@@ -312,6 +312,11 @@ class Tensor {
   // @return const unsigned char*
   const unsigned char *GetBuffer() const;
 
+  // Skip the offsets and returns the start of the buffer where the real strings is stored. Caller needs to check if the
+  // tensor's type is a string, otherwise undefined address would be returned.
+  // @return address of the first string of the tensor.
+  uchar *GetStringsBuffer() const { return data_ + kOffsetSize * shape_.NumOfElements() + kOffsetSize; }
+
   // Getter of the type
   // @return
   DataType type() const { return type_; }
@@ -642,11 +647,6 @@ class Tensor {
   // @return start address of the ths string
   // @return length of the string
   Status GetStringAt(dsize_t index, uchar **string_start, offset_t *length) const;
-
-  // Skip the offsets and returns the start of the buffer where the real strings is stored. Caller needs to check if the
-  // tensor's type is a string, otherwise undefined address would be returned.
-  // @return address of the first string of the tensor.
-  uchar *GetStringsBuffer() const { return data_ + kOffsetSize * shape_.NumOfElements() + kOffsetSize; }
 
   // all access to shape_ should be via shape
   TensorShape shape_;

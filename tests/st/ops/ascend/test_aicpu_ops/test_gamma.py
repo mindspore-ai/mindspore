@@ -55,4 +55,3 @@ def test_net_ND():
     output = net(talpha, tbeta)
     print(output.asnumpy())
     assert output.shape == (3, 2, 2)
-

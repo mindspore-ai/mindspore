@@ -88,7 +88,7 @@ class KernelRuntime {
   void UpdateRefNodeOutputMem(const session::KernelGraph *graph);
 
   void AssignCommunicationNodeOutputMem(int flag, const AnfNodePtr &node);
-  void AssignCommunicationNodeInputMem(const AnfNodePtr &node);
+  void AssignCommunicationNodeInputMem(int flag, const AnfNodePtr &node);
   void AssignCommunicationNodeMem(int flag, const AnfNodePtr &node);
 #ifdef ENABLE_DUMP_E2E
   bool SetDumpConf();

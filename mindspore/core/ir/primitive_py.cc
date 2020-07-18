@@ -79,13 +79,7 @@ py::function PrimitivePy::GetBpropFunction() {
 }
 
 BaseRef PrimitivePy::RunHookFunction(const VectorRef &args) const {
-  auto py_args = py::tuple(args.size());
-  size_t i = 0;
-  for (auto &arg : args) {
-    py_args[i] = BaseRefToPyData(arg);
-    MS_LOG(DEBUG) << "arg:" << i << ":";
-    i++;
-  }
+  auto py_args = ConvertDatatoPyTuple(args);
   py::object obj;
   bool is_bprop = this->HasAttr(kBpropAttrName);
   if (is_bprop) {
@@ -123,7 +117,7 @@ BaseRef PrimitivePy::RunHookFunction(const VectorRef &args) const {
   return std::make_shared<PyObjectRef>(obj);
 }
 
-py::function PrimitivePy::GetComputeFunction() {
+py::function PrimitivePy::GetComputeFunction() const {
   static const char *const compute_func_name = "vm_impl";
 
   if (py::hasattr(python_obj_, compute_func_name)) {
@@ -174,6 +168,47 @@ void PrimitivePy::CopyHookFunction(const PrimitivePtr &primitive) {
   auto primitive_py = primitive->cast<PrimitivePyPtr>();
   MS_EXCEPTION_IF_NULL(primitive_py);
   this->set_hook(primitive_py->hook());
+}
+
+BaseRef PrimitivePy::RunComputeFunction(const VectorRef &args) const {
+  auto py_args = ConvertDatatoPyTuple(args);
+  auto result = this->RunPyComputeFunction(py_args);
+  if (py::isinstance<py::none>(result)) {
+    return std::make_shared<BaseRef>(nullptr);
+  }
+  return std::make_shared<PyObjectRef>(result);
+}
+
+py::object PrimitivePy::RunPyComputeFunction(const py::tuple &py_args) const {
+  auto func = this->GetComputeFunction();
+  if (py::isinstance<py::none>(func)) {
+    return py::none();
+  }
+  auto result = func(*py_args);
+  return result;
+}
+
+bool PrimitivePy::HasComputeFunction() const {
+  auto func = GetComputeFunction();
+  if (py::isinstance<py::none>(func)) {
+    return false;
+  }
+  return true;
+}
+
+PrimitivePtr PrimitivePy::Clone() {
+  auto clone_fn = python_obj_.attr("_clone");
+  py::object new_obj = clone_fn();
+  auto cloned_prim = new_obj.cast<PrimitivePyPtr>();
+  return cloned_prim;
+}
+
+py::dict PrimitivePy::RunInfer(const py::tuple &args) {
+  if (!HasPyObj()) {
+    MS_LOG(EXCEPTION) << "[" << this->ToString() << "]: pyobj is empty";
+  }
+  auto infer_fuc = python_obj_.attr("__infer__");
+  return infer_fuc(*args);
 }
 
 REGISTER_PYBIND_DEFINE(Primitive_, ([](const py::module *m) {

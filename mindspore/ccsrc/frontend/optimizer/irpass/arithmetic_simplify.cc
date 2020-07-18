@@ -153,7 +153,7 @@ AnfNodePtr TensorMultiplyBase::NewTensorFilledWithData(const AnfNodePtr &node, c
   char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
 
   if (x == nullptr) {
-    std::memset(data, 0, mem_size);
+    memset_s(data, mem_size, 0, mem_size);
     auto new_vnode = NewValueNode(new_tensor_ptr);
     new_vnode->set_abstract(new_tensor_ptr->ToAbstract());
     return new_vnode;
@@ -188,10 +188,11 @@ AnfNodePtr TensorMultiplyBase::NewTensorFilledWithData(const AnfNodePtr &node, c
   char *source_data = reinterpret_cast<char *>(GetPointerToTensorData(x));
   if (x_tensor_ptr->DataSize() == 1) {
     for (int i = 0; i < new_tensor_ptr->ElementsNum(); i++) {
-      memcpy(data + i * GetTypeByte(tensor_type_ptr), source_data, GetTypeByte(tensor_type_ptr));
+      memcpy_s(data + i * GetTypeByte(tensor_type_ptr), GetTypeByte(tensor_type_ptr), source_data,
+               GetTypeByte(tensor_type_ptr));
     }
   } else {
-    memcpy(data, source_data, mem_size);
+    memcpy_s(data, mem_size, source_data, mem_size);
   }
   auto new_vnode = NewValueNode(new_tensor_ptr);
   new_vnode->set_abstract(new_tensor_ptr->ToAbstract());
@@ -478,7 +479,7 @@ AnfNodePtr ConstantDuplicateMul::MulConstantTensors(const AnfNodePtr &vnode_1, c
   auto new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_3_type_ptr->type_id(), tensor_out_shape);
   size_t mem_size = GetTypeByte(tensor_3_type_ptr) * IntToSize(new_tensor_ptr->ElementsNum());
   char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
-  memcpy(data, data_out, mem_size);
+  memcpy_s(data, mem_size, data_out, mem_size);
 
   auto new_vnode = NewValueNode(new_tensor_ptr);
   new_vnode->set_abstract(new_tensor_ptr->ToAbstract());

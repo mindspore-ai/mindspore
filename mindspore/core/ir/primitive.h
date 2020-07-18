@@ -83,6 +83,7 @@ class Primitive : public Named {
 
   void set_attr(const std::string &attrName, const ValuePtr &attr) { attrs_[attrName] = attr; }
   void EraseAttr(const std::string &attrName) { (void)attrs_.erase(attrName); }
+  virtual BaseRef RunComputeFunction(const VectorRef &args) const { return nullptr; }
 
   ValuePtr GetAttr(const std::string &attrName) const {
     auto iter = attrs_.find(attrName);
@@ -99,6 +100,7 @@ class Primitive : public Named {
     return !(iter == attrs_.cend());
   }
   void set_prim_type(const PrimType t) { prim_type_ = t; }
+  virtual PrimitivePtr Clone() { return std::make_shared<Primitive>(*this); }
   void set_instance_name(const std::string s) { instance_name_ = s; }
   bool HasPyEvaluator() const { return prim_type_ == kPrimTypePyInferShape || prim_type_ == kPrimTypeUserCustom; }
   bool HasPyInferTensor() const { return prim_type_ == kPrimTypePyInferTensor; }

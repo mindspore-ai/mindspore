@@ -38,11 +38,11 @@ ShardSample::ShardSample(int num, int den)
       indices_({}),
       sampler_type_(kCustomTopPercentSampler) {}
 
-ShardSample::ShardSample(int num, int den, int par)
+ShardSample::ShardSample(int num, int den, int par, int no_of_samples)
     : numerator_(num),
       denominator_(den),
       partition_id_(par),
-      no_of_samples_(0),
+      no_of_samples_(no_of_samples),
       indices_({}),
       sampler_type_(kCustomTopPercentSampler) {}
 
@@ -110,8 +110,11 @@ MSRStatus ShardSample::Execute(ShardTask &tasks) {
         new_tasks.InsertTask(tasks.GetTaskByID(index));  // different mod result between c and python
       }
     } else {
+      int count = 0;
       for (int i = partition_id_ * taking; i < (partition_id_ + 1) * taking; i++) {
+        if (no_of_samples_ != 0 && count == no_of_samples_) break;
         new_tasks.InsertTask(tasks.GetTaskByID(i % total_no));  // rounding up. if overflow, go back to start
+        count++;
       }
     }
     std::swap(tasks, new_tasks);
@@ -121,8 +124,11 @@ MSRStatus ShardSample::Execute(ShardTask &tasks) {
       return FAILED;
     }
     total_no = static_cast<int>(tasks.permutation_.size());
+    int count = 0;
     for (size_t i = partition_id_ * taking; i < (partition_id_ + 1) * taking; i++) {
+      if (no_of_samples_ != 0 && count == no_of_samples_) break;
       new_tasks.InsertTask(tasks.GetTaskByID(tasks.permutation_[i % total_no]));
+      count++;
     }
     std::swap(tasks, new_tasks);
   }

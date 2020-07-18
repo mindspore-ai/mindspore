@@ -66,7 +66,8 @@ class AscendControlParser {
   static AnfNodePtr InsertAssignToGraph(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> from, NotNull<AnfNodePtr> to);
   static std::vector<std::pair<KernelGraphPtr, std::vector<AnfNodePtr>>> ParseCallNode(NotNull<CNodePtr> call_node);
   static std::tuple<KernelGraphPtr, std::vector<AnfNodePtr>> ParsePartial(NotNull<AnfNodePtr> node);
-
+  static void AttachChildGraphToReturnNode(NotNull<KernelGraphPtr> graph,
+                                           const NotNull<std::set<KernelGraphPtr> *> memo);
   // root graph order
   static bool CheckLabelIndex(uint32_t order_index, uint32_t label_index, const CNodePtr &cnode,
                               NotNull<KernelGraphPtr> graph);

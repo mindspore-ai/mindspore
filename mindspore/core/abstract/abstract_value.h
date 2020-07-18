@@ -604,10 +604,39 @@ class AbstractIndexedSlices : public AbstractUndetermined {
   MS_DECLARE_PARENT(AbstractIndexedSlices, AbstractUndetermined)
 
   const AbstractTensorPtr indices() const { return indices_; }
-  const AbstractTensorPtr values() const { return values_; }
-  const AbstractTuplePtr dense_shape() const { return dense_shape_; }
   void set_indices(const AbstractTensorPtr &indices) { indices_ = indices; }
+  const AbstractTensorPtr values() const { return values_; }
   void set_values(const AbstractTensorPtr &values) { values_ = values; }
+  const AbstractTuplePtr dense_shape() const { return dense_shape_; }
+  void set_dense_shape(const AbstractTuplePtr &dense_shape) { dense_shape_ = dense_shape; }
+  TypePtr BuildType() const override;
+  AbstractBasePtr Clone() const override;
+  AbstractBasePtr Broaden() const override;
+  AbstractBasePtr BroadenWithShape() const;
+
+  std::string ToString() const override;
+
+ private:
+  AbstractTensorPtr indices_;
+  AbstractTensorPtr values_;
+  AbstractTuplePtr dense_shape_;
+};
+
+// SparseTensor
+class AbstractSparseTensor : public AbstractUndetermined {
+ public:
+  explicit AbstractSparseTensor(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
+      : AbstractUndetermined(element, shape) {}
+  AbstractSparseTensor(const TypePtr &element_type, const std::vector<int> &shape)
+      : AbstractUndetermined(element_type, shape) {}
+  ~AbstractSparseTensor() override = default;
+  MS_DECLARE_PARENT(AbstractSparseTensor, AbstractUndetermined)
+
+  const AbstractTensorPtr indices() const { return indices_; }
+  void set_indices(const AbstractTensorPtr &indices) { indices_ = indices; }
+  const AbstractTensorPtr values() const { return values_; }
+  void set_values(const AbstractTensorPtr &values) { values_ = values; }
+  const AbstractTuplePtr dense_shape() const { return dense_shape_; }
   void set_dense_shape(const AbstractTuplePtr &dense_shape) { dense_shape_ = dense_shape; }
   TypePtr BuildType() const override;
   AbstractBasePtr Clone() const override;

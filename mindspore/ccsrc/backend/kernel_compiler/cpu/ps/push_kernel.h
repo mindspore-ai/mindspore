@@ -43,7 +43,7 @@ class PushKernel : public CPUKernel {
       sizes.push_back(SizeToInt(input->size) / sizeof(T));
     }
     parallel::ps::Worker<T>::GetInstance().Push(keys, addrs, sizes);
-    memcpy(outputs[0]->addr, &key_, sizeof(size_t));
+    memcpy_s(outputs[0]->addr, sizeof(size_t), &key_, sizeof(size_t));
     return true;
   }
 

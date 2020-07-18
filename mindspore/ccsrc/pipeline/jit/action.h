@@ -38,9 +38,14 @@ bool VmOptimizeAction(const ResourcePtr &res);
 bool PynativeOptimizeAction(const ResourcePtr &res);
 bool TaskEmitAction(const ResourcePtr &res);
 bool ExecuteAction(const ResourcePtr &res);
+bool StartPSWorkerAction(const ResourcePtr &res);
+bool StartPSServerAction(const ResourcePtr &res);
+bool StartPSSchedulerAction(const ResourcePtr &res);
 
 std::vector<ActionItem> GePipeline();
 std::vector<ActionItem> VmPipeline();
+std::vector<ActionItem> PServerPipeline();
+std::vector<ActionItem> PSchedulerPipeline();
 abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &res, const FuncGraphPtr &func_graph,
                                          const abstract::AbstractBasePtrList &args_spec, bool clear = false);
 FuncGraphPtr ProgramSpecialize(const ResourcePtr &res, const FuncGraphPtr &func_graph,

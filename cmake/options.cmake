@@ -116,10 +116,10 @@ if(ENABLE_DUMP_E2E)
     add_compile_definitions(ENABLE_DUMP_E2E)
 endif()
 
-if(ENABLE_DATA_DUMP)
-    add_compile_definitions(ENABLE_DATA_DUMP)
-endif()
-
 if(ENABLE_DEBUGGER)
     add_compile_definitions(ENABLE_DEBUGGER)
+endif()
+
+if(ENABLE_TESTCASES)
+    add_compile_definitions(ENABLE_TESTCASES)
 endif()

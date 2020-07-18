@@ -35,6 +35,9 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore.nn import Optimizer
 from mindspore.nn import TrainOneStepCell, WithLossCell
+from mindspore.nn.optim import Momentum
+from mindspore.train import Model
+from ....dataset_mock import MindData
 
 context.set_context(mode=context.GRAPH_MODE, enable_sparse=True)
 
@@ -46,6 +49,40 @@ reshape = P.Reshape()
 size_op = P.Size()
 invert_permutation = P.InvertPermutation()
 logical_and = P.LogicalAnd()
+
+def get_axis(x):
+    shape = shape_op(x)
+    length = F.tuple_len(shape)
+    perm = F.make_range(0, length)
+    return perm
+
+class MSELoss(nn.Cell):
+    def __init__(self):
+        super(MSELoss, self).__init__()
+        self.reduce_sum = P.ReduceSum()
+        self.square = P.Square()
+        self.reduce_mean = P.ReduceMean()
+
+    def construct(self, data, label):
+        diff = data - label
+        return self.reduce_mean(self.square(diff), get_axis(diff))
+
+
+class MindDataSet(MindData):
+    def __init__(self, dataset_types, dataset_shapes):
+        super(MindDataSet, self).__init__(size=2, batch_size=32,
+                                          np_types=dataset_types,
+                                          output_shapes=dataset_shapes,
+                                          input_indexs=(0, 1))
+    def __next__(self):
+        if self._size < self._iter_num:
+            raise StopIteration
+        self._iter_num += 1
+        lst = []
+        for shape_, type_ in zip(self._output_shapes, self._np_types):
+            lst.append(Tensor(np.ones(shape_).astype(type_)))
+        return tuple(lst)
+
 
 @constexpr
 def _generate_shape_index(out_shape, indices_shape, axis):
@@ -189,8 +226,8 @@ def test_indexed_slices_make_indexed_slices():
         def construct(self, indices, values):
             ret = (IndexedSlices(indices, values, self.dense_shape),)
             return ret[0]
-    indices = Tensor([[0, 0], [1, 2]])
-    values = Tensor([1, 2], dtype=ms.float32)
+    indices = Tensor([1, 2])
+    values = Tensor([[0, 0], [1, 2]], dtype=ms.float32)
     MakeIndexedSlices()(indices, values)
 
 
@@ -202,8 +239,8 @@ def test_indexed_slices_attr():
         def construct(self, indices, values):
             x = IndexedSlices(indices, values, self.dense_shape)
             return x.values(), x.indices(), x.dense_shape()
-    indices = Tensor([[0, 0], [1, 2]])
-    values = Tensor([1, 2], dtype=ms.float32)
+    indices = Tensor([0])
+    values = Tensor([[1, 2]], dtype=ms.float32)
     IndexedSlicesGetAttr()(indices, values)
 
 
@@ -279,3 +316,29 @@ def test_indexed_slices_env_get():
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
     train_network(inputs, label)
+
+
+def test_indexed_slices_model_train():
+    class Net(nn.Cell):
+        def __init__(self, in_features, out_features):
+            super(Net, self).__init__()
+            self.weight = Parameter(Tensor(np.ones([out_features, in_features]).astype(np.float32)), name="weight")
+            self.add = P.TensorAdd()
+            self.cast = P.Cast()
+            self.flag = True
+
+        def construct(self, inputs, label):
+            x = self.add(inputs, self.weight)
+            if self.flag:
+                x = self.cast(x, mstype.float32)
+            return x
+
+    dataset_types = (np.float32, np.float32)
+    dataset_shapes = ((16, 16), (16, 16))
+    dataset = MindDataSet(dataset_types, dataset_shapes)
+    net = Net(16, 16)
+    net.set_train()
+
+    optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+    model = Model(net, optimizer=optimizer)
+    model.train(2, dataset, dataset_sink_mode=False)

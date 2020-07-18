@@ -1,4 +1,4 @@
-set(glog_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2 ${SECURE_CXX_FLAGS}")
+set(glog_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2 ${SECURE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
 set(glog_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
 mindspore_add_pkg(glog
         VER 0.4.0

@@ -166,10 +166,10 @@ def test_cpp_uniform_augment_exception_pyops(num_ops=2):
                      F.Invert()]
 
     with pytest.raises(TypeError) as e:
-        _ = C.UniformAugment(operations=transforms_ua, num_ops=num_ops)
+        C.UniformAugment(operations=transforms_ua, num_ops=num_ops)
 
     logger.info("Got an exception in DE: {}".format(str(e)))
-    assert "Argument tensor_op_5 with value" \
+    assert "Argument tensor_ops[5] with value" \
            " <mindspore.dataset.transforms.vision.py_transforms.Invert" in str(e.value)
     assert "is not of type (<class 'mindspore._c_dataengine.TensorOp'>,)" in str(e.value)
 

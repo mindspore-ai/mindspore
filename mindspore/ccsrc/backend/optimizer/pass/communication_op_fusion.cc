@@ -100,7 +100,10 @@ bool CommunicationOpFusion::GetSplitSegments(const CommunicationOpInfo &communic
 
   auto parallel_context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context);
-  const auto &split_indices = parallel_context->GetAllReduceFusionSplitIndices(group);
+  std::vector<uint32_t> split_indices;
+  if (!parallel_context->enable_parallel_optimizer()) {
+    split_indices = parallel_context->GetAllReduceFusionSplitIndices(group);
+  }
 
   size_t segments = 0;
   if (split_indices.size() != 0) {

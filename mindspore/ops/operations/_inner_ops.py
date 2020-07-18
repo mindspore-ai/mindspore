@@ -291,7 +291,7 @@ class Range(PrimitiveWithInfer):
         return x_dtype
 
 
-class AscendQuant(PrimitiveWithInfer):
+class Quant(PrimitiveWithInfer):
     r"""
     Returns the quantized value of input_x.
 
@@ -323,7 +323,7 @@ class AscendQuant(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor([100.0, 150.0], mstype.float32)
-        >>> quant = P.AscendQuant(80.0, 0.0, False, "Round")
+        >>> quant = P.Quant(80.0, 0.0, False, "Round")
         >>> y = quant(input_x)
     """
 
@@ -344,7 +344,7 @@ class AscendQuant(PrimitiveWithInfer):
         return mstype.int8
 
 
-class AscendDequant(PrimitiveWithInfer):
+class Dequant(PrimitiveWithInfer):
     r"""
     Returns the dequantized value of input_x.
     This operation will do ReLU to the dequantized value if `relu_flag` is True.
@@ -376,7 +376,7 @@ class AscendDequant(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor([100.0, 150.0], mstype.float32)
-        >>> dequant = P.AscendDequant(False, False)
+        >>> dequant = P.Dequant(False, False)
         >>> y = dequant(input_x)
     """
     @prim_attr_register

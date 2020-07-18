@@ -46,6 +46,8 @@ bool MemReuseUtil::InitDynamicOutputKernelRef() {
     if (iter == kernel_output_refs_.end()) {
       auto output_sizes = kernel_mod->GetOutputSizeList();
       KernelRefCountPtrList kernel_refs;
+      bool is_comm_op = AnfAlgo::IsCommunicationOp(kernel_cnode);
+      size_t output_index = 0;
       for (auto size : output_sizes) {
         total_dy_size_ += size;
         // do not MallocDynamicMem just record this
@@ -54,9 +56,20 @@ bool MemReuseUtil::InitDynamicOutputKernelRef() {
         auto curr_stream_id = AnfAlgo::GetStreamId(kernel_cnode);
         kernel_ref->stream_id_ = curr_stream_id;
         kernel_ref->SetKernelRefCountInfo(index, size, kDynamicRefCount);
+        if (is_comm_op) {
+          kernel_ref->type_ = COMM_REUSE;
+        } else {
+          session::AnfWithOutIndex out_pair(kernel_cnode, output_index);
+          if (graph_->IsInRefOutputMap(out_pair)) {
+            kernel_ref->type_ = REFNODE_OUTPUT;
+          } else {
+            kernel_ref->type_ = COMMON;
+          }
+        }
         kernel_refs.push_back(kernel_ref);
         kernel_out_ref_num++;
         total_refs_list_.push_back(kernel_ref);
+        output_index++;
       }
       if (!kernel_refs.empty()) {
         kernel_output_refs_[key] = kernel_refs;
@@ -155,9 +168,19 @@ void MemReuseUtil::SetInputMap(const CNodePtr &kernel, KernelDef *kernel_def_ptr
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(kernel_def_ptr);
   auto key = kernel.get();
-  for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
+  bool is_comm_op = AnfAlgo::IsCommunicationOp(kernel);
+  size_t input_tensor_num = AnfAlgo::GetInputTensorNum(kernel);
+  for (size_t i = 0; i < input_tensor_num; ++i) {
     auto ref_ptr = GetKernelInputRef(kernel, i);
     if (ref_ptr != nullptr) {
+      if (is_comm_op) {
+        if (input_tensor_num == 1) {
+          ref_ptr->type_ = COMM_REUSE;
+        } else {
+          ref_ptr->type_ = COMM_NOTREUSE;
+        }
+      }
+
       if (ref_ptr->reftype() == kStaticRefCount) {
         continue;
       } else if (ref_ptr->reftype() == kDynamicRefCount) {
@@ -258,6 +281,11 @@ void MemReuseUtil::SetKernelDefMap() {
     auto key = kernel.get();
     kernel_def_ptr->set_input_refs(kernel_def_ptr->inputs_[key]);
     kernel_def_ptr->set_output_refs(kernel_def_ptr->outputs_[key]);
+    if (AnfAlgo::IsCommunicationOp(kernel)) {
+      kernel_def_ptr->type_ = COMMUNICATION_NODE;
+    } else {
+      kernel_def_ptr->type_ = COMMON_NODE;
+    }
     kernel_def_ptr_list_.push_back(kernel_def_ptr);
     kernel_map_[key] = kernel_def_ptr;
   }
@@ -337,6 +365,7 @@ void MemReuseUtil::SetSummaryNodesRefCount() {
       KernelRefCountPtr kernel_ref = kernel_output_refs_[node.get()][index];
       kernel_ref->ref_count_ = kMaxRefCount;
       kernel_ref->ref_count_dynamic_use_ = kMaxRefCount;
+      kernel_ref->type_ = SUMMARY;
       total_summary_size += kernel_ref->size_;
       MS_LOG(INFO) << "Set summary node's ref count, node: " << node->fullname_with_scope() << " index: " << index;
     } else {

@@ -306,6 +306,34 @@ def get_bprop_floormod(self):
     return bprop
 
 
+@bprop_getters.register(P.TruncateDiv)
+def get_bprop_truncate_div(self):
+    """Grad definition for `TruncateDiv` operation."""
+    div_op = P.TruncateDiv()
+    neg = P.Neg()
+    mul_op = P.Mul()
+
+    def bprop(x, y, out, dout):
+        bc_x = div_op(dout, y)
+        bc_y = neg(mul_op(bc_x, out))
+        return binop_grad_common(x, y, bc_x, bc_y)
+
+    return bprop
+
+
+@bprop_getters.register(P.TruncateMod)
+def get_bprop_truncate_mod(self):
+    """Grad definition for `TruncateMod` operation."""
+    div_op = P.TruncateDiv()
+
+    def bprop(x, y, out, dout):
+        bc_x = dout
+        bc_y = -dout * div_op(x, y)
+        return binop_grad_common(x, y, bc_x, bc_y)
+
+    return bprop
+
+
 @bprop_getters.register(P.Mod)
 def get_bprop_mod(self):
     """Grad definition for `Mod` operation."""
@@ -1024,6 +1052,22 @@ def get_bprop_atan(self):
     def bprop(x, out, dout):
         dx = input_grad(x, dout)
         return (dx,)
+    return bprop
+
+
+@bprop_getters.register(P.Tan)
+def get_bprop_tan(self):
+    """Grad definition for `Tan` operation."""
+    reciprocal = P.Reciprocal()
+    square = P.Square()
+    cos = P.Cos()
+
+    def bprop(x, out, dout):
+        cosx = cos(x)
+        secx2 = square(reciprocal(cosx))
+        dx = secx2 * dout
+        return (dx,)
+
     return bprop
 
 

@@ -40,17 +40,11 @@ class ParamValue {
   const std::string &name() const { return name_; }
   void set_name(const std::string &name) { name_ = name; }
 
-  const std::string &sparse_grad() const { return sparse_grad_; }
-  void set_sparse_grad(const std::string &sparse_grad) { sparse_grad_ = sparse_grad; }
-
   bool requires_grad() const { return requires_grad_; }
   void set_requires_grad(bool requires_grad) { requires_grad_ = requires_grad; }
 
   bool layerwise_parallel() const { return layerwise_parallel_; }
   void set_layerwise_parallel(bool layerwise_parallel) { layerwise_parallel_ = layerwise_parallel; }
-
-  bool has_indexed_slices_grad() const { return has_indexed_slices_grad_; }
-  void set_has_indexed_slices_grad(bool b) { has_indexed_slices_grad_ = b; }
 
   // Whether the parameter clone from other parameter.
   bool cloned() const { return cloned_; }
@@ -81,10 +75,8 @@ class ParamValue {
  private:
   tensor::MetaTensorPtr value_;
   std::string name_{"Parameter"};
-  std::string sparse_grad_;
   bool requires_grad_{true};
   bool layerwise_parallel_{false};
-  bool has_indexed_slices_grad_{false};
   bool be_cloned_{false};
   bool cloned_{false};
   std::vector<int32_t> be_cloned_index_;

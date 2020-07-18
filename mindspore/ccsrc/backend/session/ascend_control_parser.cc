@@ -18,9 +18,12 @@
 #include <utility>
 #include <memory>
 #include <algorithm>
+#include <string>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/union_find_set.h"
 #include "runtime/device/ascend/ascend_label_assign.h"
+#include "utils/context/ms_context.h"
+#include "debug/anf_ir_dump.h"
 
 static constexpr size_t kCNodePrim = 0;
 static constexpr size_t kCNodeCallArg = 1;
@@ -104,7 +107,7 @@ static void ReuseParameter(NotNull<KernelGraphPtr> root_kg,
 
 static CNodePtr GetNextRealKernel(const std::vector<CNodePtr> &list, size_t start) {
   for (size_t i = start; i < list.size() - 1; ++i) {
-    if (!IsPrimitiveCNode(list[i], prim::kPrimPartial) && AnfAlgo::IsRealKernel(list[i])) {
+    if (AnfAlgo::IsRealKernel(list[i])) {
       return list[i];
     }
   }
@@ -168,18 +171,43 @@ static void EraseNodeFromExecOrder(const AnfNodePtr &node, const NotNull<std::ve
   exec_order->erase(exec_iter);
 }
 
+void AscendControlParser::AttachChildGraphToReturnNode(NotNull<KernelGraphPtr> graph,
+                                                       const NotNull<std::set<KernelGraphPtr> *> memo) {
+  if (memo->find(graph) != memo->end()) {
+    return;
+  }
+  memo->insert(graph.get());
+  const std::vector<std::shared_ptr<KernelGraph>> &child_graph_order = graph->child_graph_order();
+  if (child_graph_order.empty()) {
+    return;
+  }
+
+  std::vector<AnfNodePtr> depend_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimPartial->name()))};
+  for (auto &cg : child_graph_order) {
+    MS_EXCEPTION_IF_NULL(cg);
+    auto fg = cg->cast<FuncGraphPtr>();
+    MS_EXCEPTION_IF_NULL(fg);
+    depend_inputs.emplace_back(NewValueNode(fg));
+    AttachChildGraphToReturnNode(NOT_NULL(cg), memo);
+  }
+  auto child_graphs = graph->NewCNode(depend_inputs);
+  InsertDependToGraph(graph, NOT_NULL(child_graphs));
+}
+
 void AscendControlParser::LinkGraph(NotNull<KernelGraphPtr> kg) {
   std::set<KernelGraphPtr> memo;
   std::vector<std::pair<AnfNodePtr, AnfNodePtr>> link_list;
   // Insert Assign
   ChildGraphDataAssign(kg, NOT_NULL(&link_list), NOT_NULL(&memo));
+  memo.clear();
   // Reuse Parameter
   ReuseParameter(kg, link_list);
   // replace call by label goto / label switch
-  memo.clear();
   (void)ProcessKernelGraph(kg, nullptr, nullptr, NOT_NULL(&memo));
+  memo.clear();
   // assign label resource
   device::ascend::AscendLabelAssign::GetInstance().AssignLabel(kg);
+  AttachChildGraphToReturnNode(kg, NOT_NULL(&memo));
 }
 
 void AscendControlParser::EraseParameter(NotNull<KernelGraphPtr> root_graph,
@@ -248,10 +276,14 @@ void AscendControlParser::EraseParameter(NotNull<KernelGraphPtr> root_graph,
     }
     MS_LOG(INFO) << "Erase " << assign_node->DebugString(5);
     EraseNodeFromExecOrder(assign_node, NOT_NULL(&exec_order));
-
-    auto source = AnfAlgo::VisitKernelWithReturnType(assign_node->input(kCNodeAssignSource), 0).first;
-    parameter_count.AddReadCount(source, -1);
+    auto source = assign_node->input(kCNodeAssignSource);
+    MS_EXCEPTION_IF_NULL(source);
+    auto visit_source = AnfAlgo::VisitKernelWithReturnType(source, 0).first;
     parameter_count.AddWriteCount(para, -1);
+    parameter_count.AddReadCount(para, -1);
+    if (visit_source->isa<Parameter>()) {
+      parameter_count.AddReadCount(visit_source, read - 1);
+    }
     for (auto &node : all_nodes) {
       for (size_t i = 0; i < node->size(); ++i) {
         if (node->input(i) == para) {
@@ -260,8 +292,6 @@ void AscendControlParser::EraseParameter(NotNull<KernelGraphPtr> root_graph,
         }
       }
     }
-    parameter_count.AddReadCount(source, 1);
-    parameter_count.AddReadCount(para, -1);
   }
   root_graph->set_execution_order(exec_order);
 }
@@ -318,6 +348,17 @@ void AscendControlParser::ExecutorValidate(NotNull<KernelGraphPtr> root_graph) {
   (void)RecurseGraph(root_graph, NOT_NULL(&memo));
   EraseParameter(root_graph, memo);
   EraseLabel(root_graph);
+
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto save_graphs_path = context_ptr->save_graphs_path();
+  if (save_graphs_path.empty()) {
+    save_graphs_path = ".";
+  }
+  if (context_ptr->save_graphs_flag()) {
+    std::string file_path = save_graphs_path + "/after_erase_label_and_parameter.ir";
+    DumpIR(file_path, root_graph.get());
+  }
 }
 
 std::vector<std::pair<KernelGraphPtr, std::vector<AnfNodePtr>>> AscendControlParser::ParseCallNode(

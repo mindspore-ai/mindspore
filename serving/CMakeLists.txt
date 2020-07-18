@@ -61,7 +61,7 @@ add_custom_command(
 
 # Include generated *.pb.h files
 include_directories("${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/core"
-        "${PROJECT_SOURCE_DIR}/mindspore/ccsrc")
+        "${PROJECT_SOURCE_DIR}/mindspore/ccsrc" "${PROJECT_SOURCE_DIR}/mindspore/core")
 file(GLOB_RECURSE CORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "core/*.cc" "core/util/*.cc" "core/version_control/*.cc")
 

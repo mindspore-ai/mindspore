@@ -15,4 +15,4 @@
 	url = https://gitee.com/mindspore/akg.git
 [submodule "graphengine"]
 	path = graphengine
-	url = https://gitee.com/ms-incubator/graphengine.git
+	url = https://gitee.com/mindspore/graphengine.git

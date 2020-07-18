@@ -137,6 +137,10 @@ const std::set<std::string> kScalarFieldTypeSet = {"string", "int32", "int64", "
 // number field list
 const std::set<std::string> kNumberFieldTypeSet = {"int32", "int64", "float32", "float64"};
 
+const std::unordered_map<std::string, std::string> kTypesMap = {
+  {"bool", "int32"},      {"int8", "int32"},      {"uint8", "bytes"},     {"int16", "int32"},
+  {"uint16", "int32"},    {"int32", "int32"},     {"uint32", "int64"},    {"int64", "int64"},
+  {"float16", "float32"}, {"float32", "float32"}, {"float64", "float64"}, {"string", "string"}};
 /// \brief split a string using a character
 /// \param[in] field target string
 /// \param[in] separator a character for spliting

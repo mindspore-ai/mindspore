@@ -98,6 +98,7 @@ class ReshapeInfo : public OperatorInfo {
   bool input_layout_set_flag_;
   bool output_layout_set_flag_;
   bool is_generating_costs_;
+  bool is_skip_ = false;
   std::string pre_operator_name_;
   std::string next_operator_name_;
 };

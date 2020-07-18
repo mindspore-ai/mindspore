@@ -215,7 +215,7 @@ void MindRecordOp::Print(std::ostream &out, bool show_all) const {
     // Call the super class for displaying any common detailed info
     ParallelOp::Print(out, show_all);
     // Then show any custom derived-internal stuff
-    out << "\n Dataset file : ";
+    out << "\nDataset file : ";
     for (auto &file : dataset_file_) {
       out << file << " ";
     }

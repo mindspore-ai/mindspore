@@ -229,8 +229,8 @@ def _load_tensor_by_layout(tensor, layout):
     """
     if not isinstance(layout, list):
         raise TypeError("The layout should be list! layout is {}".format(layout))
-    if len(layout) != 3:
-        raise ValueError("The length of layout must be 3! layout is {}".format(layout))
+    if len(layout) < 3:
+        raise ValueError("The length of layout must be larger than 3! layout is {}".format(layout))
     dev_mat = layout[0]
     tensor_map = layout[1]
     if tensor.size() == 1:
@@ -290,3 +290,37 @@ def _reshape_param_data(param_data, dev_mat, tensor_map):
         tensor_slices_new = tensor_slices_new_inner
 
     return Tensor(tensor_slices_new[0])
+
+def _reshape_param_data_with_weight(param_data, dev_mat, field_size):
+    """
+    Combine param slice by the device matrix, used in model parallel scenario.
+
+    Args:
+        param_data (Tensor): The tensor to be reshaped and rearrangement,
+        generated from all the device from AllGatherParamNet.
+        dev_mat (list): The device matrix of devices.
+    Returns:
+        Tensor, the combined tensor which with the whole data value.
+
+    Examples:
+        >>> param_data = _allgather_param_net(param_data)
+        >>> dev_mat = [2, 2]
+        >>> field_size = [39]
+        >>> tensor = _reshape_param_data_with_weight(param_data, dev_mat, field_size)
+    """
+    device_count = 1
+    for dim in dev_mat:
+        device_count *= dim
+
+    tensor_slices = np.split(param_data.asnumpy(), device_count, axis=0)
+    tensor_slices_col = []
+    for i in range(len(tensor_slices[0][0])):
+        tensor_slices_new = np.array(tensor_slices[0][:, i]).reshape(field_size[0], -1)
+        for j in range(1, device_count):
+            tensor_slices_new = np.concatenate((tensor_slices_new,\
+                                   np.array(tensor_slices[j][:, i]).reshape(field_size[0], -1)), axis=1)
+        tensor_slices_col.append(tensor_slices_new)
+    new_tensor = np.array(tensor_slices_col[0]).reshape(-1, 1)
+    for i in range(1, len(tensor_slices_col)):
+        new_tensor = np.concatenate((new_tensor, np.array(tensor_slices_col[i]).reshape(-1, 1)), axis=1)
+    return Tensor(new_tensor)

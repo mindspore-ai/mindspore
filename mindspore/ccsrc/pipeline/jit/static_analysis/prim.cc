@@ -138,7 +138,11 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimIndexedSlicesGetValues, {InferImplIndexedSlicesGetValues, true}},
     {prim::kPrimIndexedSlicesGetIndices, {InferImplIndexedSlicesGetIndices, true}},
     {prim::kPrimIndexedSlicesGetDenseShape, {InferImplIndexedSlicesGetDenseShape, true}},
-    {prim::kPrimIsIndexedSlices, {InferImplIsIndexedSlices, true}},
+    // SparseTensor
+    {prim::kPrimMakeSparseTensor, {InferImplMakeSparseTensor, true}},
+    {prim::kPrimSparseTensorGetValues, {InferImplSparseTensorGetValues, true}},
+    {prim::kPrimSparseTensorGetIndices, {InferImplSparseTensorGetIndices, true}},
+    {prim::kPrimSparseTensorGetDenseShape, {InferImplSparseTensorGetDenseShape, true}},
   };
   return prim_eval_implement_map;
 }
@@ -523,14 +527,8 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abs
     return iter->second;
   }
   auto py_args = PreparePyInputs(prim_py_, args);
-
-  auto pyobj = prim_py_->GetPyObj();
-  if (pyobj == nullptr) {
-    MS_LOG(EXCEPTION) << "[" << prim_py_->ToString() << "]: pyobj is empty";
-  }
-  auto infer_fuc = pyobj.attr("__infer__");
   prim_py_->BeginRecordAddAttr();
-  py::dict output = infer_fuc(*py_args);
+  py::dict output = prim_py_->RunInfer(py_args);
   prim_py_->EndRecordAddAttr();
   auto added_attrs = prim_py_->evaluate_added_attrs();
   MS_LOG(DEBUG) << "Output type is " << (std::string)py::str(output);

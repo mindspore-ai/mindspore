@@ -124,6 +124,8 @@ void ProtoExporter::SetNodeOutputType(const TypePtr &type, const BaseShapePtr &s
     // Do Nothing
   } else if (type->isa<UndeterminedType>()) {
     // Do Nothing
+  } else if (type->isa<SparseTensorType>()) {
+    // Do Nothing
   } else if (type->isa<Tuple>()) {
     TuplePtr tuple_type = dyn_cast<Tuple>(type);
     type_proto->set_data_type(irpb::DT_TUPLE);

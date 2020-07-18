@@ -25,6 +25,7 @@ from .grad_base import bprop_getters
 from ..primitive import constexpr
 from ... import context
 from ...common import dtype as mstype
+from ...common.tensor import IndexedSlices
 
 reduce_sum = P.ReduceSum()
 unsorted_segment_sum = P.UnsortedSegmentSum()
@@ -206,7 +207,7 @@ def get_bprop_embedding_lookup(self):
         actual_dout_shape_changed = new_indices_shape_changed + x_shp_tail
         # Reshape the 'actual_dout' on device
         actual_dout = reshape_op(dout, actual_dout_shape_changed)
-        return (new_indices, actual_dout, x_shp), zeros_like(indices), zeros_like(offset)
+        return IndexedSlices(new_indices, actual_dout, x_shp), zeros_like(indices), zeros_like(offset)
     return bprop_sparse
 
 
@@ -354,7 +355,7 @@ def get_bprop_sparse_gather_v2(self):
             values_shape = indices_size + x_tail_shp
             values = reshape(dout, values_shape)
             indices = reshape(indices, indices_size)
-            return (indices, values, x_shp), zeros_like(indices), zeros_like(axis)
+            return IndexedSlices(indices, values, x_shp), zeros_like(indices), zeros_like(axis)
         if F.rank(dout) == 0:
             dout = P.ExpandDims()(dout, -1)
         if F.rank(indices) == 0:

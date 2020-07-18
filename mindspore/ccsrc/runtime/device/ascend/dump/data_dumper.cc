@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef ENABLE_DATA_DUMP
 #include "runtime/device/ascend/dump/data_dumper.h"
 
 #include <map>
@@ -63,6 +62,7 @@ void DataDumper::LoadDumpInfo() {
     }
     MS_LOG(INFO) << "[DataDump] LoadDumpInfo kernel:" << kernel->fullname_with_scope();
     dump_kernel_names_.emplace_back(kernel->fullname_with_scope());
+    DataDumpParser::GetInstance().MatchKernel(kernel->fullname_with_scope());
 
     aicpu::dump::Task task;
     ConstructDumpTask(NOT_NULL(kernel), NOT_NULL(&task));
@@ -71,6 +71,8 @@ void DataDumper::LoadDumpInfo() {
   }
   RtLoadDumpData(dump_info, &dev_load_mem_);
   load_flag_ = true;
+  // graph id may changed in Unload
+  graph_id_ = kernel_graph_->graph_id();
   MS_LOG(INFO) << "[DataDump] LoadDumpInfo end";
 }
 
@@ -83,7 +85,7 @@ void DataDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_inf
     MS_LOG(EXCEPTION) << "Dump path invalid";
   }
   auto device_id = context_ptr->device_id();
-  dump_info->set_dump_path(dump_path.value() + "_" + std::to_string(device_id) + "/");
+  dump_info->set_dump_path("/" + dump_path.value() + "_" + std::to_string(device_id) + "/");
   MS_LOG(INFO) << "[DataDump] dump_path:" << dump_path.value();
 
   dump_info->set_model_name(DataDumpParser::GetInstance().net_name() + "_" + std::to_string(kernel_graph_->graph_id()));
@@ -107,9 +109,9 @@ void DataDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_inf
   MS_EXCEPTION_IF_NULL(currnet_epoch_tensor->device_address());
   MS_EXCEPTION_IF_NULL(steps_per_epoch_tensor->device_address());
 
-  void *current_step = current_step_tensor->device_address()->ptr_;
-  void *current_epoch = currnet_epoch_tensor->device_address()->ptr_;
-  void *steps_per_epoch = steps_per_epoch_tensor->device_address()->ptr_;
+  void *current_step = current_step_tensor->device_address()->GetMutablePtr();
+  void *current_epoch = currnet_epoch_tensor->device_address()->GetMutablePtr();
+  void *steps_per_epoch = steps_per_epoch_tensor->device_address()->GetMutablePtr();
 
   if (current_epoch != nullptr && current_step != nullptr && steps_per_epoch != nullptr) {
     dump_info->set_step_id_addr(reinterpret_cast<uint64_t>(current_epoch));
@@ -135,11 +137,10 @@ void DataDumper::UnloadDumpInfo() {
     MS_LOG(WARNING) << "Load not success, no need to unload";
     return;
   }
-  MS_EXCEPTION_IF_NULL(kernel_graph_);
-  MS_LOG(INFO) << "[DataDump] UnloadDumpInfo start. graphId:" << kernel_graph_->graph_id();
+  MS_LOG(INFO) << "[DataDump] UnloadDumpInfo start. graphId:" << graph_id_;
 
   aicpu::dump::OpMappingInfo op_mapping_info;
-  op_mapping_info.set_model_id(kernel_graph_->graph_id());
+  op_mapping_info.set_model_id(graph_id_);
   op_mapping_info.set_flag(kAicpuUnloadFlag);
 
   for (const auto &kernel_name : dump_kernel_names_) {
@@ -279,4 +280,3 @@ void DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Ta
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
-#endif

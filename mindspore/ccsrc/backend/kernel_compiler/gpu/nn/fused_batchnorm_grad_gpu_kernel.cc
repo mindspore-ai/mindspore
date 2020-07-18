@@ -33,12 +33,12 @@ MS_REG_GPU_KERNEL_ONE(FusedBatchNormGrad,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat16)
-                        .AddOutputAttr(kNumberTypeFloat16)
-                        .AddOutputAttr(kNumberTypeFloat16),
+                        .AddOutputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32),
                       FusedBatchNormGradGpuKernel, half)
 }  // namespace kernel
 }  // namespace mindspore

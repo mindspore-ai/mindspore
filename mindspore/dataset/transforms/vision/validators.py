@@ -21,7 +21,7 @@ from mindspore._c_dataengine import TensorOp
 
 from .utils import Inter, Border
 from ...core.validator_helpers import check_value, check_uint8, FLOAT_MAX_INTEGER, check_pos_float32, \
-    check_2tuple, check_range, check_positive, INT32_MAX, parse_user_args, type_check, type_check_list
+    check_2tuple, check_range, check_positive, INT32_MAX, parse_user_args, type_check, type_check_list, check_tensor_op
 
 
 def check_crop_size(size):
@@ -78,6 +78,8 @@ def check_fill_value(fill_value):
 def check_padding(padding):
     """Parsing the padding arguments and check if it is legal."""
     type_check(padding, (tuple, list, numbers.Number), "padding")
+    if isinstance(padding, numbers.Number):
+        check_value(padding, (0, INT32_MAX), "padding")
     if isinstance(padding, (tuple, list)):
         if len(padding) not in (2, 4):
             raise ValueError("The size of the padding list or tuple should be 2 or 4.")
@@ -163,10 +165,13 @@ def check_random_resize_crop(method):
         check_crop_size(size)
 
         if scale is not None:
+            type_check(scale, (tuple,), "scale")
+            type_check_list(scale, (float, int), "scale")
             check_range(scale, [0, FLOAT_MAX_INTEGER])
         if ratio is not None:
+            type_check(ratio, (tuple,), "ratio")
+            type_check_list(ratio, (float, int), "ratio")
             check_range(ratio, [0, FLOAT_MAX_INTEGER])
-            check_positive(ratio[0], "ratio[0]")
         if interpolation is not None:
             type_check(interpolation, (Inter,), "interpolation")
         if max_attempts is not None:
@@ -450,8 +455,7 @@ def check_random_affine(method):
 
         if translate is not None:
             if type_check(translate, (list, tuple), "translate"):
-                translate_names = ["translate_{0}".format(i) for i in range(len(translate))]
-                type_check_list(translate, (int, float), translate_names)
+                type_check_list(translate, (int, float), "translate")
             if len(translate) != 2:
                 raise TypeError("translate should be a list or tuple of length 2.")
             for i, t in enumerate(translate):
@@ -508,8 +512,7 @@ def check_uniform_augment_cpp(method):
 
         if num_ops > len(operations):
             raise ValueError("num_ops is greater than operations list size")
-        tensor_ops = ["tensor_op_{0}".format(i) for i in range(len(operations))]
-        type_check_list(operations, (TensorOp,), tensor_ops)
+        type_check_list(operations, (TensorOp,), "tensor_ops")
 
         return method(self, *args, **kwargs)
 
@@ -525,6 +528,27 @@ def check_bounding_box_augment_cpp(method):
         type_check(ratio, (float, int), "ratio")
         check_value(ratio, [0., 1.], "ratio")
         type_check(transform, (TensorOp,), "transform")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_auto_contrast(method):
+    """Wrapper method to check the parameters of AutoContrast ops (python and cpp)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [cutoff, ignore], _ = parse_user_args(method, *args, **kwargs)
+        type_check(cutoff, (int, float), "cutoff")
+        check_value(cutoff, [0, 100], "cutoff")
+        if ignore is not None:
+            type_check(ignore, (list, tuple, int), "ignore")
+        if isinstance(ignore, int):
+            check_value(ignore, [0, 255], "ignore")
+        if isinstance(ignore, (list, tuple)):
+            for item in ignore:
+                type_check(item, (int,), "item")
+                check_value(item, [0, 255], "ignore")
         return method(self, *args, **kwargs)
 
     return new_method
@@ -584,6 +608,29 @@ def check_compose_list(method):
         type_check(transforms, (list,), transforms)
         if not transforms:
             raise ValueError("transforms list is empty.")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_random_select_subpolicy_op(method):
+    """Wrapper method to check the parameters of RandomSelectSubpolicyOp."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [policy], _ = parse_user_args(method, *args, **kwargs)
+        type_check(policy, (list,), "policy")
+        if not policy:
+            raise ValueError("policy can not be empty.")
+        for sub_ind, sub in enumerate(policy):
+            type_check(sub, (list,), "policy[{0}]".format([sub_ind]))
+            if not sub:
+                raise ValueError("policy[{0}] can not be empty.".format(sub_ind))
+            for op_ind, tp in enumerate(sub):
+                check_2tuple(tp, "policy[{0}][{1}]".format(sub_ind, op_ind))
+                check_tensor_op(tp[0], "op of (op, prob) in policy[{0}][{1}]".format(sub_ind, op_ind))
+                check_value(tp[1], (0, 1), "prob of (op, prob) policy[{0}][{1}]".format(sub_ind, op_ind))
 
         return method(self, *args, **kwargs)
 

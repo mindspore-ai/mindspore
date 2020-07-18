@@ -40,12 +40,12 @@
 #include "runtime/device/cpu/kernel_select_cpu.h"
 #include "utils/context/ms_context.h"
 #include "backend/kernel_compiler/kernel.h"
-#include "backend/kernel_compiler/ps/pserver_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
-#include "backend/kernel_compiler/ps/sparse_apply_adam_ps_kernel.h"
-#include "backend/kernel_compiler/ps/sparse_apply_ftrl_ps_kernel.h"
-#include "backend/kernel_compiler/ps/apply_momentum_ps_kernel.h"
-#include "backend/kernel_compiler/ps/embedding_look_up_ps_kernel.h"
+#include "backend/kernel_compiler/cpu/ps/pserver_kernel.h"
+#include "backend/kernel_compiler/cpu/ps/sparse_apply_adam_ps_kernel.h"
+#include "backend/kernel_compiler/cpu/ps/sparse_apply_ftrl_ps_kernel.h"
+#include "backend/kernel_compiler/cpu/ps/apply_momentum_ps_kernel.h"
+#include "backend/kernel_compiler/cpu/ps/embedding_look_up_ps_kernel.h"
 
 namespace mindspore {
 namespace parallel {
@@ -118,7 +118,7 @@ class ParameterServer {
   std::shared_ptr<session::KernelGraph> kernel_graph_;
   std::shared_ptr<session::SessionBasic> sess_;
 
-  std::unordered_map<std::string, std::shared_ptr<PServerKernel>> optimizers_;
+  std::unordered_map<Key, std::shared_ptr<PServerKernel>> optimizers_;
   std::unordered_map<Key, InputsShapePtr> optim_inputs_shape_;
   std::unordered_map<Key, std::shared_ptr<OptimizerInfo>> optim_infos_;
   std::unordered_map<std::string, std::shared_ptr<OptimizerInfoBuilder>> optim_info_builders_;
@@ -249,10 +249,10 @@ template <typename T>
 void ParameterServer<T>::ServerHandler::HandleEmbeddingLookup(const ::ps::KVMeta &req_meta,
                                                               const ::ps::KVPairs<T> &req_data, ::ps::KVPairs<T> *res) {
   const Key &key = req_data.keys[0];
-  ps_->DoEmbeddingLookup(key, req_data.vals, res);
   for (size_t i = 0; i < req_data.vals.size(); i++) {
-    res->keys->push_back(req_data.vals[i]);
+    res->keys.push_back(req_data.vals[i]);
   }
+  ps_->DoEmbeddingLookup(key, req_data.vals, res);
 }
 
 template <typename T>
@@ -288,7 +288,7 @@ void ParameterServer<T>::InitOptimInfoBuilders() {
 
 template <typename T>
 void ParameterServer<T>::InitWeightKeyToOptims(const Key &key, const int &optim_id) {
-  if (weight_key_to_optims_.count(key) > 0 || Util::optimizer_name(key) == "") {
+  if (weight_key_to_optims_.count(key) > 0 || Util::optimizer_name(optim_id) == "") {
     return;
   }
   weight_key_to_optims_[key] = Util::optimizer_name(optim_id);
@@ -314,22 +314,22 @@ void ParameterServer<T>::InitOptimInputsShape(const Keys &keys, const Values &va
   }
   if (weight_key_to_optims_.count(key) > 0) {
     const std::string &optim_name = weight_key_to_optims_[key];
-    if (optimizers_.count(optim_name) == 0 && optim_inputs_shape_.count(key) > 0) {
+    if (optimizers_.count(key) == 0 && optim_inputs_shape_.count(key) > 0) {
       if (optim_name == kSparseAdam) {
         std::shared_ptr<PServerKernel> optimizer =
           std::make_shared<kernel::ps::SparseApplyAdamPSKernel>(rank_id_, pserver_num_);
         optimizer->InitKernel(optim_inputs_shape_[key]);
-        optimizers_[optim_name] = optimizer;
+        optimizers_[key] = optimizer;
       } else if (optim_name == kApplyMomentum) {
         std::shared_ptr<PServerKernel> optimizer =
           std::make_shared<kernel::ps::ApplyMomentumPSKernel>(rank_id_, pserver_num_);
         optimizer->InitKernel(optim_inputs_shape_[key]);
-        optimizers_[optim_name] = optimizer;
+        optimizers_[key] = optimizer;
       } else if (optim_name == kSparseFtrl) {
         std::shared_ptr<PServerKernel> optimizer =
           std::make_shared<kernel::ps::SparseApplyFtrlPSKernel>(rank_id_, pserver_num_);
         optimizer->InitKernel(optim_inputs_shape_[key]);
-        optimizers_[optim_name] = optimizer;
+        optimizers_[key] = optimizer;
       }
     }
   }
@@ -382,8 +382,7 @@ void ParameterServer<T>::UpdateWeights() {
 
       std::shared_ptr<PServerKernel> optimizer = nullptr;
       if (weight_key_to_optims_.count(key) > 0) {
-        const std::string &optim_name = weight_key_to_optims_[key];
-        optimizer = optimizers_[optim_name];
+        optimizer = optimizers_[key];
       }
       MS_EXCEPTION_IF_NULL(optimizer);
 
@@ -391,8 +390,6 @@ void ParameterServer<T>::UpdateWeights() {
       if (optim_info == nullptr) {
         continue;
       }
-      const WeightPtr &weight = weights_[key];
-      optim_info->UpdateWeight(weight);
       const std::vector<kernel::AddressPtr> &inputs = optim_info->inputs();
       const std::vector<kernel::AddressPtr> &workspaces = optim_info->workspaces();
       const std::vector<kernel::AddressPtr> &outputs = optim_info->outputs();
@@ -416,7 +413,7 @@ void ParameterServer<T>::AccumGrad(const Keys &keys, const Values &values, const
   // Create or update the optimizer info
   if (optim_info == nullptr) {
     const std::shared_ptr<OptimizerInfoBuilder> &builder = optim_info_builders_[weight_key_to_optims_[key]];
-    std::shared_ptr<kernel::ps::PServerKernel> pserver_kernel = optimizers_[weight_key_to_optims_[key]];
+    std::shared_ptr<kernel::ps::PServerKernel> pserver_kernel = optimizers_[key];
     if (pserver_kernel == nullptr) {
       MS_LOG(EXCEPTION) << "no optimizer found for key " << key << " optim name " << weight_key_to_optims_[key];
     }
@@ -427,10 +424,8 @@ void ParameterServer<T>::AccumGrad(const Keys &keys, const Values &values, const
     optim_infos_[key] = optim_info;
   } else {
     optim_info->Update(values, lengths);
+    optim_info->Accumulate(values, lengths);
   }
-  MS_EXCEPTION_IF_NULL(optim_info);
-
-  optim_info->Accumulate(values, lengths);
 
   grads_accum_counter_[key] += 1;
   if (grads_accum_counter_[key] == worker_num_) {
@@ -499,7 +494,7 @@ void ParameterServer<T>::DoEmbeddingLookup(Key key, const LookupIds &lookup_ids,
 
   table_lookup_op->Execute(inputs, workspaces, outputs);
   res->vals = *addr;
-  res->lens.push_back(res.vals.size());
+  res->lens.push_back(res->vals.size());
 }
 
 template <typename T>

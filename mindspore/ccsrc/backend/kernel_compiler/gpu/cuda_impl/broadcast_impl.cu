@@ -116,16 +116,16 @@ __global__ void BroadcastKernel(const int l0, const int l1, const int l2, const 
                                                       output);
     case BROADCAST_TYPE_REALDIV:
       return BroadcastOperator<T, S, RealDivFunc<T, S>>(l0, l1, l2, l3, r0, r1, r2, r3, d0, d1, d2, d3, input0, input1,
-                                                      output);
+                                                        output);
     case BROADCAST_TYPE_MUL:
       return BroadcastOperator<T, S, MulFunc<T, S>>(l0, l1, l2, l3, r0, r1, r2, r3, d0, d1, d2, d3, input0, input1,
-                                                      output);
+                                                    output);
     case BROADCAST_TYPE_SUB:
       return BroadcastOperator<T, S, SubFunc<T, S>>(l0, l1, l2, l3, r0, r1, r2, r3, d0, d1, d2, d3, input0, input1,
-                                                      output);
+                                                    output);
     case BROADCAST_TYPE_ADD:
       return BroadcastOperator<T, S, AddFunc<T, S>>(l0, l1, l2, l3, r0, r1, r2, r3, d0, d1, d2, d3, input0, input1,
-                                                      output);
+                                                    output);
   }
 }
 
@@ -176,6 +176,28 @@ void NoBroadcast(const int &nums, enum BroadcastOpType op, const T *input0, cons
   NoBroadcastKernel<<<GET_BLOCKS(nums), GET_THREADS, 0, stream>>>(nums, op, input0, input1, output);
 }
 
+template <typename T>
+__global__ void BroadcastToKernel(const int i0, const int i1, const int i2, const int i3, const int o0,
+                                  const int o1, const int o2, const int o3, const T *input_addr, T *output_addr) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < o0 * o1 * o2 * o3; pos += blockDim.x * gridDim.x) {
+    int i = pos / (o1 * o2 * o3) % o0;
+    int j = pos / (o2 * o3) % o1;
+    int k = pos / o3 % o2;
+    int l = pos % o3;
+
+    int input_idx = Index(i, i0) * i1 * i2 * i3 + Index(j, i1) * i2 * i3 + Index(k, i2) * i3 + Index(l, i3);
+    output_addr[pos] = input_addr[input_idx];
+  }
+}
+
+template <typename T>
+void BroadcastTo(const int &i0, const int &i1, const int &i2, const int &i3, const int &o0, const int &o1,
+                 const int &o2, const int &o3, const T *input_addr, T *output_addr, cudaStream_t stream) {
+  int nums = o0 * o1 * o2 * o3;
+  BroadcastToKernel<<<GET_BLOCKS(nums), GET_THREADS, 0, stream>>>(i0, i1, i2, i3, o0, o1, o2, o3, input_addr,
+                                                                  output_addr);
+}
+
 template void Broadcast(const int &l0, const int &l1, const int &l2, const int &l3, const int &r0, const int &r1,
                         const int &r2, const int &r3, const int &d0, const int &d1, const int &d2, const int &d3,
                         enum BroadcastOpType op, const float *input0, const float *input1, bool *output,
@@ -204,5 +226,11 @@ template void NoBroadcast(const int &nums, enum BroadcastOpType op, const half *
                           bool *output, cudaStream_t stream);
 template void NoBroadcast(const int &nums, enum BroadcastOpType op, const half *input0, const half *input1,
                           half *output, cudaStream_t stream);
-template void NoBroadcast(const int &nums, enum BroadcastOpType op, const int *input0, const int *input1,
-                          int *output, cudaStream_t stream);
+template void NoBroadcast(const int &nums, enum BroadcastOpType op, const int *input0, const int *input1, int *output,
+                          cudaStream_t stream);
+
+template void BroadcastTo(const int &i0, const int &i1, const int &i2, const int &i3, const int &o0, const int &o1,
+                          const int &o2, const int &o3, const float *input_addr, float *output_addr,
+                          cudaStream_t stream);
+template void BroadcastTo(const int &i0, const int &i1, const int &i2, const int &i3, const int &o0, const int &o1,
+                          const int &o2, const int &o3, const half *input_addr, half *output_addr, cudaStream_t stream);

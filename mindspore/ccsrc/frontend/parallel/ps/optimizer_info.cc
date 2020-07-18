@@ -118,11 +118,13 @@ const AddressPtr &MomentumOptimInfo::gradient() { return inputs_[3]; }
 
 const AddressPtr &MomentumOptimInfo::indices() { return inputs_[3]; }
 
+size_t MomentumOptimInfo::grad_index() { return 1; }
+
 SparseAdamOptimInfo::SparseAdamOptimInfo(const AddressPtr &weight, const AddressPtr &m, const AddressPtr &v,
                                          const AddressPtr &beta1_power, const AddressPtr &beta2_power,
                                          const AddressPtr &learning_rate, const AddressPtr &beta1,
                                          const AddressPtr &beta2, const AddressPtr &epsilon, const AddressPtr &grad,
-                                         const AddressPtr &indices, size_t grads_offset, size_t indices_offset) {
+                                         const AddressPtr &indices) {
   inputs_.push_back(weight);
   inputs_.push_back(m);
   inputs_.push_back(v);
@@ -134,8 +136,8 @@ SparseAdamOptimInfo::SparseAdamOptimInfo(const AddressPtr &weight, const Address
   inputs_.push_back(epsilon);
   inputs_.push_back(grad);
   inputs_.push_back(indices);
-  grads_offset_ = grads_offset;
-  indices_offset_ = indices_offset;
+  grads_offset_ = 0;
+  indices_offset_ = 0;
 }
 
 void SparseAdamOptimInfo::Update(const Values &values, const Lengths &lens) {
@@ -159,15 +161,14 @@ size_t SparseAdamOptimInfo::grad_index() { return 6; }
 size_t SparseAdamOptimInfo::indices_index() { return 7; }
 
 SparseFtrlOptimInfo::SparseFtrlOptimInfo(const AddressPtr &weight, const AddressPtr &accum, const AddressPtr &linear,
-                                         const AddressPtr &grad, const AddressPtr &indices, size_t grads_offset,
-                                         size_t indices_offset) {
+                                         const AddressPtr &grad, const AddressPtr &indices) {
   inputs_.push_back(weight);
   inputs_.push_back(accum);
   inputs_.push_back(linear);
   inputs_.push_back(grad);
   inputs_.push_back(indices);
-  grads_offset_ = grads_offset;
-  indices_offset_ = indices_offset;
+  grads_offset_ = 0;
+  indices_offset_ = 0;
 }
 
 const AddressPtr &SparseFtrlOptimInfo::gradient() { return inputs_[3]; }

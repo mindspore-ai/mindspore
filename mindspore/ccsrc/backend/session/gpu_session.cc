@@ -25,6 +25,11 @@
 #include "backend/optimizer/pass/getitem_tuple.h"
 #include "backend/optimizer/gpu/adam_weight_decay_fusion.h"
 #include "backend/optimizer/gpu/adam_fusion.h"
+#include "backend/optimizer/gpu/replace_bn_cast_fusion.h"
+#include "backend/optimizer/gpu/replace_bn_grad_cast_fusion.h"
+#include "backend/optimizer/gpu/replace_bn_grad_cast2_fusion.h"
+#include "backend/optimizer/gpu/replace_momentum_cast_fusion.h"
+#include "backend/optimizer/gpu/replace_addn_fusion.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "predict/predict.h"
 #include "common/utils.h"
@@ -59,6 +64,11 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::AdamWeightDecayFusion>());
   pm->AddPass(std::make_shared<opt::AdamFusion>());
+  pm->AddPass(std::make_shared<opt::ReplaceBNCastFusion>());
+  pm->AddPass(std::make_shared<opt::ReplaceBNGradCastFusion>());
+  pm->AddPass(std::make_shared<opt::ReplaceBNGradCast2Fusion>());
+  pm->AddPass(std::make_shared<opt::ReplaceMomentumCastFusion>());
+  pm->AddPass(std::make_shared<opt::ReplaceAddNFusion>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -167,6 +177,10 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   Optimize(graph);
   // Select kernel build info
   SelectKernel(graph);
+#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+  // Assign parameter keys.
+  AssignParamKey(graph);
+#endif
   // Convert kernel Graph to model
   predictmodel::StepConvertGraph(graph);
   // Start gpu kernel runtime
@@ -204,6 +218,10 @@ void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
   auto &kernel_graph = graphs_[graph_id];
   // Load input data from user input
   LoadInputData(kernel_graph, inputs);
+  // Initialize parameter server
+  if (!ps_init_) {
+    InitPSParamAndOptim(kernel_graph, inputs);
+  }
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // Convert inputs to model
   predictmodel::StepConvertWeight(inputs);

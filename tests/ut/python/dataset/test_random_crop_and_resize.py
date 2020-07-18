@@ -332,10 +332,36 @@ def test_random_crop_and_resize_comp(plot=False):
         image_c_cropped.append(c_image)
         image_py_cropped.append(py_image)
         mse = diff_mse(c_image, py_image)
-        assert mse < 0.02 # rounding error
+        assert mse < 0.02  # rounding error
     if plot:
         visualize_list(image_c_cropped, image_py_cropped, visualize_mode=2)
 
+
+def test_random_crop_and_resize_06():
+    """
+    Test RandomCropAndResize with c_transforms: invalid values for scale,
+    expected to raise ValueError
+    """
+    logger.info("test_random_crop_and_resize_05_c")
+
+    # Generate dataset
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    decode_op = c_vision.Decode()
+    try:
+        random_crop_and_resize_op = c_vision.RandomResizedCrop((256, 512), scale="", ratio=(1, 0.5))
+        data = data.map(input_columns=["image"], operations=decode_op)
+        data.map(input_columns=["image"], operations=random_crop_and_resize_op)
+    except TypeError as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+        assert "Argument scale with value \"\" is not of type (<class 'tuple'>,)" in str(e)
+
+    try:
+        random_crop_and_resize_op = c_vision.RandomResizedCrop((256, 512), scale=(1, "2"), ratio=(1, 0.5))
+        data = data.map(input_columns=["image"], operations=decode_op)
+        data.map(input_columns=["image"], operations=random_crop_and_resize_op)
+    except TypeError as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+        assert "Argument scale[1] with value 2 is not of type (<class 'float'>, <class 'int'>)." in str(e)
 
 if __name__ == "__main__":
     test_random_crop_and_resize_op_c(True)
@@ -347,4 +373,5 @@ if __name__ == "__main__":
     test_random_crop_and_resize_04_py()
     test_random_crop_and_resize_05_c()
     test_random_crop_and_resize_05_py()
+    test_random_crop_and_resize_06()
     test_random_crop_and_resize_comp(True)

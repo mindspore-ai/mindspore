@@ -36,6 +36,7 @@ using mindspore::abstract::AbstractIndexedSlices;
 using mindspore::abstract::AbstractJTagged;
 using mindspore::abstract::AbstractList;
 using mindspore::abstract::AbstractScalar;
+using mindspore::abstract::AbstractSparseTensor;
 using mindspore::abstract::AbstractTensor;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractType;
@@ -95,7 +96,7 @@ void ValidateAbstract(const AnfNodePtr &node) {
 
   if (ptrBase->isa<AbstractType>() || ptrBase->isa<AbstractFunction>() || ptrBase->isa<AbstractTuple>() ||
       ptrBase->isa<AbstractList>() || ptrBase->isa<AbstractTensor>() || ptrBase->isa<AbstractIndexedSlices>() ||
-      ptrBase->isa<abstract::AbstractRefKey>()) {
+      ptrBase->isa<AbstractSparseTensor>() || ptrBase->isa<abstract::AbstractRefKey>()) {
     return;
   }
 

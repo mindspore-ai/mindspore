@@ -97,6 +97,7 @@
 #include "backend/optimizer/ascend/format_type/modify_ops_attrs.h"
 #include "backend/optimizer/ascend/format_type/remove_no_use_reshape_op.h"
 #include "backend/optimizer/ascend/ir_fusion/add_input_to_output.h"
+#include "backend/optimizer/ascend/format_type/remove_internal_output.h"
 #include "utils/context/ms_context.h"
 #include "utils/config_manager.h"
 #include "debug/anf_ir_dump.h"
@@ -201,6 +202,7 @@ void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph)
   data_layout_pm->AddPass(std::make_shared<OptimizeDependence>());
   data_layout_pm->AddPass(std::make_shared<TransDataSplit>());
   data_layout_pm->AddPass(std::make_shared<EraseVisitAttr>());
+  data_layout_pm->AddPass(std::make_shared<RemoveInternalOutputTransOp>());
   optimizer->AddPassManager(data_layout_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -222,6 +224,7 @@ void AscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel_grap
   mixed_precision_pm->AddPass(std::make_shared<LayerNormBetaGammaBackpropFusion>());
   mixed_precision_pm->AddPass(std::make_shared<EraseVisitAttr>());
   mixed_precision_pm->AddPass(std::make_shared<ConvertUnSupportNodeToAICPU>());
+  mixed_precision_pm->AddPass(std::make_shared<RemoveInternalOutputCast>());
   optimizer->AddPassManager(mixed_precision_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

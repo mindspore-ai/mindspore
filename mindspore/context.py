@@ -443,7 +443,7 @@ def _context():
 
 @args_type_check(device_num=int, global_rank=int, mirror_mean=bool, cast_before_mirror=bool, parallel_mode=str,
                  auto_parallel_search_mode=str, parameter_broadcast=bool, strategy_ckpt_load_file=str,
-                 strategy_ckpt_save_file=str, full_batch=bool)
+                 strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool)
 def set_auto_parallel_context(**kwargs):
     """
     Set auto parallel context.
@@ -487,6 +487,9 @@ def set_auto_parallel_context(**kwargs):
         strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. Default: ''
         strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. Default: ''
         full_batch (bool): Whether to load the whole batch on each device. Default: False.
+        enable_parallel_optimizer(bool): This is a developing feature, which shards the weight update  computation in
+                       data parallel training in the benefit of time and memory saving.
+
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
@@ -532,6 +535,7 @@ def reset_auto_parallel_context():
     - parameter_broadcast: False.
     - strategy_ckpt_load_file: "".
     - strategy_ckpt_save_file: "".
+    - enable_parallel_optimizer: False.
     """
     _reset_auto_parallel_context()
 

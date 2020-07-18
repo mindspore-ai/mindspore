@@ -65,6 +65,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   virtual void set_status(DeviceAddressStatus status) {}
   virtual DeviceAddressStatus status() const { return DeviceAddressStatus::kInDevice; }
   virtual DeviceAddressType DeviceType() const { return DeviceAddressType::kUnknown; }
+  void *GetMutablePtr() const override { return ptr_; }
 
  protected:
   const void *ptr() const { return ptr_; }

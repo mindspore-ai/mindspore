@@ -249,7 +249,7 @@ class Parameter : public ANode {
   MS_DECLARE_PARENT(Parameter, ANode);
 
   void accept(AnfVisitor *v) override;
-
+  std::string DebugString(int recursive_level = 1) const override;
   std::string name() const { return name_; }
   void set_name(const std::string &name) { name_ = name; }
   std::string fullname_with_scope() override { return name(); };

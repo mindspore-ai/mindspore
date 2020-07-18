@@ -51,10 +51,10 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        NPUAllocFloatStatus, NPUClearFloatStatus,
                        NPUGetFloatStatus, Pow, RealDiv, IsNan, IsInf, IsFinite, FloatStatus,
                        Reciprocal, CumSum, HistogramFixedWidth,
-                       Sin, Sqrt, Rsqrt, BesselI0e, BesselI1e,
-                       Square, Sub, TensorAdd, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Sinh, Eps)
+                       Sin, Sqrt, Rsqrt, BesselI0e, BesselI1e, TruncateDiv, TruncateMod,
+                       Square, Sub, TensorAdd, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Sinh, Eps, Tan)
 
-from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, Poisson, UniformInt, UniformReal,
+from .random_ops import (RandomChoiceWithMask, Normal, Gamma, Poisson, UniformInt, UniformReal,
                          RandomCategorical, Laplace)
 from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, ApplyMomentum, BatchNorm,
                      BiasAdd, Conv2D,
@@ -173,7 +173,7 @@ __all__ = [
     'HSigmoid',
     'Tanh',
     'RandomChoiceWithMask',
-    'StandardNormal',
+    'Normal',
     'Gamma',
     'Poisson',
     'UniformInt',
@@ -277,6 +277,8 @@ __all__ = [
     'SigmoidCrossEntropyWithLogits',
     'FloorDiv',
     'FloorMod',
+    'TruncateDiv',
+    'TruncateMod',
     'Ceil',
     'Acosh',
     'Asinh',
@@ -334,6 +336,7 @@ __all__ = [
     "BesselI1e",
     "Atan",
     "Atanh",
+    "Tan",
     "BasicLSTMCell",
     "BroadcastTo",
     "DataFormatDimMap",

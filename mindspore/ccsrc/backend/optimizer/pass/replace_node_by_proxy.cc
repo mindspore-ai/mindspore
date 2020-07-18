@@ -71,7 +71,6 @@ bool ReplaceNodeByProxy::Run(const FuncGraphPtr &func_graph) {
 
       AbstractBasePtrList abstract_list;
       AnfAlgo::CopyNodeAttr(kAttrPsKey, cnode, proxy_node);
-      AnfAlgo::CopyNodeAttr("reduce_scatter_flag", cnode, proxy_node);
       AnfAlgo::CopyNodeAttr("offset", cnode, proxy_node);
       abstract_list.push_back(cnode->abstract());
       auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);

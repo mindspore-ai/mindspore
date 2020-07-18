@@ -47,7 +47,7 @@ def test_net():
     tdy = Tensor(dy)
     output = net(tdy)
     print(output.asnumpy())
-    assert np.all([[[0, 0, 0], [0, 0, 0]], 
-                    [[6, 0, 8], [9, 0, 11]], 
-                    [[0, 0, 0], [0, 0, 0]]
+    assert np.all([[[0, 0, 0], [0, 0, 0]],
+                   [[6, 0, 8], [9, 0, 11]],
+                   [[0, 0, 0], [0, 0, 0]]
                    ] == output.asnumpy())

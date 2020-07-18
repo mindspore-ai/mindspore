@@ -88,6 +88,12 @@ class GpuKernelRegister {
   static_assert(std::is_base_of<GpuKernel, OPCLASS<T, S>>::value, " must be base of GpuKernel"); \
   static const GpuKernelRegister g_##OPNAME##_##T##_##S##_gpu_kernel_reg(#OPNAME, ATTR,          \
                                                                          []() { return new OPCLASS<T, S>(); });
+
+// register of mixed accuracy kernels which use template and maintain three typename
+#define MS_REG_GPU_KERNEL_THREE(OPNAME, ATTR, OPCLASS, T, S, G)                                     \
+  static_assert(std::is_base_of<GpuKernel, OPCLASS<T, S, G>>::value, " must be base of GpuKernel"); \
+  static const GpuKernelRegister g_##OPNAME##_##T##_##S##_##G##_gpu_kernel_reg(                     \
+    #OPNAME, ATTR, []() { return new OPCLASS<T, S, G>(); });
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_GPUKERNELFACTORY_H_

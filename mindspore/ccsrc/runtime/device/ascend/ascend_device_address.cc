@@ -100,7 +100,7 @@ void AscendDeviceAddress::SyncStream() const {
   MS_LOG(INFO) << "Start!";
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->execution_mode() != kPynativeMode) {
+  if (ms_context->execution_mode() != kPynativeMode && !ms_context->enable_pynative_infer()) {
     MS_LOG(INFO) << "Finish!";
     return;
   }

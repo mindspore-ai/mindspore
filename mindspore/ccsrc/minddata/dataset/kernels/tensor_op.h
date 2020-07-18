@@ -87,11 +87,13 @@ namespace mindspore {
 namespace dataset {
 
 // image
+constexpr char kAutoContrastOp[] = "AutoContrastOp";
 constexpr char kBoundingBoxAugmentOp[] = "BoundingBoxAugmentOp";
 constexpr char kDecodeOp[] = "DecodeOp";
 constexpr char kCenterCropOp[] = "CenterCropOp";
 constexpr char kCutOutOp[] = "CutOutOp";
 constexpr char kHwcToChwOp[] = "HwcToChwOp";
+constexpr char kInvertOp[] = "InvertOp";
 constexpr char kNormalizeOp[] = "NormalizeOp";
 constexpr char kPadOp[] = "PadOp";
 constexpr char kRandomColorAdjustOp[] = "RandomColorAdjustOp";
@@ -120,6 +122,7 @@ constexpr char kCaseFoldOp[] = "CaseFoldOp";
 constexpr char kJiebaTokenizerOp[] = "JiebaTokenizerOp";
 constexpr char kLookupOp[] = "LookupOp";
 constexpr char kNgramOp[] = "NgramOp";
+constexpr char kSlidingWindowOp[] = "SlidingWindowOp";
 constexpr char kNormalizeUTF8Op[] = "NormalizeUTF8Op";
 constexpr char kRegexReplaceOp[] = "RegexReplaceOp";
 constexpr char kRegexTokenizerOp[] = "RegexTokenizerOp";
@@ -129,6 +132,10 @@ constexpr char kUnicodeCharTokenizerOp[] = "UnicodeCharTokenizerOp";
 constexpr char kUnicodeScriptTokenizerOp[] = "UnicodeScriptTokenizerOp";
 constexpr char kWhitespaceTokenizerOp[] = "WhitespaceTokenizerOp";
 constexpr char kWordpieceTokenizerOp[] = "WordpieceTokenizerOp";
+constexpr char kRandomChoiceOp[] = "RandomChoiceOp";
+constexpr char kRandomApplyOp[] = "RandomApplyOp";
+constexpr char kComposeOp[] = "ComposeOp";
+constexpr char kRandomSelectSubpolicyOp[] = "RandomSelectSubpolicyOp";
 
 // data
 constexpr char kConcatenateOp[] = "kConcatenateOp";

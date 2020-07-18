@@ -202,10 +202,10 @@ Check out how MindSpore Open Governance [works](https://gitee.com/mindspore/comm
 
 ### Communication
 
-- [MindSpore Slack](https://join.slack.com/t/mindspore/shared_invite/enQtOTcwMTIxMDI3NjM0LTNkMWM2MzI5NjIyZWU5ZWQ5M2EwMTQ5MWNiYzMxOGM4OWFhZjI4M2E5OGI2YTg3ODU1ODE2Njg1MThiNWI3YmQ) - Communication platform for developers.
+- [MindSpore Slack](https://join.slack.com/t/mindspore/shared_invite/zt-dgk65rli-3ex4xvS4wHX7UDmsQmfu8w) - Communication platform for developers.
 - IRC channel at `#mindspore` (only for meeting minutes logging purpose)
-- Video Conferencing: https://meet.jit.si
-- Mailing-list: https://mailweb.mindspore.cn/postorius/lists
+- Video Conferencing: TBD
+- Mailing-list: <https://mailweb.mindspore.cn/postorius/lists>
 
 ## Contributing
 

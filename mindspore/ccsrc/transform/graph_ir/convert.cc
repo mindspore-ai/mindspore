@@ -205,8 +205,8 @@ const char kNameL2Loss[] = "L2Loss";
 const char kNameCTCLoss[] = "CTCLoss";
 const char kNameRange[] = "Range";
 const char kNameSquareSumAll[] = "SquareSumAll";
-const char kNameAscendQuant[] = "AscendQuant";
-const char kNameAscendDequant[] = "AscendDequant";
+const char kNameAscendQuant[] = "Quant";
+const char kNameAscendDequant[] = "Dequant";
 const char kNameCase[] = "Case";
 
 // -----------------OpAdapter initialization--------------
@@ -216,7 +216,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameIOU), ADPT_DESC(Iou)},
     {string(kNameGreaterEqual), ADPT_DESC(GreaterEqual)},
     {string(kNameSlice), ADPT_DESC(SliceD)},
-    {string(kNameApplyMomentum), ADPT_DESC(ApplyMomentumD)},
+    {string(kNameApplyMomentum), ADPT_DESC(ApplyMomentum)},
     {string(kNameMaxPool), ADPT_DESC(MaxPool)},
     {string(kNameAvgPool), ADPT_DESC(AvgPool)},
     {string(kNameMaxPoolWithArgmax), ADPT_DESC(MaxPoolWithArgmax)},
@@ -409,7 +409,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameBatchToSpace), ADPT_DESC(BatchToSpaceD)},
     {string(kNameAtan2), ADPT_DESC(Atan2)},
     {string(kNameApplyRMSProp), ADPT_DESC(ApplyRMSPropD)},
-    {string(kNameApplyCenteredRMSProp), ADPT_DESC(ApplyCenteredRMSProp)},
+    {string(kNameApplyCenteredRMSProp), ADPT_DESC(ApplyCenteredRMSPropD)},
     {string(kNameL2Loss), ADPT_DESC(L2Loss)},
     {string(kNameCTCLoss), ADPT_DESC(CTCLoss)},
     {string(kNameRange), ADPT_DESC(RangeD)},

@@ -264,7 +264,7 @@ FuncGraphPtr KPrim::FakeBprop(const ValueNodePtr &value_node, const pipeline::Re
     return IsPrimitiveCNode(user.first, prim);
   });
   if (cnode == users.end()) {
-    MS_LOG(EXCEPTION) << "Fail to find cnode.";
+    MS_LOG(EXCEPTION) << "Fail to find user for " << prim->ToString();
   }
   auto inputs_num = cnode->first->cast<CNodePtr>()->inputs().size() - 1;
 

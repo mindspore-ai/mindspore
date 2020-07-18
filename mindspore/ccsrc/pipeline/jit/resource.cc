@@ -179,6 +179,12 @@ MethodMap &GetMethodMap() {
        {"indices", prim::kPrimIndexedSlicesGetIndices},         // F.indexed_slices_get_indices
        {"dense_shape", prim::kPrimIndexedSlicesGetDenseShape},  // F.indexed_slices_get_dense_shape
      }},
+    {kObjectTypeSparseTensorType,
+     {
+       {"values", prim::kPrimSparseTensorGetValues},           // F.sparse_tensor_get_values
+       {"indices", prim::kPrimSparseTensorGetIndices},         // F.sparse_tensor_get_indices
+       {"dense_shape", prim::kPrimSparseTensorGetDenseShape},  // F.sparse_tensor_get_dense_shape
+     }},
     {kObjectTypeJTagged, {}},
     {kObjectTypeSymbolicKeyType, {}},
     {kObjectTypeEnvType, {}}};

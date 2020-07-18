@@ -19,6 +19,8 @@ import inspect
 from multiprocessing import cpu_count
 import os
 import numpy as np
+
+import mindspore._c_dataengine as cde
 from ..engine import samplers
 
 # POS_INT_MIN is used to limit values from starting from 0
@@ -187,8 +189,10 @@ def type_check_list(args, types, arg_names):
         Exception: when the type is not correct, otherwise nothing.
     """
     type_check(args, (list, tuple,), arg_names)
-    if len(args) != len(arg_names):
+    if len(args) != len(arg_names) and not isinstance(arg_names, str):
         raise ValueError("List of arguments is not the same length as argument_names.")
+    if isinstance(arg_names, str):
+        arg_names = ["{0}[{1}]".format(arg_names, i) for i in range(len(args))]
     for arg, arg_name in zip(args, arg_names):
         type_check(arg, types, arg_name)
 
@@ -358,3 +362,9 @@ def check_gnn_list_or_ndarray(param, param_name):
         if not param.dtype == np.int32:
             raise TypeError("Each member in {0} should be of type int32. Got {1}.".format(
                 param_name, param.dtype))
+
+
+def check_tensor_op(param, param_name):
+    """check whether param is a tensor op or a callable python function"""
+    if not isinstance(param, cde.TensorOp) and not callable(param):
+        raise TypeError("{0} is not a c_transform op (TensorOp) nor a callable pyfunc.".format(param_name))

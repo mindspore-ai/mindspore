@@ -247,8 +247,8 @@ class Parameter:
             if not isinstance(layout, list):
                 raise TypeError("The layout should be list! layout is {}."
                                 .format(layout))
-            if len(layout) != 3:
-                raise ValueError("The length of layout must be 3! layout is {}."
+            if len(layout) < 3:
+                raise ValueError("The length of layout must be larger than 3! layout is {}."
                                  .format(layout))
             slice_index = int(_get_slice_index(layout[0], layout[1]))
             self.default_input = self.init_mode.to_tensor(slice_index, layout[2])

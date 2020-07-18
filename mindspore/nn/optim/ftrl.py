@@ -25,31 +25,51 @@ _ftrl_opt = C.MultitypeFuncGraph("ftrl_opt")
 _ftrl_push_pull_opt = C.MultitypeFuncGraph("ftrl_opt")
 
 
-@_ftrl_opt.register("Function", "Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tuple", "Tensor",
-                    "Tensor")
-def _tensor_run_opt_with_sparse(opt, spars_opt, learning_rate, l1, l2, lr_power, linear, gradient, weight, moment):
+@_ftrl_opt.register("Function", "Function", "Tensor", "Number", "Number", "Number", "Tensor", "IndexedSlices", "Tensor",
+                    "Tensor", "Bool")
+def _tensor_run_opt_with_sparse(opt, spars_opt, learning_rate, l1, l2, lr_power, linear, gradient, weight, moment,
+                                ps_parameter):
     """Apply sparse ftrl optimizer to the weight parameter when the gradient is sparse."""
     success = True
-    success = F.depend(success, spars_opt(weight, moment, linear, gradient[1], gradient[0]))
+    indices = gradient.indices()
+    values = gradient.values()
+    if ps_parameter:
+        op_shape = P.Shape()
+        _ps_pull = P.Pull()
+        _ps_push = P.Push("Ftrl", [0, 1, 2])
+        shapes = (op_shape(weight), op_shape(moment), op_shape(linear), op_shape(values), op_shape(indices))
+        success = F.depend(success, _ps_pull(_ps_push((values, indices), shapes), weight))
+    else:
+        success = F.depend(success, spars_opt(weight, moment, linear, values, indices))
     return success
 
 
 @_ftrl_opt.register("Function", "Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor",
-                    "Tensor")
-def _tensor_run_opt(opt, spars_opt, learning_rate, l1, l2, lr_power, linear, gradient, weight, moment):
+                    "Tensor", "Bool")
+def _tensor_run_opt(opt, spars_opt, learning_rate, l1, l2, lr_power, linear, gradient, weight, moment, ps_parameter):
     """Apply ftrl optimizer to the weight parameter."""
     success = True
-    success = F.depend(success, opt(weight, moment, linear, gradient, learning_rate, l1, l2, lr_power))
+    if ps_parameter:
+        op_shape = P.Shape()
+        _ps_pull = P.Pull()
+        _ps_push = P.Push("Ftrl", [0, 1, 2])
+        success = F.depend(success, _ps_pull(_ps_push((gradient, learning_rate, l1, l2, lr_power),
+                                                      (op_shape(weight), op_shape(moment), op_shape(linear))), weight))
+    else:
+        success = F.depend(success, opt(weight, moment, linear, gradient, learning_rate, l1, l2, lr_power))
     return success
 
-@_ftrl_push_pull_opt.register("Function", "Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tuple",
+
+@_ftrl_push_pull_opt.register("Function", "Function", "Tensor", "Number", "Number", "Number", "Tensor", "IndexedSlices",
                               "Tensor", "Tensor")
 def _tensor_run_push_pull_opt_with_sparse(push, pull, learning_rate, l1, l2, lr_power, linear, gradient,
                                           weight, moment):
     success = True
     op_shape = P.Shape()
-    shapes = (op_shape(weight), op_shape(moment), op_shape(linear), op_shape(gradient[1]), op_shape(gradient[0]))
-    success = F.depend(success, pull(push((gradient[1], gradient[0]), shapes), weight))
+    values = gradient.values()
+    indices = gradient.indices()
+    shapes = (op_shape(weight), op_shape(moment), op_shape(linear), op_shape(values), op_shape(indices))
+    success = F.depend(success, pull(push((values, indices), shapes), weight))
     return success
 
 
@@ -62,6 +82,7 @@ def _tensor_run_push_pull_opt_with_one_number(push, pull, learning_rate, l1, l2,
     success = F.depend(success, pull(push((gradient, learning_rate, l1, l2, lr_power),
                                           (op_shape(weight), op_shape(moment), op_shape(linear))), weight))
     return success
+
 
 def _check_param(initial_accum, lr_power, l1, l2, use_locking, weight_decay=0.0, prim_name=None):
     """Check param."""
@@ -150,8 +171,9 @@ class FTRL(Optimizer):
 
         grads = self.scale_grad(grads)
         success = self.map_(F.partial(_ftrl_opt, self.opt, self.sparse_opt, lr, self.l1, self.l2, self.lr_power),
-                            linear, grads, params, moments)
+                            linear, grads, params, moments, self.ps_parameters)
         return success
+
 
 class PSFTRL(Optimizer):
     def __init__(self, params, initial_accum=0.1, learning_rate=0.001, lr_power=-0.5, l1=0.0, l2=0.0,

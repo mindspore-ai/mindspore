@@ -81,8 +81,8 @@ def test_set_auto_parallel_context():
     with pytest.raises(ValueError):
         set_algo_parameters(tensor_slice_align_size=1025)
 
-    auto_parallel_context().set_enable_parallel_optimizer(True)
-    assert auto_parallel_context().get_enable_parallel_optimizer() is True
+    context.set_auto_parallel_context(enable_parallel_optimizer=True)
+    assert context.get_auto_parallel_context("enable_parallel_optimizer")
     assert not auto_parallel_context().get_all_reduce_fusion_split_indices()
 
 

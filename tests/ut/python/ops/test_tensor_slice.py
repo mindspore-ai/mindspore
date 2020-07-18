@@ -971,7 +971,7 @@ raise_error_set = [
                         Tensor(np.random.randint(7, size=(3, 4, 5)), mstype.int32)],
     }),
     ('TensorGetItemByMixedTensorsTypeError', {
-        'block': (TensorGetItemByMixedTensorsTypeError(), {'exception': TypeError}),
+        'block': (TensorGetItemByMixedTensorsTypeError(), {'exception': IndexError}),
         'desc_inputs': [Tensor(np.arange(3 * 4 * 5 * 6 * 7 * 8 * 9).reshape((3, 4, 5, 6, 7, 8, 9)), mstype.int32),
                         Tensor(np.random.randint(3, size=(3, 4, 5)), mstype.int32),
                         Tensor(np.random.randint(4, size=(3, 4, 5)), mstype.int32)],

@@ -107,6 +107,9 @@ class OptimizeIRPassLib {
 
   // IndexedSlices Eliminate
   SubstitutionPtr indexed_slices_eliminate_;
+
+  // SparseTensor Eliminate
+  SubstitutionPtr sparse_tensor_eliminate_;
 };
 
 // the collection of irpass for resolve action

@@ -148,10 +148,10 @@ class KernelGraph : public FuncGraph {
   const std::map<std::string, std::pair<AnfNodePtr, int>> &summary_nodes() const { return summary_nodes_; }
   void set_summary_nodes(const std::map<std::string, std::pair<AnfNodePtr, int>> &nodes) { summary_nodes_ = nodes; }
   void AddInternalOutput(const AnfNodePtr &front_node, const AnfNodePtr &node);
-  void ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node);
+  void ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node, int src_output_idx = -1,
+                             int dst_output_idx = -1);
   AnfNodePtr GetInternalOutputByFrontNode(const AnfNodePtr &front_node) const;
   bool IsInternalOutput(const AnfNodePtr &node) const;
-  AnfNodePtr GetFrontNodeByInternalOutput(const AnfNodePtr &node) const;
   void AddFinalOutputKernel(const AnfNodePtr &node);
   bool IsFinalOutputKernel(const AnfNodePtr &node) const;
   uint32_t current_epoch() const { return current_epoch_; }
@@ -223,7 +223,7 @@ class KernelGraph : public FuncGraph {
   CNodePtr end_goto_;
   bool null_output_;
   std::unordered_map<AnfNodePtr, AnfNodePtr> front_to_internal_outputs_map_;
-  std::unordered_map<AnfNodePtr, AnfNodePtr> internal_outputs_to_front_map_;
+  std::unordered_map<AnfNodePtr, std::unordered_map<int, AnfNodePtr>> internal_outputs_to_front_map_;
   std::set<AnfNodePtr> final_output_kernels_;
   uint32_t current_epoch_;
 };

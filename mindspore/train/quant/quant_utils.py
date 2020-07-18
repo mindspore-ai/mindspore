@@ -104,7 +104,7 @@ def weight2int(data, scale, zero_point):
         raise ValueError("`scale` and `zero_point` should have the same shape.")
     if scale.shape[0] < 0:
         raise ValueError("`scale` and `zero_point` shape should greater than zero.")
-    if len(scale.shape) > 1:
+    if len(scale.shape) >= 1 and scale.shape[0] > 1:
         # for perchannel
         if scale.shape[0] == data.shape[0]:
             # `Conv2d` or `Dense` op weight

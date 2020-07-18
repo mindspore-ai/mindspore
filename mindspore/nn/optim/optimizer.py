@@ -22,14 +22,14 @@ from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.nn.cell import Cell
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.initializer import initializer
-from mindspore.common.tensor import Tensor
+from mindspore.common.tensor import Tensor, IndexedSlices
 import mindspore.common.dtype as mstype
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore import log as logger
 from mindspore.parallel._utils import _get_global_rank, _get_device_num, _get_parallel_mode
-from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.train.parallel_utils import ParallelMode
+from mindspore import context
 
 __all__ = ['Optimizer']
 
@@ -79,9 +79,10 @@ class Optimizer(Cell):
               the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
               in the value of 'order_params' should be in one of group parameters.
 
-        weight_decay (float): A floating point value for the weight decay. It should be equal to or greater than 0.
+        weight_decay (float): A floating point value for the weight decay. It should be not less than 0 and not
+                              greater than 1.
             If the type of `weight_decay` input is int, it will be converted to float. Default: 0.0.
-        loss_scale (float): A floating point value for the loss scale. It should be greater than 0. If the
+        loss_scale (float): A floating point value for the loss scale. It should be not less than 1. If the
             type of `loss_scale` input is int, it will be converted to float. Default: 1.0.
 
     Raises:
@@ -103,12 +104,12 @@ class Optimizer(Cell):
         if isinstance(loss_scale, int):
             loss_scale = float(loss_scale)
         validator.check_value_type("loss_scale", loss_scale, [float], self.cls_name)
-        validator.check_number_range("loss_scale", loss_scale, 0.0, float("inf"), Rel.INC_NEITHER, self.cls_name)
+        validator.check_number_range("loss_scale", loss_scale, 1.0, float("inf"), Rel.INC_LEFT, self.cls_name)
 
         if isinstance(weight_decay, int):
             weight_decay = float(weight_decay)
         validator.check_value_type("weight_decay", weight_decay, [float], self.cls_name)
-        validator.check_number_range("weight_decay", weight_decay, 0.0, float("inf"), Rel.INC_LEFT, self.cls_name)
+        validator.check_number_range("weight_decay", weight_decay, 0.0, 1.0, Rel.INC_BOTH, self.cls_name)
 
         self.is_group = False
         self.is_group_lr = False
@@ -152,18 +153,19 @@ class Optimizer(Cell):
             self.weight_decay = weight_decay * loss_scale
             decay_filter = lambda x: 'beta' not in x.name and 'gamma' not in x.name
             self.decay_flags = tuple(decay_filter(x) for x in self.parameters)
+        ps_filter = lambda x: x.is_param_ps
+        self.ps_parameters = tuple(ps_filter(x) for x in self.parameters)
         self.reciprocal_scale = 1.0 / loss_scale
         self.exec_weight_decay = any(self.decay_flags)
         self.param_length = len(self.parameters)
         self.map_ = C.Map()
 
-        use_parallel = auto_parallel_context().get_enable_parallel_optimizer()
+        use_parallel = context.get_auto_parallel_context("enable_parallel_optimizer")
         self.use_parallel = use_parallel
         if use_parallel:
             if self.cls_name not in ["Lamb", "AdamWeightDecayDynamicLR", "AdamWeightDecay"]:
                 raise RuntimeError("Optimizer segmentation does not support optimizer {}".format(self.cls_name))
-            if _get_parallel_mode() not in [ParallelMode.HYBRID_PARALLEL, ParallelMode.DATA_PARALLEL,
-                                            ParallelMode.AUTO_PARALLEL]:
+            if _get_parallel_mode() != ParallelMode.DATA_PARALLEL:
                 raise RuntimeError("Optimizer segmentation does not support parallel mode {}".format
                                    (_get_parallel_mode()))
             self.dev_num = _get_device_num()
@@ -175,6 +177,7 @@ class Optimizer(Cell):
             self.param_names = []
             for param in self.parameters:
                 self.param_names.append(param.name)
+
         else:
             self.optim_filter = (True,) * self.param_length
 
@@ -486,12 +489,14 @@ op_gather = P.GatherV2()
 _apply_decay = C.MultitypeFuncGraph("apply_decay")
 
 
-@_apply_decay.register("Number", "Bool", "Tensor", "Tuple")
+@_apply_decay.register("Number", "Bool", "Tensor", "IndexedSlices")
 def _tensor_apply_decay_with_sparse(weight_decay, if_apply, weight, gradient):
     """Get grad with weight_decay."""
     if if_apply:
-        weight = op_gather(weight, gradient[0], 0)
-        return gradient[0], op_add((weight * weight_decay, gradient[1])), gradient[2]
+        indices = gradient.indices()
+        values = op_add((op_gather(weight, indices, 0) * weight_decay, gradient.values()))
+        shape = gradient.dense_shape()
+        return IndexedSlices(indices, values, shape)
     return gradient
 
 
@@ -514,9 +519,9 @@ def tensor_grad_scale(scale, grad):
     return grad * scale
 
 
-@_grad_scale.register("Number", "Tuple")
+@_grad_scale.register("Number", "IndexedSlices")
 def tensor_grad_scale_with_sparse(scale, grad):
     """Get grad with scale."""
     if scale == 1.0:
         return grad
-    return grad[0], grad[1] * scale, grad[2]
+    return IndexedSlices(grad.indices(), grad.values() * scale, grad.dense_shape())

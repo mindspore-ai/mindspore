@@ -111,6 +111,27 @@ std::vector<CNodePtr> BroadFirstSearchGraphCNodes(CNodePtr ret) {
   return sorted_nodes;
 }
 
+std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(FuncGraphPtr root) {
+  std::deque<FuncGraphPtr> todo;
+  todo.push_back(root);
+  std::vector<FuncGraphPtr> sorted;
+  auto seen = NewSeenGeneration();
+  while (!todo.empty()) {
+    FuncGraphPtr top = todo.front();
+    todo.pop_front();
+    sorted.push_back(top);
+    auto used = top->func_graphs_used();
+    for (auto &item : used) {
+      if (item.first->seen_ == seen) {
+        continue;
+      }
+      todo.push_back(item.first);
+      item.first->seen_ = seen;
+    }
+  }
+  return sorted;
+}
+
 std::vector<AnfNodePtr> SuccDeeper(const AnfNodePtr &node) {
   std::vector<AnfNodePtr> vecs;
   if (node == nullptr) {

@@ -29,14 +29,10 @@ REGISTER_PYBIND_DEFINE(ParamValue, ([](const py::module *m) {
                            .def_property("requires_grad", &ParamValue::requires_grad, &ParamValue::set_requires_grad)
                            .def_property("layerwise_parallel", &ParamValue::layerwise_parallel,
                                          &ParamValue::set_layerwise_parallel)
-                           .def_property("has_indexed_slices_grad", &ParamValue::has_indexed_slices_grad,
-                                         &ParamValue::set_has_indexed_slices_grad)
-                           .def_property("sparse_grad", &ParamValue::sparse_grad, &ParamValue::set_sparse_grad)
                            .def(py::pickle(
                              [](const ParamValue &p) {  // __getstate__
                                return py::make_tuple(py::cast(p.value()), p.name(), p.requires_grad(),
-                                                     p.layerwise_parallel(), p.has_indexed_slices_grad(),
-                                                     p.sparse_grad());
+                                                     p.layerwise_parallel());
                              },
                              [](const py::tuple &t) {  // __setstate__
                                if (t.size() != 6) {
@@ -47,8 +43,6 @@ REGISTER_PYBIND_DEFINE(ParamValue, ([](const py::module *m) {
                                p->set_name(t[1].cast<std::string>());
                                p->set_requires_grad(t[2].cast<bool>());
                                p->set_layerwise_parallel(t[3].cast<bool>());
-                               p->set_has_indexed_slices_grad(t[4].cast<bool>());
-                               p->set_sparse_grad(t[5].cast<std::string>());
                                return p;
                              }));
                        }));

@@ -49,6 +49,10 @@ using mindspore::device::ascend::tasksink::TaskGenerator;
 using mindspore::kernel::tbe::TbeUtils;
 using std::vector;
 
+constexpr uint32_t kTupleTaskId = 0;
+constexpr uint32_t kTupleStreamId = 1;
+constexpr uint32_t kTupleArgs = 2;
+
 namespace mindspore {
 namespace device {
 namespace ascend {
@@ -91,13 +95,14 @@ std::string GetRankId() {
 AscendKernelRuntime::~AscendKernelRuntime() { graph_model_map_.clear(); }
 
 void AscendKernelRuntime::ClearGraphModelMap() {
-#ifdef ENABLE_DATA_DUMP
   for (auto &iter : graph_data_dumper_) {
     MS_LOG(INFO) << "[DataDump] Unload data dumper:" << iter.first;
     iter.second->UnloadDumpInfo();
   }
   graph_data_dumper_.clear();
-#endif
+  // tell users which dump kernel name not used
+  DataDumpParser::GetInstance().PrintUnusedKernel();
+
   for (auto &iter : graph_model_map_) {
     MS_LOG(INFO) << "Ge UnloadModel " << iter.first;
     auto ret = ModelRunner::Instance().UnloadModel(iter.first);
@@ -167,9 +172,7 @@ bool AscendKernelRuntime::Init() {
   }
 #endif
 
-#ifdef ENABLE_DATA_DUMP
   DataDumpParser::GetInstance().ParseDumpConfig();
-#endif
 
   // Start up profiling before rtSetDevice
   ret = ProfilingManager::GetInstance().StartupProfiling(device_id_);
@@ -510,9 +513,8 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
     ProfilingUtils::ReportProfilingData(task_ids, stream_ids, NOT_NULL(graph));
   }
 
-#ifdef ENABLE_DATA_DUMP
   LaunchDataDump(NOT_NULL(graph));
-#endif
+
   if (!ModelRunner::Instance().LoadModelComplete(model_iter->first)) {
     MS_LOG(ERROR) << "Call ge runtime LoadModelComplete failed";
     return false;
@@ -520,7 +522,6 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
   return true;
 }
 
-#ifdef ENABLE_DATA_DUMP
 void AscendKernelRuntime::LaunchDataDump(NotNull<const session::KernelGraph *> graph) {
   if (!DataDumpParser::GetInstance().DumpEnabled()) {
     return;
@@ -534,21 +535,12 @@ void AscendKernelRuntime::LaunchDataDump(NotNull<const session::KernelGraph *> g
     MS_LOG(WARNING) << "[DataDump] Insert graphId:" << graph->graph_id() << " data dumper failed";
   }
 }
-#endif
 
 void AscendKernelRuntime::DebugTaskIdName(GraphId graph_id) {
-  auto task_ids = ModelRunner::Instance().GetTaskIdList(graph_id);
-  auto graph_task_names = ProfilingUtils::graph_kernel_name();
-  auto iter = graph_task_names.find(graph_id);
-  if (iter != graph_task_names.end()) {
-    const auto &task_names = iter->second;
-    if (task_ids.size() != task_names.size()) {
-      MS_LOG(WARNING) << "Task_ids and task_names size not match";
-      return;
-    }
-    for (size_t i = 0; i < task_ids.size(); ++i) {
-      MS_LOG(INFO) << "Task_id:" << task_ids[i] << " task_name:" << task_names[i];
-    }
+  auto runtime_info_map = ModelRunner::Instance().GetRuntimeInfoMap(graph_id);
+  for (auto iter : runtime_info_map) {
+    MS_LOG(WARNING) << "Task name:" << iter.first << " task_id:" << std::get<kTupleTaskId>(*iter.second)
+                    << " stream_id:" << std::get<kTupleStreamId>(*iter.second);
   }
 }
 

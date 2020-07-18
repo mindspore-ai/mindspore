@@ -25,7 +25,8 @@
 namespace mindspore {
 namespace memreuse {
 enum RefCountType { kDynamicRefCount, kStaticRefCount };
-enum NodeType { NORMAL, SPECIAL };
+enum NodeType { COMMON_NODE, COMMUNICATION_NODE };
+enum KernelRefType { COMMON, REFNODE_OUTPUT, COMM_NOTREUSE, COMM_REUSE, SUMMARY };
 static constexpr int kInitIndex = -1;
 class KernelRefCount {
  public:
@@ -36,6 +37,7 @@ class KernelRefCount {
   size_t offset_;
   size_t size_;
   int index_;
+  KernelRefType type_;
   // remember to reset offset
   KernelRefCount()
       : stream_id_(0),
@@ -44,6 +46,7 @@ class KernelRefCount {
         offset_(0),
         size_(0),
         index_(kInitIndex),
+        type_(COMMON),
         reftype_(kStaticRefCount) {}
   ~KernelRefCount() = default;
   void SetKernelRefCountInfo(int index, size_t size, RefCountType reftype);
@@ -65,7 +68,7 @@ class KernelDef {
   KernelMap inputs_;
   KernelMap outputs_;
   KernelMap wk_space_;
-  NodeType dirty = NORMAL;
+  NodeType type_ = COMMON_NODE;
   KernelDef() = default;
   ~KernelDef() = default;
   void set_input_refs(const KernelRefCountPtrList &kernelRefPtrList) { input_refs_ = kernelRefPtrList; }

@@ -160,6 +160,12 @@ bool GPUKernelRuntime::Run(session::KernelGraph *graph) {
     }
     mem_swap_manager_ = iter->second;
     MS_EXCEPTION_IF_NULL(mem_swap_manager_);
+    auto mem_reuse_iter = mem_reuse_util_map_.find(graph_id);
+    if (mem_reuse_iter == mem_reuse_util_map_.end()) {
+      MS_LOG(EXCEPTION) << "Find memory reuse map failed.";
+    }
+    mem_reuse_util_ = mem_reuse_iter->second;
+    MS_EXCEPTION_IF_NULL(mem_reuse_util_);
     while (!LaunchKernelDynamic(graph)) {
       MS_LOG(WARNING) << "Run out of memory and try memory swapping, it may take some time, please wait a moment.";
       if (!UpdateMemorySwapInfo(graph)) {
@@ -246,18 +252,11 @@ void GPUKernelRuntime::ClearKernelOutputAddress(const session::KernelGraph *grap
 
 bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  auto graph_id = graph->graph_id();
-  auto iter = mem_reuse_util_map_.find(graph_id);
-  if (iter == mem_reuse_util_map_.end()) {
-    MS_LOG(EXCEPTION) << "Find memory reuse map failed.";
-  }
-  auto mem_reuse_util_ptr = iter->second;
-  MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr);
+  MS_EXCEPTION_IF_NULL(mem_reuse_util_);
   // Reset the reference count.
-  mem_reuse_util_ptr->ResetDynamicUsedRefCount();
+  mem_reuse_util_->ResetDynamicUsedRefCount();
   // The inputs and outputs memory of communication kernel need be continuous, so separate processing.
   AllocCommunicationOpDynamicRes(graph);
-
   auto &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
@@ -272,7 +271,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph) {
     if (!kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_)) {
       MS_LOG(EXCEPTION) << "Launch kernel failed.";
     }
-    FreeKernelDynamicRes(kernel, kernel_workspaces, graph_id);
+    FreeKernelDynamicRes(kernel, kernel_workspaces);
     UpdateMemorySwapTask(kernel);
   }
   CHECK_OP_RET_WITH_EXCEPT(SyncStream(), "SyncStream failed.");
@@ -450,9 +449,16 @@ bool GPUKernelRuntime::AllocKernelDynamicRes(const mindspore::kernel::KernelMod 
 bool GPUKernelRuntime::AllocKernelInputDynamicRes(const mindspore::AnfNodePtr &kernel, AddressPtrList *kernel_inputs) {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(kernel_inputs);
+  MS_EXCEPTION_IF_NULL(mem_reuse_util_);
   for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
-    // Graph may be all nop nodes and not remove nop node, so this can not skip nop node.
-    auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, false);
+    DeviceAddressPtr device_address;
+    if (mem_reuse_util_->is_all_nop_node()) {
+      // Graph may be all nop nodes and not remove nop node, so this can not skip nop node.
+      device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, false);
+    } else {
+      // Graph may be "nop node + depend + node",  the input of node is the depend, so this case need skip nop node.
+      device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, true);
+    }
     MS_EXCEPTION_IF_NULL(device_address);
     UpdateHostSwapQueue(device_address);
     MS_EXCEPTION_IF_NULL(device_address->ptr_);
@@ -525,13 +531,21 @@ void GPUKernelRuntime::AllocCommunicationOpDynamicRes(const session::KernelGraph
 
 void GPUKernelRuntime::AllocCommunicationOpInputDynamicRes(const mindspore::AnfNodePtr &kernel) {
   MS_EXCEPTION_IF_NULL(kernel);
+  MS_EXCEPTION_IF_NULL(mem_reuse_util_);
   bool is_need_alloc_memory = false;
   bool is_need_free_memory = false;
   size_t total_size = 0;
   std::vector<size_t> size_list;
   DeviceAddressPtrList addr_list;
   for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
-    auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, false);
+    DeviceAddressPtr device_address;
+    if (mem_reuse_util_->is_all_nop_node()) {
+      // Graph may be all nop nodes and not remove nop node, so this can not skip nop node.
+      device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, false);
+    } else {
+      // Graph may be "nop node + depend + node",  the input of node is the depend, so this case need skip nop node.
+      device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, true);
+    }
     MS_EXCEPTION_IF_NULL(device_address);
     if (device_address->ptr_ == nullptr) {
       is_need_alloc_memory = true;
@@ -593,11 +607,10 @@ void GPUKernelRuntime::AllocCommunicationOpMemory(bool is_need_alloc_memory, boo
 }
 
 void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel,
-                                            const AddressPtrList &kernel_workspaces, uint32_t graph_id) {
+                                            const AddressPtrList &kernel_workspaces) {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(mem_manager_);
-  auto mem_reuse_util_ptr = mem_reuse_util_map_[graph_id];
-  MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr);
+  MS_EXCEPTION_IF_NULL(mem_reuse_util_);
   auto cnode = kernel->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (AnfAlgo::IsCommunicationOp(kernel)) {
@@ -605,7 +618,7 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel,
   }
   // Free the input of kernel by reference count.
   for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
-    auto kernel_ref_count_ptr = mem_reuse_util_ptr->GetKernelInputRef(cnode, i);
+    auto kernel_ref_count_ptr = mem_reuse_util_->GetKernelInputRef(cnode, i);
     if (kernel_ref_count_ptr == nullptr) {
       continue;
     }
@@ -614,14 +627,21 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel,
       MS_LOG(EXCEPTION) << "Check dynamic reference count failed.";
     }
     if (kernel_ref_count_ptr->ref_count_dynamic_use_ == 0) {
-      auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, false);
+      DeviceAddressPtr device_address;
+      if (mem_reuse_util_->is_all_nop_node()) {
+        // Graph may be all nop nodes and not remove nop node, so this can not skip nop node.
+        device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, false);
+      } else {
+        // Graph may be "nop node + depend + node",  the input of node is the depend, so this case need skip nop node.
+        device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, true);
+      }
       mem_manager_->FreeMemFromMemPool(device_address);
       device_address->set_status(DeviceAddressStatus::kInDevice);
     }
   }
   // Free the output of kernel, if output has no reference.
   for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(kernel); ++i) {
-    auto kernel_ref_count_ptr = mem_reuse_util_ptr->GetRef(cnode, i);
+    auto kernel_ref_count_ptr = mem_reuse_util_->GetRef(cnode, i);
     if (kernel_ref_count_ptr == nullptr) {
       continue;
     }

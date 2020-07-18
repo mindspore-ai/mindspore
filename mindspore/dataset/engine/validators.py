@@ -246,7 +246,24 @@ def check_celebadataset(method):
 
     return new_method
 
+def check_save(method):
+    """A wrapper that wrap a parameter checker to the save op."""
 
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        _, param_dict = parse_user_args(method, *args, **kwargs)
+
+        nreq_param_int = ['num_files']
+        nreq_param_str = ['file_name', 'file_type']
+        validate_dataset_param_value(nreq_param_int, param_dict, int)
+        if(param_dict.get('num_files') <= 0 or param_dict.get('num_files') > 1000):
+            raise ValueError("num_files should between {} and {}.".format(1, 1000))
+        validate_dataset_param_value(nreq_param_str, param_dict, str)
+        if param_dict.get('file_type') != 'mindrecord':
+            raise ValueError("{} dataset format is not supported.".format(param_dict.get('file_type')))
+        return method(self, *args, **kwargs)
+
+    return new_method
 def check_minddataset(method):
     """A wrapper that wraps a parameter checker to the original Dataset(MindDataset)."""
 
@@ -669,8 +686,7 @@ def check_concat(method):
         [ds], _ = parse_user_args(method, *args, **kwargs)
         type_check(ds, (list, datasets.Dataset), "datasets")
         if isinstance(ds, list):
-            dataset_names = ["dataset[{0}]".format(i) for i in range(len(ds)) if isinstance(ds, list)]
-            type_check_list(ds, (datasets.Dataset,), dataset_names)
+            type_check_list(ds, (datasets.Dataset,), "dataset")
         return method(self, *args, **kwargs)
 
     return new_method
@@ -734,8 +750,7 @@ def check_add_column(method):
 
         if shape is not None:
             type_check(shape, (list,), "shape")
-            shape_names = ["shape[{0}]".format(i) for i in range(len(shape))]
-            type_check_list(shape, (int,), shape_names)
+            type_check_list(shape, (int,), "shape")
 
         return method(self, *args, **kwargs)
 

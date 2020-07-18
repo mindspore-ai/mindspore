@@ -173,6 +173,7 @@ class Iterator:
 
     # Convert python node into C node and add to C layer execution tree in postorder traversal.
     def __convert_node_postorder(self, node):
+        self.check_node_type(node)
         op_type = self.__get_dataset_type(node)
         c_nodes = self.depipeline.AddNodeToTree(op_type, node.get_args())
 
@@ -224,6 +225,10 @@ class Iterator:
         self._index += 1
         return data
 
+    @abstractmethod
+    def check_node_type(self, node):
+        pass
+
     def get_output_shapes(self):
         return [t for t in self.depipeline.GetOutputShapes()]
 
@@ -245,11 +250,27 @@ class Iterator:
     def __deepcopy__(self, memo):
         return self
 
+class SaveOp(Iterator):
+    """
+    The derived class of Iterator with dict type.
+    """
+    def get_next(self):
+        pass
+
+    def check_node_type(self, node):
+        if isinstance(node, (de.ShuffleDataset, de.RepeatDataset, de.BatchDataset)):
+            logger.warning("Used shuffle, repeat, batch before save operator.")
+
+    def save(self, file_names, file_type):
+        return self.depipeline.SaveDataset(file_names, file_type)
+
 
 class DictIterator(Iterator):
     """
     The derived class of Iterator with dict type.
     """
+    def check_node_type(self, node):
+        pass
 
     def __iter__(self):
         return self
@@ -269,6 +290,8 @@ class TupleIterator(Iterator):
     """
     The derived class of Iterator with list type.
     """
+    def check_node_type(self, node):
+        pass
 
     def __init__(self, dataset, columns=None):
         if columns is not None:

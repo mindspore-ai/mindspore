@@ -32,7 +32,7 @@ class ShardSample : public ShardOperator {
 
   ShardSample(int num, int den);
 
-  ShardSample(int num, int den, int par);
+  ShardSample(int num, int den, int par, int no_of_samples = 0);
 
   ShardSample(const std::vector<int64_t> &indices, uint32_t seed);
 

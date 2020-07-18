@@ -26,20 +26,23 @@ if (ENABLE_CPU)
         "cpu/*.cc"
     )
 
-    list(REMOVE_ITEM CPU_SRC_LIST "cpu/ps/push_kernel.cc" 
-                                  "cpu/ps/pull_kernel.cc"
-                                  "cpu/ps/embedding_look_up_ps_kernel.cc"
-                                  "cpu/ps/embedding_look_up_proxy_kernel.cc"
-                                  "cpu/ps/apply_momentum_ps_kernel.cc"
-                                  "cpu/ps/sparse_apply_adam_ps_kernel.cc"
-                                  "cpu/ps/sparse_apply_ftrl_ps_kernel.cc")
-
     if (NOT ENABLE_MPI)
         list(REMOVE_ITEM CPU_SRC_LIST "cpu/allgather_cpu_kernel.cc")
         list(REMOVE_ITEM CPU_SRC_LIST "cpu/reduce_scatter_cpu_kernel.cc")
         list(REMOVE_ITEM CPU_SRC_LIST "cpu/embedding_look_up_comm_grad_cpu_kernel.cc")
     endif ()
 endif ()
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows" OR ENABLE_GE)
+    list(REMOVE_ITEM CPU_SRC_LIST "cpu/ps/apply_momentum_ps_kernel.cc")
+    list(REMOVE_ITEM CPU_SRC_LIST "cpu/ps/embedding_look_up_proxy_kernel.cc")
+    list(REMOVE_ITEM CPU_SRC_LIST "cpu/ps/embedding_look_up_ps_kernel.cc")
+    list(REMOVE_ITEM CPU_SRC_LIST "cpu/ps/pserver_kernel.cc")
+    list(REMOVE_ITEM CPU_SRC_LIST "cpu/ps/pull_kernel.cc")
+    list(REMOVE_ITEM CPU_SRC_LIST "cpu/ps/push_kernel.cc")
+    list(REMOVE_ITEM CPU_SRC_LIST "cpu/ps/sparse_apply_adam_ps_kernel.cc")
+    list(REMOVE_ITEM CPU_SRC_LIST "cpu/ps/sparse_apply_ftrl_ps_kernel.cc")
+endif()
 
 if (ENABLE_GPU)
     file(GLOB_RECURSE CUDA_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}

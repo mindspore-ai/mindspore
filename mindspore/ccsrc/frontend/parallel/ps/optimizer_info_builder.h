@@ -19,7 +19,7 @@
 #include <vector>
 #include <memory>
 #include "backend/kernel_compiler/kernel.h"
-#include "backend/kernel_compiler/ps/pserver_kernel.h"
+#include "backend/kernel_compiler/cpu/ps/pserver_kernel.h"
 #include "frontend/parallel/ps/optimizer_info.h"
 
 namespace mindspore {
