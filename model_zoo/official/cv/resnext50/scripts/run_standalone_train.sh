@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-DEVICE_ID=$1
+export DEVICE_ID=$1
 DATA_DIR=$2
 PATH_CHECKPOINT=""
 if [ $# == 3 ]

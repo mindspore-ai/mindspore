@@ -29,14 +29,10 @@ class GlobalAvgPooling(nn.Cell):
     """
     def __init__(self):
         super(GlobalAvgPooling, self).__init__()
-        self.mean = P.ReduceMean(True)
-        self.shape = P.Shape()
-        self.reshape = P.Reshape()
+        self.mean = P.ReduceMean(False)
 
     def construct(self, x):
         x = self.mean(x, (2, 3))
-        b, c, _, _ = self.shape(x)
-        x = self.reshape(x, (b, c))
         return x
 
 

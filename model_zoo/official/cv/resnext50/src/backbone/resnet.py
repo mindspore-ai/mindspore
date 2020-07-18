@@ -87,7 +87,8 @@ class BasicBlock(nn.Cell):
     """
     expansion = 1
 
-    def __init__(self, in_channels, out_channels, stride=1, down_sample=None, use_se=False, **kwargs):
+    def __init__(self, in_channels, out_channels, stride=1, down_sample=None, use_se=False,
+                 platform="Ascend", **kwargs):
         super(BasicBlock, self).__init__()
         self.conv1 = conv3x3(in_channels, out_channels, stride=stride)
         self.bn1 = nn.BatchNorm2d(out_channels)
@@ -142,7 +143,7 @@ class Bottleneck(nn.Cell):
     expansion = 4
 
     def __init__(self, in_channels, out_channels, stride=1, down_sample=None,
-                 base_width=64, groups=1, use_se=False, **kwargs):
+                 base_width=64, groups=1, use_se=False, platform="Ascend", **kwargs):
         super(Bottleneck, self).__init__()
 
         width = int(out_channels * (base_width / 64.0)) * groups
@@ -153,7 +154,11 @@ class Bottleneck(nn.Cell):
 
         self.conv3x3s = nn.CellList()
 
-        self.conv2 = GroupConv(width, width, 3, stride, pad=1, groups=groups)
+        if platform == "GPU":
+            self.conv2 = nn.Conv2d(width, width, 3, stride, pad_mode='pad', padding=1, group=groups)
+        else:
+            self.conv2 = GroupConv(width, width, 3, stride, pad=1, groups=groups)
+
         self.op_split = Split(axis=1, output_num=self.groups)
         self.op_concat = Concat(axis=1)
 
@@ -211,7 +216,7 @@ class ResNet(nn.Cell):
     Examples:
         >>>ResNet()
     """
-    def __init__(self, block, layers, width_per_group=64, groups=1, use_se=False):
+    def __init__(self, block, layers, width_per_group=64, groups=1, use_se=False, platform="Ascend"):
         super(ResNet, self).__init__()
         self.in_channels = 64
         self.groups = groups
@@ -222,10 +227,10 @@ class ResNet(nn.Cell):
         self.relu = P.ReLU()
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode='same')
 
-        self.layer1 = self._make_layer(block, 64, layers[0], use_se=use_se)
-        self.layer2 = self._make_layer(block, 128, layers[1], stride=2, use_se=use_se)
-        self.layer3 = self._make_layer(block, 256, layers[2], stride=2, use_se=use_se)
-        self.layer4 = self._make_layer(block, 512, layers[3], stride=2, use_se=use_se)
+        self.layer1 = self._make_layer(block, 64, layers[0], use_se=use_se, platform=platform)
+        self.layer2 = self._make_layer(block, 128, layers[1], stride=2, use_se=use_se, platform=platform)
+        self.layer3 = self._make_layer(block, 256, layers[2], stride=2, use_se=use_se, platform=platform)
+        self.layer4 = self._make_layer(block, 512, layers[3], stride=2, use_se=use_se, platform=platform)
 
         self.out_channels = 512 * block.expansion
         self.cast = P.Cast()
@@ -242,7 +247,7 @@ class ResNet(nn.Cell):
 
         return x
 
-    def _make_layer(self, block, out_channels, blocks_num, stride=1, use_se=False):
+    def _make_layer(self, block, out_channels, blocks_num, stride=1, use_se=False, platform="Ascend"):
         """_make_layer"""
         down_sample = None
         if stride != 1 or self.in_channels != out_channels * block.expansion:
@@ -257,11 +262,12 @@ class ResNet(nn.Cell):
                             down_sample=down_sample,
                             base_width=self.base_width,
                             groups=self.groups,
-                            use_se=use_se))
+                            use_se=use_se,
+                            platform=platform))
         self.in_channels = out_channels * block.expansion
         for _ in range(1, blocks_num):
-            layers.append(block(self.in_channels, out_channels,
-                                base_width=self.base_width, groups=self.groups, use_se=use_se))
+            layers.append(block(self.in_channels, out_channels, base_width=self.base_width,
+                                groups=self.groups, use_se=use_se, platform=platform))
 
         return nn.SequentialCell(layers)
 
@@ -269,5 +275,5 @@ class ResNet(nn.Cell):
         return self.out_channels
 
 
-def resnext50():
-    return ResNet(Bottleneck, [3, 4, 6, 3], width_per_group=4, groups=32)
+def resnext50(platform="Ascend"):
+    return ResNet(Bottleneck, [3, 4, 6, 3], width_per_group=4, groups=32, platform=platform)
