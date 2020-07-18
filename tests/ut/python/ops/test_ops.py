@@ -1671,13 +1671,11 @@ test_case_array_ops = [
     ('AddN', {
         'block': NetForTupleInput(P.AddN()),
         'desc_inputs': [[2, 3, 3, 5], [2, 3, 3, 5]],
-        'desc_bprop': [[2, 3, 3, 5]],
-        'skip': ['backward']}),
+        'desc_bprop': [[2, 3, 3, 5]]}),
     ('AccumulateNV2', {
         'block': NetForTupleInput(P.AccumulateNV2()),
         'desc_inputs': [[2, 3, 3, 5], [2, 3, 3, 5]],
-        'desc_bprop': [[2, 3, 3, 5]],
-        'skip': ['backward']}),
+        'desc_bprop': [[2, 3, 3, 5]]}),
     ('Shape', {
         'block': P.Shape(),
         'desc_inputs': [[3, 3, 2, 2]],

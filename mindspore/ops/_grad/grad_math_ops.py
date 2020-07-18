@@ -980,7 +980,8 @@ def get_bprop_scalar_accumulatenv2(self):
         dx = ()
         for _ in range(len(x)):
             dx = dx + (dout,)
-        return dx
+        return (dx,)
+
     return bprop
 
 
@@ -992,7 +993,7 @@ def get_bprop_scalar_addn(self):
         dx = ()
         for _ in range(len(x)):
             dx = dx + (dout,)
-        return dx
+        return (dx,)
 
     return bprop
 
