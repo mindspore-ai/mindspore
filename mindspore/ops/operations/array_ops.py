@@ -602,6 +602,46 @@ class SparseGatherV2(GatherV2):
     """
 
 
+class Padding(PrimitiveWithInfer):
+    """
+    Extend the last dimension of input tensor from 1 to pad_dim_size, fill with 0.
+
+    Args:
+        pad_dim_size (int): The extend value of last dimension of x, must be positive.
+
+    Inputs:
+        - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The rank of x should be at least 2.
+        The last dimension of x should be 1.
+
+    Outputs:
+        Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
+
+    Examples:
+        >>> x = Tensor(np.array([[8], [10]]), mindspore.float32)
+        >>> pad_dim_size = 4
+        >>> out = P.Padding(pad_dim_size)(x)
+        [[8, 0, 0, 0], [10, 0, 0, 0]]
+    """
+    @prim_attr_register
+    def __init__(self, pad_dim_size=8):
+        """init padding"""
+        validator.check_value_type("pad_dim_size", pad_dim_size, [int], self.name)
+        validator.check_integer("pad_dim_size", pad_dim_size, 0, Rel.GT, self.name)
+        self.pad_dim_size = pad_dim_size
+
+    def __infer__(self, x):
+        validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
+        x_shape = list(x['shape'])
+        validator.check_integer("rank of x", len(x_shape), 1, Rel.GT, self.name)
+        validator.check_integer("last dim of x", x_shape[-1], 1, Rel.EQ, self.name)
+        out_shape = x_shape
+        out_shape[-1] = self.pad_dim_size
+        out = {'shape': out_shape,
+               'dtype': x['dtype'],
+               'value': None}
+        return out
+
+
 class Split(PrimitiveWithInfer):
     """
     Splits input tensor into output_num of tensors along the given axis and output numbers.
