@@ -60,10 +60,11 @@ table TensorRowIds {
 }
 
 /// Statistics returned from each cache service
-/// \note It must match CacheService::ServiceStat
+/// \note It must match CacheServiceStat
 table ServiceStatMsg {
     num_mem_cached:int64;
     num_disk_cached:int64;
+    avg_cache_sz:int64;
     min_row_id:int64;
     max_row_id:int64;
     state:int8;
@@ -78,4 +79,16 @@ table ColumnNameMsg {
 /// Serialized form of a schema
 table SchemaMsg {
     column:[ColumnNameMsg];
+}
+
+/// Part of the CreateCacheRequest
+table CreateCacheRequestMsg {
+  cache_mem_sz:int64;
+  flag:uint32;
+}
+
+/// Return result of CreateCacheRequest
+table CreateCacheReplyMsg {
+    connection_id:int64;
+    cookie:string;
 }

@@ -48,6 +48,9 @@ std::string CodeAsString(const StatusCode c) {
       case StatusCode::kProfilingError:
         s = "Error encountered while profiling";
         break;
+      case StatusCode::kSyntaxError:
+        s = "Syntax error";
+        break;
       case StatusCode::kUnexpectedError:
       default:
         s = "Unexpected error";

@@ -140,11 +140,20 @@ Path CachePool::GetSpillPath() const {
 }
 CachePool::CacheStat CachePool::GetStat() const {
   CacheStat cs{0};
+  int64_t total_sz = 0;
   for (auto &it : *tree_) {
+    total_sz += it.sz;
     if (it.ptr != nullptr) {
       ++cs.num_mem_cached;
     } else {
       ++cs.num_disk_cached;
+    }
+  }
+  if (total_sz > 0) {
+    // integer arithmetic. NO need to cast to float or double.
+    cs.average_cache_sz = total_sz / (cs.num_disk_cached + cs.num_mem_cached);
+    if (cs.average_cache_sz == 0) {
+      cs.average_cache_sz = 1;
     }
   }
   return cs;

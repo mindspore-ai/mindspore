@@ -22,7 +22,25 @@ namespace dataset {
 
 PYBIND_REGISTER(CacheClient, 0, ([](const py::module *m) {
                   (void)py::class_<CacheClient, std::shared_ptr<CacheClient>>(*m, "CacheClient")
-                    .def(py::init<uint32_t, uint64_t, bool>());
+                    .def(
+                      py::init([](session_id_type id, uint64_t mem_sz, bool spill, int32_t port, int32_t prefetch_sz) {
+                        std::shared_ptr<CacheClient> cc;
+                        CacheClient::Builder builder;
+                        builder.SetSessionId(id).SetCacheMemSz(mem_sz).SetSpill(spill).SetPort(port).SetPrefetchSize(
+                          prefetch_sz);
+                        THROW_IF_ERROR(builder.Build(&cc));
+                        return cc;
+                      }))
+                    .def("GetStat", [](CacheClient &cc) {
+                      CacheServiceStat stat{};
+                      THROW_IF_ERROR(cc.GetStat(&stat));
+                      return stat;
+                    });
+                  (void)py::class_<CacheServiceStat>(*m, "CacheServiceStat")
+                    .def(py::init<>())
+                    .def_readwrite("avg_cache_sz", &CacheServiceStat::avg_cache_sz)
+                    .def_readwrite("num_mem_cached", &CacheServiceStat::num_mem_cached)
+                    .def_readwrite("num_disk_cached", &CacheServiceStat::num_disk_cached);
                 }));
 
 }  // namespace dataset

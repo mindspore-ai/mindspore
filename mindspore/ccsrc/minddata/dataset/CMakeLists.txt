@@ -24,6 +24,11 @@ if (ENABLE_TDTQUE)
     add_definitions(-D ENABLE_TDTQUE)
     message(STATUS "TDT queue is enabled")
 endif ()
+if (MS_BUILD_GRPC)
+    set (ENABLE_CACHE true)
+    add_definitions(-D ENABLE_CACHE)
+    message(STATUS "Cache is enabled")
+endif()
 
 # conde coverage
 # option(ENABLE_COVERAGE "Enable code coverage report" OFF)
@@ -47,10 +52,6 @@ include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-rpath,$ORIGIN:$ORIGIN/lib")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default")
 
-include_directories("${CMAKE_BINARY_DIR}/minddata/dataset/engine/cache")
-set(MD_FLATBUFFER_OU "${CMAKE_BINARY_DIR}/minddata/dataset/engine/cache")
-ms_build_flatbuffers("engine/cache/de_tensor.fbs" ${CMAKE_CURRENT_SOURCE_DIR} generated_engine_files ${MD_FLATBUFFER_OU})
-
 ################## Include sub-modules ###############################
 add_subdirectory(util)
 add_subdirectory(core)
@@ -70,8 +71,6 @@ add_dependencies(engine-datasetops-source-sampler core)
 add_dependencies(engine-datasetops core)
 add_dependencies(engine-datasetops-mapop core)
 add_dependencies(engine-opt core)
-add_dependencies(engine-cache-client core)
-add_dependencies(engine-cache-server core)
 add_dependencies(engine-perf core)
 add_dependencies(engine-gnn core)
 add_dependencies(engine core)
@@ -85,7 +84,11 @@ endif()
 if (ENABLE_TDTQUE)
     add_dependencies(engine-tdt core)
 endif ()
-
+if (ENABLE_CACHE)
+    add_dependencies(engine-datasetops engine-cache-client)
+    add_dependencies(engine-cache-client core)
+    add_dependencies(engine-cache-server core)
+endif ()
 ################### Create _c_dataengine Library ######################
 set(submodules
     $<TARGET_OBJECTS:core>
@@ -105,7 +108,6 @@ set(submodules
     $<TARGET_OBJECTS:engine-datasetops>
     $<TARGET_OBJECTS:engine-opt>
     $<TARGET_OBJECTS:engine-cache-client>
-    $<TARGET_OBJECTS:engine-cache-server>
     $<TARGET_OBJECTS:engine>
     $<TARGET_OBJECTS:text>
     $<TARGET_OBJECTS:text-kernels>
@@ -122,8 +124,6 @@ if (ENABLE_TDTQUE)
 else ()
     add_library(_c_dataengine SHARED ${submodules})
 endif ()
-
-add_dependencies(_c_dataengine generated_engine_files)
 
 if (ENABLE_PYTHON)
 set_target_properties(_c_dataengine PROPERTIES
@@ -187,6 +187,6 @@ else()
     endif ()
 endif()
 
-if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
+if (MS_BUILD_GRPC)
     target_link_libraries(_c_dataengine PRIVATE mindspore::grpc++)
 endif()

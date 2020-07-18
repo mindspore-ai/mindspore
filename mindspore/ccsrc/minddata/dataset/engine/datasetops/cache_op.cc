@@ -142,7 +142,7 @@ Status CacheOp::WaitForCachingAllRows() {
   }
   // Get statistics from the server, and if we are not the one to create the cache,
   // wait until the state changed from build phase to fetch base.
-  CacheClient::ServiceStat stat{};
+  CacheServiceStat stat{};
   bool BuildPhaseDone = true;
   do {
     RETURN_IF_NOT_OK(cache_client_->GetStat(&stat));
@@ -157,6 +157,7 @@ Status CacheOp::WaitForCachingAllRows() {
   MS_LOG(INFO) << "Number of rows cached: " << num_rows_;
   MS_LOG(INFO) << "Number of rows cached in memory : " << stat.num_mem_cached;
   MS_LOG(INFO) << "Number of rows spilled to disk : " << stat.num_disk_cached;
+  MS_LOG(INFO) << "Average cache size : " << stat.avg_cache_sz;
   // Now all rows are cached and we have done a sync point check up. Next phase is
   // is pick up fetch input from sampler and pass up to the caller.
   RETURN_IF_NOT_OK(sampler_->HandshakeRandomAccessOp(this));

@@ -23,9 +23,13 @@
 #include <utility>
 #include <vector>
 
+#include "minddata/dataset/core/config_manager.h"
+#ifdef ENABLE_CACHE
+#include "minddata/dataset/engine/cache/cache_grpc_client.h"
+#else
+#include "minddata/dataset/engine/cache/stub/cache_grpc_client.h"
+#endif
 #include "minddata/dataset/engine/data_buffer.h"
-#include "minddata/dataset/engine/cache/cache_server.h"
-#include "minddata/dataset/engine/cache/de_tensor_generated.h"
 #include "minddata/dataset/util/lock.h"
 
 namespace mindspore {
@@ -35,18 +39,120 @@ namespace dataset {
 /// rows, etc.
 class CacheClient {
  public:
+  friend class CacheMergeOp;
+
+  /// \brief A builder to help creating a CacheClient object
+  class Builder {
+   public:
+    Builder() : session_id_(0), cache_mem_sz_(0), spill_(false), port_(0), num_workers_(0), prefetch_size_(0) {
+      std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
+      hostname_ = "127.0.0.1";
+      port_ = 50052;
+      num_workers_ = cfg->num_parallel_workers();
+      prefetch_size_ = 20;  // rows_per_buf is too small (1 by default).
+    }
+
+    /// Setter function to set the session id
+    /// \param session_id
+    /// \return Builder object itself.
+    Builder &SetSessionId(session_id_type session_id) {
+      session_id_ = session_id;
+      return *this;
+    }
+
+    /// Setter function to set the cache memory size
+    /// \param cache_mem_sz
+    /// \return Builder object itself
+    Builder &SetCacheMemSz(uint64_t cache_mem_sz) {
+      cache_mem_sz_ = cache_mem_sz;
+      return *this;
+    }
+
+    /// Setter function to spill attribute
+    /// \param spill
+    /// Builder object itself
+    Builder &SetSpill(bool spill) {
+      spill_ = spill;
+      return *this;
+    }
+
+    /// Setter function to set rpc hostname
+    /// \param host
+    /// \return Builder object itself
+    Builder &SetHostname(std::string host) {
+      hostname_ = std::move(host);
+      return *this;
+    }
+
+    /// Setter function to set tcpip port
+    /// \param port
+    /// \return Builder object itself.
+    Builder &SetPort(int32_t port) {
+      port_ = port;
+      return *this;
+    }
+
+    /// Setter function to set number of async rpc workers
+    /// \param num_workers
+    /// \return Builder object itself
+    Builder &SetNumWorkers(int32_t num_workers) {
+      num_workers_ = num_workers;
+      return *this;
+    }
+
+    /// Setter function to set prefetch amount for fetching rows from cache server
+    /// \param prefetch_sz
+    /// \return Builder object itself
+    Builder &SetPrefetchSize(int32_t prefetch_sz) {
+      prefetch_size_ = prefetch_sz;
+      return *this;
+    }
+
+    /// Getter functions
+    session_id_type getSessionId() const { return session_id_; }
+    uint64_t getCacheMemSz() const { return cache_mem_sz_; }
+    bool isSpill() const { return spill_; }
+    const std::string &getHostname() const { return hostname_; }
+    int32_t getPort() const { return port_; }
+    int32_t getNumWorkers() const { return num_workers_; }
+    int32_t getPrefetchSize() const { return prefetch_size_; }
+
+    Status SanityCheck() {
+      CHECK_FAIL_RETURN_UNEXPECTED(session_id_ > 0, "session id must be positive");
+      CHECK_FAIL_RETURN_UNEXPECTED(cache_mem_sz_ >= 0, "cache memory size must not be negative. (0 implies unlimited");
+      CHECK_FAIL_RETURN_UNEXPECTED(num_workers_ > 0, "rpc workers must be positive");
+      CHECK_FAIL_RETURN_UNEXPECTED(prefetch_size_ > 0, "prefetch size must be positive");
+      CHECK_FAIL_RETURN_UNEXPECTED(!hostname_.empty(), "hostname must not be empty");
+      return Status::OK();
+    }
+
+    Status Build(std::shared_ptr<CacheClient> *out) {
+      RETURN_UNEXPECTED_IF_NULL(out);
+      RETURN_IF_NOT_OK(SanityCheck());
+      *out = std::make_shared<CacheClient>(session_id_, cache_mem_sz_, spill_, hostname_, port_, num_workers_,
+                                           prefetch_size_);
+      return Status::OK();
+    }
+
+   private:
+    session_id_type session_id_;
+    uint64_t cache_mem_sz_;
+    bool spill_;
+    std::string hostname_;
+    int32_t port_;
+    int32_t num_workers_;
+    int32_t prefetch_size_;
+  };
+
   /// \brief Constructor
   /// \param session_id A user assigned session id for the current pipeline
   /// \param cache_mem_sz Size of the memory set aside for the row caching. 0 for unlimited
   /// \param spill Spill to disk if out of memory
-  CacheClient(uint32_t session_id, uint64_t cache_mem_sz, bool spill);
+  CacheClient(session_id_type session_id, uint64_t cache_mem_sz, bool spill, std::string hostname, int32_t port,
+              int32_t num_workers, int32_t prefetch_size);
 
   /// \brief Destructor
-  ~CacheClient() = default;
-
-  /// \brief Getter function for returning the current session id
-  /// \return session id
-  uint64_t session_id() const { return session_id_; }
+  ~CacheClient() { (void)comm_->ServiceStop(); }
 
   /// \brief Send a TensorRow to the cache server
   /// \param[in] row
@@ -83,14 +189,7 @@ class CacheClient {
   /// \brief Get the statistics from a cache.
   /// \param[in/out] Pointer to a pre-allocated ServiceStat object
   /// \return Status object
-  struct ServiceStat {
-    int64_t num_mem_cached;
-    int64_t num_disk_cached;
-    row_id_type min_row_id;
-    row_id_type max_row_id;
-    int8_t cache_service_state;
-  };
-  Status GetStat(ServiceStat *);
+  Status GetStat(CacheServiceStat *);
 
   /// \brief Cache the schema at the cache server
   /// \param map The unordered map of the schema
@@ -122,18 +221,45 @@ class CacheClient {
   /// \return Cookie
   std::string cookie() const { return cookie_; }
 
+  /// \brief Send a request async to the server
+  /// \param rq BaseRequest
+  /// \return Status object
+  Status PushRequest(std::shared_ptr<BaseRequest> rq) const;
+
+  /// \brief If the remote server supports local bypass using shared memory
+  /// \return boolean value
+  bool SupportLocalClient() const { return local_bypass_; }
+
+  /// \brief Return the base memory address if we attach to any shared memory.
+  auto SharedMemoryBaseAddr() const { return comm_->SharedMemoryBaseAddr(); }
+
+  /// Getter functions
+  session_id_type session_id() const { return cinfo_.session_id(); }
+  uint64_t getCacheMemSz() const { return cache_mem_sz_; }
+  bool isSpill() const { return spill_; }
+  const std::string &getHostname() const { return hostname_; }
+  int32_t getPort() const { return port_; }
+  int32_t getNumWorkers() const { return num_workers_; }
+  int32_t getPrefetchSize() const { return prefetch_size_; }
+
  private:
   mutable RWLock mux_;
   uint64_t cache_mem_sz_;
   bool spill_;
   // The session_id_ and cache_crc_ work together to uniquely identify this particular cache and allow
   // sharing of the cache.
-  uint32_t session_id_;
-  uint32_t cache_crc_;
+  CacheClientInfo cinfo_;
   // The server_connection_id_ is the actual id we use for operations after the cache is built
   connection_id_type server_connection_id_;
   // Some magic cookie returned from the cache server.
   std::string cookie_;
+  // Comm layer
+  bool local_bypass_;
+  std::string hostname_;
+  int32_t port_;
+  int32_t num_workers_;
+  int32_t prefetch_size_;
+  mutable std::shared_ptr<CacheClientGreeter> comm_;
 };
 }  // namespace dataset
 }  // namespace mindspore

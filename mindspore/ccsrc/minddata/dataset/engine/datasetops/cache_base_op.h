@@ -16,6 +16,8 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_CACHE_BASE_OP_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_CACHE_BASE_OP_H_
 
+#include <atomic>
+#include <deque>
 #include <memory>
 #include <string>
 #include <utility>
@@ -28,8 +30,9 @@
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "minddata/dataset/util/queue.h"
+#include "minddata/dataset/util/queue_map.h"
+#include "minddata/dataset/util/semaphore.h"
 #include "minddata/dataset/util/wait_post.h"
-#include "minddata/dataset/engine/datasetops/cache_base_op.h"
 namespace mindspore {
 namespace dataset {
 /// \brief This is the base class for CacheOp and CacheLookupOp which share many similarities.
@@ -82,10 +85,13 @@ class CacheBase : public ParallelOp {
 
  protected:
   constexpr static int32_t eoe_row_id = -1;
+  int64_t row_cnt_;
+  std::atomic<int64_t> num_cache_miss_;
   std::shared_ptr<CacheClient> cache_client_;
   WaitPost epoch_sync_;
   int32_t rows_per_buffer_;
   Connector<std::vector<row_id_type>> keys_miss_;
+  QueueMap<row_id_type, TensorRow> prefetch_;
 
   /// \brief Common function to register resources for interrupt
   /// \note Derived should override this function for extra resources to be registered
@@ -103,7 +109,15 @@ class CacheBase : public ParallelOp {
 
  private:
   constexpr static int32_t connector_capacity_ = 1024;
+  int32_t prefetch_size_;
   QueueList<std::unique_ptr<IOBlock>> io_block_queues_;
+  QueueList<std::unique_ptr<IOBlock>> prefetch_queues_;
+  std::unique_ptr<Queue<std::shared_ptr<Tensor>>> sampler_queue_;
+
+  Status Dispatcher();
+  /// \brief Prefetcher. It prefetch the rows from cache server
+  /// \return Status object.
+  Status Prefetcher(int32_t worker_id);
 };
 }  // namespace dataset
 }  // namespace mindspore

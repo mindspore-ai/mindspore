@@ -21,6 +21,8 @@
 
 namespace mindspore {
 namespace dataset {
+TaskManager *TaskManager::instance_ = nullptr;
+std::once_flag TaskManager::init_instance_flag_;
 // This takes the same parameter as Task constructor.
 Status TaskManager::CreateAsyncTask(const std::string &my_name, const std::function<Status()> &f, TaskGroup *vg,
                                     Task **task) {

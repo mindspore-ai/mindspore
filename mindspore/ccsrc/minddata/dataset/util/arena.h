@@ -27,20 +27,20 @@
 #define ARENA_WALL_OVERHEAD_SZ 32
 namespace mindspore {
 namespace dataset {
-// This is a memory arena based on a treap data structure.
-// The constructor of the Arena takes the size of the initial memory size (in MB).
-// Internally we divide the memory into multiple blocks. Each block is 64 bytes.
-// The treap contains all the free blocks with the relative memory address as key
-// and the size of the block as priority.
-//
-// Initially the treap has only one root which is the whole memory piece.
-//
-// For memory suballocation, we pop the root node of the treap which contains the largest free block.
-// We allocate what we need and return the rest back to the treap. We search for the first fit instead
-// of the best fit so to give us a constant time in memory allocation.
-//
-// When a block of memory is freed. It is joined with the blocks before and after (if they are available) to
-// form a bigger block.
+/// This is a memory arena based on a treap data structure.
+/// The constructor of the Arena takes the size of the initial memory size (in MB).
+/// Internally we divide the memory into multiple blocks. Each block is 64 bytes.
+/// The treap contains all the free blocks with the relative memory address as key
+/// and the size of the block as priority.
+///
+/// Initially the treap has only one root which is the whole memory piece.
+///
+/// For memory suballocation, we pop the root node of the treap which contains the largest free block.
+/// We allocate what we need and return the rest back to the treap. We search for the first fit instead
+/// of the best fit so to give us a constant time in memory allocation.
+///
+/// When a block of memory is freed. It is joined with the blocks before and after (if they are available) to
+/// form a bigger block.
 class Arena : public MemoryPool {
  public:
   Arena(const Arena &) = delete;
@@ -78,7 +78,7 @@ class Arena : public MemoryPool {
 
   static Status CreateArena(std::shared_ptr<Arena> *p_ba, size_t val_in_MB = 4096);
 
- private:
+ protected:
   std::mutex mux_;
   Treap<uint64_t, uint64_t> tr_;
   void *ptr_;

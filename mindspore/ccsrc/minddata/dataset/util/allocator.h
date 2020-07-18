@@ -168,9 +168,9 @@ class MemGuard {
   size_t GetSizeInBytes() const { return n_ * sizeof(T); }
 
  private:
+  size_t n_;
   allocator alloc_;
   std::unique_ptr<T[]> ptr_;
-  size_t n_;
 };
 }  // namespace dataset
 }  // namespace mindspore

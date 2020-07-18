@@ -82,6 +82,7 @@ class CachePool : public Service {
   struct CacheStat {
     int64_t num_mem_cached;
     int64_t num_disk_cached;
+    int64_t average_cache_sz;
   };
 
   /// \brief Constructor

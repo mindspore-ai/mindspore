@@ -15,6 +15,8 @@
 """
 Testing cache operator with mappable datasets
 """
+import os
+import pytest
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as c_vision
 from mindspore import log as logger
@@ -25,6 +27,7 @@ DATA_DIR = "../data/dataset/testImageNetData/train/"
 GENERATE_GOLDEN = False
 
 
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_map_basic1():
     """
     Test mappable leaf with cache op right over the leaf
@@ -53,7 +56,7 @@ def test_cache_map_basic1():
 
     logger.info("test_cache_map_basic1 Ended.\n")
 
-
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_map_basic2():
     """
     Test mappable leaf with the cache op later in the tree above the map(decode)
@@ -82,7 +85,7 @@ def test_cache_map_basic2():
 
     logger.info("test_cache_map_basic2 Ended.\n")
 
-
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_map_basic3():
     """
     Test a repeat under mappable cache
@@ -116,7 +119,7 @@ def test_cache_map_basic3():
     assert num_iter == 8
     logger.info('test_cache_basic3 Ended.\n')
 
-
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_map_basic4():
     """
     Test different rows result in core dump
@@ -141,7 +144,7 @@ def test_cache_map_basic4():
     assert num_iter == 8
     logger.info('test_cache_basic3 Ended.\n')
 
-
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_map_failure1():
     """
     Test nested cache (failure)
