@@ -30,60 +30,58 @@ ncclUniqueId NCCLWrapper::nccl_unique_id() const {
   return unique_id;
 }
 
-void NCCLWrapper::set_nccl_unique_id(ncclUniqueId unique_id) { unique_id_ = unique_id; }
-
-void NCCLWrapper::set_rank(int rank_id, int rank_size) {
-  rank_id_ = rank_id;
-  rank_size_ = rank_size;
-}
-
 void NCCLWrapper::InitNCCLComm() {
-  CHECK_RET(ncclCommInitRank(&comm_, rank_size_, unique_id_, rank_id_), ncclSuccess,
-            "Failed to init nccl communicator.");
-  group_to_comm_map_[NCCL_WORLD_GROUP] = comm_;
-}
-
-void NCCLWrapper::InitNCCLComm(ncclComm_t *comm, int rank_size, ncclUniqueId unique_id, int rank) {
-  CHECK_RET(ncclCommInitRank(comm, rank_size, unique_id, rank), ncclSuccess, "Failed to init nccl communicator.");
+  for (auto group : group_info_) {
+    std::string group_name = group.first;
+    NcclGroupInfo group_info = group.second;
+    CHECK_RET(ncclCommInitRank(&(group_info.comm), group_info.size, group_info.unique_id, group_info.rank), ncclSuccess,
+              "Failed to init nccl communicator for group " + group_name);
+    group_info_[group_name].comm = group_info.comm;
+  }
+  comm_init_done_ = true;
 }
 
 ncclResult_t NCCLWrapper::AllReduce(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
                                     ncclRedOp_t reduce_type, cudaStream_t stream, const std::string &group_name) {
-  CHECK_RET(group_to_comm_map_.count(group_name), 1,
+  CHECK_RET(group_info_.count(group_name), 1,
             "Failed to find NCCL communicator for AllReduce by the group name " + group_name);
-  ncclComm_t group_comm = group_to_comm_map_[group_name];
+  ncclComm_t group_comm = group_info_[group_name].comm;
   return ncclAllReduce(input_addr, output_addr, count, data_type, reduce_type, group_comm, stream);
 }
 
 ncclResult_t NCCLWrapper::AllGather(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
                                     cudaStream_t stream, const std::string &group_name) {
-  CHECK_RET(group_to_comm_map_.count(group_name), 1,
+  CHECK_RET(group_info_.count(group_name), 1,
             "Failed to find NCCL communicator for AllGather by the group name " + group_name);
-  ncclComm_t group_comm = group_to_comm_map_[group_name];
+  ncclComm_t group_comm = group_info_[group_name].comm;
   return ncclAllGather(input_addr, output_addr, count, data_type, group_comm, stream);
 }
 
 ncclResult_t NCCLWrapper::ReduceScatter(const void *input_addr, void *output_addr, size_t count,
                                         ncclDataType_t data_type, ncclRedOp_t reduce_type, cudaStream_t stream,
                                         const std::string &group_name) {
-  CHECK_RET(group_to_comm_map_.count(group_name), 1,
+  CHECK_RET(group_info_.count(group_name), 1,
             "Failed to find NCCL communicator for ReduceScatter by the group name " + group_name);
-  ncclComm_t group_comm = group_to_comm_map_[group_name];
+  ncclComm_t group_comm = group_info_[group_name].comm;
   return ncclReduceScatter(input_addr, output_addr, count, data_type, reduce_type, group_comm, stream);
 }
 
-void NCCLWrapper::SetGroupNameToNCCLComm(const std::string &group_name, const ncclComm_t comm) {
-  group_to_comm_map_[group_name] = comm;
+void NCCLWrapper::AddGroupInfo(const std::string &group_name, NcclGroupInfo *group) {
+  if (comm_init_done_) {
+    CHECK_RET(ncclCommInitRank(&(group->comm), group->size, group->unique_id, group->rank), ncclSuccess,
+              "Failed to init nccl communicator for group " + group_name);
+  }
+  group_info_[group_name] = *group;
 }
 
 void NCCLWrapper::DestroyGroup(const std::string &group_name) {
-  auto group_iter = group_to_comm_map_.find(group_name);
-  if (group_iter == group_to_comm_map_.end()) {
+  auto group_iter = group_info_.find(group_name);
+  if (group_iter == group_info_.end()) {
     return;
   }
-  group_to_comm_map_.erase(group_iter);
-  ncclComm_t group_comm = group_iter->second;
+  ncclComm_t group_comm = group_iter->second.comm;
   CHECK_RET(ncclCommDestroy(group_comm), ncclSuccess, "Failed to destroy NCCL communicator for " + group_name);
+  group_info_.erase(group_iter);
   return;
 }
 }  // namespace gpu

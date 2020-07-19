@@ -70,9 +70,7 @@ Status GroupManager::CreateGroup(const std::string &group_name, const std::vecto
                                  mindspore::parallel::Group *const group) {
   // it is simple to use size to determine whether it is a world group
   uint32_t world_size = 0;
-  if (world_group_ != NCCL_WORLD_GROUP) {
-    (void)CommManager::GetInstance().GetRankSize(world_group_, &world_size);
-  }
+  (void)CommManager::GetInstance().GetRankSize(world_group_, &world_size);
 
   if (devices.size() == world_size) {
     auto it = groups_.find(world_group_);

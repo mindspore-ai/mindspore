@@ -14,58 +14,37 @@
  * limitations under the License.
  */
 
-#include <mpi.h>
-#include <nccl.h>
-#include <unistd.h>
-#include <memory>
 #include <string>
-#include <iostream>
 #include <vector>
-#include "runtime/device/gpu/distribution/mpi_wrapper.h"
-#include "runtime/device/gpu/distribution/nccl_wrapper.h"
+#include "runtime/device/gpu/distribution/collective_wrapper.h"
 
-#ifndef EXPORT_WRAPPER
-#define EXPORT_WRAPPER __attribute__((visibility("default")))
-#endif
+void InitMPI() { MPIWrapper::instance(); }
 
-using MPIWrapper = mindspore::device::gpu::MPIWrapper;
-using NCCLWrapper = mindspore::device::gpu::NCCLWrapper;
+int local_rank_id() { return MPIWrapper::instance().local_rank_id(); }
 
-extern "C" EXPORT_WRAPPER void InitMPI() { MPIWrapper::instance(); }
+void InitNCCLComm() { NCCLWrapper::instance().InitNCCLComm(); }
 
-extern "C" EXPORT_WRAPPER int local_rank_id() { return MPIWrapper::instance().local_rank_id(); }
-
-extern "C" EXPORT_WRAPPER void InitNCCLComm() { NCCLWrapper::instance().InitNCCLComm(); }
-
-extern "C" EXPORT_WRAPPER bool CreateCommGroup(const std::string &group_name, const std::vector<unsigned int> &ranks) {
+bool CreateCommGroup(const std::string &group_name, const std::vector<unsigned int> &ranks) {
   return MPIWrapper::instance().CreateCommGroup(group_name, ranks);
 }
 
-extern "C" EXPORT_WRAPPER int GetRankIDByGroup(const std::string &group_name) {
-  return MPIWrapper::instance().GetRankIDByGroup(group_name);
+int GetRankIDByGroup(const std::string &group_name) { return MPIWrapper::instance().GetRankIDByGroup(group_name); }
+
+int GetGroupSize(const std::string &group_name) { return MPIWrapper::instance().GetGroupSize(group_name); }
+
+bool DestroyGroup(const std::string &group_name) { return MPIWrapper::instance().DestroyGroup(group_name); }
+
+ncclResult_t AllReduce(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
+                       ncclRedOp_t reduce_type, cudaStream_t stream, const std::string &group) {
+  return NCCLWrapper::instance().AllReduce(input_addr, output_addr, count, data_type, reduce_type, stream, group);
 }
 
-extern "C" EXPORT_WRAPPER int GetGroupSize(const std::string &group_name) {
-  return MPIWrapper::instance().GetGroupSize(group_name);
+ncclResult_t AllGather(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
+                       cudaStream_t stream, const std::string &group) {
+  return NCCLWrapper::instance().AllGather(input_addr, output_addr, count, data_type, stream, group);
 }
 
-extern "C" EXPORT_WRAPPER bool DestroyGroup(const std::string &group_name) {
-  return MPIWrapper::instance().DestroyGroup(group_name);
-}
-
-extern "C" EXPORT_WRAPPER ncclResult_t AllReduce(const void *input_addr, void *output_addr, size_t count,
-                                                 ncclDataType_t data_type, ncclRedOp_t reduce_type,
-                                                 cudaStream_t stream) {
-  return NCCLWrapper::instance().AllReduce(input_addr, output_addr, count, data_type, reduce_type, stream);
-}
-
-extern "C" EXPORT_WRAPPER ncclResult_t AllGather(const void *input_addr, void *output_addr, size_t count,
-                                                 ncclDataType_t data_type, cudaStream_t stream) {
-  return NCCLWrapper::instance().AllGather(input_addr, output_addr, count, data_type, stream);
-}
-
-extern "C" EXPORT_WRAPPER ncclResult_t ReduceScatter(const void *input_addr, void *output_addr, size_t count,
-                                                     ncclDataType_t data_type, ncclRedOp_t reduce_type,
-                                                     cudaStream_t stream) {
-  return NCCLWrapper::instance().ReduceScatter(input_addr, output_addr, count, data_type, reduce_type, stream);
+ncclResult_t ReduceScatter(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
+                           ncclRedOp_t reduce_type, cudaStream_t stream, const std::string &group) {
+  return NCCLWrapper::instance().ReduceScatter(input_addr, output_addr, count, data_type, reduce_type, stream, group);
 }
