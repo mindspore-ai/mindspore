@@ -127,7 +127,6 @@ def test_net_int64():
     print(output.asnumpy())
     assert np.array_equal(output.asnumpy(), np.stack([x, y], axis))
 
-
 def test_net_uint64():
     x = np.random.randn(3, 5, 4).astype(np.uint64)
     y = np.random.randn(3, 5, 4).astype(np.uint64)

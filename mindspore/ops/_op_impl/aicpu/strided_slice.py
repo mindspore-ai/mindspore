@@ -13,21 +13,29 @@
 # limitations under the License.
 # ============================================================================
 
-"""Normal op"""
+"""StridedSlice op"""
 from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataType
 
-normal_op_info = AiCPURegOp("Normal") \
+strided_slice_op_info = AiCPURegOp("StridedSliceAICPU") \
     .fusion_type("OPAQUE") \
-    .input(0, "shape", "required") \
-    .input(1, "mean", "required") \
-    .input(2, "stddev", "required") \
-    .output(0, "y", "required") \
-    .attr("seed", "int") \
-    .dtype_format(DataType.I32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
-    .dtype_format(DataType.I32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW) \
+    .input(0, "input", "required") \
+    .input(1, "begin", "required") \
+    .input(2, "end", "required") \
+    .input(3, "stride", "required") \
+    .output(0, "output", "required") \
+    .attr("begin_mask", "int") \
+    .attr("end_mask", "int") \
+    .attr("ellipsis_mask", "int") \
+    .attr("new_axis_mask", "int") \
+    .attr("shrink_axis_mask", "int") \
+    .dtype_format(DataType.F32_Default,
+                  DataType.I32_Default,
+                  DataType.I32_Default,
+                  DataType.I32_Default,
+                  DataType.F32_Default) \
     .get_op_info()
 
-@op_info_register(normal_op_info)
-def _normal_aicpu():
-    """Normal AiCPU register"""
+@op_info_register(strided_slice_op_info)
+def _strided_slice_aicpu():
+    """StridedSlice AiCPU register"""
     return

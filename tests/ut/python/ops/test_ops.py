@@ -540,6 +540,61 @@ class NormalNet(nn.Cell):
         return out
 
 
+class LaplaceNet(nn.Cell):
+    def __init__(self, shape=None, seed=0):
+        super(LaplaceNet, self).__init__()
+        self.laplace = P.Laplace(seed=seed)
+        self.shape = shape
+
+    def construct(self, mean, lambda_param):
+        out = self.laplace(self.shape, mean, lambda_param)
+        return out
+
+
+class GammaNet(nn.Cell):
+    def __init__(self, shape=None, seed=0):
+        super(GammaNet, self).__init__()
+        self.gamma = P.Gamma(seed=seed)
+        self.shape = shape
+
+    def construct(self, alpha, beta):
+        out = self.gamma(self.shape, alpha, beta)
+        return out
+
+
+class PoissonNet(nn.Cell):
+    def __init__(self, shape=None, seed=0):
+        super(PoissonNet, self).__init__()
+        self.poisson = P.Poisson(seed=seed)
+        self.shape = shape
+
+    def construct(self, mean):
+        out = self.poisson(self.shape, mean)
+        return out
+
+
+class UniformIntNet(nn.Cell):
+    def __init__(self, shape=None, seed=0):
+        super(UniformIntNet, self).__init__()
+        self.uniformint = P.UniformInt(seed=seed)
+        self.shape = shape
+
+    def construct(self, a, b):
+        out = self.uniformint(self.shape, a, b)
+        return out
+
+
+class UniformRealNet(nn.Cell):
+    def __init__(self, shape=None, seed=0):
+        super(UniformRealNet, self).__init__()
+        self.uniformreal = P.UniformReal(seed=seed)
+        self.shape = shape
+
+    def construct(self, a, b):
+        out = self.uniformreal(self.shape, a, b)
+        return out
+
+
 class StridedSliceNet(nn.Cell):
     def __init__(self):
         super(StridedSliceNet, self).__init__()
@@ -818,6 +873,26 @@ test_case_math_ops = [
     ('Normal', {
         'block': NormalNet((3, 2, 4), 0),
         'desc_inputs': [Tensor(0.0, mstype.float32), Tensor(1.0, mstype.float32)],
+        'skip': ['backward']}),
+    ('Laplace', {
+        'block': LaplaceNet((3, 2, 4), 0),
+        'desc_inputs': [Tensor(1.0, mstype.float32), Tensor(1.0, mstype.float32)],
+        'skip': ['backward']}),
+    ('Gamma', {
+        'block': GammaNet((3, 2, 4), 0),
+        'desc_inputs': [Tensor(1.0, mstype.float32), Tensor(1.0, mstype.float32)],
+        'skip': ['backward']}),
+    ('Poisson', {
+        'block': PoissonNet((3, 2, 4), 0),
+        'desc_inputs': [Tensor(2.0, mstype.float32)],
+        'skip': ['backward']}),
+    ('UniformInt', {
+        'block': UniformIntNet((3, 2, 4), 0),
+        'desc_inputs': [Tensor(1, mstype.int32), Tensor(15, mstype.int32)],
+        'skip': ['backward']}),
+    ('UniformReal', {
+        'block': UniformRealNet((3, 2, 4), 0),
+        'desc_inputs': [Tensor(1.0, mstype.float32), Tensor(5.0, mstype.float32)],
         'skip': ['backward']}),
     ('RandomChoiceWithMask', {
         'block': P.RandomChoiceWithMask(256),

@@ -27,8 +27,7 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         Rank, Reshape, ResizeNearestNeighbor, ArgMinWithValue,
                         SameTypeShape, ScatterAdd, ScatterSub, ScatterMul, ScatterDiv, ScatterMax, ScatterMin,
                         ScatterUpdate, ScalarToArray, ScalarToTensor, ScatterNd, ScatterNdUpdate, Select,
-                        Shape, Size, Slice, Split, TransShape,
-                        ParallelConcat,
+                        Shape, Size, Slice, Split, TransShape, ParallelConcat,
                         Squeeze, StridedSlice, Tile, TensorScatterUpdate,
                         Transpose, TruncatedNormal, TupleToArray, UnsortedSegmentMin, UnsortedSegmentProd,
                         UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch, BatchToSpace,
@@ -55,7 +54,8 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        Sin, Sqrt, Rsqrt, BesselI0e, BesselI1e, TruncateDiv, TruncateMod,
                        Square, Sub, TensorAdd, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Sinh, Eps, Tan)
 
-from .random_ops import (RandomChoiceWithMask, Normal, RandomCategorical)
+from .random_ops import (RandomChoiceWithMask, Normal, Gamma, Poisson, UniformInt, UniformReal,
+                         RandomCategorical, Laplace)
 from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, ApplyMomentum, BatchNorm,
                      BiasAdd, Conv2D,
                      DepthwiseConv2dNative,
@@ -69,8 +69,7 @@ from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, Appl
                      MaxPoolWithArgmax, OneHot, Pad, MirrorPad, PReLU, ReLU, ReLU6, ReLUV2, HSwish, HSigmoid,
                      ResizeBilinear, Sigmoid,
                      SigmoidCrossEntropyWithLogits,
-                     SmoothL1Loss, Softmax, Softsign, Softplus, LRN,
-                     RNNTLoss,
+                     SmoothL1Loss, Softmax, Softsign, Softplus, LRN, RNNTLoss,
                      SoftmaxCrossEntropyWithLogits, ROIAlign,
                      SparseSoftmaxCrossEntropyWithLogits, Tanh,
                      TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrl,
@@ -78,6 +77,8 @@ from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, Appl
                      ApplyAdaMax, ApplyAdadelta, ApplyAdagrad, ApplyAdagradV2,
                      ApplyAddSign, ApplyPowerSign, ApplyGradientDescent, ApplyProximalGradientDescent,
                      ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK)
+from . import _quant_ops
+from ._quant_ops import *
 from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, PopulationCount,
                         CheckValid, MakeRefKey, Partial, Depend, CheckBprop, Push, Pull)
 from .thor_ops import *
@@ -135,6 +136,7 @@ __all__ = [
     'OneHot',
     'GatherV2',
     'SparseGatherV2',
+    'EmbeddingLookup',
     'Concat',
     'Pack',
     'Unpack',
@@ -172,6 +174,11 @@ __all__ = [
     'Tanh',
     'RandomChoiceWithMask',
     'Normal',
+    'Gamma',
+    'Poisson',
+    'UniformInt',
+    'UniformReal',
+    'Laplace',
     'RandomCategorical',
     'ResizeBilinear',
     'ScalarSummary',
@@ -320,6 +327,7 @@ __all__ = [
     "ApplyCenteredRMSProp",
     "SpaceToBatchND",
     "BatchToSpaceND",
+    "ReverseSequence",
     "SquareSumAll",
     "BitwiseAnd",
     "BitwiseOr",
@@ -335,6 +343,7 @@ __all__ = [
     "ApproximateEqual",
     "InplaceUpdate",
     "InTopK",
+    "CropAndResize",
     "LRN",
     "Mod",
     "PopulationCount",

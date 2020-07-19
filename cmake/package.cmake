@@ -156,6 +156,7 @@ if (NOT ENABLE_GE)
             set(ASCEND_PATH /usr/local/Ascend)
         endif ()
         set(ASCEND_DRIVER_PATH ${ASCEND_PATH}/driver/lib64/common)
+        set(ASCEND_FWK_PATH ${ASCEND_PATH}/fwkacllib/lib64)
 
         install(
             FILES
@@ -164,6 +165,7 @@ if (NOT ENABLE_GE)
                 ${CMAKE_BINARY_DIR}/graphengine/src/ge/ge_runtime/libge_runtime.so
                 ${ASCEND_DRIVER_PATH}/libslog.so
                 ${ASCEND_DRIVER_PATH}/libc_sec.so
+                ${ASCEND_FWK_PATH}/liberror_manager.so
             DESTINATION ${INSTALL_LIB_DIR}
             COMPONENT mindspore
         )
@@ -172,6 +174,7 @@ if (NOT ENABLE_GE)
             FILES
                 ${CMAKE_BINARY_DIR}/graphengine/src/common/graph/libgraph.so
                 ${CMAKE_SOURCE_DIR}/graphengine/third_party/prebuild/${CMAKE_HOST_SYSTEM_PROCESSOR}/libslog.so
+                ${CMAKE_SOURCE_DIR}/graphengine/third_party/prebuild/${CMAKE_HOST_SYSTEM_PROCESSOR}/liberror_manager.so
                 ${CMAKE_SOURCE_DIR}/build/graphengine/libc_sec.so
             DESTINATION ${INSTALL_LIB_DIR}
             COMPONENT mindspore

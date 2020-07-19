@@ -673,7 +673,7 @@ def get_bprop_mirror_pad(self):
     mirror_pad_grad = G.MirrorPadGrad(self.mode)
 
     def bprop(x, paddings, out, dout):
-        dx = mirror_pad_grad(dout, paddings, x)
+        dx = mirror_pad_grad(dout, paddings)
         return (dx, zeros_like(paddings))
 
     return bprop

@@ -292,7 +292,6 @@ bool TbeKernelSelect::TbeCheckSupported(
                                                               parallel::TOPK,
                                                               parallel::IN_TOPK,
                                                               parallel::PACK,
-                                                              parallel::GATHER_ND,
                                                               parallel::UNSORTEF_SEGMENT_MIND,
                                                               parallel::UNSORTEF_SEGMENT_PRODD,
                                                               parallel::CAST};

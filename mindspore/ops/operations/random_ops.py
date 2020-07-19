@@ -19,6 +19,277 @@ from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ..primitive import PrimitiveWithInfer, prim_attr_register
+from .._utils import get_broadcast_shape
+
+
+class Laplace(PrimitiveWithInfer):
+    r"""
+    Generates random numbers according to the Laplace random number distribution.
+    It is defined as:
+
+    .. math::
+        \text{f}(x;μ,λ) = \frac{1}{2λ}\exp(-\frac{|x-μ|}{λ}),
+
+    Args:
+        seed (int): Seed data is used as entropy source for Random number engines generating pseudo-random numbers.
+          Default: 0.
+
+    Inputs:
+        - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
+        - **mean** (Tensor) - The mean μ distribution parameter, which specifies the location of the peak.
+          With float32 data type.
+        - **lambda_param** (Tensor) - The parameter used for controling the variance of this random distribution. The
+          variance of Laplace distribution is equal to twice the square of lambda_param. With float32 data type.
+
+    Outputs:
+        Tensor, has the shape 'shape' input and dtype as float32.
+
+    Examples:
+        >>> shape = (4, 16)
+        >>> mean = Tensor(1.0, mstype.float32)
+        >>> lambda_param = Tensor(1.0, mstype.float32)
+        >>> laplace = P.Laplace(seed=2)
+        >>> output = laplace(shape, mean, lambda_param)
+    """
+
+    @prim_attr_register
+    def __init__(self, seed=0):
+        """Init Laplace"""
+        self.init_prim_io_names(inputs=['shape', 'mean', 'lambda_param'], outputs=['output'])
+        validator.check_value_type('seed', seed, [int], self.name)
+
+    def __infer__(self, shape, mean, lambda_param):
+        shape_v = shape["value"]
+        if shape_v is None:
+            raise ValueError(f"For {self.name}, shape must be const.")
+        validator.check_value_type("shape", shape_v, [tuple], self.name)
+        for i, shape_i in enumerate(shape_v):
+            validator.check_integer("shape[%d]" % i, shape_i, 0, Rel.GT, self.name)
+        validator.check_tensor_type_same({"mean": mean["dtype"]}, [mstype.float32], self.name)
+        validator.check_tensor_type_same({"lambda_param": lambda_param["dtype"]}, [mstype.float32], self.name)
+        broadcast_shape = get_broadcast_shape(mean['shape'], lambda_param['shape'], self.name)
+        broadcast_shape = get_broadcast_shape(broadcast_shape, shape_v, self.name)
+        out = {
+            'shape': broadcast_shape,
+            'dtype': mstype.float32,
+            'value': None}
+        return out
+
+
+class Gamma(PrimitiveWithInfer):
+    r"""
+    Produces random positive floating-point values x, distributed according to probability density function:
+
+    .. math::
+        \text{P}(x|α,β) = \frac{\exp(-x/β)}{{β^α}\cdot{\Gamma(α)}}\cdot{x^{α-1}},
+
+    Args:
+        seed (int): Seed data is used as entropy source for Random number engines generating pseudo-random numbers.
+          Default: 0.
+
+    Inputs:
+        - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
+        - **alpha** (Tensor) - The α distribution parameter.
+          It is also known as the shape parameter. With float32 data type.
+        - **beta** (Tensor) - The β distribution parameter.
+          It is also known as the scale parameter. With float32 data type.
+
+    Outputs:
+        Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of alpha and beta.
+        The dtype is float32.
+
+    Examples:
+        >>> shape = (4, 16)
+        >>> alpha = Tensor(1.0, mstype.float32)
+        >>> beta = Tensor(1.0, mstype.float32)
+        >>> gamma = P.Gamma(seed=3)
+        >>> output = Gamma(shape, alpha, beta)
+    """
+
+    @prim_attr_register
+    def __init__(self, seed=0):
+        """Init Gamma"""
+        self.init_prim_io_names(inputs=['shape', 'alpha', 'beta'], outputs=['output'])
+        validator.check_value_type('seed', seed, [int], self.name)
+
+    def __infer__(self, shape, alpha, beta):
+        shape_v = shape["value"]
+        if shape_v is None:
+            raise ValueError(f"For {self.name}, shape must be const.")
+        validator.check_value_type("shape", shape_v, [tuple], self.name)
+        for i, shape_i in enumerate(shape_v):
+            validator.check_integer("shape[%d]" % i, shape_i, 0, Rel.GT, self.name)
+        validator.check_tensor_type_same({"alpha": alpha["dtype"]}, [mstype.float32], self.name)
+        validator.check_tensor_type_same({"beta": beta["dtype"]}, [mstype.float32], self.name)
+        broadcast_shape = get_broadcast_shape(alpha['shape'], beta['shape'], self.name)
+        broadcast_shape = get_broadcast_shape(broadcast_shape, shape_v, self.name)
+        out = {
+            'shape': broadcast_shape,
+            'dtype': mstype.float32,
+            'value': None}
+        return out
+
+
+class Poisson(PrimitiveWithInfer):
+    r"""
+    Produces random non-negative integer values i, distributed according to discrete probability function:
+
+    .. math::
+        \text{P}(i|μ) = \frac{\exp(-μ)μ^{i}}{i!},
+
+    Args:
+        seed (int): Seed data is used as entropy source for Random number engines generating pseudo-random numbers.
+          Default: 0.
+
+    Inputs:
+        - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
+        - **mean** (Tensor) - μ parameter the distribution was constructed with.
+          The parameter defines mean number of occurrences of the event. With float32 data type.
+
+    Outputs:
+        Tensor. The shape should be the broadcasted shape of Input "shape" and shape of mean.
+        The dtype is int32.
+
+    Examples:
+        >>> shape = (4, 16)
+        >>> mean = Tensor(5.0, mstype.float32)
+        >>> poisson = P.Poisson(seed=5)
+        >>> output = poisson(shape, mean)
+    """
+
+    @prim_attr_register
+    def __init__(self, seed=0):
+        """Init Poisson"""
+        self.init_prim_io_names(inputs=['shape', 'mean'], outputs=['output'])
+        validator.check_value_type('seed', seed, [int], self.name)
+
+    def __infer__(self, shape, mean):
+        shape_v = shape["value"]
+        if shape_v is None:
+            raise ValueError(f"For {self.name}, shape must be const.")
+        validator.check_value_type("shape", shape_v, [tuple], self.name)
+        for i, shape_i in enumerate(shape_v):
+            validator.check_integer("shape[%d]" % i, shape_i, 0, Rel.GT, self.name)
+        validator.check_tensor_type_same({"mean": mean["dtype"]}, [mstype.float32], self.name)
+        broadcast_shape = get_broadcast_shape(mean['shape'], shape_v, self.name)
+        out = {
+            'shape': broadcast_shape,
+            'dtype': mstype.int32,
+            'value': None}
+        return out
+
+
+class UniformInt(PrimitiveWithInfer):
+    r"""
+    Produces random integer values i, uniformly distributed on the closed interval [a, b], that is,
+    distributed according to the discrete probability function:
+
+    .. math::
+        \text{P}(i|a,b) = \frac{1}{b-a+1},
+
+    Note:
+        The number in tensor a should be strictly less than b at any position after broadcasting.
+
+    Args:
+        seed (int): Seed data is used as entropy source for Random number engines generating pseudo-random numbers.
+          Default: 0.
+
+    Inputs:
+        - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
+        - **a** (Tensor) - The a distribution parameter.
+          It defines the minimum possibly generated value. With int32 data type.
+        - **b** (Tensor) - The b distribution parameter.
+          It defines the maximum possibly generated value. With int32 data type.
+
+    Outputs:
+        Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of a and b.
+        The dtype is int32.
+
+    Examples:
+        >>> shape = (4, 16)
+        >>> a = Tensor(1, mstype.int32)
+        >>> b = Tensor(5, mstype.int32)
+        >>> uniform_int = P.UniformInt(seed=10)
+        >>> output = uniform_int(shape, a, b)
+    """
+
+    @prim_attr_register
+    def __init__(self, seed=0):
+        """Init UniformInt"""
+        self.init_prim_io_names(inputs=['shape', 'a', 'b'], outputs=['output'])
+        validator.check_value_type('seed', seed, [int], self.name)
+
+    def __infer__(self, shape, a, b):
+        shape_v = shape["value"]
+        if shape_v is None:
+            raise ValueError(f"For {self.name}, shape must be const.")
+        validator.check_value_type("shape", shape_v, [tuple], self.name)
+        for i, shape_i in enumerate(shape_v):
+            validator.check_integer("shape[%d]" % i, shape_i, 0, Rel.GT, self.name)
+        validator.check_tensor_type_same({"a": a["dtype"]}, [mstype.int32], self.name)
+        validator.check_tensor_type_same({"b": b["dtype"]}, [mstype.int32], self.name)
+        broadcast_shape = get_broadcast_shape(a['shape'], b['shape'], self.name)
+        broadcast_shape = get_broadcast_shape(broadcast_shape, shape_v, self.name)
+        out = {
+            'shape': broadcast_shape,
+            'dtype': mstype.int32,
+            'value': None}
+        return out
+
+
+class UniformReal(PrimitiveWithInfer):
+    r"""
+    Produces random floating-point values i, uniformly distributed on the interval [min(a, b), max(a, b)), that is,\
+    distributed according to the probability density function:
+
+    .. math::
+        \text{P}(i|a,b) = \frac{1}{b-a},
+
+    Args:
+        seed (int): Seed data is used as entropy source for Random number engines generating pseudo-random numbers.
+          Default: 0.
+
+    Inputs:
+        - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
+        - **a** (Tensor) - The a distribution parameter.
+          It defines the minimum possibly generated value. With float32 data type.
+        - **b** (Tensor) - The b distribution parameter.
+          It defines the maximum possibly generated value. With float32 data type.
+
+    Outputs:
+        Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of a and b.
+        The dtype is float32.
+
+    Examples:
+        >>> shape = (4, 16)
+        >>> a = Tensor(1.0, mstype.float32)
+        >>> b = Tensor(5.0, mstype.float32)
+        >>> uniform_real = P.UniformReal(seed=10)
+        >>> output = uniform_real(shape, a, b)
+    """
+
+    @prim_attr_register
+    def __init__(self, seed=0):
+        """Init UniformReal"""
+        self.init_prim_io_names(inputs=['shape', 'a', 'b'], outputs=['output'])
+        validator.check_value_type('seed', seed, [int], self.name)
+
+    def __infer__(self, shape, a, b):
+        shape_v = shape["value"]
+        if shape_v is None:
+            raise ValueError(f"For {self.name}, shape must be const.")
+        validator.check_value_type("shape", shape_v, [tuple], self.name)
+        for i, shape_i in enumerate(shape_v):
+            validator.check_integer("shape[%d]" % i, shape_i, 0, Rel.GT, self.name)
+        validator.check_tensor_type_same({"a": a["dtype"]}, [mstype.float32], self.name)
+        validator.check_tensor_type_same({"b": b["dtype"]}, [mstype.float32], self.name)
+        broadcast_shape = get_broadcast_shape(a['shape'], b['shape'], self.name)
+        broadcast_shape = get_broadcast_shape(broadcast_shape, shape_v, self.name)
+        out = {
+            'shape': broadcast_shape,
+            'dtype': mstype.float32,
+            'value': None}
+        return out
 
 
 class RandomChoiceWithMask(PrimitiveWithInfer):
@@ -64,50 +335,6 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype):
         validator.check_tensor_type_same({'x': x_dtype}, [mstype.bool_], self.name)
         return (mstype.int32, mstype.bool_)
-
-
-class Normal(PrimitiveWithInfer):
-    """
-    Generates random samples from a normal(Gaussian) distribution.
-
-    Args:
-        seed (int): Random seed. Default: 0.
-
-    Inputs:
-        - **shape** (tuple[int]) - The shape of output tensor. Only constant value is allowed.
-        - **mean** (Tensor) - The mean of the distribution, with float32 data type.
-        - **stddev** (Tensor) - The standard deviation of the distribution, with float32 data type.
-
-    Outputs:
-        Tensor, with the given shape from the specific distribution and float32 data type.
-
-    Examples:
-        >>> normal = P.Normal()
-        >>> mean = Tensor(0., mstype.float32)
-        >>> stddev = Tensor(1., mstype.float32)
-        >>> out = normal((32, 3, 3), mean, stddev)
-    """
-
-    @prim_attr_register
-    def __init__(self, seed=0):
-        """Init Normal"""
-        validator.check_value_type("seed", seed, [int], self.name)
-
-    def __infer__(self, shape, mean, stddev):
-        shape_value = shape["value"]
-        if shape_value is None:
-            raise ValueError(f"For {self.name}, shape must be const.")
-        validator.check_value_type("shape", shape_value, [tuple], self.name)
-        for i, shape_i in enumerate(shape_value):
-            validator.check_integer("shape[%d]" % i, shape_i, 0, Rel.GE, self.name)
-
-        validator.check_tensor_type_same({"mean": mean["dtype"]}, [mstype.float32], self.name)
-        validator.check_tensor_type_same({"stddev": stddev["dtype"]}, [mstype.float32], self.name)
-
-        out = {"shape": shape_value,
-               "dtype": mstype.float32,
-               "value": None}
-        return out
 
 
 class RandomCategorical(PrimitiveWithInfer):
@@ -166,3 +393,46 @@ class RandomCategorical(PrimitiveWithInfer):
         return {'shape': (x_shape),
                 'dtype': (self.dtype),
                 'value': None}
+
+class Normal(PrimitiveWithInfer):
+    """
+    Generates random samples from a normal(Gaussian) distribution.
+
+    Args:
+        seed (int): Random seed. Default: 0.
+
+    Inputs:
+        - **shape** (tuple[int]) - The shape of output tensor. Only constant value is allowed.
+        - **mean** (Tensor) - The mean of the distribution, with float32 data type.
+        - **stddev** (Tensor) - The standard deviation of the distribution, with float32 data type.
+
+    Outputs:
+        Tensor, with the given shape from the specific distribution and float32 data type.
+
+    Examples:
+        >>> normal = P.Normal()
+        >>> mean = Tensor(0., mstype.float32)
+        >>> stddev = Tensor(1., mstype.float32)
+        >>> out = normal((32, 3, 3), mean, stddev)
+    """
+
+    @prim_attr_register
+    def __init__(self, seed=0):
+        """Init Normal"""
+        validator.check_value_type("seed", seed, [int], self.name)
+
+    def __infer__(self, shape, mean, stddev):
+        shape_value = shape["value"]
+        if shape_value is None:
+            raise ValueError(f"For {self.name}, shape must be const.")
+        validator.check_value_type("shape", shape_value, [tuple], self.name)
+        for i, shape_i in enumerate(shape_value):
+            validator.check_integer("shape[%d]" % i, shape_i, 0, Rel.GE, self.name)
+
+        validator.check_tensor_type_same({"mean": mean["dtype"]}, [mstype.float32], self.name)
+        validator.check_tensor_type_same({"stddev": stddev["dtype"]}, [mstype.float32], self.name)
+
+        out = {"shape": shape_value,
+               "dtype": mstype.float32,
+               "value": None}
+        return out

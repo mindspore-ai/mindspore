@@ -12,32 +12,48 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+import numpy as np
+import pytest
+
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore.common import Tensor
+from mindspore import Tensor
 from mindspore.common import dtype as mstype
+from mindspore.ops import composite as C
 
-
-context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Net(nn.Cell):
-    def __init__(self, shape=None, mean=0.0, stddev=1.0, seed=0):
+    def __init__(self, shape, seed=0):
         super(Net, self).__init__()
-        self._mean = Tensor(mean, mstype.float32)
-        self._stddev = Tensor(stddev, mstype.float32)
-        self._normal = P.Normal(seed=seed)
-        self._shape = shape
+        self.shape = shape
+        self.seed = seed
 
-    def construct(self):
-        return self._normal(self._shape, self._mean, self._stddev)
+    def construct(self, mean, stddev):
+        return C.normal(self.shape, mean, stddev, self.seed)
 
 
-def test_net_3x2x4():
-    mean = 0.0
+def test_net_1D():
+    seed = 10
+    shape = (3, 2, 4)
+    mean = 1.0
     stddev = 1.0
-    seed = 0
-    net = Net((3, 2, 4), mean, stddev, seed)
-    out = net()
-    assert out.shape == (3, 2, 4)
+    net = Net(shape, seed)
+    tmean, tstddev = Tensor(mean, mstype.float32), Tensor(stddev, mstype.float32)
+    output = net(tmean, tstddev)
+    print(output.asnumpy())
+    assert output.shape == (3, 2, 4)
+
+
+def test_net_ND():
+    seed = 10
+    shape = (3, 1, 2)
+    mean = np.array([[[1], [2]], [[3], [4]], [[5], [6]]]).astype(np.float32)
+    stddev = np.array([1.0]).astype(np.float32)
+    net = Net(shape, seed)
+    tmean, tstddev = Tensor(mean, mstype.float32), Tensor(stddev, mstype.float32)
+    output = net(tmean, tstddev)
+    print(output.asnumpy())
+    assert output.shape == (3, 2, 2)
