@@ -477,7 +477,7 @@ def check_random_affine(method):
                 if len(shear) not in (2, 4):
                     raise TypeError("shear must be of length 2 or 4.")
 
-            type_check(resample, (Inter,), "resample")
+        type_check(resample, (Inter,), "resample")
 
         if fill_value is not None:
             check_fill_value(fill_value)
