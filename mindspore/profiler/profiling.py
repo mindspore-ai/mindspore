@@ -35,6 +35,7 @@ from mindspore.profiler.parser.minddata_pipeline_parser import \
     MinddataPipelineParser
 from mindspore.profiler.parser.optime_parser import OPComputeTimeParser
 from mindspore.profiler.parser.step_trace_parser import StepTraceParser
+from mindspore.nn.cell import Cell
 
 PROFILING_LOG_BASE_PATH = "/var/log/npu/profiling"
 INIT_OP_NAME = 'Default/InitDataSetQueue'
@@ -352,10 +353,9 @@ class Profiler:
 
             fwrite_format(detail_file_path, data_source='', is_print=True)
             fwrite_format(detail_file_path, data_source='Detail:', is_print=True)
-            col_names = ['op_name', 'op_type', 'avg_execution_time', 'subgraph',
-                         'full_op_name', 'op_info']
-            fwrite_format(detail_file_path, data_source=" ".join(col_names), is_print=True)
-            fwrite_format(detail_file_path, data_source=aicore_detail_result, is_print=True)
+            fwrite_format(detail_file_path, data_source=" ".join(aicore_detail_result.get('col_name_detail')),
+                          is_print=True)
+            fwrite_format(detail_file_path, data_source=aicore_detail_result.get('object'), is_print=True)
 
     def _query_op_type_info(self):
         """
@@ -388,9 +388,14 @@ class Profiler:
         if self._subgraph != 'all':
             subgraph_condition['in'] = [self._subgraph]
 
+        filter_condition = {
+            'op_type': op_type_condition,
+            'subgraph': subgraph_condition,
+            'is_display_detail': False,
+            'is_display_full_op_name': self._withfullpath
+        }
         integrator = Integrator(self._output_path, self._dev_id)
-        return integrator.get_aicore_detail_data()
-
+        return integrator.query_and_sort_by_op_type(filter_condition, op_type_order)
 
     def _get_devid_and_devtarget(self):
         """Get device id and target of this training."""
@@ -415,3 +420,22 @@ class Profiler:
             raise RuntimeError(msg)
 
         self._dev_id = dev_id
+
+    @staticmethod
+    def trainable_parameters(network):
+        """
+        Get the number of trainable parameters in the training network.
+
+        Args:
+            network(Cell): The training network.
+
+        Returns:
+            an integer,the network of trainable parameters.
+        """
+        if not isinstance(network, Cell):
+            msg = "Profiling: The network should be an object of nn.Cell"
+            raise ValueError(msg)
+
+        param_nums = len(network.parameters_dict())
+
+        return param_nums
