@@ -216,6 +216,7 @@ install(
         ${CMAKE_SOURCE_DIR}/mindspore/common
         ${CMAKE_SOURCE_DIR}/mindspore/ops
         ${CMAKE_SOURCE_DIR}/mindspore/communication
+        ${CMAKE_SOURCE_DIR}/mindspore/profiler
     DESTINATION ${INSTALL_PY_DIR}
     COMPONENT mindspore
 )
