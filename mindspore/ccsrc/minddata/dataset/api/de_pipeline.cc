@@ -385,9 +385,14 @@ Status DEPipeline::SaveDataset(const std::vector<std::string> &file_names, const
   }
 
   TensorRow row;
-  std::unordered_map<std::string, int32_t> column_name_id_map =
-    iterator_->GetColumnNameMap();  // map of column name, id
-  bool first_loop = true;           // build schema in first loop
+  std::unordered_map<std::string, int32_t> column_name_id_map;
+  for (auto el : iterator_->GetColumnNameMap()) {
+    std::string column_name = el.first;
+    std::transform(column_name.begin(), column_name.end(), column_name.begin(),
+                   [](unsigned char c) { return ispunct(c) ? '_' : c; });
+    column_name_id_map[column_name] = el.second;
+  }
+  bool first_loop = true;  // build schema in first loop
   do {
     json row_raw_data;
     std::map<std::string, std::unique_ptr<std::vector<uint8_t>>> row_bin_data;
@@ -402,7 +407,10 @@ Status DEPipeline::SaveDataset(const std::vector<std::string> &file_names, const
       std::vector<std::string> index_fields;
       s = FetchMetaFromTensorRow(column_name_id_map, row, &mr_json, &index_fields);
       RETURN_IF_NOT_OK(s);
-      mindrecord::ShardHeader::initialize(&mr_header, mr_json, index_fields, blob_fields, mr_schema_id);
+      if (mindrecord::SUCCESS !=
+          mindrecord::ShardHeader::initialize(&mr_header, mr_json, index_fields, blob_fields, mr_schema_id)) {
+        RETURN_STATUS_UNEXPECTED("Error: failed to initialize ShardHeader.");
+      }
       mr_writer->SetShardHeader(mr_header);
       first_loop = false;
     }
@@ -422,7 +430,9 @@ Status DEPipeline::SaveDataset(const std::vector<std::string> &file_names, const
     }
   } while (!row.empty());
   mr_writer->Commit();
-  mindrecord::ShardIndexGenerator::finalize(file_names);
+  if (mindrecord::SUCCESS != mindrecord::ShardIndexGenerator::finalize(file_names)) {
+    RETURN_STATUS_UNEXPECTED("Error: failed to finalize ShardIndexGenerator.");
+  }
   return Status::OK();
 }
 
