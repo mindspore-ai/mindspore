@@ -39,20 +39,7 @@ class SparseApplyProximalAdagradCPUKernel : public CPUKernel {
   size_t var_outer_dim_size_{1};
 };
 
-MS_REG_CPU_KERNEL(SparseApplyProximalAdagrad,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  SparseApplyProximalAdagradCPUKernel);
-
-MS_REG_CPU_KERNEL(SparseApplyProximalAdagradNoReturn,
+MS_REG_CPU_KERNEL(FusedSparseProximalAdagrad,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)

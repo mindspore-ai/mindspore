@@ -56,7 +56,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
 
 from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, Poisson, UniformInt, UniformReal,
                          RandomCategorical, Laplace)
-from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, ApplyMomentum, BatchNorm,
+from .nn_ops import (LSTM, SGD, Adam, FusedSparseAdam, FusedSparseLazyAdam, ApplyMomentum, BatchNorm,
                      BiasAdd, Conv2D,
                      DepthwiseConv2dNative,
                      DropoutDoMask, DropoutGrad, Dropout,
@@ -74,6 +74,7 @@ from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, Appl
                      SparseSoftmaxCrossEntropyWithLogits, Tanh,
                      TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrl,
                      ApplyProximalAdagrad, SparseApplyProximalAdagrad, SparseApplyAdagradV2, SparseApplyFtrlV2,
+                     FusedSparseFtrl, FusedSparseProximalAdagrad,
                      ApplyAdaMax, ApplyAdadelta, ApplyAdagrad, ApplyAdagradV2,
                      ApplyAddSign, ApplyPowerSign, ApplyGradientDescent, ApplyProximalGradientDescent,
                      ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK)
@@ -114,8 +115,8 @@ __all__ = [
     'MaxPool',
     'TopK',
     'Adam',
-    'SparseApplyAdam',
-    'SparseApplyLazyAdam',
+    'FusedSparseAdam',
+    'FusedSparseLazyAdam',
     'Softplus',
     'Softmax',
     'Softsign',
@@ -310,8 +311,10 @@ __all__ = [
     "SpaceToBatch",
     "SparseApplyFtrl",
     "SparseApplyFtrlV2",
+    "FusedSparseFtrl",
     "ApplyProximalAdagrad",
     "SparseApplyProximalAdagrad",
+    "FusedSparseProximalAdagrad",
     "ApplyAdaMax",
     "ApplyAdadelta",
     "ApplyAdagrad",

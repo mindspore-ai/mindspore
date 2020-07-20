@@ -32,7 +32,7 @@ epsilon = 1e-8
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.sparse_apply_adam = P.SparseApplyAdam()
+        self.sparse_apply_adam = P.FusedSparseAdam()
         self.var = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="var")
         self.m = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="m")
         self.v = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="v")
