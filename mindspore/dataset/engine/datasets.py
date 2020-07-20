@@ -253,8 +253,8 @@ class Dataset:
         If a per_batch_map callable is provided, it will be applied to the batches of tensors.
 
         Note:
-            The order of using repeat and batch reflects the number of batches. Recommend that
-            repeat operation should be used after batch operation.
+            The order of using repeat and batch reflects the number of batches and per_batch_map.
+            Recommend that repeat operation should be used after batch operation.
 
         Args:
             batch_size (int or function): The number of rows each batch is created with. An
