@@ -212,6 +212,7 @@ CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
   MS_EXCEPTION_IF_NULL(kernel_select);
   kernel_select->SelectKernel(trans_node);
   AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), trans_node);
+  AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, MakeValue<std::vector<std::string>>({}), trans_node);
   MS_EXCEPTION_IF_NULL(trans_node);
   trans_node->set_scope(input->scope());
   return trans_node;
@@ -250,6 +251,7 @@ AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cast.get());
   AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {origin_shape}, cast.get());
   AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(true), cast);
+  AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, MakeValue<std::vector<std::string>>({}), cast);
   return cast;
 }
 
@@ -354,6 +356,7 @@ AnfNodePtr CreateMemcpyAsyncOp(const FuncGraphPtr &graph, const AnfNodePtr &node
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_abstract(node->abstract());
   new_node->set_scope(node->scope());
+  AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, MakeValue<std::vector<std::string>>({}), new_node);
   return new_node;
 }
 }  // namespace opt
