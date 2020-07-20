@@ -120,7 +120,7 @@ class UniformKl(nn.Cell):
 
 def test_kl():
     """
-    Test kl_loss
+    Test kl_loss.
     """
     net = UniformKl()
     low_b = Tensor(np.array([0.0]).astype(np.float32), dtype=dtype.float32)

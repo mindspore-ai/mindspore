@@ -109,7 +109,7 @@ class Basics(nn.Cell):
 
 def test_basics():
     """
-    Test mean/standard deviation and range.
+    Test mean/standard/mode deviation.
     """
     basics = Basics()
     mean, sd, mode = basics()
@@ -120,6 +120,30 @@ def test_basics():
     assert (np.abs(mean.asnumpy() - expect_mean) < tol).all()
     assert (np.abs(sd.asnumpy() - expect_sd) < tol).all()
     assert (np.abs(mode.asnumpy() - expect_mode) < tol).all()
+
+class Sampling(nn.Cell):
+    """
+    Test class: sample of Exponential distribution.
+    """
+    def __init__(self, shape, seed=0):
+        super(Sampling, self).__init__()
+        self.e = nn.Exponential([[1.0], [0.5]], seed=seed, dtype=dtype.float32)
+        self.shape = shape
+
+    @ms_function
+    def construct(self, rate=None):
+        return self.e('sample', self.shape, rate)
+
+def test_sample():
+    """
+    Test sample.
+    """
+    shape = (2, 3)
+    seed = 10
+    rate = Tensor([1.0, 2.0, 3.0], dtype=dtype.float32)
+    sample = Sampling(shape, seed=seed)
+    output = sample(rate)
+    assert output.shape == (2, 3, 3)
 
 class CDF(nn.Cell):
     """

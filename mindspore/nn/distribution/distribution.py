@@ -30,12 +30,14 @@ class Distribution(Cell):
         and _log_prob. Functions should be called through construct when
         used inside a network. Arguments should be passed in through *args
         in the form  of function name followed by additional arguments.
-        Functions such as cdf and prob, requires a value to be passed in while 
-        functions such as mean, and sd does not require arguments other than name.
+        Functions such as cdf and prob, require a value to be passed in while
+        functions such as mean and sd do not require arguments other than name.
 
-        Dist_spec_args are unique for each distribution. For example, mean and sd
-        are the dist_spec_args for a Normal distribution. For all functions, dist_spec_args, are optional. Passing in 
-        the additional dist_spec_args will make the result to be evaluated with
+        Dist_spec_args are unique for each type of distribution. For example, mean and sd
+        are the dist_spec_args for a Normal distribution.
+
+        For all functions, passing in dist_spec_args, are optional.
+        Passing in the additional dist_spec_args will make the result to be evaluated with
         new distribution specified by the dist_spec_args. But it won't change the
         original distribuion.
     """
@@ -258,7 +260,8 @@ class Distribution(Cell):
         Evaluate the log cdf at given value.
 
         Note:
-            Args must include value, and dist_spec_args are optional.
+            Args must include name of the function and value.
+            Dist_spec_args are optional.
         """
         return self._call_log_cdf(*args)
 
@@ -427,6 +430,11 @@ class Distribution(Cell):
     def construct(self, *inputs):
         """
         Override construct in Cell.
+
+        Note:
+            Names of supported functions:
+            'prob', 'log_prob', 'cdf', 'log_cdf', 'survival_function', 'log_survival'
+            'var', 'sd', 'entropy', 'kl_loss', 'cross_entropy', 'sample'.
 
         Args:
             *inputs (list): inputs[0] is always the name of the function.

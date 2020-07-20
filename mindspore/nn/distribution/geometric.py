@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Geometric Distribution"""
+import numpy as np
 from mindspore.ops import operations as P
 from .distribution import Distribution
 from ._utils.utils import cast_to_tensor, check_prob
@@ -37,10 +38,10 @@ class Geometric(Distribution):
         >>> # To initialize a Geometric distribution of prob 0.5
         >>> n = nn.Geometric(0.5, dtype=mstype.int32)
         >>>
-        >>> # The following create two independent Geometric distributions
+        >>> # The following creates two independent Geometric distributions
         >>> n = nn.Geometric([0.5, 0.5], dtype=mstype.int32)
         >>>
-        >>> # A Geometric distribution can be initilize without arguments
+        >>> # A Geometric distribution can be initilized without arguments
         >>> # In this case, probs must be passed in through construct.
         >>> n = nn.Geometric(dtype=mstype.int32)
         >>>
@@ -51,16 +52,16 @@ class Geometric(Distribution):
         >>>         self.g1 = nn.Geometric(0.5, dtype=mstype.int32)
         >>>         self.g2 = nn.Geometric(dtype=mstype.int32)
         >>>
-        >>>     # All the following calls in construct are valid
+        >>>     # Tthe following calls are valid in construct
         >>>     def construct(self, value, probs_b, probs_a):
         >>>
-        >>>         # Similar to calls can be made to other probability functions
+        >>>         # Similar calls can be made to other probability functions
         >>>         # by replacing 'prob' with the name of the function
         >>>         ans = self.g1('prob', value)
         >>>         # Evaluate with the respect to distribution b
         >>>         ans = self.g1('prob', value, probs_b)
         >>>
-        >>>         # Additional probs must be passed in through construct
+        >>>         # Probs must be passed in through construct
         >>>         ans = self.g2('prob', value, probs_a)
         >>>
         >>>         # Functions 'sd', 'var', 'entropy' have the same usage with 'mean'
@@ -69,7 +70,7 @@ class Geometric(Distribution):
         >>>         # Will return mean_b
         >>>         ans = self.g1('mean', probs_b)
         >>>
-        >>>         # Additional probs must be passed in through construct
+        >>>         # Probs must be passed in through construct
         >>>         ans = self.g2('mean', probs_a)
         >>>
         >>>         # Usage of 'kl_loss' and 'cross_entropy' are similar
@@ -102,23 +103,22 @@ class Geometric(Distribution):
         else:
             self._probs = probs
 
+        self.minval = np.finfo(np.float).tiny
+
         # ops needed for the class
-        self.log = P.Log()
-        self.add = P.TensorAdd()
-        self.mul = P.Mul()
-        self.sqrt = P.Sqrt()
-        self.realdiv = P.RealDiv()
-        self.shape = P.Shape()
-        self.dType = P.DType()
+        self.const = P.ScalarToArray()
+        self.dtypeop = P.DType()
+        self.fill = P.Fill()
         self.floor = P.Floor()
         self.issubclass = P.IsSubClass()
-        self.const = P.ScalarToArray()
         self.less = P.Less()
-        self.normal = P.Normal(seed=seed)
-        self.sq = P.Square()
-        self.select = P.Select()
-        self.fill = P.Fill()
+        self.log = P.Log()
         self.pow = P.Pow()
+        self.select = P.Select()
+        self.shape = P.Shape()
+        self.sq = P.Square()
+        self.sqrt = P.Sqrt()
+        self.uniform = P.UniformReal(seed=seed)
 
     def extend_repr(self):
         if self.is_scalar_batch:
@@ -140,7 +140,7 @@ class Geometric(Distribution):
             MEAN(Geo) = \fratc{1 - probs1}{probs1}
         """
         if name == 'mean':
-            probs1 = self._probs if probs1 is None else probs1
+            probs1 = self.probs if probs1 is None else probs1
             return (1. - probs1) / probs1
         return None
 
@@ -160,7 +160,7 @@ class Geometric(Distribution):
             VAR(Geo) = \fract{1 - probs1}{probs1 ^ {2}}
         """
         if name in self._variance_functions:
-            probs1 = self._probs if probs1 is None else probs1
+            probs1 = self.probs if probs1 is None else probs1
             return (1.0 - probs1) / self.sq(probs1)
         return None
 
@@ -170,7 +170,7 @@ class Geometric(Distribution):
             H(Geo) = \fract{-1 * probs0 \log_2 (1-probs0)\ - prob1 * \log_2 (1-probs1)\ }{probs1}
         """
         if name == 'entropy':
-            probs1 = self._probs if probs is None else probs
+            probs1 = self.probs if probs is None else probs
             probs0 = 1.0 - probs1
             return (-probs0 * self.log(probs0) - probs1 * self.log(probs1)) / probs1
         return None
@@ -183,7 +183,7 @@ class Geometric(Distribution):
             name (str): name of the funtion. Should always be "cross_entropy" when passed in from construct.
             dist (str): type of the distributions. Should be "Geometric" in this case.
             probs1_b (Tensor): probability of success of distribution b.
-            probs1_a (Tensor): probability of success of distribution a. Default: self._probs.
+            probs1_a (Tensor): probability of success of distribution a. Default: self.probs.
         """
         if name == 'cross_entropy' and dist == 'Geometric':
             return self._entropy(probs=probs1_a) + self._kl_loss(name, dist, probs1_b, probs1_a)
@@ -196,15 +196,15 @@ class Geometric(Distribution):
         Args:
             name (str): name of the function. Should be "prob" when passed in from construct.
             value (Tensor): a Tensor composed of only natural numbers.
-            probs (Tensor): probability of success. Default: self._probs.
+            probs (Tensor): probability of success. Default: self.probs.
 
         .. math::
             pmf(k) = probs0 ^k * probs1 if k >= 0;
             pmf(k) = 0 if k < 0.
         """
         if name in self._prob_functions:
-            probs1 = self._probs if probs is None else probs
-            dtype = self.dType(value)
+            probs1 = self.probs if probs is None else probs
+            dtype = self.dtypeop(value)
             if self.issubclass(dtype, mstype.int_):
                 pass
             elif self.issubclass(dtype, mstype.float_):
@@ -224,7 +224,7 @@ class Geometric(Distribution):
         Args:
             name (str): name of the function.
             value (Tensor): a Tensor composed of only natural numbers.
-            probs (Tensor): probability of success. Default: self._probs.
+            probs (Tensor): probability of success. Default: self.probs.
 
         .. math::
             cdf(k) = 1 - probs0 ^ (k+1) if k >= 0;
@@ -232,9 +232,9 @@ class Geometric(Distribution):
 
         """
         if name in self._cdf_survival_functions:
-            probs1 = self._probs if probs is None else probs
+            probs1 = self.probs if probs is None else probs
             probs0 = 1.0 - probs1
-            dtype = self.dType(value)
+            dtype = self.dtypeop(value)
             if self.issubclass(dtype, mstype.int_):
                 pass
             elif self.issubclass(dtype, mstype.float_):
@@ -255,16 +255,16 @@ class Geometric(Distribution):
             name (str): name of the funtion.
             dist (str): type of the distributions. Should be "Geometric" in this case.
             probs1_b (Tensor): probability of success of distribution b.
-            probs1_a (Tensor): probability of success of distribution a. Default: self._probs.
+            probs1_a (Tensor): probability of success of distribution a. Default: self.probs.
 
         .. math::
             KL(a||b) = \log(\fract{probs1_a}{probs1_b}) + \fract{probs0_a}{probs1_a} * \log(\fract{probs0_a}{probs0_b})
         """
         if name in self._divergence_functions and dist == 'Geometric':
-            probs1_a = self._probs if probs1_a is None else probs1_a
+            probs1_a = self.probs if probs1_a is None else probs1_a
             probs0_a = 1.0 - probs1_a
             probs0_b = 1.0 - probs1_b
-            return self.log(probs1_a / probs1_b) + self.mul(probs0_a / probs1_a, self.log(probs0_a / probs0_b))
+            return self.log(probs1_a / probs1_b) + (probs0_a / probs1_a) * self.log(probs0_a / probs0_b)
         return None
 
     def _sample(self, name, shape=(), probs=None):
@@ -274,12 +274,15 @@ class Geometric(Distribution):
         Args:
             name (str): name of the function. Should always be 'sample' when passed in from construct.
             shape (tuple): shape of the sample. Default: ().
-            probs (Tensor): probs1 of the samples. Default: self._probs.
+            probs (Tensor): probability of success. Default: self.probs.
 
         Returns:
             Tensor, shape is shape + batch_shape.
         """
         if name == 'sample':
-            probs = self._probs if probs is None else probs
-            return self.fill(mstype.float32, shape + self.shape(probs), 1.0)
+            probs = self.probs if probs is None else probs
+            minval = self.const(self.minval)
+            maxval = self.const(1.0)
+            sample_uniform = self.uniform(shape + self.shape(probs), minval, maxval)
+            return self.floor(self.log(sample_uniform) / self.log(1.0 - probs))
         return None

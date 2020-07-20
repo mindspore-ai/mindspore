@@ -21,7 +21,6 @@ import mindspore.nn as nn
 from mindspore import dtype
 from mindspore import Tensor
 
-
 def test_arguments():
     """
     Args passing during initialization.

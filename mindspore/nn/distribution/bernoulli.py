@@ -14,7 +14,6 @@
 # ============================================================================
 """Bernoulli Distribution"""
 from mindspore.ops import operations as P
-from mindspore.ops import composite as C
 from .distribution import Distribution
 from ._utils.utils import cast_to_tensor, check_prob
 from ...common import dtype as mstype
@@ -37,10 +36,10 @@ class Bernoulli(Distribution):
         >>> # To initialize a Bernoulli distribution of prob 0.5
         >>> n = nn.Bernoulli(0.5, dtype=mstype.int32)
         >>>
-        >>> # The following create two independent Bernoulli distributions
+        >>> # The following creates two independent Bernoulli distributions
         >>> n = nn.Bernoulli([0.5, 0.5], dtype=mstype.int32)
         >>>
-        >>> # A Bernoulli distribution can be initilize without arguments
+        >>> # A Bernoulli distribution can be initilized without arguments
         >>> # In this case, probs must be passed in through construct.
         >>> n = nn.Bernoulli(dtype=mstype.int32)
         >>>
@@ -54,29 +53,29 @@ class Bernoulli(Distribution):
         >>>     # All the following calls in construct are valid
         >>>     def construct(self, value, probs_b, probs_a):
         >>>
-        >>>         # Similar to calls can be made to other probability functions
+        >>>         # Similar calls can be made to other probability functions
         >>>         # by replacing 'prob' with the name of the function
         >>>         ans = self.b1('prob', value)
         >>>         # Evaluate with the respect to distribution b
         >>>         ans = self.b1('prob', value, probs_b)
         >>>
-        >>>         # Additional probs must be passed in through construct
+        >>>         # probs must be passed in through construct
         >>>         ans = self.b2('prob', value, probs_a)
         >>>
-        >>>         # Functions 'sd', 'var', 'entropy' have the same usage with 'mean'
+        >>>         # Functions 'sd', 'var', 'entropy' have the same usage like 'mean'
         >>>         # Will return [0.0]
         >>>         ans = self.b1('mean')
         >>>         # Will return mean_b
         >>>         ans = self.b1('mean', probs_b)
         >>>
-        >>>         # Additional probs must be passed in through construct
+        >>>         # probs must be passed in through construct
         >>>         ans = self.b2('mean', probs_a)
         >>>
         >>>         # Usage of 'kl_loss' and 'cross_entropy' are similar
         >>>         ans = self.b1('kl_loss', 'Bernoulli', probs_b)
         >>>         ans = self.b1('kl_loss', 'Bernoulli', probs_b, probs_a)
         >>>
-        >>>         # Additional probs must be passed in through construct
+        >>>         # Additional probs_a must be passed in through construct
         >>>         ans = self.b2('kl_loss', 'Bernoulli', probs_b, probs_a)
         >>>
         >>>         # Sample Usage
@@ -110,18 +109,12 @@ class Bernoulli(Distribution):
         self.erf = P.Erf()
         self.fill = P.Fill()
         self.log = P.Log()
-        self.add = P.TensorAdd()
-        self.sq = P.Square()
-        self.mul = P.Mul()
-        self.sqrt = P.Sqrt()
-        self.realdiv = P.RealDiv()
-        self.shape = P.Shape()
-        self.const = P.ScalarToArray()
         self.less = P.Less()
-        self.cast = P.Cast()
-        self.erf = P.Erf()
+        self.shape = P.Shape()
         self.select = P.Select()
-        self.fill = P.Fill()
+        self.sq = P.Square()
+        self.sqrt = P.Sqrt()
+        self.uniform = P.UniformReal(seed=seed)
 
     def extend_repr(self):
         if self.is_scalar_batch:
@@ -143,7 +136,7 @@ class Bernoulli(Distribution):
             MEAN(B) = probs1
         """
         if name == 'mean':
-            return self._probs if probs1 is None else probs1
+            return self.probs if probs1 is None else probs1
         return None
 
     def _mode(self, name='mode', probs1=None):
@@ -166,9 +159,9 @@ class Bernoulli(Distribution):
             VAR(B) = probs1 * probs0
         """
         if name in self._variance_functions:
-            probs1 = self._probs if probs1 is None else probs1
+            probs1 = self.probs if probs1 is None else probs1
             probs0 = 1.0 - probs1
-            return self.mul(probs0, probs1)
+            return probs0 * probs1
         return None
 
     def _entropy(self, name='entropy', probs=None):
@@ -177,9 +170,9 @@ class Bernoulli(Distribution):
             H(B) = -probs0 * \log(probs0) - probs1 * \log(probs1)
         """
         if name == 'entropy':
-            probs1 = self._probs if probs is None else probs
+            probs1 = self.probs if probs is None else probs
             probs0 = 1 - probs1
-            return -self.mul(probs0, self.log(probs0)) - self.mul(probs1, self.log(probs1))
+            return -1 * (probs0 * self.log(probs0)) - (probs1 * self.log(probs1))
         return None
 
     def _cross_entropy(self, name, dist, probs1_b, probs1_a=None):
@@ -190,7 +183,7 @@ class Bernoulli(Distribution):
             name (str): name of the funtion.
             dist (str): type of the distributions. Should be "Bernoulli" in this case.
             probs1_b (Tensor): probs1 of distribution b.
-            probs1_a (Tensor): probs1 of distribution a. Default: self._probs.
+            probs1_a (Tensor): probs1 of distribution a. Default: self.probs.
         """
         if name == 'cross_entropy' and dist == 'Bernoulli':
             return self._entropy(probs=probs1_a) + self._kl_loss(name, dist, probs1_b, probs1_a)
@@ -203,14 +196,14 @@ class Bernoulli(Distribution):
         Args:
             name (str): name of the function. Should be "prob" when passed in from construct.
             value (Tensor): a Tensor composed of only zeros and ones.
-            probs (Tensor): probability of outcome is 1. Default: self._probs.
+            probs (Tensor): probability of outcome is 1. Default: self.probs.
 
         .. math::
             pmf(k) = probs1 if k = 1;
             pmf(k) = probs0 if k = 0;
         """
         if name in self._prob_functions:
-            probs1 = self._probs if probs is None else probs
+            probs1 = self.probs if probs is None else probs
             probs0 = 1.0 - probs1
             return (probs1 * value) + (probs0 * (1.0 - value))
         return None
@@ -222,7 +215,7 @@ class Bernoulli(Distribution):
         Args:
             name (str): name of the function.
             value (Tensor): value to be evaluated.
-            probs (Tensor): probability of outcome is 1. Default: self._probs.
+            probs (Tensor): probability of outcome is 1. Default: self.probs.
 
         .. math::
             cdf(k) = 0 if k < 0;
@@ -250,17 +243,17 @@ class Bernoulli(Distribution):
             name (str): name of the funtion.
             dist (str): type of the distributions. Should be "Bernoulli" in this case.
             probs1_b (Tensor): probs1 of distribution b.
-            probs1_a (Tensor): probs1 of distribution a. Default: self._probs.
+            probs1_a (Tensor): probs1 of distribution a. Default: self.probs.
 
         .. math::
             KL(a||b) = probs1_a * \log(\fract{probs1_a}{probs1_b}) +
                        probs0_a * \log(\fract{probs0_a}{probs0_b})
         """
         if name in self._divergence_functions and dist == 'Bernoulli':
-            probs1_a = self._probs if probs1_a is None else probs1_a
+            probs1_a = self.probs if probs1_a is None else probs1_a
             probs0_a = 1.0 - probs1_a
             probs0_b = 1.0 - probs1_b
-            return self.mul(probs1_a, self.log(probs1_a / probs1_b)) + self.mul(probs0_a, self.log(probs0_a / probs0_b))
+            return probs1_a * self.log(probs1_a / probs1_b) + probs0_a * self.log(probs0_a / probs0_b)
         return None
 
     def _sample(self, name, shape=(), probs=None):
@@ -270,21 +263,17 @@ class Bernoulli(Distribution):
         Args:
             name (str): name of the function. Should always be 'sample' when passed in from construct.
             shape (tuple): shape of the sample. Default: ().
-            probs (Tensor): probs1 of the samples. Default: self._probs.
+            probs (Tensor): probs1 of the samples. Default: self.probs.
 
         Returns:
             Tensor, shape is shape + batch_shape.
         """
         if name == 'sample':
-            probs1 = self._probs if probs is None else probs
-            batch_shape = self.shape(probs1)
-            sample_shape = shape + batch_shape
-            mean_zero = self.const(0.0)
-            sd_one = self.const(1.0)
-            sqrt_two = self.sqrt(self.const(2.0))
-            sample_norm = C.normal(sample_shape, mean_zero, sd_one, self.seed)
-            sample_uniform = 0.5 * (1 + self.erf(self.realdiv(sample_norm, sqrt_two)))
+            probs1 = self.probs if probs is None else probs
+            l_zero = self.const(0.0)
+            h_one = self.const(1.0)
+            sample_uniform = self.uniform(shape + self.shape(probs1), l_zero, h_one)
             sample = self.less(sample_uniform, probs1)
-            sample = self.cast(sample, self._dtype)
+            sample = self.cast(sample, self.dtype)
             return sample
         return None

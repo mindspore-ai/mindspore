@@ -111,7 +111,7 @@ class Basics(nn.Cell):
 
 def test_basics():
     """
-    Test mean/standard deviation/mode.
+    Test mean/standard deviation.
     """
     basics = Basics()
     mean, sd = basics()
@@ -120,6 +120,31 @@ def test_basics():
     tol = 1e-6
     assert (np.abs(mean.asnumpy() - expect_mean) < tol).all()
     assert (np.abs(sd.asnumpy() - expect_sd) < tol).all()
+
+class Sampling(nn.Cell):
+    """
+    Test class: sample of Uniform distribution.
+    """
+    def __init__(self, shape, seed=0):
+        super(Sampling, self).__init__()
+        self.u = nn.Uniform([0.0], [[1.0], [2.0]], seed=seed, dtype=dtype.float32)
+        self.shape = shape
+
+    @ms_function
+    def construct(self, low=None, high=None):
+        return self.u('sample', self.shape, low, high)
+
+def test_sample():
+    """
+    Test sample.
+    """
+    shape = (2, 3)
+    seed = 10
+    low = Tensor([1.0], dtype=dtype.float32)
+    high = Tensor([2.0, 3.0, 4.0], dtype=dtype.float32)
+    sample = Sampling(shape, seed=seed)
+    output = sample(low, high)
+    assert output.shape == (2, 3, 3)
 
 class CDF(nn.Cell):
     """

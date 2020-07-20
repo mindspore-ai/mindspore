@@ -37,10 +37,10 @@ class Uniform(Distribution):
         >>> # To initialize a Uniform distribution of mean 3.0 and standard deviation 4.0
         >>> n = nn.Uniform(0.0, 1.0, dtype=mstype.float32)
         >>>
-        >>> # The following create two independent Uniform distributions
+        >>> # The following creates two independent Uniform distributions
         >>> n = nn.Uniform([0.0, 0.0], [1.0, 2.0], dtype=mstype.float32)
         >>>
-        >>> # A Uniform distribution can be initilize without arguments
+        >>> # A Uniform distribution can be initilized without arguments
         >>> # In this case, high and low must be passed in through construct.
         >>> n = nn.Uniform(dtype=mstype.float32)
         >>>
@@ -54,13 +54,13 @@ class Uniform(Distribution):
         >>>     # All the following calls in construct are valid
         >>>     def construct(self, value, low_b, high_b, low_a, high_a):
         >>>
-        >>>         # Similar to calls can be made to other probability functions
+        >>>         # Similar calls can be made to other probability functions
         >>>         # by replacing 'prob' with the name of the function
         >>>         ans = self.u1('prob', value)
         >>>         # Evaluate with the respect to distribution b
         >>>         ans = self.u1('prob', value, low_b, high_b)
         >>>
-        >>>         # Additional high and low must be passed in through construct
+        >>>         # High and low must be passed in through construct
         >>>         ans = self.u2('prob', value, low_a, high_a)
         >>>
         >>>         # Functions 'sd', 'var', 'entropy' have the same usage with 'mean'
@@ -69,7 +69,7 @@ class Uniform(Distribution):
         >>>         # Will return low_b
         >>>         ans = self.u1('mean', low_b, high_b)
         >>>
-        >>>         # Additional high and low must be passed in through construct
+        >>>         # High and low must be passed in through construct
         >>>         ans = self.u2('mean', low_a, high_a)
         >>>
         >>>         # Usage of 'kl_loss' and 'cross_entropy' are similar
@@ -100,7 +100,7 @@ class Uniform(Distribution):
         if low is not None and high is not None:
             self._low = convert_to_batch(low, self._broadcast_shape, dtype)
             self._high = convert_to_batch(high, self._broadcast_shape, dtype)
-            check_greater(self._low, self._high, "low value", "high value")
+            check_greater(self.low, self.high, "low value", "high value")
         else:
             self._low = low
             self._high = high
@@ -109,20 +109,17 @@ class Uniform(Distribution):
         self.const = P.ScalarToArray()
         self.dtypeop = P.DType()
         self.exp = P.Exp()
-        self.log = P.Log()
-        self.add = P.TensorAdd()
-        self.mul = P.Mul()
-        self.sqrt = P.Sqrt()
-        self.realdiv = P.RealDiv()
+        self.fill = P.Fill()
         self.less = P.Less()
         self.lessequal = P.LessEqual()
-        self.sq = P.Square()
-        self.select = P.Select()
-        self.zeroslike = P.ZerosLike()
+        self.log = P.Log()
         self.logicaland = P.LogicalAnd()
-        self.fill = P.Fill()
+        self.select = P.Select()
         self.shape = P.Shape()
-        self.normal = P.Normal(seed=seed)
+        self.sq = P.Square()
+        self.sqrt = P.Sqrt()
+        self.uniform = P.UniformReal(seed=seed)
+        self.zeroslike = P.ZerosLike()
 
     def extend_repr(self):
         if self.is_scalar_batch:
@@ -152,8 +149,8 @@ class Uniform(Distribution):
             range(U) = high -low
         """
         if name == 'range':
-            low = self._low if low is None else low
-            high = self._high if high is None else high
+            low = self.low if low is None else low
+            high = self.high if high is None else high
             return high - low
         return None
 
@@ -163,8 +160,8 @@ class Uniform(Distribution):
             MEAN(U) = \fract{low + high}{2}.
         """
         if name == 'mean':
-            low = self._low if low is None else low
-            high = self._high if high is None else high
+            low = self.low if low is None else low
+            high = self.high if high is None else high
             return (low + high) / 2.
         return None
 
@@ -174,8 +171,8 @@ class Uniform(Distribution):
             VAR(U) = \fract{(high -low) ^ 2}{12}.
         """
         if name in self._variance_functions:
-            low = self._low if low is None else low
-            high = self._high if high is None else high
+            low = self.low if low is None else low
+            high = self.high if high is None else high
             return self.sq(high - low) / 12.0
         return None
 
@@ -185,8 +182,8 @@ class Uniform(Distribution):
             H(U) = \log(high - low).
         """
         if name == 'entropy':
-            low = self._low if low is None else low
-            high = self._high if high is None else high
+            low = self.low if low is None else low
+            high = self.high if high is None else high
             return self.log(high - low)
         return None
 
@@ -199,8 +196,8 @@ class Uniform(Distribution):
             dist (str): type of the distributions. Should be "Uniform" in this case.
             low_b (Tensor): lower bound of distribution b.
             high_b (Tensor): upper bound of distribution b.
-            low_a (Tensor): lower bound of distribution a. Default: self._low.
-            high_a (Tensor): upper bound of distribution a. Default: self._high.
+            low_a (Tensor): lower bound of distribution a. Default: self.low.
+            high_a (Tensor): upper bound of distribution a. Default: self.high.
         """
         if name == 'cross_entropy' and dist == 'Uniform':
             return self._entropy(low=low_a, high=high_a) + self._kl_loss(name, dist, low_b, high_b, low_a, high_a)
@@ -213,8 +210,8 @@ class Uniform(Distribution):
         Args:
             name (str): name of the function.
             value (Tensor): value to be evaluated.
-            low (Tensor): lower bound of the distribution. Default: self._low.
-            high (Tensor): upper bound of the distribution. Default: self._high.
+            low (Tensor): lower bound of the distribution. Default: self.low.
+            high (Tensor): upper bound of the distribution. Default: self.high.
 
         .. math::
             pdf(x) = 0 if x < low;
@@ -243,12 +240,12 @@ class Uniform(Distribution):
             dist (str): type of the distributions. Should be "Uniform" in this case.
             low_b (Tensor): lower bound of distribution b.
             high_b (Tensor): upper bound of distribution b.
-            low_a (Tensor): lower bound of distribution a. Default: self._low.
-            high_a (Tensor): upper bound of distribution a. Default: self._high.
+            low_a (Tensor): lower bound of distribution a. Default: self.low.
+            high_a (Tensor): upper bound of distribution a. Default: self.high.
         """
         if name in self._divergence_functions and dist == 'Uniform':
-            low_a = self._low if low_a is None else low_a
-            high_a = self._high if high_a is None else high_a
+            low_a = self.low if low_a is None else low_a
+            high_a = self.high if high_a is None else high_a
             kl = self.log(high_b - low_b) / self.log(high_a - low_a)
             comp = self.logicaland(self.lessequal(low_b, low_a), self.lessequal(high_a, high_b))
             return self.select(comp, kl, self.log(self.zeroslike(kl)))
@@ -261,8 +258,8 @@ class Uniform(Distribution):
         Args:
             name (str): name of the function.
             value (Tensor): value to be evaluated.
-            low (Tensor): lower bound of the distribution. Default: self._low.
-            high (Tensor): upper bound of the distribution. Default: self._high.
+            low (Tensor): lower bound of the distribution. Default: self.low.
+            high (Tensor): upper bound of the distribution. Default: self.high.
 
         .. math::
             cdf(x) = 0 if x < low;
@@ -270,8 +267,8 @@ class Uniform(Distribution):
             cdf(x) = 1 if x > high;
         """
         if name in self._cdf_survival_functions:
-            low = self._low if low is None else low
-            high = self._high if high is None else high
+            low = self.low if low is None else low
+            high = self.high if high is None else high
             prob = (value - low) / (high - low)
             broadcast_shape = self.shape(prob)
             zeros = self.fill(self.dtypeop(prob), broadcast_shape, 0.0)
@@ -283,9 +280,25 @@ class Uniform(Distribution):
         return None
 
     def _sample(self, name, shape=(), low=None, high=None):
+        """
+        Sampling.
+
+        Args:
+            name (str): name of the function. Should always be 'sample' when passed in from construct.
+            shape (tuple): shape of the sample. Default: ().
+            low (Tensor): lower bound of the distribution. Default: self.low.
+            high (Tensor): upper bound of the distribution. Default: self.high.
+
+        Returns:
+            Tensor, shape is shape + batch_shape.
+        """
         if name == 'sample':
-            low = self._low if low is None else low
-            high = self._high if high is None else high
+            low = self.low if low is None else low
+            high = self.high if high is None else high
             broadcast_shape = self.shape(low + high)
-            return self.fill(mstype.float32, shape + broadcast_shape, 1.0)
+            l_zero = self.const(0.0)
+            h_one = self.const(1.0)
+            sample_uniform = self.uniform(shape + broadcast_shape, l_zero, h_one)
+            sample = (high - low) * sample_uniform + low
+            return sample
         return None

@@ -26,22 +26,21 @@ class Normal(Distribution):
     Normal distribution.
 
     Args:
-        mean (int, float, list, numpy.ndarray, Tensor, Parameter): mean of the Gaussian distribution.
-        sd (int, float, list, numpy.ndarray, Tensor, Parameter): stddev of the Gaussian distribution.
+        mean (int, float, list, numpy.ndarray, Tensor, Parameter): mean of the Normal distribution.
+        sd (int, float, list, numpy.ndarray, Tensor, Parameter): stddev of the Normal distribution.
         seed (int): seed to use in sampling. Default: 0.
         dtype (mindspore.dtype): type of the distribution. Default: mstype.float32.
         name (str): name of the distribution. Default: Normal.
-
 
     Note:
         Standard deviation should be greater than zero.
         Dist_spec_args are mean and sd.
 
     Examples:
-        >>> # To initialize a normal distribution of mean 3.0 and standard deviation 4.0
+        >>> # To initialize a Normal distribution of mean 3.0 and standard deviation 4.0
         >>> n = nn.Normal(3.0, 4.0, dtype=mstype.float32)
         >>>
-        >>> # The following create two independent normal distributions
+        >>> # The following creates two independent Normal distributions
         >>> n = nn.Normal([3.0, 3.0], [4.0, 4.0], dtype=mstype.float32)
         >>>
         >>> # A normal distribution can be initilize without arguments
@@ -55,16 +54,16 @@ class Normal(Distribution):
         >>>         self.n1 = nn.Normal(0.0, 1.0, dtype=mstype.float32)
         >>>         self.n2 = nn.Normal(dtype=mstype.float32)
         >>>
-        >>>     # All the following calls in construct are valid
+        >>>     # The following calls are valid in construct
         >>>     def construct(self, value, mean_b, sd_b, mean_a, sd_a):
         >>>
-        >>>         # Similar to calls can be made to other probability functions
+        >>>         # Similar calls can be made to other probability functions
         >>>         # by replacing 'prob' with the name of the function
         >>>         ans = self.n1('prob', value)
         >>>         # Evaluate with the respect to distribution b
         >>>         ans = self.n1('prob', value, mean_b, sd_b)
         >>>
-        >>>         # Additional mean and sd must be passed in through construct
+        >>>         # mean and sd must be passed in through construct
         >>>         ans = self.n2('prob', value, mean_a, sd_a)
         >>>
         >>>         # Functions 'sd', 'var', 'entropy' have the same usage with 'mean'
@@ -73,7 +72,7 @@ class Normal(Distribution):
         >>>         # Will return mean_b
         >>>         ans = self.n1('mean', mean_b, sd_b)
         >>>
-        >>>         # Additional mean and sd must be passed in through construct
+        >>>         # mean and sd must be passed in through construct
         >>>         ans = self.n2('mean', mean_a, sd_a)
         >>>
         >>>         # Usage of 'kl_loss' and 'cross_entropy' are similar
@@ -111,20 +110,16 @@ class Normal(Distribution):
         self.seed = seed
 
         #ops needed for the class
+        self.const = P.ScalarToArray()
+        self.erf = P.Erf()
         self.exp = P.Exp()
         self.expm1 = P.Expm1() if get_context('device_target') == 'Ascend' else self._expm1_by_step
+        self.fill = P.Fill()
         self.log = P.Log()
         self.shape = P.Shape()
         self.sq = P.Square()
-        self.log = P.Log()
         self.sqrt = P.Sqrt()
-        self.realdiv = P.RealDiv()
-        self.expm1 = P.Expm1() if get_context('device_target') == 'Ascend' else self._expm1_by_step
-        self.shape = P.Shape()
         self.zeroslike = P.ZerosLike()
-        self.const = P.ScalarToArray()
-        self.erf = P.Erf()
-        self.fill = P.Fill()
 
     def extend_repr(self):
         if self.is_scalar_batch:
@@ -231,8 +226,8 @@ class Normal(Distribution):
         if name in self._cdf_survival_functions:
             mean = self._mean_value if mean is None else mean
             sd = self._sd_value if sd is None else sd
-            sqrt2 = self.sqrt(self.fill(mstype.float32, self.shape(sd), 2.0))
-            adjusted = (value - mean) / self.mul(sd, sqrt2)
+            sqrt2 = self.sqrt(self.const(2.0))
+            adjusted = (value - mean) / (sd * sqrt2)
             return 0.5 * (1.0 + self.erf(adjusted))
         return None
 
@@ -276,11 +271,11 @@ class Normal(Distribution):
         if name == 'sample':
             mean = self._mean_value if mean is None else mean
             sd = self._sd_value if sd is None else sd
-            batch_shape = self.shape(self.add(self.zeroslike(mean), self.zeroslike(sd)))
+            batch_shape = self.shape(self.zeroslike(mean) + self.zeroslike(sd))
             sample_shape = shape + batch_shape
             mean_zero = self.const(0.0)
             sd_one = self.const(1.0)
             sample_norm = C.normal(sample_shape, mean_zero, sd_one, self.seed)
-            sample = self.add(mean, self.mul(sample_norm, sd))
+            sample = mean + sample_norm * sd
             return sample
         return None

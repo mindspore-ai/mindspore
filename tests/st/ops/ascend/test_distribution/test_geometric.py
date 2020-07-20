@@ -99,7 +99,7 @@ def test_kl_loss():
 
 class Basics(nn.Cell):
     """
-    Test class: mean/sd of Geometric distribution.
+    Test class: mean/sd/mode of Geometric distribution.
     """
     def __init__(self):
         super(Basics, self).__init__()
@@ -111,7 +111,7 @@ class Basics(nn.Cell):
 
 def test_basics():
     """
-    Test mean/standard deviation/mode and probs.
+    Test mean/standard deviation/mode.
     """
     basics = Basics()
     mean, sd, mode = basics()
@@ -122,10 +122,28 @@ def test_basics():
     assert (np.abs(mean.asnumpy()- expect_mean) < tol).all()
     assert (np.abs(sd.asnumpy() - expect_sd) < tol).all()
     assert (np.abs(mode.asnumpy() - expect_mode) < tol).all()
-    b = nn.Geometric([0.7, 0.5], dtype=dtype.int32)
-    probs = b.probs()
-    expect_probs = [0.7, 0.5]
-    assert (np.abs(probs.asnumpy() - expect_probs) < tol).all()
+
+class Sampling(nn.Cell):
+    """
+    Test class: log probability of bernoulli distribution.
+    """
+    def __init__(self, shape, seed=0):
+        super(Sampling, self).__init__()
+        self.g = nn.Geometric([0.7, 0.5], seed=seed, dtype=dtype.int32)
+        self.shape = shape
+
+    @ms_function
+    def construct(self, probs=None):
+        return self.g('sample', self.shape, probs)
+
+def test_sample():
+    """
+    Test sample.
+    """
+    shape = (2, 3)
+    sample = Sampling(shape)
+    output = sample()
+    assert output.shape == (2, 3, 2)
 
 class CDF(nn.Cell):
     """

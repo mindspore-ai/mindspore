@@ -25,7 +25,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 class Prob(nn.Cell):
     """
-    Test class: probability of normal distribution.
+    Test class: probability of Normal distribution.
     """
     def __init__(self):
         super(Prob, self).__init__()
@@ -48,7 +48,7 @@ def test_pdf():
 
 class LogProb(nn.Cell):
     """
-    Test class: log probability of normal distribution.
+    Test class: log probability of Normal distribution.
     """
     def __init__(self):
         super(LogProb, self).__init__()
@@ -72,7 +72,7 @@ def test_log_likelihood():
 
 class KL(nn.Cell):
     """
-    Test class: kl_loss of normal distribution.
+    Test class: kl_loss of Normal distribution.
     """
     def __init__(self):
         super(KL, self).__init__()
@@ -106,7 +106,7 @@ def test_kl_loss():
 
 class Basics(nn.Cell):
     """
-    Test class: mean/sd of normal distribution.
+    Test class: mean/sd/mode of Normal distribution.
     """
     def __init__(self):
         super(Basics, self).__init__()
@@ -131,7 +131,7 @@ def test_basics():
 
 class Sampling(nn.Cell):
     """
-    Test class: sample of normal distribution.
+    Test class: sample of Normal distribution.
     """
     def __init__(self, shape, seed=0):
         super(Sampling, self).__init__()
@@ -156,7 +156,7 @@ def test_sample():
 
 class CDF(nn.Cell):
     """
-    Test class: cdf of normal distribution.
+    Test class: cdf of Normal distribution.
     """
     def __init__(self):
         super(CDF, self).__init__()
@@ -180,7 +180,7 @@ def test_cdf():
 
 class LogCDF(nn.Cell):
     """
-    Test class: log_cdf of normal distribution.
+    Test class: log_cdf of Mormal distribution.
     """
     def __init__(self):
         super(LogCDF, self).__init__()
@@ -203,7 +203,7 @@ def test_log_cdf():
 
 class SF(nn.Cell):
     """
-    Test class: survival function of normal distribution.
+    Test class: survival function of Normal distribution.
     """
     def __init__(self):
         super(SF, self).__init__()
@@ -226,7 +226,7 @@ def test_survival():
 
 class LogSF(nn.Cell):
     """
-    Test class: log survival function of normal distribution.
+    Test class: log survival function of Normal distribution.
     """
     def __init__(self):
         super(LogSF, self).__init__()
@@ -249,7 +249,7 @@ def test_log_survival():
 
 class EntropyH(nn.Cell):
     """
-    Test class: entropy of normal distribution.
+    Test class: entropy of Normal distribution.
     """
     def __init__(self):
         super(EntropyH, self).__init__()
@@ -272,7 +272,7 @@ def test_entropy():
 
 class CrossEntropy(nn.Cell):
     """
-    Test class: cross entropy between normal distribution.
+    Test class: cross entropy between Normal distributions.
     """
     def __init__(self):
         super(CrossEntropy, self).__init__()

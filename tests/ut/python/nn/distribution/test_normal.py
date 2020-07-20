@@ -111,7 +111,7 @@ class NormalKl(nn.Cell):
 
 def test_kl():
     """
-    Test kl_loss
+    Test kl_loss.
     """
     net = NormalKl()
     mean_b = Tensor(np.array([1.0]).astype(np.float32), dtype=dtype.float32)
@@ -136,6 +136,9 @@ class NormalCrossEntropy(nn.Cell):
         return h1 + h2
 
 def test_cross_entropy():
+    """
+    Test cross entropy between Normal distributions.
+    """
     net = NormalCrossEntropy()
     mean_b = Tensor(np.array([1.0]).astype(np.float32), dtype=dtype.float32)
     sd_b = Tensor(np.array([1.0]).astype(np.float32), dtype=dtype.float32)

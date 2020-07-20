@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Exponential Distribution"""
+import numpy as np
 from mindspore.ops import operations as P
 from .distribution import Distribution
 from ...common import dtype as mstype
@@ -36,10 +37,10 @@ class Exponential(Distribution):
         >>> # To initialize an Exponential distribution of rate 0.5
         >>> n = nn.Exponential(0.5, dtype=mstype.float32)
         >>>
-        >>> # The following create two independent Exponential distributions
+        >>> # The following creates two independent Exponential distributions
         >>> n = nn.Exponential([0.5, 0.5], dtype=mstype.float32)
         >>>
-        >>> # A Exponential distribution can be initilize without arguments
+        >>> # A Exponential distribution can be initilized without arguments
         >>> # In this case, rate must be passed in through construct.
         >>> n = nn.Exponential(dtype=mstype.float32)
         >>>
@@ -53,13 +54,13 @@ class Exponential(Distribution):
         >>>     # All the following calls in construct are valid
         >>>     def construct(self, value, rate_b, rate_a):
         >>>
-        >>>         # Similar to calls can be made to other probability functions
+        >>>         # Similar calls can be made to other probability functions
         >>>         # by replacing 'prob' with the name of the function
         >>>         ans = self.e1('prob', value)
         >>>         # Evaluate with the respect to distribution b
         >>>         ans = self.e1('prob', value, rate_b)
         >>>
-        >>>         # Additional rate must be passed in through construct
+        >>>         # Rate must be passed in through construct
         >>>         ans = self.e2('prob', value, rate_a)
         >>>
         >>>         # Functions 'sd', 'var', 'entropy' have the same usage with 'mean'
@@ -68,7 +69,7 @@ class Exponential(Distribution):
         >>>         # Will return mean_b
         >>>         ans = self.e1('mean', rate_b)
         >>>
-        >>>         # Additional rate must be passed in through construct
+        >>>         # Rate must be passed in through construct
         >>>         ans = self.e2('mean', rate_a)
         >>>
         >>>         # Usage of 'kl_loss' and 'cross_entropy' are similar
@@ -101,21 +102,20 @@ class Exponential(Distribution):
         else:
             self._rate = rate
 
+        self.minval = np.finfo(np.float).tiny
+
     # ops needed for the class
         self.const = P.ScalarToArray()
         self.dtypeop = P.DType()
         self.exp = P.Exp()
-        self.log = P.Log()
-        self.add = P.TensorAdd()
-        self.mul = P.Mul()
-        self.sqrt = P.Sqrt()
-        self.realdiv = P.RealDiv()
-        self.shape = P.Shape()
-        self.normal = P.Normal(seed=seed)
-        self.sq = P.Square()
         self.fill = P.Fill()
         self.less = P.Less()
+        self.log = P.Log()
         self.select = P.Select()
+        self.shape = P.Shape()
+        self.sqrt = P.Sqrt()
+        self.sq = P.Square()
+        self.uniform = P.UniformReal(seed=seed)
 
     def extend_repr(self):
         if self.is_scalar_batch:
@@ -137,7 +137,7 @@ class Exponential(Distribution):
             MEAN(EXP) = \fract{1.0}{\lambda}.
         """
         if name == 'mean':
-            rate = self._rate if rate is None else rate
+            rate = self.rate if rate is None else rate
             return 1.0 / rate
         return None
 
@@ -157,7 +157,7 @@ class Exponential(Distribution):
             sd(EXP) = \fract{1.0}{\lambda}.
         """
         if name in self._variance_functions:
-            rate = self._rate if rate is None else rate
+            rate = self.rate if rate is None else rate
             return 1.0 / rate
         return None
 
@@ -166,7 +166,7 @@ class Exponential(Distribution):
         .. math::
             H(Exp) = 1 - \log(\lambda).
         """
-        rate = self._rate if rate is None else rate
+        rate = self.rate if rate is None else rate
         if name == 'entropy':
             return 1.0 - self.log(rate)
         return None
@@ -179,7 +179,7 @@ class Exponential(Distribution):
             name (str): name of the funtion. Should always be "cross_entropy" when passed in from construct.
             dist (str): type of the distributions. Should be "Exponential" in this case.
             rate_b (Tensor): rate of distribution b.
-            rate_a (Tensor): rate of distribution a. Default: self._rate.
+            rate_a (Tensor): rate of distribution a. Default: self.rate.
         """
         if name == 'cross_entropy' and dist == 'Exponential':
             return self._entropy(rate=rate_a) + self._kl_loss(name, dist, rate_b, rate_a)
@@ -193,7 +193,7 @@ class Exponential(Distribution):
             Args:
             name (str): name of the function.
             value (Tensor): value to be evaluated.
-            rate (Tensor): rate of the distribution. Default: self._rate.
+            rate (Tensor): rate of the distribution. Default: self.rate.
 
         Note:
             Value should be greater or equal to zero.
@@ -216,7 +216,7 @@ class Exponential(Distribution):
         Args:
             name (str): name of the function.
             value (Tensor): value to be evaluated.
-            rate (Tensor): rate of the distribution. Default: self._rate.
+            rate (Tensor): rate of the distribution. Default: self.rate.
 
         Note:
             Value should be greater or equal to zero.
@@ -240,15 +240,29 @@ class Exponential(Distribution):
             name (str): name of the funtion.
             dist (str): type of the distributions. Should be "Exponential" in this case.
             rate_b (Tensor): rate of distribution b.
-            rate_a (Tensor): rate of distribution a. Default: self._rate.
+            rate_a (Tensor): rate of distribution a. Default: self.rate.
         """
         if name in self._divergence_functions and dist == 'Exponential':
-            rate_a = self._rate if rate_a is None else rate_a
+            rate_a = self.rate if rate_a is None else rate_a
             return self.log(rate_a) - self.log(rate_b) + rate_b / rate_a - 1.0
         return None
 
     def _sample(self, name, shape=(), rate=None):
+        """
+        Sampling.
+
+        Args:
+            name (str): name of the function.
+            shape (tuple): shape of the sample. Default: ().
+            rate (Tensor): rate of the distribution. Default: self.rate.
+
+        Returns:
+            Tensor, shape is shape + batch_shape.
+        """
         if name == 'sample':
-            rate = self._rate if rate is None else rate
-            return self.fill(mstype.float32, shape + self.shape(rate), 1.0)
+            rate = self.rate if rate is None else rate
+            minval = self.const(self.minval)
+            maxval = self.const(1.0)
+            sample = self.uniform(shape + self.shape(rate), minval, maxval)
+            return -self.log(sample) / rate
         return None

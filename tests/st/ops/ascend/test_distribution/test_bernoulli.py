@@ -25,7 +25,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 class Prob(nn.Cell):
     """
-    Test class: probability of bernoulli distribution.
+    Test class: probability of Bernoulli distribution.
     """
     def __init__(self):
         super(Prob, self).__init__()
@@ -50,7 +50,7 @@ def test_pmf():
 
 class LogProb(nn.Cell):
     """
-    Test class: log probability of bernoulli distribution.
+    Test class: log probability of Bernoulli distribution.
     """
     def __init__(self):
         super(LogProb, self).__init__()
@@ -74,7 +74,7 @@ def test_log_likelihood():
 
 class KL(nn.Cell):
     """
-    Test class: kl_loss between bernoulli distributions.
+    Test class: kl_loss between Bernoulli distributions.
     """
     def __init__(self):
         super(KL, self).__init__()
@@ -100,7 +100,7 @@ def test_kl_loss():
 
 class Basics(nn.Cell):
     """
-    Test class: mean/sd/mode of bernoulli distribution.
+    Test class: mean/sd/mode of Bernoulli distribution.
     """
     def __init__(self):
         super(Basics, self).__init__()
@@ -112,7 +112,7 @@ class Basics(nn.Cell):
 
 def test_basics():
     """
-    Test mean/standard deviation/mode and probs.
+    Test mean/standard deviation/mode.
     """
     basics = Basics()
     mean, sd, mode = basics()
@@ -123,14 +123,10 @@ def test_basics():
     assert (np.abs(mean.asnumpy() - expect_mean) < tol).all()
     assert (np.abs(sd.asnumpy() - expect_sd) < tol).all()
     assert (np.abs(mode.asnumpy() - expect_mode) < tol).all()
-    b = nn.Bernoulli([0.7, 0.5], dtype=dtype.int32)
-    probs = b.probs()
-    expect_probs = [0.7, 0.5]
-    assert (np.abs(probs.asnumpy() - expect_probs) < tol).all()
 
 class Sampling(nn.Cell):
     """
-    Test class: log probability of bernoulli distribution.
+    Test class: log probability of Bernoulli distribution.
     """
     def __init__(self, shape, seed=0):
         super(Sampling, self).__init__()
@@ -202,7 +198,7 @@ def test_logcdf():
 
 class SF(nn.Cell):
     """
-    Test class: survival function of bernoulli distributions.
+    Test class: survival function of Bernoulli distributions.
     """
     def __init__(self):
         super(SF, self).__init__()
@@ -227,7 +223,7 @@ def test_survival():
 
 class LogSF(nn.Cell):
     """
-    Test class: log survival function of  bernoulli distributions.
+    Test class: log survival function of Bernoulli distributions.
     """
     def __init__(self):
         super(LogSF, self).__init__()
@@ -251,7 +247,7 @@ def test_log_survival():
 
 class EntropyH(nn.Cell):
     """
-    Test class: entropy of bernoulli distributions.
+    Test class: entropy of Bernoulli distributions.
     """
     def __init__(self):
         super(EntropyH, self).__init__()
