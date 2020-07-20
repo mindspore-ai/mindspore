@@ -20,6 +20,8 @@ from _akg.topi.generic import schedule_elemwise
 
 def Cast(x, dst_type):
     """cast."""
+    if x.dtype == "int64" and dst_type == "float16":
+        x = cast.cast(x, "float32")
     return cast.cast(x, dst_type)
 
 
