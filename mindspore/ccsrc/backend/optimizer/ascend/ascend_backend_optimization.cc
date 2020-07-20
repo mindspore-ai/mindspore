@@ -102,6 +102,7 @@
 #include "backend/optimizer/ascend/format_type/remove_internal_output.h"
 #include "backend/optimizer/ascend/ir_fission/concat_fission.h"
 #include "backend/optimizer/ascend/ir_fission/pack_fission.h"
+#include "backend/optimizer/ascend/enhancer/concat_outputs_for_all_gather.h"
 #include "utils/context/ms_context.h"
 #include "utils/config_manager.h"
 #include "debug/anf_ir_dump.h"
@@ -341,6 +342,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   auto other_pm = std::make_shared<PassManager>("other_pm");
   other_pm->AddPass(std::make_shared<AllReduceFusion>());
   other_pm->AddPass(std::make_shared<AllGatherFusion>());
+  other_pm->AddPass(std::make_shared<ConcatOutputsForAllGather>());
   other_pm->AddPass(std::make_shared<ReduceScatterFusion>());
   other_pm->AddPass(std::make_shared<BroadcastFusion>());
   other_pm->AddPass(std::make_shared<InsertMemcpyAsyncForCascade>());
