@@ -19,6 +19,7 @@
 #include "minddata/dataset/engine/cache/cache_client.h"
 #include "minddata/dataset/engine/datasetops/source/cifar_op.h"
 #include "minddata/dataset/engine/datasetops/source/clue_op.h"
+#include "minddata/dataset/engine/datasetops/source/csv_op.h"
 #include "minddata/dataset/engine/datasetops/source/coco_op.h"
 #include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
 #include "minddata/dataset/engine/datasetops/source/io_block.h"
@@ -274,6 +275,17 @@ void bindDatasetOps(py::module *m) {
         file.is_none() ? (void)filenames.emplace_back("") : filenames.push_back(py::str(file));
       }
       THROW_IF_ERROR(ClueOp::CountAllFileRows(filenames, &count));
+      return count;
+    });
+
+  (void)py::class_<CsvOp, DatasetOp, std::shared_ptr<CsvOp>>(*m, "CsvOp")
+    .def_static("get_num_rows", [](const py::list &files, bool csv_header) {
+      int64_t count = 0;
+      std::vector<std::string> filenames;
+      for (auto file : files) {
+        file.is_none() ? (void)filenames.emplace_back("") : filenames.push_back(py::str(file));
+      }
+      THROW_IF_ERROR(CsvOp::CountAllFileRows(filenames, csv_header, &count));
       return count;
     });
 
@@ -1039,8 +1051,9 @@ PYBIND11_MODULE(_c_dataengine, m) {
     .value("SENTENCEPIECEVOCAB", OpName::kSentencePieceVocab)
     .value("CELEBA", OpName::kCelebA)
     .value("TEXTFILE", OpName::kTextFile)
-    .value("CLUE", OpName::kClue)
-    .value("EPOCHCTRL", OpName::kEpochCtrl);
+    .value("EPOCHCTRL", OpName::kEpochCtrl)
+    .value("CSV", OpName::kCsv)
+    .value("CLUE", OpName::kClue);
 
   (void)py::enum_<JiebaMode>(m, "JiebaMode", py::arithmetic())
     .value("DE_JIEBA_MIX", JiebaMode::kMix)

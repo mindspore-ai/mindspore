@@ -185,6 +185,8 @@ class Iterator:
             op_type = OpName.SENTENCEPIECEVOCAB
         elif isinstance(dataset, de.CLUEDataset):
             op_type = OpName.CLUE
+        elif isinstance(dataset, de.CSVDataset):
+            op_type = OpName.CSV
         else:
             raise ValueError("Unsupported DatasetOp")
 

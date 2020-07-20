@@ -33,7 +33,7 @@ import copy
 import numpy as np
 
 from mindspore._c_dataengine import DataType, TFReaderOp, ImageFolderOp, CifarOp, MnistOp, ManifestOp, \
-    MindRecordOp, TextFileOp, ClueOp, VOCOp, CocoOp, CBatchInfo
+    MindRecordOp, TextFileOp, ClueOp, CsvOp, VOCOp, CocoOp, CBatchInfo
 from mindspore._c_expression import typing
 
 from mindspore import log as logger
@@ -44,7 +44,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
     check_tfrecorddataset, check_vocdataset, check_cocodataset, check_celebadataset, check_minddataset, \
     check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat, \
-    check_random_dataset, check_split, check_bucket_batch_by_length, check_cluedataset, check_save
+    check_random_dataset, check_split, check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 from ..text.utils import DE_C_INTER_SENTENCEPIECE_MODE
 
@@ -1012,7 +1012,7 @@ class Dataset:
                 if isinstance(sampler, samplers.DistributedSampler):
                     dev_id = sampler.shard_id
                 return "", dev_id
-            if isinstance(output_dataset, (TFRecordDataset, TextFileDataset, CLUEDataset)):
+            if isinstance(output_dataset, (TFRecordDataset, TextFileDataset, CLUEDataset, CSVDataset)):
                 if output_dataset.shard_id is not None:
                     dev_id = output_dataset.shard_id
                 return "", dev_id
@@ -4652,8 +4652,8 @@ class CLUEDataset(SourceDataset):
         }
 
     Args:
-        dataset_files (str or list[str]): String or list of files to be read or glob strings to search for a pattern of
-            files. The list will be sorted in a lexicographical order.
+        dataset_files (str or a list of strings): String or list of files to be read or glob strings to search for
+            a pattern of files. The list will be sorted in a lexicographical order.
         task (str, optional): The kind of task, one of 'AFQMC', 'TNEWS', 'IFLYTEK', 'CMNLI', 'WSC' and 'CSL'.
             (default=AFQMC).
         usage (str, optional): Need train, test or eval data (default="train").
@@ -4844,6 +4844,108 @@ class CLUEDataset(SourceDataset):
         """
         if self._dataset_size is None:
             num_rows = ClueOp.get_num_rows(self.dataset_files)
+            num_rows = get_num_rows(num_rows, self.num_shards)
+            if self.num_samples is None:
+                return num_rows
+            return min(self.num_samples, num_rows)
+        return self._dataset_size
+
+    def is_shuffled(self):
+        return self.shuffle_files
+
+    def is_sharded(self):
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return False
+
+
+class CSVDataset(SourceDataset):
+    """
+    A source dataset that reads and parses CSV datasets.
+
+    Args:
+        dataset_files (str or a list of strings): String or list of files to be read or glob strings to search
+            for a pattern of files. The list will be sorted in a lexicographical order.
+        field_delim (str, optional): A string that indicates the char delimiter to separate fields (default=',').
+        column_defaults (list, optional): List of default values for the CSV field (default=None). Each item
+            in the list is either a valid type (float, int, or string). If this is not provided, treats all
+            columns as string type.
+        column_names (list of string, optional): List of column names of the dataset (default=None). If this
+            is not provided, infers the column_names from the first row of CSV file.
+        num_samples (int, optional): number of samples(rows) to read (default=None, reads the full dataset).
+        num_parallel_workers (int, optional): number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (bool, Shuffle level, optional): perform reshuffling of the data every epoch (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset should be divided into (default=None).
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument should be specified only when num_shards is also specified.
+
+    Examples:
+        >>> import mindspore.dataset as ds
+        >>> dataset_files = ["/path/to/1", "/path/to/2"] # contains 1 or multiple text files
+        >>> dataset = ds.CSVDataset(dataset_files=dataset_files, column_names=['col1', 'col2', 'col3', 'col4'])
+    """
+
+    @check_csvdataset
+    def __init__(self, dataset_files, field_delim=',', column_defaults=None, column_names=None, num_samples=None,
+                 num_parallel_workers=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None):
+        super().__init__(num_parallel_workers)
+        self.dataset_files = self._find_files(dataset_files)
+        self.dataset_files.sort()
+        self.field_delim = field_delim
+        self.column_defaults = column_defaults
+        self.column_names = column_names
+        self.num_samples = num_samples
+
+        if not isinstance(shuffle, (bool, Shuffle)):
+            raise TypeError("shuffle should be of boolean or enum 'Shuffle'.")
+        if not isinstance(shuffle, Shuffle):
+            if shuffle:
+                self.shuffle_level = Shuffle.GLOBAL
+                self.shuffle_files = True
+            else:
+                self.shuffle_level = None
+                self.shuffle_files = False
+        else:
+            self.shuffle_level = shuffle
+            self.shuffle_files = True
+
+        self.num_shards = num_shards
+        self.shard_id = shard_id
+
+    def get_args(self):
+        args = super().get_args()
+        args["dataset_files"] = self.dataset_files
+        args['field_delim'] = self.field_delim
+        args['column_defaults'] = self.column_defaults
+        args['column_names'] = self.column_names
+        args["num_samples"] = self.num_samples
+        if self.shuffle_files is not None:
+            args["shuffle_files"] = self.shuffle_files
+        args["shuffle_global"] = (self.shuffle_level == Shuffle.GLOBAL)
+        args["shuffle"] = self.shuffle_level
+        args["num_shards"] = self.num_shards
+        args["shard_id"] = self.shard_id
+        return args
+
+    def get_dataset_size(self):
+        """
+        Get the number of batches in an epoch.
+
+        Return:
+            Number, number of batches.
+        """
+        if self._dataset_size is None:
+            num_rows = CsvOp.get_num_rows(self.dataset_files, self.column_names is None)
             num_rows = get_num_rows(num_rows, self.num_shards)
             if self.num_samples is None:
                 return num_rows
