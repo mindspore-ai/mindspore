@@ -192,7 +192,7 @@ class GraphData:
 
         Args:
             node_list (list or numpy.ndarray): The given list of nodes.
-            feature_types (list or ndarray): The given list of feature types.
+            feature_types (list or numpy.ndarray): The given list of feature types.
 
         Returns:
             numpy.ndarray: array of features.
@@ -221,7 +221,7 @@ class GraphData:
 
         Args:
             edge_list (list or numpy.ndarray): The given list of edges.
-            feature_types (list or ndarray): The given list of feature types.
+            feature_types (list or numpy.ndarray): The given list of feature types.
 
         Returns:
             numpy.ndarray: array of features.
@@ -249,7 +249,7 @@ class GraphData:
         the feature information of nodes, the number of edges, the type of edges, and the feature information of edges.
 
         Returns:
-            Dict: Meta information of the graph. The key is node_type, edge_type, node_num, edge_num,
+            dict: Meta information of the graph. The key is node_type, edge_type, node_num, edge_num,
             node_feature_type and edge_feature_type.
         """
         return self._graph.graph_info()
