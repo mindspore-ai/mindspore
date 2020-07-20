@@ -49,7 +49,7 @@ class ProfilingManager {
   ~ProfilingManager() { prof_handle_ = nullptr; }
 
  private:
-  bool ProfStartUp(NotNull<nlohmann::json *> json);
+  bool ProfStartUp(const nlohmann::json &json);
   std::shared_ptr<ProfilingEngineImpl> engine_0_;
   uint32_t device_id_;
   void *prof_handle_;

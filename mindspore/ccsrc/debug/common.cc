@@ -80,9 +80,9 @@ bool Common::CreateNotExistDirs(const std::string &path) {
         char tmp_char = temp_path[i];
         temp_path[i] = '\0';
         std::string path_handle(temp_path);
-        if (!fs->FileExist(temp_path)) {
+        if (!fs->FileExist(path_handle)) {
           MS_LOG(INFO) << "Dir " << path_handle << " does not exit, creating...";
-          if (!fs->CreateDir(temp_path)) {
+          if (!fs->CreateDir(path_handle)) {
             MS_LOG(ERROR) << "Create " << path_handle << " dir error";
             return false;
           }

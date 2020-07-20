@@ -144,17 +144,17 @@ bool ProfilingManager::StartupProfiling(uint32_t device_id) {
   nlohmann::json startCfg;
   startCfg["startCfg"] = devices;
 
-  if (!ProfStartUp(NOT_NULL(&startCfg))) {
+  if (!ProfStartUp(startCfg)) {
     MS_LOG(ERROR) << "ProfMgrStartUp failed.";
     return false;
   }
   return true;
 }
 
-bool ProfilingManager::ProfStartUp(NotNull<nlohmann::json *> startCfg) {
+bool ProfilingManager::ProfStartUp(const nlohmann::json &startCfg) {
   // convert json to string
   std::stringstream ss;
-  ss << *startCfg;
+  ss << startCfg;
   std::string cfg = ss.str();
   MS_LOG(INFO) << "profiling config " << cfg;
   auto ret = rtProfilerStart();

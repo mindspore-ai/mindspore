@@ -34,7 +34,7 @@ void DataDumpParser::ResetParam() {
 
 bool DataDumpParser::DumpEnabled() const {
   auto enable_dump = std::getenv(kEnableDataDump);
-  if (!enable_dump) {
+  if (enable_dump == nullptr) {
     MS_LOG(INFO) << "[DataDump] enable dump is null. Please export ENABLE_DATA_DUMP";
     return false;
   }
@@ -55,13 +55,15 @@ bool DataDumpParser::DumpEnabled() const {
 
 std::optional<std::string> DataDumpParser::GetDumpPath() const {
   auto dump_path = std::getenv(kDataDumpPath);
-  if (!dump_path) {
+  if (dump_path == nullptr) {
     MS_LOG(ERROR) << "[DataDump] dump path is null. Please export DATA_DUMP_PATH";
     return {};
   }
   std::string dump_path_str(dump_path);
-  if (!std::all_of(dump_path_str.begin(), dump_path_str.end(), ::isalpha)) {
-    MS_LOG(EXCEPTION) << "[DataDump] dump path only support alphas, but got:" << dump_path_str;
+  if (!std::all_of(dump_path_str.begin(), dump_path_str.end(),
+                   [](char c) { return ::isalpha(c) || ::isdigit(c) || c == '-' || c == '_' || c == '/'; })) {
+    MS_LOG(EXCEPTION) << "[DataDump] dump path only support alphabets, digit or {'-', '_', '/'}, but got:"
+                      << dump_path_str;
   }
   return dump_path_str;
 }
