@@ -14,6 +14,7 @@
 # ============================================================================
 """Bernoulli Distribution"""
 from mindspore.ops import operations as P
+from mindspore.ops import composite as C
 from .distribution import Distribution
 from ._utils.utils import cast_to_tensor, check_prob
 from ...common import dtype as mstype
@@ -53,6 +54,7 @@ class Bernoulli(Distribution):
             check_prob(self._probs)
         else:
             self._probs = probs
+        self.seed = seed
 
         # ops needed for the class
         self.log = P.Log()
@@ -64,7 +66,6 @@ class Bernoulli(Distribution):
         self.const = P.ScalarToArray()
         self.less = P.Less()
         self.cast = P.Cast()
-        self.normal = P.Normal(seed=seed)
         self.erf = P.Erf()
         self.sqrt = P.Sqrt()
 
@@ -159,7 +160,7 @@ class Bernoulli(Distribution):
             mean_zero = self.const(0.0)
             sd_one = self.const(1.0)
             sqrt_two = self.sqrt(self.const(2.0))
-            sample_norm = self.normal(sample_shape, mean_zero, sd_one)
+            sample_norm = C.normal(sample_shape, mean_zero, sd_one, self.seed)
             sample_uniform = 0.5 * (1 + self.erf(self.realdiv(sample_norm, sqrt_two)))
             sample = self.less(sample_uniform, probs1)
             sample = self.cast(sample, self._dtype)
