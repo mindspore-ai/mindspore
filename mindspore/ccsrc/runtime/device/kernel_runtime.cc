@@ -757,6 +757,18 @@ void KernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
   MS_LOG(INFO) << "Clear graph:" << graph_id << " runtime resource";
 }
 
+bool KernelRuntime::LaunchTaskBasedOnSingleKernel(kernel::KernelModPtr kernel_mod_ptr, AddressPtrList kernel_inputs,
+                                                  AddressPtrList kernel_outputs,
+                                                  AddressPtrList kernel_workspaces) const {
+  MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
+  auto ret = kernel_mod_ptr->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
+  if (!ret) {
+    MS_LOG(ERROR) << "Launch kernel failed.";
+    return false;
+  }
+  return true;
+}
+
 #ifdef ENABLE_DUMP_E2E
 bool KernelRuntime::SetDumpConf() {
   dump_conf_ptr_ = std::make_shared<Dump>();

@@ -61,6 +61,8 @@ class KernelRuntime {
   virtual bool RunTask(const session::KernelGraph *graph);
   virtual bool GenTask(const session::KernelGraph *graph);
   bool LaunchKernel(const session::KernelGraph *graph);
+  bool LaunchTaskBasedOnSingleKernel(kernel::KernelModPtr kernel_mod_ptr, AddressPtrList kernel_inputs,
+                                     AddressPtrList kernel_outputs, AddressPtrList kernel_workspaces) const;
   virtual void AssignStaticMemoryInput(const session::KernelGraph *graph);
   virtual void AssignStaticMemoryValueNode(session::KernelGraph *graph);
   virtual void ClearGraphRuntimeResource(uint32_t graph_id);
