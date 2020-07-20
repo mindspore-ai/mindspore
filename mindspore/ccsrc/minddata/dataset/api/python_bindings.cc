@@ -88,7 +88,9 @@
 #include "minddata/dataset/text/kernels/to_number_op.h"
 #include "minddata/dataset/text/kernels/unicode_char_tokenizer_op.h"
 #include "minddata/dataset/text/kernels/wordpiece_tokenizer_op.h"
+#include "minddata/dataset/text/kernels/sentence_piece_tokenizer_op.h"
 #include "minddata/dataset/text/vocab.h"
+#include "minddata/dataset/text/sentence_piece_vocab.h"
 #include "minddata/dataset/util/random.h"
 #include "minddata/mindrecord/include/shard_distributed_sample.h"
 #include "minddata/mindrecord/include/shard_operator.h"
@@ -684,6 +686,15 @@ void bindTokenizerOps(py::module *m) {
   (void)py::class_<SlidingWindowOp, TensorOp, std::shared_ptr<SlidingWindowOp>>(
     *m, "SlidingWindowOp", "TensorOp to apply sliding window to a 1-D Tensor.")
     .def(py::init<uint32_t, int32_t>(), py::arg("width"), py::arg("axis"));
+  (void)py::class_<SentencePieceTokenizerOp, TensorOp, std::shared_ptr<SentencePieceTokenizerOp>>(
+    *m, "SentencePieceTokenizerOp", "Tokenize scalar token or 1-D tokens to  tokens by sentence piece.")
+    .def(py::init<std::shared_ptr<SentencePieceVocab> &, const SPieceTokenizerLoadType, const SPieceTokenizerOutType>(),
+         py::arg("vocab"), py::arg("load_type") = SPieceTokenizerLoadType::kModel,
+         py::arg("out_type") = SPieceTokenizerOutType::kString)
+    .def(
+      py::init<const std::string &, const std::string &, const SPieceTokenizerLoadType, const SPieceTokenizerOutType>(),
+      py::arg("model_path"), py::arg("model_filename"), py::arg("load_type") = SPieceTokenizerLoadType::kFile,
+      py::arg("out_type") = SPieceTokenizerOutType::kString);
 }
 
 void bindDependIcuTokenizerOps(py::module *m) {
@@ -839,6 +850,33 @@ void bindVocabObjects(py::module *m) {
       THROW_IF_ERROR(Vocab::BuildFromPyDict(words, &v));
       return v;
     });
+  (void)py::class_<SentencePieceVocab, std::shared_ptr<SentencePieceVocab>>(*m, "SentencePieceVocab")
+    .def(py::init<>())
+    .def_static("from_file",
+                [](const py::list &paths, const int vocab_size, const float character_coverage,
+                   const SentencePieceModel model_type, const py::dict &params) {
+                  std::shared_ptr<SentencePieceVocab> v;
+                  std::vector<std::string> path_list;
+                  for (auto path : paths) {
+                    path_list.emplace_back(py::str(path));
+                  }
+                  std::unordered_map<std::string, std::string> param_map;
+                  for (auto param : params) {
+                    std::string key = py::reinterpret_borrow<py::str>(param.first);
+                    if (key == "input" || key == "vocab_size" || key == "model_prefix" || key == "character_coverage" ||
+                        key == "model_type") {
+                      continue;
+                    }
+                    param_map[key] = py::reinterpret_borrow<py::str>(param.second);
+                  }
+                  THROW_IF_ERROR(SentencePieceVocab::BuildFromFile(path_list, vocab_size, character_coverage,
+                                                                   model_type, param_map, &v));
+                  return v;
+                })
+    .def_static("save_model",
+                [](const std::shared_ptr<SentencePieceVocab> *vocab, std::string path, std::string filename) {
+                  THROW_IF_ERROR(SentencePieceVocab::SaveModel(vocab, path, filename));
+                });
 }
 
 void bindGraphData(py::module *m) {
@@ -998,6 +1036,7 @@ PYBIND11_MODULE(_c_dataengine, m) {
     .value("CIFAR100", OpName::kCifar100)
     .value("RANDOMDATA", OpName::kRandomData)
     .value("BUILDVOCAB", OpName::kBuildVocab)
+    .value("SENTENCEPIECEVOCAB", OpName::kSentencePieceVocab)
     .value("CELEBA", OpName::kCelebA)
     .value("TEXTFILE", OpName::kTextFile)
     .value("CLUE", OpName::kClue)
@@ -1032,6 +1071,24 @@ PYBIND11_MODULE(_c_dataengine, m) {
     .value("DE_BORDER_REFLECT", BorderType::kReflect)
     .value("DE_BORDER_SYMMETRIC", BorderType::kSymmetric)
     .export_values();
+
+  (void)py::enum_<SentencePieceModel>(m, "SentencePieceModel", py::arithmetic())
+    .value("DE_SENTENCE_PIECE_UNIGRAM", SentencePieceModel::kUnigram)
+    .value("DE_SENTENCE_PIECE_BPE", SentencePieceModel::kBpe)
+    .value("DE_SENTENCE_PIECE_CHAR", SentencePieceModel::kChar)
+    .value("DE_SENTENCE_PIECE_WORD", SentencePieceModel::kWord)
+    .export_values();
+
+  (void)py::enum_<SPieceTokenizerOutType>(m, "SPieceTokenizerOutType", py::arithmetic())
+    .value("DE_SPIECE_TOKENIZER_OUTTYPE_KString", SPieceTokenizerOutType::kString)
+    .value("DE_SPIECE_TOKENIZER_OUTTYPE_KINT", SPieceTokenizerOutType::kInt)
+    .export_values();
+
+  (void)py::enum_<SPieceTokenizerLoadType>(m, "SPieceTokenizerLoadType", py::arithmetic())
+    .value("DE_SPIECE_TOKENIZER_LOAD_KFILE", SPieceTokenizerLoadType::kFile)
+    .value("DE_SPIECE_TOKENIZER_LOAD_KMODEL", SPieceTokenizerLoadType::kModel)
+    .export_values();
+
   bindDEPipeline(&m);
   bindTensor(&m);
   bindTensorOps1(&m);

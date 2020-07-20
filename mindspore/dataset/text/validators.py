@@ -419,3 +419,81 @@ def check_python_tokenizer(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def check_from_dataset_sentencepiece(method):
+    """A wrapper that wraps a parameter checker to the original function (from_dataset)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [_, col_names, vocab_size, character_coverage, model_type, params], _ = parse_user_args(method, *args, **kwargs)
+
+        if col_names is not None:
+            type_check(col_names, (list,), "col_names")
+
+        if vocab_size is not None:
+            check_uint32(vocab_size, "vocab_size")
+
+        if character_coverage is not None:
+            type_check(character_coverage, (float,), "character_coverage")
+
+        if model_type is not None:
+            from .utils import SentencePieceModel
+            type_check(model_type, (str, SentencePieceModel), "model_type")
+
+        if params is not None:
+            type_check(params, (dict,), "params")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_from_file_sentencepiece(method):
+    """A wrapper that wraps a parameter checker to the original function (from_file)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [file_path, vocab_size, character_coverage, model_type, params], _ = parse_user_args(method, *args, **kwargs)
+
+        if file_path is not None:
+            type_check(file_path, (list,), "file_path")
+
+        if vocab_size is not None:
+            check_uint32(vocab_size, "vocab_size")
+
+        if character_coverage is not None:
+            type_check(character_coverage, (float,), "character_coverage")
+
+        if model_type is not None:
+            from .utils import SentencePieceModel
+            type_check(model_type, (str, SentencePieceModel), "model_type")
+
+        if params is not None:
+            type_check(params, (dict,), "params")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_save_model(method):
+    """A wrapper that wraps a parameter checker to the original function (save_model)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [vocab, path, filename], _ = parse_user_args(method, *args, **kwargs)
+
+        if vocab is not None:
+            type_check(vocab, (cde.SentencePieceVocab,), "vocab")
+
+        if path is not None:
+            type_check(path, (str,), "path")
+
+        if filename is not None:
+            type_check(filename, (str,), "filename")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+    

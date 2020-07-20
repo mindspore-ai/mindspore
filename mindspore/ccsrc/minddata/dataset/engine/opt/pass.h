@@ -81,6 +81,8 @@ class EpochCtrlOp;
 
 class BuildVocabOp;
 
+class BuildSentencePieceVocabOp;
+
 // The base class Pass is the basic unit of tree transformation.
 // The actual implementation of the passes will be derived from here.
 class Pass : public std::enable_shared_from_this<Pass> {
@@ -205,6 +207,8 @@ class NodePass : public Pass {
   virtual Status PreRunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified);
 
   virtual Status PreRunOnNode(std::shared_ptr<BuildVocabOp> node, bool *modified);
+
+  virtual Status PreRunOnNode(std::shared_ptr<BuildSentencePieceVocabOp> node, bool *modified);
 
  private:
   // Helper function to perform DFS visit

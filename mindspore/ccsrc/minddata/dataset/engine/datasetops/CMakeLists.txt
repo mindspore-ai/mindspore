@@ -32,6 +32,7 @@ if (ENABLE_PYTHON)
         barrier_op.cc
         filter_op.cc
         build_vocab_op.cc
+        build_sentence_piece_vocab_op.cc
         )
 endif()
 

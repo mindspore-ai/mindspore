@@ -87,7 +87,8 @@ static std::unordered_map<uint32_t, pFunction> g_parse_op_func_ = {
   {kTextFile, &DEPipeline::ParseTextFileOp},
   {kBuildVocab, &DEPipeline::ParseBuildVocabOp},
   {kClue, &DEPipeline::ParseClueOp},
-  {kEpochCtrl, &DEPipeline::ParseEpochCtrlOp}};
+  {kEpochCtrl, &DEPipeline::ParseEpochCtrlOp},
+  {kSentencePieceVocab, &DEPipeline::ParseBuildSentencePieceVocabOp}};
 
 DEPipeline::DEPipeline() : iterator_(nullptr) {
   try {
@@ -1705,6 +1706,41 @@ Status DEPipeline::ParseBuildVocabOp(const py::dict &args, std::shared_ptr<Datas
     }
   }
   std::shared_ptr<BuildVocabOp> op;
+  RETURN_IF_NOT_OK(builder->Build(&op));
+  *top = op;
+  return Status::OK();
+}
+
+Status DEPipeline::ParseBuildSentencePieceVocabOp(const py::dict &args, std::shared_ptr<DatasetOp> *top,
+                                                  std::shared_ptr<DatasetOp> *bottom) {
+  std::shared_ptr<BuildSentencePieceVocabOp::Builder> builder = std::make_shared<BuildSentencePieceVocabOp::Builder>();
+  for (auto arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (!value.is_none()) {
+      if (key == "vocab_size") {
+        builder->SetVocabSize(ToInt(value));
+      } else if (key == "character_coverage") {
+        (void)builder->SetCharacterCoverage(ToFloat(value));
+      } else if (key == "params") {
+        std::unordered_map<std::string, std::string> params;
+        for (auto param : py::reinterpret_borrow<py::dict>(value)) {
+          std::string param_key = py::reinterpret_borrow<py::str>(param.first);
+          if (param_key == "input" || param_key == "vocab_size" || param_key == "model_prefix" ||
+              param_key == "character_coverage" || param_key == "model_type") {
+            continue;
+          }
+          params[param_key] = py::reinterpret_borrow<py::str>(param.second);
+        }
+        (void)builder->SetParams(params);
+      } else if (key == "vocab") {
+        (void)builder->SetVocab(value.cast<std::shared_ptr<SentencePieceVocab>>());
+      } else if (key == "model_type") {
+        (void)builder->SetModelType(value.cast<SentencePieceModel>());
+      }
+    }
+  }
+  std::shared_ptr<BuildSentencePieceVocabOp> op;
   RETURN_IF_NOT_OK(builder->Build(&op));
   *top = op;
   return Status::OK();

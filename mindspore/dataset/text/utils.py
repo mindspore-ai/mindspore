@@ -22,10 +22,11 @@ import copy
 import numpy as np
 import mindspore._c_dataengine as cde
 
-from .validators import check_from_file, check_from_list, check_from_dict, check_from_dataset
+from .validators import check_from_file, check_from_list, check_from_dict, check_from_dataset, \
+    check_from_dataset_sentencepiece, check_from_file_sentencepiece, check_save_model
 
 __all__ = [
-    "Vocab", "to_str", "to_bytes"
+    "Vocab", "SentencePieceVocab", "to_str", "to_bytes"
 ]
 
 
@@ -137,6 +138,71 @@ class Vocab(cde.Vocab):
 
         return super().from_dict(word_dict)
 
+class SentencePieceVocab(cde.SentencePieceVocab):
+    """
+    SentencePiece obiect that is used to segmentate words
+    """
+    @classmethod
+    @check_from_dataset_sentencepiece
+    def from_dataset(cls, dataset, col_names, vocab_size, character_coverage, model_type, params):
+        """
+        Build a sentencepiece from a dataset
+
+        Args:
+            dataset(Dataset): Dataset to build sentencepiece.
+            col_names(list): The list of the col name.
+            vocab_size(int): Vocabulary size, the type of uint32_t.
+            character_coverage(float): Amount of characters covered by the model, good defaults are: 0.9995 for
+                languages. with rich character set like Japanse or Chinese and 1.0 for other languages with small
+                character set.
+            model_type(SentencePieceModel): Choose from unigram (default), bpe, char, or word. The input sentence
+                must be pretokenized when using word type.
+            params(dict): A dictionary with no incoming parameters.
+
+        Returns:
+            SentencePiece, SentencePiece object from dataset.
+        """
+
+        vocab = SentencePieceVocab()
+        root = copy.deepcopy(dataset).build_sentencepiece_vocab(vocab, col_names, vocab_size, character_coverage,
+                                                                model_type, params)
+        for d in root.create_dict_iterator():
+            if d is None:
+                raise ValueError("from_dataset should receive data other than None.")
+        return vocab
+
+    @classmethod
+    @check_from_file_sentencepiece
+    def from_file(cls, file_path, vocab_size, character_coverage, model_type, params):
+        """
+        Build a SentencePiece object from a list of word.
+
+        Args:
+            file_path(list): Path to the file which contains the sentencepiece list.
+            vocab_size(int): Vocabulary size, the type of uint32_t.
+            character_coverage(float): Amount of characters covered by the model, good defaults are: 0.9995 for
+                languages. with rich character set like Japanse or Chinese and 1.0 for other languages with small
+                character set.
+            model_type(SentencePieceModel): Choose from unigram (default), bpe, char, or word. The input sentence
+                must be pretokenized when using word type.
+            params(dict): A dictionary with no incoming parameters.
+        """
+        return super().from_file(file_path, vocab_size, character_coverage,
+                                 DE_C_INTER_SENTENCEPIECE_MODE[model_type], params)
+
+    @classmethod
+    @check_save_model
+    def save_model(cls, vocab, path, filename):
+        """
+        Save model to filepath
+
+        Args:
+            vocab(SentencePieceVocab): A sentencepiece object.
+            path(str): Path to store model.
+            filename(str): The name of the file.
+        """
+        return super().save_model(vocab, path, filename)
+
 
 def to_str(array, encoding='utf8'):
     """
@@ -188,3 +254,27 @@ class NormalizeForm(IntEnum):
     NFKC = 2
     NFD = 3
     NFKD = 4
+
+class SentencePieceModel(IntEnum):
+    """An enumeration for SentencePieceModel, effective enumeration types are UNIGRAM, BPE, CHAR, WORD."""
+    UNIGRAM = 0
+    BPE = 1
+    CHAR = 2
+    WORD = 3
+
+DE_C_INTER_SENTENCEPIECE_MODE = {
+    SentencePieceModel.UNIGRAM: cde.SentencePieceModel.DE_SENTENCE_PIECE_UNIGRAM,
+    SentencePieceModel.BPE: cde.SentencePieceModel.DE_SENTENCE_PIECE_BPE,
+    SentencePieceModel.CHAR: cde.SentencePieceModel.DE_SENTENCE_PIECE_CHAR,
+    SentencePieceModel.WORD: cde.SentencePieceModel.DE_SENTENCE_PIECE_WORD
+}
+
+class SPieceTokenizerOutType(IntEnum):
+    """An enumeration for SPieceTokenizerOutType, effective enumeration types are STRING, INT."""
+    STRING = 0
+    INT = 1
+
+class SPieceTokenizerLoadType(IntEnum):
+    """An enumeration for SPieceTokenizerLoadType, effective enumeration types are FILE, MODEL."""
+    FILE = 0
+    MODEL = 1
