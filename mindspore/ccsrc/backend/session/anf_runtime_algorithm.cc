@@ -707,6 +707,18 @@ DeviceAddress *AnfRuntimeAlgorithm::GetWorkspaceAddr(const AnfNodePtr &node, siz
   return addr;
 }
 
+// get workspace device mutable addr of anf_node
+DeviceAddressPtr AnfRuntimeAlgorithm::GetMutableWorkspaceAddr(const AnfNodePtr &node, size_t index) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto addr = kernel_info->GetMutableWorkspaceAddr(index);
+  if (addr == nullptr) {
+    MS_LOG(EXCEPTION) << "Index " << index << " of node " << node->DebugString() << "] workspace addr is not exist";
+  }
+  return addr;
+}
+
 // set infer shapes and types of anf node
 void AnfRuntimeAlgorithm::SetOutputInferTypeAndShape(const std::vector<TypeId> &types,
                                                      const std::vector<std::vector<size_t>> &shapes, AnfNode *node) {

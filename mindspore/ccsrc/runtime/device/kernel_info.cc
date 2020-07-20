@@ -73,6 +73,14 @@ DeviceAddress *KernelInfo::GetWorkspaceAddr(size_t index) const {
   return workspace_address_list_[index].get();
 }
 
+DeviceAddressPtr KernelInfo::GetMutableWorkspaceAddr(size_t index) const {
+  if (index >= workspace_address_list_.size()) {
+    MS_LOG(ERROR) << "Index [" << index << "] out of range";
+    return nullptr;
+  }
+  return workspace_address_list_[index];
+}
+
 bool KernelInfo::SetWorkspaceAddr(const DeviceAddressPtr &output_address, size_t index) {
   if (workspace_address_list_.empty()) {
     // parameter and valuenode

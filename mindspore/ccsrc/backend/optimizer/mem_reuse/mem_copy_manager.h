@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <map>
+#include <set>
 #include <queue>
 #include <memory>
 #include <utility>
@@ -40,29 +41,58 @@ struct TensorInfo {
 struct KernelExecutionInfo {
   size_t topo_order_{0};
   float execution_perform_{0.0};
-  bool trigger_swap_{false};
-  bool need_swap_{false};
-  // output index to topo orders of node users
+  bool trigger_swap_out_{false};
+  bool trigger_swap_in_{false};
+  size_t swap_in_task_num_{0};
+  // Key: output index, value: topo orders of node users
   std::map<size_t, std::vector<size_t>> node_users_map_;
-  // kernel output idx to host addr
-  std::map<size_t, HostAddress> host_addrs_;
+  // Key: output idx, value: (host addr, dirty or not)
+  std::map<size_t, std::pair<HostAddress, bool>> host_addrs_;
 
-  KernelExecutionInfo() : KernelExecutionInfo(0, 0.0, false, false) {}
-  explicit KernelExecutionInfo(size_t topo_order)
-      : topo_order_(topo_order), execution_perform_(0.0), trigger_swap_(false), need_swap_(false) {}
-  KernelExecutionInfo(size_t topo_order, float execution_perform, bool trigger_swap, bool need_swap)
+  KernelExecutionInfo() {}
+  explicit KernelExecutionInfo(size_t topo_order) : KernelExecutionInfo(topo_order, 0.0, false, false, 0) {}
+  KernelExecutionInfo(size_t topo_order, float execution_perform, bool trigger_swap_out, bool trigger_swap_in,
+                      size_t swap_in_task_num)
       : topo_order_(topo_order),
         execution_perform_(execution_perform),
-        trigger_swap_(trigger_swap),
-        need_swap_(need_swap) {}
+        trigger_swap_out_(trigger_swap_out),
+        trigger_swap_in_(trigger_swap_in),
+        swap_in_task_num_(swap_in_task_num) {}
 };
 
-// trigger swap
 struct MemSwapInfo {
   SwapKind swap_kind_;
-  // kernel need to be swapped
-  AnfNodePtr kernel_{nullptr};
+  // Topo order of kernel need be swapped
+  size_t topo_order_;
   size_t output_idx_{0};
+  // Record the swapping out position of swapping in tensor
+  size_t swap_out_pos_;
+};
+
+struct SwapInfoComp {
+  bool operator()(const MemSwapInfo &a, const MemSwapInfo &b) {
+    int swap_kind_a = static_cast<int>(a.swap_kind_);
+    int swap_kind_b = static_cast<int>(b.swap_kind_);
+    if (swap_kind_a < swap_kind_b) {
+      return true;
+    } else if (swap_kind_a > swap_kind_b) {
+      return false;
+    }
+
+    if (a.swap_out_pos_ < b.swap_out_pos_) {
+      return true;
+    } else if (a.swap_out_pos_ > b.swap_out_pos_) {
+      return false;
+    }
+
+    if (a.topo_order_ < b.topo_order_) {
+      return true;
+    } else if (a.topo_order_ > b.topo_order_) {
+      return false;
+    }
+
+    return a.output_idx_ < b.output_idx_;
+  }
 };
 
 class MemCopyManager {
@@ -90,6 +120,7 @@ class MemCopyManager {
   virtual void ClearSwapQueue() {}
 };
 using MemCopyManagerPtr = std::shared_ptr<MemCopyManager>;
+using MemSwapInfoSet = std::set<MemSwapInfo, SwapInfoComp>;
 }  // namespace memswap
 }  // namespace device
 }  // namespace mindspore

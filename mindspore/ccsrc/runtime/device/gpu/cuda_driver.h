@@ -57,6 +57,7 @@ class CudaDriver {
   static bool RecordEvent(DeviceEvent event, DeviceStream stream = 0);
   static bool SyncEvent(const DeviceEvent &event);
   static bool QueryEvent(const DeviceEvent &event);
+  static bool ElapsedTime(float *cost_time, const DeviceEvent &start, const DeviceEvent &end);
 
   // Encapsulate the cuda APIs associated with device management.
   static int device_count();
