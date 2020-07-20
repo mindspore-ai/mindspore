@@ -28,6 +28,7 @@
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
 #include "minddata/dataset/engine/datasetops/shuffle_op.h"
 #include "minddata/dataset/engine/datasetops/project_op.h"
+#include "minddata/dataset/engine/datasetops/zip_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/random_sampler.h"
 
@@ -53,6 +54,7 @@ std::shared_ptr<Iterator> Dataset::CreateIterator() {
     iter = std::make_shared<Iterator>();
     Status rc = iter->BuildAndLaunchTree(shared_from_this());
     if (rc.IsError()) {
+      MS_LOG(ERROR) << rc;
       MS_LOG(ERROR) << "CreateIterator failed.";
       return nullptr;
     }
@@ -180,6 +182,21 @@ std::shared_ptr<ProjectDataset> Dataset::Project(const std::vector<std::string> 
   }
 
   ds->children.push_back(shared_from_this());
+
+  return ds;
+}
+
+// Function to create a Zip dataset
+std::shared_ptr<ZipDataset> Dataset::Zip(const std::vector<std::shared_ptr<Dataset>> &datasets) {
+  // Default values
+  auto ds = std::make_shared<ZipDataset>();
+
+  if (!ds->ValidateParams()) {
+    return nullptr;
+  }
+  for (auto dataset : datasets) {
+    ds->children.push_back(dataset);
+  }
 
   return ds;
 }
@@ -438,6 +455,19 @@ std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> ProjectDataset::Build()
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
   node_ops.push_back(std::make_shared<ProjectOp>(columns_));
+  return std::make_shared<std::vector<std::shared_ptr<DatasetOp>>>(node_ops);
+}
+
+// Function to build ZipOp
+ZipDataset::ZipDataset() {}
+
+bool ZipDataset::ValidateParams() { return true; }
+
+std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> ZipDataset::Build() {
+  // A vector containing shared pointer to the Dataset Ops that this object will create
+  std::vector<std::shared_ptr<DatasetOp>> node_ops;
+
+  node_ops.push_back(std::make_shared<ZipOp>(rows_per_buffer_, connector_que_size_));
   return std::make_shared<std::vector<std::shared_ptr<DatasetOp>>>(node_ops);
 }
 

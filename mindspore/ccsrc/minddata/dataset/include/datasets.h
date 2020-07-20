@@ -48,6 +48,7 @@ class MapDataset;
 class ShuffleDataset;
 class Cifar10Dataset;
 class ProjectDataset;
+class ZipDataset;
 
 /// \brief Function to create an ImageFolderDataset
 /// \notes A source dataset that reads images from a tree of directories
@@ -164,6 +165,12 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] columns The name of columns to project
   /// \return Shared pointer to the current Dataset
   std::shared_ptr<ProjectDataset> Project(const std::vector<std::string> &columns);
+
+  /// \brief Function to create a Zip Dataset
+  /// \notes Applies zip to the dataset
+  /// \param[in] datasets A list of shared pointer to the datasets that we want to zip
+  /// \return Shared pointer to the current Dataset
+  std::shared_ptr<ZipDataset> Zip(const std::vector<std::shared_ptr<Dataset>> &datasets);
 
  protected:
   std::vector<std::shared_ptr<Dataset>> children;
@@ -351,6 +358,24 @@ class ProjectDataset : public Dataset {
  private:
   std::vector<std::string> columns_;
 };
+
+class ZipDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  ZipDataset();
+
+  /// \brief Destructor
+  ~ZipDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return shared pointer to the list of newly created DatasetOps
+  std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+};
+
 }  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

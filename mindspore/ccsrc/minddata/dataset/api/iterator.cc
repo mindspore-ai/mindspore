@@ -52,7 +52,9 @@ Status Iterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds) {
   // Iterative BFS converting Dataset tree into runtime Execution tree.
   std::queue<std::pair<std::shared_ptr<Dataset>, std::shared_ptr<DatasetOp>>> q;
 
-  if (ds != nullptr) {
+  if (ds == nullptr) {
+    RETURN_STATUS_UNEXPECTED("Input is null pointer");
+  } else {
     // Convert the current root node.
     auto root_op = ds->Build()->front();
     RETURN_UNEXPECTED_IF_NULL(root_op);

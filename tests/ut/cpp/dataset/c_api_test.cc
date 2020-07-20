@@ -764,7 +764,59 @@ TEST_F(MindDataTestPipeline, TestProjectMap) {
     iter->GetNextRow(&row);
   }
 
-  EXPECT_TRUE(i == 20);
+  EXPECT_EQ(i, 20);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestZip) {
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_TRUE(ds != nullptr);
+
+  // Create a Project operation on ds
+  std::vector<std::string> column_project = {"image"};
+  ds = ds->Project(column_project);
+  EXPECT_TRUE(ds != nullptr);
+
+  folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds1 = Cifar10(folder_path, 0, RandomSampler(false, 10));
+  EXPECT_TRUE(ds1 != nullptr);
+
+  // Create a Project operation on ds
+  column_project = {"label"};
+  ds1 = ds1->Project(column_project);
+  EXPECT_TRUE(ds1 != nullptr);
+
+  // Create a Zip operation on the datasets
+  ds = ds->Zip({ds, ds1});
+  EXPECT_TRUE(ds != nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_TRUE(ds != nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_TRUE(iter != nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 10);
 
   // Manually terminate the pipeline
   iter->Stop();
