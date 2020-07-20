@@ -59,6 +59,15 @@ static AbstractBasePtr Reabs(const AbstractBasePtr &t) {
                          [](const AbstractAttribute &item) { return item.second; });
     return std::make_shared<AbstractTuple>(baselist);
   }
+
+  return nullptr;
+}
+
+static AbstractBasePtr AdaptAbs(const AbstractBasePtr &t) {
+  if (t == nullptr) {
+    return nullptr;
+  }
+
   if (t->isa<AbstractList>()) {
     auto abs_list = dyn_cast<AbstractList>(t);
     return std::make_shared<AbstractTuple>(abs_list->elements());
@@ -358,7 +367,41 @@ bool SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr 
       new_node = EraseMakeKeywordArgNode(cnode);
     } else if (IsPrimitiveCNode(node, prim::kPrimExtractKeywordArg)) {
       new_node = EraseExtractKeywordArg(cnode);
-    } else if (IsPrimitiveCNode(node, prim::kPrimMakeList)) {
+    }
+
+    if (new_node != nullptr) {
+      new_node->set_abstract(node->abstract());
+      MS_LOG(DEBUG) << "Replace node: " << node->DebugString() << " with new_node: " << new_node->DebugString();
+      (void)manager->Replace(node, new_node);
+      changed = true;
+    }
+  }
+
+  for (auto &node : manager->all_nodes()) {
+    auto ret = Reabs(node->abstract());
+    if (ret) {
+      MS_LOG(DEBUG) << "Replace " << node->DebugString() << "'s abstract " << node->abstract()->ToString() << " with "
+                    << ret->ToString();
+      node->set_abstract(ret);
+      changed = true;
+    }
+  }
+  return changed;
+}
+
+bool CleanList(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
+  MS_EXCEPTION_IF_NULL(manager);
+  manager->AddFuncGraph(root);
+
+  bool changed = false;
+
+  // Since `manager->Replace(...);` will modify member `all_nodes_`, so `all_node` can't be a ref var
+  AnfNodeSet all_node = manager->all_nodes();
+  for (auto &node : all_node) {
+    MS_EXCEPTION_IF_NULL(node);
+    auto cnode = node->cast<CNodePtr>();
+    AnfNodePtr new_node = nullptr;
+    if (IsPrimitiveCNode(node, prim::kPrimMakeList)) {
       new_node = ConvertMakeListToMakeTuple(cnode);
     } else if (IsPrimitiveCNode(node, prim::kPrimListGetItem)) {
       new_node = ConvertListGetItemToTupleGetItem(cnode);
@@ -377,7 +420,7 @@ bool SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr 
   }
 
   for (auto &node : manager->all_nodes()) {
-    auto ret = Reabs(node->abstract());
+    auto ret = AdaptAbs(node->abstract());
     if (ret) {
       MS_LOG(DEBUG) << "Replace " << node->DebugString() << "'s abstract " << node->abstract()->ToString() << " with "
                     << ret->ToString();

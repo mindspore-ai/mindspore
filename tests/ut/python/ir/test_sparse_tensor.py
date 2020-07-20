@@ -18,6 +18,9 @@
 @Date  : 2020-07-16
 @Desc  : test mindspore sparse_tensor's operation
 """
+import numpy as np
+import pytest
+
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore.ops import composite as C
@@ -25,17 +28,20 @@ from mindspore import Tensor, SparseTensor, context
 
 context.set_context(mode=context.GRAPH_MODE, enable_sparse=True)
 
+
+class MakeSparseTensor(nn.Cell):
+    def __init__(self, dense_shape):
+        super(MakeSparseTensor, self).__init__()
+        self.dense_shape = dense_shape
+    def construct(self, indices, values):
+        ret = (SparseTensor(indices, values, self.dense_shape),)
+        return ret[0]
+
+
 def test_sparse_tensor_make_sparse_tensor():
-    class MakeSparseTensor(nn.Cell):
-        def __init__(self):
-            super(MakeSparseTensor, self).__init__()
-            self.dense_shape = (3, 4)
-        def construct(self, indices, values):
-            ret = (SparseTensor(indices, values, self.dense_shape),)
-            return ret[0]
     indices = Tensor([[0, 1], [1, 2]])
     values = Tensor([1, 2], dtype=ms.float32)
-    MakeSparseTensor()(indices, values)
+    MakeSparseTensor((3, 4))(indices, values)
 
 
 def test_sparse_tensor_attr():
@@ -59,3 +65,20 @@ def test_sparse_tensor_attr():
     indices = Tensor([[0, 1], [1, 2]])
     values = Tensor([1, 2], dtype=ms.float32)
     SparseTensorGetAttr()(indices, values)
+    grad_op(SparseTensorGetAttr())(indices, values)
+
+
+def test_sparse_tensor_indices_dim_greater_than_dense_shape_dim():
+    indices = Tensor(np.array([[0, 0, 0], [0, 0, 1]], dtype=np.int32))
+    values = Tensor(np.array([100, 200], dtype=np.float32))
+    dense_shape = (2, 2)
+    with pytest.raises(TypeError):
+        MakeSparseTensor(dense_shape)(indices, values)
+
+
+def test_sparse_tensor_indices_dim_less_than_dense_shape_dim():
+    indices = Tensor(np.array([[0, 0], [0, 1]], dtype=np.int32))
+    values = Tensor(np.array([100, 200], dtype=np.float32))
+    dense_shape = (2, 2, 2)
+    with pytest.raises(TypeError):
+        MakeSparseTensor(dense_shape)(indices, values)

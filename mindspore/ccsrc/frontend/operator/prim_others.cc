@@ -463,6 +463,10 @@ AbstractBasePtr InferImplMakeSparseTensor(const AnalysisEnginePtr &, const Primi
                          auto elem = GetValue<int>(e);
                          return elem;
                        });
+  if (IntToSize(indices_shp[1]) != dense_shape_vec.size()) {
+    MS_EXCEPTION(TypeError) << "The size of dense_shape must be equal with the second dimension of indices "
+                            << indices_shp[1] << ", but got " << dense_shape_vec.size();
+  }
   for (auto dense_shape_elem : dense_shape_vec) {
     if (dense_shape_elem < 0) {
       MS_EXCEPTION(TypeError) << "The element of dense_shape must be positive, but got "

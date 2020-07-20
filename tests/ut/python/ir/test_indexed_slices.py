@@ -252,7 +252,7 @@ def test_indexed_slices_sparse_gatherv2_grad_all():
             self.network = network
         def construct(self, x, y):
             grad = grad_all(self.network)(x, y)
-            return grad, grad[0], grad[1]
+            return grad[0].indices(), grad[0].values(), grad[0].dense_shape()
     class SparseGatherV2(nn.Cell):
         def __init__(self):
             super(SparseGatherV2, self).__init__()
@@ -276,7 +276,7 @@ def test_indexed_slices_sparse_gatherv2_grad_with_pram():
             weights = self.weights
             grad = grad_by_list(self.network, weights)(x)
             x = grad[0]
-            return x, x.values(), x.indices(), x.dense_shape()
+            return x.values(), x.indices(), x.dense_shape()
     class SparseGatherV2(nn.Cell):
         def __init__(self):
             super(SparseGatherV2, self).__init__()

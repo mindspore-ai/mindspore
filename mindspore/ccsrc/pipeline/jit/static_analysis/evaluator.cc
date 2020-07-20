@@ -22,6 +22,7 @@
 #include "ir/func_graph_cloner.h"
 #include "abstract/utils.h"
 #include "debug/trace.h"
+#include "utils/context/ms_context.h"
 
 namespace mindspore {
 namespace abstract {
@@ -373,9 +374,16 @@ EvalResultPtr JEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &arg
   // parameters. (sense_f, sense_x, ...)(*bpro_f) (sense_y)
   AbstractBasePtrList bparams;
   bparams.push_back(SensitivityTransform(orig_func_));
-  (void)std::transform(
-    args_spec_list.begin(), args_spec_list.end(), std::back_inserter(bparams),
-    [](const AbstractBasePtr &arg_spec) -> AbstractBasePtr { return SensitivityTransform(arg_spec); });
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool enable_sparse = context->enable_sparse();
+  (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(bparams),
+                       [&enable_sparse](const AbstractBasePtr &arg_spec) -> AbstractBasePtr {
+                         if (enable_sparse && arg_spec->isa<AbstractTensor>()) {
+                           return std::make_shared<AbstractUndetermined>();
+                         }
+                         return SensitivityTransform(arg_spec);
+                       });
   AbstractBasePtr bparams_final = std::make_shared<AbstractTuple>(bparams);
   AbstractFunctionPtr bprop =
     std::make_shared<VirtualAbstractClosure>(SensitivityTransform(result->abstract()), bparams_final);

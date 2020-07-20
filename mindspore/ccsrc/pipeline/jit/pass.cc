@@ -69,6 +69,24 @@ bool SimplifyDataStructuresPass(const ResourcePtr &res) {
   return true;
 }
 
+bool CleanListPass(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res->func_graph());
+
+  FuncGraphPtr func_graph = res->func_graph();
+  bool changed = opt::CleanList(func_graph, res->manager());
+
+  abstract::AbstractBasePtrList args_spec;
+  auto parameters = func_graph->parameters();
+  (void)std::transform(parameters.begin(), parameters.end(), std::back_inserter(args_spec),
+                       [](const AnfNodePtr &p) -> AbstractBasePtr { return p->abstract(); });
+  if (changed) {
+    FuncGraphPtr new_fg = Renormalize(res, func_graph, args_spec);
+    res->set_func_graph(new_fg);
+  }
+  res->set_args_spec(args_spec);
+  return true;
+}
+
 namespace {
 OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig a_1 = opt::OptPassConfig({
@@ -100,6 +118,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
 
     // Safe inlining
     irpass.inline_,
+    irpass.sparse_tensor_eliminate_,
   });
   opt::OptPassConfig a_2 = opt::OptPassConfig({
     irpass.merge_addn_,
@@ -157,7 +176,6 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.make_ref_eliminate_,
     irpass.get_ref_param_eliminate_,
     irpass.indexed_slices_eliminate_,
-    irpass.sparse_tensor_eliminate_,
   });
   OptPassGroupMap map({
     {"b_1", b_1},
@@ -322,19 +340,23 @@ bool InferenceOptPreparePass(const ResourcePtr &res) {
   return true;
 }
 
-std::vector<PassItem> kVmPasses = {{"opt_a", OptPassAGroup},
-                                   {"simplify_data_structures", SimplifyDataStructuresPass},
+std::vector<PassItem> kVmPasses = {{"simplify_data_structures", SimplifyDataStructuresPass},
+                                   {"opt_a", OptPassAGroup},
+                                   {"clean_list", CleanListPass},
                                    {"opt_b", OptPassBGroup},
                                    {"cconv", CconvPass},
                                    {"opt_graph_kernel_a", OptPassGraphKernelGroupA},
                                    {"opt_graph_kernel_b", OptPassGraphKernelGroupB},
                                    {"add_control_depend", AddControlDependPass}};
 
-std::vector<PassItem> kGePasses = {
-  {"opt_a", OptPassAGroup},      {"simplify_data_structures", SimplifyDataStructuresPass},
-  {"opt_b", OptPassBGroup},      {"add_control_depend", AddControlDependPass},
-  {"opt_control", ControlGroup}, {"opt_prepare", PrepareGroup},
-  {"cconv", CconvPass}};
+std::vector<PassItem> kGePasses = {{"simplify_data_structures", SimplifyDataStructuresPass},
+                                   {"opt_a", OptPassAGroup},
+                                   {"clean_list", CleanListPass},
+                                   {"opt_b", OptPassBGroup},
+                                   {"add_control_depend", AddControlDependPass},
+                                   {"opt_control", ControlGroup},
+                                   {"opt_prepare", PrepareGroup},
+                                   {"cconv", CconvPass}};
 
 std::vector<PassItem> kPynativePasses = {{"opt_a", OptPassAGroup}, {"opt_b", OptPassBGroup}, {"cconv", CconvPass}};
 }  // namespace pipeline
