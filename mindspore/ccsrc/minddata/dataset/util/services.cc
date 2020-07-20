@@ -77,9 +77,13 @@ Status Services::CreateAllInstances() {
   rc = sa_[kSlotTaskMgr_]->ServiceStart();
   RETURN_IF_NOT_OK(rc);
   // TODO(jesse) : Get the parameters from config file. Right now spill to /tmp and spawn 3 workers
+#if !defined(_WIN32) && !defined(_WIN64)
   sa_[kSlotCacheMgr_] = new (&rc, pool_) CacheServer("/tmp", 3);
   RETURN_IF_NOT_OK(rc);
   rc = sa_[kSlotCacheMgr_]->ServiceStart();
+#else
+  sa_[kSlotCacheMgr_] = nullptr;
+#endif
   return rc;
 }
 
