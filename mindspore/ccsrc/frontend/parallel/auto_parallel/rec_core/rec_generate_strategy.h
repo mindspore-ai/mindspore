@@ -42,6 +42,13 @@ std::vector<std::vector<int32_t>> PrepareGatherV2(const std::vector<std::shared_
                                                   const size_t iter_ops, std::vector<int32_t> s);
 std::vector<std::vector<int32_t>> PrepareL2Normalize(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                                      const size_t iter_ops, std::vector<int32_t> s);
+std::vector<std::vector<int32_t>> CheckBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                 const size_t iter_ops, std::vector<int32_t> s);
+std::vector<int32_t> ApplyBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                                    std::vector<int32_t> s, size_t target_tensor_dim, size_t refer_tensor_dim,
+                                    bool braoadcast_first_tensor);
+std::vector<std::vector<int32_t>> CheckDivisible(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                 const size_t iter_ops, std::vector<int32_t> s);
 std::vector<std::vector<int32_t>> MakeRecSearchStrategy(const std::shared_ptr<Graph> &graph,
                                                         const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                                         const size_t iter_graph, const size_t iter_ops);
