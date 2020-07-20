@@ -83,8 +83,8 @@ class Momentum(Optimizer):
                                                              or greater than 0.0.
         momentum (float): Hyperparameter of type float, means momentum for the moving average.
             It should be at least 0.0.
-        weight_decay (int, float): Weight decay (L2 penalty). It should be equal to or greater than 0.0. Default: 0.0.
-        loss_scale (int, float): A floating point value for the loss scale. It should be greater than 0.0. Default: 1.0.
+        weight_decay (int, float): Weight decay (L2 penalty). It should be in range [0.0, 1.0]. Default: 0.0.
+        loss_scale (int, float): A floating point value for the loss scale. Should be not less than 1.0. Default: 1.0.
         use_nesterov (bool): Enable Nesterov momentum. Default: False.
 
     Inputs:
