@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_COSTMODEL_CONTEXT_H_
-#define MINDSPORE_CCSRC_PARALLEL_COSTMODEL_CONTEXT_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_COSTMODEL_CONTEXT_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_COSTMODEL_CONTEXT_H_
 
 #include <memory>
 #include <string>
@@ -178,4 +178,4 @@ class CostModelContext {
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_COSTMODEL_CONTEXT_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_COSTMODEL_CONTEXT_H_

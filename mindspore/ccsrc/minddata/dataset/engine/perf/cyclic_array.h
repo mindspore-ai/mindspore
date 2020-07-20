@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_CYCLIC_ARRAY_H
-#define DATASET_CYCLIC_ARRAY_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_CYCLIC_ARRAY_H
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_CYCLIC_ARRAY_H
 
 #include <memory>
 #include <algorithm>
@@ -194,4 +194,4 @@ class CyclicArray {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_CYCLIC_ARRAY_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_CYCLIC_ARRAY_H

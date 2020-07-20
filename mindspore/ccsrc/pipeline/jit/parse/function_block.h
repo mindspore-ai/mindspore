@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef PIPELINE_PARSE_FUNCTION_BLOCK_H_
-#define PIPELINE_PARSE_FUNCTION_BLOCK_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_FUNCTION_BLOCK_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_FUNCTION_BLOCK_H_
 
 #include <vector>
 #include <string>
@@ -115,4 +115,4 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
 }  // namespace parse
 }  // namespace mindspore
 
-#endif  // PIPELINE_PARSE_FUNCTION_BLOCK_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_FUNCTION_BLOCK_H_

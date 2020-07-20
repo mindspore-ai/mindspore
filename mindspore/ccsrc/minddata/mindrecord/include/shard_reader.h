@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDRECORD_INCLUDE_SHARD_READER_H_
-#define MINDRECORD_INCLUDE_SHARD_READER_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_READER_H_
+#define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_READER_H_
 
 #include <dirent.h>
 #include <signal.h>
@@ -363,4 +363,4 @@ class ShardReader {
 }  // namespace mindrecord
 }  // namespace mindspore
 
-#endif  // MINDRECORD_INCLUDE_SHARD_READER_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_READER_H_

@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_DTYPE_TYPE_ID_H_
-#define MINDSPORE_CCSRC_IR_DTYPE_TYPE_ID_H_
+#ifndef MINDSPORE_CORE_IR_DTYPE_TYPE_ID_H_
+#define MINDSPORE_CORE_IR_DTYPE_TYPE_ID_H_
 
 #include <unordered_map>
 #include <string>
@@ -91,4 +91,4 @@ const std::unordered_map<TypeId, std::string> type_name_map = {
   {kNumberTypeInt16, "int16"},     {kNumberTypeInt32, "int32"},     {kNumberTypeInt64, "int64"},
   {kNumberTypeFloat16, "float16"}, {kNumberTypeFloat32, "float32"}, {kNumberTypeFloat64, "float64"}};
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_IR_DTYPE_TYPE_ID_H_
+#endif  // MINDSPORE_CORE_IR_DTYPE_TYPE_ID_H_

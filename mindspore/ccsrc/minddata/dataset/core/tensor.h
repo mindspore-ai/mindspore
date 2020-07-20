@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_CORE_TENSOR_H_
-#define DATASET_CORE_TENSOR_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_TENSOR_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_TENSOR_H_
 
 #include <deque>
 #include <memory>
@@ -665,4 +665,4 @@ inline Tensor::TensorIterator<std::string_view> Tensor::end<std::string_view>() 
 }
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_CORE_TENSOR_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_TENSOR_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_ABSTRACT_PARAM_VALIDATOR_H_
-#define MINDSPORE_CCSRC_ABSTRACT_PARAM_VALIDATOR_H_
+#ifndef MINDSPORE_CORE_ABSTRACT_PARAM_VALIDATOR_H_
+#define MINDSPORE_CORE_ABSTRACT_PARAM_VALIDATOR_H_
 
 #include <memory>
 #include <string>
@@ -98,4 +98,4 @@ void CheckArgsSpec(const AbstractBasePtrList &args_list) {
 }  // namespace abstract
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_ABSTRACT_PARAM_VALIDATOR_H_
+#endif  // MINDSPORE_CORE_ABSTRACT_PARAM_VALIDATOR_H_

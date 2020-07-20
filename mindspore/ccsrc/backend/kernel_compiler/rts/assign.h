@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_RTS_ASSIGN_H
-#define MINDSPORE_CCSRC_KERNEL_RTS_ASSIGN_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_ASSIGN_H
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_ASSIGN_H
 
 #include <vector>
 #include "backend/kernel_compiler/rts/rt_kernel.h"
@@ -38,4 +38,4 @@ MS_REG_RTKERNEL(assign, AssignKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_RTS_ASSIGN_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_ASSIGN_H

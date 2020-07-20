@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_STEP_PARALLEL_H_
-#define MINDSPORE_CCSRC_PARALLEL_STEP_PARALLEL_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_STEP_PARALLEL_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_STEP_PARALLEL_H_
 
 #include <vector>
 
@@ -152,4 +152,4 @@ std::set<FuncGraphPtr> ForwardGraph(const FuncGraphPtr &root);
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_STEP_PARALLEL_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_STEP_PARALLEL_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_ENGINE_OPT_PASS_PRE_REMOVAL_NODES_H_
-#define DATASET_ENGINE_OPT_PASS_PRE_REMOVAL_NODES_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PASS_PRE_REMOVAL_NODES_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PASS_PRE_REMOVAL_NODES_H_
 
 #include <memory>
 #include "minddata/dataset/engine/opt/pass.h"
@@ -61,4 +61,4 @@ class RemovalNodes : public NodePass {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_ENGINE_OPT_PASS_PRE_REMOVAL_NODES_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PASS_PRE_REMOVAL_NODES_

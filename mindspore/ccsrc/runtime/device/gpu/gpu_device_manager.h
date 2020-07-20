@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_DEVICE_GPU_GPU_DEVICE_MANAGER_H_
-#define MINDSPORE_CCSRC_DEVICE_GPU_GPU_DEVICE_MANAGER_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_DEVICE_MANAGER_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_DEVICE_MANAGER_H_
 
 #include <cudnn.h>
 #include <cublas_v2.h>
@@ -80,4 +80,4 @@ class GPUDeviceManager {
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_GPU_GPU_DEVICE_MANAGER_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_DEVICE_MANAGER_H_

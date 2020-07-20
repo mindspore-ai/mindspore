@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_LITE_TENSOR_H_
-#define MINDSPORE_CCSRC_IR_LITE_TENSOR_H_
+#ifndef MINDSPORE_CORE_IR_LITE_TENSOR_H_
+#define MINDSPORE_CORE_IR_LITE_TENSOR_H_
 
 #include <memory>
 #include <vector>
@@ -94,4 +94,4 @@ class Tensor : public MSTensor {
 }  // namespace inference
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_LITE_TENSOR_H_
+#endif  // MINDSPORE_CORE_IR_LITE_TENSOR_H_

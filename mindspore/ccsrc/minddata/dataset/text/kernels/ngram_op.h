@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_TEXT_KERNELS_NGRAM_OP_H_
-#define DATASET_TEXT_KERNELS_NGRAM_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_TEXT_KERNELS_NGRAM_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_TEXT_KERNELS_NGRAM_OP_H_
 
 #include <string>
 #include <memory>
@@ -72,4 +72,4 @@ class NgramOp : public TensorOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_TEXT_KERNELS_NGRAM_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_TEXT_KERNELS_NGRAM_OP_H_

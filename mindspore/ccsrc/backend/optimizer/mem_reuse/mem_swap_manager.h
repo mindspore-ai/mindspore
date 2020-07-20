@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_MEM_SWAP_MANAGER_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_MEM_SWAP_MANAGER_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_MEM_SWAP_MANAGER_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_MEM_SWAP_MANAGER_H_
 
 #include <unordered_map>
 #include <unordered_set>
@@ -129,4 +129,4 @@ using MemSwapManagerPtr = std::shared_ptr<MemSwapManager>;
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_MEM_SWAP_MANAGER_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_MEM_SWAP_MANAGER_H_

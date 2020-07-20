@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_TENSOR_LAYOUT_MAP_H_
-#define MINDSPORE_CCSRC_PARALLEL_TENSOR_LAYOUT_MAP_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_MAP_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_MAP_H_
 
 #include <cstdint>
 #include <map>
@@ -49,4 +49,4 @@ class Map : public Array {
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_TENSOR_LAYOUT_MAP_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_MAP_H_

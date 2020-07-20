@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef PIPELINE_STATIC_ANALYSIS_STATIC_ANALYSIS_H_
-#define PIPELINE_STATIC_ANALYSIS_STATIC_ANALYSIS_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_STATIC_ANALYSIS_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_STATIC_ANALYSIS_H_
 
 #include <list>
 #include <memory>
@@ -277,4 +277,4 @@ EvalResultPtr EvalOnePrim(const PrimitivePtr &p, const AbstractBasePtrList &arg_
 }  // namespace abstract
 }  // namespace mindspore
 
-#endif  // PIPELINE_STATIC_ANALYSIS_STATIC_ANALYSIS_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_STATIC_ANALYSIS_H_

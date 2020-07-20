@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_PASS_CONST_TO_ATTR_STRIDED_SLICE_GRAD_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_PASS_CONST_TO_ATTR_STRIDED_SLICE_GRAD_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CONST_TO_ATTR_STRIDED_SLICE_GRAD_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CONST_TO_ATTR_STRIDED_SLICE_GRAD_H_
 
 #include <memory>
 #include "backend/optimizer/common/optimizer.h"
@@ -31,4 +31,4 @@ class ConstToAttrStridedSliceGradPass : public PatternProcessPass {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_PASS_CONST_TO_ATTR_STRIDED_SLICE_GRAD_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CONST_TO_ATTR_STRIDED_SLICE_GRAD_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
 */
 
-#ifndef DATASET_ENGINE_CACHE_SERVICE_H_
-#define DATASET_ENGINE_CACHE_SERVICE_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CACHE_SERVICE_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CACHE_SERVICE_H_
 
 #include <algorithm>
 #include <atomic>
@@ -140,4 +140,4 @@ class CacheService : public Service {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_ENGINE_CACHE_SERVICE_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CACHE_SERVICE_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PIPELINE_PASS_H_
-#define MINDSPORE_CCSRC_PIPELINE_PASS_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PASS_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_PASS_H_
 
 #include <vector>
 #include <functional>
@@ -40,4 +40,4 @@ void ReclaimOptimizer();
 }  // namespace pipeline
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_PASS_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_PASS_H_

@@ -15,8 +15,8 @@
  */
 
 #pragma once
-#ifndef MINDRECORD_STATISTICS_H
-#define MINDRECORD_STATISTICS_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_MINDRECORD_STATISTICS_H
+#define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_STATISTICS_H
 
 #include <fstream>
 #include <iostream>
@@ -88,4 +88,4 @@ class Statistics {
 }  // namespace mindrecord
 }  // namespace mindspore
 
-#endif  // MINDRECORD_STATISTICS_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_MINDRECORD_STATISTICS_H

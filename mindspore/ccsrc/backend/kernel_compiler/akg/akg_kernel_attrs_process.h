@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_KERNEL_AKG_AKG_KERNEL_ATTRS_PROCESS_H
-#define MINDSPORE_CCSRC_KERNEL_AKG_AKG_KERNEL_ATTRS_PROCESS_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_ATTRS_PROCESS_H
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_ATTRS_PROCESS_H
 
 #include <vector>
 #include <memory>
@@ -55,4 +55,4 @@ const std::unordered_map<std::string, std::function<void(const AnfNodePtr &anf_n
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_KERNEL_AKG_AKG_KERNEL_ATTRS_PROCESS_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_ATTRS_PROCESS_H

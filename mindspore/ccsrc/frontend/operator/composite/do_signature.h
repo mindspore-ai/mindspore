@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPERATOR_COMPOSITE_DO_SIGNATURE_H_
-#define MINDSPORE_CCSRC_OPERATOR_COMPOSITE_DO_SIGNATURE_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_DO_SIGNATURE_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_DO_SIGNATURE_H_
 
 #include <vector>
 #include <string>
@@ -66,4 +66,4 @@ AnfNodePtr GenerateCNode(const FuncGraphPtr &func_graph, const std::string &func
 }  // namespace prim
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_OPERATOR_COMPOSITE_DO_SIGNATURE_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_DO_SIGNATURE_H_

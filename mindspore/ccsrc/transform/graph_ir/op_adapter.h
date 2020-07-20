@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TRANSFORM_OP_ADAPTER_H_
-#define TRANSFORM_OP_ADAPTER_H_
+#ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_ADAPTER_H_
+#define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_ADAPTER_H_
 
 #include <memory>
 #include <vector>
@@ -910,4 +910,4 @@ std::unordered_map<std::string, std::unordered_map<int, std::string>> OpAdapter<
 }  // namespace transform
 }  // namespace mindspore
 
-#endif  // TRANSFORM_OP_ADAPTER_H_
+#endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_ADAPTER_H_

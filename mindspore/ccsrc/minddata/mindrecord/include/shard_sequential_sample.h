@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDRECORD_INCLUDE_SHARD_SEQUENTIAL_SAMPLE_H_
-#define MINDRECORD_INCLUDE_SHARD_SEQUENTIAL_SAMPLE_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_SEQUENTIAL_SAMPLE_H_
+#define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_SEQUENTIAL_SAMPLE_H_
 
 #include <memory>
 #include <string>
@@ -45,4 +45,4 @@ class ShardSequentialSample : public ShardSample {
 }  // namespace mindrecord
 }  // namespace mindspore
 
-#endif  // MINDRECORD_INCLUDE_SHARD_SEQUENTIAL_SAMPLE_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_SEQUENTIAL_SAMPLE_H_

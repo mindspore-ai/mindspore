@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_PRIMITIVE_H_
-#define MINDSPORE_CCSRC_IR_PRIMITIVE_H_
+#ifndef MINDSPORE_CORE_IR_PRIMITIVE_H_
+#define MINDSPORE_CORE_IR_PRIMITIVE_H_
 
 #include <unordered_map>
 #include <vector>
@@ -151,4 +151,4 @@ struct PrimitiveHasher {
   }
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_IR_PRIMITIVE_H_
+#endif  // MINDSPORE_CORE_IR_PRIMITIVE_H_

@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef PIPELINE_PARSE_DATA_CONVERTER_H_
-#define PIPELINE_PARSE_DATA_CONVERTER_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_DATA_CONVERTER_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_DATA_CONVERTER_H_
 
 #include <deque>
 #include <memory>
@@ -58,4 +58,4 @@ void CleanDataClassToClassMap();
 }  // namespace parse
 }  // namespace mindspore
 
-#endif  // PIPELINE_PARSE_DATA_CONVERTER_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_DATA_CONVERTER_H_

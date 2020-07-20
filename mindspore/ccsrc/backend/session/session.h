@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_SESSION_SESSION_H
-#define MINDSPORE_CCSRC_SESSION_SESSION_H
+#ifndef MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_H
+#define MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_H
 
 #include <vector>
 #include <string>
@@ -47,4 +47,4 @@ class Session : public MSSession {
 };
 }  // namespace inference
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_SESSION_SESSION_BASIC_H
+#endif  // MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_BASIC_H

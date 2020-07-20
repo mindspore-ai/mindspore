@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_CLEAN_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_CLEAN_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CLEAN_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CLEAN_H_
 
 #include <memory>
 #include "ir/anf.h"
@@ -40,4 +40,4 @@ void EraseTuple(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager);
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_CLEAN_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CLEAN_H_

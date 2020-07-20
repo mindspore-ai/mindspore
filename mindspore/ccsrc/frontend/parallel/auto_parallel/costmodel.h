@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_AUTO_PARALLEL_COSTMODEL_H_
-#define MINDSPORE_CCSRC_PARALLEL_AUTO_PARALLEL_COSTMODEL_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_AUTO_PARALLEL_COSTMODEL_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_AUTO_PARALLEL_COSTMODEL_H_
 
 #include <algorithm>
 #include <memory>
@@ -308,4 +308,4 @@ void RefineForPracticalCost(const CostPtr &, bool is_redistribution);
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_AUTO_PARALLEL_COSTMODEL_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_AUTO_PARALLEL_COSTMODEL_H_

@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_AD_D_FUNCTOR_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_AD_D_FUNCTOR_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_D_FUNCTOR_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_D_FUNCTOR_H_
 
 #include <memory>
 #include <string>
@@ -207,4 +207,4 @@ FuncGraphPtr KPrim::BpropToK(const T &primal, const FuncGraphPtr &bprop_fg) {
 }  // namespace ad
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_AD_D_FUNCTOR_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_D_FUNCTOR_H_

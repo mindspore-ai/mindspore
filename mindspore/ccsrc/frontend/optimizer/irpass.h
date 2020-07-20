@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_IRPASS_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_IRPASS_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_H_
 
 #include <memory>
 
@@ -192,4 +192,4 @@ inline bool IsCNodeDup(const AnfNodePtr &node) {
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_IRPASS_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_H_

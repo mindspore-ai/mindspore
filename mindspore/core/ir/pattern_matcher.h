@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_PATTERN_MATCHER_H_
-#define MINDSPORE_CCSRC_IR_PATTERN_MATCHER_H_
+#ifndef MINDSPORE_CORE_IR_PATTERN_MATCHER_H_
+#define MINDSPORE_CORE_IR_PATTERN_MATCHER_H_
 
 #include <tuple>
 #include <vector>
@@ -307,4 +307,4 @@ BIN_OPERATION_PATTERN(operator*, prim::kPrimMul);
 
 }  // namespace mindspore
 
-#endif  // #ifndef MINDSPORE_CCSRC_IR_PATTERN_MATCHER_H_
+#endif  // MINDSPORE_CORE_IR_PATTERN_MATCHER_H_

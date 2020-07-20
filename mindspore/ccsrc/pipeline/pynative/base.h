@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PYNATIVE_BASE_H_
-#define MINDSPORE_CCSRC_PYNATIVE_BASE_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_PYNATIVE_BASE_H_
+#define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_BASE_H_
 
 #include <vector>
 #include <utility>
@@ -63,4 +63,4 @@ const std::set<std::string> ignore_infer_prim = {"make_ref"};
 }  // namespace pynative
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PYNATIVE_BASE_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_BASE_H_

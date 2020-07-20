@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PREDICT_CONVERTER_CPU_ATTR_UTILS_OP_ATTR_TYPE_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PREDICT_CONVERTER_CPU_ATTR_UTILS_OP_ATTR_TYPE_H_
+#ifndef MINDSPORE_CCSRC_PREDICT_CONVERTER_CPU_ATTR_UTILS_OP_ATTR_TYPE_H_
+#define MINDSPORE_CCSRC_PREDICT_CONVERTER_CPU_ATTR_UTILS_OP_ATTR_TYPE_H_
 namespace mindspore {
 namespace predict {
 namespace convert {
@@ -62,4 +62,4 @@ typedef enum CpuOpType {
 }  // namespace convert
 }  // namespace predict
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PREDICT_CONVERTER_CPU_ATTR_UTILS_OP_ATTR_TYPE_H_
+#endif  // MINDSPORE_CCSRC_PREDICT_CONVERTER_CPU_ATTR_UTILS_OP_ATTR_TYPE_H_

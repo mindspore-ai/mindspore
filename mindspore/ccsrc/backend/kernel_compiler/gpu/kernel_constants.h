@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_KERNEL_CONSTANTS_H_
-#define MINDSPORE_CCSRC_KERNEL_GPU_KERNEL_CONSTANTS_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_KERNEL_CONSTANTS_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_KERNEL_CONSTANTS_H_
 #include <map>
 #include <string>
 
@@ -52,4 +52,4 @@ static std::map<std::string, cudaDataType_t> kCudaDtypeMap = {{"kNumberTypeFloat
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_KERNEL_CONSTANTS_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_KERNEL_CONSTANTS_H_

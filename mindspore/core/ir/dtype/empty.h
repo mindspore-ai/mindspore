@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_DTYPE_EMPTY_H_
-#define MINDSPORE_CCSRC_IR_DTYPE_EMPTY_H_
+#ifndef MINDSPORE_CORE_IR_DTYPE_EMPTY_H_
+#define MINDSPORE_CORE_IR_DTYPE_EMPTY_H_
 
 #include <cstddef>
 #include <iostream>
@@ -90,4 +90,4 @@ extern const TypePtr kTypeEllipsis;
 extern const TypePtr kAnyType;
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_DTYPE_EMPTY_H_
+#endif  // MINDSPORE_CORE_IR_DTYPE_EMPTY_H_

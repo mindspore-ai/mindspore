@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_OPS_INFO_OPS_INFO_HEAD_FILES_H_
-#define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_OPS_INFO_HEAD_FILES_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_OPS_INFO_HEAD_FILES_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_OPS_INFO_HEAD_FILES_H_
 
 #include "frontend/parallel/ops_info/activation_info.h"
 #include "frontend/parallel/ops_info/arithmetic_info.h"
@@ -38,4 +38,4 @@
 #include "frontend/parallel/ops_info/virtual_dataset_info.h"
 #include "frontend/parallel/ops_info/gather_v2_p_info.h"
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_OPS_INFO_HEAD_FILES_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_HEAD_FILES_H_

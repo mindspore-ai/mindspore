@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_IRPASS_INLINE_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_IRPASS_INLINE_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_INLINE_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_INLINE_H_
 
 #include <vector>
 #include <utility>
@@ -201,4 +201,4 @@ class Inliner : public InlinerBase {
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_IRPASS_INLINE_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_INLINE_H_

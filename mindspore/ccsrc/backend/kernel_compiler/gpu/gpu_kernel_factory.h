@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_GPUKERNELFACTORY_H_
-#define MINDSPORE_CCSRC_KERNEL_GPU_GPUKERNELFACTORY_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_GPUKERNELFACTORY_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_GPUKERNELFACTORY_H_
 
 #include <functional>
 #include <map>
@@ -96,4 +96,4 @@ class GpuKernelRegister {
     #OPNAME, ATTR, []() { return new OPCLASS<T, S, G>(); });
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_GPUKERNELFACTORY_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_GPUKERNELFACTORY_H_

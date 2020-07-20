@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_KERNEL_REFCOUNT_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_KERNEL_REFCOUNT_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_KERNEL_REFCOUNT_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_KERNEL_REFCOUNT_H_
 #include <vector>
 #include <map>
 #include <string>
@@ -98,4 +98,4 @@ class KernelDef {
 using KernelDefPtr = std::shared_ptr<KernelDef>;
 }  // namespace memreuse
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_KERNEL_REFCOUNT_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_KERNEL_REFCOUNT_H_

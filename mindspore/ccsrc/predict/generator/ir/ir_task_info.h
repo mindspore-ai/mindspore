@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_EXECUTOR_GENERATOR_IR_IR_TASK_H_
-#define MINDSPORE_MINDSPORE_CCSRC_EXECUTOR_GENERATOR_IR_IR_TASK_H_
+#ifndef MINDSPORE_CCSRC_EXECUTOR_GENERATOR_IR_IR_TASK_H_
+#define MINDSPORE_CCSRC_EXECUTOR_GENERATOR_IR_IR_TASK_H_
 #include <cstdint>
 #include <utility>
 #include <memory>
@@ -292,4 +292,4 @@ class StreamActiveIRTaskInfo : public IRtaskInfo {
 };  // namespace generator
 }  // namespace mindspore
 
-#endif  // MINDSPORE_MINDSPORE_CCSRC_EXECUTOR_GENERATOR_IR_IR_TASK_H_
+#endif  // MINDSPORE_CCSRC_EXECUTOR_GENERATOR_IR_IR_TASK_H_

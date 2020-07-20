@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PIPELINE_REMOVE_VALUE_NODE_DUP_H_
-#define MINDSPORE_CCSRC_PIPELINE_REMOVE_VALUE_NODE_DUP_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_REMOVE_VALUE_NODE_DUP_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_REMOVE_VALUE_NODE_DUP_H_
 
 #include <unordered_map>
 #include <vector>
@@ -31,4 +31,4 @@ void TryToDoReplace(FuncGraphManager *manager, const AnfNodePtr &node, HashCache
 }  // namespace pipeline
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_REMOVE_VALUE_NODE_DUP_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_REMOVE_VALUE_NODE_DUP_H_

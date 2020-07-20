@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINNIE_PARAM_VALUE_LITE_H_
-#define MINDSPORE_CCSRC_MINNIE_PARAM_VALUE_LITE_H_
+#ifndef MINDSPORE_CORE_IR_LITE_PARAM_VALUE_LITE_H_
+#define MINDSPORE_CORE_IR_LITE_PARAM_VALUE_LITE_H_
 
 #include <memory>
 
@@ -40,4 +40,4 @@ class ParamValueLite : public ParamValue {
 
 using ParamValueLitePtr = std::shared_ptr<ParamValueLite>;
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINNIE_PARAM_VALUE_LITE_H_
+#endif  // MINDSPORE_CORE_IR_LITE_PARAM_VALUE_LITE_H_

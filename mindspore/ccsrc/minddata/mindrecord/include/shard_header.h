@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDRECORD_INCLUDE_SHARD_HEADER_H_
-#define MINDRECORD_INCLUDE_SHARD_HEADER_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_HEADER_H_
+#define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_HEADER_H_
 
 #include <memory>
 #include <set>
@@ -187,4 +187,4 @@ class ShardHeader {
 }  // namespace mindrecord
 }  // namespace mindspore
 
-#endif  // MINDRECORD_INCLUDE_SHARD_HEADER_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_HEADER_H_

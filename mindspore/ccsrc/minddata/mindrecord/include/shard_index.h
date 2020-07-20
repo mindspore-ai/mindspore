@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDRECORD_INDEX_H
-#define MINDRECORD_INDEX_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INDEX_H
+#define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INDEX_H
 #pragma once
 
 #include <stdio.h>
@@ -62,4 +62,4 @@ class Index {
 }  // namespace mindrecord
 }  // namespace mindspore
 
-#endif  // MINDRECORD_INDEX_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INDEX_H

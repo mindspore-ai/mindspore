@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_DTYPE_NUMBER_H_
-#define MINDSPORE_CCSRC_IR_DTYPE_NUMBER_H_
+#ifndef MINDSPORE_CORE_IR_DTYPE_NUMBER_H_
+#define MINDSPORE_CORE_IR_DTYPE_NUMBER_H_
 
 #include <cstddef>
 #include <iostream>
@@ -151,4 +151,4 @@ extern const TypePtr kFloat;
 extern const TypePtr kNumber;
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_DTYPE_NUMBER_H_
+#endif  // MINDSPORE_CORE_IR_DTYPE_NUMBER_H_

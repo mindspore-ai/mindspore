@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_OPTIMIZER_CALLER_H_
-#define MINDSPORE_CCSRC_IR_OPTIMIZER_CALLER_H_
+#ifndef MINDSPORE_CORE_IR_OPTIMIZER_CALLER_H_
+#define MINDSPORE_CORE_IR_OPTIMIZER_CALLER_H_
 
 #include <memory>
 
@@ -36,4 +36,4 @@ class OptimizerCaller {
 };
 using OptimizerCallerPtr = std::shared_ptr<OptimizerCaller>;
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_IR_OPTIMIZER_CALLER_H_
+#endif  // MINDSPORE_CORE_IR_OPTIMIZER_CALLER_H_

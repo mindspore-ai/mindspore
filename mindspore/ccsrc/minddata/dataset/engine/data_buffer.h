@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_ENGINE_DATA_BUFFER_H_
-#define DATASET_ENGINE_DATA_BUFFER_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATA_BUFFER_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATA_BUFFER_H_
 
 #include <iostream>
 #include <memory>
@@ -105,4 +105,4 @@ class DataBuffer {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_ENGINE_DATA_BUFFER_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATA_BUFFER_H_

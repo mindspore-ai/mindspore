@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_KERNELS_IMAGE_INVERT_OP_H
-#define DATASET_KERNELS_IMAGE_INVERT_OP_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_INVERT_OP_H
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_INVERT_OP_H
 
 #include <memory>
 #include <string>
@@ -41,4 +41,4 @@ class InvertOp : public TensorOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_KERNELS_IMAGE_INVERT_OP_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_INVERT_OP_H

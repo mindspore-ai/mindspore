@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PREDICT_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PREDICT_H_
+#ifndef MINDSPORE_CCSRC_PREDICT_H_
+#define MINDSPORE_CCSRC_PREDICT_H_
 
 #include <memory>
 #include <vector>
@@ -29,4 +29,4 @@ void StepConvertGraph(const KernelGraphPtr &kernel_graph_ptr);
 void StepConvertWeight(const std::vector<tensor::TensorPtr> &inputs);
 }  // namespace predictmodel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PREDICT_H_
+#endif  // MINDSPORE_CCSRC_PREDICT_H_

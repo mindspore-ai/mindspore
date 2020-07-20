@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_DEVICE_KERNEL_RUNTIME_MANAGER_H_
-#define MINDSPORE_MINDSPORE_CCSRC_DEVICE_KERNEL_RUNTIME_MANAGER_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_KERNEL_RUNTIME_MANAGER_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_KERNEL_RUNTIME_MANAGER_H_
 #include <map>
 #include <memory>
 #include <string>
@@ -62,4 +62,4 @@ class KernelRuntimeRegistrar {
     DEVICE_NAME, []() { return std::make_shared<RUNTIME_CLASS>(); });
 }  // namespace device
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_DEVICE_KERNEL_RUNTIME_MANAGER_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_KERNEL_RUNTIME_MANAGER_H_

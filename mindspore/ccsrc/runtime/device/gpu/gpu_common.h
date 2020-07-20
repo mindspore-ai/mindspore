@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_DEVICE_GPU_GPU_COMMON_H_
-#define MINDSPORE_CCSRC_DEVICE_GPU_GPU_COMMON_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_COMMON_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_COMMON_H_
 
 #include <iostream>
 #include <vector>
@@ -119,4 +119,4 @@ inline bool CheckNullInput(std::vector<size_t> input_shape) {
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_GPU_GPU_COMMON_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_COMMON_H_

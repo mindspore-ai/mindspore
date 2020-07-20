@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_DEVICE_GPU_CUDA_DRIVER_H_
-#define MINDSPORE_CCSRC_DEVICE_GPU_CUDA_DRIVER_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_CUDA_DRIVER_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_CUDA_DRIVER_H_
 
 #include <cuda_runtime_api.h>
 
@@ -76,4 +76,4 @@ class CudaDriver {
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_GPU_CUDA_DRIVER_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_CUDA_DRIVER_H_

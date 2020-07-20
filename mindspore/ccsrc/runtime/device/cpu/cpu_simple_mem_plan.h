@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_DEVICE_CPU_CPU_SIMPLE_MEM_PLAN_H_
-#define MINDSPORE_CCSRC_DEVICE_CPU_CPU_SIMPLE_MEM_PLAN_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_CPU_SIMPLE_MEM_PLAN_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_CPU_SIMPLE_MEM_PLAN_H_
 
 #include <vector>
 #include <unordered_map>
@@ -40,4 +40,4 @@ class CPUSimpleMemPlan {
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_CPU_CPU_SIMPLE_MEM_PLAN_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_CPU_SIMPLE_MEM_PLAN_H_

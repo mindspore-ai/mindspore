@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_KERNELS_IMAGE_AUTO_CONTRAST_OP_H_
-#define DATASET_KERNELS_IMAGE_AUTO_CONTRAST_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_AUTO_CONTRAST_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_AUTO_CONTRAST_OP_H_
 
 #include <memory>
 #include <string>
@@ -58,4 +58,4 @@ class AutoContrastOp : public TensorOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_KERNELS_IMAGE_AUTO_CONTRAST_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_AUTO_CONTRAST_OP_H_

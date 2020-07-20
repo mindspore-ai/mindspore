@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_CONTROL_DEPEND_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_CONTROL_DEPEND_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CONTROL_DEPEND_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CONTROL_DEPEND_H_
 
 #include "ir/anf.h"
 
@@ -25,4 +25,4 @@ namespace opt {
 void AddControlDepend(const FuncGraphPtr &graph);
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_CONTROL_DEPEND_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CONTROL_DEPEND_H_

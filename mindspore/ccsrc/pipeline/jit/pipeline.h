@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PIPELINE_PIPELINE_H_
-#define MINDSPORE_CCSRC_PIPELINE_PIPELINE_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PIPELINE_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_PIPELINE_H_
 
 #include <vector>
 #include <utility>
@@ -144,4 +144,4 @@ void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef 
 }  // namespace pipeline
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_PIPELINE_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_PIPELINE_H_

@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_FUNC_GRAPH_H_
-#define MINDSPORE_CCSRC_IR_FUNC_GRAPH_H_
+#ifndef MINDSPORE_CORE_IR_FUNC_GRAPH_H_
+#define MINDSPORE_CORE_IR_FUNC_GRAPH_H_
 
 #include <map>
 #include <string>
@@ -421,4 +421,4 @@ std::shared_ptr<OrderedSet<CNodePtr>> FindRoots(const std::vector<CNodePtr> &seg
 std::shared_ptr<OrderedSet<CNodePtr>> FindLeaves(const std::vector<CNodePtr> &segment);
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_FUNC_GRAPH_H_
+#endif  // MINDSPORE_CORE_IR_FUNC_GRAPH_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_PASS_OPTIMIZE_DEPENDENCE_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_PASS_OPTIMIZE_DEPENDENCE_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_OPTIMIZE_DEPENDENCE_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_OPTIMIZE_DEPENDENCE_H_
 
 #include "backend/optimizer/common/optimizer.h"
 
@@ -31,4 +31,4 @@ class OptimizeDependence : public PatternProcessPass {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_PASS_OPTIMIZE_DEPENDENCE_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_OPTIMIZE_DEPENDENCE_H_

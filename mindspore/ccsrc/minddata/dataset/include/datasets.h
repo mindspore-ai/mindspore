@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_INCLUDE_DATASETS_H_
-#define DATASET_INCLUDE_DATASETS_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASETS_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASETS_H_
 
 #include <vector>
 #include <memory>
@@ -354,4 +354,4 @@ class ProjectDataset : public Dataset {
 }  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_INCLUDE_DATASETS_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASETS_H_

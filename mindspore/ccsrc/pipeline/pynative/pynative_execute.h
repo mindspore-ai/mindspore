@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PYNATIVE_PYNATIVE_EXECUTE_H_
-#define MINDSPORE_CCSRC_PYNATIVE_PYNATIVE_EXECUTE_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_EXECUTE_H_
+#define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_EXECUTE_H_
 
 #include <vector>
 #include <utility>
@@ -127,4 +127,4 @@ using PynativeExecutorPtr = std::shared_ptr<PynativeExecutor>;
 }  // namespace pynative
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PYNATIVE_PYNATIVE_EXECUTE_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_EXECUTE_H_

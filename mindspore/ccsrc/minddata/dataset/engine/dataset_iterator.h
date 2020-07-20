@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_ENGINE_DATASET_ITERATOR_H_
-#define DATASET_ENGINE_DATASET_ITERATOR_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASET_ITERATOR_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASET_ITERATOR_H_
 
 #include <memory>
 #include <string>
@@ -153,4 +153,4 @@ class ChildIterator : public IteratorBase {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_ENGINE_DATASET_ITERATOR_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASET_ITERATOR_H_

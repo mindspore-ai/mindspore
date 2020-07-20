@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PREDICT_CONVERTER_KERNEL_TO_MS_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PREDICT_CONVERTER_KERNEL_TO_MS_H_
+#ifndef MINDSPORE_CCSRC_PREDICT_CONVERTER_KERNEL_TO_MS_H_
+#define MINDSPORE_CCSRC_PREDICT_CONVERTER_KERNEL_TO_MS_H_
 
 #include <string>
 #include <unordered_map>
@@ -115,4 +115,4 @@ class Kernel2Ms {
 using Kernel2MsPtr = std::shared_ptr<Kernel2Ms>;
 }  // namespace executor
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PREDICT_CONVERTER_KERNEL_TO_MS_H_
+#endif  // MINDSPORE_CCSRC_PREDICT_CONVERTER_KERNEL_TO_MS_H_

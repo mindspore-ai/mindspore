@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPERATOR_COMPOSITE_H_
-#define MINDSPORE_CCSRC_OPERATOR_COMPOSITE_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_H_
 
 #include <vector>
 #include <string>
@@ -189,4 +189,4 @@ using TupleGetItemTensorPtr = std::shared_ptr<TupleGetItemTensor>;
 }  // namespace prim
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_OPERATOR_COMPOSITE_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_H_

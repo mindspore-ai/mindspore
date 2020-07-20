@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_UTIL_SIG_HANDLER_H_
-#define DATASET_UTIL_SIG_HANDLER_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_SIG_HANDLER_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_SIG_HANDLER_H_
 
 #include <limits.h>
 #include <signal.h>
@@ -33,4 +33,4 @@ extern void IntHandler(int sig_num,          // The signal that was raised
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_UTIL_SIG_HANDLER_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_SIG_HANDLER_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_MINDSPORE_CCSRC_KERNEL_HCCL_HCCL_KERNEL_METADATA_ANFALGO_H_
-#define MINDSPORE_MINDSPORE_CCSRC_KERNEL_HCCL_HCCL_KERNEL_METADATA_ANFALGO_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_HCCL_HCCL_KERNEL_METADATA_ANFALGO_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_HCCL_HCCL_KERNEL_METADATA_ANFALGO_H_
 #include <string>
 #include <vector>
 #include <memory>
@@ -26,4 +26,4 @@ void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_MINDSPORE_CCSRC_KERNEL_HCCL_HCCL_KERNEL_METADATA_ANFALGO_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_HCCL_HCCL_KERNEL_METADATA_ANFALGO_H_

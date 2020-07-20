@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_CORE_CLIENT_H_
-#define DATASET_CORE_CLIENT_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_CLIENT_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_CLIENT_H_
 
 // client.h
 // Include file for DE client functions
@@ -58,4 +58,4 @@ extern Status GlobalInit();
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_CORE_CLIENT_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_CLIENT_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_AKG_AKGKERNELBUILD_H_
-#define MINDSPORE_CCSRC_KERNEL_AKG_AKGKERNELBUILD_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKGKERNELBUILD_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKGKERNELBUILD_H_
 #include <unordered_map>
 #include <string>
 #include <vector>
@@ -73,4 +73,4 @@ std::string GetTensorName(const nlohmann::json &node_json, const std::string &ta
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_AKG_AKGKERNELBUILD_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKGKERNELBUILD_H_

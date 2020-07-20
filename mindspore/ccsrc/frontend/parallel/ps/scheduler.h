@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PARALLEL_PS_SCHEDULER_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PARALLEL_PS_SCHEDULER_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_SCHEDULER_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_SCHEDULER_H_
 namespace mindspore {
 namespace parallel {
 namespace ps {
@@ -37,4 +37,4 @@ class Scheduler {
 }  // namespace ps
 }  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PARALLEL_PS_SCHEDULER_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_SCHEDULER_H_

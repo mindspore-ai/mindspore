@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_TENSOR_LAYOUT_SHAPE_UTIL_H_
-#define MINDSPORE_CCSRC_PARALLEL_TENSOR_LAYOUT_SHAPE_UTIL_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_SHAPE_UTIL_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_SHAPE_UTIL_H_
 
 #include <cstdint>
 #include <map>
@@ -169,4 +169,4 @@ Status ExpandShape(const std::vector<int32_t> &in, const std::vector<int32_t> &e
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_TENSOR_LAYOUT_SHAPE_UTIL_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_SHAPE_UTIL_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_ENGINE_OPT_PASS_POST_REPEAT_PASS_
-#define DATASET_ENGINE_OPT_PASS_POST_REPEAT_PASS_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PASS_POST_REPEAT_PASS_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PASS_POST_REPEAT_PASS_
 
 #include <memory>
 #include <stack>
@@ -95,4 +95,4 @@ class RepeatPass : public NodePass {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_ENGINE_OPT_PASS_POST_REPEAT_PASS_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PASS_POST_REPEAT_PASS_

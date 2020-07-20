@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_DEVICE_SYNC_H_
-#define MINDSPORE_CCSRC_IR_DEVICE_SYNC_H_
+#ifndef MINDSPORE_CORE_IR_DEVICE_SYNC_H_
+#define MINDSPORE_CORE_IR_DEVICE_SYNC_H_
 
 #include <vector>
 #include <memory>
@@ -36,4 +36,4 @@ class DeviceSync {
 };
 using DeviceSyncPtr = std::shared_ptr<DeviceSync>;
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_IR_DEVICE_SYNC_H_
+#endif  // MINDSPORE_CORE_IR_DEVICE_SYNC_H_

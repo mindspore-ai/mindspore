@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_RTS_MEMCPY_ASYNC_H
-#define MINDSPORE_CCSRC_KERNEL_RTS_MEMCPY_ASYNC_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_MEMCPY_ASYNC_H
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_MEMCPY_ASYNC_H
 
 #include <vector>
 #include <memory>
@@ -53,4 +53,4 @@ MS_REG_RTKERNEL(memcpy_async, MemCpyAsyncKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_RTS_MEMCPY_ASYNC_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_MEMCPY_ASYNC_H

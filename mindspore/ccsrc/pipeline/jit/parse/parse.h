@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef PIPELINE_PARSE_PARSE_H_
-#define PIPELINE_PARSE_PARSE_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_PARSE_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_PARSE_H_
 
 #include <vector>
 #include <string>
@@ -357,4 +357,4 @@ AnfNodePtr GetMixedPrecisionCastHelp(const FuncGraphPtr &func_graph, const AnfNo
 }  // namespace parse
 }  // namespace mindspore
 
-#endif  // PIPELINE_PARSE_PARSE_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_PARSE_H_

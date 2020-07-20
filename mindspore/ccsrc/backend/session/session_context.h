@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_SESSION_SESSION_CONTEXT_H
-#define MINDSPORE_CCSRC_SESSION_SESSION_CONTEXT_H
+#ifndef MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_CONTEXT_H
+#define MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_CONTEXT_H
 #include <vector>
 #include <map>
 #include <functional>
@@ -47,4 +47,4 @@ class Context : public pipeline::ResourceBase {
 }  // namespace session
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_SESSION_SESSION_CONTEXT_H
+#endif  // MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_CONTEXT_H

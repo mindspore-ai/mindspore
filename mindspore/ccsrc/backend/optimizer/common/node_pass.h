@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_NODE_PASS_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_NODE_PASS_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_NODE_PASS_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_NODE_PASS_H_
 #include <string>
 #include <memory>
 
@@ -33,4 +33,4 @@ class NodePass : public Pass {
 using NodePassPtr = std::shared_ptr<NodePass>;
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_NODE_PASS_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_NODE_PASS_H_

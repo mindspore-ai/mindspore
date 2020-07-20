@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PREDICT_CONVERTER_EXECUTOR_TENSOR_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PREDICT_CONVERTER_EXECUTOR_TENSOR_H_
+#ifndef MINDSPORE_CCSRC_PREDICT_CONVERTER_EXECUTOR_TENSOR_H_
+#define MINDSPORE_CCSRC_PREDICT_CONVERTER_EXECUTOR_TENSOR_H_
 
 #include <vector>
 #include <memory>
@@ -67,4 +67,4 @@ class TensorCache {
 using TensorCachePtr = std::shared_ptr<TensorCache>;
 }  // namespace executor
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PREDICT_CONVERTER_EXECUTOR_TENSOR_H_
+#endif  // MINDSPORE_CCSRC_PREDICT_CONVERTER_EXECUTOR_TENSOR_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_KERNEL_INFO_DEV_H_
-#define MINDSPORE_CCSRC_IR_KERNEL_INFO_DEV_H_
+#ifndef MINDSPORE_CORE_IR_KERNEL_INFO_DEV_H_
+#define MINDSPORE_CORE_IR_KERNEL_INFO_DEV_H_
 
 #include <memory>
 
@@ -29,4 +29,4 @@ class KernelInfoDevice {
 using KernelInfoDevicePtr = std::shared_ptr<KernelInfoDevice>;
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_KERNEL_INFO_DEV_H_
+#endif  // MINDSPORE_CORE_IR_KERNEL_INFO_DEV_H_

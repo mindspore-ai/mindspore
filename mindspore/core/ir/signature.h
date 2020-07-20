@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_SIGNATURE_H_
-#define MINDSPORE_CCSRC_IR_SIGNATURE_H_
+#ifndef MINDSPORE_CORE_IR_SIGNATURE_H_
+#define MINDSPORE_CORE_IR_SIGNATURE_H_
 
 #include <string>
 #include <vector>
@@ -66,4 +66,4 @@ struct Signature {
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_SIGNATURE_H_
+#endif  // MINDSPORE_CORE_IR_SIGNATURE_H_

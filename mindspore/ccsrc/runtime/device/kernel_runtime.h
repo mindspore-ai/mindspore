@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_DEVICE_KERNEL_RUNTIME_H_
-#define MINDSPORE_CCSRC_DEVICE_KERNEL_RUNTIME_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_KERNEL_RUNTIME_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_KERNEL_RUNTIME_H_
 #include <vector>
 #include <memory>
 #include <string>
@@ -119,4 +119,4 @@ using KernelRuntimePtr = std::shared_ptr<KernelRuntime>;
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_KERNEL_RUNTIME_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_KERNEL_RUNTIME_H_

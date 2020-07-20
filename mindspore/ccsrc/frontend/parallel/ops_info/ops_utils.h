@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_OPS_INFO_OPS_UTILS_H_
-#define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_OPS_UTILS_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_OPS_UTILS_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_OPS_UTILS_H_
 
 namespace mindspore {
 namespace parallel {
@@ -295,4 +295,4 @@ constexpr size_t THIRD_FROM_END(size_t s) { return s - 3; }
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_OPS_INFO_OPS_UTILS_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_OPS_UTILS_H_

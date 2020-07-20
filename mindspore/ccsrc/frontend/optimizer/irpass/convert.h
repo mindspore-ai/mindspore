@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_IRPASS_CONVERT_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_IRPASS_CONVERT_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_CONVERT_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_CONVERT_H_
 
 #include <vector>
 
@@ -59,4 +59,4 @@ class PrintTupleWrapper : public AnfVisitor {
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // #ifndef MINDSPORE_CCSRC_OPTIMIZER_IRPASS_CONVERT_H_
+#endif  // #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_CONVERT_H_

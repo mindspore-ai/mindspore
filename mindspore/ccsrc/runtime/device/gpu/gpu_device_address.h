@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_DEVICE_GPU_GPU_DEVICE_ADDRESS_H_
-#define MINDSPORE_CCSRC_DEVICE_GPU_GPU_DEVICE_ADDRESS_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_DEVICE_ADDRESS_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_DEVICE_ADDRESS_H_
 
 #include <string>
 #include <vector>
@@ -44,4 +44,4 @@ class GPUDeviceAddress : public DeviceAddress {
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_GPU_GPU_DEVICE_ADDRESS_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_DEVICE_ADDRESS_H_

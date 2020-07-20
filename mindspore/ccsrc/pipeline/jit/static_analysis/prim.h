@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef PIPELINE_STATIC_ANALYSIS_PRIM_H_
-#define PIPELINE_STATIC_ANALYSIS_PRIM_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_PRIM_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_PRIM_H_
 
 #include <algorithm>
 #include <memory>
@@ -369,4 +369,4 @@ AbstractBasePtr InferImplSparseTensorGetDenseShape(const AnalysisEnginePtr &, co
 }  // namespace abstract
 }  // namespace mindspore
 
-#endif  // PIPELINE_STATIC_ANALYSIS_PRIM_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_PRIM_H_

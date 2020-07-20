@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_DEVICE_ASCEND_TASK_TASK_BUILD_H_
-#define MINDSPORE_CCSRC_DEVICE_ASCEND_TASK_TASK_BUILD_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_TASK_TASK_BUILD_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_TASK_TASK_BUILD_H_
 
 #include <algorithm>
 #include <map>
@@ -58,4 +58,4 @@ class TaskGenerator {
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_ASCEND_TASK_TASK_BUILD_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_TASK_TASK_BUILD_H_

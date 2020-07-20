@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_DYNAMIC_CREATOR_H_
-#define MINDSPORE_CCSRC_PARALLEL_DYNAMIC_CREATOR_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_DYNAMIC_CREATOR_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_DYNAMIC_CREATOR_H_
 
 #include <map>
 #include <memory>
@@ -136,4 +136,4 @@ REGISTER(EmbeddingLookupInfo);
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_DYNAMIC_CREATOR_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_DYNAMIC_CREATOR_H_

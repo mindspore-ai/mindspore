@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_DEVICE_GPU_COLLECTIVE_COMMON_H_
-#define MINDSPORE_CCSRC_DEVICE_GPU_COLLECTIVE_COMMON_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_COLLECTIVE_COMMON_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_COLLECTIVE_COMMON_H_
 
 #include <sstream>
 #include "pybind11/pybind11.h"
@@ -39,4 +39,4 @@ constexpr char NCCL_WORLD_GROUP[] = "nccl_world_group";
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_GPU_COLLECTIVE_COMMON_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_COLLECTIVE_COMMON_H_

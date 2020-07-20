@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_UTIL_AUTO_INDEX_H_
-#define DATASET_UTIL_AUTO_INDEX_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_AUTO_INDEX_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_AUTO_INDEX_H_
 
 #include <atomic>
 #include <memory>
@@ -96,4 +96,4 @@ class AutoIndexObj : public BPlusTree<int64_t, T, A> {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_UTIL_AUTO_INDEX_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_AUTO_INDEX_H_

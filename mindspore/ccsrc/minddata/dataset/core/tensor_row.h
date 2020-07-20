@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_CORE_TENSOR_ROW_H_
-#define DATASET_CORE_TENSOR_ROW_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_TENSOR_ROW_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_TENSOR_ROW_H_
 
 #include <deque>
 #include <memory>
@@ -128,4 +128,4 @@ class TensorRow {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_CORE_TENSOR_ROW_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_TENSOR_ROW_H_

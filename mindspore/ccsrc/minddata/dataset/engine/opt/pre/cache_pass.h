@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_ENGINE_OPT_PASS_PRE_CACHE_PASS_H_
-#define DATASET_ENGINE_OPT_PASS_PRE_CACHE_PASS_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PASS_PRE_CACHE_PASS_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PASS_PRE_CACHE_PASS_H_
 
 #include <memory>
 #include <string>
@@ -135,4 +135,4 @@ class CachePass : public NodePass {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_ENGINE_OPT_PASS_PRE_CACHE_PASS_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PASS_PRE_CACHE_PASS_

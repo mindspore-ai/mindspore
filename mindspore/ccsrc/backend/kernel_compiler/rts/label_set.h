@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_RTS_LABEL_SET_H
-#define MINDSPORE_CCSRC_KERNEL_RTS_LABEL_SET_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_LABEL_SET_H
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_LABEL_SET_H
 
 #include <memory>
 #include <vector>
@@ -44,4 +44,4 @@ MS_REG_RTKERNEL(labelset, LabelSetKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_RTS_LABEL_SET_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_LABEL_SET_H

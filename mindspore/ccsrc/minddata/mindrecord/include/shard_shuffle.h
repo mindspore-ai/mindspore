@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDRECORD_INCLUDE_SHARD_SHUFFLE_H_
-#define MINDRECORD_INCLUDE_SHARD_SHUFFLE_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_SHUFFLE_H_
+#define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_SHUFFLE_H_
 
 #include <random>
 #include "minddata/mindrecord/include/shard_operator.h"
@@ -45,4 +45,4 @@ class ShardShuffle : public ShardOperator {
 }  // namespace mindrecord
 }  // namespace mindspore
 
-#endif  // MINDRECORD_INCLUDE_SHARD_SHUFFLE_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_SHUFFLE_H_

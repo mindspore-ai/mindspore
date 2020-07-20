@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_SESSION_KERNEL_GRAPH_H
-#define MINDSPORE_CCSRC_SESSION_KERNEL_GRAPH_H
+#ifndef MINDSPORE_CCSRC_BACKEND_SESSION_KERNEL_GRAPH_H
+#define MINDSPORE_CCSRC_BACKEND_SESSION_KERNEL_GRAPH_H
 
 #include <vector>
 #include <unordered_map>
@@ -230,4 +230,4 @@ class KernelGraph : public FuncGraph {
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_SESSION_KERNEL_GRAPH_H
+#endif  // MINDSPORE_CCSRC_BACKEND_SESSION_KERNEL_GRAPH_H

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_SESSION_ASCEND_INFERENCE_SESSION_H
-#define MINDSPORE_CCSRC_SESSION_ASCEND_INFERENCE_SESSION_H
+#ifndef MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_INFERENCE_SESSION_H
+#define MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_INFERENCE_SESSION_H
 #include <unordered_map>
 #include <string>
 #include <memory>
@@ -43,4 +43,4 @@ class AscendInferenceSession : public AscendSession {
 MS_REG_SESSION(kDavinciInferenceDevice, AscendInferenceSession);
 }  // namespace session
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_SESSION_ASCEND_INFERENCE_SESSION_H
+#endif  // MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_INFERENCE_SESSION_H

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_UTIL_INTRP_RESOURCE_H_
-#define DATASET_UTIL_INTRP_RESOURCE_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_INTRP_RESOURCE_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_INTRP_RESOURCE_H_
 
 #include <atomic>
 #include "minddata/dataset/util/status.h"
@@ -49,4 +49,4 @@ class IntrpResource {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_UTIL_INTRP_RESOURCE_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_INTRP_RESOURCE_H_

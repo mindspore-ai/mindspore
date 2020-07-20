@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_FUSION_ID_ALLOCATOR_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_FUSION_ID_ALLOCATOR_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_FUSION_ID_ALLOCATOR_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_FUSION_ID_ALLOCATOR_H_
 
 #include <memory>
 #include "base/base.h"
@@ -41,4 +41,4 @@ using FusionIdAllocatorPtr = std::shared_ptr<FusionIdAllocator>;
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_FUSION_ID_ALLOCATOR_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_FUSION_ID_ALLOCATOR_H_

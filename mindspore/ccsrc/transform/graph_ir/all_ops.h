@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef TRANSFORM_ALL_OPS_H_
-#define TRANSFORM_ALL_OPS_H_
+#ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_ALL_OPS_H_
+#define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_ALL_OPS_H_
 
 // old
 #include "ops/all_ops.h"
-#endif  // TRANSFORM_ALL_OPS_H_
+#endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_ALL_OPS_H_
