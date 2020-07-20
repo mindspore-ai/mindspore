@@ -90,9 +90,7 @@ bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int executi
   tensor_data->SetTensor(out_tensor);
   tensor_data->SetSlot(slot);
   ret = tensor_loader->LoadNewTensor(tensor_data, keep_prev);
-
   MS_LOG(INFO) << "E2E tensor name is " << tensor_name;
-
   return ret;
 }
 #endif
