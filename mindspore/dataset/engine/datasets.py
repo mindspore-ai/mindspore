@@ -2094,8 +2094,8 @@ class SkipDataset(DatasetOp):
     The result of applying Skip operator to the input Dataset.
 
     Args:
-        input_dataset (tuple): A tuple of datasets to be skipped.
-        count (int): Number of rows the dataset should be skipped.
+        input_dataset (Dataset): Input dataset to have rows skipped.
+        count (int): Number of rows in the dataset to be skipped.
     """
 
     def __init__(self, input_dataset, count):
