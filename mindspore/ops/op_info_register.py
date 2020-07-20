@@ -220,18 +220,19 @@ class AkgRegOp(RegOp):
         self.imply_type = "AKG"
         self.processor = processor
 
-    def input(self, index=None, name=None, **kwargs):
+    def input(self, index=None, name=None, param_type=None, **kwargs):
         """
         Register Akg op input information.
 
         Args:
             index (int): Order of the input. Default: None.
             name (str): Name of the input. Default: None.
+            param_type (str): Param type of the input. Default: None.
             kwargs (dict): Other information for the input.
         """
-        param_list = [index, name]
-        key_list = ["index", "name"]
-        fn_list = [self._is_int, self._is_string]
+        param_list = [index, name, param_type]
+        key_list = ["index", "name", "param_type"]
+        fn_list = [self._is_int, self._is_string, self._is_string]
         input_dict = self._check_param(param_list, key_list, fn_list, kwargs)
         self.inputs.append(input_dict)
         return self
