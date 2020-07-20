@@ -46,8 +46,8 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   auto common_pm = std::make_shared<PassManager>("common_pm");
   common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());
   common_pm->AddPass(std::make_shared<ConstToAttrStridedSliceGradPass>());
-  common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
   common_pm->AddPass(std::make_shared<ConvertTupleOutputToMaketuple>());
+  common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
   common_pm->AddPass(std::make_shared<ConvertTupleInputToDynamicInput>());
   optimizer->AddPassManager(common_pm);
   (void)optimizer->Optimize(kernel_graph);

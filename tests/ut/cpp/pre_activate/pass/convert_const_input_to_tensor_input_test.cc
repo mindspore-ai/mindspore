@@ -99,13 +99,18 @@ TEST_F(TestHWConstInputToTensorInput, test_value_tuple_tensor_input) {
   EXPECT_NE(ret->input(1)->cast<CNodePtr>(), nullptr);
   auto cnode = ret->input(1)->cast<CNodePtr>()->input(1)->cast<CNodePtr>();
   EXPECT_EQ(AnfAlgo::GetCNodeName(cnode), prim::kPrimDropoutGenMask->name());
-  auto input1 = cnode->input(1);
-  ASSERT_TRUE(input1 != nullptr);
-  EXPECT_TRUE(IsValueNode<tensor::Tensor>(input1));
-  auto tensor = input1->cast<ValueNodePtr>()->value()->cast<tensor::TensorPtr>();
-  ASSERT_TRUE(tensor != nullptr);
-  auto data = tensor->data_c();
-  EXPECT_EQ(std::vector<int>((int *)data, (int *)data + 4), std::vector<int>({2, 4, 2, 2}));
+  std::vector<int> out;
+  for (size_t i = 1; i <= 4; i++) {
+    auto input = cnode->input(i);
+    ASSERT_TRUE(input != nullptr);
+    EXPECT_TRUE(IsValueNode<tensor::Tensor>(input));
+    auto tensor = input->cast<ValueNodePtr>()->value()->cast<tensor::TensorPtr>();
+    ASSERT_TRUE(tensor != nullptr);
+    int *data = (int *)(tensor->data_c());
+    ASSERT_TRUE(data != nullptr);
+    out.push_back(*data);
+  }
+  EXPECT_EQ(out, std::vector<int>({2, 4, 2, 2}));
 }
 }  // namespace opt
 }  // namespace mindspore
