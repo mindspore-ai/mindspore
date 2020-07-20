@@ -83,7 +83,7 @@ int64_t MemReuseChecker::CalculOriInput(const KernelGraph *graph) const {
   return static_input_size;
 }
 
-int64_t MemReuseChecker::CalculOriValue(KernelGraph *graph) const {
+int64_t MemReuseChecker::CalculOriValue(const KernelGraph *graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   int64_t static_value_size = 0;
   for (auto &value_node : graph->graph_value_nodes()) {
@@ -101,7 +101,7 @@ int64_t MemReuseChecker::CalculOriValue(KernelGraph *graph) const {
   return static_value_size;
 }
 
-int64_t MemReuseChecker::CalculOriStatic(KernelGraph *graph) const {
+int64_t MemReuseChecker::CalculOriStatic(const KernelGraph *graph) const {
   // cal static inputs
   auto static_input_size = CalculOriInput(graph);
   // do not calcul outpput size
@@ -154,7 +154,7 @@ std::string MemReuseChecker::GetSplitName(const std::string &scope_name) const {
 }
 
 void MemReuseChecker::CheckMemReuseIR(const KernelRefCountPtrList &total_refs_list,
-                                      const KernelDefPtrMaps &kernel_def_ptr_list, KernelGraph *graph) {
+                                      const KernelDefPtrMaps &kernel_def_ptr_list, const KernelGraph *graph) {
   total_ori_static_size_ = CalculOriStatic(graph);
   total_ori_input_size_ = CalculOriInput(graph);
   total_ori_value_size_ = CalculOriValue(graph);

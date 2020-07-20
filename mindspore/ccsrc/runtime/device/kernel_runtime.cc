@@ -398,12 +398,12 @@ void KernelRuntime::UpdateRefNodeOutputMem(const session::KernelGraph *graph) {
   }
 }
 
-void KernelRuntime::AssignCommunicationNodeMem(int flag, const AnfNodePtr &node) {
-  AssignCommunicationNodeInputMem(flag, node);
-  AssignCommunicationNodeOutputMem(flag, node);
+void KernelRuntime::AssignCommunicationNodeMem(MemType type, const AnfNodePtr &node) {
+  AssignCommunicationNodeInputMem(type, node);
+  AssignCommunicationNodeOutputMem(type, node);
 }
 
-void KernelRuntime::AssignCommunicationNodeOutputMem(int flag, const AnfNodePtr &node) {
+void KernelRuntime::AssignCommunicationNodeOutputMem(MemType type, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(mem_manager_);
   auto kernel_mod = AnfAlgo::GetKernelMod(node);
@@ -430,11 +430,11 @@ void KernelRuntime::AssignCommunicationNodeOutputMem(int flag, const AnfNodePtr 
     align_size_list.emplace_back(mem_size);
   }
 
-  if (flag == kReuseDynamicMem) {
+  if (type == kReuseDynamicMem) {
     // reuse communication op's all outputs' memory
-    flag = kReuseDynamicCommMem;
+    type = kReuseDynamicCommMem;
   }
-  uint8_t *output_ptr = mem_manager_->MallocOutputMem(node, 0, flag, total_size);
+  uint8_t *output_ptr = mem_manager_->MallocOutputMem(node, 0, type, total_size);
   for (size_t j = 0; j < align_size_list.size(); ++j) {
     std::string output_format = AnfAlgo::GetOutputFormat(node, j);
     auto output_type = AnfAlgo::GetOutputDeviceDataType(node, j);
@@ -458,7 +458,7 @@ DeviceAddressPtr KernelRuntime::PreAssignCNodeMemory(const AnfNodePtr &anf_node,
   return address;
 }
 
-void KernelRuntime::AssignCommunicationNodeInputMem(int flag, const AnfNodePtr &node) {
+void KernelRuntime::AssignCommunicationNodeInputMem(MemType type, const AnfNodePtr &node) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   MS_EXCEPTION_IF_NULL(node);
@@ -479,7 +479,7 @@ void KernelRuntime::AssignCommunicationNodeInputMem(int flag, const AnfNodePtr &
     total_size += mem_size;
     addr_size.emplace_back(address.get(), mem_size);
   }
-  uint8_t *input_ptr = mem_manager_->MallocOutputMem(node, 0, flag, total_size);
+  uint8_t *input_ptr = mem_manager_->MallocOutputMem(node, 0, type, total_size);
   for (const auto &iter : addr_size) {
     MS_EXCEPTION_IF_NULL(iter.first);
     iter.first->set_ptr(input_ptr);
@@ -487,12 +487,12 @@ void KernelRuntime::AssignCommunicationNodeInputMem(int flag, const AnfNodePtr &
   }
 }
 
-void KernelRuntime::AssignNodeOutputMem(int flag, const AnfNodePtr &node, int index) {
+void KernelRuntime::AssignNodeOutputMem(MemType type, const AnfNodePtr &node, int index) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(mem_manager_);
-  if (AnfAlgo::IsGetNext(NOT_NULL(node)) && flag == kReuseDynamicMem) {
+  if (AnfAlgo::IsGetNext(NOT_NULL(node)) && type == kReuseDynamicMem) {
     MS_LOG(INFO) << "GetNext disable mem_reuse";
-    flag = kDynamicMem;
+    type = kDynamicMem;
   }
   auto kernel_mod = AnfAlgo::GetKernelMod(node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
@@ -509,7 +509,7 @@ void KernelRuntime::AssignNodeOutputMem(int flag, const AnfNodePtr &node, int in
       MS_LOG(INFO) << "Already malloc index:" << i;
       continue;
     }
-    auto ptr = mem_manager_->MallocOutputMem(node, i, flag, output_sizes[i]);
+    auto ptr = mem_manager_->MallocOutputMem(node, i, type, output_sizes[i]);
     if (ptr == nullptr) {
       // reused ptr, no need alloc, continue;
       continue;
@@ -608,10 +608,10 @@ void KernelRuntime::AssignDynamicMemory(session::KernelGraph *graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool is_enable_mem_reuse = context_ptr->enable_mem_reuse();
-  auto mem_flag = kDynamicMem;
+  auto mem_type = kDynamicMem;
   if (is_enable_mem_reuse) {
     mem_manager_->MallocReusedDynamicMem(graph);
-    mem_flag = kReuseDynamicMem;
+    mem_type = kReuseDynamicMem;
   }
   auto &execution_nodes = graph->execution_order();
   std::vector<CNodePtr> compute_nodes;
@@ -619,7 +619,7 @@ void KernelRuntime::AssignDynamicMemory(session::KernelGraph *graph) {
   for (auto &node : execution_nodes) {
     if (AnfAlgo::IsCommunicationOp(node)) {
       // skip if the memory is already alocated
-      AssignCommunicationNodeMem(mem_flag, node);
+      AssignCommunicationNodeMem(mem_type, node);
     } else {
       compute_nodes.emplace_back(node);
     }
@@ -627,19 +627,19 @@ void KernelRuntime::AssignDynamicMemory(session::KernelGraph *graph) {
 
   // then compute nodes
   for (auto &node : compute_nodes) {
-    AssignNodeOutputMem(mem_flag, node, kGetAllOuts);
-    AssignWorkSpaceMem(mem_flag, node);
+    AssignNodeOutputMem(mem_type, node, kGetAllOuts);
+    AssignWorkSpaceMem(mem_type, node);
   }
 }
 
-void KernelRuntime::AssignWorkSpaceMem(int flag, const AnfNodePtr &node) {
+void KernelRuntime::AssignWorkSpaceMem(MemType type, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(mem_manager_);
   auto kernel_mod = AnfAlgo::GetKernelMod(node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   size_t index = 0;
   for (auto &size : kernel_mod->GetWorkspaceSizeList()) {
-    auto ptr = mem_manager_->MallocWorkSpaceMem(node, index, flag, size);
+    auto ptr = mem_manager_->MallocWorkSpaceMem(node, index, type, size);
     AnfAlgo::SetWorkspaceAddr(CreateDeviceAddress(ptr, size, "", kTypeUnknown), index, node.get());
     index++;
   }

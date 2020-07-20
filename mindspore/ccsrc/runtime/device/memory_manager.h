@@ -22,10 +22,7 @@
 #include "backend/optimizer/mem_reuse/mem_reuse_allocator.h"
 namespace mindspore {
 namespace device {
-const int kStaticMem = 0;
-const int kDynamicMem = 1;
-const int kReuseDynamicMem = 2;
-const int kReuseDynamicCommMem = 3;
+enum MemType { kStaticMem, kDynamicMem, kReuseDynamicMem, kReuseDynamicCommMem };
 const int kGetAllOuts = -1;
 const uint64_t kMemAlignSize = 512;
 using MemReuseUtilPtr = mindspore::memreuse::MemReuseUtilPtr;
@@ -42,10 +39,10 @@ class MemoryManager {
     dynamic_mem_offset_ = 0;
   }
 
-  void MallocReusedDynamicMem(session::KernelGraph *graph);
-  uint8_t *MallocOutputMem(const AnfNodePtr &node, size_t index, int flag, size_t size);
-  uint8_t *MallocWorkSpaceMem(const AnfNodePtr &node, size_t index, int flag, size_t size);
-  virtual uint8_t *MallocMem(int flag, size_t size);
+  void MallocReusedDynamicMem(const session::KernelGraph *graph);
+  uint8_t *MallocOutputMem(const AnfNodePtr &node, size_t index, MemType type, size_t size);
+  uint8_t *MallocWorkSpaceMem(const AnfNodePtr &node, size_t index, MemType type, size_t size);
+  virtual uint8_t *MallocMem(MemType type, size_t size);
 
   virtual bool MallocMemFromMemPool(const DeviceAddressPtr address, size_t size);
   virtual void *MallocMemFromMemPool(size_t size);
