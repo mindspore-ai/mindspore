@@ -78,7 +78,7 @@ def test_qat_lenet():
 def test_qat_mobile_per_channel_tf():
     network = mobilenetV2(num_classes=1000)
     img = Tensor(np.ones((1, 3, 224, 224)).astype(np.float32))
-    network = qat.convert_quant_network(network, bn_fold=True, per_channel=[False, True], symmetric=[True, False])
+    network = qat.convert_quant_network(network, bn_fold=True, per_channel=[True, False], symmetric=[True, False])
     # should load the checkpoint. mock here
     for param in network.get_parameters():
         param.init_data()

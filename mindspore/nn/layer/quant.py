@@ -28,8 +28,8 @@ from mindspore._checkparam import check_int_positive, check_bool, twice
 from mindspore._checkparam import Rel
 import mindspore.context as context
 
-from .normalization import BatchNorm2d
-from .activation import get_activation
+from .normalization import BatchNorm2d, BatchNorm1d
+from .activation import get_activation, ReLU
 from ..cell import Cell
 from . import conv, basic
 from ..._checkparam import ParamValidator as validator
@@ -206,7 +206,7 @@ class DenseBnAct(Cell):
         self.has_bn = validator.check_bool("has_bn", has_bn)
         self.has_act = activation is not None
         if has_bn:
-            self.batchnorm = BatchNorm2d(out_channels)
+            self.batchnorm = BatchNorm1d(out_channels)
         self.activation = get_activation(activation)
 
     def construct(self, x):
@@ -1156,13 +1156,18 @@ class QuantBlock(Cell):
         self.has_bias = bias is not None
         self.activation = activation
         self.has_act = activation is not None
+        if isinstance(activation, ReLU):
+            self.activation = None
+            self.has_act = False
+            self.dequant.add_prim_attr("relu_flag", True)
         self.bias_add = P.BiasAdd()
 
     def construct(self, x):
         x = self.quant(x)
-        x = self.core_op(x, self.weight)
         if self.has_bias:
-            x = self.bias_add(x, self.bias)
+            x = self.core_op(x, self.weight, self.bias)
+        else:
+            x = self.core_op(x, self.weight)
         if self.has_act:
             x = self.activation(x)
         x = self.dequant(x, self.dequant_scale)

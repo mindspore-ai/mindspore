@@ -757,7 +757,7 @@ ATTR_MAP(ExtractImagePatches) = {{"ksizes", ATTR_DESC(ksizes, AnyTraits<int>(), 
 OUTPUT_MAP(ExtractImagePatches) = {{0, OUTPUT_DESC(y)}};
 
 // Conv2D
-INPUT_MAP(Conv2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}};
+INPUT_MAP(Conv2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}, {3, INPUT_DESC(bias)}};
 ATTR_MAP(Conv2D) = {
   {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
@@ -794,7 +794,7 @@ ATTR_MAP(Conv2DBackpropFilterD) = {
 OUTPUT_MAP(Conv2DBackpropFilterD) = {{0, OUTPUT_DESC(y)}};
 
 // DepthwiseConv2D
-INPUT_MAP(DepthwiseConv2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}};
+INPUT_MAP(DepthwiseConv2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}, {3, INPUT_DESC(bias)}};
 ATTR_MAP(DepthwiseConv2D) = {
   {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
@@ -826,7 +826,7 @@ ATTR_MAP(DepthwiseConv2DBackpropFilterD) = {
 OUTPUT_MAP(DepthwiseConv2DBackpropFilterD) = {{0, OUTPUT_DESC(filter_grad)}};
 
 // MatMulV2
-INPUT_MAP(MatMulV2) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+INPUT_MAP(MatMulV2) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(bias)}};
 ATTR_MAP(MatMulV2) = {{"transpose_a", ATTR_DESC(transpose_x1, AnyTraits<bool>())},
                       {"transpose_b", ATTR_DESC(transpose_x2, AnyTraits<bool>())}};
 OUTPUT_MAP(MatMulV2) = {{0, OUTPUT_DESC(y)}};
@@ -1347,7 +1347,8 @@ OUTPUT_MAP(AscendQuant) = {{0, OUTPUT_DESC(y)}};
 // AscendDequant
 INPUT_MAP(AscendDequant) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(deq_scale)}};
 ATTR_MAP(AscendDequant) = {{"sqrt_mode", ATTR_DESC(sqrt_mode, AnyTraits<bool>())},
-                           {"relu_flag", ATTR_DESC(relu_flag, AnyTraits<bool>())}};
+                           {"relu_flag", ATTR_DESC(relu_flag, AnyTraits<bool>())},
+                           {"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(AscendDequant) = {{0, OUTPUT_DESC(y)}};
 #ifdef ENABLE_GE
 // Print

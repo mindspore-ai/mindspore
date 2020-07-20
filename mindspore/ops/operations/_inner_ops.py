@@ -383,6 +383,7 @@ class Dequant(PrimitiveWithInfer):
     def __init__(self, sqrt_mode=False, relu_flag=False):
         self.sqrt_mode = validator.check_value_type("sqrt_mode", sqrt_mode, [bool], self.name)
         self.relu_flag = validator.check_value_type("relu_flag", relu_flag, [bool], self.name)
+        self.add_prim_attr("dtype", mstype.float16)
 
     def infer_shape(self, x_shape, deq_scale_shape):
         return x_shape
