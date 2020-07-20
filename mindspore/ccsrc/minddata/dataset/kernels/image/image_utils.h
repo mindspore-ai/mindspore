@@ -200,6 +200,12 @@ Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
 // @param output: Adjusted image of same shape and type.
 Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &hue);
 
+/// \brief Returns image with equalized histogram.
+/// \param[in] input: Tensor of shape <H,W,3>/<H,W,1>/<H,W> in RGB/Grayscale and
+///                   any OpenCv compatible type, see CVTensor.
+/// \param[out] output: Equalized image of same shape and type.
+Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
+
 // Masks out a random section from the image with set dimension
 // @param input: input Tensor
 // @param output: cutOut Tensor

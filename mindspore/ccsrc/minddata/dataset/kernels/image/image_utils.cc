@@ -749,6 +749,46 @@ Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   return Status::OK();
 }
 
+Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+  try {
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+    if (!input_cv->mat().data) {
+      RETURN_STATUS_UNEXPECTED("Could not convert to CV Tensor");
+    }
+    if (input_cv->Rank() != 3 && input_cv->Rank() != 2) {
+      RETURN_STATUS_UNEXPECTED("Shape not <H,W,C> or <H,W>");
+    }
+    // For greyscale images, extend dimension if rank is 2 and reshape output to be of rank 2.
+    if (input_cv->Rank() == 2) {
+      RETURN_IF_NOT_OK(input_cv->ExpandDim(2));
+    }
+    // Get number of channels and image matrix
+    std::size_t num_of_channels = input_cv->shape()[2];
+    if (num_of_channels != 1 && num_of_channels != 3) {
+      RETURN_STATUS_UNEXPECTED("Number of channels is not 1 or 3.");
+    }
+    cv::Mat image = input_cv->mat();
+    // Separate the image to channels
+    std::vector<cv::Mat> planes(num_of_channels);
+    cv::split(image, planes);
+    // Equalize each channel separately
+    std::vector<cv::Mat> image_result;
+    for (std::size_t layer = 0; layer < planes.size(); layer++) {
+      cv::Mat channel_result;
+      cv::equalizeHist(planes[layer], channel_result);
+      image_result.push_back(channel_result);
+    }
+    cv::Mat result;
+    cv::merge(image_result, result);
+    std::shared_ptr<CVTensor> output_cv = std::make_shared<CVTensor>(result);
+    if (input_cv->Rank() == 2) output_cv->Squeeze();
+    (*output) = std::static_pointer_cast<Tensor>(output_cv);
+  } catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("Error in equalize.");
+  }
+  return Status::OK();
+}
+
 Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t box_height,
              int32_t box_width, int32_t num_patches, bool bounded, bool random_color, std::mt19937 *rnd, uint8_t fill_r,
              uint8_t fill_g, uint8_t fill_b) {
