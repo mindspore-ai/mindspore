@@ -111,6 +111,7 @@ class BatchFetchRequest : public BaseRequest {
   friend class CacheService;
   BatchFetchRequest(connection_id_type connection_id, const std::vector<row_id_type> &row_id)
       : BaseRequest(connection_id, RequestType::kBatchFetchRows), row_id_(row_id) {}
+  ~BatchFetchRequest() = default;
   Status RestoreRows(TensorTable *out);
 
  private:
@@ -130,6 +131,8 @@ class CreationCacheRequest : public BaseRequest {
                                 CreateCacheFlag flag = CreateCacheFlag::kNone)
       : BaseRequest(connection_id, RequestType::kCreateCache), cache_mem_sz(cache_mem_sz), flag_(flag) {}
 
+  ~CreationCacheRequest() = default;
+
   std::string cookie() const { return cookie_; }
 
  private:
@@ -142,6 +145,8 @@ class PurgeCacheRequest : public BaseRequest {
  public:
   friend class CacheServer;
   explicit PurgeCacheRequest(connection_id_type connection_id) : BaseRequest(connection_id, RequestType::kPurgeCache) {}
+
+  ~PurgeCacheRequest() = default;
 };
 /// \brief Request to destroy a cache
 class DestroyCacheRequest : public BaseRequest {
@@ -149,6 +154,9 @@ class DestroyCacheRequest : public BaseRequest {
   friend class CacheServer;
   explicit DestroyCacheRequest(connection_id_type connection_id)
       : BaseRequest(connection_id, RequestType::kDestroyCache) {}
+
+  /// \brief Destructor
+  ~DestroyCacheRequest() = default;
 };
 /// \brief Obtain the statistics of the current connection
 class GetStatRequest : public BaseRequest {
@@ -156,6 +164,9 @@ class GetStatRequest : public BaseRequest {
   friend class CacheServer;
   friend class CacheService;
   explicit GetStatRequest(connection_id_type connection_id) : BaseRequest(connection_id, RequestType::kGetStat) {}
+
+  ~GetStatRequest() = default;
+
   row_id_type GetMinRowId() const {
     auto *msg = flatbuffers::GetRoot<ServiceStatMsg>(mem_.GetPointer());
     return msg->min_row_id();
@@ -216,6 +227,8 @@ class BuildPhaseDoneRequest : public BaseRequest {
   friend class CacheServer;
   BuildPhaseDoneRequest(connection_id_type connection_id, const std::string &cookie)
       : BaseRequest(connection_id, RequestType::kBuildPhaseDone), cookie_(cookie) {}
+
+  ~BuildPhaseDoneRequest() = default;
 
  private:
   std::string cookie_;

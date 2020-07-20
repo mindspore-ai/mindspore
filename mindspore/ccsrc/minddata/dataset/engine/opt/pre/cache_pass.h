@@ -36,6 +36,9 @@ class CachePass : public NodePass {
   /// \param[in] transform_pass Raw pointer back to controlling tree pass
   explicit CachePass(CacheTransformPass *transform_pass);
 
+  /// \brief Destructor
+  ~CachePass() = default;
+
   /// \brief Identifies the subtree below this node as a cached descendant tree.
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all

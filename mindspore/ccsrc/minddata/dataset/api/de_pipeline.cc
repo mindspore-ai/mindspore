@@ -1157,8 +1157,8 @@ Status DEPipeline::ParseTFReaderOp(const py::dict &args, std::shared_ptr<Dataset
   if (sampler) {
     (void)builder->SetSampler(std::move(sampler));
   } else if (cache_client) {
-    int64_t num_samples = 0;
-    int64_t start_index = 0;
+    const int64_t num_samples = 0;
+    const int64_t start_index = 0;
     sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
     (void)builder->SetSampler(std::move(sampler));
   }
@@ -1511,8 +1511,8 @@ Status DEPipeline::ParseRandomDataOp(const py::dict &args, std::shared_ptr<Datas
   if (sampler) {
     (void)builder.SetSampler(std::move(sampler));
   } else if (cache_client) {
-    int64_t num_samples = 0;
-    int64_t start_index = 0;
+    const int64_t num_samples = 0;
+    const int64_t start_index = 0;
     sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
     (void)builder.SetSampler(std::move(sampler));
   }
