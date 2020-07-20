@@ -37,6 +37,9 @@ class Session : public MSSession {
 
   MultiTensor RunGraph(uint32_t graph_id, const std::vector<std::shared_ptr<inference::MSTensor>> &inputs) override;
 
+  bool CheckModelInputs(uint32_t graph_id,
+                        const std::vector<std::shared_ptr<inference::MSTensor>> &inputs) const override;
+
   int Init(const std::string &device, uint32_t device_id);
 
   static void RegAllOp();

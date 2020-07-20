@@ -204,5 +204,11 @@ int Session::Init(const std::string &device, uint32_t device_id) {
   return 0;
 }
 
+bool Session::CheckModelInputs(uint32_t graph_id,
+                               const std::vector<std::shared_ptr<inference::MSTensor>> &inputs) const {
+  MS_ASSERT(session_impl_ != nullptr);
+  return session_impl_->CheckModelInputs(graph_id, inputs);
+}
+
 Session::Session() = default;
 }  // namespace mindspore::inference

@@ -25,6 +25,7 @@
 namespace mindspore {
 class FuncGraph;
 namespace inference {
+using VectorForMSTensorPtr = std::vector<std::shared_ptr<inference::MSTensor>>;
 class MS_API MSSession {
  public:
   MSSession() = default;
@@ -33,7 +34,9 @@ class MS_API MSSession {
 
   virtual uint32_t CompileGraph(std::shared_ptr<FuncGraph> funcGraphPtr) = 0;
 
-  virtual MultiTensor RunGraph(uint32_t graph_id, const std::vector<std::shared_ptr<inference::MSTensor>> &inputs) = 0;
+  virtual MultiTensor RunGraph(uint32_t graph_id, const VectorForMSTensorPtr &inputs) = 0;
+
+  virtual bool CheckModelInputs(uint32_t graph_id, const VectorForMSTensorPtr &inputs) const = 0;
 };
 
 std::shared_ptr<FuncGraph> MS_API LoadModel(const char *model_buf, size_t size, const std::string &device);

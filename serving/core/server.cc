@@ -67,6 +67,11 @@ Status Session::Predict(const std::vector<MSTensorPtr> &inputs, inference::Multi
   std::lock_guard<std::mutex> lock(mutex_);
   MS_LOG(INFO) << "run Predict";
 
+  if (!session_->CheckModelInputs(graph_id_, inputs)) {
+    MS_LOG(ERROR) << "Input error.";
+    return FAILED;
+  }
+
   *outputs = session_->RunGraph(graph_id_, inputs);
   MS_LOG(INFO) << "run Predict finished";
   return SUCCESS;
