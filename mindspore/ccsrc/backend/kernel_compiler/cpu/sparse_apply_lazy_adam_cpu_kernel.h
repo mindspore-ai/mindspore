@@ -40,7 +40,7 @@ class SparseApplyLazyAdamCPUKernel : public CPUKernel {
   bool use_nesterov_{false};
 };
 
-MS_REG_CPU_KERNEL(SparseApplyLazyAdam,
+MS_REG_CPU_KERNEL(FusedSparseLazyAdam,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)

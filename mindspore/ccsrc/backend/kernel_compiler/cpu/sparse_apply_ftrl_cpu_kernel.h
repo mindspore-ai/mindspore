@@ -42,19 +42,7 @@ class SparseApplyFtrlCPUKernel : public CPUKernel {
   float lr_power_{0};
 };
 
-MS_REG_CPU_KERNEL(SparseApplyFtrl,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  SparseApplyFtrlCPUKernel);
-
-MS_REG_CPU_KERNEL(SparseApplyFtrlNoReturn,
+MS_REG_CPU_KERNEL(FusedSparseFtrl,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)

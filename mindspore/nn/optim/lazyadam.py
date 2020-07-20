@@ -182,7 +182,7 @@ class LazyAdam(Optimizer):
 
         self.hyper_map = C.HyperMap()
         self.opt = P.Adam(use_locking, use_nesterov)
-        self.sparse_opt = P.SparseApplyLazyAdam(use_locking, use_nesterov)
+        self.sparse_opt = P.FusedSparseLazyAdam(use_locking, use_nesterov)
 
     def construct(self, gradients):
         gradients = self.decay_weight(gradients)

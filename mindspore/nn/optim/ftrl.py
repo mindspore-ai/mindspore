@@ -16,7 +16,6 @@
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common import Tensor
 import mindspore.common.dtype as mstype
-from mindspore.ops.operations import _inner_ops as inner
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from .optimizer import Optimizer, _apply_decay, _grad_scale
@@ -159,7 +158,7 @@ class FTRL(Optimizer):
         self.decay_tf = tuple((lambda: True)() for x in self.parameters)
         self.hyper_map = C.HyperMap()
         self.opt = P.ApplyFtrl(use_locking=use_locking)
-        self.sparse_opt = inner.SparseApplyFtrlNoReturn(learning_rate, l1, l2, lr_power, use_locking=use_locking)
+        self.sparse_opt = P.FusedSparseFtrl(learning_rate, l1, l2, lr_power, use_locking=use_locking)
 
     def construct(self, grads):
         params = self.parameters
