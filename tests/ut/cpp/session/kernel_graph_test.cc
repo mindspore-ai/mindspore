@@ -60,7 +60,7 @@ TEST_F(KernelGraphTest, NewParameter) {
   auto anf_graph = std::make_shared<FuncGraph>();
   auto kernel_graph = std::make_shared<KernelGraph>();
   // test nullptr as input
-  auto new_paramter = kernel_graph->NewParameter(nullptr);
+  auto new_paramter = kernel_graph->NewParameter();
   EXPECT_NE(new_paramter, nullptr);
   EXPECT_TRUE(new_paramter->isa<Parameter>());
   EXPECT_EQ(AnfAlgo::GetOutputFormat(new_paramter, 0), kOpFormat_DEFAULT);

@@ -25,6 +25,38 @@
 namespace mindspore {
 namespace opt {
 namespace {
+CNodePtr ConvertTupleOuputToPlantInputs(const FuncGraphPtr &graph, const AnfNodePtr &input_node) {
+  MS_EXCEPTION_IF_NULL(graph);
+  if (!AnfAlgo::IsTupleOutput(input_node)) {
+    MS_LOG(EXCEPTION) << "Cannot using the function to convert a not tuple output node to maketuple!";
+  }
+  if (input_node->isa<CNode>()) {
+    MS_LOG(EXCEPTION) << "The function can only split a parameter or valuenode bug got " << input_node->DebugString();
+  }
+  std::vector<AnfNodePtr> convert_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto splited_node_list = kernel_graph->SplitTupleOutputNodeToNodeList(input_node);
+  for (const auto &node : splited_node_list) {
+    if (AnfAlgo::IsTupleOutput(node)) {
+      convert_inputs.emplace_back(ConvertTupleOuputToPlantInputs(graph, node));
+      continue;
+    }
+    convert_inputs.emplace_back(node);
+  }
+
+  auto make_tuple = graph->NewCNode(convert_inputs);
+  std::vector<abstract::AbstractBasePtr> abstract_list;
+  auto make_tuple_input_size = AnfAlgo::GetInputTensorNum(make_tuple);
+  for (size_t index = 0; index < make_tuple_input_size; ++index) {
+    auto make_tuple_input = AnfAlgo::GetInputNode(make_tuple, index);
+    MS_EXCEPTION_IF_NULL(make_tuple_input);
+    abstract_list.emplace_back(make_tuple_input->abstract());
+  }
+  make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
+  return make_tuple;
+}
+
 CNodePtr ConvertTupleInputToMakeTuple(const FuncGraphPtr &graph, const CNodePtr &cnode_ptr) {
   MS_EXCEPTION_IF_NULL(cnode_ptr);
   MS_EXCEPTION_IF_NULL(graph);
@@ -35,19 +67,25 @@ CNodePtr ConvertTupleInputToMakeTuple(const FuncGraphPtr &graph, const CNodePtr 
       std::vector<TypeId> types;
       std::vector<std::vector<size_t>> shapes;
       std::vector<AnfNodePtr> make_tuple_inputs_list = {NewValueNode(prim::kPrimMakeTuple)};
-      for (size_t tuple_out_index = 0; tuple_out_index < AnfAlgo::GetOutputTensorNum(input_node); ++tuple_out_index) {
-        make_tuple_inputs_list.emplace_back(CreatTupleGetItemNode(graph, input_node, tuple_out_index));
-        types.push_back(AnfAlgo::GetOutputInferDataType(input_node, tuple_out_index));
-        shapes.emplace_back(AnfAlgo::GetOutputInferShape(input_node, tuple_out_index));
+      if (input_node->isa<CNode>()) {
+        for (size_t tuple_out_index = 0; tuple_out_index < AnfAlgo::GetOutputTensorNum(input_node); ++tuple_out_index) {
+          make_tuple_inputs_list.emplace_back(CreatTupleGetItemNode(graph, input_node, tuple_out_index));
+          types.push_back(AnfAlgo::GetOutputInferDataType(input_node, tuple_out_index));
+          shapes.emplace_back(AnfAlgo::GetOutputInferShape(input_node, tuple_out_index));
+        }
+        auto make_tuple = graph->NewCNode(make_tuple_inputs_list);
+        AnfAlgo::SetOutputInferTypeAndShape(types, shapes, make_tuple.get());
+        convert_inputs.emplace_back(make_tuple);
+        continue;
       }
-      auto make_tuple = graph->NewCNode(make_tuple_inputs_list);
-      AnfAlgo::SetOutputInferTypeAndShape(types, shapes, make_tuple.get());
-      convert_inputs.emplace_back(make_tuple);
+      convert_inputs.emplace_back(ConvertTupleOuputToPlantInputs(graph, input_node));
     } else {
       convert_inputs.push_back(input_node);
     }
   }
-  return graph->NewCNode(convert_inputs);
+  auto new_node = graph->NewCNode(convert_inputs);
+  new_node->set_abstract(cnode_ptr->abstract());
+  return new_node;
 }
 }  // namespace
 
