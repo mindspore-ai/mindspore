@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_TRANSFORM_CONVERT_H_
-#define MINDSPORE_CCSRC_TRANSFORM_CONVERT_H_
+#ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_CONVERT_H_
+#define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_CONVERT_H_
 
 #define DRAW_GE_GRAPH
 
@@ -255,4 +255,4 @@ class DfGraphConvertor {
 }  // namespace transform
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_TRANSFORM_CONVERT_H_
+#endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_CONVERT_H_

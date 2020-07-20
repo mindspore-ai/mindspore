@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_STRATEGY_H_
-#define MINDSPORE_CCSRC_PARALLEL_STRATEGY_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_STRATEGY_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_STRATEGY_H_
 
 #include <cstdint>
 #include <memory>
@@ -71,4 +71,4 @@ inline StrategyPtr NewStrategy(const int32_t stage, const std::vector<Dimensions
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_STRATEGY_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_STRATEGY_H_

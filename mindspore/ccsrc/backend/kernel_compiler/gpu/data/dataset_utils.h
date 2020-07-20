@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_DATASET_UTILS_KERNEL_H_
-#define MINDSPORE_CCSRC_KERNEL_GPU_DATASET_UTILS_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_DATASET_UTILS_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_DATASET_UTILS_KERNEL_H_
 
 #include <vector>
 #include "ir/dtype/type.h"
@@ -25,4 +25,4 @@ size_t UnitSizeInBytes(const mindspore::TypeId &t);
 int ElementNums(const std::vector<int> &shape);
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_DATASET_UTILS_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_DATASET_UTILS_KERNEL_H_

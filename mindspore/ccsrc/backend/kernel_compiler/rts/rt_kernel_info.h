@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_RTS_RT_KERNEL_INFO_H
-#define MINDSPORE_CCSRC_KERNEL_RTS_RT_KERNEL_INFO_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_RT_KERNEL_INFO_H
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_RT_KERNEL_INFO_H
 
 #include <memory>
 #include <functional>
@@ -72,4 +72,4 @@ void GetRtKelInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kerne
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_RTS_RT_KERNEL_INFO_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_RT_KERNEL_INFO_H

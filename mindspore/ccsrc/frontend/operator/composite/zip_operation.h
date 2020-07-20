@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPERATOR_COMPOSITE_ZIP_OPERATION_H_
-#define MINDSPORE_CCSRC_OPERATOR_COMPOSITE_ZIP_OPERATION_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_ZIP_OPERATION_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_ZIP_OPERATION_H_
 
 #include <vector>
 #include <string>
@@ -56,4 +56,4 @@ using ZipOperationPtr = std::shared_ptr<ZipOperation>;
 }  // namespace prim
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_OPERATOR_COMPOSITE_ZIP_OPERATION_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_ZIP_OPERATION_H_

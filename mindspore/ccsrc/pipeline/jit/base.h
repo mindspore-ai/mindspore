@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PIPELINE_BASE_H_
-#define MINDSPORE_CCSRC_PIPELINE_BASE_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_BASE_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_BASE_H_
 
 #include <mutex>
 #include <memory>
@@ -59,4 +59,4 @@ inline std::string GetFilePathName(const std::string &file_name) {
 }  // namespace pipeline
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_BASE_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_BASE_H_

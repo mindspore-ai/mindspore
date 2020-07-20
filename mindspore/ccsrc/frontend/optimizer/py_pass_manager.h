@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_PY_PASS_MANAGER_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_PY_PASS_MANAGER_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PY_PASS_MANAGER_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PY_PASS_MANAGER_H_
 
 #include <memory>
 #include <string>
@@ -63,4 +63,4 @@ class PyPassManager {
 }  // namespace python_pass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_PY_PASS_MANAGER_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PY_PASS_MANAGER_H_

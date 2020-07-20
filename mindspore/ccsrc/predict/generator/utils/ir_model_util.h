@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PREDICT_GENERATOR_IR_IR_MODEL_UTIL_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PREDICT_GENERATOR_IR_IR_MODEL_UTIL_H_
+#ifndef MINDSPORE_CCSRC_PREDICT_GENERATOR_IR_IR_MODEL_UTIL_H_
+#define MINDSPORE_CCSRC_PREDICT_GENERATOR_IR_IR_MODEL_UTIL_H_
 #include <string>
 #include <vector>
 #include <memory>
@@ -89,4 +89,4 @@ class IRModelUtil {
 }  // namespace generator
 }  // namespace mindspore
 
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PREDICT_GENERATOR_IR_IR_MODEL_UTIL_H_
+#endif  // MINDSPORE_CCSRC_PREDICT_GENERATOR_IR_IR_MODEL_UTIL_H_

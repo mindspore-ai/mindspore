@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_SESSION_CPU_SESSION_H
-#define MINDSPORE_CCSRC_SESSION_CPU_SESSION_H
+#ifndef MINDSPORE_CCSRC_BACKEND_SESSION_CPU_SESSION_H
+#define MINDSPORE_CCSRC_BACKEND_SESSION_CPU_SESSION_H
 #include <string>
 #include <memory>
 #include <vector>
@@ -47,4 +47,4 @@ class CPUSession : public SessionBasic {
 MS_REG_SESSION(kCPUDevice, CPUSession);
 }  // namespace session
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_SESSION_CPU_SESSION_H
+#endif  // MINDSPORE_CCSRC_BACKEND_SESSION_CPU_SESSION_H

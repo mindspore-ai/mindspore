@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_RTS_STREAM_SWITCH_H
-#define MINDSPORE_CCSRC_KERNEL_RTS_STREAM_SWITCH_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_STREAM_SWITCH_H
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_STREAM_SWITCH_H
 
 #include <memory>
 #include <vector>
@@ -46,4 +46,4 @@ MS_REG_RTKERNEL(streamswitch, StreamSwitchKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_RTS_STREAM_SWITCH_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_STREAM_SWITCH_H

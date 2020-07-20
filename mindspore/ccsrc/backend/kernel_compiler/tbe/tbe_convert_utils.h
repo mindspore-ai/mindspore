@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_TBE_COMMON_UTILS_H_
-#define MINDSPORE_CCSRC_KERNEL_TBE_COMMON_UTILS_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_TBE_COMMON_UTILS_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_TBE_COMMON_UTILS_H_
 
 #include <string>
 #include "backend/kernel_compiler/kernel.h"
@@ -39,4 +39,4 @@ std::string GetProcessor(const AnfNodePtr &anf_node);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_TBE_COMMON_UTILS_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_TBE_COMMON_UTILS_H_

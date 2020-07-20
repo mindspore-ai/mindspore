@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_ASCEND_MEMORY_MANAGER_H_
-#define MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_ASCEND_MEMORY_MANAGER_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_MEMORY_MANAGER_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_MEMORY_MANAGER_H_
 #include "runtime/device/memory_manager.h"
 namespace mindspore {
 namespace device {
@@ -38,4 +38,4 @@ class AscendMemoryManager : public MemoryManager {
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_ASCEND_MEMORY_MANAGER_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_MEMORY_MANAGER_H_

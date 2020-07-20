@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_IRPASS_BRANCH_CULLING_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_IRPASS_BRANCH_CULLING_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BRANCH_CULLING_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BRANCH_CULLING_H_
 
 #include <vector>
 #include <algorithm>
@@ -152,4 +152,4 @@ class ConvertSwitchReplacement : public OptimizerCaller {
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // #ifndef MINDSPORE_CCSRC_OPTIMIZER_IRPASS_BRANCH_CULLING_H_
+#endif  // #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BRANCH_CULLING_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_TBE_TBE_PYTHON_FUNCS_H_
-#define MINDSPORE_CCSRC_KERNEL_TBE_TBE_PYTHON_FUNCS_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_TBE_TBE_PYTHON_FUNCS_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_TBE_TBE_PYTHON_FUNCS_H_
 
 #include <string>
 #include <nlohmann/json.hpp>
@@ -42,4 +42,4 @@ class TbePythonFuncs {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_KERNEL_TBE_TBE_PYTHON_FUNCS_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_TBE_TBE_PYTHON_FUNCS_H_

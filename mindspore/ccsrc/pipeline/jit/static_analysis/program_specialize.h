@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef PIPELINE_STATIC_ANALYSIS_SPECIALIZE_H_
-#define PIPELINE_STATIC_ANALYSIS_SPECIALIZE_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_SPECIALIZE_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_SPECIALIZE_H_
 
 #include <memory>
 #include <string>
@@ -133,4 +133,4 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
 };
 }  // namespace abstract
 }  // namespace mindspore
-#endif  // PIPELINE_STATIC_ANALYSIS_SPECIALIZE_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_SPECIALIZE_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PREDICT_CONVERTER_OP_ATTR_PACKER_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PREDICT_CONVERTER_OP_ATTR_PACKER_H_
+#ifndef MINDSPORE_CCSRC_PREDICT_CONVERTER_OP_ATTR_PACKER_H_
+#define MINDSPORE_CCSRC_PREDICT_CONVERTER_OP_ATTR_PACKER_H_
 
 #include <utility>
 #include <string>
@@ -55,4 +55,4 @@ mindspore::predict::PadMode GetAttrPadMode(const std::string &pad_mode);
 }  // namespace predict
 }  // namespace mindspore
 
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PREDICT_CONVERTER_CPU_OP_INFO_OP_ATTR_FACTORY_H_
+#endif  // MINDSPORE_CCSRC_PREDICT_CONVERTER_CPU_OP_INFO_OP_ATTR_FACTORY_H_

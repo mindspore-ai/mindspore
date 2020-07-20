@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PIPELINE_ACTION_H_
-#define MINDSPORE_CCSRC_PIPELINE_ACTION_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_ACTION_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_ACTION_H_
 
 #include <vector>
 #include <functional>
@@ -55,4 +55,4 @@ FuncGraphPtr Renormalize(const ResourcePtr &res, const FuncGraphPtr &func_graph,
 }  // namespace pipeline
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_ACTION_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_ACTION_H_

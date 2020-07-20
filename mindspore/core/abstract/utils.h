@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_ABSTRACT_UTILS_H_
-#define MINDSPORE_CCSRC_ABSTRACT_UTILS_H_
+#ifndef MINDSPORE_CORE_ABSTRACT_UTILS_H_
+#define MINDSPORE_CORE_ABSTRACT_UTILS_H_
 
 #include <vector>
 #include <utility>
@@ -53,4 +53,4 @@ int GetPositiveAxis(int axis_value, size_t increment);
 ShapePtr GetBroadcastShape(const std::string &op, const AbstractTensorPtr &tensor_x, const AbstractTensorPtr &tensor_y);
 }  // namespace abstract
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_ABSTRACT_UTILS_H_
+#endif  // MINDSPORE_CORE_ABSTRACT_UTILS_H_

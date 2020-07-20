@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_IR_FUSION_INPUT_TO_OUTPUT_REGISTRY_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_IR_FUSION_INPUT_TO_OUTPUT_REGISTRY_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_IR_FUSION_INPUT_TO_OUTPUT_REGISTRY_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_IR_FUSION_INPUT_TO_OUTPUT_REGISTRY_H_
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -61,4 +61,4 @@ class InputToOutputRegistry {
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_IR_FUSION_INPUT_TO_OUTPUT_REGISTRY_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_IR_FUSION_INPUT_TO_OUTPUT_REGISTRY_H_

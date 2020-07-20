@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_DEVICE_ASCEND_KERNEL_BUILD_ASCEND_H_
-#define MINDSPORE_CCSRC_DEVICE_ASCEND_KERNEL_BUILD_ASCEND_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_KERNEL_BUILD_ASCEND_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_KERNEL_BUILD_ASCEND_H_
 
 #include "backend/session/kernel_graph.h"
 
@@ -39,4 +39,4 @@ void KernelBuildPreprocess(mindspore::session::KernelGraph *kernel_graph);
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_ASCEND_KERNEL_BUILD_ASCEND_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_KERNEL_BUILD_ASCEND_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_ENGINE_OPT_PASS_UTIL_PRINTER_H
-#define DATASET_ENGINE_OPT_PASS_UTIL_PRINTER_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PASS_UTIL_PRINTER_H
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PASS_UTIL_PRINTER_H
 
 #include <memory>
 #include "minddata/dataset/engine/opt/pass.h"
@@ -61,4 +61,4 @@ class PrinterPass : public NodePass {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_ENGINE_OPT_PASS_UTIL_PRINTER_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PASS_UTIL_PRINTER_H

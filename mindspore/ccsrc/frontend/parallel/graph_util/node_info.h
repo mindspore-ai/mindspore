@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_GRAPH_UTIL_NODE_INFO_H_
-#define MINDSPORE_CCSRC_PARALLEL_GRAPH_UTIL_NODE_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_GRAPH_UTIL_NODE_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_GRAPH_UTIL_NODE_INFO_H_
 
 #include <string>
 #include "base/base.h"
@@ -28,4 +28,4 @@ bool ParameterRequireGrad(const AnfNodePtr &node_ptr);
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_GRAPH_UTIL_NODE_INFO_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_GRAPH_UTIL_NODE_INFO_H_

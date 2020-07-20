@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_MINDSPORE_CCSRC_EXECUTOR_GENERATOR_IR_IR_MODEL_H_
-#define MINDSPORE_MINDSPORE_CCSRC_EXECUTOR_GENERATOR_IR_IR_MODEL_H_
+#ifndef MINDSPORE_CCSRC_EXECUTOR_GENERATOR_IR_IR_MODEL_H_
+#define MINDSPORE_CCSRC_EXECUTOR_GENERATOR_IR_IR_MODEL_H_
 #include <string>
 #include <vector>
 #include <memory>
@@ -34,4 +34,4 @@ using IrModelPtr = std::shared_ptr<IRModel>;
 }  // namespace generator
 }  // namespace mindspore
 
-#endif  // MINDSPORE_MINDSPORE_CCSRC_EXECUTOR_GENERATOR_IR_IR_MODEL_H_
+#endif  // MINDSPORE_CCSRC_EXECUTOR_GENERATOR_IR_IR_MODEL_H_

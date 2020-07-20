@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_KERNEL_BUILD_INFO_H_
-#define MINDSPORE_CCSRC_KERNEL_KERNEL_BUILD_INFO_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNEL_BUILD_INFO_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNEL_BUILD_INFO_H_
 #include <iostream>
 #include <vector>
 #include <memory>
@@ -144,4 +144,4 @@ class KernelBuildInfo::KernelBuildInfoBuilder {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_KERNEL_KERNEL_BUILD_INFO_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNEL_BUILD_INFO_H_

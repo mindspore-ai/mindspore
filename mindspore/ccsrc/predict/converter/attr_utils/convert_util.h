@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PREDICT_CONVERTER_ATTR_UTILS_CONVERT_UTIL_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PREDICT_CONVERTER_ATTR_UTILS_CONVERT_UTIL_H_
+#ifndef MINDSPORE_CCSRC_PREDICT_CONVERTER_ATTR_UTILS_CONVERT_UTIL_H_
+#define MINDSPORE_CCSRC_PREDICT_CONVERTER_ATTR_UTILS_CONVERT_UTIL_H_
 
 #include <vector>
 #include <utility>
@@ -57,4 +57,4 @@ bool SaveDeviceModelUtil(const std::shared_ptr<GraphDefT> &new_ms_graph_ptr, con
 }  // namespace utils
 }  // namespace predict
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PREDICT_CONVERTER_ATTR_UTILS_CONVERT_UTIL_H_
+#endif  // MINDSPORE_CCSRC_PREDICT_CONVERTER_ATTR_UTILS_CONVERT_UTIL_H_

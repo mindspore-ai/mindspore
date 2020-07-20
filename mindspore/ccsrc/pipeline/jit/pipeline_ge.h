@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PIPELINE_PIPELINE_GE_H_
-#define MINDSPORE_CCSRC_PIPELINE_PIPELINE_GE_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PIPELINE_GE_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_PIPELINE_GE_H_
 
 #include <vector>
 #include <utility>
@@ -52,4 +52,4 @@ void ExportDFGraph(const std::string &file_name, const std::string &phase);
 }  // namespace pipeline
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_PIPELINE_GE_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_PIPELINE_GE_H_

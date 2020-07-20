@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_KERNELFUSION_H_
-#define MINDSPORE_CCSRC_KERNEL_KERNELFUSION_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNELFUSION_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNELFUSION_H_
 #include <vector>
 #include <map>
 #include "backend/kernel_compiler/kernel.h"
@@ -35,4 +35,4 @@ std::map<int32_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_KERNELFUSION_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNELFUSION_H_

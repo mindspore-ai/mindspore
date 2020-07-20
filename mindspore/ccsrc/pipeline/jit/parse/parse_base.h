@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef PIPELINE_PARSE_PARSE_BASE_H_
-#define PIPELINE_PARSE_PARSE_BASE_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_PARSE_BASE_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_PARSE_BASE_H_
 #include <string>
 #include <memory>
 #include "pybind11/pybind11.h"
@@ -149,4 +149,4 @@ FuncGraphPtr ParsePythonCode(const py::object &obj,
 }  // namespace parse
 }  // namespace mindspore
 
-#endif  // PIPELINE_PARSE_PARSE_BASE_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_PARSE_BASE_H_

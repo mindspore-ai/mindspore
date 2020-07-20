@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPERATOR_CC_IMPLEMENTATIONS_H_
-#define MINDSPORE_CCSRC_OPERATOR_CC_IMPLEMENTATIONS_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPERATOR_CC_IMPLEMENTATIONS_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPERATOR_CC_IMPLEMENTATIONS_H_
 
 #include <vector>
 #include <memory>
@@ -56,4 +56,4 @@ std::vector<int> BroadcastShape_(std::vector<int> s1, std::vector<int> s2);
 }  // namespace prim
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_OPERATOR_CC_IMPLEMENTATIONS_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPERATOR_CC_IMPLEMENTATIONS_H_

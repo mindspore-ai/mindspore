@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_CONTEXT_H_
-#define MINDSPORE_CCSRC_PARALLEL_CONTEXT_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_CONTEXT_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_CONTEXT_H_
 
 #include <cstdint>
 #include <memory>
@@ -139,4 +139,4 @@ void ParallelParameterContextCkptInTraining(const FuncGraphPtr &func_graph, cons
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_CONTEXT_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_CONTEXT_H_

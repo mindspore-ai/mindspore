@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_UTIL_CIRCULAR_POOL_H_
-#define DATASET_UTIL_CIRCULAR_POOL_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_CIRCULAR_POOL_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_CIRCULAR_POOL_H_
 
 #include <atomic>
 #include <memory>
@@ -105,4 +105,4 @@ class CircularPool : public MemoryPool {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_UTIL_CIRCULAR_POOL_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_CIRCULAR_POOL_H_

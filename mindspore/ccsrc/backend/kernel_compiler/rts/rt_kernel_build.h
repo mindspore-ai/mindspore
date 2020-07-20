@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_RTS_RT_KERNEL_BUILD_H
-#define MINDSPORE_CCSRC_KERNEL_RTS_RT_KERNEL_BUILD_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_RT_KERNEL_BUILD_H
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_RT_KERNEL_BUILD_H
 
 #include <vector>
 #include <memory>
@@ -26,4 +26,4 @@ KernelModPtr RtOpBuild(const AnfNodePtr &anf_node);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_RTS_RT_KERNEL_BUILD_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_RT_KERNEL_BUILD_H

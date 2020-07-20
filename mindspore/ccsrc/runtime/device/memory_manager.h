@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_DEVICE_MEMORY_MANAGER_H_
-#define MINDSPORE_MINDSPORE_CCSRC_DEVICE_MEMORY_MANAGER_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_MEMORY_MANAGER_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_MEMORY_MANAGER_H_
 #include <memory>
 #include <vector>
 #include "backend/optimizer/mem_reuse/mem_reuse.h"
@@ -71,4 +71,4 @@ class MemoryManager {
 };
 }  // namespace device
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_DEVICE_MEMORY_MANAGER_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_MEMORY_MANAGER_H_

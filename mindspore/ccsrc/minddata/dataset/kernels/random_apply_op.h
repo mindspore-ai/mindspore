@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_KERNELS_RANDOM_APPLY_OP_
-#define DATASET_KERNELS_RANDOM_APPLY_OP_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_RANDOM_APPLY_OP_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_RANDOM_APPLY_OP_
 
 #include <memory>
 #include <random>
@@ -76,4 +76,4 @@ class RandomApplyOp : public TensorOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_KERNELS_RANDOM_APPLY_OP_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_RANDOM_APPLY_OP_

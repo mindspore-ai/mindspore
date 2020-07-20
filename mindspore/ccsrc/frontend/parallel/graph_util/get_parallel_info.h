@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_GRAPH_UTIL_GET_GRAPH_INFO_H_
-#define MINDSPORE_CCSRC_PARALLEL_GRAPH_UTIL_GET_GRAPH_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_GRAPH_UTIL_GET_GRAPH_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_GRAPH_UTIL_GET_GRAPH_INFO_H_
 
 #include "pybind11/stl.h"
 #include "pybind11/pybind11.h"
@@ -30,4 +30,4 @@ py::dict GetAllreduceFusion(const FuncGraphPtr &graph);
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_GRAPH_UTIL_GET_GRAPH_INFO_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_GRAPH_UTIL_GET_GRAPH_INFO_H_

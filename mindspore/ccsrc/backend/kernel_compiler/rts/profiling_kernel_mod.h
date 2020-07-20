@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_MINDSPORE_CCSRC_KERNEL_RTS_PROFILING_KERNEL_MOD_H_
-#define MINDSPORE_MINDSPORE_CCSRC_KERNEL_RTS_PROFILING_KERNEL_MOD_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_PROFILING_KERNEL_MOD_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_PROFILING_KERNEL_MOD_H_
 #include <vector>
 #include "backend/kernel_compiler/rts/rt_kernel.h"
 namespace mindspore {
@@ -37,4 +37,4 @@ class ProfilingKernelMod : public RtKernel {
 MS_REG_RTKERNEL(profiling, ProfilingKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_KERNEL_RTS_PROFILING_KERNEL_MOD_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_PROFILING_KERNEL_MOD_H_

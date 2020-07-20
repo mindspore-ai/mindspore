@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_SESSION_SESSION_BASIC_H
-#define MINDSPORE_CCSRC_SESSION_SESSION_BASIC_H
+#ifndef MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_BASIC_H
+#define MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_BASIC_H
 
 #include <vector>
 #include <string>
@@ -161,4 +161,4 @@ using SessionPtr = std::shared_ptr<session::SessionBasic>;
 using NamedSummaryOutputs = std::map<std::string, std::pair<AnfNodePtr, int>>;
 }  // namespace session
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_SESSION_SESSION_BASIC_H
+#endif  // MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_BASIC_H

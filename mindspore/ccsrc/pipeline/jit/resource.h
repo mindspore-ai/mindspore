@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PIPELINE_RESOURCE_H_
-#define MINDSPORE_CCSRC_PIPELINE_RESOURCE_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_RESOURCE_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_RESOURCE_H_
 
 #include <iostream>
 #include <vector>
@@ -117,4 +117,4 @@ using ResourcePtr = std::shared_ptr<pipeline::Resource>;
 }  // namespace pipeline
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_RESOURCE_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_RESOURCE_H_

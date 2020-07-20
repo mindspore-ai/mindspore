@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDRECORD_INCLUDE_SHARD_OPERATOR_H_
-#define MINDRECORD_INCLUDE_SHARD_OPERATOR_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_OPERATOR_H_
+#define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_OPERATOR_H_
 
 #include <memory>
 #include "minddata/mindrecord/include/shard_task.h"
@@ -60,4 +60,4 @@ class ShardOperator {
 };
 }  // namespace mindrecord
 }  // namespace mindspore
-#endif  // MINDRECORD_INCLUDE_SHARD_OPERATOR_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_OPERATOR_H_

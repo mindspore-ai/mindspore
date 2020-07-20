@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_PASS_ADD_ATOMIC_CLEAN_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_PASS_ADD_ATOMIC_CLEAN_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_ADD_ATOMIC_CLEAN_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_ADD_ATOMIC_CLEAN_H_
 
 #include <memory>
 #include "backend/session/kernel_graph.h"
@@ -26,4 +26,4 @@ void AddAtomicClean(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_PASS_ADD_ATOMIC_CLEAN_H
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_ADD_ATOMIC_CLEAN_H

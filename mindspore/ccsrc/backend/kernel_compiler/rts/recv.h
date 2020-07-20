@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_RTS_RECV_H
-#define MINDSPORE_CCSRC_KERNEL_RTS_RECV_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_RECV_H
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_RECV_H
 
 #include <memory>
 #include <vector>
@@ -43,4 +43,4 @@ MS_REG_RTKERNEL(recv, RecvKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_RTS_RECV_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_RECV_H

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_DEVICE_GPU_MPI_MPI_INITIALIZER_H_
-#define MINDSPORE_CCSRC_DEVICE_GPU_MPI_MPI_INITIALIZER_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_MPI_MPI_INITIALIZER_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_MPI_MPI_INITIALIZER_H_
 
 namespace mindspore {
 namespace device {
@@ -39,4 +39,4 @@ class MPIInitializer {
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_GPU_MPI_MPI_INITIALIZER_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_MPI_MPI_INITIALIZER_H_

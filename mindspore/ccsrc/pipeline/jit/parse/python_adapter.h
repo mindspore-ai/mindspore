@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef PIPELINE_PARSE_PYTHON_ADAPTER_H_
-#define PIPELINE_PARSE_PYTHON_ADAPTER_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_PYTHON_ADAPTER_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_PYTHON_ADAPTER_H_
 #include <map>
 #include <memory>
 #include <string>
@@ -75,4 +75,4 @@ py::object CallPyFn(const std::string &module, const std::string &name, T... arg
 }  // namespace parse
 }  // namespace mindspore
 
-#endif  // PIPELINE_PARSE_PYTHON_ADAPTER_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_PYTHON_ADAPTER_H_

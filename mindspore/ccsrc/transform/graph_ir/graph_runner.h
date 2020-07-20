@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TRANSFORM_GRAPH_RUNNER_H_
-#define TRANSFORM_GRAPH_RUNNER_H_
+#ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_GRAPH_RUNNER_H_
+#define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_GRAPH_RUNNER_H_
 
 #include <set>
 #include <string>
@@ -60,4 +60,4 @@ class GraphRunner {
 }  // namespace transform
 }  // namespace mindspore
 
-#endif  // TRANSFORM_GRAPH_RUNNER_H_
+#endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_GRAPH_RUNNER_H_

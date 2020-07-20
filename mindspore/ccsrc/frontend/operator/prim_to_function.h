@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPERATOR_PRIM_TO_FUNCTION_H_
-#define MINDSPORE_CCSRC_OPERATOR_PRIM_TO_FUNCTION_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPERATOR_PRIM_TO_FUNCTION_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPERATOR_PRIM_TO_FUNCTION_H_
 
 #include <memory>
 #include <mutex>
@@ -60,4 +60,4 @@ class PrimToFunction {
 };
 }  // namespace prim
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_OPERATOR_PRIM_TO_FUNCTION_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPERATOR_PRIM_TO_FUNCTION_H_

@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_META_FUNC_GRAPH_H_
-#define MINDSPORE_CCSRC_IR_META_FUNC_GRAPH_H_
+#ifndef MINDSPORE_CORE_IR_META_FUNC_GRAPH_H_
+#define MINDSPORE_CORE_IR_META_FUNC_GRAPH_H_
 
 #include <unordered_map>
 #include <string>
@@ -88,4 +88,4 @@ class MetaFuncGraph : public FuncGraphBase {
 using MetaFuncGraphPtr = std::shared_ptr<MetaFuncGraph>;
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_META_FUNC_GRAPH_H_
+#endif  // MINDSPORE_CORE_IR_META_FUNC_GRAPH_H_

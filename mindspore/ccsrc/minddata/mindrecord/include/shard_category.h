@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDRECORD_INCLUDE_SHARD_CATEGORY_H_
-#define MINDRECORD_INCLUDE_SHARD_CATEGORY_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_CATEGORY_H_
+#define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_CATEGORY_H_
 
 #include <algorithm>
 #include <limits>
@@ -60,4 +60,4 @@ class ShardCategory : public ShardOperator {
 }  // namespace mindrecord
 }  // namespace mindspore
 
-#endif  // MINDRECORD_INCLUDE_SHARD_CATEGORY_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_CATEGORY_H_

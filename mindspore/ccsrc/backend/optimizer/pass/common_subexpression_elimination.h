@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_PASS_COMMON_SUBEXPRESSION_ELIMINATION_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_PASS_COMMON_SUBEXPRESSION_ELIMINATION_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_COMMON_SUBEXPRESSION_ELIMINATION_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_COMMON_SUBEXPRESSION_ELIMINATION_H_
 #include "backend/optimizer/common/pass.h"
 #include "frontend/optimizer/cse.h"
 
@@ -36,4 +36,4 @@ class BackendCSE : public CSE {
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_PASS_COMMON_SUBEXPRESSION_ELIMINATION_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_COMMON_SUBEXPRESSION_ELIMINATION_H_

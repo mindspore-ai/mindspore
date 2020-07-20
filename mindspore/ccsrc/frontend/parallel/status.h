@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_STATUS_H_
-#define MINDSPORE_CCSRC_PARALLEL_STATUS_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_STATUS_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_STATUS_H_
 
 #include <cstdint>
 
@@ -29,4 +29,4 @@ enum Status {
 }
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_STATUS_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_STATUS_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_OPS_INFO_L2_NORMALIZE_INFO_H_
-#define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_L2_NORMALIZE_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_L2_NORMALIZE_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_L2_NORMALIZE_INFO_H_
 
 #include <memory>
 #include <string>
@@ -47,4 +47,4 @@ class L2NormalizeInfo : public Activation {
 };
 }  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PARALLEL_OPS_INFO_L2_NORMALIZE_INFO_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_L2_NORMALIZE_INFO_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_DEBUG_COMMON_H_
-#define MINDSPORE_MINDSPORE_CCSRC_DEBUG_COMMON_H_
+#ifndef MINDSPORE_CCSRC_DEBUG_COMMON_H_
+#define MINDSPORE_CCSRC_DEBUG_COMMON_H_
 
 #include <string>
 #include <optional>
@@ -33,4 +33,4 @@ class Common {
   static bool CreateNotExistDirs(const std::string &path);
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_COMMON_H_
+#endif  // MINDSPORE_CCSRC_DEBUG_COMMON_H_

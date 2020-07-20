@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_AD_ADJOINT_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_AD_ADJOINT_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_ADJOINT_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_ADJOINT_H_
 
 #include <memory>
 #include <utility>
@@ -54,4 +54,4 @@ using AdjointPtr = std::shared_ptr<Adjoint>;
 }  // namespace ad
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_AD_ADJOINT_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_ADJOINT_H_

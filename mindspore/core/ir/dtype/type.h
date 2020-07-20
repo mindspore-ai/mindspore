@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_DTYPE_TYPE_H_
-#define MINDSPORE_CCSRC_IR_DTYPE_TYPE_H_
+#ifndef MINDSPORE_CORE_IR_DTYPE_TYPE_H_
+#define MINDSPORE_CORE_IR_DTYPE_TYPE_H_
 
 #include <cstddef>
 #include <iostream>
@@ -124,4 +124,4 @@ class Object : public Type {
 std::ostream &operator<<(std::ostream &os, const TypePtrList &types);
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_DTYPE_TYPE_H_
+#endif  // MINDSPORE_CORE_IR_DTYPE_TYPE_H_

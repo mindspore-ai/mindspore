@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_UTIL_INDEX_H_
-#define DATASET_UTIL_INDEX_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_INDEX_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_INDEX_H_
 
 #include <algorithm>
 #include <atomic>
@@ -453,7 +453,7 @@ class BPlusTree {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_UTIL_INDEX_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_INDEX_H_
 
 #include "btree_impl.tpp"
 #include "btree_iterator.tpp"

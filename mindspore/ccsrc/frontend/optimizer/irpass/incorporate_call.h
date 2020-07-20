@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_IRPASS_INCORPORATE_CALL_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_IRPASS_INCORPORATE_CALL_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_INCORPORATE_CALL_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_INCORPORATE_CALL_H_
 
 #include <vector>
 #include <algorithm>
@@ -205,4 +205,4 @@ class IncorporateCallSwitch : public AnfVisitor {
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_IRPASS_INCORPORATE_CALL_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_INCORPORATE_CALL_H_

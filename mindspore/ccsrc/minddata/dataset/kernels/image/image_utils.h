@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_
-#define DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_
 
 #include <setjmp.h>
 
@@ -264,4 +264,4 @@ Status UpdateBBoxesForResize(const std::shared_ptr<Tensor> &bboxList, const size
 
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_

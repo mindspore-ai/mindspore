@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_NAMED_H_
-#define MINDSPORE_CCSRC_IR_NAMED_H_
+#ifndef MINDSPORE_CORE_IR_NAMED_H_
+#define MINDSPORE_CORE_IR_NAMED_H_
 
 #include <string>
 #include <memory>
@@ -89,4 +89,4 @@ class Ellipsis : public Named {
 };
 extern const NamedPtr kEllipsis;
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_IR_NAMED_H_
+#endif  // MINDSPORE_CORE_IR_NAMED_H_

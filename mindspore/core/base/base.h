@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BASE_BASE_H_
-#define MINDSPORE_CCSRC_BASE_BASE_H_
+#ifndef MINDSPORE_CORE_BASE_BASE_H_
+#define MINDSPORE_CORE_BASE_BASE_H_
 
 #include <atomic>
 #include <iostream>
@@ -149,4 +149,4 @@ struct MS_EXPORT TypeIdManager {
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BASE_BASE_H_
+#endif  // MINDSPORE_CORE_BASE_BASE_H_

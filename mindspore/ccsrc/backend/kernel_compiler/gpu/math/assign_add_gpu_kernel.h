@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_ASSIGNADD_GPU_KERNEL_H
-#define MINDSPORE_CCSRC_KERNEL_GPU_ASSIGNADD_GPU_KERNEL_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ASSIGNADD_GPU_KERNEL_H
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ASSIGNADD_GPU_KERNEL_H
 
 #include <cuda_runtime_api.h>
 #include <vector>
@@ -92,4 +92,4 @@ class AssignAddGpuFwdKernel : public GpuKernel {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_ASSIGNADD_GPU_KERNEL_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ASSIGNADD_GPU_KERNEL_H

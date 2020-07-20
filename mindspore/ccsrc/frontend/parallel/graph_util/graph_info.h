@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_GRAPH_UTIL_GRAPH_INFO_H_
-#define MINDSPORE_CCSRC_PARALLEL_GRAPH_UTIL_GRAPH_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_GRAPH_UTIL_GRAPH_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_GRAPH_UTIL_GRAPH_INFO_H_
 
 #include <string>
 #include <vector>
@@ -29,4 +29,4 @@ void DumpGraph(const FuncGraphPtr &root, const std::string &name);
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_GRAPH_UTIL_GRAPH_INFO_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_GRAPH_UTIL_GRAPH_INFO_H_

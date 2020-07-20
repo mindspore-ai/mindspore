@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_RTS_LABEL_SWITCH_H
-#define MINDSPORE_CCSRC_KERNEL_RTS_LABEL_SWITCH_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_LABEL_SWITCH_H
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_LABEL_SWITCH_H
 
 #include <memory>
 #include <vector>
@@ -54,4 +54,4 @@ MS_REG_RTKERNEL(labelswitch, LabelSwitchKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_RTS_LABEL_SWITCH_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_LABEL_SWITCH_H

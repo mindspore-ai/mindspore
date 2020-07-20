@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_ANF_H_
-#define MINDSPORE_CCSRC_IR_ANF_H_
+#ifndef MINDSPORE_CORE_IR_ANF_H_
+#define MINDSPORE_CORE_IR_ANF_H_
 
 #include <functional>
 #include <string>
@@ -442,4 +442,4 @@ using TaggedGraph = std::pair<FuncGraphPtr, TaggedNodeMap>;
 std::string GetCNodeTarget(const AnfNodePtr &node);
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_ANF_H_
+#endif  // MINDSPORE_CORE_IR_ANF_H_

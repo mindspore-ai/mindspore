@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PIPELINE_VALIDATOR_H_
-#define MINDSPORE_CCSRC_PIPELINE_VALIDATOR_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_VALIDATOR_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_VALIDATOR_H_
 
 #include <string>
 #include <iostream>
@@ -35,4 +35,4 @@ void ValidateOperation(const AnfNodePtr &node);
 }  // namespace validator
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_VALIDATOR_H__
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_VALIDATOR_H__

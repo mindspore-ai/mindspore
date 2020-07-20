@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_VALUE_H_
-#define MINDSPORE_CCSRC_IR_VALUE_H_
+#ifndef MINDSPORE_CORE_IR_VALUE_H_
+#define MINDSPORE_CORE_IR_VALUE_H_
 
 #include <type_traits>
 #include <algorithm>
@@ -303,4 +303,4 @@ inline ValueNodePtr NewValueNode(const T &x) {
 }
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_VALUE_H_
+#endif  // MINDSPORE_CORE_IR_VALUE_H_

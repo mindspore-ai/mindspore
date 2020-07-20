@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_SESSION_ASCEND_CONTROL_PARSER_H
-#define MINDSPORE_CCSRC_SESSION_ASCEND_CONTROL_PARSER_H
+#ifndef MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_CONTROL_PARSER_H
+#define MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_CONTROL_PARSER_H
 
 #include <set>
 #include <map>
@@ -90,4 +90,4 @@ class AscendControlParser::ReferenceCounter {
 }  // namespace session
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_SESSION_ASCEND_CONTROL_PARSER_H
+#endif  // MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_CONTROL_PARSER_H

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_CONNECTOR_THROUGHPUT_H
-#define DATASET_CONNECTOR_THROUGHPUT_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_CONNECTOR_THROUGHPUT_H
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_CONNECTOR_THROUGHPUT_H
 
 #include <vector>
 #include <chrono>
@@ -100,4 +100,4 @@ class ConnectorThroughput : public Sampling {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_CONNECTOR_THROUGHPUT_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_CONNECTOR_THROUGHPUT_H

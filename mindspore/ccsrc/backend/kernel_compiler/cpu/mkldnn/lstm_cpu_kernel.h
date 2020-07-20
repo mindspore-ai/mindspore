@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_CPU_LSTM_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_KERNEL_CPU_LSTM_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LSTM_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LSTM_CPU_KERNEL_H_
 #if defined(__x86_64__) || defined(__amd64__) || defined(_M_IX86) || defined(_M_X64)
 #define PLATFORM_86
 #endif
@@ -67,4 +67,4 @@ MS_REG_CPU_KERNEL(LSTM,
                   LstmCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_KERNEL_CPU_LSTM_CPU_KERNEL_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LSTM_CPU_KERNEL_H

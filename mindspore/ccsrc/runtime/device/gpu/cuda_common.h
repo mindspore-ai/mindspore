@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_DEVICE_GPU_CUDA_COMMON_H_
-#define MINDSPORE_CCSRC_DEVICE_GPU_CUDA_COMMON_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_CUDA_COMMON_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_CUDA_COMMON_H_
 
 #include <algorithm>
 #include "runtime/device/gpu/gpu_device_manager.h"
@@ -66,4 +66,4 @@ class CudaCommon {
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_GPU_CUDA_COMMON_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_CUDA_COMMON_H_

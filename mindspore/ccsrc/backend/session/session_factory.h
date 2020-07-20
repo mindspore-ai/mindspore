@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_SESSION_SESSION_FACTORY_H_
-#define MINDSPORE_CCSRC_SESSION_SESSION_FACTORY_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_FACTORY_H_
+#define MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_FACTORY_H_
 
 #include <functional>
 #include <map>
@@ -53,4 +53,4 @@ class SessionRegistrar {
 }  // namespace session
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_SESSION_SESSION_FACTORY_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_FACTORY_H_

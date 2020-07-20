@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_OPLIB_OPINFO_H_
-#define MINDSPORE_CCSRC_KERNEL_OPLIB_OPINFO_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_OPLIB_OPINFO_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_OPLIB_OPINFO_H_
 #include <vector>
 #include <string>
 #include <memory>
@@ -172,4 +172,4 @@ class OpInfo {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_KERNEL_OPLIB_OPINFO_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_OPLIB_OPINFO_H_

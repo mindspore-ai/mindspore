@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_UTILS_UTILS_H_
-#define MINDSPORE_MINDSPORE_CCSRC_UTILS_UTILS_H_
+#ifndef MINDSPORE_CCSRC_UTILS_UTILS_H_
+#define MINDSPORE_CCSRC_UTILS_UTILS_H_
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -337,4 +337,4 @@ static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
   }
 }
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_UTILS_UTILS_H_
+#endif  // MINDSPORE_CCSRC_UTILS_UTILS_H_

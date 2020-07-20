@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_TASK_STREAM_H_
-#define MINDSPORE_CCSRC_KERNEL_TASK_STREAM_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_TASK_STREAM_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_TASK_STREAM_H_
 
 #include <new>
 #include <unordered_map>
@@ -56,4 +56,4 @@ class TaskStream {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_KERNEL_TASK_STREAM_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_TASK_STREAM_H_

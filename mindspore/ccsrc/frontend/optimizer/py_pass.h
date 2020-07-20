@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_PASS_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_PASS_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PASS_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PASS_H_
 #include <string>
 #include <memory>
 #include <unordered_map>
@@ -53,4 +53,4 @@ using PythonPassPtr = std::shared_ptr<PythonPass>;
 }  // namespace python_pass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_PASS_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PASS_H_

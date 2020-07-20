@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef PIPELINE_PARSE_RESOLVE_H_
-#define PIPELINE_PARSE_RESOLVE_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_RESOLVE_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_RESOLVE_H_
 
 #include <memory>
 #include <string>
@@ -155,4 +155,4 @@ bool ResolveAll(const FuncGraphManagerPtr &manager);
 }  // namespace parse
 }  // namespace mindspore
 
-#endif  // PIPELINE_PARSE_RESOLVE_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_RESOLVE_H_

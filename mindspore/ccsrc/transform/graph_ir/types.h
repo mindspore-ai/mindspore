@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TRANSFORM_TYPES_H_
-#define TRANSFORM_TYPES_H_
+#ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_TYPES_H_
+#define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_TYPES_H_
 
 #include <string>
 #include <vector>
@@ -56,4 +56,4 @@ using TensorMap = std::unordered_map<std::string, std::shared_ptr<MeTensor>>;
 }  // namespace transform
 }  // namespace mindspore
 
-#endif  // TRANSFORM_TYPES_H_
+#endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_TYPES_H_

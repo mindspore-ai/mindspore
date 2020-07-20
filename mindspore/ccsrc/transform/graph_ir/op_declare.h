@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TRANSFORM_OP_DECLARE_H_
-#define TRANSFORM_OP_DECLARE_H_
+#ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_H_
+#define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_H_
 
 #include <string>
 #include <unordered_map>
@@ -510,4 +510,4 @@ DECLARE_OP_USE_DYN_INPUT(Print)
 #endif
 }  // namespace transform
 }  // namespace mindspore
-#endif  // TRANSFORM_OP_DECLARE_H_
+#endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_H_

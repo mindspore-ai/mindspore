@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_SESSION_ANF_RUNTIME_ALGORITHM_H
-#define MINDSPORE_CCSRC_SESSION_ANF_RUNTIME_ALGORITHM_H
+#ifndef MINDSPORE_CCSRC_BACKEND_SESSION_ANF_RUNTIME_ALGORITHM_H
+#define MINDSPORE_CCSRC_BACKEND_SESSION_ANF_RUNTIME_ALGORITHM_H
 #include <iostream>
 #include <string>
 #include <vector>
@@ -213,4 +213,4 @@ class AnfRuntimeAlgorithm {
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_SESSION_ANF_RUNTIME_ALGORITHM_H
+#endif  // MINDSPORE_CCSRC_BACKEND_SESSION_ANF_RUNTIME_ALGORITHM_H

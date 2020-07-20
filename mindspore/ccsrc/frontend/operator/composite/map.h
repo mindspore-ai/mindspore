@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPERATOR_COMPOSITE_MAP_H_
-#define MINDSPORE_CCSRC_OPERATOR_COMPOSITE_MAP_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_MAP_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_MAP_H_
 
 #include <memory>
 #include <set>
@@ -95,4 +95,4 @@ using MapPyPtr = std::shared_ptr<MapPy>;
 }  // namespace prim
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_OPERATOR_COMPOSITE_MAP_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_MAP_H_

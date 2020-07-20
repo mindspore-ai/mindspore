@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_INCLUDE_ITERATOR_H_
-#define DATASET_INCLUDE_ITERATOR_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_ITERATOR_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_ITERATOR_H_
 
 #include <unordered_map>
 #include <memory>
@@ -112,4 +112,4 @@ class Iterator {
 }  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_INCLUDE_ITERATOR_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_ITERATOR_H_

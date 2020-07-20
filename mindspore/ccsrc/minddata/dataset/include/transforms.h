@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_API_TRANSFORMS_H_
-#define DATASET_API_TRANSFORMS_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_API_TRANSFORMS_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_API_TRANSFORMS_H_
 
 #include <vector>
 #include <memory>
@@ -377,4 +377,4 @@ class RandomColorAdjustOperation : public TensorOperation {
 }  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_API_TRANSFORMS_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_API_TRANSFORMS_H_

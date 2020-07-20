@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_RTS_STREAM_ACTIVE_H
-#define MINDSPORE_CCSRC_KERNEL_RTS_STREAM_ACTIVE_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_STREAM_ACTIVE_H
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_STREAM_ACTIVE_H
 #include <memory>
 #include <vector>
 #include "backend/kernel_compiler/rts/rt_kernel.h"
@@ -43,4 +43,4 @@ MS_REG_RTKERNEL(streamactive, StreamActiveKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_RTS_STREAM_ACTIVE_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_STREAM_ACTIVE_H

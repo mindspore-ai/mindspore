@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_DEBUG_ASYNC_DUMP_JSON_PARE_H_
-#define MINDSPORE_MINDSPORE_CCSRC_DEBUG_ASYNC_DUMP_JSON_PARE_H_
+#ifndef MINDSPORE_CCSRC_DEBUG_ASYNC_DUMP_JSON_PARE_H_
+#define MINDSPORE_CCSRC_DEBUG_ASYNC_DUMP_JSON_PARE_H_
 
 #include <string>
 #include <map>
@@ -59,4 +59,4 @@ class DataDumpParser {
   std::map<std::string, uint32_t> kernel_map_;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_ASYNC_DUMP_JSON_PARE_H_
+#endif  // MINDSPORE_CCSRC_DEBUG_ASYNC_DUMP_JSON_PARE_H_

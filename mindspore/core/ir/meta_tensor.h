@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_META_TENSOR_H_
-#define MINDSPORE_CCSRC_IR_META_TENSOR_H_
+#ifndef MINDSPORE_CORE_IR_META_TENSOR_H_
+#define MINDSPORE_CORE_IR_META_TENSOR_H_
 
 #include <utility>
 #include <vector>
@@ -192,4 +192,4 @@ using MetaTensorPtr = std::shared_ptr<MetaTensor>;
 }  // namespace tensor
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_META_TENSOR_H_
+#endif  // MINDSPORE_CORE_IR_META_TENSOR_H_

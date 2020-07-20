@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_DEVICE_ASCEND_PROFILING_PROFILING_ENGINE_IMPL_H_
-#define MINDSPORE_CCSRC_DEVICE_ASCEND_PROFILING_PROFILING_ENGINE_IMPL_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_PROFILING_PROFILING_ENGINE_IMPL_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_PROFILING_PROFILING_ENGINE_IMPL_H_
 
 #include "./prof_engine.h"
 
@@ -36,4 +36,4 @@ class ProfilingEngineImpl : public EngineIntf {
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_ASCEND_PROFILING_PROFILING_ENGINE_IMPL_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_PROFILING_PROFILING_ENGINE_IMPL_H_
