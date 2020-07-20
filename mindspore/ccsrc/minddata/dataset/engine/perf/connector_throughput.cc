@@ -43,14 +43,17 @@ Status ConnectorThroughput::Sample() {
     out_buffer_count_row[col] = cur_out_buffer_count;
     auto sz = timestamps_.size();
     cur_time = std::chrono::steady_clock::now();
-    auto _dt = std::chrono::duration_cast<std::chrono::microseconds>(timestamps_[0][sz - 1] - timestamps_[0][sz - 2]);
-    auto dt = std::chrono::duration<double>(_dt).count();
+    double dt = 0;
+    if (sz > 1) {
+      auto _dt = std::chrono::duration_cast<std::chrono::microseconds>(timestamps_[0][sz - 1] - timestamps_[0][sz - 2]);
+      dt = std::chrono::duration<double>(_dt).count();
+    }
     auto prev_out_buffer_count = out_buffer_count_table_[col][out_buffer_count_table_.size() - 1];
     if (dt != 0) {
       auto thr = (cur_out_buffer_count - prev_out_buffer_count) / (1000 * dt);
       throughput_row[col] = thr;
     } else {
-      throughput_row[col] = -1;
+      throughput_row[col] = 0;
     }
     col++;
   }
