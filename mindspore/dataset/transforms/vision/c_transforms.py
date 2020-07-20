@@ -738,6 +738,21 @@ class UniformAugment(cde.UniformAugOp):
 
 
 class RandomSelectSubpolicy(cde.RandomSelectSubpolicyOp):
+    """
+    Choose a random sub-policy from a list to be applied on the input image. A sub-policy is a list of tuples
+    (op, prob), where op is a TensorOp operation and prob is the probability that this op will be applied. Once
+    a sub-policy is selected, each op within the subpolicy with be applied in sequence according to its probability
+
+    Args:
+        policy (list(list(tuple(TensorOp,float))): List of sub-policies to choose from.
+
+    Examples:
+        >>> policy = [[(c_vision.RandomRotation((45, 45))), (c_transforms.RandomVerticalFlip()),
+        >>>            (c_transforms.RandomColorAdjust())],
+        >>>           [(c_vision.RandomRotation((90, 90))), (c_transforms.RandomColorAdjust())]]
+        >>> ds_policy = ds.map(input_columns=["image"], operations=visions.RandomSelectSubpolicy(policy))
+    """
+
     @check_random_select_subpolicy_op
     def __init__(self, policy):
         super().__init__(policy)

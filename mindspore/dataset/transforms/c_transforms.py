@@ -240,42 +240,47 @@ class Compose(cde.ComposeOp):
 
     Args:
         transforms (list): List of transformations to be applied.
-    Example:
+
+    Examples:
         >>> compose = Compose([vision.Decode(), vision.RandomCrop()])
         >>> dataset = ds.map(operations=compose)
     """
 
     @check_random_transform_ops
-    def __init__(self, op_list):
-        super().__init__(op_list)
+    def __init__(self, transforms):
+        super().__init__(transforms)
 
 
 class RandomApply(cde.RandomApplyOp):
     """
     Randomly performs a series of transforms with a given probability.
+
     Args:
         transforms (list): List of transformations to be applied.
         prob (float, optional): The probability to apply the transformation list (default=0.5)
-    Example:
+
+    Examples:
         >>> rand_apply = RandomApply([vision.RandomCrop()])
         >>> dataset = ds.map(operations=rand_apply)
     """
 
     @check_random_transform_ops
-    def __init__(self, op_list, prob=0.5):
-        super().__init__(prob, op_list)
+    def __init__(self, transforms, prob=0.5):
+        super().__init__(prob, transforms)
 
 
 class RandomChoice(cde.RandomChoiceOp):
     """
     Randomly selects one transform from a list of transforms to perform operation.
+
     Args:
         transforms (list): List of transformations to be chosen from to apply.
-    Example:
+
+    Examples:
         >>> rand_choice = RandomChoice([vision.CenterCrop(), vision.RandomCrop()])
         >>> dataset = ds.map(operations=rand_choice)
     """
 
     @check_random_transform_ops
-    def __init__(self, op_list):
-        super().__init__(op_list)
+    def __init__(self, transforms):
+        super().__init__(transforms)
