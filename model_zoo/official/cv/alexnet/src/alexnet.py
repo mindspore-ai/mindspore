@@ -29,7 +29,7 @@ def fc_with_initialize(input_channels, out_channels):
     return nn.Dense(input_channels, out_channels, weight, bias)
 
 def weight_variable():
-    return TruncatedNormal(0.02)  # 0.02
+    return TruncatedNormal(0.02)
 
 
 class AlexNet(nn.Cell):
