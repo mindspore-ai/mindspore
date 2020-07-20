@@ -42,7 +42,7 @@ if (NOT Patch_FOUND)
 endif ()
 message(PATCH_EXECUTABLE = ${Patch_EXECUTABLE})
 
-if (ENABLE_AKG AND ENABLE_D)
+if (ENABLE_AKG AND (ENABLE_D OR ENABLE_GPU))
     add_subdirectory("${CMAKE_SOURCE_DIR}/akg")
 endif()
 
