@@ -160,7 +160,7 @@ def save_checkpoint(parameter_list, ckpt_file_name, async_save=False):
             data_list[key].append(data)
 
     if async_save:
-        thr = Thread(target=_exec_save, args=(ckpt_file_name, data_list))
+        thr = Thread(target=_exec_save, args=(ckpt_file_name, data_list), name="asyn_save_ckpt")
         thr.start()
     else:
         _exec_save(ckpt_file_name, data_list)
