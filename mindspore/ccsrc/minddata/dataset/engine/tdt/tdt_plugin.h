@@ -38,7 +38,8 @@ class TdtPlugin {
  public:
   static std::shared_ptr<TdtPlugin> GetInstance();
 
-  TdtStatus hostPush(TensorRow ts_row, bool is_wait, std::string channel_name, bool profilig, int32_t &time);
+  TdtStatus hostPush(TensorRow ts_row, bool is_wait, std::string channel_name, bool profilig, int32_t &time,
+                     tdt::TdtDataType tdt_type = tdt::TDT_TENSOR);
 
  private:
   TdtPlugin() {}

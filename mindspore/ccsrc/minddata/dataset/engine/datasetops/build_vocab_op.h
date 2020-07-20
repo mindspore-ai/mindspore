@@ -131,6 +131,21 @@ class BuildVocabOp : public ParallelOp {
 
   ~BuildVocabOp() = default;
 
+  /// \brief A print method typically used for debugging
+  /// \param[out] out The output stream to write output to
+  /// \param[in] show_all A bool to control if you want to show all info or just a summary
+  void Print(std::ostream &out, bool show_all) const override;
+
+  /// \briefStream output operator overload
+  /// \notes This allows you to write the debug print info using stream operators
+  /// \param[out] out Reference to the output stream being overloaded
+  /// \param[in] vop - reference to the BuildVocabOp to display
+  /// \return - the output stream must be returned
+  friend std::ostream &operator<<(std::ostream &out, const BuildVocabOp &vop) {
+    vop.Print(out, false);
+    return out;
+  }
+
   Status WorkerEntry(int32_t worker_id) override;
 
   // collect the work product from each worker
@@ -151,6 +166,12 @@ class BuildVocabOp : public ParallelOp {
   int32_t num_consumers() const override { return 1; }
 
   Status Reset() override { RETURN_STATUS_UNEXPECTED("Reset shouldn't be called in BuildVocabOp"); }
+
+  /// \brief Base-class override for NodePass pre-visit acceptor
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
+  Status PreAccept(NodePass *p, bool *modified) override;
 
  private:
   const int32_t interval_;

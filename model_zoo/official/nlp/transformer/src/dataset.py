@@ -17,7 +17,6 @@
 import mindspore.common.dtype as mstype
 import mindspore.dataset.engine.datasets as de
 import mindspore.dataset.transforms.c_transforms as deC
-from mindspore import log as logger
 from .config import transformer_net_cfg
 
 def create_transformer_dataset(epoch_count=1, rank_size=1, rank_id=0, do_shuffle="true", enable_data_sink="true",
@@ -42,7 +41,4 @@ def create_transformer_dataset(epoch_count=1, rank_size=1, rank_id=0, do_shuffle
     ds = ds.batch(transformer_net_cfg.batch_size, drop_remainder=True)
     ds = ds.repeat(repeat_count)
 
-    ds.channel_name = 'transformer'
-    logger.info("data size: {}".format(ds.get_dataset_size()))
-    logger.info("repeatcount: {}".format(ds.get_repeat_count()))
-    return ds, repeat_count
+    return ds

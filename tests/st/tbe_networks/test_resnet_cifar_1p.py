@@ -140,7 +140,7 @@ def train_process(epoch_size, num_classes, batch_size):
 
     model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'})
 
-    dataset = create_dataset(epoch_size, training=True, batch_size=batch_size)
+    dataset = create_dataset(1, training=True, batch_size=batch_size)
     loss_cb = LossGet()
     model.train(epoch_size, dataset, callbacks=[loss_cb])
 

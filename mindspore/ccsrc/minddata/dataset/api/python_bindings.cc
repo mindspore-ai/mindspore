@@ -159,7 +159,7 @@ void bindDEPipeline(py::module *m) {
          [](DEPipeline &de, const DsOpPtr &dataset_op) { THROW_IF_ERROR(de.AssignRootNode(dataset_op)); })
     .def("SetBatchParameters",
          [](DEPipeline &de, const py::dict &args) { THROW_IF_ERROR(de.SetBatchParameters(args)); })
-    .def("LaunchTreeExec", [](DEPipeline &de) { THROW_IF_ERROR(de.LaunchTreeExec()); })
+    .def("LaunchTreeExec", [](DEPipeline &de, int32_t num_epochs) { THROW_IF_ERROR(de.LaunchTreeExec(num_epochs)); })
     .def("GetNextAsMap",
          [](DEPipeline &de) {
            py::dict out;
@@ -188,6 +188,7 @@ void bindDEPipeline(py::module *m) {
     .def("GetBatchSize", &DEPipeline::GetBatchSize)
     .def("GetNumClasses", &DEPipeline::GetNumClasses)
     .def("GetRepeatCount", &DEPipeline::GetRepeatCount)
+    .def("StopSend", [](DEPipeline &de) { THROW_IF_ERROR(de.StopSend()); })
     .def("SaveDataset", [](DEPipeline &de, const std::vector<std::string> &file_names, const std::string &file_type) {
       THROW_IF_ERROR(de.SaveDataset(file_names, file_type));
       return true;
@@ -999,7 +1000,8 @@ PYBIND11_MODULE(_c_dataengine, m) {
     .value("BUILDVOCAB", OpName::kBuildVocab)
     .value("CELEBA", OpName::kCelebA)
     .value("TEXTFILE", OpName::kTextFile)
-    .value("CLUE", OpName::kClue);
+    .value("CLUE", OpName::kClue)
+    .value("EPOCHCTRL", OpName::kEpochCtrl);
 
   (void)py::enum_<JiebaMode>(m, "JiebaMode", py::arithmetic())
     .value("DE_JIEBA_MIX", JiebaMode::kMix)

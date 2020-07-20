@@ -91,6 +91,7 @@ def me_de_train_dataset(sink_mode=False):
     """test me de train dataset"""
     # apply repeat operations
     repeat_count = 1
+    sink_size = -1
     batch_size = 16
     ds = de.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["input_ids", "input_mask", "segment_ids",
                                                                 "next_sentence_labels", "masked_lm_positions",
@@ -99,9 +100,9 @@ def me_de_train_dataset(sink_mode=False):
     new_repeat_count = repeat_count
     if sink_mode:
         repeat_count = 30
-        sink_steps = 100
+        sink_size = 100
         ori_dataaet_size = ds.get_dataset_size()
-        new_size = sink_steps * batch_size
+        new_size = sink_size * batch_size
         ds.set_dataset_size(new_size)
         new_repeat_count = int(repeat_count * ori_dataaet_size // ds.get_dataset_size())
     ds = ds.map(input_columns="masked_lm_ids", operations=type_cast_op)
@@ -112,10 +113,9 @@ def me_de_train_dataset(sink_mode=False):
     ds = ds.map(input_columns="input_ids", operations=type_cast_op)
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)
-    ds = ds.repeat(repeat_count)
     logger.info("data size: {}".format(ds.get_dataset_size()))
     logger.info("repeat_count: {}".format(ds.get_repeat_count()))
-    return ds, new_repeat_count
+    return ds, new_repeat_count, sink_size
 
 
 def weight_variable(shape):
@@ -157,7 +157,7 @@ class TimeMonitor(Callback):
 def test_bert_percision():
     """test bert percision"""
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", reserve_class_name_in_scope=False)
-    ds, new_repeat_count = me_de_train_dataset()
+    ds, new_repeat_count, _ = me_de_train_dataset()
     version = os.getenv('VERSION', 'large')
     batch_size = 16
     config = get_config(version=version, batch_size=batch_size)
@@ -215,7 +215,7 @@ def test_bert_percision():
 def test_bert_performance():
     """test bert performance"""
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", reserve_class_name_in_scope=False)
-    ds, new_repeat_count = me_de_train_dataset(sink_mode=True)
+    ds, new_repeat_count, sink_size = me_de_train_dataset(sink_mode=True)
     version = os.getenv('VERSION', 'large')
     batch_size = 16
     config = get_config(version=version, batch_size=batch_size)
@@ -251,7 +251,7 @@ def test_bert_performance():
                 param.default_input = weight_variable(value.asnumpy().shape)
     time_monitor_callback = TimeMonitor(ds.get_dataset_size())
     model.train(new_repeat_count, ds, callbacks=[time_monitor_callback, callback],
-                dataset_sink_mode=True)
+                dataset_sink_mode=True, sink_size=sink_size)
 
     # assertion occurs while the loss value, overflow state or loss_scale value is wrong
     loss_value = np.array(callback.loss_list)

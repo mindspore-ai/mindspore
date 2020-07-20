@@ -21,7 +21,7 @@ import numpy as np
 from mindspore import log as logger
 from ..common.tensor import Tensor
 from ..nn.metrics import get_metrics
-from .._checkparam import check_input_data, check_output_data, check_int_positive, check_bool
+from .._checkparam import check_input_data, check_output_data, check_int_positive, check_bool, check_int
 from .callback import _InternalCallbackParam, RunContext, _CallbackManager
 from .. import context
 from ..parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
@@ -225,7 +225,7 @@ class Model:
             scaling_sens /= self._device_number
         return scaling_sens
 
-    def _exec_preprocess(self, network, is_train, phase, dataset, dataset_sink_mode):
+    def _exec_preprocess(self, network, is_train, phase, dataset, dataset_sink_mode, sink_size=-1):
         """Initializes dataset."""
         need_wrap = False
         if dataset_sink_mode:
@@ -237,7 +237,7 @@ class Model:
             if not is_train:
                 dataset.__loop_size__ = 1
 
-        dataset_helper = DatasetHelper(dataset, dataset_sink_mode)
+        dataset_helper = DatasetHelper(dataset, dataset_sink_mode, sink_size)
 
         # remove later to deal with loop sink
         if need_wrap:
@@ -317,7 +317,7 @@ class Model:
                 self._eval_network.compile(*inputs)
                 break
 
-    def _train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=True):
+    def _train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=True, sink_size=-1):
         """
         Training.
 
@@ -332,6 +332,7 @@ class Model:
             dataset_sink_mode (bool): Determines whether to pass the data through dataset channel. Default: True.
                                       Configure pynative mode, the training process will be performed with
                                       dataset not sink.
+            sink_size (int): Control the amount of data each sink. Default: -1.
         """
         epoch = check_int_positive(epoch)
         self._train_network.set_train()
@@ -342,7 +343,10 @@ class Model:
         cb_params = _InternalCallbackParam()
         cb_params.train_network = self._train_network
         cb_params.epoch_num = epoch
-        cb_params.batch_num = train_dataset.get_dataset_size()
+        if dataset_sink_mode and sink_size > 0:
+            cb_params.batch_num = sink_size
+        else:
+            cb_params.batch_num = train_dataset.get_dataset_size()
         cb_params.mode = "train"
         cb_params.loss_fn = self._loss_fn
         cb_params.optimizer = self._optimizer
@@ -364,7 +368,7 @@ class Model:
                                "So the training process will be performed with dataset not sink.")
                 self._train_process(epoch, train_dataset, list_callback, cb_params)
             else:
-                self._train_dataset_sink_process(epoch, train_dataset, list_callback, cb_params)
+                self._train_dataset_sink_process(epoch, train_dataset, list_callback, cb_params, sink_size)
 
     @staticmethod
     def _transform_callbacks(callbacks):
@@ -377,7 +381,7 @@ class Model:
 
         return [callbacks]
 
-    def _train_dataset_sink_process(self, epoch, train_dataset, list_callback=None, cb_params=None):
+    def _train_dataset_sink_process(self, epoch, train_dataset, list_callback=None, cb_params=None, sink_size=-1):
         """
         Training process. The data would be passed to network through dataset channel.
 
@@ -390,17 +394,18 @@ class Model:
                                      function respectively.
             list_callback (Callback): Executor of callback list. Default: None.
             cb_params (_InternalCallbackParam): Callback parameters. Default: None.
+            sink_size (int): Control the amount of data each sink. Default: -1.
         """
         dataset_helper, train_network = self._exec_preprocess(self._train_network,
                                                               is_train=True,
                                                               phase='train',
                                                               dataset=train_dataset,
-                                                              dataset_sink_mode=True)
+                                                              dataset_sink_mode=True,
+                                                              sink_size=sink_size)
         self._train_network = train_network
         cb_params.train_network = self._train_network
         cb_params.cur_step_num = 0
 
-        loop_size = dataset_helper.loop_size()
         run_context = RunContext(cb_params)
         list_callback.begin(run_context)
 
@@ -412,9 +417,9 @@ class Model:
 
             # for data sink dataset_helper only iter once, other wise iter epoch_size times.
             for inputs in dataset_helper:
-                cb_params.cur_step_num += loop_size
                 list_callback.step_begin(run_context)
                 outputs = self._train_network(*inputs)
+                cb_params.cur_step_num += dataset_helper.sink_size()
                 cb_params.net_outputs = outputs
                 list_callback.step_end(run_context)
 
@@ -422,6 +427,7 @@ class Model:
             should_stop = should_stop or run_context.get_stop_requested()
             if should_stop:
                 break
+        dataset_helper.stop_send()
 
         list_callback.end(run_context)
 
@@ -490,7 +496,7 @@ class Model:
 
         list_callback.end(run_context)
 
-    def train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=True):
+    def train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=True, sink_size=-1):
         """
         Training API where the iteration is controlled by python front-end.
 
@@ -515,7 +521,10 @@ class Model:
             dataset_sink_mode (bool): Determines whether to pass the data through dataset channel. Default: True.
                                       Configure pynative mode, the training process will be performed with
                                       dataset not sink.
-
+            sink_size (int): Control the amount of data each sink.
+                             If sink_size=-1, sink the complete dataset each epoch.
+                             If sink_size>0, sink sink_size data each epoch.
+                             If dataset_sink_mode is False, set sink_size invalid. Default: -1.
 
         Examples:
             >>> dataset = get_dataset()
@@ -526,17 +535,19 @@ class Model:
             >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager)
             >>> model.train(2, dataset)
         """
-        repeat_count = train_dataset.get_repeat_count()
-        if epoch != repeat_count and dataset_sink_mode is True:
-            logger.warning(f"The epoch_size {epoch} is not the same with dataset repeat_count {repeat_count}")
         check_bool(dataset_sink_mode)
+        check_int(sink_size)
+        if sink_size < -1 or sink_size == 0:
+            raise ValueError("The sink_size must be -1 or positive, but got sink_size {}.".format(sink_size))
+
         _device_number_check(self._parallel_mode, self._device_number)
         _parameter_broadcast_check(self._parallel_mode, self._parameter_broadcast)
 
         self._train(epoch,
                     train_dataset,
                     callbacks=callbacks,
-                    dataset_sink_mode=dataset_sink_mode)
+                    dataset_sink_mode=dataset_sink_mode,
+                    sink_size=sink_size)
 
     def _eval_dataset_sink_process(self, valid_dataset, list_callback=None, cb_params=None):
         """

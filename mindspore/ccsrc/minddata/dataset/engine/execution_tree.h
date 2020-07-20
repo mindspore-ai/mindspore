@@ -176,7 +176,7 @@ class ExecutionTree {
   //    For example, repeatOp inlining
   //
   // @return Status - The error code return
-  Status Prepare();
+  Status Prepare(int num_epochs = -1);
 
   // Compulsory transformation/action pre optimization.
   // @return Status - The error code return
@@ -193,6 +193,7 @@ class ExecutionTree {
   // The DEPRECATED driver of the prepare phase of the execution tree. The prepare phase will recursively
   // walk the tree to perform modifications to the tree or specific nodes within the tree to get
   // it ready for execution.
+  // @param Total number of epochs that will be run on this tree
   // @return Status - The error code return
   Status PrepareDeprecated();
 
@@ -231,6 +232,10 @@ class ExecutionTree {
   // Optional optimizations status
   bool OptimizationEnabled() const { return optimize_; }
 
+  // Getter function to get the total number of epochs to be run on this tree.
+  // @return total number of epochs
+  int32_t num_epochs() { return num_epochs_; }
+
  private:
   // A helper functions for doing the recursive printing
   // @param dataset_op - The dataset op to print
@@ -245,6 +250,7 @@ class ExecutionTree {
   int32_t id_count_;                                     // Counter for generating operator id's
   uint32_t prepare_flags_;                               // Flags used during tree prepare
   TreeState tree_state_;                                 // Tracking the current tree state
+  int32_t num_epochs_;                                   // Total number of epochs to run for this tree
   std::unique_ptr<Monitor> perf_monitor_;                // Performance Monitor
   std::unique_ptr<ProfilingManager> profiling_manager_;  // Profiling manager
   bool optimize_;                                        // Flag to enable optional optimizations

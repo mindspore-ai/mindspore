@@ -132,8 +132,9 @@ Status ZipOp::prepare(TensorQTable *const table) {
   if (eof_) {
     return Status::OK();
   }
+  // One of our child iterators encounter EOE. Returns and proceed with draining phase.
   if (new_row.empty()) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "ZipOp prepare phase got empty row!");
+    return Status::OK();
   }
 
   // Pack this first row into our tensor table

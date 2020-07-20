@@ -57,7 +57,7 @@ if __name__ == '__main__':
 
     ds_train = create_dataset(args_opt.dataset_path,
                               train_mode=True,
-                              epochs=train_config.train_epochs,
+                              epochs=1,
                               batch_size=train_config.batch_size,
                               data_type=DataType(data_config.data_format),
                               rank_size=rank_size,
@@ -82,7 +82,7 @@ if __name__ == '__main__':
 
     if args_opt.do_eval:
         ds_eval = create_dataset(args_opt.dataset_path, train_mode=False,
-                                 epochs=train_config.train_epochs,
+                                 epochs=1,
                                  batch_size=train_config.batch_size,
                                  data_type=DataType(data_config.data_format))
         eval_callback = EvalCallBack(model, ds_eval, auc_metric,

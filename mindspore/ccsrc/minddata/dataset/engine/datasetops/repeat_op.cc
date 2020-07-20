@@ -132,6 +132,7 @@ Status RepeatOp::EoeReceived(int32_t worker_id) {
 
   // Invoke a reset against the eoe nodes only.
   for (auto &eoe_op : eoe_ops_) {
+    MS_LOG(DEBUG) << "Repeat operator sending reset to operator: " << eoe_op->id();
     RETURN_IF_NOT_OK(eoe_op->Reset());
   }
 
@@ -167,8 +168,9 @@ int32_t RepeatOp::num_consumers() const {
 Status RepeatOp::Reset() {
   // If there's nested repeats, an ascendant repeat may have ourself listed as an eoe op.
   // In that case, we now have to bounce the reset down to our own eoe ops.
-  MS_LOG(DEBUG) << "Repeat operator (" << operator_id_ << ") reset.";
+  MS_LOG(DEBUG) << "Repeat operator " << operator_id_ << " got reset.";
   for (auto &eoe_op : eoe_ops_) {
+    MS_LOG(DEBUG) << "Nested repeat operator bouncing a reset to operator: " << eoe_op->id();
     RETURN_IF_NOT_OK(eoe_op->Reset());
   }
   state_ = OpState::kDeOpRunning;

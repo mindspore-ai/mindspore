@@ -73,7 +73,7 @@ def test_iterator_weak_ref():
 
     _cleanup()
     with pytest.raises(AttributeError) as info:
-        itr2.get_next()
+        itr2.__next__()
     assert "object has no attribute 'depipeline'" in str(info.value)
 
     del itr1

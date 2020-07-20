@@ -26,6 +26,7 @@
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/datasetops/device_queue_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
+#include "minddata/dataset/engine/datasetops/epoch_ctrl_op.h"
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/opt/pass.h"
@@ -100,6 +101,15 @@ Status DatasetOp::InsertAsParent(std::shared_ptr<DatasetOp> to_add) {
   if (tree_->root()->id() == this->id()) {
     tree_->AssignRoot(to_add);
   }
+  return Status::OK();
+}
+// Removes child operator in this operator.
+Status DatasetOp::RemoveChildren() {
+  for (const auto &child : child_) {
+    child->RemoveParent(this);
+  }
+  child_.clear();
+
   return Status::OK();
 }
 
@@ -184,6 +194,12 @@ void DatasetOp::Parent(DatasetOp **parent, int32_t parent_index) const {
     *parent = parent_[parent_index];
   }
 }
+
+// Getter function to get all of our children.
+std::vector<std::shared_ptr<DatasetOp>> DatasetOp::children() const { return child_; }
+
+// Getter function to get all of our parents.
+std::vector<DatasetOp *> DatasetOp::parents() const { return parent_; }
 
 // Creates the connector within this operator
 void DatasetOp::CreateConnector(int32_t num_producers, int32_t num_consumers) {

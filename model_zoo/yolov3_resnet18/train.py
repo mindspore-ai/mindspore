@@ -121,7 +121,7 @@ def main():
         loss_scale = float(args_opt.loss_scale)
 
         # When create MindDataset, using the fitst mindrecord file, such as yolo.mindrecord0.
-        dataset = create_yolo_dataset(mindrecord_file, repeat_num=args_opt.epoch_size,
+        dataset = create_yolo_dataset(mindrecord_file,
                                       batch_size=args_opt.batch_size, device_num=device_num, rank=rank)
         dataset_size = dataset.get_dataset_size()
         print("Create dataset done!")

@@ -57,7 +57,8 @@ def _exec_datagraph(exec_dataset, dataset_size, phase='dataset'):
 
     # transform data format
     dataset_types, dataset_shapes = _get_types_and_shapes(exec_dataset)
-    exec_dataset = exec_dataset.device_que()
+    send_epoch_end = bool(dataset_size == -1)
+    exec_dataset = exec_dataset.device_que(send_epoch_end=send_epoch_end)
 
     _executor.init_dataset(exec_dataset.queue_name,
                            dataset_size,
@@ -126,7 +127,7 @@ def _construct_tensor_list(types, shapes, batch_expand_num=1):
 
 
 def _to_tensor(elem, scaling_sens=None):
-    """Conver numpy to tensor, adapt to minddata feed solution."""
+    """Convert numpy to tensor, adapt to feed the data from host solution."""
     lst = []
     if not isinstance(elem, (tuple, list)):
         elem = [elem]
@@ -145,7 +146,8 @@ def _to_tensor(elem, scaling_sens=None):
 
 
 def _to_full_tensor(elem, device_num, global_rank, scaling_sens=None):
-    """Conver numpy to tensor, expanding batch dimension according to device_num, adapt to minddata feed solution."""
+    """Convert numpy to tensor, expanding batch dimension according to device_num, adapt to feed the data
+       from host solution."""
     lst = []
     if not isinstance(elem, (tuple, list)):
         elem = [elem]

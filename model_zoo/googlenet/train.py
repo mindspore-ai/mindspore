@@ -78,7 +78,7 @@ if __name__ == '__main__':
                                           mirror_mean=True)
         init()
 
-    dataset = create_dataset(cfg.data_path, cfg.epoch_size)
+    dataset = create_dataset(cfg.data_path, 1)
     batch_num = dataset.get_dataset_size()
 
     net = GoogleNet(num_classes=cfg.num_classes)

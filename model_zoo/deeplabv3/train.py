@@ -66,7 +66,7 @@ if __name__ == "__main__":
         init()
     args_opt.base_size = config.crop_size
     args_opt.crop_size = config.crop_size
-    train_dataset = create_dataset(args_opt, args_opt.data_url, config.epoch_size, config.batch_size, usage="train")
+    train_dataset = create_dataset(args_opt, args_opt.data_url, 1, config.batch_size, usage="train")
     dataset_size = train_dataset.get_dataset_size()
     time_cb = TimeMonitor(data_size=dataset_size)
     callback = [time_cb, LossCallBack()]

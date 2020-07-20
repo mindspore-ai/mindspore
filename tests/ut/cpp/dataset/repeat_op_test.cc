@@ -46,7 +46,8 @@ TEST_F(MindDataTestrepeat_op, Testrepeat_opFuntions) {
   ASSERT_TRUE(rc.IsOk());
   rc = my_tree->AssociateNode(my_tfreader_op);
   ASSERT_TRUE(rc.IsOk());
-  my_tree->AssociateNode(parent_op);
+  rc = my_tree->AssociateNode(parent_op);
+  ASSERT_TRUE(rc.IsOk());
   ASSERT_NE(parent_op, nullptr);
   ASSERT_NE(my_tfreader_op, nullptr);
   parent_op->AddChild(std::move(my_tfreader_op));

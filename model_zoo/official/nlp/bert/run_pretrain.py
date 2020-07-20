@@ -100,11 +100,12 @@ def run_pretrain():
         bert_net_cfg.compute_type = mstype.float32
 
 
-    ds, new_repeat_count = create_bert_dataset(args_opt.epoch_size, device_num, rank, args_opt.do_shuffle,
-                                               args_opt.enable_data_sink, args_opt.data_sink_steps,
-                                               args_opt.data_dir, args_opt.schema_dir)
+    ds = create_bert_dataset(1, device_num, rank, args_opt.do_shuffle,
+                             args_opt.enable_data_sink, args_opt.data_sink_steps,
+                             args_opt.data_dir, args_opt.schema_dir)
+    new_repeat_count = args_opt.epoch_size
     if args_opt.train_steps > 0:
-        new_repeat_count = min(new_repeat_count, args_opt.train_steps // args_opt.data_sink_steps)
+        new_repeat_count = min(args_opt.epoch_size, args_opt.train_steps // args_opt.data_sink_steps)
     netwithloss = BertNetworkWithLoss(bert_net_cfg, True)
 
     if cfg.optimizer == 'Lamb':

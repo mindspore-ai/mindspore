@@ -176,6 +176,11 @@ class CacheMergeOp : public ParallelOp {
   /// \return Status object
   Status EoeReceived(int32_t worker_id) override;
 
+  /// \brief Base-class override for handling cases when an eof is received.
+  /// \param worker_id - The worker id
+  /// \return Status - The error code return
+  Status EofReceived(int32_t worker_id) override;
+
  protected:
   Status ComputeColMap() override;
 

@@ -79,9 +79,9 @@ def test_train_eval():
     batch_size = config.batch_size
     epochs = config.epochs
     print("epochs is {}".format(epochs))
-    ds_train = create_dataset(data_path, train_mode=True, epochs=epochs, batch_size=batch_size,
+    ds_train = create_dataset(data_path, train_mode=True, epochs=1, batch_size=batch_size,
                               data_type=DataType.MINDRECORD, rank_id=get_rank(), rank_size=get_group_size())
-    ds_eval = create_dataset(data_path, train_mode=False, epochs=epochs + 1, batch_size=batch_size,
+    ds_eval = create_dataset(data_path, train_mode=False, epochs=1, batch_size=batch_size,
                              data_type=DataType.MINDRECORD, rank_id=get_rank(), rank_size=get_group_size())
     print("ds_train.size: {}".format(ds_train.get_dataset_size()))
     print("ds_eval.size: {}".format(ds_eval.get_dataset_size()))

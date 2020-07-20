@@ -125,10 +125,10 @@ def run_transformer_train():
     else:
         device_num = 1
         rank_id = 0
-    dataset, repeat_count = create_transformer_dataset(epoch_count=args.epoch_size, rank_size=device_num,
-                                                       rank_id=rank_id, do_shuffle=args.do_shuffle,
-                                                       enable_data_sink=args.enable_data_sink,
-                                                       dataset_path=args.data_path)
+    dataset = create_transformer_dataset(epoch_count=1, rank_size=device_num,
+                                         rank_id=rank_id, do_shuffle=args.do_shuffle,
+                                         enable_data_sink=args.enable_data_sink,
+                                         dataset_path=args.data_path)
 
     netwithloss = TransformerNetworkWithLoss(transformer_net_cfg, True)
 
@@ -165,7 +165,7 @@ def run_transformer_train():
 
     netwithgrads.set_train(True)
     model = Model(netwithgrads)
-    model.train(repeat_count, dataset, callbacks=callbacks, dataset_sink_mode=(args.enable_data_sink == "true"))
+    model.train(args.epoch_size, dataset, callbacks=callbacks, dataset_sink_mode=(args.enable_data_sink == "true"))
 
 if __name__ == '__main__':
     run_transformer_train()

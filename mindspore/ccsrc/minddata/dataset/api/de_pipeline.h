@@ -70,7 +70,8 @@ enum OpName {
   kRandomData,
   kTextFile,
   kBuildVocab,
-  kClue
+  kClue,
+  kEpochCtrl
 };
 
 // The C++ binder class that we expose to the python script.
@@ -90,7 +91,7 @@ class DEPipeline {
   Status AssignRootNode(const DsOpPtr &dataset_op);
 
   // Function to launch the tree execution.
-  Status LaunchTreeExec();
+  Status LaunchTreeExec(int32_t num_epochs);
 
   // Get a row of data as dictionary of column name to the value.
   Status GetNextAsMap(py::dict *output);
@@ -143,6 +144,10 @@ class DEPipeline {
   Status ParseBucketBatchByLengthOp(const py::dict &args, std::shared_ptr<DatasetOp> *top,
                                     std::shared_ptr<DatasetOp> *bottom);
 
+  Status ParseEpochCtrlOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
+
+  Status ParseBatchOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+
   Status ParseBarrierOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
   Status ParseGeneratorOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
@@ -188,6 +193,8 @@ class DEPipeline {
   Status ParseTextFileOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
   Status ParseBuildVocabOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
+
+  Status StopSend();
 
   Status ParseClueOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 

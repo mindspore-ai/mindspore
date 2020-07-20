@@ -144,6 +144,9 @@ class ChildIterator : public IteratorBase {
   // @return The string to column id mapping.
   std::unordered_map<std::string, int32_t> GetColumnNameMap() const override;
 
+  // Return T/F if end of epoch
+  bool end_of_epoch() { return end_epoch_; }
+
  private:
   DatasetOp *current_op_;  // The parent operator. We consume from it's children.
   int32_t child_idx_;      // The specific child this iterator will fetch from.

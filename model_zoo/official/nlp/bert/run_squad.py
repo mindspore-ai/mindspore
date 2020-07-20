@@ -38,12 +38,11 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 _cur_dir = os.getcwd()
 
-def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoint_path=""):
+def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoint_path="", epoch_num=1):
     """ do train """
     if load_checkpoint_path == "":
         raise ValueError("Pretrain model missed, finetune task must load pretrain model!")
     steps_per_epoch = dataset.get_dataset_size()
-    epoch_num = dataset.get_repeat_count()
     # optimizer
     if optimizer_cfg.optimizer == 'AdamWeightDecayDynamicLR':
         optimizer = AdamWeightDecayDynamicLR(network.trainable_params(),
@@ -181,10 +180,10 @@ def run_squad():
     netwithloss = BertSquad(bert_net_cfg, True, 2, dropout_prob=0.1)
 
     if args_opt.do_train.lower() == "true":
-        ds = create_squad_dataset(batch_size=bert_net_cfg.batch_size, repeat_count=epoch_num,
+        ds = create_squad_dataset(batch_size=bert_net_cfg.batch_size, repeat_count=1,
                                   data_file_path=args_opt.train_data_file_path,
                                   schema_file_path=args_opt.schema_file_path)
-        do_train(ds, netwithloss, load_pretrain_checkpoint_path, save_finetune_checkpoint_path)
+        do_train(ds, netwithloss, load_pretrain_checkpoint_path, save_finetune_checkpoint_path, epoch_num)
         if args_opt.do_eval.lower() == "true":
             if save_finetune_checkpoint_path == "":
                 load_finetune_checkpoint_dir = _cur_dir
@@ -194,7 +193,7 @@ def run_squad():
                                                            ds.get_dataset_size(), epoch_num, "squad")
 
     if args_opt.do_eval.lower() == "true":
-        ds = create_squad_dataset(batch_size=bert_net_cfg.batch_size, repeat_count=epoch_num,
+        ds = create_squad_dataset(batch_size=bert_net_cfg.batch_size, repeat_count=1,
                                   data_file_path=args_opt.eval_data_file_path,
                                   schema_file_path=args_opt.schema_file_path, is_training=False)
         do_eval(ds, args_opt.vocab_file_path, args_opt.eval_json_path,

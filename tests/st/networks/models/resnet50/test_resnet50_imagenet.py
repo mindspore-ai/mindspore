@@ -155,7 +155,7 @@ def train_process(q, device_id, epoch_size, device_num, enable_hccl):
 
     # train dataset
     dataset = create_dataset(dataset_path=dataset_path, do_train=True,
-                             repeat_num=epoch_size, batch_size=config.batch_size)
+                             repeat_num=1, batch_size=config.batch_size)
 
     step_size = dataset.get_dataset_size()
     eval_interval = config.eval_interval
@@ -163,7 +163,7 @@ def train_process(q, device_id, epoch_size, device_num, enable_hccl):
 
     # evalutation dataset
     eval_dataset = create_dataset(dataset_path=eval_path, do_train=False,
-                                  repeat_num=epoch_size, batch_size=config.eval_batch_size)
+                                  repeat_num=1, batch_size=config.eval_batch_size)
 
     # loss scale
     loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
@@ -260,14 +260,14 @@ def train_process_thor(q, device_id, epoch_size, device_num, enable_hccl):
 
     # train dataset
     dataset = create_dataset(dataset_path=dataset_path, do_train=True,
-                             repeat_num=epoch_size, batch_size=thor_config.batch_size)
+                             repeat_num=1, batch_size=thor_config.batch_size)
 
     step_size = dataset.get_dataset_size()
     eval_interval = thor_config.eval_interval
 
     # evalutation dataset
     eval_dataset = create_dataset(dataset_path=eval_path, do_train=False,
-                                  repeat_num=epoch_size, batch_size=thor_config.eval_batch_size)
+                                  repeat_num=1, batch_size=thor_config.eval_batch_size)
 
     # loss scale
     loss_scale = FixedLossScaleManager(thor_config.loss_scale, drop_overflow_update=False)

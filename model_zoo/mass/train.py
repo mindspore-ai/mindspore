@@ -249,7 +249,7 @@ def train_parallel(config: TransformerConfig):
 
     pre_train_dataset = load_dataset(
         data_files=config.pre_train_dataset,
-        batch_size=config.batch_size, epoch_count=config.epochs,
+        batch_size=config.batch_size, epoch_count=1,
         sink_mode=config.dataset_sink_mode,
         sink_step=config.dataset_sink_step,
         rank_size=MultiAscend.get_group_size(),
@@ -257,7 +257,7 @@ def train_parallel(config: TransformerConfig):
     ) if config.pre_train_dataset else None
     fine_tune_dataset = load_dataset(
         data_files=config.fine_tune_dataset,
-        batch_size=config.batch_size, epoch_count=config.epochs,
+        batch_size=config.batch_size, epoch_count=1,
         sink_mode=config.dataset_sink_mode,
         sink_step=config.dataset_sink_step,
         rank_size=MultiAscend.get_group_size(),
@@ -265,7 +265,7 @@ def train_parallel(config: TransformerConfig):
     ) if config.fine_tune_dataset else None
     test_dataset = load_dataset(
         data_files=config.test_dataset,
-        batch_size=config.batch_size, epoch_count=config.epochs,
+        batch_size=config.batch_size, epoch_count=1,
         sink_mode=config.dataset_sink_mode,
         sink_step=config.dataset_sink_step,
         rank_size=MultiAscend.get_group_size(),
@@ -288,17 +288,17 @@ def train_single(config: TransformerConfig):
     print(" | Starting training on single device.")
     pre_train_dataset = load_dataset(data_files=config.pre_train_dataset,
                                      batch_size=config.batch_size,
-                                     epoch_count=config.epochs,
+                                     epoch_count=1,
                                      sink_mode=config.dataset_sink_mode,
                                      sink_step=config.dataset_sink_step) if config.pre_train_dataset else None
     fine_tune_dataset = load_dataset(data_files=config.fine_tune_dataset,
                                      batch_size=config.batch_size,
-                                     epoch_count=config.epochs,
+                                     epoch_count=1,
                                      sink_mode=config.dataset_sink_mode,
                                      sink_step=config.dataset_sink_step) if config.fine_tune_dataset else None
     test_dataset = load_dataset(data_files=config.test_dataset,
                                 batch_size=config.batch_size,
-                                epoch_count=config.epochs,
+                                epoch_count=1,
                                 sink_mode=config.dataset_sink_mode,
                                 sink_step=config.dataset_sink_step) if config.test_dataset else None
 

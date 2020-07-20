@@ -63,7 +63,7 @@ def test_train(configure):
     data_path = configure.data_path
     batch_size = configure.batch_size
     epochs = configure.epochs
-    ds_train = create_dataset(data_path, train_mode=True, epochs=epochs, batch_size=batch_size)
+    ds_train = create_dataset(data_path, train_mode=True, epochs=1, batch_size=batch_size)
     print("ds_train.size: {}".format(ds_train.get_dataset_size()))
 
     net_builder = ModelBuilder()

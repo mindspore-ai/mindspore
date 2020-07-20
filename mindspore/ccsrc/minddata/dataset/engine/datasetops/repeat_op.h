@@ -46,7 +46,7 @@ class RepeatOp : public PipelineOp {
     // @return shared_ptr to the new RepeatOp object
     Status Build(std::shared_ptr<RepeatOp> *);
 
-   private:
+   protected:
     int32_t build_max_repeats_;
 
     Status SanityCheck() const;
@@ -131,11 +131,11 @@ class RepeatOp : public PipelineOp {
   // @return Name of the current Op
   std::string Name() const override { return "RepeatOp"; }
 
-  /// \brief Adds an operator to the repeat ops list of tracked leaf/eoe nodes
-  /// \param[in] eoe_op The input leaf/eoe operator to add to the list
+  // \brief Adds an operator to the repeat ops list of tracked leaf/eoe nodes
+  // \param[in] eoe_op The input leaf/eoe operator to add to the list
   void AddToEoeList(std::shared_ptr<DatasetOp> eoe_op) { eoe_ops_.push_back(std::move(eoe_op)); }
 
- private:
+ protected:
   int32_t max_repeats_;                              // The number of repeats that the user requested
   int32_t repeat_count_;                             // A counter for the current number of executed repeats
   std::vector<std::shared_ptr<DatasetOp>> eoe_ops_;  // List of operators that can generate EOE underneath this repeat.

@@ -85,14 +85,14 @@ def train_and_eval(config):
     if config.full_batch:
         context.set_auto_parallel_context(full_batch=True)
         de.config.set_seed(1)
-        ds_train = create_dataset(data_path, train_mode=True, epochs=epochs,
+        ds_train = create_dataset(data_path, train_mode=True, epochs=1,
                                   batch_size=batch_size*get_group_size())
-        ds_eval = create_dataset(data_path, train_mode=False, epochs=epochs + 1,
+        ds_eval = create_dataset(data_path, train_mode=False, epochs=1,
                                  batch_size=batch_size*get_group_size())
     else:
-        ds_train = create_dataset(data_path, train_mode=True, epochs=epochs,
+        ds_train = create_dataset(data_path, train_mode=True, epochs=1,
                                   batch_size=batch_size, rank_id=get_rank(), rank_size=get_group_size())
-        ds_eval = create_dataset(data_path, train_mode=False, epochs=epochs + 1,
+        ds_eval = create_dataset(data_path, train_mode=False, epochs=1,
                                  batch_size=batch_size, rank_id=get_rank(), rank_size=get_group_size())
     print("ds_train.size: {}".format(ds_train.get_dataset_size()))
     print("ds_eval.size: {}".format(ds_eval.get_dataset_size()))

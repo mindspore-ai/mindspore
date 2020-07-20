@@ -88,10 +88,10 @@ if __name__ == '__main__':
 
     # create dataset
     if args_opt.net == "resnet50":
-        dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True, repeat_num=config.epoch_size,
+        dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True, repeat_num=1,
                                  batch_size=config.batch_size, target=target)
     else:
-        dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True, repeat_num=config.epoch_size,
+        dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True, repeat_num=1,
                                  batch_size=config.batch_size)
     step_size = dataset.get_dataset_size()
 

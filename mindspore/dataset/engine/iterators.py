@@ -29,7 +29,6 @@ from . import datasets as de
 
 ITERATORS_LIST = list()
 
-
 def _cleanup():
     """Release all the Iterator."""
     for itr_ref in ITERATORS_LIST:
@@ -60,7 +59,6 @@ def _alter_node(node):
             node.iterator_bootstrap()
     return node
 
-
 class Iterator:
     """
     General Iterator over a dataset.
@@ -69,10 +67,21 @@ class Iterator:
         dataset: Dataset to be iterated over
     """
 
-    def __init__(self, dataset):
+    def __init__(self, dataset, num_epochs=-1):
+        self.num_epochs = num_epochs
         ITERATORS_LIST.append(weakref.ref(self))
         # create a copy of tree and work on it.
         self.dataset = copy.deepcopy(dataset)
+        self.parent_subtree = []
+
+        # The dataset passed into the iterator is not the root of the tree.
+        # Trim the tree by saving the parent subtree into self.parent_subtree and
+        # restore it after launching our c++ pipeline.
+        if self.dataset.parent:
+            logger.warning("The dataset passed in is not the root of the pipeline. Ignoring parent subtree.")
+            self.parent_subtree = self.dataset.parent
+            self.dataset.parent = []
+
         self.dataset = alter_tree(self.dataset)
         if not self.__is_tree():
             raise ValueError("The data pipeline is not a tree (i.e., one node has 2 consumers)")
@@ -83,8 +92,16 @@ class Iterator:
 
         root = self.__convert_node_postorder(self.dataset)
         self.depipeline.AssignRootNode(root)
-        self.depipeline.LaunchTreeExec()
+        self.depipeline.LaunchTreeExec(self.num_epochs)
         self._index = 0
+
+    def stop(self):
+        """
+        Manually terminate python iterator instead of relying on out of scope destruction.
+        """
+        logger.info("terminating python iterator. This will also terminate c++ pipeline.")
+        if hasattr(self, 'depipeline') and self.depipeline:
+            del self.depipeline
 
     def __is_tree_node(self, node):
         """Check if a node is tree node."""
@@ -214,9 +231,14 @@ class Iterator:
 
     @abstractmethod
     def get_next(self):
-        pass
+        raise RuntimeError("Calling base class Iterator's get_next is invalid.")
 
     def __next__(self):
+        if not self.depipeline:
+            logger.warning("Iterator does not have a running c++ pipeline." +
+                           "It can be because Iterator stop() had been called, or c++ pipeline crashed silently.")
+            raise RuntimeError("Iterator does not have a running c++ pipeline.")
+
         data = self.get_next()
         if not data:
             if self._index == 0:
@@ -293,12 +315,12 @@ class TupleIterator(Iterator):
     def check_node_type(self, node):
         pass
 
-    def __init__(self, dataset, columns=None):
+    def __init__(self, dataset, columns=None, num_epochs=-1):
         if columns is not None:
             if not isinstance(columns, list):
                 columns = [columns]
             dataset = dataset.project(columns)
-        super().__init__(dataset)
+        super().__init__(dataset, num_epochs)
 
     def __iter__(self):
         return self
