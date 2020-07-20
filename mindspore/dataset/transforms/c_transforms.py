@@ -201,8 +201,8 @@ class Concatenate(cde.ConcatenateOp):
 
     Args:
         axis (int, optional): axis to concatenate the tensors along (Default=0).
-        prepend (np.array, optional): numpy array to be prepended to the already concatenated tensors (Default=None).
-        append (np.array, optional): numpy array to be appended to the already concatenated tensors (Default=None).
+        prepend (numpy.array, optional): numpy array to be prepended to the already concatenated tensors (Default=None).
+        append (numpy.array, optional): numpy array to be appended to the already concatenated tensors (Default=None).
     """
 
     @check_concat_type
