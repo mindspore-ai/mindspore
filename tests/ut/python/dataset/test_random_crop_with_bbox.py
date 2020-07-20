@@ -241,7 +241,7 @@ def test_random_crop_with_bbox_op_bad_c():
     check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WrongShape, "4 features")
 
 
-def test_random_crop_with_bbox_op_negative_padding():
+def test_random_crop_with_bbox_op_bad_padding():
     """
     Test RandomCropWithBBox Op on invalid constructor parameters, expected to raise ValueError
     """
@@ -263,6 +263,20 @@ def test_random_crop_with_bbox_op_negative_padding():
         logger.info("Got an exception in DE: {}".format(str(err)))
         assert "Input padding is not within the required interval of (0 to 2147483647)." in str(err)
 
+    try:
+        test_op = c_vision.RandomCropWithBBox([512, 512], padding=[16777216, 16777216, 16777216, 16777216])
+
+        dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
+                                output_columns=["image", "annotation"],
+                                columns_order=["image", "annotation"],
+                                operations=[test_op])
+
+        for _ in dataVoc2.create_dict_iterator():
+            break
+    except RuntimeError as err:
+        logger.info("Got an exception in DE: {}".format(str(err)))
+        assert "RandomCropBBoxOp padding size is too big, it\'s more than 3 times the original size." in str(err)
+
 
 if __name__ == "__main__":
     test_random_crop_with_bbox_op_c(plot_vis=True)
@@ -272,4 +286,4 @@ if __name__ == "__main__":
     test_random_crop_with_bbox_op_edge_c(plot_vis=True)
     test_random_crop_with_bbox_op_invalid_c()
     test_random_crop_with_bbox_op_bad_c()
-    test_random_crop_with_bbox_op_negative_padding()
+    test_random_crop_with_bbox_op_bad_padding()
