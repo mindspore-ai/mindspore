@@ -63,6 +63,7 @@ constexpr int kInitWeightToOptimIdCmd = 11;
 constexpr int kInitOptimInputsShapeCmd = 12;
 constexpr int kInitEmbeddingsCmd = 20;
 constexpr int kEmbeddingLookupCmd = 30;
+constexpr int kFinalizeCmd = 40;
 
 constexpr size_t kInvalidKey = UINT64_MAX;
 

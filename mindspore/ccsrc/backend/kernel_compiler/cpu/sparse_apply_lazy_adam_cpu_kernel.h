@@ -33,7 +33,7 @@ class SparseApplyLazyAdamCPUKernel : public CPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
- private:
+ protected:
   size_t indices_size_{0};
   size_t var_first_dim_size_{0};
   size_t var_outer_dim_size_{1};

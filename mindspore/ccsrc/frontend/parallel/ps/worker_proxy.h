@@ -58,6 +58,7 @@ class WorkerProxy : public ::ps::KVWorker<T> {
                          const ::ps::SArray<int> &lens = {}, const Callback &cb = nullptr, int priority = 0);
   void PushData(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<T> &vals, const ::ps::SArray<int> &lens = {},
                 int cmd = 0, int priority = 0);
+  void Finalize();
 
  private:
   template <typename C>
@@ -144,6 +145,17 @@ void WorkerProxy<T>::PushData(const ::ps::SArray<::ps::Key> &keys, const ::ps::S
   kvs.priority = priority;
   Send(obj_, ts, true, false, cmd, kvs, broadcast_slicer_);
   obj_->WaitRequest(ts);
+}
+
+template <typename T>
+void WorkerProxy<T>::Finalize() {
+  int ts = obj_->NewRequest(::ps::kServerGroup);
+  ::ps::KVPairs<T> kvs;
+  kvs.keys.push_back(0);
+  kvs.vals.push_back(0.0f);
+  Send(obj_, ts, true, false, kFinalizeCmd, kvs, broadcast_slicer_);
+  obj_->WaitRequest(ts);
+  ::ps::Finalize(0, false);
 }
 
 template <typename T>

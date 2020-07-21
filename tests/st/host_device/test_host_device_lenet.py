@@ -75,7 +75,7 @@ def train(net, data, label):
     print(res)
     print("+++++++++++++++++++++++++++")
     diff = res.asnumpy()[0] - 2.3025851
-    assert np.all(diff < 1.e-7)
+    assert np.all(diff < 1.e-6)
 
 
 @pytest.mark.level0
