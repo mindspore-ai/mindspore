@@ -148,7 +148,7 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework a
 | Loss                       | 0.108                                                                 |
 | Params (M)                 | 61.10                                                                 | 
 | Checkpoint for Fine tuning | 445MB(.ckpt file)                                                    |
-| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/alexnet|
+| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/alexnet|
 
 #### [LeNet](#table-of-contents)
 
@@ -168,7 +168,7 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework a
 | Loss                       | 0.004                                                            |
 | Params (M)                 | 0.06                                                            |
 | Checkpoint for Fine tuning | 483KB(.ckpt file)                                                |
-| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/lenet|
+| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/lenet|
 
 ### Object Detection and Segmentation 
 
