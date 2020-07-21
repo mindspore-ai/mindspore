@@ -147,6 +147,30 @@ bool MemSwapManager::CheckDistanceBetweenKernels(const TensorInfo &tensor_info) 
   return false;
 }
 
+std::vector<std::pair<size_t, size_t>> MemSwapManager::CheckDistanceBetweenKernelsWithIdx(
+  const TensorInfo &tensor_info) const {
+  const AnfNodePtr &kernel = tensor_info.kernel_;
+  auto &kernel_exec_info = SearchKernelExecutionInfo(kernel);
+  auto &node_users_map = kernel_exec_info.node_users_map_;
+  std::vector<std::pair<size_t, size_t>> need_swap_topo_pair_list;
+
+  auto iter = node_users_map.find(tensor_info.output_idx_);
+  if (iter == node_users_map.end()) {
+    return need_swap_topo_pair_list;
+  }
+  auto &node_users = iter->second;
+  if (node_users.front() - kernel_exec_info.topo_order_ > distance_threshold_) {
+    need_swap_topo_pair_list.emplace_back(kernel_exec_info.topo_order_, node_users.front());
+  }
+
+  for (size_t i = 1; i < node_users.size(); ++i) {
+    if (node_users[i] - node_users[i - 1] > distance_threshold_) {
+      need_swap_topo_pair_list.emplace_back(node_users[i - 1], node_users[i]);
+    }
+  }
+  return need_swap_topo_pair_list;
+}
+
 bool MemSwapManager::IsCommunicationRelevantOp(const AnfNodePtr &kernel) const {
   MS_EXCEPTION_IF_NULL(kernel);
   if (AnfAlgo::IsCommunicationOp(kernel)) {
@@ -201,56 +225,55 @@ void MemSwapManager::AddSwapInfo() {
       break;
     }
 
-    size_t output_idx = tensor.output_idx_;
     const AnfNodePtr &kernel = tensor.kernel_;
     if (IsCommunicationRelevantOp(kernel)) {
       continue;
     }
-    auto &kernel_exec_info = SearchKernelExecutionInfo(kernel);
-    auto &node_users_map = kernel_exec_info.node_users_map_;
 
-    auto iter = node_users_map.find(output_idx);
-    if (iter == node_users_map.end()) {
-      continue;
-    }
-    auto &node_users = iter->second;
-    bool need_swap = (node_users.size() == 1 && node_users[0] - kernel_exec_info.topo_order_ >= distance_threshold_) ||
-                     (node_users.size() > 1 && node_users[1] - node_users[0] >= distance_threshold_);
-    if (!need_swap) {
+    auto need_swap_topo_pair_list = CheckDistanceBetweenKernelsWithIdx(tensor);
+    if (need_swap_topo_pair_list.empty()) {
       continue;
     }
     HostAddress host_addr;
     host_addr.size = tensor_size;
-    auto ret = AllocHostPinnedMem(tensor_size, reinterpret_cast<void **>(&host_addr.addr));
-    if (!ret) {
-      MS_LOG(EXCEPTION) << "Alloc host pinned memory[" << tensor_size << "] failed.";
-    }
+    host_addr.addr = nullptr;
+
+    size_t output_idx = tensor.output_idx_;
+    auto &kernel_exec_info = SearchKernelExecutionInfo(kernel);
     kernel_exec_info.host_addrs_[output_idx] = std::make_pair(host_addr, true);
-    MemSwapInfo mem_swap_out_info = {SwapKind::kDeviceToHost, kernel_exec_info.topo_order_, output_idx, 0};
-    if (node_users.size() > 1) {
-      AddKernelMemSwapInfo(execution_order_[node_users[0]], mem_swap_out_info);
-    } else {
-      AddKernelMemSwapInfo(kernel, mem_swap_out_info);
-    }
 
-    size_t swap_in_order = node_users.size() == 1 ? node_users[0] - 1 : node_users[1] - 1;
-    if (swap_in_order <= kernel_exec_info.topo_order_) {
-      MS_LOG(EXCEPTION) << "Select swap in point failed for op[" << AnfAlgo::GetCNodeName(kernel) << "]";
-    }
-    auto swap_in_kernel = execution_order_[swap_in_order];
-    MemSwapInfo mem_swap_in_info = {SwapKind::kHostToDevice, kernel_exec_info.topo_order_, output_idx, 0};
-    AddKernelMemSwapInfo(swap_in_kernel, mem_swap_in_info);
+    for (auto &swap_topo_pair : need_swap_topo_pair_list) {
+      size_t swap_out_order = swap_topo_pair.first;
+      MemSwapInfo mem_swap_out_info = {SwapKind::kDeviceToHost, kernel_exec_info.topo_order_, output_idx,
+                                       swap_out_order};
+      AddKernelMemSwapInfo(execution_order_[swap_out_order], mem_swap_out_info);
 
-    host_addrs_list_.push_back(host_addr);
+      size_t swap_in_order = swap_topo_pair.second - 1;
+      MemSwapInfo mem_swap_in_info = {SwapKind::kHostToDevice, kernel_exec_info.topo_order_, output_idx,
+                                      swap_out_order};
+      if (swap_in_order <= swap_out_order) {
+        MS_LOG(EXCEPTION) << "Select swap in point failed for op[" << AnfAlgo::GetCNodeName(kernel) << "]";
+      }
+      AddKernelMemSwapInfo(execution_order_[swap_in_order], mem_swap_in_info);
+    }
   }
 }
 
 void MemSwapManager::AddMemSwapTask(SwapKind swap_kind, const DeviceAddressPtr &device_address,
-                                    const HostAddress &host_address) const {
+                                    const HostAddress &host_address, bool mock, bool profiling,
+                                    float *cost_time) const {
+  if (!mock) {
+    if (swap_kind == SwapKind::kDeviceToHost) {
+      mem_copy_manager_->AddMemSwapOutTask(device_address, host_address);
+    } else if (swap_kind == SwapKind::kHostToDevice) {
+      mem_copy_manager_->AddMemSwapInTask(device_address, host_address, profiling, cost_time);
+    }
+  }
+
   if (swap_kind == SwapKind::kDeviceToHost) {
-    mem_copy_manager_->AddMemSwapOutTask(device_address, host_address);
+    mem_copy_manager_->AddMemSwapOutTaskMock(device_address);
   } else if (swap_kind == SwapKind::kHostToDevice) {
-    mem_copy_manager_->AddMemSwapInTask(device_address, host_address);
+    mem_copy_manager_->AddMemSwapInTaskMock(device_address);
   }
 }
 
@@ -258,11 +281,19 @@ bool MemSwapManager::SyncMemCopyStream(SwapKind swap_kind) const {
   return mem_copy_manager_->SyncMemCopyStream(swap_kind);
 }
 
-DeviceAddressPtr MemSwapManager::UpdateSwapQueue(SwapKind swap_kind) const {
+DeviceAddressPtr MemSwapManager::UpdateSwapQueue(SwapKind swap_kind, bool mock) const {
+  if (!mock) {
+    if (swap_kind == SwapKind::kDeviceToHost) {
+      return mem_copy_manager_->UpdateSwapOutQueue();
+    } else {
+      return mem_copy_manager_->UpdateSwapInQueue();
+    }
+  }
+
   if (swap_kind == SwapKind::kDeviceToHost) {
-    return mem_copy_manager_->UpdateSwapOutQueue();
+    return mem_copy_manager_->UpdateSwapOutQueueMock();
   } else {
-    return mem_copy_manager_->UpdateSwapInQueue();
+    return mem_copy_manager_->UpdateSwapInQueueMock();
   }
 }
 
@@ -273,19 +304,7 @@ bool MemSwapManager::RetreatSwapInfo() {
   }
   if (swap_info_already_set_) {
     ResetSwapInfo();
-    if (distance_threshold_ >= kDistanceLowerBound) {
-      auto distance_decay_step = execution_order_.size() / kDistanceInitFactor / tensor_size_num_;
-      distance_threshold_ -= (distance_decay_step > 1 ? distance_decay_step : 1);
-    }
-
-    while (tensor_size_threshold_idx_ < ordered_tensors_.size() - 1) {
-      ++tensor_size_threshold_idx_;
-      if (tensor_size_threshold_ > ordered_tensors_[tensor_size_threshold_idx_].tensor_size_) {
-        tensor_size_threshold_ = ordered_tensors_[tensor_size_threshold_idx_].tensor_size_;
-        break;
-      }
-    }
-
+    RetreatSwapThreshold();
     if (tensor_size_threshold_idx_ == ordered_tensors_.size() - 1 && distance_threshold_ < kDistanceLowerBound) {
       MS_LOG(ERROR) << "Retreat swap info failed";
       return false;
@@ -373,7 +392,7 @@ bool MemSwapManager::QueryFirstTimeMovePos(const AnfNodePtr &kernel, size_t inde
 }
 
 size_t MemSwapManager::BestSwapInPerformPos(const AnfNodePtr &trigger_kernel, const MemSwapInfo &mem_swap_info) const {
-  auto need_swap_kernel = QueryKerneByTopoOrder(mem_swap_info.topo_order_);
+  auto need_swap_kernel = QueryKernelByTopoOrder(mem_swap_info.topo_order_);
   const PerformPair &perform_pair = QueryKernelSwapPerform(need_swap_kernel, mem_swap_info.output_idx_);
   float swap_in_cost_time = perform_pair.second;
   size_t swap_out_pos = mem_swap_info.swap_out_pos_;
@@ -383,11 +402,11 @@ size_t MemSwapManager::BestSwapInPerformPos(const AnfNodePtr &trigger_kernel, co
 
   size_t pos = trigger_kernel_pos;
   for (; pos > swap_out_pos + 1; pos--) {
-    auto kernel = QueryKerneByTopoOrder(pos - 1);
+    auto kernel = QueryKernelByTopoOrder(pos - 1);
     if (QueryKernelTriggerSwapIn(kernel)) {
       return pos;
     }
-    kernel_execution_time += QueryKernelExecutionPerform(QueryKerneByTopoOrder(pos));
+    kernel_execution_time += QueryKernelExecutionPerform(QueryKernelByTopoOrder(pos));
     if (kernel_execution_time >= swap_in_cost_time) {
       return pos - 1;
     }
@@ -399,8 +418,8 @@ void MemSwapManager::MoveSwapInfoPos(size_t des_pos, size_t src_pos, const MemSw
   if (des_pos == src_pos) {
     MS_LOG(EXCEPTION) << "destination pos can not equal source pos";
   }
-  auto des_kernel = QueryKerneByTopoOrder(des_pos);
-  auto src_kernel = QueryKerneByTopoOrder(src_pos);
+  auto des_kernel = QueryKernelByTopoOrder(des_pos);
+  auto src_kernel = QueryKernelByTopoOrder(src_pos);
   AddKernelMemSwapInfo(des_kernel, mem_swap_info);
   RemoveKernelMemSwapInfo(src_kernel, mem_swap_info);
 }
@@ -422,7 +441,10 @@ void MemSwapManager::AddKernelExecutionPerform(const AnfNodePtr &kernel, float p
 void MemSwapManager::AddKernelSwapPerform(const AnfNodePtr &kernel, size_t output_idx,
                                           const std::pair<float, float> &perform) {
   MS_EXCEPTION_IF_NULL(kernel);
-  kernel_swap_perform_[kernel.get()][output_idx] = perform;
+  auto iter = kernel_swap_perform_.find(kernel.get());
+  if (iter == kernel_swap_perform_.end()) {
+    kernel_swap_perform_[kernel.get()][output_idx] = perform;
+  }
 }
 
 void MemSwapManager::AddKernelMemSwapInfo(const AnfNodePtr &kernel, const MemSwapInfo &mem_swap_info) {
@@ -485,11 +507,16 @@ size_t MemSwapManager::QueryKernelTriggerSwapInTaskNum(const AnfNodePtr &kernel)
   return kernel_exec_info.swap_in_task_num_;
 }
 
-const AnfNodePtr MemSwapManager::QueryKerneByTopoOrder(size_t index) const {
+const AnfNodePtr MemSwapManager::QueryKernelByTopoOrder(size_t index) const {
   if (index >= execution_order_.size()) {
     MS_LOG(EXCEPTION) << "Index [" << index << "] out of range";
   }
   return execution_order_[index];
+}
+
+size_t MemSwapManager::QueryKernelTopoOrder(const AnfNodePtr &kernel) const {
+  const auto &kernel_exec_info = SearchKernelExecutionInfo(kernel);
+  return kernel_exec_info.topo_order_;
 }
 
 const PerformPair &MemSwapManager::QueryKernelSwapPerform(const AnfNodePtr &kernel, size_t output_idx) const {
@@ -572,13 +599,6 @@ void MemSwapManager::ResetHostAddrIsDirty() {
   }
 }
 
-void MemSwapManager::InsertSwapInBlackList(const void *device_ptr) { swap_in_blacklist_.insert(device_ptr); }
-
-bool MemSwapManager::FindInSwapInBlackList(const void *device_ptr) const {
-  auto iter = swap_in_blacklist_.find(device_ptr);
-  return iter != swap_in_blacklist_.end();
-}
-
 bool MemSwapManager::AllocHostPinnedMem(size_t size, void **addr) const {
   return mem_copy_manager_->AllocHostPinnedMem(size, addr);
 }
@@ -592,10 +612,16 @@ void MemSwapManager::ReleaseHostPinnedMem() {
   host_addrs_list_.clear();
 }
 
-void MemSwapManager::ClearSwapQueue() const { mem_copy_manager_->ClearSwapQueue(); }
+void MemSwapManager::ClearSwapQueue(bool mock) const {
+  if (!mock) {
+    mem_copy_manager_->ClearSwapQueue();
+  } else {
+    mem_copy_manager_->ClearSwapQueueMock();
+  }
+}
 
 void MemSwapManager::ResetSwapInfo() {
-  ClearSwapQueue();
+  ClearSwapQueue(true);
   for (auto &kernel_exec_info_pair : kernel_execution_info_) {
     auto &kernel_exec_info = kernel_exec_info_pair.second;
     kernel_exec_info.trigger_swap_out_ = false;
@@ -603,9 +629,52 @@ void MemSwapManager::ResetSwapInfo() {
     kernel_exec_info.swap_in_task_num_ = 0;
     kernel_exec_info.host_addrs_.clear();
   }
-  ReleaseHostPinnedMem();
-  swap_in_blacklist_.clear();
   mem_swap_info_map_.clear();
+}
+
+void MemSwapManager::DumpSwapInfo() const {
+  for (auto &kernel : execution_order_) {
+    if (!QueryKernelTriggerSwap(kernel)) {
+      continue;
+    }
+    auto &kernel_exec_info = SearchKernelExecutionInfo(kernel);
+    MS_LOG(WARNING) << "Trigger kernel topo order[" << kernel_exec_info.topo_order_ << "] , op name["
+                    << AnfAlgo::GetCNodeName(kernel) << "]";
+
+    const MemSwapInfoSet &mem_swap_info_set = QueryKernelMemSwapInfo(kernel);
+    for (auto &mem_swap_info : mem_swap_info_set) {
+      if (mem_swap_info.swap_kind_ == SwapKind::kDeviceToHost) {
+        MS_LOG(WARNING) << "    Swap Out Task: swapped kernel topo order[" << mem_swap_info.topo_order_ << "], op name["
+                        << AnfAlgo::GetCNodeName(QueryKernelByTopoOrder(mem_swap_info.topo_order_)) << "], output idx["
+                        << mem_swap_info.output_idx_ << "]";
+      } else {
+        MS_LOG(WARNING) << "    Swap In Task: swapped kernel topo order[" << mem_swap_info.topo_order_ << "], op name["
+                        << AnfAlgo::GetCNodeName(QueryKernelByTopoOrder(mem_swap_info.topo_order_)) << "], output idx["
+                        << mem_swap_info.output_idx_ << "]";
+      }
+    }
+  }
+}
+
+void MemSwapManager::DumpUserNodes() const {
+  for (auto &kernel : execution_order_) {
+    const auto &kernel_exec_info = SearchKernelExecutionInfo(kernel);
+    const auto &node_users_map = kernel_exec_info.node_users_map_;
+    MS_LOG(WARNING) << "Kernel topo order[" << kernel_exec_info.topo_order_ << "], op name["
+                    << AnfAlgo::GetCNodeName(kernel) << "]";
+    if (node_users_map.empty()) {
+      MS_LOG(WARNING) << "    Kernel does not own any user node";
+    }
+
+    for (auto &item : node_users_map) {
+      size_t output_idx = item.first;
+      auto &node_users = item.second;
+      for (auto &order : node_users) {
+        MS_LOG(WARNING) << "    Output index[" << output_idx << "] tensor is used by kernel["
+                        << AnfAlgo::GetCNodeName(QueryKernelByTopoOrder(order)) << "], topo order[" << order << "]";
+      }
+    }
+  }
 }
 }  // namespace memswap
 }  // namespace device

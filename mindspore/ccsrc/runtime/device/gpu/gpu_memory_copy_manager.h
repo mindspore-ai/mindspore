@@ -40,7 +40,12 @@ class GPUMemCopyManager : public MemCopyManager {
 
   void AddMemSwapOutTask(const DeviceAddressPtr &device_address, const HostAddress &host_addr) override;
 
-  void AddMemSwapInTask(const DeviceAddressPtr &device_address, const HostAddress &host_addr) override;
+  void AddMemSwapInTask(const DeviceAddressPtr &device_address, const HostAddress &host_addr, bool profiling,
+                        float *cost_time) override;
+
+  void AddMemSwapOutTaskMock(const DeviceAddressPtr &device_address) override;
+
+  void AddMemSwapInTaskMock(const DeviceAddressPtr &device_address) override;
 
   bool SyncMemCopyStream(SwapKind swap_kind) override;
 
@@ -48,17 +53,25 @@ class GPUMemCopyManager : public MemCopyManager {
 
   DeviceAddressPtr UpdateSwapInQueue() override;
 
+  DeviceAddressPtr UpdateSwapOutQueueMock() override;
+
+  DeviceAddressPtr UpdateSwapInQueueMock() override;
+
   bool AllocHostPinnedMem(size_t size, void **addr) const override;
 
   void FreeHostPinnedMem(void *addr) const override;
 
   void ClearSwapQueue() override;
 
+  void ClearSwapQueueMock() override;
+
  private:
   DeviceStream swap_out_stream_{nullptr};
   DeviceStream swap_in_stream_{nullptr};
   std::queue<std::pair<DeviceAddressPtr, DeviceEvent>> swap_out_queue_;
   std::queue<std::pair<DeviceAddressPtr, DeviceEvent>> swap_in_queue_;
+  std::queue<DeviceAddressPtr> swap_out_queue_mock_;
+  std::queue<DeviceAddressPtr> swap_in_queue_mock_;
 };
 using GPUMemCopyManagerPtr = std::shared_ptr<GPUMemCopyManager>;
 }  // namespace gpu

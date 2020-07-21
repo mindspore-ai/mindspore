@@ -48,12 +48,12 @@ class MemSwapManager {
 
   bool Init(const mindspore::session::KernelGraph *kernel_graph, size_t swap_mem_size = 0);
 
-  void AddMemSwapTask(SwapKind swap_kind, const DeviceAddressPtr &device_address,
-                      const HostAddress &host_address) const;
+  void AddMemSwapTask(SwapKind swap_kind, const DeviceAddressPtr &device_address, const HostAddress &host_address,
+                      bool mock, bool profiling = false, float *cost_time = nullptr) const;
 
   bool SyncMemCopyStream(SwapKind swap_kind) const;
 
-  DeviceAddressPtr UpdateSwapQueue(SwapKind swap_kind) const;
+  DeviceAddressPtr UpdateSwapQueue(SwapKind swap_kind, bool mock) const;
 
   bool RetreatSwapInfo();
 
@@ -62,8 +62,6 @@ class MemSwapManager {
   bool trigger_swap() const { return trigger_swap_; }
 
   bool mem_swap_init() const { return mem_swap_initialized_; }
-
-  KernelExecutionInfo &SearchKernelExecutionInfo(const AnfNodePtr &kernel) const;
 
   void AddKernelExecutionPerform(const AnfNodePtr &kernel, float perform);
 
@@ -79,7 +77,9 @@ class MemSwapManager {
 
   size_t QueryKernelTriggerSwapInTaskNum(const AnfNodePtr &kernel) const;
 
-  const AnfNodePtr QueryKerneByTopoOrder(size_t index) const;
+  const AnfNodePtr QueryKernelByTopoOrder(size_t index) const;
+
+  size_t QueryKernelTopoOrder(const AnfNodePtr &kernel) const;
 
   const MemSwapInfoSet &QueryKernelMemSwapInfo(const AnfNodePtr &kernel) const;
 
@@ -93,17 +93,19 @@ class MemSwapManager {
 
   void ResetHostAddrIsDirty();
 
-  void InsertSwapInBlackList(const void *device_ptr);
-
-  bool FindInSwapInBlackList(const void *device_ptr) const;
-
   bool AllocHostPinnedMem(size_t size, void **addr) const;
 
   void ReleaseHostPinnedMem();
 
-  void ClearSwapQueue() const;
+  void ClearSwapQueue(bool mock) const;
+
+  void DumpSwapInfo() const;
+
+  void DumpUserNodes() const;
 
  private:
+  KernelExecutionInfo &SearchKernelExecutionInfo(const AnfNodePtr &kernel) const;
+
   void AddSwapInfo();
 
   void ResetSwapInfo();
@@ -130,6 +132,8 @@ class MemSwapManager {
 
   bool CheckDistanceBetweenKernels(const TensorInfo &tensor_info) const;
 
+  std::vector<std::pair<size_t, size_t>> CheckDistanceBetweenKernelsWithIdx(const TensorInfo &tensor_info) const;
+
   bool IsCommunicationRelevantOp(const AnfNodePtr &kernel) const;
 
   std::vector<CNodePtr> execution_order_;
@@ -139,7 +143,6 @@ class MemSwapManager {
   // Key: trigger swap kernel, value: MemSwapInfoSet of kernel need to be swapped
   std::unordered_map<void *, MemSwapInfoSet> mem_swap_info_map_;
   std::vector<HostAddress> host_addrs_list_;
-  std::unordered_set<const void *> swap_in_blacklist_;
 
   // Key: cache kernel address, value: lists of first time move pos or not
   std::map<void *, std::vector<bool>> kernel_first_move_cache_map_;

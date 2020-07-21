@@ -46,7 +46,7 @@ struct KernelExecutionInfo {
   size_t swap_in_task_num_{0};
   // Key: output index, value: topo orders of node users
   std::map<size_t, std::vector<size_t>> node_users_map_;
-  // Key: output idx, value: (host addr, dirty or not)
+  // Key: output index, value: pair (host addr, dirty or not)
   std::map<size_t, std::pair<HostAddress, bool>> host_addrs_;
 
   KernelExecutionInfo() {}
@@ -105,7 +105,12 @@ class MemCopyManager {
 
   virtual void AddMemSwapOutTask(const DeviceAddressPtr &device_address, const HostAddress &host_addr) {}
 
-  virtual void AddMemSwapInTask(const DeviceAddressPtr &device_address, const HostAddress &host_addr) {}
+  virtual void AddMemSwapInTask(const DeviceAddressPtr &device_address, const HostAddress &host_addr, bool profiling,
+                                float *cost_time) {}
+
+  virtual void AddMemSwapOutTaskMock(const DeviceAddressPtr &device_address) {}
+
+  virtual void AddMemSwapInTaskMock(const DeviceAddressPtr &device_address) {}
 
   virtual bool SyncMemCopyStream(SwapKind swap_kind) { return true; }
 
@@ -113,11 +118,17 @@ class MemCopyManager {
 
   virtual DeviceAddressPtr UpdateSwapInQueue() { return nullptr; }
 
+  virtual DeviceAddressPtr UpdateSwapOutQueueMock() { return nullptr; }
+
+  virtual DeviceAddressPtr UpdateSwapInQueueMock() { return nullptr; }
+
   virtual bool AllocHostPinnedMem(size_t size, void **addr) const { return true; }
 
   virtual void FreeHostPinnedMem(void *addr) const {}
 
   virtual void ClearSwapQueue() {}
+
+  virtual void ClearSwapQueueMock() {}
 };
 using MemCopyManagerPtr = std::shared_ptr<MemCopyManager>;
 using MemSwapInfoSet = std::set<MemSwapInfo, SwapInfoComp>;
