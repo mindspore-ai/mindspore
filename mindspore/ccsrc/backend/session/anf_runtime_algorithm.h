@@ -149,6 +149,8 @@ class AnfRuntimeAlgorithm {
   static void SetWorkspaceAddr(const DeviceAddressPtr &addr, size_t output_idx, AnfNode *node);
   // get workspace device addr of anf_node
   static DeviceAddress *GetWorkspaceAddr(const AnfNodePtr &node, size_t output_idx);
+  // get workspace device mutable addr of anf_node
+  static DeviceAddressPtr GetMutableWorkspaceAddr(const AnfNodePtr &node, size_t index);
   // set infer shapes and types of anf node
   static void SetOutputInferTypeAndShape(const std::vector<TypeId> &types,
                                          const std::vector<std::vector<size_t>> &shapes, AnfNode *node);

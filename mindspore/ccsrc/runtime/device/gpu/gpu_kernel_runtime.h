@@ -53,11 +53,17 @@ class GPUKernelRuntime : public KernelRuntime {
   // The related functions and members for using dynamic memory pool.
   void InitKernelRefCount(const session::KernelGraph *graph);
   void InitKernelOutputAddress(const session::KernelGraph *graph);
+  void InitKernelWorkspaceAddress(const session::KernelGraph *graph);
   void InitMemorySwapInfo(const session::KernelGraph *graph);
   void ClearKernelOutputAddress(const session::KernelGraph *graph);
-  bool LaunchKernelDynamic(const session::KernelGraph *graph);
+  void ClearKernelWorkspaceAddress(const session::KernelGraph *graph);
+  void ClearKernelOldOutputAndWorkspace(const session::KernelGraph *graph);
+  bool SearchMemSwapScheme(const session::KernelGraph *graph);
+  bool RefineMemSwapScheme(const session::KernelGraph *graph);
+  bool LaunchKernelDynamic(const session::KernelGraph *graph, bool mock = false, bool profiling = false);
+  void LaunchKernelWithTimeProfiling(const AnfNodePtr &kernel, const AddressPtrList &inputs,
+                                     const AddressPtrList &workspace, const AddressPtrList &outputs);
   bool AttemptMallocMem(const DeviceAddressPtr &device_address, size_t size);
-  void *AttemptMallocMem(size_t size);
   bool AllocKernelDynamicRes(const mindspore::kernel::KernelMod &kernel_mod, const mindspore::AnfNodePtr &kernel,
                              AddressPtrList *kernel_inputs, AddressPtrList *kernel_workspaces,
                              AddressPtrList *kernel_outputs);
@@ -72,7 +78,7 @@ class GPUKernelRuntime : public KernelRuntime {
   void AllocCommunicationOpMemory(bool is_need_alloc_memory, bool is_need_free_memory,
                                   const DeviceAddressPtrList addr_list, size_t total_size,
                                   std::vector<size_t> size_list);
-  void FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel, const AddressPtrList &kernel_workspaces);
+  void FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel);
   bool AddMemorySwapTask(const AnfNodePtr &kernel);
   bool UpdateMemorySwapInfo(const session::KernelGraph *graph);
   bool UpdateMemorySwapTask(const AnfNodePtr &kernel);
@@ -81,6 +87,7 @@ class GPUKernelRuntime : public KernelRuntime {
   void ClearSwapQueue();
   std::unordered_map<uint32_t, MemReuseUtilPtr> mem_reuse_util_map_;
   std::unordered_map<uint32_t, MemSwapManagerPtr> mem_swap_map_;
+  std::unordered_map<uint32_t, bool> is_first_step_map_;
   MemReuseUtilPtr mem_reuse_util_{nullptr};
   MemSwapManagerPtr mem_swap_manager_{nullptr};
 };
