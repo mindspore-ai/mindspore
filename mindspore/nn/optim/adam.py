@@ -85,7 +85,7 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay, param, m, v, gradient, d
     return gradient
 
 
-@_adam_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "IndexedSlices",
+@_adam_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "IndexedSlices",
                     "Tensor", "Tensor", "Tensor", "Bool")
 def _run_opt_with_sparse(opt, sparse_opt, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, params,
                          moment1, moment2, ps_parameter):
@@ -108,7 +108,7 @@ def _run_opt_with_sparse(opt, sparse_opt, beta1_power, beta2_power, beta1, beta2
     return success
 
 
-@_adam_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tensor",
+@_adam_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
                     "Tensor", "Tensor", "Tensor", "Bool")
 def _run_opt_with_one_number(opt, sparse_opt, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, params,
                              moment1, moment2, ps_parameter):
@@ -276,7 +276,7 @@ class Adam(Optimizer):
         self.beta2 = Tensor(beta2, mstype.float32)
         self.beta1_power = Parameter(initializer(1, [1], mstype.float32), name="beta1_power")
         self.beta2_power = Parameter(initializer(1, [1], mstype.float32), name="beta2_power")
-        self.eps = eps
+        self.eps = Tensor(eps, mstype.float32)
 
         self.moment1 = self.parameters.clone(prefix="moment1", init='zeros')
         self.moment2 = self.parameters.clone(prefix="moment2", init='zeros')

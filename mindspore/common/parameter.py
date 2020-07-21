@@ -61,6 +61,7 @@ class Parameter:
         self._is_init = False
         self._sliced = False
         self.is_param_ps = False
+        self.init_in_server = False
         if context.get_context("mode") == context.PYNATIVE_MODE:
             self.init_data()
 
@@ -71,8 +72,9 @@ class Parameter:
     def __parameter__(self):
         """For parse check."""
 
-    def set_param_ps(self):
+    def set_param_ps(self, init_in_server=False):
         self.is_param_ps = True
+        self.init_in_server = init_in_server
 
     @property
     def name(self):
@@ -251,9 +253,15 @@ class Parameter:
                 raise ValueError("The length of layout must be larger than 3! layout is {}."
                                  .format(layout))
             slice_index = int(_get_slice_index(layout[0], layout[1]))
-            self.default_input = self.init_mode.to_tensor(slice_index, layout[2])
+            if (self.init_in_server and self.is_param_ps and isinstance(self.init_mode, Initializer)):
+                self.default_input = self.init_mode.to_tensor(0, [1])
+            else:
+                self.default_input = self.init_mode.to_tensor(slice_index, layout[2])
         else:
-            self.default_input = self.init_mode.to_tensor()
+            if (self.init_in_server and self.is_param_ps and isinstance(self.init_mode, Initializer)):
+                self.default_input = self.init_mode.to_tensor(0, [1])
+            else:
+                self.default_input = self.init_mode.to_tensor()
 
         self.init_mode = None
         if set_sliced:

@@ -72,13 +72,10 @@ using Values = ::ps::SArray<float>;
 using ValuesPtr = std::shared_ptr<Values>;
 using Weight = ::ps::SArray<float>;
 using Grad = ::ps::SArray<float>;
-using LookupIds = ::ps::SArray<float>;
+using LookupIds = ::ps::SArray<Key>;
 using Lengths = ::ps::SArray<int>;
 using WeightPtr = std::shared_ptr<Weight>;
 using GradPtr = std::shared_ptr<Grad>;
-// using EmbeddingTable = std::unordered_map<int, WeightPtr>;
-// using EmbeddingTable = ::ps::SArray<float>;
-// using EmbeddingTablePtr = std::shared_ptr<EmbeddingTable>;
 using InputsShape = std::vector<std::shared_ptr<std::vector<size_t>>>;
 using InputsShapePtr = std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>>;
 }  // namespace ps
