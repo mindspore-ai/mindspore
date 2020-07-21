@@ -23,7 +23,7 @@ from mindspore.ops import composite as C
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import ParameterTuple, Parameter
 
-context.set_context(device_target='CPU')
+context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
 class LstmNet(nn.Cell):
