@@ -17,17 +17,17 @@
 #include <vector>
 #include <memory>
 #include "utils/base_ref_utils.h"
-#include "include/ms_tensor.h"
+#include "include/infer_tensor.h"
 #include "ir/tensor.h"
 
 namespace mindspore {
-void IterateFindTensor(std::vector<std::shared_ptr<inference::MSTensor>> *msTensors, const VectorRef &ref_list) {
+
+void IterateFindTensor(std::vector<tensor::TensorPtr> *msTensors, const VectorRef &ref_list) {
   for (size_t i = 0; i < ref_list.size(); ++i) {
     if (utils::isa<tensor::TensorPtr>(ref_list[i])) {
       auto tensor_ptr = utils::cast<std::shared_ptr<tensor::Tensor>>(ref_list[i]);
       MS_EXCEPTION_IF_NULL(tensor_ptr);
-      auto tensor = new inference::Tensor(tensor_ptr);
-      msTensors->emplace_back(std::shared_ptr<inference::MSTensor>(tensor));
+      msTensors->emplace_back(tensor_ptr);
     } else if (utils::isa<VectorRef>(ref_list[i])) {
       auto ref_iter = utils::cast<VectorRef>(ref_list[i]);
       IterateFindTensor(msTensors, ref_iter);
@@ -37,19 +37,19 @@ void IterateFindTensor(std::vector<std::shared_ptr<inference::MSTensor>> *msTens
   }
 }
 
-std::vector<std::shared_ptr<inference::MSTensor>> TransformVectorRefToMultiTensor(const VectorRef &base_ref) {
-  std::vector<std::shared_ptr<inference::MSTensor>> msTensors;
+std::vector<tensor::TensorPtr> TransformVectorRefToMultiTensor(const VectorRef &base_ref) {
+  std::vector<tensor::TensorPtr> msTensors;
   if (utils::isa<VectorRef>(base_ref)) {
     auto ref_list = utils::cast<VectorRef>(base_ref);
     IterateFindTensor(&msTensors, ref_list);
   } else if (utils::isa<tensor::Tensor>(base_ref)) {
     auto tensor_ptr = utils::cast<std::shared_ptr<tensor::Tensor>>(base_ref);
     MS_EXCEPTION_IF_NULL(tensor_ptr);
-    auto tensor = new inference::Tensor(tensor_ptr);
-    msTensors.emplace_back(std::shared_ptr<inference::MSTensor>(tensor));
+    msTensors.emplace_back(tensor_ptr);
   } else {
     MS_LOG(EXCEPTION) << "The output is not a base ref list or a tensor!";
   }
   return msTensors;
 }
+
 }  // namespace mindspore

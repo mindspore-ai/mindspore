@@ -20,28 +20,32 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "include/ms_tensor.h"
+#include "include/infer_tensor.h"
 
 namespace mindspore {
-class FuncGraph;
 namespace inference {
-using VectorForMSTensorPtr = std::vector<std::shared_ptr<inference::MSTensor>>;
-class MS_API MSSession {
+
+class MS_API InferSession {
  public:
-  MSSession() = default;
+  InferSession() = default;
+  virtual ~InferSession() = default;
+  virtual bool InitEnv(const std::string &device_type, uint32_t device_id) = 0;
+  virtual bool FinalizeEnv() = 0;
+  virtual bool LoadModelFromFile(const std::string &file_name, uint32_t &model_id) = 0;
+  virtual bool UnloadModel(uint32_t model_id) = 0;
+  // override this method to avoid request/reply data copy
+  virtual bool ExecuteModel(uint32_t model_id, const RequestBase &request, ReplyBase &reply) = 0;
 
-  static std::shared_ptr<MSSession> CreateSession(const std::string &device, uint32_t device_id);
+  virtual bool ExecuteModel(uint32_t model_id, const std::vector<InferTensor> &inputs,
+                            std::vector<InferTensor> &outputs) {
+    VectorInferTensorWrapRequest request(inputs);
+    VectorInferTensorWrapReply reply(outputs);
+    return ExecuteModel(model_id, request, reply);
+  }
 
-  virtual uint32_t CompileGraph(std::shared_ptr<FuncGraph> funcGraphPtr) = 0;
-
-  virtual MultiTensor RunGraph(uint32_t graph_id, const VectorForMSTensorPtr &inputs) = 0;
-
-  virtual bool CheckModelInputs(uint32_t graph_id, const VectorForMSTensorPtr &inputs) const = 0;
+  static std::shared_ptr<InferSession> CreateSession(const std::string &device, uint32_t device_id);
 };
 
-std::shared_ptr<FuncGraph> MS_API LoadModel(const char *model_buf, size_t size, const std::string &device);
-
-void MS_API ExitInference();
 }  // namespace inference
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_MS_SESSION_H

@@ -20,11 +20,12 @@
 #include <ctime>
 #include <memory>
 #include "util/file_system_operation.h"
-#include "mindspore/ccsrc/utils/log_adapter.h"
+#include "include/infer_log.h"
 #include "core/server.h"
 
 namespace mindspore {
 namespace serving {
+
 volatile bool stop_poll = false;
 
 std::string GetVersionFromPath(const std::string &path) {
@@ -96,7 +97,7 @@ Status VersionController::Run() {
 
 Status VersionController::CreateInitModels() {
   if (!DirOrFileExist(models_path_)) {
-    MS_LOG(ERROR) << "Model Path Not Exist!" << std::endl;
+    MSI_LOG(ERROR) << "Model Path Not Exist!" << std::endl;
     return FAILED;
   }
   std::vector<std::string> SubDirs = GetAllSubDirs(models_path_);
@@ -115,7 +116,7 @@ Status VersionController::CreateInitModels() {
     }
   }
   if (valid_models_.empty()) {
-    MS_LOG(ERROR) << "There is no valid model for serving";
+    MSI_LOG(ERROR) << "There is no valid model for serving";
     return FAILED;
   }
   auto ret = Session::Instance().Warmup(valid_models_.back());

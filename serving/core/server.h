@@ -23,14 +23,21 @@
 #include "util/status.h"
 #include "version_control/model.h"
 #include "include/inference.h"
-#include "mindspore/ccsrc/debug/info.h"
+#include "serving/ms_service.pb.h"
+#include "serving/ms_service.grpc.pb.h"
+
 namespace mindspore {
 namespace serving {
+
+using ms_serving::PredictReply;
+using ms_serving::PredictRequest;
+
 class Session {
  public:
   static Session &Instance();
   Status CreatDeviceSession(const std::string &device, uint32_t device_id);
-  Status Predict(const std::vector<std::shared_ptr<inference::MSTensor>> &inputs, inference::MultiTensor *output);
+  // Status Predict(const inference::MultiTensor &inputs, inference::MultiTensor &output);
+  Status Predict(const PredictRequest &request, PredictReply &reply);
   Status Warmup(const MindSporeModelPtr model);
   Status Clear();
 
@@ -38,8 +45,8 @@ class Session {
   Session() = default;
   ~Session() = default;
   int sesseion_id_{0};
-  std::shared_ptr<inference::MSSession> session_{nullptr};
-  FuncGraphPtr last_graph_{nullptr};
+  std::shared_ptr<inference::InferSession> session_{nullptr};
+  bool model_loaded_ = false;
   uint32_t graph_id_{0};
   std::mutex mutex_;
   std::string device_type_;

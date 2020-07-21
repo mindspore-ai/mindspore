@@ -25,7 +25,7 @@ usage()
   echo "Usage:"
   echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t on|off] [-g on|off] [-h] [-b ge] [-m infer|train] \\"
   echo "              [-a on|off] [-Q on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|d|cpu] \\"
-  echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I] [-K] [-B on|off] [-E] [-l on|off]"
+  echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I] [-K] [-B on|off] [-w on|off] [-E] [-l on|off]"
   echo ""
   echo "Options:"
   echo "    -d Debug mode"
@@ -54,6 +54,7 @@ usage()
   echo "    -I Compile predict, default off"
   echo "    -K Compile with AKG, default on"
   echo "    -s Enable serving module, default off"
+  echo "    -w Enable acl module, default off"
   echo "    -B Enable debugger, default off"
   echo "    -E Enable IBVERBS for parameter server, default off"
   echo "    -l Compile with python dependency, default on"
@@ -97,12 +98,13 @@ checkopts()
   PREDICT_PLATFORM=""
   ENABLE_AKG="on"
   ENABLE_SERVING="off"
+  ENABLE_ACL="off"
   ENABLE_DEBUGGER="off"
   ENABLE_IBVERBS="off"
   ENABLE_PYTHON="on"
 
   # Process the options
-  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:Q:D:zM:V:K:sB:E' opt
+  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:Q:D:zM:V:K:swB:E' opt
   do
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
     case "${opt}" in
@@ -256,6 +258,10 @@ checkopts()
         ENABLE_SERVING="on"
         echo "enable serving"
         ;;
+      w)
+        ENABLE_ACL="on"
+        echo "enable acl"
+        ;;
       B)
         check_on_off $OPTARG B
         ENABLE_DEBUGGER="on"
@@ -348,6 +354,9 @@ build_mindspore()
     if [[ "X$ENABLE_SERVING" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_SERVING=ON"
     fi
+    if [[ "X$ENABLE_ACL" = "Xon" ]]; then
+        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_ACL=ON"
+    fi
     if [[ "X$ENABLE_DEBUGGER" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_DEBUGGER=ON"
     fi
@@ -362,7 +371,11 @@ build_mindspore()
     if [[ -n "$VERBOSE" ]]; then
       CMAKE_VERBOSE="--verbose"
     fi
+    if [[ "X$ENABLE_ACL" = "Xon" ]]; then
+    cmake --build . ${CMAKE_VERBOSE} -j$THREAD_NUM
+    else
     cmake --build . --target package ${CMAKE_VERBOSE} -j$THREAD_NUM
+    fi
     echo "success to build mindspore project!"
 }
 

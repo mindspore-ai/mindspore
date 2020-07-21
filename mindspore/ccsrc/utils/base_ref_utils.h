@@ -17,11 +17,12 @@
 #include <vector>
 #include <memory>
 #include "utils/base_ref.h"
-#include "include/ms_tensor.h"
+#include "include/infer_tensor.h"
+#include "ir/tensor.h"
 
 #ifndef MINDSPORE_CCSRC_UTILS_BASE_REF_UTILS_H
 #define MINDSPORE_CCSRC_UTILS_BASE_REF_UTILS_H
 namespace mindspore {
-std::vector<std::shared_ptr<inference::MSTensor>> TransformVectorRefToMultiTensor(const VectorRef &base_ref);
+std::vector<tensor::TensorPtr> TransformVectorRefToMultiTensor(const VectorRef &base_ref);
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_UTILS_BASE_REF_UTILS_H

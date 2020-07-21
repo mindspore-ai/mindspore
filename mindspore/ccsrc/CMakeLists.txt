@@ -297,7 +297,7 @@ set(LOAD_ONNX_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/load_onnx/anf_model_parser.cc
         )
 add_library(inference SHARED
-        ${CMAKE_CURRENT_SOURCE_DIR}/backend/session/session.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/backend/session/infer_session.cc
         ${LOAD_ONNX_SRC}
         )
 target_link_libraries(inference PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
