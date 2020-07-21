@@ -222,7 +222,7 @@ std::string GetCNodeTarget(const AnfNodePtr &node) {
     }
     auto target = GetValue<std::string>(att_target);
     if (kTargetSet.find(target) == kTargetSet.end()) {
-      MS_LOG(EXCEPTION) << "Only support string CPU|GPU|Ascend for primitive_target";
+      MS_LOG(EXCEPTION) << "Only support string CPU|GPU|Ascend for primitive_target, but get " << target;
     }
     return target;
   }
