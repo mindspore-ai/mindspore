@@ -252,9 +252,9 @@ def test_random_crop_with_bbox_op_bad_padding():
     try:
         test_op = c_vision.RandomCropWithBBox([512, 512], padding=-1)
 
-        dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                                output_columns=["image", "annotation"],
-                                columns_order=["image", "annotation"],
+        dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+                                output_columns=["image", "bbox"],
+                                columns_order=["image", "bbox"],
                                 operations=[test_op])
 
         for _ in dataVoc2.create_dict_iterator():
@@ -266,9 +266,9 @@ def test_random_crop_with_bbox_op_bad_padding():
     try:
         test_op = c_vision.RandomCropWithBBox([512, 512], padding=[16777216, 16777216, 16777216, 16777216])
 
-        dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                                output_columns=["image", "annotation"],
-                                columns_order=["image", "annotation"],
+        dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+                                output_columns=["image", "bbox"],
+                                columns_order=["image", "bbox"],
                                 operations=[test_op])
 
         for _ in dataVoc2.create_dict_iterator():
