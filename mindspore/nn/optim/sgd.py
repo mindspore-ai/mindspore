@@ -40,14 +40,11 @@ class SGD(Optimizer):
     momentum in deep learning <http://proceedings.mlr.press/v28/sutskever13.html>`_.
 
     Note:
-        The SGD optimizer supports separating parameter groups. Different parameter groups can set different
-        `learning_rate` and `weight_decay`.
-
         When separating parameter groups, the weight decay in each group will be applied on the parameters if the
-        value of weight_decay > 0. When not separating parameter groups, the `weight_decay` in the API will be
-        applied on the parameters if `weight_decay` > 0 and the 'beta' and 'gamma' are not in the name of parameters.
+        weight decay is positive. When not separating parameter groups, the `weight_decay` in the API will be applied
+        on the parameters without 'beta' or 'gamma' in their names if `weight_decay` is positive.
 
-       To improve parameter groups performance, the customized order of parameters can be supported.
+        To improve parameter groups performance, the customized order of parameters can be supported.
 
     Args:
         params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
@@ -66,14 +63,14 @@ class SGD(Optimizer):
               the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
               in the value of 'order_params' should be in one of group parameters.
 
-        learning_rate (Union[float, Tensor, Iterable]): A value for the learning rate. When the learning_rate is
-                                                        Iterable or a Tensor and the dims of the Tensor is 1,
-                                                        use dynamic learning rate, then the i-th step will
-                                                        take the i-th value as the learning rate.
-                                                        When the learning_rate is float or learning_rate is a Tensor
-                                                        but the dims of the Tensor is 0, use fixed learning rate.
-                                                        Other cases are not supported. It should be equal to or
-                                                        greater than 0. Default: 0.1.
+        learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or graph for the learning rate.
+            When the learning_rate is a Iterable or a Tensor with dimension of 1, use dynamic learning rate, then
+            the i-th step will take the i-th value as the learning rate. When the learning_rate is LearningRateSchedule,
+            use dynamic learning rate, the i-th learning rate will be calculated during the process of training
+            according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor with
+            dimension of 0, use fixed learning rate. Other cases are not supported. The float learning rate should be
+            equal to or greater than 0. If the type of `learning_rate` is int, it will be converted to float.
+            Default: 0.1.
         momentum (float): A floating point value the momentum. should be at least 0.0. Default: 0.0.
         dampening (float): A floating point value of dampening for momentum. should be at least 0.0. Default: 0.0.
         weight_decay (float): Weight decay (L2 penalty). It should be in range [0.0, 1.0]. Default: 0.0.

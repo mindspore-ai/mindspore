@@ -37,6 +37,7 @@ class Net(nn.Cell):
         x = self.biasAdd(self.matmul(x, self.weight), self.bias)
         return x
 
+
 class NetWithSparseGatherV2(nn.Cell):
     """ NetWithSparseGatherV2 definition """
     def __init__(self):

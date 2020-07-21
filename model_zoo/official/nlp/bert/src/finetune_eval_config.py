@@ -23,19 +23,20 @@ from .bert_model import BertConfig
 
 optimizer_cfg = edict({
     'optimizer': 'Lamb',
-    'AdamWeightDecayDynamicLR': edict({
+    'AdamWeightDecay': edict({
         'learning_rate': 2e-5,
         'end_learning_rate': 1e-7,
         'power': 1.0,
         'weight_decay': 1e-5,
+        'decay_filter': lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower(),
         'eps': 1e-6,
     }),
     'Lamb': edict({
-        'start_learning_rate': 2e-5,
+        'learning_rate': 2e-5,
         'end_learning_rate': 1e-7,
         'power': 1.0,
         'weight_decay': 0.01,
-        'decay_filter': lambda x: False,
+        'decay_filter': lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower(),
     }),
     'Momentum': edict({
         'learning_rate': 2e-5,

@@ -20,7 +20,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import _executor
 from mindspore.nn import TrainOneStepCell, WithLossCell
-from mindspore.nn.optim import Adam, AdamWeightDecay, AdamWeightDecayDynamicLR, Lamb
+from mindspore.nn.optim import Adam, AdamWeightDecay, Lamb
 from mindspore.ops import operations as P
 from mindspore import context
 
@@ -51,23 +51,8 @@ class Net(nn.Cell):
         return s
 
 
-def test_AdamWeightDecayDynamicLR():
-    """ test_AdamWeightDecayDynamicLR """
-    context.set_auto_parallel_context(parallel_mode="data_parallel", device_num=2, enable_parallel_optimizer=True)
-    inputs = Tensor(np.ones([32, 128]).astype(np.float32))
-    label = Tensor(np.zeros([32, 768]).astype(np.float32))
-    net = Net()
-    net.set_train()
-    loss = nn.SoftmaxCrossEntropyWithLogits()
-    optimizer = AdamWeightDecayDynamicLR(net.trainable_params(), decay_steps=20, learning_rate=0.1)
-
-    net_with_loss = WithLossCell(net, loss)
-    train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
-
-
 def test_AdamWeightDecay():
-    """ test_AdamWeightDecayDynamicLR """
+    """ test_AdamWeightDecay """
     context.set_auto_parallel_context(parallel_mode="data_parallel", device_num=2, enable_parallel_optimizer=True)
     inputs = Tensor(np.ones([32, 128]).astype(np.float32))
     label = Tensor(np.zeros([32, 768]).astype(np.float32))
@@ -89,7 +74,7 @@ def test_lamb_compile():
     net = Net()
     net.set_train()
     loss = nn.SoftmaxCrossEntropyWithLogits()
-    optimizer = Lamb(net.trainable_params(), decay_steps=10)
+    optimizer = Lamb(net.trainable_params(), learning_rate=0.1)
 
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
@@ -102,9 +87,9 @@ def test_edge_case():
     net = Net()
     with pytest.raises(RuntimeError):
         context.set_auto_parallel_context(parallel_mode="stand_alone")
-        Lamb(net.trainable_params(), decay_steps=10)
+        Lamb(net.trainable_params(), learning_rate=0.1)
     with pytest.raises(RuntimeError):
         Adam(net.trainable_params(), learning_rate=0.1)
     with pytest.raises(RuntimeError):
         context.set_auto_parallel_context(device_num=16)
-        Lamb(net.trainable_params(), decay_steps=10)
+        Lamb(net.trainable_params(), learning_rate=0.1)

@@ -84,12 +84,11 @@ class LazyAdam(Optimizer):
     :math:`\epsilon` represents `eps`.
 
     Note:
-        The LazyAdam optimizer supports separating parameter groups. Different parameter groups can set different
-        `learning_rate` and `weight_decay`.
-
         When separating parameter groups, the weight decay in each group will be applied on the parameters if the
-        value of weight_decay > 0. When not separating parameter groups, the `weight_decay` in the API will be
-        applied on the parameters if `weight_decay` > 0 and the 'beta' and 'gamma' are not in the name of parameters.
+        weight decay is positive. When not separating parameter groups, the `weight_decay` in the API will be applied
+        on the parameters without 'beta' or 'gamma' in their names if `weight_decay` is positive.
+
+        To improve parameter groups performance, the customized order of parameters can be supported.
 
         The sparse strategy is applied while the SparseGatherV2 operator being used for forward network.
         The sparse behavior, to be notice, is not equivalent to the
@@ -113,13 +112,14 @@ class LazyAdam(Optimizer):
               the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
               in the value of 'order_params' should be in one of group parameters.
 
-        learning_rate (Union[float, Tensor, Iterable]): A value for the learning rate. When the learning_rate is
-                                                        Iterable or a Tensor and the dims of the Tensor is 1,
-                                                        use dynamic learning rate, then the i-th step will
-                                                        take the i-th value as the learning rate.
-                                                        When the learning_rate is float or learning_rate is a Tensor
-                                                        but the dims of the Tensor is 0, use fixed learning rate.
-                                                        Other cases are not supported. Default: 1e-3.
+        learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or graph for the learning rate.
+            When the learning_rate is a Iterable or a Tensor with dimension of 1, use dynamic learning rate, then
+            the i-th step will take the i-th value as the learning rate. When the learning_rate is LearningRateSchedule,
+            use dynamic learning rate, the i-th learning rate will be calculated during the process of training
+            according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor with
+            dimension of 0, use fixed learning rate. Other cases are not supported. The float learning rate should be
+            equal to or greater than 0. If the type of `learning_rate` is int, it will be converted to float.
+            Default: 1e-3.
         beta1 (float): The exponential decay rate for the 1st moment estimates. Should be in range (0.0, 1.0). Default:
                        0.9.
         beta2 (float): The exponential decay rate for the 2nd moment estimates. Should be in range (0.0, 1.0). Default:
@@ -153,9 +153,9 @@ class LazyAdam(Optimizer):
         >>> group_params = [{'params': conv_params, 'weight_decay': 0.01},
         >>>                 {'params': no_conv_params, 'lr': 0.01},
         >>>                 {'order_params': net.trainable_params()}]
-        >>> optim = nn.LazyAdam(group_params, learning_rate=0.1, weight_decay=0.0)
-        >>> # The conv_params's parameters will use a learning rate of default value 0.1 and a weight decay of 0.01.
-        >>> # The no_conv_params's parameters will use a learning rate of 0.01 and a weight decay of default value 0.0.
+        >>> opt = nn.LazyAdam(group_params, learning_rate=0.1, weight_decay=0.0)
+        >>> # The conv_params's parameters will use default learning rate of 0.1 and weight decay of 0.01.
+        >>> # The no_conv_params's parameters will use learning rate of 0.01 and default weight decay of 0.0.
         >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
         >>>
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()

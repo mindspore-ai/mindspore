@@ -25,12 +25,12 @@ from src.dataset import create_squad_dataset
 from src import tokenization
 from src.create_squad_data import read_squad_examples, convert_examples_to_features
 from src.run_squad import write_predictions
-from src.utils import make_directory, LossCallBack, LoadNewestCkpt
+from src.utils import make_directory, LossCallBack, LoadNewestCkpt, BertLearningRate
 import mindspore.common.dtype as mstype
 from mindspore import context
 from mindspore import log as logger
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
-from mindspore.nn.optim import AdamWeightDecayDynamicLR, Lamb, Momentum
+from mindspore.nn.optim import AdamWeightDecay, Lamb, Momentum
 from mindspore.common.tensor import Tensor
 from mindspore.train.model import Model
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint, TimeMonitor
@@ -44,27 +44,31 @@ def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoin
         raise ValueError("Pretrain model missed, finetune task must load pretrain model!")
     steps_per_epoch = dataset.get_dataset_size()
     # optimizer
-    if optimizer_cfg.optimizer == 'AdamWeightDecayDynamicLR':
-        optimizer = AdamWeightDecayDynamicLR(network.trainable_params(),
-                                             decay_steps=steps_per_epoch * epoch_num,
-                                             learning_rate=optimizer_cfg.AdamWeightDecayDynamicLR.learning_rate,
-                                             end_learning_rate=optimizer_cfg.AdamWeightDecayDynamicLR.end_learning_rate,
-                                             power=optimizer_cfg.AdamWeightDecayDynamicLR.power,
-                                             warmup_steps=int(steps_per_epoch * epoch_num * 0.1),
-                                             weight_decay=optimizer_cfg.AdamWeightDecayDynamicLR.weight_decay,
-                                             eps=optimizer_cfg.AdamWeightDecayDynamicLR.eps)
+    if optimizer_cfg.optimizer == 'AdamWeightDecay':
+        lr_schedule = BertLearningRate(learning_rate=optimizer_cfg.AdamWeightDecay.learning_rate,
+                                       end_learning_rate=optimizer_cfg.AdamWeightDecay.end_learning_rate,
+                                       warmup_steps=int(steps_per_epoch * epoch_num * 0.1),
+                                       decay_steps=steps_per_epoch * epoch_num,
+                                       power=optimizer_cfg.AdamWeightDecay.power)
+        params = network.trainable_params()
+        decay_params = list(filter(optimizer_cfg.AdamWeightDecay.decay_filter, params))
+        other_params = list(filter(lambda x: x not in decay_params, params))
+        group_params = [{'params': decay_params, 'weight_decay': optimizer_cfg.AdamWeightDecay.weight_decay},
+                        {'params': other_params, 'weight_decay': 0.0}]
+
+        optimizer = AdamWeightDecay(group_params, lr_schedule, eps=optimizer_cfg.AdamWeightDecay.eps)
     elif optimizer_cfg.optimizer == 'Lamb':
-        optimizer = Lamb(network.trainable_params(), decay_steps=steps_per_epoch * epoch_num,
-                         start_learning_rate=optimizer_cfg.Lamb.start_learning_rate,
-                         end_learning_rate=optimizer_cfg.Lamb.end_learning_rate,
-                         power=optimizer_cfg.Lamb.power, weight_decay=optimizer_cfg.Lamb.weight_decay,
-                         warmup_steps=int(steps_per_epoch * epoch_num * 0.1),
-                         decay_filter=optimizer_cfg.Lamb.decay_filter)
+        lr_schedule = BertLearningRate(learning_rate=optimizer_cfg.Lamb.learning_rate,
+                                       end_learning_rate=optimizer_cfg.Lamb.end_learning_rate,
+                                       warmup_steps=int(steps_per_epoch * epoch_num * 0.1),
+                                       decay_steps=steps_per_epoch * epoch_num,
+                                       power=optimizer_cfg.Lamb.power)
+        optimizer = Lamb(network.trainable_params(), learning_rate=lr_schedule)
     elif optimizer_cfg.optimizer == 'Momentum':
         optimizer = Momentum(network.trainable_params(), learning_rate=optimizer_cfg.Momentum.learning_rate,
                              momentum=optimizer_cfg.Momentum.momentum)
     else:
-        raise Exception("Optimizer not supported. support: [AdamWeightDecayDynamicLR, Lamb, Momentum]")
+        raise Exception("Optimizer not supported. support: [AdamWeightDecay, Lamb, Momentum]")
 
     # load checkpoint into network
     ckpt_config = CheckpointConfig(save_checkpoint_steps=steps_per_epoch, keep_checkpoint_max=1)
