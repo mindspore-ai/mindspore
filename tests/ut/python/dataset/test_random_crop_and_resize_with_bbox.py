@@ -48,9 +48,9 @@ def test_random_resized_crop_with_bbox_op_c(plot_vis=False):
     test_op = c_vision.RandomResizedCropWithBBox((256, 512), (0.5, 0.5), (0.5, 0.5))
 
     # map to apply ops
-    dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                            output_columns=["image", "annotation"],
-                            columns_order=["image", "annotation"],
+    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+                            output_columns=["image", "bbox"],
+                            columns_order=["image", "bbox"],
                             operations=[test_op])
 
     filename = "random_resized_crop_with_bbox_01_c_result.npz"
@@ -114,15 +114,15 @@ def test_random_resized_crop_with_bbox_op_edge_c(plot_vis=False):
     test_op = c_vision.RandomResizedCropWithBBox((256, 512), (0.5, 0.5), (0.5, 0.5))
 
     # maps to convert data into valid edge case data
-    dataVoc1 = dataVoc1.map(input_columns=["image", "annotation"],
-                            output_columns=["image", "annotation"],
-                            columns_order=["image", "annotation"],
+    dataVoc1 = dataVoc1.map(input_columns=["image", "bbox"],
+                            output_columns=["image", "bbox"],
+                            columns_order=["image", "bbox"],
                             operations=[lambda img, bboxes: (img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype))])
 
     # Test Op added to list of Operations here
-    dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                            output_columns=["image", "annotation"],
-                            columns_order=["image", "annotation"],
+    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+                            output_columns=["image", "bbox"],
+                            columns_order=["image", "bbox"],
                             operations=[lambda img, bboxes: (img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype)), test_op])
 
     unaugSamp, augSamp = [], []
@@ -149,9 +149,9 @@ def test_random_resized_crop_with_bbox_op_invalid_c():
         test_op = c_vision.RandomResizedCropWithBBox((256, 512), (1, 0.5), (0.5, 0.5))
 
         # map to apply ops
-        dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                                output_columns=["image", "annotation"],
-                                columns_order=["image", "annotation"],
+        dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+                                output_columns=["image", "bbox"],
+                                columns_order=["image", "bbox"],
                                 operations=[test_op])
 
         for _ in dataVoc2.create_dict_iterator():
@@ -175,9 +175,9 @@ def test_random_resized_crop_with_bbox_op_invalid2_c():
         test_op = c_vision.RandomResizedCropWithBBox((256, 512), (1, 1), (1, 0.5))
 
         # map to apply ops
-        dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                                output_columns=["image", "annotation"],
-                                columns_order=["image", "annotation"],
+        dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+                                output_columns=["image", "bbox"],
+                                columns_order=["image", "bbox"],
                                 operations=[test_op])
 
         for _ in dataVoc2.create_dict_iterator():
@@ -206,9 +206,9 @@ def test_random_resized_crop_with_bbox_op_bad_c():
 
 
 if __name__ == "__main__":
-    test_random_resized_crop_with_bbox_op_c(plot_vis=True)
-    test_random_resized_crop_with_bbox_op_coco_c(plot_vis=True)
-    test_random_resized_crop_with_bbox_op_edge_c(plot_vis=True)
+    test_random_resized_crop_with_bbox_op_c(plot_vis=False)
+    test_random_resized_crop_with_bbox_op_coco_c(plot_vis=False)
+    test_random_resized_crop_with_bbox_op_edge_c(plot_vis=False)
     test_random_resized_crop_with_bbox_op_invalid_c()
     test_random_resized_crop_with_bbox_op_invalid2_c()
     test_random_resized_crop_with_bbox_op_bad_c()

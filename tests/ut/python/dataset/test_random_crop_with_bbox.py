@@ -46,10 +46,10 @@ def test_random_crop_with_bbox_op_c(plot_vis=False):
     test_op = c_vision.RandomCropWithBBox([512, 512], [200, 200, 200, 200])
 
     # map to apply ops
-    dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                            output_columns=["image", "annotation"],
-                            columns_order=["image", "annotation"],
-                            operations=[test_op])  # Add column for "annotation"
+    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+                            output_columns=["image", "bbox"],
+                            columns_order=["image", "bbox"],
+                            operations=[test_op])  # Add column for "bbox"
 
     unaugSamp, augSamp = [], []
 
@@ -108,9 +108,9 @@ def test_random_crop_with_bbox_op2_c(plot_vis=False):
     test_op = c_vision.RandomCropWithBBox(512, [200, 200, 200, 200], fill_value=(255, 255, 255))
 
     # map to apply ops
-    dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                            output_columns=["image", "annotation"],
-                            columns_order=["image", "annotation"],
+    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+                            output_columns=["image", "bbox"],
+                            columns_order=["image", "bbox"],
                             operations=[test_op])
 
     filename = "random_crop_with_bbox_01_c_result.npz"
@@ -145,9 +145,9 @@ def test_random_crop_with_bbox_op3_c(plot_vis=False):
     test_op = c_vision.RandomCropWithBBox(512, [200, 200, 200, 200], padding_mode=mode.Border.EDGE)
 
     # map to apply ops
-    dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                            output_columns=["image", "annotation"],
-                            columns_order=["image", "annotation"],
+    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+                            output_columns=["image", "bbox"],
+                            columns_order=["image", "bbox"],
                             operations=[test_op])
 
     unaugSamp, augSamp = [], []
@@ -175,16 +175,16 @@ def test_random_crop_with_bbox_op_edge_c(plot_vis=False):
     test_op = c_vision.RandomCropWithBBox(512, [200, 200, 200, 200], padding_mode=mode.Border.EDGE)
 
     # maps to convert data into valid edge case data
-    dataVoc1 = dataVoc1.map(input_columns=["image", "annotation"],
-                            output_columns=["image", "annotation"],
-                            columns_order=["image", "annotation"],
+    dataVoc1 = dataVoc1.map(input_columns=["image", "bbox"],
+                            output_columns=["image", "bbox"],
+                            columns_order=["image", "bbox"],
                             operations=[lambda img, bboxes: (
                                 img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype))])
 
     # Test Op added to list of Operations here
-    dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                            output_columns=["image", "annotation"],
-                            columns_order=["image", "annotation"],
+    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+                            output_columns=["image", "bbox"],
+                            columns_order=["image", "bbox"],
                             operations=[lambda img, bboxes: (
                                 img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype)), test_op])
 
@@ -212,10 +212,10 @@ def test_random_crop_with_bbox_op_invalid_c():
         test_op = c_vision.RandomCropWithBBox([512, 512, 375])
 
         # map to apply ops
-        dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                                output_columns=["image", "annotation"],
-                                columns_order=["image", "annotation"],
-                                operations=[test_op])  # Add column for "annotation"
+        dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+                                output_columns=["image", "bbox"],
+                                columns_order=["image", "bbox"],
+                                operations=[test_op])  # Add column for "bbox"
 
         for _ in dataVoc2.create_dict_iterator():
             break

@@ -215,7 +215,7 @@ Status CocoOp::LoadTensorRow(row_id_type row_id, const std::string &image_id, Te
   auto itr = coordinate_map_.find(image_id);
   if (itr == coordinate_map_.end()) RETURN_STATUS_UNEXPECTED("Invalid image_id found :" + image_id);
 
-  std::string kImageFile = image_folder_path_ + image_id;
+  std::string kImageFile = image_folder_path_ + std::string("/") + image_id;
   RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile, data_schema_->column(0), &image));
 
   auto bboxRow = itr->second;

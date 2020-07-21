@@ -252,13 +252,13 @@ def visualize_image(image_original, image_de, mse=None, image_lib=None):
     plt.show()
 
 
-def visualize_with_bounding_boxes(orig, aug, annot_name="annotation", plot_rows=3):
+def visualize_with_bounding_boxes(orig, aug, annot_name="bbox", plot_rows=3):
     """
-    Take a list of un-augmented and augmented images with "annotation" bounding boxes
+    Take a list of un-augmented and augmented images with "bbox" bounding boxes
     Plot images to compare test correct BBox augment functionality
     :param orig: list of original images and bboxes (without aug)
     :param aug: list of augmented images and bboxes
-    :param annot_name: the dict key for bboxes in data, e.g "bbox" (COCO) / "annotation" (VOC)
+    :param annot_name: the dict key for bboxes in data, e.g "bbox" (COCO) / "bbox" (VOC)
     :param plot_rows: number of rows on plot (rows = samples on one plot)
     :return: None
     """
@@ -337,7 +337,7 @@ def check_bad_bbox(data, test_op, invalid_bbox_type, expected_error):
     :return: None
     """
 
-    def add_bad_annotation(img, bboxes, invalid_bbox_type_):
+    def add_bad_bbox(img, bboxes, invalid_bbox_type_):
         """
         Used to generate erroneous bounding box examples on given img.
         :param img: image where the bounding boxes are.
@@ -366,15 +366,15 @@ def check_bad_bbox(data, test_op, invalid_bbox_type, expected_error):
 
     try:
         # map to use selected invalid bounding box type
-        data = data.map(input_columns=["image", "annotation"],
-                        output_columns=["image", "annotation"],
-                        columns_order=["image", "annotation"],
-                        operations=lambda img, bboxes: add_bad_annotation(img, bboxes, invalid_bbox_type))
+        data = data.map(input_columns=["image", "bbox"],
+                        output_columns=["image", "bbox"],
+                        columns_order=["image", "bbox"],
+                        operations=lambda img, bboxes: add_bad_bbox(img, bboxes, invalid_bbox_type))
         # map to apply ops
-        data = data.map(input_columns=["image", "annotation"],
-                        output_columns=["image", "annotation"],
-                        columns_order=["image", "annotation"],
-                        operations=[test_op])  # Add column for "annotation"
+        data = data.map(input_columns=["image", "bbox"],
+                        output_columns=["image", "bbox"],
+                        columns_order=["image", "bbox"],
+                        operations=[test_op])  # Add column for "bbox"
         for _, _ in enumerate(data.create_dict_iterator()):
             break
     except RuntimeError as error:

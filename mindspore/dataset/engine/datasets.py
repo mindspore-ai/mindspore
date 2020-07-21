@@ -4128,13 +4128,11 @@ class VOCDataset(MappableDataset):
     """
     A source dataset for reading and parsing VOC dataset.
 
-    The generated dataset has two columns :
-    task='Detection' : ['image', 'annotation'];
-    task='Segmentation' : ['image', 'target'].
-    The shape of both column 'image' and 'target' is [image_size] if decode flag is False, or [H, W, C]
-    otherwise.
-    The type of both tensor 'image' and 'target' is uint8.
-    The type of tensor 'annotation' is uint32.
+    The generated dataset has multi-columns :
+
+        - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['label', dtype=uint32],
+          ['difficult', dtype=uint32], ['truncate', dtype=uint32]].
+        - task='Segmentation', column: [['image', dtype=uint8], ['target',dtype=uint8]].
 
     This dataset can take in a sampler. sampler and shuffle are mutually exclusive. Table
     below shows what input args are allowed and their expected behavior.
