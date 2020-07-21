@@ -24,8 +24,8 @@ from ._summary_adapter import package_init_event
 class BaseWriter:
     """BaseWriter to be subclass."""
 
-    def __init__(self, filepath) -> None:
-        self._filepath = filepath
+    def __init__(self, filepath, max_file_size=None) -> None:
+        self._filepath, self._max_file_size = filepath, max_file_size
         self._writer: EventWriter_ = None
 
     def init_writer(self):
@@ -46,8 +46,15 @@ class BaseWriter:
     def write(self, plugin, data):
         """Write data to file."""
         if self.writer and disk_usage(self._filepath).free < len(data) * 32:
-            raise RuntimeError('The disk space may be soon exhausted.')
-        self.writer.Write(data)
+            raise RuntimeError(f'The disk space may be soon exhausted by the {type(self).__name__}.')
+        if self._max_file_size is None:
+            self.writer.Write(data)
+        elif self._max_file_size > 0:
+            self._max_file_size -= len(data)
+            self.writer.Write(data)
+        else:
+            raise RuntimeError(f"The file written by the {type(self).__name__} "
+                               f"has exceeded the specified max file size.")
 
     def flush(self):
         """Flush the writer."""
