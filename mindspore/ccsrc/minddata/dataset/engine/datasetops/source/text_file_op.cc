@@ -58,7 +58,7 @@ Status TextFileOp::Builder::Build(std::shared_ptr<TextFileOp> *op) {
   // Throttle the number of workers if we have more workers than files!
   if (static_cast<size_t>(builder_num_workers_) > builder_text_files_list_.size()) {
     builder_num_workers_ = builder_text_files_list_.size();
-    MS_LOG(WARNING) << "TextFileOp operator parallelism reduced to " << builder_num_workers_ << " workers.";
+    MS_LOG(DEBUG) << "TextFileOp operator parallelism reduced to " << builder_num_workers_ << " workers.";
   }
 
   builder_schema_ = std::make_unique<DataSchema>();
