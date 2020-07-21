@@ -27,6 +27,7 @@
 #include "runtime/device/kernel_info.h"
 #include "utils/graph_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "frontend/parallel/ops_info/operator_info.h"
 
 namespace mindspore {
 const std::string ToShortString(const TypeId &typeId) {
@@ -266,7 +267,7 @@ void DumpParallelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo
     return;
   }
 
-  auto operator_info = node->operator_info();
+  auto operator_info = node->GetUserData<parallel::OperatorInfo>();
   if (operator_info == nullptr) {
     return;
   }

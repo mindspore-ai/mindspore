@@ -22,9 +22,9 @@
 #include <tuple>
 #include <vector>
 
-#include "frontend/operator/ops.h"
-#include "frontend/optimizer/optimizer.h"
 #include "ir/anf.h"
+#include "ir/optimizer_caller.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 ///

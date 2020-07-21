@@ -153,7 +153,7 @@ TEST_F(TestStepAutoParallel, test_create_op_instance) {
   StrategyPtr strategyPtr;
 
   std::shared_ptr<OperatorInfo> matmul_info = NewOperatorInstance(prim, attrs, shape);
-  node->set_operator_info(matmul_info);
+  node->SetUserData<OperatorInfo>(matmul_info);
   std::string name_expect = "MatMulInfo00";
   std::string name_test = matmul_info->name();
   ASSERT_EQ(name_expect, name_test);

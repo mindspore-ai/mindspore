@@ -24,7 +24,6 @@
 
 #include "debug/trace.h"
 #include "ir/manager.h"
-#include "frontend/operator/ops.h"
 #include "utils/ordered_set.h"
 #include "utils/convert_utils_base.h"
 

@@ -28,7 +28,6 @@
 #include <type_traits>
 #include <typeinfo>
 
-#include "runtime/device/device_address.h"
 #include "abstract/abstract_value.h"
 
 namespace mindspore {

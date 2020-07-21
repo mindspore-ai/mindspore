@@ -50,7 +50,7 @@ std::unordered_set<CNodePtr> FindCNodesWithPara(const AnfNodePtr &para, uint32_t
     if (node_prim->name() == DEPEND && node_pair.second != 1) {
       continue;
     }
-    if (IsParallelCareNode(cnode) && cnode->operator_info() != nullptr) {
+    if (IsParallelCareNode(cnode) && cnode->HasUserData<OperatorInfo>()) {
       (void)cnode_set.emplace(cnode);
     } else {
       auto cnode_set_sub = FindCNodesWithPara(node_pair.first, recursive_times + 1);
@@ -98,11 +98,12 @@ CNodeCostMap AllreduceFusion::FindCNode(const AnfNodePtr &from, uint32_t recursi
     return cnode_dist;
   }
 
+  auto operator_info = cnode->GetUserData<OperatorInfo>();
   MS_LOG(DEBUG) << "cnode " << cnode->ToString() << " IsParallelCareNode: " << IsParallelCareNode(cnode)
-                << " operator_info: " << (cnode->operator_info() != nullptr);
+                << " operator_info: " << (operator_info != nullptr);
 
-  if (IsParallelCareNode(cnode) && (cnode->operator_info() != nullptr)) {
-    auto cost = cnode->operator_info()->GetForwardMemoryCostFromCNode();
+  if (IsParallelCareNode(cnode) && (operator_info != nullptr)) {
+    auto cost = operator_info->GetForwardMemoryCostFromCNode();
     MS_LOG(DEBUG) << "cnode " << cnode->DebugString() << " cost: " << cost;
 
     if (allreduce_graph_.NodeInGraph(cnode)) {

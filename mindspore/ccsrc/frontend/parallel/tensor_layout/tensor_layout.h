@@ -83,6 +83,9 @@ class TensorLayout {
 
   TensorLayout SqueezeShape() const;
 
+  // Key for user data.
+  constexpr static char key[] = "TLayout";
+
  private:
   std::shared_ptr<TensorLayout> ExpandTensorShapeWithoutExtendDeviceArrangement(
     const Arrangement &expanded_shape) const;

@@ -25,7 +25,6 @@
 
 #include "ir/dtype/type.h"
 #include "abstract/abstract_value.h"
-#include "frontend/parallel/ops_info/operator_info.h"
 #include "utils/base_ref_extends.h"
 
 namespace mindspore {
