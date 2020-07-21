@@ -62,6 +62,7 @@ def _wrap_func(fn):
     Returns:
         Function, a new function with return suitable format data.
     """
+
     @wraps(fn)
     def wrapper(*arg, **kwargs):
         results = fn(*arg, **kwargs)
@@ -74,6 +75,7 @@ def _wrap_func(fn):
             if isinstance(data, list):
                 return list(_convert_data(x) for x in data)
             return data
+
         return _convert_data(results)
 
     return wrapper
@@ -106,6 +108,7 @@ class _MindSporeFunction:
         obj (Object): If function is a method, obj is the owner of function,
              else, obj is none.
     """
+
     def __init__(self, fn, input_signature=None, obj=None):
         self.fn = fn
         self.save_graphs = context.get_context("save_graphs")
@@ -245,6 +248,7 @@ def ms_function(fn=None, obj=None, input_signature=None):
         >>> out = tensor_add_with_dec(x, y)
         >>> out = tensor_add_with_sig(x, y)
     """
+
     def wrap_mindspore(func):
         @wraps(func)
         def staging_specialize(*args):
@@ -275,6 +279,7 @@ def _generate_pip_args(obj, *args, method="construct"):
     obj.__parse_method__ = parse_method
     return args_names, args_list
 
+
 class _PynativeExecutor:
     """
     An pynative executor used to compile/manage/run graph.
@@ -303,6 +308,7 @@ class _PynativeExecutor:
 
     def __call__(self, *args):
         return self._executor(args, "")
+
 
 class _Executor:
     """
@@ -531,6 +537,7 @@ class _Executor:
         if self._executor.has_compiled(exec_id) is False:
             return None
         return self._executor.fetch_info_for_quant_export(exec_id)
+
 
 _executor = _Executor()
 _pynative_exec = _PynativeExecutor()

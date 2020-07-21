@@ -370,6 +370,8 @@ bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature
   } else if (py::hasattr(obj, PYTHON_ENVINSTANCE_FLAG)) {
     std::shared_ptr<EnvInstance> env = obj.cast<std::shared_ptr<EnvInstance>>();
     converted = env;
+  } else if (py::hasattr(obj, PYTHON_CLASS_MEMBER_NAMESPACE)) {
+    converted = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, obj);
   } else if (py::hasattr(obj, "__parameter__")) {
     auto to_convert = py::cast<py::object>(python_adapter::GetPyObjAttr(obj, "default_input"));
     ret = ConvertData(to_convert, &converted);

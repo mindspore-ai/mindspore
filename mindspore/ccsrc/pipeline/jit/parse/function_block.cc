@@ -109,7 +109,7 @@ AnfNodePtr FunctionBlock::MakeResolveClassMember(std::string attr) {
 
 // Make a resolve node for symbol string
 AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &value) {
-  if (value.compare(0, strlen("self."), "self.") == 0) {
+  if (value.compare(0, strlen("self"), "self") == 0) {
     auto start = value.find_first_of('.') + 1;
     if (start >= value.size()) {
       MS_LOG(ERROR) << "Find invalid resolve symbol str: " << value;

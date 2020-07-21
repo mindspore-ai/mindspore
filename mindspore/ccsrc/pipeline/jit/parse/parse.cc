@@ -22,6 +22,7 @@
 #include <sstream>
 #include <unordered_map>
 #include <algorithm>
+#include "pipeline/jit/parse/resolve.h"
 #include "frontend/operator/ops.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "frontend/operator/composite/composite.h"
@@ -504,14 +505,45 @@ AnfNodePtr Parser::GenerateMakeTuple(const FunctionBlockPtr &block, const std::v
                        [](AnfNodePtr arg) -> AnfNodePtr { return arg; });
   return block->func_graph()->NewCNode(make_tuple_nodes);
 }
+
+AnfNodePtr Parser::ParseSuper(const FunctionBlockPtr &block, const py::list &args) {
+  py::object father_class;
+  if (args.empty()) {
+    father_class = py::none();
+  } else if (args.size() == 2) {
+    father_class = args[0];
+    auto arg_type = AstSubType(py::cast<int32_t>(ast_->CallParserObjMethod(PYTHON_PARSE_GET_AST_TYPE, args[1])));
+    if (arg_type != AST_SUB_TYPE_NAME || py::cast<std::string>(python_adapter::GetPyObjAttr(args[1], "id")) != "self") {
+      MS_EXCEPTION(ArgumentError) << "When call 'super', the second arg should be 'self'.";
+    }
+  } else {
+    MS_EXCEPTION(ArgumentError) << "When call 'super', the args number should be 0 or 2, but got" << args.size() << ".";
+  }
+  py::object target_class_instance = ast()->CallParserObjMethod(PYTHON_PARSE_ANALYZE_SUPER, father_class, ast()->obj());
+  py::object namespace_var = ast_->CallParseModFunction(PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, target_class_instance);
+  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var);
+  SymbolPtr symbol = std::make_shared<Symbol>("namespace");
+  return block->MakeResolve(name_space, symbol);
+}
+
 // process function call, eg : f1(x, y) ...
 AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Call";
   // process function call
   py::object function_ast_node = python_adapter::GetPyObjAttr(node, "func");
+  py::list args = python_adapter::GetPyObjAttr(node, "args");
+
+  auto arg_type =
+    AstSubType(py::cast<int32_t>(ast_->CallParserObjMethod(PYTHON_PARSE_GET_AST_TYPE, function_ast_node)));
+  if (arg_type == AST_SUB_TYPE_NAME) {
+    auto name_id = py::cast<std::string>(python_adapter::GetPyObjAttr(function_ast_node, "id"));
+    if (name_id == "super") {
+      return ParseSuper(block, args);
+    }
+  }
+
   AnfNodePtr call_function_anf_node = ParseExprNode(block, function_ast_node);
   // function call arguments should be passed in as groups and unpacked later using unpack call
-  py::list args = python_adapter::GetPyObjAttr(node, "args");
   std::vector<AnfNodePtr> packed_arguments;
   std::vector<AnfNodePtr> group_arguments;
 

@@ -80,7 +80,7 @@ using SymbolPtr = std::shared_ptr<Symbol>;
 // PyObjectWrapper class wrappers resolved python object for further processing.
 class PyObjectWrapper : public Named {
  public:
-  explicit PyObjectWrapper(const py::object &obj, const std::string name = "Python object") : Named(name), obj_(obj) {}
+  explicit PyObjectWrapper(const py::object &obj, const std::string &name = "Python object") : Named(name), obj_(obj) {}
   ~PyObjectWrapper() override = default;
   MS_DECLARE_PARENT(PyObjectWrapper, Named);
   py::object obj() { return obj_; }
@@ -93,7 +93,7 @@ class PyObjectWrapper : public Named {
 // ClassObject class wrappers dataclass
 class ClassObject : public PyObjectWrapper {
  public:
-  explicit ClassObject(const py::object &obj, const std::string name = "Python dataclass")
+  explicit ClassObject(const py::object &obj, const std::string &name = "Python dataclass")
       : PyObjectWrapper(obj, name) {}
   ~ClassObject() override = default;
   MS_DECLARE_PARENT(ClassObject, PyObjectWrapper);
@@ -103,7 +103,7 @@ class ClassObject : public PyObjectWrapper {
 // ClassType class wrappers class name in python
 class ClassType : public PyObjectWrapper {
  public:
-  explicit ClassType(const py::object &obj, const std::string name = "Python class type")
+  explicit ClassType(const py::object &obj, const std::string &name = "Python class type")
       : PyObjectWrapper(obj, name) {}
   ~ClassType() override = default;
   MS_DECLARE_PARENT(ClassType, PyObjectWrapper);

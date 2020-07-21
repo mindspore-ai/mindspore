@@ -99,12 +99,19 @@ class ClassMemberNamespace(Namespace):
         obj (Object): A python class object.
     """
     def __init__(self, obj):
+        self.__class_member_namespace__ = True
         label = f'{obj.__module__}..<{obj.__class__.__name__}::{id(obj)}>'
         super().__init__(label, obj)
 
     def __getitem__(self, name):
         d, = self.dicts
+        if name == "self":
+            return d
+        if name == "namespace":
+            return self
         try:
-            return getattr(d, name)
+            if hasattr(d, name):
+                return getattr(d, name)
+            return d.__dict__[name]
         except ValueError:
             raise UnboundLocalError(name)

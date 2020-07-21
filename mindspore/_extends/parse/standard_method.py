@@ -114,6 +114,12 @@ def enumerate_(x, start=0):
     return ret
 
 
+def isinstance_(x, base_type):
+    """Determine whether x is an instance of base_type."""
+    x_type = F.typeof(x)
+    return check_type_same(x_type, base_type)
+
+
 def while_cond(x):
     """For while condtion, if the condition is a tensor, the loop will not be unrolled"""
     if F.issubclass_(F.typeof(x), F.typeof(mstype.tensor)):
@@ -121,6 +127,12 @@ def while_cond(x):
         if is_cond:
             return F.cast(x, mstype.bool_)
     return x
+
+
+@constexpr
+def check_type_same(x_type, base_type):
+    """Check x_type is same as base_type."""
+    return mstype.issubclass_(x_type, base_type)
 
 
 @constexpr
@@ -141,12 +153,14 @@ def check_is_const_int(x, op_name, arg_name):
     return True
 
 
+
 @constexpr
 def check_is_tensor_bool_cond(shp):
     """check if tensor is a bool condition"""
     if shp in ((), (1,)):
         return True
     raise ValueError("tensor as bool condition, its shape should be () or (1,), but got ", shp)
+
 
 @constexpr
 def const_tensor_to_bool(x):
@@ -161,6 +175,7 @@ def const_tensor_to_bool(x):
     else:
         value = bool(x[0])
     return value
+
 
 def tensor_bool(x):
     """tensor as conditon, if is constant, return immediate bool value"""

@@ -138,6 +138,8 @@ class Parser {
   AnfNodePtr ParseNameConstant(const FunctionBlockPtr &block, const py::object &node);
   // process a function call
   AnfNodePtr ParseCall(const FunctionBlockPtr &block, const py::object &node);
+  // process function 'super'
+  AnfNodePtr ParseSuper(const FunctionBlockPtr &block, const py::list &args);
   // process the if expression
   AnfNodePtr ParseIfExp(const FunctionBlockPtr &block, const py::object &node);
   // process class type define

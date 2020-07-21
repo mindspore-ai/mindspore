@@ -25,6 +25,7 @@ const char PYTHON_ENVINSTANCE_FLAG[] = "__envinstance_flag__";
 const char PYTHON_DTYPE_FLAG[] = "__dtype_flag__";
 const char PYTHON_CELL_AS_LIST[] = "__cell_as_list__";
 const char PYTHON_DATACLASS_FIELDS[] = "__dataclass_fields__";
+const char PYTHON_CLASS_MEMBER_NAMESPACE[] = "__class_member_namespace__";
 
 // flag names
 const char GRAPH_FLAG_MIX_PRECISION_FP16[] = "fp16";

@@ -70,6 +70,7 @@ parse_expr_statement_white_list = (
     "append",
 )
 
+
 def create_slice_obj(start, end, step):
     """Create slice object"""
     return slice(start, end, step)
@@ -201,8 +202,9 @@ def get_object_key(obj):
     if isinstance(obj, types.MethodType):
         method_instance = obj.__self__
         instance_id = "%s_ID%d" % (str(method_instance.__class__.__name__), id(method_instance))
-        obj_id = instance_id + obj_id
+        obj_id = instance_id + obj_id + str(obj.__hash__())
     return obj_id, obj_key
+
 
 def get_default_input(obj):
     if hasattr(obj, '__parameter__'):
@@ -212,6 +214,7 @@ def get_default_input(obj):
         args = tuple(convert(x) for x in obj)
         return args
     return obj
+
 
 def is_class_member(node):
     """Check the attr is class member variable."""
@@ -224,9 +227,11 @@ def is_class_member(node):
             return True
     return False
 
+
 def get_obj_id(obj):
     """Get the obj id."""
     return str(id(obj))
+
 
 def get_obj_type(obj):
     """Get the obj type."""
@@ -319,6 +324,7 @@ def get_dataclass_methods(cls):
                for name in dir(cls)
                if isinstance(getattr(cls, name), (types.FunctionType,))}
     return methods
+
 
 class Parser:
     """
@@ -452,6 +458,28 @@ class Parser:
         ops_info = parse_object_map.get(type(obj), SYMBOL_UNDEFINE)
         logger.debug("ops info = %r", ops_info)
         return ops_info
+
+    def analyze_super(self, father_class_node, subclass_instance):
+        """Analyze super and return a class instance."""
+        father_class = None
+        if father_class_node is None:
+            father_class = type(subclass_instance)
+        if isinstance(father_class_node, ast.Name):
+            father_class_name = getattr(father_class_node, 'id')
+            father_class = self.global_namespace[father_class_name]
+        if isinstance(father_class_node, ast.Attribute):
+            value = getattr(father_class_node, 'value')
+            attr = getattr(father_class_node, 'attr')
+            module_name = getattr(value, 'id')
+            father_class_module = self.global_namespace[module_name]
+            father_class = getattr(father_class_module, attr)
+        if father_class is None:
+            raise ValueError("When call 'super', the father class is None.")
+        if not isinstance(subclass_instance, father_class):
+            raise ValueError("When call 'super', the second arg should be an instance of first arg.")
+
+        target_class_instance = super(father_class, subclass_instance)
+        return target_class_instance
 
     def get_location(self, node):
         """
