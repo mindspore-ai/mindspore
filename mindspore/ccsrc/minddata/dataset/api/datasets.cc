@@ -186,7 +186,7 @@ std::shared_ptr<ProjectDataset> Dataset::Project(const std::vector<std::string> 
 
 // Helper function to create default RandomSampler.
 std::shared_ptr<SamplerObj> CreateDefaultSampler() {
-  int32_t num_samples = 0;  // 0 means to sample all ids.
+  const int32_t num_samples = 0;  // 0 means to sample all ids.
   bool replacement = false;
   return std::make_shared<RandomSamplerObj>(replacement, num_samples);
 }

@@ -664,8 +664,8 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
           table.push_back(i);
         }
       } else {
-        float scale = 255.0 / (hi - lo);
-        float offset = -1 * lo * scale;
+        const float scale = 255.0 / (hi - lo);
+        const float offset = -1 * lo * scale;
         for (int32_t i = 0; i < 256; i++) {
           int32_t ix = static_cast<int32_t>(i * scale + offset);
           ix = std::max(ix, 0);

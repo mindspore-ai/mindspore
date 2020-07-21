@@ -37,6 +37,9 @@ class CacheTransformPass : public TreePass {
   /// \brief Constructor
   CacheTransformPass();
 
+  /// \brief Destructor
+  ~CacheTransformPass() = default;
+
   /// \brief Runs a cache_pass first to set up the transformation nodes, and then drives any of these transformations
   /// \param[inout] tree The tree to operate on.
   /// \param[inout] Indicate of the tree was modified.

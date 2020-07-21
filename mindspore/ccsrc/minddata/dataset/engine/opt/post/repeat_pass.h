@@ -35,6 +35,9 @@ class RepeatPass : public NodePass {
   /// \brief Constructor
   RepeatPass();
 
+  /// \brief Destructor
+  ~RepeatPass() = default;
+
   /// \brief Identifies the subtree below this node as being in a repeated path of the tree.
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
