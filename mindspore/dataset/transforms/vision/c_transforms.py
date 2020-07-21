@@ -89,6 +89,13 @@ class AutoContrast(cde.AutoContrastOp):
         super().__init__(cutoff, ignore)
 
 
+class Equalize(cde.EqualizeOp):
+    """
+    Apply histogram equalization on input image.
+    does not have input arguments.
+    """
+
+
 class Invert(cde.InvertOp):
     """
     Apply invert on input image in RGB mode.

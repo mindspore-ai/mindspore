@@ -54,6 +54,7 @@
 #include "minddata/dataset/kernels/image/center_crop_op.h"
 #include "minddata/dataset/kernels/image/cut_out_op.h"
 #include "minddata/dataset/kernels/image/decode_op.h"
+#include "minddata/dataset/kernels/image/equalize_op.h"
 #include "minddata/dataset/kernels/image/hwc_to_chw_op.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/kernels/image/invert_op.h"
@@ -388,6 +389,10 @@ void bindTensorOps1(py::module *m) {
     *m, "NormalizeOp", "Tensor operation to normalize an image. Takes mean and std.")
     .def(py::init<float, float, float, float, float, float>(), py::arg("meanR"), py::arg("meanG"), py::arg("meanB"),
          py::arg("stdR"), py::arg("stdG"), py::arg("stdB"));
+
+  (void)py::class_<EqualizeOp, TensorOp, std::shared_ptr<EqualizeOp>>(
+    *m, "EqualizeOp", "Tensor operation to apply histogram equalization on images.")
+    .def(py::init<>());
 
   (void)py::class_<InvertOp, TensorOp, std::shared_ptr<InvertOp>>(*m, "InvertOp",
                                                                   "Tensor operation to apply invert on RGB images.")

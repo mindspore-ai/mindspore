@@ -5,6 +5,7 @@ add_library(kernels-image OBJECT
     center_crop_op.cc
     cut_out_op.cc
     decode_op.cc
+    equalize_op.cc
     hwc_to_chw_op.cc
     image_utils.cc
     invert_op.cc
