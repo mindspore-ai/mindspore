@@ -105,7 +105,7 @@ if __name__ == '__main__':
     # define dataset
     dataset = create_dataset(dataset_path=args_opt.dataset_path,
                              do_train=True,
-                             repeat_num=epoch_size,
+                             repeat_num=1,
                              batch_size=config.batch_size,
                              target=args_opt.device_target)
     step_size = dataset.get_dataset_size()

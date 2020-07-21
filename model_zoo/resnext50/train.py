@@ -191,7 +191,7 @@ def train(cloud_args=None):
 
     # dataloader
     de_dataset = classification_dataset(args.data_dir, args.image_size,
-                                        args.per_batch_size, args.max_epoch,
+                                        args.per_batch_size, 1,
                                         args.rank, args.group_size)
     de_dataset.map_model = 4  # !!!important
     args.steps_per_epoch = de_dataset.get_dataset_size()

@@ -46,7 +46,7 @@ args = parser.parse_args()
 
 if __name__ == "__main__":
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-    ds_train = create_dataset(os.path.join(args.data_path, "train"), cfg.batch_size, cfg.epoch_size)
+    ds_train = create_dataset(os.path.join(args.data_path, "train"), cfg.batch_size, 1)
     step_size = ds_train.get_dataset_size()
 
     # define fusion network
