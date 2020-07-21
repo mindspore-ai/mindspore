@@ -32,12 +32,17 @@ const std::set<std::string> kNeedInsertMemcpyOpSet = {kLambNextMVOpName, kLambNe
 bool IsParameterOrValueNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0, true);
-  return kernel_with_index.first->isa<Parameter>() || kernel_with_index.first->isa<ValueNode>();
+  auto real_node = kernel_with_index.first;
+  MS_EXCEPTION_IF_NULL(real_node);
+  if (real_node->isa<Parameter>()) {
+    return true;
+  }
+  return real_node->isa<ValueNode>();
 }
 
-void TransferControl(const CNodePtr &hccl_node, const AnfNodePtr &memcpy_async, const FuncGraphPtr &graph) {
+void TransferControl(const CNodePtr &hccl_node, const std::vector<AnfNodePtr> &memcpy_async_list,
+                     const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(hccl_node);
-  MS_EXCEPTION_IF_NULL(memcpy_async);
   MS_EXCEPTION_IF_NULL(graph);
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
@@ -48,49 +53,62 @@ void TransferControl(const CNodePtr &hccl_node, const AnfNodePtr &memcpy_async, 
   }
   // find hccl_node's output which is a control depend
   for (const auto &node_index : iter->second) {
-    AnfNodePtr output = node_index.first;
-    int output_index = node_index.second;
-    if (AnfAlgo::CheckPrimitiveType(output, prim::kPrimControlDepend)) {
-      CNodePtr control_depend = output->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(control_depend);
-      std::vector<AnfNodePtr> new_inputs;
-      for (size_t i = 0; i < control_depend->size(); ++i) {
-        if (i == IntToSize(output_index)) {
-          new_inputs.push_back(memcpy_async);
-        } else {
-          new_inputs.push_back(control_depend->input(i));
-        }
-      }
-      control_depend->set_inputs(new_inputs);
+    if (!AnfAlgo::CheckPrimitiveType(node_index.first, prim::kPrimControlDepend)) {
+      continue;
     }
+    CNodePtr control_depend = node_index.first->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(control_depend);
+    std::vector<AnfNodePtr> new_inputs;
+    for (size_t i = 0; i < control_depend->size(); ++i) {
+      if (i == IntToSize(node_index.second)) {
+        std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+        make_tuple_inputs.insert(make_tuple_inputs.end(), memcpy_async_list.begin(), memcpy_async_list.end());
+        make_tuple_inputs.emplace_back(hccl_node);
+        auto make_tuple = graph->NewCNode(make_tuple_inputs);
+        MS_EXCEPTION_IF_NULL(make_tuple);
+        new_inputs.push_back(make_tuple);
+      } else {
+        new_inputs.push_back(control_depend->input(i));
+      }
+    }
+    control_depend->set_inputs(new_inputs);
   }
 }
 }  // namespace
 
-bool InsertMemcpyAsyncForHcclOp::NeedInsertMemcpy(const FuncGraphPtr &graph, const AnfNodePtr &input) const {
+bool InsertMemcpyAsyncForHcclOp::NeedInsertMemcpy(const FuncGraphPtr &graph, const AnfNodePtr &input,
+                                                  const CNodePtr &cur_node) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(cur_node);
   // when input is a parameter or is a value node
   if (IsParameterOrValueNode(input)) {
     return true;
   }
 
-  // when input is a Ref or some special cnodes
-  if (kernel_query_->IsTbeRef(input) ||
-      kNeedInsertMemcpyOpSet.find(AnfAlgo::GetCNodeName(input)) != kNeedInsertMemcpyOpSet.end()) {
-    return true;
-  }
+  if (input->isa<CNode>()) {
+    auto manager = graph->manager();
+    MS_EXCEPTION_IF_NULL(manager);
+    auto &node_users = manager->node_users();
 
-  auto manager = graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  auto &node_users = manager->node_users();
-  auto iter = node_users.find(input);
-  if (iter == node_users.end()) {
-    MS_LOG(EXCEPTION) << "node has no output in manager";
-  }
-  // when input is used by others
-  if (iter->second.size() > 1) {
-    return true;
+    // when input is a Ref cnode
+    if (kernel_query_->IsTbeRef(input)) {
+      return true;
+    }
+
+    // when input is some special cnodes
+    if (kNeedInsertMemcpyOpSet.find(AnfAlgo::GetCNodeName(input)) != kNeedInsertMemcpyOpSet.end()) {
+      return true;
+    }
+
+    // when input is used by others
+    auto iter = node_users.find(input);
+    if (iter == node_users.end()) {
+      MS_LOG(EXCEPTION) << "node has no output in manager";
+    }
+    if (iter->second.size() > 1) {
+      return true;
+    }
   }
   return false;
 }
@@ -98,21 +116,20 @@ bool InsertMemcpyAsyncForHcclOp::NeedInsertMemcpy(const FuncGraphPtr &graph, con
 void InsertMemcpyAsyncForHcclOp::InsertMemcpyAsync(const FuncGraphPtr &graph, const CNodePtr &hccl_node) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(hccl_node);
-  bool has_insert_memcpy = false;
-  AnfNodePtr memcpy_async = nullptr;
+  std::vector<AnfNodePtr> memcpy_async_list;
   std::vector<AnfNodePtr> new_inputs = {hccl_node->input(0)};
   for (size_t i = 1; i < hccl_node->size(); ++i) {
     auto input = hccl_node->input(i);
-    if (NeedInsertMemcpy(graph, input)) {
-      memcpy_async = CreateMemcpyAsyncOp(graph, input);
-      has_insert_memcpy = true;
+    if (NeedInsertMemcpy(graph, input, hccl_node)) {
+      auto memcpy_async = CreateMemcpyAsyncOp(graph, input);
       new_inputs.push_back(memcpy_async);
+      memcpy_async_list.push_back(memcpy_async);
     } else {
       new_inputs.push_back(input);
     }
   }
 
-  if (has_insert_memcpy) {
+  if (!memcpy_async_list.empty()) {
     CNodePtr new_hccl_node = std::make_shared<CNode>(*hccl_node);
     new_hccl_node->set_inputs(new_inputs);
     auto manager = graph->manager();
@@ -122,9 +139,7 @@ void InsertMemcpyAsyncForHcclOp::InsertMemcpyAsync(const FuncGraphPtr &graph, co
     MS_LOG(DEBUG) << "end replace";
 
     // transer hccl op's control to the memcpy_async
-    if (hccl_node->size() == 2) {
-      TransferControl(new_hccl_node, memcpy_async, graph);
-    }
+    TransferControl(new_hccl_node, memcpy_async_list, graph);
   }
 }
 

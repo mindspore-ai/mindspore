@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ENHANCER_INSERT_MEMCPY_ASYNC_FOR_HCCL_OP_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ENHANCER_INSERT_MEMCPY_ASYNC_FOR_HCCL_OP_H_
+#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ENHANCER_INSERT_MEMCPY_ASYNC_FOR_CASCADE_H_
+#define MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ENHANCER_INSERT_MEMCPY_ASYNC_FOR_CASCADE_H_
 
 #include <memory>
 #include "backend/optimizer/common/optimizer.h"
@@ -22,19 +22,18 @@
 
 namespace mindspore {
 namespace opt {
-class InsertMemcpyAsyncForHcclOp : public PatternProcessPass {
+class InsertMemcpyAsyncForCascade : public PatternProcessPass {
  public:
-  explicit InsertMemcpyAsyncForHcclOp(bool multigraph = true)
-      : PatternProcessPass("insert_memcpy_async_for_hccl_op", multigraph),
-        kernel_query_(std::make_shared<KernelQuery>()) {}
-  ~InsertMemcpyAsyncForHcclOp() override = default;
+  explicit InsertMemcpyAsyncForCascade(bool multigraph = true)
+      : PatternProcessPass("insert_memcpy_async_for_cascade", multigraph),
+        kernel_select_(std::make_shared<KernelSelect>()) {}
+  ~InsertMemcpyAsyncForCascade() override = default;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  void InsertMemcpyAsync(const FuncGraphPtr &graph, const CNodePtr &hccl_node) const;
-  bool NeedInsertMemcpy(const FuncGraphPtr &graph, const AnfNodePtr &input, const CNodePtr &cur_node) const;
-  KernelQueryPtr kernel_query_;
+  AnfNodePtr InsertMemcpyAsync(const FuncGraphPtr &graph, const CNodePtr &hccl_node) const;
+  KernelSelectPtr kernel_select_;
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ENHANCER_INSERT_MEMCPY_ASYNC_FOR_HCCL_OP_H_
+#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ENHANCER_INSERT_MEMCPY_ASYNC_FOR_OP_CASCADE_H_

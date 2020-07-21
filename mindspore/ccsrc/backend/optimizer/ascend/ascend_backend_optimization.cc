@@ -87,6 +87,7 @@
 #include "backend/optimizer/ascend/buffer_fusion/segment_eltwise_fusion_pass.h"
 #include "backend/optimizer/ascend/format_type/deal_ref_trans_and_cast.h"
 #include "backend/optimizer/ascend/enhancer/insert_memcpy_async_for_hccl_op.h"
+#include "backend/optimizer/ascend/enhancer/insert_memcpy_async_for_cascade.h"
 #include "backend/optimizer/ascend/enhancer/insert_pad_for_nms_with_mask.h"
 #include "backend/optimizer/ascend/format_type/insert_transdata_for_runop.h"
 #include "backend/optimizer/ascend/enhancer/getnext_memcpy_elimination.h"
@@ -340,6 +341,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   other_pm->AddPass(std::make_shared<AllGatherFusion>());
   other_pm->AddPass(std::make_shared<ReduceScatterFusion>());
   other_pm->AddPass(std::make_shared<BroadcastFusion>());
+  other_pm->AddPass(std::make_shared<InsertMemcpyAsyncForCascade>());
   other_pm->AddPass(std::make_shared<ParameterTransOpFusion>());
   other_pm->AddPass(std::make_shared<RefreshParameterFormat>());
   optimizer->AddPassManager(other_pm);
