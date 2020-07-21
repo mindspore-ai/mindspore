@@ -330,7 +330,6 @@ __all__ = [
     "ApplyCenteredRMSProp",
     "SpaceToBatchND",
     "BatchToSpaceND",
-    "ReverseSequence",
     "SquareSumAll",
     "BitwiseAnd",
     "BitwiseOr",
@@ -346,12 +345,10 @@ __all__ = [
     "ApproximateEqual",
     "InplaceUpdate",
     "InTopK",
-    "CropAndResize",
     "LRN",
     "Mod",
     "PopulationCount",
     "ParallelConcat",
-    "EmbeddingLookup",
     "Push",
     "Pull"
 ]
