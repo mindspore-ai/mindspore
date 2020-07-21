@@ -88,6 +88,12 @@ MetaFuncGraphPtr KPrim::KMetaFuncGraph(const PrimitivePtr &prim) {
     return meta;
   }
 
+  if (prim->Hash() == prim::kPrimMakeList->Hash() && prim->name() == prim::kPrimMakeList->name()) {
+    MetaFuncGraphPtr meta = std::make_shared<prim::MakeListGradient>("make_list_gradient");
+    bprop_registry_meta_[prim::kPrimMakeList] = meta;
+    return meta;
+  }
+
   MS_LOG(EXCEPTION) << "Fail to find bprop function for " << prim->name() << ".";
 }
 
@@ -102,6 +108,8 @@ FuncGraphPtr KPrim::KPrimitive(const ValueNodePtr &value_node, const pipeline::R
     fprop->transforms().emplace("primal", FuncGraphTransform(prim::kPrimSwitchLayer));
     return fprop;
   } else if (prim->Hash() == prim::kPrimMakeTuple->Hash() && prim->name() == prim::kPrimMakeTuple->name()) {
+    return nullptr;
+  } else if (prim->Hash() == prim::kPrimMakeList->Hash() && prim->name() == prim::kPrimMakeList->name()) {
     return nullptr;
   }
 

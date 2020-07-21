@@ -17,6 +17,7 @@
 
 from functools import reduce
 import numpy as np
+import mindspore as ms
 from mindspore.ops import _selected_grad_ops as SG
 from .. import functional as F
 from .. import operations as P
@@ -33,6 +34,7 @@ shape_op = P.Shape()
 reduce_sum = P.ReduceSum()
 reshape = P.Reshape()
 tile = P.Tile()
+is_sub_class = P.IsSubClass()
 
 
 def binop_grad_common(x, y, dx, dy):
@@ -990,6 +992,12 @@ def get_bprop_scalar_addn(self):
     """Generate bprop for AddN"""
 
     def bprop(x, out, dout):
+        if is_sub_class(F.typeof(x), ms.list_):
+            dx = []
+            for _ in range(len(x)):
+                dx.append(dout)
+            return (dx,)
+
         dx = ()
         for _ in range(len(x)):
             dx = dx + (dout,)

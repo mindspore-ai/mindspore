@@ -198,6 +198,7 @@ std::string AnfExporter::GetMultitypeFuncGraphText(const prim::MultitypeFuncGrap
  * │   └── MapPy
  * ├── Tail
  * ├── MakeTupleGradient
+ * ├── MakeListGradient
  * ├── GradOperation
  * └── TupleAdd
  */
@@ -240,6 +241,8 @@ std::string AnfExporter::GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_
   } else if (meta_func_graph->isa<prim::Tail>()) {
     // do nothing
   } else if (meta_func_graph->isa<prim::MakeTupleGradient>()) {
+    // do nothing
+  } else if (meta_func_graph->isa<prim::MakeListGradient>()) {
     // do nothing
   } else if (meta_func_graph->isa<prim::TupleAdd>()) {
     // do nothing
