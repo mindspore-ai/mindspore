@@ -162,15 +162,10 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
 }
 
 OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
-  opt::OptPassConfig b_1 = opt::OptPassConfig({
-    irpass.zero_like_fill_zero_,
-    irpass.item_tuple_eliminate_,
-    irpass.float_tuple_getitem_switch_,
-    irpass.reset_defer_inline_,
-    irpass.inline_,
-    irpass.special_op_eliminate_,
-    irpass.get_make_ref_eliminate_,
-  });
+  opt::OptPassConfig b_1 =
+    opt::OptPassConfig({irpass.zero_like_fill_zero_, irpass.item_tuple_eliminate_, irpass.float_tuple_getitem_switch_,
+                        irpass.reset_defer_inline_, irpass.inline_, irpass.special_op_eliminate_,
+                        irpass.get_make_ref_eliminate_, irpass.value_based_eliminate_});
   opt::OptPassConfig b_2 = opt::OptPassConfig({
     irpass.replace_refkey_by_param_,
     irpass.make_ref_eliminate_,
