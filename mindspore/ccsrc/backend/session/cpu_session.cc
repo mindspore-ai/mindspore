@@ -32,7 +32,7 @@
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif
-#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "frontend/parallel/ps/util.h"
 #endif
 
@@ -73,7 +73,7 @@ GraphId CPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Set kernel info";
   SetKernelInfo(graph.get());
-#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
   AssignParamKey(graph);
   if (parallel::ps::Util::IsRoleOfWorker()) {
     Optimize(graph);
@@ -90,7 +90,7 @@ GraphId CPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
 void CPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
   auto &kernel_graph = graphs_[graph_id];
   MS_EXCEPTION_IF_NULL(kernel_graph);
-#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
   // Initialize parameter server
   if (!ps_init_) {
     InitPSParamAndOptim(kernel_graph, inputs);

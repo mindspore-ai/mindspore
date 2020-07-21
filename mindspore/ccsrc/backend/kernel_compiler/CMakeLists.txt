@@ -33,7 +33,7 @@ if (ENABLE_CPU)
     endif ()
 endif ()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows" OR ENABLE_GE)
+if (NOT (ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU)))
     list(REMOVE_ITEM CPU_SRC_LIST "cpu/ps/apply_momentum_ps_kernel.cc")
     list(REMOVE_ITEM CPU_SRC_LIST "cpu/ps/embedding_look_up_proxy_kernel.cc")
     list(REMOVE_ITEM CPU_SRC_LIST "cpu/ps/embedding_look_up_ps_kernel.cc")

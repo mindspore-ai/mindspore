@@ -35,7 +35,7 @@
 #include "ir/dtype.h"
 #include "ir/anf.h"
 #include "ir/func_graph_cloner.h"
-#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "frontend/parallel/ps/worker.h"
 #include "frontend/parallel/ps/common.h"
 #include "frontend/parallel/ps/util.h"
@@ -1141,7 +1141,7 @@ AnfNodePtr SessionBasic::FindPullNode(const AnfNodePtr &push_node, const std::ve
   return nullptr;
 }
 
-#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 void SessionBasic::AssignParamKey(const KernelGraphPtr &kernel_graph) {
   if (!parallel::ps::Util::IsRoleOfWorker()) {
     MS_LOG(INFO) << "Not parameter server mode.";
