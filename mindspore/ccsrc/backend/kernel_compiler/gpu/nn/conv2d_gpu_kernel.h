@@ -109,12 +109,14 @@ class Conv2dGpuFwdKernel : public GpuKernel {
     Set4DDesc(in_shape, filter_shape, output_shape);
     group_ = GetAttr<int>(kernel_node, "group");
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetConvolutionGroupCount(conv_desc_, group_), "cudnnSetConvGroupCount failed");
-    pad_height_ = GetAttr<int>(kernel_node, "pad");
-    pad_width_ = pad_height_;
+    auto pad_list = GetAttr<std::vector<int>>(kernel_node, "pad_list");
+    pad_height_ = pad_list[0];
+    pad_width_ = pad_list[2];
+    auto symmetry_pad = (pad_height_ == pad_list[1]) && (pad_width_ == pad_list[3]);
     pad_mode_ = GetAttr<std::string>(kernel_node, "pad_mode");
     SetStrideAndDilation(kernel_node);
     cudnnTensorDescriptor_t input_descriptor_real = nullptr;
-    if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) {
+    if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase || !symmetry_pad) {
       SetPad(in_shape, kernel_node);
       input_descriptor_real = use_pad_ ? padded_desc_ : input_desc_;
     } else {

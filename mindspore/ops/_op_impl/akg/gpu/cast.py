@@ -50,6 +50,9 @@ cast_op_info = AkgGpuRegOp("Cast") \
     .dtype_format(DataType.I16_Default, DataType.I32_Default) \
     .dtype_format(DataType.I16_Default, DataType.I64_Default) \
     .dtype_format(DataType.I64_Default, DataType.F64_Default) \
+    .dtype_format(DataType.I64_Default, DataType.F32_Default) \
+    .dtype_format(DataType.I64_Default, DataType.F16_Default) \
+    .dtype_format(DataType.I64_Default, DataType.I32_Default) \
     .dtype_format(DataType.I16_Default, DataType.F32_Default) \
     .dtype_format(DataType.I16_Default, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.I32_Default) \

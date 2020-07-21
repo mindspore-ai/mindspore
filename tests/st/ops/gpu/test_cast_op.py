@@ -92,7 +92,7 @@ def test_cast2():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast3():
-    x0 = Tensor(np.arange(24).reshape((4, 3, 2)).astype(np.float16))
+    x0 = Tensor(np.arange(24).reshape((4, 3, 2)).astype(np.int64))
     t0 = mstype.int32
     x1 = Tensor(np.arange(24).reshape((4, 3, 2)).astype(np.float32))
     t1 = mstype.int32
@@ -333,6 +333,23 @@ def test_cast17():
     x0 = Tensor(np.arange(24).reshape((4, 3, 2)).astype(np.int16))
     t0 = mstype.float32
     x1 = Tensor(np.arange(24).reshape((4, 3, 2)).astype(np.int16))
+    t1 = mstype.float16
+
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    net = Net(t0, t1)
+    output = net(x0, x1)
+    type0 = output[0].asnumpy().dtype
+    assert type0 == 'float32'
+    type1 = output[1].asnumpy().dtype
+    assert type1 == 'float16'
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_cast18():
+    x0 = Tensor(np.arange(24).reshape((4, 3, 2)).astype(np.int64))
+    t0 = mstype.float32
+    x1 = Tensor(np.arange(24).reshape((4, 3, 2)).astype(np.int64))
     t1 = mstype.float16
 
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
