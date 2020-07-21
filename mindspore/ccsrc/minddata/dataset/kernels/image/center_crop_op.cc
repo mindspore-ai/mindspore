@@ -36,6 +36,10 @@ Status CenterCropOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_p
   int32_t top = crop_het_ - input->shape()[0];  // number of pixels to pad (top and bottom)
   int32_t left = crop_wid_ - input->shape()[1];
   std::shared_ptr<Tensor> pad_image;
+
+  CHECK_FAIL_RETURN_UNEXPECTED((top < input->shape()[0] * 10 && left < input->shape()[1] * 10),
+                               "CenterCropOp padding size is too big, it's more than 10 times the original size.");
+
   if (top > 0 && left > 0) {  // padding only
     return Pad(input, output, top / 2 + top % 2, top / 2, left / 2 + left % 2, left / 2, BorderType::kConstant);
   } else if (top > 0) {

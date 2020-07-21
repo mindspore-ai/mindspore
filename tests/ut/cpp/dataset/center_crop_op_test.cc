@@ -20,17 +20,17 @@
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
 class MindDataTestCenterCropOp : public UT::CVOP::CVOpCommon {
  public:
   MindDataTestCenterCropOp() : CVOpCommon() {}
 };
 
-TEST_F(MindDataTestCenterCropOp, TestOp) {
-  MS_LOG(INFO) << "Doing MindDataTestCenterCropOp::TestOp.";
+TEST_F(MindDataTestCenterCropOp, TestOp1) {
+  MS_LOG(INFO) << "Doing MindDataTestCenterCropOp::TestOp1.";
   std::shared_ptr<Tensor> output_tensor;
   int het = 256;
   int wid = 128;
@@ -41,4 +41,17 @@ TEST_F(MindDataTestCenterCropOp, TestOp) {
   EXPECT_EQ(het, output_tensor->shape()[0]);
   EXPECT_EQ(wid, output_tensor->shape()[1]);
   std::shared_ptr<CVTensor> p = CVTensor::AsCVTensor(output_tensor);
+}
+
+TEST_F(MindDataTestCenterCropOp, TestOp2) {
+  MS_LOG(INFO) << "MindDataTestCenterCropOp::TestOp2. Cap valid crop size at 10 times the input size";
+  std::shared_ptr<Tensor> output_tensor;
+
+  int64_t wid = input_tensor_->shape()[0] * 10 + 1;
+  int64_t het = input_tensor_->shape()[1] * 10 + 1;
+
+  std::unique_ptr<CenterCropOp> op(new CenterCropOp(het, wid));
+  Status s = op->Compute(input_tensor_, &output_tensor);
+  EXPECT_TRUE(s.IsError());
+  ASSERT_TRUE(s.get_code() == StatusCode::kUnexpectedError);
 }

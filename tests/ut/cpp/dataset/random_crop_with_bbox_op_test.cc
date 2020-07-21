@@ -66,6 +66,7 @@ TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp1) {
     }
     GlobalContext::config_manager()->set_seed(current_seed);
   }
+  MS_LOG(INFO) << "testRandomCropWithBBoxOp1 end.";
 }
 
 TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp2) {
@@ -87,5 +88,22 @@ TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp2) {
     EXPECT_EQ(s, Status::OK());
     EXPECT_EQ(4, output_tensor_row_[1]->shape()[1]);  // check for existence of 4 columns
   }
-  MS_LOG(INFO) << "testRandomCropWithBBoxOp end.";
+  MS_LOG(INFO) << "testRandomCropWithBBoxOp2 end.";
+}
+
+TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp3) {
+  MS_LOG(INFO) << "Doing testRandomCropWithBBoxOp3.";
+  // Crop params
+  unsigned int crop_height = 1280;
+  unsigned int crop_width = 1280;
+  std::unique_ptr<RandomCropWithBBoxOp> op(new RandomCropWithBBoxOp(crop_height, crop_width, crop_height * 3 + 1,
+                                                                    crop_height * 3 + 1, crop_width * 3 + 1,
+                                                                    crop_width * 3 + 1, BorderType::kConstant, false));
+
+  for (auto tensor_row_ : images_and_annotations_) {
+    Status s = op->Compute(tensor_row_, &output_tensor_row_);
+    EXPECT_TRUE(s.IsError());
+    ASSERT_TRUE(s.get_code() == StatusCode::kUnexpectedError);
+  }
+  MS_LOG(INFO) << "testRandomCropWithBBoxOp3 end.";
 }

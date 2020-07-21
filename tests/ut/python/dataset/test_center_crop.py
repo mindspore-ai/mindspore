@@ -138,6 +138,17 @@ def test_crop_grayscale(height=375, width=375):
         assert (c_image.ndim == 3 and c_image.shape[2] == 1)
 
 
+def test_center_crop_errors():
+    """
+    Test that CenterCropOp errors with bad input
+    """
+    try:
+        test_center_crop_op(16777216, 16777216)
+    except RuntimeError as e:
+        assert "Unexpected error. CenterCropOp padding size is too big, it's more than 10 times the original size." in \
+               str(e)
+
+
 if __name__ == "__main__":
     test_center_crop_op(600, 600, plot=True)
     test_center_crop_op(300, 600)
