@@ -69,6 +69,25 @@ struct AddFunc {
   __device__ __forceinline__ S operator()(const T &lhs, const T &rhs) { return (lhs + rhs); }
 };
 
+template <typename T, typename S>
+struct FloorDivFunc {
+  __device__ __forceinline__ S operator()(const T &lhs, const T &rhs) { return floor(static_cast<float>(lhs / rhs)); }
+};
+
+template <>
+struct FloorDivFunc<half, half> {
+  __device__ __forceinline__ half operator()(const half &lhs, const half &rhs) {
+    return __float2half(floor(__half2float(lhs)/ __half2float(rhs)));
+  }
+};
+
+template <>
+struct FloorDivFunc<half, bool> {
+  // invalid branch
+  __device__ __forceinline__ half operator()(const half &lhs, const half &rhs) { return false; }
+};
+
+
 template <>
 struct PowerFunc<half, bool> {
   // invalid branch
@@ -76,6 +95,7 @@ struct PowerFunc<half, bool> {
 };
 
 __device__ __forceinline__ int Index(const int &index, const int &dim) { return dim == 1 ? 0 : index; }
+
 
 template <typename T, typename S, typename Func>
 __device__ __forceinline__ void BroadcastOperator(const int &l0, const int &l1, const int &l2, const int &l3,
@@ -116,16 +136,19 @@ __global__ void BroadcastKernel(const int l0, const int l1, const int l2, const 
                                                       output);
     case BROADCAST_TYPE_REALDIV:
       return BroadcastOperator<T, S, RealDivFunc<T, S>>(l0, l1, l2, l3, r0, r1, r2, r3, d0, d1, d2, d3, input0, input1,
-                                                        output);
+                                                      output);
     case BROADCAST_TYPE_MUL:
       return BroadcastOperator<T, S, MulFunc<T, S>>(l0, l1, l2, l3, r0, r1, r2, r3, d0, d1, d2, d3, input0, input1,
-                                                    output);
+                                                      output);
     case BROADCAST_TYPE_SUB:
       return BroadcastOperator<T, S, SubFunc<T, S>>(l0, l1, l2, l3, r0, r1, r2, r3, d0, d1, d2, d3, input0, input1,
-                                                    output);
+                                                      output);
     case BROADCAST_TYPE_ADD:
       return BroadcastOperator<T, S, AddFunc<T, S>>(l0, l1, l2, l3, r0, r1, r2, r3, d0, d1, d2, d3, input0, input1,
-                                                    output);
+                                                      output);
+    case BROADCAST_TYPE_FLOORDIV:
+      return BroadcastOperator<T, S, FloorDivFunc<T, S>>(l0, l1, l2, l3, r0, r1, r2, r3, d0, d1, d2, d3, input0, input1,
+                                                      output);
   }
 }
 
@@ -167,6 +190,8 @@ __global__ void NoBroadcastKernel(const int nums, enum BroadcastOpType op, const
       return NoBroadcastOperator<T, S, SubFunc<T, S>>(nums, input0, input1, output);
     case BROADCAST_TYPE_ADD:
       return NoBroadcastOperator<T, S, AddFunc<T, S>>(nums, input0, input1, output);
+    case BROADCAST_TYPE_FLOORDIV:
+      return NoBroadcastOperator<T, S, FloorDivFunc<T, S>>(nums, input0, input1, output);
   }
 }
 
@@ -195,7 +220,7 @@ void BroadcastTo(const int &i0, const int &i1, const int &i2, const int &i3, con
                  const int &o2, const int &o3, const T *input_addr, T *output_addr, cudaStream_t stream) {
   int nums = o0 * o1 * o2 * o3;
   BroadcastToKernel<<<GET_BLOCKS(nums), GET_THREADS, 0, stream>>>(i0, i1, i2, i3, o0, o1, o2, o3, input_addr,
-                                                                  output_addr);
+          output_addr);
 }
 
 template void Broadcast(const int &l0, const int &l1, const int &l2, const int &l3, const int &r0, const int &r1,
@@ -226,9 +251,8 @@ template void NoBroadcast(const int &nums, enum BroadcastOpType op, const half *
                           bool *output, cudaStream_t stream);
 template void NoBroadcast(const int &nums, enum BroadcastOpType op, const half *input0, const half *input1,
                           half *output, cudaStream_t stream);
-template void NoBroadcast(const int &nums, enum BroadcastOpType op, const int *input0, const int *input1, int *output,
-                          cudaStream_t stream);
-
+template void NoBroadcast(const int &nums, enum BroadcastOpType op, const int *input0, const int *input1,
+                          int *output, cudaStream_t stream);
 template void BroadcastTo(const int &i0, const int &i1, const int &i2, const int &i3, const int &o0, const int &o1,
                           const int &o2, const int &o3, const float *input_addr, float *output_addr,
                           cudaStream_t stream);

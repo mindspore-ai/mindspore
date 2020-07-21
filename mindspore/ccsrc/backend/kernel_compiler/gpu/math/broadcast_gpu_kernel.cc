@@ -51,6 +51,10 @@ MS_REG_GPU_KERNEL_TWO(
   TensorAdd,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   BroadcastOpGpuKernel, float, float)
+MS_REG_GPU_KERNEL_TWO(
+  FloorDiv,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  BroadcastOpGpuKernel, float, float)
 
 // fp16
 MS_REG_GPU_KERNEL_TWO(
@@ -83,6 +87,10 @@ MS_REG_GPU_KERNEL_TWO(
   BroadcastOpGpuKernel, half, half)
 MS_REG_GPU_KERNEL_TWO(
   TensorAdd,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  BroadcastOpGpuKernel, half, half)
+MS_REG_GPU_KERNEL_TWO(
+  FloorDiv,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
   BroadcastOpGpuKernel, half, half)
 
