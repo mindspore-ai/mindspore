@@ -435,7 +435,7 @@ class Squeeze(PrimitiveWithInfer):
         ValueError: If the corresponding dimension of the specified axis does not equal to 1.
 
     Args:
-        axis (int): Specifies the dimension indexes of shape to be removed, which will remove
+        axis (Union[int, tuple(int)]): Specifies the dimension indexes of shape to be removed, which will remove
             all the dimensions that are equal to 1. If specified, it must be int32 or int64.
             Default: (), an empty tuple.
 
@@ -1427,7 +1427,8 @@ class UnsortedSegmentProd(PrimitiveWithInfer):
     Inputs:
         - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
           With float16, float32 or int32 data type.
-        - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`. Data type must be int32.
+        - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`, the value should be >= 0.
+          Data type must be int32.
         - **num_segments** (int) - The value spcifies the number of distinct `segment_ids`,
           should be greater than 0.
 
