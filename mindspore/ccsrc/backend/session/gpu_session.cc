@@ -182,7 +182,7 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   Optimize(graph);
   // Select kernel build info
   SelectKernel(graph);
-#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
   // Assign parameter keys.
   AssignParamKey(graph);
 #endif
@@ -231,10 +231,12 @@ void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
   auto &kernel_graph = graphs_[graph_id];
   // Load input data from user input
   LoadInputData(kernel_graph, inputs);
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
   // Initialize parameter server
   if (!ps_init_) {
     InitPSParamAndOptim(kernel_graph, inputs);
   }
+#endif
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // Convert inputs to model
   predictmodel::StepConvertWeight(inputs);

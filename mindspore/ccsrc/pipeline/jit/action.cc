@@ -40,7 +40,7 @@
 #include "vm/transform.h"
 #include "parse/python_adapter.h"
 #include "frontend/optimizer/py_pass_manager.h"
-#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "frontend/parallel/ps/parameter_server.h"
 #include "frontend/parallel/ps/scheduler.h"
 #include "frontend/parallel/ps/worker.h"
@@ -379,7 +379,7 @@ bool ExecuteAction(const ResourcePtr &res) {
   return true;
 }
 
-#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 bool StartPSWorkerAction(const ResourcePtr &res) {
   parallel::ps::Worker<float>::GetInstance().Run();
   return true;
@@ -505,7 +505,7 @@ std::vector<ActionItem> VmPipeline() {
   actions.emplace_back(std::make_pair("py_opt", OptActionPyStub));
 
   actions.emplace_back(std::make_pair("validate", ValidateAction));
-#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
   if (parallel::ps::Util::IsRoleOfWorker()) {
     actions.emplace_back(std::make_pair("worker", StartPSWorkerAction));
   }
@@ -519,7 +519,7 @@ std::vector<ActionItem> VmPipeline() {
   return actions;
 }
 
-#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 std::vector<ActionItem> PServerPipeline() {
   auto actions = CommonPipeline();
   actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));

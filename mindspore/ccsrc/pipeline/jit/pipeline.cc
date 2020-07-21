@@ -42,7 +42,7 @@
 #include "frontend/optimizer/py_pass_manager.h"
 #include "pybind_api/pybind_patch.h"
 
-#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "frontend/parallel/ps/common.h"
 #include "frontend/parallel/ps/util.h"
 #endif
@@ -403,7 +403,7 @@ std::vector<ActionItem> GetPipline(const ResourcePtr &resource, const std::strin
 
   std::string backend = MsContext::GetInstance()->backend_policy();
 
-#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
   if (mindspore::parallel::ps::Util::IsParamServerMode()) {
     mindspore::parallel::ps::Util::SetInternalEnvVar();
   }
