@@ -618,7 +618,12 @@ AscendDeviceAddress::~AscendDeviceAddress() {
     return;
   }
   if (from_mem_pool_) {
-    AscendMemoryPool::GetInstance().FreeTensorMem(ptr_);
+    if (communication_ptr_ != nullptr) {
+      AscendMemoryPool::GetInstance().FreeTensorMem(communication_ptr_);
+      communication_ptr_ = nullptr;
+    } else {
+      AscendMemoryPool::GetInstance().FreeTensorMem(ptr_);
+    }
     ptr_ = nullptr;
   }
 }

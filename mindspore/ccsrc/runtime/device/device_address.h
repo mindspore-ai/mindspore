@@ -76,6 +76,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   string format_{"DefaultFormat"};
   TypeId type_id_{kNumberTypeFloat16};
   bool from_mem_pool_{false};
+  uint8_t *communication_ptr_{nullptr};
   std::vector<int> host_shape_{};
   friend class KernelRuntime;
   friend class MemoryManager;
