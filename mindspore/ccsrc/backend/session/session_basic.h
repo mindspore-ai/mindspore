@@ -106,6 +106,9 @@ class SessionBasic {
   virtual void GetSummaryNodes(KernelGraph *graph);
   void AssignParamKey(const KernelGraphPtr &kernel_graph);
   void InitPSParamAndOptim(const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &inputs_const);
+  virtual bool CheckModelInputs(uint32_t graph_id, const std::vector<std::shared_ptr<inference::MSTensor>> &inputs) {
+    return true;
+  }
 
 #ifdef ENABLE_DEBUGGER
   // set debugger
