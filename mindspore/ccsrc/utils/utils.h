@@ -228,6 +228,7 @@ constexpr auto kAttrLabelSwitchList = "label_switch_list";
 constexpr auto kAttrNewAxisMask = "new_axis_mask";
 constexpr auto kAttrShrinkAxisMask = "shrink_axis_mask";
 constexpr auto kAttrDatadumpOriginalNames = "_datadump_original_names";
+constexpr auto kAttrDatadumpIsMultiop = "_datadump_is_multiop";
 constexpr auto kAttrStreamId = "stream_id";
 constexpr auto kAttrRecordEvent = "record_event";
 constexpr auto kAttrWaitEvent = "wait_event";

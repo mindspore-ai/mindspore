@@ -15,6 +15,7 @@
  */
 #include "backend/optimizer/ascend/ir_fusion/derelu_fusion.h"
 #include <memory>
+#include <string>
 #include <vector>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "ir/primitive.h"
@@ -111,6 +112,13 @@ const AnfNodePtr DereluFusion::Process(const FuncGraphPtr &graph, const AnfNodeP
   CreateMultipleOutputsOfAnfNode(graph, relu_v2, kReluV2OutputNum, &relu_v2_node_outputs);
 
   auto relu_grad_v2 = CreateReluGradV2(graph, relu_grad, relu_v2_node_outputs[1]);
+  // Add attr mapping from original nodes to fusion nodes
+  auto original_names =
+    MakeValue<std::vector<std::string>>({relu->fullname_with_scope(), relu_grad->fullname_with_scope()});
+  AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, original_names, relu_v2);
+  AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, original_names, relu_grad_v2);
+  AnfAlgo::SetNodeAttr(kAttrDatadumpIsMultiop, MakeValue(true), relu_v2);
+  AnfAlgo::SetNodeAttr(kAttrDatadumpIsMultiop, MakeValue(true), relu_grad_v2);
 
   auto manage = graph->manager();
   MS_EXCEPTION_IF_NULL(manage);
