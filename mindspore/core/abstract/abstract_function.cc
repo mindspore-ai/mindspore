@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-#include "pipeline/jit/static_analysis/abstract_function.h"
+#include "abstract/abstract_function.h"
 
 #include <vector>
-
-#include "pipeline/jit/static_analysis/static_analysis.h"
 
 namespace mindspore {
 namespace abstract {
@@ -134,11 +132,6 @@ std::size_t AbstractFuncUnion::hash() const {
   return hash_sum;
 }
 
-EvaluatorPtr PrimitiveAbstractClosure::GetEvaluator(AnalysisEnginePtr engine) {
-  MS_EXCEPTION_IF_NULL(engine);
-  return engine->_GetEvaluatorFor(shared_from_base<PrimitiveAbstractClosure>());
-}
-
 bool PrimitiveAbstractClosure::operator==(const AbstractFunction &other) const {
   if (!other.isa<PrimitiveAbstractClosure>()) {
     return false;
@@ -151,11 +144,6 @@ bool PrimitiveAbstractClosure::operator==(const AbstractFunction &other) const {
 }
 
 std::size_t PrimitiveAbstractClosure::hash() const { return hash_combine(tid(), prim_->hash()); }
-
-EvaluatorPtr FuncGraphAbstractClosure::GetEvaluator(AnalysisEnginePtr engine) {
-  MS_EXCEPTION_IF_NULL(engine);
-  return engine->_GetEvaluatorFor(shared_from_base<FuncGraphAbstractClosure>());
-}
 
 bool FuncGraphAbstractClosure::operator==(const AbstractFunction &other) const {
   if (!other.isa<FuncGraphAbstractClosure>()) {
@@ -179,11 +167,6 @@ std::string FuncGraphAbstractClosure::ToString() const {
   ss << "FuncGraphAbstractClosure: "
      << "FuncGraph: " << func_graph_->ToString() << "; Context: " << context_->ToString();
   return ss.str();
-}
-
-EvaluatorPtr MetaFuncGraphAbstractClosure::GetEvaluator(AnalysisEnginePtr engine) {
-  MS_EXCEPTION_IF_NULL(engine);
-  return engine->_GetEvaluatorFor(shared_from_base<MetaFuncGraphAbstractClosure>());
 }
 
 bool MetaFuncGraphAbstractClosure::operator==(const AbstractFunction &other) const {
@@ -229,11 +212,6 @@ std::size_t PartialAbstractClosure::hash() const {
   return hash_value;
 }
 
-EvaluatorPtr PartialAbstractClosure::GetEvaluator(AnalysisEnginePtr engine) {
-  MS_EXCEPTION_IF_NULL(engine);
-  return engine->_GetEvaluatorFor(shared_from_base<PartialAbstractClosure>());
-}
-
 std::string PartialAbstractClosure::ToString() const {
   std::ostringstream buffer;
   buffer << "PartialAbstractClosure(" << fn_->ToString() << "(";
@@ -242,11 +220,6 @@ std::string PartialAbstractClosure::ToString() const {
   }
   buffer << "))";
   return buffer.str();
-}
-
-EvaluatorPtr JTransformedAbstractClosure::GetEvaluator(AnalysisEnginePtr engine) {
-  MS_EXCEPTION_IF_NULL(engine);
-  return engine->_GetEvaluatorFor(shared_from_base<JTransformedAbstractClosure>());
 }
 
 bool JTransformedAbstractClosure::operator==(const AbstractFunction &other) const {
@@ -263,11 +236,6 @@ bool JTransformedAbstractClosure::operator==(const AbstractFunction &other) cons
 std::size_t JTransformedAbstractClosure::hash() const {
   auto hash_value = hash_combine(tid(), fn_->hash());
   return hash_value;
-}
-
-EvaluatorPtr VirtualAbstractClosure::GetEvaluator(AnalysisEnginePtr engine) {
-  MS_EXCEPTION_IF_NULL(engine);
-  return engine->_GetEvaluatorFor(shared_from_base<VirtualAbstractClosure>());
 }
 
 bool VirtualAbstractClosure::operator==(const AbstractFunction &other) const {
@@ -304,12 +272,6 @@ std::string VirtualAbstractClosure::ToString() const {
   }
   buffer << "}, output: " << output_->ToString() << ")";
   return buffer.str();
-}
-
-EvaluatorPtr TypedPrimitiveAbstractClosure::GetEvaluator(AnalysisEnginePtr engine) {
-  MS_EXCEPTION_IF_NULL(engine);
-
-  return engine->_GetEvaluatorFor(shared_from_base<TypedPrimitiveAbstractClosure>());
 }
 
 bool TypedPrimitiveAbstractClosure::operator==(const AbstractFunction &other) const {

@@ -434,8 +434,30 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<TypedPrimiti
 // Forward to specific subclass of FunctionWrapper.
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const AbstractFunctionPtr &func) {
   MS_EXCEPTION_IF_NULL(func);
-  EvaluatorPtr evaluator = func->GetEvaluator(shared_from_this());
-  return evaluator;
+  if (func->isa<PrimitiveAbstractClosure>()) {
+    return _GetEvaluatorFor(func->cast<std::shared_ptr<PrimitiveAbstractClosure>>());
+  } else if (func->isa<FuncGraphAbstractClosure>()) {
+    return _GetEvaluatorFor(func->cast<std::shared_ptr<FuncGraphAbstractClosure>>());
+  } else if (func->isa<MetaFuncGraphAbstractClosure>()) {
+    return _GetEvaluatorFor(func->cast<std::shared_ptr<MetaFuncGraphAbstractClosure>>());
+  } else if (func->isa<JTransformedAbstractClosure>()) {
+    return _GetEvaluatorFor(func->cast<std::shared_ptr<JTransformedAbstractClosure>>());
+  } else if (func->isa<VirtualAbstractClosure>()) {
+    return _GetEvaluatorFor(func->cast<std::shared_ptr<VirtualAbstractClosure>>());
+  } else if (func->isa<PartialAbstractClosure>()) {
+    return _GetEvaluatorFor(func->cast<std::shared_ptr<PartialAbstractClosure>>());
+  } else if (func->isa<TypedPrimitiveAbstractClosure>()) {
+    return _GetEvaluatorFor(func->cast<std::shared_ptr<TypedPrimitiveAbstractClosure>>());
+  } else if (func->isa<AbstractFuncAtom>()) {
+    MS_LOG(EXCEPTION) << "Cannot GetEvaluator from AbstractFuncAtom";
+  } else if (func->isa<AbstractFuncUnion>()) {
+    MS_LOG(EXCEPTION) << "Cannot GetEvaluator from AbstractFuncUnion";
+  } else if (func->isa<DummyAbstractClosure>()) {
+    MS_LOG(EXCEPTION) << "A dummy function cannot eval";
+  } else {
+    MS_LOG(EXCEPTION) << "Cannot GetEvaluator from AbstractFunction";
+  }
+  return nullptr;
 }
 
 EvaluatorPtr AnalysisEngine::GetEvaluatorFor(const AbstractFunctionPtr &func) {
