@@ -57,7 +57,7 @@ def test_multitype_tuple():
     params1 = Parameter(tensor1, name="params1")
     tensor2 = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]]).astype('float32'))
     output = op_add((params1, tensor2))
-    assert output == Tensor(np.array([[2.4, 4.2], [4.4, 6.4]]).astype('float32'))
+    assert np.all(output.asnumpy() == np.array([[2.4, 4.2], [4.4, 6.4]]).astype('float32'))
 
 
 def test_multitype_scalar():

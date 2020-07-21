@@ -108,6 +108,10 @@ class Tensor(Tensor_):
         out = tensor_operator_registry.get('__neg__')(self)
         return out
 
+    def __bool__(self):
+        out = tensor_operator_registry.get('__bool__')(self)
+        return out
+
     def __pos__(self):
         return self
 

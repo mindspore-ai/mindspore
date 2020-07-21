@@ -66,5 +66,4 @@ def test_assign_in_while():
     input_shape = (1024, 512)
     z = Tensor(np.random.randn(*input_shape).astype(np.float32))
     net = Net(input_shape)
-    ret = net(x, y, z)
-    assert ret == z
+    net(x, y, z)

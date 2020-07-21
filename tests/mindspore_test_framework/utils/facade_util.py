@@ -63,7 +63,7 @@ def fill_block_config(ret, block_config, tid, group, desc_inputs, desc_bprop, ex
         sampling_times, reduce_output, init_param_with, \
         split_outputs, exception, error_keywords = get_function_config(block_config[-1])
 
-    if block:
+    if block is not None:
         func_list.append({
             keyword.id: tid,
             keyword.group: group,

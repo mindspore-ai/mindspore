@@ -115,8 +115,7 @@ def test_if_none():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = None
     net = Net(z)
-    assert net(x, y) == y
-
+    assert np.all(net(x, y).asnumpy() == y.asnumpy())
 
 def test_if_str_is_not_none_right():
     class Net(nn.Cell):
@@ -136,7 +135,7 @@ def test_if_str_is_not_none_right():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = "ok"
     net = Net(z)
-    assert net(x, y) == y
+    assert np.all(net(x, y).asnumpy() == y.asnumpy())
 
 
 def test_if_str_is_not_none_left():
@@ -157,7 +156,7 @@ def test_if_str_is_not_none_left():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = "ok"
     net = Net(z)
-    assert net(x, y) == y
+    assert np.all(net(x, y).asnumpy() == y.asnumpy())
 
 
 def test_if_none_equal_none():
@@ -178,7 +177,7 @@ def test_if_none_equal_none():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = None
     net = Net(z)
-    assert net(x, y) == x
+    assert np.all(net(x, y).asnumpy() == x.asnumpy())
 
 
 def test_if_str_is_null():
@@ -199,7 +198,7 @@ def test_if_str_is_null():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = ""
     net = Net(z)
-    assert net(x, y) == y
+    assert np.all(net(x, y).asnumpy() == y.asnumpy())
 
 
 def test_if_str_is_true():
@@ -220,7 +219,7 @@ def test_if_str_is_true():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = "ok"
     net = Net(z)
-    assert net(x, y) == x
+    assert np.all(net(x, y).asnumpy() == x.asnumpy())
 
 
 def test_if_str_equal():
@@ -241,7 +240,7 @@ def test_if_str_equal():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = "ok"
     net = Net(z)
-    assert net(x, y) == x
+    assert np.all(net(x, y).asnumpy() == x.asnumpy())
 
 
 def test_if_tuple_is_null():
@@ -262,7 +261,7 @@ def test_if_tuple_is_null():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = ()
     net = Net(z)
-    assert net(x, y) == y
+    assert np.all(net(x, y).asnumpy() == y.asnumpy())
 
 
 def test_if_tuple_is_not_null():
@@ -283,7 +282,7 @@ def test_if_tuple_is_not_null():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = (1, 2, 3)
     net = Net(z)
-    assert net(x, y) == x
+    assert np.all(net(x, y).asnumpy() == x.asnumpy())
 
 
 def test_if_dict_is_null():
@@ -304,7 +303,7 @@ def test_if_dict_is_null():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = {}
     net = Net(z)
-    assert net(x, y) == y
+    assert np.all(net(x, y).asnumpy() == y.asnumpy())
 
 
 def test_if_dict_is_not_null():
@@ -325,7 +324,7 @@ def test_if_dict_is_not_null():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = {"one": 1, "two": 2}
     net = Net(z)
-    assert net(x, y) == x
+    assert np.all(net(x, y).asnumpy() == x.asnumpy())
 
 
 def test_if_else_assign():
@@ -355,7 +354,7 @@ def test_if_else_assign():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = [1, 2]
     net = Net(z)
-    assert net(x, y) == x
+    assert np.all(net(x, y).asnumpy() == x.asnumpy())
 
 
 def test_if_compile_true():
