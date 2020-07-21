@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_H
-#define MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_H
+#ifndef MINDSPORE_SERVING_ACL_SESSION_H
+#define MINDSPORE_SERVING_ACL_SESSION_H
 
 #include <vector>
 #include <string>
@@ -23,31 +23,28 @@
 #include <memory>
 #include <map>
 
-#include "backend/session/session_basic.h"
-#include "ir/anf.h"
 #include "include/inference.h"
+#include "serving/acl/model_process.h"
 
 namespace mindspore {
 namespace inference {
-class Session : public MSSession {
+class AclSession : public InferSession {
  public:
-  Session();
+  AclSession();
 
-  uint32_t CompileGraph(std::shared_ptr<FuncGraph> funcGraphPtr) override;
-
-  MultiTensor RunGraph(uint32_t graph_id, const std::vector<std::shared_ptr<inference::MSTensor>> &inputs) override;
-
-  bool CheckModelInputs(uint32_t graph_id,
-                        const std::vector<std::shared_ptr<inference::MSTensor>> &inputs) const override;
-
-  int Init(const std::string &device, uint32_t device_id);
-
-  static void RegAllOp();
+  bool InitEnv(const std::string &device_type, uint32_t device_id) override;
+  bool FinalizeEnv() override;
+  bool LoadModelFromFile(const std::string &file_name, uint32_t &model_id) override;
+  bool UnloadModel(uint32_t model_id) override;
+  bool ExecuteModel(uint32_t model_id, const RequestBase &request, ReplyBase &reply) override;
 
  private:
-  std::shared_ptr<session::SessionBasic> session_impl_ = nullptr;
-  std::vector<uint32_t> graph_id_;
+  std::string device_type_;
+  int32_t device_id_;
+  aclrtStream stream_ = nullptr;
+  aclrtContext context_ = nullptr;
+  ModelProcess model_process_;
 };
 }  // namespace inference
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_BASIC_H
+#endif  // MINDSPORE_SERVING_ACL_SESSION_H

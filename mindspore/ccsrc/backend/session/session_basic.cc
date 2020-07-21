@@ -276,7 +276,7 @@ bool ExistSummaryNode(const KernelGraph *graph) {
 
 GraphId SessionBasic::graph_sum_ = 0;
 
-KernelGraphPtr SessionBasic::GetGraph(mindspore::GraphId graph_id) {
+KernelGraphPtr SessionBasic::GetGraph(mindspore::GraphId graph_id) const {
   auto it = graphs_.find(graph_id);
   if (it == graphs_.end()) {
     MS_LOG(WARNING) << "Can't find graph " << graph_id;

@@ -56,42 +56,6 @@ class Tensor : public MetaTensor {
 
 using TensorPtr = std::shared_ptr<Tensor>;
 }  // namespace tensor
-
-namespace inference {
-class Tensor : public MSTensor {
- public:
-  Tensor();
-
-  Tensor(TypeId data_type, const std::vector<int> &shape);
-
-  explicit Tensor(std::shared_ptr<tensor::Tensor> tensor_ptr);
-
-  ~Tensor() = default;
-
-  TypeId data_type() const override;
-
-  TypeId set_data_type(const TypeId data_type) override;
-
-  std::vector<int> shape() const override;
-
-  size_t set_shape(const std::vector<int> &shape) override;
-
-  int DimensionSize(size_t index) const override;
-
-  int ElementsNum() const override;
-
-  std::size_t hash() const override;
-
-  std::shared_ptr<tensor::Tensor> tensor() const;
-
-  size_t Size() const override;
-
-  void *MutableData() const override;
-
- protected:
-  std::shared_ptr<tensor::Tensor> tensor_impl_;
-};
-}  // namespace inference
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_LITE_TENSOR_H_

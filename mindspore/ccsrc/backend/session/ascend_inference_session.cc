@@ -88,8 +88,7 @@ GraphId AscendInferenceSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   return graph_id;
 }
 
-bool AscendInferenceSession::CheckModelInputs(uint32_t graph_id,
-                                              const std::vector<std::shared_ptr<inference::MSTensor> > &inputs) {
+bool AscendInferenceSession::CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs) const {
   MS_LOG(INFO) << "Start check client inputs, graph id : " << graph_id;
   auto kernel_graph = GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -119,8 +118,7 @@ bool AscendInferenceSession::CheckModelInputs(uint32_t graph_id,
   return true;
 }
 
-bool AscendInferenceSession::CompareInput(const std::shared_ptr<inference::MSTensor> &input,
-                                          const ParameterPtr &parameter) {
+bool AscendInferenceSession::CompareInput(const tensor::TensorPtr &input, const ParameterPtr &parameter) const {
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(parameter);
   // compare dims
@@ -155,7 +153,7 @@ bool AscendInferenceSession::CompareInput(const std::shared_ptr<inference::MSTen
   return true;
 }
 
-std::string AscendInferenceSession::PrintInputShape(std::vector<size_t> shape) {
+std::string AscendInferenceSession::PrintInputShape(std::vector<size_t> shape) const {
   string res = "[";
   for (auto dim : shape) {
     res += " " + std::to_string(dim);

@@ -25,7 +25,6 @@
 #include "Eigen/Core"
 #include "ir/device_sync.h"
 #include "ir/meta_tensor.h"
-#include "include/ms_tensor.h"
 #include "utils/log_adapter.h"
 
 using float16 = Eigen::half;
@@ -237,40 +236,6 @@ class Tensor : public MetaTensor {
 using TensorPtr = std::shared_ptr<Tensor>;
 using TensorPtrList = std::vector<std::shared_ptr<Tensor>>;
 }  // namespace tensor
-
-namespace inference {
-class Tensor : public MSTensor {
- public:
-  Tensor(TypeId data_type, const std::vector<int> &shape);
-
-  explicit Tensor(std::shared_ptr<tensor::Tensor> tensor_ptr);
-
-  ~Tensor() = default;
-
-  TypeId data_type() const override;
-
-  TypeId set_data_type(const TypeId data_type) override;
-
-  std::vector<int> shape() const override;
-
-  size_t set_shape(const std::vector<int> &shape) override;
-
-  int DimensionSize(size_t index) const override;
-
-  int ElementsNum() const override;
-
-  std::size_t hash() const override;
-
-  std::shared_ptr<tensor::Tensor> tensor() const;
-
-  size_t Size() const override;
-
-  void *MutableData() const override;
-
- protected:
-  std::shared_ptr<tensor::Tensor> tensor_impl_;
-};
-}  // namespace inference
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_TENSOR_H_

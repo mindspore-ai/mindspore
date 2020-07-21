@@ -13,19 +13,19 @@ add_library(protobuf::libprotobuf ALIAS protobuf::protobuf)
 add_executable(protobuf::libprotoc ALIAS protobuf::protoc)
 
 set(_PROTOBUF_LIBPROTOBUF protobuf::libprotobuf)
-if(CMAKE_CROSSCOMPILING)
+if (CMAKE_CROSSCOMPILING)
     find_program(_PROTOBUF_PROTOC protoc)
-else()
+else ()
     set(_PROTOBUF_PROTOC $<TARGET_FILE:protobuf::protoc>)
-endif()
+endif ()
 
 # Find gRPC installation
 # Looks for gRPCConfig.cmake file installed by gRPC's cmake installation.
 if (EXISTS ${grpc_ROOT}/lib64)
     set(gRPC_DIR "${grpc_ROOT}/lib64/cmake/grpc")
-else()
+else ()
     set(gRPC_DIR "${grpc_ROOT}/lib/cmake/grpc")
-endif()
+endif ()
 message("serving using grpc_DIR : " ${gPRC_DIR})
 
 find_package(gRPC CONFIG REQUIRED)
@@ -34,11 +34,11 @@ message(STATUS "Using gRPC ${gRPC_VERSION}")
 set(_GRPC_GRPCPP gRPC::grpc++)
 set(_REFLECTION gRPC::grpc++_reflection)
 
-if(CMAKE_CROSSCOMPILING)
+if (CMAKE_CROSSCOMPILING)
     find_program(_GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin)
-else()
+else ()
     set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
-endif()
+endif ()
 
 # Proto file
 get_filename_component(hw_proto "ms_service.proto" ABSOLUTE)
@@ -67,11 +67,36 @@ file(GLOB_RECURSE CORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
 
 list(APPEND SERVING_SRC "main.cc" ${hw_proto_srcs} ${hw_grpc_srcs} ${CORE_SRC_LIST})
 
+option(ENABLE_ACL "enable acl" OFF)
+
+if (ENABLE_ACL)
+    if (DEFINED ENV{ASCEND_CUSTOM_PATH})
+        set(ASCEND_PATH $ENV{ASCEND_CUSTOM_PATH})
+    else ()
+        set(ASCEND_PATH /usr/local/Ascend)
+    endif ()
+    set(ACL_LIB_DIR ${ASCEND_PATH}/acllib/)
+    MESSAGE("acl lib dir " ${ACL_LIB_DIR})
+
+    include_directories(${ACL_LIB_DIR}/include/)
+    file(GLOB_RECURSE ACL_SESSION_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "acl/*.cc")
+    list(APPEND SERVING_SRC ${ACL_SESSION_SRC_LIST})
+endif ()
+
 include_directories(${CMAKE_BINARY_DIR})
 add_executable(ms_serving ${SERVING_SRC})
-target_link_libraries(ms_serving inference mindspore_gvar)
+
 target_link_libraries(ms_serving ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF} pthread)
 if (ENABLE_D)
     add_compile_definitions(ENABLE_D)
     target_link_libraries(ms_serving ${RUNTIME_LIB})
-endif()
+endif ()
+
+if (ENABLE_ACL)
+    add_compile_definitions(ENABLE_ACL)
+    set(ALC_LIB_SO ${ACL_LIB_DIR}/lib64/libruntime.so ${ACL_LIB_DIR}/lib64/libascendcl.so
+            ${ACL_LIB_DIR}/lib64/libacl_retr.so ${ACL_LIB_DIR}/lib64/libacl_cblas.so)
+    target_link_libraries(ms_serving ${ALC_LIB_SO})
+else ()
+    target_link_libraries(ms_serving inference mindspore_gvar)
+endif ()

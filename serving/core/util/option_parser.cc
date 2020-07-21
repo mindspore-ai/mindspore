@@ -19,10 +19,11 @@
 #include <cstring>
 #include <iostream>
 #include <iomanip>
-#include "mindspore/ccsrc/utils/log_adapter.h"
+#include "include/infer_log.h"
 
 namespace mindspore {
 namespace serving {
+
 bool StartWith(const std::string &str, const std::string &expected) {
   return expected.empty() ||
          (str.size() >= expected.size() && memcmp(str.data(), expected.data(), expected.size()) == 0);
