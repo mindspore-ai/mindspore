@@ -377,6 +377,18 @@ def get_bprop_pack(self):
     return bprop
 
 
+@bprop_getters.register(P.ReverseV2)
+def get_bprop_reverse_v2(self):
+    """Generate bprop for ReverseV2"""
+    axis = self.axis
+
+    def bprop(x, out, dout):
+        reverse_grad = P.ReverseV2(axis)
+        dx = reverse_grad(dout)
+        return (dx,)
+
+    return  bprop
+
 @bprop_getters.register(P.Unpack)
 def get_bprop_unpack(self):
     """Generate bprop for Unpack"""
@@ -495,6 +507,16 @@ def get_bprop_scatter_nd_update(self):
     return bprop
 
 
+@bprop_getters.register(P.ScatterNonAliasingAdd)
+def get_bprop_scatter_non_aliasing_add_update(self):
+    """Generate bprop for ScatterNonAliasingAdd"""
+    op = P.GatherNd()
+
+    def bprop(x, indices, update, out, dout):
+        return dout, zeros_like(indices), op(dout, indices)
+
+    return bprop
+
 @bprop_getters.register(P.TensorScatterUpdate)
 def get_bprop_tensor_scatter_update(self):
     """Generate bprop for TensorScatterUpdate"""
@@ -507,6 +529,7 @@ def get_bprop_tensor_scatter_update(self):
         return x_grad, zeros_like(indices), update_grad
 
     return bprop
+
 
 
 @bprop_getters.register(P.ScatterMax)

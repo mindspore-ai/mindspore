@@ -237,6 +237,44 @@ class ScatterAdd(nn.Cell):
         return out
 
 
+class ScatterNonAliasingAdd(nn.Cell):
+    """ScatterNonAliasingAdd net definition"""
+
+    def __init__(self, ref_shape, dtype=np.float32):
+        super(ScatterNonAliasingAdd, self).__init__()
+        self.scatter_no_aliasing_add = P.ScatterNonAliasingAdd()
+        self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
+
+    def construct(self, indices, updates):
+        out = self.scatter_no_aliasing_add(self.ref, indices, updates)
+        return out
+
+
+class ScatterNdSub(nn.Cell):
+    """ScatterNdSub net definition"""
+
+    def __init__(self, ref_shape, dtype=np.float32):
+        super(ScatterNdSub, self).__init__()
+        self.scatter_nd_sub = P.ScatterNdSub()
+        self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
+
+    def construct(self, indices, updates):
+        out = self.scatter_nd_sub(self.ref, indices, updates)
+        return out
+
+class ScatterNdAdd(nn.Cell):
+    """ScatterNdAdd net definition"""
+
+    def __init__(self, ref_shape, dtype=np.float32):
+        super(ScatterNdAdd, self).__init__()
+        self.scatter_nd_add = P.ScatterNdAdd()
+        self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
+
+    def construct(self, indices, updates):
+        out = self.scatter_nd_add(self.ref, indices, updates)
+        return out
+
+
 class ScatterSub(nn.Cell):
     """ScatterSub net definition"""
 
@@ -1811,6 +1849,14 @@ test_case_array_ops = [
         'desc_const': [(2, 1, 1, 2)],
         'desc_inputs': [[2, 2, 2]],
         'desc_bprop': [[2, 2, 2, 4]]}),
+    ('ReverseV2', {
+        'block': P.ReverseV2(axis=[1]),
+        'desc_inputs': [(Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]).astype(np.float32)))],
+        'desc_bprop': [(Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]).astype(np.float32)))]}),
+    ('Rint', {
+        'block': P.Rint(),
+        'desc_inputs': [(Tensor(np.array([-1.6, -0.1, 1.5, 2.0]).astype(np.float32)))],
+        'skip': ['backward']}),
     ('ConcatV2_0', {
         'block': P.Concat(),
         'desc_inputs': [
@@ -2073,6 +2119,21 @@ test_case_other_ops = [
         'block': ScatterAdd((6,), use_locking=True),
         'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
                         Tensor(np.array([2.0, 3.0, 4.0], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterNonAliasingAdd_1d', {
+        'block': ScatterNonAliasingAdd((8,)),
+        'desc_inputs': (Tensor(np.array([[2], [3], [4], [5]], np.int32)),
+                        Tensor(np.array([2.0, 3.0, 4.0, 8.0], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterNdAdd', {
+        'block': ScatterNdAdd((8,)),
+        'desc_inputs': (Tensor(np.array([[2], [3], [4], [5]], np.int32)),
+                        Tensor(np.array([2.0, 3.0, 4.0, 8.0], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterNdSub', {
+        'block': ScatterNdAdd((8,)),
+        'desc_inputs': (Tensor(np.array([[2], [3], [4], [5]], np.int32)),
+                        Tensor(np.array([2.0, 3.0, 4.0, 8.0], np.float32))),
         'skip': ['backward']}),
     ('ScatterAdd', {
         'block': ScatterAdd((6,)),
