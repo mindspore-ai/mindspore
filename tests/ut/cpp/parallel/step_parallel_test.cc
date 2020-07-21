@@ -294,9 +294,6 @@ TEST_F(TestStepParallel, CreatOpInstance) {
   ASSERT_TRUE(allreduce_ptr);
   if (nullptr != allreduce_ptr) {
     MS_LOG(INFO) << "Get PrimitivePyPtr: " << allreduce_ptr->name();
-    if (!allreduce_ptr->HasComputeFunction()) {
-      MS_LOG(EXCEPTION) << "" << allreduce_ptr->name() << "'s compute function is not implemented";
-    }
 
     std::vector<py::object> arglist;
     (void)std::transform(attrs.begin(), attrs.end(), std::back_inserter(arglist),
