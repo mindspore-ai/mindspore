@@ -56,35 +56,24 @@ class Inception(nn.Cell):
     Inception Block
     """
 
-    def __init__(self, in_channels, n1x1, n3x3red, n3x3, n5x5red, n5x5, pool_planes, platform="Ascend"):
+    def __init__(self, in_channels, n1x1, n3x3red, n3x3, n5x5red, n5x5, pool_planes):
         super(Inception, self).__init__()
-        self.platform = platform
         self.b1 = Conv2dBlock(in_channels, n1x1, kernel_size=1)
         self.b2 = nn.SequentialCell([Conv2dBlock(in_channels, n3x3red, kernel_size=1),
                                      Conv2dBlock(n3x3red, n3x3, kernel_size=3, padding=0)])
         self.b3 = nn.SequentialCell([Conv2dBlock(in_channels, n5x5red, kernel_size=1),
                                      Conv2dBlock(n5x5red, n5x5, kernel_size=3, padding=0)])
-        if self.platform == "Ascend":
-            self.maxpool = P.MaxPoolWithArgmax(ksize=3, strides=1, padding="same")
-        else:  # GPU
-            self.maxpool = P.MaxPool(ksize=3, strides=1, padding="same")
+        self.maxpool = P.MaxPoolWithArgmax(ksize=3, strides=1, padding="same")
         self.b4 = Conv2dBlock(in_channels, pool_planes, kernel_size=1)
         self.concat = P.Concat(axis=1)
 
     def construct(self, x):
-        '''
-        construct inception model
-        '''
         branch1 = self.b1(x)
         branch2 = self.b2(x)
         branch3 = self.b3(x)
-        if self.platform == "Ascend":
-            cell, argmax = self.maxpool(x)
-            branch4 = self.b4(cell)
-            _ = argmax
-        else: # GPU
-            cell = self.maxpool(x)
-            branch4 = self.b4(cell)
+        cell, argmax = self.maxpool(x)
+        branch4 = self.b4(cell)
+        _ = argmax
         return self.concat((branch1, branch2, branch3, branch4))
 
 
@@ -93,82 +82,61 @@ class GoogleNet(nn.Cell):
     Googlenet architecture
     """
 
-    def __init__(self, num_classes, platform="Ascend"):
+    def __init__(self, num_classes):
         super(GoogleNet, self).__init__()
         self.conv1 = Conv2dBlock(3, 64, kernel_size=7, stride=2, padding=0)
-        self.platform = platform
+        self.maxpool1 = P.MaxPoolWithArgmax(ksize=3, strides=2, padding="same")
+
         self.conv2 = Conv2dBlock(64, 64, kernel_size=1)
         self.conv3 = Conv2dBlock(64, 192, kernel_size=3, padding=0)
-        self.block3a = Inception(192, 64, 96, 128, 16, 32, 32, platform=self.platform)
-        self.block3b = Inception(256, 128, 128, 192, 32, 96, 64, platform=self.platform)
-        self.block4a = Inception(480, 192, 96, 208, 16, 48, 64, platform=self.platform)
-        self.block4b = Inception(512, 160, 112, 224, 24, 64, 64, platform=self.platform)
-        self.block4c = Inception(512, 128, 128, 256, 24, 64, 64, platform=self.platform)
-        self.block4d = Inception(512, 112, 144, 288, 32, 64, 64, platform=self.platform)
-        self.block4e = Inception(528, 256, 160, 320, 32, 128, 128, platform=self.platform)
-        if self.platform == "Ascend":
-            self.maxpool1 = P.MaxPoolWithArgmax(ksize=3, strides=2, padding="same")
-            self.maxpool2 = P.MaxPoolWithArgmax(ksize=3, strides=2, padding="same")
-            self.maxpool3 = P.MaxPoolWithArgmax(ksize=3, strides=2, padding="same")
-            self.maxpool4 = P.MaxPoolWithArgmax(ksize=2, strides=2, padding="same")
-        else: # GPU
-            self.maxpool1 = P.MaxPool(ksize=3, strides=2, padding="same")
-            self.maxpool2 = P.MaxPool(ksize=3, strides=2, padding="same")
-            self.maxpool3 = P.MaxPool(ksize=3, strides=2, padding="same")
-            self.maxpool4 = P.MaxPool(ksize=2, strides=2, padding="same")
-        self.block5a = Inception(832, 256, 160, 320, 32, 128, 128, platform=self.platform)
-        self.block5b = Inception(832, 384, 192, 384, 48, 128, 128, platform=self.platform)
+        self.maxpool2 = P.MaxPoolWithArgmax(ksize=3, strides=2, padding="same")
+
+        self.block3a = Inception(192, 64, 96, 128, 16, 32, 32)
+        self.block3b = Inception(256, 128, 128, 192, 32, 96, 64)
+        self.maxpool3 = P.MaxPoolWithArgmax(ksize=3, strides=2, padding="same")
+
+        self.block4a = Inception(480, 192, 96, 208, 16, 48, 64)
+        self.block4b = Inception(512, 160, 112, 224, 24, 64, 64)
+        self.block4c = Inception(512, 128, 128, 256, 24, 64, 64)
+        self.block4d = Inception(512, 112, 144, 288, 32, 64, 64)
+        self.block4e = Inception(528, 256, 160, 320, 32, 128, 128)
+        self.maxpool4 = P.MaxPoolWithArgmax(ksize=2, strides=2, padding="same")
+
+        self.block5a = Inception(832, 256, 160, 320, 32, 128, 128)
+        self.block5b = Inception(832, 384, 192, 384, 48, 128, 128)
+
         self.mean = P.ReduceMean(keep_dims=True)
         self.dropout = nn.Dropout(keep_prob=0.8)
         self.flatten = nn.Flatten()
         self.classifier = nn.Dense(1024, num_classes, weight_init=weight_variable(),
                                    bias_init=weight_variable())
 
+
     def construct(self, x):
-        '''
-        construct googlenet model
-        '''
         x = self.conv1(x)
-        if self.platform == "Ascend":
-            x, argmax = self.maxpool1(x)
-        else: # GPU
-            x = self.maxpool1(x)
+        x, argmax = self.maxpool1(x)
 
         x = self.conv2(x)
         x = self.conv3(x)
-        if self.platform == "Ascend":
-            x, argmax = self.maxpool2(x)
-        else: # GPU
-            x = self.maxpool2(x)
+        x, argmax = self.maxpool2(x)
 
         x = self.block3a(x)
         x = self.block3b(x)
-        if self.platform == "Ascend":
-            x, argmax = self.maxpool3(x)
-        else: # GPU
-            x = self.maxpool3(x)
+        x, argmax = self.maxpool3(x)
 
         x = self.block4a(x)
         x = self.block4b(x)
         x = self.block4c(x)
         x = self.block4d(x)
         x = self.block4e(x)
-        if self.platform == "Ascend":
-            x, argmax = self.maxpool4(x)
-            x = self.block5a(x)
-            x = self.block5b(x)
+        x, argmax = self.maxpool4(x)
 
-            x = self.mean(x, (2, 3))
-            x = self.flatten(x)
-            x = self.classifier(x)
-            _ = argmax
-        else: # GPU
-            x = self.maxpool4(x)
-            x = self.block5a(x)
-            x = self.block5b(x)
+        x = self.block5a(x)
+        x = self.block5b(x)
 
-            x = self.mean(x, (2, 3))
-            x = self.flatten(x)
-            x = self.classifier(x)
+        x = self.mean(x, (2, 3))
+        x = self.flatten(x)
+        x = self.classifier(x)
 
+        _ = argmax
         return x

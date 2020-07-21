@@ -93,7 +93,7 @@ if __name__ == '__main__':
     dataset = create_dataset(cfg.data_path, 1)
     batch_num = dataset.get_dataset_size()
 
-    net = GoogleNet(num_classes=cfg.num_classes, platform=device_target)
+    net = GoogleNet(num_classes=cfg.num_classes)
     # Continue training if set pre_trained to be True
     if cfg.pre_trained:
         param_dict = load_checkpoint(cfg.checkpoint_path)

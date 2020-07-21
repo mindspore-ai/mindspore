@@ -1181,6 +1181,7 @@ class MaxPoolWithArgmax(_Pool):
     def __init__(self, ksize=1, strides=1, padding="valid"):
         super(MaxPoolWithArgmax, self).__init__(ksize, strides, padding)
         self.is_tbe = context.get_context("device_target") == "Ascend"
+        self.is_gpu = context.get_context("device_target") == "GPU"
 
     def infer_shape(self, x_shape):
         out_shape = _Pool.infer_shape(self, x_shape)
@@ -1207,6 +1208,8 @@ class MaxPoolWithArgmax(_Pool):
         out_dtype = x_dtype
         validator.check_tensor_type_same({"x": x_dtype}, (mstype.float16, mstype.float32), self.name)
         argmax_dtype = mstype.uint16
+        if self.is_gpu:
+            argmax_dtype = mstype.int32
         return out_dtype, argmax_dtype
 
 

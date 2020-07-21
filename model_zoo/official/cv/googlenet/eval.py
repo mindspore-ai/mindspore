@@ -38,7 +38,7 @@ if __name__ == '__main__':
     if device_target == "Ascend":
         context.set_context(device_id=cfg.device_id)
 
-    net = GoogleNet(num_classes=cfg.num_classes, platform=device_target)
+    net = GoogleNet(num_classes=cfg.num_classes)
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01, cfg.momentum,
                    weight_decay=cfg.weight_decay)
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean', is_grad=False)
