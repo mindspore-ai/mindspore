@@ -50,6 +50,7 @@ class SkipDataset;
 class Cifar10Dataset;
 class ProjectDataset;
 class ZipDataset;
+class RenameDataset;
 
 /// \brief Function to create an ImageFolderDataset
 /// \notes A source dataset that reads images from a tree of directories
@@ -98,8 +99,8 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   ~Dataset() = default;
 
   /// \brief Pure virtual function to convert a Dataset class into a runtime dataset object
-  /// \return shared pointer to the list of newly created DatasetOps
-  virtual std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> Build() = 0;
+  /// \return The list of shared pointers to the newly created DatasetOps
+  virtual std::vector<std::shared_ptr<DatasetOp>> Build() = 0;
 
   /// \brief Pure virtual function for derived class to implement parameters validation
   /// \return bool True if all the params are valid
@@ -179,6 +180,14 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \return Shared pointer to the current Dataset
   std::shared_ptr<ZipDataset> Zip(const std::vector<std::shared_ptr<Dataset>> &datasets);
 
+  /// \brief Function to create a Rename Dataset
+  /// \notes Renames the columns in the input dataset
+  /// \param[in] input_columns List of the input columns to rename
+  /// \param[in] output_columns List of the output columns
+  /// \return Shared pointer to the current Dataset
+  std::shared_ptr<RenameDataset> Rename(const std::vector<std::string> &input_columns,
+                                        const std::vector<std::string> &output_columns);
+
  protected:
   std::vector<std::shared_ptr<Dataset>> children;
   std::shared_ptr<Dataset> parent;
@@ -202,8 +211,8 @@ class ImageFolderDataset : public Dataset {
   ~ImageFolderDataset() = default;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return shared pointer to the list of newly created DatasetOps
-  std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> Build() override;
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
   /// \return bool true if all the params are valid
@@ -227,8 +236,8 @@ class MnistDataset : public Dataset {
   ~MnistDataset() = default;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return shared pointer to the list of newly created DatasetOps
-  std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> Build() override;
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
   /// \return bool true if all the params are valid
@@ -249,8 +258,8 @@ class BatchDataset : public Dataset {
   ~BatchDataset() = default;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return shared pointer to the list of newly created DatasetOps
-  std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> Build() override;
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
   /// \return bool true if all the params are valid
@@ -273,8 +282,8 @@ class RepeatDataset : public Dataset {
   ~RepeatDataset() = default;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return shared pointer to the list of newly created DatasetOps
-  std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> Build() override;
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
   /// \return bool true if all the params are valid
@@ -290,7 +299,7 @@ class ShuffleDataset : public Dataset {
 
   ~ShuffleDataset() = default;
 
-  std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> Build() override;
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   bool ValidateParams() override;
 
@@ -309,8 +318,8 @@ class SkipDataset : public Dataset {
   ~SkipDataset() = default;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return shared pointer to the list of newly created DatasetOps
-  std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> Build() override;
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
   /// \return bool true if all the params are valid
@@ -330,8 +339,8 @@ class MapDataset : public Dataset {
   ~MapDataset() = default;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return shared pointer to the list of newly created DatasetOps
-  std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> Build() override;
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
   /// \return bool true if all the params are valid
@@ -353,8 +362,8 @@ class Cifar10Dataset : public Dataset {
   ~Cifar10Dataset() = default;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return shared pointer to the list of newly created DatasetOps
-  std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> Build() override;
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
   /// \return bool true if all the params are valid
@@ -375,8 +384,8 @@ class ProjectDataset : public Dataset {
   ~ProjectDataset() = default;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return shared pointer to the list of newly created DatasetOps
-  std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> Build() override;
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
   /// \return bool true if all the params are valid
@@ -395,12 +404,33 @@ class ZipDataset : public Dataset {
   ~ZipDataset() = default;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return shared pointer to the list of newly created DatasetOps
-  std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> Build() override;
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
   /// \return bool true if all the params are valid
   bool ValidateParams() override;
+};
+
+class RenameDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  explicit RenameDataset(const std::vector<std::string> &input_columns, const std::vector<std::string> &output_columns);
+
+  /// \brief Destructor
+  ~RenameDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::vector<std::string> input_columns_;
+  std::vector<std::string> output_columns_;
 };
 
 }  // namespace api
