@@ -23,13 +23,15 @@ The overall network architecture of DeepFM is show below:
 
 ## Script and sample code
 
-```python
+```shell
 ├── deepfm       
   ├── README.md                      
   ├── scripts 
-  │   ├──run_train.sh                  
-  │   ├──run_eval.sh                    
-  ├── src                              
+  │   ├──run_distribute_train.sh                
+  │   ├──run_standalone_train.sh                    
+  │   ├──run_eval.sh                   
+  ├── src
+  │   ├──__init__.py                     
   │   ├──config.py                     
   │   ├──dataset.py
   │   ├──callback.py                                    
