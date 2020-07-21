@@ -145,7 +145,7 @@ def test_center_crop_errors():
     try:
         test_center_crop_op(16777216, 16777216)
     except RuntimeError as e:
-        assert "Unexpected error. CenterCropOp padding size is too big, it's more than 10 times the original size." in \
+        assert "Unexpected error. CenterCropOp padding size is too big, it's more than 3 times the original size." in \
                str(e)
 
 
