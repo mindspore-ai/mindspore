@@ -26,6 +26,7 @@
 #include "ir/func_graph.h"
 #include "ir/primitive.h"
 #include "utils/context/ms_context.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 // namespace to support intermediate representation definition
@@ -217,6 +218,15 @@ std::string GetCNodeTarget(const AnfNodePtr &node) {
   auto primitive = value->cast<PrimitivePtr>();
   auto att_target = primitive->GetAttr("primitive_target");
   if (att_target != nullptr) {
+    if (IsPrimitive(attr_input, prim::kPrimImageSummary) || IsPrimitive(attr_input, prim::kPrimScalarSummary) ||
+        IsPrimitive(attr_input, prim::kPrimTensorSummary) || IsPrimitive(attr_input, prim::kPrimHistogramSummary) ||
+        IsPrimitive(attr_input, prim::kPrimMakeTuple) || IsPrimitive(attr_input, prim::kPrimStateSetItem) ||
+        IsPrimitive(attr_input, prim::kPrimDepend) || IsPrimitive(attr_input, prim::kPrimTupleGetItem) ||
+        IsPrimitive(attr_input, prim::kPrimControlDepend) || IsPrimitive(attr_input, prim::kPrimReturn) ||
+        IsPrimitive(attr_input, prim::kPrimPartial)) {
+      primitive->EraseAttr("primitive_target");
+      return default_target;
+    }
     if (!att_target->isa<StringImm>()) {
       MS_LOG(EXCEPTION) << "Only support string CPU|GPU|Ascend for primitive_target";
     }
