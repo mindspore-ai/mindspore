@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "minddata/dataset/kernels/random_choice_op.h"
+#include "minddata/dataset/kernels/data/random_choice_op.h"
 
 #include <memory>
 #include <vector>

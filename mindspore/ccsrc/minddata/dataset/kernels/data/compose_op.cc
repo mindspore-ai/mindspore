@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "minddata/dataset/kernels/compose_op.h"
+#include "minddata/dataset/kernels/data/compose_op.h"
 
 #include <vector>
 

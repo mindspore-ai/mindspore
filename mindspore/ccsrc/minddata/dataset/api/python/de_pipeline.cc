@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "minddata/dataset/api/de_pipeline.h"
+#include "minddata/dataset/api/python/de_pipeline.h"
 
 #include <algorithm>
 #include <set>

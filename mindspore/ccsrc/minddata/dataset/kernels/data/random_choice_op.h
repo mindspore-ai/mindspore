@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_RANDOM_APPLY_OP_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_RANDOM_APPLY_OP_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_RANDOM_CHOICE_OP_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_RANDOM_CHOICE_OP_
 
 #include <memory>
 #include <random>
@@ -24,37 +24,36 @@
 #include <vector>
 
 #include "minddata/dataset/core/tensor.h"
-#include "minddata/dataset/kernels/compose_op.h"
 #include "minddata/dataset/kernels/tensor_op.h"
+#include "minddata/dataset/kernels/data/compose_op.h"
 #include "minddata/dataset/util/random.h"
 
 namespace mindspore {
 namespace dataset {
-class RandomApplyOp : public TensorOp {
+class RandomChoiceOp : public TensorOp {
  public:
   /// constructor
-  /// \param[in] prob probability whether the list of TensorOps will be applied
-  /// \param[in] ops the list of TensorOps to apply with prob likelihood
-  explicit RandomApplyOp(double prob, const std::vector<std::shared_ptr<TensorOp>> &ops);
+  /// \param[in] ops list of TensorOps to randomly choose 1 from
+  explicit RandomChoiceOp(const std::vector<std::shared_ptr<TensorOp>> &ops);
 
   /// default destructor
-  ~RandomApplyOp() = default;
+  ~RandomChoiceOp() = default;
 
-  /// return the number of inputs the first tensorOp in compose takes
+  /// return the number of inputs. All op in ops_ should have the same number of inputs
   /// \return number of input tensors
-  uint32_t NumInput() override { return compose_->NumInput(); }
+  uint32_t NumInput() override;
 
-  /// return the number of outputs
-  /// \return number of output tensors
+  /// return the number of outputs. All op in ops_ should have the same number of outputs
+  /// \return number of input tensors
   uint32_t NumOutput() override;
 
-  /// return output shape if randomApply won't affect the output shape, otherwise return unknown shape
+  /// return output shape if all ops in ops_ return the same shape, otherwise return unknown shape
   /// \param[in] inputs
   /// \param[out] outputs
   /// \return  Status code
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
 
-  /// return output type if randomApply won't affect the output type, otherwise return unknown type
+  /// return output type if all ops in ops_ return the same type, otherwise return unknown type
   /// \param[in] inputs
   /// \param[out] outputs
   /// \return Status code
@@ -65,15 +64,14 @@ class RandomApplyOp : public TensorOp {
   /// \return Status code
   Status Compute(const TensorRow &input, TensorRow *output) override;
 
-  std::string Name() const override { return kRandomApplyOp; }
+  std::string Name() const override { return kRandomChoiceOp; }
 
  private:
-  double prob_;
-  std::shared_ptr<TensorOp> compose_;
+  std::vector<std::shared_ptr<TensorOp>> ops_;
   std::mt19937 gen_;  // mersenne_twister_engine
-  std::uniform_real_distribution<double> rand_double_;
+  std::uniform_int_distribution<size_t> rand_int_;
 };
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_RANDOM_APPLY_OP_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_RANDOM_CHOICE_OP_
