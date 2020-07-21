@@ -1013,6 +1013,7 @@ def check_gnn_random_walk(method):
         type_check(step_home_param, (float,), "step_home_param")
         type_check(step_away_param, (float,), "step_away_param")
         type_check(default_node, (int,), "default_node")
+        check_value(default_node, (-1, INT32_MAX), "default_node")
 
         return method(self, *args, **kwargs)
 
