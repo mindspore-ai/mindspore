@@ -55,7 +55,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        Sin, Sqrt, Rsqrt, BesselI0e, BesselI1e, TruncateDiv, TruncateMod,
                        Square, Sub, TensorAdd, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Sinh, Eps, Tan)
 
-from .random_ops import (RandomChoiceWithMask, Normal, Gamma, Poisson, UniformInt, UniformReal,
+from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, Poisson, UniformInt, UniformReal,
                          RandomCategorical, Laplace)
 from .nn_ops import (LSTM, SGD, Adam, FusedSparseAdam, FusedSparseLazyAdam, ApplyMomentum, BatchNorm,
                      BiasAdd, Conv2D,
@@ -175,7 +175,7 @@ __all__ = [
     'HSigmoid',
     'Tanh',
     'RandomChoiceWithMask',
-    'Normal',
+    'StandardNormal',
     'Gamma',
     'Poisson',
     'UniformInt',

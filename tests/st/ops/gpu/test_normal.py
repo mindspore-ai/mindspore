@@ -14,7 +14,6 @@
 # ============================================================================
 
 import numpy as np
-import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -22,7 +21,7 @@ from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.ops import composite as C
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
 
 class Net(nn.Cell):
