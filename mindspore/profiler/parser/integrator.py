@@ -27,6 +27,7 @@ from mindspore.profiler.parser.container import TimelineContainer
 
 SIZE_LIMIT = 20 * 1024 * 1024  # 20MB
 
+
 class Integrator:
     """
     The integrator for integrating parsed profiling files.
@@ -47,10 +48,12 @@ class Integrator:
 
     _file_name_aicore_type_time = 'aicore_intermediate_{}_type.csv'
     _file_name_aicore_detail_info = 'aicore_intermediate_{}_detail.csv'
+    _col_names_detail = ['op_name', 'op_type', 'avg_execution_time', 'subgraph', 'full_op_name', 'op_info']
+    _none_filter_condition_key = ['is_display_detail', 'is_display_full_op_name']
+    _none_sort_col_names = ['op_info']
     _aicore_data = []
     _aicore_detail_data = []
     _aicore_trace_data = []
-    _col_names = []
 
     def __init__(self, profiling_dir, device_id):
         self._profiling_dir = profiling_dir
@@ -79,6 +82,8 @@ class Integrator:
     def query_for_all_reduce(self):
         return self._query_for_all_reduce()
 
+    def query_and_sort_by_op_type(self, filter_condition, op_type_order):
+        return self._query_and_sort_by_op_type(filter_condition, op_type_order)
 
     def _parse_aicore_type_time(self):
         """Parse the parsed AICORE operator type file."""
@@ -241,7 +246,6 @@ class Integrator:
                 )
         del framework_infos
 
-
     def _aicore_trace_data_load(self):
         """Load data according to the parsed AICORE operator types file."""
         file_path = query_latest_trace_time_file(self._profiling_dir, int(self._device_id))
@@ -253,7 +257,6 @@ class Integrator:
             self.__column__ = next(csv_reader)
             self._aicore_trace_data = list(csv_reader)
         self._size = len(self._aicore_trace_data) - 1
-        self._display_col_names = self._col_names[:]
         self._load_point_info()
 
     def _load_point_info(self):
@@ -341,6 +344,144 @@ class Integrator:
             reduce_info.append(reduce_meta)
 
         return reduce_info
+
+    def _query_and_sort_by_op_type(self, filter_condition, op_type_order: list):
+        """
+        Query the AICORE operator detail information by `filter_condition`,
+        and sort by `op_type_order` and execution time.
+
+        Args:
+            filter_condition (dict): The filter condition.
+            op_type_order (list[str]): The name of the operator type in order.
+
+        Returns:
+            dict, The results are filtered and sorted.
+        """
+        self._aicore_detail_data_load()
+        if filter_condition is None:
+            filter_condition = {}
+        self._filter(filter_condition)
+
+        type_detail_cache = {}
+        for detail_info in self._result:
+            op_type = detail_info[1]
+            if op_type not in op_type_order:
+                continue
+            infos = type_detail_cache.get(op_type)
+            if infos:
+                infos.append(detail_info)
+            else:
+                type_detail_cache[op_type] = [detail_info]
+
+        result = []
+        for op_type in op_type_order:
+            detail_infos = type_detail_cache.get(op_type)
+            if detail_infos is None:
+                continue
+            detail_infos.sort(key=lambda item: item[2], reverse=True)
+            result.extend(detail_infos)
+
+        return {
+            'col_name_detail': self._display_col_names_detail,
+            'object': result
+        }
+
+    def _filter(self, filter_condition):
+        """
+        Filter the profiling data according to the filter condition.
+
+        Args:
+            filter_condition (dict): The filter condition.
+        """
+        def _inner_filter(item: list):
+            return self._default_filter(item, filter_condition)
+
+        def _inner_map(item: list):
+            inner_item = item[0:4]
+            if is_display_full_op_name:
+                inner_item.append(item[4])
+            if is_display_detail:
+                inner_item.append(item[5])
+            return inner_item
+
+        is_display_detail = filter_condition.get('is_display_detail', True)
+        is_display_full_op_name = filter_condition.get(
+            'is_display_full_op_name', True
+        )
+        self._set_display_col_name(is_display_detail, is_display_full_op_name)
+        if is_display_detail and is_display_full_op_name:
+            self._result = list(filter(_inner_filter, self._aicore_detail_data))
+        else:
+            self._result = list(
+                map(_inner_map, filter(_inner_filter, self._aicore_detail_data))
+            )
+
+    def _default_filter(self, item, condition):
+        """
+        The default filter method.
+
+        Args:
+            item (list[Union[str, float, int]]): A piece of data to be filtered.
+            condition (dict): The filter condition.
+
+        Returns:
+            bool, `True` if the item is satisfied.
+        """
+        for condition_key, condition_value in condition.items():
+            if condition_key in self._none_filter_condition_key:
+                continue
+            if condition_key in self._col_names_detail:
+                index = self._col_names_detail.index(condition_key)
+                actual_value = item[index]
+                for exp_key, exp_value in condition_value.items():
+                    if not self._is_match_condition(
+                            exp_key, exp_value, actual_value):
+                        return False
+        return True
+
+    def _is_match_condition(self, exp_key, exp_value, actual_value):
+        """
+        Check whether the actual value meets the expect condition.
+
+        Args:
+            exp_key (str): Expect key of the condition.
+            exp_value (str): Expect value.
+            actual_value (str): Actual value.
+
+        Returns:
+            bool, `True` if the actual meets the expect condition, else `False`.
+        """
+        if exp_key == 'in':
+            if actual_value not in exp_value:
+                return False
+        elif exp_key == 'not_in':
+            if actual_value in exp_value:
+                return False
+        elif exp_key == 'partial_match_str_in':
+            for partial_match_str in exp_value:
+                if partial_match_str in actual_value:
+                    return True
+            return False
+        else:
+            return False
+
+        return True
+
+    def _set_display_col_name(self, is_display_detail, is_display_full_op_name):
+        """
+        Set the display column name according to the filter condition.
+
+        Args:
+            is_display_detail (bool): Whether to display the detailed operator
+                information.
+            is_display_full_op_name (bool): Whether to display the operator full
+                name.
+        """
+        self._display_col_names_detail = self._col_names_detail[0:4]
+        if is_display_full_op_name:
+            self._display_col_names_detail.append(self._col_names_detail[4])
+        if is_display_detail:
+            self._display_col_names_detail.append(self._col_names_detail[5])
 
 
 class TimelineAnalyser:
@@ -577,5 +718,4 @@ class TimelineAnalyser:
             if framework_item:
                 timeline_item['name'] = framework_item.get('name')
                 timeline_item['args'] = framework_item.get('args')
-
         logger.debug('Finished adding framework info into timeline...')
