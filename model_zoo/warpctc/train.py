@@ -59,7 +59,7 @@ if __name__ == '__main__':
     max_captcha_digits = cf.max_captcha_digits
     input_size = m.ceil(cf.captcha_height / 64) * 64 * 3
     # create dataset
-    dataset = create_dataset(dataset_path=args_opt.dataset_path, repeat_num=cf.epoch_size, batch_size=cf.batch_size)
+    dataset = create_dataset(dataset_path=args_opt.dataset_path, repeat_num=1, batch_size=cf.batch_size)
     step_size = dataset.get_dataset_size()
     # define lr
     lr_init = cf.learning_rate if not args_opt.run_distribute else cf.learning_rate * args_opt.device_num

@@ -85,4 +85,3 @@ if __name__ == "__main__":
     opt = Momentum(filter(lambda x: 'beta' not in x.name and 'gamma' not in x.name and 'depth' not in x.name and 'bias' not in x.name, net.trainable_params()), learning_rate=config.learning_rate, momentum=config.momentum, weight_decay=config.weight_decay)
     model = Model(net, loss, opt)
     model.train(config.epoch_size, train_dataset, callback)
-    
