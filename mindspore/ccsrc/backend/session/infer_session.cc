@@ -21,7 +21,7 @@
 #include "utils/load_onnx/anf_converter.h"
 #include "backend/session/session_basic.h"
 #include "backend/session/session_factory.h"
-#include "utils/base_ref_utils.h"
+#include "base/base_ref_utils.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
 
 #ifdef ENABLE_D

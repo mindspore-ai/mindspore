@@ -19,7 +19,7 @@
 #include <algorithm>
 #include <unordered_set>
 
-#include "ir/func_graph_cloner.h"
+#include "utils/func_graph_cloner.h"
 #include "abstract/utils.h"
 #include "debug/trace.h"
 #include "utils/context/ms_context.h"

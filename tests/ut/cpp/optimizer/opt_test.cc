@@ -20,7 +20,8 @@
 #include "common/py_func_graph_fetcher.h"
 
 #include "ir/anf.h"
-#include "ir/func_graph_cloner.h"
+#include "ir/visitor.h"
+#include "utils/func_graph_cloner.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/optimizer/irpass.h"

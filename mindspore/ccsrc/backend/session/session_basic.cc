@@ -33,7 +33,7 @@
 #include "common/utils.h"
 #include "ir/dtype.h"
 #include "ir/anf.h"
-#include "ir/func_graph_cloner.h"
+#include "utils/func_graph_cloner.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "frontend/parallel/ps/worker.h"
 #include "frontend/parallel/ps/common.h"

@@ -27,6 +27,7 @@
 
 #include "utils/log_adapter.h"
 #include "utils/hashing.h"
+#include "utils/any.h"
 #include "base/base.h"
 #include "ir/dtype.h"
 #include "ir/value.h"

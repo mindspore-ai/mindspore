@@ -26,7 +26,6 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-
 extern const int RET_SUCCESS;
 extern const int RET_FAILED;
 extern const int RET_CONTINUE;

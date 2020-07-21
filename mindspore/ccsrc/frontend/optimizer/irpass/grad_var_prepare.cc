@@ -26,7 +26,7 @@
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "ir/func_graph.h"
-#include "ir/func_graph_cloner.h"
+#include "utils/func_graph_cloner.h"
 
 namespace mindspore {
 namespace opt {

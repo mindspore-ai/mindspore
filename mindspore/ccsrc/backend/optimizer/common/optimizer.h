@@ -26,7 +26,7 @@
 #include "ir/primitive.h"
 #include "backend/optimizer/common/pass_manager.h"
 #include "backend/optimizer/common/pattern_engine.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "common/utils.h"
 #include "backend/optimizer/common/helper.h"
 

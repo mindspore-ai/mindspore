@@ -19,7 +19,7 @@
 #include <memory>
 #include <utility>
 
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "backend/optimizer/common/helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_graph.h"

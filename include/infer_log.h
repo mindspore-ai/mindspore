@@ -25,7 +25,7 @@
 #include <iostream>
 
 #ifndef ENABLE_ACL
-#include "mindspore/ccsrc/utils/log_adapter.h"
+#include "mindspore/core/utils/log_adapter.h"
 namespace mindspore::inference {
 #define MSI_LOG(level) MS_LOG(level)
 

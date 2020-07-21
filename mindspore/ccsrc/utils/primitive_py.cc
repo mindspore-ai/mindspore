@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-#include "ir/primitive_py.h"
+#include "utils/primitive_py.h"
 #include <mutex>
-#include <utility>
 #include "ir/signature.h"
 #include "./common.h"
 #include "pipeline/jit/parse/python_adapter.h"

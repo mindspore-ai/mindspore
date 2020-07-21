@@ -19,7 +19,8 @@
 
 #include <string>
 #include "pybind11/pybind11.h"
-#include "utils/base_ref.h"
+#include "base/base_ref.h"
+#include "utils/convert_utils.h"
 
 namespace py = pybind11;
 

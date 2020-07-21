@@ -23,7 +23,7 @@
 #include <algorithm>
 
 #include "debug/trace.h"
-#include "ir/tensor_py.h"
+#include "utils/tensor_py.h"
 #include "ir/param_value.h"
 #include "utils/any.h"
 #include "utils/utils.h"

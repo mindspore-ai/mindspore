@@ -23,6 +23,7 @@
 
 #include "runtime/device/device_address.h"
 #include "ir/tensor.h"
+#include "utils/convert_utils.h"
 #include "predict/generator/utils/ir_model_util.h"
 #ifdef ENABLE_DUMP_E2E
 #include "debug/e2e_dump.h"

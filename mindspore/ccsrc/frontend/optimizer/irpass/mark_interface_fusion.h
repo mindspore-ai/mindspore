@@ -26,7 +26,7 @@
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "frontend/operator/composite/composite.h"
 
 namespace mindspore {

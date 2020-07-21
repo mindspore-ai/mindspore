@@ -22,7 +22,7 @@
 
 #include "securec/include/securec.h"
 #include "ir/tensor.h"
-#include "ir/tensor_py.h"
+#include "utils/tensor_py.h"
 
 using mindspore::tensor::TensorPy;
 

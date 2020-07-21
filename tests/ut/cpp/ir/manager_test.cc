@@ -17,7 +17,7 @@
 #include "common/py_func_graph_fetcher.h"
 #include "ir/dtype.h"
 #include "ir/manager.h"
-#include "ir/func_graph_cloner.h"
+#include "utils/func_graph_cloner.h"
 #include "pipeline/jit/parse/parse.h"
 #include "frontend/operator/ops.h"
 #include "utils/log_adapter.h"

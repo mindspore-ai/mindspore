@@ -21,7 +21,7 @@
 #include "abstract/param_validator.h"
 #include "frontend/operator/ops.h"
 #include "utils/convert_utils.h"
-#include "ir/tensor_py.h"
+#include "utils/tensor_py.h"
 
 using mindspore::tensor::TensorPy;
 

@@ -24,7 +24,7 @@
 
 #include "debug/anf_ir_utils.h"
 #include "proto/anf_ir.pb.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "utils/symbolic.h"
 
 namespace mindspore {

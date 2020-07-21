@@ -27,7 +27,7 @@
 
 #include "ir/anf.h"
 #include "ir/meta_func_graph.h"
-#include "ir/func_graph_cloner.h"
+#include "utils/func_graph_cloner.h"
 #include "pipeline/jit/resource.h"
 #include "frontend/optimizer/ad/adjoint.h"
 #include "frontend/operator/ops.h"

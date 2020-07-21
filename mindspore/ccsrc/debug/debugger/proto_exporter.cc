@@ -24,7 +24,7 @@
 
 #include "debug/debugger/debugger.h"
 #include "proto/debug_graph.pb.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "utils/symbolic.h"
 
 namespace mindspore {

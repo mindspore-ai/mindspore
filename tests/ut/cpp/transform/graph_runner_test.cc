@@ -18,7 +18,7 @@
 #include <memory>
 #include "common/common_test.h"
 #include "ir/dtype.h"
-#include "ir/tensor_py.h"
+#include "utils/tensor_py.h"
 #include "transform/transform_base_test.h"
 #include "common/py_func_graph_fetcher.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"

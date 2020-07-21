@@ -28,7 +28,7 @@
 #include <algorithm>
 
 #include "ir/meta_func_graph.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "frontend/operator/composite/composite.h"
 #include "ir/tensor.h"
 #include "debug/anf_ir_utils.h"

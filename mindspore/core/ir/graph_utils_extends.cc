@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 
 #include <unordered_map>
 #include <unordered_set>
@@ -31,8 +31,6 @@
 #include "debug/label.h"
 #include "utils/log_adapter.h"
 #include "common/utils.h"
-#include "pipeline/jit/parse/function_block.h"
-#include "pipeline/jit/parse/python_adapter.h"
 
 namespace mindspore {
 namespace {

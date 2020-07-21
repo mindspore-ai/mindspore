@@ -29,7 +29,7 @@
 #include "ir/meta_tensor.h"
 #include "ir/func_graph.h"
 #include "frontend/operator/ops.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 
 namespace mindspore {
 namespace kernel {

@@ -63,11 +63,6 @@ class Location {
 };
 class TraceContext;
 using TraceContextPtr = std::shared_ptr<TraceContext>;
-class FuncGraph;
-using FuncGraphPtr = std::shared_ptr<FuncGraph>;
-using FuncGraphWeakPtr = std::weak_ptr<FuncGraph>;
-class AnfNode;
-using AnfNodeWeakPtr = std::weak_ptr<AnfNode>;
 
 class TraceManager {
  public:

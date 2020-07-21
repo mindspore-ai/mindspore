@@ -27,7 +27,7 @@
 #include <unordered_set>
 #include "ir/func_graph.h"
 #include "ir/anf.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "utils/contract.h"
 #include "runtime/device/kernel_info.h"
 

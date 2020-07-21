@@ -24,7 +24,7 @@
 #include <algorithm>
 #include <functional>
 
-#include "ir/func_graph_cloner.h"
+#include "utils/func_graph_cloner.h"
 #include "debug/anf_ir_utils.h"
 #include "pipeline/jit/parse/parse_base.h"
 #include "pipeline/jit/parse/data_converter.h"

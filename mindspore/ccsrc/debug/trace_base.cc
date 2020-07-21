@@ -27,7 +27,7 @@
 #include <stack>
 #include <algorithm>
 
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 
 namespace mindspore {
 // namespace to support debug trace infomation

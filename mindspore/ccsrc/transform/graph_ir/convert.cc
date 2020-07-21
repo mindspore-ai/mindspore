@@ -23,7 +23,7 @@
 
 #include "frontend/operator/ops.h"
 #include "utils/log_adapter.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "utils/symbolic.h"
 #include "utils/config_manager.h"
 #include "utils/convert_utils.h"

@@ -34,10 +34,10 @@
 #include "utils/signal.h"
 #include "utils/ordered_set.h"
 #include "utils/ordered_map.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "utils/counter.h"
 #include "utils/hashing.h"
-#include "utils/base_ref.h"
+#include "base/base_ref.h"
 #include "ir/anf.h"
 
 namespace mindspore {

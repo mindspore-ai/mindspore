@@ -23,7 +23,7 @@
 #include <set>
 #include <deque>
 #include "utils/utils.h"
-#include "utils/base_ref.h"
+#include "base/base_ref.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "frontend/operator/ops.h"
 #include "common/utils.h"
