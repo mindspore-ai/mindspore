@@ -278,8 +278,7 @@ if (ENABLE_GPU)
                           ${CUDA_PATH}/lib64/libcurand.so
                           ${CUDNN_PATH}/lib64/libcudnn.so
                           ${CUDA_PATH}/lib64/libcudart.so
-                          ${CUDA_PATH}/lib64/stubs/libcuda.so
-			  ${CUDA_PATH}/lib64/libcusolver.so)
+                          ${CUDA_PATH}/lib64/stubs/libcuda.so)
 endif ()
 
 if (ENABLE_CPU)

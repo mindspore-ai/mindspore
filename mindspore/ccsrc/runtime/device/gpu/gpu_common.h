@@ -93,22 +93,6 @@ namespace gpu {
     }                                                                                \
   }
 
-#define CHECK_CUSOLVER_RET_WITH_EXCEPT(expression, message)                                \
-  {                                                                                        \
-    cusolverStatus_t status = (expression);                                                \
-    if (status != CUSOLVER_STATUS_SUCCESS) {                                               \
-      MS_LOG(EXCEPTION) << "cusolver Error: " << message << " | Error Number: " << status; \
-    }                                                                                      \
-  }
-
-#define CHECK_CUSOLVER_RET_WITH_ERROR(expression, message)                             \
-  {                                                                                    \
-    cusolverStatus_t status = (expression);                                            \
-    if (status != CUSOLVER_STATUS_SUCCESS) {                                           \
-      MS_LOG(ERROR) << "cusolver Error: " << message << " | Error Number: " << status; \
-    }                                                                                  \
-  }
-
 #define CHECK_NCCL_RET_WITH_EXCEPT(expression, message)                                \
   {                                                                                    \
     int result = (expression);                                                         \
