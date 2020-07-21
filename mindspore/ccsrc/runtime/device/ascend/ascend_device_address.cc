@@ -482,7 +482,9 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const std::vector<int
     host_shape.emplace_back(1);
   }
   std::vector<size_t> device_shape = GetDeviceShape(&host_shape);
-  if (type_id_name_map.find(type_id_) != type_id_name_map.end()) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->execution_mode() == kPynativeMode && type_id_name_map.find(type_id_) != type_id_name_map.end()) {
     std::pair<std::string, std::string> type_format = std::make_pair(type_id_name_map.at(type_id_), format_);
     if (use_trans_data.find(type_format) != use_trans_data.end()) {
       sync_ok = SyncDeviceToHostAndConvertFormatBasedOnTransData(host_shape, device_shape, size, type, host_ptr);
