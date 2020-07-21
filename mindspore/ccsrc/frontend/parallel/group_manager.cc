@@ -74,7 +74,7 @@ Status GroupManager::CreateGroup(const std::string &group_name, const std::vecto
     (void)CommManager::GetInstance().GetRankSize(world_group_, &world_size);
   }
 
-  if ((world_group_ == NCCL_WORLD_GROUP) || (devices.size() == world_size)) {
+  if (devices.size() == world_size) {
     auto it = groups_.find(world_group_);
     if (it == groups_.end()) {
       (void)group->Init(world_group_, devices);
