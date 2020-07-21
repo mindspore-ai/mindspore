@@ -395,7 +395,7 @@ void ExecutorPy::GetGeBackendPolicy() const {
 
 bool IsPhaseExportGeir(const std::string &phase_s) {
   auto phase_to_export = "export.geir";
-  return phase_s.rfind(phase_to_export, 0) != std::string::npos;
+  return phase_s.rfind(phase_to_export) != std::string::npos;
 }
 
 std::vector<ActionItem> GetPipline(const ResourcePtr &resource, const std::string &phase_s, bool use_vm) {
