@@ -23,7 +23,7 @@
 
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/irpass.h"
-#include "ir/visitor.h"
+#include "frontend/optimizer/anf_visitor.h"
 #include "common/utils.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/ad/grad.h"

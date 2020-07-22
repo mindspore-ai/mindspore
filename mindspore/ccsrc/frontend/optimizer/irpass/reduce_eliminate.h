@@ -23,7 +23,7 @@
 
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"
-#include "ir/visitor.h"
+#include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"
 #include "abstract/dshape.h"
 

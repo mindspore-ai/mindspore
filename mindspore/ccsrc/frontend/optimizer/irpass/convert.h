@@ -21,7 +21,7 @@
 
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/irpass.h"
-#include "ir/visitor.h"
+#include "frontend/optimizer/anf_visitor.h"
 #include "ir/func_graph.h"
 #include "frontend/operator/ops.h"
 

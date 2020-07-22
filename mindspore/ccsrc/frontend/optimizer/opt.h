@@ -23,7 +23,7 @@
 
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "ir/optimizer_caller.h"
+#include "frontend/optimizer/optimizer_caller.h"
 #include "frontend/operator/ops.h"
 
 namespace mindspore {

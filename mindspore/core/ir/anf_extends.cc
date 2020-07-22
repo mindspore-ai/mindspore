@@ -93,7 +93,7 @@ std::string CNode::fullname_with_scope() {
   return fullname_with_scope_;
 }
 
-void CNode::accept(AnfVisitor *v) { v->Visit(shared_from_base<CNode>()); }
-void ValueNode::accept(AnfVisitor *v) { v->Visit(shared_from_base<ValueNode>()); }
-void Parameter::accept(AnfVisitor *v) { v->Visit(shared_from_base<Parameter>()); }
+void CNode::accept(AnfIrVisitor *v) { v->Visit(shared_from_base<CNode>()); }
+void ValueNode::accept(AnfIrVisitor *v) { v->Visit(shared_from_base<ValueNode>()); }
+void Parameter::accept(AnfIrVisitor *v) { v->Visit(shared_from_base<Parameter>()); }
 }  // namespace mindspore

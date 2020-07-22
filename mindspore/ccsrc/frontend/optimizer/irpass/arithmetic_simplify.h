@@ -23,9 +23,9 @@
 
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/irpass/prim_eliminate.h"
-#include "ir/optimizer_caller.h"
+#include "frontend/optimizer/optimizer_caller.h"
+#include "frontend/optimizer/anf_visitor.h"
 #include "ir/pattern_matcher.h"
-#include "ir/visitor.h"
 
 namespace mindspore {
 namespace opt {

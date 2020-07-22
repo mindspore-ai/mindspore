@@ -21,8 +21,8 @@
 #include <memory>
 #include <vector>
 
-#include "ir/optimizer_caller.h"
-#include "ir/visitor.h"
+#include "frontend/optimizer/optimizer_caller.h"
+#include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"

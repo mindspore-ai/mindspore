@@ -22,8 +22,7 @@
 #include <tuple>
 #include <vector>
 
-#include "ir/anf.h"
-#include "ir/optimizer_caller.h"
+#include "ir/visitor.h"
 #include "base/core_ops.h"
 
 namespace mindspore {
@@ -41,7 +40,7 @@ namespace mindspore {
 template <typename T>
 class PBase {
  public:
-  bool CheckFunc(const opt::PredicateFuncType &func, const AnfNodePtr &node) {
+  bool CheckFunc(const PredicateFuncType &func, const AnfNodePtr &node) {
     return func(get_object().GetNode(node));
   }
 

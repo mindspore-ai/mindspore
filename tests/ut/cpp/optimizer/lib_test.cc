@@ -24,7 +24,6 @@
 #include "ir/func_graph_cloner.h"
 #include "ir/manager.h"
 #include "ir/value.h"
-#include "ir/visitor.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/irpass.h"
 #include "pipeline/jit/resource.h"
