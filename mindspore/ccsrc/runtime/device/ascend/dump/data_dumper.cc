@@ -242,6 +242,11 @@ void DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::T
     }
     output.set_original_output_format(GetGeFormat(output_format, output_shape.size()));
     output.set_address(static_cast<uint64_t>(reinterpret_cast<uintptr_t>(args)) + offset);
+    // device address data size
+    auto address = AnfAlgo::GetOutputAddr(kernel, i);
+    MS_EXCEPTION_IF_NULL(address);
+    output.set_size(address->GetSize());
+    MS_LOG(INFO) << "[DataDump] output " << i << " address size:" << output.size();
     MS_EXCEPTION_IF_NULL(task->mutable_output());
     task->mutable_output()->Add(std::move(output));
     offset += sizeof(void *);
@@ -272,6 +277,11 @@ void DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Ta
       input.mutable_shape()->add_dim(dim);
     }
     input.set_address(static_cast<uint64_t>(reinterpret_cast<uintptr_t>(args)) + offset);
+    // device  address data size
+    auto address = AnfAlgo::GetPrevNodeOutputAddr(kernel, i);
+    MS_EXCEPTION_IF_NULL(address);
+    input.set_size(address->GetSize());
+    MS_LOG(INFO) << "[DataDump] input " << i << " address size:" << input.size();
     MS_EXCEPTION_IF_NULL(task->mutable_input());
     task->mutable_input()->Add(std::move(input));
     offset += sizeof(void *);
