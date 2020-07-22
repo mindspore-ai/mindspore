@@ -1,11 +1,16 @@
-# Deeplab-V3 Example
+# DeeplabV3 Example
 
 ## Description
-This is an example of training DeepLabv3 with PASCAL VOC 2012 dataset in MindSpore. 
+This is an example of training DeepLabV3 with PASCAL VOC 2012 dataset in MindSpore. 
 
 ## Requirements
 - Install [MindSpore](https://www.mindspore.cn/install/en).
 - Download the VOC 2012 dataset for training.
+- We need to run `./src/remove_gt_colormap.py` to remove the label colormap. 
+  ``` bash
+  python remove_gt_colormap.py --original_gt_folder GT_FOLDER --output_dir OUTPUT_DIR
+
+  ```
 
 > Notes: 
   If you are running a fine-tuning or evaluation task, prepare the corresponding checkpoint file.
@@ -30,7 +35,7 @@ Set options in evaluation_config.py. Make sure the 'data_file' and 'finetune_ckp
 	```
 
 ## Options and Parameters
-It contains of parameters of Deeplab-V3 model and options for training, which is set in file config.py.
+It contains of parameters of DeeplabV3 model and options for training, which is set in file config.py.
 
 ### Options:
 ```
