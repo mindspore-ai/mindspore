@@ -99,7 +99,7 @@ AnfNodePtr FunctionBlock::MakeResolveAstOp(const py::object &op) {
 }
 
 // Resolve class member, two possible: method, member variable
-AnfNodePtr FunctionBlock::MakeResolveClassMember(std::string attr) {
+AnfNodePtr FunctionBlock::MakeResolveClassMember(const std::string &attr) {
   py::object namespace_var =
     parser_.ast()->CallParseModFunction(PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, parser_.ast()->obj());
   NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var);
