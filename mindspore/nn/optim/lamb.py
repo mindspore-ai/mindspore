@@ -228,8 +228,6 @@ class Lamb(Optimizer):
         eps (float): Term added to the denominator to improve numerical stability. Default: 1e-6.
             Should be greater than 0.
         weight_decay (float): Weight decay (L2 penalty). Default: 0.0. Should be in range [0.0, 1.0].
-        decay_filter (Function): A function to determine whether to apply weight decay on parameters. Default:
-            lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
