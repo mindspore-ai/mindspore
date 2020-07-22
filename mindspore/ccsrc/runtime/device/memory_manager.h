@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_MEMORY_MANAGER_H_
 #include <memory>
 #include <vector>
+#include <utility>
 #include "backend/optimizer/mem_reuse/mem_reuse.h"
 #include "backend/optimizer/mem_reuse/mem_reuse_allocator.h"
 namespace mindspore {
@@ -34,7 +35,7 @@ class MemoryManager {
 
   virtual void MallocDeviceMemory() = 0;
   virtual void FreeDeviceMemory() = 0;
-  void ResetDynamicMemory() {
+  virtual void ResetDynamicMemory() {
     total_dynamic_size_ = 0;
     dynamic_mem_offset_ = 0;
   }
@@ -42,6 +43,8 @@ class MemoryManager {
   void MallocReusedDynamicMem(const session::KernelGraph *graph);
   uint8_t *MallocOutputMem(const AnfNodePtr &node, size_t index, MemType type, size_t size);
   uint8_t *MallocWorkSpaceMem(const AnfNodePtr &node, size_t index, MemType type, size_t size);
+  uint8_t *MallocMem(const DeviceAddressPtr &address, MemType flag, size_t size,
+                     const session::KernelWithIndex &node_with_index = std::pair<AnfNodePtr, size_t>(nullptr, 0));
   virtual uint8_t *MallocMem(MemType type, size_t size);
 
   virtual bool MallocMemFromMemPool(const DeviceAddressPtr address, size_t size);

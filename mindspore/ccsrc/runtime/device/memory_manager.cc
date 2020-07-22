@@ -95,6 +95,31 @@ uint8_t *MemoryManager::MallocMem(MemType type, size_t size) {
   return ptr;
 }
 
+uint8_t *MemoryManager::MallocMem(const DeviceAddressPtr &address, MemType flag, size_t size,
+                                  const session::KernelWithIndex &node_with_index) {
+  MS_EXCEPTION_IF_NULL(address);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+
+  uint8_t *ptr = nullptr;
+  if (node_with_index.first != nullptr) {
+    ptr = MallocOutputMem(node_with_index.first, node_with_index.second, flag, size);
+    MS_EXCEPTION_IF_NULL(ptr);
+    if (AnfAlgo::IsCommunicationOp(node_with_index.first) && context_ptr->enable_hccl()) {
+      address->communication_ptr_ = ptr - kMemAlignSize;
+    }
+  } else {
+    ptr = MallocMem(flag, size);
+    MS_EXCEPTION_IF_NULL(ptr);
+  }
+  address->ptr_ = ptr;
+
+  if (flag == kStaticMem) {
+    address->from_mem_pool_ = true;
+  }
+  return ptr;
+}
+
 uint8_t *MemoryManager::MallocStaticMem(size_t size, bool communication_mem) {
   size_t align_size = 0;
   if (communication_mem) {
