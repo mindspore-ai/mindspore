@@ -428,5 +428,5 @@ def test_pynative_resnet50():
         cost_time = end_time - start_time
         print("======step: ", step, " loss: ", loss_output.asnumpy(), " cost time: ", cost_time)
         if step > 1:
-            assert cost_time < 0.3
+            assert cost_time < 0.31
         
