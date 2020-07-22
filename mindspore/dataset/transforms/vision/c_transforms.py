@@ -754,9 +754,9 @@ class RandomSelectSubpolicy(cde.RandomSelectSubpolicyOp):
         policy (list(list(tuple(TensorOp,float))): List of sub-policies to choose from.
 
     Examples:
-        >>> policy = [[(c_vision.RandomRotation((45, 45))), (c_transforms.RandomVerticalFlip()),
-        >>>            (c_transforms.RandomColorAdjust())],
-        >>>           [(c_vision.RandomRotation((90, 90))), (c_transforms.RandomColorAdjust())]]
+        >>> policy = [[(c_vision.RandomRotation((45, 45)), 0.5), (c_transforms.RandomVerticalFlip(), 1),
+        >>>            (c_transforms.RandomColorAdjust(), 0.8)],
+        >>>           [(c_vision.RandomRotation((90, 90)), 1), (c_transforms.RandomColorAdjust(), 0.2)]]
         >>> ds_policy = ds.map(input_columns=["image"], operations=visions.RandomSelectSubpolicy(policy))
     """
 
