@@ -31,6 +31,7 @@ This is an example of training YOLOV3-DarkNet53 with COCO2014 dataset in MindSpo
     ├─run_distribute_train.sh         # launch distributed training(8p)
     └─run_eval.sh                     # launch evaluating
   ├─src
+    ├─__init__.py                     # python init file
     ├─config.py                       # parameter configuration
     ├─darknet.py                      # backbone of network
     ├─distributed_sampler.py          # iterator of dataset
