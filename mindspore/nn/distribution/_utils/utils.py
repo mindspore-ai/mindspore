@@ -20,17 +20,10 @@ from ....common.tensor import Tensor
 from ....common.parameter import Parameter
 from ....common import dtype as mstype
 
-
-def check_scalar(value):
-    """
-    Check if input value is a scalar.
-    """
-    return np.isscalar(value)
-
-
 def cast_to_tensor(t, dtype=mstype.float32):
     """
     Cast an user input value into a Tensor of dtype.
+    If the input t is of type Parameter, t is directly returned as a Parameter.
 
     Args:
         t (int, float, list, numpy.ndarray, Tensor, Parameter): object to be cast to Tensor.
@@ -54,21 +47,9 @@ def cast_to_tensor(t, dtype=mstype.float32):
         return t
     if isinstance(t, (list, np.ndarray)):
         return Tensor(t, dtype=dtype)
-    if check_scalar(t):
+    if np.isscalar(t):
         return Tensor([t], dtype=dtype)
     raise RuntimeError("Input type is not supported.")
-
-def calc_batch_size(batch_shape):
-    """
-    Calculate the size of a given batch_shape.
-
-    Args:
-        batch_shape (tuple): batch shape to be calculated.
-
-    Returns:
-        int.
-    """
-    return int(np.prod(batch_shape))
 
 def convert_to_batch(t, batch_shape, dtype):
     """
@@ -87,15 +68,9 @@ def convert_to_batch(t, batch_shape, dtype):
     """
     if isinstance(t, Parameter):
         return t
-    t = cast_to_tensor(t, dtype)
-    if t.shape != batch_shape:
-        mul = calc_batch_size(batch_shape) // t.size()
-        if (calc_batch_size(batch_shape) % t.size()) != 0:
-            raise RuntimeError("Cannot cast the tensor to the given batch shape.")
-        temp = list(t.asnumpy()) * mul
-        temp = np.reshape(temp, batch_shape)
-        return Tensor(temp, dtype)
-    return t
+    if isinstance(t, Tensor):
+        return Tensor(np.broadcast_to(t.asnumpy(), batch_shape), dtype=dtype)
+    return Tensor(np.broadcast_to(t, batch_shape), dtype=dtype)
 
 def check_scalar_from_param(params):
     """
@@ -107,9 +82,11 @@ def check_scalar_from_param(params):
     Notes: String parameters are excluded.
     """
     for value in params.values():
+        if isinstance(value, Parameter):
+            return False
         if isinstance(value, (str, type(params['dtype']))):
             continue
-        elif check_scalar(value):
+        elif np.isscalar(value):
             continue
         else:
             return False
@@ -157,6 +134,26 @@ def check_greater_equal_zero(value, name):
         value = value.default_input
     comp = np.less(value.asnumpy(), np.zeros(value.shape))
     if comp.any():
+        raise ValueError(f'{name} should be greater than ot equal to zero.')
+
+def check_greater_zero(value, name):
+    """
+    Check if the given Tensor is strictly greater than zero.
+
+    Args:
+        value (Tensor, Parameter): value to be checked.
+        name (str) : name of the value.
+
+    Raises:
+        ValueError: if the input value is less than or equal to zero.
+
+    """
+    if isinstance(value, Parameter):
+        if isinstance(value.default_input, MetaTensor):
+            return
+        value = value.default_input
+    comp = np.less(np.zeros(value.shape), value.asnumpy())
+    if not comp.all():
         raise ValueError(f'{name} should be greater than zero.')
 
 def check_greater(a, b, name_a, name_b):
@@ -164,14 +161,16 @@ def check_greater(a, b, name_a, name_b):
     Check if Tensor b is strictly greater than Tensor a.
 
     Args:
-        a (Tensor): input tensor a.
-        b (Tensor): input tensor b.
+        a (Tensor, Parameter): input tensor a.
+        b (Tensor, Parameter): input tensor b.
         name_a (str): name of Tensor_a.
         name_b (str): name of Tensor_b.
 
     Raises:
         ValueError: if b is less than or equal to a
     """
+    if isinstance(a, Parameter) or isinstance(b, Parameter):
+        return
     comp = np.less(a.asnumpy(), b.asnumpy())
     if not comp.all():
         raise ValueError(f'{name_a} should be less than {name_b}')

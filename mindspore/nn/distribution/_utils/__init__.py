@@ -17,8 +17,11 @@ Distribution operation utility functions.
 """
 from .utils import *
 
-__all__ = ['check_scalar', 'convert_to_batch', 'cast_to_tensor',
-           'calc_batch_size', 'check_greater',
+__all__ = ['convert_to_batch',
+           'cast_to_tensor',
+           'check_greater',
            'check_greater_equal_zero',
+           'check_greater_zero',
            'calc_broadcast_shape_from_param',
-           'check_scalar_from_param', 'check_prob']
+           'check_scalar_from_param',
+           'check_prob']
