@@ -65,7 +65,7 @@ AnfNodePtr InsertCastForMultipleOutput(const FuncGraphPtr &func_graph, const CNo
         MS_EXCEPTION_IF_NULL(replace_node);
         replace_node->set_scope(cnode->scope());
         AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), replace_node);
-        if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(cnode)) {
+        if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(cnode, output_idx)) {
           kernel_graph->ReplaceInternalOutput(cnode, replace_node, output_idx, 0);
         }
       } else {
@@ -114,7 +114,7 @@ AnfNodePtr InsertCastForOutput(const FuncGraphPtr &func_graph, const CNodePtr &c
       MS_EXCEPTION_IF_NULL(replace_node);
       replace_node->set_scope(cnode->scope());
       AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), replace_node);
-      if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(cnode)) {
+      if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(cnode, 0)) {
         kernel_graph->ReplaceInternalOutput(cnode, replace_node);
       }
     }

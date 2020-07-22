@@ -89,7 +89,7 @@ BaseRef CreateOneTensor(const AnfNodePtr &node, size_t output_index, const Kerne
   TypeId type_id = kNumberTypeFloat32;
   type_id = AnfAlgo::GetOutputInferDataType(node, output_index);
   std::vector<int> temp_shape;
-  if (graph.IsInternalOutput(node)) {
+  if (graph.IsInternalOutput(node, output_index)) {
     temp_shape.emplace_back(1);
     tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
     tensor->set_device_address(address);
@@ -307,8 +307,7 @@ void SessionBasic::InitInternalOutputParameter(const AnfNodePtr &out_node, const
   auto real_kernel = AnfAlgo::VisitKernel(ref_node, output_idx);
   auto ref_real_node = real_kernel.first;
   auto ref_real_node_index = real_kernel.second;
-  if (ref_real_node->isa<CNode>() && node_graph->IsInternalOutput(ref_real_node) &&
-      node_graph->IsFinalOutputKernel(ref_real_node)) {
+  if (ref_real_node->isa<CNode>() && node_graph->IsInternalOutput(ref_real_node, ref_real_node_index)) {
     auto kernel_info = ref_real_node->kernel_info();
     if (kernel_info == nullptr || !kernel_info->has_build_info()) {
       MS_LOG(INFO) << "No kernel info";

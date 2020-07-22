@@ -355,7 +355,6 @@ void KernelRuntime::AssignStaticMemoryOutput(session::KernelGraph *graph) {
     if (!item_with_index.first->isa<CNode>() || !AnfAlgo::IsRealKernel(item_with_index.first)) {
       continue;
     }
-    graph->AddFinalOutputKernel(item_with_index.first);
     if (AnfAlgo::IsCommunicationOp(item_with_index.first)) {
       AssignCommunicationNodeMem(kStaticMem, item_with_index.first);
     } else {
