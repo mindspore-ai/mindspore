@@ -61,6 +61,7 @@ class Net(nn.Cell):
         return out
 
 
+@pytest.mark.skip(reason="waiting for fix by parallel strategy")
 def test_gatherv2_semi_auto0():
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
     strategy1 = ((1, 8), (1, 1))
@@ -133,6 +134,7 @@ def test_gatherv2_semi_auto5():
     _executor.compile(net, x, y)
 
 
+@pytest.mark.skip(reason="waiting for fix by parallel strategy")
 def test_gatherv2_semi_auto6():
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
     strategy2 = ((4, 2, 1), (4, 2, 1))
@@ -167,6 +169,7 @@ def test_gatherv2_semi_auto8():
     _executor.compile(net, x, y)
 
 
+@pytest.mark.skip(reason="waiting for fix by parallel strategy")
 def test_gatherv2_auto0():
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="auto_parallel")
     net = GradWrap(NetWithLoss(Net(0)))

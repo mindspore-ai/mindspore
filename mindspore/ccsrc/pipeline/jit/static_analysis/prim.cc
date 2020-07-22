@@ -386,6 +386,16 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
     dic["shape"] = arg_tensor->shape()->shape();
     dic["dtype"] = arg_tensor->BuildType();
     dic["value"] = BuildValue(arg_tensor->BuildValue());
+  } else if (abs_base->isa<AbstractIndexedSlices>()) {
+    auto arg = dyn_cast<AbstractIndexedSlices>(abs_base);
+    dic["shape"] = arg->shape()->shape();
+    dic["dtype"] = arg->BuildType();
+    dic["value"] = BuildValue(arg->BuildValue());
+  } else if (abs_base->isa<AbstractSparseTensor>()) {
+    auto arg = dyn_cast<AbstractSparseTensor>(abs_base);
+    dic["shape"] = arg->shape()->shape();
+    dic["dtype"] = arg->BuildType();
+    dic["value"] = BuildValue(arg->BuildValue());
   } else if (abs_base->isa<AbstractScalar>() || abs_base->isa<AbstractType>() || abs_base->isa<AbstractRefKey>()) {
     std::vector<int> shape;
     dic["shape"] = shape;
