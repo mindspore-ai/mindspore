@@ -344,11 +344,11 @@ def test_reshape_net2_2():
     reshape_net2(ReshapeNet2(((1, 8), (8, 2))))
 
 
-def _test_reshape_net3_1():
+def test_reshape_net3_1():
     reshape_net2(ReshapeNet3(((1, 8), (8, 1))))
 
 
-def _test_reshape_net3_2():
+def test_reshape_net3_2():
     reshape_net2(ReshapeNet3(((1, 8), (8, 2))))
 
 
@@ -464,11 +464,11 @@ def test_reshape_common2_3():
     reshape_common2(ParallelMode.SEMI_AUTO_PARALLEL, ReshapeNet2(((1, 8), (8, 2))))
 
 
-def _test_reshape_common2_4():
+def test_reshape_common2_4():
     reshape_common2(ParallelMode.SEMI_AUTO_PARALLEL, ReshapeNet3(((1, 8), (8, 1))))
 
 
-def _test_reshape_common2_5():
+def test_reshape_common2_5():
     reshape_common2(ParallelMode.SEMI_AUTO_PARALLEL, ReshapeNet3(((1, 8), (8, 2))))
 
 
