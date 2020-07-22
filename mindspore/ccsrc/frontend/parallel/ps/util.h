@@ -34,12 +34,14 @@ class Util {
   static void SetInternalEnvVar();
   static int optimizer_id(std::string name);
   static std::string optimizer_name(int id);
+  static std::string optimizer_node_name(int id);
   static bool is_optimizer(std::string name);
   static int LocalShard(int first_dim, int rank_id, int server_num);
 
  private:
   static std::unordered_map<std::string, int> optimizer_to_ids;
   static std::unordered_map<int, std::string> id_to_optimizers;
+  static std::unordered_map<int, std::string> id_to_optimizer_nodes;
 };
 }  // namespace ps
 }  // namespace parallel

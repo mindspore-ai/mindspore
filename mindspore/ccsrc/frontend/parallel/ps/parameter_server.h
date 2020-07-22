@@ -28,6 +28,7 @@
 #include <thread>
 #include <cmath>
 #include <random>
+#include <list>
 #include "ir/func_graph.h"
 #include "backend/session/session_basic.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -116,6 +117,7 @@ class ParameterServer {
   bool ReadyForUpdateWeights();
   bool ReadyForAccumGrads();
   void ResetGradAccumCount();
+  const CNodePtr GetCNode(const std::string &name) const;
 
   size_t pserver_num_;
   size_t worker_num_;
@@ -132,6 +134,7 @@ class ParameterServer {
   std::unordered_map<Key, std::shared_ptr<OptimizerInfo>> optim_infos_;
   std::unordered_map<std::string, std::shared_ptr<OptimizerInfoBuilder>> optim_info_builders_;
   std::unordered_map<Key, std::string> weight_key_to_optims_;
+  std::unordered_map<Key, std::string> weight_key_to_optim_op_;
   std::unordered_map<Key, WeightPtr> weights_;
   std::unordered_map<Key, WeightPtr> grads_;
   std::unordered_map<Key, size_t> grads_accum_counter_;
@@ -277,7 +280,6 @@ bool ParameterServer<T>::Init(const FuncGraphPtr &func_graph) {
   handler_->Init();
 
   InitOptimInfoBuilders();
-
   ps_->set_request_handle(*handler_);
   thread_.reset(new std::thread(&ParameterServer::UpdateWeights, this));
   return true;
@@ -299,6 +301,7 @@ void ParameterServer<T>::InitWeightKeyToOptims(const Key &key, const int &optim_
     return;
   }
   weight_key_to_optims_[key] = Util::optimizer_name(optim_id);
+  weight_key_to_optim_op_[key] = Util::optimizer_node_name(optim_id);
 }
 
 template <typename T>
@@ -321,25 +324,40 @@ void ParameterServer<T>::InitOptimInputsShape(const Keys &keys, const Values &va
   }
   if (weight_key_to_optims_.count(key) > 0) {
     const std::string &optim_name = weight_key_to_optims_[key];
+    const std::string &optim_op_name = weight_key_to_optim_op_[key];
     if (optimizers_.count(key) == 0 && optim_inputs_shape_.count(key) > 0) {
+      const CNodePtr cnode = GetCNode(optim_op_name);
+      MS_EXCEPTION_IF_NULL(cnode);
       if (optim_name == kSparseAdam) {
         std::shared_ptr<PServerKernel> optimizer =
           std::make_shared<kernel::ps::SparseApplyLazyAdamPSKernel>(rank_id_, pserver_num_);
-        optimizer->InitKernel(optim_inputs_shape_[key]);
+        optimizer->InitKernel(cnode, optim_inputs_shape_[key]);
         optimizers_[key] = optimizer;
       } else if (optim_name == kApplyMomentum) {
         std::shared_ptr<PServerKernel> optimizer =
           std::make_shared<kernel::ps::ApplyMomentumPSKernel>(rank_id_, pserver_num_);
-        optimizer->InitKernel(optim_inputs_shape_[key]);
+        optimizer->InitKernel(cnode, optim_inputs_shape_[key]);
         optimizers_[key] = optimizer;
       } else if (optim_name == kSparseFtrl) {
         std::shared_ptr<PServerKernel> optimizer =
           std::make_shared<kernel::ps::SparseApplyFtrlPSKernel>(rank_id_, pserver_num_);
-        optimizer->InitKernel(optim_inputs_shape_[key]);
+        optimizer->InitKernel(cnode, optim_inputs_shape_[key]);
         optimizers_[key] = optimizer;
       }
     }
   }
+}
+
+template <typename T>
+const CNodePtr ParameterServer<T>::GetCNode(const std::string &name) const {
+  std::list<CNodePtr> cnodes = func_graph_->GetOrderedCnodes();
+  for (CNodePtr cnode : cnodes) {
+    std::string fullname = cnode->fullname_with_scope();
+    if (fullname.find(name) != std::string::npos && fullname.find("Push") != std::string::npos) {
+      return cnode;
+    }
+  }
+  return nullptr;
 }
 
 template <typename T>
