@@ -149,19 +149,19 @@ do
   cd $file_path || exit
   cd ../ || exit
 
-  rm -rf ./run_mass_$DEVICE_ID
-  mkdir ./run_mass_$DEVICE_ID
+  rm -rf ./${task}_mass_$DEVICE_ID
+  mkdir ./${task}_mass_$DEVICE_ID
 
-  cp train.py ./run_mass_$DEVICE_ID
-  cp eval.py ./run_mass_$DEVICE_ID
-  cp $configurations ./run_mass_$DEVICE_ID
+  cp train.py ./${task}_mass_$DEVICE_ID
+  cp eval.py ./${task}_mass_$DEVICE_ID
+  cp $configurations ./${task}_mass_$DEVICE_ID
 
   if [ $vocab ]
   then
-    cp $vocab ./run_mass_$DEVICE_ID
+    cp $vocab ./${task}_mass_$DEVICE_ID
   fi
 
-  cd ./run_mass_$DEVICE_ID || exit
+  cd ./${task}_mass_$DEVICE_ID || exit
   env > log.log
   echo $task
   if [ "$task" == "train" ]

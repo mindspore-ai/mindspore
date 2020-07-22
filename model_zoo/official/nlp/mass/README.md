@@ -548,7 +548,7 @@ Run the shell script `run.sh` as followed:
 ```bash
 sh run.sh -t t -n 1 -i 1 -c /mass/config/config.json
 ```
-Get the log and output files under the path `./run_mass_*/`, and the model file under the path assigned in the `config/config.json` file.
+Get the log and output files under the path `./train_mass_*/`, and the model file under the path assigned in the `config/config.json` file.
 
 ## Fine-tuning
 For fine-tuning a model, config the options in `config.json` firstly:
@@ -562,7 +562,7 @@ Run the shell script `run.sh` as followed:
 ```bash
 sh run.sh -t t -n 1 -i 1 -c config/config.json
 ```
-Get the log and output files under the path `./run_mass_*/`, and the model file under the path assigned in the `config/config.json` file.
+Get the log and output files under the path `./train_mass_*/`, and the model file under the path assigned in the `config/config.json` file.
 
 ## Inference
 If you need to use the trained model to perform inference on multiple hardware platforms, such as GPU, Ascend 910 or Ascend 310, you can refer to this [Link](https://www.mindspore.cn/tutorial/zh-CN/master/advanced_use/network_migration.html).
