@@ -172,6 +172,7 @@ class MsContext {
   MsBackendPolicy backend_policy_;
   std::string device_target_;
   uint32_t device_id_;
+  uint32_t physics_id_;
   int execution_mode_;
   bool enable_pynative_infer_;
   bool enable_pynative_hook_;
