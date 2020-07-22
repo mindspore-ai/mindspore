@@ -21,12 +21,49 @@ VOCAB_FILE = "../data/dataset/test_sentencepiece/botchan.txt"
 DATA_FILE = "../data/dataset/testTokenizerData/sentencepiece_tokenizer.txt"
 
 
-def test_from_vocab_to_str():
+def test_from_vocab_to_str_UNIGRAM():
     vocab = text.SentencePieceVocab.from_file([VOCAB_FILE], 5000, 0.9995, SentencePieceModel.UNIGRAM, {})
     tokenizer = text.SentencePieceTokenizer(vocab, out_type=SPieceTokenizerOutType.STRING)
     dataset = ds.TextFileDataset(DATA_FILE, shuffle=False)
     dataset = dataset.map(operations=tokenizer)
     expect = ['▁I', '▁sa', 'w', '▁a', '▁girl', '▁with', '▁a', '▁te', 'les', 'co', 'pe', '.']
+    for i in dataset.create_dict_iterator():
+        ret = to_str(i["text"])
+        for key, value in enumerate(ret):
+            assert value == expect[key]
+
+
+def test_from_vocab_to_str_BPE():
+    vocab = text.SentencePieceVocab.from_file([VOCAB_FILE], 5000, 0.9995, SentencePieceModel.BPE, {})
+    tokenizer = text.SentencePieceTokenizer(vocab, out_type=SPieceTokenizerOutType.STRING)
+    dataset = ds.TextFileDataset(DATA_FILE, shuffle=False)
+    dataset = dataset.map(operations=tokenizer)
+    expect = ['▁I', '▁saw', '▁a', '▁girl', '▁with', '▁a', '▁te', 'les', 'c', 'ope', '.']
+    for i in dataset.create_dict_iterator():
+        ret = to_str(i["text"])
+        for key, value in enumerate(ret):
+            assert value == expect[key]
+
+
+def test_from_vocab_to_str_CHAR():
+    vocab = text.SentencePieceVocab.from_file([VOCAB_FILE], 5000, 0.9995, SentencePieceModel.CHAR, {})
+    tokenizer = text.SentencePieceTokenizer(vocab, out_type=SPieceTokenizerOutType.STRING)
+    dataset = ds.TextFileDataset(DATA_FILE, shuffle=False)
+    dataset = dataset.map(operations=tokenizer)
+    expect = ['▁', 'I', '▁', 's', 'a', 'w', '▁', 'a', '▁', 'g', 'i', 'r', 'l', '▁', 'w', 'i', 't', 'h',\
+              '▁', 'a', '▁', 't', 'e', 'l', 'e', 's', 'c', 'o', 'p', 'e', '.']
+    for i in dataset.create_dict_iterator():
+        ret = to_str(i["text"])
+        for key, value in enumerate(ret):
+            assert value == expect[key]
+
+
+def test_from_vocab_to_str_WORD():
+    vocab = text.SentencePieceVocab.from_file([VOCAB_FILE], 5000, 0.9995, SentencePieceModel.WORD, {})
+    tokenizer = text.SentencePieceTokenizer(vocab, out_type=SPieceTokenizerOutType.STRING)
+    dataset = ds.TextFileDataset(DATA_FILE, shuffle=False)
+    dataset = dataset.map(operations=tokenizer)
+    expect = ['▁I', '▁saw', '▁a', '▁girl', '▁with', '▁a', '▁telescope.']
     for i in dataset.create_dict_iterator():
         ret = to_str(i["text"])
         for key, value in enumerate(ret):
@@ -85,7 +122,10 @@ def test_build_from_dataset():
 
 
 if __name__ == "__main__":
-    test_from_vocab_to_str()
+    test_from_vocab_to_str_UNIGRAM()
+    test_from_vocab_to_str_BPE()
+    test_from_vocab_to_str_CHAR()
+    test_from_vocab_to_str_WORD()
     test_from_vocab_to_int()
     test_from_file_to_str()
     test_from_file_to_int()

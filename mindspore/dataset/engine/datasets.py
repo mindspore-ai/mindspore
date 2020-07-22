@@ -135,6 +135,7 @@ class Dataset:
     """
 
     def __init__(self, num_parallel_workers=None):
+        # Note: children and parent are internal variables, not recommand for external using.
         self.children = []
         self.parent = []
         self.num_parallel_workers = num_parallel_workers
