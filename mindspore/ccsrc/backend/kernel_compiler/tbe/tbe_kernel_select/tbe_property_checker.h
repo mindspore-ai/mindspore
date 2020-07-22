@@ -26,8 +26,7 @@ class TbePropertyChecker {
   ~TbePropertyChecker() = default;
   static bool CheckTbeProperties(const mindspore::CNodePtr &cnode);
 };
-
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif // MINDSPORE_BACKEND_KERNEL_COMPILER_TBE_TBE_KERNEL_SELECT_TBE_PROPERTY_CHECKER_H
+#endif  // MINDSPORE_BACKEND_KERNEL_COMPILER_TBE_TBE_KERNEL_SELECT_TBE_PROPERTY_CHECKER_H
