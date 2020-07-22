@@ -25,7 +25,6 @@
 #include "ir/tensor.h"
 
 namespace mindspore {
-
 class ParamValue {
  public:
   ParamValue() {}
@@ -82,6 +81,5 @@ class ParamValue {
   std::vector<int32_t> be_cloned_index_;
   int32_t cloned_index_{0};
 };
-
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_PARAM_VALUE_H_
