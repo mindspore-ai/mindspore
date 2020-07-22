@@ -130,6 +130,7 @@ int CsvOp::CsvParser::put_row(char c) {
   }
 
   if (total_rows_ >= end_offset_) {
+    cur_col_ = 0;
     return 0;
   }
 
@@ -353,7 +354,9 @@ Status CsvOp::CsvParser::initCsvParser() {
         {{State::END_OF_LINE, Message::MS_NORMAL},
          {State::UNQUOTE,
           [this](CsvParser &, char c) -> int {
-            this->tensor_table_->push_back(TensorRow(column_default_.size(), nullptr));
+            if (this->total_rows_ > this->start_offset_ && this->total_rows_ <= this->end_offset_) {
+              this->tensor_table_->push_back(TensorRow(column_default_.size(), nullptr));
+            }
             this->str_buf_[0] = c;
             this->pos_ = 1;
             return 0;
@@ -361,14 +364,18 @@ Status CsvOp::CsvParser::initCsvParser() {
         {{State::END_OF_LINE, Message::MS_DELIM},
          {State::DELIM,
           [this](CsvParser &, char c) -> int {
-            this->tensor_table_->push_back(TensorRow(column_default_.size(), nullptr));
+            if (this->total_rows_ > this->start_offset_ && this->total_rows_ <= this->end_offset_) {
+              this->tensor_table_->push_back(TensorRow(column_default_.size(), nullptr));
+            }
             this->put_record(c);
             return 0;
           }}},
         {{State::END_OF_LINE, Message::MS_QUOTE},
          {State::QUOTE,
           [this](CsvParser &, char c) -> int {
-            this->tensor_table_->push_back(TensorRow(column_default_.size(), nullptr));
+            if (this->total_rows_ > this->start_offset_ && this->total_rows_ <= this->end_offset_) {
+              this->tensor_table_->push_back(TensorRow(column_default_.size(), nullptr));
+            }
             return 0;
           }}},
         {{State::END_OF_LINE, Message::MS_END_OF_LINE}, {State::END_OF_LINE, &CsvParser::null_func}},
