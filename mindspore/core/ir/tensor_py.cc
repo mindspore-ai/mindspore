@@ -28,7 +28,6 @@
 
 namespace mindspore {
 namespace tensor {
-
 static TypeId GetDataType(const py::buffer_info &buf) {
   if (buf.format.size() == 1) {
     switch (buf.format.front()) {

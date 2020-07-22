@@ -105,7 +105,6 @@ class TensorPy {
 
   static py::tuple GetPyTupleShape(const Tensor &tensor);
 };
-
 }  // namespace tensor
 }  // namespace mindspore
 
