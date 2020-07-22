@@ -124,7 +124,7 @@ class OrderedMap {
   std::pair<iterator, bool> insert(const pair_type &kv) {
     auto result = add(kv.first);
     if (result.second) {
-      *(result.first) = kv.second;
+      *(result.first) = kv;
       return std::make_pair(std::prev(end()), true);
     }
     return std::make_pair(result.first, false);

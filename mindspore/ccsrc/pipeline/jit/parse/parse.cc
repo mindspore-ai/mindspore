@@ -17,6 +17,8 @@
  */
 
 #include "pipeline/jit/parse/parse.h"
+
+#include <utility>
 #include <string>
 #include <memory>
 #include <sstream>
@@ -1480,21 +1482,25 @@ AnfNodePtr FindPhis(const std::unordered_map<ParameterPtr, AnfNodePtr> &removabl
 void Parser::RemoveUnnecessaryPhis() {
   // merge all removable phis to one map;
   std::unordered_map<ParameterPtr, AnfNodePtr> removable_phis;
+  std::vector<ParameterPtr> phis;
   for (FunctionBlockPtr &block : func_block_list_) {
     MS_EXCEPTION_IF_NULL(block);
     removable_phis.insert(block->removable_phis().begin(), block->removable_phis().end());
+    std::transform(block->removable_phis().begin(), block->removable_phis().end(), std::back_inserter(phis),
+                   [](std::pair<ParameterPtr, AnfNodePtr> pair) { return pair.first; });
   }
   if (removable_phis.size() == 0) {
     return;
   }
-
   auto fg_name = func_graph_->ToString();
   auto mng = Manage(func_graph_, false);
   // replace the nodes
-  for (auto iter : removable_phis) {
-    auto new_node = FindPhis(removable_phis, iter.first);
-    MS_LOG(DEBUG) << "phi " << iter.first->DebugString() << " to " << new_node->DebugString();
-    mng->Replace(iter.first, new_node);
+  // remove from inside to outside
+  for (int idx = SizeToInt(phis.size() - 1); idx >= 0; idx--) {
+    auto phi = phis[IntToSize(idx)];
+    auto new_node = FindPhis(removable_phis, phi);
+    MS_LOG(DEBUG) << "phi " << phi->DebugString() << " to " << new_node->DebugString();
+    mng->Replace(phi, new_node);
   }
   // remove the parameter
   for (FunctionBlockPtr &block : func_block_list_) {
