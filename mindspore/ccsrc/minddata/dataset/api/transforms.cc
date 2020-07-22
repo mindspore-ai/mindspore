@@ -90,9 +90,9 @@ std::shared_ptr<CenterCropOperation> CenterCrop(std::vector<int32_t> size) {
 }
 
 // Function to create UniformAugOperation.
-std::shared_ptr<UniformAugOperation> UniformAugment(std::vector<std::shared_ptr<TensorOperation>> operations,
+std::shared_ptr<UniformAugOperation> UniformAugment(std::vector<std::shared_ptr<TensorOperation>> transforms,
                                                     int32_t num_ops) {
-  auto op = std::make_shared<UniformAugOperation>(operations, num_ops);
+  auto op = std::make_shared<UniformAugOperation>(transforms, num_ops);
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -290,14 +290,14 @@ std::shared_ptr<TensorOp> CenterCropOperation::Build() {
 }
 
 // UniformAugOperation
-UniformAugOperation::UniformAugOperation(std::vector<std::shared_ptr<TensorOperation>> operations, int32_t num_ops)
-    : operations_(operations), num_ops_(num_ops) {}
+UniformAugOperation::UniformAugOperation(std::vector<std::shared_ptr<TensorOperation>> transforms, int32_t num_ops)
+    : transforms_(transforms), num_ops_(num_ops) {}
 
 bool UniformAugOperation::ValidateParams() { return true; }
 
 std::shared_ptr<TensorOp> UniformAugOperation::Build() {
   std::vector<std::shared_ptr<TensorOp>> tensor_ops;
-  (void)std::transform(operations_.begin(), operations_.end(), std::back_inserter(tensor_ops),
+  (void)std::transform(transforms_.begin(), transforms_.end(), std::back_inserter(tensor_ops),
                        [](std::shared_ptr<TensorOperation> op) -> std::shared_ptr<TensorOp> { return op->Build(); });
   std::shared_ptr<UniformAugOp> tensor_op = std::make_shared<UniformAugOp>(tensor_ops, num_ops_);
   return tensor_op;

@@ -108,10 +108,10 @@ std::shared_ptr<CenterCropOperation> CenterCrop(std::vector<int32_t> size);
 
 /// \brief Function to create a UniformAugment TensorOperation.
 /// \notes Tensor operation to perform randomly selected augmentation.
-/// \param[in] operations - a vector of TensorOperation operations.
+/// \param[in] transforms - a vector of TensorOperation transforms.
 /// \param[in] num_ops - integer representing the number of OPs to be selected and applied.
 /// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<UniformAugOperation> UniformAugment(std::vector<std::shared_ptr<TensorOperation>> operations,
+std::shared_ptr<UniformAugOperation> UniformAugment(std::vector<std::shared_ptr<TensorOperation>> transforms,
                                                     int32_t num_ops = 2);
 
 /// \brief Function to create a RandomHorizontalFlip TensorOperation.
@@ -264,7 +264,7 @@ class CenterCropOperation : public TensorOperation {
 
 class UniformAugOperation : public TensorOperation {
  public:
-  explicit UniformAugOperation(std::vector<std::shared_ptr<TensorOperation>> operations, int32_t num_ops = 2);
+  explicit UniformAugOperation(std::vector<std::shared_ptr<TensorOperation>> transforms, int32_t num_ops = 2);
 
   ~UniformAugOperation() = default;
 
@@ -273,7 +273,7 @@ class UniformAugOperation : public TensorOperation {
   bool ValidateParams() override;
 
  private:
-  std::vector<std::shared_ptr<TensorOperation>> operations_;
+  std::vector<std::shared_ptr<TensorOperation>> transforms_;
   int32_t num_ops_;
 };
 

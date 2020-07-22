@@ -124,7 +124,7 @@ def test_cpp_uniform_augment(plot=False, num_ops=2):
                      C.RandomColorAdjust(),
                      C.RandomRotation(degrees=45)]
 
-    uni_aug = C.UniformAugment(operations=transforms_ua, num_ops=num_ops)
+    uni_aug = C.UniformAugment(transforms=transforms_ua, num_ops=num_ops)
 
     transforms_all = [C.Decode(), C.Resize(size=[224, 224]),
                       uni_aug,
@@ -166,7 +166,7 @@ def test_cpp_uniform_augment_exception_pyops(num_ops=2):
                      F.Invert()]
 
     with pytest.raises(TypeError) as e:
-        C.UniformAugment(operations=transforms_ua, num_ops=num_ops)
+        C.UniformAugment(transforms=transforms_ua, num_ops=num_ops)
 
     logger.info("Got an exception in DE: {}".format(str(e)))
     assert "Argument tensor_ops[5] with value" \
@@ -187,7 +187,7 @@ def test_cpp_uniform_augment_exception_large_numops(num_ops=6):
                      C.RandomRotation(degrees=45)]
 
     try:
-        _ = C.UniformAugment(operations=transforms_ua, num_ops=num_ops)
+        _ = C.UniformAugment(transforms=transforms_ua, num_ops=num_ops)
 
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
@@ -207,7 +207,7 @@ def test_cpp_uniform_augment_exception_nonpositive_numops(num_ops=0):
                      C.RandomRotation(degrees=45)]
 
     try:
-        _ = C.UniformAugment(operations=transforms_ua, num_ops=num_ops)
+        _ = C.UniformAugment(transforms=transforms_ua, num_ops=num_ops)
 
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
@@ -227,7 +227,7 @@ def test_cpp_uniform_augment_exception_float_numops(num_ops=2.5):
                      C.RandomRotation(degrees=45)]
 
     try:
-        _ = C.UniformAugment(operations=transforms_ua, num_ops=num_ops)
+        _ = C.UniformAugment(transforms=transforms_ua, num_ops=num_ops)
 
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
@@ -248,7 +248,7 @@ def test_cpp_uniform_augment_random_crop_badinput(num_ops=1):
         C.RandomCrop(size=[224, 224]),
         C.RandomHorizontalFlip()
     ]
-    uni_aug = C.UniformAugment(operations=transforms_ua, num_ops=num_ops)
+    uni_aug = C.UniformAugment(transforms=transforms_ua, num_ops=num_ops)
     ds1 = ds1.map(input_columns="image", operations=uni_aug)
 
     # apply DatasetOps

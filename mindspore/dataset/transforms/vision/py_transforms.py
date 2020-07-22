@@ -33,7 +33,7 @@ from .validators import check_prob, check_crop, check_resize_interpolation, chec
     check_normalize_py, check_random_crop, check_random_color_adjust, check_random_rotation, \
     check_transforms_list, check_random_apply, check_ten_crop, check_num_channels, check_pad, \
     check_random_perspective, check_random_erasing, check_cutout, check_linear_transform, check_random_affine, \
-    check_mix_up, check_positive_degrees, check_uniform_augment_py, check_compose_list
+    check_mix_up, check_positive_degrees, check_uniform_augment_py, check_compose_list, check_auto_contrast
 from .utils import Inter, Border
 
 DE_PY_INTER_MODE = {Inter.NEAREST: Image.NEAREST,
@@ -1361,12 +1361,21 @@ class AutoContrast:
     """
     Automatically maximize the contrast of the input PIL image.
 
+    Args:
+        cutoff (float, optional): Percent of pixels to cut off from the histogram (default=0.0).
+        ignore (int or sequence, optional): Pixel values to ignore (default=None).
+
     Examples:
         >>> py_transforms.ComposeOp([py_transforms.Decode(),
         >>>                          py_transforms.AutoContrast(),
         >>>                          py_transforms.ToTensor()])
 
     """
+
+    @check_auto_contrast
+    def __init__(self, cutoff=0.0, ignore=None):
+        self.cutoff = cutoff
+        self.ignore = ignore
 
     def __call__(self, img):
         """
@@ -1379,7 +1388,7 @@ class AutoContrast:
             img (PIL Image), Augmented image.
         """
 
-        return util.auto_contrast(img)
+        return util.auto_contrast(img, self.cutoff, self.ignore)
 
 
 class Invert:

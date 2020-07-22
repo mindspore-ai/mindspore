@@ -722,7 +722,7 @@ class UniformAugment(cde.UniformAugOp):
     Tensor operation to perform randomly selected augmentation.
 
     Args:
-        operations: list of C++ operations (python OPs are not accepted).
+        transforms: list of C++ operations (python OPs are not accepted).
         num_ops (int, optional): number of OPs to be selected and applied (default=2).
 
     Examples:
@@ -730,7 +730,7 @@ class UniformAugment(cde.UniformAugOp):
         >>>                    c_transforms.RandomVerticalFlip(),
         >>>                    c_transforms.RandomColorAdjust(),
         >>>                    c_transforms.RandomRotation(degrees=45)]
-        >>> uni_aug = c_transforms.UniformAugment(operations=transforms_list, num_ops=2)
+        >>> uni_aug = c_transforms.UniformAugment(transforms=transforms_list, num_ops=2)
         >>> transforms_all = [c_transforms.Decode(), c_transforms.Resize(size=[224, 224]),
         >>>                   uni_aug, F.ToTensor()]
         >>> ds_ua = ds.map(input_columns="image",
@@ -738,10 +738,10 @@ class UniformAugment(cde.UniformAugOp):
     """
 
     @check_uniform_augment_cpp
-    def __init__(self, operations, num_ops=2):
-        self.operations = operations
+    def __init__(self, transforms, num_ops=2):
+        self.transforms = transforms
         self.num_ops = num_ops
-        super().__init__(operations, num_ops)
+        super().__init__(transforms, num_ops)
 
 
 class RandomSelectSubpolicy(cde.RandomSelectSubpolicyOp):

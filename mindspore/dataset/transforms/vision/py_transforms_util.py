@@ -1457,13 +1457,15 @@ def random_sharpness(img, degrees):
     return ImageEnhance.Sharpness(img).enhance(v)
 
 
-def auto_contrast(img):
+def auto_contrast(img, cutoff, ignore):
 
     """
     Automatically maximize the contrast of the input PIL image.
 
     Args:
         img (PIL Image): Image to be augmented with AutoContrast.
+        cutoff (float, optional): Percent of pixels to cut off from the histogram (default=0.0).
+        ignore (int or sequence, optional): Pixel values to ignore (default=None).
 
     Returns:
         img (PIL Image), Augmented image.
@@ -1473,7 +1475,7 @@ def auto_contrast(img):
     if not is_pil(img):
         raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
 
-    return ImageOps.autocontrast(img)
+    return ImageOps.autocontrast(img, cutoff, ignore)
 
 
 def invert_color(img):
