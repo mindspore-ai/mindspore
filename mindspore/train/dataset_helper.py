@@ -222,9 +222,9 @@ class _DatasetIterNormal:
         self.dataset = dataset
         self.device_num = _get_device_num()
         self.global_rank = _get_global_rank()
+        self.iter = self.dataset.create_tuple_iterator()
 
     def __iter__(self):
-        self.iter = self.dataset.create_tuple_iterator()
         return self
 
     def __next__(self):
