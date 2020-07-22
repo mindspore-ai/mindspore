@@ -95,6 +95,7 @@ from .bn_training_update import _bn_training_update_tbe
 from .bn_training_update_grad import _bn_training_update_grad_tbe
 from .bn_infer import _bn_infer_tbe
 from .bn_infer_grad import _bn_infer_grad_tbe
+from .bn_inference import _bn_inference_tbe
 from .reciprocal import _reciprocal_tbe
 from .reverse_v2_d import _reverse_v2_d_tbe
 from .rint import _rint_tbe
