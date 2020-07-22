@@ -405,6 +405,42 @@ class ReduceAll(_Reduce):
         return self.do_infer(input_x, axis, (mstype.bool_,))
 
 
+class ReduceAny(_Reduce):
+    """
+    Reduce a dimension of a tensor by the "logical or" of all elements in the dimension.
+
+    The dtype of the tensor to be reduced is bool.
+
+    Args:
+       keep_dims (bool): If True, keep these reduced dimensions and the length is 1.
+                         If False, don't keep these dimensions.
+                         Default : False, don't keep these reduced dimensions.
+
+    Inputs:
+        - **input_x** (Tensor[bool]) - The input tensor.
+        - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
+          Only constant value is allowed.
+
+    Outputs:
+        Tensor, the dtype is bool.
+
+        - If axis is (), and keep_dims is false,
+          the output is a 0-D tensor representing the "logical or" of of all elements in the input tensor.
+        - If axis is int, set as 2, and keep_dims is false,
+          and keep_dims is false, the shape of output is :math:`(x_1, x_3, ..., x_R)`.
+        - If axis is tuple(int), set as (2, 3), and keep_dims is false,
+          the shape of output is :math:`(x_1, x_4, ..., x_R)`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([[True, False], [True, True]]))
+        >>> op = P.ReduceAny(keep_dims=True)
+        >>> output = op(input_x, 1)
+    """
+
+    def __infer__(self, input_x, axis):
+        return self.do_infer(input_x, axis, (mstype.bool_,))
+
+
 class ReduceMax(_Reduce):
     """
     Reduce a dimension of a tensor by the maximum value in this dimension.

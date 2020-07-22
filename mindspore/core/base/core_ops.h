@@ -34,6 +34,7 @@ inline const PrimitivePtr kPrimMinimumGrad = std::make_shared<Primitive>("Minimu
 inline const PrimitivePtr kPrimReduceMean = std::make_shared<Primitive>("ReduceMean");
 inline const PrimitivePtr kPrimReduceSum = std::make_shared<Primitive>("ReduceSum");
 inline const PrimitivePtr kPrimReduceAll = std::make_shared<Primitive>("ReduceAll");
+inline const PrimitivePtr kPrimReduceAny = std::make_shared<Primitive>("ReduceAny");
 inline const PrimitivePtr kPrimReduceMax = std::make_shared<Primitive>("ReduceMax");
 inline const PrimitivePtr kPrimReduceMin = std::make_shared<Primitive>("ReduceMin");
 inline const PrimitivePtr kPrimNeg = std::make_shared<Primitive>("Neg");

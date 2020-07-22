@@ -126,6 +126,7 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"apply_rms_prop", "apply_rms_prop_d"},
   {"cum_prod", "cumprod_d"},
   {"reduce_all", "reduce_all_d"},
+  {"reduce_any", "reduce_any_d"},
   {"sparse_apply_adagrad", "sparse_apply_adagrad_d"},
   {"unsorted_segment_min", "unsorted_segment_min_d"},
   {"reduce_prod", "reduce_prod_d"},
