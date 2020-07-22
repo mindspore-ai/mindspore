@@ -276,7 +276,7 @@ class Adam(Optimizer):
 
         self.hyper_map = C.HyperMap()
         self.opt = P.Adam(use_locking, use_nesterov)
-        self.sparse_opt = P.SparseApplyAdam(use_locking, use_nesterov)
+        self.sparse_opt = P.FusedSparseAdam(use_locking, use_nesterov)
 
     def construct(self, gradients):
         params = self.parameters

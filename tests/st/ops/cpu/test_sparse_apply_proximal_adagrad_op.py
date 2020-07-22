@@ -25,7 +25,7 @@ import mindspore.common.dtype as mstype
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.sparse_apply_proximal_adagrad = P.SparseApplyProximalAdagrad()
+        self.sparse_apply_proximal_adagrad = P.FusedSparseProximalAdagrad()
         self.var = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="var")
         self.accum = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="accum")
         self.lr = 0.01
