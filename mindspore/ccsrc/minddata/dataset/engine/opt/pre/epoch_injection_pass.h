@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_ENGINE_OPT_PASS_PRE_INJECTION_PASS_H_
-#define DATASET_ENGINE_OPT_PASS_PRE_INJECTION_PASS_H_
+#ifndef DATASET_ENGINE_OPT_PASS_PRE_EPOCH_INJECTION_PASS_H_
+#define DATASET_ENGINE_OPT_PASS_PRE_EPOCH_INJECTION_PASS_H_
 
 #include <memory>
 #include <vector>
@@ -26,10 +26,10 @@ namespace dataset {
 
 class DatasetOp;
 
-/// \class InjectionPass injection_pass.h
+/// \class EpochInjectionPass epoch_injection_pass.h
 /// \brief This is a pre pass that drives the injection of any nodes that could not be directly injected from the api
 ///     parsing.
-class InjectionPass : public TreePass {
+class EpochInjectionPass : public TreePass {
   /// \class InjectionFinder
   /// \brief This is a nested node pass class who's job is to parse the tree and perform any identification logic for
   ///     operators that need to be injected.  It is run first by the main injection pass to find out what operators
@@ -37,7 +37,10 @@ class InjectionPass : public TreePass {
   class InjectionFinder : public NodePass {
    public:
     /// \brief Constructor
-    explicit InjectionFinder(InjectionPass *injection_pass);
+    explicit InjectionFinder(std::shared_ptr<DatasetOp> node);
+
+    /// \brief Destructor
+    ~InjectionFinder() = default;
 
     /// \brief Performs finder work for BuildVocabOp that has special rules about epoch control injection.
     /// \param[in] node The node being visited
@@ -58,24 +61,30 @@ class InjectionPass : public TreePass {
     /// \return Status The error code return
     Status PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified) override;
 
+    /// \brief Register the DeviceQueueOp for further action.
+    /// \param[in] node The node being visited
+    /// \param[inout] modified Indicator if the node was changed at all
+    /// \return Status The error code return
+    Status RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *modified) override;
+
+    /// \brief Getter
+    std::shared_ptr<DatasetOp> injection_point() { return injection_point_; }
+
    private:
-    InjectionPass *injection_pass_;
+    std::shared_ptr<DatasetOp> injection_point_;
   };
 
  public:
   /// \brief Constructor
-  InjectionPass();
+  EpochInjectionPass();
 
   /// \brief Runs an injection pass to inject in operators needed at the pre pass stage
   /// \param[inout] tree The tree to operate on.
   /// \param[inout] Indicate of the tree was modified.
   /// \return Status The error code return
   Status RunOnTree(ExecutionTree *tree, bool *modified) override;
-
- private:
-  bool epoch_ctrl_bypass_;
 };
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_ENGINE_OPT_PASS_PRE_INJECTION_PASS_H_
+#endif  // DATASET_ENGINE_OPT_PASS_PRE_EPOCH_INJECTION_PASS_H_
