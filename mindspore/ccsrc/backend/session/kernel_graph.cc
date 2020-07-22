@@ -1021,26 +1021,16 @@ AnfNodePtr KernelGraph::GetInternalOutputByFrontNode(const AnfNodePtr &front_nod
   return nullptr;
 }
 
-bool KernelGraph::IsInternalOutput(const AnfNodePtr &node) const {
-  if (internal_outputs_to_front_map_.find(node) != internal_outputs_to_front_map_.end()) {
-    return true;
-  }
-  return false;
-}
-
-void KernelGraph::AddFinalOutputKernel(const AnfNodePtr &node) {
-  if (node == nullptr) {
-    return;
-  }
-  (void)final_output_kernels_.insert(node);
-}
-
-bool KernelGraph::IsFinalOutputKernel(const AnfNodePtr &node) const {
-  if (node == nullptr) {
-    return false;
-  }
-  if (final_output_kernels_.find(node) != final_output_kernels_.end()) {
-    return true;
+bool KernelGraph::IsInternalOutput(const AnfNodePtr &node, int output_idx) const {
+  auto front_nodes_iter = internal_outputs_to_front_map_.find(node);
+  if (front_nodes_iter != internal_outputs_to_front_map_.end()) {
+    if (output_idx == -1) {
+      return true;
+    }
+    auto &front_nodes = front_nodes_iter->second;
+    if (front_nodes.find(output_idx) != front_nodes.end()) {
+      return true;
+    }
   }
   return false;
 }

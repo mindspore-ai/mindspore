@@ -122,7 +122,7 @@ TEST_F(TestHWRemoveInternalOutput, test_remove_internal_output_trans_op_for_sing
 
   auto make_tuple = GetMakeTuple(kg);
   auto trans_data = make_tuple->cast<CNodePtr>()->input(1);
-  EXPECT_TRUE(kg->IsInternalOutput(trans_data));
+  EXPECT_TRUE(kg->IsInternalOutput(trans_data, 0));
 
   // remove trans op for internal output
   auto graph_optimizer1 = std::make_shared<opt::GraphOptimizer>();
@@ -156,8 +156,8 @@ TEST_F(TestHWRemoveInternalOutput, test_remove_internal_output_trans_op_for_mult
   auto make_tuple1 = tuple_getitem->cast<CNodePtr>()->input(1);
   auto trans_data1 = make_tuple1->cast<CNodePtr>()->input(1);
   auto trans_data2 = make_tuple1->cast<CNodePtr>()->input(2);
-  EXPECT_TRUE(kg->IsInternalOutput(trans_data1));
-  EXPECT_TRUE(kg->IsInternalOutput(trans_data2));
+  EXPECT_TRUE(kg->IsInternalOutput(trans_data1, 0));
+  EXPECT_TRUE(kg->IsInternalOutput(trans_data2, 0));
 
   // remove trans op for internal output
   auto graph_optimizer1 = std::make_shared<opt::GraphOptimizer>();
