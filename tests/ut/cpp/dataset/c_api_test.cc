@@ -573,6 +573,59 @@ TEST_F(MindDataTestPipeline, TestShuffleDataset) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestSkipDataset) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSkipDataset.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_TRUE(ds != nullptr);
+
+  // Create a Skip operation on ds
+  int32_t count = 3;
+  ds = ds->Skip(count);
+  EXPECT_TRUE(ds != nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_TRUE(iter != nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+  MS_LOG(INFO) << "Number of rows: " << i;
+
+  // Expect 10-3=7 rows
+  EXPECT_TRUE(i == 7);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestSkipDatasetError1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSkipDatasetError1.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_TRUE(ds != nullptr);
+
+  // Create a Skip operation on ds with invalid count input
+  int32_t count = -1;
+  ds = ds->Skip(count);
+  // Expect nullptr for invalid input skip_count
+  EXPECT_TRUE(ds == nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestCifar10Dataset) {
 
   // Create a Cifar10 Dataset

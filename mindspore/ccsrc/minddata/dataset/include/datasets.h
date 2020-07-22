@@ -46,6 +46,7 @@ class BatchDataset;
 class RepeatDataset;
 class MapDataset;
 class ShuffleDataset;
+class SkipDataset;
 class Cifar10Dataset;
 class ProjectDataset;
 class ZipDataset;
@@ -159,6 +160,12 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] buffer_size The size of the buffer (must be larger than 1) for shuffling
   /// \return Shared pointer to the current ShuffleDataset
   std::shared_ptr<ShuffleDataset> Shuffle(int32_t shuffle_size);
+
+  /// \brief Function to create a SkipDataset
+  /// \notes Skips count elements in this dataset.
+  /// \param[in] count Number of elements the dataset to be skipped.
+  /// \return Shared pointer to the current SkipDataset
+  std::shared_ptr<SkipDataset> Skip(int32_t count);
 
   /// \brief Function to create a Project Dataset
   /// \notes Applies project to the dataset
@@ -291,6 +298,26 @@ class ShuffleDataset : public Dataset {
   int32_t shuffle_size_;
   uint32_t shuffle_seed_;
   bool reset_every_epoch_;
+};
+
+class SkipDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  explicit SkipDataset(int32_t count);
+
+  /// \brief Destructor
+  ~SkipDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return shared pointer to the list of newly created DatasetOps
+  std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  int32_t skip_count_;
 };
 
 class MapDataset : public Dataset {
