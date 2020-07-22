@@ -67,7 +67,7 @@ def check_from_file(method):
             check_unique_list_of_words(special_tokens, "special_tokens")
         type_check_list([file_path, delimiter], (str,), ["file_path", "delimiter"])
         if vocab_size is not None:
-            check_value(vocab_size, (-1, INT32_MAX), "vocab_size")
+            check_positive(vocab_size, "vocab_size")
         type_check(special_first, (bool,), special_first)
 
         return method(self, *args, **kwargs)
