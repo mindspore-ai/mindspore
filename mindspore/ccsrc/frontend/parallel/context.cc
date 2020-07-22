@@ -44,7 +44,10 @@ std::shared_ptr<ParallelContext> ParallelContext::GetInstance() {
   return inst_context_;
 }
 
-ParallelContext::ParallelContext() { Reset(); }
+ParallelContext::ParallelContext() {
+  communication_backend_ = HCCL_BACKEND;
+  Reset();
+}
 
 void ParallelContext::Reset() {
   mirror_mean_ = false;
@@ -53,7 +56,6 @@ void ParallelContext::Reset() {
   loss_repeated_mean_ = true;
   device_num_ = 1;
   global_rank_ = 0;
-  communication_backend_ = HCCL_BACKEND;
   device_num_is_set_ = false;
   global_rank_is_set_ = false;
   parallel_mode_ = STAND_ALONE;
