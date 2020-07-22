@@ -42,7 +42,10 @@ DatasetOp::DatasetOp(int32_t op_connector_size, std::shared_ptr<Sampler> sampler
       operator_id_(kInvalidOperatorId),
       tree_(nullptr),
       state_(OpState::kDeOpIdle),
-      op_ctrl_flags_(kDeOpNone),
+      op_total_repeats_(kInfiniteRepeat),
+      op_num_repeats_per_epoch_(kInfiniteRepeat),
+      op_current_repeats_(0),
+      op_current_epochs_(0),
       out_connector_(nullptr) {
   // The operator starts out with an invalid operator id.  The only way to
   // get it out of invalid state is to assign the operator to an execution tree.
@@ -234,8 +237,8 @@ void DatasetOp::Print(std::ostream &out, bool show_all) const {
     for (size_t i = 0; i < parent_.size(); i++) {
       out << "\n  Parent[" << i << "] id: " << parent_[i]->id();
     }
-    out << "\nConnector queue size   : " << oc_queue_size_ << "\nOperator control flags : 0x" << std::hex
-        << std::setw(8) << std::setfill('0') << op_ctrl_flags_ << std::dec << std::setfill(' ');
+    out << "\nConnector queue size   : " << oc_queue_size_ << "\nTotal repeats : " << op_total_repeats_
+        << "\nNumber repeats per epoch : " << op_num_repeats_per_epoch_;
     if (sampler_) {
       sampler_->Print(out, show_all);
     }
@@ -264,6 +267,7 @@ Status DatasetOp::GetNextInput(std::unique_ptr<DataBuffer> *p_buffer, int32_t wo
   RETURN_IF_NOT_OK(child->GetNextBuffer(&buf, worker_id));
   // Loop until non EOE is received
   while (buf->eoe()) {
+    UpdateRepeatAndEpochCounter();
     RETURN_IF_NOT_OK(EoeReceived(worker_id));
     if (state_ == OpState::kDeOpIdle) {
       *p_buffer = std::move(buf);
@@ -406,6 +410,11 @@ uint32_t DatasetOp::GenerateCRC(const std::shared_ptr<DatasetOp> &op) {
 
   uint32_t cache_crc = system::Crc32c::GetMaskCrc32cValue(ss_str.c_str(), ss_str.length());
   return cache_crc;
+}
+
+void DatasetOp::UpdateRepeatAndEpochCounter() {
+  op_current_repeats_++;
+  if (op_current_repeats_ % op_num_repeats_per_epoch_ == 0) op_current_epochs_++;
 }
 }  // namespace dataset
 }  // namespace mindspore

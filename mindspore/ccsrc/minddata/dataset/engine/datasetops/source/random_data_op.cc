@@ -221,7 +221,7 @@ Status RandomDataOp::EpochSync(int32_t worker_id, bool *quitting) {
   all_out_.Wait();
   // If we are not in a repeat loop, or that was the last repeat already, then setup our exit
   // condition from the master loop.
-  if (!BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat)) {
+  if (IsLastIteration()) {
     *quitting = true;
   }
 
@@ -231,6 +231,7 @@ Status RandomDataOp::EpochSync(int32_t worker_id, bool *quitting) {
   if (last_guy_in) {
     MS_LOG(INFO) << "RandomDataOp worker " << worker_id << " is the last one to sync. eoe sent as worker "
                  << eoe_worker_id_;
+    UpdateRepeatAndEpochCounter();
     // Prepare for sync
     all_out_.Clear();
     // Always flow eoe at the end

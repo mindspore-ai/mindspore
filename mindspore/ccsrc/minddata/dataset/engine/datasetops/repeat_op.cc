@@ -28,10 +28,10 @@
 namespace mindspore {
 namespace dataset {
 // Builder constructor.  Creates the builder object.
-RepeatOp::Builder::Builder(int32_t count) : build_max_repeats_(count) {}
+RepeatOp::Builder::Builder(int32_t count) : build_num_repeats_(count) {}
 
 Status RepeatOp::Builder::SanityCheck() const {
-  if (build_max_repeats_ < kInfiniteRepeat || build_max_repeats_ == 0) {
+  if (build_num_repeats_ < kInfiniteRepeat || build_num_repeats_ == 0) {
     std::string err_msg("Repeat count must be > 0 or -1.");
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
@@ -41,12 +41,12 @@ Status RepeatOp::Builder::SanityCheck() const {
 // The builder "build" method creates the final object.
 Status RepeatOp::Builder::Build(std::shared_ptr<RepeatOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<RepeatOp>(build_max_repeats_);
+  *ptr = std::make_shared<RepeatOp>(build_num_repeats_);
   return Status::OK();
 }
 
 // Constructor of the RepeatOp.
-RepeatOp::RepeatOp(int32_t count) : PipelineOp(0), max_repeats_(count), repeat_count_(0) {}
+RepeatOp::RepeatOp(int32_t count) : PipelineOp(0), num_repeats_(count), repeat_count_(0) {}
 
 // Destructor
 RepeatOp::~RepeatOp() {}
@@ -59,12 +59,12 @@ void RepeatOp::Print(std::ostream &out, bool show_all) const {
     // Call the super class for displaying any common 1-liner info
     PipelineOp::Print(out, show_all);
     // Then show any custom derived-internal 1-liner info for this op
-    out << " [repeats: " << max_repeats_ << "]\n";
+    out << " [repeats: " << num_repeats_ << "]\n";
   } else {
     // Call the super class for displaying any common detailed info
     PipelineOp::Print(out, show_all);
     // Then show any custom derived-internal stuff
-    out << "\nCurrent repeat count: " << repeat_count_ << "\nMax repeat count: " << max_repeats_
+    out << "\nCurrent repeat count: " << repeat_count_ << "\nMax repeat count: " << num_repeats_
         << "\nLeaf Nodes in execution path:";
     if (!eoe_ops_.empty()) {
       for (size_t i = 0; i < eoe_ops_.size(); i++) {
@@ -109,22 +109,13 @@ Status RepeatOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t wo
 
 // Base-class override for handling cases when an eoe is received.
 Status RepeatOp::EoeReceived(int32_t worker_id) {
+  UpdateRepeatAndEpochCounter();
+
   repeat_count_++;
   MS_LOG(DEBUG) << "Repeat operator (" << operator_id_
                 << ") end of epoch message received. Repeat count is now: " << repeat_count_ << ".";
-  bool repeated = BitTest(op_ctrl_flags_, kDeOpRepeated);
-  bool last_repeat = BitTest(op_ctrl_flags_, kDeOpLastRepeat);
-  // If we've reached the requested repeat count, then flag the eoe nodes
-  // to tell them they've got one more epoch to perform.  When they reach the end
-  // of the last epoch, they quit rather than loop again. This happens in two cases:
-  // 1- We are also repeated (by another repeat op) and we are at the last repetition. Or,
-  // 2- We are not repeated
-  if (max_repeats_ != kInfiniteRepeat && repeat_count_ == (max_repeats_ - 1) && (!repeated || last_repeat)) {
-    for (auto &eoe_op : eoe_ops_) {
-      eoe_op->set_control_flag(kDeOpLastRepeat);
-    }
-  }
-  if (repeat_count_ == max_repeats_) {
+
+  if (repeat_count_ == num_repeats_) {
     repeat_count_ = 0;
     state_ = OpState::kDeOpIdle;
     return Status::OK();

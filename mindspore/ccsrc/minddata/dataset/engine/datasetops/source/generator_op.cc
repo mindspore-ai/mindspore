@@ -218,7 +218,7 @@ Status GeneratorOp::operator()() {
       MS_LOG(DEBUG) << "Generator operator sends out EOE.";
       std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
       RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
-      if (!BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat)) {
+      if (IsLastIteration()) {
         // If last repeat or not repeated, push out EOF and exit master loop
         MS_LOG(DEBUG) << "Generator operator sends out EOF.";
         std::unique_ptr<DataBuffer> eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
@@ -233,6 +233,7 @@ Status GeneratorOp::operator()() {
         // Clear the status of the wait post
         wp_.Clear();
       }
+      UpdateRepeatAndEpochCounter();
     }
   }
   return Status::OK();

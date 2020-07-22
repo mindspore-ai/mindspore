@@ -151,7 +151,7 @@ Status ImageFolderOp::operator()() {
       RETURN_IF_NOT_OK(
         io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(keys, IOBlock::kDeIoBlockNone)));
     }
-    if (!BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat)) {
+    if (IsLastIteration()) {
       std::unique_ptr<IOBlock> eoe_block = std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe);
       std::unique_ptr<IOBlock> eof_block = std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof);
       RETURN_IF_NOT_OK(io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::move(eoe_block)));
@@ -168,6 +168,7 @@ Status ImageFolderOp::operator()() {
       wp_.Clear();
       RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
     }
+    UpdateRepeatAndEpochCounter();
   }
 }
 

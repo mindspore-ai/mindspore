@@ -565,6 +565,99 @@ def test_generator_tuple_repeat_repeat_3():
 
     # rely on garbage collector to destroy iter1
 
+
+def test_generator_tuple_infinite_repeat_repeat_1():
+    """
+    test generator tuple infinite repeat repeat 1
+    """
+    logger.info("Test 1D Generator : 0 - 63")
+
+    # apply dataset operations
+    data1 = ds.GeneratorDataset(generator_1d, ["data"])
+    data1 = data1.repeat()
+    data1 = data1.repeat(3)
+    iter1 = data1.create_tuple_iterator(num_epochs=11)
+
+    i = 0
+    for item in iter1:  # each data is a dictionary
+        golden = np.array([i % 64])
+        np.testing.assert_array_equal(item[0], golden)
+        i = i + 1
+        if i == 100:
+            break
+
+    # rely on garbage collector to destroy iter1
+
+
+def test_generator_tuple_infinite_repeat_repeat_2():
+    """
+    test generator tuple infinite repeat repeat 2
+    """
+    logger.info("Test 1D Generator : 0 - 63")
+
+    # apply dataset operations
+    data1 = ds.GeneratorDataset(generator_1d, ["data"])
+    data1 = data1.repeat(3)
+    data1 = data1.repeat()
+    iter1 = data1.create_tuple_iterator(num_epochs=11)
+
+    i = 0
+    for item in iter1:  # each data is a dictionary
+        golden = np.array([i % 64])
+        np.testing.assert_array_equal(item[0], golden)
+        i = i + 1
+        if i == 100:
+            break
+
+    # rely on garbage collector to destroy iter1
+
+
+def test_generator_tuple_infinite_repeat_repeat_3():
+    """
+    test generator tuple infinite repeat repeat 3
+    """
+    logger.info("Test 1D Generator : 0 - 63")
+
+    # apply dataset operations
+    data1 = ds.GeneratorDataset(generator_1d, ["data"])
+    data1 = data1.repeat()
+    data1 = data1.repeat()
+    iter1 = data1.create_tuple_iterator(num_epochs=11)
+
+    i = 0
+    for item in iter1:  # each data is a dictionary
+        golden = np.array([i % 64])
+        np.testing.assert_array_equal(item[0], golden)
+        i = i + 1
+        if i == 100:
+            break
+
+    # rely on garbage collector to destroy iter1
+
+
+def test_generator_tuple_infinite_repeat_repeat_4():
+    """
+    test generator tuple infinite repeat repeat 4
+    """
+    logger.info("Test 1D Generator : 0 - 63")
+
+    # apply dataset operations
+    data1 = ds.GeneratorDataset(generator_1d, ["data"])
+    data1 = data1.repeat()
+    data1 = data1.repeat()
+    iter1 = data1.create_tuple_iterator()
+
+    i = 0
+    for item in iter1:  # each data is a dictionary
+        golden = np.array([i % 64])
+        np.testing.assert_array_equal(item[0], golden)
+        i = i + 1
+        if i == 100:
+            break
+
+    # rely on garbage collector to destroy iter1
+
+
 def test_generator_reusedataset():
     """
     test generator reusedataset

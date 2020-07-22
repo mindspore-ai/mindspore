@@ -380,7 +380,7 @@ Status MindRecordOp::operator()() {
       RETURN_IF_NOT_OK(io_blk_queues_[buf_cnt_++ % num_workers_]->Add(
         std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone))));
     }
-    if (!BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat)) {
+    if (IsLastIteration()) {
       RETURN_IF_NOT_OK(
         io_blk_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
       RETURN_IF_NOT_OK(
@@ -398,6 +398,7 @@ Status MindRecordOp::operator()() {
       RETURN_IF_NOT_OK(shard_reader_wait_post_.Wait());
       shard_reader_wait_post_.Clear();
     }
+    UpdateRepeatAndEpochCounter();
   }
 }
 
