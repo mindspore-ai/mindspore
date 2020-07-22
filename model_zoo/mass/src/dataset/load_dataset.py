@@ -58,9 +58,6 @@ def _load_dataset(input_files, batch_size, epoch_count=1,
     ori_dataset_size = ds.get_dataset_size()
     print(f" | Dataset size: {ori_dataset_size}.")
     repeat_count = epoch_count
-    if sink_mode:
-        ds.set_dataset_size(sink_step * batch_size)
-        repeat_count = epoch_count * ori_dataset_size // ds.get_dataset_size()
 
     type_cast_op = deC.TypeCast(mstype.int32)
     ds = ds.map(input_columns="src", operations=type_cast_op)
