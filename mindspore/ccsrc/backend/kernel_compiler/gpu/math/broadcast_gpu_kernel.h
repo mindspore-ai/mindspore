@@ -96,9 +96,10 @@ class BroadcastOpGpuKernel : public GpuKernel {
     std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
 
     static std::map<std::string, BroadcastOpType> kBroadcastTypeMap = {
-      {"Greater", BROADCAST_TYPE_GREATER}, {"Less", BROADCAST_TYPE_LESS}, {"Maximum", BROADCAST_TYPE_MAXIMUM},
-      {"Minimum", BROADCAST_TYPE_MINIMUM}, {"Pow", BROADCAST_TYPE_POWER}, {"RealDiv", BROADCAST_TYPE_REALDIV},
-      {"Mul", BROADCAST_TYPE_MUL},         {"Sub", BROADCAST_TYPE_SUB},   {"TensorAdd", BROADCAST_TYPE_ADD},
+      {"Greater", BROADCAST_TYPE_GREATER},  {"Less", BROADCAST_TYPE_LESS}, {"Maximum", BROADCAST_TYPE_MAXIMUM},
+      {"Minimum", BROADCAST_TYPE_MINIMUM},  {"Pow", BROADCAST_TYPE_POWER}, {"RealDiv", BROADCAST_TYPE_REALDIV},
+      {"FloorDiv", BROADCAST_TYPE_REALDIV}, {"Mul", BROADCAST_TYPE_MUL},   {"Sub", BROADCAST_TYPE_SUB},
+      {"TensorAdd", BROADCAST_TYPE_ADD},
     };
 
     auto iter = kBroadcastTypeMap.find(kernel_name);

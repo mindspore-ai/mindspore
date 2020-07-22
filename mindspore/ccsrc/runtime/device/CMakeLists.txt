@@ -55,6 +55,7 @@ if (ENABLE_GPU)
             PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
         add_library(gpu_collective SHARED ${GPU_COLLECTIVE_SRCS})
         target_link_libraries(gpu_collective PRIVATE mindspore::ompi mindspore::nccl)
+        target_link_libraries(_ms_mpi PRIVATE gpu_collective)
     endif ()
 
     # add_library(_mindspore_device_cuda_obj OBJECT ${CUDA_SRC_LIST})

@@ -58,7 +58,7 @@ bool MPIWrapper::CreateCommGroup(const std::string &group_name, const std::vecto
   if (rank_id_ == ranks[0]) {
     group_unique_id = NCCLWrapper::instance().nccl_unique_id();
   }
-  MPI_Bcast(&group_unique_id, sizeof(ncclUniqueId), MPI_BYTE, ranks[0], mpi_group_comm);
+  MPI_Bcast(&group_unique_id, sizeof(ncclUniqueId), MPI_BYTE, 0, mpi_group_comm);
 
   int group_rank[1];
   int global_rank[1] = {rank_id_};
@@ -68,9 +68,8 @@ bool MPIWrapper::CreateCommGroup(const std::string &group_name, const std::vecto
     return false;
   }
 
-  ncclComm_t nccl_group_comm;
-  NCCLWrapper::instance().InitNCCLComm(&nccl_group_comm, ranks.size(), group_unique_id, group_rank[0]);
-  NCCLWrapper::instance().SetGroupNameToNCCLComm(group_name, nccl_group_comm);
+  NcclGroupInfo nccl_group = {static_cast<int>(ranks.size()), group_rank[0], group_unique_id, nullptr};
+  NCCLWrapper::instance().AddGroupInfo(group_name, &nccl_group);
   return true;
 }
 
@@ -111,7 +110,6 @@ void MPIWrapper::Init() {
 
   CHECK_RET(MPI_Comm_rank(MPI_COMM_WORLD, &rank_id_), MPI_SUCCESS, "Failed to init mpi rank id.");
   CHECK_RET(MPI_Comm_size(MPI_COMM_WORLD, &rank_size_), MPI_SUCCESS, "Failed to init mpi rank size.");
-  NCCLWrapper::instance().set_rank(rank_id_, rank_size_);
   AssignLocalRankID();
 
   CHECK_RET(MPI_Comm_group(MPI_COMM_WORLD, &world_group_), MPI_SUCCESS, "Failed to get group of MPI_COMM_WORLD");
@@ -123,7 +121,9 @@ void MPIWrapper::Init() {
   }
   CHECK_RET(MPI_Bcast(reinterpret_cast<void *>(&unique_id), sizeof(unique_id), MPI_BYTE, 0, MPI_COMM_WORLD),
             MPI_SUCCESS, "Failed to broadcast nccl unique id.");
-  NCCLWrapper::instance().set_nccl_unique_id(unique_id);
+
+  NcclGroupInfo world_group = {rank_size_, rank_id_, unique_id, nullptr};
+  NCCLWrapper::instance().AddGroupInfo(NCCL_WORLD_GROUP, &world_group);
   return;
 }
 
