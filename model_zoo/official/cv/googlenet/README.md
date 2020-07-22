@@ -36,13 +36,7 @@ GoogleNet, a 22 layers deep network, was proposed in 2014 and won the first plac
 
 # [Model Architecture](#contents)
 
-The overall network architecture of GoogleNet is shown below: 
-
-![](https://miro.medium.com/max/3780/1*ZFPOSAted10TPd3hBQU8iQ.png)
-
 Specifically, the GoogleNet contains numerous inception modules, which are connected together to go deeper.  In general, an inception module with dimensionality reduction consists of **1×1 conv**, **3×3 conv**, **5×5 conv**, and **3×3 max pooling**, which are done altogether for the previous input, and stack together again at output.
-
-![](https://miro.medium.com/max/1108/1*sezFsYW1MyM9YOMa1q909A.png)
 
 
 
@@ -230,10 +224,10 @@ accuracy: {'acc': 0.9217}
 | Loss                       | 0.0016                                                      |
 | Speed                      | 1pc: 79 ms/step;  8pcs: 82 ms/step                          |
 | Total time                 | 1pc: 63.85 mins;  8pcs: 11.28 mins                          |
-| Parameters (M)             | 6.8                                                         |
+| Parameters (M)             | 13.0                                                         |
 | Checkpoint for Fine tuning | 43.07M (.ckpt file)                                         |
 | Model for inference        | 21.50M (.onnx file),  21.60M(.geir file)                    |
-| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/googlenet |
+| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/googlenet |
 
 
 ### Inference Performance
@@ -243,7 +237,7 @@ accuracy: {'acc': 0.9217}
 | Model Version       | Inception V1                |
 | Resource            | Ascend 910                  |
 | Uploaded Date       | 06/09/2020 (month/day/year) |
-| MindSpore Version   | 0.3.0-alpha                       |
+| MindSpore Version   | 0.2.0-alpha                       |
 | Dataset             | CIFAR-10, 10,000 images     |
 | batch_size          | 128                         |
 | outputs             | probability                 |
