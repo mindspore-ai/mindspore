@@ -100,11 +100,6 @@ class AllReduce(PrimitiveWithInfer):
         self.add_prim_attr('fusion', 0)
         self.add_prim_attr('index', 0)
 
-    def vm_impl(self, x):
-        """Implement by vm mode."""
-        x = x.asnumpy()
-        return Tensor(x)
-
     def infer_shape(self, x_shape):
         return x_shape
 
