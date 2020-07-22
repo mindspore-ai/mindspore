@@ -2338,10 +2338,10 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
                               and output tensors are aligned. Default: False.
 
     Inputs:
-         - **input_x** (Tensor) - The input tensor. The shape of the tensor is :math:`(N, C, H, W)`.
+        - **input_x** (Tensor) - The input tensor. The shape of the tensor is :math:`(N, C, H, W)`.
 
     Outputs:
-        Tensor, the shape of the output tensor is :math:`(N, NEW\_C, NEW\_H, W)`.
+        Tensor, the shape of the output tensor is :math:`(N, C, NEW\_H, NEW\_W)`.
 
     Examples:
         >>> input_tensor = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
@@ -2360,7 +2360,7 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['image_in'], outputs=['image_out'])
 
     def infer_shape(self, x):
-        validator.check('the dimension of input_x', len(x), '', 2, Rel.GE, self.name)
+        validator.check('the dimension of input_x', len(x), '', 4, Rel.EQ, self.name)
         return tuple(x)[:-2] + tuple(self.size)
 
     def infer_dtype(self, x):
