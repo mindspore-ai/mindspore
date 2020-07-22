@@ -68,7 +68,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   void AddGlobalVar(const std::string &var_name) { (void)global_vars_.insert(var_name); }
   bool IsGlobalVar(const std::string &var_name) { return global_vars_.find(var_name) != global_vars_.end(); }
   AnfNodePtr MakeResolveAstOp(const py::object &op);
-  AnfNodePtr MakeResolveClassMember(std::string attr);
+  AnfNodePtr MakeResolveClassMember(const std::string &attr);
   AnfNodePtr MakeResolveSymbol(const std::string &value);
   AnfNodePtr MakeResolveOperation(const std::string &value);
   AnfNodePtr MakeResolve(const std::shared_ptr<NameSpace> &name_space, const std::shared_ptr<Symbol> &resolve_symbol);

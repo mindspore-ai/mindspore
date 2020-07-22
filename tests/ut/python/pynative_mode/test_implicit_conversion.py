@@ -14,6 +14,7 @@
 # ============================================================================
 """ test implicit conversion """
 import numpy as np
+import pytest
 
 from mindspore import Tensor, nn
 from mindspore.ops import composite as C
@@ -90,6 +91,30 @@ def test_float_tensor_and_bool_tensors_add():
     assert (ret_actual.asnumpy() == ret_expect.asnumpy()).all()
 
 
+def test_float_tensor_and_str_add():
+    x = Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))
+    y = "ok"
+    with pytest.raises(TypeError) as er:
+        ret = x + y
+    assert "For 'TensorAdd', the 1th input is a not support type: str" in str(er.value)
+
+
+def test_float_tensor_and_tuple_add():
+    x = Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))
+    y = (1, 2, 3)
+    with pytest.raises(TypeError) as er:
+        ret = x + y
+    assert "For 'TensorAdd', the 1th input is a not support type: tuple" in str(er.value)
+
+
+def test_float_tensor_and_list_add():
+    x = Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))
+    y = [1, 2, 3]
+    with pytest.raises(TypeError) as er:
+        ret = x + y
+    assert "For 'TensorAdd', the 1th input is a not support type: list" in str(er.value)
+
+
 def test_float_tensor_and_bool_tensors_add_grad():
     class Net(nn.Cell):
         def __init__(self):
@@ -104,7 +129,6 @@ def test_float_tensor_and_bool_tensors_add_grad():
             self.net = net
 
         def construct(self, x, y, sens):
-
             return C.grad_all_with_sens(self.net)(x, y, sens)
 
     x = Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))
@@ -133,7 +157,6 @@ def test_float_tensor_and_int_tensors_sub_grad():
             self.net = net
 
         def construct(self, x, y, sens):
-
             return C.grad_all_with_sens(self.net)(x, y, sens)
 
     x = Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))
@@ -163,7 +186,6 @@ def test_float16_tensor_and_float32_tensors_sub_grad():
             self.net = net
 
         def construct(self, x, y, sens):
-
             return C.grad_all_with_sens(self.net)(x, y, sens)
 
     x = Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.int32))

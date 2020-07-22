@@ -268,6 +268,12 @@ py::tuple ConvertInputs(const PrimitivePyPtr &prim, const py::list &args, py::tu
                                                TypeIdToMsTypeStr(it->second));
       }
     }
+    if (!py::isinstance<tensor::Tensor>(py_args[i]) && !py::isinstance<py::int_>(py_args[i]) &&
+        !py::isinstance<py::float_>(py_args[i])) {
+      MS_EXCEPTION(TypeError) << "For '" << prim->name() << "', the " << i << "th input is a not support type: "
+                              << py::cast<std::string>(py_args[1].attr("__class__").attr("__name__"))
+                              << ", and the value is " << py::cast<py::str>(py_args[i]) << ".";
+    }
     py::object cast_output = DoAutoCast(py_args[i], it->second);
     (*out_args)[i] = cast_output;
     (*out_args_list)[i] = cast_output;
