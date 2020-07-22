@@ -17,6 +17,7 @@ from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 
 all_reduce = P.AllReduce()
+broadcast = P.Broadcast(1)
 memcpy_async = Primitive('memcpy_async')
 make_tuple = Primitive('make_tuple')
 tuple_getitem = Primitive('tuple_getitem')
@@ -101,20 +102,40 @@ def test_insert_memcpy_async_for_hccl_op_cond4(tag):
     fns = FnDict()
 
     @fns
-    def before(a, b, c, d, e):
-        res1 = apply_momentun(a, b, c, d, e)
-        res2 = all_reduce(a)
-        res = control_depend(res1, res2)
-        res = make_tuple(res, res2)
+    def before(a, b):
+        x = relu(a)
+        y = all_reduce(b)
+        res = control_depend(x, y)
         return res
 
     @fns
-    def after(a, b, c, d, e):
-        res1 = apply_momentun(a, b, c, d, e)
-        res2 = memcpy_async(a)
-        res3 = all_reduce(res2)
-        res = control_depend(res1, res2)
-        res = make_tuple(res, res3)
+    def after(a, b):
+        x = relu(a)
+        y1 = memcpy_async(b)
+        y2 = all_reduce(y1)
+        res = control_depend(x, make_tuple(y1, y2))
+        return make_tuple(res)
+
+    return fns[tag]
+
+
+def test_insert_memcpy_async_for_hccl_op_cond5(tag):
+    fns = FnDict()
+
+    @fns
+    def before(a, b, c):
+        x = relu(a)
+        y = broadcast((b, c))
+        res = control_depend(x, y)
+        return res
+
+    @fns
+    def after(a, b, c):
+        x = relu(a)
+        m1 = memcpy_async(b)
+        m2 = memcpy_async(c)
+        y = broadcast(m1, m2)
+        res = control_depend(x, make_tuple(m1, m2, y))
         return make_tuple(res)
 
     return fns[tag]
