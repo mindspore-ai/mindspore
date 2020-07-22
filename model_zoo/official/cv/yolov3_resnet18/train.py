@@ -111,8 +111,8 @@ def main():
             data_to_mindrecord_byte_image(args_opt.image_dir,
                                           args_opt.anno_path,
                                           args_opt.mindrecord_dir,
-                                          prefix=prefix,
-                                          file_num=8)
+                                          prefix,
+                                          8)
             print("Create Mindrecord Done, at {}".format(args_opt.mindrecord_dir))
         else:
             print("image_dir or anno_path not exits.")
