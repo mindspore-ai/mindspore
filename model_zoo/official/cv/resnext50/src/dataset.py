@@ -143,8 +143,10 @@ def classification_dataset(data_dir, image_size, per_batch_size, max_epoch, rank
         de_dataset = de.GeneratorDataset(dataset, ["image", "label"], sampler=sampler)
         de_dataset.set_dataset_size(len(sampler))
 
-    de_dataset = de_dataset.map(input_columns="image", num_parallel_workers=8, operations=transform_img)
-    de_dataset = de_dataset.map(input_columns="label", num_parallel_workers=8, operations=transform_label)
+    de_dataset = de_dataset.map(input_columns="image", num_parallel_workers=num_parallel_workers,
+                                operations=transform_img)
+    de_dataset = de_dataset.map(input_columns="label", num_parallel_workers=num_parallel_workers,
+                                operations=transform_label)
 
     columns_to_project = ["image", "label"]
     de_dataset = de_dataset.project(columns=columns_to_project)

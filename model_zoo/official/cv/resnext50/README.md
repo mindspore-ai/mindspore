@@ -90,10 +90,15 @@ sh run_standalone_train.sh DEVICE_ID DATA_PATH
 #### Launch
 
 ```bash
-# distributed training example(8p)
+# distributed training example(8p) for Ascend
 sh scripts/run_distribute_train.sh MINDSPORE_HCCL_CONFIG_PATH /dataset/train
-# standalone training example
+# standalone training example for Ascend
 sh scripts/run_standalone_train.sh 0 /dataset/train
+
+# distributed training example(8p) for GPU
+sh scripts/run_distribute_train_for_gpu.sh /dataset/train
+# standalone training example for GPU
+sh scripts/run_standalone_train_for_gpu.sh 0 /dataset/train
 ```
 
 #### Result
@@ -106,14 +111,15 @@ You can find checkpoint file together with result in log.
 
 ```
 # Evaluation
-sh run_eval.sh DEVICE_ID DATA_PATH PRETRAINED_CKPT_PATH
+sh run_eval.sh DEVICE_ID DATA_PATH PRETRAINED_CKPT_PATH PLATFORM
 ```
+PLATFORM is Ascend or GPU, default is Ascend.
 
 #### Launch
 
 ```bash
 # Evaluation with checkpoint
-sh scripts/run_eval.sh 0 /opt/npu/datasets/classification/val /resnext50_100.ckpt
+sh scripts/run_eval.sh 0 /opt/npu/datasets/classification/val /resnext50_100.ckpt Ascend
 ```
 
 > checkpoint can be produced in training process.

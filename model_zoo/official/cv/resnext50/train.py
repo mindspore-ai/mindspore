@@ -36,11 +36,9 @@ from src.warmup_cosine_annealing_lr import warmup_cosine_annealing_lr
 from src.utils.logging import get_logger
 from src.utils.optimizers__init__ import get_param_groups
 from src.image_classification import get_network
+from src.utils.auto_mixed_precision import auto_mixed_precision
 from src.config import config
 
-devid = int(os.getenv('DEVICE_ID'))
-context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
-                    device_target="Ascend", save_graphs=False, device_id=devid)
 
 class BuildTrainNetwork(nn.Cell):
     """build training network"""
@@ -109,6 +107,7 @@ class ProgressMonitor(Callback):
 def parse_args(cloud_args=None):
     """parameters"""
     parser = argparse.ArgumentParser('mindspore classification training')
+    parser.add_argument('--platform', type=str, default='Ascend', choices=('Ascend', 'GPU'), help='run platform')
 
     # dataset related
     parser.add_argument('--data_dir', type=str, default='', help='train data dir')
@@ -141,6 +140,7 @@ def parse_args(cloud_args=None):
     args.label_smooth = config.label_smooth
     args.label_smooth_factor = config.label_smooth_factor
     args.ckpt_interval = config.ckpt_interval
+    args.ckpt_save_max = config.ckpt_save_max
     args.ckpt_path = config.ckpt_path
     args.is_save_on_master = config.is_save_on_master
     args.rank = config.rank
@@ -166,12 +166,25 @@ def merge_args(args, cloud_args):
 def train(cloud_args=None):
     """training process"""
     args = parse_args(cloud_args)
+    context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
+                        device_target=args.platform, save_graphs=False)
+    if os.getenv('DEVICE_ID', "not_set").isdigit():
+        context.set_context(device_id=int(os.getenv('DEVICE_ID')))
 
     # init distributed
     if args.is_distributed:
-        init()
+        if args.platform == "Ascend":
+            init()
+        else:
+            init("nccl")
         args.rank = get_rank()
         args.group_size = get_group_size()
+        parallel_mode = ParallelMode.DATA_PARALLEL
+        context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=args.group_size,
+                                          parameter_broadcast=True, mirror_mean=True)
+    else:
+        args.rank = 0
+        args.group_size = 1
 
     if args.is_dynamic_loss_scale == 1:
         args.loss_scale = 1  # for dynamic loss scale can not set loss scale in momentum opt
@@ -192,7 +205,7 @@ def train(cloud_args=None):
     # dataloader
     de_dataset = classification_dataset(args.data_dir, args.image_size,
                                         args.per_batch_size, 1,
-                                        args.rank, args.group_size)
+                                        args.rank, args.group_size, num_parallel_workers=8)
     de_dataset.map_model = 4  # !!!important
     args.steps_per_epoch = de_dataset.get_dataset_size()
 
@@ -201,15 +214,9 @@ def train(cloud_args=None):
     # network
     args.logger.important_info('start create network')
     # get network and init
-    network = get_network(args.backbone, args.num_classes)
+    network = get_network(args.backbone, args.num_classes, platform=args.platform)
     if network is None:
         raise NotImplementedError('not implement {}'.format(args.backbone))
-    network.add_flags_recursive(fp16=True)
-    # loss
-    if not args.label_smooth:
-        args.label_smooth_factor = 0.0
-    criterion = CrossEntropy(smooth_factor=args.label_smooth_factor,
-                             num_classes=args.num_classes)
 
     # load pretrain model
     if os.path.isfile(args.pretrained):
@@ -252,31 +259,29 @@ def train(cloud_args=None):
                    loss_scale=args.loss_scale)
 
 
-    criterion.add_flags_recursive(fp32=True)
+    # loss
+    if not args.label_smooth:
+        args.label_smooth_factor = 0.0
+    loss = CrossEntropy(smooth_factor=args.label_smooth_factor, num_classes=args.num_classes)
 
-    # package training process, adjust lr + forward + backward + optimizer
-    train_net = BuildTrainNetwork(network, criterion)
-    if args.is_distributed:
-        parallel_mode = ParallelMode.DATA_PARALLEL
-    else:
-        parallel_mode = ParallelMode.STAND_ALONE
     if args.is_dynamic_loss_scale == 1:
         loss_scale_manager = DynamicLossScaleManager(init_loss_scale=65536, scale_factor=2, scale_window=2000)
     else:
         loss_scale_manager = FixedLossScaleManager(args.loss_scale, drop_overflow_update=False)
 
-    # Model api changed since TR5_branch 2020/03/09
-    context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=args.group_size,
-                                      parameter_broadcast=True, mirror_mean=True)
-    model = Model(train_net, optimizer=opt, metrics=None, loss_scale_manager=loss_scale_manager)
+    if args.platform == "Ascend":
+        model = Model(network, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale_manager,
+                      metrics={'acc'}, amp_level="O3")
+    else:
+        auto_mixed_precision(network)
+        model = Model(network, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale_manager, metrics={'acc'})
 
     # checkpoint save
     progress_cb = ProgressMonitor(args)
     callbacks = [progress_cb,]
     if args.rank_save_ckpt_flag:
-        ckpt_max_num = args.max_epoch * args.steps_per_epoch // args.ckpt_interval
-        ckpt_config = CheckpointConfig(save_checkpoint_steps=args.ckpt_interval,
-                                       keep_checkpoint_max=ckpt_max_num)
+        ckpt_config = CheckpointConfig(save_checkpoint_steps=args.ckpt_interval * args.steps_per_epoch,
+                                       keep_checkpoint_max=args.ckpt_save_max)
         ckpt_cb = ModelCheckpoint(config=ckpt_config,
                                   directory=args.outputs_dir,
                                   prefix='{}'.format(args.rank))

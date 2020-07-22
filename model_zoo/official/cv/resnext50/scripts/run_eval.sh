@@ -14,11 +14,16 @@
 # limitations under the License.
 # ============================================================================
 
-DEVICE_ID=$1
+export DEVICE_ID=$1
 DATA_DIR=$2
 PATH_CHECKPOINT=$3
+PLATFORM=Ascend
+if [ $# == 4 ]
+then
+  PLATFORM=$4
+fi
 
 python eval.py  \
-    --device_id=$DEVICE_ID \
     --pretrained=$PATH_CHECKPOINT \
+    --platform=$PLATFORM \
     --data_dir=$DATA_DIR > log.txt 2>&1 &

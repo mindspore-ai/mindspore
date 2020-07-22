@@ -29,14 +29,10 @@ from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
 
 from src.utils.logging import get_logger
+from src.utils.auto_mixed_precision import auto_mixed_precision
 from src.image_classification import get_network
 from src.dataset import classification_dataset
 from src.config import config
-
-devid = int(os.getenv('DEVICE_ID'))
-context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
-                    device_target="Ascend", save_graphs=False, device_id=devid)
-
 
 
 class ParameterReduce(nn.Cell):
@@ -56,6 +52,7 @@ class ParameterReduce(nn.Cell):
 def parse_args(cloud_args=None):
     """parse_args"""
     parser = argparse.ArgumentParser('mindspore classification test')
+    parser.add_argument('--platform', type=str, default='Ascend', choices=('Ascend', 'GPU'), help='run platform')
 
     # dataset related
     parser.add_argument('--data_dir', type=str, default='/opt/npu/datasets/classification/val', help='eval data dir')
@@ -108,12 +105,25 @@ def merge_args(args, cloud_args):
 def test(cloud_args=None):
     """test"""
     args = parse_args(cloud_args)
+    context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
+                        device_target=args.platform, save_graphs=False)
+    if os.getenv('DEVICE_ID', "not_set").isdigit():
+        context.set_context(device_id=int(os.getenv('DEVICE_ID')))
 
     # init distributed
     if args.is_distributed:
-        init()
+        if args.platform == "Ascend":
+            init()
+        elif args.platform == "GPU":
+            init("nccl")
         args.rank = get_rank()
         args.group_size = get_group_size()
+        parallel_mode = ParallelMode.DATA_PARALLEL
+        context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=args.group_size,
+                                          parameter_broadcast=True, mirror_mean=True)
+    else:
+        args.rank = 0
+        args.group_size = 1
 
     args.outputs_dir = os.path.join(args.log_path,
                                     datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
@@ -140,7 +150,7 @@ def test(cloud_args=None):
                                             max_epoch=1, rank=args.rank, group_size=args.group_size,
                                             mode='eval')
         eval_dataloader = de_dataset.create_tuple_iterator()
-        network = get_network(args.backbone, args.num_classes)
+        network = get_network(args.backbone, args.num_classes, platform=args.platform)
         if network is None:
             raise NotImplementedError('not implement {}'.format(args.backbone))
 
@@ -157,12 +167,13 @@ def test(cloud_args=None):
         load_param_into_net(network, param_dict_new)
         args.logger.info('load model {} success'.format(model))
 
-        # must add
-        network.add_flags_recursive(fp16=True)
-
         img_tot = 0
         top1_correct = 0
         top5_correct = 0
+        if args.platform == "Ascend":
+            network.to_float(mstype.float16)
+        else:
+            auto_mixed_precision(network)
         network.set_train(False)
         t_end = time.time()
         it = 0

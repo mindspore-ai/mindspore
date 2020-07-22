@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,35 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""config"""
-from easydict import EasyDict as ed
 
-config = ed({
-    "image_size": '224,224',
-    "num_classes": 1000,
+DATA_DIR=$1
+export RANK_SIZE=8
+PATH_CHECKPOINT=""
+if [ $# == 2 ]
+then
+	PATH_CHECKPOINT=$2
+fi
 
-    "lr": 0.4,
-    "lr_scheduler": 'cosine_annealing',
-    "lr_epochs": '30,60,90,120',
-    "lr_gamma": 0.1,
-    "eta_min": 0,
-    "T_max": 150,
-    "max_epoch": 150,
-    "backbone": 'resnext50',
-    "warmup_epochs": 1,
-
-    "weight_decay": 0.0001,
-    "momentum": 0.9,
-    "is_dynamic_loss_scale": 0,
-    "loss_scale": 1024,
-    "label_smooth": 1,
-    "label_smooth_factor": 0.1,
-
-    "ckpt_interval": 5,
-    "ckpt_save_max": 5,
-    "ckpt_path": 'outputs/',
-    "is_save_on_master": 1,
-
-    "rank": 0,
-    "group_size": 1
-})
+mpirun --allow-run-as-root -n $RANK_SIZE \
+	python train.py  \
+    --is_distribute=1 \
+    --platform="GPU" \
+    --pretrained=$PATH_CHECKPOINT \
+    --data_dir=$DATA_DIR > log.txt 2>&1 &

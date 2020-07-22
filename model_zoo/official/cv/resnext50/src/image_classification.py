@@ -50,9 +50,9 @@ class Resnet(ImageClassificationNetwork):
     Returns:
         Resnet.
     """
-    def __init__(self, backbone_name, num_classes):
+    def __init__(self, backbone_name, num_classes, platform="Ascend"):
         self.backbone_name = backbone_name
-        backbone = backbones.__dict__[self.backbone_name]()
+        backbone = backbones.__dict__[self.backbone_name](platform=platform)
         out_channels = backbone.get_out_channels()
         head = heads.CommonHead(num_classes=num_classes, out_channels=out_channels)
         super(Resnet, self).__init__(backbone, head)
@@ -79,7 +79,7 @@ class Resnet(ImageClassificationNetwork):
 
 
 
-def get_network(backbone_name, num_classes):
+def get_network(backbone_name, num_classes, platform="Ascend"):
     if backbone_name in ['resnext50']:
-        return Resnet(backbone_name, num_classes)
+        return Resnet(backbone_name, num_classes, platform)
     return None
