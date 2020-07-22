@@ -652,6 +652,25 @@ def check_positive_int32(method):
     return new_method
 
 
+def check_device_send(method):
+    """check the input argument for to_device and device_que."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        param, param_dict = parse_user_args(method, *args, **kwargs)
+        para_list = list(param_dict.keys())
+        if "prefetch_size" in para_list:
+            if param[0] is not None:
+                check_pos_int32(param[0], "prefetch_size")
+            type_check(param[1], (bool,), "send_epoch_end")
+        else:
+            type_check(param[0], (bool,), "send_epoch_end")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_zip(method):
     """check the input arguments of zip."""
 
