@@ -355,6 +355,7 @@ class Model:
         cb_params.train_dataset = train_dataset
         cb_params.list_callback = self._transform_callbacks(callbacks)
         cb_params.train_dataset_element = None
+        cb_params.network = self._network
         ms_role = os.getenv("MS_ROLE")
         if ms_role in ("MS_PSERVER", "MS_SCHED"):
             epoch = 1
@@ -660,6 +661,7 @@ class Model:
         cb_params.mode = "eval"
         cb_params.cur_step_num = 0
         cb_params.list_callback = self._transform_callbacks(callbacks)
+        cb_params.network = self._network
 
         self._eval_network.set_train(mode=False)
         self._eval_network.phase = 'eval'
