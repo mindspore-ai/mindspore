@@ -112,7 +112,7 @@ void GPUKernelRuntime::ReleaseDeviceRes() {
     auto &mem_swap_manager = item.second;
     MS_EXCEPTION_IF_NULL(mem_swap_manager);
     if (mem_swap_manager->trigger_swap()) {
-      mem_swap_manager->ClearSwapQueue();
+      mem_swap_manager->ClearSwapQueue(false);
       mem_swap_manager->ReleaseHostPinnedMem();
     }
   }
@@ -141,6 +141,7 @@ void GPUKernelRuntime::AssignMemory(session::KernelGraph *graph) {
     InitMemorySwapInfo(graph);
     InitKernelOutputAddress(graph);
     InitKernelWorkspaceAddress(graph);
+    SaveGraphOutputNode(graph);
   } else {
     AssignDynamicMemory(graph);
   }
@@ -168,12 +169,8 @@ bool GPUKernelRuntime::Run(session::KernelGraph *graph) {
     }
     mem_reuse_util_ = mem_reuse_iter->second;
     MS_EXCEPTION_IF_NULL(mem_reuse_util_);
-    while (!LaunchKernelDynamic(graph)) {
-      MS_LOG(WARNING) << "Run out of memory and try memory swapping, it may take some time, please wait a moment.";
-      if (!UpdateMemorySwapInfo(graph)) {
-        return false;
-      }
-    }
+
+    ret = RunOneStep(graph);
   } else {
     ret = LaunchKernel(graph);
   }
@@ -185,7 +182,29 @@ bool GPUKernelRuntime::Run(session::KernelGraph *graph) {
   return ret;
 }
 
+bool GPUKernelRuntime::RunOneStep(const session::KernelGraph *graph) {
+  bool ret = true;
+  auto graph_id = graph->graph_id();
+  if (!is_first_step_map_[graph_id]) {
+    // Normally run graph
+    ret = LaunchKernelDynamic(graph);
+  } else {
+    // Mock run first step
+    ret = LaunchKernelDynamic(graph, true, false);
+    if (ret) {
+      // Normally run graph
+      ret = LaunchKernelDynamic(graph);
+    } else {
+      // Trigger memory swap
+      ret = SearchMemSwapScheme(graph);
+    }
+    is_first_step_map_[graph_id] = false;
+  }
+  return ret;
+}
+
 bool GPUKernelRuntime::SearchMemSwapScheme(const session::KernelGraph *graph) {
+  MS_LOG(WARNING) << "Run out of memory and try memory swapping, it may take some time, please wait a moment.";
   bool ret = false;
   ClearKernelOldOutputAndWorkspace(graph);
   if (!mem_swap_manager_->mem_swap_init()) {
@@ -214,6 +233,7 @@ bool GPUKernelRuntime::SearchMemSwapScheme(const session::KernelGraph *graph) {
 }
 
 bool GPUKernelRuntime::RefineMemSwapScheme(const session::KernelGraph *graph) {
+  MS_LOG(WARNING) << "Refine memory swap scheme, it may take some time, please wait a moment.";
   auto &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
     if (!mem_swap_manager_->QueryKernelTriggerSwapIn(kernel)) {
@@ -228,6 +248,7 @@ bool GPUKernelRuntime::RefineMemSwapScheme(const session::KernelGraph *graph) {
         ret = LaunchKernelDynamic(graph, true, false);
         if (!ret) {
           ClearKernelOldOutputAndWorkspace(graph);
+          ClearSwapInfo(true);
         }
       }
     }
@@ -297,6 +318,26 @@ void GPUKernelRuntime::InitKernelWorkspaceAddress(const session::KernelGraph *gr
   }
 }
 
+void GPUKernelRuntime::SaveGraphOutputNode(const session::KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto graph_id = graph->graph_id();
+  const auto &output_nodes = AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
+  for (const auto &node : output_nodes) {
+    graph_output_map_[graph_id].insert(node);
+  }
+}
+
+bool GPUKernelRuntime::IsGraphOutput(const session::KernelGraph *graph, const mindspore::AnfNodePtr &kernel) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto graph_id = graph->graph_id();
+  auto iter = graph_output_map_.find(graph_id);
+  if (iter == graph_output_map_.end()) {
+    MS_LOG(EXCEPTION) << "Find graph output info failed.";
+  }
+  auto &graph_output_set = iter->second;
+  return (graph_output_set.find(kernel) != graph_output_set.end());
+}
+
 void GPUKernelRuntime::ClearKernelOldOutputAndWorkspace(const session::KernelGraph *graph) {
   ClearKernelOutputAddress(graph);
   ClearKernelWorkspaceAddress(graph);
@@ -306,6 +347,9 @@ void GPUKernelRuntime::ClearKernelOutputAddress(const session::KernelGraph *grap
   MS_EXCEPTION_IF_NULL(graph);
   auto &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
+    if (IsGraphOutput(graph, kernel)) {
+      continue;
+    }
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     auto output_sizes = kernel_mod->GetOutputSizeList();
@@ -354,18 +398,27 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
     AddressPtrList kernel_inputs;
     AddressPtrList kernel_workspaces;
     AddressPtrList kernel_outputs;
-    auto ret = AllocKernelDynamicRes(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
+    auto ret = AllocKernelDynamicRes(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs, mock);
     if (!ret) {
       return false;
     }
-    if (!kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_)) {
-      MS_LOG(EXCEPTION) << "Launch kernel failed.";
+    if (!mock) {
+      if (!profiling) {
+        CHECK_OP_RET_WITH_EXCEPT(kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_),
+                                 "Launch kernel failed.");
+      } else {
+        LaunchKernelWithTimeProfiling(kernel, kernel_inputs, kernel_workspaces, kernel_outputs);
+      }
     }
     FreeKernelDynamicRes(kernel);
-    UpdateMemorySwapTask(kernel);
+    if (!UpdateMemorySwapTask(kernel, mock, profiling)) {
+      return false;
+    }
   }
-  CHECK_OP_RET_WITH_EXCEPT(SyncStream(), "SyncStream failed.");
-  ClearSwapQueue();
+  if (!mock) {
+    CHECK_OP_RET_WITH_EXCEPT(SyncStream(), "SyncStream failed.");
+  }
+  ClearSwapInfo(mock);
   return true;
 }
 
@@ -393,29 +446,38 @@ void GPUKernelRuntime::LaunchKernelWithTimeProfiling(const AnfNodePtr &kernel, c
   CHECK_OP_RET_WITH_EXCEPT(CudaDriver::DestroyEvent(end), "Failed to destroy event.");
 }
 
-bool GPUKernelRuntime::AddMemorySwapTask(const AnfNodePtr &kernel) {
+bool GPUKernelRuntime::AddMemorySwapTask(const AnfNodePtr &kernel, bool mock, bool profiling) {
   MS_EXCEPTION_IF_NULL(mem_swap_manager_);
   const MemSwapInfoSet &mem_swap_info_set = mem_swap_manager_->QueryKernelMemSwapInfo(kernel);
   for (auto &mem_swap_info : mem_swap_info_set) {
-    auto need_swap_kernel = mem_swap_manager_->QueryKerneByTopoOrder(mem_swap_info.topo_order_);
+    auto need_swap_kernel = mem_swap_manager_->QueryKernelByTopoOrder(mem_swap_info.topo_order_);
     MS_EXCEPTION_IF_NULL(need_swap_kernel);
     const HostAddress &host_address =
       mem_swap_manager_->QueryKernelHostAddr(need_swap_kernel, mem_swap_info.output_idx_);
     auto device_address = AnfAlgo::GetMutableOutputAddr(need_swap_kernel, mem_swap_info.output_idx_, false);
 
     if (mem_swap_info.swap_kind_ == SwapKind::kDeviceToHost) {
-      mem_swap_manager_->AddMemSwapTask(SwapKind::kDeviceToHost, device_address, host_address);
+      if (mem_swap_manager_->QueryKernelHostAddrIsDirty(need_swap_kernel, mem_swap_info.output_idx_)) {
+        mem_swap_manager_->AddMemSwapTask(SwapKind::kDeviceToHost, device_address, host_address, mock);
+        mem_swap_manager_->AddKernelHostAddrIsDirty(need_swap_kernel, mem_swap_info.output_idx_, false);
+      } else {
+        mem_manager_->FreeMemFromMemPool(device_address);
+        device_address->set_status(DeviceAddressStatus::kInHost);
+      }
     } else if (mem_swap_info.swap_kind_ == SwapKind::kHostToDevice) {
       auto status = device_address->status();
       if (status == DeviceAddressStatus::kInDeviceToHost) {
-        mem_swap_manager_->InsertSwapInBlackList(device_address->ptr_);
         device_address->set_status(DeviceAddressStatus::kInDevice);
       } else if (status == DeviceAddressStatus::kInHost) {
-        if (!device_address->ptr_ && !AttemptMallocMem(device_address, device_address->size_)) {
+        if (!device_address->ptr_ && !AttemptMallocMem(device_address, device_address->size_, mock)) {
           return false;
         }
-        if (!mem_swap_manager_->FindInSwapInBlackList(device_address->ptr_)) {
-          mem_swap_manager_->AddMemSwapTask(SwapKind::kHostToDevice, device_address, host_address);
+        float cost_time = 0;
+        mem_swap_manager_->AddMemSwapTask(SwapKind::kHostToDevice, device_address, host_address, mock, profiling,
+                                          &cost_time);
+        if (profiling) {
+          mem_swap_manager_->AddKernelSwapPerform(need_swap_kernel, mem_swap_info.output_idx_,
+                                                  std::make_pair(0, cost_time));
         }
       }
     }
@@ -423,87 +485,81 @@ bool GPUKernelRuntime::AddMemorySwapTask(const AnfNodePtr &kernel) {
   return true;
 }
 
-bool GPUKernelRuntime::UpdateMemorySwapInfo(const session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(mem_swap_manager_);
-  ClearKernelOldOutputAndWorkspace(graph);
-  if (!mem_swap_manager_->mem_swap_init()) {
-    if (!mem_swap_manager_->Init(graph)) {
-      return false;
-    }
-  }
-  return mem_swap_manager_->RetreatSwapInfo();
-}
-
-bool GPUKernelRuntime::UpdateMemorySwapTask(const AnfNodePtr &kernel) {
+bool GPUKernelRuntime::UpdateMemorySwapTask(const AnfNodePtr &kernel, bool mock, bool profiling) {
   MS_EXCEPTION_IF_NULL(mem_swap_manager_);
   if (!mem_swap_manager_->trigger_swap()) {
     return true;
   }
   if (mem_swap_manager_->QueryKernelTriggerSwap(kernel)) {
-    CHECK_OP_RET_WITH_EXCEPT(SyncStream(), "SyncStream failed.");
-    if (!AddMemorySwapTask(kernel)) {
+    if (!mock) {
+      CHECK_OP_RET_WITH_EXCEPT(SyncStream(), "SyncStream failed.");
+    }
+    if (!AddMemorySwapTask(kernel, mock, profiling)) {
       return false;
     }
+    if (!mock) {
+      CHECK_OP_RET_WITH_EXCEPT(mem_swap_manager_->SyncMemCopyStream(SwapKind::kDeviceToHost), "SyncCopyStream failed.");
+    }
   }
-  CHECK_OP_RET_WITH_EXCEPT(mem_swap_manager_->SyncMemCopyStream(SwapKind::kDeviceToHost), "SyncCopyStream failed.");
   return true;
 }
 
-void GPUKernelRuntime::UpdateHostSwapQueue(const DeviceAddressPtr device_address) {
+void GPUKernelRuntime::UpdateHostSwapInQueue(const DeviceAddressPtr device_address, bool mock) {
   MS_EXCEPTION_IF_NULL(mem_swap_manager_);
   if (!mem_swap_manager_->trigger_swap()) {
     return;
   }
-  while (auto device_address_swap_in = mem_swap_manager_->UpdateSwapQueue(SwapKind::kHostToDevice)) {
+  while (auto device_address_swap_in = mem_swap_manager_->UpdateSwapQueue(SwapKind::kHostToDevice, mock)) {
     device_address_swap_in->set_status(DeviceAddressStatus::kInDevice);
   }
+
   auto status = device_address->status();
   switch (status) {
     case DeviceAddressStatus::kInDevice:
       break;
     case DeviceAddressStatus::kInDeviceToHost: {
-      mem_swap_manager_->InsertSwapInBlackList(device_address->ptr_);
       device_address->set_status(DeviceAddressStatus::kInDevice);
       break;
     }
     case DeviceAddressStatus::kInHostToDevice: {
       while (device_address->status() != DeviceAddressStatus::kInDevice) {
-        while (auto device_address_swap_in = mem_swap_manager_->UpdateSwapQueue(SwapKind::kHostToDevice)) {
+        while (auto device_address_swap_in = mem_swap_manager_->UpdateSwapQueue(SwapKind::kHostToDevice, mock)) {
           device_address_swap_in->set_status(DeviceAddressStatus::kInDevice);
         }
       }
       break;
     }
     case DeviceAddressStatus::kInHost:
-      MS_LOG(ERROR) << "Invaild device address status:" << status;
+      MS_LOG(WARNING) << "Unexpected device address status: " << status;
       break;
     default:
-      MS_LOG(EXCEPTION) << "Invaild device address status:" << status;
+      MS_LOG(EXCEPTION) << "Invaild device address status: " << status;
   }
 }
 
-void GPUKernelRuntime::UpdateDeviceSwapQueue() {
+void GPUKernelRuntime::UpdateHostSwapOutQueue(bool mock) {
   MS_EXCEPTION_IF_NULL(mem_swap_manager_);
   if (!mem_swap_manager_->trigger_swap()) {
     return;
   }
-  while (auto device_address_swap_out = mem_swap_manager_->UpdateSwapQueue(SwapKind::kDeviceToHost)) {
-    if (!mem_swap_manager_->FindInSwapInBlackList(device_address_swap_out->ptr_) && device_address_swap_out->ptr_) {
+  while (auto device_address_swap_out = mem_swap_manager_->UpdateSwapQueue(SwapKind::kDeviceToHost, mock)) {
+    if (device_address_swap_out->status() == DeviceAddressStatus::kInDeviceToHost && device_address_swap_out->ptr_) {
       device_address_swap_out->set_status(DeviceAddressStatus::kInHost);
       mem_manager_->FreeMemFromMemPool(device_address_swap_out);
     }
   }
 }
 
-void GPUKernelRuntime::ClearSwapQueue() {
+void GPUKernelRuntime::ClearSwapInfo(bool mock) {
   MS_EXCEPTION_IF_NULL(mem_swap_manager_);
   if (!mem_swap_manager_->trigger_swap()) {
     return;
   }
-  mem_swap_manager_->ClearSwapQueue();
+  mem_swap_manager_->ClearSwapQueue(mock);
+  mem_swap_manager_->ResetHostAddrIsDirty();
 }
 
-bool GPUKernelRuntime::AttemptMallocMem(const DeviceAddressPtr &device_address, size_t size) {
+bool GPUKernelRuntime::AttemptMallocMem(const DeviceAddressPtr &device_address, size_t size, bool mock) {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   MS_EXCEPTION_IF_NULL(mem_swap_manager_);
   auto ret = mem_manager_->MallocMemFromMemPool(device_address, size);
@@ -511,13 +567,11 @@ bool GPUKernelRuntime::AttemptMallocMem(const DeviceAddressPtr &device_address, 
     if (!mem_swap_manager_->trigger_swap()) {
       return false;
     }
-    mem_swap_manager_->SyncMemCopyStream(SwapKind::kDeviceToHost);
-    while (auto device_address_swap_out = mem_swap_manager_->UpdateSwapQueue(SwapKind::kDeviceToHost)) {
-      if (!mem_swap_manager_->FindInSwapInBlackList(device_address_swap_out->ptr_) && device_address_swap_out->ptr_) {
-        device_address_swap_out->set_status(DeviceAddressStatus::kInHost);
-        mem_manager_->FreeMemFromMemPool(device_address_swap_out);
-      }
+    if (!mock) {
+      mem_swap_manager_->SyncMemCopyStream(SwapKind::kDeviceToHost);
     }
+    UpdateHostSwapOutQueue(mock);
+
     ret = mem_manager_->MallocMemFromMemPool(device_address, size);
     if (!ret) {
       return false;
@@ -528,20 +582,22 @@ bool GPUKernelRuntime::AttemptMallocMem(const DeviceAddressPtr &device_address, 
 
 bool GPUKernelRuntime::AllocKernelDynamicRes(const mindspore::kernel::KernelMod &kernel_mod,
                                              const mindspore::AnfNodePtr &kernel, AddressPtrList *kernel_inputs,
-                                             AddressPtrList *kernel_workspaces, AddressPtrList *kernel_outputs) {
-  if (!AllocKernelInputDynamicRes(kernel, kernel_inputs)) {
+                                             AddressPtrList *kernel_workspaces, AddressPtrList *kernel_outputs,
+                                             bool mock) {
+  if (!AllocKernelInputDynamicRes(kernel, kernel_inputs, mock)) {
     return false;
   }
-  if (!AllocKernelOutputDynamicRes(kernel_mod, kernel, kernel_outputs)) {
+  if (!AllocKernelOutputDynamicRes(kernel_mod, kernel, kernel_outputs, mock)) {
     return false;
   }
-  if (!AllocKernelWorkspaceDynamicRes(kernel_mod, kernel, kernel_workspaces)) {
+  if (!AllocKernelWorkspaceDynamicRes(kernel_mod, kernel, kernel_workspaces, mock)) {
     return false;
   }
   return true;
 }
 
-bool GPUKernelRuntime::AllocKernelInputDynamicRes(const mindspore::AnfNodePtr &kernel, AddressPtrList *kernel_inputs) {
+bool GPUKernelRuntime::AllocKernelInputDynamicRes(const mindspore::AnfNodePtr &kernel, AddressPtrList *kernel_inputs,
+                                                  bool mock) {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(kernel_inputs);
   MS_EXCEPTION_IF_NULL(mem_reuse_util_);
@@ -555,7 +611,7 @@ bool GPUKernelRuntime::AllocKernelInputDynamicRes(const mindspore::AnfNodePtr &k
       device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, true);
     }
     MS_EXCEPTION_IF_NULL(device_address);
-    UpdateHostSwapQueue(device_address);
+    UpdateHostSwapInQueue(device_address, mock);
     MS_EXCEPTION_IF_NULL(device_address->ptr_);
     kernel::AddressPtr input = std::make_shared<kernel::Address>();
     MS_EXCEPTION_IF_NULL(input);
@@ -567,16 +623,16 @@ bool GPUKernelRuntime::AllocKernelInputDynamicRes(const mindspore::AnfNodePtr &k
 }
 
 bool GPUKernelRuntime::AllocKernelOutputDynamicRes(const mindspore::kernel::KernelMod &kernel_mod,
-                                                   const mindspore::AnfNodePtr &kernel,
-                                                   AddressPtrList *kernel_outputs) {
+                                                   const mindspore::AnfNodePtr &kernel, AddressPtrList *kernel_outputs,
+                                                   bool mock) {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(kernel_outputs);
-  UpdateDeviceSwapQueue();
+  UpdateHostSwapOutQueue(mock);
   auto output_sizes = kernel_mod.GetOutputSizeList();
   for (size_t i = 0; i < output_sizes.size(); ++i) {
     auto device_address = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
     MS_EXCEPTION_IF_NULL(device_address);
-    if (device_address->ptr_ == nullptr && !AttemptMallocMem(device_address, output_sizes[i])) {
+    if (device_address->ptr_ == nullptr && !AttemptMallocMem(device_address, output_sizes[i], mock)) {
       return false;
     }
     kernel::AddressPtr output = std::make_shared<kernel::Address>();
@@ -590,7 +646,7 @@ bool GPUKernelRuntime::AllocKernelOutputDynamicRes(const mindspore::kernel::Kern
 
 bool GPUKernelRuntime::AllocKernelWorkspaceDynamicRes(const mindspore::kernel::KernelMod &kernel_mod,
                                                       const mindspore::AnfNodePtr &kernel,
-                                                      AddressPtrList *kernel_workspaces) {
+                                                      AddressPtrList *kernel_workspaces, bool mock) {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(kernel_workspaces);
   auto workspace_sizes = kernel_mod.GetWorkspaceSizeList();
@@ -600,7 +656,7 @@ bool GPUKernelRuntime::AllocKernelWorkspaceDynamicRes(const mindspore::kernel::K
       continue;
     }
     auto device_address = AnfAlgo::GetMutableWorkspaceAddr(kernel, i);
-    if (device_address->ptr_ == nullptr && !AttemptMallocMem(device_address, workspace_sizes[i])) {
+    if (device_address->ptr_ == nullptr && !AttemptMallocMem(device_address, workspace_sizes[i], mock)) {
       return false;
     }
     kernel::AddressPtr workspace = std::make_shared<kernel::Address>();
