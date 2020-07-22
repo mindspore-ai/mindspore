@@ -915,13 +915,14 @@ test_case_math_ops = [
         'block': G.MinimumGrad(),
         'desc_inputs': [[2, 3, 3, 5], [2, 3, 3, 5], [2, 3, 3, 5]],
         'skip': ['backward']}),
-    ('StridedSlice', {
-        'block': P.StridedSlice(),
+    ('StridedSlice_00', {
+        'block': P.StridedSlice(shrink_axis_mask=0),
         'desc_const': [(0, 1, 2, 1),
                        (2, 3, 3, 4),
-                       (1, 1, 1, 1)],
+                       (1, 1, 1, 2)],
         'desc_inputs': [[2, 3, 3, 5]],
-        'desc_bprop': [[2, 2, 1, 3]]}),
+        'desc_bprop': [[2, 2, 1, 3]],
+        'skip': ['backward']}),
     ('Slice_1', {
         'block': P.Slice(),
         'desc_const': [(0, 1, 2, 1),
