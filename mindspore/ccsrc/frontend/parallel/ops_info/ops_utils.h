@@ -232,6 +232,7 @@ constexpr char UNSORTEF_SEGMENT_PRODD[] = "UnsortedSegmentProdD";
 constexpr char DEPTHWISE_CONV2D_NATIVE[] = "DepthwiseConv2dNative";
 constexpr char DEPTHWISE_CONV2D[] = "DepthwiseConv2D";
 constexpr char ADD[] = "Add";
+constexpr char KStridedSlice[] = "StridedSlice";
 
 // Parallel don't care
 constexpr char TUPLE_GETITEM[] = "tuple_getitem";

@@ -31,6 +31,7 @@
 #include "backend/kernel_compiler/tbe/tbe_kernel_select/tbe_kernel_broadcast_selecter.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_select/tbe_kernel_reduce_selecter.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_select/common_utils.h"
+#include "backend/kernel_compiler/tbe/tbe_kernel_select/tbe_property_checker.h"
 
 namespace mindspore {
 namespace kernel {
@@ -57,6 +58,10 @@ void TbeKernelSelect::TbeMetadataInfoEx() {
   auto op_info_ptr = OpLib::FindOp(node_name_, kTBE);
   if (!op_info_ptr) {
     MS_LOG(INFO) << "Warning: Cann't find tbe core opinfo, node type: " << node_name_;
+    return;
+  }
+  if (!TbePropertyChecker::CheckTbeProperties(cnode_ptr_)) {
+    MS_LOG(INFO) << "Warning: node(" << cnode_ptr_->fullname_with_scope() << ") not support tbe aicore.";
     return;
   }
   MS_LOG(INFO) << "Start to tbe metadata info. node type: " << node_name_
