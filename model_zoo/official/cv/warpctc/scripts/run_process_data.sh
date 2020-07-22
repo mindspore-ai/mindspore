@@ -17,4 +17,4 @@
 CUR_PATH=$(dirname $PWD/$0)
 cd $CUR_PATH/../ &&
   python process_data.py &&
-  cd - || exit
+  cd - &> /dev/null || exit
