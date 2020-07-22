@@ -2,12 +2,12 @@
 
 ## Description
 
-This is an example of training ResNext50 with ImageNet dataset in Mindspore.
+This is an example of training ResNext50 in MindSpore.
 
 ## Requirements
 
 - Install [Mindspore](http://www.mindspore.cn/install/en).
-- Downlaod the dataset ImageNet2012.
+- Downlaod the dataset.
 
 ## Structure
 
@@ -91,9 +91,9 @@ sh run_standalone_train.sh DEVICE_ID DATA_PATH
 
 ```bash
 # distributed training example(8p)
-sh scripts/run_distribute_train.sh MINDSPORE_HCCL_CONFIG_PATH /ImageNet/train
+sh scripts/run_distribute_train.sh MINDSPORE_HCCL_CONFIG_PATH /dataset/train
 # standalone training example
-sh scripts/run_standalone_train.sh 0 /ImageNet_Original/train
+sh scripts/run_standalone_train.sh 0 /dataset/train
 ```
 
 #### Result
@@ -123,6 +123,6 @@ sh scripts/run_eval.sh 0 /opt/npu/datasets/classification/val /resnext50_100.ckp
 Evaluation result will be stored in the scripts path. Under this, you can find result like the followings in log.
  
 ```
-acc=78,16%(TOP1)
+acc=78.16%(TOP1)
 acc=93.88%(TOP5)
 ```
