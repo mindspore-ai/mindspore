@@ -24,10 +24,22 @@ from .._checkparam import Rel
 
 
 class LearningRateSchedule(Cell):
+    """Basic class of learning rate schedule."""
     def __init__(self):
         super(LearningRateSchedule, self).__init__()
 
     def construct(self, global_step):
+        """
+        Defines the computation to get the current learning rate.
+
+        This method should be overridden by all subclasses.
+
+        Note:
+            The output should be a Tensor of scalar.
+
+        Inputs:
+            Tensor. The current step number.
+        """
         raise NotImplementedError
 
 
