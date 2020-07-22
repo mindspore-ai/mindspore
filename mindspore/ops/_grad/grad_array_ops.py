@@ -15,6 +15,8 @@
 
 """array_ops"""
 
+import mindspore as ms
+from mindspore.ops import composite as C
 from .. import operations as P
 from ..operations import _grad_ops as G
 from ..operations import _inner_ops as inner
@@ -35,6 +37,7 @@ reshape = P.Reshape()
 size_op = P.Size()
 invert_permutation = P.InvertPermutation()
 logical_and = P.LogicalAnd()
+is_sub_class = P.IsSubClass()
 
 
 @bprop_getters.register(P.Fill)
@@ -57,6 +60,29 @@ def get_bprop_dtype(self):
     return bprop
 
 
+dout_cast = C.MultitypeFuncGraph("dout_cast")
+@dout_cast.register("Tensor", "Tensor")
+def dout_cast_tensor(dout, x):
+    cast = P.Cast()
+    get_dtype = P.DType()
+    dx = cast(dout, get_dtype(x))
+    return dx
+
+@dout_cast.register("Number", "Number")
+def dout_cast_number(dout, x):
+    cast = P.Cast()
+    get_dtype = P.DType()
+    dx = cast(dout, get_dtype(x))
+    return dx
+
+@dout_cast.register("IndexedSlices", "Tensor")
+def dout_cast_indexed_slices(dout, x):
+    cast = P.Cast()
+    get_dtype = P.DType()
+    values = cast(dout.values(), get_dtype(x))
+    return IndexedSlices(dout.indices(), values, dout.dense_shape())
+
+
 @bprop_getters.register(P.Cast)
 def get_bprop_cast(self):
     """Generate bprop for Cast"""
@@ -66,6 +92,13 @@ def get_bprop_cast(self):
     def bprop(x, t, out, dout):
         dx = cast(dout, get_dtype(x))
         return dx, zeros_like(t)
+
+    def bprop_sparse(x, t, out, dout):
+        dx = dout_cast(dout, x)
+        return dx, zeros_like(t)
+
+    if context.get_context('enable_sparse'):
+        return bprop_sparse
 
     return bprop
 
@@ -372,6 +405,11 @@ def get_bprop_pack(self):
     def bprop(x, out, dout):
         pack_grad = P.Unpack(axis)
         out = pack_grad(dout)
+        if is_sub_class(F.typeof(x), ms.list_):
+            ret = []
+            for item in out:
+                ret.append(item)
+            return (ret,)
         return (out,)
 
     return bprop

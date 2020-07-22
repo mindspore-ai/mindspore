@@ -19,6 +19,7 @@
 @Desc  : test mindspore indexed_slices's operation
 """
 import numpy as np
+import pytest
 
 import mindspore as ms
 import mindspore.nn as nn
@@ -222,7 +223,7 @@ def test_indexed_slices_make_indexed_slices():
     class MakeIndexedSlices(nn.Cell):
         def __init__(self):
             super(MakeIndexedSlices, self).__init__()
-            self.dense_shape = (3, 4)
+            self.dense_shape = (3, 2)
         def construct(self, indices, values):
             ret = (IndexedSlices(indices, values, self.dense_shape),)
             return ret[0]
@@ -231,17 +232,19 @@ def test_indexed_slices_make_indexed_slices():
     MakeIndexedSlices()(indices, values)
 
 
+class IndexedSlicesGetAttr(nn.Cell):
+    def __init__(self, dense_shape):
+        super(IndexedSlicesGetAttr, self).__init__()
+        self.dense_shape = dense_shape
+    def construct(self, indices, values):
+        x = IndexedSlices(indices, values, self.dense_shape)
+        return x.values(), x.indices(), x.dense_shape()
+
+
 def test_indexed_slices_attr():
-    class IndexedSlicesGetAttr(nn.Cell):
-        def __init__(self):
-            super(IndexedSlicesGetAttr, self).__init__()
-            self.dense_shape = (3, 4)
-        def construct(self, indices, values):
-            x = IndexedSlices(indices, values, self.dense_shape)
-            return x.values(), x.indices(), x.dense_shape()
     indices = Tensor([0])
     values = Tensor([[1, 2]], dtype=ms.float32)
-    IndexedSlicesGetAttr()(indices, values)
+    IndexedSlicesGetAttr((3, 2))(indices, values)
 
 
 def test_indexed_slices_sparse_gatherv2_grad_all():
@@ -342,3 +345,109 @@ def test_indexed_slices_model_train():
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     model = Model(net, optimizer=optimizer)
     model.train(2, dataset, dataset_sink_mode=False)
+
+
+def test_indexed_slices_values_dim_greater_than_dense_shape_dim():
+    indices = Tensor(np.array([0, 1], dtype=np.int32))
+    values = Tensor(np.random.randn(2, 4, 5).astype(np.float32))
+    dense_shape = (3, 4)
+    with pytest.raises(TypeError):
+        IndexedSlicesGetAttr(dense_shape)(indices, values)
+
+
+def test_indexed_slices_values_dim_less_than_dense_shape_dim():
+    indices = Tensor(np.array([0, 1], dtype=np.int32))
+    values = Tensor(np.random.randn(2, 4).astype(np.float32))
+    dense_shape = (3, 4, 5)
+    with pytest.raises(TypeError):
+        IndexedSlicesGetAttr(dense_shape)(indices, values)
+
+
+def test_indexed_slices_value_and_dense_shape_illegal():
+    indices = Tensor(np.array([0, 1], dtype=np.int32))
+    values = Tensor(np.random.randn(2, 4).astype(np.float32))
+    dense_shape = (3, 5)
+    with pytest.raises(TypeError):
+        IndexedSlicesGetAttr(dense_shape)(indices, values)
+
+
+class IndexedSlicesValuesDouble(nn.Cell):
+    def __init__(self):
+        super().__init__()
+
+    def construct(self, x):
+        indices = x.indices()
+        values = x.values() * 2
+        dense_shape = x.dense_shape()
+        return IndexedSlices(indices, values, dense_shape)
+
+
+class IndexedSlicesValuesAdd2(nn.Cell):
+    def __init__(self):
+        super().__init__()
+
+    def construct(self, x):
+        indices = x.indices()
+        values = x.values() + 2
+        dense_shape = x.dense_shape()
+        return IndexedSlices(indices, values, dense_shape)
+
+
+class IndexedSlicesWithControlIf(nn.Cell):
+    def __init__(self, dense_shape):
+        super().__init__()
+        self.op1 = IndexedSlicesValuesDouble()
+        self.op2 = IndexedSlicesValuesAdd2()
+        self.dense_shape = dense_shape
+
+    def construct(self, a, b, indices, values):
+        x = IndexedSlices(indices, values, self.dense_shape)
+        if a > b:
+            x = self.op1(x)
+        else:
+            x = self.op2(x)
+        return x.indices(), x.values()
+
+
+def test_indexed_slices_with_control_flow_if():
+    a = Tensor(np.array(0).astype(np.int32))
+    b = Tensor(np.array(2).astype(np.int32))
+    indices = Tensor(np.array([0, 2]).astype(np.int32))
+    values = Tensor(np.ones([2, 2]).astype(np.float32))
+    dense_shape = (5, 2)
+
+    net = IndexedSlicesWithControlIf(dense_shape)
+    net(a, b, indices, values)
+
+
+class EmbeddingLookUpBnNet(nn.Cell):
+    def __init__(self, param_np, target='CPU'):
+        super().__init__()
+        self.param = Parameter(Tensor(param_np), name="w1")
+        self.embedding_lookup = nn.EmbeddingLookup(target=target)
+        self.bn = nn.BatchNorm2d(num_features=3)
+        self.mul = P.Mul()
+        self.reshape = P.Reshape()
+        self.relu = nn.PReLU()
+
+    def construct(self, indices):
+        x = self.embedding_lookup(self.param, indices)
+        x = self.reshape(x, (2, 3, 2, 2))
+        x = self.relu(x)
+        x = self.bn(x)
+        return x
+
+
+def test_embedding_lookup_with_mix_precision():
+    param_np = np.ones([8, 8]).astype(np.float32)
+    data = Tensor(np.array([0, 1, 2]).astype(np.int32))
+    label = Tensor(np.random.randn(*(2, 3, 2, 2)).astype(np.float32))
+    net = EmbeddingLookUpBnNet(param_np, target='CPU')
+
+    criterion = nn.SoftmaxCrossEntropyWithLogits(reduction='mean')
+    optimizer = nn.Adam(params=net.trainable_params(), learning_rate=0.1)
+    optimizer.sparse_opt.add_prim_attr("primitive_target", "CPU")
+    train_network = ms.amp.build_train_network(net, optimizer, criterion, level="O2")
+    train_network.set_train()
+    for _ in range(2):
+        train_network(data, label)
