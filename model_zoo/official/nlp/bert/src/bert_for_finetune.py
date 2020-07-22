@@ -22,7 +22,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore.common.tensor import Tensor
-from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore.common.parameter import Parameter
 from mindspore.common import dtype as mstype
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.train.parallel_utils import ParallelMode
@@ -55,7 +55,7 @@ class BertFinetuneCell(nn.Cell):
 
         super(BertFinetuneCell, self).__init__(auto_prefix=False)
         self.network = network
-        self.weights = ParameterTuple(network.trainable_params())
+        self.weights = optimizer.parameters
         self.optimizer = optimizer
         self.grad = C.GradOperation('grad',
                                     get_by_list=True,
@@ -158,7 +158,7 @@ class BertSquadCell(nn.Cell):
     def __init__(self, network, optimizer, scale_update_cell=None):
         super(BertSquadCell, self).__init__(auto_prefix=False)
         self.network = network
-        self.weights = ParameterTuple(network.trainable_params())
+        self.weights = optimizer.parameters
         self.optimizer = optimizer
         self.grad = C.GradOperation('grad', get_by_list=True, sens_param=True)
         self.reducer_flag = False

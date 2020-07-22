@@ -117,8 +117,7 @@ def run_pretrain():
         decay_params = list(filter(cfg.Lamb.decay_filter, params))
         other_params = list(filter(lambda x: x not in decay_params, params))
         group_params = [{'params': decay_params, 'weight_decay': cfg.Lamb.weight_decay},
-                        {'params': other_params},
-                        {'order_params': params}]
+                        {'params': other_params}]
         optimizer = Lamb(group_params, learning_rate=lr_schedule, eps=cfg.Lamb.eps)
     elif cfg.optimizer == 'Momentum':
         optimizer = Momentum(net_with_loss.trainable_params(), learning_rate=cfg.Momentum.learning_rate,
@@ -133,8 +132,7 @@ def run_pretrain():
         decay_params = list(filter(cfg.AdamWeightDecay.decay_filter, params))
         other_params = list(filter(lambda x: x not in decay_params, params))
         group_params = [{'params': decay_params, 'weight_decay': cfg.AdamWeightDecay.weight_decay},
-                        {'params': other_params, 'weight_decay': 0.0},
-                        {'order_params': params}]
+                        {'params': other_params, 'weight_decay': 0.0}]
 
         optimizer = AdamWeightDecay(group_params, learning_rate=lr_schedule, eps=cfg.AdamWeightDecay.eps)
     else:
