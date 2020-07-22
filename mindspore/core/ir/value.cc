@@ -130,7 +130,12 @@ bool FP32Imm::operator==(const Value &other) const {
     return false;
   }
 }
-bool FP32Imm::operator==(const FP32Imm &other) const { return fabs(v_ - other.v_) < FLT_EPSILON; }
+bool FP32Imm::operator==(const FP32Imm &other) const {
+  if (std::isinf(v_) && std::isinf(other.v_)) {
+    return true;
+  }
+  return fabs(v_ - other.v_) < FLT_EPSILON;
+}
 bool FP64Imm::operator==(const Value &other) const {
   if (other.isa<FP64Imm>()) {
     auto other_ = static_cast<const FP64Imm &>(other);
@@ -179,7 +184,12 @@ std::string ValueSequeue::DumpText() const {
   return oss.str();
 }
 
-bool FP64Imm::operator==(const FP64Imm &other) const { return fabs(v_ - other.v_) < DBL_EPSILON; }
+bool FP64Imm::operator==(const FP64Imm &other) const {
+  if (std::isinf(v_) && std::isinf(other.v_)) {
+    return true;
+  }
+  return fabs(v_ - other.v_) < DBL_EPSILON;
+}
 bool StringImm::operator==(const Value &other) const {
   if (other.isa<StringImm>()) {
     auto other_ = static_cast<const StringImm &>(other);

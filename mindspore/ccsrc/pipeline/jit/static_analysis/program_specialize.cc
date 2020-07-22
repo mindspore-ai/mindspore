@@ -115,6 +115,7 @@ AnfNodePtr FuncGraphSpecializer::ReplicateDisconnectedNode(const AnfNodePtr &nod
   std::shared_ptr<FuncGraphSpecializer> specializer = shared_from_this();
   while (fg != nullptr && fg != specializer->func_graph_) {
     specializer = specializer->parent_;
+    MS_EXCEPTION_IF_NULL(specializer);
   }
   // If had replicated, just return that.
   auto iter = specializer->repl_node_->find(node);
