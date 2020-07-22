@@ -33,6 +33,7 @@ class OptimizerInfo {
   virtual void Update(const Values &values, const Lengths &lengths) {}
   virtual void UpdateWeight(const WeightPtr &weight);
   virtual void Accumulate(const Values &values, const Lengths &lengths) = 0;
+  virtual void ComputeMean(size_t n) {}
   virtual void Reset() {}
   void AddWorkspace(const AddressPtr &workspace);
 
@@ -58,6 +59,7 @@ class DenseOptimInfo : public OptimizerInfo {
   ~DenseOptimInfo() override = default;
 
   void Accumulate(const Values &values, const Lengths &lens) override;
+  void ComputeMean(size_t n) override;
   void Reset() override;
 };
 

@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_APPLY_ADAM_PS_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_APPLY_ADAM_PS_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_APPLY_LAZY_ADAM_PS_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_APPLY_LAZY_ADAM_PS_KERNEL_H_
 
 #include <vector>
 #include <memory>
 #include "backend/kernel_compiler/cpu/ps/pserver_kernel.h"
-#include "backend/kernel_compiler/cpu/sparse_apply_adam_cpu_kernel.h"
+#include "backend/kernel_compiler/cpu/sparse_apply_lazy_adam_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
 namespace ps {
-using mindspore::kernel::SparseApplyAdamCPUKernel;
-class SparseApplyAdamPSKernel : public SparseApplyAdamCPUKernel, public PServerKernel {
+using mindspore::kernel::SparseApplyLazyAdamCPUKernel;
+class SparseApplyLazyAdamPSKernel : public SparseApplyLazyAdamCPUKernel, public PServerKernel {
  public:
-  SparseApplyAdamPSKernel(size_t rank_id, size_t pserver_num) : PServerKernel(rank_id, pserver_num) {}
-  ~SparseApplyAdamPSKernel() override = default;
+  SparseApplyLazyAdamPSKernel(size_t rank_id, size_t pserver_num) : PServerKernel(rank_id, pserver_num) {}
+  ~SparseApplyLazyAdamPSKernel() override = default;
 
   void InitKernel(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &) override;
   void ReInit(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &) override;
@@ -46,4 +46,4 @@ class SparseApplyAdamPSKernel : public SparseApplyAdamCPUKernel, public PServerK
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_APPLY_ADAM_PS_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_APPLY_LAZY_ADAM_PS_KERNEL_H_

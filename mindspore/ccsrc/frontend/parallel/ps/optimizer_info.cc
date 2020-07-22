@@ -57,6 +57,16 @@ void DenseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   }
 }
 
+void DenseOptimInfo::ComputeMean(size_t n) {
+  if (n > 1) {
+    float *accum_grad_data = reinterpret_cast<float *>(gradient()->addr);
+    size_t size = gradient()->size / sizeof(float);
+    for (size_t i = 0; i < size; i++) {
+      accum_grad_data[i] /= n;
+    }
+  }
+}
+
 void DenseOptimInfo::Reset() { memset_s(gradient()->addr, gradient()->size, 0x00, gradient()->size); }
 
 void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {

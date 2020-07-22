@@ -41,7 +41,7 @@
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 #include "backend/kernel_compiler/cpu/ps/pserver_kernel.h"
-#include "backend/kernel_compiler/cpu/ps/sparse_apply_adam_ps_kernel.h"
+#include "backend/kernel_compiler/cpu/ps/sparse_apply_lazy_adam_ps_kernel.h"
 #include "backend/kernel_compiler/cpu/ps/sparse_apply_ftrl_ps_kernel.h"
 #include "backend/kernel_compiler/cpu/ps/apply_momentum_ps_kernel.h"
 #include "backend/kernel_compiler/cpu/ps/embedding_look_up_ps_kernel.h"
@@ -90,6 +90,7 @@ class ParameterServer {
     void HandleInitInputsShape(const ::ps::KVMeta &req_meta, const ::ps::KVPairs<T> &req_data, ::ps::KVPairs<T> *res);
     void HandleInitEmbeddings(const ::ps::KVMeta &req_meta, const ::ps::KVPairs<T> &req_data, ::ps::KVPairs<T> *res);
     void HandleEmbeddingLookup(const ::ps::KVMeta &req_meta, const ::ps::KVPairs<T> &req_data, ::ps::KVPairs<T> *res);
+    void HandleFinalize(const ::ps::KVMeta &req_meta, const ::ps::KVPairs<T> &req_data, ::ps::KVPairs<T> *res);
 
     ParameterServer *ps_;
     typedef void (ServerHandler::*RequestHandler)(const ::ps::KVMeta &req_meta, const ::ps::KVPairs<T> &req_data,
@@ -165,6 +166,7 @@ void ParameterServer<T>::ServerHandler::Init() {
   handlers_[kInitOptimInputsShapeCmd] = &ServerHandler::HandleInitInputsShape;
   handlers_[kInitEmbeddingsCmd] = &ServerHandler::HandleInitEmbeddings;
   handlers_[kEmbeddingLookupCmd] = &ServerHandler::HandleEmbeddingLookup;
+  handlers_[kFinalizeCmd] = &ServerHandler::HandleFinalize;
 }
 
 template <typename T>
@@ -257,15 +259,15 @@ void ParameterServer<T>::ServerHandler::HandleEmbeddingLookup(const ::ps::KVMeta
 }
 
 template <typename T>
+void ParameterServer<T>::ServerHandler::HandleFinalize(const ::ps::KVMeta &req_meta, const ::ps::KVPairs<T> &req_data,
+                                                       ::ps::KVPairs<T> *res) {
+  ::ps::Finalize(0, false);
+}
+
+template <typename T>
 bool ParameterServer<T>::Init(const FuncGraphPtr &func_graph) {
-  const char *server_num = getenv(kEnvPServerNum);
-  const char *worker_num = getenv(kEnvWorkerNum);
-  if (server_num != nullptr) {
-    pserver_num_ = *server_num - '0';
-  }
-  if (worker_num != nullptr) {
-    worker_num_ = *worker_num - '0';
-  }
+  pserver_num_ = ::ps::NumServers();
+  worker_num_ = ::ps::NumWorkers();
   func_graph_ = func_graph;
   rank_id_ = ::ps::MyRank();
   handler_.reset(new ServerHandler(this));
@@ -319,7 +321,7 @@ void ParameterServer<T>::InitOptimInputsShape(const Keys &keys, const Values &va
     if (optimizers_.count(key) == 0 && optim_inputs_shape_.count(key) > 0) {
       if (optim_name == kSparseAdam) {
         std::shared_ptr<PServerKernel> optimizer =
-          std::make_shared<kernel::ps::SparseApplyAdamPSKernel>(rank_id_, pserver_num_);
+          std::make_shared<kernel::ps::SparseApplyLazyAdamPSKernel>(rank_id_, pserver_num_);
         optimizer->InitKernel(optim_inputs_shape_[key]);
         optimizers_[key] = optimizer;
       } else if (optim_name == kApplyMomentum) {
@@ -368,10 +370,11 @@ void ParameterServer<T>::InitEmbeddingTable(
   }
 
   WeightPtr embedding = std::make_shared<Weight>(total_dims, 0);
+  T *embedding_data = embedding->data();
   std::default_random_engine engine;
   std::normal_distribution<float> random(0, 0.01);
   for (size_t i = 0; i < total_dims; i++) {
-    (*embedding)[i] = random(engine);
+    embedding_data[i] = random(engine);
   }
   weights_[key] = embedding;
 
@@ -402,6 +405,7 @@ void ParameterServer<T>::UpdateWeights() {
       const std::vector<kernel::AddressPtr> &workspaces = optim_info->workspaces();
       const std::vector<kernel::AddressPtr> &outputs = optim_info->outputs();
 
+      optim_info->ComputeMean(worker_num_);
       optimizer->Execute(inputs, workspaces, outputs);
       optim_info->Reset();
     }

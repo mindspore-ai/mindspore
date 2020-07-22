@@ -50,6 +50,7 @@ class Worker {
   void InitPSParamAndOptim(const std::string &param_name, void *param_data, size_t param_size);
   void DoPSEmbeddingLookup(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<int> &lookup_ids,
                            const ::ps::SArray<int> &lens, ::ps::SArray<T> *lookup_result, int cmd);
+  void Finalize();
 
  private:
   Worker() : kv_worker_(nullptr), running_(false), key_cnt_(0) {}
@@ -116,6 +117,11 @@ template <typename T>
 void Worker<T>::DoPSEmbeddingLookup(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<int> &lookup_ids,
                                     const ::ps::SArray<int> &lens, ::ps::SArray<T> *lookup_result, int cmd) {
   kv_worker_->EmbeddingLookup(keys, lookup_ids, lens, lookup_result, cmd);
+}
+
+template <typename T>
+void Worker<T>::Finalize() {
+  kv_worker_->Finalize();
 }
 
 template <typename T>
