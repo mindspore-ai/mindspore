@@ -31,8 +31,9 @@ class PServerKernel {
   ~PServerKernel() = default;
   PServerKernel(const PServerKernel &) = delete;
   PServerKernel &operator=(const PServerKernel &) = delete;
-
   virtual void InitKernel(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &) {}
+  virtual void InitKernel(const CNodePtr &cnode,
+                          const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &) {}
   virtual void ReInit(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &) {}
   virtual bool Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                        const std::vector<AddressPtr> &outputs) = 0;
