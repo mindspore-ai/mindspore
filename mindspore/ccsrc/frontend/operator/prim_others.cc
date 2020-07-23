@@ -378,10 +378,25 @@ AbstractBasePtr InferImplMakeIndexedSlices(const AnalysisEnginePtr &, const Prim
                          auto elem = GetValue<int>(e);
                          return elem;
                        });
-  for (auto dense_shape_elem : dense_shape_vec) {
-    if (dense_shape_elem < 0) {
-      MS_EXCEPTION(TypeError) << "The element of dense_shape must be positive, but got "
-                              << dense_shape_value->ToString();
+  if (dense_shape_vec.size() != values_shp.size()) {
+    MS_EXCEPTION(TypeError) << "The size of dense_shape must be the same with the dimension of values "
+                            << values_shp.size() << ", but got " << dense_shape_value->size();
+  }
+  for (size_t i = 0; i < dense_shape_vec.size(); i++) {
+    if (dense_shape_vec[i] < 0) {
+      MS_EXCEPTION(TypeError) << "The " << i << "th element of dense_shape must be positive, but got "
+                              << dense_shape_vec[i];
+    }
+    if (i == 0) {
+      if (dense_shape_vec[i] < values_shp[i]) {
+        MS_EXCEPTION(TypeError) << "The " << i << "th element of dense_shape should be greator or equal to the " << i
+                                << "th dimension of values " << values_shp[i] << ", but got " << dense_shape_vec[i];
+      }
+    } else {
+      if (dense_shape_vec[i] != values_shp[i]) {
+        MS_EXCEPTION(TypeError) << "The " << i << "th element of dense_shape must be same with the " << i
+                                << "th dimension of values " << values_shp[i] << ", but got " << dense_shape_vec[i];
+      }
     }
   }
   auto ret = std::make_shared<AbstractIndexedSlices>(values->element()->BuildType(), dense_shape_vec);
