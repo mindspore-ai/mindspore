@@ -26,7 +26,7 @@ cfg = edict({
     'optimizer': 'Lamb',
     'AdamWeightDecay': edict({
         'learning_rate': 3e-5,
-        'end_learning_rate': 1e-10,
+        'end_learning_rate': 0.0,
         'power': 5.0,
         'weight_decay': 1e-5,
         'decay_filter': lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower(),
@@ -35,7 +35,7 @@ cfg = edict({
     }),
     'Lamb': edict({
         'learning_rate': 3e-5,
-        'end_learning_rate': 1e-10,
+        'end_learning_rate': 0.0,
         'power': 10.0,
         'warmup_steps': 10000,
         'weight_decay': 0.01,
