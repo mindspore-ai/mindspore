@@ -185,7 +185,14 @@ class SentencePieceVocab(cde.SentencePieceVocab):
                 character set.
             model_type(SentencePieceModel): Choose from unigram (default), bpe, char, or word. The input sentence
                 must be pretokenized when using word type.
-            params(dict): A dictionary with no incoming parameters.
+            params(dict): A dictionary with no incoming parameters(The parameters are derived from SentencePiece
+                library).
+
+            .. code-block ::
+                {
+                  "input_sentence_size" : 0,
+                  "max_sentencepiece_length" : 16
+                }
         """
         return super().from_file(file_path, vocab_size, character_coverage,
                                  DE_C_INTER_SENTENCEPIECE_MODE[model_type], params)
