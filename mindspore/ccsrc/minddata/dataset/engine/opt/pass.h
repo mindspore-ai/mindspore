@@ -91,6 +91,8 @@ class Pass : public std::enable_shared_from_this<Pass> {
   // @param tree - Pointer to the execution tree to be transformed.
   // @param modified - Pointer to the modified flag,
   virtual Status Run(ExecutionTree *tree, bool *modified) = 0;
+
+  virtual ~Pass() = default;
 };
 
 // TreePass is a basic Pass class which performs transformation on ExecutionTree directly.
