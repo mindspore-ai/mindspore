@@ -94,7 +94,11 @@ def check_degrees(degrees):
     if isinstance(degrees, numbers.Number):
         check_value(degrees, (0, float("inf")), "degrees")
     elif isinstance(degrees, (list, tuple)):
-        if len(degrees) != 2:
+        if len(degrees) == 2:
+            type_check_list(degrees, (numbers.Number,), "degrees")
+            if degrees[0] > degrees[1]:
+                raise ValueError("degrees should be in (min,max) format. Got (max,min).")
+        else:
             raise TypeError("If degrees is a sequence, the length must be 2.")
 
 
@@ -106,6 +110,8 @@ def check_random_color_adjust_param(value, input_name, center=1, bound=(0, FLOAT
             raise ValueError("The input value of {} cannot be negative.".format(input_name))
     elif isinstance(value, (list, tuple)) and len(value) == 2:
         check_range(value, bound)
+        if value[0] > value[1]:
+            raise ValueError("value should be in (min,max) format. Got (max,min).")
 
 
 def check_erasing_value(value):
@@ -168,10 +174,14 @@ def check_random_resize_crop(method):
             type_check(scale, (tuple,), "scale")
             type_check_list(scale, (float, int), "scale")
             check_range(scale, [0, FLOAT_MAX_INTEGER])
+            if scale[0] > scale[1]:
+                raise ValueError("scale should be in (min,max) format. Got (max,min).")
         if ratio is not None:
             type_check(ratio, (tuple,), "ratio")
             type_check_list(ratio, (float, int), "ratio")
             check_range(ratio, [0, FLOAT_MAX_INTEGER])
+            if ratio[0] > ratio[1]:
+                raise ValueError("ratio should be in (min,max) format. Got (max,min).")
         if interpolation is not None:
             type_check(interpolation, (Inter,), "interpolation")
         if max_attempts is not None:
