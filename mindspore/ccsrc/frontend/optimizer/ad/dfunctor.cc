@@ -216,6 +216,7 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
   TraceManager::DebugTrace(std::make_shared<TraceGradFpropApp>(cnode_morph->debug_info()));
   auto k_app = k_graph_->NewCNode(inputs);
   TraceManager::EndTrace();
+  ReplaceEquivdout(k_app, cnode_morph->forward());
   for (size_t i = 0; i < param_adjoints.size(); ++i) {
     param_adjoints[i]->RegisterKUser(k_app, i);
   }
@@ -235,6 +236,37 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
   BackPropagate(cnode_morph, k_app, node_adjoint);
   MS_LOG(DEBUG) << "MapMorphism node " << morph->ToString() << ".";
   return node_adjoint;
+}
+
+void DFunctor::ReplaceEquivdout(const CNodePtr &cnode, const ValuePtr &forward) {
+  if (forward == nullptr) {
+    return;
+  }
+  auto &input = cnode->input(0);
+  if (!IsValueNode<FuncGraph>(input)) {
+    return;
+  }
+  auto fg = GetValueNode<FuncGraphPtr>(input);
+  auto output = fg->output();
+  if (!output->isa<CNode>()) {
+    return;
+  }
+  auto cnode_output = output->cast<CNodePtr>();
+  auto &cnode_input = cnode_output->input(1);
+  if (!cnode_input->isa<CNode>()) {
+    return;
+  }
+  auto &input_fg = cnode_output->input(2);
+  if (!IsValueNode<FuncGraph>(input_fg)) {
+    return;
+  }
+  auto equivdout = cnode_input->cast<CNodePtr>();
+  auto func_graph = GetValueNode<FuncGraphPtr>(input_fg);
+  auto manager = Manage({fg, func_graph}, false);
+  MS_LOG(DEBUG) << "Replace: " << equivdout->ToString() << " with " << forward;
+  auto value_node = NewValueNode(forward);
+  value_node->set_has_new_value(true);
+  manager->Replace(equivdout, value_node);
 }
 
 bool DFunctor::IsFreeMorphism(const AnfNodePtr &node) {

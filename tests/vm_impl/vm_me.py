@@ -554,9 +554,7 @@ def softmax_cross_entropy_with_logits(logits, labels):
     sample_num = labels.shape[0]
     prob = softmax(logits)
     log_likelihood = -np.log(prob[range(sample_num)]) * labels
-    # loss = np.sum(log_likelihood)
-    loss = log_likelihood
-
+    loss = np.sum(log_likelihood)
     dx = prob.copy()
     dx[range(sample_num)] -= labels
     return loss, dx

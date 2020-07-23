@@ -59,7 +59,8 @@ class GPUSession : public SessionBasic {
 
   void AllocateMemory(KernelGraph *kernel_graph) const;
 
-  void RunOpAllocateMemory(const std::vector<tensor::TensorPtr> &input_tensors, KernelGraph *kernel_graph) const;
+  void RunOpAllocateMemory(const ValuePtr &pre_output_value, const std::vector<tensor::TensorPtr> &input_tensors,
+                           KernelGraph *kernel_graph) const;
 
   void RunOpClearMemory(KernelGraph *kernel_graph) const;
 

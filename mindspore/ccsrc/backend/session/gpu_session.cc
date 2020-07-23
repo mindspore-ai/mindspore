@@ -102,12 +102,13 @@ void GPUSession::AllocateMemory(KernelGraph *kernel_graph) const {
   runtime_instance->AssignMemory(kernel_graph);
 }
 
-void GPUSession::RunOpAllocateMemory(const std::vector<tensor::TensorPtr> &input_tensors,
+void GPUSession::RunOpAllocateMemory(const ValuePtr &pre_output_value,
+                                     const std::vector<tensor::TensorPtr> &input_tensors,
                                      KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  runtime_instance->RunOpAssignMemory(input_tensors, kernel_graph);
+  runtime_instance->RunOpAssignMemory(pre_output_value, input_tensors, kernel_graph);
 }
 
 void GPUSession::RunOpClearMemory(KernelGraph *kernel_graph) const {
@@ -292,7 +293,7 @@ py::tuple GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // Remove NoOp from execution graph
   opt::RemoveNopNode(kernel_graph.get());
-  RunOpAllocateMemory(input_tensors, kernel_graph.get());
+  RunOpAllocateMemory(op_run_info.value, input_tensors, kernel_graph.get());
   // Execute the computation
   LoadInputData(kernel_graph, input_tensors);
   Execute(kernel_graph);

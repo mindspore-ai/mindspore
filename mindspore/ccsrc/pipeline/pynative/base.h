@@ -26,6 +26,7 @@
 #include <unordered_set>
 
 #include "pybind11/pybind11.h"
+#include "ir/anf.h"
 #include "ir/primitive_py.h"
 #include "abstract/abstract_value.h"
 
@@ -51,6 +52,7 @@ struct OpExecInfo {
   PrimitivePyPtr py_primitive;
   std::string op_name;
   AbstractBasePtr abstract;
+  ValuePtr value = nullptr;
 
   py::tuple op_inputs;
   py::tuple inputs_mask;

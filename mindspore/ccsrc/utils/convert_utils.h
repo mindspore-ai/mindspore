@@ -21,6 +21,7 @@
 #include <memory>
 #include <utility>
 #include <stack>
+#include <vector>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -69,6 +70,8 @@ using NodeMapEquiv = std::unordered_map<AnfNodePtr, AnfNodePtr>;
 bool Isomorphic(FuncGraphPtr g1, FuncGraphPtr g2, FuncGraphPairMapEquiv *equiv_func_graph, NodeMapEquiv *equiv_node);
 
 tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar);
+
+void TensorValueToTensor(const ValuePtr &value, std::vector<tensor::TensorPtr> *tensors);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_UTILS_CONVERT_UTILS_H_

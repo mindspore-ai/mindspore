@@ -607,4 +607,25 @@ tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar) {
   MS_EXCEPTION_IF_NULL(tensor);
   return tensor;
 }
+
+void TensorValueToTensor(const ValuePtr &value, std::vector<tensor::TensorPtr> *tensors) {
+  MS_EXCEPTION_IF_NULL(value);
+  MS_EXCEPTION_IF_NULL(tensors);
+  if (value->isa<ValueTuple>()) {
+    auto value_tuple = value->cast<ValueTuplePtr>();
+    MS_EXCEPTION_IF_NULL(value_tuple);
+    for (size_t i = 0; i < value_tuple->size(); ++i) {
+      ValuePtr element = value_tuple->value()[i];
+      if (element->isa<tensor::Tensor>()) {
+        auto tensor = element->cast<tensor::TensorPtr>();
+        MS_EXCEPTION_IF_NULL(tensor);
+        tensors->push_back(tensor);
+      }
+    }
+  } else if (value->isa<tensor::Tensor>()) {
+    tensor::TensorPtr tensor = value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    tensors->push_back(tensor);
+  }
+}
 }  // namespace mindspore

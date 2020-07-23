@@ -53,7 +53,8 @@ class KernelRuntime {
   virtual ~KernelRuntime();
   virtual bool Init() = 0;
   virtual void AssignMemory(session::KernelGraph *graph);
-  void RunOpAssignMemory(const std::vector<tensor::TensorPtr> &input_tensors, session::KernelGraph *graph);
+  void RunOpAssignMemory(const ValuePtr &pre_output_value, const std::vector<tensor::TensorPtr> &input_tensors,
+                         session::KernelGraph *graph);
   void RunOpClearMemory(const session::KernelGraph *graph);
   bool DumpDataEnabled();
   bool DumpDataEnabledIteration();
@@ -108,6 +109,7 @@ class KernelRuntime {
   void RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> &input_tensors, const session::KernelGraph *graph);
   void RunOpAssignOutputMemory(const AnfNodePtr &kernel);
   void RunOpAssignWorkSpaceMemory(const AnfNodePtr &kernel);
+  void RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value, session::KernelGraph *graph);
   void AssignValueNodeTensor(const ValueNodePtr &value_node, const ValuePtr &node_value, size_t output_idx);
   DeviceAddressPtr PreAssignCNodeMemory(const AnfNodePtr &anf_node, size_t index);
 

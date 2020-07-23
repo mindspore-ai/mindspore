@@ -95,7 +95,11 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void set_obj_node_map(FuncGraphPtr g, const std::string obj, AnfNodePtr node, std::vector<int> index) {
     graph_info_map_[g].obj_node_map[obj] = std::make_pair(node, index);
   }
-  AnfNodePtr MakeCNode(const OpExecInfoPtr &op_exec_info, const py::args &args, const py::tuple &out);
+  CNodePtr MakeCNode(const OpExecInfoPtr &op_exec_info, const py::args &args, const py::tuple &out);
+  ValuePtr GetForwardValue(const OpExecInfoPtr &op_exec_info);
+  void SaveOpForwardValue(const OpExecInfoPtr &op_exec_info, const ValuePtr &value);
+  void SaveForwardResult(const CNodePtr &cnode, const py::object &out);
+  void SaveAllResult(const OpExecInfoPtr &op_exec_info, const CNodePtr &cnode, const py::tuple &out);
   py::object Run(const py::tuple &args, const py::object &phase);
 
   void Pushp();
@@ -116,6 +120,8 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   std::unordered_map<std::string, FuncGraphPtr> graph_map_;
   std::unordered_map<std::string, FuncGraphPtr> cell_graph_map_;
   std::unordered_map<FuncGraphPtr, GraphInfo> graph_info_map_;
+  std::unordered_map<std::string, ValuePtr> op_forward_map_;
+  std::unordered_map<std::string, size_t> op_id_map_;
   std::stack<FuncGraphPtr> graph_p_;
   FuncGraphPtr top_g_;
   FuncGraphPtr df_builder_;
