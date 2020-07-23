@@ -181,11 +181,15 @@ void Cloner::CloneFuncGraphValueNodes(const FuncGraphPtr &func_graph, const Func
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(target_func_graph);
   MS_EXCEPTION_IF_NULL(manager_);
-  auto return_node = repl_node_[func_graph->get_return()]->cast<CNodePtr>();
-  if (return_node == nullptr) {
-    MS_LOG(EXCEPTION) << "Can't find replicate node for return.";
+
+  auto old_return = func_graph->get_return();
+  if (old_return != nullptr) {
+    auto return_node = repl_node_[old_return]->cast<CNodePtr>();
+    if (return_node == nullptr) {
+      MS_LOG(EXCEPTION) << "Can't find replicate node for return.";
+    }
+    target_func_graph->set_return(return_node);
   }
-  target_func_graph->set_return(return_node);
 
   auto &cnodes = func_graph->func_graph_cnodes_index();
   for (auto &cnode : cnodes) {
