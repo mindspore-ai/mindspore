@@ -38,6 +38,7 @@ class DataDumpParser {
   bool enable() const { return enable_; }
   const std::string &net_name() const { return net_name_; }
   uint32_t dump_mode() const { return dump_mode_; }
+  uint32_t op_debug_mode() const { return op_debug_mode_; }
   uint32_t dump_step() const { return dump_step_; }
   void MatchKernel(const std::string &kernel_name);
   void PrintUnusedKernel();
@@ -54,6 +55,7 @@ class DataDumpParser {
   std::mutex lock_;
   bool enable_{false};
   std::string net_name_;
+  uint32_t op_debug_mode_{0};
   uint32_t dump_mode_{0};
   uint32_t dump_step_{0};
   std::map<std::string, uint32_t> kernel_map_;

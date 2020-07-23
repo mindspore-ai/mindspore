@@ -38,6 +38,10 @@ bool ModelRunner::RunModel(uint32_t model_id, const ge::InputData &input_data, g
   return true;
 }
 
+void *ModelRunner::GetModelHandle(uint32_t model_id) const { return nullptr; }
+
+bool ModelRunner::DistributeTask(uint32_t model_id) { return true; }
+
 const std::vector<uint32_t> &ModelRunner::GetTaskIdList(uint32_t model_id) const {
   static std::vector<uint32_t> task_id_list;
   return task_id_list;

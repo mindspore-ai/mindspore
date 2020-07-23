@@ -28,6 +28,8 @@ bool TaskGenerator::GenTasks(const std::vector<CNodePtr> &anf_node_list, std::ve
 }  // namespace tasksink
 void DataDumper::LoadDumpInfo() {}
 void DataDumper::UnloadDumpInfo() {}
+void DataDumper::OpDebugRegister() {}
+void DataDumper::OpDebugUnregister() {}
 DataDumper::~DataDumper() {}
 }  // namespace ascend
 }  // namespace device

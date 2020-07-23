@@ -22,36 +22,53 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/mem.h"
 #include "runtime/kernel.h"
+#include "runtime/rt_model.h"
 #include "runtime/device/ascend/dump/ge_dump.h"
 #include "proto/op_mapping_info.pb.h"
 #include "utils/context/ms_context.h"
 #include "debug/data_dump_parser.h"
 
-constexpr uint32_t kAicpuLoadFlag = 1;
-constexpr uint32_t kAicpuUnloadFlag = 0;
-constexpr uint32_t kTupleTaskId = 0;
-constexpr uint32_t kTupleStreamId = 1;
-constexpr uint32_t kTupleArgs = 2;
-constexpr uint32_t kCurrentStepTensorIndex = 0;
-constexpr uint32_t kCurrentEpochTensorIndex = 1;
-constexpr uint32_t kStepsPerEpochTensorIndex = 2;
+static constexpr uint32_t kAicpuLoadFlag = 1;
+static constexpr uint32_t kAicpuUnloadFlag = 0;
+static constexpr uint32_t kTupleTaskId = 0;
+static constexpr uint32_t kTupleStreamId = 1;
+static constexpr uint32_t kTupleArgs = 2;
+static constexpr uint32_t kCurrentStepTensorIndex = 0;
+static constexpr uint32_t kCurrentEpochTensorIndex = 1;
+static constexpr uint32_t kStepsPerEpochTensorIndex = 2;
+static constexpr uint64_t kOpDebugShape = 2048;
+static constexpr uint64_t kOpDebugHostMemSize = 2048;
+static constexpr uint64_t kOpDebugDevMemSize = sizeof(void *);
+static constexpr uint8_t kNoOverflow = 0;
+static constexpr uint8_t kAiCoreOverflow = (0x1 << 0);
+static constexpr uint8_t kAtomicOverflow = (0x1 << 1);
+static constexpr uint8_t kAllOverflow = (kAiCoreOverflow | kAtomicOverflow);
+static const std::map<uint32_t, std::string> kOverflowModeStr = {{kNoOverflow, "NoOverflow"},
+                                                                 {kAiCoreOverflow, "AiCoreOverflow"},
+                                                                 {kAtomicOverflow, "AtomicOverflow"},
+                                                                 {kAllOverflow, "AllOverflow"}};
+constexpr const char *kNodeNameOpDebug = "Node_OpDebug";
+constexpr const char *kOpTypeOpDebug = "Opdebug";
 
 namespace mindspore {
 namespace device {
 namespace ascend {
-void DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task);
-void DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task);
-void RtLoadDumpData(const aicpu::dump::OpMappingInfo &dump_info, void **ptr);
+static void DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task);
+static void DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task);
+static void RtLoadDumpData(const aicpu::dump::OpMappingInfo &dump_info, void **ptr);
 
 DataDumper::~DataDumper() {
   ReleaseDevMem(&dev_load_mem_);
   ReleaseDevMem(&dev_unload_mem_);
+  ReleaseDevMem(&op_debug_buffer_addr_);
+  ReleaseDevMem(&op_debug_dump_args_);
 }
 
 void DataDumper::LoadDumpInfo() {
   MS_LOG(INFO) << "[DataDump] LoadDumpInfo start";
   MS_EXCEPTION_IF_NULL(kernel_graph_);
   aicpu::dump::OpMappingInfo dump_info;
+  SetOpDebugMappingInfo(NOT_NULL(&dump_info));
   SetOpMappingInfo(NOT_NULL(&dump_info));
 
   auto kernels = kernel_graph_->execution_order();
@@ -134,7 +151,7 @@ bool DataDumper::KernelNeedDump(const CNodePtr &kernel) const {
 
 void DataDumper::UnloadDumpInfo() {
   if (!load_flag_) {
-    MS_LOG(WARNING) << "Load not success, no need to unload";
+    MS_LOG(WARNING) << "[DataDump] Load not success, no need to unload";
     return;
   }
   MS_LOG(INFO) << "[DataDump] UnloadDumpInfo start. graphId:" << graph_id_;
@@ -192,6 +209,84 @@ void DataDumper::ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aic
 
   DumpKernelOutput(kernel, args, dump_task);
   DumpKernelInput(kernel, args, dump_task);
+}
+
+void DataDumper::SetOpDebugMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_info) const {
+  MS_LOG(INFO) << "[DataDump] Add op debug info to OpMappingInfo, task id = " << debug_task_id_
+               << ", stream id = " << debug_stream_id_;
+  aicpu::dump::Task task;
+  task.set_end_graph(false);
+  task.set_task_id(debug_task_id_);
+  task.set_stream_id(debug_stream_id_);
+  task.mutable_op()->set_op_name(kNodeNameOpDebug);
+  task.mutable_op()->set_op_type(kOpTypeOpDebug);
+
+  aicpu::dump::Output output;
+  output.set_data_type(ge::proto::DataType::DT_UINT8);
+  output.set_format(GeFormat::kFormat_ND);
+
+  output.mutable_shape()->add_dim(kOpDebugShape);
+
+  output.set_original_name(kNodeNameOpDebug);
+  output.set_original_output_index(0);
+  output.set_original_output_format(GeFormat::kFormat_ND);
+  output.set_original_output_data_type(ge::proto::DataType::DT_UINT8);
+  // due to lhisi virtual addr bug, cannot use args now
+  output.set_address(static_cast<uint64_t>(reinterpret_cast<uintptr_t>(op_debug_dump_args_)));
+  output.set_size(kOpDebugHostMemSize);
+
+  task.mutable_output()->Add(std::move(output));
+  dump_info->mutable_task()->Add(std::move(task));
+}
+
+void DataDumper::OpDebugRegister() {
+  uint32_t op_debug_mode = DataDumpParser::GetInstance().op_debug_mode();
+  auto iter = kOverflowModeStr.find(op_debug_mode);
+  if (iter == kOverflowModeStr.end()) {
+    MS_LOG(EXCEPTION) << "Invalid op debug mode " << op_debug_mode;
+  }
+  MS_LOG(INFO) << "[DataDump] Op debug mode is " << iter->second;
+  if (op_debug_mode == kNoOverflow) {
+    return;
+  }
+
+  rtError_t rt_ret = rtMalloc(&op_debug_buffer_addr_, kOpDebugHostMemSize, RT_MEMORY_DDR);
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "[DataDump] Call rtMalloc failed, ret = " << rt_ret;
+  }
+
+  rt_ret = rtMalloc(&op_debug_dump_args_, kOpDebugDevMemSize, RT_MEMORY_HBM);
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "[DataDump] Call rtMalloc failed, ret = " << rt_ret;
+  }
+
+  rt_ret =
+    rtMemcpy(op_debug_dump_args_, sizeof(void *), &op_debug_buffer_addr_, sizeof(void *), RT_MEMCPY_HOST_TO_DEVICE);
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "[DataDump] Call rtMemcpy failed, ret = " << rt_ret;
+  }
+
+  rt_ret = rtDebugRegister(model_handle_(), op_debug_mode, op_debug_buffer_addr_, &debug_stream_id_, &debug_task_id_);
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "[DataDump] Call rtDebugRegister failed, ret = " << rt_ret;
+  }
+
+  MS_LOG(INFO) << "[DataDump] Distribute op debug task, task id = " << debug_task_id_
+               << ", stream id = " << debug_stream_id_;
+}
+
+void DataDumper::OpDebugUnregister() {
+  uint32_t op_debug_mode = DataDumpParser::GetInstance().op_debug_mode();
+  if (op_debug_mode == kNoOverflow) {
+    MS_LOG(INFO) << "[DataDump] Op debug mode is no overflow, no need to unregister.";
+    return;
+  }
+
+  MS_LOG(INFO) << "[DataDump] Start.";
+  rtError_t rt_ret = rtDebugUnRegister(model_handle_());
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "[DataDump] Call rtDebugUnRegister failed, ret = " << rt_ret;
+  }
 }
 
 void RtLoadDumpData(const aicpu::dump::OpMappingInfo &dump_info, void **ptr) {

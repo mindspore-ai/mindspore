@@ -97,7 +97,10 @@ AscendKernelRuntime::~AscendKernelRuntime() { graph_model_map_.clear(); }
 void AscendKernelRuntime::ClearGraphModelMap() {
   for (auto &iter : graph_data_dumper_) {
     MS_LOG(INFO) << "[DataDump] Unload data dumper:" << iter.first;
-    iter.second->UnloadDumpInfo();
+    auto &data_dumper = iter.second;
+    MS_EXCEPTION_IF_NULL(data_dumper);
+    data_dumper->UnloadDumpInfo();
+    data_dumper->OpDebugUnregister();
   }
   graph_data_dumper_.clear();
   // tell users which dump kernel name not used
@@ -113,18 +116,29 @@ void AscendKernelRuntime::ClearGraphModelMap() {
 }
 
 void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
-  MS_LOG(DEBUG) << "Clear graph:" << graph_id << " runtime resource";
-  auto iter = graph_model_map_.find(graph_id);
-  if (iter == graph_model_map_.end()) {
+  MS_LOG(DEBUG) << "Clear graph:" << graph_id << " data dumper";
+  if (auto dumper_iter = graph_data_dumper_.find(graph_id); dumper_iter != graph_data_dumper_.end()) {
+    MS_LOG(DEBUG) << "Unload dump info " << graph_id;
+    auto &data_dumper = dumper_iter->second;
+    MS_EXCEPTION_IF_NULL(data_dumper);
+    data_dumper->UnloadDumpInfo();
+    data_dumper->OpDebugUnregister();
+    graph_data_dumper_.erase(dumper_iter);
+  } else {
     MS_LOG(DEBUG) << "GraphId:" << graph_id << " not found";
-    return;
   }
-  MS_LOG(DEBUG) << "Ge UnloadModel " << iter->first;
-  auto ret = ModelRunner::Instance().UnloadModel(iter->first);
-  if (!ret) {
-    MS_LOG(ERROR) << "UnloadModel failed";
+
+  MS_LOG(DEBUG) << "Clear graph:" << graph_id << " runtime resource";
+  if (auto model_iter = graph_model_map_.find(graph_id); model_iter != graph_model_map_.end()) {
+    MS_LOG(DEBUG) << "Ge UnloadModel " << graph_id;
+    auto ret = ModelRunner::Instance().UnloadModel(graph_id);
+    if (!ret) {
+      MS_LOG(ERROR) << "UnloadModel failed";
+    }
+    graph_model_map_.erase(model_iter);
+  } else {
+    MS_LOG(DEBUG) << "GraphId:" << graph_id << " not found";
   }
-  graph_model_map_.erase(iter);
 }
 
 bool AscendKernelRuntime::NeedDestroyHccl() {
@@ -505,15 +519,25 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
   bool status =
     ModelRunner::Instance().LoadDavinciModel(device_id_, 0, model_iter->first, model_iter->second, listener);
   if (!status) {
-    MS_LOG(EXCEPTION) << "Load Task Failed";
+    MS_LOG(EXCEPTION) << "Load Model Failed";
   }
+
+  std::function<void *()> model_handle =
+    std::bind(&ModelRunner::GetModelHandle, &ModelRunner::Instance(), model_iter->first);
+  DistributeDebugTask(NOT_NULL(graph), NOT_NULL(model_handle));
+
+  status = ModelRunner::Instance().DistributeTask(model_iter->first);
+  if (!status) {
+    MS_LOG(EXCEPTION) << "Distribute Task Failed";
+  }
+
   if (ProfilingManager::GetInstance().IsProfiling()) {
     auto task_ids = ModelRunner::Instance().GetTaskIdList(model_iter->first);
     auto stream_ids = ModelRunner::Instance().GetStreamIdList(model_iter->first);
     ProfilingUtils::ReportProfilingData(task_ids, stream_ids, NOT_NULL(graph));
   }
 
-  LaunchDataDump(NOT_NULL(graph));
+  LaunchDataDump(graph->graph_id());
 
   if (!ModelRunner::Instance().LoadModelComplete(model_iter->first)) {
     MS_LOG(ERROR) << "Call ge runtime LoadModelComplete failed";
@@ -522,17 +546,32 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
   return true;
 }
 
-void AscendKernelRuntime::LaunchDataDump(NotNull<const session::KernelGraph *> graph) {
+void AscendKernelRuntime::DistributeDebugTask(NotNull<const session::KernelGraph *> graph,
+                                              NotNull<std::function<void *()>> model_handle) {
   if (!DataDumpParser::GetInstance().DumpEnabled()) {
     return;
   }
-  auto runtime_info_map = ModelRunner::Instance().GetRuntimeInfoMap(graph->graph_id());
-  auto data_dumper = std::make_shared<DataDumper>(graph.get(), runtime_info_map);
+  auto data_dumper = std::make_shared<DataDumper>(graph.get(), model_handle);
   MS_EXCEPTION_IF_NULL(data_dumper);
-  data_dumper->LoadDumpInfo();
   auto ret = graph_data_dumper_.try_emplace(graph->graph_id(), data_dumper);
+  data_dumper->OpDebugRegister();
   if (!ret.second) {
     MS_LOG(WARNING) << "[DataDump] Insert graphId:" << graph->graph_id() << " data dumper failed";
+  }
+}
+
+void AscendKernelRuntime::LaunchDataDump(GraphId graph_id) {
+  if (!DataDumpParser::GetInstance().DumpEnabled()) {
+    return;
+  }
+  auto runtime_info_map = ModelRunner::Instance().GetRuntimeInfoMap(graph_id);
+  if (auto dumper_iter = graph_data_dumper_.find(graph_id); dumper_iter != graph_data_dumper_.end()) {
+    auto &data_dumper = dumper_iter->second;
+    MS_EXCEPTION_IF_NULL(data_dumper);
+    data_dumper->set_runtime_info(runtime_info_map);
+    data_dumper->LoadDumpInfo();
+  } else {
+    MS_LOG(EXCEPTION) << "GraphId:" << graph_id << " not found";
   }
 }
 

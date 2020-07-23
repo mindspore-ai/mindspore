@@ -63,12 +63,13 @@ class AscendKernelRuntime : public KernelRuntime {
   bool GraphWithEmptyTaskList(const session::KernelGraph *graph) const;
   bool CheckGraphIdValid(GraphId graph_id) const;
   static void DebugTaskIdName(GraphId graph_id);
+  void DistributeDebugTask(NotNull<const session::KernelGraph *> graph, NotNull<std::function<void *()>> model_handle);
+  void LaunchDataDump(GraphId graph_id);
 
   rtContext_t rt_context_{nullptr};
   bool initialized_{false};
   unordered_map<GraphId, vector<std::shared_ptr<TaskInfo>>> task_map_;
   unordered_map<GraphId, std::shared_ptr<ge::model_runner::DavinciModel>> graph_model_map_;
-  void LaunchDataDump(NotNull<const session::KernelGraph *> graph);
   unordered_map<GraphId, std::shared_ptr<DataDumper>> graph_data_dumper_;
 };
 
