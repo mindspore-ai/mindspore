@@ -150,6 +150,8 @@ Status ReshapeInfo::ComputeReplaceOp() {
     ConstructOperator constructor;
     replace_op_ = constructor.SkipRedisReshapeOP(output_layout_.slice_shape().array());
     replace_op_info_.clear();
+    MS_LOG(INFO) << "skip reshape redistribution and reshape slice_shape is "
+                 << ShapeToString(output_layout_.slice_shape().array());
   } else {
     RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution.InferTensorRedistributionOperatorList();
     if (redistribution_oplist_ptr == nullptr) {

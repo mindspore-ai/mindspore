@@ -316,12 +316,6 @@ void Redistribution(const std::pair<AnfNodePtr, int> &node_pair, const OperatorI
   TensorLayout tensorlayout_out = tensorinfo_out.tensor_layout();
   TensorLayout tensorlayout_in = GetTensorInLayout(middle_node, middle_prim, distribute_operator);
 
-  if (tensorlayout_in.skip_redistribution() || tensorlayout_out.skip_redistribution()) {
-    MS_LOG(INFO) << "skip the reshape redistribution, operator name is" << distribute_operator->name()
-                 << "next distribute operator, operator name is" << next_distribute_operator->name();
-    return;
-  }
-
   if (tensor_redistribution.Init(tensorlayout_in, tensorlayout_out, dev_list) == FAILED) {
     MS_LOG(ERROR) << "Redistribution: middle_prim " << middle_prim->name() << " next_prim : " << next_prim_name;
     MS_LOG(ERROR) << "Redistribution: middle_node " << middle_node->ToString() << " next_node "
@@ -1379,10 +1373,6 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
       MS_LOG(EXCEPTION) << "The parameter: " << cloned_parameter->name() << " is cloned, cloned index is  "
                         << cloned_index << ", but not found the be cloned parameter";
     }
-  }
-  std::string env = common::GetEnv("SLICE_ENV");
-  if (!env.empty()) {
-    MS_LOG(INFO) << "Slice tensors shape will be configured from env:" << env;
   }
 }
 
