@@ -1888,11 +1888,11 @@ void AscendSession::SelectKernel(NotNull<KernelGraphPtr> root_graph) {
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->execution_mode() == kGraphMode) {
     if (raise_precision_count > 0) {
-      MS_LOG(WARNING) << "There has " << raise_precision_count
+      MS_LOG(WARNING) << "There are " << raise_precision_count
                       << " node/nodes used raise precision to selected the kernel!";
     }
     if (reduce_precision_count > 0) {
-      MS_LOG(WARNING) << "There has " << raise_precision_count
+      MS_LOG(WARNING) << "There are " << reduce_precision_count
                       << " node/nodes used reduce precision to selected the kernel!";
     }
   }
