@@ -672,10 +672,8 @@ void AscendStreamAssign::InsertEventForIndependentParallel(const NotNull<KernelG
 void AscendStreamAssign::GetNeedActiveStreams(const NotNull<KernelGraphPtr> &graph_ptr) {
   CNodePtr cur_cnode_ptr = nullptr;
   auto cnode_ptr_list = graph_ptr->execution_order();
-  // 1)first stream 0 should be actived first;
-  need_first_active_streams_.emplace_back(0);
 
-  // 2)stream witch kStreamNeedActivedFirst attr should be actived;
+  // 1)stream witch kStreamNeedActivedFirst attr should be actived;
   for (size_t i = 0; i < cnode_ptr_list.size(); ++i) {
     cur_cnode_ptr = cnode_ptr_list[i];
     MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
@@ -691,18 +689,24 @@ void AscendStreamAssign::GetNeedActiveStreams(const NotNull<KernelGraphPtr> &gra
     }
   }
 
-  // 3)independent stream:if has not been activate, push to need active vector
+  // 2)independent stream:if has not been activate, push to need active vector
   if (!independent_stream_activated_) {
     for (auto &item : independent_stream_map_) {
       need_first_active_streams_.emplace_back(item.first);
     }
   }
 
-  // 4)hcom stream:if has not been activate, push to need active vector
+  // 3)hcom stream:if has not been activate, push to need active vector
   if (!hcom_stream_activated_) {
     for (auto &item : hcom_stream_map_) {
       need_first_active_streams_.emplace_back(item.first);
     }
+  }
+
+  // 4)first stream 0 should be actived first;
+  auto it = std::find(need_first_active_streams_.begin(), need_first_active_streams_.end(), 0);
+  if (it == need_first_active_streams_.end()) {
+    need_first_active_streams_.emplace_back(0);
   }
 }
 
@@ -958,7 +962,7 @@ void AscendStreamAssign::DFS(uint32_t start, std::vector<uint32_t> *group) {
     if (!IsVecExist(group)) {
       stream_groups_.emplace_back(*group);
     } else {
-      MS_LOG(WARNING) << "DFS should not print this log";
+      MS_LOG(WARNING) << "DFS find same stream group, Not expected";
     }
     return;
   }
