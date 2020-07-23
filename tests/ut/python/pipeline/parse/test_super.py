@@ -92,7 +92,7 @@ class Net(nn.Cell):
 
 def test_single_super():
     single_net = SingleSubNet(2, 3)
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.ones([1, 2, 3], np.int32))
     y = Tensor(np.ones([1, 2, 3], np.int32))
     single_net(x, y)
@@ -100,7 +100,7 @@ def test_single_super():
 
 def test_mul_super():
     mul_net = MulSubNet(2, 3, 4)
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.ones([1, 2, 3], np.int32))
     y = Tensor(np.ones([1, 2, 3], np.int32))
     mul_net(x, y)
@@ -108,9 +108,41 @@ def test_mul_super():
 
 def test_super_cell():
     net = Net(2)
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.ones([1, 2, 3], np.int32))
     y = Tensor(np.ones([1, 2, 3], np.int32))
     with pytest.raises(RuntimeError) as er:
         net(x, y)
     assert "Unsupported syntax 'Raise'" in str(er.value)
+
+
+def test_single_super_in():
+    class FatherNetIn(nn.Cell):
+        def __init__(self, x):
+            super(FatherNetIn, self).__init__(x)
+            self.x = x
+
+        def construct(self, x, y):
+            return self.x * x
+
+        def test_father(self, x):
+            return self.x + x
+
+    class SingleSubNetIN(FatherNetIn):
+        def __init__(self, x, z):
+            super(SingleSubNetIN, self).__init__(x)
+            self.z = z
+
+        def construct(self, x, y):
+            ret_father_construct = super().construct(x, y)
+            ret_father_test = super(SingleSubNetIN, self).test_father(x)
+            ret_father_x = super(SingleSubNetIN, self).x
+            ret_sub_z = self.z
+
+            return ret_father_construct, ret_father_test, ret_father_x, ret_sub_z
+
+    single_net_in = SingleSubNetIN(2, 3)
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    x = Tensor(np.ones([1, 2, 3], np.int32))
+    y = Tensor(np.ones([1, 2, 3], np.int32))
+    single_net_in(x, y)

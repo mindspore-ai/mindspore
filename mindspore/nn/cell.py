@@ -58,6 +58,7 @@ class Cell:
         >>>    def construct(self, x):
         >>>        return self.relu(x)
     """
+
     def __init__(self, auto_prefix=True, flags=None):
         self._params = OrderedDict()
         self._cells = OrderedDict()
@@ -888,6 +889,7 @@ class Cell:
         for param in params:
             param.set_param_ps(init_in_server)
 
+
 class GraphKernel(Cell):
     """
     Base class for GraphKernel.
@@ -904,6 +906,7 @@ class GraphKernel(Cell):
         >>>    def construct(self, x):
         >>>        return self.max(P.Fill()(P.DType()(x), P.Shape()(x), 0.0), x)
     """
+
     def __init__(self, auto_prefix=True, pips=None):
         super(GraphKernel, self).__init__(auto_prefix, pips)
         class_name = self.__class__.__name__
