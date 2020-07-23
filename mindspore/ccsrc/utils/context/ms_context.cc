@@ -82,6 +82,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   if (IsCloudTransDeviceId()) {
     device_id_ = 0;
   }
+  MS_LOG(INFO) << "context logic id: " << device_id_ << "context physics id: " << physics_id_;
 
   backend_policy_ = policy_map_[policy];
   device_target_ = target;
@@ -172,7 +173,7 @@ bool MsContext::set_device_id(uint32_t device_id) {
   if (IsCloudTransDeviceId()) {
     device_id_ = 0;
   }
-  MS_LOG(INFO) << "ms set context logic id:" << device_id;
+  MS_LOG(INFO) << "ms set context logic id:" << device_id_;
 
   return true;
 }
