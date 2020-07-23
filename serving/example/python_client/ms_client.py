@@ -19,28 +19,25 @@ import ms_service_pb2_grpc
 
 
 def run():
-    channel = grpc.insecure_channel('localhost:50051')
+    channel = grpc.insecure_channel('localhost:5050')
     stub = ms_service_pb2_grpc.MSServiceStub(channel)
-    # request = ms_service_pb2.EvalRequest()
-    # request.name = 'haha'
-    # response = stub.Eval(request)
-    # print("ms client received: " + response.message)
-
     request = ms_service_pb2.PredictRequest()
-    request.data.tensor_shape.dims.extend([32, 1, 32, 32])
-    request.data.tensor_type = ms_service_pb2.MS_FLOAT32
-    request.data.data = (np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01).tobytes()
 
-    request.label.tensor_shape.dims.extend([32])
-    request.label.tensor_type = ms_service_pb2.MS_INT32
-    request.label.data = np.ones([32]).astype(np.int32).tobytes()
+    x = request.data.add()
+    x.tensor_shape.dims.extend([4])
+    x.tensor_type = ms_service_pb2.MS_FLOAT32
+    x.data = (np.ones([4]).astype(np.float32)).tobytes()
 
-    result = stub.Test(request)
-    #result_np = np.frombuffer(result.result.data, dtype=np.float32).reshape(result.result.tensor_shape.dims)
-    print("ms client test call received: ")
-    #print(result_np)
+    y = request.data.add()
+    y.tensor_shape.dims.extend([4])
+    y.tensor_type = ms_service_pb2.MS_FLOAT32
+    y.data = (np.ones([4]).astype(np.float32)).tobytes()
 
-
+    result = stub.Predict(request)
+    print(result)
+    result_np = np.frombuffer(result.result[0].data, dtype=np.float32).reshape(result.result[0].tensor_shape.dims)
+    print("ms client received: ")
+    print(result_np)
 
 if __name__ == '__main__':
     run()
