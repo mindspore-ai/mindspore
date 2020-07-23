@@ -405,7 +405,7 @@ KernelWithIndex AnfRuntimeAlgorithm::GetPrevNodeOutput(const AnfNodePtr &anf_nod
   }
   auto node = cnode->input(input_idx + 1);
   MS_EXCEPTION_IF_NULL(node);
-  return VisitKernel(node, 0);
+  return VisitKernelWithReturnType(node, 0);
 }
 
 std::string AnfRuntimeAlgorithm::GetPrevNodeOutputFormat(const AnfNodePtr &anf_node, size_t input_idx) {
