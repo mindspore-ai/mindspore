@@ -21,7 +21,7 @@ namespace device {
 namespace cpu {
 void CPUSimpleMemPlan::MemPlan(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  size_t total_mem_size = 0;
+  size_t total_mem_size = 32;
   auto kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
