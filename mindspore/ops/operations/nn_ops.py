@@ -1332,10 +1332,9 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         validator.check_value_type('pad', pad, (int, tuple), self.name)
         if isinstance(pad, int):
             pad = (pad,) * 4
-            self.padding = pad
         else:
             validator.check_integer('pad size', len(pad), 4, Rel.EQ, self.name)
-
+        self.padding = pad
         self.pad_mode = validator.check_string('pad_mode', pad_mode, ['valid', 'same', 'pad'], self.name)
         if pad_mode != 'pad' and pad != (0, 0, 0, 0):
             raise ValueError(f"For '{self.name}', padding must be zero when pad_mode is '{pad_mode}'.")
