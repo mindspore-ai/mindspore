@@ -186,11 +186,15 @@ BaseRef CPUKernelRuntime::CreatTensorForOutput(const session::KernelWithIndex &k
       return ret;
     }
     return CreatTensorForOutput(node, index, bound_addresses, need_sync_outputs);
-  } else if (input_node->isa<Parameter>() || input_node->isa<ValueNode>()) {
+  } else if (input_node->isa<Parameter>()) {
     auto iter = input_map.find(input_node.get());
     if (iter != input_map.end()) {
       return iter->second;
     }
+  } else if (input_node->isa<ValueNode>()) {
+    auto value_node = input_node->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
+    return value_node->value();
   }
   return BaseRef();
 }
