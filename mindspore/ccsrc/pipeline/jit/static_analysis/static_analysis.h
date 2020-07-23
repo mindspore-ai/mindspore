@@ -35,7 +35,7 @@
 #include "ir/anf.h"
 #include "ir/primitive_py.h"
 #include "abstract/analysis_context.h"
-#include "pipeline/jit/static_analysis/abstract_function.h"
+#include "abstract/abstract_function.h"
 #include "pipeline/jit/parse/parse.h"
 
 namespace mindspore {

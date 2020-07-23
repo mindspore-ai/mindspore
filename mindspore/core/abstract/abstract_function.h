@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_ABSTRACT_FUNCTION_H_
-#define MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_ABSTRACT_FUNCTION_H_
+#ifndef MINDSPORE_CORE_ABSTRACT_ABSTRACT_FUNCTION_H_
+#define MINDSPORE_CORE_ABSTRACT_ABSTRACT_FUNCTION_H_
 
 #include <memory>
 #include <string>
@@ -35,10 +35,6 @@ class AbstractFuncAtom : public AbstractFunction {
   MS_DECLARE_PARENT(AbstractFuncAtom, AbstractFunction)
 
   AbstractFunctionPtr GetUnique() override { return shared_from_base<AbstractFuncAtom>(); }
-  EvaluatorPtr GetEvaluator(AnalysisEnginePtr) override {
-    MS_LOG(EXCEPTION) << "Cannot GetEvaluator from AbstractFuncAtom";
-  }
-
   AbstractFunctionPtr Join(const AbstractFunctionPtr &other) final;
   void Visit(std::function<void(const AbstractFuncAtomPtr &)>) const final;
   bool operator==(const AbstractFunction &other) const override;
@@ -56,9 +52,6 @@ class AbstractFuncUnion : public AbstractFunction {
   std::string ToString() const override;
 
   AbstractFunctionPtr GetUnique() override { MS_LOG(EXCEPTION) << "Cannot get unique from AbstractFuncUnion"; }
-  EvaluatorPtr GetEvaluator(AnalysisEnginePtr) override {
-    MS_LOG(EXCEPTION) << "Cannot GetEvaluator from AbstractFuncUnion";
-  }
   bool IsSuperSet(const AbstractFunctionPtr &other);
   AbstractFunctionPtr Join(const AbstractFunctionPtr &other) final;
   void Visit(std::function<void(const AbstractFuncAtomPtr &)>) const final;
@@ -79,8 +72,6 @@ class PrimitiveAbstractClosure : public AbstractFuncAtom {
       : prim_(prim), tracking_id_(AnfNodeWeakPtr(tracking_id)) {}
   ~PrimitiveAbstractClosure() override = default;
   MS_DECLARE_PARENT(PrimitiveAbstractClosure, AbstractFuncAtom)
-
-  EvaluatorPtr GetEvaluator(AnalysisEnginePtr engine) override;
 
   PrimitivePtr prim() { return prim_; }
 
@@ -114,8 +105,6 @@ class FuncGraphAbstractClosure : public AbstractFuncAtom {
   ~FuncGraphAbstractClosure() override = default;
   MS_DECLARE_PARENT(FuncGraphAbstractClosure, AbstractFuncAtom)
 
-  EvaluatorPtr GetEvaluator(AnalysisEnginePtr engine) override;
-
   FuncGraphPtr func_graph() { return func_graph_; }
 
   AnalysisContextPtr context() const override { return context_; }
@@ -146,8 +135,6 @@ class MetaFuncGraphAbstractClosure : public AbstractFuncAtom {
 
   AnalysisContextPtr context() const override { return kDummyAnalysisContext; }
 
-  EvaluatorPtr GetEvaluator(AnalysisEnginePtr engine) override;
-
   ScopePtr GetScope() { return scope_; }
 
   AbstractFunctionPtr Copy() const override { return std::make_shared<MetaFuncGraphAbstractClosure>(meta_func_graph_); }
@@ -171,8 +158,6 @@ class PartialAbstractClosure : public AbstractFuncAtom {
       : fn_(fn), args_spec_list_(args_spec_list), node_(AnfNodePtr(node)) {}
   ~PartialAbstractClosure() override = default;
   MS_DECLARE_PARENT(PartialAbstractClosure, AbstractFuncAtom)
-
-  EvaluatorPtr GetEvaluator(AnalysisEnginePtr engine) override;
 
   AbstractFunctionPtr fn() { return fn_; }
   AbstractBasePtrList args() { return args_spec_list_; }
@@ -199,7 +184,6 @@ class JTransformedAbstractClosure : public AbstractFuncAtom {
   explicit JTransformedAbstractClosure(const AbstractFuncAtomPtr &fn) : fn_(fn) {}
   ~JTransformedAbstractClosure() override = default;
   MS_DECLARE_PARENT(JTransformedAbstractClosure, AbstractFuncAtom)
-  EvaluatorPtr GetEvaluator(AnalysisEnginePtr engine) override;
 
   AbstractFuncAtomPtr fn() { return fn_; }
   AbstractFunctionPtr Copy() const override { return std::make_shared<JTransformedAbstractClosure>(fn_); }
@@ -223,8 +207,6 @@ class VirtualAbstractClosure : public AbstractFuncAtom {
       : args_spec_list_({args_spec}), output_(output_spec) {}
   ~VirtualAbstractClosure() override = default;
   MS_DECLARE_PARENT(VirtualAbstractClosure, AbstractFuncAtom)
-
-  EvaluatorPtr GetEvaluator(AnalysisEnginePtr engine) override;
 
   AbstractBasePtrList args_spec_list() { return args_spec_list_; }
 
@@ -254,8 +236,6 @@ class TypedPrimitiveAbstractClosure : public AbstractFuncAtom {
   ~TypedPrimitiveAbstractClosure() override = default;
   MS_DECLARE_PARENT(TypedPrimitiveAbstractClosure, AbstractFuncAtom)
 
-  EvaluatorPtr GetEvaluator(AnalysisEnginePtr engine) override;
-
   PrimitivePtr prim() { return prim_; }
   AbstractBasePtrList args_spec_list() { return args_spec_list_; }
   AbstractBasePtr output() { return output_; }
@@ -280,8 +260,6 @@ class DummyAbstractClosure : public AbstractFuncAtom {
   ~DummyAbstractClosure() override = default;
   MS_DECLARE_PARENT(DummyAbstractClosure, AbstractFuncAtom)
 
-  EvaluatorPtr GetEvaluator(AnalysisEnginePtr) override { MS_LOG(EXCEPTION) << "A dummy function cannot eval."; }
-
   AbstractFunctionPtr Copy() const override { return std::make_shared<DummyAbstractClosure>(); }
   bool operator==(const AbstractFunction &other) const override;
 
@@ -300,4 +278,4 @@ struct AbstractFunctionEqual {
 };
 }  // namespace abstract
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_ABSTRACT_FUNCTION_H_
+#endif  // MINDSPORE_CORE_ABSTRACT_ABSTRACT_FUNCTION_H_

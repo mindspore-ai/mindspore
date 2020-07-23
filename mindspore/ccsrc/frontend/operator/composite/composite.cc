@@ -25,7 +25,7 @@
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "abstract/abstract_value.h"
-#include "pipeline/jit/static_analysis/abstract_function.h"
+#include "abstract/abstract_function.h"
 #include "abstract/dshape.h"
 #include "abstract/param_validator.h"
 #include "frontend/operator/cc_implementations.h"

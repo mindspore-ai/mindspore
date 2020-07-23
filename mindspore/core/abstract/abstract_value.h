@@ -193,7 +193,6 @@ class AbstractFunction : public AbstractBase {
 
   static AbstractFunctionPtr MakeAbstractFunction(const AbstractFuncAtomPtrList &func_list);
 
-  virtual EvaluatorPtr GetEvaluator(AnalysisEnginePtr engine) = 0;
   virtual AnfNodePtr tracking_id() const { return nullptr; }
   virtual void set_tracking_id(AnfNodePtr) {}
   virtual AnalysisContextPtr context() const { return nullptr; }

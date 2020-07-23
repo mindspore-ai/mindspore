@@ -23,7 +23,7 @@
 #include "./common.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/do_signature.h"
-#include "pipeline/jit/static_analysis/abstract_function.h"
+#include "abstract/abstract_function.h"
 #include "utils/graph_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/profile.h"
