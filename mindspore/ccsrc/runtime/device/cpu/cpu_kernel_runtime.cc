@@ -270,7 +270,7 @@ void CPUKernelRuntime::DecreaseSummaryRefCount(const session::NamedSummaryOutput
   resource_manager_.DecreaseSummaryRefCount(summary_outputs);
 }
 
-bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph) {
+bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   resource_manager_.IncreaseAddressRefCount(kernel_graph);
 

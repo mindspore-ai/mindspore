@@ -32,6 +32,7 @@
 #include "utils/contract.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "runtime/device/kernel_info.h"
+#include "utils/context/ms_context.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif
@@ -112,7 +113,9 @@ class SessionBasic {
   // set debugger
   void SetDebugger() {
     debugger_ = Debugger::GetInstance();
-    debugger_->Init(device_id_);
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    debugger_->Init(device_id_, ms_context->device_target());
   }
 #endif
 

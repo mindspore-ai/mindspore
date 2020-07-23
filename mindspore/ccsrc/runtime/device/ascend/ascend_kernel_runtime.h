@@ -38,7 +38,7 @@ class AscendKernelRuntime : public KernelRuntime {
   AscendKernelRuntime() = default;
   ~AscendKernelRuntime() override;
   bool Init() override;
-  bool DumpData(session::KernelGraph *graph) override;
+  bool DumpData(session::KernelGraph *graph, Debugger *debugger = nullptr) override;
   bool LoadData(session::KernelGraph *graph, Debugger *debugger) override;
   bool GenTask(const session::KernelGraph *graph) override;
   bool RunTask(const session::KernelGraph *graph) override;

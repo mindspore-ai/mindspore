@@ -55,7 +55,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   // init
   // only save device_id
-  void Init(const uint32_t device_id);
+  void Init(const uint32_t device_id, const std::string device_target);
 
   // reset debugger
   void Reset();
@@ -128,6 +128,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   std::unique_ptr<DebugServices> debug_services_;
   KernelGraphPtr graph_ptr_;
   uint32_t device_id_;
+  std::string device_target_;
   int32_t num_step_;
   bool debugger_enabled_;
   bool is_dataset_graph_;

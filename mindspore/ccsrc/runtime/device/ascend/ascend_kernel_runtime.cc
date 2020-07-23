@@ -275,7 +275,7 @@ void DumpParameters(mindspore::session::KernelGraph *graph, const string &dump_p
 }  // namespace
 #endif
 
-bool AscendKernelRuntime::DumpData(mindspore::session::KernelGraph *graph) {
+bool AscendKernelRuntime::DumpData(mindspore::session::KernelGraph *graph, Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(graph);
 #ifdef ENABLE_DUMP_E2E
   MS_LOG(INFO) << "Start dump step";

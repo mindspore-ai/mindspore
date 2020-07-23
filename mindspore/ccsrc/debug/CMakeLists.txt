@@ -16,6 +16,7 @@ if (ENABLE_DEBUGGER)
         "${CMAKE_CURRENT_SOURCE_DIR}/debugger/grpc_client.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/debugger/proto_exporter.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/debug_services.cc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/common.cc"
         )
 endif (ENABLE_DEBUGGER)
 
