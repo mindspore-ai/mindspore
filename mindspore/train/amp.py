@@ -102,7 +102,7 @@ def _add_loss_network(network, loss_fn, cast_model_type):
         def construct(self, data, label):
             out = self._backbone(data)
             label = F.mixed_precision_cast(mstype.float32, label)
-            return self._loss_fn(F.cast(out, mstype.float32), label)
+            return self._loss_fn(F.mixed_precision_cast(mstype.float32, out), label)
 
     validator.check_value_type('loss_fn', loss_fn, nn.Cell, None)
     if cast_model_type == mstype.float16:

@@ -149,6 +149,7 @@ class FuncGraph : public FuncGraphBase {
 
   // get the graph's abstract
   abstract::AbstractFunctionPtr abstract();
+  abstract::AbstractBasePtr ToAbstract() override;
 
   // return the graph's output, or nullptr if not yet deduced
   AnfNodePtr output() const;

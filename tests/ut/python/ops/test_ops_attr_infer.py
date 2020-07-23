@@ -15,6 +15,7 @@
 """ test nn ops """
 import numpy as np
 from numpy.random import normal
+import pytest
 
 import mindspore.nn as nn
 import mindspore.context as context
@@ -311,6 +312,7 @@ def test_op_with_arg_as_input():
 
 # The partial application used as argument is not supported yet
 # because of the limit of inference specialize system
+@pytest.mark.skip("poly in infer")
 def test_partial_as_arg():
     class PartialArgNet(nn.Cell):
         def __init__(self):

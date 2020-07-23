@@ -19,9 +19,15 @@
 #include "ir/meta_func_graph.h"
 #include "base/core_ops.h"
 #include "utils/context/ms_context.h"
+#include "abstract/abstract_function.h"
 
 // namespace to support intermediate representation definition
 namespace mindspore {
+
+abstract::AbstractBasePtr MetaFuncGraph::ToAbstract() {
+  return std::make_shared<abstract::MetaFuncGraphAbstractClosure>(shared_from_base<MetaFuncGraph>());
+}
+
 FuncGraphPtr MetaFuncGraph::GenerateStubFunc(const TypePtrList &types) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);

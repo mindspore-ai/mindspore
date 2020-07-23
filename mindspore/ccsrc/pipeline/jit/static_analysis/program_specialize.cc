@@ -82,6 +82,9 @@ std::shared_ptr<FuncGraphSpecializer> ProgramSpecializer::GetFuncGraphSpecialize
   if (iter != specializations_.end()) {
     return iter->second;
   }
+  if (context->func_graph()) {
+    MS_LOG(EXCEPTION) << "Specialize inner error";
+  }
   return nullptr;
 }
 
@@ -540,8 +543,7 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &new_node) {
       MS_LOG(DEBUG) << "FindUniqueArgvals return status: " << status;
       // if a node is a poly node, or an input parameter is a PartialAbstractClosure, expand it early
       if (status == kSpecializeFindUniqueArgvalPoly ||
-          (func->isa<Parameter>() && (func->func_graph()->has_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER) ||
-                                      func->abstract()->isa<PartialAbstractClosure>()))) {
+          (func->isa<Parameter>() && func->func_graph()->has_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER))) {
         auto wrapped_node = BuildSpecializedParameterNode(new_node);
         new_inputs[0] = wrapped_node;
       }

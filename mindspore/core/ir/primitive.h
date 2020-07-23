@@ -57,7 +57,7 @@ class Primitive : public Named {
         record_evaluate_add_attr_(false) {}
 
   MS_DECLARE_PARENT(Primitive, Named);
-
+  abstract::AbstractBasePtr ToAbstract();
   abstract::AbstractBasePtr ToPrimAbstract(const AnfNodePtr &anf_node);
   std::string ToString() const override { return name(); }
   void BeginRecordAddAttr() {
