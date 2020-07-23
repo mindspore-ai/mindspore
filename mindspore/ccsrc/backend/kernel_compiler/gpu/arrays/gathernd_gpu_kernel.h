@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T, typename S>
 class GatherNdGpuFwdKernel : public GpuKernel {
  public:
-  GatherNdGpuFwdKernel() : dev_batch_strides_(nullptr), dev_batch_indices_(nullptr) {}
+  GatherNdGpuFwdKernel() : dev_batch_strides_(nullptr), dev_batch_indices_(nullptr), memcpy_flag_(false) {}
   ~GatherNdGpuFwdKernel() {
     if (dev_batch_strides_ != nullptr) {
       device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(static_cast<void *>(dev_batch_strides_));
@@ -48,12 +48,25 @@ class GatherNdGpuFwdKernel : public GpuKernel {
     S *indices_addr = GetDeviceAddress<S>(inputs, 1);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
+    if (!memcpy_flag_) {
+      const size_t strides_len = sizeof(S) * batch_strides_.size();
+      const size_t indices_len = sizeof(S) * batch_indices_.size();
+      CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(dev_batch_strides_, &batch_strides_[0], strides_len,
+                                                 cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                 "cudaMemcpyAsync failed in GatherNdGpuFwdKernel::Launch.");
+      CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(dev_batch_indices_, &batch_indices_[0], indices_len,
+                                                 cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                 "cudaMemcpyAsync failed in GatherNdGpuFwdKernel::Launch.");
+      memcpy_flag_ = true;
+    }
+
     GatherNd(input_addr, indices_addr, output_addr, dims_[0], dims_[1], dims_[2], dev_batch_strides_,
              dev_batch_indices_, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
     InitResource();
+    memcpy_flag_ = false;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
       MS_LOG(EXCEPTION) << "Argument number is " << input_num << ", but GatherNdGpuFwdKernel needs 2.";
@@ -77,24 +90,19 @@ class GatherNdGpuFwdKernel : public GpuKernel {
       batch_indices_[i - 1] = batch_indices_[i] * input_shapes_[i];
     }
 
-    size_t strides_len = sizeof(S) * batch_strides_.size();
+    const size_t strides_len = sizeof(S) * batch_strides_.size();
     void *dev_batch_strides_work = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(strides_len);
     if (dev_batch_strides_work == nullptr) {
       MS_LOG(EXCEPTION) << "Failed to alloc dev_batch_strides_work, size: " << strides_len;
     }
     dev_batch_strides_ = static_cast<S *>(dev_batch_strides_work);
 
-    size_t indices_len = sizeof(S) * batch_indices_.size();
+    const size_t indices_len = sizeof(S) * batch_indices_.size();
     void *dev_batch_indices_work = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(indices_len);
     if (dev_batch_indices_work == nullptr) {
       MS_LOG(EXCEPTION) << "Failed to alloc dev_batch_indices_work, size: " << indices_len;
     }
     dev_batch_indices_ = static_cast<S *>(dev_batch_indices_work);
-
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpy(dev_batch_strides_, &batch_strides_[0], strides_len, cudaMemcpyHostToDevice),
-                               "cudaMemcpy failed in GatherNdGpuFwdKernel::Init.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpy(dev_batch_indices_, &batch_indices_[0], indices_len, cudaMemcpyHostToDevice),
-                               "cudaMemcpy failed in GatherNdGpuFwdKernel::Init.");
 
     InitSizeLists();
     return true;
@@ -155,6 +163,7 @@ class GatherNdGpuFwdKernel : public GpuKernel {
 
   S *dev_batch_strides_;
   S *dev_batch_indices_;
+  bool memcpy_flag_;
 };
 }  // namespace kernel
 }  // namespace mindspore
