@@ -18,6 +18,7 @@
 #include "minddata/dataset/kernels/image/image_utils.h"
 
 #include "minddata/dataset/kernels/image/center_crop_op.h"
+#include "minddata/dataset/kernels/image/crop_op.h"
 #include "minddata/dataset/kernels/image/cut_out_op.h"
 #include "minddata/dataset/kernels/image/decode_op.h"
 #include "minddata/dataset/kernels/image/normalize_op.h"
@@ -28,6 +29,7 @@
 #include "minddata/dataset/kernels/image/random_rotation_op.h"
 #include "minddata/dataset/kernels/image/random_vertical_flip_op.h"
 #include "minddata/dataset/kernels/image/resize_op.h"
+#include "minddata/dataset/kernels/image/swap_red_blue_op.h"
 #include "minddata/dataset/kernels/image/uniform_aug_op.h"
 
 namespace mindspore {
@@ -42,6 +44,16 @@ namespace vision {
 // Function to create CenterCropOperation.
 std::shared_ptr<CenterCropOperation> CenterCrop(std::vector<int32_t> size) {
   auto op = std::make_shared<CenterCropOperation>(size);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
+// Function to create CropOperation.
+std::shared_ptr<CropOperation> Crop(std::vector<int32_t> coordinates, std::vector<int32_t> size) {
+  auto op = std::make_shared<CropOperation>(coordinates, size);
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -155,6 +167,16 @@ std::shared_ptr<ResizeOperation> Resize(std::vector<int32_t> size, Interpolation
   return op;
 }
 
+// Function to create SwapRedBlueOperation.
+std::shared_ptr<SwapRedBlueOperation> SwapRedBlue() {
+  auto op = std::make_shared<SwapRedBlueOperation>();
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
 // Function to create UniformAugOperation.
 std::shared_ptr<UniformAugOperation> UniformAugment(std::vector<std::shared_ptr<TensorOperation>> transforms,
                                                     int32_t num_ops) {
@@ -189,6 +211,36 @@ std::shared_ptr<TensorOp> CenterCropOperation::Build() {
   }
 
   std::shared_ptr<CenterCropOp> tensor_op = std::make_shared<CenterCropOp>(crop_height, crop_width);
+  return tensor_op;
+}
+
+// CropOperation.
+CropOperation::CropOperation(std::vector<int32_t> coordinates, std::vector<int32_t> size)
+    : coordinates_(coordinates), size_(size) {}
+
+bool CropOperation::ValidateParams() {
+  // Do some input validation.
+  if (coordinates_.empty() || coordinates_.size() > 2) {
+    MS_LOG(ERROR) << "Crop: coordinates must be a vector of one or two values";
+    return false;
+  }
+  if (size_.empty() || size_.size() > 2) {
+    MS_LOG(ERROR) << "Crop: size must be a vector of one or two values";
+    return false;
+  }
+  return true;
+}
+
+std::shared_ptr<TensorOp> CropOperation::Build() {
+  int32_t x, y, height, width;
+
+  x = coordinates_[0];
+  y = coordinates_[1];
+
+  height = size_[0];
+  width = size_[1];
+
+  std::shared_ptr<CropOp> tensor_op = std::make_shared<CropOp>(x, y, height, width);
   return tensor_op;
 }
 
@@ -470,6 +522,16 @@ std::shared_ptr<TensorOp> ResizeOperation::Build() {
   }
 
   return std::make_shared<ResizeOp>(height, width, interpolation_);
+}
+
+// SwapRedBlueOperation.
+SwapRedBlueOperation::SwapRedBlueOperation() {}
+
+bool SwapRedBlueOperation::ValidateParams() { return true; }
+
+std::shared_ptr<TensorOp> SwapRedBlueOperation::Build() {
+  std::shared_ptr<SwapRedBlueOp> tensor_op = std::make_shared<SwapRedBlueOp>();
+  return tensor_op;
 }
 
 // UniformAugOperation

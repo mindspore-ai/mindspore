@@ -58,6 +58,8 @@ class RandomRotationOperation;
 class PadOperation;
 class CutOutOperation;
 class RandomColorAdjustOperation;
+class CropOperation;
+class SwapRedBlueOperation;
 
 /// \brief Function to create a Normalize TensorOperation.
 /// \notes Normalize the input image with respect to mean and standard deviation.
@@ -182,6 +184,18 @@ std::shared_ptr<RandomColorAdjustOperation> RandomColorAdjust(std::vector<float>
                                                               std::vector<float> contrast = {1.0, 1.0},
                                                               std::vector<float> saturation = {1.0, 1.0},
                                                               std::vector<float> hue = {0.0, 0.0});
+
+/// \brief Function to create a Crop TensorOp
+/// \notes Crop an image based on location and crop size
+/// \param[in] coordinates Starting location of crop. Must be a vector of two values, in the form of {x_coor, y_coor}
+/// \param[in] size Size of the cropped area. Must be a vector of two values, in the form of {height, width}
+/// \return Shared pointer to the current TensorOp
+std::shared_ptr<CropOperation> Crop(std::vector<int32_t> coordinates, std::vector<int32_t> size);
+
+/// \brief Function to create a SwapRedBlue TensorOp
+/// \notes Swaps the red and blue channels in image
+/// \return Shared pointer to the current TensorOp
+std::shared_ptr<SwapRedBlueOperation> SwapRedBlue();
 
 /* ####################################### Derived TensorOperation classes ################################# */
 
@@ -372,6 +386,32 @@ class RandomColorAdjustOperation : public TensorOperation {
   std::vector<float> contrast_;
   std::vector<float> saturation_;
   std::vector<float> hue_;
+};
+
+class CropOperation : public TensorOperation {
+ public:
+  CropOperation(std::vector<int32_t> coordinates, std::vector<int32_t> size);
+
+  ~CropOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
+
+ private:
+  std::vector<int32_t> coordinates_;
+  std::vector<int32_t> size_;
+};
+
+class SwapRedBlueOperation : public TensorOperation {
+ public:
+  SwapRedBlueOperation();
+
+  ~SwapRedBlueOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
 };
 }  // namespace vision
 }  // namespace api
