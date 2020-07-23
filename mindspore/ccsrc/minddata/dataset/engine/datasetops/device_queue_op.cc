@@ -212,12 +212,12 @@ Status DeviceQueueOp::SendDataToGPU() {
         RETURN_IF_NOT_OK(RetryPushGPUData(data_size, curr_row, handle));
         total_batch++;
       }
-      if (!TaskManager::FindMe()->Interrupted())
+      if (!TaskManager::FindMe()->Interrupted() && !GpuBufferMgr::GetInstance().IsClosed())
         RETURN_IF_NOT_OK(GetNextInput(&current_buffer));
       else
         is_break_loop = true;
     }
-    if (!TaskManager::FindMe()->Interrupted())
+    if (!TaskManager::FindMe()->Interrupted() && !GpuBufferMgr::GetInstance().IsClosed())
       RETURN_IF_NOT_OK(GetNextInput(&current_buffer));
     else
       is_break_loop = true;

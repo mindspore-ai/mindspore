@@ -15,11 +15,16 @@
 """Dataset help for minddata dataset"""
 from mindspore._checkparam import check_bool
 from mindspore.parallel._utils import _get_device_num, _get_parallel_mode
-from mindspore.train.dataset_helper import _send_data
 from mindspore.train._utils import _exec_datagraph, _get_types_and_shapes, \
     _to_full_shapes
 from mindspore.train.parallel_utils import ParallelMode
 
+def _send_data(dataset):
+    """Engine dataset to write data to tdt queue."""
+    if not hasattr(dataset, '__has_sent__'):
+        exec_dataset = dataset.__TRANSFER_DATASET__
+        exec_dataset.send()
+        dataset.__has_sent__ = True
 
 class DatasetHelper:
     """
