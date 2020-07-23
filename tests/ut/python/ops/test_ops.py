@@ -1311,13 +1311,6 @@ test_case_nn_ops = [
         'block': P.AvgPool(ksize=(2, 2), strides=(2, 2), padding="VALID"),
         'desc_inputs': [[100, 3, 28, 28]],
         'desc_bprop': [[100, 3, 14, 14]]}),
-    ('AvgPoolGrad', {
-        'block': G.AvgPoolGrad(ksize=(2, 2), strides=(2, 2), padding="VALID"),
-        'desc_const': [(3, 4, 6, 6)],
-        'const_first': True,
-        'desc_inputs': [[3, 4, 6, 6]],
-        'desc_bprop': [[3, 4, 6, 6]],
-        'skip': ['backward']}),
     ('MaxPoolWithArgmax', {
         'block': P.MaxPoolWithArgmax(ksize=2, strides=2),
         'desc_inputs': [[128, 32, 32, 64]],

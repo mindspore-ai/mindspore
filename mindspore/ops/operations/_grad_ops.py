@@ -23,7 +23,6 @@ from .._utils import get_concat_offset
 from ...common import dtype as mstype
 from .. import functional as F
 
-
 class AbsGrad(PrimitiveWithInfer):
     """Computes gradients for abs operation."""
 
@@ -492,13 +491,31 @@ class _PoolGrad(PrimitiveWithInfer):
 
 
 class AvgPoolGrad(_PoolGrad):
-    """Gradients of the avg pool operation."""
+    """Gradients of the avg pool operation for ge."""
 
     @prim_attr_register
     def __init__(self, ksize=1, strides=1, padding="VALID"):
         super(AvgPoolGrad, self).__init__(ksize, strides, padding)
 
     def __infer__(self, origin_input, dout):
+        out = {
+            'value': None,
+            'shape': tuple(origin_input['value']),
+            'dtype': dout['dtype'],
+        }
+
+        return out
+
+
+class AvgPoolGradVm(_PoolGrad):
+    """Gradients of the avg pool operation for vm."""
+
+    @prim_attr_register
+    def __init__(self, ksize=1, strides=1, padding="VALID"):
+        super(AvgPoolGradVm, self).__init__(ksize, strides, padding)
+        self.init_prim_io_names(inputs=['x_origin', 'grad', 'mean_matrix', 'kernel_matrix'], outputs=['output'])
+
+    def __infer__(self, origin_input, dout, mean_matrix, kernel_matrix):
         out = {
             'value': None,
             'shape': tuple(origin_input['value']),
