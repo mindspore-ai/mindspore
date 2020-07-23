@@ -153,9 +153,7 @@ class KernelGraph : public FuncGraph {
   void ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node, int src_output_idx = -1,
                              int dst_output_idx = -1);
   AnfNodePtr GetInternalOutputByFrontNode(const AnfNodePtr &front_node) const;
-  bool IsInternalOutput(const AnfNodePtr &node) const;
-  void AddFinalOutputKernel(const AnfNodePtr &node);
-  bool IsFinalOutputKernel(const AnfNodePtr &node) const;
+  bool IsInternalOutput(const AnfNodePtr &node, int output_idx = -1) const;
   uint32_t current_epoch() const { return current_epoch_; }
   void set_current_epoch(uint32_t epoch) { current_epoch_ = epoch; }
   void UpdateChildGraphOrder();
@@ -230,7 +228,6 @@ class KernelGraph : public FuncGraph {
   bool null_output_;
   std::unordered_map<AnfNodePtr, AnfNodePtr> front_to_internal_outputs_map_;
   std::unordered_map<AnfNodePtr, std::unordered_map<int, AnfNodePtr>> internal_outputs_to_front_map_;
-  std::set<AnfNodePtr> final_output_kernels_;
   uint32_t current_epoch_;
 };
 }  // namespace session

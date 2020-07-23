@@ -492,6 +492,10 @@ void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, co
         AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) != kTypeUnknown) {
       continue;
     }
+    if (AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) != kTypeUnknown &&
+        AnfAlgo::OutputAddrExist(real_input_node, 0)) {
+      continue;
+    }
     if (AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) == kTypeUnknown || is_ref) {
       std::vector<std::string> output_format = {selected_kernel_info.GetInputFormat(input_index)};
       builder->SetOutputsFormat(output_format);

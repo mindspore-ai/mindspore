@@ -153,7 +153,7 @@ AnfNodePtr InsertTransOpForMultipleOutput(const FuncGraphPtr &func_graph, const 
     std::vector<size_t> origin_shape = AnfAlgo::GetOutputInferShape(node, output_idx);
     if (kCommonFormatSet.find(output_format) == kCommonFormatSet.end() && origin_shape.size() > 1) {
       auto trans_op = AddTransOpNodeToGraph(func_graph, tuple_getitem, kernel_select, 0, false);
-      if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(node)) {
+      if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(node, output_idx)) {
         kernel_graph->ReplaceInternalOutput(node, trans_op, output_idx, 0);
       }
       make_tuple_inputs.emplace_back(trans_op);
@@ -265,7 +265,7 @@ AnfNodePtr InsertTransOpForOutput(const FuncGraphPtr &func_graph, const AnfNodeP
   // Single output
   if (outputs_num == 1 && (!AnfAlgo::IsTupleOutput(node))) {
     auto new_node = InsertTransOpForSingleOutput(func_graph, node, kernel_select);
-    if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(node)) {
+    if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(node, 0)) {
       kernel_graph->ReplaceInternalOutput(node, new_node);
     }
     return new_node;
