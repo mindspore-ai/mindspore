@@ -206,6 +206,7 @@ class TrainOneStepWithLossScaleCell(Cell):
     def __init__(self, network, optimizer, scale_update_cell=None):
         super(TrainOneStepWithLossScaleCell, self).__init__(auto_prefix=False)
         self.network = network
+        self.network.set_grad()
         self.network.add_flags(defer_inline=True)
         self.weights = optimizer.parameters
         self.optimizer = optimizer
