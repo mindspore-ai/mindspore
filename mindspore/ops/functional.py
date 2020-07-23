@@ -28,6 +28,7 @@ hastype = Primitive('hastype')
 cast = P.Cast()
 dtype = P.DType()
 isconstant = Primitive('is_constant')
+isconstant.add_prim_attr('const_value', True)
 
 
 issubclass_ = P.IsSubClass()

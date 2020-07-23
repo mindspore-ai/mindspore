@@ -672,7 +672,7 @@ def check_input_data(*data, data_class):
 
 def check_output_data(data):
     """Output data check."""
-    if not data:
+    if data is None:
         raise RuntimeError('Executor return data ' + str(data) + ', please check your net or input data.')
 
 

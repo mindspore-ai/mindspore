@@ -256,7 +256,7 @@ def test_stop_gradient_4():
     def stop_test(x):
         return stop_gradient(x)
 
-    assert C.grad_all(stop_test)(Tensor(1, dtype=ms.int32)) == (0,)
+    assert C.grad_all(stop_test)(Tensor(1, dtype=ms.int32)) == (1,)
 
 
 def test_stop_gradient_5():

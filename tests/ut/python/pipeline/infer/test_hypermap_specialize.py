@@ -53,4 +53,7 @@ def test_hypermap_specialize_param():
 
     expected_ret = (Tensor(np.full(1, 5).astype(np.int32)), Tensor(np.full(2, 5).astype(np.int32)))
     ret = hypermap_specialize_param()
-    assert ret == (expected_ret, list(expected_ret))
+    assert ret[0][0].asnumpy() == expected_ret[0].asnumpy()
+    assert np.all(ret[0][1].asnumpy() == expected_ret[1].asnumpy())
+    assert ret[1][0].asnumpy() == list(expected_ret[0].asnumpy())
+    assert np.all(ret[1][1].asnumpy() == list(expected_ret[1].asnumpy()))

@@ -48,7 +48,7 @@ def test_list_equal():
     ret = net(x, y)
 
     print(ret.asnumpy())
-    assert ret == x
+    assert np.all(ret.asnumpy() == x.asnumpy())
     assert ret.dtype == mstype.int32
     assert ret.shape == (6, 8, 10)
 
@@ -70,7 +70,7 @@ def test_list_not_equal():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = [1, 2, 3]
     net = Net(z)
-    assert net(x, y) == y
+    assert np.all(net(x, y).asnumpy() == y.asnumpy())
 
 
 def test_list_expansion():
@@ -91,7 +91,7 @@ def test_list_expansion():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = [1, 2, 3]
     net = Net(z)
-    assert net(x, y) == x
+    assert np.all(net(x, y).asnumpy() == x.asnumpy())
 
 
 def test_list_append():
@@ -114,7 +114,7 @@ def test_list_append():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = [1, 2, 3]
     net = Net(z)
-    assert net(x, y) == y
+    assert np.all(net(x, y).asnumpy() == y.asnumpy())
 
 
 def test_class_member_list_append():

@@ -47,7 +47,7 @@ def test_parser_three_default_mixed_args_subnet():
     tensor1 = Tensor(np.full((2, 3), 2).astype(np.float32))
     tensor2 = Tensor(np.full((3, 2), 4).astype(np.float32))
     net = NetOut()
-    assert net(tensor1, tensor2) == tensor1
+    assert np.all(net(tensor1, tensor2).asnumpy() == tensor1.asnumpy())
 
 
 # pylint: disable=keyword-arg-before-vararg

@@ -37,7 +37,7 @@ class Bprop(Cell):
         self.grad = grad_op
         self.sens = sens
         self.with_sens = False
-        if sens:
+        if sens is not None:
             self.with_sens = True
 
     def construct(self, *inputs):
@@ -71,10 +71,10 @@ def bprop(func, *inputs, grads_wrt_outputs=None, wrt: list = None, params: list 
     func.set_train()
 
     with_sens_param = False
-    if grads_wrt_outputs:
+    if grads_wrt_outputs is not None:
         with_sens_param = True
 
-    if not wrt:
+    if wrt is None:
         wrt = []
     wrt_inputs = False
     if 'inputs' in wrt:
