@@ -410,6 +410,7 @@ Status DEPipeline::SaveDataset(const std::vector<std::string> &file_names, const
       std::vector<std::string> index_fields;
       s = FetchMetaFromTensorRow(column_name_id_map, row, &mr_json, &index_fields);
       RETURN_IF_NOT_OK(s);
+      MS_LOG(DEBUG) << "Schema of saved mindrecord: " << mr_json.dump();
       if (mindrecord::SUCCESS !=
           mindrecord::ShardHeader::initialize(&mr_header, mr_json, index_fields, blob_fields, mr_schema_id)) {
         RETURN_STATUS_UNEXPECTED("Error: failed to initialize ShardHeader.");
@@ -569,6 +570,7 @@ Status DEPipeline::FetchMetaFromTensorRow(const std::unordered_map<std::string, 
   if (column_name_id_map.empty()) {
     RETURN_STATUS_UNEXPECTED("Error: column not found.");
   }
+  json dataset_schema;
   for (auto &col : column_name_id_map) {
     auto idx = col.second;
     auto column_name = col.first;
@@ -580,6 +582,7 @@ Status DEPipeline::FetchMetaFromTensorRow(const std::unordered_map<std::string, 
     auto shapes = column_shape.AsVector();
     std::vector<int> mr_shape(shapes.begin(), shapes.end());
     std::string el = column_type.ToString();
+    dataset_schema[column_name] = el;
     if (mindrecord::kTypesMap.find(el) == mindrecord::kTypesMap.end()) {
       std::string err_msg("Error: can not support data type: " + el);
       RETURN_STATUS_UNEXPECTED(err_msg);
@@ -605,6 +608,7 @@ Status DEPipeline::FetchMetaFromTensorRow(const std::unordered_map<std::string, 
     if (mr_type == "bytes" || !mr_shape.empty()) continue;
     index_fields->emplace_back(column_name);  // candidate of index fields
   }
+  MS_LOG(DEBUG) << "Schema of dataset: " << dataset_schema.dump();
   return Status::OK();
 }
 Status DEPipeline::BuildMindrecordSamplerChain(const py::handle &handle,
