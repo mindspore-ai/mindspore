@@ -348,13 +348,13 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
         seed2 (int): Random seed2. Default: 0.
 
     Inputs:
-        - **input_x** (Tensor[bool]) - The input tensor.
+        - **input_x** (Tensor[bool]) - The input tensor. The input tensor rank should be >= 1 and <= 5.
 
     Outputs:
         Two tensors, the first one is the index tensor and the other one is the mask tensor.
 
-        - **index** (Tensor) - The output has shape between 2-D and 5-D.
-        - **mask** (Tensor) - The output has shape 1-D.
+        - **index** (Tensor) - The output shape is 2-D.
+        - **mask** (Tensor) - The output shape is 1-D.
 
     Examples:
         >>> rnd_choice_mask = P.RandomChoiceWithMask()
@@ -372,6 +372,7 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape):
         validator.check_integer("input_x rank", len(x_shape), 1, Rel.GE, self.name)
+        validator.check_integer("input_x rank", len(x_shape), 5, Rel.LE, self.name)
         return ([self.count, len(x_shape)], [self.count])
 
     def infer_dtype(self, x_dtype):
