@@ -1817,7 +1817,7 @@ void AscendSession::CreateMultiBranchOutput(NotNull<KernelGraphPtr> graph, NotNu
       // create a parameter to store the output of multiple branch and set the parameter as the condition graph's output
       // auto multi_output_param = graph->NewParameter();
       auto origin_inputs = graph->inputs();
-      auto output_param = CreateNewParameterFromCNode(node, true, graph.get().get());
+      auto output_param = graph->TransTupleToMakeTuple(graph->NewParameter(node->abstract()));
       MS_EXCEPTION_IF_NULL(graph->MutableInputs());
       graph->MutableInputs()->operator=(origin_inputs);
       graph->AddChildGraphResult(output_param);
@@ -1835,9 +1835,8 @@ void AscendSession::CreateMultiBranchOutput(NotNull<KernelGraphPtr> graph, NotNu
         if (child_graph->get_output_null()) {
           continue;
         }
-        auto graph_output = child_graph->output();
-        AscendControlParser::InsertMultipleAssignToGraph(NOT_NULL(child_graph), nullptr, NOT_NULL(graph_output),
-                                                         NOT_NULL(output_param));
+        AscendControlParser::InsertMultipleAssignToGraph(NOT_NULL(child_graph), nullptr,
+                                                         NOT_NULL(child_graph->output()), NOT_NULL(output_param));
       }
     }
   }

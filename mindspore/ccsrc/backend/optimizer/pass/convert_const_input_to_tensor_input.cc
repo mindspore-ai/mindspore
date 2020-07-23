@@ -139,7 +139,10 @@ AnfNodePtr ProcessGraphKernelOp(const AnfNodePtr &node) {
 
 const AnfNodePtr ConvertConstInputToTensorInput::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                          const EquivPtr &) const {
-  if (node == nullptr || func_graph == nullptr || !AnfAlgo::IsRealCNodeKernel(node)) {
+  if (node == nullptr || func_graph == nullptr || AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
+    return nullptr;
+  }
+  if (!node->isa<CNode>()) {
     return nullptr;
   }
   if (AnfAlgo::IsGraphKernel(node)) {
