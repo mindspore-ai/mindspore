@@ -49,7 +49,7 @@ class MetaFuncGraph : public FuncGraphBase {
   virtual abstract::AbstractBasePtrList NormalizeArgs(const abstract::AbstractBasePtrList &args_spec_list) const {
     return args_spec_list;
   }
-
+  abstract::AbstractBasePtr ToAbstract() override;
   const std::vector<Signature> &signatures() const { return signatures_; }
   void set_signatures(const std::vector<Signature> &signatures) { signatures_ = signatures; }
   // Generate a Graph for the given abstract arguments.

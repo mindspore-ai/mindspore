@@ -26,6 +26,7 @@
 #include "ir/manager.h"
 #include "utils/ordered_set.h"
 #include "utils/convert_utils_base.h"
+#include "abstract/abstract_function.h"
 
 namespace mindspore {
 /*
@@ -46,6 +47,11 @@ FuncGraph::FuncGraph()
       manager_(std::weak_ptr<FuncGraphManager>()),
       stub_(false) {
   debug_info_ = std::make_shared<GraphDebugInfo>();
+}
+
+abstract::AbstractBasePtr FuncGraph::ToAbstract() {
+  auto temp_context = abstract::AnalysisContext::DummyContext();
+  return std::make_shared<abstract::FuncGraphAbstractClosure>(shared_from_base<FuncGraph>(), temp_context);
 }
 
 AnfNodePtr FuncGraph::output() const {

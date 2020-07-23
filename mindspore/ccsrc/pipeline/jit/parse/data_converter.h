@@ -32,8 +32,8 @@ namespace mindspore {
 namespace parse {
 // data convert for parse
 namespace data_converter {
-void CacheObjectValue(const std::string &obj_key, const Any &data);
-bool GetObjectValue(const std::string &obj_key, Any *const data);
+void CacheObjectValue(const std::string &obj_key, const ValuePtr &data);
+bool GetObjectValue(const std::string &obj_key, ValuePtr *const data);
 
 void SetObjGraphValue(const std::string &obj_key, const FuncGraphPtr &data);
 

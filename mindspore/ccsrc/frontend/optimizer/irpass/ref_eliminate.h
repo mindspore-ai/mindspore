@@ -42,8 +42,8 @@ class GetRefParamEliminater : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     PatternNode<AnfNodePtr> x;
-    MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimGetRefValue, x), x, x.CheckFunc(IsParam, node));
-    MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimGetRefOrigin, x), x, x.CheckFunc(IsParam, node));
+    MATCH_REPLACE(node, PPrimitive(prim::kPrimGetRefValue, x), x);
+    MATCH_REPLACE(node, PPrimitive(prim::kPrimGetRefOrigin, x), x);
     return nullptr;
   }
 };

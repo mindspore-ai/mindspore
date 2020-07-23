@@ -128,7 +128,8 @@ bool ConvertDict(const py::object &obj, ValuePtr *data, bool use_signature) {
   std::vector<std::pair<std::string, ValuePtr>> key_values;
   for (auto item : dict_values) {
     if (!py::isinstance<py::str>(item.first)) {
-      MS_LOG(EXCEPTION) << "The key of dict is only support str.";
+      MS_LOG(ERROR) << "The key of dict is only support str.";
+      return false;
     }
     std::string key = py::str(item.first);
     ValuePtr out = nullptr;
@@ -158,7 +159,7 @@ void ConvertDataClass(py::object obj, ValuePtr *const data) {
 }
 
 bool ConvertPrimitive(py::object obj, ValuePtr *const data, bool use_signature = false) {
-  MS_LOG(DEBUG) << "Converting primitive object";
+  MS_LOG(DEBUG) << "Converting primitive object" << use_signature;
 
   // need check the primitive is class type or instance
   auto obj_type = data_converter::GetObjType(obj);
@@ -184,6 +185,7 @@ bool ConvertPrimitive(py::object obj, ValuePtr *const data, bool use_signature =
     } else {
       *data = primitive;
     }
+    MS_LOG(DEBUG) << "Converting primitive object ok " << (*data)->ToString();
   }
   return true;
 }
@@ -389,12 +391,12 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python
   std::string obj_id = results[0] + python_mod_get_parse_method;
   std::string obj_key = results[1];
   FuncGraphPtr func_graph = nullptr;
-  Any value = Any();
+  ValuePtr value = nullptr;
   bool is_cache = data_converter::GetObjectValue(obj_id, &value);
   if (is_cache) {
-    if (value.is<FuncGraphPtr>()) {
+    if (value && value->isa<FuncGraph>()) {
       MS_LOG(DEBUG) << "Get the cache data, obj = " << obj_id;
-      func_graph = value.cast<FuncGraphPtr>();
+      func_graph = value->cast<FuncGraphPtr>();
       return func_graph;
     }
   }
@@ -415,10 +417,9 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python
   return func_graph;
 }
 namespace data_converter {
-static std::unordered_map<std::string, Any> object_map_ = std::unordered_map<std::string, Any>();
+static std::unordered_map<std::string, ValuePtr> object_map_;
 
-static std::unordered_map<std::string, std::vector<FuncGraphPtr>> object_graphs_map_ =
-  std::unordered_map<std::string, std::vector<FuncGraphPtr>>();
+static std::unordered_map<std::string, std::vector<FuncGraphPtr>> object_graphs_map_;
 
 void SetObjGraphValue(const std::string &obj_key, const FuncGraphPtr &data) {
   object_graphs_map_[obj_key].push_back(data);
@@ -430,8 +431,8 @@ const std::unordered_map<std::string, std::vector<FuncGraphPtr>> &GetObjGraphs()
   return object_graphs_map_;
 }
 
-void CacheObjectValue(const std::string &obj_key, const Any &data) { object_map_[obj_key] = data; }
-bool GetObjectValue(const std::string &obj_key, Any *const data) {
+void CacheObjectValue(const std::string &obj_key, const ValuePtr &data) { object_map_[obj_key] = data; }
+bool GetObjectValue(const std::string &obj_key, ValuePtr *const data) {
   if (object_map_.count(obj_key)) {
     *data = object_map_[obj_key];
     return true;

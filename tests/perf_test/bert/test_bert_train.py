@@ -25,7 +25,8 @@ from mindspore import Tensor
 from mindspore.nn.optim import AdamWeightDecay
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore.nn import learning_rate_schedule as lr_schedules
-from model_zoo.bert.src import BertConfig, BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell
+from mindspore.ops import operations as P
+from model_zoo.official.nlp.bert.src import BertConfig, BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell
 from ...dataset_mock import MindData
 from ...ops_common import nn, np, batch_tuple_tensor, build_construct_graph
 
@@ -100,7 +101,7 @@ def get_config(version='base', batch_size=1):
 
 
 class BertLearningRate(lr_schedules.LearningRateSchedule):
-    def __init__(self, decay_steps, warmup_steps=0, learning_rate=0.1, end_learning_rate=0.0001, power=1.0):
+    def __init__(self, decay_steps, warmup_steps=100, learning_rate=0.1, end_learning_rate=0.0001, power=1.0):
         super(BertLearningRate, self).__init__()
         self.warmup_lr = lr_schedules.WarmUpLR(learning_rate, warmup_steps)
         self.decay_lr = lr_schedules.PolynomialDecayLR(learning_rate, end_learning_rate, decay_steps, power)

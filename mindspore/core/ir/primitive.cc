@@ -17,8 +17,15 @@
 #include "ir/primitive.h"
 
 #include <utility>
+#include "abstract/abstract_function.h"
+
 
 namespace mindspore {
+
+abstract::AbstractBasePtr Primitive::ToAbstract() {
+  return std::make_shared<abstract::PrimitiveAbstractClosure>(shared_from_base<Primitive>(), nullptr);
+}
+
 bool Primitive::operator==(const Value &other) const {
   if (other.isa<Primitive>()) {
     auto other_prim = static_cast<const Primitive &>(other);
