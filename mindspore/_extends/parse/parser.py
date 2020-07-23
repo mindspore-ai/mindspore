@@ -459,27 +459,27 @@ class Parser:
         logger.debug("ops info = %r", ops_info)
         return ops_info
 
-    def analyze_super(self, father_class_node, subclass_instance):
+    def analyze_super(self, class_type_node, subclass_instance):
         """Analyze super and return a class instance."""
-        father_class = None
-        if father_class_node is None:
-            father_class = type(subclass_instance)
-        if isinstance(father_class_node, ast.Name):
-            father_class_name = getattr(father_class_node, 'id')
-            father_class = self.global_namespace[father_class_name]
-        if isinstance(father_class_node, ast.Attribute):
-            value = getattr(father_class_node, 'value')
-            attr = getattr(father_class_node, 'attr')
-            module_name = getattr(value, 'id')
-            father_class_module = self.global_namespace[module_name]
-            father_class = getattr(father_class_module, attr)
-        if father_class is None:
-            raise ValueError("When call 'super', the father class is None.")
-        if not isinstance(subclass_instance, father_class):
-            raise ValueError("When call 'super', the second arg should be an instance of first arg.")
+        sub_class = type(subclass_instance)
+        if class_type_node is None:
+            return super(sub_class, subclass_instance)
+        if isinstance(class_type_node, ast.Name):
+            class_name = getattr(class_type_node, 'id')
+        elif isinstance(class_type_node, ast.Attribute):
+            class_name = getattr(class_type_node, 'attr')
+        else:
+            raise ValueError(f"When call 'super', the first arg should be a class type, "
+                             f"but got {class_type_node.__class__.__name__}.")
 
-        target_class_instance = super(father_class, subclass_instance)
-        return target_class_instance
+        target_father_class = None
+        for class_element in sub_class.mro():
+            if class_element.__name__ == class_name:
+                target_father_class = class_element
+                break
+        if target_father_class is None:
+            raise ValueError("When call 'super', the second arg should be an instance of first arg.")
+        return super(target_father_class, subclass_instance)
 
     def get_location(self, node):
         """
