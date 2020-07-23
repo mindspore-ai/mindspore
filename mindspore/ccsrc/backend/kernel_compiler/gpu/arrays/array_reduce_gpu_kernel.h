@@ -29,6 +29,7 @@ const std::map<std::string, cudnnReduceTensorOp_t> kReduceTypeMap = {
   {"ReduceMax", CUDNN_REDUCE_TENSOR_MAX},
   {"ReduceMean", CUDNN_REDUCE_TENSOR_AVG},
   {"ReduceSum", CUDNN_REDUCE_TENSOR_ADD},
+  {"ReduceMin", CUDNN_REDUCE_TENSOR_MIN},
 };
 template <typename T>
 class ArrayReduceGpuKernel : public GpuKernel {
