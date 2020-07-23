@@ -106,6 +106,7 @@ endif() # NOT ENABLE_ACL
 
 if (ENABLE_SERVING)
     add_subdirectory(serving)
+    add_subdirectory(serving/example/cpp_client)
 endif()
 
 if (NOT ENABLE_ACL)

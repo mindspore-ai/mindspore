@@ -211,77 +211,12 @@ PredictRequest ReadBertInput() {
   return request;
 }
 
-PredictRequest ReadLenetInput() {
-  size_t size;
-  auto buf = ReadFile("lenet_img.bin", &size);
-  if (buf == nullptr) {
-    std::cout << "read file failed" << std::endl;
-    return PredictRequest();
-  }
-  PredictRequest request;
-  auto cur = buf;
-  if (size > 0) {
-    Tensor data;
-    TensorShape shape;
-    // set type
-    data.set_tensor_type(ms_serving::MS_FLOAT32);
-
-    // set shape
-    shape.add_dims(size / sizeof(float));
-    *data.mutable_tensor_shape() = shape;
-
-    // set data
-    data.set_data(cur, size);
-    *request.add_data() = data;
-  }
-  std::cout << "get input data size " << size << std::endl;
-  return request;
-}
-
-PredictRequest ReadOtherInput(const std::string &data_file) {
-  size_t size;
-  auto buf = ReadFile(data_file.c_str(), &size);
-  if (buf == nullptr) {
-    std::cout << "read file failed" << std::endl;
-    return PredictRequest();
-  }
-  PredictRequest request;
-  auto cur = buf;
-  if (size > 0) {
-    Tensor data;
-    TensorShape shape;
-    // set type
-    data.set_tensor_type(ms_serving::MS_FLOAT32);
-
-    // set shape
-    shape.add_dims(size / sizeof(float));
-    *data.mutable_tensor_shape() = shape;
-
-    // set data
-    data.set_data(cur, size);
-    *request.add_data() = data;
-  }
-  std::cout << "get input data size " << size << std::endl;
-  return request;
-}
-
-template <class DT>
-void print_array_item(const DT *data, size_t size) {
-  for (size_t i = 0; i < size && i < 100; i++) {
-    std::cout << data[i] << '\t';
-    if ((i + 1) % 10 == 0) {
-      std::cout << std::endl;
-    }
-  }
-  std::cout << std::endl;
-}
-
 class MSClient {
  public:
   explicit MSClient(std::shared_ptr<Channel> channel) : stub_(MSService::NewStub(channel)) {}
   ~MSClient() = default;
 
-  std::string Predict(const std::string &type, const std::string &data_file) {
+  std::string Predict(const std::string &type) {
     // Data we are sending to the server.
     PredictRequest request;
     if (type == "add") {
@@ -299,10 +234,6 @@ class MSClient {
       *request.add_data() = data;
     } else if (type == "bert") {
       request = ReadBertInput();
-    } else if (type == "lenet") {
-      request = ReadLenetInput();
-    } else if (type == "other") {
-      request = ReadOtherInput(data_file);
     } else {
       std::cout << "type only support bert or add, but input is " << type << std::endl;
     }
@@ -325,20 +256,6 @@ class MSClient {
 
     // Act upon its status.
     if (status.ok()) {
-      for (size_t i = 0; i < reply.result_size(); i++) {
-        auto result = reply.result(i);
-        if (result.tensor_type() == ms_serving::DataType::MS_FLOAT32) {
-          print_array_item(reinterpret_cast<const float *>(result.data().data()), result.data().size() / sizeof(float));
-        } else if (result.tensor_type() == ms_serving::DataType::MS_INT32) {
-          print_array_item(reinterpret_cast<const int32_t *>(result.data().data()),
-                           result.data().size() / sizeof(int32_t));
-        } else if (result.tensor_type() == ms_serving::DataType::MS_UINT32) {
-          print_array_item(reinterpret_cast<const uint32_t *>(result.data().data()),
-                           result.data().size() / sizeof(uint32_t));
-        } else {
-          std::cout << "output datatype " << result.tensor_type() << std::endl;
-        }
-      }
       return "RPC OK";
     } else {
       std::cout << status.error_code() << ": " << status.error_message() << std::endl;
@@ -360,8 +277,6 @@ int main(int argc, char **argv) {
   std::string arg_target_str("--target");
   std::string type;
   std::string arg_type_str("--type");
-  std::string arg_data_str("--data");
-  std::string data = "default_data.bin";
   if (argc > 2) {
     {
       // parse target
@@ -389,25 +304,11 @@ int main(int argc, char **argv) {
         if (arg_val2[start_pos] == '=') {
           type = arg_val2.substr(start_pos + 1);
         } else {
-          std::cout << "The only correct argument syntax is --type=" << std::endl;
+          std::cout << "The only correct argument syntax is --target=" << std::endl;
           return 0;
         }
       } else {
         type = "add";
-      }
-    }
-    if (argc > 3) {
-      // parse type
-      std::string arg_val3 = argv[3];
-      size_t start_pos = arg_val3.find(arg_data_str);
-      if (start_pos != std::string::npos) {
-        start_pos += arg_data_str.size();
-        if (arg_val3[start_pos] == '=') {
-          data = arg_val3.substr(start_pos + 1);
-        } else {
-          std::cout << "The only correct argument syntax is --data=" << std::endl;
-          return 0;
-        }
       }
     }
   } else {
@@ -415,7 +316,7 @@ int main(int argc, char **argv) {
     type = "add";
   }
   MSClient client(grpc::CreateChannel(target_str, grpc::InsecureChannelCredentials()));
-  std::string reply = client.Predict(type, data);
+  std::string reply = client.Predict(type);
   std::cout << "client received: " << reply << std::endl;
 
   return 0;
