@@ -2934,7 +2934,8 @@ class Tan(PrimitiveWithInfer):
     Computes tangent of `input_x` element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. Data type should be
+          float16, float32 or int32.
 
     Outputs:
         Tensor, has the same shape as `input_x`.
@@ -2953,7 +2954,8 @@ class Tan(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_type):
-        validator.check_tensor_type_same({'x': x_type}, mstype.number_type, self.name)
+        valid_types = [mstype.float16, mstype.float32, mstype.int32]
+        validator.check_tensor_type_same({'x': x_type}, valid_types, self.name)
         return x_type
 
 
