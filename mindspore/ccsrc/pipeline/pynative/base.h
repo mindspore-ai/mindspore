@@ -49,8 +49,9 @@ enum PynativeStatusCode {
 enum RunOpArgsEnum { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_ARGS_NUM };
 
 struct OpExecInfo {
-  PrimitivePyPtr py_primitive;
   std::string op_name;
+  std::string prim_id;
+  PrimitivePyPtr py_primitive;
   AbstractBasePtr abstract;
   ValuePtr value = nullptr;
 
