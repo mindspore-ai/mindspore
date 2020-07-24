@@ -20,6 +20,7 @@ import mindspore as ms
 from mindspore import Tensor
 from mindspore import context
 from mindspore import nn
+from mindspore.common import dtype as mstype
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
@@ -639,3 +640,9 @@ def test_large_for_loop_with_continue_break():
     t = Tensor(np.ones([2, 3], dtype=np.float32))
     net = Net()
     net(t)
+
+
+def test_mixed_precision_cast():
+    x = Tensor(np.ones([2, 3], dtype=np.float32))
+    z = F.mixed_precision_cast(mstype.float16, x)
+    assert z.dtype == mstype.float16
