@@ -616,10 +616,6 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, De
 
 #ifdef ENABLE_DEBUGGER
   bool dump_enabled = GPUKernelRuntime::DumpDataEnabledIteration();
-  if (!mock) {
-    // collect weights and bias
-    LoadParameters(graph, debugger, dump_enabled);
-  }
 #endif
   auto &kernels = graph->execution_order();
   int exec_order = 1;
@@ -665,6 +661,10 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, De
     }
   }
   if (!mock) {
+#ifdef ENABLE_DEBUGGER
+    // collect weights and bias
+    LoadParameters(graph, debugger, dump_enabled);
+#endif
     CHECK_OP_RET_WITH_EXCEPT(SyncStream(), "SyncStream failed.");
   }
   ClearSwapInfo(mock);
