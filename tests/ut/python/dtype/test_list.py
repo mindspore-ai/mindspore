@@ -18,8 +18,10 @@ import numpy as np
 import pytest
 import mindspore.nn as nn
 import mindspore.context as context
+import mindspore as ms
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
 from tests.ut.python.ut_filter import non_graph_engine
 from tests.mindspore_test_framework.mindspore_test import mindspore_test
@@ -282,3 +284,26 @@ test_exec_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 def test_exec():
     context.set_context(mode=context.GRAPH_MODE)
     return test_exec_case
+
+
+def test_grad_make_list():
+    class MyWhileNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+
+        def construct(self, idx, x):
+            return x[idx, :, :]
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+
+        def construct(self, *inputs):
+            return C.grad_all(self.net)(*inputs)
+
+    while_net = MyWhileNet()
+    net = GradNet(while_net)
+    idx = Tensor(np.array(0), dtype=ms.int32)
+    x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
+    net(idx, x)
