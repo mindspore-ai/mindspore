@@ -65,8 +65,9 @@ class KernelRuntime {
   virtual bool RunTask(const session::KernelGraph *graph);
   virtual bool GenTask(const session::KernelGraph *graph);
   bool LaunchKernel(const session::KernelGraph *graph);
-  bool LaunchTaskBasedOnSingleKernel(kernel::KernelModPtr kernel_mod_ptr, AddressPtrList kernel_inputs,
-                                     AddressPtrList kernel_outputs, AddressPtrList kernel_workspaces) const;
+  bool LaunchTaskBasedOnSingleKernel(kernel::KernelModPtr kernel_mod_ptr, const AddressPtrList &kernel_inputs,
+                                     const AddressPtrList &kernel_outputs,
+                                     const AddressPtrList &kernel_workspaces) const;
   virtual void AssignStaticMemoryInput(const session::KernelGraph *graph);
   virtual void AssignStaticMemoryValueNode(session::KernelGraph *graph);
   virtual void ClearGraphRuntimeResource(uint32_t graph_id);
@@ -79,6 +80,7 @@ class KernelRuntime {
   // for GPU and D to impl
   virtual void ReleaseDeviceRes() {}
   void set_device_id(uint32_t device_id) { device_id_ = device_id; }
+  DeviceAddressPtr AssignSingleOpLaunchMemory(size_t size, const std::string &format, TypeId type);
 
  protected:
   virtual DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
