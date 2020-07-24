@@ -42,6 +42,7 @@ class TensorOperation;
 class SamplerObj;
 // Datasets classes (in alphabetical order)
 class Cifar10Dataset;
+class Cifar100Dataset;
 class ImageFolderDataset;
 class MnistDataset;
 // Dataset Op classes (in alphabetical order)
@@ -57,12 +58,19 @@ class ZipDataset;
 /// \brief Function to create a Cifar10 Dataset
 /// \notes The generated dataset has two columns ['image', 'label']
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
-/// \param[in] num_samples The number of images to be included in the dataset
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
 ///    will be used to randomly iterate the entire dataset
 /// \return Shared pointer to the current Dataset
-std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, int32_t num_samples,
-                                        std::shared_ptr<SamplerObj> sampler);
+std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, std::shared_ptr<SamplerObj> sampler = nullptr);
+
+/// \brief Function to create a Cifar100 Dataset
+/// \notes The generated dataset has two columns ['image', 'coarse_label', 'fine_label']
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
+///    will be used to randomly iterate the entire dataset
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir,
+                                          std::shared_ptr<SamplerObj> sampler = nullptr);
 
 /// \brief Function to create an ImageFolderDataset
 /// \notes A source dataset that reads images from a tree of directories
@@ -204,7 +212,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
 class Cifar10Dataset : public Dataset {
  public:
   /// \brief Constructor
-  Cifar10Dataset(const std::string &dataset_dir, int32_t num_samples, std::shared_ptr<SamplerObj> sampler);
+  Cifar10Dataset(const std::string &dataset_dir, std::shared_ptr<SamplerObj> sampler);
 
   /// \brief Destructor
   ~Cifar10Dataset() = default;
@@ -219,7 +227,27 @@ class Cifar10Dataset : public Dataset {
 
  private:
   std::string dataset_dir_;
-  int32_t num_samples_;
+  std::shared_ptr<SamplerObj> sampler_;
+};
+
+class Cifar100Dataset : public Dataset {
+ public:
+  /// \brief Constructor
+  Cifar100Dataset(const std::string &dataset_dir, std::shared_ptr<SamplerObj> sampler);
+
+  /// \brief Destructor
+  ~Cifar100Dataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::string dataset_dir_;
   std::shared_ptr<SamplerObj> sampler_;
 };
 
