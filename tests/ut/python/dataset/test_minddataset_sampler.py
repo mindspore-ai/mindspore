@@ -34,26 +34,32 @@ def add_and_remove_cv_file():
     """add/remove cv file"""
     paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
-    for x in paths:
-        if os.path.exists("{}".format(x)):
+    try:
+        for x in paths:
+            if os.path.exists("{}".format(x)):
+                os.remove("{}".format(x))
+            if os.path.exists("{}.db".format(x)):
+                os.remove("{}.db".format(x))
+        writer = FileWriter(CV_FILE_NAME, FILES_NUM)
+        data = get_data(CV_DIR_NAME, True)
+        cv_schema_json = {"id": {"type": "int32"},
+                          "file_name": {"type": "string"},
+                          "label": {"type": "int32"},
+                          "data": {"type": "bytes"}}
+        writer.add_schema(cv_schema_json, "img_schema")
+        writer.add_index(["file_name", "label"])
+        writer.write_raw_data(data)
+        writer.commit()
+        yield "yield_cv_data"
+    except Exception as error:
+        for x in paths:
             os.remove("{}".format(x))
-        if os.path.exists("{}.db".format(x)):
             os.remove("{}.db".format(x))
-    writer = FileWriter(CV_FILE_NAME, FILES_NUM)
-    data = get_data(CV_DIR_NAME, True)
-    cv_schema_json = {"id": {"type": "int32"},
-                      "file_name": {"type": "string"},
-                      "label": {"type": "int32"},
-                      "data": {"type": "bytes"}}
-    writer.add_schema(cv_schema_json, "img_schema")
-    writer.add_index(["file_name", "label"])
-    writer.write_raw_data(data)
-    writer.commit()
-    yield "yield_cv_data"
-    for x in paths:
-        os.remove("{}".format(x))
-        os.remove("{}.db".format(x))
-
+        raise error
+    else:
+        for x in paths:
+            os.remove("{}".format(x))
+            os.remove("{}.db".format(x))
 
 def test_cv_minddataset_pk_sample_no_column(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
@@ -626,3 +632,24 @@ def get_data(dir_name, sampler=False):
         except FileNotFoundError:
             continue
     return data_list
+
+if __name__ == '__main__':
+    test_cv_minddataset_pk_sample_no_column(add_and_remove_cv_file)
+    test_cv_minddataset_pk_sample_basic(add_and_remove_cv_file)
+    test_cv_minddataset_pk_sample_shuffle(add_and_remove_cv_file)
+    test_cv_minddataset_pk_sample_out_of_range(add_and_remove_cv_file)
+    test_cv_minddataset_subset_random_sample_basic(add_and_remove_cv_file)
+    test_cv_minddataset_subset_random_sample_replica(add_and_remove_cv_file)
+    test_cv_minddataset_subset_random_sample_empty(add_and_remove_cv_file)
+    test_cv_minddataset_subset_random_sample_out_of_range(add_and_remove_cv_file)
+    test_cv_minddataset_subset_random_sample_negative(add_and_remove_cv_file)
+    test_cv_minddataset_random_sampler_basic(add_and_remove_cv_file)
+    test_cv_minddataset_random_sampler_repeat(add_and_remove_cv_file)
+    test_cv_minddataset_random_sampler_replacement(add_and_remove_cv_file)
+    test_cv_minddataset_sequential_sampler_basic(add_and_remove_cv_file)
+    test_cv_minddataset_sequential_sampler_exceed_size(add_and_remove_cv_file)
+    test_cv_minddataset_split_basic(add_and_remove_cv_file)
+    test_cv_minddataset_split_exact_percent(add_and_remove_cv_file)
+    test_cv_minddataset_split_fuzzy_percent(add_and_remove_cv_file)
+    test_cv_minddataset_split_deterministic(add_and_remove_cv_file)
+    test_cv_minddataset_split_sharding(add_and_remove_cv_file)
