@@ -376,6 +376,44 @@ def test_cache_nomap_allowed_share3():
     logger.info("test_cache_nomap_allowed_share3 Ended.\n")
 
 
+def test_cache_nomap_allowed_share4():
+    """
+    It is allowed to share the cache between the following two trees:
+
+       Cache                                  Cache
+         |                                      |
+     Map(decode, num_parallel_workers=1)    Map(decode, num_parallel_workers=2)
+         |                                      |
+      TFReader                              TFReader
+    """
+
+    logger.info("Test cache nomap allowed share 4")
+
+    # This dataset has 3 records in it only
+    some_cache = ds.DatasetCache(session_id=2, size=0, spilling=True)
+    decode_op = c_vision.Decode()
+
+    ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache, num_parallel_workers=1)
+
+    ds2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    ds2 = ds2.map(input_columns=["image"], operations=decode_op, cache=some_cache, num_parallel_workers=2)
+
+    num_iter = 0
+    for _ in ds1.create_dict_iterator():
+        num_iter += 1
+    logger.info("Number of data in ds1: {} ".format(num_iter))
+    assert num_iter == 3
+
+    num_iter = 0
+    for _ in ds2.create_dict_iterator():
+        num_iter += 1
+    logger.info("Number of data in ds2: {} ".format(num_iter))
+    assert num_iter == 3
+
+    logger.info("test_cache_nomap_allowed_share4 Ended.\n")
+
+
 def test_cache_nomap_disallowed_share1():
     """
     It is not allowed to share the cache between the following two trees:
@@ -426,4 +464,5 @@ if __name__ == '__main__':
     test_cache_nomap_allowed_share1()
     test_cache_nomap_allowed_share2()
     test_cache_nomap_allowed_share3()
+    test_cache_nomap_allowed_share4()
     test_cache_nomap_disallowed_share1()
