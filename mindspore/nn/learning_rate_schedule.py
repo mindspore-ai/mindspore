@@ -59,7 +59,7 @@ class ExponentialDecayLR(LearningRateSchedule):
     For the i-th step, the formula of computing decayed_learning_rate[i] is:
 
     .. math::
-        decayed\_learning\_rate[i] = learning\_rate * decay\_rate^{p}}
+        decayed\_learning\_rate[i] = learning\_rate * decay\_rate^{p}
 
     Where :math:`p = \frac{current\_step}{decay\_steps}`, if `is_stair` is True, The formula
     is :math:`p = floor(\frac{current\_step}{decay\_steps})`.
@@ -158,7 +158,7 @@ class InverseDecayLR(LearningRateSchedule):
     For the i-th step, the formula of computing decayed_learning_rate[i] is:
 
     .. math::
-        decayed\_learning\_rate[i] = learning\_rate / (1 + decay\_rate * p}
+        decayed\_learning\_rate[i] = learning\_rate / (1 + decay\_rate * p)
 
     Where :math:`p = \frac{current\_step}{decay\_steps}`, if `is_stair` is True, The formula
     is :math:`p = floor(\frac{current\_step}{decay\_steps})`.
@@ -166,7 +166,7 @@ class InverseDecayLR(LearningRateSchedule):
     Args:
         learning_rate (float): The initial value of learning rate.
         decay_rate (float): The decay rate.
-        decay_epoch (int): A value used to calculate decayed learning rate.
+        decay_steps (int): A value used to calculate decayed learning rate.
         is_stair (bool): If true, learning rate decay once every `decay_steps` times. Default: False.
 
     Inputs:
@@ -207,9 +207,8 @@ class CosineDecayLR(LearningRateSchedule):
 
     .. math::
         decayed\_learning\_rate[i] = min\_learning\_rate + 0.5 * (max\_learning\_rate - min\_learning\_rate) *
-        (1 + cos(\frac{current\_epoch}{decay\_epoch}\pi))
+        (1 + cos(\frac{current\_step}{decay\_steps}\pi))
 
-    Where :math:`current\_epoch=floor(\frac{i}{step\_per\_epoch})`.
 
     Args:
         min_lr (float): The minimum value of learning rate.
@@ -262,11 +261,11 @@ class PolynomialDecayLR(LearningRateSchedule):
 
     .. math::
         decayed\_learning\_rate[i] = (learning\_rate - end\_learning\_rate) *
-        (1 - tmp\_step / tmp\_decay\_step)^{power} + end\_learning\_rate
+        (1 - tmp\_step / tmp\_decay\_steps)^{power} + end\_learning\_rate
 
-    Where :math:`tmp\_step=min(global\_step, decay\_step).
+    Where :math:`tmp\_step=min(current\_step, decay\_steps).
     If `update_decay_steps` is true, update the value of `tmp_decay_step` every `decay_steps`. The formula
-    is :math:`tmp\_decay\_step = decay\_step * ceil(global\_step / decay\_steps)`
+    is :math:`tmp\_decay\_steps = decay\_steps * ceil(current\_step / decay\_steps)`
 
     Args:
         learning_rate (float): The initial value of learning rate.
@@ -335,7 +334,7 @@ class WarmUpLR(LearningRateSchedule):
     .. math::
         warmup\_learning\_rate[i] = learning\_rate * tmp\_step / warmup\_steps
 
-    Where :math:`tmp\_step=min(global\_step, warmup\_steps).
+    Where :math:`tmp\_step=min(current\_step, warmup\_steps)`.
 
     Args:
         learning_rate (float): The initial value of learning rate.
