@@ -185,12 +185,6 @@ inline const PrimitivePtr kPrimSparseTensorGetValues = std::make_shared<Primitiv
 inline const PrimitivePtr kPrimSparseTensorGetIndices = std::make_shared<Primitive>("SparseTensorGetIndices");
 inline const PrimitivePtr kPrimSparseTensorGetDenseShape = std::make_shared<Primitive>("SparseTensorGetDenseShape");
 
-// attribute 'unroll_flag' of primitive 'switch', when 'unroll_flag' is '0', 'switch' will not unroll
-const char SWITCH_UNROLL_FLAG[] = "unroll_flag";
-// max loop count of for statement, when loop count is less then this value, the for loop will be unrolled, otherwise it
-//  will be sunk(i.e. not unrolled)
-const int MAX_FOR_LOOP_COUNT = 600;
-
 class UnpackGraphPrimitive : public Primitive {
  public:
   explicit UnpackGraphPrimitive(const std::string &name, const bool &with_sens, const bool &need_unpack_args)
