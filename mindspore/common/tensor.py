@@ -213,9 +213,73 @@ class Tensor(Tensor_):
 
 
 class IndexedSlices:
+    """
+    A sparse representation of a set of tensor slices at given indices.
+
+    An IndexedSlices is typically used to represent a subset of a larger
+        tensor dense of shape [LARGE0, D1, .. , DN] where LARGE0 >> D0.
+    The values in indices are the indices in the first dimension of the slices
+        that have been extracted from the larger tensor.
+    The dense tensor dense represented by an IndexedSlices slices has
+        `dense[slices.indices[i], :, :, :, ...] = slices.values[i, :, :, :, ...]`.
+    IndexedSlices can only be used in `Cell`'s contruct method.
+
+    Args:
+        indices (Tensor): A 1-D integer Tensor of shape [D0].
+        values (Tensor): A Tensor of any dtype of shape [D0, D1, ..., Dn].
+        dense_shape: (tuple): A integer tuple containing the shape
+            of the corresponding dense tensor.
+
+    Returns:
+        IndexedSlices, composed of `indices`, `values`, `dense_shape`.
+
+    Examples:
+        >>> # Create a IndexedSlices.
+        >>> indices = Tensor([1, 2])
+        >>> values = Tensor([[0, 0], [1, 2]], dtype=ms.float32)
+        >>> dense_shape = (3, 2)
+        >>> indexed_slices = IndexedSlices(indices, values, dense_shape)
+        >>>
+        >>> # Get atrr.
+        >>> indices = indexed_slices.indices()
+        >>> values = indexed_slices.values()
+        >>> dense_shape = indexed_slices.dense_shape()
+    """
     def __init__(self, indices, values, dense_shape):
         raise NotImplementedError
 
+
 class SparseTensor:
+    """
+    A sparse representation of a set of nonzero elememts from a tensor at given indices.
+
+    SparseTensor can only be used in `Cell`'s contruct method.
+    For a tensor dense, its SparseTensor(indices, values, dense_shape) has
+        `dense[indices[i]] = values[i]`.
+
+    Args:
+        indices (Tensor): A 2-D integer Tensor of shape `[N, ndims]`,
+            where N and ndims are the number of values and number of dimensions in
+            the SparseTensor, respectively.
+        values (Tensor): A 1-D tensor of any type and shape `[N]`, which
+            supplies the values for each element in indices.
+        dense_shape: (tuple): A integer tuple of size `ndims`,
+            which specifies the dense_shape of the sparse tensor.
+
+    Returns:
+        SparseTensor, composed of `indices`, `values`, `dense_shape`.
+
+    Examples:
+        >>> # Create a SparseTensor.
+        >>> indices = Tensor([[0, 1], [1, 2]])
+        >>> values = Tensor([1, 2], dtype=ms.float32)
+        >>> dense_shape = (3, 4)
+        >>> sparse_tensor = SparseTensor(indices, values, dense_shape)
+        >>>
+        >>> # Get atrr.
+        >>> indices = sparse_tensor.indices()
+        >>> values = sparse_tensor.values()
+        >>> dense_shape = sparse_tensor.dense_shape()
+    """
     def __init__(self, indices, values, dense_shape):
         raise NotImplementedError
