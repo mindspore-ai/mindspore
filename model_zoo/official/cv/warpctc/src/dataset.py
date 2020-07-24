@@ -24,24 +24,25 @@ from PIL import Image
 from src.config import config as cf
 
 
-class _CaptchaDataset():
+class _CaptchaDataset:
     """
     create train or evaluation dataset for warpctc
 
     Args:
         img_root_dir(str): root path of images
         max_captcha_digits(int): max number of digits in images.
-        blank(int): value reserved for blank label, default is 10. When parsing label from image file names, if label
-        length is less than max_captcha_digits, the remaining labels are padding with blank.
+        device_target(str): platform of training, support Ascend and GPU.
     """
 
-    def __init__(self, img_root_dir, max_captcha_digits, blank=10):
+    def __init__(self, img_root_dir, max_captcha_digits, device_target='Ascend'):
         if not os.path.exists(img_root_dir):
             raise RuntimeError("the input image dir {} is invalid!".format(img_root_dir))
         self.img_root_dir = img_root_dir
         self.img_names = [i for i in os.listdir(img_root_dir) if i.endswith('.png')]
         self.max_captcha_digits = max_captcha_digits
-        self.blank = blank
+        self.target = device_target
+        self.blank = 10 if self.target == 'Ascend' else 0
+        self.label_length = [len(os.path.splitext(n)[0].split('-')[-1]) for n in self.img_names]
 
     def __len__(self):
         return len(self.img_names)
@@ -54,27 +55,33 @@ class _CaptchaDataset():
         image = np.array(im)
         label_str = os.path.splitext(img_name)[0]
         label_str = label_str[label_str.find('-') + 1:]
-        label = [int(i) for i in label_str]
-        label.extend([int(self.blank)] * (self.max_captcha_digits - len(label)))
+        if self.target == 'Ascend':
+            label = [int(i) for i in label_str]
+            label.extend([int(self.blank)] * (self.max_captcha_digits - len(label)))
+        else:
+            label = [int(i) + 1 for i in label_str]
+            length = len(label)
+            label.extend([int(self.blank)] * (self.max_captcha_digits - len(label)))
+            label.append(length)
         label = np.array(label)
         return image, label
 
 
-def create_dataset(dataset_path, repeat_num=1, batch_size=1):
+def create_dataset(dataset_path, batch_size=1, num_shards=1, shard_id=0, device_target='Ascend'):
     """
      create train or evaluation dataset for warpctc
 
      Args:
         dataset_path(int): dataset path
-        repeat_num(int): dataset repetition num, default is 1
         batch_size(int): batch size of generated dataset, default is 1
+        num_shards(int): number of devices
+        shard_id(int): rank id
+        device_target(str): platform of training, support Ascend and GPU
      """
-    rank_size = int(os.environ.get("RANK_SIZE")) if os.environ.get("RANK_SIZE") else 1
-    rank_id = int(os.environ.get("RANK_ID")) if os.environ.get("RANK_ID") else 0
 
-    dataset = _CaptchaDataset(dataset_path, cf.max_captcha_digits)
-    ds = de.GeneratorDataset(dataset, ["image", "label"], shuffle=True, num_shards=rank_size, shard_id=rank_id)
-    ds.set_dataset_size(m.ceil(len(dataset) / rank_size))
+    dataset = _CaptchaDataset(dataset_path, cf.max_captcha_digits, device_target)
+    ds = de.GeneratorDataset(dataset, ["image", "label"], shuffle=True, num_shards=num_shards, shard_id=shard_id)
+    ds.set_dataset_size(m.ceil(len(dataset) / num_shards))
     image_trans = [
         vc.Rescale(1.0 / 255.0, 0.0),
         vc.Normalize([0.9010, 0.9049, 0.9025], std=[0.1521, 0.1347, 0.1458]),
@@ -87,6 +94,5 @@ def create_dataset(dataset_path, repeat_num=1, batch_size=1):
     ds = ds.map(input_columns=["image"], num_parallel_workers=8, operations=image_trans)
     ds = ds.map(input_columns=["label"], num_parallel_workers=8, operations=label_trans)
 
-    ds = ds.batch(batch_size)
-    ds = ds.repeat(repeat_num)
+    ds = ds.batch(batch_size, drop_remainder=True)
     return ds

@@ -47,3 +47,25 @@ class CTCLoss(_Loss):
         labels_values = self.reshape(label, (-1,))
         loss, _ = self.ctc_loss(logit, self.labels_indices, labels_values, self.sequence_length)
         return loss
+
+
+class CTCLossV2(_Loss):
+    """
+     CTCLoss definition
+
+     Args:
+        max_sequence_length(int): max number of sequence length. For captcha images, the value is equal to image width
+        batch_size(int): batch size of input logits
+     """
+
+    def __init__(self, max_sequence_length, batch_size):
+        super(CTCLossV2, self).__init__()
+        self.input_length = Tensor(np.array([max_sequence_length] * batch_size), mstype.int32)
+        self.reshape = P.Reshape()
+        self.ctc_loss = P.CTCLossV2()
+
+    def construct(self, logit, label):
+        labels_values = label[:, :-1]
+        labels_length = label[:, -1]
+        loss, _ = self.ctc_loss(logit, labels_values, self.input_length, labels_length)
+        return loss

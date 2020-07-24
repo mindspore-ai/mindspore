@@ -31,7 +31,8 @@ These is an example of training Warpctc with self-generated captcha image datase
 └──warpct
   ├── README.md
   ├── script
-    ├── run_distribute_train.sh         # launch distributed training(8 pcs)
+    ├── run_distribute_train.sh         # launch distributed training in Ascend(8 pcs)
+    ├── run_distribute_train_for_gpu.sh # launch distributed training in GPU
     ├── run_eval.sh                     # launch evaluation
     ├── run_process_data.sh             # launch dataset generation
     └── run_standalone_train.sh         # launch standalone training(1 pcs)
@@ -75,22 +76,31 @@ Parameters for both training and evaluation can be set in config.py.
 #### Usage
 
 ```
-# distributed training
+# distributed training in Ascend
 Usage: sh run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [DATASET_PATH]
 
+# distributed training in GPU
+Usage: sh run_distribute_train_for_gpu.sh [RANK_SIZE] [DATASET_PATH]
+
 # standalone training
-Usage: sh run_standalone_train.sh [DATASET_PATH]  
+Usage: sh run_standalone_train.sh [DATASET_PATH] [PLATFORM]
 ```
 
 
 #### Launch
 
 ```
-# distribute training example
+# distribute training example in Ascend
 sh run_distribute_train.sh rank_table.json ../data/train
 
-# standalone training example
-sh run_standalone_train.sh ../data/train
+# distribute training example in GPU
+sh run_distribute_train.sh 8 ../data/train
+
+# standalone training example in Ascend
+sh run_standalone_train.sh ../data/train Ascend
+
+# standalone training example in GPU
+sh run_standalone_train.sh ../data/train GPU
 ```
 
 > About rank_table.json, you can refer to the [distributed training tutorial](https://www.mindspore.cn/tutorial/en/master/advanced_use/distributed_training.html).
@@ -116,14 +126,17 @@ Epoch: [  5/ 30], step: [   98/   98], loss: [0.0186/0.0186], time: [75199.5809]
 
 ```
 # evaluation
-Usage: sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
+Usage: sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM]
 ```
 
 #### Launch
 
 ```
-# evaluation example
-sh run_eval.sh ../data/test warpctc-30-98.ckpt
+# evaluation example in Ascend
+sh run_eval.sh ../data/test warpctc-30-98.ckpt Ascend
+
+# evaluation example in GPU
+sh run_eval.sh ../data/test warpctc-30-98.ckpt GPU
 ```
 
 > checkpoint can be produced in training process.
