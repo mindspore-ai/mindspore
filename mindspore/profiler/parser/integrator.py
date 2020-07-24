@@ -178,7 +178,6 @@ class Integrator:
             row = src_file.readline()
             if not row.startswith('serial_number'):
                 return
-            _ = src_file.readline()
             with open(save_file_path, 'w') as save_file:
                 csv_writer = csv.writer(save_file)
                 csv_writer.writerow(self._header_aicpu)
