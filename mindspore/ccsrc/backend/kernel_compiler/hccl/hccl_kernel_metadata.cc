@@ -20,11 +20,17 @@
 #include "utils/utils.h"
 #include "backend/kernel_compiler/hccl/hcom_util.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "frontend/parallel/context.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 std::string GetKernelFormat(const CNodePtr &kernel_node, size_t index) {
+  auto parallel_context_instance = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context_instance);
+  if (parallel_context_instance->enable_parallel_optimizer()) {
+    return kOpFormat_DEFAULT;
+  }
   const std::set<std::string> kReduceNoSupportedSet = {kOpFormat_FRAC_Z, kOpFormat_FRACTAL_Z_C04, kOpFormat_C1HWNCoC0};
   auto op_name = AnfAlgo::GetCNodeName(kernel_node);
   auto format = AnfAlgo::GetPrevNodeOutputFormat(kernel_node, index);
