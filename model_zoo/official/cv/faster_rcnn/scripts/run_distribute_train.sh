@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 2 ]
+if [ $# -lt 1 ] || [ $# -gt 2 ]
 then 
     echo "Usage: sh run_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [PRETRAINED_PATH]"
 exit 1
@@ -27,11 +27,9 @@ get_real_path(){
     echo "$(realpath -m $PWD/$1)"
   fi
 }
-PATH1=$(get_real_path $1)
-PATH2=$(get_real_path $2)
 
+PATH1=$(get_real_path $1)
 echo $PATH1
-echo $PATH2
 
 if [ ! -f $PATH1 ]
 then 
@@ -39,10 +37,15 @@ then
 exit 1
 fi 
 
-if [ ! -f $PATH2 ]
-then 
-    echo "error: PRETRAINED_PATH=$PATH2 is not a file"
-exit 1
+if [ $# == 2 ]
+then
+    PATH2=$(get_real_path $2)
+    echo $PATH2
+    if [ ! -f $PATH2 ]
+    then 
+	echo "error: PRETRAINED_PATH=$PATH2 is not a file"
+    exit 1
+    fi
 fi
 
 ulimit -u unlimited
@@ -63,7 +66,11 @@ do
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
-    python train.py --do_train=True  --device_id=$i --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM \
-                    --pre_trained=$PATH2 &> log &
+    if [ $# == 2 ]
+    then 
+        python train.py --do_train=True  --device_id=$i --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM --pre_trained=$PATH2 &> log &
+    else
+        python train.py --do_train=True  --device_id=$i --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM  &> log &
+    fi
     cd ..
 done
