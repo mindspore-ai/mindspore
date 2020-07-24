@@ -58,6 +58,7 @@ class SentencePieceTokenizerOp : public TensorOp {
   std::string file_path_;
   SPieceTokenizerLoadType load_type_;
   sentencepiece::SentencePieceProcessor processor_;
+  Status model_status_;
 };
 }  // namespace dataset
 }  // namespace mindspore
