@@ -56,7 +56,13 @@ Status Iterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds) {
     RETURN_STATUS_UNEXPECTED("Input is null pointer");
   } else {
     // Convert the current root node.
-    auto root_op = ds->Build()->front();
+    auto root_ops = ds->Build();
+    if (root_ops.empty()) {
+      RETURN_STATUS_UNEXPECTED("Node operation returned nothing");
+    }
+
+    auto root_op = root_ops.front();
+
     RETURN_UNEXPECTED_IF_NULL(root_op);
 
     RETURN_IF_NOT_OK(tree_->AssociateNode(root_op));
@@ -70,20 +76,22 @@ Status Iterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds) {
       // Iterate through all the direct children of the first element in our BFS queue
       for (auto child : node_pair.first->children) {
         auto child_ops = child->Build();
-        RETURN_UNEXPECTED_IF_NULL(child_ops);
+        if (child_ops.empty()) {
+          RETURN_STATUS_UNEXPECTED("Node operation returned nothing");
+        }
         auto node_op = node_pair.second;
         // Iterate through all the DatasetOps returned by calling Build on the last Dataset object, associate them
         // with the execution tree and add the child and parent relationship between the nodes
         // Note that some Dataset objects might return more than one DatasetOps
         // e.g. MapDataset will return MapOp and ProjectOp if project_columns is set for MapDataset
-        for (auto child_op : *child_ops) {
+        for (auto child_op : child_ops) {
           RETURN_IF_NOT_OK(tree_->AssociateNode(child_op));
           RETURN_IF_NOT_OK(node_op->AddChild(child_op));
           node_op = child_op;
         }
         // Add the child and the last element of the returned DatasetOps (which is now the leaf node in our current
         // execution tree) to the BFS queue
-        q.push(std::make_pair(child, child_ops->back()));
+        q.push(std::make_pair(child, child_ops.back()));
       }
     }
     RETURN_IF_NOT_OK(tree_->AssignRoot(root_op));
