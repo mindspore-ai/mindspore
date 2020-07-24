@@ -84,8 +84,6 @@ class Type : public Value {
   friend std::ostream &operator<<(std::ostream &os, const Type &type);
   friend std::ostream &operator<<(std::ostream &os, const TypePtr type);
 
-  const bool parse_info_ = true;
-
  private:
   TypeId meta_type_;
   bool is_generic_;

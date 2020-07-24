@@ -214,7 +214,6 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                          // Define python MetaTensor class.
                          (void)py::class_<MetaTensor, std::shared_ptr<MetaTensor>>(*m, "MetaTensor")
                            .def(py::init<TypePtr, const std::vector<int>>(), py::arg("dtype"), py::arg("shape"))
-                           .def_readonly(PYTHON_META_TENSOR_FLAG, &MetaTensor::parse_info_)
                            .def_property_readonly("dtype", &MetaTensor::Dtype, "Get the MetaTensor's dtype.")
                            .def_property_readonly("shape", &MetaTensor::shape, "Get the MetaTensor's shape.")
                            .def(py::pickle(
@@ -268,7 +267,6 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                   return TensorPy::MakeTensor(py::array(input), type_ptr);
                                 }),
                                 py::arg("input"), py::arg("dtype") = nullptr)
-                           .def_readonly(PYTHON_TENSOR_FLAG, &Tensor::parse_info_)
                            .def_property("init_flag", &Tensor::is_init, &Tensor::set_init_flag)
                            .def_property_readonly("dtype", &Tensor::Dtype, R"mydelimiter(
                              Get the tensor's data type.

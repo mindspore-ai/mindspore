@@ -367,8 +367,7 @@ py::object VectorRefToPyData(const VectorRef &value_list) {
 }
 
 AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py::object &type_obj) {
-  if ((py::isinstance<py::list>(shape_obj) || py::isinstance<py::tuple>(shape_obj)) &&
-      py::hasattr(type_obj, PYTHON_DTYPE_FLAG)) {
+  if ((py::isinstance<py::list>(shape_obj) || py::isinstance<py::tuple>(shape_obj)) && py::isinstance<Type>(type_obj)) {
     auto ret_vec = shape_obj.cast<std::vector<int>>();
     auto ret_dtype = type_obj.cast<TypePtr>();
     MS_EXCEPTION_IF_NULL(ret_dtype);

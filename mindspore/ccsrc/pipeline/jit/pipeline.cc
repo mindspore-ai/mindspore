@@ -125,7 +125,7 @@ py::bool_ VerifyInputSignature(const py::list input_signature, const py::tuple i
 
   size_t count = 0;
   for (auto arg_obj : inputs) {
-    if (py::hasattr(arg_obj, PYTHON_TENSOR_FLAG)) {
+    if (py::isinstance<Tensor>(arg_obj)) {
       MS_LOG(DEBUG) << "Verify Tensor";
       std::shared_ptr<Tensor> m_tensor = arg_obj.cast<std::shared_ptr<Tensor>>();
       if (m_tensor == nullptr) {

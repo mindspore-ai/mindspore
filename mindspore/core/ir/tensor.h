@@ -224,8 +224,6 @@ class Tensor : public MetaTensor {
 
   std::string id() const { return id_; }
 
-  const bool parse_info_ = true;
-
  private:
   bool init_flag_{false};
   TensorDataPtr data_{nullptr};

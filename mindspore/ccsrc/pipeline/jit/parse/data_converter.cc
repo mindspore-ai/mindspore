@@ -361,15 +361,15 @@ bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature
     ConvertDataClass(obj, &converted);
   } else if (py::hasattr(obj, PYTHON_PRIMITIVE_FLAG)) {
     ret = ConvertPrimitive(obj, &converted, use_signature);
-  } else if (py::hasattr(obj, PYTHON_METAFUNCGRAPH_FLAG)) {
+  } else if (py::isinstance<MetaFuncGraph>(obj)) {
     ret = ConvertMetaFuncGraph(obj, &converted, use_signature);
-  } else if (py::hasattr(obj, PYTHON_DTYPE_FLAG)) {
+  } else if (py::isinstance<Type>(obj)) {
     ret = ConvertDataType(obj, &converted);
-  } else if (py::hasattr(obj, PYTHON_TENSOR_FLAG)) {
+  } else if (py::isinstance<Tensor>(obj)) {
     ret = ConvertTensor(obj, &converted);
-  } else if (py::hasattr(obj, PYTHON_META_TENSOR_FLAG)) {
+  } else if (py::isinstance<MetaTensor>(obj)) {
     ret = ConvertMetaTensor(obj, &converted);
-  } else if (py::hasattr(obj, PYTHON_ENVINSTANCE_FLAG)) {
+  } else if (py::isinstance<EnvInstance>(obj)) {
     std::shared_ptr<EnvInstance> env = obj.cast<std::shared_ptr<EnvInstance>>();
     converted = env;
   } else if (py::hasattr(obj, PYTHON_CLASS_MEMBER_NAMESPACE)) {
