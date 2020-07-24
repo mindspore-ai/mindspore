@@ -45,6 +45,7 @@ class Cifar10Dataset;
 class Cifar100Dataset;
 class ImageFolderDataset;
 class MnistDataset;
+class VOCDataset;
 // Dataset Op classes (in alphabetical order)
 class BatchDataset;
 class MapDataset;
@@ -53,6 +54,7 @@ class RenameDataset;
 class RepeatDataset;
 class ShuffleDataset;
 class SkipDataset;
+class TakeDataset;
 class ZipDataset;
 
 /// \brief Function to create a Cifar10 Dataset
@@ -95,6 +97,24 @@ std::shared_ptr<ImageFolderDataset> ImageFolder(std::string dataset_dir, bool de
 ///    A `RandomSampler` will be used to randomly iterate the entire dataset
 /// \return Shared pointer to the current MnistDataset
 std::shared_ptr<MnistDataset> Mnist(std::string dataset_dir, std::shared_ptr<SamplerObj> sampler = nullptr);
+
+/// \brief Function to create a VOCDataset
+/// \notes The generated dataset has multi-columns :
+///        - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['label', dtype=uint32],
+///                                     ['difficult', dtype=uint32], ['truncate', dtype=uint32]].
+///        - task='Segmentation', column: [['image', dtype=uint8], ['target',dtype=uint8]].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] task Set the task type of reading voc data, now only support "Segmentation" or "Detection"
+/// \param[in] mode Set the data list txt file to be readed
+/// \param[in] class_indexing A str-to-int mapping from label name to index
+/// \param[in] decode Decode the images after reading
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
+///    will be used to randomly iterate the entire dataset
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::string &task = "Segmentation",
+                                const std::string &mode = "train",
+                                const std::map<std::string, int32_t> &class_index = {}, bool decode = false,
+                                std::shared_ptr<SamplerObj> sampler = nullptr);
 
 /// \class Dataset datasets.h
 /// \brief A base class to represent a dataset in the data pipeline.
@@ -191,6 +211,12 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] count Number of elements the dataset to be skipped.
   /// \return Shared pointer to the current SkipDataset
   std::shared_ptr<SkipDataset> Skip(int32_t count);
+
+  /// \brief Function to create a TakeDataset
+  /// \notes Takes count elements in this dataset.
+  /// \param[in] count Number of elements the dataset to be taken.
+  /// \return Shared pointer to the current Dataset
+  std::shared_ptr<Dataset> Take(int32_t count = -1);
 
   /// \brief Function to create a Zip Dataset
   /// \notes Applies zip to the dataset
@@ -297,6 +323,32 @@ class MnistDataset : public Dataset {
 
  private:
   std::string dataset_dir_;
+  std::shared_ptr<SamplerObj> sampler_;
+};
+
+class VOCDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  VOCDataset(const std::string &dataset_dir, const std::string &task, const std::string &mode,
+             const std::map<std::string, int32_t> &class_index, bool decode, std::shared_ptr<SamplerObj> sampler);
+
+  /// \brief Destructor
+  ~VOCDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return shared pointer to the list of newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::string dataset_dir_;
+  std::string task_;
+  std::string mode_;
+  std::map<std::string, int32_t> class_index_;
+  bool decode_;
   std::shared_ptr<SamplerObj> sampler_;
 };
 
@@ -444,6 +496,26 @@ class SkipDataset : public Dataset {
 
  private:
   int32_t skip_count_;
+};
+
+class TakeDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  explicit TakeDataset(int32_t count);
+
+  /// \brief Destructor
+  ~TakeDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return shared pointer to the list of newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  int32_t take_count_;
 };
 
 class ZipDataset : public Dataset {
