@@ -101,14 +101,14 @@ std::map<int32_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
   int build_failed_num = 0;
   while (!build_manger->IsAllTaskFinish()) {
     int task_id = -1;
-    char *task_result = nullptr;
-    char *pre_build_result = nullptr;
+    std::string task_result;
+    std::string pre_build_result;
     auto ret = build_manger->WaitOne(&task_id, &task_result, &pre_build_result);
     if (!ret) {
       MS_EXCEPTION(ArgumentError) << "Build Failed. wait one ret:" << ret << ", task id:" << task_id;
     }
 
-    if ((task_result != nullptr) && (strcmp(task_result, "Success") != 0)) {
+    if (task_result != "Success") {
       MS_LOG(INFO) << "Fusion warning: Fuison op build failed, err log: " << task_result
                    << "  change to single op build.";
       build_failed_num++;

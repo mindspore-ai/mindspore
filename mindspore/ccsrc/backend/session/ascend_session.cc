@@ -43,7 +43,6 @@
 #include "common/utils.h"
 #include "backend/optimizer/common/helper.h"
 #include "runtime/device/kernel_runtime_manager.h"
-#include "backend/kernel_compiler/tbe/tbe_python_funcs.h"
 #include "utils/config_manager.h"
 #include "utils/base_ref_extends.h"
 #include "debug/tensor_load.h"

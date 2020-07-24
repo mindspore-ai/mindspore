@@ -24,7 +24,6 @@
 #include "backend/kernel_compiler/tbe/tbe_kernel_build.h"
 #include "nlohmann/json.hpp"
 #include "utils/context/ms_context.h"
-#include "backend/kernel_compiler/tbe/tbe_python_funcs.h"
 #include "backend/optimizer/common/helper.h"
 #include "backend/kernel_compiler/tbe/tbe_convert_utils.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
@@ -32,6 +31,7 @@
 #include "backend/kernel_compiler/tbe/tbe_kernel_select/tbe_kernel_reduce_selecter.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_select/common_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_select/tbe_property_checker.h"
+#include "backend/session/kernel_build_client.h"
 
 namespace mindspore {
 namespace kernel {
@@ -314,7 +314,7 @@ bool TbeKernelSelect::TbeCheckSupported(
   if (!ret) {
     MS_LOG(EXCEPTION) << "Gen tbe single kernel json for check support failed.";
   }
-  ret = TbePythonFuncs::CheckSupported(kernel_json);
+  ret = KernelBuildClient::Instance().CheckSupported(kernel_json.dump());
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_tmp, cnode_ptr_.get());
   return ret;
 }
@@ -488,7 +488,7 @@ std::string TbeKernelSelect::OpSelectFormat() {
   if (!ret) {
     MS_LOG(EXCEPTION) << "GenTbeSingleKernelJson failed.";
   }
-  res_json_str = TbePythonFuncs::OpSelectFormat(kernel_json);
+  res_json_str = KernelBuildClient::Instance().SelectFormat(kernel_json.dump());
   if (res_json_str.empty()) {
     MS_LOG(EXCEPTION) << "op select format error.";
   }

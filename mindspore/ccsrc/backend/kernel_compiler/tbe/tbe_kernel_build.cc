@@ -22,7 +22,6 @@
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/tbe/tbe_adapter.h"
-#include "backend/kernel_compiler/tbe/tbe_python_funcs.h"
 #include "backend/kernel_compiler/tbe/tbe_convert_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
 

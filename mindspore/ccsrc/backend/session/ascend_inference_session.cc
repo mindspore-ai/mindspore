@@ -24,7 +24,6 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "common/utils.h"
 #include "common/trans.h"
-#include "backend/kernel_compiler/tbe/tbe_python_funcs.h"
 #include "utils/config_manager.h"
 #include "utils/base_ref_extends.h"
 

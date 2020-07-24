@@ -376,13 +376,13 @@ kernel::KernelModPtr AscendDeviceAddress::CompileTransDataAndObtainKernelMod(con
   }
   while (!build_manager->IsAllTaskFinish()) {
     int task_id = -1;
-    char *task_result = nullptr;
-    char *pre_build_result = nullptr;
+    std::string task_result;
+    std::string pre_build_result;
     auto ret = build_manager->WaitOne(&task_id, &task_result, &pre_build_result);
     if (!ret) {
       MS_EXCEPTION(ArgumentError) << "Build Failed. wait one ret:" << ret << ", task id:" << task_id;
     }
-    if ((task_result != nullptr) && (strcmp(task_result, "Success") != 0)) {
+    if (task_result != "Success") {
       MS_EXCEPTION(ArgumentError) << "task compile Failed, task id:" << task_id << ", cause:" << task_result;
     }
     (void)build_manager->TaskFinishProcess(task_id, false);
