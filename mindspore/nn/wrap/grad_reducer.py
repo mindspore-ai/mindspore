@@ -25,7 +25,7 @@ import mindspore.common.dtype as mstype
 reduce_opt = C.MultitypeFuncGraph("reduce_opt")
 
 
-def _init_allreduce_operators(length):
+def _init_allreduce_operators(length, split_indices):
     """ initialize allreduce communication operators"""
     group = 1
     fusion = ()
@@ -318,7 +318,7 @@ class DistributedGradReducer(Cell):
         split_indices = auto_parallel_context().get_all_reduce_fusion_split_indices()
         if is_parallel_optimizer and split_indices:
             self.split_fusion = True
-            self.op_list = _init_allreduce_operators(len(parameters))
+            self.op_list = _init_allreduce_operators(len(parameters), split_indices)
         else:
             self.split_fusion = False
             self.allreduce = AllReduce().add_prim_attr('fusion', 1)
@@ -344,10 +344,10 @@ class DistributedGradReducer(Cell):
         if self.split_fusion:
             if self.enable_parameter_server:
                 new_grad = self.map_(F.partial(reduce_opt, self.degree, self.mean, self.allgather),
-                                     self.opt_list, self.allreduce_filter, grads, self.ps_parameters)
+                                     self.op_list, self.allreduce_filter, grads, self.ps_parameters)
             else:
                 new_grad = self.map_(F.partial(reduce_opt, self.degree, self.mean, self.allgather),
-                                     self.opt_list, self.allreduce_filter, grads)
+                                     self.op_list, self.allreduce_filter, grads)
         else:
             if self.enable_parameter_server:
                 new_grad = self.map_(F.partial(reduce_opt, self.degree, self.mean, self.allgather,
