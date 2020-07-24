@@ -40,17 +40,29 @@ namespace api {
 
 class TensorOperation;
 class SamplerObj;
+// Datasets classes (in alphabetical order)
+class Cifar10Dataset;
 class ImageFolderDataset;
 class MnistDataset;
+// Dataset Op classes (in alphabetical order)
 class BatchDataset;
-class RepeatDataset;
 class MapDataset;
+class ProjectDataset;
+class RenameDataset;
+class RepeatDataset;
 class ShuffleDataset;
 class SkipDataset;
-class Cifar10Dataset;
-class ProjectDataset;
 class ZipDataset;
-class RenameDataset;
+
+/// \brief Function to create a Cifar10 Dataset
+/// \notes The generated dataset has two columns ['image', 'label']
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] num_samples The number of images to be included in the dataset
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
+///    will be used to randomly iterate the entire dataset
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, int32_t num_samples,
+                                        std::shared_ptr<SamplerObj> sampler);
 
 /// \brief Function to create an ImageFolderDataset
 /// \notes A source dataset that reads images from a tree of directories
@@ -75,16 +87,6 @@ std::shared_ptr<ImageFolderDataset> ImageFolder(std::string dataset_dir, bool de
 ///    A `RandomSampler` will be used to randomly iterate the entire dataset
 /// \return Shared pointer to the current MnistDataset
 std::shared_ptr<MnistDataset> Mnist(std::string dataset_dir, std::shared_ptr<SamplerObj> sampler = nullptr);
-
-/// \brief Function to create a Cifar10 Dataset
-/// \notes The generated dataset has two columns ['image', 'label']
-/// \param[in] dataset_dir Path to the root directory that contains the dataset
-/// \param[in] num_samples The number of images to be included in the dataset
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
-///    will be used to randomly iterate the entire dataset
-/// \return Shared pointer to the current Dataset
-std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, int32_t num_samples,
-                                        std::shared_ptr<SamplerObj> sampler);
 
 /// \class Dataset datasets.h
 /// \brief A base class to represent a dataset in the data pipeline.
@@ -128,14 +130,6 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \return Shared pointer to the current BatchDataset
   std::shared_ptr<BatchDataset> Batch(int32_t batch_size, bool drop_remainder = false);
 
-  /// \brief Function to create a RepeatDataset
-  /// \notes Repeats this dataset count times. Repeat indefinitely if count is -1
-  /// \param[in] count Number of times the dataset should be repeated
-  /// \return Shared pointer to the current Dataset
-  /// \note Repeat will return shared pointer to `Dataset` instead of `RepeatDataset`
-  ///    due to a limitation in the current implementation
-  std::shared_ptr<Dataset> Repeat(int32_t count = -1);
-
   /// \brief Function to create a MapDataset
   /// \notes Applies each operation in operations to this dataset
   /// \param[in] operations Vector of operations to be applied on the dataset. Operations are
@@ -156,6 +150,28 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
                                   std::vector<std::string> output_columns = {},
                                   const std::vector<std::string> &project_columns = {});
 
+  /// \brief Function to create a Project Dataset
+  /// \notes Applies project to the dataset
+  /// \param[in] columns The name of columns to project
+  /// \return Shared pointer to the current Dataset
+  std::shared_ptr<ProjectDataset> Project(const std::vector<std::string> &columns);
+
+  /// \brief Function to create a Rename Dataset
+  /// \notes Renames the columns in the input dataset
+  /// \param[in] input_columns List of the input columns to rename
+  /// \param[in] output_columns List of the output columns
+  /// \return Shared pointer to the current Dataset
+  std::shared_ptr<RenameDataset> Rename(const std::vector<std::string> &input_columns,
+                                        const std::vector<std::string> &output_columns);
+
+  /// \brief Function to create a RepeatDataset
+  /// \notes Repeats this dataset count times. Repeat indefinitely if count is -1
+  /// \param[in] count Number of times the dataset should be repeated
+  /// \return Shared pointer to the current Dataset
+  /// \note Repeat will return shared pointer to `Dataset` instead of `RepeatDataset`
+  ///    due to a limitation in the current implementation
+  std::shared_ptr<Dataset> Repeat(int32_t count = -1);
+
   /// \brief Function to create a Shuffle Dataset
   /// \notes Randomly shuffles the rows of this dataset
   /// \param[in] buffer_size The size of the buffer (must be larger than 1) for shuffling
@@ -168,25 +184,11 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \return Shared pointer to the current SkipDataset
   std::shared_ptr<SkipDataset> Skip(int32_t count);
 
-  /// \brief Function to create a Project Dataset
-  /// \notes Applies project to the dataset
-  /// \param[in] columns The name of columns to project
-  /// \return Shared pointer to the current Dataset
-  std::shared_ptr<ProjectDataset> Project(const std::vector<std::string> &columns);
-
   /// \brief Function to create a Zip Dataset
   /// \notes Applies zip to the dataset
   /// \param[in] datasets A list of shared pointer to the datasets that we want to zip
   /// \return Shared pointer to the current Dataset
   std::shared_ptr<ZipDataset> Zip(const std::vector<std::shared_ptr<Dataset>> &datasets);
-
-  /// \brief Function to create a Rename Dataset
-  /// \notes Renames the columns in the input dataset
-  /// \param[in] input_columns List of the input columns to rename
-  /// \param[in] output_columns List of the output columns
-  /// \return Shared pointer to the current Dataset
-  std::shared_ptr<RenameDataset> Rename(const std::vector<std::string> &input_columns,
-                                        const std::vector<std::string> &output_columns);
 
  protected:
   std::vector<std::shared_ptr<Dataset>> children;
@@ -198,6 +200,28 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
 };
 
 /* ####################################### Derived Dataset classes ################################# */
+
+class Cifar10Dataset : public Dataset {
+ public:
+  /// \brief Constructor
+  Cifar10Dataset(const std::string &dataset_dir, int32_t num_samples, std::shared_ptr<SamplerObj> sampler);
+
+  /// \brief Destructor
+  ~Cifar10Dataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::string dataset_dir_;
+  int32_t num_samples_;
+  std::shared_ptr<SamplerObj> sampler_;
+};
 
 /// \class ImageFolderDataset
 /// \brief A Dataset derived class to represent ImageFolder dataset
@@ -273,6 +297,71 @@ class BatchDataset : public Dataset {
   std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map_;
 };
 
+class MapDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  MapDataset(std::vector<std::shared_ptr<TensorOperation>> operations, std::vector<std::string> input_columns = {},
+             std::vector<std::string> output_columns = {}, const std::vector<std::string> &columns = {});
+
+  /// \brief Destructor
+  ~MapDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::vector<std::shared_ptr<TensorOperation>> operations_;
+  std::vector<std::string> input_columns_;
+  std::vector<std::string> output_columns_;
+  std::vector<std::string> project_columns_;
+};
+
+class ProjectDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  explicit ProjectDataset(const std::vector<std::string> &columns);
+
+  /// \brief Destructor
+  ~ProjectDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::vector<std::string> columns_;
+};
+
+class RenameDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  explicit RenameDataset(const std::vector<std::string> &input_columns, const std::vector<std::string> &output_columns);
+
+  /// \brief Destructor
+  ~RenameDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::vector<std::string> input_columns_;
+  std::vector<std::string> output_columns_;
+};
+
 class RepeatDataset : public Dataset {
  public:
   /// \brief Constructor
@@ -329,72 +418,6 @@ class SkipDataset : public Dataset {
   int32_t skip_count_;
 };
 
-class MapDataset : public Dataset {
- public:
-  /// \brief Constructor
-  MapDataset(std::vector<std::shared_ptr<TensorOperation>> operations, std::vector<std::string> input_columns = {},
-             std::vector<std::string> output_columns = {}, const std::vector<std::string> &columns = {});
-
-  /// \brief Destructor
-  ~MapDataset() = default;
-
-  /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return The list of shared pointers to the newly created DatasetOps
-  std::vector<std::shared_ptr<DatasetOp>> Build() override;
-
-  /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
-
- private:
-  std::vector<std::shared_ptr<TensorOperation>> operations_;
-  std::vector<std::string> input_columns_;
-  std::vector<std::string> output_columns_;
-  std::vector<std::string> project_columns_;
-};
-
-class Cifar10Dataset : public Dataset {
- public:
-  /// \brief Constructor
-  Cifar10Dataset(const std::string &dataset_dir, int32_t num_samples, std::shared_ptr<SamplerObj> sampler);
-
-  /// \brief Destructor
-  ~Cifar10Dataset() = default;
-
-  /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return The list of shared pointers to the newly created DatasetOps
-  std::vector<std::shared_ptr<DatasetOp>> Build() override;
-
-  /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
-
- private:
-  std::string dataset_dir_;
-  int32_t num_samples_;
-  std::shared_ptr<SamplerObj> sampler_;
-};
-
-class ProjectDataset : public Dataset {
- public:
-  /// \brief Constructor
-  explicit ProjectDataset(const std::vector<std::string> &columns);
-
-  /// \brief Destructor
-  ~ProjectDataset() = default;
-
-  /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return The list of shared pointers to the newly created DatasetOps
-  std::vector<std::shared_ptr<DatasetOp>> Build() override;
-
-  /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
-
- private:
-  std::vector<std::string> columns_;
-};
-
 class ZipDataset : public Dataset {
  public:
   /// \brief Constructor
@@ -410,27 +433,6 @@ class ZipDataset : public Dataset {
   /// \brief Parameters validation
   /// \return bool true if all the params are valid
   bool ValidateParams() override;
-};
-
-class RenameDataset : public Dataset {
- public:
-  /// \brief Constructor
-  explicit RenameDataset(const std::vector<std::string> &input_columns, const std::vector<std::string> &output_columns);
-
-  /// \brief Destructor
-  ~RenameDataset() = default;
-
-  /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return The list of shared pointers to the newly created DatasetOps
-  std::vector<std::shared_ptr<DatasetOp>> Build() override;
-
-  /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
-
- private:
-  std::vector<std::string> input_columns_;
-  std::vector<std::string> output_columns_;
 };
 
 }  // namespace api

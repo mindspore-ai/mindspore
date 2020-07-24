@@ -17,12 +17,14 @@
 #include <fstream>
 
 #include "minddata/dataset/include/datasets.h"
-#include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/include/samplers.h"
+#include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/engine/dataset_iterator.h"
+// Source dataset headers (in alphabetical order)
+#include "minddata/dataset/engine/datasetops/source/cifar_op.h"
 #include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
 #include "minddata/dataset/engine/datasetops/source/mnist_op.h"
-#include "minddata/dataset/engine/datasetops/source/cifar_op.h"
+// Dataset operator headers (in alphabetical order)
 #include "minddata/dataset/engine/datasetops/batch_op.h"
 #include "minddata/dataset/engine/datasetops/map_op.h"
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
@@ -31,6 +33,7 @@
 #include "minddata/dataset/engine/datasetops/project_op.h"
 #include "minddata/dataset/engine/datasetops/zip_op.h"
 #include "minddata/dataset/engine/datasetops/rename_op.h"
+// Sampler headers (in alphabetical order)
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/random_sampler.h"
 
@@ -79,6 +82,18 @@ Dataset::Dataset() {
   connector_que_size_ = cfg->op_connector_size();
 }
 
+// FUNCTIONS TO CREATE DATASETS FOR LEAF-NODE DATASETS
+// (In alphabetical order)
+
+// Function to create a Cifar10Dataset.
+std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, int32_t num_samples,
+                                        std::shared_ptr<SamplerObj> sampler) {
+  auto ds = std::make_shared<Cifar10Dataset>(dataset_dir, num_samples, sampler);
+
+  // Call derived class validation method.
+  return ds->ValidateParams() ? ds : nullptr;
+}
+
 // Function to create a ImageFolderDataset.
 std::shared_ptr<ImageFolderDataset> ImageFolder(std::string dataset_dir, bool decode,
                                                 std::shared_ptr<SamplerObj> sampler, std::set<std::string> extensions,
@@ -101,14 +116,8 @@ std::shared_ptr<MnistDataset> Mnist(std::string dataset_dir, std::shared_ptr<Sam
   return ds->ValidateParams() ? ds : nullptr;
 }
 
-// Function to create a Cifar10Dataset.
-std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, int32_t num_samples,
-                                        std::shared_ptr<SamplerObj> sampler) {
-  auto ds = std::make_shared<Cifar10Dataset>(dataset_dir, num_samples, sampler);
-
-  // Call derived class validation method.
-  return ds->ValidateParams() ? ds : nullptr;
-}
+// FUNCTIONS TO CREATE DATASETS FOR DATASET OPS
+// (In alphabetical order)
 
 // Function to create a Batch dataset
 std::shared_ptr<BatchDataset> Dataset::Batch(int32_t batch_size, bool drop_remainder) {
@@ -127,14 +136,12 @@ std::shared_ptr<BatchDataset> Dataset::Batch(int32_t batch_size, bool drop_remai
   return ds;
 }
 
-// Function to create Repeat dataset.
-std::shared_ptr<Dataset> Dataset::Repeat(int32_t count) {
-  // Workaround for repeat == 1, do not inject repeat.
-  if (count == 1) {
-    return shared_from_this();
-  }
-
-  auto ds = std::make_shared<RepeatDataset>(count);
+// Function to create a Map dataset.
+std::shared_ptr<MapDataset> Dataset::Map(std::vector<std::shared_ptr<TensorOperation>> operations,
+                                         std::vector<std::string> input_columns,
+                                         std::vector<std::string> output_columns,
+                                         const std::vector<std::string> &project_columns) {
+  auto ds = std::make_shared<MapDataset>(operations, input_columns, output_columns, project_columns);
 
   if (!ds->ValidateParams()) {
     return nullptr;
@@ -145,12 +152,41 @@ std::shared_ptr<Dataset> Dataset::Repeat(int32_t count) {
   return ds;
 }
 
-// Function to create a Map dataset.
-std::shared_ptr<MapDataset> Dataset::Map(std::vector<std::shared_ptr<TensorOperation>> operations,
-                                         std::vector<std::string> input_columns,
-                                         std::vector<std::string> output_columns,
-                                         const std::vector<std::string> &project_columns) {
-  auto ds = std::make_shared<MapDataset>(operations, input_columns, output_columns, project_columns);
+// Function to create a ProjectDataset.
+std::shared_ptr<ProjectDataset> Dataset::Project(const std::vector<std::string> &columns) {
+  auto ds = std::make_shared<ProjectDataset>(columns);
+  // Call derived class validation method.
+  if (!ds->ValidateParams()) {
+    return nullptr;
+  }
+
+  ds->children.push_back(shared_from_this());
+
+  return ds;
+}
+
+// Function to create a RenameDataset.
+std::shared_ptr<RenameDataset> Dataset::Rename(const std::vector<std::string> &input_columns,
+                                               const std::vector<std::string> &output_columns) {
+  auto ds = std::make_shared<RenameDataset>(input_columns, output_columns);
+  // Call derived class validation method.
+  if (!ds->ValidateParams()) {
+    return nullptr;
+  }
+
+  ds->children.push_back(shared_from_this());
+
+  return ds;
+}
+
+// Function to create Repeat dataset.
+std::shared_ptr<Dataset> Dataset::Repeat(int32_t count) {
+  // Workaround for repeat == 1, do not inject repeat.
+  if (count == 1) {
+    return shared_from_this();
+  }
+
+  auto ds = std::make_shared<RepeatDataset>(count);
 
   if (!ds->ValidateParams()) {
     return nullptr;
@@ -189,33 +225,6 @@ std::shared_ptr<SkipDataset> Dataset::Skip(int32_t count) {
   return ds;
 }
 
-// Function to create a ProjectDataset.
-std::shared_ptr<ProjectDataset> Dataset::Project(const std::vector<std::string> &columns) {
-  auto ds = std::make_shared<ProjectDataset>(columns);
-  // Call derived class validation method.
-  if (!ds->ValidateParams()) {
-    return nullptr;
-  }
-
-  ds->children.push_back(shared_from_this());
-
-  return ds;
-}
-
-// Function to create a RenameDataset.
-std::shared_ptr<RenameDataset> Dataset::Rename(const std::vector<std::string> &input_columns,
-                                               const std::vector<std::string> &output_columns) {
-  auto ds = std::make_shared<RenameDataset>(input_columns, output_columns);
-  // Call derived class validation method.
-  if (!ds->ValidateParams()) {
-    return nullptr;
-  }
-
-  ds->children.push_back(shared_from_this());
-
-  return ds;
-}
-
 // Function to create a Zip dataset
 std::shared_ptr<ZipDataset> Dataset::Zip(const std::vector<std::shared_ptr<Dataset>> &datasets) {
   // Default values
@@ -231,6 +240,9 @@ std::shared_ptr<ZipDataset> Dataset::Zip(const std::vector<std::shared_ptr<Datas
   return ds;
 }
 
+// OTHER FUNCTIONS
+// (In alphabetical order)
+
 // Helper function to create default RandomSampler.
 std::shared_ptr<SamplerObj> CreateDefaultSampler() {
   const int32_t num_samples = 0;  // 0 means to sample all ids.
@@ -239,6 +251,48 @@ std::shared_ptr<SamplerObj> CreateDefaultSampler() {
 }
 
 /* ####################################### Derived Dataset classes ################################# */
+
+// DERIVED DATASET CLASSES LEAF-NODE DATASETS
+// (In alphabetical order)
+
+// Constructor for Cifar10Dataset
+Cifar10Dataset::Cifar10Dataset(const std::string &dataset_dir, int32_t num_samples, std::shared_ptr<SamplerObj> sampler)
+    : dataset_dir_(dataset_dir), num_samples_(num_samples), sampler_(sampler) {}
+
+bool Cifar10Dataset::ValidateParams() {
+  if (dataset_dir_.empty()) {
+    MS_LOG(ERROR) << "No dataset path is specified.";
+    return false;
+  }
+  if (num_samples_ < 0) {
+    MS_LOG(ERROR) << "Number of samples cannot be negative";
+    return false;
+  }
+  return true;
+}
+
+// Function to build CifarOp
+std::vector<std::shared_ptr<DatasetOp>> Cifar10Dataset::Build() {
+  // A vector containing shared pointer to the Dataset Ops that this object will create
+  std::vector<std::shared_ptr<DatasetOp>> node_ops;
+
+  // If user does not specify Sampler, create a default sampler based on the shuffle variable.
+  if (sampler_ == nullptr) {
+    sampler_ = CreateDefaultSampler();
+  }
+
+  // Do internal Schema generation.
+  auto schema = std::make_unique<DataSchema>();
+  RETURN_EMPTY_IF_ERROR(schema->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kCv, 1)));
+  TensorShape scalar = TensorShape::CreateScalar();
+  RETURN_EMPTY_IF_ERROR(
+    schema->AddColumn(ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar)));
+
+  node_ops.push_back(std::make_shared<CifarOp>(CifarOp::CifarType::kCifar10, num_workers_, rows_per_buffer_,
+                                               dataset_dir_, connector_que_size_, std::move(schema),
+                                               std::move(sampler_->Build())));
+  return node_ops;
+}
 
 ImageFolderDataset::ImageFolderDataset(std::string dataset_dir, bool decode, std::shared_ptr<SamplerObj> sampler,
                                        bool recursive, std::set<std::string> extensions,
@@ -315,6 +369,9 @@ std::vector<std::shared_ptr<DatasetOp>> MnistDataset::Build() {
   return node_ops;
 }
 
+// DERIVED DATASET CLASSES LEAF-NODE DATASETS
+// (In alphabetical order)
+
 BatchDataset::BatchDataset(int32_t batch_size, bool drop_remainder, bool pad, std::vector<std::string> cols_to_map,
                            std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map)
     : batch_size_(batch_size),
@@ -347,24 +404,6 @@ bool BatchDataset::ValidateParams() {
   return true;
 }
 
-RepeatDataset::RepeatDataset(uint32_t count) : repeat_count_(count) {}
-
-std::vector<std::shared_ptr<DatasetOp>> RepeatDataset::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
-  node_ops.push_back(std::make_shared<RepeatOp>(repeat_count_));
-  return node_ops;
-}
-
-bool RepeatDataset::ValidateParams() {
-  if (repeat_count_ <= 0) {
-    MS_LOG(ERROR) << "Repeat: Repeat count cannot be negative";
-    return false;
-  }
-
-  return true;
-}
 MapDataset::MapDataset(std::vector<std::shared_ptr<TensorOperation>> operations, std::vector<std::string> input_columns,
                        std::vector<std::string> output_columns, const std::vector<std::string> &project_columns)
     : operations_(operations),
@@ -403,6 +442,69 @@ std::vector<std::shared_ptr<DatasetOp>> MapDataset::Build() {
 bool MapDataset::ValidateParams() {
   if (operations_.empty()) {
     MS_LOG(ERROR) << "Map: No operation is specified.";
+    return false;
+  }
+
+  return true;
+}
+
+// Function to build ProjectOp
+ProjectDataset::ProjectDataset(const std::vector<std::string> &columns) : columns_(columns) {}
+
+bool ProjectDataset::ValidateParams() {
+  if (columns_.empty()) {
+    MS_LOG(ERROR) << "No columns are specified.";
+    return false;
+  }
+  return true;
+}
+
+std::vector<std::shared_ptr<DatasetOp>> ProjectDataset::Build() {
+  // A vector containing shared pointer to the Dataset Ops that this object will create
+  std::vector<std::shared_ptr<DatasetOp>> node_ops;
+
+  node_ops.push_back(std::make_shared<ProjectOp>(columns_));
+  return node_ops;
+}
+
+// Function to build RenameOp
+RenameDataset::RenameDataset(const std::vector<std::string> &input_columns,
+                             const std::vector<std::string> &output_columns)
+    : input_columns_(input_columns), output_columns_(output_columns) {}
+
+bool RenameDataset::ValidateParams() {
+  if (input_columns_.empty() || output_columns_.empty()) {
+    MS_LOG(ERROR) << "input and output columns must be specified";
+    return false;
+  }
+  if (input_columns_.size() != output_columns_.size()) {
+    MS_LOG(ERROR) << "input and output columns must be the same size";
+    return false;
+  }
+  return true;
+}
+
+std::vector<std::shared_ptr<DatasetOp>> RenameDataset::Build() {
+  // A vector containing shared pointer to the Dataset Ops that this object will create
+  std::vector<std::shared_ptr<DatasetOp>> node_ops;
+
+  node_ops.push_back(std::make_shared<RenameOp>(input_columns_, output_columns_, connector_que_size_));
+  return node_ops;
+}
+
+RepeatDataset::RepeatDataset(uint32_t count) : repeat_count_(count) {}
+
+std::vector<std::shared_ptr<DatasetOp>> RepeatDataset::Build() {
+  // A vector containing shared pointer to the Dataset Ops that this object will create
+  std::vector<std::shared_ptr<DatasetOp>> node_ops;
+
+  node_ops.push_back(std::make_shared<RepeatOp>(repeat_count_));
+  return node_ops;
+}
+
+bool RepeatDataset::ValidateParams() {
+  if (repeat_count_ <= 0) {
+    MS_LOG(ERROR) << "Repeat: Repeat count cannot be negative";
     return false;
   }
 
@@ -455,64 +557,6 @@ bool SkipDataset::ValidateParams() {
   return true;
 }
 
-// Constructor for Cifar10Dataset
-Cifar10Dataset::Cifar10Dataset(const std::string &dataset_dir, int32_t num_samples, std::shared_ptr<SamplerObj> sampler)
-    : dataset_dir_(dataset_dir), num_samples_(num_samples), sampler_(sampler) {}
-
-bool Cifar10Dataset::ValidateParams() {
-  if (dataset_dir_.empty()) {
-    MS_LOG(ERROR) << "No dataset path is specified.";
-    return false;
-  }
-  if (num_samples_ < 0) {
-    MS_LOG(ERROR) << "Number of samples cannot be negative";
-    return false;
-  }
-  return true;
-}
-
-// Function to build CifarOp
-std::vector<std::shared_ptr<DatasetOp>> Cifar10Dataset::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
-  // If user does not specify Sampler, create a default sampler based on the shuffle variable.
-  if (sampler_ == nullptr) {
-    sampler_ = CreateDefaultSampler();
-  }
-
-  // Do internal Schema generation.
-  auto schema = std::make_unique<DataSchema>();
-  RETURN_EMPTY_IF_ERROR(schema->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kCv, 1)));
-  TensorShape scalar = TensorShape::CreateScalar();
-  RETURN_EMPTY_IF_ERROR(
-    schema->AddColumn(ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar)));
-
-  node_ops.push_back(std::make_shared<CifarOp>(CifarOp::CifarType::kCifar10, num_workers_, rows_per_buffer_,
-                                               dataset_dir_, connector_que_size_, std::move(schema),
-                                               std::move(sampler_->Build())));
-  return node_ops;
-}
-
-// Function to build ProjectOp
-ProjectDataset::ProjectDataset(const std::vector<std::string> &columns) : columns_(columns) {}
-
-bool ProjectDataset::ValidateParams() {
-  if (columns_.empty()) {
-    MS_LOG(ERROR) << "No columns are specified.";
-    return false;
-  }
-  return true;
-}
-
-std::vector<std::shared_ptr<DatasetOp>> ProjectDataset::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
-  node_ops.push_back(std::make_shared<ProjectOp>(columns_));
-  return node_ops;
-}
-
 // Function to build ZipOp
 ZipDataset::ZipDataset() {}
 
@@ -523,31 +567,6 @@ std::vector<std::shared_ptr<DatasetOp>> ZipDataset::Build() {
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
   node_ops.push_back(std::make_shared<ZipOp>(rows_per_buffer_, connector_que_size_));
-  return node_ops;
-}
-
-// Function to build RenameOp
-RenameDataset::RenameDataset(const std::vector<std::string> &input_columns,
-                             const std::vector<std::string> &output_columns)
-    : input_columns_(input_columns), output_columns_(output_columns) {}
-
-bool RenameDataset::ValidateParams() {
-  if (input_columns_.empty() || output_columns_.empty()) {
-    MS_LOG(ERROR) << "input and output columns must be specified";
-    return false;
-  }
-  if (input_columns_.size() != output_columns_.size()) {
-    MS_LOG(ERROR) << "input and output columns must be the same size";
-    return false;
-  }
-  return true;
-}
-
-std::vector<std::shared_ptr<DatasetOp>> RenameDataset::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
-  node_ops.push_back(std::make_shared<RenameOp>(input_columns_, output_columns_, connector_que_size_));
   return node_ops;
 }
 
