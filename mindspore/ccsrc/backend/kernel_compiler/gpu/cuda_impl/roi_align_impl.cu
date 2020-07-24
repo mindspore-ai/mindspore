@@ -16,13 +16,6 @@
 
 #include "roi_align_impl.cuh"
 #include "runtime/device/gpu/cuda_common.h"
-template <typename T>
-inline __device__ T gpu_atomic_add(const T val, T *address);
-
-template <>
-inline __device__ float gpu_atomic_add(const float val, float *address) {
-  return atomicAdd(address, val);
-}
 
 template <typename T>
 __device__ void bilinear_interpolate(const int height, const int width, T y, T x, int *x_low, int *y_low, int *x_high,
@@ -201,11 +194,11 @@ __global__ void ROIAlignGradKernel(size_t size, const T *dy, const T *roi_boxes,
 
     for (int iy = 0; iy < roi_bin_grid_h; iy++) {
       // Shift half point RIGHT for y / x,  while previous scaled roi shift half point LEFT
-      const T y =
-        roi_start_h + ph * bin_size_h + static_cast<T>(iy + .5f) * bin_size_h / static_cast<T>(roi_bin_grid_h);
+      const T y = roi_start_h + static_cast<T>(ph) * bin_size_h +
+                  static_cast<T>(iy + .5f) * bin_size_h / static_cast<T>(roi_bin_grid_h);
       for (int ix = 0; ix < roi_bin_grid_w; ix++) {
-        const T x =
-          roi_start_w + pw * bin_size_w + static_cast<T>(ix + .5f) * bin_size_w / static_cast<T>(roi_bin_grid_w);
+        const T x = roi_start_w + static_cast<T>(pw) * bin_size_w +
+                    static_cast<T>(ix + .5f) * bin_size_w / static_cast<T>(roi_bin_grid_w);
         // bilinear interpolate by shifted y / x
         // calculate bilinear interpolation
         int x_low, y_low, x_high, y_high;
@@ -217,12 +210,28 @@ __global__ void ROIAlignGradKernel(size_t size, const T *dy, const T *roi_boxes,
         T g4 = top_diff_this_bin * w4 / count_points_in_grid_cell;
 
         if (x_low >= 0 && x_high >= 0 && y_low >= 0 && y_high >= 0) {
-          gpu_atomic_add(static_cast<T>(g1), dx + offset + y_low * width + x_low);
-          gpu_atomic_add(static_cast<T>(g2), dx + offset + y_low * width + x_high);
-          gpu_atomic_add(static_cast<T>(g3), dx + offset + y_high * width + x_low);
-          gpu_atomic_add(static_cast<T>(g4), dx + offset + y_high * width + x_high);
+          atomicAdd(dx + offset + y_low * width + x_low, static_cast<T>(g1));
+          atomicAdd(dx + offset + y_low * width + x_high, static_cast<T>(g2));
+          atomicAdd(dx + offset + y_high * width + x_low, static_cast<T>(g3));
+          atomicAdd(dx + offset + y_high * width + x_high, static_cast<T>(g4));
         }
       }
     }
   }
 }
+
+template <typename T>
+void ROIAlignGrad(const T *dy, const T *roi_boxes, int roi_rows, int roi_cols, T *dx, const T spatial_scale,
+                  const int sample_num, int roi_end_mode, const int channels, const int height, const int width,
+                  const int pooled_height, const int pooled_width, cudaStream_t cuda_stream) {
+  size_t size = roi_rows * channels * pooled_height * pooled_width;
+  ROIAlignGradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
+    size, dy, roi_boxes, roi_cols, dx, spatial_scale, sample_num, roi_end_mode, channels, height, width, pooled_height,
+    pooled_width);
+  return;
+}
+
+template void ROIAlignGrad<float>(const float *dy, const float *roi_boxes, int roi_rows, int roi_cols, float *dx,
+                                  const float spatial_scale, const int sample_num, int roi_end_mode, const int channels,
+                                  const int height, const int width, const int pooled_height, const int pooled_width,
+                                  cudaStream_t cuda_stream);
