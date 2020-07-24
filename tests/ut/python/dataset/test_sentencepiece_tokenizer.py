@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+import copy
 import mindspore.dataset.text as text
 import mindspore.dataset as ds
 from mindspore.dataset.text import SentencePieceModel, to_str, SPieceTokenizerOutType
@@ -121,6 +121,44 @@ def test_build_from_dataset():
             assert value == expect[key]
 
 
+def apply_func(dataset):
+    input_columns = ['text']
+    output_columns = ['text2']
+    dataset = dataset.rename(input_columns, output_columns)
+    return dataset
+
+
+def zip_test(dataset):
+    dataset_1 = copy.deepcopy(dataset)
+    dataset_2 = copy.deepcopy(dataset)
+    dataset_1 = dataset_1.apply(apply_func)
+    dataset_zip = ds.zip((dataset_1, dataset_2))
+    expect = ['▁I', '▁sa', 'w', '▁a', '▁girl', '▁with', '▁a', '▁te', 'les', 'co', 'pe', '.']
+    for i in dataset_zip.create_dict_iterator():
+        ret = to_str(i["text"])
+        for key, value in enumerate(ret):
+            assert value == expect[key]
+
+
+def concat_test(dataset):
+    dataset_1 = copy.deepcopy(dataset)
+    dataset = dataset.concat(dataset_1)
+    expect = ['▁I', '▁sa', 'w', '▁a', '▁girl', '▁with', '▁a', '▁te', 'les', 'co', 'pe', '.']
+    for i in dataset.create_dict_iterator():
+        ret = to_str(i["text"])
+        for key, value in enumerate(ret):
+            assert value == expect[key]
+
+def test_with_zip_concat():
+    data = ds.TextFileDataset(VOCAB_FILE, shuffle=False)
+    vocab = text.SentencePieceVocab.from_dataset(data, [""], 5000, 0.9995, SentencePieceModel.UNIGRAM, {})
+    tokenizer = text.SentencePieceTokenizer(vocab, out_type=SPieceTokenizerOutType.STRING)
+    dataset = ds.TextFileDataset(DATA_FILE, shuffle=False)
+    dataset = dataset.map(operations=tokenizer, num_parallel_workers=2)
+    zip_test(dataset)
+    concat_test(dataset)
+
+
 if __name__ == "__main__":
     test_from_vocab_to_str_UNIGRAM()
     test_from_vocab_to_str_BPE()
@@ -130,3 +168,4 @@ if __name__ == "__main__":
     test_from_file_to_str()
     test_from_file_to_int()
     test_build_from_dataset()
+    test_with_zip_concat()
