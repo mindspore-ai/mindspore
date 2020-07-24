@@ -130,7 +130,7 @@ class Optimizer(Cell):
             if self.dynamic_lr:
                 self.learning_rate = CellList(self.group_lr)
             else:
-                self.learning_rate = tuple(self.group_lr)
+                self.learning_rate = ParameterTuple(self.group_lr)
         else:
             self.learning_rate = self._build_single_lr(learning_rate, 'learning_rate')
         if self.is_group:
