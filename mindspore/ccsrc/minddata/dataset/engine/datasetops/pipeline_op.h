@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_PIPELINE_OP_H_
 
 #include <memory>
+#include <string>
 #include <vector>
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
 
@@ -42,6 +43,7 @@ class PipelineOp : public DatasetOp {
   // @param out - The output stream to write output to
   // @param show_all - A bool to control if you want to show all info or just a summary
   void Print(std::ostream &out, bool show_all) const override;
+  std::string Name() const override { return kPipelineOp; }
 
   // << Stream output operator overload
   // @notes This allows you to write the debug print info using stream operators

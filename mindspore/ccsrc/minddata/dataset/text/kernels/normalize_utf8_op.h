@@ -39,8 +39,6 @@ class NormalizeUTF8Op : public TensorOp {
 
   ~NormalizeUTF8Op() override = default;
 
-  void Print(std::ostream &out) const override { out << "NormalizeUTF8Op"; }
-
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
   std::string Name() const override { return kNormalizeUTF8Op; }

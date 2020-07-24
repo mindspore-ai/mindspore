@@ -40,7 +40,7 @@ class UniformAugOp : public TensorOp {
   // Destructor
   ~UniformAugOp() override = default;
 
-  void Print(std::ostream &out) const override { out << "UniformAugOp:: number of ops " << num_ops_; }
+  void Print(std::ostream &out) const override { out << Name() << ":: number of ops " << num_ops_; }
 
   // Overrides the base class compute function
   // @return Status - The error code return

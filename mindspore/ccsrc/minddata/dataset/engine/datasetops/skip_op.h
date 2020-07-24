@@ -82,7 +82,7 @@ class SkipOp : public PipelineOp {
 
   // Op name getter
   // @return Name of the current Op
-  std::string Name() const override { return "SkipOp"; }
+  std::string Name() const override { return kSkipOp; }
 
  private:
   int32_t max_skips_;   // The number of skips that the user requested

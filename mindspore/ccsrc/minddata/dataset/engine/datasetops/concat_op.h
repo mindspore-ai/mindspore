@@ -77,7 +77,7 @@ class ConcatOp : public PipelineOp {
 
   // Op name getter
   // @return Name of the current Op
-  std::string Name() const override { return "ConcatOp"; }
+  std::string Name() const override { return kConcatOp; }
 
   // Private function for computing the assignment of the column name map.
   // @return - Status

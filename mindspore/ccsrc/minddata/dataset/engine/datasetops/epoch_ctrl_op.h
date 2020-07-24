@@ -52,6 +52,7 @@ class EpochCtrlOp : public RepeatOp {
   // @param out - The output stream to write output to
   // @param show_all - A bool to control if you want to show all info or just a summary
   void Print(std::ostream &out, bool show_all) const override;
+  std::string Name() const override { return kEpochCtrlOp; }
 
   // This function returns the buffer that is at the top of our output connector. The caller is
   // typically our parent node, when the parent is asking us to provide the next buffer of data.

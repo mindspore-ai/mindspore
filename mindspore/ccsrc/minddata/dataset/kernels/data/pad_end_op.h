@@ -32,8 +32,6 @@ class PadEndOp : public TensorOp {
 
   ~PadEndOp() override = default;
 
-  void Print(std::ostream &out) const override { out << "PadEndOp"; }
-
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;

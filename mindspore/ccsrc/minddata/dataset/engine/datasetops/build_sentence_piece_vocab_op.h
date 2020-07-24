@@ -157,6 +157,8 @@ class BuildSentencePieceVocabOp : public PipelineOp {
 
   Status Reset() override { RETURN_STATUS_UNEXPECTED("Reset shouldn't be called in BuildSentencePieceVocabOp"); }
 
+  std::string Name() const override { return kBuildSentencePieceVocabOp; }
+
   // build the input params for sentence api
   std::unordered_map<std::string, std::string> BuildParams();
 

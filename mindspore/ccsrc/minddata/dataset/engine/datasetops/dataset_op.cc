@@ -239,6 +239,8 @@ void DatasetOp::Print(std::ostream &out, bool show_all) const {
     if (sampler_) {
       sampler_->Print(out, show_all);
     }
+  } else {
+    out << Name() << std::endl;
   }
 }
 

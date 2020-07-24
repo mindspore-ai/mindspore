@@ -45,8 +45,6 @@ class BasicTokenizerOp : public TensorOp {
 
   ~BasicTokenizerOp() override = default;
 
-  void Print(std::ostream &out) const override { out << "BasicTokenizerOp"; }
-
   Status Compute(const TensorRow &input, TensorRow *output) override;
 
  protected:

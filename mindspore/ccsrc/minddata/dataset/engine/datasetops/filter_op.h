@@ -129,7 +129,7 @@ class FilterOp : public ParallelOp {
 
   // Op name getter
   // @return Name of the current Op
-  std::string Name() const override { return "FilterOp"; }
+  std::string Name() const override { return kFilterOp; }
 
  private:
   // predicate_func python callable which returns a boolean value.

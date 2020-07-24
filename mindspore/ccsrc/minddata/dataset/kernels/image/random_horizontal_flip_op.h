@@ -44,8 +44,6 @@ class RandomHorizontalFlipOp : public TensorOp {
     return out;
   }
 
-  void Print(std::ostream &out) const override { out << "RandomHorizontalFlipOp"; }
-
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
   std::string Name() const override { return kRandomHorizontalFlipOp; }

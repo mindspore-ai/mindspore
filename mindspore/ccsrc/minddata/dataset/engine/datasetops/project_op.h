@@ -109,7 +109,7 @@ class ProjectOp : public PipelineOp {
 
   // Op name getter
   // @return Name of the current Op
-  std::string Name() const override { return "ProjectOp"; }
+  std::string Name() const override { return kProjectOp; }
 
  private:
   std::vector<std::string> columns_to_project_;

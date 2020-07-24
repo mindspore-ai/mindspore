@@ -86,7 +86,7 @@ class TakeOp : public PipelineOp {
 
   // Op name getter
   // @return Name of the current Op
-  std::string Name() const override { return "TakeOp"; }
+  std::string Name() const override { return kTakeOp; }
 
  private:
   int32_t max_takes_;   // The number of takes that the user requested

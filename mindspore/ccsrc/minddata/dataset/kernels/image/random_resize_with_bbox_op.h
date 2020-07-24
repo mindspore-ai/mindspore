@@ -42,7 +42,7 @@ class RandomResizeWithBBoxOp : public ResizeWithBBoxOp {
 
   // Description: A function that prints info about the node
   void Print(std::ostream &out) const override {
-    out << "RandomResizeWithBBoxOp: " << ResizeWithBBoxOp::size1_ << " " << ResizeWithBBoxOp::size2_;
+    out << Name() << ": " << ResizeWithBBoxOp::size1_ << " " << ResizeWithBBoxOp::size2_;
   }
 
   Status Compute(const TensorRow &input, TensorRow *output) override;

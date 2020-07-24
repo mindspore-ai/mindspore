@@ -47,10 +47,6 @@ class RandomColorAdjustOp : public TensorOp {
 
   ~RandomColorAdjustOp() override = default;
 
-  // Print function for RandomJitter.
-  // @param out output stream to print to.
-  void Print(std::ostream &out) const override { out << "RandomColorAdjustOp: "; }
-
   // Overrides the base class compute function.
   // Calls multiple transform functions in ImageUtils, this function takes an input tensor.
   // and transforms its data using openCV, the output memory is manipulated to contain the result.

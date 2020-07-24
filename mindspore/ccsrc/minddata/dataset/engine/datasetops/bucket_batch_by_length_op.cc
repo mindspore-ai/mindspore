@@ -107,8 +107,6 @@ Status BucketBatchByLengthOp::EoeReceived(int32_t) {
   return Status::OK();
 }
 
-void BucketBatchByLengthOp::Print(std::ostream &out, bool show_all) const { out << "BucketBatchByLengthOp\n"; }
-
 Status BucketBatchByLengthOp::operator()() {
   TaskManager::FindMe()->Post();
 

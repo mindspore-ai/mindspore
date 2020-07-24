@@ -37,7 +37,6 @@ class DecodeOp : public TensorOp {
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
-  void Print(std::ostream &out) const override { out << "DecodeOp"; }
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
   Status OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) override;
 

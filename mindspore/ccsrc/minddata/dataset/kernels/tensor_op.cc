@@ -48,8 +48,6 @@ Status TensorOp::Compute(const TensorRow &input, TensorRow *output) {
                 "Is this TensorOp oneToOne? If no, please implement this Compute() in the derived class.");
 }
 
-void TensorOp::Print(std::ostream &out) const { out << "TensorOp" << std::endl; }
-
 Status TensorOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
   if (inputs.size() != NumInput())
     return Status(StatusCode::kUnexpectedError,

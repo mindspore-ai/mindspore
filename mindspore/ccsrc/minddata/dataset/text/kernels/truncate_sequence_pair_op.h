@@ -36,8 +36,6 @@ class TruncateSequencePairOp : public TensorOp {
 
   ~TruncateSequencePairOp() override = default;
 
-  void Print(std::ostream &out) const override { out << "TruncateSequencePairOp"; }
-
   Status Compute(const TensorRow &input, TensorRow *output) override;
 
   std::string Name() const override { return kTruncateSequencePairOp; }

@@ -34,7 +34,7 @@ class ResizeWithBBoxOp : public ResizeOp {
 
   ~ResizeWithBBoxOp() override = default;
 
-  void Print(std::ostream &out) const override { out << "ResizeWithBBoxOp: " << size1_ << " " << size2_; }
+  void Print(std::ostream &out) const override { out << Name() << ": " << size1_ << " " << size2_; }
 
   Status Compute(const TensorRow &input, TensorRow *output) override;
 

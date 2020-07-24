@@ -31,8 +31,6 @@ class CaseFoldOp : public TensorOp {
 
   ~CaseFoldOp() override = default;
 
-  void Print(std::ostream &out) const override { out << "CaseFoldOp"; }
-
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
   std::string Name() const override { return kCaseFoldOp; }

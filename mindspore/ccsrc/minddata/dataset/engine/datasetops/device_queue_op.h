@@ -146,7 +146,7 @@ class DeviceQueueOp : public PipelineOp {
 
   // Op name getter
   // @return Name of the current Op
-  std::string Name() const override { return "DeviceQueueOp"; }
+  std::string Name() const override { return kDeviceQueueOp; }
 
  private:
   //  Name: checkExceptions(DataBuffer);

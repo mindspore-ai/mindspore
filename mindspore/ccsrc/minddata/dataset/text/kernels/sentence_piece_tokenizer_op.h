@@ -45,7 +45,7 @@ class SentencePieceTokenizerOp : public TensorOp {
   Status GetModelRealPath(const std::string &model_path, const std::string &filename);
 
   void Print(std::ostream &out) const override {
-    out << "SentencePieceTokenizerOp out_type = " << out_type_ << " load_type = " << load_type_;
+    out << Name() << " out_type = " << out_type_ << " load_type = " << load_type_;
   }
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;

@@ -163,7 +163,7 @@ class ShuffleOp : public PipelineOp {
 
   // Op name getter
   // @return Name of the current Op
-  std::string Name() const override { return "ShuffleOp"; }
+  std::string Name() const override { return kShuffleOp; }
 
  private:
   // Private function to add a new row to the shuffle buffer.

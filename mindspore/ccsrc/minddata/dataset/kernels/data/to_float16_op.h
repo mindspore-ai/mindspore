@@ -39,8 +39,6 @@ class ToFloat16Op : public TensorOp {
   // @return Status - The error code return
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
-  void Print(std::ostream &out) const override { out << "ToFloat16Op"; }
-
   Status OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) override;
 
   std::string Name() const override { return kToFloat16Op; }

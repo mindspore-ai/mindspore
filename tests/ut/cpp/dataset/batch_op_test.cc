@@ -78,7 +78,10 @@ std::shared_ptr<de::ExecutionTree> Build(std::vector<std::shared_ptr<de::Dataset
 TEST_F(MindDataTestBatchOp, TestSimpleBatch) {
   std::string schema_file = datasets_root_path_ + "/testBatchDataset/test.data";
   bool success = false;
-  auto tree = Build({TFReader(schema_file), Batch(12)});
+  const std::shared_ptr<de::BatchOp> &op = Batch(12);
+  EXPECT_EQ(op->Name(), "BatchOp");
+
+  auto tree = Build({TFReader(schema_file), op});
   tree->Prepare();
   Status rc = tree->Launch();
   if (rc.IsError()) {

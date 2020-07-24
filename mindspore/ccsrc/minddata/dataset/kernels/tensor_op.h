@@ -86,6 +86,9 @@
 namespace mindspore {
 namespace dataset {
 
+// base class
+constexpr char kTensorOp[] = "TensorOp";
+
 // image
 constexpr char kAutoContrastOp[] = "AutoContrastOp";
 constexpr char kBoundingBoxAugmentOp[] = "BoundingBoxAugmentOp";
@@ -140,7 +143,7 @@ constexpr char kRandomSelectSubpolicyOp[] = "RandomSelectSubpolicyOp";
 constexpr char kSentencepieceTokenizerOp[] = "SentencepieceTokenizerOp";
 
 // data
-constexpr char kConcatenateOp[] = "kConcatenateOp";
+constexpr char kConcatenateOp[] = "ConcatenateOp";
 constexpr char kDuplicateOp[] = "DuplicateOp";
 constexpr char kFillOp[] = "FillOp";
 constexpr char kMaskOp[] = "MaskOp";
@@ -163,7 +166,7 @@ class TensorOp {
 
   // A function that prints info about the tensor operation
   // @param out
-  virtual void Print(std::ostream &out) const;
+  virtual void Print(std::ostream &out) const { out << Name() << std::endl; }
 
   // Provide stream operator for displaying it
   // @param output stream

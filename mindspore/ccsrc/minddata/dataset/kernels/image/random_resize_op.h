@@ -40,9 +40,7 @@ class RandomResizeOp : public ResizeOp {
   ~RandomResizeOp() = default;
 
   // Description: A function that prints info about the node
-  void Print(std::ostream &out) const override {
-    out << "RandomResizeOp: " << ResizeOp::size1_ << " " << ResizeOp::size2_;
-  }
+  void Print(std::ostream &out) const override { out << Name() << ": " << ResizeOp::size1_ << " " << ResizeOp::size2_; }
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 

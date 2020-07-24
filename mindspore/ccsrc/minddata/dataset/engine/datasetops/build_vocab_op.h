@@ -135,6 +135,7 @@ class BuildVocabOp : public ParallelOp {
   /// \param[out] out The output stream to write output to
   /// \param[in] show_all A bool to control if you want to show all info or just a summary
   void Print(std::ostream &out, bool show_all) const override;
+  std::string Name() const override { return kBuildVocabOp; }
 
   /// \briefStream output operator overload
   /// \notes This allows you to write the debug print info using stream operators

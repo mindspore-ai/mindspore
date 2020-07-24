@@ -39,8 +39,6 @@ class RandomVerticalFlipWithBBoxOp : public TensorOp {
 
   ~RandomVerticalFlipWithBBoxOp() override = default;
 
-  void Print(std::ostream &out) const override { out << "RandomVerticalFlipWithBBoxOp"; }
-
   Status Compute(const TensorRow &input, TensorRow *output) override;
 
   std::string Name() const override { return kRandomVerticalFlipWithBBoxOp; }

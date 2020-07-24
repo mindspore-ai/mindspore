@@ -67,8 +67,6 @@ class SliceOp : public TensorOp {
 
   ~SliceOp() override = default;
 
-  void Print(std::ostream &out) const override { out << "SliceOp"; }
-
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
   std::string Name() const override { return kSliceOp; }
