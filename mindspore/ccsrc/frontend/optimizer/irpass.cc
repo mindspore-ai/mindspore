@@ -168,6 +168,8 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {
+  resolver_resolve_attr_ =
+    MakeSubstitution(std::make_shared<ResolveAttr>(), "resolver_resolve_attr", prim::kPrimGetAttr);
   resolver_resolve_ = MakeSubstitution(std::make_shared<ResolverResolve>(), "resolver_resolve", prim::kPrimResolve);
   resolver_getattr_ = MakeSubstitution(std::make_shared<ResolverGetattr>(), "resolver_getattr", prim::kPrimGetAttr);
 }

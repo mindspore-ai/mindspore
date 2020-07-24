@@ -118,6 +118,7 @@ class ResolveIRPassLib {
   ResolveIRPassLib();
   ~ResolveIRPassLib() = default;
 
+  SubstitutionPtr resolver_resolve_attr_;
   SubstitutionPtr resolver_resolve_;
   SubstitutionPtr resolver_getattr_;
 };
