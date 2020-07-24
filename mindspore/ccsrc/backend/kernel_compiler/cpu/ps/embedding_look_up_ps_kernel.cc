@@ -25,47 +25,40 @@ namespace mindspore {
 namespace kernel {
 namespace ps {
 using mindspore::parallel::ps::Util;
+constexpr int kAxis = 2;
 void EmbeddingLookUpPSKernel::InitKernel(
   const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
   const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
   input_shape_ = *(shape_vec[0]);
-  input_lens_ = 1;
-  for (auto shape : input_shape_) {
-    input_lens_ = input_lens_ * shape;
-  }
-  indices_shape_ = *(shape_vec[1]);
+  auto indices_shape = *(shape_vec[1]);
   indices_lens_ = 1;
-  for (auto shape : indices_shape_) {
+  for (auto shape : indices_shape) {
     indices_lens_ = indices_lens_ * shape;
   }
-  output_shape_ = *(shape_vec[2]);
-  axis_ = 2;
-  reduce_scatter_flag_ = false;
+  auto output_shape = *(shape_vec[2]);
 
   size_t offset = 0;
   for (size_t i = 0; i < rank_id_; i++) {
-    offset += Util::LocalShard(input_shape_[axis_], i, pserver_num_);
+    offset += Util::LocalShard(input_shape_[kAxis], i, pserver_num_);
   }
   offset_ = offset;
-  split_num_ = pserver_num_;
 
   // input shape should be sharded after computing offset_;
-  Shard(&input_shape_, axis_);
+  Shard(&input_shape_, kAxis);
 
   size_t output_size =
-    std::accumulate(output_shape_.begin(), output_shape_.end(), sizeof(float), std::multiplies<size_t>());
+    std::accumulate(output_shape.begin(), output_shape.end(), sizeof(float), std::multiplies<size_t>());
   output_size_list_.emplace_back(output_size);
   CPUKernelUtils::ExpandDimsTo4(&input_shape_);
-  CPUKernelUtils::ExpandDimsTo4(&output_shape_);
 }
 
 void EmbeddingLookUpPSKernel::ReInit(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
   const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
-  const auto &indices_shape_ = *(shape_vec[0]);
-  indices_lens_ = indices_shape_[0];
+  const auto &indices_shape = *(shape_vec[0]);
+  indices_lens_ = indices_shape[0];
 
   size_t output_size = sizeof(float) * indices_lens_;
-  for (size_t i = axis_ + 1; i < input_shape_.size(); i++) {
+  for (size_t i = kAxis + 1; i < input_shape_.size(); i++) {
     output_size *= input_shape_[i];
   }
   output_size_list_.clear();
