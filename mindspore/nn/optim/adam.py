@@ -450,5 +450,5 @@ class AdamWeightDecay(Optimizer):
                                           self.parameters, self.moments1, self.moments2,
                                           gradients, self.decay_flags, self.optim_filter)
         if self.use_parallel:
-            optim_result = self.broadcast_params(optim_result)
+            self.broadcast_params(optim_result)
         return optim_result

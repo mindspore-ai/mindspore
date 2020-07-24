@@ -466,7 +466,7 @@ class Optimizer(Cell):
             param_group.append(F.make_tuple())
             key_group.append(F.make_tuple())
         for i in range(self.param_length):
-            param_group[self.param_rank[i]] = param_group[self.param_rank[i]] + (optim_result[i],)
+            param_group[self.param_rank[i]] = param_group[self.param_rank[i]] + (self.parameters[i],)
             key = P.MakeRefKey(self.param_names[i])()
             key_group[self.param_rank[i]] = key_group[self.param_rank[i]] + (key,)
         new_param_group = []
@@ -476,9 +476,9 @@ class Optimizer(Cell):
             new_param_group.append(next_params)
             for i in range(F.tuple_len(next_params)):
                 F.assign(key_group[root][i], next_params[i])
-        status = True
+        status = F.control_depend(optim_result, new_param_group[0][0])
         for i in range(self.dev_num - 1):
-            status = F.control_depend(new_param_group[i][0], new_param_group[i+1])
+            status = F.depend(F.control_depend(new_param_group[i], new_param_group[i+1][0]), status)
 
         return status
 
