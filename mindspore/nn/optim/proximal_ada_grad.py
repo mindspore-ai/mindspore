@@ -99,7 +99,7 @@ class ProximalAdagrad(Optimizer):
         l2 (float): l2 regularization strength, must be greater than or equal to zero. Default: 0.0.
         use_locking (bool): If True use locks for update operation. Default: False.
         loss_scale (float): Value for the loss scale. It should be not less than 1.0. Default: 1.0.
-        wegith_decay (float): Weight decay value to multiply weight, should be in range [0.0, 1.0]. Default: 0.0.
+        weight_decay (float): Weight decay value to multiply weight, should be in range [0.0, 1.0]. Default: 0.0.
 
     Inputs:
         - **grads** (tuple[Tensor]) - The gradients of `params` in optimizer, the shape is as same as the `params`
