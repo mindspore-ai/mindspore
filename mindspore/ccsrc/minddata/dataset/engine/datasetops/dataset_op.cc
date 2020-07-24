@@ -388,6 +388,10 @@ uint32_t DatasetOp::GenerateCRC(const std::shared_ptr<DatasetOp> &op) {
   op->tree_->Print(ss, op);
   std::string ss_str = ss.str();
 
+  // Filter out the Num workers field when generating the check sum
+  ss_str = std::regex_replace(ss_str, std::regex("Num workers.*\n"), "");
+  ss_str = std::regex_replace(ss_str, std::regex("\\[workers.*\\]"), "");
+
   // Filter out the Operator control flags field when generating the check sum
   ss_str = std::regex_replace(ss_str, std::regex("Operator control flags.*\n"), "");
 
@@ -399,6 +403,8 @@ uint32_t DatasetOp::GenerateCRC(const std::shared_ptr<DatasetOp> &op) {
   // cache_client later. So we filter out these two fields to allow cache sharing.
   ss_str = std::regex_replace(ss_str, std::regex("Cache crc.*\n"), "");
   ss_str = std::regex_replace(ss_str, std::regex("Server cache id.*\n"), "");
+
+  MS_LOG(DEBUG) << "Printing the tree for generating crc:\n" << ss_str;
 
   uint32_t cache_crc = system::Crc32c::GetMaskCrc32cValue(ss_str.c_str(), ss_str.length());
   return cache_crc;
