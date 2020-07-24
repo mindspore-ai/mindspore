@@ -387,16 +387,10 @@ AbstractBasePtr InferImplMakeIndexedSlices(const AnalysisEnginePtr &, const Prim
       MS_EXCEPTION(TypeError) << "The " << i << "th element of dense_shape must be positive, but got "
                               << dense_shape_vec[i];
     }
-    if (i == 0) {
-      if (dense_shape_vec[i] < values_shp[i]) {
-        MS_EXCEPTION(TypeError) << "The " << i << "th element of dense_shape should be greator or equal to the " << i
-                                << "th dimension of values " << values_shp[i] << ", but got " << dense_shape_vec[i];
-      }
-    } else {
-      if (dense_shape_vec[i] != values_shp[i]) {
-        MS_EXCEPTION(TypeError) << "The " << i << "th element of dense_shape must be same with the " << i
-                                << "th dimension of values " << values_shp[i] << ", but got " << dense_shape_vec[i];
-      }
+    // The 0th mode might be less or exceed dense_shape[0] due to duplicated selection
+    if (i != 0 && dense_shape_vec[i] != values_shp[i]) {
+      MS_EXCEPTION(TypeError) << "The " << i << "th element of dense_shape must be same with the " << i
+                              << "th dimension of values " << values_shp[i] << ", but got " << dense_shape_vec[i];
     }
   }
   auto ret = std::make_shared<AbstractIndexedSlices>(values->element()->BuildType(), dense_shape_vec);
