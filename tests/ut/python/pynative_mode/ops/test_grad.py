@@ -41,7 +41,7 @@ def test_grad():
 
 
 @non_graph_engine
-def test_expand_dims_grad():
+def Xtest_expand_dims_grad():
     """ test_expand_dims_grad """
     input_tensor = Tensor(np.array([[2, 2], [2, 2]]))
     expand_dims = P.ExpandDims()
