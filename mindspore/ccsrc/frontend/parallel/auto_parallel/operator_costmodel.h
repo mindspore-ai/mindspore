@@ -195,6 +195,8 @@ class SoftmaxCost : public OperatorCost {
                                     int32_t) const override;
 };
 using SoftmaxCostPtr = std::shared_ptr<SoftmaxCost>;
+using TileCost = SoftmaxCost;
+using TileCostPtr = std::shared_ptr<TileCost>;
 
 class TmpIdentityCost : public OperatorCost {
  public:

@@ -182,6 +182,7 @@ constexpr char RELU[] = "ReLU";
 constexpr char ONEHOT[] = "OneHot";
 constexpr char DROPOUT_DO_MASK[] = "DropoutDoMask";
 constexpr char DROPOUT_GEN_MASK[] = "DropoutGenMask";
+constexpr char TILE[] = "Tile";
 constexpr char REDUCE_MAX[] = "ReduceMax";
 constexpr char REDUCE_MIN[] = "ReduceMin";
 constexpr char REDUCE_SUM[] = "ReduceSum";
