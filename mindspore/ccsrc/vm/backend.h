@@ -43,50 +43,19 @@ class Backend {
 
   LinkFuncType convert_fn() { return convert_fn_; }
   std::string name() { return name_; }
-  virtual void SimulateRun(FinalVMPtr, FuncGraphPtr) {}
-  virtual SwitchCondStatus SetSimuCond(const BaseRef &, bool) { return kCondOk; }
   virtual bool GetCond(const BaseRef &c, bool *value);
   virtual bool GetIndex(const BaseRef &c, int *value);
-  virtual void SetSwitchGraph() {}
-  virtual void SetSwitchActive(const BaseRef &, bool) {}
-  virtual void RecallGraphInput(const FuncGraphPtr &, const VectorRef &, const BaseRef &) {}
-  virtual void SetGraphUserInputs(const FuncGraphPtr &, const FuncGraphPtr &, const AnfNodePtrList &) {}
   virtual GraphId CompileGraph(NotNull<FuncGraphPtr> fg) { return kInvalidGraphId; }
-  void set_curr_switch(const BaseRef &value) {
-    curr_switch_ = value;
-    is_switch_call_ = true;
-  }
-
-  BaseRef curr_switch() { return curr_switch_; }
   virtual void Link(GraphId) {}
-  virtual LinConvertResult GetMultiGraphRun(const FuncGraphPtr &) { return LinConvertResult(); }
+  virtual void SetDebugger() {}
 
-  LinConvertResult multi_result() { return multi_result_; }
-  void set_multi_result(const LinConvertResult &value) { multi_result_ = value; }
-  AnfNodePtr final_output() const { return final_output_; }
   bool is_multi_graph_sink() const { return is_multi_graph_sink_; }
   void set_is_multi_graph_sink(bool flag) { is_multi_graph_sink_ = flag; }
-  bool simu_flag() const { return simu_flag_; }
-  bool is_switch_call() const { return is_switch_call_; }
-  void set_simu_flag(bool simu) { simu_flag_ = simu; }
-
-  virtual void SetDebugger() {}
 
  protected:
   std::string name_;
   LinkFuncType convert_fn_;
-  BaseRef curr_switch_;  // curr switch node
   bool is_multi_graph_sink_;
-  bool is_switch_call_;
-  bool simu_flag_;
-  LinConvertResult multi_result_;
-  AnfNodePtr final_output_;
-  std::unordered_map<FuncGraphPtr, std::pair<FuncGraphPtr, AnfNodePtrList>> graph_user_inputs_;
-};
-
-struct CondGraph {
-  bool curr_cond;
-  std::unordered_map<bool, GraphId> cond_graph_map;
 };
 
 class MsBackend : public Backend {
@@ -98,16 +67,7 @@ class MsBackend : public Backend {
   VectorRef MsRunGraph(const GraphId &g, const VectorRef &args, const std::string &target = "");
 
   VectorRef MsSimuRunGraph(const GraphId &g, const VectorRef &args);
-  void SimulateRun(FinalVMPtr rt, FuncGraphPtr root) override;
-  SwitchCondStatus SetSimuCond(const BaseRef &c, bool value) override;
-
-  void SetSwitchGraph() override;
-  void SetSwitchActive(const BaseRef &c, bool cond) override;
-  void RecallGraphInput(const FuncGraphPtr &, const VectorRef &, const BaseRef &) override;
-  void SetGraphUserInputs(const FuncGraphPtr &, const FuncGraphPtr &, const AnfNodePtrList &) override;
   void Link(GraphId) override;
-  AnfNodePtr ConvertGraphInput(const FuncGraphPtr &, const AnfNodePtr &);
-  LinConvertResult GetMultiGraphRun(const FuncGraphPtr &g) override;
   GraphId CompileGraph(NotNull<FuncGraphPtr> fg) override;
   VectorRef RunGraph(GraphId graph_id, const VectorRef &args);
   void CreateOtherSession(const std::string &target);
@@ -121,9 +81,7 @@ class MsBackend : public Backend {
   session::SessionPtr other_sess_;
   std::string target_device_;
   std::string other_device_;
-  std::unordered_map<BaseRef, CondGraph, BaseRefHash> simu_cond_map_;
   std::unordered_map<GraphId, LinConvertResult> graph_id_map_;
-  std::unordered_map<BaseRef, std::list<std::pair<GraphId, VectorRef>>, BaseRefHash> graph_inputs_;
 };
 }  // namespace compile
 }  // namespace mindspore

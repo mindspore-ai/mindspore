@@ -890,7 +890,7 @@ void SessionBasic::RegisterSummaryCallBackFunc(const CallBackFunc &callback) {
 
 void SessionBasic::Reorder(std::vector<CNodePtr> *node_list) { AnfAlgo::ReorderExecList(NOT_NULL(node_list)); }
 
-void SessionBasic::GetSummaryNodes(KernelGraph *graph) {
+void SessionBasic::SetSummaryNodes(KernelGraph *graph) {
   MS_LOG(DEBUG) << "Update summary Start";
   MS_EXCEPTION_IF_NULL(graph);
   if (!graph->summary_node_exist()) {
@@ -930,7 +930,7 @@ void SessionBasic::Summary(KernelGraph *graph) {
   if (!exist_summary) {
     return;
   }
-  GetSummaryNodes(graph);
+  SetSummaryNodes(graph);
   auto summary_outputs = graph->summary_nodes();
   std::map<std::string, tensor::TensorPtr> params_list;
   // fetch outputs apply kernel in session & run callback functions

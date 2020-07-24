@@ -515,11 +515,7 @@ int CompileGraph::LinConvert(const FuncGraphPtr &graph, const AnfNodePtrList &no
   MS_LOG(DEBUG) << "LinConvert start";
   LinConvertResult result;
 
-  if (backend_->simu_flag()) {
-    result = backend_->GetMultiGraphRun(graph);
-  } else {
-    result = lin_convert_(node_list, target);
-  }
+  result = lin_convert_(node_list, target);
 
   if (result.run == nullptr) {
     MS_LOG(ERROR) << "LinConvert failed";
@@ -546,27 +542,6 @@ int CompileGraph::LinConvert(const FuncGraphPtr &graph, const AnfNodePtrList &no
   return RET_SUCCESS;
 }
 
-void CompileGraph::AddSinkSwitch(const CNodePtr &node) {
-  MS_LOG(DEBUG) << "AddSinkSwitch:" << node->ToString();
-  if (backend_->is_multi_graph_sink()) {
-    VectorRef args;
-    args.emplace_back(-1);
-    MS_LOG(DEBUG) << "call::" << height_;
-    AddInst(Instruction::kCall, args);
-
-    args.clear();
-    args.emplace_back(node->input(1));
-    AddInst(Instruction::kSwitchReturn, args);
-
-    args.clear();
-    args.emplace_back(false);
-    args.emplace_back(Ref(node->input(1)));
-    args.emplace_back(Ref(node->input(2)));
-    args.emplace_back(Ref(node->input(3)));
-    AddInst(Instruction::kSwitch, args);
-  }
-}
-
 int CompileGraph::InterpretNode(const FuncGraphPtr &graph, const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(DEBUG) << "Interpret node: " << node->DebugString(true);
@@ -589,7 +564,6 @@ int CompileGraph::InterpretNode(const FuncGraphPtr &graph, const CNodePtr &node)
       AddPartial(node);
     } else if (IsPrimitive(fn, prim::kPrimSwitch)) {
       AddSwitch(node);
-      AddSinkSwitch(node);
     } else if (IsPrimitive(fn, prim::kPrimSwitchLayer)) {
       AddSwitchLayer(node);
     } else if (IsPrimitive(fn, prim::kPrimMakeTuple)) {
@@ -605,14 +579,6 @@ int CompileGraph::InterpretNode(const FuncGraphPtr &graph, const CNodePtr &node)
   }
   Push(node);
   return RET_SUCCESS;
-}
-
-void CompileGraph::GenMultiGraphsRun(const FuncGraphPtr &graph) {
-  auto ret = LinConvert(graph, {});
-  if (ret == RET_FAILED) {
-    MS_LOG(EXCEPTION) << "MultiGraphRun failed.";
-  }
-  AddReturn(nullptr);
 }
 
 bool CompileGraph::SplitGraph(const FuncGraphPtr &graph) {
@@ -659,11 +625,6 @@ bool CompileGraph::SplitGraph(const FuncGraphPtr &graph) {
   return true;
 }
 
-InstSet CompileGraph::GenMultiGraphsSinkInst(const FuncGraphPtr &graph) {
-  InstSet inst = Run(graph);
-  return inst;
-}
-
 InstSet CompileGraph::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
 
@@ -672,12 +633,8 @@ InstSet CompileGraph::Run(const FuncGraphPtr &graph) {
   int param_height = height_;
   MS_LOG(DEBUG) << "'param_height': " << height_ << " to split graph: " << graph->get_return()->DebugString(true);
 
-  if (backend_->simu_flag()) {
-    GenMultiGraphsRun(graph);
-  } else {
-    if (!SplitGraph(graph)) {
-      return inst_;
-    }
+  if (!SplitGraph(graph)) {
+    return inst_;
   }
 
   AddPadStack(param_height);
@@ -712,12 +669,6 @@ void CompileGraph::AddPartial(const CNodePtr &node) {
   if (!IsValueNode<FuncGraph>(fn)) {
     MS_LOG(EXCEPTION) << "The type of 1st input of node must be FuncGraph";
   }
-  if (backend_->is_multi_graph_sink()) {
-    auto func_graph = GetValueNode<FuncGraphPtr>(fn);
-    args.emplace_back(func_graph);
-    AnfNodePtrList outs(inputs.begin() + 2, inputs.end());
-    backend_->SetGraphUserInputs(func_graph, node->func_graph(), outs);
-  }
   for (size_t i = 1; i < inputs.size(); i++) {
     args.emplace_back(Ref(inputs[i]));
   }
@@ -739,9 +690,6 @@ void CompileGraph::AddSwitch(const CNodePtr &node) {
     MS_LOG(EXCEPTION) << "Length of inputs of primitive " << prim::kPrimSwitch->name() << " is less than 4";
   }
   VectorRef args;
-  if (backend_->is_multi_graph_sink()) {
-    args.emplace_back(true);
-  }
   args.emplace_back(Ref(inputs[1]));
   args.emplace_back(Ref(inputs[2]));
   args.emplace_back(Ref(inputs[3]));
@@ -761,11 +709,7 @@ void CompileGraph::AddSwitchLayer(const CNodePtr &node) {
 
 void CompileGraph::AddReturn(const CNodePtr &node) {
   VectorRef args;
-  if (backend_->simu_flag()) {
-    args.emplace_back(Ref(backend_->final_output()));
-  } else {
-    args.emplace_back(Ref(node->input(1)));
-  }
+  args.emplace_back(Ref(node->input(1)));
   args.emplace_back(height_);
   AddInst(Instruction::kReturn, args);
 }
@@ -783,11 +727,6 @@ void CompileGraph::AddPrimitive(const CNodePtr &node, const PrimitivePtr &prim) 
 int CompileGraph::AddCall(const FuncGraphPtr &graph, const CNodePtr &node) {
   auto inputs = node->inputs();
   AnfNodePtr fn = inputs[0];
-  if (backend_->is_multi_graph_sink() && IsValueNode<FuncGraph>(fn)) {
-    auto func_graph = GetValueNode<FuncGraphPtr>(fn);
-    AnfNodePtrList outs(inputs.begin() + 1, inputs.end());
-    backend_->SetGraphUserInputs(func_graph, node->func_graph(), outs);
-  }
   (void)Ref(fn);
   size_t size = inputs.size();
   for (size_t i = size - 1; i > 0; i--) {
@@ -929,17 +868,6 @@ FinalVMPtr CompileGraphs::Link(const FuncGraphPtr &graph) {
   }
 
   FinalVMPtr rt = std::make_shared<FinalVM>(insts_, backend_);
-  if (backend_->is_multi_graph_sink()) {
-    backend_->set_simu_flag(true);
-    MS_LOG(DEBUG) << "Start simulate";
-    backend_->SimulateRun(rt, graph);
-    MS_LOG(DEBUG) << "Link graphs";
-    insts_ = transform_->GenMultiGraphsSinkInst(graph);
-    rt->set_insts(insts_);
-    backend_->set_simu_flag(false);
-    MS_LOG(DEBUG) << "End start simulate";
-    backend_->Link(kInvalidGraphId);
-  }
   MS_LOG(DEBUG) << "End";
   return rt;
 }

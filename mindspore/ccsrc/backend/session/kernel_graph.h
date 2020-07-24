@@ -131,16 +131,8 @@ class KernelGraph : public FuncGraph {
   void set_parent_graph(const std::shared_ptr<KernelGraph> &parent_graph) { parent_graph_ = parent_graph; }
   // find anf node in graph
   std::vector<CNodePtr> FindNodeByPrimitive(const PrimitivePtr &primitive) const;
-  // get real inputs
-  const std::vector<std::pair<AnfNodePtr, std::vector<AnfNodePtr>>> &real_inputs() const { return real_inputs_; }
-  void SetRealInput(const AnfNodePtr &parameter, const AnfNodePtr &arg);
-  // mark unreused args
-  void AddUnreuseArgs(const AnfNodePtr &arg, const std::shared_ptr<KernelGraph> &from_graph);
-  const std::map<AnfNodePtr, std::shared_ptr<KernelGraph>> &unreuse_args() const { return unreuse_args_; }
   // used to dump ir
   std::string ToString() const override;
-  // update the real input if the node is a call
-  void UpdateCallRealInput();
 
   void set_start_label(const CNodePtr &start_label) { start_label_ = start_label; }
   CNodePtr get_start_label() { return start_label_; }
@@ -212,9 +204,6 @@ class KernelGraph : public FuncGraph {
   // valid inputs
   std::vector<bool> valid_inputs_;
 
-  // new members for control sink process
-  // all child grahs refers to partial node
-  std::map<AnfNodePtr, std::shared_ptr<KernelGraph>> node_to_child_graphs_;
   // child graph execute order in root graph
   std::vector<std::shared_ptr<KernelGraph>> child_graph_order_;
 
@@ -223,9 +212,6 @@ class KernelGraph : public FuncGraph {
 
   // parameter graph
   std::shared_ptr<KernelGraph> parent_graph_;
-  // record real parameters,inputs_ is the formal parameters
-  std::vector<std::pair<AnfNodePtr, std::vector<AnfNodePtr>>> real_inputs_;
-  std::map<AnfNodePtr, std::shared_ptr<KernelGraph>> unreuse_args_;
 
   CNodePtr start_label_;
   CNodePtr end_goto_;
