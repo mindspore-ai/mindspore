@@ -55,7 +55,7 @@ SET(DE_UT_SRCS
         resize_bilinear_op_test.cc
         resize_op_test.cc
         resize_with_bbox_op_test.cc
-	    schema_test.cc
+	schema_test.cc
         shuffle_op_test.cc
         stand_alone_samplers_test.cc
         status_test.cc
@@ -96,6 +96,7 @@ SET(DE_UT_SRCS
         sliding_window_op_test.cc
         epoch_ctrl_op_test.cc
         sentence_piece_vocab_op_test.cc
+	swap_red_blue_test.cc
         )
 
 add_executable(de_ut_tests ${DE_UT_SRCS})

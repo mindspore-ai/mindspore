@@ -92,6 +92,7 @@ constexpr char kBoundingBoxAugmentOp[] = "BoundingBoxAugmentOp";
 constexpr char kDecodeOp[] = "DecodeOp";
 constexpr char kCenterCropOp[] = "CenterCropOp";
 constexpr char kCutOutOp[] = "CutOutOp";
+constexpr char kCropOp[] = "CropOp";
 constexpr char kEqualizeOp[] = "EqualizeOp";
 constexpr char kHwcToChwOp[] = "HwcToChwOp";
 constexpr char kInvertOp[] = "InvertOp";
@@ -114,6 +115,7 @@ constexpr char kRescaleOp[] = "RescaleOp";
 constexpr char kResizeBilinearOp[] = "ResizeBilinearOp";
 constexpr char kResizeOp[] = "ResizeOp";
 constexpr char kResizeWithBBoxOp[] = "ResizeWithBBoxOp";
+constexpr char kSwapRedBlueOp[] = "SwapRedBlueOp";
 constexpr char kUniformAugOp[] = "UniformAugOp";
 
 // text
