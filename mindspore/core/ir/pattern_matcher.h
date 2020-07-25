@@ -229,8 +229,8 @@ class PCNode : public PBase<PCNode<TArgs...> > {
       // Pattern must exactly match the number of Node inputs.
       if (!has_min_extra_nodes_) {
         // Inputs in Node perfectly match number of tokens in Pattern.
-        if ((inputs.size() - 1) == pattern_arg_len) {
-          AnfNodePtrList tokens(inputs.begin() + 1, inputs.end());
+        if (inputs.size() == pattern_arg_len) {
+          AnfNodePtrList tokens(inputs.begin(), inputs.end());
           tuple_utils::PTupleCapture capture_func(tokens);
           tuple_utils::apply_func_tuple(&capture_func, args_);
           return capture_func.captured_;
@@ -240,14 +240,14 @@ class PCNode : public PBase<PCNode<TArgs...> > {
 
       // Pattern may accept extra (non specified) nodes at the end of the CNode
       // There must be at least `min_extra_nodes` additional nodes in the inputs.
-      if ((inputs.size() - 1) >= pattern_arg_len + min_extra_nodes_) {
-        AnfNodePtrList tokens(inputs.begin() + 1, inputs.begin() + 1 + pattern_arg_len);
+      if (inputs.size() >= pattern_arg_len + min_extra_nodes_) {
+        AnfNodePtrList tokens(inputs.begin(), inputs.begin() + pattern_arg_len);
         tuple_utils::PTupleCapture capture_func(tokens);
         tuple_utils::apply_func_tuple(&capture_func, args_);
         // If it could capture the initial set of nodes specified in the Pattern
         // and there are enough extra inputs to add
-        if (capture_func.captured_ && inputs.size() > pattern_arg_len + 1) {
-          extra_nodes_.insert(extra_nodes_.end(), inputs.begin() + 1 + pattern_arg_len, inputs.end());
+        if (capture_func.captured_ && inputs.size() > pattern_arg_len) {
+          extra_nodes_.insert(extra_nodes_.end(), inputs.begin() + pattern_arg_len, inputs.end());
           return true;
         }
         return capture_func.captured_;
