@@ -81,9 +81,7 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("has_compiled", &ExecutorPy::HasCompiled, py::arg("phase") = py::str(""), "get if cell compiled.")
     .def("run_init_graph", &ExecutorPy::RunInitGraph, "Run init Graph.");
 
-  (void)py::class_<EnvInstance, std::shared_ptr<EnvInstance>>(m, "EnvInstance_")
-    .def_readonly(mindspore::PYTHON_ENVINSTANCE_FLAG, &mindspore::EnvInstance::parse_info_)
-    .def(py::init());
+  (void)py::class_<EnvInstance, std::shared_ptr<EnvInstance>>(m, "EnvInstance_").def(py::init());
 
   (void)m.def("generate_key", &mindspore::pipeline::GenerateKey, "Generate the function graph key.");
   (void)m.def("real_run_op", &mindspore::pynative::RunOp, "Run op pynatively.");

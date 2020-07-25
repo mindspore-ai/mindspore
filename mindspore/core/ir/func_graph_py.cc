@@ -24,7 +24,7 @@ namespace mindspore {
 REGISTER_PYBIND_DEFINE(FuncGraph, ([](const pybind11::module *m) {
                          // Define python "MetaFuncGraph_" class
                          (void)py::class_<MetaFuncGraph, std::shared_ptr<MetaFuncGraph>>(*m, "MetaFuncGraph_")
-                           .def_readonly(PYTHON_METAFUNCGRAPH_FLAG, &MetaFuncGraph::parse_info_)
+                          //  .def_readonly(PYTHON_METAFUNCGRAPH_FLAG, &MetaFuncGraph::parse_info_)
                            .def(py::init<std::string &>());
                          // Define python "FuncGraph" class
                          (void)py::class_<FuncGraph, FuncGraphPtr>(*m, "FuncGraph")

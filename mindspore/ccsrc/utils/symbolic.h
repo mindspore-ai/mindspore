@@ -162,8 +162,6 @@ class EnvInstance : public Value {
     return Len();
   }
 
-  const bool parse_info_ = true;
-
  private:
   EnvInstanceContentsMap contents_;
 };

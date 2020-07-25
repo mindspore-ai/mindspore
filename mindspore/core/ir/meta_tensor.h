@@ -163,7 +163,6 @@ class MetaTensor : public Value {
       return false;
     }
   }
-  const bool parse_info_ = true;
 
  protected:
   // brief Data type of the tensor.
