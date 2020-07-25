@@ -108,6 +108,9 @@ class DenseLayer(nn.Cell):
         return act_func
 
     def construct(self, x):
+        '''
+        Construct Dense layer
+        '''
         if self.training and self.drop_out:
             x = self.dropout(x)
         if self.convert_dtype:
@@ -138,6 +141,7 @@ class WideDeepModel(nn.Cell):
         super(WideDeepModel, self).__init__()
         self.batch_size = config.batch_size
         host_device_mix = bool(config.host_device_mix)
+        parameter_server = bool(config.parameter_server)
         parallel_mode = _get_parallel_mode()
         is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
         if is_auto_parallel:
@@ -164,6 +168,9 @@ class WideDeepModel(nn.Cell):
         self.wide_w = var_map["Wide_w"]
         self.wide_b = var_map["Wide_b"]
         self.embedding_table = var_map["V_l2"]
+        if parameter_server:
+            self.wide_w.set_param_ps()
+            self.embedding_table.set_param_ps()
         self.dense_layer_1 = DenseLayer(self.all_dim_list[0],
                                         self.all_dim_list[1],
                                         self.weight_bias_init,
@@ -209,6 +216,9 @@ class WideDeepModel(nn.Cell):
             self.deep_mul.set_strategy(((1, 1, get_group_size()), (1, 1, 1)))
             self.deep_reshape.add_prim_attr("skip_redistribution", True)
             self.reduce_sum.add_prim_attr("cross_batch", True)
+        elif parameter_server:
+            self.deep_embeddinglookup = nn.EmbeddingLookup()
+            self.wide_embeddinglookup = nn.EmbeddingLookup()
         else:
             self.deep_embeddinglookup = nn.EmbeddingLookup(target='DEVICE')
             self.wide_embeddinglookup = nn.EmbeddingLookup(target='DEVICE')
@@ -249,9 +259,10 @@ class NetWithLossClass(nn.Cell):
     def __init__(self, network, config):
         super(NetWithLossClass, self).__init__(auto_prefix=False)
         host_device_mix = bool(config.host_device_mix)
+        parameter_server = bool(config.parameter_server)
         parallel_mode = _get_parallel_mode()
         is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
-        self.no_l2loss = host_device_mix and is_auto_parallel
+        self.no_l2loss = (is_auto_parallel if host_device_mix else parameter_server)
         self.network = network
         self.l2_coef = config.l2_coef
         self.loss = P.SigmoidCrossEntropyWithLogits()
@@ -262,6 +273,9 @@ class NetWithLossClass(nn.Cell):
         self.reduceSum_false = P.ReduceSum(keep_dims=False)
 
     def construct(self, batch_ids, batch_wts, label):
+        '''
+        Construct NetWithLossClass
+        '''
         predict, embedding_table = self.network(batch_ids, batch_wts)
         log_loss = self.loss(predict, label)
         wide_loss = self.reduceMean_false(log_loss)
@@ -294,9 +308,10 @@ class TrainStepWrap(nn.Cell):
         network (Cell): The training network. Note that loss function should have been added.
         sens (Number): The adjust parameter. Default: 1024.0
         host_device_mix (Bool): Whether run in host and device mix mode. Default: False
+        parameter_server (Bool): Whether run in parameter server mode. Default: False
     """
 
-    def __init__(self, network, sens=1024.0, host_device_mix=False):
+    def __init__(self, network, sens=1024.0, host_device_mix=False, parameter_server=False):
         super(TrainStepWrap, self).__init__()
         parallel_mode = _get_parallel_mode()
         is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
@@ -315,6 +330,13 @@ class TrainStepWrap(nn.Cell):
 
         if host_device_mix and is_auto_parallel:
             self.optimizer_d = LazyAdam(
+                self.weights_d, learning_rate=3.5e-4, eps=1e-8, loss_scale=sens)
+            self.optimizer_w = FTRL(learning_rate=5e-2, params=self.weights_w,
+                                    l1=1e-8, l2=1e-8, initial_accum=1.0, loss_scale=sens)
+            self.optimizer_w.sparse_opt.add_prim_attr("primitive_target", "CPU")
+            self.optimizer_d.sparse_opt.add_prim_attr("primitive_target", "CPU")
+        elif parameter_server:
+            self.optimizer_d = Adam(
                 self.weights_d, learning_rate=3.5e-4, eps=1e-8, loss_scale=sens)
             self.optimizer_w = FTRL(learning_rate=5e-2, params=self.weights_w,
                                     l1=1e-8, l2=1e-8, initial_accum=1.0, loss_scale=sens)
@@ -347,6 +369,9 @@ class TrainStepWrap(nn.Cell):
             self.grad_reducer_d = DistributedGradReducer(self.optimizer_d.parameters, mean, degree)
 
     def construct(self, batch_ids, batch_wts, label):
+        '''
+        Construct wide and deep model
+        '''
         weights_w = self.weights_w
         weights_d = self.weights_d
         loss_w, loss_d = self.network(batch_ids, batch_wts, label)
