@@ -392,6 +392,9 @@ uint32_t DatasetOp::GenerateCRC(const std::shared_ptr<DatasetOp> &op) {
   ss_str = std::regex_replace(ss_str, std::regex("Num workers.*\n"), "");
   ss_str = std::regex_replace(ss_str, std::regex("\\[workers.*\\]"), "");
 
+  // Filter out Number of rows when generating the check sum
+  ss_str = std::regex_replace(ss_str, std::regex("Number of rows.*\n"), "");
+
   // Filter out the Operator control flags field when generating the check sum
   ss_str = std::regex_replace(ss_str, std::regex("Operator control flags.*\n"), "");
 
