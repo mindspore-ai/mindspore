@@ -394,7 +394,7 @@ template <typename T>
 void ParameterServer<T>::UpdateWeights() {
   while (true) {
     std::unique_lock<std::mutex> lock(mutex_);
-    apply_grads_cv_.wait(lock, [this] { return this->ReadyForUpdateWeights() || running_; });
+    apply_grads_cv_.wait(lock, [this] { return this->ReadyForUpdateWeights() || !running_; });
     if (!running_) {
       break;
     }

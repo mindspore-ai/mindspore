@@ -81,12 +81,12 @@ void Worker<T>::Run() {
     MS_LOG(INFO) << "'Worker is already running.";
     return;
   }
+  ::ps::Start(0);
   if (!::ps::IsWorker()) {
     MS_LOG(EXCEPTION) << "The role is not worker.";
   }
   kv_worker_ = std::make_shared<WorkerProxy<T>>(0, 0, 1);
   running_ = true;
-  ::ps::Start(0);
 }
 
 template <typename T>
