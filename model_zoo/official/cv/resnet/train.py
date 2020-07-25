@@ -31,7 +31,6 @@ from mindspore.communication.management import init, get_rank, get_group_size
 import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
 from src.lr_generator import get_lr, warmup_cosine_annealing_lr
-from src.crossentropy import CrossEntropy
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--net', type=str, default=None, help='Resnet Model, either resnet50 or resnet101')
@@ -75,7 +74,7 @@ if __name__ == '__main__':
             context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                               mirror_mean=True)
             if args_opt.net == "resnet50":
-                auto_parallel_context().set_all_reduce_fusion_split_indices([107, 160])
+                auto_parallel_context().set_all_reduce_fusion_split_indices([85, 160])
             else:
                 auto_parallel_context().set_all_reduce_fusion_split_indices([180, 313])
             init()
@@ -128,15 +127,19 @@ if __name__ == '__main__':
     lr = Tensor(lr)
 
     # define opt
-    opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum,
-                   config.weight_decay, config.loss_scale)
-
+    decayed_params = list(filter(lambda x: 'beta' not in x.name and 'gamma' not in x.name and 'bias' not in x.name, net.trainalbe_params()))
+    no_decayed_params = [param for param in net.trainalbe_params() if param not in decayed_params]
+    group_params = [{'params': decayed_params, 'weight_decay': config.weight_decay},
+                    {'params': no_decayed_params},
+                    {'order_params': net.trainalbe_params()}]
+    opt = Momentum(group_params, lr, config.momentum, loss_scale=config.loss_scale)
     # define loss, model
     if target == "Ascend":
         if args_opt.dataset == "imagenet2012":
             if not config.use_label_smooth:
                 config.label_smooth_factor = 0.0
-            loss = CrossEntropy(smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
+            loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean",
+                                                 smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
         else:
             loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
