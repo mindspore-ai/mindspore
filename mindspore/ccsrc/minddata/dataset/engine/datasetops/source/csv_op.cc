@@ -758,6 +758,11 @@ Status CsvOp::ComputeColMap() {
   } else {
     MS_LOG(WARNING) << "Column name map is already set!";
   }
+  if (column_default_list_.size() < column_name_id_map_.size()) {
+    for (int32_t i = column_default_list_.size(); i < column_name_id_map_.size(); i++) {
+      column_default_list_.push_back(std::make_shared<CsvOp::Record<std::string>>(CsvOp::STRING, ""));
+    }
+  }
   return Status::OK();
 }
 }  // namespace dataset
