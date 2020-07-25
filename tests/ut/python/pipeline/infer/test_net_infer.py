@@ -67,3 +67,62 @@ def test_assign_in_while():
     z = Tensor(np.random.randn(*input_shape).astype(np.float32))
     net = Net(input_shape)
     net(x, y, z)
+
+
+def test_dup_context():
+    ''' different func_with_fv in net1 and net2 should produce 2 different FuncGraphAbstractClosure and
+        Evaluator.
+    '''
+    context.set_context(mode=context.GRAPH_MODE)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+
+        def construct(self, x):
+            def identity(f):
+                return f
+
+            def func_with_fv():
+                return x
+
+            def net1():
+                local_func = identity(func_with_fv)
+                out = local_func() + 20.0
+                return out
+
+            def net2():
+                local_func = identity(func_with_fv)
+                out = local_func() + 15.0
+                return out
+
+            return net1() + net2()
+
+    Net()(5.0)
+
+
+def test_maybe_poly_func():
+    ''' different func_with_fv in net1 and net2 may produce poly node. '''
+    context.set_context(mode=context.GRAPH_MODE)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+
+        def construct(self, x, y, z):
+            def identity(f, inp):
+                return f(inp)
+
+            def func_with_fv(yy):
+                return (x, yy)
+
+            def make_call():
+                out1 = identity(func_with_fv, y)
+                out2 = identity(func_with_fv, z)
+                return (out1, out2)
+
+            return make_call()
+
+    y_input = Tensor(np.array([1, 2]).astype(np.int32))
+    z_input = Tensor(np.array([[2, 2], [3, 3]]).astype(np.int32))
+    Net()(1, y_input, z_input)

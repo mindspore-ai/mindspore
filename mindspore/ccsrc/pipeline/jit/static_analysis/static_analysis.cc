@@ -470,7 +470,8 @@ EvaluatorPtr AnalysisEngine::GetEvaluatorFor(const AbstractFunctionPtr &func) {
     MS_LOG(DEBUG) << "The tracking_id: " << func->tracking_id()->DebugString();
   }
   MS_EXCEPTION_IF_NULL(func);
-  if (func->tracking_id() == nullptr) {
+  if (func->tracking_id() == nullptr || func->isa<abstract::MetaFuncGraphAbstractClosure>() ||
+      func->isa<abstract::FuncGraphAbstractClosure>()) {
     EvaluatorPtr evaluator = _GetEvaluatorFor(func);
     return evaluator;
   }
@@ -639,12 +640,12 @@ EvalResultPtr AnfNodeConfig::GetEvaluatedValue() {
 }
 
 abstract::AbstractBasePtr MakeAbstractClosure(const FuncGraphPtr &func_graph,
-                                              const abstract::AnalysisContextPtr &context) {
+                                              const abstract::AnalysisContextPtr &context, const AnfNodePtr &anf_node) {
   AnalysisContextPtr temp_context = context;
   if (temp_context == nullptr) {
     temp_context = abstract::AnalysisContext::DummyContext();
   }
-  return std::make_shared<abstract::FuncGraphAbstractClosure>(func_graph, temp_context);
+  return std::make_shared<abstract::FuncGraphAbstractClosure>(func_graph, temp_context, anf_node);
 }
 
 abstract::AbstractBasePtr MakeAbstractClosure(const MetaFuncGraphPtr &meta_func_graph, const AnfNodePtr &anf_node) {
@@ -652,7 +653,8 @@ abstract::AbstractBasePtr MakeAbstractClosure(const MetaFuncGraphPtr &meta_func_
   if (anf_node == nullptr) {
     meta_func_graph_fn = std::make_shared<abstract::MetaFuncGraphAbstractClosure>(meta_func_graph);
   } else {
-    meta_func_graph_fn = std::make_shared<abstract::MetaFuncGraphAbstractClosure>(meta_func_graph, anf_node->scope());
+    meta_func_graph_fn =
+      std::make_shared<abstract::MetaFuncGraphAbstractClosure>(meta_func_graph, anf_node, anf_node->scope());
   }
   return meta_func_graph_fn;
 }
@@ -663,13 +665,13 @@ abstract::AbstractBasePtr MakeAbstractClosure(const PrimitivePtr &primitive, con
 }
 
 AbstractBasePtr ToAbstract(const ValuePtr &value, const AnalysisContextPtr &context, const AnfNodeConfigPtr &conf) {
-  if (value->isa<FuncGraph>()) {
-    auto func_graph = value->cast<FuncGraphPtr>();
-    return MakeAbstractClosure(func_graph, context);
-  }
   AnfNodePtr anf_node = nullptr;
   if (conf != nullptr) {
     anf_node = conf->node();
+  }
+  if (value->isa<FuncGraph>()) {
+    auto func_graph = value->cast<FuncGraphPtr>();
+    return MakeAbstractClosure(func_graph, context, anf_node);
   }
   if (value->isa<MetaFuncGraph>()) {
     auto meta_func_graph = value->cast<MetaFuncGraphPtr>();
