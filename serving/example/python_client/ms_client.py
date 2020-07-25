@@ -19,7 +19,7 @@ import ms_service_pb2_grpc
 
 
 def run():
-    channel = grpc.insecure_channel('localhost:5050')
+    channel = grpc.insecure_channel('localhost:5500')
     stub = ms_service_pb2_grpc.MSServiceStub(channel)
     request = ms_service_pb2.PredictRequest()
 
