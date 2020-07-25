@@ -115,6 +115,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   bool grad_flag_;
   std::unordered_map<std::string, FuncGraphPtr> graph_map_;
   std::unordered_map<std::string, FuncGraphPtr> cell_graph_map_;
+  std::unordered_map<std::string, ResourcePtr> cell_resource_map_;
   std::unordered_map<FuncGraphPtr, GraphInfo> graph_info_map_;
   std::stack<FuncGraphPtr> graph_p_;
   FuncGraphPtr top_g_;
