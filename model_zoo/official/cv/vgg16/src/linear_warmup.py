@@ -12,19 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""test_vgg"""
-import numpy as np
-import pytest
-
-from mindspore import Tensor
-from model_zoo.official.cv.vgg16.src.vgg import vgg16
-from model_zoo.official.cv.vgg16.src.config import cifar_cfg as cfg
-from ..ut_filter import non_graph_engine
+"""
+linear warm up learning rate.
+"""
 
 
-@non_graph_engine
-def test_vgg16():
-    inputs = Tensor(np.random.rand(1, 3, 112, 112).astype(np.float32))
-    net = vgg16(args=cfg)
-    with pytest.raises(ValueError):
-        print(net.construct(inputs))
+def linear_warmup_lr(current_step, warmup_steps, base_lr, init_lr):
+    lr_inc = (float(base_lr) - float(init_lr)) / float(warmup_steps)
+    lr = float(init_lr) + lr_inc * current_step
+    return lr

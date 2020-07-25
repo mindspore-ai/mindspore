@@ -12,12 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""VGG."""
+"""
+Image classifiation.
+"""
+import math
 import mindspore.nn as nn
-from mindspore.common.initializer import initializer
 import mindspore.common.dtype as mstype
+from mindspore.common import initializer as init
+from mindspore.common.initializer import initializer
+from .utils.var_init import default_recurisive_init, KaimingNormal
 
-def _make_layer(base, batch_norm):
+
+def _make_layer(base, args, batch_norm):
     """Make stage network of VGG."""
     layers = []
     in_channels = 3
@@ -27,11 +33,14 @@ def _make_layer(base, batch_norm):
         else:
             weight_shape = (v, in_channels, 3, 3)
             weight = initializer('XavierUniform', shape=weight_shape, dtype=mstype.float32).to_tensor()
+            if args.initialize_mode == "KaimingNormal":
+                weight = 'normal'
             conv2d = nn.Conv2d(in_channels=in_channels,
                                out_channels=v,
                                kernel_size=3,
-                               padding=0,
-                               pad_mode='same',
+                               padding=args.padding,
+                               pad_mode=args.pad_mode,
+                               has_bias=args.has_bias,
                                weight_init=weight)
             if batch_norm:
                 layers += [conv2d, nn.BatchNorm2d(v), nn.ReLU()]
@@ -59,23 +68,50 @@ class Vgg(nn.Cell):
         >>>     num_classes=1000, batch_norm=False, batch_size=1)
     """
 
-    def __init__(self, base, num_classes=1000, batch_norm=False, batch_size=1):
+    def __init__(self, base, num_classes=1000, batch_norm=False, batch_size=1, args=None, phase="train"):
         super(Vgg, self).__init__()
         _ = batch_size
-        self.layers = _make_layer(base, batch_norm=batch_norm)
+        self.layers = _make_layer(base, args, batch_norm=batch_norm)
         self.flatten = nn.Flatten()
+        dropout_ratio = 0.5
+        if not args.has_dropout or phase == "test":
+            dropout_ratio = 1.0
         self.classifier = nn.SequentialCell([
             nn.Dense(512 * 7 * 7, 4096),
             nn.ReLU(),
+            nn.Dropout(dropout_ratio),
             nn.Dense(4096, 4096),
             nn.ReLU(),
+            nn.Dropout(dropout_ratio),
             nn.Dense(4096, num_classes)])
+        if args.initialize_mode == "KaimingNormal":
+            default_recurisive_init(self)
+            self.custom_init_weight()
 
     def construct(self, x):
         x = self.layers(x)
         x = self.flatten(x)
         x = self.classifier(x)
         return x
+
+    def custom_init_weight(self):
+        """
+        Init the weight of Conv2d and Dense in the net.
+        """
+        for _, cell in self.cells_and_names():
+            if isinstance(cell, nn.Conv2d):
+                cell.weight.default_input = init.initializer(
+                    KaimingNormal(a=math.sqrt(5), mode='fan_out', nonlinearity='relu'),
+                    cell.weight.default_input.shape, cell.weight.default_input.dtype).to_tensor()
+                if cell.bias is not None:
+                    cell.bias.default_input = init.initializer(
+                        'zeros', cell.bias.default_input.shape, cell.bias.default_input.dtype).to_tensor()
+            elif isinstance(cell, nn.Dense):
+                cell.weight.default_input = init.initializer(
+                    init.Normal(0.01), cell.weight.default_input.shape, cell.weight.default_input.dtype).to_tensor()
+                if cell.bias is not None:
+                    cell.bias.default_input = init.initializer(
+                        'zeros', cell.bias.default_input.shape, cell.bias.default_input.dtype).to_tensor()
 
 
 cfg = {
@@ -86,19 +122,21 @@ cfg = {
 }
 
 
-def vgg16(num_classes=1000):
+def vgg16(num_classes=1000, args=None, phase="train"):
     """
     Get Vgg16 neural network with batch normalization.
 
     Args:
         num_classes (int): Class numbers. Default: 1000.
+        args(namespace): param for net init.
+        phase(str): train or test mode.
 
     Returns:
         Cell, cell instance of Vgg16 neural network with batch normalization.
 
     Examples:
-        >>> vgg16(num_classes=1000)
+        >>> vgg16(num_classes=1000, args=args)
     """
 
-    net = Vgg(cfg['16'], num_classes=num_classes, batch_norm=True)
+    net = Vgg(cfg['16'], num_classes=num_classes, args=args, batch_norm=args.batch_norm, phase=phase)
     return net
