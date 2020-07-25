@@ -42,7 +42,7 @@ grad_div = C.MultitypeFuncGraph("grad_div")
 
 @grad_div.register("Tensor", "Tensor")
 def _grad_div(val, grad):
-    div = P.Div()
+    div = P.RealDiv()
     mul = P.Mul()
     grad = mul(grad, 10.0)
     ret = div(grad, val)

@@ -23,10 +23,10 @@ from mindspore import dataset as de
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
-from src.loss import CTCLoss
+from src.loss import CTCLoss, CTCLossV2
 from src.config import config as cf
 from src.dataset import create_dataset
-from src.warpctc import StackedRNN
+from src.warpctc import StackedRNN, StackedRNNForGPU
 from src.metric import WarpCTCAccuracy
 
 random.seed(1)
@@ -36,30 +36,38 @@ de.config.set_seed(1)
 parser = argparse.ArgumentParser(description="Warpctc training")
 parser.add_argument("--dataset_path", type=str, default=None, help="Dataset, default is None.")
 parser.add_argument("--checkpoint_path", type=str, default=None, help="checkpoint file path, default is None")
+parser.add_argument('--platform', type=str, default='Ascend', choices=['Ascend', 'GPU'],
+                    help='Running platform, choose from Ascend, GPU, and default is Ascend.')
 args_opt = parser.parse_args()
 
-device_id = int(os.getenv('DEVICE_ID'))
-context.set_context(mode=context.GRAPH_MODE,
-                    device_target="Ascend",
-                    save_graphs=False,
-                    device_id=device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.platform, save_graphs=False)
+if args_opt.platform == 'Ascend':
+    device_id = int(os.getenv('DEVICE_ID'))
+    context.set_context(device_id=device_id)
 
 if __name__ == '__main__':
     max_captcha_digits = cf.max_captcha_digits
     input_size = m.ceil(cf.captcha_height / 64) * 64 * 3
     # create dataset
-    dataset = create_dataset(dataset_path=args_opt.dataset_path, repeat_num=1, batch_size=cf.batch_size)
+    dataset = create_dataset(dataset_path=args_opt.dataset_path,
+                             batch_size=cf.batch_size,
+                             device_target=args_opt.platform)
     step_size = dataset.get_dataset_size()
-    # define loss
-    loss = CTCLoss(max_sequence_length=cf.captcha_width, max_label_length=max_captcha_digits, batch_size=cf.batch_size)
-    # define net
-    net = StackedRNN(input_size=input_size, batch_size=cf.batch_size, hidden_size=cf.hidden_size)
+    if args_opt.platform == 'Ascend':
+        loss = CTCLoss(max_sequence_length=cf.captcha_width,
+                       max_label_length=max_captcha_digits,
+                       batch_size=cf.batch_size)
+        net = StackedRNN(input_size=input_size, batch_size=cf.batch_size, hidden_size=cf.hidden_size)
+    else:
+        loss = CTCLossV2(max_sequence_length=cf.captcha_width, batch_size=cf.batch_size)
+        net = StackedRNNForGPU(input_size=input_size, batch_size=cf.batch_size, hidden_size=cf.hidden_size)
+
     # load checkpoint
     param_dict = load_checkpoint(args_opt.checkpoint_path)
     load_param_into_net(net, param_dict)
     net.set_train(False)
     # define model
-    model = Model(net, loss_fn=loss, metrics={'WarpCTCAccuracy': WarpCTCAccuracy()})
+    model = Model(net, loss_fn=loss, metrics={'WarpCTCAccuracy': WarpCTCAccuracy(args_opt.platform)})
     # start evaluation
-    res = model.eval(dataset)
+    res = model.eval(dataset, dataset_sink_mode=args_opt.platform == 'Ascend')
     print("result:", res, flush=True)
