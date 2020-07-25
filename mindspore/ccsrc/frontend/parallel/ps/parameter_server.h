@@ -344,6 +344,7 @@ void ParameterServer<T>::InitOptimInputsShape(const Keys &keys, const Values &va
 
 template <typename T>
 void ParameterServer<T>::InitWeight(const Key &key, const WeightPtr &weight) {
+  MS_LOG(INFO) << "Initializing weight for key " << key;
   if (weights_.count(key) == 0) {
     weights_[key] = weight;
   }
@@ -360,7 +361,7 @@ void ParameterServer<T>::InitGrad(const Key &key, const GradPtr &grad) {
 template <typename T>
 void ParameterServer<T>::InitEmbeddingTable(
   const Key &key, const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
-  // Init embedding lookup kernel
+  MS_LOG(INFO) << "Initializing embedding table for key " << key;
   std::shared_ptr<PServerKernel> lookup = std::make_shared<kernel::ps::EmbeddingLookUpPSKernel>(rank_id_, pserver_num_);
   lookup->InitKernel(shapes);
   embedding_lookup_ops_[key] = lookup;
