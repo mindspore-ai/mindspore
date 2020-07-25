@@ -251,7 +251,8 @@ class InsertGradientOf(PrimitiveWithInfer):
 
 class HookBackward(PrimitiveWithInfer):
     """
-    Used as tag to hook gradient in intermediate variables.
+    Used as tag to hook gradient in intermediate variables. Note that this function
+    is only supported in Pynative Mode.
 
     Note:
         The hook function should be defined like `hook_fn(grad) -> Tensor or None`,
