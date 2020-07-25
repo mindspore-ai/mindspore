@@ -213,18 +213,21 @@ class IndexedSlices:
     A sparse representation of a set of tensor slices at given indices.
 
     An IndexedSlices is typically used to represent a subset of a larger
-    tensor dense of shape [LARGE0, D1, .. , DN] where LARGE0 >> D0.
+    tensor dense of shape [L0, D1, .. , DN] where L0 >> D0.
+
     The values in indices are the indices in the first dimension of the slices
     that have been extracted from the larger tensor.
+
     The dense tensor dense represented by an IndexedSlices slices has
     `dense[slices.indices[i], :, :, :, ...] = slices.values[i, :, :, :, ...]`.
+
     IndexedSlices can only be used in `Cell`'s contruct method.
 
     Args:
         indices (Tensor): A 1-D integer Tensor of shape [D0].
         values (Tensor): A Tensor of any dtype of shape [D0, D1, ..., Dn].
-        dense_shape: (tuple): A integer tuple containing the shape
-        of the corresponding dense tensor.
+        dense_shape (tuple): A integer tuple containing the shape
+            of the corresponding dense tensor.
 
     Outputs:
         IndexedSlices, composed of `indices`, `values`, `dense_shape`.
@@ -250,17 +253,18 @@ class SparseTensor:
     A sparse representation of a set of nonzero elememts from a tensor at given indices.
 
     SparseTensor can only be used in `Cell`'s contruct method.
+
     For a tensor dense, its SparseTensor(indices, values, dense_shape) has
-    `dense[indices[i]] = values[i]`
+    `dense[indices[i]] = values[i]`.
 
     Args:
         indices (Tensor): A 2-D integer Tensor of shape `[N, ndims]`,
         where N and ndims are the number of values and number of dimensions in
         the SparseTensor, respectively.
         values (Tensor): A 1-D tensor of any type and shape `[N]`, which
-        supplies the values for each element in indices.
-        dense_shape: (tuple): A integer tuple of size `ndims`,
-        which specifies the dense_shape of the sparse tensor.
+            supplies the values for each element in indices.
+        dense_shape (tuple): A integer tuple of size `ndims`,
+            which specifies the dense_shape of the sparse tensor.
 
     Outputs:
         SparseTensor, composed of `indices`, `values`, `dense_shape`.
