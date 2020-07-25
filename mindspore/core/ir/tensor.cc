@@ -224,10 +224,21 @@ class TensorDataImpl : public TensorData {
             ss << ' ';
           }
         }
+
+        // Set width and indent for different int type.
+        //
+        //   int8/uint8 width:   3
+        //   int16/uint16 width: 5
+        //   int32/uint32 width: 10
+        //   int64/uint64 width: NOT SET
         if constexpr (std::is_same<T, int8_t>::value) {
-          ss << static_cast<int16_t>(value);
+          ss << std::setw(3) << std::setiosflags(std::ios::right) << static_cast<int16_t>(value);
         } else if constexpr (std::is_same<T, uint8_t>::value) {
-          ss << static_cast<uint16_t>(value);
+          ss << std::setw(3) << std::setiosflags(std::ios::right) << static_cast<uint16_t>(value);
+        } else if constexpr (std::is_same<T, int16_t>::value || std::is_same<T, uint16_t>::value) {
+          ss << std::setw(5) << std::setiosflags(std::ios::right) << value;
+        } else if constexpr (std::is_same<T, int32_t>::value || std::is_same<T, uint32_t>::value) {
+          ss << std::setw(10) << std::setiosflags(std::ios::right) << value;
         } else {
           ss << value;
         }
