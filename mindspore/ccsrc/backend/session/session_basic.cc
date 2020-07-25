@@ -1194,6 +1194,7 @@ void SessionBasic::InitPSParamAndOptim(const KernelGraphPtr &kernel_graph,
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  std::vector<int> shape_init_in_server = {1};
   for (size_t i = 0; i < inputs.size(); ++i) {
     auto tensor = inputs[i];
     MS_EXCEPTION_IF_NULL(tensor);
@@ -1201,8 +1202,13 @@ void SessionBasic::InitPSParamAndOptim(const KernelGraphPtr &kernel_graph,
     MS_EXCEPTION_IF_NULL(input_node);
     if (input_node->isa<Parameter>() && AnfAlgo::OutputAddrExist(input_node, 0)) {
       auto pk_node = input_node->cast<ParameterPtr>();
+      bool init_in_server = false;
+      if (tensor->shape_c() == shape_init_in_server) {
+        MS_LOG(INFO) << "The param need to be initialized in server " << pk_node->fullname_with_scope();
+        init_in_server = true;
+      }
       mindspore::parallel::ps::Worker<float>::GetInstance().InitPSParamAndOptim(
-        pk_node->fullname_with_scope(), tensor->data_c(), LongToSize(tensor->data().nbytes()));
+        pk_node->fullname_with_scope(), tensor->data_c(), LongToSize(tensor->data().nbytes()), init_in_server);
     }
   }
   ps_init_ = true;

@@ -530,6 +530,10 @@ inline bool ParameterServer<T>::ReadyForUpdateWeights() {
 
 template <typename T>
 inline bool ParameterServer<T>::ReadyForAccumGrads() {
+  if (weights_.empty()) {
+    MS_LOG(EXCEPTION) << "The weights in server is empty. Many reasons could cause this: 1.The Worker didn't send "
+                         "kInitWeightsCmd command. 2.The Server failed to initialize weights.";
+  }
   return grad_accum_count_ < weights_.size();
 }
 
