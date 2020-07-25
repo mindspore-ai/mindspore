@@ -224,7 +224,8 @@ void CPUKernelRuntime::BindInputOutput(const session::KernelGraph *kernel_graph,
         (void)tensor->data_sync();
       }
 
-      if (tensor->data_type() == kNumberTypeFloat32 || tensor->data_type() == kNumberTypeInt32) {
+      if (tensor->data_type() == address->type_id_ || tensor->data_type() == kNumberTypeFloat32 ||
+          tensor->data_type() == kNumberTypeInt32) {
         address->ptr_ = tensor->data_c();
       } else {
         std::vector<int> data_shape = tensor->shape();
