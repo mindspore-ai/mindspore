@@ -25,7 +25,7 @@ config = EasyDict({
     "learning_rate": 0.01,
     "momentum": 0.9,
     "save_checkpoint": True,
-    "save_checkpoint_steps": 98,
+    "save_checkpoint_steps": 97,
     "keep_checkpoint_max": 30,
-    "save_checkpoint_path": "./",
+    "save_checkpoint_path": "./checkpoint",
 })
