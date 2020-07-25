@@ -155,7 +155,7 @@ void WorkerProxy<T>::Finalize() {
   kvs.vals.push_back(0.0f);
   Send(obj_, ts, true, false, kFinalizeCmd, kvs, broadcast_slicer_);
   obj_->WaitRequest(ts);
-  ::ps::Finalize(0, false);
+  ::ps::Finalize(0, true);
 }
 
 template <typename T>

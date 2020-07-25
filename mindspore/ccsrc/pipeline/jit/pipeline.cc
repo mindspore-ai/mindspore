@@ -45,6 +45,7 @@
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "frontend/parallel/ps/common.h"
 #include "frontend/parallel/ps/util.h"
+#include "frontend/parallel/ps/worker.h"
 #endif
 
 #if (ENABLE_GE || ENABLE_D)
@@ -949,7 +950,13 @@ void ClearResAtexit() {
   pynative::ClearPyNativeSession();
   session::ClearPythonParasMap();
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
-
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  if (mindspore::parallel::ps::Util::IsParamServerMode()) {
+    if (parallel::ps::Util::IsRoleOfWorker()) {
+      parallel::ps::Worker<float>::GetInstance().Finalize();
+    }
+  }
+#endif
   ad::g_k_prims.clear();
 
   abstract::ClearPrimEvaluatorMap();
