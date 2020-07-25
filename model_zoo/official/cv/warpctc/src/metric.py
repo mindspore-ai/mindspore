@@ -15,19 +15,19 @@
 """Metric for accuracy evaluation."""
 from mindspore import nn
 
-BLANK_LABLE = 10
-
 
 class WarpCTCAccuracy(nn.Metric):
     """
     Define accuracy metric for warpctc network.
     """
 
-    def __init__(self):
+    def __init__(self, device_target='Ascend'):
         super(WarpCTCAccuracy).__init__()
         self._correct_num = 0
         self._total_num = 0
         self._count = 0
+        self.device_target = device_target
+        self.blank = 10 if device_target == 'Ascend' else 0
 
     def clear(self):
         self._correct_num = 0
@@ -39,6 +39,8 @@ class WarpCTCAccuracy(nn.Metric):
 
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
+        if self.device_target == 'GPU':
+            y = y[:, :-1]
 
         self._count += 1
 
@@ -54,8 +56,7 @@ class WarpCTCAccuracy(nn.Metric):
             raise RuntimeError('Accuary can not be calculated, because the number of samples is 0.')
         return self._correct_num / self._total_num
 
-    @staticmethod
-    def _is_eq(pred_lbl, target):
+    def _is_eq(self, pred_lbl, target):
         """
         check whether predict label is equal to target label
         """
@@ -63,11 +64,10 @@ class WarpCTCAccuracy(nn.Metric):
         pred_diff = len(target) - len(pred_lbl)
         if pred_diff > 0:
             # padding by BLANK_LABLE
-            pred_lbl.extend([BLANK_LABLE] * pred_diff)
+            pred_lbl.extend([self.blank] * pred_diff)
         return pred_lbl == target
 
-    @staticmethod
-    def _get_prediction(y_pred):
+    def _get_prediction(self, y_pred):
         """
         parse predict result to labels
         """
@@ -78,11 +78,11 @@ class WarpCTCAccuracy(nn.Metric):
         pred_lbls = []
         for i in range(batch_size):
             idx = indices[:, i]
-            last_idx = BLANK_LABLE
+            last_idx = self.blank
             pred_lbl = []
             for j in range(lens[i]):
                 cur_idx = idx[j]
-                if cur_idx not in [last_idx, BLANK_LABLE]:
+                if cur_idx not in [last_idx, self.blank]:
                     pred_lbl.append(cur_idx)
                 last_idx = cur_idx
             pred_lbls.append(pred_lbl)

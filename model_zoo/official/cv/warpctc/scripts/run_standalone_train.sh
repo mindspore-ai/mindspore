@@ -14,8 +14,8 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 1 ]; then
-  echo "Usage: sh run_standalone_train.sh [DATASET_PATH]"
+if [ $# != 2 ]; then
+  echo "Usage: sh run_standalone_train.sh [DATASET_PATH] [PLATFORM]"
   exit 1
 fi
 
@@ -28,27 +28,44 @@ get_real_path() {
 }
 
 PATH1=$(get_real_path $1)
+PLATFORM=$2
 
 if [ ! -d $PATH1 ]; then
   echo "error: DATASET_PATH=$PATH1 is not a directory"
   exit 1
 fi
 
-ulimit -u unlimited
-export DEVICE_NUM=1
-export DEVICE_ID=0
-export RANK_ID=0
-export RANK_SIZE=1
+run_ascend() {
+  ulimit -u unlimited
+  export DEVICE_NUM=1
+  export DEVICE_ID=0
+  export RANK_ID=0
+  export RANK_SIZE=1
+
+  echo "start training for device $DEVICE_ID"
+  env >env.log
+  python train.py --dataset_path=$1 --platform=Ascend > log.txt 2>&1 &
+  cd ..
+}
+
+run_gpu() {
+  env >env.log
+  python train.py --dataset_path=$1 --platform=GPU  > log.txt 2>&1 &
+  cd ..
+}
 
 if [ -d "train" ]; then
-  rm -rf ./train
+    rm -rf ./train
 fi
 mkdir ./train
 cp ../*.py ./train
-cp *.sh ./train
 cp -r ../src ./train
 cd ./train || exit
-echo "start training for device $DEVICE_ID"
-env >env.log
-python train.py --dataset=$PATH1 &>log &
-cd ..
+
+if [ "Ascend" == $PLATFORM ]; then
+  run_ascend $PATH1
+elif [ "GPU" == $PLATFORM ]; then
+  run_gpu $PATH1
+else
+  echo "error: PLATFORM=$PLATFORM is not support, only support Ascend and GPU."
+fi

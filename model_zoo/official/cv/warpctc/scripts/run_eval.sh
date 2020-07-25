@@ -14,8 +14,8 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 2 ]; then
-  echo "Usage: sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]"
+if [ $# != 3 ]; then
+  echo "Usage: sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM]"
   exit 1
 fi
 
@@ -29,6 +29,7 @@ get_real_path() {
 
 PATH1=$(get_real_path $1)
 PATH2=$(get_real_path $2)
+PLATFORM=$3
 
 if [ ! -d $PATH1 ]; then
   echo "error: DATASET_PATH=$PATH1 is not a directory"
@@ -40,21 +41,44 @@ if [ ! -f $PATH2 ]; then
   exit 1
 fi
 
-ulimit -u unlimited
-export DEVICE_NUM=1
-export DEVICE_ID=0
-export RANK_SIZE=$DEVICE_NUM
-export RANK_ID=0
+run_ascend() {
+  ulimit -u unlimited
+  export DEVICE_NUM=1
+  export DEVICE_ID=0
+  export RANK_SIZE=$DEVICE_NUM
+  export RANK_ID=0
 
-if [ -d "eval" ]; then
-  rm -rf ./eval
+  if [ -d "eval" ]; then
+    rm -rf ./eval
+  fi
+  mkdir ./eval
+  cp ../*.py ./eval
+  cp -r ../src ./eval
+  cd ./eval || exit
+  env >env.log
+  echo "start evaluation for device $DEVICE_ID"
+  python eval.py --dataset_path=$1 --checkpoint_path=$2 --platform=Ascend > log.txt 2>&1 &
+  cd ..
+}
+
+run_gpu() {
+  if [ -d "eval" ]; then
+    rm -rf ./eval
+  fi
+  mkdir ./eval
+  cp ../*.py ./eval
+  cp -r ../src ./eval
+  cd ./eval || exit
+  env >env.log
+  python eval.py --dataset_path=$1 --checkpoint_path=$2 --platform=GPU  > log.txt 2>&1 &
+  cd ..
+}
+
+if [ "Ascend" == $PLATFORM ]; then
+  run_ascend $PATH1 $PATH2
+elif [ "GPU" == $PLATFORM ]; then
+  run_gpu $PATH1 $PATH2
+else
+  echo "error: PLATFORM=$PLATFORM is not support, only support Ascend and GPU."
 fi
-mkdir ./eval
-cp ../*.py ./eval
-cp *.sh ./eval
-cp -r ../src ./eval
-cd ./eval || exit
-env >env.log
-echo "start evaluation for device $DEVICE_ID"
-python eval.py --dataset_path=$PATH1 --checkpoint_path=$PATH2 &>log &
-cd ..
+
