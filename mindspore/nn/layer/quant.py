@@ -83,7 +83,7 @@ class Conv2dBnAct(Cell):
             Initializer and string are the same as 'weight_init'. Refer to the values of
             Initializer for more details. Default: 'zeros'.
         has_bn (bool): Specifies to used batchnorm or not. Default: False.
-        activation (string): Specifies activation type. The optional values are as following:
+        activation (Cell): Specifies activation type. The optional values are as following:
             'softmax', 'logsoftmax', 'relu', 'relu6', 'tanh', 'gelu', 'sigmoid',
             'prelu', 'leakyrelu', 'hswish', 'hsigmoid'. Default: None.
 
@@ -170,7 +170,7 @@ class DenseBnAct(Cell):
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
             same as input x. The values of str refer to the function `initializer`. Default: 'zeros'.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
-        activation (str): Regularizer function applied to the output of the layer, eg. 'relu'. Default: None.
+        activation (Cell): Regularizer function applied to the output of the layer, eg. 'relu'. Default: None.
         has_bn (bool): Specifies to used batchnorm or not. Default: False.
         activation (string): Specifies activation type. The optional values are as following:
             'softmax', 'logsoftmax', 'relu', 'relu6', 'tanh', 'gelu', 'sigmoid',
@@ -403,8 +403,8 @@ class Conv2dBatchNormQuant(Cell):
         out_channels (int): The number of output channel :math:`C_{out}`.
         kernel_size (Union[int, tuple]): Specifies the height and width of the 2D convolution window.
         stride (int): Specifies stride for all spatial dimensions with the same value.
-        pad_mode: (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
-        padding: (int): Implicit paddings on both sides of the input. Default: 0.
+        pad_mode (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
+        padding (int): Implicit paddings on both sides of the input. Default: 0.
         eps (float): Parameters for BatchNormal. Default: 1e-5.
         momentum (float): Parameters for BatchNormal op. Default: 0.997.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the
@@ -590,8 +590,8 @@ class Conv2dQuant(Cell):
         out_channels (int): The number of output channel :math:`C_{out}`.
         kernel_size (Union[int, tuple]): Specifies the height and width of the 2D convolution window.
         stride (int): Specifies stride for all spatial dimensions with the same value. Default: 1.
-        pad_mode: (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
-        padding: (int): Implicit paddings on both sides of the input. Default: 0.
+        pad_mode (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
+        padding (int): Implicit paddings on both sides of the input. Default: 0.
         dilation (int): Specifying the dilation rate to use for dilated convolution. Default: 1.
         group (int): Split filter into groups, `in_ channels` and `out_channels` should be
             divisible by the number of groups. Default: 1.
@@ -989,7 +989,7 @@ class HSigmoidQuant(_QuantActivation):
                                                         symmetric=symmetric,
                                                         narrow_range=narrow_range,
                                                         quant_delay=quant_delay)
-        if issubclass(activation, nn.HSwish):
+        if issubclass(activation, nn.HSigmoid):
             self.act = activation()
         else:
             raise ValueError("Activation should be `nn.HSigmoid`")
