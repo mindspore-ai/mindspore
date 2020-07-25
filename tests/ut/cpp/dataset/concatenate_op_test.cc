@@ -29,14 +29,14 @@ class MindDataTestConcatenateOp : public UT::Common {
 
 TEST_F(MindDataTestConcatenateOp, TestOp) {
   MS_LOG(INFO) << "Doing MindDataTestConcatenate-TestOp.";
-  uint64_t labels[3] = {1, 1, 2};
+  std::vector<uint64_t> labels = {1, 1, 2};
   TensorShape shape({3});
-  std::shared_ptr<Tensor> input =
-    std::make_shared<Tensor>(shape, DataType(DataType::DE_UINT64), reinterpret_cast<unsigned char *>(labels));
+  std::shared_ptr<Tensor> input;
+  Tensor::CreateFromVector(labels, &input);
 
-  uint64_t append_labels[3] = {4, 4, 4};
-  std::shared_ptr<Tensor> append =
-    std::make_shared<Tensor>(shape, DataType(DataType::DE_UINT64), reinterpret_cast<unsigned char *>(append_labels));
+  std::vector<uint64_t> append_labels = {4, 4, 4};
+  std::shared_ptr<Tensor> append;
+  Tensor::CreateFromVector(append_labels, &append);
 
   std::shared_ptr<Tensor> output;
   std::unique_ptr<ConcatenateOp> op(new ConcatenateOp(0, nullptr, append));
@@ -44,10 +44,11 @@ TEST_F(MindDataTestConcatenateOp, TestOp) {
   in.push_back(input);
   TensorRow out_row;
   Status s = op->Compute(in, &out_row);
-  uint64_t out[6] = {1, 1, 2, 4, 4, 4};
+  std::vector<uint64_t> out = {1, 1, 2, 4, 4, 4};
 
-  std::shared_ptr<Tensor> expected =
-    std::make_shared<Tensor>(TensorShape{6}, DataType(DataType::DE_UINT64), reinterpret_cast<unsigned char *>(out));
+  std::shared_ptr<Tensor> expected;
+  Tensor::CreateFromVector(out, &expected);
+
   output = out_row[0];
   EXPECT_TRUE(s.IsOk());
   ASSERT_TRUE(output->shape() == expected->shape());

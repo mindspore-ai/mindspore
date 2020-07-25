@@ -185,17 +185,14 @@ Status ManifestOp::LoadTensorRow(row_id_type row_id, const std::pair<std::string
   std::vector<int32_t> label_index(data.second.size());
   (void)std::transform(data.second.begin(), data.second.end(), label_index.begin(),
                        [this](const std::string &label_name) { return label_index_[label_name]; });
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(label_index, &label));
   if (label_index.size() == 1) {
-    RETURN_IF_NOT_OK(Tensor::CreateTensor(&label, data_schema_->column(1).tensorImpl(), TensorShape({}),
-                                          data_schema_->column(1).type(),
-                                          reinterpret_cast<unsigned char *>(&label_index[0])));
+    label->Reshape(TensorShape({}));
   } else {
-    RETURN_IF_NOT_OK(Tensor::CreateTensor(
-      &label, data_schema_->column(1).tensorImpl(), TensorShape(std::vector<dsize_t>(1, label_index.size())),
-      data_schema_->column(1).type(), reinterpret_cast<unsigned char *>(&label_index[0])));
+    label->Reshape(TensorShape(std::vector<dsize_t>(1, label_index.size())));
   }
 
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&image, data.first));
+  RETURN_IF_NOT_OK(Tensor::CreateFromFile(data.first, &image));
   if (decode_ == true) {
     Status rc = Decode(image, &image);
     if (rc.IsError()) {

@@ -138,15 +138,12 @@ Status WordpieceTokenizerOp::Compute(const TensorRow &input, TensorRow *output) 
     offsets_start.push_back(0);
     offsets_limit.push_back(0);
   }
-  token_tensor = std::make_shared<Tensor>(out_tokens, TensorShape({(dsize_t)out_tokens.size()}));
+  Tensor::CreateFromVector(out_tokens, &token_tensor);
   output->push_back(token_tensor);
   if (with_offsets_) {
-    RETURN_IF_NOT_OK(Tensor::CreateTensor(&offsets_start_tensor, TensorImpl::kFlexible,
-                                          TensorShape({(dsize_t)offsets_start.size()}), DataType(DataType::DE_UINT32),
-                                          reinterpret_cast<unsigned char *>(&offsets_start[0])));
-    RETURN_IF_NOT_OK(Tensor::CreateTensor(&offsets_limit_tensor, TensorImpl::kFlexible,
-                                          TensorShape({(dsize_t)offsets_limit.size()}), DataType(DataType::DE_UINT32),
-                                          reinterpret_cast<unsigned char *>(&offsets_limit[0])));
+    RETURN_IF_NOT_OK(Tensor::CreateFromVector(offsets_start, &offsets_start_tensor));
+    RETURN_IF_NOT_OK(Tensor::CreateFromVector(offsets_limit, &offsets_limit_tensor));
+
     output->push_back(offsets_start_tensor);
     output->push_back(offsets_limit_tensor);
   }

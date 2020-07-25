@@ -141,8 +141,9 @@ Status BatchFetchRequest::RestoreOneTensor(const TensorMetaMsg *col_ts, const Re
 #undef CASE
 
   DataType type(dest);
-  std::shared_ptr<Tensor> ts =
-    std::make_shared<Tensor>(shape, type, static_cast<const unsigned char *>(data.GetPointer()), data.GetSize());
+  std::shared_ptr<Tensor> ts;
+  RETURN_IF_NOT_OK(
+    Tensor::CreateFromMemory(shape, type, static_cast<const unsigned char *>(data.GetPointer()), data.GetSize(), &ts));
   // Next we restore the real data which can be embedded or stored separately.
   if (ts->SizeInBytes() != data.GetSize()) {
     MS_LOG(ERROR) << "Unexpected length. Read " << data.GetSize() << ". Expected " << ts->SizeInBytes() << ".\n"

@@ -677,8 +677,7 @@ Status TFReaderOp::LoadFeature(const std::unique_ptr<TensorQTable> *tensor_table
       // into the tensor
       TensorShape current_shape = TensorShape::CreateUnknownRankShape();
       RETURN_IF_NOT_OK(current_col.MaterializeTensorShape(num_elements, &current_shape));
-      RETURN_IF_NOT_OK(
-        Tensor::CreateTensor(&ts, current_col.tensorImpl(), current_shape, current_col.type(), data_ptr));
+      RETURN_IF_NOT_OK(Tensor::CreateFromMemory(current_shape, current_col.type(), data_ptr, &ts));
       break;
     }
     case dataengine::Feature::KindCase::kInt64List: {
@@ -735,7 +734,7 @@ Status TFReaderOp::LoadBytesList(const ColDescriptor &current_col, const dataeng
   if (current_col.type() == DataType::DE_STRING) {
     TensorShape shape = TensorShape::CreateScalar();
     RETURN_IF_NOT_OK(current_col.MaterializeTensorShape(*num_elements, &shape));
-    RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, bytes_list, shape));
+    RETURN_IF_NOT_OK(Tensor::CreateFromByteList(bytes_list, shape, tensor));
     return Status::OK();
   }
 
@@ -763,7 +762,7 @@ Status TFReaderOp::LoadBytesList(const ColDescriptor &current_col, const dataeng
   // know how many elements there are and the total bytes, create tensor here:
   TensorShape current_shape = TensorShape::CreateScalar();
   RETURN_IF_NOT_OK(current_col.MaterializeTensorShape((*num_elements) * pad_size, &current_shape));
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, bytes_list, current_shape, current_col.type(), pad_size));
+  RETURN_IF_NOT_OK(Tensor::CreateFromByteList(bytes_list, current_shape, current_col.type(), pad_size, tensor));
 
   return Status::OK();
 }
@@ -836,10 +835,7 @@ Status TFReaderOp::LoadIntList(const ColDescriptor &current_col, const dataengin
   // know how many elements there are, create tensor here:
   TensorShape current_shape = TensorShape::CreateUnknownRankShape();
   RETURN_IF_NOT_OK(current_col.MaterializeTensorShape(*num_elements, &current_shape));
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, current_col.tensorImpl(), current_shape, current_col.type()));
-
-  // Tensors are lazily allocated, this eagerly allocates memory for the tensor.
-  RETURN_IF_NOT_OK((*tensor)->AllocateBuffer((*tensor)->SizeInBytes()));
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(current_shape, current_col.type(), tensor));
 
   int64_t i = 0;
   auto it = (*tensor)->begin<T>();

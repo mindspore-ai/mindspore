@@ -69,14 +69,14 @@ Status SentencePieceTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, s
     if (!status.ok()) {
       RETURN_STATUS_UNEXPECTED("sentence piece tokenizer error");
     }
-    *output = std::make_unique<Tensor>(pieces, TensorShape({(dsize_t)pieces.size()}));
+    RETURN_IF_NOT_OK(Tensor::CreateFromVector(pieces, output));
   } else {
     std::vector<int> ids;
     auto status = processor_.Encode(sentence, &ids);
     if (!status.ok()) {
       RETURN_STATUS_UNEXPECTED("sentence piece tokenizer error");
     }
-    RETURN_IF_NOT_OK(Tensor::CreateTensor(output, ids, TensorShape({(dsize_t)ids.size()})));
+    RETURN_IF_NOT_OK(Tensor::CreateFromVector(ids, output));
   }
   return Status::OK();
 }

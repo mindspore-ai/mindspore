@@ -38,9 +38,9 @@ class MindDataTestMaskOp : public UT::Common {
 
 TEST_F(MindDataTestMaskOp, Basics) {
   std::shared_ptr<Tensor> t;
-  Tensor::CreateTensor(&t, std::vector<uint32_t>({1, 2, 3, 4, 5, 6}));
+  Tensor::CreateFromVector(std::vector<uint32_t>({1, 2, 3, 4, 5, 6}), &t);
   std::shared_ptr<Tensor> v;
-  Tensor::CreateTensor(&v, std::vector<uint32_t>({3}), TensorShape::CreateScalar());
+  Tensor::CreateFromVector(std::vector<uint32_t>({3}), TensorShape::CreateScalar(), &v);
   std::shared_ptr<MaskOp> op = std::make_shared<MaskOp>(RelationalOp::kEqual, v, DataType(DataType::DE_UINT16));
   std::shared_ptr<Tensor> out;
   ASSERT_TRUE(op->Compute(t, &out).IsOk());

@@ -46,8 +46,8 @@ class MindDataTestTokenizerOp : public UT::Common {
 TEST_F(MindDataTestTokenizerOp, TestUnicodeCharTokenizerOp) {
   MS_LOG(INFO) << "Doing TestUnicodeCharTokenizerOp.";
   std::unique_ptr<UnicodeCharTokenizerOp> op(new UnicodeCharTokenizerOp(true));
-  std::shared_ptr<Tensor> input = std::make_shared<Tensor>("Hello World!");
-  TensorRow output;
+std::shared_ptr<Tensor> input;
+  Tensor::CreateScalar<std::string>("Hello World!", &input);  TensorRow output;
   Status s = op->Compute(TensorRow(0, {input}), &output);
   EXPECT_TRUE(s.IsOk());
   EXPECT_EQ(output[0]->Size(), 12);
@@ -66,7 +66,7 @@ TEST_F(MindDataTestTokenizerOp, TestUnicodeCharTokenizerOp) {
   CheckEqual(output[0], {10}, "d");
   CheckEqual(output[0], {11}, "!");
 
-  input = std::make_shared<Tensor>("中国 你好!");
+  Tensor::CreateScalar<std::string>("中国 你好!", &input);
   output.clear();
   s = op->Compute(TensorRow(0, {input}), &output);
   EXPECT_TRUE(s.IsOk());
@@ -80,38 +80,38 @@ TEST_F(MindDataTestTokenizerOp, TestUnicodeCharTokenizerOp) {
   CheckEqual(output[0], {4}, "好");
   CheckEqual(output[0], {5}, "!");
 
-  input = std::make_shared<Tensor>("中");
-  output.clear();
+  Tensor::CreateScalar<std::string>("中", &input);
+output.clear();
   s = op->Compute(TensorRow(0, {input}), &output);
-  EXPECT_TRUE(s.IsOk());
+    EXPECT_TRUE(s.IsOk());
   EXPECT_EQ(output[0]->Size(), 1);
   EXPECT_EQ(output[0]->Rank(), 1);
   MS_LOG(INFO) << "Out tensor3: " << output[0]->ToString();
   CheckEqual(output[0], {0}, "中");
 
-  input = std::make_shared<Tensor>("H");
-  output.clear();
+  Tensor::CreateScalar<std::string>("H", &input);
+output.clear();
   s = op->Compute(TensorRow(0, {input}), &output);
-  EXPECT_TRUE(s.IsOk());
+    EXPECT_TRUE(s.IsOk());
   EXPECT_EQ(output[0]->Size(), 1);
   EXPECT_EQ(output[0]->Rank(), 1);
   MS_LOG(INFO) << "Out tensor4: " << output[0]->ToString();
   CheckEqual(output[0], {0}, "H");
 
-  input = std::make_shared<Tensor>("  ");
-  output.clear();
+  Tensor::CreateScalar<std::string>("  ", &input);
+output.clear();
   s = op->Compute(TensorRow(0, {input}), &output);
-  EXPECT_TRUE(s.IsOk());
+    EXPECT_TRUE(s.IsOk());
   EXPECT_EQ(output[0]->Size(), 2);
   EXPECT_EQ(output[0]->Rank(), 1);
   MS_LOG(INFO) << "Out tensor5: " << output[0]->ToString();
   CheckEqual(output[0], {0}, " ");
   CheckEqual(output[0], {1}, " ");
 
-  input = std::make_shared<Tensor>("");
-  output.clear();
+  Tensor::CreateScalar<std::string>("", &input);
+output.clear();
   s = op->Compute(TensorRow(0, {input}), &output);
-  EXPECT_TRUE(s.IsOk());
+    EXPECT_TRUE(s.IsOk());
   EXPECT_EQ(output[0]->Size(), 1);
   EXPECT_EQ(output[0]->Rank(), 1);
   MS_LOG(INFO) << "Out tensor6: " << output[0]->ToString();
@@ -121,10 +121,10 @@ TEST_F(MindDataTestTokenizerOp, TestUnicodeCharTokenizerOp) {
 TEST_F(MindDataTestTokenizerOp, TestWhitespaceTokenizerOp) {
   MS_LOG(INFO) << "Doing TestWhitespaceTokenizerOp.";
   std::unique_ptr<WhitespaceTokenizerOp> op(new WhitespaceTokenizerOp(true));
-  std::shared_ptr<Tensor> input = std::make_shared<Tensor>("Welcome to China.");
-  TensorRow output;
+std::shared_ptr<Tensor> input;
+  Tensor::CreateScalar<std::string>("Welcome to China.", &input);  TensorRow output;
   Status s = op->Compute(TensorRow(0, {input}), &output);
-  EXPECT_TRUE(s.IsOk());
+    EXPECT_TRUE(s.IsOk());
   EXPECT_EQ(output[0]->Size(), 3);
   EXPECT_EQ(output[0]->Rank(), 1);
   MS_LOG(INFO) << "Out tensor1: " << output[0]->ToString();
@@ -132,37 +132,37 @@ TEST_F(MindDataTestTokenizerOp, TestWhitespaceTokenizerOp) {
   CheckEqual(output[0], {1}, "to");
   CheckEqual(output[0], {2}, "China.");
 
-  input = std::make_shared<Tensor>("  hello");
-  output.clear();
+  Tensor::CreateScalar<std::string>("  hello", &input);
+output.clear();
   s = op->Compute(TensorRow(0, {input}), &output);
-  EXPECT_TRUE(s.IsOk());
+    EXPECT_TRUE(s.IsOk());
   EXPECT_EQ(output[0]->Size(), 1);
   EXPECT_EQ(output[0]->Rank(), 1);
   MS_LOG(INFO) << "Out tensor2: " << output[0]->ToString();
   CheckEqual(output[0], {0}, "hello");
 
-  input = std::make_shared<Tensor>("hello");
-  output.clear();
+  Tensor::CreateScalar<std::string>("hello", &input);
+output.clear();
   s = op->Compute(TensorRow(0, {input}), &output);
-  EXPECT_TRUE(s.IsOk());
+    EXPECT_TRUE(s.IsOk());
   EXPECT_EQ(output[0]->Size(), 1);
   EXPECT_EQ(output[0]->Rank(), 1);
   MS_LOG(INFO) << "Out tensor3: " << output[0]->ToString();
   CheckEqual(output[0], {0}, "hello");
 
-  input = std::make_shared<Tensor>("hello  ");
-  output.clear();
+  Tensor::CreateScalar<std::string>("hello  ", &input);
+output.clear();
   s = op->Compute(TensorRow(0, {input}), &output);
-  EXPECT_TRUE(s.IsOk());
+    EXPECT_TRUE(s.IsOk());
   EXPECT_EQ(output[0]->Size(), 1);
   EXPECT_EQ(output[0]->Rank(), 1);
   MS_LOG(INFO) << "Out tensor4: " << output[0]->ToString();
   CheckEqual(output[0], {0}, "hello");
 
-  input = std::make_shared<Tensor>("  ");
-  output.clear();
+  Tensor::CreateScalar<std::string>("  ", &input);
+output.clear();
   s = op->Compute(TensorRow(0, {input}), &output);
-  EXPECT_TRUE(s.IsOk());
+    EXPECT_TRUE(s.IsOk());
   EXPECT_EQ(output[0]->Size(), 1);
   EXPECT_EQ(output[0]->Rank(), 1);
   MS_LOG(INFO) << "Out tensor5: " << output[0]->ToString();
@@ -174,8 +174,9 @@ TEST_F(MindDataTestTokenizerOp, TestUnicodeScriptTokenizer) {
   std::unique_ptr<UnicodeScriptTokenizerOp> keep_whitespace_op(new UnicodeScriptTokenizerOp(true, true));
   std::unique_ptr<UnicodeScriptTokenizerOp> skip_whitespace_op(new UnicodeScriptTokenizerOp(false, true));
 
-  std::shared_ptr<Tensor> input = std::make_shared<Tensor>("Welcome to China. \n 中国\t北京");
-  TensorRow output;
+ std::shared_ptr<Tensor> input;
+  Tensor::CreateScalar<std::string>("Welcome to China. \n 中国\t北京", &input);
+ TensorRow output;
   Status s = keep_whitespace_op->Compute(TensorRow(0, {input}), &output);
   EXPECT_TRUE(s.IsOk());
   EXPECT_EQ(output[0]->Size(), 10);
@@ -204,10 +205,9 @@ TEST_F(MindDataTestTokenizerOp, TestUnicodeScriptTokenizer) {
   CheckEqual(output[0], {4}, "中国");
   CheckEqual(output[0], {5}, "北京");
 
-  input = std::make_shared<Tensor>("  Welcome to 中国.  ");
-  output.clear();
-  s = skip_whitespace_op->Compute(TensorRow(0, {input}), &output);
-  EXPECT_TRUE(s.IsOk());
+  Tensor::CreateScalar<std::string>("  Welcome to 中国.  ", &input);
+ output.clear();
+  s = skip_whitespace_op->Compute(TensorRow(0, {input}), &output);  EXPECT_TRUE(s.IsOk());
   EXPECT_EQ(output[0]->Size(), 4);
   EXPECT_EQ(output[0]->Rank(), 1);
   MS_LOG(INFO) << "Out tensor3: " << output[0]->ToString();
@@ -230,25 +230,23 @@ TEST_F(MindDataTestTokenizerOp, TestUnicodeScriptTokenizer) {
   CheckEqual(output[0], {6}, ".");
   CheckEqual(output[0], {7}, "  ");
 
-  input = std::make_shared<Tensor>("Hello");
-  output.clear();
-  s = keep_whitespace_op->Compute(TensorRow(0, {input}), &output);
-  EXPECT_TRUE(s.IsOk());
+  Tensor::CreateScalar<std::string>("Hello", &input);
+output.clear();
+  s = keep_whitespace_op->Compute(TensorRow(0, {input}), &output);  EXPECT_TRUE(s.IsOk());
   EXPECT_EQ(output[0]->Size(), 1);
   EXPECT_EQ(output[0]->Rank(), 1);
   MS_LOG(INFO) << "Out tensor5: " << output[0]->ToString();
   CheckEqual(output[0], {0}, "Hello");
 
-  input = std::make_shared<Tensor>("H");
-  output.clear();
-  s = keep_whitespace_op->Compute(TensorRow(0, {input}), &output);
-  EXPECT_TRUE(s.IsOk());
+  Tensor::CreateScalar<std::string>("H", &input);
+output.clear();
+  s = keep_whitespace_op->Compute(TensorRow(0, {input}), &output);  EXPECT_TRUE(s.IsOk());
   EXPECT_EQ(output[0]->Size(), 1);
   EXPECT_EQ(output[0]->Rank(), 1);
   MS_LOG(INFO) << "Out tensor6: " << output[0]->ToString();
   CheckEqual(output[0], {0}, "H");
 
-  input = std::make_shared<Tensor>("");
+  Tensor::CreateScalar<std::string>("", &input);
   output.clear();
   s = keep_whitespace_op->Compute(TensorRow(0, {input}), &output);
   EXPECT_TRUE(s.IsOk());
@@ -257,10 +255,9 @@ TEST_F(MindDataTestTokenizerOp, TestUnicodeScriptTokenizer) {
   MS_LOG(INFO) << "Out tensor7: " << output[0]->ToString();
   CheckEqual(output[0], {0}, "");
 
-  input = std::make_shared<Tensor>("Hello中国Hello世界");
-  output.clear();
-  s = keep_whitespace_op->Compute(TensorRow(0, {input}), &output); EXPECT_TRUE(s.IsOk());
-  EXPECT_EQ(output[0]->Size(), 4);
+  Tensor::CreateScalar<std::string>("Hello中国Hello世界", &input);
+ output.clear();
+  s = keep_whitespace_op->Compute(TensorRow(0, {input}), &output); EXPECT_TRUE(s.IsOk());  EXPECT_EQ(output[0]->Size(), 4);
   EXPECT_EQ(output[0]->Rank(), 1);
   MS_LOG(INFO) << "Out tensor8: " << output[0]->ToString();
   CheckEqual(output[0], {0}, "Hello");
@@ -268,15 +265,15 @@ TEST_F(MindDataTestTokenizerOp, TestUnicodeScriptTokenizer) {
   CheckEqual(output[0], {2}, "Hello");
   CheckEqual(output[0], {3}, "世界");
 
-  input = std::make_shared<Tensor>("   ");
-  output.clear();
+  Tensor::CreateScalar<std::string>("   ", &input);
+ output.clear();
   s = keep_whitespace_op->Compute(TensorRow(0, {input}), &output);
-  EXPECT_TRUE(s.IsOk());
+   EXPECT_TRUE(s.IsOk());
   EXPECT_EQ(output[0]->Size(), 1);
   EXPECT_EQ(output[0]->Rank(), 1);
   MS_LOG(INFO) << "Out tensor10: " << output[0]->ToString();
   CheckEqual(output[0], {0}, "   ");
-  input = std::make_shared<Tensor>("   ");
+  Tensor::CreateScalar<std::string>("   ", &input);
   output.clear();
   s = skip_whitespace_op->Compute(TensorRow(0, {input}), &output);
   EXPECT_TRUE(s.IsOk());
@@ -289,7 +286,9 @@ TEST_F(MindDataTestTokenizerOp, TestUnicodeScriptTokenizer) {
 TEST_F(MindDataTestTokenizerOp, TestCaseFold) {
   MS_LOG(INFO) << "Doing TestCaseFold.";
   std::unique_ptr<CaseFoldOp> case_fold_op(new CaseFoldOp());
-  std::shared_ptr<Tensor> input = std::make_shared<Tensor>("Welcome to China. \n 中国\t北京");
+  std::shared_ptr<Tensor> input;
+  Tensor::CreateScalar<std::string>("Welcome to China. \n 中国\t北京", &input);
+
   std::shared_ptr<Tensor> output;
   Status s = case_fold_op->Compute(input, &output);
   EXPECT_TRUE(s.IsOk());
@@ -305,7 +304,8 @@ TEST_F(MindDataTestTokenizerOp, TestNormalize) {
   std::unique_ptr<NormalizeUTF8Op> nfkc_normalize_op(new NormalizeUTF8Op(NormalizeForm::kNfkc));
   std::unique_ptr<NormalizeUTF8Op> nfd_normalize_op(new NormalizeUTF8Op(NormalizeForm::kNfd));
   std::unique_ptr<NormalizeUTF8Op> nfkd_normalize_op(new NormalizeUTF8Op(NormalizeForm::kNfkd));
-  std::shared_ptr<Tensor> input = std::make_shared<Tensor>("ṩ");
+  std::shared_ptr<Tensor> input;
+  Tensor::CreateScalar<std::string>("ṩ", &input);
   std::shared_ptr<Tensor> output;
   Status s = nfc_normalize_op->Compute(input, &output);
   EXPECT_TRUE(s.IsOk());
@@ -327,7 +327,8 @@ TEST_F(MindDataTestTokenizerOp, TestNormalize) {
 TEST_F(MindDataTestTokenizerOp, TestRegexReplace) {
   MS_LOG(INFO) << "Doing TestRegexReplace.";
   std::unique_ptr<RegexReplaceOp> regex_replace_op(new RegexReplaceOp("\\s+", "_", true));
-  std::shared_ptr<Tensor> input = std::make_shared<Tensor>("Welcome to China. \n 中国\t北京");
+  std::shared_ptr<Tensor> input;
+  Tensor::CreateScalar<std::string>("Welcome to China. \n 中国\t北京", &input);
   std::shared_ptr<Tensor> output;
   Status s = regex_replace_op->Compute(input, &output);
   EXPECT_TRUE(s.IsOk());
@@ -340,19 +341,20 @@ TEST_F(MindDataTestTokenizerOp, TestRegexReplace) {
 TEST_F(MindDataTestTokenizerOp, TestRegexTokenizer) {
   MS_LOG(INFO) << "Doing TestRegexTokenizerOp.";
   std::unique_ptr<RegexTokenizerOp> regex_tokenizer_op(new RegexTokenizerOp("\\p{Cc}|\\p{Cf}|\\s+", "", true));
-  std::shared_ptr<Tensor> input = std::make_shared<Tensor>("Welcome to China. \n 中国\t北京");
-  TensorRow output;
+std::shared_ptr<Tensor> input;
+  Tensor::CreateScalar<std::string>("Welcome to China. \n 中国\t北京", &input);
+     TensorRow output;
   Status s = regex_tokenizer_op->Compute(TensorRow(0, {input}), &output);
   EXPECT_TRUE(s.IsOk());
 }
 
 TEST_F(MindDataTestTokenizerOp, TestBasicTokenizer) {
   MS_LOG(INFO) << "Doing TestBasicTokenizer.";
-  //bool lower_case, bool keep_whitespace, 
+  // bool lower_case, bool keep_whitespace,
   // NormalizeForm  normalization_form, bool preserve_unused_token
-  std::unique_ptr<BasicTokenizerOp> basic_tokenizer(new BasicTokenizerOp(true, true, NormalizeForm::kNone, false,
-                                                                         true));
-  std::shared_ptr<Tensor> input = std::make_shared<Tensor>("Welcome to China. 中国\t北京");
+  std::unique_ptr<BasicTokenizerOp> basic_tokenizer(new BasicTokenizerOp(true, true, NormalizeForm::kNone, false,true));
+std::shared_ptr<Tensor> input;
+  Tensor::CreateScalar<std::string>("Welcome to China. 中国\t北京", &input);
   TensorRow output;
   Status s = basic_tokenizer->Compute(TensorRow(0, {input}), &output);
   EXPECT_TRUE(s.IsOk());

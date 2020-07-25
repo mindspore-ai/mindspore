@@ -160,12 +160,10 @@ Status MnistOp::WorkerEntry(int32_t worker_id) {
 // Load 1 TensorRow (image,label) using 1 MnistLabelPair.
 Status MnistOp::LoadTensorRow(row_id_type row_id, const MnistLabelPair &mnist_pair, TensorRow *trow) {
   std::shared_ptr<Tensor> image, label;
-  int32_t l = mnist_pair.second;
   // make a copy of cached tensor
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&image, data_schema_->column(0).tensorImpl(), mnist_pair.first->shape(),
-                                        mnist_pair.first->type(), mnist_pair.first->GetBuffer()));
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&label, data_schema_->column(1).tensorImpl(), data_schema_->column(1).shape(),
-                                        data_schema_->column(1).type(), reinterpret_cast<unsigned char *>(&l)));
+  RETURN_IF_NOT_OK(Tensor::CreateFromTensor(mnist_pair.first, &image));
+  RETURN_IF_NOT_OK(Tensor::CreateScalar(mnist_pair.second, &label));
+
   (*trow) = TensorRow(row_id, {std::move(image), std::move(label)});
   return Status::OK();
 }
@@ -325,8 +323,8 @@ Status MnistOp::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *la
       pixels[m] = (pixels[m] == 0) ? 0 : 255;
     }
     std::shared_ptr<Tensor> image;
-    RETURN_IF_NOT_OK(Tensor::CreateTensor(&image, data_schema_->column(0).tensorImpl(), img_tensor_shape,
-                                          data_schema_->column(0).type(), reinterpret_cast<unsigned char *>(pixels)));
+    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(img_tensor_shape, data_schema_->column(0).type(),
+                                              reinterpret_cast<unsigned char *>(pixels), &image));
     image_label_pairs_.emplace_back(std::make_pair(image, labels_buf[j]));
   }
   return Status::OK();

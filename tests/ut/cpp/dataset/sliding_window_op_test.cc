@@ -31,15 +31,17 @@ TEST_F(MindDataTestSlidingWindowOp, Compute) {
   MS_LOG(INFO) << "Doing MindDataTestSlidingWindowOp->Compute.";
   std::vector<std::string> strings = {"one", "two", "three", "four", "five", "six", "seven", "eight"};
   TensorShape shape({static_cast<dsize_t>(strings.size())});
-  std::shared_ptr<Tensor> input = std::make_shared<Tensor>(strings, shape);
+  std::shared_ptr<Tensor> input;
+  Tensor::CreateFromVector(strings, shape, &input);
   std::shared_ptr<Tensor> output;
 
   std::unique_ptr<SlidingWindowOp> op(new SlidingWindowOp(3, 0));
   Status s = op->Compute(input, &output);
 
-  std::vector<std::string> out = {"one", "two", "three", "two", "three", "four", "three", "four", "five",
-                                  "four", "five", "six", "five", "six", "seven", "six", "seven", "eight"};
-  std::shared_ptr<Tensor> expected = std::make_shared<Tensor>(out, TensorShape({6, 3}));
+  std::vector<std::string> out = {"one",  "two",  "three", "two",  "three", "four",  "three", "four",  "five",
+                                  "four", "five", "six",   "five", "six",   "seven", "six",   "seven", "eight"};
+  std::shared_ptr<Tensor> expected;
+  Tensor::CreateFromVector(out, TensorShape({6, 3}), &expected);
 
   ASSERT_TRUE(output->shape() == expected->shape());
   ASSERT_TRUE(output->type() == expected->type());
@@ -54,7 +56,8 @@ TEST_F(MindDataTestSlidingWindowOp, OutputShape) {
   MS_LOG(INFO) << "Doing MindDataTestSlidingWindowOp->OutputShape.";
   std::vector<std::string> strings = {"one", "two", "three", "four", "five", "six", "seven", "eight"};
   TensorShape shape({static_cast<dsize_t>(strings.size())});
-  std::shared_ptr<Tensor> input = std::make_shared<Tensor>(strings, shape);
+  std::shared_ptr<Tensor> input;
+  Tensor::CreateFromVector(strings, shape, &input);
   std::vector<TensorShape> input_shape = {input->shape()};
   std::vector<TensorShape> output_shape = {TensorShape({})};
 

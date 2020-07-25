@@ -359,7 +359,7 @@ Status CelebAOp::LoadTensorRow(row_id_type row_id, const std::pair<std::string, 
 
   Path path(folder_path_);
   Path image_path = path / image_label.first;
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&image, image_path.toString()));
+  RETURN_IF_NOT_OK(Tensor::CreateFromFile(image_path.toString(), &image));
   if (decode_ == true) {
     Status rc = Decode(image, &image);
     if (rc.IsError()) {
@@ -369,9 +369,8 @@ Status CelebAOp::LoadTensorRow(row_id_type row_id, const std::pair<std::string, 
     }
   }
 
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&label, data_schema_->column(1).tensorImpl(),
-                                        TensorShape({1, (uint32_t)image_label.second.size()}),
-                                        data_schema_->column(1).type()));
+  RETURN_IF_NOT_OK(
+    Tensor::CreateEmpty(TensorShape({1, (uint32_t)image_label.second.size()}), data_schema_->column(1).type(), &label));
   RETURN_IF_NOT_OK(label->Zero());
   for (uint32_t index = 0; index < image_label.second.size(); index++) {
     if (image_label.second[index] == 1) {

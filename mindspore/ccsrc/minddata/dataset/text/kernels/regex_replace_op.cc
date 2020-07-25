@@ -50,8 +50,7 @@ Status RegexReplaceOp::Compute(const std::shared_ptr<Tensor> &input, std::shared
   for (auto iter = input->begin<std::string_view>(); iter != input->end<std::string_view>(); iter++) {
     RETURN_IF_NOT_OK(RegexReplace(&matcher, *iter, &strs[i]));
   }
-  *output = std::make_shared<Tensor>(std::move(strs), input->shape());
-  return Status::OK();
+  return Tensor::CreateFromVector(strs, input->shape(), output);
 }
 }  // namespace dataset
 }  // namespace mindspore

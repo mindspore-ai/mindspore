@@ -97,7 +97,7 @@ Status OneHotEncoding(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *ou
     if (input->Rank() == 1) num_elements = input->shape()[0];
     TensorShape out_shape({num_elements, num_classes});
     std::shared_ptr<Tensor> out;
-    RETURN_IF_NOT_OK(Tensor::CreateTensor(&out, TensorImpl::kFlexible, out_shape, input->type()));
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(out_shape, input->type(), &out));
     RETURN_IF_NOT_OK(out->Zero());
     for (dsize_t i = 0; i < num_elements; ++i) {
       if (input->type().IsUnsignedInt()) {
@@ -133,7 +133,9 @@ Status Fill(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output
     fill_output = fill_value;
   }
 
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&out, TensorImpl::kFlexible, input_shape, input_type));
+  if (input_type.IsNumeric()) {
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(input_shape, input_type, &out));
+  }
 
   switch (input_type.value()) {
     case DataType::DE_BOOL: {
@@ -216,7 +218,7 @@ Status Fill(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output
       for (int i = 0; i < input_shape.NumOfElements(); i++) {
         strings.emplace_back(fill_string);
       }
-      RETURN_IF_NOT_OK(Tensor::CreateTensor(&out, strings, input_shape));
+      RETURN_IF_NOT_OK(Tensor::CreateFromVector(strings, input_shape, &out));
       break;
     }
     case DataType::DE_UNKNOWN: {
@@ -285,9 +287,8 @@ void CastFrom(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 
 // Type cast operator
 Status TypeCast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const DataType &data_type) {
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(output, TensorImpl::kFlexible, input->shape(), data_type));
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), data_type, output));
 
-  RETURN_IF_NOT_OK((*output)->AllocateBuffer((*output)->SizeInBytes()));
   switch (input->type().value()) {
     case DataType::DE_BOOL:
       CastFrom<bool>(input, output);
@@ -335,8 +336,7 @@ Status TypeCast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
 Status ToFloat16(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   // initiate new tensor for type cast
   DataType new_type = DataType("float16");
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(output, TensorImpl::kFlexible, input->shape(), new_type));
-  RETURN_IF_NOT_OK((*output)->AllocateBuffer((*output)->SizeInBytes()));
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), new_type, output));
 
   auto in_itr = input->begin<float>();
   auto out_itr = (*output)->begin<float16>();
@@ -387,7 +387,7 @@ Status PadEndNumeric(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor>
     (*dst) = src;  // if no padding, copy the pointer
   } else {
     CHECK_FAIL_RETURN_UNEXPECTED(src->Rank() == pad_shape.size(), "Pad to diff rank not allowed");
-    RETURN_IF_NOT_OK(Tensor::CreateTensor(dst, TensorImpl::kFlexible, TensorShape(pad_shape), src->type()));
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape(pad_shape), src->type(), dst));
     auto tensor_type = src->type().value();
     if (pad_val == 0) {  // if pad with zero, don't care what type it is
       RETURN_IF_NOT_OK((*dst)->Zero());
@@ -447,7 +447,7 @@ Status PadEndString(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> 
     std::vector<dsize_t> cur_ind(src->Rank(), 0);
     std::vector<std::string> strings;
     RETURN_IF_NOT_OK(PadEndStringHelper(src, &strings, TensorShape(pad_shape), cur_ind, 0, pad_val));
-    RETURN_IF_NOT_OK(Tensor::CreateTensor(dst, strings, TensorShape(pad_shape)));
+    RETURN_IF_NOT_OK(Tensor::CreateFromVector(strings, TensorShape(pad_shape), dst));
   }
   return Status::OK();
 }
@@ -521,7 +521,7 @@ Status Mask(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
                                "Cannot convert constant value to the type of the input tensor.");
   CHECK_FAIL_RETURN_UNEXPECTED(value->shape() == TensorShape::CreateScalar(), "Value is not a scalar");
 
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(output, TensorImpl::kFlexible, input->shape(), DataType(DataType::DE_BOOL)));
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), DataType(DataType::DE_BOOL), output));
 
   std::unique_ptr<TypeCastOp> value_cast_op(new TypeCastOp(input->type()));
   std::shared_ptr<Tensor> casted_value;
@@ -629,7 +629,7 @@ Status ConcatenateHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   std::shared_ptr<Tensor> out;
 
   if (input->type().IsNumeric()) {
-    RETURN_IF_NOT_OK(Tensor::CreateTensor(&out, TensorImpl::kFlexible, t, input->type()));
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(t, input->type(), &out));
 
     RETURN_IF_NOT_OK(out->Concatenate({0}, input));
     RETURN_IF_NOT_OK(out->Concatenate({input->shape()[0]}, append));
@@ -645,7 +645,7 @@ Status ConcatenateHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
     for (; itr != append->end<std::string_view>(); itr++) {
       strings.emplace_back(*itr);
     }
-    RETURN_IF_NOT_OK(Tensor::CreateTensor(&out, strings, t));
+    RETURN_IF_NOT_OK(Tensor::CreateFromVector(strings, t, &out));
 
     *output = out;
   }

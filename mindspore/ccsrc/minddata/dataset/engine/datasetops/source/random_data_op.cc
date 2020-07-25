@@ -361,8 +361,7 @@ Status RandomDataOp::CreateRandomRow(int32_t worker_id, TensorRow *new_row) {
       return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Failed to set random bytes for a tensor.");
     }
 
-    RETURN_IF_NOT_OK(
-      Tensor::CreateTensor(&new_tensor, current_col.tensorImpl(), *new_shape, current_col.type(), buf.get()));
+    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(*new_shape, current_col.type(), buf.get(), &new_tensor));
 
     // Add this tensor to the tensor row for output
     (*new_row).push_back(std::move(new_tensor));

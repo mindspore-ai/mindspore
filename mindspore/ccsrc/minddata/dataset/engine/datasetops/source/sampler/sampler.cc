@@ -73,9 +73,7 @@ Status Sampler::CreateSamplerTensor(std::shared_ptr<Tensor> *sample_ids, int64_t
     col_desc_ = std::make_unique<ColDescriptor>("sampleIds", DataType(DataType::DE_INT64), TensorImpl::kFlexible, 1);
   }
   TensorShape shape(std::vector<dsize_t>(1, num_elements));
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(sample_ids, col_desc_->tensorImpl(), shape, col_desc_->type()));
-  RETURN_IF_NOT_OK(
-    (*sample_ids)->AllocateBuffer((*sample_ids)->SizeInBytes()));  // allocate memory in case user forgets!
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(shape, col_desc_->type(), sample_ids));
   return Status::OK();
 }
 

@@ -75,7 +75,8 @@ TEST_F(MindDataTestCacheOp, TestCacheServer) {
   EXPECT_TRUE(rc.IsOk());
 
   // Create a tensor, take a snapshot and restore it back, and compare.
-  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2, 3}), DataType(DataType::DE_UINT64));
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateEmpty(TensorShape({2, 3}), DataType(DataType::DE_UINT64), &t);
   t->SetItemAt<uint64_t>({0, 0}, 1);
   t->SetItemAt<uint64_t>({0, 1}, 2);
   t->SetItemAt<uint64_t>({0, 2}, 3);
@@ -129,7 +130,8 @@ TEST_F(MindDataTestCacheOp, TestConcurrencyRequest) {
   rc = myClient.CreateCache(1, true);
   EXPECT_TRUE(rc.IsOk());
   std::cout << myClient << std::endl;
-  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2, 3}), DataType(DataType::DE_UINT64));
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateEmpty(TensorShape({2, 3}), DataType(DataType::DE_UINT64), &t);
   t->SetItemAt<uint64_t>({0, 0}, 1);
   t->SetItemAt<uint64_t>({0, 1}, 2);
   t->SetItemAt<uint64_t>({0, 2}, 3);
@@ -403,11 +405,7 @@ TEST_F(MindDataTestCacheOp, TestImageFolderCacheMerge) {
   // replace it with the required tree structures for cache lookup op and cache merge op.
 
   std::shared_ptr<CacheOp> myCacheOp;
-  rc = CacheOp::Builder()
-         .SetNumWorkers(4)
-         .SetClient(myClient)
-         .SetRowsPerBuffer(3)
-         .Build(&myCacheOp);
+  rc = CacheOp::Builder().SetNumWorkers(4).SetClient(myClient).SetRowsPerBuffer(3).Build(&myCacheOp);
 
   std::shared_ptr<ImageFolderOp> so;
   ImageFolderOp::Builder builder;

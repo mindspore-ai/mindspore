@@ -121,21 +121,10 @@ def test_slice_exceptions():
         slice_compare([1, 2, 3, 4, 5], 5)
     assert "Index 5 is out of bounds [0,5)" in str(info.value)
 
-    with pytest.raises(RuntimeError) as info:
-        slice_compare([1, 2, 3, 4, 5], slice(0))
-    assert "Indices are empty, generated tensor would be empty." in str(info.value)
-
-    with pytest.raises(RuntimeError) as info:
-        slice_compare([1, 2, 3, 4, 5], slice(3, 1, 1))
-    assert "Indices are empty, generated tensor would be empty." in str(info.value)
-
-    with pytest.raises(RuntimeError) as info:
-        slice_compare([1, 2, 3, 4, 5], slice(5, 10, 1))
-    assert "Indices are empty, generated tensor would be empty." in str(info.value)
-
-    with pytest.raises(RuntimeError) as info:
-        slice_compare([1, 2, 3, 4, 5], slice(-1, -5, 1))
-    assert "Indices are empty, generated tensor would be empty." in str(info.value)
+    slice_compare([1, 2, 3, 4, 5], slice(0))
+    slice_compare([1, 2, 3, 4, 5], slice(3, 1, 1))
+    slice_compare([1, 2, 3, 4, 5], slice(5, 10, 1))
+    slice_compare([1, 2, 3, 4, 5], slice(-1, -5, 1))
 
 
 def test_slice_all_str():
@@ -198,21 +187,10 @@ def test_slice_exceptions_str():
         slice_compare([b"1", b"2", b"3", b"4", b"5"], 5)
     assert "Index 5 is out of bounds [0,5)" in str(info.value)
 
-    with pytest.raises(RuntimeError) as info:
-        slice_compare([b"1", b"2", b"3", b"4", b"5"], slice(0))
-    assert "Indices are empty, generated tensor would be empty." in str(info.value)
-
-    with pytest.raises(RuntimeError) as info:
-        slice_compare([b"1", b"2", b"3", b"4", b"5"], slice(3, 1, 1))
-    assert "Indices are empty, generated tensor would be empty." in str(info.value)
-
-    with pytest.raises(RuntimeError) as info:
-        slice_compare([b"1", b"2", b"3", b"4", b"5"], slice(5, 10, 1))
-    assert "Indices are empty, generated tensor would be empty." in str(info.value)
-
-    with pytest.raises(RuntimeError) as info:
-        slice_compare([b"1", b"2", b"3", b"4", b"5"], slice(-1, -5, 1))
-    assert "Indices are empty, generated tensor would be empty." in str(info.value)
+    slice_compare([b"1", b"2", b"3", b"4", b"5"], slice(0))
+    slice_compare([b"1", b"2", b"3", b"4", b"5"], slice(3, 1, 1))
+    slice_compare([b"1", b"2", b"3", b"4", b"5"], slice(5, 10, 1))
+    slice_compare([b"1", b"2", b"3", b"4", b"5"], slice(-1, -5, 1))
 
 
 if __name__ == "__main__":

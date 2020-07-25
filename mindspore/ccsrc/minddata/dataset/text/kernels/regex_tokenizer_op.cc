@@ -120,15 +120,11 @@ Status RegexTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
   std::shared_ptr<Tensor> token_tensor, offsets_start_tensor, offsets_limit_tensor;
   RETURN_IF_NOT_OK(input[0]->GetItemAt(&text, {}));
   RETURN_IF_NOT_OK(GetRegexTokens(std::string(text.data(), text.size()), &tokens, &offsets_start, &offsets_limit));
-  token_tensor = std::make_shared<Tensor>(std::move(tokens), TensorShape({(dsize_t)tokens.size()}));
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(std::move(tokens), &token_tensor));
   output->push_back(token_tensor);
   if (with_offsets_) {
-    RETURN_IF_NOT_OK(Tensor::CreateTensor(&offsets_start_tensor, TensorImpl::kFlexible,
-                                          TensorShape({(dsize_t)offsets_start.size()}), DataType(DataType::DE_UINT32),
-                                          reinterpret_cast<unsigned char *>(&offsets_start[0])));
-    RETURN_IF_NOT_OK(Tensor::CreateTensor(&offsets_limit_tensor, TensorImpl::kFlexible,
-                                          TensorShape({(dsize_t)offsets_limit.size()}), DataType(DataType::DE_UINT32),
-                                          reinterpret_cast<unsigned char *>(&offsets_limit[0])));
+    RETURN_IF_NOT_OK(Tensor::CreateFromVector(offsets_start, &offsets_start_tensor));
+    RETURN_IF_NOT_OK(Tensor::CreateFromVector(offsets_limit, &offsets_limit_tensor));
     output->push_back(offsets_start_tensor);
     output->push_back(offsets_limit_tensor);
   }

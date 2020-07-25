@@ -23,16 +23,33 @@
 
 namespace mindspore {
 namespace dataset {
-CVTensor::CVTensor(const TensorShape &shape, const DataType &type) : Tensor(shape, type) {
-  (void)this->MatInit(GetMutableBuffer(), shape_, type_, &mat_);
-}
-
-CVTensor::CVTensor(const TensorShape &shape, const DataType &type, const uchar *data) : Tensor(shape, type, data) {
-  (void)this->MatInit(GetMutableBuffer(), shape_, type_, &mat_);
-}
 
 CVTensor::CVTensor(std::shared_ptr<Tensor> tensor) : Tensor(std::move(*tensor)) {
   (void)this->MatInit(GetMutableBuffer(), shape_, type_, &mat_);
+}
+
+Status CVTensor::CreateEmpty(const TensorShape &shape, DataType type, CVTensorPtr *out) {
+  const CVTensorAlloc *alloc = GlobalContext::Instance()->cv_tensor_allocator();
+  *out = std::allocate_shared<CVTensor>(*alloc, shape, type);
+  int64_t byte_size = (*out)->SizeInBytes();
+  // Don't allocate if we have a tensor with no elements.
+  if (byte_size != 0) {
+    RETURN_IF_NOT_OK((*out)->AllocateBuffer(byte_size));
+  }
+
+  return (*out)->MatInit((*out)->GetMutableBuffer(), (*out)->shape_, (*out)->type_, &(*out)->mat_);
+}
+
+Status CVTensor::CreateFromMat(const cv::Mat &mat, CVTensorPtr *out) {
+  TensorPtr out_tensor;
+  cv::Mat mat_local = mat;
+  // if the input Mat's memory is not continuous, copy it to one block of memory
+  if (!mat.isContinuous()) mat_local = mat.clone();
+  TensorShape shape(mat.size, mat_local.type());
+  DataType type = DataType::FromCVType(mat_local.type());
+  RETURN_IF_NOT_OK(CreateFromMemory(shape, type, mat_local.data, &out_tensor));
+  *out = AsCVTensor(out_tensor);
+  return Status::OK();
 }
 
 std::pair<std::array<int, 2>, int> CVTensor::IsValidImage(const TensorShape &shape, const DataType &type) {
@@ -57,7 +74,8 @@ std::shared_ptr<CVTensor> CVTensor::AsCVTensor(std::shared_ptr<Tensor> t) {
   if (cv_t != nullptr) {
     return cv_t;
   } else {
-    return std::make_shared<CVTensor>(t);
+    const CVTensorAlloc *alloc = GlobalContext::Instance()->cv_tensor_allocator();
+    return std::allocate_shared<CVTensor>(*alloc, t);
   }
 }
 
@@ -96,6 +114,14 @@ Status CVTensor::ExpandDim(const dsize_t &axis) {
 void CVTensor::Squeeze() {
   Tensor::Squeeze();
   (void)this->MatInit(GetMutableBuffer(), shape_, type_, &mat_);
+}
+
+Status CVTensor::MatAtIndex(const std::vector<dsize_t> &index, cv::Mat *mat) {
+  uchar *start = nullptr;
+  TensorShape remaining({-1});
+  RETURN_IF_NOT_OK(this->StartAddrOfIndex(index, &start, &remaining));
+  RETURN_IF_NOT_OK(this->MatInit(start, remaining, type_, mat));
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

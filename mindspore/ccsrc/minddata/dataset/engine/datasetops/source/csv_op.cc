@@ -102,18 +102,13 @@ int CsvOp::CsvParser::put_record(char c) {
   std::shared_ptr<Tensor> t;
   switch (column_default_[cur_col_]->type) {
     case CsvOp::INT:
-      Tensor::CreateTensor(&t, TensorImpl::kFlexible, TensorShape::CreateScalar(), DataType(DataType::DE_INT32));
-      t->SetItemAt<int32_t>({0}, std::stoi(s));
+      Tensor::CreateScalar(std::stoi(s), &t);
       break;
     case CsvOp::FLOAT:
-      Tensor::CreateTensor(&t, TensorImpl::kFlexible, TensorShape::CreateScalar(), DataType(DataType::DE_FLOAT32));
-      t->SetItemAt<float>({0}, std::stof(s));
-      break;
-    case CsvOp::STRING:
-      Tensor::CreateTensor(&t, {s}, TensorShape::CreateScalar());
+      Tensor::CreateScalar(std::stof(s), &t);
       break;
     default:
-      Tensor::CreateTensor(&t, {s}, TensorShape::CreateScalar());
+      Tensor::CreateScalar(s, &t);
       break;
   }
   (*tensor_table_)[cur_row_][cur_col_] = std::move(t);

@@ -136,8 +136,7 @@ Status BasicTokenizerOp::CaseFoldWithoutUnusedWords(const std::shared_ptr<Tensor
   for (auto iter = input->begin<std::string_view>(); iter != input->end<std::string_view>(); iter++) {
     RETURN_IF_NOT_OK(CaseFoldWithoutUnusedWords(*iter, kUnusedWords, &strs[i++]));
   }
-  *output = std::make_shared<Tensor>(std::move(strs), input->shape());
-  return Status::OK();
+  return Tensor::CreateFromVector(strs, input->shape(), output);
 }
 
 Status BasicTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {

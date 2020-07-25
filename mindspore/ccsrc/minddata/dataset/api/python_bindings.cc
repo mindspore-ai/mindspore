@@ -340,7 +340,7 @@ void bindTensor(py::module *m) {
   (void)py::class_<Tensor, std::shared_ptr<Tensor>>(*m, "Tensor", py::buffer_protocol())
     .def(py::init([](py::array arr) {
       std::shared_ptr<Tensor> out;
-      THROW_IF_ERROR(Tensor::CreateTensor(&out, arr));
+      THROW_IF_ERROR(Tensor::CreateFromNpArray(arr, &out));
       return out;
     }))
     .def_buffer([](Tensor &tensor) {
@@ -364,7 +364,18 @@ void bindTensor(py::module *m) {
     });
 
   (void)py::class_<TensorShape>(*m, "TensorShape")
-    .def(py::init<py::list>())
+    .def(py::init([](const py::list &list) {
+      std::vector<dsize_t> list_c;
+      for (auto &i : list) {
+        if (!i.is_none()) {
+          list_c.push_back(i.cast<int>());
+        } else {
+          list_c.push_back(TensorShape::kDimUnknown);
+        }
+      }
+      TensorShape out(list_c);
+      return out;
+    }))
     .def("__str__", &TensorShape::ToString)
     .def("as_list", &TensorShape::AsPyList)
     .def("is_known", &TensorShape::known);
