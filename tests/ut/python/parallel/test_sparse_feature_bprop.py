@@ -21,9 +21,8 @@ from mindspore import context
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.ops import composite as C, operations as P
-from mindspore.ops.operations.comm_ops import AllReduce, _MirrorOperator
+from mindspore.ops.operations.comm_ops import AllReduce
 from mindspore.common.api import _executor
-from mindspore.communication.management import HCCL_WORLD_COMM_GROUP
 from mindspore.nn import TrainOneStepCell, Adam
 
 
@@ -60,30 +59,37 @@ def test_bprop_with_sparse_feature_allreduce():
 
     _executor.compile(net, x)
 
+
 def test_bprop_with_sparse_feature_mirror():
-    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="hybrid_parallel")
+    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
     context.set_context(enable_sparse=True)
 
     class Net(nn.Cell):
-        def __init__(self, axis=0, shape=None):
+        def __init__(self, shape=None):
             super(Net, self).__init__()
             if shape is None:
                 shape = [8, 8]
-            self.mirror = _MirrorOperator(group=HCCL_WORLD_COMM_GROUP)
-            self.gatherv2 = P.SparseGatherV2()
+            weight = Tensor(np.ones([64, 64]), dtype=ms.float32)
+            self.weight = Parameter(weight, "w")
             self.index = Tensor(np.ones(shape), dtype=ms.int32)
-            self.axis = axis
+            self.embeddinglookup = nn.EmbeddingLookup()
+            self.embeddinglookup.embeddinglookup.set_strategy(((1, 1), (8, 1)))
 
-        def construct(self, x):
-            out = self.mirror(x)
-            out = self.gatherv2(out, self.index, self.axis)
+        def construct(self, x, b):
+            out = self.embeddinglookup(self.weight, self.index)
 
             return out
 
-    net = GradWrap(Net())
-    x = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    _x = Tensor(np.ones([126, 64, 32]), dtype=ms.float32)
+    _b = Tensor(np.ones([126, 64, 32]), dtype=ms.float32)
 
-    _executor.compile(net, x)
+    def compile_net(net):
+        optimizer = Adam(net.trainable_params(), learning_rate=0.1, loss_scale=1024.0, weight_decay=0.9)
+        train_net = TrainOneStepCell(net, optimizer)
+        _executor.compile(train_net, _x, _b)
+
+    net = Net()
+    compile_net(net)
 
 
 def test_bprop_with_sparse_feature_dataparallel():
