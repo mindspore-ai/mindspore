@@ -57,6 +57,6 @@ for ((i = 0; i < ${DEVICE_NUM}; i++)); do
   cd ./train_parallel$i || exit
   echo "start training for rank $RANK_ID, device $DEVICE_ID"
   env >env.log
-  python train.py --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 &>log &
+  python train.py --platform=Ascend --dataset_path=$PATH2 --run_distribute > log.txt 2>&1 &
   cd ..
 done
