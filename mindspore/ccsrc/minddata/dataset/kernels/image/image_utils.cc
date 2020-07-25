@@ -679,9 +679,10 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
     }
     cv::Mat result;
     cv::merge(image_result, result);
+    result.convertTo(result, input_cv->mat().type());
     std::shared_ptr<CVTensor> output_cv = std::make_shared<CVTensor>(result);
-    if (input_cv->Rank() == 2) output_cv->Squeeze();
     (*output) = std::static_pointer_cast<Tensor>(output_cv);
+    (*output)->Reshape(input->shape());
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("Error in auto contrast");
   }
@@ -781,8 +782,8 @@ Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     cv::Mat result;
     cv::merge(image_result, result);
     std::shared_ptr<CVTensor> output_cv = std::make_shared<CVTensor>(result);
-    if (input_cv->Rank() == 2) output_cv->Squeeze();
     (*output) = std::static_pointer_cast<Tensor>(output_cv);
+    (*output)->Reshape(input->shape());
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("Error in equalize.");
   }
