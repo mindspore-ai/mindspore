@@ -58,7 +58,7 @@ class MindData:
     def create_tuple_iterator(self):
         return self.__iter__()
 
-    def send(self):
+    def send(self, num_epochs=-1):
         pass
 
     def stop_send(self):

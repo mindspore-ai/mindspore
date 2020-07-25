@@ -16,6 +16,7 @@
 from collections.abc import Iterable
 
 import os
+import math
 import numpy as np
 
 from mindspore import log as logger
@@ -227,7 +228,7 @@ class Model:
             scaling_sens /= self._device_number
         return scaling_sens
 
-    def _exec_preprocess(self, network, is_train, phase, dataset, dataset_sink_mode, sink_size=-1):
+    def _exec_preprocess(self, network, is_train, phase, dataset, dataset_sink_mode, sink_size=-1, epoch_num=1):
         """Initializes dataset."""
         need_wrap = False
         if dataset_sink_mode:
@@ -239,7 +240,7 @@ class Model:
             if not is_train:
                 dataset.__loop_size__ = 1
 
-        dataset_helper = DatasetHelper(dataset, dataset_sink_mode, sink_size)
+        dataset_helper = DatasetHelper(dataset, dataset_sink_mode, sink_size, epoch_num)
 
         # remove later to deal with loop sink
         if need_wrap:
@@ -399,12 +400,18 @@ class Model:
             cb_params (_InternalCallbackParam): Callback parameters. Default: None.
             sink_size (int): Control the amount of data each sink. Default: -1.
         """
+        if sink_size == -1:
+            epoch_num = epoch
+        else:
+            epoch_num = math.ceil(epoch * sink_size / train_dataset.get_dataset_size())
+
         dataset_helper, train_network = self._exec_preprocess(self._train_network,
                                                               is_train=True,
                                                               phase='train',
                                                               dataset=train_dataset,
                                                               dataset_sink_mode=True,
-                                                              sink_size=sink_size)
+                                                              sink_size=sink_size,
+                                                              epoch_num=epoch_num)
         self._train_network = train_network
         cb_params.train_network = self._train_network
         cb_params.cur_step_num = 0
@@ -620,6 +627,8 @@ class Model:
             cb_params.net_outputs = outputs
             list_callback.step_end(run_context)
             self._update_metrics(outputs)
+
+        valid_dataset.reset()
 
         metrics = self._get_metrics()
         cb_params.metrics = metrics
