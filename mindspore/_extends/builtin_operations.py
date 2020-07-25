@@ -14,6 +14,7 @@
 # ============================================================================
 """builtin_operations"""
 import numpy as np
+from mindspore.ops import functional as F
 from mindspore.common.tensor import Tensor
 from mindspore.common.dtype import dtype_to_nptype, get_py_obj_dtype
 
@@ -171,3 +172,12 @@ def tuple_to_array(x):
 def stop_gradient(x):
     """Implement `stop_gradient`."""
     return x
+
+def mixed_precision_cast(dst_type, x):
+    """Implement `mixed_precision_cast`."""
+    if isinstance(x, tuple):
+        res = list()
+        for item in x:
+            res.append(F.cast(item, dst_type))
+        return tuple(res)
+    return F.cast(x, dst_type)

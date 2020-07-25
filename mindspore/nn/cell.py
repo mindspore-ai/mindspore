@@ -240,12 +240,13 @@ class Cell:
         else:
             _pynative_exec.set_grad_flag(False)
         cast_inputs = list()
-        if hasattr(self, "_mindspore_flags") and self._mindspore_flags.get('fp16'):
-            for item in inputs:
-                cast_inputs.append(cast(item, mstype.float16))
-        if hasattr(self, "_mindspore_flags") and self._mindspore_flags.get('fp32'):
-            for item in inputs:
-                cast_inputs.append(cast(item, mstype.float32))
+        if hasattr(self, "_mindspore_flags"):
+            if self._mindspore_flags.get('fp16'):
+                for item in inputs:
+                    cast_inputs.append(cast(item, mstype.float16))
+            if self._mindspore_flags.get('fp32'):
+                for item in inputs:
+                    cast_inputs.append(cast(item, mstype.float32))
         if cast_inputs:
             cast_inputs = tuple(cast_inputs)
         else:
@@ -496,10 +497,11 @@ class Cell:
         Args:
             param (Parameter): The parameter to cast.
         """
-        if hasattr(self, "_mindspore_flags") and self._mindspore_flags.get('fp16'):
-            return cast(param, mstype.float16)
-        if hasattr(self, "_mindspore_flags") and self._mindspore_flags.get('fp32'):
-            return cast(param, mstype.float32)
+        if hasattr(self, "_mindspore_flags"):
+            if self._mindspore_flags.get('fp16'):
+                return cast(param, mstype.float16)
+            if self._mindspore_flags.get('fp32'):
+                return cast(param, mstype.float32)
         return param
 
     def insert_child_to_cell(self, child_name, child):
