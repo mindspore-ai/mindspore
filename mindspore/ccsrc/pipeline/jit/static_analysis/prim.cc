@@ -150,7 +150,8 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
 using mindspore::parse::PyObjectWrapper;
 
 EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
-  if (prim_ != prim::kPrimMakeTuple && prim_ != prim::kPrimSwitch) {
+  if (prim_ != prim::kPrimMakeTuple && prim_ != prim::kPrimSwitch && prim_ != prim::kPrimEnvSetItem &&
+      prim_ != prim::kPrimEnvGetItem) {
     auto ret_abstract = AbstractEval(args);
     if (ret_abstract != nullptr) {
       MS_LOG(DEBUG) << "StandardPrimEvaluator eval Undetermined";
