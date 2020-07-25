@@ -862,7 +862,7 @@ class Cell:
 
     def register_backward_hook(self, fn):
         """
-        Set the cell backward hook function.
+        Set the cell backward hook function. Note that this function is only supported in Pynative Mode.
 
         Note:
             fn should be defined as following code shows, `cell_name` is the name of registered cell,
