@@ -54,7 +54,7 @@ class Worker {
 
  private:
   Worker() : kv_worker_(nullptr), running_(false), key_cnt_(0) {}
-  ~Worker() { ::ps::Finalize(0, true); }
+  ~Worker() = default;
   Worker(const Worker &) = delete;
   Worker &operator=(const Worker &) = delete;
 
@@ -81,13 +81,12 @@ void Worker<T>::Run() {
     MS_LOG(INFO) << "'Worker is already running.";
     return;
   }
-
-  ::ps::Start(0);
   if (!::ps::IsWorker()) {
     MS_LOG(EXCEPTION) << "The role is not worker.";
   }
   kv_worker_ = std::make_shared<WorkerProxy<T>>(0, 0, 1);
   running_ = true;
+  ::ps::Start(0);
 }
 
 template <typename T>
@@ -121,7 +120,11 @@ void Worker<T>::DoPSEmbeddingLookup(const ::ps::SArray<::ps::Key> &keys, const :
 
 template <typename T>
 void Worker<T>::Finalize() {
-  kv_worker_->Finalize();
+  if (running_) {
+    kv_worker_->Finalize();
+    kv_worker_.reset();
+    running_ = false;
+  }
 }
 
 template <typename T>
