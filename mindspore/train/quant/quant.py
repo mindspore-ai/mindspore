@@ -35,8 +35,8 @@ from . import quant_utils
 
 _ACTIVATION_MAP = {nn.ReLU: quant.ActQuant,
                    nn.ReLU6: quant.ActQuant,
-                   nn.LeakyReLU: quant.ActQuant,
                    nn.Sigmoid: quant.ActQuant,
+                   nn.LeakyReLU: quant.LeakyReLUQuant,
                    nn.HSigmoid: quant.HSigmoidQuant,
                    nn.HSwish: quant.HSwishQuant}
 
@@ -167,32 +167,35 @@ class ConvertToQuantNetwork:
         convert Conv2d cell to quant cell
         """
         conv_inner = subcell.conv
-        if subcell.has_bn and self.bn_fold:
-            bn_inner = subcell.batchnorm
-            conv_inner = quant.Conv2dBatchNormQuant(conv_inner.in_channels,
-                                                    conv_inner.out_channels,
-                                                    kernel_size=conv_inner.kernel_size,
-                                                    stride=conv_inner.stride,
-                                                    pad_mode=conv_inner.pad_mode,
-                                                    padding=conv_inner.padding,
-                                                    dilation=conv_inner.dilation,
-                                                    group=conv_inner.group,
-                                                    eps=bn_inner.eps,
-                                                    quant_delay=self.weight_qdelay,
-                                                    freeze_bn=self.freeze_bn,
-                                                    per_channel=self.weight_channel,
-                                                    num_bits=self.weight_bits,
-                                                    fake=True,
-                                                    symmetric=self.weight_symmetric,
-                                                    narrow_range=self.weight_range)
-            # change original network BatchNormal OP parameters to quant network
-            conv_inner.gamma = subcell.batchnorm.gamma
-            conv_inner.beta = subcell.batchnorm.beta
-            conv_inner.moving_mean = subcell.batchnorm.moving_mean
-            conv_inner.moving_variance = subcell.batchnorm.moving_variance
-            del subcell.batchnorm
-            subcell.batchnorm = None
-            subcell.has_bn = False
+        if subcell.has_bn:
+            if self.bn_fold:
+                bn_inner = subcell.batchnorm
+                conv_inner = quant.Conv2dBatchNormQuant(conv_inner.in_channels,
+                                                        conv_inner.out_channels,
+                                                        kernel_size=conv_inner.kernel_size,
+                                                        stride=conv_inner.stride,
+                                                        pad_mode=conv_inner.pad_mode,
+                                                        padding=conv_inner.padding,
+                                                        dilation=conv_inner.dilation,
+                                                        group=conv_inner.group,
+                                                        eps=bn_inner.eps,
+                                                        quant_delay=self.weight_qdelay,
+                                                        freeze_bn=self.freeze_bn,
+                                                        per_channel=self.weight_channel,
+                                                        num_bits=self.weight_bits,
+                                                        fake=True,
+                                                        symmetric=self.weight_symmetric,
+                                                        narrow_range=self.weight_range)
+                # change original network BatchNormal OP parameters to quant network
+                conv_inner.gamma = subcell.batchnorm.gamma
+                conv_inner.beta = subcell.batchnorm.beta
+                conv_inner.moving_mean = subcell.batchnorm.moving_mean
+                conv_inner.moving_variance = subcell.batchnorm.moving_variance
+                del subcell.batchnorm
+                subcell.batchnorm = None
+                subcell.has_bn = False
+            else:
+                raise ValueError("Only support Batchnorm fold mode.")
         else:
             conv_inner = quant.Conv2dQuant(conv_inner.in_channels,
                                            conv_inner.out_channels,
@@ -259,7 +262,7 @@ class ConvertToQuantNetwork:
         act_class = activation.__class__
         if act_class not in _ACTIVATION_MAP:
             raise ValueError("Unsupported activation in auto quant: ", act_class)
-        return _ACTIVATION_MAP[act_class](activation=act_class,
+        return _ACTIVATION_MAP[act_class](activation=activation,
                                           num_bits=self.act_bits,
                                           quant_delay=self.act_qdelay,
                                           per_channel=self.act_channel,
