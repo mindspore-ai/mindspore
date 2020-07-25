@@ -45,8 +45,6 @@ class RandomHorizontalFlipWithBBoxOp : public TensorOp {
     return out;
   }
 
-  void Print(std::ostream &out) const override { out << "RandomHorizontalFlipWithBBoxOp"; }
-
   Status Compute(const TensorRow &input, TensorRow *output) override;
 
   std::string Name() const override { return kRandomHorizontalFlipWithBBoxOp; }

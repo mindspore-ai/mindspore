@@ -118,7 +118,7 @@ class RenameOp : public PipelineOp {
 
   // Op name getter
   // @return Name of the current Op
-  std::string Name() const override { return "RenameOp"; }
+  std::string Name() const override { return kRenameOp; }
 
  protected:
   // Rename core functionality

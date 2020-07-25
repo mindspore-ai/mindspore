@@ -112,7 +112,7 @@ class ZipOp : public PipelineOp {
 
   // Op name getter
   // @return Name of the current Op
-  std::string Name() const override { return "ZipOp"; }
+  std::string Name() const override { return kZipOp; }
 
  private:
   // Handles preprocessing of the main loop, used when starting new epoch

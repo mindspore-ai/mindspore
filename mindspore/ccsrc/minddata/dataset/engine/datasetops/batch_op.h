@@ -200,7 +200,7 @@ class BatchOp : public ParallelOp {
 
   // Op name getter
   // @return Name of the current Op
-  std::string Name() const override { return "BatchOp"; }
+  std::string Name() const override { return kBatchOp; }
 
   // batch the rows in src table then put it to dest table
   // @param const std::unique_ptr<TensorQTable> *src - table that has the rows for batching

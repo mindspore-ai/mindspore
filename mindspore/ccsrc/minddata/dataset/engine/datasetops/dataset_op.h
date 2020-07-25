@@ -28,6 +28,31 @@
 namespace mindspore {
 namespace dataset {
 
+constexpr char kBarrierOp[] = "BarrierOp";
+constexpr char kBatchOp[] = "BatchOp";
+constexpr char kBucketBatchByLengthOp[] = "BucketBatchByLengthOp";
+constexpr char kBuildSentencePieceVocabOp[] = "BuildSentencePieceVocabOp";
+constexpr char kBuildVocabOp[] = "BuildVocabOp";
+constexpr char kCacheBase[] = "CacheBase";
+constexpr char kCacheLookupOp[] = "CacheLookupOp";
+constexpr char kCacheMergeOp[] = "CacheMergeOp";
+constexpr char kCacheOp[] = "CacheOp";
+constexpr char kConcatOp[] = "ConcatOp";
+constexpr char kDatasetOp[] = "DatasetOp";
+constexpr char kDeviceQueueOp[] = "DeviceQueueOp";
+constexpr char kEpochCtrlOp[] = "EpochCtrlOp";
+constexpr char kFilterOp[] = "FilterOp";
+constexpr char kMapOp[] = "MapOp";
+constexpr char kParallelOp[] = "ParallelOp";
+constexpr char kPipelineOp[] = "PipelineOp";
+constexpr char kProjectOp[] = "ProjectOp";
+constexpr char kRenameOp[] = "RenameOp";
+constexpr char kRepeatOp[] = "RepeatOp";
+constexpr char kShuffleOp[] = "ShuffleOp";
+constexpr char kSkipOp[] = "SkipOp";
+constexpr char kTakeOp[] = "TakeOp";
+constexpr char kZipOp[] = "ZipOp";
+
 // Forward declare
 class ExecutionTree;
 
@@ -292,7 +317,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
 
   /// Op name getter
   /// \return Name of the current Op
-  virtual std::string Name() const { return "DatasetOp"; }
+  virtual std::string Name() const = 0;
 
   /// Execution Tree getter
   /// \return Pointer to the ExecutionTree the current op belongs to, no ownership

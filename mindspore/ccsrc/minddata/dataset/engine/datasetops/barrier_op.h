@@ -121,6 +121,10 @@ class BarrierOp : public PipelineOp {
   // @param show_all - if it should print everything
   void Print(std::ostream &out, bool show_all) const override;
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return kBarrierOp; }
+
   // Provide stream operator for displaying it
   friend std::ostream &operator<<(std::ostream &out, const BarrierOp &bo) {
     bo.Print(out, false);

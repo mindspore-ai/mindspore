@@ -40,8 +40,7 @@ class RandomCropDecodeResizeOp : public RandomCropAndResizeOp {
   ~RandomCropDecodeResizeOp() override = default;
 
   void Print(std::ostream &out) const override {
-    out << "RandomCropDecodeResize: " << RandomCropAndResizeOp::target_height_ << " "
-        << RandomCropAndResizeOp::target_width_;
+    out << Name() << ": " << RandomCropAndResizeOp::target_height_ << " " << RandomCropAndResizeOp::target_width_;
   }
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;

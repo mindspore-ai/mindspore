@@ -38,7 +38,7 @@ class RandomCropWithBBoxOp : public RandomCropOp {
   ~RandomCropWithBBoxOp() override = default;
 
   void Print(std::ostream &out) const override {
-    out << "RandomCropWithBBoxOp: " << RandomCropOp::crop_height_ << " " << RandomCropOp::crop_width_;
+    out << Name() << ": " << RandomCropOp::crop_height_ << " " << RandomCropOp::crop_width_;
   }
 
   Status Compute(const TensorRow &input, TensorRow *output) override;

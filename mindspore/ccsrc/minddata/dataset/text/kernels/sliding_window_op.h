@@ -52,10 +52,6 @@ class SlidingWindowOp : public TensorOp {
   /// \return Status return code
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
 
-  /// \brief Print args for debugging.
-  /// \param[in] out - std::ostream &out.
-  void Print(std::ostream &out) const override { out << "SliceWindowOp"; }
-
   /// \brief Print name of op.
   std::string Name() const override { return kSlidingWindowOp; }
 

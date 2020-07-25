@@ -43,8 +43,6 @@ class RegexTokenizerOp : public TensorOp {
 
   ~RegexTokenizerOp() override = default;
 
-  void Print(std::ostream &out) const override { out << "RegexTokenizerOp"; }
-
   Status Compute(const TensorRow &input, TensorRow *output) override;
 
  protected:

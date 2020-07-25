@@ -31,7 +31,6 @@ class FillOp : public TensorOp {
   explicit FillOp(std::shared_ptr<Tensor> value) : fill_value_(value) {}
 
   ~FillOp() override = default;
-  void Print(std::ostream &out) const override { out << "FillOp"; }
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 

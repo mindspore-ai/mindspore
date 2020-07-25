@@ -129,7 +129,7 @@ class RepeatOp : public PipelineOp {
 
   // Op name getter
   // @return Name of the current Op
-  std::string Name() const override { return "RepeatOp"; }
+  std::string Name() const override { return kRepeatOp; }
 
   // \brief Adds an operator to the repeat ops list of tracked leaf/eoe nodes
   // \param[in] eoe_op The input leaf/eoe operator to add to the list

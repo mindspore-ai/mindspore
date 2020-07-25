@@ -140,6 +140,8 @@ class CacheMergeOp : public ParallelOp {
                std::shared_ptr<CacheClient> cache_client, const std::shared_ptr<Sampler> &sampler);
   ~CacheMergeOp();
   void Print(std::ostream &out, bool show_all) const override;
+  std::string Name() const override { return kCacheMergeOp; }
+
   friend std::ostream &operator<<(std::ostream &out, const CacheMergeOp &mo) {
     mo.Print(out, false);
     return out;

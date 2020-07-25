@@ -32,8 +32,6 @@ class DuplicateOp : public TensorOp {
 
   ~DuplicateOp() override = default;
 
-  void Print(std::ostream &out) const override { out << "DuplicateOp"; }
-
   Status Compute(const TensorRow &input, TensorRow *output) override;
 
   uint32_t NumOutput() override { return 2; }

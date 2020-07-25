@@ -31,8 +31,6 @@ class OneHotOp : public TensorOp {
 
   ~OneHotOp() override = default;
 
-  void Print(std::ostream &out) const override { out << "OneHotOp"; }
-
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;

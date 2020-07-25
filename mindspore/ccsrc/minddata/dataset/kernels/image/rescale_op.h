@@ -33,7 +33,7 @@ class RescaleOp : public TensorOp {
   ~RescaleOp() override = default;
 
   void Print(std::ostream &out) const override {
-    out << "RescaleOp: shift: " << shift_ << ", Rescale: " << rescale_ << std::endl;
+    out << Name() << ": shift: " << shift_ << ", Rescale: " << rescale_ << std::endl;
   }
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;

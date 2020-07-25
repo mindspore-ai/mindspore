@@ -36,8 +36,6 @@ class UnicodeScriptTokenizerOp : public TensorOp {
 
   ~UnicodeScriptTokenizerOp() override = default;
 
-  void Print(std::ostream &out) const override { out << "UnicodeScriptTokenizerOp"; }
-
   Status Compute(const TensorRow &input, TensorRow *output) override;
 
   std::string Name() const override { return kUnicodeScriptTokenizerOp; }

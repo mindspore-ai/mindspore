@@ -59,6 +59,9 @@ class CacheBase : public ParallelOp {
   /// \param show_all A bool to control if you want to show all info or just a summary
   void Print(std::ostream &out, bool show_all) const override;
 
+  /// \brief Gives a name to the class, typically used for debugging
+  std::string Name() const override { return kCacheBase; }
+
   /// \brief << Stream output operator overload
   /// \notes This allows you to write the debug print info using stream operators
   /// \param out reference to the output stream being overloaded

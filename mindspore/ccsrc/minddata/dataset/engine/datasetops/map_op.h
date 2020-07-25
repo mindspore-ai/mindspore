@@ -179,7 +179,7 @@ class MapOp : public ParallelOp {
 
   // Op name getter
   // @return Name of the current Op
-  std::string Name() const override { return "MapOp"; }
+  std::string Name() const override { return kMapOp; }
 
   // List of tensor ops getter/setter
   // @Return the vector of tensor ops by non-const reference

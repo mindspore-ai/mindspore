@@ -46,8 +46,7 @@ class JiebaTokenizerOp : public TensorOp {
   ~JiebaTokenizerOp() override = default;
 
   void Print(std::ostream &out) const override {
-    out << "JiebaTokenizerOp: " << jieba_mode_ << "hmm_model_path_ " << hmm_model_path_ << "mp_dict_path_"
-        << mp_dict_path_;
+    out << Name() << ": " << jieba_mode_ << "hmm_model_path_ " << hmm_model_path_ << "mp_dict_path_" << mp_dict_path_;
   }
 
   Status Compute(const TensorRow &input, TensorRow *output) override;

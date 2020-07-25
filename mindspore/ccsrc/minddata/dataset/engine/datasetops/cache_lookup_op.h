@@ -100,7 +100,7 @@ class CacheLookupOp : public CacheBase, public Sampler {
   Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
   void Print(std::ostream &out, bool show_all) const override;
   bool AllowCacheMiss() override { return true; }
-  std::string Name() const override { return "CacheLookupOp"; }
+  std::string Name() const override { return kCacheLookupOp; }
 
   /// \brief Base-class override for NodePass visitor acceptor
   /// \param[in] p The node to visit

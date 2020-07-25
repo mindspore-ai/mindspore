@@ -58,10 +58,6 @@ class RandomRotationOp : public TensorOp {
 
   ~RandomRotationOp() override = default;
 
-  // Print function for RandomRotation
-  // @param out output stream to print to
-  void Print(std::ostream &out) const override { out << "RandomRotationOp: "; }
-
   // Overrides the base class compute function
   // Calls the rotate function in ImageUtils, this function takes an input tensor
   // and transforms its data using openCV, the output memory is manipulated to contain the result

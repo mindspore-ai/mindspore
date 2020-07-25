@@ -55,13 +55,5 @@ TEST_F(MindDataTestConcatenateOp, TestOp) {
   ASSERT_TRUE(output->type() == expected->type());
   MS_LOG(DEBUG) << *output << std::endl;
   MS_LOG(DEBUG) << *expected << std::endl;
-
   ASSERT_TRUE(*output == *expected);
-
-  //  std::vector<TensorShape> inputs = {TensorShape({3})};
-  //  std::vector<TensorShape> outputs = {};
-  //  s = op->OutputShape(inputs, outputs);
-  //  EXPECT_TRUE(s.IsOk());
-  //  ASSERT_TRUE(outputs[0] == TensorShape{6});
-  //  MS_LOG(INFO) << "MindDataTestConcatenateOp-TestOp end.";
 }

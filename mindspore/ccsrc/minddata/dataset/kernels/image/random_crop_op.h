@@ -52,7 +52,7 @@ class RandomCropOp : public TensorOp {
 
   ~RandomCropOp() override = default;
 
-  void Print(std::ostream &out) const override { out << "RandomCropOp: " << crop_height_ << " " << crop_width_; }
+  void Print(std::ostream &out) const override { out << Name() << ": " << crop_height_ << " " << crop_width_; }
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 

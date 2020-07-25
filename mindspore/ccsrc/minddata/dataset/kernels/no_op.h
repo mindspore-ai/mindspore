@@ -31,8 +31,6 @@ class NoOp : public TensorOp {
     return Status::OK();
   }
 
-  void Print(std::ostream &out) const override { out << "NoOp"; };
-
   std::string Name() const override { return kNoOp; }
 };
 }  // namespace dataset

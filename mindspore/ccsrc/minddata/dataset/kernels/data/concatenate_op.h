@@ -40,7 +40,6 @@ class ConcatenateOp : public TensorOp {
 
   /// Print method to see which tensor Op this is.
   /// @param std::ostream &out - output stream object.
-  void Print(std::ostream &out) const override { out << "ConcatenateOp"; }
 
   /// Compute method allowing multiple tensors as inputs
   /// @param TensorRow &input - input tensor rows

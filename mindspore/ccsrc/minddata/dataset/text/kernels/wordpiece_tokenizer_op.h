@@ -44,8 +44,6 @@ class WordpieceTokenizerOp : public TensorOp {
 
   ~WordpieceTokenizerOp() override = default;
 
-  void Print(std::ostream &out) const override { out << "WordpieceTokenizerOp"; }
-
   Status Compute(const TensorRow &input, TensorRow *output) override;
 
  protected:

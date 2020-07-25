@@ -31,9 +31,6 @@ class InvertOp : public TensorOp {
   InvertOp() {}
   ~InvertOp() = default;
 
-  // Description: A function that prints info about the node
-  void Print(std::ostream &out) const override { out << Name(); }
-
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
   std::string Name() const override { return kInvertOp; }
