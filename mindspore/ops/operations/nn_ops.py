@@ -1690,7 +1690,9 @@ class L2Loss(PrimitiveWithInfer):
     Set `input_x` as x and output as loss.
 
     .. math::
-        loss = sum(x ** 2) / 2
+        loss = sum(x ** 2) / nelement(x)
+
+    :math:`nelement(x)` represents the number of `input_x`.
 
     Inputs:
         - **input_x** (Tensor) - A input Tensor.
