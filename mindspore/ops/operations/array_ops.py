@@ -3423,7 +3423,7 @@ class EmbeddingLookup(PrimitiveWithInfer):
 
     Inputs:
         - **input_params** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-          The Tensor slice, instead of the entire Tensor.
+          This represents a Tensor slice, instead of the entire Tensor. Currently, the dimension is restricted to be 2.
         - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
           Specifies the indices of elements of the original Tensor. Values can be out of range of `input_params`,
           and the exceeding part will be filled with 0 in the output.
