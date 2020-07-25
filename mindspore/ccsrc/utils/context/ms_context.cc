@@ -21,6 +21,7 @@
 #include "./common.h"
 #include "utils/convert_utils.h"
 #include "utils/tensorprint_utils.h"
+#include "frontend/parallel/costmodel_context.h"
 #ifndef NO_DLIB
 #include "tdt/tsd_client.h"
 #include "tdt/tdt_host_interface.h"
@@ -146,6 +147,7 @@ bool MsContext::set_device_target(const std::string &target) {
   } else {
     device_target_ = target;
   }
+  parallel::CostModelContext::GetInstance()->set_costmodel_context_for_device(device_target_);
   MS_LOG(INFO) << "ms set context device target:" << target;
   return true;
 }

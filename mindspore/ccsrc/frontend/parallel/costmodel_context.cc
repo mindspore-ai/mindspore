@@ -20,6 +20,7 @@
 
 #include "frontend/parallel/allreduce_fusion/allreduce_fusion.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
+#include "utils/context/ms_context.h"
 
 namespace mindspore {
 namespace parallel {
@@ -41,7 +42,7 @@ CostModelContext::CostModelContext() {
 void CostModelContext::ResetCostModel() {
   device_memory_capacity_ = DEFAULT_DEVICE_MEMORY_CAPACITY;
   costmodel_alpha_ = DEFAULT_COST_MODEL_ALPHA;
-  costmodel_beta_ = DEFAULT_COST_MODEL_BETA;
+  costmodel_beta_ = DEFAULT_COST_MODEL_BETA_ASCEND;
   costmodel_gamma_ = DEFAULT_COST_MODEL_GAMMA;
   costmodel_communi_threshold_ = DEFAULT_COST_MODEL_COMMUNI_THRESHOLD;
   costmodel_communi_const_ = DEFAULT_COST_MODEL_COMMUNI_CONST;
@@ -64,6 +65,12 @@ void CostModelContext::ResetAlgoParameters() {
   tensor_slice_alignment_size_ = DEFAULT_TENSOR_SLICE_ALIGNMENT_SIZE;
   fully_use_device_ = DEFAULT_FULLY_USE_DEVICES;
   elementwise_stra_follow_ = DEFAULT_ELEMENTWISE_OP_STRA_FOLLOW;
+}
+
+void CostModelContext::set_costmodel_context_for_device(const std::string &device_target) {
+  if (device_target == kGPUDevice) {
+    costmodel_beta_ = DEFAULT_COST_MODEL_BETA_GPU;
+  }
 }
 
 void CostModelContext::set_device_memory_capacity(double dm_capacity) { device_memory_capacity_ = dm_capacity; }
