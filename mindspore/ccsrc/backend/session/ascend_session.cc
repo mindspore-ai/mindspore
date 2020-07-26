@@ -881,22 +881,22 @@ void AscendSession::CreateMultiBranchOutput(NotNull<KernelGraphPtr> graph, NotNu
     return;
   }
   memo->insert(graph.get());
-
   graph->UpdateChildGraphOrder();
   for (auto &child_graph : graph->child_graph_order()) {
     CreateMultiBranchOutput(NOT_NULL(child_graph), memo);
   }
-
+  // If graph has no output, the graph is the true graph of while and will call condition graph, no need insert assign
+  // from condition to true graph
+  if (graph->get_output_null()) {
+    return;
+  }
   std::map<AnfNodePtr, AnfNodePtr> need_replace_list;
   auto node_list = GetCNodes(TopoSort(graph->get_return()));
   for (auto &node : node_list) {
     if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimCall)) {
       // create a parameter to store the output of multiple branch and set the parameter as the condition graph's output
-      // auto multi_output_param = graph->NewParameter();
-      auto origin_inputs = graph->inputs();
       auto output_param = graph->TransTupleToMakeTuple(graph->NewParameter(node->abstract()));
       MS_EXCEPTION_IF_NULL(graph->MutableInputs());
-      graph->MutableInputs()->operator=(origin_inputs);
       graph->AddChildGraphResult(output_param);
 
       std::vector<AnfNodePtr> depend_inputs = {

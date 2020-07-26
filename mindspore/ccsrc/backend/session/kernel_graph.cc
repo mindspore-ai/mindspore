@@ -133,7 +133,6 @@ AnfNodePtr KernelGraph::MakeValueNode(const AnfNodePtr &node) {
   if (value_node == nullptr) {
     return nullptr;
   }
-
   ValueNodePtr new_value_node = std::make_shared<ValueNode>(value_node->value());
   new_value_node->set_abstract(value_node->abstract());
   this->SetKernelInfoForNode(new_value_node);

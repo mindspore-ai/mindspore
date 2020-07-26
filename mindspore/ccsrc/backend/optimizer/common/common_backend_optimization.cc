@@ -22,6 +22,7 @@
 #include "backend/optimizer/pass/convert_const_input_to_tensor_input.h"
 #include "backend/optimizer/pass/convert_tuple_input_to_dynamic_input.h"
 #include "backend/optimizer/pass/const_to_attr_strided_slice_grad.h"
+#include "backend/optimizer/pass/convert_const_scalar_to_tensor.h"
 #include "utils/context/ms_context.h"
 #include "debug/anf_ir_dump.h"
 
@@ -46,8 +47,9 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   auto common_pm = std::make_shared<PassManager>("common_pm");
   common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());
   common_pm->AddPass(std::make_shared<ConstToAttrStridedSliceGradPass>());
-  common_pm->AddPass(std::make_shared<ConvertTupleOutputToMaketuple>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
+  common_pm->AddPass(std::make_shared<ConvertTupleOutputToMaketuple>());
+  common_pm->AddPass(std::make_shared<ConvertConstScalarToTensor>());
   common_pm->AddPass(std::make_shared<ConvertTupleInputToDynamicInput>());
   optimizer->AddPassManager(common_pm);
   (void)optimizer->Optimize(kernel_graph);

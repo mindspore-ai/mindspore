@@ -194,6 +194,9 @@ bool GetBoolAttr(const AnfNodePtr &node, const std::string &attr_name);
 
 // Check node's data type is in supported data type set
 bool CheckSupportDataType(const AnfNodePtr &node, const std::set<TypeId> &supported_data_type_set);
+
+// Create a new value node of func graph,not kernel graph
+ValueNodePtr MakeValueNode(const ValueNodePtr &value_node);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_HELPER_H_
