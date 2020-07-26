@@ -312,11 +312,11 @@ void SessionBasic::InitInternalOutputParameter(const AnfNodePtr &out_node, const
       MS_LOG(INFO) << "No kernel info";
       return;
     }
-    auto address = AnfAlgo::GetMutableOutputAddr(ref_real_node, ref_real_node_index);
-    if (address == nullptr) {
+    if (!AnfAlgo::OutputAddrExist(ref_real_node, ref_real_node_index)) {
       MS_LOG(INFO) << "No kernel address";
       return;
     }
+    auto address = AnfAlgo::GetMutableOutputAddr(ref_real_node, ref_real_node_index);
     auto format = AnfAlgo::GetOutputFormat(ref_real_node, ref_real_node_index);
     auto type = AnfAlgo::GetOutputDeviceDataType(ref_real_node, ref_real_node_index);
     auto d_kernel_info = std::make_shared<device::KernelInfo>();
