@@ -885,11 +885,6 @@ void AscendSession::CreateMultiBranchOutput(NotNull<KernelGraphPtr> graph, NotNu
   for (auto &child_graph : graph->child_graph_order()) {
     CreateMultiBranchOutput(NOT_NULL(child_graph), memo);
   }
-  // If graph has no output, the graph is the true graph of while and will call condition graph, no need insert assign
-  // from condition to true graph
-  if (graph->get_output_null()) {
-    return;
-  }
   std::map<AnfNodePtr, AnfNodePtr> need_replace_list;
   auto node_list = GetCNodes(TopoSort(graph->get_return()));
   for (auto &node : node_list) {
@@ -909,6 +904,11 @@ void AscendSession::CreateMultiBranchOutput(NotNull<KernelGraphPtr> graph, NotNu
       auto child_graphs = AnfAlgo::GetCallNodeKernelGraph(node);
       for (auto &child_graph : child_graphs) {
         MS_EXCEPTION_IF_NULL(child_graph);
+        // If graph has no output, the graph is the true graph of while and will call condition graph, no need insert
+        // assign from condition to true graph
+        if (memo->find(child_graph) != memo->end()) {
+          continue;
+        }
         if (child_graph->get_output_null()) {
           continue;
         }
@@ -927,6 +927,7 @@ void AscendSession::CreateMultiBranchOutput(NotNull<KernelGraphPtr> graph, NotNu
       }
     }
   }
+  memo->erase(graph.get());
 }
 
 void AscendSession::IrFusionPass(const NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) {
