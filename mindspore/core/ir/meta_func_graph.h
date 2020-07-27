@@ -72,7 +72,6 @@ class MetaFuncGraph : public FuncGraphBase {
       return false;
     }
   }
-  // const bool parse_info_ = true;
 
  protected:
   template <typename Derived>

@@ -108,11 +108,6 @@ AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &p
   auto fb = args_spec_list[2];
   MS_EXCEPTION_IF_NULL(cond);
 
-  auto unroll_flag = prim->GetAttr(prim::SWITCH_UNROLL_FLAG);
-  if (unroll_flag != nullptr && GetValue<int>(unroll_flag) == 0) {
-    return tb->Join(fb);
-  }
-
   ValuePtr v = cond->GetValueTrack();
   MS_EXCEPTION_IF_NULL(v);
   // for tensor as condition, keeps both true and false branch.

@@ -48,6 +48,10 @@ enum ParseStatusCode : int {
   PARSE_FAILURE = 0xFF
 };
 
+// max loop count of for statement, when loop count is less then this value, the for loop will be unrolled, otherwise it
+//  will be sunk(i.e. not unrolled)
+const int MAX_FOR_LOOP_COUNT = 600;
+
 class AstNodeType;
 class ParseAst;
 
