@@ -84,6 +84,12 @@ TEST_F(MindDataTestPipeline, TestBatchAndRepeat) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestMnistFail1) {
+  // Create a Mnist Dataset
+  std::shared_ptr<Dataset> ds = Mnist("", RandomSampler(false, 10));
+  EXPECT_EQ(ds, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestTensorOpsAndMap) {
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
@@ -272,6 +278,12 @@ TEST_F(MindDataTestPipeline, TestImageFolderBatchAndRepeat) {
 
   // Manually terminate the pipeline
   iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestImageFolderFail1) {
+  // Create an ImageFolder Dataset
+  std::shared_ptr<Dataset> ds = ImageFolder("", true, nullptr);
+  EXPECT_EQ(ds, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestImageFolderWithSamplers) {
@@ -630,17 +642,7 @@ TEST_F(MindDataTestPipeline, TestCifar10Dataset) {
 
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, 0, RandomSampler(false, 10));
-  EXPECT_NE(ds, nullptr);
-
-  // Create a Repeat operation on ds
-  int32_t repeat_num = 2;
-  ds = ds->Repeat(repeat_num);
-  EXPECT_NE(ds, nullptr);
-
-  // Create a Batch operation on ds
-  int32_t batch_size = 2;
-  ds = ds->Batch(batch_size);
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, RandomSampler(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -651,6 +653,9 @@ TEST_F(MindDataTestPipeline, TestCifar10Dataset) {
   // Iterate the dataset and get each row
   std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
   iter->GetNextRow(&row);
+
+  EXPECT_NE(row.find("image"), row.end());
+  EXPECT_NE(row.find("label"), row.end());
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -664,6 +669,54 @@ TEST_F(MindDataTestPipeline, TestCifar10Dataset) {
 
   // Manually terminate the pipeline
   iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestCifar10DatasetFail1) {
+
+  // Create a Cifar10 Dataset
+  std::shared_ptr<Dataset> ds = Cifar10("", RandomSampler(false, 10));
+  EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestCifar100Dataset) {
+
+  // Create a Cifar100 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar100Data/";
+  std::shared_ptr<Dataset> ds = Cifar100(folder_path, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  EXPECT_NE(row.find("image"), row.end());
+  EXPECT_NE(row.find("coarse_label"), row.end());
+  EXPECT_NE(row.find("fine_label"), row.end());
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 10);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestCifar100DatasetFail1) {
+
+  // Create a Cifar100 Dataset
+  std::shared_ptr<Dataset> ds = Cifar100("", RandomSampler(false, 10));
+  EXPECT_EQ(ds, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomColorAdjust) {
@@ -843,7 +896,7 @@ TEST_F(MindDataTestPipeline, TestZipSuccess) {
   EXPECT_NE(ds1, nullptr);
 
   folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, 0, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, RandomSampler(false, 10));
   EXPECT_NE(ds2, nullptr);
 
   // Create a Project operation on ds
