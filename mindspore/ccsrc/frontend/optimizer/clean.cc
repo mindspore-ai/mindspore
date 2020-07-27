@@ -32,9 +32,11 @@ namespace opt {
 using mindspore::abstract::AbstractAttribute;
 using mindspore::abstract::AbstractClass;
 using mindspore::abstract::AbstractDictionary;
+using mindspore::abstract::AbstractIndexedSlices;
 using mindspore::abstract::AbstractJTagged;
 using mindspore::abstract::AbstractList;
 using mindspore::abstract::AbstractScalar;
+using mindspore::abstract::AbstractSparseTensor;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractUndetermined;
 
@@ -71,6 +73,19 @@ static AbstractBasePtr AdaptAbs(const AbstractBasePtr &t) {
   if (t->isa<AbstractList>()) {
     auto abs_list = dyn_cast<AbstractList>(t);
     return std::make_shared<AbstractTuple>(abs_list->elements());
+  }
+
+  if (t->isa<AbstractSparseTensor>()) {
+    auto abs_sparse = dyn_cast<AbstractSparseTensor>(t);
+    std::vector<AbstractBasePtr> abstract_list{abs_sparse->indices(), abs_sparse->values(), abs_sparse->dense_shape()};
+    return std::make_shared<AbstractTuple>(abstract_list);
+  }
+
+  if (t->isa<AbstractIndexedSlices>()) {
+    auto abs_indexed_slices = dyn_cast<AbstractIndexedSlices>(t);
+    std::vector<AbstractBasePtr> abstract_list{abs_indexed_slices->indices(), abs_indexed_slices->values(),
+                                               abs_indexed_slices->dense_shape()};
+    return std::make_shared<AbstractTuple>(abstract_list);
   }
 
   return nullptr;
@@ -389,14 +404,44 @@ bool SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr 
   return changed;
 }
 
-bool CleanList(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
+AnfNodePtr ConvertMakeSparseToMakeTuple(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(node->func_graph());
+
+  std::vector<AnfNodePtr> inputs;
+  inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+  // Inputs of node should be [make_sparse, indices, values, dense_shape], so offset by 1 to get items;
+  (void)inputs.insert(inputs.end(), node->inputs().begin() + 1, node->inputs().end());
+  return node->func_graph()->NewCNode(inputs);
+}
+
+AnfNodePtr ConvertSparseGetAttrToTupleGetItem(const CNodePtr &node, const int &index) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(node->func_graph());
+
+  const auto &inputs = node->inputs();
+  // Inputs should be [spase_getattr, sparse]
+  if (inputs.size() < 2) {
+    MS_LOG(EXCEPTION) << "Node's input number < 2.";
+  }
+
+  AnfNodePtr sparse = inputs[1];
+  MS_EXCEPTION_IF_NULL(sparse);
+  auto cons_node = NewValueNode(index);
+  AbstractBasePtr aptr = std::make_shared<AbstractScalar>(std::make_shared<Int32Imm>(index));
+  cons_node->set_abstract(aptr);
+
+  return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleGetItem), sparse, cons_node});
+}
+
+bool CleanAfterOptA(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(root);
 
   bool changed = false;
 
   // Since `manager->Replace(...);` will modify member `all_nodes_`, so `all_node` can't be a ref var
-  AnfNodeSet all_node = manager->all_nodes();
+  auto all_node = manager->all_nodes();
   for (auto &node : all_node) {
     MS_EXCEPTION_IF_NULL(node);
     auto cnode = node->cast<CNodePtr>();
@@ -409,6 +454,18 @@ bool CleanList(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
       new_node = ConvertListSetItemToTupleSetItem(cnode);
     } else if (IsValueNode<ValueList>(node)) {
       new_node = ConvertValueListNodeToValueTupleNode(node->cast<ValueNodePtr>());
+    } else if (IsPrimitiveCNode(node, prim::kPrimMakeSparseTensor) ||
+               IsPrimitiveCNode(node, prim::kPrimMakeIndexedSlices)) {
+      new_node = ConvertMakeSparseToMakeTuple(cnode);
+    } else if (IsPrimitiveCNode(node, prim::kPrimSparseTensorGetIndices) ||
+               IsPrimitiveCNode(node, prim::kPrimIndexedSlicesGetIndices)) {
+      new_node = ConvertSparseGetAttrToTupleGetItem(cnode, 0);
+    } else if (IsPrimitiveCNode(node, prim::kPrimSparseTensorGetValues) ||
+               IsPrimitiveCNode(node, prim::kPrimIndexedSlicesGetValues)) {
+      new_node = ConvertSparseGetAttrToTupleGetItem(cnode, 1);
+    } else if (IsPrimitiveCNode(node, prim::kPrimSparseTensorGetDenseShape) ||
+               IsPrimitiveCNode(node, prim::kPrimIndexedSlicesGetDenseShape)) {
+      new_node = ConvertSparseGetAttrToTupleGetItem(cnode, 2);
     }
 
     if (new_node != nullptr) {

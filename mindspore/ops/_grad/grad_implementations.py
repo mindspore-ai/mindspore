@@ -116,6 +116,7 @@ def bprop_tuple_getitem(data, idx, out, dout):
     """Backpropagator for primitive `tuple_getitem`."""
     return F.tuple_setitem(C.zeros_like(data), idx, dout), C.zeros_like(idx)
 
+
 @bprops.register("list_getitem")
 def bprop_list_getitem(data, idx, out, dout):
     """Backpropagator for primitive `list_getitem`."""

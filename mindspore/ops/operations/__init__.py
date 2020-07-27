@@ -84,6 +84,7 @@ from ._quant_ops import *
 from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, PopulationCount,
                         CheckValid, MakeRefKey, Partial, Depend, CheckBprop, Push, Pull)
 from .thor_ops import *
+from .sparse_ops import SparseToDense
 
 __all__ = [
     'ReverseSequence',
@@ -357,7 +358,8 @@ __all__ = [
     "PopulationCount",
     "ParallelConcat",
     "Push",
-    "Pull"
+    "Pull",
+    'SparseToDense',
 ]
 
 __all__.sort()
