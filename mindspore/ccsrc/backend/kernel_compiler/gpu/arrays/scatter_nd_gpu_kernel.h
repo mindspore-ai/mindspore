@@ -35,7 +35,8 @@ class ScatterNdGpuFwdKernel : public GpuKernel {
         indices_stride_(nullptr),
         work_shape_(nullptr),
         indices_dim_0_(0),
-        indices_dim_1_(0) {}
+        indices_dim_1_(0),
+        memcpy_flag_(false) {}
   ~ScatterNdGpuFwdKernel() {
     if (indices_stride_ != nullptr) {
       device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(static_cast<void *>(indices_stride_));
@@ -56,12 +57,25 @@ class ScatterNdGpuFwdKernel : public GpuKernel {
     T *update = GetDeviceAddress<T>(inputs, 1);
     T *output = GetDeviceAddress<T>(outputs, 0);
 
+    if (!memcpy_flag_) {
+      const size_t indices_len = sizeof(S) * vec_indices_stride_.size();
+      const size_t vec_work_len = sizeof(S) * vec_work_shape_.size();
+      CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(indices_stride_, &vec_indices_stride_[0], indices_len,
+                                                 cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                 "cudaMemcpy failed in ScatterNdGpuFwdKernel::Launch.");
+      CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(work_shape_, &vec_work_shape_[0], vec_work_len, cudaMemcpyHostToDevice,
+                                                 reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                 "cudaMemcpy failed in ScatterNdGpuFwdKernel::Launch.");
+      memcpy_flag_ = true;
+    }
+
     ScatterNd(indices, update, output, block_size_, input_size_, output_size_, indices_dim_0_, indices_dim_1_,
               indices_stride_, work_shape_, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    memcpy_flag_ = false;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but transpose needs 2 input.";
@@ -81,25 +95,20 @@ class ScatterNdGpuFwdKernel : public GpuKernel {
 
     GetSize();
 
-    size_t indices_len = sizeof(S) * vec_indices_stride_.size();
+    const size_t indices_len = sizeof(S) * vec_indices_stride_.size();
     void *indices_stride_work = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(indices_len);
     if (indices_stride_work == nullptr) {
       MS_LOG(EXCEPTION) << "Failed to alloc indices_stride_work, size: " << indices_len;
     }
     indices_stride_ = static_cast<S *>(indices_stride_work);
 
-    size_t vec_work_len = sizeof(S) * vec_work_shape_.size();
+    const size_t vec_work_len = sizeof(S) * vec_work_shape_.size();
     void *work_shape_work = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(vec_work_len);
     if (work_shape_work == nullptr) {
       MS_LOG(EXCEPTION) << "Failed to alloc work_shape_work, size: " << vec_work_len;
     }
     work_shape_ = static_cast<S *>(work_shape_work);
 
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      cudaMemcpy(indices_stride_, &vec_indices_stride_[0], indices_len, cudaMemcpyHostToDevice),
-      "cudaMemcpy failed in ScatterNdGpuFwdKernel::Init.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpy(work_shape_, &vec_work_shape_[0], vec_work_len, cudaMemcpyHostToDevice),
-                               "cudaMemcpy failed in ScatterNdGpuFwdKernel::Init.");
     InitSizeLists();
 
     return true;
@@ -168,6 +177,7 @@ class ScatterNdGpuFwdKernel : public GpuKernel {
   S *work_shape_;
   size_t indices_dim_0_;
   size_t indices_dim_1_;
+  bool memcpy_flag_;
 };
 }  // namespace kernel
 }  // namespace mindspore

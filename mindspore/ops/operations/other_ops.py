@@ -262,8 +262,6 @@ class IOU(PrimitiveWithInfer):
         return iou
 
     def infer_dtype(self, anchor_boxes, gt_boxes):
-        args = {"anchor_boxes": anchor_boxes, "gt_boxes": gt_boxes}
-        validator.check_tensor_type_same(args, (mstype.float16,), self.name)
         return anchor_boxes
 
 
