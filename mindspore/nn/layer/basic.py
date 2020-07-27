@@ -33,7 +33,6 @@ from .activation import get_activation
 from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 
-
 __all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold',
            'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag']
 

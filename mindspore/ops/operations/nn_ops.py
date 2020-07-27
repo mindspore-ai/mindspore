@@ -1276,6 +1276,8 @@ class AvgPool(_Pool):
     def __init__(self, ksize=1, strides=1, padding="valid"):
         if context.get_context("device_target") == "GPU":
             self.target = "GPU"
+        elif context.get_context("enable_ge"):
+            self.target = "GE"
         else:
             self.target = "OTHER"
         super(AvgPool, self).__init__(ksize, strides, padding)
