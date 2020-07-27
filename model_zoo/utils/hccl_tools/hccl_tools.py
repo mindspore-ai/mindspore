@@ -17,7 +17,6 @@ import os
 import sys
 import json
 import socket
-import platform
 from argparse import ArgumentParser
 from typing import Dict, Any
 
@@ -114,40 +113,25 @@ def main():
                 device_id = device_id.split('_')[1]
                 device_ips[device_id] = device_ip.strip()
 
-    arch = platform.processor()
-    hccn_table = {'board_id': {'aarch64': '0x002f', 'x86_64': '0x0000'}[arch],
-                  'chip_info': '910',
-                  'deploy_mode': 'lab',
-                  'group_count': '1',
-                  'group_list': []}
-    instance_list = []
+    hccn_table = {'version': '1.0',
+                  'server_count': '1',
+                  'server_list': []}
+    device_list = []
     rank_id = 0
     for instance_id in device_num_list:
-        instance = {'devices': []}
         device_id = visible_devices[instance_id]
         device_ip = device_ips[device_id]
-        instance['devices'].append({
-            'device_id': device_id,
-            'device_ip': device_ip,
-        })
+        device = {'device_id': device_id,
+                  'device_ip': device_ip,
+                  'rank_id': str(rank_id)}
         print('rank_id:{}, device_id:{}, device_ip:{}'.format(rank_id, device_id, device_ip))
-        instance['rank_id'] = str(rank_id)
         rank_id += 1
-        instance['server_id'] = server_id
-        instance_list.append(instance)
-    hccn_table['group_list'].append({
-        'device_num': str(len(device_num_list)),
-        'server_num': '1',
-        'group_name': '',
-        'instance_count': str(len(device_num_list)),
-        'instance_list': instance_list,
+        device_list.append(device)
+    hccn_table['server_list'].append({
+        'server_id': server_id,
+        'device': device_list,
+        'host_nic_ip': 'reserve'
     })
-    hccn_table['para_plane_nic_location'] = 'device'
-    hccn_table['para_plane_nic_name'] = []
-    for instance_id in device_num_list:
-        eth_id = visible_devices[instance_id]
-        hccn_table['para_plane_nic_name'].append('eth{}'.format(eth_id))
-    hccn_table['para_plane_nic_num'] = str(len(device_num_list))
     hccn_table['status'] = 'completed'
 
     # save hccn_table to file
