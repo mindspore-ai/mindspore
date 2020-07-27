@@ -296,7 +296,13 @@ Status TaskGroup::CreateAsyncTask(const std::string &my_name, const std::functio
   return Status::OK();
 }
 
-void TaskGroup::interrupt_all() noexcept { intrp_svc_->InterruptAll(); }
+void TaskGroup::interrupt_all() noexcept {
+  // There is a racing condition if we don't stop the interrupt service at this point. New resource
+  // may come in and not being picked up after we call InterruptAll(). So stop new comers and then
+  // interrupt any existing resources.
+  (void)intrp_svc_->ServiceStop();
+  intrp_svc_->InterruptAll();
+}
 
 Status TaskGroup::join_all(Task::WaitFlag wf) {
   Status rc;
@@ -312,7 +318,6 @@ Status TaskGroup::join_all(Task::WaitFlag wf) {
 }
 
 Status TaskGroup::DoServiceStop() {
-  intrp_svc_->ServiceStop();
   interrupt_all();
   return (join_all(Task::WaitFlag::kNonBlocking));
 }
