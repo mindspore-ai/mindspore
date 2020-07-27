@@ -27,7 +27,7 @@ def mstype_to_detype(type_):
     Get de data type corresponding to mindspore dtype.
 
     Args:
-        type_ (:class:`mindspore.dtype`): MindSpore's dtype.
+        type_ (mindspore.dtype): MindSpore's dtype.
 
     Returns:
         The data type of de.
@@ -57,7 +57,7 @@ def mstypelist_to_detypelist(type_list):
     Get list[de type] corresponding to list[mindspore.dtype].
 
     Args:
-        type_list (:list[mindspore.dtype]): a list of MindSpore's dtype.
+        type_list (list[mindspore.dtype]): a list of MindSpore's dtype.
 
     Returns:
         The list of de data type.

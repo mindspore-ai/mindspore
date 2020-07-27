@@ -46,7 +46,7 @@ class Fill(cde.FillOp):
     The output tensor will have the same shape and type as the input tensor.
 
     Args:
-        fill_value (python types (str, bytes, int, float, or bool)) : scalar value
+        fill_value (Union[str, bytes, int, float, bool])) : scalar value
             to fill created tensor with.
     """
 
@@ -78,9 +78,9 @@ class Slice(cde.SliceOp):
     (Currently only rank-1 tensors are supported).
 
     Args:
-        slices(Variable length argument list, supported types are, int, list[int], slice, None or Ellipses):
-            Maximum `n` number of arguments to slice a tensor of rank `n`, one object in slices can be one of:
-
+        slices(Union[int, list(int), slice, None, Ellipses]):
+            Maximum `n` number of arguments to slice a tensor of rank `n`.
+            One object in slices can be one of:
             1.  :py:obj:`int`: Slice this index only. Negative index is supported.
             2.  :py:obj:`list(int)`: Slice these indices ion the list only. Negative indices are supported.
             3.  :py:obj:`slice`: Slice the generated indices from the slice object. Similar to `start:stop:step`.
@@ -139,9 +139,9 @@ class Mask(cde.MaskOp):
 
     Args:
         operator (Relational): One of the relational operator EQ, NE LT, GT, LE or GE
-        constant (python types (str, int, float, or bool): constant to be compared to.
+        constant (Union[str, int, float, bool]): constant to be compared to.
             Constant will be casted to the type of the input tensor
-        dtype (optional, mindspore.dtype): type of the generated mask. Default to bool
+        dtype (mindspore.dtype, optional): type of the generated mask. Default to bool
 
     Examples:
         >>> # Data before
@@ -171,7 +171,7 @@ class PadEnd(cde.PadEndOp):
     Args:
         pad_shape (list(int)): list on integers representing the shape needed. Dimensions that set to `None` will
             not be padded (i.e., original dim will be used). Shorter dimensions will truncate the values.
-        pad_value (python types (str, bytes, int, float, or bool), optional): value used to pad. Default to 0 or empty
+        pad_value (Union[str, bytes, int, float, bool]), optional): value used to pad. Default to 0 or empty
             string in case of Tensors of strings.
 
     Examples:

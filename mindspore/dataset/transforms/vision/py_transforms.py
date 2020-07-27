@@ -100,7 +100,7 @@ class ToTensor:
         The range of channel dimension remains the same.
 
     Args:
-        output_type (numpy datatype, optional): The datatype of the numpy output (default=numpy.float32).
+        output_type (numpy datatype, optional): The datatype of the numpy output (default=np.float32).
 
     Examples:
         >>> py_transforms.ComposeOp([py_transforms.Decode(),
@@ -260,10 +260,10 @@ class RandomCrop:
     Crop the input PIL Image at a random location.
 
     Args:
-        size (int or sequence): The output size of the cropped image.
+        size (Union[int, sequence]): The output size of the cropped image.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
-        padding (int or sequence, optional): The number of pixels to pad the image (default=None).
+        padding (Union[int, sequence], optional): The number of pixels to pad the image (default=None).
             If padding is not None, pad image firstly with padding values.
             If a single number is provided, it pads all borders with this value.
             If a tuple or list of 2 values are provided, it pads the (left and top)
@@ -385,7 +385,7 @@ class Resize:
     Resize the input PIL Image to the given size.
 
     Args:
-        size (int or sequence): The output size of the resized image.
+        size (Union[int, sequence]): The output size of the resized image.
             If size is an int, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
@@ -427,7 +427,7 @@ class RandomResizedCrop:
     Extract crop from the input image and resize it to a random size and aspect ratio.
 
     Args:
-        size (int or sequence): The size of the output image.
+        size (Union[int, sequence]): The size of the output image.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         scale (tuple, optional): Range (min, max) of respective size of the original size
@@ -479,7 +479,7 @@ class CenterCrop:
     Crop the central reigion of the input PIL Image to the given size.
 
     Args:
-        size (int or sequence): The output size of the cropped image.
+        size (Union[int, sequence]): The output size of the cropped image.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
 
@@ -511,16 +511,16 @@ class RandomColorAdjust:
     Perform a random brightness, contrast, saturation, and hue adjustment on the input PIL image.
 
     Args:
-        brightness (float or tuple, optional): Brightness adjustment factor (default=(1, 1)). Cannot be negative.
+        brightness (Union[float, tuple], optional): Brightness adjustment factor (default=(1, 1)). Cannot be negative.
             If it is a float, the factor is uniformly chosen from the range [max(0, 1-brightness), 1+brightness].
             If it is a sequence, it should be [min, max] for the range.
-        contrast (float or tuple, optional): Contrast adjustment factor (default=(1, 1)). Cannot be negative.
+        contrast (Union[float, tuple], optional): Contrast adjustment factor (default=(1, 1)). Cannot be negative.
             If it is a float, the factor is uniformly chosen from the range [max(0, 1-contrast), 1+contrast].
             If it is a sequence, it should be [min, max] for the range.
-        saturation (float or tuple, optional): Saturation adjustment factor (default=(1, 1)). Cannot be negative.
+        saturation (Union[float, tuple], optional): Saturation adjustment factor (default=(1, 1)). Cannot be negative.
             If it is a float, the factor is uniformly chosen from the range [max(0, 1-saturation), 1+saturation].
             If it is a sequence, it should be [min, max] for the range.
-        hue (float or tuple, optional): Hue adjustment factor (default=(0, 0)).
+        hue (Union[float, tuple], optional): Hue adjustment factor (default=(0, 0)).
             If it is a float, the range will be [-hue, hue]. Value should be 0 <= hue <= 0.5.
             If it is a sequence, it should be [min, max] where -0.5 <= min <= max <= 0.5.
 
@@ -558,7 +558,7 @@ class RandomRotation:
         See https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.rotate.
 
     Args:
-        degrees (int or float or sequence): Range of random rotation degrees.
+        degrees (Union[int, float, sequence]): Range of random rotation degrees.
             If degrees is a number, the range will be converted to (-degrees, degrees).
             If degrees is a sequence, it should be (min, max).
         resample (Inter mode, optional): An optional resampling filter (default=Inter.NEAREST).
@@ -743,7 +743,7 @@ class TenCrop:
     Generate 10 cropped images (first 5 from FiveCrop, second 5 from their flipped version).
 
     Args:
-        size (int or sequence): The output size of the crop.
+        size (Union[int, sequence]): The output size of the crop.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         use_vertical_flip (bool, optional): Flip the image vertically instead of horizontally
@@ -853,13 +853,13 @@ class Pad:
     Pad the input PIL image according to padding parameters.
 
     Args:
-        padding (int or sequence): The number of pixels to pad the image.
+        padding (Union[int, sequence]): The number of pixels to pad the image.
             If a single number is provided, it pads all borders with this value.
             If a tuple or list of 2 values are provided, it pads the (left and top)
             with the first value and (right and bottom) with the second value.
             If 4 values are provided as a list or tuple,
             it pads the left, top, right and bottom respectively.
-        fill_value (int or tuple, optional): Filling value (default=0). The pixel intensity
+        fill_value (Union[int, tuple], optional): Filling value (default=0). The pixel intensity
             of the borders if the padding_mode is Border.CONSTANT.
             If it is a 3-tuple, it is used to fill R, G, B channels respectively.
         padding_mode (Border mode, optional): The method of padding (default=Border.CONSTANT).
@@ -961,7 +961,7 @@ class RandomErasing:
             original image (default=(0.02, 0.33)).
         ratio (sequence of floats, optional): Range of the aspect ratio of the erase
             area (default=(0.3, 3.3)).
-        value (int or sequence): Erasing value (default=0).
+        value (Union[int, sequence]): Erasing value (default=0).
             If value is a single int, it is applied to all pixels to be erases.
             If value is a sequence of length 3, it is applied to R, G, B channels respectively.
             If value is a str 'random', the erase value will be obtained from a standard normal distribution.
@@ -1088,7 +1088,7 @@ class RandomAffine:
     Apply Random affine transformation to the input PIL image.
 
     Args:
-        degrees (int or float or sequence): Range of the rotation degrees.
+        degrees (Union[int, float, sequence]): Range of the rotation degrees.
             If degrees is a number, the range will be (-degrees, degrees).
             If degrees is a sequence, it should be (min, max).
         translate (sequence, optional): Sequence (tx, ty) of maximum translation in
@@ -1097,7 +1097,7 @@ class RandomAffine:
             (-tx*width, tx*width) and (-ty*height, ty*height), respectively.
             If None, no translations gets applied.
         scale (sequence, optional): Scaling factor interval (default=None, original scale is used).
-        shear (int or float or sequence, optional): Range of shear factor (default=None).
+        shear (Union[int, float, sequence], optional): Range of shear factor (default=None).
             If a number 'shear', then a shear parallel to the x axis in the range of (-shear, +shear) is applied.
             If a tuple or list of size 2, then a shear parallel to the x axis in the range of (shear[0], shear[1])
             is applied.
@@ -1114,7 +1114,7 @@ class RandomAffine:
 
             - Inter.BICUBIC, means resample method is bicubic interpolation.
 
-        fill_value (tuple or int, optional): Optional fill_value to fill the area outside the transform
+        fill_value (Union[tuple, int], optional): Optional fill_value to fill the area outside the transform
             in the output image. Used only in Pillow versions > 5.0.0 (default=0, filling is performed).
 
     Raises:
@@ -1363,7 +1363,7 @@ class AutoContrast:
 
     Args:
         cutoff (float, optional): Percent of pixels to cut off from the histogram (default=0.0).
-        ignore (int or sequence, optional): Pixel values to ignore (default=None).
+        ignore (Union[int, sequence], optional): Pixel values to ignore (default=None).
 
     Examples:
         >>> py_transforms.ComposeOp([py_transforms.Decode(),
