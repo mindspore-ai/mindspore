@@ -37,7 +37,10 @@ class CVOpCommon : public Common {
     kChannelSwap,
     kChangeMode,
     kTemplate,
-    kCrop
+    kCrop,
+    kRandomAffine,
+    kAutoContrast,
+    kEqualize
   };
 
   CVOpCommon();

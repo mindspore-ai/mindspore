@@ -20,9 +20,10 @@ import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.py_transforms as F
 import mindspore.dataset.transforms.vision.c_transforms as C
 from mindspore import log as logger
-from util import visualize_list, diff_mse, save_and_check_md5
+from util import visualize_list, visualize_one_channel_dataset, diff_mse, save_and_check_md5
 
 DATA_DIR = "../data/dataset/testImageNetData/train/"
+MNIST_DATA_DIR = "../data/dataset/testMnistData"
 
 GENERATE_GOLDEN = False
 
@@ -81,7 +82,7 @@ def test_auto_contrast_py(plot=False):
     logger.info("MSE= {}".format(str(np.mean(mse))))
 
     # Compare with expected md5 from images
-    filename = "autcontrast_01_result_py.npz"
+    filename = "autocontrast_01_result_py.npz"
     save_and_check_md5(ds_auto_contrast, filename, generate_golden=GENERATE_GOLDEN)
 
     if plot:
@@ -144,7 +145,7 @@ def test_auto_contrast_c(plot=False):
     np.testing.assert_equal(np.mean(mse), 0.0)
 
     # Compare with expected md5 from images
-    filename = "autcontrast_01_result_c.npz"
+    filename = "autocontrast_01_result_c.npz"
     save_and_check_md5(ds_auto_contrast_c, filename, generate_golden=GENERATE_GOLDEN)
 
     if plot:
@@ -211,6 +212,34 @@ def test_auto_contrast_one_channel_c(plot=False):
 
     if plot:
         visualize_list(images_auto_contrast_c, images_auto_contrast_py, visualize_mode=2)
+
+
+def test_auto_contrast_mnist_c(plot=False):
+    """
+    Test AutoContrast C op with MNIST dataset (Grayscale images)
+    """
+    logger.info("Test AutoContrast C Op With MNIST Images")
+    ds = de.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
+    ds_auto_contrast_c = ds.map(input_columns="image",
+                                operations=C.AutoContrast(cutoff=1, ignore=(0, 255)))
+    ds_orig = de.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
+
+    images = []
+    images_trans = []
+    labels = []
+    for _, (data_orig, data_trans) in enumerate(zip(ds_orig, ds_auto_contrast_c)):
+        image_orig, label_orig = data_orig
+        image_trans, _ = data_trans
+        images.append(image_orig)
+        labels.append(label_orig)
+        images_trans.append(image_trans)
+
+    # Compare with expected md5 from images
+    filename = "autocontrast_mnist_result_c.npz"
+    save_and_check_md5(ds_auto_contrast_c, filename, generate_golden=GENERATE_GOLDEN)
+
+    if plot:
+        visualize_one_channel_dataset(images, images_trans, labels)
 
 
 def test_auto_contrast_invalid_ignore_param_c():
@@ -333,6 +362,7 @@ if __name__ == "__main__":
     test_auto_contrast_py(plot=True)
     test_auto_contrast_c(plot=True)
     test_auto_contrast_one_channel_c(plot=True)
+    test_auto_contrast_mnist_c(plot=True)
     test_auto_contrast_invalid_ignore_param_c()
     test_auto_contrast_invalid_ignore_param_py()
     test_auto_contrast_invalid_cutoff_param_c()

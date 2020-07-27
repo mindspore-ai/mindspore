@@ -21,6 +21,7 @@
 #include <utility>
 #include <opencv2/imgcodecs.hpp>
 #include "utils/ms_utils.h"
+#include "minddata/dataset/kernels/image/math_utils.h"
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/core/tensor.h"
@@ -631,36 +632,9 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
       hist.col(0).copyTo(hist_vec);
       // Ignore values in ignore
       for (const auto &item : ignore) hist_vec[item] = 0;
-      int32_t n = std::accumulate(hist_vec.begin(), hist_vec.end(), 0);
-      // Find pixel values that are in the low cutoff and high cutoff.
-      int32_t cut = static_cast<int32_t>((cutoff / 100.0) * n);
-      if (cut != 0) {
-        for (int32_t lo = 0; lo < 256 && cut > 0; lo++) {
-          if (cut > hist_vec[lo]) {
-            cut -= hist_vec[lo];
-            hist_vec[lo] = 0;
-          } else {
-            hist_vec[lo] -= cut;
-            cut = 0;
-          }
-        }
-        cut = static_cast<int32_t>((cutoff / 100.0) * n);
-        for (int32_t hi = 255; hi >= 0 && cut > 0; hi--) {
-          if (cut > hist_vec[hi]) {
-            cut -= hist_vec[hi];
-            hist_vec[hi] = 0;
-          } else {
-            hist_vec[hi] -= cut;
-            cut = 0;
-          }
-        }
-      }
-      int32_t lo = 0;
       int32_t hi = 255;
-      for (; lo < 256 && !hist_vec[lo]; lo++) {
-      }
-      for (; hi >= 0 && !hist_vec[hi]; hi--) {
-      }
+      int32_t lo = 0;
+      RETURN_IF_NOT_OK(ComputeUpperAndLowerPercentiles(&hist_vec, cutoff, cutoff, &hi, &lo));
       if (hi <= lo) {
         for (int32_t i = 0; i < 256; i++) {
           table.push_back(i);
@@ -684,7 +658,6 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
     result.convertTo(result, input_cv->mat().type());
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateFromMat(result, &output_cv));
-    (*output) = std::static_pointer_cast<Tensor>(output_cv);
     (*output) = std::static_pointer_cast<Tensor>(output_cv);
     (*output)->Reshape(input->shape());
   } catch (const cv::Exception &e) {

@@ -47,7 +47,8 @@ from .utils import Inter, Border
 from .validators import check_prob, check_crop, check_resize_interpolation, check_random_resize_crop, \
     check_mix_up_batch_c, check_normalize_c, check_random_crop, check_random_color_adjust, check_random_rotation, \
     check_range, check_resize, check_rescale, check_pad, check_cutout, check_uniform_augment_cpp, \
-    check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_auto_contrast, FLOAT_MAX_INTEGER
+    check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_auto_contrast, check_random_affine, \
+    FLOAT_MAX_INTEGER
 
 DE_C_INTER_MODE = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBOUR,
                    Inter.LINEAR: cde.InterpolationMode.DE_INTER_LINEAR,
@@ -168,6 +169,95 @@ class Normalize(cde.NormalizeOp):
         self.mean = mean
         self.std = std
         super().__init__(*mean, *std)
+
+
+class RandomAffine(cde.RandomAffineOp):
+    """
+    Apply Random affine transformation to the input PIL image.
+
+    Args:
+        degrees (int or float or sequence): Range of the rotation degrees.
+            If degrees is a number, the range will be (-degrees, degrees).
+            If degrees is a sequence, it should be (min, max).
+        translate (sequence, optional): Sequence (tx, ty) of maximum translation in
+            x(horizontal) and y(vertical) directions (default=None).
+            The horizontal and vertical shift is selected randomly from the range:
+            (-tx*width, tx*width) and (-ty*height, ty*height), respectively.
+            If None, no translations gets applied.
+        scale (sequence, optional): Scaling factor interval (default=None, original scale is used).
+        shear (int or float or sequence, optional): Range of shear factor (default=None).
+            If a number 'shear', then a shear parallel to the x axis in the range of (-shear, +shear) is applied.
+            If a tuple or list of size 2, then a shear parallel to the x axis in the range of (shear[0], shear[1])
+            is applied.
+            If a tuple of list of size 4, then a shear parallel to x axis in the range of (shear[0], shear[1])
+            and a shear parallel to y axis in the range of (shear[2], shear[3]) is applied.
+            If None, no shear is applied.
+        resample (Inter mode, optional): An optional resampling filter (default=Inter.NEAREST).
+            If omitted, or if the image has mode "1" or "P", it is set to be Inter.NEAREST.
+            It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
+
+            - Inter.BILINEAR, means resample method is bilinear interpolation.
+
+            - Inter.NEAREST, means resample method is nearest-neighbor interpolation.
+
+            - Inter.BICUBIC, means resample method is bicubic interpolation.
+
+        fill_value (tuple or int, optional): Optional fill_value to fill the area outside the transform
+            in the output image. Used only in Pillow versions > 5.0.0 (default=0, filling is performed).
+
+    Raises:
+        ValueError: If degrees is negative.
+        ValueError: If translation value is not between 0 and 1.
+        ValueError: If scale is not positive.
+        ValueError: If shear is a number but is not positive.
+        TypeError: If degrees is not a number or a list or a tuple.
+            If degrees is a list or tuple, its length is not 2.
+        TypeError: If translate is specified but is not list or a tuple of length 2.
+        TypeError: If scale is not a list or tuple of length 2.''
+        TypeError: If shear is not a list or tuple of length 2 or 4.
+
+    Examples:
+        >>> c_transform.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1))
+    """
+
+    @check_random_affine
+    def __init__(self, degrees, translate=None, scale=None, shear=None, resample=Inter.NEAREST, fill_value=0):
+        # Parameter checking
+        if shear is not None:
+            if isinstance(shear, numbers.Number):
+                shear = (-1 * shear, shear, 0., 0.)
+            else:
+                if len(shear) == 2:
+                    shear = [shear[0], shear[1], 0., 0.]
+                elif len(shear) == 4:
+                    shear = [s for s in shear]
+
+        if isinstance(degrees, numbers.Number):
+            degrees = (-1 * degrees, degrees)
+
+        if isinstance(fill_value, numbers.Number):
+            fill_value = (fill_value, fill_value, fill_value)
+
+        # translation
+        if translate is None:
+            translate = (0.0, 0.0)
+
+        # scale
+        if scale is None:
+            scale = (1.0, 1.0)
+
+        # shear
+        if shear is None:
+            shear = (0.0, 0.0, 0.0, 0.0)
+
+        self.degrees = degrees
+        self.translate = translate
+        self.scale_ = scale
+        self.shear = shear
+        self.resample = DE_C_INTER_MODE[resample]
+        self.fill_value = fill_value
+
+        super().__init__(degrees, translate, scale, shear, DE_C_INTER_MODE[resample], fill_value)
 
 
 class RandomCrop(cde.RandomCropOp):

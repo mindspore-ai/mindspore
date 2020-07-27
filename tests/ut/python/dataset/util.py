@@ -200,6 +200,23 @@ def diff_me(in1, in2):
     return mse / 255 * 100
 
 
+def visualize_one_channel_dataset(images_original, images_transformed, labels):
+    """
+    Helper function to visualize one channel grayscale images
+    """
+    num_samples = len(images_original)
+    for i in range(num_samples):
+        plt.subplot(2, num_samples, i + 1)
+        # Note: Use squeeze() to convert (H, W, 1) images to (H, W)
+        plt.imshow(images_original[i].squeeze(), cmap=plt.cm.gray)
+        plt.title(PLOT_TITLE_DICT[1][0] + ":" + str(labels[i]))
+
+        plt.subplot(2, num_samples, i + num_samples + 1)
+        plt.imshow(images_transformed[i].squeeze(), cmap=plt.cm.gray)
+        plt.title(PLOT_TITLE_DICT[1][1] + ":" + str(labels[i]))
+    plt.show()
+
+
 def visualize_list(image_list_1, image_list_2, visualize_mode=1):
     """
     visualizes a list of images using DE op

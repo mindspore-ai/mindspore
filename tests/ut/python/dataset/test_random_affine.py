@@ -18,6 +18,7 @@ Testing RandomAffine op in DE
 import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.vision.c_transforms as c_vision
 from mindspore import log as logger
 from util import visualize_list, save_and_check_md5, \
     config_get_set_seed, config_get_set_num_parallel_workers
@@ -65,6 +66,39 @@ def test_random_affine_op(plot=False):
         visualize_list(image_original, image_affine)
 
 
+def test_random_affine_op_c(plot=False):
+    """
+    Test RandomAffine in C transformations
+    """
+    logger.info("test_random_affine_op_c")
+    # define map operations
+    transforms1 = [
+        c_vision.Decode(),
+        c_vision.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1))
+    ]
+
+    transforms2 = [
+        c_vision.Decode()
+    ]
+
+    #  First dataset
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data1 = data1.map(input_columns=["image"], operations=transforms1)
+    #  Second dataset
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data2 = data2.map(input_columns=["image"], operations=transforms2)
+
+    image_affine = []
+    image_original = []
+    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+        image1 = item1["image"]
+        image2 = item2["image"]
+        image_affine.append(image1)
+        image_original.append(image2)
+    if plot:
+        visualize_list(image_original, image_affine)
+
+
 def test_random_affine_md5():
     """
     Test RandomAffine with md5 comparison
@@ -87,6 +121,33 @@ def test_random_affine_md5():
 
     # check results with md5 comparison
     filename = "random_affine_01_result.npz"
+    save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+
+    # Restore configuration
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers((original_num_parallel_workers))
+
+
+def test_random_affine_c_md5():
+    """
+    Test RandomAffine C Op with md5 comparison
+    """
+    logger.info("test_random_affine_c_md5")
+    original_seed = config_get_set_seed(1)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
+    # define map operations
+    transforms = [
+        c_vision.Decode(),
+        c_vision.RandomAffine(degrees=(-5, 15), translate=(0.1, 0.3),
+                              scale=(0.9, 1.1), shear=(-10, 10, -5, 5))
+    ]
+
+    #  Generate dataset
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data = data.map(input_columns=["image"], operations=transforms)
+
+    # check results with md5 comparison
+    filename = "random_affine_01_c_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
 
     # Restore configuration
@@ -199,7 +260,9 @@ def test_random_affine_exception_shear_size():
 
 if __name__ == "__main__":
     test_random_affine_op(plot=True)
+    test_random_affine_op_c(plot=True)
     test_random_affine_md5()
+    test_random_affine_c_md5()
     test_random_affine_exception_negative_degrees()
     test_random_affine_exception_translation_range()
     test_random_affine_exception_scale_value()
