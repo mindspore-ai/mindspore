@@ -36,14 +36,15 @@ set(_REFLECTION gRPC::grpc++_reflection)
 
 if (CMAKE_CROSSCOMPILING)
     find_program(_GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin)
+    find_program(_GRPC_PYTHON_PLUGIN_EXECUTABLE grpc_python_plugin)
 else ()
     set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
+    set(_GRPC_PYTHON_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_python_plugin>)
 endif ()
 
 # Proto file
 get_filename_component(hw_proto "ms_service.proto" ABSOLUTE)
 get_filename_component(hw_proto_path "${hw_proto}" PATH)
-
 # Generated sources
 set(hw_proto_srcs "${CMAKE_CURRENT_BINARY_DIR}/ms_service.pb.cc")
 set(hw_proto_hdrs "${CMAKE_CURRENT_BINARY_DIR}/ms_service.pb.h")
@@ -56,6 +57,12 @@ add_custom_command(
         --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
         -I "${hw_proto_path}"
         --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
+        "${hw_proto}"
+        COMMAND ${_PROTOBUF_PROTOC}
+        ARGS --grpc_out "${PROJECT_SOURCE_DIR}/serving/"
+        --python_out "${PROJECT_SOURCE_DIR}/serving/"
+        -I "${hw_proto_path}"
+        --plugin=protoc-gen-grpc="${_GRPC_PYTHON_PLUGIN_EXECUTABLE}"
         "${hw_proto}"
         DEPENDS "${hw_proto}")
 
