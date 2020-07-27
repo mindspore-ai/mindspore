@@ -158,13 +158,13 @@ void KernelBuildInfo::KernelBuildInfoBuilder::SetProcessor(Processor processor) 
 
 std::shared_ptr<KernelBuildInfo> KernelBuildInfo::KernelBuildInfoBuilder::Build() { return kernel_build_info_; }
 
-void KernelBuildInfo::KernelBuildInfoBuilder::SetInputReshapeType(
+void KernelBuildInfo::KernelBuildInfoBuilder::SetInputsReshapeType(
   const std::vector<std::vector<Axis>> &input_reshape_type) {
   MS_EXCEPTION_IF_NULL(kernel_build_info_);
   kernel_build_info_->input_reshape_type_ = input_reshape_type;
 }
 
-void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputReshapeType(
+void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputsReshapeType(
   const std::vector<std::vector<Axis>> &output_reshape_type) {
   MS_EXCEPTION_IF_NULL(kernel_build_info_);
   kernel_build_info_->output_reshape_type_ = output_reshape_type;
@@ -188,6 +188,37 @@ void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputFormat(const std::string 
     MS_LOG(EXCEPTION) << "index outof range!";
   }
   kernel_build_info_->outputs_format_[index] = format;
+}
+void KernelBuildInfo::KernelBuildInfoBuilder::SetInputReshapeType(const std::vector<Axis> &input_reshape_type,
+                                                                  size_t index) {
+  if (index >= kernel_build_info_->input_reshape_type_.size()) {
+    MS_LOG(EXCEPTION) << "index outof range!";
+  }
+  std::copy(input_reshape_type.begin(), input_reshape_type.end(),
+            std::back_inserter(kernel_build_info_->input_reshape_type_[index]));
+}
+
+void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputReshapeType(const std::vector<Axis> &output_reshape_type,
+                                                                   size_t index) {
+  if (index >= kernel_build_info_->output_reshape_type_.size()) {
+    MS_LOG(EXCEPTION) << "index outof range!";
+  }
+  std::copy(output_reshape_type.begin(), output_reshape_type.end(),
+            std::back_inserter(kernel_build_info_->output_reshape_type_[index]));
+}
+
+void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputDeviceType(const TypeId &output_device_type, size_t index) {
+  if (index >= kernel_build_info_->outputs_device_type_.size()) {
+    MS_LOG(EXCEPTION) << "index outof range!";
+  }
+  kernel_build_info_->outputs_device_type_[index] = output_device_type;
+}
+
+void KernelBuildInfo::KernelBuildInfoBuilder::SetInputDeviceType(const TypeId &input_device_type, size_t index) {
+  if (index >= kernel_build_info_->inputs_device_type_.size()) {
+    MS_LOG(EXCEPTION) << "index outof range!";
+  }
+  kernel_build_info_->inputs_device_type_[index] = input_device_type;
 }
 }  // namespace kernel
 }  // namespace mindspore
