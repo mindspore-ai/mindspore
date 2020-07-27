@@ -27,7 +27,6 @@ from mindspore._checkparam import Rel
 from .optimizer import Optimizer
 
 _adam_opt = C.MultitypeFuncGraph("adam_opt")
-_adam_push_pull_opt = C.MultitypeFuncGraph("_adam_push_pull_opt")
 
 
 @_adam_opt.register("Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tensor", "Tensor",
@@ -85,76 +84,41 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay, param, m, v, gradient, d
     return gradient
 
 
-@_adam_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "IndexedSlices",
-                    "Tensor", "Tensor", "Tensor", "Bool")
-def _run_opt_with_sparse(opt, sparse_opt, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, params,
-                         moment1, moment2, ps_parameter):
+@_adam_opt.register("Function", "Function", "Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
+                    "Tensor", "IndexedSlices", "Tensor", "Tensor", "Tensor", "Bool")
+def _run_opt_with_sparse(opt, sparse_opt, push, pull, beta1_power, beta2_power, beta1, beta2, eps, lr,
+                         gradient, params, moment1, moment2, ps_parameter):
     """Apply sparse adam optimizer to the weight parameter when the gradient is sparse."""
     success = True
     indices = gradient.indices()
     values = gradient.values()
     if ps_parameter:
         op_shape = P.Shape()
-        _ps_pull = P.Pull()
-        _ps_push = P.Push("Adam", [0, 1, 2])
         shapes = (op_shape(params), op_shape(moment1), op_shape(moment2),
                   op_shape(beta1_power), op_shape(beta2_power), op_shape(lr), op_shape(beta1),
                   op_shape(beta2), op_shape(eps), op_shape(values), op_shape(indices))
-        success = F.depend(success, _ps_pull(_ps_push((beta1_power, beta2_power, lr, beta1, beta2,
-                                                       eps, values, indices), shapes), params))
+        success = F.depend(success, pull(push((beta1_power, beta2_power, lr, beta1, beta2,
+                                               eps, values, indices), shapes), params))
     else:
         success = F.depend(success, sparse_opt(params, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
                                                eps, values, indices))
     return success
 
 
-@_adam_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
-                    "Tensor", "Tensor", "Tensor", "Bool")
-def _run_opt_with_one_number(opt, sparse_opt, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, params,
-                             moment1, moment2, ps_parameter):
+@_adam_opt.register("Function", "Function", "Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
+                    "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool")
+def _run_opt_with_one_number(opt, sparse_opt, push, pull, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient,
+                             params, moment1, moment2, ps_parameter):
     """Apply adam optimizer to the weight parameter using Tensor."""
     success = True
     if ps_parameter:
         op_shape = P.Shape()
-        _ps_pull = P.Pull()
-        _ps_push = P.Push("Adam", [0, 1, 2])
-        success = F.depend(success, _ps_pull(_ps_push((beta1_power, beta2_power, lr, beta1, beta2, eps, gradient),
-                                                      (op_shape(params), op_shape(moment1), op_shape(moment2))),
-                                             params))
+        success = F.depend(success, pull(push((beta1_power, beta2_power, lr, beta1, beta2, eps, gradient),
+                                              (op_shape(params), op_shape(moment1), op_shape(moment2))), params))
     else:
         success = F.depend(success, opt(params, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
                                         eps, gradient))
     return success
-
-
-@_adam_push_pull_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
-                              "Tensor", "IndexedSlices", "Tensor", "Tensor", "Tensor")
-def _run_push_pull_opt_with_sparse(push, pull, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, params,
-                                   moment1, moment2):
-    """Apply sparse adam optimizer by push and pull to the weight parameter when the gradient is sparse."""
-    success = True
-    op_shape = P.Shape()
-    values = gradient.values()
-    indices = gradient.indices()
-    shapes = (op_shape(params), op_shape(moment1), op_shape(moment2),
-              op_shape(beta1_power), op_shape(beta2_power), op_shape(lr), op_shape(beta1),
-              op_shape(beta2), op_shape(eps), op_shape(values), op_shape(indices))
-    success = F.depend(success, pull(push((beta1_power, beta2_power, lr, beta1, beta2,
-                                           eps, values, indices), shapes), params))
-    return success
-
-
-@_adam_push_pull_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
-                              "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
-def _run_push_pull_opt_with_one_number(push, pull, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, params,
-                                       moment1, moment2):
-    """Apply adam optimizer by push and pull to the weight parameter using Tensor."""
-    success = True
-    op_shape = P.Shape()
-    success = F.depend(success, pull(push((beta1_power, beta2_power, lr, beta1, beta2, eps, gradient),
-                                          (op_shape(params), op_shape(moment1), op_shape(moment2))), params))
-    return success
-
 
 def _check_param_value(beta1, beta2, eps, prim_name):
     """Check the type of inputs."""
@@ -285,6 +249,10 @@ class Adam(Optimizer):
         self.opt = P.Adam(use_locking, use_nesterov)
         self.sparse_opt = P.FusedSparseAdam(use_locking, use_nesterov)
 
+        self._ps_pull = P.Pull()
+        self._ps_push = P.Push("Adam", [0, 1, 2])
+        self._ps_push.add_prim_attr("use_nesterov", use_nesterov)
+
     def construct(self, gradients):
         params = self.parameters
         moment1 = self.moment1
@@ -298,60 +266,13 @@ class Adam(Optimizer):
         beta2_power = self.beta2_power * self.beta2
         self.beta2_power = beta2_power
         if self.is_group_lr:
-            success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, beta1_power, beta2_power,
-                                          self.beta1, self.beta2, self.eps),
+            success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
+                                          beta1_power, beta2_power, self.beta1, self.beta2, self.eps),
                                 lr, gradients, params, moment1, moment2, self.ps_parameters)
         else:
-            success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, beta1_power, beta2_power,
-                                          self.beta1, self.beta2, self.eps, lr),
+            success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
+                                          beta1_power, beta2_power, self.beta1, self.beta2, self.eps, lr),
                                 gradients, params, moment1, moment2, self.ps_parameters)
-        return success
-
-
-class PSAdam(Optimizer):
-    '''The same usage as Adam optimizer except the parameters are set PS mode.'''
-    def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False,
-                 use_nesterov=False, weight_decay=0.0, loss_scale=1.0):
-        super(PSAdam, self).__init__(learning_rate, params, weight_decay, loss_scale)
-        _check_param_value(beta1, beta2, eps, self.cls_name)
-        validator.check_value_type("use_locking", use_locking, [bool], self.cls_name)
-        validator.check_value_type("use_nesterov", use_nesterov, [bool], self.cls_name)
-
-        self.beta1 = Tensor(beta1, mstype.float32)
-        self.beta2 = Tensor(beta2, mstype.float32)
-        self.beta1_power = Parameter(initializer(1, [1], mstype.float32), name="beta1_power")
-        self.beta2_power = Parameter(initializer(1, [1], mstype.float32), name="beta2_power")
-        self.eps = Tensor(eps, mstype.float32)
-
-        self.moment1 = self.parameters.clone(prefix="moment1", init='zeros')
-        self.moment2 = self.parameters.clone(prefix="moment2", init='zeros')
-
-        self.hyper_map = C.HyperMap()
-        self.push = P.Push("Adam", [0, 1, 2])
-        self.push.add_prim_attr("primitive_target", "CPU")
-        self.pull = P.Pull()
-        self.pull.add_prim_attr("primitive_target", "CPU")
-
-    def construct(self, gradients):
-        params = self.parameters
-        moment1 = self.moment1
-        moment2 = self.moment2
-        gradients = self.decay_weight(gradients)
-        gradients = self.scale_grad(gradients)
-        lr = self.get_lr()
-
-        beta1_power = self.beta1_power * self.beta1
-        self.beta1_power = beta1_power
-        beta2_power = self.beta2_power * self.beta2
-        self.beta2_power = beta2_power
-        if self.is_group_lr:
-            success = self.map_(F.partial(_adam_push_pull_opt, self.push, self.pull, beta1_power, beta2_power,
-                                          self.beta1, self.beta2, self.eps),
-                                lr, gradients, params, moment1, moment2)
-        else:
-            success = self.map_(F.partial(_adam_push_pull_opt, self.push, self.pull, beta1_power, beta2_power,
-                                          self.beta1, self.beta2, self.eps, lr),
-                                gradients, params, moment1, moment2)
         return success
 
 
