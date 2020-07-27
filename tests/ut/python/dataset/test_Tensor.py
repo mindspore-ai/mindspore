@@ -31,13 +31,13 @@ def test_basic():
     arr[0] = 0
     x = np.array([0, 2, 3, 4, 5])
 
-    assert np.array_equal(x, arr)
+    np.testing.assert_array_equal(x, arr)
     assert n.type() == cde.DataType("int64")
 
     arr2 = n.as_array()
     arr[0] = 2
     x = np.array([2, 2, 3, 4, 5])
-    assert np.array_equal(x, arr2)
+    np.testing.assert_array_equal(x, arr2)
     assert n.type() == cde.DataType("int64")
     assert arr.__array_interface__['data'] == arr2.__array_interface__['data']
 
@@ -47,12 +47,12 @@ def test_strides():
     n1 = cde.Tensor(x[:, 1])
     arr = np.array(n1, copy=False)
 
-    assert np.array_equal(x[:, 1], arr)
+    np.testing.assert_array_equal(x[:, 1], arr)
 
     n2 = cde.Tensor(x.transpose())
     arr = np.array(n2, copy=False)
 
-    assert np.array_equal(x.transpose(), arr)
+    np.testing.assert_array_equal(x.transpose(), arr)
 
 
 if __name__ == '__main__':

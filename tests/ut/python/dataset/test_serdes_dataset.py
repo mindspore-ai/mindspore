@@ -79,12 +79,12 @@ def test_imagefolder(remove_json_files=True):
     # Iterate and compare the data in the original pipeline (data1) against the deserialized pipeline (data2)
     for item1, item2, item3, item4 in zip(data1.create_dict_iterator(), data2.create_dict_iterator(),
                                           data3.create_dict_iterator(), data4.create_dict_iterator()):
-        assert np.array_equal(item1['image'], item2['image'])
-        assert np.array_equal(item1['image'], item3['image'])
-        assert np.array_equal(item1['label'], item2['label'])
-        assert np.array_equal(item1['label'], item3['label'])
-        assert np.array_equal(item3['image'], item4['image'])
-        assert np.array_equal(item3['label'], item4['label'])
+        np.testing.assert_array_equal(item1['image'], item2['image'])
+        np.testing.assert_array_equal(item1['image'], item3['image'])
+        np.testing.assert_array_equal(item1['label'], item2['label'])
+        np.testing.assert_array_equal(item1['label'], item3['label'])
+        np.testing.assert_array_equal(item3['image'], item4['image'])
+        np.testing.assert_array_equal(item3['label'], item4['label'])
         num_samples += 1
 
     logger.info("Number of data in data1: {}".format(num_samples))
@@ -119,10 +119,10 @@ def test_mnist_dataset(remove_json_files=True):
     num = 0
     for data1, data2, data3 in zip(data1.create_dict_iterator(), data2.create_dict_iterator(),
                                    data3.create_dict_iterator()):
-        assert np.array_equal(data1['image'], data2['image'])
-        assert np.array_equal(data1['image'], data3['image'])
-        assert np.array_equal(data1['label'], data2['label'])
-        assert np.array_equal(data1['label'], data3['label'])
+        np.testing.assert_array_equal(data1['image'], data2['image'])
+        np.testing.assert_array_equal(data1['image'], data3['image'])
+        np.testing.assert_array_equal(data1['label'], data2['label'])
+        np.testing.assert_array_equal(data1['label'], data3['label'])
         num += 1
 
     logger.info("mnist total num samples is {}".format(str(num)))
@@ -160,10 +160,10 @@ def test_zip_dataset(remove_json_files=True):
         num_cols = len(d0)
         offset = 0
         for t1 in d0:
-            assert np.array_equal(t1, d3[offset])
-            assert np.array_equal(t1, d3[offset + num_cols])
-            assert np.array_equal(t1, d4[offset])
-            assert np.array_equal(t1, d4[offset + num_cols])
+            np.testing.assert_array_equal(t1, d3[offset])
+            np.testing.assert_array_equal(t1, d3[offset + num_cols])
+            np.testing.assert_array_equal(t1, d4[offset])
+            np.testing.assert_array_equal(t1, d4[offset + num_cols])
             offset += 1
         rows += 1
     assert rows == 12
@@ -199,7 +199,7 @@ def test_random_crop():
 
     for item1, item1_1, item2 in zip(data1.create_dict_iterator(), data1_1.create_dict_iterator(),
                                      data2.create_dict_iterator()):
-        assert np.array_equal(item1['image'], item1_1['image'])
+        np.testing.assert_array_equal(item1['image'], item1_1['image'])
         _ = item2["image"]
 
     # Restore configuration num_parallel_workers

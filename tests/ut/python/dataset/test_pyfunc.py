@@ -39,7 +39,7 @@ def test_case_0():
     for item in data1.create_dict_iterator():  # each data is a dictionary
         # In this test, the dataset is 2x2 sequential tensors
         golden = np.array([[i * 2, (i + 1) * 2], [(i + 2) * 2, (i + 3) * 2]])
-        assert np.array_equal(item["out"], golden)
+        np.testing.assert_array_equal(item["out"], golden)
         i = i + 4
 
 
@@ -60,9 +60,9 @@ def test_case_1():
     for item in data1.create_dict_iterator():  # each data is a dictionary
         # In this test, the dataset is 2x2 sequential tensors
         golden = np.array([[i, i + 1], [i + 2, i + 3]])
-        assert np.array_equal(item["out0"], golden)
+        np.testing.assert_array_equal(item["out0"], golden)
         golden = np.array([[i * 2, (i + 1) * 2], [(i + 2) * 2, (i + 3) * 2]])
-        assert np.array_equal(item["out1"], golden)
+        np.testing.assert_array_equal(item["out1"], golden)
         i = i + 4
 
 
@@ -84,7 +84,7 @@ def test_case_2():
     for item in data1.create_dict_iterator():  # each data is a dictionary
         # In this test, the dataset is 2x2 sequential tensors
         golden = np.array([[i * 2, (i + 1) * 2], [(i + 2) * 2, (i + 3) * 2]])
-        assert np.array_equal(item["out"], golden)
+        np.testing.assert_array_equal(item["out"], golden)
         i = i + 4
 
 
@@ -106,11 +106,11 @@ def test_case_3():
     for item in data1.create_dict_iterator():  # each data is a dictionary
         # In this test, the dataset is 2x2 sequential tensors
         golden = np.array([[i, i + 1], [i + 2, i + 3]])
-        assert np.array_equal(item["out0"], golden)
+        np.testing.assert_array_equal(item["out0"], golden)
         golden = np.array([[i * 2, (i + 1) * 2], [(i + 2) * 2, (i + 3) * 2]])
-        assert np.array_equal(item["out1"], golden)
+        np.testing.assert_array_equal(item["out1"], golden)
         golden = np.array([[i * 2 + 1, (i + 1) * 2 + 1], [(i + 2) * 2 + 1, (i + 3) * 2 + 1]])
-        assert np.array_equal(item["out2"], golden)
+        np.testing.assert_array_equal(item["out2"], golden)
         i = i + 4
 
 
@@ -132,11 +132,11 @@ def test_case_4():
     for item in data1.create_dict_iterator():  # each data is a dictionary
         # In this test, the dataset is 2x2 sequential tensors
         golden = np.array([[i, i + 1], [i + 2, i + 3]])
-        assert np.array_equal(item["out0"], golden)
+        np.testing.assert_array_equal(item["out0"], golden)
         golden = np.array([[i * 2, (i + 1) * 2], [(i + 2) * 2, (i + 3) * 2]])
-        assert np.array_equal(item["out1"], golden)
+        np.testing.assert_array_equal(item["out1"], golden)
         golden = np.array([[i * 2 + 1, (i + 1) * 2 + 1], [(i + 2) * 2 + 1, (i + 3) * 2 + 1]])
-        assert np.array_equal(item["out2"], golden)
+        np.testing.assert_array_equal(item["out2"], golden)
         i = i + 4
 
 
@@ -159,7 +159,7 @@ def test_case_5():
     for item in data1.create_dict_iterator():  # each data is a dictionary
         # In this test, the dataset is 2x2 sequential tensors
         golden = np.array([[1, 1], [1, 1]])
-        assert np.array_equal(item["out"], golden)
+        np.testing.assert_array_equal(item["out"], golden)
 
 
 def test_case_6():
@@ -178,7 +178,7 @@ def test_case_6():
     for item in data1.create_dict_iterator():  # each data is a dictionary
         # In this test, the dataset is 2x2 sequential tensors
         golden = np.array([[i * 4, (i + 1) * 4], [(i + 2) * 4, (i + 3) * 4]])
-        assert np.array_equal(item["out"], golden)
+        np.testing.assert_array_equal(item["out"], golden)
         i = i + 4
 
 
@@ -198,7 +198,7 @@ def test_case_7():
     for item in data1.create_dict_iterator():  # each data is a dictionary
         # In this test, the dataset is 2x2 sequential tensors
         golden = np.array([[i * 2, (i + 1) * 2], [(i + 2) * 2, (i + 3) * 2]])
-        assert np.array_equal(item["out"], golden)
+        np.testing.assert_array_equal(item["out"], golden)
         i = i + 4
 
 
@@ -221,11 +221,11 @@ def test_case_8():
     for item in data1.create_dict_iterator():  # each data is a dictionary
         # In this test, the dataset is 2x2 sequential tensors
         golden = np.array([[i, i + 1], [i + 2, i + 3]])
-        assert np.array_equal(item["out0"], golden)
+        np.testing.assert_array_equal(item["out0"], golden)
         golden = np.array([[i * 2, (i + 1) * 2], [(i + 2) * 2, (i + 3) * 2]])
-        assert np.array_equal(item["out1"], golden)
+        np.testing.assert_array_equal(item["out1"], golden)
         golden = np.array([[i * 2 + 1, (i + 1) * 2 + 1], [(i + 2) * 2 + 1, (i + 3) * 2 + 1]])
-        assert np.array_equal(item["out2"], golden)
+        np.testing.assert_array_equal(item["out2"], golden)
         i = i + 4
 
 
@@ -246,7 +246,7 @@ def test_case_9():
     for item in data1.create_dict_iterator():  # each data is a dictionary
         # In this test, the dataset is 2x2 sequential tensors
         golden = np.array([[i * 2 + 3, (i + 1) * 2 + 3], [(i + 2) * 2 + 3, (i + 3) * 2 + 3]])
-        assert np.array_equal(item["out"], golden)
+        np.testing.assert_array_equal(item["out"], golden)
         i = i + 4
 
 

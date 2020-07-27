@@ -56,7 +56,7 @@ def _compare_to_golden(golden_ref_dir, result_dict):
     """
     test_array = np.array(list(result_dict.values()))
     golden_array = np.load(golden_ref_dir, allow_pickle=True)['arr_0']
-    assert np.array_equal(test_array, golden_array)
+    np.testing.assert_array_equal(test_array, golden_array)
 
 
 def _compare_to_golden_dict(golden_ref_dir, result_dict):

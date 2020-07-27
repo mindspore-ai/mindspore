@@ -136,7 +136,7 @@ def test_generator_dict_0():
     # create the iterator inside the loop declaration
     for item in data1.create_dict_iterator():  # each data is a dictionary
         golden = np.array([i])
-        assert np.array_equal(item["data"], golden)
+        np.testing.assert_array_equal(item["data"], golden)
         i = i + 1
 
 def test_generator_dict_1():
@@ -154,7 +154,7 @@ def test_generator_dict_1():
         # Create iterator outside the epoch for loop.
         for item in data1.create_dict_iterator():  # each data is a dictionary
             golden = np.array([i])
-            assert np.array_equal(item["data"], golden)
+            np.testing.assert_array_equal(item["data"], golden)
             i = i + 1
         assert i == 64
 
@@ -171,7 +171,7 @@ def test_generator_dict_2():
         i = 0
         for item in iter1:  # each data is a dictionary
             golden = np.array([i])
-            assert np.array_equal(item["data"], golden)
+            np.testing.assert_array_equal(item["data"], golden)
             i = i + 1
         assert i == 64
 
@@ -193,7 +193,7 @@ def test_generator_dict_3():
         i = 0
         for item in iter1:  # each data is a dictionary
             golden = np.array([i])
-            assert np.array_equal(item["data"], golden)
+            np.testing.assert_array_equal(item["data"], golden)
             i = i + 1
         assert i == 64
     # optional
@@ -217,7 +217,7 @@ def test_generator_dict_4():
         i = 0
         for item in iter1:  # each data is a dictionary
             golden = np.array([i])
-            assert np.array_equal(item["data"], golden)
+            np.testing.assert_array_equal(item["data"], golden)
             i = i + 1
         assert i == 64
 
@@ -240,7 +240,7 @@ def test_generator_dict_4_1():
         i = 0
         for item in iter1:  # each data is a dictionary
             golden = np.array([i])
-            assert np.array_equal(item["data"], golden)
+            np.testing.assert_array_equal(item["data"], golden)
             i = i + 1
         assert i == 64
 
@@ -265,7 +265,7 @@ def test_generator_dict_4_2():
         i = 0
         for item in iter1:  # each data is a dictionary
             golden = np.array([i])
-            assert np.array_equal(item["data"], golden)
+            np.testing.assert_array_equal(item["data"], golden)
             i = i + 1
         assert i == 64
 
@@ -287,7 +287,7 @@ def test_generator_dict_5():
         i = 0
         for item in iter1:  # each data is a dictionary
             golden = np.array([i])
-            assert np.array_equal(item["data"], golden)
+            np.testing.assert_array_equal(item["data"], golden)
             i = i + 1
         assert i == 64
 
@@ -295,7 +295,7 @@ def test_generator_dict_5():
     i = 0
     for item in iter1:  # each data is a dictionary
         golden = np.array([i])
-        assert np.array_equal(item["data"], golden)
+        np.testing.assert_array_equal(item["data"], golden)
         i = i + 1
     assert i == 64
 
@@ -320,7 +320,7 @@ def test_generator_tuple_0():
     # create the iterator inside the loop declaration
     for item in data1.create_tuple_iterator():  # each data is a dictionary
         golden = np.array([i])
-        assert np.array_equal(item[0], golden)
+        np.testing.assert_array_equal(item[0], golden)
         i = i + 1
 
 def test_generator_tuple_1():
@@ -338,7 +338,7 @@ def test_generator_tuple_1():
         # Create iterator outside the epoch for loop.
         for item in data1.create_tuple_iterator():  # each data is a dictionary
             golden = np.array([i])
-            assert np.array_equal(item[0], golden)
+            np.testing.assert_array_equal(item[0], golden)
             i = i + 1
         assert i == 64
 
@@ -355,7 +355,7 @@ def test_generator_tuple_2():
         i = 0
         for item in iter1:  # each data is a dictionary
             golden = np.array([i])
-            assert np.array_equal(item[0], golden)
+            np.testing.assert_array_equal(item[0], golden)
             i = i + 1
         assert i == 64
 
@@ -377,7 +377,7 @@ def test_generator_tuple_3():
         i = 0
         for item in iter1:  # each data is a dictionary
             golden = np.array([i])
-            assert np.array_equal(item[0], golden)
+            np.testing.assert_array_equal(item[0], golden)
             i = i + 1
         assert i == 64
     # optional
@@ -401,7 +401,7 @@ def test_generator_tuple_4():
         i = 0
         for item in iter1:  # each data is a dictionary
             golden = np.array([i])
-            assert np.array_equal(item[0], golden)
+            np.testing.assert_array_equal(item[0], golden)
             i = i + 1
         assert i == 64
 
@@ -424,7 +424,7 @@ def test_generator_tuple_5():
         i = 0
         for item in iter1:  # each data is a dictionary
             golden = np.array([i])
-            assert np.array_equal(item[0], golden)
+            np.testing.assert_array_equal(item[0], golden)
             i = i + 1
         assert i == 64
 
@@ -432,7 +432,7 @@ def test_generator_tuple_5():
     i = 0
     for item in iter1:  # each data is a dictionary
         golden = np.array([i])
-        assert np.array_equal(item[0], golden)
+        np.testing.assert_array_equal(item[0], golden)
         i = i + 1
     assert i == 64
 
@@ -457,7 +457,7 @@ def test_generator_tuple_repeat_1():
         i = 0
         for item in iter1:  # each data is a dictionary
             golden = np.array([i % 64])
-            assert np.array_equal(item[0], golden)
+            np.testing.assert_array_equal(item[0], golden)
             i = i + 1
         assert i == 64 * 2
 
@@ -465,7 +465,7 @@ def test_generator_tuple_repeat_1():
     i = 0
     for item in iter1:  # each data is a dictionary
         golden = np.array([i % 64])
-        assert np.array_equal(item[0], golden)
+        np.testing.assert_array_equal(item[0], golden)
         i = i + 1
     assert i == 64 * 2
 
@@ -492,7 +492,7 @@ def test_generator_tuple_repeat_repeat_1():
         i = 0
         for item in iter1:  # each data is a dictionary
             golden = np.array([i % 64])
-            assert np.array_equal(item[0], golden)
+            np.testing.assert_array_equal(item[0], golden)
             i = i + 1
         assert i == 64 * 2 * 3
 
@@ -500,7 +500,7 @@ def test_generator_tuple_repeat_repeat_1():
     i = 0
     for item in iter1:  # each data is a dictionary
         golden = np.array([i % 64])
-        assert np.array_equal(item[0], golden)
+        np.testing.assert_array_equal(item[0], golden)
         i = i + 1
     assert i == 64 * 2 * 3
 
@@ -526,7 +526,7 @@ def test_generator_tuple_repeat_repeat_2():
         i = 0
         for item in iter1:  # each data is a dictionary
             golden = np.array([i % 64])
-            assert np.array_equal(item[0], golden)
+            np.testing.assert_array_equal(item[0], golden)
             i = i + 1
         assert i == 64 * 2 * 3
     # optional
@@ -551,7 +551,7 @@ def test_generator_tuple_repeat_repeat_3():
         i = 0
         for item in iter1:  # each data is a dictionary
             golden = np.array([i % 64])
-            assert np.array_equal(item[0], golden)
+            np.testing.assert_array_equal(item[0], golden)
             i = i + 1
         assert i == 64 * 2 * 3
 
@@ -559,7 +559,7 @@ def test_generator_tuple_repeat_repeat_3():
         i = 0
         for item in iter1:  # each data is a dictionary
             golden = np.array([i % 64])
-            assert np.array_equal(item[0], golden)
+            np.testing.assert_array_equal(item[0], golden)
             i = i + 1
         assert i == 64 * 2 * 3
 
@@ -579,7 +579,7 @@ def test_generator_reusedataset():
         i = 0
         for item in iter1:  # each data is a dictionary
             golden = np.array([i % 64])
-            assert np.array_equal(item[0], golden)
+            np.testing.assert_array_equal(item[0], golden)
             i = i + 1
         assert i == 64 * 2
 
@@ -589,7 +589,7 @@ def test_generator_reusedataset():
         i = 0
         for item in iter1:  # each data is a dictionary
             golden = np.array([i % 64])
-            assert np.array_equal(item[0], golden)
+            np.testing.assert_array_equal(item[0], golden)
             i = i + 1
         assert i == 64 * 2 * 3
 
@@ -600,7 +600,7 @@ def test_generator_reusedataset():
         sample = 0
         for item in iter1:  # each data is a dictionary
             golden = np.array([[i % 64], [(i + 1) % 64]])
-            assert np.array_equal(item["data"], golden)
+            np.testing.assert_array_equal(item["data"], golden)
             i = i + 2
             sample = sample + 1
         assert sample == 64 * 3
