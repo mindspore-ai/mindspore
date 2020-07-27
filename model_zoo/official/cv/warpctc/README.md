@@ -28,7 +28,7 @@ These is an example of training Warpctc with self-generated captcha image datase
 
 ```shell
 .
-└──warpct
+└──warpctc
   ├── README.md
   ├── script
     ├── run_distribute_train.sh         # launch distributed training in Ascend(8 pcs)
@@ -55,18 +55,18 @@ These is an example of training Warpctc with self-generated captcha image datase
 Parameters for both training and evaluation can be set in config.py.
 
 ```
-"max_captcha_digits": 4,          # max number of digits in each 
-"captcha_width": 160,             # width of captcha images
-"captcha_height": 64,             # height of capthca images
-"batch_size": 64,                 # batch size of input tensor
-"epoch_size": 30,                 # only valid for taining, which is always 1 for inference
-"hidden_size": 512,               # hidden size in LSTM layers
-"learning_rate": 0.01,            # initial learning rate
-"momentum": 0.9                   # momentum of SGD optimizer
-"save_checkpoint": True,          # whether save checkpoint or not
-"save_checkpoint_steps": 98,      # the step interval between two checkpoints. By default, the last checkpoint will be saved after the last step
-"keep_checkpoint_max": 30,        # only keep the last keep_checkpoint_max checkpoint
-"save_checkpoint_path": "./",     # path to save checkpoint
+"max_captcha_digits": 4,                    # max number of digits in each 
+"captcha_width": 160,                       # width of captcha images
+"captcha_height": 64,                       # height of capthca images
+"batch_size": 64,                           # batch size of input tensor
+"epoch_size": 30,                           # only valid for taining, which is always 1 for inference
+"hidden_size": 512,                         # hidden size in LSTM layers
+"learning_rate": 0.01,                      # initial learning rate
+"momentum": 0.9                             # momentum of SGD optimizer
+"save_checkpoint": True,                    # whether save checkpoint or not
+"save_checkpoint_steps": 97,                # the step interval between two checkpoints. By default, the last checkpoint will be saved after the last step
+"keep_checkpoint_max": 30,                  # only keep the last keep_checkpoint_max checkpoint
+"save_checkpoint_path": "./checkpoint",     # path to save checkpoint
 ```
 
 ## Running the example
@@ -77,13 +77,13 @@ Parameters for both training and evaluation can be set in config.py.
 
 ```
 # distributed training in Ascend
-Usage: sh run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [DATASET_PATH]
+Usage: bash run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [DATASET_PATH]
 
 # distributed training in GPU
-Usage: sh run_distribute_train_for_gpu.sh [RANK_SIZE] [DATASET_PATH]
+Usage: bash run_distribute_train_for_gpu.sh [RANK_SIZE] [DATASET_PATH]
 
 # standalone training
-Usage: sh run_standalone_train.sh [DATASET_PATH] [PLATFORM]
+Usage: bash run_standalone_train.sh [DATASET_PATH] [PLATFORM]
 ```
 
 
@@ -91,16 +91,16 @@ Usage: sh run_standalone_train.sh [DATASET_PATH] [PLATFORM]
 
 ```
 # distribute training example in Ascend
-sh run_distribute_train.sh rank_table.json ../data/train
+bash run_distribute_train.sh rank_table.json ../data/train
 
 # distribute training example in GPU
-sh run_distribute_train.sh 8 ../data/train
+bash run_distribute_train_for_gpu.sh 8 ../data/train
 
 # standalone training example in Ascend
-sh run_standalone_train.sh ../data/train Ascend
+bash run_standalone_train.sh ../data/train Ascend
 
 # standalone training example in GPU
-sh run_standalone_train.sh ../data/train GPU
+bash run_standalone_train.sh ../data/train GPU
 ```
 
 > About rank_table.json, you can refer to the [distributed training tutorial](https://www.mindspore.cn/tutorial/en/master/advanced_use/distributed_training.html).
@@ -111,11 +111,11 @@ Training result will be stored in folder `scripts`, whose name begins with "trai
 
 ```
 # distribute training result(8 pcs)
-Epoch: [  1/ 30], step: [   98/   98], loss: [0.5853/0.5853], time: [376813.7944]
-Epoch: [  2/ 30], step: [   98/   98], loss: [0.4007/0.4007], time: [75882.0951]
-Epoch: [  3/ 30], step: [   98/   98], loss: [0.0921/0.0921], time: [75150.9385]
-Epoch: [  4/ 30], step: [   98/   98], loss: [0.1472/0.1472], time: [75135.0193]
-Epoch: [  5/ 30], step: [   98/   98], loss: [0.0186/0.0186], time: [75199.5809]
+Epoch: [  1/ 30], step: [   97/   97], loss: [0.5853/0.5853], time: [376813.7944]
+Epoch: [  2/ 30], step: [   97/   97], loss: [0.4007/0.4007], time: [75882.0951]
+Epoch: [  3/ 30], step: [   97/   97], loss: [0.0921/0.0921], time: [75150.9385]
+Epoch: [  4/ 30], step: [   97/   97], loss: [0.1472/0.1472], time: [75135.0193]
+Epoch: [  5/ 30], step: [   97/   97], loss: [0.0186/0.0186], time: [75199.5809]
 ...
 ```
 
@@ -126,17 +126,17 @@ Epoch: [  5/ 30], step: [   98/   98], loss: [0.0186/0.0186], time: [75199.5809]
 
 ```
 # evaluation
-Usage: sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM]
+Usage: bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM]
 ```
 
 #### Launch
 
 ```
 # evaluation example in Ascend
-sh run_eval.sh ../data/test warpctc-30-98.ckpt Ascend
+bash run_eval.sh ../data/test warpctc-30-97.ckpt Ascend
 
 # evaluation example in GPU
-sh run_eval.sh ../data/test warpctc-30-98.ckpt GPU
+bash run_eval.sh ../data/test warpctc-30-97.ckpt GPU
 ```
 
 > checkpoint can be produced in training process.
