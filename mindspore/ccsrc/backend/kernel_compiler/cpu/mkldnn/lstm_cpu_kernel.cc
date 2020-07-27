@@ -29,36 +29,7 @@ void LstmCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   using tag = dnnl::memory::format_tag;
   using dim = dnnl::memory::dims;
-  std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  std::vector<size_t> src_h_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  std::vector<size_t> src_c_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
-  bidirectional_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "bidirectional");
-  input_size_ = AnfAlgo::GetNodeAttr<int>(kernel_node, "input_size");
-  hidden_size_ = AnfAlgo::GetNodeAttr<int>(kernel_node, "hidden_size");
-  num_layers_ = AnfAlgo::GetNodeAttr<int>(kernel_node, "num_layers");
-  has_bias_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "has_bias");
-  batch_size_ = SizeToInt(src_shape[1]);
-  seq_len_ = SizeToInt(src_shape[0]);
-  num_directions_ = 1;
-  if (bidirectional_) {
-    num_directions_ = 2;
-  }
-  if (num_directions_ * num_layers_ != SizeToInt(src_h_shape[0])) {
-    MS_LOG(EXCEPTION) << "error iteration shape!";
-  }
-  if (num_layers_ <= 0) {
-    MS_LOG(EXCEPTION) << "layers must be greater than zero!";
-  }
-  if (src_shape.size() != 3 || src_h_shape.size() != 3 || src_c_shape.size() != 3) {
-    MS_LOG(EXCEPTION) << "conv2d only support 3-D input!";
-  }
-  const int gate_size = 4 * hidden_size_;
-  for (int i = 0; i < num_layers_; ++i) {
-    weight_size_ += gate_size * (i == 0 ? input_size_ : hidden_size_ * num_directions_);
-    weight_h_size_ += gate_size * hidden_size_;
-  }
-  weight_size_ = weight_size_ * num_directions_;
-  weight_h_size_ = weight_h_size_ * num_directions_;
+  CheckParam(kernel_node);
   auto eng = MKLKernelEngine::Get().engine();
   dnnl::stream s(eng);
   dnnl::rnn_direction direction = dnnl::rnn_direction::unidirectional;
@@ -97,6 +68,39 @@ void LstmCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_DST_ITER, dst_h_desc);
   AddArgument(DNNL_ARG_DST_ITER_C, dst_c_desc);
   AddArgument(DNNL_ARG_WORKSPACE, prim_desc_.workspace_desc());
+}
+
+void LstmCPUKernel::CheckParam(const CNodePtr &kernel_node) {
+  std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  std::vector<size_t> src_h_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+  std::vector<size_t> src_c_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
+  bidirectional_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "bidirectional");
+  input_size_ = AnfAlgo::GetNodeAttr<int>(kernel_node, "input_size");
+  hidden_size_ = AnfAlgo::GetNodeAttr<int>(kernel_node, "hidden_size");
+  num_layers_ = AnfAlgo::GetNodeAttr<int>(kernel_node, "num_layers");
+  has_bias_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "has_bias");
+  batch_size_ = SizeToInt(src_shape[1]);
+  seq_len_ = SizeToInt(src_shape[0]);
+  num_directions_ = 1;
+  if (bidirectional_) {
+    num_directions_ = 2;
+  }
+  const int gate_size = 4 * hidden_size_;
+  for (int i = 0; i < num_layers_; ++i) {
+    weight_size_ += gate_size * (i == 0 ? input_size_ : hidden_size_ * num_directions_);
+    weight_h_size_ += gate_size * hidden_size_;
+  }
+  weight_size_ = weight_size_ * num_directions_;
+  weight_h_size_ = weight_h_size_ * num_directions_;
+  if (num_directions_ * num_layers_ != SizeToInt(src_h_shape[0])) {
+    MS_LOG(EXCEPTION) << "error iteration shape!";
+  }
+  if (num_layers_ <= 0) {
+    MS_LOG(EXCEPTION) << "layers must be greater than zero!";
+  }
+  if (src_shape.size() != 3 || src_h_shape.size() != 3 || src_c_shape.size() != 3) {
+    MS_LOG(EXCEPTION) << "lstm only support 3-D input!";
+  }
 }
 
 bool LstmCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,

@@ -37,6 +37,7 @@ class LstmCPUKernel : public MKLCPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
+  void CheckParam(const CNodePtr &kernel_node);
   int weight_size_ = 0;
   int weight_h_size_ = 0;
   int input_size_;
