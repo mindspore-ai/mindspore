@@ -27,6 +27,9 @@
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/pipeline_op.h"
 #include "minddata/dataset/util/wait_post.h"
+#include "pybind11/pybind11.h"
+
+namespace py = pybind11;
 
 namespace mindspore {
 namespace dataset {

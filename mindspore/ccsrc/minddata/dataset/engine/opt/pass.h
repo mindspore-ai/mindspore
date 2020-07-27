@@ -165,7 +165,11 @@ class NodePass : public Pass {
 #ifdef ENABLE_PYTHON
   virtual Status RunOnNode(std::shared_ptr<FilterOp> node, bool *modified);
 
+  virtual Status RunOnNode(std::shared_ptr<ManifestOp> node, bool *modified);
+
   virtual Status RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<VOCOp> node, bool *modified);
 #endif
 
   virtual Status RunOnNode(std::shared_ptr<RandomDataOp> node, bool *modified);
@@ -182,11 +186,7 @@ class NodePass : public Pass {
 
   virtual Status RunOnNode(std::shared_ptr<MnistOp> node, bool *modified);
 
-  virtual Status RunOnNode(std::shared_ptr<ManifestOp> node, bool *modified);
-
   virtual Status RunOnNode(std::shared_ptr<CifarOp> node, bool *modified);
-
-  virtual Status RunOnNode(std::shared_ptr<VOCOp> node, bool *modified);
 
   virtual Status RunOnNode(std::shared_ptr<CocoOp> node, bool *modified);
 

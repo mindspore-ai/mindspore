@@ -39,6 +39,7 @@ if(ENABLE_MINDDATA)
             dataset/filter_op_test.cc
             dataset/voc_op_test.cc
             dataset/manifest_op_test.cc
+            dataset/sentence_piece_vocab_op_test.cc
         )
         list(REMOVE_ITEM UT_SRCS ${PYTHON_RELATED_SRCS})
     endif()
