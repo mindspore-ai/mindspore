@@ -155,11 +155,15 @@ bool DataDumpParser::ParseDumpSetting(const nlohmann::json &dump_settings) {
   auto net_name = dump_settings.at(kConfigNetName);
   auto iteration = dump_settings.at(kConfigIteration);
   auto kernels = dump_settings.at(kConfigKernels);
-  if (!(mode.is_number() && net_name.is_string() && iteration.is_number() && kernels.is_array())) {
+  if (!(mode.is_number_unsigned() && op_debug_mode.is_number_unsigned() && net_name.is_string() &&
+        iteration.is_number_unsigned() && kernels.is_array())) {
     MS_LOG(ERROR) << "[DataDump] Element's type in Dump config json is invalid.";
     enable_ = false;
     return false;
   }
+
+  CheckDumpMode(mode);
+  CheckOpDebugMode(op_debug_mode);
 
   enable_ = true;
   auto context_ptr = MsContext::GetInstance();
@@ -191,6 +195,18 @@ void DataDumpParser::PrintUnusedKernel() {
     if (iter.second == 0) {
       MS_LOG(WARNING) << "[DataDump] Unused Kernel in json:" << iter.first;
     }
+  }
+}
+
+void DataDumpParser::CheckDumpMode(uint32_t dump_mode) const {
+  if (dump_mode != 0 && dump_mode != 1) {
+    MS_LOG(EXCEPTION) << "[DataDump] dump_mode in config json should be 0 or 1";
+  }
+}
+
+void DataDumpParser::CheckOpDebugMode(uint32_t op_debug_mode) const {
+  if (op_debug_mode < 0 || op_debug_mode > 3) {
+    MS_LOG(EXCEPTION) << "[DataDump] op_debug_mode in config json file should be [0-3]";
   }
 }
 }  // namespace mindspore

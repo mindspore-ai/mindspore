@@ -51,6 +51,8 @@ class DataDumpParser {
   void ResetParam();
   bool IsConfigExist(const nlohmann::json &dump_settings) const;
   bool ParseDumpSetting(const nlohmann::json &dump_settings);
+  void CheckDumpMode(uint32_t dump_mode) const;
+  void CheckOpDebugMode(uint32_t op_debug_mode) const;
 
   std::mutex lock_;
   bool enable_{false};
