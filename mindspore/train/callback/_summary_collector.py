@@ -110,7 +110,7 @@ class SummaryCollector(Callback):
             lineage page. In the custom data, the key type support str, and the value type support str/int/float.
             Default: None, it means there is no custom data.
         collect_tensor_freq (Optional[int]): Same as the `collect_freq`, but controls TensorSummary specifically.
-            Default: None, which means the frequency is auto-calculated just to collect at most 50 steps TensorSummary.
+            Default: None, which means the frequency is auto-calculated just to collect at most 20 steps TensorSummary.
         max_file_size (Optional[int]): The maximum size in bytes each file can be written to the disk.
             Default: None, which means no limit.
 
@@ -295,7 +295,7 @@ class SummaryCollector(Callback):
 
             self._collect_dataset_graph(cb_params)
             if self._collect_tensor_freq is None:
-                default_tensor_summary_limit = 50
+                default_tensor_summary_limit = 20
                 total_step = cb_params.epoch_num * cb_params.batch_num
                 self._collect_tensor_freq = max(self._collect_freq, total_step // default_tensor_summary_limit)
 
