@@ -1081,7 +1081,7 @@ class Dataset:
              - None
              - Not support
            * - DE_FLOAT16
-             - float32
+             - Not support
              -
            * - DE_FLOAT32
              - float32
