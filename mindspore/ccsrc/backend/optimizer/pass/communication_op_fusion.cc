@@ -19,7 +19,7 @@
 #include <memory>
 #include <unordered_map>
 
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "frontend/operator/ops.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/session/anf_runtime_algorithm.h"

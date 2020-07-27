@@ -24,7 +24,7 @@
 #include "ir/dtype.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "frontend/operator/ops.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "vm/segment_runner.h"
 

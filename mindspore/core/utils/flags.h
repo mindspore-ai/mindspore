@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef PYBIND_API_EXPORT_FLAGS_H_
-#define PYBIND_API_EXPORT_FLAGS_H_
-
-#include "utils/flags.h"
+#ifndef MINDSPORE_CORE_UTILS_FLAGS_H
+#define MINDSPORE_CORE_UTILS_FLAGS_H
 namespace mindspore {
-extern const char PYTHON_PRIMITIVE_FLAG[];
-extern const char PYTHON_CELL_AS_LIST[];
-extern const char PYTHON_DATACLASS_FIELDS[];
-extern const char PYTHON_CLASS_MEMBER_NAMESPACE[];
-}  // namespace mindspore
+extern const char GRAPH_FLAG_MIX_PRECISION_FP16[];
+extern const char GRAPH_FLAG_MIX_PRECISION_FP32[];
+extern const char GRAPH_FLAG_HAS_EFFECT[];
+extern const char GRAPH_FLAG_EFFECT_PATIAL_ORDER[];
+extern const char GRAPH_FLAG_RANDOM_EFFECT[];
+extern const char GRAPH_FLAG_SIDE_EFFECT[];
+}
 
-#endif  // PYBIND_API_EXPORT_FLAGS_H_
+#endif  // MINDSPORE_CORE_UTILS_FLAGS_H

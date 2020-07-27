@@ -26,7 +26,6 @@
 #include "abstract/abstract_value.h"
 #include "utils/any.h"
 #include "utils/misc.h"
-#include "utils/convert_utils.h"
 
 namespace mindspore {
 namespace abstract {

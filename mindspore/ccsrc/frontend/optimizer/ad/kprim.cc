@@ -20,9 +20,9 @@
 #include <string>
 #include <utility>
 #include "ir/anf.h"
-#include "ir/primitive_py.h"
+#include "utils/primitive_py.h"
 #include "ir/meta_func_graph.h"
-#include "ir/func_graph_cloner.h"
+#include "utils/func_graph_cloner.h"
 #include "ir/manager.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/parse/parse.h"

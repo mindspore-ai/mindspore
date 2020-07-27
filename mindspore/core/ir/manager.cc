@@ -19,12 +19,9 @@
 #include "ir/manager.h"
 
 #include <algorithm>
-#include <numeric>
 #include <list>
 
-#include "debug/trace_base.h"
 #include "ir/func_graph.h"
-#include "utils/profile.h"
 #include "utils/convert_utils_base.h"
 #include "base/core_ops.h"
 

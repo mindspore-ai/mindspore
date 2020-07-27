@@ -33,7 +33,7 @@
 
 #include "utils/log_adapter.h"
 #include "ir/anf.h"
-#include "ir/primitive_py.h"
+#include "utils/primitive_py.h"
 #include "abstract/analysis_context.h"
 #include "abstract/abstract_function.h"
 #include "pipeline/jit/parse/parse.h"

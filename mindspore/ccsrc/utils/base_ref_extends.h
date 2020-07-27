@@ -20,7 +20,7 @@
 #include <string>
 
 #include "utils/base_ref_py.h"
-#include "utils/base_ref.h"
+#include "base/base_ref.h"
 
 namespace mindspore {
 class PyObjectRef : public BaseRef {

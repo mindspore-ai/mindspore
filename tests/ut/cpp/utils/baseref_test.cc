@@ -19,7 +19,7 @@
 #include "common/common_test.h"
 
 #include "ir/anf.h"
-#include "utils/base_ref.h"
+#include "base/base_ref.h"
 
 namespace mindspore {
 namespace utils {

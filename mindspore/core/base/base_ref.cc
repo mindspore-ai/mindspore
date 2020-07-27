@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "utils/base_ref.h"
+#include "base/base_ref.h"
 
 namespace mindspore {
 iterator ConstIteratorCast(std::vector<BaseRef> *v, const const_iterator iter) {

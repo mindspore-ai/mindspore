@@ -28,7 +28,6 @@
 #include <string>
 
 namespace mindspore {
-
 template <typename T>
 std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {
   out << "[const vector][";
@@ -134,7 +133,6 @@ std::string ToString(const std::map<T1, T2> &map) {
   buffer << map;
   return buffer.str();
 }
-
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_UTILS_OVERLOAD_H_

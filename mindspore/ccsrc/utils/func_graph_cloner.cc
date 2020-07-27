@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ir/func_graph_cloner.h"
+#include "utils/func_graph_cloner.h"
 
 #include <algorithm>
 
@@ -25,7 +25,7 @@
 #include "utils/log_adapter.h"
 #include "utils/profile.h"
 #include "utils/context/ms_context.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 
 // namespace to support intermediate representation definition
 namespace mindspore {
@@ -412,7 +412,7 @@ void Cloner::Lift() {
   auto sorted = BroadFirstSearchGraphUsed(*(manager_->roots().begin()));
   for (auto r_iter = sorted.rbegin(); r_iter != sorted.rend(); ++r_iter) {
     auto func_graph = *r_iter;
-    auto iter  = repl_func_graph_params_.find(func_graph);
+    auto iter = repl_func_graph_params_.find(func_graph);
     if (iter != repl_func_graph_params_.end()) {
       auto &params = iter->second;
       for (auto &cnode : func_graph->func_graph_cnodes_index()) {

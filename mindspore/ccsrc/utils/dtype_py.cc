@@ -35,7 +35,7 @@ REGISTER_PYBIND_DEFINE(
       "dump_type", [](const TypePtr &t) { return t->type_id(); }, "dump type");
     (void)m_sub.def("str_to_type", &StringToType, "string to typeptr");
     (void)py::class_<Type, std::shared_ptr<Type>>(m_sub, "Type")
-     .def("__eq__",
+      .def("__eq__",
            [](const TypePtr &t1, const py::object &other) {
              if (!py::isinstance<Type>(other)) {
                return false;

@@ -36,7 +36,7 @@
 #include "backend/optimizer/common/visit.h"
 #include "base/base.h"
 #include "utils/log_adapter.h"
-#include "utils/base_ref.h"
+#include "base/base_ref.h"
 
 namespace mindspore {
 class CondVar;

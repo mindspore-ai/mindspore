@@ -27,7 +27,7 @@
 #include <memory>
 
 #include "base/base.h"
-#include "utils/base_ref.h"
+#include "base/base_ref.h"
 
 // namespace to support utils definition
 namespace mindspore {

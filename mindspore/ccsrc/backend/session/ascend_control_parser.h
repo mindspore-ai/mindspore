@@ -23,7 +23,7 @@
 #include <utility>
 #include <functional>
 #include "backend/session/kernel_graph.h"
-#include "utils/base_ref.h"
+#include "base/base_ref.h"
 #include "utils/contract.h"
 #include "utils/union_find_set.h"
 

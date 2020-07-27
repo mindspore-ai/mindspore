@@ -26,7 +26,7 @@
 #include "frontend/operator/ops.h"
 #include "utils/symbolic.h"
 #include "ir/tensor.h"
-#include "ir/func_graph_cloner.h"
+#include "utils/func_graph_cloner.h"
 #include "./common.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "debug/draw.h"

@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include "base/base_ref_utils.h"
 #include <vector>
 #include <memory>
-#include "utils/base_ref_utils.h"
+
 #include "include/infer_tensor.h"
 #include "ir/tensor.h"
 
 namespace mindspore {
-
 void IterateFindTensor(std::vector<tensor::TensorPtr> *msTensors, const VectorRef &ref_list) {
   for (size_t i = 0; i < ref_list.size(); ++i) {
     if (utils::isa<tensor::TensorPtr>(ref_list[i])) {
@@ -51,5 +50,4 @@ std::vector<tensor::TensorPtr> TransformVectorRefToMultiTensor(const VectorRef &
   }
   return msTensors;
 }
-
 }  // namespace mindspore

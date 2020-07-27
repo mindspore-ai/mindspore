@@ -17,7 +17,6 @@
 #include "utils/misc.h"
 
 namespace mindspore {
-
 const int RET_SUCCESS = 0;
 const int RET_FAILED = 1;
 const int RET_CONTINUE = 2;

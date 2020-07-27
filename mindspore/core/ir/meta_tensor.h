@@ -24,7 +24,7 @@
 
 #include "base/base.h"
 #include "ir/dtype.h"
-#include "utils/convert_utils.h"
+#include "utils/convert_utils_base.h"
 #include "utils/hashing.h"
 
 // brief mindspore namespace.

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_IR_FUNC_GRAPH_CLONER_H_
-#define MINDSPORE_CORE_IR_FUNC_GRAPH_CLONER_H_
+#ifndef MINDSPORE_CCSRC_UTILS_FUNC_GRAPH_CLONER_H_
+#define MINDSPORE_CCSRC_UTILS_FUNC_GRAPH_CLONER_H_
 
 #include <functional>
 #include <list>
@@ -119,8 +119,6 @@ class Cloner {
   std::unordered_map<FuncGraphPtr, AnfNodePtrList> repl_func_graph_params_;
 };
 
-FuncGraphPtr BasicClone(const FuncGraphPtr &func_graph);
-
 AnfNodePtr InlineClone(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph,
                        const AnfNodePtrList &func_graph_args, const ScopePtr &scope = nullptr);
 
@@ -132,4 +130,4 @@ FuncGraphPtr TransformableClone(const FuncGraphPtr &func_graph,
                                 const TraceInfoPtr &relation = std::make_shared<TraceTransform>());
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_IR_FUNC_GRAPH_CLONER_H_
+#endif  // MINDSPORE_CCSRC_UTILS_FUNC_GRAPH_CLONER_H_

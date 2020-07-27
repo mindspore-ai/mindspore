@@ -30,7 +30,7 @@
 #ifdef ENABLE_GE
 #include "transform/graph_ir/convert.h"
 #endif
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "utils/context/ms_context.h"
 #include "debug/trace.h"
 #include "debug/anf_ir_dump.h"

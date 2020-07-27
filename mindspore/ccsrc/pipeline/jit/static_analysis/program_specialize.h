@@ -28,7 +28,7 @@
 #include <vector>
 
 #include "ir/anf.h"
-#include "ir/func_graph_cloner.h"
+#include "utils/func_graph_cloner.h"
 #include "pipeline/jit/static_analysis/evaluator.h"
 
 namespace mindspore {

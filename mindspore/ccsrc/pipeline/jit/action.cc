@@ -23,7 +23,7 @@
 #include <algorithm>
 #include <functional>
 
-#include "ir/func_graph_cloner.h"
+#include "utils/func_graph_cloner.h"
 #include "ir/param_value.h"
 #include "frontend/parallel/costmodel_context.h"
 #include "frontend/parallel/context.h"

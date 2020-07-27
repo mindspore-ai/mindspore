@@ -27,7 +27,6 @@
 
 #include "ir/anf.h"
 #include "abstract/abstract_value.h"
-#include "utils/any.h"
 
 namespace mindspore {
 

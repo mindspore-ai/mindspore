@@ -24,7 +24,7 @@
 #include "pipeline/jit/static_analysis/program_specialize.h"
 #include "pipeline/static_analysis/helper.h"
 #include "utils/log_adapter.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "utils/misc.h"
 #include "debug/draw.h"
 

@@ -23,11 +23,11 @@
 #include <unordered_set>
 #include <algorithm>
 
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "utils/symbolic.h"
 #include "ir/meta_func_graph.h"
 #include "ir/param_value.h"
-#include "ir/tensor_py.h"
+#include "utils/tensor_py.h"
 #include "pipeline/jit/parse/python_adapter.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "frontend/operator/composite/composite.h"

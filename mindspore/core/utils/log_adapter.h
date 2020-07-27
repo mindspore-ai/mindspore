@@ -23,7 +23,7 @@
 #include <sstream>
 #include <memory>
 #include <functional>
-#include "./overload.h"
+#include "utils/overload.h"
 #include "./securec.h"
 #ifdef USE_GLOG
 #include "glog/logging.h"
@@ -31,7 +31,7 @@
 #include "toolchain/slog.h"
 #endif
 // NOTICE: when relative path of 'log_adapter.h' changed, macro 'LOG_HDR_FILE_REL_PATH' must be changed
-#define LOG_HDR_FILE_REL_PATH "mindspore/ccsrc/utils/log_adapter.h"
+#define LOG_HDR_FILE_REL_PATH "mindspore/core/utils/log_adapter.h"
 
 // Get start index of file relative path in __FILE__
 static constexpr int GetRelPathPos() noexcept {

@@ -29,7 +29,7 @@
 #include "frontend/optimizer/anf_visitor.h"
 #include "ir/manager.h"
 #include "ir/func_graph.h"
-#include "ir/func_graph_cloner.h"
+#include "utils/func_graph_cloner.h"
 #include "frontend/operator/ops.h"
 
 namespace mindspore {

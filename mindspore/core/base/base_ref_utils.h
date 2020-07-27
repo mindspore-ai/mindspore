@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef PYBIND_API_EXPORT_FLAGS_H_
-#define PYBIND_API_EXPORT_FLAGS_H_
+#include <vector>
+#include <memory>
 
-#include "utils/flags.h"
+#include "include/infer_tensor.h"
+#include "ir/tensor.h"
+#include "base/base_ref.h"
+
+
+#ifndef MINDSPORE_CCSRC_UTILS_BASE_REF_UTILS_H
+#define MINDSPORE_CCSRC_UTILS_BASE_REF_UTILS_H
 namespace mindspore {
-extern const char PYTHON_PRIMITIVE_FLAG[];
-extern const char PYTHON_CELL_AS_LIST[];
-extern const char PYTHON_DATACLASS_FIELDS[];
-extern const char PYTHON_CLASS_MEMBER_NAMESPACE[];
+std::vector<tensor::TensorPtr> TransformVectorRefToMultiTensor(const VectorRef &base_ref);
 }  // namespace mindspore
-
-#endif  // PYBIND_API_EXPORT_FLAGS_H_
+#endif  // MINDSPORE_CCSRC_UTILS_BASE_REF_UTILS_H
