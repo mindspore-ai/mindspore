@@ -210,7 +210,6 @@ class Parameter:
 
     def set_parameter_data(self, data):
         """Set `default_input` of current `Parameter`."""
-        self.init_mode = None
         if isinstance(data, bool):
             raise ValueError('Parameter data can not be `bool`')
         if isinstance(data, Tensor):
@@ -243,7 +242,8 @@ class Parameter:
             set_sliced (bool): True if should set parameter sliced after init the data of initializer.
                 Default: False.
         """
-        if self.init_mode is None:
+        if isinstance(self.default_input, Tensor):
+            # skip if data already initialized.
             return
         if layout is not None:
             if not isinstance(layout, list):
