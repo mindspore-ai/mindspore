@@ -552,7 +552,8 @@ class RandomRotation(cde.RandomRotationOp):
             Note that the expand flag assumes rotation around the center and no translation.
         center (tuple, optional): Optional center of rotation (a 2-tuple) (default=None).
             Origin is the top left corner. None sets to the center of the image.
-        fill_value (Union[int, tuple], optional): Optional fill color for the area outside the rotated image (default=0).
+        fill_value (Union[int, tuple], optional): Optional fill color for the area outside the rotated image
+            (default=0).
             If it is a 3-tuple, it is used for R, G, B channels respectively.
             If it is an int, it is used for all RGB channels.
     """

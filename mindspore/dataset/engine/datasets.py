@@ -3169,8 +3169,8 @@ class GeneratorDataset(MappableDataset):
         num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel (default=1).
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
             (default=None, expected order behavior shown in the table).
-        sampler (Union[Sampler, Iterable], optional): Object used to choose samples from the dataset. Random accessible input is
-            required (default=None, expected order behavior shown in the table).
+        sampler (Union[Sampler, Iterable], optional): Object used to choose samples from the dataset. Random accessible
+            input is required (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset should be divided into (default=None).
             When this argument is specified, 'num_samples' will not effect. Random accessible input is required.
         shard_id (int, optional): The shard ID within num_shards (default=None). This argument should be specified only
@@ -3322,8 +3322,8 @@ class TFRecordDataset(SourceDataset):
     A source dataset that reads and parses datasets stored on disk in TFData format.
 
     Args:
-        dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for a pattern of
-            files. The list will be sorted in a lexicographical order.
+        dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for a
+        pattern of files. The list will be sorted in a lexicographical order.
         schema (Union[str, Schema], optional): Path to the json schema file or schema object (default=None).
             If the schema is not provided, the meta data from the TFData file is considered the schema.
         columns_list (list[str], optional): List of columns to be read (default=None, read all columns)
@@ -3333,7 +3333,8 @@ class TFRecordDataset(SourceDataset):
             If both num_samples and numRows(parsed from schema) are greater than 0, read num_samples rows.
         num_parallel_workers (int, optional): number of workers to read the data
             (default=None, number set in the config).
-        shuffle (Union[bool, Shuffle level], optional): perform reshuffling of the data every epoch (default=Shuffle.GLOBAL).
+        shuffle (Union[bool, Shuffle level], optional): perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
             If shuffle is False, no shuffling will be performed;
             If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
             Otherwise, there are two levels of shuffling:
@@ -4710,7 +4711,8 @@ class CLUEDataset(SourceDataset):
         num_samples (int, optional): number of samples(rows) to read (default=None, reads the full dataset).
         num_parallel_workers (int, optional): number of workers to read the data
             (default=None, number set in the config).
-        shuffle (Union[bool, Shuffle level], optional): perform reshuffling of the data every epoch (default=Shuffle.GLOBAL).
+        shuffle (Union[bool, Shuffle level], optional): perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
             If shuffle is False, no shuffling will be performed;
             If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
             Otherwise, there are two levels of shuffling:
@@ -4926,7 +4928,8 @@ class CSVDataset(SourceDataset):
         num_samples (int, optional): number of samples(rows) to read (default=None, reads the full dataset).
         num_parallel_workers (int, optional): number of workers to read the data
             (default=None, number set in the config).
-        shuffle (Union[bool, Shuffle level], optional): perform reshuffling of the data every epoch (default=Shuffle.GLOBAL).
+        shuffle (Union[bool, Shuffle level], optional): perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
             If shuffle is False, no shuffling will be performed;
             If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
             Otherwise, there are two levels of shuffling:
@@ -5018,12 +5021,13 @@ class TextFileDataset(SourceDataset):
     The generated dataset has one columns ['text'].
 
     Args:
-        dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for a pattern of
-            files. The list will be sorted in a lexicographical order.
+        dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for a
+            pattern of files. The list will be sorted in a lexicographical order.
         num_samples (int, optional): number of samples(rows) to read (default=None, reads the full dataset).
         num_parallel_workers (int, optional): number of workers to read the data
             (default=None, number set in the config).
-        shuffle (Union[bool, Shuffle level], optional): perform reshuffling of the data every epoch (default=Shuffle.GLOBAL).
+        shuffle (Union[bool, Shuffle level], optional): perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
             If shuffle is False, no shuffling will be performed;
             If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
             Otherwise, there are two levels of shuffling:
@@ -5204,17 +5208,17 @@ class NumpySlicesDataset(GeneratorDataset):
          - not allowed
 
     Args:
-        data (Union[list, tuple, dict]) Input of Given data, supported data type includes list, tuple, dict and other numpy
-            format. Input data will be sliced in first dimension and generate many rows, large data is not recommend to
-            load in this way as data is loading into memory.
+        data (Union[list, tuple, dict]) Input of Given data, supported data type includes list, tuple, dict and other
+            numpy format. Input data will be sliced in first dimension and generate many rows, large data is not
+            recommend to load in this way as data is loading into memory.
         column_names (list[str], optional): List of column names of the dataset (default=None). If column_names not
             provided, when data is dict, column_names will be its key, otherwise it will be like column_1, column_2 ...
         num_samples (int, optional): The number of samples to be included in the dataset (default=None, all images).
         num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel (default=1).
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
             (default=None, expected order behavior shown in the table).
-        sampler (Union[Sampler, Iterable], optional): Object used to choose samples from the dataset. Random accessible input is
-            required (default=None, expected order behavior shown in the table).
+        sampler (Union[Sampler, Iterable], optional): Object used to choose samples from the dataset. Random accessible
+            input is required (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset should be divided into (default=None).
             When this argument is specified, 'num_samples' will not effect. Random accessible input is required.
         shard_id (int, optional): The shard ID within num_shards (default=None). This argument should be specified only
@@ -5255,8 +5259,8 @@ class BuildVocabDataset(DatasetOp):
 
     Args:
         vocab(Vocab): text.vocab object.
-        columns(Union[str, list], optional): column names to get words from. It can be a list of column names (Default is
-            None, all columns are used, return error if any column isn't string).
+        columns(Union[str, list], optional): column names to get words from. It can be a list of column names (Default
+            is None, all columns are used, return error if any column isn't string).
         freq_range(tuple, optional): A tuple of integers (min_frequency, max_frequency). Words within the frequency
             range would be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
             can be None, which corresponds to 0/total_words separately (default=None, all words are included).
