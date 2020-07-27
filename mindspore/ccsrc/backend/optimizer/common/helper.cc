@@ -781,5 +781,27 @@ bool CheckSupportDataType(const AnfNodePtr &node, const std::set<TypeId> &suppor
   MS_LOG(DEBUG) << "Not supported data type. Node:" << node->DebugString();
   return false;
 }
+
+ValueNodePtr MakeValueNode(const ValueNodePtr &value_node) {
+  MS_EXCEPTION_IF_NULL(value_node);
+  ValueNodePtr new_value_node = std::make_shared<ValueNode>(value_node->value());
+  new_value_node->set_abstract(value_node->abstract());
+  // create kernel_info fo new value node
+  auto kernel_info = std::make_shared<device::KernelInfo>();
+  new_value_node->set_kernel_info(kernel_info);
+  // create kernel_build_info for new value node
+  auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  // set the format of value_node to DEFAULT_FORMAT
+  kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{kOpFormat_DEFAULT});
+  // set value node initial device data type = infer data type
+  std::vector<TypeId> types;
+  for (size_t index = 0; index < AnfAlgo::GetOutputTensorNum(value_node); ++index) {
+    types.push_back(kTypeUnknown);
+  }
+  kernel_build_info_builder->SetOutputsDeviceType(types);
+  AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), new_value_node.get());
+  return new_value_node;
+}
+
 }  // namespace opt
 }  // namespace mindspore
