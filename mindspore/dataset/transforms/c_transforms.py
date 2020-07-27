@@ -78,9 +78,9 @@ class Slice(cde.SliceOp):
     (Currently only rank-1 tensors are supported).
 
     Args:
-        *slices(Variable length argument list, supported types are, int, list(int), slice, None or Ellipses):
-            Maximum `n` number of arguments to slice a tensor of rank `n`.
-            One object in slices can be one of:
+        slices(Variable length argument list, supported types are, int, list[int], slice, None or Ellipses):
+            Maximum `n` number of arguments to slice a tensor of rank `n`, one object in slices can be one of:
+
             1.  :py:obj:`int`: Slice this index only. Negative index is supported.
             2.  :py:obj:`list(int)`: Slice these indices ion the list only. Negative indices are supported.
             3.  :py:obj:`slice`: Slice the generated indices from the slice object. Similar to `start:stop:step`.
