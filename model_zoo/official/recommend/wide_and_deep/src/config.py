@@ -40,6 +40,7 @@ def argparse_init():
     parser.add_argument("--loss_file_name", type=str, default="loss.log")
     parser.add_argument("--host_device_mix", type=int, default=0)
     parser.add_argument("--dataset_type", type=str, default="tfrecord")
+    parser.add_argument("--parameter_server", type=int, default=0)
     return parser
 
 
@@ -72,6 +73,7 @@ class WideDeepConfig():
         self.ckpt_path = "./checkpoints/"
         self.host_device_mix = 0
         self.dataset_type = "tfrecord"
+        self.parameter_server = 0
 
     def argparse_init(self):
         """
@@ -103,3 +105,4 @@ class WideDeepConfig():
         self.ckpt_path = args.ckpt_path
         self.host_device_mix = args.host_device_mix
         self.dataset_type = args.dataset_type
+        self.parameter_server = args.parameter_server
