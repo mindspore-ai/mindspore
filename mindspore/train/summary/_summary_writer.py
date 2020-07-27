@@ -46,15 +46,20 @@ class BaseWriter:
     def write(self, plugin, data):
         """Write data to file."""
         if self.writer and disk_usage(self._filepath).free < len(data) * 32:
-            raise RuntimeError(f'The disk space may be soon exhausted by the {type(self).__name__}.')
+            raise RuntimeError(f"The disk space may be soon exhausted by the '{self._filepath}'.")
+        # 8: data length
+        # 4: crc32 of data length
+        # 4: crc32 of data
+        metadata_length = 8 + 4 + 4
+        required_length = len(data) + metadata_length
         if self._max_file_size is None:
             self.writer.Write(data)
-        elif self._max_file_size > 0:
-            self._max_file_size -= len(data)
+        elif self._max_file_size >= required_length:
+            self._max_file_size -= required_length
             self.writer.Write(data)
         else:
-            raise RuntimeError(f"The file written by the {type(self).__name__} "
-                               f"has exceeded the specified max file size.")
+            raise RuntimeError(f"'max_file_size' reached: There are {self._max_file_size} bytes remaining, "
+                               f"but the '{self._filepath}' requires to write {required_length} bytes.")
 
     def flush(self):
         """Flush the writer."""
