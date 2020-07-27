@@ -491,6 +491,31 @@ class FusedBatchNormGrad(Primitive):
         raise NotImplementedError
 
 
+class UniqueGrad(Primitive):
+    """Gradients of Unique operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['dy', 'y'], outputs=['dx'])
+
+    def __call__(self, dy, x, scale, save_mean, save_inv_variance):
+        raise NotImplementedError
+
+
+class UnsortedSegmentSumGrad(PrimitiveWithInfer):
+    """Gradients of UnsortedSegmentSum operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['grads', 'ids'], outputs=['y'])
+
+    def infer_shape(self, grads, ids):
+        return ids + grads[len(ids):]
+
+    def infer_dtype(self, grads, ids):
+        return grads
+
+
 class BNTrainingReduceGrad(PrimitiveWithInfer):
     """Gradients of FusedBatchNorm operation."""
 

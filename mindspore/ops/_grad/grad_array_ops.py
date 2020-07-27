@@ -807,3 +807,23 @@ def get_bprop_trans_shape(self):
         dx = op(dout, shape_op(x))
         return (dx, zeros_like(shape))
     return bprop
+
+
+@bprop_getters.register(P.Unique)
+def get_bprop_unique(self):
+    """Generate bprop for Unique"""
+    op = G.UniqueGrad()
+    def bprop(x, out, dout):
+        dx = op(dout, out)
+        return (dx,)
+    return bprop
+
+
+@bprop_getters.register(P.UnsortedSegmentSum)
+def get_bprop_unsorted_segment_sum(self):
+    """Generate bprop for UnsortedSegmentSum"""
+    op = G.UnsortedSegmentSumGrad()
+    def bprop(x, segment_ids, num_segments, out, dout):
+        dx = op(dout, segment_ids)
+        return (dx, zeros_like(segment_ids), zeros_like(num_segments))
+    return bprop

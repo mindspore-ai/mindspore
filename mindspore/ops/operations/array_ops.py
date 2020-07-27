@@ -27,7 +27,7 @@ import numpy as np
 
 from .._utils import get_concat_offset
 from ..operations.math_ops import _infer_shape_reduce
-from ..primitive import PrimitiveWithInfer, prim_attr_register, _run_op
+from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register, _run_op
 from ..._c_expression import signature_dtype as sig_dtype
 from ..._c_expression import signature_kind as sig_kind
 from ..._c_expression import signature_rw as sig_rw
@@ -554,6 +554,28 @@ class Transpose(PrimitiveWithInfer):
                'dtype': x['dtype'],
                'value': None}
         return out
+
+
+class Unique(Primitive):
+    """
+    Returns the unique elements of input tensor and also return a tensor containing the index of each value of input
+    tensor corresponding to the output unique tensor.
+
+    Inputs:
+        - **x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tuple, containing tensor objects `(y, idx)`, `y` is a tensor has the same type as `x`, `idx` is a tensor
+        containing indices of elements in the input coressponding to the output tensor.
+
+    Examples:
+        >>> x = Tensor(np.array([1, 2, 5, 2]), mindspore.float32)
+        >>> out = P.Unique()(x)
+        (Tensor([1, 2, 5], mindspore.int32), Tensor([0, 1, 2, 1], mindspore.float32))
+    """
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
 class GatherV2(PrimitiveWithInfer):
