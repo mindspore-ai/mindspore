@@ -27,26 +27,32 @@ namespace mindspore {
 namespace dataset {
 class DistributedSampler : public Sampler {
  public:
-  // @param num_samples
-  // @param int64_t num_dev
-  // @param int64_t dev_id
-  // @param bool shuffle
+  /// \brief Constructor
+  /// \param[in] num_samples The total number of rows in the dataset
+  /// \param[in] num_dev Total number of shards for the distributed sampler
+  /// \param[in] dev_id Device id of the shard
+  /// \param[in] shuffle Option to shuffle
+  /// \param seed Seed parameter to shuffle, default to max unsigned int (different seed in sampler will
+  ///     result in different samples being picked
+  /// \param even_dist The option to indicate whether or not each shard returns the same number of rows.
+  ///     This option is not exposed in the python API. Current behavior is that the remainder will always
+  ///     be handled by the first n shards, n being the corresponding device id.
   DistributedSampler(int64_t num_samples, int64_t num_dev, int64_t dev_id, bool shuffle,
-                     uint32_t seed = std::numeric_limits<uint32_t>::max());
+                     uint32_t seed = std::numeric_limits<uint32_t>::max(), bool even_dist = true);
 
-  // default destructor
+  /// \brief default destructor
   ~DistributedSampler() = default;
 
-  // @param std::unique_ptr<DataBuffer> * pBuffer
-  // @param int32_t workerId
-  // @return - The error code return
+  /// \param std::unique_ptr<DataBuffer> * pBuffer
+  /// \param int32_t workerId
+  /// \return Status code
   Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
 
-  // Init sampler, called by base class or python
+  /// Init sampler, called by base class or python
   Status InitSampler() override;
 
-  // for next epoch of sampleIds
-  // @return - The error code return
+  /// \brief for next epoch of sampleIds
+  /// \return Status code
   Status ResetSampler() override;
 
   void Print(std::ostream &out, bool show_all) const override;
@@ -59,6 +65,7 @@ class DistributedSampler : public Sampler {
   bool shuffle_;
   std::mt19937 rnd_;
   std::vector<int64_t> shuffle_vec_;
+  bool even_dist_;
 };
 }  // namespace dataset
 }  // namespace mindspore

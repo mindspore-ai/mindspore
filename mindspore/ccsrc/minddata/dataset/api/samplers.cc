@@ -31,8 +31,8 @@ SamplerObj::SamplerObj() {}
 
 /// Function to create a Distributed Sampler.
 std::shared_ptr<DistributedSamplerObj> DistributedSampler(int64_t num_shards, int64_t shard_id, bool shuffle,
-                                                          int64_t num_samples, uint32_t seed) {
-  auto sampler = std::make_shared<DistributedSamplerObj>(num_shards, shard_id, shuffle, num_samples, seed);
+                                                          int64_t num_samples, uint32_t seed, bool even_dist) {
+  auto sampler = std::make_shared<DistributedSamplerObj>(num_shards, shard_id, shuffle, num_samples, seed, even_dist);
   // Input validation
   if (!sampler->ValidateParams()) {
     return nullptr;
@@ -95,8 +95,13 @@ std::shared_ptr<WeightedRandomSamplerObj> WeightedRandomSampler(const std::vecto
 
 // DistributedSampler
 DistributedSamplerObj::DistributedSamplerObj(int64_t num_shards, int64_t shard_id, bool shuffle, int64_t num_samples,
-                                             uint32_t seed)
-    : num_shards_(num_shards), shard_id_(shard_id), shuffle_(shuffle), num_samples_(num_samples), seed_(seed) {}
+                                             uint32_t seed, bool even_dist)
+    : num_shards_(num_shards),
+      shard_id_(shard_id),
+      shuffle_(shuffle),
+      num_samples_(num_samples),
+      seed_(seed),
+      even_dist_(even_dist) {}
 
 bool DistributedSamplerObj::ValidateParams() {
   if (num_shards_ <= 0) {
@@ -118,7 +123,8 @@ bool DistributedSamplerObj::ValidateParams() {
 }
 
 std::shared_ptr<Sampler> DistributedSamplerObj::Build() {
-  return std::make_shared<dataset::DistributedSampler>(num_samples_, num_shards_, shard_id_, shuffle_, seed_);
+  return std::make_shared<dataset::DistributedSampler>(num_samples_, num_shards_, shard_id_, shuffle_, seed_,
+                                                       even_dist_);
 }
 
 // PKSampler

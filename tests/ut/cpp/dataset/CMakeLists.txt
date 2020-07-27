@@ -92,7 +92,9 @@ SET(DE_UT_SRCS
         tensor_op_fusion_pass_test.cc
         sliding_window_op_test.cc
         epoch_ctrl_op_test.cc
-        swap_red_blue_test.cc
+        sentence_piece_vocab_op_test.cc
+	swap_red_blue_test.cc
+	distributed_sampler_test.cc
         )
 
 if (ENABLE_PYTHON)
