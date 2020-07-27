@@ -118,7 +118,7 @@ epoch: 12 step: 7393, rpn_loss: 0.00691, rcnn_loss: 0.10168, rpn_cls_loss: 0.005
  
 ```
 # infer
-sh run_infer.sh [VALIDATION_DATASET_PATH] [CHECKPOINT_PATH]
+sh run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 ```
  
 > checkpoint can be produced in training process.

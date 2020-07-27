@@ -108,7 +108,7 @@ if __name__ == '__main__':
     prefix = "FasterRcnn_eval.mindrecord"
     mindrecord_dir = config.mindrecord_dir
     mindrecord_file = os.path.join(mindrecord_dir, prefix)
-    if not os.path.exists(mindrecord_file):
+    if args_opt.rank_id == 0 and not os.path.exists(mindrecord_file):
         if not os.path.isdir(mindrecord_dir):
             os.makedirs(mindrecord_dir)
         if args_opt.dataset == "coco":
@@ -125,6 +125,9 @@ if __name__ == '__main__':
                 print("Create Mindrecord Done, at {}".format(mindrecord_dir))
             else:
                 print("IMAGE_DIR or ANNO_PATH not exits.")
+
+    while not os.path.exists(mindrecord_file  + ".db"):
+        time.sleep(5)
 
     print("Start Eval!")
     FasterRcnn_eval(mindrecord_file, args_opt.checkpoint_path, args_opt.ann_file)
