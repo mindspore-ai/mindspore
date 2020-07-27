@@ -24,22 +24,24 @@ The common used benchmark datasets are used for model training and evaluation.
 The entire code structure is as following:
 ```
 |--- wide_and_deep/
-    train_and_eval.py                "Entrance of Wide&Deep model training and evaluation"
-    eval.py                          "Entrance of Wide&Deep model evaluation"
-    train.py                         "Entrance of Wide&Deep model training"
-    train_and_eval_multinpu.py       "Entrance of Wide&Deep model data parallel training and evaluation"
+    train_and_eval.py                  "Entrance of Wide&Deep model training and evaluation"
+    eval.py                            "Entrance of Wide&Deep model evaluation"
+    train.py                           "Entrance of Wide&Deep model training"
+    train_and_eval_multinpu.py         "Entrance of Wide&Deep model data parallel training and evaluation"
     train_and_eval_auto_parallel.py
-    |--- src/                        "Entrance of training and evaluation"
-        config.py                    "Parameters configuration"
-        dataset.py                   "Dataset loader class"
-        process_data.py              "Process dataset"
-        preprocess_data.py           "Pre_process dataset"
-        wide_and_deep.py             "Model structure"
-        callbacks.py                 "Callback class for training and evaluation"
-        metrics.py                   "Metric class"
-    |--- script/                     "Run shell dir"
-        run_multinpu_train.sh        "Run data parallel"
-        run_auto_parallel_train.sh   "Run auto parallel"
+    train_and_eval_parameter_server.py "Entrance of Wide&Deep model parameter server training and evaluation"
+    |--- src/                          "Entrance of training and evaluation"
+        config.py                      "Parameters configuration"
+        dataset.py                     "Dataset loader class"
+        process_data.py                "Process dataset"
+        preprocess_data.py             "Pre_process dataset"
+        wide_and_deep.py               "Model structure"
+        callbacks.py                   "Callback class for training and evaluation"
+        metrics.py                     "Metric class"
+    |--- script/                       "Run shell dir"
+        run_multinpu_train.sh          "Run data parallel"
+        run_auto_parallel_train.sh     "Run auto parallel"
+        run_parameter_server_train.sh  "Run parameter server"
 ```
 
 ### Train and evaluate model
@@ -108,6 +110,15 @@ bash deploy_cluster.sh CLUSTER_CONFIG_PATH EXECUTE_PATH
 # MODE: "host_device_mix"
 bash start_cluster.sh CLUSTER_CONFIG_PATH EPOCH_SIZE VOCAB_SIZE EMB_DIM
                       DATASET ENV_SH RANK_TABLE_FILE MODE
+```
+
+To train and evaluate the model in parameter server mode, command as follows:'''
+```
+# SERVER_NUM is the number of parameter servers for this task.
+# SCHED_HOST is the IP address of scheduler.
+# SCHED_PORT is the port of scheduler.
+# The number of workers is the same as RANK_SIZE.
+bash run_parameter_server_train.sh RANK_SIZE EPOCHS DATASET RANK_TABLE_FILE SERVER_NUM SCHED_HOST SCHED_PORT
 ```
 
 To evaluate the model, command as follows:
