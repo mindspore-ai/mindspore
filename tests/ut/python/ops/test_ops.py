@@ -1186,6 +1186,11 @@ test_case_math_ops = [
         'desc_const': [1],
         'desc_inputs': [Tensor(np.array([[True, False], [True, True]]))],
         'desc_bprop': []}),
+    ('ReduceAny', {
+        'block': P.ReduceAny(),
+        'desc_const': [1],
+        'desc_inputs': [Tensor(np.array([[True, False], [True, True]]))],
+        'desc_bprop': []}),
     ('BesselI0e', {
         'block': P.BesselI0e(),
         'desc_inputs': [[2, 3]],

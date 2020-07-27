@@ -641,6 +641,16 @@ def get_bprop_reduceall(self):
     return bprop
 
 
+@bprop_getters.register(P.ReduceAny)
+def get_bprop_reduceany(self):
+    """Grad definition for `ReduceAny` operation."""
+
+    def bprop(x, axis, out, dout):
+        return zeros_like(x), zeros_like(axis)
+
+    return bprop
+
+
 @bprop_getters.register(P.ReduceMax)
 def get_bprop_reducemax(self):
     """Grad definition for `Max` operation."""
