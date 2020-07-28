@@ -1041,12 +1041,61 @@ class Dataset:
         """
         Save the dynamic data processed by dataset pipeline as common dataset format, support: mindrecord.
 
+        Implicit type casting exists when saving data as mindrecord. Table below shows how to do type casting.
+
+        .. list-table:: Implicit Type Casting of Saving as mindrecord
+           :widths: 25 25 50
+           :header-rows: 1
+
+           * - type in 'dataset'
+             - type in 'mindrecord'
+             - detail
+           * - DE_BOOL
+             - None
+             - Not support
+           * - DE_INT8
+             - int32
+             -
+           * - DE_UINT8
+             - bytes(1D uint8)
+             - Drop dimension
+           * - DE_INT16
+             - int32
+             -
+           * - DE_UINT16
+             - int32
+             -
+           * - DE_INT32
+             - int32
+             -
+           * - DE_UINT32
+             - int64
+             -
+           * - DE_INT64
+             - int64
+             -
+           * - DE_UINT64
+             - None
+             - Not support
+           * - DE_FLOAT16
+             - Not support
+             -
+           * - DE_FLOAT32
+             - float32
+             -
+           * - DE_FLOAT64
+             - float64
+             -
+           * - DE_STRING
+             - string
+             - Not support multi-dimensional DE_STRING
+
         Note:
             1. To save the samples in order, should set dataset's shuffle false and num_files 1.
             2. Before call the function, do not use batch, repeat operator or data augmentation operators
                with random attribute in map operator.
-            3. Mindreocrd do not support np.uint64, multi-dimensional np.uint8(drop dimension) and
-               multi-dimensional string.
+            3. Mindrecord does not support DE_UINT64, multi-dimensional DE_UINT8(drop dimension) and
+               multi-dimensional DE_STRING.
 
         Args:
             file_name (str): Path to dataset file.
