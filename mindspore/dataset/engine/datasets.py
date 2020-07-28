@@ -2144,6 +2144,7 @@ class RepeatDataset(DatasetOp):
         """
         return self.count
 
+
 class SkipDataset(DatasetOp):
     """
     The result of applying Skip operator to the input Dataset.
@@ -2408,6 +2409,7 @@ class TransferDataset(DatasetOp):
 
     def stop_send(self):
         self.iterator.depipeline.StopSend()
+
 
 class RangeDataset(MappableDataset):
     """
@@ -5318,6 +5320,7 @@ class BuildVocabDataset(DatasetOp):
         new_op.special_first = copy.deepcopy(self.special_first)
 
         return new_op
+
 
 class BuildSentencePieceVocabDataset(DatasetOp):
     """
