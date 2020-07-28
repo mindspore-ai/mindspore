@@ -132,7 +132,9 @@ def while_cond(x):
 @constexpr
 def check_type_same(x_type, base_type):
     """Check x_type is same as base_type."""
-    return mstype.issubclass_(x_type, base_type)
+    if mstype.issubclass_(x_type, base_type):
+        return True
+    raise TypeError(f"The arg 'x' should be a {base_type}, but got {x_type}.")
 
 
 @constexpr
