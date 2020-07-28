@@ -344,10 +344,10 @@ class DistributedGradReducer(Cell):
         if self.split_fusion:
             if self.enable_parameter_server:
                 new_grad = self.map_(F.partial(reduce_opt, self.degree, self.mean, self.allgather),
-                                     self.opt_list, self.allreduce_filter, grads, self.ps_parameters)
+                                     self.op_list, self.allreduce_filter, grads, self.ps_parameters)
             else:
                 new_grad = self.map_(F.partial(reduce_opt, self.degree, self.mean, self.allgather),
-                                     self.opt_list, self.allreduce_filter, grads)
+                                     self.op_list, self.allreduce_filter, grads)
         else:
             if self.enable_parameter_server:
                 new_grad = self.map_(F.partial(reduce_opt, self.degree, self.mean, self.allgather,
