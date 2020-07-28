@@ -51,7 +51,7 @@ using OpRunInfoPtr = std::shared_ptr<OpRunInfo>;
 
 class SessionBasic {
  public:
-  SessionBasic() : context_(nullptr), summary_callback_(nullptr), device_id_(0), ps_init_(false) {
+  SessionBasic() : context_(nullptr), summary_callback_(nullptr), device_id_(0) {
 #ifdef ENABLE_DEBUGGER
     debugger_ = nullptr;
 #endif
@@ -152,7 +152,6 @@ class SessionBasic {
   CallBackFunc summary_callback_;
   static GraphId graph_sum_;
   uint32_t device_id_;
-  bool ps_init_;
 #ifdef ENABLE_DEBUGGER
   std::shared_ptr<Debugger> debugger_;
 #endif

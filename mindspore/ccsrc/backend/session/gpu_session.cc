@@ -233,9 +233,7 @@ void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
   LoadInputData(kernel_graph, inputs);
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
   // Initialize parameter server
-  if (!ps_init_) {
-    InitPSParamAndOptim(kernel_graph, inputs);
-  }
+  InitPSParamAndOptim(kernel_graph, inputs);
 #endif
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // Convert inputs to model

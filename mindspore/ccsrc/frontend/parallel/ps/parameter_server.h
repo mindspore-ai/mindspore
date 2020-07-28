@@ -24,7 +24,6 @@
 #include <memory>
 #include <vector>
 #include <mutex>
-#include <list>
 #include <condition_variable>
 #include <thread>
 #include <cmath>
@@ -206,11 +205,6 @@ void ParameterServer<T>::ServerHandler::HandleInitWeights(const ::ps::KVMeta &re
   size_t pos = 0;
   for (size_t i = 0; i < key_num; i++) {
     Key key = req_data.keys[i];
-    if (init_weights_[key]) {
-      continue;
-    } else {
-      init_weights_[key] = true;
-    }
     size_t data_len = req_data.lens.size() != key_num ? req_data.vals.size() / key_num : req_data.lens[i];
 
     WeightPtr weight_ptr = std::make_shared<::ps::SArray<T>>();
@@ -259,11 +253,6 @@ void ParameterServer<T>::ServerHandler::HandleInitEmbeddings(const ::ps::KVMeta 
                                                              const ::ps::KVPairs<T> &req_data, ::ps::KVPairs<T> *res) {
   std::unique_lock<std::mutex> lock(ps_->mutex());
   const Key &key = req_data.keys[0];
-  if (init_weights_[key]) {
-    return;
-  } else {
-    init_weights_[key] = true;
-  }
   std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> shapes =
     std::make_shared<std::vector<std::shared_ptr<std::vector<size_t>>>>();
   std::shared_ptr<std::vector<size_t>> input_shape = std::make_shared<std::vector<size_t>>();
@@ -401,7 +390,7 @@ void ParameterServer<T>::InitOptimInputsShape(const Keys &keys, const Values &va
 template <typename T>
 void ParameterServer<T>::InitWeight(const Key &key, const WeightPtr &weight) {
   MS_LOG(INFO) << "Initializing weight for key " << key;
-  if (weights_.count(key) == 0) {
+  if ((weights_.count(key) == 0) || (is_embedding_[key] && weights_.count(key) != 0)) {
     weights_[key] = weight;
     tokens_[key] = 0;
     is_embedding_[key] = false;
