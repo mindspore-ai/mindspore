@@ -35,6 +35,7 @@ class CostModelContext {
 
   static std::shared_ptr<CostModelContext> GetInstance();
 
+  void set_costmodel_context_for_device(const std::string &);
   // DEVICE_MEMORY_CAPACITY
   void set_device_memory_capacity(double);
   double device_memory_capacity() const { return device_memory_capacity_; }

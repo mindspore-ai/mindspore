@@ -678,3 +678,56 @@ def test_train_64k_8p(batch_size=32, num_classes=65536):  # 1048576 #131072 #327
             assert v == [[1, 1], [dev_num, 1]]
         elif re.search('ReduceSum-op', k) is not None:
             assert v == [[1, dev_num]]
+
+
+def test_train_8k_8p_gpu(batch_size=32, num_classes=8192):
+    dev_num = 8
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=dev_num)
+    set_algo_parameters(elementwise_op_strategy_follow=True)
+    resset_op_id()
+    np.random.seed(6)
+    input_np = np.ones([batch_size, 3, 224, 224]).astype(np.float32)
+    label_np = np.zeros([batch_size]).astype(np.int32)
+    for i in range(0, batch_size):
+        label_np[i] = i % num_classes
+    dataset = DatasetLenet(Tensor(input_np), Tensor(label_np), 1)
+    net = resnet50(num_classes)
+    loss = SoftmaxCrossEntropyExpand(sparse=True)
+    opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01, 0.9)
+    model = Model(net, loss_fn=loss, optimizer=opt)
+    model.train(5, dataset, dataset_sink_mode=False)
+    strategies = _executor._get_strategy(model._train_network)
+    for (k, v) in strategies.items():
+        if re.search('Conv2D-op', k) is not None:
+            assert v[0][0] == dev_num
+        elif re.search('MatMul-op', k) is not None:
+            assert v == [[1, 1], [dev_num, 1]]
+        elif re.search('ReduceSum-op', k) is not None:
+            assert v == [[1, dev_num]]
+
+def test_train_4k_8p_gpu(batch_size=32, num_classes=4096):
+    dev_num = 8
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=dev_num)
+    set_algo_parameters(elementwise_op_strategy_follow=True)
+    resset_op_id()
+    np.random.seed(6)
+    input_np = np.ones([batch_size, 3, 224, 224]).astype(np.float32)
+    label_np = np.zeros([batch_size]).astype(np.int32)
+    for i in range(0, batch_size):
+        label_np[i] = i % num_classes
+    dataset = DatasetLenet(Tensor(input_np), Tensor(label_np), 1)
+    net = resnet50(num_classes)
+    loss = SoftmaxCrossEntropyExpand(sparse=True)
+    opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01, 0.9)
+    model = Model(net, loss_fn=loss, optimizer=opt)
+    model.train(5, dataset, dataset_sink_mode=False)
+    strategies = _executor._get_strategy(model._train_network)
+    for (k, v) in strategies.items():
+        if re.search('Conv2D-op', k) is not None:
+            assert v[0][0] == dev_num
+        elif re.search('MatMul-op', k) is not None:
+            assert v == [[dev_num, 1], [1, 1]]
+        elif re.search('ReduceSum-op', k) is not None:
+            assert v == [[dev_num, 1]]
