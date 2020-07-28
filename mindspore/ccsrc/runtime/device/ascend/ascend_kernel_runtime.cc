@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define PATH_MAX 0x3ffff
+#define PATH_MAX 4096
 #include "runtime/device/ascend/ascend_kernel_runtime.h"
 #include <string>
 #include <vector>

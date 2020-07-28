@@ -79,9 +79,6 @@ void ReduceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool ReduceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                              const std::vector<kernel::AddressPtr> & /*workspaces*/,
                              const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.empty() || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "input or output empty!";
-  }
   size_t out_float_size = left_dims_ * sizeof(float);
   size_t in_float_size = stride_ * out_float_size;
   if (inputs[0]->size != in_float_size || outputs[0]->size != out_float_size) {
@@ -106,6 +103,11 @@ bool ReduceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   }
   (void)transpose_axis.insert(transpose_axis.end(), axis_.begin(), axis_.end());
   Transpose(size, input, shape_, transpose_axis, SizeToInt(shape_.size()), &new_input[0]);
+  ConvertDataToOutput(&new_input[0], output);
+  return true;
+}
+
+void ReduceCPUKernel::ConvertDataToOutput(const float *new_input, float *output) {
   if (reduce_type_ == kReduceTypeMax) {
     for (size_t i = 0; i < left_dims_; ++i) {
       float value = new_input[i * stride_];
@@ -129,7 +131,6 @@ bool ReduceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
       }
     }
   }
-  return true;
 }
 void ReduceCPUKernel::Transpose(const int size, const float *input, const std::vector<size_t> &input_shape,
                                 const std::vector<size_t> &input_axis, const int shape_size, float *output) {
