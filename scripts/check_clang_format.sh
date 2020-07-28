@@ -86,12 +86,12 @@ cd "${SCRIPTS_PATH}/.." || exit 1
 CHECK_LIST_FILE='__checked_files_list__'
 
 if [ "X${mode}" == "Xall" ]; then
-  find mindspore/ccsrc -type f -name "*" | grep "\.h$\|\.cc$" > "${CHECK_LIST_FILE}" || true
+  find mindspore/{ccsrc,core} -type f -name "*" | grep "\.h$\|\.cc$" > "${CHECK_LIST_FILE}" || true
 elif [ "X${mode}" == "Xchanged" ]; then
   # --diff-filter=ACMRTUXB will ignore deleted files in commit
-  git diff --diff-filter=ACMRTUXB --name-only | grep "mindspore/ccsrc" | grep "\.h$\|\.cc$" > "${CHECK_LIST_FILE}" || true
+  git diff --diff-filter=ACMRTUXB --name-only | grep "mindspore/ccsrc\|mindspore/core" | grep "\.h$\|\.cc$" > "${CHECK_LIST_FILE}" || true
 else  # "X${mode}" == "Xlastcommit"
-  git diff --diff-filter=ACMRTUXB --name-only HEAD~ HEAD | grep "mindspore/ccsrc" | grep "\.h$\|\.cc$" > "${CHECK_LIST_FILE}" || true
+  git diff --diff-filter=ACMRTUXB --name-only HEAD~ HEAD | grep "mindspore/ccsrc\|mindspore/core" | grep "\.h$\|\.cc$" > "${CHECK_LIST_FILE}" || true
 fi
 
 CHECK_RESULT_FILE=__code_format_check_result__

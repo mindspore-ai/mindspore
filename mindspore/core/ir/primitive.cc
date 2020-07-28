@@ -19,7 +19,6 @@
 #include <utility>
 #include "abstract/abstract_function.h"
 
-
 namespace mindspore {
 
 abstract::AbstractBasePtr Primitive::ToAbstract() {
