@@ -53,6 +53,8 @@ class TestHWRemoveInternalOutput : public BackendCommon {
     KernelBuildInfoBuilder builder;
     builder.SetInputsFormat({kOpFormat_DEFAULT, kOpFormat_DEFAULT});
     builder.SetInputsDeviceType({kFloat32->type_id(), kFloat32->type_id()});
+    builder.SetInputsReshapeType({{}, {}});
+    builder.SetOutputsReshapeType({{}});
     builder.SetOutputsFormat({kOpFormat_NC1HWC0});
     builder.SetOutputsDeviceType({kFloat16->type_id()});
     add->set_kernel_info(std::make_shared<device::KernelInfo>());
@@ -78,6 +80,8 @@ class TestHWRemoveInternalOutput : public BackendCommon {
     kg->AddInternalOutput(tuple_getitem1, max_pool);
     kg->AddInternalOutput(tuple_getitem2, max_pool);
     KernelBuildInfoBuilder builder;
+    builder.SetInputsReshapeType({{}});
+    builder.SetOutputsReshapeType({{}, {}});
     builder.SetInputsFormat({kOpFormat_DEFAULT});
     builder.SetInputsDeviceType({kFloat32->type_id()});
     builder.SetOutputsFormat({kOpFormat_NC1HWC0, kOpFormat_NC1HWC0});
@@ -99,6 +103,8 @@ class MockRemoveInternalOutputTransOpKernelSelect : public KernelSelect {
     builder.SetInputsDeviceType({kFloat16->type_id()});
     builder.SetOutputsFormat({kOpFormat_DEFAULT});
     builder.SetOutputsDeviceType({kFloat32->type_id()});
+    builder.SetInputsReshapeType({{}});
+    builder.SetOutputsReshapeType({{}});
     AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cnode.get());
   }
 };

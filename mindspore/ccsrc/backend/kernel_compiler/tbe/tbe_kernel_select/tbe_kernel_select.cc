@@ -118,7 +118,7 @@ void TbeKernelSelect::GetCommonPatternKernelInfo(const OpInfo &op_info) {
     }
     builder.SetInputsDeviceType(inputs_device_type);
     builder.SetInputsFormat(inputs_format);
-    builder.SetInputReshapeType(inputs_reshape_type);
+    builder.SetInputsReshapeType(inputs_reshape_type);
     // output
     std::vector<std::string> outputs_format;
     std::vector<TypeId> outputs_device_type;
@@ -129,7 +129,7 @@ void TbeKernelSelect::GetCommonPatternKernelInfo(const OpInfo &op_info) {
     }
     builder.SetOutputsDeviceType(outputs_device_type);
     builder.SetOutputsFormat(outputs_format);
-    builder.SetOutputReshapeType(outputs_reshape_type);
+    builder.SetOutputsReshapeType(outputs_reshape_type);
     kernel_info_list_->emplace_back(builder.Build());
   }
   MS_LOG(INFO) << "end.";
