@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_DEBUG_DEBUG_SERVICES_H_
 #define MINDSPORE_CCSRC_DEBUG_DEBUG_SERVICES_H_
 
+#include <math.h>
 #include <vector>
 #include <string>
 #include <memory>
