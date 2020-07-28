@@ -1959,7 +1959,7 @@ def _compute_slicing_length(begin, end, stride, x_shape, i):
             if begin >= x_dim:
                 # When slicing backward, if begin >= x_dim, set begin = -1, which means start from the last element.
                 begin = -1
-            if 0 < end < x_dim:
+            if 0 <= end < x_dim:
                 end += -x_dim
             if end < -x_dim - 1:
                 # When slicing backward, if end < -x_dim - 1, set end = -x_dim - 1, which means
