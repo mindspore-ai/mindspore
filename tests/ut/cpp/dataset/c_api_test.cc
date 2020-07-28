@@ -53,6 +53,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 
 
 TEST_F(MindDataTestPipeline, TestBatchAndRepeat) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBatchAndRepeat.";
+
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
   std::shared_ptr<Dataset> ds = Mnist(folder_path, RandomSampler(false, 10));
@@ -92,12 +94,16 @@ TEST_F(MindDataTestPipeline, TestBatchAndRepeat) {
 }
 
 TEST_F(MindDataTestPipeline, TestMnistFail1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMnistFail1.";
+
   // Create a Mnist Dataset
   std::shared_ptr<Dataset> ds = Mnist("", RandomSampler(false, 10));
   EXPECT_EQ(ds, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestTensorOpsAndMap) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTensorOpsAndMap.";
+
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
   std::shared_ptr<Dataset> ds = Mnist(folder_path, RandomSampler(false, 20));
@@ -148,6 +154,8 @@ TEST_F(MindDataTestPipeline, TestTensorOpsAndMap) {
 }
 
 TEST_F(MindDataTestPipeline, TestUniformAugWithOps) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugWithOps.";
+
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
   std::shared_ptr<Dataset> ds = Mnist(folder_path, RandomSampler(false, 20));
@@ -199,6 +207,8 @@ TEST_F(MindDataTestPipeline, TestUniformAugWithOps) {
 }
 
 TEST_F(MindDataTestPipeline, TestRandomFlip) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomFlip.";
+
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
@@ -249,6 +259,8 @@ TEST_F(MindDataTestPipeline, TestRandomFlip) {
 }
 
 TEST_F(MindDataTestPipeline, TestImageFolderBatchAndRepeat) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderBatchAndRepeat.";
+
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
@@ -288,12 +300,16 @@ TEST_F(MindDataTestPipeline, TestImageFolderBatchAndRepeat) {
 }
 
 TEST_F(MindDataTestPipeline, TestImageFolderFail1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderFail1.";
+
   // Create an ImageFolder Dataset
   std::shared_ptr<Dataset> ds = ImageFolder("", true, nullptr);
   EXPECT_EQ(ds, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestImageFolderWithSamplers) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderWithSamplers.";
+
   std::shared_ptr<SamplerObj> sampl = DistributedSampler(2, 1);
   EXPECT_NE(sampl, nullptr);
 
@@ -353,6 +369,8 @@ TEST_F(MindDataTestPipeline, TestImageFolderWithSamplers) {
 }
 
 TEST_F(MindDataTestPipeline, TestPad) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPad.";
+
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
@@ -406,6 +424,8 @@ TEST_F(MindDataTestPipeline, TestPad) {
 }
 
 TEST_F(MindDataTestPipeline, TestCutOut) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutOut.";
+
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
@@ -456,6 +476,8 @@ TEST_F(MindDataTestPipeline, TestCutOut) {
 }
 
 TEST_F(MindDataTestPipeline, TestNormalize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalize.";
+
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
@@ -503,6 +525,8 @@ TEST_F(MindDataTestPipeline, TestNormalize) {
 }
 
 TEST_F(MindDataTestPipeline, TestDecode) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDecode.";
+
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, RandomSampler(false, 10));
@@ -549,6 +573,8 @@ TEST_F(MindDataTestPipeline, TestDecode) {
 }
 
 TEST_F(MindDataTestPipeline, TestShuffleDataset) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestShuffleDataset.";
+
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
@@ -735,6 +761,8 @@ TEST_F(MindDataTestPipeline, TestTakeDatasetError1) {
 }
 
 TEST_F(MindDataTestPipeline, TestCifar10Dataset) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10Dataset.";
+
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
   std::shared_ptr<Dataset> ds = Cifar10(folder_path, RandomSampler(false, 10));
@@ -767,6 +795,7 @@ TEST_F(MindDataTestPipeline, TestCifar10Dataset) {
 }
 
 TEST_F(MindDataTestPipeline, TestCifar10DatasetFail1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10DatasetFail1.";
 
   // Create a Cifar10 Dataset
   std::shared_ptr<Dataset> ds = Cifar10("", RandomSampler(false, 10));
@@ -774,6 +803,7 @@ TEST_F(MindDataTestPipeline, TestCifar10DatasetFail1) {
 }
 
 TEST_F(MindDataTestPipeline, TestCifar100Dataset) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar100Dataset.";
 
   // Create a Cifar100 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar100Data/";
@@ -808,6 +838,7 @@ TEST_F(MindDataTestPipeline, TestCifar100Dataset) {
 }
 
 TEST_F(MindDataTestPipeline, TestCifar100DatasetFail1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar100DatasetFail1.";
 
   // Create a Cifar100 Dataset
   std::shared_ptr<Dataset> ds = Cifar100("", RandomSampler(false, 10));
@@ -815,6 +846,8 @@ TEST_F(MindDataTestPipeline, TestCifar100DatasetFail1) {
 }
 
 TEST_F(MindDataTestPipeline, TestRandomColorAdjust) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomColorAdjust.";
+
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
@@ -873,6 +906,8 @@ TEST_F(MindDataTestPipeline, TestRandomColorAdjust) {
 }
 
 TEST_F(MindDataTestPipeline, TestRandomRotation) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomRotation.";
+
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
@@ -920,6 +955,8 @@ TEST_F(MindDataTestPipeline, TestRandomRotation) {
 }
 
 TEST_F(MindDataTestPipeline, TestProjectMap) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestProjectMap.";
+
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
@@ -972,6 +1009,9 @@ TEST_F(MindDataTestPipeline, TestProjectMap) {
 }
 
 TEST_F(MindDataTestPipeline, TestZipSuccess) {
+  // Testing the member zip() function
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestZipSuccess.";
+
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
@@ -1000,7 +1040,7 @@ TEST_F(MindDataTestPipeline, TestZipSuccess) {
   EXPECT_NE(ds2, nullptr);
 
   // Create a Zip operation on the datasets
-  ds = ds->Zip({ds, ds1, ds2});
+  ds = ds->Zip({ds1, ds2});
   EXPECT_NE(ds, nullptr);
 
   // Create a Batch operation on ds
@@ -1017,6 +1057,13 @@ TEST_F(MindDataTestPipeline, TestZipSuccess) {
   std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
   iter->GetNextRow(&row);
 
+  // Check zipped column names
+  EXPECT_EQ(row.size(), 4);
+  EXPECT_NE(row.find("image"), row.end());
+  EXPECT_NE(row.find("label"), row.end());
+  EXPECT_NE(row.find("col1"), row.end());
+  EXPECT_NE(row.find("col2"), row.end());
+
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
@@ -1031,7 +1078,62 @@ TEST_F(MindDataTestPipeline, TestZipSuccess) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestZipSuccess2) {
+  // Testing the static zip() function
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestZipSuccess2.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 9));
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds2, nullptr);
+
+  // Create a Rename operation on ds (so that the 2 datasets we are going to zip have distinct column names)
+  ds = ds->Rename({"image", "label"}, {"col1", "col2"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Zip operation on the datasets
+  ds = Zip({ds, ds2});
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  // Check zipped column names
+  EXPECT_EQ(row.size(), 4);
+  EXPECT_NE(row.find("image"), row.end());
+  EXPECT_NE(row.find("label"), row.end());
+  EXPECT_NE(row.find("col1"), row.end());
+  EXPECT_NE(row.find("col2"), row.end());
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 9);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
 TEST_F(MindDataTestPipeline, TestZipFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestZipFail.";
   // We expect this test to fail because we are the both datasets we are zipping have "image" and "label" columns
   // and zip doesn't accept datasets with same column names
 
@@ -1045,7 +1147,7 @@ TEST_F(MindDataTestPipeline, TestZipFail) {
   EXPECT_NE(ds1, nullptr);
 
   // Create a Zip operation on the datasets
-  ds = ds->Zip({ds, ds1});
+  ds = Zip({ds, ds1});
   EXPECT_NE(ds, nullptr);
 
   // Create a Batch operation on ds
@@ -1059,7 +1161,24 @@ TEST_F(MindDataTestPipeline, TestZipFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
+TEST_F(MindDataTestPipeline, TestZipFail2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestZipFail2.";
+  // This case is expected to fail because the input dataset is empty.
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Zip operation on the datasets
+  // Input dataset to zip is empty
+  ds = Zip({});
+  EXPECT_EQ(ds, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestRenameSuccess) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRenameSuccess.";
+
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
@@ -1108,6 +1227,7 @@ TEST_F(MindDataTestPipeline, TestRenameSuccess) {
 }
 
 TEST_F(MindDataTestPipeline, TestRenameFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRenameFail.";
   // We expect this test to fail because input and output in Rename are not the same size
 
   // Create an ImageFolder Dataset
@@ -1127,6 +1247,7 @@ TEST_F(MindDataTestPipeline, TestRenameFail) {
 
 TEST_F(MindDataTestPipeline, TestVOCSegmentation) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVOCSegmentation.";
+
   // Create a VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
   std::shared_ptr<Dataset> ds = VOC(folder_path, "Segmentation", "train", {}, false, SequentialSampler(0, 3));
@@ -1176,6 +1297,7 @@ TEST_F(MindDataTestPipeline, TestVOCSegmentation) {
 
 TEST_F(MindDataTestPipeline, TestVOCSegmentationError1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVOCSegmentationError1.";
+
   // Create a VOC Dataset
   std::map<std::string, int32_t> class_index;
   class_index["car"] = 0;
@@ -1188,6 +1310,7 @@ TEST_F(MindDataTestPipeline, TestVOCSegmentationError1) {
 
 TEST_F(MindDataTestPipeline, TestVOCInvalidTaskOrMode) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVOCInvalidTaskOrMode.";
+
   // Create a VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
   std::shared_ptr<Dataset> ds_1 = VOC(folder_path, "Classification", "train", {}, false, SequentialSampler(0, 3));
@@ -1201,6 +1324,7 @@ TEST_F(MindDataTestPipeline, TestVOCInvalidTaskOrMode) {
 
 TEST_F(MindDataTestPipeline, TestVOCDetection) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVOCDetection.";
+
   // Create a VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
   std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, false, SequentialSampler(0, 4));
@@ -1246,6 +1370,7 @@ TEST_F(MindDataTestPipeline, TestVOCDetection) {
 
 TEST_F(MindDataTestPipeline, TestVOCClassIndex) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVOCClassIndex.";
+
   // Create a VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
   std::map<std::string, int32_t> class_index;
@@ -1288,4 +1413,154 @@ TEST_F(MindDataTestPipeline, TestVOCClassIndex) {
 
   // Manually terminate the pipeline
   iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestConcatSuccess) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatSuccess.";
+
+  // Create an ImageFolder Dataset
+  // Column names: {"image", "label"}
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Cifar10 Dataset
+  // Column names: {"image", "label"}
+  folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, RandomSampler(false, 9));
+  EXPECT_NE(ds2, nullptr);
+
+  // Create a Project operation on ds
+  ds = ds->Project({"image"});
+  EXPECT_NE(ds, nullptr);
+  ds2 = ds2->Project({"image"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Concat operation on the ds
+  ds = ds->Concat({ds2});
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 19);
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestConcatSuccess2) {
+  // Test "+" operator to concat two datasets
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatSuccess2.";
+
+  // Create an ImageFolder Dataset
+  // Column names: {"image", "label"}
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Cifar10 Dataset
+  // Column names: {"image", "label"}
+  folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, RandomSampler(false, 9));
+  EXPECT_NE(ds2, nullptr);
+
+  // Create a Project operation on ds
+  ds = ds->Project({"image"});
+  EXPECT_NE(ds, nullptr);
+  ds2 = ds2->Project({"image"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Concat operation on the ds
+  ds = ds + ds2;
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 19);
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestConcatFail1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatFail1.";
+  // This case is expected to fail because the input column names of concatenated datasets are not the same
+
+  // Create an ImageFolder Dataset
+  // Column names: {"image", "label"}
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Rename operation on ds
+  ds2 = ds2->Rename({"image", "label"}, {"col1", "col2"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Project operation on the ds
+  // Name of datasets to concat doesn't not match
+  ds = ds->Concat({ds2});
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestConcatFail2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatFail2.";
+  // This case is expected to fail because the input dataset is empty.
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Project operation on the ds
+  // Input dataset to concat is empty
+  ds = ds->Concat({});
+  EXPECT_EQ(ds, nullptr);
 }
