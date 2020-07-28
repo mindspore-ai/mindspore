@@ -1890,8 +1890,24 @@ void HandleDropoutNode(const OperatorInfoPtr &distribute_operator, const CNodePt
   ReplaceOneOp(replace_op[0], cnode->input(DROPOUT_GEN_MASK_INDEX)->cast<CNodePtr>());
 }
 
+void HandleTileNode(const OperatorInfoPtr &distribute_operator, const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (cnode->size() < 3 || !IsValueNode<Primitive>(cnode->input(0))) {
+    return;
+  }
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  if (prim->name() != TILE) {
+    return;
+  }
+
+  TileInfoPtr tile = std::dynamic_pointer_cast<TileInfo>(distribute_operator);
+  MS_EXCEPTION_IF_NULL(tile);
+  tile->UpdateMultiples(cnode);
+}
+
 void HandleSpecialNode(const OperatorInfoPtr &distribute_operator, const CNodePtr &cnode) {
   HandleDropoutNode(distribute_operator, cnode);
+  HandleTileNode(distribute_operator, cnode);
 }
 
 std::set<FuncGraphPtr> FindForwardGraphByRootNodes(const AnfNodeSet &root_all_nodes) {

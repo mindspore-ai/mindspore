@@ -198,8 +198,8 @@ double ActivationCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs
 // this operator uses
 double ActivationCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
                                                  int32_t) const {
-  TensorInfo input0_info = inputs[0];
-  Shape input0_slice_shape = input0_info.slice_shape();
+  TensorInfo input0 = inputs[0];
+  Shape input0_slice_shape = input0.slice_shape();
   return ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
 }
 
@@ -240,12 +240,16 @@ double SoftmaxCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, c
 
 // Return the per device computation cost in the forward phase. The cost is calculated according to the bytes
 // this operator uses
-double SoftmaxCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
+double SoftmaxCost::GetForwardComputationCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &outputs,
                                               int32_t) const {
-  // In the forward phase, the computation cost = slice(A)
-  TensorInfo input0 = inputs[0];
-  Shape input0_slice_shape = input0.slice_shape();
-  return ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
+  if (outputs.empty() || outputs_type_lengths_.empty()) {
+    MS_LOG(EXCEPTION) << "The outputs or outputs_type_length is empty";
+  }
+
+  // use output for Tile operator
+  TensorInfo output_info = outputs[0];
+  Shape output_slice_shape = output_info.slice_shape();
+  return ListProduct(output_slice_shape) * static_cast<double>(outputs_type_lengths_[0]);
 }
 
 // Return the per device computation cost in the forward phase. The cost is calculated according to the bytes
