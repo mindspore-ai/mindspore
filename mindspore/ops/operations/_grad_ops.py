@@ -115,6 +115,74 @@ class AsinhGrad(PrimitiveWithInfer):
         return x
 
 
+class ReciprocalGrad(PrimitiveWithInfer):
+    """Performs grad of Reciprocal operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        """init ReciprocalGrad"""
+
+    def infer_shape(self, x_shape, dout_shape):
+        validator.check("x shape", x_shape, "dout shape", dout_shape, Rel.EQ, self.name)
+        return x_shape
+
+    def infer_dtype(self, x_dtype, dout_dtype):
+        args = {"x": x_dtype, "dout": dout_dtype}
+        validator.check_tensor_type_same(args, [mstype.float16, mstype.float32], self.name)
+        return x_dtype
+
+
+class RsqrtGrad(PrimitiveWithInfer):
+    """Performs grad of Rsqrt operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        """init RsqrtGrad"""
+
+    def infer_shape(self, x_shape, dout_shape):
+        validator.check("x shape", x_shape, "dout shape", dout_shape, Rel.EQ, self.name)
+        return x_shape
+
+    def infer_dtype(self, x_dtype, dout_dtype):
+        args = {"x": x_dtype, "dout": dout_dtype}
+        validator.check_tensor_type_same(args, [mstype.float16, mstype.float32, mstype.int32, mstype.int8], self.name)
+        return x_dtype
+
+
+class SoftmaxGrad(PrimitiveWithInfer):
+    """Performs grad of Softmax operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        """init SoftmaxGrad"""
+
+    def infer_shape(self, x_shape, dout_shape):
+        validator.check("x shape", x_shape, "dout shape", dout_shape, Rel.EQ, self.name)
+        return x_shape
+
+    def infer_dtype(self, x_dtype, dout_dtype):
+        args = {"x": x_dtype, "dout": dout_dtype}
+        validator.check_tensor_type_same(args, [mstype.float16, mstype.float32], self.name)
+        return x_dtype
+
+
+class SqrtGrad(PrimitiveWithInfer):
+    """Performs grad of Sqrt operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        """init SqrtGrad"""
+
+    def infer_shape(self, x_shape, dout_shape):
+        validator.check("x shape", x_shape, "dout shape", dout_shape, Rel.EQ, self.name)
+        return x_shape
+
+    def infer_dtype(self, x_dtype, dout_dtype):
+        args = {"x": x_dtype, "dout": dout_dtype}
+        validator.check_tensor_type_same(args, [mstype.float16, mstype.float32], self.name)
+        return x_dtype
+
+
 class BatchNormGrad(PrimitiveWithInfer):
     """Performs grad of BatchNorm operation."""
 

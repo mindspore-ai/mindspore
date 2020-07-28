@@ -61,7 +61,6 @@ const char kNameReduceSum[] = "ReduceSum";
 const char kNameIsFinite[] = "isFinite";
 const char kNameReciprocal[] = "Reciprocal";
 const char kNameRsqrt[] = "Rsqrt";
-const char kNameRsqrtGrad[] = "RsqrtGrad";
 const char kNameSqrt[] = "Sqrt";
 const char kNameSquare[] = "Square";
 const char kNameSquaredDifference[] = "SquaredDifference";
@@ -83,6 +82,9 @@ const char kNameFlattenGrad[] = "FlattenGrad";
 const char kNameConvolution[] = "Convolution";
 const char kNameBiasAdd[] = "BiasAdd";
 const char kNameMaxPoolGrad[] = "MaxPoolGrad";
+const char kNameRsqrtGrad[] = "RsqrtGrad";
+const char kNameSqrtGrad[] = "SqrtGrad";
+const char kNameReciprocalGrad[] = "ReciprocalGrad";
 const char kNameAvgPoolGrad[] = "AvgPoolGrad";
 const char kNameMaxPoolGradWithArgmax[] = "MaxPoolGradWithArgmax";
 const char kNameApplyMomentum[] = "ApplyMomentum";
@@ -233,6 +235,9 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameAllgather), ADPT_DESC(HcomAllGather)},
     {string(kNameReduceScatter), ADPT_DESC(HcomReduceScatter)},
     {string(kNameMaxPoolGrad), ADPT_DESC(MaxPoolGrad)},
+    {string(kNameSqrtGrad), ADPT_DESC(SqrtGrad)},
+    {string(kNameReciprocalGrad), ADPT_DESC(ReciprocalGrad)},
+    {string(kNameRsqrtGrad), ADPT_DESC(RsqrtGrad)},
     {string(kNameAvgPoolGrad), ADPT_DESC(AvgPoolGrad)},
     {string(kNameMaxPoolGradWithArgmax), ADPT_DESC(MaxPoolGradWithArgmax)},
     {string(kNameExtractImagePatches), ADPT_DESC(ExtractImagePatches)},

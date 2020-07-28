@@ -366,15 +366,10 @@ def get_bprop_square(self):
 @bprop_getters.register(P.Sqrt)
 def get_bprop_sqrt(self):
     """Grad definition for `Sqrt` operation."""
-    mul_func = P.Mul()
-    fill_func = P.Fill()
-    div_op = P.RealDiv()
-    sqrt = P.Sqrt()
-    dtype = P.DType()
+    sqrt_grad = G.SqrtGrad()
 
     def bprop(x, out, dout):
-        temp = div_op(fill_func(dtype(x), shape_op(x), 0.5), sqrt(x))
-        dx = mul_func(dout, temp)
+        dx = sqrt_grad(out, dout)
         return (dx,)
 
     return bprop
@@ -383,10 +378,10 @@ def get_bprop_sqrt(self):
 @bprop_getters.register(P.Rsqrt)
 def get_bprop_rsqrt(self):
     """Grad definition for `Rsqrt` operation."""
+    rsqrt_grad = G.RsqrtGrad()
 
     def bprop(x, out, dout):
-        grad = F.fill(F.dtype(x), F.shape(x), -0.5) / (F.sqrt(x) * x)
-        dx = dout * grad
+        dx = rsqrt_grad(out, dout)
         return (dx,)
 
     return bprop
@@ -395,14 +390,10 @@ def get_bprop_rsqrt(self):
 @bprop_getters.register(P.Reciprocal)
 def get_bprop_reciprocal(self):
     """Grad definition for `Reciprocal` operation."""
-    neg = P.Neg()
-    mul = P.Mul()
-    square = P.Square()
-    reciprocal = P.Reciprocal()
+    reciprocal_grad = G.ReciprocalGrad()
 
     def bprop(x, out, dout):
-        g = neg(reciprocal(square(x)))
-        dx = mul(dout, g)
+        dx = reciprocal_grad(out, dout)
         return (dx,)
 
     return bprop

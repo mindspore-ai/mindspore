@@ -726,6 +726,21 @@ ATTR_MAP(MaxPoolGrad) = {{"ksize", ATTR_DESC(ksize, AnyTraits<int>(), AnyTraits<
                          {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
 OUTPUT_MAP(MaxPoolGrad) = {{0, OUTPUT_DESC(y)}};
 
+// RsqrtGrad
+INPUT_MAP(RsqrtGrad) = {{1, INPUT_DESC(y)}, {2, INPUT_DESC(dy)}};
+ATTR_MAP(RsqrtGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(RsqrtGrad) = {{0, OUTPUT_DESC(z)}};
+
+// SqrtGrad
+INPUT_MAP(SqrtGrad) = {{1, INPUT_DESC(y)}, {2, INPUT_DESC(dy)}};
+ATTR_MAP(SqrtGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(SqrtGrad) = {{0, OUTPUT_DESC(z)}};
+
+// ReciprocalGrad
+INPUT_MAP(ReciprocalGrad) = {{1, INPUT_DESC(y)}, {2, INPUT_DESC(dy)}};
+ATTR_MAP(ReciprocalGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(ReciprocalGrad) = {{0, OUTPUT_DESC(z)}};
+
 // avgpoolgrad
 INPUT_MAP(AvgPoolGrad) = {{1, INPUT_DESC(orig_input_shape)}, {2, INPUT_DESC(input_grad)}};
 ATTR_MAP(AvgPoolGrad) = {{"ksize", ATTR_DESC(ksize, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
