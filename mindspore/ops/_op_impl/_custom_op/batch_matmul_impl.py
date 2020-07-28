@@ -14,9 +14,10 @@
 # ============================================================================
 """batch_matmul_impl"""
 
-from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 from te import tik
 from topi.cce import util
+
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 cus_batchmatmul_op_info = TBERegOp("CusBatchMatMul") \
     .fusion_type("OPAQUE") \
@@ -114,7 +115,8 @@ def CusBatchMatMul(input_x1, input_x2, output, transpose_a=False, transpose_b=Tr
                      ((1, 64, 64), (1, 64, 64), "float32", False, True),
                      ((1, 128, 128), (1, 128, 128), "float32", False, True),
                      ((4, 128, 128), (4, 128, 128), "float32", False, True),
-                     ((2, 128, 128), (2, 128, 128), "float32", False, True)]
+                     ((2, 128, 128), (2, 128, 128), "float32", False, True),
+                     ((32, 128, 128), (32, 128, 128), 'float32', False, True)]
     if input_shape not in support_shape:
         raise RuntimeError("input_shape %s is not supported" % str(input_shape))
 
@@ -232,7 +234,8 @@ def CusBatchMatMul(input_x1, input_x2, output, transpose_a=False, transpose_b=Tr
                         ((2, 128, 128), (2, 128, 128), "float32", False, True),
                         ((4, 128, 128), (4, 128, 128), "float32", False, True),
                         ((8, 128, 128), (8, 128, 128), "float32", False, True),
-                        ((16, 128, 128), (16, 128, 128), "float32", False, True)
+                        ((16, 128, 128), (16, 128, 128), "float32", False, True),
+                        ((32, 128, 128), (32, 128, 128), 'float32', False, True)
                         ]
     if input_shape in input_shape_list:
         block_num = 32
