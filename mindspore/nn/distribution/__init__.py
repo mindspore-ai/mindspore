@@ -21,7 +21,13 @@ The high-level components(Distributions) used to construct the probabilistic net
 from .distribution import Distribution
 from .normal import Normal
 from .bernoulli import Bernoulli
+from .exponential import Exponential
+from .uniform import Uniform
+from .geometric import Geometric
 
 __all__ = ['Distribution',
            'Normal',
-           'Bernoulli',]
+           'Bernoulli',
+           'Exponential',
+           'Uniform',
+           'Geometric',]
