@@ -320,5 +320,17 @@ Status Edge::CalculateMemoryCostForInference() {
   }
   return SUCCESS;
 }
+
+void Edge::SetCostMapAndInputOutput(std::map<CostPtrKey, CostPtrList> &cost_map) {
+  cost_map_ = cost_map;
+  pre_op_output_.clear();
+  next_op_input_.clear();
+
+  for (auto &key_value : cost_map_) {
+    auto &key_pair = key_value.first;
+    pre_op_output_.emplace_back(std::pair<StrategyPtr, std::vector<TensorInfo>>(key_pair.first, {}));
+    next_op_input_.emplace_back(std::pair<StrategyPtr, std::vector<TensorInfo>>(key_pair.second, {}));
+  }
+}
 }  // namespace parallel
 }  // namespace mindspore

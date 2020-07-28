@@ -80,6 +80,8 @@ class Edge {
   std::string edge_name() const { return edge_name_; }
   // Init cost_map_: for each output layout and input layout, calculate the cost
   Status InitEdgeCost();
+  std::map<CostPtrKey, CostPtrList> GetCostMap() { return cost_map_; }
+  void SetCostMapAndInputOutput(std::map<CostPtrKey, CostPtrList> &);
   // For two operators u--->v, given the output tensor layout of u,
   // and the input tensor layout of v, return the redistribution cost,
   // and the op_list to carry out the redistribution.

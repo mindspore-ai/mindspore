@@ -36,7 +36,19 @@ using StrategyPtr = std::shared_ptr<Strategy>;
 
 class Strategy {
  public:
-  Strategy(int32_t stage, std::vector<Dimensions> inputs) : stage_(stage), inputs_(std::move(inputs)) {}
+  Strategy(int32_t stage, std::vector<Dimensions> inputs)
+      : stage_(stage), inputs_(std::move(inputs)), internal_size_(0), internal_stragies_() {}
+
+  Strategy(const Strategy &another_stra) : stage_(another_stra.GetInputStage()) {
+    inputs_ = another_stra.GetInputDim();
+    internal_size_ = another_stra.GetInternalSize();
+    if (internal_size_ != 0) {
+      internal_stragies_ = another_stra.GetInternalStrategies();
+    } else {
+      internal_stragies_ = {};
+    }
+  }
+
   ~Strategy() = default;
   size_t GetInputNumber() const { return inputs_.size(); }
   std::vector<Dimensions> GetInputDim() const { return inputs_; }
@@ -47,7 +59,10 @@ class Strategy {
     }
   }
   void ResetInputs(const std::vector<Dimensions> &input) { inputs_ = input; }
+  std::vector<StrategyPtr> GetInternalStrategies() const { return internal_stragies_; }
+  size_t GetInternalSize() const { return internal_size_; }
 
+  // TODO(Xiaoda): need fix for adapting 'CoverStrategy'
   bool IsEqual(const StrategyPtr &another_stra) {
     if (another_stra == nullptr) {
       return false;
@@ -58,11 +73,19 @@ class Strategy {
     return true;
   }
 
+  // Include 'another_stra' into this strategy
+  void CoverStrategy(const StrategyPtr &another_stra) {
+    internal_stragies_.push_back(another_stra);
+    internal_size_++;
+  }
+
  private:
   const int32_t stage_;
 
   // The size of Dimensions must equal to inputs_ tensor dimension.
   std::vector<Dimensions> inputs_;
+  size_t internal_size_ = 0;
+  std::vector<StrategyPtr> internal_stragies_;
 };
 
 inline StrategyPtr NewStrategy(const int32_t stage, const std::vector<Dimensions> &inputs) {
