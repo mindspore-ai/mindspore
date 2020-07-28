@@ -23,9 +23,9 @@
 #include <utility>
 #include <vector>
 
-#include "./de_tensor_generated.h"
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/cache/cache_server.h"
+#include "minddata/dataset/engine/cache/de_tensor_generated.h"
 #include "minddata/dataset/util/lock.h"
 
 namespace mindspore {
