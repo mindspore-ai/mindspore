@@ -100,7 +100,7 @@ class ToTensor:
         The range of channel dimension remains the same.
 
     Args:
-        output_type (numpy datatype, optional): The datatype of the numpy output (default=np.float32).
+        output_type (numpy datatype, optional): The datatype of the numpy output (default=numpy.float32).
 
     Examples:
         >>> py_transforms.ComposeOp([py_transforms.Decode(),
@@ -129,7 +129,7 @@ class ToType:
     Convert the input Numpy image array to desired numpy dtype.
 
     Args:
-        output_type (numpy datatype): The datatype of the numpy output. e.g. np.float32.
+        output_type (numpy datatype): The datatype of the numpy output, e.g. numpy.float32.
 
     Examples:
         >>> import numpy as np

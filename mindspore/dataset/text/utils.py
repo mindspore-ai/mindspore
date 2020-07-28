@@ -210,7 +210,7 @@ def to_str(array, encoding='utf8'):
 
     Args:
         array (numpy.ndarray): Array of type `bytes` representing strings.
-        encoding (string): Indicating the charset for decoding.
+        encoding (str): Indicating the charset for decoding.
 
     Returns:
         numpy.ndarray, numpy array of `str`.
