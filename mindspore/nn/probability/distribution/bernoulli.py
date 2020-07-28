@@ -13,10 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """Bernoulli Distribution"""
+from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 from .distribution import Distribution
 from ._utils.utils import cast_to_tensor, check_prob
-from ...common import dtype as mstype
 
 class Bernoulli(Distribution):
     """

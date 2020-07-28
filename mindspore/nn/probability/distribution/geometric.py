@@ -15,9 +15,9 @@
 """Geometric Distribution"""
 import numpy as np
 from mindspore.ops import operations as P
+from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import cast_to_tensor, check_prob
-from ...common import dtype as mstype
 
 class Geometric(Distribution):
     """
