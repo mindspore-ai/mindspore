@@ -64,11 +64,14 @@ bool MemReuseUtil::InitDynamicOutputKernelRef() {
             kernel_ref->type_ = kRefNodeOutput;
             auto origin_pair = graph_->GetRefCorrespondOutput(out_pair);
             MS_EXCEPTION_IF_NULL(origin_pair.first);
+            MS_LOG(INFO) << "REF origin op is " << origin_pair.first->fullname_with_scope() << ", output index is "
+                         << origin_pair.second << ", cur op is " << kernel_cnode->fullname_with_scope()
+                         << ", out index is " << output_index;
             if (origin_pair.first->isa<CNode>()) {
               auto cnode = origin_pair.first->cast<CNodePtr>();
-              auto ref_ptr = GetKernelInputRef(cnode, origin_pair.second);
+              auto ref_ptr = GetRef(cnode, origin_pair.second);
               if (ref_ptr != nullptr) {
-                kernel_ref->type_ = kRefNodeInput;
+                ref_ptr->type_ = kRefNodeInput;
               }
             }
           } else {
