@@ -34,7 +34,8 @@ namespace parallel {
 #define OPERATOR_TO_OPERATOR_CONNECTOR "-"
 #define DEFAULT_DEVICE_MEMORY_CAPACITY (1024.0 * 1024.0 * 1024.0 * 16.0)
 #define DEFAULT_COST_MODEL_ALPHA 1.0
-#define DEFAULT_COST_MODEL_BETA 400.0
+#define DEFAULT_COST_MODEL_BETA_ASCEND 400.0  // for 'device_target = Ascend'
+#define DEFAULT_COST_MODEL_BETA_GPU 50.0      // for 'device_target = GPU'
 #define DEFAULT_COST_MODEL_GAMMA 0.001
 #define DEFAULT_COST_MODEL_SIMPLIFY_CALCULATION true
 #define DEFAULT_COST_MODEL_COMMUNI_THRESHOLD 2048.0
@@ -73,7 +74,7 @@ class CostGraph {
   CostGraph() {
     dev_memory_ = DEFAULT_DEVICE_MEMORY_CAPACITY;
     costmodel_alpha_ = DEFAULT_COST_MODEL_ALPHA;
-    costmodel_beta_ = DEFAULT_COST_MODEL_BETA;
+    costmodel_beta_ = DEFAULT_COST_MODEL_BETA_ASCEND;
   }
   ~CostGraph() = default;
   void AddOperator(const OperatorInfoPtr &op) { ops_.push_back(op); }
