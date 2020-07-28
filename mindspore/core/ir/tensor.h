@@ -82,7 +82,7 @@ class Tensor : public MetaTensor {
   // param data The shared tensor data.
   Tensor(TypeId data_type, const std::vector<int> &shape, TensorDataPtr data);
 
-  // brief Create an all zero tensor.
+  // brief Create a lazy allocated tensor.
   //
   // param data_type [TypeId] Data type of the tensor.
   // param shape The shape represented by std::vector<int> of the tensor.

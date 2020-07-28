@@ -20,6 +20,7 @@
 #include <functional>
 #include <numeric>
 #include <vector>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -53,54 +54,80 @@ static size_t SizeOf(const std::vector<int> &shape) {
   return std::accumulate(shape.begin(), shape.end(), size_t(1), std::multiplies<size_t>());
 }
 
+template <typename T, typename U>
+std::unique_ptr<T[]> NewData(const U *input, size_t size) {
+  if (input == nullptr || size == 0) {
+    return nullptr;
+  }
+  auto data = std::make_unique<T[]>(size);
+  if constexpr (!std::is_same<T, U>::value && (std::is_same<T, float16>::value || std::is_same<U, float16>::value)) {
+    // Because float16 do not support implicit cast from/to other types,
+    // We can not use std::copy() on array of float16, use a loop here.
+    for (size_t i = 0; i < size; ++i) {
+      data[i] = static_cast<T>(input[i]);
+    }
+  } else {
+    // otherwise, use std::copy for better performance.
+    std::copy(input, input + size, data.get());
+  }
+  return data;
+}
+
+template <typename T, typename Scalar>
+std::unique_ptr<T[]> NewData(Scalar scalar) {
+  auto data = std::make_unique<T[]>(1);
+  data[0] = static_cast<T>(scalar);
+  return data;
+}
+
 template <typename T>
-std::vector<T> CopyData(const std::vector<int> &shape, void *data, TypeId data_type) {
-  const size_t count = SizeOf(shape);
+std::unique_ptr<T[]> CopyData(const std::vector<int> &shape, void *data, TypeId data_type) {
+  const size_t size = SizeOf(shape);
   switch (data_type) {
     case kNumberTypeBool:
     case kNumberTypeUInt8: {
       auto buf = static_cast<uint8_t *>(data);
-      return std::vector<T>(buf, buf + count);
+      return NewData<T>(buf, size);
     }
     case kNumberTypeInt8: {
       auto buf = static_cast<int8_t *>(data);
-      return std::vector<T>(buf, buf + count);
+      return NewData<T>(buf, size);
     }
     case kNumberTypeInt16: {
       auto buf = static_cast<int16_t *>(data);
-      return std::vector<T>(buf, buf + count);
+      return NewData<T>(buf, size);
     }
     case kNumberTypeInt32: {
       auto buf = static_cast<int32_t *>(data);
-      return std::vector<T>(buf, buf + count);
+      return NewData<T>(buf, size);
     }
     case kNumberTypeInt64: {
       auto buf = static_cast<int64_t *>(data);
-      return std::vector<T>(buf, buf + count);
+      return NewData<T>(buf, size);
     }
     case kNumberTypeUInt16: {
       auto buf = static_cast<uint16_t *>(data);
-      return std::vector<T>(buf, buf + count);
+      return NewData<T>(buf, size);
     }
     case kNumberTypeUInt32: {
       auto buf = static_cast<uint32_t *>(data);
-      return std::vector<T>(buf, buf + count);
+      return NewData<T>(buf, size);
     }
     case kNumberTypeUInt64: {
       auto buf = static_cast<uint64_t *>(data);
-      return std::vector<T>(buf, buf + count);
+      return NewData<T>(buf, size);
     }
     case kNumberTypeFloat16: {
       auto buf = static_cast<float16 *>(data);
-      return std::vector<T>(buf, buf + count);
+      return NewData<T>(buf, size);
     }
     case kNumberTypeFloat32: {
-      const float *buf = static_cast<float *>(data);
-      return std::vector<T>(buf, buf + count);
+      auto buf = static_cast<float *>(data);
+      return NewData<T>(buf, size);
     }
     case kNumberTypeFloat64: {
       auto buf = static_cast<double *>(data);
-      return std::vector<T>(buf, buf + count);
+      return NewData<T>(buf, size);
     }
     default:
       break;
@@ -109,14 +136,14 @@ std::vector<T> CopyData(const std::vector<int> &shape, void *data, TypeId data_t
 }
 
 template <typename T>
-std::vector<T> CopyData(const std::vector<int> &shape, void *data, size_t data_len) {
+std::unique_ptr<T[]> CopyData(const std::vector<int> &shape, void *data, size_t data_len) {
   size_t size = SizeOf(shape);
   if (size * sizeof(T) != data_len) {
     MS_LOG(EXCEPTION) << "Incorrect tensor input data length  " << data_len << ", expect " << size * sizeof(T)
                       << " item size " << sizeof(T);
   }
   auto buf = static_cast<T *>(data);
-  return {buf, buf + size};
+  return NewData<T>(buf, size);
 }
 
 // Tensor data implementation.
@@ -132,13 +159,13 @@ class TensorDataImpl : public TensorData {
   TensorDataImpl(const std::vector<int> &shape, void *data, TypeId data_type)
       : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(CopyData<T>(shape, data, data_type)) {}
 
-  template <typename InputIt>
-  TensorDataImpl(const std::vector<int> &shape, InputIt first, InputIt last)
-      : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(first, last) {}
+  template <typename U>
+  TensorDataImpl(const std::vector<int> &shape, const U *input, size_t size)
+      : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(NewData<T>(input, size)) {}
 
   template <typename Scalar>
   TensorDataImpl(const std::vector<int> &shape, Scalar scalar)
-      : ndim_(shape.size()), data_size_(SizeOf(shape)), data_({static_cast<T>(scalar)}) {}
+      : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(NewData<T>(scalar)) {}
 
   ssize_t size() const override { return static_cast<ssize_t>(data_size_); }
 
@@ -149,24 +176,25 @@ class TensorDataImpl : public TensorData {
   ssize_t ndim() const override { return static_cast<ssize_t>(ndim_); }
 
   void *data() override {
-    static std::vector<T> empty_data(1);
+    static T empty_data = static_cast<T>(0);
     if (data_size_ == 0) {
       // Prevent null pointer for empty shape.
-      return empty_data.data();
+      return &empty_data;
     }
     // Lazy allocation.
-    if (data_.empty()) {
-      data_.resize(data_size_);
+    if (data_ == nullptr) {
+      data_ = std::make_unique<T[]>(data_size_);
     }
-    return data_.data();
+    return data_.get();
   }
 
   bool equals(const TensorData &other) const override {
     auto ptr = dynamic_cast<const TensorDataImpl<T> *>(&other);
-    if (ptr) {
-      return (ptr == this) || ((ndim_ == ptr->ndim_) && (data_size_ == ptr->data_size_) && (data_ == ptr->data_));
+    if (ptr == nullptr) {
+      return false;
     }
-    return false;
+    return (ptr == this) || ((ndim_ == ptr->ndim_) && (data_size_ == ptr->data_size_) &&
+                             (std::equal(data_.get(), data_.get() + data_size_, ptr->data_.get())));
   }
 
   std::string ToString(const TypeId type, const std::vector<int> &shape) const override {
@@ -179,7 +207,7 @@ class TensorDataImpl : public TensorData {
     if (data_size_ == 0) {
       return "";
     }
-    if (data_.empty()) {
+    if (data_ == nullptr) {
       return "<uninitialized>";
     }
 
@@ -309,7 +337,7 @@ class TensorDataImpl : public TensorData {
 
   size_t ndim_{0};
   size_t data_size_{0};
-  std::vector<T> data_;
+  std::unique_ptr<T[]> data_;
 };
 
 template <typename... Args>
@@ -374,12 +402,12 @@ Tensor::Tensor(TypeId data_type, const std::vector<int> &shape, void *data, Type
 
 Tensor::Tensor(const std::vector<int64_t> &input, const TypePtr &data_type)
     : MetaTensor(TypeIdOf(data_type, kNumberTypeInt32), {static_cast<int>(input.size())}),
-      data_(MakeTensorData(data_type_, shape_, input.begin(), input.end())),
+      data_(MakeTensorData(data_type_, shape_, input.data(), input.size())),
       id_(MakeId()) {}
 
 Tensor::Tensor(const std::vector<double> &input, const TypePtr &data_type)
     : MetaTensor(TypeIdOf(data_type, kNumberTypeFloat32), {static_cast<int>(input.size())}),
-      data_(MakeTensorData(data_type_, shape_, input.begin(), input.end())),
+      data_(MakeTensorData(data_type_, shape_, input.data(), input.size())),
       id_(MakeId()) {}
 
 Tensor::Tensor(int64_t input, const TypePtr &data_type)
