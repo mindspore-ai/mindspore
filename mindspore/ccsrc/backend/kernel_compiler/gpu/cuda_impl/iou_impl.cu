@@ -50,12 +50,12 @@ __global__ void IOUKernel(const size_t size, const T *box1, const T *box2, T *io
 
     T area1 = (location_coordinate[0][2] - location_coordinate[0][0] + 1) * (location_coordinate[0][3] -
                location_coordinate[0][1] + 1);
+    T area2 = (location_coordinate[1][2] - location_coordinate[1][0] + 1) * (location_coordinate[1][3] -
+                                                                             location_coordinate[1][1] + 1);
     if (mode == 0) {
-      T area2 = (location_coordinate[1][2] - location_coordinate[1][0] + 1) * (location_coordinate[1][3] -
-               location_coordinate[1][1] + 1);
       iou_results[i] = overlaps / (area1 + area2 - overlaps + epsilon);
     } else {
-      iou_results[i] = overlaps / (area1 + epsilon);
+      iou_results[i] = overlaps / (area2 + epsilon);
     }
   }
 

@@ -101,6 +101,8 @@ class BoundingBoxEncode(PrimitiveWithInfer):
     def infer_shape(self, anchor_box, groundtruth_box):
         validator.check('anchor_box shape[0]', anchor_box[0], 'groundtruth_box shape[0]', groundtruth_box[0], Rel.EQ,
                         self.name)
+        validator.check("anchor_box rank", len(anchor_box), "", 2, Rel.EQ, self.name)
+        validator.check("groundtruth_box rank", len(groundtruth_box), "", 2, Rel.EQ, self.name)
         validator.check_integer('anchor_box shape[1]', anchor_box[1], 4, Rel.EQ, self.name)
         validator.check_integer('groundtruth_box shape[1]', groundtruth_box[1], 4, Rel.EQ, self.name)
         return anchor_box
@@ -152,6 +154,8 @@ class BoundingBoxDecode(PrimitiveWithInfer):
 
     def infer_shape(self, anchor_box, deltas):
         validator.check('anchor_box shape[0]', anchor_box[0], 'deltas shape[0]', deltas[0], Rel.EQ, self.name)
+        validator.check("anchor_box rank", len(anchor_box), "", 2, Rel.EQ, self.name)
+        validator.check("deltas rank", len(deltas), "", 2, Rel.EQ, self.name)
         validator.check_integer('anchor_box shape[1]', anchor_box[1], 4, Rel.EQ, self.name)
         validator.check_integer('deltas shape[1]', deltas[1], 4, Rel.EQ, self.name)
         return anchor_box
