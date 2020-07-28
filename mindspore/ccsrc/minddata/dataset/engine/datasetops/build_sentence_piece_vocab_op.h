@@ -31,6 +31,7 @@
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/util/queue.h"
 #include "minddata/dataset/text/sentence_piece_vocab.h"
+#include "pybind11/pybind11.h"
 
 namespace mindspore {
 namespace dataset {

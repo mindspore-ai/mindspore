@@ -156,6 +156,16 @@ Status NodePass::RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) {
   // Fallback to base class visitor by default
   return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
 }
+
+Status NodePass::RunOnNode(std::shared_ptr<ManifestOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::RunOnNode(std::shared_ptr<VOCOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
 #endif
 
 Status NodePass::RunOnNode(std::shared_ptr<RandomDataOp> node, bool *modified) {
@@ -193,17 +203,7 @@ Status NodePass::RunOnNode(std::shared_ptr<MnistOp> node, bool *modified) {
   return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
 }
 
-Status NodePass::RunOnNode(std::shared_ptr<ManifestOp> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
-}
-
 Status NodePass::RunOnNode(std::shared_ptr<CifarOp> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
-}
-
-Status NodePass::RunOnNode(std::shared_ptr<VOCOp> node, bool *modified) {
   // Fallback to base class visitor by default
   return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
 }

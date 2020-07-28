@@ -24,14 +24,17 @@
 #include "minddata/dataset/engine/datasetops/source/celeba_op.h"
 #include "minddata/dataset/engine/datasetops/source/cifar_op.h"
 #include "minddata/dataset/engine/datasetops/source/coco_op.h"
-#include "minddata/dataset/engine/datasetops/source/generator_op.h"
 #include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
-#include "minddata/dataset/engine/datasetops/source/manifest_op.h"
 #include "minddata/dataset/engine/datasetops/source/mindrecord_op.h"
 #include "minddata/dataset/engine/datasetops/source/mnist_op.h"
 #include "minddata/dataset/engine/datasetops/source/random_data_op.h"
 #include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
+
+#ifdef ENABLE_PYTHON
+#include "minddata/dataset/engine/datasetops/source/generator_op.h"
+#include "minddata/dataset/engine/datasetops/source/manifest_op.h"
 #include "minddata/dataset/engine/datasetops/source/voc_op.h"
+#endif
 
 namespace mindspore {
 namespace dataset {
@@ -120,7 +123,7 @@ Status CacheTransformPass::CachePass::NonMappableCacheLeafSetup(std::shared_ptr<
   return Status::OK();
 }
 
-// Perform leaf node cache tranform identifications
+// Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<TFReaderOp> node, bool *modified) {
   if (is_caching_) {
     // If we are a TF Reader in a caching tree, then change our config so that it becomes a basic
@@ -130,55 +133,57 @@ Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<TFReaderOp> node
   return NonMappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
 }
 
-// Perform leaf node cache tranform identifications
+// Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<RandomDataOp> node, bool *modified) {
   return NonMappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
 }
 
-// Perform leaf node cache tranform identifications
+// Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<ImageFolderOp> node, bool *modified) {
   return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
 }
 
-// Perform leaf node cache tranform identifications
+// Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<MnistOp> node, bool *modified) {
   return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
 }
 
-// Perform leaf node cache tranform identifications
-Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) {
-  return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
-}
-
-// Perform leaf node cache tranform identifications
-Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<ManifestOp> node, bool *modified) {
-  return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
-}
-
-// Perform leaf node cache tranform identifications
+// Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CifarOp> node, bool *modified) {
   return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
 }
 
-// Perform leaf node cache tranform identifications
-Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<VOCOp> node, bool *modified) {
-  return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
-}
-
-// Perform leaf node cache tranform identifications
+// Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CocoOp> node, bool *modified) {
   return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
 }
 
-// Perform leaf node cache tranform identifications
+// Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CelebAOp> node, bool *modified) {
   return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
 }
 
-// Perform leaf node cache tranform identifications
+// Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified) {
   return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
 }
+
+#ifdef ENABLE_PYTHON
+// Perform leaf node cache transform identification
+Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) {
+  return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
+}
+
+// Perform leaf node cache transform identification
+Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<ManifestOp> node, bool *modified) {
+  return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
+}
+
+// Perform leaf node cache transform identification
+Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<VOCOp> node, bool *modified) {
+  return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
+}
+#endif
 
 // Assigns the leaf and cache operators that are involved in a cache transformation
 void CacheTransformPass::CachePass::AddMappableCacheOperators(std::shared_ptr<DatasetOp> leaf_op,

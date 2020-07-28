@@ -649,12 +649,6 @@ class Tensor {
   unsigned char *data_end_ = nullptr;
 
  private:
-  /// Helper function to create a tensor from Numpy array of strings
-  /// \param[in] arr Numpy array
-  /// \param[out] out Created Tensor
-  /// \return Status
-  static Status CreateFromNpString(py::array arr, TensorPtr *out);
-
   /// Copy raw data of a array based on shape and strides to the destination pointer
   /// \param dst [out] Pointer to the destination array where the content is to be copied
   /// \param[in] src Pointer to the source of strided array to be copied
@@ -667,6 +661,14 @@ class Tensor {
 
   /// const of the size of the offset variable
   static constexpr uint8_t kOffsetSize = sizeof(offset_t);
+
+#ifdef ENABLE_PYTHON
+  /// Helper function to create a tensor from Numpy array of strings
+  /// \param[in] arr Numpy array
+  /// \param[out] out Created Tensor
+  /// \return Status
+  static Status CreateFromNpString(py::array arr, TensorPtr *out);
+#endif
 };
 template <>
 inline Tensor::TensorIterator<std::string_view> Tensor::end<std::string_view>() {
