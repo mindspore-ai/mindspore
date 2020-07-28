@@ -77,7 +77,7 @@ class AutoContrast(cde.AutoContrastOp):
 
     Args:
         cutoff (float, optional): Percent of pixels to cut off from the histogram (default=0.0).
-        ignore (int or sequence, optional): Pixel values to ignore (default=None).
+        ignore (Union[int, sequence], optional): Pixel values to ignore (default=None).
     """
 
     @check_auto_contrast
@@ -151,10 +151,10 @@ class RandomCrop(cde.RandomCropOp):
     Crop the input image at a random location.
 
     Args:
-        size (int or sequence): The output size of the cropped image.
+        size (Union[int, sequence]): The output size of the cropped image.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
-        padding (int or sequence, optional): The number of pixels to pad the image (default=None).
+        padding (Union[int, sequence], optional): The number of pixels to pad the image (default=None).
             If padding is not None, pad image firstly with padding values.
             If a single number is provided, it pads all borders with this value.
             If a tuple or list of 2 values are provided, it pads the (left and top)
@@ -163,7 +163,7 @@ class RandomCrop(cde.RandomCropOp):
             it pads the left, top, right and bottom respectively.
         pad_if_needed (bool, optional): Pad the image if either side is smaller than
             the given output size (default=False).
-        fill_value (int or tuple, optional): The pixel intensity of the borders if
+        fill_value (Union[int, tuple], optional): The pixel intensity of the borders if
             the padding_mode is Border.CONSTANT (default=0). If it is a 3-tuple, it is used to
             fill R, G, B channels respectively.
         padding_mode (Border mode, optional): The method of padding (default=Border.CONSTANT). Can be any of
@@ -206,10 +206,10 @@ class RandomCropWithBBox(cde.RandomCropWithBBoxOp):
     Crop the input image at a random location and adjust bounding boxes accordingly.
 
     Args:
-        size (int or sequence): The output size of the cropped image.
+        size (Union[int, sequence]): The output size of the cropped image.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
-        padding (int or sequence, optional): The number of pixels to pad the image (default=None).
+        padding (Union[int, sequence], optional): The number of pixels to pad the image (default=None).
             If padding is not None, pad image firstly with padding values.
             If a single number is provided, it pads all borders with this value.
             If a tuple or list of 2 values are provided, it pads the (left and top)
@@ -217,7 +217,7 @@ class RandomCropWithBBox(cde.RandomCropWithBBoxOp):
             If 4 values are provided as a list or tuple,it pads the left, top, right and bottom respectively.
         pad_if_needed (bool, optional): Pad the image if either side is smaller than
             the given output size (default=False).
-        fill_value (int or tuple, optional): The pixel intensity of the borders if
+        fill_value (Union[int, tuple], optional): The pixel intensity of the borders if
             the padding_mode is Border.CONSTANT (default=0). If it is a 3-tuple, it is used to
             fill R, G, B channels respectively.
         padding_mode (Border mode, optional): The method of padding (default=Border.CONSTANT). Can be any of
@@ -335,7 +335,7 @@ class Resize(cde.ResizeOp):
     Resize the input image to the given size.
 
     Args:
-        size (int or sequence): The output size of the resized image.
+        size (Union[int, sequence]): The output size of the resized image.
             If size is an int, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
@@ -365,7 +365,7 @@ class ResizeWithBBox(cde.ResizeWithBBoxOp):
     Resize the input image to the given size and adjust bounding boxes accordingly.
 
     Args:
-        size (int or sequence): The output size of the resized image.
+        size (Union[int, sequence]): The output size of the resized image.
             If size is an int, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
@@ -395,7 +395,7 @@ class RandomResizedCropWithBBox(cde.RandomCropAndResizeWithBBoxOp):
     Crop the input image to a random size and aspect ratio and adjust bounding boxes accordingly.
 
     Args:
-        size (int or sequence): The size of the output image.
+        size (Union[int, sequence]): The size of the output image.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         scale (tuple, optional): Range (min, max) of respective size of the original
@@ -434,7 +434,7 @@ class RandomResizedCrop(cde.RandomCropAndResizeOp):
     Crop the input image to a random size and aspect ratio.
 
     Args:
-        size (int or sequence): The size of the output image.
+        size (Union[int, sequence]): The size of the output image.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         scale (tuple, optional): Range (min, max) of respective size of the original
@@ -473,7 +473,7 @@ class CenterCrop(cde.CenterCropOp):
     Crops the input image at the center to the given size.
 
     Args:
-        size (int or sequence): The output size of the cropped image.
+        size (Union[int, sequence]): The output size of the cropped image.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
     """
@@ -491,16 +491,16 @@ class RandomColorAdjust(cde.RandomColorAdjustOp):
     Randomly adjust the brightness, contrast, saturation, and hue of the input image.
 
     Args:
-        brightness (float or tuple, optional): Brightness adjustment factor (default=(1, 1)). Cannot be negative.
+        brightness (Union[float, tuple], optional): Brightness adjustment factor (default=(1, 1)). Cannot be negative.
             If it is a float, the factor is uniformly chosen from the range [max(0, 1-brightness), 1+brightness].
             If it is a sequence, it should be [min, max] for the range.
-        contrast (float or tuple, optional): Contrast adjustment factor (default=(1, 1)). Cannot be negative.
+        contrast (Union[float, tuple], optional): Contrast adjustment factor (default=(1, 1)). Cannot be negative.
             If it is a float, the factor is uniformly chosen from the range [max(0, 1-contrast), 1+contrast].
             If it is a sequence, it should be [min, max] for the range.
-        saturation (float or tuple, optional): Saturation adjustment factor (default=(1, 1)). Cannot be negative.
+        saturation (Union[float, tuple], optional): Saturation adjustment factor (default=(1, 1)). Cannot be negative.
             If it is a float, the factor is uniformly chosen from the range [max(0, 1-saturation), 1+saturation].
             If it is a sequence, it should be [min, max] for the range.
-        hue (float or tuple, optional): Hue adjustment factor (default=(0, 0)).
+        hue (Union[float, tuple], optional): Hue adjustment factor (default=(0, 0)).
             If it is a float, the range will be [-hue, hue]. Value should be 0 <= hue <= 0.5.
             If it is a sequence, it should be [min, max] where -0.5 <= min <= max <= 0.5.
     """
@@ -533,7 +533,7 @@ class RandomRotation(cde.RandomRotationOp):
     Rotate the input image by a random angle.
 
     Args:
-        degrees (int or float or sequence): Range of random rotation degrees.
+        degrees (Union[int, float, sequence): Range of random rotation degrees.
             If degrees is a number, the range will be converted to (-degrees, degrees).
             If degrees is a sequence, it should be (min, max).
         resample (Inter mode, optional): An optional resampling filter (default=Inter.NEAREST).
@@ -552,7 +552,8 @@ class RandomRotation(cde.RandomRotationOp):
             Note that the expand flag assumes rotation around the center and no translation.
         center (tuple, optional): Optional center of rotation (a 2-tuple) (default=None).
             Origin is the top left corner. None sets to the center of the image.
-        fill_value (int or tuple, optional): Optional fill color for the area outside the rotated image (default=0).
+        fill_value (Union[int, tuple], optional): Optional fill color for the area outside the rotated image
+            (default=0).
             If it is a 3-tuple, it is used for R, G, B channels respectively.
             If it is an int, it is used for all RGB channels.
     """
@@ -595,7 +596,7 @@ class RandomResize(cde.RandomResizeOp):
     Tensor operation to resize the input image using a randomly selected interpolation mode.
 
     Args:
-        size (int or sequence): The output size of the resized image.
+        size (Union[int, sequence]): The output size of the resized image.
             If size is an int, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
@@ -616,7 +617,7 @@ class RandomResizeWithBBox(cde.RandomResizeWithBBoxOp):
     bounding boxes accordingly.
 
     Args:
-        size (int or sequence): The output size of the resized image.
+        size (Union[int, sequence]): The output size of the resized image.
             If size is an int, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
@@ -642,7 +643,7 @@ class RandomCropDecodeResize(cde.RandomCropDecodeResizeOp):
     Equivalent to RandomResizedCrop, but crops before decodes.
 
     Args:
-        size (int or sequence, optional): The size of the output image.
+        size (Union[int, sequence], optional): The size of the output image.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         scale (tuple, optional): Range (min, max) of respective size of the
@@ -681,13 +682,13 @@ class Pad(cde.PadOp):
     Pads the image according to padding parameters.
 
     Args:
-        padding (int or sequence): The number of pixels to pad the image.
+        padding (Union[int, sequence]): The number of pixels to pad the image.
             If a single number is provided, it pads all borders with this value.
             If a tuple or list of 2 values are provided, it pads the (left and top)
             with the first value and (right and bottom) with the second value.
             If 4 values are provided as a list or tuple,
             it pads the left, top, right and bottom respectively.
-        fill_value (int or tuple, optional): The pixel intensity of the borders if
+        fill_value (Union[int, tuple], optional): The pixel intensity of the borders if
             the padding_mode is Border.CONSTANT (default=0). If it is a 3-tuple, it is used to
             fill R, G, B channels respectively.
         padding_mode (Border mode): The method of padding (default=Border.CONSTANT). Can be any of

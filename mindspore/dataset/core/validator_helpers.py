@@ -155,8 +155,8 @@ def parse_user_args(method, *args, **kwargs):
 
     Args:
         method (method): a callable function.
-        *args: user passed args.
-        **kwargs: user passed kwargs.
+        args: user passed args.
+        kwargs: user passed kwargs.
 
     Returns:
         user_filled_args (list): values of what the user passed in for the arguments.
@@ -181,9 +181,9 @@ def type_check_list(args, types, arg_names):
     Check the type of each parameter in the list.
 
     Args:
-        args (list, tuple): a list or tuple of any variable.
+        args (Union[list, tuple]): a list or tuple of any variable.
         types (tuple): tuple of all valid types for arg.
-        arg_names (list, tuple of str): the names of args.
+        arg_names (Union[list, tuple of str]): the names of args.
 
     Returns:
         Exception: when the type is not correct, otherwise nothing.
@@ -202,7 +202,7 @@ def type_check(arg, types, arg_name):
     Check the type of the parameter.
 
     Args:
-        arg : any variable.
+        arg (Any) : any variable.
         types (tuple): tuple of all valid types for arg.
         arg_name (str): the name of arg.
 
@@ -346,7 +346,7 @@ def check_gnn_list_or_ndarray(param, param_name):
     Check if the input parameter is list or numpy.ndarray.
 
     Args:
-        param (list, nd.ndarray): param.
+        param (Union[list, nd.ndarray]): param.
         param_name (str): param_name.
 
     Returns:

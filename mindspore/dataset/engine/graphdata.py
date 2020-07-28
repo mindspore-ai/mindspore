@@ -91,7 +91,7 @@ class GraphData:
         Get nodes from the edges.
 
         Args:
-            edge_list (list or numpy.ndarray): The given list of edges.
+            edge_list (Union[list, numpy.ndarray]): The given list of edges.
 
         Returns:
             numpy.ndarray: array of nodes.
@@ -107,7 +107,7 @@ class GraphData:
         Get `neighbor_type` neighbors of the nodes in `node_list`.
 
         Args:
-            node_list (list or numpy.ndarray): The given list of nodes.
+            node_list (Union[list, numpy.ndarray]): The given list of nodes.
             neighbor_type (int): Specify the type of neighbor.
 
         Returns:
@@ -137,9 +137,9 @@ class GraphData:
         2-hop samling result ...]
 
         Args:
-            node_list (list or numpy.ndarray): The given list of nodes.
-            neighbor_nums (list or numpy.ndarray): Number of neighbors sampled per hop.
-            neighbor_types (list or numpy.ndarray): Neighbor type sampled per hop.
+            node_list (Union[list, numpy.ndarray]): The given list of nodes.
+            neighbor_nums (Union[list, numpy.ndarray]): Number of neighbors sampled per hop.
+            neighbor_types (Union[list, numpy.ndarray]): Neighbor type sampled per hop.
 
         Returns:
             numpy.ndarray: array of nodes.
@@ -164,7 +164,7 @@ class GraphData:
         Get `neg_neighbor_type` negative sampled neighbors of the nodes in `node_list`.
 
         Args:
-            node_list (list or numpy.ndarray): The given list of nodes.
+            node_list (Union[list, numpy.ndarray]): The given list of nodes.
             neg_neighbor_num (int): Number of neighbors sampled.
             neg_neighbor_type (int): Specify the type of negative neighbor.
 
@@ -191,8 +191,8 @@ class GraphData:
         Get `feature_types` feature of the nodes in `node_list`.
 
         Args:
-            node_list (list or numpy.ndarray): The given list of nodes.
-            feature_types (list or numpy.ndarray): The given list of feature types.
+            node_list (Union[list, numpy.ndarray]): The given list of nodes.
+            feature_types (Union[list, numpy.ndarray]): The given list of feature types.
 
         Returns:
             numpy.ndarray: array of features.
@@ -220,8 +220,8 @@ class GraphData:
         Get `feature_types` feature of the edges in `edge_list`.
 
         Args:
-            edge_list (list or numpy.ndarray): The given list of edges.
-            feature_types (list or numpy.ndarray): The given list of feature types.
+            edge_list (Union[list, numpy.ndarray]): The given list of edges.
+            feature_types (Union[list, numpy.ndarray]): The given list of feature types.
 
         Returns:
             numpy.ndarray: array of features.
