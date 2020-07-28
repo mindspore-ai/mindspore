@@ -29,8 +29,7 @@ class Net(nn.Cell):
 
     def construct(self, x, index):
         x = self.layers[index](x)
-        y = self.conv1(x)
-        return x + y
+        return 2 + x
 
 
 def test_case():
