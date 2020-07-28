@@ -24,21 +24,25 @@
 #include "minddata/dataset/engine/datasetops/source/cifar_op.h"
 #include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
 #include "minddata/dataset/engine/datasetops/source/mnist_op.h"
+#include "minddata/dataset/engine/datasetops/source/voc_op.h"
 // Dataset operator headers (in alphabetical order)
 #include "minddata/dataset/engine/datasetops/batch_op.h"
 #include "minddata/dataset/engine/datasetops/map_op.h"
+#include "minddata/dataset/engine/datasetops/project_op.h"
+#include "minddata/dataset/engine/datasetops/rename_op.h"
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
 #include "minddata/dataset/engine/datasetops/shuffle_op.h"
 #include "minddata/dataset/engine/datasetops/skip_op.h"
-#include "minddata/dataset/engine/datasetops/project_op.h"
+#include "minddata/dataset/engine/datasetops/take_op.h"
 #include "minddata/dataset/engine/datasetops/zip_op.h"
-#include "minddata/dataset/engine/datasetops/rename_op.h"
+
 // Sampler headers (in alphabetical order)
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/random_sampler.h"
 
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/util/random.h"
+#include "minddata/dataset/util/path.h"
 
 namespace mindspore {
 namespace dataset {
@@ -118,6 +122,16 @@ std::shared_ptr<ImageFolderDataset> ImageFolder(std::string dataset_dir, bool de
 // Function to create a MnistDataset.
 std::shared_ptr<MnistDataset> Mnist(std::string dataset_dir, std::shared_ptr<SamplerObj> sampler) {
   auto ds = std::make_shared<MnistDataset>(dataset_dir, sampler);
+
+  // Call derived class validation method.
+  return ds->ValidateParams() ? ds : nullptr;
+}
+
+// Function to create a VOCDataset.
+std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::string &task, const std::string &mode,
+                                const std::map<std::string, int32_t> &class_index, bool decode,
+                                std::shared_ptr<SamplerObj> sampler) {
+  auto ds = std::make_shared<VOCDataset>(dataset_dir, task, mode, class_index, decode, sampler);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
@@ -221,6 +235,26 @@ std::shared_ptr<ShuffleDataset> Dataset::Shuffle(int32_t shuffle_size) {
 // Function to create a SkipDataset.
 std::shared_ptr<SkipDataset> Dataset::Skip(int32_t count) {
   auto ds = std::make_shared<SkipDataset>(count);
+
+  // Call derived class validation method.
+  if (!ds->ValidateParams()) {
+    return nullptr;
+  }
+
+  ds->children.push_back(shared_from_this());
+
+  return ds;
+}
+
+// Function to create a TakeDataset.
+std::shared_ptr<Dataset> Dataset::Take(int32_t count) {
+  // If count is greater than the number of element in dataset or equal to -1,
+  // all the element in dataset will be taken
+  if (count == -1) {
+    return shared_from_this();
+  }
+
+  auto ds = std::make_shared<TakeDataset>(count);
 
   // Call derived class validation method.
   if (!ds->ValidateParams()) {
@@ -389,6 +423,71 @@ std::vector<std::shared_ptr<DatasetOp>> MnistDataset::Build() {
 
   node_ops.push_back(std::make_shared<MnistOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_,
                                                std::move(schema), std::move(sampler_->Build())));
+  return node_ops;
+}
+
+// Constructor for VOCDataset
+VOCDataset::VOCDataset(const std::string &dataset_dir, const std::string &task, const std::string &mode,
+                       const std::map<std::string, int32_t> &class_index, bool decode,
+                       std::shared_ptr<SamplerObj> sampler)
+    : dataset_dir_(dataset_dir),
+      task_(task),
+      mode_(mode),
+      class_index_(class_index),
+      decode_(decode),
+      sampler_(sampler) {}
+
+bool VOCDataset::ValidateParams() {
+  Path dir(dataset_dir_);
+  if (!dir.IsDirectory()) {
+    MS_LOG(ERROR) << "Invalid dataset path or no dataset path is specified.";
+    return false;
+  }
+  if (task_ == "Segmentation") {
+    if (!class_index_.empty()) {
+      MS_LOG(ERROR) << "class_indexing is invalid in Segmentation task.";
+      return false;
+    }
+    Path imagesets_file = dir / "ImageSets" / "Segmentation" / mode_ + ".txt";
+    if (!imagesets_file.Exists()) {
+      MS_LOG(ERROR) << "[Segmentation] imagesets_file is invalid or not exist";
+      return false;
+    }
+  } else if (task_ == "Detection") {
+    Path imagesets_file = dir / "ImageSets" / "Main" / mode_ + ".txt";
+    if (!imagesets_file.Exists()) {
+      MS_LOG(ERROR) << "[Detection] imagesets_file is invalid or not exist.";
+      return false;
+    }
+  } else {
+    MS_LOG(ERROR) << "Invalid task: " << task_;
+    return false;
+  }
+  return true;
+}
+
+// Function to build VOCDataset
+std::vector<std::shared_ptr<DatasetOp>> VOCDataset::Build() {
+  // A vector containing shared pointer to the Dataset Ops that this object will create
+  std::vector<std::shared_ptr<DatasetOp>> node_ops;
+
+  // If user does not specify Sampler, create a default sampler based on the shuffle variable.
+  if (sampler_ == nullptr) {
+    sampler_ = CreateDefaultSampler();
+  }
+
+  std::shared_ptr<VOCOp::Builder> builder = std::make_shared<VOCOp::Builder>();
+  (void)builder->SetDir(dataset_dir_);
+  (void)builder->SetTask(task_);
+  (void)builder->SetMode(mode_);
+  (void)builder->SetNumWorkers(num_workers_);
+  (void)builder->SetSampler(std::move(sampler_->Build()));
+  (void)builder->SetDecode(decode_);
+  (void)builder->SetClassIndex(class_index_);
+
+  std::shared_ptr<VOCOp> op;
+  RETURN_EMPTY_IF_ERROR(builder->Build(&op));
+  node_ops.push_back(op);
   return node_ops;
 }
 
@@ -574,6 +673,28 @@ std::vector<std::shared_ptr<DatasetOp>> SkipDataset::Build() {
 bool SkipDataset::ValidateParams() {
   if (skip_count_ <= -1) {
     MS_LOG(ERROR) << "Skip: Invalid input, skip_count: " << skip_count_;
+    return false;
+  }
+
+  return true;
+}
+
+// Constructor for TakeDataset
+TakeDataset::TakeDataset(int32_t count) : take_count_(count) {}
+
+// Function to build the TakeOp
+std::vector<std::shared_ptr<DatasetOp>> TakeDataset::Build() {
+  // A vector containing shared pointer to the Dataset Ops that this object will create
+  std::vector<std::shared_ptr<DatasetOp>> node_ops;
+
+  node_ops.push_back(std::make_shared<TakeOp>(take_count_, connector_que_size_));
+  return node_ops;
+}
+
+// Function to validate the parameters for TakeDataset
+bool TakeDataset::ValidateParams() {
+  if (take_count_ < -1) {
+    MS_LOG(ERROR) << "Take: Invalid input, take_count: " << take_count_;
     return false;
   }
 
