@@ -443,7 +443,6 @@ class PConstant : public PBase<PConstant<T> > {
   }
 
   bool TryCapture_(const AnfNodePtr &node) const {
-    // if (IsValueNode<Value>(node)) {
     if (node->isa<ValueNode>()) {
       // If any_value_ is set don't check for the node's value. Just capture it.
       if (any_value_) {
@@ -726,7 +725,7 @@ class PConstant : public PBase<PConstant<T> > {
           ret = memcpy_s(data, mem_size, data_out, mem_size);
           delete[] reinterpret_cast<int *>(data_out);
         } else {
-          // Un-support data types
+          // Unsupported data types
           return nullptr;
         }
       }
