@@ -285,7 +285,7 @@ fi
 echo "---------------- MindSpore: build start ----------------"
 mkdir -pv "${BUILD_PATH}/package/mindspore/lib"
 git submodule update --init graphengine
-if [[ "X$ENABLE_AKG" = "Xon" ]] && [[ "X$ENABLE_D" = "Xon" ]]; then
+if [[ "X$ENABLE_AKG" = "Xon" ]] && [[ "X$ENABLE_D" = "Xon" || "X$ENABLE_GPU" = "Xon" ]]; then
     git submodule update --init --recursive akg
 fi
 
@@ -340,7 +340,7 @@ build_mindspore()
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_D=ON"
     fi
     if [[ "X$ENABLE_GPU" = "Xon" ]]; then
-        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_GPU=ON -DCUDA_PATH=$CUDA_PATH -DCUDNN_PATH=$CUDNN_PATH -DMS_REQUIRE_CUDA_VERSION=${CUDA_VERSION}"
+        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_GPU=ON -DUSE_CUDA=ON -DUSE_CUDNN=ON -DCUDA_PATH=$CUDA_PATH -DCUDNN_PATH=$CUDNN_PATH -DMS_REQUIRE_CUDA_VERSION=${CUDA_VERSION}"
     fi
     if [[ "X$ENABLE_CPU" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_CPU=ON"
@@ -351,7 +351,7 @@ build_mindspore()
     if [[ "X$USE_GLOG" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DUSE_GLOG=ON"
     fi
-    if [[ "X$ENABLE_AKG" = "Xon" ]] && [[ "X$ENABLE_D" = "Xon" ]]; then
+    if [[ "X$ENABLE_AKG" = "Xon" ]] && [[ "X$ENABLE_D" = "Xon" || "X$ENABLE_GPU" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_AKG=ON"
     fi
     if [[ "X$ENABLE_SERVING" = "Xon" ]]; then
