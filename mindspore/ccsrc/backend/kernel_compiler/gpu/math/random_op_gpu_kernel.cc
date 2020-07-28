@@ -20,5 +20,12 @@ namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(StandardNormal, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
                       RandomOpGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(UniformReal,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      RandomOpGpuKernel, float)
 }  // namespace kernel
 }  // namespace mindspore
