@@ -19,7 +19,7 @@
 #include <algorithm>
 
 #include "utils/symbolic.h"
-#include "debug/trace.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace abstract {

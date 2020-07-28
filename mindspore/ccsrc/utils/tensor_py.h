@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_IR_TENSOR_PY_H_
-#define MINDSPORE_CORE_IR_TENSOR_PY_H_
+#ifndef MINDSPORE_CCSRC_UTILS_TENSOR_PY_H_
+#define MINDSPORE_CCSRC_UTILS_TENSOR_PY_H_
 
 #include <memory>
 #include <string>
@@ -108,4 +108,4 @@ class TensorPy {
 }  // namespace tensor
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_IR_TENSOR_PY_H_
+#endif  // MINDSPORE_CCSRC_UTILS_TENSOR_PY_H_

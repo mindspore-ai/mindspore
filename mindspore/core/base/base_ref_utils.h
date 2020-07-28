@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#ifndef MINDSPORE_CORE_BASE_BASE_REF_UTILS_H
+#define MINDSPORE_CORE_BASE_BASE_REF_UTILS_H
 #include <vector>
 #include <memory>
 
@@ -21,9 +22,7 @@
 #include "ir/tensor.h"
 #include "base/base_ref.h"
 
-#ifndef MINDSPORE_CCSRC_UTILS_BASE_REF_UTILS_H
-#define MINDSPORE_CCSRC_UTILS_BASE_REF_UTILS_H
 namespace mindspore {
 std::vector<tensor::TensorPtr> TransformVectorRefToMultiTensor(const VectorRef &base_ref);
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_UTILS_BASE_REF_UTILS_H
+#endif  // MINDSPORE_CORE_BASE_BASE_REF_UTILS_H

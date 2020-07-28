@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_UTILS_ANY_H_
-#define MINDSPORE_CCSRC_UTILS_ANY_H_
+#ifndef MINDSPORE_CORE_UTILS_ANY_H_
+#define MINDSPORE_CORE_UTILS_ANY_H_
 
 #include <iostream>
 #include <string>
@@ -211,4 +211,4 @@ bool AnyIsLiteral(const Any &any);
 
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_UTILS_ANY_H_
+#endif  // MINDSPORE_CORE_UTILS_ANY_H_

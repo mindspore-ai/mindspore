@@ -30,7 +30,7 @@
 #include "base/user_data.h"
 #include "ir/kernel_info_dev.h"
 #include "ir/scope.h"
-#include "debug/info.h"
+#include "utils/info.h"
 
 // A MindSpore ANF IR defined here.
 // with BNF followed:

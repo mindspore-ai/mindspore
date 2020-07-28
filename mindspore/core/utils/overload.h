@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_UTILS_OVERLOAD_H_
-#define MINDSPORE_CCSRC_UTILS_OVERLOAD_H_
+#ifndef MINDSPORE_CORE_UTILS_OVERLOAD_H_
+#define MINDSPORE_CORE_UTILS_OVERLOAD_H_
 
 #include <list>
 #include <utility>
@@ -135,4 +135,4 @@ std::string ToString(const std::map<T1, T2> &map) {
 }
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_UTILS_OVERLOAD_H_
+#endif  // MINDSPORE_CORE_UTILS_OVERLOAD_H_

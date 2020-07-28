@@ -24,7 +24,7 @@
 #include <vector>
 
 #include "ir/func_graph.h"
-#include "utils/func_graph_cloner.h"
+#include "ir/func_graph_cloner.h"
 #include "frontend/optimizer/optimizer_caller.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"

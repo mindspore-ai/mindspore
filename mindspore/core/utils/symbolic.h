@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_UTILS_SYMBOLIC_H_
-#define MINDSPORE_CCSRC_UTILS_SYMBOLIC_H_
+#ifndef MINDSPORE_CORE_UTILS_SYMBOLIC_H_
+#define MINDSPORE_CORE_UTILS_SYMBOLIC_H_
 
 #include <unordered_map>
 #include <memory>
@@ -171,4 +171,4 @@ extern std::shared_ptr<EnvInstance> newenv;
 
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_UTILS_SYMBOLIC_H_
+#endif  // MINDSPORE_CORE_UTILS_SYMBOLIC_H_

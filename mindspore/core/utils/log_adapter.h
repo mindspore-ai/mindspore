@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_UTILS_LOG_ADAPTER_H_
-#define MINDSPORE_CCSRC_UTILS_LOG_ADAPTER_H_
+#ifndef MINDSPORE_CORE_UTILS_LOG_ADAPTER_H_
+#define MINDSPORE_CORE_UTILS_LOG_ADAPTER_H_
 
 #include <stdarg.h>
 #include <stdint.h>
@@ -201,4 +201,4 @@ class LogWriter {
 #define MS_ASSERT(f) ((void)0)
 #endif
 
-#endif  // MINDSPORE_CCSRC_UTILS_LOG_ADAPTER_H_
+#endif  // MINDSPORE_CORE_UTILS_LOG_ADAPTER_H_

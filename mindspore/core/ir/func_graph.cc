@@ -22,7 +22,7 @@
 #include <sstream>
 #include <utility>
 
-#include "debug/trace_base.h"
+#include "utils/trace_base.h"
 #include "ir/manager.h"
 #include "utils/flags.h"
 #include "utils/ordered_set.h"

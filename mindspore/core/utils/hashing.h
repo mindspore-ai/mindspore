@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_UTILS_HASHING_H_
-#define MINDSPORE_CCSRC_UTILS_HASHING_H_
+#ifndef MINDSPORE_CORE_UTILS_HASHING_H_
+#define MINDSPORE_CORE_UTILS_HASHING_H_
 
 #include <initializer_list>
 
@@ -33,4 +33,4 @@ inline std::size_t hash_combine(const std::initializer_list<std::size_t> &hash_v
   return hash_sum;
 }
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_UTILS_HASHING_H_
+#endif  // MINDSPORE_CORE_UTILS_HASHING_H_

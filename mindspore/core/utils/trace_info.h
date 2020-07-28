@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_DEBUG_TRACE_INFO_H_
-#define MINDSPORE_CCSRC_DEBUG_TRACE_INFO_H_
+#ifndef MINDSPORE_CORE_UTILS_TRACE_INFO_H_
+#define MINDSPORE_CORE_UTILS_TRACE_INFO_H_
 
 #include <iostream>
 #include <string>
@@ -414,4 +414,4 @@ class TraceCombileLikeGraphs : public TraceInfo {
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEBUG_TRACE_INFO_H_
+#endif  // MINDSPORE_CORE_UTILS_TRACE_INFO_H_

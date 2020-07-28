@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_INFO_H_
-#define MINDSPORE_CCSRC_IR_INFO_H_
+#ifndef MINDSPORE_CORE_UTILS_INFO_H_
+#define MINDSPORE_CORE_UTILS_INFO_H_
 
 #include <iostream>
 #include <string>
@@ -25,7 +25,7 @@
 #include <vector>
 
 #include "base/base.h"
-#include "debug/trace_info.h"
+#include "utils/trace_info.h"
 
 namespace mindspore {
 // namespace to support intermediate representation definition
@@ -232,4 +232,4 @@ class GraphDebugInfo : public DebugInfo {
 using GraphDebugInfoPtr = std::shared_ptr<GraphDebugInfo>;
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_INFO_H_
+#endif  // MINDSPORE_CORE_UTILS_INFO_H_

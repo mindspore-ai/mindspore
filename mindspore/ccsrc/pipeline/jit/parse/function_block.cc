@@ -23,7 +23,7 @@
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/parse/parse.h"
 #include "frontend/operator/ops.h"
-#include "debug/info.h"
+#include "utils/info.h"
 #include "debug/trace.h"
 #include "pybind11/pybind11.h"
 

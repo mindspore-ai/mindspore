@@ -28,7 +28,7 @@
 #include "utils/convert_utils.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "debug/info.h"
+#include "utils/info.h"
 #include "abstract/abstract_value.h"
 
 namespace mindspore {

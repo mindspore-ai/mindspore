@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "debug/label.h"
+#include "utils/label.h"
 #include <algorithm>
 #include <sstream>
 #include <utility>
 
-#include "debug/info.h"
+#include "utils/info.h"
 #include "ir/func_graph.h"
 
 namespace mindspore {

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_UTILS_ORDERED_MAP_H_
-#define MINDSPORE_CCSRC_UTILS_ORDERED_MAP_H_
+#ifndef MINDSPORE_CORE_UTILS_ORDERED_MAP_H_
+#define MINDSPORE_CORE_UTILS_ORDERED_MAP_H_
 
 #include <algorithm>
 #include <unordered_map>
@@ -198,4 +198,4 @@ class OrderedMap {
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_UTILS_ORDERED_MAP_H_
+#endif  // MINDSPORE_CORE_UTILS_ORDERED_MAP_H_

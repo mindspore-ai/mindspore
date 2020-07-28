@@ -22,7 +22,7 @@
 #include "ir/anf.h"
 #include "utils/primitive_py.h"
 #include "ir/meta_func_graph.h"
-#include "utils/func_graph_cloner.h"
+#include "ir/func_graph_cloner.h"
 #include "ir/manager.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/parse/parse.h"
@@ -33,7 +33,7 @@
 #include "utils/symbolic.h"
 #include "utils/primitive_utils.h"
 #include "utils/context/ms_context.h"
-#include "debug/info.h"
+#include "utils/info.h"
 #include "debug/trace.h"
 
 #include "./common.h"
