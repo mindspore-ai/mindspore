@@ -1,0 +1,5 @@
+serial_number node_type_name total_time(ms) dispatch_time(ms) run_start run_end
+1 InitData 1.567 0.1 2298200409 2298200538
+2 GetNext 0.989 0.087 2302769932 2302769980
+3 TruncatedNormal 1.566 0.105 4098200409 4098200538
+AI CPU Total Time(ms): 4.122000
