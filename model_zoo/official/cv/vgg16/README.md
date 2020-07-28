@@ -38,9 +38,11 @@ epcoh: 2 step: 781, loss is 1.827582
 
 ### Evaluation
 
+- Do eval as follows, need to specify dataset type as "cifar10" or "imagenet2012"
 ```
-python eval.py --data_path=your_data_path --device_id=6 --checkpoint_path=./train_vgg_cifar10-70-781.ckpt > out.eval.log 2>&1 & 
+python eval.py --data_path=your_data_path --dataset="cifar10" --pre_trained=./train_vgg_cifar10-70-781.ckpt > out.eval.log 2>&1 & 
 ```
+- If the using dataset is
 The above python command will run in the background, you can view the results through the file `out.eval.log`.
 
 You will get the accuracy as following:
@@ -93,7 +95,7 @@ parameters/options:
   --device_target       the evaluation backend type, default is Ascend.
   --data_path           the storage path of datasetd 
   --device_id           the device which used to evaluate model.
-  --checkpoint_path     the checkpoint file path used to evaluate model.
+  --pre_trained     the checkpoint file path used to evaluate model.
 ```
 
 ### Distribute Training
