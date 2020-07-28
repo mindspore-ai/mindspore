@@ -319,8 +319,10 @@ class Tensor {
   /// Ex: shape <2,3>, inserting into index {0} will replace the first row. index {1,2} will replace the last cell.
   /// \param index
   /// \param input
+  /// \param partial_insert: boolean to determine if insertion along the full axis is enforced
   /// \return Status code
-  Status InsertTensor(const std::vector<dsize_t> &index, const std::shared_ptr<Tensor> &input);
+  Status InsertTensor(const std::vector<dsize_t> &index, const std::shared_ptr<Tensor> &input,
+                      const bool partial_insert = false);
 
   /// Find the address of the given index. Used in InsertTensor.
   /// Example:
@@ -381,9 +383,6 @@ class Tensor {
 
   static Status GetBufferInfo(Tensor *t, py::buffer_info *out);
 #endif
-
-  /// Concatenate based on given tensor, can fill in current tensor with a smaller one, unlike InsertTensor
-  Status Concatenate(const std::vector<dsize_t> &index, const std::shared_ptr<Tensor> &input);
 
   /// TensorIterator is a linear iterator that can be used to iterate over the elements of the Tensor
   /// The order  elements  is as the memory layout (i.e., row-major) [[1,2,3],[4,5,6] --> 1,2,3,4,5,6

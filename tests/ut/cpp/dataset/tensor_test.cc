@@ -432,7 +432,7 @@ TEST_F(MindDataTestTensorDE, TensorSlice) {
   ASSERT_EQ(*t2, *t);
 }
 
-TEST_F(MindDataTestTensorDE, TensorConcatenate) {
+TEST_F(MindDataTestTensorDE, TensorPartialInsert) {
   std::vector<uint32_t> values1 = {1, 2, 3, 0, 0, 0};
   std::vector<uint32_t> values2 = {4, 5, 6};
   std::vector<uint32_t> expected = {1, 2, 3, 4, 5, 6};
@@ -445,7 +445,7 @@ TEST_F(MindDataTestTensorDE, TensorConcatenate) {
 
   std::shared_ptr<Tensor> out;
   Tensor::CreateFromVector(expected, &out);
-  Status s = t1->Concatenate({3}, t2);
+  Status s = t1->InsertTensor({3}, t2, true);
   EXPECT_TRUE(s.IsOk());
 
   auto i = out->begin<uint32_t>();
@@ -455,7 +455,7 @@ TEST_F(MindDataTestTensorDE, TensorConcatenate) {
   }
 
   // should fail if the concatenated vector is too large
-  s = t1->Concatenate({5}, t2);
+  s = t1->InsertTensor({5}, t2, true);
   EXPECT_FALSE(s.IsOk());
 }
 

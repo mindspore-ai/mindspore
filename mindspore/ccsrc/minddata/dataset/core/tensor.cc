@@ -522,16 +522,34 @@ Status Tensor::StartAddrOfIndex(std::vector<dsize_t> ind, uchar **start_addr_of_
   return Status::OK();
 }
 
-Status Tensor::InsertTensor(const std::vector<dsize_t> &ind, const std::shared_ptr<Tensor> &tensor) {
+Status Tensor::InsertTensor(const std::vector<dsize_t> &ind, const std::shared_ptr<Tensor> &tensor,
+                            const bool partial_insert) {
   std::string err_msg;
-  err_msg += (this->type() == DataType::DE_STRING) ? "[Tensor] Cannot batch tensors of type string\n" : "";
-  err_msg += (!this->shape().known() || !tensor->shape().known()) ? "[Tensor] unknown shape\n" : "";
-  err_msg += (ind.size() + tensor->Rank() != this->Rank()) ? "[Tensor] incorrect index\n" : "";
-  err_msg += tensor->type().SizeInBytes() != this->type().SizeInBytes() ? "[Tensor] incorrect datatype\n" : "";
+  if (partial_insert) {
+    err_msg += (ind.size() != 1)
+                 ? "[Tensor] only supports 1D insertion of elements not along the full length of the axis\n"
+                 : "";
+    err_msg +=
+      (ind.at(0) + tensor->shape().NumOfElements() > shape().NumOfElements()) ? "[Tensor] incorrect index\n" : "";
+  } else {
+    err_msg += (ind.size() + tensor->Rank() != Rank()) ? "[Tensor] incorrect index\n" : "";
+  }
+  err_msg += (type() == DataType::DE_STRING) ? "[Tensor] Cannot insert into a tensor of type string\n" : "";
+  err_msg += (!shape().known() || !tensor->shape().known()) ? "[Tensor] unknown shape\n" : "";
+
+  err_msg += tensor->type().SizeInBytes() != type().SizeInBytes() ? "[Tensor] incorrect datatype\n" : "";
   uchar *start_addr_of_ind = nullptr;
-  TensorShape remaining_shape = TensorShape::CreateUnknownRankShape();
-  err_msg += (!StartAddrOfIndex(ind, &start_addr_of_ind, &remaining_shape).IsOk()) ? "[Tensor] incorrect index\n" : "";
-  err_msg += !(remaining_shape == tensor->shape()) ? "[Tensor] memory error\n" : "";
+  if (partial_insert) {
+    TensorShape remaining_shape = tensor->shape();
+    err_msg +=
+      (!StartAddrOfIndex(ind, &start_addr_of_ind, &remaining_shape).IsOk()) ? "[Tensor] incorrect index\n" : "";
+  } else {
+    TensorShape remaining_shape = TensorShape::CreateUnknownRankShape();
+    err_msg +=
+      (!StartAddrOfIndex(ind, &start_addr_of_ind, &remaining_shape).IsOk()) ? "[Tensor] incorrect index\n" : "";
+    err_msg += !(remaining_shape == tensor->shape()) ? "[Tensor] memory error\n" : "";
+  }
+
   if (!err_msg.empty()) {
     MS_LOG(DEBUG) << "Insert tensor message: " << err_msg;
     RETURN_STATUS_UNEXPECTED(err_msg);
@@ -548,39 +566,6 @@ Status Tensor::InsertTensor(const std::vector<dsize_t> &ind, const std::shared_p
       }
     } else {
       RETURN_STATUS_UNEXPECTED("Failed to create memory for Tensor.");
-    }
-  }
-}
-
-Status Tensor::Concatenate(const std::vector<dsize_t> &index, const std::shared_ptr<Tensor> &tensor) {
-  std::string err_msg;
-  err_msg += (index.size() != 1) ? "[Tensor] only supports 1d concatenation \n" : "";
-  err_msg += (type() == DataType::DE_STRING) ? "[Tensor] Cannot batch tensors of type string\n" : "";
-  err_msg += (!shape().known() || !tensor->shape().known()) ? "[Tensor] unknown shape\n" : "";
-
-  err_msg +=
-    (index.at(0) + tensor->shape().NumOfElements() > this->shape().NumOfElements()) ? "[Tensor] incorrect index\n" : "";
-  err_msg += tensor->type().SizeInBytes() != this->type().SizeInBytes() ? "[Tensor] incorrect datatype\n" : "";
-  uchar *start_addr_of_ind = nullptr;
-
-  TensorShape remaining_shape = tensor->shape();
-  StartAddrOfIndex(index, &start_addr_of_ind, &remaining_shape);
-  err_msg += (start_addr_of_ind == nullptr) ? "Failed to create memory for Tensor.\n" : "";
-
-  if (!err_msg.empty()) {
-    MS_LOG(DEBUG) << "Insert tensor message: " << err_msg;
-
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  } else {
-    int ret_code =
-      memcpy_s(start_addr_of_ind, tensor->SizeInBytes(), tensor->GetMutableBuffer(), tensor->SizeInBytes());
-
-    if (ret_code == 0) {
-      return Status::OK();
-    } else {
-      err_msg += "[Tensor] error in memcpy_s when inserting tensor\n";
-      MS_LOG(DEBUG) << "Tensor message: " << err_msg;
-      RETURN_STATUS_UNEXPECTED(err_msg);
     }
   }
 }
