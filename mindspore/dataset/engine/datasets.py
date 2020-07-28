@@ -188,13 +188,13 @@ class Dataset:
         except for maybe the last batch for each bucket.
 
         Args:
-            column_names (list of string): Columns passed to element_length_function.
-            bucket_boundaries (list of int): A list consisting of the upper boundaries
+            column_names (list[str]): Columns passed to element_length_function.
+            bucket_boundaries (list[int]): A list consisting of the upper boundaries
                 of the buckets. Must be strictly increasing. If there are n boundaries,
                 n+1 buckets are created: One bucket for [0, bucket_boundaries[0]), one
                 bucket for [bucket_boundaries[i], bucket_boundaries[i+1]) for each
                 0<i<n, and one bucket for [bucket_boundaries[n-1], inf).
-            bucket_batch_sizes (list of int): A list consisting of the batch sizes for
+            bucket_batch_sizes (list[int]): A list consisting of the batch sizes for
                 each bucket. Must contain len(bucket_boundaries)+1 elements.
             element_length_function (Callable, optional): A function that takes in
                 len(column_names) arguments and returns an int. If no value is
@@ -269,7 +269,7 @@ class Dataset:
                 (list[Tensor], list[Tensor], ..., BatchInfo) as input parameters. Each list[Tensor] represent a batch of
                 Tensors on a given column. The number of lists should match with number of entries in input_columns. The
                 last parameter of the callable should always be a BatchInfo object.
-            input_columns (list of string, optional): List of names of the input columns. The size of the list should
+            input_columns (list[str], optional): List of names of the input columns. The size of the list should
                 match with signature of per_batch_map callable.
             pad_info (dict, optional): Whether to perform padding on selected columns. pad_info={"col1":([224,224],0)}
                 would pad column with name "col1" to a tensor of size [224,224] and fill the missing with 0.
@@ -417,7 +417,7 @@ class Dataset:
                 input columns expected by the first operator. (default=None, the first
                 operation will be passed however many columns that is required, starting from
                 the first column).
-            operations (list[TensorOp] or Python list[functions]): List of operations to be
+            operations (Union[list[TensorOp], list[functions]]): List of operations to be
                 applied on the dataset. Operations are applied in the order they appear in this list.
             output_columns (list[str], optional): List of names assigned to the columns outputted by
                 the last operation. This parameter is mandatory if len(input_columns) !=
@@ -724,7 +724,7 @@ class Dataset:
         called where ds is a MappableDataset.
 
         Args:
-            sizes (list of int or list of float): If a list of integers [s1, s2, …, sn] is
+            sizes (Union[list[int], list[float]]): If a list of integers [s1, s2, …, sn] is
                 provided, the dataset will be split into n datasets of size s1, size s2, …, size sn
                 respectively. If the sum of all sizes does not equal the original dataset size, an
                 an error will occur.
@@ -806,7 +806,7 @@ class Dataset:
         Zip the datasets in the input tuple of datasets. Columns in the input datasets must not have the same name.
 
         Args:
-            datasets (tuple or class Dataset): A tuple of datasets or a single class Dataset
+            datasets (Union[tuple, class Dataset]): A tuple of datasets or a single class Dataset
                 to be zipped together with this dataset.
 
         Returns:
@@ -835,7 +835,7 @@ class Dataset:
             The column name，column data type and rank of column data should be the same in input datasets.
 
         Args:
-            datasets (list or class Dataset): A list of datasets or a single class Dataset
+            datasets (Union[list, class Dataset]): A list of datasets or a single class Dataset
                 to be concatenated together with this dataset.
 
         Returns:
@@ -1261,10 +1261,10 @@ class Dataset:
 
         Args:
             condition_name (str): The condition name that is used to toggle sending next row.
-            num_batch (int or None): The number of batches(rows) that are released.
+            num_batch (Union[int, None]): The number of batches(rows) that are released.
                 When num_batch is None, it will default to the number specified by the
                 sync_wait operator (default=None).
-            data (dict or None): The data passed to the callback (default=None).
+            data (Union[dict, None]): The data passed to the callback (default=None).
         """
         if isinstance(num_batch, int) and num_batch <= 0:
             # throwing exception, disable all sync_wait in pipeline
@@ -1343,7 +1343,7 @@ class SourceDataset(Dataset):
         Utility function to search for files with the given glob patterns.
 
         Args:
-            patterns (str or list[str]): string or list of patterns to be searched.
+            patterns (Union[str, list[str]]): string or list of patterns to be searched.
 
         Returns:
             List, files.
@@ -1445,7 +1445,7 @@ class MappableDataset(SourceDataset):
         that calls this function is a MappableDataset.
 
         Args:
-            sizes (list of int or list of float): If a list of integers [s1, s2, …, sn] is
+            sizes (Union[list[int], list[float]]): If a list of integers [s1, s2, …, sn] is
                 provided, the dataset will be split into n datasets of size s1, size s2, …, size sn
                 respectively. If the sum of all sizes does not equal the original dataset size, an
                 an error will occur.
@@ -1593,7 +1593,7 @@ class BatchDataset(DatasetOp):
 
     Args:
         input_dataset (Dataset): Input Dataset to be batched.
-        batch_size (int or function): The number of rows each batch is created with. An
+        batch_size (Union[int, function]): The number of rows each batch is created with. An
             int or callable which takes exactly 1 parameter, BatchInfo.
         drop_remainder (bool, optional): Determines whether or not to drop the last
             possibly incomplete batch (default=False). If True, and if there are less
@@ -1604,7 +1604,7 @@ class BatchDataset(DatasetOp):
             (list[Tensor], list[Tensor], ..., BatchInfo) as input parameters. Each list[Tensor] represent a batch of
             Tensors on a given column. The number of lists should match with number of entries in input_columns. The
             last parameter of the callable should always be a BatchInfo object.
-        input_columns (list of string, optional): List of names of the input columns. The size of the list should
+        input_columns (list[str], optional): List of names of the input columns. The size of the list should
             match with signature of per_batch_map callable.
         pad_info (dict, optional): Whether to perform padding on selected columns. pad_info={"col1":([224,224],0)}
             would pad column with name "col1" to a tensor of size [224,224] and fill the missing with 0.
@@ -2447,7 +2447,7 @@ def _select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id, n
 
     Args:
         num_samples (int): Number of samples.
-        input_sampler (Iterable / Sampler): Sampler from user.
+        input_sampler (Union[Iterable, Sampler]): Sampler from user.
         shuffle (bool): Shuffle.
         num_shards (int): Number of shard for sharding.
         shard_id (int): Shard ID.
@@ -2786,7 +2786,7 @@ class MindDataset(MappableDataset):
     A source dataset that reads from shard files and database.
 
     Args:
-        dataset_file (str, list[str]): One of file names or file list in dataset.
+        dataset_file (Union[str, list[str]]): One of file names or file list in dataset.
         columns_list (list[str], optional): List of columns to be read (default=None).
         num_parallel_workers (int, optional): The number of readers (default=None).
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset
@@ -3158,7 +3158,7 @@ class GeneratorDataset(MappableDataset):
          - not allowed
 
     Args:
-        source (Callable/Iterable/Random Accessible):
+        source (Union[Callable, Iterable, Random Accessible]):
             A generator callable object, an iterable python object or a random accessible python object.
             Callable source is required to return a tuple of numpy array as a row of the dataset on source().next().
             Iterable source is required to return a tuple of numpy array as a row of the dataset on iter(source).next().
@@ -3168,15 +3168,15 @@ class GeneratorDataset(MappableDataset):
             provide either column_names or schema.
         column_types (list[mindspore.dtype], optional): List of column data types of the dataset (default=None).
             If provided, sanity check will be performed on generator output.
-        schema (Schema/str, optional): Path to the json schema file or schema object (default=None). Users are
+        schema (Union[Schema, str], optional): Path to the json schema file or schema object (default=None). Users are
             required to provide either column_names or schema. If both are provided, schema will be used.
         num_samples (int, optional): The number of samples to be included in the dataset
             (default=None, all images).
         num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel (default=1).
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
             (default=None, expected order behavior shown in the table).
-        sampler (Sampler/Iterable, optional): Object used to choose samples from the dataset. Random accessible input is
-            required (default=None, expected order behavior shown in the table).
+        sampler (Union[Sampler, Iterable], optional): Object used to choose samples from the dataset. Random accessible
+            input is required (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset should be divided into (default=None).
             When this argument is specified, 'num_samples' will not effect. Random accessible input is required.
         shard_id (int, optional): The shard ID within num_shards (default=None). This argument should be specified only
@@ -3328,9 +3328,9 @@ class TFRecordDataset(SourceDataset):
     A source dataset that reads and parses datasets stored on disk in TFData format.
 
     Args:
-        dataset_files (str or list[str]): String or list of files to be read or glob strings to search for a pattern of
-            files. The list will be sorted in a lexicographical order.
-        schema (str or Schema, optional): Path to the json schema file or schema object (default=None).
+        dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for a
+        pattern of files. The list will be sorted in a lexicographical order.
+        schema (Union[str, Schema], optional): Path to the json schema file or schema object (default=None).
             If the schema is not provided, the meta data from the TFData file is considered the schema.
         columns_list (list[str], optional): List of columns to be read (default=None, read all columns)
         num_samples (int, optional): number of samples(rows) to read (default=None).
@@ -3339,7 +3339,8 @@ class TFRecordDataset(SourceDataset):
             If both num_samples and numRows(parsed from schema) are greater than 0, read num_samples rows.
         num_parallel_workers (int, optional): number of workers to read the data
             (default=None, number set in the config).
-        shuffle (bool, Shuffle level, optional): perform reshuffling of the data every epoch (default=Shuffle.GLOBAL).
+        shuffle (Union[bool, Shuffle level], optional): perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
             If shuffle is False, no shuffling will be performed;
             If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
             Otherwise, there are two levels of shuffling:
@@ -3920,7 +3921,7 @@ class RandomDataset(SourceDataset):
 
     Args:
         total_rows (int): number of rows for the dataset to generate (default=None, number of rows is random)
-        schema (str or Schema, optional): Path to the json schema file or schema object (default=None).
+        schema (Union[str, Schema], optional): Path to the json schema file or schema object (default=None).
             If the schema is not provided, the random dataset generates a random schema.
         columns_list (list[str], optional): List of columns to be read (default=None, read all columns)
         num_samples (int): number of samples to draw from the total. (default=None, which means all rows)
@@ -4097,7 +4098,7 @@ class Schema:
         Parse the columns and add it to self.
 
         Args:
-            columns (dict or list[dict]): dataset attribution information, decoded from schema file.
+            columns (Union[dict, list[dict]]): dataset attribution information, decoded from schema file.
 
                 - list[dict], 'name' and 'type' must be in keys, 'shape' optional.
 
@@ -4710,7 +4711,7 @@ class CLUEDataset(SourceDataset):
         }
 
     Args:
-        dataset_files (str or a list of strings): String or list of files to be read or glob strings to search for
+        dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for
             a pattern of files. The list will be sorted in a lexicographical order.
         task (str, optional): The kind of task, one of 'AFQMC', 'TNEWS', 'IFLYTEK', 'CMNLI', 'WSC' and 'CSL'.
             (default=AFQMC).
@@ -4718,7 +4719,8 @@ class CLUEDataset(SourceDataset):
         num_samples (int, optional): number of samples(rows) to read (default=None, reads the full dataset).
         num_parallel_workers (int, optional): number of workers to read the data
             (default=None, number set in the config).
-        shuffle (bool, Shuffle level, optional): perform reshuffling of the data every epoch (default=Shuffle.GLOBAL).
+        shuffle (Union[bool, Shuffle level], optional): perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
             If shuffle is False, no shuffling will be performed;
             If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
             Otherwise, there are two levels of shuffling:
@@ -4923,18 +4925,19 @@ class CSVDataset(SourceDataset):
     A source dataset that reads and parses CSV datasets.
 
     Args:
-        dataset_files (str or a list of strings): String or list of files to be read or glob strings to search
+        dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search
             for a pattern of files. The list will be sorted in a lexicographical order.
         field_delim (str, optional): A string that indicates the char delimiter to separate fields (default=',').
         column_defaults (list, optional): List of default values for the CSV field (default=None). Each item
             in the list is either a valid type (float, int, or string). If this is not provided, treats all
             columns as string type.
-        column_names (list of string, optional): List of column names of the dataset (default=None). If this
+        column_names (list[str], optional): List of column names of the dataset (default=None). If this
             is not provided, infers the column_names from the first row of CSV file.
         num_samples (int, optional): number of samples(rows) to read (default=None, reads the full dataset).
         num_parallel_workers (int, optional): number of workers to read the data
             (default=None, number set in the config).
-        shuffle (bool, Shuffle level, optional): perform reshuffling of the data every epoch (default=Shuffle.GLOBAL).
+        shuffle (Union[bool, Shuffle level], optional): perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
             If shuffle is False, no shuffling will be performed;
             If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
             Otherwise, there are two levels of shuffling:
@@ -5026,12 +5029,13 @@ class TextFileDataset(SourceDataset):
     The generated dataset has one columns ['text'].
 
     Args:
-        dataset_files (str or list[str]): String or list of files to be read or glob strings to search for a pattern of
-            files. The list will be sorted in a lexicographical order.
+        dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for a
+            pattern of files. The list will be sorted in a lexicographical order.
         num_samples (int, optional): number of samples(rows) to read (default=None, reads the full dataset).
         num_parallel_workers (int, optional): number of workers to read the data
             (default=None, number set in the config).
-        shuffle (bool, Shuffle level, optional): perform reshuffling of the data every epoch (default=Shuffle.GLOBAL).
+        shuffle (Union[bool, Shuffle level], optional): perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
             If shuffle is False, no shuffling will be performed;
             If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
             Otherwise, there are two levels of shuffling:
@@ -5212,17 +5216,17 @@ class NumpySlicesDataset(GeneratorDataset):
          - not allowed
 
     Args:
-        data (list, tuple or dict) Input of Given data, supported data type includes list, tuple, dict and other numpy
-            format. Input data will be sliced in first dimension and generate many rows, large data is not recommend to
-            load in this way as data is loading into memory.
+        data (Union[list, tuple, dict]) Input of Given data, supported data type includes list, tuple, dict and other
+            numpy format. Input data will be sliced in first dimension and generate many rows, large data is not
+            recommend to load in this way as data is loading into memory.
         column_names (list[str], optional): List of column names of the dataset (default=None). If column_names not
             provided, when data is dict, column_names will be its key, otherwise it will be like column_1, column_2 ...
         num_samples (int, optional): The number of samples to be included in the dataset (default=None, all images).
         num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel (default=1).
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
             (default=None, expected order behavior shown in the table).
-        sampler (Sampler/Iterable, optional): Object used to choose samples from the dataset. Random accessible input is
-            required (default=None, expected order behavior shown in the table).
+        sampler (Union[Sampler, Iterable], optional): Object used to choose samples from the dataset. Random accessible
+            input is required (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset should be divided into (default=None).
             When this argument is specified, 'num_samples' will not effect. Random accessible input is required.
         shard_id (int, optional): The shard ID within num_shards (default=None). This argument should be specified only
@@ -5263,8 +5267,8 @@ class BuildVocabDataset(DatasetOp):
 
     Args:
         vocab(Vocab): text.vocab object.
-        columns(str or list, optional): column names to get words from. It can be a list of column names (Default is
-            None, all columns are used, return error if any column isn't string).
+        columns(Union[str, list], optional): column names to get words from. It can be a list of column names (Default
+            is None, all columns are used, return error if any column isn't string).
         freq_range(tuple, optional): A tuple of integers (min_frequency, max_frequency). Words within the frequency
             range would be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
             can be None, which corresponds to 0/total_words separately (default=None, all words are included).

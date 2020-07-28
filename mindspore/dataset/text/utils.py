@@ -51,7 +51,7 @@ class Vocab(cde.Vocab):
 
         Args:
             dataset(Dataset): dataset to build vocab from.
-            columns(list of str, optional): column names to get words from. It can be a list of column names.
+            columns(list[str], optional): column names to get words from. It can be a list of column names.
                 (default=None, where all columns will be used. If any column isn't string type, will return error).
             freq_range(tuple, optional): A tuple of integers (min_frequency, max_frequency). Words within the frequency
                 range would be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency=0 is the same as
