@@ -23,8 +23,8 @@
 #include <utility>
 #include <vector>
 
-#include "./de_tensor_generated.h"
 #include "minddata/dataset/core/tensor_row.h"
+#include "minddata/dataset/engine/cache/de_tensor_generated.h"
 #include "minddata/dataset/util/slice.h"
 #include "minddata/dataset/util/wait_post.h"
 
