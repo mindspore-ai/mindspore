@@ -130,7 +130,7 @@ def test_cache_map_basic4():
   ds1 = ds1.map(input_columns=["image"], operations=decode_op)
   logger.info("ds1.dataset_size is ", ds1.get_dataset_size())
   shape = ds1.output_shapes()
-
+  logger.info(shape)
   num_iter = 0
   for _ in ds1.create_dict_iterator():
       logger.info("get data from dataset")

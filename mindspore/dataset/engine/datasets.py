@@ -435,7 +435,8 @@ class Dataset:
                 parallel (default=None, the value from the config will be used).
             python_multiprocessing (bool, optional): Parallelize python operations with multiple worker process. This
                 option could be beneficial if the python operation is computational heavy (default=False).
-            cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used)
+            cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
+                The cache feature is under development and is not recommended.
 
         Returns:
             MapDataset, dataset after mapping operation.
@@ -1951,7 +1952,9 @@ class MapDataset(DatasetOp):
             in parallel (default=None).
         python_multiprocessing (bool, optional): Parallelize python operations with multiple worker process. This
             option could be beneficial if the python operation is computational heavy (default=False).
-        cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used)
+        cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
+            The cache feature is under development and is not recommended.
+
 
         Raises:
             ValueError: If len(input_columns) != len(output_columns) and columns_order is not specified.
@@ -2552,7 +2555,8 @@ class ImageFolderDatasetV2(MappableDataset):
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument should be specified only when num_shards is also specified.
-        cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used)
+        cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
+            The cache feature is under development and is not recommended.
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -3348,7 +3352,8 @@ class TFRecordDataset(SourceDataset):
             argument should be specified only when num_shards is also specified.
         shard_equal_rows (bool): Get equal rows for all shards(default=False). If shard_equal_rows is false, number
             of rows of each shard may be not equal.
-        cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used)
+        cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
+            The cache feature is under development and is not recommended.
     Examples:
         >>> import mindspore.dataset as ds
         >>> import mindspore.common.dtype as mstype
@@ -3919,7 +3924,8 @@ class RandomDataset(SourceDataset):
         num_samples (int): number of samples to draw from the total. (default=None, which means all rows)
         num_parallel_workers (int, optional): number of workers to read the data
             (default=None, number set in the config).
-        cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used)
+        cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
+            The cache feature is under development and is not recommended.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset
             (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset should be divided
