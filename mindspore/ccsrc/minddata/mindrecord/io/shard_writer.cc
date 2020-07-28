@@ -83,7 +83,7 @@ MSRStatus ShardWriter::OpenDataFiles(bool append) {
       // if not append and mindrecord file exist, return FAILED
       fs->open(common::SafeCStr(file), std::ios::in | std::ios::binary);
       if (fs->good()) {
-        MS_LOG(ERROR) << "MindRecord file already existed.";
+        MS_LOG(ERROR) << "MindRecord file already existed, please delete file: " << common::SafeCStr(file);
         fs->close();
         return FAILED;
       }
