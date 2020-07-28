@@ -205,7 +205,7 @@ def test_csv_dataset_exception():
     with pytest.raises(Exception) as err:
         for _ in data.create_dict_iterator():
             pass
-    assert "Failed to parse CSV file" in str(err.value)
+    assert "Failed to parse file" in str(err.value)
 
 
 def test_csv_dataset_type_error():
@@ -218,7 +218,7 @@ def test_csv_dataset_type_error():
     with pytest.raises(Exception) as err:
         for _ in data.create_dict_iterator():
             pass
-    assert "invalid argument of stoi" in str(err.value)
+    assert "type does not match" in str(err.value)
 
 
 if __name__ == "__main__":

@@ -76,7 +76,8 @@ class CsvOp : public ParallelOp {
           cur_col_(0),
           total_rows_(0),
           start_offset_(0),
-          end_offset_(std::numeric_limits<int64_t>::max()) {
+          end_offset_(std::numeric_limits<int64_t>::max()),
+          err_message_("unkonw") {
       cur_buffer_ = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
       initCsvParser();
     }
@@ -189,6 +190,7 @@ class CsvOp : public ParallelOp {
     std::vector<char> str_buf_;
     std::unique_ptr<TensorQTable> tensor_table_;
     std::unique_ptr<DataBuffer> cur_buffer_;
+    std::string err_message_;
   };
 
   class Builder {
