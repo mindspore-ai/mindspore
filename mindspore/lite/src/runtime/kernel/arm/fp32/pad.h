@@ -19,7 +19,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 
-#include "src/runtime/kernel/arm/opclib/pad.h"
+#include "src/runtime/kernel/arm/opclib/fp32/pad.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 
 namespace mindspore::kernel {
@@ -29,12 +29,7 @@ class PadCPUKernel : public LiteKernel {
                const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
       : LiteKernel(parameter, inputs, outputs), context_(ctx) {}
 
-  ~PadCPUKernel() {
-    if (exec_input_data_ != nullptr) {
-      free(exec_input_data_);
-      exec_input_data_ = nullptr;
-    }
-  }
+  ~PadCPUKernel() {}
 
   int Init() override;
   int ReSize() override { return 0; };
@@ -42,18 +37,10 @@ class PadCPUKernel : public LiteKernel {
   int RunImpl(int task_id);
 
  private:
-  int CheckInputsOutputsParams();
-  int MaybeConvertInputLayout();
-
- private:
   std::vector<int> paddings_;
   size_t paddings_size_;
   const lite::Context *context_;
-  schema::Format exec_format_ = schema::Format_NHWC;
-  LayoutConvertor layout_convertor_ = nullptr;
-  float *exec_input_data_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_PAD_H_
-

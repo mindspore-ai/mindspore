@@ -25,6 +25,10 @@ inline int offset(const int *shape, const int dim0, const int dim1, const int di
   return ((dim0 * shape[1] + dim1) * shape[2] + dim2) * shape[3] + dim3;
 }
 
+inline int offsetComm(const int *shape, const int dim0, const int dim1, const int dim2) {
+  return ((dim0 * shape[1] + dim1) * shape[2] + dim2) * shape[3];
+}
+
 inline int offset4d(const int *shape, const int *dims) { return offset(shape, dims[0], dims[1], dims[2], dims[3]); }
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_OFFSET_UTILS_H_
 

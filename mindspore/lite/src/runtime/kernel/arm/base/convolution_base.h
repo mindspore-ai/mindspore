@@ -57,15 +57,12 @@ class ConvolutionBaseCPUKernel : public LiteKernel {
   int thread_count_;
   int tile_num_;
   void *bias_data_ = nullptr;
-  void *nhwc4_input_;
+  void *nhwc4_input_ = nullptr;
   const Context *ctx_;
   ConvParameter *conv_param_;
-  ConvQuantArg *conv_quant_arg_ = nullptr;
-  QuantArg **quant_args_ = nullptr;
   LayoutConvertor convert_func_;
 };
 void ComputeQuantOutRange(ConvParameter *conv_param);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CONVOLUTION_BASE_H_
-

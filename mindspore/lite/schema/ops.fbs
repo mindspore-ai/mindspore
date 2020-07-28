@@ -99,8 +99,9 @@ enum PaddingMode : byte {
 }
 
 table Pad {
-    paddingmode: PaddingMode;
     paddings: [int];
+    paddingMode: PaddingMode;
+    constantValue: float;
 }
 
 table Maximum {

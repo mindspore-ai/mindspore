@@ -169,10 +169,12 @@ int DeConvolutionCPUKernel::DoPostFunc(int task_id) {
     return RET_OK;
   }
 
+  float *cur_bias =
+    (bias_data_ == nullptr) ? nullptr : reinterpret_cast<float *>(bias_data_) + thread_co_stride_ * task_id;
+
   DeConvPostFp32(tmp_output_ + thread_co_stride_ * task_id * input_plane * kernel_plane,
                  c4_output_ + thread_co_stride_ * task_id * output_plane, output_ptr_ + thread_co_stride_ * task_id,
-                 reinterpret_cast<float *>(bias_data_) + thread_co_stride_ * task_id, cur_oc, input_plane, kernel_plane,
-                 output_plane, conv_param_);
+                 cur_bias, cur_oc, input_plane, kernel_plane, output_plane, conv_param_);
   return RET_OK;
 }
 
@@ -224,4 +226,3 @@ int DeConvolutionCPUKernel::Run() {
   return RET_OK;
 }
 }  // namespace mindspore::kernel
-

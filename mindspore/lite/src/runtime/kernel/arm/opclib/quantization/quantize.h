@@ -58,6 +58,12 @@ struct FcQuantArg {
   int32_t quant_multiplier;
 };
 
+struct PadQuantArg {
+  QuantArg *in_quant_args_ = nullptr;
+  QuantArg *out_quanr_args_ = nullptr;
+  int8_t *constant_value_ = nullptr;
+};
+
 struct MulQuantArg {
   QuantArg in_quant_args_[2];
   QuantArg out_quant_arg_;
