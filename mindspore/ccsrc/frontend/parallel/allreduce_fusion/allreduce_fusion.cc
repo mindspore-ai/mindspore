@@ -50,7 +50,7 @@ std::unordered_set<CNodePtr> FindCNodesWithPara(const AnfNodePtr &para, uint32_t
     if (node_prim->name() == DEPEND && node_pair.second != 1) {
       continue;
     }
-    if (IsParallelCareNode(cnode) && cnode->HasUserData<OperatorInfo>()) {
+    if (IsParallelCareNode(cnode) && cnode->has_user_data<OperatorInfo>()) {
       (void)cnode_set.emplace(cnode);
     } else {
       auto cnode_set_sub = FindCNodesWithPara(node_pair.first, recursive_times + 1);
@@ -98,7 +98,7 @@ CNodeCostMap AllreduceFusion::FindCNode(const AnfNodePtr &from, uint32_t recursi
     return cnode_dist;
   }
 
-  auto operator_info = cnode->GetUserData<OperatorInfo>();
+  auto operator_info = cnode->user_data<OperatorInfo>();
   MS_LOG(DEBUG) << "cnode " << cnode->ToString() << " IsParallelCareNode: " << IsParallelCareNode(cnode)
                 << " operator_info: " << (operator_info != nullptr);
 

@@ -437,7 +437,7 @@ static void DrawParallelInfo(Graphviz *const graph_obj, const CNodePtr &node) {
   if (graph_obj == nullptr || node == nullptr) {
     return;
   }
-  auto distributed_operation_info = node->GetUserData<parallel::OperatorInfo>();
+  auto distributed_operation_info = node->user_data<parallel::OperatorInfo>();
   if (distributed_operation_info != nullptr) {
     auto strategyPtr = distributed_operation_info->strategy();
     if (strategyPtr != nullptr) {

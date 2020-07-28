@@ -267,7 +267,7 @@ void DumpParallelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo
     return;
   }
 
-  auto operator_info = node->GetUserData<parallel::OperatorInfo>();
+  auto operator_info = node->user_data<parallel::OperatorInfo>();
   if (operator_info == nullptr) {
     return;
   }

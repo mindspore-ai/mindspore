@@ -158,29 +158,29 @@ class AnfNode : public Base {
   size_t seen_{0};
 
   template <typename T>
-  void SetUserData(const std::string &key, const std::shared_ptr<T> &value) {
+  void set_user_data(const std::string &key, const std::shared_ptr<T> &value) {
     user_data_.set<T>(key, value);
   }
 
   template <typename T>
-  void SetUserData(const std::shared_ptr<T> &value) {
+  void set_user_data(const std::shared_ptr<T> &value) {
     user_data_.set<T>(T::key, value);
   }
 
   template <typename T>
-  std::shared_ptr<T> GetUserData(const std::string &key) const {
+  std::shared_ptr<T> user_data(const std::string &key) const {
     return user_data_.get<T>(key);
   }
 
   template <typename T>
-  std::shared_ptr<T> GetUserData() const {
+  std::shared_ptr<T> user_data() const {
     return user_data_.get<T>(T::key);
   }
 
-  bool HasUserData(const std::string &key) const { return user_data_.has(key); }
+  bool has_user_data(const std::string &key) const { return user_data_.has(key); }
 
   template <typename T>
-  bool HasUserData() const {
+  bool has_user_data() const {
     return user_data_.has(T::key);
   }
 

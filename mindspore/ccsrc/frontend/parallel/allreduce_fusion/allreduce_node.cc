@@ -83,7 +83,7 @@ Status AllreduceNode::AddPara(const AnfNodePtr &node_ptr) {
   }
   auto para_ptr = node_ptr->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(para_ptr);
-  auto layout_ptr = para_ptr->GetUserData<TensorLayout>();
+  auto layout_ptr = para_ptr->user_data<TensorLayout>();
   if (layout_ptr == nullptr) {
     MS_LOG(ERROR) << "layout_ptr is nullptr!";
     return FAILED;
