@@ -223,6 +223,8 @@ class IndexedSlices:
 
     IndexedSlices can only be used in `Cell`'s contruct method.
 
+    Pynative mode not supported at the moment.
+
     Args:
         indices (Tensor): A 1-D integer Tensor of shape [D0].
         values (Tensor): A Tensor of any dtype of shape [D0, D1, ..., Dn].
@@ -233,16 +235,17 @@ class IndexedSlices:
         IndexedSlices, composed of `indices`, `values`, `dense_shape`.
 
     Examples:
-        >>> # Create a IndexedSlices.
-        >>> indices = Tensor([1, 2])
-        >>> values = Tensor([[0, 0], [1, 2]], dtype=ms.float32)
-        >>> dense_shape = (3, 2)
-        >>> indexed_slices = IndexedSlices(indices, values, dense_shape)
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self, dense_shape):
+        >>>         super(Net, self).__init__()
+        >>>         self.dense_shape = dense_shape
+        >>>     def construct(self, indices, values):
+        >>>         x = IndexedSlices(indices, values, self.dense_shape)
+        >>>         return x.values(), x.indices(), x.dense_shape()
         >>>
-        >>> # Get atrr.
-        >>> indices = indexed_slices.indices()
-        >>> values = indexed_slices.values()
-        >>> dense_shape = indexed_slices.dense_shape()
+        >>> indices = Tensor([0])
+        >>> values = Tensor([[1, 2]], dtype=ms.float32)
+        >>> Net((3, 2))(indices, values)
     """
     def __init__(self, indices, values, dense_shape):
         raise NotImplementedError
@@ -253,6 +256,8 @@ class SparseTensor:
     A sparse representation of a set of nonzero elememts from a tensor at given indices.
 
     SparseTensor can only be used in `Cell`'s contruct method.
+
+    Pynative mode not supported at the moment.
 
     For a tensor dense, its SparseTensor(indices, values, dense_shape) has
     `dense[indices[i]] = values[i]`.
@@ -269,17 +274,18 @@ class SparseTensor:
     Outputs:
         SparseTensor, composed of `indices`, `values`, `dense_shape`.
 
-    Examples:
-        >>> # Create a SparseTensor.
+    Examples:     
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self, dense_shape):
+        >>>         super(Net, self).__init__()
+        >>>         self.dense_shape = dense_shape
+        >>>     def construct(self, indices, values):
+        >>>         x = SparseTensor(indices, values, self.dense_shape)
+        >>>         return x.values(), x.indices(), x.dense_shape()
+        >>>
         >>> indices = Tensor([[0, 1], [1, 2]])
         >>> values = Tensor([1, 2], dtype=ms.float32)
-        >>> dense_shape = (3, 4)
-        >>> sparse_tensor = SparseTensor(indices, values, dense_shape)
-        >>>
-        >>> # Get atrr.
-        >>> indices = sparse_tensor.indices()
-        >>> values = sparse_tensor.values()
-        >>> dense_shape = sparse_tensor.dense_shape()
+        >>> Net((3, 4))(indices, values)
     """
     def __init__(self, indices, values, dense_shape):
         raise NotImplementedError
