@@ -114,13 +114,13 @@ test_cases = [
 
 test_cases_for_verify_exception = [
     ('SliceStartCross', {
-        'block': (NetWork_3(), {'exception': RuntimeError}),
+        'block': (NetWork_3(), {'exception': TypeError}),
         'desc_inputs': [Tensor(np.ones([2, 3, 4], np.int32)),
                         Tensor(np.zeros([2, 3, 4], np.int32)),
                         Tensor(np.ones([2, 3, 4], np.int32))],
     }),
     ('SliceStepZero', {
-        'block': (NetWork_3(), {'exception': RuntimeError}),
+        'block': (NetWork_3(), {'exception': TypeError}),
         'desc_inputs': [Tensor(np.ones([2, 3, 4], np.int32)),
                         Tensor(np.zeros([2, 3, 4], np.int32)),
                         Tensor(np.ones([2, 3, 4], np.int32))],

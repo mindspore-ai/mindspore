@@ -150,11 +150,12 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
   for (size_t index = 0; index < args_size; index++) {
     MS_EXCEPTION_IF_NULL(args_spec_list[index]);
     if (!args_spec_list[index]->isa<AbstractScalar>() && !args_spec_list[index]->isa<AbstractNone>()) {
-      MS_LOG(EXCEPTION) << "MakeSlice eval " << index << " parameter is neither AbstractScalar nor AbstractNone.";
+      MS_EXCEPTION(TypeError) << "MakeSlice eval " << index << " parameter is neither AbstractScalar nor AbstractNone.";
     }
     if (args_spec_list[index]->isa<AbstractScalar>() &&
         !dyn_cast<AbstractScalar>(args_spec_list[index])->BuildValue()->isa<Int32Imm>()) {
-      MS_LOG(EXCEPTION) << "MakeSlice eval " << index << " parameter is an AbstractScalar, but is not an int32 number.";
+      MS_EXCEPTION(TypeError) << "MakeSlice eval " << index
+                              << " parameter is an AbstractScalar, but is not an int32 number.";
     }
   }
   // Slice: start, end, step
