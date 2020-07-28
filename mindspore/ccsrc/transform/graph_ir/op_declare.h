@@ -70,8 +70,6 @@ DECLARE_OP_ADAPTER(AssignSub)
 DECLARE_OP_USE_OUTPUT(AssignSub)
 
 DECLARE_OP_ADAPTER(ReduceMean)
-DECLARE_OP_ADAPTER(Multiply)
-DECLARE_OP_USE_OUTPUT(Multiply)
 
 // ** Distributed Operations **
 DECLARE_OP_ADAPTER(HcomReduceScatter)
@@ -326,9 +324,6 @@ DECLARE_OP_USE_OUTPUT(MatMulV2)
 
 DECLARE_OP_ADAPTER(SoftmaxCrossEntropyWithLogits)
 DECLARE_OP_USE_OUTPUT(SoftmaxCrossEntropyWithLogits)
-
-DECLARE_OP_ADAPTER(MeanGrad)
-DECLARE_OP_USE_INPUT_ATTR(MeanGrad)
 
 DECLARE_OP_ADAPTER(Assign)
 DECLARE_OP_USE_OUTPUT(Assign)
