@@ -81,13 +81,21 @@ OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   AddressPtr m = std::make_shared<kernel::Address>();
   m->addr = new float[weight->size()];
   m->size = weight->size() * sizeof(float);
+  int ret = memset_s(m->addr, m->size, 0x00, m->size);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+  }
   AddressPtr v = std::make_shared<kernel::Address>();
   v->addr = new float[weight->size()];
   v->size = weight->size() * sizeof(float);
+  ret = memset_s(v->addr, v->size, 0x00, v->size);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+  }
 
   void *data_ptr = values.data();
   void *copy_data_ptr = new float[values.size()];
-  auto ret = memcpy_s(copy_data_ptr, values.size() * sizeof(float), data_ptr, values.size() * sizeof(float));
+  ret = memcpy_s(copy_data_ptr, values.size() * sizeof(float), data_ptr, values.size() * sizeof(float));
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
   }
@@ -120,10 +128,10 @@ OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
     std::accumulate((*grad_shape).begin(), (*grad_shape).end(), sizeof(float), std::multiplies<size_t>());
   AddressPtr grad = std::make_shared<kernel::Address>();
   grad->addr = new float[total_grad_size * worker_num];
-  auto ret2 = memcpy_s(grad->addr, lens[6] * sizeof(float), reinterpret_cast<float *>(epsilon->addr) + lens[5],
-                       lens[6] * sizeof(float));
-  if (ret2 != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret2 << ")";
+  ret = memcpy_s(grad->addr, lens[6] * sizeof(float), reinterpret_cast<float *>(epsilon->addr) + lens[5],
+                 lens[6] * sizeof(float));
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
   }
   grad->size = lens[6] * sizeof(float);
 
@@ -132,10 +140,10 @@ OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
     std::accumulate((*indices_shape).begin(), (*indices_shape).end(), sizeof(float), std::multiplies<size_t>());
   AddressPtr indices = std::make_shared<kernel::Address>();
   indices->addr = new float[total_indice_size * worker_num];
-  auto ret3 = memcpy_s(indices->addr, lens[7] * sizeof(float),
-                       reinterpret_cast<float *>(epsilon->addr) + lens[5] + lens[6], lens[7] * sizeof(float));
-  if (ret3 != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret3 << ")";
+  ret = memcpy_s(indices->addr, lens[7] * sizeof(float), reinterpret_cast<float *>(epsilon->addr) + lens[5] + lens[6],
+                 lens[7] * sizeof(float));
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
   }
   indices->size = lens[7] * sizeof(int);
 
@@ -160,7 +168,7 @@ OptimizerInfo *SparseFtrlOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   linear->addr = new float[weight->size()];
   auto ret = memset_s(linear->addr, weight->size() * sizeof(float), 0x00, weight->size() * sizeof(float));
   if (ret != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    MS_LOG(EXCEPTION) << "memset_s error, errorno(" << ret << ")";
   }
   linear->size = weight->size() * sizeof(float);
 
