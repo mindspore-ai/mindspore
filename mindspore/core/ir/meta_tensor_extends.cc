@@ -37,5 +37,7 @@ abstract::AbstractBasePtr MetaTensor::ToAbstract() {
   abs_tensor->set_value(shared_from_base<MetaTensor>());
   return abs_tensor;
 }
+
+TypePtr MetaTensor::Dtype() const { return TypeIdToType(data_type_); }
 }  // namespace tensor
 }  // namespace mindspore

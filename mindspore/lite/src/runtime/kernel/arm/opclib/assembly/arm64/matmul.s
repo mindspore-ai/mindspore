@@ -1,0 +1,315 @@
+#ifdef __aarch64__
+    .text
+    .align 5
+    .global MatMulFloatNeon64
+#ifndef __APPLE__
+    .type MatMulFloatNeon64, %function
+#endif
+
+// A: LM  [row_8 * depth] col_8_major
+// B: RM  [depth * col_8] row_8_major
+// C: A*B [row_8 * col_8] col_8x8_major
+// A * B -> [8 * depth] * [depth * 8] -> [8 * 4] * [4 * 8] or [8 * 1] * [1 * 8]
+///////////////////////////////////////////////////////////////////////////////
+//CommLoopMul                                          RM 1x8 block
+//                           /-----------------------------------------\
+//                           |v2.s[0] ... v2.s[3]   v3.s[0] ... v3.s[3]|
+//                           \-----------------------------------------/
+//        LM 8x1 block
+//  /---------------------\  /-----------------------------------------\
+//  |        v0.s[0]      |  |v16.s[0]           ...           v30.s[0]|
+//  |         ...         |  |  ...                              ...   |
+//  |        v0.s[3]      |  |v16.s[3]           ...           v30.s[3]|
+//  |        v1.s[0]      |  |v17.s[0]           ...           v31.s[0]|
+//  |         ...         |  |  ...                              ...   |
+//  |        v1.s[3]      |  |v17.s[3]           ...           v31.s[3]|
+//  \---------------------/  \-----------------------------------------/
+//                                      accumulators 8x8 block
+//
+///////////////////////////////////////////////////////////////////////////////
+//OptLoopMul4                                          RHS 1x8 block
+//                                       /--------------------------------------------\
+//                                       |v8.s[0]  ... v8.s[3]   v9.s[0]  ... v9.s[3] |
+//                                       |v10.s[0] ... v10.s[3]  v11.s[0] ... v11.s[3]|
+//                                       |v12.s[0] ... v12.s[3]  v13.s[0] ... v13.s[3]|
+//                                       |v14.s[0] ... v14.s[3]  v15.s[0] ... v15.s[3]|
+//                                       \--------------------------------------------/
+//        LM 8x4 block
+//  /---------------------------------\  /--------------------------------------------\
+//  | v0.s[0] v2.s[0] v4.s[0] v6.s[0] |  |v16.s[0]           ...              v30.s[0]|
+//  |  ...     ...     ...     ...    |  |  ...                                 ...   |
+//  | v0.s[3] v2.s[3] v4.s[3] v6.s[3] |  |v16.s[3]           ...              v30.s[3]|
+//  | v1.s[0] v3.s[0] v5.s[0] v7.s[0] |  |v17.s[0]           ...              v31.s[0]|
+//  |  ...     ...     ...     ...    |  |  ...                                 ...   |
+//  | v1.s[3] v3.s[3] v5.s[3] v7.s[3] |  |v17.s[3]           ...              v31.s[3]|
+//  \---------------------------------/  \--------------------------------------------/
+//                                                  accumulators 8x8 block
+/////////////////////////////////////////////////////////////////////////////////
+//
+// void MatMulFloatNeon64(const float *a, const float *b, float *c, const float *bias, float maxf, float minf, int depth, int row, int col)
+// x0: a
+// x1: b
+// x2: c
+// x3: bias
+// v0.s[0]: maxf
+// v1.s[0]: minf
+// w4: depth
+// w5: row
+// w6: col
+
+MatMulFloatNeon64:
+  sub sp, sp, #128
+  st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
+  st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
+
+  mov w7, v0.s[0]
+  mov w8, v1.s[0]
+  mov w9, 0     // row counter
+  mov w10, 0    // col counter
+  mov w18, #32
+  mul w15, w4, w18  // the stride of a or b
+  mul w16, w6, w18  // the stride of c
+
+L1:
+  cmp w9, w5
+  beq End1
+
+  mov w10, 0    // reset col counter
+  mov x12, x1   // reload b ptr
+  mov x17, x2   // reload current c ptr
+  mov x14, x3   // reload bias ptr
+L2:
+  cmp w10, w6
+  beq End2
+
+  mov x11, x0   // reload a ptr
+  mov w13, w4   // reload depth
+  dup v16.4s, wzr
+  dup v17.4s, wzr
+  dup v18.4s, wzr
+  dup v19.4s, wzr
+  dup v20.4s, wzr
+  dup v21.4s, wzr
+  dup v22.4s, wzr
+  dup v23.4s, wzr
+  dup v24.4s, wzr
+  dup v25.4s, wzr
+  dup v26.4s, wzr
+  dup v27.4s, wzr
+  dup v28.4s, wzr
+  dup v29.4s, wzr
+  dup v30.4s, wzr
+  dup v31.4s, wzr
+
+OptLoopMul4:
+  cmp w13, #4
+  blt CommLoopMul
+
+  ld1 {v0.4s}, [x11], #16
+  ld1 {v8.4s}, [x12], #16
+  fmla v16.4s, v0.4s, v8.s[0]
+  fmla v18.4s, v0.4s, v8.s[1]
+  ld1 {v1.4s}, [x11], #16
+  fmla v20.4s, v0.4s, v8.s[2]
+  fmla v22.4s, v0.4s, v8.s[3]
+  ld1 {v9.4s}, [x12], #16
+  fmla v25.4s, v1.4s, v9.s[0]
+  fmla v27.4s, v1.4s, v9.s[1]
+  fmla v29.4s, v1.4s, v9.s[2]
+  fmla v31.4s, v1.4s, v9.s[3]
+  ld1 {v2.4s}, [x11], #16
+  ld1 {v3.4s}, [x11], #16
+  fmla v24.4s, v0.4s, v9.s[0]
+  fmla v26.4s, v0.4s, v9.s[1]
+  fmla v28.4s, v0.4s, v9.s[2]
+  fmla v30.4s, v0.4s, v9.s[3]
+  fmla v17.4s, v1.4s, v8.s[0]
+  fmla v19.4s, v1.4s, v8.s[1]
+  fmla v21.4s, v1.4s, v8.s[2]
+  fmla v23.4s, v1.4s, v8.s[3]
+  ld1 {v10.4s}, [x12], #16
+  ld1 {v11.4s}, [x12], #16
+  fmla v16.4s, v2.4s, v10.s[0]
+  fmla v18.4s, v2.4s, v10.s[1]
+  fmla v20.4s, v2.4s, v10.s[2]
+  fmla v22.4s, v2.4s, v10.s[3]
+  fmla v25.4s, v3.4s, v11.s[0]
+  fmla v27.4s, v3.4s, v11.s[1]
+  fmla v29.4s, v3.4s, v11.s[2]
+  fmla v31.4s, v3.4s, v11.s[3]
+  ld1 {v4.4s}, [x11], #16
+  ld1 {v5.4s}, [x11], #16
+  fmla v24.4s, v2.4s, v11.s[0]
+  fmla v26.4s, v2.4s, v11.s[1]
+  fmla v28.4s, v2.4s, v11.s[2]
+  fmla v30.4s, v2.4s, v11.s[3]
+  fmla v17.4s, v3.4s, v10.s[0]
+  fmla v19.4s, v3.4s, v10.s[1]
+  fmla v21.4s, v3.4s, v10.s[2]
+  fmla v23.4s, v3.4s, v10.s[3]
+  ld1 {v12.4s}, [x12], #16
+  ld1 {v13.4s}, [x12], #16
+  fmla v16.4s, v4.4s, v12.s[0]
+  fmla v18.4s, v4.4s, v12.s[1]
+  fmla v20.4s, v4.4s, v12.s[2]
+  fmla v22.4s, v4.4s, v12.s[3]
+  fmla v25.4s, v5.4s, v13.s[0]
+  fmla v27.4s, v5.4s, v13.s[1]
+  fmla v29.4s, v5.4s, v13.s[2]
+  fmla v31.4s, v5.4s, v13.s[3]
+  ld1 {v6.4s}, [x11], #16
+  ld1 {v7.4s}, [x11], #16
+  fmla v24.4s, v4.4s, v13.s[0]
+  fmla v26.4s, v4.4s, v13.s[1]
+  fmla v28.4s, v4.4s, v13.s[2]
+  fmla v30.4s, v4.4s, v13.s[3]
+  fmla v17.4s, v5.4s, v12.s[0]
+  fmla v19.4s, v5.4s, v12.s[1]
+  fmla v21.4s, v5.4s, v12.s[2]
+  fmla v23.4s, v5.4s, v12.s[3]
+  ld1 {v14.4s}, [x12], #16
+  ld1 {v15.4s}, [x12], #16
+  fmla v16.4s, v6.4s, v14.s[0]
+  fmla v18.4s, v6.4s, v14.s[1]
+  fmla v20.4s, v6.4s, v14.s[2]
+  fmla v22.4s, v6.4s, v14.s[3]
+  fmla v25.4s, v7.4s, v15.s[0]
+  fmla v27.4s, v7.4s, v15.s[1]
+  fmla v29.4s, v7.4s, v15.s[2]
+  fmla v31.4s, v7.4s, v15.s[3]
+  fmla v24.4s, v6.4s, v15.s[0]
+  fmla v26.4s, v6.4s, v15.s[1]
+  fmla v28.4s, v6.4s, v15.s[2]
+  fmla v30.4s, v6.4s, v15.s[3]
+  fmla v17.4s, v7.4s, v14.s[0]
+  fmla v19.4s, v7.4s, v14.s[1]
+  fmla v21.4s, v7.4s, v14.s[2]
+  fmla v23.4s, v7.4s, v14.s[3]
+  subs w13, w13, #4
+  b OptLoopMul4
+
+CommLoopMul:
+  cmp w13, #1
+  blt Bias
+  ld1 {v0.4s}, [x11], #16
+  ld1 {v2.4s}, [x12], #16
+  fmla v16.4s, v0.4s, v2.s[0]
+  fmla v18.4s, v0.4s, v2.s[1]
+  ld1 {v1.4s}, [x11], #16
+  fmla v20.4s, v0.4s, v2.s[2]
+  fmla v22.4s, v0.4s, v2.s[3]
+  ld1 {v3.4s}, [x12], #16
+  fmla v25.4s, v1.4s, v3.s[0]
+  fmla v27.4s, v1.4s, v3.s[1]
+  fmla v29.4s, v1.4s, v3.s[2]
+  fmla v31.4s, v1.4s, v3.s[3]
+  fmla v24.4s, v0.4s, v3.s[0]
+  fmla v26.4s, v0.4s, v3.s[1]
+  fmla v28.4s, v0.4s, v3.s[2]
+  fmla v30.4s, v0.4s, v3.s[3]
+  fmla v17.4s, v1.4s, v2.s[0]
+  fmla v19.4s, v1.4s, v2.s[1]
+  fmla v21.4s, v1.4s, v2.s[2]
+  fmla v23.4s, v1.4s, v2.s[3]
+  subs w13, w13, #1
+  b CommLoopMul
+
+Bias:
+  ld1 {v0.4s}, [x14], #16
+  ld1 {v1.4s}, [x14], #16
+  dup v2.4s, v0.s[0]
+  fadd v16.4s, v16.4s, v2.4s
+  fadd v17.4s, v17.4s, v2.4s
+  dup v3.4s, v0.s[1]
+  fadd v18.4s, v18.4s, v3.4s
+  fadd v19.4s, v19.4s, v3.4s
+  dup v4.4s, v0.s[2]
+  fadd v20.4s, v20.4s, v4.4s
+  fadd v21.4s, v21.4s, v4.4s
+  dup v5.4s, v0.s[3]
+  fadd v22.4s, v22.4s, v5.4s
+  fadd v23.4s, v23.4s, v5.4s
+  dup v2.4s, v1.s[0]
+  fadd v24.4s, v24.4s, v2.4s
+  fadd v25.4s, v25.4s, v2.4s
+  dup v3.4s, v1.s[1]
+  fadd v26.4s, v26.4s, v3.4s
+  fadd v27.4s, v27.4s, v3.4s
+  dup v4.4s, v1.s[2]
+  fadd v28.4s, v28.4s, v4.4s
+  fadd v29.4s, v29.4s, v4.4s
+  dup v5.4s, v1.s[3]
+  fadd v30.4s, v30.4s, v5.4s
+  fadd v31.4s, v31.4s, v5.4s
+
+Relu:
+  dup v15.4s, w7
+  dup v14.4s, w8
+  fmax v16.4s, v16.4s, v14.4s
+  fmax v17.4s, v17.4s, v14.4s
+  fmax v18.4s, v18.4s, v14.4s
+  fmax v19.4s, v19.4s, v14.4s
+  fmax v20.4s, v20.4s, v14.4s
+  fmax v21.4s, v21.4s, v14.4s
+  fmax v22.4s, v22.4s, v14.4s
+  fmax v23.4s, v23.4s, v14.4s
+  fmax v24.4s, v24.4s, v14.4s
+  fmax v25.4s, v25.4s, v14.4s
+  fmax v26.4s, v26.4s, v14.4s
+  fmax v27.4s, v27.4s, v14.4s
+  fmax v28.4s, v28.4s, v14.4s
+  fmax v29.4s, v29.4s, v14.4s
+  fmax v30.4s, v30.4s, v14.4s
+  fmax v31.4s, v31.4s, v14.4s
+
+  fmin v16.4s, v16.4s, v15.4s
+  fmin v17.4s, v17.4s, v15.4s
+  fmin v18.4s, v18.4s, v15.4s
+  fmin v19.4s, v19.4s, v15.4s
+  fmin v20.4s, v20.4s, v15.4s
+  fmin v20.4s, v20.4s, v15.4s
+  fmin v21.4s, v21.4s, v15.4s
+  fmin v22.4s, v22.4s, v15.4s
+  fmin v23.4s, v23.4s, v15.4s
+  fmin v24.4s, v24.4s, v15.4s
+  fmin v25.4s, v25.4s, v15.4s
+  fmin v26.4s, v26.4s, v15.4s
+  fmin v27.4s, v27.4s, v15.4s
+  fmin v28.4s, v28.4s, v15.4s
+  fmin v29.4s, v29.4s, v15.4s
+  fmin v30.4s, v30.4s, v15.4s
+  fmin v31.4s, v31.4s, v15.4s
+
+TransToOut:
+  st1 {v16.4s}, [x17], #16
+  st1 {v17.4s}, [x17], #16
+  st1 {v18.4s}, [x17], #16
+  st1 {v19.4s}, [x17], #16
+  st1 {v20.4s}, [x17], #16
+  st1 {v21.4s}, [x17], #16
+  st1 {v22.4s}, [x17], #16
+  st1 {v23.4s}, [x17], #16
+  st1 {v24.4s}, [x17], #16
+  st1 {v25.4s}, [x17], #16
+  st1 {v26.4s}, [x17], #16
+  st1 {v27.4s}, [x17], #16
+  st1 {v28.4s}, [x17], #16
+  st1 {v29.4s}, [x17], #16
+  st1 {v30.4s}, [x17], #16
+  st1 {v31.4s}, [x17], #16
+
+  add w10, w10, #8    // col+=8
+  b L2
+
+End2:
+  add x0, x0, x15     // stride a ptr
+  add x2, x2, x16     // stride c ptr
+  add w9, w9, #8      // row+=8
+  b L1
+
+End1:
+  sub sp, sp, #128
+  ld1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
+  ld1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
+  ret
+#endif

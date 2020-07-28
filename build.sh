@@ -25,7 +25,8 @@ usage()
   echo "Usage:"
   echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t on|off] [-g on|off] [-h] [-b ge] [-m infer|train] \\"
   echo "              [-a on|off] [-Q on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|d|cpu] \\"
-  echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I] [-K] [-B on|off] [-w on|off] [-E] [-l on|off]"
+  echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I arm64|arm32|x86_64] [-K] \\"
+  echo "              [-B on|off] [-w on|off] [-E] [-l on|off]"
   echo ""
   echo "Options:"
   echo "    -d Debug mode"
@@ -51,7 +52,7 @@ usage()
   echo "    -z Compile dataset & mindrecord, default on"
   echo "    -M Enable MPI and NCCL for GPU training, gpu default on"
   echo "    -V Specify the minimum required cuda version, default CUDA 10.1"
-  echo "    -I Compile predict, default off"
+  echo "    -I Compile lite"
   echo "    -K Compile with AKG, default on"
   echo "    -s Enable serving module, default off"
   echo "    -w Enable acl module, default off"
@@ -93,9 +94,10 @@ checkopts()
   COMPILE_MINDDATA="on"
   ENABLE_MPI="off"
   CUDA_VERSION="10.1"
-  COMPILE_PREDICT="off"
+  COMPILE_LITE="off"
+  LITE_PLATFORM=""
+  SUPPORT_TRAIN="off"
   USE_GLOG="on"
-  PREDICT_PLATFORM=""
   ENABLE_AKG="on"
   ENABLE_SERVING="off"
   ENABLE_ACL="off"
@@ -240,13 +242,16 @@ checkopts()
         fi
         ;;
       I)
-        COMPILE_PREDICT="on"
+        COMPILE_LITE="on"
         if [[ "$OPTARG" == "arm64" ]]; then
-          PREDICT_PLATFORM="arm64"
+          LITE_PLATFORM="arm64"
+        elif [[ "$OPTARG" == "arm32" ]]; then
+          LITE_PLATFORM="arm32"
         elif [[ "$OPTARG" == "x86_64" ]]; then
-          PREDICT_PLATFORM="x86_64"
+          ENABLE_CONVERTER="on"
+          LITE_PLATFORM="x86_64"
         else
-          echo "-I parameter must be arm64 or x86_64"
+          echo "-I parameter must be arm64、arm32 or x86_64"
           exit 1
         fi
         ;;
@@ -382,128 +387,247 @@ build_mindspore()
     echo "success to build mindspore project!"
 }
 
-build_predict()
-{
-    git submodule update --init --recursive third_party/incubator-tvm
-    echo "start build predict project"
-
-    git submodule update --init --recursive third_party/flatbuffers
-    git submodule update --init --recursive third_party/googletest
-    git submodule update --init --recursive third_party/protobuf
-
-    rm -rf "${BASEPATH}/predict/build"
-    mkdir -pv "${BASEPATH}/predict/build"
-    rm -rf "${BASEPATH}/predict/output"
-    mkdir -pv "${BASEPATH}/predict/output"
-
-    if [[ "$PREDICT_PLATFORM" == "arm64" ]]; then
-      if [ "${ANDROID_NDK}" ]; then
-          echo -e "\e[31mANDROID_NDK_PATH=$ANDROID_NDK  \e[0m"
-      else
-          echo -e "\e[31mplease set ANDROID_NDK_PATH in environment variable for example: export ANDROID_NDK=/root/usr/android-ndk-r16b/ \e[0m"
-          exit 1
-      fi
-    fi
-
-    #build flatbuf
-    cd "${BASEPATH}/third_party/flatbuffers"
-    rm -rf build && mkdir -p build && cd build && cmake .. && make -j$THREAD_NUM
-    FLATC="${BASEPATH}"/third_party/flatbuffers/build/flatc
-    cd "${BASEPATH}"/predict/schema && mkdir -p "${BASEPATH}"/predict/schema/inner
-    find . -name "*.fbs" -print0 | xargs -0 "${FLATC}" -c -b
-    find . -name "*.fbs" -print0 | xargs -0 "${FLATC}" -c -b --reflect-types --gen-mutable --reflect-names --gen-object-api -o ${BASEPATH}/predict/schema/inner
-
-    # check LLVM_PATH
-    if [ "${LLVM_PATH}" == "" ]; then
-        echo "Please set LLVM_PATH in env for example export LLVM_PATH=/xxxx/bin/llvm-config"
-        exit
-    fi
-
-    #build tvm
-    tvm_open_source="${BASEPATH}/third_party/incubator-tvm"
-    tvm_kernel_build="${BASEPATH}/predict/module/tvm_kernel"
-    if [ ! -f "${tvm_kernel_build}"/incubator-tvm/build/libtvm.so ]; then
-        rm -fr "${tvm_kernel_build}"/incubator-tvm
-        cp -fr "${tvm_open_source}" "${tvm_kernel_build}"
-        mkdir -p "${tvm_kernel_build}"/incubator-tvm/build
-        patch -d "${tvm_kernel_build}"/incubator-tvm -p1 < "${BASEPATH}"/third_party/patch/predict/0001-RetBugFix-CustomRuntime_v06.patch
-        cp "${tvm_kernel_build}"/lite/src/codegen/llvm/lite_rtfunc_reset.cc "${tvm_kernel_build}"/incubator-tvm/src/codegen/llvm/
-        cp "${tvm_open_source}"/cmake/config.cmake "${tvm_kernel_build}"/incubator-tvm
-        if [ "${LLVM_PATH}" ]; then
-            sed -i "s#set(USE_LLVM .*)#set(USE_LLVM \"${LLVM_PATH}\")#g"  "${tvm_kernel_build}"/incubator-tvm/config.cmake
-        else
-            echo "need set LLVM_PATH in env for example export LLVM_PATH=/xxxx/bin/llvm-config"
-        fi
-        cd "${tvm_kernel_build}"/incubator-tvm/build
-        cmake ..
-        make -j$THREAD_NUM
+checkndk() {
+    if [ "${ANDROID_NDK}" ]; then
+        echo -e "\e[31mANDROID_NDK_PATH=$ANDROID_NDK  \e[0m"
     else
-        cd "${tvm_kernel_build}"/incubator-tvm/build
-        make -j$THREAD_NUM
+        echo -e "\e[31mplease set ANDROID_NDK_PATH in environment variable for example: export ANDROID_NDK=/root/usr/android-ndk-r20b/ \e[0m"
+        exit 1
     fi
-
-    #gen op
-    predict_tvm_op_lib_path="${BASEPATH}/predict/module/tvm_kernel/build/lib_x86"
-    predict_platform="x86"
-    if [[ "$PREDICT_PLATFORM" == "arm64" ]]; then
-      predict_tvm_op_lib_path="${BASEPATH}/predict/module/tvm_kernel/build/lib_arm64"
-      predict_platform="arm64"
-    fi
-
-    need_get_libs=true
-    if [ -d "${predict_tvm_op_lib_path}" ]; then
-      file_list=$(ls "${predict_tvm_op_lib_path}")
-      if [ -n "${file_list}" ]; then
-        libstime=$(stat -c %Y "${predict_tvm_op_lib_path}"/* | sort -u | tail -n1)
-        pythontime=$(find "${BASEPATH}"/predict/module/tvm_kernel/lite/python/ -name "*.py" -exec stat -c %Y {} \; |
-        sort -u | tail -n1)
-        if [ "${libstime}" -ge "${pythontime}" ]; then
-          need_get_libs=false
-        else
-          rm -fr "${predict_tvm_op_lib_path}"
-        fi
-      fi
-    fi
-
-    if $need_get_libs; then
-       PYTHONPATH_OLD=${PYTHONPATH}
-       export PYTHONPATH="${tvm_kernel_build}/incubator-tvm/python:${tvm_kernel_build}/incubator-tvm/topi/python:${tvm_kernel_build}/incubator-tvm/nnvm/python:${tvm_kernel_build}/lite/python:"
-       cd "${BASEPATH}"/predict/module/tvm_kernel/lite/python/at_ops
-       python3 at_gen_strip.py ${predict_platform}
-       export PYTHONPATH=${PYTHONPATH_OLD}
-    fi
-
-    cd "${BASEPATH}/predict/build"
-    if [[ "$PREDICT_PLATFORM" == "arm64" ]]; then
-      cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" \
-            -DANDROID_NATIVE_API_LEVEL=android-19 -DANDROID_NDK="${ANDROID_NDK}" \
-            -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang" -DANDROID_STL="c++_shared" \
-            -DANDROID_ABI="arm64-v8a" -DENABLE_PREDICT_ARM64=ON -DANDROID_ALLOW_UNDEFINED_SYMBOLS=TRUE ..
-    elif [[ "$PREDICT_PLATFORM" == "x86_64" ]]; then
-      cmake ..
-    fi
-
-    make ${VERBOSE} -j$THREAD_NUM
-    if [[ "$PREDICT_PLATFORM" == "x86_64" ]]; then
-      cd "${BASEPATH}/predict/build/test" && ./run_tests.sh
-    fi
-
-    # copy securec include files
-    mkdir -p "${BASEPATH}/predict/output/include/securec/include"
-    cp "${BASEPATH}"/third_party/securec/include/* "${BASEPATH}"/predict/output/include/securec/include
-
-    cd "${BASEPATH}/predict/output/"
-    if [[ "$PREDICT_PLATFORM" == "x86_64" ]]; then
-      tar -cf MSPredict-0.5.0-linux_x86_64.tar.gz include/ lib/ --warning=no-file-changed
-    elif [[ "$PREDICT_PLATFORM" == "arm64" ]]; then
-      tar -cf MSPredict-0.5.0-linux_aarch64.tar.gz include/ lib/ --warning=no-file-changed
-    fi
-    echo "success to build predict project!"
 }
 
-if [[ "X$COMPILE_PREDICT" = "Xon" ]]; then
-    build_predict
-    echo "---------------- mindspore: build end   ----------------"
+gene_flatbuffer() {
+    FLAT_DIR="${BASEPATH}/mindspore/lite/schema"
+    cd ${FLAT_DIR} && rm -rf "${FLAT_DIR}/inner" && mkdir -p "${FLAT_DIR}/inner"
+    find . -name "*.fbs" -print0 | xargs -0 "${FLATC}" -c -b
+    find . -name "*.fbs" -print0 | xargs -0 "${FLATC}" -c -b --reflect-types --gen-mutable --reflect-names --gen-object-api -o "${FLAT_DIR}/inner"
+
+    FLAT_DIR="${BASEPATH}/mindspore/lite/tools/converter/parser/tflite"
+    cd ${FLAT_DIR}
+    find . -name "*.fbs" -print0 | xargs -0 "${FLATC}" -c -b --reflect-types --gen-mutable --reflect-names --gen-object-api -o "${FLAT_DIR}/"
+}
+
+build_flatbuffer() {
+    cd ${BASEPATH}
+    FLATC="${BASEPATH}"/third_party/flatbuffers/build/flatc
+    if [[ ! -f "${FLATC}" ]]; then
+        git submodule update --init --recursive third_party/flatbuffers
+        cd ${BASEPATH}/third_party/flatbuffers
+        rm -rf build && mkdir -pv build && cd build && cmake .. && make -j$THREAD_NUM
+        gene_flatbuffer
+    fi
+    if [[ "${INC_BUILD}" == "off" ]]; then
+        gene_flatbuffer
+    fi
+}
+
+gene_protobuf() {
+    PROTO_SRC_DIR="${BASEPATH}/mindspore/lite/tools/converter/parser/caffe"
+    find ${PROTO_SRC_DIR} -name "*.proto" -print0 | xargs -0 "${PROTOC}" -I"${PROTO_SRC_DIR}" --cpp_out="${PROTO_SRC_DIR}"
+    PROTO_SRC_DIR="${BASEPATH}/mindspore/lite/tools/converter/parser/onnx"
+    find ${PROTO_SRC_DIR} -name "*.proto" -print0 | xargs -0 "${PROTOC}" -I"${PROTO_SRC_DIR}" --cpp_out="${PROTO_SRC_DIR}"
+}
+
+build_protobuf() {
+    cd ${BASEPATH}
+    PROTOC="${BASEPATH}"/third_party/protobuf/build/bin/protoc
+    if [[ ! -f "${PROTOC}" ]]; then
+        git submodule update --init --recursive third_party/protobuf
+        cd ${BASEPATH}/third_party/protobuf
+        rm -rf build && mkdir -pv build && ./autogen.sh
+        ./configure --prefix=${BASEPATH}/third_party/protobuf/build
+        make clean && make -j$THREAD_NUM && make install
+        gene_protobuf
+    fi
+    if [[ "${INC_BUILD}" == "off" ]]; then
+        gene_protobuf
+    fi
+}
+
+build_gtest() {
+    cd ${BASEPATH}
+    git submodule update --init --recursive third_party/googletest
+}
+
+gene_clhpp() {
+    CL_SRC_DIR="${BASEPATH}/mindspore/lite/src/runtime/kernel/opencl/cl"
+    for sub_dir in "${CL_SRC_DIR}"/*
+    do
+        data_type="$(basename ${sub_dir})"
+        if [ ! -d ${CL_SRC_DIR}/${data_type} ]; then
+          continue
+        fi
+        cd ${CL_SRC_DIR}/${data_type}
+        rm -rf *.inc
+        echo "$(cd "$(dirname $0)"; pwd)"
+        for file_path in "${CL_SRC_DIR}/${data_type}"/*
+        do
+            file="$(basename ${file_path})"
+            inc_file=`echo ${CL_SRC_DIR}/${data_type}/${file} | sed 's/$/.inc/'`
+            sed 's/^/\"/;s/$/    \\n\" \\/' ${CL_SRC_DIR}/${data_type}/${file} > ${inc_file}
+            kernel_name=`echo ${file} | sed s'/.\{3\}$//'`
+	    sed -i "1i\static const char *${kernel_name}_source_${data_type} =\"\\n\" \\" ${inc_file}
+            sed -i '$a\;' ${inc_file}
+        done
+    done
+}
+
+gene_ocl_program() {
+    CL_SRC_DIR="${BASEPATH}/mindspore/lite/src/runtime/kernel/opencl/cl"
+    SPIRV_DIR=build/spirv
+    rm -rf ${SPIRV_DIR}
+    mkdir -pv ${SPIRV_DIR}
+    for sub_dir in "${CL_SRC_DIR}"/*
+    do
+        data_type="$(basename ${sub_dir})"
+        if [ ! -d ${CL_SRC_DIR}/${data_type} ]; then
+          continue
+        fi
+        #echo $(cd "$(dirname $0)"; pwd)
+        for file_path in "${CL_SRC_DIR}/${data_type}"/*
+        do
+          file="$(basename ${file_path})"
+          if [ "${file##*.}" != "cl" ]; then
+            continue
+          fi
+          clang -Xclang -finclude-default-header -cl-std=CL2.0 --target=spir64-unknown-unknown -emit-llvm \
+                -c -O0 -o ${SPIRV_DIR}/${file%.*}.bc ${CL_SRC_DIR}/${data_type}/${file}
+        done
+    done
+
+    bcs=`ls ${SPIRV_DIR}/*.bc`
+    llvm-link ${bcs} -o ${SPIRV_DIR}/program.bc
+    llvm-spirv -o ${SPIRV_DIR}/program.spv ${SPIRV_DIR}/program.bc
+
+    CL_PROGRAM_PATH="${BASEPATH}/mindspore/lite/src/runtime/kernel/opencl/cl/program.inc"
+    echo "#include <vector>" > ${CL_PROGRAM_PATH}
+    echo "std::vector<unsigned char> g_program_binary = {" >> ${CL_PROGRAM_PATH}
+    #hexdump -v -e '16/1 "0x%02x, " "\n"' ${SPIRV_DIR}/program.spv >> ${CL_PROGRAM_PATH}
+    hexdump -v -e '1/1 "0x%02x, "' ${SPIRV_DIR}/program.spv >> ${CL_PROGRAM_PATH}
+    echo "};" >> ${CL_PROGRAM_PATH}
+    echo "Compile SPIRV done"
+}
+
+build_opencl() {
+    cd ${BASEPATH}
+    git submodule update --init third_party/OpenCL-Headers
+    git submodule update --init third_party/OpenCL-CLHPP
+    if [[ "${OPENCL_OFFLINE_COMPILE}" == "on" ]]; then
+        gene_ocl_program
+    else
+        gene_clhpp
+    fi
+}
+
+build_lite()
+{
+    echo "start build mindspore lite project"
+
+    if [[ "${ENABLE_GPU}" == "on" ]]; then
+      build_opencl
+    fi
+    if [[ "${LITE_PLATFORM}" == "x86_64" ]]; then
+      build_protobuf
+    fi
+    build_flatbuffer
+    build_gtest
+
+    cd "${BASEPATH}/mindspore/lite"
+    mkdir -pv build
+    cd build
+    BUILD_TYPE="Release"
+    if [[ "${DEBUG_MODE}" == "on" ]]; then
+      BUILD_TYPE="Debug"
+    fi
+
+    if [[ "${LITE_PLATFORM}" == "arm64" ]]; then
+        checkndk
+        cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
+              -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="arm64-v8a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"  \
+              -DANDROID_STL="c++_shared" -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_TRAIN=${SUPPORT_TRAIN}                     \
+              -DBUILD_DEVICE=on -DPLATFORM_ARM64=on -DBUILD_CONVERTER=off -DENABLE_NEON=on -DENABLE_FP16="off"      \
+              -DSUPPORT_GPU=${ENABLE_GPU} -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} "${BASEPATH}/mindspore/lite"
+    elif [[ "${LITE_PLATFORM}" == "arm32" ]]; then
+        checkndk
+        cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
+              -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="armeabi-v7a" -DANDROID_TOOLCHAIN_NAME="clang"                      \
+              -DANDROID_STL="c++_shared" -DCMAKE_BUILD_TYPE=${BUILD_TYPE}                                                      \
+              -DBUILD_DEVICE=on -DPLATFORM_ARM32=on -DENABLE_NEON=on -DSUPPORT_TRAIN=${SUPPORT_TRAIN} -DBUILD_CONVERTER=off    \
+              -DSUPPORT_GPU=${ENABLE_GPU} -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} "${BASEPATH}/mindspore/lite"
+    else
+        cmake -DBUILD_DEVICE=on -DPLATFORM_ARM64=off -DBUILD_CONVERTER=${ENABLE_CONVERTER} -DSUPPORT_TRAIN=${SUPPORT_TRAIN}   \
+        -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_GPU=${ENABLE_GPU} -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} "${BASEPATH}/mindspore/lite"
+    fi
+    VERBOSE=2 make -j$THREAD_NUM
+    COMPILE_RET=$?
+
+    if [[ "${COMPILE_RET}" -ne 0 ]]; then
+        echo "---------------- mindspore lite: build failed ----------------"
+    else
+        mkdir -pv ${BASEPATH}/mindspore/lite/output/
+        if [[ "$LITE_PLATFORM" == "x86_64" ]]; then
+            OUTPUT_DIR=${BASEPATH}/mindspore/lite/output/MSLite-0.5.0-linux_x86_64
+            rm -rf ${OUTPUT_DIR} && mkdir -p ${OUTPUT_DIR} && cd ${OUTPUT_DIR}
+            mkdir -p ${OUTPUT_DIR}/converter && mkdir -p ${OUTPUT_DIR}/time_profile
+            mkdir -p ${OUTPUT_DIR}/benchmark && mkdir -p ${OUTPUT_DIR}/include && mkdir -p ${OUTPUT_DIR}/lib
+            mkdir -p ${OUTPUT_DIR}/third_party
+            cp ${BASEPATH}/mindspore/lite/build/tools/converter/converter_lite ${OUTPUT_DIR}/converter/
+            cp ${BASEPATH}/mindspore/lite/build/tools/benchmark/benchmark ${OUTPUT_DIR}/benchmark/
+            cp ${BASEPATH}/mindspore/lite/include/*.h ${OUTPUT_DIR}/include/
+            mkdir -p ${OUTPUT_DIR}/include/ir/dtype/
+            cp ${BASEPATH}/mindspore/core/ir/dtype/type_id.h ${OUTPUT_DIR}/include/ir/dtype/
+            mkdir -p ${OUTPUT_DIR}/include/schema/
+            cp ${BASEPATH}/mindspore/lite/schema/*.h ${OUTPUT_DIR}/include/schema/
+            cp ${BASEPATH}/mindspore/lite/build/src/libmindspore-lite.so ${OUTPUT_DIR}/lib/
+            mkdir -p ${OUTPUT_DIR}/third_party/protobuf/lib
+            cp -r ${BASEPATH}/third_party/protobuf/build/include/ ${OUTPUT_DIR}/third_party/protobuf/
+            cp -r ${BASEPATH}/third_party/protobuf/build/lib/libprotobuf.so.19 ${OUTPUT_DIR}/third_party/protobuf/lib/
+            cp -r ${BASEPATH}/third_party/protobuf/build/lib/libprotobuf.so.19.0.0 ${OUTPUT_DIR}/third_party/protobuf/lib/
+            mkdir -p ${OUTPUT_DIR}/third_party/flatbuffers
+            cp -r ${BASEPATH}/third_party/flatbuffers/include/ ${OUTPUT_DIR}/third_party/flatbuffers/
+            cd ..
+            tar -cf MSLite-0.5.0-linux_x86_64.tar.gz MSLite-0.5.0-linux_x86_64/ --warning=no-file-changed
+        elif [[ "$LITE_PLATFORM" == "arm64" ]]; then
+            OUTPUT_DIR=${BASEPATH}/mindspore/lite/output/MSLite-0.5.0-linux_arm64
+            rm -rf ${OUTPUT_DIR} && mkdir -p ${OUTPUT_DIR} && cd ${OUTPUT_DIR}
+            mkdir -p ${OUTPUT_DIR}/time_profile && mkdir -p ${OUTPUT_DIR}/benchmark
+            mkdir -p ${OUTPUT_DIR}/include && mkdir -p ${OUTPUT_DIR}/lib
+            mkdir -p ${OUTPUT_DIR}/third_party
+            cp ${BASEPATH}/mindspore/lite/build/tools/benchmark/benchmark ${OUTPUT_DIR}/benchmark/
+            cp ${BASEPATH}/mindspore/lite/include/*.h ${OUTPUT_DIR}/include/
+            mkdir -p ${OUTPUT_DIR}/include/ir/dtype/
+            cp ${BASEPATH}/mindspore/core/ir/dtype/type_id.h ${OUTPUT_DIR}/include/ir/dtype/
+            mkdir -p ${OUTPUT_DIR}/include/schema/
+            cp ${BASEPATH}/mindspore/lite/schema/*.h ${OUTPUT_DIR}/include/schema/
+            cp ${BASEPATH}/mindspore/lite/build/src/libmindspore-lite.so ${OUTPUT_DIR}/lib/
+            mkdir -p ${OUTPUT_DIR}/third_party/flatbuffers
+            cp -r ${BASEPATH}/third_party/flatbuffers/include/ ${OUTPUT_DIR}/third_party/flatbuffers/
+            cd ..
+            tar -cf MSLite-0.5.0-linux_arm64.tar.gz MSLite-0.5.0-linux_arm64/ --warning=no-file-changed
+        elif [[ "$LITE_PLATFORM" == "arm32" ]]; then
+            OUTPUT_DIR=${BASEPATH}/mindspore/lite/output/MSLite-0.5.0-linux_arm32
+            rm -rf ${OUTPUT_DIR} && mkdir -p ${OUTPUT_DIR} && cd ${OUTPUT_DIR}
+            mkdir -p ${OUTPUT_DIR}/time_profile && mkdir -p ${OUTPUT_DIR}/benchmark
+            mkdir -p ${OUTPUT_DIR}/include && mkdir -p ${OUTPUT_DIR}/lib
+            mkdir -p ${OUTPUT_DIR}/third_party
+            cp ${BASEPATH}/mindspore/lite/build/tools/benchmark/benchmark ${OUTPUT_DIR}/benchmark/
+            cp ${BASEPATH}/mindspore/lite/include/*.h ${OUTPUT_DIR}/include/
+            mkdir -p ${OUTPUT_DIR}/include/ir/dtype/
+            cp ${BASEPATH}/mindspore/core/ir/dtype/type_id.h ${OUTPUT_DIR}/include/ir/dtype/
+            mkdir -p ${OUTPUT_DIR}/include/schema/
+            cp ${BASEPATH}/mindspore/lite/schema/*.h ${OUTPUT_DIR}/include/schema/
+            cp ${BASEPATH}/mindspore/lite/build/src/libmindspore-lite.so ${OUTPUT_DIR}/lib/
+            mkdir -p ${OUTPUT_DIR}/third_party/flatbuffers
+            cp -r ${BASEPATH}/third_party/flatbuffers/include/ ${OUTPUT_DIR}/third_party/flatbuffers/
+            cd ..
+            tar -cf MSLite-0.5.0-linux_arm32.tar.gz MSLite-0.5.0-linux_arm32/ --warning=no-file-changed
+        fi
+        echo "---------------- mindspore lite: build success ----------------"
+    fi
+}
+
+if [[ "X$COMPILE_LITE" = "Xon" ]]; then
+    build_lite
     exit
 else
     build_mindspore

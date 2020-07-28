@@ -4,6 +4,20 @@ mindspore/lib
 output
 *.ir
 
+# flatbuffer
+mindspore/lite/tools/converter/parser/tflite/schema_generated.h
+mindspore/lite/tools/converter/parser/caffe/caffe.pb.cc
+mindspore/lite/tools/converter/parser/caffe/caffe.pb.h
+mindspore/lite/tools/converter/parser/onnx/onnx.pb.h
+mindspore/lite/tools/converter/parser/onnx/onnx.pb.h
+mindspore/lite/tools/converter/schema/*.h
+mindspore/lite/tools/converter/schema/inner
+mindspore/lite/schema/*.h
+mindspore/lite/schema/inner
+
+mindspore/lite/src/runtime/kernel/opencl/cl/fp16/*.inc
+mindspore/lite/src/runtime/kernel/opencl/cl/fp32/*.inc
+
 # Cmake files
 CMakeFiles/
 cmake_install.cmake
@@ -71,5 +85,3 @@ test_temp_summary_event_file/
 mindspore/version.py
 mindspore/default_config.py
 mindspore/.commit_id
-onnx.proto
-mindspore/ccsrc/onnx.proto

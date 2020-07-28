@@ -1,0 +1,517 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="gmock"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;CMake Files\..\;CMake Files\..\..\;CMake Files\..\..\cmake\;CMake Files\..\..\cmake\external_libs\;CMake Files\..\..\..\;CMake Files\..\..\..\..\;CMake Files\..\..\..\..\..\;CMake Files\..\..\..\..\..\..\;CMake Files\..\..\..\..\..\..\..\;CMake Files\..\..\..\..\..\..\..\..\;CMake Files\..\..\..\..\..\..\..\..\home\;CMake Files\..\..\..\..\..\..\..\..\home\hgq\;CMake Files\..\..\..\..\..\..\..\..\home\hgq\.mslib\;CMake Files\..\..\..\..\..\..\..\..\home\hgq\.mslib\pybind11_4ff815e53c2c9c54255c528ad480c451\;CMake Files\..\..\..\..\..\..\..\..\home\hgq\.mslib\pybind11_4ff815e53c2c9c54255c528ad480c451\share\;CMake Files\..\..\..\..\..\..\..\..\home\hgq\.mslib\pybind11_4ff815e53c2c9c54255c528ad480c451\share\cmake\;CMake Files\..\..\..\..\..\..\..\..\home\hgq\.mslib\pybind11_4ff815e53c2c9c54255c528ad480c451\share\cmake\pybind11\;CMake Files\..\..\..\..\..\..\..\..\home\hgq\.mslib\eigen3_951666374a92d62fcd880d2baa7db402\;CMake Files\..\..\..\..\..\..\..\..\home\hgq\.mslib\eigen3_951666374a92d62fcd880d2baa7db402\share\;CMake Files\..\..\..\..\..\..\..\..\home\hgq\.mslib\eigen3_951666374a92d62fcd880d2baa7db402\share\eigen3\;CMake Files\..\..\..\..\..\..\..\..\home\hgq\.mslib\eigen3_951666374a92d62fcd880d2baa7db402\share\eigen3\cmake\;CMake Files\..\..\third_party\;CMake Files\..\..\third_party\securec\;CMake Files\..\..\third_party\securec\src\;CMake Files\..\..\third_party\googletest\;CMake Files\..\..\third_party\googletest\googlemock\;CMake Files\..\..\third_party\googletest\googlemock\cmake\;CMake Files\..\..\third_party\googletest\googletest\;CMake Files\..\..\third_party\googletest\googletest\cmake\;CMake Files\tools\;CMake Files\tools\converter\;CMake Files\tools\converter\parser\;CMake Files\tools\converter\parser\caffe\;CMake Files\tools\converter\parser\tflite\;CMake Files\tools\converter\optimizer\;CMake Files\tools\converter\optimizer\fusion\;CMake Files\tools\converter\optimizer\node\;CMake Files\tools\converter\optimizer\graph\;CMake Files\tools\converter\quantizer\;CMake Files\tools\benchmark\;CMake Files\src\;CMake Files\src\common\;CMake Files\src\common\anf_exporter\;CMake Files\src\runtime\;CMake Files\src\runtime\kernel\;CMake Files\src\runtime\kernel\arm\;CMake Files\src\runtime\kernel\arm\opclib\;CMake Files\src\ops\;CMake Files\test\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="gmock_main">
+				<Option output="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/libgmock_maind.so" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock"/>
+				<Option object_output="./"/>
+				<Option type="3"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DGTEST_CREATE_SHARED_LIBRARY=1"/>
+					<Add option="-DUSE_ANDROID_LOG"/>
+					<Add option="-DNO_DLIB"/>
+					<Add option="-DBUILD_DEVICE"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../.."/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/core"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/ccsrc"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/flatbuffers/include"/>
+					<Add directory="/home/hgq/.mslib/nlohmann_json_b73a91c3af99db76a4468ecba3b99509/."/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/cmake/../third_party/securec/include"/>
+					<Add directory="/mnt/data/software/anaconda/anaconda/include/python3.7m"/>
+					<Add directory="/home/hgq/.mslib/pybind11_4ff815e53c2c9c54255c528ad480c451/include"/>
+					<Add directory="/home/hgq/.mslib/eigen3_951666374a92d62fcd880d2baa7db402/include/eigen3"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/protobuf/build/include"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../tests/ut/cpp"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/lite/tools"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/lite/lite"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googlemock/include"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googlemock"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googletest/include"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googletest"/>
+					<Add directory="/usr/include/c++/7"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/7"/>
+					<Add directory="/usr/include/c++/7/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/Makefile&quot;  VERBOSE=1 gmock_main"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="gmock_main/fast">
+				<Option output="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/libgmock_maind.so" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock"/>
+				<Option object_output="./"/>
+				<Option type="3"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DGTEST_CREATE_SHARED_LIBRARY=1"/>
+					<Add option="-DUSE_ANDROID_LOG"/>
+					<Add option="-DNO_DLIB"/>
+					<Add option="-DBUILD_DEVICE"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../.."/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/core"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/ccsrc"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/flatbuffers/include"/>
+					<Add directory="/home/hgq/.mslib/nlohmann_json_b73a91c3af99db76a4468ecba3b99509/."/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/cmake/../third_party/securec/include"/>
+					<Add directory="/mnt/data/software/anaconda/anaconda/include/python3.7m"/>
+					<Add directory="/home/hgq/.mslib/pybind11_4ff815e53c2c9c54255c528ad480c451/include"/>
+					<Add directory="/home/hgq/.mslib/eigen3_951666374a92d62fcd880d2baa7db402/include/eigen3"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/protobuf/build/include"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../tests/ut/cpp"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/lite/tools"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/lite/lite"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googlemock/include"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googlemock"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googletest/include"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googletest"/>
+					<Add directory="/usr/include/c++/7"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/7"/>
+					<Add directory="/usr/include/c++/7/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/Makefile&quot;  VERBOSE=1 gmock_main/fast"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="gmock">
+				<Option output="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/libgmockd.so" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock"/>
+				<Option object_output="./"/>
+				<Option type="3"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DGTEST_CREATE_SHARED_LIBRARY=1"/>
+					<Add option="-DUSE_ANDROID_LOG"/>
+					<Add option="-DNO_DLIB"/>
+					<Add option="-DBUILD_DEVICE"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../.."/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/core"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/ccsrc"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/flatbuffers/include"/>
+					<Add directory="/home/hgq/.mslib/nlohmann_json_b73a91c3af99db76a4468ecba3b99509/."/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/cmake/../third_party/securec/include"/>
+					<Add directory="/mnt/data/software/anaconda/anaconda/include/python3.7m"/>
+					<Add directory="/home/hgq/.mslib/pybind11_4ff815e53c2c9c54255c528ad480c451/include"/>
+					<Add directory="/home/hgq/.mslib/eigen3_951666374a92d62fcd880d2baa7db402/include/eigen3"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/protobuf/build/include"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../tests/ut/cpp"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/lite/tools"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/lite/lite"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googlemock/include"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googlemock"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googletest/include"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googletest"/>
+					<Add directory="/usr/include/c++/7"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/7"/>
+					<Add directory="/usr/include/c++/7/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/Makefile&quot;  VERBOSE=1 gmock"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="gmock/fast">
+				<Option output="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/libgmockd.so" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock"/>
+				<Option object_output="./"/>
+				<Option type="3"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DGTEST_CREATE_SHARED_LIBRARY=1"/>
+					<Add option="-DUSE_ANDROID_LOG"/>
+					<Add option="-DNO_DLIB"/>
+					<Add option="-DBUILD_DEVICE"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../.."/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/core"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/ccsrc"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/flatbuffers/include"/>
+					<Add directory="/home/hgq/.mslib/nlohmann_json_b73a91c3af99db76a4468ecba3b99509/."/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/cmake/../third_party/securec/include"/>
+					<Add directory="/mnt/data/software/anaconda/anaconda/include/python3.7m"/>
+					<Add directory="/home/hgq/.mslib/pybind11_4ff815e53c2c9c54255c528ad480c451/include"/>
+					<Add directory="/home/hgq/.mslib/eigen3_951666374a92d62fcd880d2baa7db402/include/eigen3"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/protobuf/build/include"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../tests/ut/cpp"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/lite/tools"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/lite/lite"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googlemock/include"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googlemock"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googletest/include"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googletest"/>
+					<Add directory="/usr/include/c++/7"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/7"/>
+					<Add directory="/usr/include/c++/7/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/Makefile&quot;  VERBOSE=1 gmock/fast"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="gtest_main">
+				<Option output="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest/libgtest_maind.so" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest"/>
+				<Option object_output="./"/>
+				<Option type="3"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DGTEST_CREATE_SHARED_LIBRARY=1"/>
+					<Add option="-DUSE_ANDROID_LOG"/>
+					<Add option="-DNO_DLIB"/>
+					<Add option="-DBUILD_DEVICE"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../.."/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/core"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/ccsrc"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/flatbuffers/include"/>
+					<Add directory="/home/hgq/.mslib/nlohmann_json_b73a91c3af99db76a4468ecba3b99509/."/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/cmake/../third_party/securec/include"/>
+					<Add directory="/mnt/data/software/anaconda/anaconda/include/python3.7m"/>
+					<Add directory="/home/hgq/.mslib/pybind11_4ff815e53c2c9c54255c528ad480c451/include"/>
+					<Add directory="/home/hgq/.mslib/eigen3_951666374a92d62fcd880d2baa7db402/include/eigen3"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/protobuf/build/include"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../tests/ut/cpp"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/lite/tools"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/lite/lite"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googletest/include"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googletest"/>
+					<Add directory="/usr/include/c++/7"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/7"/>
+					<Add directory="/usr/include/c++/7/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest/Makefile&quot;  VERBOSE=1 gtest_main"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="gtest_main/fast">
+				<Option output="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest/libgtest_maind.so" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest"/>
+				<Option object_output="./"/>
+				<Option type="3"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DGTEST_CREATE_SHARED_LIBRARY=1"/>
+					<Add option="-DUSE_ANDROID_LOG"/>
+					<Add option="-DNO_DLIB"/>
+					<Add option="-DBUILD_DEVICE"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../.."/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/core"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/ccsrc"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/flatbuffers/include"/>
+					<Add directory="/home/hgq/.mslib/nlohmann_json_b73a91c3af99db76a4468ecba3b99509/."/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/cmake/../third_party/securec/include"/>
+					<Add directory="/mnt/data/software/anaconda/anaconda/include/python3.7m"/>
+					<Add directory="/home/hgq/.mslib/pybind11_4ff815e53c2c9c54255c528ad480c451/include"/>
+					<Add directory="/home/hgq/.mslib/eigen3_951666374a92d62fcd880d2baa7db402/include/eigen3"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/protobuf/build/include"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../tests/ut/cpp"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/lite/tools"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/lite/lite"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googletest/include"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googletest"/>
+					<Add directory="/usr/include/c++/7"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/7"/>
+					<Add directory="/usr/include/c++/7/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest/Makefile&quot;  VERBOSE=1 gtest_main/fast"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="gtest">
+				<Option output="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest/libgtestd.so" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest"/>
+				<Option object_output="./"/>
+				<Option type="3"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DGTEST_CREATE_SHARED_LIBRARY=1"/>
+					<Add option="-DUSE_ANDROID_LOG"/>
+					<Add option="-DNO_DLIB"/>
+					<Add option="-DBUILD_DEVICE"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../.."/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/core"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/ccsrc"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/flatbuffers/include"/>
+					<Add directory="/home/hgq/.mslib/nlohmann_json_b73a91c3af99db76a4468ecba3b99509/."/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/cmake/../third_party/securec/include"/>
+					<Add directory="/mnt/data/software/anaconda/anaconda/include/python3.7m"/>
+					<Add directory="/home/hgq/.mslib/pybind11_4ff815e53c2c9c54255c528ad480c451/include"/>
+					<Add directory="/home/hgq/.mslib/eigen3_951666374a92d62fcd880d2baa7db402/include/eigen3"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/protobuf/build/include"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../tests/ut/cpp"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/lite/tools"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/lite/lite"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googletest/include"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googletest"/>
+					<Add directory="/usr/include/c++/7"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/7"/>
+					<Add directory="/usr/include/c++/7/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest/Makefile&quot;  VERBOSE=1 gtest"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="gtest/fast">
+				<Option output="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest/libgtestd.so" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest"/>
+				<Option object_output="./"/>
+				<Option type="3"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DGTEST_CREATE_SHARED_LIBRARY=1"/>
+					<Add option="-DUSE_ANDROID_LOG"/>
+					<Add option="-DNO_DLIB"/>
+					<Add option="-DBUILD_DEVICE"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../.."/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/core"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/ccsrc"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/flatbuffers/include"/>
+					<Add directory="/home/hgq/.mslib/nlohmann_json_b73a91c3af99db76a4468ecba3b99509/."/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/cmake/../third_party/securec/include"/>
+					<Add directory="/mnt/data/software/anaconda/anaconda/include/python3.7m"/>
+					<Add directory="/home/hgq/.mslib/pybind11_4ff815e53c2c9c54255c528ad480c451/include"/>
+					<Add directory="/home/hgq/.mslib/eigen3_951666374a92d62fcd880d2baa7db402/include/eigen3"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/protobuf/build/include"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../tests/ut/cpp"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/lite/tools"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../mindspore/lite/lite"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googletest/include"/>
+					<Add directory="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googletest"/>
+					<Add directory="/usr/include/c++/7"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/7"/>
+					<Add directory="/usr/include/c++/7/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest/Makefile&quot;  VERBOSE=1 gtest/fast"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/cmake-build-minnie/googletest/googlemock/gtest/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googlemock/src/gmock-all.cc">
+			<Option target="gmock"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googlemock/src/gmock_main.cc">
+			<Option target="gmock_main"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googletest/src/gtest-all.cc">
+			<Option target="gtest"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/third_party/googletest/googletest/src/gtest_main.cc">
+			<Option target="gtest_main"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../cmake/dependency_gtest.cmake">
+			<Option virtualFolder="CMake Files\..\..\cmake\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../cmake/dependency_securec.cmake">
+			<Option virtualFolder="CMake Files\..\..\cmake\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../cmake/utils.cmake">
+			<Option virtualFolder="CMake Files\..\..\cmake\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../cmake/external_libs/eigen.cmake">
+			<Option virtualFolder="CMake Files\..\..\cmake\external_libs\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../cmake/external_libs/json.cmake">
+			<Option virtualFolder="CMake Files\..\..\cmake\external_libs\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../cmake/external_libs/pybind11.cmake">
+			<Option virtualFolder="CMake Files\..\..\cmake\external_libs\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../../../../../../../home/hgq/.mslib/pybind11_4ff815e53c2c9c54255c528ad480c451/share/cmake/pybind11/FindPythonLibsNew.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\..\..\..\home\hgq\.mslib\pybind11_4ff815e53c2c9c54255c528ad480c451\share\cmake\pybind11\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../../../../../../../home/hgq/.mslib/pybind11_4ff815e53c2c9c54255c528ad480c451/share/cmake/pybind11/pybind11Config.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\..\..\..\home\hgq\.mslib\pybind11_4ff815e53c2c9c54255c528ad480c451\share\cmake\pybind11\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../../../../../../../home/hgq/.mslib/pybind11_4ff815e53c2c9c54255c528ad480c451/share/cmake/pybind11/pybind11ConfigVersion.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\..\..\..\home\hgq\.mslib\pybind11_4ff815e53c2c9c54255c528ad480c451\share\cmake\pybind11\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../../../../../../../home/hgq/.mslib/pybind11_4ff815e53c2c9c54255c528ad480c451/share/cmake/pybind11/pybind11Targets.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\..\..\..\home\hgq\.mslib\pybind11_4ff815e53c2c9c54255c528ad480c451\share\cmake\pybind11\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../../../../../../../home/hgq/.mslib/pybind11_4ff815e53c2c9c54255c528ad480c451/share/cmake/pybind11/pybind11Tools.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\..\..\..\home\hgq\.mslib\pybind11_4ff815e53c2c9c54255c528ad480c451\share\cmake\pybind11\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../../../../../../../home/hgq/.mslib/eigen3_951666374a92d62fcd880d2baa7db402/share/eigen3/cmake/Eigen3Config.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\..\..\..\home\hgq\.mslib\eigen3_951666374a92d62fcd880d2baa7db402\share\eigen3\cmake\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../../../../../../../home/hgq/.mslib/eigen3_951666374a92d62fcd880d2baa7db402/share/eigen3/cmake/Eigen3ConfigVersion.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\..\..\..\home\hgq\.mslib\eigen3_951666374a92d62fcd880d2baa7db402\share\eigen3\cmake\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../../../../../../../home/hgq/.mslib/eigen3_951666374a92d62fcd880d2baa7db402/share/eigen3/cmake/Eigen3Targets.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\..\..\..\home\hgq\.mslib\eigen3_951666374a92d62fcd880d2baa7db402\share\eigen3\cmake\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/securec/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\..\..\third_party\securec\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/securec/src/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\..\..\third_party\securec\src\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/googletest/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\..\..\third_party\googletest\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/googletest/googlemock/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\..\..\third_party\googletest\googlemock\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/googletest/googlemock/cmake/gmock.pc.in">
+			<Option virtualFolder="CMake Files\..\..\third_party\googletest\googlemock\cmake\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/googletest/googlemock/cmake/gmock_main.pc.in">
+			<Option virtualFolder="CMake Files\..\..\third_party\googletest\googlemock\cmake\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/googletest/googletest/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\..\..\third_party\googletest\googletest\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/googletest/googletest/cmake/Config.cmake.in">
+			<Option virtualFolder="CMake Files\..\..\third_party\googletest\googletest\cmake\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/googletest/googletest/cmake/gtest.pc.in">
+			<Option virtualFolder="CMake Files\..\..\third_party\googletest\googletest\cmake\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/googletest/googletest/cmake/gtest_main.pc.in">
+			<Option virtualFolder="CMake Files\..\..\third_party\googletest\googletest\cmake\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/../../third_party/googletest/googletest/cmake/internal_utils.cmake">
+			<Option virtualFolder="CMake Files\..\..\third_party\googletest\googletest\cmake\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/tools/converter/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\tools\converter\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/tools/converter/parser/caffe/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\tools\converter\parser\caffe\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/tools/converter/parser/tflite/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\tools\converter\parser\tflite\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/tools/converter/optimizer/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\tools\converter\optimizer\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/tools/converter/optimizer/fusion/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\tools\converter\optimizer\fusion\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/tools/converter/optimizer/node/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\tools\converter\optimizer\node\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/tools/converter/optimizer/graph/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\tools\converter\optimizer\graph\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/tools/converter/quantizer/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\tools\converter\quantizer\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/tools/benchmark/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\tools\benchmark\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/src/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\src\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/src/common/anf_exporter/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\src\common\anf_exporter\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/src/runtime/kernel/arm/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\src\runtime\kernel\arm\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/src/runtime/kernel/arm/opclib/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\src\runtime\kernel\arm\opclib\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/src/ops/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\src\ops\"/>
+		</Unit>
+		<Unit filename="/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/test/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\test\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

@@ -1,0 +1,719 @@
+/**
+ * Copyright 2019 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+namespace mindspore.schema;
+
+enum ResizeMethod: byte {
+    UNKNOW = -1,
+    BILINEAR = 0,
+    NEAREST_NEIGHBOR = 1
+}
+
+enum Format : int {
+    NCHW = 0,
+    NHWC,
+    NHWC4,
+    HWKC,
+    HWCK,
+    KCHW,
+    CKHW,
+    KHWC,
+    CHWK,
+    NC4HW4 = 100,
+    NUM_OF_FORMAT
+}
+
+enum ActivationType : byte {
+    NO_ACTIVATION = 0,
+    RELU = 1,
+    SIGMOID = 2,
+    RELU6 = 3,
+    ELU = 4,
+    LEAKY_RELU = 5,
+    ABS = 6,
+    RELU1 = 7,
+    SOFTSIGN = 8,
+    SOFTPLUS = 9,
+    TANH = 10,
+    SELU = 11,
+    HSWISH = 12,
+    HSIGMOID = 13,
+    THRESHOLDRELU = 14,
+    LINEAR = 15,
+    UNKNOW = 16
+}
+
+enum ReduceType : byte {
+    REDUCE_MAX = 0,
+    REDUCE_MEAN = 1,
+    REDUCE_ALL = 2,
+    REDUCE_ANY = 3,
+    REDUCE_LOG_SUM_EXP = 4,
+    REDUCE_PROD = 5,
+    REDUCE_SUM = 6,
+    UNKNOW = 7
+}
+
+enum PoolMode : byte {
+    MAX_POOLING = 0,
+    MEAN_POOLING = 1,
+}
+
+enum EltwiseMode : byte {
+    PROD = 0,
+    SUM = 1,
+    MAXIMUM = 2,
+    UNKNOW = 3
+}
+
+enum PadMode : byte {
+    NOTSET = 0,
+    SAME = 1,
+    VALID = 2,
+    CAFFE = 4
+}
+
+enum RoundMode : byte {
+    FLOOR = 0,
+    CEIL = 1
+}
+
+enum PaddingMode : byte {
+    CONSTANT = 0,
+    REFLECT = 1,
+    SYMMETRIC = 2,
+    MODE_RESERVED = 3
+}
+
+table Pad {
+    paddingmode: PaddingMode;
+    paddings: [int];
+}
+
+table Maximum {
+}
+
+table Minimum {
+}
+
+table Flatten {
+}
+
+table Concat {
+    axis: int;
+    n: int;
+}
+
+table SoftMax {
+    axis: int;
+}
+
+table Activation {
+    type: ActivationType = 0;
+}
+
+table Conv2D {
+    format: Format = 0;
+    group: int;
+    channelIn: int;
+    channelOut: int;
+    kernelW: int;
+    kernelH: int;
+    strideW: int;
+    strideH: int;
+    padMode: PadMode;
+    padUp: int;
+    padDown: int;
+    padLeft: int;
+    padRight: int;
+    dilateW: int;
+    dilateH: int;
+    hasBias: bool = false;
+    activationType: ActivationType = 0;
+}
+
+table FusedBatchNorm {
+    epsilon: float = 0.00001;   // eg. epsilon=0.001
+    momentum: float = 0.9;
+    spatial: int = 1;
+}
+
+table CaffeBatchNorm {
+    epsilon: float;   // eg. epsilon=0.001
+}
+
+table Shape {
+}
+
+table Nchw2Nhwc {
+
+}
+
+table Nhwc2Nchw {
+
+}
+
+table FakeQuantWithMinMaxVars {
+    narrowRange: bool;
+    numBits: int;
+}
+
+table BiasAdd {
+    axis: [int];
+}
+
+table Pooling {
+    format: Format = 0;
+    poolingMode: PoolMode;
+    global: bool = false;
+    windowW: int;
+    windowH: int;
+    strideW: int;
+    strideH: int;
+    padMode: PadMode;
+    padUp: int;
+    padDown: int;
+    padLeft: int;
+    padRight: int;
+    roundMode: RoundMode;
+}
+
+table DepthwiseConv2D {
+    format: Format = 0;
+    channelIn: int;
+    channelMultiplier: int;
+    kernelW: int;
+    kernelH: int;
+    strideW: int;
+    strideH: int;
+    padMode: PadMode;
+    padUp: int;
+    padDown: int;
+    padLeft: int;
+    padRight: int;
+    dilateW: int;
+    dilateH: int;
+    hasBias: bool  = false;
+    activationType: ActivationType = 0;
+}
+
+table DeDepthwiseConv2D {
+    format: Format = 0;
+    channelIn: int;
+    channelMultiplier: int;
+    kernelW: int;
+    kernelH: int;
+    strideW: int;
+    strideH: int;
+    padMode: PadMode;
+    padUp: int;
+    padDown: int;
+    padLeft: int;
+    padRight: int;
+    dilateW: int;
+    dilateH: int;
+    hasBias: bool  = false;
+    activationType: ActivationType = 0;
+}
+
+
+table Resize {
+    format: Format = 0;
+    method: ResizeMethod;
+    newHeight: long;
+    newWidth: long;
+    alignCorners: bool = false;
+    preserveAspectRatio: bool = false;
+}
+
+table DetectionPostProcess {
+    format: Format = 0;
+    inputSize: int;
+    hScale: float;
+    wScale: float;
+    xScale: float;
+    yScale: float;
+    NmsIouThreshold: float;
+    NmsScoreThreshold: float;
+    MaxDetections: long;
+    DetectionsPreClass: long;
+    MaxClassesPreDetection: long;
+    NumClasses: long;
+    UseRegularNms: bool;
+}
+
+table FullConnection {
+    hasBias: bool;
+    axis: int;
+}
+
+// Mean(input_tensor, axis, keep_dims)
+table Mean {
+    axis: [int];
+    keepDims: bool = false;
+}
+
+table DeConv2D {
+    format: Format = 0;
+    group: int;
+    channelIn: int;
+    channelOut: int;
+    kernelW: int;
+    kernelH: int;
+    strideW: int;
+    strideH: int;
+    padMode: PadMode;
+    padUp: int;
+    padDown: int;
+    padLeft: int;
+    padRight: int;
+    dilateW: int;
+    dilateH: int;
+    hasBias: bool = false;
+    activationType: ActivationType = 0;
+}
+
+table Scale {
+    format: Format = 0;
+}
+
+table Eltwise {
+    mode: EltwiseMode;
+}
+
+table Add {
+}
+
+table Sub {
+}
+
+table Mul {
+}
+
+table Div {
+}
+
+table RealDiv {
+}
+
+table Rsqrt {
+}
+
+table Equal {
+}
+
+table Less {
+}
+
+table Greater {
+}
+
+table NotEqual {
+}
+
+table LessEqual {
+}
+
+table GreaterEqual {
+}
+
+table Min {
+}
+
+table Slice {
+    format: Format = 0;
+    begin: [int];
+    size: [int];
+}
+
+table Floor {
+}
+
+table Abs {
+}
+
+table Neg {
+}
+
+table Exp {
+}
+
+table Cos {
+}
+
+table Sin {
+}
+
+table Sqrt {
+}
+
+table Square {
+}
+
+table Ceil {
+}
+
+table Log {
+}
+
+table Tan {
+}
+
+table Atan {
+}
+
+table Asin {
+}
+
+table Reshape {
+    format: Format = 0;
+    shape: [long];
+}
+
+table Power {
+    power: float;
+    scale: float;
+    shift: float;
+}
+
+table ArgMax {
+    axis: int;
+    outMaxValue: bool;
+    topK: int = 1;
+    keepDims: bool;
+    axisType: int;
+}
+
+table ArgMin {
+    axis: int;
+    outMaxValue: bool;
+    topK: int = 1;
+    keepDims: bool;
+    axisType: int;
+}
+
+table NetOutput {
+}
+
+table MatMul {
+    transposeA : bool = false;
+    transposeB : bool = false;
+}
+
+table CaffePReLU {
+    channelShared : bool = false;
+}
+
+table LeakyReLU {
+    negativeSlope: float;
+}
+
+table StridedSlice {
+    beginMask: int;
+    endMask: int;
+    ellipsisMask: int;
+    newAxisMask: int;
+    shrinkAxisMask: int;
+    begin: [int];
+    end: [int];
+    stride: [int];
+    isScale: [int];
+}
+
+table Stack {
+    axis: int;
+    n: int;
+    isScale: [int];
+}
+
+table Range {
+    dType: int;
+    start: int;
+    limit: int;
+    delta: int;
+}
+
+table ExpandDims {
+    dim: int;
+}
+
+table Tile {
+    multiples: [int];
+}
+
+table Cast {
+    srcT: int;
+    dstT: int;
+}
+
+table QuantDTypeCast {
+    srcT: int;
+    dstT: int;
+}
+
+table Split {
+    numberSplit: int;
+    sizeSplits: [int];
+    splitDim: int;
+}
+
+table Crop {
+    axis : long;
+    offsets : [long];
+}
+
+table Permute {
+    order: [long];
+}
+
+table Clip {
+    max: float;
+    min: float;
+}
+
+table Constant {
+}
+
+
+table Elu {
+    alpha: float = 1.0;
+}
+
+table Broadcast {
+}
+
+table BroadcastTo {
+    dst_shape: [int];
+}
+
+table Lrn {
+    alpha: float = 0.0001;
+    beta: float = 0.75;
+    bias: float = 1.0;
+    size: int;
+}
+
+enum ReduceMode : byte {
+    ReduceMean = 0,
+    ReduceMax = 1,
+    ReduceMin = 2,
+    ReduceProd = 3,
+    ReduceSum = 4,
+    ReduceSumSquare = 5
+}
+
+table Reduce {
+    axes: [int];
+    keepDims: int;
+    mode: ReduceMode;
+}
+
+table Prelu {
+    slope: [float];
+}
+
+table Transpose {
+    perm: [int];
+    conjugate: bool = false;
+}
+
+table Squeeze {
+    axis: [int];
+}
+
+table Unsqueeze {
+    axis: [int];
+}
+
+table Upsample {
+    mode: string;
+    scales: [float];
+}
+
+table Dropout {
+    ratio : float = 0.5;
+}
+
+table LocalResponseNormalization {
+    depth_radius: int;
+    bias: float;
+    alpha: float;
+    beta: float;
+}
+
+table ZerosLike {
+}
+
+table TopK {
+    k : int;
+    sorted : bool = true;
+}
+
+table SpaceToDepth {
+    blockSize : int;
+    format: Format = 0;
+}
+
+table SpaceToBatch {
+    blockShape : [int];
+    paddings : [int];
+}
+
+table SparseToDense {
+    validateIndices: bool;
+}
+
+table ReverseSequence {
+    seqAxis: int;
+    batchAxis: int;
+}
+
+table Rank {
+}
+
+
+table Gather {
+    axis: int;
+    batchDims: int;
+}
+
+table GatherNd {
+    batchDims: int;
+}
+
+table Fill {
+    dims: [int];
+}
+
+table DepthToSpace {
+    blockSize: int;
+    format: Format = 0;
+}
+
+
+table BatchToSpace {
+    blockShape: [int];
+    crops: [int];
+}
+
+table AddN {
+    N: int;
+}
+
+
+table EmbeddingLookup {
+    ids: [int];
+    maxNorm: float;
+}
+
+table EmbeddingLookupSparse {
+    spIds: [int];
+    spWeights: [float];
+    //combiner: Combiner=0;
+    maxNortm: float;
+}
+
+table FloorDiv {
+}
+
+table FloorMod {
+}
+
+table L2Norm {
+    axis: [int];
+    epsilon: float;
+}
+
+table LogicalAnd {
+}
+
+table LogicalOr {
+}
+
+table LogicalXor {
+}
+
+table LogicalNot {
+}
+
+table MatrixDiag {
+    k: int;
+    numRows: int;
+    numCols: int;
+    paddingValue: float;
+}
+
+table Select {
+}
+
+table TfReduce {
+    type: ReduceType = 7;
+}
+
+table Reverse {
+    axis: [int];
+}
+
+table Round {
+}
+
+table Scatter {
+}
+
+table ScatterND {
+}
+
+table Unique {
+}
+
+table Unstack {
+    num: int;
+    axis: int;
+}
+
+table OnnxInt8Quantize {
+}
+
+table OnnxInt8Dequantize {
+}
+
+table FakeQuantWithMinMax {
+}
+
+table FakeQuantWithMinMaxPerChannel {
+}
+
+table BatchNormFold {
+}
+
+table MulFold {
+}
+
+table AddFold {
+}
+
+table SquaredDifference {
+}
+
+table TupleGetItem {
+}
+
+table Where{
+}
+
+table OneHot {
+    axis: int;
+}

@@ -1,0 +1,208 @@
+/**
+ * Copyright 2019 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+include "ops.fbs";
+
+namespace mindspore.schema;
+
+enum NodeType: int {
+    ValueNode,  // const
+    Parameter,  // var
+    CNode       // op
+}
+
+table QuantParam {
+    scale: double;
+    zeroPoint: int;
+    min: double = 0;
+    max: double = 0;
+    narrowRange: bool = true;
+    numBits: int = 8;
+    inited: bool = false;
+}
+
+table Tensor {
+    nodeType: NodeType;
+    // data type
+    dataType: int;
+    // shape
+    dims: [int];
+    format: Format;
+    refCount: int;
+    offset: int;
+    data: [ubyte];
+    quantParams: [QuantParam];
+}
+
+union PrimitiveType {
+    Concat,
+    SoftMax,
+    Activation,
+    Conv2D,
+    FusedBatchNorm,
+    CaffeBatchNorm,
+    BiasAdd,
+    Pooling,
+    DepthwiseConv2D,
+    DeDepthwiseConv2D,
+    Resize,
+    DetectionPostProcess,
+    FullConnection,
+    Mean,
+    DeConv2D,
+    Scale,
+    Reshape,
+    Eltwise,
+    NetOutput,
+    Add,
+    Sub,
+    MatMul,
+    StridedSlice,
+    Power,
+    Slice,
+    Stack,
+    Mul,
+    RealDiv,
+    Pad,
+    Maximum,
+    Minimum,
+    CaffePReLU,
+    LeakyReLU,
+    ArgMax,
+    ArgMin,
+    Exp,
+    Crop,
+    Range,
+    Rsqrt,
+    ExpandDims,
+    Tile,
+    Cast,
+    Shape,
+    Nchw2Nhwc,
+    Nhwc2Nchw,
+    QuantDTypeCast,
+    Split,
+    Permute,
+    FakeQuantWithMinMaxVars,
+    Equal,
+    Less,
+    Greater,
+    NotEqual,
+    LessEqual,
+    GreaterEqual,
+    Min,
+    Floor,
+    Abs,
+    Neg,
+    Cos,
+    Sin,
+    Sqrt,
+    Square,
+    Constant,
+    Log,
+    Tan,
+    Atan,
+    Asin,
+    Clip,
+    Transpose,
+    Squeeze,
+    Unsqueeze,
+    Upsample,
+    Dropout,
+    Broadcast,
+    BroadcastTo,
+    Lrn,
+    Prelu,
+    ZerosLike,
+    TopK,
+    SpaceToDepth,
+    SpaceToBatch,
+    SparseToDense,
+    ReverseSequence,
+    Rank,
+    Gather,
+    GatherNd,
+    Fill,
+    Elu,
+    DepthToSpace,
+    BatchToSpace,
+    AddN,
+    Ceil,
+    EmbeddingLookup,
+    EmbeddingLookupSparse,
+    FloorDiv,
+    FloorMod,
+    L2Norm,
+    LocalResponseNormalization,
+    MatrixDiag,
+    Reduce,
+    Reverse,
+    Round,
+    Select,
+    Scatter,
+    ScatterND,
+    Unique,
+    Unstack,
+    LogicalAnd,
+    LogicalOr,
+    LogicalXor,
+    LogicalNot,
+    OnnxInt8Quantize,
+    OnnxInt8Dequantize,
+    FakeQuantWithMinMax,
+    FakeQuantWithMinMaxPerChannel,
+    BatchNormFold,
+    MulFold,
+    AddFold,
+    SquaredDifference,
+    Flatten,
+    TupleGetItem,
+    Div,
+    Where,
+    OneHot
+}
+
+enum QuantType: int {
+    QUANT_NONE,
+    AwareTrainning,
+    WeightQuant,
+    PostTraining
+}
+
+table Primitive {
+    value: PrimitiveType;
+}
+
+table CNode {
+    name: string;
+    nodeType: NodeType = CNode;
+    primitive: Primitive;
+    inputIndex: [uint];
+    outputIndex: [uint];
+    quantType: QuantType = QUANT_NONE;
+}
+
+table MetaGraph {
+    name: string;
+    fmkType: int; // 0:tf,1:caffe
+    inputIndex: [uint];
+    outputIndex: [uint];
+    mempoolSize: uint;
+    nodes: [CNode];
+    allTensors: [Tensor]; // weight + input + output
+}
+
+root_type MetaGraph;

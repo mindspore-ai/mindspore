@@ -31,7 +31,7 @@ class ParamValue {
 
   ParamValue(const ParamValue &other) = default;
 
-  ~ParamValue() = default;
+  virtual ~ParamValue() = default;
 
   tensor::MetaTensorPtr value() const { return value_; }
   void set_value(const tensor::MetaTensorPtr &value) { value_ = value; }
