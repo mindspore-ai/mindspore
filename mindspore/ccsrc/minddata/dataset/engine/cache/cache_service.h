@@ -25,10 +25,10 @@
 #include <utility>
 #include <vector>
 
-#include "./de_tensor_generated.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/cache/cache_request.h"
+#include "minddata/dataset/engine/cache/de_tensor_generated.h"
 #include "minddata/dataset/util/arena.h"
 #include "minddata/dataset/util/btree.h"
 #include "minddata/dataset/util/cache_pool.h"
