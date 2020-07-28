@@ -21,15 +21,21 @@
 #include <memory>
 
 #include "frontend/optimizer/optimizer.h"
+#include "frontend/optimizer/optimizer_caller.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"
+#include "ir/pattern_matcher.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/parse/python_adapter.h"
+#include "pipeline/jit/parse/parse_base.h"
 
 namespace mindspore {
 namespace opt {
 namespace irpass {
+
+const char PARSE_SUPER_NAME[] = "namespace";
+
 // {prim::kPrimResolve, Ns, Sym}
 class ResolverResolve : public AnfVisitor {
  public:
@@ -89,6 +95,34 @@ class ResolverGetattr : public AnfVisitor {
  private:
   parse::NameSpacePtr ns_{nullptr};
   parse::SymbolPtr sym_{nullptr};
+};
+
+// {prim::kPrimGetAttr, {prim::kPrimResolve, ns_node, sym_node}, attr_node}
+class ResolveAttr : public OptimizerCaller {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
+    PatternNode<AnfNodePtr> ns_node, sym_node, attr_node;
+    auto ResolveAttrLambda = [&node, &ns_node, &sym_node, &attr_node, &optimizer]() -> AnfNodePtr {
+      auto node_to_getattr = node->cast<CNodePtr>()->input(1);
+      std::string attr_as_string = GetValueNode<StringImmPtr>(attr_node.GetNode(node))->value();
+
+      auto ns_ = GetValueNode<parse::NameSpacePtr>(ns_node.GetNode(node));
+      auto sym_ = GetValueNode<parse::SymbolPtr>(sym_node.GetNode(node));
+
+      if (ns_->module() == parse::RESOLVE_NAMESPACE_NAME_CLASS_MEMBER && sym_->symbol() != PARSE_SUPER_NAME) {
+        // deal with the case of getting attr from a class member
+        // and avoid the case of getting attr from self (the result of ParseSuper)
+        auto result = parse::ResolveCellwithAttr(optimizer->manager(), ns_, sym_, node_to_getattr, attr_as_string);
+        return result;
+      }
+      return nullptr;
+    };
+    MATCH_REPLACE_LAMBDA_IF(
+      node, PPrimitive(prim::kPrimGetAttr, PPrimitive(prim::kPrimResolve, ns_node, sym_node), attr_node),
+      ResolveAttrLambda, attr_node.CheckFunc(IsValueNode<StringImm>, node));
+
+    return nullptr;
+  }
 };
 }  // namespace irpass
 }  // namespace opt

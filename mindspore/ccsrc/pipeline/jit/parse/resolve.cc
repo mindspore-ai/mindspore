@@ -228,19 +228,10 @@ bool TransformVectorFuncValueNode(const FuncGraphManagerPtr &manager, const Func
 
   return true;
 }
-}  // namespace
 
-AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr &name_space, const SymbolPtr &symbol,
-                         const AnfNodePtr &node) {
-  if (node->func_graph() == nullptr || manager == nullptr) {
-    MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " graph or manager is nullptr";
-  }
-  SymbolResolver symbol_resolver(name_space, symbol, node);
-  if (!symbol_resolver.Resolve()) {
-    MS_LOG(EXCEPTION) << "Parse Resolve node failed NodeInfo: " << trace::GetDebugInfo(node->debug_info());
-  }
-
-  py::object obj = symbol_resolver.result();
+// resolve the python obj, and if the resovled node is valuenode with graphs, add the graphs to manager
+AnfNodePtr ResolveObjectAndAddToManager(const FuncGraphManagerPtr &manager, const py::object &obj,
+                                        const AnfNodePtr &node) {
   ScopeGuard scope_guard(node->scope());
   AnfNodePtr resolved_node = nullptr;
   TraceManager::DebugTrace(std::make_shared<TraceResolve>(node->debug_info()));
@@ -262,10 +253,54 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
   TraceManager::EndTrace();
   return resolved_node;
 }
+}  // namespace
+
+AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr &name_space, const SymbolPtr &symbol,
+                         const AnfNodePtr &node) {
+  if (node->func_graph() == nullptr || manager == nullptr) {
+    MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " graph or manager is nullptr";
+  }
+  SymbolResolver symbol_resolver(name_space, symbol, node);
+  if (!symbol_resolver.Resolve()) {
+    MS_LOG(EXCEPTION) << "Parse Resolve node failed NodeInfo: " << trace::GetDebugInfo(node->debug_info());
+  }
+
+  py::object obj = symbol_resolver.result();
+
+  AnfNodePtr resolved_node = ResolveObjectAndAddToManager(manager, obj, node);
+
+  return resolved_node;
+}
+
+AnfNodePtr ResolveCellwithAttr(const FuncGraphManagerPtr &manager, const NameSpacePtr &name_space,
+                               const SymbolPtr &symbol, const AnfNodePtr &node, const std::string &attr) {
+  if (node->func_graph() == nullptr || manager == nullptr) {
+    MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " graph or manager is nullptr";
+  }
+  SymbolResolver symbol_resolver(name_space, symbol, node);
+  if (!symbol_resolver.Resolve()) {
+    MS_LOG(EXCEPTION) << "Parse Resolve node failed NodeInfo: " << trace::GetDebugInfo(node->debug_info());
+  }
+
+  py::object obj = symbol_resolver.result();
+  if (!data_converter::IsCellInstance(obj)) {
+    return nullptr;
+  }
+  py::object obj_attr = obj.attr(attr.c_str());
+
+  AnfNodePtr resolved_node = ResolveObjectAndAddToManager(manager, obj_attr, node);
+
+  return resolved_node;
+}
 
 namespace {
 opt::OptPassGroupMap GetOptResolvePasses(const opt::irpass::ResolveIRPassLib &irpass) {
   opt::OptPassGroupMap map({
+    {"resolve_attr",
+     {
+       // for resolve primitive;
+       irpass.resolver_resolve_attr_,
+     }},
     {"resolve",
      {
        // for resolve and getattr primitive;

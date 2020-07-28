@@ -145,6 +145,10 @@ using SymbolResolverPtr = std::shared_ptr<SymbolResolver>;
 AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr &name_space, const SymbolPtr &symbol,
                          const AnfNodePtr &node);
 
+// Resolve Cell with attr name.
+AnfNodePtr ResolveCellwithAttr(const FuncGraphManagerPtr &manager, const NameSpacePtr &name_space,
+                               const SymbolPtr &symbol, const AnfNodePtr &node, const std::string &attr);
+
 // Resolve one graph which normally is the root graph. FuncGraph shall be managed by res->manager().
 bool ResolveFuncGraph(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePtr &res, bool use_profile = true);
 
