@@ -23,6 +23,6 @@ extern const char GRAPH_FLAG_HAS_EFFECT[];
 extern const char GRAPH_FLAG_EFFECT_PATIAL_ORDER[];
 extern const char GRAPH_FLAG_RANDOM_EFFECT[];
 extern const char GRAPH_FLAG_SIDE_EFFECT[];
-}
+}  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_UTILS_FLAGS_H

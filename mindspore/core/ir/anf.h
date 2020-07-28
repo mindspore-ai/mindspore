@@ -180,7 +180,9 @@ class AnfNode : public Base {
   bool HasUserData(const std::string &key) const { return user_data_.has(key); }
 
   template <typename T>
-  bool HasUserData() const { return user_data_.has(T::key); }
+  bool HasUserData() const {
+    return user_data_.has(T::key);
+  }
 
  protected:
   // Hold a weak ref to Graph as Graph also hold ref to AnfNode.

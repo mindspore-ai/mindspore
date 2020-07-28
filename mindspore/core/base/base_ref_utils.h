@@ -21,7 +21,6 @@
 #include "ir/tensor.h"
 #include "base/base_ref.h"
 
-
 #ifndef MINDSPORE_CCSRC_UTILS_BASE_REF_UTILS_H
 #define MINDSPORE_CCSRC_UTILS_BASE_REF_UTILS_H
 namespace mindspore {

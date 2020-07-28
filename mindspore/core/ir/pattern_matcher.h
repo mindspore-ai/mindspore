@@ -40,9 +40,7 @@ namespace mindspore {
 template <typename T>
 class PBase {
  public:
-  bool CheckFunc(const PredicateFuncType &func, const AnfNodePtr &node) {
-    return func(get_object().GetNode(node));
-  }
+  bool CheckFunc(const PredicateFuncType &func, const AnfNodePtr &node) { return func(get_object().GetNode(node)); }
 
   const T &get_object() const { return *static_cast<const T *>(this); }
 
