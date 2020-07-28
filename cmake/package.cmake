@@ -253,7 +253,7 @@ if (ENABLE_GPU)
     endif ()
 endif ()
 
-if (ENABLE_AKG AND (ENABLE_D OR ENABLE_GPU))
+if (ENABLE_D AND ENABLE_AKG)
     set (AKG_PATH ${CMAKE_SOURCE_DIR}/build/mindspore/akg)
     install(
         DIRECTORY
