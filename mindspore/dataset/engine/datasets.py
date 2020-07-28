@@ -1051,45 +1051,45 @@ class Dataset:
            * - type in 'dataset'
              - type in 'mindrecord'
              - detail
-           * - DE_BOOL
+           * - bool
              - None
              - Not support
-           * - DE_INT8
+           * - int8
              - int32
              -
-           * - DE_UINT8
+           * - uint8
              - bytes(1D uint8)
              - Drop dimension
-           * - DE_INT16
+           * - int16
              - int32
              -
-           * - DE_UINT16
+           * - uint16
              - int32
              -
-           * - DE_INT32
+           * - int32
              - int32
              -
-           * - DE_UINT32
+           * - uint32
              - int64
              -
-           * - DE_INT64
+           * - int64
              - int64
              -
-           * - DE_UINT64
+           * - uint64
              - None
              - Not support
-           * - DE_FLOAT16
-             - Not support
-             -
-           * - DE_FLOAT32
+           * - float16
              - float32
              -
-           * - DE_FLOAT64
+           * - float32
+             - float32
+             -
+           * - float64
              - float64
              -
-           * - DE_STRING
+           * - string
              - string
-             - Not support multi-dimensional DE_STRING
+             - Not support multi-dimensional string
 
         Note:
             1. To save the samples in order, should set dataset's shuffle false and num_files 1.

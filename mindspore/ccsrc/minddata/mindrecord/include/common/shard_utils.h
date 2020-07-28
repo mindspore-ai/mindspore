@@ -104,7 +104,8 @@ const uint64_t kInt64Len = 8;
 const uint64_t kMinFileSize = kInt64Len;
 
 const int kMinShardCount = 1;
-const int kMaxShardCount = 1000;
+const int kMaxShardCount = 1000;  // write
+const int kMaxFileCount = 4096;   // read
 
 const int kMinConsumerCount = 1;
 const int kMaxConsumerCount = 128;
