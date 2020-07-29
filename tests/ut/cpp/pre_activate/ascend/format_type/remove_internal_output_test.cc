@@ -52,6 +52,8 @@ class TestHWRemoveInternalOutput : public BackendCommon {
     kg->AddInternalOutput(add, add);
     KernelBuildInfoBuilder builder;
     builder.SetInputsFormat({kOpFormat_DEFAULT, kOpFormat_DEFAULT});
+    builder.SetInputsReshapeType({{}, {}});
+    builder.SetOutputsReshapeType({{}});
     builder.SetInputsDeviceType({kFloat32->type_id(), kFloat32->type_id()});
     builder.SetOutputsFormat({kOpFormat_NC1HWC0});
     builder.SetOutputsDeviceType({kFloat16->type_id()});
@@ -78,6 +80,8 @@ class TestHWRemoveInternalOutput : public BackendCommon {
     kg->AddInternalOutput(tuple_getitem1, max_pool);
     kg->AddInternalOutput(tuple_getitem2, max_pool);
     KernelBuildInfoBuilder builder;
+    builder.SetInputsReshapeType({{}});
+    builder.SetOutputsReshapeType({{}, {}});
     builder.SetInputsFormat({kOpFormat_DEFAULT});
     builder.SetInputsDeviceType({kFloat32->type_id()});
     builder.SetOutputsFormat({kOpFormat_NC1HWC0, kOpFormat_NC1HWC0});
@@ -95,6 +99,8 @@ class MockRemoveInternalOutputTransOpKernelSelect : public KernelSelect {
   ~MockRemoveInternalOutputTransOpKernelSelect() override = default;
   void SelectKernel(const CNodePtr &cnode) override {
     KernelBuildInfoBuilder builder;
+    builder.SetInputsReshapeType({{}});
+    builder.SetOutputsReshapeType({{}});
     builder.SetInputsFormat({kOpFormat_NC1HWC0});
     builder.SetInputsDeviceType({kFloat16->type_id()});
     builder.SetOutputsFormat({kOpFormat_DEFAULT});

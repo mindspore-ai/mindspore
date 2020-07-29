@@ -51,6 +51,8 @@ class MockInsertTransOpKernelSelectTrans4Dto5D : public KernelSelect {
       builder.SetInputsDeviceType({kFloat16->type_id()});
       builder.SetOutputsFormat({"NC1HWC0"});
       builder.SetOutputsDeviceType({kFloat16->type_id()});
+      builder.SetInputsReshapeType({{}});
+      builder.SetOutputsReshapeType({{}});
       AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cnode.get());
     } else {
       KernelBuildInfoBuilder builder;
@@ -58,6 +60,8 @@ class MockInsertTransOpKernelSelectTrans4Dto5D : public KernelSelect {
       builder.SetInputsDeviceType({kFloat16->type_id()});
       builder.SetOutputsFormat({"NC1HWC0"});
       builder.SetOutputsDeviceType({kFloat16->type_id()});
+      builder.SetInputsReshapeType({{}});
+      builder.SetOutputsReshapeType({{}});
       AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cnode.get());
     }
   }
@@ -74,10 +78,14 @@ class MockTransdataSplitKernelSelect : public KernelSelect {
       builder.SetInputsDeviceType({kFloat16->type_id()});
       builder.SetOutputsFormat({"NCHW"});
       builder.SetOutputsDeviceType({kFloat16->type_id()});
+      builder.SetInputsReshapeType({{}});
+      builder.SetOutputsReshapeType({{}});
       AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cnode.get());
     } else {
       KernelBuildInfoBuilder builder;
       builder.SetInputsFormat({"NCHW"});
+      builder.SetInputsReshapeType({{}});
+      builder.SetOutputsReshapeType({{}});
       builder.SetInputsDeviceType({kFloat16->type_id()});
       builder.SetOutputsFormat({"NCHW"});
       builder.SetOutputsDeviceType({kFloat16->type_id()});
@@ -116,6 +124,8 @@ TEST_F(TestHWTransdataSplit, test_transdata_split_fraz_nchw) {
   builder.SetKernelType(KernelType::TBE_KERNEL);
   builder.SetFusionType(kernel::FusionType::ELEMWISE);
   builder.SetProcessor(kernel::Processor::AICORE);
+  builder.SetInputsReshapeType({{}});
+  builder.SetOutputsReshapeType({{}});
   auto kernel_info = std::make_shared<device::KernelInfo>();
   kernel_info->set_select_kernel_build_info(builder.Build());
   transpose->set_kernel_info(kernel_info);
@@ -162,6 +172,8 @@ TEST_F(TestHWTransdataSplit, test_transdata_split_nchw_fraz) {
   builder.SetKernelType(KernelType::TBE_KERNEL);
   builder.SetFusionType(kernel::FusionType::ELEMWISE);
   builder.SetProcessor(kernel::Processor::AICORE);
+  builder.SetInputsReshapeType({{}});
+  builder.SetOutputsReshapeType({{}});
   auto kernel_info = std::make_shared<device::KernelInfo>();
   kernel_info->set_select_kernel_build_info(builder.Build());
   transpose->set_kernel_info(kernel_info);

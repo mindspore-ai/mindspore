@@ -174,8 +174,8 @@ void RefreshKernelBuildInfo(const std::string &input_format, const std::string &
   MS_EXCEPTION_IF_NULL(ori_build_info);
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(ori_build_info);
   builder->SetInputsFormat({input_format});
-  builder->SetInputReshapeType({reshape_type});
-  builder->SetOutputReshapeType({reshape_type});
+  builder->SetInputsReshapeType({reshape_type});
+  builder->SetOutputsReshapeType({reshape_type});
   builder->SetOutputsFormat({output_format});
   if (type_id != kTypeUnknown) {
     builder->SetOutputsDeviceType({type_id});

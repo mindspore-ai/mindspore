@@ -58,6 +58,8 @@ class MockInsertTransOpKernelSelectTrans4Dto5D : public KernelSelect {
       builder.SetInputsDeviceType({kFloat16->type_id()});
       builder.SetOutputsFormat({"NC1HWC0"});
       builder.SetOutputsDeviceType({kFloat16->type_id()});
+      builder.SetInputsReshapeType({});
+      builder.SetOutputsReshapeType({});
       AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cnode.get());
     } else {
       KernelBuildInfoBuilder builder;
@@ -65,6 +67,8 @@ class MockInsertTransOpKernelSelectTrans4Dto5D : public KernelSelect {
       builder.SetInputsDeviceType({kFloat16->type_id()});
       builder.SetOutputsFormat({"NC1HWC0"});
       builder.SetOutputsDeviceType({kFloat16->type_id()});
+      builder.SetInputsReshapeType({});
+      builder.SetOutputsReshapeType({});
       AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cnode.get());
     }
   }
@@ -97,6 +101,8 @@ TEST_F(TestHWTransposeTransdataFusion, test_transpose_transdata_fusion) {
   builder.SetInputsDeviceType({kFloat16->type_id()});
   builder.SetOutputsFormat({"NC1HWC0"});
   builder.SetOutputsDeviceType({kFloat16->type_id()});
+  builder.SetInputsReshapeType({});
+  builder.SetOutputsReshapeType({});
   builder.SetKernelType(KernelType::TBE_KERNEL);
   builder.SetFusionType(kernel::FusionType::ELEMWISE);
   builder.SetProcessor(kernel::Processor::AICORE);
