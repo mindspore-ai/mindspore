@@ -183,3 +183,4 @@ tensor_operator_registry.register('__ge__', tensor_ge)
 tensor_operator_registry.register('shape', shape)
 #support GE backend for no compare operators
 tensor_operator_registry.register('vm_compare', BP.vm_compare)
+tensor_operator_registry.register('cast', cast)

@@ -286,6 +286,8 @@ class Cell:
             if context.get_context("mode") == context.PYNATIVE_MODE:
                 if name in self.__dict__:
                     del self.__dict__[name]
+                if name in params:
+                    del params[name]
                 params_list[name] = value
             else:
                 object.__setattr__(self, name, value)
@@ -499,9 +501,11 @@ class Cell:
         """
         if hasattr(self, "_mindspore_flags"):
             if self._mindspore_flags.get('fp16'):
-                return cast(param, mstype.float16)
-            if self._mindspore_flags.get('fp32'):
-                return cast(param, mstype.float32)
+                param.cast_type = mstype.float16
+            elif self._mindspore_flags.get('fp32'):
+                param.cast_type = mstype.float32
+            else:
+                param.cast_type = None
         return param
 
     def insert_child_to_cell(self, child_name, child):
