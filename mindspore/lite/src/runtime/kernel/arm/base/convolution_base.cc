@@ -101,7 +101,6 @@ void ConvolutionBaseCPUKernel::FreeQuantParam() {
 int ConvolutionBaseCPUKernel::Init() {
   auto input = this->inputs_.front();
   auto output = this->outputs_.front();
-
   conv_param_->input_batch_ = input->Batch();
   conv_param_->input_h_ = input->Height();
   conv_param_->input_w_ = input->Width();
@@ -111,7 +110,6 @@ int ConvolutionBaseCPUKernel::Init() {
   conv_param_->output_w_ = output->Width();
   conv_param_->output_channel_ = output->Channel();
   conv_param_->thread_num_ = ctx_->threadNum;
-
   return RET_OK;
 }
 
@@ -221,9 +219,24 @@ void CheckIfUseWinograd(bool *use_winograd, int *output_unit, ConvParameter *con
   }
 }
 
-kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs,
-                                             OpParameter *opParameter, const Context *ctx) {
+bool CheckSupportFP16() {
+  bool support_fp16 = false;
+#ifdef ENABLE_ARM64
+  void *optimize_op_handler = OptimizeModule::GetInstance()->optimized_op_handler_;
+  if (optimize_op_handler != nullptr) {
+    support_fp16 = true;
+    MS_LOG(INFO) << "Support FP16.";
+  } else {
+    support_fp16 = false;
+    MS_LOG(INFO) << "Your machine doesn't support fp16, return back to float32 kernel.";
+  }
+#endif
+  return support_fp16;
+}
+
+kernel::LiteKernel *CpuConvFloatKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
+                                              const std::vector<lite::tensor::Tensor *> &outputs,
+                                              OpParameter *opParameter, const Context *ctx) {
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
@@ -240,43 +253,34 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Ten
   InputTransformUnitFunc input_trans_func = nullptr;
   OutputTransformUnitFunc output_trans_func = nullptr;
   CheckIfUseWinograd(&use_winograd, &out_unit, conv_param, input_trans_func, output_trans_func);
+  bool support_fp16 = CheckSupportFP16();
 
   if (kernel_h == 1 && kernel_w == 1) {
     auto kernel = new (std::nothrow) Convolution1x1CPUKernel(opParameter, inputs, outputs, ctx);
     return kernel;
   } else if (kernel_h == 3 && kernel_w == 3 && stride_h == 1 && stride_w == 1 && dilation_h == 1 && dilation_w == 1) {
+    if (support_fp16) {
+#ifdef ENABLE_FP16
+      auto kernel = new (std::nothrow) Convolution3x3FP16CPUKernel(opParameter, inputs, outputs, ctx);
+      return kernel;
+#endif
+    }
     auto kernel = new (std::nothrow) Convolution3x3CPUKernel(opParameter, inputs, outputs, ctx);
     return kernel;
   } else if (use_winograd) {
     auto kernel = new (std::nothrow) ConvolutionWinogradCPUKernel(opParameter, inputs, outputs, ctx, out_unit);
     return kernel;
   } else {
+    if (support_fp16) {
+#ifdef ENABLE_FP16
+      auto kernel = new (std::nothrow) ConvolutionFP16CPUKernel(opParameter, inputs, outputs, ctx);
+      return kernel;
+#endif
+    }
     auto kernel = new (std::nothrow) ConvolutionCPUKernel(opParameter, inputs, outputs, ctx);
     return kernel;
   }
 }
-
-#ifdef ENABLE_FP16
-kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs,
-                                             OpParameter *opParameter, const Context *ctx) {
-  auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
-  int kernel_h = conv_param->kernel_h_;
-  int kernel_w = conv_param->kernel_w_;
-  int stride_h = conv_param->stride_h_;
-  int stride_w = conv_param->stride_w_;
-  int dilation_h = conv_param->dilation_h_;
-  int dilation_w = conv_param->dilation_w_;
-
-  if (kernel_h == 3 && kernel_w == 3 && stride_h == 1 && stride_w == 1 && dilation_h == 1 && dilation_w == 1) {
-    auto kernel = new (std::nothrow) Convolution3x3FP16CPUKernel(opParameter, inputs, outputs, ctx);
-    return kernel;
-  } else {
-    auto kernel = new (std::nothrow) ConvolutionFP16CPUKernel(opParameter, inputs, outputs, ctx);
-    return kernel;
-  }
-}
-#endif
 
 kernel::LiteKernel *CpuConvInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs,
@@ -308,17 +312,10 @@ kernel::LiteKernel *CpuConvKernelCreator(const std::vector<lite::tensor::Tensor 
   kernel::LiteKernel *kernel = nullptr;
   switch (data_type) {
     case kNumberTypeInt8:
-      break;
-    case kNumberTypeUInt8:
       kernel = CpuConvInt8KernelCreator(inputs, outputs, opParameter, ctx);
       break;
-#ifdef ENABLE_FP16
-    case kNumberTypeFloat16:
-      kernel = CpuConvFp16KernelCreator(inputs, outputs, opParameter, ctx);
-      break;
-#endif
     case kNumberTypeFloat32:
-      kernel = CpuConvFp32KernelCreator(inputs, outputs, opParameter, ctx);
+      kernel = CpuConvFloatKernelCreator(inputs, outputs, opParameter, ctx);
       break;
     default:
       break;
@@ -384,8 +381,6 @@ kernel::LiteKernel *CpuConvDwKernelCreator(const std::vector<lite::tensor::Tenso
   switch (data_type) {
     case kNumberTypeInt8:
       kernel = CpuConvDwInt8KernelCreator(inputs, outputs, opParameter, ctx);
-      break;
-    case kNumberTypeUInt8:
       break;
     case kNumberTypeFloat32:
 #ifdef ENABLE_FP16
@@ -515,8 +510,6 @@ kernel::LiteKernel *CpuDeConvKernelCreator(const std::vector<lite::tensor::Tenso
   kernel::LiteKernel *kernel = nullptr;
   switch (data_type) {
     case kNumberTypeInt8:
-      break;
-    case kNumberTypeUInt8:
       kernel = CpuDeConvInt8KernelCreator(inputs, outputs, opParameter, ctx);
       break;
 #ifdef ENABLE_FP16

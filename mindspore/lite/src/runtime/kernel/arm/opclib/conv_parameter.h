@@ -39,7 +39,7 @@ struct ConvParameter {
   int pad_l_;
   int pad_r_;
   int group_;
-  int n_dim_;
+  int tile_num_;
   int input_batch_;
   int input_h_;
   int input_w_;

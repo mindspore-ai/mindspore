@@ -49,6 +49,8 @@ void ProcessFilterFp16(float16_t *origin_weight, float16_t *dst_weight, ConvPara
 int Convolution3x3FP16CPUKernel::InitWeightBias() {
   auto input_channel = conv_param_->input_channel_;
   int output_channel = conv_param_->output_channel_;
+  int kernel_h = conv_param_->kernel_h_;
+  int kernel_w = conv_param_->kernel_w_;
   int iC4 = UP_DIV(input_channel, C4NUM);
   int oC8 = UP_DIV(output_channel, C8NUM);
   // init weight
@@ -60,8 +62,8 @@ int Convolution3x3FP16CPUKernel::InitWeightBias() {
   }
   memset(transformed_filter_addr_, 0, transformed_size);
   float *origin_weight = reinterpret_cast<float *>(inputs_.at(kWeightIndex)->Data());
-  size_t fp16_weight_size = in_channel * out_channel * kernel_h * kernel_w * sizeof(float16_t);
-  fp16_weight_ = malloc(fp16_weight_size);
+  size_t fp16_weight_size = input_channel * output_channel * kernel_h * kernel_w * sizeof(float16_t);
+  fp16_weight_ = reinterpret_cast<float16_t *>(malloc(fp16_weight_size));
   if (fp16_weight_ == nullptr) {
     MS_LOG(ERROR) << "malloc fp16_weight_ failed.";
     return RET_ERROR;
@@ -74,16 +76,17 @@ int Convolution3x3FP16CPUKernel::InitWeightBias() {
 
   // init bias
   size_t new_bias_size = oC8 * C8NUM * sizeof(float16_t);
-  bias_data_ = reinterpret_cast<float16_t *>(malloc(new_bias_size));
+  bias_data_ = malloc(new_bias_size);
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc bias_data_ failed.";
     return RET_ERROR;
   }
   memset(bias_data_, 0, new_bias_size);
+  auto fp16_bias_data = reinterpret_cast<float16_t *>(bias_data_);
   if (inputs_.size() == kInputSize2) {
     auto ori_bias_addr = reinterpret_cast<float *>(inputs_.at(kBiasIndex)->Data());
-    for (int i = 0; i < out_channel; ++i) {
-      bias_data_[i] = (float16_t)ori_bias_addr[i];
+    for (int i = 0; i < output_channel; ++i) {
+      fp16_bias_data[i] = (float16_t)ori_bias_addr[i];
     }
   } else {
     MS_ASSERT(inputs_.size() == kInputSize1);
@@ -129,15 +132,14 @@ int Convolution3x3FP16CPUKernel::InitTmpBuffer() {
   }
   memset(tmp_out_, 0, tmp_out_size);
 
-  size_t fp16_input_size =
-    in_channel * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float16_t);
-  fp16_input_ = malloc(fp16_input_size);
+  size_t fp16_input_size = conv_param_->input_channel_ * conv_param_->input_batch_ * conv_param_->input_h_ *
+                           conv_param_->input_w_ * sizeof(float16_t);
+  fp16_input_ = reinterpret_cast<float16_t *>(malloc(fp16_input_size));
   if (fp16_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc fp16_input_ failed.";
     return RET_ERROR;
   }
   memset(fp16_input_, 0, fp16_input_size);
-
 
   // init nhwc4 input
   size_t nhwc4_input_size =
@@ -249,4 +251,3 @@ int Convolution3x3FP16CPUKernel::Run() {
   return RET_OK;
 }
 }  // namespace mindspore::kernel
-

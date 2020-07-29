@@ -5,19 +5,22 @@ set(LITE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../)
 include_directories(OPTIMIZED_OP_DIR)
 
 ########################### optimized files ###########################
-set(FP16_ASSEMBLY
-#        ${OPTIMIZED_OP_DIR}/assembly/arm64/IndirectGemmFp16_16x8.s
+file(GLOB OPTIMIZED_ASSEMBLY
+        ${OPTIMIZED_OP_DIR}/assembly/opt/*.s
+        ${OPTIMIZED_OP_DIR}/assembly/opt/*.S
         )
 
-file(GLOB_RECURSE OPTIMIZED_INT8_ASSEMBLY
-        ${OPTIMIZED_OP_DIR}/assembly/opt/*.S
+
+file(GLOB FP16_SRC
+        #        ${OPTIMIZED_OP_DIR}/fp16/*.cc
+        #        ${OPTIMIZED_OP_DIR}/../fp16/*.cc
         )
 
 ########################### share library build ########################
 set(OPTIMIZED_OPS "opt_op_handler.c")
 
-set_property(SOURCE ${OPTIMIZED_INT8_ASSEMBLY} PROPERTY LANGUAGE C)
-list(APPEND OPTIMIZED_OPS ${OPTIMIZED_INT8_ASSEMBLY} ${FP16_ASSEMBLY})
+set_property(SOURCE ${OPTIMIZED_ASSEMBLY} PROPERTY LANGUAGE C)
+list(APPEND OPTIMIZED_OPS ${OPTIMIZED_ASSEMBLY} ${FP16_SRC})
 
 if (PLATFORM_ARM64)
     string(REPLACE "-fvisibility=hidden" "-fvisibility=default" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")

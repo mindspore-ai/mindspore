@@ -141,7 +141,7 @@ void ConvFp16(float16_t *input_data, float16_t *packed_input, float16_t *packed_
       int start_index = thread_id * tile_n;
       int real_cal_num = (output_count - start_index) < tile_n ? (output_count - start_index) : tile_n;
       float16_t *gemm_input =
-        (float *)(packed_input + thread_id * unit_size * tile_n + gemm_in_batch_offset);
+        (float16_t *)(packed_input + thread_id * unit_size * tile_n + gemm_in_batch_offset);
       Im2ColPackUnitFp16(input_data + in_batch_offset, conv_param, gemm_input, real_cal_num, start_index);
 
       int out_offset = thread_id * tile_n * out_channel + out_batch_offset;

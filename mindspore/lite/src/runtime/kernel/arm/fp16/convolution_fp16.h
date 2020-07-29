@@ -20,9 +20,7 @@
 #include <arm_neon.h>
 #include <vector>
 #include "src/lite_kernel.h"
-
 #include "src/runtime/kernel/arm/base/convolution_base.h"
-#include "src/runtime/kernel/arm/opclib/optimized_kernel.h"
 
 namespace mindspore::kernel {
 typedef void (*FP16_GEMM_FUNC)(float16_t *output, float16_t *input, float16_t *weight, float16_t *bias, size_t step,
@@ -33,7 +31,7 @@ class ConvolutionFP16CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   ConvolutionFP16CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                            const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+    : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~ConvolutionFP16CPUKernel() override {
     if (fp16_input_ != nullptr) {
       free(fp16_input_);
