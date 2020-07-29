@@ -55,9 +55,9 @@ int Pad::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Te
   if (output == nullptr) {
     return RET_NULL_PTR;
   }
+  output->SetFormat(input->GetFormat());
   output->set_shape(output_shape);
   output->set_data_type(input->data_type());
   return RET_OK;
 }
 }  // namespace mindspore::lite
-

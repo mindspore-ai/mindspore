@@ -55,8 +55,8 @@ int Split::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor:
     output_shape[split_dim] = split_dim_i;
     outputs_[i]->set_shape(output_shape);
     outputs_[i]->set_data_type(input->data_type());
+    outputs_[i]->SetFormat(input->GetFormat());
   }
   return RET_OK;
 }
 }  // namespace mindspore::lite
-

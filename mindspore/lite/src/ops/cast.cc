@@ -44,9 +44,9 @@ int Cast::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
     MS_LOG(ERROR) << "Invalid output datatype " << cast_prim->dstT();
     return RET_INPUT_TENSOR_ERROR;
   }
+  output->SetFormat(input->GetFormat());
   output->set_shape(input->shape());
   output->set_data_type(input->data_type());
   return RET_OK;
 }
 }  // namespace mindspore::lite
-

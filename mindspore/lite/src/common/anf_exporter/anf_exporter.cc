@@ -150,6 +150,7 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &funcGraph) {
       auto tensor = metaGraphT->allTensors[input].get();
       if (tensor->data.empty()) {
         tensor->nodeType = schema::NodeType_ValueNode;
+        tensor->format = schema::Format_NHWC;
         // tensor->refCount = lite::MSCONST_WEIGHT_REFCOUNT;
         metaGraphT->inputIndex.emplace_back(input);
       }

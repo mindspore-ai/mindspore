@@ -41,8 +41,8 @@ int Unstack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor
     MS_ASSERT(out != nullptr);
     out->set_shape(output_shape);
     out->set_data_type(input->data_type());
+    out->SetFormat(input->GetFormat());
   }
   return RET_OK;
 }
 }  // namespace mindspore::lite
-

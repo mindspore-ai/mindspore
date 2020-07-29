@@ -138,7 +138,8 @@ int Primitive::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<ten
   MS_ASSERT(output != nullptr);
   output->set_shape(input->shape());
   output->set_data_type(input->data_type());
+  output->SetFormat(input->GetFormat());
+
   return RET_OK;
 }
 }  // namespace mindspore::lite
-

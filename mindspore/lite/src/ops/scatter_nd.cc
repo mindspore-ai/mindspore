@@ -57,7 +57,8 @@ int ScatterND::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<ten
   std::vector<int> out_shape(shape_data, shape_data + sizeof(shape_data) / sizeof(shape_data[0]));
   output->set_shape(out_shape);
   output->set_data_type(update->data_type());
+  output->SetFormat(update->GetFormat());
+
   return RET_OK;
 }
 }  // namespace mindspore::lite
-

@@ -67,6 +67,8 @@ int OneHot::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor:
     return RET_NULL_PTR;
   }
   output->set_data_type(on_value->data_type());
+  output->SetFormat(on_value->GetFormat());
+
   return RET_OK;
 }
 }  // namespace mindspore::lite

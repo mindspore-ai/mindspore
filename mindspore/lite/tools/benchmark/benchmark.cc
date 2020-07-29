@@ -330,6 +330,7 @@ int Benchmark::MarkAccuracy() {
   }
 
   ReadCalibData();
+  CompareOutput();
   if (cleanData) {
     for (auto &msOutput : msOutputs) {
       for (auto &outputTensor : msOutput.second) {

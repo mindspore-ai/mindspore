@@ -36,7 +36,9 @@ int Unique::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   output0->set_data_type(input->data_type());
   output1->set_shape(input->shape());
   output1->set_data_type(kNumberTypeInt32);
+  output1->SetFormat(input->GetFormat());
+  output0->SetFormat(input->GetFormat());
+
   return RET_OK;
 }
 }  // namespace mindspore::lite
-
