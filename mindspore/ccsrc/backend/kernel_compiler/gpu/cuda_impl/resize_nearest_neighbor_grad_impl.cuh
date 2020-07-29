@@ -21,7 +21,7 @@
 #define RESIZENEARESTNEIGHBORGRAD_DIMENSION 4
 
 template <typename T>
-void CalResizeNearestNeighborGrad(const int size, const T *input, const int s1, const int s2, const int s3,
+void CalResizeNearestNeighborGrad(const int input_size, const T *input, const int s1, const int s2, const int s3,
                                   const int s4, T *output, const int d1, const int d2, const int d3, const int d4,
                                   bool align_corners, float h_scale, float w_scale, cudaStream_t cuda_stream);
 

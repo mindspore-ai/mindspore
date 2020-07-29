@@ -18,64 +18,73 @@
 #include <stdint.h>
 #include <math.h>
 #include <algorithm>
+#include "backend/kernel_compiler/gpu/cuda_impl/util.cuh"
 #include "backend/kernel_compiler/gpu/cuda_impl/resize_nearest_neighbor_grad_impl.cuh"
 
 template <typename T>
-__global__ void ResizeNearestNeighborGrad(const int size, const T *input, const int s1, const int s2, const int s3,
-                                          const int s4, T *output, const int d1, const int d2, const int d3,
-                                          const int d4, bool align_corners, float h_scale, float w_scale) {
+__global__ void InitZero(T *output, const int output_size) {
+  for (size_t pos = threadIdx.x + blockIdx.x * blockDim.x; pos < (output_size); pos += gridDim.x * blockDim.x) {
+    output[pos] = static_cast<T>(0);
+  }
+}
+
+template <typename T>
+__global__ void ResizeNearestNeighborGrad(const int input_size, const T *input, const int s1, const int s2,
+                                          const int s3, const int s4, T *output, const int d1, const int d2,
+                                          const int d3, const int d4, bool align_corners, float h_scale,
+                                          float w_scale) {
   // initialization
   // HalfPixelCenters false
-  int input_pos;
+  int output_pos;
   int pos_array[RESIZENEARESTNEIGHBORGRAD_DIMENSION];
-  int in_height = s3;
-  int in_width = s4;
+  int out_height = d3;
+  int out_width = d4;
   // for example 4-D: pos = pos_array[0] * output_shape[1] * output_shape[2] * output_shape[3] +
   //                        pos_array[1] * output_shape[2] * output_shape[3] +
   //                        pos_array[2] * output_shape[3] +
   //                        pos_array[3]
-  T h_scale_ = static_cast<T>(h_scale);
-  T w_scale_ = static_cast<T>(w_scale);
-  T out_h_;
-  T out_w_;
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
-    pos_array[0] = pos / (d2 * d3 * d4) % d1;
-    pos_array[1] = pos / (d3 * d4) % d2;
-    pos_array[2] = pos / (d4) % d3;
-    pos_array[3] = pos % d4;
-    out_h_ = static_cast<T>(pos_array[2]);
-    out_w_ = static_cast<T>(pos_array[3]);
-    const int in_y =
-      min((align_corners) ? static_cast<int>(roundf(out_h_ * h_scale_)) : static_cast<int>(floorf(out_h_ * h_scale_)),
-          in_height - 1);
-    const int in_x =
-      min((align_corners) ? static_cast<int>(roundf(out_w_ * w_scale_)) : static_cast<int>(floorf(out_w_ * w_scale_)),
-          in_width - 1);
-    // pos_array[0] N, pos_array[1] C, in_y H, in_x W
-    input_pos = pos_array[0] * s2 * s3 * s4 + pos_array[1] * s3 * s4 + in_y * s4 + in_x;
-    output[pos] = input[input_pos];
+  int in_h;
+  int in_w;
+
+  for (size_t pos = threadIdx.x + blockIdx.x * blockDim.x; pos < (input_size); pos += gridDim.x * blockDim.x) {
+    pos_array[0] = pos / (s2 * s3 * s4) % s1;
+    pos_array[1] = pos / (s3 * s4) % s2;
+    pos_array[2] = pos / (s4) % s3;
+    pos_array[3] = pos % s4;
+    in_h = pos_array[2];
+    in_w = pos_array[3];
+    const int out_y =
+      min((align_corners) ? static_cast<int>(roundf(in_h * h_scale)) : static_cast<int>(floorf(in_h * h_scale)),
+          out_height - 1);
+    const int out_x =
+      min((align_corners) ? static_cast<int>(roundf(in_w * w_scale)) : static_cast<int>(floorf(in_w * w_scale)),
+          out_width - 1);
+    // pos_array[0] N, pos_array[1] C, out_y H, out_x W
+    output_pos = pos_array[0] * d2 * d3 * d4 + pos_array[1] * d3 * d4 + out_y * d4 + out_x;
+    ms_atomic_add(&output[output_pos], input[pos]);
   }
-  return;
 }
 
 template <typename T>
-void CalResizeNearestNeighborGrad(const int size, const T *input, const int s1, const int s2, const int s3,
+void CalResizeNearestNeighborGrad(const int input_size, const T *input, const int s1, const int s2, const int s3,
                                   const int s4, T *output, const int d1, const int d2, const int d3, const int d4,
                                   bool align_corners, float h_scale, float w_scale, cudaStream_t cuda_stream) {
-  ResizeNearestNeighborGrad<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
-    size, input, s1, s2, s3, s4, output, d1, d2, d3, d4, align_corners, h_scale, w_scale);
+  int output_size = d1 * d2 * d3 * d4;
+  InitZero<<<GET_BLOCKS(input_size), GET_THREADS, 0, cuda_stream>>>(output, output_size);
+  ResizeNearestNeighborGrad<<<GET_BLOCKS(input_size), GET_THREADS, 0, cuda_stream>>>(
+    input_size, input, s1, s2, s3, s4, output, d1, d2, d3, d4, align_corners, h_scale, w_scale);
   return;
 }
 
-template void CalResizeNearestNeighborGrad<float>(const int size, const float *input, const int s1, const int s2,
+template void CalResizeNearestNeighborGrad<float>(const int input_size, const float *input, const int s1, const int s2,
                                                   const int s3, const int s4, float *output, const int d1, const int d2,
                                                   const int d3, const int d4, bool align_corners, float h_scale,
                                                   float w_scale, cudaStream_t cuda_stream);
-template void CalResizeNearestNeighborGrad<half>(const int size, const half *input, const int s1, const int s2,
+template void CalResizeNearestNeighborGrad<half>(const int input_size, const half *input, const int s1, const int s2,
                                                  const int s3, const int s4, half *output, const int d1, const int d2,
                                                  const int d3, const int d4, bool align_corners, float h_scale,
                                                  float w_scale, cudaStream_t cuda_stream);
-template void CalResizeNearestNeighborGrad<int>(const int size, const int *input, const int s1, const int s2,
+template void CalResizeNearestNeighborGrad<int>(const int input_size, const int *input, const int s1, const int s2,
                                                 const int s3, const int s4, int *output, const int d1, const int d2,
                                                 const int d3, const int d4, bool align_corners, float h_scale,
                                                 float w_scale, cudaStream_t cuda_stream);

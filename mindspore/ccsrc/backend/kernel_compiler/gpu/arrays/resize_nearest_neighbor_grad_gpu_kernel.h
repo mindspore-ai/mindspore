@@ -38,10 +38,10 @@ class ResizeNearestNeighborGradGpuKernel : public GpuKernel {
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 0);
-    int size = SizeToInt(output_size_ / sizeof(T));
-    float h_scale = Scaling(input_shape_[2], output_shape_[2], align_corners_);
-    float w_scale = Scaling(input_shape_[3], output_shape_[3], align_corners_);
-    CalResizeNearestNeighborGrad(size, input, input_shape_[0], input_shape_[1], input_shape_[2], input_shape_[3],
+    int input_size = SizeToInt(input_size_ / sizeof(T));
+    float h_scale = Scaling(output_shape_[2], input_shape_[2], align_corners_);
+    float w_scale = Scaling(output_shape_[3], input_shape_[3], align_corners_);
+    CalResizeNearestNeighborGrad(input_size, input, input_shape_[0], input_shape_[1], input_shape_[2], input_shape_[3],
                                  output, output_shape_[0], output_shape_[1], output_shape_[2], output_shape_[3],
                                  align_corners_, h_scale, w_scale, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
@@ -55,15 +55,15 @@ class ResizeNearestNeighborGradGpuKernel : public GpuKernel {
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but ResizeNearestNeighbor needs 1 output.";
+      MS_LOG(ERROR) << "Output number is " << output_num << ", but ResizeNearestNeighbor has 1 output.";
       return false;
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     shape_size_ = input_shape.size();
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     if (shape_size_ != RESIZENEARESTNEIGHBORGRAD_DIMENSION) {
-      MS_LOG(EXCEPTION) << "Input is " << shape_size_ << "-D, but ResizeNearestNeighbor supports only "
-                        << RESIZENEARESTNEIGHBORGRAD_DIMENSION << "-D inputs.";
+      MS_LOG(ERROR) << "Input is " << shape_size_ << "-D, but ResizeNearestNeighbor supports only "
+                    << RESIZENEARESTNEIGHBORGRAD_DIMENSION << "-D inputs.";
       return false;
     }
     input_size_ = 1;

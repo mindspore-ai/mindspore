@@ -34,22 +34,20 @@ __global__ void ResizeNearestNeighbor(const int size, const T *input, const int 
   //                        pos_array[1] * output_shape[2] * output_shape[3] +
   //                        pos_array[2] * output_shape[3] +
   //                        pos_array[3]
-  T h_scale_ = static_cast<T>(h_scale);
-  T w_scale_ = static_cast<T>(w_scale);
-  T out_h_;
-  T out_w_;
+  int out_h;
+  int out_w;
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
     pos_array[0] = pos / (d2 * d3 * d4) % d1;
     pos_array[1] = pos / (d3 * d4) % d2;
     pos_array[2] = pos / (d4) % d3;
     pos_array[3] = pos % d4;
-    out_h_ = static_cast<T>(pos_array[2]);
-    out_w_ = static_cast<T>(pos_array[3]);
+    out_h = pos_array[2];
+    out_w = pos_array[3];
     const int in_y =
-      min((align_corners) ? static_cast<int>(roundf(out_h_ * h_scale_)) : static_cast<int>(floorf(out_h_ * h_scale_)),
+      min((align_corners) ? static_cast<int>(roundf(out_h * h_scale)) : static_cast<int>(floorf(out_h * h_scale)),
           in_height - 1);
     const int in_x =
-      min((align_corners) ? static_cast<int>(roundf(out_w_ * w_scale_)) : static_cast<int>(floorf(out_w_ * w_scale_)),
+      min((align_corners) ? static_cast<int>(roundf(out_w * w_scale)) : static_cast<int>(floorf(out_w * w_scale)),
           in_width - 1);
     // pos_array[0] N, pos_array[1] C, in_y H, in_x W
     input_pos = pos_array[0] * s2 * s3 * s4 + pos_array[1] * s3 * s4 + in_y * s4 + in_x;

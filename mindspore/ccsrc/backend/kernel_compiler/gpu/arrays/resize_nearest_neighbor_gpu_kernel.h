@@ -55,15 +55,15 @@ class ResizeNearestNeighborGpuKernel : public GpuKernel {
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but ResizeNearestNeighbor needs 1 output.";
+      MS_LOG(ERROR) << "Output number is " << output_num << ", but ResizeNearestNeighbor has 1 output.";
       return false;
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     shape_size_ = input_shape.size();
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     if (shape_size_ != RESIZENEARESTNEIGHBOR_DIMENSION) {
-      MS_LOG(EXCEPTION) << "Input is " << shape_size_ << "-D, but ResizeNearestNeighbor supports only "
-                        << RESIZENEARESTNEIGHBOR_DIMENSION << "-D inputs.";
+      MS_LOG(ERROR) << "Input is " << shape_size_ << "-D, but ResizeNearestNeighbor supports only "
+                    << RESIZENEARESTNEIGHBOR_DIMENSION << "-D inputs.";
       return false;
     }
     input_size_ = 1;
