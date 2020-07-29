@@ -94,8 +94,8 @@ class PBinOperation : public PBase<PBinOperation<T, T2> > {
   ~PBinOperation() = default;
 
   AnfNodePtr GetNode(const AnfNodePtr &node) const {
-    AnfNodePtr lhs = x_.GetNode(node->func_graph());
-    AnfNodePtr rhs = y_.GetNode(node->func_graph());
+    AnfNodePtr lhs = x_.GetNode(node);
+    AnfNodePtr rhs = y_.GetNode(node);
     AnfNodePtrList list = {NewValueNode(prim_), lhs, rhs};
     return NewCNode(list, node->func_graph());
   }
@@ -113,25 +113,42 @@ class PBinOperation : public PBase<PBinOperation<T, T2> > {
             if (!x_.TryCapture(inputs[2]) || !y_.TryCapture(inputs[1])) {
               return false;
             }
+            captured_binop_node_ = node;
             return true;
           }
           return false;
         }
+        captured_binop_node_ = node;
         return true;
       }
     }
     return false;
   }
+
+  /// Returns the original node captured by this Binary Operation Pattern.
+  /// Throws exception if a node was not captured before.
+  AnfNodePtr GetOriginalNode() const {
+    if (captured_binop_node_ == nullptr) {
+      MS_EXCEPTION(ValueError) << "A Node wasn't captured for this Pattern before attempting to get it.";
+    }
+
+    return captured_binop_node_;
+  }
+
   void Reset() const {
     x_.Reset();
     y_.Reset();
+    captured_binop_node_ = nullptr;
   }
+
+  using Internal = const PBinOperation<T, T2> &;
 
  private:
   const PrimitivePtr prim_;
   typename T::Internal x_;
   typename T2::Internal y_;
   bool is_commutative_{false};
+  mutable AnfNodePtr captured_binop_node_{nullptr};
 };
 
 ///
@@ -265,10 +282,11 @@ class PCNode : public PBase<PCNode<TArgs...> > {
     return *this;
   }
 
+  using Internal = const PCNode<TArgs...> &;
+
   void Reset() const {
     tuple_utils::PTupleResetCapture reset;
     tuple_utils::apply_func_tuple(&reset, args_);
-    has_min_extra_nodes_ = false;
     extra_nodes_.clear();
   }
 
@@ -316,6 +334,9 @@ class PPrimitive : public PBase<PPrimitive<TArgs...> > {
           AnfNodePtrList tokens(inputs.begin() + 1, inputs.end());
           tuple_utils::PTupleCapture capture_func(tokens);
           tuple_utils::apply_func_tuple(&capture_func, args_);
+          if (capture_func.captured_) {
+            captured_prim_node_ = node;
+          }
           return capture_func.captured_;
         }
         return false;
@@ -329,9 +350,11 @@ class PPrimitive : public PBase<PPrimitive<TArgs...> > {
         tuple_utils::apply_func_tuple(&capture_func, args_);
         // If it could capture the initial set of nodes specified in the Pattern
         // and there are enough extra inputs to add
-        if (capture_func.captured_ && inputs.size() > pattern_arg_len + 1) {
-          extra_nodes_.insert(extra_nodes_.end(), inputs.begin() + 1 + pattern_arg_len, inputs.end());
-          return true;
+        if (capture_func.captured_) {
+          captured_prim_node_ = node;
+          if (inputs.size() > pattern_arg_len + 1) {
+            extra_nodes_.insert(extra_nodes_.end(), inputs.begin() + 1 + pattern_arg_len, inputs.end());
+          }
         }
         return capture_func.captured_;
       }
@@ -349,12 +372,34 @@ class PPrimitive : public PBase<PPrimitive<TArgs...> > {
     return *this;
   }
 
+  /// Returns the FuncGraph of the original node captured by this Primitive Pattern.
+  /// Throws exception if a node was not captured before.
+  FuncGraphPtr GetFuncGraph() const {
+    if (captured_prim_node_ == nullptr) {
+      MS_EXCEPTION(ValueError) << "A Node wasn't captured for this Pattern before attempting to get its FuncGraph.";
+    }
+
+    return captured_prim_node_->func_graph();
+  }
+
+  /// Returns the original node captured by this Primitive Pattern.
+  /// Throws exception if a node was not captured before.
+  AnfNodePtr GetOriginalNode() const {
+    if (captured_prim_node_ == nullptr) {
+      MS_EXCEPTION(ValueError) << "A Node wasn't captured for this Pattern before attempting to get it.";
+    }
+
+    return captured_prim_node_;
+  }
+
   void Reset() const {
     tuple_utils::PTupleResetCapture reset;
     tuple_utils::apply_func_tuple(&reset, args_);
-    has_min_extra_nodes_ = false;
     extra_nodes_.clear();
+    captured_prim_node_ = nullptr;
   }
+
+  using Internal = const PPrimitive<TArgs...> &;
 
  private:
   const PrimitivePtr prim_;
@@ -362,6 +407,7 @@ class PPrimitive : public PBase<PPrimitive<TArgs...> > {
   mutable AnfNodePtrList extra_nodes_;
   mutable bool has_min_extra_nodes_{false};
   mutable size_t min_extra_nodes_{0};
+  mutable AnfNodePtr captured_prim_node_{nullptr};
 };
 
 ///
