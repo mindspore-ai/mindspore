@@ -75,8 +75,6 @@ int MetaTensor::ElementsNum() const {
   return std::accumulate(shape_.begin(), shape_.end(), 1LL, std::multiplies<int>());
 }
 
-TypePtr MetaTensor::Dtype() const { return TypeIdToType(data_type_); }
-
 TypePtr MetaTensor::SetDtype(const TypePtr type_ptr) {
   if (type_ptr == nullptr) {
     MS_LOG(ERROR) << "Dtype to be set is nullptr.";

@@ -1,0 +1,102 @@
+/**
+ * Copyright 2020 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include <memory>
+#include "mindspore/lite/tools/converter/parser/caffe/caffe_node_parser.h"
+#include "securec/include/securec.h"
+#include "ir/dtype/type_id.h"
+
+namespace mindspore {
+namespace lite {
+schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
+  std::unique_ptr<schema::TensorT> weight(new schema::TensorT());
+  weight->format = schema::Format_NCHW;
+  std::vector<int32_t> shapeVec;
+  ConvertShape(proto, &shapeVec);
+  weight->dims = shapeVec;
+  weight->dataType = kNumberTypeFloat32;
+  weight->nodeType = schema::NodeType_ValueNode;
+
+  // cal Weight num
+  int count = 1;
+  for (size_t i = 0; i < shapeVec.size(); ++i) {
+    int dim = shapeVec[i];
+    if (dim <= 0) {
+      // MS_LOGE("Convert weight fail, Blob size invalid");
+      return nullptr;
+    }
+    if (dim >= INT_MAX / count) {
+      // MS_LOGE("Convert weight fail, Blob size exceeds INT_MAX, dim:%d, count:%d", dim, count);
+      return nullptr;
+    }
+    count *= dim;
+  }
+
+  // get weight
+  std::unique_ptr<float[]> buf(new (std::nothrow) float[count]());
+  if (buf == nullptr) {
+    return nullptr;
+  }
+  if (proto.double_data_size() > 0) {
+    // datatype double
+    if (count != proto.double_data_size()) {
+      // MS_LOGE("Convert weight fail, Blob size does not match shape size, shape size:%d, blob size:%d", count,
+      //        proto.double_data_size());
+      return nullptr;
+    }
+
+    for (int i = 0; i < count; ++i) {
+      buf[i] = proto.double_data(i);
+    }
+    weight->data.resize(count * sizeof(float));
+    ::memcpy_s(weight->data.data(), count * sizeof(float),
+               reinterpret_cast<uint8_t *>(buf.get()),
+               count * sizeof(float));
+  } else {
+    // datatype float
+    if (count != proto.data_size()) {
+      // MS_LOGE("Convert weight fail, Blob size does not match shape size, shape size:%d, blob.data_size:%d", count,
+      //       proto.data_size());
+      return nullptr;
+    }
+    weight->data.resize(count * sizeof(float));
+    const float *data_ptr = proto.data().data();
+    ::memcpy_s(weight->data.data(), count * sizeof(float), (uint8_t *)data_ptr, count * sizeof(float));
+  }
+  weight->refCount = 1;
+
+  return weight.release();
+}
+
+STATUS ConvertShape(const caffe::BlobProto &proto, std::vector<int32_t> *shape) {
+  shape->clear();
+
+  if (proto.has_num() || proto.has_channels() || proto.has_height() || proto.has_width()) {
+    // num, channels, height, width
+    shape->push_back(proto.num());
+    shape->push_back(proto.channels());
+    shape->push_back(proto.height());
+    shape->push_back(proto.width());
+  } else {
+    for (int i = 0; i < proto.shape().dim_size(); ++i) {
+      shape->push_back(proto.shape().dim(i));
+    }
+  }
+}
+}  // namespace lite
+}  // namespace mindspore
+//
+

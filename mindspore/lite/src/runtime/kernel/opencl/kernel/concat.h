@@ -1,0 +1,57 @@
+/**
+ * Copyright 2019 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef MINDSPORE_LITE_SRC_BACKEND_OPENCL_Concat_H_
+#define MINDSPORE_LITE_SRC_BACKEND_OPENCL_Concat_H_
+
+#include <memory.h>
+#include <iostream>
+#include <vector>
+
+#include "src/lite_kernel.h"
+#include "src/runtime/kernel/arm/opclib/concat_parameter.h"
+#include "src/runtime/opencl/opencl_runtime.h"
+#include "src/runtime/kernel/arm/opclib/fp32/concat.h"
+#include "src/runtime/kernel/arm/opclib/int8/concat_int8.h"
+
+namespace mindspore::kernel {
+
+class ConcatOpenCLKernel : public LiteKernel {
+ public:
+  explicit ConcatOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                              const std::vector<lite::tensor::Tensor *> &outputs)
+      : LiteKernel(parameter, inputs, outputs) {}
+
+  ~ConcatOpenCLKernel() override{};
+
+  int Init() override;
+
+  int InferShape() { return {}; }
+
+  int ReSize() override;
+
+  int Run_axis0();
+
+  int Run() override;
+
+ private:
+  cl::Kernel kernel_;
+};
+
+}  // namespace mindspore::kernel
+
+#endif  // MINDSPORE_LITE_SRC_BACKEND_OPENCL_DEPTHWISE_H_
+

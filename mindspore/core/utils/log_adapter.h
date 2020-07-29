@@ -25,10 +25,12 @@
 #include <functional>
 #include "utils/overload.h"
 #include "./securec.h"
+#ifndef USE_ANDROID_LOG
 #ifdef USE_GLOG
 #include "glog/logging.h"
 #else
 #include "toolchain/slog.h"
+#endif
 #endif
 // NOTICE: when relative path of 'log_adapter.h' changed, macro 'LOG_HDR_FILE_REL_PATH' must be changed
 #define LOG_HDR_FILE_REL_PATH "mindspore/core/utils/log_adapter.h"
@@ -128,6 +130,8 @@ enum SubModuleId : int {
 #ifndef SUBMODULE_ID
 #define SUBMODULE_ID mindspore::SubModuleId::SM_ME
 #endif
+
+const char *EnumStrForMsLogLevel(MsLogLevel level);
 
 #if defined(_WIN32) || defined(_WIN64)
 extern int g_ms_submodule_log_levels[] __attribute__((dllexport));
