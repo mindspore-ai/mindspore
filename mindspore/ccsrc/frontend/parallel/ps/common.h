@@ -66,6 +66,8 @@ constexpr int kInitWeightToOptimIdCmd = 11;
 constexpr int kInitOptimInputsShapeCmd = 12;
 constexpr int kInitKeyToPushNodeIdCmd = 13;
 constexpr int kInitEmbeddingsCmd = 20;
+constexpr int kCheckReadyForPushCmd = 25;
+constexpr int kCheckReadyForPullCmd = 26;
 constexpr int kEmbeddingLookupCmd = 30;
 constexpr int kFinalizeCmd = 40;
 

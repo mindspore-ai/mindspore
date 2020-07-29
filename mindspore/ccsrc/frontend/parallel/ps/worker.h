@@ -99,9 +99,15 @@ void Worker<T>::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> add
   ::ps::SArray<T> total_buffer(total_size, 0);
   size_t offset = 0;
   for (size_t i = 0; i < sizes.size(); i++) {
-    memcpy_s(total_buffer.data() + offset / sizeof(T), sizes[i] * sizeof(T), reinterpret_cast<void *>(addrs[i]),
-             sizes[i] * sizeof(T));
+    auto ret = memcpy_s(total_buffer.data() + offset / sizeof(T), sizes[i] * sizeof(T),
+                        reinterpret_cast<void *>(addrs[i]), sizes[i] * sizeof(T));
+    if (ret != 0) {
+      MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    }
     offset += sizes[i] * sizeof(T);
+  }
+  while (!kv_worker_->IsReadyForPush(keys[0])) {
+    continue;
   }
   kv_worker_->PushData(::ps::SArray<::ps::Key>(keys), total_buffer, ::ps::SArray<int>(sizes));
 }
@@ -109,8 +115,14 @@ void Worker<T>::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> add
 template <typename T>
 void Worker<T>::Pull(const size_t key, void *dev_addr, const size_t size) {
   ::ps::SArray<T> variables(size / sizeof(T), 0);
+  while (!kv_worker_->IsReadyForPull(key)) {
+    continue;
+  }
   kv_worker_->Wait(kv_worker_->ZPull({key}, &variables));
-  memcpy_s(dev_addr, size, variables.data(), size);
+  auto ret = memcpy_s(dev_addr, size, variables.data(), size);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+  }
 }
 
 template <typename T>
