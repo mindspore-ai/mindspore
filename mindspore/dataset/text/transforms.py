@@ -108,7 +108,7 @@ class Ngram(cde.NgramOp):
     Refer to https://en.wikipedia.org/wiki/N-gram#Examples for an overview of what n-gram is and how it works.
 
     Args:
-        n (list of int):  n in n-gram, n >= 1. n is a list of positive integers, for e.g. n=[4,3], The result
+        n (list[int]):  n in n-gram, n >= 1. n is a list of positive integers, for e.g. n=[4,3], The result
             would be a 4-gram followed by a 3-gram in the same tensor. If number of words is not enough to make up for
             a n-gram, an empty string would be returned. For e.g. 3 grams on ["mindspore","best"] would result in an
             empty string be produced.
@@ -199,7 +199,7 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
         Add user defined word to JiebaTokenizer's dictionary.
 
         Args:
-            user_dict (str or dict): Dictionary to be added, file path or Python dictionary,
+            user_dict (Union[str, dict]): Dictionary to be added, file path or Python dictionary,
                 Python Dict format: {word1:freq1, word2:freq2,...}.
                 Jieba dictionary format : word(required), freq(optional), such as:
 
@@ -339,9 +339,9 @@ class SentencePieceTokenizer(cde.SentencePieceTokenizerOp):
     Tokenize scalar token or 1-D tokens to tokens by sentencepiece.
 
     Args:
-        mode(str or SentencePieceVocab): If the input parameter is a file, then it is of type string,
+        mode(Union[str, SentencePieceVocab]): If the input parameter is a file, then it is of type string,
             if the input parameter is a SentencePieceVocab object, then it is of type SentencePieceVocab.
-        out_type(str or int): The type of output.
+        out_type(Union[str, int]): The type of output.
     """
 
     def __init__(self, mode, out_type):
