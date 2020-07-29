@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """basic"""
-from ..cell import Cell
+from mindspore.nn.cell import Cell
 from ._utils.utils import calc_broadcast_shape_from_param, check_scalar_from_param
 
 class Distribution(Cell):

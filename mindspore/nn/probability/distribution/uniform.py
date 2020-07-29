@@ -14,8 +14,8 @@
 # ============================================================================
 """Uniform Distribution"""
 from mindspore.ops import operations as P
+from mindspore.common import dtype as mstype
 from .distribution import Distribution
-from ...common import dtype as mstype
 from ._utils.utils import convert_to_batch, check_greater
 
 class Uniform(Distribution):

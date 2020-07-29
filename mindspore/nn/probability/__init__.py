@@ -13,27 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """
-Neural Networks Cells.
+Probability.
 
-Pre-defined building blocks or computing units to construct Neural Networks.
+The high-level components(Distributions) used to construct the probabilistic network.
 """
-from . import layer, loss, optim, metrics, wrap, probability
-from .cell import Cell, GraphKernel
-from .layer import *
-from .loss import *
-from .optim import *
-from .metrics import *
-from .wrap import *
-from .probability import *
 
+from .distribution import *
 
-__all__ = ["Cell", "GraphKernel"]
-__all__.extend(layer.__all__)
-__all__.extend(loss.__all__)
-__all__.extend(optim.__all__)
-__all__.extend(metrics.__all__)
-__all__.extend(wrap.__all__)
-__all__.extend(probability.__all__)
-
-
-__all__.sort()
+__all__ = []
+__all__.extend(distribution.__all__)

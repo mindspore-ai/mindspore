@@ -16,10 +16,11 @@
 import numpy as np
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
+from mindspore.common import dtype as mstype
+from mindspore.context import get_context
 from .distribution import Distribution
 from ._utils.utils import convert_to_batch, check_greater_equal_zero
-from ...common import dtype as mstype
-from ...context import get_context
+
 
 class Normal(Distribution):
     """

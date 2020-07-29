@@ -15,8 +15,8 @@
 """Exponential Distribution"""
 import numpy as np
 from mindspore.ops import operations as P
+from mindspore.common import dtype as mstype
 from .distribution import Distribution
-from ...common import dtype as mstype
 from ._utils.utils import cast_to_tensor, check_greater_zero
 
 class Exponential(Distribution):

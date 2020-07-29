@@ -16,9 +16,9 @@
 """Utitly functions to help distribution class."""
 import numpy as np
 from mindspore.ops import _utils as utils
-from ....common.tensor import Tensor
-from ....common.parameter import Parameter
-from ....common import dtype as mstype
+from mindspore.common.tensor import Tensor
+from mindspore.common.parameter import Parameter
+from mindspore.common import dtype as mstype
 
 def cast_to_tensor(t, dtype=mstype.float32):
     """
