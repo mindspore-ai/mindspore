@@ -278,6 +278,8 @@ def check_minddataset(method):
 
         dataset_file = param_dict.get('dataset_file')
         if isinstance(dataset_file, list):
+            if len(dataset_file) > 4096:
+                raise ValueError("length of dataset_file should less than or equal to {}.".format(4096))
             for f in dataset_file:
                 check_file(f)
         else:

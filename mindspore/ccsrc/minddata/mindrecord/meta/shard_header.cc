@@ -55,7 +55,9 @@ MSRStatus ShardHeader::InitializeHeader(const std::vector<json> &headers, bool l
       header_size_ = header["header_size"].get<uint64_t>();
       page_size_ = header["page_size"].get<uint64_t>();
     }
-    ParsePage(header["page"], shard_index, load_dataset);
+    if (SUCCESS != ParsePage(header["page"], shard_index, load_dataset)) {
+      return FAILED;
+    }
     shard_index++;
   }
   return SUCCESS;
@@ -248,11 +250,16 @@ MSRStatus ShardHeader::ParseIndexFields(const json &index_fields) {
   return SUCCESS;
 }
 
-void ShardHeader::ParsePage(const json &pages, int shard_index, bool load_dataset) {
+MSRStatus ShardHeader::ParsePage(const json &pages, int shard_index, bool load_dataset) {
   // set shard_index when load_dataset is false
-  if (pages_.empty() && shard_count_ <= kMaxShardCount) {
+  if (shard_count_ > kMaxFileCount) {
+    MS_LOG(ERROR) << "The number of mindrecord files is greater than max value: " << kMaxFileCount;
+    return FAILED;
+  }
+  if (pages_.empty() && shard_count_ <= kMaxFileCount) {
     pages_.resize(shard_count_);
   }
+
   for (auto &page : pages) {
     int page_id = page["page_id"];
     int shard_id = page["shard_id"];
@@ -275,6 +282,7 @@ void ShardHeader::ParsePage(const json &pages, int shard_index, bool load_datase
       pages_[shard_index].push_back(std::move(parsed_page));
     }
   }
+  return SUCCESS;
 }
 
 MSRStatus ShardHeader::ParseStatistics(const json &statistics) {
@@ -715,7 +723,9 @@ MSRStatus ShardHeader::FileToPages(const std::string dump_file_name) {
 
   std::string line;
   while (std::getline(page_in_handle, line)) {
-    ParsePage(json::parse(line), -1, true);
+    if (SUCCESS != ParsePage(json::parse(line), -1, true)) {
+      return FAILED;
+    }
   }
 
   page_in_handle.close();

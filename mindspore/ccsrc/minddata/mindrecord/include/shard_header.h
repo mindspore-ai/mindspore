@@ -152,7 +152,7 @@ class ShardHeader {
 
   MSRStatus CheckIndexField(const std::string &field, const json &schema);
 
-  void ParsePage(const json &page, int shard_index, bool load_dataset);
+  MSRStatus ParsePage(const json &page, int shard_index, bool load_dataset);
 
   MSRStatus ParseStatistics(const json &statistics);
 
