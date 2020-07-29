@@ -296,7 +296,10 @@ py::tuple GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph
   RunOpAllocateMemory(op_run_info.value, input_tensors, kernel_graph.get());
   // Execute the computation
   LoadInputData(kernel_graph, input_tensors);
-  Execute(kernel_graph);
+  {
+    py::gil_scoped_release gil_release;
+    Execute(kernel_graph);
+  }
   // Fetch outputs
   VectorRef outputs;
   UpdateOutputs(kernel_graph, &outputs, input_tensors);
