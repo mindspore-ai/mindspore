@@ -46,6 +46,21 @@ class SGD(Optimizer):
 
         To improve parameter groups performance, the customized order of parameters can be supported.
 
+    .. math::
+        v_{t+1} = u \ast v_{t} + gradient \ast (1-dampening)
+
+    If nesterov is True:
+        .. math::
+            p_{t+1} = p_{t} - lr \ast (gradient + u \ast v_{t+1})
+
+    If nesterov is Flase:
+        .. math::
+            p_{t+1} = p_{t} - lr \ast v_{t+1}
+
+    To be notice, for the first step, v_{t+1} = gradient
+
+    Here : where p, v and u denote the parameters, accum, and momentum respectively.
+
     Args:
         params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
             the element in `params` should be class `Parameter`. When the `params` is a list of `dict`, the "params",
@@ -74,7 +89,8 @@ class SGD(Optimizer):
         momentum (float): A floating point value the momentum. should be at least 0.0. Default: 0.0.
         dampening (float): A floating point value of dampening for momentum. should be at least 0.0. Default: 0.0.
         weight_decay (float): Weight decay (L2 penalty). It should be in range [0.0, 1.0]. Default: 0.0.
-        nesterov (bool): Enables the Nesterov momentum. Default: False.
+        nesterov (bool): Enables the Nesterov momentum. If use nesterov, momentum must greater then 0,
+                         and dampening must equal to 1. Default: False.
         loss_scale (float): A floating point value for the loss scale. Should be not less than 1.0. Default: 1.0.
 
     Inputs:
@@ -117,6 +133,10 @@ class SGD(Optimizer):
 
         if isinstance(momentum, float) and momentum < 0.0:
             raise ValueError("momentum should be at least 0.0, but got momentum {}".format(momentum))
+
+        if nesterov and (momentum <= 0 or dampening != 0):
+            raise ValueError("If use nesterov, momentum must be positive and dampening must equal to 0,"
+                             "but got momentum {}, dampening {}".format(momentum, dampening))
 
         if isinstance(dampening, int):
             dampening = float(dampening)

@@ -53,6 +53,19 @@ class Momentum(Optimizer):
 
         To improve parameter groups performance, the customized order of parameters can be supported.
 
+    .. math::
+            v_{t} = v_{t-1} \ast u + gradients
+
+    If use_nesterov is True:
+        .. math::
+            p_{t} = grad \ast lr + v_{t} \ast u \ast lr
+
+    If use_nesterov is Flase:
+        .. math::
+            p_{t} = lr \ast v_{t}
+
+    Here: where grad, lr, p, v and u denote the gradients, learning_rate, parameter, accum, and momentum respectively.
+
     Args:
         params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
             the element in `params` should be class `Parameter`. When the `params` is a list of `dict`, the "params",
