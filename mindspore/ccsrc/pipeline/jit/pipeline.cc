@@ -262,6 +262,7 @@ void ExecutorPy::DelNetRes(const std::string &id) {
     for (auto &item : tmp_info) {
       if (item.first.find(id) != string::npos) {
         MS_LOG(DEBUG) << "Delete network res:" << item.first;
+        item.second = nullptr;
         (void)info_.erase(item.first);
         flag = true;
       }

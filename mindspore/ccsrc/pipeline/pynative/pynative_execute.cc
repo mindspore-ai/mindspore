@@ -347,6 +347,11 @@ std::string GetSingleOpGraphInfo(const OpExecInfoPtr &op_exec_info,
   MS_EXCEPTION_IF_NULL(op_exec_info->abstract);
   (void)graph_info.append(std::to_string((uintptr_t)(op_exec_info->py_primitive.get())) + "_" +
                           op_exec_info->abstract->ToString());
+  // get attr info
+  auto attr_map = op_exec_info->py_primitive->evaluate_added_attrs();
+  for (const auto &element : attr_map) {
+    (void)graph_info.append(element.second->ToString() + " ");
+  }
   return graph_info;
 }
 
@@ -407,7 +412,9 @@ bool RunOpConvertConstInputToAttr(const py::object &input_object, size_t input_i
     ValuePtr value = parse::data_converter::PyDataToValue(input_object);
     MS_EXCEPTION_IF_NULL(value);
     auto input_name = input_names_vec[input_index];
-    op_prim->set_attr(input_name, value);
+    op_prim->BeginRecordAddAttr();
+    op_prim->AddAttr(input_name, value);
+    op_prim->EndRecordAddAttr();
     return true;
   }
   return false;
