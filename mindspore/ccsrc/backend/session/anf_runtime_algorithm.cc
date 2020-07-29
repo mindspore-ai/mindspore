@@ -221,6 +221,11 @@ std::string AnfRuntimeAlgorithm::GetCNodeName(const AnfNodePtr &node) {
     }
     auto func_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
     MS_EXCEPTION_IF_NULL(func_graph);
+    if (func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
+      std::string fg_name = "GraphKernel_";
+      fg_name += GetValue<std::string>(func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
+      return fg_name;
+    }
     return func_graph->ToString();
   }
   MS_LOG(EXCEPTION) << "Unknown anf node type " << node->DebugString();
