@@ -1342,9 +1342,11 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
   }
 
   for (size_t i = 1; i < input_size; i++) {
-    auto pred = inputs[i];
+    AnfNodePtr pred = nullptr;
     if (case_flag != 0) {
       pred = case_input_handle_cache_[node.get()]->at(i - 1);
+    } else {
+      pred = inputs[i];
     }
 
     while (pred->isa<CNode>() && GetCNodeTargetFuncName(pred->cast<CNodePtr>()) == "Depend") {
