@@ -915,8 +915,8 @@ void PynativeExecutor::EndGraphInner(const py::object &cell, const py::object &o
       cnode->set_inputs(args);
       set_obj_node_map(curr_g_, out_id, cnode);
     } else {
-      MS_LOG(ERROR) << "Graph has no this out: " << out_id;
-      return;
+      MS_LOG(DEBUG) << "Set ValueNode as output for graph, out id: " << out_id;
+      MakeValueNode(out, out_id);
     }
   }
   EndGraphByOutId(out_id, cell, out, args);
