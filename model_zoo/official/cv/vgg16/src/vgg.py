@@ -33,7 +33,7 @@ def _make_layer(base, args, batch_norm):
         else:
             weight_shape = (v, in_channels, 3, 3)
             weight = initializer('XavierUniform', shape=weight_shape, dtype=mstype.float32).to_tensor()
-            if args.dataset == "imagenet2012":
+            if args.initialize_mode == "KaimingNormal":
                 weight = 'normal'
             conv2d = nn.Conv2d(in_channels=in_channels,
                                out_channels=v,
@@ -74,7 +74,7 @@ class Vgg(nn.Cell):
         self.layers = _make_layer(base, args, batch_norm=batch_norm)
         self.flatten = nn.Flatten()
         dropout_ratio = 0.5
-        if args.dataset == "cifar10" or phase == "test":
+        if not args.has_dropout or phase == "test":
             dropout_ratio = 1.0
         self.classifier = nn.SequentialCell([
             nn.Dense(512 * 7 * 7, 4096),
@@ -84,7 +84,7 @@ class Vgg(nn.Cell):
             nn.ReLU(),
             nn.Dropout(dropout_ratio),
             nn.Dense(4096, num_classes)])
-        if args.dataset == "imagenet2012":
+        if args.initialize_mode == "KaimingNormal":
             default_recurisive_init(self)
             self.custom_init_weight()
 
@@ -128,14 +128,14 @@ def vgg16(num_classes=1000, args=None, phase="train"):
 
     Args:
         num_classes (int): Class numbers. Default: 1000.
-        args(dict): param for net init.
+        args(namespace): param for net init.
         phase(str): train or test mode.
 
     Returns:
         Cell, cell instance of Vgg16 neural network with batch normalization.
 
     Examples:
-        >>> vgg16(num_classes=1000)
+        >>> vgg16(num_classes=1000, args=args)
     """
 
     net = Vgg(cfg['16'], num_classes=num_classes, args=args, batch_norm=args.batch_norm, phase=phase)
