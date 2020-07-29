@@ -43,7 +43,10 @@ class PushKernel : public CPUKernel {
       sizes.push_back(SizeToInt(input->size) / sizeof(T));
     }
     parallel::ps::Worker<T>::GetInstance().Push(keys, addrs, sizes);
-    memcpy_s(outputs[0]->addr, sizeof(size_t), &key_, sizeof(size_t));
+    auto ret = memcpy_s(outputs[0]->addr, sizeof(size_t), &key_, sizeof(size_t));
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "Lookup id memcpy failed.";
+    }
     return true;
   }
 
