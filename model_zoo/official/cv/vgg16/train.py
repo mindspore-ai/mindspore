@@ -109,7 +109,7 @@ class ProgressMonitor(Callback):
 def parse_args(cloud_args=None):
     """parameters"""
     parser = argparse.ArgumentParser('mindspore classification training')
-    parser.add_argument('--device_target', type=str, default='GPU', choices=['Ascend', 'GPU'],
+    parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'GPU'],
                         help='device where the code will be implemented. (Default: Ascend)')
     parser.add_argument('--device_id', type=int, default=1, help='device id of GPU or Ascend. (Default: None)')
 
@@ -127,7 +127,7 @@ def parse_args(cloud_args=None):
     # logging and checkpoint related
     parser.add_argument('--log_interval', type=int, default=100, help='logging interval')
     parser.add_argument('--ckpt_path', type=str, default='outputs/', help='checkpoint save location')
-    parser.add_argument('--ckpt_interval', type=int, default=5000, help='ckpt_interval')
+    parser.add_argument('--ckpt_interval', type=int, default=2, help='ckpt_interval')
     parser.add_argument('--is_save_on_master', type=int, default=1, help='save ckpt on master or all rank')
 
     # distributed related

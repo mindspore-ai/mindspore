@@ -138,5 +138,5 @@ def vgg16(num_classes=1000, args=None, phase="train"):
         >>> vgg16(num_classes=1000)
     """
 
-    net = Vgg(cfg['16'], num_classes=num_classes, args=args, batch_norm=True, phase=phase)
+    net = Vgg(cfg['16'], num_classes=num_classes, args=args, batch_norm=args.batch_norm, phase=phase)
     return net
