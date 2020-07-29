@@ -52,6 +52,7 @@ class DatasetHelper:
         sink_size (int): Control the amount of data each sink.
                              If sink_size=-1, sink the complete dataset each epoch.
                              If sink_size>0, sink sink_size data each epoch. Default: -1.
+        epoch_num (int): Control the number of epoch data to send.
 
     Examples:
         >>> dataset_helper = DatasetHelper(dataset)
