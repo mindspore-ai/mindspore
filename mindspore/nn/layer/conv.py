@@ -880,6 +880,8 @@ class DepthwiseConv2d(Cell):
         self.dilation = dilation
         self.group = group
         self.has_bias = has_bias
+        self.weight_init = weight_init
+        self.bias_init = bias_init
         self.conv = P.DepthwiseConv2dNative(channel_multiplier=1,
                                             kernel_size=self.kernel_size,
                                             pad_mode=self.pad_mode,
