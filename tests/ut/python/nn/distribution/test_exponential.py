@@ -13,11 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """
-Test nn.Distribution.Exponential.
+Test nn.probability.distribution.Exponential.
 """
 import pytest
 
 import mindspore.nn as nn
+import mindspore.nn.probability.distribution as msd
 from mindspore import dtype
 from mindspore import Tensor
 
@@ -26,19 +27,19 @@ def test_arguments():
     """
     Args passing during initialization.
     """
-    e = nn.Exponential()
-    assert isinstance(e, nn.Distribution)
-    e = nn.Exponential([0.1, 0.3, 0.5, 1.0], dtype=dtype.float32)
-    assert isinstance(e, nn.Distribution)
+    e = msd.Exponential()
+    assert isinstance(e, msd.Distribution)
+    e = msd.Exponential([0.1, 0.3, 0.5, 1.0], dtype=dtype.float32)
+    assert isinstance(e, msd.Distribution)
 
 def test_rate():
     """
     Invalid rate.
     """
     with pytest.raises(ValueError):
-        nn.Exponential([-0.1], dtype=dtype.float32)
+        msd.Exponential([-0.1], dtype=dtype.float32)
     with pytest.raises(ValueError):
-        nn.Exponential([0.0], dtype=dtype.float32)
+        msd.Exponential([0.0], dtype=dtype.float32)
 
 class ExponentialProb(nn.Cell):
     """
@@ -46,7 +47,7 @@ class ExponentialProb(nn.Cell):
     """
     def __init__(self):
         super(ExponentialProb, self).__init__()
-        self.e = nn.Exponential(0.5, dtype=dtype.float32)
+        self.e = msd.Exponential(0.5, dtype=dtype.float32)
 
     def construct(self, value):
         prob = self.e('prob', value)
@@ -72,7 +73,7 @@ class ExponentialProb1(nn.Cell):
     """
     def __init__(self):
         super(ExponentialProb1, self).__init__()
-        self.e = nn.Exponential(dtype=dtype.float32)
+        self.e = msd.Exponential(dtype=dtype.float32)
 
     def construct(self, value, rate):
         prob = self.e('prob', value, rate)
@@ -99,8 +100,8 @@ class ExponentialKl(nn.Cell):
     """
     def __init__(self):
         super(ExponentialKl, self).__init__()
-        self.e1 = nn.Exponential(0.7, dtype=dtype.float32)
-        self.e2 = nn.Exponential(dtype=dtype.float32)
+        self.e1 = msd.Exponential(0.7, dtype=dtype.float32)
+        self.e2 = msd.Exponential(dtype=dtype.float32)
 
     def construct(self, rate_b, rate_a):
         kl1 = self.e1('kl_loss', 'Exponential', rate_b)
@@ -123,8 +124,8 @@ class ExponentialCrossEntropy(nn.Cell):
     """
     def __init__(self):
         super(ExponentialCrossEntropy, self).__init__()
-        self.e1 = nn.Exponential(0.3, dtype=dtype.float32)
-        self.e2 = nn.Exponential(dtype=dtype.float32)
+        self.e1 = msd.Exponential(0.3, dtype=dtype.float32)
+        self.e2 = msd.Exponential(dtype=dtype.float32)
 
     def construct(self, rate_b, rate_a):
         h1 = self.e1('cross_entropy', 'Exponential', rate_b)
@@ -147,7 +148,7 @@ class ExponentialBasics(nn.Cell):
     """
     def __init__(self):
         super(ExponentialBasics, self).__init__()
-        self.e = nn.Exponential([0.3, 0.5], dtype=dtype.float32)
+        self.e = msd.Exponential([0.3, 0.5], dtype=dtype.float32)
 
     def construct(self):
         mean = self.e('mean')

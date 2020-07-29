@@ -13,12 +13,13 @@
 # limitations under the License.
 # ============================================================================
 """
-Test nn.Distribution.Normal.
+Test nn.probability.distribution.Normal.
 """
 import numpy as np
 import pytest
 
 import mindspore.nn as nn
+import mindspore.nn.probability.distribution as msd
 from mindspore import dtype
 from mindspore import Tensor
 
@@ -27,17 +28,17 @@ def test_normal_shape_errpr():
     Invalid shapes.
     """
     with pytest.raises(ValueError):
-        nn.Normal([[2.], [1.]], [[2.], [3.], [4.]], dtype=dtype.float32)
+        msd.Normal([[2.], [1.]], [[2.], [3.], [4.]], dtype=dtype.float32)
 
 
 def test_arguments():
     """
     args passing during initialization.
     """
-    n = nn.Normal()
-    assert isinstance(n, nn.Distribution)
-    n = nn.Normal([3.0], [4.0], dtype=dtype.float32)
-    assert isinstance(n, nn.Distribution)
+    n = msd.Normal()
+    assert isinstance(n, msd.Distribution)
+    n = msd.Normal([3.0], [4.0], dtype=dtype.float32)
+    assert isinstance(n, msd.Distribution)
 
 
 class NormalProb(nn.Cell):
@@ -46,7 +47,7 @@ class NormalProb(nn.Cell):
     """
     def __init__(self):
         super(NormalProb, self).__init__()
-        self.normal = nn.Normal(3.0, 4.0, dtype=dtype.float32)
+        self.normal = msd.Normal(3.0, 4.0, dtype=dtype.float32)
 
     def construct(self, value):
         prob = self.normal('prob', value)
@@ -73,7 +74,7 @@ class NormalProb1(nn.Cell):
     """
     def __init__(self):
         super(NormalProb1, self).__init__()
-        self.normal = nn.Normal()
+        self.normal = msd.Normal()
 
     def construct(self, value, mean, sd):
         prob = self.normal('prob', value, mean, sd)
@@ -101,8 +102,8 @@ class NormalKl(nn.Cell):
     """
     def __init__(self):
         super(NormalKl, self).__init__()
-        self.n1 = nn.Normal(np.array([3.0]), np.array([4.0]), dtype=dtype.float32)
-        self.n2 = nn.Normal(dtype=dtype.float32)
+        self.n1 = msd.Normal(np.array([3.0]), np.array([4.0]), dtype=dtype.float32)
+        self.n2 = msd.Normal(dtype=dtype.float32)
 
     def construct(self, mean_b, sd_b, mean_a, sd_a):
         kl1 = self.n1('kl_loss', 'Normal', mean_b, sd_b)
@@ -127,8 +128,8 @@ class NormalCrossEntropy(nn.Cell):
     """
     def __init__(self):
         super(NormalCrossEntropy, self).__init__()
-        self.n1 = nn.Normal(np.array([3.0]), np.array([4.0]), dtype=dtype.float32)
-        self.n2 = nn.Normal(dtype=dtype.float32)
+        self.n1 = msd.Normal(np.array([3.0]), np.array([4.0]), dtype=dtype.float32)
+        self.n2 = msd.Normal(dtype=dtype.float32)
 
     def construct(self, mean_b, sd_b, mean_a, sd_a):
         h1 = self.n1('cross_entropy', 'Normal', mean_b, sd_b)
@@ -153,7 +154,7 @@ class NormalBasics(nn.Cell):
     """
     def __init__(self):
         super(NormalBasics, self).__init__()
-        self.n = nn.Normal(3.0, 4.0, dtype=dtype.float32)
+        self.n = msd.Normal(3.0, 4.0, dtype=dtype.float32)
 
     def construct(self):
         mean = self.n('mean')

@@ -16,6 +16,7 @@
 import numpy as np
 from scipy import stats
 import mindspore.nn as nn
+import mindspore.nn.probability.distribution as msd
 from mindspore import dtype
 from mindspore import Tensor
 import mindspore.context as context
@@ -30,7 +31,7 @@ class Net(nn.Cell):
 
     def __init__(self):
         super(Net, self).__init__()
-        self.normal = nn.Normal(0., 1., dtype=dtype.float32)
+        self.normal = msd.Normal(0., 1., dtype=dtype.float32)
 
     def construct(self, x_, y_):
         kl = self.normal.kl_loss('kl_loss', 'Normal', x_, y_)

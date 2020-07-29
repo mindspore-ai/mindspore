@@ -13,12 +13,13 @@
 # limitations under the License.
 # ============================================================================
 """
-Test nn.Distribution.Uniform.
+Test nn.probability.distribution.Uniform.
 """
 import numpy as np
 import pytest
 
 import mindspore.nn as nn
+import mindspore.nn.probability.distribution as msd
 from mindspore import dtype
 from mindspore import Tensor
 
@@ -27,17 +28,17 @@ def test_uniform_shape_errpr():
     Invalid shapes.
     """
     with pytest.raises(ValueError):
-        nn.Uniform([[2.], [1.]], [[2.], [3.], [4.]], dtype=dtype.float32)
+        msd.Uniform([[2.], [1.]], [[2.], [3.], [4.]], dtype=dtype.float32)
 
 
 def test_arguments():
     """
     Args passing during initialization.
     """
-    u = nn.Uniform()
-    assert isinstance(u, nn.Distribution)
-    u = nn.Uniform([3.0], [4.0], dtype=dtype.float32)
-    assert isinstance(u, nn.Distribution)
+    u = msd.Uniform()
+    assert isinstance(u, msd.Distribution)
+    u = msd.Uniform([3.0], [4.0], dtype=dtype.float32)
+    assert isinstance(u, msd.Distribution)
 
 
 def test_invalid_range():
@@ -45,9 +46,9 @@ def test_invalid_range():
     Test range of uniform distribution.
     """
     with pytest.raises(ValueError):
-        nn.Uniform(0.0, 0.0, dtype=dtype.float32)
+        msd.Uniform(0.0, 0.0, dtype=dtype.float32)
     with pytest.raises(ValueError):
-        nn.Uniform(1.0, 0.0, dtype=dtype.float32)
+        msd.Uniform(1.0, 0.0, dtype=dtype.float32)
 
 
 class UniformProb(nn.Cell):
@@ -56,7 +57,7 @@ class UniformProb(nn.Cell):
     """
     def __init__(self):
         super(UniformProb, self).__init__()
-        self.u = nn.Uniform(3.0, 4.0, dtype=dtype.float32)
+        self.u = msd.Uniform(3.0, 4.0, dtype=dtype.float32)
 
     def construct(self, value):
         prob = self.u('prob', value)
@@ -82,7 +83,7 @@ class UniformProb1(nn.Cell):
     """
     def __init__(self):
         super(UniformProb1, self).__init__()
-        self.u = nn.Uniform(dtype=dtype.float32)
+        self.u = msd.Uniform(dtype=dtype.float32)
 
     def construct(self, value, low, high):
         prob = self.u('prob', value, low, high)
@@ -110,8 +111,8 @@ class UniformKl(nn.Cell):
     """
     def __init__(self):
         super(UniformKl, self).__init__()
-        self.u1 = nn.Uniform(np.array([3.0]), np.array([4.0]), dtype=dtype.float32)
-        self.u2 = nn.Uniform(dtype=dtype.float32)
+        self.u1 = msd.Uniform(np.array([3.0]), np.array([4.0]), dtype=dtype.float32)
+        self.u2 = msd.Uniform(dtype=dtype.float32)
 
     def construct(self, low_b, high_b, low_a, high_a):
         kl1 = self.u1('kl_loss', 'Uniform', low_b, high_b)
@@ -136,8 +137,8 @@ class UniformCrossEntropy(nn.Cell):
     """
     def __init__(self):
         super(UniformCrossEntropy, self).__init__()
-        self.u1 = nn.Uniform(np.array([3.0]), np.array([4.0]), dtype=dtype.float32)
-        self.u2 = nn.Uniform(dtype=dtype.float32)
+        self.u1 = msd.Uniform(np.array([3.0]), np.array([4.0]), dtype=dtype.float32)
+        self.u2 = msd.Uniform(dtype=dtype.float32)
 
     def construct(self, low_b, high_b, low_a, high_a):
         h1 = self.u1('cross_entropy', 'Uniform', low_b, high_b)
@@ -162,7 +163,7 @@ class UniformBasics(nn.Cell):
     """
     def __init__(self):
         super(UniformBasics, self).__init__()
-        self.u = nn.Uniform(3.0, 4.0, dtype=dtype.float32)
+        self.u = msd.Uniform(3.0, 4.0, dtype=dtype.float32)
 
     def construct(self):
         mean = self.u('mean')

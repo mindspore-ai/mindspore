@@ -13,11 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """
-Test nn.Distribution.Geometric.
+Test nn.probability.distribution.Geometric.
 """
 import pytest
 
 import mindspore.nn as nn
+import mindspore.nn.probability.distribution as msd
 from mindspore import dtype
 from mindspore import Tensor
 
@@ -26,19 +27,19 @@ def test_arguments():
     """
     Args passing during initialization.
     """
-    g = nn.Geometric()
-    assert isinstance(g, nn.Distribution)
-    g = nn.Geometric([0.0, 0.3, 0.5, 1.0], dtype=dtype.int32)
-    assert isinstance(g, nn.Distribution)
+    g = msd.Geometric()
+    assert isinstance(g, msd.Distribution)
+    g = msd.Geometric([0.0, 0.3, 0.5, 1.0], dtype=dtype.int32)
+    assert isinstance(g, msd.Distribution)
 
 def test_prob():
     """
     Invalid probability.
     """
     with pytest.raises(ValueError):
-        nn.Geometric([-0.1], dtype=dtype.int32)
+        msd.Geometric([-0.1], dtype=dtype.int32)
     with pytest.raises(ValueError):
-        nn.Geometric([1.1], dtype=dtype.int32)
+        msd.Geometric([1.1], dtype=dtype.int32)
 
 class GeometricProb(nn.Cell):
     """
@@ -46,7 +47,7 @@ class GeometricProb(nn.Cell):
     """
     def __init__(self):
         super(GeometricProb, self).__init__()
-        self.g = nn.Geometric(0.5, dtype=dtype.int32)
+        self.g = msd.Geometric(0.5, dtype=dtype.int32)
 
     def construct(self, value):
         prob = self.g('prob', value)
@@ -72,7 +73,7 @@ class GeometricProb1(nn.Cell):
     """
     def __init__(self):
         super(GeometricProb1, self).__init__()
-        self.g = nn.Geometric(dtype=dtype.int32)
+        self.g = msd.Geometric(dtype=dtype.int32)
 
     def construct(self, value, probs):
         prob = self.g('prob', value, probs)
@@ -100,8 +101,8 @@ class GeometricKl(nn.Cell):
     """
     def __init__(self):
         super(GeometricKl, self).__init__()
-        self.g1 = nn.Geometric(0.7, dtype=dtype.int32)
-        self.g2 = nn.Geometric(dtype=dtype.int32)
+        self.g1 = msd.Geometric(0.7, dtype=dtype.int32)
+        self.g2 = msd.Geometric(dtype=dtype.int32)
 
     def construct(self, probs_b, probs_a):
         kl1 = self.g1('kl_loss', 'Geometric', probs_b)
@@ -124,8 +125,8 @@ class GeometricCrossEntropy(nn.Cell):
     """
     def __init__(self):
         super(GeometricCrossEntropy, self).__init__()
-        self.g1 = nn.Geometric(0.3, dtype=dtype.int32)
-        self.g2 = nn.Geometric(dtype=dtype.int32)
+        self.g1 = msd.Geometric(0.3, dtype=dtype.int32)
+        self.g2 = msd.Geometric(dtype=dtype.int32)
 
     def construct(self, probs_b, probs_a):
         h1 = self.g1('cross_entropy', 'Geometric', probs_b)
@@ -148,7 +149,7 @@ class GeometricBasics(nn.Cell):
     """
     def __init__(self):
         super(GeometricBasics, self).__init__()
-        self.g = nn.Geometric([0.3, 0.5], dtype=dtype.int32)
+        self.g = msd.Geometric([0.3, 0.5], dtype=dtype.int32)
 
     def construct(self):
         mean = self.g('mean')

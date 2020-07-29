@@ -13,11 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """
-Test nn.Distribution.Bernoulli.
+Test nn.probability.distribution.Bernoulli.
 """
 import pytest
 
 import mindspore.nn as nn
+import mindspore.nn.probability.distribution as msd
 from mindspore import dtype
 from mindspore import Tensor
 
@@ -25,19 +26,19 @@ def test_arguments():
     """
     Args passing during initialization.
     """
-    b = nn.Bernoulli()
-    assert isinstance(b, nn.Distribution)
-    b = nn.Bernoulli([0.0, 0.3, 0.5, 1.0], dtype=dtype.int32)
-    assert isinstance(b, nn.Distribution)
+    b = msd.Bernoulli()
+    assert isinstance(b, msd.Distribution)
+    b = msd.Bernoulli([0.0, 0.3, 0.5, 1.0], dtype=dtype.int32)
+    assert isinstance(b, msd.Distribution)
 
 def test_prob():
     """
     Invalid probability.
     """
     with pytest.raises(ValueError):
-        nn.Bernoulli([-0.1], dtype=dtype.int32)
+        msd.Bernoulli([-0.1], dtype=dtype.int32)
     with pytest.raises(ValueError):
-        nn.Bernoulli([1.1], dtype=dtype.int32)
+        msd.Bernoulli([1.1], dtype=dtype.int32)
 
 class BernoulliProb(nn.Cell):
     """
@@ -45,7 +46,7 @@ class BernoulliProb(nn.Cell):
     """
     def __init__(self):
         super(BernoulliProb, self).__init__()
-        self.b = nn.Bernoulli(0.5, dtype=dtype.int32)
+        self.b = msd.Bernoulli(0.5, dtype=dtype.int32)
 
     def construct(self, value):
         prob = self.b('prob', value)
@@ -71,7 +72,7 @@ class BernoulliProb1(nn.Cell):
     """
     def __init__(self):
         super(BernoulliProb1, self).__init__()
-        self.b = nn.Bernoulli(dtype=dtype.int32)
+        self.b = msd.Bernoulli(dtype=dtype.int32)
 
     def construct(self, value, probs):
         prob = self.b('prob', value, probs)
@@ -98,8 +99,8 @@ class BernoulliKl(nn.Cell):
     """
     def __init__(self):
         super(BernoulliKl, self).__init__()
-        self.b1 = nn.Bernoulli(0.7, dtype=dtype.int32)
-        self.b2 = nn.Bernoulli(dtype=dtype.int32)
+        self.b1 = msd.Bernoulli(0.7, dtype=dtype.int32)
+        self.b2 = msd.Bernoulli(dtype=dtype.int32)
 
     def construct(self, probs_b, probs_a):
         kl1 = self.b1('kl_loss', 'Bernoulli', probs_b)
@@ -122,8 +123,8 @@ class BernoulliCrossEntropy(nn.Cell):
     """
     def __init__(self):
         super(BernoulliCrossEntropy, self).__init__()
-        self.b1 = nn.Bernoulli(0.7, dtype=dtype.int32)
-        self.b2 = nn.Bernoulli(dtype=dtype.int32)
+        self.b1 = msd.Bernoulli(0.7, dtype=dtype.int32)
+        self.b2 = msd.Bernoulli(dtype=dtype.int32)
 
     def construct(self, probs_b, probs_a):
         h1 = self.b1('cross_entropy', 'Bernoulli', probs_b)
@@ -146,7 +147,7 @@ class BernoulliBasics(nn.Cell):
     """
     def __init__(self):
         super(BernoulliBasics, self).__init__()
-        self.b = nn.Bernoulli([0.3, 0.5], dtype=dtype.int32)
+        self.b = msd.Bernoulli([0.3, 0.5], dtype=dtype.int32)
 
     def construct(self):
         mean = self.b('mean')
