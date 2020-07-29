@@ -82,10 +82,13 @@ int ArithmeticOpenCLKernel::Init() {
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
+  outputs_[0]->SetFormat(schema::Format_NHWC4);
+  MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return 0;
 }
 
 int ArithmeticOpenCLKernel::Run() {
+  MS_LOG(DEBUG) << this->Name() << " Running!";
   uint32_t element_num = outputs_[0]->ElementsC4Num();
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   std::vector<size_t> global = {element_num};
