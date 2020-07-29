@@ -3115,7 +3115,7 @@ class _GeneratorWorker(multiprocessing.Process):
         """
         Get function for worker result queue. Block with timeout.
         """
-        return self.res_queue.get(timeout=5)
+        return self.res_queue.get()
 
     def __del__(self):
         self.terminate()
