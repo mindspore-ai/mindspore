@@ -134,6 +134,7 @@ REGISTER(SquareInfo);
 REGISTER(GatherV2PInfo);
 REGISTER(EmbeddingLookupInfo);
 REGISTER(TileInfo);
+REGISTER(StridedSliceInfo);
 }  // namespace parallel
 }  // namespace mindspore
 
