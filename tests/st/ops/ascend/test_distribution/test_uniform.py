@@ -19,7 +19,6 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.nn.probability.distribution as msd
 from mindspore import Tensor
-from mindspore.common.api import ms_function
 from mindspore import dtype
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -32,9 +31,8 @@ class Prob(nn.Cell):
         super(Prob, self).__init__()
         self.u = msd.Uniform([0.0], [[1.0], [2.0]], dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_):
-        return self.u('prob', x_)
+        return self.u.prob(x_)
 
 def test_pdf():
     """
@@ -56,9 +54,8 @@ class LogProb(nn.Cell):
         super(LogProb, self).__init__()
         self.u = msd.Uniform([0.0], [[1.0], [2.0]], dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_):
-        return self.u('log_prob', x_)
+        return self.u.log_prob(x_)
 
 def test_log_likelihood():
     """
@@ -80,9 +77,8 @@ class KL(nn.Cell):
         super(KL, self).__init__()
         self.u = msd.Uniform([0.0], [1.5], dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_, y_):
-        return self.u('kl_loss', 'Uniform', x_, y_)
+        return self.u.kl_loss('Uniform', x_, y_)
 
 def test_kl_loss():
     """
@@ -106,9 +102,8 @@ class Basics(nn.Cell):
         super(Basics, self).__init__()
         self.u = msd.Uniform([0.0], [3.0], dtype=dtype.float32)
 
-    @ms_function
     def construct(self):
-        return self.u('mean'), self.u('sd')
+        return self.u.mean(), self.u.sd()
 
 def test_basics():
     """
@@ -131,9 +126,8 @@ class Sampling(nn.Cell):
         self.u = msd.Uniform([0.0], [[1.0], [2.0]], seed=seed, dtype=dtype.float32)
         self.shape = shape
 
-    @ms_function
     def construct(self, low=None, high=None):
-        return self.u('sample', self.shape, low, high)
+        return self.u.sample(self.shape, low, high)
 
 def test_sample():
     """
@@ -155,9 +149,8 @@ class CDF(nn.Cell):
         super(CDF, self).__init__()
         self.u = msd.Uniform([0.0], [1.0], dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_):
-        return self.u('cdf', x_)
+        return self.u.cdf(x_)
 
 def test_cdf():
     """
@@ -179,9 +172,8 @@ class LogCDF(nn.Cell):
         super(LogCDF, self).__init__()
         self.u = msd.Uniform([0.0], [1.0], dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_):
-        return self.u('log_cdf', x_)
+        return self.u.log_cdf(x_)
 
 class SF(nn.Cell):
     """
@@ -191,9 +183,8 @@ class SF(nn.Cell):
         super(SF, self).__init__()
         self.u = msd.Uniform([0.0], [1.0], dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_):
-        return self.u('survival_function', x_)
+        return self.u.survival_function(x_)
 
 class LogSF(nn.Cell):
     """
@@ -203,9 +194,8 @@ class LogSF(nn.Cell):
         super(LogSF, self).__init__()
         self.u = msd.Uniform([0.0], [1.0], dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_):
-        return self.u('log_survival', x_)
+        return self.u.log_survival(x_)
 
 class EntropyH(nn.Cell):
     """
@@ -215,9 +205,8 @@ class EntropyH(nn.Cell):
         super(EntropyH, self).__init__()
         self.u = msd.Uniform([0.0], [1.0, 2.0], dtype=dtype.float32)
 
-    @ms_function
     def construct(self):
-        return self.u('entropy')
+        return self.u.entropy()
 
 def test_entropy():
     """
@@ -238,12 +227,11 @@ class CrossEntropy(nn.Cell):
         super(CrossEntropy, self).__init__()
         self.u = msd.Uniform([0.0], [1.5], dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_, y_):
-        entropy = self.u('entropy')
-        kl_loss = self.u('kl_loss', 'Uniform', x_, y_)
+        entropy = self.u.entropy()
+        kl_loss = self.u.kl_loss('Uniform', x_, y_)
         h_sum_kl = entropy + kl_loss
-        cross_entropy = self.u('cross_entropy', 'Uniform', x_, y_)
+        cross_entropy = self.u.cross_entropy('Uniform', x_, y_)
         return h_sum_kl - cross_entropy
 
 def test_log_cdf():

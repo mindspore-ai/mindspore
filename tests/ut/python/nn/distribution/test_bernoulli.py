@@ -49,12 +49,12 @@ class BernoulliProb(nn.Cell):
         self.b = msd.Bernoulli(0.5, dtype=dtype.int32)
 
     def construct(self, value):
-        prob = self.b('prob', value)
-        log_prob = self.b('log_prob', value)
-        cdf = self.b('cdf', value)
-        log_cdf = self.b('log_cdf', value)
-        sf = self.b('survival_function', value)
-        log_sf = self.b('log_survival', value)
+        prob = self.b.prob(value)
+        log_prob = self.b.log_prob(value)
+        cdf = self.b.cdf(value)
+        log_cdf = self.b.log_cdf(value)
+        sf = self.b.survival_function(value)
+        log_sf = self.b.log_survival(value)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
 def test_bernoulli_prob():
@@ -75,12 +75,12 @@ class BernoulliProb1(nn.Cell):
         self.b = msd.Bernoulli(dtype=dtype.int32)
 
     def construct(self, value, probs):
-        prob = self.b('prob', value, probs)
-        log_prob = self.b('log_prob', value, probs)
-        cdf = self.b('cdf', value, probs)
-        log_cdf = self.b('log_cdf', value, probs)
-        sf = self.b('survival_function', value, probs)
-        log_sf = self.b('log_survival', value, probs)
+        prob = self.b.prob(value, probs)
+        log_prob = self.b.log_prob(value, probs)
+        cdf = self.b.cdf(value, probs)
+        log_cdf = self.b.log_cdf(value, probs)
+        sf = self.b.survival_function(value, probs)
+        log_sf = self.b.log_survival(value, probs)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
 def test_bernoulli_prob1():
@@ -103,8 +103,8 @@ class BernoulliKl(nn.Cell):
         self.b2 = msd.Bernoulli(dtype=dtype.int32)
 
     def construct(self, probs_b, probs_a):
-        kl1 = self.b1('kl_loss', 'Bernoulli', probs_b)
-        kl2 = self.b2('kl_loss', 'Bernoulli', probs_b, probs_a)
+        kl1 = self.b1.kl_loss('Bernoulli', probs_b)
+        kl2 = self.b2.kl_loss('Bernoulli', probs_b, probs_a)
         return kl1 + kl2
 
 def test_kl():
@@ -127,8 +127,8 @@ class BernoulliCrossEntropy(nn.Cell):
         self.b2 = msd.Bernoulli(dtype=dtype.int32)
 
     def construct(self, probs_b, probs_a):
-        h1 = self.b1('cross_entropy', 'Bernoulli', probs_b)
-        h2 = self.b2('cross_entropy', 'Bernoulli', probs_b, probs_a)
+        h1 = self.b1.cross_entropy('Bernoulli', probs_b)
+        h2 = self.b2.cross_entropy('Bernoulli', probs_b, probs_a)
         return h1 + h2
 
 def test_cross_entropy():
@@ -150,11 +150,11 @@ class BernoulliBasics(nn.Cell):
         self.b = msd.Bernoulli([0.3, 0.5], dtype=dtype.int32)
 
     def construct(self):
-        mean = self.b('mean')
-        sd = self.b('sd')
-        var = self.b('var')
-        mode = self.b('mode')
-        entropy = self.b('entropy')
+        mean = self.b.mean()
+        sd = self.b.sd()
+        var = self.b.var()
+        mode = self.b.mode()
+        entropy = self.b.entropy()
         return mean + sd + var + mode + entropy
 
 def test_bascis():
@@ -163,4 +163,29 @@ def test_bascis():
     """
     net = BernoulliBasics()
     ans = net()
+    assert isinstance(ans, Tensor)
+
+class BernoulliConstruct(nn.Cell):
+    """
+    Bernoulli distribution: going through construct.
+    """
+    def __init__(self):
+        super(BernoulliConstruct, self).__init__()
+        self.b = msd.Bernoulli(0.5, dtype=dtype.int32)
+        self.b1 = msd.Bernoulli(dtype=dtype.int32)
+
+    def construct(self, value, probs):
+        prob = self.b('prob', value)
+        prob1 = self.b('prob', value, probs)
+        prob2 = self.b1('prob', value, probs)
+        return prob + prob1 + prob2
+
+def test_bernoulli_construct():
+    """
+    Test probability function going through construct.
+    """
+    net = BernoulliConstruct()
+    value = Tensor([0, 0, 0, 0, 0], dtype=dtype.float32)
+    probs = Tensor([0.5], dtype=dtype.float32)
+    ans = net(value, probs)
     assert isinstance(ans, Tensor)

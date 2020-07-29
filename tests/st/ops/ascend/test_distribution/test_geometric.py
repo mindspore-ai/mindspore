@@ -19,7 +19,6 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.nn.probability.distribution as msd
 from mindspore import Tensor
-from mindspore.common.api import ms_function
 from mindspore import dtype
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -32,9 +31,8 @@ class Prob(nn.Cell):
         super(Prob, self).__init__()
         self.g = msd.Geometric(0.7, dtype=dtype.int32)
 
-    @ms_function
     def construct(self, x_):
-        return self.g('prob', x_)
+        return self.g.prob(x_)
 
 def test_pmf():
     """
@@ -56,9 +54,8 @@ class LogProb(nn.Cell):
         super(LogProb, self).__init__()
         self.g = msd.Geometric(0.7, dtype=dtype.int32)
 
-    @ms_function
     def construct(self, x_):
-        return self.g('log_prob', x_)
+        return self.g.log_prob(x_)
 
 def test_log_likelihood():
     """
@@ -80,9 +77,8 @@ class KL(nn.Cell):
         super(KL, self).__init__()
         self.g = msd.Geometric(0.7, dtype=dtype.int32)
 
-    @ms_function
     def construct(self, x_):
-        return self.g('kl_loss', 'Geometric', x_)
+        return self.g.kl_loss('Geometric', x_)
 
 def test_kl_loss():
     """
@@ -106,9 +102,8 @@ class Basics(nn.Cell):
         super(Basics, self).__init__()
         self.g = msd.Geometric([0.5, 0.5], dtype=dtype.int32)
 
-    @ms_function
     def construct(self):
-        return self.g('mean'), self.g('sd'), self.g('mode')
+        return self.g.mean(), self.g.sd(), self.g.mode()
 
 def test_basics():
     """
@@ -133,9 +128,8 @@ class Sampling(nn.Cell):
         self.g = msd.Geometric([0.7, 0.5], seed=seed, dtype=dtype.int32)
         self.shape = shape
 
-    @ms_function
     def construct(self, probs=None):
-        return self.g('sample', self.shape, probs)
+        return self.g.sample(self.shape, probs)
 
 def test_sample():
     """
@@ -154,9 +148,8 @@ class CDF(nn.Cell):
         super(CDF, self).__init__()
         self.g = msd.Geometric(0.7, dtype=dtype.int32)
 
-    @ms_function
     def construct(self, x_):
-        return self.g('cdf', x_)
+        return self.g.cdf(x_)
 
 def test_cdf():
     """
@@ -178,9 +171,8 @@ class LogCDF(nn.Cell):
         super(LogCDF, self).__init__()
         self.g = msd.Geometric(0.7, dtype=dtype.int32)
 
-    @ms_function
     def construct(self, x_):
-        return self.g('log_cdf', x_)
+        return self.g.log_cdf(x_)
 
 def test_logcdf():
     """
@@ -202,9 +194,8 @@ class SF(nn.Cell):
         super(SF, self).__init__()
         self.g = msd.Geometric(0.7, dtype=dtype.int32)
 
-    @ms_function
     def construct(self, x_):
-        return self.g('survival_function', x_)
+        return self.g.survival_function(x_)
 
 def test_survival():
     """
@@ -226,9 +217,8 @@ class LogSF(nn.Cell):
         super(LogSF, self).__init__()
         self.g = msd.Geometric(0.7, dtype=dtype.int32)
 
-    @ms_function
     def construct(self, x_):
-        return self.g('log_survival', x_)
+        return self.g.log_survival(x_)
 
 def test_log_survival():
     """
@@ -250,9 +240,8 @@ class EntropyH(nn.Cell):
         super(EntropyH, self).__init__()
         self.g = msd.Geometric(0.7, dtype=dtype.int32)
 
-    @ms_function
     def construct(self):
-        return self.g('entropy')
+        return self.g.entropy()
 
 def test_entropy():
     """
@@ -273,12 +262,11 @@ class CrossEntropy(nn.Cell):
         super(CrossEntropy, self).__init__()
         self.g = msd.Geometric(0.7, dtype=dtype.int32)
 
-    @ms_function
     def construct(self, x_):
-        entropy = self.g('entropy')
-        kl_loss = self.g('kl_loss', 'Geometric', x_)
+        entropy = self.g.entropy()
+        kl_loss = self.g.kl_loss('Geometric', x_)
         h_sum_kl = entropy + kl_loss
-        ans = self.g('cross_entropy', 'Geometric', x_)
+        ans = self.g.cross_entropy('Geometric', x_)
         return h_sum_kl - ans
 
 def test_cross_entropy():

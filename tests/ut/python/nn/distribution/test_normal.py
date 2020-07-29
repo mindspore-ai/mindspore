@@ -50,12 +50,12 @@ class NormalProb(nn.Cell):
         self.normal = msd.Normal(3.0, 4.0, dtype=dtype.float32)
 
     def construct(self, value):
-        prob = self.normal('prob', value)
-        log_prob = self.normal('log_prob', value)
-        cdf = self.normal('cdf', value)
-        log_cdf = self.normal('log_cdf', value)
-        sf = self.normal('survival_function', value)
-        log_sf = self.normal('log_survival', value)
+        prob = self.normal.prob(value)
+        log_prob = self.normal.log_prob(value)
+        cdf = self.normal.cdf(value)
+        log_cdf = self.normal.log_cdf(value)
+        sf = self.normal.survival_function(value)
+        log_sf = self.normal.log_survival(value)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
 def test_normal_prob():
@@ -77,12 +77,12 @@ class NormalProb1(nn.Cell):
         self.normal = msd.Normal()
 
     def construct(self, value, mean, sd):
-        prob = self.normal('prob', value, mean, sd)
-        log_prob = self.normal('log_prob', value, mean, sd)
-        cdf = self.normal('cdf', value, mean, sd)
-        log_cdf = self.normal('log_cdf', value, mean, sd)
-        sf = self.normal('survival_function', value, mean, sd)
-        log_sf = self.normal('log_survival', value, mean, sd)
+        prob = self.normal.prob(value, mean, sd)
+        log_prob = self.normal.log_prob(value, mean, sd)
+        cdf = self.normal.cdf(value, mean, sd)
+        log_cdf = self.normal.log_cdf(value, mean, sd)
+        sf = self.normal.survival_function(value, mean, sd)
+        log_sf = self.normal.log_survival(value, mean, sd)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
 def test_normal_prob1():
@@ -106,8 +106,8 @@ class NormalKl(nn.Cell):
         self.n2 = msd.Normal(dtype=dtype.float32)
 
     def construct(self, mean_b, sd_b, mean_a, sd_a):
-        kl1 = self.n1('kl_loss', 'Normal', mean_b, sd_b)
-        kl2 = self.n2('kl_loss', 'Normal', mean_b, sd_b, mean_a, sd_a)
+        kl1 = self.n1.kl_loss('Normal', mean_b, sd_b)
+        kl2 = self.n2.kl_loss('Normal', mean_b, sd_b, mean_a, sd_a)
         return kl1 + kl2
 
 def test_kl():
@@ -132,8 +132,8 @@ class NormalCrossEntropy(nn.Cell):
         self.n2 = msd.Normal(dtype=dtype.float32)
 
     def construct(self, mean_b, sd_b, mean_a, sd_a):
-        h1 = self.n1('cross_entropy', 'Normal', mean_b, sd_b)
-        h2 = self.n2('cross_entropy', 'Normal', mean_b, sd_b, mean_a, sd_a)
+        h1 = self.n1.cross_entropy('Normal', mean_b, sd_b)
+        h2 = self.n2.cross_entropy('Normal', mean_b, sd_b, mean_a, sd_a)
         return h1 + h2
 
 def test_cross_entropy():
@@ -157,10 +157,10 @@ class NormalBasics(nn.Cell):
         self.n = msd.Normal(3.0, 4.0, dtype=dtype.float32)
 
     def construct(self):
-        mean = self.n('mean')
-        sd = self.n('sd')
-        mode = self.n('mode')
-        entropy = self.n('entropy')
+        mean = self.n.mean()
+        sd = self.n.sd()
+        mode = self.n.mode()
+        entropy = self.n.entropy()
         return mean + sd + mode + entropy
 
 def test_bascis():
@@ -169,4 +169,31 @@ def test_bascis():
     """
     net = NormalBasics()
     ans = net()
+    assert isinstance(ans, Tensor)
+
+
+class NormalConstruct(nn.Cell):
+    """
+    Normal distribution: going through construct.
+    """
+    def __init__(self):
+        super(NormalConstruct, self).__init__()
+        self.normal = msd.Normal(3.0, 4.0)
+        self.normal1 = msd.Normal()
+
+    def construct(self, value, mean, sd):
+        prob = self.normal('prob', value)
+        prob1 = self.normal('prob', value, mean, sd)
+        prob2 = self.normal1('prob', value, mean, sd)
+        return prob + prob1 + prob2
+
+def test_normal_construct():
+    """
+    Test probability function going through construct.
+    """
+    net = NormalConstruct()
+    value = Tensor([0.5, 1.0], dtype=dtype.float32)
+    mean = Tensor([0.0], dtype=dtype.float32)
+    sd = Tensor([1.0], dtype=dtype.float32)
+    ans = net(value, mean, sd)
     assert isinstance(ans, Tensor)

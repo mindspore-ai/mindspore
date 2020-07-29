@@ -19,7 +19,6 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.nn.probability.distribution as msd
 from mindspore import Tensor
-from mindspore.common.api import ms_function
 from mindspore import dtype
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -32,9 +31,8 @@ class Prob(nn.Cell):
         super(Prob, self).__init__()
         self.n = msd.Normal(np.array([3.0]), np.array([[2.0], [4.0]]), dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_):
-        return self.n('prob', x_)
+        return self.n.prob(x_)
 
 def test_pdf():
     """
@@ -55,9 +53,8 @@ class LogProb(nn.Cell):
         super(LogProb, self).__init__()
         self.n = msd.Normal(np.array([3.0]), np.array([[2.0], [4.0]]), dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_):
-        return self.n('log_prob', x_)
+        return self.n.log_prob(x_)
 
 def test_log_likelihood():
     """
@@ -79,9 +76,8 @@ class KL(nn.Cell):
         super(KL, self).__init__()
         self.n = msd.Normal(np.array([3.0]), np.array([4.0]), dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_, y_):
-        return self.n('kl_loss', 'Normal', x_, y_)
+        return self.n.kl_loss('Normal', x_, y_)
 
 
 def test_kl_loss():
@@ -113,9 +109,8 @@ class Basics(nn.Cell):
         super(Basics, self).__init__()
         self.n = msd.Normal(np.array([3.0]), np.array([2.0, 4.0]), dtype=dtype.float32)
 
-    @ms_function
     def construct(self):
-        return self.n('mean'), self.n('sd'), self.n('mode')
+        return self.n.mean(), self.n.sd(), self.n.mode()
 
 def test_basics():
     """
@@ -139,9 +134,8 @@ class Sampling(nn.Cell):
         self.n = msd.Normal(np.array([3.0]), np.array([[2.0], [4.0]]), seed=seed, dtype=dtype.float32)
         self.shape = shape
 
-    @ms_function
     def construct(self, mean=None, sd=None):
-        return self.n('sample', self.shape, mean, sd)
+        return self.n.sample(self.shape, mean, sd)
 
 def test_sample():
     """
@@ -163,9 +157,8 @@ class CDF(nn.Cell):
         super(CDF, self).__init__()
         self.n = msd.Normal(np.array([3.0]), np.array([[2.0], [4.0]]), dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_):
-        return self.n('cdf', x_)
+        return self.n.cdf(x_)
 
 
 def test_cdf():
@@ -187,9 +180,8 @@ class LogCDF(nn.Cell):
         super(LogCDF, self).__init__()
         self.n = msd.Normal(np.array([3.0]), np.array([[2.0], [4.0]]), dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_):
-        return self.n('log_cdf', x_)
+        return self.n.log_cdf(x_)
 
 def test_log_cdf():
     """
@@ -210,9 +202,8 @@ class SF(nn.Cell):
         super(SF, self).__init__()
         self.n = msd.Normal(np.array([3.0]), np.array([[2.0], [4.0]]), dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_):
-        return self.n('survival_function', x_)
+        return self.n.survival_function(x_)
 
 def test_survival():
     """
@@ -233,9 +224,8 @@ class LogSF(nn.Cell):
         super(LogSF, self).__init__()
         self.n = msd.Normal(np.array([3.0]), np.array([[2.0], [4.0]]), dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_):
-        return self.n('log_survival', x_)
+        return self.n.log_survival(x_)
 
 def test_log_survival():
     """
@@ -256,9 +246,8 @@ class EntropyH(nn.Cell):
         super(EntropyH, self).__init__()
         self.n = msd.Normal(np.array([3.0]), np.array([[2.0], [4.0]]), dtype=dtype.float32)
 
-    @ms_function
     def construct(self):
-        return self.n('entropy')
+        return self.n.entropy()
 
 def test_entropy():
     """
@@ -279,12 +268,11 @@ class CrossEntropy(nn.Cell):
         super(CrossEntropy, self).__init__()
         self.n = msd.Normal(np.array([3.0]), np.array([4.0]), dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_, y_):
-        entropy = self.n('entropy')
-        kl_loss = self.n('kl_loss', 'Normal', x_, y_)
+        entropy = self.n.entropy()
+        kl_loss = self.n.kl_loss('Normal', x_, y_)
         h_sum_kl = entropy + kl_loss
-        cross_entropy = self.n('cross_entropy', 'Normal', x_, y_)
+        cross_entropy = self.n.cross_entropy('Normal', x_, y_)
         return h_sum_kl - cross_entropy
 
 def test_cross_entropy():
@@ -297,3 +285,40 @@ def test_cross_entropy():
     diff = cross_entropy(mean, sd)
     tol = 1e-6
     assert (np.abs(diff.asnumpy() - np.zeros(diff.shape)) < tol).all()
+
+class Net(nn.Cell):
+    """
+    Test class: expand single distribution instance to multiple graphs
+    by specifying the attributes.
+    """
+
+    def __init__(self):
+        super(Net, self).__init__()
+        self.normal = msd.Normal(0., 1., dtype=dtype.float32)
+
+    def construct(self, x_, y_):
+        kl = self.normal.kl_loss('Normal', x_, y_)
+        prob = self.normal.prob(kl)
+        return prob
+
+def test_multiple_graphs():
+    """
+    Test multiple graphs case.
+    """
+    prob = Net()
+    mean_a = np.array([0.0]).astype(np.float32)
+    sd_a = np.array([1.0]).astype(np.float32)
+    mean_b = np.array([1.0]).astype(np.float32)
+    sd_b = np.array([1.0]).astype(np.float32)
+    ans = prob(Tensor(mean_b), Tensor(sd_b))
+
+    diff_log_scale = np.log(sd_a) - np.log(sd_b)
+    squared_diff = np.square(mean_a / sd_b - mean_b / sd_b)
+    expect_kl_loss = 0.5 * squared_diff + 0.5 * \
+        np.expm1(2 * diff_log_scale) - diff_log_scale
+
+    norm_benchmark = stats.norm(np.array([0.0]), np.array([1.0]))
+    expect_prob = norm_benchmark.pdf(expect_kl_loss).astype(np.float32)
+
+    tol = 1e-6
+    assert (np.abs(ans.asnumpy() - expect_prob) < tol).all()
