@@ -40,8 +40,7 @@ void CPUKernelRuntime::AssignKernelAddress(session::KernelGraph *kernel_graph) {
   AssignValueNodeAddress(kernel_graph);
   AssignInputNodeAddress(kernel_graph);
   AssignKernelOutputAddress(kernel_graph);
-  resource_manager_.MemPlan(kernel_graph);
-  resource_manager_.MemMalloc(kernel_graph);
+  resource_manager_.AssignMemory(kernel_graph);
 }
 
 void CPUKernelRuntime::AssignValueNodeAddress(session::KernelGraph *kernel_graph) {

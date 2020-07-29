@@ -312,7 +312,7 @@ void SessionBasic::InitInternalOutputParameter(const AnfNodePtr &out_node, const
       MS_LOG(INFO) << "No kernel info";
       return;
     }
-    if (!AnfAlgo::OutputAddrExist(ref_real_node, ref_real_node_index)) {
+    if (!opt::IsNopNode(ref_real_node) && !AnfAlgo::OutputAddrExist(ref_real_node, ref_real_node_index)) {
       MS_LOG(INFO) << "No kernel address";
       return;
     }
