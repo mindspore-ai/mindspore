@@ -79,10 +79,13 @@ export RANK_SIZE=8
 export MINDSPORE_HCCL_CONFIG_PATH=$PATH1
 export RANK_TABLE_FILE=$PATH1
 
+export SERVER_ID=0
+rank_start=$((DEVICE_NUM * SERVER_ID))
+
 for((i=0; i<${DEVICE_NUM}; i++))
 do
     export DEVICE_ID=$i
-    export RANK_ID=$i
+    export RANK_ID=$((rank_start + i))
     rm -rf ./train_parallel$i
     mkdir ./train_parallel$i
     cp ../*.py ./train_parallel$i
