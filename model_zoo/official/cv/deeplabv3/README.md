@@ -5,8 +5,7 @@ This is an example of training DeepLabV3 with PASCAL VOC 2012 dataset in MindSpo
 
 ## Requirements
 - Install [MindSpore](https://www.mindspore.cn/install/en).
-- Download the VOC 2012 dataset for training.
-- We need to run `./src/remove_gt_colormap.py` to remove the label colormap. 
+- Download the VOC 2012 dataset for training. 
   ``` bash
   python remove_gt_colormap.py --original_gt_folder GT_FOLDER --output_dir OUTPUT_DIR
 

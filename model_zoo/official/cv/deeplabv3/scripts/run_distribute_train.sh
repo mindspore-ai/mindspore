@@ -26,6 +26,7 @@ DATA_DIR=$2
 export MINDSPORE_HCCL_CONFIG_PATH=$1
 export RANK_TABLE_FILE=$1
 export RANK_SIZE=8
+export DEVICE_NUM=8
 PATH_CHECKPOINT=""
 if [ $# == 3 ]
 then
@@ -37,11 +38,13 @@ avg_core_per_rank=`expr $cores \/ $RANK_SIZE`
 core_gap=`expr $avg_core_per_rank \- 1`
 echo "avg_core_per_rank" $avg_core_per_rank
 echo "core_gap" $core_gap
-for((i=0;i<RANK_SIZE;i++))
+export SERVER_ID=0
+rank_start=$((DEVICE_NUM * SERVER_ID))
+for((i=0;i<DEVICE_NUM;i++))
 do
     start=`expr $i \* $avg_core_per_rank`
     export DEVICE_ID=$i
-    export RANK_ID=$i
+    export RANK_ID=$((rank_start + i))
     export DEPLOY_MODE=0
     export GE_USE_STATIC_MEMORY=1
     end=`expr $start \+ $core_gap`
