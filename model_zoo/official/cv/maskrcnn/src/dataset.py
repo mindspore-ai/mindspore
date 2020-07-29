@@ -170,8 +170,8 @@ def rescale_column(img, img_shape, gt_bboxes, gt_label, gt_num, gt_mask):
         scale_factor = scale_factor*scale_factor2
 
     gt_bboxes = gt_bboxes * scale_factor
-    gt_bboxes[:, 0::2] = np.clip(gt_bboxes[:, 0::2], 0, img_shape[1] - 1)
-    gt_bboxes[:, 1::2] = np.clip(gt_bboxes[:, 1::2], 0, img_shape[0] - 1)
+    gt_bboxes[:, 0::2] = np.clip(gt_bboxes[:, 0::2], 0, img_data.shape[1] - 1)
+    gt_bboxes[:, 1::2] = np.clip(gt_bboxes[:, 1::2], 0, img_data.shape[0] - 1)
 
     gt_mask_data = np.array([
         mmcv.imrescale(mask, scale_factor, interpolation='nearest')
