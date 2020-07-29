@@ -38,7 +38,12 @@ bool ParameterRequireGrad(const AnfNodePtr &node_ptr) {
   if (!para_ptr->has_default()) {
     return false;
   }
-  return para_ptr->default_param()->requires_grad();
+  auto obj = py::cast(para_ptr->default_param());
+  auto param_value = py::cast<ParamValuePtr>(obj.attr("_value"));
+  if (param_value == nullptr) {
+    return false;
+  }
+  return param_value->requires_grad();
 }
 }  // namespace parallel
 }  // namespace mindspore

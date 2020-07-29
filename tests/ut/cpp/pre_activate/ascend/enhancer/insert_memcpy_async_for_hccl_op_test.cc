@@ -107,7 +107,6 @@ TEST_F(TestHWInsertMemcpyForHccl, test_cond2) {
   for (auto p : kg->parameters()) {
     auto param = p->cast<ParameterPtr>();
     EXPECT_NE(param, nullptr);
-    param->set_default_param(std::make_shared<ParamValue>());
   }
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
@@ -157,7 +156,6 @@ TEST_F(TestHWInsertMemcpyForHccl, test_cond4) {
   for (auto p : kg->parameters()) {
     auto param = p->cast<ParameterPtr>();
     EXPECT_NE(param, nullptr);
-    param->set_default_param(std::make_shared<ParamValue>());
   }
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
@@ -185,7 +183,6 @@ TEST_F(TestHWInsertMemcpyForHccl, test_cond5) {
   for (auto p : kg->parameters()) {
     auto param = p->cast<ParameterPtr>();
     EXPECT_NE(param, nullptr);
-    param->set_default_param(std::make_shared<ParamValue>());
   }
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();

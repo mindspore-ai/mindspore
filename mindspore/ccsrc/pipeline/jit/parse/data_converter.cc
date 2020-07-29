@@ -205,41 +205,6 @@ bool ConvertMetaFuncGraph(const py::object &obj, ValuePtr *const data, bool use_
   return true;
 }
 
-bool ConvertDataType(const py::object &obj, ValuePtr *const data) {
-  MS_LOG(DEBUG) << "Converting type object";
-  auto typeptr = obj.cast<TypePtr>();
-  if (typeptr == nullptr) {
-    MS_LOG(ERROR) << "Resolve TypePtr error, get ptr is null";
-    return false;
-  }
-  *data = typeptr;
-  return true;
-}
-
-bool ConvertMetaTensor(const py::object &obj, ValuePtr *const data) {
-  MS_LOG(DEBUG) << "Converting MetaTensor object.";
-
-  auto m_tensor = obj.cast<MetaTensorPtr>();
-  if (m_tensor == nullptr) {
-    MS_LOG(ERROR) << "Resolve MetaTensor error, get ptr is null.";
-    return false;
-  }
-  *data = m_tensor;
-  return true;
-}
-
-bool ConvertTensor(const py::object &obj, ValuePtr *const data) {
-  MS_LOG(DEBUG) << "Converting tensor object";
-
-  auto m_tensor = obj.cast<TensorPtr>();
-  if (m_tensor == nullptr) {
-    MS_LOG(ERROR) << "Resolve Tensor error, get ptr is null";
-    return false;
-  }
-  *data = m_tensor;
-  return true;
-}
-
 bool ConvertSlice(const py::object &obj, ValuePtr *const data) {
   MS_LOG(DEBUG) << "Converting slice object";
 
@@ -364,11 +329,11 @@ bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature
   } else if (py::isinstance<MetaFuncGraph>(obj)) {
     ret = ConvertMetaFuncGraph(obj, &converted, use_signature);
   } else if (py::isinstance<Type>(obj)) {
-    ret = ConvertDataType(obj, &converted);
+    converted = obj.cast<TypePtr>();
   } else if (py::isinstance<Tensor>(obj)) {
-    ret = ConvertTensor(obj, &converted);
+    converted = obj.cast<TensorPtr>();
   } else if (py::isinstance<MetaTensor>(obj)) {
-    ret = ConvertMetaTensor(obj, &converted);
+    converted = obj.cast<MetaTensorPtr>();
   } else if (py::isinstance<EnvInstance>(obj)) {
     std::shared_ptr<EnvInstance> env = obj.cast<std::shared_ptr<EnvInstance>>();
     converted = env;

@@ -33,9 +33,6 @@ class ParamValue {
 
   virtual ~ParamValue() = default;
 
-  tensor::MetaTensorPtr value() const { return value_; }
-  void set_value(const tensor::MetaTensorPtr &value) { value_ = value; }
-
   const std::string &name() const { return name_; }
   void set_name(const std::string &name) { name_ = name; }
 
@@ -72,7 +69,6 @@ class ParamValue {
   }
 
  private:
-  tensor::MetaTensorPtr value_;
   std::string name_{"Parameter"};
   bool requires_grad_{true};
   bool layerwise_parallel_{false};

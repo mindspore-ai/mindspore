@@ -1295,11 +1295,8 @@ void CoverSliceShape(const FuncGraphPtr &root) {
   g_RefMap.clear();
 }
 
-bool ParameterIsCloned(const FuncGraphPtr &root, const AnfNodePtr &parameter_node) {
-  MS_EXCEPTION_IF_NULL(root);
+bool ParameterIsCloned(const AnfNodePtr &parameter_node) {
   MS_EXCEPTION_IF_NULL(parameter_node);
-  FuncGraphManagerPtr manager = root->manager();
-  MS_EXCEPTION_IF_NULL(manager);
   auto cloned_parameter = parameter_node->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(cloned_parameter);
 
@@ -1307,8 +1304,12 @@ bool ParameterIsCloned(const FuncGraphPtr &root, const AnfNodePtr &parameter_nod
   if (!cloned_parameter->has_default()) {
     return false;
   }
-
-  bool cloned = cloned_parameter->default_param()->cloned();
+  auto obj = py::cast(cloned_parameter->default_param());
+  auto param_value = py::cast<ParamValuePtr>(obj.attr("_value"));
+  if (param_value == nullptr) {
+    return false;
+  }
+  bool cloned = param_value->cloned();
   if (!cloned) {
     return false;
   }
@@ -1324,12 +1325,16 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
     auto cloned_parameter = cloned_parameter_node->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(cloned_parameter);
 
-    if (!ParameterIsCloned(root, cloned_parameter_node)) {
+    if (!ParameterIsCloned(cloned_parameter_node)) {
       continue;
     }
-
+    auto obj = py::cast(cloned_parameter->default_param());
+    auto param_value = py::cast<ParamValuePtr>(obj.attr("_value"));
+    if (param_value == nullptr) {
+      continue;
+    }
     // get the cloned index
-    int32_t cloned_index = cloned_parameter->default_param()->cloned_index();
+    int32_t cloned_index = param_value->cloned_index();
 
     // find the be cloned parameter
     bool found_be_cloned_parameter = false;
@@ -1344,12 +1349,18 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
       }
 
       const auto &param_value_cloned = be_cloned_parameter->default_param();
-      if (!param_value_cloned->be_cloned()) {
+
+      auto obj_in = py::cast(param_value_cloned);
+      auto param_value_in = py::cast<ParamValuePtr>(obj_in.attr("_value"));
+      if (param_value_in == nullptr) {
+        continue;
+      }
+      if (!param_value_in->be_cloned()) {
         continue;
       }
 
       // get the be cloned index
-      auto &be_cloned_index = param_value_cloned->be_cloned_index();
+      auto &be_cloned_index = param_value_in->be_cloned_index();
       if (std::find(be_cloned_index.begin(), be_cloned_index.end(), cloned_index) != be_cloned_index.end()) {
         found_be_cloned_parameter = true;
         cloned_from_parameter = be_cloned_parameter;
@@ -2103,10 +2114,7 @@ std::string NodeParameterName(const CNodePtr &node) {
     if (input->isa<Parameter>()) {
       auto input_parameter = input->cast<ParameterPtr>();
       if (input_parameter->has_default()) {
-        const auto &param_value = input_parameter->default_param();
-        if (param_value->requires_grad()) {
-          return param_value->name();
-        }
+        input_parameter->name();
       }
     }
   }

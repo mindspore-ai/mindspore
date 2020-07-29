@@ -36,7 +36,7 @@ struct AnfQuantParam {
   int32_t numBits;
   AnfQuantParam() : scale(1.0), zeroPoint(0), min(0.0), max(0.0), narrowRange(false), numBits(8), inited(false) {}
 };
-class ParamValueLite : public ParamValue {
+class ParamValueLite : public Value {
  public:
   ParamValueLite() : tensor_addr_(nullptr), tensor_size_(0) {}
   virtual ~ParamValueLite() = default;
@@ -63,6 +63,10 @@ class ParamValueLite : public ParamValue {
   std::vector<std::unique_ptr<AnfQuantParam>> &quant_param() { return quant_params_; }
   void set_quant_param(std::unique_ptr<AnfQuantParam> &quant_param) {
     quant_params_.emplace_back(std::move(quant_param));
+  }
+
+  bool operator==(const Value &other) const override {
+    this == &other;
   }
 
  private:

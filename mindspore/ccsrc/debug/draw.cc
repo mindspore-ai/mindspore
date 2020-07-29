@@ -318,8 +318,9 @@ void BaseDigraph::FuncGraphParameters(const FuncGraphPtr &key) {
     buffer_ << parameter->ToString();
     auto param = parameter->cast<ParameterPtr>();
     if (param->has_default()) {
-      auto tensor = param->default_param()->value();
-      if (tensor) {
+      auto tensor_v = param->default_param();
+      if (tensor_v && tensor_v->isa<tensor::Tensor>()) {
+        auto tensor = tensor_v->cast<tensor::TensorPtr>();
         auto &shape = tensor->shape();
         std::ostringstream shape_str;
         std::copy(shape.begin(), shape.end(), std::ostream_iterator<int>(shape_str, ","));

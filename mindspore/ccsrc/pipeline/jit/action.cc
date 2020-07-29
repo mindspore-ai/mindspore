@@ -233,8 +233,7 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
   for (const auto &param : func_graph->parameters()) {
     auto param_node = std::static_pointer_cast<Parameter>(param);
     if (param_node->has_default()) {
-      const auto &param_value = param_node->default_param();
-      ValuePtr value = param_value->value();
+      ValuePtr value = param_node->default_param();
       constexpr bool broaden = true;
       AbstractBasePtr ptr = abstract::FromValue(value, broaden);
 

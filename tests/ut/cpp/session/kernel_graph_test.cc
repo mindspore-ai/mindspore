@@ -82,7 +82,7 @@ TEST_F(KernelGraphTest, NewParameter) {
   // test weight parameter node as input
   auto weight_parameter_node = anf_graph->add_parameter();
   MS_EXCEPTION_IF_NULL(weight_parameter_node);
-  auto param_value_new = std::make_shared<ParamValue>();
+  auto param_value_new = std::make_shared<tensor::Tensor>(kNumberTypeFloat32, shape);
   weight_parameter_node->set_default_param(param_value_new);
   weight_parameter_node->set_abstract(x_abstract);
   auto new_weight_parameter_node = kernel_graph->NewParameter(weight_parameter_node);

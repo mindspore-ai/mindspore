@@ -766,7 +766,7 @@ TEST_F(AnfRuntimeAlgorithmTest, IsParameterWeight) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   auto parameter_node = kernel_graph->add_parameter();
   MS_EXCEPTION_IF_NULL(parameter_node);
-  auto param_value_new = std::make_shared<ParamValue>();
+  auto param_value_new = std::make_shared<tensor::Tensor>(int64_t(0), kInt32);
   parameter_node->set_default_param(param_value_new);
   EXPECT_TRUE(AnfAlgo::IsParameterWeight(parameter_node));
   EXPECT_THROW(AnfAlgo::IsParameterWeight(nullptr), std::runtime_error);

@@ -103,10 +103,9 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
   }
   if (para_node == nullptr) {
     auto node = top_graph->AddWeightParameter(param_name);
-    auto param_value = py::cast<ParamValuePtr>(python_adapter::GetPyObjAttr(obj, "_value"));
-    node->set_default_param(param_value);
+    auto value = py::cast<tensor::MetaTensorPtr>(obj);
+    node->set_default_param(value);
     // set_abstract for parameter
-    ValuePtr value = param_value->value();
     constexpr bool broaden = true;
     node->set_abstract(abstract::FromValue(value, broaden));
     para_node = node;

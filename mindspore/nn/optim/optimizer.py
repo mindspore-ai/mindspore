@@ -90,7 +90,7 @@ class Optimizer(Cell):
 
     def __init__(self, learning_rate, parameters, weight_decay=0.0, loss_scale=1.0):
         super(Optimizer, self).__init__(auto_prefix=False)
-        if parameters and not isinstance(parameters, list):
+        if parameters is not None and not isinstance(parameters, list):
             parameters = list(parameters)
 
         if not parameters:

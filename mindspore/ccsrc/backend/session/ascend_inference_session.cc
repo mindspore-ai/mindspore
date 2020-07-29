@@ -76,7 +76,7 @@ GraphId AscendInferenceSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
     if (AnfAlgo::IsParameterWeight(pk_node)) {
       const auto &param_value = pk_node->default_param();
       MS_EXCEPTION_IF_NULL(param_value);
-      auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(param_value->value());
+      auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(param_value);
       MS_EXCEPTION_IF_NULL(tensor);
       if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(pk_node, 0),
                                             LongToSize(tensor->data().nbytes()), tensor->data_type(),

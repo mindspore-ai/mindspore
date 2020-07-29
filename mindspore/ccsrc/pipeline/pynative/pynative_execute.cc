@@ -146,12 +146,6 @@ static std::string GetOpId(const OpExecInfoPtr &op_exec_info) {
   return id;
 }
 
-py::object GetTupleObj(const py::object &obj) {
-  py::module mod = parse::python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-  py::object obj_tuple = parse::python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_DEFAULT_INPUT, obj);
-  return obj_tuple;
-}
-
 std::map<SignatureEnumDType, std::vector<size_t>> GetTypeIndex(const std::vector<SignatureEnumDType> &dtypes) {
   std::map<SignatureEnumDType, std::vector<size_t>> type_indexes;
   for (size_t i = 0; i < dtypes.size(); ++i) {
@@ -242,7 +236,7 @@ py::tuple ConvertInputs(const PrimitivePyPtr &prim, const py::list &args, py::tu
   py::tuple input_mask(args.size());
   for (size_t i = 0; i < args.size(); ++i) {
     input_mask[i] = py::hasattr(args[i], "__parameter__");
-    py_args[i] = GetTupleObj(args[i]);
+    py_args[i] = args[i];
   }
   auto signature = prim->signatures();
   std::vector<SignatureEnumDType> dtypes;
@@ -366,9 +360,6 @@ py::object RunOpInVM(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
     py::tuple result(op_inputs.size());
     for (size_t i = 0; i < op_inputs.size(); i++) {
       py::object input = op_inputs[i];
-      if (py::hasattr(input, "__parameter__")) {
-        input = py::getattr(input, "data");
-      }
       auto tensor = py::cast<tensor::TensorPtr>(input);
       auto new_tensor = std::make_shared<tensor::Tensor>(tensor->data_type(), tensor->shape(), tensor->data_ptr());
       new_tensor->set_device_address(tensor->device_address());
@@ -878,8 +869,7 @@ AnfNodePtr PynativeExecutor::GetInput(const py::object &obj, const py::object &o
     if (graph_info_map_[df_builder_].param_map.count(obj_id) == 0) {
       auto free_param = df_builder_->add_parameter();
       free_param->set_name(param_name);
-      auto free_param_new = py::cast<ParamValuePtr>(obj.attr("_value"));
-      free_param->set_default_param(free_param_new);
+      free_param->set_default_param(py::cast<tensor::TensorPtr>(obj));
       free_param->debug_info()->set_name(param_name);
       MS_LOG(DEBUG) << "Top graph set free parameter " << obj_id;
       graph_info_map_[df_builder_].param_map[obj_id] = free_param;
@@ -1074,8 +1064,7 @@ abstract::AbstractBasePtrList PynativeExecutor::GetArgsSpec(const py::args &args
   for (const auto &param : df_builder_->parameters()) {
     auto param_node = std::static_pointer_cast<Parameter>(param);
     if (param_node->has_default()) {
-      const auto &param_value = param_node->default_param();
-      ValuePtr value = param_value->value();
+      ValuePtr value = param_node->default_param();
       AbstractBasePtr ptr = abstract::FromValue(value, true);
       if (ptr == nullptr) {
         MS_LOG(EXCEPTION) << "Args convert error";

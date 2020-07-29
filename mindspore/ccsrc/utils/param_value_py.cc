@@ -24,22 +24,19 @@ REGISTER_PYBIND_DEFINE(ParamValue, ([](const py::module *m) {
                          (void)py::class_<ParamValue, ParamValuePtr>(*m, "ParamValue")
                            .def(py::init())
                            .def("clone", &ParamValue::Clone)
-                           .def_property("data", &ParamValue::value, &ParamValue::set_value)
                            .def_property("name", &ParamValue::name, &ParamValue::set_name)
                            .def_property("requires_grad", &ParamValue::requires_grad, &ParamValue::set_requires_grad)
                            .def_property("layerwise_parallel", &ParamValue::layerwise_parallel,
                                          &ParamValue::set_layerwise_parallel)
                            .def(py::pickle(
                              [](const ParamValue &p) {  // __getstate__
-                               return py::make_tuple(py::cast(p.value()), p.name(), p.requires_grad(),
-                                                     p.layerwise_parallel());
+                               return py::make_tuple(p.name(), p.requires_grad(), p.layerwise_parallel());
                              },
                              [](const py::tuple &t) {  // __setstate__
                                if (t.size() != 6) {
                                  std::runtime_error("Invalid state for ParamValue!");
                                }
                                ParamValuePtr p = std::make_shared<ParamValue>();
-                               p->set_value(t[0].cast<tensor::TensorPtr>());
                                p->set_name(t[1].cast<std::string>());
                                p->set_requires_grad(t[2].cast<bool>());
                                p->set_layerwise_parallel(t[3].cast<bool>());

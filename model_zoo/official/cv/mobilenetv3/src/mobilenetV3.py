@@ -200,6 +200,7 @@ class ResUnit(nn.Cell):
         self.add = P.TensorAdd() if self.use_short_cut_conv else None
 
     def construct(self, x):
+        """construct"""
         if self.first_conv:
             out = self.expand(x)
         else:
@@ -289,6 +290,7 @@ class MobileNetV3(nn.Cell):
                                 kernel_size=1, has_bias=True, pad_mode='pad')
         self.squeeze = P.Squeeze(axis=(2, 3))
 
+        self.init_parameters_data()
         self._initialize_weights()
 
     def construct(self, x):
