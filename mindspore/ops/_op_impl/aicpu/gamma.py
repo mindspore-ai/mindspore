@@ -23,6 +23,7 @@ gamma_op_info = AiCPURegOp("Gamma") \
     .input(2, "beta", "required") \
     .output(0, "output", "required") \
     .attr("seed", "int") \
+    .attr("seed2", "int") \
     .dtype_format(DataType.I32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.I32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW) \
     .get_op_info()

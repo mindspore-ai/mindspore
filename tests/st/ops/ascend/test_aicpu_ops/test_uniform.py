@@ -12,45 +12,46 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
 import numpy as np
 
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
+from mindspore.ops import composite as C
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Net(nn.Cell):
-    def __init__(self, shape, seed=0, seed2=0):
+    def __init__(self, shape, seed=0):
         super(Net, self).__init__()
-        self.gamma = P.Gamma(seed=seed, seed2=seed2)
         self.shape = shape
+        self.seed = seed
 
-    def construct(self, alpha, beta):
-        return self.gamma(self.shape, alpha, beta)
+    def construct(self, a, b):
+        C.set_seed(20)
+        return C.uniform(self.shape, a, b, self.seed)
 
 
 def test_net_1D():
     seed = 10
     shape = (3, 2, 4)
-    alpha = 1.0
-    beta = 1.0
-    net = Net(shape=shape, seed=seed)
-    talpha, tbeta = Tensor(alpha, mstype.float32), Tensor(beta, mstype.float32)
-    output = net(talpha, tbeta)
+    a = 1.0
+    b = 6.0
+    net = Net(shape, seed)
+    ta, tb = Tensor(a, mstype.float32), Tensor(b, mstype.float32)
+    output = net(ta, tb)
     assert output.shape == (3, 2, 4)
 
 
 def test_net_ND():
     seed = 10
     shape = (3, 1, 2)
-    alpha = np.array([[[1], [2]], [[3], [4]], [[5], [6]]]).astype(np.float32)
-    beta = np.array([1.0]).astype(np.float32)
-    net = Net(shape=shape, seed=seed)
-    talpha, tbeta = Tensor(alpha), Tensor(beta)
-    output = net(talpha, tbeta)
+    a = np.array([[[1], [2]], [[3], [4]], [[5], [6]]]).astype(np.float32)
+    b = np.array([1.0]).astype(np.float32)
+    net = Net(shape, seed)
+    ta, tb = Tensor(a, mstype.float32), Tensor(b, mstype.float32)
+    output = net(ta, tb)
     assert output.shape == (3, 2, 2)
-

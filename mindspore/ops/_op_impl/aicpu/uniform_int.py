@@ -23,6 +23,7 @@ uniform_int_op_info = AiCPURegOp("UniformInt") \
     .input(2, "b", "required") \
     .output(0, "output", "required") \
     .attr("seed", "int") \
+    .attr("seed2", "int") \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
     .dtype_format(DataType.I32_NCHW, DataType.I32_NCHW, DataType.I32_NCHW, DataType.I32_NCHW) \
     .get_op_info()
