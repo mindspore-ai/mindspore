@@ -618,6 +618,7 @@ class FusedBatchNorm(Primitive):
         self.mode = validator.check_integer('mode', mode, [0, 1], Rel.IN, self.name)
         self.epsilon = validator.check_number_range('epsilon', epsilon, 0, 1, Rel.INC_RIGHT, self.name)
         self.momentum = validator.check_number_range('momentum', momentum, 0, 1, Rel.INC_BOTH, self.name)
+        self._update_parameter = True
 
 
 class BNTrainingReduce(PrimitiveWithInfer):

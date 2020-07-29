@@ -274,7 +274,7 @@ class SparseTensor:
     Outputs:
         SparseTensor, composed of `indices`, `values`, `dense_shape`.
 
-    Examples:     
+    Examples:
         >>> class Net(nn.Cell):
         >>>     def __init__(self, dense_shape):
         >>>         super(Net, self).__init__()
