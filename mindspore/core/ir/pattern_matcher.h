@@ -372,6 +372,8 @@ class PPrimitive : public PBase<PPrimitive<TArgs...> > {
     return *this;
   }
 
+  const AnfNodePtrList &GetCapturedExtraNodes() const { return extra_nodes_; }
+
   /// Returns the FuncGraph of the original node captured by this Primitive Pattern.
   /// Throws exception if a node was not captured before.
   FuncGraphPtr GetFuncGraph() const {
