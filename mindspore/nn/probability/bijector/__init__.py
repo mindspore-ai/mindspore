@@ -13,10 +13,15 @@
 # limitations under the License.
 # ============================================================================
 """
-Probability.
+Bijector.
 
-The high-level components used to construct the probabilistic network.
+The high-level components(Bijectors) used to construct the probabilistic network.
 """
 
-from . import bijector
-from . import distribution
+from .bijector import Bijector
+from .power_transform import PowerTransform
+from .exp import Exp
+
+__all__ = ['Bijector',
+           'PowerTransform',
+           'Exp']
