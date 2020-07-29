@@ -252,7 +252,7 @@ std::vector<std::tuple<int, int, int, uint64_t>> ShardReader::ReadRowGroupSummar
   if (shard_count <= 0) {
     return row_group_summary;
   }
-  if (shard_count <= kMaxShardCount) {
+  if (shard_count <= kMaxFileCount) {
     for (int shard_id = 0; shard_id < shard_count; ++shard_id) {
       // return -1 when page's size equals to 0.
       auto last_page_id = shard_header_->GetLastPageId(shard_id);
@@ -1054,7 +1054,7 @@ MSRStatus ShardReader::CreateTasksByRow(const std::vector<std::tuple<int, int, i
   }
   auto offsets = std::get<1>(ret);
   auto local_columns = std::get<2>(ret);
-  if (shard_count_ <= kMaxShardCount) {
+  if (shard_count_ <= kMaxFileCount) {
     for (int shard_id = 0; shard_id < shard_count_; shard_id++) {
       for (uint32_t i = 0; i < offsets[shard_id].size(); i += 1) {
         tasks_.InsertTask(TaskType::kCommonTask, offsets[shard_id][i][0], offsets[shard_id][i][1],
