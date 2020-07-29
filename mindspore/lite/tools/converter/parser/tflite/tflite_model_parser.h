@@ -73,7 +73,8 @@ class TfliteModelParser : public ModelParser {
                         schema::CNodeT *op,
                         TensorCache *tensorCache);
 
-  STATUS SetOpInputIdx(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+  STATUS SetOpInputIdx(const std::unique_ptr<tflite::ModelT> &tflite_model,
+                       const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                        const std::unique_ptr<tflite::OperatorT> &tflite_op, TensorCache *tensorCache);
 
   std::map<std::string, schema::CNodeT *> opMap;
