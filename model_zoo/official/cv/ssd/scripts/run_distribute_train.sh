@@ -16,7 +16,7 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "sh run_distribute_train.sh DEVICE_NUM EPOCH_SIZE LR DATASET MINDSPORE_HCCL_CONFIG_PATH PRE_TRAINED PRE_TRAINED_EPOCH_SIZE"
+echo "sh run_distribute_train.sh DEVICE_NUM EPOCH_SIZE LR DATASET RANK_TABLE_FILE PRE_TRAINED PRE_TRAINED_EPOCH_SIZE"
 echo "for example: sh run_distribute_train.sh 8 500 0.2 coco /data/hccl.json /opt/ssd-300.ckpt(optional) 200(optional)"
 echo "It is better to use absolute path."
 echo "================================================================================================================="
@@ -24,7 +24,7 @@ echo "==========================================================================
 if [ $# != 5 ] && [ $# != 7 ]
 then
     echo "Usage: sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] \
-[MINDSPORE_HCCL_CONFIG_PATH] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)"
+[RANK_TABLE_FILE] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)"
     exit 1
 fi
 
@@ -41,7 +41,7 @@ LR=$3
 DATASET=$4
 PRE_TRAINED=$6
 PRE_TRAINED_EPOCH_SIZE=$7
-export MINDSPORE_HCCL_CONFIG_PATH=$5
+export RANK_TABLE_FILE=$5
 
 for((i=0;i<RANK_SIZE;i++))
 do

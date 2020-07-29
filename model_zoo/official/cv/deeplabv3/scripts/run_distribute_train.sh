@@ -16,14 +16,13 @@
  
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "bash run_distribute_train.sh MINDSPORE_HCCL_CONFIG_PATH DATA_PATH"
-echo "for example: bash run_distribute_train.sh  MINDSPORE_HCCL_CONFIG_PATH DATA_PATH [PRETRAINED_CKPT_PATH](option)"
+echo "bash run_distribute_train.sh RANK_TABLE_FILE DATA_PATH"
+echo "for example: bash run_distribute_train.sh  RANK_TABLE_FILE DATA_PATH [PRETRAINED_CKPT_PATH](option)"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
  
 DATA_DIR=$2
- 
-export MINDSPORE_HCCL_CONFIG_PATH=$1
+
 export RANK_TABLE_FILE=$1
 export RANK_SIZE=8
 PATH_CHECKPOINT=""

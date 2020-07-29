@@ -16,9 +16,11 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "bash run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_DIR SCHEMA_DIR MINDSPORE_HCCL_CONFIG_PATH"
-echo "for example: bash run_distribute_pretrain.sh 8 40 /path/zh-wiki/ /path/Schema.json /path/hccl.json"
+echo "bash run_distribute_pretrain.sh DATA_DIR MINDSPORE_HCCL_CONFIG_PATH"
+echo "for example: bash run_distribute_pretrain.sh /path/dataset /path/hccl.json"
 echo "It is better to use absolute path."
+echo "For hyper parameter, please note that you should customize the scripts:
+          '{CUR_DIR}/scripts/ascend_distributed_launcher/hyper_parameter_config.ini' "
 echo "=============================================================================================================="
 
 EPOCH_SIZE=$2

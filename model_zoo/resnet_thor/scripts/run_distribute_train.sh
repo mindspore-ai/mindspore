@@ -16,13 +16,13 @@
 
 if [ $# != 3 ]
 then
-    echo "Usage: sh run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [DATASET_PATH] [DEVICE_NUM]"
+    echo "Usage: sh run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [DEVICE_NUM]"
 exit 1
 fi
 
 if [ ! -f $1 ]
 then
-    echo "error: DMINDSPORE_HCCL_CONFIG_PATH=$1 is not a file"
+    echo "error: DRANK_TABLE_FILE=$1 is not a file"
 exit 1
 fi
 
@@ -38,7 +38,7 @@ cd $BASE_PATH/../ || exit
 ulimit -u unlimited
 export DEVICE_NUM=$3
 export RANK_SIZE=$3
-export MINDSPORE_HCCL_CONFIG_PATH=$1
+export RANK_TABLE_FILE=$1
 
 for((i=0; i<${DEVICE_NUM}; i++))
 do

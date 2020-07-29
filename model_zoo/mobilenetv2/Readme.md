@@ -60,7 +60,7 @@ Dataset used: [imagenet](http://www.image-net.org/)
 
 ### Usage
 
-- Ascend: sh run_train.sh Ascend [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [MINDSPORE_HCCL_CONFIG_PATH] [DATASET_PATH] [CKPT_PATH]
+- Ascend: sh run_train.sh Ascend [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [CKPT_PATH]
 - GPU: sh run_trian.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]
 
 ### Launch

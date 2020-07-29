@@ -22,7 +22,6 @@ export RANK_SIZE=$1
 export EPOCH_SIZE=$2
 export DATASET=$3
 export RANK_TABLE_FILE=$4
-export MINDSPORE_HCCL_CONFIG_PATH=$4
 
 for((i=0;i<$RANK_SIZE;i++));
 do

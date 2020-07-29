@@ -15,7 +15,7 @@
 # ============================================================================
 
 if [ $# != 2 ]; then
-  echo "Usage: sh run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [DATASET_PATH]"
+  echo "Usage: sh run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH]"
   exit 1
 fi
 
@@ -31,7 +31,7 @@ PATH1=$(get_real_path $1)
 PATH2=$(get_real_path $2)
 
 if [ ! -f $PATH1 ]; then
-  echo "error: MINDSPORE_HCCL_CONFIG_PATH=$PATH1 is not a file"
+  echo "error: RANK_TABLE_FILE=$PATH1 is not a file"
   exit 1
 fi
 
@@ -43,7 +43,6 @@ fi
 ulimit -u unlimited
 export DEVICE_NUM=8
 export RANK_SIZE=8
-export MINDSPORE_HCCL_CONFIG_PATH=$PATH1
 export RANK_TABLE_FILE=$PATH1
 
 for ((i = 0; i < ${DEVICE_NUM}; i++)); do

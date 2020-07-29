@@ -74,7 +74,7 @@ Parameters for both training and inference can be set in config.py.
 
 ```
 # distributed training
-Usage: sh run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [DATASET_PATH] [DEVICE_NUM]
+Usage: sh run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [DEVICE_NUM]
 ```
 
 

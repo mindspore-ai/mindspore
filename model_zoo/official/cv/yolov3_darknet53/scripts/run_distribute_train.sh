@@ -16,7 +16,7 @@
 
 if [ $# != 3 ]
 then
-    echo "Usage: sh run_distribute_train.sh [DATASET_PATH] [PRETRAINED_BACKBONE] [MINDSPORE_HCCL_CONFIG_PATH]"
+    echo "Usage: sh run_distribute_train.sh [DATASET_PATH] [PRETRAINED_BACKBONE] [RANK_TABLE_FILE]"
 exit 1
 fi
 
@@ -30,10 +30,10 @@ get_real_path(){
 
 DATASET_PATH=$(get_real_path $1)
 PRETRAINED_BACKBONE=$(get_real_path $2)
-MINDSPORE_HCCL_CONFIG_PATH=$(get_real_path $3)
+RANK_TABLE_FILE=$(get_real_path $3)
 echo $DATASET_PATH
 echo $PRETRAINED_BACKBONE
-echo $MINDSPORE_HCCL_CONFIG_PATH
+echo $RANK_TABLE_FILE
 
 if [ ! -d $DATASET_PATH ]
 then
@@ -47,15 +47,15 @@ then
 exit 1
 fi
 
-if [ ! -f $MINDSPORE_HCCL_CONFIG_PATH ]
+if [ ! -f $RANK_TABLE_FILE ]
 then
-    echo "error: MINDSPORE_HCCL_CONFIG_PATH=$MINDSPORE_HCCL_CONFIG_PATH is not a file"
+    echo "error: RANK_TABLE_FILE=$RANK_TABLE_FILE is not a file"
 exit 1
 fi
 
 export DEVICE_NUM=8
 export RANK_SIZE=8
-export MINDSPORE_HCCL_CONFIG_PATH=$MINDSPORE_HCCL_CONFIG_PATH
+export RANK_TABLE_FILEH=$RANK_TABLE_FILE
 
 for((i=0; i<${DEVICE_NUM}; i++))
 do

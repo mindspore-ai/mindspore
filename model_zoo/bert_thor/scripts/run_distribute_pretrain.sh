@@ -16,7 +16,7 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "bash run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_DIR SCHEMA_DIR MINDSPORE_HCCL_CONFIG_PATH"
+echo "bash run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_DIR SCHEMA_DIR RANK_TABLE_FILE"
 echo "for example: bash run_distribute_pretrain.sh 8 1 /path/zh-wiki/ /path/Schema.json /path/hccl.json"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
@@ -26,7 +26,6 @@ DATA_DIR=$3
 SCHEMA_DIR=$4
 
 ulimit -u unlimited
-export MINDSPORE_HCCL_CONFIG_PATH=$5
 export RANK_TABLE_FILE=$5
 export RANK_SIZE=$1
 export HCCL_CONNECT_TIMEOUT=300

@@ -77,7 +77,7 @@ Parameters for both training and evaluation can be set in config.py.
 
 ```
 # distributed training in Ascend
-Usage: bash run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [DATASET_PATH]
+Usage: bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH]
 
 # distributed training in GPU
 Usage: bash run_distribute_train_for_gpu.sh [RANK_SIZE] [DATASET_PATH]

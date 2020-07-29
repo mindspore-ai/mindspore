@@ -16,7 +16,7 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "sh run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_PATH MINDSPORE_HCCL_CONFIG_PATH"
+echo "sh run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_PATH RANK_TABLE_FILE"
 echo "for example: sh run_distribute_pretrain.sh 8 52 /path/ende-l128-mindrecord00 /path/hccl.json"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
@@ -28,7 +28,6 @@ cd run_distribute_train || exit
 EPOCH_SIZE=$2
 DATA_PATH=$3
 
-export MINDSPORE_HCCL_CONFIG_PATH=$4
 export RANK_TABLE_FILE=$4
 export RANK_SIZE=$1
 export HCCL_FLAG=1

@@ -30,7 +30,6 @@ run_ascend()
 
     BASEPATH=$(cd "`dirname $0`" || exit; pwd)
     export PYTHONPATH=${BASEPATH}:$PYTHONPATH
-    export MINDSPORE_HCCL_CONFIG_PATH=$4
     export RANK_TABLE_FILE=$4
     if [ -d "../train" ];
     then
@@ -81,7 +80,7 @@ run_gpu()
 if [ $# -gt 6 ] || [ $# -lt 4 ]
 then
     echo "Usage:\n \
-          Ascend: sh run_train.sh Ascend [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [MINDSPORE_HCCL_CONFIG_PATH] [DATASET_PATH] [CKPT_PATH]\n \
+          Ascend: sh run_train.sh Ascend [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [CKPT_PATH]\n \
           GPU: sh run_train.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]\n \
           "
 exit 1

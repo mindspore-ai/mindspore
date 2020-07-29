@@ -16,7 +16,7 @@
 
 if [ $# != 4 ] && [ $# != 5 ]
 then 
-	echo "Usage: sh run_distribute_train.sh [resnet50|resnet101] [cifar10|imagenet2012] [MINDSPORE_HCCL_CONFIG_PATH] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
+	echo "Usage: sh run_distribute_train.sh [resnet50|resnet101] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
 exit 1
 fi
 
@@ -57,7 +57,7 @@ fi
 
 if [ ! -f $PATH1 ]
 then 
-    echo "error: MINDSPORE_HCCL_CONFIG_PATH=$PATH1 is not a file"
+    echo "error: RANK_TABLE_FILE=$PATH1 is not a file"
 exit 1
 fi 
 
@@ -76,7 +76,6 @@ fi
 ulimit -u unlimited
 export DEVICE_NUM=8
 export RANK_SIZE=8
-export MINDSPORE_HCCL_CONFIG_PATH=$PATH1
 export RANK_TABLE_FILE=$PATH1
 
 for((i=0; i<${DEVICE_NUM}; i++))

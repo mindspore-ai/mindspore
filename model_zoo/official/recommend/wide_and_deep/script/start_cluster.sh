@@ -29,7 +29,7 @@ EPOCH_SIZE=$2
 VOCAB_SIZE=$3
 EMB_DIM=$4
 DATASET=$5
-MINDSPORE_HCCL_CONFIG_PATH=$6
+RANK_TABLE_FILE=$6
 ENV_SH=$7
 MODE=$8
 
@@ -39,7 +39,7 @@ do
   passwd=$(get_node_passwd ${cluster_config_path} ${node})
   echo "------------------${user}@${node}---------------------"
   if [ $MODE == "host_device_mix" ]; then
-    ssh_pass ${node} ${user} ${passwd} "mkdir -p ${execute_path}; cd ${execute_path}; bash ${SCRIPTPATH}/run_auto_parallel_train_cluster.sh ${RANK_SIZE} ${RANK_START} ${EPOCH_SIZE} ${VOCAB_SIZE} ${EMB_DIM} ${DATASET} ${ENV_SH} ${MODE} ${MINDSPORE_HCCL_CONFIG_PATH}"
+    ssh_pass ${node} ${user} ${passwd} "mkdir -p ${execute_path}; cd ${execute_path}; bash ${SCRIPTPATH}/run_auto_parallel_train_cluster.sh ${RANK_SIZE} ${RANK_START} ${EPOCH_SIZE} ${VOCAB_SIZE} ${EMB_DIM} ${DATASET} ${ENV_SH} ${MODE} ${RANK_TABLE_FILE}"
   else
     echo "[ERROR] mode is wrong"
     exit 1
