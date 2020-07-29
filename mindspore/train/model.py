@@ -523,7 +523,9 @@ class Model:
             of data will be transferred one by one. The limitation of data transmission per time is 256M.
 
         Args:
-            epoch (int): Total number of iterations on the data.
+            epoch (int): Generally, total number of iterations on the data per epoch.
+                         When dataset_sink_mode is set to true and sink_size>0, each epoch sink sink_size
+                         steps on the data instead of total number of iterations.
             train_dataset (Dataset): A training dataset iterator. If there is no
                                      loss_fn, a tuple with multiply data (data1, data2, data3, ...) should be
                                      returned and passed to the network. Otherwise, a tuple (data, label) should
