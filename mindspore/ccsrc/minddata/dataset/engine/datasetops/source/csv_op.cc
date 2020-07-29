@@ -100,6 +100,10 @@ Status CsvOp::Init() {
 int CsvOp::CsvParser::put_record(char c) {
   std::string s = std::string(str_buf_.begin(), str_buf_.begin() + pos_);
   std::shared_ptr<Tensor> t;
+  if (cur_col_ >= column_default_.size()) {
+    err_message_ = "Number of file columns does not match the default records";
+    return -1;
+  }
   switch (column_default_[cur_col_]->type) {
     case CsvOp::INT:
       Tensor::CreateScalar(std::stoi(s), &t);
@@ -110,6 +114,10 @@ int CsvOp::CsvParser::put_record(char c) {
     default:
       Tensor::CreateScalar(s, &t);
       break;
+  }
+  if (cur_col_ >= (*tensor_table_)[cur_row_].size()) {
+    err_message_ = "Number of file columns does not match the tensor table";
+    return -1;
   }
   (*tensor_table_)[cur_row_][cur_col_] = std::move(t);
   pos_ = 0;
@@ -129,7 +137,11 @@ int CsvOp::CsvParser::put_row(char c) {
     return 0;
   }
 
-  put_record(c);
+  int ret = put_record(c);
+  if (ret < 0) {
+    return ret;
+  }
+
   total_rows_++;
   cur_row_++;
   cur_col_ = 0;
@@ -260,8 +272,7 @@ Status CsvOp::CsvParser::initCsvParser() {
           [this](CsvParser &, char c) -> int {
             this->tensor_table_ = std::make_unique<TensorQTable>();
             this->tensor_table_->push_back(TensorRow(column_default_.size(), nullptr));
-            this->put_record(c);
-            return 0;
+            return this->put_record(c);
           }}},
         {{State::START_OF_FILE, Message::MS_QUOTE},
          {State::QUOTE,
@@ -362,8 +373,7 @@ Status CsvOp::CsvParser::initCsvParser() {
             if (this->total_rows_ > this->start_offset_ && this->total_rows_ <= this->end_offset_) {
               this->tensor_table_->push_back(TensorRow(column_default_.size(), nullptr));
             }
-            this->put_record(c);
-            return 0;
+            return this->put_record(c);
           }}},
         {{State::END_OF_LINE, Message::MS_QUOTE},
          {State::QUOTE,
@@ -403,15 +413,16 @@ Status CsvOp::LoadFile(const std::string &file, const int64_t start_offset, cons
     while (ifs.good()) {
       char chr = ifs.get();
       if (csv_parser.processMessage(chr) != 0) {
-        RETURN_STATUS_UNEXPECTED("Failed to parse CSV file " + file + ":" + std::to_string(csv_parser.total_rows_));
+        RETURN_STATUS_UNEXPECTED("Failed to parse file " + file + ":" + std::to_string(csv_parser.total_rows_ + 1) +
+                                 ". error message: " + csv_parser.err_message_);
       }
     }
   } catch (std::invalid_argument &ia) {
-    std::string err_row = std::to_string(csv_parser.total_rows_);
-    RETURN_STATUS_UNEXPECTED(file + ":" + err_row + ", invalid argument of " + std::string(ia.what()));
+    std::string err_row = std::to_string(csv_parser.total_rows_ + 1);
+    RETURN_STATUS_UNEXPECTED(file + ":" + err_row + ", type does not match");
   } catch (std::out_of_range &oor) {
-    std::string err_row = std::to_string(csv_parser.total_rows_);
-    RETURN_STATUS_UNEXPECTED(file + ":" + err_row + ", out of Range error: " + std::string(oor.what()));
+    std::string err_row = std::to_string(csv_parser.total_rows_ + 1);
+    RETURN_STATUS_UNEXPECTED(file + ":" + err_row + ", out of range");
   }
   return Status::OK();
 }
@@ -757,6 +768,9 @@ Status CsvOp::ComputeColMap() {
     for (int32_t i = column_default_list_.size(); i < column_name_id_map_.size(); i++) {
       column_default_list_.push_back(std::make_shared<CsvOp::Record<std::string>>(CsvOp::STRING, ""));
     }
+  }
+  if (column_default_list_.size() != column_name_id_map_.size()) {
+    RETURN_STATUS_UNEXPECTED("The number of column names does not match the column defaults");
   }
   return Status::OK();
 }
