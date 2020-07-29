@@ -41,6 +41,7 @@
 #include "frontend/optimizer/irpass/symbol_resolver.h"
 #include "frontend/optimizer/irpass/tile_eliminate.h"
 #include "frontend/optimizer/irpass/transpose_eliminate.h"
+#include "frontend/optimizer/irpass/value_based_eliminate.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/irpass/indexed_slices_eliminate.h"
 #include "frontend/optimizer/irpass/sparse_tensor_eliminate.h"
@@ -165,6 +166,10 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   sparse_tensor_eliminate_ = MakeSubstitution(
     std::make_shared<SparseTensorEliminater>(), "sparse_tensor_eliminate",
     {prim::kPrimSparseTensorGetIndices, prim::kPrimSparseTensorGetValues, prim::kPrimSparseTensorGetDenseShape});
+
+  // Value_Based Eliminate
+  value_based_eliminate_ =
+    MakeSubstitution(std::make_shared<ValueBasedEliminate>(), "value_based_eliminate", {prim::kPrimSelect});
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {

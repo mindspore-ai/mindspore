@@ -110,6 +110,9 @@ class OptimizeIRPassLib {
 
   // SparseTensor Eliminate
   SubstitutionPtr sparse_tensor_eliminate_;
+
+  // Value_Based Eliminate
+  SubstitutionPtr value_based_eliminate_;
 };
 
 // the collection of irpass for resolve action
