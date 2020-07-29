@@ -414,12 +414,6 @@ void AscendControlParser::ChildGraphDataAssign(
                           << node->DebugString(5) << " gives " << args.size();
       }
       for (size_t i = 0; i < args.size(); ++i) {
-        if (args[i]->isa<Parameter>() && memo->find(child_graph) == memo->end()) {
-          MS_LOG(INFO) << args[i]->DebugString() << " to " << params[i]->DebugString()
-                       << " should be reused, continue.";
-          link_list->emplace_back(args[i], params[i]);
-          continue;
-        }
         InsertMultipleAssignToGraph(kg, node, NOT_NULL(args[i]), NOT_NULL(params[i]));
       }
     }
