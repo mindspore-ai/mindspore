@@ -24,9 +24,8 @@ namespace device {
 namespace memswap {
 bool MemSwapManager::Init(const mindspore::session::KernelGraph *kernel_graph, size_t swap_mem_size) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  graph_manager_ = kernel_graph->manager();
-  MS_EXCEPTION_IF_NULL(graph_manager_);
   execution_order_ = kernel_graph->execution_order();
+  kernel_graph_ = kernel_graph;
 
   size_t kernel_index = 0;
   for (const auto &kernel : execution_order_) {
@@ -177,7 +176,10 @@ bool MemSwapManager::IsCommunicationRelevantOp(const AnfNodePtr &kernel) const {
     return true;
   }
 
-  NodeUsersMap &user_map = graph_manager_->node_users();
+  MS_EXCEPTION_IF_NULL(kernel_graph_);
+  const auto &graph_manager = kernel_graph_->manager();
+  MS_EXCEPTION_IF_NULL(graph_manager);
+  NodeUsersMap &user_map = graph_manager->node_users();
   auto iter = user_map.find(kernel);
   bool adjacent_with_communication_op = false;
   if (iter != user_map.end()) {
@@ -190,7 +192,10 @@ bool MemSwapManager::IsCommunicationRelevantOp(const AnfNodePtr &kernel) const {
 }
 
 void MemSwapManager::SaveUserKernelTopoOrder() {
-  NodeUsersMap &user_map = graph_manager_->node_users();
+  MS_EXCEPTION_IF_NULL(kernel_graph_);
+  const auto &graph_manager = kernel_graph_->manager();
+  MS_EXCEPTION_IF_NULL(graph_manager);
+  NodeUsersMap &user_map = graph_manager->node_users();
   for (const auto &kernel : execution_order_) {
     auto iter = user_map.find(kernel);
     if (iter == user_map.end()) {

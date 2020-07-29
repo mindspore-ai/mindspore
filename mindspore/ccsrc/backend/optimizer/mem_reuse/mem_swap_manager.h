@@ -156,7 +156,7 @@ class MemSwapManager {
   size_t distance_decay_step_;
 
   MemCopyManagerPtr mem_copy_manager_{nullptr};
-  FuncGraphManagerPtr graph_manager_{nullptr};
+  const mindspore::session::KernelGraph *kernel_graph_{nullptr};
   bool mem_swap_initialized_{false};
   bool swap_info_already_set_{false};
   bool trigger_swap_{false};
