@@ -813,11 +813,15 @@ def check_csvdataset(method):
     def new_method(self, *args, **kwargs):
         _, param_dict = parse_user_args(method, *args, **kwargs)
 
-        nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id']
+        nreq_param_int = ['num_parallel_workers', 'num_shards', 'shard_id']
 
         # check dataset_files; required argument
         dataset_files = param_dict.get('dataset_files')
         type_check(dataset_files, (str, list), "dataset files")
+
+        # check num_samples
+        num_samples = param_dict.get('num_samples')
+        check_value(num_samples, [-1, INT32_MAX], "num_samples")
 
         # check field_delim
         field_delim = param_dict.get('field_delim')

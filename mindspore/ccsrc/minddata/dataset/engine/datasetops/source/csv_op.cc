@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace dataset {
 CsvOp::Builder::Builder()
-    : builder_device_id_(0), builder_num_devices_(1), builder_num_samples_(0), builder_shuffle_files_(false) {
+    : builder_device_id_(0), builder_num_devices_(1), builder_num_samples_(-1), builder_shuffle_files_(false) {
   std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
   builder_num_workers_ = config_manager->num_parallel_workers();
   builder_op_connector_size_ = config_manager->op_connector_size();
@@ -451,7 +451,7 @@ Status CsvOp::operator()() {
       RETURN_IF_NOT_OK(jagged_buffer_connector_->Pop(0, &buffer));
       if (buffer->eoe()) {
         workers_done++;
-      } else if (num_samples_ == 0 || rows_read < num_samples_) {
+      } else if (num_samples_ == -1 || rows_read < num_samples_) {
         if ((num_samples_ > 0) && (rows_read + buffer->NumRows() > num_samples_)) {
           int64_t rowsToRemove = buffer->NumRows() - (num_samples_ - rows_read);
           RETURN_IF_NOT_OK(buffer->SliceOff(rowsToRemove));
