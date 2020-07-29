@@ -205,8 +205,13 @@ class TensorDataImpl : public TensorData {
         if (isScalar) {
           ss << value;
         } else {
-          ss << std::setw(15) << std::setprecision(8) << std::setiosflags(std::ios::scientific | std::ios::right)
-             << value;
+          if (std::is_same<T, float16>::value) {
+            ss << std::setw(11) << std::setprecision(4) << std::setiosflags(std::ios::scientific | std::ios::right)
+               << value;
+          } else {
+            ss << std::setw(15) << std::setprecision(8) << std::setiosflags(std::ios::scientific | std::ios::right)
+               << value;
+          }
         }
         linefeedThreshold = kThreshold1DFloat;
       } else if (type == kNumberTypeBool) {
