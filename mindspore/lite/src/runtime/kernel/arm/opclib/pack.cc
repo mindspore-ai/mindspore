@@ -151,23 +151,21 @@ void PackWeightInt8Opt(int8_t *weight_data, ConvParameter *conv_param, int8_t *p
 }
 
 void Conv1x1InputPackFp32(const float *src, float *dst, ConvParameter *conv_param) {
-  for (int c = 0; c < UP_DIV(conv_param->input_channel_, C4NUM); c++) {
-    const float *src_c_ptr = src + c * conv_param->input_h_ * conv_param->input_w_ * C4NUM;
-    float *dst_c_ptr = dst + c * conv_param->output_h_ * conv_param->output_w_ * C4NUM;
-    for (int dst_h = 0; dst_h < conv_param->output_h_; dst_h++) {
-      int src_h = dst_h * conv_param->stride_h_ - conv_param->pad_h_;
-      if (src_h < 0 || src_h >= conv_param->input_h_) {
+  /* support nhwc */
+  for (int dst_h = 0; dst_h < conv_param->output_h_; dst_h++) {
+    int src_h = dst_h * conv_param->stride_h_ - conv_param->pad_h_;
+    if (src_h < 0 || src_h >= conv_param->input_h_) {
+      continue;
+    }
+    const float *src_h_ptr = src + src_h * conv_param->input_w_ * conv_param->input_channel_;
+    float *dst_h_ptr = dst + dst_h * conv_param->output_w_ * conv_param->input_channel_;
+    for (int dst_w = 0; dst_w < conv_param->output_w_; dst_w++) {
+      int src_w = dst_w * conv_param->stride_w_ - conv_param->pad_w_;
+      if (src_w < 0 || src_w >= conv_param->input_w_) {
         continue;
       }
-      const float *src_h_ptr = src_c_ptr + src_h * conv_param->input_w_ * C4NUM;
-      float *dst_h_ptr = dst_c_ptr + dst_h * conv_param->output_w_ * C4NUM;
-      for (int dst_w = 0; dst_w < conv_param->output_w_; dst_w++) {
-        int src_w = dst_w * conv_param->stride_w_ - conv_param->pad_w_;
-        if (src_w < 0 || src_w >= conv_param->input_w_) {
-          continue;
-        }
-        memcpy(dst_h_ptr + dst_w * C4NUM, src_h_ptr + src_w * C4NUM, C4NUM * sizeof(float));
-      }
+      memcpy(dst_h_ptr + dst_w * conv_param->input_channel_, src_h_ptr + src_w * conv_param->input_channel_,
+             conv_param->input_channel_ * sizeof(float));
     }
   }
   return;
@@ -571,6 +569,21 @@ void PackNC4HW4ToNCHWFp32(const void *src, void *dst, int batch, int plane, int 
       }
     }
   }
+}
+
+void PackNHWCToC8HWN8Fp32(const void *src, void *dst, int batch, int plane, int channel) {
+  for (int n = 0; n < batch; n++) {
+    for (int hw = 0; hw < plane; hw++) {
+      for (int c = 0; c < channel; c++) {
+        int c8div = c / C8NUM;
+        int c8mod = c % C8NUM;
+        int src_index = n * plane * channel + hw * channel + c;
+        int dst_index = c8div * batch * plane * C8NUM + hw * batch * C8NUM + n * C8NUM + c8mod;
+        ((float *)dst)[dst_index] = ((float *)src)[src_index];
+      }
+    }
+  }
+  return;
 }
 
 void PackNHWCToNHWC4Int8(const void *src, void *dst, int batch, int plane, int channel) {

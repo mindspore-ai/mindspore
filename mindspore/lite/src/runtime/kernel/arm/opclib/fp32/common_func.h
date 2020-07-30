@@ -27,8 +27,10 @@
 extern "C" {
 #endif
 
-void PostConvFuncFp32(const float *c4_out_ptr, float *out_ptr, const float *bias_ptr, size_t output_channel,
-                      size_t plane_size, size_t stride, bool is_relu, bool is_relu6);
+void PostConvFuncFp32C4(const float *c4_out_ptr, float *out_ptr, const float *bias_ptr, size_t output_channel,
+                        size_t plane_size, size_t stride, bool is_relu, bool is_relu6);
+void PostConvFuncFp32C8(const float *c8_out_ptr, float *out_ptr, const float *bias_ptr, size_t output_channel,
+                        size_t plane_size, size_t stride, bool is_relu, bool is_relu6);
 void MatrixAdd(const float *a_ptr, const float *b_ptr, float *dst, size_t a_stride, size_t b_stride, size_t c_stride,
                size_t row, size_t col);
 void MatrixSub(const float *a_ptr, const float *b_ptr, float *dst, size_t a_stride, size_t b_stride, size_t c_stride,
@@ -60,4 +62,3 @@ void DeconvDwFp32Center(float *dst, const float *src, const float *weight, size_
 #endif
 
 #endif /* MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_COMMON_FUNC_H_ */
-

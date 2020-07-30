@@ -48,10 +48,11 @@ void Row8x8Major2RowMajor(float *src_ptr, float *dst_ptr, int row, int col) {
       dst_ptr[r * col + c] = src_ptr[cd8 * row8 * 8 + r * 8 + cm8];
     }
   }
+  return;
 }
 
-void MatMul8x8(const float *a, const float *b, float *c, const float *bias, float maxf, float minf, int deep,
-               int row_8_, int col_8_) {
+void MatMul8x8(const float *a, const float *b, float *c, const float *bias, ActType act_type, int deep, int row_8_,
+               int col_8_) {
   /*  col8-major * row8-major => col8x8-major  */
   for (int row = 0; row < row_8_; row++) {
     for (int col = 0; col < col_8_; col++) {
@@ -64,19 +65,25 @@ void MatMul8x8(const float *a, const float *b, float *c, const float *bias, floa
         size_t bi = c8div * deep * 8 + d * 8 + c8mod;
         value = value + a[ai] * b[bi];
       }
-      value += bias[col];
-      value = MSMIN(maxf, value);
-      value = MSMAX(minf, value);
+      if (bias != nullptr) {
+        value += bias[col];
+      }
+      if (act_type == ActType_Relu6) value = MSMIN(6.0f, value);
+      if (act_type != ActType_No) value = MSMAX(0.0f, value);
       c[ci] = value;
     }
   }
+  return;
 }
 
-void MatMul(const float *a, const float *b, float *c, const float *bias, float maxf, float minf, int deep, int row_8_,
+void MatMul(const float *a, const float *b, float *c, const float *bias, ActType act_type, int deep, int row_8_,
             int col_8_) {
 #ifdef __aarch64__
+  float minf = (act_type == ActType_No) ? FLT_MIN : 0.f;
+  float maxf = (act_type == ActType_Relu6) ? 6.0f : FLT_MAX;
   MatMulFloatNeon64(a, b, c, bias, maxf, minf, deep, row_8_, col_8_);
 #else
-  MatMul8x8(a, b, c, bias, maxf, minf, deep, row_8_, col_8_);
+  MatMul8x8(a, b, c, bias, act_type, deep, row_8_, col_8_);
 #endif
+  return;
 }

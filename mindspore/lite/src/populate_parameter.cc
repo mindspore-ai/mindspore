@@ -165,8 +165,7 @@ OpParameter *PopulateFullconnectionParameter(const lite::Primitive *primitive) {
   matmul_param->b_transpose_ = true;
   matmul_param->a_transpose_ = false;
   matmul_param->has_bias_ = param->hasBias();
-  matmul_param->minf_ = -FLT_MAX;
-  matmul_param->maxf_ = FLT_MAX;
+  matmul_param->act_type_ = ActType_No;
   return reinterpret_cast<OpParameter *>(matmul_param);
 }
 
@@ -181,8 +180,7 @@ OpParameter *PopulateMatMulParameter(const lite::Primitive *primitive) {
   matmul_param->b_transpose_ = param->transposeB();
   matmul_param->a_transpose_ = param->transposeA();
   matmul_param->has_bias_ = false;
-  matmul_param->minf_ = -FLT_MAX;
-  matmul_param->maxf_ = FLT_MAX;
+  matmul_param->act_type_ = ActType_No;
   return reinterpret_cast<OpParameter *>(matmul_param);
 }
 

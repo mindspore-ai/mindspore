@@ -17,12 +17,12 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_MATMUL_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_MATMUL_H_
 
+#include <float.h>
 #include "src/runtime/kernel/arm/opclib/errorcode.h"
 #include "src/runtime/kernel/arm/opclib/op_base.h"
 #include "src/runtime/kernel/arm/opclib/matmul.h"
 
-void MatMul(const float *a, const float *b, float *c, const float *bias, float maxf, float minf, int depth, int row,
-            int col);
+void MatMul(const float *a, const float *b, float *c, const float *bias, ActType act_type, int depth, int row, int col);
 void RowMajor2Row8Major(float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Col8Major(float *src_ptr, float *dst_ptr, int row, int col);
 void Row8x8Major2RowMajor(float *src_ptr, float *dst_ptr, int row, int col);

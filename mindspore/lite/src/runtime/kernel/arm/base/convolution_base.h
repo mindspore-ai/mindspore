@@ -38,7 +38,7 @@ class ConvolutionBaseCPUKernel : public LiteKernel {
  public:
   ConvolutionBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                            const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-    : LiteKernel(parameter, inputs, outputs), ctx_(ctx), thread_count_(ctx->threadNum) {
+      : LiteKernel(parameter, inputs, outputs), ctx_(ctx), thread_count_(ctx->threadNum) {
     opParameter->thread_num_ = ctx->threadNum;
     conv_param_ = reinterpret_cast<ConvParameter *>(opParameter);
   }
@@ -60,7 +60,6 @@ class ConvolutionBaseCPUKernel : public LiteKernel {
   ConvParameter *conv_param_;
   LayoutConvertor convert_func_;
 };
-void ComputeQuantOutRange(ConvParameter *conv_param);
 bool CheckSupportFP16();
 }  // namespace mindspore::kernel
 
