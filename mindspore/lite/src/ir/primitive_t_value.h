@@ -26,8 +26,8 @@ namespace mindspore::lite {
 class PrimitiveTValue : public Value {
  public:
   explicit PrimitiveTValue(schema::PrimitiveT *primt) : primitive(primt) {}
-
-  ~PrimitiveTValue() override { delete this->primitive; }
+  // not responsible to free primitive, the one created the dynamic memory is responsible to free it.
+  ~PrimitiveTValue() override = default;
 
   MS_DECLARE_PARENT(PrimitiveTValue, Value)
 

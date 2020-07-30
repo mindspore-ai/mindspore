@@ -98,7 +98,6 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &funcGraph) {
     }
 
     node->primitive = std::unique_ptr<schema::PrimitiveT>(primitiveT_value->GetPrimitiveT());
-    primitiveT_value->SetPrimitiveT(nullptr);
     std::vector<schema::TensorT *> outputs;
     SetOpInputNode(cnode, metaGraphT.get(), node.get());
     SetOpOutputNode(outputs, metaGraphT.get(), node.get());
@@ -113,24 +112,22 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &funcGraph) {
       auto input_quant_params = primitiveT_value->GetInputQuantParams();
       if (input_quant_params.empty()) {
         MS_LOG(WARNING) << "node: " << node->name << " input quant params is empty";
-        continue;
+      } else {
+        std::unique_ptr<schema::QuantParamT> input_quant_param =
+          std::make_unique<schema::QuantParamT>(input_quant_params[0]);
+        tensor_input->quantParams.emplace_back(std::move(input_quant_param));
       }
-
-      std::unique_ptr<schema::QuantParamT> input_quant_param =
-        std::make_unique<schema::QuantParamT>(input_quant_params[0]);
-      tensor_input->quantParams.emplace_back(std::move(input_quant_param));
       // output
       auto output_index = node->outputIndex[0];
       auto tensor_output = metaGraphT->allTensors[output_index].get();
       auto output_quant_params = primitiveT_value->GetOutputQuantParams();
       if (output_quant_params.empty()) {
         MS_LOG(WARNING) << "node: " << node->name << " output quant params is empty";
-        continue;
+      } else {
+        std::unique_ptr<schema::QuantParamT> output_quant_param =
+          std::make_unique<schema::QuantParamT>(output_quant_params[0]);
+        tensor_output->quantParams.emplace_back(std::move(output_quant_param));
       }
-
-      std::unique_ptr<schema::QuantParamT> output_quant_param =
-        std::make_unique<schema::QuantParamT>(output_quant_params[0]);
-      tensor_output->quantParams.emplace_back(std::move(output_quant_param));
       //      // TensorType
       //      valuePtr = primitive->GetAttr(kInputTensorDataType);
       //      if (valuePtr != nullptr) {
