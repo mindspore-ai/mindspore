@@ -91,10 +91,7 @@ void CPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
   auto &kernel_graph = graphs_[graph_id];
   MS_EXCEPTION_IF_NULL(kernel_graph);
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  // Initialize parameter server
-  if (!ps_init_) {
-    InitPSParamAndOptim(kernel_graph, inputs);
-  }
+  InitPSParamAndOptim(kernel_graph, inputs);
 #endif
   MS_LOG(INFO) << "Bind input output address";
   std::vector<tensor::TensorPtr> need_sync_outputs;

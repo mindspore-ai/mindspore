@@ -517,9 +517,7 @@ void AscendSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::
   LoadInputData(kernel_graph, inputs);
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
   // Initialize parameter server
-  if (!ps_init_) {
-    InitPSParamAndOptim(kernel_graph, inputs);
-  }
+  InitPSParamAndOptim(kernel_graph, inputs);
 #endif
   // convert inputs to model
   predictmodel::StepConvertWeight(inputs);
