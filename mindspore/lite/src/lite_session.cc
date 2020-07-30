@@ -68,44 +68,6 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
   return RET_OK;
 }
 
-int LiteSession::ConvertKernels(const lite::Model *model, Context *context) {
-  //  MS_EXCEPTION_IF_NULL(model);
-  //  auto meta_graph = model->GetMetaGraph();
-  //  MS_EXCEPTION_IF_NULL(meta_graph);
-  //  uint32_t kernelCount = meta_graph->nodes()->size();
-  //  for (uint32_t i = 0; i < kernelCount; i++) {
-  //    auto cNode = meta_graph->nodes()->GetAs<schema::CNode>(i);
-  //    std::vector<tensor::Tensor *> inputs;
-  //    std::vector<tensor::Tensor *> outputs;
-  //    auto inIndexes = cNode->inputIndex();
-  //    for (size_t j = 0; j < inIndexes->size(); j++) {
-  //      inputs.emplace_back(this->tensors.at(size_t(inIndexes->GetAs<uint32_t>(j))));
-  //    }
-  //    auto outIndexes = cNode->outputIndex();
-  //    for (size_t j = 0; j < outIndexes->size(); j++) {
-  //      outputs.emplace_back(this->tensors.at(size_t(outIndexes->GetAs<uint32_t>(j))));
-  //    }
-  //    const auto *primitive = model->GetOp(cNode->name()->str());
-  //    if (primitive == nullptr) {
-  //      MS_LOG(ERROR) << "Op " << cNode->name()->str() << " should exist in model";
-  //      return RET_ERROR;
-  //    }
-  //    auto ret = primitive->InferShape(inputs, outputs);
-  //    if (0 != ret) {
-  //      MS_LOG(ERROR) << "InferShape failed, node : " << cNode->name()->str();
-  //      return ret;
-  //    }
-  //    auto *kernel = lite::KernelFactory::GetInstance()->GetKernel(inputs, outputs, cNode, context);
-  //    if (nullptr == kernel) {
-  //      MS_LOG(ERROR) << "Create kernel return nullptr, name: " << cNode->name()->str()
-  //                    << ", type: " << schema::EnumNamePrimitiveType(cNode->primitive()->value_type());
-  //      return RET_ERROR;
-  //    }
-  //    kernels.emplace_back(kernel);
-  //  }
-  return RET_OK;
-}
-
 void LiteSession::InitGraphInOutTensor(const lite::Model *model) {
   auto meta_graph = model->GetMetaGraph();
   MS_ASSERT(this->input_map.empty());

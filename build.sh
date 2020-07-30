@@ -444,11 +444,6 @@ build_protobuf() {
     fi
 }
 
-build_gtest() {
-    cd ${BASEPATH}
-    git submodule update --init --recursive third_party/googletest
-}
-
 gene_clhpp() {
     CL_SRC_DIR="${BASEPATH}/mindspore/lite/src/runtime/kernel/opencl/cl"
     for sub_dir in "${CL_SRC_DIR}"/*
@@ -530,9 +525,11 @@ build_lite()
       build_protobuf
     fi
     build_flatbuffer
-    build_gtest
 
     cd "${BASEPATH}/mindspore/lite"
+    if [[ "${INC_BUILD}" == "off" ]]; then
+        rm -rf build
+    fi
     mkdir -pv build
     cd build
     BUILD_TYPE="Release"
