@@ -411,7 +411,10 @@ Status CsvOp::LoadFile(const std::string &file, const int64_t start_offset, cons
   csv_parser.Reset();
   try {
     while (ifs.good()) {
-      char chr = ifs.get();
+      // when ifstream reachs the end of file, the function get() return std::char_traits<char>::eof()
+      // which is a 32-bit -1, it's not equal to the 8-bit -1 on Euler OS. So instead of char, we use
+      // int to receive its return value.
+      int chr = ifs.get();
       if (csv_parser.processMessage(chr) != 0) {
         RETURN_STATUS_UNEXPECTED("Failed to parse file " + file + ":" + std::to_string(csv_parser.total_rows_ + 1) +
                                  ". error message: " + csv_parser.err_message_);
