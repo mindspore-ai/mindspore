@@ -270,7 +270,7 @@ std::string GetCNodeTarget(const AnfNodePtr &node) {
     }
     return target;
   }
-  if (IsPrimitive(node, prim::kPrimMakeTuple)) {
+  if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
     return GetMaketupleNodeTarget(cnode);
   }
   return default_target;
