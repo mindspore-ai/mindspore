@@ -32,7 +32,7 @@ do
   cd ${execute_path}/sched_$i/ || exit
   export RANK_ID=$i
   export DEVICE_ID=$i
-  python -s ${self_path}/../test_full_ps_lenet.py --device_target=$DEVICE_TARGET &
+  python ${self_path}/../test_multi_worker_full_ps_lenet.py --device_target=$DEVICE_TARGET &
 done
 
 export MS_ROLE=MS_PSERVER
@@ -43,7 +43,7 @@ do
   cd ${execute_path}/server_$i/ || exit
   export RANK_ID=$i
   export DEVICE_ID=$i
-  python -s ${self_path}/../test_full_ps_lenet.py --device_target=$DEVICE_TARGET &
+  python ${self_path}/../test_multi_worker_full_ps_lenet.py --device_target=$DEVICE_TARGET &
 done
 
 export MS_ROLE=MS_WORKER
@@ -54,7 +54,7 @@ do
   cd ${execute_path}/worker_$i/ || exit
   export RANK_ID=$i
   export DEVICE_ID=$i
-  python -s ${self_path}/../test_full_ps_lenet.py --device_target=$DEVICE_TARGET &
+  python ${self_path}/../test_multi_worker_full_ps_lenet.py --device_target=$DEVICE_TARGET &
 done
 
 wait $!

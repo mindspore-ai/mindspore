@@ -25,11 +25,15 @@ namespace mindspore {
 namespace kernel {
 namespace ps {
 using mindspore::parallel::ps::Util;
-constexpr int kAxis = 2;
+constexpr int kAxis = 0;
 void EmbeddingLookUpPSKernel::InitKernel(
   const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
   const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
   input_shape_ = *(shape_vec[0]);
+  first_dim_size_ = input_shape_[0];
+  for (size_t i = 1; i < input_shape_.size(); ++i) {
+    outer_dim_size_ *= input_shape_[i];
+  }
   auto indices_shape = *(shape_vec[1]);
   indices_lens_ = 1;
   for (auto shape : indices_shape) {
@@ -49,7 +53,6 @@ void EmbeddingLookUpPSKernel::InitKernel(
   size_t output_size =
     std::accumulate(output_shape.begin(), output_shape.end(), sizeof(float), std::multiplies<size_t>());
   output_size_list_.emplace_back(output_size);
-  CPUKernelUtils::ExpandDimsTo4(&input_shape_);
 }
 
 void EmbeddingLookUpPSKernel::ReInit(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {

@@ -25,9 +25,7 @@ void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  size_t axis = kShape4dDims - input_shape.size();
-  CPUKernelUtils::ExpandDimsTo4(&input_shape);
-  CPUKernelUtils::ExpandDimsTo4(&output_shape);
+  size_t axis = kShape2dDims - input_shape.size();
   for (auto dim : input_shape) {
     input_dims_ *= dim;
   }
@@ -40,6 +38,8 @@ void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
   values.insert(values.end(), input_shape.begin(), input_shape.end());
   values.insert(values.end(), indices_shape.begin(), indices_shape.end());
   values.insert(values.end(), output_shape.begin(), output_shape.end());
+  MS_LOG(INFO) << "Init embedding lookup proxy kernel, input shape:" << input_shape
+               << ", indices_shape:" << indices_shape << ", output_shape:" << output_shape;
   std::vector<int> lens{SizeToInt(input_shape.size()), SizeToInt(indices_shape.size()), SizeToInt(output_shape.size())};
   const char *env_role = getenv(mindspore::parallel::ps::kEnvRole);
   if (env_role != nullptr && strcmp(env_role, mindspore::parallel::ps::kEnvRoleOfWorker) == 0) {
