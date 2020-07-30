@@ -46,6 +46,14 @@ void PackNC4HW4ToNHWC4Fp16(const void *src, void *dst, int batch, int plane, int
 void PackNC4HW4ToNHWCFp16(const void *src, void *dst, int batch, int plane, int channel);
 
 void PackNC4HW4ToNCHWFp16(const void *src, void *dst, int batch, int plane, int channel);
+
+void PackNC8HW8ToNHWCFp16(const void *src, void *dst, int batch, int plane, int channel);
+
+void PackNCHWFp32ToNC8HW8Fp16(float *src, float16_t *dst, int batch, int plane, int channel);
+
+void PackNHWCFp32ToNHWC8Fp16(float *src, float16_t *dst, int batch, int plane, int channel);
+
+void PackNHWC8Fp16ToNHWCFp32(float16_t *src, float *dst, int batch, int plane, int channel);
 #endif
 void Im2ColPackUnitFp32(const float *input_data, ConvParameter *conv_param, float *packed_input, int real_cal_num,
                         int block_index);
@@ -163,4 +171,3 @@ inline void C4UnpackToHwcInt8(int8_t *src_ptr, int8_t *dst_ptr, int channel, int
 }
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_PACK_H_
-

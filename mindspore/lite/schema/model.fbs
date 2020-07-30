@@ -172,7 +172,8 @@ union PrimitiveType {
     TupleGetItem,
     Div,
     Where,
-    OneHot
+    OneHot,
+    Lstm
 }
 
 enum QuantType: int {

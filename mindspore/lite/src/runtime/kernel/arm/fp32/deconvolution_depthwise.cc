@@ -38,8 +38,8 @@ int DeconvolutionDepthwiseCPUKernel::InitSlideParam() {
   conv_param_->output_channel_ = inputs_.front()->shape().at(kNHWC_C);
 
   // init sliding window param
-  sliding = new SlidingWindowParam;
-  InitSlidingParam(sliding, conv_param_, C4NUM);
+  sliding_ = new SlidingWindowParam;
+  InitSlidingParam(sliding_, conv_param_, C4NUM);
   return RET_OK;
 }
 
@@ -110,7 +110,7 @@ int DeconvolutionDepthwiseCPUKernel::ReSize() {
 
 int DeconvolutionDepthwiseCPUKernel::DoExcute(int task_id) {
   DeconvDwC4Fp32(packed_output_, packed_input_, packed_weight_, reinterpret_cast<float *>(bias_data_), conv_param_,
-                 sliding, task_id);
+                 sliding_, task_id);
   return RET_OK;
 }
 
