@@ -2016,6 +2016,7 @@ class MapDataset(DatasetOp):
         new_op.columns_order = copy.deepcopy(self.columns_order, memodict)
         new_op.num_parallel_workers = copy.deepcopy(self.num_parallel_workers, memodict)
         new_op.parent = copy.deepcopy(self.parent, memodict)
+        new_op.ms_role = copy.deepcopy(self.ms_role, memodict)
         new_op.input_indexs = copy.deepcopy(self._input_indexs, memodict)
         new_op.python_multiprocessing = copy.deepcopy(self.python_multiprocessing, memodict)
         new_op.cache = copy.deepcopy(self.cache, memodict)
@@ -3283,6 +3284,7 @@ class GeneratorDataset(MappableDataset):
         memodict[id(self)] = new_op
         new_op.children = copy.deepcopy(self.children, memodict)
         new_op.parent = copy.deepcopy(self.parent, memodict)
+        new_op.ms_role = copy.deepcopy(self.ms_role, memodict)
         new_op.num_parallel_workers = copy.deepcopy(self.num_parallel_workers, memodict)
         new_op.column_types = copy.deepcopy(self.column_types, memodict)
         new_op.column_names = copy.deepcopy(self.column_names, memodict)
