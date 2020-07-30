@@ -28,7 +28,6 @@
 #include "backend/optimizer/gpu/adam_fusion.h"
 #include "backend/optimizer/gpu/replace_bn_cast_fusion.h"
 #include "backend/optimizer/gpu/replace_bn_grad_cast_fusion.h"
-#include "backend/optimizer/gpu/replace_bn_grad_cast2_fusion.h"
 #include "backend/optimizer/gpu/replace_momentum_cast_fusion.h"
 #include "backend/optimizer/gpu/replace_addn_fusion.h"
 #include "runtime/device/kernel_runtime_manager.h"
@@ -68,7 +67,6 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   pm->AddPass(std::make_shared<opt::AdamFusion>());
   pm->AddPass(std::make_shared<opt::ReplaceBNCastFusion>());
   pm->AddPass(std::make_shared<opt::ReplaceBNGradCastFusion>());
-  pm->AddPass(std::make_shared<opt::ReplaceBNGradCast2Fusion>());
   pm->AddPass(std::make_shared<opt::ReplaceMomentumCastFusion>());
   pm->AddPass(std::make_shared<opt::ReplaceAddNFusion>());
   optimizer->AddPassManager(pm);
