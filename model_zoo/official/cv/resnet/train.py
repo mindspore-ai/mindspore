@@ -86,12 +86,8 @@ if __name__ == '__main__':
             ckpt_save_dir = config.save_checkpoint_path + "ckpt_" + str(get_rank()) + "/"
 
     # create dataset
-    if args_opt.net == "resnet50":
-        dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True, repeat_num=1,
-                                 batch_size=config.batch_size, target=target)
-    else:
-        dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True, repeat_num=1,
-                                 batch_size=config.batch_size)
+    dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True, repeat_num=1,
+                             batch_size=config.batch_size, target=target)
     step_size = dataset.get_dataset_size()
 
     # define net
@@ -122,7 +118,7 @@ if __name__ == '__main__':
             lr = get_lr(lr_init=config.lr_init, lr_end=0.0, lr_max=config.lr_max, warmup_epochs=config.warmup_epochs,
                         total_epochs=config.epoch_size, steps_per_epoch=step_size, lr_decay_mode='cosine')
     else:
-        lr = warmup_cosine_annealing_lr(config.lr, step_size, config.warmup_epochs, 120,
+        lr = warmup_cosine_annealing_lr(config.lr, step_size, config.warmup_epochs, config.epoch_size,
                                         config.pretrain_epoch_size * step_size)
     lr = Tensor(lr)
 
@@ -147,9 +143,13 @@ if __name__ == '__main__':
                       amp_level="O2", keep_batchnorm_fp32=False)
     else:
         # GPU target
-        loss = SoftmaxCrossEntropyWithLogits(sparse=True, is_grad=False, reduction='mean')
-        opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum)
+        loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean", is_grad=False,
+                                             smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
+        opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum, config.weight_decay)
         model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'})
+        ##Mixed precision
+        #model = Model(net, loss_fn=loss, optimizer=opt,  metrics={'acc'},
+        #              amp_level="O2", keep_batchnorm_fp32=True)
 
     # define callbacks
     time_cb = TimeMonitor(data_size=step_size)

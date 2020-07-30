@@ -141,7 +141,7 @@ def create_dataset2(dataset_path, do_train, repeat_num=1, batch_size=32, target=
     return ds
 
 
-def create_dataset3(dataset_path, do_train, repeat_num=1, batch_size=32):
+def create_dataset3(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend"):
     """
     create a train or eval imagenet2012 dataset for resnet101
     Args:
@@ -161,36 +161,26 @@ def create_dataset3(dataset_path, do_train, repeat_num=1, batch_size=32):
     else:
         ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True,
                                      num_shards=device_num, shard_id=rank_id)
-    resize_height = 224
-    rescale = 1.0 / 255.0
-    shift = 0.0
+    image_size = 224
+    mean = [0.475 * 255, 0.451 * 255, 0.392 * 255]
+    std = [0.275 * 255, 0.267 * 255, 0.278 * 255]
 
     # define map operations
-    decode_op = C.Decode()
-
-    random_resize_crop_op = C.RandomResizedCrop(resize_height, (0.08, 1.0), (0.75, 1.33), max_attempts=100)
-    horizontal_flip_op = C.RandomHorizontalFlip(rank_id / (rank_id + 1))
-    resize_op_256 = C.Resize((256, 256))
-    center_crop = C.CenterCrop(224)
-    rescale_op = C.Rescale(rescale, shift)
-    normalize_op = C.Normalize((0.475, 0.451, 0.392), (0.275, 0.267, 0.278))
-    changeswap_op = C.HWC2CHW()
-
     if do_train:
-        trans = [decode_op,
-                 random_resize_crop_op,
-                 horizontal_flip_op,
-                 rescale_op,
-                 normalize_op,
-                 changeswap_op]
-
+        trans = [
+            C.RandomCropDecodeResize(image_size, scale=(0.08, 1.0), ratio=(0.75, 1.333)),
+            C.RandomHorizontalFlip(rank_id/ (rank_id +1)),
+            C.Normalize(mean=mean, std=std),
+            C.HWC2CHW()
+        ]
     else:
-        trans = [decode_op,
-                 resize_op_256,
-                 center_crop,
-                 rescale_op,
-                 normalize_op,
-                 changeswap_op]
+        trans = [
+            C.Decode(),
+            C.Resize(256),
+            C.CenterCrop(image_size),
+            C.Normalize(mean=mean, std=std),
+            C.HWC2CHW()
+        ]
 
     type_cast_op = C2.TypeCast(mstype.int32)
 
