@@ -65,6 +65,8 @@ void ParallelContext::Reset() {
   strategy_ckpt_load_file_ = "";
   strategy_ckpt_save_file_ = "";
   enable_parallel_optimizer_ = false;
+  all_reduce_fusion_split_indices_.clear();
+  all_reduce_fusion_split_sizes_.clear();
 }
 
 void ParallelContext::set_device_num(int32_t device_num) {

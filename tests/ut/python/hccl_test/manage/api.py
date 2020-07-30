@@ -86,3 +86,13 @@ def create_group(group, rank_size, rank_ids):
 # pylint: disable=unused-argument
 def destroy_group(group):
     pass
+
+
+# pylint: disable=unused-argument
+def set_fusion_strategy_by_idx():
+    pass
+
+
+# pylint: disable=unused-argument
+def set_fusion_strategy_by_size():
+    pass

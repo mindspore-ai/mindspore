@@ -312,7 +312,7 @@ class Lamb(Optimizer):
                                               self.decay_flags, self.optim_filter)
 
         if self.use_parallel:
-            optim_result = self.broadcast_params(optim_result)
+            self.broadcast_params(optim_result)
 
         if not self.dynamic_lr:
             F.control_depend(lr, self.assignadd(self.global_step, 1))
