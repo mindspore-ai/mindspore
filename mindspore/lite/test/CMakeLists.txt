@@ -129,6 +129,15 @@ if (SUPPORT_GPU)
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/conv2d_transpose.cc
             )
 endif()
+### minddata lite
+if (BUILD_MINDDATA)
+    include_directories(${CCSRC_DIR}/minddata)
+    set(DATASET_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dataset)
+    set(TEST_MINDDATA_SRC
+                ${DATASET_TEST_DIR}/de_tensor_test.cc
+                ${DATASET_TEST_DIR}/eager_test.cc
+            )
+endif()
 ### runtime framework
 file(GLOB_RECURSE OPS_SRC ${LITE_DIR}/src/ops/*.cc)
 set(TEST_LITE_SRC
@@ -245,6 +254,7 @@ file(GLOB_RECURSE TEST_CASE_KERNEL_SRC
 
 set(TEST_SRC
     ${TEST_LITE_SRC}
+    ${TEST_MINDDATA_SRC}
     ${TEST_CASE_KERNEL_SRC}
     ${TEST_DIR}/common/common_test.cc
     ${TEST_DIR}/main.cc

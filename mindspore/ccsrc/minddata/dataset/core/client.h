@@ -25,8 +25,11 @@
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/dataset_iterator.h"
+
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/datasetops/source/mindrecord_op.h"
 #include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
+#endif
 
 #ifdef ENABLE_PYTHON
 #include "minddata/dataset/engine/datasetops/barrier_op.h"

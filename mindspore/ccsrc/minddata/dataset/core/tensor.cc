@@ -213,6 +213,7 @@ Status Tensor::CreateFromNpArray(const py::array &arr, std::shared_ptr<Tensor> *
 }
 #endif
 
+#ifndef ENABLE_ANDROID
 Status Tensor::CreateFromByteList(const dataengine::BytesList &bytes_list, const TensorShape &shape, TensorPtr *out) {
   const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
   *out = std::allocate_shared<Tensor>(*alloc, TensorShape({static_cast<dsize_t>(bytes_list.value_size())}),
@@ -255,6 +256,7 @@ Status Tensor::CreateFromByteList(const dataengine::BytesList &bytes_list, const
   (*out)->Reshape(shape);
   return Status::OK();
 }
+#endif
 
 Status Tensor::CreateFromFile(const std::string &path, std::shared_ptr<Tensor> *out) {
   std::ifstream fs;
@@ -269,6 +271,7 @@ Status Tensor::CreateFromFile(const std::string &path, std::shared_ptr<Tensor> *
   return Status::OK();
 }
 
+#ifndef ENABLE_ANDROID
 Status Tensor::CreateFromByteList(const dataengine::BytesList &bytes_list, const TensorShape &shape,
                                   const DataType &type, dsize_t pad_size, TensorPtr *out) {
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(shape, type, out));
@@ -298,6 +301,7 @@ Status Tensor::CreateFromByteList(const dataengine::BytesList &bytes_list, const
 
   return Status::OK();
 }
+#endif
 
 // Memcpy the given strided array's used part to consecutive memory
 // Consider a 3-d array

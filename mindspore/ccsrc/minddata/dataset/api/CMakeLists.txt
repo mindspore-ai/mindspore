@@ -13,4 +13,6 @@ add_library(cpp-API OBJECT
   iterator.cc
   transforms.cc
   samplers.cc
+  de_tensor.cc
+  execute.cc
   )

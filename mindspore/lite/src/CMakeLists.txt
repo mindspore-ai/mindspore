@@ -80,5 +80,9 @@ target_link_libraries(mindspore-lite
         )
 
 add_subdirectory(runtime/kernel/arm)
+if (BUILD_MINDDATA)
+        target_link_libraries(mindspore-lite minddata-eager minddata-lite log)
+endif ()
+
 add_subdirectory(ops)
 

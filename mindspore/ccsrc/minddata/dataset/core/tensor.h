@@ -38,12 +38,18 @@
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/util/status.h"
+#include "minddata/dataset/include/de_tensor.h"
+#ifndef ENABLE_ANDROID
 #include "proto/example.pb.h"
+#endif
 
 #ifdef ENABLE_PYTHON
 namespace py = pybind11;
 #endif
 namespace mindspore {
+namespace tensor {
+class DETensor;
+}  // namespace tensor
 namespace dataset {
 class Tensor;
 template <typename T>
@@ -55,6 +61,7 @@ using offset_t = uint32_t;                                  // type of offset va
 using TensorPtr = std::shared_ptr<Tensor>;
 
 class Tensor {
+  friend class tensor::DETensor;
  public:
   Tensor() = delete;
   Tensor(const Tensor &other) = delete;
@@ -117,6 +124,7 @@ class Tensor {
   static Status CreateFromNpArray(const py::array &arr, TensorPtr *out);
 #endif
 
+#ifndef ENABLE_ANDROID
   /// Create a tensor of type DE_STRING from a BytesList.
   /// \param[in] bytes_list protobuf's Bytelist
   /// \param[in] shape shape of the outout tensor
@@ -134,6 +142,7 @@ class Tensor {
   /// \return Status Code
   static Status CreateFromByteList(const dataengine::BytesList &bytes_list, const TensorShape &shape,
                                    const DataType &type, dsize_t pad_size, TensorPtr *out);
+#endif
 
   /// Create a Tensor from a given list of values.
   /// \tparam type of the values to be inserted.
