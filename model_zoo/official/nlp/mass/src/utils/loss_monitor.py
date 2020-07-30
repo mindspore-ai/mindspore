@@ -49,11 +49,13 @@ class LossCallBack(Callback):
         file_name = "./loss.log"
         with open(file_name, "a+") as f:
             time_stamp_current = self._get_ms_timestamp()
-            f.write("time: {}, epoch: {}, step: {}, outputs are {}.\n".format(
+            f.write("time: {}, epoch: {}, step: {}, outputs are {},{},{}.\n".format(
                 time_stamp_current - self.time_stamp_first,
                 cb_params.cur_epoch_num,
                 cb_params.cur_step_num,
-                str(cb_params.net_outputs)
+                str(cb_params.net_outputs[0].asnumpy()),
+                str(cb_params.net_outputs[1].asnumpy()),
+                str(cb_params.net_outputs[2].asnumpy())
             ))
 
     @staticmethod

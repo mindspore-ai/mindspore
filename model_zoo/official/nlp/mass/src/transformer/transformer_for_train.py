@@ -14,6 +14,7 @@
 # ============================================================================
 """Transformer for training."""
 from mindspore import nn
+import mindspore.context as context
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
@@ -204,11 +205,16 @@ class TransformerNetworkWithLoss(nn.Cell):
 grad_scale = C.MultitypeFuncGraph("grad_scale")
 reciprocal = P.Reciprocal()
 
-
 @grad_scale.register("Tensor", "Tensor")
 def tensor_grad_scale(scale, grad):
     return grad * F.cast(reciprocal(scale), F.dtype(grad))
 
+_grad_overflow = C.MultitypeFuncGraph("_grad_overflow")
+grad_overflow = P.FloatStatus()
+
+@_grad_overflow.register("Tensor")
+def _tensor_grad_overflow(grad):
+    return grad_overflow(grad)
 
 class TransformerTrainOneStepWithLossScaleCell(nn.Cell):
     """
@@ -251,9 +257,16 @@ class TransformerTrainOneStepWithLossScaleCell(nn.Cell):
         self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
         self.clip_gradients = ClipGradients()
         self.cast = P.Cast()
-        self.alloc_status = P.NPUAllocFloatStatus()
-        self.get_status = P.NPUGetFloatStatus()
-        self.clear_before_grad = P.NPUClearFloatStatus()
+        if context.get_context("device_target") == "GPU":
+            self.gpu_target = True
+            self.float_status = P.FloatStatus()
+            self.addn = P.AddN()
+            self.reshape = P.Reshape()
+        else:
+            self.gpu_target = False
+            self.alloc_status = P.NPUAllocFloatStatus()
+            self.get_status = P.NPUGetFloatStatus()
+            self.clear_status = P.NPUClearFloatStatus()
         self.reduce_sum = P.ReduceSum(keep_dims=False)
         self.depend_parameter_use = P.ControlDepend(depend_mode=1)
         self.base = Tensor(1, mstype.float32)
@@ -304,14 +317,18 @@ class TransformerTrainOneStepWithLossScaleCell(nn.Cell):
                             target_mask,
                             label_ids,
                             label_weights)
-        # Alloc status.
-        init = self.alloc_status()
-        # Clear overflow buffer.
-        self.clear_before_grad(init)
+
+        init = False
+        if not self.gpu_target:
+            # init overflow buffer
+            init = self.alloc_status()
+            # clear overflow buffer
+            self.clear_status(init)
         if sens is None:
             scaling_sens = self.loss_scale
         else:
             scaling_sens = sens
+
         grads = self.grad(self.network, weights)(source_ids,
                                                  source_mask,
                                                  target_ids,
@@ -323,11 +340,21 @@ class TransformerTrainOneStepWithLossScaleCell(nn.Cell):
 
         grads = self.hyper_map(F.partial(grad_scale, scaling_sens), grads)
         grads = self.clip_gradients(grads, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE)
+
         if self.reducer_flag:
             # Apply grad reducer on grads.
             grads = self.grad_reducer(grads)
-        self.get_status(init)
-        flag_sum = self.reduce_sum(init, (0,))
+
+        # get the overflow buffer
+        if not self.gpu_target:
+            self.get_status(init)
+            # sum overflow buffer elements, 0:not overflow , >0:overflow
+            flag_sum = self.reduce_sum(init, (0,))
+        else:
+            flag_sum = self.hyper_map(F.partial(_grad_overflow), grads)
+            flag_sum = self.addn(flag_sum)
+            # convert flag_sum to scalar
+            flag_sum = self.reshape(flag_sum, (()))
 
         if self.is_distributed:
             # Sum overflow flag over devices.

@@ -165,10 +165,10 @@ do
   echo $task
   if [ "$task" == "train" ]
   then
-    python train.py --config ${configurations##*/} >>log.log 2>&1 &
+    python train.py --config ${configurations##*/} --platform Ascend >>log.log 2>&1 &
   elif [ "$task" == "infer" ]
   then
-    python eval.py --config ${configurations##*/} --output ${output} --vocab ${vocab##*/} --metric ${metric} >>log_infer.log 2>&1 &
+    python eval.py --config ${configurations##*/} --output ${output} --vocab ${vocab##*/} --metric ${metric} --platform Ascend >>log_infer.log 2>&1 &
   fi
   cd ../
 done

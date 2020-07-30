@@ -24,7 +24,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.nn import Momentum
 from mindspore.nn.optim import Adam, Lamb
 from mindspore.train.model import Model
-from mindspore.train.loss_scale_manager import DynamicLossScaleManager
+from mindspore.train.loss_scale_manager import DynamicLossScaleManager, FixedLossScaleManager
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint
 from mindspore import context, ParallelMode, Parameter
 from mindspore.communication import management as MultiAscend
@@ -41,18 +41,7 @@ from src.utils.lr_scheduler import polynomial_decay_scheduler, BertLearningRate
 
 parser = argparse.ArgumentParser(description='MASS train entry point.')
 parser.add_argument("--config", type=str, required=True, help="model config json file path.")
-
-device_id = os.getenv('DEVICE_ID', None)
-if device_id is None:
-    raise RuntimeError("`DEVICE_ID` can not be None.")
-
-device_id = int(device_id)
-context.set_context(
-    mode=context.GRAPH_MODE,
-    device_target="Ascend",
-    reserve_class_name_in_scope=False,
-    device_id=device_id)
-
+parser.add_argument("--platform", type=str, required=True, help="model working platform.")
 
 def get_config(config):
     config = TransformerConfig.from_json_file(config)
@@ -79,12 +68,11 @@ def _train(model, config: TransformerConfig,
 
     if pre_training_dataset is not None:
         print(" | Start pre-training job.")
-        epoch_size = config.epochs * pre_training_dataset.get_dataset_size() // config.dataset_sink_step
 
         if os.getenv("RANK_SIZE") is not None and int(os.getenv("RANK_SIZE")) > 1:
             print(f" | Rank {MultiAscend.get_rank()} Call model train.")
 
-        model.train(epoch_size, pre_training_dataset,
+        model.train(config.epochs, pre_training_dataset,
                     callbacks=callbacks, dataset_sink_mode=config.dataset_sink_mode,
                     sink_size=config.dataset_sink_step)
 
@@ -97,9 +85,8 @@ def _train(model, config: TransformerConfig,
 
     if fine_tune_dataset is not None:
         print(" | Start fine-tuning job.")
-        epoch_size = config.epochs * fine_tune_dataset.get_dataset_size() // config.dataset_sink_step
 
-        model.train(epoch_size, fine_tune_dataset,
+        model.train(config.epochs, fine_tune_dataset,
                     callbacks=callbacks, dataset_sink_mode=config.dataset_sink_mode,
                     sink_size=config.dataset_sink_step)
 
@@ -114,7 +101,8 @@ def _train(model, config: TransformerConfig,
 def _build_training_pipeline(config: TransformerConfig,
                              pre_training_dataset=None,
                              fine_tune_dataset=None,
-                             test_dataset=None):
+                             test_dataset=None,
+                             platform="Ascend"):
     """
     Build training pipeline.
 
@@ -198,14 +186,15 @@ def _build_training_pipeline(config: TransformerConfig,
     else:
         raise ValueError(f"optimizer only support `adam` and `momentum` now.")
 
-    # Dynamic loss scale.
-    scale_manager = DynamicLossScaleManager(init_loss_scale=config.init_loss_scale,
-                                            scale_factor=config.loss_scale_factor,
-                                            scale_window=config.scale_window)
-    net_with_grads = TransformerTrainOneStepWithLossScaleCell(
-        network=net_with_loss, optimizer=optimizer,
-        scale_update_cell=scale_manager.get_update_cell()
-    )
+    # loss scale.
+    if platform == "Ascend":
+        scale_manager = DynamicLossScaleManager(init_loss_scale=config.init_loss_scale,
+                                                scale_factor=config.loss_scale_factor,
+                                                scale_window=config.scale_window)
+    else:
+        scale_manager = FixedLossScaleManager(loss_scale=1.0, drop_overflow_update=True)
+    net_with_grads = TransformerTrainOneStepWithLossScaleCell(network=net_with_loss, optimizer=optimizer,
+                                                              scale_update_cell=scale_manager.get_update_cell())
     net_with_grads.set_train(True)
     model = Model(net_with_grads)
     loss_monitor = LossCallBack(config)
@@ -236,9 +225,12 @@ def _build_training_pipeline(config: TransformerConfig,
            callbacks=callbacks)
 
 
-def _setup_parallel_env():
+def _setup_parallel_env(platform):
     context.reset_auto_parallel_context()
-    MultiAscend.init()
+    if platform == "GPU":
+        MultiAscend.init("nccl")
+    else:
+        MultiAscend.init()
     context.set_auto_parallel_context(
         parallel_mode=ParallelMode.DATA_PARALLEL,
         device_num=MultiAscend.get_group_size(),
@@ -247,14 +239,14 @@ def _setup_parallel_env():
     )
 
 
-def train_parallel(config: TransformerConfig):
+def train_parallel(config: TransformerConfig, platform: "Ascend"):
     """
     Train model with multi ascend chips.
 
     Args:
         config (TransformerConfig): Config for MASS model.
     """
-    _setup_parallel_env()
+    _setup_parallel_env(platform)
 
     print(f" | Starting training on {os.getenv('RANK_SIZE', None)} devices.")
 
@@ -286,10 +278,11 @@ def train_parallel(config: TransformerConfig):
     _build_training_pipeline(config=config,
                              pre_training_dataset=pre_train_dataset,
                              fine_tune_dataset=fine_tune_dataset,
-                             test_dataset=test_dataset)
+                             test_dataset=test_dataset,
+                             platform=platform)
 
 
-def train_single(config: TransformerConfig):
+def train_single(config: TransformerConfig, platform: "Ascend"):
     """
     Train model on single device.
 
@@ -316,7 +309,8 @@ def train_single(config: TransformerConfig):
     _build_training_pipeline(config=config,
                              pre_training_dataset=pre_train_dataset,
                              fine_tune_dataset=fine_tune_dataset,
-                             test_dataset=test_dataset)
+                             test_dataset=test_dataset,
+                             platform=platform)
 
 
 def _check_args(config):
@@ -327,9 +321,20 @@ def _check_args(config):
 
 
 if __name__ == '__main__':
+    args, _ = parser.parse_known_args()
+
+    device_id = os.getenv('DEVICE_ID', None)
+    if device_id is None:
+        device_id = 0
+    device_id = int(device_id)
+    context.set_context(
+        mode=context.GRAPH_MODE,
+        device_target=args.platform,
+        reserve_class_name_in_scope=False,
+        device_id=device_id)
+
     _rank_size = os.getenv('RANK_SIZE')
 
-    args, _ = parser.parse_known_args()
     _check_args(args.config)
     _config = get_config(args.config)
 
@@ -337,6 +342,6 @@ if __name__ == '__main__':
     context.set_context(save_graphs=_config.save_graphs)
 
     if _rank_size is not None and int(_rank_size) > 1:
-        train_parallel(_config)
+        train_parallel(_config, args.platform)
     else:
-        train_single(_config)
+        train_single(_config, args.platform)
