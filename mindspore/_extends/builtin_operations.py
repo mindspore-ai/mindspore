@@ -15,6 +15,7 @@
 """builtin_operations"""
 import numpy as np
 from mindspore.ops import functional as F
+from mindspore.ops import composite as C
 from mindspore.common.tensor import Tensor
 from mindspore.common.dtype import dtype_to_nptype, get_py_obj_dtype
 
@@ -174,11 +175,10 @@ def stop_gradient(x):
     return x
 
 
+hyper_map = C.HyperMap()
+
 def mixed_precision_cast(dst_type, x):
     """Implement `mixed_precision_cast`."""
-    if isinstance(x, tuple):
-        res = list()
-        for item in x:
-            res.append(F.cast(item, dst_type))
-        return tuple(res)
-    return F.cast(x, dst_type)
+    def cast_inner(data):
+        return F.cast(data, dst_type)
+    return hyper_map(cast_inner, x)
