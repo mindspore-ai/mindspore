@@ -86,6 +86,8 @@ def parse_args(cloud_args=None):
     args_opt.padding = cfg.padding
     args_opt.has_bias = cfg.has_bias
     args_opt.batch_norm = cfg.batch_norm
+    args_opt.initialize_mode = cfg.initialize_mode
+    args_opt.has_dropout = cfg.has_dropout
 
     args_opt.image_size = list(map(int, args_opt.image_size.split(',')))
 
