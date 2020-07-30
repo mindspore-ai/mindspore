@@ -73,10 +73,6 @@ inline __device__ void WarpReduce(T *mean, T *var, T *num) {
 template <typename T>
 inline __device__ void BlockReduce(const int &col_dim, T *mean, T *var, T *num, T *mean_addr, T *var_addr,
                                    T *share_mem) {
-  if (threadIdx.x >= col_dim) {
-    return;
-  }
-
   // load data to share memory
   // thread(0, 32, 64, 96, ...) keep the data
   if (threadIdx.x % WARP_SIZE == 0) {
@@ -146,13 +142,11 @@ __global__ void LayerNormKernel(const int row_dim, const int col_dim, const int 
 template <typename T>
 void LayerNorm(const int &row_dim, const int &col_dim, const int &param_dim, const T &epsilon, const T *x,
                const T *gamma, const T *beta, T *y, T *mean, T *var, cudaStream_t stream) {
-  const dim3 block(row_dim);
-  const dim3 thread(256);
+  const int thread_per_block = 256;
   // keep the mean/var/num after warp reduce
-  int share_mem_size =
-    ((col_dim + NUM_PER_THREAD_REDUCE - 1) / NUM_PER_THREAD_REDUCE + WARP_SIZE - 1) / WARP_SIZE * 3 * sizeof(T);
-  LayerNormKernel<<<block, thread, share_mem_size, stream>>>(row_dim, col_dim, param_dim, epsilon, x, gamma, beta, y,
-                                                             mean, var);
+  int share_mem_size = thread_per_block / WARP_SIZE * 3 * sizeof(T);
+  LayerNormKernel<<<row_dim, thread_per_block, share_mem_size, stream>>>(row_dim, col_dim, param_dim, epsilon, x, gamma,
+                                                                         beta, y, mean, var);
 }
 
 template void LayerNorm(const int &row_dim, const int &col_dim, const int &param_dim, const float &epsilon,
