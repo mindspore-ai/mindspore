@@ -313,7 +313,7 @@ void SessionBasic::InitInternalOutputParameter(const AnfNodePtr &out_node, const
       MS_LOG(INFO) << "No kernel info";
       return;
     }
-    if (!AnfAlgo::OutputAddrExist(ref_real_node, ref_real_node_index)) {
+    if (!opt::IsNopNode(ref_real_node) && !AnfAlgo::OutputAddrExist(ref_real_node, ref_real_node_index)) {
       MS_LOG(INFO) << "No kernel address";
       return;
     }
@@ -1003,6 +1003,7 @@ CNodePtr SessionBasic::ConstructOutput(const AnfNodePtrList &outputs, const std:
           break;
         }
       }
+
       if (internal_output) {
         MS_LOG(INFO) << "Internal output1: " << out->DebugString() << "To " << backend_real_kernel.first->DebugString();
         graph->AddInternalOutput(out, backend_real_kernel.first);
