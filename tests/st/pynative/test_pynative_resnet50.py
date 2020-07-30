@@ -413,6 +413,7 @@ def test_pynative_resnet50():
 
     step = 0
     max_step = 20
+    exceed_num = 0
     data_set = create_dataset(repeat_num=1, training=True, batch_size=batch_size)
     for element in data_set.create_dict_iterator():
         step = step + 1
@@ -427,5 +428,7 @@ def test_pynative_resnet50():
         end_time = time.time()
         cost_time = end_time - start_time
         print("======step: ", step, " loss: ", loss_output.asnumpy(), " cost time: ", cost_time)
-        if step > 1:
-            assert cost_time < 0.32
+        if step > 1 and cost_time > 0.32:
+            exceed_num = exceed_num + 1
+    assert exceed_num < 10
+    
