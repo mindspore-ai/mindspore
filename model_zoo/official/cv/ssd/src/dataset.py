@@ -63,7 +63,7 @@ def random_sample_crop(image, boxes):
         if not drop_mask.any():
             continue
 
-        if overlap[drop_mask].min() < min_iou:
+        if overlap[drop_mask].min() < min_iou and overlap[drop_mask].max() > (min_iou + 0.2):
             continue
 
         image_t = image_t[rect[0]:rect[2], rect[1]:rect[3], :]
