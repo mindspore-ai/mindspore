@@ -40,6 +40,7 @@ int ArgMax::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   }
   output_shape.erase(output_shape.begin() + axis);
 
+  output->SetFormat(input->GetFormat());
   output->set_shape(output_shape);
   output->set_data_type(input->data_type());
   return RET_OK;

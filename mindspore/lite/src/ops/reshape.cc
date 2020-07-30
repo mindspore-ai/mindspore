@@ -114,7 +114,8 @@ int Reshape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
 
   output->set_shape(out_shape);
   output->set_data_type(input->data_type());
+  output->SetFormat(input->GetFormat());
+
   return RET_OK;
 }
 }  // namespace mindspore::lite
-

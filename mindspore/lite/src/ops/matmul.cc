@@ -57,7 +57,8 @@ int MatMul::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   y_shape[y_shape_size - 1] = w_shape[w_shape.size() - 1];
   output->set_shape(y_shape);
   output->set_data_type(input0->data_type());
+  output->SetFormat(input0->GetFormat());
+
   return RET_OK;
 }
 }  // namespace mindspore::lite
-

@@ -85,9 +85,10 @@ int BatchToSpace::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<t
   output_shape[kNHWC_h_index] = input_shape[kNHWC_h_index] * block_shape->Get(0) - crops->Get(0) - crops->Get(1);
   output_shape[kNHWC_w_index] = input_shape[kNHWC_w_index] * block_shape->Get(1) - crops->Get(2) - crops->Get(3);
   output_shape[kNHWC_c_index] = input_shape[kNHWC_c_index];
+
+  outputs[0]->SetFormat(input->GetFormat());
   outputs[0]->set_shape(output_shape);
   outputs[0]->set_data_type(input->data_type());
   return RET_OK;
 }
 }  // namespace mindspore::lite
-

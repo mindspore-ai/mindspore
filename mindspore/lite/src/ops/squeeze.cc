@@ -23,7 +23,7 @@ namespace mindspore::lite {
 namespace {
 constexpr int kSqueezeInputNum = 1;
 constexpr int kSqueezeOutputNum = 1;
-}
+}  // namespace
 int Squeeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   if (kSqueezeInputNum != inputs_.size()) {
@@ -45,31 +45,31 @@ int Squeeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
   std::vector<int> axes_;
   for (auto iter = axis->begin(); iter != axis->end(); iter++) {
     axes_.push_back(*iter);
-}
+  }
 
   if (axes_.size() == 0) {
     for (int i = 0; i < in_shape.size(); i++) {
-        if (in_shape[i] != 1) {
-            out_shape.push_back(in_shape[i]);
-        }
+      if (in_shape[i] != 1) {
+        out_shape.push_back(in_shape[i]);
+      }
     }
   } else {
-      int axisIdx = 0;
-      for (int i = 0; i < in_shape.size(); i++) {
-          if (axisIdx < axes_.size() && axes_[axisIdx] == i) {
-              MS_ASSERT(in_shape[i] == 1);
-              axisIdx++;
-              continue;
-          } else {
-              out_shape.push_back(in_shape[i]);
-          }
+    int axisIdx = 0;
+    for (int i = 0; i < in_shape.size(); i++) {
+      if (axisIdx < axes_.size() && axes_[axisIdx] == i) {
+        MS_ASSERT(in_shape[i] == 1);
+        axisIdx++;
+        continue;
+      } else {
+        out_shape.push_back(in_shape[i]);
       }
+    }
   }
 
   outputs_.front()->set_shape(out_shape);
   outputs_.front()->set_data_type(in_tensor->data_type());
+  outputs_.front()->SetFormat(in_tensor->GetFormat());
 
   return 0;
 }
 }  // namespace mindspore::lite
-

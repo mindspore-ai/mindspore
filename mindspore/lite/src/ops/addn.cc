@@ -36,6 +36,7 @@ int AddN::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
       return RET_INPUT_TENSOR_ERROR;
     }
   }
+  output->SetFormat(input->GetFormat());
   output->set_shape(input->shape());
   output->set_data_type(input->data_type());
   return RET_OK;

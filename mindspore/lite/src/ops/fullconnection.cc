@@ -56,7 +56,8 @@ int FullConnection::InferShape(std::vector<tensor::Tensor *> inputs_, std::vecto
   out_shape[fc_prim->axis()] = input1->shape()[0];
   output->set_shape(out_shape);
   output->set_data_type(input0->data_type());
+  output->SetFormat(input0->GetFormat());
+
   return RET_OK;
 }
 }  // namespace mindspore::lite
-

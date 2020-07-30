@@ -29,7 +29,8 @@ int Rank::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
   std::vector<int> in_shape(1, 1);
   output->set_shape(in_shape);
   output->set_data_type(input->data_type());
+  output->SetFormat(input->GetFormat());
+
   return RET_OK;
 }
 }  // namespace mindspore::lite
-
