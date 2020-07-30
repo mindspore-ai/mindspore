@@ -20,14 +20,14 @@ The optimizer is used to calculate and update the gradients.
 """
 from .optimizer import Optimizer
 from .momentum import Momentum
-from .adam import Adam, PSAdam, AdamWeightDecay
+from .adam import Adam, AdamWeightDecay
 from .lamb import Lamb
 from .sgd import SGD
 from .lars import LARS
-from .ftrl import FTRL, PSFTRL
+from .ftrl import FTRL
 from .rmsprop import RMSProp
 from .proximal_ada_grad import ProximalAdagrad
 from .lazyadam import LazyAdam
 
-__all__ = ['Optimizer', 'Momentum', 'LARS', 'Adam', 'PSAdam', 'AdamWeightDecay', 'LazyAdam',
-           'Lamb', 'SGD', 'FTRL', 'PSFTRL', 'RMSProp', 'ProximalAdagrad']
+__all__ = ['Optimizer', 'Momentum', 'LARS', 'Adam', 'AdamWeightDecay', 'LazyAdam',
+           'Lamb', 'SGD', 'FTRL', 'RMSProp', 'ProximalAdagrad']

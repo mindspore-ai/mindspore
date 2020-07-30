@@ -23,7 +23,7 @@ namespace mindspore {
 namespace kernel {
 namespace ps {
 void SparseApplyAdamPSKernel::InitKernel(
-  const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
+  const CNodePtr &cnode, const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
   const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
   std::vector<size_t> &var_shape = *(shape_vec[0]);
   std::vector<size_t> &m_shape = *(shape_vec[1]);
@@ -55,11 +55,9 @@ void SparseApplyAdamPSKernel::InitKernel(
   if (grad_shape[0] != indices_size_) {
     MS_LOG(ERROR) << "The first dimension of grad shape must be equal to indices";
   }
-  /*
-  if (AnfAlgo::HasNodeAttr(USE_NESTEROV, kernel_node)) {
-    use_nesterov_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "use_nesterov");
+  if (AnfAlgo::HasNodeAttr(USE_NESTEROV, cnode)) {
+    use_nesterov_ = AnfAlgo::GetNodeAttr<bool>(cnode, "use_nesterov");
   }
-  */
   workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
   workspace_size_list_.emplace_back(indices_size_ * sizeof(int));
   workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));

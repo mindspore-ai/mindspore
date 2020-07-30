@@ -21,65 +21,37 @@ from mindspore._checkparam import Rel
 from .optimizer import Optimizer, _apply_decay, _grad_scale
 
 _ftrl_opt = C.MultitypeFuncGraph("ftrl_opt")
-_ftrl_push_pull_opt = C.MultitypeFuncGraph("ftrl_opt")
 
 
-@_ftrl_opt.register("Function", "Function", "Number", "Number", "Number", "Tensor", "Tensor", "IndexedSlices", "Tensor",
-                    "Tensor", "Bool")
-def _tensor_run_opt_with_sparse(opt, spars_opt, l1, l2, lr_power, learning_rate, linear, gradient, weight, moment,
-                                ps_parameter):
+@_ftrl_opt.register("Function", "Function", "Function", "Function", "Number", "Number", "Number", "Tensor",
+                    "Tensor", "IndexedSlices", "Tensor", "Tensor", "Bool")
+def _tensor_run_opt_with_sparse(opt, spars_opt, pull, push, l1, l2, lr_power, learning_rate,
+                                linear, gradient, weight, moment, ps_parameter):
     """Apply sparse ftrl optimizer to the weight parameter when the gradient is sparse."""
     success = True
     indices = gradient.indices()
     values = gradient.values()
     if ps_parameter:
         op_shape = P.Shape()
-        _ps_pull = P.Pull()
-        _ps_push = P.Push("Ftrl", [0, 1, 2])
         shapes = (op_shape(weight), op_shape(moment), op_shape(linear), op_shape(values), op_shape(indices))
-        success = F.depend(success, _ps_pull(_ps_push((values, indices), shapes), weight))
+        success = F.depend(success, pull(push((values, indices), shapes), weight))
     else:
         success = F.depend(success, spars_opt(weight, moment, linear, values, indices))
     return success
 
 
-@_ftrl_opt.register("Function", "Function", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor", "Tensor",
-                    "Tensor", "Bool")
-def _tensor_run_opt(opt, spars_opt, l1, l2, lr_power, learning_rate, linear, gradient, weight, moment, ps_parameter):
+@_ftrl_opt.register("Function", "Function", "Function", "Function", "Number", "Number", "Number", "Tensor",
+                    "Tensor", "Tensor", "Tensor", "Tensor", "Bool")
+def _tensor_run_opt(opt, spars_opt, pull, push, l1, l2, lr_power, learning_rate,
+                    linear, gradient, weight, moment, ps_parameter):
     """Apply ftrl optimizer to the weight parameter."""
     success = True
     if ps_parameter:
         op_shape = P.Shape()
-        _ps_pull = P.Pull()
-        _ps_push = P.Push("Ftrl", [0, 1, 2])
-        success = F.depend(success, _ps_pull(_ps_push((gradient, learning_rate, l1, l2, lr_power),
-                                                      (op_shape(weight), op_shape(moment), op_shape(linear))), weight))
+        success = F.depend(success, pull(push((gradient, learning_rate, l1, l2, lr_power),
+                                              (op_shape(weight), op_shape(moment), op_shape(linear))), weight))
     else:
         success = F.depend(success, opt(weight, moment, linear, gradient, learning_rate, l1, l2, lr_power))
-    return success
-
-
-@_ftrl_push_pull_opt.register("Function", "Function", "Tensor", "Number", "Number", "Number", "Tensor", "IndexedSlices",
-                              "Tensor", "Tensor")
-def _tensor_run_push_pull_opt_with_sparse(push, pull, learning_rate, l1, l2, lr_power, linear, gradient,
-                                          weight, moment):
-    success = True
-    op_shape = P.Shape()
-    values = gradient.values()
-    indices = gradient.indices()
-    shapes = (op_shape(weight), op_shape(moment), op_shape(linear), op_shape(values), op_shape(indices))
-    success = F.depend(success, pull(push((values, indices), shapes), weight))
-    return success
-
-
-@_ftrl_push_pull_opt.register("Function", "Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tensor",
-                              "Tensor", "Tensor")
-def _tensor_run_push_pull_opt_with_one_number(push, pull, learning_rate, l1, l2, lr_power, linear, gradient,
-                                              weight, moment):
-    success = True
-    op_shape = P.Shape()
-    success = F.depend(success, pull(push((gradient, learning_rate, l1, l2, lr_power),
-                                          (op_shape(weight), op_shape(moment), op_shape(linear))), weight))
     return success
 
 
@@ -188,6 +160,12 @@ class FTRL(Optimizer):
         self.hyper_map = C.HyperMap()
         self.opt = P.ApplyFtrl(use_locking=use_locking)
         self.sparse_opt = P.FusedSparseFtrl(learning_rate, l1, l2, lr_power, use_locking=use_locking)
+        self._ps_pull = P.Pull()
+        self._ps_push = P.Push("Ftrl", [0, 1, 2])
+        self._ps_push.add_prim_attr("lr", learning_rate)
+        self._ps_push.add_prim_attr("l1", l1)
+        self._ps_push.add_prim_attr("l2", l2)
+        self._ps_push.add_prim_attr("lr_power", lr_power)
 
     def construct(self, grads):
         params = self.parameters
@@ -197,41 +175,7 @@ class FTRL(Optimizer):
         grads = self.scale_grad(grads)
         lr = self.get_lr()
 
-        success = self.map_(F.partial(_ftrl_opt, self.opt, self.sparse_opt, self.l1, self.l2, self.lr_power, lr),
+        success = self.map_(F.partial(_ftrl_opt, self.opt, self.sparse_opt, self._ps_pull, self._ps_push,
+                                      self.l1, self.l2, self.lr_power, lr),
                             linear, grads, params, moments, self.ps_parameters)
-        return success
-
-
-class PSFTRL(Optimizer):
-    def __init__(self, params, initial_accum=0.1, learning_rate=0.001, lr_power=-0.5, l1=0.0, l2=0.0,
-                 use_locking=False, loss_scale=1.0, weight_decay=0.0):
-        super(PSFTRL, self).__init__(learning_rate, params, loss_scale=loss_scale)
-        if self.is_group:
-            raise RuntimeError(f"The {self.cls_name} optimizer cannot support group setting.")
-        _check_param(initial_accum, lr_power, l1, l2, use_locking, self.cls_name)
-        self.moments = self.parameters.clone(prefix="moments", init=initial_accum)
-        self.linear = self.parameters.clone(prefix="linear", init='zeros')
-        self.l1 = l1
-        self.l2 = l2
-        self.lr_power = lr_power
-        self.weight_decay = weight_decay
-        self.decay_tf = tuple((lambda: True)() for x in self.parameters)
-
-        self.hyper_map = C.HyperMap()
-        self.push = P.Push("Ftrl", [0, 1, 2])
-        self.push.add_prim_attr("primitive_target", "CPU")
-        self.pull = P.Pull()
-        self.pull.add_prim_attr("primitive_target", "CPU")
-
-    def construct(self, grads):
-        params = self.parameters
-        moments = self.moments
-        linear = self.linear
-        lr = self.learning_rate
-        if self.weight_decay > 0.0:
-            grads = self.hyper_map(F.partial(_apply_decay, self.weight_decay), self.decay_tf, params, grads)
-
-        grads = self.scale_grad(grads)
-        success = self.map_(F.partial(_ftrl_push_pull_opt, self.push, self.pull, lr, self.l1, self.l2, self.lr_power),
-                            linear, grads, params, moments)
         return success

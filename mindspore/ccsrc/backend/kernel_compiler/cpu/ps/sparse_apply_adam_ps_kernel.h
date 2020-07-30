@@ -30,7 +30,8 @@ class SparseApplyAdamPSKernel : public SparseApplyAdamCPUKernel, public PServerK
   SparseApplyAdamPSKernel(size_t rank_id, size_t pserver_num) : PServerKernel(rank_id, pserver_num) {}
   ~SparseApplyAdamPSKernel() override = default;
 
-  void InitKernel(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &) override;
+  void InitKernel(const CNodePtr &cnode,
+                  const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &) override;
   void ReInit(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &) override;
   bool Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                const std::vector<AddressPtr> &outputs) override;
