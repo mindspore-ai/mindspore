@@ -58,13 +58,13 @@ class Momentum(Optimizer):
 
     If use_nesterov is True:
         .. math::
-            p_{t} = grad \ast lr + v_{t} \ast u \ast lr
+            p_{t} =  p_{t-1} - (grad \ast lr + v_{t} \ast u \ast lr)
 
     If use_nesterov is Flase:
         .. math::
-            p_{t} = lr \ast v_{t}
+            p_{t} = p_{t-1} - lr \ast v_{t}
 
-    Here: where grad, lr, p, v and u denote the gradients, learning_rate, parameter, accum, and momentum respectively.
+    Here: where grad, lr, p, v and u denote the gradients, learning_rate, params, moments, and momentum respectively.
 
     Args:
         params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,

@@ -57,7 +57,7 @@ class SGD(Optimizer):
         .. math::
             p_{t+1} = p_{t} - lr \ast v_{t+1}
 
-    To be notice, for the first step, v_{t+1} = gradient
+    To be noticed, for the first step, v_{t+1} = gradient
 
     Here : where p, v and u denote the parameters, accum, and momentum respectively.
 
@@ -89,8 +89,8 @@ class SGD(Optimizer):
         momentum (float): A floating point value the momentum. should be at least 0.0. Default: 0.0.
         dampening (float): A floating point value of dampening for momentum. should be at least 0.0. Default: 0.0.
         weight_decay (float): Weight decay (L2 penalty). It should be in range [0.0, 1.0]. Default: 0.0.
-        nesterov (bool): Enables the Nesterov momentum. If use nesterov, momentum must greater then 0,
-                         and dampening must equal to 1. Default: False.
+        nesterov (bool): Enables the Nesterov momentum. If use nesterov, momentum must be positive,
+                         and dampening must equal to 0.0. Default: False.
         loss_scale (float): A floating point value for the loss scale. Should be not less than 1.0. Default: 1.0.
 
     Inputs:
@@ -134,8 +134,8 @@ class SGD(Optimizer):
         if isinstance(momentum, float) and momentum < 0.0:
             raise ValueError("momentum should be at least 0.0, but got momentum {}".format(momentum))
 
-        if nesterov and (momentum <= 0 or dampening != 0):
-            raise ValueError("If use nesterov, momentum must be positive and dampening must equal to 0,"
+        if nesterov and (momentum <= 0.0 or dampening != 0.0):
+            raise ValueError("If use nesterov, momentum must be positive and dampening must equal to 0.0,"
                              "but got momentum {}, dampening {}".format(momentum, dampening))
 
         if isinstance(dampening, int):
