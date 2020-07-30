@@ -41,5 +41,11 @@ mkdir ../train
 cd ../train || exit
 
 export CUDA_VISIBLE_DEVICES="$2"
-mpirun -n $1 --allow-run-as-root \
-python3 ${BASEPATH}/../train.py > train.log 2>&1 &
+
+if [ $1 -gt 1 ]
+then
+    mpirun -n $1 --allow-run-as-root \
+    python3 ${BASEPATH}/../train.py > train.log 2>&1 &
+else
+    python3 ${BASEPATH}/../train.py > train.log 2>&1 &
+fi
