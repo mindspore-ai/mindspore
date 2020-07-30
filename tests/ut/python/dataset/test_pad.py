@@ -148,8 +148,20 @@ def test_pad_md5():
     filename2 = "pad_01_py_result.npz"
     save_and_check_md5(data2, filename2, generate_golden=GENERATE_GOLDEN)
 
+def test_pad_exception():
+    try:
+        data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+        pad_op = c_vision.Pad(150)
+        data1 = data1.map(input_columns=["image"], operations=pad_op)
+        for _ in data1.create_dict_iterator():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "Pad error: invalid image shape, only support 3 channels image" in str(e)
+
 
 if __name__ == "__main__":
     test_pad_op()
     test_pad_grayscale()
     test_pad_md5()
+    test_pad_exception()
