@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_P32_CONV_DEPTHWISE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_P32_CONV_DEPTHWISE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_CONV_DEPTHWISE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_CONV_DEPTHWISE_H_
 
 #include "src/runtime/kernel/arm/opclib/conv_parameter.h"
 
@@ -45,5 +45,5 @@ void ConvDwC4Fp32(float *output_data, const float *input_data, const float *weig
 void DeconvDwC4Fp32(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
                     const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id);
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_P32_CONV_DEPTHWISE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_CONV_DEPTHWISE_H_
 

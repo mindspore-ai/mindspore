@@ -72,7 +72,7 @@ else()
             )
 endif()
 ### cpu kernel
-file(GLOB_RECURSE KERNEL_OP_SRC
+file(GLOB KERNEL_OP_SRC
         ${LITE_DIR}/src/runtime/kernel/arm/base/*.cc
         ${LITE_DIR}/src/runtime/kernel/arm/fp32/*.cc
         ${LITE_DIR}/src/runtime/kernel/arm/int8/*.cc
@@ -103,10 +103,13 @@ if (PLATFORM_ARM32)
             )
 endif()
 if (ENABLE_FP16)
+    file(GLOB KERNEL_OP_FP16_SRC
+            ${LITE_DIR}/src/runtime/kernel/arm/fp16/*.cc
+            ${LITE_DIR}/src/runtime/kernel/arm/opclib/fp16/*.cc
+            )
     set(KERNEL_OP_SRC
             ${KERNEL_OP_SRC}
-            ${LITE_DIR}/src/runtime/kernel/arm/fp16/convolution_fp16.cc
-            ${LITE_DIR}/src/runtime/kernel/arm/fp16/convolution_3x3_fp16.cc
+            ${KERNEL_OP_FP16_SRC}
             )
 endif ()
 ### gpu kernel

@@ -25,6 +25,8 @@
 #ifdef ENABLE_FP16
 #include "src/runtime/kernel/arm/fp16/convolution_fp16.h"
 #include "src/runtime/kernel/arm/fp16/convolution_3x3_fp16.h"
+#include "src/runtime/kernel/arm/fp16/convolution_depthwise_fp16.h"
+#include "src/runtime/kernel/arm/fp16/deconvolution_depthwise_fp16.h"
 #endif
 #include "src/runtime/kernel/arm/int8/deconvolution_int8.h"
 #include "src/runtime/kernel/arm/int8/convolution_int8.h"
@@ -347,6 +349,19 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::tensor::T
   return kernel;
 }
 
+#ifdef ENABLE_FP16
+kernel::LiteKernel *CpuConvDwFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
+                                               const std::vector<lite::tensor::Tensor *> &outputs,
+                                               OpParameter *opParameter, const Context *ctx) {
+  auto kernel = new (std::nothrow) ConvolutionDepthwiseFp16CPUKernel(opParameter, inputs, outputs, ctx);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "kernel is nullptr.";
+    return nullptr;
+  }
+  return kernel;
+}
+#endif
+
 kernel::LiteKernel *CpuConvDwInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                const std::vector<lite::tensor::Tensor *> &outputs,
                                                OpParameter *opParameter, const Context *ctx) {
@@ -372,12 +387,12 @@ kernel::LiteKernel *CpuConvDwKernelCreator(const std::vector<lite::tensor::Tenso
       break;
     case kNumberTypeUInt8:
       break;
-#ifdef ENABLE_FP16
-    case kNumberTypeFloat16:
-      break;
-#endif
     case kNumberTypeFloat32:
+#ifdef ENABLE_FP16
+      kernel = CpuConvDwFp16KernelCreator(inputs, outputs, opParameter, ctx);
+#else
       kernel = CpuConvDwFp32KernelCreator(inputs, outputs, opParameter, ctx);
+#endif
       break;
     default:
       break;
@@ -407,6 +422,19 @@ kernel::LiteKernel *CpuDeconvDwFp32KernelCreator(const std::vector<lite::tensor:
   return kernel;
 }
 
+#ifdef ENABLE_FP16
+kernel::LiteKernel *CpuDeconvDwFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
+                                                 const std::vector<lite::tensor::Tensor *> &outputs,
+                                                 OpParameter *opParameter, const lite::Context *ctx) {
+  auto kernel = new (std::nothrow) DeconvolutionDepthwiseFp16CPUKernel(opParameter, inputs, outputs, ctx);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "kernel is nullptr.";
+    return nullptr;
+  }
+  return kernel;
+}
+#endif
+
 kernel::LiteKernel *CpuDeconvDwInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                  const std::vector<lite::tensor::Tensor *> &outputs,
                                                  OpParameter *opParameter, const lite::Context *ctx) {
@@ -432,7 +460,11 @@ kernel::LiteKernel *CpuDeconvDwKernelCreator(const std::vector<lite::tensor::Ten
       kernel = CpuDeconvDwInt8KernelCreator(inputs, outputs, opParameter, ctx);
       break;
     case kNumberTypeFloat32:
+#ifdef ENABLE_FP16
+      kernel = CpuDeconvDwFp16KernelCreator(inputs, outputs, opParameter, ctx);
+#else
       kernel = CpuDeconvDwFp32KernelCreator(inputs, outputs, opParameter, ctx);
+#endif
       break;
     default:
       break;

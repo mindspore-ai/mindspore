@@ -718,3 +718,7 @@ table Where{
 table OneHot {
     axis: int;
 }
+
+table Lstm{
+    bidirection: bool = false;
+}

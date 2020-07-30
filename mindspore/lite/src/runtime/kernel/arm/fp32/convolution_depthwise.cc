@@ -32,8 +32,8 @@ int ConvolutionDepthwiseCPUKernel::Init() {
   ConvolutionBaseCPUKernel::Init();
 
   // init sliding window param
-  sliding = new SlidingWindowParam;
-  InitSlidingParam(sliding, conv_param_, C4NUM);
+  sliding_ = new SlidingWindowParam;
+  InitSlidingParam(sliding_, conv_param_, C4NUM);
 
   // pack input function: convert_func_
   auto input_tensor = inputs_[kInputIndex];
@@ -97,7 +97,7 @@ int ConvolutionDepthwiseCPUKernel::ReSize() {
 
 int ConvolutionDepthwiseCPUKernel::Execute(int task_id) {
   ConvDwC4Fp32(packed_output_, packed_input_, packed_weight_, reinterpret_cast<float *>(bias_data_), conv_param_,
-               sliding, task_id);
+               sliding_, task_id);
   return RET_OK;
 }
 

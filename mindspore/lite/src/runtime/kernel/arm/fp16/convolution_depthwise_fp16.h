@@ -14,46 +14,41 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DEPTHWISE_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DEPTHWISE_FP16_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
-#include "src/runtime/kernel/arm/opclib/fp32/conv_depthwise.h"
+#include "src/runtime/kernel/arm/opclib/fp16/conv_depthwise_fp16.h"
 
 namespace mindspore::kernel {
-class ConvolutionDepthwiseCPUKernel : public ConvolutionBaseCPUKernel {
+class ConvolutionDepthwiseFp16CPUKernel : public ConvolutionBaseCPUKernel {
  public:
-  ConvolutionDepthwiseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
+  ConvolutionDepthwiseFp16CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                                    const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
-  ~ConvolutionDepthwiseCPUKernel() override {
+  ~ConvolutionDepthwiseFp16CPUKernel() override {
     delete sliding_;
     free(packed_weight_);
-    if (convert_func_ != nullptr) {
-      free(packed_input_);
-    }
-    if (need_align_) {
-      free(packed_output_);
-    }
-  };
+    free(packed_input_);
+    free(packed_output_);
+  }
 
   int Init() override;
   int ReSize() override;
   int Run() override;
 
+  int InitBuffer();
+  int InitWeightBias();
   int Execute(int task_id);
 
  private:
   SlidingWindowParam *sliding_;
-  float *packed_weight_;
-  float *packed_input_;
-  float *packed_output_;
-  float *output_addr;
-  bool need_align_ = false;
+  float16_t *packed_weight_;
+  float16_t *packed_input_;
+  float16_t *packed_output_;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_H_
-
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DEPTHWISE_FP16_H_
