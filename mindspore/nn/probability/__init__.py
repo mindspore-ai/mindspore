@@ -15,10 +15,7 @@
 """
 Probability.
 
-The high-level components(Distributions) used to construct the probabilistic network.
+The high-level components used to construct the probabilistic network.
 """
 
-from .distribution import *
-
-__all__ = []
-__all__.extend(distribution.__all__)
+from . import distribution

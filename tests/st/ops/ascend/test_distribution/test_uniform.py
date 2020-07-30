@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""test cases for uniform distribution"""
+"""test cases for Uniform distribution"""
 import numpy as np
 from scipy import stats
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore.nn.probability.distribution as msd
 from mindspore import Tensor
 from mindspore.common.api import ms_function
 from mindspore import dtype
@@ -29,7 +30,7 @@ class Prob(nn.Cell):
     """
     def __init__(self):
         super(Prob, self).__init__()
-        self.u = nn.Uniform([0.0], [[1.0], [2.0]], dtype=dtype.float32)
+        self.u = msd.Uniform([0.0], [[1.0], [2.0]], dtype=dtype.float32)
 
     @ms_function
     def construct(self, x_):
@@ -53,7 +54,7 @@ class LogProb(nn.Cell):
     """
     def __init__(self):
         super(LogProb, self).__init__()
-        self.u = nn.Uniform([0.0], [[1.0], [2.0]], dtype=dtype.float32)
+        self.u = msd.Uniform([0.0], [[1.0], [2.0]], dtype=dtype.float32)
 
     @ms_function
     def construct(self, x_):
@@ -77,7 +78,7 @@ class KL(nn.Cell):
     """
     def __init__(self):
         super(KL, self).__init__()
-        self.u = nn.Uniform([0.0], [1.5], dtype=dtype.float32)
+        self.u = msd.Uniform([0.0], [1.5], dtype=dtype.float32)
 
     @ms_function
     def construct(self, x_, y_):
@@ -103,7 +104,7 @@ class Basics(nn.Cell):
     """
     def __init__(self):
         super(Basics, self).__init__()
-        self.u = nn.Uniform([0.0], [3.0], dtype=dtype.float32)
+        self.u = msd.Uniform([0.0], [3.0], dtype=dtype.float32)
 
     @ms_function
     def construct(self):
@@ -127,7 +128,7 @@ class Sampling(nn.Cell):
     """
     def __init__(self, shape, seed=0):
         super(Sampling, self).__init__()
-        self.u = nn.Uniform([0.0], [[1.0], [2.0]], seed=seed, dtype=dtype.float32)
+        self.u = msd.Uniform([0.0], [[1.0], [2.0]], seed=seed, dtype=dtype.float32)
         self.shape = shape
 
     @ms_function
@@ -152,7 +153,7 @@ class CDF(nn.Cell):
     """
     def __init__(self):
         super(CDF, self).__init__()
-        self.u = nn.Uniform([0.0], [1.0], dtype=dtype.float32)
+        self.u = msd.Uniform([0.0], [1.0], dtype=dtype.float32)
 
     @ms_function
     def construct(self, x_):
@@ -176,7 +177,7 @@ class LogCDF(nn.Cell):
     """
     def __init__(self):
         super(LogCDF, self).__init__()
-        self.u = nn.Uniform([0.0], [1.0], dtype=dtype.float32)
+        self.u = msd.Uniform([0.0], [1.0], dtype=dtype.float32)
 
     @ms_function
     def construct(self, x_):
@@ -188,7 +189,7 @@ class SF(nn.Cell):
     """
     def __init__(self):
         super(SF, self).__init__()
-        self.u = nn.Uniform([0.0], [1.0], dtype=dtype.float32)
+        self.u = msd.Uniform([0.0], [1.0], dtype=dtype.float32)
 
     @ms_function
     def construct(self, x_):
@@ -200,7 +201,7 @@ class LogSF(nn.Cell):
     """
     def __init__(self):
         super(LogSF, self).__init__()
-        self.u = nn.Uniform([0.0], [1.0], dtype=dtype.float32)
+        self.u = msd.Uniform([0.0], [1.0], dtype=dtype.float32)
 
     @ms_function
     def construct(self, x_):
@@ -212,7 +213,7 @@ class EntropyH(nn.Cell):
     """
     def __init__(self):
         super(EntropyH, self).__init__()
-        self.u = nn.Uniform([0.0], [1.0, 2.0], dtype=dtype.float32)
+        self.u = msd.Uniform([0.0], [1.0, 2.0], dtype=dtype.float32)
 
     @ms_function
     def construct(self):
@@ -235,7 +236,7 @@ class CrossEntropy(nn.Cell):
     """
     def __init__(self):
         super(CrossEntropy, self).__init__()
-        self.u = nn.Uniform([0.0], [1.5], dtype=dtype.float32)
+        self.u = msd.Uniform([0.0], [1.5], dtype=dtype.float32)
 
     @ms_function
     def construct(self, x_, y_):

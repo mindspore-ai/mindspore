@@ -24,7 +24,6 @@ from .loss import *
 from .optim import *
 from .metrics import *
 from .wrap import *
-from .probability import *
 
 
 __all__ = ["Cell", "GraphKernel"]
@@ -33,7 +32,7 @@ __all__.extend(loss.__all__)
 __all__.extend(optim.__all__)
 __all__.extend(metrics.__all__)
 __all__.extend(wrap.__all__)
-__all__.extend(probability.__all__)
+
 
 
 __all__.sort()
