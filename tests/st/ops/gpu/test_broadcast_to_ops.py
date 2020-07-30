@@ -38,3 +38,9 @@ def test_broadcast():
     output = P.BroadcastTo(shape)(Tensor(x1_np))
     expect = np.broadcast_to(x1_np, shape)
     assert np.allclose(output.asnumpy(), expect)
+
+    x1_np = np.random.rand(4, 5).astype(np.float32)
+    shape = (2, 3, 4, 5)
+    output = P.BroadcastTo(shape)(Tensor(x1_np))
+    expect = np.broadcast_to(x1_np, shape)
+    assert np.allclose(output.asnumpy(), expect)
