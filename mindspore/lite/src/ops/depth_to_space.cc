@@ -23,7 +23,7 @@ namespace mindspore::lite {
 namespace {
 constexpr int kDepthToSpaceOutputNum = 1;
 constexpr int kDepthToSpaceInputNum = 1;
-}
+}  // namespace
 
 int DepthToSpace::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
   MS_ASSERT(this->primitive != nullptr);
@@ -56,7 +56,8 @@ int DepthToSpace::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<t
   output_shape[kNHWC_c_index] = input_shape[kNHWC_c_index] / (block_size * block_size);
   outputs[0]->set_shape(output_shape);
   outputs[0]->set_data_type(input->data_type());
+  outputs[0]->SetFormat(input->GetFormat());
+
   return RET_OK;
 }
 }  // namespace mindspore::lite
-

@@ -45,7 +45,8 @@ int Resize::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   output_shape.push_back(input->Channel());
   output->set_shape(output_shape);
   output->set_data_type(input->data_type());
+  output->SetFormat(input->GetFormat());
+
   return RET_OK;
 }
 }  // namespace mindspore::lite
-

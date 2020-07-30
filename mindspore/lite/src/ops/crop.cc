@@ -32,7 +32,8 @@ int Crop::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::T
     return RET_PARAM_INVALID;
   }
   outputs[0]->set_shape(inputs[1]->shape());
+  outputs[0]->SetFormat(inputs[1]->GetFormat());
+
   return RET_OK;
 }
 }  // namespace mindspore::lite
-

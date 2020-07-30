@@ -23,7 +23,7 @@ namespace mindspore::lite {
 namespace {
 constexpr int kSliceInputNum = 1;
 constexpr int kSliceOutputNum = 1;
-}
+}  // namespace
 
 int Slice::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
   MS_ASSERT(this->primitive != nullptr);
@@ -47,13 +47,13 @@ int Slice::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::
       return RET_PARAM_INVALID;
     }
     if (input_shape[i] <= slice_begin[i]) {
-      MS_LOG(ERROR) << "Invalid begin input!begin[" << i << "]=" << slice_begin[i] << " which should be <= "
-                    << input_shape[i];
+      MS_LOG(ERROR) << "Invalid begin input!begin[" << i << "]=" << slice_begin[i]
+                    << " which should be <= " << input_shape[i];
       return RET_PARAM_INVALID;
     }
     if (slice_size[i] > (input_shape[i] - slice_begin[i])) {
-      MS_LOG(ERROR) << "Invalid size input " << slice_size[i] << " which should be <= "
-                    << input_shape[i] - slice_begin[i];
+      MS_LOG(ERROR) << "Invalid size input " << slice_size[i]
+                    << " which should be <= " << input_shape[i] - slice_begin[i];
       return RET_PARAM_INVALID;
     }
 
@@ -62,7 +62,8 @@ int Slice::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::
 
   outputs[0]->set_shape(output_shape);
   outputs[0]->set_data_type(input->data_type());
+  outputs[0]->SetFormat(input->GetFormat());
+
   return RET_OK;
 }
 }  // namespace mindspore::lite
-

@@ -58,9 +58,9 @@ int BroadcastTo::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<te
     shape[i] = dst_shape[i];
     --input_shape_index;
   }
+  outputs[0]->SetFormat(input->GetFormat());
   outputs[0]->set_shape(shape);
   outputs[0]->set_data_type(input->data_type());
   return RET_OK;
 }
 }  // namespace mindspore::lite
-

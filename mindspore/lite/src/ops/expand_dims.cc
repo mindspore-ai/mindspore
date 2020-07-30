@@ -45,7 +45,8 @@ int ExpandDims::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<te
   out_shape.insert(out_shape.begin() + dim, 1, 1);
   output->set_shape(out_shape);
   output->set_data_type(input->data_type());
+  output->SetFormat(input->GetFormat());
+
   return RET_OK;
 }
 }  // namespace mindspore::lite
-

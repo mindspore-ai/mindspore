@@ -157,6 +157,8 @@ int StridedSlice::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<t
 
   outputs.front()->set_shape(output_shape);
   outputs.front()->set_data_type(input->data_type());
+  outputs[0]->SetFormat(input->GetFormat());
+
   return RET_OK;
 }
 }  // namespace mindspore::lite

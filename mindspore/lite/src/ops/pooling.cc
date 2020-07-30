@@ -74,6 +74,7 @@ int Pooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
   input_shape.at(2) = output_w;
   output->set_shape(input_shape);
   output->set_data_type(input->data_type());
+
   // todo: temp fix
   output->SetFormat(schema::Format_NHWC);
   return RET_OK;

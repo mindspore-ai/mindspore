@@ -37,12 +37,13 @@ int TopK::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
 
   output0->set_shape(input->shape());
   output0->set_data_type(input->data_type());
-//  output0->shape().back() = topk_prim->k();
+  //  output0->shape().back() = topk_prim->k();
 
   output1->set_shape(input->shape());
   output1->set_data_type(input->data_type());
-//  output1->shape().back() = topk_prim->k();
+  //  output1->shape().back() = topk_prim->k();
+  output1->SetFormat(input->GetFormat());
+
   return RET_OK;
 }
 }  // namespace mindspore::lite
-

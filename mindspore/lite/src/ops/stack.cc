@@ -23,7 +23,7 @@ namespace mindspore::lite {
 namespace {
 constexpr int kStackOutputNum = 1;
 constexpr int kStackMinInputNum = 2;
-}
+}  // namespace
 
 int Stack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
   MS_ASSERT(this->primitive != nullptr);
@@ -61,7 +61,8 @@ int Stack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::
   output_shape.insert(output_shape.begin() + axis, inputs.size());
   outputs[0]->set_shape(output_shape);
   outputs[0]->set_data_type(input->data_type());
+  outputs[0]->SetFormat(input->GetFormat());
+
   return RET_OK;
 }
 }  // namespace mindspore::lite
-
