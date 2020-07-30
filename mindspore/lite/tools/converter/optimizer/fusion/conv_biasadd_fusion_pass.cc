@@ -81,7 +81,7 @@ STATUS ConvBiasAddFusionPass::DoFusion(MetaGraphT *graph, const std::string &pat
   }
   auto baNodeBiasTensor = graph->allTensors.at(baNodeInputIndex[BIASADD_OP_CONST_TENSOR_INDEX]).get();
   MS_ASSERT(baNodeBiasTensor != nullptr);
-  if (baNodeBiasTensor->refCount != schema::NodeType_ValueNode) {
+  if (baNodeBiasTensor->nodeType != schema::NodeType_ValueNode) {
     // dont fusion, return
     return RET_OK;
   }
@@ -215,7 +215,9 @@ STATUS ConvBiasAddFusionPass::GenConvBiasTensor(std::shared_ptr<Path> convPath, 
                   << ". or bias tensor is a scaler";
     return RET_ERROR;
   }
-  if (!biasDims.empty() && biasDims.at(BIASADD_BIAS_DIM_INDEX) != kernelNum) {
+
+  bool bias_const = !biasDims.empty() && biasDims.size() == 1 && biasDims[0] == 1;
+  if (!biasDims.empty() && !bias_const && biasDims.at(BIASADD_BIAS_DIM_INDEX) != kernelNum) {
     MS_LOG(ERROR) << "Size(%d) of BiasAdd(%s) bias tensor should be equal to kernelNum(%d)"
                   << biasDims.at(BIASADD_BIAS_DIM_INDEX) << baNode->name.c_str() << kernelNum;
     return RET_ERROR;
@@ -233,6 +235,11 @@ STATUS ConvBiasAddFusionPass::GenConvBiasTensor(std::shared_ptr<Path> convPath, 
     if (0 != memset_s(newBiasData, kernelNum * sizeof(float), *biasData, kernelNum * sizeof(float))) {
       MS_LOG(ERROR) << "memset_s newBiasData failed";
       return RET_ERROR;
+    }
+  } else if (bias_const) {
+    auto *biasData = reinterpret_cast<float *>(biasTensor->data.data());
+    for (size_t i = 0; i < kernelNum; i++) {
+      newBiasData[i] = *biasData;
     }
   } else {
     if (0 != memcpy_s(newBiasData, kernelNum * sizeof(float), biasTensor->data.data(), kernelNum * sizeof(float))) {
