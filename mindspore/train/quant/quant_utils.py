@@ -176,13 +176,13 @@ def scale_zp_from_data(op, minq, maxq, data_type):
 
 def fold_batchnorm(weight, cell_quant):
     r"""
-    Fold the batchnorm in `Conv2dBatchNormQuant` to weight.
+    Fold the batchnorm in `Conv2dBnFoldQuant` to weight.
 
     Calculate from `FakeQuantWithMinMax`'s Parameter or Fake quant primitive.
 
     Args:
         weight (numpy.ndarray): Weight of `cell_quant`.
-        cell_quant (Cell): Object of `mindspore.nn.layer.Conv2dBatchNormQuant`.
+        cell_quant (Cell): Object of `mindspore.nn.layer.Conv2dBnFoldQuant`.
 
     Returns:
         weight (numpy.ndarray): Folded weight.

@@ -39,7 +39,8 @@ __all__ = [
     'Conv2dBnAct',
     'DenseBnAct',
     'FakeQuantWithMinMax',
-    'Conv2dBatchNormQuant',
+    'Conv2dBnFoldQuant',
+    'Conv2dBnWithoutFoldQuant',
     'Conv2dQuant',
     'DenseQuant',
     'ActQuant',
@@ -393,7 +394,7 @@ class FakeQuantWithMinMax(Cell):
         return out
 
 
-class Conv2dBatchNormQuant(Cell):
+class Conv2dBnFoldQuant(Cell):
     r"""
     2D convolution with BatchNormal op folded layer.
 
@@ -418,7 +419,7 @@ class Conv2dBatchNormQuant(Cell):
             mean vector. Default: 'zeros'.
         var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the
             variance vector. Default: 'ones'.
-        fake (bool): Conv2dBatchNormQuant Cell add FakeQuantWithMinMax op or not. Default: True.
+        fake (bool): Conv2dBnFoldQuant Cell add FakeQuantWithMinMax op or not. Default: True.
         per_channel (bool): FakeQuantWithMinMax Parameters. Default: False.
         num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
         symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
@@ -433,7 +434,7 @@ class Conv2dBatchNormQuant(Cell):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> batchnorm_quant = nn.Conv2dBatchNormQuant(1, 6, kernel_size= (2, 2), stride=(1, 1), pad_mode="valid",
+        >>> batchnorm_quant = nn.Conv2dBnFoldQuant(1, 6, kernel_size= (2, 2), stride=(1, 1), pad_mode="valid",
         >>>                                           dilation=(1, 1))
         >>> input_x = Tensor(np.random.randint(-2, 2, (2, 1, 1, 3)), mindspore.float32)
         >>> result = batchnorm_quant(input_x)
@@ -462,8 +463,8 @@ class Conv2dBatchNormQuant(Cell):
                  narrow_range=False,
                  quant_delay=0,
                  freeze_bn=100000):
-        """init Conv2dBatchNormQuant layer"""
-        super(Conv2dBatchNormQuant, self).__init__()
+        """init Conv2dBnFoldQuant layer"""
+        super(Conv2dBnFoldQuant, self).__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.kernel_size = twice(kernel_size)
@@ -578,6 +579,132 @@ class Conv2dBatchNormQuant(Cell):
             else:
                 out = self.batchnorm_fold2_infer(out, self.beta, self.gamma, running_std, running_mean, running_std)
         return out
+
+
+class Conv2dBnWithoutFoldQuant(Cell):
+    r"""
+    2D convolution + batchnorm without fold with fake quant op layer.
+
+    For a more Detailed overview of Conv2d op.
+
+    Args:
+        in_channels (int): The number of input channel :math:`C_{in}`.
+        out_channels (int): The number of output channel :math:`C_{out}`.
+        kernel_size (Union[int, tuple]): Specifies the height and width of the 2D convolution window.
+        stride (int): Specifies stride for all spatial dimensions with the same value. Default: 1.
+        pad_mode (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
+        padding (int): Implicit paddings on both sides of the input. Default: 0.
+        dilation (int): Specifying the dilation rate to use for dilated convolution. Default: 1.
+        group (int): Split filter into groups, `in_ channels` and `out_channels` should be
+            divisible by the number of groups. Default: 1.
+        has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
+        has_bn (bool): Specifies to used batchnorm or not. Default: False.
+        eps (float): Parameters for BatchNormal. Default: 1e-5.
+        momentum (float): Parameters for BatchNormal op. Default: 0.997.
+        weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the convolution kernel.
+            Default: 'normal'.
+        bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the bias vector. Default: 'zeros'.
+        per_channel (bool): FakeQuantWithMinMax Parameters. Default: False.
+        num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
+        symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
+        narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
+        quant_delay (int): Quantization delay parameters according by global step. Default: 0.
+
+    Inputs:
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+
+    Outputs:
+        Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Examples:
+        >>> conv2d_quant = nn.Conv2dQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
+        >>>                               dilation=(1, 1))
+        >>> input_x = Tensor(np.random.randint(-2, 2, (2, 1, 1, 3)), mstype.float32)
+        >>> result = conv2d_quant(input_x)
+    """
+
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 kernel_size,
+                 stride=1,
+                 pad_mode='same',
+                 padding=0,
+                 dilation=1,
+                 group=1,
+                 has_bias=False,
+                 has_bn=True,
+                 eps=1e-5,
+                 momentum=0.997,
+                 weight_init='normal',
+                 bias_init='zeros',
+                 per_channel=False,
+                 num_bits=8,
+                 symmetric=False,
+                 narrow_range=False,
+                 quant_delay=0):
+        super(Conv2dBnWithoutFoldQuant, self).__init__()
+        if isinstance(kernel_size, int):
+            self.kernel_size = (kernel_size, kernel_size)
+        else:
+            self.kernel_size = kernel_size
+        self.in_channels = check_int_positive(in_channels)
+        self.out_channels = check_int_positive(out_channels)
+        self.has_bias = has_bias
+        self.stride = twice(stride)
+        self.dilation = twice(dilation)
+        self.pad_mode = pad_mode
+        self.padding = padding
+        self.group = group
+        self.quant_delay = quant_delay
+
+        weight_shape = [out_channels, in_channels // group, *self.kernel_size]
+        self.weight = Parameter(initializer(weight_init, weight_shape), name='weight')
+
+        self.bias_add = P.BiasAdd()
+        if check_bool(has_bias):
+            self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
+        else:
+            self.bias = None
+
+        self.conv = P.Conv2D(out_channel=self.out_channels,
+                             kernel_size=self.kernel_size,
+                             mode=1,
+                             pad_mode=self.pad_mode,
+                             pad=self.padding,
+                             stride=self.stride,
+                             dilation=self.dilation,
+                             group=self.group)
+        self.fake_quant_weight = FakeQuantWithMinMax(min_init=-6,
+                                                     max_init=6,
+                                                     ema=False,
+                                                     per_channel=per_channel,
+                                                     channel_axis=0,
+                                                     num_channels=out_channels,
+                                                     num_bits=num_bits,
+                                                     symmetric=symmetric,
+                                                     narrow_range=narrow_range,
+                                                     quant_delay=quant_delay)
+        self.has_bn = validator.check_bool("has_bn", has_bn)
+        if has_bn:
+            self.batchnorm = BatchNorm2d(out_channels)
+
+    def construct(self, x):
+        weight = self.fake_quant_weight(self.weight)
+        out = self.conv(x, weight)
+        if self.has_bias:
+            out = self.bias_add(out, self.bias)
+        if self.has_bn:
+            out = self.batchnorm(out)
+        return out
+
+    def extend_repr(self):
+        s = 'in_channels={}, out_channels={}, kernel_size={}, stride={}, ' \
+            'pad_mode={}, padding={}, dilation={}, group={}, ' \
+            'has_bias={}, quant_delay={}'.format(self.in_channels, self.out_channels, self.kernel_size, self.stride,
+                                                 self.pad_mode, self.padding, self.dilation, self.group,
+                                                 self.has_bias, self.quant_delay)
+        return s
 
 
 class Conv2dQuant(Cell):
