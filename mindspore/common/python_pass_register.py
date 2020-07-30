@@ -14,6 +14,7 @@
 # ============================================================================
 """Python pass register"""
 from inspect import isfunction
+from mindspore.common.graph_pattern import Pattern
 from mindspore._c_expression import PyPassManager_
 from mindspore._c_expression import phase
 
@@ -46,10 +47,10 @@ class PyPassManager(PyPassManager_):
             raise TypeError(f"Expecting function pass, got : ({type(py_pass)}){py_pass}")
         pattern, target = py_pass()
         pass_name = py_pass.__name__
-        if not isfunction(pattern):
-            raise TypeError(f"Expecting function pattern, got : ({type(pattern)}){pattern}")
-        if not isfunction(target):
-            raise TypeError(f"Expecting function target, got : ({type(target)}){target}")
+        if not isinstance(pattern, Pattern):
+            raise TypeError(f"Expecting pattern of Pattern type, got : ({type(pattern)}){pattern}")
+        if not isinstance(target, Pattern):
+            raise TypeError(f"Expecting target of Pattern type, got : ({type(target)}){target}")
         super().registe(pass_name, pattern, target, self.phase_, self.run_only_once_, self.multi_graph_)
 
     def unregiste(self, py_pass, pipeline_phase=phase.opt):

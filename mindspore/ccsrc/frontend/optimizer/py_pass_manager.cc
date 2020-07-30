@@ -49,7 +49,7 @@ PyPassManager::PyPassManager() {
   phase_to_group_[Phase::OPT] = std::make_shared<PassGroup>();
 }
 
-void PyPassManager::Registe(const std::string &pass_name, const py::function &pattern, const py::function &target,
+void PyPassManager::Registe(const std::string &pass_name, const PatternPtr &pattern, const PatternPtr &target,
                             Phase phase, bool run_only_once, bool multigraph) {
   auto cur_pm = GetPassGroup(phase);
   MS_EXCEPTION_IF_NULL(cur_pm);
