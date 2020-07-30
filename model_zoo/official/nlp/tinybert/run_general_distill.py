@@ -87,8 +87,10 @@ def run_general_distill():
 
     if args_opt.enable_data_sink == "true":
         repeat_count = args_opt.epoch_size * dataset.get_dataset_size() // args_opt.data_sink_steps
+        time_monitor_steps = args_opt.data_sink_steps
     else:
         repeat_count = args_opt.epoch_size
+        time_monitor_steps = dataset_size
 
     lr_schedule = BertLearningRate(learning_rate=common_cfg.AdamWeightDecay.learning_rate,
                                    end_learning_rate=common_cfg.AdamWeightDecay.end_learning_rate,
@@ -104,10 +106,10 @@ def run_general_distill():
 
     optimizer = AdamWeightDecay(group_params, learning_rate=lr_schedule, eps=common_cfg.AdamWeightDecay.eps)
 
-    callback = [TimeMonitor(dataset_size), LossCallBack(), ModelSaveCkpt(netwithloss.bert,
-                                                                         args_opt.save_ckpt_step,
-                                                                         args_opt.max_ckpt_num,
-                                                                         save_ckpt_dir)]
+    callback = [TimeMonitor(time_monitor_steps), LossCallBack(), ModelSaveCkpt(netwithloss.bert,
+                                                                               args_opt.save_ckpt_step,
+                                                                               args_opt.max_ckpt_num,
+                                                                               save_ckpt_dir)]
 
     update_cell = DynamicLossScaleUpdateCell(loss_scale_value=common_cfg.loss_scale_value,
                                              scale_factor=common_cfg.scale_factor,
