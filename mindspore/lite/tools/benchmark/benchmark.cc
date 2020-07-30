@@ -316,6 +316,8 @@ int Benchmark::MarkPerformance() {
 int Benchmark::MarkAccuracy() {
   MS_LOG(INFO) << "MarkAccuracy";
   for (size_t i = 0; i < msInputs.size(); i++) {
+    MS_ASSERT(msInputs.at(i) != nullptr);
+    MS_ASSERT(msInputs.at(i)->data_type() == TypeId::kNumberTypeFloat32);
     auto inData = reinterpret_cast<float *>(msInputs.at(i)->MutableData());
     std::cout << "InData" << i << ": ";
     for (size_t j = 0; j < 20; j++) {
@@ -331,14 +333,6 @@ int Benchmark::MarkAccuracy() {
 
   ReadCalibData();
   CompareOutput();
-  if (cleanData) {
-    for (auto &msOutput : msOutputs) {
-      for (auto &outputTensor : msOutput.second) {
-        delete outputTensor;
-      }
-    }
-    msOutputs.clear();
-  }
   return 0;
 }
 
@@ -407,10 +401,6 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
   }
 
   if (cleanData) {
-    for (auto &msInput : msInputs) {
-      delete msInput;
-    }
-    msInputs.clear();
     for (auto &data : calibData) {
       data.second->shape.clear();
       data.second->data.clear();

@@ -39,6 +39,7 @@ class Model {
  protected:
   std::shared_ptr<ModelImpl> modelImpl = nullptr;
 };
+
 class ModelBuilder {
  public:
   struct OutEdge {
@@ -54,4 +55,3 @@ class ModelBuilder {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_INCLUDE_MODEL_H
-

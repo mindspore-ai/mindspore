@@ -444,11 +444,6 @@ build_protobuf() {
     fi
 }
 
-build_gtest() {
-    cd ${BASEPATH}
-    git submodule update --init --recursive third_party/googletest
-}
-
 gene_clhpp() {
     CL_SRC_DIR="${BASEPATH}/mindspore/lite/src/runtime/kernel/opencl/cl"
     for sub_dir in "${CL_SRC_DIR}"/*
@@ -530,9 +525,11 @@ build_lite()
       build_protobuf
     fi
     build_flatbuffer
-    build_gtest
 
     cd "${BASEPATH}/mindspore/lite"
+    if [[ "${INC_BUILD}" == "off" ]]; then
+        rm -rf build
+    fi
     mkdir -pv build
     cd build
     BUILD_TYPE="Release"
@@ -590,7 +587,7 @@ build_lite()
             sha256sum MSLite-0.5.0-linux_x86_64.tar.gz > MSLite-0.5.0-linux_x86_64.tar.gz.256sha
             rm -rf MSLite-0.5.0-linux_x86_64/
         elif [[ "$LITE_PLATFORM" == "arm64" ]]; then
-            OUTPUT_DIR=${BASEPATH}/mindspore/lite/output/MSLite-0.5.0-linux_arm64
+            OUTPUT_DIR=${BASEPATH}/output/MSLite-0.5.0-linux_arm64
             rm -rf ${OUTPUT_DIR} && mkdir -p ${OUTPUT_DIR} && cd ${OUTPUT_DIR}
             mkdir -p ${OUTPUT_DIR}/time_profile && mkdir -p ${OUTPUT_DIR}/benchmark
             mkdir -p ${OUTPUT_DIR}/include && mkdir -p ${OUTPUT_DIR}/lib
@@ -609,7 +606,7 @@ build_lite()
             sha256sum MSLite-0.5.0-linux_arm64.tar.gz > MSLite-0.5.0-linux_arm64.tar.gz.256sha
             rm -rf MSLite-0.5.0-linux_arm64/
         elif [[ "$LITE_PLATFORM" == "arm32" ]]; then
-            OUTPUT_DIR=${BASEPATH}/mindspore/lite/output/MSLite-0.5.0-linux_arm32
+            OUTPUT_DIR=${BASEPATH}/output/MSLite-0.5.0-linux_arm32
             rm -rf ${OUTPUT_DIR} && mkdir -p ${OUTPUT_DIR} && cd ${OUTPUT_DIR}
             mkdir -p ${OUTPUT_DIR}/time_profile && mkdir -p ${OUTPUT_DIR}/benchmark
             mkdir -p ${OUTPUT_DIR}/include && mkdir -p ${OUTPUT_DIR}/lib

@@ -56,7 +56,7 @@ class LiteSession : public session::LiteSession {
 
  protected:
   int ConvertTensors(const lite::Model *model);
-  int ConvertKernels(const lite::Model *model, Context *context);
+
   void InitGraphInOutTensor(const lite::Model *model);
 
  protected:
