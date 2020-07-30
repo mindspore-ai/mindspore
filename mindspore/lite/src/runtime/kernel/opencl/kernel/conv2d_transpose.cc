@@ -69,6 +69,8 @@ int Conv2dTransposeOpenCLKernel::Init() {
   PadWeight();
   allocator->UnmapBuffer(padWeight_);
   allocator->UnmapBuffer(bias_);
+  outputs_[0]->SetFormat(schema::Format_NHWC4);
+  MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return 0;
 }
 
@@ -120,6 +122,7 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
 }
 
 int Conv2dTransposeOpenCLKernel::Run() {
+  MS_LOG(DEBUG) << this->Name() << " Running!";
   std::vector<int> shapex = inputs_[0]->shape();
   int n = shapex[0];
   if (n > 1) {

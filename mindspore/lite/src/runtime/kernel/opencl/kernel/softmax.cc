@@ -46,6 +46,8 @@ int SoftmaxOpenCLKernel::Init() {
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
+  outputs_[0]->SetFormat(schema::Format_NHWC4);
+  MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return 0;
 }
 
@@ -53,6 +55,7 @@ int SoftmaxOpenCLKernel::InitBuffer() { return 0; }
 int SoftmaxOpenCLKernel::ReSize() { return 0; }
 
 int SoftmaxOpenCLKernel::Run() {
+  MS_LOG(DEBUG) << this->Name() << " Running!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   auto allocator = ocl_runtime->GetAllocator();
 

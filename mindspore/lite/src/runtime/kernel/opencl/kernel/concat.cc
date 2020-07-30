@@ -35,7 +35,7 @@ int ConcatOpenCLKernel::Init() {
   }
 
   auto param = reinterpret_cast<ConcatParameter *>(this->opParameter);
-  MS_LOG(INFO) << "concat at axis=:  " << param->axis_;
+  MS_LOG(DEBUG) << "concat at axis=:  " << param->axis_;
   if (param->axis_ != 0 && param->axis_ != 3) {
     MS_LOG(ERROR) << "only support axis=0 or axis=3";
   }
@@ -55,6 +55,8 @@ int ConcatOpenCLKernel::Init() {
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
+  outputs_[0]->SetFormat(schema::Format_NHWC4);
+  MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return 0;
 }
 
@@ -88,6 +90,7 @@ int ConcatOpenCLKernel::Run_axis0() {
 }
 
 int ConcatOpenCLKernel::Run() {
+  MS_LOG(DEBUG) << this->Name() << " Running!";
   auto param = reinterpret_cast<ConcatParameter *>(this->opParameter);
   if (param->axis_ == 0) {
     return Run_axis0();

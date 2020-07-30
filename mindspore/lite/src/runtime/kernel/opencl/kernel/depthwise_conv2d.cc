@@ -58,6 +58,7 @@ int DepthwiseConv2dOpenCLKernel::Init() {
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
   this->InitBuffer();
+  MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return 0;
 }
 int DepthwiseConv2dOpenCLKernel::InitBuffer() {
@@ -100,6 +101,7 @@ int DepthwiseConv2dOpenCLKernel::ReSize() {
 }
 
 int DepthwiseConv2dOpenCLKernel::Run() {
+  MS_LOG(DEBUG) << this->Name() << " Running!";
   auto parameter = reinterpret_cast<ConvParameter*>(opParameter);
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   size_t CO4 = UP_DIV(outputs_[0]->Channel(), C4NUM);

@@ -66,6 +66,8 @@ int MatMulOpenCLKernel::Init() {
   if (hasBias_) {
     allocator->UnmapBuffer(bias_);
   }
+  outputs_[0]->SetFormat(schema::Format_NHWC4);
+  MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return 0;
 }
 
@@ -100,6 +102,7 @@ void MatMulOpenCLKernel::PadWeight() {
 }
 
 int MatMulOpenCLKernel::Run() {
+  MS_LOG(DEBUG) << this->Name() << " Running!";
   std::vector<int> shapex = inputs_[0]->shape();
   int n = shapex[0];
   if (n > 1) {

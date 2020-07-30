@@ -59,8 +59,6 @@ int PoolingOpenCLKernel::Init() {
     MS_LOG(ERROR) << "Init `Pooling2d` kernel failed!";
     return RET_INVALID_OP_NAME;
   }
-  auto in_format = inputs_[0]->GetFormat();
-  outputs_[0]->SetFormat(in_format);
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
 
 #ifdef PROGRAM_WITH_IL
@@ -70,6 +68,8 @@ int PoolingOpenCLKernel::Init() {
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
+  outputs_[0]->SetFormat(schema::Format_NHWC4);
+  MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
 
@@ -85,6 +85,7 @@ int PoolingOpenCLKernel::InitBuffer() { return 0; }
 int PoolingOpenCLKernel::ReSize() { return 0; }
 
 int PoolingOpenCLKernel::Run() {
+  MS_LOG(DEBUG) << this->Name() << " Running!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
 
   // attribute
