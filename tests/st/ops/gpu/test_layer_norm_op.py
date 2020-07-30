@@ -175,3 +175,25 @@ def test_layernorm2d_3():
     assert np.allclose(y_ms.asnumpy(), y_np, rtol=1e-6, atol=1e-6)
     assert np.allclose(mean_ms.asnumpy(), mean_np, rtol=1e-6, atol=1e-6)
     assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-6)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_layernorm2d_4():
+    begin_norm_axis = 2
+    begin_params_axis = 1
+    np.random.seed(42)
+    x_np = np.random.randn(128, 2, 16, 32).astype(np.float32)
+    gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+    beta_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+    y_np, mean_np, var_np = LayerNormReference(begin_norm_axis, begin_params_axis, x_np, gamma_np, beta_np)
+
+    x_ms = Tensor(x_np)
+    gamma_ms = Tensor(gamma_np)
+    beta_ms = Tensor(beta_np)
+    net = LayerNormNet(begin_norm_axis, begin_params_axis)
+    y_ms, mean_ms, var_ms = net(x_ms, gamma_ms, beta_ms)
+    assert np.allclose(y_ms.asnumpy(), y_np, rtol=1e-6, atol=1e-6)
+    assert np.allclose(mean_ms.asnumpy(), mean_np, rtol=1e-6, atol=1e-6)
+    assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-6)
