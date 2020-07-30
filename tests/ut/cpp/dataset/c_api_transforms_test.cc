@@ -146,6 +146,127 @@ TEST_F(MindDataTestPipeline, TestRandomFlip) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestMixUpBatchSuccess1) {
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 5;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> one_hot_op = vision::OneHot(10);
+  EXPECT_NE(one_hot_op, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({one_hot_op},{"label"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<TensorOperation> mixup_batch_op = vision::MixUpBatch(0.5);
+  EXPECT_NE(mixup_batch_op, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({mixup_batch_op}, {"image", "label"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 2);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestMixUpBatchSuccess2) {
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 5;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> one_hot_op = vision::OneHot(10);
+  EXPECT_NE(one_hot_op, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({one_hot_op},{"label"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<TensorOperation> mixup_batch_op = vision::MixUpBatch();
+  EXPECT_NE(mixup_batch_op, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({mixup_batch_op}, {"image", "label"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 2);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestMixUpBatchFail1) {
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 5;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> one_hot_op = vision::OneHot(10);
+  EXPECT_NE(one_hot_op, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({one_hot_op},{"label"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<TensorOperation> mixup_batch_op = vision::MixUpBatch(-1);
+  EXPECT_EQ(mixup_batch_op, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestPad) {
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";

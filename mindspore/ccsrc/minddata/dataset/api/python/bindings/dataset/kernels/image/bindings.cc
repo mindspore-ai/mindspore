@@ -28,6 +28,7 @@
 #include "minddata/dataset/kernels/image/hwc_to_chw_op.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/kernels/image/invert_op.h"
+#include "minddata/dataset/kernels/image/mixup_batch_op.h"
 #include "minddata/dataset/kernels/image/normalize_op.h"
 #include "minddata/dataset/kernels/image/pad_op.h"
 #include "minddata/dataset/kernels/image/random_color_adjust_op.h"
@@ -90,6 +91,12 @@ PYBIND_REGISTER(CenterCropOp, 1, ([](const py::module *m) {
                     *m, "CenterCropOp",
                     "Tensor operation to crop and image in the middle. Takes height and width (optional)")
                     .def(py::init<int32_t, int32_t>(), py::arg("height"), py::arg("width") = CenterCropOp::kDefWidth);
+                }));
+
+PYBIND_REGISTER(MixUpBatchOp, 1, ([](const py::module *m) {
+                  (void)py::class_<MixUpBatchOp, TensorOp, std::shared_ptr<MixUpBatchOp>>(
+                    *m, "MixUpBatchOp", "Tensor operation to mixup a batch of images")
+                    .def(py::init<float>(), py::arg("alpha"));
                 }));
 
 PYBIND_REGISTER(ResizeOp, 1, ([](const py::module *m) {

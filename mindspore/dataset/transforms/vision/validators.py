@@ -47,6 +47,19 @@ def check_resize_size(size):
         raise TypeError("Size should be a single integer or a list/tuple (h, w) of length 2.")
 
 
+def check_mix_up_batch_c(method):
+    """Wrapper method to check the parameters of MixUpBatch."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [alpha], _ = parse_user_args(method, *args, **kwargs)
+        check_pos_float32(alpha)
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_normalize_c_param(mean, std):
     if len(mean) != len(std):
         raise ValueError("Length of mean and std must be equal")

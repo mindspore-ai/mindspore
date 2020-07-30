@@ -45,9 +45,9 @@ import mindspore._c_dataengine as cde
 
 from .utils import Inter, Border
 from .validators import check_prob, check_crop, check_resize_interpolation, check_random_resize_crop, \
-    check_normalize_c, check_random_crop, check_random_color_adjust, check_random_rotation, check_range, \
-    check_resize, check_rescale, check_pad, check_cutout, check_uniform_augment_cpp, check_bounding_box_augment_cpp, \
-    check_random_select_subpolicy_op, check_auto_contrast, FLOAT_MAX_INTEGER
+    check_mix_up_batch_c, check_normalize_c, check_random_crop, check_random_color_adjust, check_random_rotation, \
+    check_range, check_resize, check_rescale, check_pad, check_cutout, check_uniform_augment_cpp, \
+    check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_auto_contrast, FLOAT_MAX_INTEGER
 
 DE_C_INTER_MODE = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBOUR,
                    Inter.LINEAR: cde.InterpolationMode.DE_INTER_LINEAR,
@@ -128,6 +128,30 @@ class CutOut(cde.CutOutOp):
         self.num_patches = num_patches
         fill_value = (0, 0, 0)
         super().__init__(length, length, num_patches, False, *fill_value)
+
+
+class MixUpBatch(cde.MixUpBatchOp):
+    """
+    Apply MixUp transformation on input batch of images and labels. Each image is multiplied by a random weight (lambda)
+    and then added to a randomly selected image from the batch multiplied by (1 - lambda). Same formula is also applied
+    to the one-hot labels.
+    Note that you need to make labels into one-hot format and batch before calling this function.
+
+    Args:
+        alpha (float): hyperparameter of beta distribution (default = 1.0).
+
+    Examples:
+        >>> one_hot_op = data.OneHot(num_classes=10)
+        >>> data = data.map(input_columns=["label"], operations=one_hot_op)
+        >>> mixup_batch_op = vision.MixUpBatch()
+        >>> data = data.batch(5)
+        >>> data = data.map(input_columns=["image", "label"], operations=mixup_batch_op)
+    """
+
+    @check_mix_up_batch_c
+    def __init__(self, alpha=1.0):
+        self.alpha = alpha
+        super().__init__(alpha)
 
 
 class Normalize(cde.NormalizeOp):

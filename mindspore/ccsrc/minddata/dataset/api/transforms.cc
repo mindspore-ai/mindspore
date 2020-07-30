@@ -21,7 +21,9 @@
 #include "minddata/dataset/kernels/image/crop_op.h"
 #include "minddata/dataset/kernels/image/cut_out_op.h"
 #include "minddata/dataset/kernels/image/decode_op.h"
+#include "minddata/dataset/kernels/image/mixup_batch_op.h"
 #include "minddata/dataset/kernels/image/normalize_op.h"
+#include "minddata/dataset/kernels/data/one_hot_op.h"
 #include "minddata/dataset/kernels/image/pad_op.h"
 #include "minddata/dataset/kernels/image/random_color_adjust_op.h"
 #include "minddata/dataset/kernels/image/random_crop_op.h"
@@ -81,9 +83,29 @@ std::shared_ptr<DecodeOperation> Decode(bool rgb) {
   return op;
 }
 
+// Function to create MixUpBatchOperation.
+std::shared_ptr<MixUpBatchOperation> MixUpBatch(float alpha) {
+  auto op = std::make_shared<MixUpBatchOperation>(alpha);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
 // Function to create NormalizeOperation.
 std::shared_ptr<NormalizeOperation> Normalize(std::vector<float> mean, std::vector<float> std) {
   auto op = std::make_shared<NormalizeOperation>(mean, std);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
+// Function to create OneHotOperation.
+std::shared_ptr<OneHotOperation> OneHot(int32_t num_classes) {
+  auto op = std::make_shared<OneHotOperation>(num_classes);
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -271,6 +293,20 @@ bool DecodeOperation::ValidateParams() { return true; }
 
 std::shared_ptr<TensorOp> DecodeOperation::Build() { return std::make_shared<DecodeOp>(rgb_); }
 
+// MixUpOperation
+MixUpBatchOperation::MixUpBatchOperation(float alpha) : alpha_(alpha) {}
+
+bool MixUpBatchOperation::ValidateParams() {
+  if (alpha_ < 0) {
+    MS_LOG(ERROR) << "MixUpBatch: alpha must be a positive floating value however it is: " << alpha_;
+    return false;
+  }
+
+  return true;
+}
+
+std::shared_ptr<TensorOp> MixUpBatchOperation::Build() { return std::make_shared<MixUpBatchOp>(alpha_); }
+
 // NormalizeOperation
 NormalizeOperation::NormalizeOperation(std::vector<float> mean, std::vector<float> std) : mean_(mean), std_(std) {}
 
@@ -291,6 +327,20 @@ bool NormalizeOperation::ValidateParams() {
 std::shared_ptr<TensorOp> NormalizeOperation::Build() {
   return std::make_shared<NormalizeOp>(mean_[0], mean_[1], mean_[2], std_[0], std_[1], std_[2]);
 }
+
+// OneHotOperation
+OneHotOperation::OneHotOperation(int32_t num_classes) : num_classes_(num_classes) {}
+
+bool OneHotOperation::ValidateParams() {
+  if (num_classes_ < 0) {
+    MS_LOG(ERROR) << "OneHot: Number of classes cannot be negative. Number of classes: " << num_classes_;
+    return false;
+  }
+
+  return true;
+}
+
+std::shared_ptr<TensorOp> OneHotOperation::Build() { return std::make_shared<OneHotOp>(num_classes_); }
 
 // PadOperation
 PadOperation::PadOperation(std::vector<int32_t> padding, std::vector<uint8_t> fill_value, BorderType padding_mode)

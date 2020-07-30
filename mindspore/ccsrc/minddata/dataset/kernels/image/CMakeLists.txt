@@ -10,6 +10,7 @@ add_library(kernels-image OBJECT
     hwc_to_chw_op.cc
     image_utils.cc
     invert_op.cc
+    mixup_batch_op.cc
     normalize_op.cc
     pad_op.cc
     random_color_adjust_op.cc

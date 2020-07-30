@@ -27,6 +27,7 @@ SET(DE_UT_SRCS
         main_test.cc
         map_op_test.cc
         mind_record_op_test.cc
+        mixup_batch_op_test.cc
         memory_pool_test.cc
         normalize_op_test.cc
         one_hot_op_test.cc
