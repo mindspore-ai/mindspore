@@ -25,7 +25,7 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_rank
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.model import Model, ParallelMode
@@ -37,7 +37,6 @@ from src.googlenet import GoogleNet
 
 random.seed(1)
 np.random.seed(1)
-
 
 def lr_steps(global_step, lr_max=None, total_epochs=None, steps_per_epoch=None):
     """Set learning rate."""
@@ -65,23 +64,36 @@ if __name__ == '__main__':
     parser.add_argument('--device_id', type=int, default=None, help='device id of GPU or Ascend. (Default: None)')
     args_opt = parser.parse_args()
 
-    context.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target)
-    if args_opt.device_id is not None:
-        context.set_context(device_id=args_opt.device_id)
-    else:
-        context.set_context(device_id=cfg.device_id)
+    device_target = cfg.device_target
 
+    context.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target)
     device_num = int(os.environ.get("DEVICE_NUM", 1))
-    if device_num > 1:
-        context.reset_auto_parallel_context()
-        context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                          mirror_mean=True)
-        init()
+
+    if device_target == "Ascend":
+        if args_opt.device_id is not None:
+            context.set_context(device_id=args_opt.device_id)
+        else:
+            context.set_context(device_id=cfg.device_id)
+
+        if device_num > 1:
+            context.reset_auto_parallel_context()
+            context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
+                                              mirror_mean=True)
+            init()
+    elif device_target == "GPU":
+        init("nccl")
+
+        if device_num > 1:
+            context.reset_auto_parallel_context()
+            context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
+                                              mirror_mean=True)
+    else:
+        raise ValueError("Unsupport platform.")
 
     dataset = create_dataset(cfg.data_path, 1)
     batch_num = dataset.get_dataset_size()
 
-    net = GoogleNet(num_classes=cfg.num_classes)
+    net = GoogleNet(num_classes=cfg.num_classes, platform=device_target)
     # Continue training if set pre_trained to be True
     if cfg.pre_trained:
         param_dict = load_checkpoint(cfg.checkpoint_path)
@@ -90,12 +102,19 @@ if __name__ == '__main__':
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), Tensor(lr), cfg.momentum,
                    weight_decay=cfg.weight_decay)
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean', is_grad=False)
-    model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'},
-                  amp_level="O2", keep_batchnorm_fp32=False, loss_scale_manager=None)
+
+    if device_target == "Ascend":
+        model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'},
+                      amp_level="O2", keep_batchnorm_fp32=False, loss_scale_manager=None)
+        ckpt_save_dir = "./"
+    else: # GPU
+        model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'},
+                      amp_level="O2", keep_batchnorm_fp32=True, loss_scale_manager=None)
+        ckpt_save_dir = "./ckpt_" + str(get_rank()) + "/"
 
     config_ck = CheckpointConfig(save_checkpoint_steps=batch_num * 5, keep_checkpoint_max=cfg.keep_checkpoint_max)
     time_cb = TimeMonitor(data_size=batch_num)
-    ckpoint_cb = ModelCheckpoint(prefix="train_googlenet_cifar10", directory="./", config=config_ck)
+    ckpoint_cb = ModelCheckpoint(prefix="train_googlenet_cifar10", directory=ckpt_save_dir, config=config_ck)
     loss_cb = LossMonitor()
     model.train(cfg.epoch_size, dataset, callbacks=[time_cb, ckpoint_cb, loss_cb])
     print("train success")

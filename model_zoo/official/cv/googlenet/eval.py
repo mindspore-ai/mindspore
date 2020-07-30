@@ -16,6 +16,8 @@
 ##############test googlenet example on cifar10#################
 python eval.py
 """
+import argparse
+
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.nn.optim.momentum import Momentum
@@ -26,18 +28,27 @@ from src.config import cifar_cfg as cfg
 from src.dataset import create_dataset
 from src.googlenet import GoogleNet
 
+parser = argparse.ArgumentParser(description='googlenet')
+parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
+args_opt = parser.parse_args()
 
 if __name__ == '__main__':
+    device_target = cfg.device_target
     context.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target)
-    context.set_context(device_id=cfg.device_id)
+    if device_target == "Ascend":
+        context.set_context(device_id=cfg.device_id)
 
-    net = GoogleNet(num_classes=cfg.num_classes)
+    net = GoogleNet(num_classes=cfg.num_classes, platform=device_target)
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01, cfg.momentum,
                    weight_decay=cfg.weight_decay)
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean', is_grad=False)
     model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'})
 
-    param_dict = load_checkpoint(cfg.checkpoint_path)
+    if device_target == "Ascend":
+        param_dict = load_checkpoint(cfg.checkpoint_path)
+    else: # GPU
+        param_dict = load_checkpoint(args_opt.checkpoint_path)
+
     load_param_into_net(net, param_dict)
     net.set_train(False)
     dataset = create_dataset(cfg.data_path, 1, False)
