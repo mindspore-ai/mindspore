@@ -17,6 +17,7 @@ include_directories(${TOP_DIR}/third_party)
 include_directories(${TOP_DIR}/third_party/flatbuffers/include)
 
 include(${TOP_DIR}/cmake/utils.cmake)
+include(${TOP_DIR}/cmake/dependency_utils.cmake)
 include(${TOP_DIR}/cmake/external_libs/json.cmake)
 include(${TOP_DIR}/cmake/dependency_securec.cmake)
 set(CMAKE_VERBOSE_MAKEFILE on)
