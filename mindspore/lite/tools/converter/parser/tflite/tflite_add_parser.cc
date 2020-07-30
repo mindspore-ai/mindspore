@@ -29,10 +29,10 @@ STATUS TfliteAddParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp
                               bool quantizedModel) {
   MS_LOG(DEBUG) << "parse TfliteAddParser";
   std::unique_ptr<schema::AddT> attr(new schema::AddT());
+
   auto weight_index = tfliteOp->inputs[1];
   const auto &weight_tensor = tfliteTensors[weight_index];
   std::vector<tflite::TensorT *> weight_tensors{weight_tensor.get()};
-
   if (RET_OK != ParseWeight(weight_tensors, tfliteModelBuffer, tensor_cache, schema::Format_KHWC)) {
     return RET_ERROR;
   }

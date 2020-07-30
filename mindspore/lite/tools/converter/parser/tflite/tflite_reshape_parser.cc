@@ -26,12 +26,12 @@ STATUS TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
                                   const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                   schema::CNodeT *op,
                                   TensorCache *tensor_cache, bool quantizedModel) {
-  // MS_LOGD("parse TfliteReshapeParser");
+  MS_LOG(DEBUG) << "parse TfliteReshapeParser";
   std::unique_ptr<schema::ReshapeT> attr(new schema::ReshapeT());
 
   const auto &tfliteAttr = tfliteOp->builtin_options.AsReshapeOptions();
   if (tfliteAttr == nullptr) {
-    // MS_LOGE("get op: %s attr failed", op->name.c_str());
+    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
     return RET_NULL_PTR;
   }
 

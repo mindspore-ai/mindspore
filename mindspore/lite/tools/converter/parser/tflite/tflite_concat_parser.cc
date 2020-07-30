@@ -27,11 +27,11 @@ STATUS TfliteConcatParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
                                  schema::CNodeT *op,
                                  TensorCache *tensor_cache,
                                  bool quantizedModel) {
-  // MS_LOGD("parse TfliteConcatParser");
+  MS_LOG(DEBUG) << "parse TfliteConcatParser";
   std::unique_ptr<schema::ConcatT> attr(new schema::ConcatT());
   const auto &tfliteAttr = tfliteOp->builtin_options.AsConcatenationOptions();
   if (tfliteAttr == nullptr) {
-    // MS_LOGE("get op: %s attr failed", op->name.c_str());
+    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
     return RET_NULL_PTR;
   }
 

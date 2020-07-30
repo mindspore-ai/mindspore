@@ -25,12 +25,13 @@ STATUS TfliteMeanParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteO
                                const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
-  // MS_LOGI("paser TfliteMeanParser");
+  MS_LOG(DEBUG) << "parse TfliteMeanParser";
   std::unique_ptr<schema::MeanT> attr(new schema::MeanT());
   const auto &tflite_attr = tfliteOp->builtin_options.AsReducerOptions();
   if (tflite_attr == nullptr) {
-    // MS_LOGE("get op: %s attr failed", op->name.c_str());
+    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
   }
+
   attr->keepDims = tflite_attr->keep_dims;
   if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->axis)) {
     return RET_ERROR;

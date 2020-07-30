@@ -20,13 +20,14 @@
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteActivationParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-                                     const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-                                     const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                                     const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                                     schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
-  // MS_LOGI("paser TfliteActivationParser");
+STATUS TfliteRelu6Parser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
+                                const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
+                                const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
+                                const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
+                                schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+  MS_LOG(DEBUG) << "parse TfliteRelu6Parser";
   std::unique_ptr<schema::ActivationT> attr(new schema::ActivationT());
+  attr->type = schema::ActivationType_RELU6;
 
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
@@ -36,6 +37,6 @@ STATUS TfliteActivationParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
   return RET_OK;
 }
 
-TfliteNodeRegister g_tfliteActivationParser("Relu6", new TfliteActivationParser());
+TfliteNodeRegister g_TfliteRelu6Parser("Relu6", new TfliteRelu6Parser());
 }  // namespace lite
 }  // namespace mindspore

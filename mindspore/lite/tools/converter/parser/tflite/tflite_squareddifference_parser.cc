@@ -25,11 +25,11 @@ STATUS TfliteSquaredDifferenceParser::Parse(const std::unique_ptr<tflite::Operat
                                             const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                             const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                             schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
-  // MS_LOGI("paser TfliteSquaredDifferenceParser");
+  MS_LOG(DEBUG) << "parse TfliteSquaredDifferenceParser";
   std::unique_ptr<schema::SquaredDifferenceT> attr(new schema::SquaredDifferenceT());
   const auto &tflite_attr = tfliteOp->builtin_options.AsSquaredDifferenceOptions();
   if (tflite_attr == nullptr) {
-    // MS_LOGE("get op: %s attr failed", op->name.c_str());
+    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
   }
 
   if (op != nullptr) {
