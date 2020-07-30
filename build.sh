@@ -590,7 +590,7 @@ build_lite()
             sha256sum MSLite-0.5.0-linux_x86_64.tar.gz > MSLite-0.5.0-linux_x86_64.tar.gz.256sha
             rm -rf MSLite-0.5.0-linux_x86_64/
         elif [[ "$LITE_PLATFORM" == "arm64" ]]; then
-            OUTPUT_DIR=${BASEPATH}/mindspore/lite/output/MSLite-0.5.0-linux_arm64
+            OUTPUT_DIR=${BASEPATH}/output/MSLite-0.5.0-linux_arm64
             rm -rf ${OUTPUT_DIR} && mkdir -p ${OUTPUT_DIR} && cd ${OUTPUT_DIR}
             mkdir -p ${OUTPUT_DIR}/time_profile && mkdir -p ${OUTPUT_DIR}/benchmark
             mkdir -p ${OUTPUT_DIR}/include && mkdir -p ${OUTPUT_DIR}/lib
@@ -609,7 +609,7 @@ build_lite()
             sha256sum MSLite-0.5.0-linux_arm64.tar.gz > MSLite-0.5.0-linux_arm64.tar.gz.256sha
             rm -rf MSLite-0.5.0-linux_arm64/
         elif [[ "$LITE_PLATFORM" == "arm32" ]]; then
-            OUTPUT_DIR=${BASEPATH}/mindspore/lite/output/MSLite-0.5.0-linux_arm32
+            OUTPUT_DIR=${BASEPATH}/output/MSLite-0.5.0-linux_arm32
             rm -rf ${OUTPUT_DIR} && mkdir -p ${OUTPUT_DIR} && cd ${OUTPUT_DIR}
             mkdir -p ${OUTPUT_DIR}/time_profile && mkdir -p ${OUTPUT_DIR}/benchmark
             mkdir -p ${OUTPUT_DIR}/include && mkdir -p ${OUTPUT_DIR}/lib
