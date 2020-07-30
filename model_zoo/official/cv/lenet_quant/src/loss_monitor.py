@@ -48,10 +48,16 @@ class LossMonitor(Callback):
         self.lr_init = lr_init
 
     def epoch_begin(self, run_context):
+        """
+        epoch begin
+        """
         self.losses = []
         self.epoch_time = time.time()
 
     def epoch_end(self, run_context):
+        """
+        epoch end
+        """
         cb_params = run_context.original_args()
         epoch_mseconds = (time.time() - self.epoch_time) * 1000
         per_step_mseconds = epoch_mseconds / cb_params.batch_num
@@ -62,9 +68,15 @@ class LossMonitor(Callback):
         print("*" * 60)
 
     def step_begin(self, run_context):
+        """
+        step begin
+        """
         self.step_time = time.time()
 
     def step_end(self, run_context):
+        """
+        step end
+        """
         cb_params = run_context.original_args()
         step_mseconds = (time.time() - self.step_time) * 1000
         step_loss = cb_params.net_outputs
