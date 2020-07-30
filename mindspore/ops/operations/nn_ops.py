@@ -3360,6 +3360,76 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
         validator.check_tensor_type_same({'indices': indices_dtype}, valid_types, self.name)
         return var_dtype, accum_dtype
 
+class KLDivLoss(PrimitiveWithInfer):
+    r"""
+    Computes the Kullback-Leibler divergence between the target and the output.
+
+    Note:
+        Sets input as :math:`x`, input label as :math:`y`, output as :math:`\ell(x, y)`.
+        Let,
+
+        .. math::
+            L = \{l_1,\dots,l_N\}^\top, \quad
+            l_n = y_n \cdot (\log y_n - x_n)
+
+        Then,
+
+        .. math::
+            \ell(x, y) = \begin{cases}
+            L, & \text{if reduction} = \text{'none';}\\
+            \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+            \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+            \end{cases}
+
+    Args:
+        reduction (str): Specifies the reduction to apply to the output.
+            Its value should be one of 'none', 'mean', 'sum'. Default: 'mean'.
+
+    Inputs:
+        - **input_x** (Tensor) - The input Tensor. The data type must be float32.
+        - **input_y** (Tensor) - The label Tensor which has same shape as `input_x`. The data type must be float32.
+
+    Outputs:
+        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and same shape as `input_x`.
+        Otherwise it is a scalar.
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as P
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.kldiv_loss = P.KLDivLoss()
+        >>>     def construct(self, x, y):
+        >>>         result = self.kldiv_loss(x, y)
+        >>>         return result
+        >>>
+        >>> net = Net()
+        >>> input_x = Tensor(np.array([0.2, 0.7, 0.1]), mindspore.float32)
+        >>> input_y = Tensor(np.array([0., 1., 0.]), mindspore.float32)
+        >>> result = net(input_x, input_y)
+    """
+
+    @prim_attr_register
+    def __init__(self, reduction='mean'):
+        self.reduction = validator.check_string('reduction', reduction, ['none', 'mean', 'sum'], self.name)
+
+    def infer_shape(self, x_shape, y_shape):
+        validator.check('x_shape', x_shape, 'y_shape', y_shape, Rel.EQ, self.name)
+        if self.reduction in ('mean', 'sum'):
+            shape = []
+        else:
+            shape = x_shape
+        return shape
+
+    def infer_dtype(self, x_type, y_type):
+        args = {'x': x_type, 'y': y_type}
+        valid_types = (mstype.float16, mstype.float32)
+        validator.check_tensor_type_same(args, valid_types, self.name)
+        return x_type
 
 class BinaryCrossEntropy(PrimitiveWithInfer):
     r"""

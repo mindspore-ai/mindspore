@@ -732,6 +732,17 @@ def get_bprop_binary_cross_entropy(self):
 
     return bprop
 
+@bprop_getters.register(P.KLDivLoss)
+def get_bprop_kl_div_loss(self):
+    """Grad definition for `KLDivLoss` operation."""
+    grad = G.KLDivLossGrad(self.reduction)
+
+    def bprop(x, y, out, dout):
+        dx, dy = grad(x, y, dout)
+        return dx, dy
+
+    return bprop
+
 
 @bprop_getters.register(P.Dropout)
 def get_bprop_dropout(self):
