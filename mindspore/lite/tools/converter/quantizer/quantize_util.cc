@@ -88,7 +88,7 @@ bool QuantStrategy::CanOpPostQuantized(AnfNodePtr &node) const {
 
     auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveTValue>>(cnode->input(0));
     if (primitiveT_value == nullptr) {
-        MS_LOG(ERROR) << "PrimitiveT_value is nullptr";
+        MS_LOG(ERROR) << "PrimitiveT_value is nullptr: " << cnode->fullname_with_scope();
         return false;
     }
 

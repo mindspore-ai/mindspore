@@ -32,6 +32,7 @@
 #include "tools/converter/parser/onnx/onnx.pb.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
 #include "tools/converter/quantizer/post_training.h"
+#include "tools/converter/quantizer/quant_cast.h"
 
 namespace mindspore {
 namespace lite {
@@ -90,7 +91,7 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
   }
 
 //  auto newGraph = anfTransform->Transform(graph);
-  /*
+
   CreateQuantizer(graph, flag);
   if (mQuantizer != nullptr) {
     auto status = mQuantizer->DoQuantize(graph);
@@ -98,8 +99,15 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
       MS_LOG(ERROR) << "Quant failed " << status;
       return nullptr;
     }
+    quant::QuantCast quant_cast;
+    quant_cast.SetInputDataDType(kNumberTypeFloat32);
+    status = quant_cast.Run(graph);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "add QuantCast error";
+      return nullptr;
+    }
   }
-  */
+
   // anf -- fb
   auto meta_graph = Export(graph);
   if (meta_graph == nullptr) {

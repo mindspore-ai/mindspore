@@ -732,9 +732,10 @@ STATUS PostTrainingQuantizer::CheckTensorVec(const std::string &nodeName,
     return RET_ERROR;
   }
   tensor::Tensor *tensor = tensorVec[0];
-  if (tensor->data_type() != kNumberTypeFloat) {
+  if (tensor->data_type() != kNumberTypeFloat32) {
     //&& tensor->RefCount() != MSCONST_WEIGHT_REFCOUNT
-    MS_LOG(DEBUG) << "node: " << nodeName << " will not quantize";
+    MS_LOG(DEBUG) << "node: " << nodeName << " will not quantize" << " tensor data_type: " << tensor->data_type();
+    return RET_ERROR;
   }
   return RET_OK;
 }

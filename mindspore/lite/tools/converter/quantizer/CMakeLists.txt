@@ -11,6 +11,7 @@ add_library(quantizer_mid OBJECT
     ${CMAKE_CURRENT_SOURCE_DIR}/quantize_util.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/general_bitpacking.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/post_training.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/quant_cast.cc
     #${CMAKE_CURRENT_SOURCE_DIR}/../proto/post_training/post_training.pb.cc
     )
 
