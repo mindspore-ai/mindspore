@@ -84,6 +84,7 @@ class CacheService : public Service {
    public:
     using state_type = std::underlying_type<State>::type;
     ServiceStat() : min_(0), max_(0), state_(0) {}
+    ~ServiceStat() = default;
     CachePool::CacheStat stat_{};
     row_id_type min_;
     row_id_type max_;

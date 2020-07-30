@@ -1,0 +1,39 @@
+diff -Npur libjpeg-turbo-2.0.4/ChangeLog.md libjpeg-turbo-2.0.4-new/ChangeLog.md
+--- libjpeg-turbo-2.0.4/ChangeLog.md	2019-12-31 15:10:30.000000000 +0800
++++ libjpeg-turbo-2.0.4-new/ChangeLog.md	2020-07-29 19:12:06.259357156 +0800
+@@ -562,10 +562,10 @@ application was linked against.
+
+ 3. Fixed a couple of issues in the PPM reader that would cause buffer overruns
+ in cjpeg if one of the values in a binary PPM/PGM input file exceeded the
+-maximum value defined in the file's header.  libjpeg-turbo 1.4.2 already
+-included a similar fix for ASCII PPM/PGM files.  Note that these issues were
+-not security bugs, since they were confined to the cjpeg program and did not
+-affect any of the libjpeg-turbo libraries.
++maximum value defined in the file's header and that maximum value was greater
++than 255.  libjpeg-turbo 1.4.2 already included a similar fix for ASCII PPM/PGM
++files.  Note that these issues were not security bugs, since they were confined
++to the cjpeg program and did not affect any of the libjpeg-turbo libraries.
+
+ 4. Fixed an issue whereby attempting to decompress a JPEG file with a corrupt
+ header using the `tjDecompressToYUV2()` function would cause the function to
+diff -Npur libjpeg-turbo-2.0.4/rdppm.c libjpeg-turbo-2.0.4-new/rdppm.c
+--- libjpeg-turbo-2.0.4/rdppm.c	2019-12-31 15:10:30.000000000 +0800
++++ libjpeg-turbo-2.0.4-new/rdppm.c	2020-07-29 17:55:33.129123386 +0800
+@@ -5,7 +5,7 @@
+  * Copyright (C) 1991-1997, Thomas G. Lane.
+  * Modified 2009 by Bill Allombert, Guido Vollbeding.
+  * libjpeg-turbo Modifications:
+- * Copyright (C) 2015-2017, D. R. Commander.
++ * Copyright (C) 2015-2017, 2020, D. R. Commander.
+  * For conditions of distribution and use, see the accompanying README.ijg
+  * file.
+  *
+@@ -720,7 +720,7 @@ start_input_ppm(j_compress_ptr cinfo, cj
+     /* On 16-bit-int machines we have to be careful of maxval = 65535 */
+     source->rescale = (JSAMPLE *)
+       (*cinfo->mem->alloc_small) ((j_common_ptr)cinfo, JPOOL_IMAGE,
+-                                  (size_t)(((long)maxval + 1L) *
++                                  (size_t)(((long)MAX(maxval, 255) + 1L) *
+                                            sizeof(JSAMPLE)));
+     half_maxval = maxval / 2;
+     for (val = 0; val <= (long)maxval; val++) {
