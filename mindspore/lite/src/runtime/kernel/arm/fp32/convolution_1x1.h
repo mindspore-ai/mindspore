@@ -56,7 +56,6 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
   int thread_hw_stride_ = 0;
   int thread_oc4_count_ = 0;
   int thread_oc_stride_ = 0;
-  float *bias_ptr_ = nullptr;
   float *weight_ptr_ = nullptr;
   float *tmp_ptr_ = nullptr;
   float *c4_input_ = nullptr;

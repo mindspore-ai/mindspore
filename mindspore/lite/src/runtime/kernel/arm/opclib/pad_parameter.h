@@ -13,23 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_PAD_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_PAD_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_PAD_PARAMETER_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_PAD_PARAMETER_H_
 
-#ifdef ENABLE_NEON
-#include <arm_neon.h>
-#endif
-#include <memory.h>
 #include "src/runtime/kernel/arm/opclib/op_base.h"
+
+#define MAX_PAD_SIZE 8
+#define DEFAULT_PAD_NDIMS 4
 
 struct PadParameter {
   OpParameter op_parameter_;
-  int paddings[8];
-  size_t ori_size_;
+  PadQuantArg pad_quant_arg_;
+  int paddings_[MAX_PAD_SIZE] = {0};
+  int pad_mode_;
+  float constant_value_;
 };
 
-void Pad(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-         const int *paddings, const int tid, const int thread_num);
-
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_PAD_H_
-
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_PAD_PARAMETER_H_

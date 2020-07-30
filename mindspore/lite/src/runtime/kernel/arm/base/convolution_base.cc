@@ -49,40 +49,50 @@ namespace mindspore::kernel {
 ConvolutionBaseCPUKernel::~ConvolutionBaseCPUKernel() {
   if (bias_data_ != nullptr) {
     free(bias_data_);
+    bias_data_ = nullptr;
   }
   if (nhwc4_input_ != nullptr) {
     free(nhwc4_input_);
+    nhwc4_input_ = nullptr;
   }
 }
 
 void ConvolutionBaseCPUKernel::FreeQuantParam() {
-  if (quant_args_ != nullptr) {
+  ConvQuantArg *conv_quant_arg_ = &conv_param_->conv_quant_arg_;
+  if (conv_quant_arg_ == nullptr) {
+    return;
+  }
+  if (conv_quant_arg_->real_multiplier_ != nullptr) {
+    free(conv_quant_arg_->real_multiplier_);
+    conv_quant_arg_->real_multiplier_ = nullptr;
+  }
+  if (conv_quant_arg_->left_shift_ != nullptr) {
+    free(conv_quant_arg_->left_shift_);
+    conv_quant_arg_->left_shift_ = nullptr;
+  }
+  if (conv_quant_arg_->right_shift_ != nullptr) {
+    free(conv_quant_arg_->right_shift_);
+    conv_quant_arg_->right_shift_ = nullptr;
+  }
+  if (conv_quant_arg_->quant_multiplier_ != nullptr) {
+    free(conv_quant_arg_->quant_multiplier_);
+    conv_quant_arg_->quant_multiplier_ = nullptr;
+  }
+  if (conv_quant_arg_->out_act_min_ != nullptr) {
+    free(conv_quant_arg_->out_act_min_);
+    conv_quant_arg_->out_act_min_ = nullptr;
+  }
+  if (conv_quant_arg_->out_act_max_ != nullptr) {
+    free(conv_quant_arg_->out_act_max_);
+    conv_quant_arg_->out_act_max_ = nullptr;
+  }
+
+  if (conv_quant_arg_->quant_args_ != nullptr) {
     for (int i = 0; i < 3; ++i) {
-      if (*(quant_args_ + i) != nullptr) {
-        free(*(quant_args_ + i));
+      if (*(conv_quant_arg_->quant_args_ + i) != nullptr) {
+        free(*(conv_quant_arg_->quant_args_ + i));
       }
     }
-  }
-  if (conv_quant_arg_ != nullptr) {
-    if (conv_quant_arg_->real_multiplier_ != nullptr) {
-      free(conv_quant_arg_->real_multiplier_);
-    }
-    if (conv_quant_arg_->left_shift_ != nullptr) {
-      free(conv_quant_arg_->left_shift_);
-    }
-    if (conv_quant_arg_->right_shift_ != nullptr) {
-      free(conv_quant_arg_->right_shift_);
-    }
-    if (conv_quant_arg_->quant_multiplier_ != nullptr) {
-      free(conv_quant_arg_->quant_multiplier_);
-    }
-    if (conv_quant_arg_->out_act_min_ != nullptr) {
-      free(conv_quant_arg_->out_act_min_);
-    }
-    if (conv_quant_arg_->out_act_max_ != nullptr) {
-      free(conv_quant_arg_->out_act_max_);
-    }
-    free(conv_quant_arg_);
   }
 }
 
@@ -116,11 +126,19 @@ int ConvolutionBaseCPUKernel::CheckLayout(lite::tensor::Tensor *input_tensor) {
 }
 
 int ConvolutionBaseCPUKernel::SetQuantParam() {
-  conv_quant_arg_ = new ConvQuantArg();
-  quant_args_ = reinterpret_cast<QuantArg **>(malloc(3 * sizeof(QuantArg *)));
+  ConvQuantArg *conv_quant_arg_ = &conv_param_->conv_quant_arg_;
+  conv_quant_arg_->quant_args_ = reinterpret_cast<QuantArg **>(malloc(3 * sizeof(QuantArg *)));
+  if (conv_quant_arg_->quant_args_ == nullptr) {
+    MS_LOG(ERROR) << "malloc quant_args_ failed.";
+    return RET_ERROR;
+  }
   // per-tensor init
   for (int j = 0; j < 3; ++j) {
-    quant_args_[j] = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
+    conv_quant_arg_->quant_args_[j] = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
+    if (conv_quant_arg_->quant_args_[j] == nullptr) {
+      MS_LOG(ERROR) << "malloc quant_args_ failed.";
+      return RET_ERROR;
+    }
   }
   auto input_tensor = inputs_.at(kInputIndex);
   auto weight_tensor = inputs_.at(kWeightIndex);
@@ -129,16 +147,15 @@ int ConvolutionBaseCPUKernel::SetQuantParam() {
   auto weight_quant_arg = weight_tensor->GetQuantParams().front();
   auto output_quant_arg = output_tensor->GetQuantParams().front();
   // input
-  quant_args_[0][0].zp_ = input_quant_arg.zeroPoint;
-  quant_args_[0][0].scale_ = input_quant_arg.scale;
+  conv_quant_arg_->quant_args_[0][0].zp_ = input_quant_arg.zeroPoint;
+  conv_quant_arg_->quant_args_[0][0].scale_ = input_quant_arg.scale;
   // weight
-  quant_args_[1][0].zp_ = weight_quant_arg.zeroPoint;
-  quant_args_[1][0].scale_ = weight_quant_arg.scale;
+  conv_quant_arg_->quant_args_[1][0].zp_ = weight_quant_arg.zeroPoint;
+  conv_quant_arg_->quant_args_[1][0].scale_ = weight_quant_arg.scale;
   // output
-  quant_args_[2][0].zp_ = output_quant_arg.zeroPoint;
-  quant_args_[2][0].scale_ = output_quant_arg.scale;
+  conv_quant_arg_->quant_args_[2][0].zp_ = output_quant_arg.zeroPoint;
+  conv_quant_arg_->quant_args_[2][0].scale_ = output_quant_arg.scale;
 
-  conv_quant_arg_->quant_args_ = quant_args_;
   conv_quant_arg_->real_multiplier_ = reinterpret_cast<double *>(malloc(sizeof(double)));
   conv_quant_arg_->left_shift_ = reinterpret_cast<int32_t *>(malloc(sizeof(int32_t)));
   conv_quant_arg_->right_shift_ = reinterpret_cast<int32_t *>(malloc(sizeof(int32_t)));
@@ -151,7 +168,6 @@ int ConvolutionBaseCPUKernel::SetQuantParam() {
   QuantizeRoundParameter(real_multiplier, &conv_quant_arg_->quant_multiplier_[0], &conv_quant_arg_->left_shift_[0],
                          &conv_quant_arg_->right_shift_[0]);
 
-  conv_param_->conv_quant_arg_ = *conv_quant_arg_;
   ComputeQuantOutRange(conv_param_);
   return RET_OK;
 }

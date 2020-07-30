@@ -43,7 +43,7 @@
 #include "src/runtime/kernel/arm/opclib/fp32/local_response_norm.h"
 #include "src/runtime/kernel/arm/opclib/fp32/expandDims.h"
 #include "src/runtime/kernel/arm/opclib/fp32/arithmetic_self.h"
-#include "src/runtime/kernel/arm/opclib/pad.h"
+#include "src/runtime/kernel/arm/opclib/pad_parameter.h"
 #include "src/runtime/kernel/arm/opclib/fp32/fill.h"
 #include "src/runtime/kernel/arm/opclib/transpose.h"
 #include "src/runtime/kernel/arm/opclib/split.h"
@@ -300,6 +300,42 @@ ConvParameter *PopulateDeconvDwParameter(const lite::Primitive *primitive) {
   return parameter;
 }
 
+ConvParameter *PopulateDeconvParameter(const lite::Primitive *primitive) {
+  ConvParameter *parameter = new ConvParameter();
+  auto conv_primitive = primitive->Value()->value_as_DeConv2D();
+  parameter->kernel_h_ = conv_primitive->kernelH();
+  parameter->kernel_w_ = conv_primitive->kernelW();
+  parameter->stride_h_ = conv_primitive->strideH();
+  parameter->stride_w_ = conv_primitive->strideW();
+
+  auto deconv_lite_primitive = (lite::DeConv2D *)primitive;
+  MS_ASSERT(nullptr != deconvdw_lite_primitive);
+  parameter->pad_u_ = deconv_lite_primitive->PadUp();
+  parameter->pad_d_ = deconv_lite_primitive->PadDown();
+  parameter->pad_l_ = deconv_lite_primitive->PadLeft();
+  parameter->pad_r_ = deconv_lite_primitive->PadRight();
+  parameter->pad_h_ = deconv_lite_primitive->PadUp();
+  parameter->pad_w_ = deconv_lite_primitive->PadLeft();
+  parameter->dilation_h_ = conv_primitive->dilateH();
+  parameter->dilation_w_ = conv_primitive->dilateW();
+  auto act_type = conv_primitive->activationType();
+  switch (act_type) {
+    case schema::ActivationType_RELU:
+      parameter->is_relu_ = true;
+      parameter->is_relu6_ = false;
+      break;
+    case schema::ActivationType_RELU6:
+      parameter->is_relu_ = false;
+      parameter->is_relu6_ = true;
+      break;
+    default:
+      parameter->is_relu_ = false;
+      parameter->is_relu6_ = false;
+      break;
+  }
+  return parameter;
+}
+
 SoftmaxParameter *PopulateSoftmaxParameter(const lite::Primitive *primitive) {
   auto softmax_primitive = primitive->Value()->value_as_SoftMax();
   SoftmaxParameter *parameter = new (std::nothrow) SoftmaxParameter();
@@ -335,19 +371,31 @@ ReduceParameter *PopulateReduceParameter(const lite::Primitive *primitive) {
 }
 
 PadParameter *PopulatePadParameter(const lite::Primitive *primitive) {
-  PadParameter *parameter = new (std::nothrow) PadParameter();
-  if (parameter == nullptr) {
+  PadParameter *pad_param = new (std::nothrow) PadParameter();
+  if (pad_param == nullptr) {
     MS_LOG(ERROR) << "new PadParameter failed.";
     return nullptr;
   }
-  auto param = primitive->Value()->value_as_Pad();
-  auto size = param->paddings()->size();
-  parameter->ori_size_ = size;
-  auto valid_size = size <= 8 ? size : 8;
-  for (size_t i = 0; i < valid_size; i++) {
-    parameter->paddings[i] = (*(param->paddings()))[i];
+  auto pad_node = primitive->Value()->value_as_Pad();
+
+  pad_param->pad_mode_ = pad_node->paddingMode();
+  if (pad_param->pad_mode_ == schema::PaddingMode_CONSTANT) {
+    pad_param->constant_value_ = pad_node->constantValue();
+  } else {
+    MS_LOG(ERROR) << "Invalid padding mode: " << pad_param->pad_mode_;
+    return nullptr;
   }
-  return parameter;
+
+  auto size = pad_node->paddings()->size();
+  if (size > MAX_PAD_SIZE) {
+    MS_LOG(ERROR) << "Invalid padding size: " << size;
+    return nullptr;
+  }
+
+  for (size_t i = 0; i < size; i++) {
+    pad_param->paddings_[MAX_PAD_SIZE - size + i] = (*(pad_node->paddings()))[i];
+  }
+  return pad_param;
 }
 
 ActivationParameter *PopulateActivationParameter(const lite::Primitive *primitive) {
@@ -891,7 +939,7 @@ FlattenParameter *PopulateFlattenParameter(const lite::Primitive *primitive) {
     MS_LOG(ERROR) << "new FlattenParameter fail!";
     return nullptr;
   }
-    return parameter;
+  return parameter;
 }
 
 StridedSliceParameter *PopulateStridedSliceParam(const lite::Primitive *primitive) {
@@ -932,6 +980,8 @@ OpParameter *PopulateParameter(const lite::Primitive *primitive) {
       return reinterpret_cast<OpParameter *>(PopulateConvDwParameter(primitive));
     case schema::PrimitiveType_DeDepthwiseConv2D:
       return reinterpret_cast<OpParameter *>(PopulateDeconvDwParameter(primitive));
+    case schema::PrimitiveType_DeConv2D:
+      return reinterpret_cast<OpParameter *>(PopulateDeconvParameter(primitive));
     case schema::PrimitiveType_FusedBatchNorm:
       return reinterpret_cast<OpParameter *>(PopulateFusedBatchNorm(primitive));
     case schema::PrimitiveType_FullConnection:

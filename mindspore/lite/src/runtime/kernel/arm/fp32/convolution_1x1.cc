@@ -39,10 +39,6 @@ Convolution1x1CPUKernel::~Convolution1x1CPUKernel() {
     free(tmp_ptr_);
     tmp_ptr_ = nullptr;
   }
-  if (bias_ptr_ != nullptr) {
-    free(bias_ptr_);
-    bias_ptr_ = nullptr;
-  }
   if (weight_ptr_ != nullptr) {
     free(weight_ptr_);
     weight_ptr_ = nullptr;
@@ -64,15 +60,15 @@ void Convolution1x1CPUKernel::InitConv1x1MatmulParam() {
 
 int Convolution1x1CPUKernel::InitConv1x1BiasWeight() {
   if (inputs_.size() == 3) {
-    bias_ptr_ = reinterpret_cast<float *>(malloc(matmul_param_->col_ * C4NUM * sizeof(float)));
-    if (bias_ptr_ == nullptr) {
+    bias_data_ = malloc(matmul_param_->col_ * C4NUM * sizeof(float));
+    if (bias_data_ == nullptr) {
       MS_LOG(ERROR) << "Conv1x1 Malloc bias_ptr_ error!";
       return RET_ERROR;
     }
-    memset(bias_ptr_, 0, matmul_param_->col_ * C4NUM * sizeof(float));
-    memcpy(bias_ptr_, inputs_[2]->Data(), conv_param_->output_channel_ * sizeof(float));
+    memset(bias_data_, 0, matmul_param_->col_ * C4NUM * sizeof(float));
+    memcpy(bias_data_, inputs_[2]->Data(), conv_param_->output_channel_ * sizeof(float));
   } else {
-    bias_ptr_ = nullptr;
+    bias_data_ = nullptr;
   }
 
   weight_ptr_ = reinterpret_cast<float *>(
@@ -109,15 +105,15 @@ int Convolution1x1CPUKernel::InitConv1x1Param() {
     MS_LOG(ERROR) << "Conv1x1 Malloc tmp_ptr_ error!";
     return RET_MEMORY_FAILED;
   }
-  c4_output_ = reinterpret_cast<float *>(malloc(outputs_[0]->ElementsC4Num() / conv_param_->output_batch_ *
-          sizeof(float)));
+  c4_output_ =
+    reinterpret_cast<float *>(malloc(outputs_[0]->ElementsC4Num() / conv_param_->output_batch_ * sizeof(float)));
   if (c4_output_ == nullptr) {
     MS_LOG(ERROR) << "Conv1x1 Malloc c4_output_ error!";
     return RET_MEMORY_FAILED;
   }
 
-  c4_input_ = reinterpret_cast<float *>(malloc(inputs_[0]->ElementsC4Num() / conv_param_->input_batch_ *
-          sizeof(float)));
+  c4_input_ =
+    reinterpret_cast<float *>(malloc(inputs_[0]->ElementsC4Num() / conv_param_->input_batch_ * sizeof(float)));
   if (c4_input_ == nullptr) {
     MS_LOG(ERROR) << "Conv1x1 Malloc c4_input_ error!";
     return RET_MEMORY_FAILED;
@@ -189,9 +185,12 @@ int Convolution1x1CPUKernel::DoPostFunc(int task_id) {
     return RET_OK;
   }
 
+  float *cur_bias =
+    (bias_data_ == nullptr) ? nullptr : reinterpret_cast<float *>(bias_data_) + task_id * thread_oc_stride_;
+
   PostConvFuncFp32(c4_output_ + matmul_param_->row_ * thread_oc_stride_ * task_id,
-                   output_ptr_ + task_id * thread_oc_stride_, bias_ptr_ + task_id * thread_oc_stride_, cur_oc,
-                   matmul_param_->row_, conv_param_->output_channel_, conv_param_->is_relu_, conv_param_->is_relu6_);
+                   output_ptr_ + task_id * thread_oc_stride_, cur_bias, cur_oc, matmul_param_->row_,
+                   conv_param_->output_channel_, conv_param_->is_relu_, conv_param_->is_relu6_);
   return RET_OK;
 }
 
@@ -228,4 +227,3 @@ int Convolution1x1CPUKernel::Run() {
   return RET_OK;
 }
 }  // namespace mindspore::kernel
-

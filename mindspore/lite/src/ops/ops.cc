@@ -45,6 +45,8 @@ Primitive *Primitive::CreatePrimitive(schema::Primitive *primitive) {
       return new lite::FullConnection(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Power:
       return new lite::Power(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_Pad:
+      return new lite::Pad(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Range:
       return new lite::Range(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Mul:

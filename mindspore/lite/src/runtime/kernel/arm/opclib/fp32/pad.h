@@ -13,25 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/opclib/pad.h"
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_PAD_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_PAD_H_
+
+#ifdef ENABLE_NEON
+#include <arm_neon.h>
+#endif
+#include <memory.h>
 #include <float.h>
 #include "src/runtime/kernel/arm/opclib/offset_utils.h"
+#include "src/runtime/kernel/arm/opclib/op_base.h"
+#include "src/runtime/kernel/arm/opclib/pad_parameter.h"
 
 void Pad(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-         const int *paddings, const int tid, const int thread_num) {
-  int in[4], out[4];
-  for (in[0] = 0; in[0] < input_shape[0]; in[0]++) {
-    out[0] = in[0] + paddings[0];
-    for (in[1] = tid; in[1] < input_shape[1]; in[1] += thread_num) {
-      out[1] = in[1] + paddings[2];
-      for (in[2] = 0; in[2] < input_shape[2]; in[2]++) {
-        out[2] = in[2] + paddings[4];
-        for (in[3] = 0; in[3] < input_shape[3]; in[3]++) {
-          out[3] = in[3] + paddings[6];
-          output_data[offset4d(output_shape, out)] = input_data[offset4d(input_shape, in)];
-        }
-      }
-    }
-  }
-}
+         const int *paddings, const int tid, const int thread_num);
 
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_PAD_H_
