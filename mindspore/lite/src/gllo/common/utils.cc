@@ -16,9 +16,10 @@
 #include <vector>
 #include <memory>
 #include "src/gllo/common/utils.h"
-#include "mindspore/lite/src/ir/primitive_t_value.h"
+#include "src/ir/primitive_t_value.h"
 #include "frontend/operator/ops.h"
 
+using PrimitiveTValuePtr = std::shared_ptr<mindspore::lite::PrimitiveTValue>;
 namespace mindspore {
 namespace opt {
 
@@ -74,7 +75,11 @@ bool AnfEqual(const BaseRef &a, const BaseRef &b) {
       }
     }
   }
-
+  if (a.m_ptr->isa<lite::PrimitiveTValue>()) {
+    auto a_value_node_ptr = a.m_ptr->cast<PrimitiveTValuePtr>();
+    auto b_value_node_ptr = b.m_ptr->cast<PrimitiveTValuePtr>();
+    return a_value_node_ptr->GetPrimitiveT()->value.type == b_value_node_ptr->GetPrimitiveT()->value.type;
+  }
   return a == b;
 }
 
@@ -201,6 +206,17 @@ void CheckInputSize(const CNodePtr &node, const int size) {
   if (node->inputs().size() != size) {
     MS_LOG(EXCEPTION) << "The input size of node must be " << size << ", but it is" << node->inputs().size();
   }
+}
+
+schema::PrimitiveType GetCNodeType(const CNodePtr &node) {
+    auto value_primitive = node->input(0);
+    auto value_node = value_primitive->cast<ValueNodePtr>();
+    MS_ASSERT(value_node != nullptr);
+    auto value = value_node->value();
+    MS_ASSERT(value != nullptr);
+    auto primitive = value->cast<PrimitiveTValuePtr>();
+    MS_ASSERT(primitive != nullptr);
+    return primitive->GetPrimitiveT()->value.type;
 }
 
 }  // namespace opt
