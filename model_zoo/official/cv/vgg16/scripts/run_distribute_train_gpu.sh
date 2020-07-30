@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,19 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""test_vgg"""
-import numpy as np
-import pytest
 
-from mindspore import Tensor
-from model_zoo.official.cv.vgg16.src.vgg import vgg16
-from model_zoo.official.cv.vgg16.src.config import cifar_cfg as cfg
-from ..ut_filter import non_graph_engine
+echo "=============================================================================================================="
+echo "Please run the scipt as: "
+echo "bash run_distribute_train_gpu.sh DATA_PATH"
+echo "for example: bash run_distribute_train_gpu.sh /path/ImageNet2012/train"
+echo "=============================================================================================================="
 
+DATA_PATH=$1
 
-@non_graph_engine
-def test_vgg16():
-    inputs = Tensor(np.random.rand(1, 3, 112, 112).astype(np.float32))
-    net = vgg16(args=cfg)
-    with pytest.raises(ValueError):
-        print(net.construct(inputs))
+mpirun -n 8 python train.py  \
+    --device_target="GPU" \
+    --dataset="imagenet2012" \
+    --is_distributed=1 \
+    --data_path=$DATA_PATH  > output.train.log 2>&1 &
