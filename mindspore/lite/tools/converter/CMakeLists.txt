@@ -78,6 +78,8 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/common/visit.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/fusion/conv_biasadd_fusion.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/fusion/conv_activation_fusion.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/fusion/conv_scale_fusion.cc
         )
 
 add_subdirectory(parser/caffe)

@@ -21,6 +21,7 @@
 #include "ir/func_graph.h"
 #include "src/common/utils.h"
 #include "src/gllo/common/pattern_engine.h"
+#include "schema/inner/model_generated.h"
 
 namespace mindspore {
 namespace opt {
@@ -41,6 +42,8 @@ void CheckIfCNodeIsNull(const CNodePtr &node);
 void CheckIfVarIsNull(const VarPtr &var);
 
 void CheckInputSize(const CNodePtr &node, const int size);
+
+schema::PrimitiveType GetCNodeType(const CNodePtr &node);
 
 }  // namespace opt
 }  // namespace mindspore
