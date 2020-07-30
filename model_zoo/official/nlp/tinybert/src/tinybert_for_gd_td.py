@@ -292,6 +292,60 @@ class BertTrainWithLossScaleCell(nn.Cell):
         ret = (loss, cond, scaling_sens)
         return F.depend(ret, succ)
 
+class BertTrainCell(nn.Cell):
+    """
+    Encapsulation class of bert network training.
+
+    Append an optimizer to the training network after that the construct
+    function can be called to create the backward graph.
+
+    Args:
+        network (Cell): The training network. Note that loss function should have been added.
+        optimizer (Optimizer): Optimizer for updating the weights.
+        sens (Number): The adjust parameter. Default: 1.0.
+    """
+    def __init__(self, network, optimizer, sens=1.0):
+        super(BertTrainCell, self).__init__(auto_prefix=False)
+        self.network = network
+        self.weights = optimizer.parameters
+        self.optimizer = optimizer
+        self.sens = sens
+        self.grad = C.GradOperation('grad',
+                                    get_by_list=True,
+                                    sens_param=True)
+        self.reducer_flag = False
+        self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
+        if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
+            self.reducer_flag = True
+        self.grad_reducer = F.identity
+        self.degree = 1
+        if self.reducer_flag:
+            mean = context.get_auto_parallel_context("mirror_mean")
+            self.degree = get_group_size()
+            self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, self.degree)
+        self.cast = P.Cast()
+        self.hyper_map = C.HyperMap()
+
+    def construct(self,
+                  input_ids,
+                  input_mask,
+                  token_type_id):
+        """Defines the computation performed."""
+        weights = self.weights
+        loss = self.network(input_ids,
+                            input_mask,
+                            token_type_id)
+        grads = self.grad(self.network, weights)(input_ids,
+                                                 input_mask,
+                                                 token_type_id,
+                                                 self.cast(F.tuple_to_array((self.sens,)),
+                                                           mstype.float32))
+        # apply grad reducer on grads
+        grads = self.grad_reducer(grads)
+        grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
+        succ = self.optimizer(grads)
+        return F.depend(loss, succ)
+
 class BertNetworkWithLoss_td(nn.Cell):
     """
     Provide bert pre-training loss through network.
@@ -411,12 +465,12 @@ class BertNetworkWithLoss_td(nn.Cell):
             total_loss += cls_loss
         return self.cast(total_loss, mstype.float32)
 
-class BertEvaluationCell(nn.Cell):
+class BertEvaluationWithLossScaleCell(nn.Cell):
     """
     Especifically defined for finetuning where only four inputs tensor are needed.
     """
     def __init__(self, network, optimizer, scale_update_cell=None):
-        super(BertEvaluationCell, self).__init__(auto_prefix=False)
+        super(BertEvaluationWithLossScaleCell, self).__init__(auto_prefix=False)
         self.network = network
         self.weights = optimizer.parameters
         self.optimizer = optimizer
@@ -496,3 +550,54 @@ class BertEvaluationCell(nn.Cell):
             succ = self.optimizer(grads)
         ret = (loss, cond, scaling_sens)
         return F.depend(ret, succ)
+
+
+class BertEvaluationCell(nn.Cell):
+    """
+    Especifically defined for finetuning where only four inputs tensor are needed.
+    """
+    def __init__(self, network, optimizer, sens=1.0):
+        super(BertEvaluationCell, self).__init__(auto_prefix=False)
+        self.network = network
+        self.weights = optimizer.parameters
+        self.optimizer = optimizer
+        self.sens = sens
+        self.grad = C.GradOperation('grad',
+                                    get_by_list=True,
+                                    sens_param=True)
+        self.reducer_flag = False
+        self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
+        if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
+            self.reducer_flag = True
+        self.grad_reducer = F.identity
+        self.degree = 1
+        if self.reducer_flag:
+            mean = context.get_auto_parallel_context("mirror_mean")
+            self.degree = get_group_size()
+            self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, self.degree)
+        self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
+        self.cast = P.Cast()
+        self.hyper_map = C.HyperMap()
+
+    def construct(self,
+                  input_ids,
+                  input_mask,
+                  token_type_id,
+                  label_ids):
+        """Defines the computation performed."""
+        weights = self.weights
+        loss = self.network(input_ids,
+                            input_mask,
+                            token_type_id,
+                            label_ids)
+        grads = self.grad(self.network, weights)(input_ids,
+                                                 input_mask,
+                                                 token_type_id,
+                                                 label_ids,
+                                                 self.cast(F.tuple_to_array((self.sens,)),
+                                                           mstype.float32))
+        # apply grad reducer on grads
+        grads = self.grad_reducer(grads)
+        grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
+        succ = self.optimizer(grads)
+        return F.depend(loss, succ)
