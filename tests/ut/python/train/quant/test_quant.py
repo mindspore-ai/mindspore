@@ -20,7 +20,7 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore import nn
 from mindspore.train.quant import quant as qat
-from model_zoo.mobilenetv2_quant.src.mobilenetV2 import mobilenetV2
+from model_zoo.official.cv.mobilenetv2_quant.src.mobilenetV2 import mobilenetV2
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
