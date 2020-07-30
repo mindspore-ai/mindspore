@@ -17,7 +17,8 @@
 #include "src/runtime/kernel/arm/opclib/fp32/batch_to_space.h"
 #include "src/runtime/kernel/arm/opclib/arithmetic_common.h"
 
-void BatchToSpaceNoCropForNHWC(const float *input, float *output, const int *in_shape, int out_n, const int *block) {
+void BatchToSpaceNoCropForNHWC(const void *input, void *output, const int *in_shape, int out_n, const int *block,
+                               int data_size) {
   int block_h = block[0];
   int block_w = block[1];
   int in_h = in_shape[1];
@@ -25,7 +26,7 @@ void BatchToSpaceNoCropForNHWC(const float *input, float *output, const int *in_
   int in_c = in_shape[3];
   size_t stride_h = block_w * out_n;
   size_t output_offset = 0;
-  size_t copy_size = in_c * 4;
+  size_t copy_size = in_c * data_size;
   size_t in_stride_h = in_w * in_c;
   size_t in_stride_n = in_stride_h * in_h;
   for (int n = 0; n < out_n; ++n) {
@@ -36,8 +37,9 @@ void BatchToSpaceNoCropForNHWC(const float *input, float *output, const int *in_
           size_t w_offset = w * in_c;
           for (int bw = 0; bw < block_w; ++bw) {
             size_t in_offset = in_stride_n * (bh * stride_h + bw * out_n + n) + w_offset + h_offset;
-            memcpy(output + output_offset, input + in_offset, copy_size);
-            output_offset += in_c;
+            memcpy(reinterpret_cast<int8_t *>(output) + output_offset,
+                   reinterpret_cast<const int8_t *>(input) + in_offset * data_size, copy_size);
+            output_offset += copy_size;
           }
         }
       }
@@ -45,8 +47,8 @@ void BatchToSpaceNoCropForNHWC(const float *input, float *output, const int *in_
   }
 }
 
-void BatchToSpaceForNHWC(const float *input, float *output, const int *in_shape, int out_n, const int *block,
-                         const int *crops) {
+void BatchToSpaceForNHWC(const void *input, void *output, const int *in_shape, int out_n, const int *block,
+                         const int *crops, int data_size) {
   int block_h = block[0];
   int block_w = block[1];
   int in_n = in_shape[0];
@@ -64,7 +66,7 @@ void BatchToSpaceForNHWC(const float *input, float *output, const int *in_shape,
 
   size_t stride_h = block_w * out_n;
   size_t output_offset = 0;
-  size_t copy_size = in_c * 4;
+  size_t copy_size = in_c * data_size;
   size_t in_stride_h = in_w * in_c;
   size_t in_stride_n = in_stride_h * in_h;
   for (int n = 0; n < out_n; ++n) {
@@ -83,12 +85,12 @@ void BatchToSpaceForNHWC(const float *input, float *output, const int *in_shape,
               continue;
             }
             size_t in_offset = in_stride_n * (bh * stride_h + bw * out_n + n) + w_offset + h_offset;
-            memcpy(output + output_offset, input + in_offset, copy_size);
-            output_offset += in_c;
+            memcpy(reinterpret_cast<int8_t *>(output) + output_offset,
+                   reinterpret_cast<const int8_t *>(input) + in_offset * data_size, copy_size);
+            output_offset += copy_size;
           }
         }
       }
     }
   }
 }
-

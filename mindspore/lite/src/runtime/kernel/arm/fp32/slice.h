@@ -32,8 +32,8 @@ class SliceCPUKernel : public LiteKernel {
     return 0;
   }
   int Run() override;
+  int SliceParallelRun(int thread_id);
 };
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SLICE_H_
-

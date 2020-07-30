@@ -32,8 +32,13 @@ class AddNCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int AddNParallelRun(int thread_id);
+ private:
+  float *in1_addr_;
+  float *in2_addr_;
+  float *out_addr_;
+  size_t elements_num_;
 };
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ADDN_H_
-

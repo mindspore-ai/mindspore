@@ -50,13 +50,13 @@ int BroadcastToCPUKernel::Run() {
 
 kernel::LiteKernel *CpuBroadcastToFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                     const std::vector<lite::tensor::Tensor *> &outputs,
-                                                    OpParameter *opParameter, const lite::Context *ctx,
+                                                    OpParameter *op_parameter, const lite::Context *ctx,
                                                     const kernel::KernelKey &desc) {
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Input opParameter is nullptr!";
+  if (op_parameter == nullptr) {
+    MS_LOG(ERROR) << "Input op_parameter is nullptr!";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) BroadcastToCPUKernel(opParameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) BroadcastToCPUKernel(op_parameter, inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new BroadcastToCPUKernel fail!";
     return nullptr;
@@ -65,8 +65,8 @@ kernel::LiteKernel *CpuBroadcastToFp32KernelCreator(const std::vector<lite::tens
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    MS_LOG(ERROR) << "Init kernel failed, name: " << op_parameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
     return nullptr;
   }
   return kernel;

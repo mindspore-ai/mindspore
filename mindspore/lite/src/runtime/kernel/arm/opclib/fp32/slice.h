@@ -26,9 +26,11 @@ struct SliceParameter {
     int32_t size_[SLICE_SHAPE_MAX_SIZE];
     int32_t shape_[SLICE_SHAPE_MAX_SIZE];
     int32_t param_length_;
+    int32_t thread_id_;
 };
 
-int DoSlice(const float *input, SliceParameter *param, float *output);
-
+void PadSliceParameterTo4D(SliceParameter *param);
+void DoSlice(const float *input, float *output, SliceParameter *param);
+void DoSliceNoParallel(const float *input, float *output, SliceParameter *param);
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_SLICE_H_
 
