@@ -48,7 +48,7 @@ TEST_F(MindDataTestDistributedSampler, TestTwoShardsOne) {
   uint64_t num_samples = 7;
 
   // create sampler with replacement = true
-  DistributedSampler m_sampler(num_samples, 2, 0, false, 0, false);
+  DistributedSampler m_sampler(num_samples, 2, 0, false, 0, -1, false);
   DummyRandomAccessOp dummyRandomAccessOp(num_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
@@ -74,7 +74,7 @@ TEST_F(MindDataTestDistributedSampler, TestTwoShardsTwo) {
   uint64_t num_samples = 7;
 
   // create sampler with replacement = true
-  DistributedSampler m_sampler(num_samples, 2, 1, false, 0, false);
+  DistributedSampler m_sampler(num_samples, 2, 1, false, 0, -1, false);
   DummyRandomAccessOp dummyRandomAccessOp(num_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
@@ -100,7 +100,7 @@ TEST_F(MindDataTestDistributedSampler, TestThreeShards) {
   uint64_t num_samples = 2;
 
   // create sampler with replacement = true
-  DistributedSampler m_sampler(num_samples, 3, 2, false, 0, false);
+  DistributedSampler m_sampler(num_samples, 3, 2, false, 0, -1, false);
   DummyRandomAccessOp dummyRandomAccessOp(num_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 

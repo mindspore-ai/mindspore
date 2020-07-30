@@ -34,11 +34,13 @@ class DistributedSampler : public Sampler {
   /// \param[in] shuffle Option to shuffle
   /// \param seed Seed parameter to shuffle, default to max unsigned int (different seed in sampler will
   ///     result in different samples being picked
+  /// \param[in] offset The starting position which the elements in the dataset are send to.The application
+  ///     scenario of this parameter is when the concatdataset is set distributedSampler
   /// \param even_dist The option to indicate whether or not each shard returns the same number of rows.
   ///     This option is not exposed in the python API. Current behavior is that the remainder will always
   ///     be handled by the first n shards, n being the corresponding device id.
   DistributedSampler(int64_t num_samples, int64_t num_dev, int64_t dev_id, bool shuffle,
-                     uint32_t seed = std::numeric_limits<uint32_t>::max(), bool even_dist = true);
+                     uint32_t seed = std::numeric_limits<uint32_t>::max(), int64_t offset = -1, bool even_dist = true);
 
   /// \brief default destructor
   ~DistributedSampler() = default;
@@ -55,6 +57,10 @@ class DistributedSampler : public Sampler {
   /// \return Status code
   Status ResetSampler() override;
 
+  int64_t GetDeviceID() { return device_id_; }
+
+  int64_t GetDeviceNum() { return num_devices_; }
+
   void Print(std::ostream &out, bool show_all) const override;
 
  private:
@@ -66,6 +72,8 @@ class DistributedSampler : public Sampler {
   std::mt19937 rnd_;
   std::vector<int64_t> shuffle_vec_;
   bool even_dist_;
+  int64_t offset_;
+  bool non_empty_;
 };
 }  // namespace dataset
 }  // namespace mindspore

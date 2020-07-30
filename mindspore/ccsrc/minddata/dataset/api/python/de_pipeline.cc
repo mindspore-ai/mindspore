@@ -1081,6 +1081,25 @@ Status DEPipeline::ParseZipOp(const py::dict &args, std::shared_ptr<DatasetOp> *
 Status DEPipeline::ParseConcatOp(const py::dict &args, std::shared_ptr<DatasetOp> *top,
                                  std::shared_ptr<DatasetOp> *bottom) {
   std::shared_ptr<ConcatOp::Builder> builder = std::make_shared<ConcatOp::Builder>();
+  for (auto arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (!value.is_none()) {
+      if (key == "sampler") {
+        auto create = py::reinterpret_borrow<py::object>(value).attr("create");
+        std::shared_ptr<Sampler> sampler = create().cast<std::shared_ptr<Sampler>>();
+        (void)builder->SetSampler(std::move(sampler));
+      }
+      if (key == "children_flag_and_nums") {
+        auto childFlag = py::reinterpret_borrow<py::list>(value).cast<std::vector<std::pair<int, int>>>();
+        (void)builder->SetChildrenFlagAndNums(childFlag);
+      }
+      if (key == "children_start_end_index") {
+        auto childIndex = py::reinterpret_borrow<py::list>(value).cast<std::vector<std::pair<int, int>>>();
+        (void)builder->SetChildrenStartEndIndex(childIndex);
+      }
+    }
+  }
   std::shared_ptr<ConcatOp> op;
   RETURN_IF_NOT_OK(builder->Build(&op));
   *top = op;

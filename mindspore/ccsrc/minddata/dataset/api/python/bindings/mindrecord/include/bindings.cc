@@ -41,7 +41,7 @@ PYBIND_REGISTER(ShardDistributedSample, 1, ([](const py::module *m) {
                   (void)py::class_<mindrecord::ShardDistributedSample, mindrecord::ShardSample,
                                    std::shared_ptr<mindrecord::ShardDistributedSample>>(*m,
                                                                                         "MindrecordDistributedSampler")
-                    .def(py::init<int64_t, int64_t, bool, uint32_t, int64_t>());
+                    .def(py::init<int64_t, int64_t, bool, uint32_t, int64_t, int64_t>());
                 }));
 
 PYBIND_REGISTER(

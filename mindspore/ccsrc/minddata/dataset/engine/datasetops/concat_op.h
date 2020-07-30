@@ -20,7 +20,9 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <utility>
 #include "minddata/dataset/engine/datasetops/pipeline_op.h"
+#include "minddata/dataset/engine/datasetops/source/sampler/distributed_sampler.h"
 
 namespace mindspore {
 namespace dataset {
@@ -42,15 +44,35 @@ class ConcatOp : public PipelineOp {
     // The builder "build" method creates the final object.
     // @return shared_ptr to the new ConcatOp object
     Status Build(std::shared_ptr<ConcatOp> *);
+    Builder &SetSampler(std::shared_ptr<Sampler> sampler) {
+      builder_sampler_ = std::move(sampler);
+      return *this;
+    }
+
+    Builder &SetChildrenFlagAndNums(std::vector<std::pair<int, int>> children_flag_and_nums) {
+      children_flag_and_nums_ = std::move(children_flag_and_nums);
+      return *this;
+    }
+
+    Builder &SetChildrenStartEndIndex(std::vector<std::pair<int, int>> children_start_end_index) {
+      children_start_end_index_ = std::move(children_start_end_index);
+      return *this;
+    }
 
    private:
     int32_t builder_op_connector_size_;
+    std::shared_ptr<Sampler> builder_sampler_;
+    std::vector<std::pair<int, int>> children_flag_and_nums_;
+    std::vector<std::pair<int, int>> children_start_end_index_;
   };
 
   // Constructor of the ConcatOp.
   // @note The builder class should be used to call it
   // @param op_connector_size - connector size
   explicit ConcatOp(int32_t op_connector_size);
+  explicit ConcatOp(int32_t op_connector_size, std::shared_ptr<Sampler> sampler,
+                    std::vector<std::pair<int, int>> children_flag_and_nums,
+                    std::vector<std::pair<int, int>> children_start_end_index);
 
   // Destructor
   ~ConcatOp() = default;
@@ -90,6 +112,9 @@ class ConcatOp : public PipelineOp {
   std::unordered_map<std::string, int32_t> column_name_id_;  // Mapping between col index and col name
   std::vector<DataType> data_type_;
   std::vector<dsize_t> data_rank_;
+  std::shared_ptr<Sampler> sampler_;
+  std::vector<std::pair<int, int>> children_flag_and_nums_;
+  std::vector<std::pair<int, int>> children_start_end_index_;
 };
 }  // namespace dataset
 }  // namespace mindspore
