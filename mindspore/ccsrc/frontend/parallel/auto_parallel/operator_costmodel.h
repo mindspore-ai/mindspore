@@ -170,6 +170,8 @@ class ActivationCost : public OperatorCost {
 using ActivationCostPtr = std::shared_ptr<ActivationCost>;
 using TransposeCost = ActivationCost;
 using TransposeCostPtr = std::shared_ptr<TransposeCost>;
+using StridedSliceCost = ActivationCost;
+using StridedSliceCostPtr = std::shared_ptr<StridedSliceCost>;
 
 class SoftmaxCost : public OperatorCost {
  public:
