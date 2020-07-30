@@ -142,6 +142,11 @@ int CsvOp::CsvParser::put_row(char c) {
     return ret;
   }
 
+  if (cur_col_ != column_default_.size()) {
+    err_message_ = "The number of columns does not match the definition.";
+    return -1;
+  }
+
   total_rows_++;
   cur_row_++;
   cur_col_ = 0;
@@ -159,8 +164,12 @@ int CsvOp::CsvParser::put_row(char c) {
 
 int CsvOp::CsvParser::end_file(char c) {
   if (cur_col_ > 0) {
-    put_row(c);
+    int ret = put_row(c);
+    if (ret < 0) {
+      return ret;
+    }
   }
+
   if (cur_row_ > 0) {
     cur_buffer_->set_tensor_table(std::move(tensor_table_));
     buffer_connector_->Add(worker_id_, std::move(cur_buffer_));
@@ -190,16 +199,16 @@ Status CsvOp::CsvParser::initCsvParser() {
 
   // State diagram for counting rows
   sdl = {// START_OF_FILE
-         // ┌───────────┬───────────┬─────────────┐
-         // │    abc    │    "      │    \n       │
-         // ├───────────┼───────────┼─────────────┤
-         // │ UNQUOTE   │ QUOTE     │ END_OF_LINE │
-         // ├───────────┼───────────┼─────────────┤
-         // | null_func │ null_func │ null_func   │
-         // └───────────┴───────────┴─────────────┘
+         // ┌───────────┬───────────┬───────────────┐
+         // │    abc    │    "      │      \n       │
+         // ├───────────┼───────────┼───────────────┤
+         // │ UNQUOTE   │   QUOTE   │ START_OF_FILE │
+         // ├───────────┼───────────┼───────────────┤
+         // | null_func │ null_func │   null_func   │
+         // └───────────┴───────────┴───────────────┘
          {{State::START_OF_FILE, Message::MS_NORMAL}, {State::UNQUOTE, &CsvParser::null_func}},
          {{State::START_OF_FILE, Message::MS_QUOTE}, {State::QUOTE, &CsvParser::null_func}},
-         {{State::START_OF_FILE, Message::MS_END_OF_LINE}, {State::END_OF_LINE, &CsvParser::null_func}},
+         {{State::START_OF_FILE, Message::MS_END_OF_LINE}, {State::START_OF_FILE, &CsvParser::null_func}},
 
          // UNQUOTE
          // ┌───────────┬───────────┬─────────────┐
@@ -254,7 +263,7 @@ Status CsvOp::CsvParser::initCsvParser() {
         // ┌───────────┬──────────┬──────────┬────────────────┬────────────────┐
         // │    abc    │    ,     │    "     │      \n        │       EOF      │
         // ├───────────┼──────────┼──────────┼────────────────┼────────────────┤
-        // │ UNQUOTE   │ DELIM    │ QUOTE    │ END_OF_LINE    │ END_OF_FILE    │
+        // │ UNQUOTE   │ DELIM    │ QUOTE    │ START_OF_FILE  │ END_OF_FILE    │
         // ├───────────┼──────────┼──────────┼────────────────┼────────────────┤
         // | lambda    │ lambda   │ lambda   │ null_func      │ null_func      │
         // └───────────┴──────────┴──────────┴────────────────┴────────────────┘
@@ -282,7 +291,7 @@ Status CsvOp::CsvParser::initCsvParser() {
             this->pos_ = 0;
             return 0;
           }}},
-        {{State::START_OF_FILE, Message::MS_END_OF_LINE}, {State::END_OF_LINE, &CsvParser::null_func}},
+        {{State::START_OF_FILE, Message::MS_END_OF_LINE}, {State::START_OF_FILE, &CsvParser::null_func}},
         {{State::START_OF_FILE, Message::MS_END_OF_FILE}, {State::END_OF_FILE, &CsvParser::null_func}},
 
         // UNQUOTE
@@ -683,7 +692,7 @@ Status CsvOp::CalculateNumRowsPerShard() {
   }
   if (all_num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "There is no valid data matching the dataset API CsvDataset. Please check file path or dataset API "
+      "There is no valid data matching the dataset API CsvDataset. Please check file path or CSV format "
       "validation first.");
   }
 
@@ -756,6 +765,8 @@ Status CsvOp::ComputeColMap() {
       getline(handle, line);
       std::vector<std::string> col_names = split(line, field_delim_);
       for (int32_t i = 0; i < col_names.size(); i++) {
+        // consider the case of CRLF
+        col_names[i].erase(col_names[i].find_last_not_of('\r') + 1);
         column_name_id_map_[col_names[i]] = i;
       }
     } else {
