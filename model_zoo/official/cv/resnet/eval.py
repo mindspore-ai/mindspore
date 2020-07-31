@@ -58,11 +58,8 @@ if __name__ == '__main__':
     context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=False, device_id=device_id)
 
     # create dataset
-    if args_opt.net == "resnet50":
-        dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=False, batch_size=config.batch_size,
-                                 target=target)
-    else:
-        dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=False, batch_size=config.batch_size)
+    dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=False, batch_size=config.batch_size,
+                             target=target)
     step_size = dataset.get_dataset_size()
 
     # define net
