@@ -167,7 +167,7 @@ def test_nested_repeat5():
     data = data.repeat(3)
 
     for _, d in enumerate(data):
-        assert np.array_equal(d[0], np.asarray([[0], [1], [2]]))
+        np.testing.assert_array_equal(d[0], np.asarray([[0], [1], [2]]))
 
     assert sum([1 for _ in data]) == 6
 
@@ -180,7 +180,7 @@ def test_nested_repeat6():
     data = data.repeat(3)
 
     for _, d in enumerate(data):
-        assert np.array_equal(d[0], np.asarray([[0], [1], [2]]))
+        np.testing.assert_array_equal(d[0], np.asarray([[0], [1], [2]]))
 
     assert sum([1 for _ in data]) == 6
 
@@ -193,7 +193,7 @@ def test_nested_repeat7():
     data = data.batch(3)
 
     for _, d in enumerate(data):
-        assert np.array_equal(d[0], np.asarray([[0], [1], [2]]))
+        np.testing.assert_array_equal(d[0], np.asarray([[0], [1], [2]]))
 
     assert sum([1 for _ in data]) == 6
 
@@ -207,9 +207,9 @@ def test_nested_repeat8():
 
     for i, d in enumerate(data):
         if i % 2 == 0:
-            assert np.array_equal(d[0], np.asarray([[0], [1]]))
+            np.testing.assert_array_equal(d[0], np.asarray([[0], [1]]))
         else:
-            assert np.array_equal(d[0], np.asarray([[2]]))
+            np.testing.assert_array_equal(d[0], np.asarray([[2]]))
 
     assert sum([1 for _ in data]) == 6 * 2
 

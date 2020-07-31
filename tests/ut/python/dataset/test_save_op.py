@@ -324,7 +324,7 @@ def test_case_03(add_and_remove_cv_file):
     i = 0
     for item in d2.create_dict_iterator():  # each data is a dictionary
         golden = np.array([i])
-        assert np.array_equal(item["data"], golden)
+        np.testing.assert_array_equal(item["data"], golden)
         i = i + 1
 
 
@@ -354,7 +354,7 @@ def type_tester(t):
     for item in d2.create_dict_iterator():  # each data is a dictionary
         golden = np.array([[i], [i + 1], [i + 2], [i + 3]], dtype=t)
         logger.info(item)
-        assert np.array_equal(item["data"], golden)
+        np.testing.assert_array_equal(item["data"], golden)
         i = i + 4
         if i == 64:
             i = 0

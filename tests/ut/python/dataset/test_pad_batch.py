@@ -63,8 +63,8 @@ def test_batch_padding_01():
     data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col2d": ([2, 2], -2), "col1d": ([2], -1)})
     data1 = data1.repeat(2)
     for data in data1.create_dict_iterator():
-        assert np.array_equal([[0, -1], [1, -1]], data["col1d"])
-        assert np.array_equal([[[100, -2], [200, -2]], [[101, -2], [201, -2]]], data["col2d"])
+        np.testing.assert_array_equal([[0, -1], [1, -1]], data["col1d"])
+        np.testing.assert_array_equal([[[100, -2], [200, -2]], [[101, -2], [201, -2]]], data["col2d"])
 
 
 def test_batch_padding_02():
@@ -72,8 +72,8 @@ def test_batch_padding_02():
     data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col2d": ([1, 2], -2)})
     data1 = data1.repeat(2)
     for data in data1.create_dict_iterator():
-        assert np.array_equal([[0], [1]], data["col1d"])
-        assert np.array_equal([[[100, -2]], [[101, -2]]], data["col2d"])
+        np.testing.assert_array_equal([[0], [1]], data["col1d"])
+        np.testing.assert_array_equal([[[100, -2]], [[101, -2]]], data["col2d"])
 
 
 def test_batch_padding_03():
@@ -83,10 +83,10 @@ def test_batch_padding_03():
     res = dict()
     for ind, data in enumerate(data1.create_dict_iterator()):
         res[ind] = data["col"].copy()
-    assert np.array_equal(res[0], [[0, -1], [0, 1]])
-    assert np.array_equal(res[1], [[0, 1, 2, -1], [0, 1, 2, 3]])
-    assert np.array_equal(res[2], [[0, -1], [0, 1]])
-    assert np.array_equal(res[3], [[0, 1, 2, -1], [0, 1, 2, 3]])
+    np.testing.assert_array_equal(res[0], [[0, -1], [0, 1]])
+    np.testing.assert_array_equal(res[1], [[0, 1, 2, -1], [0, 1, 2, 3]])
+    np.testing.assert_array_equal(res[2], [[0, -1], [0, 1]])
+    np.testing.assert_array_equal(res[3], [[0, 1, 2, -1], [0, 1, 2, 3]])
 
 
 def test_batch_padding_04():
@@ -94,8 +94,8 @@ def test_batch_padding_04():
     data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={})  # pad automatically
     data1 = data1.repeat(2)
     for data in data1.create_dict_iterator():
-        assert np.array_equal(data["col1"], [[0, 0], [0, 1]])
-        assert np.array_equal(data["col2"], [[100, 0], [100, 101]])
+        np.testing.assert_array_equal(data["col1"], [[0, 0], [0, 1]])
+        np.testing.assert_array_equal(data["col2"], [[100, 0], [100, 101]])
 
 
 def test_batch_padding_05():
@@ -103,9 +103,9 @@ def test_batch_padding_05():
     data1 = data1.batch(batch_size=3, drop_remainder=False,
                         pad_info={"col2": ([2, None], -2), "col1": (None, -1)})  # pad automatically
     for data in data1.create_dict_iterator():
-        assert np.array_equal(data["col1"], [[[0, -1, -1]], [[0, 1, -1]], [[0, 1, 2]]])
-        assert np.array_equal(data["col2"], [[[100, -2, -2], [-2, -2, -2]], [[100, 101, -2], [-2, -2, -2]],
-                                             [[100, 101, 102], [-2, -2, -2]]])
+        np.testing.assert_array_equal(data["col1"], [[[0, -1, -1]], [[0, 1, -1]], [[0, 1, 2]]])
+        np.testing.assert_array_equal(data["col2"], [[[100, -2, -2], [-2, -2, -2]], [[100, 101, -2], [-2, -2, -2]],
+                                                     [[100, 101, 102], [-2, -2, -2]]])
 
 
 def batch_padding_performance_3d():
@@ -197,7 +197,7 @@ def test_pad_via_map():
     res_from_batch = pad_batch_config()
     assert len(res_from_batch) == len(res_from_batch)
     for i, _ in enumerate(res_from_map):
-        assert np.array_equal(res_from_map[i], res_from_batch[i])
+        np.testing.assert_array_equal(res_from_map[i], res_from_batch[i])
 
 
 if __name__ == '__main__':

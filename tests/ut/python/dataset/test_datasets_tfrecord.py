@@ -162,7 +162,7 @@ def test_tfrecord_schema():
 
     for d1, d2 in zip(data1, data2):
         for t1, t2 in zip(d1, d2):
-            assert np.array_equal(t1, t2)
+            np.testing.assert_array_equal(t1, t2)
 
 
 def test_tfrecord_shuffle():
@@ -174,7 +174,7 @@ def test_tfrecord_shuffle():
 
     for d1, d2 in zip(data1, data2):
         for t1, t2 in zip(d1, d2):
-            assert np.array_equal(t1, t2)
+            np.testing.assert_array_equal(t1, t2)
 
 
 def test_tfrecord_shard():

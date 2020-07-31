@@ -67,7 +67,7 @@ def test_shuffle():
 
     for d1, d2 in zip(data1, data2):
         for t1, t2 in zip(d1, d2):
-            assert np.array_equal(t1, t2)
+            np.testing.assert_array_equal(t1, t2)
 
     ds.config.set_seed(1)
     DATA_ALL_FILE = "../data/dataset/testTextFileDataset/*"
@@ -77,7 +77,7 @@ def test_shuffle():
 
     for d1, d2 in zip(data1, data2):
         for t1, t2 in zip(d1, d2):
-            assert np.array_equal(t1, t2)
+            np.testing.assert_array_equal(t1, t2)
 
     ds.config.set_seed(1)
     TRAIN_FILE = '../data/dataset/testCLUE/afqmc/train.json'
@@ -87,7 +87,7 @@ def test_shuffle():
 
     for d1, d2 in zip(data1, data2):
         for t1, t2 in zip(d1, d2):
-            assert np.array_equal(t1, t2)
+            np.testing.assert_array_equal(t1, t2)
 
 
 if __name__ == "__main__":

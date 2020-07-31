@@ -36,22 +36,22 @@ def test_batch_corner_cases():
     tst1, tst2, tst3, tst4 = [], [], [], []
     # case 1 & 2, where batch_size is greater than the entire epoch, with drop equals to both val
     test_repeat_batch(gen_num=2, repeats=4, batch_size=7, drop=False, res=tst1)
-    assert np.array_equal(np.array([[0], [1], [0], [1], [0], [1], [0]]), tst1[0]), "\nATTENTION BATCH FAILED\n"
-    assert np.array_equal(np.array([[1]]), tst1[1]), "\nATTENTION TEST BATCH FAILED\n"
+    np.testing.assert_array_equal(np.array([[0], [1], [0], [1], [0], [1], [0]]), tst1[0], "\nATTENTION BATCH FAILED\n")
+    np.testing.assert_array_equal(np.array([[1]]), tst1[1], "\nATTENTION TEST BATCH FAILED\n")
     assert len(tst1) == 2, "\nATTENTION TEST BATCH FAILED\n"
     test_repeat_batch(gen_num=2, repeats=4, batch_size=5, drop=True, res=tst2)
-    assert np.array_equal(np.array([[0], [1], [0], [1], [0]]), tst2[0]), "\nATTENTION BATCH FAILED\n"
+    np.testing.assert_array_equal(np.array([[0], [1], [0], [1], [0]]), tst2[0], "\nATTENTION BATCH FAILED\n")
     assert len(tst2) == 1, "\nATTENTION TEST BATCH FAILED\n"
     # case 3 & 4, batch before repeat with different drop
     test_batch_repeat(gen_num=5, repeats=2, batch_size=4, drop=True, res=tst3)
-    assert np.array_equal(np.array([[0], [1], [2], [3]]), tst3[0]), "\nATTENTION BATCH FAILED\n"
-    assert np.array_equal(tst3[0], tst3[1]), "\nATTENTION BATCH FAILED\n"
+    np.testing.assert_array_equal(np.array([[0], [1], [2], [3]]), tst3[0], "\nATTENTION BATCH FAILED\n")
+    np.testing.assert_array_equal(tst3[0], tst3[1], "\nATTENTION BATCH FAILED\n")
     assert len(tst3) == 2, "\nATTENTION BATCH FAILED\n"
     test_batch_repeat(gen_num=5, repeats=2, batch_size=4, drop=False, res=tst4)
-    assert np.array_equal(np.array([[0], [1], [2], [3]]), tst4[0]), "\nATTENTION BATCH FAILED\n"
-    assert np.array_equal(tst4[0], tst4[2]), "\nATTENTION BATCH FAILED\n"
-    assert np.array_equal(tst4[1], np.array([[4]])), "\nATTENTION BATCH FAILED\n"
-    assert np.array_equal(tst4[1], tst4[3]), "\nATTENTION BATCH FAILED\n"
+    np.testing.assert_array_equal(np.array([[0], [1], [2], [3]]), tst4[0], "\nATTENTION BATCH FAILED\n")
+    np.testing.assert_array_equal(tst4[0], tst4[2], "\nATTENTION BATCH FAILED\n")
+    np.testing.assert_array_equal(tst4[1], np.array([[4]]), "\nATTENTION BATCH FAILED\n")
+    np.testing.assert_array_equal(tst4[1], tst4[3], "\nATTENTION BATCH FAILED\n")
     assert len(tst4) == 4, "\nATTENTION BATCH FAILED\n"
 
 

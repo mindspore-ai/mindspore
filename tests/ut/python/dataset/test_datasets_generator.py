@@ -38,7 +38,7 @@ def test_generator_0():
     i = 0
     for item in data1.create_dict_iterator():  # each data is a dictionary
         golden = np.array([i])
-        assert np.array_equal(item["data"], golden)
+        np.testing.assert_array_equal(item["data"], golden)
         i = i + 1
 
 
@@ -60,7 +60,7 @@ def test_generator_1():
     i = 0
     for item in data1.create_dict_iterator():  # each data is a dictionary
         golden = np.array([[i, i + 1], [i + 2, i + 3]])
-        assert np.array_equal(item["data"], golden)
+        np.testing.assert_array_equal(item["data"], golden)
         i = i + 1
 
 
@@ -82,9 +82,9 @@ def test_generator_2():
     i = 0
     for item in data1.create_dict_iterator():  # each data is a dictionary
         golden = np.array([i])
-        assert np.array_equal(item["col0"], golden)
+        np.testing.assert_array_equal(item["col0"], golden)
         golden = np.array([[i, i + 1], [i + 2, i + 3]])
-        assert np.array_equal(item["col1"], golden)
+        np.testing.assert_array_equal(item["col1"], golden)
         i = i + 1
 
 
@@ -102,7 +102,7 @@ def test_generator_3():
     i = 0
     for item in data1.create_dict_iterator():  # each data is a dictionary
         golden = np.array([i])
-        assert np.array_equal(item["data"], golden)
+        np.testing.assert_array_equal(item["data"], golden)
         i = i + 1
         if i == 64:
             i = 0
@@ -122,7 +122,7 @@ def test_generator_4():
     i = 0
     for item in data1.create_dict_iterator():  # each data is a dictionary
         golden = np.array([[i], [i + 1], [i + 2], [i + 3]])
-        assert np.array_equal(item["data"], golden)
+        np.testing.assert_array_equal(item["data"], golden)
         i = i + 4
 
 
@@ -142,7 +142,7 @@ def type_tester(t):
     i = 0
     for item in data1.create_dict_iterator():  # each data is a dictionary
         golden = np.array([[i], [i + 1], [i + 2], [i + 3]], dtype=t)
-        assert np.array_equal(item["data"], golden)
+        np.testing.assert_array_equal(item["data"], golden)
         i = i + 4
 
 
@@ -169,7 +169,7 @@ def type_tester_with_type_check(t, c):
     i = 0
     for item in data1.create_dict_iterator():  # each data is a dictionary
         golden = np.array([[i], [i + 1], [i + 2], [i + 3]], dtype=t)
-        assert np.array_equal(item["data"], golden)
+        np.testing.assert_array_equal(item["data"], golden)
         i = i + 4
 
 
@@ -204,7 +204,7 @@ def type_tester_with_type_check_2c(t, c):
     i = 0
     for item in data1.create_dict_iterator():  # each data is a dictionary
         golden = np.array([[i], [i + 1], [i + 2], [i + 3]], dtype=t)
-        assert np.array_equal(item["data0"], golden)
+        np.testing.assert_array_equal(item["data0"], golden)
         i = i + 4
 
 
@@ -241,11 +241,11 @@ def test_generator_8():
     i = 0
     for item in data1.create_dict_iterator():  # each data is a dictionary
         golden = np.array([i * 3])
-        assert np.array_equal(item["out0"], golden)
+        np.testing.assert_array_equal(item["out0"], golden)
         golden = np.array([[i * 7, (i + 1) * 7], [(i + 2) * 7, (i + 3) * 7]])
-        assert np.array_equal(item["out1"], golden)
+        np.testing.assert_array_equal(item["out1"], golden)
         golden = np.array([[i + 1, i + 2], [i + 3, i + 4]])
-        assert np.array_equal(item["out2"], golden)
+        np.testing.assert_array_equal(item["out2"], golden)
         i = i + 1
 
 
@@ -269,14 +269,14 @@ def test_generator_9():
     i = 0
     for data1, data2 in zip(data1, data2):  # each data is a dictionary
         golden = np.array([i])
-        assert np.array_equal(data1[0], golden)
+        np.testing.assert_array_equal(data1[0], golden)
         golden = np.array([[i * 3, (i + 1) * 3], [(i + 2) * 3, (i + 3) * 3]])
-        assert np.array_equal(data1[1], golden)
+        np.testing.assert_array_equal(data1[1], golden)
 
         golden = np.array([i * 3])
-        assert np.array_equal(data2[0], golden)
+        np.testing.assert_array_equal(data2[0], golden)
         golden = np.array([[i, i + 1], [i + 2, i + 3]])
-        assert np.array_equal(data2[1], golden)
+        np.testing.assert_array_equal(data2[1], golden)
         i = i + 1
 
 
@@ -295,11 +295,11 @@ def test_generator_10():
     i = 0
     for item in data1.create_tuple_iterator():
         golden = np.array([i])
-        assert np.array_equal(item[0], golden)
+        np.testing.assert_array_equal(item[0], golden)
         golden = np.array([[i, i + 1], [i + 2, i + 3]])
-        assert np.array_equal(item[1], golden)
+        np.testing.assert_array_equal(item[1], golden)
         golden = np.array([[i * 5, (i + 1) * 5], [(i + 2) * 5, (i + 3) * 5]])
-        assert np.array_equal(item[2], golden)
+        np.testing.assert_array_equal(item[2], golden)
         i = i + 1
 
 
@@ -321,9 +321,9 @@ def test_generator_11():
         # len should be 2 because col0 is dropped (not included in columns_order)
         assert len(item) == 2
         golden = np.array([[i, i + 1], [i + 2, i + 3]])
-        assert np.array_equal(item[0], golden)
+        np.testing.assert_array_equal(item[0], golden)
         golden = np.array([[i * 5, (i + 1) * 5], [(i + 2) * 5, (i + 3) * 5]])
-        assert np.array_equal(item[1], golden)
+        np.testing.assert_array_equal(item[1], golden)
         i = i + 1
 
 
@@ -342,9 +342,9 @@ def test_generator_12():
     for item in data1.create_tuple_iterator():
         assert len(item) == 2
         golden = np.array([i * 5])
-        assert np.array_equal(item[0], golden)
+        np.testing.assert_array_equal(item[0], golden)
         golden = np.array([[i, i + 1], [i + 2, i + 3]])
-        assert np.array_equal(item[1], golden)
+        np.testing.assert_array_equal(item[1], golden)
         i = i + 1
 
     data1 = ds.GeneratorDataset(generator_mc(2048), ["col0", "col1"])
@@ -355,9 +355,9 @@ def test_generator_12():
     for item in data1.create_tuple_iterator():
         assert len(item) == 2
         golden = np.array([i * 5])
-        assert np.array_equal(item[1], golden)
+        np.testing.assert_array_equal(item[1], golden)
         golden = np.array([[i, i + 1], [i + 2, i + 3]])
-        assert np.array_equal(item[0], golden)
+        np.testing.assert_array_equal(item[0], golden)
         i = i + 1
 
 
@@ -376,18 +376,18 @@ def test_generator_13():
     for item in data1.create_tuple_iterator():
         assert len(item) == 2
         golden = np.array([i * 5])
-        assert np.array_equal(item[0], golden)
+        np.testing.assert_array_equal(item[0], golden)
         golden = np.array([[i, i + 1], [i + 2, i + 3]])
-        assert np.array_equal(item[1], golden)
+        np.testing.assert_array_equal(item[1], golden)
         i = i + 1
 
     for item in data1.create_dict_iterator():  # each data is a dictionary
         # len should be 2 because col0 is dropped (not included in columns_order)
         assert len(item) == 2
         golden = np.array([i * 5])
-        assert np.array_equal(item["out0"], golden)
+        np.testing.assert_array_equal(item["out0"], golden)
         golden = np.array([[i, i + 1], [i + 2, i + 3]])
-        assert np.array_equal(item["col1"], golden)
+        np.testing.assert_array_equal(item["col1"], golden)
         i = i + 1
 
 
@@ -402,7 +402,7 @@ def test_generator_14():
     i = 0
     for data in ds1.create_dict_iterator():  # each data is a dictionary
         golden = np.array([i])
-        assert np.array_equal(data["data"], golden)
+        np.testing.assert_array_equal(data["data"], golden)
         i = i + 1
         if i == 256:
             i = 0
@@ -420,7 +420,7 @@ def test_generator_15():
     i = 0
     for data in ds1.create_dict_iterator():  # each data is a dictionary
         golden = np.array([i])
-        assert np.array_equal(data["data"], golden)
+        np.testing.assert_array_equal(data["data"], golden)
         i = i + 1
         if i == 256:
             i = 0
@@ -439,9 +439,9 @@ def test_generator_16():
     i = 0
     for item in data1.create_dict_iterator():  # each data is a dictionary
         golden = np.array([i])
-        assert np.array_equal(item["col0"], golden)
+        np.testing.assert_array_equal(item["col0"], golden)
         golden = np.array([i + 1])
-        assert np.array_equal(item["col1"], golden)
+        np.testing.assert_array_equal(item["col1"], golden)
         i = i + 1
 
 
@@ -459,9 +459,9 @@ def test_generator_17():
     i = 0
     for item in data1.create_dict_iterator():  # each data is a dictionary
         golden = np.array([i])
-        assert np.array_equal(item["col0"], golden)
+        np.testing.assert_array_equal(item["col0"], golden)
         golden = np.array([i + 1])
-        assert np.array_equal(item["col1"], golden)
+        np.testing.assert_array_equal(item["col1"], golden)
         i = i + 1
 
 
@@ -519,7 +519,7 @@ def test_generator_sequential_sampler():
     i = 0
     for data in ds1.create_dict_iterator():  # each data is a dictionary
         golden = np.array([i])
-        assert np.array_equal(data["data"], golden)
+        np.testing.assert_array_equal(data["data"], golden)
         i = i + 1
 
 
@@ -537,7 +537,7 @@ def test_generator_distributed_sampler():
         i = sid
         for data in ds1.create_dict_iterator():  # each data is a dictionary
             golden = np.array([i])
-            assert np.array_equal(data["data"], golden)
+            np.testing.assert_array_equal(data["data"], golden)
             i = i + 8
 
 
@@ -596,7 +596,7 @@ def type_tester_with_type_check_2c_schema(t, c):
     i = 0
     for item in data1.create_dict_iterator():  # each data is a dictionary
         golden = np.array([[i], [i + 1], [i + 2], [i + 3]], dtype=t)
-        assert np.array_equal(item["data0"], golden)
+        np.testing.assert_array_equal(item["data0"], golden)
         i = i + 4
 
 

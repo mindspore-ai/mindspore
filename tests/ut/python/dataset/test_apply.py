@@ -41,7 +41,7 @@ def test_apply_generator_case():
     data2 = data2.batch(4)
 
     for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
-        assert np.array_equal(item1["data"], item2["data"])
+        np.testing.assert_array_equal(item1["data"], item2["data"])
 
 
 def test_apply_imagefolder_case():
@@ -64,7 +64,7 @@ def test_apply_imagefolder_case():
     data2 = data2.repeat(2)
 
     for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
-        assert np.array_equal(item1["image"], item2["image"])
+        np.testing.assert_array_equal(item1["image"], item2["image"])
 
 
 def test_apply_flow_case_0(id_=0):
