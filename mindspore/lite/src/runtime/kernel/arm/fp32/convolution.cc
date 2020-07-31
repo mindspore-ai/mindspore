@@ -33,10 +33,17 @@ int ConvolutionCPUKernel::InitWeightBias() {
   int kernel_w = conv_param_->kernel_w_;
   int in_channel = conv_param_->input_channel_;
   int out_channel = conv_param_->output_channel_;
-  int oc8 = UP_DIV(out_channel, C8NUM);
   int ic4 = UP_DIV(in_channel, C4NUM);
   int kernel_plane = kernel_h * kernel_w;
-  int pack_weight_size = oc8 * ic4 * C8NUM * C4NUM * kernel_plane;
+  int oc_block, oc_block_num;
+#ifdef ENABLE_ARM32
+  oc_block = C4NUM;
+  oc_block_num = UP_DIV(out_channel, C4NUM);
+#else
+  oc_block = C8NUM;
+  oc_block_num = UP_DIV(out_channel, C8NUM);
+#endif
+  int pack_weight_size = oc_block_num * oc_block * ic4 * C4NUM * kernel_plane;
 
   // init weight
   auto origin_weight = reinterpret_cast<float *>(inputs_.at(kWeightIndex)->Data());
@@ -49,12 +56,12 @@ int ConvolutionCPUKernel::InitWeightBias() {
   PackWeightFp32(origin_weight, conv_param_, packed_weight_);
 
   // init bias
-  bias_data_ = reinterpret_cast<float *>(malloc(oc8 * C8NUM * sizeof(float)));
+  bias_data_ = reinterpret_cast<float *>(malloc(oc_block_num * oc_block * sizeof(float)));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc bias failed.";
     return RET_ERROR;
   }
-  memset(bias_data_, 0, oc8 * C8NUM * sizeof(float));
+  memset(bias_data_, 0, oc_block_num * oc_block * sizeof(float));
   if (inputs_.size() == kInputSize2) {
     auto ori_bias = reinterpret_cast<float *>(inputs_.at(kBiasIndex)->Data());
     memcpy(bias_data_, ori_bias, out_channel * sizeof(float));
@@ -198,4 +205,3 @@ int ConvolutionCPUKernel::Run() {
   return RET_OK;
 }
 }  // namespace mindspore::kernel
-

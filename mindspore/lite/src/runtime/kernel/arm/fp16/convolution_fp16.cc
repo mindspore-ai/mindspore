@@ -42,7 +42,7 @@ int ConvolutionFP16CPUKernel::InitWeightBias() {
   // init weight
   float *origin_weight = reinterpret_cast<float *>(inputs_.at(kWeightIndex)->Data());
   size_t fp16_weight_size = in_channel * out_channel * kernel_h * kernel_w * sizeof(float16_t);
-  fp16_weight_ = malloc(fp16_weight_size);
+  fp16_weight_ = reinterpret_cast<float16_t *>(malloc(fp16_weight_size));
   if (fp16_weight_ == nullptr) {
     MS_LOG(ERROR) << "malloc fp16_weight_ failed.";
     return RET_ERROR;
@@ -60,16 +60,17 @@ int ConvolutionFP16CPUKernel::InitWeightBias() {
   PackWeightFp16(fp16_weight_, conv_param_, packed_weight_);
 
   // init bias
-  bias_data_ = reinterpret_cast<float16_t *>(malloc(oc8 * C8NUM * sizeof(float16_t)));
+  bias_data_ = malloc(oc8 * C8NUM * sizeof(float16_t));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc bias_data_ failed.";
     return RET_ERROR;
   }
   memset(bias_data_, 0, oc8 * C8NUM * sizeof(float16_t));
+  auto fp16_bias_data = reinterpret_cast<float16_t *>(bias_data_);
   if (inputs_.size() == kInputSize2) {
     auto ori_bias = reinterpret_cast<float *>(inputs_.at(kBiasIndex)->Data());
     for (int i = 0; i < out_channel; ++i) {
-      bias_data_[i] = (float16_t)ori_bias[i];
+      fp16_bias_data[i] = (float16_t)ori_bias[i];
     }
   } else {
     MS_ASSERT(inputs_.size() == kInputSize1);
@@ -101,7 +102,7 @@ int ConvolutionFP16CPUKernel::InitTmpBuffer() {
 
   size_t fp16_input_size =
     in_channel * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float16_t);
-  fp16_input_ = malloc(fp16_input_size);
+  fp16_input_ = reinterpret_cast<float16_t *>(malloc(fp16_input_size));
   if (fp16_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc fp16_input_ failed.";
     return RET_ERROR;

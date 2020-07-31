@@ -42,10 +42,10 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
                       TmpBufferAddress *buffer_list, int task_id, ConvParameter *conv_param,
                       InputTransformUnitFunc input_trans_func, OutputTransformUnitFunc output_trans_func);
 
+void UnPackWinogradOutput(const float *src, float *dst, int batch, int height, int width, int channel, int output_unit);
+
 // fp32 conv3x3
 void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_data, float *output_data,
-                 TmpBufferAddress *buffer_list, int task_id,
-                 ConvParameter *conv_param);
+                 TmpBufferAddress *buffer_list, int task_id, ConvParameter *conv_param);
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_CONV_H_
-

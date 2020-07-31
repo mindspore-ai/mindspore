@@ -24,11 +24,6 @@ void IndirectGemmInt16to32_8x4(int32_t *dst, const int16_t *src, const int16_t *
                                size_t oc4, size_t offset);
 
 #ifdef ENABLE_ARM64
-// void IndirectGemmInt8_24x4_dp(int8_t *dst, const int8_t *src, const int8_t *weight, const int32_t *bias, size_t
-// ksize,
-//                              size_t ic4, size_t output_channel, size_t offset, const int32_t *input_sum,
-//                              size_t act_min, size_t act_max, size_t out_zp, size_t out_multiplier, size_t
-//                              shift_before, size_t shift_after);
 void IndirectGemmInt8_4x4(int8_t *output, const int8_t *input, const int8_t *weight, const int32_t *bias, size_t ksize,
                           size_t ic4, size_t oc, size_t offset, const int32_t *input_sum, size_t act_min,
                           size_t act_max, size_t out_zp, size_t out_multiplier, size_t shift_before,
@@ -54,8 +49,9 @@ void IndirectGemmInt8(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const in
 #ifdef __aarch64__
   IndirectGemmInt8_4x4(dst, src, weight, bias, kernel_plane, ic4, output_channel, output_channel * sizeof(int8_t),
                        input_sum, act_min, act_max, out_zp, out_multiplier, shift_before, shift_after);
+  // todo arm32
 #else
-  int tile_num = 4;
+  int tile_num = conv_param->tile_num_;
   int plane_c4 = UP_DIV(kernel_plane, C4NUM);
   for (int oc = 0; oc < output_channel; oc++) {
     int oc4_block = oc / C4NUM;
@@ -109,7 +105,7 @@ void IndirectGemmInt8Opt(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const
               act_min, act_max, out_zp, out_multiplier, shift_before, shift_after);
 #endif
   } else {
-    int tile_num = 24;
+    int tile_num = conv_param->tile_num_;
     for (int oc = 0; oc < output_channel; oc++) {
       int oc4_block = oc / C4NUM;
       int oc4_res = oc % C4NUM;
@@ -202,7 +198,7 @@ void ConvInt8(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight, c
   int out_channel = conv_param->output_channel_;
   int32_t input_zp = conv_param->conv_quant_arg_.quant_args_[0][0].zp_;
 
-  int tile_n = 4;
+  int tile_n = conv_param->tile_num_;
   int thread_count = conv_param->thread_num_;
   int output_count = out_h * out_w;
   int output_tile_count = UP_DIV(output_count, tile_n);
@@ -255,9 +251,7 @@ void ConvInt8Opt(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight
   int out_w = conv_param->output_w_;
   int out_channel = conv_param->output_channel_;
   int32_t input_zp = conv_param->conv_quant_arg_.quant_args_[0][0].zp_;
-
-  // todo
-  int tile_n = 24;
+  int tile_n = conv_param->tile_num_;
   int thread_count = conv_param->thread_num_;
   int output_count = out_h * out_w;
   int output_tile_count = UP_DIV(output_count, tile_n);
@@ -302,7 +296,6 @@ void ConvInt8Opt(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight
 void Conv3x3Int8(int16_t *input_data, int16_t *transed_weight, const int32_t *bias_data, int8_t *output_data,
                  int16_t *tile_buffer, int16_t *block_unit_buffer, int32_t *tmp_dst_buffer, int8_t *tmp_out,
                  int task_id, ConvParameter *conv_param) {
-  // todo
   int thread_count = conv_param->thread_num_;
   int ic8 = UP_DIV(conv_param->input_channel_, C8NUM);
   int output_batch = conv_param->output_batch_;
@@ -331,8 +324,5 @@ void Conv3x3Int8(int16_t *input_data, int16_t *transed_weight, const int32_t *bi
   }
 
   // get real output
-  for (int batch = 0; batch < output_batch; batch++) {
-    // int batch_size = batch * output_channel * output_h * output_w;
-    C4UnpackToHwcInt8(tmp_out, output_data, output_channel, output_h, output_w);
-  }
+  PackNC4HW4ToNHWCInt8(tmp_out, output_data, output_batch, output_h * output_w, output_channel);
 }

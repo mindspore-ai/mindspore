@@ -1494,6 +1494,169 @@ void OutputTransform4x3Unit(const float *src_data, float *dst_data, const float 
 void OutputTransform8x2Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                             int dst_step) {
 #ifdef ENABLE_ARM
+  float32x4_t src_data_00 = vld1q_f32(src_data + 0 * src_step);
+  float32x4_t src_data_01 = vld1q_f32(src_data + 1 * src_step);
+  float32x4_t src_data_02 = vld1q_f32(src_data + 2 * src_step);
+  float32x4_t src_data_03 = vld1q_f32(src_data + 3 * src_step);
+  float32x4_t src_data_04 = vld1q_f32(src_data + 4 * src_step);
+  float32x4_t src_data_05 = vld1q_f32(src_data + 5 * src_step);
+  float32x4_t src_data_06 = vld1q_f32(src_data + 6 * src_step);
+  float32x4_t src_data_07 = vld1q_f32(src_data + 7 * src_step);
+  float32x4_t src_data_10 = vld1q_f32(src_data + 8 * src_step);
+  float32x4_t src_data_11 = vld1q_f32(src_data + 9 * src_step);
+  float32x4_t src_data_12 = vld1q_f32(src_data + 10 * src_step);
+  float32x4_t src_data_13 = vld1q_f32(src_data + 11 * src_step);
+  float32x4_t src_data_14 = vld1q_f32(src_data + 12 * src_step);
+  float32x4_t src_data_15 = vld1q_f32(src_data + 13 * src_step);
+  float32x4_t src_data_16 = vld1q_f32(src_data + 14 * src_step);
+  float32x4_t src_data_17 = vld1q_f32(src_data + 15 * src_step);
+  float32x4_t src_data_20 = vld1q_f32(src_data + 16 * src_step);
+  float32x4_t src_data_21 = vld1q_f32(src_data + 17 * src_step);
+  float32x4_t src_data_22 = vld1q_f32(src_data + 18 * src_step);
+  float32x4_t src_data_23 = vld1q_f32(src_data + 19 * src_step);
+  float32x4_t src_data_24 = vld1q_f32(src_data + 20 * src_step);
+  float32x4_t src_data_25 = vld1q_f32(src_data + 21 * src_step);
+  float32x4_t src_data_26 = vld1q_f32(src_data + 22 * src_step);
+  float32x4_t src_data_27 = vld1q_f32(src_data + 23 * src_step);
+  float32x4_t src_data_30 = vld1q_f32(src_data + 24 * src_step);
+  float32x4_t src_data_31 = vld1q_f32(src_data + 25 * src_step);
+  float32x4_t src_data_32 = vld1q_f32(src_data + 26 * src_step);
+  float32x4_t src_data_33 = vld1q_f32(src_data + 27 * src_step);
+  float32x4_t src_data_34 = vld1q_f32(src_data + 28 * src_step);
+  float32x4_t src_data_35 = vld1q_f32(src_data + 29 * src_step);
+  float32x4_t src_data_36 = vld1q_f32(src_data + 30 * src_step);
+  float32x4_t src_data_37 = vld1q_f32(src_data + 31 * src_step);
+  float32x4_t src_data_40 = vld1q_f32(src_data + 32 * src_step);
+  float32x4_t src_data_41 = vld1q_f32(src_data + 33 * src_step);
+  float32x4_t src_data_42 = vld1q_f32(src_data + 34 * src_step);
+  float32x4_t src_data_43 = vld1q_f32(src_data + 35 * src_step);
+  float32x4_t src_data_44 = vld1q_f32(src_data + 36 * src_step);
+  float32x4_t src_data_45 = vld1q_f32(src_data + 37 * src_step);
+  float32x4_t src_data_46 = vld1q_f32(src_data + 38 * src_step);
+  float32x4_t src_data_47 = vld1q_f32(src_data + 39 * src_step);
+  float32x4_t src_data_50 = vld1q_f32(src_data + 40 * src_step);
+  float32x4_t src_data_51 = vld1q_f32(src_data + 41 * src_step);
+  float32x4_t src_data_52 = vld1q_f32(src_data + 42 * src_step);
+  float32x4_t src_data_53 = vld1q_f32(src_data + 43 * src_step);
+  float32x4_t src_data_54 = vld1q_f32(src_data + 44 * src_step);
+  float32x4_t src_data_55 = vld1q_f32(src_data + 45 * src_step);
+  float32x4_t src_data_56 = vld1q_f32(src_data + 46 * src_step);
+  float32x4_t src_data_57 = vld1q_f32(src_data + 47 * src_step);
+  float32x4_t src_data_60 = vld1q_f32(src_data + 48 * src_step);
+  float32x4_t src_data_61 = vld1q_f32(src_data + 49 * src_step);
+  float32x4_t src_data_62 = vld1q_f32(src_data + 50 * src_step);
+  float32x4_t src_data_63 = vld1q_f32(src_data + 51 * src_step);
+  float32x4_t src_data_64 = vld1q_f32(src_data + 52 * src_step);
+  float32x4_t src_data_65 = vld1q_f32(src_data + 53 * src_step);
+  float32x4_t src_data_66 = vld1q_f32(src_data + 54 * src_step);
+  float32x4_t src_data_67 = vld1q_f32(src_data + 55 * src_step);
+  float32x4_t src_data_70 = vld1q_f32(src_data + 56 * src_step);
+  float32x4_t src_data_71 = vld1q_f32(src_data + 57 * src_step);
+  float32x4_t src_data_72 = vld1q_f32(src_data + 58 * src_step);
+  float32x4_t src_data_73 = vld1q_f32(src_data + 59 * src_step);
+  float32x4_t src_data_74 = vld1q_f32(src_data + 60 * src_step);
+  float32x4_t src_data_75 = vld1q_f32(src_data + 61 * src_step);
+  float32x4_t src_data_76 = vld1q_f32(src_data + 62 * src_step);
+  float32x4_t src_data_77 = vld1q_f32(src_data + 63 * src_step);
+
+  float32x4_t d01 = vsubq_f32(src_data_10, src_data_20);
+  float32x4_t d02 = vsubq_f32(src_data_11, src_data_21);
+  float32x4_t d03 = vsubq_f32(src_data_12, src_data_22);
+  float32x4_t d04 = vsubq_f32(src_data_13, src_data_23);
+  float32x4_t d05 = vsubq_f32(src_data_14, src_data_24);
+  float32x4_t d06 = vsubq_f32(src_data_15, src_data_25);
+  float32x4_t d07 = vsubq_f32(src_data_16, src_data_26);
+  float32x4_t d08 = vsubq_f32(src_data_17, src_data_27);
+
+  float32x4_t d11 = vsubq_f32(src_data_30, src_data_40);
+  float32x4_t d12 = vsubq_f32(src_data_31, src_data_41);
+  float32x4_t d13 = vsubq_f32(src_data_32, src_data_42);
+  float32x4_t d14 = vsubq_f32(src_data_33, src_data_43);
+  float32x4_t d15 = vsubq_f32(src_data_34, src_data_44);
+  float32x4_t d16 = vsubq_f32(src_data_35, src_data_45);
+  float32x4_t d17 = vsubq_f32(src_data_36, src_data_46);
+  float32x4_t d18 = vsubq_f32(src_data_37, src_data_47);
+
+  float32x4_t d21 = vsubq_f32(src_data_50, src_data_60);
+  float32x4_t d22 = vsubq_f32(src_data_51, src_data_61);
+  float32x4_t d23 = vsubq_f32(src_data_52, src_data_62);
+  float32x4_t d24 = vsubq_f32(src_data_53, src_data_63);
+  float32x4_t d25 = vsubq_f32(src_data_54, src_data_64);
+  float32x4_t d26 = vsubq_f32(src_data_55, src_data_65);
+  float32x4_t d27 = vsubq_f32(src_data_56, src_data_66);
+  float32x4_t d28 = vsubq_f32(src_data_57, src_data_67);
+
+  float32x4_t t00 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_00, src_data_10), src_data_20), src_data_30), src_data_40),
+      src_data_50),
+    src_data_60);
+  float32x4_t t01 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_01, src_data_11), src_data_21), src_data_31), src_data_41),
+      src_data_51),
+    src_data_61);
+  float32x4_t t02 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_02, src_data_12), src_data_22), src_data_32), src_data_42),
+      src_data_52),
+    src_data_62);
+  float32x4_t t03 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_03, src_data_13), src_data_23), src_data_33), src_data_43),
+      src_data_53),
+    src_data_63);
+  float32x4_t t04 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_04, src_data_14), src_data_24), src_data_34), src_data_44),
+      src_data_54),
+    src_data_64);
+  float32x4_t t05 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_05, src_data_15), src_data_25), src_data_35), src_data_45),
+      src_data_55),
+    src_data_65);
+  float32x4_t t06 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_06, src_data_16), src_data_26), src_data_36), src_data_46),
+      src_data_56),
+    src_data_66);
+  float32x4_t t07 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_07, src_data_17), src_data_27), src_data_37), src_data_47),
+      src_data_57),
+    src_data_67);
+
+  float32x4_t t10 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d01, 0.5), d11), vmulq_n_f32(d21, 1.5)), src_data_70);
+  float32x4_t t11 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d02, 0.5), d12), vmulq_n_f32(d22, 1.5)), src_data_71);
+  float32x4_t t12 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d03, 0.5), d13), vmulq_n_f32(d23, 1.5)), src_data_72);
+  float32x4_t t13 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d04, 0.5), d14), vmulq_n_f32(d24, 1.5)), src_data_73);
+  float32x4_t t14 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d05, 0.5), d15), vmulq_n_f32(d25, 1.5)), src_data_74);
+  float32x4_t t15 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d06, 0.5), d16), vmulq_n_f32(d26, 1.5)), src_data_75);
+  float32x4_t t16 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d07, 0.5), d17), vmulq_n_f32(d27, 1.5)), src_data_76);
+  float32x4_t t17 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d08, 0.5), d18), vmulq_n_f32(d28, 1.5)), src_data_77);
+
+  float32x4_t s11 = vsubq_f32(t01, t02);
+  float32x4_t s12 = vsubq_f32(t11, t12);
+
+  float32x4_t s21 = vsubq_f32(t03, t04);
+  float32x4_t s22 = vsubq_f32(t13, t14);
+
+  float32x4_t s31 = vsubq_f32(t05, t06);
+  float32x4_t s32 = vsubq_f32(t15, t16);
+
+  float32x4_t m00 = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t00, t01), t02), t03), t04), t05), t06);
+  float32x4_t m01 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(s11, 0.5), s21), vmulq_n_f32(s31, 1.5)), t07);
+
+  float32x4_t m10 = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t10, t11), t12), t13), t14), t15), t16);
+  float32x4_t m11 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(s12, 0.5), s22), vmulq_n_f32(s32, 1.5)), t17);
+
+  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  vst1q_f32(dst_data, vaddq_f32(m00, bias_ptr));
+  vst1q_f32(dst_data + C4NUM, vaddq_f32(m01, bias_ptr));
+
+  vst1q_f32(dst_data + dst_step * C4NUM, vaddq_f32(m10, bias_ptr));
+  vst1q_f32(dst_data + dst_step * C4NUM + C4NUM, vaddq_f32(m11, bias_ptr));
 #else
   for (int i = 0; i < C4NUM; i++) {
     float src_data_00 = src_data[i];
@@ -1588,33 +1751,6 @@ void OutputTransform8x2Unit(const float *src_data, float *dst_data, const float 
     float d27 = src_data_56 - src_data_66;
     float d28 = src_data_57 - src_data_67;
 
-    float d31 = src_data_10 + src_data_20;
-    float d32 = src_data_11 + src_data_21;
-    float d33 = src_data_12 + src_data_22;
-    float d34 = src_data_13 + src_data_23;
-    float d35 = src_data_14 + src_data_24;
-    float d36 = src_data_15 + src_data_25;
-    float d37 = src_data_16 + src_data_26;
-    float d38 = src_data_17 + src_data_27;
-
-    float d41 = src_data_30 + src_data_40;
-    float d42 = src_data_31 + src_data_41;
-    float d43 = src_data_32 + src_data_42;
-    float d44 = src_data_33 + src_data_43;
-    float d45 = src_data_34 + src_data_44;
-    float d46 = src_data_35 + src_data_45;
-    float d47 = src_data_36 + src_data_46;
-    float d48 = src_data_37 + src_data_47;
-
-    float d51 = src_data_50 + src_data_60;
-    float d52 = src_data_51 + src_data_61;
-    float d53 = src_data_52 + src_data_62;
-    float d54 = src_data_53 + src_data_63;
-    float d55 = src_data_54 + src_data_64;
-    float d56 = src_data_55 + src_data_65;
-    float d57 = src_data_56 + src_data_66;
-    float d58 = src_data_57 + src_data_67;
-
     float t00 = src_data_00 + src_data_10 + src_data_20 + src_data_30 + src_data_40 + src_data_50 + src_data_60;
     float t01 = src_data_01 + src_data_11 + src_data_21 + src_data_31 + src_data_41 + src_data_51 + src_data_61;
     float t02 = src_data_02 + src_data_12 + src_data_22 + src_data_32 + src_data_42 + src_data_52 + src_data_62;
@@ -1635,25 +1771,13 @@ void OutputTransform8x2Unit(const float *src_data, float *dst_data, const float 
 
     float s11 = t01 - t02;
     float s12 = t11 - t12;
-
     float s21 = t03 - t04;
     float s22 = t13 - t14;
-
     float s31 = t05 - t06;
     float s32 = t15 - t16;
 
-    float s41 = t01 + t02;
-    float s42 = t11 + t12;
-
-    float s51 = t03 + t04;
-    float s52 = t13 + t14;
-
-    float s61 = t05 + t06;
-    float s62 = t15 + t16;
-
     float m00 = t00 + t01 + t02 + t03 + t04 + t05 + t06;
     float m01 = 0.5f * s11 + s21 + 1.5f * s31 + t07;
-
     float m10 = t10 + t11 + t12 + t13 + t14 + t15 + t16;
     float m11 = 0.5f * s12 + s22 + 1.5f * s32 + t17;
 
@@ -1668,6 +1792,232 @@ void OutputTransform8x2Unit(const float *src_data, float *dst_data, const float 
 void OutputTransform8x3Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                             int dst_step) {
 #ifdef ENABLE_ARM
+  float32x4_t src_data_00 = vld1q_f32(src_data + 0 * src_step);
+  float32x4_t src_data_01 = vld1q_f32(src_data + 1 * src_step);
+  float32x4_t src_data_02 = vld1q_f32(src_data + 2 * src_step);
+  float32x4_t src_data_03 = vld1q_f32(src_data + 3 * src_step);
+  float32x4_t src_data_04 = vld1q_f32(src_data + 4 * src_step);
+  float32x4_t src_data_05 = vld1q_f32(src_data + 5 * src_step);
+  float32x4_t src_data_06 = vld1q_f32(src_data + 6 * src_step);
+  float32x4_t src_data_07 = vld1q_f32(src_data + 7 * src_step);
+  float32x4_t src_data_10 = vld1q_f32(src_data + 8 * src_step);
+  float32x4_t src_data_11 = vld1q_f32(src_data + 9 * src_step);
+  float32x4_t src_data_12 = vld1q_f32(src_data + 10 * src_step);
+  float32x4_t src_data_13 = vld1q_f32(src_data + 11 * src_step);
+  float32x4_t src_data_14 = vld1q_f32(src_data + 12 * src_step);
+  float32x4_t src_data_15 = vld1q_f32(src_data + 13 * src_step);
+  float32x4_t src_data_16 = vld1q_f32(src_data + 14 * src_step);
+  float32x4_t src_data_17 = vld1q_f32(src_data + 15 * src_step);
+  float32x4_t src_data_20 = vld1q_f32(src_data + 16 * src_step);
+  float32x4_t src_data_21 = vld1q_f32(src_data + 17 * src_step);
+  float32x4_t src_data_22 = vld1q_f32(src_data + 18 * src_step);
+  float32x4_t src_data_23 = vld1q_f32(src_data + 19 * src_step);
+  float32x4_t src_data_24 = vld1q_f32(src_data + 20 * src_step);
+  float32x4_t src_data_25 = vld1q_f32(src_data + 21 * src_step);
+  float32x4_t src_data_26 = vld1q_f32(src_data + 22 * src_step);
+  float32x4_t src_data_27 = vld1q_f32(src_data + 23 * src_step);
+  float32x4_t src_data_30 = vld1q_f32(src_data + 24 * src_step);
+  float32x4_t src_data_31 = vld1q_f32(src_data + 25 * src_step);
+  float32x4_t src_data_32 = vld1q_f32(src_data + 26 * src_step);
+  float32x4_t src_data_33 = vld1q_f32(src_data + 27 * src_step);
+  float32x4_t src_data_34 = vld1q_f32(src_data + 28 * src_step);
+  float32x4_t src_data_35 = vld1q_f32(src_data + 29 * src_step);
+  float32x4_t src_data_36 = vld1q_f32(src_data + 30 * src_step);
+  float32x4_t src_data_37 = vld1q_f32(src_data + 31 * src_step);
+  float32x4_t src_data_40 = vld1q_f32(src_data + 32 * src_step);
+  float32x4_t src_data_41 = vld1q_f32(src_data + 33 * src_step);
+  float32x4_t src_data_42 = vld1q_f32(src_data + 34 * src_step);
+  float32x4_t src_data_43 = vld1q_f32(src_data + 35 * src_step);
+  float32x4_t src_data_44 = vld1q_f32(src_data + 36 * src_step);
+  float32x4_t src_data_45 = vld1q_f32(src_data + 37 * src_step);
+  float32x4_t src_data_46 = vld1q_f32(src_data + 38 * src_step);
+  float32x4_t src_data_47 = vld1q_f32(src_data + 39 * src_step);
+  float32x4_t src_data_50 = vld1q_f32(src_data + 40 * src_step);
+  float32x4_t src_data_51 = vld1q_f32(src_data + 41 * src_step);
+  float32x4_t src_data_52 = vld1q_f32(src_data + 42 * src_step);
+  float32x4_t src_data_53 = vld1q_f32(src_data + 43 * src_step);
+  float32x4_t src_data_54 = vld1q_f32(src_data + 44 * src_step);
+  float32x4_t src_data_55 = vld1q_f32(src_data + 45 * src_step);
+  float32x4_t src_data_56 = vld1q_f32(src_data + 46 * src_step);
+  float32x4_t src_data_57 = vld1q_f32(src_data + 47 * src_step);
+  float32x4_t src_data_60 = vld1q_f32(src_data + 48 * src_step);
+  float32x4_t src_data_61 = vld1q_f32(src_data + 49 * src_step);
+  float32x4_t src_data_62 = vld1q_f32(src_data + 50 * src_step);
+  float32x4_t src_data_63 = vld1q_f32(src_data + 51 * src_step);
+  float32x4_t src_data_64 = vld1q_f32(src_data + 52 * src_step);
+  float32x4_t src_data_65 = vld1q_f32(src_data + 53 * src_step);
+  float32x4_t src_data_66 = vld1q_f32(src_data + 54 * src_step);
+  float32x4_t src_data_67 = vld1q_f32(src_data + 55 * src_step);
+  float32x4_t src_data_70 = vld1q_f32(src_data + 56 * src_step);
+  float32x4_t src_data_71 = vld1q_f32(src_data + 57 * src_step);
+  float32x4_t src_data_72 = vld1q_f32(src_data + 58 * src_step);
+  float32x4_t src_data_73 = vld1q_f32(src_data + 59 * src_step);
+  float32x4_t src_data_74 = vld1q_f32(src_data + 60 * src_step);
+  float32x4_t src_data_75 = vld1q_f32(src_data + 61 * src_step);
+  float32x4_t src_data_76 = vld1q_f32(src_data + 62 * src_step);
+  float32x4_t src_data_77 = vld1q_f32(src_data + 63 * src_step);
+
+  float32x4_t d01 = vsubq_f32(src_data_10, src_data_20);
+  float32x4_t d02 = vsubq_f32(src_data_11, src_data_21);
+  float32x4_t d03 = vsubq_f32(src_data_12, src_data_22);
+  float32x4_t d04 = vsubq_f32(src_data_13, src_data_23);
+  float32x4_t d05 = vsubq_f32(src_data_14, src_data_24);
+  float32x4_t d06 = vsubq_f32(src_data_15, src_data_25);
+  float32x4_t d07 = vsubq_f32(src_data_16, src_data_26);
+  float32x4_t d08 = vsubq_f32(src_data_17, src_data_27);
+
+  float32x4_t d11 = vsubq_f32(src_data_30, src_data_40);
+  float32x4_t d12 = vsubq_f32(src_data_31, src_data_41);
+  float32x4_t d13 = vsubq_f32(src_data_32, src_data_42);
+  float32x4_t d14 = vsubq_f32(src_data_33, src_data_43);
+  float32x4_t d15 = vsubq_f32(src_data_34, src_data_44);
+  float32x4_t d16 = vsubq_f32(src_data_35, src_data_45);
+  float32x4_t d17 = vsubq_f32(src_data_36, src_data_46);
+  float32x4_t d18 = vsubq_f32(src_data_37, src_data_47);
+
+  float32x4_t d21 = vsubq_f32(src_data_50, src_data_60);
+  float32x4_t d22 = vsubq_f32(src_data_51, src_data_61);
+  float32x4_t d23 = vsubq_f32(src_data_52, src_data_62);
+  float32x4_t d24 = vsubq_f32(src_data_53, src_data_63);
+  float32x4_t d25 = vsubq_f32(src_data_54, src_data_64);
+  float32x4_t d26 = vsubq_f32(src_data_55, src_data_65);
+  float32x4_t d27 = vsubq_f32(src_data_56, src_data_66);
+  float32x4_t d28 = vsubq_f32(src_data_57, src_data_67);
+
+  float32x4_t d31 = vaddq_f32(src_data_10, src_data_20);
+  float32x4_t d32 = vaddq_f32(src_data_11, src_data_21);
+  float32x4_t d33 = vaddq_f32(src_data_12, src_data_22);
+  float32x4_t d34 = vaddq_f32(src_data_13, src_data_23);
+  float32x4_t d35 = vaddq_f32(src_data_14, src_data_24);
+  float32x4_t d36 = vaddq_f32(src_data_15, src_data_25);
+  float32x4_t d37 = vaddq_f32(src_data_16, src_data_26);
+  float32x4_t d38 = vaddq_f32(src_data_17, src_data_27);
+
+  float32x4_t d41 = vaddq_f32(src_data_30, src_data_40);
+  float32x4_t d42 = vaddq_f32(src_data_31, src_data_41);
+  float32x4_t d43 = vaddq_f32(src_data_32, src_data_42);
+  float32x4_t d44 = vaddq_f32(src_data_33, src_data_43);
+  float32x4_t d45 = vaddq_f32(src_data_34, src_data_44);
+  float32x4_t d46 = vaddq_f32(src_data_35, src_data_45);
+  float32x4_t d47 = vaddq_f32(src_data_36, src_data_46);
+  float32x4_t d48 = vaddq_f32(src_data_37, src_data_47);
+
+  float32x4_t d51 = vaddq_f32(src_data_50, src_data_60);
+  float32x4_t d52 = vaddq_f32(src_data_51, src_data_61);
+  float32x4_t d53 = vaddq_f32(src_data_52, src_data_62);
+  float32x4_t d54 = vaddq_f32(src_data_53, src_data_63);
+  float32x4_t d55 = vaddq_f32(src_data_54, src_data_64);
+  float32x4_t d56 = vaddq_f32(src_data_55, src_data_65);
+  float32x4_t d57 = vaddq_f32(src_data_56, src_data_66);
+  float32x4_t d58 = vaddq_f32(src_data_57, src_data_67);
+
+  float32x4_t t00 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_00, src_data_10), src_data_20), src_data_30), src_data_40),
+      src_data_50),
+    src_data_60);
+  float32x4_t t01 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_01, src_data_11), src_data_21), src_data_31), src_data_41),
+      src_data_51),
+    src_data_61);
+  float32x4_t t02 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_02, src_data_12), src_data_22), src_data_32), src_data_42),
+      src_data_52),
+    src_data_62);
+  float32x4_t t03 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_03, src_data_13), src_data_23), src_data_33), src_data_43),
+      src_data_53),
+    src_data_63);
+  float32x4_t t04 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_04, src_data_14), src_data_24), src_data_34), src_data_44),
+      src_data_54),
+    src_data_64);
+  float32x4_t t05 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_05, src_data_15), src_data_25), src_data_35), src_data_45),
+      src_data_55),
+    src_data_65);
+  float32x4_t t06 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_06, src_data_16), src_data_26), src_data_36), src_data_46),
+      src_data_56),
+    src_data_66);
+  float32x4_t t07 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_07, src_data_17), src_data_27), src_data_37), src_data_47),
+      src_data_57),
+    src_data_67);
+
+  float32x4_t t10 = vaddq_f32(vaddq_f32(vmulq_n_f32(d01, 0.5), d11), vmulq_n_f32(d21, 1.5));
+  float32x4_t t11 = vaddq_f32(vaddq_f32(vmulq_n_f32(d02, 0.5), d12), vmulq_n_f32(d22, 1.5));
+  float32x4_t t12 = vaddq_f32(vaddq_f32(vmulq_n_f32(d03, 0.5), d13), vmulq_n_f32(d23, 1.5));
+  float32x4_t t13 = vaddq_f32(vaddq_f32(vmulq_n_f32(d04, 0.5), d14), vmulq_n_f32(d24, 1.5));
+  float32x4_t t14 = vaddq_f32(vaddq_f32(vmulq_n_f32(d05, 0.5), d15), vmulq_n_f32(d25, 1.5));
+  float32x4_t t15 = vaddq_f32(vaddq_f32(vmulq_n_f32(d06, 0.5), d16), vmulq_n_f32(d26, 1.5));
+  float32x4_t t16 = vaddq_f32(vaddq_f32(vmulq_n_f32(d07, 0.5), d17), vmulq_n_f32(d27, 1.5));
+  float32x4_t t17 = vaddq_f32(vaddq_f32(vmulq_n_f32(d08, 0.5), d18), vmulq_n_f32(d28, 1.5));
+
+  float32x4_t t20 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d31, 0.25), d41), vmulq_n_f32(d51, 2.25)), src_data_70);
+  float32x4_t t21 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d32, 0.25), d42), vmulq_n_f32(d52, 2.25)), src_data_71);
+  float32x4_t t22 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d33, 0.25), d43), vmulq_n_f32(d53, 2.25)), src_data_72);
+  float32x4_t t23 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d34, 0.25), d44), vmulq_n_f32(d54, 2.25)), src_data_73);
+  float32x4_t t24 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d35, 0.25), d45), vmulq_n_f32(d55, 2.25)), src_data_74);
+  float32x4_t t25 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d36, 0.25), d46), vmulq_n_f32(d56, 2.25)), src_data_75);
+  float32x4_t t26 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d37, 0.25), d47), vmulq_n_f32(d57, 2.25)), src_data_76);
+  float32x4_t t27 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d38, 0.25), d48), vmulq_n_f32(d58, 2.25)), src_data_77);
+
+  float32x4_t s11 = vsubq_f32(t01, t02);
+  float32x4_t s12 = vsubq_f32(t11, t12);
+  float32x4_t s13 = vsubq_f32(t21, t22);
+
+  float32x4_t s21 = vsubq_f32(t03, t04);
+  float32x4_t s22 = vsubq_f32(t13, t14);
+  float32x4_t s23 = vsubq_f32(t23, t24);
+
+  float32x4_t s31 = vsubq_f32(t05, t06);
+  float32x4_t s32 = vsubq_f32(t15, t16);
+  float32x4_t s33 = vsubq_f32(t25, t26);
+
+  float32x4_t s41 = vaddq_f32(t01, t02);
+  float32x4_t s42 = vaddq_f32(t11, t12);
+  float32x4_t s43 = vaddq_f32(t21, t22);
+
+  float32x4_t s51 = vaddq_f32(t03, t04);
+  float32x4_t s52 = vaddq_f32(t13, t14);
+  float32x4_t s53 = vaddq_f32(t23, t24);
+
+  float32x4_t s61 = vaddq_f32(t05, t06);
+  float32x4_t s62 = vaddq_f32(t15, t16);
+  float32x4_t s63 = vaddq_f32(t25, t26);
+
+  float32x4_t m00 = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t00, t01), t02), t03), t04), t05), t06);
+  float32x4_t m01 = vaddq_f32(vaddq_f32(vmulq_n_f32(s11, 0.5), s21), vmulq_n_f32(s31, 1.5));
+  float32x4_t m02 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(s41, 0.25), s51), vmulq_n_f32(s61, 2.25)), t07);
+
+  float32x4_t m10 = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t10, t11), t12), t13), t14), t15), t16);
+  float32x4_t m11 = vaddq_f32(vaddq_f32(vmulq_n_f32(s12, 0.5), s22), vmulq_n_f32(s32, 1.5));
+  float32x4_t m12 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(s42, 0.25), s52), vmulq_n_f32(s62, 2.25)), t17);
+
+  float32x4_t m20 = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t20, t21), t22), t23), t24), t25), t26);
+  float32x4_t m21 = vaddq_f32(vaddq_f32(vmulq_n_f32(s13, 0.5), s23), vmulq_n_f32(s33, 1.5));
+  float32x4_t m22 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(s43, 0.25), s53), vmulq_n_f32(s63, 2.25)), t27);
+
+  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  vst1q_f32(dst_data, vaddq_f32(m00, bias_ptr));
+  vst1q_f32(dst_data + C4NUM, vaddq_f32(m01, bias_ptr));
+  vst1q_f32(dst_data + 2 * C4NUM, vaddq_f32(m02, bias_ptr));
+
+  vst1q_f32(dst_data + dst_step * C4NUM, vaddq_f32(m10, bias_ptr));
+  vst1q_f32(dst_data + dst_step * C4NUM + C4NUM, vaddq_f32(m11, bias_ptr));
+  vst1q_f32(dst_data + dst_step * C4NUM + 2 * C4NUM, vaddq_f32(m12, bias_ptr));
+
+  vst1q_f32(dst_data + 2 * dst_step * C4NUM, vaddq_f32(m20, bias_ptr));
+  vst1q_f32(dst_data + 2 * dst_step * C4NUM + C4NUM, vaddq_f32(m21, bias_ptr));
+  vst1q_f32(dst_data + 2 * dst_step * C4NUM + 2 * C4NUM, vaddq_f32(m22, bias_ptr));
 #else
   for (int i = 0; i < C4NUM; i++) {
     float src_data_00 = src_data[i];
@@ -1870,6 +2220,263 @@ void OutputTransform8x3Unit(const float *src_data, float *dst_data, const float 
 void OutputTransform8x4Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                             int dst_step) {
 #ifdef ENABLE_ARM
+  float32x4_t src_data_00 = vld1q_f32(src_data + 0 * src_step);
+  float32x4_t src_data_01 = vld1q_f32(src_data + 1 * src_step);
+  float32x4_t src_data_02 = vld1q_f32(src_data + 2 * src_step);
+  float32x4_t src_data_03 = vld1q_f32(src_data + 3 * src_step);
+  float32x4_t src_data_04 = vld1q_f32(src_data + 4 * src_step);
+  float32x4_t src_data_05 = vld1q_f32(src_data + 5 * src_step);
+  float32x4_t src_data_06 = vld1q_f32(src_data + 6 * src_step);
+  float32x4_t src_data_07 = vld1q_f32(src_data + 7 * src_step);
+  float32x4_t src_data_10 = vld1q_f32(src_data + 8 * src_step);
+  float32x4_t src_data_11 = vld1q_f32(src_data + 9 * src_step);
+  float32x4_t src_data_12 = vld1q_f32(src_data + 10 * src_step);
+  float32x4_t src_data_13 = vld1q_f32(src_data + 11 * src_step);
+  float32x4_t src_data_14 = vld1q_f32(src_data + 12 * src_step);
+  float32x4_t src_data_15 = vld1q_f32(src_data + 13 * src_step);
+  float32x4_t src_data_16 = vld1q_f32(src_data + 14 * src_step);
+  float32x4_t src_data_17 = vld1q_f32(src_data + 15 * src_step);
+  float32x4_t src_data_20 = vld1q_f32(src_data + 16 * src_step);
+  float32x4_t src_data_21 = vld1q_f32(src_data + 17 * src_step);
+  float32x4_t src_data_22 = vld1q_f32(src_data + 18 * src_step);
+  float32x4_t src_data_23 = vld1q_f32(src_data + 19 * src_step);
+  float32x4_t src_data_24 = vld1q_f32(src_data + 20 * src_step);
+  float32x4_t src_data_25 = vld1q_f32(src_data + 21 * src_step);
+  float32x4_t src_data_26 = vld1q_f32(src_data + 22 * src_step);
+  float32x4_t src_data_27 = vld1q_f32(src_data + 23 * src_step);
+  float32x4_t src_data_30 = vld1q_f32(src_data + 24 * src_step);
+  float32x4_t src_data_31 = vld1q_f32(src_data + 25 * src_step);
+  float32x4_t src_data_32 = vld1q_f32(src_data + 26 * src_step);
+  float32x4_t src_data_33 = vld1q_f32(src_data + 27 * src_step);
+  float32x4_t src_data_34 = vld1q_f32(src_data + 28 * src_step);
+  float32x4_t src_data_35 = vld1q_f32(src_data + 29 * src_step);
+  float32x4_t src_data_36 = vld1q_f32(src_data + 30 * src_step);
+  float32x4_t src_data_37 = vld1q_f32(src_data + 31 * src_step);
+  float32x4_t src_data_40 = vld1q_f32(src_data + 32 * src_step);
+  float32x4_t src_data_41 = vld1q_f32(src_data + 33 * src_step);
+  float32x4_t src_data_42 = vld1q_f32(src_data + 34 * src_step);
+  float32x4_t src_data_43 = vld1q_f32(src_data + 35 * src_step);
+  float32x4_t src_data_44 = vld1q_f32(src_data + 36 * src_step);
+  float32x4_t src_data_45 = vld1q_f32(src_data + 37 * src_step);
+  float32x4_t src_data_46 = vld1q_f32(src_data + 38 * src_step);
+  float32x4_t src_data_47 = vld1q_f32(src_data + 39 * src_step);
+  float32x4_t src_data_50 = vld1q_f32(src_data + 40 * src_step);
+  float32x4_t src_data_51 = vld1q_f32(src_data + 41 * src_step);
+  float32x4_t src_data_52 = vld1q_f32(src_data + 42 * src_step);
+  float32x4_t src_data_53 = vld1q_f32(src_data + 43 * src_step);
+  float32x4_t src_data_54 = vld1q_f32(src_data + 44 * src_step);
+  float32x4_t src_data_55 = vld1q_f32(src_data + 45 * src_step);
+  float32x4_t src_data_56 = vld1q_f32(src_data + 46 * src_step);
+  float32x4_t src_data_57 = vld1q_f32(src_data + 47 * src_step);
+  float32x4_t src_data_60 = vld1q_f32(src_data + 48 * src_step);
+  float32x4_t src_data_61 = vld1q_f32(src_data + 49 * src_step);
+  float32x4_t src_data_62 = vld1q_f32(src_data + 50 * src_step);
+  float32x4_t src_data_63 = vld1q_f32(src_data + 51 * src_step);
+  float32x4_t src_data_64 = vld1q_f32(src_data + 52 * src_step);
+  float32x4_t src_data_65 = vld1q_f32(src_data + 53 * src_step);
+  float32x4_t src_data_66 = vld1q_f32(src_data + 54 * src_step);
+  float32x4_t src_data_67 = vld1q_f32(src_data + 55 * src_step);
+  float32x4_t src_data_70 = vld1q_f32(src_data + 56 * src_step);
+  float32x4_t src_data_71 = vld1q_f32(src_data + 57 * src_step);
+  float32x4_t src_data_72 = vld1q_f32(src_data + 58 * src_step);
+  float32x4_t src_data_73 = vld1q_f32(src_data + 59 * src_step);
+  float32x4_t src_data_74 = vld1q_f32(src_data + 60 * src_step);
+  float32x4_t src_data_75 = vld1q_f32(src_data + 61 * src_step);
+  float32x4_t src_data_76 = vld1q_f32(src_data + 62 * src_step);
+  float32x4_t src_data_77 = vld1q_f32(src_data + 63 * src_step);
+
+  float32x4_t d01 = vsubq_f32(src_data_10, src_data_20);
+  float32x4_t d02 = vsubq_f32(src_data_11, src_data_21);
+  float32x4_t d03 = vsubq_f32(src_data_12, src_data_22);
+  float32x4_t d04 = vsubq_f32(src_data_13, src_data_23);
+  float32x4_t d05 = vsubq_f32(src_data_14, src_data_24);
+  float32x4_t d06 = vsubq_f32(src_data_15, src_data_25);
+  float32x4_t d07 = vsubq_f32(src_data_16, src_data_26);
+  float32x4_t d08 = vsubq_f32(src_data_17, src_data_27);
+
+  float32x4_t d11 = vsubq_f32(src_data_30, src_data_40);
+  float32x4_t d12 = vsubq_f32(src_data_31, src_data_41);
+  float32x4_t d13 = vsubq_f32(src_data_32, src_data_42);
+  float32x4_t d14 = vsubq_f32(src_data_33, src_data_43);
+  float32x4_t d15 = vsubq_f32(src_data_34, src_data_44);
+  float32x4_t d16 = vsubq_f32(src_data_35, src_data_45);
+  float32x4_t d17 = vsubq_f32(src_data_36, src_data_46);
+  float32x4_t d18 = vsubq_f32(src_data_37, src_data_47);
+
+  float32x4_t d21 = vsubq_f32(src_data_50, src_data_60);
+  float32x4_t d22 = vsubq_f32(src_data_51, src_data_61);
+  float32x4_t d23 = vsubq_f32(src_data_52, src_data_62);
+  float32x4_t d24 = vsubq_f32(src_data_53, src_data_63);
+  float32x4_t d25 = vsubq_f32(src_data_54, src_data_64);
+  float32x4_t d26 = vsubq_f32(src_data_55, src_data_65);
+  float32x4_t d27 = vsubq_f32(src_data_56, src_data_66);
+  float32x4_t d28 = vsubq_f32(src_data_57, src_data_67);
+
+  float32x4_t d31 = vaddq_f32(src_data_10, src_data_20);
+  float32x4_t d32 = vaddq_f32(src_data_11, src_data_21);
+  float32x4_t d33 = vaddq_f32(src_data_12, src_data_22);
+  float32x4_t d34 = vaddq_f32(src_data_13, src_data_23);
+  float32x4_t d35 = vaddq_f32(src_data_14, src_data_24);
+  float32x4_t d36 = vaddq_f32(src_data_15, src_data_25);
+  float32x4_t d37 = vaddq_f32(src_data_16, src_data_26);
+  float32x4_t d38 = vaddq_f32(src_data_17, src_data_27);
+
+  float32x4_t d41 = vaddq_f32(src_data_30, src_data_40);
+  float32x4_t d42 = vaddq_f32(src_data_31, src_data_41);
+  float32x4_t d43 = vaddq_f32(src_data_32, src_data_42);
+  float32x4_t d44 = vaddq_f32(src_data_33, src_data_43);
+  float32x4_t d45 = vaddq_f32(src_data_34, src_data_44);
+  float32x4_t d46 = vaddq_f32(src_data_35, src_data_45);
+  float32x4_t d47 = vaddq_f32(src_data_36, src_data_46);
+  float32x4_t d48 = vaddq_f32(src_data_37, src_data_47);
+
+  float32x4_t d51 = vaddq_f32(src_data_50, src_data_60);
+  float32x4_t d52 = vaddq_f32(src_data_51, src_data_61);
+  float32x4_t d53 = vaddq_f32(src_data_52, src_data_62);
+  float32x4_t d54 = vaddq_f32(src_data_53, src_data_63);
+  float32x4_t d55 = vaddq_f32(src_data_54, src_data_64);
+  float32x4_t d56 = vaddq_f32(src_data_55, src_data_65);
+  float32x4_t d57 = vaddq_f32(src_data_56, src_data_66);
+  float32x4_t d58 = vaddq_f32(src_data_57, src_data_67);
+
+  float32x4_t t00 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_00, src_data_10), src_data_20), src_data_30), src_data_40),
+      src_data_50),
+    src_data_60);
+  float32x4_t t01 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_01, src_data_11), src_data_21), src_data_31), src_data_41),
+      src_data_51),
+    src_data_61);
+  float32x4_t t02 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_02, src_data_12), src_data_22), src_data_32), src_data_42),
+      src_data_52),
+    src_data_62);
+  float32x4_t t03 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_03, src_data_13), src_data_23), src_data_33), src_data_43),
+      src_data_53),
+    src_data_63);
+  float32x4_t t04 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_04, src_data_14), src_data_24), src_data_34), src_data_44),
+      src_data_54),
+    src_data_64);
+  float32x4_t t05 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_05, src_data_15), src_data_25), src_data_35), src_data_45),
+      src_data_55),
+    src_data_65);
+  float32x4_t t06 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_06, src_data_16), src_data_26), src_data_36), src_data_46),
+      src_data_56),
+    src_data_66);
+  float32x4_t t07 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_07, src_data_17), src_data_27), src_data_37), src_data_47),
+      src_data_57),
+    src_data_67);
+
+  float32x4_t t10 = vaddq_f32(vaddq_f32(vmulq_n_f32(d01, 0.5), d11), vmulq_n_f32(d21, 1.5));
+  float32x4_t t11 = vaddq_f32(vaddq_f32(vmulq_n_f32(d02, 0.5), d12), vmulq_n_f32(d22, 1.5));
+  float32x4_t t12 = vaddq_f32(vaddq_f32(vmulq_n_f32(d03, 0.5), d13), vmulq_n_f32(d23, 1.5));
+  float32x4_t t13 = vaddq_f32(vaddq_f32(vmulq_n_f32(d04, 0.5), d14), vmulq_n_f32(d24, 1.5));
+  float32x4_t t14 = vaddq_f32(vaddq_f32(vmulq_n_f32(d05, 0.5), d15), vmulq_n_f32(d25, 1.5));
+  float32x4_t t15 = vaddq_f32(vaddq_f32(vmulq_n_f32(d06, 0.5), d16), vmulq_n_f32(d26, 1.5));
+  float32x4_t t16 = vaddq_f32(vaddq_f32(vmulq_n_f32(d07, 0.5), d17), vmulq_n_f32(d27, 1.5));
+  float32x4_t t17 = vaddq_f32(vaddq_f32(vmulq_n_f32(d08, 0.5), d18), vmulq_n_f32(d28, 1.5));
+
+  float32x4_t t20 = vaddq_f32(vaddq_f32(vmulq_n_f32(d31, 0.25), d41), vmulq_n_f32(d51, 2.25));
+  float32x4_t t21 = vaddq_f32(vaddq_f32(vmulq_n_f32(d32, 0.25), d42), vmulq_n_f32(d52, 2.25));
+  float32x4_t t22 = vaddq_f32(vaddq_f32(vmulq_n_f32(d33, 0.25), d43), vmulq_n_f32(d53, 2.25));
+  float32x4_t t23 = vaddq_f32(vaddq_f32(vmulq_n_f32(d34, 0.25), d44), vmulq_n_f32(d54, 2.25));
+  float32x4_t t24 = vaddq_f32(vaddq_f32(vmulq_n_f32(d35, 0.25), d45), vmulq_n_f32(d55, 2.25));
+  float32x4_t t25 = vaddq_f32(vaddq_f32(vmulq_n_f32(d36, 0.25), d46), vmulq_n_f32(d56, 2.25));
+  float32x4_t t26 = vaddq_f32(vaddq_f32(vmulq_n_f32(d37, 0.25), d47), vmulq_n_f32(d57, 2.25));
+  float32x4_t t27 = vaddq_f32(vaddq_f32(vmulq_n_f32(d38, 0.25), d48), vmulq_n_f32(d58, 2.25));
+
+  float32x4_t t30 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d01, 0.125), d11), vmulq_n_f32(d21, 3.375)), src_data_70);
+  float32x4_t t31 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d02, 0.125), d12), vmulq_n_f32(d22, 3.375)), src_data_71);
+  float32x4_t t32 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d03, 0.125), d13), vmulq_n_f32(d23, 3.375)), src_data_72);
+  float32x4_t t33 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d04, 0.125), d14), vmulq_n_f32(d24, 3.375)), src_data_73);
+  float32x4_t t34 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d05, 0.125), d15), vmulq_n_f32(d25, 3.375)), src_data_74);
+  float32x4_t t35 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d06, 0.125), d16), vmulq_n_f32(d26, 3.375)), src_data_75);
+  float32x4_t t36 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d07, 0.125), d17), vmulq_n_f32(d27, 3.375)), src_data_76);
+  float32x4_t t37 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d08, 0.125), d18), vmulq_n_f32(d28, 3.375)), src_data_77);
+
+  float32x4_t s11 = vsubq_f32(t01, t02);
+  float32x4_t s12 = vsubq_f32(t11, t12);
+  float32x4_t s13 = vsubq_f32(t21, t22);
+  float32x4_t s14 = vsubq_f32(t31, t32);
+
+  float32x4_t s21 = vsubq_f32(t03, t04);
+  float32x4_t s22 = vsubq_f32(t13, t14);
+  float32x4_t s23 = vsubq_f32(t23, t24);
+  float32x4_t s24 = vsubq_f32(t33, t34);
+
+  float32x4_t s31 = vsubq_f32(t05, t06);
+  float32x4_t s32 = vsubq_f32(t15, t16);
+  float32x4_t s33 = vsubq_f32(t25, t26);
+  float32x4_t s34 = vsubq_f32(t35, t36);
+
+  float32x4_t s41 = vaddq_f32(t01, t02);
+  float32x4_t s42 = vaddq_f32(t11, t12);
+  float32x4_t s43 = vaddq_f32(t21, t22);
+  float32x4_t s44 = vaddq_f32(t31, t32);
+
+  float32x4_t s51 = vaddq_f32(t03, t04);
+  float32x4_t s52 = vaddq_f32(t13, t14);
+  float32x4_t s53 = vaddq_f32(t23, t24);
+  float32x4_t s54 = vaddq_f32(t33, t34);
+
+  float32x4_t s61 = vaddq_f32(t05, t06);
+  float32x4_t s62 = vaddq_f32(t15, t16);
+  float32x4_t s63 = vaddq_f32(t25, t26);
+  float32x4_t s64 = vaddq_f32(t35, t36);
+
+  float32x4_t m00 = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t00, t01), t02), t03), t04), t05), t06);
+  float32x4_t m01 = vaddq_f32(vaddq_f32(vmulq_n_f32(s11, 0.5), s21), vmulq_n_f32(s31, 1.5));
+  float32x4_t m02 = vaddq_f32(vaddq_f32(vmulq_n_f32(s41, 0.25), s51), vmulq_n_f32(s61, 2.25));
+  float32x4_t m03 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(s11, 0.125), s21), vmulq_n_f32(s31, 3.375)), t07);
+
+  float32x4_t m10 = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t10, t11), t12), t13), t14), t15), t16);
+  float32x4_t m11 = vaddq_f32(vaddq_f32(vmulq_n_f32(s12, 0.5), s22), vmulq_n_f32(s32, 1.5));
+  float32x4_t m12 = vaddq_f32(vaddq_f32(vmulq_n_f32(s42, 0.25), s52), vmulq_n_f32(s62, 2.25));
+  float32x4_t m13 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(s12, 0.125), s22), vmulq_n_f32(s32, 3.375)), t17);
+
+  float32x4_t m20 = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t20, t21), t22), t23), t24), t25), t26);
+  float32x4_t m21 = vaddq_f32(vaddq_f32(vmulq_n_f32(s13, 0.5), s23), vmulq_n_f32(s33, 1.5));
+  float32x4_t m22 = vaddq_f32(vaddq_f32(vmulq_n_f32(s43, 0.25), s53), vmulq_n_f32(s63, 2.25));
+  float32x4_t m23 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(s13, 0.125), s23), vmulq_n_f32(s33, 3.375)), t27);
+
+  float32x4_t m30 = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t30, t31), t32), t33), t34), t35), t36);
+  float32x4_t m31 = vaddq_f32(vaddq_f32(vmulq_n_f32(s14, 0.5), s24), vmulq_n_f32(s34, 1.5));
+  float32x4_t m32 = vaddq_f32(vaddq_f32(vmulq_n_f32(s44, 0.25), s54), vmulq_n_f32(s64, 2.25));
+  float32x4_t m33 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(s14, 0.125), s24), vmulq_n_f32(s34, 3.375)), t37);
+
+  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  vst1q_f32(dst_data, vaddq_f32(m00, bias_ptr));
+  vst1q_f32(dst_data + C4NUM, vaddq_f32(m01, bias_ptr));
+  vst1q_f32(dst_data + 2 * C4NUM, vaddq_f32(m02, bias_ptr));
+  vst1q_f32(dst_data + 3 * C4NUM, vaddq_f32(m03, bias_ptr));
+
+  vst1q_f32(dst_data + dst_step * C4NUM, vaddq_f32(m10, bias_ptr));
+  vst1q_f32(dst_data + dst_step * C4NUM + C4NUM, vaddq_f32(m11, bias_ptr));
+  vst1q_f32(dst_data + dst_step * C4NUM + 2 * C4NUM, vaddq_f32(m12, bias_ptr));
+  vst1q_f32(dst_data + dst_step * C4NUM + 3 * C4NUM, vaddq_f32(m13, bias_ptr));
+
+  vst1q_f32(dst_data + 2 * dst_step * C4NUM, vaddq_f32(m20, bias_ptr));
+  vst1q_f32(dst_data + 2 * dst_step * C4NUM + C4NUM, vaddq_f32(m21, bias_ptr));
+  vst1q_f32(dst_data + 2 * dst_step * C4NUM + 2 * C4NUM, vaddq_f32(m22, bias_ptr));
+  vst1q_f32(dst_data + 2 * dst_step * C4NUM + 3 * C4NUM, vaddq_f32(m23, bias_ptr));
+
+  vst1q_f32(dst_data + 3 * dst_step * C4NUM, vaddq_f32(m30, bias_ptr));
+  vst1q_f32(dst_data + 3 * dst_step * C4NUM + C4NUM, vaddq_f32(m31, bias_ptr));
+  vst1q_f32(dst_data + 3 * dst_step * C4NUM + 2 * C4NUM, vaddq_f32(m32, bias_ptr));
+  vst1q_f32(dst_data + 3 * dst_step * C4NUM + 3 * C4NUM, vaddq_f32(m33, bias_ptr));
 #else
   for (int i = 0; i < C4NUM; i++) {
     float src_data_00 = src_data[i];
@@ -2103,6 +2710,306 @@ void OutputTransform8x4Unit(const float *src_data, float *dst_data, const float 
 void OutputTransform8x5Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                             int dst_step) {
 #ifdef ENABLE_ARM
+  float32x4_t src_data_00 = vld1q_f32(src_data + 0 * src_step);
+  float32x4_t src_data_01 = vld1q_f32(src_data + 1 * src_step);
+  float32x4_t src_data_02 = vld1q_f32(src_data + 2 * src_step);
+  float32x4_t src_data_03 = vld1q_f32(src_data + 3 * src_step);
+  float32x4_t src_data_04 = vld1q_f32(src_data + 4 * src_step);
+  float32x4_t src_data_05 = vld1q_f32(src_data + 5 * src_step);
+  float32x4_t src_data_06 = vld1q_f32(src_data + 6 * src_step);
+  float32x4_t src_data_07 = vld1q_f32(src_data + 7 * src_step);
+  float32x4_t src_data_10 = vld1q_f32(src_data + 8 * src_step);
+  float32x4_t src_data_11 = vld1q_f32(src_data + 9 * src_step);
+  float32x4_t src_data_12 = vld1q_f32(src_data + 10 * src_step);
+  float32x4_t src_data_13 = vld1q_f32(src_data + 11 * src_step);
+  float32x4_t src_data_14 = vld1q_f32(src_data + 12 * src_step);
+  float32x4_t src_data_15 = vld1q_f32(src_data + 13 * src_step);
+  float32x4_t src_data_16 = vld1q_f32(src_data + 14 * src_step);
+  float32x4_t src_data_17 = vld1q_f32(src_data + 15 * src_step);
+  float32x4_t src_data_20 = vld1q_f32(src_data + 16 * src_step);
+  float32x4_t src_data_21 = vld1q_f32(src_data + 17 * src_step);
+  float32x4_t src_data_22 = vld1q_f32(src_data + 18 * src_step);
+  float32x4_t src_data_23 = vld1q_f32(src_data + 19 * src_step);
+  float32x4_t src_data_24 = vld1q_f32(src_data + 20 * src_step);
+  float32x4_t src_data_25 = vld1q_f32(src_data + 21 * src_step);
+  float32x4_t src_data_26 = vld1q_f32(src_data + 22 * src_step);
+  float32x4_t src_data_27 = vld1q_f32(src_data + 23 * src_step);
+  float32x4_t src_data_30 = vld1q_f32(src_data + 24 * src_step);
+  float32x4_t src_data_31 = vld1q_f32(src_data + 25 * src_step);
+  float32x4_t src_data_32 = vld1q_f32(src_data + 26 * src_step);
+  float32x4_t src_data_33 = vld1q_f32(src_data + 27 * src_step);
+  float32x4_t src_data_34 = vld1q_f32(src_data + 28 * src_step);
+  float32x4_t src_data_35 = vld1q_f32(src_data + 29 * src_step);
+  float32x4_t src_data_36 = vld1q_f32(src_data + 30 * src_step);
+  float32x4_t src_data_37 = vld1q_f32(src_data + 31 * src_step);
+  float32x4_t src_data_40 = vld1q_f32(src_data + 32 * src_step);
+  float32x4_t src_data_41 = vld1q_f32(src_data + 33 * src_step);
+  float32x4_t src_data_42 = vld1q_f32(src_data + 34 * src_step);
+  float32x4_t src_data_43 = vld1q_f32(src_data + 35 * src_step);
+  float32x4_t src_data_44 = vld1q_f32(src_data + 36 * src_step);
+  float32x4_t src_data_45 = vld1q_f32(src_data + 37 * src_step);
+  float32x4_t src_data_46 = vld1q_f32(src_data + 38 * src_step);
+  float32x4_t src_data_47 = vld1q_f32(src_data + 39 * src_step);
+  float32x4_t src_data_50 = vld1q_f32(src_data + 40 * src_step);
+  float32x4_t src_data_51 = vld1q_f32(src_data + 41 * src_step);
+  float32x4_t src_data_52 = vld1q_f32(src_data + 42 * src_step);
+  float32x4_t src_data_53 = vld1q_f32(src_data + 43 * src_step);
+  float32x4_t src_data_54 = vld1q_f32(src_data + 44 * src_step);
+  float32x4_t src_data_55 = vld1q_f32(src_data + 45 * src_step);
+  float32x4_t src_data_56 = vld1q_f32(src_data + 46 * src_step);
+  float32x4_t src_data_57 = vld1q_f32(src_data + 47 * src_step);
+  float32x4_t src_data_60 = vld1q_f32(src_data + 48 * src_step);
+  float32x4_t src_data_61 = vld1q_f32(src_data + 49 * src_step);
+  float32x4_t src_data_62 = vld1q_f32(src_data + 50 * src_step);
+  float32x4_t src_data_63 = vld1q_f32(src_data + 51 * src_step);
+  float32x4_t src_data_64 = vld1q_f32(src_data + 52 * src_step);
+  float32x4_t src_data_65 = vld1q_f32(src_data + 53 * src_step);
+  float32x4_t src_data_66 = vld1q_f32(src_data + 54 * src_step);
+  float32x4_t src_data_67 = vld1q_f32(src_data + 55 * src_step);
+  float32x4_t src_data_70 = vld1q_f32(src_data + 56 * src_step);
+  float32x4_t src_data_71 = vld1q_f32(src_data + 57 * src_step);
+  float32x4_t src_data_72 = vld1q_f32(src_data + 58 * src_step);
+  float32x4_t src_data_73 = vld1q_f32(src_data + 59 * src_step);
+  float32x4_t src_data_74 = vld1q_f32(src_data + 60 * src_step);
+  float32x4_t src_data_75 = vld1q_f32(src_data + 61 * src_step);
+  float32x4_t src_data_76 = vld1q_f32(src_data + 62 * src_step);
+  float32x4_t src_data_77 = vld1q_f32(src_data + 63 * src_step);
+
+  float32x4_t d01 = vsubq_f32(src_data_10, src_data_20);
+  float32x4_t d02 = vsubq_f32(src_data_11, src_data_21);
+  float32x4_t d03 = vsubq_f32(src_data_12, src_data_22);
+  float32x4_t d04 = vsubq_f32(src_data_13, src_data_23);
+  float32x4_t d05 = vsubq_f32(src_data_14, src_data_24);
+  float32x4_t d06 = vsubq_f32(src_data_15, src_data_25);
+  float32x4_t d07 = vsubq_f32(src_data_16, src_data_26);
+  float32x4_t d08 = vsubq_f32(src_data_17, src_data_27);
+
+  float32x4_t d11 = vsubq_f32(src_data_30, src_data_40);
+  float32x4_t d12 = vsubq_f32(src_data_31, src_data_41);
+  float32x4_t d13 = vsubq_f32(src_data_32, src_data_42);
+  float32x4_t d14 = vsubq_f32(src_data_33, src_data_43);
+  float32x4_t d15 = vsubq_f32(src_data_34, src_data_44);
+  float32x4_t d16 = vsubq_f32(src_data_35, src_data_45);
+  float32x4_t d17 = vsubq_f32(src_data_36, src_data_46);
+  float32x4_t d18 = vsubq_f32(src_data_37, src_data_47);
+
+  float32x4_t d21 = vsubq_f32(src_data_50, src_data_60);
+  float32x4_t d22 = vsubq_f32(src_data_51, src_data_61);
+  float32x4_t d23 = vsubq_f32(src_data_52, src_data_62);
+  float32x4_t d24 = vsubq_f32(src_data_53, src_data_63);
+  float32x4_t d25 = vsubq_f32(src_data_54, src_data_64);
+  float32x4_t d26 = vsubq_f32(src_data_55, src_data_65);
+  float32x4_t d27 = vsubq_f32(src_data_56, src_data_66);
+  float32x4_t d28 = vsubq_f32(src_data_57, src_data_67);
+
+  float32x4_t d31 = vaddq_f32(src_data_10, src_data_20);
+  float32x4_t d32 = vaddq_f32(src_data_11, src_data_21);
+  float32x4_t d33 = vaddq_f32(src_data_12, src_data_22);
+  float32x4_t d34 = vaddq_f32(src_data_13, src_data_23);
+  float32x4_t d35 = vaddq_f32(src_data_14, src_data_24);
+  float32x4_t d36 = vaddq_f32(src_data_15, src_data_25);
+  float32x4_t d37 = vaddq_f32(src_data_16, src_data_26);
+  float32x4_t d38 = vaddq_f32(src_data_17, src_data_27);
+
+  float32x4_t d41 = vaddq_f32(src_data_30, src_data_40);
+  float32x4_t d42 = vaddq_f32(src_data_31, src_data_41);
+  float32x4_t d43 = vaddq_f32(src_data_32, src_data_42);
+  float32x4_t d44 = vaddq_f32(src_data_33, src_data_43);
+  float32x4_t d45 = vaddq_f32(src_data_34, src_data_44);
+  float32x4_t d46 = vaddq_f32(src_data_35, src_data_45);
+  float32x4_t d47 = vaddq_f32(src_data_36, src_data_46);
+  float32x4_t d48 = vaddq_f32(src_data_37, src_data_47);
+
+  float32x4_t d51 = vaddq_f32(src_data_50, src_data_60);
+  float32x4_t d52 = vaddq_f32(src_data_51, src_data_61);
+  float32x4_t d53 = vaddq_f32(src_data_52, src_data_62);
+  float32x4_t d54 = vaddq_f32(src_data_53, src_data_63);
+  float32x4_t d55 = vaddq_f32(src_data_54, src_data_64);
+  float32x4_t d56 = vaddq_f32(src_data_55, src_data_65);
+  float32x4_t d57 = vaddq_f32(src_data_56, src_data_66);
+  float32x4_t d58 = vaddq_f32(src_data_57, src_data_67);
+
+  float32x4_t t00 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_00, src_data_10), src_data_20), src_data_30), src_data_40),
+      src_data_50),
+    src_data_60);
+  float32x4_t t01 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_01, src_data_11), src_data_21), src_data_31), src_data_41),
+      src_data_51),
+    src_data_61);
+  float32x4_t t02 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_02, src_data_12), src_data_22), src_data_32), src_data_42),
+      src_data_52),
+    src_data_62);
+  float32x4_t t03 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_03, src_data_13), src_data_23), src_data_33), src_data_43),
+      src_data_53),
+    src_data_63);
+  float32x4_t t04 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_04, src_data_14), src_data_24), src_data_34), src_data_44),
+      src_data_54),
+    src_data_64);
+  float32x4_t t05 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_05, src_data_15), src_data_25), src_data_35), src_data_45),
+      src_data_55),
+    src_data_65);
+  float32x4_t t06 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_06, src_data_16), src_data_26), src_data_36), src_data_46),
+      src_data_56),
+    src_data_66);
+  float32x4_t t07 = vaddq_f32(
+    vaddq_f32(
+      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src_data_07, src_data_17), src_data_27), src_data_37), src_data_47),
+      src_data_57),
+    src_data_67);
+
+  float32x4_t t10 = vaddq_f32(vaddq_f32(vmulq_n_f32(d01, 0.5), d11), vmulq_n_f32(d21, 1.5));
+  float32x4_t t11 = vaddq_f32(vaddq_f32(vmulq_n_f32(d02, 0.5), d12), vmulq_n_f32(d22, 1.5));
+  float32x4_t t12 = vaddq_f32(vaddq_f32(vmulq_n_f32(d03, 0.5), d13), vmulq_n_f32(d23, 1.5));
+  float32x4_t t13 = vaddq_f32(vaddq_f32(vmulq_n_f32(d04, 0.5), d14), vmulq_n_f32(d24, 1.5));
+  float32x4_t t14 = vaddq_f32(vaddq_f32(vmulq_n_f32(d05, 0.5), d15), vmulq_n_f32(d25, 1.5));
+  float32x4_t t15 = vaddq_f32(vaddq_f32(vmulq_n_f32(d06, 0.5), d16), vmulq_n_f32(d26, 1.5));
+  float32x4_t t16 = vaddq_f32(vaddq_f32(vmulq_n_f32(d07, 0.5), d17), vmulq_n_f32(d27, 1.5));
+  float32x4_t t17 = vaddq_f32(vaddq_f32(vmulq_n_f32(d08, 0.5), d18), vmulq_n_f32(d28, 1.5));
+
+  float32x4_t t20 = vaddq_f32(vaddq_f32(vmulq_n_f32(d31, 0.25), d41), vmulq_n_f32(d51, 2.25));
+  float32x4_t t21 = vaddq_f32(vaddq_f32(vmulq_n_f32(d32, 0.25), d42), vmulq_n_f32(d52, 2.25));
+  float32x4_t t22 = vaddq_f32(vaddq_f32(vmulq_n_f32(d33, 0.25), d43), vmulq_n_f32(d53, 2.25));
+  float32x4_t t23 = vaddq_f32(vaddq_f32(vmulq_n_f32(d34, 0.25), d44), vmulq_n_f32(d54, 2.25));
+  float32x4_t t24 = vaddq_f32(vaddq_f32(vmulq_n_f32(d35, 0.25), d45), vmulq_n_f32(d55, 2.25));
+  float32x4_t t25 = vaddq_f32(vaddq_f32(vmulq_n_f32(d36, 0.25), d46), vmulq_n_f32(d56, 2.25));
+  float32x4_t t26 = vaddq_f32(vaddq_f32(vmulq_n_f32(d37, 0.25), d47), vmulq_n_f32(d57, 2.25));
+  float32x4_t t27 = vaddq_f32(vaddq_f32(vmulq_n_f32(d38, 0.25), d48), vmulq_n_f32(d58, 2.25));
+
+  float32x4_t t30 = vaddq_f32(vaddq_f32(vmulq_n_f32(d01, 0.125), d11), vmulq_n_f32(d21, 3.375));
+  float32x4_t t31 = vaddq_f32(vaddq_f32(vmulq_n_f32(d02, 0.125), d12), vmulq_n_f32(d22, 3.375));
+  float32x4_t t32 = vaddq_f32(vaddq_f32(vmulq_n_f32(d03, 0.125), d13), vmulq_n_f32(d23, 3.375));
+  float32x4_t t33 = vaddq_f32(vaddq_f32(vmulq_n_f32(d04, 0.125), d14), vmulq_n_f32(d24, 3.375));
+  float32x4_t t34 = vaddq_f32(vaddq_f32(vmulq_n_f32(d05, 0.125), d15), vmulq_n_f32(d25, 3.375));
+  float32x4_t t35 = vaddq_f32(vaddq_f32(vmulq_n_f32(d06, 0.125), d16), vmulq_n_f32(d26, 3.375));
+  float32x4_t t36 = vaddq_f32(vaddq_f32(vmulq_n_f32(d07, 0.125), d17), vmulq_n_f32(d27, 3.375));
+  float32x4_t t37 = vaddq_f32(vaddq_f32(vmulq_n_f32(d08, 0.125), d18), vmulq_n_f32(d28, 3.375));
+
+  float32x4_t t40 =
+    vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d31, 0.0625), d41), vmulq_n_f32(d51, 5.0625)), src_data_70);
+  float32x4_t t41 =
+    vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d32, 0.0625), d42), vmulq_n_f32(d52, 5.0625)), src_data_71);
+  float32x4_t t42 =
+    vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d33, 0.0625), d43), vmulq_n_f32(d53, 5.0625)), src_data_72);
+  float32x4_t t43 =
+    vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d34, 0.0625), d44), vmulq_n_f32(d54, 5.0625)), src_data_73);
+  float32x4_t t44 =
+    vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d35, 0.0625), d45), vmulq_n_f32(d55, 5.0625)), src_data_74);
+  float32x4_t t45 =
+    vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d36, 0.0625), d46), vmulq_n_f32(d56, 5.0625)), src_data_75);
+  float32x4_t t46 =
+    vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d37, 0.0625), d47), vmulq_n_f32(d57, 5.0625)), src_data_76);
+  float32x4_t t47 =
+    vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(d38, 0.0625), d48), vmulq_n_f32(d58, 5.0625)), src_data_77);
+
+  float32x4_t s11 = vsubq_f32(t01, t02);
+  float32x4_t s12 = vsubq_f32(t11, t12);
+  float32x4_t s13 = vsubq_f32(t21, t22);
+  float32x4_t s14 = vsubq_f32(t31, t32);
+  float32x4_t s15 = vsubq_f32(t41, t42);
+
+  float32x4_t s21 = vsubq_f32(t03, t04);
+  float32x4_t s22 = vsubq_f32(t13, t14);
+  float32x4_t s23 = vsubq_f32(t23, t24);
+  float32x4_t s24 = vsubq_f32(t33, t34);
+  float32x4_t s25 = vsubq_f32(t43, t44);
+
+  float32x4_t s31 = vsubq_f32(t05, t06);
+  float32x4_t s32 = vsubq_f32(t15, t16);
+  float32x4_t s33 = vsubq_f32(t25, t26);
+  float32x4_t s34 = vsubq_f32(t35, t36);
+  float32x4_t s35 = vsubq_f32(t45, t46);
+
+  float32x4_t s41 = vaddq_f32(t01, t02);
+  float32x4_t s42 = vaddq_f32(t11, t12);
+  float32x4_t s43 = vaddq_f32(t21, t22);
+  float32x4_t s44 = vaddq_f32(t31, t32);
+  float32x4_t s45 = vaddq_f32(t41, t42);
+
+  float32x4_t s51 = vaddq_f32(t03, t04);
+  float32x4_t s52 = vaddq_f32(t13, t14);
+  float32x4_t s53 = vaddq_f32(t23, t24);
+  float32x4_t s54 = vaddq_f32(t33, t34);
+  float32x4_t s55 = vaddq_f32(t43, t44);
+
+  float32x4_t s61 = vaddq_f32(t05, t06);
+  float32x4_t s62 = vaddq_f32(t15, t16);
+  float32x4_t s63 = vaddq_f32(t25, t26);
+  float32x4_t s64 = vaddq_f32(t35, t36);
+  float32x4_t s65 = vaddq_f32(t45, t46);
+
+  float32x4_t m00 = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t00, t01), t02), t03), t04), t05), t06);
+  float32x4_t m01 = vaddq_f32(vaddq_f32(vmulq_n_f32(s11, 0.5), s21), vmulq_n_f32(s31, 1.5));
+  float32x4_t m02 = vaddq_f32(vaddq_f32(vmulq_n_f32(s41, 0.25), s51), vmulq_n_f32(s61, 2.25));
+  float32x4_t m03 = vaddq_f32(vaddq_f32(vmulq_n_f32(s11, 0.125), s21), vmulq_n_f32(s31, 3.375));
+  float32x4_t m04 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(s41, 0.0625), s51), vmulq_n_f32(s61, 5.0625)), t07);
+
+  float32x4_t m10 = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t10, t11), t12), t13), t14), t15), t16);
+  float32x4_t m11 = vaddq_f32(vaddq_f32(vmulq_n_f32(s12, 0.5), s22), vmulq_n_f32(s32, 1.5));
+  float32x4_t m12 = vaddq_f32(vaddq_f32(vmulq_n_f32(s42, 0.25), s52), vmulq_n_f32(s62, 2.25));
+  float32x4_t m13 = vaddq_f32(vaddq_f32(vmulq_n_f32(s12, 0.125), s22), vmulq_n_f32(s32, 3.375));
+  float32x4_t m14 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(s42, 0.0625), s52), vmulq_n_f32(s62, 5.0625)), t17);
+
+  float32x4_t m20 = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t20, t21), t22), t23), t24), t25), t26);
+  float32x4_t m21 = vaddq_f32(vaddq_f32(vmulq_n_f32(s13, 0.5), s23), vmulq_n_f32(s33, 1.5));
+  float32x4_t m22 = vaddq_f32(vaddq_f32(vmulq_n_f32(s43, 0.25), s53), vmulq_n_f32(s63, 2.25));
+  float32x4_t m23 = vaddq_f32(vaddq_f32(vmulq_n_f32(s13, 0.125), s23), vmulq_n_f32(s33, 3.375));
+  float32x4_t m24 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(s43, 0.0625), s53), vmulq_n_f32(s63, 5.0625)), t27);
+
+  float32x4_t m30 = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t30, t31), t32), t33), t34), t35), t36);
+  float32x4_t m31 = vaddq_f32(vaddq_f32(vmulq_n_f32(s14, 0.5), s24), vmulq_n_f32(s34, 1.5));
+  float32x4_t m32 = vaddq_f32(vaddq_f32(vmulq_n_f32(s44, 0.25), s54), vmulq_n_f32(s64, 2.25));
+  float32x4_t m33 = vaddq_f32(vaddq_f32(vmulq_n_f32(s14, 0.125), s24), vmulq_n_f32(s34, 3.375));
+  float32x4_t m34 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(s44, 0.0625), s54), vmulq_n_f32(s64, 5.0625)), t37);
+
+  float32x4_t m40 = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t40, t41), t42), t43), t44), t45), t46);
+  float32x4_t m41 = vaddq_f32(vaddq_f32(vmulq_n_f32(s15, 0.5), s25), vmulq_n_f32(s35, 1.5));
+  float32x4_t m42 = vaddq_f32(vaddq_f32(vmulq_n_f32(s45, 0.25), s55), vmulq_n_f32(s65, 2.25));
+  float32x4_t m43 = vaddq_f32(vaddq_f32(vmulq_n_f32(s15, 0.125), s25), vmulq_n_f32(s35, 3.375));
+  float32x4_t m44 = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(s45, 0.0625), s55), vmulq_n_f32(s65, 5.0625)), t47);
+
+  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  vst1q_f32(dst_data, vaddq_f32(m00, bias_ptr));
+  vst1q_f32(dst_data + C4NUM, vaddq_f32(m01, bias_ptr));
+  vst1q_f32(dst_data + 2 * C4NUM, vaddq_f32(m02, bias_ptr));
+  vst1q_f32(dst_data + 3 * C4NUM, vaddq_f32(m03, bias_ptr));
+  vst1q_f32(dst_data + 4 * C4NUM, vaddq_f32(m04, bias_ptr));
+
+  vst1q_f32(dst_data + dst_step * C4NUM, vaddq_f32(m10, bias_ptr));
+  vst1q_f32(dst_data + dst_step * C4NUM + C4NUM, vaddq_f32(m11, bias_ptr));
+  vst1q_f32(dst_data + dst_step * C4NUM + 2 * C4NUM, vaddq_f32(m12, bias_ptr));
+  vst1q_f32(dst_data + dst_step * C4NUM + 3 * C4NUM, vaddq_f32(m13, bias_ptr));
+  vst1q_f32(dst_data + dst_step * C4NUM + 4 * C4NUM, vaddq_f32(m14, bias_ptr));
+
+  vst1q_f32(dst_data + 2 * dst_step * C4NUM, vaddq_f32(m20, bias_ptr));
+  vst1q_f32(dst_data + 2 * dst_step * C4NUM + C4NUM, vaddq_f32(m21, bias_ptr));
+  vst1q_f32(dst_data + 2 * dst_step * C4NUM + 2 * C4NUM, vaddq_f32(m22, bias_ptr));
+  vst1q_f32(dst_data + 2 * dst_step * C4NUM + 3 * C4NUM, vaddq_f32(m23, bias_ptr));
+  vst1q_f32(dst_data + 2 * dst_step * C4NUM + 4 * C4NUM, vaddq_f32(m24, bias_ptr));
+
+  vst1q_f32(dst_data + 3 * dst_step * C4NUM, vaddq_f32(m30, bias_ptr));
+  vst1q_f32(dst_data + 3 * dst_step * C4NUM + C4NUM, vaddq_f32(m31, bias_ptr));
+  vst1q_f32(dst_data + 3 * dst_step * C4NUM + 2 * C4NUM, vaddq_f32(m32, bias_ptr));
+  vst1q_f32(dst_data + 3 * dst_step * C4NUM + 3 * C4NUM, vaddq_f32(m33, bias_ptr));
+  vst1q_f32(dst_data + 3 * dst_step * C4NUM + 4 * C4NUM, vaddq_f32(m34, bias_ptr));
+
+  vst1q_f32(dst_data + 4 * dst_step * C4NUM, vaddq_f32(m40, bias_ptr));
+  vst1q_f32(dst_data + 4 * dst_step * C4NUM + C4NUM, vaddq_f32(m41, bias_ptr));
+  vst1q_f32(dst_data + 4 * dst_step * C4NUM + 2 * C4NUM, vaddq_f32(m42, bias_ptr));
+  vst1q_f32(dst_data + 4 * dst_step * C4NUM + 3 * C4NUM, vaddq_f32(m43, bias_ptr));
+  vst1q_f32(dst_data + 4 * dst_step * C4NUM + 4 * C4NUM, vaddq_f32(m44, bias_ptr));
 #else
   for (int i = 0; i < C4NUM; i++) {
     float src_data_00 = src_data[i];
@@ -3801,4 +4708,3 @@ OutputTransformUnitFunc GetOutputTransFunc(int input_unit, int output_unit) {
     return nullptr;
   }
 }
-

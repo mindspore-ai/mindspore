@@ -345,6 +345,7 @@ void PackNHWC8Fp16ToNHWCFp32(float16_t *src, float *dst, int batch, int plane, i
 
 void PackWeightFp32(float *weight_data, ConvParameter *conv_param, float *packed_weight) {
   // original weight format : ohwi
+  // todo pack weight for arm32 platform
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
   int in_channel = conv_param->input_channel_;
@@ -352,7 +353,7 @@ void PackWeightFp32(float *weight_data, ConvParameter *conv_param, float *packed
   int oc8 = UP_DIV(out_channel, C8NUM);
   int ic4 = UP_DIV(in_channel, C4NUM);
   int kernel_plane = kernel_h * kernel_w;
-  int pack_weight_size = oc8 * ic4 * C8NUM * C4NUM * kernel_plane;
+  int pack_weight_size = oc8 * C8NUM * ic4 * C4NUM * kernel_plane;
 
   int unit_size = C8NUM * C4NUM;
   int block_size = pack_weight_size / oc8;
@@ -565,7 +566,7 @@ void Im2ColPackUnitFp32(const float *input_data, ConvParameter *conv_param, floa
 void Im2ColPackUnitInt8(const int8_t *input_data, int8_t *packed_input, int real_cal_num, int block_index,
                         int32_t *input_sum, ConvParameter *conv_param) {
   // input format : nhwc
-  int tile_num = 4;
+  int tile_num = conv_param->tile_num_;
   int32_t filter_zp = conv_param->conv_quant_arg_.quant_args_[1][0].zp_;
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
@@ -624,7 +625,7 @@ void Im2ColPackUnitInt8(const int8_t *input_data, int8_t *packed_input, int real
 void Im2ColPackUnitInt8Opt(const int8_t *input_data, int8_t *packed_input, int real_cal_num, int block_index,
                            int32_t *input_sum, ConvParameter *conv_param) {
   // input format : nhwc
-  int tile_num = 24;
+  int tile_num = conv_param->tile_num_;
   int32_t filter_zp = conv_param->conv_quant_arg_.quant_args_[1][0].zp_;
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
@@ -980,15 +981,23 @@ void PackNC4HW4ToNHWCInt8(const void *src, void *dst, int batch, int plane, int 
   for (int b = 0; b < batch; b++) {
     int src_offset = b * plane * c4 * C4NUM;
     int dst_offset = b * plane * channel;
-    for (int c = 0; c < channel; c++) {
-      int c4_block_num = c / C4NUM;
-      int c4_block_res = c % C4NUM;
-      int src_c_offset = src_offset + c4_block_num * plane * C4NUM + c4_block_res;
-      int dst_c_offset = dst_offset + c;
-      for (int k = 0; k < plane; k++) {
-        int src_kernel_offset = src_c_offset + k * C4NUM;
-        int dst_kernel_offset = dst_c_offset + k * channel;
-        ((uint8_t *)dst + dst_kernel_offset)[0] = ((uint8_t *)src + src_kernel_offset)[0];
+    for (int k = 0; k < plane; k++) {
+      int src_kernel_offset = src_offset + k * C4NUM;
+      int dst_kernel_offset = dst_offset + k * channel;
+      for (int c = 0; c < c4 - 1; c++) {
+        int src_c_offset = src_kernel_offset + c * plane * C4NUM;
+        int dst_c_offset = dst_kernel_offset + c * C4NUM;
+        ((int8_t *)dst + dst_c_offset)[0] = ((int8_t *)src + src_c_offset)[0];
+        ((int8_t *)dst + dst_c_offset)[1] = ((int8_t *)src + src_c_offset)[1];
+        ((int8_t *)dst + dst_c_offset)[2] = ((int8_t *)src + src_c_offset)[2];
+        ((int8_t *)dst + dst_c_offset)[3] = ((int8_t *)src + src_c_offset)[3];
+      }
+      // res part
+      int res_c = channel - (c4 - 1) * C4NUM;
+      for (int i = 0; i < res_c; i++) {
+        int src_res_c_offset = src_kernel_offset + (c4 - 1) * C4NUM * plane + i;
+        int dst_res_c_offset = dst_kernel_offset + (c4 - 1) * C4NUM + i;
+        ((int8_t *)dst + dst_res_c_offset)[0] = ((int8_t *)src + src_res_c_offset)[0];
       }
     }
   }
