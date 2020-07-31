@@ -32,11 +32,11 @@ class AclSession : public InferSession {
  public:
   AclSession();
 
-  bool InitEnv(const std::string &device_type, uint32_t device_id) override;
-  bool FinalizeEnv() override;
-  bool LoadModelFromFile(const std::string &file_name, uint32_t &model_id) override;
-  bool UnloadModel(uint32_t model_id) override;
-  bool ExecuteModel(uint32_t model_id, const RequestBase &request, ReplyBase &reply) override;
+  Status InitEnv(const std::string &device_type, uint32_t device_id) override;
+  Status FinalizeEnv() override;
+  Status LoadModelFromFile(const std::string &file_name, uint32_t &model_id) override;
+  Status UnloadModel(uint32_t model_id) override;
+  Status ExecuteModel(uint32_t model_id, const RequestBase &request, ReplyBase &reply) override;
 
  private:
   std::string device_type_;

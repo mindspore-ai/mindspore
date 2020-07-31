@@ -38,11 +38,11 @@ class MSInferSession : public InferSession {
   MSInferSession();
   ~MSInferSession();
 
-  bool InitEnv(const std::string &device_type, uint32_t device_id) override;
-  bool FinalizeEnv() override;
-  bool LoadModelFromFile(const std::string &file_name, uint32_t &model_id) override;
-  bool UnloadModel(uint32_t model_id) override;
-  bool ExecuteModel(uint32_t model_id, const RequestBase &inputs, ReplyBase &outputs) override;
+  Status InitEnv(const std::string &device_type, uint32_t device_id) override;
+  Status FinalizeEnv() override;
+  Status LoadModelFromFile(const std::string &file_name, uint32_t &model_id) override;
+  Status UnloadModel(uint32_t model_id) override;
+  Status ExecuteModel(uint32_t model_id, const RequestBase &inputs, ReplyBase &outputs) override;
 
  private:
   std::shared_ptr<session::SessionBasic> session_impl_ = nullptr;
@@ -57,7 +57,7 @@ class MSInferSession : public InferSession {
   std::shared_ptr<std::vector<char>> ReadFile(const std::string &file);
   static void RegAllOp();
   string AjustTargetName(const std::string &device);
-  bool CompileGraph(std::shared_ptr<FuncGraph> funcGraphPtr, uint32_t &model_id);
+  Status CompileGraph(std::shared_ptr<FuncGraph> funcGraphPtr, uint32_t &model_id);
   bool CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs) const;
   std::vector<tensor::TensorPtr> RunGraph(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs);
 };

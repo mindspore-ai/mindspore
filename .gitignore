@@ -41,6 +41,7 @@ cmake-build-debug
 *.pb.h
 *.pb.cc
 *.pb
+*_grpc.py
 
 # Object files
 *.o

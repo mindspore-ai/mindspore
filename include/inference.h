@@ -24,20 +24,20 @@
 
 namespace mindspore {
 namespace inference {
-
+enum Status { SUCCESS = 0, FAILED, INVALID_INPUTS };
 class MS_API InferSession {
  public:
   InferSession() = default;
   virtual ~InferSession() = default;
-  virtual bool InitEnv(const std::string &device_type, uint32_t device_id) = 0;
-  virtual bool FinalizeEnv() = 0;
-  virtual bool LoadModelFromFile(const std::string &file_name, uint32_t &model_id) = 0;
-  virtual bool UnloadModel(uint32_t model_id) = 0;
+  virtual Status InitEnv(const std::string &device_type, uint32_t device_id) = 0;
+  virtual Status FinalizeEnv() = 0;
+  virtual Status LoadModelFromFile(const std::string &file_name, uint32_t &model_id) = 0;
+  virtual Status UnloadModel(uint32_t model_id) = 0;
   // override this method to avoid request/reply data copy
-  virtual bool ExecuteModel(uint32_t model_id, const RequestBase &request, ReplyBase &reply) = 0;
+  virtual Status ExecuteModel(uint32_t model_id, const RequestBase &request, ReplyBase &reply) = 0;
 
-  virtual bool ExecuteModel(uint32_t model_id, const std::vector<InferTensor> &inputs,
-                            std::vector<InferTensor> &outputs) {
+  virtual Status ExecuteModel(uint32_t model_id, const std::vector<InferTensor> &inputs,
+                              std::vector<InferTensor> &outputs) {
     VectorInferTensorWrapRequest request(inputs);
     VectorInferTensorWrapReply reply(outputs);
     return ExecuteModel(model_id, request, reply);

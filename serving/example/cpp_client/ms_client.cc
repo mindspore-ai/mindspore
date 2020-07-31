@@ -31,51 +31,51 @@ using ms_serving::TensorShape;
 
 class MSClient {
  public:
-    explicit MSClient(std::shared_ptr<Channel> channel) : stub_(MSService::NewStub(channel)) {}
+  explicit MSClient(std::shared_ptr<Channel> channel) : stub_(MSService::NewStub(channel)) {}
 
-    ~MSClient() = default;
+  ~MSClient() = default;
 
-    std::string Predict() {
-      // Data we are sending to the server.
-      PredictRequest request;
+  std::string Predict() {
+    // Data we are sending to the server.
+    PredictRequest request;
 
-      Tensor data;
-      TensorShape shape;
-      shape.add_dims(4);
-      *data.mutable_tensor_shape() = shape;
-      data.set_tensor_type(ms_serving::MS_FLOAT32);
-      std::vector<float> input_data{1, 2, 3, 4};
-      data.set_data(input_data.data(), input_data.size() * sizeof(float));
-      *request.add_data() = data;
-      *request.add_data() = data;
-      std::cout << "intput tensor size is " << request.data_size() << std::endl;
-      // Container for the data we expect from the server.
-      PredictReply reply;
+    Tensor data;
+    TensorShape shape;
+    shape.add_dims(4);
+    *data.mutable_tensor_shape() = shape;
+    data.set_tensor_type(ms_serving::MS_FLOAT32);
+    std::vector<float> input_data{1, 2, 3, 4};
+    data.set_data(input_data.data(), input_data.size() * sizeof(float));
+    *request.add_data() = data;
+    *request.add_data() = data;
+    std::cout << "intput tensor size is " << request.data_size() << std::endl;
+    // Container for the data we expect from the server.
+    PredictReply reply;
 
-      // Context for the client. It could be used to convey extra information to
-      // the server and/or tweak certain RPC behaviors.
-      ClientContext context;
+    // Context for the client. It could be used to convey extra information to
+    // the server and/or tweak certain RPC behaviors.
+    ClientContext context;
 
-      // The actual RPC.
-      Status status = stub_->Predict(&context, request, &reply);
-      std::cout << "Compute [1, 2, 3, 4] + [1, 2, 3, 4]" << std::endl;
+    // The actual RPC.
+    Status status = stub_->Predict(&context, request, &reply);
+    std::cout << "Compute [1, 2, 3, 4] + [1, 2, 3, 4]" << std::endl;
+
+    // Act upon its status.
+    if (status.ok()) {
       std::cout << "Add result is";
       for (size_t i = 0; i < reply.result(0).data().size() / sizeof(float); i++) {
         std::cout << " " << (reinterpret_cast<const float *>(reply.mutable_result(0)->mutable_data()->data()))[i];
       }
       std::cout << std::endl;
-
-      // Act upon its status.
-      if (status.ok()) {
-        return "RPC OK";
-      } else {
-        std::cout << status.error_code() << ": " << status.error_message() << std::endl;
-        return "RPC failed";
-      }
+      return "RPC OK";
+    } else {
+      std::cout << status.error_code() << ": " << status.error_message() << std::endl;
+      return "RPC failed";
     }
+  }
 
  private:
-    std::unique_ptr<MSService::Stub> stub_;
+  std::unique_ptr<MSService::Stub> stub_;
 };
 
 int main(int argc, char **argv) {
