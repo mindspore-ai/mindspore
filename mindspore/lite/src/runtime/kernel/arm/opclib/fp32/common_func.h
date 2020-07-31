@@ -42,6 +42,17 @@ void BiasAddRelu6(const float *bias, float *data, size_t oc4, size_t plan_size);
 void BiasAddRelu(const float *bias, float *data, size_t oc4, size_t plan_size);
 void Relu6(float *data, size_t element4);
 void Relu(float *data, size_t element4);
+void C4BiasAdd(float *dst, const float *input, const float* bias, size_t oc, size_t plane_size, size_t stride);
+void C4BiasAddRelu(float *dst, const float *input, const float* bias, size_t oc, size_t plane_size, size_t stride);
+void C4BiasAddRelu6(float *dst, const float *input, const float* bias, size_t oc, size_t plane_size, size_t stride);
+void C4Relu(float *dst, const float *input, size_t oc, size_t plane_size, size_t stride);
+void C4Relu6(float *dst, const float *input, size_t oc, size_t plane_size, size_t stride);
+void ConvDwFp32Center(float *dst, const float *src, const float *weight, const float *bias, size_t height, size_t width,
+                      size_t kernel_h, size_t kernel_w, size_t out_h_step, size_t block_channel, size_t in_sh_step,
+                      size_t in_sw_step, size_t in_kh_step, size_t in_kw_step, size_t relu, size_t relu6);
+void DeconvDwFp32Center(float *dst, const float *src, const float *weight, size_t height, size_t width,
+                        size_t kernel_h, size_t kernel_w, size_t out_h_step, size_t block_channel, size_t in_sh_step,
+                        size_t in_sw_step, size_t in_kh_step, size_t in_kw_step);
 #endif
 
 #ifdef __cplusplus

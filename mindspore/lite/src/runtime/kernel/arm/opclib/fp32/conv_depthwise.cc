@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/opclib/fp32/conv_depthwise.h"
+#include "src/runtime/kernel/arm/opclib/fp32/common_func.h"
 #ifdef ENABLE_ARM64
 #include <arm_neon.h>
 #endif
@@ -122,6 +123,10 @@ void DepthwiseBorder(float *dst, const float *src, const float *weight, const fl
 void DepthwiseCenter(float *dst, const float *src, const float *weight, const float *bias, int height, int width,
                      int kernel_h, int kernel_w, int out_h_step, int block_channel, int in_sh_step, int in_sw_step,
                      int in_kh_step, int in_kw_step, bool is_relu, bool is_relu6) {
+#ifdef ENABLE_ARM64
+  ConvDwFp32Center(dst, src, weight, bias, height, width, kernel_h, kernel_w, out_h_step, block_channel,
+                   in_sh_step, in_sw_step, in_kh_step, in_kw_step, is_relu, is_relu6);
+#else
   float *dst_h = dst;
   const float *src_h = src;
   for (int oh = 0; oh < height; oh++) {
@@ -163,6 +168,7 @@ void DepthwiseCenter(float *dst, const float *src, const float *weight, const fl
     dst_h += out_h_step;
     src_h += in_sh_step;
   }  // dst_height loop
+#endif
 }
 
 // conv depthwise fp32: sliding window
@@ -262,6 +268,10 @@ void DeconvDepthwiseBorder(float *dst, const float *src, const float *weight, in
 void DeconvDepthwiseCenter(float *dst, const float *src, const float *weight, int height, int width, int kernel_h,
                            int kernel_w, int out_h_step, int block_channel, int in_sh_step, int in_sw_step,
                            int in_kh_step, int in_kw_step) {
+#ifdef ENABLE_ARM64
+  DeconvDwFp32Center(dst, src, weight, height, width, kernel_h, kernel_w, out_h_step, block_channel,
+                     in_sh_step, in_sw_step, in_kh_step, in_kw_step);
+#else
   float *dst_h = dst;
   const float *src_h = src;
   for (int oh = 0; oh < height; oh++) {
@@ -297,6 +307,7 @@ void DeconvDepthwiseCenter(float *dst, const float *src, const float *weight, in
     dst_h += in_sh_step;
     src_h += out_h_step;
   }  // dst_height loop
+#endif
 }
 
 void DeconvDepthwisePostFunc(float *dst, const float *bias, int block_channel, const ConvParameter *conv_param) {

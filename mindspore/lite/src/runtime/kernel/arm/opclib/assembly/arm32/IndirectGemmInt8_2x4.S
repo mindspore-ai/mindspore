@@ -1,4 +1,5 @@
-#ifdef __aarch64__
+#ifdef __arm__
+#ifndef __aarch64__
 
 .text
 .align 5
@@ -10,8 +11,8 @@
 // void IndirectGemmInt8_2x4(int8_t *output, int8_t *input, int8_t *weight, int32_t *bias, size_t ksize, size_t ic4,
 // size_t oc, size_t offset, int32_t *input_sum, size_t act_min, size_t act_max, size_t out_zp, size_t out_multiplier,
 // size_t shift_before, size_t shift_after);
-// x0: output, x1: input, r2: weight, x3: bias, x4: kSize, x5: ic4, x6: oc, x7: offset
-// x8: input_sum, x10: act_min, x11: act_max, x10: out_zp, x11: out_multiplier, x10: shift_before, x11: shift_after
+// r0: output, r1: input, r2: weight, r3: bias, r4: kSize, r5: ic4, r6: oc, r7: offset
+// r8: input_sum, r10: act_min, r11: act_max, r10: out_zp, r11: out_multiplier, r10: shift_before, r11: shift_after
 IndirectGemmInt8_2x4:
 
     .macro INIT_BIAS
@@ -73,7 +74,7 @@ IndirectGemmInt8_2x4:
             vmlal.s8 q6, d1, d9
             vmlal.s8 q7, d1, d11
 
-            subs x10, x5, #1
+            subs r10, r5, #1
             beq LoopIcEnd
 
             LoopIc:
@@ -107,7 +108,7 @@ IndirectGemmInt8_2x4:
                 vmlal.s8 q6, d1, d9
                 vmlal.s8 q7, d1, d11       
 
-                subs x10, x10, #1
+                subs r10, r10, #1
                 bne LoopIc
 
             LoopIcEnd:
@@ -131,15 +132,23 @@ IndirectGemmInt8_2x4:
                 vld1.32 q0[], [r10]!
                 vld1.32 q1[], [r10]!
                 // pairwise add
-                vpadd.i32 q8, q8, q9
-                vpadd.i32 q10, q10, q11
-                vpadd.i32 q12, q12, q13
-                vpadd.i32 q14, q14, q15
-                vpadd.i32 q8, q8, q10
-                vpadd.i32 q12, q12, q14
+                vpadd.i32 d16, d16, d17
+                vpadd.i32 d18, d18, d19
+                vpadd.i32 d20, d20, d21
+                vpadd.i32 d22, d22, d23
+                vpadd.i32 d24, d24, d25
+                vpadd.i32 d26, d26, d27
+                vpadd.i32 d28, d28, d29
+                vpadd.i32 d30, d30, d31
+
+                vpadd.i32 d16, d16, d18
+                vpadd.i32 d17, d20, d22
+                vpadd.i32 d24, d24, d26
+                vpadd.i32 d25, d28, d30
                 vsub.i32 q8, q8, q0
                 vsub.i32 q12, q12, q1
-                cbz r3, NoBias
+                cmp r3, #0
+                beq NoBias
                 vld1.32 q2, [r3]
                 vadd.i32 q8, q8, q2
                 vadd.i32 q12, q12, q2
@@ -182,34 +191,34 @@ IndirectGemmInt8_2x4:
             // prefetching is not prefered while writing results in spite of cache missings
             // you could try prfm pstl2strm
             WriteStart:
-                cmp x6, #1
+                cmp r6, #1
                 beq Write1
-                cmp x6, #2
+                cmp r6, #2
                 beq Write2
-                cmp x6, #3
+                cmp r6, #3
                 beq Write3
                 b Write4
             Write1:
-                vst1.8 {d0[0]}, [x11], x7
-                vst1.8 {d0[1]}, [x11]
+                vst1.8 {d0[0]}, [r11], r7
+                vst1.8 {d0[1]}, [r11]
                 add r0, r0, #1
                 b WriteEnd
             Write2:
-                vst1.16 {d0[0]}, [x11], x7
-                vst1.16 {d0[1]}, [x11]
+                vst1.16 {d0[0]}, [r11], r7
+                vst1.16 {d0[1]}, [r11]
                 add r0, r0, #2
                 b WriteEnd
             Write3:
-                add x14, x11, #2
-                vst1.16 {d0[0]}, [x11], x7
-                vst1.16 {d0[1]}, [x11]
-                vst1.8 {d0[0]}, [x14], x7
-                vst1.8 {d0[1]}, [x14]
+                add r14, r11, #2
+                vst1.16 {d0[0]}, [r11], r7
+                vst1.16 {d0[1]}, [r11]
+                vst1.8 {d0[0]}, [r14], r7
+                vst1.8 {d0[1]}, [r14]
                 add r0, r0, #3
                 b WriteEnd
             Write4:
-                vst1.32 {d0[0]}, [x11], x7
-                vst1.32 {d0[1]}, [x11]
+                vst1.32 {d0[0]}, [r11], r7
+                vst1.32 {d0[1]}, [r11]
                 add r0, r0, #4
 
         WriteEnd:
@@ -218,7 +227,8 @@ IndirectGemmInt8_2x4:
             bne LoopKsize
 
         subs r6, r6, #4
-        cbz r3, NoStepFowrard
+        cmp r3, #0
+        beq NoStepFowrard
         add r3, r3, #16
     NoStepFowrard:
         bgt LoopOc
@@ -226,4 +236,5 @@ IndirectGemmInt8_2x4:
     add sp, sp, #160
     vpop {q4-q7}
     pop {r4-r8, r10, r11, pc}
+#endif
 #endif
