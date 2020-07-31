@@ -1,9 +1,11 @@
-set(TEST_DIR ${TOP_DIR}/tests/ut/cpp)
+set(TEST_DIR ${TOP_DIR}/mindspore/lite/test)
 set(LITE_DIR ${TOP_DIR}/mindspore/lite)
+include_directories(${TOP_DIR})
 include_directories(${TEST_DIR})
+include_directories(${LITE_DIR})
 include_directories(${LITE_DIR}/tools)
-include_directories(${LITE_DIR}/lite)
 include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/dependency_gtest.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/external_libs/gtest.cmake)
 
 ### anf src
 set(ANF_SRC
@@ -158,7 +160,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/tools/common/flag_parser.cc
         ${LITE_DIR}/tools/common/storage.cc
         ${LITE_DIR}/tools/benchmark/benchmark.cc
-        ${LITE_DIR}/test/benchmark_test.cc
+        ${LITE_DIR}/test/st/benchmark_test.cc
         )
 ### gpu runtime
 if (SUPPORT_GPU)
@@ -179,6 +181,7 @@ endif()
 if(BUILD_CONVERTER)
     set(TEST_LITE_SRC
             ${TEST_LITE_SRC}
+            ${TOP_DIR}/mindspore/core/utils/flags.cc
             ${LITE_DIR}/tools/converter/optimizer.cc
             ${LITE_DIR}/src/common/anf_importer/anf_importer.cc
             ${LITE_DIR}/src/common/anf_importer/import_from_meta_graphT.cc
@@ -188,7 +191,7 @@ if(BUILD_CONVERTER)
             ${LITE_DIR}/tools/converter/converter_flags.cc
             ${LITE_DIR}/tools/converter/converter.cc
             ${LITE_DIR}/tools/converter/parser/onnx/onnx.pb.cc
-            ${LITE_DIR}/test/converter_test.cc
+            ${LITE_DIR}/test/st/converter_test.cc
             ${LITE_DIR}/src/gllo/common/node_pass.cc
             ${LITE_DIR}/src/gllo/common/optimizer.cc
             ${LITE_DIR}/src/gllo/common/pass_manager.cc
@@ -233,59 +236,50 @@ else()
 endif()
 ### test src
 file(GLOB_RECURSE TEST_CASE_KERNEL_SRC
-    ${TEST_DIR}/kernel/cpu/arm/fp32/*.cc
-    ${TEST_DIR}/kernel/cpu/arm/int8/*.cc
+    ${TEST_DIR}/ut/src/runtime/kernel/arm/fp32/*.cc
+    ${TEST_DIR}/ut/src/runtime/kernel/arm/int8/*.cc
 )
 
 set(TEST_SRC
     ${TEST_LITE_SRC}
     ${TEST_CASE_KERNEL_SRC}
     ${TEST_DIR}/common/common_test.cc
-    ${TEST_DIR}/common/test_lite_main.cc
-    ${TEST_DIR}/kernel/cpu/arm/common/pack_tests.cc
-    ${TEST_DIR}/device/cpu/arm/infer_test.cc
+    ${TEST_DIR}/main.cc
+    ${TEST_DIR}/ut/src/runtime/kernel/arm/common/pack_tests.cc
+    ${TEST_DIR}/ut/src/infer_test.cc
 #        ${TEST_DIR}/device/cpu/arm/graph_test.cc
 )
 
 if (SUPPORT_TRAIN)
     set(TEST_SRC
             ${TEST_SRC}
-            ${TEST_DIR}/device/cpu/arm/train_test.cc
+            ${TEST_DIR}/ut/src/train_test.cc
             )
 else()
     set(TEST_SRC
             ${TEST_SRC}
-            ${TEST_DIR}/device/cpu/arm/infer_test.cc
+            ${TEST_DIR}/ut/src/infer_test.cc
             )
 endif()
 
 if (SUPPORT_GPU)
     set(TEST_SRC
             ${TEST_SRC}
-            ${TEST_DIR}/device/opencl/opencl_infer_tests.cc
-            ${TEST_DIR}/kernel/opencl/utils_cl_tests.cc
-            ${TEST_DIR}/kernel/opencl/arithmetic_tests.cc
-            ${TEST_DIR}/kernel/opencl/convolution_tests.cc
-            ${TEST_DIR}/kernel/opencl/depthwise_conv2d_tests.cc
-            ${TEST_DIR}/kernel/opencl/matmul_tests.cc
-            ${TEST_DIR}/kernel/opencl/max_pooling_cl_tests.cc
-            ${TEST_DIR}/kernel/opencl/avg_pooling_cl_tests.cc
-            ${TEST_DIR}/kernel/opencl/softmax_cl_tests.cc
-            ${TEST_DIR}/kernel/opencl/concat_tests.cc
-            ${TEST_DIR}/kernel/opencl/conv2d_transpose_tests.cc
+            ${TEST_DIR}/ut/stc/runtime/kernel/opencl/matmul_tests.cc
+            ${TEST_DIR}/ut/stc/runtime/kernel/opencl/softmax_cl_tests.cc
             )
 endif()
 
 if (ENABLE_FP16)
     set(TEST_SRC
             ${TEST_SRC}
-            ${TEST_DIR}/kernel/cpu/arm/fp16/convolution_fp16_tests.cc)
+            ${TEST_DIR}/ut/src/runtime/kernel/arm/fp16/convolution_fp16_tests.cc)
 endif ()
 
 
 add_executable(lite-test ${TEST_SRC})
 
-target_link_libraries(lite-test dl ${SECUREC_LIBRARY} ${GTEST_LIBRARY} mindspore::json)
+target_link_libraries(lite-test dl ${SECUREC_LIBRARY} ${GTEST_LIBRARY} mindspore::json mindspore::gtest)
 if (BUILD_CONVERTER)
     target_link_libraries(lite-test
             anf_exporter_mid

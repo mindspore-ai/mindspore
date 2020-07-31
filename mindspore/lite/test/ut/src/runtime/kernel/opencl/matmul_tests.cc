@@ -1,0 +1,89 @@
+/**
+ * Copyright 2020 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include <iostream>
+#include <memory>
+#include "mindspore/core/utils/log_adapter.h"
+#include "common/common_test.h"
+#include "mindspore/lite/src/common/file_utils.h"
+#include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
+#include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
+#include "mindspore/lite/src/runtime/kernel/opencl/kernel/matmul.h"
+
+// using namespace mindspore::kernel;
+// using namespace mindspore::lite;
+// using namespace mindspore;
+
+namespace mindspore {
+class TestMatMulOpenCL : public mindspore::Common {
+ public:
+  TestMatMulOpenCL() {}
+};
+
+TEST_F(TestMatMulOpenCL, MatMulFp32) {
+  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  ocl_runtime->Init();
+  size_t input_size;
+  int ci = 1280;
+  int co = 1001;
+  std::string input_path = "./test_data/matmul/matmul_fp32_input.bin";
+  auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+
+  size_t weight_size;
+  std::string weight_path = "./test_data/matmul/matmul_fp32_weight.bin";
+  auto weight_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(weight_path.c_str(), &weight_size));
+
+  lite::tensor::Tensor *tensor_x = new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), {1, ci});
+
+  lite::tensor::Tensor *tensor_w = new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), {co, ci});
+  tensor_w->SetData(weight_data);
+
+  lite::tensor::Tensor *tensor_out = new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), {1, co});
+  std::vector<lite::tensor::Tensor *> inputs{tensor_x, tensor_w};
+  std::vector<lite::tensor::Tensor *> outputs{tensor_out};
+  auto *arith_kernel = new MatMulOpenCLKernel(nullptr, inputs, outputs, false);
+  arith_kernel->Init();
+
+  std::vector<LiteKernel *> kernels{arith_kernel};
+  auto *pGraph = new SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  pGraph->Init();
+
+  memcpy(inputs[0]->Data(), input_data, sizeof(float) * ci);
+  pGraph->Run();
+
+  printf("==================output data=================\n");
+  float *output_data = reinterpret_cast<float *>(tensor_out->Data());
+  std::cout << std::endl;
+  for (int i = 0; i < co; i++) {
+    std::cout << output_data[i] << ", ";
+  }
+  std::cout << std::endl;
+
+  size_t output_size;
+  std::string output_path = "./test_data/matmul/matmul_fp32_output.bin";
+  auto correct_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(output_path.c_str(), &output_size));
+
+  // compare
+  CompareOutputData(output_data, correct_data, co * sizeof(float), 0.00001);
+
+  delete input_data;
+  delete weight_data;
+  delete tensor_x;
+  delete tensor_w;
+  delete tensor_out;
+  delete correct_data;
+  MS_LOG(INFO) << "TestMatMulFp32 passed";
+}
+}  // namespace mindspore
