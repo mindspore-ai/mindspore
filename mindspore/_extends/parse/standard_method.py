@@ -28,7 +28,8 @@ from ...ops.composite.base import _append
 __all__ = ['MultitypeFuncGraph', 'env_get', 'hyper_add', 'zeros_like', 'ones_like']
 
 trans = P.Transpose()
-
+shape_ = P.Shape()
+dtype_ = P.DType()
 
 def transpose(x):
     """Implementation of `transpose`."""

@@ -20,7 +20,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+context.set_context(mode=context.GRAPH_MODE)
 
 
 class FatherNet(nn.Cell):
@@ -92,7 +92,6 @@ class Net(nn.Cell):
 
 def test_single_super():
     single_net = SingleSubNet(2, 3)
-    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.ones([1, 2, 3], np.int32))
     y = Tensor(np.ones([1, 2, 3], np.int32))
     single_net(x, y)
@@ -100,7 +99,6 @@ def test_single_super():
 
 def test_mul_super():
     mul_net = MulSubNet(2, 3, 4)
-    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.ones([1, 2, 3], np.int32))
     y = Tensor(np.ones([1, 2, 3], np.int32))
     mul_net(x, y)
@@ -108,7 +106,6 @@ def test_mul_super():
 
 def test_super_cell():
     net = Net(2)
-    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.ones([1, 2, 3], np.int32))
     y = Tensor(np.ones([1, 2, 3], np.int32))
     with pytest.raises(RuntimeError) as er:
@@ -142,7 +139,6 @@ def test_single_super_in():
             return ret_father_construct, ret_father_test, ret_father_x, ret_sub_z
 
     single_net_in = SingleSubNetIN(2, 3)
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
     x = Tensor(np.ones([1, 2, 3], np.int32))
     y = Tensor(np.ones([1, 2, 3], np.int32))
     single_net_in(x, y)

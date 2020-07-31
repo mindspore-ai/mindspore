@@ -21,7 +21,6 @@
 #include <algorithm>
 #include <limits>
 #include <mutex>
-#include <set>
 #include <string>
 #include <utility>
 
@@ -31,10 +30,8 @@
 #include "frontend/operator/prim_to_function.h"
 #include "abstract/utils.h"
 #include "utils/symbolic.h"
-#include "./common.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/parse/resolve.h"
-#include "ir/tensor.h"
 #include "utils/convert_utils.h"
 #include "utils/context/ms_context.h"
 #include "pipeline/jit/parse/data_converter.h"
@@ -64,7 +61,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimScalarToArray, {InferImplScalarToArray, true}},
     {prim::kPrimArrayToScalar, {InferImplArrayToScalar, true}},
     {prim::kPrimBroadcastShape, {InferImplBroadCastShape, true}},
-    {prim::kPrimShape, {InferImplShape, true}},
     {prim::kPrimPack, {InferImplPack, true}},
     // Structure
     {prim::kPrimMakeTuple, {InferImplMakeTuple, true}},
@@ -634,7 +630,7 @@ EvaluatorPtr InitUniformPrimEvaluator(const PrimitivePtr &primitive, PrimitiveIm
 }
 
 const int kResolveCaseUserDefineClass = 1;
-const int kResolveCaseBuildinTypeMethod = 2;
+const int kResolveCaseBuiltInType = 2;
 const int kResolveCaseFunction = 3;
 int GetResolveCase(const TypePtr &data_type) {
   MS_EXCEPTION_IF_NULL(data_type);
@@ -643,8 +639,8 @@ int GetResolveCase(const TypePtr &data_type) {
   }
 
   // try method map, if not in method map, the data_type should be External type.
-  if (pipeline::Resource::IsTypeInMethodMap(data_type->type_id())) {
-    return kResolveCaseBuildinTypeMethod;
+  if (pipeline::Resource::IsTypeInBuiltInMap(data_type->type_id())) {
+    return kResolveCaseBuiltInType;
   }
 
   return kResolveCaseFunction;
@@ -674,8 +670,10 @@ inline void AddToManager(const AnalysisEnginePtr &engine, const FuncGraphPtr fun
   manager->AddFuncGraph(func_graph);
 }
 
-EvalResultPtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &data_conf,
-                                   const AnfNodeConfigPtr &old_conf) {
+enum REQUIRE_TYPE { ATTR, METHOD };
+
+EvalResultPtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &data_conf, const AnfNodeConfigPtr &old_conf,
+                                   REQUIRE_TYPE require_type = REQUIRE_TYPE::METHOD) {
   MS_EXCEPTION_IF_NULL(old_conf);
 
   AbstractBasePtr abs_ptr = ToAbstract(value, AnalysisContext::DummyContext(), old_conf);
@@ -701,6 +699,9 @@ EvalResultPtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &data_
   MS_EXCEPTION_IF_NULL(old_conf);
   FuncGraphPtr func_graph = old_conf->node()->func_graph();
   CNodePtr new_cnode = func_graph->NewCNode(input);
+  if (require_type == REQUIRE_TYPE::ATTR) {
+    new_cnode = func_graph->NewCNode({new_cnode});
+  }
   AnalysisEnginePtr eng = old_conf->engine();
   AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_cnode, old_conf->context());
   return eng->ForwardConfig(old_conf, fn_conf);
@@ -781,9 +782,9 @@ EvalResultPtr GetEvaluatedValueForClassAttrOrMethod(const AnalysisEnginePtr &eng
   return StaticGetterInferred(converted_v, data_conf, out_conf);
 }
 
-EvalResultPtr GetEvaluatedValueForBuiltinTypeMethod(const AnalysisEnginePtr &engine, const ValuePtr &item_v,
-                                                    const TypePtr &data_type, const ConfigPtr &data_conf,
-                                                    const AnfNodeConfigPtr &out_conf) {
+EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePtr &engine, const ValuePtr &item_v,
+                                                          const TypePtr &data_type, const ConfigPtr &data_conf,
+                                                          const AnfNodeConfigPtr &out_conf) {
   MS_EXCEPTION_IF_NULL(item_v);
   MS_EXCEPTION_IF_NULL(data_type);
   // The method maybe a Primitive or Composite
@@ -792,22 +793,29 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeMethod(const AnalysisEnginePtr &eng
   }
 
   std::string item_name = item_v->cast<StringImmPtr>()->value();
-  Any method = pipeline::Resource::GetMethodPtr(data_type->type_id(), item_name);
-  if (method.empty()) {
-    MS_LOG(EXCEPTION) << "Object type: " << data_type->ToString() << " has no method: " << item_name;
+  REQUIRE_TYPE require_type = REQUIRE_TYPE::METHOD;
+  Any require = pipeline::Resource::GetMethodPtr(data_type->type_id(), item_name);
+  if (require.empty()) {
+    require = pipeline::Resource::GetAttrPtr(data_type->type_id(), item_name);
+    if (require.empty()) {
+      MS_LOG(EXCEPTION) << "The object of type: " << data_type->ToString() << " has no method or attr: " << item_name;
+    }
+    require_type = REQUIRE_TYPE::ATTR;
   }
 
   ValuePtr converted_v = nullptr;
-  if (method.is<std::string>()) {
+  if (require.is<std::string>()) {
     // composite registered in standard_method_map go to this branch
-    converted_v = prim::GetPythonOps(method.cast<std::string>());
-    AddToManager(engine, converted_v->cast<FuncGraphPtr>());
-  } else if (method.is<PrimitivePtr>()) {
-    converted_v = method.cast<PrimitivePtr>();
+    converted_v = prim::GetPythonOps(require.cast<std::string>());
+    if (!converted_v->isa<Primitive>()) {
+      AddToManager(engine, converted_v->cast<FuncGraphPtr>());
+    }
+  } else if (require.is<PrimitivePtr>()) {
+    converted_v = require.cast<PrimitivePtr>();
   } else {
-    MS_LOG(EXCEPTION) << "Expect to get string or PrimitivePtr from method map, but got " << method.ToString();
+    MS_LOG(EXCEPTION) << "Expect to get string or PrimitivePtr from attr or method map, but got " << require.ToString();
   }
-  return StaticGetterInferred(converted_v, data_conf, out_conf);
+  return StaticGetterInferred(converted_v, data_conf, out_conf, require_type);
 }
 
 EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
@@ -831,8 +839,8 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
   int case_v = GetResolveCase(data_type);
   if (case_v == kResolveCaseUserDefineClass) {
     return GetEvaluatedValueForClassAttrOrMethod(engine, args_spec_list, item_value, data_conf, out_conf);
-  } else if (case_v == kResolveCaseBuildinTypeMethod) {
-    return GetEvaluatedValueForBuiltinTypeMethod(engine, item_value, data_type, data_conf, out_conf);
+  } else if (case_v == kResolveCaseBuiltInType) {
+    return GetEvaluatedValueForBuiltinTypeAttrOrMethod(engine, item_value, data_type, data_conf, out_conf);
   } else {
     return GetEvaluatedValueForNameSpaceString(engine, args_spec_list, out_conf);
   }

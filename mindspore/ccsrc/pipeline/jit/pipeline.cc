@@ -963,6 +963,7 @@ void ClearResAtexit() {
   abstract::ClearPrimEvaluatorMap();
   compile::ClearConvertCache();
   pipeline::GetMethodMap().clear();
+  pipeline::GetAttrMap().clear();
   pipeline::ExecutorPy::ClearRes();
   pipeline::ReclaimOptimizer();
   pynative::PynativeExecutor::GetInstance()->ClearRes();
