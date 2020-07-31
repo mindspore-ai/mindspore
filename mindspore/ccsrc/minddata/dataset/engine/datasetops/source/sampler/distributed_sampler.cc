@@ -24,13 +24,14 @@
 namespace mindspore {
 namespace dataset {
 DistributedSampler::DistributedSampler(int64_t num_samples, int64_t num_dev, int64_t dev_id, bool shuffle,
-                                       uint32_t seed)
+                                       uint32_t seed, bool even_dist)
     : Sampler(num_samples, std::numeric_limits<int64_t>::max()),
       cnt_(0),
       seed_(seed == std::numeric_limits<uint32_t>::max() ? GetSeed() : seed),
       device_id_(dev_id),
       num_devices_(num_dev),
-      shuffle_(shuffle) {}
+      shuffle_(shuffle),
+      even_dist_(even_dist) {}
 
 Status DistributedSampler::InitSampler() {
   // Special value of 0 for num_samples means that the user wants to sample the entire set of data.
@@ -43,7 +44,15 @@ Status DistributedSampler::InitSampler() {
   CHECK_FAIL_RETURN_UNEXPECTED(device_id_ < num_devices_ && device_id_ >= 0 && num_rows_ > 0 && num_samples_ > 0,
                                "fail to init DistributedSampler");
   rnd_.seed(seed_++);
-  samples_per_buffer_ = (num_rows_ + num_devices_ - 1) / num_devices_;  // equals to ceil(num_rows/num_devices)
+  if (even_dist_) {
+    samples_per_buffer_ = (num_rows_ + num_devices_ - 1) / num_devices_;  // equals to ceil(num_rows/num_devices)
+  } else {
+    int64_t mod = num_rows_ % num_devices_;
+    samples_per_buffer_ = num_rows_ / num_devices_;
+    if (mod > device_id_) {
+      samples_per_buffer_++;
+    }
+  }
   samples_per_buffer_ = num_samples_ < samples_per_buffer_ ? num_samples_ : samples_per_buffer_;
   if (shuffle_ == true) {
     shuffle_vec_.reserve(num_rows_);

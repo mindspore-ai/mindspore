@@ -52,9 +52,12 @@ class WeightedRandomSamplerObj;
 /// \param[in] shuffle - If true, the indices are shuffled.
 /// \param[in] num_samples - The number of samples to draw (default to all elements).
 /// \param[in] seed - The seed in use when shuffle is true.
+/// \param[in] even_dist - If true, each shard would return the same number of rows (default to true).
+///     If false the total rows returned by all the shards would not have overlap.
 /// \return Shared pointer to the current Sampler.
 std::shared_ptr<DistributedSamplerObj> DistributedSampler(int64_t num_shards, int64_t shard_id, bool shuffle = true,
-                                                          int64_t num_samples = 0, uint32_t seed = 1);
+                                                          int64_t num_samples = 0, uint32_t seed = 1,
+                                                          bool even_dist = true);
 
 /// Function to create a PK Sampler.
 /// \notes Samples K elements for each P class in the dataset.
@@ -100,7 +103,8 @@ std::shared_ptr<WeightedRandomSamplerObj> WeightedRandomSampler(const std::vecto
 /* ####################################### Derived Sampler classes ################################# */
 class DistributedSamplerObj : public SamplerObj {
  public:
-  DistributedSamplerObj(int64_t num_shards, int64_t shard_id, bool shuffle, int64_t num_samples, uint32_t seed);
+  DistributedSamplerObj(int64_t num_shards, int64_t shard_id, bool shuffle, int64_t num_samples, uint32_t seed,
+                        bool even_dist);
 
   ~DistributedSamplerObj() = default;
 
@@ -114,6 +118,7 @@ class DistributedSamplerObj : public SamplerObj {
   bool shuffle_;
   int64_t num_samples_;
   uint32_t seed_;
+  bool even_dist_;
 };
 
 class PKSamplerObj : public SamplerObj {
