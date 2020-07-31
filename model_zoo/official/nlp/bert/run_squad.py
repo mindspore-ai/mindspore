@@ -140,6 +140,10 @@ def run_squad():
     parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
     parser.add_argument("--epoch_num", type=int, default="1", help="Epoch number, default is 1.")
     parser.add_argument("--num_class", type=int, default="2", help="The number of class, default is 2.")
+    parser.add_argument("--train_data_shuffle", type=str, default="true",
+                        help="Enable train data shuffle, default is true")
+    parser.add_argument("--eval_data_shuffle", type=str, default="false",
+                        help="Enable eval data shuffle, default is false")
     parser.add_argument("--vocab_file_path", type=str, default="", help="Vocab file path")
     parser.add_argument("--eval_json_path", type=str, default="", help="Evaluation json file path, can be eval.json")
     parser.add_argument("--save_finetune_checkpoint_path", type=str, default="", help="Save checkpoint path")
@@ -186,7 +190,8 @@ def run_squad():
     if args_opt.do_train.lower() == "true":
         ds = create_squad_dataset(batch_size=bert_net_cfg.batch_size, repeat_count=1,
                                   data_file_path=args_opt.train_data_file_path,
-                                  schema_file_path=args_opt.schema_file_path)
+                                  schema_file_path=args_opt.schema_file_path,
+                                  do_shuffle=(args_opt.train_data_shuffle.lower() == "true"))
         do_train(ds, netwithloss, load_pretrain_checkpoint_path, save_finetune_checkpoint_path, epoch_num)
         if args_opt.do_eval.lower() == "true":
             if save_finetune_checkpoint_path == "":
@@ -199,7 +204,8 @@ def run_squad():
     if args_opt.do_eval.lower() == "true":
         ds = create_squad_dataset(batch_size=bert_net_cfg.batch_size, repeat_count=1,
                                   data_file_path=args_opt.eval_data_file_path,
-                                  schema_file_path=args_opt.schema_file_path, is_training=False)
+                                  schema_file_path=args_opt.schema_file_path, is_training=False,
+                                  do_shuffle=(args_opt.eval_data_shuffle.lower() == "true"))
         do_eval(ds, args_opt.vocab_file_path, args_opt.eval_json_path,
                 load_finetune_checkpoint_path, bert_net_cfg.seq_length)
 

@@ -34,7 +34,6 @@ class Accuracy():
         logit_id = np.argmax(logits, axis=-1)
         self.acc_num += np.sum(labels == logit_id)
         self.total_num += len(labels)
-        print("=========================accuracy is ", self.acc_num / self.total_num)
 
 class F1():
     '''

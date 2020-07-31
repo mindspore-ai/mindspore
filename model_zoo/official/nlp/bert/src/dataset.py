@@ -53,11 +53,11 @@ def create_bert_dataset(device_num=1, rank=0, do_shuffle="true", data_dir=None, 
 
 
 def create_ner_dataset(batch_size=1, repeat_count=1, assessment_method="accuracy",
-                       data_file_path=None, schema_file_path=None):
+                       data_file_path=None, schema_file_path=None, do_shuffle=True):
     """create finetune or evaluation dataset"""
     type_cast_op = C.TypeCast(mstype.int32)
     ds = de.TFRecordDataset([data_file_path], schema_file_path if schema_file_path != "" else None,
-                            columns_list=["input_ids", "input_mask", "segment_ids", "label_ids"])
+                            columns_list=["input_ids", "input_mask", "segment_ids", "label_ids"], shuffle=do_shuffle)
     if assessment_method == "Spearman_correlation":
         type_cast_op_float = C.TypeCast(mstype.float32)
         ds = ds.map(input_columns="label_ids", operations=type_cast_op_float)
@@ -76,11 +76,11 @@ def create_ner_dataset(batch_size=1, repeat_count=1, assessment_method="accuracy
 
 
 def create_classification_dataset(batch_size=1, repeat_count=1, assessment_method="accuracy",
-                                  data_file_path=None, schema_file_path=None):
+                                  data_file_path=None, schema_file_path=None, do_shuffle=True):
     """create finetune or evaluation dataset"""
     type_cast_op = C.TypeCast(mstype.int32)
     ds = de.TFRecordDataset([data_file_path], schema_file_path if schema_file_path != "" else None,
-                            columns_list=["input_ids", "input_mask", "segment_ids", "label_ids"])
+                            columns_list=["input_ids", "input_mask", "segment_ids", "label_ids"], shuffle=do_shuffle)
     if assessment_method == "Spearman_correlation":
         type_cast_op_float = C.TypeCast(mstype.float32)
         ds = ds.map(input_columns="label_ids", operations=type_cast_op_float)
@@ -98,14 +98,15 @@ def create_classification_dataset(batch_size=1, repeat_count=1, assessment_metho
     return ds
 
 
-def create_squad_dataset(batch_size=1, repeat_count=1, data_file_path=None, schema_file_path=None, is_training=True):
+def create_squad_dataset(batch_size=1, repeat_count=1, data_file_path=None, schema_file_path=None,
+                         is_training=True, do_shuffle=True):
     """create finetune or evaluation dataset"""
     type_cast_op = C.TypeCast(mstype.int32)
     if is_training:
         ds = de.TFRecordDataset([data_file_path], schema_file_path if schema_file_path != "" else None,
-                                columns_list=["input_ids", "input_mask", "segment_ids",
-                                              "start_positions", "end_positions",
-                                              "unique_ids", "is_impossible"])
+                                columns_list=["input_ids", "input_mask", "segment_ids", "start_positions",
+                                              "end_positions", "unique_ids", "is_impossible"],
+                                shuffle=do_shuffle)
         ds = ds.map(input_columns="start_positions", operations=type_cast_op)
         ds = ds.map(input_columns="end_positions", operations=type_cast_op)
     else:

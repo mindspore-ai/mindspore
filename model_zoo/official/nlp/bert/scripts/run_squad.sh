@@ -33,6 +33,8 @@ python ${PROJECT_DIR}/../run_squad.py  \
     --device_id=0 \
     --epoch_num=1 \
     --num_class=2 \
+    --train_data_shuffle="true" \
+    --eval_data_shuffle="false" \
     --vocab_file_path="" \
     --eval_json_path="" \
     --save_finetune_checkpoint_path="" \
