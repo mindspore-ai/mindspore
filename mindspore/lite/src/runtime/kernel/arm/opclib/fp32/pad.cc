@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/opclib/fp32/pad.h"
+#include "src/runtime/kernel/arm/opclib/common_func.h"
 
 void Pad(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
          const int *paddings, const int tid, const int thread_num) {
@@ -25,10 +26,9 @@ void Pad(const float *input_data, float *output_data, const int *input_shape, co
       out[1] = in[1] + paddings[2];
       for (in[2] = 0; in[2] < input_shape[2]; in[2]++) {
         out[2] = in[2] + paddings[4];
-        for (in[3] = 0; in[3] < input_shape[3]; in[3]++) {
-          out[3] = in[3] + paddings[6];
-          output_data[offset4d(output_shape, out)] = input_data[offset4d(input_shape, in)];
-        }
+        float *dst = output_data + offset(output_shape, out[0], out[1], out[2], paddings[6]);
+        const float *src = input_data + offset(input_shape, in[0], in[1], in[2], 0);
+        memcpy(dst, src, input_shape[3] * sizeof(float));
       }
     }
   }

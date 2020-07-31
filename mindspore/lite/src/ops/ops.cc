@@ -127,6 +127,10 @@ Primitive *Primitive::CreatePrimitive(schema::Primitive *primitive) {
       return new lite::Flatten(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_StridedSlice:
       return new lite::StridedSlice(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_Resize:
+      return new lite::Resize(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_OneHot:
+      return new lite::OneHot(const_cast<schema::Primitive *>(primitive));
     default:
       break;
   }

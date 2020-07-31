@@ -383,12 +383,14 @@ PadParameter *PopulatePadParameter(const lite::Primitive *primitive) {
     pad_param->constant_value_ = pad_node->constantValue();
   } else {
     MS_LOG(ERROR) << "Invalid padding mode: " << pad_param->pad_mode_;
+    delete (pad_param);
     return nullptr;
   }
 
   auto size = pad_node->paddings()->size();
   if (size > MAX_PAD_SIZE) {
     MS_LOG(ERROR) << "Invalid padding size: " << size;
+    delete (pad_param);
     return nullptr;
   }
 

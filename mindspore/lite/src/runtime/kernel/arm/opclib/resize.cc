@@ -15,8 +15,7 @@
  */
 #include <math.h>
 #include "src/runtime/kernel/arm/opclib/resize.h"
-#include "src/runtime/kernel/arm/opclib/offset_utils.h"
-#include "src/runtime/kernel/arm/opclib/op_base.h"
+#include "src/runtime/kernel/arm/opclib/common_func.h"
 
 int ResizeBilinear(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
                    bool align_corners, int tid, int thread_num) {

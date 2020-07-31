@@ -33,8 +33,6 @@ namespace mindspore::kernel {
 namespace {
 constexpr int kInputNum = 1;
 constexpr int kOutputNum = 1;
-constexpr int kInputRank = 4;
-constexpr int kPaddingsSize = 8;
 }  // namespace
 
 int PadCPUKernel::Init() {
@@ -52,21 +50,14 @@ int PadCPUKernel::Init() {
   }
 
   auto rank = input->shape().size();
-  if (rank != kInputRank) {
-    MS_LOG(ERROR) << "Pad input rank should be " << kInputRank << ", got " << rank;
+  if (rank > DEFAULT_PAD_NDIMS) {
+    MS_LOG(ERROR) << "Pad input rank should <= " << DEFAULT_PAD_NDIMS << ", got " << rank;
     return RET_ERROR;
   }
 
-  if (paddings_size_ != kPaddingsSize) {
-    MS_LOG(ERROR) << "Pad op paddings size should be 2*input_rank: " << 2 * rank << " but got " << paddings_size_;
-    return RET_ERROR;
-  }
-
-  for (auto pad : paddings_) {
-    if (pad < 0) {
-      MS_LOG(ERROR) << "Pad op paddings should be >= 0, but got " << pad;
-      return RET_ERROR;
-    }
+  for (int i = 0; i < rank; i++) {
+    in_[DEFAULT_PAD_NDIMS - rank + i] = input->shape()[i];
+    out_[DEFAULT_PAD_NDIMS - rank + i] = output->shape()[i];
   }
   return RET_OK;
 }
@@ -87,10 +78,8 @@ int PadCPUKernel::RunImpl(int task_id) {
 
   auto input_data = reinterpret_cast<float *>(input->Data());
   auto output_data = reinterpret_cast<float *>(output->Data());
-  auto input_shape = input->shape().data();
-  auto output_shape = output->shape().data();
 
-  Pad(input_data, output_data, input_shape, output_shape, paddings_.data(), task_id, context_->threadNum);
+  Pad(input_data, output_data, in_, out_, pad_param_->paddings_, task_id, context_->threadNum);
 
   return RET_OK;
 }
