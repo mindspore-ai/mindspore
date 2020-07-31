@@ -519,6 +519,11 @@ build_opencl() {
     fi
 }
 
+build_gtest() {
+    cd ${BASEPATH}
+    git submodule update --init --recursive third_party/googletest
+}
+
 build_opencv() {
     cd ${BASEPATH}
     if [[ "${INC_BUILD}" == "off" ]]; then
@@ -561,6 +566,7 @@ build_minddata_lite_deps()
   build_opencv
   build_eigen
   build_jpeg_turbo
+  build_gtest
 }
 
 build_lite()

@@ -132,7 +132,7 @@ endif()
 ### minddata lite
 if (BUILD_MINDDATA)
     include_directories(${CCSRC_DIR}/minddata)
-    set(DATASET_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dataset)
+    set(DATASET_TEST_DIR ${TEST_DIR}/ut/src/dataset)
     set(TEST_MINDDATA_SRC
                 ${DATASET_TEST_DIR}/de_tensor_test.cc
                 ${DATASET_TEST_DIR}/eager_test.cc
@@ -294,6 +294,13 @@ endif ()
 add_executable(lite-test ${TEST_SRC})
 
 target_link_libraries(lite-test dl ${SECUREC_LIBRARY} ${GTEST_LIBRARY} mindspore::json)
+if (BUILD_MINDDATA)
+    target_link_libraries(lite-test
+           minddata-lite
+           minddata-eager
+           log
+           )
+endif()
 if (BUILD_CONVERTER)
     target_link_libraries(lite-test
             anf_exporter_mid

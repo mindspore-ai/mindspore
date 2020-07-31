@@ -27,7 +27,7 @@ using namespace mindspore::dataset;
 using namespace mindspore::dataset::api;
 using namespace mindspore;
 
-class MindDataTestEager : public UT::Common {
+class MindDataTestEager : public mindspore::Common {
  public:
   MindDataTestEager() {}
 };
