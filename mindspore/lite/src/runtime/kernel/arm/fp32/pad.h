@@ -27,7 +27,9 @@ class PadCPUKernel : public LiteKernel {
  public:
   PadCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
-      : LiteKernel(parameter, inputs, outputs), context_(ctx) {}
+      : LiteKernel(parameter, inputs, outputs), context_(ctx) {
+    pad_param_ = reinterpret_cast<PadParameter *>(parameter);
+  }
 
   ~PadCPUKernel() {}
 
@@ -37,9 +39,10 @@ class PadCPUKernel : public LiteKernel {
   int RunImpl(int task_id);
 
  private:
-  std::vector<int> paddings_;
-  size_t paddings_size_;
   const lite::Context *context_;
+  const PadParameter *pad_param_;
+  int in_[4] = {1, 1, 1, 1};
+  int out_[4] = {1, 1, 1, 1};
 };
 }  // namespace mindspore::kernel
 

@@ -21,7 +21,6 @@
 #endif
 #include <memory.h>
 #include <float.h>
-#include "src/runtime/kernel/arm/opclib/offset_utils.h"
 #include "src/runtime/kernel/arm/opclib/op_base.h"
 #include "src/runtime/kernel/arm/opclib/pad_parameter.h"
 

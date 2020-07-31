@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/opclib/int8/pad.h"
+#include "src/runtime/kernel/arm/opclib/common_func.h"
 
 void PadConstant4D(const int8_t *in_data, int8_t *out_data, const int32_t *in_dims, const int32_t *out_dims,
                    const int32_t *paddings) {

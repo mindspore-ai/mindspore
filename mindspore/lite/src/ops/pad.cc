@@ -37,14 +37,12 @@ int Pad::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Te
   if (paddings == nullptr) {
     return RET_NULL_PTR;
   }
-  MS_ASSERT(paddings->size() == kPaddingsSize);
 
   auto input = inputs.front();
   if (input == nullptr) {
     return RET_NULL_PTR;
   }
   auto input_shape = input->shape();
-  MS_ASSERT(input_shape.size() == kInputRank);
   std::vector<int> output_shape;
   for (size_t i = 0; i < input_shape.size(); i++) {
     auto shape = input_shape[i] + (*paddings)[2 * i] + (*paddings)[2 * i + 1];

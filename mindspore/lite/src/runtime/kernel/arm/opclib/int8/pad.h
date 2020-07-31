@@ -19,7 +19,6 @@
 
 #include <string.h>
 #include "src/runtime/kernel/arm/opclib/op_base.h"
-#include "src/runtime/kernel/arm/opclib/offset_utils.h"
 #include "src/runtime/kernel/arm/opclib/pad_parameter.h"
 
 void PadConstant4D(const int8_t *in_data, int8_t *out_data, const int32_t *in_dims, const int32_t *out_dims,
