@@ -81,7 +81,7 @@ class SummaryRecord:
         file_suffix (str): The suffix of file. Default: "_MS".
         network (Cell): Obtain a pipeline through network for saving graph summary. Default: None.
         max_file_size (Optional[int]): The maximum size in bytes each file can be written to the disk. \
-            Unlimited by default.
+            Unlimited by default. For example, to write not larger than 4GB, specify `max_file_size=4 * 1024**3`.
 
     Raises:
         TypeError: If `max_file_size`, `queue_max_size` or `flush_time` is not int, \

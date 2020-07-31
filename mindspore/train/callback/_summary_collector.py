@@ -109,10 +109,18 @@ class SummaryCollector(Callback):
         custom_lineage_data (Union[dict, None]): Allows you to customize the data and present it on the MingInsight
             lineage page. In the custom data, the key type support str, and the value type support str/int/float.
             Default: None, it means there is no custom data.
-        collect_tensor_freq (Optional[int]): Same as the `collect_freq`, but controls TensorSummary specifically.
-            Default: None, which means the frequency is auto-calculated just to collect at most 20 steps TensorSummary.
+        collect_tensor_freq (Optional[int]): Same semantic as the `collect_freq`, but controls TensorSummary only.
+            Because TensorSummary data is too large compared to other summary data, this parameter is used to reduce
+            its collection. By default, TensorSummary data will be collected at most 21 steps, but not more than how
+            many steps other summary data will be collected.
+            Default: None, which means to follow the behavior as described above. For example, given `collect_freq=10`,
+            when the total steps is 600, TensorSummary will be collected 21 steps, while other summary data 61 steps,
+            but when the total steps is 20, both TensorSummary and other summary will be collected 3 steps.
+            Also note that when in parallel mode, the total steps will be splitted evenly, which will
+            affect how many steps TensorSummary will be collected.
         max_file_size (Optional[int]): The maximum size in bytes each file can be written to the disk.
-            Default: None, which means no limit.
+            Default: None, which means no limit. For example, to write not larger than 4GB,
+            specify `max_file_size=4 * 1024**3`.
 
     Raises:
         ValueError: If the parameter value is not expected.

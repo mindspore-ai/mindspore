@@ -66,7 +66,7 @@ class WriterPool(Process):
                     for plugin, data in deq.popleft().get():
                         self._write(plugin, data)
 
-                if not self._queue.empty() and self._writers:
+                if not self._queue.empty():
                     action, data = self._queue.get()
                     if action == 'WRITE':
                         deq.append(pool.apply_async(_pack_data, (data, time.time())))
