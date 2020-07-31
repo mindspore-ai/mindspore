@@ -74,7 +74,7 @@ This example implements training and evaluation of Transformer Model, which is i
 - Run `run_distribute_train.sh` for distributed training of Transformer model.
 
     ``` bash
-    sh scripts/run_distribute_train.sh DEVICE_NUM EPOCH_SIZE DATA_PATH MINDSPORE_HCCL_CONFIG_PATH
+    sh scripts/run_distribute_train.sh DEVICE_NUM EPOCH_SIZE DATA_PATH RANK_TABLE_FILE
     ```
 
 ### Evaluation

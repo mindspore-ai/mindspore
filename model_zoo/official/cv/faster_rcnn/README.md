@@ -87,13 +87,13 @@ FasterRcnn is a two-stage target detection network,This network uses a region pr
 
 ```
 # distributed training
-sh run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [PRETRAINED_MODEL]
+sh run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
  
 # standalone training
 sh run_standalone_train.sh [PRETRAINED_MODEL]
 ```
  
-> Rank_table.json which is specified by MINDSPORE_HCCL_CONFIG_PATH is needed when you are running a distribute task. You can generate it by using the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
+> Rank_table.json which is specified by RANK_TABLE_FILE is needed when you are running a distribute task. You can generate it by using the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
 > As for PRETRAINED_MODEL，if not set, the model will be trained from the very beginning.Ready-made pretrained_models are not available now. Stay tuned.
 
 #### Result

@@ -138,7 +138,7 @@ def main():
         env['RANK_ID'] = str(rank_id)
         env['DEVICE_ID'] = str(device_id)
         if args.nproc_per_node > 1:
-            env['MINDSPORE_HCCL_CONFIG_PATH'] = table_fn
+            env['RANK_TABLE_FILE'] = table_fn
             env['RANK_TABLE_FILE'] = table_fn
         if os.path.exists(device_dir):
             shutil.rmtree(device_dir)

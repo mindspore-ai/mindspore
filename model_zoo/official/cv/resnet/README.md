@@ -132,7 +132,7 @@ Parameters for both training and evaluation can be set in config.py.
 
 ```
 # distributed training
-Usage: sh run_distribute_train.sh [resnet50|resnet101] [cifar10|imagenet2012] [MINDSPORE_HCCL_CONFIG_PATH] [DATASET_PATH]
+Usage: sh run_distribute_train.sh [resnet50|resnet101] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH]
        [PRETRAINED_CKPT_PATH](optional)
 
 # standalone training

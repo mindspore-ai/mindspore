@@ -209,10 +209,10 @@ parameters/options:
 - Train on Ascend.
 
 ```
-Usage: sh script/run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [DATA_PATH]
+Usage: sh script/run_distribute_train.sh [RANK_TABLE_FILE] [DATA_PATH]
 
 parameters/options:
-  MINDSPORE_HCCL_CONFIG_PATH   HCCL configuration file path.
+  RANK_TABLE_FILE   HCCL configuration file path.
   DATA_PATH                    the storage path of dataset.
 ```
 

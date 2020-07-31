@@ -21,7 +21,7 @@ echo "After running the script, the network runs in the background, The log will
 
 export RANK_SIZE=$1
 DATA_URL=$2
-export MINDSPORE_HCCL_CONFIG_PATH=$3
+export RANK_TABLE_FILE=$3
 
 for ((i=0; i<RANK_SIZE;i++))
 do

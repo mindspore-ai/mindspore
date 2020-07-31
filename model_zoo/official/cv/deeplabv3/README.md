@@ -24,7 +24,7 @@ This is an example of training DeepLabV3 with PASCAL VOC 2012 dataset in MindSpo
 	```
 - Run `run_distribute_train.sh` for distributed training.
 	``` bash
-	sh scripts/run_distribute_train.sh MINDSPORE_HCCL_CONFIG_PATH DATA_PATH
+	sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
 	```
 ### Evaluation
 Set options in evaluation_config.py. Make sure the 'data_file' and 'finetune_ckpt' are set to your own path.

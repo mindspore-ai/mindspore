@@ -44,7 +44,6 @@ set_hccl_json()
   do
     if [[ "$1" == "-j" || "$1"  == "--hccl_json" ]]
     then
-      export MINDSPORE_HCCL_CONFIG_PATH=$2
       export RANK_TABLE_FILE=$2
       break
     fi

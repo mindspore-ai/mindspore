@@ -16,22 +16,22 @@
 
 if [ $# != 1 ]
 then
-    echo "Usage: sh run_train.sh [MINDSPORE_HCCL_CONFIG_PATH]"
+    echo "Usage: sh run_train.sh [RANK_TABLE_FILE]"
 exit 1
 fi
 
 if [ ! -f $1 ]
 then
-    echo "error: MINDSPORE_HCCL_CONFIG_PATH=$1 is not a file"
+    echo "error: RANK_TABLE_FILE=$1 is not a file"
 exit 1
 fi
 
 ulimit -u unlimited
 export DEVICE_NUM=8
 export RANK_SIZE=8
-MINDSPORE_HCCL_CONFIG_PATH=$(realpath $1)
-export MINDSPORE_HCCL_CONFIG_PATH
-echo "MINDSPORE_HCCL_CONFIG_PATH=${MINDSPORE_HCCL_CONFIG_PATH}"
+RANK_TABLE_FILE=$(realpath $1)
+export RANK_TABLE_FILE
+echo "RANK_TABLE_FILE=${RANK_TABLE_FILE}"
 
 export SERVER_ID=0
 rank_start=$((DEVICE_NUM * SERVER_ID))

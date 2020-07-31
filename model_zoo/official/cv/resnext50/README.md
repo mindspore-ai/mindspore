@@ -82,7 +82,7 @@ Parameters for both training and evaluating can be set in config.py
 
 ```
 # distribute training example(8p)
-sh run_distribute_train.sh MINDSPORE_HCCL_CONFIG_PATH DATA_PATH
+sh run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
 # standalone training
 sh run_standalone_train.sh DEVICE_ID DATA_PATH
 ```
@@ -91,7 +91,7 @@ sh run_standalone_train.sh DEVICE_ID DATA_PATH
 
 ```bash
 # distributed training example(8p) for Ascend
-sh scripts/run_distribute_train.sh MINDSPORE_HCCL_CONFIG_PATH /dataset/train
+sh scripts/run_distribute_train.sh RANK_TABLE_FILE /dataset/train
 # standalone training example for Ascend
 sh scripts/run_standalone_train.sh 0 /dataset/train
 
