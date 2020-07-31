@@ -32,7 +32,7 @@ namespace opt {
 
 // Remove the class type from graphs
 bool SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager);
-bool CleanList(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager);
+bool CleanAfterOptA(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager);
 
 // Remove most uses of tuples from the graph
 // tuples that are returned will be kept

@@ -13,27 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """
-Neural Networks Cells.
-
-Pre-defined building blocks or computing units to construct Neural Networks.
+Sparse related transformation.
 """
-from . import layer, loss, optim, metrics, wrap, probability, sparse
-from .cell import Cell, GraphKernel
-from .layer import *
-from .loss import *
-from .optim import *
-from .metrics import *
-from .wrap import *
-from .sparse import *
+from .sparse import SparseToDense
 
-
-__all__ = ["Cell", "GraphKernel"]
-__all__.extend(layer.__all__)
-__all__.extend(loss.__all__)
-__all__.extend(optim.__all__)
-__all__.extend(metrics.__all__)
-__all__.extend(wrap.__all__)
-__all__.extend(sparse.__all__)
-
-
-__all__.sort()
+__all__ = [
+    "SparseToDense",
+    ]

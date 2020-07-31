@@ -69,11 +69,11 @@ bool SimplifyDataStructuresPass(const ResourcePtr &res) {
   return true;
 }
 
-bool CleanListPass(const ResourcePtr &res) {
+bool CleanAfterOptAPass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res->func_graph());
 
   FuncGraphPtr func_graph = res->func_graph();
-  bool changed = opt::CleanList(func_graph, res->manager());
+  bool changed = opt::CleanAfterOptA(func_graph, res->manager());
 
   abstract::AbstractBasePtrList args_spec;
   auto parameters = func_graph->parameters();
@@ -337,7 +337,7 @@ bool InferenceOptPreparePass(const ResourcePtr &res) {
 
 std::vector<PassItem> kVmPasses = {{"simplify_data_structures", SimplifyDataStructuresPass},
                                    {"opt_a", OptPassAGroup},
-                                   {"clean_list", CleanListPass},
+                                   {"clean_after_opta", CleanAfterOptAPass},
                                    {"opt_b", OptPassBGroup},
                                    {"cconv", CconvPass},
                                    {"opt_graph_kernel_a", OptPassGraphKernelGroupA},
@@ -346,7 +346,7 @@ std::vector<PassItem> kVmPasses = {{"simplify_data_structures", SimplifyDataStru
 
 std::vector<PassItem> kGePasses = {{"simplify_data_structures", SimplifyDataStructuresPass},
                                    {"opt_a", OptPassAGroup},
-                                   {"clean_list", CleanListPass},
+                                   {"clean_after_opta", CleanAfterOptAPass},
                                    {"opt_b", OptPassBGroup},
                                    {"add_control_depend", AddControlDependPass},
                                    {"opt_control", ControlGroup},

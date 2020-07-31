@@ -28,6 +28,7 @@ from mindspore import Tensor, SparseTensor, context
 
 context.set_context(mode=context.GRAPH_MODE, enable_sparse=True)
 
+grad_op = C.GradOperation('get_all', get_all=True)
 
 class MakeSparseTensor(nn.Cell):
     def __init__(self, dense_shape):
@@ -45,15 +46,6 @@ def test_sparse_tensor_make_sparse_tensor():
 
 
 def test_sparse_tensor_attr():
-    grad_op = C.GradOperation('get_all', get_all=True)
-    class GradWrap(nn.Cell):
-        def __init__(self, network):
-            super(GradWrap, self).__init__()
-            self.network = network
-        def construct(self, input1, input2):
-            gout = grad_op(self.network)(input1, input2)
-            return gout
-
     class SparseTensorGetAttr(nn.Cell):
         def __init__(self):
             super(SparseTensorGetAttr, self).__init__()
@@ -82,3 +74,20 @@ def test_sparse_tensor_indices_dim_less_than_dense_shape_dim():
     dense_shape = (2, 2, 2)
     with pytest.raises(TypeError):
         MakeSparseTensor(dense_shape)(indices, values)
+
+
+def test_sparse_tensor_to_tensor():
+    class SparseToDenseCell(nn.Cell):
+        def __init__(self, dense_shape):
+            super(SparseToDenseCell, self).__init__()
+            self.dense_shape = dense_shape
+            self.sparse_to_dense = nn.SparseToDense()
+        def construct(self, indices, values):
+            sparse = SparseTensor(indices, values, self.dense_shape)
+            return self.sparse_to_dense(sparse)
+
+    indices = Tensor([[0, 1], [1, 2]])
+    values = Tensor([1, 2], dtype=ms.float32)
+    dense_shape = (3, 4)
+    SparseToDenseCell(dense_shape)(indices, values)
+    grad_op(SparseToDenseCell(dense_shape))(indices, values)
