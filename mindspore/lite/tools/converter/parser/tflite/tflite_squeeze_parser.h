@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef PREDICT_TFLITE_STACK_PARSER_H
-#define PREDICT_TFLITE_STACK_PARSER_H
+#ifndef PREDICT_TFLITE_SQUEEZE_PARSER_H
+#define PREDICT_TFLITE_SQUEEZE_PARSER_H
 
 #include <memory>
 #include <vector>
-#include "mindspore/lite/tools/converter/parser/tflite/tflite_node_parser.h"
-#include "mindspore/lite/tools/converter/parser/tflite/tflite_node_parser_registry.h"
+#include "tools/converter/parser/tflite/tflite_node_parser.h"
+#include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
 
 namespace mindspore {
 namespace lite {
@@ -32,10 +32,10 @@ class TfliteSqueezeParser : public TfliteNodeParser {
                const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
                const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet, schema::CNodeT *op,
-               TensorCache *tensor_cache, bool quantizedModel) override;
+               TensorCache *tensor_cache,
+               bool quantizedModel) override;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // PREDICT_TFLITE_Squeeze_PARSER_H
-
+#endif  // PREDICT_TFLITE_SQUEEZE_PARSER_H

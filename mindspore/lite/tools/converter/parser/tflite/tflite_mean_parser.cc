@@ -16,7 +16,7 @@
 
 #include <vector>
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/tflite/tflite_mean_parser.h"
+#include "tools/converter/parser/tflite/tflite_mean_parser.h"
 
 namespace mindspore {
 namespace lite {
@@ -30,10 +30,12 @@ STATUS TfliteMeanParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteO
   const auto &tflite_attr = tfliteOp->builtin_options.AsReducerOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
+    return RET_ERROR;
   }
 
   attr->keepDims = tflite_attr->keep_dims;
   if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->axis)) {
+    MS_LOG(ERROR) << "Mean get axis attr failed";
     return RET_ERROR;
   }
 

@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef PREDICT_TFLITE_MEAN_PARSER_H
-#define PREDICT_TFLITE_MEAN_PARSER_H
+#ifndef PREDICT_TFLITE_SUM_PARSER_H
+#define PREDICT_TFLITE_SUM_PARSER_H
 
 #include <memory>
 #include <vector>
-#include "tools/converter/parser/tflite/tflite_node_parser.h"
-#include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
+#include "mindspore/lite/tools/converter/parser/tflite/tflite_node_parser.h"
+#include "mindspore/lite/tools/converter/parser/tflite/tflite_node_parser_registry.h"
 
 namespace mindspore {
 namespace lite {
-class TfliteMeanParser : public TfliteNodeParser {
+class TfliteSumParser : public TfliteNodeParser {
  public:
-  TfliteMeanParser() : TfliteNodeParser("Mean") {}
+  TfliteSumParser() : TfliteNodeParser("Sum") {}
 
   STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
                const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
@@ -37,5 +37,4 @@ class TfliteMeanParser : public TfliteNodeParser {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // PREDICT_TFLITE_MEAN_PARSER_H
-
+#endif  // PREDICT_TFLITE_SUM_PARSER_H

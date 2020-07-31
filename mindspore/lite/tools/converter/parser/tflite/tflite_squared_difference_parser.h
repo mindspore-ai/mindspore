@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef PREDICT_TFLITE_MEAN_PARSER_H
-#define PREDICT_TFLITE_MEAN_PARSER_H
+#ifndef PREDICT_TFLITE_SQUARED_DIFFERENCE_PARSER_H
+#define PREDICT_TFLITE_SQUARED_DIFFERENCE_PARSER_H
 
 #include <memory>
 #include <vector>
@@ -24,9 +24,9 @@
 
 namespace mindspore {
 namespace lite {
-class TfliteMeanParser : public TfliteNodeParser {
+class TfliteSquaredDifferenceParser : public TfliteNodeParser {
  public:
-  TfliteMeanParser() : TfliteNodeParser("Mean") {}
+  TfliteSquaredDifferenceParser() : TfliteNodeParser("SquaredDifference") {}
 
   STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
                const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
@@ -37,5 +37,5 @@ class TfliteMeanParser : public TfliteNodeParser {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // PREDICT_TFLITE_MEAN_PARSER_H
+#endif  // PREDICT_TFLITE_SQUARED_DIFFERENCE_PARSER_H
 
