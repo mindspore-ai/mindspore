@@ -17,7 +17,7 @@
 #include <memory>
 #include "minddata/dataset/engine/opt/optional/tensor_op_fusion_pass.h"
 #include "minddata/dataset/kernels/image/decode_op.h"
-#include "minddata/dataset/engine/datasetops/map_op.h"
+#include "minddata/dataset/engine/datasetops/map_op/map_op.h"
 #include "minddata/dataset/kernels/image/random_crop_decode_resize_op.h"
 
 namespace mindspore {

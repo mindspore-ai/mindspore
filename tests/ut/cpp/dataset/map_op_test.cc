@@ -645,16 +645,14 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize) {
   map_decode_builder.SetInColNames({"image"})
     .SetOutColNames({})
     .SetTensorFuncs(func_list)
-    .SetNumWorkers(14)
-    .SetPerformanceMode(false);
+    .SetNumWorkers(14);
   rc = map_decode_builder.Build(&map_decode_map);
   EXPECT_TRUE(rc.IsOk());
 
   map_resize_builder.SetInColNames({"image"})
     .SetOutColNames({})
     .SetTensorFuncs(func_list2)
-    .SetNumWorkers(15)
-    .SetPerformanceMode(false);
+    .SetNumWorkers(15);
   rc = map_resize_builder.Build(&map_resize_op);
   EXPECT_TRUE(rc.IsOk());
 
@@ -739,5 +737,3 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize_NoInputColumns) {
   }
   EXPECT_TRUE(i == 88);
 }
-
-

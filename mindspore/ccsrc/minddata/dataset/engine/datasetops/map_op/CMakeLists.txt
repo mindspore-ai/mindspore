@@ -1,0 +1,10 @@
+file(GLOB_RECURSE _CURRENT_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
+set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
+
+set(DATASET_ENGINE_DATASETOPS_MAPOP_SRC_FILES
+  map_op.cc
+  cpu_map_job.cc
+  gpu_map_job.cc
+  )
+
+add_library(engine-datasetops-mapop OBJECT ${DATASET_ENGINE_DATASETOPS_MAPOP_SRC_FILES})

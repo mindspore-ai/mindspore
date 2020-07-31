@@ -26,6 +26,9 @@ namespace dataset {
 using uchar = unsigned char;
 using dsize_t = int64_t;
 
+// Target devices to perform map operation
+enum class MapTargetDevice { kCpu, kGpu, kDvpp };
+
 // Possible dataset types for holding the data and client type
 enum class DatasetType { kUnknown, kArrow, kTf };
 

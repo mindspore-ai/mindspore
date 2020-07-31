@@ -22,8 +22,8 @@ endif()
 
 if (ENABLE_TDTQUE)
   add_dependencies(engine engine-datasetops engine-datasetops-source engine-tdt engine-opt engine-gnn engine-perf
-                   engine-cache-client engine-cache-server)
+                   engine-cache-client engine-cache-server engine-datasetops-mapop)
 else ()
   add_dependencies(engine engine-datasetops engine-datasetops-source engine-opt engine-gnn engine-perf
-                   engine-cache-client engine-cache-server)
+                   engine-cache-client engine-cache-server engine-datasetops-mapop)
 endif ()

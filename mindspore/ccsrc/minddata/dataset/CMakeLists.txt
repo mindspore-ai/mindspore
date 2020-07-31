@@ -66,6 +66,7 @@ add_dependencies(kernels core)
 add_dependencies(engine-datasetops-source core)
 add_dependencies(engine-datasetops-source-sampler core)
 add_dependencies(engine-datasetops core)
+add_dependencies(engine-datasetops-mapop core)
 add_dependencies(engine-opt core)
 add_dependencies(engine-perf core)
 add_dependencies(engine-gnn core)
@@ -89,6 +90,7 @@ set(submodules
     $<TARGET_OBJECTS:cpp-API>
     $<TARGET_OBJECTS:engine-datasetops-source>
     $<TARGET_OBJECTS:engine-datasetops-source-sampler>
+    $<TARGET_OBJECTS:engine-datasetops-mapop>
     $<TARGET_OBJECTS:engine-gnn>
     $<TARGET_OBJECTS:engine-perf>
     $<TARGET_OBJECTS:engine-datasetops>
