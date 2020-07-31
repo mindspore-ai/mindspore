@@ -34,10 +34,14 @@
 #include "minddata/dataset/engine/datasetops/source/cifar_op.h"
 #include "minddata/dataset/engine/datasetops/source/coco_op.h"
 #include "minddata/dataset/engine/datasetops/source/manifest_op.h"
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/datasetops/source/mindrecord_op.h"
+#endif
 #include "minddata/dataset/engine/datasetops/source/mnist_op.h"
 #include "minddata/dataset/engine/datasetops/source/random_data_op.h"
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
+#endif
 #include "minddata/dataset/engine/datasetops/source/voc_op.h"
 #ifdef ENABLE_PYTHON
 #include "minddata/dataset/engine/datasetops/filter_op.h"
@@ -136,6 +140,7 @@ Status NodePass::RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified) {
   return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
 }
 
+#ifndef ENABLE_ANDROID
 Status NodePass::RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified) {
   // Fallback to base class visitor by default
   return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
@@ -145,6 +150,7 @@ Status NodePass::RunOnNode(std::shared_ptr<TFReaderOp> node, bool *modified) {
   // Fallback to base class visitor by default
   return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
 }
+#endif
 
 #ifdef ENABLE_PYTHON
 Status NodePass::RunOnNode(std::shared_ptr<FilterOp> node, bool *modified) {

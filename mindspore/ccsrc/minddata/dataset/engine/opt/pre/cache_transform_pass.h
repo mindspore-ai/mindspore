@@ -58,11 +58,14 @@ class CacheTransformPass : public TreePass {
     /// \return Status The error code return
     Status RunOnNode(std::shared_ptr<CacheOp> node, bool *modified) override;
 
+#ifndef ENABLE_ANDROID
+
     /// \brief Perform leaf node cache tranform identifications
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The error code return
     Status RunOnNode(std::shared_ptr<TFReaderOp> node, bool *modified) override;
+#endif
 
     /// \brief Perform leaf node cache tranform identifications
     /// \param[in] node The node being visited
@@ -120,11 +123,13 @@ class CacheTransformPass : public TreePass {
     /// \return Status The error code return
     Status RunOnNode(std::shared_ptr<CelebAOp> node, bool *modified) override;
 
+#ifndef ENABLE_ANDROID
     /// \brief Perform leaf node cache tranform identifications
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The error code return
     Status RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified) override;
+#endif
 
     /// \brief Getter
     std::vector<std::pair<std::shared_ptr<DatasetOp>, std::shared_ptr<CacheOp>>> cache_pairs() { return cache_pairs_; }

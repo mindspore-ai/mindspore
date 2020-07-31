@@ -25,10 +25,17 @@
 #include "minddata/dataset/engine/datasetops/source/cifar_op.h"
 #include "minddata/dataset/engine/datasetops/source/coco_op.h"
 #include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
+
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/datasetops/source/mindrecord_op.h"
+#endif
+
 #include "minddata/dataset/engine/datasetops/source/mnist_op.h"
 #include "minddata/dataset/engine/datasetops/source/random_data_op.h"
+
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
+#endif
 
 #ifdef ENABLE_PYTHON
 #include "minddata/dataset/engine/datasetops/source/generator_op.h"
@@ -123,6 +130,7 @@ Status CacheTransformPass::CachePass::NonMappableCacheLeafSetup(std::shared_ptr<
   return Status::OK();
 }
 
+#ifndef ENABLE_ANDROID
 // Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<TFReaderOp> node, bool *modified) {
   if (is_caching_) {
@@ -132,6 +140,7 @@ Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<TFReaderOp> node
   }
   return NonMappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
 }
+#endif
 
 // Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<RandomDataOp> node, bool *modified) {
@@ -163,10 +172,12 @@ Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CelebAOp> node, 
   return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
 }
 
+#ifndef ENABLE_ANDROID
 // Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified) {
   return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
 }
+#endif
 
 #ifdef ENABLE_PYTHON
 // Perform leaf node cache transform identification
