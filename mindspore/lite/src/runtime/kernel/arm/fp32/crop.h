@@ -15,34 +15,20 @@
  */
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CROP_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CROP_H_
-
 #include <vector>
 #include "src/lite_kernel.h"
-
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 
 namespace mindspore::kernel {
 class CropCPUKernel : public LiteKernel {
  public:
   CropCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs), packed_input_(nullptr), convert_function_(nullptr) {}
-  ~CropCPUKernel() {
-    if (packed_input_ != nullptr) {
-      free(packed_input_);
-      packed_input_ = nullptr;
-    }
-  }
-
+                const std::vector<lite::tensor::Tensor *> &outputs) : LiteKernel(parameter, inputs, outputs) {}
+  ~CropCPUKernel() = default;
   int Init() override;
   int ReSize() override { return 0; }
   int Run() override;
-
- private:
-  float *packed_input_;
-  LayoutConvertor convert_function_;
+  int CropParallelRun(int thread_id);
 };
 }  // namespace mindspore::kernel
-
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CROP_H_
-

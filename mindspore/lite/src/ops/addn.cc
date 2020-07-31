@@ -20,19 +20,26 @@
 #include "src/ir/tensor.h"
 
 namespace mindspore::lite {
-int AddN::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+namespace {
+constexpr int kLeastInputNum = 2;
+}
+int AddN::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
   MS_ASSERT(this->primitive != nullptr);
-  auto input = inputs_.front();
+  auto input = inputs.front();
   MS_ASSERT(input != nullptr);
-  auto output = outputs_.front();
+  auto output = outputs.front();
   MS_ASSERT(output != nullptr);
-  if (inputs_.size() < kDoubleNum) {
-    MS_LOG(ERROR) << "input size is error";
+  if (inputs.size() < kLeastInputNum) {
+    MS_LOG(ERROR) << "input size" << inputs.size() << " is error!";
     return RET_INPUT_TENSOR_ERROR;
   }
-  for (int i = 1; i < inputs_.size(); ++i) {
-    if (inputs_.at(i)->shape() != inputs_.at(0)->shape()) {
+  for (int i = 1; i < inputs.size(); ++i) {
+    if (inputs.at(i)->shape() != inputs.at(0)->shape()) {
       MS_LOG(ERROR) << "AddN inputs shape is not equal!";
+      return RET_INPUT_TENSOR_ERROR;
+    }
+    if (inputs.at(i)->data_type() != inputs.at(0)->data_type()) {
+      MS_LOG(ERROR) << "AddN all input data type should be the same!";
       return RET_INPUT_TENSOR_ERROR;
     }
   }

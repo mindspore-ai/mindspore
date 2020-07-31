@@ -485,13 +485,29 @@ PowerParameter *PopulatePowerParameter(const lite::Primitive *primitive) {
   return parameter;
 }
 
-ArgMinMaxParameter *PopulateArgMinMaxParam(const lite::Primitive *primitive) {
+ArgMinMaxParameter *PopulateArgMaxParam(const lite::Primitive *primitive) {
   ArgMinMaxParameter *parameter = new (std::nothrow) ArgMinMaxParameter();
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "new ArgMinMaxParameter failed.";
     return nullptr;
   }
   auto param = primitive->Value()->value_as_ArgMax();
+  parameter->op_parameter_.type_ = primitive->Type();
+  parameter->axis_ = param->axis();
+  parameter->topk_ = param->topK();
+  parameter->axis_type_ = param->axisType();
+  parameter->out_value_ = param->outMaxValue();
+  parameter->keep_dims_ = param->keepDims();
+  return parameter;
+}
+
+ArgMinMaxParameter *PopulateArgMinParam(const lite::Primitive *primitive) {
+  ArgMinMaxParameter *parameter = new (std::nothrow) ArgMinMaxParameter();
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << "new ArgMinMaxParameter failed.";
+    return nullptr;
+  }
+  auto param = primitive->Value()->value_as_ArgMin();
   parameter->op_parameter_.type_ = primitive->Type();
   parameter->axis_ = param->axis();
   parameter->topk_ = param->topK();
@@ -962,6 +978,16 @@ StridedSliceParameter *PopulateStridedSliceParam(const lite::Primitive *primitiv
   return parameter;
 }
 
+OpParameter *PopulateAddNParam(const lite::Primitive *primitive) {
+  auto parameter = new (std::nothrow) OpParameter();
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << "new OpParameter fail!";
+    return nullptr;
+  }
+  parameter->type_ = primitive->Type();
+  return parameter;
+}
+
 OpParameter *PopulateParameter(const lite::Primitive *primitive) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_type = primitive->Type();
@@ -1020,8 +1046,9 @@ OpParameter *PopulateParameter(const lite::Primitive *primitive) {
     case schema::PrimitiveType_Floor:
       return reinterpret_cast<OpParameter *>(PopulateArithmeticSelf(primitive));
     case schema::PrimitiveType_ArgMax:
+      return reinterpret_cast<OpParameter *>(PopulateArgMaxParam(primitive));
     case schema::PrimitiveType_ArgMin:
-      return reinterpret_cast<OpParameter *>(PopulateArgMinMaxParam(primitive));
+      return reinterpret_cast<OpParameter *>(PopulateArgMinParam(primitive));
     case schema::PrimitiveType_Cast:
       return reinterpret_cast<OpParameter *>(PopulateCastParam(primitive));
     case schema::PrimitiveType_Ceil:
@@ -1078,6 +1105,8 @@ OpParameter *PopulateParameter(const lite::Primitive *primitive) {
       return reinterpret_cast<OpParameter *>(PopulateMatMulParameter(primitive));
     case schema::PrimitiveType_OneHot:
       return reinterpret_cast<OpParameter *>(PopulateOneHotParameter(primitive));
+    case schema::PrimitiveType_AddN:
+      return reinterpret_cast<OpParameter *>(PopulateAddNParam(primitive));
     default:
       break;
   }

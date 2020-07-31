@@ -86,13 +86,13 @@ int StackCPUKernel::Run() {
 
 kernel::LiteKernel *CpuStackFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                              OpParameter *opParameter, const lite::Context *ctx,
+                                              OpParameter *op_parameter, const lite::Context *ctx,
                                               const kernel::KernelKey &desc) {
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Input opParameter is nullptr!";
+  if (op_parameter == nullptr) {
+    MS_LOG(ERROR) << "Input op_parameter is nullptr!";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) StackCPUKernel(opParameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) StackCPUKernel(op_parameter, inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new StackCPUKernel fail!";
     return nullptr;
@@ -101,8 +101,8 @@ kernel::LiteKernel *CpuStackFp32KernelCreator(const std::vector<lite::tensor::Te
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    MS_LOG(ERROR) << "Init kernel failed, name: " << op_parameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
     return nullptr;
   }
   return kernel;

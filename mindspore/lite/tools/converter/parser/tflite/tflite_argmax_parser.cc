@@ -29,6 +29,11 @@ STATUS TfliteArgmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
                                  bool quantizedModel) {
   MS_LOG(DEBUG) << "parse TfliteArgmaxParser";
   std::unique_ptr<schema::ArgMaxT> attr(new schema::ArgMaxT());
+  // These are caffe attributes, set to default value.
+  attr->axisType = 1;
+  attr->outMaxValue = false;
+  attr->topK = -1;
+  attr->keepDims = false;
 
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();

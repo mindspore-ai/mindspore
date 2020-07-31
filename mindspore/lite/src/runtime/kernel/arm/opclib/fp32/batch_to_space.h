@@ -26,8 +26,8 @@ struct BatchToSpaceParameter {
     int32_t crops_[BATCH_TO_SPACE_CROPS_SIZE];
 };
 
-void BatchToSpaceNoCropForNHWC(const float *input, float *output, const int *in_shape, int out_n, const int *block);
-void BatchToSpaceForNHWC(const float *input, float *output, const int *in_shape, int out_n, const int *block,
-                         const int *crops);
+void BatchToSpaceNoCropForNHWC(const void *input, void *output, const int *in_shape, int out_n, const int *block,
+                               int data_size);
+void BatchToSpaceForNHWC(const void *input, void *output, const int *in_shape, int out_n, const int *block,
+                         const int *crops, int data_size);
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_BATCH_TO_SPACE_H_
-

@@ -51,9 +51,11 @@ int BatchToSpaceCPUKernel::Run() {
   BatchToSpaceParameter *param = reinterpret_cast<BatchToSpaceParameter *>(this->opParameter);
 
   if (no_crop_) {
-    BatchToSpaceNoCropForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_);
+    BatchToSpaceNoCropForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_,
+                              sizeof(float));
   } else {
-    BatchToSpaceForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_, param->crops_);
+    BatchToSpaceForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_, param->crops_,
+                        sizeof(float));
   }
 
   return RET_OK;
@@ -61,13 +63,13 @@ int BatchToSpaceCPUKernel::Run() {
 
 kernel::LiteKernel *CpuBatchToSpaceFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                      const std::vector<lite::tensor::Tensor *> &outputs,
-                                                     OpParameter *opParameter, const lite::Context *ctx,
+                                                     OpParameter *op_parameter, const lite::Context *ctx,
                                                      const kernel::KernelKey &desc) {
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Input opParameter is nullptr!";
+  if (op_parameter == nullptr) {
+    MS_LOG(ERROR) << "Input op_parameter is nullptr!";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) BatchToSpaceCPUKernel(opParameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) BatchToSpaceCPUKernel(op_parameter, inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new BatchToSpaceCPUKernel fail!";
     return nullptr;
@@ -76,8 +78,8 @@ kernel::LiteKernel *CpuBatchToSpaceFp32KernelCreator(const std::vector<lite::ten
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    MS_LOG(ERROR) << "Init kernel failed, name: " << op_parameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
     return nullptr;
   }
   return kernel;
