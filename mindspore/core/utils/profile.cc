@@ -28,7 +28,6 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-
 namespace {
 constexpr size_t TIME_INFO_PREFIX_NUM_LEN = 4;
 const char KEY_PROF_TOTAL[] = "__total__";

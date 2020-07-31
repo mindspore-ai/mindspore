@@ -25,7 +25,6 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-
 struct TimeInfo;
 using TimeInfoMap = std::map<std::string, const TimeInfo *>;
 
