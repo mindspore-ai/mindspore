@@ -192,7 +192,7 @@ bool MsContext::OpenTsd() {
   }
 
   MS_LOG(INFO) << "Device id = " << device_id << ", rank size = " << rank_size << ".";
-  TDT_StatusT status = tdt::TsdClient::GetInstance()->Open(device_id, rank_size);
+  TDT_StatusT status = TsdOpen(device_id, rank_size);
   if (status != TDT_OK) {
     MS_LOG(EXCEPTION) << "Device " << device_id << " is occupied, open tsd failed, status = " << status << ".";
     return false;
@@ -238,7 +238,9 @@ bool MsContext::CloseTsd(bool force) {
       MS_LOG(ERROR) << "tdt thread join failed: " << e.what();
     }
 #endif
-    TDT_StatusT status = tdt::TsdClient::GetInstance()->Close();
+    unsigned int device_id;
+    device_id = device_id_;
+    TDT_StatusT status = TsdClose(device_id);
     if (status != TDT_OK) {
       MS_LOG(EXCEPTION) << "Close tsd failed, status = " << status << ".";
       return false;
