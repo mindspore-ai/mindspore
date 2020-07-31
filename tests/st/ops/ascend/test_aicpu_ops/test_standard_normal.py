@@ -34,7 +34,7 @@ class Net(nn.Cell):
         self.stdnormal = P.StandardNormal(seed, seed2)
 
     def construct(self):
-        return self.stdnormal(self.shape, self.seed, self.seed2)
+        return self.stdnormal(self.shape)
 
 
 def test_net():

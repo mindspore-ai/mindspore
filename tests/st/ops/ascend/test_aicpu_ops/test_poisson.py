@@ -24,7 +24,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Net(nn.Cell):
-    def __init__(self, shape):
+    def __init__(self, shape, seed=0, seed2=0):
         super(Net, self).__init__()
         self.poisson = P.Poisson()
         self.shape = shape
@@ -36,18 +36,16 @@ class Net(nn.Cell):
 def test_net_1():
     shape = (2, 16)
     mean = np.array([5.0]).astype(np.float32)
-    net = Net(shape)
+    net = Net(shape=shape)
     tmean = Tensor(mean)
     output = net(tmean)
-    print(output.asnumpy())
     assert output.shape == (2, 16)
 
 
 def test_net_2():
     shape = (4, 1)
     mean = np.array([5.0, 10.0]).astype(np.float32)
-    net = Net(shape)
+    net = Net(shape=shape)
     tmean = Tensor(mean)
     output = net(tmean)
-    print(output.asnumpy())
     assert output.shape == (4, 2)

@@ -32,6 +32,7 @@ class Net(nn.Cell):
         self.seed = seed
 
     def construct(self, mean, stddev):
+        C.set_seed(20)
         return C.normal(self.shape, mean, stddev, self.seed)
 
 
@@ -43,7 +44,6 @@ def test_net_1D():
     net = Net(shape, seed)
     tmean, tstddev = Tensor(mean, mstype.float32), Tensor(stddev, mstype.float32)
     output = net(tmean, tstddev)
-    print(output.asnumpy())
     assert output.shape == (3, 2, 4)
 
 
@@ -55,5 +55,4 @@ def test_net_ND():
     net = Net(shape, seed)
     tmean, tstddev = Tensor(mean, mstype.float32), Tensor(stddev, mstype.float32)
     output = net(tmean, tstddev)
-    print(output.asnumpy())
     assert output.shape == (3, 2, 2)
