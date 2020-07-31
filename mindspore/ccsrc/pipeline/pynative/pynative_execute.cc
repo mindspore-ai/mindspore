@@ -565,9 +565,9 @@ py::object RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
 
   if (session == nullptr) {
     session = session::SessionFactory::Get().Create(device_target);
+    MS_EXCEPTION_IF_NULL(session);
+    session->Init(ms_context->device_id());
   }
-  MS_EXCEPTION_IF_NULL(session);
-  session->Init(ms_context->device_id());
 
   std::vector<tensor::TensorPtr> input_tensors;
   std::vector<int> tensors_mask;

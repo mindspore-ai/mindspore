@@ -426,7 +426,12 @@ py::tuple AscendSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &gr
   if (op_run_info.value != nullptr) {
     std::vector<tensor::TensorPtr> pre_output_tensors;
     TensorValueToTensor(op_run_info.value, &pre_output_tensors);
-    std::copy(pre_output_tensors.begin(), pre_output_tensors.end(), std::back_inserter(outputs));
+    for (auto &pre_output : pre_output_tensors) {
+      tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(pre_output->data_type(), pre_output->shape());
+      tensor->set_device_address(pre_output->device_address());
+      tensor->set_dirty(false);
+      outputs.emplace_back(tensor);
+    }
   } else {
     UpdateOutputs(graph, &outputs, input_tensors);
   }
