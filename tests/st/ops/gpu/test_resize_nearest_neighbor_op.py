@@ -53,6 +53,11 @@ def test_ResizeNearestNeighborAlignCornerT():
     rnn = ResizeNearestNeighborAlignCornerT((4, 4))
     output = rnn(input_tensor)
     assert np.all(output.asnumpy() == expect)
+    input_tensor = Tensor(np.array([[[[1, 0], [0, 1]]]]).astype(np.int32))
+    expect = np.array([[[[1, 1, 0, 0], [1, 1, 0, 0], [0, 0, 1, 1], [0, 0, 1, 1]]]]).astype(np.int32)
+    rnn = ResizeNearestNeighborAlignCornerT((4, 4))
+    output = rnn(input_tensor)
+    assert np.all(output.asnumpy() == expect)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -66,6 +71,11 @@ def test_ResizeNearestNeighborAlignCornerF():
     assert np.all(output.asnumpy() == expect)
     input_tensor = Tensor(np.array([[[[1, 0], [0, 1]]]]).astype(np.float16))
     expect = np.array([[[[1, 1, 0, 0], [1, 1, 0, 0], [0, 0, 1, 1], [0, 0, 1, 1]]]]).astype(np.float16)
+    rnn = ResizeNearestNeighborAlignCornerF((4, 4))
+    output = rnn(input_tensor)
+    assert np.all(output.asnumpy() == expect)
+    input_tensor = Tensor(np.array([[[[1, 0], [0, 1]]]]).astype(np.int32))
+    expect = np.array([[[[1, 1, 0, 0], [1, 1, 0, 0], [0, 0, 1, 1], [0, 0, 1, 1]]]]).astype(np.int32)
     rnn = ResizeNearestNeighborAlignCornerF((4, 4))
     output = rnn(input_tensor)
     assert np.all(output.asnumpy() == expect)
