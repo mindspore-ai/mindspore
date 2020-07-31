@@ -267,7 +267,7 @@ class ClueOp : public ParallelOp {
   std::unique_ptr<StringIndex> filename_index_;
   std::vector<std::string> clue_files_list_;
   WaitPost io_block_queue_wait_post_;
-  std::unique_ptr<JaggedConnector> jagged_buffer_connector_;
+  std::shared_ptr<JaggedConnector> jagged_buffer_connector_;
   QueueList<std::unique_ptr<FilenameBlock>> io_block_queues_;
   bool load_jagged_connector_;
   ColKeyMap cols_to_keyword_;
