@@ -138,7 +138,7 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework a
 | Paper                      | [ImageNet Classification with Deep Convolutional Neural Networks](http://papers.nips.cc/paper/4824-imagenet-classification-with-deep-)        |
 | Resource                   | Ascend 910                                                         |
 | Features                   | support with Ascend, GPU                                           |
-| MindSpore Version          | 0.5.0-beta                                                         |
+| MindSpore Version          | 0.6.0-beta                                                         |
 | Dataset                    | CIFAR10                                                              |
 | Training Parameters        | epoch=30, batch_size=32                                            |
 | Optimizer                  | Momentum                                                           |
@@ -158,7 +158,7 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework a
 | Paper                      | [Gradient-Based Learning Applied to Document Recognition](https://ieeexplore.ieee.org/abstract/document/726791)          |
 | Resource                   | Ascend 910             |
 | Features                   | support with Ascend, GPU, CPU                                  |
-| MindSpore Version          | 0.5.0-beta                                                       |
+| MindSpore Version          | 0.6.0-beta                                                       |
 | Dataset                    | MNIST                                                          |
 | Training Parameters        | epoch=10, batch_size=32                                          |
 | Optimizer                  | Momentum                                                    |
@@ -308,7 +308,7 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework a
 | Paper                      | [Attention Is All You Need ](https://arxiv.org/abs/1706.03762) |
 | Resource                   | Ascend 910                                                     |
 | Features                   | • Multi-GPU training support with Ascend                       |
-| MindSpore Version          | 0.5.0-beta                                                     |
+| MindSpore Version          | 0.6.0-beta                                                     |
 | Dataset                    | WMT Englis-German                                              |
 | Training Parameters        | epoch=52, batch_size=96                                        |
 | Optimizer                  | Adam                                                           |
