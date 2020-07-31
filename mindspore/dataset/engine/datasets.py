@@ -2795,7 +2795,6 @@ class MindDataset(MappableDataset):
         num_shards (int, optional): Number of shards that the dataset should be divided into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument should be specified only when num_shards is also specified.
-        block_reader (bool, optional): Whether read data by block mode (default=False).
         sampler (Sampler, optional): Object used to choose samples from the
             dataset (default=None, sampler is exclusive
             with shuffle and block_reader). Support list: SubsetRandomSampler,
@@ -2810,13 +2809,12 @@ class MindDataset(MappableDataset):
     Raises:
         ValueError: If num_shards is specified but shard_id is None.
         ValueError: If shard_id is specified but num_shards is None.
-        ValueError: If block reader is true but partition is specified.
     """
 
     @check_minddataset
     def __init__(self, dataset_file, columns_list=None, num_parallel_workers=None,
                  shuffle=None, num_shards=None, shard_id=None,
-                 block_reader=False, sampler=None, padded_sample=None,
+                 sampler=None, padded_sample=None,
                  num_padded=None, num_samples=None):
         super().__init__(num_parallel_workers)
         if isinstance(dataset_file, list):
@@ -2828,14 +2826,7 @@ class MindDataset(MappableDataset):
         self.shuffle_option = shuffle
         self.num_shards = num_shards
         self.shard_id = shard_id
-
-        if block_reader is True and num_shards is not None:
-            raise ValueError("block_reader not allowed true when use partitions")
-
-        if block_reader is True and shuffle is True:
-            raise ValueError("block_reader not allowed true when use shuffle")
-
-        if block_reader is True:
+        if shuffle is False:
             logger.warning("WARN: global shuffle is not used.")
 
         if sampler is not None:
@@ -2846,15 +2837,9 @@ class MindDataset(MappableDataset):
 
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
         self.num_samples = num_samples
-
-        # sampler exclusive
-        if block_reader is True and sampler is not None:
-            raise ValueError("block_reader not allowed true when use sampler")
-
         if num_padded is None:
             num_padded = 0
 
-        self.block_reader = block_reader
         self.padded_sample = padded_sample
         self.num_padded = num_padded
 
@@ -2873,7 +2858,6 @@ class MindDataset(MappableDataset):
         args["columns_list"] = self.columns_list
         args["shuffle_option"] = self.shuffle_option
         args["num_samples"] = self.num_samples
-        args["block_reader"] = self.block_reader
         args["num_padded"] = self.num_padded
         args["padded_sample"] = padded_sample
         args["sampler"] = self.sampler

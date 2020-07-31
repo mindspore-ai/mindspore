@@ -672,8 +672,6 @@ Status DEPipeline::ParseMindRecordOp(const py::dict &args, std::shared_ptr<Datas
     if (!value.is_none()) {
       if (key == "num_parallel_workers") {
         (void)builder->SetNumMindRecordWorkers(ToInt(value));
-      } else if (key == "block_reader" && ToBool(value) == true) {
-        (void)builder->SetBlockReader();
       } else if (key == "sampler") {
         int num_padded = 0;
         if (!args["num_padded"].is_none()) {

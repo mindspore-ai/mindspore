@@ -51,7 +51,6 @@ MindRecordOp::Builder::Builder() : build_dataset_file_({}) {
   build_num_mind_record_workers_ = kDefaultMindRecordWorkers;
   build_rows_per_buffer_ = cfg->rows_per_buffer();
   build_op_connector_queue_size_ = cfg->op_connector_size();
-  build_block_reader_ = false;
   builder_num_workers_ = 0;
   build_num_padded_ = 0;
   build_sample_ = nullptr;
@@ -69,10 +68,10 @@ Status MindRecordOp::Builder::Build(std::shared_ptr<MindRecordOp> *ptr) {
   if (build_num_padded_ > 0) {
     sample_json = ToJson(build_sample_);
   }
-  new_mind_record_op = std::make_shared<MindRecordOp>(
-    build_num_mind_record_workers_, build_rows_per_buffer_, build_dataset_file_, build_load_dataset_,
-    build_op_connector_queue_size_, build_columns_to_load_, build_operators_, build_block_reader_, build_num_padded_,
-    sample_json, build_sample_bytes_);
+  new_mind_record_op =
+    std::make_shared<MindRecordOp>(build_num_mind_record_workers_, build_rows_per_buffer_, build_dataset_file_,
+                                   build_load_dataset_, build_op_connector_queue_size_, build_columns_to_load_,
+                                   build_operators_, build_num_padded_, sample_json, build_sample_bytes_);
 
   RETURN_IF_NOT_OK(new_mind_record_op->Init());
   *ptr = std::move(new_mind_record_op);
@@ -113,9 +112,8 @@ mindrecord::json MindRecordOp::Builder::ToJson(const py::handle &obj) {
 MindRecordOp::MindRecordOp(int32_t num_mind_record_workers, int32_t rows_per_buffer,
                            std::vector<std::string> dataset_file, bool load_dataset, int32_t op_connector_queue_size,
                            const std::vector<std::string> &columns_to_load,
-                           const std::vector<std::shared_ptr<ShardOperator>> &operators, const bool &block_reader,
-                           int64_t num_padded, const mindrecord::json &sample_json,
-                           const std::map<std::string, std::string> &sample_bytes)
+                           const std::vector<std::shared_ptr<ShardOperator>> &operators, int64_t num_padded,
+                           const mindrecord::json &sample_json, const std::map<std::string, std::string> &sample_bytes)
     : ParallelOp(num_mind_record_workers, op_connector_queue_size),
       rows_per_buffer_(rows_per_buffer),
       dataset_file_(dataset_file),
@@ -123,27 +121,21 @@ MindRecordOp::MindRecordOp(int32_t num_mind_record_workers, int32_t rows_per_buf
       columns_to_load_(columns_to_load),
       operators_(operators),
       num_mind_record_workers_(num_mind_record_workers),
-      block_reader_(block_reader),
       num_rows_(0),
       buffers_needed_(0),
       buf_cnt_(0),
       ended_worker_(0),
-      buffer_water_mark_(0),
       num_padded_(num_padded),
       sample_json_(sample_json),
       sample_bytes_(sample_bytes) {
   io_blk_queues_.Init(num_workers_, op_connector_queue_size);
-  if (!block_reader_) return;
-  for (int32_t i = 0; i < num_workers_; ++i) {
-    block_buffer_.emplace_back(std::make_unique<std::vector<ShardTuple>>(std::vector<ShardTuple>{}));
-  }
 }
 
 // Private helper method to encapsulate some common construction/reset tasks
 Status MindRecordOp::Init() {
   shard_reader_ = std::make_unique<ShardReader>();
   auto rc = shard_reader_->Open(dataset_file_, load_dataset_, num_mind_record_workers_, columns_to_load_, operators_,
-                                block_reader_, num_padded_);
+                                num_padded_);
 
   CHECK_FAIL_RETURN_UNEXPECTED(rc == MSRStatus::SUCCESS,
                                "MindRecordOp init failed. Error message: " + ErrnoToMessage(rc));
@@ -264,23 +256,6 @@ Status MindRecordOp::WorkerEntry(int32_t worker_id) {
     }
     RETURN_IF_NOT_OK(GetBufferFromReader(&fetched_buffer, buffer_id, worker_id));
     RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::move(fetched_buffer)));
-    if (!block_reader_) {
-      RETURN_IF_NOT_OK(io_blk_queues_[worker_id]->PopFront(&io_block));
-      continue;
-    }
-
-    // update block-reader buffer
-    block_buffer_[buffer_id % num_workers_]->clear();
-    {
-      std::unique_lock<std::mutex> lck(mtx_block_reader_);
-      if (buffer_id == buffer_water_mark_) {
-        buffer_water_mark_++;
-        while (block_set_.count(buffer_water_mark_) > 0) (void)block_set_.erase(buffer_water_mark_++);
-      } else {
-        (void)block_set_.insert(buffer_id);
-      }
-    }
-    cv_reader_.notify_one();
     RETURN_IF_NOT_OK(io_blk_queues_[worker_id]->PopFront(&io_block));
   }
   RETURN_STATUS_UNEXPECTED("Unexpected nullptr received in worker");
@@ -291,23 +266,16 @@ Status MindRecordOp::GetBufferFromReader(std::unique_ptr<DataBuffer> *fetched_bu
   *fetched_buffer = std::make_unique<DataBuffer>(buffer_id, DataBuffer::kDeBFlagNone);
   std::unique_ptr<TensorQTable> tensor_table = std::make_unique<TensorQTable>();
   for (int32_t i = 0; i < rows_per_buffer_; ++i) {
-    ShardTuple tupled_buffer;
-    mindrecord::TaskType task_type = mindrecord::TaskType::kCommonTask;
-    if (block_reader_) {
-      if (i >= block_buffer_[buffer_id % num_workers_]->size()) break;
-      tupled_buffer = block_buffer_[buffer_id % num_workers_]->at(i);
-    } else {
-      int32_t row_id = buffer_id * rows_per_buffer_ + i;
-      auto rc = shard_reader_->GetNextById(row_id, worker_id);
-      task_type = rc.first;
-      tupled_buffer = rc.second;
-      if (task_type == mindrecord::TaskType::kPaddedTask) {
-        TensorRow tensor_row;
-        RETURN_IF_NOT_OK(LoadTensorRow(&tensor_row, {}, mindrecord::json(), task_type));
-        tensor_table->push_back(std::move(tensor_row));
-      }
-      if (tupled_buffer.empty()) break;
+    int32_t row_id = buffer_id * rows_per_buffer_ + i;
+    auto rc = shard_reader_->GetNextById(row_id, worker_id);
+    auto task_type = rc.first;
+    auto tupled_buffer = rc.second;
+    if (task_type == mindrecord::TaskType::kPaddedTask) {
+      TensorRow tensor_row;
+      RETURN_IF_NOT_OK(LoadTensorRow(&tensor_row, {}, mindrecord::json(), task_type));
+      tensor_table->push_back(std::move(tensor_row));
     }
+    if (tupled_buffer.empty()) break;
     if (task_type == mindrecord::TaskType::kCommonTask) {
       for (const auto &tupled_row : tupled_buffer) {
         std::vector<uint8_t> columns_blob = std::get<0>(tupled_row);
@@ -396,21 +364,6 @@ Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint
   return Status::OK();
 }
 
-Status MindRecordOp::FetchBlockBuffer(const int32_t &buffer_id) {
-  {
-    std::unique_lock<std::mutex> lck(mtx_block_reader_);
-    cv_reader_.wait(lck, [buffer_id, this] { return buffer_id < buffer_water_mark_ + num_workers_; });
-  }
-  for (int32_t i = 0; i < rows_per_buffer_; i++) {
-    // Block reader does NOT care about argument
-    auto rc = shard_reader_->GetNextById(i, i);
-    ShardTuple tuple_buffer = rc.second;
-    if (tuple_buffer.empty()) break;
-    block_buffer_[buffer_id % num_workers_]->push_back(std::move(tuple_buffer));
-  }
-  return Status::OK();
-}
-
 // Class functor operator () override.
 // All dataset ops operate by launching a thread (see ExecutionTree). This class functor will
 // provide the master loop that drives the logic for performing the work
@@ -423,7 +376,6 @@ Status MindRecordOp::operator()() {
 
   while (true) {  // each iterator is 1 epoch
     for (int32_t i = 0; i < buffers_needed_; ++i) {
-      if (block_reader_) RETURN_IF_NOT_OK(FetchBlockBuffer(i));
       std::vector<int64_t> keys(1, i);
       RETURN_IF_NOT_OK(io_blk_queues_[buf_cnt_++ % num_workers_]->Add(
         std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone))));
@@ -455,12 +407,7 @@ Status MindRecordOp::operator()() {
 Status MindRecordOp::Reset() {
   RETURN_IF_NOT_OK(ParallelOp::Reset());  // Call our super class reset first.
 
-  if (block_reader_) {
-    shard_reader_->Reset();
-    buffer_water_mark_ = 0;
-  } else {
-    shard_reader_->ShuffleTask();
-  }
+  shard_reader_->ShuffleTask();
   shard_reader_wait_post_.Set();
 
   return Status::OK();
@@ -473,7 +420,7 @@ Status MindRecordOp::LaunchThreadAndInitOp() {
 
   RETURN_IF_NOT_OK(io_blk_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(shard_reader_wait_post_.Register(tree_->AllTasks()));
-  if (shard_reader_->Launch(!block_reader_) == MSRStatus::FAILED) {
+  if (shard_reader_->Launch(true) == MSRStatus::FAILED) {
     RETURN_STATUS_UNEXPECTED("MindRecordOp launch failed.");
   }
   // Launch main workers that load DataBuffers by reading all images

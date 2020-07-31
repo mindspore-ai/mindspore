@@ -94,31 +94,6 @@ TEST_F(TestShardReader, TestShardReaderSample) {
   dataset.Close();
 }
 
-TEST_F(TestShardReader, TestShardReaderBlock) {
-  MS_LOG(INFO) << FormatInfo("Test read imageNet with block way");
-  std::string file_name = "./imagenet.shard01";
-  auto column_list = std::vector<std::string>{"label"};
-
-  std::vector<std::shared_ptr<ShardOperator>> ops;
-  ops.push_back(std::make_shared<ShardSample>(3));
-  ShardReader dataset;
-  const bool kBlockReader = true;
-  dataset.Open({file_name}, true, 4, column_list, ops, kBlockReader);
-  dataset.Launch();
-
-  while (true) {
-    auto x = dataset.GetBlockNext();
-    if (x.empty()) break;
-    for (auto &j : x) {
-      for (auto &item : std::get<1>(j).items()) {
-        MS_LOG(INFO) << "key: " << item.key() << ", value: " << item.value().dump();
-      }
-    }
-  }
-  dataset.Finish();
-  dataset.Close();
-}
-
 TEST_F(TestShardReader, TestShardReaderEasy) {
   MS_LOG(INFO) << FormatInfo("Test read imageNet");
   std::string file_name = "./imagenet.shard01";

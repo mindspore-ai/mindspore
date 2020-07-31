@@ -300,7 +300,6 @@ def check_padding_options(param_dict):
     """
 
     columns_list = param_dict.get('columns_list')
-    block_reader = param_dict.get('block_reader')
     padded_sample, num_padded = param_dict.get('padded_sample'), param_dict.get('num_padded')
     if padded_sample is not None:
         if num_padded is None:
@@ -312,9 +311,6 @@ def check_padding_options(param_dict):
         for column in columns_list:
             if column not in padded_sample:
                 raise ValueError("padded_sample cannot match columns_list.")
-        if block_reader:
-            raise RuntimeError("block_reader and padded_sample cannot be specified at the same time.")
-
     if padded_sample is None and num_padded is not None:
         raise RuntimeError("num_padded is specified but padded_sample is not.")
 

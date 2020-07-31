@@ -63,7 +63,6 @@ using ROW_GROUP_BRIEF =
 using TASK_RETURN_CONTENT =
   std::pair<MSRStatus, std::pair<TaskType, std::vector<std::tuple<std::vector<uint8_t>, json>>>>;
 const int kNumBatchInMap = 1000;  // iterator buffer size in row-reader mode
-const int kNumPageInBuffer = 16;  // page buffer size in block-reader mode
 
 class ShardReader {
  public:
@@ -77,12 +76,10 @@ class ShardReader {
   /// \param[in] n_consumer number of threads when reading
   /// \param[in] selected_columns column list to be populated
   /// \param[in] operators operators applied to data, operator type is shuffle, sample or category
-  /// \param[in] block_reader block-reader mode if true, otherwise row-reader mode
   /// \return MSRStatus the status of MSRStatus
   MSRStatus Open(const std::vector<std::string> &file_paths, bool load_dataset, int n_consumer = 4,
                  const std::vector<std::string> &selected_columns = {},
-                 const std::vector<std::shared_ptr<ShardOperator>> &operators = {}, const bool &block_reader = false,
-                 const int num_padded = 0);
+                 const std::vector<std::shared_ptr<ShardOperator>> &operators = {}, const int num_padded = 0);
 
   /// \brief open files and initialize reader, python API
   /// \param[in] file_paths the path of ONE file, any file in dataset is fine or file list
@@ -189,10 +186,6 @@ class ShardReader {
   std::pair<TaskType, std::vector<std::tuple<std::vector<uint8_t>, json>>> GetNextById(const int64_t &task_id,
                                                                                        const int32_t &consumer_id);
 
-  /// \brief return a batch in block-reader mode, given that one is ready
-  /// \return a batch of images and image data
-  std::vector<std::tuple<std::vector<uint8_t>, json>> GetBlockNext();
-
   /// \brief return a batch, given that one is ready, python API
   /// \return a batch of images and image data
   std::vector<std::tuple<std::vector<std::vector<uint8_t>>, pybind11::object>> GetNextPy();
@@ -242,9 +235,6 @@ class ShardReader {
   /// \brief populate one row by task list in row-reader mode
   MSRStatus ConsumerByRow(int consumer_id);
 
-  /// \brief populate one row by task list in block-reader mode
-  MSRStatus ConsumerByBlock(int consumer_id);
-
   /// \brief get offset address of images within page
   std::vector<std::vector<uint64_t>> GetImageOffset(int group_id, int shard_id,
                                                     const std::pair<std::string, std::string> &criteria = {"", ""});
@@ -261,10 +251,6 @@ class ShardReader {
                                                             const std::vector<std::string> &columns,
                                                             const std::pair<std::string, std::string> &criteria = {"",
                                                                                                                    ""});
-
-  /// \brief create task list in block-reader mode
-  MSRStatus CreateTasksByBlock(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
-                               const std::vector<std::shared_ptr<ShardOperator>> &operators);
 
   /// \brief create category-applied task list
   MSRStatus CreateTasksByCategory(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
@@ -290,14 +276,9 @@ class ShardReader {
   /// \brief read one row by one task
   TASK_RETURN_CONTENT ConsumerOneTask(int task_id, uint32_t consumer_id);
 
-  /// \brief get one row from buffer in block-reader mode
-  std::shared_ptr<std::vector<std::tuple<std::vector<uint8_t>, json>>> GetRowFromBuffer(int bufId, int rowId);
-
   /// \brief get labels from binary file
   std::pair<MSRStatus, std::vector<json>> GetLabelsFromBinaryFile(
     int shard_id, const std::vector<std::string> &columns, const std::vector<std::vector<std::string>> &label_offsets);
-
-  MSRStatus ReadBlob(const int &shard_id, const uint64_t &page_offset, const int &page_length, const int &buf_id);
 
   /// \brief get classes in one shard
   void GetClassesInShard(sqlite3 *db, int shard_id, const std::string sql, std::set<std::string> &categories);
@@ -349,16 +330,6 @@ class ShardReader {
   // map of delivery
   std::unordered_map<int, std::shared_ptr<std::vector<std::tuple<std::vector<uint8_t>, json>>>> delivery_map_;
   // Delivery/Iterator mode end
-
-  // Block reader mode begin
-  bool block_reader_;  // block-reader mode
-  int row_id_;         // row id in one page
-  int num_blocks_;     // number of pages
-  // raw data page
-  std::vector<std::shared_ptr<std::pair<std::vector<std::vector<uint64_t>>, std::vector<json>>>> delivery_block_;
-  std::unordered_set<int> delivery_block_set_;  // set of delivered pages
-  std::vector<std::vector<uint8_t>> buf_;       // page buffer
-  // Block reader mode end
 };
 }  // namespace mindrecord
 }  // namespace mindspore

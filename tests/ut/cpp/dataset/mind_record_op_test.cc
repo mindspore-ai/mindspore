@@ -435,7 +435,6 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordBlockReaderRepeat) {
       .SetLoadDataset(true)
       .SetRowsPerBuffer(3)
       .SetNumMindRecordWorkers(4)
-      .SetBlockReader()
       .SetColumnsToLoad(column_list);
   rc = builder.Build(&my_mindrecord_op);
   ASSERT_TRUE(rc.IsOk());
