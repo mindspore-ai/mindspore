@@ -19,9 +19,6 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <map>
-#ifndef USE_ANDROID_LOG
-#include "debug/trace.h"
-#endif
 
 // namespace to support utils module definition
 namespace mindspore {
@@ -244,10 +241,9 @@ void LogWriter::operator^(const LogStream &stream) const {
   }
   oss << msg.str();
 
-#ifndef USE_ANDROID_LOG
-  trace::TraceGraphEval();
-  trace::GetEvalStackInfo(oss);
-#endif
+  if (trace_provider_ != nullptr) {
+    trace_provider_(oss);
+  }
 
   if (exception_handler_ != nullptr) {
     exception_handler_(exception_type_, oss.str());

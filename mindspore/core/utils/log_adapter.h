@@ -142,6 +142,7 @@ extern int g_ms_submodule_log_levels[] __attribute__((visibility("default")));
 class LogWriter {
  public:
   using ExceptionHandler = std::function<void(ExceptionType, const std::string &msg)>;
+  using TraceProvider = std::function<void(std::ostringstream &oss)>;
 
   LogWriter(const LocationInfo &location, MsLogLevel log_level, SubModuleId submodule,
             ExceptionType excp_type = NoExceptionType)
@@ -152,6 +153,7 @@ class LogWriter {
   void operator^(const LogStream &stream) const __attribute__((noreturn, visibility("default")));
 
   static void set_exception_handler(ExceptionHandler exception_handler) { exception_handler_ = exception_handler; }
+  static void set_trace_provider(TraceProvider trace_provider) { trace_provider_ = trace_provider; }
 
  private:
   void OutputLog(const std::ostringstream &msg) const;
@@ -162,6 +164,7 @@ class LogWriter {
   ExceptionType exception_type_;
 
   inline static ExceptionHandler exception_handler_ = nullptr;
+  inline static TraceProvider trace_provider_ = nullptr;
 };
 
 #define MSLOG_IF(level, condition, excp_type)                                                                       \
