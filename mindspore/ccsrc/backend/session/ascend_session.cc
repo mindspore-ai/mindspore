@@ -34,7 +34,6 @@
 #include "runtime/device/kernel_adjust.h"
 #include "runtime/device/ascend/ascend_stream_assign.h"
 #include "runtime/device/ascend/ascend_label_assign.h"
-#include "predict/predict.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "ir/scalar.h"
 #include "debug/anf_ir_dump.h"
@@ -303,8 +302,6 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
       save_graphs_path + "/" + "select_kernel_after" + "_graph_" + std::to_string(child_graph->graph_id()) + ".ir";
     DumpIR(file_path, child_graph);
   }
-  // convert kernel Graph to model
-  predictmodel::StepConvertGraph(child_graph);
   // optimize graph
   HardwareOptimize(child_graph);
   // assign static memory of parameters
@@ -333,8 +330,6 @@ void AscendSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::
     InitPSParamAndOptim(kernel_graph, inputs);
   }
 #endif
-  // convert inputs to model
-  predictmodel::StepConvertWeight(inputs);
   {
     py::gil_scoped_release release;
     // run task on device
@@ -1036,8 +1031,6 @@ void AscendSession::HardwareOptimize(NotNull<KernelGraphPtr> graph,
   memo->insert(graph.get());
 
   MS_LOG(INFO) << "Start to do HardwareOptimize in graph: " << graph->graph_id();
-  // convert kernel Graph to model
-  predictmodel::StepConvertGraph(graph.get());
 
   HardwareOptimize(graph.get());
   for (auto &child_graph : graph->child_graph_order()) {

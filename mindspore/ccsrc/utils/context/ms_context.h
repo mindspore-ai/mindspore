@@ -102,12 +102,6 @@ class MsContext {
   void set_enable_mem_reuse(bool enable_mem_reuse) { enable_mem_reuse_ = enable_mem_reuse; }
   bool enable_mem_reuse() const { return enable_mem_reuse_; }
 
-  bool save_ms_model_flag() const { return save_ms_model_flag_; }
-  void set_save_ms_model_flag(bool save_ms_model_flag) { save_ms_model_flag_ = save_ms_model_flag; }
-
-  std::string save_ms_model_path() const { return save_ms_model_path_; }
-  void set_save_ms_model_path(const std::string &save_ms_model_path) { save_ms_model_path_ = save_ms_model_path; }
-
   void set_enable_gpu_summary(bool enable_gpu_summary) { enable_gpu_summary_ = enable_gpu_summary; }
   bool enable_gpu_summary() const { return enable_gpu_summary_; }
 
@@ -190,8 +184,6 @@ class MsContext {
   bool enable_reduce_precision_;
   bool enable_loop_sink_;
   bool enable_mem_reuse_;
-  std::string save_ms_model_path_;
-  bool save_ms_model_flag_;
   bool enable_gpu_summary_;
   bool enable_dump_;
   std::string save_dump_path_;

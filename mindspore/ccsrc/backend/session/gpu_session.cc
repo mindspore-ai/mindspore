@@ -31,7 +31,6 @@
 #include "backend/optimizer/gpu/replace_momentum_cast_fusion.h"
 #include "backend/optimizer/gpu/replace_addn_fusion.h"
 #include "runtime/device/kernel_runtime_manager.h"
-#include "predict/predict.h"
 #include "common/utils.h"
 #include "common/trans.h"
 #include "utils/context/ms_context.h"
@@ -190,8 +189,6 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   // Assign parameter keys.
   AssignParamKey(graph);
 #endif
-  // Convert kernel Graph to model
-  predictmodel::StepConvertGraph(graph);
   // Start gpu kernel runtime
   StartKernelRT();
   // Dump .pb graph before hardware optimization
@@ -245,8 +242,6 @@ void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
   }
 #endif
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  // Convert inputs to model
-  predictmodel::StepConvertWeight(inputs);
   {
     py::gil_scoped_release gil_release;
     // Run graph on GPU

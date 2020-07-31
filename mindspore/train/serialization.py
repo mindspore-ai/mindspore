@@ -20,7 +20,6 @@ from threading import Thread, Lock
 import numpy as np
 
 import mindspore.nn as nn
-import mindspore.context as context
 from mindspore import log as logger
 from mindspore.train.checkpoint_pb2 import Checkpoint
 from mindspore.train.print_pb2 import Print
@@ -457,18 +456,17 @@ def export(net, *inputs, file_name, file_format='GEIR'):
         net (Cell): MindSpore network.
         inputs (Tensor): Inputs of the `net`.
         file_name (str): File name of model to export.
-        file_format (str): MindSpore currently supports 'GEIR', 'ONNX' 'LITE' and 'BINARY' format for exported model.
+        file_format (str): MindSpore currently supports 'GEIR', 'ONNX' and 'BINARY' format for exported model.
 
             - GEIR: Graph Engine Intermidiate Representation. An intermidiate representation format of
               Ascend model.
             - ONNX: Open Neural Network eXchange. An open format built to represent machine learning models.
-            - LITE: Huawei model format for mobile. A lite model only for the MindSpore Lite
             - BINARY: Binary format for model. An intermidiate representation format for models.
     """
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
     check_input_data(*inputs, data_class=Tensor)
 
-    supported_formats = ['GEIR', 'ONNX', 'LITE', 'BINARY']
+    supported_formats = ['GEIR', 'ONNX', 'BINARY']
     if file_format not in supported_formats:
         raise ValueError(f'Illegal file format {file_format}, it must be one of {supported_formats}')
     # switch network mode to infer when it is training
@@ -497,9 +495,6 @@ def export(net, *inputs, file_name, file_format='GEIR'):
         with open(file_name, 'wb') as f:
             os.chmod(file_name, stat.S_IWUSR | stat.S_IRUSR)
             f.write(onnx_stream)
-    elif file_format == 'LITE':  # file_format is 'LITE'
-        context.set_context(save_ms_model=True, save_ms_model_path=file_name)
-        net(*inputs)
     # restore network training mode
     if is_training:
         net.set_train(mode=True)
