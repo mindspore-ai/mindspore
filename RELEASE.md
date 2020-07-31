@@ -1,3 +1,74 @@
+# Release 0.6.0-beta
+
+## Major Features and Improvements
+### Ascend 910 Training and Inference Framework
+* New models
+    * There are official, research and community under modelzoo.  
+        * Official is maintained  with the newest APIs by MindSpore team,  MaskRCNN and TinyBERT are added.
+        * Research is uploaded by researchers for official review, and APIs may not  be updated in time.
+        * Community reprints the relevant links of partner research results.
+    * Hub added on the same level as modelzoo，synchronous storage of materials needed for official hub web pages which will be launched soon.
+    * Support pre-trained models, few lines of code can be used to download and load pre-trained models, supporting inference or transfer learning. 
+* Frontend and user interface
+    * Supports user side operator compilation and graph execution error rendering.
+    * Uniform definition dynamic learning rate behavior in optimizers.
+    * Support IndexSlice in sparse expression.
+    * Support use parent construct method during construct.
+    * Support asynchronous execution save checkpoint file.
+    * Support implicit type conversion in pynative mode.
+    * User interfaces change log
+      * unform learning rate behavior in optimizers([!2755](https://gitee.com/mindspore/mindspore/pulls/2755))
+      * rename operator of sparse optimizer([!3217](https://gitee.com/mindspore/mindspore/pulls/3217))
+      * move profiler module from mindinsight to mindspore([!3075](https://gitee.com/mindspore/mindspore/pulls/3075))
+      * VOCDataset output change to multi-columns（[!3093](https://gitee.com/mindspore/mindspore/pulls/3093)）
+      * GetDatasize feature([!3212](https://gitee.com/mindspore/mindspore/pulls/3212))
+      * dataset: modify config api（[!2936](https://gitee.com/mindspore/mindspore/pulls/2936)）
+* Executor and performance optimization
+    * Decouple C++ and python, so make the architecture more extensible.
+    * Parameter Server for distributed deep learning supported, and is verified in Wide&Deep model.
+    * Serving：a flexible service deployment framework for deep learning models.
+    * Memory reuse is enhanced, and the batch size of Bert large model is increased from 96 to 160 on a single server.
+* Data processing, augmentation, and save format
+    * Support single cache after data processing 
+    * Support MindRecord save operator after  date processing 
+    * Support automatic fusion operator, such as decode/resize/crop
+    * Support CSV dataset loading 
+### Other Hardware Support
+* GPU platform
+    * New model supported: ResNext50, WarpCTC.
+    * Support hyperparametric search and data enhanced automl on GPU.
+    * Support Resnet50 automatic parallel in GPU backend.
+
+## Bugfixes
+* Models
+  * Improved the performance and accuracy on ResNet50([!3456](https://gitee.com/mindspore/mindspore/pulls/3456))
+  * Fixed the performance test case of bert([!3486](https://gitee.com/mindspore/mindspore/pulls/3486))
+* Python API
+  * Fix assign used in while loop([!2720](https://gitee.com/mindspore/mindspore/pulls/2720))
+  * Revert optimize the graph output of all nop node.([!2857](https://gitee.com/mindspore/mindspore/pulls/2857))
+  * Print tensor as numpy.（[!2859](https://gitee.com/mindspore/mindspore/pulls/2859)）
+  * Support weight decay for sparse optimizer([!2668](https://gitee.com/mindspore/mindspore/pulls/2668))
+  * Fix BatchToSpaceND([!2741](https://gitee.com/mindspore/mindspore/pulls/2741))
+  * Fixing type check mistakes of InplaceAdd and Inplace Sub ops([!2744](https://gitee.com/mindspore/mindspore/pulls/2744]))
+  * Change order param only equal to group param([!2748](https://gitee.com/mindspore/mindspore/pulls/2748))
+* Executor
+  * The performance of graph whith control flow is optimized([!2931](https://gitee.com/mindspore/mindspore/pulls/2931))
+  * Fix bug of wrong number of tuple layers([!3390](https://gitee.com/mindspore/mindspore/pulls/3390))
+  * Fix cpu multi graph memory exception([!3631](https://gitee.com/mindspore/mindspore/pulls/3631))
+  * Enable data sync when calling operator without defining a cell([!3081](https://gitee.com/mindspore/mindspore/pulls/3081))
+  * Fix argmaxwith value error in pynative mode on GPU([!3082](https://gitee.com/mindspore/mindspore/pulls/3082))
+  * Fix precision error with fp16 input on pynative mode([!3196](https://gitee.com/mindspore/mindspore/pulls/3196))
+* Data processing
+    * Fix bug of RandomColor and RandomSharpness default parameter checking  ([!2833](https://gitee.com/mindspore/mindspore/pulls/2833))
+    * Fix process hung when training and eval  ([!3469](https://gitee.com/mindspore/mindspore/pulls/3469))
+
+## Contributors
+Thanks goes to these wonderful people:
+
+Alexey Shevlyakov, avakh, baihuawei, BowenK, buxue, caifubi, caojian05, Cathy Wong, changzherui, chenfei, chengxianbin, chenhaozhe, chenjianping, chentingting, chenzomi, chujinjin, Danish Farid, dayschan, dengwentao, dinghao, etone-chan, fangzehua, fary86, geekun, Giancarlo Colmenares, gong chen, gukecai, guohongzilong, hangangqiang, heleiwang, hesham, He Wei, hexia, hongxing, huangdongrun, huanghui, islam_amin, Jamie Nisbet, Jesse Lee, jiangjinsheng, jiangzhiwen, jinyaohui, jjfeing, jojobugfree, Jonathan Yan, jonyguo, Junhan Hu, Kang, kingfo, kouzhenzhong, kpy, kswang, laiyongqiang, leopz, liangzelang, lichenever, lihongkang, Li Hongzhang, lilei, limingqi107, lirongzhen1, liubuyu, liuchongming74, liuwenhao4, liuxiao, Lixia Chen, liyanliu, liyong, lizhenyu, lvliang, Mahdi, Margaret_wangrui, meixiaowei, ms_yan, nhussain, ougongchang, panfengfeng, panyifeng, peilinwang, Peilin Wang, pkuliuliu, qianlong, rick_sanchez, shibeiji, Shida He, shijianning, simson, sunsuodong, suteng, Tinazhang, Tron Zhang, unknown, VectorSL, wandongdong, wangcong, wangdongxu, wangdongxu6, wanghua, wangnan39, Wei Luning, wenchunjiang, wenkai, wilfChen, WilliamLian, wukesong, Xian Weizhao, Xiaoda Zhang, xiefangqi, xulei2020, xunxue, xutianchun, Yang, yanghaitao, yanghaitao1, yanghaoran, yangjie, yangjie159, YangLuo, Yanjun Peng, yankai, yanzhenxiang2020, yao_yf, Yi Huaijie, yoonlee666, yuchaojie, yujianfeng, zhangzhongpeng, zhangdengcheng, Zhang Qinghua, zhangyinxia, zhangz0911gm, zhaojichen, zhaoting, zhaozhenlong, zhoufeng, zhouneng, zhousiyi, Zirui Wu, Ziyan, zjun, ZPaC, lihongzhang, wangdongxu
+
+Contributions of any kind are welcome!
+
 # Release 0.5.0-beta
 
 ## Major Features and Improvements
