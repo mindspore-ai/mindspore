@@ -278,9 +278,9 @@ if (ENABLE_SERVING)
         COMPONENT mindspore
     )
 
-    file(GLOB MS_SERVING_PY_LIST ${CMAKE_SOURCE_DIR}/serving/*.py)
     install(
-        FILES ${MS_SERVING_PY_LIST}
+        FILES ${CMAKE_SOURCE_DIR}/build/mindspore/serving/ms_service_pb2.py
+              ${CMAKE_SOURCE_DIR}/build/mindspore/serving/ms_service_pb2_grpc.py
         DESTINATION ${INSTALL_PY_DIR}
         COMPONENT mindspore
     )

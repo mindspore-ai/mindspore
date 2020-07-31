@@ -50,8 +50,10 @@ set(hw_proto_srcs "${CMAKE_CURRENT_BINARY_DIR}/ms_service.pb.cc")
 set(hw_proto_hdrs "${CMAKE_CURRENT_BINARY_DIR}/ms_service.pb.h")
 set(hw_grpc_srcs "${CMAKE_CURRENT_BINARY_DIR}/ms_service.grpc.pb.cc")
 set(hw_grpc_hdrs "${CMAKE_CURRENT_BINARY_DIR}/ms_service.grpc.pb.h")
+set(hw_py_pb2 "${CMAKE_CURRENT_BINARY_DIR}/ms_service_pb2.py")
+set(hw_py_pb2_grpc "${CMAKE_CURRENT_BINARY_DIR}/ms_service_pb2_grpc.py")
 add_custom_command(
-        OUTPUT "${hw_proto_srcs}" "${hw_proto_hdrs}" "${hw_grpc_srcs}" "${hw_grpc_hdrs}"
+        OUTPUT "${hw_proto_srcs}" "${hw_proto_hdrs}" "${hw_grpc_srcs}" "${hw_grpc_hdrs}" "${hw_py_pb2}" "${hw_py_pb2_grpc}"
         COMMAND ${_PROTOBUF_PROTOC}
         ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}"
         --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
@@ -59,8 +61,8 @@ add_custom_command(
         --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
         "${hw_proto}"
         COMMAND ${_PROTOBUF_PROTOC}
-        ARGS --grpc_out "${PROJECT_SOURCE_DIR}/serving/"
-        --python_out "${PROJECT_SOURCE_DIR}/serving/"
+        ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}"
+        --python_out "${CMAKE_CURRENT_BINARY_DIR}"
         -I "${hw_proto_path}"
         --plugin=protoc-gen-grpc="${_GRPC_PYTHON_PLUGIN_EXECUTABLE}"
         "${hw_proto}"
