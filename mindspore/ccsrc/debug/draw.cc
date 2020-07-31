@@ -23,7 +23,6 @@
 #include <vector>
 #include <string>
 
-#include "pybind11/pybind11.h"
 #include "ir/meta_func_graph.h"
 #include "ir/param_value.h"
 #include "ir/primitive.h"
@@ -31,8 +30,6 @@
 #include "utils/utils.h"
 #include "frontend/operator/composite/composite.h"
 #include "ir/tensor.h"
-
-namespace py = pybind11;
 
 namespace mindspore {
 

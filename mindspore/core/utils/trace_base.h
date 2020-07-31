@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_CORE_UTILS_TRACE_BASE_H_
+#define MINDSPORE_CORE_UTILS_TRACE_BASE_H_
 
-#include "debug/trace_info.h"
-#include <utility>
 #include <fstream>
-#include <sstream>
+#include <memory>
+#include <string>
+#include <vector>
+#include <utility>
+#include <stack>
+
+#include "utils/info.h"
 #include "ir/anf.h"
+#include "ir/func_graph.h"
+#include "utils/any.h"
 
 namespace mindspore {
-std::string TraceInfo::GetActionBetweenNode(const DebugInfoPtr &info) {
-  if (info == nullptr) {
-    return "";
-  }
-  std::string act_name = action_name();
-  if (debug_info() == nullptr) {
-    MS_LOG(EXCEPTION) << "Traced debug info is null";
-  }
-  if (debug_info() == info) {
-    return act_name;
-  } else if (debug_info()->trace_info() != nullptr) {
-    return act_name + debug_info()->trace_info()->GetActionBetweenNode(info);
-  }
-  return "Not in the traced info";
-}
+namespace trace {
+std::string GetDebugInfo(const DebugInfoPtr &info, SourceLineTip tip = kSourceLineTipNextLine);
+std::string GetDebugInfo(const DebugInfoPtr &info, const std::string &prefix,
+                         SourceLineTip tip = kSourceLineTipNextLine);
+}  // namespace trace
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CORE_UTILS_TRACE_BASE_H_

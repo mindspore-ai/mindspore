@@ -33,7 +33,7 @@
 #include "vm/segment_runner.h"
 #include "debug/draw.h"
 #include "debug/anf_ir_dump.h"
-#include "utils/func_graph_cloner.h"
+#include "ir/func_graph_cloner.h"
 
 namespace mindspore {
 namespace opt {

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_UTILS_CONVERT_UTILS_BASE_H_
-#define MINDSPORE_CCSRC_UTILS_CONVERT_UTILS_BASE_H_
+#ifndef MINDSPORE_CORE_UTILS_CONVERT_UTILS_BASE_H_
+#define MINDSPORE_CORE_UTILS_CONVERT_UTILS_BASE_H_
 
 #include <limits>
 #include <memory>
@@ -129,4 +129,4 @@ inline uint8_t *AddressOffset(void *address, size_t offset) {
 }
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_UTILS_CONVERT_UTILS_BASE_H_
+#endif  // MINDSPORE_CORE_UTILS_CONVERT_UTILS_BASE_H_

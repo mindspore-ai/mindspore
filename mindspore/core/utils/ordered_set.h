@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_UTILS_ORDERED_SET_H_
-#define MINDSPORE_CCSRC_UTILS_ORDERED_SET_H_
+#ifndef MINDSPORE_CORE_UTILS_ORDERED_SET_H_
+#define MINDSPORE_CORE_UTILS_ORDERED_SET_H_
 
 #include <algorithm>
 #include <unordered_map>
@@ -280,4 +280,4 @@ class OrderedSet {
 
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_UTILS_ORDERED_SET_H_
+#endif  // MINDSPORE_CORE_UTILS_ORDERED_SET_H_

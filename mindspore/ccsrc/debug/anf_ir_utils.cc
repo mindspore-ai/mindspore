@@ -36,7 +36,7 @@
 #include "utils/ordered_set.h"
 #include "utils/utils.h"
 #include "debug/trace.h"
-#include "debug/label.h"
+#include "utils/label.h"
 #include "utils/context/ms_context.h"
 #include "frontend/operator/ops.h"
 

@@ -24,7 +24,6 @@
 #include "ir/visitor.h"
 #include "ir/func_graph.h"
 #include "base/core_ops.h"
-#include "debug/label.h"
 
 namespace mindspore {
 // namespace to support intermediate representation definition

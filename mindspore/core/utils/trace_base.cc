@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "debug/trace_base.h"
+#include "utils/trace_base.h"
 
 #include <iostream>
 #include <fstream>

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_UTILS_SIGNAL_H_
-#define MINDSPORE_CCSRC_UTILS_SIGNAL_H_
+#ifndef MINDSPORE_CORE_UTILS_SIGNAL_H_
+#define MINDSPORE_CORE_UTILS_SIGNAL_H_
 
 #include <functional>
 #include <memory>
@@ -66,4 +66,4 @@ class Signal {
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_UTILS_EVENT_H_
+#endif  // MINDSPORE_CORE_UTILS_EVENT_H_

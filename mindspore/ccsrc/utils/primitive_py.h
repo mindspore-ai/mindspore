@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_IR_PRIMITIVE_PY_H_
-#define MINDSPORE_CORE_IR_PRIMITIVE_PY_H_
+#ifndef MINDSPORE_CCSRC_UTILS_PRIMITIVE_PY_H_
+#define MINDSPORE_CCSRC_UTILS_PRIMITIVE_PY_H_
 
 #include <unordered_map>
 #include <vector>
@@ -77,4 +77,4 @@ class PrimitivePy : public Primitive {
 
 using PrimitivePyPtr = std::shared_ptr<PrimitivePy>;
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_IR_PRIMITIVE_PY_H_
+#endif  // MINDSPORE_CCSRC_UTILS_PRIMITIVE_PY_H_

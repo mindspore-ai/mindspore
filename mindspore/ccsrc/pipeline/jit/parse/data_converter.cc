@@ -28,7 +28,7 @@
 #include "pipeline/jit/parse/python_adapter.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/composite.h"
-#include "utils/func_graph_cloner.h"
+#include "ir/func_graph_cloner.h"
 #include "utils/symbolic.h"
 #include "utils/context/ms_context.h"
 #include "debug/trace.h"

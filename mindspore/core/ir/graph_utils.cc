@@ -28,7 +28,6 @@
 #include <deque>
 #include <set>
 
-#include "debug/label.h"
 #include "ir/func_graph.h"
 #include "utils/log_adapter.h"
 #include "utils/context/ms_context.h"

@@ -23,9 +23,8 @@
 #include "base/core_ops.h"
 #include "utils/ordered_set.h"
 #include "abstract/abstract_value.h"
-#include "debug/trace.h"
+#include "abstract/abstract_function.h"
 #include "debug/draw.h"
-#include "debug/label.h"
 
 namespace mindspore {
 using mindspore::abstract::AbstractFunction;

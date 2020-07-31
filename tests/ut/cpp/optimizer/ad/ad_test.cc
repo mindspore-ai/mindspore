@@ -21,7 +21,7 @@
 #include "common/py_func_graph_fetcher.h"
 #include "ir/manager.h"
 #include "ir/value.h"
-#include "utils/func_graph_cloner.h"
+#include "ir/func_graph_cloner.h"
 #include "utils/log_adapter.h"
 #include "ir/graph_utils.h"
 #include "pipeline/jit/resource.h"

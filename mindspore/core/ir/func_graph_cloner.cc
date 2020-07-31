@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "utils/func_graph_cloner.h"
+#include "ir/func_graph_cloner.h"
 
 #include <algorithm>
 
@@ -23,7 +23,6 @@
 #include "base/core_ops.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
-#include "utils/profile.h"
 #include "utils/context/ms_context.h"
 #include "ir/graph_utils.h"
 

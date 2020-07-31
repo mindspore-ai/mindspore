@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_UTILS_GRAPH_UTILS_H_
-#define MINDSPORE_CCSRC_UTILS_GRAPH_UTILS_H_
+#ifndef MINDSPORE_CORE_IR_GRAPH_UTILS_H_
+#define MINDSPORE_CORE_IR_GRAPH_UTILS_H_
 
 #include <unordered_map>
 #include <unordered_set>
@@ -32,7 +32,7 @@
 #include "ir/primitive.h"
 #include "ir/scalar.h"
 #include "ir/tensor.h"
-#include "debug/label.h"
+#include "utils/label.h"
 
 namespace mindspore {
 
@@ -94,4 +94,4 @@ class FuncGraphIndex {
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_UTILS_GRAPH_UTILS_H_
+#endif  // MINDSPORE_CORE_IR_GRAPH_UTILS_H_

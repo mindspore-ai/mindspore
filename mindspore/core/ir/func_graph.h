@@ -33,6 +33,7 @@
 #include "utils/ordered_set.h"
 #include "utils/ordered_map.h"
 #include "base/base_ref.h"
+#include "ir/func_graph_cloner.h"
 
 namespace mindspore {
 using BaseRefCounterMap = OrderedMap<BaseRef, int, BaseRefHash>;
@@ -420,8 +421,6 @@ size_t NewFgSeenGeneration();
 std::shared_ptr<OrderedSet<CNodePtr>> FindRoots(const std::vector<CNodePtr> &segment);
 // Find the leaf cnodes of a segment of cnodes.
 std::shared_ptr<OrderedSet<CNodePtr>> FindLeaves(const std::vector<CNodePtr> &segment);
-
-FuncGraphPtr BasicClone(const FuncGraphPtr &func_graph);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_FUNC_GRAPH_H_
