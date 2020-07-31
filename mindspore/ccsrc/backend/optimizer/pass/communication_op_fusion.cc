@@ -188,9 +188,13 @@ AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr 
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
   MS_EXCEPTION_IF_NULL(abstract_tuple);
   fused_node->set_abstract(abstract_tuple);
-  AnfAlgo::CopyNodeAttr("fusion", communication_op_info.communication_op_nodes[end_index], fused_node);
-  AnfAlgo::CopyNodeAttr("op", communication_op_info.communication_op_nodes[end_index], fused_node);
-  AnfAlgo::CopyNodeAttr("group", communication_op_info.communication_op_nodes[end_index], fused_node);
+  auto final_node = communication_op_info.communication_op_nodes[end_index];
+  AnfAlgo::CopyNodeAttr(kAttrFusion, final_node, fused_node);
+  AnfAlgo::CopyNodeAttr(kAttrOp, final_node, fused_node);
+  AnfAlgo::CopyNodeAttr(kAttrGroup, final_node, fused_node);
+  if (AnfAlgo::HasNodeAttr(kAttrRankSize, final_node)) {
+    AnfAlgo::CopyNodeAttr(kAttrRankSize, final_node, fused_node);
+  }
   return fused_node;
 }
 

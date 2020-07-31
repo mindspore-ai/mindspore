@@ -250,6 +250,7 @@ constexpr auto kAttrChildGraph = "child_graph";
 constexpr auto kAttrInputNums = "inputNums";
 constexpr auto kAttrT = "T";
 constexpr auto kAttrNum = "num";
+constexpr auto kAttrRankSize = "rank_size";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
