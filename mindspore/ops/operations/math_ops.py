@@ -814,9 +814,13 @@ class AddN(PrimitiveWithInfer):
         validator.check_value_type("inputs", inputs, [tuple, list], cls_name)
         validator.check_integer("inputs", len(inputs), 1, Rel.GE, cls_name)
         args = {}
+        contains_undetermined = False
         for i, dtype in enumerate(inputs):
             args[f"inputs[{i}]"] = dtype
-        validator.check_tensor_type_same(args, mstype.number_type + (mstype.bool_,), cls_name)
+            if dtype == mstype.undetermined:
+                contains_undetermined = True
+        if not contains_undetermined:
+            validator.check_tensor_type_same(args, mstype.number_type + (mstype.bool_,), cls_name)
         return inputs[0]
 
     def infer_value(self, inputs):

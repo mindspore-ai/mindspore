@@ -32,6 +32,7 @@
 #include "ir/tensor.h"
 #include "ir/param_value.h"
 #include "utils/base_ref_extends.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 py::object BuiltinsToPyData(const Any &value);
@@ -404,6 +405,13 @@ AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py
     auto abstract_none = std::make_shared<abstract::AbstractNone>();
     return abstract_none;
   } else {
+    // When sparse enabled, the undetermined might be raised and eliminated in opt passes
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    bool enable_sparse = context->enable_sparse();
+    if (enable_sparse) {
+      return std::make_shared<abstract::AbstractUndetermined>();
+    }
     MS_LOG(EXCEPTION) << "Python evaluator return invalid shape or type. " << (std::string)py::str(type_obj);
   }
 }

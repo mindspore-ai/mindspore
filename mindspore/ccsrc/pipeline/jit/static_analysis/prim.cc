@@ -145,9 +145,11 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
 
 using mindspore::parse::PyObjectWrapper;
 
+std::unordered_set<std::string> prims_to_skip_undetermined_infer{"make_tuple", "make_list", "switch", "env_setitem",
+                                                                 "env_getitem"};
+
 EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
-  if (prim_ != prim::kPrimMakeTuple && prim_ != prim::kPrimSwitch && prim_ != prim::kPrimEnvSetItem &&
-      prim_ != prim::kPrimEnvGetItem) {
+  if (prims_to_skip_undetermined_infer.find(prim_->name()) == prims_to_skip_undetermined_infer.end()) {
     auto ret_abstract = AbstractEval(args);
     if (ret_abstract != nullptr) {
       MS_LOG(DEBUG) << "StandardPrimEvaluator eval Undetermined";
@@ -167,17 +169,23 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   AbstractBasePtrList args_spec_list;
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
                        [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->GetEvaluatedValue()->abstract(); });
-  auto ret_abstract = AbstractEval(args_spec_list);
-  if (ret_abstract != nullptr) {
-    MS_LOG(DEBUG) << "StandardPrimEvaluator eval Undetermined";
-    return ret_abstract;
+  auto do_signature = prim_->cast<prim::DoSignaturePrimitivePtr>();
+  auto &func = do_signature->function();
+  if (func->isa<Primitive>()) {
+    auto sig_prim = func->cast<PrimitivePtr>();
+    if (prims_to_skip_undetermined_infer.find(sig_prim->name()) == prims_to_skip_undetermined_infer.end()) {
+      auto ret_abstract = AbstractEval(args_spec_list);
+      if (ret_abstract != nullptr) {
+        MS_LOG(DEBUG) << "DoSignatureEvaluator eval Undetermined";
+        return ret_abstract;
+      }
+    }
   }
 
   if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Node of out_conf should be CNode";
   }
 
-  auto do_signature = dyn_cast<prim::DoSignaturePrimitive>(prim_);
   auto out_node = dyn_cast<CNode>(out_conf->node());
   const auto &out_node_inputs = out_node->inputs();
   if (out_node->inputs().size() == 0 || (out_node_inputs.size() - 1) != args_conf_list.size()) {
@@ -446,6 +454,11 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
   } else if (abs_base->isa<AbstractFunction>()) {
     dic["shape"] = py::none();
     dic["dtype"] = abs_base->BuildType();
+    dic["value"] = py::none();
+  } else if (abs_base->isa<AbstractUndetermined>()) {
+    auto arg = dyn_cast<AbstractUndetermined>(abs_base);
+    dic["shape"] = py::none();
+    dic["dtype"] = arg->BuildType();
     dic["value"] = py::none();
   } else {
     auto value = abs_base->BuildValue();

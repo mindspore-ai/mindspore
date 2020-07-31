@@ -290,7 +290,19 @@ class IndexedSlices:
     """
 
     def __init__(self, indices, values, dense_shape):
-        raise NotImplementedError
+        "Init IndexedSlices"
+        self.__indices = indices
+        self.__values = values
+        self.__dense_shape = dense_shape
+
+    def indices(self):
+        return self.__indices
+
+    def values(self):
+        return self.__values
+
+    def dense_shape(self):
+        return self.__dense_shape
 
 
 class SparseTensor:
@@ -331,4 +343,16 @@ class SparseTensor:
     """
 
     def __init__(self, indices, values, dense_shape):
-        raise NotImplementedError
+        "Init SparseTensor"
+        self.__indices = indices
+        self.__values = values
+        self.__dense_shape = dense_shape
+
+    def indices(self):
+        return self.__indices
+
+    def values(self):
+        return self.__values
+
+    def dense_shape(self):
+        return self.__dense_shape
