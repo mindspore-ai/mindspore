@@ -48,6 +48,7 @@ class MnistDataset;
 class VOCDataset;
 // Dataset Op classes (in alphabetical order)
 class BatchDataset;
+class ConcatDataset;
 class MapDataset;
 class ProjectDataset;
 class RenameDataset;
@@ -98,6 +99,14 @@ std::shared_ptr<ImageFolderDataset> ImageFolder(std::string dataset_dir, bool de
 /// \return Shared pointer to the current MnistDataset
 std::shared_ptr<MnistDataset> Mnist(std::string dataset_dir, std::shared_ptr<SamplerObj> sampler = nullptr);
 
+/// \brief Function to create a ConcatDataset
+/// \notes Reload "+" operator to concat two datasets
+/// \param[in] datasets1 Shared pointer to the first dataset to be concatenated
+/// \param[in] datasets2 Shared pointer to the second dataset to be concatenated
+/// \return Shared pointer to the current ConcatDataset
+std::shared_ptr<ConcatDataset> operator+(const std::shared_ptr<Dataset> &datasets1,
+                                         const std::shared_ptr<Dataset> &datasets2);
+
 /// \brief Function to create a VOCDataset
 /// \notes The generated dataset has multi-columns :
 ///        - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['label', dtype=uint32],
@@ -115,6 +124,12 @@ std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::strin
                                 const std::string &mode = "train",
                                 const std::map<std::string, int32_t> &class_index = {}, bool decode = false,
                                 std::shared_ptr<SamplerObj> sampler = nullptr);
+
+/// \brief Function to create a ZipDataset
+/// \notes Applies zip to the dataset
+/// \param[in] datasets List of shared pointers to the datasets that we want to zip
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<ZipDataset> Zip(const std::vector<std::shared_ptr<Dataset>> &datasets);
 
 /// \class Dataset datasets.h
 /// \brief A base class to represent a dataset in the data pipeline.
@@ -157,6 +172,12 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   ///    be dropped and not propagated to the next node
   /// \return Shared pointer to the current BatchDataset
   std::shared_ptr<BatchDataset> Batch(int32_t batch_size, bool drop_remainder = false);
+
+  /// \brief Function to create a ConcatDataset
+  /// \notes Concat the datasets in the input
+  /// \param[in] datasets List of shared pointers to the dataset that should be concatenated together
+  /// \return Shared pointer to the current ConcatDataset
+  std::shared_ptr<ConcatDataset> Concat(const std::vector<std::shared_ptr<Dataset>> &datasets);
 
   /// \brief Function to create a MapDataset
   /// \notes Applies each operation in operations to this dataset
@@ -220,7 +241,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
 
   /// \brief Function to create a Zip Dataset
   /// \notes Applies zip to the dataset
-  /// \param[in] datasets A list of shared pointer to the datasets that we want to zip
+  /// \param[in] datasets A list of shared pointers to the datasets that we want to zip
   /// \return Shared pointer to the current Dataset
   std::shared_ptr<ZipDataset> Zip(const std::vector<std::shared_ptr<Dataset>> &datasets);
 
@@ -377,6 +398,26 @@ class BatchDataset : public Dataset {
   std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map_;
 };
 
+class ConcatDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  explicit ConcatDataset(const std::vector<std::shared_ptr<Dataset>> &datasets);
+
+  /// \brief Destructor
+  ~ConcatDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::vector<std::shared_ptr<Dataset>> datasets_;
+};
+
 class MapDataset : public Dataset {
  public:
   /// \brief Constructor
@@ -521,7 +562,7 @@ class TakeDataset : public Dataset {
 class ZipDataset : public Dataset {
  public:
   /// \brief Constructor
-  ZipDataset();
+  explicit ZipDataset(const std::vector<std::shared_ptr<Dataset>> &datasets);
 
   /// \brief Destructor
   ~ZipDataset() = default;
@@ -533,6 +574,9 @@ class ZipDataset : public Dataset {
   /// \brief Parameters validation
   /// \return bool true if all the params are valid
   bool ValidateParams() override;
+
+ private:
+  std::vector<std::shared_ptr<Dataset>> datasets_;
 };
 
 }  // namespace api

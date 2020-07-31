@@ -27,6 +27,7 @@
 #include "minddata/dataset/engine/datasetops/source/voc_op.h"
 // Dataset operator headers (in alphabetical order)
 #include "minddata/dataset/engine/datasetops/batch_op.h"
+#include "minddata/dataset/engine/datasetops/concat_op.h"
 #include "minddata/dataset/engine/datasetops/map_op/map_op.h"
 #include "minddata/dataset/engine/datasetops/project_op.h"
 #include "minddata/dataset/engine/datasetops/rename_op.h"
@@ -127,11 +128,27 @@ std::shared_ptr<MnistDataset> Mnist(std::string dataset_dir, std::shared_ptr<Sam
   return ds->ValidateParams() ? ds : nullptr;
 }
 
+// Function to overload "+" operator to concat two datasets
+std::shared_ptr<ConcatDataset> operator+(const std::shared_ptr<Dataset> &datasets1,
+                                         const std::shared_ptr<Dataset> &datasets2) {
+  std::shared_ptr<ConcatDataset> ds = std::make_shared<ConcatDataset>(std::vector({datasets1, datasets2}));
+
+  return ds->ValidateParams() ? ds : nullptr;
+}
+
 // Function to create a VOCDataset.
 std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::string &task, const std::string &mode,
                                 const std::map<std::string, int32_t> &class_index, bool decode,
                                 std::shared_ptr<SamplerObj> sampler) {
   auto ds = std::make_shared<VOCDataset>(dataset_dir, task, mode, class_index, decode, sampler);
+
+  // Call derived class validation method.
+  return ds->ValidateParams() ? ds : nullptr;
+}
+
+// Function to create a ZipDataset.
+std::shared_ptr<ZipDataset> Zip(const std::vector<std::shared_ptr<Dataset>> &datasets) {
+  auto ds = std::make_shared<ZipDataset>(datasets);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
@@ -155,6 +172,14 @@ std::shared_ptr<BatchDataset> Dataset::Batch(int32_t batch_size, bool drop_remai
   ds->children.push_back(shared_from_this());
 
   return ds;
+}
+
+// Function to create a Concat dataset
+std::shared_ptr<ConcatDataset> Dataset::Concat(const std::vector<std::shared_ptr<Dataset>> &datasets) {
+  auto ds = std::make_shared<ConcatDataset>(datasets);
+  ds->children.push_back(shared_from_this());
+
+  return ds->ValidateParams() ? ds : nullptr;
 }
 
 // Function to create a Map dataset.
@@ -269,16 +294,10 @@ std::shared_ptr<Dataset> Dataset::Take(int32_t count) {
 // Function to create a Zip dataset
 std::shared_ptr<ZipDataset> Dataset::Zip(const std::vector<std::shared_ptr<Dataset>> &datasets) {
   // Default values
-  auto ds = std::make_shared<ZipDataset>();
+  auto ds = std::make_shared<ZipDataset>(datasets);
+  ds->children.push_back(shared_from_this());
 
-  if (!ds->ValidateParams()) {
-    return nullptr;
-  }
-  for (auto dataset : datasets) {
-    ds->children.push_back(dataset);
-  }
-
-  return ds;
+  return ds->ValidateParams() ? ds : nullptr;
 }
 
 // OTHER FUNCTIONS
@@ -526,6 +545,27 @@ bool BatchDataset::ValidateParams() {
   return true;
 }
 
+// Function to build ConcatOp
+ConcatDataset::ConcatDataset(const std::vector<std::shared_ptr<Dataset>> &datasets) : datasets_(datasets) {
+  this->children = datasets_;
+}
+
+bool ConcatDataset::ValidateParams() {
+  if (datasets_.empty()) {
+    MS_LOG(ERROR) << "Concat: concatenated datasets are not specified.";
+    return false;
+  }
+  return true;
+}
+
+std::vector<std::shared_ptr<DatasetOp>> ConcatDataset::Build() {
+  // A vector containing shared pointer to the Dataset Ops that this object will create
+  std::vector<std::shared_ptr<DatasetOp>> node_ops;
+
+  node_ops.push_back(std::make_shared<ConcatOp>(connector_que_size_));
+  return node_ops;
+}
+
 MapDataset::MapDataset(std::vector<std::shared_ptr<TensorOperation>> operations, std::vector<std::string> input_columns,
                        std::vector<std::string> output_columns, const std::vector<std::string> &project_columns)
     : operations_(operations),
@@ -698,9 +738,19 @@ bool TakeDataset::ValidateParams() {
 }
 
 // Function to build ZipOp
-ZipDataset::ZipDataset() {}
+ZipDataset::ZipDataset(const std::vector<std::shared_ptr<Dataset>> &datasets) : datasets_(datasets) {
+  for (auto dataset : datasets_) {
+    this->children.push_back(dataset);
+  }
+}
 
-bool ZipDataset::ValidateParams() { return true; }
+bool ZipDataset::ValidateParams() {
+  if (datasets_.empty()) {
+    MS_LOG(ERROR) << "Zip: dataset to zip are not specified.";
+    return false;
+  }
+  return true;
+}
 
 std::vector<std::shared_ptr<DatasetOp>> ZipDataset::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
