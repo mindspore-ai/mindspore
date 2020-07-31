@@ -16,7 +16,7 @@
 #include <gtest/gtest.h>
 #include <string>
 #include "common/common_test.h"
-#include "benchmark/benchmark.h"
+#include "tools/benchmark/benchmark.h"
 
 namespace mindspore {
 namespace lite {
@@ -26,19 +26,25 @@ class BenchmarkTest : public mindspore::Common {
 };
 
 TEST_F(BenchmarkTest, TestVideo) {
-  const char *argv[] = {"./benchmark", "--modelPath=./models/hiai_label_and_video.ms"};
+  const char *argv[] = {"./benchmark", "--modelPath=./hiai/hiai_label_and_video.ms"
+                                       "--inDataPath=./hiai/hiai_label_and_video.bin"
+                                       "--calibDataPath=./hiai/hiai_label_and_video.txt"};
   auto status = RunBenchmark(2, argv);
   ASSERT_EQ(status, RET_OK);
 }
 
 TEST_F(BenchmarkTest, TestOCR_02) {
-  const char *argv[] = {"./benchmark", "--modelPath=./models/hiai_cv_focusShootOCRMOdel_02.ms"};
+  const char *argv[] = {"./benchmark", "--modelPath=./hiai/hiai_cv_focusShootOCRMOdel_02.ms"
+                                       "--inDataPath=./hiai/hiai_cv_focusShootOCRMOdel_02.bin"
+                                       "--calibDataPath=./hiai/hiai_cv_focusShootOCRMOdel_02.txt"};
   auto status = RunBenchmark(2, argv);
   ASSERT_EQ(status, RET_OK);
 }
 
 TEST_F(BenchmarkTest, TestHebing) {
-  const char *argv[] = {"./benchmark", "--modelPath=./models/model_hebing_3branch.ms"};
+  const char *argv[] = {"./benchmark", "--modelPath=./hiai/model_hebing_3branch.ms"
+                                       "--inDataPath=./hiai/model_hebing_3branch.bin"
+                                       "--calibDataPath=./hiai/model_hebing_3branch.txt"};
   auto status = RunBenchmark(2, argv);
   ASSERT_EQ(status, RET_OK);
 }

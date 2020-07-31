@@ -15,7 +15,7 @@
  */
 #include <gtest/gtest.h>
 #include <string>
-#include "converter/converter.h"
+#include "tools/converter/converter.h"
 #include "common/common_test.h"
 
 namespace mindspore {
@@ -26,28 +26,28 @@ class ConverterTest : public mindspore::Common {
 };
 
 TEST_F(ConverterTest, TestLenet) {
-  const char *argv[] = {"./converter", "--fmk=MS", "--modelFile=./models/lenet_bin.pb",
+  const char *argv[] = {"./converter", "--fmk=MS", "--modelFile=./common/lenet_bin.pb",
                         "--outputFile=./models/lenet_bin"};
   auto status = RunConverter(4, argv);
   ASSERT_EQ(status, RET_OK);
 }
 
 TEST_F(ConverterTest, TestVideo) {
-  const char *argv[] = {"./converter", "--fmk=TFLITE", "--modelFile=./models/hiai_label_and_video.tflite",
+  const char *argv[] = {"./converter", "--fmk=TFLITE", "--modelFile=./hiai/hiai_label_and_video.tflite",
                         "--outputFile=./models/hiai_label_and_video"};
   auto status = RunConverter(4, argv);
   ASSERT_EQ(status, RET_OK);
 }
 
 TEST_F(ConverterTest, TestOCR_02) {
-  const char *argv[] = {"./converter", "--fmk=TFLITE", "--modelFile=./models/hiai_cv_focusShootOCRMOdel_02.tflite",
+  const char *argv[] = {"./converter", "--fmk=TFLITE", "--modelFile=./hiai/hiai_cv_focusShootOCRMOdel_02.tflite",
                         "--outputFile=./models/hiai_cv_focusShootOCRMOdel_02"};
   auto status = RunConverter(4, argv);
   ASSERT_EQ(status, RET_OK);
 }
 
 TEST_F(ConverterTest, TestHebing) {
-  const char *argv[] = {"./converter", "--fmk=CAFFE", "--modelFile=./models/model_hebing_3branch.caffemodel",
+  const char *argv[] = {"./converter", "--fmk=CAFFE", "--modelFile=./hiai/model_hebing_3branch.caffemodel",
                         "--weightFile=./models/model_hebing_3branch.prototxt",
                         "--outputFile=./models/model_hebing_3branch"};
   auto status = RunConverter(5, argv);

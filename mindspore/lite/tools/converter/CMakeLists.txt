@@ -15,7 +15,7 @@ set(ANF_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/meta_func_graph.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/func_graph.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/graph_utils.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../ccsrc/utils/func_graph_cloner.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/func_graph_cloner.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/func_graph_extends.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/primitive.cc
@@ -38,14 +38,14 @@ set(ANF_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/symbolic.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/misc.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/flags.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/trace_base.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/trace_info.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/label.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/info.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/profile.cc
         ## ccsrc
-        ${CCSRC_DIR}/debug/info.cc
-        ${CCSRC_DIR}/debug/trace_base.cc
-        ${CCSRC_DIR}/debug/trace_info.cc
-        ${CCSRC_DIR}/debug/label.cc
         ${CCSRC_DIR}/debug/draw.cc
         ${CCSRC_DIR}/pybind_api/export_flags.cc
-        ${CCSRC_DIR}/utils/profile.cc
         ${CCSRC_DIR}/utils/context/ms_context.cc
         ${CCSRC_DIR}/frontend/parallel/costmodel_context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/graph_utils_extends.cc
