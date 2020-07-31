@@ -16,7 +16,7 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "bash run_distribute_pretrain.sh DATA_DIR MINDSPORE_HCCL_CONFIG_PATH"
+echo "bash run_distribute_pretrain.sh DATA_DIR RANK_TABLE_FILE"
 echo "for example: bash run_distribute_pretrain.sh /path/dataset /path/hccl.json"
 echo "It is better to use absolute path."
 echo "For hyper parameter, please note that you should customize the scripts:

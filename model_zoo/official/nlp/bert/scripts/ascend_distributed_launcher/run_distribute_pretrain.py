@@ -62,7 +62,6 @@ def distribute_pretrain():
     cfg = dict(cf.items("config"))
 
     print("hccl_config_dir:", args.hccl_config_dir)
-    os.environ['MINDSPORE_HCCL_CONFIG_PATH'] = args.hccl_config_dir
     os.environ['RANK_TABLE_FILE'] = args.hccl_config_dir
 
     cores = multiprocessing.cpu_count()

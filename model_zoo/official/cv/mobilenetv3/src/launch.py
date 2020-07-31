@@ -139,7 +139,6 @@ def main():
         env['DEVICE_ID'] = str(device_id)
         if args.nproc_per_node > 1:
             env['RANK_TABLE_FILE'] = table_fn
-            env['RANK_TABLE_FILE'] = table_fn
         if os.path.exists(device_dir):
             shutil.rmtree(device_dir)
         os.mkdir(device_dir)

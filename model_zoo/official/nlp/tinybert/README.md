@@ -21,7 +21,7 @@
 - Run `run_distribute_gd.sh` for distributed general distill of BERT-base model.
 
     ``` bash
-    bash scripts/run_distribute_gd.sh DEVICE_NUM EPOCH_SIZE MINDSPORE_HCCL_CONFIG_PATH
+    bash scripts/run_distribute_gd.sh DEVICE_NUM EPOCH_SIZE RANK_TABLE_FILE
     ```  
 
 ### Task Distill
