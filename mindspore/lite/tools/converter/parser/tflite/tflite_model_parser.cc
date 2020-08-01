@@ -112,10 +112,17 @@ STATUS TfliteModelParser::SetOpOutputIdx(const std::unique_ptr<tflite::SubGraphT
   return RET_OK;
 }
 
-STATUS TfliteModelParser::SetOpInputIdx(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+STATUS TfliteModelParser::SetOpInputIdx(const std::unique_ptr<tflite::ModelT> &tflite_model,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::OperatorT> &tflite_op, TensorCache *tensorCache) {
-  for (const auto &tfliteIndex : tflite_op->inputs) {
-    const auto &tflite_tensor = tflite_subgraph->tensors[tfliteIndex];
+  auto op_type = GetTfliteNodeType(tflite_op, tflite_model);
+  std::vector<int32_t> op_inputs(tflite_op->inputs);
+  if (op_type == "DeConv2D") {
+    reverse(op_inputs.begin(), op_inputs.end());
+  }
+
+  for (const auto &tflite_index : op_inputs) {
+    const auto &tflite_tensor = tflite_subgraph->tensors[tflite_index];
     auto tensor_name = tflite_tensor->name;
     auto op = tfliteOpMap[tflite_op.get()];
     unsigned int index = tensorCache->FindTensor(tensor_name);
@@ -228,8 +235,8 @@ MetaGraphT *TfliteModelParser::Parse(const std::string &modelFile, const std::st
   }
 
   for (const auto &tflite_op : tflite_subgraph->operators) {
-    auto statusTmp = SetOpInputIdx(tflite_subgraph, tflite_op, &tensorCache);
-    if (statusTmp != RET_OK) {
+    auto status_tmp = SetOpInputIdx(tflite_model, tflite_subgraph, tflite_op, &tensorCache);
+    if (status_tmp != RET_OK) {
       // MS_LOGE("Set Op %s Input Index Failed!", tfliteOpMap.at(tflite_op.get())->name.c_str());
     }
   }

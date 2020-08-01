@@ -55,6 +55,7 @@ std::map<tflite::BuiltinOperator, std::string> tfMsOpTypeMap{
   {tflite::BuiltinOperator_ARG_MAX, "Argmax"},
   {tflite::BuiltinOperator_SQUARED_DIFFERENCE, "SquaredDifference"},
   {tflite::BuiltinOperator_FAKE_QUANT, "FakeQuant"},
+  {tflite::BuiltinOperator_TRANSPOSE_CONV, "DeConv2D"},
 };
 
 std::string GetMSOpType(tflite::BuiltinOperator tfliteOpType) {
