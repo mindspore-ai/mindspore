@@ -62,6 +62,7 @@
 #include "src/runtime/kernel/arm/opclib/fp32/unsqueeze.h"
 #include "src/runtime/kernel/arm/opclib/fp32/one_hot.h"
 #include "src/runtime/kernel/arm/opclib/fp32/strided_slice.h"
+#include "src/runtime/kernel/arm/base/prior_box.h"
 
 namespace mindspore::kernel {
 FillParameter *PopulateFillParam(const lite::Primitive *primitive) {
@@ -990,6 +991,60 @@ OpParameter *PopulateAddNParam(const lite::Primitive *primitive) {
   return parameter;
 }
 
+PriorBoxParameter *PopulatePriorBoxParameter(const lite::Primitive *primitive) {
+  PriorBoxParameter *param = new (std::nothrow) PriorBoxParameter();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "new PriorBoxParameter failed.";
+    return nullptr;
+  }
+  param->op_parameter_.type_ = primitive->Type();
+  auto prior_box_param = primitive->Value()->value_as_PriorBox();
+
+  if (prior_box_param->min_sizes()->size() > PRIOR_BOX_MAX_NUM) {
+    MS_LOG(ERROR) << "PriorBox min_sizes size exceeds max num " << PRIOR_BOX_MAX_NUM << ", got "
+                  << prior_box_param->min_sizes();
+    delete (param);
+    return nullptr;
+  }
+  param->min_sizes_size = prior_box_param->min_sizes()->size();
+  if (prior_box_param->max_sizes()->size() > PRIOR_BOX_MAX_NUM) {
+    MS_LOG(ERROR) << "PriorBox max_sizes size exceeds max num " << PRIOR_BOX_MAX_NUM << ", got "
+                  << prior_box_param->max_sizes();
+    delete (param);
+    return nullptr;
+  }
+  param->max_sizes_size = prior_box_param->max_sizes()->size();
+  (void)memcpy(param->max_sizes, prior_box_param->max_sizes()->data(),
+               prior_box_param->max_sizes()->size() * sizeof(int32_t));
+  (void)memcpy(param->min_sizes, prior_box_param->min_sizes()->data(),
+               prior_box_param->min_sizes()->size() * sizeof(int32_t));
+
+  if (prior_box_param->aspect_ratios()->size() > PRIOR_BOX_MAX_NUM) {
+    MS_LOG(ERROR) << "PriorBox aspect_ratios size exceeds max num " << PRIOR_BOX_MAX_NUM << ", got "
+                  << prior_box_param->aspect_ratios();
+    delete (param);
+    return nullptr;
+  }
+  param->aspect_ratios_size = prior_box_param->aspect_ratios()->size();
+  (void)memcpy(param->aspect_ratios, prior_box_param->aspect_ratios()->data(),
+               prior_box_param->aspect_ratios()->size() * sizeof(float));
+  if (prior_box_param->variances()->size() != PRIOR_BOX_VAR_NUM) {
+    MS_LOG(ERROR) << "PriorBox variances size should be " << PRIOR_BOX_VAR_NUM << ", got "
+                  << prior_box_param->variances()->size();
+    delete (param);
+    return nullptr;
+  }
+  (void)memcpy(param->variances, prior_box_param->variances()->data(), PRIOR_BOX_VAR_NUM * sizeof(float));
+  param->flip = prior_box_param->flip();
+  param->clip = prior_box_param->clip();
+  param->offset = prior_box_param->offset();
+  param->image_size_h = prior_box_param->image_size_h();
+  param->image_size_w = prior_box_param->image_size_w();
+  param->step_h = prior_box_param->step_h();
+  param->step_w = prior_box_param->step_w();
+  return param;
+}
+
 OpParameter *PopulateParameter(const lite::Primitive *primitive) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_type = primitive->Type();
@@ -1109,6 +1164,8 @@ OpParameter *PopulateParameter(const lite::Primitive *primitive) {
       return reinterpret_cast<OpParameter *>(PopulateOneHotParameter(primitive));
     case schema::PrimitiveType_AddN:
       return reinterpret_cast<OpParameter *>(PopulateAddNParam(primitive));
+    case schema::PrimitiveType_PriorBox:
+      return reinterpret_cast<OpParameter *>(PopulatePriorBoxParameter(primitive));
     default:
       break;
   }

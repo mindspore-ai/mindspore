@@ -660,7 +660,14 @@ class StridedSlice : public Primitive {
   std::vector<int> new_axis_mask_;
   std::vector<int> shrink_axis_mask_;
 };
+
+class PriorBox : public Primitive {
+ public:
+  explicit PriorBox(schema::Primitive *primitive) : Primitive(primitive) {}
+  const schema::PriorBox *GetAttrbute() const { return this->primitive->value_as_PriorBox(); }
+  int InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) override;
+};
+
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_OPS_OPS_H_
-
