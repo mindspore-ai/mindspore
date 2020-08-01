@@ -14,14 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_SPLIT_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_SPLIT_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_SPLIT_PARAMETER_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_SPLIT_PARAMETER_H_
 
 #include "src/runtime/kernel/arm/opclib/op_base.h"
-#include "src/runtime/kernel/arm/opclib/split_parameter.h"
 
-int DoSplit(float *in_data, float **out_data, const int *input_shape, int offset, int num_unit,
-            SplitParameter *split_param);
+struct SplitParameter {
+  OpParameter op_parameter_;
+  SplitQuantArg quant_arg_;
+  int num_split_;
+  int split_sizes_[20] = {0};
+  int strides_[20];
+  int split_dim_;
+  int n_dims_;
+  int split_count_;
+};
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_SPLIT_H_
-
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_SPLIT_PARAMETER_H_

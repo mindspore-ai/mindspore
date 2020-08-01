@@ -31,16 +31,28 @@ int ArithmeticSelfInt8CPUKernel::Init() {
   int ret = ReSize();
   auto *input_tensor = inputs_.at(kInputIndex);
   auto in_quant_args = input_tensor->GetQuantParams();
-  arithmeticSelfParameter_->quant_arg_.in_args_.scale_ = in_quant_args.front().scale;
-  arithmeticSelfParameter_->quant_arg_.in_args_.zp_ = in_quant_args.front().zeroPoint;
+  para_->quant_arg_.in_args_.scale_ = in_quant_args.front().scale;
+  para_->quant_arg_.in_args_.zp_ = in_quant_args.front().zeroPoint * (-1);
 
   auto *out_tensor = outputs_.at(kOutputIndex);
   auto out_quant_args = out_tensor->GetQuantParams();
-  arithmeticSelfParameter_->quant_arg_.out_args_.scale_ = out_quant_args.front().scale;
-  arithmeticSelfParameter_->quant_arg_.out_args_.zp_ = out_quant_args.front().zeroPoint;
+  para_->quant_arg_.out_args_.scale_ = out_quant_args.front().scale;
+  para_->quant_arg_.out_args_.zp_ = out_quant_args.front().zeroPoint;
 
-  arithmeticSelfParameter_->quant_arg_.output_activation_max_ = std::numeric_limits<int8_t>::max();
-  arithmeticSelfParameter_->quant_arg_.output_activation_min_ = std::numeric_limits<int8_t>::min();
+  para_->quant_arg_.output_activation_max_ = std::numeric_limits<int8_t>::max();
+  para_->quant_arg_.output_activation_min_ = std::numeric_limits<int8_t>::min();
+
+  if (para_->op_parameter_.type_ == PrimitiveType_Square) {
+    const double real_multiplier =
+      (para_->quant_arg_.in_args_.scale_ * para_->quant_arg_.in_args_.scale_) / para_->quant_arg_.out_args_.scale_;
+
+    int right_shift = 0;
+    QuantizeMultiplierSmallerThanOne(real_multiplier, &para_->quant_arg_.output_multiplier_, &right_shift);
+
+    para_->quant_arg_.shift_left_ = right_shift < 0 ? -right_shift : 0;
+    para_->quant_arg_.shift_right_ = right_shift > 0 ? right_shift : 0;
+  }
+
   return ret;
 }
 
@@ -68,7 +80,7 @@ int ArithmeticSelfInt8CPUKernel::DoArithmeticSelf(int task_id) {
   }
   int offset = task_id * thread_sz_stride_;
   if (arithmeticSelf_run_) {
-    auto ret = arithmeticSelf_run_(in_ptr_ + offset, out_ptr_ + offset, size, arithmeticSelfParameter_->quant_arg_);
+    auto ret = arithmeticSelf_run_(in_ptr_ + offset, out_ptr_ + offset, size, para_->quant_arg_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Run failed, illegal input! ";
       return ret;
@@ -117,4 +129,12 @@ kernel::LiteKernel *CpuArithmeticSelfInt8KernelCreator(const std::vector<lite::t
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Round, CpuArithmeticSelfInt8KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Floor, CpuArithmeticSelfInt8KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Ceil, CpuArithmeticSelfInt8KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Abs, CpuArithmeticSelfInt8KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Sin, CpuArithmeticSelfInt8KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Cos, CpuArithmeticSelfInt8KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Log, CpuArithmeticSelfInt8KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Sqrt, CpuArithmeticSelfInt8KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Rsqrt, CpuArithmeticSelfInt8KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Square, CpuArithmeticSelfInt8KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_LogicalNot, CpuArithmeticSelfInt8KernelCreator)
 }  // namespace mindspore::kernel

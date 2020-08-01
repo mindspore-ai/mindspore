@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/opclib/split.h"
+#include "src/runtime/kernel/arm/opclib/split_parameter.h"
 #include <string.h>
 #include "src/runtime/kernel/arm/opclib/errorcode.h"
 
