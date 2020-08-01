@@ -80,5 +80,6 @@ kernel::LiteKernel *CpuBiasAddInt8KernelCreator(const std::vector<lite::tensor::
   return kernel;
 }
 
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_BiasAdd, CpuBiasAddInt8KernelCreator)
 }  // namespace mindspore::kernel
 

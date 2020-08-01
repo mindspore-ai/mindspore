@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_LITE_KERNEL_H_
 #include <vector>
 #include <string>
-#ifdef ENABLE_FP16
+#ifdef ENABLE_ARM
 #include <arm_neon.h>
 #endif
 #include "src/runtime/kernel/arm/opclib/op_base.h"
@@ -35,14 +35,17 @@ using FLOAT_t = float;
 
 // using mindspore::kernel::AddressPtr;
 namespace mindspore::kernel {
-enum KERNEL_ARCH { kCPU, kGPU, kNPU, kInferShape };
+enum KERNEL_ARCH { kCPU, kGPU, kNPU, kKernelArch_MIN = kCPU, kKernelArch_MAX = kNPU };
 struct KernelKey {
   KERNEL_ARCH arch;
+  TypeId data_type;
   schema::PrimitiveType type;
 
   bool operator<(const KernelKey &dst) const {
     if (arch != dst.arch) {
       return arch < dst.arch;
+    } else if (data_type != dst.data_type) {
+      return data_type < dst.data_type;
     } else {
       return type < dst.type;
     }
@@ -179,4 +182,3 @@ class LiteKernelUtil {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_LITE_KERNEL_H_
-

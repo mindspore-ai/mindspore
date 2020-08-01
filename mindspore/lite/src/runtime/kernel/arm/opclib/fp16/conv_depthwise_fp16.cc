@@ -15,7 +15,6 @@
  */
 
 #include "src/runtime/kernel/arm/opclib/fp16/conv_depthwise_fp16.h"
-#ifdef ENABLE_FP16
 #include <arm_neon.h>
 
 /*conv depthwise fp16 begin*/
@@ -299,4 +298,3 @@ void DeconvDwC8Fp16(float16_t *output_data, const float16_t *input_data, const f
 }
 /*deconv depthwise fp16 end*/
 
-#endif

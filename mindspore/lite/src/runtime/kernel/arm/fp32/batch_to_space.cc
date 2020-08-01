@@ -69,6 +69,7 @@ kernel::LiteKernel *CpuBatchToSpaceFp32KernelCreator(const std::vector<lite::ten
     MS_LOG(ERROR) << "Input op_parameter is nullptr!";
     return nullptr;
   }
+  MS_ASSERT(desc.type == schema::PrimitiveType_BatchToSpace);
   auto *kernel = new (std::nothrow) BatchToSpaceCPUKernel(op_parameter, inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new BatchToSpaceCPUKernel fail!";
@@ -85,7 +86,5 @@ kernel::LiteKernel *CpuBatchToSpaceFp32KernelCreator(const std::vector<lite::ten
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_BatchToSpace, CpuBatchToSpaceFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BatchToSpace, CpuBatchToSpaceFp32KernelCreator)
 }  // namespace mindspore::kernel
-
-

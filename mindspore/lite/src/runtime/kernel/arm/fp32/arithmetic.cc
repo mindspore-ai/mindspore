@@ -112,25 +112,8 @@ kernel::LiteKernel *CpuArithmeticFp32KernelCreator(const std::vector<lite::tenso
                                                    const std::vector<lite::tensor::Tensor *> &outputs,
                                                    OpParameter *parameter, const lite::Context *ctx,
                                                    const kernel::KernelKey &desc) {
-  MS_ASSERT(parameter);
-  MS_ASSERT(inputs.at(0));
-  auto data_type = inputs.at(0)->data_type();
-  kernel::LiteKernel *kernel = nullptr;
-  switch (data_type) {
-    case kNumberTypeFloat32:
-      kernel = new (std::nothrow) ArithmeticCPUKernel(parameter, inputs, outputs, ctx);
-      break;
-    case kNumberTypeInt8:
-      if (desc.type == schema::PrimitiveType_Add) {
-        kernel = new (std::nothrow) QuantizedAddCPUKernel(parameter, inputs, outputs, ctx);
-      } else if (desc.type == schema::PrimitiveType_Mul) {
-        kernel = new (std::nothrow) MulInt8CPUKernel(parameter, inputs, outputs, ctx);
-      } else {
-      }
-      break;
-    default:
-      break;
-  }
+  MS_ASSERT(parameter != nullptr);
+  auto kernel = new (std::nothrow) ArithmeticCPUKernel(parameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create kernel failed, name: " << parameter->name_;
     return nullptr;
@@ -145,24 +128,23 @@ kernel::LiteKernel *CpuArithmeticFp32KernelCreator(const std::vector<lite::tenso
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_Mul, CpuArithmeticFp32KernelCreator)
-REG_KERNEL(kCPU, PrimitiveType_Add, CpuArithmeticFp32KernelCreator)
-REG_KERNEL(kCPU, PrimitiveType_Sub, CpuArithmeticFp32KernelCreator)
-REG_KERNEL(kCPU, PrimitiveType_Div, CpuArithmeticFp32KernelCreator)
-REG_KERNEL(kCPU, PrimitiveType_LogicalAnd, CpuArithmeticFp32KernelCreator)
-REG_KERNEL(kCPU, PrimitiveType_LogicalOr, CpuArithmeticFp32KernelCreator)
-REG_KERNEL(kCPU, PrimitiveType_Maximum, CpuArithmeticFp32KernelCreator)
-REG_KERNEL(kCPU, PrimitiveType_Minimum, CpuArithmeticFp32KernelCreator)
-REG_KERNEL(kCPU, PrimitiveType_FloorDiv, CpuArithmeticFp32KernelCreator)
-REG_KERNEL(kCPU, PrimitiveType_FloorMod, CpuArithmeticFp32KernelCreator)
-REG_KERNEL(kCPU, PrimitiveType_SquaredDifference, CpuArithmeticFp32KernelCreator)
-REG_KERNEL(kCPU, PrimitiveType_Equal, CpuArithmeticFp32KernelCreator)
-REG_KERNEL(kCPU, PrimitiveType_NotEqual, CpuArithmeticFp32KernelCreator)
-REG_KERNEL(kCPU, PrimitiveType_Less, CpuArithmeticFp32KernelCreator)
-REG_KERNEL(kCPU, PrimitiveType_LessEqual, CpuArithmeticFp32KernelCreator)
-REG_KERNEL(kCPU, PrimitiveType_Greater, CpuArithmeticFp32KernelCreator)
-REG_KERNEL(kCPU, PrimitiveType_GreaterEqual, CpuArithmeticFp32KernelCreator)
-REG_KERNEL(kCPU, PrimitiveType_Eltwise, CpuArithmeticFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Mul, CpuArithmeticFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Add, CpuArithmeticFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Sub, CpuArithmeticFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Div, CpuArithmeticFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LogicalAnd, CpuArithmeticFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LogicalOr, CpuArithmeticFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Maximum, CpuArithmeticFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Minimum, CpuArithmeticFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_FloorDiv, CpuArithmeticFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_FloorMod, CpuArithmeticFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SquaredDifference, CpuArithmeticFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Equal, CpuArithmeticFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_NotEqual, CpuArithmeticFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Less, CpuArithmeticFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LessEqual, CpuArithmeticFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Greater, CpuArithmeticFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_GreaterEqual, CpuArithmeticFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Eltwise, CpuArithmeticFp32KernelCreator)
 
 }  // namespace mindspore::kernel
-

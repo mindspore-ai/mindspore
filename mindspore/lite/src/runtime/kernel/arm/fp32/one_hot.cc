@@ -183,5 +183,5 @@ kernel::LiteKernel *CpuOneHotFp32KernelCreator(const std::vector<lite::tensor::T
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_OneHot, CpuOneHotFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_OneHot, CpuOneHotFp32KernelCreator)
 }  // namespace mindspore::kernel

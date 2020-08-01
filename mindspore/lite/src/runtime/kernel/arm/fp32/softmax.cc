@@ -64,6 +64,10 @@ kernel::LiteKernel *CpuSoftmaxFp32KernelCreator(const std::vector<lite::tensor::
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_SoftMax);
   auto *kernel = new (std::nothrow) SoftmaxCPUKernel(opParameter, inputs, outputs);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new SoftmaxCPUKernel fail!";
+    return nullptr;
+  }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
@@ -74,6 +78,6 @@ kernel::LiteKernel *CpuSoftmaxFp32KernelCreator(const std::vector<lite::tensor::
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_SoftMax, CpuSoftmaxFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SoftMax, CpuSoftmaxFp32KernelCreator)
 }  // namespace mindspore::kernel
 

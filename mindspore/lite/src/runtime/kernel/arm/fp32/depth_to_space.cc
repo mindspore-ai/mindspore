@@ -67,6 +67,7 @@ kernel::LiteKernel *CpuDepthToSpaceFp32KernelCreator(const std::vector<lite::ten
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
+  MS_ASSERT(desc.type == schema::PrimitiveType_DepthToSpace);
   auto *kernel = new (std::nothrow) DepthToSpaceCPUKernel(opParameter, inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new DepthToSpaceCPUKernel fail!";
@@ -83,6 +84,6 @@ kernel::LiteKernel *CpuDepthToSpaceFp32KernelCreator(const std::vector<lite::ten
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_DepthToSpace, CpuDepthToSpaceFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_DepthToSpace, CpuDepthToSpaceFp32KernelCreator)
 }  // namespace mindspore::kernel
 

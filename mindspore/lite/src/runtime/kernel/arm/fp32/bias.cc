@@ -52,7 +52,7 @@ int BiasCPUKernel::Init() {
     bias_param_->in_shape1_[i] = 1;
     bias_param_->out_shape_[i] = dims[i];
   }
-  bias_param_->in_shape1_[bias_param_->ndim_ - 1] = dims[bias_param_->ndim_  - 1];
+  bias_param_->in_shape1_[bias_param_->ndim_ - 1] = dims[bias_param_->ndim_ - 1];
   return RET_OK;
 }
 
@@ -61,19 +61,7 @@ kernel::LiteKernel *CpuBiasFp32KernelCreator(const std::vector<lite::tensor::Ten
                                              const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_BiasAdd);
-  MS_ASSERT(inputs.at(0));
-  auto data_type = inputs.at(0)->data_type();
-  kernel::LiteKernel *kernel = nullptr;
-  switch (data_type) {
-    case kNumberTypeFloat32:
-      kernel = new (std::nothrow) BiasCPUKernel(parameter, inputs, outputs);
-      break;
-    case kNumberTypeInt8:
-      kernel = new (std::nothrow) BiasAddInt8CPUKernel(parameter, inputs, outputs, ctx);
-      break;
-    default:
-      break;
-  }
+  auto kernel = new (std::nothrow) BiasCPUKernel(parameter, inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create kernel failed, name: " << parameter->name_;
     return nullptr;
@@ -89,6 +77,5 @@ kernel::LiteKernel *CpuBiasFp32KernelCreator(const std::vector<lite::tensor::Ten
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_BiasAdd, CpuBiasFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BiasAdd, CpuBiasFp32KernelCreator)
 }  // namespace mindspore::kernel
-

@@ -95,6 +95,10 @@ kernel::LiteKernel *CpuLocalResponseNormFp32KernelCreator(const std::vector<lite
   MS_ASSERT(desc.type == schema::PrimitiveType_LocalResponseNormalization);
 
   auto *kernel = new (std::nothrow) LocalResponseNormCPUKernel(opParameter, inputs, outputs, ctx);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new LocalResponseNormCPUKernel fail!";
+    return nullptr;
+  }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
@@ -105,6 +109,5 @@ kernel::LiteKernel *CpuLocalResponseNormFp32KernelCreator(const std::vector<lite
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_LocalResponseNormalization, CpuLocalResponseNormFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LocalResponseNormalization, CpuLocalResponseNormFp32KernelCreator)
 }  // namespace mindspore::kernel
-

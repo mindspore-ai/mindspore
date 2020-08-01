@@ -81,7 +81,7 @@ kernel::LiteKernel *CpuSparseToDenseFp32KernelCreator(const std::vector<lite::te
     MS_LOG(ERROR) << "input opParameter is nullptr!";
     return nullptr;
   }
-
+  MS_ASSERT(desc.type == schema::PrimitiveType_SparseToDense);
   auto *kernel = new (std::nothrow) SparseToDenseCPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SparseToDenseCPUKernel fail!";
@@ -97,6 +97,6 @@ kernel::LiteKernel *CpuSparseToDenseFp32KernelCreator(const std::vector<lite::te
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_SparseToDense, CpuSparseToDenseFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SparseToDense, CpuSparseToDenseFp32KernelCreator)
 }  // namespace mindspore::kernel
 

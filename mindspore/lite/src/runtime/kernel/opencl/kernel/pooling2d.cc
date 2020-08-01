@@ -137,6 +137,6 @@ kernel::LiteKernel *OpenCLPooling2dKernelCreator(const std::vector<lite::tensor:
   return kernel;
 }
 
-REG_KERNEL(kGPU, PrimitiveType_Pooling, OpenCLPooling2dKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Pooling, OpenCLPooling2dKernelCreator)
 }  // namespace kernel
 }  // namespace mindspore

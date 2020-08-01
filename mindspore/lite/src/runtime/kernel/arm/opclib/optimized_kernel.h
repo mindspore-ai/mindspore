@@ -29,11 +29,24 @@ class OptimizeModule {
  public:
   OptimizeModule() {
     bool support_optimize_ops = false;
-
+    bool support_fp16 = false;
 #ifdef __ANDROID__
     int hwcap_type = 16;
     uint32_t hwcap = getHwCap(hwcap_type);
-#if defined(__aarch64__)
+#ifdef ENABLE_ARM64
+    if (hwcap & HWCAP_FPHP) {
+#elif defined(__arm__)
+    if (hwcap & HWCAP_HALF) {
+#endif
+      MS_LOG(INFO) << "Hw cap support FP16, hwcap: 0x" << hwcap;
+      support_fp16 = true;
+#ifdef ENABLE_ARM64
+    }
+#elif defined(__arm__)
+    }
+#endif
+
+#ifdef ENABLE_ARM64
     if (hwcap & HWCAP_ASIMDDP) {
       printf("Hw cap support SMID Dot Product, hwcap: 0x%x \n", hwcap);
       support_optimize_ops = true;
@@ -42,7 +55,7 @@ class OptimizeModule {
     }
 #endif
 #endif
-    if (!support_optimize_ops) {
+    if ((!support_optimize_ops) && (!support_fp16)) {
       return;
     }
     optimized_op_handler_ = dlopen(OPTIMIZE_SHARED_LIBRARY_PATH, RTLD_LAZY);
@@ -61,4 +74,3 @@ class OptimizeModule {
 };
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_OPTIMIZED_KERNEL_H_
-

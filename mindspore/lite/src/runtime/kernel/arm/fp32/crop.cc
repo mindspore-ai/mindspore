@@ -37,12 +37,12 @@ int CropLaunch(int thread_id, LiteParallelGroupEnv *penv, void *cdata) {
   auto kernel = reinterpret_cast<CropCPUKernel *>(cdata);
   return kernel->CropParallelRun(thread_id);
 }
-}
+}  // namespace
 
 int CropCPUKernel::Init() {
   schema::Format input0_format = inputs_[0]->GetFormat();
   if (input0_format != schema::Format_NCHW && input0_format != schema::Format_NHWC) {
-     MS_LOG(ERROR) << "Unsupport format " << input0_format;
+    MS_LOG(ERROR) << "Unsupport format " << input0_format;
     return RET_FORMAT_ERR;
   }
   outputs_[0]->SetFormat(input0_format);
@@ -90,7 +90,7 @@ kernel::LiteKernel *CpuCropFp32KernelCreator(const std::vector<lite::tensor::Ten
     MS_LOG(ERROR) << "Input context is nullptr!";
     return nullptr;
   }
-
+  MS_ASSERT(desc.type == schema::PrimitiveType_Crop);
   op_parameter->thread_num_ = ctx->threadNum;
   auto *kernel = new (std::nothrow) CropCPUKernel(op_parameter, inputs, outputs);
   if (kernel == nullptr) {
@@ -108,5 +108,5 @@ kernel::LiteKernel *CpuCropFp32KernelCreator(const std::vector<lite::tensor::Ten
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_Crop, CpuCropFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Crop, CpuCropFp32KernelCreator)
 }  // namespace mindspore::kernel

@@ -83,7 +83,7 @@ file(GLOB KERNEL_OP_SRC
         )
 if (PLATFORM_ARM64)
     # assembly
-    file(GLOB_RECURSE TEST_ASSEMBLY_SRC ${LITE_DIR}/src/runtime/kernel/arm/opclib/assembly/arm64/*.s
+    file(GLOB TEST_ASSEMBLY_SRC ${LITE_DIR}/src/runtime/kernel/arm/opclib/assembly/arm64/*.s
             ${LITE_DIR}/src/runtime/kernel/arm/opclib/assembly/arm64/*.S)
 
     set_property(SOURCE ${TEST_ASSEMBLY_SRC} PROPERTY LANGUAGE C)
@@ -94,8 +94,9 @@ if (PLATFORM_ARM64)
 endif()
 if (PLATFORM_ARM32)
     # assembly
-    set(GLOB_RECURSE TEST_ASSEMBLY_SRC
-            ${LITE_DIR}/src/runtime/kernel/arm/opclib/assembly/arm32/*.S)
+    file(GLOB TEST_ASSEMBLY_SRC
+            ${LITE_DIR}/src/runtime/kernel/arm/opclib/assembly/arm32/*.S
+            ${LITE_DIR}/src/runtime/kernel/arm/opclib/assembly/arm32/*.s)
     set_property(SOURCE ${TEST_ASSEMBLY_SRC} PROPERTY LANGUAGE C)
     set(KERNEL_OP_SRC
             ${KERNEL_OP_SRC}

@@ -43,19 +43,11 @@ LiteKernel *KernelFactory::GetKernel(const std::vector<tensor::Tensor *> &inputs
     MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << schema::EnumNamePrimitiveType(primitive->Type());
     return nullptr;
   }
-  auto creator = KernelRegistry::GetInstance()->GetKernelCreator(key);
+  auto creator = KernelRegistry::GetInstance()->GetCreator(key);
   if (creator != nullptr) {
-    auto *kernel = creator(inputs, outputs, parameter, ctx, key);
-    if (kernel != nullptr) {
-      return kernel;
-    } else {
-      MS_LOG(ERROR) << "Creator kernel failed for " << schema::EnumNamePrimitiveType(key.type);
-      return nullptr;
-    }
-  } else {
-    MS_LOG(ERROR) << "Can not find OpCreator for " << schema::EnumNamePrimitiveType(key.type);
-    return nullptr;
+    auto kernel = creator(inputs, outputs, parameter, ctx, key);
+    return kernel;
   }
+  return nullptr;
 }
 }  // namespace mindspore::lite
-

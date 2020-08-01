@@ -96,6 +96,7 @@ kernel::LiteKernel *CpuReverseSequenceFp32KernelCreator(const std::vector<lite::
                                                         OpParameter *parameter, const lite::Context *ctx,
                                                         const KernelKey &desc) {
   MS_ASSERT(parameter != nullptr);
+  MS_ASSERT(desc.type == schema::PrimitiveType_ReverseSequence);
   auto *kernel = new (std::nothrow) ReverseSequenceCPUKernel(parameter, inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create kernel failed, name: " << parameter->name_;
@@ -111,6 +112,6 @@ kernel::LiteKernel *CpuReverseSequenceFp32KernelCreator(const std::vector<lite::
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_ReverseSequence, CpuReverseSequenceFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ReverseSequence, CpuReverseSequenceFp32KernelCreator)
 }  // namespace mindspore::kernel
 

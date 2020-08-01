@@ -48,6 +48,7 @@ kernel::LiteKernel *CpuZerosLikeFp32KernelCreator(const std::vector<lite::tensor
     MS_LOG(ERROR) << "input opParameter is nullptr!";
     return nullptr;
   }
+  MS_ASSERT(desc.type == schema::PrimitiveType_ZerosLike);
   auto *kernel = new (std::nothrow) ZerosLikeCPUKernel(opParameter, inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ZerosLikeCPUKernel fail!";
@@ -63,6 +64,6 @@ kernel::LiteKernel *CpuZerosLikeFp32KernelCreator(const std::vector<lite::tensor
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_ZerosLike, CpuZerosLikeFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ZerosLike, CpuZerosLikeFp32KernelCreator)
 }  // namespace mindspore::kernel
 

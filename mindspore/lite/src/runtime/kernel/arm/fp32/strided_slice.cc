@@ -82,5 +82,5 @@ kernel::LiteKernel *CpuStridedSliceFp32KernelCreator(const std::vector<lite::ten
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_StridedSlice, CpuStridedSliceFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_StridedSlice, CpuStridedSliceFp32KernelCreator)
 }  // namespace mindspore::kernel

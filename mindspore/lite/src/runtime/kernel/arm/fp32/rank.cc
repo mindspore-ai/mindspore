@@ -53,6 +53,10 @@ kernel::LiteKernel *CpuRankFp32KernelCreator(const std::vector<lite::tensor::Ten
   MS_ASSERT(desc.type == schema::PrimitiveType_Rank);
 
   auto *kernel = new (std::nothrow) RankCPUKernel(opParameter, inputs, outputs);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new RankCPUKernel fail!";
+    return nullptr;
+  }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
@@ -63,6 +67,6 @@ kernel::LiteKernel *CpuRankFp32KernelCreator(const std::vector<lite::tensor::Ten
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_Rank, CpuRankFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Rank, CpuRankFp32KernelCreator)
 }  // namespace mindspore::kernel
 

@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/base/layout_transform.h"
+#include "mindspore/core/utils/log_adapter.h"
 
 using mindspore::schema::Format;
 namespace mindspore::kernel {

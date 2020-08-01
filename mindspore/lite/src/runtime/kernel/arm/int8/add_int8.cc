@@ -130,8 +130,10 @@ kernel::LiteKernel *CpuAddInt8KernelCreator(const std::vector<lite::tensor::Tens
   }
   MS_ASSERT(desc.type == PrimitiveType_Add);
   auto *kernel = new (std::nothrow) QuantizedAddCPUKernel(parameter, inputs, outputs, ctx);
-  MS_EXCEPTION_IF_NULL(kernel);
-
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "kernel is nullptr.";
+    return nullptr;
+  }
   auto ret = kernel->Init();
   if (0 != ret) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_
@@ -142,5 +144,6 @@ kernel::LiteKernel *CpuAddInt8KernelCreator(const std::vector<lite::tensor::Tens
   return kernel;
 }
 
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Add, CpuAddInt8KernelCreator)
 }  // namespace mindspore::kernel
 

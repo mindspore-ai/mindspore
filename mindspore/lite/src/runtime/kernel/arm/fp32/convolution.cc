@@ -15,6 +15,9 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/convolution.h"
+#include "src/runtime/kernel/arm/fp32/convolution_1x1.h"
+#include "src/runtime/kernel/arm/fp32/convolution_3x3.h"
+#include "src/runtime/kernel/arm/fp32/convolution_winograd.h"
 #include "src/runtime/kernel/arm/opclib/fp32/conv.h"
 #include "schema/model_generated.h"
 #include "src/kernel_factory.h"
@@ -204,4 +207,78 @@ int ConvolutionCPUKernel::Run() {
   }
   return RET_OK;
 }
+
+void CheckIfUseWinograd(bool *use_winograd, int *output_unit, ConvParameter *conv_param,
+                        InputTransformUnitFunc input_trans_func, OutputTransformUnitFunc output_trans_func) {
+  if (conv_param->kernel_w_ == conv_param->kernel_h_ && conv_param->dilation_h_ == 1 && conv_param->dilation_w_ == 1 &&
+      conv_param->stride_h_ == 1 && conv_param->stride_w_ == 1) {
+    *output_unit = SelectOutputUnit(conv_param);
+    if (*output_unit > 1) {
+      *use_winograd = true;
+      int input_unit = conv_param->kernel_h_ + *output_unit - 1;
+      input_trans_func = GetInputTransFunc(input_unit);
+      if (input_trans_func == nullptr) {
+        MS_LOG(INFO) << "No matching input trans func. Turn back to common conv.";
+        *use_winograd = false;
+      }
+      output_trans_func = GetOutputTransFunc(input_unit, *output_unit);
+      if (output_trans_func == nullptr) {
+        MS_LOG(INFO) << "No matching output trans func. Turn back to common conv.";
+        *use_winograd = false;
+      }
+    } else {
+      *use_winograd = false;
+    }
+  } else {
+    *use_winograd = false;
+  }
+}
+
+kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
+                                             const std::vector<lite::tensor::Tensor *> &outputs,
+                                             OpParameter *opParameter, const Context *ctx,
+                                             const kernel::KernelKey &desc) {
+  MS_ASSERT(opParameter != nullptr);
+  MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D);
+  auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
+  int kernel_h = conv_param->kernel_h_;
+  int kernel_w = conv_param->kernel_w_;
+  int stride_h = conv_param->stride_h_;
+  int stride_w = conv_param->stride_w_;
+  int dilation_h = conv_param->dilation_h_;
+  int dilation_w = conv_param->dilation_w_;
+  conv_param->input_h_ = inputs.front()->Height();
+  conv_param->input_w_ = inputs.front()->Width();
+  conv_param->output_h_ = outputs.front()->Height();
+  conv_param->output_w_ = outputs.front()->Width();
+  bool use_winograd;
+  int out_unit;
+  InputTransformUnitFunc input_trans_func = nullptr;
+  OutputTransformUnitFunc output_trans_func = nullptr;
+  CheckIfUseWinograd(&use_winograd, &out_unit, conv_param, input_trans_func, output_trans_func);
+  kernel::LiteKernel *kernel;
+  if (kernel_h == 1 && kernel_w == 1) {
+    kernel = new (std::nothrow) kernel::Convolution1x1CPUKernel(opParameter, inputs, outputs, ctx);
+  } else if (kernel_h == 3 && kernel_w == 3 && stride_h == 1 && stride_w == 1 && dilation_h == 1 && dilation_w == 1) {
+    kernel = new (std::nothrow) kernel::Convolution3x3CPUKernel(opParameter, inputs, outputs, ctx);
+  } else if (use_winograd) {
+    kernel = new (std::nothrow) kernel::ConvolutionWinogradCPUKernel(opParameter, inputs, outputs, ctx, out_unit);
+  } else {
+    kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(opParameter, inputs, outputs, ctx);
+  }
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "kernel is nullptr.";
+    return nullptr;
+  }
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    delete kernel;
+    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    return nullptr;
+  }
+  return kernel;
+}
+
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Conv2D, CpuConvFp32KernelCreator)
 }  // namespace mindspore::kernel

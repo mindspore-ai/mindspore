@@ -16,6 +16,8 @@
 
 #include "src/runtime/kernel/arm/fp16/convolution_3x3_fp16.h"
 #include "src/runtime/kernel/arm/opclib/fp16/conv_fp16.h"
+#include "src/runtime/kernel/arm/opclib/fp16/winograd_transform_fp16.h"
+#include "src/runtime/kernel/arm/opclib/fp16/pack_fp16.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -165,7 +167,6 @@ void Convolution3x3FP16CPUKernel::ConfigInputOutput() {
 }
 
 int Convolution3x3FP16CPUKernel::Init() {
-  ConvolutionBaseCPUKernel::Init();
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";

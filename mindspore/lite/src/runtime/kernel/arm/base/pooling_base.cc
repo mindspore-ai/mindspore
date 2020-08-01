@@ -81,7 +81,8 @@ int PoolingBaseCPUKernel::Init() {
 
 kernel::LiteKernel *CpuPoolingInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                 const std::vector<lite::tensor::Tensor *> &outputs,
-                                                OpParameter *opParameter, const Context *ctx) {
+                                                OpParameter *opParameter, const Context *ctx,
+                                                const kernel::KernelKey &desc) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
@@ -90,50 +91,6 @@ kernel::LiteKernel *CpuPoolingInt8KernelCreator(const std::vector<lite::tensor::
   auto *kernel = new (std::nothrow) PoolingInt8CPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PoolingInt8CPUKernel fail!";
-    return nullptr;
-  }
-  return kernel;
-}
-
-kernel::LiteKernel *CpuPoolingFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                const std::vector<lite::tensor::Tensor *> &outputs,
-                                                OpParameter *opParameter, const Context *ctx) {
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Input opParameter is nullptr!";
-    return nullptr;
-  }
-  MS_ASSERT(desc.type == schema::PrimitiveType_Pooling);
-  auto *kernel = new (std::nothrow) PoolingCPUKernel(opParameter, inputs, outputs, ctx);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new PoolingCPUKernel fail!";
-    return nullptr;
-  }
-  return kernel;
-}
-
-kernel::LiteKernel *CpuPoolingKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                            const std::vector<lite::tensor::Tensor *> &outputs,
-                                            OpParameter *opParameter, const lite::Context *ctx,
-                                            const kernel::KernelKey &desc) {
-  MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_Pooing);
-  auto input_tensor = inputs.at(kInputIndex);
-  auto data_type = input_tensor->data_type();
-  kernel::LiteKernel *kernel = nullptr;
-  switch (data_type) {
-    case kNumberTypeInt8:
-    case kNumberTypeUInt8:
-      kernel = CpuPoolingInt8KernelCreator(inputs, outputs, opParameter, ctx);
-      break;
-    case kNumberTypeFloat32:
-      kernel = CpuPoolingFp32KernelCreator(inputs, outputs, opParameter, ctx);
-      break;
-    default:
-      break;
-  }
-
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "kernel is nullptr.";
     return nullptr;
   }
   auto ret = kernel->Init();
@@ -146,5 +103,30 @@ kernel::LiteKernel *CpuPoolingKernelCreator(const std::vector<lite::tensor::Tens
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_Pooling, CpuPoolingKernelCreator)
+kernel::LiteKernel *CpuPoolingFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
+                                                const std::vector<lite::tensor::Tensor *> &outputs,
+                                                OpParameter *opParameter, const Context *ctx,
+                                                const kernel::KernelKey &desc) {
+  if (opParameter == nullptr) {
+    MS_LOG(ERROR) << "Input opParameter is nullptr!";
+    return nullptr;
+  }
+  MS_ASSERT(desc.type == schema::PrimitiveType_Pooling);
+  auto *kernel = new (std::nothrow) PoolingCPUKernel(opParameter, inputs, outputs, ctx);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new PoolingCPUKernel fail!";
+    return nullptr;
+  }
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    delete kernel;
+    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    return nullptr;
+  }
+  return kernel;
+}
+
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Pooling, CpuPoolingInt8KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Pooling, CpuPoolingFp32KernelCreator)
 }  // namespace mindspore::kernel

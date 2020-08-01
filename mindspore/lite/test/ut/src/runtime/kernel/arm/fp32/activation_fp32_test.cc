@@ -108,8 +108,8 @@ TEST_F(TestActivationFp32, HSwishFp32) {
   outputs_tensor.push_back(&output0_tensor);
   output0_tensor.SetData(output.data());
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, schema::PrimitiveType_Activation};
-  auto creator = lite::KernelRegistry::GetInstance()->GetKernelCreator(desc);
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Activation};
+  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   lite::Context ctx;
   ctx.threadNum = 7;

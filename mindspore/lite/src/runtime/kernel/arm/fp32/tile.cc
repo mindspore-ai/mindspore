@@ -77,6 +77,6 @@ kernel::LiteKernel *CpuTileFp32KernelCreator(const std::vector<lite::tensor::Ten
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_Tile, CpuTileFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Tile, CpuTileFp32KernelCreator)
 }  // namespace mindspore::kernel
 

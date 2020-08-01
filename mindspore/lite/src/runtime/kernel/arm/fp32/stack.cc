@@ -92,6 +92,7 @@ kernel::LiteKernel *CpuStackFp32KernelCreator(const std::vector<lite::tensor::Te
     MS_LOG(ERROR) << "Input op_parameter is nullptr!";
     return nullptr;
   }
+  MS_ASSERT(desc.type == schema::PrimitiveType_Stack);
   auto *kernel = new (std::nothrow) StackCPUKernel(op_parameter, inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new StackCPUKernel fail!";
@@ -108,6 +109,5 @@ kernel::LiteKernel *CpuStackFp32KernelCreator(const std::vector<lite::tensor::Te
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_Stack, CpuStackFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Stack, CpuStackFp32KernelCreator)
 }  // namespace mindspore::kernel
-

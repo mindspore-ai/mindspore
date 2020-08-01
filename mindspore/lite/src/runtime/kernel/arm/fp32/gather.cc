@@ -121,6 +121,6 @@ kernel::LiteKernel *CpuGatherFp32KernelCreator(const std::vector<lite::tensor::T
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_Gather, CpuGatherFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Gather, CpuGatherFp32KernelCreator)
 }  // namespace mindspore::kernel
 

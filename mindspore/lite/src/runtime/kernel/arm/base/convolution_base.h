@@ -28,7 +28,6 @@
 #include "src/lite_kernel.h"
 #include "include/context.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
-#include "src/runtime/kernel/arm/opclib/optimized_kernel.h"
 
 using mindspore::lite::Context;
 using mindspore::schema::PadMode;

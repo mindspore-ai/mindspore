@@ -98,7 +98,7 @@ kernel::LiteKernel *OpenCLSoftMaxKernelCreator(const std::vector<lite::tensor::T
   return kernel;
 }
 
-REG_KERNEL(kGPU, PrimitiveType_SoftMax, OpenCLSoftMaxKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_SoftMax, OpenCLSoftMaxKernelCreator)
 }  // namespace kernel
 }  // namespace mindspore
 

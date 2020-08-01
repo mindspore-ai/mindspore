@@ -147,6 +147,6 @@ kernel::LiteKernel *OpenCLDepthwiseConv2dKernelCreator(const std::vector<lite::t
   return kernel;
 }
 
-REG_KERNEL(kGPU, PrimitiveType_DepthwiseConv2D, OpenCLDepthwiseConv2dKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_DepthwiseConv2D, OpenCLDepthwiseConv2dKernelCreator)
 }  // namespace mindspore::kernel
 

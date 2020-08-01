@@ -54,6 +54,10 @@ kernel::LiteKernel *CpuRangeFp32KernelCreator(const std::vector<lite::tensor::Te
   MS_ASSERT(desc.type == schema::PrimitiveType_Range);
 
   auto *kernel = new (std::nothrow) RangeCPUKernel(opParameter, inputs, outputs);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new RangeCPUKernel fail!";
+    return nullptr;
+  }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
@@ -64,7 +68,7 @@ kernel::LiteKernel *CpuRangeFp32KernelCreator(const std::vector<lite::tensor::Te
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_Range, CpuRangeFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Range, CpuRangeFp32KernelCreator)
 
 }  // namespace mindspore::kernel
 
