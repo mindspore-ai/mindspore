@@ -722,3 +722,17 @@ table OneHot {
 table Lstm{
     bidirection: bool = false;
 }
+
+table PriorBox {
+    min_sizes: [int];
+    max_sizes: [int];
+    aspect_ratios: [float];
+    variances: [float];
+    image_size_w: int;
+    image_size_h: int;
+    step_w: float;
+    step_h: float;
+    clip: bool = true;
+    flip: bool = true;
+    offset: float;
+}

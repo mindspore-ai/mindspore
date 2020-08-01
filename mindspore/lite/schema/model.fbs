@@ -173,7 +173,8 @@ union PrimitiveType {
     Div,
     Where,
     OneHot,
-    Lstm
+    Lstm,
+    PriorBox
 }
 
 enum QuantType: int {
