@@ -148,8 +148,8 @@ std::shared_ptr<RandomColorAdjustOperation> RandomColorAdjust(std::vector<float>
 ///                     fill R, G, B channels respectively.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<RandomCropOperation> RandomCrop(std::vector<int32_t> size, std::vector<int32_t> padding = {0, 0, 0, 0},
-                                                bool pad_if_needed = false,
-                                                std::vector<uint8_t> fill_value = {0, 0, 0});
+                                                bool pad_if_needed = false, std::vector<uint8_t> fill_value = {0, 0, 0},
+                                                BorderType padding_mode = BorderType::kConstant);
 
 /// \brief Function to create a RandomHorizontalFlip TensorOperation.
 /// \notes Tensor operation to perform random horizontal flip.
@@ -311,7 +311,8 @@ class RandomColorAdjustOperation : public TensorOperation {
 class RandomCropOperation : public TensorOperation {
  public:
   RandomCropOperation(std::vector<int32_t> size, std::vector<int32_t> padding = {0, 0, 0, 0},
-                      bool pad_if_needed = false, std::vector<uint8_t> fill_value = {0, 0, 0});
+                      bool pad_if_needed = false, std::vector<uint8_t> fill_value = {0, 0, 0},
+                      BorderType padding_mode = BorderType::kConstant);
 
   ~RandomCropOperation() = default;
 
@@ -324,6 +325,7 @@ class RandomCropOperation : public TensorOperation {
   std::vector<int32_t> padding_;
   bool pad_if_needed_;
   std::vector<uint8_t> fill_value_;
+  BorderType padding_mode_;
 };
 
 class RandomHorizontalFlipOperation : public TensorOperation {

@@ -95,6 +95,7 @@ SET(DE_UT_SRCS
         c_api_dataset_coco_test.cc
         c_api_dataset_voc_test.cc
         c_api_datasets_test.cc
+        c_api_dataset_iterator_test.cc
         tensor_op_fusion_pass_test.cc
         sliding_window_op_test.cc
         epoch_ctrl_op_test.cc

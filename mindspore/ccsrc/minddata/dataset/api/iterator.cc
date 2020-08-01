@@ -30,6 +30,19 @@ void Iterator::GetNextRow(TensorMap *row) {
   }
 }
 
+// Get the next row from the data pipeline.
+void Iterator::GetNextRow(TensorVec *row) {
+  TensorRow tensor_row;
+  Status rc = iterator_->FetchNextTensorRow(&tensor_row);
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "GetNextRow: Failed to get next row.";
+    row->clear();
+  }
+  // Generate a vector as return
+  row->clear();
+  std::copy(tensor_row.begin(), tensor_row.end(), std::back_inserter(*row));
+}
+
 // Shut down the data pipeline.
 void Iterator::Stop() {
   // Releasing the iterator_ unique_ptre. This should trigger the destructor of iterator_.
