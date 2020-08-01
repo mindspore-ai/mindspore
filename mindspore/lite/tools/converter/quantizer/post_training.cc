@@ -292,13 +292,32 @@ STATUS Calibrator::RecordMaxValue(std::string opName, vector<float> data,
 }
 
 STATUS Calibrator::ComputeThreshold() {
-  for (auto iter = this->input_diverg_info_.begin(); iter != this->input_diverg_info_.end(); iter++) {
-    DivergInfo *info = iter->second.get();
-    info->ComputeThreshold();
-  }
   for (auto iter = this->output_diverg_info_.begin(); iter != this->output_diverg_info_.end(); iter++) {
     DivergInfo *info = iter->second.get();
     info->ComputeThreshold();
+  }
+  // node A's input may be node B's output, no need to re-compute the node A's input quant param which is the same as
+  for (auto iter = this->input_diverg_info_.begin(); iter != this->input_diverg_info_.end(); iter++) {
+    DivergInfo *info = iter->second.get();
+    auto cnode = info->cnode;
+
+    bool already_computed = false;
+    auto input = cnode->input(1);
+    if (input->isa<mindspore::CNode>()) {
+      auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input);
+      for (const auto &output_diverg_info : output_diverg_info_) {
+        auto output_diverg_cnode = output_diverg_info.second->cnode;
+        if (output_diverg_cnode == input_cnode) {
+          *info = *(output_diverg_info.second);
+          info->cnode = cnode;
+          already_computed = true;
+          break;
+        }
+      }
+    }
+    if (!already_computed) {
+      info->ComputeThreshold();
+    }
   }
   return RET_OK;
 }
