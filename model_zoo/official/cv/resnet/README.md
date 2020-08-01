@@ -241,7 +241,7 @@ result: {'top_5_accuracy': 0.9429417413572343, 'top_1_accuracy': 0.7853513124199
 ### Running on GPU
 ```
 # distributed training example
-mpirun -n 8 python train.py ---net=resnet50 --dataset=cifar10 -dataset_path=~/cifar-10-batches-bin --device_target="GPU" --run_distribute=True
+mpirun -n 8 python train.py --net=resnet50 --dataset=cifar10 --dataset_path=~/cifar-10-batches-bin --device_target="GPU" --run_distribute=True
 
 # standalone training example
 python train.py --net=resnet50 --dataset=cifar10 --dataset_path=~/cifar-10-batches-bin --device_target="GPU"
