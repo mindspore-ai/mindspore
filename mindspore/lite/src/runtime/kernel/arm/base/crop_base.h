@@ -13,24 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CROP_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CROP_H_
+
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CROP_BASE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CROP_BASE_H_
+
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/base/layout_transform.h"
-#include "src/runtime/kernel/arm/base/crop_base.h"
+#include "src/runtime/kernel/arm/opclib/crop_parameter.h"
+
+using mindspore::lite::Context;
 
 namespace mindspore::kernel {
-class CropCPUKernel : public CropBaseCPUKernel {
+class CropBaseCPUKernel : public LiteKernel {
  public:
-  CropCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : CropBaseCPUKernel(parameter, inputs, outputs, ctx) {}
-  ~CropCPUKernel() = default;
+  CropBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                       const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
+    : LiteKernel(parameter, inputs, outputs), ctx_(ctx), thread_count_(ctx->threadNum) {
+    opParameter->thread_num_ = ctx->threadNum;
+  }
+  ~CropBaseCPUKernel() = default;
+
   int Init() override;
   int ReSize() override { return 0; }
-  int Run() override;
-  int CropParallelRun(int thread_id);
+  int Run() override { return 0; }
+
+ protected:
+  int thread_count_;
+  const Context *ctx_;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CROP_H_
+
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CROP_BASE_H_

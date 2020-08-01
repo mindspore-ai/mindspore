@@ -17,6 +17,7 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/opclib/fp32/crop.h"
+#include "src/runtime/kernel/arm/opclib/crop_parameter.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
 
@@ -77,36 +78,4 @@ int CropCPUKernel::Run() {
   }
   return RET_OK;
 }
-
-kernel::LiteKernel *CpuCropFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs,
-                                             OpParameter *op_parameter, const lite::Context *ctx,
-                                             const kernel::KernelKey &desc) {
-  if (op_parameter == nullptr) {
-    MS_LOG(ERROR) << "Input op_parameter is nullptr!";
-    return nullptr;
-  }
-  if (ctx == nullptr) {
-    MS_LOG(ERROR) << "Input context is nullptr!";
-    return nullptr;
-  }
-  MS_ASSERT(desc.type == schema::PrimitiveType_Crop);
-  op_parameter->thread_num_ = ctx->threadNum;
-  auto *kernel = new (std::nothrow) CropCPUKernel(op_parameter, inputs, outputs);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new CropCPUKernel fail!";
-    return nullptr;
-  }
-
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << op_parameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Crop, CpuCropFp32KernelCreator)
 }  // namespace mindspore::kernel

@@ -75,6 +75,13 @@ struct MulQuantArg {
   int shift_right_;
 };
 
+struct CropQuantArg {
+  QuantArg in_args_;
+  QuantArg out_args_;
+  int output_activation_min_;
+  int output_activation_max_;
+};
+
 void QuantizeMultiplier(double double_multiplier, int32_t *quantized_multiplier, int *shift);
 
 inline void QuantizeMultiplierSmallerThanOne(double double_multiplier, int32_t *quantized_multiplier,
