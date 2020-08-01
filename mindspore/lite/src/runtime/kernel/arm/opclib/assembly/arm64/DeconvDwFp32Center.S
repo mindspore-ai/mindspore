@@ -27,16 +27,6 @@ DeconvDwFp32Center:
     ldr x11, [sp, #24]
     ldr x12, [sp, #32]
 
-    mov x13, #4
-    mul x7, x7, x13
-    mul x8, x8, x13
-    mul x9, x9, x13
-    mul x10, x10, x13
-    mul x11, x11, x13
-    mul x12, x12, x13
-    mov x13, #16
-    mul x14, x6, x13
-
     LoopH:
         mov x15, x0
         mov x16, x1
@@ -45,20 +35,18 @@ DeconvDwFp32Center:
             mov x18, x15
             mov x19, x2
             mov x20, x5
+            dup v0.4s, wzr
             LoopKh:
                 mov x21, x18
-                mov x22, x19
                 mov x13, x6
                 LoopKw:
-                    ld1 {v0.4s}, [x21]
                     ld1 {v1.4s}, [x16]
-                    ld1 {v2.4s}, [x22], #16
+                    ld1 {v2.4s}, [x19], #16
                     fmla v0.4s, v1.4s, v2.4s
                     st1 {v0.4s}, [x21], x12
                     subs x13, x13, #1
                     bne LoopKw
                 add x18, x18, x11
-                add x19, x19, x14
                 subs x20, x20, #1
                 bne LoopKh
             add x15, x15, x10
