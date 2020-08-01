@@ -22,7 +22,11 @@
 #include "include/ms_tensor.h"
 
 namespace mindspore::lite {
+// brief Allocator defined by MindSpore Lite
+//
+// note List public class and interface for reference
 class Allocator;
+
 enum CpuBindMode {
   MID_CPU = -1,   /**< bind mid cpu first */
   HIGHER_CPU = 1, /**< bind higher cpu first */
@@ -31,7 +35,7 @@ enum CpuBindMode {
 
 typedef enum { DT_CPU, DT_GPU, DT_NPU } DeviceType;
 
-// brief NPUContext defined by MindSpore predict
+// brief NPUContext defined by MindSpore Lite
 typedef struct {
   int freq{3};
   int fmkType{0};
@@ -40,29 +44,28 @@ typedef struct {
   std::string modelName = "default";
 } NPUContext;
 
-// brief DeviceContext defined by MindSpore predict
+// brief DeviceContext defined by MindSpore Lite
 typedef struct {
   DeviceType type;
-  //  DLContext primary;
   NPUContext npuCtx;
 } DeviceContext;
 
-// brief Context defined by MindSpore predict
+// brief Context defined by MindSpore Lite
 class MS_API Context {
  public:
-  // brief Constructor of MindSpore predict context using default value for parameters
+  // brief Constructor of MindSpore Lite context using default value for parameters
   //
-  // return Instance of MindSpore predict context.
+  // return Instance of MindSpore Lite context.
   Context();
 
-  // brief Constructor of MindSpore predict context using input value for parameters
+  // brief Constructor of MindSpore Lite context using input value for parameters
   //
   // param[in] threadNum Define the threadNum during the runtime.
   // param[in] allocator Define the allocator for malloc.
   // param[in] deviceCtx Define device information during the runtime.
   Context(int threadNum, std::shared_ptr<Allocator> allocator, DeviceContext deviceCtx);
 
-  // brief Destructor of MindSpore predict context
+  // brief Destructor of MindSpore Lite context
   virtual ~Context();
 
  public:
@@ -73,4 +76,3 @@ class MS_API Context {
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_INCLUDE_CONTEXT_H_
-

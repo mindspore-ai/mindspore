@@ -25,7 +25,7 @@
 
 #include "ir/func_graph.h"
 #include "mindspore/core/ir/primitive.h"
-#include "debug/info.h"
+#include "utils/info.h"
 #include "ir/anf.h"
 #include "utils/convert_utils_base.h"
 #include "utils/overload.h"

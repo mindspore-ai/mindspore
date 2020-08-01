@@ -2,10 +2,8 @@ set(TEST_DIR ${TOP_DIR}/mindspore/lite/test)
 set(LITE_DIR ${TOP_DIR}/mindspore/lite)
 include_directories(${TOP_DIR})
 include_directories(${TEST_DIR})
-include_directories(${LITE_DIR})
-include_directories(${LITE_DIR}/tools)
 include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/dependency_gtest.cmake)
-include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/external_libs/gtest.cmake)
+#include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/external_libs/gtest.cmake)
 
 ### anf src
 set(ANF_SRC
@@ -18,13 +16,6 @@ set(ANF_SRC
 if(BUILD_CONVERTER)
     set(ANF_SRC
             ${ANF_SRC}
-            # core/abstract
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/abstract_function.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/analysis_context.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/param_validator.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/abstract_value.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/dshape.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/utils.cc
             # core/base
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/base/base_ref.cc
             # core/ir
@@ -33,7 +24,7 @@ if(BUILD_CONVERTER)
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/meta_func_graph.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/func_graph.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/graph_utils.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../ccsrc/utils/func_graph_cloner.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/func_graph_cloner.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/func_graph_extends.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/manager.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/primitive.cc
@@ -55,14 +46,21 @@ if(BUILD_CONVERTER)
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/any.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/symbolic.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/misc.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/trace_base.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/trace_info.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/label.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/info.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/profile.cc
+            # core/abstract
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/abstract_function.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/analysis_context.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/param_validator.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/abstract_value.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/dshape.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/utils.cc
             ## ccsrc
-            ${CCSRC_DIR}/debug/info.cc
-            ${CCSRC_DIR}/debug/trace_base.cc
-            ${CCSRC_DIR}/debug/trace_info.cc
-            ${CCSRC_DIR}/debug/label.cc
             ${CCSRC_DIR}/debug/draw.cc
             ${CCSRC_DIR}/pybind_api/export_flags.cc
-            ${CCSRC_DIR}/utils/profile.cc
             ${CCSRC_DIR}/utils/context/ms_context.cc
             ${CCSRC_DIR}/frontend/parallel/costmodel_context.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/graph_utils_extends.cc
@@ -247,7 +245,6 @@ set(TEST_SRC
     ${TEST_DIR}/main.cc
     ${TEST_DIR}/ut/src/runtime/kernel/arm/common/pack_tests.cc
     ${TEST_DIR}/ut/src/infer_test.cc
-#        ${TEST_DIR}/device/cpu/arm/graph_test.cc
 )
 
 if (SUPPORT_TRAIN)
@@ -279,7 +276,7 @@ endif ()
 
 add_executable(lite-test ${TEST_SRC})
 
-target_link_libraries(lite-test dl ${SECUREC_LIBRARY} ${GTEST_LIBRARY} mindspore::json mindspore::gtest)
+target_link_libraries(lite-test dl ${SECUREC_LIBRARY} ${GTEST_LIBRARY} mindspore::json)
 if (BUILD_CONVERTER)
     target_link_libraries(lite-test
             anf_exporter_mid
@@ -294,4 +291,3 @@ if (BUILD_CONVERTER)
             mindspore::eigen
             )
 endif()
-

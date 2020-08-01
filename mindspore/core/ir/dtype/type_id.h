@@ -83,12 +83,5 @@ enum TypeId : int {
   kNumberTypeFloat64,
   kNumberTypeEnd
 };
-//
-// TypeId name map
-//
-const std::unordered_map<TypeId, std::string> type_name_map = {
-  {kNumberTypeBool, "bool_"},      {kNumberTypeInt8, "int8"},       {kNumberTypeUInt8, "uint8"},
-  {kNumberTypeInt16, "int16"},     {kNumberTypeInt32, "int32"},     {kNumberTypeInt64, "int64"},
-  {kNumberTypeFloat16, "float16"}, {kNumberTypeFloat32, "float32"}, {kNumberTypeFloat64, "float64"}};
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_DTYPE_TYPE_ID_H_

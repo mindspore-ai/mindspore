@@ -444,6 +444,11 @@ build_protobuf() {
     fi
 }
 
+build_gtest() {
+    cd ${BASEPATH}
+    git submodule update --init --recursive third_party/googletest
+}
+
 gene_clhpp() {
     CL_SRC_DIR="${BASEPATH}/mindspore/lite/src/runtime/kernel/opencl/cl"
     for sub_dir in "${CL_SRC_DIR}"/*
@@ -525,6 +530,7 @@ build_lite()
       build_protobuf
     fi
     build_flatbuffer
+    build_gtest
 
     cd "${BASEPATH}/mindspore/lite"
     if [[ "${INC_BUILD}" == "off" ]]; then
@@ -583,8 +589,8 @@ build_lite()
             mkdir -p ${OUTPUT_DIR}/third_party/flatbuffers
             cp -r ${BASEPATH}/third_party/flatbuffers/include/ ${OUTPUT_DIR}/third_party/flatbuffers/
             cd ..
-            tar -cf MSLite-0.5.0-linux_x86_64.tar.gz MSLite-0.5.0-linux_x86_64/ --warning=no-file-changed
-            sha256sum MSLite-0.5.0-linux_x86_64.tar.gz > MSLite-0.5.0-linux_x86_64.tar.gz.256sha
+            tar -czf MSLite-0.5.0-linux_x86_64.tar.gz MSLite-0.5.0-linux_x86_64/ --warning=no-file-changed
+            sha256sum MSLite-0.5.0-linux_x86_64.tar.gz > MSLite-0.5.0-linux_x86_64.tar.gz.sha256
             rm -rf MSLite-0.5.0-linux_x86_64/
         elif [[ "$LITE_PLATFORM" == "arm64" ]]; then
             OUTPUT_DIR=${BASEPATH}/output/MSLite-0.5.0-linux_arm64
@@ -602,8 +608,8 @@ build_lite()
             mkdir -p ${OUTPUT_DIR}/third_party/flatbuffers
             cp -r ${BASEPATH}/third_party/flatbuffers/include/ ${OUTPUT_DIR}/third_party/flatbuffers/
             cd ..
-            tar -cf MSLite-0.5.0-linux_arm64.tar.gz MSLite-0.5.0-linux_arm64/ --warning=no-file-changed
-            sha256sum MSLite-0.5.0-linux_arm64.tar.gz > MSLite-0.5.0-linux_arm64.tar.gz.256sha
+            tar -czf MSLite-0.5.0-linux_arm64.tar.gz MSLite-0.5.0-linux_arm64/ --warning=no-file-changed
+            sha256sum MSLite-0.5.0-linux_arm64.tar.gz > MSLite-0.5.0-linux_arm64.tar.gz.sha256
             rm -rf MSLite-0.5.0-linux_arm64/
         elif [[ "$LITE_PLATFORM" == "arm32" ]]; then
             OUTPUT_DIR=${BASEPATH}/output/MSLite-0.5.0-linux_arm32
@@ -621,8 +627,8 @@ build_lite()
             mkdir -p ${OUTPUT_DIR}/third_party/flatbuffers
             cp -r ${BASEPATH}/third_party/flatbuffers/include/ ${OUTPUT_DIR}/third_party/flatbuffers/
             cd ..
-            tar -cf MSLite-0.5.0-linux_arm32.tar.gz MSLite-0.5.0-linux_arm32/ --warning=no-file-changed
-            sha256sum MSLite-0.5.0-linux_arm32.tar.gz > MSLite-0.5.0-linux_arm32.tar.gz.256sha
+            tar -czf MSLite-0.5.0-linux_arm32.tar.gz MSLite-0.5.0-linux_arm32/ --warning=no-file-changed
+            sha256sum MSLite-0.5.0-linux_arm32.tar.gz > MSLite-0.5.0-linux_arm32.tar.gz.sha256
             rm -rf MSLite-0.5.0-linux_arm32/
         fi
         echo "---------------- mindspore lite: build success ----------------"

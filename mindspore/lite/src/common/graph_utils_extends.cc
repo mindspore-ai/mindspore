@@ -27,7 +27,7 @@
 
 #include "ir/visitor.h"
 #include "ir/func_graph.h"
-#include "debug/label.h"
+ #include "utils/label.h"
 #include "utils/log_adapter.h"
 #include "src/common/utils.h"
 

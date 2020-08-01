@@ -34,6 +34,10 @@ std::shared_ptr<ModelImpl> ModelImpl::Import(const char *model_buf, size_t size)
   }
   memcpy(inner_model_buf, model_buf, size);
   auto model = std::make_shared<ModelImpl>(inner_model_buf, size);
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "Create modelImpl failed";
+    return nullptr;
+  }
   auto ret = model->BuildOps();
   if (0 != ret) {
     MS_LOG(ERROR) << "BuildOps failed";
