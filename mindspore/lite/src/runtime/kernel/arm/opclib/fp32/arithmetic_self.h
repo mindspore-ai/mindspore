@@ -23,11 +23,6 @@
 #include "src/runtime/kernel/arm/opclib/op_base.h"
 #include "src/runtime/kernel/arm/opclib/errorcode.h"
 
-// For Abs, Cos, Exp, Log, Square, Sqrt, Rsqrt ops.
-struct ArithmeticSelfParameter {
-  OpParameter op_parameter_;
-};
-
 int ElementAbs(float *input, float *output, int element_size);
 
 int ElementCos(float *input, float *output, int element_size);
