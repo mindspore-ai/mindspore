@@ -32,16 +32,6 @@ ConvDwFp32Center:
     ldr x14, [sp, #48]
     ldr x15, [sp, #56]
 
-    mov x16, #4
-    mul x8, x8, x16
-    mul x9, x9, x16
-    mul x10, x10, x16
-    mul x11, x11, x16
-    mul x12, x12, x16
-    mul x13, x13, x16
-    mov x16, #16
-    mul x19, x7, x16
-
     ld1 {v5.4s}, [x3]
 
     LoopH:
@@ -52,20 +42,17 @@ ConvDwFp32Center:
             mov x16, x23
             mov x17, x2
             mov x20, x6
-            ld1 {v0.4s}, [x3]
-            fadd v0.4s, v0.4s, v5.4s
+            mov v0.16b, v5.16b
             LoopKh:
                 mov x18, x7
-                mov x21, x17
                 mov x22, x16
                 LoopKw:
                     ld1 {v1.4s}, [x22], x13
-                    ld1 {v2.4s}, [x21], #16
+                    ld1 {v2.4s}, [x17], #16
                     fmla v0.4s, v1.4s, v2.4s
                     subs x18, x18, #1
                     bne LoopKw
                 add x16, x16, x12
-                add x17, x17, x19
                 subs x20, x20, #1
                 bne LoopKh
             cbnz x15, Relu6
