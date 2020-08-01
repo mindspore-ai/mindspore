@@ -17,30 +17,27 @@
 #ifndef MINDSPORE_LITE_SRC_BACKEND_OPENCL_Concat_H_
 #define MINDSPORE_LITE_SRC_BACKEND_OPENCL_Concat_H_
 
-#include <memory.h>
-#include <iostream>
 #include <vector>
-
+#include "ir/anf.h"
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/opclib/concat_parameter.h"
+#include "src/backend/arm/opclib/conv_parameter.h"
 #include "src/runtime/opencl/opencl_runtime.h"
-#include "src/runtime/kernel/arm/opclib/fp32/concat.h"
-#include "src/runtime/kernel/arm/opclib/int8/concat_int8.h"
+#include "src/backend/arm/opclib/concat.h"
 
 namespace mindspore::kernel {
 
 class ConcatOpenCLKernel : public LiteKernel {
  public:
-  explicit ConcatOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                              const std::vector<lite::tensor::Tensor *> &outputs)
+  explicit ConcatOpenCLKernel(OpParameter *parameter, const std::vector<tensor::Tensor *> &inputs,
+                              const std::vector<tensor::Tensor *> &outputs)
       : LiteKernel(parameter, inputs, outputs) {}
 
   ~ConcatOpenCLKernel() override{};
 
   int Init() override;
 
-  int InferShape() { return {}; }
-
+  //  int InferShape() { return {}; };
+  int InferShape() {}
   int ReSize() override;
 
   int Run_axis0();
@@ -52,6 +49,4 @@ class ConcatOpenCLKernel : public LiteKernel {
 };
 
 }  // namespace mindspore::kernel
-
-#endif  // MINDSPORE_LITE_SRC_BACKEND_OPENCL_DEPTHWISE_H_
-
+#endif

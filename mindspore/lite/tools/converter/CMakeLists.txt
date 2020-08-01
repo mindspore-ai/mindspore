@@ -1,15 +1,15 @@
 set(ANF_SRC
         ${ANF_SRC}
-        # core/abstract
+#core / abstract
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/abstract/abstract_function.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/abstract/analysis_context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/abstract/param_validator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/abstract/abstract_value.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/abstract/dshape.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/abstract/utils.cc
-        # core/base
+#core / base
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/base/base_ref.cc
-        # core/ir
+#core / ir
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/anf.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/anf_extends.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/meta_func_graph.cc
