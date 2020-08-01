@@ -80,6 +80,8 @@ lite::Primitive *ModelImpl::CopyPrimitive(const schema::Primitive *srcPrim) {
       return new lite::Activation(const_cast<schema::Primitive *>(srcPrim));
     case schema::PrimitiveType_Conv2D:
       return new lite::Conv2D(const_cast<schema::Primitive *>(srcPrim));
+    case schema::PrimitiveType_DeConv2D:
+      return new lite::DeConv2D(const_cast<schema::Primitive *>(srcPrim));
     case schema::PrimitiveType_Reduce:
       return new lite::Reduce(const_cast<schema::Primitive *>(srcPrim));
     case schema::PrimitiveType_Pooling:
