@@ -20,7 +20,6 @@
 #include "src/runtime/kernel/arm/opclib/conv_parameter.h"
 #include "src/runtime/kernel/arm/opclib/fp32/conv_depthwise.h"
 
-#ifdef ENABLE_FP16
 void ConvDwC8Fp16(float16_t *output_data, const float16_t *input_data, const float16_t *weight_data,
                   const float16_t *bias_data, const ConvParameter *conv_param, const SlidingWindowParam *sliding,
                   int task_id);
@@ -28,6 +27,5 @@ void ConvDwC8Fp16(float16_t *output_data, const float16_t *input_data, const flo
 void DeconvDwC8Fp16(float16_t *output_data, const float16_t *input_data, const float16_t *weight_data,
                     const float16_t *bias_data, const ConvParameter *conv_param, const SlidingWindowParam *sliding,
                     int task_id);
-#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP16_CONV_DEPTHWISE_FP16_H_

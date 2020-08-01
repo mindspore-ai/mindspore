@@ -134,6 +134,6 @@ kernel::LiteKernel *OpenCLConcatKernelCreator(const std::vector<lite::tensor::Te
   return kernel;
 }
 
-REG_KERNEL(kGPU, PrimitiveType_Concat, OpenCLConcatKernelCreator);
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Concat, OpenCLConcatKernelCreator);
 }  // namespace mindspore::kernel
 

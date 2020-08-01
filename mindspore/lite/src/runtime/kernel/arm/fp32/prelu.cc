@@ -70,7 +70,7 @@ kernel::LiteKernel *CpuPReluFp32KernelCreator(const std::vector<lite::tensor::Te
     MS_LOG(ERROR) << "input opParameter is nullptr!";
     return nullptr;
   }
-
+  MS_ASSERT(desc.type == schema::PrimitiveType_Prelu);
   auto *kernel = new (std::nothrow) PReluCPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PReluCPUKernel fail!";
@@ -86,6 +86,6 @@ kernel::LiteKernel *CpuPReluFp32KernelCreator(const std::vector<lite::tensor::Te
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_Prelu, CpuPReluFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Prelu, CpuPReluFp32KernelCreator)
 }  // namespace mindspore::kernel
 

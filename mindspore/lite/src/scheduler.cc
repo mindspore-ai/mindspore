@@ -150,9 +150,10 @@ int Scheduler::MergeKernels(std::vector<kernel::LiteKernel *> *kernels) { return
 kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<tensor::Tensor *> &inputs,
                                             const std::vector<tensor::Tensor *> &outputs,
                                             const lite::Primitive *primitive) {
-  // todo: support CPU, NPU, APU
+  // todo: support NPU, APU
   MS_ASSERT(nullptr != primitive);
-  kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, primitive->Type()};
+  auto data_type = inputs.front()->data_type();
+  kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, primitive->Type()};
   if (context->deviceCtx.type == DT_GPU) {
     desc.arch = kernel::KERNEL_ARCH::kGPU;
     auto *kernel = KernelFactory::GetInstance()->GetKernel(inputs, outputs, primitive, context, desc);
@@ -161,13 +162,25 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<tensor::Tensor *> 
       return kernel;
     }
   }
+
   desc.arch = kernel::KERNEL_ARCH::kCPU;
-  auto *kernel = KernelFactory::GetInstance()->GetKernel(inputs, outputs, primitive, context, desc);
-  if (nullptr != kernel) {
+  kernel::LiteKernel *kernel;
+  if (data_type == kNumberTypeFloat32) {
+    // check if support fp16
+    kernel::KernelKey key{desc.arch, kNumberTypeFloat16, desc.type};
+    kernel = KernelFactory::GetInstance()->GetKernel(inputs, outputs, primitive, context, key);
+    if (kernel != nullptr) {
+      kernel->set_desc(desc);
+      return kernel;
+    }
+    kernel = KernelFactory::GetInstance()->GetKernel(inputs, outputs, primitive, context, desc);
+  } else {
+    kernel = KernelFactory::GetInstance()->GetKernel(inputs, outputs, primitive, context, desc);
+  }
+  if (kernel != nullptr) {
     kernel->set_desc(desc);
     return kernel;
   }
   return nullptr;
 }
 }  // namespace mindspore::lite
-

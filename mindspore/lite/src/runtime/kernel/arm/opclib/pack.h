@@ -23,38 +23,6 @@
 #include "src/runtime/kernel/arm/opclib/conv_parameter.h"
 #include "src/runtime/kernel/arm/opclib/op_base.h"
 
-#ifdef ENABLE_FP16
-void Im2ColPackUnitFp16(float16_t *input_data, ConvParameter *conv_param, float16_t *packed_input, int real_cal_num,
-                        int block_index);
-
-void PackWeightFp16(float16_t *weight_data, ConvParameter *conv_param, float16_t *packed_weight);
-
-void PackWeightToC8Fp16(const float16_t *origin_weight_data, float16_t *packed_weight_data, ConvParameter *conv_param);
-
-void PackWeightToC4Fp16(const float16_t *origin_weight_data, float16_t *packed_weight_data, ConvParameter *conv_param);
-
-void PackNHWCToNC4HW4Fp16(const void *src, void *dst, int batch, int plane, int channel);
-
-void PackNCHWToNC4HW4Fp16(const void *src, void *dst, int batch, int plane, int channel);
-
-void PackNHWCToNHWC4Fp16(const void *src, void *dst, int batch, int plane, int channel);
-
-void PackNCHWToNHWC4Fp16(const void *src, void *dst, int batch, int plane, int channel);
-
-void PackNC4HW4ToNHWC4Fp16(const void *src, void *dst, int batch, int plane, int channel);
-
-void PackNC4HW4ToNHWCFp16(const void *src, void *dst, int batch, int plane, int channel);
-
-void PackNC4HW4ToNCHWFp16(const void *src, void *dst, int batch, int plane, int channel);
-
-void PackNC8HW8ToNHWCFp16(const void *src, void *dst, int batch, int plane, int channel);
-
-void PackNCHWFp32ToNC8HW8Fp16(float *src, float16_t *dst, int batch, int plane, int channel);
-
-void PackNHWCFp32ToNHWC8Fp16(float *src, float16_t *dst, int batch, int plane, int channel);
-
-void PackNHWC8Fp16ToNHWCFp32(float16_t *src, float *dst, int batch, int plane, int channel);
-#endif
 void Im2ColPackUnitFp32(const float *input_data, ConvParameter *conv_param, float *packed_input, int real_cal_num,
                         int block_index);
 

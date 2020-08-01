@@ -13,47 +13,105 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "src/kernel_registry.h"
+#include "include/errorcode.h"
+#include "ir/dtype/type_id.h"
+#ifdef ENABLE_ARM64
+#include <asm/hwcap.h>
+#include "common/utils.h"
+#include "utils/log_adapter.h"
+#include "src/runtime/kernel/arm/opclib/optimized_kernel.h"
+#endif
 
+using mindspore::kernel::kCPU;
+using mindspore::kernel::KERNEL_ARCH;
 using mindspore::kernel::KernelCreator;
 using mindspore::kernel::KernelKey;
-using mindspore::kernel::KERNEL_ARCH;
+using mindspore::kernel::kKernelArch_MAX;
+using mindspore::kernel::kKernelArch_MIN;
+using mindspore::schema::PrimitiveType_MAX;
+using mindspore::schema::PrimitiveType_MIN;
 
 namespace mindspore::lite {
 KernelRegistry::KernelRegistry() {}
 
-KernelRegistry::~KernelRegistry() {}
+KernelRegistry::~KernelRegistry() { FreeCreatorArray(); }
 
 KernelRegistry *KernelRegistry::GetInstance() {
   static KernelRegistry instance;
   return &instance;
 }
 
-KernelCreator KernelRegistry::GetKernelCreator(const KernelKey &desc) {
-  auto it = creators.find(desc);
-  if (it != creators.end()) {
-    return it->second;
+int KernelRegistry::Init() {
+  lock_.lock();
+  if (creator_arrays_ != nullptr) {
+      lock_.unlock();
+      return RET_OK;
   }
+  device_type_length_ = kKernelArch_MAX - kKernelArch_MIN;
+  data_type_length_ = kNumberTypeEnd - kNumberTypeBegin;
+  op_type_length_ = PrimitiveType_MAX - PrimitiveType_MIN;
+  // malloc an array contain creator functions of kernel
+  auto total_len = device_type_length_ * data_type_length_ * op_type_length_;
+  creator_arrays_ = (kernel::KernelCreator *)malloc(total_len * sizeof(kernel::KernelCreator));
+  if (creator_arrays_ == nullptr) {
+    MS_LOG(ERROR) << "malloc creator_arrays_ failed.";
+    lock_.unlock();
+    return RET_ERROR;
+  }
+  for (int i = 0; i < total_len; ++i) {
+    creator_arrays_[i] = nullptr;
+  }
+#ifdef ENABLE_ARM64
+  void *optimized_lib_handler = OptimizeModule::GetInstance()->optimized_op_handler_;
+  if (optimized_lib_handler != nullptr) {
+    MS_LOG(INFO) << "load optimize lib success.";
+  } else {
+    MS_LOG(INFO) << "load optimize lib failed.";
+  }
+#endif
+  lock_.unlock();
+  return RET_OK;
+}
 
-  // if not find, use cpu kernel
-  KernelKey cpuDesc {kernel::KERNEL_ARCH::kCPU, desc.type};
-  it = creators.find(cpuDesc);
-  if (it != creators.end()) {
-    return it->second;
+void KernelRegistry::FreeCreatorArray() {
+  if (creator_arrays_ != nullptr) {
+    free(creator_arrays_);
+    creator_arrays_ = nullptr;
+  }
+}
+
+kernel::KernelCreator KernelRegistry::GetCreator(const KernelKey &desc) {
+  int index = GetCreatorFuncIndex(desc);
+  auto it = creator_arrays_[index];
+  if (it != nullptr) {
+    return it;
   }
   return nullptr;
 }
 
-void KernelRegistry::RegKernel(const KernelKey desc, KernelCreator creator) { creators[desc] = creator; }
+int KernelRegistry::GetCreatorFuncIndex(const kernel::KernelKey desc) {
+  int index;
+  int device_index = static_cast<int>(desc.arch);
+  int dType_index = static_cast<int>(desc.data_type);
+  int op_index = static_cast<int>(desc.type);
+  index = device_index * data_type_length_ * op_type_length_ + dType_index * op_type_length_ + op_index;
+  return index;
+}
 
-void KernelRegistry::RegKernel(const KERNEL_ARCH arch, const schema::PrimitiveType type, KernelCreator creator) {
-  KernelKey desc = {arch, type};
-  creators[desc] = creator;
+void KernelRegistry::RegKernel(const KernelKey desc, kernel::KernelCreator creator) {
+  int index = GetCreatorFuncIndex(desc);
+  creator_arrays_[index] = creator;
+}
+
+void KernelRegistry::RegKernel(const KERNEL_ARCH arch, const TypeId data_type, const schema::PrimitiveType op_type,
+                               kernel::KernelCreator creator) {
+  KernelKey desc = {arch, data_type, op_type};
+  int index = GetCreatorFuncIndex(desc);
+  creator_arrays_[index] = creator;
 }
 
 bool KernelRegistry::Merge(const std::unordered_map<KernelKey, KernelCreator> &newCreators) { return false; }
 
-const std::map<KernelKey, KernelCreator> &KernelRegistry::GetKernelCreators() { return creators; }
+const kernel::KernelCreator *KernelRegistry::GetCreatorArrays() { return creator_arrays_; }
 }  // namespace mindspore::lite
-

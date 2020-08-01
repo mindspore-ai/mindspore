@@ -33,7 +33,7 @@ TEST_F(TestQuantizedAdd, Add) {
   lite::tensor::Tensor out_tensor(kNumberTypeInt8, {1, 1, 2, 5});
 
   int8_t input_data0[] = {-102, 25, -51, 89, -102, 25, -51, 89, -102, 25};  // -0.8 0.2 -0.4 0.7
-  int8_t input_data1[] = {38, 51, 64, -102, 38, 51, 64, -102, 38, 51};  // 0.3 0.4 0.5 -0.8
+  int8_t input_data1[] = {38, 51, 64, -102, 38, 51, 64, -102, 38, 51};      // 0.3 0.4 0.5 -0.8
   int8_t output_data[10] = {0};
   in_tensor0.SetData(input_data0);
   in_tensor1.SetData(input_data1);
@@ -50,9 +50,9 @@ TEST_F(TestQuantizedAdd, Add) {
   std::vector<lite::tensor::Tensor *> outputs = {&out_tensor};
 
   OpParameter parameter = {};
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, schema::PrimitiveType_Add};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Add};
 
-  auto creator = lite::KernelRegistry::GetInstance()->GetKernelCreator(desc);
+  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
 
   auto ctx = std::make_shared<lite::Context>();

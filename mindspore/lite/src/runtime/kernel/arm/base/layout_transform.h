@@ -21,7 +21,8 @@
 #include <arm_neon.h>
 #endif
 #include "src/runtime/kernel/arm/opclib/pack.h"
-#include "src/ir/tensor.h"
+#include "ir/dtype/type_id.h"
+#include "schema/ops_generated.h"
 
 namespace mindspore::kernel {
 typedef void (*LayoutConvertor)(const void *src, void *dst, int batch, int plane, int channel);

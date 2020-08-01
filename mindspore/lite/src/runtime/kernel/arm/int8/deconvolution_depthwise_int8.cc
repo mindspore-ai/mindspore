@@ -25,6 +25,7 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::schema::PrimitiveType_DeDepthwiseConv2D;
 
 namespace mindspore::kernel {
 int DeconvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
@@ -63,9 +64,9 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitSlideParam() {
 
   sliding->in_h_step_ = conv_param_->input_w_ * C4NUM;
   sliding->in_sh_step_ = conv_param_->input_w_ * C4NUM * conv_param_->stride_h_;    // stride H
-  sliding->in_sw_step_ = C4NUM * conv_param_->stride_h_;                           // stride W
+  sliding->in_sw_step_ = C4NUM * conv_param_->stride_h_;                            // stride W
   sliding->in_kh_step_ = conv_param_->input_w_ * C4NUM * conv_param_->dilation_h_;  // kernel H
-  sliding->in_kw_step_ = C4NUM * conv_param_->dilation_w_;                         // kernel W
+  sliding->in_kw_step_ = C4NUM * conv_param_->dilation_w_;                          // kernel W
   return RET_OK;
 }
 
@@ -171,4 +172,27 @@ int DeconvolutionDepthwiseInt8CPUKernel::Run() {
   }
   return RET_OK;
 }
+
+kernel::LiteKernel *CpuDeconvDwInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
+                                                 const std::vector<lite::tensor::Tensor *> &outputs,
+                                                 OpParameter *opParameter, const lite::Context *ctx,
+                                                 const kernel::KernelKey &desc) {
+  MS_ASSERT(opParameter != nullptr);
+  MS_ASSERT(desc.type == schema::PrimitiveType_DeDepthwiseConv2D);
+  auto kernel = new (std::nothrow) kernel::DeconvolutionDepthwiseInt8CPUKernel(opParameter, inputs, outputs, ctx);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "kernel is nullptr.";
+    return nullptr;
+  }
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    delete kernel;
+    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    return nullptr;
+  }
+  return kernel;
+}
+
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_DeDepthwiseConv2D, CpuDeconvDwInt8KernelCreator)
 }  // namespace mindspore::kernel

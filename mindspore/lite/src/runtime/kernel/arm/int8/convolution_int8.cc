@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/int8/convolution_int8.h"
+#include "src/runtime/kernel/arm/int8/convolution_3x3_int8.h"
 #include "src/runtime/kernel/arm/opclib/int8/conv_int8.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 #include "schema/model_generated.h"
@@ -36,7 +37,7 @@ void ConvolutionInt8CPUKernel::CheckSupportOptimize() {
   support_optimize_ = false;
 #endif
 
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
   void *optimize_op_handler = OptimizeModule::GetInstance()->optimized_op_handler_;
   if (optimize_op_handler != nullptr) {
     dlerror();
@@ -383,4 +384,39 @@ int ConvolutionInt8CPUKernel::Run() {
   }
   return RET_OK;
 }
+
+kernel::LiteKernel *CpuConvInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
+                                             const std::vector<lite::tensor::Tensor *> &outputs,
+                                             OpParameter *opParameter, const Context *ctx,
+                                             const kernel::KernelKey &desc) {
+  MS_ASSERT(opParameter != nullptr);
+  MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D);
+  auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
+  int kernel_h = conv_param->kernel_h_;
+  int kernel_w = conv_param->kernel_w_;
+  int stride_h = conv_param->stride_h_;
+  int stride_w = conv_param->stride_w_;
+  int dilation_h = conv_param->dilation_h_;
+  int dilation_w = conv_param->dilation_w_;
+  kernel::LiteKernel *kernel;
+  if (kernel_h == 3 && kernel_w == 3 && stride_h == 1 && stride_w == 1 && dilation_h == 1 && dilation_w == 1) {
+    kernel = new (std::nothrow) kernel::Convolution3x3Int8CPUKernel(opParameter, inputs, outputs, ctx);
+  } else {
+    kernel = new (std::nothrow) kernel::ConvolutionInt8CPUKernel(opParameter, inputs, outputs, ctx);
+  }
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "kernel is nullptr.";
+    return nullptr;
+  }
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    delete kernel;
+    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    return nullptr;
+  }
+  return kernel;
+}
+
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Conv2D, CpuConvInt8KernelCreator)
 }  // namespace mindspore::kernel

@@ -38,4 +38,3 @@ class KernelFactory {
 }  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_SRC_KERNEL_FACTORY_H_
-

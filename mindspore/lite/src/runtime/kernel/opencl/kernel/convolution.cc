@@ -194,6 +194,6 @@ kernel::LiteKernel *OpenCLConvolutionKernelCreator(const std::vector<lite::tenso
   return kernel;
 }
 
-REG_KERNEL(kGPU, PrimitiveType_Conv2D, OpenCLConvolutionKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Conv2D, OpenCLConvolutionKernelCreator)
 }  // namespace mindspore::kernel
 

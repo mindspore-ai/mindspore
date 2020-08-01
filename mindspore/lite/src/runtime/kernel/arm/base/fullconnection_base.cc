@@ -32,39 +32,17 @@ int FullconnectionBaseCPUKernel::Init() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuFullConnectionKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                   const std::vector<lite::tensor::Tensor *> &outputs,
-                                                   OpParameter *opParameter, const lite::Context *ctx,
-                                                   const kernel::KernelKey &desc) {
+kernel::LiteKernel *CpuFullConnectionInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
+                                                       const std::vector<lite::tensor::Tensor *> &outputs,
+                                                       OpParameter *opParameter, const lite::Context *ctx,
+                                                       const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Concat);
-  auto input_tensor = inputs.at(kInputIndex);
-  auto data_type = input_tensor->data_type();
-  kernel::LiteKernel *kernel = nullptr;
-  switch (data_type) {
-    case kNumberTypeInt8:
-    case kNumberTypeUInt8: {
-      kernel = new (std::nothrow) FullconnectionInt8CPUKernel(opParameter, inputs, outputs, ctx);
-      if (!kernel) {
-        MS_LOG(ERROR) << "kernel is nullptr.";
-        return nullptr;
-      }
-      break;
-    }
-
-    case kNumberTypeFloat32: {
-      kernel = new (std::nothrow) FullconnectionCPUKernel(opParameter, inputs, outputs, ctx);
-      if (!kernel) {
-        MS_LOG(ERROR) << "kernel is nullptr.";
-        return nullptr;
-      }
-      break;
-    }
-
-    default:
-      break;
+  auto kernel = new (std::nothrow) FullconnectionInt8CPUKernel(opParameter, inputs, outputs, ctx);
+  if (!kernel) {
+    MS_LOG(ERROR) << "kernel is nullptr.";
+    return nullptr;
   }
-
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     delete kernel;
@@ -75,5 +53,27 @@ kernel::LiteKernel *CpuFullConnectionKernelCreator(const std::vector<lite::tenso
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_FullConnection, CpuFullConnectionKernelCreator)
+kernel::LiteKernel *CpuFullConnectionFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
+                                                       const std::vector<lite::tensor::Tensor *> &outputs,
+                                                       OpParameter *opParameter, const lite::Context *ctx,
+                                                       const kernel::KernelKey &desc) {
+  MS_ASSERT(opParameter != nullptr);
+  MS_ASSERT(desc.type == schema::PrimitiveType_Concat);
+  auto kernel = new (std::nothrow) FullconnectionCPUKernel(opParameter, inputs, outputs, ctx);
+  if (!kernel) {
+    MS_LOG(ERROR) << "kernel is nullptr.";
+    return nullptr;
+  }
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    delete kernel;
+    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    return nullptr;
+  }
+  return kernel;
+}
+
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_FullConnection, CpuFullConnectionInt8KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_FullConnection, CpuFullConnectionFp32KernelCreator)
 }  // namespace mindspore::kernel

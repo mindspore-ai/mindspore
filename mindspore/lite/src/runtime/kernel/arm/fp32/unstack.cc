@@ -86,6 +86,5 @@ kernel::LiteKernel *CpuUnstackFp32KernelCreator(const std::vector<lite::tensor::
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_Unstack, CpuUnstackFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Unstack, CpuUnstackFp32KernelCreator)
 }  // namespace mindspore::kernel
-

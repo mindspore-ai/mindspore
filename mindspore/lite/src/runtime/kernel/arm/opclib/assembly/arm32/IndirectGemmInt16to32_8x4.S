@@ -1,5 +1,4 @@
-#ifdef __arm__
-#ifndef __aarch64__
+#ifdef ENABLE_ARM32
 
 .text
 .align 5
@@ -235,6 +234,5 @@ IndirectGemmInt16to32_8x4:
     vpop {q4-q7}
     pop {r4-r8, r10, pc}
 
-#endif
 #endif
 

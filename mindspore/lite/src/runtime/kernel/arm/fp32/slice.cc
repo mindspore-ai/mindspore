@@ -23,8 +23,8 @@
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
-using mindspore::lite::RET_OK;
 using mindspore::lite::RET_NULL_PTR;
+using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Slice;
 
 namespace mindspore::kernel {
@@ -37,7 +37,7 @@ int SliceLaunch(int thread_id, LiteParallelGroupEnv *penv, void *cdata) {
   auto kernel = reinterpret_cast<SliceCPUKernel *>(cdata);
   return kernel->SliceParallelRun(thread_id);
 }
-}
+}  // namespace
 
 int SliceCPUKernel::Init() {
   auto *param = reinterpret_cast<SliceParameter *>(opParameter);
@@ -106,7 +106,7 @@ kernel::LiteKernel *CpuSliceFp32KernelCreator(const std::vector<lite::tensor::Te
     MS_LOG(ERROR) << "Input context is nullptr!";
     return nullptr;
   }
-
+  MS_ASSERT(desc.type == schema::PrimitiveType_Slice);
   op_parameter->thread_num_ = ctx->threadNum;
   auto *kernel = new (std::nothrow) SliceCPUKernel(op_parameter, inputs, outputs);
   if (kernel == nullptr) {
@@ -124,5 +124,5 @@ kernel::LiteKernel *CpuSliceFp32KernelCreator(const std::vector<lite::tensor::Te
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_Slice, CpuSliceFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Slice, CpuSliceFp32KernelCreator)
 }  // namespace mindspore::kernel

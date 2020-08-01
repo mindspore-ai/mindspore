@@ -127,9 +127,9 @@ kernel::LiteKernel *OpenCLArithmeticKernelCreator(const std::vector<lite::tensor
   return kernel;
 }
 
-REG_KERNEL(kGPU, PrimitiveType_Mul, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, PrimitiveType_Add, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, PrimitiveType_Sub, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, PrimitiveType_Div, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Mul, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Add, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Sub, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Div, OpenCLArithmeticKernelCreator)
 }  // namespace mindspore::kernel
 

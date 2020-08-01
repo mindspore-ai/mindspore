@@ -20,7 +20,6 @@
 #include "common/common_test.h"
 #include "mindspore/lite/src/common/file_utils.h"
 #include "mindspore/lite/src/runtime/kernel/arm/opclib/pack.h"
-#include "mindspore/lite/src/runtime/kernel/arm/base/convolution_base.h"
 
 namespace mindspore {
 class TestPack : public mindspore::Common {

@@ -32,50 +32,13 @@ kernel::LiteKernel *CpuPadInt8KernelCreator(const std::vector<lite::tensor::Tens
                                             const std::vector<lite::tensor::Tensor *> &outputs,
                                             OpParameter *opParameter, const lite::Context *ctx,
                                             const kernel::KernelKey &desc) {
+  MS_ASSERT(opParameter != nullptr);
+  MS_ASSERT(desc.type == schema::PrimitiveType_Pad);
   auto *kernel = new (std::nothrow) PadInt8CPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PadCPUKernel failed.";
     return nullptr;
   }
-  return kernel;
-}
-
-kernel::LiteKernel *CpuPadFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                            const std::vector<lite::tensor::Tensor *> &outputs,
-                                            OpParameter *opParameter, const lite::Context *ctx,
-                                            const kernel::KernelKey &desc) {
-  auto *kernel = new (std::nothrow) PadCPUKernel(opParameter, inputs, outputs, ctx);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new PadCPUKernel failed.";
-    return nullptr;
-  }
-  return kernel;
-}
-
-kernel::LiteKernel *CpuPadKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                        const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *opParameter,
-                                        const lite::Context *ctx, const kernel::KernelKey &desc) {
-  MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_Concat);
-  auto input_tensor = inputs.at(kInputIndex);
-  auto data_type = input_tensor->data_type();
-  kernel::LiteKernel *kernel = nullptr;
-  switch (data_type) {
-    case kNumberTypeInt8:
-      kernel = CpuPadInt8KernelCreator(inputs, outputs, opParameter, ctx, desc);
-      break;
-    case kNumberTypeFloat32:
-      kernel = CpuPadFp32KernelCreator(inputs, outputs, opParameter, ctx, desc);
-      break;
-    default:
-      break;
-  }
-
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "kernel is nullptr.";
-    return nullptr;
-  }
-
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     delete kernel;
@@ -86,5 +49,27 @@ kernel::LiteKernel *CpuPadKernelCreator(const std::vector<lite::tensor::Tensor *
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_Pad, CpuPadKernelCreator)
+kernel::LiteKernel *CpuPadFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
+                                            const std::vector<lite::tensor::Tensor *> &outputs,
+                                            OpParameter *opParameter, const lite::Context *ctx,
+                                            const kernel::KernelKey &desc) {
+  MS_ASSERT(opParameter != nullptr);
+  MS_ASSERT(desc.type == schema::PrimitiveType_Pad);
+  auto *kernel = new (std::nothrow) PadCPUKernel(opParameter, inputs, outputs, ctx);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new PadCPUKernel failed.";
+    return nullptr;
+  }
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    delete kernel;
+    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    return nullptr;
+  }
+  return kernel;
+}
+
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Pad, CpuPadInt8KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Pad, CpuPadFp32KernelCreator)
 }  // namespace mindspore::kernel

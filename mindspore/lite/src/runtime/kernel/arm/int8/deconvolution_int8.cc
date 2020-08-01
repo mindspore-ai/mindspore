@@ -17,8 +17,10 @@
 #include "src/runtime/kernel/arm/int8/deconvolution_int8.h"
 #include "src/runtime/kernel/arm/opclib/quantization/fixed_point.h"
 #include "src/runtime/runtime_api.h"
+#include "src/kernel_registry.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
+using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
@@ -216,5 +218,27 @@ int DeConvInt8CPUKernel::Run() {
 
   return RET_OK;
 }
-}  // namespace mindspore::kernel
 
+kernel::LiteKernel *CpuDeConvInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
+                                               const std::vector<lite::tensor::Tensor *> &outputs,
+                                               OpParameter *opParameter, const lite::Context *ctx,
+                                               const kernel::KernelKey &desc) {
+  MS_ASSERT(opParameter != nullptr);
+  MS_ASSERT(desc.type == schema::PrimitiveType_DeConv2D);
+  auto kernel = new (std::nothrow) kernel::DeConvInt8CPUKernel(opParameter, inputs, outputs, ctx);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "kernel is nullptr.";
+    return nullptr;
+  }
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    delete kernel;
+    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    return nullptr;
+  }
+  return kernel;
+}
+
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_DeConv2D, CpuDeConvInt8KernelCreator)
+}  // namespace mindspore::kernel

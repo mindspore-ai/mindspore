@@ -30,16 +30,22 @@ class KernelRegistry {
   virtual ~KernelRegistry();
 
   static KernelRegistry *GetInstance();
-  virtual kernel::KernelCreator GetKernelCreator(const kernel::KernelKey &desc);
-
-  const std::map<kernel::KernelKey, kernel::KernelCreator> &GetKernelCreators();
-
+  int Init();
+  void FreeCreatorArray();
+  virtual kernel::KernelCreator GetCreator(const kernel::KernelKey &desc);
+  const kernel::KernelCreator *GetCreatorArrays();
+  int GetCreatorFuncIndex(const kernel::KernelKey desc);
   void RegKernel(const kernel::KernelKey desc, kernel::KernelCreator creator);
-  void RegKernel(const kernel::KERNEL_ARCH arch, const schema::PrimitiveType type, kernel::KernelCreator creator);
+  void RegKernel(const kernel::KERNEL_ARCH arch, const TypeId data_type, const schema::PrimitiveType type,
+                 kernel::KernelCreator creator);
   bool Merge(const std::unordered_map<kernel::KernelKey, kernel::KernelCreator> &newCreators);
 
  protected:
-  std::map<kernel::KernelKey, kernel::KernelCreator> creators;
+  kernel::KernelCreator *creator_arrays_ = nullptr;
+  int device_type_length_;
+  int data_type_length_;
+  int op_type_length_;
+  std::mutex lock_;
 };
 
 class KernelRegistrar {
@@ -48,14 +54,14 @@ class KernelRegistrar {
     KernelRegistry::GetInstance()->RegKernel(desc, creator);
   }
 
-  KernelRegistrar(const kernel::KERNEL_ARCH arch, const schema::PrimitiveType type, kernel::KernelCreator creator) {
-    KernelRegistry::GetInstance()->RegKernel(arch, type, creator);
+  KernelRegistrar(const kernel::KERNEL_ARCH arch, const TypeId data_type, const schema::PrimitiveType op_type,
+                  kernel::KernelCreator creator) {
+    KernelRegistry::GetInstance()->RegKernel(arch, data_type, op_type, creator);
   }
 };
 
-#define REG_KERNEL(arch, type, kernelCreater) \
-  static KernelRegistrar g_##arch##type##kernelReg(arch, type, kernelCreater);
+#define REG_KERNEL(arch, data_type, op_type, kernelCreater) \
+  static KernelRegistrar g_##arch##data_type##op_type##kernelReg(arch, data_type, op_type, kernelCreater);
 }  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_SRC_KERNEL_REGISTRY_H_
-

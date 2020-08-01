@@ -241,7 +241,8 @@ int ReduceCPUKernel::MallocTmpBuffer() {
     data_buffers_.emplace_back(buffer);
     input_shape[axis] = 1;
   }
+  return RET_OK;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_Reduce, CpuReduceFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Reduce, CpuReduceFp32KernelCreator)
 }  // namespace mindspore::kernel

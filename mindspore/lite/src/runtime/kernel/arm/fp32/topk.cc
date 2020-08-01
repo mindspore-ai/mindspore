@@ -53,10 +53,13 @@ int TopKCPUKernel::Run() {
 kernel::LiteKernel *CpuTopKFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
                                              const lite::Context *ctx, const KernelKey &desc) {
-  MS_EXCEPTION_IF_NULL(parameter);
+  MS_ASSERT(parameter != nullptr);
   MS_ASSERT(desc.type == PrimitiveType_Tile);
   auto *kernel = new (std::nothrow) TopKCPUKernel(parameter, inputs, outputs);
-  MS_EXCEPTION_IF_NULL(kernel);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new TopKCPUKernel fail!";
+    return nullptr;
+  }
 
   auto ret = kernel->Init();
   if (ret != RET_OK) {
@@ -68,6 +71,6 @@ kernel::LiteKernel *CpuTopKFp32KernelCreator(const std::vector<lite::tensor::Ten
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_TopK, CpuTopKFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_TopK, CpuTopKFp32KernelCreator)
 }  // namespace mindspore::kernel
 

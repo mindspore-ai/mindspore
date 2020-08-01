@@ -114,5 +114,5 @@ kernel::LiteKernel *CpuCastFp32KernelCreator(const std::vector<lite::tensor::Ten
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_Cast, CpuCastFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Cast, CpuCastFp32KernelCreator)
 }  // namespace mindspore::kernel

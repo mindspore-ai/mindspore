@@ -24,6 +24,7 @@
 #include "src/executor.h"
 #include "src/common/utils.h"
 #include "src/common/graph_util.h"
+#include "src/kernel_registry.h"
 #if SUPPORT_GPU
 #include "src/runtime/opencl/opencl_runtime.h"
 #endif
@@ -197,7 +198,11 @@ void LiteSession::Init(Context *context) {
   this->context->deviceCtx.type = context->deviceCtx.type;
   this->context->allocator = std::make_shared<DefaultAllocator>();
   ConfigThreadPool(context->cpuBindMode, context->threadNum);
-
+  auto ret = KernelRegistry::GetInstance()->Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "KernelRegistry Init Failed.";
+    return;
+  }
 #if SUPPORT_GPU
   if (context->deviceCtx.type == DT_GPU) {
     auto opencl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
@@ -228,6 +233,7 @@ LiteSession::~LiteSession() {
     delete kernel;
   }
 }
+
 std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputsByName(std::string name) {
   return input_map[name];
 }

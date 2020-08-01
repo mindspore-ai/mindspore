@@ -40,6 +40,10 @@ kernel::LiteKernel *CpuMatmulFp32KernelCreator(const std::vector<lite::tensor::T
                                                const kernel::KernelKey &desc) {
   MS_ASSERT(desc.type == schema::PrimitiveType_MatMul);
   auto *kernel = new (std::nothrow) MatmulCPUKernel(opParameter, inputs, outputs);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new MatmulCPUKernel fail!";
+    return nullptr;
+  }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
@@ -48,6 +52,6 @@ kernel::LiteKernel *CpuMatmulFp32KernelCreator(const std::vector<lite::tensor::T
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_MatMul, CpuMatmulFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_MatMul, CpuMatmulFp32KernelCreator)
 }  // namespace mindspore::kernel
 

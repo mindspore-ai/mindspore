@@ -92,6 +92,10 @@ kernel::LiteKernel *CpuFillFp32KernelCreator(const std::vector<lite::tensor::Ten
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Fill);
   auto *kernel = new (std::nothrow) FillCPUKernel(opParameter, inputs, outputs, ctx);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new FillCPUKernel fail!";
+    return nullptr;
+  }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
@@ -102,6 +106,6 @@ kernel::LiteKernel *CpuFillFp32KernelCreator(const std::vector<lite::tensor::Ten
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_Fill, CpuFillFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Fill, CpuFillFp32KernelCreator)
 }  // namespace mindspore::kernel
 

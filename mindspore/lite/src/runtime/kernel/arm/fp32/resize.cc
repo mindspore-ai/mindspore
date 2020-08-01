@@ -221,6 +221,7 @@ kernel::LiteKernel *CpuResizeFp32KernelCreator(const std::vector<lite::tensor::T
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
+  MS_ASSERT(desc.type == schema::PrimitiveType_Resize);
   auto *kernel = new (std::nothrow) ResizeCPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ResizeCPUKernel fail!";
@@ -237,6 +238,6 @@ kernel::LiteKernel *CpuResizeFp32KernelCreator(const std::vector<lite::tensor::T
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_Resize, CpuResizeFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Resize, CpuResizeFp32KernelCreator)
 }  // namespace mindspore::kernel
 

@@ -82,6 +82,10 @@ kernel::LiteKernel *CpuExpandsDimsFp32KernelCreator(const std::vector<lite::tens
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_ExpandDims);
   auto *kernel = new (std::nothrow) ExpandDimsCPUKernel(opParameter, inputs, outputs, ctx);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new ExpandDimsCPUKernel fail!";
+    return nullptr;
+  }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
@@ -92,6 +96,6 @@ kernel::LiteKernel *CpuExpandsDimsFp32KernelCreator(const std::vector<lite::tens
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_ExpandDims, CpuExpandsDimsFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ExpandDims, CpuExpandsDimsFp32KernelCreator)
 }  // namespace mindspore::kernel
 

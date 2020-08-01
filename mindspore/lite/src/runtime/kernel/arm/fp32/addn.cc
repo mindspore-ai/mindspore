@@ -100,7 +100,7 @@ kernel::LiteKernel *CpuAddNFp32KernelCreator(const std::vector<lite::tensor::Ten
     MS_LOG(ERROR) << "Input context is nullptr!";
     return nullptr;
   }
-
+  MS_ASSERT(desc.type == schema::PrimitiveType_AddN);
   op_parameter->thread_num_ = ctx->threadNum;
   auto *kernel = new (std::nothrow) AddNCPUKernel(op_parameter, inputs, outputs);
   if (kernel == nullptr) {
@@ -117,5 +117,5 @@ kernel::LiteKernel *CpuAddNFp32KernelCreator(const std::vector<lite::tensor::Ten
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_AddN, CpuAddNFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_AddN, CpuAddNFp32KernelCreator)
 }  // namespace mindspore::kernel

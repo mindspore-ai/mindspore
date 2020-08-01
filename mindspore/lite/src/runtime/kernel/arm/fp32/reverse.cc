@@ -139,6 +139,7 @@ kernel::LiteKernel *CpuReverseFp32KernelCreator(const std::vector<lite::tensor::
     MS_LOG(ERROR) << "opParameter is NULL! ";
     return nullptr;
   }
+  MS_ASSERT(desc.type == schema::PrimitiveType_Reverse);
   auto *kernel = new (std::nothrow) ReverseCPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Kernel is NULL! name: " << opParameter->name_ << ", type: "
@@ -156,6 +157,6 @@ kernel::LiteKernel *CpuReverseFp32KernelCreator(const std::vector<lite::tensor::
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_Reverse, CpuReverseFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Reverse, CpuReverseFp32KernelCreator)
 }  // namespace mindspore::kernel
 

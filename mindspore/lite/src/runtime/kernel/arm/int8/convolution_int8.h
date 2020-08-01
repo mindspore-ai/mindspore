@@ -72,4 +72,3 @@ class ConvolutionInt8CPUKernel : public ConvolutionBaseCPUKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_CONVOLUTION_INT8_H_
-

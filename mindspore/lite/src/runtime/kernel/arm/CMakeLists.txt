@@ -25,13 +25,5 @@ if (PLATFORM_ARM32)
     set(KERNEL_SRC ${KERNEL_SRC} ${ASSEMBLY_SRC})
 endif()
 
-if (ENABLE_FP16)
-    file(GLOB FP6_SRC
-            ${CMAKE_CURRENT_SOURCE_DIR}/fp16/*.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/opclib/fp16/*.cc
-            )
-    set(KERNEL_SRC ${KERNEL_SRC} ${FP6_SRC})
-endif ()
-
 add_library(cpu_kernel_mid_ OBJECT ${KERNEL_SRC})
 add_subdirectory(opclib)

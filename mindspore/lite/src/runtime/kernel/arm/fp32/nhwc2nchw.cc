@@ -43,6 +43,10 @@ kernel::LiteKernel *CpuNhwc2NchwFp32KernelCreator(const std::vector<lite::tensor
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Nhwc2Nchw);
   auto *kernel = new (std::nothrow) Nhwc2NchwCPUKernel(opParameter, inputs, outputs);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new Nhwc2NchwCPUKernel fail!";
+    return nullptr;
+  }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
@@ -53,6 +57,6 @@ kernel::LiteKernel *CpuNhwc2NchwFp32KernelCreator(const std::vector<lite::tensor
   return kernel;
 }
 
-REG_KERNEL(kCPU, PrimitiveType_Nhwc2Nchw, CpuNhwc2NchwFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Nhwc2Nchw, CpuNhwc2NchwFp32KernelCreator)
 }  // namespace mindspore::kernel
 

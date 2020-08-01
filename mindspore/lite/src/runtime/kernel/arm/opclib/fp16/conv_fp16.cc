@@ -15,20 +15,17 @@
  */
 #include "src/runtime/kernel/arm/opclib/fp16/conv_fp16.h"
 #include <string.h>
-#include "src/runtime/kernel/arm/opclib/pack.h"
-#include "src/runtime/kernel/arm/opclib/winograd_transform.h"
+#include "src/runtime/kernel/arm/opclib/fp16/pack_fp16.h"
+#include "src/runtime/kernel/arm/opclib/fp16/winograd_transform_fp16.h"
 
 extern "C" {
 #ifdef ENABLE_ARM64
-#ifdef ENABLE_FP16
 void IndirectGemmFp16_16x8(float16_t *output, float16_t *input, float16_t *weight, float16_t *bias, size_t step,
                            size_t ic4, size_t oc8, size_t offset, size_t mode, size_t writeC4, size_t relu,
                            size_t relu6);
 #endif
-#endif
 }
 
-#ifdef ENABLE_FP16
 #ifndef ENABLE_NEON
 void IndirectGemmFp16_16x8(float16_t *output, float16_t *input, float16_t *weight, float16_t *bias, size_t step,
                            size_t ic4, size_t out_channel, size_t offset, size_t mode, size_t writeC4, size_t relu,
@@ -215,5 +212,5 @@ void Conv3x3Fp16(float16_t *input_data, float16_t *transed_weight, const float16
     }
   }
 }
-#endif
+
 
