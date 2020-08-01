@@ -24,7 +24,7 @@
 #include "src/runtime/kernel/arm/opclib/arithmetic_common.h"
 
 struct ArithmeticParameter {
-  OpParameter op_parameter;
+  OpParameter op_parameter_;
   bool broadcasting_;
   size_t ndim_;
   int in_shape0_[5];
