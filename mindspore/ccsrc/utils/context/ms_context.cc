@@ -50,8 +50,6 @@ std::map<std::string, MsBackendPolicy> MsContext::policy_map_ = {{"ge", kMsBacke
 MsContext::MsContext(const std::string &policy, const std::string &target) {
   save_graphs_flag_ = false;
   save_graphs_path_ = ".";
-  save_ms_model_flag_ = false;
-  save_ms_model_path_ = "./model.ms";
   enable_dump_ = false;
   save_dump_path_ = ".";
   tsd_ref_ = 0;

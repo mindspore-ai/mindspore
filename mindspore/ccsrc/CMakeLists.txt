@@ -60,11 +60,6 @@ if(ENABLE_GPU)
     add_compile_definitions(ENABLE_GPU)
 endif ()
 
-## make flatuffer files
-include_directories("${CMAKE_BINARY_DIR}/predict/schema/inner")
-file(GLOB_RECURSE FLATBUFFER_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "predict/schema/*.fbs")
-set(FLATBUFFER_OU "${CMAKE_BINARY_DIR}/predict/schema/inner")
-ms_build_flatbuffers("${FLATBUFFER_IN}" "${FLATBUFFER_IN}" flat_input "${FLATBUFFER_OU}")
 
 ## make protobuf files
 file(COPY "${ms_onnx_INC}/onnx/onnx.proto" DESTINATION ${CMAKE_BINARY_DIR}/proto)
@@ -104,13 +99,9 @@ endif ()
 
 if (ENABLE_D)
     include_directories("${CMAKE_BINARY_DIR}/backend/kernel_compiler/aicpu")
-    include_directories("${CMAKE_BINARY_DIR}/predict/generator/ir")
     file(GLOB_RECURSE PROTO_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "backend/kernel_compiler/aicpu/proto/*.proto")
     ms_protobuf_generate(PROTOSRCS PROTOHDRS ${PROTO_IN})
     
-    file(GLOB_RECURSE PROTO_INNER RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "predict/proto/*.proto")
-    ms_protobuf_generate(PREDICT_PROTOSRCS PREDICT_PROTOHDRS ${PROTO_INNER})
-
     file(GLOB_RECURSE PROTO_DUMP RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "runtime/device/ascend/dump/proto/*.proto")
     ms_protobuf_generate(DUMP_PROTOSRCS PROTOHDRS ${PROTO_DUMP})
 
@@ -139,7 +130,7 @@ set(SUB_COMP
         frontend/operator
         pipeline/jit
         pipeline/pynative
-        common debug gvar predict pybind_api utils vm
+        common debug gvar pybind_api utils vm
 )
 
 foreach (_comp ${SUB_COMP})
@@ -147,7 +138,7 @@ foreach (_comp ${SUB_COMP})
     string(REPLACE "/" "_" sub ${_comp})
     if (TARGET _mindspore_${sub}_obj)
         list(APPEND SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_${sub}_obj>)
-        add_dependencies(_mindspore_${sub}_obj proto_input flat_input)
+        add_dependencies(_mindspore_${sub}_obj proto_input )
     endif ()
 endforeach ()
 add_subdirectory(${CMAKE_SOURCE_DIR}/mindspore/core/base base)
@@ -158,7 +149,7 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/mindspore/core/utils util)
 list(APPEND SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_core_utils_obj>)
 add_subdirectory(${CMAKE_SOURCE_DIR}/mindspore/core/ir ir)
 list(APPEND SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_ir_obj>)
-add_dependencies(_mindspore_core_utils_obj _mindspore_base_obj _mindspore_ir_obj _mindspore_abstract_obj proto_input flat_input)
+add_dependencies(_mindspore_core_utils_obj _mindspore_base_obj _mindspore_ir_obj _mindspore_abstract_obj proto_input )
 
 set_property(SOURCE ${SUB_OBJECTS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_ME)
 add_library(mindspore STATIC ${SUB_OBJECTS_SRC})

@@ -24,7 +24,6 @@
 #include "common/utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_adjust.h"
-#include "predict/generator/utils/ir_model_util.h"
 #include "backend/optimizer/common/helper.h"
 #include "utils/utils.h"
 
@@ -53,13 +52,6 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
     GetStreamRelations();
     PrintStreamGroups();
     FindEventRelations(graph_ptr);
-
-    // Get info for D Model
-    AscendResourceMng &resource_manager = AscendResourceMng::GetInstance();
-    generator::IRModelUtil::GetInstance().set_event_num(resource_manager.get_cur_event_num());
-    generator::IRModelUtil::GetInstance().set_stream_num(resource_manager.get_cur_stream_num());
-    // Init to 1,temporarily
-    generator::IRModelUtil::GetInstance().set_batch_num(1);
   }
 }
 
