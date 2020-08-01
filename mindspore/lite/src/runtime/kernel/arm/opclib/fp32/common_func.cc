@@ -81,20 +81,19 @@ void PostConvFuncFp32(const float *c4_out_ptr, float *out_ptr, const float *bias
     }
   }
 #else
-  int oc4 = UP_DIV(output_channel, C4NUM);
   if (bias_ptr != nullptr) {
     if (is_relu) {
-      BiasAddRelu(bias_ptr, out_ptr, oc4, plane_size);
+      C4BiasAddRelu(out_ptr, c4_out_ptr, bias_ptr, output_channel, plane_size, stride * sizeof(float));
     } else if (is_relu6) {
-      BiasAddRelu6(bias_ptr, out_ptr, oc4, plane_size);
+      C4BiasAddRelu6(out_ptr, c4_out_ptr, bias_ptr, output_channel, plane_size, stride * sizeof(float));
     } else {
-      BiasAdd(bias_ptr, out_ptr, oc4, plane_size);
+      C4BiasAdd(out_ptr, c4_out_ptr, bias_ptr, output_channel, plane_size, stride * sizeof(float));
     }
   } else {
     if (is_relu) {
-      Relu(out_ptr, oc4 * plane_size);
+      C4Relu(out_ptr, c4_out_ptr, output_channel, plane_size, stride * sizeof(float));
     } else if (is_relu6) {
-      Relu6(out_ptr, oc4 * plane_size);
+      C4Relu6(out_ptr, c4_out_ptr, output_channel, plane_size, stride * sizeof(float));
     } else {
       // do nothing
     }
