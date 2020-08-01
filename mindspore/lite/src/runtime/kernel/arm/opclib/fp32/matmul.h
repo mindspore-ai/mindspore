@@ -21,19 +21,22 @@
 #include "src/runtime/kernel/arm/opclib/op_base.h"
 #include "src/runtime/kernel/arm/opclib/matmul.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void MatMul(const float *a, const float *b, float *c, const float *bias, float maxf, float minf, int depth, int row,
             int col);
 void RowMajor2Row8Major(float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Col8Major(float *src_ptr, float *dst_ptr, int row, int col);
 void Row8x8Major2RowMajor(float *src_ptr, float *dst_ptr, int row, int col);
-
+void MatMul8x8(const float *a, const float *b, float *c, const float *bias, float maxf, float minf, int deep,
+               int row_8_, int col_8_);
+#ifdef __cplusplus
+extern "C" {
+#endif
+#ifdef __aarch64__
+void MatMulFloatNeon64(const float *a, const float *b, float *c, const float *bias, float maxf, float minf, int depth,
+                       int row, int col);
+#endif
 #ifdef __cplusplus
 }
 #endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_MATMUL_H_
-

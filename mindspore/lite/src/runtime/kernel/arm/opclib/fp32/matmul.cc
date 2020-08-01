@@ -74,5 +74,9 @@ void MatMul8x8(const float *a, const float *b, float *c, const float *bias, floa
 
 void MatMul(const float *a, const float *b, float *c, const float *bias, float maxf, float minf, int deep, int row_8_,
             int col_8_) {
+#ifdef __aarch64__
+  MatMulFloatNeon64(a, b, c, bias, maxf, minf, deep, row_8_, col_8_);
+#else
   MatMul8x8(a, b, c, bias, maxf, minf, deep, row_8_, col_8_);
+#endif
 }
