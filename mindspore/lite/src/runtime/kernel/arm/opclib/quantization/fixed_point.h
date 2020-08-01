@@ -35,8 +35,17 @@ inline int SaturatingRoundingDoublingHighMul(int a, int b) {
   int64_t ab = ((int64_t)a) * ((int64_t)b);
   int64_t rounding = ab >= 0 ? (1ll << 30) : (1ll - (1ll << 30));
   // do not apply right shift to potential negetive values
-  int ab_mantissa = (int) ((ab + rounding) / (1ll << 31));
+  int ab_mantissa = (int)((ab + rounding) / (1ll << 31));
   return ab_mantissa;
+}
+
+inline int16_t SaturatingRoundingDoublingHighMulInt16(int16_t a, int16_t b) {
+  if (a == SHRT_MIN && b == SHRT_MIN) {
+    return SHRT_MAX;
+  }
+  int32_t ab = ((int32_t)a) * ((int32_t)b);
+  int16_t rounding = ab >= 0 ? (1ll << 14) : (1ll - (1ll << 14));
+  return (int16_t)((ab + rounding) / (1ll << 15));
 }
 
 // division by a 2^exponent with rounding
@@ -62,10 +71,7 @@ inline int32x4_t RoundingDivideByPOTInt32x4(int32x4_t x, int exponent) {
   return vrshlq_s32(fixed_up_x, shift_vec);
 }
 
-inline int32x4_t SaturatingRoundingDoublingHighMulInt32x4(int32x4_t a, int32x4_t b) {
-  return vqrdmulhq_s32(a, b);
-}
+inline int32x4_t SaturatingRoundingDoublingHighMulInt32x4(int32x4_t a, int32x4_t b) { return vqrdmulhq_s32(a, b); }
 #endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_QUANTIZATION_FIXED_POINT_H_
-

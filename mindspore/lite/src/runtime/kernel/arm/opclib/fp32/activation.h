@@ -19,6 +19,7 @@
 #include <math.h>
 #include "src/runtime/kernel/arm/opclib/op_base.h"
 #include "src/runtime/kernel/arm/opclib/errorcode.h"
+#include "src/runtime/kernel/arm/opclib/quantization/fixed_point.h"
 
 struct ActivationParameter {
   OpParameter op_parameter_;
@@ -75,4 +76,3 @@ inline int HSwish(const float *src, int length, float *dst) {
 }
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_ACTIVATION_H_
-
