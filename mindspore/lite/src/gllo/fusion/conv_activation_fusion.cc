@@ -14,23 +14,24 @@
  * limitations under the License.
  */
 
-#include "src/gllo/fusion/conv_activation_fusion.h"
+#include "mindspore/lite/src/gllo/fusion/conv_activation_fusion.h"
 #include <memory>
-#include "schema/inner/model_generated.h"
-#include "src/ir/primitive_t_value.h"
+#include "mindspore/lite/schema/inner/model_generated.h"
+#include "mindspore/lite/src/ir/primitive_t_value.h"
 #include "mindspore/ccsrc/utils/utils.h"
-#include "src/gllo/common/utils.h"
+#include "mindspore/lite/src/gllo/common/utils.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::opt {
+namespace {
+constexpr size_t kActivationInputsLength = 2;
+}
 const BaseRef ConvActivationFusion::DefinePattern() const {
-  VarPtr X = std::make_shared<Var>();
-  // conv2d inputs may be 2 or 3 inputs,match move to process
+  auto conv_var = std::make_shared<CondVar>(IsConvNode);
   auto prim = new schema::PrimitiveT();
   prim->value.type = primitive_type;
   auto prim_value = std::make_shared<lite::PrimitiveTValue>(prim);
 
-  return VectorRef({prim_value, X});
+  return VectorRef({prim_value, conv_var});
 }
 
 const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
@@ -41,7 +42,7 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
   CheckIfAnfNodeIsNull(node);
   auto act_node = node->cast<CNodePtr>();
   CheckIfCNodeIsNull(act_node);
-  CheckInputSize(act_node, 2);
+  CheckInputSize(act_node, kActivationInputsLength);
 
   auto act_primitive = GetValueNode<std::shared_ptr<lite::PrimitiveTValue>>(act_node->input(0));
   if (act_primitive->GetPrimitiveT()->value.AsActivation()->type != activation_type) {
@@ -52,13 +53,18 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
   if (pre_node != nullptr && pre_node->isa<CNode>()) {
     auto conv_node = pre_node->cast<CNodePtr>();
     auto node_type = GetCNodeType(conv_node);
-    if (node_type == schema::PrimitiveType_Conv2D || node_type == schema::PrimitiveType_DepthwiseConv2D) {
-      auto primitiveT_value = GetValueNode<std::shared_ptr<lite::PrimitiveTValue>>(conv_node->input(0));
+    auto primitiveT_value = GetValueNode<std::shared_ptr<lite::PrimitiveTValue>>(conv_node->input(0));
+    MS_ASSERT(primitiveT_value);
+    if (node_type == schema::PrimitiveType_Conv2D) {
       primitiveT_value->GetPrimitiveT()->value.AsConv2D()->activationType = activation_type;
       return pre_node;
+    } else if (node_type == schema::PrimitiveType_DepthwiseConv2D) {
+      primitiveT_value->GetPrimitiveT()->value.AsDepthwiseConv2D()->activationType = activation_type;
+      return pre_node;
+    } else {
+      MS_LOG(EXCEPTION) << "conv activation pass match only conv2d or depthwise_conv2d ";
     }
   }
   return node;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::opt

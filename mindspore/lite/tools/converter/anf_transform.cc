@@ -18,8 +18,10 @@
 #include <memory>
 #include <string>
 #include "utils/log_adapter.h"
-#include "src/gllo/fusion/conv_biasadd_fusion.h"
-
+#include "mindspore/lite/src/gllo/fusion/conv_biasadd_fusion.h"
+#include "mindspore/lite/src/gllo/fusion/conv_activation_fusion.h"
+#include "mindspore/lite/src/gllo/fusion/conv_scale_fusion.h"
+#include "mindspore/lite/src/gllo/fusion/conv_bn_fusion.h"
 
 using std::string;
 namespace mindspore {
@@ -34,8 +36,13 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph) {
   // return old_graph;
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  auto pass = std::make_shared<opt::ConvBiasaddFusion>();
-  pm->AddPass(pass);
+  pm->AddPass(std::make_shared<opt::ConvBiasaddFusion>());
+  pm->AddPass(std::make_shared<opt::ConvBatchNormFusion>());
+  pm->AddPass(std::make_shared<opt::ConvScaleFusion>());
+  pm->AddPass(std::make_shared<opt::ConvActivationFusion>(true, "conv_relu", schema::PrimitiveType_Activation,
+                                                         schema::ActivationType_RELU));
+  pm->AddPass(std::make_shared<opt::ConvActivationFusion>(true, "conv_relu6", schema::PrimitiveType_Activation,
+                                                         schema::ActivationType_RELU6));
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(old_graph);
   return new_graph;

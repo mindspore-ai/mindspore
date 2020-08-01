@@ -22,11 +22,8 @@
 using PrimitiveTValuePtr = std::shared_ptr<mindspore::lite::PrimitiveTValue>;
 namespace mindspore {
 namespace opt {
-
 bool AnfEqual(const BaseRef &a, const BaseRef &b) {
-  if (utils::isa<Var>(a) && utils::isa<Parameter>(b)) {
-    return true;
-  } else if (utils::isa<AnfNodePtr>(a) && utils::isa<AnfNodePtr>(b)) {
+  if (utils::isa<AnfNodePtr>(a) && utils::isa<AnfNodePtr>(b)) {
     auto a_node = utils::cast<AnfNodePtr>(a);
     auto b_node = utils::cast<AnfNodePtr>(b);
     MS_EXCEPTION_IF_NULL(a_node);
@@ -80,6 +77,7 @@ bool AnfEqual(const BaseRef &a, const BaseRef &b) {
     auto b_value_node_ptr = b.m_ptr->cast<PrimitiveTValuePtr>();
     return a_value_node_ptr->GetPrimitiveT()->value.type == b_value_node_ptr->GetPrimitiveT()->value.type;
   }
+
   return a == b;
 }
 
@@ -202,22 +200,72 @@ void CheckIfVarIsNull(const VarPtr &var) {
   }
 }
 
+void CheckIfNodeIsParam(const AnfNodePtr &node) {
+  if (node != nullptr && !utils::isa<ParameterPtr>(node)) {
+    MS_LOG(EXCEPTION) << "The Node is not param.";
+  }
+}
+
 void CheckInputSize(const CNodePtr &node, const int size) {
   if (node->inputs().size() != size) {
     MS_LOG(EXCEPTION) << "The input size of node must be " << size << ", but it is" << node->inputs().size();
   }
 }
 
-schema::PrimitiveType GetCNodeType(const CNodePtr &node) {
-    auto value_primitive = node->input(0);
-    auto value_node = value_primitive->cast<ValueNodePtr>();
-    MS_ASSERT(value_node != nullptr);
-    auto value = value_node->value();
-    MS_ASSERT(value != nullptr);
+void CheckLeastInputSize(const CNodePtr &node, const int size) {
+  if (node->inputs().size() < size) {
+    MS_LOG(EXCEPTION) << "The input size of node must be " << size << ", but it is" << node->inputs().size();
+  }
+}
+
+AnfNodePtr AddNewBiasNode(float *bias_data, const FuncGraphPtr &func_graph, int kernel_num,
+                          const ParamValueLitePtr &weight_tensor) {
+  auto bias_parameter = func_graph->add_parameter();
+  MS_ASSERT(bias_parameter != nullptr);
+  std::vector<int> shape = {kernel_num};
+  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(TypeIdToType(weight_tensor->tensor_type()), shape);
+  bias_parameter->set_abstract(abstract_tensor);
+
+  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
+  MS_ASSERT(param_value != nullptr);
+  param_value->set_tensor_addr(bias_data);
+  param_value->set_tensor_size(kernel_num * sizeof(float) / sizeof(uint8_t));
+  bias_parameter->set_default_param(param_value);
+  return bias_parameter;
+}
+
+schema::PrimitiveType GetCNodeType(const BaseRef &n) {
+  ValueNodePtr value_node;
+  if (utils::isa<CNodePtr>(n)) {
+    auto in = utils::cast<CNodePtr>(n);
+    value_node = in->input(0)->cast<ValueNodePtr>();
+  } else if (utils::isa<ValueNodePtr>(n)) {
+    value_node = utils::cast<ValueNodePtr>(n);
+  } else {
+    MS_LOG(EXCEPTION) << "only value node or cnode has type";
+    return schema::PrimitiveType_NONE;
+  }
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto value = value_node->value();
+  MS_ASSERT(value != nullptr);
+  if (utils::isa<PrimitiveTValuePtr>(value)) {
     auto primitive = value->cast<PrimitiveTValuePtr>();
     MS_ASSERT(primitive != nullptr);
     return primitive->GetPrimitiveT()->value.type;
+  }
+  return schema::PrimitiveType_NONE;
 }
 
+bool IsParamNode(const BaseRef &n) {
+  return utils::isa<ParameterPtr>(n);
+}
+
+bool IsConvNode(const BaseRef &n) {
+  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
+    auto type = opt::GetCNodeType(n);
+    return type == schema::PrimitiveType_Conv2D || type == schema::PrimitiveType_DepthwiseConv2D;
+  }
+  return false;
+}
 }  // namespace opt
 }  // namespace mindspore
