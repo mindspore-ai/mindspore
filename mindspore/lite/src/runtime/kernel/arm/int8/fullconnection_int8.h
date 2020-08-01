@@ -31,20 +31,22 @@ class FullconnectionInt8CPUKernel : public FullconnectionBaseCPUKernel {
                               const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
       : FullconnectionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~FullconnectionInt8CPUKernel() override {
-    free(a_c8_ptr_);
-    free(b_r8_ptr_);
-    free(c_r8x8_ptr_);
+    ctx_->allocator->Free(a_c8_ptr_);
+    ctx_->allocator->Free(b_r8_ptr_);
+    ctx_->allocator->Free(c_r8x8_ptr_);
   }
 
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int RunImpl(int task_id);
 
  private:
   FcQuantArg quant_params_;
   int8_t *a_c8_ptr_;
   int8_t *b_r8_ptr_;
   int *c_r8x8_ptr_;
+  int *bias_ptr_;
 };
 }  // namespace mindspore::kernel
 

@@ -17,6 +17,7 @@
 #include "src/runtime/kernel/arm/int8/fullconnection_int8.h"
 #include "src/runtime/kernel/arm/opclib/int8/matmul.h"
 #include "src/runtime/kernel/arm/opclib/common_func.h"
+#include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::RET_MEMORY_FAILED;
@@ -25,21 +26,41 @@ using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 int FullconnectionInt8CPUKernel::Init() {
   fc_param_->row_ = (inputs_[0]->shape())[0];
-  fc_param_->col_ = (inputs_[1]->shape())[1];
-  fc_param_->deep_ = (inputs_[1]->shape())[0];
+  fc_param_->col_ = (inputs_[1]->shape())[0];
+  fc_param_->deep_ = (inputs_[1]->shape())[1];
   fc_param_->row_8_ = UP_ROUND(fc_param_->row_, 8);
   fc_param_->col_8_ = UP_ROUND(fc_param_->col_, 8);
 
+  thread_count_ = MSMIN(thread_count_, UP_DIV(fc_param_->col_8_, 8));
+  thread_stride_ = UP_DIV(UP_DIV(fc_param_->col_8_, 8), thread_count_);
+
   a_c8_ptr_ =
     reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(fc_param_->row_8_ * fc_param_->deep_ * sizeof(int8_t)));
+  if (!a_c8_ptr_) {
+    return RET_MEMORY_FAILED;
+  }
   memset(a_c8_ptr_, 0, fc_param_->row_8_ * fc_param_->deep_ * sizeof(int8_t));
   b_r8_ptr_ =
     reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(fc_param_->col_8_ * fc_param_->deep_ * sizeof(int8_t)));
-  memset(b_r8_ptr_, 0, fc_param_->col_8_ * fc_param_->deep_ * sizeof(int8_t));
-  c_r8x8_ptr_ = reinterpret_cast<int *>(ctx_->allocator->Malloc(fc_param_->row_8_ * fc_param_->col_8_ * sizeof(int)));
-  memset(c_r8x8_ptr_, 0, fc_param_->row_8_ * fc_param_->col_8_ * sizeof(int));
-  if (!a_c8_ptr_ || !b_r8_ptr_ || !c_r8x8_ptr_) {
+  if (!b_r8_ptr_) {
     return RET_MEMORY_FAILED;
+  }
+  memset(b_r8_ptr_, 0, fc_param_->col_8_ * fc_param_->deep_ * sizeof(int8_t));
+  auto weight_data = reinterpret_cast<int8_t *>(inputs_[1]->Data());
+  RowMajor2Col8MajorInt8(weight_data, b_r8_ptr_, fc_param_->col_, fc_param_->deep_);
+  c_r8x8_ptr_ = reinterpret_cast<int *>(ctx_->allocator->Malloc(fc_param_->row_8_ * fc_param_->col_8_ * sizeof(int)));
+  if (!c_r8x8_ptr_) {
+    return RET_MEMORY_FAILED;
+  }
+  memset(c_r8x8_ptr_, 0, fc_param_->row_8_ * fc_param_->col_8_ * sizeof(int));
+  auto bias_len = fc_param_->col_8_ * sizeof(int);
+  bias_ptr_ = reinterpret_cast<int *>(ctx_->allocator->Malloc(bias_len));
+  if (!bias_ptr_) {
+    return RET_MEMORY_FAILED;
+  }
+  memset(bias_ptr_, 0, bias_len);
+  if (inputs_.size() == 3) {
+    memcpy(bias_ptr_, inputs_[2]->Data(), bias_len);
   }
 
   auto input_tensor = inputs_[0];
@@ -59,7 +80,8 @@ int FullconnectionInt8CPUKernel::Init() {
   quant_params_.output.scale_ = params.front().scale;
 
   double real_multiplier = quant_params_.input.scale_ * quant_params_.weight.scale_ / quant_params_.output.scale_;
-  QuantizeMultiplier(real_multiplier, &quant_params_.quant_multiplier, &quant_params_.output_shift);
+  QuantizeRoundParameter(real_multiplier, &quant_params_.quant_multiplier, &quant_params_.left_shift,
+                         &quant_params_.right_shift);
   CalculateActivationRangeQuantized(fc_param_->maxf_, fc_param_->minf_, quant_params_.output.scale_,
                                     quant_params_.output.zp_, &quant_params_.out_act_max, &quant_params_.out_act_min);
 
@@ -68,22 +90,37 @@ int FullconnectionInt8CPUKernel::Init() {
 
 int FullconnectionInt8CPUKernel::ReSize() { return RET_OK; }
 
-int FullconnectionInt8CPUKernel::Run() {
-  auto a_ptr = reinterpret_cast<int8_t *>(inputs_.at(0)->Data());
-  auto b_ptr = reinterpret_cast<int8_t *>(inputs_.at(1)->Data());
-  auto bias_ptr = reinterpret_cast<int *>(inputs_.at(2)->Data());
-  auto output_ptr = reinterpret_cast<int8_t *>(outputs_.at(0)->Data());
+int FullconnectionInt8CPUKernel::RunImpl(int task_id) {
+  int cur_oc = MSMIN(thread_stride_, UP_DIV(fc_param_->col_8_, 8) - task_id * thread_stride_);
+  if (cur_oc <= 0) {
+    return RET_OK;
+  }
   auto &p = quant_params_;
-
-  // rows*depth -> rows*depth, col_8 major
-  RowMajor2Col8MajorInt8(a_ptr, a_c8_ptr_, fc_param_->row_, fc_param_->deep_);
-  // cols*depth -> cols*depth, col_8 major == depth*cols, row_8 major
-  RowMajor2Col8MajorInt8(b_ptr, b_r8_ptr_, fc_param_->col_, fc_param_->deep_);
-  MatMulInt8(a_c8_ptr_, b_r8_ptr_, c_r8x8_ptr_, fc_param_->row_8_, fc_param_->col_8_, fc_param_->deep_, p.input.zp_,
-             p.weight.zp_);
-  PostFuncInt8(c_r8x8_ptr_, bias_ptr, output_ptr, fc_param_->col_, fc_param_->row_, fc_param_->col_8_,
-               fc_param_->row_8_, p.quant_multiplier, p.output_shift, p.output.zp_, p.out_act_min, p.out_act_max);
-
+  auto cur_b = b_r8_ptr_ + task_id * thread_stride_ * C8NUM * fc_param_->deep_;
+  auto cur_c = c_r8x8_ptr_ + task_id * thread_stride_ * C8NUM * fc_param_->row_8_;
+  MatMulInt8(a_c8_ptr_, cur_b, cur_c, fc_param_->row_8_, cur_oc * 8, fc_param_->deep_, p.input.zp_, p.weight.zp_);
   return RET_OK;
 }
+
+int FcInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+  auto fc = reinterpret_cast<FullconnectionInt8CPUKernel *>(cdata);
+  auto ret = fc->RunImpl(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "FcInt8Run error task_id[" << task_id << "] error_code[" << ret << "]";
+    return ret;
+  }
+  return RET_OK;
+}
+
+int FullconnectionInt8CPUKernel::Run() {
+  auto a_ptr = reinterpret_cast<int8_t *>(inputs_[0]->Data());
+  auto output_ptr = reinterpret_cast<int8_t *>(outputs_[0]->Data());
+  auto &p = quant_params_;
+  RowMajor2Col8MajorInt8(a_ptr, a_c8_ptr_, fc_param_->row_, fc_param_->deep_);
+  LiteBackendParallelLaunch(FcInt8Run, this, thread_count_);
+  PostFuncInt8(c_r8x8_ptr_, bias_ptr_, output_ptr, fc_param_->col_, fc_param_->row_, fc_param_->row_8_,
+               p.quant_multiplier, p.left_shift, p.right_shift, p.output.zp_, p.out_act_min, p.out_act_max);
+  return RET_OK;
+}
+
 }  // namespace mindspore::kernel
