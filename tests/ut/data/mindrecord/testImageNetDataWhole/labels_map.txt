@@ -1,4 +1,4 @@
-n00000005 0 data_line
-n00000006 1 small_iron_box
-n00000007 2 plastic_toothpicks
-n00000002 3 orange
+n00000005 0
+n00000006 1
+n00000007 2
+n00000002 3

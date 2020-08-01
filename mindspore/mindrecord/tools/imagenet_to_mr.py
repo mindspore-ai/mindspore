@@ -35,10 +35,10 @@ class ImageNetToMR:
 
                   .. code-block::
 
-                      n02119789 1 pen
-                      n02100735 2 notebook
-                      n02110185 3 mouse
-                      n02096294 4 orange
+                      n02119789 0
+                      n02100735 1
+                      n02110185 2
+                      n02096294 3
 
         image_dir (str): image directory contains n02119789, n02100735, n02110185, n02096294 dir.
         destination (str): the MindRecord file path to transform into.

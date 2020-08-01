@@ -28,12 +28,12 @@ This example provides an efficient way to generate MindRecord. Users only need t
 
     Store the downloaded ImageNet dataset in a folder. The folder contains all images and a mapping file that records labels of the images.
 
-    In the mapping file, there are three columns, which are separated by spaces. They indicate image classes, label IDs, and label names. The following is an example of the mapping file:
+    In the mapping file, there are three columns, which are separated by spaces. They indicate image classes and label IDs. The following is an example of the mapping file:
     ```
-    n02119789 1 pen
-    n02100735 2 notbook
-    n02110185 3 mouse
-    n02096294 4 orange
+    n02119789 0
+    n02100735 1
+    n02110185 2
+    n02096294 3
     ```
 
 2. Edit run_imagenet.sh and modify the parameters
