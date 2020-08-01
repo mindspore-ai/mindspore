@@ -39,7 +39,7 @@ class CropInt8CPUKernel : public CropBaseCPUKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int DoExecute(int tId);
+  int DoExecute(int task_id);
 
  private:
   CropParameter *crop_para_;

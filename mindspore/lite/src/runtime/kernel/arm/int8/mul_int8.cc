@@ -68,7 +68,6 @@ int MulInt8CPUKernel::Run() {
 
   elements_num_ = inputs_.at(0)->ElementsNum();
   count_unit_ = thread_count_ > 1 ? UP_DIV(elements_num_, thread_count_) : elements_num_;
-
   if (inputs_.at(0)->ElementsNum() != inputs_.at(1)->ElementsNum()) {
     input0_data_ = static_cast<int8_t *>(ctx_->allocator->Malloc(outputs_.at(0)->Size()));
     input1_data_ = static_cast<int8_t *>(ctx_->allocator->Malloc(outputs_.at(0)->Size()));
@@ -98,11 +97,14 @@ int MulInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
   return lite::RET_OK;
 }
 
-int MulInt8CPUKernel::DoExecute(int tId) {
-  int64_t real_dst_count = MSMIN(elements_num_ - tId * count_unit_, count_unit_);
-  int8_t *cur_input0_data = input0_data_ + tId * count_unit_;
-  int8_t *cur_input1_data = input1_data_ + tId * count_unit_;
-  int8_t *cur_output_data = output_data_ + tId * count_unit_;
+int MulInt8CPUKernel::DoExecute(int task_id) {
+  int64_t real_dst_count = MSMIN(elements_num_ - task_id * count_unit_, count_unit_);
+  if (real_dst_count <= 0) {
+    return lite::RET_OK;
+  }
+  int8_t *cur_input0_data = input0_data_ + task_id * count_unit_;
+  int8_t *cur_input1_data = input1_data_ + task_id * count_unit_;
+  int8_t *cur_output_data = output_data_ + task_id * count_unit_;
 
   Mul(cur_input0_data, cur_input1_data, cur_output_data, real_dst_count, para_.mul_quant_arg_);
   return lite::RET_OK;
