@@ -745,13 +745,16 @@ py::tuple RunOpInner(const OpExecInfoPtr &op_exec_info, const py::args &args) {
     return err_ret;
   }
 
-  auto cnode = PynativeExecutor::GetInstance()->MakeCNode(op_exec_info, args, result);
-  if (cnode != nullptr) {
-    cnode->set_abstract(op_exec_info->abstract);
-    MS_LOG(DEBUG) << "RunOp MakeCnode,new node is: " << cnode->DebugString();
+  if (op_exec_info->op_name != prim::kPrimMixedPrecisionCast->name()) {
+    auto cnode = PynativeExecutor::GetInstance()->MakeCNode(op_exec_info, args, result);
+    if (cnode != nullptr) {
+      cnode->set_abstract(op_exec_info->abstract);
+      MS_LOG(DEBUG) << "RunOp MakeCnode,new node is: " << cnode->DebugString();
+    }
+    PynativeExecutor::GetInstance()->SaveAllResult(op_exec_info, cnode, result);
+    MS_LOG(DEBUG) << "RunOp end";
   }
-  PynativeExecutor::GetInstance()->SaveAllResult(op_exec_info, cnode, result);
-  MS_LOG(DEBUG) << "RunOp end";
+
   return result;
 }
 
