@@ -569,7 +569,7 @@ build_lite()
     else
         mkdir -pv ${BASEPATH}/mindspore/lite/output/
         if [[ "$LITE_PLATFORM" == "x86_64" ]]; then
-            OUTPUT_DIR=${BASEPATH}/output/MSLite-0.5.0-linux_x86_64
+            OUTPUT_DIR=${BASEPATH}/output/MSLite-0.6.0-linux_x86_64
             rm -rf ${OUTPUT_DIR} && mkdir -p ${OUTPUT_DIR} && cd ${OUTPUT_DIR}
             mkdir -p ${OUTPUT_DIR}/converter && mkdir -p ${OUTPUT_DIR}/time_profile
             mkdir -p ${OUTPUT_DIR}/benchmark && mkdir -p ${OUTPUT_DIR}/include && mkdir -p ${OUTPUT_DIR}/lib
@@ -589,11 +589,11 @@ build_lite()
             mkdir -p ${OUTPUT_DIR}/third_party/flatbuffers
             cp -r ${BASEPATH}/third_party/flatbuffers/include/ ${OUTPUT_DIR}/third_party/flatbuffers/
             cd ..
-            tar -czf MSLite-0.5.0-linux_x86_64.tar.gz MSLite-0.5.0-linux_x86_64/ --warning=no-file-changed
-            sha256sum MSLite-0.5.0-linux_x86_64.tar.gz > MSLite-0.5.0-linux_x86_64.tar.gz.sha256
-            rm -rf MSLite-0.5.0-linux_x86_64/
+            tar -czf MSLite-0.6.0-linux_x86_64.tar.gz MSLite-0.6.0-linux_x86_64/ --warning=no-file-changed
+            sha256sum MSLite-0.6.0-linux_x86_64.tar.gz > MSLite-0.6.0-linux_x86_64.tar.gz.sha256
+            rm -rf MSLite-0.6.0-linux_x86_64/
         elif [[ "$LITE_PLATFORM" == "arm64" ]]; then
-            OUTPUT_DIR=${BASEPATH}/output/MSLite-0.5.0-linux_arm64
+            OUTPUT_DIR=${BASEPATH}/output/MSLite-0.6.0-linux_arm64
             rm -rf ${OUTPUT_DIR} && mkdir -p ${OUTPUT_DIR} && cd ${OUTPUT_DIR}
             mkdir -p ${OUTPUT_DIR}/time_profile && mkdir -p ${OUTPUT_DIR}/benchmark
             mkdir -p ${OUTPUT_DIR}/include && mkdir -p ${OUTPUT_DIR}/lib
@@ -608,11 +608,11 @@ build_lite()
             mkdir -p ${OUTPUT_DIR}/third_party/flatbuffers
             cp -r ${BASEPATH}/third_party/flatbuffers/include/ ${OUTPUT_DIR}/third_party/flatbuffers/
             cd ..
-            tar -czf MSLite-0.5.0-linux_arm64.tar.gz MSLite-0.5.0-linux_arm64/ --warning=no-file-changed
-            sha256sum MSLite-0.5.0-linux_arm64.tar.gz > MSLite-0.5.0-linux_arm64.tar.gz.sha256
-            rm -rf MSLite-0.5.0-linux_arm64/
+            tar -czf MSLite-0.6.0-linux_arm64.tar.gz MSLite-0.6.0-linux_arm64/ --warning=no-file-changed
+            sha256sum MSLite-0.6.0-linux_arm64.tar.gz > MSLite-0.6.0-linux_arm64.tar.gz.sha256
+            rm -rf MSLite-0.6.0-linux_arm64/
         elif [[ "$LITE_PLATFORM" == "arm32" ]]; then
-            OUTPUT_DIR=${BASEPATH}/output/MSLite-0.5.0-linux_arm32
+            OUTPUT_DIR=${BASEPATH}/output/MSLite-0.6.0-linux_arm32
             rm -rf ${OUTPUT_DIR} && mkdir -p ${OUTPUT_DIR} && cd ${OUTPUT_DIR}
             mkdir -p ${OUTPUT_DIR}/time_profile && mkdir -p ${OUTPUT_DIR}/benchmark
             mkdir -p ${OUTPUT_DIR}/include && mkdir -p ${OUTPUT_DIR}/lib
@@ -627,9 +627,9 @@ build_lite()
             mkdir -p ${OUTPUT_DIR}/third_party/flatbuffers
             cp -r ${BASEPATH}/third_party/flatbuffers/include/ ${OUTPUT_DIR}/third_party/flatbuffers/
             cd ..
-            tar -czf MSLite-0.5.0-linux_arm32.tar.gz MSLite-0.5.0-linux_arm32/ --warning=no-file-changed
-            sha256sum MSLite-0.5.0-linux_arm32.tar.gz > MSLite-0.5.0-linux_arm32.tar.gz.sha256
-            rm -rf MSLite-0.5.0-linux_arm32/
+            tar -czf MSLite-0.6.0-linux_arm32.tar.gz MSLite-0.6.0-linux_arm32/ --warning=no-file-changed
+            sha256sum MSLite-0.6.0-linux_arm32.tar.gz > MSLite-0.6.0-linux_arm32.tar.gz.sha256
+            rm -rf MSLite-0.6.0-linux_arm32/
         fi
         echo "---------------- mindspore lite: build success ----------------"
     fi
