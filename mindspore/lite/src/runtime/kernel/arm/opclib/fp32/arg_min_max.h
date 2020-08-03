@@ -16,22 +16,18 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_ARG_MIN_MAX_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_ARG_MIN_MAX_H_
 
-#ifdef ENABLE_NEON
-#include <arm_neon.h>
-#endif
-#include "src/runtime/kernel/arm/opclib/op_base.h"
+#include "src/runtime/kernel/arm/opclib/arg_min_max_parameter.h"
 
-// For arg min, arg max.
-struct ArgMinMaxParameter {
-    OpParameter op_parameter_;
-    int axis_;
-    int topk_;
-    int axis_type_;
-    bool out_value_;
-    bool keep_dims_;
-};
-
-void ArgMax(const float *input, const int *shape, int dims_number, int axis, bool out_value, float *output);
-void ArgMin(const float *input, const int *shape, int dims_number, int axis, bool out_value, float *output);
+void ArgMax(const float *input, float *output, ArgMinMaxParameter *param, int pre_axis_count, int axis_count,
+            int after_axis_count);
+void ArgMin(const float *input, float *output, ArgMinMaxParameter *param, int pre_axis_count, int axis_count,
+            int after_axis_count);
+void ArgMaxDim0(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param);
+void ArgMinDim0(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param);
+void ArgMaxDim1(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param);
+void ArgMinDim1(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param);
+void ArgMaxDim2(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param);
+void ArgMinDim2(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param);
+void ArgMaxDim3(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param);
+void ArgMinDim3(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param);
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_ARG_MIN_MAX_H_
-

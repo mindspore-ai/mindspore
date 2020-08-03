@@ -14,40 +14,36 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CONCAT_BASE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CONCAT_BASE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_BATCH_TO_SPACE_BASE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_BATCH_TO_SPACE_BASE_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/opclib/concat_parameter.h"
-#include "src/runtime/kernel/arm/base/layout_transform.h"
-
-using mindspore::lite::Context;
 
 namespace mindspore::kernel {
-class ConcatBaseCPUKernel : public LiteKernel {
+class BatchToSpaceBaseCPUKernel : public LiteKernel {
  public:
-  ConcatBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                      const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-          : LiteKernel(parameter, inputs, outputs), ctx_(ctx), thread_count_(ctx->thread_num_) {
-    opParameter->thread_num_ = ctx->thread_num_;
-    concat_param_ = reinterpret_cast<ConcatParameter *>(opParameter);
+  BatchToSpaceBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                            const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
+      : LiteKernel(parameter, inputs, outputs) {
+    opParameter->thread_num_ = ctx->threadNum;
   }
 
-  virtual ~ConcatBaseCPUKernel() = default;
+  virtual ~BatchToSpaceBaseCPUKernel() = default;
 
   int Init() override;
 
   int ReSize() override { return 0; }
 
   int Run() override { return 0; }
- protected:
-  int thread_count_;
-  int axis_;
-  const Context *ctx_;
-  ConcatParameter *concat_param_;
+
+  bool IsNoCrop() const {
+    return no_crop_;
+  }
+ private:
+  bool no_crop_;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CONCAT_BASE_H_
-
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_BATCH_TO_SPACE_BASE_H_

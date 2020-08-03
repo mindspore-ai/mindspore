@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/opclib/fp32/batch_to_space.h"
+#include "src/runtime/kernel/arm/opclib/batch_to_space.h"
 #include "src/runtime/kernel/arm/opclib/arithmetic_common.h"
 
 void BatchToSpaceNoCropForNHWC(const void *input, void *output, const int *in_shape, int out_n, const int *block,

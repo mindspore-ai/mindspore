@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/fp32/batch_to_space.h"
+#include "src/runtime/kernel/arm/int8/batch_to_space_int8.h"
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -23,25 +23,25 @@
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-int BatchToSpaceCPUKernel::Init() {
+int BatchToSpaceInt8CPUKernel::Init() {
   return BatchToSpaceBaseCPUKernel::Init();
 }
 
-int BatchToSpaceCPUKernel::Run() {
+int BatchToSpaceInt8CPUKernel::Run() {
   auto input = inputs_[0];
   auto output = outputs_[0];
-  const float *input_data = reinterpret_cast<const float *>(input->Data());
-  float *output_data = reinterpret_cast<float *>(output->Data());
+  const int8_t *input_data = reinterpret_cast<const int8_t *>(input->Data());
+  int8_t *output_data = reinterpret_cast<int8_t *>(output->Data());
   auto in_shape = input->shape();
   auto out_shape = output->shape();
   BatchToSpaceParameter *param = reinterpret_cast<BatchToSpaceParameter *>(this->opParameter);
 
   if (IsNoCrop()) {
     BatchToSpaceNoCropForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_,
-                              sizeof(float));
+                              sizeof(int8_t));
   } else {
     BatchToSpaceForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_, param->crops_,
-                        sizeof(float));
+                        sizeof(int8_t));
   }
 
   return RET_OK;

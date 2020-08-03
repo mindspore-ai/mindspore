@@ -17,14 +17,14 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_DEPTH_TO_SPACE_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
-
+#include "src/runtime/kernel/arm/base/depth_to_space_base.h"
 
 namespace mindspore::kernel {
-class DepthToSpaceCPUKernel : public LiteKernel {
+class DepthToSpaceCPUKernel : public DepthToSpaceBaseCPUKernel {
  public:
   DepthToSpaceCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                        const std::vector<lite::tensor::Tensor *> &outputs) : LiteKernel(parameter, inputs, outputs) {}
+                        const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
+      : DepthToSpaceBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~DepthToSpaceCPUKernel() = default;
 
   int Init() override;

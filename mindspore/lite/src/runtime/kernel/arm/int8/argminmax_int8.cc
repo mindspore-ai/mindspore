@@ -13,35 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/runtime/kernel/arm/fp32/argminmax.h"
+#include "src/runtime/kernel/arm/int8/argminmax_int8.h"
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/opclib/arg_min_max.h"
 #include "include/errorcode.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
-using mindspore::lite::KernelRegistrar;
-using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_ArgMax;
-using mindspore::schema::PrimitiveType_ArgMin;
+using mindspore::lite::RET_ERROR;
 
 namespace mindspore::kernel {
-int ArgMinMaxCPUKernel::Init() {
+int ArgMinMaxInt8CPUKernel::Init() {
   auto ret = ArgMinMaxBaseCPUKernel::Init();
   if (ret != RET_OK) {
     return ret;
   }
   auto param = reinterpret_cast<ArgMinMaxParameter *>(opParameter);
-  param->data_type_ = kNumberTypeFloat32;
+  param->data_type_ = kNumberTypeInt8;
   return RET_OK;
 }
 
-int ArgMinMaxCPUKernel::Run() {
+int ArgMinMaxInt8CPUKernel::Run() {
   auto ret = ArgMinMaxBaseCPUKernel::Run();
-  ArgMinMaxBaseCPUKernel::FreeTmpMemory();
+  FreeTmpMemory();
   return ret;
 }
 }  // namespace mindspore::kernel

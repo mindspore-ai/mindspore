@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_BATCH_TO_SPACE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_BATCH_TO_SPACE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_BATCH_TO_SPACE_INT8_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_BATCH_TO_SPACE_INT8_H_
+
 #include <vector>
 #include "src/runtime/kernel/arm/base/batch_to_space_base.h"
 
 namespace mindspore::kernel {
-class BatchToSpaceCPUKernel : public BatchToSpaceBaseCPUKernel {
+class BatchToSpaceInt8CPUKernel : public BatchToSpaceBaseCPUKernel {
  public:
-  BatchToSpaceCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                        const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
+  BatchToSpaceInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                            const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
       : BatchToSpaceBaseCPUKernel(parameter, inputs, outputs, ctx) {}
 
-  ~BatchToSpaceCPUKernel() = default;
+  ~BatchToSpaceInt8CPUKernel() = default;
 
   int Init() override;
   int ReSize() override { return 0; }
@@ -33,5 +34,4 @@ class BatchToSpaceCPUKernel : public BatchToSpaceBaseCPUKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_BATCH_TO_SPACE_H_
-
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_BATCH_TO_SPACE_INT8_H_

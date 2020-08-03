@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_BATCH_TO_SPACE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_BATCH_TO_SPACE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_BATCH_TO_SPACE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_BATCH_TO_SPACE_H_
 #include "src/runtime/kernel/arm/opclib/op_base.h"
 
 #define BATCH_TO_SPACE_BLOCK_SHAPE_SIZE 2
