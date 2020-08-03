@@ -170,22 +170,23 @@ class ConvertToQuantNetwork:
         if subcell.has_bn:
             if self.bn_fold:
                 bn_inner = subcell.batchnorm
-                conv_inner = quant.Conv2dBatchNormQuant(conv_inner.in_channels,
-                                                        conv_inner.out_channels,
-                                                        kernel_size=conv_inner.kernel_size,
-                                                        stride=conv_inner.stride,
-                                                        pad_mode=conv_inner.pad_mode,
-                                                        padding=conv_inner.padding,
-                                                        dilation=conv_inner.dilation,
-                                                        group=conv_inner.group,
-                                                        eps=bn_inner.eps,
-                                                        quant_delay=self.weight_qdelay,
-                                                        freeze_bn=self.freeze_bn,
-                                                        per_channel=self.weight_channel,
-                                                        num_bits=self.weight_bits,
-                                                        fake=True,
-                                                        symmetric=self.weight_symmetric,
-                                                        narrow_range=self.weight_range)
+                conv_inner = quant.Conv2dBnFoldQuant(conv_inner.in_channels,
+                                                     conv_inner.out_channels,
+                                                     kernel_size=conv_inner.kernel_size,
+                                                     stride=conv_inner.stride,
+                                                     pad_mode=conv_inner.pad_mode,
+                                                     padding=conv_inner.padding,
+                                                     dilation=conv_inner.dilation,
+                                                     group=conv_inner.group,
+                                                     eps=bn_inner.eps,
+                                                     momentum=bn_inner.momentum,
+                                                     quant_delay=self.weight_qdelay,
+                                                     freeze_bn=self.freeze_bn,
+                                                     per_channel=self.weight_channel,
+                                                     num_bits=self.weight_bits,
+                                                     fake=True,
+                                                     symmetric=self.weight_symmetric,
+                                                     narrow_range=self.weight_range)
                 # change original network BatchNormal OP parameters to quant network
                 conv_inner.gamma = subcell.batchnorm.gamma
                 conv_inner.beta = subcell.batchnorm.beta
@@ -195,7 +196,31 @@ class ConvertToQuantNetwork:
                 subcell.batchnorm = None
                 subcell.has_bn = False
             else:
-                raise ValueError("Only support Batchnorm fold mode.")
+                bn_inner = subcell.batchnorm
+                conv_inner = quant.Conv2dBnWithoutFoldQuant(conv_inner.in_channels,
+                                                            conv_inner.out_channels,
+                                                            kernel_size=conv_inner.kernel_size,
+                                                            stride=conv_inner.stride,
+                                                            pad_mode=conv_inner.pad_mode,
+                                                            padding=conv_inner.padding,
+                                                            dilation=conv_inner.dilation,
+                                                            group=conv_inner.group,
+                                                            eps=bn_inner.eps,
+                                                            momentum=bn_inner.momentum,
+                                                            has_bn=True,
+                                                            quant_delay=self.weight_qdelay,
+                                                            per_channel=self.weight_channel,
+                                                            num_bits=self.weight_bits,
+                                                            symmetric=self.weight_symmetric,
+                                                            narrow_range=self.weight_range)
+                # change original network BatchNormal OP parameters to quant network
+                conv_inner.batchnorm.gamma = subcell.batchnorm.gamma
+                conv_inner.batchnorm.beta = subcell.batchnorm.beta
+                conv_inner.batchnorm.moving_mean = subcell.batchnorm.moving_mean
+                conv_inner.batchnorm.moving_variance = subcell.batchnorm.moving_variance
+                del subcell.batchnorm
+                subcell.batchnorm = None
+                subcell.has_bn = False
         else:
             conv_inner = quant.Conv2dQuant(conv_inner.in_channels,
                                            conv_inner.out_channels,
@@ -354,7 +379,7 @@ class ExportToQuantInferNetwork:
         if isinstance(cell_core, (quant.DenseQuant, quant.Conv2dQuant)):
             if cell_core.has_bias:
                 bias = cell_core.bias.data.asnumpy()
-        elif isinstance(cell_core, quant.Conv2dBatchNormQuant):
+        elif isinstance(cell_core, (quant.Conv2dBnFoldQuant, quant.Conv2dBnWithoutFoldQuant)):
             weight, bias = quant_utils.fold_batchnorm(weight, cell_core)
 
         # apply the quant
