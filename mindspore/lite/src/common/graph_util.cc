@@ -34,7 +34,9 @@ std::vector<size_t> GetGraphInputNodes(const schema::MetaGraph *meta_graph) {
       MS_ASSERT(nullptr != cNode);
       for (size_t k = 0; k < cNode->inputIndex()->size(); k++) {
         if (cNode->inputIndex()->GetAs<uint32_t>(k) == input_index) {
-          ret.emplace_back(j);
+          if (!IsContain<size_t>(ret, j)) {
+            ret.emplace_back(j);
+          }
           break;
         }
       }
@@ -53,7 +55,9 @@ std::vector<size_t> GetGraphOutputNodes(const schema::MetaGraph *meta_graph) {
       MS_ASSERT(nullptr != cNode);
       for (size_t k = 0; k < cNode->outputIndex()->size(); k++) {
         if (cNode->outputIndex()->GetAs<uint32_t>(k) == output_index) {
-          ret.emplace_back(j);
+          if (!IsContain<size_t>(ret, j)) {
+            ret.emplace_back(j);
+          }
           break;
         }
       }
