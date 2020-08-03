@@ -199,7 +199,9 @@ if(BUILD_CONVERTER)
             ${LITE_DIR}/src/gllo/common/utils.cc
             ${LITE_DIR}/src/gllo/fusion/conv_biasadd_fusion.cc
             ${LITE_DIR}/src/gllo/fusion/conv_activation_fusion.cc
+            ${LITE_DIR}/src/gllo/fusion/conv_transform_fusion.cc
             ${LITE_DIR}/src/gllo/fusion/conv_scale_fusion.cc
+            ${LITE_DIR}/src/gllo/fusion/conv_bn_fusion.cc
             )
 endif()
 ### train
