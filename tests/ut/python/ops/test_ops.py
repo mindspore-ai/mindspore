@@ -1013,6 +1013,18 @@ test_case_math_ops = [
         'desc_const': [(0, 3, 1, 2)],
         'desc_inputs': [],
         'skip': ['backward']}),
+    ('Xdivy', {
+        'block': P.Xdivy(),
+        'desc_inputs': [[4, 5], [2, 3, 4, 5]],
+        'desc_bprop': [[2, 3, 4, 5]]}),
+    ('Xlogy', {
+        'block': P.Xlogy(),
+        'desc_inputs': [[4, 5], [2, 3, 4, 5]],
+        'desc_bprop': [[2, 3, 4, 5]]}),
+    ('SquaredDifference', {
+        'block': P.SquaredDifference(),
+        'desc_inputs': [[4, 5], [2, 3, 4, 5]],
+        'desc_bprop': [[2, 3, 4, 5]]}),
     ('Square', {
         'block': P.Square(),
         'desc_inputs': [[4]],

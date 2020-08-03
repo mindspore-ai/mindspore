@@ -108,6 +108,8 @@ from .elu import _elu_tbe
 from .elu_grad import _elu_grad_tbe
 from .div import _div_tbe
 from .log import _log_tbe
+from .xdivy import _xdivy_tbe
+from .xlogy import _xlogy_tbe
 from .floor_div import _floor_div_tbe
 from .zeros_like import _zeros_like_tbe
 from .neg import _neg_tbe
@@ -133,6 +135,7 @@ from .softplus import _softplus_tbe
 from .softplus_grad import _softplus_grad_tbe
 from .softmax_grad_ext import _softmax_grad_ext_tbe
 from .square import _square_tbe
+from .squared_difference import _squared_difference_tbe
 from .sqrt import _sqrt_tbe
 from .sparse_apply_ftrl_d import _sparse_apply_ftrl_d
 from .sparse_apply_proximal_adagrad import _sparse_apply_proximal_adagrad

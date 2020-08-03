@@ -1121,6 +1121,40 @@ class Mul(_MathBinaryOp):
         return None
 
 
+class SquaredDifference(_MathBinaryOp):
+    """
+    Subtracts the second input tensor from the first input tensor element-wise and returns square of it.
+
+    The inputs must be two tensors or one tensor and one scalar.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
+
+    Inputs:
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is float16, float32, int32 or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is
+          float16, float32, int32 or bool.
+
+    Outputs:
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
+
+    Examples:
+        >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
+        >>> input_y = Tensor(np.array([2.0, 4.0, 6.0]), mindspore.float32)
+        >>> squared_difference = P.SquaredDifference()
+        >>> squared_difference(input_x, input_y)
+        [1.0, 4.0, 9.0]
+    """
+
+    def infer_dtype(self, x_dtype, y_dtype):
+        valid_type = [mstype.float16, mstype.float32, mstype.int32]
+        return _MathBinaryOp.do_infer_dtype(x_dtype, y_dtype, valid_type, self.name)
+
+
 class Square(PrimitiveWithInfer):
     """
     Returns square of a tensor element-wise.
@@ -1960,6 +1994,72 @@ class Ceil(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype):
         validator.check_tensor_type_same({"x": x_dtype}, mstype.float_type, self.name)
         return x_dtype
+
+
+class Xdivy(_MathBinaryOp):
+    """
+    Divide the first input tensor by the second input tensor element-wise. Returns zero when `x` is zero.
+
+    The inputs must be two tensors or one tensor and one scalar.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
+
+    Inputs:
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is float16, float32 or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is float16, float32 or bool.
+
+    Outputs:
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
+
+    Examples:
+        >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.float32)
+        >>> input_y = Tensor(np.array([2, 2, 2]), mindspore.float32)
+        >>> xdivy = P.Xdivy()
+        >>> xdivy(input_x, input_y)
+        [1.0, 2.0, -0.5]
+    """
+
+    def infer_dtype(self, x_dtype, y_dtype):
+        return _MathBinaryOp.do_infer_dtype(x_dtype, y_dtype, [mstype.float16, mstype.float32], self.name)
+
+
+class Xlogy(_MathBinaryOp):
+    """
+    Computes first input tensor multiplied by the logarithm of second input tensor element-wise.
+    Returns zero when `x` is zero.
+
+    The inputs must be two tensors or one tensor and one scalar.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
+
+    Inputs:
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is float16, float32 or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is float16, float32 or bool.
+          The value must be positive.
+
+    Outputs:
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
+
+    Examples:
+        >>> input_x = Tensor(np.array([-5, 0, 4]), mindspore.float32)
+        >>> input_y = Tensor(np.array([2， 2， 2]), mindspore.float32)
+        >>> xlogy = P.Xlogy()
+        >>> Xlogy(input_x, input_y)
+        [-3.465736, 0.0, 2.7725887]
+    """
+
+    def infer_dtype(self, x_dtype, y_dtype):
+        return _MathBinaryOp.do_infer_dtype(x_dtype, y_dtype, [mstype.float16, mstype.float32], self.name)
 
 
 class Acosh(PrimitiveWithInfer):

@@ -3205,11 +3205,11 @@ class FusedSparseFtrl(PrimitiveWithInfer):
         use_locking (bool): Use locks for update operation if True . Default: False.
 
     Inputs:
-        - **var** (Parameter): The variable to be updated. The data type must be float32.
-        - **accum** (Parameter): The accum to be updated, must be same type and shape as `var`.
-        - **linear** (Parameter): The linear to be updated, must be same type and shape as `var`.
-        - **grad** (Tensor): A tensor of the same type as `var`, for the gradient.
-        - **indices** (Tensor): A vector of indices into the first dimension of `var` and `accum`. The shape
+        - **var** (Parameter) - The variable to be updated. The data type must be float32.
+        - **accum** (Parameter) - The accum to be updated, must be same type and shape as `var`.
+        - **linear** (Parameter) - The linear to be updated, must be same type and shape as `var`.
+        - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
+        - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`. The shape
           of `indices` must be the same as `grad` in first dimension. The type must be int32.
 
     Outputs:
@@ -3300,9 +3300,9 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. The data type must be float32.
         - **accum** (Parameter) - Variable tensor to be updated. Has the same dtype as `var`.
-        - **lr** (Tensor): The learning rate value. The data type must be float32.
-        - **l1** (Tensor): l1 regularization strength. The data type must be float32.
-        - **l2** (Tensor): l2 regularization strength. The data type must be float32.
+        - **lr** (Tensor) - The learning rate value. The data type must be float32.
+        - **l1** (Tensor) - l1 regularization strength. The data type must be float32.
+        - **l2** (Tensor) - l2 regularization strength. The data type must be float32.
         - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient. The data type must be float32.
         - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`. The data type
           must be int32.
@@ -4670,16 +4670,16 @@ class ApplyFtrl(PrimitiveWithInfer):
         use_locking (bool): Use locks for update operation if True . Default: False.
 
     Inputs:
-        - **var** (Tensor): The variable to be updated.
-        - **accum** (Tensor): The accum to be updated, must be same type and shape as `var`.
-        - **linear** (Tensor): The linear to be updated, must be same type and shape as `var`.
-        - **grad** (Tensor): Gradient.
-        - **lr** (Union[Number, Tensor]): The learning rate value, must be positive. Default: 0.001.
-        - **l1** (Union[Number, Tensor]): l1 regularization strength, must be greater than or equal to zero.
+        - **var** (Tensor) - The variable to be updated.
+        - **accum** (Tensor) - The accum to be updated, must be same type and shape as `var`.
+        - **linear** (Tensor) - The linear to be updated, must be same type and shape as `var`.
+        - **grad** (Tensor) - Gradient.
+        - **lr** (Union[Number, Tensor]) - The learning rate value, must be positive. Default: 0.001.
+        - **l1** (Union[Number, Tensor]) - l1 regularization strength, must be greater than or equal to zero.
           Default: 0.0.
-        - **l2** (Union[Number, Tensor]): l2 regularization strength, must be greater than or equal to zero.
+        - **l2** (Union[Number, Tensor]) - l2 regularization strength, must be greater than or equal to zero.
           Default: 0.0.
-        - **lr_power** (Union[Number, Tensor]): Learning rate power controls how the learning rate decreases
+        - **lr_power** (Union[Number, Tensor]) - Learning rate power controls how the learning rate decreases
           during training, must be less than or equal to zero. Use fixed learning rate if lr_power is zero.
           Default: -0.5.
 
@@ -4760,17 +4760,17 @@ class SparseApplyFtrl(PrimitiveWithInfer):
         use_locking (bool): Use locks for update operation if True . Default: False.
 
     Inputs:
-        - **var** (Parameter): The variable to be updated. The data type must be float32.
-        - **accum** (Parameter): The accum to be updated, must be same type and shape as `var`.
-        - **linear** (Parameter): The linear to be updated, must be same type and shape as `var`.
-        - **grad** (Tensor): A tensor of the same type as `var`, for the gradient.
-        - **indices** (Tensor): A vector of indices into the first dimension of `var` and `accum`.
+        - **var** (Parameter) - The variable to be updated. The data type must be float32.
+        - **accum** (Parameter) - The accum to be updated, must be same type and shape as `var`.
+        - **linear** (Parameter) - The linear to be updated, must be same type and shape as `var`.
+        - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
+        - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
           The shape of `indices` must be the same as `grad` in first dimension. The type must be int32.
 
     Outputs:
-        - **var** (Tensor): Tensor, has the same shape and type as `var`.
-        - **accum** (Tensor): Tensor, has the same shape and type as `accum`.
-        - **linear** (Tensor): Tensor, has the same shape and type as `linear`.
+        - **var** (Tensor) - Tensor, has the same shape and type as `var`.
+        - **accum** (Tensor) - Tensor, has the same shape and type as `accum`.
+        - **linear** (Tensor) - Tensor, has the same shape and type as `linear`.
 
     Examples:
         >>> import mindspore
@@ -4858,9 +4858,9 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
     Outputs:
         Tuple of 3 Tensor, the updated parameters.
 
-        - **var** (Tensor): Tensor, has the same shape and type as `var`.
-        - **accum** (Tensor): Tensor, has the same shape and type as `accum`.
-        - **linear** (Tensor): Tensor, has the same shape and type as `linear`.
+        - **var** (Tensor) - Tensor, has the same shape and type as `var`.
+        - **accum** (Tensor) - Tensor, has the same shape and type as `accum`.
+        - **linear** (Tensor) - Tensor, has the same shape and type as `linear`.
 
     Examples:
         >>> import mindspore
