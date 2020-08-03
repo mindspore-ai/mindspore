@@ -284,14 +284,9 @@ def get_bprop_ceil(self):
 @bprop_getters.register(P.FloorDiv)
 def get_bprop_floordiv(self):
     """Grad definition for `FloorDiv` operation."""
-    div_op = P.FloorDiv()
-    neg = P.Neg()
-    mul_op = P.Mul()
 
     def bprop(x, y, out, dout):
-        bc_x = div_op(dout, y)
-        bc_y = neg(mul_op(bc_x, out))
-        return binop_grad_common(x, y, bc_x, bc_y)
+        return zeros_like(x), zeros_like(y)
 
     return bprop
 
@@ -311,14 +306,9 @@ def get_bprop_floormod(self):
 @bprop_getters.register(P.TruncateDiv)
 def get_bprop_truncate_div(self):
     """Grad definition for `TruncateDiv` operation."""
-    div_op = P.TruncateDiv()
-    neg = P.Neg()
-    mul_op = P.Mul()
 
     def bprop(x, y, out, dout):
-        bc_x = div_op(dout, y)
-        bc_y = neg(mul_op(bc_x, out))
-        return binop_grad_common(x, y, bc_x, bc_y)
+        return zeros_like(x), zeros_like(y)
 
     return bprop
 

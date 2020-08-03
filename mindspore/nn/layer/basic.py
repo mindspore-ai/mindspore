@@ -591,7 +591,7 @@ class MatrixDiagPart(Cell):
         Tensor, same type as input `x`. The shape should be x.shape[:-2] + [min(x.shape[-2:])].
 
     Examples:
-        >>> x = Tensor([[[-1, 0], [0, 1]], [-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
+        >>> x = Tensor([[[-1, 0], [0, 1]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
         >>> matrix_diag_part = nn.MatrixDiagPart()
         >>> result = matrix_diag_part(x)
         [[-1., 1.], [-1., 1.], [-1., 1.]]
@@ -622,11 +622,11 @@ class MatrixSetDiag(Cell):
         Tensor, same type as input `x`. The shape same as `x`.
 
     Examples:
-        >>> x = Tensor([[[-1, 0], [0, 1]], [-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
+        >>> x = Tensor([[[-1, 0], [0, 1]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
         >>> diagonal = Tensor([[-1., 2.], [-1., 1.], [-1., 1.]], mindspore.float32)
         >>> matrix_set_diag = nn.MatrixSetDiag()
         >>> result = matrix_set_diag(x, diagonal)
-        [[[-1, 0], [0, 2]], [-1, 0], [0, 1]], [[-1, 0], [0, 1]]]
+        [[[-1, 0], [0, 2]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]]
     """
     def __init__(self):
         super(MatrixSetDiag, self).__init__()

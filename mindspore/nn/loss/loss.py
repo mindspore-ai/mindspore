@@ -218,7 +218,8 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
         sparse (bool): Specifies whether labels use sparse format or not. Default: False.
         reduction (Union[str, None]): Type of reduction to apply to loss. Support 'sum' or 'mean' If None,
             do not reduction. Default: None.
-        smooth_factor (float): Label smoothing factor. It is a optional input. Default: 0.
+        smooth_factor (float): Label smoothing factor. It is a optional input which should be in range [0, 1].
+            Default: 0.
         num_classes (int): The number of classes in the task. It is a optional input Default: 2.
 
     Inputs:

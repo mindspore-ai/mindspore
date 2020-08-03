@@ -14,7 +14,6 @@
 # ============================================================================
 
 """Define the grad rules of neural network related operations."""
-import math
 import numpy as np
 from mindspore.ops import _selected_grad_ops as SG
 from mindspore.ops.primitive import constexpr
@@ -632,11 +631,8 @@ def get_bprop_onehot(self):
 @constexpr
 def _range_op(start, limit, delta, dtype):
     """helper function for Grad TopK"""
-    range_op = inner.Range(float(start), float(limit), float(delta))
-    length_input = math.ceil((limit - start) / delta)
-    input_tensor = Tensor(list(range(length_input)), dtype)
-    range_out = range_op(input_tensor)
-    return range_out
+    output_tensor = Tensor(list(range(start, limit, delta)), dtype)
+    return output_tensor
 
 @constexpr
 def _get_1d_shape(in_shape):
