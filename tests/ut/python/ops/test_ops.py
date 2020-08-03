@@ -1188,7 +1188,8 @@ test_case_math_ops = [
         'block': P.SquareSumAll(),
         'desc_inputs': [Tensor(np.array([0, 1, 4, 5]).astype(np.float32)),
                         Tensor(np.array([1, 1, 3, 7]).astype(np.float32))],
-        'skip': ['backward']}),
+        'desc_bprop': [Tensor(np.array(0.1).astype(np.float32)),
+                       Tensor(np.array(0.1).astype(np.float32))]}),
     ('Cos', {
         'block': P.Cos(),
         'desc_inputs': [[2, 3]],
