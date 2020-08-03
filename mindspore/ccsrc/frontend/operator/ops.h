@@ -93,7 +93,6 @@ inline const PrimitivePtr kPrimArrayToScalar = std::make_shared<Primitive>("arra
 inline const PrimitivePtr kPrimBroadcastShape = std::make_shared<Primitive>("broadcast_shape");
 inline const PrimitivePtr kPrimArrayMap = std::make_shared<Primitive>("array_map");
 inline const PrimitivePtr kPrimArrayReduce = std::make_shared<Primitive>("array_reduce");
-inline const PrimitivePtr kPrimShape = std::make_shared<Primitive>("Shape");
 inline const PrimitivePtr kPrimCast = std::make_shared<Primitive>("Cast");
 inline const PrimitivePtr kPrimConcat = std::make_shared<Primitive>("Concat");
 inline const PrimitivePtr kPrimSqueeze = std::make_shared<Primitive>("Squeeze");

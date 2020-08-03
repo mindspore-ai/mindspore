@@ -15,7 +15,6 @@
  */
 
 #include "pipeline/jit/static_analysis/prim.h"
-#include "frontend/operator/ops.h"
 #include "abstract/utils.h"
 #include "frontend/operator/cc_implementations.h"
 #include "abstract/param_validator.h"
@@ -78,23 +77,6 @@ AbstractBasePtr InferImplBroadCastShape(const AnalysisEnginePtr &, const Primiti
   });
 
   return std::make_shared<AbstractTuple>(elems);
-}
-
-AbstractBasePtr InferImplShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const AbstractBasePtrList &args_spec_list) {
-  // Inputs: a tensor.
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  AbstractTensorPtr arg = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  MS_LOG(DEBUG) << "InferImplShape:" << arg->ToString();
-
-  AbstractBasePtrList values;
-  auto shp = arg->shape();
-  for (int entry : shp->shape()) {
-    auto entry_v = MakeValue(entry);
-    values.push_back(std::make_shared<AbstractScalar>(entry_v, entry_v->type()));
-  }
-  return std::make_shared<AbstractTuple>(values);
 }
 
 AbstractBasePtr InferImplTile(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -17,23 +17,20 @@
  */
 
 #include "pipeline/jit/resource.h"
-#include "pipeline/jit/pipeline.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
-#include "debug/draw.h"
 #include "debug/trace.h"
 #include "ir/dtype.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "frontend/operator/ops.h"
 #include "ir/graph_utils.h"
 #include "frontend/optimizer/ad/dfunctor.h"
-#include "vm/segment_runner.h"
 
 namespace mindspore {
 // namespace to support opmap definition
 namespace pipeline {
 
-MethodMap &GetMethodMap() {
-  static MethodMap method_map = {
+BuiltInTypeMap &GetMethodMap() {
+  static BuiltInTypeMap method_map = {
     {kObjectTypeString,
      {
        {"__bool__", std::string("str_bool")}  // C.str_bool
@@ -191,6 +188,15 @@ MethodMap &GetMethodMap() {
   return method_map;
 }
 
+BuiltInTypeMap &GetAttrMap() {
+  static BuiltInTypeMap attr_map = {{kObjectTypeTensorType,
+                                     {
+                                       {"shape", std::string("shape_")},  // C.shape_
+                                       {"dtype", std::string("dtype_")},  // C.dtype_
+                                     }}};
+  return attr_map;
+}
+
 Resource::Resource(const py::object &obj)
     : engine_(std::make_shared<abstract::AnalysisEngine>(abstract::GetPrimEvaluatorConstructors(), manager_)),
       input_(obj),
@@ -218,31 +224,42 @@ Resource::~Resource() {
   }
 }
 
-bool Resource::IsTypeInMethodMap(const TypeId &type) {
-  TypeId type_id = NormalizeTypeId(type);
-  const MethodMap &method_map = GetMethodMap();
-  auto iter = method_map.find(static_cast<int>(type_id));
-  if (iter != method_map.end()) {
-    return true;
+Any GetMethodOrAttr(const string &name, const TypeId &type_id, const BuiltInTypeMap &method_map) {
+  auto type_method_map = method_map.find(static_cast<int>(type_id));
+  if (type_method_map == method_map.end()) {
+    return Any();
   }
-  return false;
+  auto method = type_method_map->second.find(name);
+  if (method == type_method_map->second.end()) {
+    return Any();
+  }
+  return method->second;
+}
+
+bool Resource::IsTypeInBuiltInMap(const TypeId &type) {
+  TypeId type_id = NormalizeTypeId(type);
+  const BuiltInTypeMap &method_map = GetMethodMap();
+  auto iter = method_map.find(static_cast<int>(type_id));
+  if (iter == method_map.end()) {
+    const BuiltInTypeMap &attr_map = GetAttrMap();
+    iter = attr_map.find(static_cast<int>(type_id));
+    if (iter == attr_map.end()) {
+      return false;
+    }
+  }
+  return true;
 }
 
 Any Resource::GetMethodPtr(const TypeId &type, const std::string &name) {
   TypeId type_id = NormalizeTypeId(type);
-  const MethodMap &method_map = GetMethodMap();
-  auto iter = method_map.find(static_cast<int>(type_id));
-  if (iter == method_map.end()) {
-    MS_LOG(WARNING) << "Object type: " << type_id << " not in the method_map";
-    return Any();
-  }
+  const BuiltInTypeMap &method_map = GetMethodMap();
+  return GetMethodOrAttr(name, type_id, method_map);
+}
 
-  auto iter_map = iter->second.find(name);
-  if (iter_map == iter->second.end()) {
-    MS_LOG(WARNING) << "Object type: " << type_id << " have no method: " << name;
-    return Any();
-  }
-  return iter_map->second;
+Any Resource::GetAttrPtr(const TypeId &type, const std::string &name) {
+  TypeId type_id = NormalizeTypeId(type);
+  const BuiltInTypeMap &attr_map = GetAttrMap();
+  return GetMethodOrAttr(name, type_id, attr_map);
 }
 
 void Resource::Clean() {

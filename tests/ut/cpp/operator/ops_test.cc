@@ -267,11 +267,6 @@ TEST_F(TestOps, BroadCastShapeTest) {
   ASSERT_EQ(prim->name(), kPrimBroadcastShape->name());
 }
 
-TEST_F(TestOps, ShapeTest) {
-  auto prim = std::make_shared<Primitive>("Shape");
-  ASSERT_EQ(prim->name(), kPrimShape->name());
-}
-
 TEST_F(TestOps, ArrayMapTest) {
   auto prim = std::make_shared<Primitive>("array_map");
   ASSERT_EQ(prim->name(), kPrimArrayMap->name());

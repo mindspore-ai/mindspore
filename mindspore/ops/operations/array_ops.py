@@ -22,20 +22,21 @@ import copy
 import functools
 import itertools
 import numbers
+
 import numpy as np
 
-from ..._checkparam import Validator as validator
-from ..._checkparam import Rel
-from ...common import dtype as mstype
-from ...common.tensor import Tensor
-from ...common.parameter import Parameter
-from ..operations.math_ops import _infer_shape_reduce
 from .._utils import get_concat_offset
-from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register, _run_op
-from ..._c_expression import signature_rw as sig_rw
-from ..._c_expression import signature_kind as sig_kind
+from ..operations.math_ops import _infer_shape_reduce
+from ..primitive import PrimitiveWithInfer, prim_attr_register, _run_op
 from ..._c_expression import signature_dtype as sig_dtype
+from ..._c_expression import signature_kind as sig_kind
+from ..._c_expression import signature_rw as sig_rw
 from ..._c_expression import typing
+from ..._checkparam import Rel
+from ..._checkparam import Validator as validator
+from ...common import dtype as mstype
+from ...common.parameter import Parameter
+from ...common.tensor import Tensor
 
 
 class _ScatterOp(PrimitiveWithInfer):
@@ -415,7 +416,7 @@ class Reshape(PrimitiveWithInfer):
         return out
 
 
-class Shape(Primitive):
+class Shape(PrimitiveWithInfer):
     """
     Returns the shape of input tensor.
 
@@ -435,6 +436,13 @@ class Shape(Primitive):
     @prim_attr_register
     def __init__(self):
         """init Shape"""
+
+    def __infer__(self, x):
+        validator.check_subclass("input_x", x['dtype'], mstype.tensor, self.name)
+        out = {'shape': (),
+               'dtype': mstype.tuple_,
+               'value': tuple(x['shape'])}
+        return out
 
 
 class Squeeze(PrimitiveWithInfer):
