@@ -36,6 +36,9 @@ void PostFuncInt8(const int *in, const int *bias, int8_t *out, int oc, int plane
 void IndirectGemmFp32_8x8(float *output, const float *input, const float *weight, const float *bias, size_t step,
                           size_t ic4, size_t output_channel, size_t offset, size_t mode, size_t writeC4, size_t relu,
                           size_t relu6);
+void IndirectGemmFp32_8x4(float *output, const float *input, const float *weight, const float *bias, size_t step,
+                          size_t ic4, size_t output_channel, size_t offset, size_t mode, size_t writeC4, size_t relu,
+                          size_t relu6);
 void IndirectGemmFp32_Comm(float *output, const float *input, const float *weight, size_t ic4, size_t hw, size_t oc,
                            size_t offset);
 void IndirectGemmFp32(float *output, const float *input, const float *weight, const float *bias, size_t step, int ic4,

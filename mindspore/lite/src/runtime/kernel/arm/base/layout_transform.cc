@@ -19,12 +19,6 @@
 
 using mindspore::schema::Format;
 namespace mindspore::kernel {
-#ifdef ENABLE_FP16
-LayoutConvertor LayoutTransformFp16(schema::Format src_format, schema::Format dst_format) {
-  // todo
-  return nullptr;
-}
-#endif
 LayoutConvertor LayoutTransformFp32(schema::Format src_format, schema::Format dst_format) {
   // todo
   if (src_format == schema::Format_NHWC && dst_format == schema::Format_NC4HW4) {
@@ -58,10 +52,6 @@ LayoutConvertor LayoutTransform(TypeId data_type, schema::Format src_format, sch
   switch (data_type) {
     case kNumberTypeInt8:
       return LayoutTransformInt8(src_format, dst_format);
-#ifdef ENABLE_FP16
-    case kNumberTypeFloat16:
-      return LayoutTransformFp16(src_format, dst_format);
-#endif
     case kNumberTypeFloat32:
       return LayoutTransformFp32(src_format, dst_format);
     default:

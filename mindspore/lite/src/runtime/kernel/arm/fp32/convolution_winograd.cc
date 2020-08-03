@@ -29,7 +29,7 @@ using mindspore::schema::PrimitiveType_Conv2D;
 
 namespace mindspore::kernel {
 void WinogradFilterTransform(const float *weight_data, Matrix *trans_weight, int kernel_unit, int input_unit,
-                             ConvParameter *conv_param) {
+                             ConvParameter *conv_param, int oc_block) {
   // original weight format : ohwi
   auto channel_in = conv_param->input_channel_;
   auto channel_out = conv_param->output_channel_;
@@ -53,10 +53,10 @@ void WinogradFilterTransform(const float *weight_data, Matrix *trans_weight, int
 
   int kernel_plane_stride = channel_in;
   for (int i = 0; i < channel_out; i++) {
-    int oc8_block = i / C8NUM;
-    int oc8_res = i % C8NUM;
+    int out_c_block = i / oc_block;
+    int out_c_res = i % oc_block;
     int input_oz_offset = i * kernel_unit * kernel_unit * channel_in;
-    int output_oz_offset = oc8_block * strides[1] * input_unit * input_unit + oc8_res;
+    int output_oz_offset = out_c_block * strides[1] * input_unit * input_unit + out_c_res;
     for (int j = 0; j < channel_in; j++) {
       int ic4_block = j / C4NUM;
       int ic4_res = j % C4NUM;
@@ -88,16 +88,24 @@ void WinogradFilterTransform(const float *weight_data, Matrix *trans_weight, int
 int ConvolutionWinogradCPUKernel::InitWeightBias() {
   int output_channel = conv_param_->output_channel_;
   int oc4 = UP_DIV(output_channel, C4NUM);
+  int oc_block, oc_block_num;
+#ifdef ENABLE_ARM32
+  oc_block = C4NUM;
+  oc_block_num = UP_DIV(output_channel, C4NUM);
+#else
+  oc_block = C8NUM;
+  oc_block_num = UP_DIV(output_channel, C8NUM);
+#endif
 
   // init weight
-  auto ret = MallocFilterMatrix();
+  auto ret = MallocFilterMatrix(oc_block, oc_block_num);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Malloc filter matrix failed.";
     return RET_ERROR;
   }
   auto weight_tensor = inputs_.at(kWeightIndex);
   auto weight_data = reinterpret_cast<float *>(weight_tensor->Data());
-  WinogradFilterTransform(weight_data, trans_weight_, kernel_unit_, input_unit_, conv_param_);
+  WinogradFilterTransform(weight_data, trans_weight_, kernel_unit_, input_unit_, conv_param_, oc_block);
 
   // init bias
   size_t new_bias_size = oc4 * C4NUM * sizeof(float);
@@ -112,14 +120,12 @@ int ConvolutionWinogradCPUKernel::InitWeightBias() {
   return RET_OK;
 }
 
-int ConvolutionWinogradCPUKernel::MallocFilterMatrix() {
+int ConvolutionWinogradCPUKernel::MallocFilterMatrix(int oc_block, int oc_block_num) {
   int channel_in = conv_param_->input_channel_;
-  int channel_out = conv_param_->output_channel_;
   int ic4 = UP_DIV(channel_in, BLOCK);
-  int oc8 = UP_DIV(channel_out, C8NUM);
 
   // set data
-  auto trans_matrix_data_size = input_unit_ * input_unit_ * ic4 * oc8 * C4NUM * C8NUM * sizeof(float);
+  auto trans_matrix_data_size = input_unit_ * input_unit_ * ic4 * C4NUM * oc_block_num * oc_block * sizeof(float);
   auto matrix_buffer = malloc(trans_matrix_data_size);
   if (matrix_buffer == nullptr) {
     MS_LOG(ERROR) << "malloc matrix_buffer failed.";
@@ -134,10 +140,10 @@ int ConvolutionWinogradCPUKernel::MallocFilterMatrix() {
   std::vector<int> strides;
   // set shape
   shapes.push_back(input_unit_ * input_unit_);
-  shapes.push_back(oc8);
+  shapes.push_back(oc_block_num);
   shapes.push_back(ic4);
   shapes.push_back(C4NUM);
-  shapes.push_back(C8NUM);
+  shapes.push_back(oc_block);
   // set stride
   for (int i = 0; i < 4; i++) {
     int stride = 1;
@@ -227,6 +233,11 @@ int ConvolutionWinogradCPUKernel::ConfigInputOutput() {
     MS_LOG(ERROR) << "Get output_trans_func_ failed.";
     return RET_ERROR;
   }
+#ifdef ENABLE_ARM32
+  gemm_func_ = IndirectGemmFp32_8x4;
+#else
+  gemm_func_ = IndirectGemmFp32_8x8;
+#endif
   return RET_OK;
 }
 
@@ -301,10 +312,14 @@ int ConvolutionWinogradCPUKernel::ReSize() {
 }
 
 int ConvolutionWinogradCPUKernel::RunImpl(int task_id) {
+  if (gemm_func_ == nullptr) {
+    MS_LOG(ERROR) << "gemm_func is nullptr.";
+    return RET_ERROR;
+  }
   auto output_addr = reinterpret_cast<float *>(outputs_.at(kOutputIndex)->Data());
   ConvWinogardFp32(reinterpret_cast<float *>(nhwc4_input_), reinterpret_cast<float *>(trans_weight_->GetData()),
                    reinterpret_cast<const float *>(bias_data_), output_addr, tmp_buffer_address_list_, task_id,
-                   conv_param_, input_trans_func_, output_trans_func_);
+                   conv_param_, input_trans_func_, output_trans_func_, gemm_func_);
   return RET_OK;
 }
 
@@ -335,4 +350,3 @@ int ConvolutionWinogradCPUKernel::Run() {
   return RET_OK;
 }
 }  // namespace mindspore::kernel
-

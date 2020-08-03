@@ -43,7 +43,8 @@ void Conv3x3Fp32InputUnit(const float *tmp_data, float *trans_input_data, size_t
 void Conv3x3Fp32InputTransform(const float *input_data, float *trans_input, float *tmp_data, int start_index,
                                int real_cal_num, int out_w_block, ConvParameter *conv_param);
 
-void Conv3x3Fp32FilterTransform(float *weight_data, float *trans_weight, int iC4, int output_channel, int kernel_plane);
+void Conv3x3Fp32FilterTransform(float *weight_data, float *trans_weight, int iC4, int output_channel, int kernel_plane,
+                                int oc_block);
 
 void Conv3x3Fp32OutputUnit(const float *gemm_out, const float *bias_data, float *output_data, bool h_not_bound,
                            bool w_not_bound, int output_w);
@@ -67,4 +68,3 @@ void Conv3x3Uint8OutputTransform(const int32_t *gemm_out, int8_t *out_data, cons
                                  int real_cal_num, int out_w_block, ConvParameter *conv_param);
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_WINOGRAD_TRANSFORM_H_
-

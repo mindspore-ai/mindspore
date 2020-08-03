@@ -18,7 +18,7 @@
 #include "src/runtime/kernel/arm/fp16/convolution_3x3_fp16.h"
 #include "src/runtime/kernel/arm/opclib/fp16/conv_fp16.h"
 #include "src/runtime/kernel/arm/opclib/fp16/pack_fp16.h"
-#include "src/runtime/kernel/arm/base/layout_transform.h"
+#include "src/runtime/kernel/arm/fp16/layout_transform_fp16.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -130,9 +130,11 @@ int ConvolutionFP16CPUKernel::InitTmpBuffer() {
 
 void ConvolutionFP16CPUKernel::ConfigInputOutput() {
   auto input_tensor = inputs_.at(kInputIndex);
-  auto ret = CheckLayout(input_tensor);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Check layout failed.";
+  auto input_format = input_tensor->GetFormat();
+  schema::Format execute_format = schema::Format_NHWC4;
+  convert_func_ = LayoutTransformFp16(input_format, execute_format);
+  if (convert_func_ == nullptr) {
+    MS_LOG(ERROR) << "layout convert func is nullptr.";
     return;
   }
   auto output_tensor = outputs_.at(kOutputIndex);

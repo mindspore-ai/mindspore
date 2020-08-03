@@ -21,6 +21,7 @@
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/opclib/op_base.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
+#include "src/runtime/kernel/arm/opclib/fp32/conv.h"
 
 namespace mindspore::kernel {
 class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
@@ -52,8 +53,8 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
   float *packed_input_;
   float *packed_weight_;
   float *tmp_output_block_;
+  GEMM_FUNC_FP32 gemm_func_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_H_
-

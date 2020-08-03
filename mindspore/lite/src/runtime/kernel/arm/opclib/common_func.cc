@@ -17,7 +17,7 @@
 #include "src/runtime/kernel/arm/opclib/common_func.h"
 #include "src/runtime/kernel/arm/opclib/quantization/fixed_point.h"
 
-#ifndef __aarch64__
+#ifndef ENABLE_ARM64
 void IndirectGemmFp32(float *output, const float *input, const float *weight, const float *bias, size_t step, int ic4,
                       int output_channel, size_t offset, size_t relu, size_t relu6) {
   for (int i = 0; i < TILE_NUM; i++) {
@@ -101,6 +101,11 @@ void IndirectGemmFp32_8x8(float *output, const float *input, const float *weight
     IndirectGemmFp32(output, input, weight, bias, step, ic4, output_channel, offset, relu, relu6);
   }
 }
+#endif
+#ifndef ENABLE_ARM32
+void IndirectGemmFp32_8x4(float *output, const float *input, const float *weight, const float *bias, size_t step,
+                          size_t ic4, size_t output_channel, size_t offset, size_t mode, size_t writeC4, size_t relu,
+                          size_t relu6) {}
 #endif
 
 int8_t MinInt8(int8_t a, int8_t b) { return b ^ ((a ^ b) & -(a < b)); }

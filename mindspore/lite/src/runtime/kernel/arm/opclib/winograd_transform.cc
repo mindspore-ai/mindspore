@@ -326,18 +326,18 @@ void Conv3x3Fp32InputTransform(const float *input_data, float *trans_input, floa
   }
 }
 
-void Conv3x3Fp32FilterTransform(float *weight_data, float *trans_weight, int iC4, int output_channel,
-                                int kernel_plane) {
+void Conv3x3Fp32FilterTransform(float *weight_data, float *trans_weight, int iC4, int output_channel, int kernel_plane,
+                                int oc_block) {
   int input_unit = 4;
-  int dst_step = iC4 * C4NUM * C8NUM;
+  int dst_step = iC4 * C4NUM * oc_block;
   for (int o = 0; o < output_channel; o++) {
-    int oc8_block_num = o / C8NUM;
-    int oc8_block_rem = o % C8NUM;
+    int oc_block_num = o / oc_block;
+    int oc_block_rem = o % oc_block;
     int src_oc_offset = o * iC4 * C4NUM * kernel_plane;
-    int dst_oc_offset = oc8_block_num * C8NUM * iC4 * C4NUM * input_unit * input_unit + oc8_block_rem;
+    int dst_oc_offset = oc_block_num * oc_block * iC4 * C4NUM * input_unit * input_unit + oc_block_rem;
     for (int i = 0; i < iC4; i++) {
       float *src_ic4_ptr = weight_data + src_oc_offset + i * kernel_plane * C4NUM;
-      float *dst_ic4_ptr = trans_weight + dst_oc_offset + i * C8NUM * C4NUM;
+      float *dst_ic4_ptr = trans_weight + dst_oc_offset + i * oc_block * C4NUM;
 #ifdef ENABLE_ARM
       float32x4_t g00 = vld1q_f32(src_ic4_ptr);
       float32x4_t g01 = vld1q_f32(src_ic4_ptr + 4);
@@ -1368,4 +1368,3 @@ void Conv3x3Uint8OutputTransform(const int32_t *gemm_out, int8_t *out_data, cons
     }
   }
 }
-

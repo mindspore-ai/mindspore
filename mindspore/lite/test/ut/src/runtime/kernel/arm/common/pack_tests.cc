@@ -122,7 +122,7 @@ TEST_F(TestPack, PackWeightFp32) {
   std::string weight_path = "./test_data/conv/convfp32_weight_32_3_3_3.bin";
   auto weight_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(weight_path.c_str(), &weight_size));
   auto packed_weight = reinterpret_cast<float *>(malloc(k_h * k_w * ic4 * C4NUM * oc8 * C8NUM * sizeof(float)));
-  PackWeightFp32(weight_data, conv_param, packed_weight);
+  PackWeightFp32(weight_data, conv_param, packed_weight, C8NUM, oc8);
 
   printf("==================output data=================\n");
   for (int i = 0; i < 20; i++) {

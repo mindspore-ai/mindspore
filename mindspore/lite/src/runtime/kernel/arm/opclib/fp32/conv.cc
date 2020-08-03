@@ -20,7 +20,8 @@
 
 // fp32 conv common
 void ConvFp32(float *input_data, float *packed_input, float *packed_weight, const float *bias_data,
-              float *tmp_out_block, float *output_data, int task_id, ConvParameter *conv_param) {
+              float *tmp_out_block, float *output_data, int task_id, ConvParameter *conv_param,
+              GEMM_FUNC_FP32 gemm_func) {
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
   int in_batch = conv_param->input_batch_;
@@ -57,12 +58,12 @@ void ConvFp32(float *input_data, float *packed_input, float *packed_weight, cons
       int out_offset = thread_id * TILE_NUM * out_channel + out_batch_offset;
       if (real_cal_num == TILE_NUM) {
         float *gemm_output = output_data + out_offset;
-        IndirectGemmFp32_8x8(gemm_output, gemm_input, packed_weight, bias_data, conv_depth, ic4, out_channel,
-                             output_offset, 0, 0, conv_param->is_relu_, conv_param->is_relu6_);
+        gemm_func(gemm_output, gemm_input, packed_weight, bias_data, conv_depth, ic4, out_channel, output_offset, 0, 0,
+                  conv_param->is_relu_, conv_param->is_relu6_);
       } else {
         // res part
-        IndirectGemmFp32_8x8(tmp_out_block, gemm_input, packed_weight, bias_data, conv_depth, ic4, out_channel,
-                             output_offset, 0, 0, conv_param->is_relu_, conv_param->is_relu6_);
+        gemm_func(tmp_out_block, gemm_input, packed_weight, bias_data, conv_depth, ic4, out_channel, output_offset, 0,
+                  0, conv_param->is_relu_, conv_param->is_relu6_);
         memcpy(output_data + out_offset, tmp_out_block, real_cal_num * out_channel * sizeof(float));
       }
     }
@@ -78,7 +79,8 @@ int Conv1x1Fp32(const float *input_data, const float *weight_data, float *output
 // fp32 conv winograd
 void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_data, float *output_data,
                       TmpBufferAddress *buffer_list, int task_id, ConvParameter *conv_param,
-                      InputTransformUnitFunc input_trans_func, OutputTransformUnitFunc output_trans_func) {
+                      InputTransformUnitFunc input_trans_func, OutputTransformUnitFunc output_trans_func,
+                      GEMM_FUNC_FP32 gemm_func) {
   int thread_num = conv_param->thread_num_;
   int input_unit = conv_param->input_unit_;
   int in_batch = conv_param->input_batch_;
@@ -111,8 +113,8 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
       WinogradInputTransform(input_data, trans_input, tmp_data, cal_num, out_tile_index, out_w_block, conv_param,
                              input_trans_func);
       // step 3 : gemm
-      IndirectGemmFp32_8x8(gemm_out, trans_input, trans_weight, nullptr, input_unit_square, ic4, oc4 * C4NUM,
-                           output_offset, 1, 1, 0, 0);
+      gemm_func(gemm_out, trans_input, trans_weight, nullptr, input_unit_square, ic4, oc4 * C4NUM, output_offset, 1, 1,
+                0, 0);
 
       // step 4 : output transform
       WinogradOutputTransform(gemm_out, tmp_out_data, bias_data, cal_num, out_tile_index, out_w_block, conv_param,
@@ -173,7 +175,7 @@ void UnPackWinogradOutput(const float *src, float *dst, int batch, int height, i
 
 // fp32 conv3x3
 void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_data, float *output_data,
-                 TmpBufferAddress *buffer_list, int task_id, ConvParameter *conv_param) {
+                 TmpBufferAddress *buffer_list, int task_id, ConvParameter *conv_param, GEMM_FUNC_FP32 gemm_func) {
   int thread_count = conv_param->thread_num_;
   int ic4 = UP_DIV(conv_param->input_channel_, C4NUM);
   int output_channel = conv_param->output_channel_;
@@ -198,8 +200,8 @@ void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_dat
       Conv3x3Fp32InputTransform(input_data, tile_buffer, block_unit_buffer, start_index, real_cal_num, out_w_block,
                                 conv_param);
 
-      IndirectGemmFp32_8x8(tmp_dst_buffer, tile_buffer, transed_weight, nullptr, input_unit_square, ic4, oc4 * C4NUM,
-                           oc4 * C4NUM * input_unit_square * sizeof(float), 1, 1, 0, 0);
+      gemm_func(tmp_dst_buffer, tile_buffer, transed_weight, nullptr, input_unit_square, ic4, oc4 * C4NUM,
+                oc4 * C4NUM * input_unit_square * sizeof(float), 1, 1, 0, 0);
 
       Conv3x3Fp32OutputTransform(tmp_dst_buffer, nc4hw4_out, bias_data, start_index, real_cal_num, out_w_block,
                                  conv_param);
