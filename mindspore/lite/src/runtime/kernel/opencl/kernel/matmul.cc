@@ -94,8 +94,8 @@ void MatMulOpenCLKernel::PadWeight() {
     }
   }
   if (hasBias_) {
-    memcpy(inputs_[2]->Data(), bias_, sizeof(FLOAT_T) * sizeCI.s[0]);
-    for (int i = sizeCI.s[0]; i < sizeCI.s[1] * 4; i++) {
+    memcpy(bias_, inputs_[2]->Data(), sizeof(FLOAT_T) * sizeCO.s[0]);
+    for (int i = sizeCO.s[0]; i < sizeCO.s[1] * 4; i++) {
       bias_[i] = 0;
     }
   }
@@ -118,7 +118,7 @@ int MatMulOpenCLKernel::Run() {
   ocl_runtime->SetKernelArg(kernel_, 1, padWeight_);
   ocl_runtime->SetKernelArg(kernel_, 2, outputs_[0]->Data());
   if (hasBias_) {
-    ocl_runtime->SetKernelArg(kernel_, 3, inputs_[2]->Data());
+    ocl_runtime->SetKernelArg(kernel_, 3, bias_);
   } else {
     ocl_runtime->SetKernelArg(kernel_, 3, nullptr);
   }

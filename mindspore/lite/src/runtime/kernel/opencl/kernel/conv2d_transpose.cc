@@ -64,11 +64,8 @@ int Conv2dTransposeOpenCLKernel::Init() {
   auto allocator = ocl_runtime->GetAllocator();
   padWeight_ = reinterpret_cast<FLOAT_T *>(allocator->Malloc(div_ci * div_co * 16 * kh * kw * sizeof(FLOAT_T)));
   padWeight_ = reinterpret_cast<FLOAT_T *>(allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true));
-  bias_ = reinterpret_cast<FLOAT_T *>(allocator->Malloc(div_co * 4 * sizeof(FLOAT_T)));
-  bias_ = reinterpret_cast<FLOAT_T *>(allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true));
   PadWeight();
   allocator->UnmapBuffer(padWeight_);
-  allocator->UnmapBuffer(bias_);
   outputs_[0]->SetFormat(schema::Format_NHWC4);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return 0;
@@ -77,7 +74,7 @@ int Conv2dTransposeOpenCLKernel::Init() {
 int Conv2dTransposeOpenCLKernel::ReSize() { return 0; }
 
 void Conv2dTransposeOpenCLKernel::PadWeight() {
-  // OHWI to OIHW4(I)4(O)
+  // OHWI to OHWI4(I)4(O)
   ConvParameter *param = reinterpret_cast<ConvParameter *>(opParameter);
   int ci = param->input_channel_;
   int co = param->output_channel_;
@@ -86,13 +83,11 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
   int div_ci = UP_DIV(ci, 4);
   int div_co = UP_DIV(co, 4);
   auto origin_weight = reinterpret_cast<FLOAT_T *>(inputs_.at(kWeightIndex)->Data());
-  auto origin_bias = reinterpret_cast<FLOAT_T *>(inputs_.at(kBiasIndex)->Data());
-  bool has_bias = origin_bias != nullptr;
   int index = 0;
   for (int co_i = 0; co_i < div_co; co_i++) {
-    for (int ci_i = 0; ci_i < div_ci; ci_i++) {
+    for (int kw_i = 0; kw_i < kw; kw_i++) {
       for (int kh_i = 0; kh_i < kh; kh_i++) {
-        for (int kw_i = 0; kw_i < kw; kw_i++) {
+        for (int ci_i = 0; ci_i < div_ci; ci_i++) {
           for (int ci4_i = 0; ci4_i < 4; ci4_i++) {
             for (int co4_i = 0; co4_i < 4; co4_i++) {
               int co_offset = co_i * 4 + co4_i;
@@ -106,16 +101,6 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
             }
           }
         }
-      }
-    }
-  }
-  for (int co_i = 0; co_i < div_co; co_i++) {
-    for (int co4_i = 0; co4_i < 4; co4_i++) {
-      int co_offset = co_i * 4 + co4_i;
-      if (has_bias && co_offset < co) {
-        bias_[co_offset] = origin_bias[co_offset];
-      } else {
-        bias_[co_offset] = 0.;
       }
     }
   }
@@ -134,14 +119,31 @@ int Conv2dTransposeOpenCLKernel::Run() {
   int co = param->output_channel_;
   int kh = param->kernel_h_;
   int kw = param->kernel_w_;
-  int pad = kh - 1 - param->pad_h_;
+  int pad = param->pad_h_;
   int oh = outputs_[0]->shape()[1];
   int ow = outputs_[0]->shape()[2];
   int h = inputs_[0]->shape()[1];
   int w = inputs_[0]->shape()[2];
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+
+  cl::ImageFormat image_format;
+  {
+    image_format.image_channel_order = CL_RGBA;
+#ifdef ENABLE_FP16
+    image_format.image_channel_data_type = CL_HALF_FLOAT;
+#else
+    image_format.image_channel_data_type = CL_FLOAT;
+#endif
+  }
+  cl_int in_error_code, in_error_code_weight, in_error_code_bias, out_error_code;
+  cl::Image2D img_x(*ocl_runtime->Context(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, image_format, w * ci / 4, h, 0,
+                    inputs_[0]->Data(), &in_error_code);
+  cl::Image2D img_bias(*ocl_runtime->Context(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, image_format, co / 4, 1, 0,
+                       inputs_[2]->Data(), &in_error_code_bias);
+  cl::Image2D out_mem(*ocl_runtime->Context(), CL_MEM_WRITE_ONLY, image_format, ow * co / 4, oh, 0, nullptr,
+                      &out_error_code);
   // local size should less than MAX_GROUP_SIZE
-  std::vector<size_t> local = {4, 4, 32};
+  std::vector<size_t> local = {16, 1, 16};
   std::vector<size_t> global = {UP_ROUND((size_t)oh / 2, local[0]), UP_ROUND((size_t)ow / 2, local[1]),
                                 UP_ROUND((size_t)co / 4, local[2])};
 
@@ -150,16 +152,19 @@ int Conv2dTransposeOpenCLKernel::Run() {
   cl_int2 padding = {pad, pad};
   cl_int4 src_size = {h, w, UP_DIV(ci, 4), 1};
   cl_int4 dst_size = {oh, ow, UP_DIV(co, 4), 1};
-  ocl_runtime->SetKernelArg(kernel_, 0, inputs_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, 0, img_x);
   ocl_runtime->SetKernelArg(kernel_, 1, padWeight_);
-  ocl_runtime->SetKernelArg(kernel_, 2, bias_);
-  ocl_runtime->SetKernelArg(kernel_, 3, outputs_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, 2, img_bias);
+  ocl_runtime->SetKernelArg(kernel_, 3, out_mem);
   ocl_runtime->SetKernelArg(kernel_, 4, kernel_size);
   ocl_runtime->SetKernelArg(kernel_, 5, stride);
   ocl_runtime->SetKernelArg(kernel_, 6, padding);
   ocl_runtime->SetKernelArg(kernel_, 7, src_size);
   ocl_runtime->SetKernelArg(kernel_, 8, dst_size);
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
+  auto origin = cl::array<cl::size_type, 3U>{0, 0, 0};
+  auto region = cl::array<cl::size_type, 3U>{(size_t)(ow * co / 4), (size_t)(oh), 1};
+  ocl_runtime->GetDefaultCommandQueue()->enqueueReadImage(out_mem, CL_TRUE, origin, region, 0, 0, outputs_[0]->Data());
   return 0;
 }
 
@@ -180,4 +185,3 @@ kernel::LiteKernel *OpenCLConv2dTransposeKernelCreator(const std::vector<lite::t
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_DeConv2D, OpenCLConv2dTransposeKernelCreator)
 }  // namespace mindspore::kernel
-
