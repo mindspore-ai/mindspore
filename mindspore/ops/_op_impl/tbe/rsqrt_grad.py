@@ -13,24 +13,28 @@
 # limitations under the License.
 # ============================================================================
 
-"""Reciprocal op"""
+"""RsqrtGrad op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-reciprocal_op_info = TBERegOp("Reciprocal") \
+rsqrt_grad_op_info = TBERegOp("RsqrtGrad") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
-    .binfile_name("reciprocal.so") \
+    .binfile_name("rsqrt_grad.so") \
     .compute_cost(10) \
-    .kernel_name("reciprocal") \
+    .kernel_name("rsqrt_grad") \
     .partial_flag(True) \
+    .op_pattern("broadcast") \
     .input(0, "x", False, "required", "all") \
+    .input(1, "dy", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .op_pattern("dynamicFormat") \
-    .dtype_format(DataType.None_None, DataType.None_None) \
+    .dtype_format(DataType.F16_None, DataType.F16_None, DataType.F16_None) \
+    .dtype_format(DataType.I8_None, DataType.I8_None, DataType.I8_None) \
+    .dtype_format(DataType.I32_None, DataType.I32_None, DataType.I32_None) \
+    .dtype_format(DataType.F32_None, DataType.F32_None, DataType.F32_None) \
     .get_op_info()
 
 
-@op_info_register(reciprocal_op_info)
-def _reciprocal_tbe():
-    """Reciprocal TBE register"""
+@op_info_register(rsqrt_grad_op_info)
+def _rsqrt_grad_tbe():
+    """RsqrtGrad TBE register"""
     return

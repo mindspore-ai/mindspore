@@ -236,6 +236,9 @@ from .cum_sum import _cum_sum_tbe
 from .apply_rms_prop import _apply_rms_prop_tbe
 from .cumprod import _cumprop_tbe
 from .reduce_prod import _reduce_prod_tbe
+from .reciprocal_grad import _reciprocal_grad_tbe
+from .sqrt_grad import _sqrt_grad_tbe
+from .rsqrt_grad import _rsqrt_grad_tbe
 from .flatten_grad import _flatten_grad_tbe
 from .scatter_add import _scatter_add_tbe
 from .atan2 import _atan2_tbe
