@@ -22,12 +22,12 @@ __global__ void SGDKernel(const int size, const T dampening, const T weight_deca
                           const T *momentum, const T *lr, T *param, T *accum, T *stat) {
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < (size); i += blockDim.x * gridDim.x) {
     T grad_new = grad[i];
-    if (weight_decay != static_cast<T>(0)) {
+    if (weight_decay > static_cast<T>(0)) {
       grad_new += param[i] * weight_decay;
     }
 
-    if (momentum[0] != static_cast<T>(0)) {
-      if (stat[i] == static_cast<T>(0)) {
+    if (momentum[0] > static_cast<T>(0)) {
+      if (stat[i] > static_cast<T>(0)) {
         accum[i] = grad_new;
         stat[i] = 0;
       } else {

@@ -15,7 +15,9 @@
  */
 
 #include "backend/kernel_compiler/gpu/cuda_impl/scatter_nd.cuh"
+#include "backend/kernel_compiler/gpu/cuda_impl/util.cuh"
 #include "runtime/device/gpu/cuda_common.h"
+
 template <typename T, typename S>
 __global__ void ScatterNdKernel(S *indices, T *update, T *output, const size_t block_size, const size_t input_size,
                                 const size_t output_size, const size_t indices_dim_0, const size_t indices_dim_1,
@@ -39,7 +41,7 @@ __global__ void ScatterNdKernel(S *indices, T *update, T *output, const size_t b
     out_bound |= write_index >= output_size;
 
     if (!out_bound) {
-      output[write_index] = update[read_index];
+      ms_atomic_add(&output[write_index], update[read_index]);
     }
   }
 }
@@ -48,7 +50,7 @@ template <typename T, typename S>
 void ScatterNd(S *indices, T *update, T *output, const size_t &block_size, const size_t &input_size,
                const size_t &output_size, const size_t &indices_dim_0, const size_t &indices_dim_1, S *indices_stride,
                S *work_shape, cudaStream_t stream) {
-  ScatterNdKernel<<<GET_BLOCKS(input_size), GET_THREADS, 0, stream>>>(indices, update, output, block_size, input_size,
+  ScatterNdKernel<<<GET_BLOCKS(output_size), GET_THREADS, 0, stream>>>(indices, update, output, block_size, input_size,
                                                                       output_size, indices_dim_0, indices_dim_1,
                                                                       indices_stride, work_shape);
   return;

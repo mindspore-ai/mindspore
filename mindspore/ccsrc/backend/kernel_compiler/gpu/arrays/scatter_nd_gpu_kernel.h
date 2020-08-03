@@ -69,7 +69,10 @@ class ScatterNdGpuFwdKernel : public GpuKernel {
       memcpy_flag_ = true;
     }
 
-    ScatterNd(indices, update, output, block_size_, input_size_, output_size_, indices_dim_0_, indices_dim_1_,
+    const size_t input_size = input_size_ / sizeof(T);
+    const size_t output_size = output_size_ / sizeof(T);
+
+    ScatterNd(indices, update, output, block_size_, input_size, output_size, indices_dim_0_, indices_dim_1_,
               indices_stride_, work_shape_, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -138,7 +141,7 @@ class ScatterNdGpuFwdKernel : public GpuKernel {
 
     // calculate indices dim 0/1
     indices_dim_0_ = indices_shapes_[0];
-    indices_dim_1_ = indices_shapes_[1];
+    indices_dim_1_ = indices_shapes_[indices_shapes_.size() - 1];
 
     // calculate block_size
     for (size_t i = indices_dim_1_; i < output_shapes_.size(); i++) {
@@ -146,10 +149,7 @@ class ScatterNdGpuFwdKernel : public GpuKernel {
     }
 
     // calculate indices_stride
-    for (size_t i = 0; i < indices_dim_1_; i++) {
-      vec_indices_stride_.push_back(0);
-    }
-
+    vec_indices_stride_.resize(indices_dim_1_, 0);
     vec_indices_stride_[indices_dim_1_ - 1] = block_size_;
 
     for (size_t i = indices_dim_1_ - 1; i > 0; --i) {
