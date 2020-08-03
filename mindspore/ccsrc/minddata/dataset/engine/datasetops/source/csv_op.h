@@ -95,7 +95,7 @@ class CsvOp : public ParallelOp {
 
     void setEndOffset(int64_t end_offset) { end_offset_ = end_offset; }
 
-    int processMessage(char c) {
+    int processMessage(int c) {
       Message m = getMessage(c);
       StateDiagram::iterator it = sd.find({cur_state_, m});
       if (it == sd.end()) {
@@ -132,7 +132,7 @@ class CsvOp : public ParallelOp {
     typedef std::pair<State, std::function<int(CsvParser &, char)>> StateActionPair;
     typedef std::map<StateMessagePair, StateActionPair> StateDiagram;
 
-    Message getMessage(char c) {
+    Message getMessage(int c) {
       if (c == csv_field_delim_) {
         return Message::MS_DELIM;
       } else if (c == '"') {
