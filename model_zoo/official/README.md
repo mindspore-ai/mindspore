@@ -54,7 +54,7 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework, 
 # Announcements
 | Date         | News                                                         |
 | ------------ | ------------------------------------------------------------ |
-| June 30, 2020 | Support [MindSpore v0.5.0-beta](https://www.mindspore.cn/news/newschildren?id=221) |
+| June 30, 2020 | Support [MindSpore v0.6.0-beta](https://www.mindspore.cn/news/newschildren?id=221) |
 
 
 
