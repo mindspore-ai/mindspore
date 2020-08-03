@@ -201,7 +201,6 @@ float Benchmark::CompareData(const std::string &nodeName, std::vector<int> msSha
     }
     std::cout << std::endl;
     if (meanError > 0.0f) {
-      errorCount = 0;
       meanError /= errorCount;
     }
 
