@@ -16,6 +16,7 @@
 #include "src/runtime/kernel/arm/opclib/fp32/crop.h"
 #include <string.h>
 #include "src/runtime/kernel/arm/opclib/op_base.h"
+#include "src/runtime/kernel/arm/opclib/crop_parameter.h"
 
 void Pad4DOffset(CropParameter *crop_param, int64_t *offset) {
   int axis = crop_param->axis_;

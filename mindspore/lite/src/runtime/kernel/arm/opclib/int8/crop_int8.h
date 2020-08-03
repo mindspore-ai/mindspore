@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_CROP_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_CROP_H_
+
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_CROP_INT8_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_CROP_INT8_H_
 #include "src/runtime/kernel/arm/opclib/op_base.h"
 #include "src/runtime/kernel/arm/opclib/crop_parameter.h"
 
-#define CROP_OFFSET_MAX_SIZE 4
+void Crop(const int8_t *input, int8_t *output, int task_id, CropParameter *para);
+void Crop1D(const int8_t *input, int8_t *output, int task_id, CropParameter *para);
+void Crop2D(const int8_t *input, int8_t *output, int task_id, CropParameter *para);
+void Crop3D(const int8_t *input, int8_t *output, int task_id, CropParameter *para);
+void Crop4D(const int8_t *input, int8_t *output, int task_id, CropParameter *para);
 
-void Crop4D(const float *input, float *output, const int *in_shape, const int *out_shape, CropParameter *crop_param);
-void Crop4DNoParallel(const float *input, float *output, const int *in_shape, const int *out_shape,
-                      CropParameter *crop_param);
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_CROP_H_
-
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_CROP_INT8_H_

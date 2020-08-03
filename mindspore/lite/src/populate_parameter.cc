@@ -950,6 +950,7 @@ CropParameter *PopulateCropParameter(const lite::Primitive *primitive) {
     return nullptr;
   }
   parameter->axis_ = param->axis();
+  parameter->offset_size_ = param_offset->size();
   for (int i = 0; i < param_offset->size(); ++i) {
     parameter->offset_[i] = param_offset->Get(i);
   }
