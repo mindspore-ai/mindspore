@@ -158,7 +158,7 @@ Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  std::vector<Dimensions> stra = strategy->GetInputDim();
+  Strategys stra = strategy->GetInputDim();
   Dimensions mat_a_strategy = stra.at(0);
   Dimensions mat_b_strategy = stra.at(1);
 
@@ -207,7 +207,7 @@ Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status MatMulBase::InferDevMatrixShape() {
-  std::vector<Dimensions> stra = strategy_->GetInputDim();
+  Strategys stra = strategy_->GetInputDim();
   Dimensions mat_a_strategy = stra.at(0);
   Dimensions mat_b_strategy = stra.at(1);
 
@@ -279,10 +279,10 @@ Status MatMulBase::InferTensorMap() {
     size = dev_matrix_shape_.size() - 1;
   }
 
-  std::vector<int32_t> tensor_map_index;
+  Shape tensor_map_index;
   // such as 5: tensor_map_index [4,3,2,1,0]
   for (size_t i = 0; i < size; ++i) {
-    tensor_map_index.push_back((int32_t)(LAST_INDEX(size) - i));
+    tensor_map_index.push_back((int64_t)(LAST_INDEX(size) - i));
   }
 
   // infer output tensor map: [4,3,2,0], delete the second-from-end element
@@ -309,7 +309,7 @@ Status MatMulBase::InferTensorMap() {
     mat_b_tensor_map.begin() + static_cast<different_type>(LAST_INDEX(size) - mat_b_dimension_));
   if (transpose_b_) {
     // swap the last two elements
-    int32_t last_value = mat_b_tensor_map.back();
+    int64_t last_value = mat_b_tensor_map.back();
     mat_b_tensor_map.pop_back();
     (void)mat_b_tensor_map.insert(
       mat_b_tensor_map.begin() + static_cast<different_type>(LAST_INDEX(mat_b_tensor_map.size())), last_value);
@@ -436,7 +436,7 @@ Status MatMulBase::GenerateStrategies(int32_t stage_id) {
     return FAILED;
   }
   CheckGlobalDeviceManager();
-  std::vector<int32_t> dev_list = g_device_manager->GetDeviceListByStageId(stage_id);
+  RankList dev_list = g_device_manager->GetDeviceListByStageId(stage_id);
   size_t dev_num = dev_list.size();
   Shape input0_shape = inputs_shape_[0], input1_shape = inputs_shape_[1];
   if (transpose_a_) {
@@ -503,13 +503,14 @@ Status MatMulBase::GenerateStrategies(int32_t stage_id) {
 Status MatMulBase::PrepareStrategy(int32_t stage_id, size_t dev_num,
                                    mindspore::parallel::Dimensions combined_partitions, size_t input0_shape_size,
                                    size_t input1_shape_size, mindspore::parallel::StrategyPtr *const sp) {
-  int32_t product = std::accumulate(combined_partitions.begin(), combined_partitions.end(), 1, std::multiplies<int>());
+  int64_t product =
+    std::accumulate(combined_partitions.begin(), combined_partitions.end(), 1, std::multiplies<int64_t>());
   if (!FULLY_USE_DEVICES) {
-    if (IntToSize(product) > dev_num) {
+    if (LongToSize(product) > dev_num) {
       return FAILED;
     }
   } else {
-    if (IntToSize(product) != dev_num) {
+    if (LongToSize(product) != dev_num) {
       return FAILED;
     }
   }
@@ -550,7 +551,7 @@ Status MatMulBase::PrepareStrategy(int32_t stage_id, size_t dev_num,
       MS_LOG(ERROR) << name_ << " : Swap last two elements failed.";
     }
   }
-  std::vector<Dimensions> stras;
+  Strategys stras;
   stras.push_back(input0_partitions);
   stras.push_back(input1_partitions);
   (*sp) = std::make_shared<Strategy>(stage_id, stras);

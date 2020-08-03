@@ -43,11 +43,10 @@ using ForwardOp = OperatorVector;
 using MirrorOps = std::vector<OperatorVector>;
 using Ops = std::vector<OperatorVector>;
 using VirtualDivOp = OperatorVector;
-using TensorMaps = std::vector<std::vector<int32_t>>;
+using TensorMaps = std::vector<Shape>;
 using TensorLayouts = std::vector<TensorLayout>;
 using different_type = std::vector<int32_t>::difference_type;
 using PrimitiveAttrs = std::unordered_map<std::string, ValuePtr>;
-using Strategys = std::vector<Dimensions>;
 using ReplaceGraphPtr = std::shared_ptr<std::pair<std::vector<std::pair<AnfNodePtr, int>>, AnfNodePtr>>;
 
 class Edge;
@@ -88,7 +87,7 @@ class OperatorInfo {
   void set_cost(const OperatorCostPtr &cost) { operator_cost_ = cost; }
   virtual Status SetCostUnderStrategy(const StrategyPtr &strategy) = 0;
 
-  virtual std::shared_ptr<std::vector<std::vector<int32_t>>> GenerateBatchStrategies();
+  virtual std::shared_ptr<Strategys> GenerateBatchStrategies();
   virtual void ReComputeBatchSplitFlagList();
   void ComputeBatchSplitFlagList();
 
@@ -271,8 +270,8 @@ Operator CreateReduceScatterOp(const std::string &reduce_op, const std::string &
 Operator CreateGetTensorSliceOp(const TensorLayout &tensor_layout);
 OperatorVector CreateMirrorOps(const std::string &group_name, size_t dev_num);
 int32_t ComputeRepeatDeviceNumByTensorMap(const Shape &dev_matrix_shape, const Shape &tensor_map);
-std::shared_ptr<std::vector<std::vector<int32_t>>> GenerateBatchStrategiesBySplitFlag(
-  const Shapes &shapes, const std::vector<bool> &split_flag_list);
+std::shared_ptr<Strategys> GenerateBatchStrategiesBySplitFlag(const Shapes &shapes,
+                                                              const std::vector<bool> &split_flag_list);
 
 void PrintStrategy(const StrategyPtr &strategy);
 // generate strategies for that all inputs' dimensions are independent, such as: ([a, b, c, d])

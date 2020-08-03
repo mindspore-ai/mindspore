@@ -33,13 +33,13 @@ class TestMatMulCost : public UT::Common {
 
 void TestMatMulCost::SetUp() {
   mmcost_ = MatMulCost();
-  std::vector<int32_t> dev_list;
+  RankList dev_list;
 
   for (int32_t i = 0; i < 1050; i++) {
     dev_list.push_back(i);
   }
 
-  std::vector<int32_t> stage_map;
+  RankList stage_map;
   stage_map.push_back(1024);
   stage_map.push_back(26);
 
@@ -90,13 +90,13 @@ class TestActivationCost : public UT::Common {
 
 void TestActivationCost::SetUp() {
   ac_cost_ = ActivationCost();
-  std::vector<int32_t> dev_list;
+  RankList dev_list;
 
   for (int32_t i = 0; i < 1050; i++) {
     dev_list.push_back(i);
   }
 
-  std::vector<int32_t> stage_map;
+  RankList stage_map;
   stage_map.push_back(1024);
   stage_map.push_back(26);
 
@@ -142,13 +142,13 @@ class TestPReLUCost : public UT::Common {
 
 void TestPReLUCost::SetUp() {
   prelu_cost_ = PReLUCost();
-  std::vector<int32_t> dev_list;
+  RankList dev_list;
 
   for (int32_t i = 0; i < 1050; i++) {
     dev_list.push_back(i);
   }
 
-  std::vector<int32_t> stage_map;
+  RankList stage_map;
   stage_map.push_back(1024);
   stage_map.push_back(26);
 

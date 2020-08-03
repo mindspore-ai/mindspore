@@ -38,13 +38,13 @@ class TestSoftmaxLoss : public UT::Common {
 };
 
 void TestSoftmaxLoss::SetUp() {
-  std::vector<int32_t> dev_list;
+  RankList dev_list;
 
   for (int32_t i = 0; i < 65; i++) {
     dev_list.push_back(i);
   }
 
-  std::vector<int32_t> stage_map;
+  RankList stage_map;
   stage_map.push_back(64);
   stage_map.push_back(1);
 
@@ -64,18 +64,18 @@ void TestSoftmaxLoss::SetUp() {
 }
 
 TEST_F(TestSoftmaxLoss, InferDevMatrixShape1) {
-  std::vector<Dimensions> inputs = {{2, 4, 8, 1}, {2, 4, 8, 1}};
+  Strategys inputs = {{2, 4, 8, 1}, {2, 4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   loss->Init(strategy);
-  std::vector<int32_t> dev_matrix_shape = loss->dev_matrix_shape();
+  Shape dev_matrix_shape = loss->dev_matrix_shape();
 
-  std::vector<int32_t> expect = {2, 4, 8, 1};
+  Shape expect = {2, 4, 8, 1};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 TEST_F(TestSoftmaxLoss, InferSliceShape1) {
-  std::vector<Dimensions> str = {{2, 4, 8, 1}, {2, 4, 8, 1}};
+  Strategys str = {{2, 4, 8, 1}, {2, 4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   loss->Init(strategy);
@@ -104,7 +104,7 @@ TEST_F(TestSoftmaxLoss, InferSliceShape1) {
 }
 
 TEST_F(TestSoftmaxLoss, GetTensorLayout1) {
-  std::vector<Dimensions> str = {{2, 4, 8, 1}, {2, 4, 8, 1}};
+  Strategys str = {{2, 4, 8, 1}, {2, 4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   loss->Init(strategy);
@@ -133,7 +133,7 @@ TEST_F(TestSoftmaxLoss, GetTensorLayout1) {
 }
 
 TEST_F(TestSoftmaxLoss, GetForwardOp1) {
-  std::vector<Dimensions> inputs = {{2, 4, 8, 1}, {2, 4, 8, 1}};
+  Strategys inputs = {{2, 4, 8, 1}, {2, 4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   loss->Init(strategy);
@@ -144,7 +144,7 @@ TEST_F(TestSoftmaxLoss, GetForwardOp1) {
 }
 
 TEST_F(TestSoftmaxLoss, GetMirrorOPs1) {
-  std::vector<Dimensions> inputs = {{2, 4, 8, 1}, {2, 4, 8, 1}};
+  Strategys inputs = {{2, 4, 8, 1}, {2, 4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   loss->Init(strategy);
@@ -156,7 +156,7 @@ TEST_F(TestSoftmaxLoss, GetMirrorOPs1) {
 }
 
 TEST_F(TestSoftmaxLoss, GetVirtualDivOPs1) {
-  std::vector<Dimensions> inputs = {{1, 4, 8, 1}, {1, 4, 8, 1}};
+  Strategys inputs = {{1, 4, 8, 1}, {1, 4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   loss->Init(strategy);
@@ -176,7 +176,7 @@ TEST_F(TestSoftmaxLoss, GetVirtualDivOPs1) {
 
 TEST_F(TestSoftmaxLoss, CheckStrategy1) {
   // Success: {{2,4,8,16}}
-  std::vector<Dimensions> inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
+  Strategys inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = loss->Init(strategy);
@@ -185,7 +185,7 @@ TEST_F(TestSoftmaxLoss, CheckStrategy1) {
 
 TEST_F(TestSoftmaxLoss, CheckStrategy2) {
   // Success: {{2,4,8,16}}
-  std::vector<Dimensions> inputs = {{2, 4, 8}};
+  Strategys inputs = {{2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = loss->Init(strategy);

@@ -24,19 +24,20 @@
 #include <vector>
 
 #include "frontend/parallel/status.h"
+#include "frontend/parallel/device_matrix.h"
 
 namespace mindspore {
 namespace parallel {
 #define MIN_SLICE_NUM 1
 
-using Dimensions = std::vector<int32_t>;
-
+using Dimensions = Shape;
+using Strategys = std::vector<Dimensions>;
 class Strategy;
 using StrategyPtr = std::shared_ptr<Strategy>;
 
 class Strategy {
  public:
-  Strategy(int32_t stage, std::vector<Dimensions> inputs)
+  Strategy(int32_t stage, Strategys inputs)
       : stage_(stage), inputs_(std::move(inputs)), internal_size_(0), internal_stragies_() {}
 
   Strategy(const Strategy &another_stra) : stage_(another_stra.GetInputStage()) {
@@ -51,14 +52,14 @@ class Strategy {
 
   ~Strategy() = default;
   size_t GetInputNumber() const { return inputs_.size(); }
-  std::vector<Dimensions> GetInputDim() const { return inputs_; }
+  Strategys GetInputDim() const { return inputs_; }
   int32_t GetInputStage() const { return stage_; }
   void ExpandInputDimFromOneToTwo() {
     if (inputs_.size() == 1) {
       inputs_.push_back(inputs_[0]);
     }
   }
-  void ResetInputs(const std::vector<Dimensions> &input) { inputs_ = input; }
+  void ResetInputs(const Strategys &input) { inputs_ = input; }
   std::vector<StrategyPtr> GetInternalStrategies() const { return internal_stragies_; }
   size_t GetInternalSize() const { return internal_size_; }
 
@@ -83,12 +84,12 @@ class Strategy {
   const int32_t stage_;
 
   // The size of Dimensions must equal to inputs_ tensor dimension.
-  std::vector<Dimensions> inputs_;
+  Strategys inputs_;
   size_t internal_size_ = 0;
   std::vector<StrategyPtr> internal_stragies_;
 };
 
-inline StrategyPtr NewStrategy(const int32_t stage, const std::vector<Dimensions> &inputs) {
+inline StrategyPtr NewStrategy(const int32_t stage, const Strategys &inputs) {
   return std::make_shared<Strategy>(stage, inputs);
 }
 }  // namespace parallel

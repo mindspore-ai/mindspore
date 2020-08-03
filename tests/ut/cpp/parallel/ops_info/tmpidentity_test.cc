@@ -19,6 +19,7 @@
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/ops_info/tmp_identity_info.h"
+#include "frontend/parallel/step_parallel.h"
 
 namespace mindspore {
 namespace parallel {
@@ -26,7 +27,6 @@ namespace parallel {
 class TmpIdentityInfo;
 using TmpIdentityInfoPtr = std::shared_ptr<TmpIdentityInfo>;
 TmpIdentityInfoPtr identity_ptr;
-using TensorMap = std::vector<int32_t>;
 
 class TestTmpIdentityInfo : public UT::Common {
  public:
@@ -38,13 +38,13 @@ class TestTmpIdentityInfo : public UT::Common {
 };
 
 void TestTmpIdentityInfo::SetUp() {
-  std::vector<int32_t> dev_list;
+  RankList dev_list;
 
   for (int32_t i = 0; i < 1050; i++) {
     dev_list.push_back(i);
   }
 
-  std::vector<int32_t> stage_map;
+  RankList stage_map;
   stage_map.push_back(1024);
   stage_map.push_back(26);
 
@@ -65,18 +65,18 @@ void TestTmpIdentityInfo::SetUp() {
 }
 
 TEST_F(TestTmpIdentityInfo, InferDevMatrixShape1) {
-  std::vector<Dimensions> inputs = {{2, 4, 8, 16}};
+  Strategys inputs = {{2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   identity_ptr->Init(strategy);
-  std::vector<int32_t> dev_matrix_shape = identity_ptr->dev_matrix_shape();
+  Shape dev_matrix_shape = identity_ptr->dev_matrix_shape();
 
-  std::vector<int32_t> expect = {2, 4, 8, 16};
+  Shape expect = {2, 4, 8, 16};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 TEST_F(TestTmpIdentityInfo, InferSliceShape1) {
-  std::vector<Dimensions> str = {{2, 4, 8, 16}};
+  Strategys str = {{2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   identity_ptr->Init(strategy);
@@ -97,7 +97,7 @@ TEST_F(TestTmpIdentityInfo, InferSliceShape1) {
 }
 
 TEST_F(TestTmpIdentityInfo, GetTensorLayout1) {
-  std::vector<Dimensions> str = {{2, 4, 8, 16}};
+  Strategys str = {{2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   identity_ptr->Init(strategy);
@@ -119,7 +119,7 @@ TEST_F(TestTmpIdentityInfo, GetTensorLayout1) {
 
 TEST_F(TestTmpIdentityInfo, CheckStrategy1) {
   // Success: {{2,4,8,16}}
-  std::vector<Dimensions> inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
+  Strategys inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = identity_ptr->Init(strategy);
@@ -128,7 +128,7 @@ TEST_F(TestTmpIdentityInfo, CheckStrategy1) {
 
 TEST_F(TestTmpIdentityInfo, CheckStrategy2) {
   // Success: {{2,4,8,16}}
-  std::vector<Dimensions> inputs = {{2, 4, 8}};
+  Strategys inputs = {{2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = identity_ptr->Init(strategy);
