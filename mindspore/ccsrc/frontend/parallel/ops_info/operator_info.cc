@@ -1330,5 +1330,9 @@ void OperatorInfo::CheckSelectedStrategy(const StrategyPtr &s_strategy) {
     PrintStrategy(s_strategy);
   }
 }
+
+void OperatorInfo::SetStrategyCost(const std::vector<std::shared_ptr<StrategyWithCost>> &stra_cost) {
+  strategy_cost_ = stra_cost;
+}
 }  // namespace parallel
 }  // namespace mindspore

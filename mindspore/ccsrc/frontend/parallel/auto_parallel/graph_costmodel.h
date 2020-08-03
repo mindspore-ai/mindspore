@@ -180,6 +180,14 @@ class CostGraph {
   void CreateStarEliminationSubCostList(const StrategyPtr &, const CostPtrList &, const CostPtrList &,
                                         const StrategyPtr &, const CostPtrList &, std::vector<StrategyPtr>,
                                         CostPtrList &, CostPtrList &, CostPtrList *);
+  // Return <op1, op2>. we merge 'op2' into 'op1'
+  std::pair<OperatorInfoPtr, OperatorInfoPtr> CheckSourceElimination() const;
+  void CreateSourceEliminationSubCostList(StrategyPtr, const CostPtrList &, StrategyPtr, const CostPtrList &,
+                                          CostPtrList *);
+  // We merge 'op2' into op1. The returned value are '<Edges1, Edges2>'. 'Edges1' are newly updated edges for 'op1',
+  // 'Edges2' are newly updated edges for 'op2'.
+  std::pair<std::vector<std::shared_ptr<Edge>>, std::vector<std::shared_ptr<Edge>>> EliminationSources(
+    OperatorInfoPtr op1, OperatorInfoPtr op2);
   // Calculate memory cost for training phase or inference phase.
   Status CalculateMemoryCost();
   // When the input of a operator is neither a WEIGHT, nor a output of a subsequent operator involving WEIGHT, then

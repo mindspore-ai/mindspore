@@ -97,6 +97,7 @@ class OperatorInfo {
   // is checked
   Status SetCostUnderStrategyBase(const StrategyPtr &strategy);
   std::vector<std::shared_ptr<StrategyWithCost>> GetStrategyCost() { return strategy_cost_; }
+  void SetStrategyCost(const std::vector<std::shared_ptr<StrategyWithCost>> &);
   // In the training phase, when the input of a operator contains WEIGHT or a output from other operators involving
   // WEIGHT, then these input should stay in memory until it is used in the backward phase, which is kept in memory
   // at the end of forward phase.

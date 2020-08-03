@@ -794,6 +794,191 @@ OperatorInfoPtr CostGraph::CheckContractElimination() const {
   return nullptr;
 }
 
+std::pair<OperatorInfoPtr, OperatorInfoPtr> CostGraph::CheckSourceElimination() const {
+  size_t source_count = 0;
+  std::vector<OperatorInfoPtr> op_vector(2, nullptr);
+  for (auto &op : ops_) {
+    MS_EXCEPTION_IF_NULL(op);
+    bool bool_test = op->is_alive() && op->GetAlivePrevEdges().empty() && op->GetAliveSuccEdges().size() > 0;
+    if (bool_test) {
+      op_vector[source_count++] = op;
+      if (source_count == 2) {
+        return std::make_pair(op_vector[0], op_vector[1]);
+      }
+    }
+  }
+  return std::make_pair(nullptr, nullptr);
+}
+
+void CostGraph::CreateSourceEliminationSubCostList(StrategyPtr op1_old_stra, const CostPtrList &op1_old_clist,
+                                                   StrategyPtr op2_old_stra, const CostPtrList &op2_old_clist,
+                                                   CostPtrList *op1_new_clist) {
+  for (auto &op1_cost : op1_old_clist) {
+    for (auto &op2_cost : op2_old_clist) {
+      double computation = op1_cost->computation_cost_ + op2_cost->computation_cost_;
+      double memory = op1_cost->memory_with_reuse_ + op2_cost->memory_with_reuse_;
+      double communication = op1_cost->communication_cost_ + op2_cost->communication_cost_;
+      double communication_forward = op1_cost->communication_forward_ + op2_cost->communication_forward_;
+      double communication_without_para =
+        op1_cost->communication_without_parameter_ + op2_cost->communication_without_parameter_;
+      auto decision = std::make_shared<SourceEliminationDecision>(op1_old_stra, op1_cost, op2_old_stra, op2_cost);
+      auto new_cost = std::make_shared<Cost>(computation, communication, decision);
+      MS_EXCEPTION_IF_NULL(new_cost);
+      new_cost->communication_without_parameter_ = communication_without_para;
+      new_cost->communication_with_partial_para_ =
+        communication_without_para + COST_MODEL_GAMMA * (communication - communication_without_para);
+      new_cost->memory_with_reuse_ = memory;
+      new_cost->communication_forward_ = communication_forward;
+      MS_EXCEPTION_IF_NULL(op1_new_clist);
+      op1_new_clist->emplace_back(std::move(new_cost));
+    }
+  }
+}
+
+std::pair<std::vector<std::shared_ptr<Edge>>, std::vector<std::shared_ptr<Edge>>> CostGraph::EliminationSources(
+  OperatorInfoPtr op1, OperatorInfoPtr op2) {
+  MS_EXCEPTION_IF_NULL(op1);
+  MS_EXCEPTION_IF_NULL(op2);
+  MS_LOG(INFO) << "Now source eliminating node: " << op2->name() << " to node: " << op1->name();
+
+  auto op1_old_succ_edges = op1->GetAliveSuccEdges();
+  std::vector<std::map<StrategyPtr, std::vector<std::pair<StrategyPtr, CostPtrList>>>> op1_edges_reorganised_cost(
+    op1_old_succ_edges.size());
+  std::vector<std::map<CostPtrKey, CostPtrList>> op1_new_edges_cost(op1_old_succ_edges.size());
+  std::vector<std::shared_ptr<Edge>> op1_new_succ_edges(op1_old_succ_edges.size());
+
+  auto op2_old_succ_edges = op2->GetAliveSuccEdges();
+  std::vector<std::map<StrategyPtr, std::vector<std::pair<StrategyPtr, CostPtrList>>>> op2_edges_reorganised_cost(
+    op2_old_succ_edges.size());
+  std::vector<std::map<CostPtrKey, CostPtrList>> op2_new_edges_cost(op2_old_succ_edges.size());
+  std::vector<std::shared_ptr<Edge>> op2_new_succ_edges(op2_old_succ_edges.size());
+
+  // Construct cost_map for the data_structure of 'op1_edges_reorganised_cost' and 'op2_edges_reorganised_cost'
+  for (size_t i = 0; i < op1_old_succ_edges.size(); ++i) {
+    const auto &op1_cost_map = op1_old_succ_edges[i]->GetCostMap();
+    std::map<StrategyPtr, std::vector<std::pair<StrategyPtr, CostPtrList>>> from_tocost;
+    for (const auto &key_value : op1_cost_map) {
+      const auto &from_to_strategies = key_value.first;
+      const auto &costlist = key_value.second;
+      from_tocost[from_to_strategies.first].emplace_back(std::make_pair(from_to_strategies.second, costlist));
+    }
+    op1_edges_reorganised_cost[i] = from_tocost;
+  }
+
+  for (size_t i = 0; i < op2_old_succ_edges.size(); ++i) {
+    const auto &op2_cost_map = op2_old_succ_edges[i]->GetCostMap();
+    std::map<StrategyPtr, std::vector<std::pair<StrategyPtr, CostPtrList>>> from_tocost;
+    for (const auto &key_value : op2_cost_map) {
+      const auto &from_to_strategies = key_value.first;
+      const auto &costlist = key_value.second;
+      from_tocost[from_to_strategies.first].emplace_back(std::make_pair(from_to_strategies.second, costlist));
+    }
+    op2_edges_reorganised_cost[i] = from_tocost;
+  }
+
+  // Merge op2 into op1
+  const auto &op1_old_stra_cost = op1->GetStrategyCost();
+  const auto &op2_old_stra_cost = op2->GetStrategyCost();
+  std::vector<std::shared_ptr<StrategyWithCost>> op1_new_stra_cost;
+
+  for (auto &op1_stra_cost : op1_old_stra_cost) {
+    auto op1_old_stra = op1_stra_cost->strategy_ptr;
+    auto op1_old_costlist = op1_stra_cost->cost_list;
+
+    for (auto &op2_stra_cost : op2_old_stra_cost) {
+      auto op2_stra = op2_stra_cost->strategy_ptr;
+      auto op2_costlist = op2_stra_cost->cost_list;
+
+      StrategyPtr op1_new_stra = std::make_shared<Strategy>(*op1_old_stra);
+      op1_new_stra->CoverStrategy(op2_stra);
+      CostPtrList op1_new_costlist;
+      // Calculate new cost for 'op1_new_costlist'
+      CreateSourceEliminationSubCostList(op1_old_stra, op1_old_costlist, op2_stra, op2_costlist, &op1_new_costlist);
+      std::shared_ptr<StrategyWithCost> swc = std::make_shared<StrategyWithCost>(op1_new_stra, op1_new_costlist);
+      op1_new_stra_cost.emplace_back(swc);
+
+      // Set cost for new successive edges of op1 and op2
+      for (size_t i = 0; i < op1_old_succ_edges.size(); ++i) {
+        auto &from_tocost = op1_edges_reorganised_cost[i];
+        auto &to_cost = from_tocost[op1_old_stra];
+        auto &new_cost_map = op1_new_edges_cost[i];
+        for (auto &stra_costlit : to_cost) {
+          auto &to_strategy = stra_costlit.first;
+          auto &edge_costlist = stra_costlit.second;
+          CostPtrKey new_key = {op1_new_stra, to_strategy};
+          new_cost_map[new_key] = edge_costlist;
+        }
+      }
+      for (size_t i = 0; i < op2_old_succ_edges.size(); ++i) {
+        auto &from_tocost = op2_edges_reorganised_cost[i];
+        auto &to_cost = from_tocost[op2_stra];
+        auto &new_cost_map = op2_new_edges_cost[i];
+        for (auto &stra_costlist : to_cost) {
+          auto &to_strategy = stra_costlist.first;
+          auto &edge_costlist = stra_costlist.second;
+          CostPtrKey new_key = {op1_new_stra, to_strategy};
+          new_cost_map[new_key] = edge_costlist;
+        }
+      }
+    }
+  }
+  op1->SetStrategyCost(op1_new_stra_cost);
+  op2->SetNotAlive();
+
+  // Update the edges incident to op1, and edges incident to op2
+  for (size_t i = 0; i < op1_old_succ_edges.size(); ++i) {
+    auto &new_cost_map = op1_new_edges_cost[i];
+    auto &ith_edge = op1_old_succ_edges[i];
+
+    std::string new_edge_name = op1->name() + OPERATOR_TO_OPERATOR_CONNECTOR + ith_edge->next_operator()->name();
+    std::shared_ptr<Edge> new_edge;
+    if (ith_edge->is_combined()) {
+      std::vector<size_t> output_indexs, input_indexs;
+      output_indexs = ith_edge->prev_op_output_indexs();
+      input_indexs = ith_edge->next_op_input_indexs();
+      new_edge =
+        std::make_shared<Edge>(new_edge_name, op1, ith_edge->next_operator(), output_indexs, input_indexs, true);
+    } else {
+      size_t output_index, input_index;
+      output_index = ith_edge->prev_op_output_index();
+      input_index = ith_edge->next_op_input_index();
+      new_edge =
+        std::make_shared<Edge>(new_edge_name, op1, ith_edge->next_operator(), output_index, input_index, false);
+    }
+    new_edge->SetCostMapAndInputOutput(new_cost_map);
+    // replace the old successive edges with the new ones.
+    op1->ReplaceSuccEdge(ith_edge->next_operator(), new_edge);
+    ith_edge->next_operator()->ReplacePreEdge(op1, new_edge);
+    op1_new_succ_edges[i] = new_edge;
+  }
+  for (size_t i = 0; i < op2_old_succ_edges.size(); ++i) {
+    auto &new_cost_map = op2_new_edges_cost[i];
+    auto &ith_edge = op2_old_succ_edges[i];
+    const auto &destination = ith_edge->next_operator();
+
+    std::string new_edge_name = op1->name() + OPERATOR_TO_OPERATOR_CONNECTOR + destination->name();
+    std::shared_ptr<Edge> new_edge;
+    if (ith_edge->is_combined()) {
+      std::vector<size_t> output_indexs, input_indexs;
+      output_indexs = ith_edge->prev_op_output_indexs();
+      input_indexs = ith_edge->next_op_input_indexs();
+      new_edge = std::make_shared<Edge>(new_edge_name, op1, destination, output_indexs, input_indexs, true);
+    } else {
+      size_t output_index, input_index;
+      output_index = ith_edge->prev_op_output_index();
+      input_index = ith_edge->next_op_input_index();
+      new_edge = std::make_shared<Edge>(new_edge_name, op1, destination, output_index, input_index, false);
+    }
+    new_edge->SetCostMapAndInputOutput(new_cost_map);
+    // replace the old successive edges with the new ones.
+    destination->ReplacePreEdge(op2, new_edge);
+    op1->AddSuccEdge(new_edge);
+    op2_new_succ_edges[i] = new_edge;
+  }
+  MS_LOG(INFO) << "Source eliminating node: " << op2->name() << " to node: " << op1->name() + " succeeded.";
+  return {op1_new_succ_edges, op2_new_succ_edges};
+}
+
 // Check the graph whether a TriangleElimination can be performed
 std::pair<OperatorInfoPtr, std::shared_ptr<Edge>> CostGraph::CheckTriangleElimination() const {
   for (auto &op : ops_) {
