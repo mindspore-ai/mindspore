@@ -90,6 +90,7 @@ def run_predistill():
                                       args_opt.train_data_dir, args_opt.schema_dir)
 
     dataset_size = dataset.get_dataset_size()
+    print('td1 dataset size: ', dataset_size)
     if args_opt.enable_data_sink == 'true':
         repeat_count = args_opt.td_phase1_epoch_size * dataset.get_dataset_size() // args_opt.data_sink_steps
         time_monitor_steps = args_opt.data_sink_steps
@@ -147,6 +148,7 @@ def run_task_distill(ckpt_file):
                                             args_opt.train_data_dir, args_opt.schema_dir)
 
     dataset_size = train_dataset.get_dataset_size()
+    print('td2 train dataset size: ', dataset_size)
     if args_opt.enable_data_sink == 'true':
         repeat_count = args_opt.td_phase2_epoch_size * train_dataset.get_dataset_size() // args_opt.data_sink_steps
         time_monitor_steps = args_opt.data_sink_steps
@@ -173,12 +175,9 @@ def run_task_distill(ckpt_file):
     eval_dataset = create_tinybert_dataset('td', td_teacher_net_cfg.batch_size,
                                            device_num, rank, args_opt.do_shuffle,
                                            args_opt.eval_data_dir, args_opt.schema_dir)
+
     if args_opt.do_eval.lower() == "true":
         callback = [TimeMonitor(time_monitor_steps), LossCallBack(),
-                    ModelSaveCkpt(netwithloss.bert,
-                                  args_opt.save_ckpt_step,
-                                  args_opt.max_ckpt_num,
-                                  td_phase2_save_ckpt_dir),
                     EvalCallBack(netwithloss.bert, eval_dataset)]
     else:
         callback = [TimeMonitor(time_monitor_steps), LossCallBack(),

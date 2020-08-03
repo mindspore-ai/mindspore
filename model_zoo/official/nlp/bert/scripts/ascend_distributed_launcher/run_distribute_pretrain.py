@@ -123,8 +123,9 @@ def distribute_pretrain():
         print("core_nums:", cmdopt)
         print("epoch_size:", str(cfg['epoch_size']))
         print("data_dir:", data_dir)
-        print("log_file_dir: ./LOG" + str(device_id) + "/log.txt")
+        print("log_file_dir: " + cur_dir + "/LOG" + str(device_id) + "/log.txt")
 
+        os.chdir(cur_dir + "/LOG" + str(device_id))
         cmd = 'taskset -c ' + cmdopt + ' python ' + run_script + " "
         opt = " ".join(["--" + key + "=" + str(cfg[key]) for key in cfg.keys()])
         if ('device_id' in opt) or ('device_num' in opt) or ('data_dir' in opt):
@@ -133,10 +134,10 @@ def distribute_pretrain():
         cmd += opt
         cmd += " --data_dir=" + data_dir
         cmd += ' --device_id=' + str(device_id) + ' --device_num=' \
-               + str(rank_size) + ' >./LOG' + str(device_id) + '/log.txt 2>&1 &'
+               + str(rank_size) + ' >./log.txt 2>&1 &'
 
         os.system(cmd)
-
+        os.chdir(cur_dir)
 
 if __name__ == "__main__":
     distribute_pretrain()

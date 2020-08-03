@@ -56,7 +56,7 @@ large: BERT-NEZHA(a Chinese pretrained language model developed by Huawei, which
 '''
 if cfg.bert_network == 'base':
     bert_net_cfg = BertConfig(
-        batch_size=32,
+        batch_size=64,
         seq_length=128,
         vocab_size=21128,
         hidden_size=768,
@@ -77,7 +77,7 @@ if cfg.bert_network == 'base':
     )
 if cfg.bert_network == 'nezha':
     bert_net_cfg = BertConfig(
-        batch_size=32,
+        batch_size=96,
         seq_length=128,
         vocab_size=21128,
         hidden_size=1024,
@@ -98,7 +98,7 @@ if cfg.bert_network == 'nezha':
     )
 if cfg.bert_network == 'large':
     bert_net_cfg = BertConfig(
-        batch_size=16,
+        batch_size=24,
         seq_length=512,
         vocab_size=30522,
         hidden_size=1024,

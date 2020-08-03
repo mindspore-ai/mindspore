@@ -1,11 +1,12 @@
 # BERT Example
 ## Description
-This example implements pre-training, fine-tuning and evaluation of [BERT-base](https://github.com/google-research/bert)(the base version of BERT model) and [BERT-NEZHA](https://github.com/huawei-noah/Pretrained-Language-Model)(a Chinese pretrained language model developed by Huawei, which introduced a improvement of Functional Relative Positional Encoding as an effective positional encoding scheme).
+This example implements pre-training, fine-tuning and evaluation of [BERT-base](https://github.com/google-research/bert) and [BERT-NEZHA](https://github.com/huawei-noah/Pretrained-Language-Model).
 
 ## Requirements
 - Install [MindSpore](https://www.mindspore.cn/install/en).
 - Download the zhwiki dataset for pre-training. Extract and clean text in the dataset with [WikiExtractor](https://github.com/attardi/wikiextractor). Convert the dataset to TFRecord format and move the files to a specified path.
 - Download dataset for fine-tuning and evaluation such as CLUENER, TNEWS, SQuAD v1.1, etc.
+- Convert dataset files from json format to tfrecord format, please refer to run_classifier.py which in [BERT](https://github.com/google-research/bert) repository.
 >  Notes:
    If you are running a fine-tuning or evaluation task, prepare a checkpoint from pre-train.
 
@@ -25,14 +26,29 @@ This example implements pre-training, fine-tuning and evaluation of [BERT-base](
     ```  
 
 ### Fine-Tuning and Evaluation
+- Including three kinds of task: Classification, NER(Named Entity Recognition) and SQuAD(Stanford Question Answering Dataset)
+
 - Set bert network config and optimizer hyperparameters in `finetune_eval_config.py`. 
 
-- Set task related hyperparameters in scripts/run_XXX.sh. 
-
-- Run `bash scripts/run_XXX.py` for fine-tuning of BERT-base and BERT-NEZHA model.
+- Classification task: Set task related hyperparameters in scripts/run_classifier.sh. 
+- Run `bash scripts/run_classifier.py` for fine-tuning of BERT-base and BERT-NEZHA model.
 
     ```bash
-    bash scripts/run_XXX.sh
+    bash scripts/run_classifier.sh
+    ```
+  
+- NER task: Set task related hyperparameters in scripts/run_ner.sh.
+- Run `bash scripts/run_ner.py` for fine-tuning of BERT-base and BERT-NEZHA model.
+
+    ```bash
+    bash scripts/run_ner.sh
+    ```
+  
+- SQuAD task: Set task related hyperparameters in scripts/run_squad.sh. 
+- Run `bash scripts/run_squad.py` for fine-tuning of BERT-base and BERT-NEZHA model.
+
+    ```bash
+    bash scripts/run_squad.sh
     ```
 
 ## Usage
@@ -61,8 +77,86 @@ options:
     --data_dir                 path to dataset directory: PATH, default is ""
     --schema_dir               path to schema.json file, PATH, default is ""
 ```
+### Fine-Tuning and Evaluation
+```
+usage: run_ner.py   [--device_target DEVICE_TARGET] [--do_train DO_TRAIN] [----do_eval DO_EVAL] 
+                    [--assessment_method ASSESSMENT_METHOD] [--use_crf USE_CRF] 
+                    [--device_id N] [--epoch_num N] [--vocab_file_path VOCAB_FILE_PATH]
+                    [--label2id_file_path LABEL2ID_FILE_PATH] 
+                    [--save_finetune_checkpoint_path SAVE_FINETUNE_CHECKPOINT_PATH]
+                    [--load_pretrain_checkpoint_path LOAD_PRETRAIN_CHECKPOINT_PATH] 
+                    [--train_data_file_path TRAIN_DATA_FILE_PATH] 
+                    [--eval_data_file_path EVAL_DATA_FILE_PATH] 
+                    [--schema_file_path SCHEMA_FILE_PATH]
+options:
+    --device_target                   targeted device to run task: Ascend | GPU
+    --do_train                        whether to run training on training set: true | false
+    --do_eval                         whether to run eval on dev set: true | false
+    --assessment_method               assessment method to do evaluation: f1 | clue_benchmark
+    --use_crf                         whether to use crf to calculate loss: true | false
+    --device_id                       device id to run task
+    --epoch_num                       total number of training epochs to perform
+    --num_class                       number of classes to do labeling
+    --vocab_file_path                 the vocabulary file that the BERT model was trained on
+    --label2id_file_path              label to id json file
+    --save_finetune_checkpoint_path   path to save generated finetuning checkpoint
+    --load_pretrain_checkpoint_path   initial checkpoint (usually from a pre-trained BERT model)
+    --load_finetune_checkpoint_path   give a finetuning checkpoint path if only do eval
+    --train_data_file_path            ner tfrecord for training. E.g., train.tfrecord
+    --eval_data_file_path             ner tfrecord for predictions if f1 is used to evaluate result, ner json for predictions if clue_benchmark is used to evaluate result
+    --schema_file_path                path to datafile schema file
+
+usage: run_squad.py [--device_target DEVICE_TARGET] [--do_train DO_TRAIN] [----do_eval DO_EVAL]                    
+                    [--device_id N] [--epoch_num N] [--num_class N]
+                    [--vocab_file_path VOCAB_FILE_PATH]
+                    [--eval_json_path EVAL_JSON_PATH] 
+                    [--save_finetune_checkpoint_path SAVE_FINETUNE_CHECKPOINT_PATH]
+                    [--load_pretrain_checkpoint_path LOAD_PRETRAIN_CHECKPOINT_PATH] 
+                    [--load_finetune_checkpoint_path LOAD_FINETUNE_CHECKPOINT_PATH] 
+                    [--train_data_file_path TRAIN_DATA_FILE_PATH] 
+                    [--eval_data_file_path EVAL_DATA_FILE_PATH] 
+                    [--schema_file_path SCHEMA_FILE_PATH]
+options:
+    --device_target                   targeted device to run task: Ascend | GPU
+    --do_train                        whether to run training on training set: true | false
+    --do_eval                         whether to run eval on dev set: true | false
+    --device_id                       device id to run task
+    --epoch_num                       total number of training epochs to perform
+    --num_class                       number of classes to classify, usually 2 for squad task
+    --vocab_file_path                 the vocabulary file that the BERT model was trained on
+    --eval_json_path                  path to squad dev json file
+    --save_finetune_checkpoint_path   path to save generated finetuning checkpoint
+    --load_pretrain_checkpoint_path   initial checkpoint (usually from a pre-trained BERT model)
+    --load_finetune_checkpoint_path   give a finetuning checkpoint path if only do eval
+    --train_data_file_path            squad tfrecord for training. E.g., train1.1.tfrecord
+    --eval_data_file_path             squad tfrecord for predictions. E.g., dev1.1.tfrecord
+    --schema_file_path                path to datafile schema file
+
+usage: run_classifier.py [--device_target DEVICE_TARGET] [--do_train DO_TRAIN] [----do_eval DO_EVAL]                    
+                         [--assessment_method ASSESSMENT_METHOD] [--device_id N] [--epoch_num N] [--num_class N]
+                         [--save_finetune_checkpoint_path SAVE_FINETUNE_CHECKPOINT_PATH]
+                         [--load_pretrain_checkpoint_path LOAD_PRETRAIN_CHECKPOINT_PATH] 
+                         [--load_finetune_checkpoint_path LOAD_FINETUNE_CHECKPOINT_PATH] 
+                         [--train_data_file_path TRAIN_DATA_FILE_PATH] 
+                         [--eval_data_file_path EVAL_DATA_FILE_PATH] 
+                         [--schema_file_path SCHEMA_FILE_PATH]
+options:
+    --device_target                   targeted device to run task: Ascend | GPU
+    --do_train                        whether to run training on training set: true | false
+    --do_eval                         whether to run eval on dev set: true | false
+    --assessment_method               assessment method to do evaluation: accuracy | f1 | mcc | spearman_correlation
+    --device_id                       device id to run task
+    --epoch_num                       total number of training epochs to perform
+    --num_class                       number of classes to do labeling
+    --save_finetune_checkpoint_path   path to save generated finetuning checkpoint
+    --load_pretrain_checkpoint_path   initial checkpoint (usually from a pre-trained BERT model)
+    --load_finetune_checkpoint_path   give a finetuning checkpoint path if only do eval
+    --train_data_file_path            tfrecord for training. E.g., train.tfrecord
+    --eval_data_file_path             tfrecord for predictions. E.g., dev.tfrecord
+    --schema_file_path                path to datafile schema file
+```
 ## Options and Parameters
-It contains of parameters of BERT model and options for training, which is set in file `config.py`, `finetune_config.py` and `evaluation_config.py` respectively.
+It contains of parameters of BERT model and options for training, which is set in file `config.py` and `finetune_eval_config.py` respectively.
 ### Options:
 ```
 config.py:
@@ -71,57 +165,6 @@ config.py:
     scale_factor                    factor used to update loss scale: N, default is 2
     scale_window                    steps for once updatation of loss scale: N, default is 1000   
     optimizer                       optimizer used in the network: AdamWerigtDecayDynamicLR | Lamb | Momentum, default is "Lamb"
-
-scripts/run_ner.sh:
-    device_target                   targeted device to run task: Ascend | GPU
-    do_train                        whether to run training on training set: true | false
-    do_eval                         whether to run eval on dev set: true | false
-    assessment_method               assessment method to do evaluation: f1 | clue_benchmark
-    use_crf                         whether to use crf to calculate loss: true | false
-    device_id                       device id to run task
-    epoch_num                       total number of training epochs to perform
-    num_class                       number of classes to do labeling
-    vocab_file_path                 the vocabulary file that the BERT model was trained on
-    label2id_file_path              label to id json file
-    save_finetune_checkpoint_path   path to save generated finetuning checkpoint
-    load_pretrain_checkpoint_path   initial checkpoint (usually from a pre-trained BERT model)
-    load_finetune_checkpoint_path   give a finetuning checkpoint path if only do eval
-    train_data_file_path            ner tfrecord for training. E.g., train.tfrecord
-    eval_data_file_path             ner tfrecord for predictions if f1 is used to evaluate result, ner json for predictions if clue_benchmark is used to evaluate result
-    schema_file_path                path to datafile schema file
-
-scripts/run_squad.sh:
-    device_target                   targeted device to run task: Ascend | GPU
-    do_train                        whether to run training on training set: true | false
-    do_eval                         whether to run eval on dev set: true | false
-    device_id                       device id to run task
-    epoch_num                       total number of training epochs to perform
-    num_class                       number of classes to classify, usually 2 for squad task
-    vocab_file_path                 the vocabulary file that the BERT model was trained on
-    eval_json_path                  path to squad dev json file
-    save_finetune_checkpoint_path   path to save generated finetuning checkpoint
-    load_pretrain_checkpoint_path   initial checkpoint (usually from a pre-trained BERT model)
-    load_finetune_checkpoint_path   give a finetuning checkpoint path if only do eval
-    train_data_file_path            squad tfrecord for training. E.g., train1.1.tfrecord
-    eval_data_file_path             squad tfrecord for predictions. E.g., dev1.1.tfrecord
-    schema_file_path                path to datafile schema file
-
-scripts/run_classifier.sh
-    device_target                   targeted device to run task: Ascend | GPU
-    do_train                        whether to run training on training set: true | false
-    do_eval                         whether to run eval on dev set: true | false
-    assessment_method               assessment method to do evaluation: accuracy | f1 | mcc | spearman_correlation
-    device_id                       device id to run task
-    epoch_num                       total number of training epochs to perform
-    num_class                       number of classes to do labeling
-    save_finetune_checkpoint_path   path to save generated finetuning checkpoint
-    load_pretrain_checkpoint_path   initial checkpoint (usually from a pre-trained BERT model)
-    load_finetune_checkpoint_path   give a finetuning checkpoint path if only do eval
-    train_data_file_path            tfrecord for training. E.g., train.tfrecord
-    eval_data_file_path             tfrecord for predictions. E.g., dev.tfrecord
-    schema_file_path                path to datafile schema file
-
-
 ```
 
 ### Parameters:
