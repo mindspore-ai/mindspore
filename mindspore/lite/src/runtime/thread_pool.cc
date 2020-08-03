@@ -201,7 +201,7 @@ bool LiteThreadBind::SetCPUBind(pthread_t threadId, cpu_set_t *cpuSet) {
 #if __ANDROID_API__ >= 21
   int ret = sched_setaffinity(pthread_gettid_np(threadId), sizeof(cpu_set_t), cpuSet);
   if (ret != 0) {
-    MS_LOG(ERROR) << "bind thread %ld to cpu failed.ERROR %d", threadId, ret;
+    MS_LOG(ERROR) << "bind thread " << threadId << "to cpu failed.ERROR " << ret;
   }
 #endif
 #else
