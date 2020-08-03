@@ -56,6 +56,8 @@ class WorkerProxy : public ::ps::KVWorker<T> {
                        int priority = 0);
   int InitEmbeddingTable(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<T> &vals,
                          const ::ps::SArray<int> &lens = {}, const Callback &cb = nullptr, int priority = 0);
+  bool IsReadyForPush(const Key &key);
+  bool IsReadyForPull(const Key &key);
   void PushData(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<T> &vals, const ::ps::SArray<int> &lens = {},
                 int cmd = 0, int priority = 0);
   void Finalize();
@@ -132,6 +134,28 @@ int WorkerProxy<T>::InitEmbeddingTable(const ::ps::SArray<::ps::Key> &keys, cons
   kvs.priority = priority;
   Send(obj_, ts, true, false, kInitEmbeddingsCmd, kvs, broadcast_slicer_);
   return ts;
+}
+
+template <typename T>
+bool WorkerProxy<T>::IsReadyForPush(const Key &key) {
+  ::ps::SArray<T> result(1, 0);
+  this->Wait(this->ZPull({key}, &result, nullptr, kCheckReadyForPushCmd));
+  if (result[0] > 0) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+template <typename T>
+bool WorkerProxy<T>::IsReadyForPull(const Key &key) {
+  ::ps::SArray<T> result(1, 0);
+  this->Wait(this->ZPull({key}, &result, nullptr, kCheckReadyForPullCmd));
+  if (result[0] > 0) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 template <typename T>
