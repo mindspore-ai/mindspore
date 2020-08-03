@@ -16,7 +16,7 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "bash scripts/run_distribute_gd.sh DEVICE_NUM EPOCH_SIZE MINDSPORE_HCCL_CONFIG_PATH"
+echo "bash scripts/run_distribute_gd.sh DEVICE_NUM EPOCH_SIZE RANK_TABLE_FILE"
 echo "for example: bash scripts/run_distribute_gd.sh 8 40 /path/hccl.json"
 echo "It is better to use absolute path."
 echo "running....... please see details by LOG{}/log.txt"
@@ -25,7 +25,6 @@ echo "==========================================================================
 EPOCH_SIZE=$2
 
 PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
-export MINDSPORE_HCCL_CONFIG_PATH=$3
 export RANK_TABLE_FILE=$3
 export RANK_SIZE=$1
 cores=`cat /proc/cpuinfo|grep "processor" |wc -l`

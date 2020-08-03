@@ -21,7 +21,7 @@ This example implements pre-training, fine-tuning and evaluation of [BERT-base](
 - Run `run_distribute_pretrain.sh` for distributed pre-training of BERT-base and BERT-NEZHA model.
 
     ``` bash   
-    sh scripts/run_distribute_pretrain.sh DATA_DIR MINDSPORE_HCCL_CONFIG_PATH
+    sh scripts/run_distribute_pretrain.sh DATA_DIR RANK_TABLE_FILE
     ```  
 
 ### Fine-Tuning and Evaluation
