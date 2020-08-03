@@ -25,10 +25,10 @@ SubGraphOpenCLKernel::~SubGraphOpenCLKernel() { UnInit(); }
 int SubGraphOpenCLKernel::Init() {
   allocator_ = lite::opencl::OpenCLRuntime::GetInstance()->GetAllocator();
   for (const auto tensor : inputs_) {
-    tensor->MallocData(allocator_);
+    tensor->set_allocator(allocator_);
   }
   for (const auto tensor : outputs_) {
-    tensor->MallocData(allocator_);
+    tensor->set_allocator(allocator_);
   }
   // Map buffer for write, it is not necessary for fine-grained
   for (auto &tensor : inputs_) {
@@ -82,4 +82,3 @@ int SubGraphOpenCLKernel::Run() {
 }
 
 }  // namespace mindspore::kernel
-

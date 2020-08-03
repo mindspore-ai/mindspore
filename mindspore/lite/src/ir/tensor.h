@@ -112,19 +112,24 @@ class Tensor : public mindspore::tensor::MetaTensor {
         return 0;
     }
     size *= (format_ == schema::Format_NC4HW4 || format_ == schema::Format_NHWC4) ? ElementsC4Num()
-                                                                                         : MetaTensor::ElementsNum();
+                                                                                  : MetaTensor::ElementsNum();
 
     return size;
   }
+
+  void set_allocator(mindspore::lite::Allocator *allocator) { allocator_ = allocator; }
 
   int MallocData(mindspore::lite::Allocator *allocator = nullptr) {
     if (nullptr != this->data_) {
       return 0;
     }
-    if (nullptr == allocator) {
+    if (allocator != nullptr) {
+      allocator_ = allocator;
+    }
+    if (allocator_ == nullptr) {
       this->data_ = malloc(this->Size());
     } else {
-      this->data_ = allocator->Malloc(this->Size());
+      this->data_ = allocator_->Malloc(this->Size());
     }
     if (nullptr == this->data_) {
       MS_LOG(ERROR) << "Malloc tensor data failed, size=" << this->Size();
@@ -134,14 +139,14 @@ class Tensor : public mindspore::tensor::MetaTensor {
     return 0;
   }
 
-  int FreeData(mindspore::lite::Allocator *allocator = nullptr) {
+  int FreeData() {
     if (nullptr == this->data_) {
       return 0;
     }
-    if (nullptr == allocator) {
+    if (nullptr == allocator_) {
       free(this->data_);
     } else {
-      allocator->Free(this->data_);
+      allocator_->Free(this->data_);
       this->data_ = nullptr;
     }
 
@@ -177,6 +182,7 @@ class Tensor : public mindspore::tensor::MetaTensor {
   schema::Format format_;
   size_t refCount = 0;
   std::vector<tensor::QuantArg> quant_params_;
+  mindspore::lite::Allocator *allocator_ = nullptr;
 };
 
 class LiteTensor : public mindspore::tensor::MSTensor {
@@ -221,4 +227,3 @@ using TensorPtr = std::shared_ptr<tensor::Tensor>;
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_SRC_IR_TENSOR_H_
-

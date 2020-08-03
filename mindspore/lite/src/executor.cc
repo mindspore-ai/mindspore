@@ -39,7 +39,7 @@ int Executor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tensor::Ten
     auto &outputs = kernel->GetOutputs();
     for (auto *output : outputs) {
       MS_ASSERT(nullptr != output);
-      output->MallocData(allocator);
+      output->MallocData();
     }
     kernel::CallBackParam callbackParam;
     callbackParam.name_callback_aram = kernel->Name();
@@ -62,7 +62,7 @@ int Executor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tensor::Ten
     }
     for (auto input_kernel : kernel->GetInKernels()) {
       MS_EXCEPTION_IF_NULL(input_kernel);
-      ret = input_kernel->DecOutTensorRefCount(allocator);
+      ret = input_kernel->DecOutTensorRefCount();
       if (0 != ret) {
         MS_LOG(WARNING) << "DecOutTensorRefCount for kernel" << kernel->Name() << " failed";
       }
