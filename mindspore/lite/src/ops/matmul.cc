@@ -33,29 +33,30 @@ int MatMul::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
 
-  std::vector<int> x_shape = input0->shape();
-  std::vector<int> w_shape = input1->shape();
-  if (x_shape.size() < 2 || w_shape.size() < 2) {
+  std::vector<int> a_shape = input0->shape();
+  std::vector<int> b_shape = input1->shape();
+  if (a_shape.size() < 3 || b_shape.size() < 3) {
     MS_LOG(ERROR) << "inputs shape is invalid";
     return RET_INPUT_TENSOR_ERROR;
   }
 
+  for (int i = 0; i < a_shape.size() - 2; ++i) {
+    if (a_shape[i] != b_shape[i]) {
+      MS_LOG(ERROR) << "Op MatMul's dimensions must be equal";
+      return RET_INPUT_TENSOR_ERROR;
+    }
+  }
+
   auto matmul_prim = this->primitive->value_as_MatMul();
   if (matmul_prim->transposeA()) {
-    int tmp = x_shape.back();
-    x_shape[x_shape.size() - 1] = x_shape[x_shape.size() - 2];
-    x_shape[x_shape.size() - 2] = tmp;
+    std::swap(a_shape[a_shape.size() - 1], a_shape[a_shape.size() - 2]);
   }
   if (matmul_prim->transposeB()) {
-    int tmp = w_shape.back();
-    w_shape[w_shape.size() - 1] = w_shape[w_shape.size() - 2];
-    w_shape[w_shape.size() - 2] = tmp;
+    std::swap(b_shape[b_shape.size() - 1], b_shape[b_shape.size() - 2]);
   }
-  auto y_shape_size = std::max(x_shape.size(), w_shape.size());
-  std::vector<int> y_shape(y_shape_size);
-  y_shape = x_shape;
-  y_shape[y_shape_size - 1] = w_shape[w_shape.size() - 1];
-  output->set_shape(y_shape);
+  std::vector<int> c_shape(a_shape);
+  c_shape[c_shape.size() - 1] = b_shape[b_shape.size() - 1];
+  output->set_shape(c_shape);
   output->set_data_type(input0->data_type());
   output->SetFormat(input0->GetFormat());
 

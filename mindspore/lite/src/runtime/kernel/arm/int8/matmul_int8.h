@@ -14,28 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_FULLCONNECTION_INT8_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_FULLCONNECTION_INT8_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_MATMUL_INT8_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_MATMUL_INT8_H_
 
 #include <vector>
 #include "include/context.h"
 #include "src/runtime/kernel/arm/opclib/quantization/quantize.h"
-#include "src/runtime/kernel/arm/base/fullconnection_base.h"
+#include "src/runtime/kernel/arm/base/matmul_base.h"
 
 using mindspore::lite::Context;
 
 namespace mindspore::kernel {
-class FullconnectionInt8CPUKernel : public FullconnectionBaseCPUKernel {
+class MatmulInt8CPUKernel : public MatmulBaseCPUKernel {
  public:
-  FullconnectionInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                              const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : FullconnectionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
-  ~FullconnectionInt8CPUKernel() override {
-    ctx_->allocator->Free(a_c8_ptr_);
-    ctx_->allocator->Free(b_r8_ptr_);
-    ctx_->allocator->Free(c_r8x8_ptr_);
-  }
-
+  MatmulInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                      const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
+      : MatmulBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+  ~MatmulInt8CPUKernel() override;
   int Init() override;
   int ReSize() override;
   int Run() override;
@@ -46,8 +41,7 @@ class FullconnectionInt8CPUKernel : public FullconnectionBaseCPUKernel {
   int8_t *a_c8_ptr_;
   int8_t *b_r8_ptr_;
   int *c_r8x8_ptr_;
-  int *bias_ptr_;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_FULLCONNECTION_INT8_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_MATMUL_INT8_H_

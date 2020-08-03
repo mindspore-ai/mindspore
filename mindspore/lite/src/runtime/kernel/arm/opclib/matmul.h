@@ -29,6 +29,7 @@ struct MatMulParameter {
   int col_8_;
   int deep_;
   bool has_bias_;
+  int batch;
   bool a_transpose_; /* false :  row-major  */
   bool b_transpose_; /* true  :  col-major  */
   ActType act_type_;

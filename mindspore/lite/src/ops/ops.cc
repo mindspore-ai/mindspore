@@ -139,6 +139,8 @@ Primitive *Primitive::CreatePrimitive(schema::Primitive *primitive) {
       return new lite::SpaceToBatch(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_QuantDTypeCast:
       return new lite::QuantDTypeCast(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_MatMul:
+      return new lite::MatMul(const_cast<schema::Primitive *>(primitive));
     default:
       break;
   }
