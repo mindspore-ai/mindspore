@@ -137,10 +137,8 @@ Primitive *Primitive::CreatePrimitive(schema::Primitive *primitive) {
       return new lite::SpaceToDepth(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_SpaceToBatch:
       return new lite::SpaceToBatch(const_cast<schema::Primitive *>(primitive));
-    case schema::PrimitiveType_OnnxInt8Dequantize:
-      return new lite::Dequantize(const_cast<schema::Primitive *>(primitive));
-    case schema::PrimitiveType_OnnxInt8Quantize:
-      return new lite::Quantize(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_QuantDTypeCast:
+      return new lite::QuantDTypeCast(const_cast<schema::Primitive *>(primitive));
     default:
       break;
   }

@@ -37,7 +37,9 @@ TEST_F(SpaceToDepthTestFp32, SpaceToDepthTest1) {
   float output[16];
   int in_shape[4] = {1, 4, 4, 1};
   int out_shape[4] = {1, 2, 2, 4};
-  SpaceToDepthForNHWC((const float *)input, output, in_shape, out_shape, 4, 2);
+  int h_start = 0;
+  int h_end = 2;
+  SpaceToDepthForNHWC((const float *)input, output, in_shape, out_shape, 4, 2, h_start, h_end);
   for (int i = 0; i < out_size; ++i) {
     std::cout << output[i] << " ";
   }
@@ -69,10 +71,11 @@ TEST_F(SpaceToDepthTestFp32, SpaceToDepthTest2) {
   outputs_tensor.emplace_back(&output_tensor);
 
   SpaceToDepthParameter op_param;
-  op_param.op_parameter_.type_ = schema::PrimitiveType_SpaceToBatch;
+  op_param.op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
   op_param.block_size_ = 2;
 
   lite::Context ctx;
+  ctx.threadNum = 3;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_SpaceToDepth};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);

@@ -65,8 +65,7 @@
 #include "src/runtime/kernel/arm/base/prior_box.h"
 #include "src/runtime/kernel/arm/opclib/fp32/space_to_depth.h"
 #include "src/runtime/kernel/arm/opclib/fp32/space_to_batch.h"
-#include "src/runtime/kernel/arm/opclib/int8/dequantize.h"
-#include "src/runtime/kernel/arm/opclib/fp32/quantize.h"
+#include "src/runtime/kernel/arm/opclib/int8/quant_dtype_cast.h"
 
 namespace mindspore::kernel {
 OpParameter *PopulateFillParameter(const lite::Primitive *primitive) {
@@ -1032,24 +1031,17 @@ OpParameter *PopulateFlattenParameter(const lite::Primitive *primitive) {
   return reinterpret_cast<OpParameter *>(flatten_param);
 }
 
-OpParameter *PopulateDequantizeParameter(const lite::Primitive *primitive) {
-  DequantizeParameter *dequantize_parameter = new (std::nothrow) DequantizeParameter();
-  if (dequantize_parameter == nullptr) {
-    MS_LOG(ERROR) << "new DequantizeParameter fail!";
+OpParameter *PopulateQuantDTypeCastParameter(const lite::Primitive *primitive) {
+  QuantDTypeCastParameter *parameter = new (std::nothrow) QuantDTypeCastParameter();
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << "new QuantDTypeCastParameter fail!";
     return nullptr;
   }
-  dequantize_parameter->op_parameter_.type_ = primitive->Type();
-  return reinterpret_cast<OpParameter *>(dequantize_parameter);
-}
-
-OpParameter *PopulateQuantizeParameter(const lite::Primitive *primitive) {
-  QuantizeParameter *quantize_parameter = new (std::nothrow) QuantizeParameter();
-  if (quantize_parameter == nullptr) {
-    MS_LOG(ERROR) << "new QuantizeParameter fail!";
-    return nullptr;
-  }
-  quantize_parameter->op_parameter_.type_ = primitive->Type();
-  return reinterpret_cast<OpParameter *>(quantize_parameter);
+  parameter->op_parameter_.type_ = primitive->Type();
+  auto quant_dtype_cast_param = primitive->Value()->value_as_QuantDTypeCast();
+  parameter->srcT = quant_dtype_cast_param->srcT();
+  parameter->dstT = quant_dtype_cast_param->dstT();
+  return reinterpret_cast<OpParameter *>(parameter);
 }
 
 OpParameter *PopulateStridedSliceParameter(const lite::Primitive *primitive) {
@@ -1209,8 +1201,7 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_Square] = PopulateSqueezeParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Split] = PopulateSplitParameter;
   populate_parameter_funcs_[schema::PrimitiveType_PriorBox] = PopulatePriorBoxParameter;
-  populate_parameter_funcs_[schema::PrimitiveType_OnnxInt8Dequantize] = PopulateDequantizeParameter;
-  populate_parameter_funcs_[schema::PrimitiveType_OnnxInt8Quantize] = PopulateQuantizeParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_QuantDTypeCast] = PopulateQuantDTypeCastParameter;
 }
 
 PopulateParameterRegistry *PopulateParameterRegistry::GetInstance() {

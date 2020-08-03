@@ -14,33 +14,34 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_DEQUANTIZE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_DEQUANTIZE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_QUANTDTYPECAST_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_QUANTDTYPECAST_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
-class DequantizeCPUKernel : public LiteKernel {
+class QuantDTypeCastCPUKernel : public LiteKernel {
  public:
-  DequantizeCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+  QuantDTypeCastCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                       const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
       : LiteKernel(parameter, inputs, outputs), thread_num_(ctx->threadNum) {}
-  ~DequantizeCPUKernel() = default;
+  ~QuantDTypeCastCPUKernel() = default;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int Dequantize(int task_id);
+  int QuantDTypeCast(int task_id);
 
  private:
   int thread_num_;
   int thread_n_num_;
   int thread_n_stride_;
   int num_unit_;
-  int8_t *input_ptr_;
-  float *output_ptr_;
+  int8_t *int8_ptr_;
+  float *float32_ptr_;
+  bool inverse_;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_DEQUANTIZE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_QUANTDTYPECAST_H_

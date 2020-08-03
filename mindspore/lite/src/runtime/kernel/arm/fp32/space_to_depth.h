@@ -24,13 +24,22 @@ namespace mindspore::kernel {
 class SpaceToDepthCPUKernel : public LiteKernel {
  public:
   SpaceToDepthCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                        const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs) {}
+                        const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
+      : LiteKernel(parameter, inputs, outputs), thread_num_(ctx->threadNum) {}
   ~SpaceToDepthCPUKernel() = default;
 
+  int SpaceToDepth(int task_id);
   int Init() override;
   int ReSize() override { return 0; };
   int Run() override;
+
+ private:
+  int thread_num_;
+  int thread_h_stride_;
+  int thread_h_num_;
+  int num_unit_;
+  float *input_ptr_;
+  float *output_ptr_;
 };
 }  // namespace mindspore::kernel
 

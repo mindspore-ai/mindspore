@@ -19,11 +19,14 @@
 #include "src/runtime/kernel/arm/opclib/op_base.h"
 
 int SpaceToDepthForNHWC(const float *input, float *output, int *in_shape, int *out_shape, int shape_size,
-                        int block_size) {
+                        int block_size, int h_start, int h_end) {
   if (input == nullptr || output == nullptr) {
     return OPCLIB_NULL_PTR;
   }
   if (shape_size != C4NUM) {
+    return OPCLIB_PARAM_INVALID;
+  }
+  if (h_start < 0 || h_start >= h_end || h_end > out_shape[1]) {
     return OPCLIB_PARAM_INVALID;
   }
   int in_strides[C4NUM];
@@ -33,7 +36,7 @@ int SpaceToDepthForNHWC(const float *input, float *output, int *in_shape, int *o
   for (int i = 0; i < out_shape[0]; ++i) {
     size_t in_offset_n = i * in_strides[0];
     size_t out_offset_n = i * out_strides[0];
-    for (int j = 0; j < out_shape[1]; ++j) {
+    for (int j = h_start; j < h_end; ++j) {
       size_t in_offset_h = in_offset_n + j * block_size * in_strides[1];
       size_t out_offset_h = out_offset_n + j * out_strides[1];
       for (int k = 0; k < out_shape[2]; ++k) {

@@ -20,15 +20,16 @@
 #include "src/ir/tensor.h"
 
 namespace mindspore::lite {
-int Quantize::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+int QuantDTypeCast::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
   output->set_shape(input->shape());
-  output->set_data_type(kNumberTypeInt8);
+  auto param = primitive->value_as_QuantDTypeCast();
+  MS_ASSERT(input->data_type() == param->srcT);
+  output->set_data_type(static_cast<TypeId>(param->dstT()));
   return RET_OK;
 }
 }  // namespace mindspore::lite
-

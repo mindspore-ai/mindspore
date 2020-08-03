@@ -14,8 +14,19 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/opclib/fp32/quantize.h"
+#include "src/runtime/kernel/arm/opclib/int8/quant_dtype_cast.h"
 #include "src/runtime/kernel/arm/opclib/errorcode.h"
+
+int DequantizeInt8(int8_t *quant_values, float *real_values, float scale, int32_t zp, int size) {
+  if (quant_values == nullptr || real_values == nullptr) {
+    return OPCLIB_PARAM_INVALID;
+  }
+
+  for (int i = 0; i < size; ++i) {
+    real_values[i] = (quant_values[i] + zp) * scale;
+  }
+  return OPCLIB_OK;
+}
 
 int QuantizeToInt8(float *real_values, int8_t *quant_values, float scale, int32_t zp, int size) {
   if (quant_values == nullptr || real_values == nullptr) {
