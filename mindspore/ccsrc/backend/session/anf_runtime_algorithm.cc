@@ -1164,5 +1164,31 @@ bool AnfRuntimeAlgorithm::IsCondControlKernel(const CNodePtr &node) {
   auto input = node->input(kAnfPrimitiveIndex);
   return IsPrimitive(input, prim::kPrimLabelGoto) || IsPrimitive(input, prim::kPrimLabelSwitch);
 }
+
+bool AnfRuntimeAlgorithm::IsIndependentNode(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (AnfAlgo::GetKernelType(node) != AICPU_KERNEL) {
+    return false;
+  }
+
+  if (AnfAlgo::GetCNodeName(node) == kGetNextOpName) {
+    MS_LOG(INFO) << "GetNext should not be independent node";
+    return false;
+  }
+
+  uint32_t input_nums = AnfAlgo::GetInputTensorNum(node);
+  if (input_nums == 0) {
+    return true;
+  }
+
+  auto inputs = node->inputs();
+  for (size_t i = 1; i < inputs.size(); i++) {
+    if (!inputs[i]->isa<ValueNode>()) {
+      return false;
+    }
+  }
+  return true;
+}
+
 }  // namespace session
 }  // namespace mindspore
