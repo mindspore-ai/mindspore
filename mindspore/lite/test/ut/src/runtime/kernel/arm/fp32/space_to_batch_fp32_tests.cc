@@ -158,6 +158,8 @@ TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest3) {
   }
   std::cout << "\n";
   CompareOutputData(output.data(), expect_out, out_size, 0.000001);
+  input_tensor.SetData(nullptr);
+  output_tensor.SetData(nullptr);
 }
 
 }  // namespace mindspore

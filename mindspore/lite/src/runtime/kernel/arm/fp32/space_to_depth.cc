@@ -77,6 +77,8 @@ int SpaceToDepthRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int SpaceToDepthCPUKernel::Run() {
+  input_ptr_ = reinterpret_cast<float *>(inputs_[0]->Data());
+  output_ptr_ = reinterpret_cast<float *>(outputs_[0]->Data());
   if (inputs_[0]->GetFormat() == schema::Format_NHWC) {
     int ret = LiteBackendParallelLaunch(SpaceToDepthRun, this, thread_h_num_);
     if (ret != RET_OK) {
