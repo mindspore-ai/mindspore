@@ -13,25 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_BATCH_TO_SPACE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_BATCH_TO_SPACE_H_
+
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_DEPTH_TO_SPACE_BASE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_DEPTH_TO_SPACE_BASE_H_
+
 #include <vector>
-#include "src/runtime/kernel/arm/base/batch_to_space_base.h"
+#include "src/lite_kernel.h"
+#include "src/runtime/kernel/arm/opclib/depth_to_space.h"
 
 namespace mindspore::kernel {
-class BatchToSpaceCPUKernel : public BatchToSpaceBaseCPUKernel {
+class DepthToSpaceBaseCPUKernel : public LiteKernel {
  public:
-  BatchToSpaceCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                        const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
-      : BatchToSpaceBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+  DepthToSpaceBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                            const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
+      : LiteKernel(parameter, inputs, outputs) {
+    opParameter->thread_num_ = ctx->threadNum;
+  }
 
-  ~BatchToSpaceCPUKernel() = default;
+  virtual ~DepthToSpaceBaseCPUKernel() = default;
 
   int Init() override;
+
   int ReSize() override { return 0; }
-  int Run() override;
+
+  int Run() override { return 0; }
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_BATCH_TO_SPACE_H_
-
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_DEPTH_TO_SPACE_BASE_H_

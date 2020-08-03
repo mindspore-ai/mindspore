@@ -38,7 +38,7 @@ int ArgMax::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
     MS_LOG(ERROR) << "Invalid axis " << argmax_prim->axis() << ", input shape size: " << input_shape_size;
     return RET_PARAM_INVALID;
   }
-  if (argmax_prim->topK() == -1) {
+  if (argmax_prim->topK() == 1) {
     output_shape.erase(output_shape.begin() + axis);
   } else if (argmax_prim->axisType() == 1) {
     output_shape[axis] = argmax_prim->topK();

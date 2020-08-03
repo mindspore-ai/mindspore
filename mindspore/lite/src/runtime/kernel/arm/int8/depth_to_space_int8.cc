@@ -13,35 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/fp32/batch_to_space.h"
+#include "src/runtime/kernel/arm/int8/depth_to_space_int8.h"
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/opclib/batch_to_space.h"
+#include "src/runtime/kernel/arm/opclib/depth_to_space.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::RET_OK;
+using mindspore::lite::RET_ERROR;
 
 namespace mindspore::kernel {
-int BatchToSpaceCPUKernel::Init() {
-  return BatchToSpaceBaseCPUKernel::Init();
+int DepthToSpaceInt8CPUKernel::Init() {
+  auto ret = DepthToSpaceBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    return ret;
+  }
+  DepthToSpaceParameter *param = reinterpret_cast<DepthToSpaceParameter *>(opParameter);
+  param->data_type_size_ = sizeof(int8_t);
+  return RET_OK;
 }
 
-int BatchToSpaceCPUKernel::Run() {
+int DepthToSpaceInt8CPUKernel::Run() {
   auto input = inputs_[0];
   auto output = outputs_[0];
-  const float *input_data = reinterpret_cast<const float *>(input->Data());
-  float *output_data = reinterpret_cast<float *>(output->Data());
+  const int8_t *input_data = reinterpret_cast<const int8_t *>(input->Data());
+  int8_t *output_data = reinterpret_cast<int8_t *>(output->Data());
   auto in_shape = input->shape();
-  auto out_shape = output->shape();
-  BatchToSpaceParameter *param = reinterpret_cast<BatchToSpaceParameter *>(this->opParameter);
-
-  if (IsNoCrop()) {
-    BatchToSpaceNoCropForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_,
-                              sizeof(float));
+  DepthToSpaceParameter *param = reinterpret_cast<DepthToSpaceParameter *>(opParameter);
+  if (input->GetFormat() == schema::Format_NHWC) {
+    DepthToSpaceForNHWC(input_data, output_data, in_shape.data(), param);
+    return RET_OK;
   } else {
-    BatchToSpaceForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_, param->crops_,
-                        sizeof(float));
+    MS_LOG(ERROR) << "Depth_to_space only support NHWC now!";
+    return RET_ERROR;
   }
 
   return RET_OK;
