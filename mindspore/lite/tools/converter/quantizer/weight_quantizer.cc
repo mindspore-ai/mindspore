@@ -81,7 +81,7 @@ STATUS WeightQuantizer::DoConvQuantize(const std::list<CNodePtr> &nodes) {
         }
 
         ParamValueLitePtr paramValue = std::static_pointer_cast<ParamValueLite>(paramNode->default_param());
-        auto status = QuantFilter(paramValue, QuantType_WeightQuant, bitNum);
+        auto status = QuantFilter(paramValue, QuantType_WeightQuant, 127, -128, bitNum);
         if (status != RET_OK) {
             MS_LOG(ERROR) << "QuantFilter failed : " << status;
             return status;
@@ -120,7 +120,7 @@ STATUS WeightQuantizer::DoMulQuantize(const std::list<CNodePtr> &nodes) {
             MS_LOG(ERROR) << "No valid input param node !";
             continue;
         }
-        auto status = QuantFilter(paramValue, QuantType_WeightQuant, bitNum);
+        auto status = QuantFilter(paramValue, QuantType_WeightQuant, 127, -128, bitNum);
         if (status != RET_OK) {
             MS_LOG(ERROR) << "QunatFilter failed" << status;
             return RET_ERROR;

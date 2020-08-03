@@ -57,6 +57,25 @@ int Reshape::CalNewShape(const tensor::Tensor *in_tensor, std::vector<int> *out_
   return RET_OK;
 }
 
+template <typename T>
+void CalShape(const T *data, const std::vector<tensor::Tensor *> &inputs, std::vector<int> *out_shape, int shape_size) {
+  int input_count = inputs[0]->ElementsNum();
+
+  int index = 0;
+  int size = 1;
+  for (size_t i = 0; i < shape_size; i++) {
+    if (data[i] == -1) {
+      index = i;
+    } else {
+      size *= data[i];
+    }
+    out_shape->push_back(data[i]);
+  }
+  if (data[index] == -1) {
+    (*out_shape)[index] = input_count / size;
+  }
+}
+
 int Reshape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   auto input = inputs_.front();
@@ -69,31 +88,23 @@ int Reshape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
   std::vector<int> out_shape;
   if (inputs_.size() == kDoubleNum) {
     auto shape_tensor = inputs_.at(1);
-    size_t shape_size = shape_tensor->shape().size();
+    size_t shape_size = shape_tensor->ElementsNum();
     switch (shape_tensor->data_type()) {
       case kNumberTypeInt8: {
         auto data = reinterpret_cast<int8_t *>(shape_tensor->Data());
-        for (size_t i = 0; i < shape_size; i++) {
-          out_shape.push_back(data[i]);
-        }
+        CalShape<int8_t>(data, inputs_, &out_shape, shape_size);
       } break;
       case kNumberTypeInt32: {
         auto data = reinterpret_cast<int32_t *>(shape_tensor->Data());
-        for (size_t i = 0; i < shape_size; i++) {
-          out_shape.push_back(data[i]);
-        }
+        CalShape<int32_t>(data, inputs_, &out_shape, shape_size);
       } break;
       case kNumberTypeFloat: {
         auto data = reinterpret_cast<float *>(shape_tensor->Data());
-        for (size_t i = 0; i < shape_size; i++) {
-          out_shape.push_back(data[i]);
-        }
+        CalShape<float>(data, inputs_, &out_shape, shape_size);
       } break;
       case kNumberTypeUInt32: {
         auto data = reinterpret_cast<uint32_t *>(shape_tensor->Data());
-        for (size_t i = 0; i < shape_size; i++) {
-          out_shape.push_back(data[i]);
-        }
+        CalShape<uint32_t>(data, inputs_, &out_shape, shape_size);
       } break;
       default: {
         MS_LOG(ERROR) << "Reshape weight tensor has unsupported dataType: " << shape_tensor->data_type();
