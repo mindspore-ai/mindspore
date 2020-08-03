@@ -27,7 +27,7 @@ class DepthToSpaceBaseCPUKernel : public LiteKernel {
   DepthToSpaceBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                             const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
       : LiteKernel(parameter, inputs, outputs) {
-    opParameter->thread_num_ = ctx->threadNum;
+    opParameter->thread_num_ = ctx->thread_num_;
   }
 
   virtual ~DepthToSpaceBaseCPUKernel() = default;
@@ -39,5 +39,4 @@ class DepthToSpaceBaseCPUKernel : public LiteKernel {
   int Run() override { return 0; }
 };
 }  // namespace mindspore::kernel
-
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_DEPTH_TO_SPACE_BASE_H_
