@@ -29,7 +29,7 @@ class WeightFormatPass : public NodePass {
 
   ~WeightFormatPass() override = default;
 
-  //  void SetQuantType(QuantType quantType);
+  void SetQuantType(QuantType quantType);
 
   void SetFmkType(converter::FmkType fmkType);
 

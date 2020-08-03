@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,6 @@ namespace mindspore {
 namespace lite {
 AnfNodePopulaterRegistry *AnfNodePopulaterRegistry::GetInstance() {
   static AnfNodePopulaterRegistry instance;
-  instance.SetNodePopulater("BiasAdd", new AnfBiasAddPopulater());
-  instance.SetNodePopulater("Conv2D", new AnfConvPopulater());
-  instance.SetNodePopulater("MatMul", new AnfMatmulPopulater());
-  instance.SetNodePopulater("MaxPool", new AnfPoolPopulater());
-  instance.SetNodePopulater("ReLU", new AnfActivationPopulater());
-  instance.SetNodePopulater("Flatten", new AnfFlattenPopulater());
   return &instance;
 }
 AnfNodePopulater *AnfNodePopulaterRegistry::GetNodePopulater(const std::string &name) {

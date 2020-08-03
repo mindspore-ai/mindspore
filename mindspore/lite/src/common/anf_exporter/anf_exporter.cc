@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
 #include "mindspore/core/ir/primitive.h"
 #include "src/ir/primitive_t_value.h"
 #include "base/core_ops.h"
+#include "src/ir/tensor.h"
 
 namespace mindspore::lite {
 schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &funcGraph) {
@@ -223,9 +224,28 @@ void AnfExporter::SetOpInputNode(const CNodePtr &cnode, schema::MetaGraphT *meta
       nodeIdMap[paramNode->fullname_with_scope()] = meta_graph->allTensors.size();
       fbNode->inputIndex.emplace_back(meta_graph->allTensors.size());
       meta_graph->allTensors.emplace_back(std::move(paramTensor));
+    } else if (inputNode->isa<ValueNode>()) {
+      auto valueNode = inputNode->cast<ValueNodePtr>();
+      auto paramTensor = std::make_unique<schema::TensorT>();
+      auto value = valueNode->value();
+      if (value->isa<lite::tensor::Tensor>()) {
+        auto valueAbstract = valueNode->abstract();
+        auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(valueAbstract);
+        auto typePtr = abstractTensor->element()->GetTypeTrack();
+        paramTensor->dataType = typePtr->type_id();
+        paramTensor->dims = utils::cast<abstract::ShapePtr>(abstractTensor->BuildShape())->shape();
+        paramTensor->nodeType = schema::NodeType_ValueNode;
+        auto data = value->cast<lite::tensor::TensorPtr>();
+        paramTensor->data.resize(data->Size());
+        memcpy(paramTensor->data.data(), data->Data(), data->Size());
+        nodeIdMap[valueNode->fullname_with_scope()] = meta_graph->allTensors.size();
+        fbNode->inputIndex.emplace_back(meta_graph->allTensors.size());
+        meta_graph->allTensors.emplace_back(std::move(paramTensor));
+      } else {
+        MS_LOG(ERROR) << "Not support value type , need add support.";
+      }
     }
   }
-
   if (isGraphInput) {
     graphInputNodes.emplace_back(fbNode);
   }

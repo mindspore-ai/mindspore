@@ -191,7 +191,7 @@ NodeIter FormatTransPass::InsertFormatTransNode(schema::MetaGraphT *graph, NodeI
   return InsertNode(graph, existNodeIter, place, inoutIdx, std::move(transNode), errorCode);
 }
 
-// void FormatTransPass::SetQuantType(QuantType quantType) { this->quantType = quantType; }
+void FormatTransPass::SetQuantType(QuantType quantType) { this->quantType = quantType; }
 
 void FormatTransPass::SetFmk(converter::FmkType fmkType) { this->fmkType = fmkType; }
 
