@@ -51,7 +51,7 @@ TEST_F(TestSoftmaxOpenCL, SoftmaxFp32) {
   MS_LOG(INFO) << "create OpenCL Kernel";
   auto *Softmax_kernel = new kernel::SoftmaxOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
   Softmax_kernel->Init();
-  std::vector<LiteKernel *> kernels{Softmax_kernel};
+  std::vector<kernel::LiteKernel *> kernels{Softmax_kernel};
 
   MS_LOG(INFO) << "create SubGraphOpenCLKernel";
   auto *pGraph = new kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);

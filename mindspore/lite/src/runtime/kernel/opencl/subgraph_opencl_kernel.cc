@@ -50,12 +50,12 @@ int SubGraphOpenCLKernel::UnInit() {
   }
   for (const auto tensor : inputs_) {
     if (tensor != nullptr) {
-      tensor->FreeData(allocator_);
+      tensor->FreeData();
     }
   }
   for (const auto tensor : outputs_) {
     if (tensor != nullptr) {
-      tensor->FreeData(allocator_);
+      tensor->FreeData();
     }
   }
   return 0;

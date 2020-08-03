@@ -57,7 +57,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::inDataPath, "inDataPath", "Input data path, if not set, use random input", "");
     AddFlag(&BenchmarkFlags::inDataTypeIn, "inDataType", "Input data type. img | bin", "bin");
     AddFlag(&BenchmarkFlags::omModelPath, "omModelPath", "OM model path, only required when device is NPU", "");
-    AddFlag(&BenchmarkFlags::device, "device", "CPU | NPU", "CPU");
+    AddFlag(&BenchmarkFlags::device, "device", "CPU | NPU | GPU", "CPU");
     AddFlag(&BenchmarkFlags::cpuBindMode, "cpuBindMode",
             "Input -1 for MID_CPU, 1 for HIGHER_CPU, 0 for NO_BIND, defalut value: 1", 1);
     // MarkPerformance

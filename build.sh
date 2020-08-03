@@ -527,7 +527,7 @@ build_lite()
 {
     echo "start build mindspore lite project"
 
-    if [[ "${ENABLE_GPU}" == "on" ]]; then
+    if [ "${ENABLE_GPU}" == "on" ] || [ "${LITE_PLATFORM}" == "arm64" ]; then
       echo "start build opencl"
       build_opencl
     fi
@@ -554,7 +554,7 @@ build_lite()
               -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="arm64-v8a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"  \
               -DANDROID_STL="c++_shared" -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_TRAIN=${SUPPORT_TRAIN}                     \
               -DBUILD_DEVICE=on -DPLATFORM_ARM64=on -DBUILD_CONVERTER=off -DENABLE_NEON=on -DENABLE_FP16="off"      \
-              -DSUPPORT_GPU=${ENABLE_GPU} -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} "${BASEPATH}/mindspore/lite"
+              -DSUPPORT_GPU=on -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} "${BASEPATH}/mindspore/lite"
     elif [[ "${LITE_PLATFORM}" == "arm32" ]]; then
         checkndk
         cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \

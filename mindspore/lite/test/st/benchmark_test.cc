@@ -41,6 +41,14 @@ TEST_F(BenchmarkTest, TestOCR_02) {
   ASSERT_EQ(status, RET_OK);
 }
 
+TEST_F(BenchmarkTest, TestOCR_02_GPU) {
+const char *argv[] = {"./benchmark", "--modelPath=./hiai/hiai_cv_focusShootOCRMOdel_02.ms"
+                                     "--inDataPath=./hiai/hiai_cv_focusShootOCRMOdel_02.bin"
+                                     "--calibDataPath=./hiai/hiai_cv_focusShootOCRMOdel_02.txt"};
+auto status = RunBenchmark(2, argv);
+ASSERT_EQ(status, RET_OK);
+}
+
 TEST_F(BenchmarkTest, TestHebing) {
   const char *argv[] = {"./benchmark", "--modelPath=./hiai/model_hebing_3branch.ms"
                                        "--inDataPath=./hiai/model_hebing_3branch.bin"

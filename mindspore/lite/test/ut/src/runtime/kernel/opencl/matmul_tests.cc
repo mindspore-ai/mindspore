@@ -52,7 +52,7 @@ TEST_F(TestMatMulOpenCL, MatMulFp32) {
   auto *arith_kernel = new kernel::MatMulOpenCLKernel(nullptr, inputs, outputs, false);
   arith_kernel->Init();
 
-  std::vector<LiteKernel *> kernels{arith_kernel};
+  std::vector<kernel::LiteKernel *> kernels{arith_kernel};
   auto *pGraph = new kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
   pGraph->Init();
 
