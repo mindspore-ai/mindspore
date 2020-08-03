@@ -152,7 +152,7 @@ int LiteSession::CompileGraph(Model *model) {
   return RET_OK;
 }
 
-std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputs() {
+std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputs() const {
   std::vector<mindspore::tensor::MSTensor *> ret;
   for (auto &iter : this->input_map) {
     auto &node_input_tensors = iter.second;
@@ -167,7 +167,7 @@ std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputs() {
 
 int LiteSession::RunGraph() {
   MS_EXCEPTION_IF_NULL(this->context_);
-  SetMaxWokerNum(context_->threadNum);
+  SetMaxWokerNum(context_->thread_num_);
   Executor executor;
   return executor.Run(this->inputs, this->outputs, this->kernels, this->context_->allocator.get());
 }
@@ -178,7 +178,7 @@ int LiteSession::RunGraph(const kernel::KernelCallBack &before, const kernel::Ke
   return executor.Run(this->inputs, this->outputs, this->kernels, this->context_->allocator.get(), before, after);
 }
 
-std::vector<mindspore::tensor::MSTensor *> LiteSession::GetOutputs() {
+std::vector<mindspore::tensor::MSTensor *> LiteSession::GetOutputs() const {
   std::vector<mindspore::tensor::MSTensor *> ret;
   for (auto &iter : this->output_map) {
     auto &node_output_tensors = iter.second;
@@ -193,20 +193,20 @@ std::vector<mindspore::tensor::MSTensor *> LiteSession::GetOutputs() {
 
 int LiteSession::Init(Context *context) {
   MS_EXCEPTION_IF_NULL(context);
-  this->context_ = new (std::nothrow) Context(context->threadNum, context->allocator, context->deviceCtx);
+  this->context_ = new (std::nothrow) Context(context->thread_num_, context->allocator, context->device_ctx_);
   if (this->context_ == nullptr) {
     MS_LOG(ERROR) << "new context failed";
     return RET_MEMORY_FAILED;
   }
-  this->context_->cpuBindMode = context->cpuBindMode;
-  ConfigThreadPool(context->cpuBindMode, context->threadNum);
+  this->context_->cpu_bind_mode_ = context->cpu_bind_mode_;
+  ConfigThreadPool(context->cpu_bind_mode_, context->thread_num_);
   auto ret = KernelRegistry::GetInstance()->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "KernelRegistry Init Failed.";
     return ret;
   }
 #if SUPPORT_GPU
-  if (context_->deviceCtx.type == DT_GPU) {
+  if (context_->device_ctx_.type == DT_GPU) {
     auto opencl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
     opencl_runtime->Init();
   }
@@ -215,8 +215,8 @@ int LiteSession::Init(Context *context) {
 }
 
 void LiteSession::BindThread(bool ifBind) {
-  if (this->context_->cpuBindMode != NO_BIND) {
-    DoAllThreadBind(ifBind, static_cast<int>(this->context_->cpuBindMode));
+  if (this->context_->cpu_bind_mode_ != NO_BIND) {
+    DoAllThreadBind(ifBind, static_cast<int>(this->context_->cpu_bind_mode_));
   }
 }
 
@@ -237,8 +237,25 @@ LiteSession::~LiteSession() {
   }
 }
 
-std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputsByName(std::string name) { return input_map[name]; }
-std::vector<mindspore::tensor::MSTensor *> LiteSession::GetOutputsByName(std::string name) { return output_map[name]; }
+std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputsByName(const std::string &name) const {
+  auto ret = input_map.find(name);
+  if (ret == input_map.end()) {
+    MS_LOG(WARNING) << "Node  " << name << " is not an input node";
+    std::vector<mindspore::tensor::MSTensor *> empty_ret;
+    return empty_ret;
+  }
+  return ret->second;
+}
+
+std::vector<mindspore::tensor::MSTensor *> LiteSession::GetOutputsByName(const std::string &name) const {
+  auto ret = output_map.find(name);
+  if (ret == output_map.end()) {
+    MS_LOG(WARNING) << "Node  " << name << " is not an output node";
+    std::vector<mindspore::tensor::MSTensor *> empty_ret;
+    return empty_ret;
+  }
+  return ret->second;
+}
 }  // namespace lite
 
 session::LiteSession *session::LiteSession::CreateSession(lite::Context *context) {

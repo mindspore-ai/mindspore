@@ -26,7 +26,7 @@ class MulInt8CPUKernel : public LiteKernel {
  public:
   explicit MulInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                             const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
-    : LiteKernel(parameter, inputs, outputs), ctx_(ctx), thread_count_(ctx_->threadNum) {}
+    : LiteKernel(parameter, inputs, outputs), ctx_(ctx), thread_count_(ctx_->thread_num_) {}
   ~MulInt8CPUKernel() override {};
 
   int Init() override;

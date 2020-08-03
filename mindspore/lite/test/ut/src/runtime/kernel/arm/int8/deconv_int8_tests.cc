@@ -247,7 +247,7 @@ TEST_F(TestDeconvInt8, DeConvInt8Test1) {
   std::vector<lite::tensor::Tensor *> outputs_;
   auto deconv_param = new ConvParameter();
   lite::Context *ctx = new lite::Context;
-  ctx->threadNum = 2;
+  ctx->thread_num_ = 2;
   int8_t *correct;
   int total_size = DeConvInt8TestInit1(&inputs_, &outputs_, deconv_param, &correct);
   mindspore::kernel::DeConvInt8CPUKernel *deconv =

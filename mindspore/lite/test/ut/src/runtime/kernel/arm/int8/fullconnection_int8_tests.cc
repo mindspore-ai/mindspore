@@ -106,7 +106,7 @@ TEST_F(TestFcInt8, fcint8) {
   int output_zp;
   int total_size = FcInt8TestInit(&inputs_, &outputs_, matmul_param, &correct, &output_scale, &output_zp);
   lite::Context *ctx = new lite::Context;
-  ctx->threadNum = 2;
+  ctx->thread_num_ = 2;
   kernel::FullconnectionInt8CPUKernel *fc =
     new kernel::FullconnectionInt8CPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx);
 

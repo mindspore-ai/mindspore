@@ -38,8 +38,8 @@ class ConvolutionBaseCPUKernel : public LiteKernel {
  public:
   ConvolutionBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                            const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : LiteKernel(parameter, inputs, outputs), ctx_(ctx), thread_count_(ctx->threadNum) {
-    opParameter->thread_num_ = ctx->threadNum;
+      : LiteKernel(parameter, inputs, outputs), ctx_(ctx), thread_count_(ctx->thread_num_) {
+    opParameter->thread_num_ = ctx->thread_num_;
     conv_param_ = reinterpret_cast<ConvParameter *>(opParameter);
   }
   ~ConvolutionBaseCPUKernel() override;

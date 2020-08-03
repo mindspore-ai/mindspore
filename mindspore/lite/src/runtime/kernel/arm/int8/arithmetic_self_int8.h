@@ -37,7 +37,7 @@ class ArithmeticSelfInt8CPUKernel : public LiteKernel {
  public:
   explicit ArithmeticSelfInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                                    const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-    : LiteKernel(parameter, inputs, outputs), ctx_(ctx), thread_count_(ctx->threadNum) {
+    : LiteKernel(parameter, inputs, outputs), ctx_(ctx), thread_count_(ctx->thread_num_) {
     switch (parameter->type_) {
       case PrimitiveType_Round:
         arithmeticSelf_run_ = ElementRound;

@@ -27,7 +27,7 @@ class ScatterNDCPUKernel : public LiteKernel {
  public:
   explicit ScatterNDCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                               const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
-      : LiteKernel(parameter, inputs, outputs), thread_num_(ctx->threadNum) {}
+      : LiteKernel(parameter, inputs, outputs), thread_num_(ctx->thread_num_) {}
   ~ScatterNDCPUKernel() override = default;
 
   int Init() override;

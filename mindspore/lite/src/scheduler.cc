@@ -159,7 +159,7 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<tensor::Tensor *> 
   MS_ASSERT(nullptr != primitive);
   auto data_type = inputs.front()->data_type();
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, primitive->Type()};
-  if (context_->deviceCtx.type == DT_GPU) {
+  if (context_->device_ctx_.type == DT_GPU) {
     desc.arch = kernel::KERNEL_ARCH::kGPU;
     auto *kernel = KernelFactory::GetInstance()->GetKernel(inputs, outputs, primitive, context_, desc);
     if (nullptr != kernel) {

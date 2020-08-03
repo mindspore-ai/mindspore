@@ -23,32 +23,88 @@
 #include "schema/model_generated.h"
 
 namespace mindspore {
+/// \brief ModelImpl defined by MindSpore Lite.
+///
+/// \note List public class and interface for reference.
 class ModelImpl;
+
 namespace lite {
+/// \brief Primitive defined by MindSpore Lite.
+///
+/// \note List public class and interface for reference.
 class Primitive;
+
+/// \brief Model defined by MindSpore Lite.
 class Model {
  public:
+  /// \brief Static method to create a Model pointer.
+  ///
+  /// \param[in] model_buf Define the buffer read from a model file.
+  /// \param[in] size Define bytes numbers of model buffer.
+  ///
+  /// \return Pointer of MindSpore Lite Model.
   static std::shared_ptr<Model> Import(const char *model_buf, size_t size);
-  virtual ~Model() = default;
+
+  /// \brief Constructor of MindSpore Lite Model using default value for parameters.
+  ///
+  /// \return Instance of MindSpore Lite Model.
   Model() = default;
+
+  /// \brief Destructor of MindSpore Lite Model.
+  virtual ~Model() = default;
+
+  /// \brief Get MindSpore Lite Primitive by name.
+  ///
+  /// \param[in] name Define name of primitive to be returned.
+  ///
+  /// \return A pointer of MindSpore Lite Primitive.
   lite::Primitive *GetOp(const std::string &name) const;
+
+  /// \brief Get MindSpore Lite MetaGraph.
+  ///
+  /// \return A pointer of MindSpore Lite MetaGraph.
   const schema::MetaGraph *GetMetaGraph() const;
-  std::shared_ptr<ModelImpl> GetModelImpl();
+
+  /// \brief Get MindSpore Lite ModelImpl.
+  ///
+  /// \return A pointer of MindSpore Lite ModelImpl.
+  std::shared_ptr<ModelImpl> model_impl();
+
+  /// \brief Free MetaGraph in MindSpore Lite Model.
   void FreeMetaGraph();
 
  protected:
-  std::shared_ptr<ModelImpl> modelImpl = nullptr;
+  std::shared_ptr<ModelImpl> model_impl_ = nullptr;
 };
 
+/// \brief ModelBuilder defined by MindSpore Lite.
 class ModelBuilder {
  public:
+  /// \brief OutEdge defined by MindSpore Lite.
   struct OutEdge {
-    std::string nodeId;
-    size_t outEdgeIndex;
+    std::string nodeId;  /**< Id of a node linked by this edge */
+    size_t outEdgeIndex; /**< Index of this edge */
   };
+
+  /// \brief Constructor of MindSpore Lite Model using default value for parameters.
+  ///
+  /// \return Instance of MindSpore Lite ModelBuilder.
   ModelBuilder() = default;
+
+  /// \brief Destructor of MindSpore Lite ModelBuilder.
   virtual ~ModelBuilder() = default;
+
+  /// \brief Add primitive into model builder for model building.
+  ///
+  /// \param[in] op Define the primitive to be added.
+  /// \param[in] inputs Define input edge of primitive to be added.
+  ///
+  /// \return Id of the primitive added.
   virtual std::string AddOp(const lite::Primitive &op, const std::vector<OutEdge> &inputs) = 0;
+
+  /// \brief Finish constructing the model.
+  ///
+  /// \return A pointer of MindSpore Lite Model.
   virtual Model *Construct();
 };
 }  // namespace lite

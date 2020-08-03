@@ -42,17 +42,17 @@ class LiteSession : public session::LiteSession {
 
   int CompileGraph(Model *model) override;
 
-  std::vector<mindspore::tensor::MSTensor *> GetInputs() override;
+  std::vector<mindspore::tensor::MSTensor *> GetInputs() const override;
 
-  std::vector<mindspore::tensor::MSTensor *> GetInputsByName(std::string name) override;
+  std::vector<mindspore::tensor::MSTensor *> GetInputsByName(const std::string &name) const override;
 
   int RunGraph() override;
 
   int RunGraph(const kernel::KernelCallBack &before = nullptr, const kernel::KernelCallBack &after = nullptr);
 
-  std::vector<mindspore::tensor::MSTensor *> GetOutputs() override;
+  std::vector<mindspore::tensor::MSTensor *> GetOutputs() const override;
 
-  std::vector<mindspore::tensor::MSTensor *> GetOutputsByName(std::string name) override;
+  std::vector<mindspore::tensor::MSTensor *> GetOutputsByName(const std::string &name) const override;
 
  protected:
   int ConvertTensors(const lite::Model *model);
@@ -75,4 +75,3 @@ class LiteSession : public session::LiteSession {
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_LITE_SESSION_H_
-

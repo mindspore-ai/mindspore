@@ -138,7 +138,7 @@ int ReduceCPUKernel::Init() {
 
 int ReduceCPUKernel::CallReduceUnit(int task_id) {
   auto ret = reducer_(outer_size_, inner_size_, axis_size_, src_data_, tmp_shape_.data(), dst_data_, task_id,
-                      context_->threadNum);
+                      context_->thread_num_);
   return ret;
 }
 
@@ -167,7 +167,7 @@ int ReduceCPUKernel::Run() {
       inner_size_ *= tmp_shape_[k];
     }
     axis_size_ = tmp_shape_[axis];
-    auto error_code = LiteBackendParallelLaunch(ReduceImpl, this, context_->threadNum);
+    auto error_code = LiteBackendParallelLaunch(ReduceImpl, this, context_->thread_num_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
       return RET_ERROR;
@@ -187,7 +187,7 @@ int ReduceCPUKernel::Run() {
   }
   axis_size_ = tmp_shape_[last_reduce_axis];
   dst_data_ = reinterpret_cast<float *>(outputs_.at(0)->Data());
-  auto error_code = LiteBackendParallelLaunch(ReduceImpl, this, context_->threadNum);
+  auto error_code = LiteBackendParallelLaunch(ReduceImpl, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
     return RET_ERROR;

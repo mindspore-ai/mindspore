@@ -112,7 +112,7 @@ TEST_F(TestActivationFp32, HSwishFp32) {
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   lite::Context ctx;
-  ctx.threadNum = 7;
+  ctx.thread_num_ = 7;
   kernel::LiteKernel *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);

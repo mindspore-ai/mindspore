@@ -95,7 +95,7 @@ kernel::LiteKernel *CpuCastFp32KernelCreator(const std::vector<lite::tensor::Ten
     MS_LOG(ERROR) << "Input context is nullptr!";
     return nullptr;
   }
-  if (ctx->threadNum == 0) {
+  if (ctx->thread_num_ == 0) {
     MS_LOG(ERROR) << "context thread num is 0!";
     return nullptr;
   }

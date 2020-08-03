@@ -66,7 +66,7 @@ TEST_F(TestCropInt8, crop_1d_axis0_offset0_quant0_thread2) {
   CropParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Crop;
   lite::Context *ctx = new lite::Context;
-  ctx->threadNum = 2;
+  ctx->thread_num_ = 2;
   op_param.axis_ = 0;
   op_param.offset_[0] = 1;
   op_param.offset_size_ = 1;
@@ -129,7 +129,7 @@ TEST_F(TestCropInt8, crop_2d_axis1_offset0_quant0_thread2) {
   CropParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Crop;
   lite::Context *ctx = new lite::Context;
-  ctx->threadNum = 2;
+  ctx->thread_num_ = 2;
   op_param.axis_ = 1;
   op_param.offset_[0] = 1;
   op_param.offset_size_ = 1;
@@ -192,7 +192,7 @@ TEST_F(TestCropInt8, crop_3d_axis1_offset0_quant0_thread0) {
   CropParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Crop;
   lite::Context *ctx = new lite::Context;
-  ctx->threadNum = 1;
+  ctx->thread_num_ = 1;
   op_param.axis_ = 1;
   op_param.offset_[0] = 1;
   op_param.offset_size_ = 1;
@@ -256,7 +256,7 @@ TEST_F(TestCropInt8, crop_3d_axis1_offset0_quant0_thread2) {
   CropParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Crop;
   lite::Context *ctx = new lite::Context;
-  ctx->threadNum = 2;
+  ctx->thread_num_ = 2;
   op_param.axis_ = 1;
   op_param.offset_[0] = 1;
   op_param.offset_size_ = 1;
@@ -319,7 +319,7 @@ TEST_F(TestCropInt8, crop_4d_axis0_offset0_quant0_thread0) {
   CropParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Crop;
   lite::Context *ctx = new lite::Context;
-  ctx->threadNum = 1;
+  ctx->thread_num_ = 1;
   op_param.axis_ = 0;
   op_param.offset_[0] = 1;
   op_param.offset_size_ = 1;
@@ -382,7 +382,7 @@ TEST_F(TestCropInt8, crop_4d_axis1_offset0_quant0_thread0) {
   CropParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Crop;
   lite::Context *ctx = new lite::Context;
-  ctx->threadNum = 1;
+  ctx->thread_num_ = 1;
   op_param.axis_ = 1;
   op_param.offset_[0] = 1;
   op_param.offset_size_ = 1;
@@ -445,7 +445,7 @@ TEST_F(TestCropInt8, crop_4d_axis1_offset1_quant0_thread0) {
   CropParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Crop;
   lite::Context *ctx = new lite::Context;
-  ctx->threadNum = 1;
+  ctx->thread_num_ = 1;
   op_param.axis_ = 0;
   op_param.offset_[0] = 1;
   op_param.offset_[1] = 1;
@@ -511,7 +511,7 @@ TEST_F(TestCropInt8, crop_4d_axis1_offset1_quant1_thread0) {
   CropParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Crop;
   lite::Context *ctx = new lite::Context;
-  ctx->threadNum = 1;
+  ctx->thread_num_ = 1;
   op_param.axis_ = 0;
   op_param.offset_[0] = 1;
   op_param.offset_[1] = 1;
@@ -579,7 +579,7 @@ TEST_F(TestCropInt8, crop_4d_axis0_offset0_quant0_thread2) {
   CropParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Crop;
   lite::Context *ctx = new lite::Context;
-  ctx->threadNum = 2;
+  ctx->thread_num_ = 2;
   op_param.axis_ = 0;
   op_param.offset_[0] = 1;
   op_param.offset_size_ = 1;
@@ -644,7 +644,7 @@ TEST_F(TestCropInt8, crop_4d_axis0_offset0_quant0_thread3) {
   CropParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Crop;
   lite::Context *ctx = new lite::Context;
-  ctx->threadNum = 3;
+  ctx->thread_num_ = 3;
   op_param.axis_ = 0;
   op_param.offset_[0] = 1;
   op_param.offset_size_ = 1;

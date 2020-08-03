@@ -65,7 +65,7 @@ TEST_F(TestArithmeticSelfInt8, floor_quant0_thread2) {
   ArithmeticSelfParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Floor;
   lite::Context *ctx = new lite::Context;
-  ctx->threadNum = 2;
+  ctx->thread_num_ = 2;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Floor};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -124,7 +124,7 @@ TEST_F(TestArithmeticSelfInt8, floor_quant1_thread2) {
   ArithmeticSelfParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Floor;
   lite::Context *ctx = new lite::Context;
-  ctx->threadNum = 2;
+  ctx->thread_num_ = 2;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Floor};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -183,7 +183,7 @@ TEST_F(TestArithmeticSelfInt8, round_quant0_thread2) {
   ArithmeticSelfParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Round;
   lite::Context *ctx = new lite::Context;
-  ctx->threadNum = 2;
+  ctx->thread_num_ = 2;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Floor};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -242,7 +242,7 @@ TEST_F(TestArithmeticSelfInt8, round_quant1_thread2) {
   ArithmeticSelfParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Round;
   lite::Context *ctx = new lite::Context;
-  ctx->threadNum = 2;
+  ctx->thread_num_ = 2;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Floor};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -301,7 +301,7 @@ TEST_F(TestArithmeticSelfInt8, ceil_quant0_thread2) {
   ArithmeticSelfParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Ceil;
   lite::Context *ctx = new lite::Context;
-  ctx->threadNum = 2;
+  ctx->thread_num_ = 2;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Floor};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -360,7 +360,7 @@ TEST_F(TestArithmeticSelfInt8, ceil_quant1_thread2) {
   ArithmeticSelfParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Ceil;
   lite::Context *ctx = new lite::Context;
-  ctx->threadNum = 2;
+  ctx->thread_num_ = 2;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Floor};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);

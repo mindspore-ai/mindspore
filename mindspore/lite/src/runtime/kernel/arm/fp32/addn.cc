@@ -101,7 +101,7 @@ kernel::LiteKernel *CpuAddNFp32KernelCreator(const std::vector<lite::tensor::Ten
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_AddN);
-  op_parameter->thread_num_ = ctx->threadNum;
+  op_parameter->thread_num_ = ctx->thread_num_;
   auto *kernel = new (std::nothrow) AddNCPUKernel(op_parameter, inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new AddNCPUKernel fail!";

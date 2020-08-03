@@ -104,9 +104,9 @@ TEST_F(InferTest, TestConvNode) {
   meta_graph.reset();
   content = nullptr;
   auto context = new lite::Context;
-  context->cpuBindMode = lite::NO_BIND;
-  context->deviceCtx.type = lite::DT_CPU;
-  context->threadNum = 4;
+  context->cpu_bind_mode_ = lite::NO_BIND;
+  context->device_ctx_.type = lite::DT_CPU;
+  context->thread_num_ = 4;
   auto session = session::LiteSession::CreateSession(context);
   ASSERT_NE(nullptr, session);
   auto ret = session->CompileGraph(model.get());
@@ -201,9 +201,9 @@ TEST_F(InferTest, TestAddNode) {
   meta_graph.reset();
   content = nullptr;
   auto context = new lite::Context;
-  context->cpuBindMode = lite::NO_BIND;
-  context->deviceCtx.type = lite::DT_GPU;
-  context->threadNum = 4;
+  context->cpu_bind_mode_ = lite::NO_BIND;
+  context->device_ctx_.type = lite::DT_GPU;
+  context->thread_num_ = 4;
   auto session = session::LiteSession::CreateSession(context);
   ASSERT_NE(nullptr, session);
   auto ret = session->CompileGraph(model.get());
@@ -252,9 +252,9 @@ TEST_F(InferTest, TestModel) {
   ASSERT_NE(nullptr, model);
   delete[] buf[0];
   auto context = new lite::Context;
-  context->cpuBindMode = lite::NO_BIND;
-  context->deviceCtx.type = lite::DT_CPU;
-  context->threadNum = 4;
+  context->cpu_bind_mode_ = lite::NO_BIND;
+  context->device_ctx_.type = lite::DT_CPU;
+  context->thread_num_ = 4;
   auto session = session::LiteSession::CreateSession(context);
   ASSERT_NE(nullptr, session);
   auto ret = session->CompileGraph(model.get());

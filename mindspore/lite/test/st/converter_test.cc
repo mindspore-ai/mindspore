@@ -47,8 +47,8 @@ TEST_F(ConverterTest, TestOCR_02) {
 }
 
 TEST_F(ConverterTest, TestHebing) {
-  const char *argv[] = {"./converter", "--fmk=CAFFE", "--modelFile=./hiai/model_hebing_3branch.caffemodel",
-                        "--weightFile=./models/model_hebing_3branch.prototxt",
+  const char *argv[] = {"./converter", "--fmk=CAFFE", "--modelFile=./hiai/model_hebing_3branch.prototxt",
+                        "--weightFile=./models/model_hebing_3branch.caffemodel",
                         "--outputFile=./models/model_hebing_3branch"};
   auto status = RunConverter(5, argv);
   ASSERT_EQ(status, RET_OK);

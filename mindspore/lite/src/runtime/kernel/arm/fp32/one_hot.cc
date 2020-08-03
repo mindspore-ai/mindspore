@@ -58,7 +58,7 @@ int OneHotCPUKernel::Init() {
     MS_LOG(ERROR) << "OneHot context nullptr";
     return RET_NULL_PTR;
   }
-  thread_num_ = context_->threadNum;
+  thread_num_ = context_->thread_num_;
 
   const int indices_rank = static_cast<int>(inputs_.at(0)->shape().size());
   if (axis_ < 0) {
@@ -148,7 +148,7 @@ int OneHotCPUKernel::GetParams() {
 }
 
 int OneHotCPUKernel::Run() {
-  int error_code = LiteBackendParallelLaunch(RunOneHot, this, context_->threadNum);
+  int error_code = LiteBackendParallelLaunch(RunOneHot, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "OneHot function error error_code[" << error_code << "]";
     return RET_ERROR;
