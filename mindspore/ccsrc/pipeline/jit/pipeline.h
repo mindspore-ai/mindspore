@@ -88,6 +88,8 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
 
   FuncGraphPtr BuildGraph(const py::dict &init_params, const std::string &phase,
                           const py::object &broadcast_params = {});
+  void UpdataParamNodeDefaultInput(const std::string &phase,
+                                   const std::unordered_map<std::string, tensor::TensorPtr> &params);
   void RunInitGraph(const py::dict &init_params, const std::string &phase);
   py::dict GetParameterLayout(const std::string &phase);
   py::dict GetCNodeStrategy(const std::string &phase);

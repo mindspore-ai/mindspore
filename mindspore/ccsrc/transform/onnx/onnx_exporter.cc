@@ -449,7 +449,7 @@ void OnnxExporter::ExportParameters(const FuncGraphPtr &func_graph, onnx::GraphP
     initializer_proto->set_name(param_ptr->ToString());
     SetTensorProtoInfo(param_ptr, initializer_proto);
     // set value for initializer
-    auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(param_ptr->default_param()->value());
+    auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(param_ptr->default_param());
     if (tensor) {
       initializer_proto->set_raw_data(tensor->data_c(), tensor->data().nbytes());
     }

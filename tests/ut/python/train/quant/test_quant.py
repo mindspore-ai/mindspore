@@ -69,8 +69,7 @@ def test_qat_lenet():
     net = qat.convert_quant_network(
         net, bn_fold=True, per_channel=[True, False], symmetric=[True, False])
     # should load the checkpoint. mock here
-    for param in net.get_parameters():
-        param.init_data()
+    net.init_parameters_data()
     qat.export(net, img, file_name="quant.pb")
 
 
@@ -80,8 +79,7 @@ def test_qat_mobile_per_channel_tf():
     img = Tensor(np.ones((1, 3, 224, 224)).astype(np.float32))
     network = qat.convert_quant_network(network, bn_fold=True, per_channel=[True, False], symmetric=[True, False])
     # should load the checkpoint. mock here
-    for param in network.get_parameters():
-        param.init_data()
+    network.init_parameters_data()
     qat.export(network, img, file_name="quant.pb")
 
 @pytest.mark.skip(reason="no `te.lang.cce` in ut env")
@@ -90,6 +88,5 @@ def test_qat_mobile_per_channel_ff():
     img = Tensor(np.ones((1, 3, 224, 224)).astype(np.float32))
     network = qat.convert_quant_network(network, bn_fold=True, per_channel=[False, False], symmetric=[True, False])
     # should load the checkpoint. mock here
-    for param in network.get_parameters():
-        param.init_data()
+    network.init_parameters_data()
     qat.export(network, img, file_name="quant.pb")

@@ -372,7 +372,7 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                            .def(py::pickle(
                              [](const Tensor &t) {  // __getstate__
                                /* Return a tuple that fully encodes the state of the object */
-                               return py::make_tuple(TensorPy::AsNumpy(t));
+                               return py::make_tuple(TensorPy::SyncAsNumpy(t));
                              },
                              [](const py::tuple &t) {  // __setstate__
                                if (t.size() != 1) {

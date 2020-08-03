@@ -206,16 +206,6 @@ def get_object_key(obj):
     return obj_id, obj_key
 
 
-def get_default_input(obj):
-    if hasattr(obj, '__parameter__'):
-        return obj.default_input
-    if isinstance(obj, tuple):
-        convert = lambda x: x.default_input if hasattr(x, '__parameter__') else x
-        args = tuple(convert(x) for x in obj)
-        return args
-    return obj
-
-
 def is_class_member(node):
     """Check the attr is class member variable."""
     type_ = node.__class__.__name__

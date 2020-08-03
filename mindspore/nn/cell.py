@@ -229,7 +229,6 @@ class Cell:
         for item in inputs:
             if isinstance(item, numpy.ndarray):
                 raise TypeError("cell inputs should not be numpy array.")
-        self.init_parameters_data()
         orign_grad = []
         if self.requires_grad is True:
             _pynative_exec.set_grad_flag(True)
@@ -350,19 +349,8 @@ class Cell:
             params (dict): The parameters dictionary used for init data graph.
         """
         if params is None:
-            for key in self.parameters_dict():
-                tensor = self.parameters_dict()[key].data
-                if key not in self.parameter_layout_dict:
-                    logger.info("layout dict does not contain the key %s", key)
-                    continue
-                if self.parameters_dict()[key].sliced:
-                    logger.debug("Param %s is already sliced.", key)
-                    continue
-                layout = self.parameter_layout_dict[key]
-                new_tensor = _load_tensor_by_layout(tensor, layout)
-                self.parameters_dict()[key].set_parameter_data(new_tensor)
-                self.parameters_dict()[key].sliced = True
-        elif isinstance(params, OrderedDict):
+            params = self.parameters_dict()
+        if isinstance(params, OrderedDict):
             for key in params:
                 tensor = params[key].data
                 if key not in self.parameter_layout_dict:
@@ -373,8 +361,7 @@ class Cell:
                     continue
                 layout = self.parameter_layout_dict[key]
                 new_tensor = _load_tensor_by_layout(tensor, layout)
-                params[key].set_parameter_data(new_tensor)
-                params[key].sliced = True
+                params[key].set_parameter_data(new_tensor, True)
         else:
             raise TypeError('Parameters need OrderedDict type, but got {}'.
                             format(type(params)))
@@ -545,17 +532,46 @@ class Cell:
         """
         raise NotImplementedError
 
-    def init_parameters_data(self, recurse=True, auto_parallel_mode=False):
-        """Init parameters' data."""
-        for param in self.get_parameters(expand=recurse):
-            if not auto_parallel_mode:
-                param.init_data()
-            elif param.name not in self.parameter_layout_dict:
-                logger.debug("Layout dict does not contain the key %s.", param.name)
-                param.init_data(set_sliced=True)
-            else:
-                layout = self.parameter_layout_dict[param.name]
-                param.init_data(layout, set_sliced=True)
+    def init_parameters_data(self, auto_parallel_mode=False):
+        """
+        Init all parameters' data and replace the original saved parameters in cell.
+
+        Args:
+            auto_parallel_mode (bool): If running in auto_parallel_mode.
+
+        Returns:
+            Dict[Parameter, Parameter], returns a dict of original parameter and replaced parameter.
+        """
+        replace = dict()
+        def _updata(param):
+            if param in replace:
+                return replace[param]
+            layout = None
+            set_sliced = False
+            if auto_parallel_mode:
+                set_sliced = True
+                if param.name not in self.parameter_layout_dict:
+                    logger.debug("Layout dict does not contain the key %s.", param.name)
+                else:
+                    layout = self.parameter_layout_dict[param.name]
+            new_p = param.init_data(layout, set_sliced=set_sliced)
+            replace[param] = new_p
+            return new_p
+        # replace all original usage.
+        cells = self.cells_and_names()
+        for _, cell in cells:
+            params = cell._params.items()
+            for param_name, param in params:
+                cell._params[param_name] = _updata(param)
+            cell_dict = cell.__dict__
+            for key in cell_dict:
+                if isinstance(cell_dict[key], ParameterTuple):
+                    param_tuple = cell_dict[key]
+                    new_param_tuple = []
+                    for param in param_tuple:
+                        new_param_tuple.append(_updata(param))
+                    cell.__dict__[key] = ParameterTuple(new_param_tuple)
+        return replace
 
     def parameters_dict(self, recurse=True):
         """
@@ -682,9 +698,10 @@ class Cell:
         for cell_name, cell in cells:
             params = cell._params.items()
             for par_name, par in params:
-                if par and par not in params_set:
+                if par.inited_param is not None:
+                    par = par.inited_param
+                if par is not None and par not in params_set:
                     params_set.add(par)
-
                     par_new_name = par_name
                     if cell_name:
                         par_new_name = cell_name + '.' + par_new_name

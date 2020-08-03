@@ -295,7 +295,6 @@ def load_param_into_net(net, parameter_dict):
                 logger.error("Failed to combine the net and the parameters.")
                 msg = ("Argument parameter_dict element should be a Parameter, but got {}.".format(type(new_param)))
                 raise TypeError(msg)
-            param.init_data()
             _update_param(param, new_param)
         else:
             param_not_load.append(param.name)
@@ -362,15 +361,13 @@ def _exec_save_checkpoint(train_network, ckpt_file_name, integrated_save=True, a
         integrated_save (bool): Whether to integrated save in automatic model parallel scene.
         async_save (bool): Whether asynchronous execute save checkpoint into file. Default: False.
     """
-
+    train_network.init_parameters_data()
     param_dict = {}
     for _, param in train_network.parameters_and_names():
         param_dict[param.name] = param
-
     param_list = []
     for (key, value) in param_dict.items():
         each_param = {"name": key}
-        value.init_data()
         if isinstance(value.data, Tensor):
             param_data = value.data
         else:

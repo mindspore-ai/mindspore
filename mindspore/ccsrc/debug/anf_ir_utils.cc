@@ -1670,7 +1670,7 @@ class IrParser {
 
         // load parameter default value from serialized file
         py::object default_obj = LoadObject(lexer_.GetTokenText());
-        auto param_value_new = py::cast<ParamValuePtr>(default_obj);
+        auto param_value_new = py::cast<tensor::TensorPtr>(default_obj);
         param->set_default_param(param_value_new);
 
         tok = lexer_.GetNextToken();

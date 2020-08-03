@@ -41,6 +41,7 @@
 #include "frontend/parallel/context.h"
 #include "frontend/parallel/ops_info/tmp_identity_info.h"
 #include "frontend/parallel/ops_info/reshape_info.h"
+#include "frontend/parallel/graph_util/node_info.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 #include "pipeline/jit/parse/python_adapter.h"
@@ -122,12 +123,7 @@ std::vector<bool> ExtractInputParameterByNode(const CNodePtr &node) {
 
     if (input->isa<Parameter>()) {
       auto input_parameter = input->cast<ParameterPtr>();
-      if (input_parameter->has_default()) {
-        bool requires_grad = input_parameter->default_param()->requires_grad();
-        is_parameter.push_back(requires_grad);
-      } else {
-        is_parameter.push_back(false);
-      }
+      is_parameter.push_back(ParameterRequireGrad(input_parameter));
     } else if (input->isa<CNode>() || IsValueNode<tensor::Tensor>(input) || IsValueNode<RefKey>(input)) {
       is_parameter.push_back(false);
     }
@@ -798,12 +794,7 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
       std::vector<bool> is_parameter;
       auto casted_target_parameter = target_parameter->cast<ParameterPtr>();
       MS_EXCEPTION_IF_NULL(casted_target_parameter);
-      if (casted_target_parameter->has_default()) {
-        bool requires_grad = casted_target_parameter->default_param()->requires_grad();
-        is_parameter.push_back(requires_grad);
-      } else {
-        is_parameter.push_back(false);
-      }
+      is_parameter.push_back(ParameterRequireGrad(casted_target_parameter));
       if (tmp_identity_ptr->set_is_parameter(is_parameter) != SUCCESS) {
         MS_LOG(EXCEPTION) << "Setting parameter for TmpIdentityInfo failed";
       }

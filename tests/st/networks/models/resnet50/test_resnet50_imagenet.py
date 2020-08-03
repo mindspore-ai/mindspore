@@ -174,9 +174,14 @@ def train_process(q, device_id, epoch_size, device_num, enable_hccl):
                                   steps_per_epoch=step_size, lr_decay_mode=config.lr_decay_mode))
 
     # optimizer
-    decayed_params = list(filter(lambda x: 'beta' not in x.name and 'gamma' not in x.name and 'bias' not in x.name,
-                                 net.trainable_params()))
-    no_decayed_params = [param for param in net.trainable_params() if param not in decayed_params]
+    decayed_params = []
+    no_decayed_params = []
+    for param in net.trainable_params():
+        if 'beta' not in param.name and 'gamma' not in param.name and 'bias' not in param.name:
+            decayed_params.append(param)
+        else:
+            no_decayed_params.append(param)
+
     group_params = [{'params': decayed_params, 'weight_decay': config.weight_decay},
                     {'params': no_decayed_params, 'weight_decay': 0.0},
                     {'order_params': net.trainable_params()}]

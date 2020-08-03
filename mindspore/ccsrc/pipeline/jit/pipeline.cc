@@ -719,7 +719,11 @@ void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef 
       if (!param_ptr->has_default()) {
         MS_LOG(EXCEPTION) << "Parameter[" << i << "] has no default param";
       }
-      arg_list->push_back(param_ptr->default_param()->value());
+      if (!param_ptr->default_param()->isa<Tensor>()) {
+        MS_LOG(EXCEPTION) << "Parameter[" << param_ptr->ToString()
+                          << "] is not initialized, need to call `.init_data()`";
+      }
+      arg_list->push_back(param_ptr->default_param());
     }
   }
 }
@@ -780,6 +784,24 @@ FuncGraphPtr ExecutorPy::BuildGraph(const py::dict &init_params, const std::stri
 #else
   return nullptr;
 #endif
+}
+
+void ExecutorPy::UpdataParamNodeDefaultInput(const std::string &phase,
+                                             const std::unordered_map<std::string, tensor::TensorPtr> &params_value) {
+  FuncGraphPtr func_graph = info_[phase]->resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_LOG(DEBUG) << "UpdataParamNodeDefaultInput for func graph(" << func_graph->ToString() << ") phase(" << phase
+                << ")!";
+  auto &params = func_graph->parameters();
+  for (const auto &param : params) {
+    MS_EXCEPTION_IF_NULL(param);
+    auto param_cast = param->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param_cast);
+    auto iter = params_value.find(param_cast->name());
+    if (iter != params_value.end()) {
+      param_cast->set_default_param(iter->second);
+    }
+  }
 }
 
 void ExecutorPy::RunInitGraph(const py::dict &init_params, const std::string &phase) {

@@ -207,9 +207,9 @@ def test_bert_percision():
     netwithgrads.set_train(True)
     model = Model(netwithgrads)
     callback = ModelCallback()
+    netwithloss.init_parameters_data()
     params = netwithloss.trainable_params()
     for param in params:
-        param.init_data()
         value = param.default_input
         name = param.name
         if isinstance(value, Tensor):
@@ -279,9 +279,9 @@ def test_bert_performance():
     netwithgrads.set_train(True)
     model = Model(netwithgrads)
     callback = ModelCallback()
+    netwithloss.init_parameters_data()
     params = netwithloss.trainable_params()
     for param in params:
-        param.init_data()
         value = param.default_input
         name = param.name
         if isinstance(value, Tensor):

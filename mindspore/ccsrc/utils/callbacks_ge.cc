@@ -52,7 +52,7 @@ bool GetParameterShape(const FuncGraphPtr &graph, const std::string &param_name,
     if (param_node->name() == param_name) {
       TensorPtr tensor;
       if (param_node->has_default()) {
-        tensor = std::dynamic_pointer_cast<tensor::Tensor>(param_node->default_param()->value());
+        tensor = std::dynamic_pointer_cast<tensor::Tensor>(param_node->default_param());
       }
       if (tensor == nullptr) {
         shape->push_back(ONE_SHAPE);

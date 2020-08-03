@@ -196,6 +196,7 @@ class mobilenetV2(nn.Cell):
         self.head = nn.SequentialCell(head)
 
         # init weights
+        self.init_parameters_data()
         self._initialize_weights()
 
     def construct(self, x):
@@ -215,6 +216,7 @@ class mobilenetV2(nn.Cell):
         Examples:
             >>> _initialize_weights()
         """
+        self.init_parameters_data()
         for _, m in self.cells_and_names():
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels

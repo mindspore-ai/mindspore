@@ -283,11 +283,11 @@ class Parameter : public ANode {
   std::string fullname_with_scope() override { return name(); };
 
   bool has_default() const { return has_default_; }
-  void set_default_param(ParamValuePtr param) {
+  void set_default_param(ValuePtr param) {
     default_param_ = param;
     has_default_ = true;
   }
-  ParamValuePtr default_param() const { return default_param_; }
+  ValuePtr default_param() const { return default_param_; }
 
   bool operator==(const AnfNode &other) const override {
     if (!other.isa<Parameter>()) {
@@ -303,7 +303,7 @@ class Parameter : public ANode {
  private:
   std::string name_;
   bool has_default_;
-  ParamValuePtr default_param_;
+  ValuePtr default_param_;
 };
 using ParameterPtr = std::shared_ptr<Parameter>;
 

@@ -448,7 +448,7 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
       if (!param->has_default()) {
         MS_LOG(EXCEPTION) << "Can not determine value of Parameter " << index << " (" << param->name() << ")";
       }
-      auto tensor = param->default_param()->value();
+      auto tensor = param->default_param();
       *ret_val = py::cast(tensor);
     }
     return true;

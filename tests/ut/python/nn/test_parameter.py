@@ -139,14 +139,31 @@ def test_parameter_lazy_init():
     # Call init_data() without set default_input.
     para = Parameter(initializer('ones', [1, 2, 3], mstype.float32), 'test1')
     assert not isinstance(para.default_input, Tensor)
-    para.init_data()
+    para = para.init_data()
     assert isinstance(para.default_input, Tensor)
     assert np.array_equal(para.default_input.asnumpy(), np.ones((1, 2, 3)))
 
     # Call init_data() after default_input is set.
     para = Parameter(initializer('ones', [1, 2, 3], mstype.float32), 'test2')
     assert not isinstance(para.default_input, Tensor)
-    para.default_input = Tensor(np.zeros((1, 2, 3)))
+    # expect type error when not init
+    with pytest.raises(TypeError):
+        para.default_input = Tensor(np.zeros((1, 2, 3)))
+    # init then assign
+    para = para.init_data()
+    # check the type
+    with pytest.raises(ValueError):
+        para.default_input = Tensor(np.zeros((1, 2, 3)))
+    # check the shape
+    with pytest.raises(ValueError):
+        para.default_input = Tensor(np.zeros((1, 2)))
+    # expect change ok
+    para.default_input = Tensor(np.zeros((1, 2, 3)).astype(np.float32))
     assert np.array_equal(para.default_input.asnumpy(), np.zeros((1, 2, 3)))
-    para.init_data() # expect no effect.
-    assert np.array_equal(para.default_input.asnumpy(), np.zeros((1, 2, 3)))
+    para.default_input = initializer('ones', [1, 2, 3], mstype.float32)
+    assert isinstance(para.default_input, Tensor)
+    # same object and has inited
+    assert np.array_equal(para.default_input.asnumpy(), np.ones((1, 2, 3)))
+    # expect no effect.
+    para.init_data()
+    assert np.array_equal(para.default_input.asnumpy(), np.ones((1, 2, 3)))
