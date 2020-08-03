@@ -22,6 +22,7 @@
 #include "minddata/dataset/engine/dataset_iterator.h"
 // Source dataset headers (in alphabetical order)
 #include "minddata/dataset/engine/datasetops/source/cifar_op.h"
+#include "minddata/dataset/engine/datasetops/source/coco_op.h"
 #include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
 #include "minddata/dataset/engine/datasetops/source/mnist_op.h"
 #include "minddata/dataset/engine/datasetops/source/voc_op.h"
@@ -101,6 +102,15 @@ std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, std::sha
 // Function to create a Cifar100Dataset.
 std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir, std::shared_ptr<SamplerObj> sampler) {
   auto ds = std::make_shared<Cifar100Dataset>(dataset_dir, sampler);
+
+  // Call derived class validation method.
+  return ds->ValidateParams() ? ds : nullptr;
+}
+
+// Function to create a CocoDataset.
+std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::string &annotation_file,
+                                  const std::string &task, bool decode, std::shared_ptr<SamplerObj> sampler) {
+  auto ds = std::make_shared<CocoDataset>(dataset_dir, annotation_file, task, decode, sampler);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
@@ -381,6 +391,97 @@ std::vector<std::shared_ptr<DatasetOp>> Cifar100Dataset::Build() {
   node_ops.push_back(std::make_shared<CifarOp>(CifarOp::CifarType::kCifar100, num_workers_, rows_per_buffer_,
                                                dataset_dir_, connector_que_size_, std::move(schema),
                                                std::move(sampler_->Build())));
+  return node_ops;
+}
+
+// Constructor for CocoDataset
+CocoDataset::CocoDataset(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task,
+                         bool decode, std::shared_ptr<SamplerObj> sampler)
+    : dataset_dir_(dataset_dir), annotation_file_(annotation_file), task_(task), decode_(decode), sampler_(sampler) {}
+
+bool CocoDataset::ValidateParams() {
+  Path dir(dataset_dir_);
+  if (!dir.IsDirectory()) {
+    MS_LOG(ERROR) << "Invalid dataset path or no dataset path is specified.";
+    return false;
+  }
+  Path annotation_file(annotation_file_);
+  if (!annotation_file.Exists()) {
+    MS_LOG(ERROR) << "annotation_file is invalid or not exist";
+    return false;
+  }
+  std::set<std::string> task_list = {"Detection", "Stuff", "Panoptic", "Keypoint"};
+  auto task_iter = task_list.find(task_);
+  if (task_iter == task_list.end()) {
+    MS_LOG(ERROR) << "Invalid task type";
+    return false;
+  }
+  return true;
+}
+
+// Function to build CocoDataset
+std::vector<std::shared_ptr<DatasetOp>> CocoDataset::Build() {
+  // A vector containing shared pointer to the Dataset Ops that this object will create
+  std::vector<std::shared_ptr<DatasetOp>> node_ops;
+
+  // If user does not specify Sampler, create a default sampler based on the shuffle variable.
+  if (sampler_ == nullptr) {
+    sampler_ = CreateDefaultSampler();
+  }
+
+  CocoOp::TaskType task_type;
+  if (task_ == "Detection") {
+    task_type = CocoOp::TaskType::Detection;
+  } else if (task_ == "Stuff") {
+    task_type = CocoOp::TaskType::Stuff;
+  } else if (task_ == "Keypoint") {
+    task_type = CocoOp::TaskType::Keypoint;
+  } else if (task_ == "Panoptic") {
+    task_type = CocoOp::TaskType::Panoptic;
+  }
+
+  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
+  RETURN_EMPTY_IF_ERROR(
+    schema->AddColumn(ColDescriptor(std::string("image"), DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
+  switch (task_type) {
+    case CocoOp::TaskType::Detection:
+      RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+        ColDescriptor(std::string("bbox"), DataType(DataType::DE_FLOAT32), TensorImpl::kFlexible, 1)));
+      RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+        ColDescriptor(std::string("category_id"), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
+      RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+        ColDescriptor(std::string("iscrowd"), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
+      break;
+    case CocoOp::TaskType::Stuff:
+      RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+        ColDescriptor(std::string("segmentation"), DataType(DataType::DE_FLOAT32), TensorImpl::kFlexible, 1)));
+      RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+        ColDescriptor(std::string("iscrowd"), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
+      break;
+    case CocoOp::TaskType::Keypoint:
+      RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+        ColDescriptor(std::string("keypoints"), DataType(DataType::DE_FLOAT32), TensorImpl::kFlexible, 1)));
+      RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+        ColDescriptor(std::string("num_keypoints"), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
+      break;
+    case CocoOp::TaskType::Panoptic:
+      RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+        ColDescriptor(std::string("bbox"), DataType(DataType::DE_FLOAT32), TensorImpl::kFlexible, 1)));
+      RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+        ColDescriptor(std::string("category_id"), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
+      RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+        ColDescriptor(std::string("iscrowd"), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
+      RETURN_EMPTY_IF_ERROR(
+        schema->AddColumn(ColDescriptor(std::string("area"), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
+      break;
+    default:
+      MS_LOG(ERROR) << "CocoDataset::Build : Invalid task type";
+      return {};
+  }
+  std::shared_ptr<CocoOp> op =
+    std::make_shared<CocoOp>(task_type, dataset_dir_, annotation_file_, num_workers_, rows_per_buffer_,
+                             connector_que_size_, decode_, std::move(schema), std::move(sampler_->Build()));
+  node_ops.push_back(op);
   return node_ops;
 }
 

@@ -45,6 +45,7 @@ using mindspore::dataset::TensorImpl;
 using mindspore::dataset::DataType;
 using mindspore::dataset::Status;
 using mindspore::dataset::BorderType;
+using mindspore::dataset::dsize_t;
 
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
@@ -1413,6 +1414,272 @@ TEST_F(MindDataTestPipeline, TestVOCClassIndex) {
 
   // Manually terminate the pipeline
   iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestCocoDetection) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoDetection.";
+  // Create a Coco Dataset
+  std::string folder_path = datasets_root_path_ + "/testCOCO/train";
+  std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/train.json";
+
+  std::shared_ptr<Dataset> ds = Coco(folder_path, annotation_file, "Detection", false, SequentialSampler(0, 6));
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::string expect_file[] = {"000000391895", "000000318219", "000000554625", "000000574769", "000000060623",
+                               "000000309022"};
+  std::vector<std::vector<float>> expect_bbox_vector = {{10.0, 10.0, 10.0, 10.0, 70.0, 70.0, 70.0, 70.0},
+                                                        {20.0, 20.0, 20.0, 20.0, 80.0, 80.0, 80.0, 80.0},
+                                                        {30.0, 30.0, 30.0, 30.0}, {40.0, 40.0, 40.0, 40.0},
+                                                        {50.0, 50.0, 50.0, 50.0}, {60.0, 60.0, 60.0, 60.0}};
+  std::vector<std::vector<uint32_t>> expect_catagoryid_list = {{1, 7}, {2, 8}, {3}, {4}, {5}, {6}};
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto image = row["image"];
+    auto bbox = row["bbox"];
+    auto category_id = row["category_id"];
+    std::shared_ptr<Tensor> expect_image;
+    Tensor::CreateFromFile(folder_path + "/" + expect_file[i] + ".jpg", &expect_image);
+    EXPECT_EQ(*image, *expect_image);
+    std::shared_ptr<Tensor> expect_bbox;
+    dsize_t bbox_num = static_cast<dsize_t>(expect_bbox_vector[i].size() / 4);
+    Tensor::CreateFromVector(expect_bbox_vector[i], TensorShape({bbox_num, 4}), &expect_bbox);
+    EXPECT_EQ(*bbox, *expect_bbox);
+    std::shared_ptr<Tensor> expect_categoryid;
+    Tensor::CreateFromVector(expect_catagoryid_list[i], TensorShape({bbox_num, 1}), &expect_categoryid);
+    EXPECT_EQ(*category_id, *expect_categoryid);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 6);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestCocoStuff) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoStuff.";
+  // Create a Coco Dataset
+  std::string folder_path = datasets_root_path_ + "/testCOCO/train";
+  std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/train.json";
+
+  std::shared_ptr<Dataset> ds = Coco(folder_path, annotation_file, "Stuff", false, SequentialSampler(0, 6));
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::string expect_file[] = {"000000391895", "000000318219", "000000554625", "000000574769", "000000060623",
+                               "000000309022"};
+  std::vector<std::vector<float>> expect_segmentation_vector =
+    {{10.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0,
+      70.0, 72.0, 73.0, 74.0, 75.0, -1.0, -1.0, -1.0, -1.0, -1.0},
+     {20.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0,
+      10.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, -1.0},
+     {40.0, 42.0, 43.0, 44.0, 45.0, 46.0, 47.0, 48.0, 49.0, 40.0, 41.0, 42.0},
+     {50.0, 52.0, 53.0, 54.0, 55.0, 56.0, 57.0, 58.0, 59.0, 60.0, 61.0, 62.0, 63.0},
+     {60.0, 62.0, 63.0, 64.0, 65.0, 66.0, 67.0, 68.0, 69.0, 70.0, 71.0, 72.0, 73.0, 74.0},
+     {60.0, 62.0, 63.0, 64.0, 65.0, 66.0, 67.0, 68.0, 69.0, 70.0, 71.0, 72.0, 73.0, 74.0}};
+  std::vector<std::vector<dsize_t>> expect_size = {{2, 10}, {2, 11}, {1, 12}, {1, 13}, {1, 14}, {2, 7}};
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto image = row["image"];
+    auto segmentation = row["segmentation"];
+    auto iscrowd = row["iscrowd"];
+    std::shared_ptr<Tensor> expect_image;
+    Tensor::CreateFromFile(folder_path + "/" + expect_file[i] + ".jpg", &expect_image);
+    EXPECT_EQ(*image, *expect_image);
+    std::shared_ptr<Tensor> expect_segmentation;
+    Tensor::CreateFromVector(expect_segmentation_vector[i], TensorShape(expect_size[i]), &expect_segmentation);
+    EXPECT_EQ(*segmentation, *expect_segmentation);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 6);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestCocoKeypoint) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoKeypoint.";
+  // Create a Coco Dataset
+  std::string folder_path = datasets_root_path_ + "/testCOCO/train";
+  std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/key_point.json";
+
+  std::shared_ptr<Dataset> ds = Coco(folder_path, annotation_file, "Keypoint", false, SequentialSampler(0, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::string expect_file[] = {"000000391895", "000000318219"};
+  std::vector<std::vector<float>> expect_keypoint_vector =
+    {{368.0, 61.0, 1.0, 369.0, 52.0, 2.0, 0.0, 0.0, 0.0, 382.0, 48.0, 2.0, 0.0, 0.0, 0.0, 368.0, 84.0, 2.0, 435.0,
+       81.0, 2.0, 362.0, 125.0, 2.0, 446.0, 125.0, 2.0, 360.0, 153.0, 2.0, 0.0, 0.0, 0.0, 397.0, 167.0, 1.0, 439.0,
+       166.0, 1.0, 369.0, 193.0, 2.0, 461.0, 234.0, 2.0, 361.0, 246.0, 2.0, 474.0, 287.0, 2.0},
+     {244.0, 139.0, 2.0, 0.0, 0.0, 0.0, 226.0, 118.0, 2.0, 0.0, 0.0, 0.0, 154.0, 159.0, 2.0, 143.0, 261.0, 2.0, 135.0,
+       312.0, 2.0, 271.0, 423.0, 2.0, 184.0, 530.0, 2.0, 261.0, 280.0, 2.0, 347.0, 592.0, 2.0, 0.0, 0.0, 0.0, 123.0,
+       596.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}};
+  std::vector<std::vector<dsize_t>> expect_size = {{1, 51}, {1, 51}};
+  std::vector<std::vector<uint32_t>> expect_num_keypoints_list = {{14}, {10}};
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto image = row["image"];
+    auto keypoints = row["keypoints"];
+    auto num_keypoints = row["num_keypoints"];
+    std::shared_ptr<Tensor> expect_image;
+    Tensor::CreateFromFile(folder_path + "/" + expect_file[i] + ".jpg", &expect_image);
+    EXPECT_EQ(*image, *expect_image);
+    std::shared_ptr<Tensor> expect_keypoints;
+    dsize_t keypoints_size = expect_size[i][0];
+    Tensor::CreateFromVector(expect_keypoint_vector[i], TensorShape(expect_size[i]), &expect_keypoints);
+    EXPECT_EQ(*keypoints, *expect_keypoints);
+    std::shared_ptr<Tensor> expect_num_keypoints;
+    Tensor::CreateFromVector(expect_num_keypoints_list[i], TensorShape({keypoints_size, 1}), &expect_num_keypoints);
+    EXPECT_EQ(*num_keypoints, *expect_num_keypoints);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 2);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestCocoPanoptic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoPanoptic.";
+  // Create a Coco Dataset
+  std::string folder_path = datasets_root_path_ + "/testCOCO/train";
+  std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/panoptic.json";
+
+  std::shared_ptr<Dataset> ds = Coco(folder_path, annotation_file, "Panoptic", false, SequentialSampler(0, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::string expect_file[] = {"000000391895", "000000574769"};
+  std::vector<std::vector<float>> expect_bbox_vector = {{472, 173, 36, 48, 340, 22, 154, 301, 486, 183, 30, 35},
+                                                        {103, 133, 229, 422, 243, 175, 93, 164}};
+  std::vector<std::vector<uint32_t>> expect_categoryid_vector = {{1, 1, 2}, {1, 3}};
+  std::vector<std::vector<uint32_t>> expect_iscrowd_vector = {{0, 0, 0}, {0, 0}};
+  std::vector<std::vector<uint32_t>> expect_area_vector = {{705, 14062, 626}, {43102, 6079}};
+  std::vector<std::vector<dsize_t>> expect_size = {{3, 4}, {2, 4}};
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto image = row["image"];
+    auto bbox = row["bbox"];
+    auto category_id = row["category_id"];
+    auto iscrowd = row["iscrowd"];
+    auto area = row["area"];
+    std::shared_ptr<Tensor> expect_image;
+    Tensor::CreateFromFile(folder_path + "/" + expect_file[i] + ".jpg", &expect_image);
+    EXPECT_EQ(*image, *expect_image);
+    std::shared_ptr<Tensor> expect_bbox;
+    dsize_t bbox_size = expect_size[i][0];
+    Tensor::CreateFromVector(expect_bbox_vector[i], TensorShape(expect_size[i]), &expect_bbox);
+    EXPECT_EQ(*bbox, *expect_bbox);
+    std::shared_ptr<Tensor> expect_categoryid;
+    Tensor::CreateFromVector(expect_categoryid_vector[i], TensorShape({bbox_size, 1}), &expect_categoryid);
+    EXPECT_EQ(*category_id, *expect_categoryid);
+    std::shared_ptr<Tensor> expect_iscrowd;
+    Tensor::CreateFromVector(expect_iscrowd_vector[i], TensorShape({bbox_size, 1}), &expect_iscrowd);
+    EXPECT_EQ(*iscrowd, *expect_iscrowd);
+    std::shared_ptr<Tensor> expect_area;
+    Tensor::CreateFromVector(expect_area_vector[i], TensorShape({bbox_size, 1}), &expect_area);
+    EXPECT_EQ(*area, *expect_area);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 2);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestCocoDefault) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoDetection.";
+  // Create a Coco Dataset
+  std::string folder_path = datasets_root_path_ + "/testCOCO/train";
+  std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/train.json";
+
+  std::shared_ptr<Dataset> ds = Coco(folder_path, annotation_file);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto image = row["image"];
+    auto bbox = row["bbox"];
+    auto category_id = row["category_id"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    MS_LOG(INFO) << "Tensor bbox shape: " << bbox->shape();
+    MS_LOG(INFO) << "Tensor category_id shape: " << category_id->shape();
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 6);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestCocoException) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoDetection.";
+  // Create a Coco Dataset
+  std::string folder_path = datasets_root_path_ + "/testCOCO/train";
+  std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/train.json";
+  std::string invalid_folder_path = "./NotExist";
+  std::string invalid_annotation_file = "./NotExistFile";
+
+  std::shared_ptr<Dataset> ds = Coco(invalid_folder_path, annotation_file);
+  EXPECT_EQ(ds, nullptr);
+
+  std::shared_ptr<Dataset> ds1 = Coco(folder_path, invalid_annotation_file);
+  EXPECT_EQ(ds1, nullptr);
+
+  std::shared_ptr<Dataset> ds2 = Coco(folder_path, annotation_file, "valid_mode");
+  EXPECT_EQ(ds2, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestConcatSuccess) {

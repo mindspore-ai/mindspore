@@ -43,6 +43,7 @@ class SamplerObj;
 // Datasets classes (in alphabetical order)
 class Cifar10Dataset;
 class Cifar100Dataset;
+class CocoDataset;
 class ImageFolderDataset;
 class MnistDataset;
 class VOCDataset;
@@ -74,6 +75,26 @@ std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, std::sha
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir,
                                           std::shared_ptr<SamplerObj> sampler = nullptr);
+
+/// \brief Function to create a CocoDataset
+/// \notes The generated dataset has multi-columns :
+///        - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
+///                                     ['iscrowd', dtype=uint32]].
+///        - task='Stuff', column: [['image', dtype=uint8], ['segmentation',dtype=float32], ['iscrowd', dtype=uint32]].
+///        - task='Keypoint', column: [['image', dtype=uint8], ['keypoints', dtype=float32],
+///                                    ['num_keypoints', dtype=uint32]].
+///        - task='Panoptic', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
+///                                    ['iscrowd', dtype=uint32], ['area', dtype=uitn32]].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] annotation_file Path to the annotation json
+/// \param[in] task Set the task type of reading coco data, now support 'Detection'/'Stuff'/'Panoptic'/'Keypoint'
+/// \param[in] decode Decode the images after reading
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
+///    will be used to randomly iterate the entire dataset
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::string &annotation_file,
+                                  const std::string &task = "Detection", bool decode = false,
+                                  std::shared_ptr<SamplerObj> sampler = nullptr);
 
 /// \brief Function to create an ImageFolderDataset
 /// \notes A source dataset that reads images from a tree of directories
@@ -295,6 +316,31 @@ class Cifar100Dataset : public Dataset {
 
  private:
   std::string dataset_dir_;
+  std::shared_ptr<SamplerObj> sampler_;
+};
+
+class CocoDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  CocoDataset(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task, bool decode,
+              std::shared_ptr<SamplerObj> sampler);
+
+  /// \brief Destructor
+  ~CocoDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return shared pointer to the list of newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::string dataset_dir_;
+  std::string annotation_file_;
+  std::string task_;
+  bool decode_;
   std::shared_ptr<SamplerObj> sampler_;
 };
 
