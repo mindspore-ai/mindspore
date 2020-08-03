@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr int MAX_DIMS = 4;
+constexpr int MAX_DIMS = 7;
 template <typename T>
 class StridedSliceGpuKernel : public GpuKernel {
  public:
@@ -65,8 +65,17 @@ class StridedSliceGpuKernel : public GpuKernel {
 
  protected:
   void InitSizeLists() override {
-    input_size_list_.push_back(input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * sizeof(T));
-    output_size_list_.push_back(output_shape_[0] * output_shape_[1] * output_shape_[2] * output_shape_[3] * sizeof(T));
+    size_t size = sizeof(T);
+    for (size_t i = 0; i < MAX_DIMS; i++) {
+      size *= input_shape_[i];
+    }
+    input_size_list_.push_back(size);
+
+    int size1 = sizeof(T);
+    for (size_t i = 0; i < MAX_DIMS; i++) {
+      size1 *= output_shape_[i];
+    }
+    output_size_list_.push_back(size1);
   }
 
  private:

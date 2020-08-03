@@ -93,3 +93,15 @@ def test_stridedslice():
     y = Tensor(x_np)[:, ::-1]
     expect = x_np[:, ::-1]
     assert np.allclose(y.asnumpy(), expect)
+
+    x = Tensor(np.arange(0, 2 * 3 * 4 * 5 * 4 * 3 * 2).reshape(2, 3, 4, 5, 4, 3, 2).astype(np.float32))
+    y = P.StridedSlice()(x, (1, 0, 0, 2, 1, 2, 0), (2, 2, 2, 4, 2, 3, 2), (1, 1, 1, 1, 1, 1, 2))
+    expect = np.array([[[[[[[1498.]]],
+                          [[[1522.]]]],
+                         [[[[1618.]]],
+                          [[[1642.]]]]],
+                        [[[[[1978.]]],
+                          [[[2002.]]]],
+                         [[[[2098.]]],
+                          [[[2122.]]]]]]])
+    assert np.allclose(y.asnumpy(), expect)
