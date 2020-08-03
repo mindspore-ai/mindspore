@@ -63,23 +63,29 @@ void MatrixMultiAdd(float *c11, float *c12, float *c21, float *c22, float *x_ptr
   return;
 }
 
-void PostConvFuncFp32(const float *c4_out_ptr, float *out_ptr, const float *bias_ptr, size_t output_channel,
-                      size_t plane_size, size_t stride, bool is_relu, bool is_relu6) {
-#ifndef ENABLE_ARM64
+void PostConvFuncComm(const float *src_ptr_, float *out_ptr, const float *bias_ptr, size_t output_channel,
+                      size_t plane_size, size_t stride, bool is_relu, bool is_relu6, int size) {
   for (int oc = 0; oc < output_channel; oc++) {
-    int oc4div = oc / 4, oc4mod = oc % 4;
+    int oc_div = oc / size, oc_mod = oc % size;
     for (int hw = 0; hw < plane_size; hw++) {
-      int src_index = oc4div * 4 * plane_size + hw * 4 + oc4mod;
+      int src_index = oc_div * size * plane_size + hw * size + oc_mod;
       int dst_index = hw * stride + oc;
-      float value = c4_out_ptr[src_index];
+      float value = src_ptr_[src_index];
       if (bias_ptr != nullptr) {
         value = value + bias_ptr[oc];
       }
-      value = (is_relu) ? (MSMAX(0, value)) : (value);
-      value = (is_relu6) ? (MSMIN(6, MSMAX(0, value))) : (value);
+      value = (is_relu || is_relu6) ? (MSMAX(0.f, value)) : (value);
+      value = (is_relu6) ? (MSMIN(6.f, value)) : (value);
       out_ptr[dst_index] = value;
     }
   }
+  return;
+}
+
+void PostConvFuncFp32C4(const float *c4_out_ptr, float *out_ptr, const float *bias_ptr, size_t output_channel,
+                        size_t plane_size, size_t stride, bool is_relu, bool is_relu6) {
+#ifndef ENABLE_ARM64
+  PostConvFuncComm(c4_out_ptr, out_ptr, bias_ptr, output_channel, plane_size, stride, is_relu, is_relu6, C4NUM);
 #else
   if (bias_ptr != nullptr) {
     if (is_relu) {
@@ -102,3 +108,8 @@ void PostConvFuncFp32(const float *c4_out_ptr, float *out_ptr, const float *bias
   return;
 }
 
+void PostConvFuncFp32C8(const float *c8_out_ptr, float *out_ptr, const float *bias_ptr, size_t output_channel,
+                        size_t plane_size, size_t stride, bool is_relu, bool is_relu6) {
+  PostConvFuncComm(c8_out_ptr, out_ptr, bias_ptr, output_channel, plane_size, stride, is_relu, is_relu6, C8NUM);
+  return;
+}

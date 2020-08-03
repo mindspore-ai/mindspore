@@ -27,7 +27,7 @@ namespace mindspore {
 using lite::tensor::Tensor;
 class TestFcInt8 : public mindspore::Common {
  public:
-  TestFcInt8(){}
+  TestFcInt8() {}
 };
 
 void Quantize(float *input_data, int length, float scale, int zero_point, int8_t *output_data) {
@@ -110,8 +110,7 @@ int FcInt8TestInit(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lit
   matmal_param->b_transpose_ = true;
   matmal_param->a_transpose_ = false;
   matmal_param->has_bias_ = true;
-  matmal_param->minf_ = -FLT_MAX;
-  matmal_param->maxf_ = FLT_MAX;
+  matmal_param->act_type_ = ActType_No;
   return out_t->ElementsNum();
 }
 

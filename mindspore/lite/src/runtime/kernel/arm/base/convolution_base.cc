@@ -146,28 +146,10 @@ int ConvolutionBaseCPUKernel::SetQuantParam() {
   QuantizeRoundParameter(real_multiplier, &conv_quant_arg_->quant_multiplier_[0], &conv_quant_arg_->left_shift_[0],
                          &conv_quant_arg_->right_shift_[0]);
 
-  ComputeQuantOutRange(conv_param_);
+  CalculateActivationRangeQuantized(
+    conv_param_->is_relu_, conv_param_->is_relu6_, conv_param_->conv_quant_arg_.quant_args_[2][0].zp_,
+    conv_param_->conv_quant_arg_.quant_args_[2][0].scale_, &conv_param_->conv_quant_arg_.out_act_min_[0],
+    &conv_param_->conv_quant_arg_.out_act_max_[0]);
   return RET_OK;
-}
-
-void ComputeQuantOutRange(ConvParameter *conv_param) {
-  int32_t min = std::numeric_limits<int8_t>::min();
-  int32_t max = std::numeric_limits<int8_t>::max();
-  float scale = conv_param->conv_quant_arg_.quant_args_[2][0].scale_;
-  int32_t zp = conv_param->conv_quant_arg_.quant_args_[2][0].zp_;
-  bool is_relu = conv_param->is_relu_;
-  bool is_relu6 = conv_param->is_relu6_;
-  int32_t quantized_zero = QuantizeToInt8(0, scale, zp);
-  int32_t quantized_six = QuantizeToInt8(6, scale, zp);
-  if (is_relu) {
-    min = min > quantized_zero ? min : quantized_zero;
-  } else if (is_relu6) {
-    min = min > quantized_zero ? min : quantized_zero;
-    max = max < quantized_six ? max : quantized_six;
-  } else {
-    // do nothing
-  }
-  conv_param->conv_quant_arg_.out_act_min_[0] = min;
-  conv_param->conv_quant_arg_.out_act_max_[0] = max;
 }
 }  // namespace mindspore::kernel

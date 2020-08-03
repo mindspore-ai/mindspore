@@ -21,6 +21,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <limits>
 
 struct QuantArg {
   double scale_;
@@ -112,13 +113,21 @@ inline uint8_t QuantizeToUint8(float real_value, float scale, int32_t zp) { retu
 
 inline int32_t QuantizeToInt8(float real_value, float scale, int32_t zp) { return round(real_value / scale + zp); }
 
-inline void CalculateActivationRangeQuantized(float fmax, float fmin, float scale, int zero_point, int *imax,
-                                              int *imin) {
-  int8_t qmin = (int8_t)CHAR_MIN;
-  int8_t qmax = (int8_t)CHAR_MAX;
-  int8_t qfmin = QuantizeToInt8(fmin, scale, zero_point);
-  int8_t qfmax = QuantizeToInt8(fmax, scale, zero_point);
-  *imin = qmin < qfmin ? qmin : qfmin;
-  *imax = qmax > qfmax ? qmax : qfmax;
+inline void CalculateActivationRangeQuantized(bool is_relu, bool is_relu6, int32_t zp, int32_t scale, int *mini,
+                                              int *maxi) {
+  int32_t min = std::numeric_limits<int8_t>::min();
+  int32_t max = std::numeric_limits<int8_t>::max();
+  int32_t quantized_zero = QuantizeToInt8(0, scale, zp);
+  int32_t quantized_six = QuantizeToInt8(6, scale, zp);
+  if (is_relu) {
+    min = min > quantized_zero ? min : quantized_zero;
+  } else if (is_relu6) {
+    min = min > quantized_zero ? min : quantized_zero;
+    max = max < quantized_six ? max : quantized_six;
+  } else {
+    // do nothing
+  }
+  *mini = min;
+  *maxi = max;
 }
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_QUANTIZATION_QUANTIZE_H_

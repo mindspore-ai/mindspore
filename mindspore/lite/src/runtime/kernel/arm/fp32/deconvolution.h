@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_DECONVOLUTION_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_DECONVOLUTION_H_
 
+#include <float.h>
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/kernel_registry.h"
@@ -24,13 +25,16 @@
 #include "schema/model_generated.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
 #include "src/runtime/kernel/arm/opclib/fp32/deconv.h"
+#include "src/runtime/kernel/arm/opclib/fp32/matmul.h"
 
 namespace mindspore::kernel {
 class DeConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
  public:
   DeConvolutionCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                          const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {
+    matmul_param_ = new MatMulParameter();
+  }
   ~DeConvolutionCPUKernel() override;
   int Init() override;
   int Run() override;
@@ -45,19 +49,18 @@ class DeConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
   int InitWeightBias();
 
  private:
-  StrassenMatMulParameter *matmul_param_;
-  int thread_hw_count_;
-  int thread_hw_stride_;
-  int thread_co4_count_;
-  int thread_co_stride_;
+  MatMulParameter *matmul_param_;
+  int input_plane_;
+  int kernel_plane_;
+  int output_plane_;
+  int thread_count_;
+  int thread_stride_;
   float *weight_ptr_;
+  float *pack_input_;
+  float *pack_output_;
   float *tmp_buffer_;
-  float *tmp_output_;
-  float *c4_input_;
-  float *c4_output_;
   float *input_ptr_;
   float *output_ptr_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_DECONVOLUTION_H_
-

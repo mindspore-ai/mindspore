@@ -19,6 +19,8 @@
 
 #include "src/runtime/kernel/arm/opclib/op_base.h"
 
+enum ActType { ActType_No, ActType_Relu, ActType_Relu6 };
+
 struct MatMulParameter {
   OpParameter op_parameter_;
   int row_;
@@ -26,12 +28,10 @@ struct MatMulParameter {
   int row_8_;
   int col_8_;
   int deep_;
-  float minf_;
-  float maxf_;
   bool has_bias_;
   bool a_transpose_; /* false :  row-major  */
   bool b_transpose_; /* true  :  col-major  */
+  ActType act_type_;
 };
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_MATMUL_H_
-
