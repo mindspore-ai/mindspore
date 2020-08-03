@@ -41,7 +41,6 @@ class MatMulOpenCLKernel : public LiteKernel {
   ~MatMulOpenCLKernel() override{};
 
   int Init() override;
-  int InferShape() {}
   int ReSize() override;
   int Run() override;
   void PadWeight();

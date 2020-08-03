@@ -19,7 +19,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/kernel/concat.h"
-#include "src/backend/opencl/cl/fp32/concat.cl.inc"
+#include "src/runtime/kernel/opencl/cl/fp32/concat.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
@@ -115,12 +115,16 @@ int GetBiggestDividerWithPriority(int number, int max_divider) {
   return 1;
 }
 
-void ConcatGetWorkGroup(const std::vector<size_t> &global, const std::vector<size_t> &local, int max_size) {
+void ConcatGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *local, int max_size) {
   int x = std::min(GetBiggestDividerWithPriority(global[0], 8), 4);
   int yz = max_size / x;
   int y = std::min(std::min(GetBiggestDividerWithPriority(global[1], 8), yz), 8);
   int z = std::min(yz / y, DivideRoundUp(global[2], 2));
-  local = {static_cast<unsigned int>(x), static_cast<unsigned int>(y), static_cast<unsigned int>(z)};
+
+  local->clear();
+  local->push_back(x);
+  local->push_back(y);
+  local->push_back(z);
 }
 int ConcatOpenCLKernel::Run() {
   auto param = reinterpret_cast<ConcatParameter *>(this->opParameter);
@@ -144,7 +148,7 @@ int ConcatOpenCLKernel::Run() {
     uint32_t OW = output_shape[2];
     uint32_t OC = output_shape[3];
     global = {OH, OW, OC};  // HWC
-    ConcatGetWorkGroup(global, local, 384);
+    ConcatGetWorkGroup(global, &local, 384);
     std::cout << "local size=:" << std::endl;
     for (int i = 0; i < local.size(); i++) {
       std::cout << local[i] << "    ";
@@ -174,7 +178,7 @@ int ConcatOpenCLKernel::Run() {
     uint32_t OW = output_shape[2];
     uint32_t OC = output_shape[3];
     global = {OH, OW, OC};  // HWC
-    ConcatGetWorkGroup(global, local, 384);
+    ConcatGetWorkGroup(global, &local, 384);
     std::cout << "local size=:" << std::endl;
     for (int i = 0; i < local.size(); i++) {
       std::cout << local[i] << "    ";
@@ -196,8 +200,9 @@ int ConcatOpenCLKernel::Run() {
   return 0;
 }
 
-kernel::LiteKernel *OpenCLConcatKernelCreator(const std::vector<tensor::Tensor *> &inputs,
-                                              const std::vector<tensor::Tensor *> &outputs, OpParameter *opParameter,
+kernel::LiteKernel *OpenCLConcatKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
+                                              const std::vector<lite::tensor::Tensor *> &outputs,
+                                              OpParameter *opParameter,
                                               const lite::Context *ctx, const kernel::KernelKey &desc) {
   auto *kernel = new ConcatOpenCLKernel(opParameter, inputs, outputs);
   auto ret = kernel->Init();

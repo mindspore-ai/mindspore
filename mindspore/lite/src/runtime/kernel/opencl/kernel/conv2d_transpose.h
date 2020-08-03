@@ -39,7 +39,6 @@ class Conv2dTransposeOpenCLKernel : public LiteKernel {
   ~Conv2dTransposeOpenCLKernel() override {};
 
   int Init() override;
-  int InferShape() {}
   int ReSize() override;
   int Run() override;
   void PadWeight();

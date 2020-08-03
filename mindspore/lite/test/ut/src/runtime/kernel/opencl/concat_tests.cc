@@ -18,12 +18,10 @@
 #include "utils/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
-#include "mindspore/lite/src/backend/opencl/subgraph_opencl_kernel.h"
-#include "mindspore/lite/src/backend/opencl/kernel/concat.h"
+#include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
+#include "mindspore/lite/src/runtime/kernel/opencl/kernel/concat.h"
 
-using  mindspore::kernel;
-using  mindspore::lite;
-using  mindspore;
+
 int DivideRoundUp(int n, int div) {
   int q = n / div;
   return n % div == 0 ? q : q + 1;
@@ -96,7 +94,7 @@ void ConcatComputeByCPU_3input_dim4_axis3(float *input0, float *input1, float *i
 }
 
 namespace mindspore {
-class TestConcatOpenCL : public UT::Common {
+class TestConcatOpenCL : public mindspore::Common {
  public:
   TestConcatOpenCL(){}
 };
@@ -113,30 +111,31 @@ TEST_F(TestConcatOpenCL, ConcatFp32_2input_dim4_axis3) {
   output_shape[3] = DivideRoundUp(output_shape[3], 4) * 4;
   auto data_type = kNumberTypeFloat32;
   auto tensor_type = schema::NodeType_ValueNode;
-  std::vector<tensor::Tensor *> inputs;
+  std::vector<lite::tensor::Tensor *> inputs;
   for (auto &shape : input_shapes) {
-    inputs.push_back(new tensor::Tensor(data_type, shape, schema::Format_NHWC, tensor_type));
+    inputs.push_back(new lite::tensor::Tensor(data_type, shape, schema::Format_NHWC, tensor_type));
   }
-  auto *output_tensor = new tensor::Tensor(data_type, output_shape, schema::Format_NHWC, tensor_type);
-  std::vector<tensor::Tensor *> outputs{output_tensor};
+  auto *output_tensor = new lite::tensor::Tensor(data_type, output_shape, schema::Format_NHWC, tensor_type);
+  std::vector<lite::tensor::Tensor *> outputs{output_tensor};
   std::cout << "input_shapes size=: " << input_shapes.size() << std::endl;
   MS_LOG(INFO) << "initialize tensors";
   auto param = new ConcatParameter();
   param->axis_ = 3;
-  auto *concat_kernel = new ConcatOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  auto *concat_kernel = new kernel::ConcatOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
   concat_kernel->Init();
 
   MS_LOG(INFO) << "initialize sub_graph";
-  std::vector<LiteKernel *> kernels{concat_kernel};
-  auto *sub_graph = new SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  std::vector<kernel::LiteKernel *> kernels{concat_kernel};
+  auto *sub_graph = new kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
   sub_graph->Init();
 
   MS_LOG(INFO) << "initialize input data";
   srand(time(NULL));
   for (auto &input_tensor : inputs) {
     auto input_data = reinterpret_cast<float *>(input_tensor->Data());
+    static unsigned int seed = 123;
     for (int i = 0; i < input_tensor->ElementsNum(); ++i) {
-      input_data[i] = static_cast<float>(rand_r() % 10 + 1);
+      input_data[i] = static_cast<float>(rand_r(&seed) % 10 + 1);
     }
     printf("\n");
   }

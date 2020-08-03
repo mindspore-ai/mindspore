@@ -22,10 +22,6 @@
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/softmax.h"
 
-// using namespace mindspore::kernel;
-// using namespace mindspore::lite;
-// using namespace mindspore;
-
 namespace mindspore {
 
 class TestSoftmaxOpenCL : public mindspore::Common {};
@@ -53,12 +49,12 @@ TEST_F(TestSoftmaxOpenCL, SoftmaxFp32) {
   std::vector<lite::tensor::Tensor *> outputs{tensor_out};
 
   MS_LOG(INFO) << "create OpenCL Kernel";
-  auto *Softmax_kernel = new SoftmaxOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  auto *Softmax_kernel = new kernel::SoftmaxOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
   Softmax_kernel->Init();
   std::vector<LiteKernel *> kernels{Softmax_kernel};
 
   MS_LOG(INFO) << "create SubGraphOpenCLKernel";
-  auto *pGraph = new SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  auto *pGraph = new kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
   pGraph->Init();
 
   MS_LOG(INFO) << "initialize data";

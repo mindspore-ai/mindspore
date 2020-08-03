@@ -23,9 +23,6 @@
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/depthwise_conv2d.h"
 
-using mindspore::kernel;
-using mindspore::lite;
-using mindspore;
 
 #define SAFE_DELETE_ARRAY(a) \
   if (a != nullptr) {        \
@@ -39,12 +36,12 @@ using mindspore;
   }
 
 namespace mindspore {
-class TestConvolutionDwOpenCL : public UT::Common {
+class TestConvolutionDwOpenCL : public mindspore::Common {
  public:
   TestConvolutionDwOpenCL(){}
 };
 
-void DepthWiseTestMain(const ConvParameter *conv_param, float_t *input_data, float_t *weight_data, float_t *gnd_data,
+void DepthWiseTestMain(ConvParameter *conv_param, float_t *input_data, float_t *weight_data, float_t *gnd_data,
                        schema::Format format, bool is_compare = true) {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
@@ -92,13 +89,13 @@ void DepthWiseTestMain(const ConvParameter *conv_param, float_t *input_data, flo
   inputs[1]->SetData(packed_weight);
   inputs[2]->SetData(bias_data);
 
-  OpParameter * parameter = conv_param;
-  auto *pKernel = new DepthwiseConv2dOpenCLKernel(parameter, inputs, outputs);
+  OpParameter * parameter = reinterpret_cast<OpParameter *>(conv_param);
+  auto *pKernel = new kernel::DepthwiseConv2dOpenCLKernel(parameter, inputs, outputs);
   pKernel->Init();
 
-  std::vector<LiteKernel *> kernels{pKernel};
+  std::vector<kernel::LiteKernel *> kernels{pKernel};
   std::vector<lite::tensor::Tensor *> inputs_{tensor_a};
-  auto *pGraph = new SubGraphOpenCLKernel(inputs_, outputs, kernels, kernels, kernels);
+  auto *pGraph = new kernel::SubGraphOpenCLKernel(inputs_, outputs, kernels, kernels, kernels);
   pGraph->Init();
 
   // freamework to do!!!
@@ -141,7 +138,7 @@ void DepthWiseTestMain(const ConvParameter *conv_param, float_t *input_data, flo
     }
     std::cout << std::endl;
     // compare
-    UT::Common::CompareOutputData(packed_output, packed_correct_data, packed_output_size, 0.00001);
+    Common::CompareOutputData(packed_output, packed_correct_data, packed_output_size, 0.00001);
     SAFE_DELETE_ARRAY(packed_correct_data)
   }
 
@@ -202,7 +199,7 @@ TEST_F(TestConvolutionDwOpenCL, NoPadNC4HW4Fp32) {
                       2.2294958, 1.6570128, 2.465089,  1.4294086, 2.7941442, 1.7871612, 2.188921, 1.0601988};
 
   DepthWiseTestMain(conv_param, input_data, weight_data, gnd_data, schema::Format_NC4HW4);
-  opencl::OpenCLRuntime::DeleteInstance();
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestConvolutionDwOpenCL, PadNC4HW4Fp32) {
@@ -275,7 +272,7 @@ TEST_F(TestConvolutionDwOpenCL, PadNC4HW4Fp32) {
                       1.0517888,  0.59817517, 0.75649744, 1.2075498,  0.38804203};
 
   DepthWiseTestMain(conv_param, input_data, weight_data, gnd_data, schema::Format_NC4HW4);
-  opencl::OpenCLRuntime::DeleteInstance();
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestConvolutionDwOpenCL, NoPadNHWC4Fp32) {
@@ -321,7 +318,7 @@ TEST_F(TestConvolutionDwOpenCL, NoPadNHWC4Fp32) {
                       2.2294958, 1.6570128, 2.465089,  1.4294086, 2.7941442, 1.7871612, 2.188921, 1.0601988};
 
   DepthWiseTestMain(conv_param, input_data, weight_data, gnd_data, schema::Format_NHWC4);
-  opencl::OpenCLRuntime::DeleteInstance();
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestConvolutionDwOpenCL, PadNHWC4Fp32) {
@@ -394,7 +391,7 @@ TEST_F(TestConvolutionDwOpenCL, PadNHWC4Fp32) {
                       1.0517888,  0.59817517, 0.75649744, 1.2075498,  0.38804203};
 
   DepthWiseTestMain(conv_param, input_data, weight_data, gnd_data, schema::Format_NHWC4);
-  opencl::OpenCLRuntime::DeleteInstance();
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 
@@ -474,13 +471,13 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwNoPadFp32) {
   inputs[1]->SetData(packed_weight);
   inputs[2]->SetData(bias_data);
 
-  OpParameter * parameter = conv_param;
-  auto *pKernel = new DepthwiseConv2dOpenCLKernel(parameter, inputs, outputs);
+  OpParameter * parameter = reinterpret_cast<OpParameter *>(conv_param);
+  auto *pKernel = new kernel::DepthwiseConv2dOpenCLKernel(parameter, inputs, outputs);
   pKernel->Init();
 
-  std::vector<LiteKernel *> kernels{pKernel};
+  std::vector<kernel::LiteKernel *> kernels{pKernel};
   std::vector<lite::tensor::Tensor *> inputs_{tensor_a};
-  auto *pGraph = new SubGraphOpenCLKernel(inputs_, outputs, kernels, kernels, kernels);
+  auto *pGraph = new kernel::SubGraphOpenCLKernel(inputs_, outputs, kernels, kernels, kernels);
   pGraph->Init();
 
   // freamework to do!!!
@@ -517,7 +514,7 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwNoPadFp32) {
   }
   std::cout << std::endl;
   // compare
-  CompareOutputData(packed_output, packed_correct_data, packed_output_size, 0.00001);
+  Common::CompareOutputData(packed_output, packed_correct_data, packed_output_size, 0.00001);
 
   for (auto tensor : inputs) {
     tensor->SetData(nullptr);
@@ -530,7 +527,7 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwNoPadFp32) {
   SAFE_DELETE_PTR(pKernel)
   SAFE_DELETE_PTR(pGraph)
   MS_LOG(INFO) << "TestConvolutionDwNoPadFp32 passed";
-  opencl::OpenCLRuntime::DeleteInstance();
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestConvolutionDwOpenCL, ConvDwPadFp32) {
@@ -637,13 +634,13 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwPadFp32) {
   inputs[1]->SetData(packed_weight);
   inputs[2]->SetData(bias_data);
 
-  OpParameter * parameter = conv_param;
-  auto *pKernel = new DepthwiseConv2dOpenCLKernel(parameter, inputs, outputs);
+  OpParameter * parameter = reinterpret_cast<OpParameter *>(conv_param);
+  auto *pKernel = new kernel::DepthwiseConv2dOpenCLKernel(parameter, inputs, outputs);
   pKernel->Init();
 
-  std::vector<LiteKernel *> kernels{pKernel};
+  std::vector<kernel::LiteKernel *> kernels{pKernel};
   std::vector<lite::tensor::Tensor *> inputs_{tensor_a};
-  auto *pGraph = new SubGraphOpenCLKernel(inputs_, outputs, kernels, kernels, kernels);
+  auto *pGraph = new kernel::SubGraphOpenCLKernel(inputs_, outputs, kernels, kernels, kernels);
   pGraph->Init();
 
   // freamework to do!!!
@@ -688,7 +685,7 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwPadFp32) {
   }
   std::cout << std::endl;
   // compare
-  CompareOutputData(packed_output, packed_correct_data, packed_output_size, 0.00001);
+  Common::CompareOutputData(packed_output, packed_correct_data, packed_output_size, 0.00001);
 
   SAFE_DELETE_ARRAY(packed_input);
   SAFE_DELETE_ARRAY(packed_correct_data)
@@ -703,7 +700,7 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwPadFp32) {
   SAFE_DELETE_PTR(pKernel)
   SAFE_DELETE_PTR(pGraph)
   MS_LOG(INFO) << "TestConvolutionDwPadFp32 passed";
-  opencl::OpenCLRuntime::DeleteInstance();
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestConvolutionDwOpenCL, ProfilingMobilenetv2) {
@@ -803,7 +800,7 @@ TEST_F(TestConvolutionDwOpenCL, ProfilingMobilenetv2) {
   }
   SAFE_DELETE_ARRAY(input_data);
   SAFE_DELETE_ARRAY(weight_data);
-  opencl::OpenCLRuntime::DeleteInstance();
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 }  // namespace mindspore
