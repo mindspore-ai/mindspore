@@ -56,7 +56,7 @@ TEST_F(SpaceToDepthTestFp32, SpaceToDepthTest2) {
   input_tensor.SetFormat(schema::Format_NHWC);
   input_tensor.set_data_type(kNumberTypeFloat32);
   std::vector<lite::tensor::Tensor *> inputs_tensor;
-  inputs_tensor.emplace_back(&input_tensor);
+  inputs_tensor.push_back(&input_tensor);
 
   const int out_size = 16;
   float expect_out[16] = {1, 2, 10, 20, 5, 6, 3, 8, 18, 10, 11, 55, 3, 4, 15, 25};
@@ -68,7 +68,7 @@ TEST_F(SpaceToDepthTestFp32, SpaceToDepthTest2) {
   output_tensor.SetFormat(schema::Format_NHWC);
   output_tensor.set_data_type(kNumberTypeFloat32);
   std::vector<lite::tensor::Tensor *> outputs_tensor;
-  outputs_tensor.emplace_back(&output_tensor);
+  outputs_tensor.push_back(&output_tensor);
 
   SpaceToDepthParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
