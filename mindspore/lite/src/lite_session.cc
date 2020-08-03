@@ -167,6 +167,7 @@ std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputs() {
 
 int LiteSession::RunGraph() {
   MS_EXCEPTION_IF_NULL(this->context_);
+  SetMaxWokerNum(context_->threadNum);
   Executor executor;
   return executor.Run(this->inputs, this->outputs, this->kernels, this->context_->allocator.get());
 }
