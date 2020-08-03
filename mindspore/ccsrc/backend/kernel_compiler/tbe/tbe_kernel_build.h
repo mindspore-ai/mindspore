@@ -26,7 +26,6 @@
 #include <nlohmann/json.hpp>
 #include "ir/dtype.h"
 #include "backend/kernel_compiler/kernel.h"
-#include "pybind11/stl.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "backend/kernel_compiler/tbe/tbe_adapter.h"
 

@@ -37,7 +37,6 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/ascend/profiling/profiling_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
-#include "backend/kernel_compiler/tbe/tbe_python_funcs.h"
 #include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
 #include "runtime/device/ascend/ascend_memory_manager.h"
 #include "debug/tensor_load.h"

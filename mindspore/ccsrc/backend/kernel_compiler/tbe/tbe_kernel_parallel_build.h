@@ -21,9 +21,11 @@
 #include <string>
 #include <map>
 #include <vector>
-#include "backend/kernel_compiler/kernel.h"
-#include "pybind11/stl.h"
 #include <nlohmann/json.hpp>
+
+#include "backend/kernel_compiler/kernel.h"
+#include "backend/session/kernel_build_client.h"
+
 namespace mindspore {
 namespace kernel {
 bool TbeOpParallelPreBuild(const std::vector<AnfNodePtr> &anf_nodes);
@@ -42,7 +44,6 @@ class ParallelBuildManager {
  public:
   ParallelBuildManager();
   ~ParallelBuildManager();
-  int32_t StartCompileOp(const nlohmann::json &kernel_json) const;
   void SavePreTaskInfo(int32_t task_id, const AnfNodePtr &anf_node);
   void SaveTaskInfo(int32_t task_id, const AnfNodePtr &anf_node, const std::string &json_name,
                     const std::vector<size_t> &input_size_list, const std::vector<size_t> &output_size_list,
@@ -54,7 +55,6 @@ class ParallelBuildManager {
                      const std::vector<size_t> &input_size_list, const std::vector<size_t> &output_size_list,
                      AnfNode *node) const;
 
-  bool WaitOne(int *task_id, char **task_result, char **pre_build_result) const;
   bool IsAllPreTaskFinish() const;
   bool IsAllTaskFinish() const;
   void PreTaskFinishProcess(int32_t task_id, const std::string &pre_build_result);
@@ -62,10 +62,13 @@ class ParallelBuildManager {
   KernelModPtr GenKernelMod(const string &json_name, const string &processor,
                             const std::vector<size_t> &input_size_list, const std::vector<size_t> &output_size_list,
                             const KernelPackPtr &kernel_pack) const;
+
+  // Interactive with real backend, who could be implemented by Python.
+  int StartCompileOp(const nlohmann::json &kernel_json);
+  bool WaitOne(int *task_id, std::string *task_result, std::string *pre_build_result);
   void ResetTaskInfo();
 
  private:
-  PyObject *tbe_parallel_compiler_;
   std::map<int32_t, AnfNodePtr> pre_task_map_;
   std::map<int32_t, KernelBuildTaskInfo> task_map_;
   std::vector<KernelBuildTaskInfo> same_op_list_;
