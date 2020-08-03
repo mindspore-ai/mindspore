@@ -165,9 +165,11 @@ def load_weights(network, network_name=None, force_reload=True, **kwargs):
         network (Cell): Cell network.
         network_name (string, optional): Cell network name get from network. Default: None.
         force_reload (bool, optional): Whether to force a fresh download unconditionally. Default: False.
-        **kwargs (optional): The corresponding kwargs for download for model.
-            device_target (string, optional): Runtime device target. Default: 'ascend'.
-            dataset (string, optional): Dataset to train the network. Default: 'cifar10'.
+        kwargs (dict, optional): The corresponding kwargs for download for model.
+
+            - device_target (str, optional): Runtime device target. Default: 'ascend'.
+            - dataset (str, optional): Dataset to train the network. Default: 'cifar10'.
+            - version (str, optional): MindSpore version to save the checkpoint. Default: Latest version.
 
     Example:
         >>> hub.load(network, network_name='lenet',
