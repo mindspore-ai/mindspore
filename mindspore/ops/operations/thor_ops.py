@@ -13,9 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """thor_ops"""
+import math
+
 from ..primitive import prim_attr_register, PrimitiveWithInfer
 from ...common import dtype as mstype
-
+from ..._checkparam import Validator as validator
+from ..._checkparam import Rel
 
 __all__ = ["CusBatchMatMul",
            "CusCholeskyTrsm",
@@ -29,6 +32,37 @@ __all__ = ["CusBatchMatMul",
            "CusMatMulCubeDenseRight",
            "CusMatMulCubeFraczLeftCast",
            ]
+
+
+def _check_positive_int_or_tuple(arg_name, arg_value, prim_name, allow_four=False, ret_four=False):
+    """
+    Checks whether an argument is a positive int or tuple with 2 or 4(when allow_four is True) positive int elements.
+    """
+
+    def _raise_message():
+        raise ValueError(f"For '{prim_name}' attr '{arg_name}' should be an positive int number or a tuple of two "
+                         f"{'or four ' if allow_four else ''}positive int numbers, but got {arg_value}")
+
+    def _get_return_value():
+        if isinstance(arg_value, int):
+            ret = (1, 1, arg_value, arg_value) if ret_four else (arg_value, arg_value)
+        elif len(arg_value) == 2:
+            ret = (1, 1, arg_value[0], arg_value[1]) if ret_four else arg_value
+        elif len(arg_value) == 4:
+            if not allow_four:
+                _raise_message()
+            ret = arg_value if ret_four else (arg_value[2], arg_value[3])
+        else:
+            _raise_message()
+        return ret
+
+    validator.check_value_type(arg_name, arg_value, (int, tuple), prim_name)
+    ret_value = _get_return_value()
+    for item in ret_value:
+        if isinstance(item, int) and item > 0:
+            continue
+        _raise_message()
+    return ret_value
 
 
 class CusBatchMatMul(PrimitiveWithInfer):
@@ -360,6 +394,7 @@ class CusTranspose02314(PrimitiveWithInfer):
         """init CusTranspose02314"""
         self.init_prim_io_names(inputs=['x1'], outputs=['y'])
         from mindspore.ops._op_impl._custom_op.transpose02314_impl import CusTranspose02314
+
     def get_bprop(self):
         def bprop(x, out, dout):
             return (C.zeros_like(x),)
@@ -446,3 +481,84 @@ class CusMatMulCubeFraczLeftCast(PrimitiveWithInfer):
 
     def infer_dtype(self, data1_dtype, data2_dtype):
         return mstype.float16
+
+
+class Im2Col(PrimitiveWithInfer):
+    """
+    extract image pathes from image.
+
+    The rank of input_x1 must be `4`, data_format is "NCHW".
+
+    Inputs:
+        - **input_x1** (Tensor) - The feature map.
+          The shape of the tensor is :math:`(N, C, H, W)`.
+    Outputs:
+        Tensor.
+    Examples:
+        >>> input_x = Tensor(np.random.rand(32, 3, 224, 224).astype(np.float16))
+        >>> img2col = P.CusMatMulCubeDenseLeft(kernel_size=7, pad=3, stride=2)
+        >>> output = img2col(input_x)
+    """
+    @prim_attr_register
+    def __init__(self,
+                 kernel_size,
+                 pad_mode="valid",
+                 pad=0,
+                 stride=1,
+                 dilation=1):
+        """init Im2Col"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+        self.kernel_size = _check_positive_int_or_tuple('kernel_size', kernel_size, self.name)
+        self.add_prim_attr('kernel_size', self.kernel_size)
+        self.stride = _check_positive_int_or_tuple('stride', stride, self.name, allow_four=True, ret_four=True)
+        self.add_prim_attr('stride', self.stride)
+        self.dilation = _check_positive_int_or_tuple('dilation', dilation, self.name, allow_four=True, ret_four=True)
+        self.add_prim_attr('dilation', self.dilation)
+        validator.check_value_type('pad', pad, (int,), self.name)
+        self.pad_mode = validator.check_string('pad_mode', pad_mode, ['valid', 'same', 'pad'], self.name)
+        self.pad = validator.check_pad_value_by_mode(pad_mode, pad, self.name)
+        if self.pad_mode == 'pad':
+            validator.check_integer('pad', self.pad, 0, Rel.GE, self.name)
+        self.add_prim_attr('data_format', "NCHW")
+
+    def infer_shape(self, x_shape):
+        validator.check_integer("x rank", len(x_shape), 4, Rel.EQ, self.name)
+        kernel_size_h = self.kernel_size[0]
+        kernel_size_w = self.kernel_size[1]
+        stride_h = self.stride[2]
+        stride_w = self.stride[3]
+        dilation_h = self.dilation[2]
+        dilation_w = self.dilation[3]
+        if self.pad_mode == "valid":
+            h_out = math.ceil((x_shape[2] - dilation_h * (kernel_size_h - 1)) / stride_h)
+            w_out = math.ceil((x_shape[3] - dilation_w * (kernel_size_w - 1)) / stride_w)
+            pad_top, pad_bottom, pad_left, pad_right = 0, 0, 0, 0
+        elif self.pad_mode == "same":
+            h_out = math.ceil(x_shape[2] / stride_h)
+            w_out = math.ceil(x_shape[3] / stride_w)
+            pad_needed_h = max(0, (h_out - 1) * stride_h + dilation_h * (kernel_size_h - 1) + 1 - x_shape[2])
+            pad_top = math.floor(pad_needed_h / 2)
+            pad_bottom = pad_needed_h - pad_top
+            pad_needed_w = max(0, (w_out - 1) * stride_w + dilation_w * (kernel_size_w - 1) + 1 - x_shape[3])
+            pad_left = math.floor(pad_needed_w / 2)
+            pad_right = pad_needed_w - pad_left
+        elif self.pad_mode == 'pad':
+            pad_top, pad_bottom, pad_left, pad_right = self.pad, self.pad, self.pad, self.pad
+            h_out = 1 + (x_shape[2] + 2 * self.pad - kernel_size_h - (kernel_size_h - 1) * (dilation_h - 1)) / stride_h
+            w_out = 1 + (x_shape[3] + 2 * self.pad - kernel_size_w - (kernel_size_w - 1) * (dilation_w - 1)) / stride_w
+            h_out = math.floor(h_out)
+            w_out = math.floor(w_out)
+        self.pad_list = [pad_top, pad_bottom, pad_left, pad_right]
+        self.add_prim_attr('pad_list', (pad_top, pad_bottom, pad_left, pad_right))
+        batch_size = x_shape[0]
+        channel = x_shape[1]
+        k_h = kernel_size_h
+        k_w = kernel_size_w
+        out_shape = [channel, k_h, k_w, batch_size, h_out, w_out]
+        return out_shape
+
+    def infer_dtype(self, x_dtype):
+        args = {'x': x_dtype}
+        valid_types = [mstype.float16, mstype.float32]
+        validator.check_tensor_type_same(args, valid_types, self.name)
+        return x_dtype
