@@ -73,7 +73,7 @@ TEST_F(InferTest, TestConvNode) {
   auto buf = new char *[1];
   //================================================================
   size_t weight_size;
-  std::string weight_path = "./convfp32_weight_32_3_3_3.bin";
+  std::string weight_path = "./test_data/conv/convfp32_weight_32_3_3_3.bin";
   ReadFile(weight_path.c_str(), &weight_size, buf);
   ASSERT_NE(nullptr, buf[0]);
   auto weight_data_temp = reinterpret_cast<float *>(buf[0]);
@@ -118,7 +118,7 @@ TEST_F(InferTest, TestConvNode) {
   auto data = inTensor->MutableData();
   //===================================================
   size_t input_size;
-  std::string input_path = "./convfp32_input_1_28_28_3.bin";
+  std::string input_path = "./test_data/conv/convfp32_input_1_28_28_3.bin";
   ReadFile(input_path.c_str(), &input_size, buf);
   ASSERT_NE(nullptr, buf[0]);
   auto input_data = reinterpret_cast<float *>(buf[0]);
@@ -138,7 +138,7 @@ TEST_F(InferTest, TestConvNode) {
   ASSERT_NE(nullptr, outData);
   //===================================================
   size_t output_size;
-  std::string output_path = "./convfp32_out_1_28_28_32.bin";
+  std::string output_path = "./test_data/conv/convfp32_out_1_28_28_32.bin";
   ReadFile(output_path.c_str(), &output_size, buf);
   ASSERT_NE(nullptr, buf[0]);
   auto output_data = reinterpret_cast<float *>(buf[0]);
@@ -146,7 +146,7 @@ TEST_F(InferTest, TestConvNode) {
   //===================================================
   ASSERT_EQ(output_size, outTensor->Size());
   for (size_t i = 0; i < outTensor->ElementsNum(); i++) {
-    ASSERT_EQ(output_data[i], outData[i]);
+    ASSERT_LE((output_data[i]- outData[i]), 0.001);
   }
   MS_LOG(INFO) << "Passed";
 }

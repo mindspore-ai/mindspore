@@ -18,6 +18,7 @@
 #include <float.h>
 #include "src/ops/ops.h"
 #include "utils/log_adapter.h"
+#include "schema/ops_generated.h"
 #include "src/runtime/kernel/arm/opclib/op_base.h"
 #include "src/runtime/kernel/arm/opclib/fp32/arg_min_max.h"
 #include "src/runtime/kernel/arm/opclib/fp32/cast.h"
@@ -389,6 +390,30 @@ OpParameter *PopulateReduceParameter(const lite::Primitive *primitive) {
   }
   reduce_param->mode_ = static_cast<int>(reduce->mode());
   return reinterpret_cast<OpParameter *>(reduce_param);
+}
+
+OpParameter *PopulateMeanParameter(const lite::Primitive *primitive) {
+    ReduceParameter *mean_param = new (std::nothrow) ReduceParameter();
+    if (mean_param == nullptr) {
+        MS_LOG(ERROR) << "new ReduceParameter failed.";
+        return nullptr;
+    }
+    mean_param->op_parameter_.type_ = primitive->Type();
+    auto mean = primitive->Value()->value_as_Mean();
+    mean_param->keep_dims_ = mean->keepDims();
+    auto axisVector = mean->axis();
+    if (axisVector->size() > REDUCE_MAX_AXES_NUM) {
+        MS_LOG(ERROR) << "Reduce axes size " << axisVector->size() << " exceed limit " << REDUCE_MAX_AXES_NUM;
+        delete (mean_param);
+        return nullptr;
+    }
+    mean_param->num_axes_ = static_cast<int>(axisVector->size());
+    int i = 0;
+    for (auto iter = axisVector->begin(); iter != axisVector->end(); iter++) {
+        mean_param->axes_[i++] = *iter;
+    }
+    mean_param->mode_ = static_cast<int>(schema::ReduceMode_ReduceMean);
+    return reinterpret_cast<OpParameter *>(mean_param);
 }
 
 OpParameter *PopulatePadParameter(const lite::Primitive *primitive) {
@@ -1131,6 +1156,7 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_Activation] = PopulateActivationParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Conv2D] = PopulateConvParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Reduce] = PopulateReduceParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_Mean] = PopulateMeanParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Pooling] = PopulatePoolingParameter;
   populate_parameter_funcs_[schema::PrimitiveType_DepthwiseConv2D] = PopulateConvDwParameter;
   populate_parameter_funcs_[schema::PrimitiveType_DeDepthwiseConv2D] = PopulateDeconvDwParameter;

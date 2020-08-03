@@ -175,9 +175,11 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<tensor::Tensor *> 
     kernel::KernelKey key{desc.arch, kNumberTypeFloat16, desc.type};
     kernel = KernelFactory::GetInstance()->GetKernel(inputs, outputs, primitive, context_, key);
     if (kernel != nullptr) {
+      MS_LOG(INFO) << "Get fp16 op success.";
       kernel->set_desc(desc);
       return kernel;
     }
+    MS_LOG(INFO) << "Get fp16 op failed, back to fp32 op.";
     kernel = KernelFactory::GetInstance()->GetKernel(inputs, outputs, primitive, context_, desc);
   } else {
     kernel = KernelFactory::GetInstance()->GetKernel(inputs, outputs, primitive, context_, desc);

@@ -30,9 +30,9 @@ using mindspore::schema::PrimitiveType_Activation;
 
 namespace mindspore::kernel {
 kernel::LiteKernel *CpuActivationInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *parameter, const lite::Context *ctx,
-                                               const KernelKey &desc) {
+                                                   const std::vector<lite::tensor::Tensor *> &outputs,
+                                                   OpParameter *parameter, const lite::Context *ctx,
+                                                   const KernelKey &desc) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "parameter is nullptr";
     return nullptr;
@@ -56,8 +56,10 @@ kernel::LiteKernel *CpuActivationInt8KernelCreator(const std::vector<lite::tenso
   }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
+    delete kernel;
     MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_
                   << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
+    return nullptr;
   }
   return kernel;
 }

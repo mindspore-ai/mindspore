@@ -105,7 +105,46 @@ void IndirectGemmFp32_8x8(float *output, const float *input, const float *weight
 #ifndef ENABLE_ARM32
 void IndirectGemmFp32_8x4(float *output, const float *input, const float *weight, const float *bias, size_t step,
                           size_t ic4, size_t output_channel, size_t offset, size_t mode, size_t writeC4, size_t relu,
-                          size_t relu6) {}
+                          size_t relu6) {
+  for (int i = 0; i < TILE_NUM; i++) {
+    int input_tile_offset = i * C4NUM;
+    int output_tile_offset = i * output_channel;
+    for (int j = 0; j < output_channel; j++) {
+      int oc4_block = j / C4NUM;
+      int oc4_res = j % C4NUM;
+      int weight_oc_offset = oc4_block * step * ic4 * C4NUM * C4NUM + oc4_res;
+      int out_oc_offset = output_tile_offset + j;
+
+      float acc = 0;
+      for (int n = 0; n < step; n++) {
+        int input_kw_offset = input_tile_offset + n * ic4 * C4NUM * TILE_NUM;
+        int weight_kw_offset = weight_oc_offset + n * ic4 * C4NUM * C4NUM;
+
+        for (int k = 0; k < ic4; k++) {
+          int input_ic4_offset = input_kw_offset + k * TILE_NUM * C4NUM;
+          int weight_ic4_offset = weight_kw_offset + k * C4NUM * C4NUM;
+          for (int m = 0; m < C4NUM; m++) {
+            int input_ic_offset = input_ic4_offset + m;
+            int weight_ic_offset = weight_ic4_offset + m * C4NUM;
+            acc += (weight + weight_ic_offset)[0] * (input + input_ic_offset)[0];
+          }
+        }
+      }
+      acc += bias[j];
+      if (relu) {
+        acc = acc > 0 ? acc : 0;
+      } else if (relu6) {
+        if (acc < 0) {
+          acc = 0;
+        } else if (acc > 6) {
+          acc = 6;
+        } else {
+        }
+      }
+      (output + out_oc_offset)[0] = acc;
+    }
+  }
+}
 #endif
 
 int8_t MinInt8(int8_t a, int8_t b) { return b ^ ((a ^ b) & -(a < b)); }

@@ -384,6 +384,13 @@ class Fill : public Primitive {
   int InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) override;
 };
 
+class Mean : public Primitive {
+ public:
+  explicit Mean(schema::Primitive *primitive) : Primitive(primitive) {}
+  const schema::Mean *GetAttribute() const { return this->primitive->value_as_Mean(); }
+  int InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) override;
+};
+
 class ArgMax : public Primitive {
  public:
   explicit ArgMax(schema::Primitive *primitive) : Primitive(primitive) {}
@@ -601,10 +608,11 @@ class SpaceToBatch : public Primitive {
   explicit SpaceToBatch(schema::Primitive *primitive) : Primitive(primitive) {}
   const schema::SpaceToBatch *GetAttribute() const { return this->primitive->value_as_SpaceToBatch(); }
   int InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) override;
-  std::vector<int> BlockSizes() {return block_sizes_;}
-  std::vector<int> Paddings() {return block_sizes_;}
-  std::vector<int> InShape() {return block_sizes_;}
-  std::vector<int> PaddedInShape() {return block_sizes_;}
+  std::vector<int> BlockSizes() { return block_sizes_; }
+  std::vector<int> Paddings() { return block_sizes_; }
+  std::vector<int> InShape() { return block_sizes_; }
+  std::vector<int> PaddedInShape() { return block_sizes_; }
+
  private:
   std::vector<int> block_sizes_;
   std::vector<int> paddings_;
