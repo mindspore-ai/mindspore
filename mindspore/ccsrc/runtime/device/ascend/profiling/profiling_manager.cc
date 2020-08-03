@@ -181,7 +181,8 @@ bool ProfilingManager::StopProfiling() {
   }
   Msprof::Engine::Reporter *reporter = PluginImpl::GetPluginReporter();
   if (reporter != nullptr) {
-    MS_LOG(INFO) << "report data end, ret = " << reporter->Flush();
+    auto ret = reporter->Flush();
+    MS_LOG(INFO) << "report data end, ret = " << ret;
   }
 
   auto rt_ret = rtProfilerStop();
