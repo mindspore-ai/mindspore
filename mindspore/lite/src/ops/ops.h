@@ -691,17 +691,10 @@ class SpaceToDepth : public Primitive {
   int InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) override;
 };
 
-class Dequantize : public Primitive {
+class QuantDTypeCast : public Primitive {
  public:
-  explicit Dequantize(schema::Primitive *primitive) : Primitive(primitive) {}
-  const schema::OnnxInt8Dequantize *GetAttribute() const { return this->primitive->value_as_OnnxInt8Dequantize(); }
-  int InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) override;
-};
-
-class Quantize : public Primitive {
- public:
-  explicit Quantize(schema::Primitive *primitive) : Primitive(primitive) {}
-  const schema::OnnxInt8Quantize *GetAttribute() const { return this->primitive->value_as_OnnxInt8Quantize(); }
+  explicit QuantDTypeCast(schema::Primitive *primitive) : Primitive(primitive) {}
+  const schema::QuantDTypeCast *GetAttribute() const { return this->primitive->value_as_QuantDTypeCast(); }
   int InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) override;
 };
 }  // namespace lite

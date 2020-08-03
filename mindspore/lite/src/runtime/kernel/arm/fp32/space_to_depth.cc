@@ -16,11 +16,11 @@
 
 #include "src/runtime/kernel/arm/fp32/space_to_depth.h"
 #include <vector>
-#include "schema/ops_generated.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/opclib/fp32/space_to_depth.h"
 #include "include/errorcode.h"
+#include "src/runtime/runtime_api.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -41,21 +41,48 @@ int SpaceToDepthCPUKernel::Init() {
     MS_LOG(ERROR) << "Input block_size should > 0!";
     return RET_PARAM_INVALID;
   }
+
+  num_unit_ = static_cast<int>(inputs_[0]->shape().at(kNHWC_H));
+  thread_h_num_ = MSMIN(thread_num_, num_unit_);
+  thread_h_stride_ = UP_DIV(num_unit_, thread_h_num_);
+  return RET_OK;
+}
+
+int SpaceToDepthCPUKernel::SpaceToDepth(int task_id) {
+  int num_unit_thread = MSMIN(thread_h_stride_, num_unit_ - task_id * thread_h_stride_);
+  if (num_unit_thread <= 0) {
+    return RET_OK;
+  }
+  int thread_offset = task_id * thread_h_stride_;
+  auto in_shape = inputs_[0]->shape();
+  auto out_shape = outputs_[0]->shape();
+  SpaceToDepthParameter *param = reinterpret_cast<SpaceToDepthParameter *>(opParameter);
+  auto ret = SpaceToDepthForNHWC(input_ptr_, output_ptr_, in_shape.data(), out_shape.data(), in_shape.size(),
+                                 param->block_size_, thread_offset, thread_offset + num_unit_thread);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SpaceToDepth error task_id[" << task_id << "] error_code[" << ret << "]";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int SpaceToDepthRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+  auto g_kernel = reinterpret_cast<SpaceToDepthCPUKernel *>(cdata);
+  auto ret = g_kernel->SpaceToDepth(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SpaceToDepthRun error task_id[" << task_id << "] error_code[" << ret << "]";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
 int SpaceToDepthCPUKernel::Run() {
-  auto input = inputs_[0];
-  auto output = outputs_[0];
-  const float *input_data = static_cast<const float *>(input->Data());
-  float *output_data = static_cast<float *>(output->Data());
-  auto in_shape = input->shape();
-  auto out_shape = output->shape();
-  SpaceToDepthParameter *param = reinterpret_cast<SpaceToDepthParameter *>(opParameter);
-  if (input->GetFormat() == schema::Format_NHWC) {
-    auto ret = SpaceToDepthForNHWC(input_data, output_data, in_shape.data(), out_shape.data(), in_shape.size(),
-                                   param->block_size_);
-    return ret;
+  if (inputs_[0]->GetFormat() == schema::Format_NHWC) {
+    int ret = LiteBackendParallelLaunch(SpaceToDepthRun, this, thread_h_num_);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "SpaceToDepth error error_code[" << ret << "]";
+      return ret;
+    }
   } else {
     MS_LOG(ERROR) << "Only support NHWC now!";
     return RET_ERROR;
@@ -69,7 +96,7 @@ kernel::LiteKernel *CpuSpaceToDepthFp32KernelCreator(const std::vector<lite::ten
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) SpaceToDepthCPUKernel(opParameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) SpaceToDepthCPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SpaceToDepthCPUKernel fail!";
     return nullptr;

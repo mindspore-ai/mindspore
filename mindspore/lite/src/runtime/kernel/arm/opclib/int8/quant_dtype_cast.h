@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/opclib/int8/dequantize.h"
-#include "src/runtime/kernel/arm/opclib/errorcode.h"
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_QUANTDTYPECAST_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_QUANTDTYPECAST_H_
 
-int DequantizeInt8(int8_t *quant_values, float *real_values, float scale, int32_t zp, int size) {
-  if (quant_values == nullptr || real_values == nullptr) {
-    return OPCLIB_PARAM_INVALID;
-  }
+#include "src/runtime/kernel/arm/opclib/op_base.h"
 
-  for (int i = 0; i < size; ++i) {
-    real_values[i] = (quant_values[i] + zp) * scale;
-  }
-  return OPCLIB_OK;
-}
+struct QuantDTypeCastParameter {
+  OpParameter op_parameter_;
+  int32_t srcT;
+  int32_t dstT;
+};
+
+int DequantizeInt8(int8_t *quant_values, float *real_values, float scale, int32_t zp, int size);
+int QuantizeToInt8(float *real_values, int8_t *quant_values, float scale, int32_t zp, int size);
+
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_QUANTDTYPECAST_H_

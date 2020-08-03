@@ -23,5 +23,5 @@ struct SpaceToDepthParameter {
 };
 
 int SpaceToDepthForNHWC(const float *input, float *output, int *in_shape, int *out_shape, int shape_size,
-                        int block_size);
+                        int block_size, int h_start, int h_end);
 #endif  // MINDSPORE_LITE_SRC_BACKEND_ARM_OPCLIB_FP32_SPACE_TO_DEPTH_H_
