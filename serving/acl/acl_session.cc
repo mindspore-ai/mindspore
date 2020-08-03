@@ -35,53 +35,53 @@ std::shared_ptr<InferSession> InferSession::CreateSession(const std::string &dev
   }
 }
 
-bool AclSession::LoadModelFromFile(const std::string &file_name, uint32_t &model_id) {
-  return model_process_.LoadModelFromFile(file_name, model_id);
+Status AclSession::LoadModelFromFile(const std::string &file_name, uint32_t &model_id) {
+  return model_process_.LoadModelFromFile(file_name, model_id) ? SUCCESS : FAILED;
 }
 
-bool AclSession::UnloadModel(uint32_t model_id) {
+Status AclSession::UnloadModel(uint32_t model_id) {
   model_process_.UnLoad();
-  return true;
+  return SUCCESS;
 }
 
-bool AclSession::ExecuteModel(uint32_t model_id, const RequestBase &request,
-                              ReplyBase &reply) {  // set d context
+Status AclSession::ExecuteModel(uint32_t model_id, const RequestBase &request,
+                                ReplyBase &reply) {  // set d context
   aclError rt_ret = aclrtSetCurrentContext(context_);
   if (rt_ret != ACL_ERROR_NONE) {
     MSI_LOG_ERROR << "set the ascend device context failed";
-    return false;
+    return FAILED;
   }
-  return model_process_.Execute(request, reply);
+  return model_process_.Execute(request, reply) ? SUCCESS : FAILED;
 }
 
-bool AclSession::InitEnv(const std::string &device_type, uint32_t device_id) {
+Status AclSession::InitEnv(const std::string &device_type, uint32_t device_id) {
   device_type_ = device_type;
   device_id_ = device_id;
   auto ret = aclInit(nullptr);
   if (ret != ACL_ERROR_NONE) {
     MSI_LOG_ERROR << "Execute aclInit Failed";
-    return false;
+    return FAILED;
   }
   MSI_LOG_INFO << "acl init success";
 
   ret = aclrtSetDevice(device_id_);
   if (ret != ACL_ERROR_NONE) {
     MSI_LOG_ERROR << "acl open device " << device_id_ << " failed";
-    return false;
+    return FAILED;
   }
   MSI_LOG_INFO << "open device " << device_id_ << " success";
 
   ret = aclrtCreateContext(&context_, device_id_);
   if (ret != ACL_ERROR_NONE) {
     MSI_LOG_ERROR << "acl create context failed";
-    return false;
+    return FAILED;
   }
   MSI_LOG_INFO << "create context success";
 
   ret = aclrtCreateStream(&stream_);
   if (ret != ACL_ERROR_NONE) {
     MSI_LOG_ERROR << "acl create stream failed";
-    return false;
+    return FAILED;
   }
   MSI_LOG_INFO << "create stream success";
 
@@ -89,17 +89,17 @@ bool AclSession::InitEnv(const std::string &device_type, uint32_t device_id) {
   ret = aclrtGetRunMode(&run_mode);
   if (ret != ACL_ERROR_NONE) {
     MSI_LOG_ERROR << "acl get run mode failed";
-    return false;
+    return FAILED;
   }
   bool is_device = (run_mode == ACL_DEVICE);
   model_process_.SetIsDevice(is_device);
   MSI_LOG_INFO << "get run mode success is device input/output " << is_device;
 
   MSI_LOG_INFO << "Init acl success, device id " << device_id_;
-  return true;
+  return SUCCESS;
 }
 
-bool AclSession::FinalizeEnv() {
+Status AclSession::FinalizeEnv() {
   aclError ret;
   if (stream_ != nullptr) {
     ret = aclrtDestroyStream(stream_);
@@ -129,7 +129,7 @@ bool AclSession::FinalizeEnv() {
     MSI_LOG_ERROR << "finalize acl failed";
   }
   MSI_LOG_INFO << "end to finalize acl";
-  return true;
+  return SUCCESS;
 }
 
 AclSession::AclSession() = default;

@@ -31,6 +31,7 @@
 #include "core/version_control/version_controller.h"
 #include "core/util/file_system_operation.h"
 #include "core/serving_tensor.h"
+#include "util/status.h"
 
 using ms_serving::MSService;
 using ms_serving::PredictReply;
@@ -79,9 +80,9 @@ Status Session::Predict(const PredictRequest &request, PredictReply &reply) {
 
   auto ret = session_->ExecuteModel(graph_id_, serving_request, serving_reply);
   MSI_LOG(INFO) << "run Predict finished";
-  if (!ret) {
+  if (Status(ret) != SUCCESS) {
     MSI_LOG(ERROR) << "execute model return failed";
-    return FAILED;
+    return Status(ret);
   }
   return SUCCESS;
 }
@@ -97,9 +98,9 @@ Status Session::Warmup(const MindSporeModelPtr model) {
   MSI_TIME_STAMP_START(LoadModelFromFile)
   auto ret = session_->LoadModelFromFile(file_name, graph_id_);
   MSI_TIME_STAMP_END(LoadModelFromFile)
-  if (!ret) {
+  if (Status(ret) != SUCCESS) {
     MSI_LOG(ERROR) << "Load graph model failed, file name is " << file_name.c_str();
-    return FAILED;
+    return Status(ret);
   }
   model_loaded_ = true;
   MSI_LOG(INFO) << "Session Warmup finished";
@@ -119,11 +120,21 @@ namespace {
 static const uint32_t uint32max = 0x7FFFFFFF;
 std::promise<void> exit_requested;
 
-void ClearEnv() {
-  Session::Instance().Clear();
-  // inference::ExitInference();
-}
+void ClearEnv() { Session::Instance().Clear(); }
 void HandleSignal(int sig) { exit_requested.set_value(); }
+
+grpc::Status CreatGRPCStatus(Status status) {
+  switch (status) {
+    case SUCCESS:
+      return grpc::Status::OK;
+    case FAILED:
+      return grpc::Status::CANCELLED;
+    case INVALID_INPUTS:
+      return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "The Predict Inputs do not match the Model Request!");
+    default:
+      return grpc::Status::CANCELLED;
+  }
+}
 
 }  // namespace
 
@@ -134,8 +145,8 @@ class MSServiceImpl final : public MSService::Service {
     MSI_TIME_STAMP_START(Predict)
     auto res = Session::Instance().Predict(*request, *reply);
     MSI_TIME_STAMP_END(Predict)
-    if (res != SUCCESS) {
-      return grpc::Status::CANCELLED;
+    if (res != inference::SUCCESS) {
+      return CreatGRPCStatus(res);
     }
     MSI_LOG(INFO) << "Finish call service Eval";
     return grpc::Status::OK;

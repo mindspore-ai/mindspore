@@ -18,7 +18,7 @@
 namespace mindspore {
 namespace serving {
 using Status = uint32_t;
-enum ServingStatus { SUCCESS = 0, FAILED };
+enum ServingStatus { SUCCESS = 0, FAILED, INVALID_INPUTS };
 }  // namespace serving
 }  // namespace mindspore
 
