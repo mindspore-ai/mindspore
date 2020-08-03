@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# -lt 1 ] || [ $# -gt 2 ]
+if [ $# -ne 2 ]
 then 
     echo "Usage: sh run_train.sh [RANK_TABLE_FILE] [PRETRAINED_PATH]"
 exit 1
@@ -37,15 +37,12 @@ then
 exit 1
 fi 
 
-if [ $# == 2 ]
-then
-    PATH2=$(get_real_path $2)
-    echo $PATH2
-    if [ ! -f $PATH2 ]
-    then 
-	echo "error: PRETRAINED_PATH=$PATH2 is not a file"
-    exit 1
-    fi
+PATH2=$(get_real_path $2)
+echo $PATH2
+if [ ! -f $PATH2 ]
+then 
+    echo "error: PRETRAINED_PATH=$PATH2 is not a file"
+exit 1
 fi
 
 ulimit -u unlimited
@@ -65,11 +62,6 @@ do
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
-    if [ $# == 2 ]
-    then 
-        python train.py --do_train=True  --device_id=$i --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM --pre_trained=$PATH2 &> log &
-    else
-        python train.py --do_train=True  --device_id=$i --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM  &> log &
-    fi
+    python train.py --do_train=True  --device_id=$i --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM --pre_trained=$PATH2 &> log &
     cd ..
 done

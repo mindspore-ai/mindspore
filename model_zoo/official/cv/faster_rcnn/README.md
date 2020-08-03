@@ -94,7 +94,7 @@ sh run_standalone_train.sh [PRETRAINED_MODEL]
 ```
  
 > Rank_table.json which is specified by RANK_TABLE_FILE is needed when you are running a distribute task. You can generate it by using the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
-> As for PRETRAINED_MODEL，if not set, the model will be trained from the very beginning.Ready-made pretrained_models are not available now. Stay tuned.
+> As for PRETRAINED_MODEL，it should be a ResNet50 checkpoint that trained over ImageNet2012. Ready-made pretrained_models are not available now. Stay tuned.
 
 #### Result
  
@@ -125,7 +125,7 @@ sh run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 
 #### Result
  
-Inference result will be stored in the example path, whose folder name is "infer". Under this, you can find result like the followings in log.
+Inference result will be stored in the example path, whose folder name is "eval". Under this, you can find result like the followings in log.
  
 ```
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.360
