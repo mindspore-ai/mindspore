@@ -25,11 +25,11 @@ void LiteKernel::InitOutTensorRefCount() {
   }
 }
 
-int LiteKernel::DecOutTensorRefCount(lite::Allocator *allocator) {
+int LiteKernel::DecOutTensorRefCount() {
   for (auto *tensor : this->outputs_) {
     tensor->decRefCount();
     if (0 >= tensor->RefCount()) {
-      auto ret = tensor->FreeData(allocator);
+      auto ret = tensor->FreeData();
       if (0 != ret) {
         MS_LOG(ERROR) << "Free tensor data failed";
         return ret;
@@ -141,4 +141,3 @@ void LiteKernelUtil::InitTensorRefCount(std::vector<kernel::LiteKernel *> &kerne
 
 int LiteKernelUtil::SetInput(LiteKernel &kernelMod, std::vector<lite::tensor::Tensor *> inputs) { return -1; }
 }  // namespace mindspore::kernel
-

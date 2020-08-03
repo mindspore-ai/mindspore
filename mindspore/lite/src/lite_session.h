@@ -36,7 +36,7 @@ class LiteSession : public session::LiteSession {
 
   ~LiteSession() override;
 
-  void Init(Context *context);
+  int Init(Context *context);
 
   void BindThread(bool ifBind) override;
 
@@ -60,7 +60,7 @@ class LiteSession : public session::LiteSession {
   void InitGraphInOutTensor(const lite::Model *model);
 
  protected:
-  Context *context = nullptr;
+  Context *context_ = nullptr;
   std::vector<kernel::LiteKernel *> kernels;
   std::vector<tensor::Tensor *> tensors;
   // graph input tensors

@@ -112,6 +112,11 @@ void Scheduler::ConstructSubgraphs(std::vector<kernel::LiteKernel *> *kernels) {
   for (auto temp_kernels : sub_kernels_list) {
     kernel::KERNEL_ARCH arch = temp_kernels.front()->Desc().arch;
     if (arch == kernel::KERNEL_ARCH::kCPU) {
+      for (auto kernel : temp_kernels) {
+        for (auto tensor : kernel->GetOutputs()) {
+          tensor->set_allocator(context_->allocator.get());
+        }
+      }
       std::copy(temp_kernels.begin(), temp_kernels.end(), std::back_inserter(subgraph_kernels));
     } else {
       auto subgraph_kernel = CreateSubKernel(temp_kernels, arch);
@@ -154,9 +159,9 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<tensor::Tensor *> 
   MS_ASSERT(nullptr != primitive);
   auto data_type = inputs.front()->data_type();
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, primitive->Type()};
-  if (context->deviceCtx.type == DT_GPU) {
+  if (context_->deviceCtx.type == DT_GPU) {
     desc.arch = kernel::KERNEL_ARCH::kGPU;
-    auto *kernel = KernelFactory::GetInstance()->GetKernel(inputs, outputs, primitive, context, desc);
+    auto *kernel = KernelFactory::GetInstance()->GetKernel(inputs, outputs, primitive, context_, desc);
     if (nullptr != kernel) {
       kernel->set_desc(desc);
       return kernel;
@@ -168,14 +173,14 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<tensor::Tensor *> 
   if (data_type == kNumberTypeFloat32) {
     // check if support fp16
     kernel::KernelKey key{desc.arch, kNumberTypeFloat16, desc.type};
-    kernel = KernelFactory::GetInstance()->GetKernel(inputs, outputs, primitive, context, key);
+    kernel = KernelFactory::GetInstance()->GetKernel(inputs, outputs, primitive, context_, key);
     if (kernel != nullptr) {
       kernel->set_desc(desc);
       return kernel;
     }
-    kernel = KernelFactory::GetInstance()->GetKernel(inputs, outputs, primitive, context, desc);
+    kernel = KernelFactory::GetInstance()->GetKernel(inputs, outputs, primitive, context_, desc);
   } else {
-    kernel = KernelFactory::GetInstance()->GetKernel(inputs, outputs, primitive, context, desc);
+    kernel = KernelFactory::GetInstance()->GetKernel(inputs, outputs, primitive, context_, desc);
   }
   if (kernel != nullptr) {
     kernel->set_desc(desc);

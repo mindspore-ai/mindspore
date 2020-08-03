@@ -22,7 +22,6 @@
 #include <arm_neon.h>
 #endif
 #include "src/runtime/kernel/arm/opclib/op_base.h"
-// #include "backend/kernel_compiler/kernel.h"
 #include "include/context.h"
 #include "src/ir/tensor.h"
 #include "src/ops/ops.h"
@@ -60,7 +59,6 @@ struct CallBackParam {
 using KernelCallBack = std::function<bool(std::vector<lite::tensor::Tensor *> inputs,
                                           std::vector<lite::tensor::Tensor *> outputs, const CallBackParam &opInfo)>;
 
-// class LiteKernel : public KernelMod {
 class LiteKernel {
  public:
   LiteKernel() = default;
@@ -72,17 +70,6 @@ class LiteKernel {
   }
 
   virtual ~LiteKernel() { delete opParameter; }
-
-  //  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-  //              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-  //    return false;
-  //  };
-  //
-  //  const std::vector<size_t> &GetInputSizeList() const override { return {}; }
-  //
-  //  const std::vector<size_t> &GetOutputSizeList() const override { return {}; }
-  //
-  //  const std::vector<size_t> &GetWorkspaceSizeList() const override { return {}; }
 
   virtual int Prepare() { return -1; }
   virtual int Init() { return -1; }
@@ -115,7 +102,7 @@ class LiteKernel {
 
   void InitOutTensorRefCount();
 
-  int DecOutTensorRefCount(lite::Allocator *allocator = nullptr);
+  int DecOutTensorRefCount();
 
   const KernelKey Desc() const { return desc; }
 
