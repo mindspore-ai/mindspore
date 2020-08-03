@@ -34,6 +34,8 @@ python ${PROJECT_DIR}/../run_classifier.py  \
     --device_id=0 \
     --epoch_num=1 \
     --num_class=2 \
+    --train_data_shuffle="true" \
+    --eval_data_shuffle="false" \
     --save_finetune_checkpoint_path="" \
     --load_pretrain_checkpoint_path="" \
     --load_finetune_checkpoint_path="" \
