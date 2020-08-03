@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_SOFTMAX_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_SOFTMAX_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_SOFTMAX_INT8_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_SOFTMAX_INT8_H_
 
 #include "src/runtime/kernel/arm/opclib/op_base.h"
 #include "src/runtime/kernel/arm/opclib/softmax_parameter.h"
 
-void Softmax(const float *input_ptr, float *output_ptr, float *sum_data, SoftmaxParameter *parameter);
+int Softmax(const int8_t *input_ptr, int8_t *output_ptr, int count, float *exp_data, float *sum_data,
+            SoftmaxQuantArg quant_param, SoftmaxParameter *parameter);
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_FP32_SOFTMAX_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_SOFTMAX_INT8_H_

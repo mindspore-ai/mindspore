@@ -27,8 +27,7 @@ struct LocalResponseNormParameter {
   float beta_;
 };
 
-int LocalResponseNorm(float *input_ptr, int out_size, int channel, float *output_ptr, int depth_radius, float bias,
-                      float alpha, float beta);
+int LocalResponseNorm(float *input_ptr, int out_size, int channel, float *output_ptr,
+                      LocalResponseNormParameter *param);
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_LOCAL_RESPONSE_NORM_H_
-

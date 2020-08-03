@@ -36,10 +36,6 @@ class LocalResponseNormCPUKernel : public LiteKernel {
 
  private:
   int thread_count_;
-  int depth_radius_;
-  float bias_;
-  float alpha_;
-  float beta_;
 };
 }  // namespace mindspore::kernel
 
