@@ -241,6 +241,9 @@ void AnfExporter::SetOpInputNode(const CNodePtr &cnode, schema::MetaGraphT *meta
         nodeIdMap[valueNode->fullname_with_scope()] = meta_graph->allTensors.size();
         fbNode->inputIndex.emplace_back(meta_graph->allTensors.size());
         meta_graph->allTensors.emplace_back(std::move(paramTensor));
+      } else if (value->isa<mindspore::ValueSequeue>()) {
+        MS_LOG(INFO) << "Value type is ValueSequence.";
+        break;
       } else {
         MS_LOG(ERROR) << "Not support value type , need add support.";
       }
