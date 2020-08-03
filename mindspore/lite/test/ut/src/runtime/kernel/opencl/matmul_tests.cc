@@ -22,10 +22,6 @@
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/matmul.h"
 
-// using namespace mindspore::kernel;
-// using namespace mindspore::lite;
-// using namespace mindspore;
-
 namespace mindspore {
 class TestMatMulOpenCL : public mindspore::Common {
  public:
@@ -53,11 +49,11 @@ TEST_F(TestMatMulOpenCL, MatMulFp32) {
   lite::tensor::Tensor *tensor_out = new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), {1, co});
   std::vector<lite::tensor::Tensor *> inputs{tensor_x, tensor_w};
   std::vector<lite::tensor::Tensor *> outputs{tensor_out};
-  auto *arith_kernel = new MatMulOpenCLKernel(nullptr, inputs, outputs, false);
+  auto *arith_kernel = new kernel::MatMulOpenCLKernel(nullptr, inputs, outputs, false);
   arith_kernel->Init();
 
   std::vector<LiteKernel *> kernels{arith_kernel};
-  auto *pGraph = new SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  auto *pGraph = new kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
   pGraph->Init();
 
   memcpy(inputs[0]->Data(), input_data, sizeof(float) * ci);

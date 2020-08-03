@@ -510,8 +510,12 @@ gene_ocl_program() {
 
 build_opencl() {
     cd ${BASEPATH}
-    git submodule update --init third_party/OpenCL-Headers
-    git submodule update --init third_party/OpenCL-CLHPP
+    if [[ ! -d "third_party/OpenCL-Headers" ]]; then
+      git submodule update --init third_party/OpenCL-Headers
+    fi
+    if [[ ! -d "third_party/OpenCL-CLHPP" ]]; then
+      git submodule update --init third_party/OpenCL-CLHPP
+    fi
     if [[ "${OPENCL_OFFLINE_COMPILE}" == "on" ]]; then
         gene_ocl_program
     else
@@ -524,6 +528,7 @@ build_lite()
     echo "start build mindspore lite project"
 
     if [[ "${ENABLE_GPU}" == "on" ]]; then
+      echo "start build opencl"
       build_opencl
     fi
     if [[ "${LITE_PLATFORM}" == "x86_64" ]]; then

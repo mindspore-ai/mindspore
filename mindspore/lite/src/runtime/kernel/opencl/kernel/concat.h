@@ -20,24 +20,21 @@
 #include <vector>
 #include "ir/anf.h"
 #include "src/lite_kernel.h"
-#include "src/backend/arm/opclib/conv_parameter.h"
 #include "src/runtime/opencl/opencl_runtime.h"
-#include "src/backend/arm/opclib/concat.h"
+#include "src/runtime/kernel/arm/base/concat_base.h"
 
 namespace mindspore::kernel {
 
 class ConcatOpenCLKernel : public LiteKernel {
  public:
-  explicit ConcatOpenCLKernel(OpParameter *parameter, const std::vector<tensor::Tensor *> &inputs,
-                              const std::vector<tensor::Tensor *> &outputs)
+  explicit ConcatOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                              const std::vector<lite::tensor::Tensor *> &outputs)
       : LiteKernel(parameter, inputs, outputs) {}
 
   ~ConcatOpenCLKernel() override{};
 
   int Init() override;
 
-  //  int InferShape() { return {}; };
-  int InferShape() {}
   int ReSize() override;
 
   int Run_axis0();

@@ -265,10 +265,10 @@ endif()
 if (SUPPORT_GPU)
     set(TEST_SRC
             ${TEST_SRC}
-            ${TEST_DIR}/ut/stc/runtime/kernel/opencl/matmul_tests.cc
-            ${TEST_DIR}/ut/stc/runtime/kernel/opencl/depthwise_conv2d_tests.cc
-            ${TEST_DIR}/ut/stc/runtime/kernel/opencl/concat_tests.cc
-            ${TEST_DIR}/ut/stc/runtime/kernel/opencl/softmax_cl_tests.cc
+            ${TEST_DIR}/ut/src/runtime/kernel/opencl/matmul_tests.cc
+            ${TEST_DIR}/ut/src/runtime/kernel/opencl/depthwise_conv2d_tests.cc
+            ${TEST_DIR}/ut/src/runtime/kernel/opencl/concat_tests.cc
+            ${TEST_DIR}/ut/src/runtime/kernel/opencl/softmax_cl_tests.cc
             )
 endif()
 
