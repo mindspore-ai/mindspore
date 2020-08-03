@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_BACKEND_OPENCL_CONVOLUTIONOPENCLKERNEL_H_
-#define MINDSPORE_LITE_SRC_BACKEND_OPENCL_CONVOLUTIONOPENCLKERNEL_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_CONVOLUTION_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_CONVOLUTION_H_
 
 #include <vector>
-#include "src/runtime/kernel/arm/fp32/convolution.h"
+#include "src/ir/tensor.h"
+#include "src/lite_kernel.h"
+#include "schema/model_generated.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/arm/opclib/conv_parameter.h"
 
@@ -44,5 +46,4 @@ class ConvolutionOpenCLKernel : public LiteKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_BACKEND_OPENCL_CONVOLUTIONOPENCLKERNEL_H_
-
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_CONVOLUTION_H_
