@@ -28,18 +28,23 @@ class ArithmeticOpenCLKernel : public ArithmeticCPUKernel {
   explicit ArithmeticOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                                   const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
       : ArithmeticCPUKernel(parameter, inputs, outputs, ctx) {}
-  ~ArithmeticOpenCLKernel() override {};
+  ~ArithmeticOpenCLKernel() override{};
 
   int Init() override;
   int Run() override;
 
  private:
+  std::vector<size_t> InitGlobalSize() const;
+  void Image2dGetWorkGroupSize();
+  void BufferGetWorkGroupSize();
+
   cl::Kernel kernel_;
-  bool is_bias_add_{false};
-  float weight_{1.f};
-  float bias_{.0f};
+  lite::opencl::OpenCLRuntime *runtime_;
+  bool element_flag_{true};
+
+  std::vector<size_t> local_size_;
+  std::vector<size_t> global_size_;
 };
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_BACKEND_OPENCL_ARITHMETIC_H_
-
