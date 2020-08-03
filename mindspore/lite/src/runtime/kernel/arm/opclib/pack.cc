@@ -18,20 +18,19 @@
 #include <cstring>
 #include <cstdlib>
 
-void PackWeightFp32(float *weight_data, ConvParameter *conv_param, float *packed_weight) {
+void PackWeightFp32(float *weight_data, ConvParameter *conv_param, float *packed_weight, int oc_block,
+                    int oc_block_num) {
   // original weight format : ohwi
-  // todo pack weight for arm32 platform
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
   int in_channel = conv_param->input_channel_;
   int out_channel = conv_param->output_channel_;
-  int oc8 = UP_DIV(out_channel, C8NUM);
   int ic4 = UP_DIV(in_channel, C4NUM);
   int kernel_plane = kernel_h * kernel_w;
-  int pack_weight_size = oc8 * C8NUM * ic4 * C4NUM * kernel_plane;
+  int pack_weight_size = oc_block * oc_block_num * ic4 * C4NUM * kernel_plane;
 
-  int unit_size = C8NUM * C4NUM;
-  int block_size = pack_weight_size / oc8;
+  int unit_size = oc_block * C4NUM;
+  int block_size = pack_weight_size / oc_block_num;
 
   for (int m = 0; m < kernel_plane; m++) {
     int kernel_plane_stride = m * in_channel;
@@ -43,12 +42,12 @@ void PackWeightFp32(float *weight_data, ConvParameter *conv_param, float *packed
       int real_ic_num = ic_remainder < C4NUM ? ic_remainder : C4NUM;
       for (int h = 0; h < real_ic_num; h++) {
         int block_stride = channel_block_stride + h;
-        int packed_block_stride = packed_channel_block_size + h * C8NUM;
-        for (int j = 0; j < oc8; j++) {
-          int kernel_block_stride = block_stride + j * C8NUM * kernel_plane * in_channel;
+        int packed_block_stride = packed_channel_block_size + h * oc_block;
+        for (int j = 0; j < oc_block_num; j++) {
+          int kernel_block_stride = block_stride + j * oc_block * kernel_plane * in_channel;
           int packed_kernel_block_size = packed_block_stride + j * block_size;
-          int oc_remainder = out_channel - j * C8NUM;
-          int real_oc_num = oc_remainder < C8NUM ? oc_remainder : C8NUM;
+          int oc_remainder = out_channel - j * oc_block;
+          int real_oc_num = oc_remainder < oc_block ? oc_remainder : oc_block;
           for (int k = 0; k < real_oc_num; k++) {
             float *origin_data_ptr = weight_data + kernel_block_stride + k * kernel_plane * in_channel;
             float *packed_data_ptr = packed_weight + packed_kernel_block_size + k;

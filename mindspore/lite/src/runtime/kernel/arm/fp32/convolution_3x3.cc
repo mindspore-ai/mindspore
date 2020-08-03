@@ -29,14 +29,13 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Conv2D;
 
 namespace mindspore::kernel {
-void ProcessFilter(float *origin_weight, float *dst_weight, ConvParameter *conv_param) {
+void ProcessFilter(float *origin_weight, float *dst_weight, ConvParameter *conv_param, int oc_block, int oc_block_num) {
   auto input_channel = conv_param->input_channel_;
   auto output_channel = conv_param->output_channel_;
   auto kernel_plane = conv_param->kernel_w_ * conv_param->kernel_h_;
   int iC4 = UP_DIV(input_channel, C4NUM);
-  int oc8 = UP_DIV(output_channel, C8NUM);
 
-  size_t tmp_size = oc8 * C8NUM * iC4 * C4NUM * kernel_plane * sizeof(float);
+  size_t tmp_size = oc_block_num * oc_block * iC4 * C4NUM * kernel_plane * sizeof(float);
   auto tmp_addr = reinterpret_cast<float *>(malloc(tmp_size));
   if (tmp_addr == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_addr failed.";
@@ -45,8 +44,7 @@ void ProcessFilter(float *origin_weight, float *dst_weight, ConvParameter *conv_
   memset(tmp_addr, 0, tmp_size);
 
   PackNHWCToNC4HW4Fp32(origin_weight, tmp_addr, output_channel, kernel_plane, input_channel);
-  Conv3x3Fp32FilterTransform(tmp_addr, dst_weight, iC4, output_channel, kernel_plane);
-
+  Conv3x3Fp32FilterTransform(tmp_addr, dst_weight, iC4, output_channel, kernel_plane, oc_block);
   free(tmp_addr);
 }
 
@@ -55,10 +53,17 @@ int Convolution3x3CPUKernel::InitWeightBias() {
   auto output_channel = conv_param_->output_channel_;
   int iC4 = UP_DIV(input_channel, C4NUM);
   int oC4 = UP_DIV(output_channel, C4NUM);
-  int oC8 = UP_DIV(output_channel, C8NUM);
+  int oc_block, oc_block_num;
+#ifdef ENABLE_ARM32
+  oc_block = C4NUM;
+  oc_block_num = UP_DIV(output_channel, C4NUM);
+#else
+  oc_block = C8NUM;
+  oc_block_num = UP_DIV(output_channel, C8NUM);
+#endif
   int k_plane = 16;
   // init weight
-  size_t transformed_size = iC4 * C4NUM * oC8 * C8NUM * k_plane * sizeof(float);
+  size_t transformed_size = iC4 * C4NUM * oc_block_num * oc_block * k_plane * sizeof(float);
   transformed_filter_addr_ = reinterpret_cast<float *>(malloc(transformed_size));
   if (transformed_filter_addr_ == nullptr) {
     MS_LOG(ERROR) << "malloc transformed filter addr failed.";
@@ -66,7 +71,7 @@ int Convolution3x3CPUKernel::InitWeightBias() {
   }
   memset(transformed_filter_addr_, 0, transformed_size);
   auto weight_data = reinterpret_cast<float *>(inputs_.at(kWeightIndex)->Data());
-  ProcessFilter(weight_data, transformed_filter_addr_, conv_param_);
+  ProcessFilter(weight_data, transformed_filter_addr_, conv_param_, oc_block, oc_block_num);
 
   // init bias
   size_t new_bias_size = oC4 * C4NUM * sizeof(float);
@@ -89,7 +94,6 @@ int Convolution3x3CPUKernel::InitTmpBuffer() {
   int iC4 = UP_DIV(conv_param_->input_channel_, C4NUM);
   int oC4 = UP_DIV(conv_param_->output_channel_, C4NUM);
   int k_plane = 16;
-  // todo
   size_t tile_buffer_size = thread_count_ * TILE_NUM * k_plane * iC4 * C4NUM * sizeof(float);
   tile_buffer_ = reinterpret_cast<float *>(malloc(tile_buffer_size));
   if (tile_buffer_ == nullptr) {
@@ -148,6 +152,11 @@ void Convolution3x3CPUKernel::ConfigInputOutput() {
     MS_LOG(ERROR) << "Check layout failed.";
     return;
   }
+#ifdef ENABLE_ARM32
+  gemm_func_ = IndirectGemmFp32_8x4;
+#else
+  gemm_func_ = IndirectGemmFp32_8x8;
+#endif
 }
 
 int Convolution3x3CPUKernel::Init() {
@@ -201,9 +210,13 @@ int Convolution3x3CPUKernel::ReSize() {
 }
 
 int Convolution3x3CPUKernel::RunImpl(int task_id) {
+  if (gemm_func_ == nullptr) {
+    MS_LOG(ERROR) << "gemm_func is nullptr.";
+    return RET_ERROR;
+  }
   auto output_addr = reinterpret_cast<float *>(outputs_.at(kOutputIndex)->Data());
   Conv3x3Fp32(reinterpret_cast<float *>(nhwc4_input_), transformed_filter_addr_, reinterpret_cast<float *>(bias_data_),
-              output_addr, tmp_buffer_address_list_, task_id, conv_param_);
+              output_addr, tmp_buffer_address_list_, task_id, conv_param_, gemm_func_);
   return RET_OK;
 }
 
@@ -234,4 +247,3 @@ int Convolution3x3CPUKernel::Run() {
   return RET_OK;
 }
 }  // namespace mindspore::kernel
-

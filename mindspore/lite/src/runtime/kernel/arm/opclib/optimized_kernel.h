@@ -58,10 +58,10 @@ class OptimizeModule {
     if ((!support_optimize_ops) && (!support_fp16)) {
       return;
     }
-//    optimized_op_handler_ = dlopen(OPTIMIZE_SHARED_LIBRARY_PATH, RTLD_LAZY);
-//    if (optimized_op_handler_ == nullptr) {
-//      printf("Open optimize shared library failed.\n");
-//    }
+    optimized_op_handler_ = dlopen(OPTIMIZE_SHARED_LIBRARY_PATH, RTLD_LAZY);
+    if (optimized_op_handler_ == nullptr) {
+      printf("Open optimize shared library failed.\n");
+    }
   }
 
   ~OptimizeModule() = default;

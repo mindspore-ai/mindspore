@@ -50,7 +50,7 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   int Run() override;
   int RunImpl(int task_id);
   int InitWeightBias();
-  int MallocFilterMatrix();
+  int MallocFilterMatrix(int oc_block, int oc_block_num);
   int InitTmpBuffer();
   int ConfigInputOutput();
 
@@ -66,9 +66,9 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   InputTransformUnitFunc input_trans_func_;
   OutputTransformUnitFunc output_trans_func_;
   TmpBufferAddress tmp_buffer_address_list_[5];
+  GEMM_FUNC_FP32 gemm_func_ = nullptr;
 };
 void WinogradFilterTransform(const float *weight_data, Matrix *trans_weight, int kernel_unit, int input_unit,
-                             ConvParameter *conv_param);
+                             ConvParameter *conv_param, int oc_block);
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_WINOGRAD_H_
-

@@ -19,6 +19,7 @@
 #include "src/runtime/kernel/arm/fp32/convolution_3x3.h"
 #include "src/runtime/kernel/arm/fp32/convolution_winograd.h"
 #include "src/runtime/kernel/arm/opclib/fp32/conv.h"
+#include "src/runtime/kernel/arm/opclib/common_func.h"
 #include "schema/model_generated.h"
 #include "src/kernel_factory.h"
 #include "include/errorcode.h"
@@ -56,7 +57,7 @@ int ConvolutionCPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(packed_weight_, 0, pack_weight_size * sizeof(float));
-  PackWeightFp32(origin_weight, conv_param_, packed_weight_);
+  PackWeightFp32(origin_weight, conv_param_, packed_weight_, oc_block, oc_block_num);
 
   // init bias
   bias_data_ = reinterpret_cast<float *>(malloc(oc_block_num * oc_block * sizeof(float)));
@@ -125,6 +126,11 @@ void ConvolutionCPUKernel::ConfigInputOutput() {
     MS_LOG(ERROR) << "Check layout failed.";
     return;
   }
+#ifdef ENABLE_ARM32
+  gemm_func_ = IndirectGemmFp32_8x4;
+#else
+  gemm_func_ = IndirectGemmFp32_8x8;
+#endif
 }
 
 int ConvolutionCPUKernel::Init() {
@@ -175,9 +181,13 @@ int ConvolutionCPUKernel::ReSize() {
 }
 
 int ConvolutionCPUKernel::RunImpl(int task_id) {
+  if (gemm_func_ == nullptr) {
+    MS_LOG(ERROR) << "gemm_func is nullptr.";
+    return RET_ERROR;
+  }
   auto output_addr = reinterpret_cast<float *>(outputs_.at(kOutputIndex)->Data());
   ConvFp32(reinterpret_cast<float *>(nhwc4_input_), packed_input_, packed_weight_,
-           reinterpret_cast<float *>(bias_data_), tmp_output_block_, output_addr, task_id, conv_param_);
+           reinterpret_cast<float *>(bias_data_), tmp_output_block_, output_addr, task_id, conv_param_, gemm_func_);
   return RET_OK;
 }
 

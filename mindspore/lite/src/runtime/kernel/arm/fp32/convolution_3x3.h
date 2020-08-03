@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-
 #include "src/runtime/kernel/arm/base/convolution_base.h"
 #include "src/runtime/kernel/arm/opclib/winograd_transform.h"
 
@@ -62,9 +61,9 @@ class Convolution3x3CPUKernel : public ConvolutionBaseCPUKernel {
   float *tmp_dst_buffer_;
   float *nc4hw4_out_;
   TmpBufferAddress tmp_buffer_address_list_[4];
+  GEMM_FUNC_FP32 gemm_func_ = nullptr;
 };
-void ProcessFilter(float *origin_weight, float *dst_weight, ConvParameter *conv_param);
+void ProcessFilter(float *origin_weight, float *dst_weight, ConvParameter *conv_param, int oc_block, int oc_block_num);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_3X3_H_
-

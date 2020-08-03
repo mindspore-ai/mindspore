@@ -40,7 +40,8 @@ void MatrixPack(const float *src, float *dst, int row, int ic4, int stride);
 
 void PackInputToC8Int8(const int8_t *input_data, int16_t *packed_input, ConvParameter *conv_param);
 
-void PackWeightFp32(float *weight_data, ConvParameter *conv_param, float *packed_weight);
+void PackWeightFp32(float *weight_data, ConvParameter *conv_param, float *packed_weight, int oc_block,
+                    int oc_block_num);
 
 void PackWeightInt8(int8_t *weight_data, ConvParameter *conv_param, int8_t *packed_weight, int32_t *weight_sum);
 
