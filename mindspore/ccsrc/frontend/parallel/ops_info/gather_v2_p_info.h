@@ -56,7 +56,6 @@ class GatherV2PInfo : public OperatorInfo {
   Status InferTensorMap() override;
   Status GetAttrs() override;
 
- private:
   Status ComputeReplaceGraph(const CNodePtr &cnode);
   Status CheckManualSplit();
   Status ComputeReplaceOp();
