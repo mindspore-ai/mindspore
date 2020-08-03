@@ -71,13 +71,13 @@ int ReduceCPUKernel::CheckParameters() {
     return RET_ERROR;
   }
   for (auto i = 0; i < num_axes_; i++) {
-    if (static_cast<size_t>(axes_[i]) < -input_rank || static_cast<size_t>(axes_[i]) >= input_rank) {
-      MS_LOG(ERROR) << "Reduce got invalid axis " << axes_[i] << ", axis should be in [" << -input_rank << ", "
-                    << input_rank - 1 << "].";
+    if (axes_[i] < -static_cast<int>(input_rank) || static_cast<size_t>(axes_[i]) >= input_rank) {
+      MS_LOG(ERROR) << "Reduce got invalid axis " << axes_[i] << ", axis should be in ["
+                    << -static_cast<int>(input_rank) << ", " << input_rank - 1 << "].";
       return RET_ERROR;
     }
     if (axes_[i] < 0) {
-      axes_[i] += input_rank;
+      axes_[i] += static_cast<int>(input_rank);
     }
   }
 
@@ -155,7 +155,7 @@ int ReduceImpl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 int ReduceCPUKernel::Run() {
   tmp_shape_ = inputs_.at(0)->shape();
   src_data_ = static_cast<float *>(inputs_.at(0)->Data());
-  for (int i = 0; i < tmp_shape_.size(); ++i) {
+  for (int i = 0; i < data_buffers_.size(); ++i) {
     dst_data_ = data_buffers_[i];
     int axis = axes_[i];
     outer_size_ = 1;
