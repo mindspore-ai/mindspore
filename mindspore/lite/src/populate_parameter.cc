@@ -43,7 +43,7 @@
 #include "src/runtime/kernel/arm/opclib/fp32/range.h"
 #include "src/runtime/kernel/arm/opclib/fp32/local_response_norm.h"
 #include "src/runtime/kernel/arm/opclib/fp32/expandDims.h"
-#include "src/runtime/kernel/arm/opclib/fp32/arithmetic_self.h"
+#include "src/runtime/kernel/arm/opclib/arithmetic_self_parameter.h"
 #include "src/runtime/kernel/arm/opclib/pad_parameter.h"
 #include "src/runtime/kernel/arm/opclib/fp32/fill.h"
 #include "src/runtime/kernel/arm/opclib/transpose.h"
