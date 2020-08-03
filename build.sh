@@ -510,12 +510,8 @@ gene_ocl_program() {
 
 build_opencl() {
     cd ${BASEPATH}
-    if [[ ! -d "third_party/OpenCL-Headers" ]]; then
-      git submodule update --init third_party/OpenCL-Headers
-    fi
-    if [[ ! -d "third_party/OpenCL-CLHPP" ]]; then
-      git submodule update --init third_party/OpenCL-CLHPP
-    fi
+    git submodule update --init third_party/OpenCL-Headers
+    git submodule update --init third_party/OpenCL-CLHPP
     if [[ "${OPENCL_OFFLINE_COMPILE}" == "on" ]]; then
         gene_ocl_program
     else

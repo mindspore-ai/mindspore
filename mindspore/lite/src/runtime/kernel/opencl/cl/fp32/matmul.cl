@@ -1,8 +1,7 @@
 #define FLT4 float4
 #define FLT16 float16
-__kernel void MatMul(__global FLT4 *x, __global FLT16 *weight,
-                        __global FLT4 *buffer, __global FLT4 *bias, int2 offset_ci,
-                        int2 offset_co, int has_bias) {
+__kernel void MatMul(__global FLT4 *x, __global FLT16 *weight, __global FLT4 *buffer, __global FLT4 *bias,
+                     int2 offset_ci, int2 offset_co, int has_bias) {
   int2 gid = (int2)(get_global_id(0), get_global_id(1));
   int2 lid = (int2)(get_local_id(0), get_local_id(1));
   FLT4 s = (FLT4)(0.0f);
