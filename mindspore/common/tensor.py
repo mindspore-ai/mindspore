@@ -185,6 +185,9 @@ class Tensor(Tensor_):
     def __imod__(self, other):
         return self.__mod__(other)
 
+    def __rmod__(self, other):
+        return tensor_operator_registry.get('__mod__')(other, self)
+
     def __pow__(self, other):
         return tensor_operator_registry.get('__pow__')(self, other)
 
@@ -193,6 +196,9 @@ class Tensor(Tensor_):
 
     def __ifloordiv__(self, other):
         return self.__floordiv__(other)
+
+    def __rfloordiv__(self, other):
+        return tensor_operator_registry.get('__floordiv__')(other, self)
 
     def __str__(self):
         if self.dtype == mstype.type_none:

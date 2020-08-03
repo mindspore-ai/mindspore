@@ -472,3 +472,7 @@ def test_tensor_operation():
     assert np.all(x.asnumpy() == np.ones((3, 3)))
     with pytest.raises(ValueError):
         res = x * (2, 3)
+    res = 5 % x
+    assert np.all(x.asnumpy() == np.ones((3, 3)))
+    res = 5 // x
+    assert np.all(x.asnumpy() == np.ones((3, 3)))

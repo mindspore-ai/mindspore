@@ -316,7 +316,10 @@ OpExecInfoPtr GenerateOpExecInfo(const py::args &args, py::list *const out_args)
   }
   op_exec_info->py_primitive = prim;
   op_exec_info->op_attrs = py::getattr(args[PY_PRIM], "attrs");
-  op_exec_info->value = PynativeExecutor::GetInstance()->GetForwardValue(op_exec_info);
+  auto inst = PynativeExecutor::GetInstance();
+  if (inst->grad_flag()) {
+    op_exec_info->value = inst->GetForwardValue(op_exec_info);
+  }
   if (op_exec_info->op_inputs.size() != op_exec_info->inputs_mask.size()) {
     MS_LOG(ERROR) << "Op:" << op_exec_info->op_name << " inputs size not equal op_mask";
     return nullptr;
@@ -1029,15 +1032,24 @@ std::vector<AnfNodePtr> PynativeExecutor::GetWeightsArgs(const py::object &weigh
       AnfNodePtr para_node = nullptr;
       if (graph_info_map_[df_builder_].param_map.count(param_id)) {
         para_node = graph_info_map_[df_builder_].param_map[param_id];
-
-        AnfNodePtr value = parse::GetMixedPrecisionCastHelp(df_builder_, para_node);
-        AnfNodePtr make_ref = NewValueNode(prim::kPrimMakeRef);
-        auto refkey = std::make_shared<RefKey>(para_node->cast<ParameterPtr>()->name());
-        AnfNodePtr ref_key_node = NewValueNode(refkey);
-        AnfNodePtr ref_node = df_builder_->NewCNode({make_ref, ref_key_node, value, para_node});
-
-        w_args.push_back(ref_node);
+      } else {
+        auto name_attr = mindspore::parse::python_adapter::GetPyObjAttr(param, "name");
+        if (py::isinstance<py::none>(name_attr)) {
+          MS_LOG(EXCEPTION) << "Parameter object should have name attribute";
+        }
+        auto param_name = py::cast<std::string>(name_attr);
+        auto free_param = df_builder_->add_parameter();
+        free_param->set_name(param_name);
+        free_param->set_default_param(py::cast<tensor::TensorPtr>(param));
+        free_param->debug_info()->set_name(param_name);
+        para_node = free_param;
       }
+      AnfNodePtr value = parse::GetMixedPrecisionCastHelp(df_builder_, para_node);
+      AnfNodePtr make_ref = NewValueNode(prim::kPrimMakeRef);
+      auto refkey = std::make_shared<RefKey>(para_node->cast<ParameterPtr>()->name());
+      AnfNodePtr ref_key_node = NewValueNode(refkey);
+      AnfNodePtr ref_node = df_builder_->NewCNode({make_ref, ref_key_node, value, para_node});
+      w_args.push_back(ref_node);
     }
   } else {
     MS_LOG(DEBUG) << "training not paramter_tuple";
