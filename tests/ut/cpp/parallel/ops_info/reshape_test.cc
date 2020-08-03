@@ -38,13 +38,13 @@ class TestReshapeInfo : public UT::Common {
 };
 
 void TestReshapeInfo::SetUp() {
-  RankList dev_list;
+  std::vector<int32_t> dev_list;
 
   for (int32_t i = 0; i < 34; i++) {
     dev_list.push_back(i);
   }
 
-  RankList stage_map;
+  std::vector<int32_t> stage_map;
   stage_map.push_back(32);
   stage_map.push_back(2);
 
@@ -68,29 +68,29 @@ void TestReshapeInfo::SetUp() {
 }
 
 TEST_F(TestReshapeInfo, InferDevMatrixShape1) {
-  Strategys inputs = {{4, 1, 1, 1}};
+  std::vector<Dimensions> inputs = {{4, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   reshape->Init(strategy);
-  Shape dev_matrix_shape = reshape->dev_matrix_shape();
+  std::vector<int32_t> dev_matrix_shape = reshape->dev_matrix_shape();
 
-  Shape expect = {8, 4};
+  std::vector<int32_t> expect = {8, 4};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 TEST_F(TestReshapeInfo, InferDevMatrixShape2) {
-  Strategys inputs = {{32, 1, 1, 1}};
+  std::vector<Dimensions> inputs = {{32, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   reshape->Init(strategy);
-  Shape dev_matrix_shape = reshape->dev_matrix_shape();
+  std::vector<int32_t> dev_matrix_shape = reshape->dev_matrix_shape();
 
-  Shape expect = {32};
+  std::vector<int32_t> expect = {32};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 TEST_F(TestReshapeInfo, InferSliceShape1) {
-  Strategys str = {{4, 1, 1, 1}};
+  std::vector<Dimensions> str = {{4, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   reshape->Init(strategy);
@@ -111,7 +111,7 @@ TEST_F(TestReshapeInfo, InferSliceShape1) {
 }
 
 TEST_F(TestReshapeInfo, InferSliceShape2) {
-  Strategys str = {{32, 1, 1, 1}};
+  std::vector<Dimensions> str = {{32, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   reshape->Init(strategy);
@@ -132,7 +132,7 @@ TEST_F(TestReshapeInfo, InferSliceShape2) {
 }
 
 TEST_F(TestReshapeInfo, GetTensorLayout1) {
-  Strategys str = {{4, 1, 1, 1}};
+  std::vector<Dimensions> str = {{4, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   reshape->Init(strategy);
@@ -153,7 +153,7 @@ TEST_F(TestReshapeInfo, GetTensorLayout1) {
 }
 
 TEST_F(TestReshapeInfo, GetTensorLayout2) {
-  Strategys str = {{32, 1, 1, 1}};
+  std::vector<Dimensions> str = {{32, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   reshape->Init(strategy);
@@ -174,7 +174,7 @@ TEST_F(TestReshapeInfo, GetTensorLayout2) {
 }
 
 TEST_F(TestReshapeInfo, GetForwardOp1) {
-  Strategys inputs = {{4, 1, 1, 1}};
+  std::vector<Dimensions> inputs = {{4, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   reshape->Init(strategy);
@@ -185,7 +185,7 @@ TEST_F(TestReshapeInfo, GetForwardOp1) {
 }
 
 TEST_F(TestReshapeInfo, GetMirrorOPs1) {
-  Strategys inputs = {{4, 1, 1, 1}};
+  std::vector<Dimensions> inputs = {{4, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   reshape->Init(strategy);
@@ -197,7 +197,7 @@ TEST_F(TestReshapeInfo, GetMirrorOPs1) {
 }
 
 TEST_F(TestReshapeInfo, CheckStrategy1) {
-  Strategys inputs = {{1, 4, 8}};
+  std::vector<Dimensions> inputs = {{1, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = reshape->Init(strategy);
@@ -205,7 +205,7 @@ TEST_F(TestReshapeInfo, CheckStrategy1) {
 }
 
 TEST_F(TestReshapeInfo, CheckStrategy2) {
-  Strategys inputs = {{2, 4, 8}, {2, 4, 8}};
+  std::vector<Dimensions> inputs = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = reshape->Init(strategy);
@@ -213,7 +213,7 @@ TEST_F(TestReshapeInfo, CheckStrategy2) {
 }
 
 TEST_F(TestReshapeInfo, CheckStrategy3) {
-  Strategys inputs = {{4, 1, 1, 1}};
+  std::vector<Dimensions> inputs = {{4, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = reshape->Init(strategy);

@@ -26,7 +26,7 @@ namespace parallel {
  * shape_accum = [2, 2 * 8, 2 * 8 * 32]
  */
 TEST(ShapeUtilTest, ShapeToAccumulateProduct) {
-  Shape shape = {2, 8, 32};
+  std::vector<int32_t> shape = {2, 8, 32};
   std::vector<int64_t> shape_accum;
   Status status = ShapeToAccumulateProduct(shape, &shape_accum);
   ASSERT_EQ(Status::SUCCESS, status);
@@ -39,7 +39,7 @@ TEST(ShapeUtilTest, ShapeToAccumulateProduct) {
  * shape_accum = [2 * 8 * 32, 8 * 32, 32]
  */
 TEST(ShapeUtilTest, ShapeToAccumulateProductReverse) {
-  Shape shape = {2, 8, 32};
+  std::vector<int32_t> shape = {2, 8, 32};
   std::vector<int64_t> shape_accum;
   Status status = ShapeToAccumulateProductReverse(shape, &shape_accum);
   ASSERT_EQ(Status::SUCCESS, status);
@@ -53,10 +53,10 @@ TEST(ShapeUtilTest, ShapeToAccumulateProductReverse) {
  */
 TEST(ShapeUtilTest, AccumulateProductToShape) {
   std::vector<int64_t> shape_accum = {2, 2 * 8, 2 * 8 * 32};
-  Shape shape;
+  std::vector<int32_t> shape;
   Status status = AccumulateProductToShape(shape_accum, &shape);
   ASSERT_EQ(Status::SUCCESS, status);
-  Shape shape_expect = {2, 8, 32};
+  std::vector<int32_t> shape_expect = {2, 8, 32};
   ASSERT_EQ(shape_expect, shape);
 }
 
@@ -66,10 +66,10 @@ TEST(ShapeUtilTest, AccumulateProductToShape) {
  */
 TEST(ShapeUtilTest, AccumulateProductReverseToShape) {
   std::vector<int64_t> shape_accum = {2 * 8 * 32, 8 * 32, 32};
-  Shape shape;
+  std::vector<int32_t> shape;
   Status status = AccumulateProductReverseToShape(shape_accum, &shape);
   ASSERT_EQ(Status::SUCCESS, status);
-  Shape shape_expect = {2, 8, 32};
+  std::vector<int32_t> shape_expect = {2, 8, 32};
   ASSERT_EQ(shape_expect, shape);
 }
 
@@ -94,12 +94,12 @@ TEST(ShapeUtilTest, UnifyAccumulateProduct) {
  * out = [2, 2, 2]
  */
 TEST(ShapeUtilTest, UnifyShape1) {
-  Shape in1 = {2, 4};
-  Shape in2 = {4, 2};
-  Shape out;
+  std::vector<int32_t> in1 = {2, 4};
+  std::vector<int32_t> in2 = {4, 2};
+  std::vector<int32_t> out;
   Status status = UnifyShape(in1, in2, &out);
   ASSERT_EQ(Status::SUCCESS, status);
-  Shape out_expect = {2, 2, 2};
+  std::vector<int32_t> out_expect = {2, 2, 2};
   ASSERT_EQ(out_expect, out);
 }
 
@@ -109,12 +109,12 @@ TEST(ShapeUtilTest, UnifyShape1) {
  * out = [2, 4, 4]
  */
 TEST(ShapeUtilTest, UnifyShape2) {
-  Shape in1 = {8, 4};
-  Shape in2 = {2, 16};
-  Shape out;
+  std::vector<int32_t> in1 = {8, 4};
+  std::vector<int32_t> in2 = {2, 16};
+  std::vector<int32_t> out;
   Status status = UnifyShape(in1, in2, &out);
   ASSERT_EQ(Status::SUCCESS, status);
-  Shape out_expect = {2, 4, 4};
+  std::vector<int32_t> out_expect = {2, 4, 4};
   ASSERT_EQ(out_expect, out);
 }
 
@@ -184,12 +184,12 @@ TEST(ShapeUtilTest, ExpandAccumulateProduct4) {
  * out = [2, 8, 4, 8]
  */
 TEST(ShapeUtilTest, ExpandShape1) {
-  Shape in = {2, 8, 32};
-  Shape expand = {16, 4, 8};
-  Shape out;
+  std::vector<int32_t> in = {2, 8, 32};
+  std::vector<int32_t> expand = {16, 4, 8};
+  std::vector<int32_t> out;
   Status status = ExpandShape(in, expand, &out);
   ASSERT_EQ(Status::SUCCESS, status);
-  Shape out_expect = {2, 8, 4, 8};
+  std::vector<int32_t> out_expect = {2, 8, 4, 8};
   ASSERT_EQ(out_expect, out);
 }
 
@@ -199,12 +199,12 @@ TEST(ShapeUtilTest, ExpandShape1) {
  * out = [2, 8, 4, 8]
  */
 TEST(ShapeUtilTest, ExpandShape2) {
-  Shape in = {2, 8, 32};
-  Shape expand = {2, 4, 8};
-  Shape out;
+  std::vector<int32_t> in = {2, 8, 32};
+  std::vector<int32_t> expand = {2, 4, 8};
+  std::vector<int32_t> out;
   Status status = ExpandShape(in, expand, &out);
   ASSERT_EQ(Status::SUCCESS, status);
-  Shape out_expect = {2, 4, 2, 4, 8};
+  std::vector<int32_t> out_expect = {2, 4, 2, 4, 8};
   ASSERT_EQ(out_expect, out);
 }
 

@@ -66,10 +66,10 @@ Status StrategyCheckpoint::Load(StrategyMap *strategy_map) {
     straspb::ParallelStrategys parallel_strategys = parallel_strategy_item.parallel_strategys();
     auto stage = (int32_t)parallel_strategys.stage();
     size_t strategys_num = IntToSize(parallel_strategys.parallel_strategy_size());
-    Strategys strategy_inputs;
+    std::vector<std::vector<int32_t>> strategy_inputs;
     for (size_t j = 0; j < strategys_num; j++) {
       straspb::ParallelStrategy parallel_strategy = parallel_strategys.parallel_strategy(SizeToInt(j));
-      Dimensions dimension;
+      std::vector<int32_t> dimension;
       size_t dim_num = IntToSize(parallel_strategy.dim_size());
       for (size_t k = 0; k < dim_num; k++) {
         dimension.push_back(parallel_strategy.dim(SizeToInt(k)));

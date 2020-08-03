@@ -43,13 +43,13 @@ Status BatchParallelInfo::CheckStrategy(const StrategyPtr &strategy) {
   dev_num_ = dev_num;
 
   size_t strategy_size = strategy->GetInputNumber();
-  Strategys stra = strategy->GetInputDim();
+  std::vector<Dimensions> stra = strategy->GetInputDim();
   for (size_t i = 0; i < strategy_size; ++i) {
     Shape sub_strategy = stra.at(i);
     size_t strategy_len = sub_strategy.size();
     bool flag = false;
     for (size_t j = 0; j < strategy_len; ++j) {
-      int64_t strategy_value = sub_strategy.at(j);
+      int32_t strategy_value = sub_strategy.at(j);
       if (strategy_value > 1) {
         if (flag || strategy_value != dev_num_) {
           if (is_auto_parallel_) {
@@ -95,7 +95,7 @@ Status BatchParallelInfo::InferTensorMap() {
     return FAILED;
   }
   for (size_t i = 0; i < inputs_shape_.size(); i++) {
-    Shape tensor_map_index;
+    std::vector<int32_t> tensor_map_index;
     for (size_t j = 0; j < inputs_shape_[i].size(); ++j) {
       if (strategy_->GetInputDim()[i][j] == dev_num_ && j == 0) {
         tensor_map_index.push_back(0);
@@ -106,7 +106,7 @@ Status BatchParallelInfo::InferTensorMap() {
     inputs_tensor_map_.push_back(tensor_map_index);
   }
   for (size_t i = 0; i < outputs_shape_.size(); i++) {
-    Shape tensor_map_index;
+    std::vector<int32_t> tensor_map_index;
     for (size_t j = 0; j < outputs_shape_[i].size(); ++j) {
       if (i == 0 && j == 0) {
         tensor_map_index.push_back(0);
@@ -123,7 +123,7 @@ Strategys BatchParallelInfo::GetOutputsStrategy() {
   Strategys outputs_strategy;
 
   for (size_t i = 0; i < outputs_shape_.size(); ++i) {
-    Dimensions strategy;
+    std::vector<int32_t> strategy;
     for (size_t j = 0; j < outputs_shape_[i].size(); ++j) {
       if (i == 0 && j == 0) {
         strategy.push_back(dev_num_);
@@ -201,7 +201,7 @@ Status BatchParallelInfo::GenerateStrategies(int32_t stage_id) {
   is_auto_parallel_ = true;
   size_t total_dev_num = g_device_manager->GetDeviceListByStageId(stage_id).size();
   StrategyPtr sp;
-  Strategys strategy;
+  std::vector<Dimensions> strategy;
   for (size_t i = 0; i < inputs_shape_.size(); i++) {
     Shape temp(inputs_shape_[i].size(), 1);
     if (split_flag_list_[i]) {

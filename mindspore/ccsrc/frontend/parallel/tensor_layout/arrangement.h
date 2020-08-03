@@ -32,11 +32,11 @@ class Arrangement : public Array {
  public:
   Arrangement() : size_(1) {}
   ~Arrangement() override = default;
-  Status Init(const Shape &array) override;
-  int64_t size() const { return size_; }
-  Shape GetFrontElementByValue(int64_t value) const;
+  Status Init(const std::vector<int32_t> &array) override;
+  int32_t size() const { return size_; }
+  std::vector<int32_t> GetFrontElementByValue(int32_t value) const;
   std::shared_ptr<std::vector<Arrangement>> GetExpandShapeList(const Arrangement &expand_shape) const;
-  Shape ComputeReverseAccumulateSumInReverseOrder() const;
+  std::vector<int32_t> ComputeReverseAccumulateSumInReverseOrder() const;
   std::shared_ptr<Arrangement> GetExpandedShapeByExpandListReserveLeft(
     const std::vector<Arrangement> &expand_list) const;
   std::shared_ptr<Arrangement> GetExpandedShapeByExpandListRemoveLeft(
@@ -50,7 +50,7 @@ class Arrangement : public Array {
  private:
   bool IsValidArrangement();
   void ComputeSize();
-  int64_t size_;
+  int32_t size_;
 };
 }  // namespace parallel
 }  // namespace mindspore

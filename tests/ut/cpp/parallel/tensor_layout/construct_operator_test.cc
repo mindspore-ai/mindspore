@@ -39,12 +39,12 @@ class TestConstructOperator : public UT::Common {
 };
 
 void TestConstructOperator::SetUp() {
-  RankList dev_list;
+  std::vector<int32_t> dev_list;
 
   for (int32_t i = 0; i < 1050; i++) {
     dev_list.push_back(i);
   }
-  RankList stage_map;
+  std::vector<int32_t> stage_map;
   stage_map.push_back(1024);
   stage_map.push_back(26);
 
@@ -62,7 +62,7 @@ void TestConstructOperator::SetUp() {
 
   MatMulInfoPtr matmul = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_1, outputs_shape_1, attr_1);
 
-  Strategys str = {{2, 4, 8, 16}, {2, 4, 16, 1}};
+  std::vector<Dimensions> str = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
   matmul->Init(strategy);
   Shape tensor_shape = {512, 1024};
@@ -79,8 +79,8 @@ TEST_F(TestConstructOperator, TestReshapeOP) {
 
 TEST_F(TestConstructOperator, TestStridedSliceOP) {
   Args args = {1, 2, 3};
-  int64_t split_count = args[0];
-  int64_t split_dim = args[1];
+  int32_t split_count = args[0];
+  int32_t split_dim = args[1];
   Shape device_arrangement = {8, 4};
   Arrangement dev_mat;
   dev_mat.Init(device_arrangement);
@@ -98,18 +98,12 @@ TEST_F(TestConstructOperator, TestStridedSliceOP) {
   OperatorParams params = op.second.second;
   ValuePtr begin_ptr = params[0].first.second;
   ValuePtr end_ptr = params[1].first.second;
-  std::vector<int32_t> begin_int = GetValue<const std::vector<int32_t>>(begin_ptr);
-  std::vector<int32_t> end_int = GetValue<const std::vector<int32_t>>(end_ptr);
-  Shape begin;
-  Shape end;
-  (void)std::transform(begin_int.begin(), begin_int.end(), std::back_inserter(begin),
-                       [](const int32_t &value) { return static_cast<int64_t>(value); });
-  (void)std::transform(end_int.begin(), end_int.end(), std::back_inserter(end),
-                       [](const int32_t &value) { return static_cast<int64_t>(value); });
+  Shape begin = GetValue<const std::vector<int>>(begin_ptr);
+  Shape end = GetValue<const std::vector<int>>(end_ptr);
   for (size_t i = 0; i < begin.size(); i++) {
-    int64_t diff = end[i] - begin[i];
-    int64_t num = shape[i];
-    if (SizeToLong(i) != split_dim) {
+    int32_t diff = end[i] - begin[i];
+    int32_t num = shape[i];
+    if (SizeToInt(i) != split_dim) {
       ASSERT_EQ(diff, shape[i]);
     } else {
       ASSERT_EQ(diff, num / split_count);

@@ -47,8 +47,8 @@ Status RedistributionOperatorInfer::Init(const TensorLayout &tensor_layout, cons
   constructor_.UpdateTensorShape(cur_tensor_layout_.slice_shape().array());
 
   size_t key = 0;
-  Shape map = in_tensor_map_.array();
-  for (int64_t item : map) {
+  std::vector<int32_t> map = in_tensor_map_.array();
+  for (int32_t item : map) {
     map_[key++] = item;
   }
 
@@ -83,9 +83,9 @@ Status RedistributionOperatorInfer::InferRedistributionOperator() {
     // break loop structure with concat_by_axis
     if (len_global == operator_list_.size() && !map_.empty()) {
       size_t index = map_.begin()->first;
-      int64_t in_dim = map_[index];
+      int32_t in_dim = map_[index];
       map_[index] = NONE;
-      Args args = {SizeToInt(index), in_dim, dev_mat_.GetDimByReverseIdx(LongToSize(in_dim))};
+      Args args = {SizeToInt(index), in_dim, dev_mat_.GetDimByReverseIdx(IntToUint(in_dim))};
       if (InsertOperator(CONCAT_BY_AXIS, args) == Status::FAILED) {
         return Status::FAILED;
       }
@@ -97,8 +97,8 @@ Status RedistributionOperatorInfer::InferRedistributionOperator() {
 Status RedistributionOperatorInfer::InferSplitByAxis() {
   for (auto iter = map_.begin(); iter != map_.end();) {
     uint32_t index = iter->first;
-    int64_t in_dim = iter->second;
-    int64_t out_dim = out_tensor_map_.GetDimByIdx(index);
+    int32_t in_dim = iter->second;
+    int32_t out_dim = out_tensor_map_.GetDimByIdx(index);
     if (in_dim == out_dim) {
       (void)map_.erase(iter++);
       continue;
@@ -122,8 +122,8 @@ Status RedistributionOperatorInfer::InferSplitByAxis() {
 Status RedistributionOperatorInfer::InferPermuteByAxis() {
   for (auto iter = map_.begin(); iter != map_.end();) {
     uint32_t index = iter->first;
-    int64_t in_dim = map_[index];
-    int64_t out_dim = out_tensor_map_.GetDimByIdx(index);
+    int32_t in_dim = map_[index];
+    int32_t out_dim = out_tensor_map_.GetDimByIdx(index);
     if (in_dim == out_dim) {
       (void)map_.erase(iter++);
       continue;
@@ -132,9 +132,9 @@ Status RedistributionOperatorInfer::InferPermuteByAxis() {
         std::any_of(map_.begin(), map_.end(),
                     [out_dim](const RedistributionOperatorMap::value_type &a) { return a.second == out_dim; })) {
       int32_t cat_dim = in_tensor_map_.GetIndexByValue(out_dim);
-      int64_t dev_num = dev_mat_.GetDimByReverseIdx(LongToSize(out_dim));
+      int32_t dev_num = dev_mat_.GetDimByReverseIdx(IntToUint(out_dim));
       if (is_cost_model_) {
-        int64_t dev_dim = in_tensor_map_.GetDimByIdx(IntToUint(cat_dim));
+        int32_t dev_dim = in_tensor_map_.GetDimByIdx(IntToUint(cat_dim));
         Args args_alltoall = {dev_mat_.GetDimByReverseIdx(IntToUint(dev_dim)), UintToInt(index), cat_dim, dev_dim,
                               dev_num};
         if (InsertOperator(PERMUTE_BY_AXIS, args_alltoall) == Status::FAILED) {
@@ -165,10 +165,10 @@ Status RedistributionOperatorInfer::InferPermuteByAxis() {
 Status RedistributionOperatorInfer::InferConcatByAxis() {
   for (auto iter = map_.begin(); iter != map_.end();) {
     uint32_t index = iter->first;
-    int64_t in_dim = map_[index];
-    int64_t out_dim = out_tensor_map_.GetDimByIdx(index);
+    int32_t in_dim = map_[index];
+    int32_t out_dim = out_tensor_map_.GetDimByIdx(index);
     if (in_dim != NONE && out_tensor_map_.GetIndexByValue(in_dim) == NONE) {
-      Args args = {SizeToInt(index), in_dim, dev_mat_.GetDimByReverseIdx(LongToSize(in_dim))};
+      Args args = {SizeToInt(index), in_dim, dev_mat_.GetDimByReverseIdx(IntToUint(in_dim))};
       if (InsertOperator(CONCAT_BY_AXIS, args) == Status::FAILED) {
         MS_LOG(ERROR) << "Insert ConcatByAxis Error!";
         return Status::FAILED;
@@ -215,7 +215,7 @@ Status RedistributionOperatorInfer::TransferSplitByAxis(Args args) {
     MS_LOG(ERROR) << "args size should not be less than 3!";
     return Status::FAILED;
   }
-  size_t index = LongToSize(args[1]);
+  uint32_t index = IntToUint(args[1]);
   if (constructor_.StridedSliceOP(args) != Status::SUCCESS) {
     return Status::FAILED;
   } else {
@@ -239,11 +239,11 @@ Status RedistributionOperatorInfer::TransferPermuteByAxis(Args args) {
     operator_vector_.push_back(constructor_.GetOperator());
     output_info_vector_.push_back(std::make_pair(false, 0));
   }
-  size_t index = LongToSize(args[1]);
-  int64_t val = args[2];
-  int64_t out_dim = out_tensor_map_.GetDimByIdx(index);
+  uint32_t index = IntToUint(args[1]);
+  int32_t val = args[2];
+  int32_t out_dim = out_tensor_map_.GetDimByIdx(index);
 
-  if (cur_tensor_layout_.UpdateTensorMap(LongToSize(val), NONE) == Status::FAILED) {
+  if (cur_tensor_layout_.UpdateTensorMap(IntToUint(val), NONE) == Status::FAILED) {
     return Status::FAILED;
   }
   if (cur_tensor_layout_.UpdateTensorMap(index, out_dim) == Status::FAILED) {
@@ -257,9 +257,9 @@ Status RedistributionOperatorInfer::TransferConcatByAxis(Args args) {
     MS_LOG(ERROR) << "args size should not be less than 3!";
     return Status::FAILED;
   }
-  int64_t tensor_dim = args[0];
-  int64_t dev_dim = args[1];
-  int64_t split_count = args[2];
+  int32_t tensor_dim = args[0];
+  int32_t dev_dim = args[1];
+  int32_t split_count = args[2];
   if (constructor_.AllGatherOP(dev_dim) != Status::SUCCESS) {
     return Status::FAILED;
   } else {
@@ -280,7 +280,7 @@ Status RedistributionOperatorInfer::TransferConcatByAxis(Args args) {
       output_info_vector_.push_back(std::make_pair(false, 0));
     }
   }
-  if (cur_tensor_layout_.UpdateTensorMap(LongToSize(tensor_dim), NONE) == Status::FAILED) {
+  if (cur_tensor_layout_.UpdateTensorMap(IntToUint(tensor_dim), NONE) == Status::FAILED) {
     return Status::FAILED;
   }
   return Status::SUCCESS;

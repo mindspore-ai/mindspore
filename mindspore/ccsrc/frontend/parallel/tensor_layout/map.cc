@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace parallel {
-Status Map::Init(const Shape &array) {
+Status Map::Init(const std::vector<int32_t> &array) {
   Status status = Array::Init(array);
   if (status != Status::SUCCESS) {
     return Status::FAILED;
@@ -39,11 +39,11 @@ Status Map::Init(const Shape &array) {
 }
 
 bool Map::IsValidMap() {
-  if (std::any_of(array_.begin(), array_.end(), [](int64_t value) { return ((value < 0) && (value != MAP_NONE)); })) {
+  if (std::any_of(array_.begin(), array_.end(), [](int32_t value) { return ((value < 0) && (value != MAP_NONE)); })) {
     return false;
   }
   // check that all none -1 value in array_ is different
-  Shape sorted_array = array_;
+  std::vector<int32_t> sorted_array = array_;
   std::sort(sorted_array.begin(), sorted_array.end());
   int32_t value = MAP_NONE;
   for (auto &element : sorted_array) {
@@ -58,7 +58,7 @@ bool Map::IsValidMap() {
   return true;
 }
 
-int64_t Map::GetMaxItem() const {
+int32_t Map::GetMaxItem() const {
   if (!array_.empty()) {
     return *std::max_element(array_.begin(), array_.end());
   } else {
@@ -66,7 +66,7 @@ int64_t Map::GetMaxItem() const {
   }
 }
 
-int32_t Map::GetIndexByValue(int64_t value) const {
+int32_t Map::GetIndexByValue(int32_t value) const {
   auto iter = find(array_.begin(), array_.end(), value);
   if (iter != array_.end()) {
     return static_cast<int32_t>(std::distance(array_.begin(), iter));
@@ -82,15 +82,15 @@ std::shared_ptr<Map> Map::ExpandMapByNone(const Arrangement &expand_num_list) co
   if (expand_num_list.GetDimSize() != GetDimSize()) {
     return nullptr;
   }
-  Shape new_shape;
-  for (size_t i = 0; i != GetDimSize(); i++) {
+  std::vector<int32_t> new_shape;
+  for (uint32_t i = 0; i != GetDimSize(); i++) {
     if (GetDimByIdx(i) == MAP_NONE) {
-      for (int64_t j = 0; j < expand_num_list.GetDimByIdx(i); j++) {
+      for (int32_t j = 0; j < expand_num_list.GetDimByIdx(i); j++) {
         new_shape.push_back(MAP_NONE);
       }
     } else {
       new_shape.push_back(GetDimByIdx(i));
-      int64_t j = 1;
+      int32_t j = 1;
       while (j < expand_num_list.GetDimByIdx(i)) {
         new_shape.push_back(MAP_NONE);
         j++;
@@ -106,17 +106,17 @@ std::shared_ptr<Map> Map::ExpandMapByNone(const Arrangement &expand_num_list) co
  * expand.size() should be equal to array_.size()
  */
 std::shared_ptr<Map> Map::ExpandMapByDecreaseNumber(const Arrangement &expand_num_list) const {
-  if (GetMaxItem() >= static_cast<int64_t>(expand_num_list.GetDimSize())) {
+  if (GetMaxItem() >= static_cast<int32_t>(expand_num_list.GetDimSize())) {
     return nullptr;
   }
-  Shape new_shape;
-  for (size_t i = 0; i < GetDimSize(); i++) {
+  std::vector<int32_t> new_shape;
+  for (uint32_t i = 0; i < GetDimSize(); i++) {
     if (GetDimByIdx(i) == MAP_NONE) {
       new_shape.push_back(MAP_NONE);
     } else {
-      int64_t start_map =
-        expand_num_list.ComputeReverseAccumulateSumInReverseOrder()[static_cast<size_t>(GetDimByIdx(i))];
-      for (int32_t k = expand_num_list.GetDimByReverseIdx(static_cast<size_t>(GetDimByIdx(i))) - 1; k >= 0; k--) {
+      int32_t start_map =
+        expand_num_list.ComputeReverseAccumulateSumInReverseOrder()[static_cast<uint32_t>(GetDimByIdx(i))];
+      for (int32_t k = expand_num_list.GetDimByReverseIdx(static_cast<uint32_t>(GetDimByIdx(i))) - 1; k >= 0; k--) {
         new_shape.push_back(k + start_map);
       }
     }
@@ -127,16 +127,16 @@ std::shared_ptr<Map> Map::ExpandMapByDecreaseNumber(const Arrangement &expand_nu
 }
 
 std::shared_ptr<std::vector<Arrangement>> Map::ReMapVector(const std::vector<Arrangement> &input_vector) const {
-  if (GetMaxItem() >= static_cast<int64_t>(input_vector.size())) {
+  if (GetMaxItem() >= static_cast<int32_t>(input_vector.size())) {
     return nullptr;
   }
   std::vector<Arrangement> out;
   Arrangement empty_arrangement;
-  for (size_t i = 0; i < GetDimSize(); i++) {
+  for (uint32_t i = 0; i < GetDimSize(); i++) {
     if (GetDimByIdx(i) == MAP_NONE) {
       out.push_back(empty_arrangement);
     } else {
-      out.push_back(input_vector[input_vector.size() - 1 - LongToSize(GetDimByIdx(i))]);
+      out.push_back(input_vector[IntToUint(SizeToInt(input_vector.size()) - 1 - GetDimByIdx(i))]);
     }
   }
   return std::make_shared<std::vector<Arrangement>>(out);
@@ -144,7 +144,7 @@ std::shared_ptr<std::vector<Arrangement>> Map::ReMapVector(const std::vector<Arr
 
 bool Map::CheckNoneByIdxList(std::vector<size_t> idx_list) const {
   for (auto &value : idx_list) {
-    if (GetDimByIdx(value) != MAP_NONE) {
+    if (GetDimByIdx(SizeToUint(value)) != MAP_NONE) {
       return false;
     }
   }
@@ -152,11 +152,11 @@ bool Map::CheckNoneByIdxList(std::vector<size_t> idx_list) const {
 }
 
 Map Map::SqueezeMapByIdxList(std::vector<size_t> idx_list) const {
-  Shape out_shape;
+  std::vector<int32_t> out_shape;
   for (size_t i = 0; i < GetDimSize(); i++) {
     auto it = std::find(idx_list.begin(), idx_list.end(), i);
     if (it == idx_list.end()) {
-      out_shape.push_back(GetDimByIdx(i));
+      out_shape.push_back(GetDimByIdx(SizeToUint(i)));
     }
   }
   if (out_shape.empty()) {

@@ -21,50 +21,51 @@
 #include <vector>
 
 #include "frontend/parallel/tensor_layout/tensor_layout.h"
-#include "frontend/parallel/step_parallel.h"
 
 namespace mindspore {
 namespace parallel {
 
-std::vector<Shape> combine(const Shape& in, int64_t target);
+std::vector<std::vector<int32_t>> combine(const std::vector<int32_t>& in, int32_t target);
 
-void GenerateValidShapeBySizeAndDim(int64_t pow_size, int64_t dim, std::vector<Shape>* out);
+void GenerateValidShapeBySizeAndDim(int32_t pow_size, int32_t dim,
+                                    std::vector<std::vector<int32_t>>* out);
 
-void GenerateValidShapeBySize(int64_t pow_size, std::vector<Shape>* out);
+void GenerateValidShapeBySize(int32_t pow_size, std::vector<std::vector<int32_t>>* out);
 
-TensorMap GenerateTensorMap(const int64_t& map_size, const Shape& pos_index, const Shape& pos_value);
+std::vector<int32_t> GenerateTensorMap(const uint32_t& map_size, const std::vector<int32_t>& pos_index,
+                                       const std::vector<int32_t>& pos_value);
 
-void GenerateValidTensorMap(const DeviceArrangement& device_arrangement, const TensorMap& tensor_shape,
-                            std::vector<TensorMap>* tensor_map_list);
+void GenerateValidTensorMap(const std::vector<int32_t>& device_arrangement, const std::vector<int32_t>& tensor_shape,
+                            std::vector<std::vector<int32_t>>* tensor_map_list);
 
 void GenerateValidLayoutByDeviceSizeAndTensorSize(
-  int64_t device_pow_size, int64_t tensor_pow_size, int64_t max_device_dim,
-  int64_t max_shape_dim,
-  std::vector<std::tuple<DeviceArrangement, TensorMap, TensorShape>>* layout_list);
+  int32_t device_pow_size, int32_t tensor_pow_size, int32_t max_device_dim,
+  int32_t max_shape_dim,
+  std::vector<std::tuple<std::vector<int32_t>, std::vector<int32_t>, std::vector<int32_t>>>* layout_list);
 
-size_t ComputeNoneNumber(const TensorMap& tensor_map);
+uint32_t ComputeNoneNumber(const std::vector<int32_t>& tensor_map);
 
-bool ShapeIsDividedByDevice(const DeviceArrangement& device_arrangement, const TensorMap& tensor_map,
-                            const TensorShape& tensor_shape);
+bool ShapeIsDividedByDevice(const std::vector<int32_t>& device_arrangement, const std::vector<int32_t>& tensor_map,
+                            const std::vector<int32_t>& tensor_shape);
 
-bool CheckLayoutValid(const DeviceArrangement& device_arrangement, const TensorMap& tensor_map,
-                      const TensorShape& tensor_shape);
+bool CheckLayoutValid(const std::vector<int32_t>& device_arrangement, const std::vector<int32_t>& tensor_map,
+                      const std::vector<int32_t>& tensor_shape);
 
-void ComputeAccumDeviceTOAccumShapeMap(const DeviceArrangement& device_arrangement,
-                                       const TensorMap& tensor_map, const TensorShape& tensor_shape,
-                                       std::map<int64_t, int64_t>* accum_device_to_accum_shape_map);
+void ComputeAccumDeviceTOAccumShapeMap(const std::vector<int32_t>& device_arrangement,
+                                       const std::vector<int32_t>& tensor_map, const std::vector<int32_t>& tensor_shape,
+                                       std::map<int32_t, int32_t>* accum_device_to_accum_shape_map);
 
-void LayoutTransferValidLayoutChangeCheck(const DeviceArrangement& in_device_arrangement,
-                                          const TensorMap& in_tensor_map,
-                                          const TensorShape& in_tensor_shape,
-                                          const DeviceArrangement& out_device_arrangement,
-                                          const TensorMap& out_tensor_map,
-                                          const TensorShape& out_tensor_shape);
+void LayoutTransferValidLayoutChangeCheck(const std::vector<int32_t>& in_device_arrangement,
+                                          const std::vector<int32_t>& in_tensor_map,
+                                          const std::vector<int32_t>& in_tensor_shape,
+                                          const std::vector<int32_t>& out_device_arrangement,
+                                          const std::vector<int32_t>& out_tensor_map,
+                                          const std::vector<int32_t>& out_tensor_shape);
 
-void ValidLayoutChangeCheck(const DeviceArrangement& in_device_arrangement,
-                            const TensorMap& in_tensor_map, const TensorShape& in_tensor_shape,
-                            const DeviceArrangement& out_device_arrangement,
-                            const TensorMap& out_tensor_map, const TensorShape& out_tensor_shape);
+void ValidLayoutChangeCheck(const std::vector<int32_t>& in_device_arrangement,
+                            const std::vector<int32_t>& in_tensor_map, const std::vector<int32_t>& in_tensor_shape,
+                            const std::vector<int32_t>& out_device_arrangement,
+                            const std::vector<int32_t>& out_tensor_map, const std::vector<int32_t>& out_tensor_shape);
 
 }  // namespace parallel
 }  // namespace mindspore

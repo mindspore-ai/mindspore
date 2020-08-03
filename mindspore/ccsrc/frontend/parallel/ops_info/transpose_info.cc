@@ -41,7 +41,7 @@ Status TransposeInfo::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status TransposeInfo::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  std::vector<Dimensions> stra = strategy_->GetInputDim();
   input_strategy_ = stra.at(0);
   for (auto &iter : input_strategy_) {
     dev_matrix_shape_.push_back(iter);
@@ -105,13 +105,13 @@ Status TransposeInfo::InferTensorMap() {
     return FAILED;
   }
 
-  Shape tensor_map_index_input;
+  std::vector<int32_t> tensor_map_index_input;
   for (size_t j = 0; j < inputs_shape_[0].size(); ++j) {
     tensor_map_index_input.push_back(SizeToInt(inputs_shape_[0].size() - j - 1));
   }
   inputs_tensor_map_.push_back(tensor_map_index_input);
 
-  Shape tensor_map_index_output = tensor_map_index_input;
+  std::vector<int32_t> tensor_map_index_output = tensor_map_index_input;
   for (uint32_t i = 0; i < tensor_map_index_output.size(); i++) {
     tensor_map_index_output[i] = tensor_map_index_input[IntToUint(axis_v_[i])];
   }
@@ -122,7 +122,7 @@ Status TransposeInfo::InferTensorMap() {
 // the output tensor strategy is the permutation of input tensor strategy, the permutation is axis_v
 Strategys TransposeInfo::GetOutputsStrategy() {
   Strategys outputs_strategy;
-  Dimensions strategy = input_strategy_;
+  std::vector<int32_t> strategy = input_strategy_;
   for (uint32_t i = 0; i < strategy.size(); i++) {
     strategy[i] = input_strategy_[IntToUint(axis_v_[i])];
   }

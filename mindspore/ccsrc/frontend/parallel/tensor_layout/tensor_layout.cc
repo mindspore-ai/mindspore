@@ -64,8 +64,8 @@ Status TensorLayout::Init(const Arrangement &device_arrangement, const Map &tens
   }
 }
 
-Status TensorLayout::InitFromVector(const Shape &device_arrangement, const Shape &tensor_map,
-                                    const Shape &tensor_shape) {
+Status TensorLayout::InitFromVector(const std::vector<int32_t> &device_arrangement,
+                                    const std::vector<int32_t> &tensor_map, const std::vector<int32_t> &tensor_shape) {
   if (device_arrangement_origin_.Init(device_arrangement) != SUCCESS) {
     return FAILED;
   }
@@ -82,7 +82,7 @@ Status TensorLayout::InitFromVector(const Shape &device_arrangement, const Shape
 }
 
 bool TensorLayout::IsValidTensorLayout() const {
-  if (tensor_map_origin_.GetMaxItem() >= static_cast<int64_t>(device_arrangement_origin_.GetDimSize())) {
+  if (tensor_map_origin_.GetMaxItem() >= static_cast<int32_t>(device_arrangement_origin_.GetDimSize())) {
     MS_LOG(ERROR) << "the max element in tensor_map_origin_ must be smaller than device_arrangement_origin_ size!";
     return false;
   }
@@ -114,18 +114,18 @@ bool TensorLayout::TensorShapeDimensionIsDividedBySplitDeviceDimension() const {
 }
 
 void TensorLayout::RemoveElementEqualToOneInDeviceArrangement() {
-  Shape device_arrangement_shape;
-  Shape tensor_map_shape = tensor_map_origin_.array();
-  size_t dev_num = device_arrangement_origin_.GetDimSize();
-  size_t dev_num_left = device_arrangement_origin_.GetDimSize();
-  for (size_t i = 0; i < dev_num; i++) {
+  std::vector<int32_t> device_arrangement_shape;
+  std::vector<int32_t> tensor_map_shape = tensor_map_origin_.array();
+  uint32_t dev_num = SizeToUint(device_arrangement_origin_.GetDimSize());
+  int32_t dev_num_left = SizeToInt(device_arrangement_origin_.GetDimSize());
+  for (uint32_t i = 0; i < dev_num; i++) {
     if (device_arrangement_origin_.GetDimByIdx(i) == 1) {
-      int32_t idx = GetTensorDimensionIndexByDeviceDimensionIndex(static_cast<int64_t>(dev_num - 1 - i));
+      int32_t idx = GetTensorDimensionIndexByDeviceDimensionIndex(static_cast<int32_t>(dev_num - 1 - i));
       if (idx != -1) {
         tensor_map_shape[static_cast<uint32_t>(idx)] = -1;
       }
       for (auto &value : tensor_map_shape) {
-        if (value >= SizeToLong(dev_num_left) - 1 - static_cast<int64_t>(i)) {
+        if (value >= dev_num_left - 1 - static_cast<int32_t>(i)) {
           value--;
         }
       }
@@ -139,7 +139,7 @@ void TensorLayout::RemoveElementEqualToOneInDeviceArrangement() {
 }
 
 // if idx is not in tensor_map, return -1
-int32_t TensorLayout::GetTensorDimensionIndexByDeviceDimensionIndex(int64_t idx) const {
+int32_t TensorLayout::GetTensorDimensionIndexByDeviceDimensionIndex(int32_t idx) const {
   return tensor_map_.GetIndexByValue(idx);
 }
 
@@ -288,7 +288,7 @@ std::shared_ptr<TensorLayout> TensorLayout::ExpandDeviceArrangement(const Arrang
 }
 
 bool TensorLayout::TensorShapeCanBeExpanded(const Arrangement &expand_shape) const {
-  Shape in_expand_shape_shape;
+  std::vector<int32_t> in_expand_shape_shape;
   Status status = ExpandShape(tensor_shape_.array(), expand_shape.array(), &in_expand_shape_shape);
   if (status != Status::SUCCESS) {
     return false;
@@ -297,7 +297,7 @@ bool TensorLayout::TensorShapeCanBeExpanded(const Arrangement &expand_shape) con
 }
 
 std::shared_ptr<Arrangement> TensorLayout::ComputeExpandedTensorShape(const Arrangement &expand_shape) const {
-  Shape in_expand_shape_shape;
+  std::vector<int32_t> in_expand_shape_shape;
   Status status = ExpandShape(tensor_shape_.array(), expand_shape.array(), &in_expand_shape_shape);
   if (status != Status::SUCCESS) {
     return nullptr;
@@ -311,14 +311,14 @@ std::shared_ptr<Arrangement> TensorLayout::ComputeExpandedTensorShape(const Arra
 }
 
 Arrangement TensorLayout::slice_shape() const {
-  Shape shape;
-  for (size_t index = 0; index < tensor_map_.GetDimSize(); index++) {
-    int64_t dim = tensor_map_.GetDimByIdx(index);
-    int64_t num = tensor_shape_.GetDimByIdx(index);
+  std::vector<int32_t> shape;
+  for (uint32_t index = 0; index < tensor_map_.GetDimSize(); index++) {
+    int32_t dim = tensor_map_.GetDimByIdx(index);
+    int32_t num = tensor_shape_.GetDimByIdx(index);
     if (dim == -1) {
       shape.push_back(num);
     } else {
-      int64_t divisor = device_arrangement_.GetDimByReverseIdx(IntToUint(dim));
+      int32_t divisor = device_arrangement_.GetDimByReverseIdx(IntToUint(dim));
       shape.push_back(num / divisor);
     }
   }
@@ -331,7 +331,7 @@ Arrangement TensorLayout::slice_shape() const {
   }
 }
 
-Status TensorLayout::UpdateTensorMap(size_t index, int64_t value) {
+Status TensorLayout::UpdateTensorMap(uint32_t index, int32_t value) {
   if (index >= tensor_map_.GetDimSize()) {
     MS_LOG(ERROR) << "Index is out of the size of the tensor map!";
     return Status::FAILED;

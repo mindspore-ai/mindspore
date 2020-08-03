@@ -25,7 +25,6 @@
 #include <unordered_map>
 #include <typeindex>
 #include <memory>
-#include <algorithm>
 
 #include "utils/log_adapter.h"
 #include "base/base.h"
@@ -64,16 +63,7 @@ class Shape : public BaseShape {
   static const int SHP_ANY = -1;
   Shape() : shape_() {}
   Shape(const std::initializer_list<int> &list) : shape_(list) {}
-  Shape(const std::initializer_list<int64_t> &list) {
-    std::vector<int64_t> list_in(list);
-    (void)std::transform(list_in.begin(), list_in.end(), std::back_inserter(shape_),
-                         [](const int64_t &value) { return static_cast<int>(value); });
-  }
   explicit Shape(const std::vector<int> &list) : shape_(list) {}
-  explicit Shape(const std::vector<int64_t> &list) {
-    (void)std::transform(list.begin(), list.end(), std::back_inserter(shape_),
-                         [](const int64_t &value) { return static_cast<int>(value); });
-  }
   ~Shape() override = default;
   MS_DECLARE_PARENT(Shape, BaseShape)
   std::string ToString() const override;

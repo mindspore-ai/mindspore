@@ -38,13 +38,13 @@ class TestLogSoftmaxInfo : public UT::Common {
 };
 
 void TestLogSoftmaxInfo::SetUp() {
-  RankList dev_list;
+  std::vector<int32_t> dev_list;
 
   for (int32_t i = 0; i < 130; i++) {
     dev_list.push_back(i);
   }
 
-  RankList stage_map;
+  std::vector<int32_t> stage_map;
   stage_map.push_back(128);
   stage_map.push_back(2);
 
@@ -64,18 +64,18 @@ void TestLogSoftmaxInfo::SetUp() {
 }
 
 TEST_F(TestLogSoftmaxInfo, InferDevMatrixShape1) {
-  Strategys inputs = {{2, 4, 1, 16}};
+  std::vector<Dimensions> inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   log_softmax->Init(strategy);
-  Shape dev_matrix_shape = log_softmax->dev_matrix_shape();
+  std::vector<int32_t> dev_matrix_shape = log_softmax->dev_matrix_shape();
 
-  Shape expect = {2, 4, 1, 16};
+  std::vector<int32_t> expect = {2, 4, 1, 16};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 TEST_F(TestLogSoftmaxInfo, InferSliceShape1) {
-  Strategys str = {{2, 4, 1, 16}};
+  std::vector<Dimensions> str = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   log_softmax->Init(strategy);
@@ -96,7 +96,7 @@ TEST_F(TestLogSoftmaxInfo, InferSliceShape1) {
 }
 
 TEST_F(TestLogSoftmaxInfo, GetTensorLayout1) {
-  Strategys str = {{2, 4, 1, 16}};
+  std::vector<Dimensions> str = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   log_softmax->Init(strategy);
@@ -117,7 +117,7 @@ TEST_F(TestLogSoftmaxInfo, GetTensorLayout1) {
 }
 
 TEST_F(TestLogSoftmaxInfo, GetForwardOp1) {
-  Strategys inputs = {{2, 4, 1, 16}};
+  std::vector<Dimensions> inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   log_softmax->Init(strategy);
@@ -128,7 +128,7 @@ TEST_F(TestLogSoftmaxInfo, GetForwardOp1) {
 }
 
 TEST_F(TestLogSoftmaxInfo, GetMirrorOPs1) {
-  Strategys inputs = {{2, 4, 1, 16}};
+  std::vector<Dimensions> inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   log_softmax->Init(strategy);
@@ -141,7 +141,7 @@ TEST_F(TestLogSoftmaxInfo, GetMirrorOPs1) {
 
 TEST_F(TestLogSoftmaxInfo, CheckStrategy1) {
   // Success: {{2,4,1,16}}
-  Strategys inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
+  std::vector<Dimensions> inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = log_softmax->Init(strategy);
@@ -150,7 +150,7 @@ TEST_F(TestLogSoftmaxInfo, CheckStrategy1) {
 
 TEST_F(TestLogSoftmaxInfo, CheckStrategy2) {
   // Success: {{2,4,1,16}}
-  Strategys inputs = {{2, 4, 8}};
+  std::vector<Dimensions> inputs = {{2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = log_softmax->Init(strategy);
@@ -159,7 +159,7 @@ TEST_F(TestLogSoftmaxInfo, CheckStrategy2) {
 
 TEST_F(TestLogSoftmaxInfo, CheckStrategy3) {
   // Success: {{2,4,1,16}}
-  Strategys inputs = {{2, 4, 8, 16}};
+  std::vector<Dimensions> inputs = {{2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = log_softmax->Init(strategy);
@@ -167,7 +167,7 @@ TEST_F(TestLogSoftmaxInfo, CheckStrategy3) {
 }
 
 TEST_F(TestLogSoftmaxInfo, GetDeviceList1) {
-  Strategys inputs = {{2, 4, 1, 16}};
+  std::vector<Dimensions> inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   log_softmax->Init(strategy);

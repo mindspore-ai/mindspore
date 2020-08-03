@@ -18,7 +18,6 @@
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"
 #include "frontend/parallel/tensor_layout/tensor_layout.h"
-#include "frontend/parallel/step_parallel.h"
 
 namespace mindspore {
 namespace parallel {
@@ -32,12 +31,12 @@ class TestTensorLayout : public UT::Common {
   virtual void TearDown() {}
 };
 
-void ReshapeExpandDeviceArrangementTestFunction(const DeviceArrangement& in_device_arrangement_shape,
-                                                const TensorMap& in_tensor_map_shape,
-                                                const TensorShape& in_tensor_shape_shape,
-                                                const DeviceArrangement& out_device_arrangement_shape,
-                                                const TensorMap& out_tensor_map_shape,
-                                                const TensorShape& out_tensor_shape_shape) {
+void ReshapeExpandDeviceArrangementTestFunction(const std::vector<int32_t>& in_device_arrangement_shape,
+                                                const std::vector<int32_t>& in_tensor_map_shape,
+                                                const std::vector<int32_t>& in_tensor_shape_shape,
+                                                const std::vector<int32_t>& out_device_arrangement_shape,
+                                                const std::vector<int32_t>& out_tensor_map_shape,
+                                                const std::vector<int32_t>& out_tensor_shape_shape) {
   Arrangement device_arrangement;
   Status status = device_arrangement.Init(in_device_arrangement_shape);
   ASSERT_EQ(Status::SUCCESS, status);
@@ -71,12 +70,12 @@ void ReshapeExpandDeviceArrangementTestFunction(const DeviceArrangement& in_devi
  *
  */
 TEST_F(TestTensorLayout, ReshapeExpandDeviceArrangement1) {
-  DeviceArrangement device_arrangement = {8, 4};
-  TensorMap tensor_map = {1, 0};
-  TensorShape tensor_shape = {512, 1024};
-  DeviceArrangement device_arrangement_new = {4, 2, 2, 2};
-  TensorMap tensor_map_expect = {3, 2, 1, 0};
-  TensorShape tensor_shape_expect = {4, 128, 2, 512};
+  std::vector<int32_t> device_arrangement = {8, 4};
+  std::vector<int32_t> tensor_map = {1, 0};
+  std::vector<int32_t> tensor_shape = {512, 1024};
+  std::vector<int32_t> device_arrangement_new = {4, 2, 2, 2};
+  std::vector<int32_t> tensor_map_expect = {3, 2, 1, 0};
+  std::vector<int32_t> tensor_shape_expect = {4, 128, 2, 512};
   ReshapeExpandDeviceArrangementTestFunction(device_arrangement, tensor_map, tensor_shape, device_arrangement_new,
                                              tensor_map_expect, tensor_shape_expect);
 }
@@ -92,12 +91,12 @@ TEST_F(TestTensorLayout, ReshapeExpandDeviceArrangement1) {
  *    out_tensor_shape = [2, 256, 4, 256]
  */
 TEST_F(TestTensorLayout, ReshapeExpandDeviceArrangement2) {
-  DeviceArrangement device_arrangement = {8, 4};
-  TensorMap tensor_map = {0, 1};
-  TensorShape tensor_shape = {512, 1024};
-  DeviceArrangement device_arrangement_new = {4, 2, 2, 2};
-  TensorMap tensor_map_expect = {1, 0, 3, 2};
-  TensorShape tensor_shape_expect = {2, 256, 4, 256};
+  std::vector<int32_t> device_arrangement = {8, 4};
+  std::vector<int32_t> tensor_map = {0, 1};
+  std::vector<int32_t> tensor_shape = {512, 1024};
+  std::vector<int32_t> device_arrangement_new = {4, 2, 2, 2};
+  std::vector<int32_t> tensor_map_expect = {1, 0, 3, 2};
+  std::vector<int32_t> tensor_shape_expect = {2, 256, 4, 256};
   ReshapeExpandDeviceArrangementTestFunction(device_arrangement, tensor_map, tensor_shape, device_arrangement_new,
                                              tensor_map_expect, tensor_shape_expect);
 }
@@ -112,12 +111,12 @@ TEST_F(TestTensorLayout, ReshapeExpandDeviceArrangement2) {
  *    out_tensor_shape = [4, 128, 1024]
  */
 TEST_F(TestTensorLayout, ReshapeExpandDeviceArrangement3) {
-  DeviceArrangement device_arrangement = {8, 4};
-  TensorMap tensor_map = {1, -1};
-  TensorShape tensor_shape = {512, 1024};
-  DeviceArrangement device_arrangement_new = {4, 2, 2, 2};
-  TensorMap tensor_map_expect = {3, 2, -1};
-  TensorShape tensor_shape_expect = {4, 128, 1024};
+  std::vector<int32_t> device_arrangement = {8, 4};
+  std::vector<int32_t> tensor_map = {1, -1};
+  std::vector<int32_t> tensor_shape = {512, 1024};
+  std::vector<int32_t> device_arrangement_new = {4, 2, 2, 2};
+  std::vector<int32_t> tensor_map_expect = {3, 2, -1};
+  std::vector<int32_t> tensor_shape_expect = {4, 128, 1024};
   ReshapeExpandDeviceArrangementTestFunction(device_arrangement, tensor_map, tensor_shape, device_arrangement_new,
                                              tensor_map_expect, tensor_shape_expect);
 }
@@ -133,33 +132,33 @@ TEST_F(TestTensorLayout, ReshapeExpandDeviceArrangement3) {
  *    out_tensor_shape = [512, 4, 256]
  */
 TEST_F(TestTensorLayout, ReshapeExpandDeviceArrangement4) {
-  DeviceArrangement device_arrangement = {8, 4};
-  TensorMap tensor_map = {0, 1};
-  TensorShape tensor_shape = {512, 1024};
-  DeviceArrangement device_arrangement_new = {4, 2, 4};
-  TensorMap tensor_map_expect = {0, 2, 1};
-  TensorShape tensor_shape_expect = {512, 4, 256};
+  std::vector<int32_t> device_arrangement = {8, 4};
+  std::vector<int32_t> tensor_map = {0, 1};
+  std::vector<int32_t> tensor_shape = {512, 1024};
+  std::vector<int32_t> device_arrangement_new = {4, 2, 4};
+  std::vector<int32_t> tensor_map_expect = {0, 2, 1};
+  std::vector<int32_t> tensor_shape_expect = {512, 4, 256};
   ReshapeExpandDeviceArrangementTestFunction(device_arrangement, tensor_map, tensor_shape, device_arrangement_new,
                                              tensor_map_expect, tensor_shape_expect);
 }
 
 TEST_F(TestTensorLayout, ReshapeExpandDeviceArrangement5) {
-  DeviceArrangement device_arrangement = {8, 4};
-  TensorMap tensor_map = {1, -1, 0};
-  TensorShape tensor_shape = {128, 4, 1024};
-  DeviceArrangement device_arrangement_new = {8, 4};
-  TensorMap tensor_map_expect = {1, -1, 0};
-  TensorShape tensor_shape_expect = {128, 4, 1024};
+  std::vector<int32_t> device_arrangement = {8, 4};
+  std::vector<int32_t> tensor_map = {1, -1, 0};
+  std::vector<int32_t> tensor_shape = {128, 4, 1024};
+  std::vector<int32_t> device_arrangement_new = {8, 4};
+  std::vector<int32_t> tensor_map_expect = {1, -1, 0};
+  std::vector<int32_t> tensor_shape_expect = {128, 4, 1024};
   ReshapeExpandDeviceArrangementTestFunction(device_arrangement, tensor_map, tensor_shape, device_arrangement_new,
                                              tensor_map_expect, tensor_shape_expect);
 }
 
-void ExpandTensorShapeTestFunction(const DeviceArrangement& in_device_arrangement_shape,
-                                   const TensorMap& in_tensor_map_shape,
-                                   const TensorShape& in_tensor_shape_shape,
-                                   const DeviceArrangement& out_device_arrangement_shape,
-                                   const TensorMap& out_tensor_map_shape,
-                                   const TensorShape& out_tensor_shape_shape) {
+void ExpandTensorShapeTestFunction(const std::vector<int32_t>& in_device_arrangement_shape,
+                                   const std::vector<int32_t>& in_tensor_map_shape,
+                                   const std::vector<int32_t>& in_tensor_shape_shape,
+                                   const std::vector<int32_t>& out_device_arrangement_shape,
+                                   const std::vector<int32_t>& out_tensor_map_shape,
+                                   const std::vector<int32_t>& out_tensor_shape_shape) {
   Arrangement device_arrangement;
   Status status = device_arrangement.Init(in_device_arrangement_shape);
   ASSERT_EQ(Status::SUCCESS, status);
@@ -194,31 +193,31 @@ void ExpandTensorShapeTestFunction(const DeviceArrangement& in_device_arrangemen
  *    out_tensor_map = [2, 1, 0],
  */
 TEST_F(TestTensorLayout, ExpandTensorShape1) {
-  DeviceArrangement device_arrangement = {8, 4};
-  TensorMap tensor_map = {1, 0};
-  TensorShape tensor_shape = {512, 1024};
-  DeviceArrangement device_arrangement_expect = {4, 2, 4};
-  TensorMap tensor_map_expect = {2, 1, 0};
-  TensorShape tensor_shape_new = {4, 128, 1024};
+  std::vector<int32_t> device_arrangement = {8, 4};
+  std::vector<int32_t> tensor_map = {1, 0};
+  std::vector<int32_t> tensor_shape = {512, 1024};
+  std::vector<int32_t> device_arrangement_expect = {4, 2, 4};
+  std::vector<int32_t> tensor_map_expect = {2, 1, 0};
+  std::vector<int32_t> tensor_shape_new = {4, 128, 1024};
   ExpandTensorShapeTestFunction(device_arrangement, tensor_map, tensor_shape, device_arrangement_expect,
                                 tensor_map_expect, tensor_shape_new);
 }
 
 TEST_F(TestTensorLayout, ExpandTensorShape2) {
-  DeviceArrangement device_arrangement = {8, 4};
-  TensorMap tensor_map = {1, 0};
-  TensorShape tensor_shape = {128, 4096};
-  DeviceArrangement device_arrangement_expect = {8, 4};
-  TensorMap tensor_map_expect = {1, 0, -1};
-  TensorShape tensor_shape_new = {128, 4, 1024};
+  std::vector<int32_t> device_arrangement = {8, 4};
+  std::vector<int32_t> tensor_map = {1, 0};
+  std::vector<int32_t> tensor_shape = {128, 4096};
+  std::vector<int32_t> device_arrangement_expect = {8, 4};
+  std::vector<int32_t> tensor_map_expect = {1, 0, -1};
+  std::vector<int32_t> tensor_shape_new = {128, 4, 1024};
   ExpandTensorShapeTestFunction(device_arrangement, tensor_map, tensor_shape, device_arrangement_expect,
                                 tensor_map_expect, tensor_shape_new);
 }
 
 TEST_F(TestTensorLayout, GetSliceShape) {
-  DeviceArrangement in_device_arrangement = {8, 4};
-  TensorMap in_tensor_map = {1, -1};
-  TensorShape in_tensor_shape = {512, 1024};
+  std::vector<int32_t> in_device_arrangement = {8, 4};
+  std::vector<int32_t> in_tensor_map = {1, -1};
+  std::vector<int32_t> in_tensor_shape = {512, 1024};
   Arrangement device_arrangement;
   device_arrangement.Init(in_device_arrangement);
   Map tensor_map;
@@ -234,9 +233,9 @@ TEST_F(TestTensorLayout, GetSliceShape) {
 }
 
 TEST_F(TestTensorLayout, UpdateTensorMap) {
-  DeviceArrangement in_device_arrangement = {8, 4};
-  TensorMap in_tensor_map = {1, -1};
-  TensorShape in_tensor_shape = {512, 1024};
+  std::vector<int32_t> in_device_arrangement = {8, 4};
+  std::vector<int32_t> in_tensor_map = {1, -1};
+  std::vector<int32_t> in_tensor_shape = {512, 1024};
   Arrangement device_arrangement;
   device_arrangement.Init(in_device_arrangement);
   Map tensor_map;
@@ -251,12 +250,12 @@ TEST_F(TestTensorLayout, UpdateTensorMap) {
   ASSERT_EQ(in_tensor_map, new_tensor_map);
 }
 
-void RemoveElementEqualToOneInDeviceArrangementTestFunction(const DeviceArrangement& in_device_arrangement_shape,
-                                                            const TensorMap& in_tensor_map_shape,
-                                                            const TensorShape& in_tensor_shape_shape,
-                                                            const DeviceArrangement& out_device_arrangement_shape,
-                                                            const TensorMap& out_tensor_map_shape,
-                                                            const TensorShape& out_tensor_shape_shape) {
+void RemoveElementEqualToOneInDeviceArrangementTestFunction(const std::vector<int32_t>& in_device_arrangement_shape,
+                                                            const std::vector<int32_t>& in_tensor_map_shape,
+                                                            const std::vector<int32_t>& in_tensor_shape_shape,
+                                                            const std::vector<int32_t>& out_device_arrangement_shape,
+                                                            const std::vector<int32_t>& out_tensor_map_shape,
+                                                            const std::vector<int32_t>& out_tensor_shape_shape) {
   Arrangement device_arrangement;
   Status status = device_arrangement.Init(in_device_arrangement_shape);
   ASSERT_EQ(Status::SUCCESS, status);
@@ -278,45 +277,45 @@ void RemoveElementEqualToOneInDeviceArrangementTestFunction(const DeviceArrangem
 }
 
 TEST_F(TestTensorLayout, RemoveElementEqualToOneInDeviceArrangement1) {
-  DeviceArrangement device_arrangement = {2, 2, 1};
-  TensorMap tensor_map = {2, 1};
-  TensorShape tensor_shape = {128, 4096};
-  DeviceArrangement device_arrangement_expect = {2, 2};
-  TensorMap tensor_map_expect = {1, 0};
-  TensorShape tensor_shape_new = {128, 4096};
+  std::vector<int32_t> device_arrangement = {2, 2, 1};
+  std::vector<int32_t> tensor_map = {2, 1};
+  std::vector<int32_t> tensor_shape = {128, 4096};
+  std::vector<int32_t> device_arrangement_expect = {2, 2};
+  std::vector<int32_t> tensor_map_expect = {1, 0};
+  std::vector<int32_t> tensor_shape_new = {128, 4096};
   RemoveElementEqualToOneInDeviceArrangementTestFunction(
     device_arrangement, tensor_map, tensor_shape, device_arrangement_expect, tensor_map_expect, tensor_shape_new);
 }
 
 TEST_F(TestTensorLayout, RemoveElementEqualToOneInDeviceArrangement2) {
-  DeviceArrangement device_arrangement = {16, 1, 1};
-  TensorMap tensor_map = {2, 0};
-  TensorShape tensor_shape = {128, 4096};
-  DeviceArrangement device_arrangement_expect = {16};
-  TensorMap tensor_map_expect = {0, -1};
-  TensorShape tensor_shape_new = {128, 4096};
+  std::vector<int32_t> device_arrangement = {16, 1, 1};
+  std::vector<int32_t> tensor_map = {2, 0};
+  std::vector<int32_t> tensor_shape = {128, 4096};
+  std::vector<int32_t> device_arrangement_expect = {16};
+  std::vector<int32_t> tensor_map_expect = {0, -1};
+  std::vector<int32_t> tensor_shape_new = {128, 4096};
   RemoveElementEqualToOneInDeviceArrangementTestFunction(
     device_arrangement, tensor_map, tensor_shape, device_arrangement_expect, tensor_map_expect, tensor_shape_new);
 }
 
 TEST_F(TestTensorLayout, RemoveElementEqualToOneInDeviceArrangement3) {
-  DeviceArrangement device_arrangement = {1, 16, 1};
-  TensorMap tensor_map = {2, 1};
-  TensorShape tensor_shape = {128, 4096};
-  DeviceArrangement device_arrangement_expect = {16};
-  TensorMap tensor_map_expect = {-1, 0};
-  TensorShape tensor_shape_new = {128, 4096};
+  std::vector<int32_t> device_arrangement = {1, 16, 1};
+  std::vector<int32_t> tensor_map = {2, 1};
+  std::vector<int32_t> tensor_shape = {128, 4096};
+  std::vector<int32_t> device_arrangement_expect = {16};
+  std::vector<int32_t> tensor_map_expect = {-1, 0};
+  std::vector<int32_t> tensor_shape_new = {128, 4096};
   RemoveElementEqualToOneInDeviceArrangementTestFunction(
     device_arrangement, tensor_map, tensor_shape, device_arrangement_expect, tensor_map_expect, tensor_shape_new);
 }
 
 TEST_F(TestTensorLayout, RemoveElementEqualToOneInDeviceArrangement4) {
-  DeviceArrangement device_arrangement = {1, 1, 1};
-  TensorMap tensor_map = {2, 1};
-  TensorShape tensor_shape = {128, 4096};
-  DeviceArrangement device_arrangement_expect = {};
-  TensorMap tensor_map_expect = {-1, -1};
-  TensorShape tensor_shape_new = {128, 4096};
+  std::vector<int32_t> device_arrangement = {1, 1, 1};
+  std::vector<int32_t> tensor_map = {2, 1};
+  std::vector<int32_t> tensor_shape = {128, 4096};
+  std::vector<int32_t> device_arrangement_expect = {};
+  std::vector<int32_t> tensor_map_expect = {-1, -1};
+  std::vector<int32_t> tensor_shape_new = {128, 4096};
   RemoveElementEqualToOneInDeviceArrangementTestFunction(
     device_arrangement, tensor_map, tensor_shape, device_arrangement_expect, tensor_map_expect, tensor_shape_new);
 }

@@ -18,7 +18,6 @@
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
-#include "frontend/parallel/step_parallel.h"
 
 namespace mindspore {
 namespace parallel {
@@ -34,7 +33,7 @@ class TestTensorRedistribution : public UT::Common {
       dev_list.push_back(i);
     }
 
-    RankList stage_map;
+    std::vector<int32_t> stage_map;
     stage_map.push_back(16);
     stage_map.push_back(4);
 
@@ -50,9 +49,9 @@ class TestTensorRedistribution : public UT::Common {
 
 // Redistribution: Reshape -> SplitByAxis -> ConcatByAxis -> SplitByAxis -> Reshape
 TEST_F(TestTensorRedistribution, TestInferRedistribution1) {
-  DeviceArrangement device_arrangement = {2, 4, 2};
-  TensorMap tensor_map = {2, 0};
-  TensorShape tensor_shape = {512, 1024};
+  std::vector<int32_t> device_arrangement = {2, 4, 2};
+  std::vector<int32_t> tensor_map = {2, 0};
+  std::vector<int32_t> tensor_shape = {512, 1024};
 
   Arrangement in_device_arrangement;
   Status status = in_device_arrangement.Init(device_arrangement);
@@ -103,9 +102,9 @@ TEST_F(TestTensorRedistribution, TestInferRedistribution1) {
 
 // Redistribution: AlltoAll
 TEST_F(TestTensorRedistribution, TestInferRedistribution2) {
-  DeviceArrangement device_arrangement = {16, 1, 1};
-  TensorMap tensor_map = {2, 0};
-  TensorShape tensor_shape = {512, 1024};
+  std::vector<int32_t> device_arrangement = {16, 1, 1};
+  std::vector<int32_t> tensor_map = {2, 0};
+  std::vector<int32_t> tensor_shape = {512, 1024};
 
   Arrangement in_device_arrangement;
   Status status = in_device_arrangement.Init(device_arrangement);
@@ -155,9 +154,9 @@ TEST_F(TestTensorRedistribution, TestInferRedistribution2) {
 
 // Redistribution: Reshape
 TEST_F(TestTensorRedistribution, TestInferRedistribution3) {
-  DeviceArrangement device_arrangement = {8};
-  TensorMap tensor_map = {0, -1, -1, -1};
-  TensorShape tensor_shape = {128, 64, 1, 1};
+  std::vector<int32_t> device_arrangement = {8};
+  std::vector<int32_t> tensor_map = {0, -1, -1, -1};
+  std::vector<int32_t> tensor_shape = {128, 64, 1, 1};
 
   Arrangement in_device_arrangement;
   Status status = in_device_arrangement.Init(device_arrangement);

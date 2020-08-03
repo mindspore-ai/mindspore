@@ -37,7 +37,7 @@ Status L2NormalizeInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  Strategys stra = strategy->GetInputDim();
+  std::vector<Dimensions> stra = strategy->GetInputDim();
   Dimensions input_strategy = stra.at(0);
   int32_t axis_index = axis_;
   if (axis_ < 0) {

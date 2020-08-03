@@ -69,8 +69,8 @@ void TestDeviceManager::TearDown() {
 }
 
 TEST_F(TestDeviceManager, test_dm_init_AND_get_device_list) {
-  RankList dev_list;
-  RankList stage_map;
+  std::vector<int32_t> dev_list;
+  std::vector<int32_t> stage_map;
   int32_t local_dev = 0;
 
   dev_list.push_back(5);
@@ -85,12 +85,12 @@ TEST_F(TestDeviceManager, test_dm_init_AND_get_device_list) {
   ASSERT_EQ(dm_.DeviceNum(), 4);
   ASSERT_EQ(dm_.GetStageNum(), (int32_t)(2));
 
-  RankList dev_list_0 = dm_.GetDeviceListByStageId(0);
-  RankList dev_list_1 = dm_.GetDeviceListByStageId(1);
+  std::vector<int32_t> dev_list_0 = dm_.GetDeviceListByStageId(0);
+  std::vector<int32_t> dev_list_1 = dm_.GetDeviceListByStageId(1);
   ASSERT_EQ(dev_list_0.size(), 2);
   ASSERT_EQ(dev_list_1.size(), 2);
 
-  RankList::iterator it = dev_list_0.begin();
+  std::vector<int32_t>::iterator it = dev_list_0.begin();
   ASSERT_EQ((*it), int32_t(5));
   it++;
   ASSERT_EQ((*it), int32_t(3));
@@ -112,7 +112,7 @@ TEST_F(TestDeviceManager, test_CreateNewDeviceByRank) {
 
 TEST_F(TestDeviceManager, test_CreateDeviceListByRankList) {
   std::vector<Device> dev_list;
-  RankList rlist;
+  std::vector<int32_t> rlist;
   rlist.push_back(int32_t(2));
   rlist.push_back(int32_t(1));
   dev_list = dm_.CreateDeviceListByRankList(rlist);

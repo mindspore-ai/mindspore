@@ -77,7 +77,7 @@ Status OneHotInfo::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status OneHotInfo::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  std::vector<Dimensions> stra = strategy_->GetInputDim();
   Dimensions input_strategy = stra.at(0);
 
   // Now input only support 1-D tensor, so the output is a 2-D tensor
@@ -96,16 +96,16 @@ Status OneHotInfo::InferDevMatrixShape() {
 }
 
 Status OneHotInfo::InferTensorMap() {
-  Shape input_tensor_map_index, output_tensor_map_index;
+  std::vector<int32_t> input_tensor_map_index, output_tensor_map_index;
   size_t size = outputs_shape_[0].size();
   // such as 2: tensor_map_index [1,0]
   if (axis_ == 0) {
     for (size_t i = 0; i < size; ++i) {
-      output_tensor_map_index.push_back((int64_t)(i));
+      output_tensor_map_index.push_back((int32_t)(i));
     }
   } else {
     for (size_t i = 0; i < size; ++i) {
-      output_tensor_map_index.push_back((int64_t)(LAST_INDEX(size) - i));
+      output_tensor_map_index.push_back((int32_t)(LAST_INDEX(size) - i));
     }
   }
   outputs_tensor_map_.push_back(output_tensor_map_index);
@@ -299,13 +299,13 @@ Status OneHotInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-std::shared_ptr<Strategys> OneHotInfo::GenerateBatchStrategies() {
+std::shared_ptr<std::vector<std::vector<int32_t>>> OneHotInfo::GenerateBatchStrategies() {
   CheckGlobalDeviceManager();
   size_t dev_num = g_device_manager->GetDeviceListByStageId(0).size();
   Dimensions strategy = {SizeToInt(dev_num), 1};
   Dimensions empty_strategy;
-  Strategys strategy_v = {strategy, empty_strategy, empty_strategy};
-  return std::make_shared<Strategys>(strategy_v);
+  std::vector<Dimensions> strategy_v = {strategy, empty_strategy, empty_strategy};
+  return std::make_shared<std::vector<std::vector<int32_t>>>(strategy_v);
 }
 }  // namespace parallel
 }  // namespace mindspore
