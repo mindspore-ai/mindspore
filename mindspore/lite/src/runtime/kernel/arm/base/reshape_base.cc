@@ -92,7 +92,7 @@ kernel::LiteKernel *CpuReshapeFp32KernelCreator(const std::vector<lite::tensor::
   MS_ASSERT(desc.type == schema::PrimitiveType_Reshape);
   auto *kernel = new (std::nothrow) ReshapeCPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new ConcatCPUKernel fail!";
+    MS_LOG(ERROR) << "new ReshapeCPUKernel fail!";
     return nullptr;
   }
   auto ret = kernel->Init();

@@ -73,7 +73,7 @@ kernel::LiteKernel *CpuStridedSliceFp32KernelCreator(const std::vector<lite::ten
   }
 
   auto ret = kernel->Init();
-  if (ret != 0) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     delete kernel;

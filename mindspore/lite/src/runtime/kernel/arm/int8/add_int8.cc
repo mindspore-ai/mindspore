@@ -23,6 +23,7 @@
 #include "include/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Add;
 
 namespace mindspore::kernel {
@@ -135,7 +136,7 @@ kernel::LiteKernel *CpuAddInt8KernelCreator(const std::vector<lite::tensor::Tens
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (0 != ret) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_
                   << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
     delete kernel;
@@ -146,4 +147,3 @@ kernel::LiteKernel *CpuAddInt8KernelCreator(const std::vector<lite::tensor::Tens
 
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Add, CpuAddInt8KernelCreator)
 }  // namespace mindspore::kernel
-

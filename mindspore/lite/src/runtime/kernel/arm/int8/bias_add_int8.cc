@@ -18,8 +18,10 @@
 #include "src/runtime/kernel/arm/opclib/fp32/arithmetic.h"
 #include "src/runtime/kernel/arm/opclib/errorcode.h"
 #include "src/kernel_registry.h"
+#include "include/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BiasAdd;
 
 namespace mindspore::kernel {
@@ -71,7 +73,7 @@ kernel::LiteKernel *CpuBiasAddInt8KernelCreator(const std::vector<lite::tensor::
   }
 
   auto ret = kernel->Init();
-  if (0 != ret) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_
                   << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
     delete kernel;
@@ -82,4 +84,3 @@ kernel::LiteKernel *CpuBiasAddInt8KernelCreator(const std::vector<lite::tensor::
 
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_BiasAdd, CpuBiasAddInt8KernelCreator)
 }  // namespace mindspore::kernel
-
