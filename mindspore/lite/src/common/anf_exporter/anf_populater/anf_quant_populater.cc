@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/common/anf_exporter/anf_populater/anf_mul_populater.h"
+#include "src/common/anf_exporter/anf_populater/anf_quant_populater.h"
 #include <vector>
+#include <string>
 #include <memory>
 #include "src/common/anf_exporter/anf_populater/anf_node_populater_registry.h"
 #include "ir/func_graph.h"
 #include "ir/primitive.h"
 
 namespace mindspore::lite {
-int mindspore::lite::AnfMulPopulater::Parse(mindspore::CNodePtr cnodePtr, schema::CNodeT *node,
-                                         std::vector<schema::TensorT *> *outputs) {
-  auto attr = std::make_unique<schema::MulT>();
-
+int mindspore::lite::AnfQuantPopulater::Parse(mindspore::CNodePtr cnodePtr, schema::CNodeT *node,
+                                          std::vector<schema::TensorT *> *outputs) {
+  auto attr = std::make_unique<schema::OnnxInt8QuantizeT>();
   node->nodeType = schema::NodeType_CNode;
   node->primitive = std::make_unique<schema::PrimitiveT>();
-  node->primitive->value.type = schema::PrimitiveType_Mul;
+  node->primitive->value.type = schema::PrimitiveType_OnnxInt8Quantize;
   node->primitive->value.value = attr.release();
   return 0;
 }
-AnfNodePopulaterRegistrar anfMulParser("Mul", new AnfMulPopulater());
-AnfNodePopulaterRegistrar anfMatMulParser("MatMul", new AnfMulPopulater());
+AnfNodePopulaterRegistrar anfQuantParser("Quant", new AnfQuantPopulater());
 }  // namespace mindspore::lite

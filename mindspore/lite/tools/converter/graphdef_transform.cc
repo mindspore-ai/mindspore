@@ -123,7 +123,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
       MS_LOG(ERROR) << "new weightFormatPass failed";
       return RET_ERROR;
     }
-    //    weightFormatPass->SetQuantType(ctx.quantType);
+    weightFormatPass->SetQuantType(ctx.quantType);
     weightFormatPass->SetFmkType(ctx.fmk);
     weightFormatOptimizer.AddPass(weightFormatPass);
     status = weightFormatOptimizer.Run(graphDefT);
@@ -141,7 +141,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
       MS_LOG(ERROR) << "new formatTransPass failed";
       return RET_ERROR;
     }
-    //    formatTransPass->SetQuantType(ctx.quantType);
+    formatTransPass->SetQuantType(ctx.quantType);
     formatTransPass->SetFmk(ctx.fmk);
     formatTransOptimizer.AddPass(formatTransPass);
     formatTransOptimizer.AddPass(new (std::nothrow) FormatTransFusionPass());

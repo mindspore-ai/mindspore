@@ -33,7 +33,7 @@ class FormatTransPass : public GraphPass {
 
   STATUS Run(schema::MetaGraphT *graph) override;
 
-  //  void SetQuantType(QuantType quantType);
+  void SetQuantType(QuantType quantType);
 
   void SetFmk(converter::FmkType fmkType);
 
