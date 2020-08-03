@@ -596,6 +596,22 @@ class BatchToSpace : public Primitive {
   int InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) override;
 };
 
+class SpaceToBatch : public Primitive {
+ public:
+  explicit SpaceToBatch(schema::Primitive *primitive) : Primitive(primitive) {}
+  const schema::SpaceToBatch *GetAttribute() const { return this->primitive->value_as_SpaceToBatch(); }
+  int InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) override;
+  std::vector<int> BlockSizes() {return block_sizes_;}
+  std::vector<int> Paddings() {return block_sizes_;}
+  std::vector<int> InShape() {return block_sizes_;}
+  std::vector<int> PaddedInShape() {return block_sizes_;}
+ private:
+  std::vector<int> block_sizes_;
+  std::vector<int> paddings_;
+  std::vector<int> in_shape_;
+  std::vector<int> padded_in_shape_;
+};
+
 class Crop : public Primitive {
  public:
   explicit Crop(schema::Primitive *primitive) : Primitive(primitive) {}
@@ -668,6 +684,26 @@ class PriorBox : public Primitive {
   int InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) override;
 };
 
+class SpaceToDepth : public Primitive {
+ public:
+  explicit SpaceToDepth(schema::Primitive *primitive) : Primitive(primitive) {}
+  const schema::SpaceToDepth *GetAttribute() const { return this->primitive->value_as_SpaceToDepth(); }
+  int InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) override;
+};
+
+class Dequantize : public Primitive {
+ public:
+  explicit Dequantize(schema::Primitive *primitive) : Primitive(primitive) {}
+  const schema::OnnxInt8Dequantize *GetAttribute() const { return this->primitive->value_as_OnnxInt8Dequantize(); }
+  int InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) override;
+};
+
+class Quantize : public Primitive {
+ public:
+  explicit Quantize(schema::Primitive *primitive) : Primitive(primitive) {}
+  const schema::OnnxInt8Quantize *GetAttribute() const { return this->primitive->value_as_OnnxInt8Quantize(); }
+  int InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) override;
+};
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_OPS_OPS_H_

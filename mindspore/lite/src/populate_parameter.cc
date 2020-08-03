@@ -63,6 +63,10 @@
 #include "src/runtime/kernel/arm/opclib/fp32/one_hot.h"
 #include "src/runtime/kernel/arm/opclib/fp32/strided_slice.h"
 #include "src/runtime/kernel/arm/base/prior_box.h"
+#include "src/runtime/kernel/arm/opclib/fp32/space_to_depth.h"
+#include "src/runtime/kernel/arm/opclib/fp32/space_to_batch.h"
+#include "src/runtime/kernel/arm/opclib/int8/dequantize.h"
+#include "src/runtime/kernel/arm/opclib/fp32/quantize.h"
 
 namespace mindspore::kernel {
 FillParameter *PopulateFillParam(const lite::Primitive *primitive) {
@@ -873,6 +877,22 @@ DepthToSpaceParameter *PopulateDepthToSpaceParam(const lite::Primitive *primitiv
   return parameter;
 }
 
+SpaceToDepthParameter *PopulateSpaceToDepthParam(const lite::Primitive *primitive) {
+  SpaceToDepthParameter *parameter = new (std::nothrow) SpaceToDepthParameter();
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << "new SpaceToDepthParameter failed.";
+    return nullptr;
+  }
+  auto param = primitive->Value()->value_as_DepthToSpace();
+  parameter->op_parameter_.type_ = primitive->Type();
+  parameter->block_size_ = param->blockSize();
+  if (param->format() != schema::Format_NHWC) {
+    MS_LOG(ERROR) << "Currently only NHWC format is supported.";
+    return nullptr;
+  }
+  return parameter;
+}
+
 ResizeParameter *PopulateResizeParameter(const lite::Primitive *primitive) {
   ResizeParameter *parameter = new (std::nothrow) ResizeParameter();
   if (parameter == nullptr) {
@@ -961,6 +981,24 @@ FlattenParameter *PopulateFlattenParameter(const lite::Primitive *primitive) {
   return parameter;
 }
 
+DequantizeParameter *PopulateDequantizeParameter(const lite::Primitive *primitive) {
+  DequantizeParameter *parameter = new (std::nothrow) DequantizeParameter();
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << "new DequantizeParameter fail!";
+    return nullptr;
+  }
+    return parameter;
+}
+
+QuantizeParameter *PopulateQuantizeParameter(const lite::Primitive *primitive) {
+  QuantizeParameter *parameter = new (std::nothrow) QuantizeParameter();
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << "new QuantizeParameter fail!";
+    return nullptr;
+  }
+    return parameter;
+}
+
 StridedSliceParameter *PopulateStridedSliceParam(const lite::Primitive *primitive) {
   StridedSliceParameter *parameter = new (std::nothrow) StridedSliceParameter();
   if (parameter == nullptr) {
@@ -1043,6 +1081,24 @@ PriorBoxParameter *PopulatePriorBoxParameter(const lite::Primitive *primitive) {
   param->step_h = prior_box_param->step_h();
   param->step_w = prior_box_param->step_w();
   return param;
+}
+
+SpaceToBatchParameter *PopulateSpaceToBatchParam(const lite::Primitive *primitive) {
+  SpaceToBatchParameter *parameter = new (std::nothrow) SpaceToBatchParameter();
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << "new SpaceToBatchParameter failed.";
+    return nullptr;
+  }
+  parameter->op_parameter_.type_ = primitive->Type();
+  auto block_sizes = ((lite::SpaceToBatch *)primitive)->BlockSizes();
+  (void)memcpy(parameter->block_sizes_, (block_sizes.data()), block_sizes.size() * sizeof(int));
+  auto paddings = ((lite::SpaceToBatch *)primitive)->Paddings();
+  (void)memcpy(parameter->paddings_, (paddings.data()), paddings.size() * sizeof(int));
+  auto in_shape = ((lite::SpaceToBatch *)primitive)->InShape();
+  (void)memcpy(parameter->in_shape_, (in_shape.data()), in_shape.size() * sizeof(int));
+  auto padded_in_shape = ((lite::SpaceToBatch *)primitive)->PaddedInShape();
+  (void)memcpy(parameter->padded_in_shape_, (padded_in_shape.data()), padded_in_shape.size() * sizeof(int));
+  return parameter;
 }
 
 OpParameter *PopulateParameter(const lite::Primitive *primitive) {
@@ -1166,6 +1222,10 @@ OpParameter *PopulateParameter(const lite::Primitive *primitive) {
       return reinterpret_cast<OpParameter *>(PopulateAddNParam(primitive));
     case schema::PrimitiveType_PriorBox:
       return reinterpret_cast<OpParameter *>(PopulatePriorBoxParameter(primitive));
+    case schema::PrimitiveType_OnnxInt8Dequantize:
+      return reinterpret_cast<OpParameter *>(PopulateDequantizeParameter(primitive));
+    case schema::PrimitiveType_OnnxInt8Quantize:
+      return reinterpret_cast<OpParameter *>(PopulateQuantizeParameter(primitive));
     default:
       break;
   }
