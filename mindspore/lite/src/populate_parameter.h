@@ -22,7 +22,20 @@
 #include "src/runtime/kernel/arm/opclib/op_base.h"
 
 namespace mindspore::kernel {
+typedef OpParameter *(*PopulateParameterFunc)(const lite::Primitive *);
+
+class PopulateParameterRegistry {
+ public:
+  PopulateParameterRegistry();
+  ~PopulateParameterRegistry() = default;
+
+  static PopulateParameterRegistry *GetInstance();
+  PopulateParameterFunc GetParameterFunc(const schema::PrimitiveType &type);
+
+ protected:
+  PopulateParameterFunc populate_parameter_funcs_[schema::PrimitiveType_MAX + 1];
+};
+
 OpParameter *PopulateParameter(const lite::Primitive *primitive);
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_POPULATE_PARAMETER_H_
-

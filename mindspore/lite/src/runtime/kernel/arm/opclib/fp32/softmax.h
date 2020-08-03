@@ -20,7 +20,7 @@
 #include "src/runtime/kernel/arm/opclib/op_base.h"
 
 struct SoftmaxParameter {
-    OpParameter op_parameter;
+    OpParameter op_parameter_;
     int32_t axis_;
     int element_size_;
     int n_dim_;
