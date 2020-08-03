@@ -297,6 +297,7 @@ if (SUPPORT_GPU)
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/utils_tests.cc
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/conv2d_transpose_tests.cc
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/transpose_tests.cc
+            ${TEST_DIR}/ut/src/runtime/kernel/opencl/convolution_tests.cc
             )
 endif()
 
