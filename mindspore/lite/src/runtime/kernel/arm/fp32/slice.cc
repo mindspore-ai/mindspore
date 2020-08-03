@@ -107,7 +107,7 @@ kernel::LiteKernel *CpuSliceFp32KernelCreator(const std::vector<lite::tensor::Te
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Slice);
-  op_parameter->thread_num_ = ctx->threadNum;
+  op_parameter->thread_num_ = ctx->thread_num_;
   auto *kernel = new (std::nothrow) SliceCPUKernel(op_parameter, inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SliceCPUKernel fail!";

@@ -28,7 +28,7 @@ class PowerCPUKernel : public LiteKernel {
   PowerCPUKernel(PowerParameter *param, const std::vector<lite::tensor::Tensor *> &inputs,
                  const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
       : LiteKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs),
-        thread_count_(ctx->threadNum),
+        thread_count_(ctx->thread_num_),
         power_(param->power_),
         scale_(param->scale_),
         shift_(param->shift_) {}

@@ -26,7 +26,7 @@ class CastCPUKernel : public LiteKernel {
                 const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
     : LiteKernel(parameter, inputs, outputs) {
       if (ctx != nullptr) {
-        thread_num_ = ctx->threadNum;
+        thread_num_ = ctx->thread_num_;
       }
     }
 

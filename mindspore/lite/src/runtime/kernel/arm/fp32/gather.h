@@ -26,7 +26,7 @@ class GatherCPUKernel : public LiteKernel {
  public:
   GatherCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                   const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
-      : LiteKernel(parameter, inputs, outputs), thread_count_(ctx->threadNum) {}
+      : LiteKernel(parameter, inputs, outputs), thread_count_(ctx->thread_num_) {}
   ~GatherCPUKernel() override = default;
 
   int Init() override;

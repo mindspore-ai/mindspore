@@ -350,19 +350,19 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
   auto model = lite::Model::Import(graphBuf, size);
   auto context = new lite::Context;
   if (_flags->device == "CPU") {
-    context->deviceCtx.type = lite::DT_CPU;
+    context->device_ctx_.type = lite::DT_CPU;
   } else {
-    context->deviceCtx.type = lite::DT_NPU;
+    context->device_ctx_.type = lite::DT_NPU;
   }
 
   if (_flags->cpuBindMode == -1) {
-    context->cpuBindMode = MID_CPU;
+    context->cpu_bind_mode_ = MID_CPU;
   } else if (_flags->cpuBindMode == 0) {
-    context->cpuBindMode = HIGHER_CPU;
+    context->cpu_bind_mode_ = HIGHER_CPU;
   } else {
-    context->cpuBindMode = NO_BIND;
+    context->cpu_bind_mode_ = NO_BIND;
   }
-  context->threadNum = _flags->numThreads;
+  context->thread_num_ = _flags->numThreads;
   session = session::LiteSession::CreateSession(context);
   auto ret = session->CompileGraph(model.get());
   if (ret != RET_OK) {

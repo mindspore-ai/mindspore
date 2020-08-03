@@ -29,7 +29,7 @@ class PadInt8CPUKernel : public LiteKernel {
   explicit PadInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                             const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
       : LiteKernel(parameter, inputs, outputs) {
-    opParameter->thread_num_ = ctx->threadNum;
+    opParameter->thread_num_ = ctx->thread_num_;
     pad_param_ = reinterpret_cast<PadParameter *>(opParameter);
   }
   ~PadInt8CPUKernel() override { FreeQuantParam(); };

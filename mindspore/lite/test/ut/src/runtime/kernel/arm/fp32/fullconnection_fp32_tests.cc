@@ -77,7 +77,7 @@ TEST_F(TestFcFp32, FcTest1) {
   float *correct;
   int total_size = FcTestInit1(&inputs_, &outputs_, matmul_param, &correct);
   lite::Context *ctx = new lite::Context;
-  ctx->threadNum = 2;
+  ctx->thread_num_ = 2;
   kernel::FullconnectionCPUKernel *fc =
     new kernel::FullconnectionCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx);
 
@@ -134,7 +134,7 @@ TEST_F(TestFcFp32, FcTest2) {
   float *correct;
   int total_size = FcTestInit2(&inputs_, &outputs_, matmul_param, &correct);
   lite::Context *ctx = new lite::Context;
-  ctx->threadNum = 1;
+  ctx->thread_num_ = 1;
   kernel::FullconnectionCPUKernel *fc =
     new kernel::FullconnectionCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx);
 

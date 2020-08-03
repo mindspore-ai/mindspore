@@ -898,9 +898,9 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr funcGraph) {
   auto model = lite::Model::Import(content, size);
 
   Context ctx;
-  ctx.deviceCtx.type = DT_CPU;
-  ctx.threadNum = calibrator_->GetThreadNum();
-  ctx.cpuBindMode = MID_CPU;
+  ctx.device_ctx_.type = DT_CPU;
+  ctx.thread_num_ = calibrator_->GetThreadNum();
+  ctx.cpu_bind_mode_ = MID_CPU;
 
   session_ = dynamic_cast<mindspore::lite::LiteSession *>(session::LiteSession::CreateSession(&ctx));
   if (session_ == nullptr) {

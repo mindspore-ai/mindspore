@@ -172,10 +172,10 @@ int ResizeCPUKernel::RunImpl(int task_id) {
         layout_convertor_(input_data, exec_input_data_, input->Batch(), input->Height() * input->Width(),
                           input->Channel());
         ret = ResizeBilinear(exec_input_data_, output_data, inputs_[0]->shape().data(), outputs_[0]->shape().data(),
-                             align_corners_, task_id, context_->threadNum);
+                             align_corners_, task_id, context_->thread_num_);
       } else {
         ret = ResizeBilinear(input_data, output_data, inputs_[0]->shape().data(), outputs_[0]->shape().data(),
-                             align_corners_, task_id, context_->threadNum);
+                             align_corners_, task_id, context_->thread_num_);
       }
       break;
     }
@@ -188,10 +188,10 @@ int ResizeCPUKernel::RunImpl(int task_id) {
         layout_convertor_(input_data, exec_input_data_, input->Batch(), input->Height() * input->Width(),
                           input->Channel());
         ret = ResizeNearestNeighbor(exec_input_data_, output_data, input_shape.data(), outputs_[0]->shape().data(),
-                                    task_id, context_->threadNum);
+                                    task_id, context_->thread_num_);
       } else {
         ret = ResizeNearestNeighbor(input_data, output_data, input_shape.data(), outputs_[0]->shape().data(), task_id,
-                                    context_->threadNum);
+                                    context_->thread_num_);
       }
       break;
     }
@@ -205,7 +205,7 @@ int ResizeCPUKernel::RunImpl(int task_id) {
 }
 
 int ResizeCPUKernel::Run() {
-  int error_code = LiteBackendParallelLaunch(ResizeImpl, this, context_->threadNum);
+  int error_code = LiteBackendParallelLaunch(ResizeImpl, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Resize run error, error_code[" << error_code << "]";
     return RET_ERROR;

@@ -79,7 +79,7 @@ int PadCPUKernel::RunImpl(int task_id) {
   auto input_data = reinterpret_cast<float *>(input->Data());
   auto output_data = reinterpret_cast<float *>(output->Data());
 
-  Pad(input_data, output_data, in_, out_, pad_param_->paddings_, task_id, context_->threadNum);
+  Pad(input_data, output_data, in_, out_, pad_param_->paddings_, task_id, context_->thread_num_);
 
   return RET_OK;
 }
@@ -92,7 +92,7 @@ int PadCPUKernel::Run() {
   // todo parallel memset to save time
   memset(output_data, 0, output_size * sizeof(float));
 
-  int error_code = LiteBackendParallelLaunch(PadImpl, this, context_->threadNum);
+  int error_code = LiteBackendParallelLaunch(PadImpl, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Pad run error, error_code[" << error_code << "]";
     return RET_ERROR;

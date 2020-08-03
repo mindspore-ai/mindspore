@@ -87,7 +87,7 @@ int ConvolutionBaseCPUKernel::Init() {
   conv_param_->output_h_ = output->Height();
   conv_param_->output_w_ = output->Width();
   conv_param_->output_channel_ = output->Channel();
-  conv_param_->thread_num_ = ctx_->threadNum;
+  conv_param_->thread_num_ = ctx_->thread_num_;
   return RET_OK;
 }
 

@@ -62,7 +62,7 @@ TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest1) {
   outputs_tensor.emplace_back(&output_tensor);
 
   lite::Context ctx;
-  ctx.threadNum = 3;
+  ctx.thread_num_ = 3;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_QuantDTypeCast};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -108,7 +108,7 @@ TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest2) {
   outputs_tensor.emplace_back(&output_tensor);
 
   lite::Context ctx;
-  ctx.threadNum = 3;
+  ctx.thread_num_ = 3;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_QuantDTypeCast};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);

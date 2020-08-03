@@ -26,7 +26,7 @@ class StridedSliceCPUKernel : public LiteKernel {
  public:
   StridedSliceCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                         const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
-      : LiteKernel(parameter, inputs, outputs), thread_num_(ctx->threadNum) {}
+      : LiteKernel(parameter, inputs, outputs), thread_num_(ctx->thread_num_) {}
   ~StridedSliceCPUKernel() override = default;
 
   int Init() override;

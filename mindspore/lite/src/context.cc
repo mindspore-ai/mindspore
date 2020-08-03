@@ -24,8 +24,8 @@ Context::~Context() = default;
 
 Context::Context(int threadNum, std::shared_ptr<Allocator> allocator, DeviceContext deviceCtx) {
   this->allocator = std::move(allocator);
-  this->threadNum = threadNum;
-  this->deviceCtx = std::move(deviceCtx);
+  this->thread_num_ = threadNum;
+  this->device_ctx_ = std::move(deviceCtx);
 }
 }  // namespace mindspore::lite
 

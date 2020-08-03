@@ -197,7 +197,7 @@ class LiteTensor : public mindspore::tensor::MSTensor {
 
   TypeId data_type() const override;
 
-  TypeId set_data_type(const TypeId data_type) override;
+  TypeId set_data_type(TypeId data_type) override;
 
   std::vector<int> shape() const override;
 

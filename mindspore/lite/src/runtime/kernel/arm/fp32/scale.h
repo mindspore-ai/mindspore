@@ -26,7 +26,7 @@ class ScaleCPUKernel : public LiteKernel {
  public:
   explicit ScaleCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                           const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
-      : LiteKernel(parameter, inputs, outputs), thread_num_(ctx->threadNum) {}
+      : LiteKernel(parameter, inputs, outputs), thread_num_(ctx->thread_num_) {}
   ~ScaleCPUKernel() override = default;
 
   int Init() override;

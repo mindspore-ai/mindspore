@@ -26,25 +26,63 @@
 
 namespace mindspore {
 namespace session {
+/// \brief LiteSession defined by MindSpore Lite.
 class MS_API LiteSession {
  public:
-  virtual ~LiteSession() = default;
-
-  virtual void BindThread(bool ifBind) = 0;
-
+  /// \brief Static method to create a LiteSession pointer.
+  ///
+  /// \param[in] context Define the context of session to be created.
+  ///
+  /// \return Pointer of MindSpore Lite LiteSession.
   static LiteSession *CreateSession(lite::Context *context);
 
+  /// \brief Destructor of MindSpore Lite LiteSession.
+  virtual ~LiteSession() = default;
+
+  /// \brief Try to bind or unbind threads in the thread pool to specified cpu core.
+  ///
+  /// \param[in] if_bind Define weather to bind or unbind threads.
+  virtual void BindThread(bool if_bind) = 0;
+
+  /// \brief Compile MindSpore lite model.
+  ///
+  /// \note CompileGraph should called before RunGraph.
+  ///
+  /// \param[in] model Define the model to be compiled.
+  ///
+  /// \return ErrorCode of compile graph.
   virtual int CompileGraph(lite::Model *model) = 0;
 
-  virtual std::vector<tensor::MSTensor *> GetInputs() = 0;
+  /// \brief Get input MindSpore Lite MSTensors of model.
+  ///
+  /// \return A vector of MindSpore Lite MSTensor.
+  virtual std::vector<tensor::MSTensor *> GetInputs() const = 0;
 
-  virtual std::vector<tensor::MSTensor *> GetInputsByName(std::string name) = 0;
+  /// \brief Get input MindSpore Lite MSTensors of model by node name.
+  ///
+  /// \param[in] node_name Define node name.
+  ///
+  /// \return A vector of MindSpore Lite MSTensor.
+  virtual std::vector<tensor::MSTensor *> GetInputsByName(const std::string &node_name) const = 0;
 
+  /// \brief Run model compiled by this session.
+  ///
+  /// \note RunGraph should called after CompileGraph.
+  ///
+  /// \return ErrorCode of run graph.
   virtual int RunGraph() = 0;
 
-  virtual std::vector<tensor::MSTensor *> GetOutputs() = 0;
+  /// \brief Get output MindSpore Lite MSTensors of model.
+  ///
+  /// \return A vector of MindSpore Lite MSTensor.
+  virtual std::vector<tensor::MSTensor *> GetOutputs() const = 0;
 
-  virtual std::vector<tensor::MSTensor *> GetOutputsByName(std::string name) = 0;
+  /// \brief Get output MindSpore Lite MSTensors of model by node name.
+  ///
+  /// \param[in] node_name Define node name.
+  ///
+  /// \return A vector of MindSpore Lite MSTensor.
+  virtual std::vector<tensor::MSTensor *> GetOutputsByName(const std::string &node_name) const = 0;
 };
 }  // namespace session
 }  // namespace mindspore
