@@ -76,12 +76,6 @@ void MatMul8x8(const float *a, const float *b, float *c, const float *bias, ActT
 
 void MatMul(const float *a, const float *b, float *c, const float *bias, ActType act_type, int deep, int row_8_,
             int col_8_) {
-#ifdef __aarch64__
-  float minf = (act_type == ActType_No) ? FLT_MIN : 0.f;
-  float maxf = (act_type == ActType_Relu6) ? 6.0f : FLT_MAX;
-  MatMulFloatNeon64(a, b, c, bias, maxf, minf, deep, row_8_, col_8_);
-#else
   MatMul8x8(a, b, c, bias, act_type, deep, row_8_, col_8_);
-#endif
   return;
 }
