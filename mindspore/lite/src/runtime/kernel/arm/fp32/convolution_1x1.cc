@@ -80,12 +80,12 @@ int Convolution1x1CPUKernel::InitConv1x1BiasWeight() {
     bias_data_ = nullptr;
   }
 
-  weight_ptr_ = reinterpret_cast<float *>(malloc(matmul_param_->row_8_ * matmul_param_->col_8_ * sizeof(float)));
+  weight_ptr_ = reinterpret_cast<float *>(malloc(matmul_param_->deep_ * matmul_param_->col_8_ * sizeof(float)));
   if (weight_ptr_ == nullptr) {
     MS_LOG(ERROR) << "Conv1x1 Malloc weight_ptr_ error!";
     return RET_ERROR;
   }
-  memset(weight_ptr_, 0, matmul_param_->row_8_ * matmul_param_->col_8_ * sizeof(float));
+  memset(weight_ptr_, 0, matmul_param_->deep_ * matmul_param_->col_8_ * sizeof(float));
   RowMajor2Col8Major(reinterpret_cast<float *>(inputs_[1]->Data()), weight_ptr_, matmul_param_->col_,
                      matmul_param_->deep_);
   return RET_OK;

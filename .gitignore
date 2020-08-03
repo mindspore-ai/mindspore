@@ -86,3 +86,6 @@ test_temp_summary_event_file/
 mindspore/version.py
 mindspore/default_config.py
 mindspore/.commit_id
+
+# lite test file
+mindspore/lite/test/do_test/
