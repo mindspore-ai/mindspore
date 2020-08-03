@@ -26,7 +26,7 @@ if (EXISTS ${grpc_ROOT}/lib64)
 else ()
     set(gRPC_DIR "${grpc_ROOT}/lib/cmake/grpc")
 endif ()
-message("serving using grpc_DIR : " ${gPRC_DIR})
+message("serving ut using grpc_DIR : " ${gPRC_DIR})
 
 find_package(gRPC CONFIG REQUIRED)
 message(STATUS "Using gRPC ${gRPC_VERSION}")
@@ -44,7 +44,7 @@ endif ()
 
 # Proto file
 get_filename_component(hw_proto "ms_service.proto" ABSOLUTE)
-get_filename_component(hw_proto_path "${hw_proto}" PATH)
+get_filename_component(hw_proto_path ${hw_proto} PATH)
 # Generated sources
 set(hw_proto_srcs "${CMAKE_CURRENT_BINARY_DIR}/ms_service.pb.cc")
 set(hw_proto_hdrs "${CMAKE_CURRENT_BINARY_DIR}/ms_service.pb.h")
@@ -68,47 +68,23 @@ add_custom_command(
         "${hw_proto}"
         DEPENDS "${hw_proto}")
 
-# Include generated *.pb.h files
-include_directories("${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/core"
-        "${PROJECT_SOURCE_DIR}/mindspore/ccsrc" "${PROJECT_SOURCE_DIR}/mindspore/core")
-file(GLOB_RECURSE CORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-        "core/*.cc" "core/util/*.cc" "core/version_control/*.cc")
+list(APPEND SERVING_SRC_TEST ${hw_proto_srcs} ${hw_grpc_srcs})
 
-list(APPEND SERVING_SRC "main.cc" ${hw_proto_srcs} ${hw_grpc_srcs} ${CORE_SRC_LIST})
+file(GLOB_RECURSE ACL_SESSION_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        "../../../../serving/acl/*.cc"
+        "../../../../serving/core/*.cc")
+list(APPEND SERVING_SRC_TEST ${ACL_SESSION_SRC_LIST})
 
-option(ENABLE_ACL "enable acl" OFF)
+# utest files
+file(GLOB_RECURSE ACL_UTEST_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
+list(APPEND SERVING_SRC_TEST ${ACL_UTEST_SRC_LIST})
 
-if (ENABLE_ACL)
-    if (DEFINED ENV{ASCEND_CUSTOM_PATH})
-        set(ASCEND_PATH $ENV{ASCEND_CUSTOM_PATH})
-    else ()
-        set(ASCEND_PATH /usr/local/Ascend)
-    endif ()
-    set(ACL_LIB_DIR ${ASCEND_PATH}/acllib/)
-    MESSAGE("acl lib dir " ${ACL_LIB_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/serving/core)
+include_directories(${CMAKE_SOURCE_DIR}/serving/acl)
+include_directories(${CMAKE_SOURCE_DIR}/serving)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/../)
+add_library(ut_serving_obj OBJECT ${SERVING_SRC_TEST})
 
-    include_directories(${ACL_LIB_DIR}/include/)
-    file(GLOB_RECURSE ACL_SESSION_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "acl/*.cc")
-    list(APPEND SERVING_SRC ${ACL_SESSION_SRC_LIST})
-endif ()
 
-include_directories(${CMAKE_BINARY_DIR})
-add_executable(ms_serving ${SERVING_SRC})
-
-target_link_libraries(ms_serving ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF} pthread)
-if (ENABLE_D)
-    add_compile_definitions(ENABLE_D)
-    target_link_libraries(ms_serving ${RUNTIME_LIB})
-endif ()
-
-if (ENABLE_ACL)
-    add_compile_definitions(ENABLE_ACL)
-    add_compile_definitions(ENABLE_DVPP_INTERFACE)
-    set(ALC_LIB_SO ${ACL_LIB_DIR}/lib64/libruntime.so ${ACL_LIB_DIR}/lib64/libascendcl.so
-            ${ACL_LIB_DIR}/lib64/libacl_retr.so ${ACL_LIB_DIR}/lib64/libacl_cblas.so
-            ${ACL_LIB_DIR}/lib64/libacl_dvpp.so)
-    target_link_libraries(ms_serving ${ALC_LIB_SO})
-    target_link_libraries(ms_serving jpeg_turbo::jpeg)
-else ()
-    target_link_libraries(ms_serving inference mindspore_gvar)
-endif ()

@@ -25,9 +25,11 @@
 
 #include "include/inference.h"
 #include "serving/acl/model_process.h"
+#include "serving/acl/dvpp_process.h"
 
 namespace mindspore {
 namespace inference {
+
 class AclSession : public InferSession {
  public:
   AclSession();
@@ -37,6 +39,8 @@ class AclSession : public InferSession {
   Status LoadModelFromFile(const std::string &file_name, uint32_t &model_id) override;
   Status UnloadModel(uint32_t model_id) override;
   Status ExecuteModel(uint32_t model_id, const RequestBase &request, ReplyBase &reply) override;
+  Status ExecuteModel(uint32_t model_id, const ImagesRequestBase &images_inputs,  // images for preprocess
+                      const RequestBase &request, ReplyBase &reply) override;
 
  private:
   std::string device_type_;
@@ -44,6 +48,10 @@ class AclSession : public InferSession {
   aclrtStream stream_ = nullptr;
   aclrtContext context_ = nullptr;
   ModelProcess model_process_;
+  bool execute_with_dvpp_ = false;
+  DvppProcess dvpp_process_;
+
+  Status PreProcess(uint32_t model_id, const InferImagesBase *images_input, ImagesDvppOutput &dvpp_output);
 };
 }  // namespace inference
 }  // namespace mindspore

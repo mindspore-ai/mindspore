@@ -88,7 +88,8 @@ GraphId AscendInferenceSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   return graph_id;
 }
 
-bool AscendInferenceSession::CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs) const {
+bool AscendInferenceSession::CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs,
+                                              std::string *error_msg) const {
   MS_LOG(INFO) << "Start check client inputs, graph id : " << graph_id;
   auto kernel_graph = GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -114,12 +115,25 @@ bool AscendInferenceSession::CheckModelInputs(uint32_t graph_id, const std::vect
       MS_LOG(ERROR) << "Input number is inconsistent. The actual input number [" << inputs.size()
                     << "] but the graph input number is [" << paras.size() << "]";
       MS_LOG(ERROR) << "InputsInfo --" << InputsInfo(paras, inputs);
+      if (error_msg != nullptr) {
+        std::stringstream str_stream;
+        str_stream << "Input number is inconsistent. The given input number [" << inputs.size()
+                   << "] but the graph input number is [" << paras.size() << "]\n";
+        str_stream << "InputsInfo --" << InputsInfo(paras, inputs);
+        *error_msg = str_stream.str();
+      }
       return false;
     }
     auto input = inputs[no_weight_input++];
     if (!CompareInput(input, paras[i])) {
       MS_LOG(ERROR) << "Please check the input information.";
       MS_LOG(ERROR) << "InputsInfo --" << InputsInfo(paras, inputs);
+      if (error_msg != nullptr) {
+        std::stringstream str_stream;
+        str_stream << "Please check the input information.\n";
+        str_stream << "InputsInfo --" << InputsInfo(paras, inputs);
+        *error_msg = str_stream.str();
+      }
       return false;
     }
   }
@@ -166,17 +180,35 @@ std::string AscendInferenceSession::PrintInputShape(std::vector<T> shape) const 
 
 std::string AscendInferenceSession::InputsInfo(const std::vector<ParameterPtr> &paras,
                                                const std::vector<tensor::TensorPtr> &inputs) const {
+  const std::map<TypeId, std::string> dtype_name_map{
+    {TypeId::kNumberTypeBegin, "Unknown"},   {TypeId::kNumberTypeBool, "Bool"},
+    {TypeId::kNumberTypeFloat64, "Float64"}, {TypeId::kNumberTypeInt8, "Int8"},
+    {TypeId::kNumberTypeUInt8, "Uint8"},     {TypeId::kNumberTypeInt16, "Int16"},
+    {TypeId::kNumberTypeUInt16, "Uint16"},   {TypeId::kNumberTypeInt32, "Int32"},
+    {TypeId::kNumberTypeUInt32, "Uint32"},   {TypeId::kNumberTypeInt64, "Int64"},
+    {TypeId::kNumberTypeUInt64, "Uint64"},   {TypeId::kNumberTypeFloat16, "Float16"},
+    {TypeId::kNumberTypeFloat32, "Float32"},
+  };
+  auto data_type_to_string = [&dtype_name_map](TypeId type_id) {
+    auto it = dtype_name_map.find(type_id);
+    if (it == dtype_name_map.end()) {
+      return std::string("Unknown");
+    }
+    return it->second;
+  };
+
   std::string graph = "graph inputs:{ ";
   for (size_t i = 0; i < paras.size(); ++i) {
-    graph += std::to_string(i) + ": dims " + std::to_string(AnfAlgo::GetOutputDeviceShape(paras[i], 0).size()) +
-             ", shape " + PrintInputShape(AnfAlgo::GetOutputDeviceShape(paras[i], 0)) + ", data type " +
-             std::to_string(AnfAlgo::GetSelectKernelBuildInfo(paras[i])->GetOutputDeviceType(0)) + " }";
+    auto &para = paras[i];
+    graph += std::to_string(i) + ": dims " + std::to_string(AnfAlgo::GetOutputDeviceShape(para, 0).size()) +
+             ", shape " + PrintInputShape(AnfAlgo::GetOutputDeviceShape(para, 0)) + ", data type " +
+             data_type_to_string(AnfAlgo::GetSelectKernelBuildInfo(para)->GetOutputDeviceType(0)) + " }";
   }
 
-  std::string actual = "actual inputs:{ ";
+  std::string actual = "given inputs:{ ";
   for (size_t i = 0; i < inputs.size(); ++i) {
     actual += std::to_string(i) + ": dims " + std::to_string(inputs[i]->shape().size()) + ", shape " +
-              PrintInputShape(inputs[i]->shape()) + ", data type " + std::to_string(inputs[i]->data_type()) + " }";
+              PrintInputShape(inputs[i]->shape()) + ", data type " + data_type_to_string(inputs[i]->data_type()) + " }";
   }
   return graph + "   " + actual;
 }

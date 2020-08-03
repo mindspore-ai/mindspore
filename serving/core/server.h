@@ -31,6 +31,10 @@ namespace serving {
 
 using ms_serving::PredictReply;
 using ms_serving::PredictRequest;
+using inference::Status;
+using inference::SUCCESS;
+using inference::FAILED;
+using inference::INVALID_INPUTS;
 
 class Session {
  public:

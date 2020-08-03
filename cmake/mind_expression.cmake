@@ -15,7 +15,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/external_libs/json.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/dependency_securec.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/external_libs/protobuf.cmake)
 
-if (ENABLE_DEBUGGER OR ENABLE_SERVING)
+if (ENABLE_DEBUGGER OR ENABLE_SERVING OR ENABLE_TESTCASES)
     # build dependencies of gRPC
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/absl.cmake)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/c-ares.cmake)
@@ -69,13 +69,16 @@ endif()
 
 if (ENABLE_MINDDATA)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/icu4c.cmake)
-    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/jpeg_turbo.cmake)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/libtiff.cmake)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/opencv.cmake)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/sqlite.cmake)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/tinyxml2.cmake)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/cppjieba.cmake)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/sentencepiece.cmake)
+endif()
+
+if (ENABLE_MINDDATA OR ENABLE_SERVING)
+    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/jpeg_turbo.cmake)
 endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/external_libs/gtest.cmake)

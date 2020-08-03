@@ -21,10 +21,36 @@
 #include <vector>
 #include <string>
 #include "include/infer_tensor.h"
+#include "include/infer_log.h"
 
 namespace mindspore {
 namespace inference {
-enum Status { SUCCESS = 0, FAILED, INVALID_INPUTS };
+
+enum StatusCode { SUCCESS = 0, FAILED, INVALID_INPUTS };
+
+class Status {
+ public:
+  Status() : status_code_(FAILED) {}
+  Status(enum StatusCode status_code, const std::string &status_msg = "")
+      : status_code_(status_code), status_msg_(status_msg) {}
+  bool IsSuccess() const { return status_code_ == SUCCESS; }
+  enum StatusCode StatusCode() const { return status_code_; }
+  std::string StatusMessage() const { return status_msg_; }
+  bool operator==(const Status &other) const { return status_code_ == other.status_code_; }
+  bool operator==(enum StatusCode other_code) const { return status_code_ == other_code; }
+  bool operator!=(const Status &other) const { return status_code_ != other.status_code_; }
+  bool operator!=(enum StatusCode other_code) const { return status_code_ != other_code; }
+  operator bool() const = delete;
+  Status &operator<(const LogStream &stream) noexcept __attribute__((visibility("default"))) {
+    status_msg_ = stream.sstream_->str();
+    return *this;
+  }
+
+ private:
+  enum StatusCode status_code_;
+  std::string status_msg_;
+};
+
 class MS_API InferSession {
  public:
   InferSession() = default;
@@ -42,7 +68,12 @@ class MS_API InferSession {
     VectorInferTensorWrapReply reply(outputs);
     return ExecuteModel(model_id, request, reply);
   }
-
+  // default not support input data preprocess(decode, resize, crop, crop&paste, etc.)
+  virtual Status ExecuteModel(uint32_t /*model_id*/,
+                              const ImagesRequestBase & /*images_inputs*/,  // images for preprocess
+                              const RequestBase & /*request*/, ReplyBase & /*reply*/) {
+    return FAILED;
+  }
   static std::shared_ptr<InferSession> CreateSession(const std::string &device, uint32_t device_id);
 };
 

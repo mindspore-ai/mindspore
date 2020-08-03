@@ -13,17 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_STATUS_H
-#define MINDSPORE_STATUS_H
-#include "include/inference.h"
 
-namespace mindspore {
-namespace serving {
-using inference::Status;
-using inference::SUCCESS;
-using inference::FAILED;
-using inference::INVALID_INPUTS;
-}  // namespace serving
-}  // namespace mindspore
+#ifndef ACL_STUB_INC_ACL_H
+#define ACL_STUB_INC_ACL_H
+#include "acl_base.h"
+#include "acl_mdl.h"
+#include "acl_rt.h"
 
-#endif  // MINDSPORE_STATUS_H
+aclError aclInit(const char *configPath);
+aclError aclFinalize();
+
+#endif // ACL_STUB_INC_ACL_H

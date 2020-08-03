@@ -51,6 +51,10 @@ else()
         endif()
     endforeach ()
 endif()
+# removing serving ut
+file(GLOB_RECURSE SERVING_ACL_UT_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} serving/*.cc)
+list(REMOVE_ITEM UT_SRCS ${SERVING_ACL_UT_SRCS})
+add_subdirectory(serving)
 
 file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/core/base/*.cc"
@@ -157,7 +161,7 @@ file(GLOB_RECURSE UT_SUTB_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "stub/ge/*.cc"
         )
 
-add_executable(ut_tests ${UT_SRCS} ${MINDSPORE_SRC_LIST} ${UT_SUTB_SRC_LIST})
+add_executable(ut_tests ${UT_SRCS} ${MINDSPORE_SRC_LIST} ${UT_SUTB_SRC_LIST} $<TARGET_OBJECTS:ut_serving_obj>)
 
 if (ENABLE_GE)
     if(ENABLE_TRAIN)
@@ -182,3 +186,14 @@ if (USE_GLOG)
 endif()
 
 target_link_libraries(ut_tests PRIVATE securec graph)
+
+# link grpc
+if (EXISTS ${grpc_ROOT}/lib64)
+    set(gRPC_DIR "${grpc_ROOT}/lib64/cmake/grpc")
+else ()
+    set(gRPC_DIR "${grpc_ROOT}/lib/cmake/grpc")
+endif ()
+find_package(gRPC CONFIG REQUIRED)
+target_link_libraries(ut_tests PRIVATE gRPC::grpc++)
+target_link_libraries(ut_tests PRIVATE gRPC::grpc++_reflection)
+target_link_libraries(ut_tests PRIVATE protobuf::libprotobuf)

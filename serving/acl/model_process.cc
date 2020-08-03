@@ -23,41 +23,44 @@
 namespace mindspore {
 namespace inference {
 
-bool ModelProcess::LoadModelFromFile(const std::string &file_name, uint32_t &model_id) {
+Status ModelProcess::PreInitModelResource() {
+  model_desc_ = aclmdlCreateDesc();
+  aclError acl_ret = aclmdlGetDesc(model_desc_, model_id_);
+  if (acl_ret != ACL_ERROR_NONE) {
+    MSI_LOG_ERROR << "Read model desc failed";
+    return FAILED;
+  }
+  Status ret = InitInputsBuffer();
+  if (ret != SUCCESS) {
+    MSI_LOG_ERROR << "Create input buffer failed";
+    return FAILED;
+  }
+  ret = InitOutputsBuffer();
+  if (ret != SUCCESS) {
+    MSI_LOG_ERROR << "Create output buffer failed";
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
+Status ModelProcess::LoadModelFromFile(const std::string &file_name, uint32_t &model_id) {
   aclError acl_ret = aclmdlLoadFromFile(file_name.c_str(), &model_id);
   if (acl_ret != ACL_ERROR_NONE) {
     MSI_LOG_ERROR << "Read model file failed, file name is " << file_name;
-    return false;
+    return FAILED;
   }
   MSI_LOG_INFO << "Load model success " << file_name;
-
-  model_desc_ = aclmdlCreateDesc();
-  acl_ret = aclmdlGetDesc(model_desc_, model_id);
-  if (acl_ret != ACL_ERROR_NONE) {
-    MSI_LOG_ERROR << "Read model desc failed";
-    return false;
-  }
-  bool ret = InitInputsBuffer();
-  if (!ret) {
-    MSI_LOG_ERROR << "Create input buffer failed";
-    return false;
-  }
-  ret = InitOutputsBuffer();
-  if (!ret) {
-    MSI_LOG_ERROR << "Create output buffer failed";
-    return false;
-  }
   model_id_ = model_id;
-  return true;
+  if (PreInitModelResource() != SUCCESS) {
+    aclmdlUnload(model_id_);
+    MSI_LOG_ERROR << "Pre init model resource failed, file name is " << file_name;
+    return FAILED;
+  }
+  return SUCCESS;
 }
 
-bool ModelProcess::InitInputsBuffer() {
+Status ModelProcess::InitInputsBuffer() {
   aclError ret;
-  inputs_ = aclmdlCreateDataset();
-  if (inputs_ == nullptr) {
-    MSI_LOG_ERROR << "Create input dataset failed";
-    return false;
-  }
   size_t input_size = aclmdlGetNumInputs(model_desc_);
 
   for (size_t i = 0; i < input_size; ++i) {
@@ -67,7 +70,7 @@ bool ModelProcess::InitInputsBuffer() {
       ret = aclrtMalloc(&data_mem_buffer, buffer_size, ACL_MEM_MALLOC_NORMAL_ONLY);
       if (ret != ACL_ERROR_NONE) {
         MSI_LOG_ERROR << "Malloc device input buffer faild , input size " << buffer_size;
-        return false;
+        return FAILED;
       }
     }
 
@@ -75,17 +78,20 @@ bool ModelProcess::InitInputsBuffer() {
     ret = aclmdlGetInputDims(model_desc_, i, &dims);
     if (ret != ACL_ERROR_NONE) {
       MSI_LOG_ERROR << "Get input shape failed";
-      return false;
+      if (!is_run_on_device_) {
+        aclrtFree(data_mem_buffer);
+      }
+      return FAILED;
     }
-    aclDataType dataType = aclmdlGetInputDataType(model_desc_, i);
+    aclDataType data_type = aclmdlGetInputDataType(model_desc_, i);
     std::vector<int64_t> shape(dims.dims, dims.dims + dims.dimCount);
-    input_infos_.emplace_back(AclTensorInfo{data_mem_buffer, buffer_size, dataType, shape});
+    input_infos_.emplace_back(AclTensorInfo{data_mem_buffer, buffer_size, data_type, shape});
   }
   MSI_LOG_INFO << "Create model inputs success";
-  return true;
+  return SUCCESS;
 }
 
-bool ModelProcess::CreateDataBuffer(void *&data_mem_buffer, size_t buffer_size, aclmdlDataset *dataset) {
+Status ModelProcess::CreateDataBuffer(void *&data_mem_buffer, size_t buffer_size, aclmdlDataset *dataset) {
   aclError ret;
   auto free_data_buffer = [this](void *dataMemBuffer) {
     if (!is_run_on_device_) {
@@ -98,13 +104,13 @@ bool ModelProcess::CreateDataBuffer(void *&data_mem_buffer, size_t buffer_size, 
     ret = aclrtMalloc(&data_mem_buffer, buffer_size, ACL_MEM_MALLOC_NORMAL_ONLY);
     if (ret != ACL_ERROR_NONE) {
       MSI_LOG_ERROR << "Malloc device buffer faild , buffer size " << buffer_size;
-      return false;
+      return FAILED;
     }
   } else {
     ret = aclrtMallocHost(&data_mem_buffer, buffer_size);
     if (ret != ACL_ERROR_NONE) {
       MSI_LOG_ERROR << "Malloc device buffer faild , buffer size " << buffer_size;
-      return false;
+      return FAILED;
     }
   }
 
@@ -112,46 +118,51 @@ bool ModelProcess::CreateDataBuffer(void *&data_mem_buffer, size_t buffer_size, 
   if (data_buffer == nullptr) {
     MSI_LOG_ERROR << "Create Data Buffer failed";
     free_data_buffer(data_mem_buffer);
-    return false;
+    return FAILED;
   }
   ret = aclmdlAddDatasetBuffer(dataset, data_buffer);
   if (ret != ACL_ERROR_NONE) {
     MSI_LOG_ERROR << "add data buffer failed";
     free_data_buffer(data_mem_buffer);
     aclDestroyDataBuffer(data_buffer);
-    return false;
+    return FAILED;
   }
-  return true;
+  return SUCCESS;
 }
 
-bool ModelProcess::InitOutputsBuffer() {
+Status ModelProcess::InitOutputsBuffer() {
   aclError ret;
   outputs_ = aclmdlCreateDataset();
   if (outputs_ == nullptr) {
     MSI_LOG_ERROR << "Create input dataset failed";
-    return false;
+    return FAILED;
   }
   size_t output_size = aclmdlGetNumOutputs(model_desc_);
   for (size_t i = 0; i < output_size; ++i) {
     auto buffer_size = aclmdlGetOutputSizeByIndex(model_desc_, i);
 
     void *data_mem_buffer = nullptr;
-    if (CreateDataBuffer(data_mem_buffer, buffer_size, outputs_) != true) {
+    if (CreateDataBuffer(data_mem_buffer, buffer_size, outputs_) != SUCCESS) {
       MSI_LOG_ERROR << "add output data buffer failed, buffer size " << buffer_size;
-      return false;
+      return FAILED;
     }
     aclmdlIODims dims;
     ret = aclmdlGetOutputDims(model_desc_, i, &dims);
     if (ret != ACL_ERROR_NONE) {
       MSI_LOG_ERROR << "Get input shape failed";
-      return false;
+      if (!is_run_on_device_) {
+        aclrtFree(data_mem_buffer);
+      } else {
+        aclrtFreeHost(data_mem_buffer);
+      }
+      return FAILED;
     }
-    aclDataType dataType = aclmdlGetOutputDataType(model_desc_, i);
+    aclDataType data_type = aclmdlGetOutputDataType(model_desc_, i);
     std::vector<int64_t> shape(dims.dims, dims.dims + dims.dimCount);
-    output_infos_.emplace_back(AclTensorInfo{data_mem_buffer, buffer_size, dataType, shape});
+    output_infos_.emplace_back(AclTensorInfo{data_mem_buffer, buffer_size, data_type, shape});
   }
   MSI_LOG_INFO << "Create model output success";
-  return true;
+  return SUCCESS;
 }
 
 void ModelProcess::DestroyInputsDataset() {
@@ -176,27 +187,29 @@ void ModelProcess::DestroyInputsDataMem() {
 }
 
 void ModelProcess::DestroyInputsBuffer() {
-  DestroyInputsDataset();
   DestroyInputsDataMem();
+  DestroyInputsDataset();
 }
 
 void ModelProcess::DestroyOutputsBuffer() {
+  for (const auto &item : output_infos_) {
+    if (!is_run_on_device_) {
+      aclrtFree(item.device_data);
+    } else {
+      aclrtFreeHost(item.device_data);
+    }
+  }
+  output_infos_.clear();
+
   if (outputs_ == nullptr) {
     return;
   }
   for (size_t i = 0; i < aclmdlGetDatasetNumBuffers(outputs_); i++) {
     auto dataBuffer = aclmdlGetDatasetBuffer(outputs_, i);
-    auto data = aclGetDataBufferAddr(dataBuffer);
-    if (!is_run_on_device_) {
-      aclrtFree(data);
-    } else {
-      aclrtFreeHost(data);
-    }
     aclDestroyDataBuffer(dataBuffer);
   }
   aclmdlDestroyDataset(outputs_);
   outputs_ = nullptr;
-  output_infos_.clear();
 }
 
 void ModelProcess::UnLoad() {
@@ -213,24 +226,26 @@ void ModelProcess::UnLoad() {
   MSI_LOG_INFO << "End unload model " << model_id_;
 }
 
-bool ModelProcess::CheckAndInitInput(const RequestBase &request) {
+Status ModelProcess::CheckAndInitInput(const RequestBase &request) {
   aclError ret;
   inputs_ = aclmdlCreateDataset();
   // check inputs
   if (request.size() != input_infos_.size()) {
     MSI_LOG_ERROR << "inputs count not match, required count " << input_infos_.size() << ", given count "
                   << request.size();
-    return false;
+    return INFER_STATUS(INVALID_INPUTS) << "inputs count not match, required count " << input_infos_.size()
+                                        << ", given count " << request.size();
   }
   for (size_t i = 0; i < input_infos_.size(); i++) {
     if (request[i] == nullptr) {
       MSI_LOG_ERROR << "input " << i << " cannot be null";
-      return false;
+      return FAILED;
     }
     if (request[i]->data_size() != input_infos_[i].buffer_size) {
       MSI_LOG_ERROR << "input " << i << " data size not match, required size " << input_infos_[i].buffer_size
                     << ", given count " << request[i]->data_size();
-      return false;
+      return INFER_STATUS(INVALID_INPUTS) << "input " << i << " data size not match, required size "
+                                          << input_infos_[i].buffer_size << ", given count " << request[i]->data_size();
     }
   }
   // copy inputs
@@ -242,7 +257,7 @@ bool ModelProcess::CheckAndInitInput(const RequestBase &request) {
       ret = aclrtMemcpy(info.device_data, info.buffer_size, data, request[i]->data_size(), ACL_MEMCPY_HOST_TO_DEVICE);
       if (ret != ACL_ERROR_NONE) {
         MSI_LOG_ERROR << "memcpy input " << i << " data to device failed, buffer size " << request[i]->data_size();
-        return false;
+        return FAILED;
       }
       input_buffer = info.device_data;
     } else {
@@ -251,32 +266,70 @@ bool ModelProcess::CheckAndInitInput(const RequestBase &request) {
     auto data_buffer = aclCreateDataBuffer(input_buffer, info.buffer_size);
     if (data_buffer == nullptr) {
       MSI_LOG_ERROR << "Create Data Buffer failed";
-      return false;
+      return FAILED;
     }
     ret = aclmdlAddDatasetBuffer(inputs_, data_buffer);
     if (ret != ACL_ERROR_NONE) {
       MSI_LOG_ERROR << "add data buffer failed";
       aclDestroyDataBuffer(data_buffer);
-      return false;
+      return FAILED;
     }
   }
-  return true;
+  return SUCCESS;
 }
 
-bool ModelProcess::BuildOutputs(ReplyBase &reply) {
+Status ModelProcess::CheckAndInitDvppInput(const void *dvpp_outputs_buffer_dev, size_t dvpp_outputs_buffer_size,
+                                           size_t input_index) {
+  aclError ret;
+  inputs_ = aclmdlCreateDataset();
+  // check inputs
+  if (input_index >= input_infos_.size()) {
+    MSI_LOG_ERROR << "inputs count not match, required count " << input_infos_.size() << ", given index "
+                  << input_index;
+    return INFER_STATUS(INVALID_INPUTS) << "inputs count not match, required count " << input_infos_.size()
+                                        << ", given index " << input_index;
+  }
+  if (dvpp_outputs_buffer_dev == nullptr) {
+    MSI_LOG_ERROR << "input " << 0 << " cannot be null";
+    return FAILED;
+  }
+  if (dvpp_outputs_buffer_size != input_infos_[input_index].buffer_size) {
+    MSI_LOG_ERROR << "input " << 0 << " data size not match, required size " << input_infos_[input_index].buffer_size
+                  << ", given count " << dvpp_outputs_buffer_size;
+    return INFER_STATUS(INVALID_INPUTS) << "input " << 0 << " data size not match, required size "
+                                        << input_infos_[input_index].buffer_size << ", given count "
+                                        << dvpp_outputs_buffer_size;
+  }
+  // copy inputs
+  auto &info = input_infos_[input_index];
+  auto data_buffer = aclCreateDataBuffer(const_cast<void *>(dvpp_outputs_buffer_dev), info.buffer_size);
+  if (data_buffer == nullptr) {
+    MSI_LOG_ERROR << "Create Data Buffer failed";
+    return FAILED;
+  }
+  ret = aclmdlAddDatasetBuffer(inputs_, data_buffer);
+  if (ret != ACL_ERROR_NONE) {
+    MSI_LOG_ERROR << "add data buffer failed";
+    aclDestroyDataBuffer(data_buffer);
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
+Status ModelProcess::BuildOutputs(ReplyBase &reply) {
   aclError ret;
   // copy outputs
   reply.clear();
 
-  std::unordered_map<aclDataType, inference::DataType> dataTypeMap = {
+  std::unordered_map<aclDataType, inference::DataType> data_type_map = {
     {ACL_FLOAT16, inference::kMSI_Float16}, {ACL_FLOAT, inference::kMSI_Float32}, {ACL_DOUBLE, inference::kMSI_Float64},
     {ACL_INT8, inference::kMSI_Int8},       {ACL_INT16, inference::kMSI_Int16},   {ACL_INT32, inference::kMSI_Int32},
     {ACL_INT64, inference::kMSI_Int64},     {ACL_UINT8, inference::kMSI_Uint8},   {ACL_UINT16, inference::kMSI_Uint16},
     {ACL_UINT32, inference::kMSI_Uint32},   {ACL_UINT64, inference::kMSI_Uint64}, {ACL_BOOL, inference::kMSI_Bool},
   };
-  auto trans_to_serving_type = [&dataTypeMap](aclDataType data_type) {
-    auto it = dataTypeMap.find(data_type);
-    if (it == dataTypeMap.end()) {
+  auto trans_to_serving_type = [&data_type_map](aclDataType data_type) {
+    auto it = data_type_map.find(data_type);
+    if (it == data_type_map.end()) {
       return inference::kMSI_Unknown;
     } else {
       return it->second;
@@ -287,53 +340,93 @@ bool ModelProcess::BuildOutputs(ReplyBase &reply) {
     auto output = reply.add();
     if (output == nullptr) {
       MSI_LOG_ERROR << "add new output failed";
-      return false;
+      return FAILED;
     }
     output->set_data_type(trans_to_serving_type(info.data_type));
     output->set_shape(info.dims);
     if (!output->resize_data(info.buffer_size)) {
       MSI_LOG_ERROR << "new output data buffer failed, data size " << info.buffer_size;
-      return false;
+      return FAILED;
     }
     if (!is_run_on_device_) {
       ret = aclrtMemcpy(output->mutable_data(), output->data_size(), info.device_data, info.buffer_size,
                         ACL_MEMCPY_DEVICE_TO_HOST);
       if (ret != ACL_ERROR_NONE) {
         MSI_LOG_ERROR << "Memcpy output " << i << " to host failed, memory size " << info.buffer_size;
-        return false;
+        return FAILED;
       }
     } else {
       ret = aclrtMemcpy(output->mutable_data(), output->data_size(), info.device_data, info.buffer_size,
                         ACL_MEMCPY_HOST_TO_HOST);
       if (ret != ACL_ERROR_NONE) {
         MSI_LOG_ERROR << "Memcpy output " << i << " to host failed, memory size " << info.buffer_size;
-        return false;
+        return FAILED;
       }
     }
   }
-  return true;
+  return SUCCESS;
 }
 
-bool ModelProcess::Execute(const RequestBase &request, ReplyBase &reply) {
+Status ModelProcess::Execute(const RequestBase &request, ReplyBase &reply) {
   aclError acl_ret;
-  if (CheckAndInitInput(request) != true) {
+  Status ret = CheckAndInitInput(request);
+  if (ret != SUCCESS) {
     MSI_LOG_ERROR << "check or init input failed";
     DestroyInputsDataset();
-    return false;
+    return ret;  // forward status error
   }
   acl_ret = aclmdlExecute(model_id_, inputs_, outputs_);
   DestroyInputsDataset();
   if (acl_ret != ACL_ERROR_NONE) {
     MSI_LOG_ERROR << "Execute Model Failed";
-    return false;
+    return FAILED;
   }
-  bool ret = BuildOutputs(reply);
-  if (!ret) {
+  ret = BuildOutputs(reply);
+  if (ret != SUCCESS) {
     MSI_LOG_ERROR << "Build outputs faield";
-    return false;
+    return FAILED;
   }
   MSI_LOG_INFO << "excute model success";
-  return true;
+  return SUCCESS;
+}
+
+Status ModelProcess::Execute(const void *dvpp_outputs_buffer_dev, size_t dvpp_outputs_buffer_size, ReplyBase &reply) {
+  aclError acl_ret;
+  if (input_infos_.size() != 1) {
+    MSI_LOG_ERROR << "can only support input size 1, now model inputs size is " << input_infos_.size();
+    return INFER_STATUS(INVALID_INPUTS) << "can only support input size 1, now model inputs size is "
+                                        << input_infos_.size();
+  }
+  Status ret = CheckAndInitDvppInput(dvpp_outputs_buffer_dev, dvpp_outputs_buffer_size, 0);
+  if (ret != SUCCESS) {
+    MSI_LOG_ERROR << "check or init input failed";
+    DestroyInputsDataset();
+    return ret;  // forward status msg
+  }
+  acl_ret = aclmdlExecute(model_id_, inputs_, outputs_);
+  DestroyInputsDataset();
+  if (acl_ret != ACL_ERROR_NONE) {
+    MSI_LOG_ERROR << "Execute Model Failed";
+    return INFER_STATUS(FAILED) << "Execute Model Failed";
+  }
+  ret = BuildOutputs(reply);
+  if (ret != SUCCESS) {
+    MSI_LOG_ERROR << "Build outputs faield";
+    return FAILED;
+  }
+  MSI_LOG_INFO << "excute model success";
+  return SUCCESS;
+}
+
+size_t ModelProcess::GetBatchSize() const {
+  if (input_infos_.empty()) {
+    MSI_LOG_ERROR << "Model is not loaded";
+    return 0;
+  }
+  if (input_infos_[0].dims.empty()) {
+    return 1;
+  }
+  return static_cast<size_t>(input_infos_[0].dims[0]);
 }
 
 }  // namespace inference
