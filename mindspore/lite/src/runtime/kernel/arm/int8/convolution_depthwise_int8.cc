@@ -35,15 +35,47 @@ int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   int OC4 = UP_DIV(conv_param_->output_channel_, C4NUM);
   int pack_weight_size = C4NUM * OC4 * conv_param_->kernel_h_ * conv_param_->kernel_w_;
   packed_weight_ = reinterpret_cast<int16_t *>(malloc(pack_weight_size * sizeof(int16_t)));
+  if (packed_weight_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc buffer failed.";
+    return RET_ERROR;
+  }
   memset(packed_weight_, 0, pack_weight_size * sizeof(int16_t));
   PackDepthwiseInt8Weight(origin_weight, packed_weight_, conv_param_);
 
   // init bias, add output zp
   bias_data_ = reinterpret_cast<int32_t *>(malloc(C4NUM * OC4 * sizeof(int32_t)));
+  if (bias_data_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc buffer failed.";
+    return RET_ERROR;
+  }
   memset(bias_data_, 0, C4NUM * OC4 * sizeof(int32_t));
   if (inputs_.size() == kInputSize2) {
     auto ori_bias = reinterpret_cast<int32_t *>(inputs_.at(kBiasIndex)->Data());
     memcpy(bias_data_, ori_bias, conv_param_->output_channel_ * sizeof(int32_t));
+  }
+  return RET_OK;
+}
+
+int ConvolutionDepthwiseInt8CPUKernel::InitBuffer() {
+  // malloc packed input buffer
+  int pack_input_size = conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * C4NUM *
+                        UP_DIV(conv_param_->input_channel_, 4);
+  packed_input_ = reinterpret_cast<int16_t *>(malloc(pack_input_size * sizeof(int16_t)));
+  memset(packed_input_, 0, pack_input_size * sizeof(int16_t));
+  if (packed_input_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc buffer failed.";
+    return RET_ERROR;
+  }
+
+  if (conv_param_->input_channel_ % C4NUM != 0) {
+    need_align_ = true;
+    int pack_output_size = conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * C4NUM *
+                           UP_DIV(conv_param_->output_channel_, C4NUM);
+    packed_output_ = reinterpret_cast<int8_t *>(malloc(pack_output_size * sizeof(int8_t)));
+    if (packed_input_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc buffer failed.";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }
@@ -66,7 +98,7 @@ int ConvolutionDepthwiseInt8CPUKernel::Init() {
     return ret;
   }
 
-  ret = ReSize();
+  ret = InitBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Depthwise int8 ReSize error!";
     return ret;
@@ -75,26 +107,23 @@ int ConvolutionDepthwiseInt8CPUKernel::Init() {
 }
 
 int ConvolutionDepthwiseInt8CPUKernel::ReSize() {
-  // malloc packed input buffer
-  int pack_input_size = conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * C4NUM *
-                        UP_DIV(conv_param_->input_channel_, 4);
-  packed_input_ = reinterpret_cast<int16_t *>(malloc(pack_input_size * sizeof(int16_t)));
-  memset(packed_input_, 0, pack_input_size * sizeof(int16_t));
-  if (packed_input_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc buffer failed.";
-    return RET_ERROR;
+  free(packed_input_);
+  if (need_align_) {
+    free(packed_output_);
   }
+  // conv base init
+  ConvolutionBaseCPUKernel::Init();
 
-  if (conv_param_->input_channel_ % C4NUM != 0) {
-    need_align_ = true;
-    int pack_output_size = conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * C4NUM *
-                           (conv_param_->output_channel_, C4NUM);
-    packed_output_ = reinterpret_cast<int8_t *>(malloc(pack_output_size * sizeof(int8_t)));
-    if (packed_input_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc buffer failed.";
-      return RET_ERROR;
-    }
-    memset(packed_output_, 0, pack_output_size * sizeof(int8_t));
+  // init sliding window param
+  InitSlidingParam(sliding, conv_param_, C4NUM);
+
+  // init quant param
+  ConvolutionBaseCPUKernel::SetQuantParam();
+
+  auto ret = InitBuffer();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Depthwise int8 ReSize error!";
+    return ret;
   }
   return RET_OK;
 }
@@ -106,8 +135,8 @@ int ConvolutionDepthwiseInt8CPUKernel::Execute(int task_id) {
 }
 
 int ConvDwInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
-  auto conv_dw = reinterpret_cast<ConvolutionDepthwiseInt8CPUKernel *>(cdata);
-  auto ret = conv_dw->Execute(task_id);
+  auto conv_dw_int8 = reinterpret_cast<ConvolutionDepthwiseInt8CPUKernel *>(cdata);
+  auto ret = conv_dw_int8->Execute(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionDepthwiseInt8Run error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
@@ -127,7 +156,6 @@ int ConvolutionDepthwiseInt8CPUKernel::Run() {
   PackDepthwiseInt8Input(input_addr, packed_input_, conv_param_);
 
   auto output_addr = reinterpret_cast<int8_t *>(outputs_.at(kOutputIndex)->Data());
-  memset(output_addr, 0, outputs_.at(kOutputIndex)->ElementsNum() * sizeof(int8_t));
   if (!need_align_) {
     packed_output_ = output_addr;
   }

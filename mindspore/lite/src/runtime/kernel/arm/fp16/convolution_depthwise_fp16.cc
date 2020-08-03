@@ -46,7 +46,6 @@ int ConvolutionDepthwiseFp16CPUKernel::InitBuffer() {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-  memset(packed_output_, 0, pack_output_size * sizeof(float16_t));
   return RET_OK;
 }
 
