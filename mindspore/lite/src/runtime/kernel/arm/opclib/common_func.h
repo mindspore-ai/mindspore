@@ -33,6 +33,8 @@ void ReluFp32(float *data, int ele_num);
 void Relu6Fp32(float *data, int ele_num);
 void PostFuncInt8(const int *in, const int *bias, int8_t *out, int oc, int plane, int plane8, int32_t multiplier,
                   int32_t left_shift, int32_t right_shift, int32_t zp, int8_t mini, int8_t maxi);
+void SimplePostFuncInt8(const int *in, int8_t *out, int oc, int plane, int plane8, int32_t multiplier,
+                        int32_t left_shift, int32_t right_shift, int32_t zp);
 void IndirectGemmFp32_8x8(float *output, const float *input, const float *weight, const float *bias, size_t step,
                           size_t ic4, size_t output_channel, size_t offset, size_t mode, size_t writeC4, size_t relu,
                           size_t relu6);

@@ -19,27 +19,26 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-
 #include "src/runtime/kernel/arm/opclib/matmul.h"
+#include "src/runtime/kernel/arm/base/matmul_base.h"
 
 namespace mindspore::kernel {
-class MatmulCPUKernel : public LiteKernel {
+class MatmulCPUKernel : public MatmulBaseCPUKernel {
  public:
   explicit MatmulCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                           const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs) {
-    matmul_param_ = reinterpret_cast<MatMulParameter *>(parameter);
-  }
-  ~MatmulCPUKernel() override = default;
-
+                           const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
+      : MatmulBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+  ~MatmulCPUKernel() override;
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int RunImpl(int task_id);
 
  private:
-  MatMulParameter *matmul_param_;
+  float *a_c8_ptr_;
+  float *b_r8_ptr_;
+  float *c_r8x8_ptr_;
 };
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_MATMUL_H_
-

@@ -15,27 +15,26 @@
  */
 #include "utils/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/runtime/kernel/arm/int8/fullconnection_int8.h"
-#include "mindspore/lite/src/runtime/kernel/arm/opclib/common_func.h"
+#include "mindspore/lite/src/runtime/kernel/arm/int8/matmul_int8.h"
 #include "mindspore/lite/src/runtime/kernel/arm/opclib/quantization/quantize.h"
+#include "mindspore/lite/src/runtime/kernel/arm/opclib/common_func.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "mindspore/lite/src/lite_kernel.h"
 
 namespace mindspore {
-using lite::tensor::Tensor;
-class TestFcInt8 : public mindspore::Common {
+class TestMatmulInt8 : public mindspore::Common {
  public:
-  TestFcInt8() {}
+  TestMatmulInt8() {}
 };
 
-int FcInt8TestInit(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lite::tensor::Tensor *> *outputs_,
+int MMInt8TestInit(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lite::tensor::Tensor *> *outputs_,
                    MatMulParameter *matmal_param, float **correct, double *scale, int *zeropoint) {
   float input_max = 20;
   float input_min = -20;
   float weight_max = 1;
   float weight_min = -1;
-  float output_max = 20;
-  float output_min = -20;
+  float output_max = 30;
+  float output_min = -30;
 
   double input_scale =
     (input_max - input_min) / (std::numeric_limits<int8_t>::max() - std::numeric_limits<int8_t>::min());
@@ -49,10 +48,13 @@ int FcInt8TestInit(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lit
   *scale = output_scale;
   *zeropoint = output_zp;
 
-  Tensor *in_t = new Tensor(kNumberTypeInt8, {2, 2, 2, 2}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  auto in_t =
+    new lite::tensor::Tensor(kNumberTypeInt8, {1, 2, 8}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
   in_t->MallocData();
-  float in[] = {-3.2366564, -4.7733846, -7.8329225, 16.146885, 5.060793,  -6.1471,  -1.7680453, -6.5721383,
-                17.87506,   -5.1192183, 10.742863,  1.4536934, 19.693445, 19.45783, 5.063163,   0.5234792};
+  float in[] = {6.583835634764597,   11.337275140963907,  -4.125256949459629, 10.994337291530833,
+                19.086065139532636,  3.620842999158455,   13.167624585590346, -18.326739299407755,
+                14.877693740734841,  -17.092677920571653, 19.24147072807235,  -15.14805323833401,
+                -18.075654829688737, -0.9164404591894204, -3.836646280336332, -10.870298671273918};
   Quantize(in, in_t->ElementsNum(), input_scale, input_zp, reinterpret_cast<int8_t *>(in_t->Data()));
   auto in_quant_arg = new mindspore::lite::tensor::QuantArg();
   in_quant_arg->zeroPoint = input_zp;
@@ -60,12 +62,15 @@ int FcInt8TestInit(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lit
   in_t->AddQuantParam(*in_quant_arg);
   inputs_->push_back(in_t);
 
-  Tensor *weight_t = new Tensor(kNumberTypeInt8, {3, 8}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  auto weight_t =
+    new lite::tensor::Tensor(kNumberTypeInt8, {1, 3, 8}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
   weight_t->MallocData();
-  float weight[] = {-0.24438887,  0.06738146,  -0.8169129,   0.21510671,   -0.012470592, -0.053063435,
-                    0.6050155,    0.8656233,   0.12911413,   -0.028635843, -0.034080597, -0.10622552,
-                    -0.012254699, -0.01312836, 0.25241964,   -0.4706142,   0.2451482,    -0.9558459,
-                    0.4481974,    0.33251503,  -0.011705584, -0.1720293,   -0.39410214,  -0.73637343};
+  float weight[] = {0.3651070698591563,    -0.5856943921727129,  -0.7472032663840145,  0.9489992871641959,
+                    -0.8179490270358738,   -0.873058811259344,   0.39876672713807215,  -0.1816769383004213,
+                    -0.13584645926733696,  -0.7614673836659709,  -0.2535825872616164,  -0.05265760030895916,
+                    0.28558728305658754,   0.15404213943520118,  -0.1634824450738006,  -0.5068199082730189,
+                    -0.026961256849111326, -0.1508441942453307,  0.9375335677537737,   0.3304690744194263,
+                    -0.5091563780251127,   0.029887336278646925, -0.39540496207319276, 0.46094065001445084};
   Quantize(weight, weight_t->ElementsNum(), weight_scale, weight_zp, reinterpret_cast<int8_t *>(weight_t->Data()));
   auto weight_quant_arg = new mindspore::lite::tensor::QuantArg();
   weight_quant_arg->zeroPoint = weight_zp;
@@ -73,12 +78,8 @@ int FcInt8TestInit(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lit
   weight_t->AddQuantParam(*weight_quant_arg);
   inputs_->push_back(weight_t);
 
-  Tensor *bias_t = new Tensor(kNumberTypeInt32, {3}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
-  bias_t->MallocData();
-  memset(bias_t->Data(), 0, sizeof(int) * bias_t->ElementsNum());
-  inputs_->push_back(bias_t);
-
-  Tensor *out_t = new Tensor(kNumberTypeInt8, {2, 3}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  auto out_t =
+    new lite::tensor::Tensor(kNumberTypeInt8, {1, 2, 3}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
   out_t->MallocData();
   auto output_quant_arg = new mindspore::lite::tensor::QuantArg();
   output_quant_arg->zeroPoint = output_zp;
@@ -87,37 +88,36 @@ int FcInt8TestInit(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lit
   outputs_->push_back(out_t);
 
   *correct = reinterpret_cast<float *>(malloc(out_t->ElementsNum() * sizeof(float)));
-  float nchw_co[] = {3.84586822, 0.93586633, 12.16212629, -10.93835061, 2.46887183, 8.61480108};
+  float nchw_co[] = {-0.912632942, 4.08398056, -25.385608673, 2.720281124, 7.745952606, 20.893184662};
   memcpy(*correct, nchw_co, out_t->ElementsNum() * sizeof(float));
 
   matmal_param->b_transpose_ = true;
   matmal_param->a_transpose_ = false;
-  matmal_param->has_bias_ = true;
-  matmal_param->act_type_ = ActType_No;
+  matmal_param->has_bias_ = false;
   return out_t->ElementsNum();
 }
 
-TEST_F(TestFcInt8, fcint8) {
+TEST_F(TestMatmulInt8, mmint8) {
   std::vector<lite::tensor::Tensor *> inputs_;
   std::vector<lite::tensor::Tensor *> outputs_;
   auto matmul_param = new MatMulParameter();
   float *correct;
   double output_scale;
   int output_zp;
-  int total_size = FcInt8TestInit(&inputs_, &outputs_, matmul_param, &correct, &output_scale, &output_zp);
-  lite::Context *ctx = new lite::Context;
+  int total_size = MMInt8TestInit(&inputs_, &outputs_, matmul_param, &correct, &output_scale, &output_zp);
+  auto ctx = new lite::Context;
   ctx->threadNum = 2;
-  kernel::FullconnectionInt8CPUKernel *fc =
-    new kernel::FullconnectionInt8CPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx);
+  kernel::MatmulInt8CPUKernel *mm =
+    new kernel::MatmulInt8CPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx);
 
-  fc->Init();
-  fc->Run();
+  mm->Init();
+  mm->Run();
   float fout[6] = {0};
   Dequantize(reinterpret_cast<int8_t *>(outputs_[0]->Data()), outputs_[0]->ElementsNum(), output_scale, output_zp,
              fout);
-  CompareOutputData(fout, correct, 6, 0.2);
+  CompareOutputData(fout, correct, 6, 0.3);
   delete matmul_param;
-  delete fc;
+  delete mm;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;
   free(correct);

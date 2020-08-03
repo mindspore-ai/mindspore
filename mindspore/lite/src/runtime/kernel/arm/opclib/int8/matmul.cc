@@ -18,6 +18,17 @@
 #include <limits.h>
 #include "src/runtime/kernel/arm/opclib/quantization/fixed_point.h"
 
+void RowMajor2Row8MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col) {
+  for (int r = 0; r < row; r++) {
+    int8_t *src = src_ptr + r * col;
+    for (int c = 0; c < col; c++) {
+      int cd8 = c / 8;
+      int cm8 = c % 8;
+      dst_ptr[cd8 * 8 * row + r * 8 + cm8] = src[c];
+    }
+  }
+}
+
 void RowMajor2Col8MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col) {
   for (int r = 0; r < row; r++) {
     int rd8 = r / 8;
@@ -26,7 +37,6 @@ void RowMajor2Col8MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col) 
       dst_ptr[rd8 * col * 8 + c * 8 + rm8] = src_ptr[r * col + c];
     }
   }
-  return;
 }
 
 void MatMulInt8(const int8_t *a, const int8_t *b, int32_t *c, const int row8, const int col8, const int deep,
@@ -46,5 +56,4 @@ void MatMulInt8(const int8_t *a, const int8_t *b, int32_t *c, const int row8, co
       c[ci] = value;
     }
   }
-  return;
 }

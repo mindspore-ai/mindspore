@@ -65,9 +65,7 @@ void MatMul8x8(const float *a, const float *b, float *c, const float *bias, ActT
         size_t bi = c8div * deep * 8 + d * 8 + c8mod;
         value = value + a[ai] * b[bi];
       }
-      if (bias != nullptr) {
-        value += bias[col];
-      }
+      if (bias != nullptr) value += bias[col];
       if (act_type == ActType_Relu6) value = MSMIN(6.0f, value);
       if (act_type != ActType_No) value = MSMAX(0.0f, value);
       c[ci] = value;
