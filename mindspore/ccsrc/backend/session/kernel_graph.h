@@ -143,11 +143,16 @@ class KernelGraph : public FuncGraph {
   void PrintGraphExecuteOrder() const;
   const std::map<std::string, std::pair<AnfNodePtr, int>> &summary_nodes() const { return summary_nodes_; }
   void set_summary_nodes(const std::map<std::string, std::pair<AnfNodePtr, int>> &nodes) { summary_nodes_ = nodes; }
-  void AddInternalOutput(const AnfNodePtr &front_node, const AnfNodePtr &node);
+  void AddInternalOutput(const AnfNodePtr &front_node, const AnfNodePtr &node, int output_idx = 0,
+                         bool unique_target = false);
   void ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node, int src_output_idx = -1,
                              int dst_output_idx = -1);
   AnfNodePtr GetInternalOutputByFrontNode(const AnfNodePtr &front_node) const;
   bool IsInternalOutput(const AnfNodePtr &node, int output_idx = -1) const;
+  bool IsUniqueTargetInternalOutput(const AnfNodePtr &node, int output_idx) const;
+  void AddInternalOutputTensor(const AnfNodePtr &node, int output_idx, const tensor::TensorPtr &tensor);
+  tensor::TensorPtr GetInternalOutputTensor(const AnfNodePtr &node, int output_idx);
+
   uint32_t current_epoch() const { return current_epoch_; }
   void set_current_epoch(uint32_t epoch) { current_epoch_ = epoch; }
   void UpdateChildGraphOrder();
@@ -217,7 +222,8 @@ class KernelGraph : public FuncGraph {
   CNodePtr end_goto_;
   bool null_output_;
   std::unordered_map<AnfNodePtr, AnfNodePtr> front_to_internal_outputs_map_;
-  std::unordered_map<AnfNodePtr, std::unordered_map<int, AnfNodePtr>> internal_outputs_to_front_map_;
+  std::unordered_map<AnfNodePtr, std::unordered_map<int, std::pair<AnfNodePtr, bool>>> internal_outputs_to_front_map_;
+  std::unordered_map<AnfNodePtr, std::unordered_map<int, tensor::TensorPtr>> internal_outputs_tensor_map_;
   uint32_t current_epoch_;
 };
 }  // namespace session

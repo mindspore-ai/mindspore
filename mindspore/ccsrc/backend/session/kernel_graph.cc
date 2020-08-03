@@ -961,18 +961,40 @@ void KernelGraph::PrintGraphExecuteOrder() const {
   }
 }
 
-void KernelGraph::AddInternalOutput(const AnfNodePtr &front_node, const AnfNodePtr &node) {
+void KernelGraph::AddInternalOutput(const AnfNodePtr &front_node, const AnfNodePtr &node, int output_idx,
+                                    bool unique_target) {
   if (front_node == nullptr || node == nullptr) {
     MS_LOG(INFO) << "Front node or node is nullptr";
     return;
   }
   MS_LOG(INFO) << "Add internal node " << node->DebugString() << " with front node " << front_node->DebugString();
   front_to_internal_outputs_map_[front_node] = node;
-  int output_idx = 0;
   if (AnfAlgo::CheckPrimitiveType(front_node, prim::kPrimTupleGetItem)) {
     output_idx = AnfAlgo::GetTupleGetItemOutIndex(front_node->cast<CNodePtr>());
   }
-  internal_outputs_to_front_map_[node][output_idx] = front_node;
+  internal_outputs_to_front_map_[node][output_idx] = std::pair<AnfNodePtr, bool>(front_node, unique_target);
+}
+
+void KernelGraph::AddInternalOutputTensor(const AnfNodePtr &node, int output_idx, const tensor::TensorPtr &tensor) {
+  if (node == nullptr) {
+    return;
+  }
+  internal_outputs_tensor_map_[node][output_idx] = tensor;
+}
+
+tensor::TensorPtr KernelGraph::GetInternalOutputTensor(const AnfNodePtr &node, int output_idx) {
+  if (node == nullptr) {
+    return nullptr;
+  }
+  auto iter = internal_outputs_tensor_map_.find(node);
+  if (iter == internal_outputs_tensor_map_.end()) {
+    return nullptr;
+  }
+  auto idx_iter = iter->second.find(output_idx);
+  if (idx_iter == iter->second.end()) {
+    return nullptr;
+  }
+  return idx_iter->second;
 }
 
 void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node, int src_output_idx,
@@ -996,7 +1018,7 @@ void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr
   if (src_output_idx == -1) {
     internal_outputs_to_front_map_[new_node] = front_nodes;
     for (const auto &front_node_iter : front_nodes) {
-      front_to_internal_outputs_map_[front_node_iter.second] = new_node;
+      front_to_internal_outputs_map_[front_node_iter.second.first] = new_node;
     }
     internal_outputs_to_front_map_.erase(iter);
     return;
@@ -1008,9 +1030,9 @@ void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr
     MS_LOG(INFO) << "The output " << src_output_idx << " of node " << node->DebugString() << " is not an internal node";
     return;
   }
-  auto front_node = front_node_iter->second;
-  internal_outputs_to_front_map_[new_node][dst_output_idx] = front_node;
-  front_to_internal_outputs_map_[front_node] = new_node;
+  auto front_node_pair = front_node_iter->second;
+  internal_outputs_to_front_map_[new_node][dst_output_idx] = front_node_pair;
+  front_to_internal_outputs_map_[front_node_pair.first] = new_node;
   front_nodes.erase(index);
   if (front_nodes.empty()) {
     internal_outputs_to_front_map_.erase(iter);
@@ -1027,16 +1049,30 @@ AnfNodePtr KernelGraph::GetInternalOutputByFrontNode(const AnfNodePtr &front_nod
 
 bool KernelGraph::IsInternalOutput(const AnfNodePtr &node, int output_idx) const {
   auto front_nodes_iter = internal_outputs_to_front_map_.find(node);
-  if (front_nodes_iter != internal_outputs_to_front_map_.end()) {
-    if (output_idx == -1) {
-      return true;
-    }
-    auto &front_nodes = front_nodes_iter->second;
-    if (front_nodes.find(output_idx) != front_nodes.end()) {
-      return true;
-    }
+  if (front_nodes_iter == internal_outputs_to_front_map_.end()) {
+    return false;
   }
-  return false;
+  if (output_idx == -1) {
+    return true;
+  }
+  auto &front_nodes = front_nodes_iter->second;
+  if (front_nodes.find(output_idx) == front_nodes.end()) {
+    return false;
+  }
+  return true;
+}
+
+bool KernelGraph::IsUniqueTargetInternalOutput(const AnfNodePtr &node, int output_idx) const {
+  auto front_nodes_iter = internal_outputs_to_front_map_.find(node);
+  if (front_nodes_iter == internal_outputs_to_front_map_.end()) {
+    return false;
+  }
+  auto &front_nodes = front_nodes_iter->second;
+  auto idx_iter = front_nodes.find(output_idx);
+  if (idx_iter == front_nodes.end()) {
+    return false;
+  }
+  return idx_iter->second.second;
 }
 
 void KernelGraph::UpdateChildGraphOrder() {
