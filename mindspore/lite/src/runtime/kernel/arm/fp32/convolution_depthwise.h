@@ -31,10 +31,8 @@ class ConvolutionDepthwiseCPUKernel : public ConvolutionBaseCPUKernel {
   ~ConvolutionDepthwiseCPUKernel() override {
     delete sliding_;
     free(packed_weight_);
-    if (convert_func_ != nullptr) {
-      free(packed_input_);
-    }
     if (need_align_) {
+      free(packed_input_);
       free(packed_output_);
     }
   };
@@ -43,6 +41,8 @@ class ConvolutionDepthwiseCPUKernel : public ConvolutionBaseCPUKernel {
   int ReSize() override;
   int Run() override;
 
+  int InitBuffer();
+  int InitWeightBias();
   int Execute(int task_id);
 
  private:
@@ -50,7 +50,6 @@ class ConvolutionDepthwiseCPUKernel : public ConvolutionBaseCPUKernel {
   float *packed_weight_;
   float *packed_input_;
   float *packed_output_;
-  float *output_addr;
   bool need_align_ = false;
 };
 }  // namespace mindspore::kernel

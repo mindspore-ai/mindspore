@@ -21,6 +21,9 @@
 void DepthwiseBorderPixelFp16(float16_t *dst, const float16_t *src, const float16_t *weight, const float16_t *bias,
                               int height, int width, int in_kh_step, int in_kw_step, int kernel_w, bool is_relu,
                               bool is_relu6) {
+  for (int c = 0; c < C8NUM; c++) {
+    dst[c] = 0;
+  }
   const float16_t *src_kh = src;
   const float16_t *weight_kh = weight;
   for (int kh = 0; kh < height; kh++) {
@@ -87,6 +90,9 @@ void DepthwiseCenterFp16(float16_t *dst, const float16_t *src, const float16_t *
     for (int ow = 0; ow < width; ow++) {
       const float16_t *src_kh = src_w;
       const float16_t *weight_kh = weight;
+      for (int c = 0; c < C8NUM; c++) {
+        dst_w[c] = 0;
+      }
       for (int kh = 0; kh < kernel_h; kh++) {
         const float16_t *src_kw = src_kh;
         const float16_t *weight_kw = weight_kh;
@@ -297,4 +303,3 @@ void DeconvDwC8Fp16(float16_t *output_data, const float16_t *input_data, const f
   // output nchwc8
 }
 /*deconv depthwise fp16 end*/
-

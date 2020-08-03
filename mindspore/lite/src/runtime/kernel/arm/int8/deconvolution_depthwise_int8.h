@@ -43,6 +43,7 @@ class DeconvolutionDepthwiseInt8CPUKernel : public ConvolutionBaseCPUKernel {
 
   int InitSlideParam();
   int InitWeightBias();
+  int InitBuffer();
   int Execute(int task_id);
 
  private:

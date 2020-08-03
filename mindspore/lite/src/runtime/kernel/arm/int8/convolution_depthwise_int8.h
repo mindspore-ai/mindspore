@@ -42,6 +42,7 @@ class ConvolutionDepthwiseInt8CPUKernel : public ConvolutionBaseCPUKernel {
   int Run() override;
 
   int InitWeightBias();
+  int InitBuffer();
   int Execute(int task_id);
 
  private:

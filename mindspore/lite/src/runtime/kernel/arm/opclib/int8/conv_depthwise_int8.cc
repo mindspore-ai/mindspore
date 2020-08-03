@@ -171,7 +171,7 @@ void ConvDwInt8(int8_t *output_data, const int16_t *input_data, const int16_t *w
     src += sliding->in_step_;
     dst += sliding->out_step_;
   }  // batch loop
-  // output nc4hwc4
+  // output nhwc4
 }
 /*conv depthwise int8 end*/
 
@@ -317,6 +317,6 @@ void DeconvDwInt8(int8_t *output_data, int32_t *output_buffer, const int16_t *in
     src += sliding->in_step_;
     dst += sliding->out_step_;
   }  // batch loop
-  // output nc4hwc4
+  // output nhwc4
 }
 /*deconv depthwise int8 end*/

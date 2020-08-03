@@ -31,8 +31,10 @@ class DeconvolutionDepthwiseCPUKernel : public ConvolutionBaseCPUKernel {
   ~DeconvolutionDepthwiseCPUKernel() override {
     delete sliding_;
     free(packed_weight_);
-    free(packed_input_);
-    free(packed_output_);
+    if (need_align_) {
+      free(packed_input_);
+      free(packed_output_);
+    }
   };
 
   int Init() override;
@@ -40,17 +42,17 @@ class DeconvolutionDepthwiseCPUKernel : public ConvolutionBaseCPUKernel {
   int ReSize() override;
   int Run() override;
 
-  int DoExcute(int task_id);
+  int InitBuffer();
+  int InitWeightBias();
+  int Execute(int task_id);
 
  private:
   SlidingWindowParam *sliding_;
   float *packed_weight_;
   float *packed_input_;
   float *packed_output_;
-  float *output_addr;
-  bool need_pack_ = false;
+  bool need_align_ = false;
 };
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_DECONVOLUTION_DEPTHWISE_H_
-

@@ -63,6 +63,9 @@ void DepthwiseBorderPixel(float *dst, const float *src, const float *weight, con
                           int in_kh_step, int in_kw_step, int kernel_w, bool is_relu, bool is_relu6) {
   const float *src_kh = src;
   const float *weight_kh = weight;
+  for (int c = 0; c < C4NUM; c++) {
+    dst[c] = 0;
+  }
   for (int kh = 0; kh < height; kh++) {
     const float *src_kw = src_kh;
     const float *weight_kw = weight_kh;
@@ -132,6 +135,9 @@ void DepthwiseCenter(float *dst, const float *src, const float *weight, const fl
     for (int ow = 0; ow < width; ow++) {
       const float *src_kh = src_w;
       const float *weight_kh = weight;
+      for (int c = 0; c < C4NUM; c++) {
+        dst_w[c] = 0;
+      }
       for (int kh = 0; kh < kernel_h; kh++) {
         const float *src_kw = src_kh;
         const float *weight_kw = weight_kh;
@@ -202,7 +208,7 @@ void ConvDwC4Fp32(float *output_data, const float *input_data, const float *weig
     src += sliding->in_step_;
     dst += sliding->out_step_;
   }  // batch loop
-  // output nc4hwc4
+  // output nhwc4
 }
 /*conv depthwise fp32 end*/
 
@@ -350,6 +356,6 @@ void DeconvDwC4Fp32(float *output_data, const float *input_data, const float *we
     src += sliding->in_step_;
     dst += sliding->out_step_;
   }  // batch loop
-  // output nc4hwc4
+  // output nhwc4
 }
 /*deconv depthwise fp32 end*/
