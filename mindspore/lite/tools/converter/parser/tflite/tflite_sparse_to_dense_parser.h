@@ -35,7 +35,7 @@ class TfliteSparseToDenseParser : public TfliteNodeParser {
                TensorCache *tensor_cache,
                bool quantized_model) override;
 };
-}  // namespace lite 
+}  // namespace lite
 }  // namespace mindspore
 
 #endif  // LITE_TFLITE_SPARSE_TO_DENSE_PARSER_H
