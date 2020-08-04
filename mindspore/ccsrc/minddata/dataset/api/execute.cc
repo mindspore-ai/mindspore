@@ -46,7 +46,7 @@ std::shared_ptr<tensor::MSTensor> Execute::operator()(std::shared_ptr<tensor::MS
     MS_LOG(ERROR) << "Operation execution failed : " << rc.ToString();
     return nullptr;
   }
-  return std::shared_ptr<tensor::MSTensor>(new tensor::DETensor(std::move(de_output)));
+  return std::make_shared<tensor::DETensor>(std::move(de_output));
 }
 
 
