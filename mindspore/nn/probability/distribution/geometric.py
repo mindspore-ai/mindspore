@@ -36,55 +36,56 @@ class Geometric(Distribution):
 
     Examples:
         >>> # To initialize a Geometric distribution of prob 0.5
-        >>> n = nn.Geometric(0.5, dtype=mstype.int32)
+        >>> import mindspore.nn.probability.distribution as msd
+        >>> n = msd.Geometric(0.5, dtype=mstype.int32)
         >>>
         >>> # The following creates two independent Geometric distributions
-        >>> n = nn.Geometric([0.5, 0.5], dtype=mstype.int32)
+        >>> n = msd.Geometric([0.5, 0.5], dtype=mstype.int32)
         >>>
         >>> # A Geometric distribution can be initilized without arguments
-        >>> # In this case, probs must be passed in through construct.
-        >>> n = nn.Geometric(dtype=mstype.int32)
+        >>> # In this case, probs must be passed in through args during function calls.
+        >>> n = msd.Geometric(dtype=mstype.int32)
         >>>
-        >>> # To use Geometric distribution in a network
+        >>> # To use Geometric in a network
         >>> class net(Cell):
         >>>     def __init__(self):
         >>>         super(net, self).__init__():
-        >>>         self.g1 = nn.Geometric(0.5, dtype=mstype.int32)
-        >>>         self.g2 = nn.Geometric(dtype=mstype.int32)
+        >>>         self.g1 = msd.Geometric(0.5, dtype=mstype.int32)
+        >>>         self.g2 = msd.Geometric(dtype=mstype.int32)
         >>>
         >>>     # Tthe following calls are valid in construct
         >>>     def construct(self, value, probs_b, probs_a):
         >>>
         >>>         # Similar calls can be made to other probability functions
         >>>         # by replacing 'prob' with the name of the function
-        >>>         ans = self.g1('prob', value)
+        >>>         ans = self.g1.prob(value)
         >>>         # Evaluate with the respect to distribution b
-        >>>         ans = self.g1('prob', value, probs_b)
+        >>>         ans = self.g1.prob(value, probs_b)
         >>>
-        >>>         # Probs must be passed in through construct
-        >>>         ans = self.g2('prob', value, probs_a)
+        >>>         # Probs must be passed in during function calls
+        >>>         ans = self.g2.prob(value, probs_a)
         >>>
-        >>>         # Functions 'sd', 'var', 'entropy' have the same usage with 'mean'
-        >>>         # Will return [0.0]
-        >>>         ans = self.g1('mean')
-        >>>         # Will return mean_b
-        >>>         ans = self.g1('mean', probs_b)
+        >>>         # Functions 'sd', 'var', 'entropy' have the same usage as 'mean'
+        >>>         # Will return 1.0
+        >>>         ans = self.g1.mean()
+        >>>         # Another possible usage
+        >>>         ans = self.g1.mean(probs_b)
         >>>
-        >>>         # Probs must be passed in through construct
-        >>>         ans = self.g2('mean', probs_a)
+        >>>         # Probs must be passed in during function calls
+        >>>         ans = self.g2.mean(probs_a)
         >>>
         >>>         # Usage of 'kl_loss' and 'cross_entropy' are similar
-        >>>         ans = self.g1('kl_loss', 'Geometric', probs_b)
-        >>>         ans = self.g1('kl_loss', 'Geometric', probs_b, probs_a)
+        >>>         ans = self.g1.kl_loss('Geometric', probs_b)
+        >>>         ans = self.g1.kl_loss('Geometric', probs_b, probs_a)
         >>>
-        >>>         # Additional probs must be passed in through construct
-        >>>         ans = self.g2('kl_loss', 'Geometric', probs_b, probs_a)
+        >>>         # Additional probs must be passed in
+        >>>         ans = self.g2.kl_loss('Geometric', probs_b, probs_a)
         >>>
-        >>>         # Sample Usage
-        >>>         ans = self.g1('sample')
-        >>>         ans = self.g1('sample', (2,3))
-        >>>         ans = self.g1('sample', (2,3), probs_b)
-        >>>         ans = self.g2('sample', (2,3), probs_a)
+        >>>         # Sample
+        >>>         ans = self.g1.sample()
+        >>>         ans = self.g1.sample((2,3))
+        >>>         ans = self.g1.sample((2,3), probs_b)
+        >>>         ans = self.g2.sample((2,3), probs_a)
     """
 
     def __init__(self,
@@ -134,67 +135,57 @@ class Geometric(Distribution):
         """
         return self._probs
 
-    def _mean(self, name='mean', probs1=None):
+    def _mean(self, probs1=None):
         r"""
         .. math::
             MEAN(Geo) = \fratc{1 - probs1}{probs1}
         """
-        if name == 'mean':
-            probs1 = self.probs if probs1 is None else probs1
-            return (1. - probs1) / probs1
-        return None
+        probs1 = self.probs if probs1 is None else probs1
+        return (1. - probs1) / probs1
 
-    def _mode(self, name='mode', probs1=None):
+    def _mode(self, probs1=None):
         r"""
         .. math::
             MODE(Geo) = 0
         """
-        if name == 'mode':
-            probs1 = self.probs if probs1 is None else probs1
-            return self.fill(self.dtypeop(probs1), self.shape(probs1), 0.)
-        return None
+        probs1 = self.probs if probs1 is None else probs1
+        return self.fill(self.dtypeop(probs1), self.shape(probs1), 0.)
 
-    def _var(self, name='var', probs1=None):
+    def _var(self, probs1=None):
         r"""
         .. math::
             VAR(Geo) = \fract{1 - probs1}{probs1 ^ {2}}
         """
-        if name in self._variance_functions:
-            probs1 = self.probs if probs1 is None else probs1
-            return (1.0 - probs1) / self.sq(probs1)
-        return None
+        probs1 = self.probs if probs1 is None else probs1
+        return (1.0 - probs1) / self.sq(probs1)
 
-    def _entropy(self, name='entropy', probs=None):
+    def _entropy(self, probs=None):
         r"""
         .. math::
             H(Geo) = \fract{-1 * probs0 \log_2 (1-probs0)\ - prob1 * \log_2 (1-probs1)\ }{probs1}
         """
-        if name == 'entropy':
-            probs1 = self.probs if probs is None else probs
-            probs0 = 1.0 - probs1
-            return (-probs0 * self.log(probs0) - probs1 * self.log(probs1)) / probs1
-        return None
+        probs1 = self.probs if probs is None else probs
+        probs0 = 1.0 - probs1
+        return (-probs0 * self.log(probs0) - probs1 * self.log(probs1)) / probs1
 
-    def _cross_entropy(self, name, dist, probs1_b, probs1_a=None):
+    def _cross_entropy(self, dist, probs1_b, probs1_a=None):
         r"""
         Evaluate cross_entropy between Geometric distributions.
 
         Args:
-            name (str): name of the funtion. Should always be "cross_entropy" when passed in from construct.
             dist (str): type of the distributions. Should be "Geometric" in this case.
             probs1_b (Tensor): probability of success of distribution b.
             probs1_a (Tensor): probability of success of distribution a. Default: self.probs.
         """
-        if name == 'cross_entropy' and dist == 'Geometric':
-            return self._entropy(probs=probs1_a) + self._kl_loss(name, dist, probs1_b, probs1_a)
+        if dist == 'Geometric':
+            return self._entropy(probs=probs1_a) + self._kl_loss(dist, probs1_b, probs1_a)
         return None
 
-    def _prob(self, name, value, probs=None):
+    def _prob(self, value, probs=None):
         r"""
         pmf of Geometric distribution.
 
         Args:
-            name (str): name of the function. Should be "prob" when passed in from construct.
             value (Tensor): a Tensor composed of only natural numbers.
             probs (Tensor): probability of success. Default: self.probs.
 
@@ -202,27 +193,24 @@ class Geometric(Distribution):
             pmf(k) = probs0 ^k * probs1 if k >= 0;
             pmf(k) = 0 if k < 0.
         """
-        if name in self._prob_functions:
-            probs1 = self.probs if probs is None else probs
-            dtype = self.dtypeop(value)
-            if self.issubclass(dtype, mstype.int_):
-                pass
-            elif self.issubclass(dtype, mstype.float_):
-                value = self.floor(value)
-            else:
-                return None
-            pmf = self.pow((1.0 - probs1), value) * probs1
-            zeros = self.fill(self.dtypeop(probs1), self.shape(pmf), 0.0)
-            comp = self.less(value, zeros)
-            return self.select(comp, zeros, pmf)
-        return None
+        probs1 = self.probs if probs is None else probs
+        dtype = self.dtypeop(value)
+        if self.issubclass(dtype, mstype.int_):
+            pass
+        elif self.issubclass(dtype, mstype.float_):
+            value = self.floor(value)
+        else:
+            return None
+        pmf = self.pow((1.0 - probs1), value) * probs1
+        zeros = self.fill(self.dtypeop(probs1), self.shape(pmf), 0.0)
+        comp = self.less(value, zeros)
+        return self.select(comp, zeros, pmf)
 
-    def _cdf(self, name, value, probs=None):
+    def _cdf(self, value, probs=None):
         r"""
         cdf of Geometric distribution.
 
         Args:
-            name (str): name of the function.
             value (Tensor): a Tensor composed of only natural numbers.
             probs (Tensor): probability of success. Default: self.probs.
 
@@ -231,28 +219,26 @@ class Geometric(Distribution):
             cdf(k) = 0 if k < 0.
 
         """
-        if name in self._cdf_survival_functions:
-            probs1 = self.probs if probs is None else probs
-            probs0 = 1.0 - probs1
-            dtype = self.dtypeop(value)
-            if self.issubclass(dtype, mstype.int_):
-                pass
-            elif self.issubclass(dtype, mstype.float_):
-                value = self.floor(value)
-            else:
-                return None
-            cdf = 1.0 - self.pow(probs0, value + 1.0)
-            zeros = self.fill(self.dtypeop(probs1), self.shape(cdf), 0.0)
-            comp = self.less(value, zeros)
-            return self.select(comp, zeros, cdf)
-        return None
+        probs1 = self.probs if probs is None else probs
+        probs0 = 1.0 - probs1
+        dtype = self.dtypeop(value)
+        if self.issubclass(dtype, mstype.int_):
+            pass
+        elif self.issubclass(dtype, mstype.float_):
+            value = self.floor(value)
+        else:
+            return None
+        cdf = 1.0 - self.pow(probs0, value + 1.0)
+        zeros = self.fill(self.dtypeop(probs1), self.shape(cdf), 0.0)
+        comp = self.less(value, zeros)
+        return self.select(comp, zeros, cdf)
 
-    def _kl_loss(self, name, dist, probs1_b, probs1_a=None):
+
+    def _kl_loss(self, dist, probs1_b, probs1_a=None):
         r"""
         Evaluate Geometric-Geometric kl divergence, i.e. KL(a||b).
 
         Args:
-            name (str): name of the funtion.
             dist (str): type of the distributions. Should be "Geometric" in this case.
             probs1_b (Tensor): probability of success of distribution b.
             probs1_a (Tensor): probability of success of distribution a. Default: self.probs.
@@ -260,29 +246,26 @@ class Geometric(Distribution):
         .. math::
             KL(a||b) = \log(\fract{probs1_a}{probs1_b}) + \fract{probs0_a}{probs1_a} * \log(\fract{probs0_a}{probs0_b})
         """
-        if name in self._divergence_functions and dist == 'Geometric':
+        if dist == 'Geometric':
             probs1_a = self.probs if probs1_a is None else probs1_a
             probs0_a = 1.0 - probs1_a
             probs0_b = 1.0 - probs1_b
             return self.log(probs1_a / probs1_b) + (probs0_a / probs1_a) * self.log(probs0_a / probs0_b)
         return None
 
-    def _sample(self, name, shape=(), probs=None):
+    def _sample(self, shape=(), probs=None):
         """
         Sampling.
 
         Args:
-            name (str): name of the function. Should always be 'sample' when passed in from construct.
             shape (tuple): shape of the sample. Default: ().
             probs (Tensor): probability of success. Default: self.probs.
 
         Returns:
             Tensor, shape is shape + batch_shape.
         """
-        if name == 'sample':
-            probs = self.probs if probs is None else probs
-            minval = self.const(self.minval)
-            maxval = self.const(1.0)
-            sample_uniform = self.uniform(shape + self.shape(probs), minval, maxval)
-            return self.floor(self.log(sample_uniform) / self.log(1.0 - probs))
-        return None
+        probs = self.probs if probs is None else probs
+        minval = self.const(self.minval)
+        maxval = self.const(1.0)
+        sample_uniform = self.uniform(shape + self.shape(probs), minval, maxval)
+        return self.floor(self.log(sample_uniform) / self.log(1.0 - probs))

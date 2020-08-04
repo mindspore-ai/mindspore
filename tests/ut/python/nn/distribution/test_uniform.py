@@ -60,12 +60,12 @@ class UniformProb(nn.Cell):
         self.u = msd.Uniform(3.0, 4.0, dtype=dtype.float32)
 
     def construct(self, value):
-        prob = self.u('prob', value)
-        log_prob = self.u('log_prob', value)
-        cdf = self.u('cdf', value)
-        log_cdf = self.u('log_cdf', value)
-        sf = self.u('survival_function', value)
-        log_sf = self.u('log_survival', value)
+        prob = self.u.prob(value)
+        log_prob = self.u.log_prob(value)
+        cdf = self.u.cdf(value)
+        log_cdf = self.u.log_cdf(value)
+        sf = self.u.survival_function(value)
+        log_sf = self.u.log_survival(value)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
 def test_uniform_prob():
@@ -86,12 +86,12 @@ class UniformProb1(nn.Cell):
         self.u = msd.Uniform(dtype=dtype.float32)
 
     def construct(self, value, low, high):
-        prob = self.u('prob', value, low, high)
-        log_prob = self.u('log_prob', value, low, high)
-        cdf = self.u('cdf', value, low, high)
-        log_cdf = self.u('log_cdf', value, low, high)
-        sf = self.u('survival_function', value, low, high)
-        log_sf = self.u('log_survival', value, low, high)
+        prob = self.u.prob(value, low, high)
+        log_prob = self.u.log_prob(value, low, high)
+        cdf = self.u.cdf(value, low, high)
+        log_cdf = self.u.log_cdf(value, low, high)
+        sf = self.u.survival_function(value, low, high)
+        log_sf = self.u.log_survival(value, low, high)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
 def test_uniform_prob1():
@@ -115,8 +115,8 @@ class UniformKl(nn.Cell):
         self.u2 = msd.Uniform(dtype=dtype.float32)
 
     def construct(self, low_b, high_b, low_a, high_a):
-        kl1 = self.u1('kl_loss', 'Uniform', low_b, high_b)
-        kl2 = self.u2('kl_loss', 'Uniform', low_b, high_b, low_a, high_a)
+        kl1 = self.u1.kl_loss('Uniform', low_b, high_b)
+        kl2 = self.u2.kl_loss('Uniform', low_b, high_b, low_a, high_a)
         return kl1 + kl2
 
 def test_kl():
@@ -141,8 +141,8 @@ class UniformCrossEntropy(nn.Cell):
         self.u2 = msd.Uniform(dtype=dtype.float32)
 
     def construct(self, low_b, high_b, low_a, high_a):
-        h1 = self.u1('cross_entropy', 'Uniform', low_b, high_b)
-        h2 = self.u2('cross_entropy', 'Uniform', low_b, high_b, low_a, high_a)
+        h1 = self.u1.cross_entropy('Uniform', low_b, high_b)
+        h2 = self.u2.cross_entropy('Uniform', low_b, high_b, low_a, high_a)
         return h1 + h2
 
 def test_cross_entropy():
@@ -166,10 +166,10 @@ class UniformBasics(nn.Cell):
         self.u = msd.Uniform(3.0, 4.0, dtype=dtype.float32)
 
     def construct(self):
-        mean = self.u('mean')
-        sd = self.u('sd')
-        var = self.u('var')
-        entropy = self.u('entropy')
+        mean = self.u.mean()
+        sd = self.u.sd()
+        var = self.u.var()
+        entropy = self.u.entropy()
         return mean + sd + var + entropy
 
 def test_bascis():
@@ -178,4 +178,31 @@ def test_bascis():
     """
     net = UniformBasics()
     ans = net()
+    assert isinstance(ans, Tensor)
+
+
+class UniConstruct(nn.Cell):
+    """
+    Unifrom distribution: going through construct.
+    """
+    def __init__(self):
+        super(UniConstruct, self).__init__()
+        self.u = msd.Uniform(-4.0, 4.0)
+        self.u1 = msd.Uniform()
+
+    def construct(self, value, low, high):
+        prob = self.u('prob', value)
+        prob1 = self.u('prob', value, low, high)
+        prob2 = self.u1('prob', value, low, high)
+        return prob + prob1 + prob2
+
+def test_uniform_construct():
+    """
+    Test probability function going through construct.
+    """
+    net = UniConstruct()
+    value = Tensor([-5.0, 0.0, 1.0, 5.0], dtype=dtype.float32)
+    low = Tensor([-1.0], dtype=dtype.float32)
+    high = Tensor([1.0], dtype=dtype.float32)
+    ans = net(value, low, high)
     assert isinstance(ans, Tensor)

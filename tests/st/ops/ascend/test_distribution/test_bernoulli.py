@@ -19,7 +19,6 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.nn.probability.distribution as msd
 from mindspore import Tensor
-from mindspore.common.api import ms_function
 from mindspore import dtype
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -32,9 +31,8 @@ class Prob(nn.Cell):
         super(Prob, self).__init__()
         self.b = msd.Bernoulli(0.7, dtype=dtype.int32)
 
-    @ms_function
     def construct(self, x_):
-        return self.b('prob', x_)
+        return self.b.prob(x_)
 
 def test_pmf():
     """
@@ -57,9 +55,8 @@ class LogProb(nn.Cell):
         super(LogProb, self).__init__()
         self.b = msd.Bernoulli(0.7, dtype=dtype.int32)
 
-    @ms_function
     def construct(self, x_):
-        return self.b('log_prob', x_)
+        return self.b.log_prob(x_)
 
 def test_log_likelihood():
     """
@@ -81,9 +78,8 @@ class KL(nn.Cell):
         super(KL, self).__init__()
         self.b = msd.Bernoulli(0.7, dtype=dtype.int32)
 
-    @ms_function
     def construct(self, x_):
-        return self.b('kl_loss', 'Bernoulli', x_)
+        return self.b.kl_loss('Bernoulli', x_)
 
 def test_kl_loss():
     """
@@ -107,9 +103,8 @@ class Basics(nn.Cell):
         super(Basics, self).__init__()
         self.b = msd.Bernoulli([0.3, 0.5, 0.7], dtype=dtype.int32)
 
-    @ms_function
     def construct(self):
-        return self.b('mean'), self.b('sd'), self.b('mode')
+        return self.b.mean(), self.b.sd(), self.b.mode()
 
 def test_basics():
     """
@@ -134,9 +129,8 @@ class Sampling(nn.Cell):
         self.b = msd.Bernoulli([0.7, 0.5], seed=seed, dtype=dtype.int32)
         self.shape = shape
 
-    @ms_function
     def construct(self, probs=None):
-        return self.b('sample', self.shape, probs)
+        return self.b.sample(self.shape, probs)
 
 def test_sample():
     """
@@ -155,9 +149,8 @@ class CDF(nn.Cell):
         super(CDF, self).__init__()
         self.b = msd.Bernoulli(0.7, dtype=dtype.int32)
 
-    @ms_function
     def construct(self, x_):
-        return self.b('cdf', x_)
+        return self.b.cdf(x_)
 
 def test_cdf():
     """
@@ -171,7 +164,6 @@ def test_cdf():
     tol = 1e-6
     assert (np.abs(output.asnumpy() - expect_cdf) < tol).all()
 
-
 class LogCDF(nn.Cell):
     """
     Test class: log cdf of  bernoulli distributions.
@@ -180,9 +172,8 @@ class LogCDF(nn.Cell):
         super(LogCDF, self).__init__()
         self.b = msd.Bernoulli(0.7, dtype=dtype.int32)
 
-    @ms_function
     def construct(self, x_):
-        return self.b('log_cdf', x_)
+        return self.b.log_cdf(x_)
 
 def test_logcdf():
     """
@@ -205,9 +196,8 @@ class SF(nn.Cell):
         super(SF, self).__init__()
         self.b = msd.Bernoulli(0.7, dtype=dtype.int32)
 
-    @ms_function
     def construct(self, x_):
-        return self.b('survival_function', x_)
+        return self.b.survival_function(x_)
 
 def test_survival():
     """
@@ -230,9 +220,8 @@ class LogSF(nn.Cell):
         super(LogSF, self).__init__()
         self.b = msd.Bernoulli(0.7, dtype=dtype.int32)
 
-    @ms_function
     def construct(self, x_):
-        return self.b('log_survival', x_)
+        return self.b.log_survival(x_)
 
 def test_log_survival():
     """
@@ -254,9 +243,8 @@ class EntropyH(nn.Cell):
         super(EntropyH, self).__init__()
         self.b = msd.Bernoulli(0.7, dtype=dtype.int32)
 
-    @ms_function
     def construct(self):
-        return self.b('entropy')
+        return self.b.entropy()
 
 def test_entropy():
     """
@@ -277,12 +265,11 @@ class CrossEntropy(nn.Cell):
         super(CrossEntropy, self).__init__()
         self.b = msd.Bernoulli(0.7, dtype=dtype.int32)
 
-    @ms_function
     def construct(self, x_):
-        entropy = self.b('entropy')
-        kl_loss = self.b('kl_loss', 'Bernoulli', x_)
+        entropy = self.b.entropy()
+        kl_loss = self.b.kl_loss('Bernoulli', x_)
         h_sum_kl = entropy + kl_loss
-        cross_entropy = self.b('cross_entropy', 'Bernoulli', x_)
+        cross_entropy = self.b.cross_entropy('Bernoulli', x_)
         return h_sum_kl - cross_entropy
 
 def test_cross_entropy():

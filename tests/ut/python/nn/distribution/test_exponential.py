@@ -50,12 +50,12 @@ class ExponentialProb(nn.Cell):
         self.e = msd.Exponential(0.5, dtype=dtype.float32)
 
     def construct(self, value):
-        prob = self.e('prob', value)
-        log_prob = self.e('log_prob', value)
-        cdf = self.e('cdf', value)
-        log_cdf = self.e('log_cdf', value)
-        sf = self.e('survival_function', value)
-        log_sf = self.e('log_survival', value)
+        prob = self.e.prob(value)
+        log_prob = self.e.log_prob(value)
+        cdf = self.e.cdf(value)
+        log_cdf = self.e.log_cdf(value)
+        sf = self.e.survival_function(value)
+        log_sf = self.e.log_survival(value)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
 def test_exponential_prob():
@@ -76,12 +76,12 @@ class ExponentialProb1(nn.Cell):
         self.e = msd.Exponential(dtype=dtype.float32)
 
     def construct(self, value, rate):
-        prob = self.e('prob', value, rate)
-        log_prob = self.e('log_prob', value, rate)
-        cdf = self.e('cdf', value, rate)
-        log_cdf = self.e('log_cdf', value, rate)
-        sf = self.e('survival_function', value, rate)
-        log_sf = self.e('log_survival', value, rate)
+        prob = self.e.prob(value, rate)
+        log_prob = self.e.log_prob(value, rate)
+        cdf = self.e.cdf(value, rate)
+        log_cdf = self.e.log_cdf(value, rate)
+        sf = self.e.survival_function(value, rate)
+        log_sf = self.e.log_survival(value, rate)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
 def test_exponential_prob1():
@@ -104,8 +104,8 @@ class ExponentialKl(nn.Cell):
         self.e2 = msd.Exponential(dtype=dtype.float32)
 
     def construct(self, rate_b, rate_a):
-        kl1 = self.e1('kl_loss', 'Exponential', rate_b)
-        kl2 = self.e2('kl_loss', 'Exponential', rate_b, rate_a)
+        kl1 = self.e1.kl_loss('Exponential', rate_b)
+        kl2 = self.e2.kl_loss('Exponential', rate_b, rate_a)
         return kl1 + kl2
 
 def test_kl():
@@ -128,8 +128,8 @@ class ExponentialCrossEntropy(nn.Cell):
         self.e2 = msd.Exponential(dtype=dtype.float32)
 
     def construct(self, rate_b, rate_a):
-        h1 = self.e1('cross_entropy', 'Exponential', rate_b)
-        h2 = self.e2('cross_entropy', 'Exponential', rate_b, rate_a)
+        h1 = self.e1.cross_entropy('Exponential', rate_b)
+        h2 = self.e2.cross_entropy('Exponential', rate_b, rate_a)
         return h1 + h2
 
 def test_cross_entropy():
@@ -151,11 +151,11 @@ class ExponentialBasics(nn.Cell):
         self.e = msd.Exponential([0.3, 0.5], dtype=dtype.float32)
 
     def construct(self):
-        mean = self.e('mean')
-        sd = self.e('sd')
-        var = self.e('var')
-        mode = self.e('mode')
-        entropy = self.e('entropy')
+        mean = self.e.mean()
+        sd = self.e.sd()
+        var = self.e.var()
+        mode = self.e.mode()
+        entropy = self.e.entropy()
         return mean + sd + var + mode + entropy
 
 def test_bascis():
@@ -164,4 +164,30 @@ def test_bascis():
     """
     net = ExponentialBasics()
     ans = net()
+    assert isinstance(ans, Tensor)
+
+
+class ExpConstruct(nn.Cell):
+    """
+    Exponential distribution: going through construct.
+    """
+    def __init__(self):
+        super(ExpConstruct, self).__init__()
+        self.e = msd.Exponential(0.5, dtype=dtype.float32)
+        self.e1 = msd.Exponential(dtype=dtype.float32)
+
+    def construct(self, value, rate):
+        prob = self.e('prob', value)
+        prob1 = self.e('prob', value, rate)
+        prob2 = self.e1('prob', value, rate)
+        return prob + prob1 + prob2
+
+def test_exp_construct():
+    """
+    Test probability function going through construct.
+    """
+    net = ExpConstruct()
+    value = Tensor([0, 0, 0, 0, 0], dtype=dtype.float32)
+    probs = Tensor([0.5], dtype=dtype.float32)
+    ans = net(value, probs)
     assert isinstance(ans, Tensor)

@@ -19,7 +19,6 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.nn.probability.distribution as msd
 from mindspore import Tensor
-from mindspore.common.api import ms_function
 from mindspore import dtype
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -32,9 +31,8 @@ class Prob(nn.Cell):
         super(Prob, self).__init__()
         self.e = msd.Exponential([[1.0], [0.5]], dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_):
-        return self.e('prob', x_)
+        return self.e.prob(x_)
 
 def test_pdf():
     """
@@ -56,9 +54,8 @@ class LogProb(nn.Cell):
         super(LogProb, self).__init__()
         self.e = msd.Exponential([[1.0], [0.5]], dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_):
-        return self.e('log_prob', x_)
+        return self.e.log_prob(x_)
 
 def test_log_likelihood():
     """
@@ -80,9 +77,8 @@ class KL(nn.Cell):
         super(KL, self).__init__()
         self.e = msd.Exponential([1.5], dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_):
-        return self.e('kl_loss', 'Exponential', x_)
+        return self.e.kl_loss('Exponential', x_)
 
 def test_kl_loss():
     """
@@ -104,9 +100,8 @@ class Basics(nn.Cell):
         super(Basics, self).__init__()
         self.e = msd.Exponential([0.5], dtype=dtype.float32)
 
-    @ms_function
     def construct(self):
-        return self.e('mean'), self.e('sd'), self.e('mode')
+        return self.e.mean(), self.e.sd(), self.e.mode()
 
 def test_basics():
     """
@@ -131,9 +126,8 @@ class Sampling(nn.Cell):
         self.e = msd.Exponential([[1.0], [0.5]], seed=seed, dtype=dtype.float32)
         self.shape = shape
 
-    @ms_function
     def construct(self, rate=None):
-        return self.e('sample', self.shape, rate)
+        return self.e.sample(self.shape, rate)
 
 def test_sample():
     """
@@ -154,9 +148,8 @@ class CDF(nn.Cell):
         super(CDF, self).__init__()
         self.e = msd.Exponential([[1.0], [0.5]], dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_):
-        return self.e('cdf', x_)
+        return self.e.cdf(x_)
 
 def test_cdf():
     """
@@ -178,9 +171,8 @@ class LogCDF(nn.Cell):
         super(LogCDF, self).__init__()
         self.e = msd.Exponential([[1.0], [0.5]], dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_):
-        return self.e('log_cdf', x_)
+        return self.e.log_cdf(x_)
 
 def test_log_cdf():
     """
@@ -202,9 +194,8 @@ class SF(nn.Cell):
         super(SF, self).__init__()
         self.e = msd.Exponential([[1.0], [0.5]], dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_):
-        return self.e('survival_function', x_)
+        return self.e.survival_function(x_)
 
 def test_survival():
     """
@@ -226,9 +217,8 @@ class LogSF(nn.Cell):
         super(LogSF, self).__init__()
         self.e = msd.Exponential([[1.0], [0.5]], dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_):
-        return self.e('log_survival', x_)
+        return self.e.log_survival(x_)
 
 def test_log_survival():
     """
@@ -250,9 +240,8 @@ class EntropyH(nn.Cell):
         super(EntropyH, self).__init__()
         self.e = msd.Exponential([[1.0], [0.5]], dtype=dtype.float32)
 
-    @ms_function
     def construct(self):
-        return self.e('entropy')
+        return self.e.entropy()
 
 def test_entropy():
     """
@@ -273,12 +262,11 @@ class CrossEntropy(nn.Cell):
         super(CrossEntropy, self).__init__()
         self.e = msd.Exponential([1.0], dtype=dtype.float32)
 
-    @ms_function
     def construct(self, x_):
-        entropy = self.e('entropy')
-        kl_loss = self.e('kl_loss', 'Exponential', x_)
+        entropy = self.e.entropy()
+        kl_loss = self.e.kl_loss('Exponential', x_)
         h_sum_kl = entropy + kl_loss
-        cross_entropy = self.e('cross_entropy', 'Exponential', x_)
+        cross_entropy = self.e.cross_entropy('Exponential', x_)
         return h_sum_kl - cross_entropy
 
 def test_cross_entropy():

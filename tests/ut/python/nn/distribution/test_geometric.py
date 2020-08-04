@@ -50,12 +50,12 @@ class GeometricProb(nn.Cell):
         self.g = msd.Geometric(0.5, dtype=dtype.int32)
 
     def construct(self, value):
-        prob = self.g('prob', value)
-        log_prob = self.g('log_prob', value)
-        cdf = self.g('cdf', value)
-        log_cdf = self.g('log_cdf', value)
-        sf = self.g('survival_function', value)
-        log_sf = self.g('log_survival', value)
+        prob = self.g.prob(value)
+        log_prob = self.g.log_prob(value)
+        cdf = self.g.cdf(value)
+        log_cdf = self.g.log_cdf(value)
+        sf = self.g.survival_function(value)
+        log_sf = self.g.log_survival(value)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
 def test_geometric_prob():
@@ -76,12 +76,12 @@ class GeometricProb1(nn.Cell):
         self.g = msd.Geometric(dtype=dtype.int32)
 
     def construct(self, value, probs):
-        prob = self.g('prob', value, probs)
-        log_prob = self.g('log_prob', value, probs)
-        cdf = self.g('cdf', value, probs)
-        log_cdf = self.g('log_cdf', value, probs)
-        sf = self.g('survival_function', value, probs)
-        log_sf = self.g('log_survival', value, probs)
+        prob = self.g.prob(value, probs)
+        log_prob = self.g.log_prob(value, probs)
+        cdf = self.g.cdf(value, probs)
+        log_cdf = self.g.log_cdf(value, probs)
+        sf = self.g.survival_function(value, probs)
+        log_sf = self.g.log_survival(value, probs)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
 def test_geometric_prob1():
@@ -105,8 +105,8 @@ class GeometricKl(nn.Cell):
         self.g2 = msd.Geometric(dtype=dtype.int32)
 
     def construct(self, probs_b, probs_a):
-        kl1 = self.g1('kl_loss', 'Geometric', probs_b)
-        kl2 = self.g2('kl_loss', 'Geometric', probs_b, probs_a)
+        kl1 = self.g1.kl_loss('Geometric', probs_b)
+        kl2 = self.g2.kl_loss('Geometric', probs_b, probs_a)
         return kl1 + kl2
 
 def test_kl():
@@ -129,8 +129,8 @@ class GeometricCrossEntropy(nn.Cell):
         self.g2 = msd.Geometric(dtype=dtype.int32)
 
     def construct(self, probs_b, probs_a):
-        h1 = self.g1('cross_entropy', 'Geometric', probs_b)
-        h2 = self.g2('cross_entropy', 'Geometric', probs_b, probs_a)
+        h1 = self.g1.cross_entropy('Geometric', probs_b)
+        h2 = self.g2.cross_entropy('Geometric', probs_b, probs_a)
         return h1 + h2
 
 def test_cross_entropy():
@@ -152,11 +152,11 @@ class GeometricBasics(nn.Cell):
         self.g = msd.Geometric([0.3, 0.5], dtype=dtype.int32)
 
     def construct(self):
-        mean = self.g('mean')
-        sd = self.g('sd')
-        var = self.g('var')
-        mode = self.g('mode')
-        entropy = self.g('entropy')
+        mean = self.g.mean()
+        sd = self.g.sd()
+        var = self.g.var()
+        mode = self.g.mode()
+        entropy = self.g.entropy()
         return mean + sd + var + mode + entropy
 
 def test_bascis():
@@ -165,4 +165,30 @@ def test_bascis():
     """
     net = GeometricBasics()
     ans = net()
+    assert isinstance(ans, Tensor)
+
+
+class GeoConstruct(nn.Cell):
+    """
+    Bernoulli distribution: going through construct.
+    """
+    def __init__(self):
+        super(GeoConstruct, self).__init__()
+        self.g = msd.Geometric(0.5, dtype=dtype.int32)
+        self.g1 = msd.Geometric(dtype=dtype.int32)
+
+    def construct(self, value, probs):
+        prob = self.g('prob', value)
+        prob1 = self.g('prob', value, probs)
+        prob2 = self.g1('prob', value, probs)
+        return prob + prob1 + prob2
+
+def test_geo_construct():
+    """
+    Test probability function going through construct.
+    """
+    net = GeoConstruct()
+    value = Tensor([0, 0, 0, 0, 0], dtype=dtype.float32)
+    probs = Tensor([0.5], dtype=dtype.float32)
+    ans = net(value, probs)
     assert isinstance(ans, Tensor)

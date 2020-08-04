@@ -27,11 +27,7 @@ class Distribution(Cell):
 
     Note:
         Derived class should override operations such as ,_mean, _prob,
-        and _log_prob. Functions should be called through construct when
-        used inside a network. Arguments should be passed in through *args
-        in the form  of function name followed by additional arguments.
-        Functions such as cdf and prob, require a value to be passed in while
-        functions such as mean and sd do not require arguments other than name.
+        and _log_prob. Arguments should be passed in through *args.
 
         Dist_spec_args are unique for each type of distribution. For example, mean and sd
         are the dist_spec_args for a Normal distribution.
@@ -72,11 +68,6 @@ class Distribution(Cell):
         self._set_log_cdf()
         self._set_log_survival()
         self._set_cross_entropy()
-
-        self._prob_functions = ('prob', 'log_prob')
-        self._cdf_survival_functions = ('cdf', 'log_cdf', 'survival_function', 'log_survival')
-        self._variance_functions = ('var', 'sd')
-        self._divergence_functions = ('kl_loss', 'cross_entropy')
 
     @property
     def name(self):
@@ -185,7 +176,7 @@ class Distribution(Cell):
         Evaluate the log probability(pdf or pmf) at the given value.
 
         Note:
-            Args must include name of the function and value.
+            Args must include value.
             Dist_spec_args are optional.
         """
         return self._call_log_prob(*args)
@@ -204,7 +195,7 @@ class Distribution(Cell):
         Evaluate the probability (pdf or pmf) at given value.
 
         Note:
-            Args must include name of the function and value.
+            Args must include value.
             Dist_spec_args are optional.
         """
         return self._call_prob(*args)
@@ -223,7 +214,7 @@ class Distribution(Cell):
         Evaluate the cdf at given value.
 
         Note:
-            Args must include name of the function and value.
+            Args must include value.
             Dist_spec_args are optional.
         """
         return self._call_cdf(*args)
@@ -260,7 +251,7 @@ class Distribution(Cell):
         Evaluate the log cdf at given value.
 
         Note:
-            Args must include name of the function and value.
+            Args must include value.
             Dist_spec_args are optional.
         """
         return self._call_log_cdf(*args)
@@ -279,7 +270,7 @@ class Distribution(Cell):
         Evaluate the survival function at given value.
 
         Note:
-            Args must include name of the function and value.
+            Args must include value.
             Dist_spec_args are optional.
         """
         return self._call_survival(*args)
@@ -307,7 +298,7 @@ class Distribution(Cell):
         Evaluate the log survival function at given value.
 
         Note:
-            Args must include name of the function and value.
+            Args must include value.
             Dist_spec_args are optional.
         """
         return self._call_log_survival(*args)
@@ -326,7 +317,7 @@ class Distribution(Cell):
         Evaluate the KL divergence, i.e. KL(a||b).
 
         Note:
-            Args must include name of the function, type of the distribution, parameters of distribution b.
+            Args must include type of the distribution, parameters of distribution b.
             Parameters for distribution a are optional.
         """
         return self._kl_loss(*args)
@@ -336,7 +327,7 @@ class Distribution(Cell):
         Evaluate the mean.
 
         Note:
-            Args must include the name of function. Dist_spec_args are optional.
+            Dist_spec_args are optional.
         """
         return self._mean(*args)
 
@@ -345,7 +336,7 @@ class Distribution(Cell):
         Evaluate the mode.
 
         Note:
-            Args must include the name of function. Dist_spec_args are optional.
+            Dist_spec_args are optional.
         """
         return self._mode(*args)
 
@@ -354,7 +345,7 @@ class Distribution(Cell):
         Evaluate the standard deviation.
 
         Note:
-            Args must include the name of function. Dist_spec_args are optional.
+            Dist_spec_args are optional.
         """
         return self._call_sd(*args)
 
@@ -363,7 +354,7 @@ class Distribution(Cell):
         Evaluate the variance.
 
         Note:
-            Args must include the name of function. Dist_spec_args are optional.
+            Dist_spec_args are optional.
         """
         return self._call_var(*args)
 
@@ -390,7 +381,7 @@ class Distribution(Cell):
         Evaluate the entropy.
 
         Note:
-            Args must include the name of function. Dist_spec_args are optional.
+            Dist_spec_args are optional.
         """
         return self._entropy(*args)
 
@@ -399,7 +390,7 @@ class Distribution(Cell):
         Evaluate the cross_entropy between distribution a and b.
 
         Note:
-            Args must include name of the function, type of the distribution, parameters of distribution b.
+            Args must include type of the distribution, parameters of distribution b.
             Parameters for distribution a are optional.
         """
         return self._call_cross_entropy(*args)
@@ -421,13 +412,13 @@ class Distribution(Cell):
             *args (list): arguments passed in through construct.
 
         Note:
-            Args must include name of the function.
-            Shape of the sample and dist_spec_args are optional.
+            Shape of the sample is default to ().
+            Dist_spec_args are optional.
         """
         return self._sample(*args)
 
 
-    def construct(self, *inputs):
+    def construct(self, name, *args):
         """
         Override construct in Cell.
 
@@ -437,35 +428,36 @@ class Distribution(Cell):
             'var', 'sd', 'entropy', 'kl_loss', 'cross_entropy', 'sample'.
 
         Args:
-            *inputs (list): inputs[0] is always the name of the function.
+            name (str): name of the function.
+            *args (list): list of arguments needed for the function.
         """
 
-        if inputs[0] == 'log_prob':
-            return self._call_log_prob(*inputs)
-        if inputs[0] == 'prob':
-            return self._call_prob(*inputs)
-        if inputs[0] == 'cdf':
-            return self._call_cdf(*inputs)
-        if inputs[0] == 'log_cdf':
-            return self._call_log_cdf(*inputs)
-        if inputs[0] == 'survival_function':
-            return self._call_survival(*inputs)
-        if inputs[0] == 'log_survival':
-            return self._call_log_survival(*inputs)
-        if inputs[0] == 'kl_loss':
-            return self._kl_loss(*inputs)
-        if inputs[0] == 'mean':
-            return self._mean(*inputs)
-        if inputs[0] == 'mode':
-            return self._mode(*inputs)
-        if inputs[0] == 'sd':
-            return self._call_sd(*inputs)
-        if inputs[0] == 'var':
-            return self._call_var(*inputs)
-        if inputs[0] == 'entropy':
-            return self._entropy(*inputs)
-        if inputs[0] == 'cross_entropy':
-            return self._call_cross_entropy(*inputs)
-        if inputs[0] == 'sample':
-            return self._sample(*inputs)
+        if name == 'log_prob':
+            return self._call_log_prob(*args)
+        if name == 'prob':
+            return self._call_prob(*args)
+        if name == 'cdf':
+            return self._call_cdf(*args)
+        if name == 'log_cdf':
+            return self._call_log_cdf(*args)
+        if name == 'survival_function':
+            return self._call_survival(*args)
+        if name == 'log_survival':
+            return self._call_log_survival(*args)
+        if name == 'kl_loss':
+            return self._kl_loss(*args)
+        if name == 'mean':
+            return self._mean(*args)
+        if name == 'mode':
+            return self._mode(*args)
+        if name == 'sd':
+            return self._call_sd(*args)
+        if name == 'var':
+            return self._call_var(*args)
+        if name == 'entropy':
+            return self._entropy(*args)
+        if name == 'cross_entropy':
+            return self._call_cross_entropy(*args)
+        if name == 'sample':
+            return self._sample(*args)
         return None
