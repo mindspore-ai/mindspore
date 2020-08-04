@@ -28,6 +28,7 @@
 #include "common/utils.h"
 
 #include "pipeline/jit/parse/resolve.h"
+#include "frontend/optimizer/pattern.h"
 #include "frontend/optimizer/py_pass.h"
 #include "frontend/optimizer/pass_group.h"
 
@@ -51,7 +52,7 @@ class PyPassManager {
   // Access the only global instance
   static PyPassManagerPtr GetInstance();
   virtual ~PyPassManager() = default;
-  void Registe(const std::string &pass_name, const py::function &pattern, const py::function &target,
+  void Registe(const std::string &pass_name, const PatternPtr &pattern, const PatternPtr &target,
                Phase phase = Phase::RESOLVE, bool run_only_once = false, bool multigraph = true);
   void Unregiste(const std::string &pass_name, Phase phase);
   PassGroupPtr GetPassGroup(Phase phase);
