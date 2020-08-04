@@ -64,9 +64,6 @@ using offset_t = uint32_t;                                  // type of offset va
 using TensorPtr = std::shared_ptr<Tensor>;
 
 class Tensor {
-#ifdef ENABLE_ANDROID
-  friend class tensor::DETensor;
-#endif
  public:
   Tensor() = delete;
   Tensor(const Tensor &other) = delete;
@@ -663,6 +660,9 @@ class Tensor {
   unsigned char *data_end_ = nullptr;
 
  private:
+#ifdef ENABLE_ANDROID
+  friend class tensor::DETensor;
+#endif
   /// Copy raw data of a array based on shape and strides to the destination pointer
   /// \param dst [out] Pointer to the destination array where the content is to be copied
   /// \param[in] src Pointer to the source of strided array to be copied
