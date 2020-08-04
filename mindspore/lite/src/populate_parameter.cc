@@ -334,8 +334,6 @@ OpParameter *PopulateDeconvParameter(const lite::Primitive *primitive) {
   conv_param->pad_d_ = deconv_lite_primitive->PadDown();
   conv_param->pad_l_ = deconv_lite_primitive->PadLeft();
   conv_param->pad_r_ = deconv_lite_primitive->PadRight();
-  conv_param->pad_h_ = deconv_lite_primitive->PadUp();
-  conv_param->pad_w_ = deconv_lite_primitive->PadLeft();
   conv_param->dilation_h_ = conv_primitive->dilateH();
   conv_param->dilation_w_ = conv_primitive->dilateW();
   auto act_type = conv_primitive->activationType();
@@ -353,6 +351,26 @@ OpParameter *PopulateDeconvParameter(const lite::Primitive *primitive) {
       conv_param->is_relu6_ = false;
       break;
   }
+
+  auto pad_mode = conv_primitive->padMode();
+  switch (pad_mode) {
+    case schema::PadMode_SAME:
+      conv_param->pad_h_ = (conv_param->kernel_h_ - 1) / 2;
+      conv_param->pad_w_ = (conv_param->kernel_w_ - 1) / 2;
+      break;
+    case schema::PadMode_VALID:
+      conv_param->pad_h_ = 0;
+      conv_param->pad_w_ = 0;
+      break;
+    case schema::PadMode_CAFFE:
+      conv_param->pad_h_ = conv_param->pad_u_;
+      conv_param->pad_w_ = conv_param->pad_l_;
+      break;
+    default:
+      MS_LOG(ERROR) << "invalid pad mode!";
+      return nullptr;
+  }
+
   return reinterpret_cast<OpParameter *>(conv_param);
 }
 
@@ -393,27 +411,27 @@ OpParameter *PopulateReduceParameter(const lite::Primitive *primitive) {
 }
 
 OpParameter *PopulateMeanParameter(const lite::Primitive *primitive) {
-    ReduceParameter *mean_param = new (std::nothrow) ReduceParameter();
-    if (mean_param == nullptr) {
-        MS_LOG(ERROR) << "new ReduceParameter failed.";
-        return nullptr;
-    }
-    mean_param->op_parameter_.type_ = primitive->Type();
-    auto mean = primitive->Value()->value_as_Mean();
-    mean_param->keep_dims_ = mean->keepDims();
-    auto axisVector = mean->axis();
-    if (axisVector->size() > REDUCE_MAX_AXES_NUM) {
-        MS_LOG(ERROR) << "Reduce axes size " << axisVector->size() << " exceed limit " << REDUCE_MAX_AXES_NUM;
-        delete (mean_param);
-        return nullptr;
-    }
-    mean_param->num_axes_ = static_cast<int>(axisVector->size());
-    int i = 0;
-    for (auto iter = axisVector->begin(); iter != axisVector->end(); iter++) {
-        mean_param->axes_[i++] = *iter;
-    }
-    mean_param->mode_ = static_cast<int>(schema::ReduceMode_ReduceMean);
-    return reinterpret_cast<OpParameter *>(mean_param);
+  ReduceParameter *mean_param = new (std::nothrow) ReduceParameter();
+  if (mean_param == nullptr) {
+    MS_LOG(ERROR) << "new ReduceParameter failed.";
+    return nullptr;
+  }
+  mean_param->op_parameter_.type_ = primitive->Type();
+  auto mean = primitive->Value()->value_as_Mean();
+  mean_param->keep_dims_ = mean->keepDims();
+  auto axisVector = mean->axis();
+  if (axisVector->size() > REDUCE_MAX_AXES_NUM) {
+    MS_LOG(ERROR) << "Reduce axes size " << axisVector->size() << " exceed limit " << REDUCE_MAX_AXES_NUM;
+    delete (mean_param);
+    return nullptr;
+  }
+  mean_param->num_axes_ = static_cast<int>(axisVector->size());
+  int i = 0;
+  for (auto iter = axisVector->begin(); iter != axisVector->end(); iter++) {
+    mean_param->axes_[i++] = *iter;
+  }
+  mean_param->mode_ = static_cast<int>(schema::ReduceMode_ReduceMean);
+  return reinterpret_cast<OpParameter *>(mean_param);
 }
 
 OpParameter *PopulatePadParameter(const lite::Primitive *primitive) {
