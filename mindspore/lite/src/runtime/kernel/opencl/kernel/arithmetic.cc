@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/runtime/kernel/opencl/kernel/arithmetic.h"
+#include <set>
 #include <vector>
 #include <string>
-#include <set>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
+#include "src/runtime/kernel/opencl/utils.h"
+#include "src/runtime/kernel/opencl/kernel/arithmetic.h"
 #ifndef PROGRAM_WITH_IL
-#include "src/runtime/kernel/opencl/cl/fp32/arithmetic.cl.inc"
+#include "src/runtime/kernel/opencl/cl/fp32/arithmetic_buffer.cl.inc"
+#include "src/runtime/kernel/opencl/cl/fp32/arithmetic_image2d.cl.inc"
 #endif
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -29,44 +30,53 @@ using mindspore::lite::KernelRegistrar;
 
 namespace mindspore::kernel {
 
-int ArithmeticOpenCLKernel::Init() {
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  std::string kernel_name = "ArithmeticAdd";
+std::vector<size_t> ArithmeticOpenCLKernel::InitGlobalSize() const {
+  const size_t global_x = outputs_[0]->Width();
+  const size_t global_y = outputs_[0]->Height();
+  const size_t global_z = UP_ROUND_DIV(outputs_[0]->Channel(), 4);
+  std::vector<size_t> global = {global_x, global_y, global_z};
+  return global;
+}
 
-  is_bias_add_ = false;
+void ArithmeticOpenCLKernel::Image2dGetWorkGroupSize() {
+  global_size_ = InitGlobalSize();
+  int max_work_group_size = runtime_->GetKernelMaxWorkGroupSize(kernel_(), (*runtime_->Device())());
+  local_size_ = GetLocalSize(global_size_, max_work_group_size);
+  global_size_ = GetGlobalSize(local_size_, global_size_);
+}
+
+void ArithmeticOpenCLKernel::BufferGetWorkGroupSize() {
+  uint32_t element_num = outputs_[0]->ElementsC4Num();
+  global_size_ = {element_num};
+}
+
+int ArithmeticOpenCLKernel::Init() {
+  runtime_ = lite::opencl::OpenCLRuntime::GetInstance();
+  std::string element_name;
+  std::string boardcast_name;
+
   if (inputs_[1]->TensorType() == schema::NodeType_ValueNode && inputs_[1]->Data() != nullptr) {
-    kernel_name = "ArithmeticBiasAdd";
-    is_bias_add_ = true;
+    element_flag_ = false;
+  } else {
+    element_flag_ = true;
   }
 
   switch (opParameter->type_) {
     case PrimitiveType_Mul:
-      if (is_bias_add_) {
-        weight_ = static_cast<float *>(inputs_[1]->Data())[0];
-        break;
-      }
-      kernel_name = "ArithmeticMul";
+      element_name = "ElementMul";
+      boardcast_name = "BoardcastMul";
       break;
     case PrimitiveType_Add:
-      if (is_bias_add_) {
-        bias_ = static_cast<float *>(inputs_[1]->Data())[0];
-        break;
-      }
-      kernel_name = "ArithmeticAdd";
+      element_name = "ElementAdd";
+      boardcast_name = "BoardcastAdd";
       break;
     case PrimitiveType_Sub:
-      if (is_bias_add_) {
-        bias_ = -1 * static_cast<float *>(inputs_[1]->Data())[0];
-        break;
-      }
-      kernel_name = "ArithmeticSub";
+      element_name = "ElementSub";
+      boardcast_name = "BoardcastSub";
       break;
     case PrimitiveType_Div:
-      if (is_bias_add_) {
-        weight_ = 1 / static_cast<float *>(inputs_[1]->Data())[0];
-        break;
-      }
-      kernel_name = "ArithmeticDiv";
+      element_name = "ElementDiv";
+      boardcast_name = "BoardcastDiv";
       break;
     default:
       MS_LOG(ERROR) << "Error Operator type " << opParameter->type_;
@@ -74,39 +84,44 @@ int ArithmeticOpenCLKernel::Init() {
   }
 
 #ifdef PROGRAM_WITH_IL
-  ocl_runtime->CreateKernelFromIL(kernel_(), kernel_name);
+  runtime_->CreateKernelFromIL(kernel_(), kernel_name);
 #else
   std::string program_name = "Arithmetic";
   std::set<std::string> build_options;
-  std::string source = arithmetic_source_fp32;
-  ocl_runtime->LoadSource(program_name, source);
-  ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  std::string source = arithmetic_buffer_source_fp32;
+  runtime_->LoadSource(program_name, source);
+
+  if (element_flag_) {
+    runtime_->BuildKernel(kernel_, program_name, element_name, build_options);
+    MS_LOG(DEBUG) << element_name << " Init Done!";
+  } else {
+    runtime_->BuildKernel(kernel_, program_name, boardcast_name, build_options);
+    MS_LOG(DEBUG) << boardcast_name << " Init Done!";
+  }
 #endif
   outputs_[0]->SetFormat(schema::Format_NHWC4);
-  MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return 0;
 }
 
 int ArithmeticOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->Name() << " Running!";
-  uint32_t element_num = outputs_[0]->ElementsC4Num();
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  std::vector<size_t> global = {element_num};
-  std::vector<size_t> local;
+  auto runtime_ = lite::opencl::OpenCLRuntime::GetInstance();
+  BufferGetWorkGroupSize();
 
-  ocl_runtime->SetKernelArg(kernel_, 0, inputs_[0]->Data());
-  if (is_bias_add_) {
-    MS_LOG(DEBUG) << "weight: " << weight_ << " bias: " << bias_;
-    ocl_runtime->SetKernelArg(kernel_, 1, outputs_[0]->Data());
-    ocl_runtime->SetKernelArg(kernel_, 2, weight_);
-    ocl_runtime->SetKernelArg(kernel_, 3, bias_);
-    ocl_runtime->SetKernelArg(kernel_, 4, element_num / C4NUM);
+  int arg_idx = 0;
+  uint32_t element_num = outputs_[0]->ElementsC4Num();
+
+  runtime_->SetKernelArg(kernel_, arg_idx++, inputs_[0]->Data());
+  if (element_flag_) {
+    runtime_->SetKernelArg(kernel_, arg_idx++, inputs_[1]->Data());
   } else {
-    ocl_runtime->SetKernelArg(kernel_, 1, inputs_[1]->Data());
-    ocl_runtime->SetKernelArg(kernel_, 2, outputs_[0]->Data());
-    ocl_runtime->SetKernelArg(kernel_, 3, element_num);
+    runtime_->SetKernelArg(kernel_, arg_idx++, static_cast<float *>(inputs_[1]->Data())[0]);
   }
-  return ocl_runtime->RunKernel(kernel_, global, local, nullptr);
+  runtime_->SetKernelArg(kernel_, arg_idx++, outputs_[0]->Data());
+  runtime_->SetKernelArg(kernel_, arg_idx++, element_num);
+
+  runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);
+  return 0;
 }
 
 kernel::LiteKernel *OpenCLArithmeticKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
@@ -132,4 +147,3 @@ REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Add, OpenCLArithmeticKernelCr
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Sub, OpenCLArithmeticKernelCreator)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Div, OpenCLArithmeticKernelCreator)
 }  // namespace mindspore::kernel
-
