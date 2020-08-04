@@ -19,7 +19,6 @@ import math
 from functools import reduce
 import numpy as np
 import mindspore.nn as nn
-from mindspore import Tensor
 from mindspore.common import initializer as init
 
 def _calculate_gain(nonlinearity, param=None):
@@ -191,23 +190,25 @@ def default_recurisive_init(custom_cell):
     for _, cell in custom_cell.cells_and_names():
         if isinstance(cell, nn.Conv2d):
             cell.weight.default_input = init.initializer(KaimingUniform(a=math.sqrt(5)),
-                                                         cell.weight.default_input.shape,
-                                                         cell.weight.default_input.dtype).to_tensor()
+                                                         cell.weight.shape,
+                                                         cell.weight.dtype)
             if cell.bias is not None:
-                fan_in, _ = _calculate_in_and_out(cell.weight.default_input.asnumpy())
+                fan_in, _ = _calculate_in_and_out(cell.weight)
                 bound = 1 / math.sqrt(fan_in)
                 np.random.seed(0)
-                cell.bias.default_input = Tensor(np.random.uniform(-bound, bound, cell.bias.default_input.shape),
-                                                 cell.bias.default_input.dtype)
+                cell.bias.default_input = init.initializer(init.Uniform(bound),
+                                                           cell.bias.shape,
+                                                           cell.bias.dtype)
         elif isinstance(cell, nn.Dense):
             cell.weight.default_input = init.initializer(KaimingUniform(a=math.sqrt(5)),
-                                                         cell.weight.default_input.shape,
-                                                         cell.weight.default_input.dtype).to_tensor()
+                                                         cell.weight.shape,
+                                                         cell.weight.dtype)
             if cell.bias is not None:
-                fan_in, _ = _calculate_in_and_out(cell.weight.default_input.asnumpy())
+                fan_in, _ = _calculate_in_and_out(cell.weight)
                 bound = 1 / math.sqrt(fan_in)
                 np.random.seed(0)
-                cell.bias.default_input = Tensor(np.random.uniform(-bound, bound, cell.bias.default_input.shape),
-                                                 cell.bias.default_input.dtype)
+                cell.bias.default_input = init.initializer(init.Uniform(bound),
+                                                           cell.bias.shape,
+                                                           cell.bias.dtype)
         elif isinstance(cell, (nn.BatchNorm2d, nn.BatchNorm1d)):
             pass

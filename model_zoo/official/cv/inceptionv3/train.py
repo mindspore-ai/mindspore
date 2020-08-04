@@ -84,8 +84,14 @@ if __name__ == '__main__':
     lr = Tensor(lr)
 
     # optimizer
-    decayed_params = list(filter(lambda x: 'beta' not in x.name and 'gamma' not in x.name and 'bias' not in x.name, net.trainable_params()))
-    no_decayed_params = [param for param in net.trainable_params() if param not in decayed_params]
+    decayed_params = []
+    no_decayed_params = []
+    for param in net.trainable_params():
+        if 'beta' not in param.name and 'gamma' not in param.name and 'bias' not in param.name:
+            decayed_params.append(param)
+        else:
+            no_decayed_params.append(param)
+
     group_params = [{'params': decayed_params, 'weight_decay': cfg.weight_decay},
                     {'params': no_decayed_params},
                     {'order_params': net.trainable_params()}]

@@ -290,7 +290,6 @@ class MobileNetV3(nn.Cell):
                                 kernel_size=1, has_bias=True, pad_mode='pad')
         self.squeeze = P.Squeeze(axis=(2, 3))
 
-        self.init_parameters_data()
         self._initialize_weights()
 
     def construct(self, x):
@@ -320,6 +319,7 @@ class MobileNetV3(nn.Cell):
         Examples:
             >>> _initialize_weights()
         """
+        self.init_parameters_data()
         for _, m in self.cells_and_names():
             if isinstance(m, (nn.Conv2d)):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels

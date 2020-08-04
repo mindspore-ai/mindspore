@@ -101,12 +101,12 @@ if __name__ == '__main__':
         for _, cell in net.cells_and_names():
             if isinstance(cell, nn.Conv2d):
                 cell.weight.default_input = weight_init.initializer(weight_init.XavierUniform(),
-                                                                    cell.weight.default_input.shape,
-                                                                    cell.weight.default_input.dtype).to_tensor()
+                                                                    cell.weight.shape,
+                                                                    cell.weight.dtype)
             if isinstance(cell, nn.Dense):
                 cell.weight.default_input = weight_init.initializer(weight_init.TruncatedNormal(),
-                                                                    cell.weight.default_input.shape,
-                                                                    cell.weight.default_input.dtype).to_tensor()
+                                                                    cell.weight.shape,
+                                                                    cell.weight.dtype)
 
     # init lr
     if args_opt.net == "resnet50":
@@ -123,8 +123,14 @@ if __name__ == '__main__':
     lr = Tensor(lr)
 
     # define opt
-    decayed_params = list(filter(lambda x: 'beta' not in x.name and 'gamma' not in x.name and 'bias' not in x.name, net.trainable_params()))
-    no_decayed_params = [param for param in net.trainable_params() if param not in decayed_params]
+    decayed_params = []
+    no_decayed_params = []
+    for param in net.trainable_params():
+        if 'beta' not in param.name and 'gamma' not in param.name and 'bias' not in param.name:
+            decayed_params.append(param)
+        else:
+            no_decayed_params.append(param)
+
     group_params = [{'params': decayed_params, 'weight_decay': config.weight_decay},
                     {'params': no_decayed_params},
                     {'order_params': net.trainable_params()}]
