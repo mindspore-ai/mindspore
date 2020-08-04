@@ -41,22 +41,18 @@ np.random.seed(1)
 de.config.set_seed(1)
 
 parser = argparse.ArgumentParser(description="FasterRcnn training")
-parser.add_argument("--only_create_dataset", type=bool, default=False, help="If set it true, only create "
-                                                                            "Mindrecord, default is false.")
-parser.add_argument("--run_distribute", type=bool, default=False, help="Run distribute, default is false.")
-parser.add_argument("--do_train", type=bool, default=True, help="Do train or not, default is true.")
-parser.add_argument("--do_eval", type=bool, default=False, help="Do eval or not, default is false.")
-parser.add_argument("--dataset", type=str, default="coco", help="Dataset, default is coco.")
-parser.add_argument("--pre_trained", type=str, default="", help="Pretrain file path.")
-parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
-parser.add_argument("--device_num", type=int, default=1, help="Use device nums, default is 1.")
-parser.add_argument("--rank_id", type=int, default=0, help="Rank id, default is 0.")
+parser.add_argument("--run_distribute", type=bool, default=False, help="Run distribute, default: false.")
+parser.add_argument("--dataset", type=str, default="coco", help="Dataset name, default: coco.")
+parser.add_argument("--pre_trained", type=str, default="", help="Pretrained file path.")
+parser.add_argument("--device_id", type=int, default=0, help="Device id, default: 0.")
+parser.add_argument("--device_num", type=int, default=1, help="Use device nums, default: 1.")
+parser.add_argument("--rank_id", type=int, default=0, help="Rank id, default: 0.")
 args_opt = parser.parse_args()
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
 
 if __name__ == '__main__':
-    if not args_opt.do_eval and args_opt.run_distribute:
+    if args_opt.run_distribute:
         rank = args_opt.rank_id
         device_num = args_opt.device_num
         context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
@@ -73,19 +69,21 @@ if __name__ == '__main__':
     prefix = "FasterRcnn.mindrecord"
     mindrecord_dir = config.mindrecord_dir
     mindrecord_file = os.path.join(mindrecord_dir, prefix + "0")
+    print("CHECKING MINDRECORD FILES ...")
+
     if rank == 0 and not os.path.exists(mindrecord_file):
         if not os.path.isdir(mindrecord_dir):
             os.makedirs(mindrecord_dir)
         if args_opt.dataset == "coco":
             if os.path.isdir(config.coco_root):
-                print("Create Mindrecord.")
+                print("Create Mindrecord. It may take some time.")
                 data_to_mindrecord_byte_image("coco", True, prefix)
                 print("Create Mindrecord Done, at {}".format(mindrecord_dir))
             else:
                 print("coco_root not exits.")
         else:
             if os.path.isdir(config.IMAGE_DIR) and os.path.exists(config.ANNO_PATH):
-                print("Create Mindrecord.")
+                print("Create Mindrecord. It may take some time.")
                 data_to_mindrecord_byte_image("other", True, prefix)
                 print("Create Mindrecord Done, at {}".format(mindrecord_dir))
             else:
@@ -94,47 +92,48 @@ if __name__ == '__main__':
     while not os.path.exists(mindrecord_file + ".db"):
         time.sleep(5)
 
-    if not args_opt.only_create_dataset:
-        loss_scale = float(config.loss_scale)
+    print("CHECKING MINDRECORD FILES DONE!")
 
-        # When create MindDataset, using the fitst mindrecord file, such as FasterRcnn.mindrecord0.
-        dataset = create_fasterrcnn_dataset(mindrecord_file, repeat_num=1,
-                                            batch_size=config.batch_size, device_num=device_num, rank_id=rank)
+    loss_scale = float(config.loss_scale)
 
-        dataset_size = dataset.get_dataset_size()
-        print("Create dataset done!")
+    # When create MindDataset, using the fitst mindrecord file, such as FasterRcnn.mindrecord0.
+    dataset = create_fasterrcnn_dataset(mindrecord_file, repeat_num=1,
+                                        batch_size=config.batch_size, device_num=device_num, rank_id=rank)
 
-        net = Faster_Rcnn_Resnet50(config=config)
-        net = net.set_train()
+    dataset_size = dataset.get_dataset_size()
+    print("Create dataset done!")
 
-        load_path = args_opt.pre_trained
-        if load_path != "":
-            param_dict = load_checkpoint(load_path)
-            for item in list(param_dict.keys()):
-                if not item.startswith('backbone'):
-                    param_dict.pop(item)
-            load_param_into_net(net, param_dict)
+    net = Faster_Rcnn_Resnet50(config=config)
+    net = net.set_train()
 
-        loss = LossNet()
-        lr = Tensor(dynamic_lr(config, rank_size=device_num), mstype.float32)
+    load_path = args_opt.pre_trained
+    if load_path != "":
+        param_dict = load_checkpoint(load_path)
+        for item in list(param_dict.keys()):
+            if not item.startswith('backbone'):
+                param_dict.pop(item)
+        load_param_into_net(net, param_dict)
 
-        opt = SGD(params=net.trainable_params(), learning_rate=lr, momentum=config.momentum,
-                  weight_decay=config.weight_decay, loss_scale=config.loss_scale)
-        net_with_loss = WithLossCell(net, loss)
-        if args_opt.run_distribute:
-            net = TrainOneStepCell(net_with_loss, net, opt, sens=config.loss_scale, reduce_flag=True,
-                                   mean=True, degree=device_num)
-        else:
-            net = TrainOneStepCell(net_with_loss, net, opt, sens=config.loss_scale)
+    loss = LossNet()
+    lr = Tensor(dynamic_lr(config, rank_size=device_num), mstype.float32)
 
-        time_cb = TimeMonitor(data_size=dataset_size)
-        loss_cb = LossCallBack()
-        cb = [time_cb, loss_cb]
-        if config.save_checkpoint:
-            ckptconfig = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * dataset_size,
-                                          keep_checkpoint_max=config.keep_checkpoint_max)
-            ckpoint_cb = ModelCheckpoint(prefix='faster_rcnn', directory=config.save_checkpoint_path, config=ckptconfig)
-            cb += [ckpoint_cb]
+    opt = SGD(params=net.trainable_params(), learning_rate=lr, momentum=config.momentum,
+              weight_decay=config.weight_decay, loss_scale=config.loss_scale)
+    net_with_loss = WithLossCell(net, loss)
+    if args_opt.run_distribute:
+        net = TrainOneStepCell(net_with_loss, net, opt, sens=config.loss_scale, reduce_flag=True,
+                               mean=True, degree=device_num)
+    else:
+        net = TrainOneStepCell(net_with_loss, net, opt, sens=config.loss_scale)
 
-        model = Model(net)
-        model.train(config.epoch_size, dataset, callbacks=cb)
+    time_cb = TimeMonitor(data_size=dataset_size)
+    loss_cb = LossCallBack()
+    cb = [time_cb, loss_cb]
+    if config.save_checkpoint:
+        ckptconfig = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * dataset_size,
+                                      keep_checkpoint_max=config.keep_checkpoint_max)
+        ckpoint_cb = ModelCheckpoint(prefix='faster_rcnn', directory=config.save_checkpoint_path, config=ckptconfig)
+        cb += [ckpoint_cb]
+
+    model = Model(net)
+    model.train(config.epoch_size, dataset, callbacks=cb)

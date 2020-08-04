@@ -62,6 +62,6 @@ do
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
-    python train.py --do_train=True  --device_id=$i --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM --pre_trained=$PATH2 &> log &
+    python train.py --device_id=$i --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM --pre_trained=$PATH2 &> log &
     cd ..
 done
