@@ -138,6 +138,14 @@ lite::Primitive *ModelImpl::CopyPrimitive(const schema::Primitive *srcPrim) {
       return new lite::Nhwc2Nchw(const_cast<schema::Primitive *>(srcPrim));
     case schema::PrimitiveType_Flatten:
       return new lite::Flatten(const_cast<schema::Primitive *>(srcPrim));
+    case schema::PrimitiveType_Mean:
+      return new lite::Mean(const_cast<schema::Primitive *>(srcPrim));
+    case schema::PrimitiveType_Stack:
+      return new lite::Stack(const_cast<schema::Primitive *>(srcPrim));
+    case schema::PrimitiveType_Crop:
+      return new lite::Crop(const_cast<schema::Primitive *>(srcPrim));
+    case schema::PrimitiveType_SquaredDifference:
+      return new lite::SquaredDifference(const_cast<schema::Primitive *>(srcPrim));
     case schema::PrimitiveType_MatMul:
       return new lite::MatMul(const_cast<schema::Primitive *>(srcPrim));
     default:
