@@ -88,10 +88,11 @@ class SGD(Optimizer):
             Default: 0.1.
         momentum (float): A floating point value the momentum. should be at least 0.0. Default: 0.0.
         dampening (float): A floating point value of dampening for momentum. should be at least 0.0. Default: 0.0.
-        weight_decay (float): Weight decay (L2 penalty). It should be in range [0.0, 1.0]. Default: 0.0.
+        weight_decay (float): Weight decay (L2 penalty). It should be equal to or greater than 0. Default: 0.0.
         nesterov (bool): Enables the Nesterov momentum. If use nesterov, momentum must be positive,
                          and dampening must equal to 0.0. Default: False.
-        loss_scale (float): A floating point value for the loss scale. Should be not less than 1.0. Default: 1.0.
+        loss_scale (float): A floating point value for the loss scale, which should be larger
+                            than 0.0. Default: 1.0.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.

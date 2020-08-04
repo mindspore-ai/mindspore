@@ -98,7 +98,7 @@ def test_momentum_with_loss_scale():
 
     net = Net(strategy1, strategy2, weight)
 
-    optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9, loss_scale=1.0)
+    optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9, loss_scale=0.5)
 
     net_with_loss = NetWithLoss(net, strategy3)
 
@@ -169,7 +169,7 @@ def test_momentum_with_loss_scale_and_dynamic_lr():
     net = Net(strategy1, strategy2, weight)
 
     lr = Tensor(np.ones([6]), dtype=ms.float32)
-    optimizer = Momentum(net.trainable_params(), learning_rate=lr, momentum=0.9, loss_scale=1.0)
+    optimizer = Momentum(net.trainable_params(), learning_rate=lr, momentum=0.9, loss_scale=0.5)
 
     net_with_loss = NetWithLoss(net, strategy3)
 

@@ -43,7 +43,7 @@ def _update_run_op(beta1, beta2, eps, global_step, lr, weight_decay, param, m, v
         beta2 (Tensor): The exponential decay rate for the 2nd moment estimates. Should be in range (0.0, 1.0).
         eps (Tensor): Term added to the denominator to improve numerical stability. Should be greater than 0.
         lr (Tensor): Learning rate.
-        weight_decay (Number): Weight decay. Should be in range [0.0, 1.0].
+        weight_decay (Number): Weight decay. Should be equal to or greater than 0.
         global_step (Tensor): Global step.
         param (Tensor): Parameters.
         m (Tensor): m value of parameters.
@@ -126,7 +126,7 @@ def _update_run_op_graph_kernel(beta1, beta2, eps, global_step, lr, weight_decay
         beta2 (Tensor): The exponential decay rate for the 2nd moment estimates. Should be in range (0.0, 1.0).
         eps (Tensor): Term added to the denominator to improve numerical stability. Should be greater than 0.
         lr (Tensor): Learning rate.
-        weight_decay (Number): Weight decay. Should be in range [0.0, 1.0].
+        weight_decay (Number): Weight decay. Should be equal to or greater than 0.
         global_step (Tensor): Global step.
         param (Tensor): Parameters.
         m (Tensor): m value of parameters.
@@ -227,7 +227,7 @@ class Lamb(Optimizer):
             Should be in range (0.0, 1.0).
         eps (float): Term added to the denominator to improve numerical stability. Default: 1e-6.
             Should be greater than 0.
-        weight_decay (float): Weight decay (L2 penalty). Default: 0.0. Should be in range [0.0, 1.0].
+        weight_decay (float): Weight decay (L2 penalty). Default: 0.0. Should be equal to or greater than 0.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
