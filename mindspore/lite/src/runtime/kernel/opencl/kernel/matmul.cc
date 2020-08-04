@@ -50,22 +50,24 @@ int MatMulOpenCLKernel::Init() {
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
-  int ci = inputs_[1]->shape()[1];
+  auto weight_format = inputs_[1]->GetFormat();
+  if (weight_format != schema::Format_NHWC) {
+    MS_LOG(ERROR) << "weight format(" << weight_format << ") "
+                  << "format not support!";
+    return 1;
+  }
+  int ci = inputs_[1]->shape()[3];
   int co = inputs_[1]->shape()[0];
   sizeCI = {ci, UP_DIV(ci, 4)};
   sizeCO = {co, UP_DIV(co, 4)};
   auto allocator = ocl_runtime->GetAllocator();
   padWeight_ = reinterpret_cast<FLOAT_T *>(allocator->Malloc(sizeCI.s[1] * sizeCO.s[1] * 16 * sizeof(FLOAT_T)));
   padWeight_ = reinterpret_cast<FLOAT_T *>(allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true));
-  if (hasBias_) {
-    bias_ = reinterpret_cast<FLOAT_T *>(allocator->Malloc(sizeCO.s[1] * 4 * sizeof(FLOAT_T)));
-    bias_ = reinterpret_cast<FLOAT_T *>(allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true));
-  }
+  bias_ = reinterpret_cast<FLOAT_T *>(allocator->Malloc(sizeCO.s[1] * 4 * sizeof(FLOAT_T)));
+  bias_ = reinterpret_cast<FLOAT_T *>(allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true));
   PadWeight();
   allocator->UnmapBuffer(padWeight_);
-  if (hasBias_) {
-    allocator->UnmapBuffer(bias_);
-  }
+  allocator->UnmapBuffer(bias_);
   outputs_[0]->SetFormat(schema::Format_NHWC4);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return 0;
@@ -98,6 +100,10 @@ void MatMulOpenCLKernel::PadWeight() {
     for (int i = sizeCO.s[0]; i < sizeCO.s[1] * 4; i++) {
       bias_[i] = 0;
     }
+  } else {
+    for (int i = 0; i < sizeCO.s[1] * 4; i++) {
+      bias_[i] = 0;
+    }
   }
 }
 
@@ -114,18 +120,34 @@ int MatMulOpenCLKernel::Run() {
   std::vector<size_t> local = {64, 4};
   std::vector<size_t> global = {UP_ROUND(sizeCO.s[1], local[0]), 4};
 
-  ocl_runtime->SetKernelArg(kernel_, 0, inputs_[0]->Data());
-  ocl_runtime->SetKernelArg(kernel_, 1, padWeight_);
-  ocl_runtime->SetKernelArg(kernel_, 2, outputs_[0]->Data());
-  if (hasBias_) {
-    ocl_runtime->SetKernelArg(kernel_, 3, bias_);
-  } else {
-    ocl_runtime->SetKernelArg(kernel_, 3, nullptr);
+  cl::ImageFormat image_format;
+  {
+    image_format.image_channel_order = CL_RGBA;
+#ifdef ENABLE_FP16
+    image_format.image_channel_data_type = CL_HALF_FLOAT;
+#else
+    image_format.image_channel_data_type = CL_FLOAT;
+#endif
   }
+  cl_int in_error_code, in_error_code_weight, in_error_code_bias, out_error_code;
+  cl::Image2D img_input(*ocl_runtime->Context(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, image_format, sizeCI.s[1], 1,
+                        0, inputs_[0]->Data(), &in_error_code);
+  cl::Image2D img_bias(*ocl_runtime->Context(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, image_format, sizeCO.s[1], 1,
+                       0, bias_, &in_error_code_bias);
+  cl::Image2D img_out(*ocl_runtime->Context(), CL_MEM_WRITE_ONLY, image_format, sizeCO.s[1], 1, 0, nullptr,
+                      &out_error_code);
+
+  ocl_runtime->SetKernelArg(kernel_, 0, img_input);
+  ocl_runtime->SetKernelArg(kernel_, 1, padWeight_);
+  ocl_runtime->SetKernelArg(kernel_, 2, img_bias);
+  ocl_runtime->SetKernelArg(kernel_, 3, img_out);
   ocl_runtime->SetKernelArg(kernel_, 4, sizeCI);
   ocl_runtime->SetKernelArg(kernel_, 5, sizeCO);
   ocl_runtime->SetKernelArg(kernel_, 6, hasBias_ ? 1 : 0);
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
+  auto origin = cl::array<cl::size_type, 3U>{0, 0, 0};
+  auto region = cl::array<cl::size_type, 3U>{(size_t)(sizeCO.s[1]), 1, 1};
+  ocl_runtime->GetDefaultCommandQueue()->enqueueReadImage(img_out, CL_TRUE, origin, region, 0, 0, outputs_[0]->Data());
   return 0;
 }
 
@@ -151,4 +173,3 @@ kernel::LiteKernel *OpenCLMatMulKernelCreator(const std::vector<lite::tensor::Te
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_MatMul, OpenCLMatMulKernelCreator)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_FullConnection, OpenCLMatMulKernelCreator)
 }  // namespace mindspore::kernel
-
