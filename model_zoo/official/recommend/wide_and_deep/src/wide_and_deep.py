@@ -209,19 +209,22 @@ class WideDeepModel(nn.Cell):
         if is_auto_parallel and host_device_mix:
             self.dense_layer_1.dropout.dropout_do_mask.set_strategy(((1, get_group_size()),))
             self.dense_layer_1.matmul.set_strategy(((1, get_group_size()), (get_group_size(), 1)))
-            self.deep_embeddinglookup = nn.EmbeddingLookup()
-            self.deep_embeddinglookup.embeddinglookup.set_strategy(((1, get_group_size()), (1, 1)))
-            self.wide_embeddinglookup = nn.EmbeddingLookup()
-            self.wide_embeddinglookup.embeddinglookup.set_strategy(((get_group_size(), 1), (1, 1)))
+            self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim,
+                                                           slice_mode=nn.EmbeddingLookUpSplitMode.TABLE_COLUMN_SLICE)
+            self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1,
+                                                           slice_mode=nn.EmbeddingLookUpSplitMode.TABLE_ROW_SLICE)
             self.deep_mul.set_strategy(((1, 1, get_group_size()), (1, 1, 1)))
             self.deep_reshape.add_prim_attr("skip_redistribution", True)
             self.reduce_sum.add_prim_attr("cross_batch", True)
+            self.embedding_table = self.deep_embeddinglookup.embedding_table
         elif parameter_server:
-            self.deep_embeddinglookup = nn.EmbeddingLookup()
-            self.wide_embeddinglookup = nn.EmbeddingLookup()
+            self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim)
+            self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1)
+            self.embedding_table = self.deep_embeddinglookup.embedding_table
         else:
-            self.deep_embeddinglookup = nn.EmbeddingLookup(target='DEVICE')
-            self.wide_embeddinglookup = nn.EmbeddingLookup(target='DEVICE')
+            self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim, target='DEVICE')
+            self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1, target='DEVICE')
+            self.embedding_table = self.deep_embeddinglookup.embedding_table
 
     def construct(self, id_hldr, wt_hldr):
         """
@@ -231,11 +234,11 @@ class WideDeepModel(nn.Cell):
         """
         mask = self.reshape(wt_hldr, (self.batch_size, self.field_size, 1))
         # Wide layer
-        wide_id_weight = self.wide_embeddinglookup(self.wide_w, id_hldr)
+        wide_id_weight = self.wide_embeddinglookup(id_hldr)
         wx = self.wide_mul(wide_id_weight, mask)
         wide_out = self.reshape(self.reduce_sum(wx, 1) + self.wide_b, (-1, 1))
         # Deep layer
-        deep_id_embs = self.deep_embeddinglookup(self.embedding_table, id_hldr)
+        deep_id_embs = self.deep_embeddinglookup(id_hldr)
         vx = self.deep_mul(deep_id_embs, mask)
         deep_in = self.deep_reshape(vx, (-1, self.field_size * self.emb_dim))
         deep_in = self.dense_layer_1(deep_in)

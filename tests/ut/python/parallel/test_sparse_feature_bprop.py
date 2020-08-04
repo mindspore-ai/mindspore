@@ -69,14 +69,12 @@ def test_bprop_with_sparse_feature_mirror():
             super(Net, self).__init__()
             if shape is None:
                 shape = [8, 8]
-            weight = Tensor(np.ones([64, 64]), dtype=ms.float32)
-            self.weight = Parameter(weight, "w")
             self.index = Tensor(np.ones(shape), dtype=ms.int32)
-            self.embeddinglookup = nn.EmbeddingLookup()
+            self.embeddinglookup = nn.EmbeddingLookup(64, 64, param_init='ones')
             self.embeddinglookup.embeddinglookup.set_strategy(((1, 1), (8, 1)))
 
         def construct(self, x, b):
-            out = self.embeddinglookup(self.weight, self.index)
+            out = self.embeddinglookup(self.index)
 
             return out
 

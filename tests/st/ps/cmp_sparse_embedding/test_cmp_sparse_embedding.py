@@ -24,8 +24,7 @@ from mindspore.common import dtype as mstype
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Adam
 from mindspore.ops import operations as P
-from mindspore.common.initializer import TruncatedNormal, initializer
-from mindspore import Parameter
+from mindspore.common.initializer import TruncatedNormal
 
 parser = argparse.ArgumentParser(description="test_sparse_embedding")
 parser.add_argument("--device_target", type=str, default="Ascend")
@@ -53,16 +52,13 @@ class LeNet5(nn.Cell):
         super(LeNet5, self).__init__()
         self.cast = P.Cast()
         self.flatten = nn.Flatten()
-        self.embedding_table = Parameter(
-            initializer("normal", (16, 4), mstype.float32), name="embedding_table"
-        )
-        self.embedding = nn.EmbeddingLookup()
+        self.embedding = nn.EmbeddingLookup(16, 4)
         self.relu = nn.ReLU()
         self.fc = fc_with_initialize(12, num_class)
 
     def construct(self, x):
         x = self.cast(x, mstype.int32)
-        x = self.embedding(self.embedding_table, x)
+        x = self.embedding(x)
         x = self.flatten(x)
         x = self.fc(x)
         return x
@@ -72,7 +68,7 @@ def do_sparse_embedding(ps=False):
     epoch = 10
     net = LeNet5(10)
     if ps:
-        net.embedding_table.set_param_ps()
+        net.embedding.embedding_table.set_param_ps()
 
     optimizer = Adam(filter(lambda x: x.requires_grad, net.get_parameters()))
     optimizer.sparse_opt.add_prim_attr("primitive_target", "CPU")
