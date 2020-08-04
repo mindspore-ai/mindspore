@@ -108,13 +108,13 @@ class CheckpointConfig:
                 not keep_checkpoint_max and not keep_checkpoint_per_n_minutes:
             raise ValueError("The input_param can't be all None or 0")
 
-        if save_checkpoint_steps:
+        if save_checkpoint_steps is not None:
             save_checkpoint_steps = check_int_non_negative(save_checkpoint_steps)
-        if save_checkpoint_seconds:
+        if save_checkpoint_seconds is not None:
             save_checkpoint_seconds = check_int_non_negative(save_checkpoint_seconds)
-        if keep_checkpoint_max:
+        if keep_checkpoint_max is not None:
             keep_checkpoint_max = check_int_non_negative(keep_checkpoint_max)
-        if keep_checkpoint_per_n_minutes:
+        if keep_checkpoint_per_n_minutes is not None:
             keep_checkpoint_per_n_minutes = check_int_non_negative(keep_checkpoint_per_n_minutes)
 
         self._save_checkpoint_steps = save_checkpoint_steps

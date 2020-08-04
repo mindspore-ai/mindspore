@@ -258,7 +258,7 @@ def load_checkpoint(ckpt_file_name, net=None):
         logger.error("Failed to load the checkpoint file `%s`.", ckpt_file_name)
         raise RuntimeError(e.__str__())
 
-    if net:
+    if net is not None:
         load_param_into_net(net, parameter_dict)
 
     return parameter_dict
