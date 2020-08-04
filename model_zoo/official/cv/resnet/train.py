@@ -143,13 +143,21 @@ if __name__ == '__main__':
                       amp_level="O2", keep_batchnorm_fp32=False)
     else:
         # GPU target
-        loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean", is_grad=False,
-                                             smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
+        if args_opt.dataset == "imagenet2012":
+            if not config.use_label_smooth:
+                config.label_smooth_factor = 0.0
+            loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean", is_grad=False,
+                                                 smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
+        else:
+            loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean", is_grad=False,
+                                                 num_classes=config.class_num)
+        ## fp32 training
         opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum, config.weight_decay)
         model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'})
-        ##Mixed precision
-        #model = Model(net, loss_fn=loss, optimizer=opt,  metrics={'acc'},
-        #              amp_level="O2", keep_batchnorm_fp32=True)
+        # # Mixed precision
+        # loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
+        # opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum, config.weight_decay, config.loss_scale)
+        # model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'}, amp_level="O2")
 
     # define callbacks
     time_cb = TimeMonitor(data_size=step_size)

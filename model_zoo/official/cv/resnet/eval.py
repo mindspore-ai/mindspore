@@ -54,8 +54,10 @@ if __name__ == '__main__':
     target = args_opt.device_target
 
     # init context
-    device_id = int(os.getenv('DEVICE_ID'))
-    context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=False, device_id=device_id)
+    context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=False)
+    if target != "GPU":
+        device_id = int(os.getenv('DEVICE_ID'))
+        context.set_context(device_id=device_id)
 
     # create dataset
     dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=False, batch_size=config.batch_size,
