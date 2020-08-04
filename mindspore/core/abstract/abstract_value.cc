@@ -38,9 +38,24 @@ bool AbstractBase::operator==(const AbstractBase &other) const {
                       << this->ToString() << ", other: " << other.ToString();
   }
 
-  bool value_equal = *value_ == *other.value_;
-  bool type_equal = *type_ == *other.type_;
-  bool shape_equal = *shape_ == *other.shape_;
+  bool value_equal = false;
+  if (value_ == other.value_) {
+    value_equal = true;
+  } else if (*value_ == *other.value_) {
+    value_equal = true;
+  }
+  bool type_equal = false;
+  if (type_ == other.type_) {
+    type_equal = true;
+  } else if (*type_ == *other.type_) {
+    type_equal = true;
+  }
+  bool shape_equal = false;
+  if (shape_ == other.shape_) {
+    shape_equal = true;
+  } else if (*shape_ == *other.shape_) {
+    shape_equal = true;
+  }
   return value_equal && type_equal && shape_equal;
 }
 
