@@ -64,7 +64,7 @@ class LiteKernel {
   LiteKernel() = default;
   explicit LiteKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                       const std::vector<lite::tensor::Tensor *> &outputs)
-      : opParameter(parameter), inputs_(inputs), outputs_(outputs) {
+      : opParameter(parameter), inputs_(inputs), outputs_(outputs), train_mode(false) {
     this->in_kernel_.clear();
     this->out_kernel_.clear();
   }
@@ -77,7 +77,10 @@ class LiteKernel {
   virtual int Run() { return -1; }
 
   std::string Name() { return this->name; }
-
+  virtual void train() { train_mode = true; }
+  virtual bool is_train() { return train_mode == true; }
+  virtual void eval() { train_mode = false; }
+  virtual bool is_eval() { return train_mode == false; }
   void set_name(const std::string &name) { this->name = name; }
 
   schema::PrimitiveType type() { return (schema::PrimitiveType)this->opParameter->type_; }
@@ -117,6 +120,7 @@ class LiteKernel {
   std::vector<lite::tensor::Tensor *> outputs_;
   std::vector<LiteKernel *> in_kernel_;
   std::vector<LiteKernel *> out_kernel_;
+  bool train_mode;
 };
 
 class SubGraphKernel : public LiteKernel {

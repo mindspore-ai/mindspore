@@ -174,6 +174,19 @@ union PrimitiveType {
     Where,
     OneHot,
     Lstm,
+    Conv2DGradFilter,
+    Conv2DGradInput,
+    PoolingGrad,
+    BNGradInput,
+    OptMomentum,
+    BiasGrad,
+    SoftmaxCrossEntropy,
+    AddGrad,
+    SubGrad,
+    MulGrad,
+    DivGrad,
+    PowerGrad,
+    ActivationGrad,
     PriorBox
 }
 

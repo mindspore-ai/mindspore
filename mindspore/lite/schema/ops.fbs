@@ -55,7 +55,25 @@ enum ActivationType : byte {
     LINEAR = 15,
     UNKNOW = 16
 }
-
+enum ActivationGradType : byte {
+    NO_ACTIVATION = 0,
+    RELU = 1,
+    SIGMOID = 2,
+    RELU6 = 3,
+    ELU = 4,
+    LEAKY_RELU = 5,
+    ABS = 6,
+    RELU1 = 7,
+    SOFTSIGN = 8,
+    SOFTPLUS = 9,
+    TANH = 10,
+    SELU = 11,
+    HSWISH = 12,
+    HSIGMOID = 13,
+    THRESHOLDRELU = 14,
+    LINEAR = 15,
+    UNKNOW = 16
+}
 enum ReduceType : byte {
     REDUCE_MAX = 0,
     REDUCE_MEAN = 1,
@@ -125,6 +143,10 @@ table SoftMax {
 table Activation {
     type: ActivationType = 0;
 }
+table ActivationGrad {
+    type: ActivationGradType = 0;
+}
+
 
 table Conv2D {
     format: Format = 0;
@@ -146,7 +168,45 @@ table Conv2D {
     activationType: ActivationType = 0;
 }
 
-table FusedBatchNorm {
+table Conv2DGradFilter {
+    format: Format = 0;
+    group: int;
+    channelIn: int;
+    channelOut: int;
+    kernelW: int;
+    kernelH: int;
+    strideW: int;
+    strideH: int;
+    padMode: PadMode;
+    padUp: int;
+    padDown: int;
+    padLeft: int;
+    padRight: int;
+    dilateW: int;
+    dilateH: int;
+    hasBias: bool = false;
+    activationType: ActivationType = 0;
+}
+
+table Conv2DGradInput {
+    format: Format = 0;
+    group: int;
+    channelIn: int;
+    channelOut: int;
+    kernelW: int;
+    kernelH: int;
+    strideW: int;
+    strideH: int;
+    padMode: PadMode;
+    padUp: int;
+    padDown: int;
+    padLeft: int;
+    padRight: int;
+    dilateW: int;
+    dilateH: int;
+    hasBias: bool = false;
+    activationType: ActivationType = 0;
+}table FusedBatchNorm {
     epsilon: float = 0.00001;   // eg. epsilon=0.001
     momentum: float = 0.9;
     spatial: int = 1;
@@ -156,6 +216,31 @@ table CaffeBatchNorm {
     epsilon: float;   // eg. epsilon=0.001
 }
 
+table BiasGrad {
+    axis: [int];
+}
+
+
+table SoftmaxCrossEntropy {
+    axis: [int];
+}
+
+
+table PoolingGrad {
+    format: Format = 0;
+    poolingMode: PoolMode;
+    global: bool = false;
+    windowW: int;
+    windowH: int;
+    strideW: int;
+    strideH: int;
+    padMode: PadMode;
+    padUp: int;
+    padDown: int;
+    padLeft: int;
+    padRight: int;
+    roundMode: RoundMode;
+}
 table Shape {
 }
 
@@ -286,7 +371,10 @@ table DeConv2D {
     hasBias: bool = false;
     activationType: ActivationType = 0;
 }
-
+table BNGradInput {
+    eps : float;
+    channels: int;
+}
 table Scale {
     format: Format = 0;
 }
@@ -307,6 +395,17 @@ table Mul {
 table Div {
 }
 
+table AddGrad {
+}
+
+table SubGrad {
+}
+
+table MulGrad {
+}
+
+table DivGrad {
+}
 table RealDiv {
 }
 
@@ -389,7 +488,11 @@ table Power {
     scale: float;
     shift: float;
 }
-
+table PowerGrad {
+    power: float;
+    scale: float;
+    shift: float;
+}
 table ArgMax {
     axis: int;
     outMaxValue: bool;
@@ -711,6 +814,10 @@ table SquaredDifference {
 
 table TupleGetItem {
 }
+
+table OptMomentum {
+}
+
 
 table Where{
 }
