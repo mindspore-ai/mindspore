@@ -120,7 +120,6 @@ def test_yolov3():
 
         net = yolov3_resnet18(ConfigYOLOV3ResNet18())
         net = YoloWithLossCell(net, ConfigYOLOV3ResNet18())
-        init_net_param(net)
 
         total_epoch_size = 60
         lr = Tensor(get_lr(learning_rate=lr_init, start_step=0,

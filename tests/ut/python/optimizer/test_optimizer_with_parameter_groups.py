@@ -71,7 +71,7 @@ def test_group_lr():
     assert opt.dynamic_lr is False
     assert opt.is_group_params_ordered is True
     for lr, param, order_param in zip(opt.learning_rate, opt.parameters, net.trainable_params()):
-        if param in conv_params:
+        if 'conv' in param.name:
             assert np.all(lr.data.asnumpy() == Tensor(conv_lr, mstype.float32).asnumpy())
         else:
             assert np.all(lr.data.asnumpy() == Tensor(default_lr, mstype.float32).asnumpy())
@@ -103,7 +103,7 @@ def test_group_dynamic_1():
     assert opt.dynamic_lr is True
     assert opt.is_group_params_ordered is True
     for lr, param, order_param in zip(opt.learning_rate, opt.parameters, net.trainable_params()):
-        if param in conv_params:
+        if 'conv' in param.name:
             assert np.all(lr.learning_rate.data.asnumpy() == \
                           Tensor(np.array([conv_lr] * 3).astype(np.float32)).asnumpy())
         else:
@@ -135,7 +135,7 @@ def test_group_dynamic_2():
     assert opt.is_group is True
     assert opt.dynamic_lr is True
     for lr, param in zip(opt.learning_rate, opt.parameters):
-        if param in conv_params:
+        if 'conv' in param.name:
             assert np.all(lr.learning_rate.data.asnumpy() == \
                           Tensor(np.array(list(conv_lr)).astype(np.float32)).asnumpy())
         else:
@@ -203,7 +203,7 @@ def test_weight_decay():
     assert opt.is_group_params_ordered is True
     for weight_decay, decay_flags, param, order_param in zip(
             opt.weight_decay, opt.decay_flags, opt.parameters, net.trainable_params()):
-        if param in conv_params:
+        if 'conv' in param.name:
             assert weight_decay == conv_weight_decay
             assert decay_flags is True
         else:
@@ -303,11 +303,11 @@ def test_order_params_1():
     assert opt.is_group_params_ordered is True
     for weight_decay, decay_flags, lr, param, order_param in zip(
             opt.weight_decay, opt.decay_flags, opt.learning_rate, opt.parameters, bias_params+conv_params):
-        if param in conv_params:
+        if 'conv' in param.name:
             assert np.all(lr.data.asnumpy() == Tensor(0.1, mstype.float32).asnumpy())
             assert weight_decay == 0.01
             assert decay_flags is True
-        elif param in bias_params:
+        elif 'bias' in param.name:
             assert np.all(lr.data.asnumpy() == Tensor(0.01, mstype.float32).asnumpy())
             assert weight_decay == 0.0
             assert decay_flags is False
@@ -342,11 +342,11 @@ def test_order_params_2():
     all_lr = opt.get_lr_parameter(fc1_params+conv_params)
     for weight_decay, decay_flags, lr, param, order_param in zip(
             opt.weight_decay, opt.decay_flags, all_lr, opt.parameters, fc1_params+conv_params):
-        if param in conv_params:
+        if 'conv' in param.name:
             assert np.all(lr.data.asnumpy() == Tensor(np.array([default_lr] * 3), mstype.float32).asnumpy())
             assert weight_decay == conv_weight_decay
             assert decay_flags is True
-        elif param in fc1_params:
+        elif 'fc1' in param.name:
             assert np.all(lr.data.asnumpy() == Tensor(fc1_lr, mstype.float32).asnumpy())
             assert weight_decay == default_wd
             assert decay_flags is False
