@@ -90,9 +90,5 @@ TEST_F(MindDataTestTensorDE, MSTensorHash) {
   std::shared_ptr<Tensor> t;
   Tensor::CreateFromVector(x, TensorShape({2, 2}), &t);
   auto ms_tensor = std::shared_ptr<mindspore::tensor::MSTensor>(new mindspore::tensor::DETensor(t));
-#ifdef ENABLE_ARM64
-  ASSERT_EQ(ms_tensor->hash() == 11093771382437, true); // arm64
-#else
-  ASSERT_EQ(ms_tensor->hash() == 11093825635904, true);
-#endif
+  ASSERT_EQ(ms_tensor->hash() == 11093771382437, true);
 }

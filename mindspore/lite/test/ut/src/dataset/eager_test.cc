@@ -33,7 +33,11 @@ class MindDataTestEager : public mindspore::Common {
 };
 
 TEST_F(MindDataTestEager, Test1) {
+#ifdef ENABLE_ARM64 || ENABLE_ARM32
   std::string in_dir = "/sdcard/data/testPK/data/class1";
+#else
+  std::string in_dir = "data/testPK/data/class1";
+#endif
   Path base_dir = Path(in_dir);
   MS_LOG(WARNING) << base_dir.toString() << ".";
   if (!base_dir.IsDirectory() || !base_dir.Exists()) {

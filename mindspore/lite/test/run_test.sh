@@ -7,6 +7,12 @@ mkdir -pv ${CUR_DIR}/do_test
 cd ${CUR_DIR}/do_test
 cp ${BUILD_DIR}/test/lite-test ./
 cp -r ${CUR_DIR}/ut/src/runtime/kernel/arm/test_data/* ./
+## prepare data for dataset
+TEST_DATA_DIR=${CUR_DIR}/../../../tests/ut/data/dataset/
+cp -fr $TEST_DATA_DIR/testPK ./data
+
+./lite-test --gtest_filter="*MindDataTestTensorDE*"
+./lite-test --gtest_filter="*MindDataTestEager*"
 
 ./lite-test --gtest_filter="*TestHebing*"
 

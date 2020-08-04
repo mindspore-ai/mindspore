@@ -298,8 +298,10 @@ if (BUILD_MINDDATA)
     target_link_libraries(lite-test
            minddata-lite
            minddata-eager
-           log
            )
+    if (PLATFORM_ARM32 OR PLATFORM_ARM64)
+           target_link_libraries(lite-test log)
+    endif()
 endif()
 if (BUILD_CONVERTER)
     target_link_libraries(lite-test
