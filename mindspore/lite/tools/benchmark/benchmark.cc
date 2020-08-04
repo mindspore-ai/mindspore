@@ -230,6 +230,10 @@ int Benchmark::CompareOutput() {
   for (const auto &calibTensor : calibData) {
     std::string nodeName = calibTensor.first;
     auto tensors = session->GetOutputsByName(nodeName);
+    if (tensors.empty()) {
+      MS_LOG(ERROR) << "Cannot find output node: " << nodeName.c_str() << " , compare output data fail.";
+      return RET_ERROR;
+    }
     for (auto tensor : tensors) {
       MS_ASSERT(tensor->GetDataType() == DataType_DT_FLOAT);
       MS_ASSERT(tensor->GetData() != nullptr);
