@@ -8,18 +8,9 @@
 #define TO_FLT4 convert_float4
 #endif
 __constant sampler_t sampler_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
-__kernel void DepthwiseConv2d_IMG_NC4HW4(
-__read_only image2d_t src_data,
-__global FLT4* filter,
-__global FLT4* bias,
-    float relu_clip1,
-__write_only image2d_t dst_data,
-    int2 kernel_size,
-    int2 stride,
-    int2 padding,
-    int2 dilation,
-    int4 src_size,
-    int4 dst_size) {
+__kernel void DepthwiseConv2d_IMG_NC4HW4(__read_only image2d_t src_data, __global FLT4 *filter, __global FLT4 *bias,
+                                         float relu_clip1, __write_only image2d_t dst_data, int2 kernel_size,
+                                         int2 stride, int2 padding, int2 dilation, int4 src_size, int4 dst_size) {
   int X = get_global_id(0);
   int Y = get_global_id(1);
   int Z = get_global_id(2);
@@ -36,32 +27,23 @@ __write_only image2d_t dst_data,
       bool outside_x = x_c < 0 || x_c >= src_size.x;
       if (!outside_x && !outside_y) {
         FLT4 f = filter[fx_c];
-        //FLT4 src_final =src_data[(((Z) * src_size.y + (y_c)) * src_size.x + (x_c))];
-        FLT4 src_final =read_imagef(src_data, sampler_zero, (int2)(x_c, (Z * src_size.y + y_c)));
+        // FLT4 src_final =src_data[(((Z) * src_size.y + (y_c)) * src_size.x + (x_c))];
+        FLT4 src_final = read_imagef(src_data, sampler_zero, (int2)(x_c, (Z * src_size.y + y_c)));
         r += TO_FLT4(src_final * f);
-      };
+      }
       fx_c++;
     }
   }
   FLT4 bias_val = bias[Z];
   FLT4 res0 = TO_FLT4(r) + bias_val;
   res0 = clamp(res0, (FLT)(0.0f), (FLT)(relu_clip1));
-  //dst_data[(((Z) * dst_size.y + (Y)) * dst_size.x + (X))] = res0;
+  // dst_data[(((Z) * dst_size.y + (Y)) * dst_size.x + (X))] = res0;
   write_imagef(dst_data, (int2)(X, (Z * dst_size.y + Y)), res0);
 }
 
-__kernel void DepthwiseConv2d_IMG_NHWC4(
-__read_only image2d_t src_data,
-__global FLT4* filter,  
-__global FLT4* bias,
-    float relu_clip1,
-__write_only image2d_t dst_data,
-    int2 kernel_size,
-    int2 stride,
-    int2 padding,
-    int2 dilation,
-    int4 src_size,
-    int4 dst_size) {
+__kernel void DepthwiseConv2d_IMG_NHWC4(__read_only image2d_t src_data, __global FLT4 *filter, __global FLT4 *bias,
+                                        float relu_clip1, __write_only image2d_t dst_data, int2 kernel_size,
+                                        int2 stride, int2 padding, int2 dilation, int4 src_size, int4 dst_size) {
   int X = get_global_id(0);
   int Y = get_global_id(1);
   int Z = get_global_id(2);
@@ -78,32 +60,23 @@ __write_only image2d_t dst_data,
       bool outside_x = x_c < 0 || x_c >= src_size.x;
       if (!outside_x && !outside_y) {
         FLT4 f = filter[fx_c];
-        //FLT4 src_final =src_data[((y_c * src_size.x + x_c) * src_size.z + Z)];
-        FLT4 src_final =read_imagef(src_data, sampler_zero, (int2)(Z+x_c*src_size.z, y_c));
+        // FLT4 src_final =src_data[((y_c * src_size.x + x_c) * src_size.z + Z)];
+        FLT4 src_final = read_imagef(src_data, sampler_zero, (int2)(Z + x_c * src_size.z, y_c));
         r += TO_FLT4(src_final * f);
-      };
+      }
       fx_c++;
     }
   }
   FLT4 bias_val = bias[Z];
   FLT4 res0 = TO_FLT4(r) + bias_val;
   res0 = clamp(res0, (FLT)(0.0f), (FLT)(relu_clip1));
-  //dst_data[((Y * dst_size.x + X) * dst_size.z + Z)] = res0;
-  write_imagef(dst_data, (int2)(X*dst_size.z+Z, Y), res0);
+  // dst_data[((Y * dst_size.x + X) * dst_size.z + Z)] = res0;
+  write_imagef(dst_data, (int2)(X * dst_size.z + Z, Y), res0);
 }
 
-__kernel void DepthwiseConv2d_IMG_NHWC4_1x1(
-__read_only image2d_t src_data,
-__global FLT4* filter,  
-__global FLT4* bias,
-    float relu_clip1,
-__write_only image2d_t dst_data,
-    int2 kernel_size,
-    int2 stride,
-    int2 padding,
-    int2 dilation,
-    int4 src_size,
-    int4 dst_size) {
+__kernel void DepthwiseConv2d_IMG_NHWC4_1x1(__read_only image2d_t src_data, __global FLT4 *filter, __global FLT4 *bias,
+                                            float relu_clip1, __write_only image2d_t dst_data, int2 kernel_size,
+                                            int2 stride, int2 padding, int2 dilation, int4 src_size, int4 dst_size) {
   int X = get_global_id(0);
   int Y = get_global_id(1);
   int Z = get_global_id(2);
@@ -120,30 +93,21 @@ __write_only image2d_t dst_data,
       bool outside_x = x_c < 0 || x_c >= src_size.x;
       if (!outside_x && !outside_y) {
         FLT4 f = filter[fx_c];
-        //FLT4 src_final =src_data[((y_c * src_size.x + x_c) * src_size.z + Z)];
+        // FLT4 src_final =src_data[((y_c * src_size.x + x_c) * src_size.z + Z)];
         FLT4 src_final = read_imagef(src_data, sampler_zero, (int2)(Z, (y_c * src_size.x + x_c) * src_size.z));
         r += TO_FLT4(src_final * f);
-      };
+      }
     }
   }
   FLT4 bias_val = bias[Z];
   FLT4 res0 = TO_FLT4(r) + bias_val;
   res0 = clamp(res0, (FLT)(0.0f), (FLT)(relu_clip1));
-  //dst_data[((Y * dst_size.x + X) * dst_size.z + Z)] = res0;
+  // dst_data[((Y * dst_size.x + X) * dst_size.z + Z)] = res0;
   write_imagef(dst_data, (int2)(Z, (Y * dst_size.x + X) * dst_size.z), res0);
 }
-__kernel void DepthwiseConv2d_BUF_NC4HW4(
-__global FLT4* src_data,
-__global FLT4* filter,
-__global FLT4* bias,
-    float relu_clip1,
-__global FLT4* dst_data,
-    int2 kernel_size,
-    int2 stride,
-    int2 padding,
-    int2 dilation,
-    int4 src_size,
-    int4 dst_size) {
+__kernel void DepthwiseConv2d_BUF_NC4HW4(__global FLT4 *src_data, __global FLT4 *filter, __global FLT4 *bias,
+                                         float relu_clip1, __global FLT4 *dst_data, int2 kernel_size, int2 stride,
+                                         int2 padding, int2 dilation, int4 src_size, int4 dst_size) {
   int X = get_global_id(0);
   int Y = get_global_id(1);
   int Z = get_global_id(2);
@@ -160,30 +124,21 @@ __global FLT4* dst_data,
       bool outside_x = x_c < 0 || x_c >= src_size.x;
       if (!outside_x && !outside_y) {
         FLT4 f = filter[fx_c];
-        FLT4 src_final =src_data[(((Z) * src_size.y + (y_c)) * src_size.x + (x_c))];
+        FLT4 src_final = src_data[(((Z)*src_size.y + (y_c)) * src_size.x + (x_c))];
         r += TO_FLT4(src_final * f);
-      };
+      }
       fx_c++;
     }
   }
   FLT4 bias_val = bias[Z];
   FLT4 res0 = TO_FLT4(r) + bias_val;
   res0 = clamp(res0, (FLT)(0.0f), (FLT)(relu_clip1));
-  dst_data[(((Z) * dst_size.y + (Y)) * dst_size.x + (X))] = res0;
+  dst_data[(((Z)*dst_size.y + (Y)) * dst_size.x + (X))] = res0;
 }
 
-__kernel void DepthwiseConv2d_BUF_NHWC4(
-__global FLT4* src_data,
-__global FLT4* filter,  
-__global FLT4* bias,
-    float relu_clip1,
-__global FLT4* dst_data,
-    int2 kernel_size,
-    int2 stride,
-    int2 padding,
-    int2 dilation,
-    int4 src_size,
-    int4 dst_size) {
+__kernel void DepthwiseConv2d_BUF_NHWC4(__global FLT4 *src_data, __global FLT4 *filter, __global FLT4 *bias,
+                                        float relu_clip1, __global FLT4 *dst_data, int2 kernel_size, int2 stride,
+                                        int2 padding, int2 dilation, int4 src_size, int4 dst_size) {
   int X = get_global_id(0);
   int Y = get_global_id(1);
   int Z = get_global_id(2);
@@ -200,9 +155,9 @@ __global FLT4* dst_data,
       bool outside_x = x_c < 0 || x_c >= src_size.x;
       if (!outside_x && !outside_y) {
         FLT4 f = filter[fx_c];
-        FLT4 src_final =src_data[((y_c * src_size.x + x_c) * src_size.z + Z)];
+        FLT4 src_final = src_data[((y_c * src_size.x + x_c) * src_size.z + Z)];
         r += TO_FLT4(src_final * f);
-      };
+      }
       fx_c++;
     }
   }
@@ -212,18 +167,9 @@ __global FLT4* dst_data,
   dst_data[((Y * dst_size.x + X) * dst_size.z + Z)] = res0;
 }
 
-__kernel void DepthwiseConv2d_BUF_NHWC4_1x1(
-__global FLT4* src_data,
-__global FLT4* filter,  
-__global FLT4* bias,
-    float relu_clip1,
-__global FLT4* dst_data,
-    int2 kernel_size,
-    int2 stride,
-    int2 padding,
-    int2 dilation,
-    int4 src_size,
-    int4 dst_size) {
+__kernel void DepthwiseConv2d_BUF_NHWC4_1x1(__global FLT4 *src_data, __global FLT4 *filter, __global FLT4 *bias,
+                                            float relu_clip1, __global FLT4 *dst_data, int2 kernel_size, int2 stride,
+                                            int2 padding, int2 dilation, int4 src_size, int4 dst_size) {
   int X = get_global_id(0);
   int Y = get_global_id(1);
   int Z = get_global_id(2);
@@ -240,9 +186,9 @@ __global FLT4* dst_data,
       bool outside_x = x_c < 0 || x_c >= src_size.x;
       if (!outside_x && !outside_y) {
         FLT4 f = filter[fx_c];
-        FLT4 src_final =src_data[((y_c * src_size.x + x_c) * src_size.z + Z)];
+        FLT4 src_final = src_data[((y_c * src_size.x + x_c) * src_size.z + Z)];
         r += TO_FLT4(src_final * f);
-      };
+      }
     }
   }
   FLT4 bias_val = bias[Z];
