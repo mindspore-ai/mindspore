@@ -643,5 +643,13 @@ void ModelDigraph::Edge(AnfNodePtr start, AnfNodePtr end, int idx, int id_start)
   buffer_ << "[arrowhead=vee,";
   buffer_ << "]" << std::endl;
 }
+
+struct DrawerRegister {
+  DrawerRegister() {
+    FuncGraph::set_drawer(
+      [](const std::string &filename, const FuncGraphPtr &func_graph) { Draw(filename, func_graph); });
+  }
+  ~DrawerRegister() = default;
+} drawer_regsiter;
 }  // namespace draw
 }  // namespace mindspore

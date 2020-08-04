@@ -23,7 +23,8 @@
 #include <algorithm>
 #include "runtime/device/ascend/ascend_device_address.h"
 #include "runtime/device/cpu/mpi/mpi_adapter.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
+#include "utils/context/context_extends.h"
 #include "utils/mpi/mpi_config.h"
 #include "runtime/device/ascend/profiling/profiling_manager.h"
 #include "hccl/hcom.h"
@@ -688,7 +689,7 @@ bool AscendKernelRuntime::ResetDevice() {
 bool AscendKernelRuntime::HcclInit() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (!context_ptr->IsTsdOpened()) {
+  if (!context::IsTsdOpened(context_ptr)) {
     MS_LOG(EXCEPTION) << "Hccl dependent tsd is not open";
   }
   MS_LOG(INFO) << "Do hcom init";

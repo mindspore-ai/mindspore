@@ -18,7 +18,7 @@
 #include <memory>
 #include <vector>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/util/path.h"
 
 namespace mindspore {

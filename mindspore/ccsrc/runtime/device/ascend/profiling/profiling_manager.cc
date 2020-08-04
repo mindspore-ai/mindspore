@@ -22,8 +22,8 @@
 #include "runtime/device/ascend/profiling/plugin_impl.h"
 #include "runtime/device/ascend/profiling/profiling_engine_impl.h"
 #include "utils/log_adapter.h"
-#include "utils/context/ms_context.h"
-#include "common/utils.h"
+#include "utils/ms_context.h"
+#include "utils/ms_utils.h"
 #include "utils/convert_utils.h"
 #include "runtime/base.h"
 

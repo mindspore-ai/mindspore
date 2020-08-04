@@ -21,7 +21,7 @@
 
 #include "utils/utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "backend/kernel_compiler/common_utils.h"
 
 namespace mindspore {

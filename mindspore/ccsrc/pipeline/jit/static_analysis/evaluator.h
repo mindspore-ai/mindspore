@@ -25,7 +25,7 @@
 #include <vector>
 
 #include "pipeline/jit/static_analysis/static_analysis.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace abstract {

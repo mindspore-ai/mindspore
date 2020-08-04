@@ -34,7 +34,7 @@
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "pipeline/jit/static_analysis/program_specialize.h"
 #include "pipeline/jit/resource.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "pipeline/jit/remove_value_node_dup.h"
 #include "frontend/optimizer/optimizer.h"
 #include "vm/transform.h"

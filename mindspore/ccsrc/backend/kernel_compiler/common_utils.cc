@@ -24,7 +24,7 @@
 #include <thread>
 #include "nlohmann/json.hpp"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "ir/manager.h"
 #include "ir/meta_tensor.h"
 #include "ir/func_graph.h"

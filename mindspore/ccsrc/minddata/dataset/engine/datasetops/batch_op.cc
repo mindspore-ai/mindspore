@@ -18,7 +18,7 @@
 #include <utility>
 #include <iomanip>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #ifdef ENABLE_PYTHON
 #include "minddata/dataset/core/pybind_support.h"
 #endif

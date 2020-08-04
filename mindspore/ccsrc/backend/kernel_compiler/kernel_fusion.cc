@@ -21,7 +21,7 @@
 #include <memory>
 #include <utility>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_build.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_parallel_build.h"
 #include "backend/kernel_compiler/tbe/tbe_utils.h"

@@ -22,7 +22,7 @@
 #include <vector>
 #include "ir/tensor.h"
 #include "pybind11/pybind11.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "runtime/device/convert_tensor_utils.h"
 #include "./securec.h"
 #ifndef NO_DLIB

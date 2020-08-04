@@ -32,6 +32,7 @@
 #include "debug/anf_ir_utils.h"
 #include "utils/config_manager.h"
 #include "utils/convert_utils.h"
+#include "utils/context/context_extends.h"
 #include "utils/utils.h"
 #include "vm/segment_runner.h"
 #include "frontend/parallel/context.h"
@@ -817,7 +818,7 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
 #ifndef NO_DLIB
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (!ms_context->IsTsdOpened() || !ms_context->IsGeInited()) {
+  if (!context::IsTsdOpened(ms_context) || !context::IsGeInited(ms_context)) {
     (void)InitBackend();
   }
 #endif
@@ -911,7 +912,7 @@ void InitHccl() {
   mindspore::parse::python_adapter::set_python_env_flag(true);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  (void)ms_context->OpenTsd();
+  (void)context::OpenTsd(ms_context);
   uint32_t device_id = ms_context->device_id();
   std::string device_name = ms_context->device_target();
   ms_context->set_enable_hccl(true);
@@ -944,8 +945,8 @@ void ExportGraph(const std::string &file_name, const std::string &, const std::s
 void ReleaseGeTsd() {
   auto context_ptr = MsContext::GetInstance();
   if (context_ptr != nullptr) {
-    (void)context_ptr->FinalizeGe(true);
-    (void)context_ptr->CloseTsd(true);
+    (void)context::FinalizeGe(context_ptr, true);
+    (void)context::CloseTsd(context_ptr, true);
   }
 }
 
@@ -955,17 +956,17 @@ void InitBackend() {
   // open tsd before ge initialize
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (!ms_context->OpenTsd()) {
+  if (!context::OpenTsd(ms_context)) {
     MS_LOG(EXCEPTION) << "Open tsd failed";
   }
-  (void)ms_context->InitGe();
+  (void)context::InitGe(ms_context);
 }
 
 void FinalizeBackend() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  (void)context_ptr->FinalizeGe();
-  (void)context_ptr->CloseTsd();
+  (void)context::FinalizeGe(context_ptr);
+  (void)context::CloseTsd(context_ptr);
 }
 
 void ClearResAtexit() {

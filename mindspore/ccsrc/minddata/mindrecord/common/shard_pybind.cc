@@ -16,7 +16,7 @@
 
 #include <string>
 #include <vector>
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/mindrecord/include/common/shard_utils.h"
 #include "minddata/mindrecord/include/shard_error.h"
 #include "minddata/mindrecord/include/shard_index_generator.h"

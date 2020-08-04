@@ -24,11 +24,11 @@
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "debug/anf_ir_dump.h"
 #include "frontend/operator/ops.h"
 #include "ir/func_graph.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/kernel_compiler/common_utils.h"

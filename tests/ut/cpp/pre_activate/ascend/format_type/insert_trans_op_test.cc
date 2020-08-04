@@ -21,7 +21,7 @@
 #include "backend/optimizer/common/pass_manager.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_info.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 #define private public
 #define protected public

@@ -15,7 +15,7 @@
  */
 #include "backend/kernel_compiler/cpu/debug_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif

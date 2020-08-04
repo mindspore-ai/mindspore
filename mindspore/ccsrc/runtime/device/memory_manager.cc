@@ -16,7 +16,7 @@
 
 #include "runtime/device/memory_manager.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 using mindspore::memreuse::BestFitMemReuse;
 using mindspore::memreuse::MemReuseUtilPtr;
 namespace mindspore {

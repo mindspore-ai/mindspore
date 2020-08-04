@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <iostream>
 #include <utility>
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "frontend/parallel/status.h"
 #include "frontend/parallel/tensor_layout/shape_util.h"
 #include "utils/convert_utils.h"

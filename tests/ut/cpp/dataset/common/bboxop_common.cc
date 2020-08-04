@@ -25,7 +25,7 @@
 
 #include "./tinyxml2.h"
 #include "opencv2/opencv.hpp"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/core/constants.h"

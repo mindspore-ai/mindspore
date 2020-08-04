@@ -17,7 +17,7 @@
 #include "backend/optimizer/ascend/ascend_helper.h"
 #include <set>
 #include "common/trans.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "backend/optimizer/common/helper.h"
 #include "utils/utils.h"
 #include "runtime/device/kernel_info.h"
@@ -26,7 +26,7 @@
 #include "frontend/operator/ops.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_graph.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {

@@ -23,7 +23,7 @@
 
 #include "utils/any.h"
 #include "utils/utils.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "frontend/operator/ops.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/static_analysis/prim.h"

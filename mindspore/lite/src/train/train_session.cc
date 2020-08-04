@@ -18,7 +18,7 @@
 #include "mindspore/lite/src/train/train_session.h"
 #include "mindspore/lite/src/kernel_factory.h"
 #include "mindspore/lite/src/param_value_lite.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "mindspore/lite/src/ops/ops.h"
 #include "ir/anf.h"
 #include "mindspore/lite/src/ir/tensor.h"

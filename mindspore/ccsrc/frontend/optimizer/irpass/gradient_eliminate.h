@@ -24,7 +24,7 @@
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/anf_visitor.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/ad/grad.h"
 

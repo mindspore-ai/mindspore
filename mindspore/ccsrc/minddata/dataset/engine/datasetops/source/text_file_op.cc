@@ -21,7 +21,7 @@
 #include <string>
 #include <utility>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/engine/datasetops/source/text_file_op.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/util/task_manager.h"

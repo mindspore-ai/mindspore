@@ -16,7 +16,7 @@
 #include <string>
 #include "runtime/device/ascend/ascend_memory_manager.h"
 #include "runtime/device/ascend/ascend_memory_pool.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "runtime/mem.h"
 namespace mindspore {
 namespace device {

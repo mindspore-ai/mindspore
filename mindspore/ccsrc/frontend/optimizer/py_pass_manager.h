@@ -25,7 +25,7 @@
 #include "ir/func_graph.h"
 #include "utils/primitive_py.h"
 #include "ir/graph_utils.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 #include "pipeline/jit/parse/resolve.h"
 #include "frontend/optimizer/pattern.h"

@@ -22,7 +22,7 @@
 #include <sstream>
 #include <utility>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

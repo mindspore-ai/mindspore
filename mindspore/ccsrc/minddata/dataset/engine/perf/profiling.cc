@@ -17,7 +17,7 @@
 #include <sys/time.h>
 #include <cstdlib>
 #include <fstream>
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/engine/perf/monitor.h"
 #include "minddata/dataset/engine/perf/device_queue_tracing.h"

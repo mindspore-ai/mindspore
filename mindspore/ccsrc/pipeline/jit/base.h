@@ -24,7 +24,7 @@
 
 #include "ir/anf.h"
 #include "pipeline/jit/resource.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace pipeline {

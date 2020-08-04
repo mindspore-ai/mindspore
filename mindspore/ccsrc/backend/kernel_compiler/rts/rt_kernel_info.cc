@@ -19,7 +19,7 @@
 #include <algorithm>
 #include "utils/convert_utils.h"
 #include "utils/utils.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore {

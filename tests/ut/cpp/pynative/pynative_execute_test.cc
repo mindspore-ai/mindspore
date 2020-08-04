@@ -20,7 +20,7 @@
 #include "pipeline/jit/parse/data_converter.h"
 #include "frontend/operator/ops.h"
 #include "pipeline/pynative/pynative_execute.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "utils/utils.h"
 
 namespace py = pybind11;

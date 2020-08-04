@@ -18,7 +18,7 @@
 #include <memory>
 #include <string>
 #include "common/common.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/core/client.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/data_schema.h"

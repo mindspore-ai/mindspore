@@ -24,7 +24,7 @@
 #include <unordered_set>
 #include "ir/func_graph.h"
 #include "backend/session/kernel_graph.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "backend/optimizer/common/pattern_engine.h"
 
 namespace mindspore {

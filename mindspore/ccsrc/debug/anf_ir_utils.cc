@@ -37,7 +37,7 @@
 #include "utils/utils.h"
 #include "debug/trace.h"
 #include "utils/label.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "frontend/operator/ops.h"
 
 using mindspore::tensor::TensorPy;

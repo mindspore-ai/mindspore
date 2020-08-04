@@ -24,7 +24,7 @@
 #include <utility>
 #include <map>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "frontend/parallel/device_manager.h"
 
 namespace mindspore {

@@ -22,7 +22,7 @@
 #include "backend/optimizer/common/pass_manager.h"
 #include "backend/optimizer/pass/convert_const_input_to_attr.h"
 #include "utils/utils.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace opt {

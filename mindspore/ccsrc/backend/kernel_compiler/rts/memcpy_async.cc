@@ -20,10 +20,10 @@
 #include <string>
 
 #include "runtime/mem.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "common/trans.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 using ge::model_runner::MemcpyAsyncTaskInfo;
 using MemcpyAsyncTaskInfoPtr = std::shared_ptr<MemcpyAsyncTaskInfo>;

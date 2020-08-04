@@ -30,7 +30,7 @@
 #include "frontend/operator/composite/composite.h"
 #include "ir/func_graph_cloner.h"
 #include "utils/symbolic.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "debug/trace.h"
 #include "frontend/optimizer/ad/grad.h"
 

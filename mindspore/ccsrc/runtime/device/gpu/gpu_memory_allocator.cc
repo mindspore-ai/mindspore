@@ -18,7 +18,7 @@
 #include "runtime/device/gpu/gpu_memory_allocator.h"
 #include "runtime/device/gpu/cuda_driver.h"
 #include "utils/log_adapter.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
 
 namespace mindspore {

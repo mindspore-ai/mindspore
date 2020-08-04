@@ -15,7 +15,7 @@
  */
 #include "backend/kernel_compiler/kernel_fusion.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_mod.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {

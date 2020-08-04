@@ -22,7 +22,7 @@
 #include "ir/func_graph_cloner.h"
 #include "abstract/utils.h"
 #include "debug/trace.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace abstract {

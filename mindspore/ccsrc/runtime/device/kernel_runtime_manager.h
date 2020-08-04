@@ -22,7 +22,7 @@
 #include <functional>
 #include <utility>
 #include <mutex>
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "runtime/device/kernel_runtime.h"
 namespace mindspore {
 namespace device {

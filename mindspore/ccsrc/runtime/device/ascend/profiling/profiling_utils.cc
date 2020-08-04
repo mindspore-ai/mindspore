@@ -19,10 +19,10 @@
 #include "backend/kernel_compiler/kernel.h"
 #include "runtime/device/ascend/profiling/profiling_manager.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "utils/utils.h"
 #include "runtime/device/ascend/profiling/reporter/task_desc_reporter.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "runtime/device/ascend/profiling/reporter/point_reporter.h"
 
 namespace mindspore {

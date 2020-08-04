@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_UTILS_CONTEXT_MS_CONTEXT_H_
-#define MINDSPORE_CCSRC_UTILS_CONTEXT_MS_CONTEXT_H_
+#ifndef MINDSPORE_CORE_UTILS_MS_CONTEXT_H_
+#define MINDSPORE_CORE_UTILS_MS_CONTEXT_H_
 #include <thread>
 #include <memory>
 #include <map>
@@ -26,7 +26,6 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-
 enum MsBackendPolicy {
   kMsBackendGeOnly = 0,
   kMsBackendVmOnly = 1,
@@ -50,10 +49,12 @@ const float kDefaultMaxDeviceMemory = 1024;
 
 class MsContext {
  public:
+  MsContext(const std::string &backend_policy, const std::string &target);
   ~MsContext() = default;
   MsContext(const MsContext &) = delete;
   MsContext &operator=(const MsContext &) = delete;
-
+  using DeviceSeter = std::function<void(const std::string &device_target)>;
+  using DeviceTypeSeter = std::function<void(std::shared_ptr<MsContext> &)>;
   static std::shared_ptr<MsContext> GetInstance();
 
   std::string backend_policy() const;
@@ -85,18 +86,10 @@ class MsContext {
   std::string save_graphs_path() const { return save_graphs_path_; }
   void set_save_graphs_path(const std::string &save_paths) { save_graphs_path_ = save_paths; }
 
-  bool OpenTsd();
-  bool CloseTsd(bool force = false);
-  bool IsTsdOpened();
-  bool InitGe();
-  bool FinalizeGe(bool force = false);
-  bool IsGeInited();
+  bool IsGeInited() { return ge_ref_ > 0; }
   void set_enable_hccl(bool enable_hccl) { enable_hccl_ = enable_hccl; }
   bool enable_hccl() const { return enable_hccl_; }
-  bool PynativeInitGe();
-
   bool ir_fusion_flag() const { return ir_fusion_flag_; }
-
   bool loop_sink_flag() const { return enable_loop_sink_; }
   void set_loop_sink_flag(bool enable_loop_sink) { enable_loop_sink_ = enable_loop_sink; }
   void set_enable_mem_reuse(bool enable_mem_reuse) { enable_mem_reuse_ = enable_mem_reuse; }
@@ -120,6 +113,14 @@ class MsContext {
   std::string save_dump_path() const { return save_dump_path_; }
 
   bool IsTsdOpened() const { return tsd_ref_ > 0; }
+  void set_tsd_ref(const std::string &op);
+  uint32_t tsd_ref() const { return tsd_ref_; }
+
+  void set_ge_ref(const std::string &op);
+  uint32_t ge_ref() const { return ge_ref_; }
+
+  bool is_pynative_ge_init() { return is_pynative_ge_init_; }
+  void set_pynative_ge_init(bool flag) { is_pynative_ge_init_ = flag; }
 
   bool is_multi_graph_sink() const { return is_multi_graph_sink_; }
   void set_is_multi_graph_sink(bool flag) { is_multi_graph_sink_ = flag; }
@@ -157,13 +158,14 @@ class MsContext {
 
   bool enable_sparse() const { return enable_sparse_; }
   void set_enable_sparse(bool enable_sparse) { enable_sparse_ = enable_sparse; }
+  static void device_seter(DeviceSeter device) { seter_ = device; }
+  static void device_type_seter(DeviceTypeSeter device_type) { device_type_seter_ = device_type; }
+
+  std::thread tdt_print_;
 
  private:
-  MsContext(const std::string &backend_policy, const std::string &target);
-  void GetGeOptions(std::map<std::string, std::string> *ge_options) const;
-  void SetDisableReuseMemoryFlag(std::map<std::string, std::string> *ge_options) const;
-  void SetHcclOptions(std::map<std::string, std::string> *ge_options) const;
-
+  inline static DeviceSeter seter_ = nullptr;
+  inline static DeviceTypeSeter device_type_seter_ = nullptr;
   static std::shared_ptr<MsContext> inst_context_;
   static std::map<std::string, MsBackendPolicy> policy_map_;
   MsBackendPolicy backend_policy_;
@@ -192,7 +194,6 @@ class MsContext {
   bool enable_dynamic_mem_pool_;
   std::string graph_memory_max_size_;
   std::string variable_memory_max_size_;
-  std::thread tdt_print_;
   bool profiling_mode_;
   std::string profiling_options_;
   bool check_bprop_flag_;
@@ -201,7 +202,6 @@ class MsContext {
   bool enable_graph_kernel_;
   bool enable_sparse_;
 };
-
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_UTILS_CONTEXT_MS_CONTEXT_H_
+#endif  // MINDSPORE_CORE_UTILS_MS_CONTEXT_H_

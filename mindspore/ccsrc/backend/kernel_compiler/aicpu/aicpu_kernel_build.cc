@@ -30,7 +30,7 @@
 #include "proto/attr.pb.h"
 #include "proto/node_def.pb.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "backend/kernel_compiler/aicpu/aicpu_util.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/kernel_compiler/common_utils.h"

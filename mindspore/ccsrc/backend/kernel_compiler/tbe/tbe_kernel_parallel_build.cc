@@ -23,7 +23,7 @@
 #include <vector>
 #include <string>
 
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "backend/kernel_compiler/tbe/tbe_adapter.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_build.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_mod.h"

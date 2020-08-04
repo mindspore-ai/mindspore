@@ -22,7 +22,7 @@
 #include "backend/optimizer/common/pass_manager.h"
 #include "backend/optimizer/pass/const_to_attr_strided_slice_grad.h"
 #include "utils/utils.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace opt {

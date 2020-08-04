@@ -22,7 +22,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/union_find_set.h"
 #include "runtime/device/ascend/ascend_label_assign.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "debug/anf_ir_dump.h"
 
 static constexpr size_t kCNodePrim = 0;

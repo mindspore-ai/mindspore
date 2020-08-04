@@ -22,9 +22,28 @@
 #include <vector>
 
 #include "utils/log_adapter.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace parallel {
+#define OPERATOR_TO_OPERATOR_CONNECTOR "-"
+#define DEFAULT_DEVICE_MEMORY_CAPACITY (1024.0 * 1024.0 * 1024.0 * 16.0)
+#define DEFAULT_COST_MODEL_ALPHA 1.0
+#define DEFAULT_COST_MODEL_BETA_ASCEND 400.0  // for 'device_target = Ascend'
+#define DEFAULT_COST_MODEL_BETA_GPU 50.0      // for 'device_target = GPU'
+#define DEFAULT_COST_MODEL_GAMMA 0.001
+#define DEFAULT_COST_MODEL_SIMPLIFY_CALCULATION true
+#define DEFAULT_COST_MODEL_COMMUNI_THRESHOLD 2048.0
+#define DEFAULT_COST_MODEL_COMMUNI_CONST 3072.0
+#define DEFAULT_COST_MODEL_COMMUNI_BIAS 1024.0
+#define DEFAULT_TENSOR_SLICE_ALIGNMENT_ENABLE false
+#define DEFAULT_TENSOR_SLICE_ALIGNMENT_SIZE 16
+#define DEFAULT_FULLY_USE_DEVICES true
+#define DEFAULT_ELEMENTWISE_OP_STRA_FOLLOW false
+#define DEFAULT_IS_MULTI_SUBGRAPHS false
+#define DEFAULT_RUN_PHASE 0
+#define TRAINING_PHASE 0
+#define INFERENCE_PHASE 1
 class CostModelContext {
  public:
   ~CostModelContext() = default;

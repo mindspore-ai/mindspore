@@ -17,7 +17,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 
 namespace mindspore {

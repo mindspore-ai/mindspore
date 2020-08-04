@@ -25,7 +25,7 @@
 #include "ir/func_graph.h"
 #include "ir/manager.h"
 #include "utils/utils.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "debug/anf_ir_dump.h"
 
 namespace mindspore {

@@ -22,7 +22,7 @@
 #include "debug/anf_ir_dump.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "frontend/operator/ops.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "backend/optimizer/common/fusion_id_allocator.h"
 
 namespace mindspore {

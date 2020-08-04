@@ -18,7 +18,7 @@
 #include "frontend/operator/ops.h"
 #include "abstract/utils.h"
 #include "abstract/param_validator.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace abstract {

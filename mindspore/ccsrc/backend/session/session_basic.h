@@ -32,7 +32,7 @@
 #include "utils/contract.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "runtime/device/kernel_info.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif

@@ -23,7 +23,7 @@
 #include "backend/kernel_compiler/tbe/tbe_kernel_select/tbe_kernel_select.h"
 #include "backend/kernel_compiler/akg/akg_kernel_metadata.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {

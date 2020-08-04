@@ -22,7 +22,7 @@
 #include <memory>
 #include <nlohmann/json.hpp>
 #include "utils/contract.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 using std::map;
 using std::string;

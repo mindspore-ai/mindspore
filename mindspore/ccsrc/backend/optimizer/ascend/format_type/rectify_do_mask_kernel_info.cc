@@ -25,7 +25,7 @@
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "utils/utils.h"
 #include "backend/kernel_compiler/common_utils.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "backend/optimizer/common/helper.h"
 
 namespace mindspore {

@@ -16,7 +16,7 @@
 
 #include "minddata/mindrecord/include/shard_distributed_sample.h"
 #include "minddata/mindrecord/include/shard_reader.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 using mindspore::LogStream;
 using mindspore::ExceptionType::NoExceptionType;

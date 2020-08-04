@@ -17,7 +17,7 @@
 #include "frontend/parallel/ps/util.h"
 #include <unordered_map>
 #include "frontend/parallel/ps/common.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace parallel {

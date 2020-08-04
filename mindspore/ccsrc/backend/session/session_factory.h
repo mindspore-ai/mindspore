@@ -21,7 +21,7 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "backend/session/session_basic.h"
 namespace mindspore {
 namespace session {

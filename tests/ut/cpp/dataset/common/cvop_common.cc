@@ -19,7 +19,7 @@
 #include <vector>
 #include "cvop_common.h"
 #include "minddata/dataset/core/constants.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/core/cv_tensor.h"
 #include "utils/log_adapter.h"
 #include <fstream>
