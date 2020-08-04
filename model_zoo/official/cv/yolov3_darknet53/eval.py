@@ -90,35 +90,35 @@ class DetectionEngine:
                             for i in keep_index]
                 self.det_boxes.extend(keep_box)
 
-    def _nms(self, dets, thresh):
+    def _nms(self, predicts, threshold):
         """Calculate NMS."""
         # conver xywh -> xmin ymin xmax ymax
-        x1 = dets[:, 0]
-        y1 = dets[:, 1]
-        x2 = x1 + dets[:, 2]
-        y2 = y1 + dets[:, 3]
-        scores = dets[:, 4]
+        x1 = predicts[:, 0]
+        y1 = predicts[:, 1]
+        x2 = x1 + predicts[:, 2]
+        y2 = y1 + predicts[:, 3]
+        scores = predicts[:, 4]
 
         areas = (x2 - x1 + 1) * (y2 - y1 + 1)
         order = scores.argsort()[::-1]
 
-        keep = []
+        reserved_boxes = []
         while order.size > 0:
             i = order[0]
-            keep.append(i)
-            xx1 = np.maximum(x1[i], x1[order[1:]])
-            yy1 = np.maximum(y1[i], y1[order[1:]])
-            xx2 = np.minimum(x2[i], x2[order[1:]])
-            yy2 = np.minimum(y2[i], y2[order[1:]])
+            reserved_boxes.append(i)
+            max_x1 = np.maximum(x1[i], x1[order[1:]])
+            max_y1 = np.maximum(y1[i], y1[order[1:]])
+            min_x2 = np.minimum(x2[i], x2[order[1:]])
+            min_y2 = np.minimum(y2[i], y2[order[1:]])
 
-            w = np.maximum(0.0, xx2 - xx1 + 1)
-            h = np.maximum(0.0, yy2 - yy1 + 1)
-            inter = w * h
-            ovr = inter / (areas[i] + areas[order[1:]] - inter)
+            intersect_w = np.maximum(0.0, min_x2 - max_x1 + 1)
+            intersect_h = np.maximum(0.0, min_y2 - max_y1 + 1)
+            intersect_area = intersect_w * intersect_h
+            ovr = intersect_area / (areas[i] + areas[order[1:]] - intersect_area)
 
-            inds = np.where(ovr <= thresh)[0]
-            order = order[inds + 1]
-        return keep
+            indexs = np.where(ovr <= threshold)[0]
+            order = order[indexs + 1]
+        return reserved_boxes
 
     def write_result(self):
         """Save result to file."""
