@@ -82,6 +82,16 @@ def test_numpy_slices_dict_1():
         assert data[0] == res[i][0]
         assert data[1] == res[i][1]
 
+def test_numpy_slices_dict_2():
+    logger.info("Test Dictionary empty data.")
+
+    np_data = {"a": [[]], "b": [[4]]}
+    ds = de.NumpySlicesDataset(np_data, shuffle=False)
+    res = [[], [4]]
+
+    for _, data in enumerate(ds):
+        np.testing.assert_array_almost_equal(data[0], np.array(res[0]))
+        np.testing.assert_array_almost_equal(data[1], np.array(res[1]))
 
 def test_numpy_slices_tuple_1():
     logger.info("Test slicing a list of tuple.")
