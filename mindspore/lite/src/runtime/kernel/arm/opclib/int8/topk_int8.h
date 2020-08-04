@@ -14,26 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_TOPK_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_TOPK_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_TOPK_INT8_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_TOPK_INT8_H_
 
 #include "src/runtime/kernel/arm/opclib/op_base.h"
+#include "src/runtime/kernel/arm/opclib/fp32/topk.h"
 
-struct Node {
-  float element;
-  float index;
+struct TopkNodeInt8 {
+  int8_t element;
+  int32_t index;
 };
 
-struct TopkParameter {
-  OpParameter op_parameter_;
-  int last_dim_size_;
-  int loop_num_;
-  int k_;
-  bool sorted_;
-  Node *topk_node_list_;
-};
+void TopkInt8(int8_t *input_data, int8_t *output_data, int32_t *output_index, TopkParameter *parameter);
 
-void Topk(float *input_data, float *output_data, float *output_index, TopkParameter *parameter);
-
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_TOPK_H_
-
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_TOPK_INT8_H_

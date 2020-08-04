@@ -34,7 +34,7 @@
 #include "src/runtime/kernel/arm/opclib/matmul.h"
 #include "src/runtime/kernel/arm/opclib/fp32/softmax.h"
 #include "src/runtime/kernel/arm/opclib/tile.h"
-#include "src/runtime/kernel/arm/opclib/topk.h"
+#include "src/runtime/kernel/arm/opclib/fp32/topk.h"
 #include "src/runtime/kernel/arm/opclib/fp32/reduce.h"
 #include "src/runtime/kernel/arm/opclib/fp32/activation.h"
 #include "src/runtime/kernel/arm/opclib/fp32/arithmetic.h"
