@@ -22,7 +22,7 @@ import numpy as np
 from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.ssd import SSD300, ssd_mobilenet_v2
-from src.dataset import create_ssd_dataset, data_to_mindrecord_byte_image
+from src.dataset import create_ssd_dataset, data_to_mindrecord_byte_image, voc_data_to_mindrecord
 from src.config import config
 from src.coco_eval import metrics
 
@@ -88,6 +88,13 @@ if __name__ == '__main__':
                 print("Create Mindrecord Done, at {}".format(mindrecord_dir))
             else:
                 print("coco_root not exits.")
+        elif args_opt.dataset == "voc":
+            if os.path.isdir(config.voc_dir) and os.path.isdir(config.voc_root):
+                print("Create Mindrecord.")
+                voc_data_to_mindrecord(mindrecord_dir, False, prefix)
+                print("Create Mindrecord Done, at {}".format(mindrecord_dir))
+            else:
+                print("voc_root or voc_dir not exits.")
         else:
             if os.path.isdir(config.image_dir) and os.path.exists(config.anno_path):
                 print("Create Mindrecord.")

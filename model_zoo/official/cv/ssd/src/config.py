@@ -71,8 +71,11 @@ config = ed({
                      'refrigerator', 'book', 'clock', 'vase', 'scissors',
                      'teddy bear', 'hair drier', 'toothbrush'),
     "num_classes": 81,
-
-    # if coco used, `image_dir` and `anno_path` are useless.
+    # The annotation.json position of voc validation dataset.
+    "voc_root": "",
+    # voc original dataset.
+    "voc_dir": "",
+    # if coco or voc used, `image_dir` and `anno_path` are useless.
     "image_dir": "",
     "anno_path": "",
 })

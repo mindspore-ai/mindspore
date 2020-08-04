@@ -40,3 +40,9 @@ def load_backbone_params(network, param_dict):
             param_name = '.'.join(['features', str(int(name_split[1]) + 14)] + name_split[2:])
         if param_name in param_dict:
             param.set_parameter_data(param_dict[param_name].data)
+
+def filter_checkpoint_parameter(param_dict):
+    """remove useless parameters"""
+    for key in list(param_dict.keys()):
+        if 'multi_loc_layers' in key or 'multi_cls_layers' in key:
+            del param_dict[key]
