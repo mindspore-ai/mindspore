@@ -24,6 +24,7 @@
 #include <map>
 #include "ps/ps.h"
 #include "utils/log_adapter.h"
+#include "ir/tensor.h"
 #include "frontend/parallel/ps/util.h"
 #include "frontend/parallel/ps/common.h"
 #include "frontend/parallel/ps/worker_proxy.h"
@@ -43,12 +44,13 @@ class Worker {
   void Push(const std::vector<size_t> &keys, std::vector<uintptr_t> addrs, const std::vector<int> &sizes);
   void Pull(const size_t key, void *dev_addr, const size_t size);
   size_t SetParamKey(const std::string &param_name);
+  void SetParamInitInServer(const std::string &param_name, bool init_in_server);
+  bool GetParamInitInServer(const std::string &param_name);
   void SetKeyOptimId(size_t key, const std::string &optimizer_name);
   void SetOptimInputShapes(size_t key, const std::vector<int> &shape);
   void AddEmbeddingTable(const ::ps::Key &key, const size_t &row_count);
   void InitPSEmbeddingTable(const std::vector<size_t> &keys, std::vector<size_t> shapes, const std::vector<int> &sizes);
-  void InitPSParamAndOptim(const std::string &param_name, void *param_data, size_t param_size,
-                           bool init_in_server = false);
+  void InitPSParamAndOptim(const std::string &param_name, tensor::TensorPtr tensor);
   void DoPSEmbeddingLookup(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<int> &lookup_ids,
                            const ::ps::SArray<int> &lens, ::ps::SArray<T> *lookup_result, int cmd);
   void Finalize();
@@ -74,6 +76,7 @@ class Worker {
   std::map<size_t, bool> init_keys_;
   std::map<size_t, int> key_to_optimId_;
   std::map<size_t, std::vector<std::vector<int>>> key_to_optim_shapes_;
+  std::map<std::string, bool> param_to_init_in_server_;
 };
 
 template <typename T>
@@ -209,6 +212,20 @@ size_t Worker<T>::SetParamKey(const std::string &param_name) {
 }
 
 template <typename T>
+void Worker<T>::SetParamInitInServer(const std::string &param_name, bool init_in_server) {
+  MS_LOG(INFO) << "Set parameter " << param_name << " init_in_server:" << init_in_server;
+  param_to_init_in_server_[param_name] = init_in_server;
+}
+
+template <typename T>
+bool Worker<T>::GetParamInitInServer(const std::string &param_name) {
+  if (param_to_init_in_server_.count(param_name) == 0) {
+    return false;
+  }
+  return param_to_init_in_server_[param_name];
+}
+
+template <typename T>
 size_t Worker<T>::GetParamKey(const std::string &param_name) {
   size_t key = kInvalidKey;
   if (param_to_key_.find(param_name) != param_to_key_.end()) {
@@ -253,13 +270,22 @@ void Worker<T>::InitPSEmbeddingTable(const std::vector<size_t> &keys, std::vecto
 
 template <typename T>
 // Initialize parameters and optimizer kernels of Parameter Server.
-void Worker<T>::InitPSParamAndOptim(const std::string &param_name, void *param_data, size_t param_size,
-                                    bool init_in_server) {
+void Worker<T>::InitPSParamAndOptim(const std::string &param_name, tensor::TensorPtr tensor) {
+  void *param_data = tensor->data_c();
+  size_t param_size = LongToSize(tensor->data().nbytes());
+  std::vector<int> param_shape = tensor->shape_c();
+
   size_t param_key = GetParamKey(param_name);
   if (param_key == kInvalidKey) {
     MS_LOG(INFO) << "Parameter " << param_name << " has no key assigned.";
     return;
   }
+  bool init_in_server = false;
+  std::vector<int> shape_init_in_server = {1};
+  if (param_shape == shape_init_in_server) {
+    init_in_server = true;
+  }
+  SetParamInitInServer(param_name, init_in_server);
   bool init = IsKeyInit(param_key);
   if (!init) {
     MS_LOG(INFO) << "Init paramter and optimizer in parameter server side for " << param_name
