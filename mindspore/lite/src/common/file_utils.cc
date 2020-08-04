@@ -44,7 +44,7 @@ char *ReadFile(const char *file, size_t *size) {
 
   ifs.seekg(0, std::ios::end);
   *size = ifs.tellg();
-  std::unique_ptr<char> buf(new (std::nothrow) char[*size]);
+  std::unique_ptr<char[]> buf(new (std::nothrow) char[*size]);
   if (buf == nullptr) {
     MS_LOG(ERROR) << "malloc buf failed, file: " << realPath;
     ifs.close();
@@ -165,4 +165,3 @@ void CompareOutput(float *output_data, std::string file_path) {
 
 }  // namespace lite
 }  // namespace mindspore
-

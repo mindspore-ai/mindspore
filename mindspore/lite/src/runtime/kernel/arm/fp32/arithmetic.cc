@@ -32,11 +32,11 @@ namespace mindspore::kernel {
 
 ArithmeticCPUKernel::~ArithmeticCPUKernel() {
   if (tile_data0_ != nullptr) {
-    free(tile_data0_);
+    delete[](tile_data0_);
     tile_data0_ = nullptr;
   }
   if (tile_data1_ != nullptr) {
-    free(tile_data1_);
+    delete[](tile_data1_);
     tile_data1_ = nullptr;
   }
 }
