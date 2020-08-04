@@ -20,7 +20,9 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <map>
 #include "utils/log_adapter.h"
+#include "include/curand.h"
 
 namespace mindspore {
 namespace device {
@@ -131,6 +133,15 @@ inline bool CheckNullInput(std::vector<size_t> input_shape) {
   return false;
 }
 #define CHECK_NULL_INPUT(input_shape) mindspore::device::gpu::CheckNullInput(input_shape)
+
+#define CHECK_CURAND_RET_WITH_EXCEPT(expression, message)                                     \
+  {                                                                                           \
+    curandStatus_t status = (expression);                                                     \
+    if (status != CURAND_STATUS_SUCCESS) {                                                    \
+      MS_LOG(EXCEPTION) << "CUAD curand Error: " << message << " | curandStatus: " << status; \
+    }                                                                                         \
+  }
+
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
