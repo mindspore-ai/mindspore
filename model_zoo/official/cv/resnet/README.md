@@ -44,6 +44,9 @@ ImageNet2012
     ├── run_distribute_train.sh         # launch distributed training(8 pcs)
     ├── run_eval.sh                     # launch evaluation
     └── run_standalone_train.sh         # launch standalone training(1 pcs)
+    ├── run_distribute_train_gpu.sh     # launch gpu distributed training(8 pcs)
+    ├── run_eval_gpu.sh                 # launch gpu evaluation
+    └── run_standalone_train_gpu.sh     # launch gpu standalone training(1 pcs)
   ├── src
     ├── config.py                       # parameter configuration
     ├── dataset.py                      # data preprocessing
@@ -241,11 +244,11 @@ result: {'top_5_accuracy': 0.9429417413572343, 'top_1_accuracy': 0.7853513124199
 ### Running on GPU
 ```
 # distributed training example
-mpirun -n 8 python train.py --net=resnet50 --dataset=cifar10 --dataset_path=~/cifar-10-batches-bin --device_target="GPU" --run_distribute=True
+sh run_distribute_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012]  [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 
 # standalone training example
-python train.py --net=resnet50 --dataset=cifar10 --dataset_path=~/cifar-10-batches-bin --device_target="GPU"
+sh run_standalone_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 
 # infer example
-python eval.py --net=resnet50 --dataset=cifar10 --dataset_path=~/cifar10-10-verify-bin --device_target="GPU" --checkpoint_path=resnet-90_195.ckpt
+sh run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
