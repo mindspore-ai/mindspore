@@ -20,6 +20,8 @@
 #include <memory>
 #include <vector>
 #include <utility>
+#include <functional>
+#include <numeric>
 
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/costmodel.h"
@@ -48,6 +50,29 @@ Status Activation::CheckStrategy(const StrategyPtr &strategy) {
     } else {
       MS_LOG(ERROR) << name_ << " : Invalid strategy.";
     }
+    return FAILED;
+  }
+
+  return SUCCESS;
+}
+
+Status DropoutInfo::CheckStrategy(const StrategyPtr &strategy) {
+  if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
+    if (is_auto_parallel_) {
+      MS_LOG(DEBUG) << name_ << " : Invalid strategy.";
+    } else {
+      MS_LOG(ERROR) << name_ << " : Invalid strategy.";
+    }
+    return FAILED;
+  }
+
+  // dropout don't support repeated calculation
+  CheckGlobalDeviceManager();
+  auto input_strategy = strategy->GetInputDim().at(0);
+  size_t dev_num = g_device_manager->GetDeviceListByStageId(0).size();
+  auto product_p = std::accumulate(input_strategy.begin(), input_strategy.end(), 1, std::multiplies<int>());
+  if (IntToSize(product_p) != dev_num) {
+    MS_LOG(ERROR) << name_ << ": Invalid strategy. Don't support repeated calc.";
     return FAILED;
   }
 
@@ -100,6 +125,27 @@ Status Activation::GenerateStrategies(int32_t stage_id) {
     return FAILED;
   }
 
+  is_auto_parallel_ = true;
+  Shape input0_split(inputs_shape_[0].size(), 1);
+  Shapes splittable_inputs = {input0_split};
+
+  std::vector<StrategyPtr> sp_vector;
+  if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << " : Generate strategies for independent inputs() failed.";
+    return FAILED;
+  }
+  size_t success = 0;
+  for (auto &sp : sp_vector) {
+    if (SetCostUnderStrategy(sp) == SUCCESS) {
+      success++;
+      MS_LOG(INFO) << name_ << " : Successfully generated " << success << " strategy";
+      PrintStrategy(sp);
+    }
+  }
+  return SUCCESS;
+}
+
+Status DropoutInfo::GenerateStrategies(int32_t stage_id) {
   is_auto_parallel_ = true;
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};
@@ -330,6 +376,32 @@ Status ActivationBase::InferTensorInfo() {
 
   inputs_tensor_info_.push_back(input_tensor_info);
   outputs_tensor_info_.push_back(input_tensor_info);  // the same as input
+
+  return SUCCESS;
+}
+
+Status DropoutInfo::InferTensorInfo() {
+  // infer tensor shape
+  Shape input_shape = inputs_shape_.at(0);
+
+  // infer slice shape
+  Shapes inputs_slice_shape, outputs_slice_shape;
+  Strategys inputs_strategy = strategy_->GetInputDim();
+  // dropout has two outputs
+  Strategys outputs_strategy = {inputs_strategy.at(0), inputs_strategy.at(0)};
+  if (InferSliceShape(inputs_strategy, outputs_strategy, &inputs_slice_shape, &outputs_slice_shape) != SUCCESS) {
+    return FAILED;
+  }
+  Shape input_slice_shape = inputs_slice_shape.at(0);
+  TensorLayout input_tensor_layout;
+  if (input_tensor_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[0], input_shape) != SUCCESS) {
+    return FAILED;
+  }
+  TensorInfo input_tensor_info(input_tensor_layout, input_shape, input_slice_shape);
+  inputs_tensor_info_.push_back(input_tensor_info);
+  // the two outputs of dropout all have the same tensor_info as input
+  outputs_tensor_info_.push_back(input_tensor_info);
+  outputs_tensor_info_.push_back(input_tensor_info);
 
   return SUCCESS;
 }
