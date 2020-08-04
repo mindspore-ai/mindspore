@@ -35,7 +35,7 @@ MaskRcnn is a two-stage target detection network,This network uses a region prop
           └─train2017
     
         ```
-
+        Notice that the coco2017 dataset will be converted to MindRecord which is a data format in MindSpore. The dataset conversion may take about 4 hours.
     2. If your own dataset is used. **Select dataset to other when run script.**
         Organize the dataset infomation into a TXT file, each row in the file is as follows:
 

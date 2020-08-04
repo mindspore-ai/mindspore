@@ -25,7 +25,7 @@ def a_cosine_learning_rate(current_step, base_lr, warmup_steps, decay_steps):
     learning_rate = (1 + math.cos(base * math.pi)) / 2 * base_lr
     return learning_rate
 
-def dynamic_lr(config, rank_size=1):
+def dynamic_lr(config, rank_size=1, start_steps=0):
     """dynamic learning rate generator"""
     base_lr = config.base_lr
 
@@ -38,5 +38,5 @@ def dynamic_lr(config, rank_size=1):
             lr.append(linear_warmup_learning_rate(i, warmup_steps, base_lr, base_lr * config.warmup_ratio))
         else:
             lr.append(a_cosine_learning_rate(i, base_lr, warmup_steps, total_steps))
-
-    return lr
+    learning_rate = lr[start_steps:]
+    return learning_rate

@@ -134,6 +134,7 @@ config = ed({
     "loss_scale": 1,
     "momentum": 0.91,
     "weight_decay": 1e-4,
+    "pretrain_epoch_size": 0,
     "epoch_size": 12,
     "save_checkpoint": True,
     "save_checkpoint_epochs": 1,
