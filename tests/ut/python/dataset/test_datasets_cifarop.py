@@ -406,7 +406,7 @@ def test_cifar_usage():
         try:
             data = ds.Cifar10Dataset(cifar_path, usage=usage) if flag else ds.Cifar100Dataset(cifar_path, usage=usage)
             num_rows = 0
-            for _ in data.create_dict_iterator():
+            for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
                 num_rows += 1
         except (ValueError, TypeError, RuntimeError) as e:
             return str(e)

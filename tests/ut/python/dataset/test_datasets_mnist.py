@@ -240,7 +240,7 @@ def test_mnist_usage():
         try:
             data = ds.MnistDataset(mnist_path, usage=usage, shuffle=False)
             num_rows = 0
-            for _ in data.create_dict_iterator():
+            for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
                 num_rows += 1
         except (ValueError, TypeError, RuntimeError) as e:
             return str(e)

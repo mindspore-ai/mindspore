@@ -31,7 +31,9 @@ ParallelOp::ParallelOp(int32_t num_workers, int32_t op_connector_size, std::shar
       num_workers_(num_workers),
       num_producers_(num_workers),
       worker_connector_size_(1),
-      worker_connector_(nullptr) {}
+      worker_connector_(nullptr),
+      num_workers_paused_(0),
+      epoch_sync_flag_(false) {}
 
 // Creates the internal worker connector for the parallel op if the derived class wants to use it
 Status ParallelOp::CreateWorkerConnector(int32_t worker_connector_size) {
@@ -80,6 +82,16 @@ Status ParallelOp::RegisterWorkerConnectors() {
   if (worker_connector_) {
     return (worker_connector_->Register(tree_->AllTasks()));
   }
+  return Status::OK();
+}
+
+Status ParallelOp::WaitForWorkers() {
+  num_workers_paused_ = 0;
+  for (int32_t i = 0; i < num_workers_; i++) {
+    RETURN_IF_NOT_OK(io_block_queues_[i]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagWait)));
+  }
+  RETURN_IF_NOT_OK(wait_for_workers_post_.Wait());
+  wait_for_workers_post_.Clear();
   return Status::OK();
 }
 }  // namespace dataset

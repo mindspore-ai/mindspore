@@ -424,7 +424,7 @@ def generator_big(maxid=20):
 
 # test with  row_data_buffer > 1
 def test_filter_by_generator_Partial():
-    dataset = ds.GeneratorDataset(source=generator_mc(99), column_names=["col1", "col2"])
+    dataset = ds.GeneratorDataset(source=(lambda: generator_mc(99)), column_names=["col1", "col2"])
     dataset_s = dataset.shuffle(4)
     dataset_f1 = dataset_s.filter(input_columns=["col1", "col2"], predicate=filter_func_Partial, num_parallel_workers=1)
 

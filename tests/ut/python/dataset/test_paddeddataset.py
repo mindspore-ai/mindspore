@@ -502,7 +502,7 @@ def test_celeba_padded():
     data = data.repeat(2)
 
     count = 0
-    for _ in data.create_dict_iterator():
+    for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         count = count + 1
     assert count == 2
 

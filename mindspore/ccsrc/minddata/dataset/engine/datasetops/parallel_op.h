@@ -21,6 +21,7 @@
 #include <vector>
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
+#include "minddata/dataset/engine/datasetops/source/io_block.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
@@ -117,10 +118,27 @@ class ParallelOp : public DatasetOp {
   // @return Status - The error code return
   virtual Status WorkerEntry(int32_t workerId) = 0;
 
+  /// This function is only intended to be called by CallbackManager within the master thread of ParallelOp
+  /// The expected behavior is this, when this function is invoked, this function will block until all the workers
+  /// have finished their remaining work and go to sleep. Since all ParallelOps use a QueueList to sync with master.
+  /// They would automatically wait on the QueueList when they are done.
+  /// \return Status
+  Status WaitForWorkers() override;
+
+  // Wait post used to perform the pausing logic
+  WaitPost wait_for_workers_post_;
+
+  // Count number of workers that have signaled master
+  std::atomic_int num_workers_paused_;
+
+  // Whether or not to sync worker threads at the end of each epoch
+  bool epoch_sync_flag_;
+
   int32_t num_workers_;    // The number of worker threads
   int32_t num_producers_;  // The number of threads pushing to the out_connector_
   int32_t worker_connector_size_;
-  std::unique_ptr<DbConnector> worker_connector_;  // The internal connector for worker threads
+  std::unique_ptr<DbConnector> worker_connector_;        // The internal connector for worker threads
+  QueueList<std::unique_ptr<IOBlock>> io_block_queues_;  // queues of IOBlocks
 };
 }  // namespace dataset
 }  // namespace mindspore
