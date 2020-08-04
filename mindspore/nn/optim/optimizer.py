@@ -78,9 +78,9 @@ class Optimizer(Cell):
               the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
               in the value of 'order_params' should be in one of group parameters.
 
-        weight_decay (float): A floating point value for the weight decay. It should be in range [0.0, 1.0].
+        weight_decay (float): A floating point value for the weight decay. It should be equal to or greater than 0.
             If the type of `weight_decay` input is int, it will be converted to float. Default: 0.0.
-        loss_scale (float): A floating point value for the loss scale. It should be not less than 1.0. If the
+        loss_scale (float): A floating point value for the loss scale. It should be greater than 0. If the
             type of `loss_scale` input is int, it will be converted to float. Default: 1.0.
 
     Raises:
@@ -102,7 +102,7 @@ class Optimizer(Cell):
         if isinstance(loss_scale, int):
             loss_scale = float(loss_scale)
         validator.check_value_type("loss_scale", loss_scale, [float], self.cls_name)
-        validator.check_number_range("loss_scale", loss_scale, 1.0, float("inf"), Rel.INC_LEFT, self.cls_name)
+        validator.check_number_range("loss_scale", loss_scale, 0.0, float("inf"), Rel.INC_NEITHER, self.cls_name)
         self.loss_scale = loss_scale
 
         weight_decay = self._preprocess_weight_decay(weight_decay)

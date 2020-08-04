@@ -133,7 +133,7 @@ class LazyAdam(Optimizer):
             If True, updates the gradients using NAG.
             If False, updates the gradients without using NAG. Default: False.
         weight_decay (float): Weight decay (L2 penalty). Default: 0.0.
-        loss_scale (float): A floating point value for the loss scale. It should be not less than 1.0. Default:
+        loss_scale (float): A floating point value for the loss scale. Should be equal to or greater than 1. Default:
                             1.0.
 
     Inputs:
