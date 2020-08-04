@@ -1,0 +1,6 @@
+op_type,execution_time,execution_frequency,percent
+AtomicAddrClean,0.007283,6,0.49
+Cast,0.053395,13,3.63
+TransData,0.121800,5,8.23
+Conv2D,0.063656,2,4.33
+MatMul,1.085982,9,73.80

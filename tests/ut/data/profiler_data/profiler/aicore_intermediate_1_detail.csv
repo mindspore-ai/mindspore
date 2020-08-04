@@ -1,0 +1,11 @@
+full_op_time,execution_time
+Default/AtomicAddrClean-op104,0.00133
+Default/AtomicAddrClean-op105,0.000987
+Default/AtomicAddrClean-op106,0.001129
+Default/Cast-op10,0.00466
+Default/network-WithLossCell/_backbone-LeNet5/conv1-Conv2d/Cast-op12,0.002366
+Gradients/Default/network-WithLossCell/_backbone-LeNet5/conv1-Conv2d/gradConv2D/Cast-op53,0.004879
+Default/TransData-op11,0.006366
+Gradients/Default/network-WithLossCell/_backbone-LeNet5/gradReshape/TransData-op44,0.006782
+Default/network-WithLossCell/_backbone-LeNet5/conv1-Conv2d/Conv2D-op13,0.05651
+Default/network-WithLossCell/_backbone-LeNet5/fc3-Dense/MatMul-op9,0.370864

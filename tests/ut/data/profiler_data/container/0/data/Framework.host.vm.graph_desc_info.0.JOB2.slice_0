@@ -1,0 +1,4 @@
+op_name:Default/Cast-op6 op_type:Cast input_id:0 input_format:DefaultFormat input_data_type:40 input_shape:"32,3,224,224" output_id:0 output_format:DefaultFormat output_data_type:39 output_shape:"32,3,224,224"
+op_name:Default/TransData-op7 op_type:TransData input_id:0 input_format:DefaultFormat input_data_type:39 input_shape:"32,3,224,224" output_id:0 output_format:NC1HWC0 output_data_type:39 output_shape:"32,1,224,224,16"
+op_name:Default/network-WithLossCell/_backbone-ResNet/conv1-Conv2d/Cast-op5 op_type:Cast input_id:0 input_format:FracZ input_data_type:40 input_shape:"49,4,16,16" output_id:0 output_format:FracZ output_data_type:39 output_shape:"49,4,16,16"
+op_name:Default/network-WithLossCell/_backbone-ResNet/layer1-SequentialCell/0-ResidualBlock/conv1-Conv2d/Cast-op28 op_type:Cast input_id:0 input_format:FracZ input_data_type:40 input_shape:"4,4,16,16" output_id:0 output_format:FracZ output_data_type:39 output_shape:"4,4,16,16"
