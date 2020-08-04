@@ -259,8 +259,10 @@ void SetGenMaskShape(const CNodePtr &cnode, const Shape &input_slice_shape) {
   if (manager == nullptr) {
     MS_LOG(EXCEPTION) << "Failure: AddNode error since manager is nullptr.";
   }
-
-  ValuePtr new_shape = MakeValue(input_slice_shape);
+  std::vector<int32_t> input_slice_shape_int;
+  (void)std::transform(input_slice_shape.begin(), input_slice_shape.end(), std::back_inserter(input_slice_shape_int),
+                       [](const int64_t &value) { return static_cast<int32_t>(value); });
+  ValuePtr new_shape = MakeValue(input_slice_shape_int);
   AnfNodePtr val = NewValueNode(new_shape);
   (void)manager->Replace(dropout_gen_mask_cnode->input(1), val);
 }
@@ -306,8 +308,10 @@ std::vector<Operator> DropoutDoMaskInfo::GetDropoutGenMaskReplaceOp(const CNodeP
     MS_LOG(DEBUG) << "The input slice shape droupout is " << ShapeToString(input_slice_shape);
     return replace_ops;
   }
-
-  ValuePtr new_shape = MakeValue(input_slice_shape);
+  std::vector<int32_t> input_slice_shape_int;
+  (void)std::transform(input_slice_shape.begin(), input_slice_shape.end(), std::back_inserter(input_slice_shape_int),
+                       [](const int64_t &value) { return static_cast<int32_t>(value); });
+  ValuePtr new_shape = MakeValue(input_slice_shape_int);
   Attr attr_0 = std::make_pair(SEED0, MakeValue(seed_0));
   Attr attr_1 = std::make_pair(SEED1, MakeValue(seed_1));
   OperatorAttrs attrs = {attr_0, attr_1};

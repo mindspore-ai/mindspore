@@ -776,7 +776,10 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
       if (input_shape == nullptr) {
         MS_LOG(EXCEPTION) << "Failure: input_shape is nullptr";
       }
-      Shape shape = input_shape->shape();
+      std::vector<int> shape_int = input_shape->shape();
+      Shape shape;
+      (void)std::transform(shape_int.begin(), shape_int.end(), std::back_inserter(shape),
+                           [](int sub_shape) { return static_cast<int64_t>(sub_shape); });
       Shapes inputs_shape = {shape};
       Shapes outputs_shape = {shape};
       // 2) init the attr

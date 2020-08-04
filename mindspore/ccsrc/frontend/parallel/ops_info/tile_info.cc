@@ -180,7 +180,10 @@ void TileInfo::UpdateMultiples(const CNodePtr &cnode) {
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
 
-  ValuePtr new_multiples = MakeValue(slice_multiples_);
+  std::vector<int32_t> slice_multiples_int;
+  (void)std::transform(slice_multiples_.begin(), slice_multiples_.end(), std::back_inserter(slice_multiples_int),
+                       [](const int64_t &value) { return static_cast<int32_t>(value); });
+  ValuePtr new_multiples = MakeValue(slice_multiples_int);
   AnfNodePtr val = NewValueNode(new_multiples);
   (void)manager->Replace(cnode->input(2), val);
 }

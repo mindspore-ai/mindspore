@@ -1027,7 +1027,7 @@ StrategyPtr ExtractStrategy(std::unordered_map<std::string, ValuePtr> attrs) {
         std::vector<ValuePtr> value_vector = value_tuple->value();
         (void)std::transform(
           value_vector.begin(), value_vector.end(), std::back_inserter(dim), [](const ValuePtr &value) {
-            return GetValue<int64_t>(value);
+            return value->isa<Int64Imm>() ? GetValue<int64_t>(value) : static_cast<int64_t>(GetValue<int>(value));
           });
         strategy.push_back(dim);
       } else {
@@ -1077,13 +1077,19 @@ Shapes GetNodeShape(const AnfNodePtr &node) {
     for (auto &shape : tuple_shape) {
       auto each_shape = dyn_cast<abstract::Shape>(shape);
       MS_EXCEPTION_IF_NULL(each_shape);
-      Shape new_shape = each_shape->shape();
+      std::vector<int> shape_int = each_shape->shape();
+      Shape new_shape;
+      (void)std::transform(shape_int.begin(), shape_int.end(), std::back_inserter(new_shape),
+                           [](const int &value) { return static_cast<int64_t>(value); });
       shapes.push_back(new_shape);
     }
   } else {
     auto shape_ptr = dyn_cast<abstract::Shape>(base_shape_ptr);
     MS_EXCEPTION_IF_NULL(shape_ptr);
-    Shape new_shape = shape_ptr->shape();
+    std::vector<int> shape_int = shape_ptr->shape();
+    Shape new_shape;
+    (void)std::transform(shape_int.begin(), shape_int.end(), std::back_inserter(new_shape),
+                         [](const int &value) { return static_cast<int64_t>(value); });
     shapes.push_back(new_shape);
   }
   return shapes;

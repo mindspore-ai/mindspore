@@ -98,8 +98,14 @@ TEST_F(TestConstructOperator, TestStridedSliceOP) {
   OperatorParams params = op.second.second;
   ValuePtr begin_ptr = params[0].first.second;
   ValuePtr end_ptr = params[1].first.second;
-  Shape begin = GetValue<const std::vector<int64_t>>(begin_ptr);
-  Shape end = GetValue<const std::vector<int64_t>>(end_ptr);
+  std::vector<int32_t> begin_int = GetValue<const std::vector<int32_t>>(begin_ptr);
+  std::vector<int32_t> end_int = GetValue<const std::vector<int32_t>>(end_ptr);
+  Shape begin;
+  Shape end;
+  (void)std::transform(begin_int.begin(), begin_int.end(), std::back_inserter(begin),
+                       [](const int32_t &value) { return static_cast<int64_t>(value); });
+  (void)std::transform(end_int.begin(), end_int.end(), std::back_inserter(end),
+                       [](const int32_t &value) { return static_cast<int64_t>(value); });
   for (size_t i = 0; i < begin.size(); i++) {
     int64_t diff = end[i] - begin[i];
     int64_t num = shape[i];

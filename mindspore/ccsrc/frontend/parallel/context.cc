@@ -189,7 +189,10 @@ void ParallelParameterContextCkptInTraining(const FuncGraphPtr &func_graph, cons
     return;
   }
 
-  Shape shape = dyn_cast<abstract::Shape>(ptr->GetShapeTrack())->shape();
+  std::vector<int> shape_int = dyn_cast<abstract::Shape>(ptr->GetShapeTrack())->shape();
+  Shape shape;
+  (void)std::transform(shape_int.begin(), shape_int.end(), std::back_inserter(shape),
+                       [](const int &value) { return static_cast<int64_t>(value); });
   auto ret = param_shapes.try_emplace(param_node->name(), shape);
   if (!ret.second) {
     MS_LOG(EXCEPTION) << "The shape for parameter name " << param_node->name() << " is existed";

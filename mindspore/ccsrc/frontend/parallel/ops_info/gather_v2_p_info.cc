@@ -560,7 +560,8 @@ Status GatherV2PInfo::ComputeReplaceOp() {
 
   OperatorName op_name = EMBEDDING_LOOKUP;
   OperatorAttrs attrs;
-  Attr param_offset = std::make_pair("offset", MakeValue(bias));
+  int32_t bias_int = static_cast<int32_t>(bias);
+  Attr param_offset = std::make_pair("offset", MakeValue(bias_int));
   OperatorParams params = {std::make_pair(param_offset, 3)};
   OperatorArgs args = std::make_pair(attrs, params);
   Operator op = std::make_pair(op_name, args);

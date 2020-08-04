@@ -52,17 +52,26 @@ void Init_Device_Manager() {
 }
 
 CNodePtr Make_Node(Shape x, Shape y, Shape out, int condition = 0) {
+  std::vector<int32_t> x_shape;
+  std::vector<int32_t> y_shape;
+  std::vector<int32_t> out_shape;
   FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
   ParameterPtr param1 = func_graph->add_parameter();
   ParameterPtr param2 = func_graph->add_parameter();
+  (void)std::transform(x.begin(), x.end(), std::back_inserter(x_shape),
+                       [](const int64_t &value) { return static_cast<int>(value); });
+  (void)std::transform(y.begin(), y.end(), std::back_inserter(y_shape),
+                       [](const int64_t &value) { return static_cast<int>(value); });
+  (void)std::transform(out.begin(), out.end(), std::back_inserter(out_shape),
+                       [](const int64_t &value) { return static_cast<int>(value); });
   param1->set_name("x");
   param2->set_name("y");
   BaseShapePtr shape1 = std::make_shared<abstract::Shape>(x);
   BaseShapePtr shape2 = std::make_shared<abstract::Shape>(y);
   BaseShapePtr shape3 = std::make_shared<abstract::Shape>(out);
-  std::shared_ptr<tensor::Tensor> inputs_x = std::make_shared<tensor::Tensor>(kNumberTypeInt32, x);
-  std::shared_ptr<tensor::Tensor> inputs_y = std::make_shared<tensor::Tensor>(kNumberTypeInt32, y);
-  std::shared_ptr<tensor::Tensor> inputs_out = std::make_shared<tensor::Tensor>(kNumberTypeInt32, out);
+  std::shared_ptr<tensor::Tensor> inputs_x = std::make_shared<tensor::Tensor>(kNumberTypeInt32, x_shape);
+  std::shared_ptr<tensor::Tensor> inputs_y = std::make_shared<tensor::Tensor>(kNumberTypeInt32, y_shape);
+  std::shared_ptr<tensor::Tensor> inputs_out = std::make_shared<tensor::Tensor>(kNumberTypeInt32, out_shape);
   AbstractBasePtr abstract1 = abstract::FromValue(inputs_x, true);
   AbstractBasePtr abstract2 = abstract::FromValue(inputs_y, true);
   AbstractBasePtr abstract3 = abstract::FromValue(inputs_out, true);

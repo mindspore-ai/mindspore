@@ -148,7 +148,7 @@ std::shared_ptr<std::pair<std::vector<Arrangement>, Arrangement>> Arrangement::G
   Shape expand_num_list_shape;
   (void)std::transform(expand_shape_list_ptr->begin(), expand_shape_list_ptr->end(),
                        std::back_inserter(expand_num_list_shape),
-                       [](const Arrangement &arr) { return SizeToLong(arr.GetDimSize()); });
+                       [](const Arrangement &arr) { return SizeToInt(arr.GetDimSize()); });
   Arrangement expand_num_list;
   Status status = expand_num_list.Init(expand_num_list_shape);
   if (status != Status::SUCCESS) {

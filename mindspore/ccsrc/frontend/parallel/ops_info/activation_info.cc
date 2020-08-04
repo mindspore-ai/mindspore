@@ -176,7 +176,7 @@ Status Softmax::GetAttrs() {
       }
       std::vector<ValuePtr> value_vector = value_tuple->value();
       (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(axis_),
-                           [](const ValuePtr &value) { return static_cast<int32_t>(GetValue<int64_t>(value)); });
+                           [](const ValuePtr &value) { return static_cast<int32_t>(GetValue<int>(value)); });
       if (axis_.empty()) {
         MS_LOG(ERROR) << name_ << " : The axis tuple is empty.";
         return FAILED;
