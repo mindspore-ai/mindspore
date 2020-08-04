@@ -16,26 +16,26 @@
 
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_rsqrt_parser.h"
+#include "tools/converter/parser/tflite/tflite_cos_parser.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteRsqrtParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-                                const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-                                const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                                const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                                schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
-  MS_LOG(DEBUG) << "paser TfliteRsqrtParser";
-  std::unique_ptr<schema::RsqrtT> attr(new schema::RsqrtT());
+STATUS TfliteCosParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
+                                 const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
+                                 const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
+                                 const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
+                                 schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+  MS_LOG(INFO) << "parse TfliteCosParser";
+  std::unique_ptr<schema::CosT> attr(new schema::CosT());
 
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Rsqrt;
+    op->primitive->value.type = schema::PrimitiveType_Cos;
     op->primitive->value.value = attr.release();
   }
   return RET_OK;
 }
 
-TfliteNodeRegister g_tfliteRsqrtParser("Rsqrt", new TfliteRsqrtParser());
+TfliteNodeRegister g_TfliteCosParser("Cos", new TfliteCosParser());
 }  // namespace lite
 }  // namespace mindspore

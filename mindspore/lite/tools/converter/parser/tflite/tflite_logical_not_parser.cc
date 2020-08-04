@@ -16,26 +16,26 @@
 
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_rsqrt_parser.h"
+#include "tools/converter/parser/tflite/tflite_logical_not_parser.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteRsqrtParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-                                const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-                                const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                                const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                                schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
-  MS_LOG(DEBUG) << "paser TfliteRsqrtParser";
-  std::unique_ptr<schema::RsqrtT> attr(new schema::RsqrtT());
+STATUS TfliteLogicalNotParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
+                                 const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
+                                 const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
+                                 const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
+                                 schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+  MS_LOG(INFO) << "parse TfliteLogicalNotParser";
+  std::unique_ptr<schema::LogicalNotT> attr(new schema::LogicalNotT());
 
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Rsqrt;
+    op->primitive->value.type = schema::PrimitiveType_LogicalNot;
     op->primitive->value.value = attr.release();
   }
   return RET_OK;
 }
 
-TfliteNodeRegister g_tfliteRsqrtParser("Rsqrt", new TfliteRsqrtParser());
+TfliteNodeRegister g_TfliteLogicalNotParser("LogicalNot", new TfliteLogicalNotParser());
 }  // namespace lite
 }  // namespace mindspore

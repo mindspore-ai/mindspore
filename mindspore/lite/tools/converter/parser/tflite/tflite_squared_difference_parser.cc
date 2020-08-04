@@ -16,7 +16,7 @@
 
 #include <vector>
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/tflite/tflite_squareddifference_parser.h"
+#include "tools/converter/parser/tflite/tflite_squared_difference_parser.h"
 
 namespace mindspore {
 namespace lite {
@@ -27,10 +27,6 @@ STATUS TfliteSquaredDifferenceParser::Parse(const std::unique_ptr<tflite::Operat
                                             schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
   MS_LOG(DEBUG) << "parse TfliteSquaredDifferenceParser";
   std::unique_ptr<schema::SquaredDifferenceT> attr(new schema::SquaredDifferenceT());
-  const auto &tflite_attr = tfliteOp->builtin_options.AsSquaredDifferenceOptions();
-  if (tflite_attr == nullptr) {
-    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
-  }
 
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();

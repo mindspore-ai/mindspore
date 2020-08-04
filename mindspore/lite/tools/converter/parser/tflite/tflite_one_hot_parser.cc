@@ -16,33 +16,33 @@
 
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_squeeze_parser.h"
+#include "tools/converter/parser/tflite/tflite_one_hot_parser.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteSqueezeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-                                  const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-                                  const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                                  const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                                  schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
-  MS_LOG(INFO) << "parse TfliteSqueezeParser";
-  std::unique_ptr<schema::SqueezeT> attr(new schema::SqueezeT());
-  const auto &tflite_attr = tfliteOp->builtin_options.AsSqueezeOptions();
+STATUS TfliteOneHotParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
+                                 const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
+                                 const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
+                                 const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
+                                 schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+  MS_LOG(INFO) << "parse TfliteOneHotParser";
+  std::unique_ptr<schema::OneHotT> attr(new schema::OneHotT());
+  const auto &tflite_attr = tfliteOp->builtin_options.AsOneHotOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name << " attr failed";
     return RET_NULL_PTR;
   }
 
-  attr->axis = tflite_attr->squeeze_dims;
+  attr->axis = tflite_attr->axis;
 
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Squeeze;
+    op->primitive->value.type = schema::PrimitiveType_OneHot;
     op->primitive->value.value = attr.release();
   }
   return RET_OK;
 }
 
-TfliteNodeRegister g_TfliteSqueezeParser("Squeeze", new TfliteSqueezeParser());
+TfliteNodeRegister g_TfliteOneHotParser("OneHot", new TfliteOneHotParser());
 }  // namespace lite
 }  // namespace mindspore

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef PREDICT_TFLITE_MEAN_PARSER_H
-#define PREDICT_TFLITE_MEAN_PARSER_H
+#ifndef PREDICT_TFLITE_REDUCE_ANY_PARSER_H
+#define PREDICT_TFLITE_REDUCE_ANY_PARSER_H
 
 #include <memory>
 #include <vector>
@@ -24,18 +24,18 @@
 
 namespace mindspore {
 namespace lite {
-class TfliteMeanParser : public TfliteNodeParser {
+class TfliteReduceAnyParser : public TfliteNodeParser {
  public:
-  TfliteMeanParser() : TfliteNodeParser("Mean") {}
+  TfliteReduceAnyParser() : TfliteNodeParser("ReduceAny") {}
 
   STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
                const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
                const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet, schema::CNodeT *op,
-               TensorCache *tensor_cache, bool quantizedModel) override;
+               TensorCache *tensor_cache,
+               bool quantizedModel) override;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // PREDICT_TFLITE_MEAN_PARSER_H
-
+#endif  // PREDICT_TFLITE_REDUCE_ANY_PARSER_H
