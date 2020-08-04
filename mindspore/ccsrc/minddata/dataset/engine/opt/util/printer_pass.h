@@ -39,7 +39,7 @@ class PrinterPass : public NodePass {
 
   Status RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified) override;
 
-#ifndef ENABLE_ANDROID  
+#ifndef ENABLE_ANDROID
   Status RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified) override;
 
   Status RunOnNode(std::shared_ptr<TFReaderOp> node, bool *modified) override;

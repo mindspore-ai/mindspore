@@ -17,13 +17,18 @@
 #include <string>
 #include "common/common_test.h"
 #include "gtest/gtest.h"
-#include "securec.h"
+#include "./securec.h"
 #include "dataset/core/tensor.h"
 #include "dataset/core/cv_tensor.h"
 #include "dataset/core/data_type.h"
 #include "mindspore/lite/src/ir/tensor.h"
 
-using namespace mindspore::dataset;
+using MSTensor = mindspore::tensor::MSTensor;
+using DETensor = mindspore::tensor::DETensor;
+using LiteTensor = mindspore::lite::tensor::LiteTensor;
+using Tensor = mindspore::dataset::Tensor;
+using DataType = mindspore::dataset::DataType;
+using TensorShape = mindspore::dataset::TensorShape;
 
 class MindDataTestTensorDE : public mindspore::Common {
  public:
@@ -32,26 +37,26 @@ class MindDataTestTensorDE : public mindspore::Common {
 
 TEST_F(MindDataTestTensorDE, MSTensorBasic) {
   std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2, 3}), DataType(DataType::DE_FLOAT32));
-  auto ms_tensor = std::shared_ptr<mindspore::tensor::MSTensor>(new mindspore::tensor::DETensor(t));
-  ASSERT_EQ(t == std::dynamic_pointer_cast<mindspore::tensor::DETensor>(ms_tensor)->tensor(), true);
+  auto ms_tensor = std::shared_ptr<MSTensor>(new DETensor(t));
+  ASSERT_EQ(t == std::dynamic_pointer_cast<DETensor>(ms_tensor)->tensor(), true);
 }
 
 TEST_F(MindDataTestTensorDE, MSTensorConvertToLiteTensor) {
   std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2, 3}), DataType(DataType::DE_FLOAT32));
-  auto ms_tensor = std::shared_ptr<mindspore::tensor::DETensor>(new mindspore::tensor::DETensor(t));
-  std::shared_ptr<mindspore::tensor::MSTensor> lite_ms_tensor = std::shared_ptr<mindspore::tensor::MSTensor>(
-    std::dynamic_pointer_cast<mindspore::tensor::DETensor>(ms_tensor)->ConvertToLiteTensor());
+  auto ms_tensor = std::shared_ptr<DETensor>(new DETensor(t));
+  std::shared_ptr<MSTensor> lite_ms_tensor = std::shared_ptr<MSTensor>(
+    std::dynamic_pointer_cast<DETensor>(ms_tensor)->ConvertToLiteTensor());
   // check if the lite_ms_tensor is the derived LiteTensor
-  mindspore::lite::tensor::LiteTensor * lite_tensor = static_cast<mindspore::lite::tensor::LiteTensor *>(lite_ms_tensor.get());
+  LiteTensor * lite_tensor = static_cast<LiteTensor *>(lite_ms_tensor.get());
   ASSERT_EQ(lite_tensor != nullptr, true);
 }
 
 TEST_F(MindDataTestTensorDE, MSTensorShape) {
   std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2, 3}), DataType(DataType::DE_FLOAT32));
-  auto ms_tensor = std::shared_ptr<mindspore::tensor::MSTensor>(new mindspore::tensor::DETensor(t));
+  auto ms_tensor = std::shared_ptr<MSTensor>(new DETensor(t));
   ASSERT_EQ(ms_tensor->DimensionSize(0) == 2, true);
   ASSERT_EQ(ms_tensor->DimensionSize(1) == 3, true);
-  ms_tensor->set_shape(std::vector<int>{3,2});
+  ms_tensor->set_shape(std::vector<int>{3, 2});
   ASSERT_EQ(ms_tensor->DimensionSize(0) == 3, true);
   ASSERT_EQ(ms_tensor->DimensionSize(1) == 2, true);
   ms_tensor->set_shape(std::vector<int>{6});
@@ -60,35 +65,34 @@ TEST_F(MindDataTestTensorDE, MSTensorShape) {
 
 TEST_F(MindDataTestTensorDE, MSTensorSize) {
   std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2, 3}), DataType(DataType::DE_FLOAT32));
-  auto ms_tensor = std::shared_ptr<mindspore::tensor::MSTensor>(new mindspore::tensor::DETensor(t));
+  auto ms_tensor = std::shared_ptr<MSTensor>(new DETensor(t));
   ASSERT_EQ(ms_tensor->ElementsNum() == 6, true);
   ASSERT_EQ(ms_tensor->Size() == 24, true);
 }
 
 TEST_F(MindDataTestTensorDE, MSTensorDataType) {
   std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2, 3}), DataType(DataType::DE_FLOAT32));
-  auto ms_tensor = std::shared_ptr<mindspore::tensor::MSTensor>(new mindspore::tensor::DETensor(t));
+  auto ms_tensor = std::shared_ptr<MSTensor>(new DETensor(t));
   ASSERT_EQ(ms_tensor->data_type() == mindspore::TypeId::kNumberTypeFloat32, true);
   ms_tensor->set_data_type(mindspore::TypeId::kNumberTypeInt32);
   ASSERT_EQ(ms_tensor->data_type() == mindspore::TypeId::kNumberTypeInt32, true);
-  ASSERT_EQ(std::dynamic_pointer_cast<mindspore::tensor::DETensor>(ms_tensor)->tensor()->type() == DataType::DE_INT32, true);
+  ASSERT_EQ(std::dynamic_pointer_cast<DETensor>(ms_tensor)->tensor()->type() == DataType::DE_INT32, true);
 }
 
 TEST_F(MindDataTestTensorDE, MSTensorMutableData) {
   std::vector<float> x = {2.5, 2.5, 2.5, 2.5};
   std::shared_ptr<Tensor> t;
   Tensor::CreateFromVector(x, TensorShape({2, 2}), &t);
-  auto ms_tensor = std::shared_ptr<mindspore::tensor::MSTensor>(new mindspore::tensor::DETensor(t));
+  auto ms_tensor = std::shared_ptr<MSTensor>(new DETensor(t));
   float *data = static_cast<float*>(ms_tensor->MutableData());
   std::vector<float> tensor_vec(data, data + ms_tensor->ElementsNum());
   ASSERT_EQ(x == tensor_vec, true);
-  // TODO: add set_data_type after implmenting it
 }
 
 TEST_F(MindDataTestTensorDE, MSTensorHash) {
   std::vector<float> x = {2.5, 2.5, 2.5, 2.5};
   std::shared_ptr<Tensor> t;
   Tensor::CreateFromVector(x, TensorShape({2, 2}), &t);
-  auto ms_tensor = std::shared_ptr<mindspore::tensor::MSTensor>(new mindspore::tensor::DETensor(t));
+  auto ms_tensor = std::shared_ptr<MSTensor>(new DETensor(t));
   ASSERT_EQ(ms_tensor->hash() == 11093771382437, true);
 }

@@ -25,7 +25,7 @@ namespace api {
 
 Execute::Execute(const std::shared_ptr<TensorOperation> &op) : op_(std::move(op)) {}
 
-std::shared_ptr<tensor::MSTensor> Execute::operator()(std::shared_ptr<tensor::MSTensor> input){
+std::shared_ptr<tensor::MSTensor> Execute::operator()(std::shared_ptr<tensor::MSTensor> input) {
   // Build the op
   if (op_ == nullptr) {
     MS_LOG(ERROR) << "Input TensorOperation is not valid";

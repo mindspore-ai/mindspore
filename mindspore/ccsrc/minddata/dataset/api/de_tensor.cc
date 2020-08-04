@@ -114,7 +114,8 @@ TypeId DETensor::set_data_type(TypeId data_type) {
     MS_ASSERT(this->tensor_impl_ != nullptr);
     if (data_type != this->data_type()) {
         std::shared_ptr<dataset::Tensor> temp;
-        dataset::Tensor::CreateFromMemory(this->tensor_impl_->shape(), MSTypeToDEType(data_type), this->tensor_impl_->GetBuffer(), &temp);
+        dataset::Tensor::CreateFromMemory(this->tensor_impl_->shape(), MSTypeToDEType(data_type), 
+                                          this->tensor_impl_->GetBuffer(), &temp);
         this->tensor_impl_ = temp;
     }
     return data_type;
@@ -139,7 +140,6 @@ size_t DETensor::set_shape(const std::vector<int> &shape) {
                    std::back_inserter(t_shape),
                    [](int s) -> dataset::dsize_t {return static_cast<dataset::dsize_t>(s);});
     dataset::Status rc = this->tensor_impl_->Reshape(dataset::TensorShape(t_shape));
-    //TODO: what if t_shape has different size?
     return shape.size();
 }
 
@@ -180,7 +180,6 @@ size_t DETensor::Size() const {
 
 void *DETensor::MutableData() const {
   MS_ASSERT(this->tensor_impl_ != nullptr);
-  // TODO: friend the DETensor?
   return this->tensor_impl_->GetMutableBuffer();
 }
 

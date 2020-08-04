@@ -16,16 +16,20 @@
 #include <chrono>
 #include "common/common_test.h"
 #include "gtest/gtest.h"
-#include "securec.h"
+#include "./securec.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/include/execute.h"
 #include "minddata/dataset/util/path.h"
 
-using namespace mindspore::dataset;
-using namespace mindspore::dataset::api;
-using namespace mindspore;
+using MSTensor = mindspore::tensor::MSTensor;
+using DETensor = mindspore::tensor::DETensor;
+using mindspore::dataset::api::vision::Decode;
+using mindspore::dataset::api::vision::Normalize;
+using mindspore::dataset::api::vision::Resize;
+using Execute = mindspore::dataset::api::Execute;
+using Path = mindspore::dataset::Path;
 
 class MindDataTestEager : public mindspore::Common {
  public:
@@ -33,7 +37,7 @@ class MindDataTestEager : public mindspore::Common {
 };
 
 TEST_F(MindDataTestEager, Test1) {
-#ifdef ENABLE_ARM64 || ENABLE_ARM32
+#if defined(ENABLE_ARM64) || defined(ENABLE_ARM32)
   std::string in_dir = "/sdcard/data/testPK/data/class1";
 #else
   std::string in_dir = "data/testPK/data/class1";
@@ -47,20 +51,20 @@ TEST_F(MindDataTestEager, Test1) {
   // check if output_dir exists and create it if it does not exist
 
   // iterate over in dir and create json for all images
-  auto dir_it = Path::DirIterator::OpenDirectory(&base_dir); 
+  auto dir_it = Path::DirIterator::OpenDirectory(&base_dir);
   while (dir_it->hasNext()) {
     Path v = dir_it->next();
     MS_LOG(WARNING) << v.toString() << ".";
-    std::shared_ptr<tensor::MSTensor> image = std::shared_ptr<tensor::MSTensor>(tensor::DETensor::CreateTensor(v.toString()));
-    
-    image = Execute(vision::Decode())(image);
+    std::shared_ptr<MSTensor> image = std::shared_ptr<MSTensor>(DETensor::CreateTensor(v.toString()));
+
+    image = Execute(Decode())(image);
     EXPECT_TRUE(image != nullptr);
-    image = Execute(vision::Normalize({121.0, 115.0, 100.0}, {70.0, 68.0, 71.0}))(image);
+    image = Execute(Normalize({121.0, 115.0, 100.0}, {70.0, 68.0, 71.0}))(image);
     EXPECT_TRUE(image != nullptr);
-    image = Execute(vision::Resize({224, 224}))(image);
+    image = Execute(Resize({224, 224}))(image);
     EXPECT_TRUE(image != nullptr);
-    EXPECT_TRUE(image->DimensionSize(0) == 224);
-    EXPECT_TRUE(image->DimensionSize(1) == 224);
+    EXPECT_EQ(image->DimensionSize(0), 224);
+    EXPECT_EQ(image->DimensionSize(1), 224);
   }
   auto t_end = std::chrono::high_resolution_clock::now();
   double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();

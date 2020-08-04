@@ -33,7 +33,7 @@ namespace api {
 class Execute {
  public:
   /// \brief Constructor
-  Execute(const std::shared_ptr<TensorOperation> &op);
+  explicit Execute(const std::shared_ptr<TensorOperation> &op);
 
   /// \brief callable function to execute the TensorOperation in eager mode
   /// \param[inout] input - the tensor to be transformed
