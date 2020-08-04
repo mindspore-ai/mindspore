@@ -39,6 +39,8 @@ class CVOpCommon : public Common {
     kRandomSolarize,
     kTemplate,
     kCrop,
+    kRandomSharpness,
+    kInvert,
     kRandomAffine,
     kAutoContrast,
     kEqualize

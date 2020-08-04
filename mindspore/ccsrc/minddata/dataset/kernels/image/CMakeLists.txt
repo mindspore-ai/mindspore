@@ -32,9 +32,11 @@ add_library(kernels-image OBJECT
     random_solarize_op.cc
     random_vertical_flip_op.cc
     random_vertical_flip_with_bbox_op.cc
+    random_sharpness_op.cc
     rescale_op.cc
     resize_bilinear_op.cc
     resize_op.cc
+    sharpness_op.cc
     solarize_op.cc
     swap_red_blue_op.cc
     uniform_aug_op.cc

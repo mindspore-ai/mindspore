@@ -61,6 +61,7 @@ class RandomColorAdjustOperation;
 class RandomCropOperation;
 class RandomHorizontalFlipOperation;
 class RandomRotationOperation;
+class RandomSharpnessOperation;
 class RandomSolarizeOperation;
 class RandomVerticalFlipOperation;
 class ResizeOperation;
@@ -208,6 +209,13 @@ std::shared_ptr<RandomHorizontalFlipOperation> RandomHorizontalFlip(float prob =
 std::shared_ptr<RandomRotationOperation> RandomRotation(
   std::vector<float> degrees, InterpolationMode resample = InterpolationMode::kNearestNeighbour, bool expand = false,
   std::vector<float> center = {-1, -1}, std::vector<uint8_t> fill_value = {0, 0, 0});
+
+/// \brief Function to create a RandomSharpness TensorOperation.
+/// \notes Tensor operation to perform random sharpness.
+/// \param[in] start_degree - float representing the start of the range to uniformly sample the factor from it.
+/// \param[in] end_degree - float representing the end of the range.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<RandomSharpnessOperation> RandomSharpness(std::vector<float> degrees = {0.1, 1.9});
 
 /// \brief Function to create a RandomSolarize TensorOperation.
 /// \notes Invert pixels within specified range. If min=max, then it inverts all pixel above that threshold
@@ -466,6 +474,20 @@ class RandomRotationOperation : public TensorOperation {
   std::vector<float> center_;
   bool expand_;
   std::vector<uint8_t> fill_value_;
+};
+
+class RandomSharpnessOperation : public TensorOperation {
+ public:
+  explicit RandomSharpnessOperation(std::vector<float> degrees = {0.1, 1.9});
+
+  ~RandomSharpnessOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
+
+ private:
+  std::vector<float> degrees_;
 };
 
 class RandomVerticalFlipOperation : public TensorOperation {

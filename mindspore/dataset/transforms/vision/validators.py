@@ -614,14 +614,16 @@ def check_positive_degrees(method):
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [degrees], _ = parse_user_args(method, *args, **kwargs)
-
         if isinstance(degrees, (list, tuple)):
             if len(degrees) != 2:
                 raise ValueError("Degrees must be a sequence with length 2.")
+            for value in degrees:
+                check_value(value, (0., FLOAT_MAX_INTEGER))
             check_positive(degrees[0], "degrees[0]")
             if degrees[0] > degrees[1]:
                 raise ValueError("Degrees should be in (min,max) format. Got (max,min).")
-
+        else:
+            raise TypeError("Degrees should be a tuple or list.")
         return method(self, *args, **kwargs)
 
     return new_method

@@ -31,6 +31,7 @@
 #include "minddata/dataset/kernels/image/random_crop_op.h"
 #include "minddata/dataset/kernels/image/random_horizontal_flip_op.h"
 #include "minddata/dataset/kernels/image/random_rotation_op.h"
+#include "minddata/dataset/kernels/image/random_sharpness_op.h"
 #include "minddata/dataset/kernels/image/random_solarize_op.h"
 #include "minddata/dataset/kernels/image/random_vertical_flip_op.h"
 #include "minddata/dataset/kernels/image/resize_op.h"
@@ -202,6 +203,16 @@ std::shared_ptr<RandomRotationOperation> RandomRotation(std::vector<float> degre
 // Function to create RandomSolarizeOperation.
 std::shared_ptr<RandomSolarizeOperation> RandomSolarize(uint8_t threshold_min, uint8_t threshold_max) {
   auto op = std::make_shared<RandomSolarizeOperation>(threshold_min, threshold_max);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
+// Function to create RandomSharpnessOperation.
+std::shared_ptr<RandomSharpnessOperation> RandomSharpness(std::vector<float> degrees) {
+  auto op = std::make_shared<RandomSharpnessOperation>(degrees);
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -662,6 +673,22 @@ std::shared_ptr<TensorOp> RandomRotationOperation::Build() {
   std::shared_ptr<RandomRotationOp> tensor_op =
     std::make_shared<RandomRotationOp>(degrees_[0], degrees_[1], center_[0], center_[1], interpolation_mode_, expand_,
                                        fill_value_[0], fill_value_[1], fill_value_[2]);
+  return tensor_op;
+}
+
+// Function to create RandomSharpness.
+RandomSharpnessOperation::RandomSharpnessOperation(std::vector<float> degrees) : degrees_(degrees) {}
+
+bool RandomSharpnessOperation::ValidateParams() {
+  if (degrees_.empty() || degrees_.size() != 2) {
+    MS_LOG(ERROR) << "RandomSharpness: degrees vector has incorrect size: degrees.size()";
+    return false;
+  }
+  return true;
+}
+
+std::shared_ptr<TensorOp> RandomSharpnessOperation::Build() {
+  std::shared_ptr<RandomSharpnessOp> tensor_op = std::make_shared<RandomSharpnessOp>(degrees_[0], degrees_[1]);
   return tensor_op;
 }
 
