@@ -351,6 +351,8 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
   auto context = new lite::Context;
   if (_flags->device == "CPU") {
     context->device_ctx_.type = lite::DT_CPU;
+  } else if (_flags->device == "GPU") {
+      context->device_ctx_.type = lite::DT_GPU;
   } else {
     context->device_ctx_.type = lite::DT_NPU;
   }
