@@ -38,13 +38,13 @@ class TestL2NormalizeInfo : public UT::Common {
 };
 
 void TestL2NormalizeInfo::SetUp() {
-  RankList dev_list;
+  std::vector<int32_t> dev_list;
 
   for (int32_t i = 0; i < 34; i++) {
     dev_list.push_back(i);
   }
 
-  RankList stage_map;
+  std::vector<int32_t> stage_map;
   stage_map.push_back(32);
   stage_map.push_back(2);
 
@@ -64,18 +64,18 @@ void TestL2NormalizeInfo::SetUp() {
 }
 
 TEST_F(TestL2NormalizeInfo, InferDevMatrixShape1) {
-  Strategys inputs = {{4, 1, 8}};
+  std::vector<Dimensions> inputs = {{4, 1, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   norm->Init(strategy);
-  Shape dev_matrix_shape = norm->dev_matrix_shape();
+  std::vector<int32_t> dev_matrix_shape = norm->dev_matrix_shape();
 
-  Shape expect = {4, 1, 8};
+  std::vector<int32_t> expect = {4, 1, 8};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 TEST_F(TestL2NormalizeInfo, InferSliceShape1) {
-  Strategys str = {{4, 1, 8}};
+  std::vector<Dimensions> str = {{4, 1, 8}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   norm->Init(strategy);
@@ -96,7 +96,7 @@ TEST_F(TestL2NormalizeInfo, InferSliceShape1) {
 }
 
 TEST_F(TestL2NormalizeInfo, GetTensorLayout1) {
-  Strategys str = {{4, 1, 8}};
+  std::vector<Dimensions> str = {{4, 1, 8}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   norm->Init(strategy);
@@ -117,7 +117,7 @@ TEST_F(TestL2NormalizeInfo, GetTensorLayout1) {
 }
 
 TEST_F(TestL2NormalizeInfo, GetForwardOp1) {
-  Strategys inputs = {{4, 1, 8}};
+  std::vector<Dimensions> inputs = {{4, 1, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   norm->Init(strategy);
@@ -128,7 +128,7 @@ TEST_F(TestL2NormalizeInfo, GetForwardOp1) {
 }
 
 TEST_F(TestL2NormalizeInfo, GetMirrorOPs1) {
-  Strategys inputs = {{4, 1, 8}};
+  std::vector<Dimensions> inputs = {{4, 1, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   norm->Init(strategy);
@@ -140,7 +140,7 @@ TEST_F(TestL2NormalizeInfo, GetMirrorOPs1) {
 }
 
 TEST_F(TestL2NormalizeInfo, CheckStrategy1) {
-  Strategys inputs = {{4, 1, 8}, {4, 1, 8}};
+  std::vector<Dimensions> inputs = {{4, 1, 8}, {4, 1, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = norm->Init(strategy);
@@ -148,7 +148,7 @@ TEST_F(TestL2NormalizeInfo, CheckStrategy1) {
 }
 
 TEST_F(TestL2NormalizeInfo, CheckStrategy2) {
-  Strategys inputs = {{4, 2, 3}};
+  std::vector<Dimensions> inputs = {{4, 2, 3}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = norm->Init(strategy);
@@ -156,7 +156,7 @@ TEST_F(TestL2NormalizeInfo, CheckStrategy2) {
 }
 
 TEST_F(TestL2NormalizeInfo, CheckStrategy3) {
-  Strategys inputs = {{4, 2, 3, 4}};
+  std::vector<Dimensions> inputs = {{4, 2, 3, 4}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = norm->Init(strategy);
@@ -164,7 +164,7 @@ TEST_F(TestL2NormalizeInfo, CheckStrategy3) {
 }
 
 TEST_F(TestL2NormalizeInfo, CheckStrategy4) {
-  Strategys inputs = {{4, 1, 8}};
+  std::vector<Dimensions> inputs = {{4, 1, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = norm->Init(strategy);
@@ -172,7 +172,7 @@ TEST_F(TestL2NormalizeInfo, CheckStrategy4) {
 }
 
 TEST_F(TestL2NormalizeInfo, mirror_ops) {
-  Strategys inputs = {{2, 1, 8}};
+  std::vector<Dimensions> inputs = {{2, 1, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   norm->Init(strategy);

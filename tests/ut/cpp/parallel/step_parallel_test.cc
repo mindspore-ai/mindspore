@@ -34,13 +34,13 @@ class TestStepParallel : public UT::Common {
 void TestStepParallel::SetUp() { UT::InitPythonPath(); }
 
 void Init_Device_Manager() {
-  RankList dev_list;
+  std::vector<int32_t> dev_list;
 
   for (int32_t i = 0; i < 20; i++) {
     dev_list.push_back(i);
   }
 
-  RankList stage_map;
+  std::vector<int32_t> stage_map;
   stage_map.push_back(16);
   stage_map.push_back(4);
 
@@ -52,26 +52,17 @@ void Init_Device_Manager() {
 }
 
 CNodePtr Make_Node(Shape x, Shape y, Shape out, int condition = 0) {
-  std::vector<int32_t> x_shape;
-  std::vector<int32_t> y_shape;
-  std::vector<int32_t> out_shape;
   FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
   ParameterPtr param1 = func_graph->add_parameter();
   ParameterPtr param2 = func_graph->add_parameter();
-  (void)std::transform(x.begin(), x.end(), std::back_inserter(x_shape),
-                       [](const int64_t &value) { return static_cast<int>(value); });
-  (void)std::transform(y.begin(), y.end(), std::back_inserter(y_shape),
-                       [](const int64_t &value) { return static_cast<int>(value); });
-  (void)std::transform(out.begin(), out.end(), std::back_inserter(out_shape),
-                       [](const int64_t &value) { return static_cast<int>(value); });
   param1->set_name("x");
   param2->set_name("y");
   BaseShapePtr shape1 = std::make_shared<abstract::Shape>(x);
   BaseShapePtr shape2 = std::make_shared<abstract::Shape>(y);
   BaseShapePtr shape3 = std::make_shared<abstract::Shape>(out);
-  std::shared_ptr<tensor::Tensor> inputs_x = std::make_shared<tensor::Tensor>(kNumberTypeInt32, x_shape);
-  std::shared_ptr<tensor::Tensor> inputs_y = std::make_shared<tensor::Tensor>(kNumberTypeInt32, y_shape);
-  std::shared_ptr<tensor::Tensor> inputs_out = std::make_shared<tensor::Tensor>(kNumberTypeInt32, out_shape);
+  std::shared_ptr<tensor::Tensor> inputs_x = std::make_shared<tensor::Tensor>(kNumberTypeInt32, x);
+  std::shared_ptr<tensor::Tensor> inputs_y = std::make_shared<tensor::Tensor>(kNumberTypeInt32, y);
+  std::shared_ptr<tensor::Tensor> inputs_out = std::make_shared<tensor::Tensor>(kNumberTypeInt32, out);
   AbstractBasePtr abstract1 = abstract::FromValue(inputs_x, true);
   AbstractBasePtr abstract2 = abstract::FromValue(inputs_y, true);
   AbstractBasePtr abstract3 = abstract::FromValue(inputs_out, true);
@@ -121,11 +112,11 @@ CNodePtr Make_Node(Shape x, Shape y, Shape out, int condition = 0) {
 }
 
 FuncGraphManagerPtr Make_Manager(int condition = 0) {
-  std::vector<int32_t> inputs_x = {64, 32};
-  std::vector<int32_t> inputs_y = {32, 64};
-  std::vector<int32_t> inputs_z = {64, 128};
-  std::vector<int32_t> outputs_1 = {64, 64};
-  std::vector<int32_t> outputs_2 = {64, 128};
+  Shape inputs_x = {64, 32};
+  Shape inputs_y = {32, 64};
+  Shape inputs_z = {64, 128};
+  Shape outputs_1 = {64, 64};
+  Shape outputs_2 = {64, 128};
   FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
   ParameterPtr param1 = func_graph->add_parameter();
   ParameterPtr param2 = func_graph->add_parameter();
@@ -143,8 +134,8 @@ FuncGraphManagerPtr Make_Manager(int condition = 0) {
   param1->set_abstract(abstract_x);
   param2->set_abstract(abstract_y);
   param3->set_abstract(abstract_z);
-  Dimensions v1 = {2, 2};
-  Dimensions v2 = {2, 4};
+  std::vector<int> v1 = {2, 2};
+  std::vector<int> v2 = {2, 4};
   std::vector<ValuePtr> elements = {MakeValue(v1), MakeValue(v2)};
   ValueTuplePtr var = std::make_shared<ValueTuple>(elements);
   std::vector<AnfNodePtr> inputs;
@@ -162,8 +153,8 @@ FuncGraphManagerPtr Make_Manager(int condition = 0) {
   prim1->AddAttr("instance_name", MakeValue("matmul1"));
   prim1->AddAttr("strategy", var);
   inputs.clear();
-  Dimensions v3 = {2, 2};
-  Dimensions v4 = {2, 4};
+  std::vector<int> v3 = {2, 2};
+  std::vector<int> v4 = {2, 4};
   std::vector<ValuePtr> elements2 = {MakeValue(v3), MakeValue(v4)};
   ValueTuplePtr var2 = std::make_shared<ValueTuple>(elements2);
   inputs.push_back(NewValueNode(prim::kPrimMatMul));
@@ -195,8 +186,8 @@ FuncGraphManagerPtr Make_Manager(int condition = 0) {
       break;
     }
     case 3: {
-      Dimensions vt1 = {2, 4};
-      Dimensions vt2 = {2, 4};
+      std::vector<int> vt1 = {2, 4};
+      std::vector<int> vt2 = {2, 4};
       std::vector<ValuePtr> elements_t2 = {MakeValue(vt1), MakeValue(vt2)};
       ValueTuplePtr var_t2 = std::make_shared<ValueTuple>(elements_t2);
       prim1->set_attr("strategy", var_t2);
@@ -233,9 +224,9 @@ TEST_F(TestStepParallel, ExtractStrategy) {
   std::vector<ValuePtr> elements = {val1, val2};
   ValueTuplePtr strategy_tuple = std::make_shared<ValueTuple>(elements);
   attrs["strategy"] = strategy_tuple;
-  Strategys strategy_expect = {v1, v2};
+  std::vector<Dimensions> strategy_expect = {v1, v2};
   StrategyPtr strategy = ExtractStrategy(attrs);
-  Strategys strategy_test = strategy->GetInputDim();
+  std::vector<Dimensions> strategy_test = strategy->GetInputDim();
 
   ASSERT_EQ(strategy_expect, strategy_test);
 }
@@ -362,7 +353,7 @@ TEST_F(TestStepParallel, OperatorInstance) {
   prim->set_attr("transpose_b", transpose_b);
   auto attrs = prim->attrs();
   // creat strategy
-  Strategys strategy = {{2, 2}, {2, 4}};
+  std::vector<Dimensions> strategy = {{2, 2}, {2, 4}};
   StrategyPtr strategyPtr = parallel::NewStrategy(0, strategy);
   // creat shape
   Shapes inputs_shape = std::vector<Shape>{{64, 32}, {32, 64}};
@@ -523,7 +514,7 @@ TEST_F(TestStepParallel, GetTensorInLayout) {
   prim->set_attr("transpose_b", transpose_b);
   auto attrs = prim->attrs();
   // creat strategy
-  Strategys strategy = {{2, 2}, {2, 4}};
+  std::vector<Dimensions> strategy = {{2, 2}, {2, 4}};
   StrategyPtr strategyPtr = parallel::NewStrategy(0, strategy);
   // creat shape
   Shapes inputs_shape = std::vector<Shape>{{64, 32}, {32, 64}};
@@ -534,9 +525,9 @@ TEST_F(TestStepParallel, GetTensorInLayout) {
   node->set_user_data<OperatorInfo>(matmul_info);
   OperatorInfoPtr distribute_operator_pre = node->user_data<OperatorInfo>();
   TensorLayout tensorlayout_e;
-  Shape array = {64, 64};
+  std::vector<int32_t> array = {64, 64};
   TensorLayout tensorlayout = GetTensorInLayout(node1, prim, distribute_operator_pre);
-  Shape tensor_shape_test = tensorlayout.tensor_shape().array();
+  std::vector<int32_t> tensor_shape_test = tensorlayout.tensor_shape().array();
   ASSERT_EQ(array, tensor_shape_test);
 }
 

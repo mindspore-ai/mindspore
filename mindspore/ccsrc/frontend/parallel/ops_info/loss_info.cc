@@ -38,7 +38,7 @@ Status SoftmaxCrossEntropyWithLogitsInfo::CheckStrategy(const mindspore::paralle
     return FAILED;
   }
 
-  Strategys stra = strategy->GetInputDim();
+  std::vector<Dimensions> stra = strategy->GetInputDim();
   Dimensions input_strategy = stra.at(0);
   Dimensions label_strategy = stra.at(1);
   if (input_strategy != label_strategy) {
@@ -52,8 +52,8 @@ Status SoftmaxCrossEntropyWithLogitsInfo::CheckStrategy(const mindspore::paralle
     axis_index = static_cast<int32_t>(input_dim) + axis_;
   }
 
-  int64_t input_axis_strategy = input_strategy.at(IntToSize(axis_index));
-  int64_t label_axis_strategy = label_strategy.at(IntToSize(axis_index));
+  int32_t input_axis_strategy = input_strategy.at(IntToSize(axis_index));
+  int32_t label_axis_strategy = label_strategy.at(IntToSize(axis_index));
   // Dimension corresponding to axis is un-splittable
   if ((input_axis_strategy != MIN_SLICE_NUM) && (label_axis_strategy != MIN_SLICE_NUM)) {
     if (is_auto_parallel_) {
@@ -82,21 +82,21 @@ Status SoftmaxCrossEntropyWithLogitsInfo::GetAttrs() {
 }
 
 Status SoftmaxCrossEntropyWithLogitsInfo::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  std::vector<Dimensions> stra = strategy_->GetInputDim();
   Dimensions input_strategy = stra.at(0);
   dev_matrix_shape_ = input_strategy;
   return SUCCESS;
 }
 
 Status SoftmaxCrossEntropyWithLogitsInfo::InferTensorMap() {
-  Shape tensor_map_index;
+  std::vector<int32_t> tensor_map_index;
   size_t size = inputs_shape_[0].size();
   // such as 4: tensor_map_index [3,2,1,0]
   for (size_t i = 0; i < size; ++i) {
-    tensor_map_index.push_back((int64_t)(size - i - 1));
+    tensor_map_index.push_back((int32_t)(size - i - 1));
   }
 
-  Shape first_output_tensor_map = {tensor_map_index[0]};
+  std::vector<int32_t> first_output_tensor_map = {tensor_map_index[0]};
   inputs_tensor_map_.push_back(tensor_map_index);          // input
   inputs_tensor_map_.push_back(tensor_map_index);          // label
   outputs_tensor_map_.push_back(first_output_tensor_map);  // output-0

@@ -38,13 +38,13 @@ class TestPowInfo : public UT::Common {
 };
 
 void TestPowInfo::SetUp() {
-  RankList dev_list;
+  std::vector<int32_t> dev_list;
 
   for (int32_t i = 0; i < 66; i++) {
     dev_list.push_back(i);
   }
 
-  RankList stage_map;
+  std::vector<int32_t> stage_map;
   stage_map.push_back(64);
   stage_map.push_back(2);
 
@@ -63,18 +63,18 @@ void TestPowInfo::SetUp() {
 }
 
 TEST_F(TestPowInfo, InferDevMatrixShape1) {
-  Strategys inputs = {{2, 4, 8}, {2, 4, 8}};
+  std::vector<Dimensions> inputs = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   pow->Init(strategy);
-  Shape dev_matrix_shape = pow->dev_matrix_shape();
+  std::vector<int32_t> dev_matrix_shape = pow->dev_matrix_shape();
 
-  Shape expect = {2, 4, 8};
+  std::vector<int32_t> expect = {2, 4, 8};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 TEST_F(TestPowInfo, InferSliceShape1) {
-  Strategys str = {{2, 4, 8}, {2, 4, 8}};
+  std::vector<Dimensions> str = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   pow->Init(strategy);
@@ -95,7 +95,7 @@ TEST_F(TestPowInfo, InferSliceShape1) {
 }
 
 TEST_F(TestPowInfo, GetTensorLayout1) {
-  Strategys str = {{2, 4, 8}, {2, 4, 8}};
+  std::vector<Dimensions> str = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   pow->Init(strategy);
@@ -116,7 +116,7 @@ TEST_F(TestPowInfo, GetTensorLayout1) {
 }
 
 TEST_F(TestPowInfo, GetForwardOp1) {
-  Strategys inputs = {{2, 4, 8}, {2, 4, 8}};
+  std::vector<Dimensions> inputs = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   pow->Init(strategy);
@@ -127,7 +127,7 @@ TEST_F(TestPowInfo, GetForwardOp1) {
 }
 
 TEST_F(TestPowInfo, GetMirrorOPs1) {
-  Strategys inputs = {{2, 4, 8}, {2, 4, 8}};
+  std::vector<Dimensions> inputs = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   pow->Init(strategy);
@@ -139,7 +139,7 @@ TEST_F(TestPowInfo, GetMirrorOPs1) {
 }
 
 TEST_F(TestPowInfo, CheckStrategy1) {
-  Strategys inputs = {{2, 2, 8}, {2, 4, 8}};
+  std::vector<Dimensions> inputs = {{2, 2, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = pow->Init(strategy);
@@ -147,7 +147,7 @@ TEST_F(TestPowInfo, CheckStrategy1) {
 }
 
 TEST_F(TestPowInfo, CheckStrategy2) {
-  Strategys inputs = {{2, 4, 8, 16}, {2, 4, 8, 16}};
+  std::vector<Dimensions> inputs = {{2, 4, 8, 16}, {2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = pow->Init(strategy);
@@ -155,7 +155,7 @@ TEST_F(TestPowInfo, CheckStrategy2) {
 }
 
 TEST_F(TestPowInfo, CheckStrategy3) {
-  Strategys inputs = {{2, 4, 8}, {2, 4, 8}};
+  std::vector<Dimensions> inputs = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = pow->Init(strategy);

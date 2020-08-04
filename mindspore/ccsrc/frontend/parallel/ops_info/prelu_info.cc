@@ -43,7 +43,7 @@ Status PReLUInfo::CheckStrategy(const StrategyPtr &strategy) {
     }
     return FAILED;
   }
-  Strategys stra = strategy->GetInputDim();
+  std::vector<Dimensions> stra = strategy->GetInputDim();
   if (stra[1].size() != PRELU_SECOND_INPUT_SIZE) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Invalid strategy size.";
@@ -67,7 +67,7 @@ Status PReLUInfo::CheckStrategy(const StrategyPtr &strategy) {
  * device matrix is same with the strategy matrix
  */
 Status PReLUInfo::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  std::vector<Dimensions> stra = strategy_->GetInputDim();
   Dimensions input_strategy = stra.at(0);
   input_strategy_ = input_strategy;
   dev_matrix_shape_ = input_strategy;
@@ -103,7 +103,7 @@ Status PReLUInfo::InferTensorMap() {
   TensorMap input_tensor_map;
   // such as 4: input_tensor_map [3,2,1,0]
   for (size_t i = 0; i < inputs_shape_[0].size(); ++i) {
-    input_tensor_map.push_back((int64_t)(inputs_shape_[0].size() - i - 1));
+    input_tensor_map.push_back((int32_t)(inputs_shape_[0].size() - i - 1));
   }
 
   TensorMap param_tensor_map;

@@ -48,10 +48,6 @@ py::object ValuePtrToPyData(const ValuePtr &value) {
     MS_LOG(DEBUG) << "int";
     py::int_ v = value->cast<Int32ImmPtr>()->value();
     ret = v;
-  } else if (value->isa<Int64Imm>()) {
-    MS_LOG(DEBUG) << "int64";
-    py::int_ v = value->cast<Int64ImmPtr>()->value();
-    ret = v;
   } else if (value->isa<UInt64Imm>()) {
     MS_LOG(DEBUG) << "uint64";
     py::int_ v = value->cast<UInt64ImmPtr>()->value();

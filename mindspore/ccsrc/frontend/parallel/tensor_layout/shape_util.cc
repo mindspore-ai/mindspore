@@ -26,7 +26,7 @@ namespace parallel {
  * shape = [2, 8, 32]
  * shape_accum = [2, 2 * 8, 2 * 8 * 32]
  */
-Status ShapeToAccumulateProduct(const Shape &shape, Shape *shape_accum) {
+Status ShapeToAccumulateProduct(const std::vector<int32_t> &shape, std::vector<int64_t> *shape_accum) {
   MS_EXCEPTION_IF_NULL(shape_accum);
   shape_accum->clear();
   int64_t size = 1;
@@ -47,7 +47,7 @@ Status ShapeToAccumulateProduct(const Shape &shape, Shape *shape_accum) {
  * shape_accum = [2 * 8 * 32, 8 * 32, 32]
  *
  */
-Status ShapeToAccumulateProductReverse(const Shape &shape, Shape *shape_accum) {
+Status ShapeToAccumulateProductReverse(const std::vector<int32_t> &shape, std::vector<int64_t> *shape_accum) {
   MS_EXCEPTION_IF_NULL(shape_accum);
   shape_accum->clear();
   int64_t size = 1;
@@ -68,7 +68,7 @@ Status ShapeToAccumulateProductReverse(const Shape &shape, Shape *shape_accum) {
  * shape = [2, 8, 32]
  *
  */
-Status AccumulateProductToShape(const Shape &shape_accum, Shape *shape) {
+Status AccumulateProductToShape(const std::vector<int64_t> &shape_accum, std::vector<int32_t> *shape) {
   MS_EXCEPTION_IF_NULL(shape);
   shape->clear();
   int64_t value = 1;
@@ -81,7 +81,7 @@ Status AccumulateProductToShape(const Shape &shape_accum, Shape *shape) {
       MS_LOG(ERROR) << "shape_accum is not a accumulate product in ascending order";
       return Status::FAILED;
     }
-    shape->push_back(static_cast<int64_t>((*iter) / value));
+    shape->push_back(static_cast<int32_t>((*iter) / value));
     value = (*iter);
   }
   return Status::SUCCESS;
@@ -92,7 +92,7 @@ Status AccumulateProductToShape(const Shape &shape_accum, Shape *shape) {
  * shape_accum_reverse = [2 * 8 * 32, 8 * 32, 32]
  * shape = [2, 8, 32]
  */
-Status AccumulateProductReverseToShape(const Shape &shape_accum_reverse, Shape *shape) {
+Status AccumulateProductReverseToShape(const std::vector<int64_t> &shape_accum_reverse, std::vector<int32_t> *shape) {
   MS_EXCEPTION_IF_NULL(shape);
   shape->clear();
   int64_t value = 1;
@@ -105,7 +105,7 @@ Status AccumulateProductReverseToShape(const Shape &shape_accum_reverse, Shape *
       MS_LOG(ERROR) << "shape_accum is not a accumulate product in ascending order";
       return Status::FAILED;
     }
-    (void)shape->insert(shape->begin(), static_cast<int64_t>((*iter) / value));
+    (void)shape->insert(shape->begin(), static_cast<int32_t>((*iter) / value));
     value = *iter;
   }
   return Status::SUCCESS;
@@ -122,7 +122,8 @@ Status AccumulateProductReverseToShape(const Shape &shape_accum_reverse, Shape *
  * in2 = [8, 16]
  * *out = [2, 4, 8, 16]
  */
-Status UnifyAccumulateProduct(const Shape &in1_accum, const Shape &in2_accum, Shape *out_accum) {
+Status UnifyAccumulateProduct(const std::vector<int64_t> &in1_accum, const std::vector<int64_t> &in2_accum,
+                              std::vector<int64_t> *out_accum) {
   MS_EXCEPTION_IF_NULL(out_accum);
   out_accum->clear();
   auto in1_iter = in1_accum.begin();
@@ -158,19 +159,19 @@ Status UnifyAccumulateProduct(const Shape &in1_accum, const Shape &in2_accum, Sh
  * in2 = [2, 16]
  * out = [2, 4, 4]
  */
-Status UnifyShape(const Shape &in1, const Shape &in2, Shape *out) {
+Status UnifyShape(const std::vector<int32_t> &in1, const std::vector<int32_t> &in2, std::vector<int32_t> *out) {
   MS_EXCEPTION_IF_NULL(out);
-  Shape in1_accum;
+  std::vector<int64_t> in1_accum;
   Status status = ShapeToAccumulateProduct(in1, &in1_accum);
   if (status != Status::SUCCESS) {
     return status;
   }
-  Shape in2_accum;
+  std::vector<int64_t> in2_accum;
   status = ShapeToAccumulateProduct(in2, &in2_accum);
   if (status != Status::SUCCESS) {
     return status;
   }
-  Shape out_accum;
+  std::vector<int64_t> out_accum;
   status = UnifyAccumulateProduct(in1_accum, in2_accum, &out_accum);
   if (status != Status::SUCCESS) {
     return status;
@@ -193,8 +194,9 @@ Status UnifyShape(const Shape &in1, const Shape &in2, Shape *out) {
  * expand_accum_reverse = [2 * 4 * 8, 4 * 8, 8]
  * out_accum_reverse = [2 * 4 * 2 * 4 * 8, 4 * 2 * 4 * 8, 2 * 4 * 8, 4 * 8, 8]
  */
-Status ExpandAccumulateProduct(const Shape &in_accum_reverse, const Shape &expand_accum_reverse,
-                               Shape *out_accum_reverse) {
+Status ExpandAccumulateProduct(const std::vector<int64_t> &in_accum_reverse,
+                               const std::vector<int64_t> &expand_accum_reverse,
+                               std::vector<int64_t> *out_accum_reverse) {
   MS_EXCEPTION_IF_NULL(out_accum_reverse);
   out_accum_reverse->clear();
   auto in_riter = in_accum_reverse.rbegin();
@@ -234,19 +236,19 @@ Status ExpandAccumulateProduct(const Shape &in_accum_reverse, const Shape &expan
  * expand = [2, 4, 8]
  * out = [2, 4, 2, 4, 8]
  */
-Status ExpandShape(const Shape &in, const Shape &expand, Shape *out) {
+Status ExpandShape(const std::vector<int32_t> &in, const std::vector<int32_t> &expand, std::vector<int32_t> *out) {
   MS_EXCEPTION_IF_NULL(out);
-  Shape in_accum_reverse;
+  std::vector<int64_t> in_accum_reverse;
   Status status = ShapeToAccumulateProductReverse(in, &in_accum_reverse);
   if (status != Status::SUCCESS) {
     return status;
   }
-  Shape expand_accum_reverse;
+  std::vector<int64_t> expand_accum_reverse;
   status = ShapeToAccumulateProductReverse(expand, &expand_accum_reverse);
   if (status != Status::SUCCESS) {
     return status;
   }
-  Shape out_accum_reverse;
+  std::vector<int64_t> out_accum_reverse;
   status = ExpandAccumulateProduct(in_accum_reverse, expand_accum_reverse, &out_accum_reverse);
   if (status != Status::SUCCESS) {
     return status;

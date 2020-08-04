@@ -38,7 +38,8 @@ class TensorLayout {
   std::string StandardToString() const;
   std::string OriginToString() const;
   Status Init(const Arrangement &device_arrangement, const Map &tensor_map, const Arrangement &tensor_shape);
-  Status InitFromVector(const Shape &device_arrangement, const Shape &tensor_map, const Shape &tensor_shape);
+  Status InitFromVector(const std::vector<int32_t> &device_arrangement, const std::vector<int32_t> &tensor_map,
+                        const std::vector<int32_t> &tensor_shape);
 
   bool skip_redistribution() const { return skip_redistribution_; }
 
@@ -78,7 +79,7 @@ class TensorLayout {
 
   Arrangement slice_shape() const;
 
-  Status UpdateTensorMap(size_t index, int64_t value);
+  Status UpdateTensorMap(uint32_t index, int32_t value);
 
   TensorLayout SqueezeShape() const;
 
@@ -94,7 +95,7 @@ class TensorLayout {
   int32_t GetSliceDeviceDimensionByTensorDimensionIndex(uint32_t idx) const;
   int32_t GetSliceNumByTensorDimensionIndex(uint32_t idx) const;
   bool TensorShapeDimensionIsDividedBySplitDeviceDimension() const;
-  int32_t GetTensorDimensionIndexByDeviceDimensionIndex(int64_t idx) const;
+  int32_t GetTensorDimensionIndexByDeviceDimensionIndex(int32_t idx) const;
 
   Arrangement device_arrangement_origin_;
   Map tensor_map_origin_;

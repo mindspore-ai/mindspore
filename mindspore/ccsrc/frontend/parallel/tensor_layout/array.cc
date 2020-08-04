@@ -31,14 +31,14 @@ std::string Array::ToString() const {
   return buffer.str();
 }
 
-Status Array::Init(const Shape &array) {
+Status Array::Init(const std::vector<int32_t> &array) {
   array_ = array;
   return IsvalidArray() ? Status::SUCCESS : Status::FAILED;
 }
 
 bool Array::IsvalidArray() const { return true; }
 
-int64_t Array::GetDimByIdx(size_t idx) const {
+int32_t Array::GetDimByIdx(uint32_t idx) const {
   size_t mod_idx = idx;
   if (idx >= GetDimSize()) {
     MS_LOG(EXCEPTION) << "idx is " << idx << ", but array size is " << GetDimSize();
@@ -46,7 +46,7 @@ int64_t Array::GetDimByIdx(size_t idx) const {
   return array_[mod_idx];
 }
 
-int64_t Array::GetDimByReverseIdx(size_t idx) const {
+int32_t Array::GetDimByReverseIdx(uint32_t idx) const {
   size_t mod_idx = idx;
   if (idx >= GetDimSize()) {
     MS_LOG(EXCEPTION) << "idx is " << idx << " but array size is " << GetDimSize();

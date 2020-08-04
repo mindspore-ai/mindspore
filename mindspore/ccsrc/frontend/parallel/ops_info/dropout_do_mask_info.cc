@@ -38,7 +38,7 @@ Status DropoutDoMaskInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  Strategys stra = strategy->GetInputDim();
+  std::vector<Dimensions> stra = strategy->GetInputDim();
   if (stra.size() != 1) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy size " << stra.size() << ", it must be 1";
     return FAILED;
@@ -68,7 +68,7 @@ Status DropoutDoMaskInfo::InferDevMatrixShape() {
     return FAILED;
   }
 
-  Strategys strategy = strategy_->GetInputDim();
+  std::vector<Dimensions> strategy = strategy_->GetInputDim();
   if (strategy.empty()) {
     MS_LOG(ERROR) << name_ << ": The strategy is empty";
     return FAILED;
@@ -84,7 +84,7 @@ Status DropoutDoMaskInfo::InferTensorMap() {
     return FAILED;
   }
 
-  Shape tensor_map_index;
+  std::vector<int32_t> tensor_map_index;
   size_t size = inputs_shape_[0].size();
   // if the dimension of input is 4, and tensor_map_index is [3, 2, 1, 0]
   for (size_t i = 0; i < size; ++i) {
@@ -169,13 +169,13 @@ Status DropoutDoMaskInfo::GenerateStrategies(int32_t stage_id) {
   return SUCCESS;
 }
 
-std::shared_ptr<Strategys> DropoutDoMaskInfo::GenerateBatchStrategies() {
+std::shared_ptr<std::vector<std::vector<int32_t>>> DropoutDoMaskInfo::GenerateBatchStrategies() {
   CheckGlobalDeviceManager();
   size_t dev_num = g_device_manager->GetDeviceListByStageId(0).size();
   Dimensions strategy(inputs_shape_[0].size() - 1, 1);
   (void)strategy.insert(strategy.begin(), SizeToInt(dev_num));
-  Strategys strategy_v = {strategy};
-  return std::make_shared<Strategys>(strategy_v);
+  std::vector<Dimensions> strategy_v = {strategy};
+  return std::make_shared<std::vector<std::vector<int32_t>>>(strategy_v);
 }
 
 Status DropoutDoMaskInfo::Init(const StrategyPtr &strategy) {

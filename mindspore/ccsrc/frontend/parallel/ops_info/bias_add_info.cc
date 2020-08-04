@@ -36,11 +36,11 @@ Status BiasAddInfo::CheckStrategy(const StrategyPtr &strategy) {
     }
     return FAILED;
   }
-  Strategys stra = strategy->GetInputDim();
+  std::vector<Dimensions> stra = strategy->GetInputDim();
   Dimensions sub_a_strategy = stra.at(0);
   Dimensions sub_b_strategy = stra.at(1);
-  int64_t channel_a_strategy = sub_a_strategy.at(1);
-  int64_t channel_b_strategy = sub_b_strategy.at(0);
+  int32_t channel_a_strategy = sub_a_strategy.at(1);
+  int32_t channel_b_strategy = sub_b_strategy.at(0);
   if (channel_a_strategy != channel_b_strategy) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << " : Invalid strategy.";
@@ -53,7 +53,7 @@ Status BiasAddInfo::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status BiasAddInfo::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  std::vector<Dimensions> stra = strategy_->GetInputDim();
   Dimensions sub_a_strategy = stra.at(0);
   dev_matrix_shape_ = sub_a_strategy;
   return SUCCESS;
@@ -67,13 +67,13 @@ void BiasAddInfo::ReComputeBatchSplitFlagList() {
 Status BiasAddInfo::InferTensorMap() {
   TensorMap sub_a_tensor_map;
   TensorMap sub_b_tensor_map;
-  Strategys stra = strategy_->GetInputDim();
+  std::vector<Dimensions> stra = strategy_->GetInputDim();
   Dimensions sub_a_strategy = stra.at(0);
   size_t sub_a_strategy_size = sub_a_strategy.size();
   for (size_t i = 0; i < sub_a_strategy_size; ++i) {
-    sub_a_tensor_map.push_back((int32_t)(LAST_INDEX(sub_a_strategy_size) - i));
+    sub_a_tensor_map.push_back((int32_t)(LAST_INDEX(SizeToUint(sub_a_strategy_size)) - i));
   }
-  sub_b_tensor_map.push_back((int32_t)(LAST_INDEX(sub_a_strategy_size) - 1));
+  sub_b_tensor_map.push_back((int32_t)(LAST_INDEX(SizeToUint(sub_a_strategy_size)) - 1));
 
   inputs_tensor_map_.push_back(sub_a_tensor_map);
   inputs_tensor_map_.push_back(sub_b_tensor_map);
@@ -213,7 +213,7 @@ Status BiasAddInfo::GenerateStrategies(int32_t stage_id) {
   MS_LOG(INFO) << name_ << " : Generate strategies with broadcast success.";
 
   for (auto &sp : sp_vector) {
-    Strategys tmp_strategy;
+    std::vector<Dimensions> tmp_strategy;
     Dimensions input0_strategy = sp->GetInputDim()[0];
     tmp_strategy.push_back(input0_strategy);  // input0
 

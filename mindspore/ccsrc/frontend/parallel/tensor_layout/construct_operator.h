@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace parallel {
-using Args = std::vector<std::int64_t>;
+using Args = std::vector<std::int32_t>;
 
 class ConstructOperator {
  public:
@@ -38,9 +38,9 @@ class ConstructOperator {
   OperatorVector SkipRedisReshapeOP(Shape shape);
   Status ReshapeOP(Shape shape);
   Status StridedSliceOP(Args args);
-  Status AllGatherOP(int64_t dev_dim);
-  Status SplitOP(int64_t split_count);
-  Status ConcatOP(int64_t concat_dim);
+  Status AllGatherOP(int32_t dev_dim);
+  Status SplitOP(int32_t split_count);
+  Status ConcatOP(int32_t concat_dim);
   Status AlltoAllOP(Args args);
   Operator GetOperator() const { return op_; }
   void UpdateTensorShape(const Shape &tensor_shape) { tensor_shape_ = tensor_shape; }

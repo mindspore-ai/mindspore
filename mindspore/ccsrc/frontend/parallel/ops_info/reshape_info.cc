@@ -57,7 +57,7 @@ Status ReshapeInfo::CheckStrategy(const StrategyPtr &strategy) {
  * only support batch parallel reshape operator in ReID (batch parallel degree can be smaller than device number)
  */
 Status ReshapeInfo::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  std::vector<Dimensions> stra = strategy_->GetInputDim();
   input_strategy_ = stra.at(0);
   dev_matrix_shape_.push_back(input_strategy_[0]);
   return SUCCESS;
@@ -181,7 +181,7 @@ Status ReshapeInfo::InferTensorMap() {
     return FAILED;
   }
 
-  Shape tensor_map_index_input;
+  std::vector<int32_t> tensor_map_index_input;
   tensor_map_index_input.push_back(0);
 
   for (size_t j = 1; j < inputs_shape_[0].size(); ++j) {
@@ -189,7 +189,7 @@ Status ReshapeInfo::InferTensorMap() {
   }
   inputs_tensor_map_.push_back(tensor_map_index_input);
 
-  Shape tensor_map_index_output;
+  std::vector<int32_t> tensor_map_index_output;
   tensor_map_index_output.push_back(0);
 
   for (size_t j = 1; j < outputs_shape_[0].size(); ++j) {
@@ -205,7 +205,7 @@ Status ReshapeInfo::InferTensorMap() {
  */
 Strategys ReshapeInfo::GetOutputsStrategy() {
   Strategys outputs_strategy;
-  Dimensions strategy;
+  std::vector<int32_t> strategy;
   strategy.push_back(input_strategy_[0]);
   for (size_t j = 1; j < outputs_shape_[0].size(); ++j) {
     strategy.push_back(1);
@@ -325,7 +325,7 @@ void ReshapeInfo::device_number(const StrategyPtr &strategy) {
 }
 
 Status ReshapeInfo::InferDefaultLayout(const Shape &shape, TensorLayout *const layout) {
-  Shape tensor_map_index;
+  std::vector<int32_t> tensor_map_index;
   for (size_t i = 0; i < shape.size(); i++) {
     tensor_map_index.push_back(MAP_NONE);
   }
@@ -504,7 +504,7 @@ Status ReshapeInfo::GenetateStrategyCosts(const std::vector<std::shared_ptr<Stra
       MS_LOG(ERROR) << "Infer strategy by tensor_info failed";
       return FAILED;
     }
-    Strategys stra_inputs = {stra};
+    std::vector<Dimensions> stra_inputs = {stra};
     StrategyPtr reshape_stra = std::make_shared<Strategy>(pre_stra_cost->strategy_ptr->GetInputStage(), stra_inputs);
     if (next_stra_costs.empty()) {
       if (Init(nullptr) == FAILED) {

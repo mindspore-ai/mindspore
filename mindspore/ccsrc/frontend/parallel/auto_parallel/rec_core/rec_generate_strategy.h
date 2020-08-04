@@ -31,60 +31,68 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
                       const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list,
                       const std::vector<std::vector<std::string>> &input_tensor_names,
                       const std::shared_ptr<std::vector<size_t>> &index_list);
-Strategys PrepareMatMul(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                        const size_t iter_graph, const size_t iter_ops);
-Strategys PrepareBiasAdd(const std::shared_ptr<Dimensions> &s);
-Strategys PrepareOneHot(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                        const size_t iter_graph, const size_t iter_ops);
-Strategys PrepareGatherV2(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s);
-Strategys PrepareL2Normalize(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                             Dimensions s);
-Strategys MakeRecSearchStrategy(const std::shared_ptr<Graph> &graph,
-                                const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
-                                const size_t iter_ops);
-Strategys CheckBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s);
-Dimensions ApplyBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s,
-                          size_t target_tensor_dim, size_t refer_tensor_dim, bool braoadcast_first_tensor);
-Strategys CheckDivisible(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s);
-Strategys MakeDataParallelStrategy(const std::shared_ptr<Graph> &graph,
-                                   const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
-                                   const size_t iter_ops);
-Strategys PrepareStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                          const size_t iter_graph, const size_t iter_ops);
+std::vector<std::vector<int32_t>> PrepareMatMul(const std::shared_ptr<Graph> &graph,
+                                                const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                const size_t iter_graph, const size_t iter_ops);
+std::vector<std::vector<int32_t>> PrepareBiasAdd(const std::shared_ptr<std::vector<int32_t>> &s);
+std::vector<std::vector<int32_t>> PrepareOneHot(const std::shared_ptr<Graph> &graph,
+                                                const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                const size_t iter_graph, const size_t iter_ops);
+std::vector<std::vector<int32_t>> PrepareGatherV2(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                  const size_t iter_ops, std::vector<int32_t> s);
+std::vector<std::vector<int32_t>> PrepareL2Normalize(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                     const size_t iter_ops, std::vector<int32_t> s);
+std::vector<std::vector<int32_t>> CheckBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                 const size_t iter_ops, std::vector<int32_t> s);
+std::vector<int32_t> ApplyBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                                    std::vector<int32_t> s, size_t target_tensor_dim, size_t refer_tensor_dim,
+                                    bool braoadcast_first_tensor);
+std::vector<std::vector<int32_t>> CheckDivisible(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                 const size_t iter_ops, std::vector<int32_t> s);
+std::vector<std::vector<int32_t>> MakeRecSearchStrategy(const std::shared_ptr<Graph> &graph,
+                                                        const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                        const size_t iter_graph, const size_t iter_ops);
+std::vector<std::vector<int32_t>> MakeDataParallelStrategy(const std::shared_ptr<Graph> &graph,
+                                                           const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                           const size_t iter_graph, const size_t iter_ops);
+std::vector<std::vector<int32_t>> PrepareStrategy(const std::shared_ptr<Graph> &graph,
+                                                  const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                  const size_t iter_graph, const size_t iter_ops);
 void GeneratePartitionedOperatorStrategy(const std::shared_ptr<Graph> &graph,
                                          const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                          const std::shared_ptr<std::vector<size_t>> &index_list);
 size_t FindIndexOfOperatorIncoming(const std::vector<std::vector<std::string>> &input_tensor_names,
                                    const size_t iter_ops);
-Dimensions CopyIncomingOperatorOutputStrategy(const std::shared_ptr<Graph> &graph,
-                                              const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                              const size_t iter_ops, const size_t iter_graph);
-Dimensions PrepareIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                const size_t incoming_op_index);
-Dimensions GetAxisList(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const int iter_ops);
-Dimensions ModifyStrategyIfSqueezeIncoming(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                           const size_t incoming_op_index, Dimensions s);
+std::vector<int32_t> CopyIncomingOperatorOutputStrategy(const std::shared_ptr<Graph> &graph,
+                                                        const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                        const size_t iter_ops, const size_t iter_graph);
+std::vector<int32_t> PrepareIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                          const size_t incoming_op_index);
+std::vector<int32_t> GetAxisList(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const int iter_ops);
+std::vector<int32_t> ModifyStrategyIfSqueezeIncoming(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                     const size_t incoming_op_index, std::vector<int32_t> s);
 bool GetKeepDims(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops);
-Dimensions GetDimList(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops);
-Dimensions ModifyStrategyIfReduceIncoming(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                          const size_t incoming_op_index, Dimensions s);
-Dimensions GetDimListFromAttrs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops);
-Dimensions ModifyStrategyIfArgIncoming(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                       const size_t incoming_op_index, Dimensions s);
-Dimensions CopyIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                             const size_t iter_ops, const size_t incoming_op_index);
-Strategys GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                                         Dimensions basic_stra);
+std::vector<int32_t> GetDimList(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops);
+std::vector<int32_t> ModifyStrategyIfReduceIncoming(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                    const size_t incoming_op_index, std::vector<int32_t> s);
+std::vector<int32_t> GetDimListFromAttrs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops);
+std::vector<int32_t> ModifyStrategyIfArgIncoming(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                 const size_t incoming_op_index, std::vector<int32_t> s);
+std::vector<int32_t> CopyIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                       const size_t iter_ops, const size_t incoming_op_index);
+std::vector<std::vector<int32_t>> GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                                 const size_t iter_ops,
+                                                                 std::vector<int32_t> basic_stra);
 void GenerateEliminatedOperatorStrategyForward(const std::shared_ptr<Graph> &graph,
                                                const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                                const std::vector<std::vector<std::string>> &input_tensor_names,
                                                const std::shared_ptr<std::vector<size_t>> &index_list,
                                                const std::shared_ptr<std::vector<size_t>> &no_stra_op_list);
-Dimensions ModifyStrategyIfSqueezeOutgoing(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                                           Dimensions s);
-Dimensions CopyOutgoingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                             const std::vector<std::vector<std::string>> &input_tensor_names,
-                                             const size_t iter_ops);
+std::vector<int32_t> ModifyStrategyIfSqueezeOutgoing(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                     const size_t iter_ops, std::vector<int32_t> s);
+std::vector<int32_t> CopyOutgoingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                       const std::vector<std::vector<std::string>> &input_tensor_names,
+                                                       const size_t iter_ops);
 void GenerateEliminatedOperatorStrategyBackward(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                                 const std::vector<std::vector<std::string>> &input_tensor_names,
                                                 const std::shared_ptr<std::vector<size_t>> &no_stra_op_list);

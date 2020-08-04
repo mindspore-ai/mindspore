@@ -227,7 +227,7 @@ Status StridedSliceInfo::InferTensorInfo() {
 }
 
 // Note: if the batch dimension is not fully fetched, the batch strategy may not work.
-std::shared_ptr<Strategys> StridedSliceInfo::GenerateBatchStrategies() {
+std::shared_ptr<std::vector<std::vector<int32_t>>> StridedSliceInfo::GenerateBatchStrategies() {
   split_flag_list_ = {true};
   return GenerateBatchStrategiesBySplitFlag(inputs_shape_, split_flag_list_);
 }

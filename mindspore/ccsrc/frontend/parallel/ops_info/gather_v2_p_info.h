@@ -45,7 +45,7 @@ class GatherV2PInfo : public OperatorInfo {
   Status GenerateStrategies(int32_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
-  std::shared_ptr<Strategys> GenerateBatchStrategies() override;
+  std::shared_ptr<std::vector<std::vector<int32_t>>> GenerateBatchStrategies() override;
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
@@ -67,13 +67,13 @@ class GatherV2PInfo : public OperatorInfo {
   std::string target_ = DEVICE;
   std::string replace_op_name_ = GATHERV2;
   int32_t bias_;
-  int64_t index_offset_;
+  int32_t index_offset_;
   int32_t slice_size_;
   Shape out_dev_matrix_shape_;
   Group group_;
   bool manual_split_ = false;
-  std::vector<int64_t> param_split_shapes_;
-  std::vector<int64_t> index_offsets_;
+  std::vector<int32_t> param_split_shapes_;
+  std::vector<int32_t> index_offsets_;
 };
 
 class SparseGatherV2Info : public GatherV2PInfo {

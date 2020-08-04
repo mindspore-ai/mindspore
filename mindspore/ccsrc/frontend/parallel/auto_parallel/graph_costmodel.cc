@@ -1580,7 +1580,7 @@ Status CostGraph::InitSelectedStrategy() {
         if (stra.empty()) {
           MS_LOG(EXCEPTION) << "Infer strategy by tensor_info failed";
         }
-        Strategys stra_inputs = {stra};
+        std::vector<Dimensions> stra_inputs = {stra};
         StrategyPtr reshape_stra =
           std::make_shared<Strategy>((*pre_iter)->prev_operator()->strategy()->GetInputStage(), stra_inputs);
         reshape_info->set_strategy(reshape_stra);

@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace parallel {
-Status Arrangement::Init(const Shape &array) {
+Status Arrangement::Init(const std::vector<int32_t> &array) {
   Status status = Array::Init(array);
   if (status != Status::SUCCESS) {
     return Status::FAILED;
@@ -40,7 +40,7 @@ Status Arrangement::Init(const Shape &array) {
 }
 
 bool Arrangement::IsValidArrangement() {
-  return !std::any_of(array_.begin(), array_.end(), [](int64_t value) { return value <= 0; });
+  return !std::any_of(array_.begin(), array_.end(), [](int32_t value) { return value <= 0; });
 }
 
 void Arrangement::ComputeSize() {
@@ -57,14 +57,14 @@ void Arrangement::ComputeSize() {
  * where size_[i-1] = shape[0] * shape[1] * ... * shape[i-1],
  * if value > size_, return []
  */
-Shape Arrangement::GetFrontElementByValue(int64_t value) const {
-  Shape out;
+std::vector<int32_t> Arrangement::GetFrontElementByValue(int32_t value) const {
+  std::vector<int32_t> out;
   if (GetDimSize() == 0) {
     return out;
   }
   if (value <= size_) {
-    int64_t size = 1;
-    size_t shape_list_idx = 0;
+    int32_t size = 1;
+    uint32_t shape_list_idx = 0;
     while (size < value) {
       size *= array_[shape_list_idx];
       if (size <= value) {
@@ -88,9 +88,9 @@ std::shared_ptr<Arrangement> Arrangement::GetExpandedShapeByExpandListRemoveLeft
   if (expand_list.size() != GetDimSize()) {
     return nullptr;
   }
-  Shape new_shape;
-  for (size_t i = 0; i < expand_list.size(); i++) {
-    Shape expand_shape = expand_list[i].GetFrontElementByValue(GetDimByIdx(i));
+  std::vector<int32_t> new_shape;
+  for (uint32_t i = 0; i < expand_list.size(); i++) {
+    std::vector<int32_t> expand_shape = expand_list[i].GetFrontElementByValue(GetDimByIdx(i));
     if (expand_shape.empty()) {
       new_shape.push_back(GetDimByIdx(i));
     } else {
@@ -109,11 +109,11 @@ std::shared_ptr<Arrangement> Arrangement::GetExpandedShapeByExpandListRemoveLeft
  *    arrangement_list = [[4, 2], [2, 2]]
  */
 std::shared_ptr<std::vector<Arrangement>> Arrangement::GetExpandShapeList(const Arrangement &expand_shape) const {
-  int64_t size = 1;
-  size_t ind = 0;
+  int32_t size = 1;
+  uint32_t ind = 0;
   std::vector<Arrangement> arrangement_list;
-  Shape shape;
-  for (size_t i = 0; i < expand_shape.GetDimSize(); i++) {
+  std::vector<int32_t> shape;
+  for (uint32_t i = 0; i < expand_shape.GetDimSize(); i++) {
     size *= expand_shape.GetDimByIdx(i);
     if (size > GetDimByIdx(ind)) {
       MS_LOG(ERROR) << "invalid expand_shape";
@@ -145,7 +145,7 @@ std::shared_ptr<std::pair<std::vector<Arrangement>, Arrangement>> Arrangement::G
   if (expand_shape_list_ptr == nullptr) {
     return nullptr;
   }
-  Shape expand_num_list_shape;
+  std::vector<int32_t> expand_num_list_shape;
   (void)std::transform(expand_shape_list_ptr->begin(), expand_shape_list_ptr->end(),
                        std::back_inserter(expand_num_list_shape),
                        [](const Arrangement &arr) { return SizeToInt(arr.GetDimSize()); });
@@ -158,9 +158,9 @@ std::shared_ptr<std::pair<std::vector<Arrangement>, Arrangement>> Arrangement::G
   return std::make_shared<std::pair<std::vector<Arrangement>, Arrangement>>(out_value);
 }
 
-Shape Arrangement::ComputeReverseAccumulateSumInReverseOrder() const {
-  Shape shape_accum;
-  int64_t size = 0;
+std::vector<int32_t> Arrangement::ComputeReverseAccumulateSumInReverseOrder() const {
+  std::vector<int32_t> shape_accum;
+  int32_t size = 0;
   for (auto iter = array_.end() - 1; iter >= array_.begin(); --iter) {
     shape_accum.push_back(size);
     size += *iter;
@@ -173,11 +173,11 @@ std::shared_ptr<Arrangement> Arrangement::GetExpandedShapeByExpandListReserveLef
   if (expand_list.size() != GetDimSize()) {
     return nullptr;
   }
-  Shape new_shape;
-  for (size_t i = 0; i < expand_list.size(); i++) {
+  std::vector<int32_t> new_shape;
+  for (uint32_t i = 0; i < expand_list.size(); i++) {
     if (expand_list[i].GetDimSize() >= 1) {
-      int64_t size = 1;
-      for (size_t k = 0; k < expand_list[i].GetDimSize() - 1; k++) {
+      int32_t size = 1;
+      for (uint32_t k = 0; k < expand_list[i].GetDimSize() - 1; k++) {
         new_shape.push_back(expand_list[i].GetDimByIdx(k));
         size *= expand_list[i].GetDimByIdx(k);
       }
@@ -207,7 +207,7 @@ std::shared_ptr<Arrangement> Arrangement::GetUnifiedShape(const Arrangement &in2
   if (status != Status::SUCCESS) {
     return nullptr;
   }
-  Shape out_shape;
+  std::vector<int32_t> out_shape;
   status = AccumulateProductToShape(out_accum, &out_shape);
   if (status != Status::SUCCESS) {
     return nullptr;
@@ -231,8 +231,8 @@ std::vector<size_t> Arrangement::GetSqueezeIdx() const {
 }
 
 Arrangement Arrangement::GetSqueezeArrangement() const {
-  Shape out_shape(array_.size());
-  auto it = std::copy_if(array_.begin(), array_.end(), out_shape.begin(), [](int64_t value) { return value != 1; });
+  std::vector<int32_t> out_shape(array_.size());
+  auto it = std::copy_if(array_.begin(), array_.end(), out_shape.begin(), [](int32_t value) { return value != 1; });
   out_shape.resize(LongToSize(std::distance(out_shape.begin(), it)));
 
   // if all elements are 1, out_shape = {1}
