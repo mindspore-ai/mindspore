@@ -25,9 +25,9 @@ from mindspore.train import Model, ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.ssd import SSD300, SSDWithLossCell, TrainingWrapper, ssd_mobilenet_v2
 from src.config import config
-from src.dataset import create_ssd_dataset, data_to_mindrecord_byte_image
+from src.dataset import create_ssd_dataset, data_to_mindrecord_byte_image, voc_data_to_mindrecord
 from src.lr_schedule import get_lr
-from src.init_params import init_net_param
+from src.init_params import init_net_param, filter_checkpoint_parameter
 
 
 def main():
@@ -79,6 +79,13 @@ def main():
                 print("Create Mindrecord Done, at {}".format(mindrecord_dir))
             else:
                 print("coco_root not exits.")
+        elif args_opt.dataset == "voc":
+            if os.path.isdir(config.voc_dir):
+                print("Create Mindrecord.")
+                voc_data_to_mindrecord(mindrecord_dir, True, prefix)
+                print("Create Mindrecord Done, at {}".format(mindrecord_dir))
+            else:
+                print("voc_dir not exits.")
         else:
             if os.path.isdir(config.image_dir) and os.path.exists(config.anno_path):
                 print("Create Mindrecord.")
@@ -110,6 +117,7 @@ def main():
             if args_opt.pre_trained_epoch_size <= 0:
                 raise KeyError("pre_trained_epoch_size must be greater than 0.")
             param_dict = load_checkpoint(args_opt.pre_trained)
+            filter_checkpoint_parameter(param_dict)
             load_param_into_net(net, param_dict)
 
         lr = Tensor(get_lr(global_step=config.global_step,
