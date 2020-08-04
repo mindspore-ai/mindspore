@@ -26,7 +26,7 @@ STATUS TfliteSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
                                   const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                   schema::CNodeT *op,
                                   TensorCache *tensor_cache, bool quantizedModel) {
-  // MS_LOGI("paser TfliteSliceParser");
+  MS_LOG(DEBUG) << "parse TfliteSliceParser";
   std::unique_ptr<schema::SliceT> attr(new schema::SliceT());
 
   if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->begin)) {

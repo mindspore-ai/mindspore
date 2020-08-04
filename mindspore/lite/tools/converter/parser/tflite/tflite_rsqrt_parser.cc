@@ -25,7 +25,7 @@ STATUS TfliteRsqrtParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
                                 const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                 const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                 schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
-  // MS_LOGI("paser TfliteRsqrtParser");
+  MS_LOG(DEBUG) << "paser TfliteRsqrtParser";
   std::unique_ptr<schema::RsqrtT> attr(new schema::RsqrtT());
 
   if (op != nullptr) {

@@ -25,11 +25,11 @@ STATUS TfliteStackParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
                                 const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                 const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                 schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
-  // MS_LOGI("paser TfliteStackParser");
+  MS_LOG(DEBUG) << "parse TfliteStackParser";
   std::unique_ptr<schema::StackT> attr(new schema::StackT());
   const auto &tflite_attr = tfliteOp->builtin_options.AsPackOptions();
   if (tflite_attr == nullptr) {
-    // MS_LOGE("get op: %s attr failed", op->name.c_str());
+    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
   }
 
   attr->axis = tflite_attr->axis;

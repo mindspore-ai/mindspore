@@ -56,12 +56,34 @@ std::map<tflite::BuiltinOperator, std::string> tfMsOpTypeMap{
   {tflite::BuiltinOperator_SQUARED_DIFFERENCE, "SquaredDifference"},
   {tflite::BuiltinOperator_FAKE_QUANT, "FakeQuant"},
   {tflite::BuiltinOperator_TRANSPOSE_CONV, "DeConv2D"},
+  {tflite::BuiltinOperator_PAD, "Pad"},
+  {tflite::BuiltinOperator_RESIZE_NEAREST_NEIGHBOR, "NearestNeighbor"},
+  {tflite::BuiltinOperator_RELU, "Relu"},
+  {tflite::BuiltinOperator_LEAKY_RELU, "LeakyRelu"},
+  {tflite::BuiltinOperator_SQUEEZE, "Squeeze"},
+  {tflite::BuiltinOperator_POW, "Pow"},
+  {tflite::BuiltinOperator_ARG_MIN, "Argmin"},
+  {tflite::BuiltinOperator_CEIL, "Ceil"},
+  {tflite::BuiltinOperator_EXPAND_DIMS, "ExpandDims"},
+  {tflite::BuiltinOperator_FILL, "Fill"},
+  {tflite::BuiltinOperator_DIV, "Div"},
+  {tflite::BuiltinOperator_FLOOR, "flOOR"},
+  {tflite::BuiltinOperator_FLOOR_DIV, "FloorDiv"},
+  {tflite::BuiltinOperator_FLOOR_MOD, "FloorMod"},
+  {tflite::BuiltinOperator_GATHER, "Gather"},
+  {tflite::BuiltinOperator_GATHER_ND, "GatherND"},
+  {tflite::BuiltinOperator_REVERSE_V2, "reverse"},
+  {tflite::BuiltinOperator_RANGE, "Range"},
+  {tflite::BuiltinOperator_RANK, "Rank"},
+  {tflite::BuiltinOperator_LOCAL_RESPONSE_NORMALIZATION, "LocalResponseNorm"},
+  {tflite::BuiltinOperator_GATHER, "GatherV2"},
 };
 
 std::string GetMSOpType(tflite::BuiltinOperator tfliteOpType) {
   auto iter = tfMsOpTypeMap.find(tfliteOpType);
   if (iter == tfMsOpTypeMap.end()) {
-    return "unsupported_op_type";
+    // return "unsupported_op_type";
+    return tflite::EnumNameBuiltinOperator(tfliteOpType);
   }
   return iter->second;
 }

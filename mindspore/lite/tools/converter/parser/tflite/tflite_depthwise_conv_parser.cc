@@ -75,11 +75,11 @@ STATUS TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite::Operator
                                           const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                           const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                           schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
-  // MS_LOGD("parse TfliteDepthwiseConv2DParser");
+  MS_LOG(DEBUG) << "parse TfliteDepthwiseConv2DParser";
   std::unique_ptr<schema::DepthwiseConv2DT> attr(new schema::DepthwiseConv2DT());
   const auto &tflite_attr = tflite_op->builtin_options.AsDepthwiseConv2DOptions();
   if (tflite_attr == nullptr) {
-    // MS_LOGE("get op: %s attr failed", op->name.c_str());
+    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
     return RET_NULL_PTR;
   }
   attr->strideW = tflite_attr->stride_w;
@@ -105,7 +105,7 @@ STATUS TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite::Operator
   std::vector<tflite::TensorT *> weight_tensors{weight_tensor.get()};
 
   if (RET_OK != ParseWeight(weight_tensors, tfliteModelBuffer, tensor_cache, schema::Format_KHWC)) {
-    // MS_LOGE("parse weight failed");
+    MS_LOG(ERROR) << "parse weight failed";
     return RET_ERROR;
   }
 
@@ -115,7 +115,7 @@ STATUS TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite::Operator
     const auto &bias_tensor = tflite_tensors[bias_index];
     std::vector<tflite::TensorT *> bias_tensors{bias_tensor.get()};
     if (RET_OK != ParseBias(bias_tensors, tfliteModelBuffer, tensor_cache)) {
-      // MS_LOGE("parse bias failed");
+      MS_LOG(ERROR) << "parse bias failed";
       return RET_ERROR;
     }
   }

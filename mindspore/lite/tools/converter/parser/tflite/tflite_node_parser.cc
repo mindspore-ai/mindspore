@@ -32,11 +32,11 @@ STATUS TfliteNodeParser::CopyTfliteTensorData(const std::vector<std::unique_ptr<
     tensor->data.resize(data_size);
     auto ret = memcpy_s(tensor->data.data(), data_size, tfliteModelBuffer[buffer_idx]->data.data(), data_size);
     if (ret) {
-      // MS_LOGE("memcpy tensor data failed, error code: %d", ret);
+      MS_LOG(ERROR) << "memcpy tensor data failed, error code: %d" << ret;
       return ret;
     }
   } else {
-    // MS_LOGE("src tensor data is empty.");
+    MS_LOG(ERROR) << "src tensor data is empty.";
     return RET_ERROR;
   }
   return RET_OK;
@@ -57,7 +57,7 @@ STATUS TfliteNodeParser::ParseWeight(const std::vector<tflite::TensorT *> &weigh
       if (weight_tensor->buffer > 0) {
         CopyTfliteTensorData(tfliteModelBuffer, weight_tensor, tensor.get());
       }
-      // MS_LOGD("add weight tensor name: %s", weight_tensor->name.c_str());
+      MS_LOG(DEBUG) << "add weight tensor name: %s", weight_tensor->name.c_str();
       tensor_cache->AddTensor(weight_tensor->name, tensor.release(), TF_CONST);
     }
   }

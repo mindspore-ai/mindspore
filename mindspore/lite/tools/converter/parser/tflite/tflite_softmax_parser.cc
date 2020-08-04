@@ -26,11 +26,11 @@ STATUS TfliteSoftmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
                                   const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                   schema::CNodeT *op,
                                   TensorCache *tensor_cache, bool quantizedModel) {
-  // MS_LOGI("paser TfliteSoftmaxParser");
+  MS_LOG(DEBUG) << "parse TfliteSoftmaxParser";
   std::unique_ptr<schema::SoftMaxT> attr(new schema::SoftMaxT());
   const auto &tflite_attr = tfliteOp->builtin_options.AsSoftmaxOptions();
   if (tflite_attr == nullptr) {
-    // MS_LOGE("get op: %s attr failed", op->name.c_str());
+    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
   }
   // attr->axis
 

@@ -26,7 +26,7 @@ namespace mindspore {
 namespace lite {
 class TfliteResizeBilinearParser : public TfliteNodeParser {
  public:
-    TfliteResizeBilinearParser() : TfliteNodeParser("ResizeBilinear") {}
+  TfliteResizeBilinearParser() : TfliteNodeParser("ResizeBilinear") {}
 
   STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
                const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
@@ -38,5 +38,5 @@ class TfliteResizeBilinearParser : public TfliteNodeParser {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // PREDICT_TFLITE_ADD_PARSER_H
+#endif  // PREDICT_TFLITE_RESIZE_PARSER_H
 

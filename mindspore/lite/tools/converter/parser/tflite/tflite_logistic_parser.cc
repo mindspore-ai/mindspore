@@ -27,7 +27,7 @@ STATUS TfliteLogisticParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfl
                                    schema::CNodeT *op,
                                    TensorCache *tensor_cache,
                                    bool quantizedModel) {
-  // MS_LOGD("parse TfliteLogisticParser");
+  MS_LOG(DEBUG) << "parse TfliteLogisticParser";
   std::unique_ptr<schema::ActivationT> attr(new schema::ActivationT());
   attr->type = schema::ActivationType_SIGMOID;
 

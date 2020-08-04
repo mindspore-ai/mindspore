@@ -25,7 +25,7 @@ STATUS TfliteFullyConnectedParser::Parse(const std::unique_ptr<tflite::OperatorT
                                          const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                          const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                          schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
-  // MS_LOGD("parse TfliteFullyConnectedParser");
+  MS_LOG(DEBUG) << "parse TfliteFullyConnectedParser";
   std::unique_ptr<schema::FullConnectionT> attr(new schema::FullConnectionT());
 
   auto weight_index = tfliteOp->inputs[1];
@@ -33,7 +33,7 @@ STATUS TfliteFullyConnectedParser::Parse(const std::unique_ptr<tflite::OperatorT
 
   std::vector<tflite::TensorT *> weight_tensors{weight_tensor.get()};
   if (RET_OK != ParseWeight(weight_tensors, tfliteModelBuffer, tensor_cache, schema::Format_NHWC)) {
-    // MS_LOGE("parse weight failed");
+    MS_LOG(ERROR) << "parse weight failed";
     return RET_ERROR;
   }
   if (tfliteOp->inputs.size() == 3) {
@@ -42,7 +42,7 @@ STATUS TfliteFullyConnectedParser::Parse(const std::unique_ptr<tflite::OperatorT
     const auto &bias_tensor = tfliteTensors[bias_index];
     std::vector<tflite::TensorT *> bias_tensors{bias_tensor.get()};
     if (RET_OK != ParseBias(bias_tensors, tfliteModelBuffer, tensor_cache)) {
-      // MS_LOGE("parse bias failed");
+      MS_LOG(ERROR) << "parse bias failed";
       return RET_ERROR;
     }
   }

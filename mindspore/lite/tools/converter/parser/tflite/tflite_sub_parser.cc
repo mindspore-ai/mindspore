@@ -27,23 +27,19 @@ STATUS TfliteSubParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp
                               schema::CNodeT *op,
                               TensorCache *tensor_cache,
                               bool quantizedModel) {
-  // MS_LOGD("parse TfliteSubParser");
+  MS_LOG(DEBUG) << "parse TfliteSubParser";
   std::unique_ptr<schema::SubT> attr(new schema::SubT());
+  const auto &tfliteAttr = tfliteOp->builtin_options.AsSubOptions();
+  if (tfliteAttr == nullptr) {
+    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
+  }
+
   auto weight_index = tfliteOp->inputs[1];
   const auto &weight_tensor = tfliteTensors[weight_index];
   std::vector<tflite::TensorT *> weight_tensors{weight_tensor.get()};
-
   if (RET_OK != ParseWeight(weight_tensors, tfliteModelBuffer, tensor_cache, schema::Format_KHWC)) {
-    // MS_LOGE("parse weight failed");
-    return RET_ERROR;
+    MS_LOG(ERROR) << "parse weight failed";
   }
-
-  const auto &tfliteAttr = tfliteOp->builtin_options.AsSubOptions();
-  if (tfliteAttr == nullptr) {
-    // MS_LOGE("get op: %s attr failed", op->name.c_str());
-    return RET_NULL_PTR;
-  }
-  // tfliteAttr->fused_activation_function
 
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();

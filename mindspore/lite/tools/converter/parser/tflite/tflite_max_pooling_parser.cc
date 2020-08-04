@@ -26,11 +26,11 @@ STATUS TfliteMaxPoolingParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
                                      const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                      schema::CNodeT *op,
                                      TensorCache *tensor_cache, bool quantizedModel) {
-  // MS_LOGD("paser TfliteMaxPoolingParser");
+  MS_LOG(DEBUG) << "parse TfliteMaxPoolingParser";
   std::unique_ptr<schema::PoolingT> attr(new schema::PoolingT());
   const auto &tflite_attr = tflite_op->builtin_options.AsPool2DOptions();
   if (tflite_attr == nullptr) {
-    // MS_LOGE("get op: %s attr failed", op->name.c_str());
+    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
   }
   attr->format = schema::Format_NHWC;
   // attr->global

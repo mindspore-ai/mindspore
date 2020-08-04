@@ -34,12 +34,12 @@ std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModelFromFlat(const
   size_t size;
   auto buf = ReadFile(model_path, &size);
   if (buf == nullptr) {
-    // MS_LOGE("the file buffer is nullptr");
+    MS_LOG(ERROR) << "the file buffer is nullptr";
     return nullptr;
   }
   flatbuffers::Verifier verify((const uint8_t *)buf, size);
   if (!tflite::VerifyModelBuffer(verify)) {
-    // MS_LOGE("the buffer is invalid and fail to create graph");
+    MS_LOG(ERROR) << "the buffer is invalid and fail to create graph";
     return nullptr;
   }
   return tflite::UnPackModel(buf);
@@ -145,25 +145,26 @@ STATUS TfliteModelParser::ParseOp(const std::unique_ptr<tflite::ModelT> &tflite_
     std::unique_ptr<schema::CNodeT> op(new schema::CNodeT);
     op->name = opType + "-" + std::to_string(i++);
 
-    // MS_LOGD("parse op: [%s]", op->name.c_str());
+    MS_LOG(INFO) << "parse op: [%s]" << op->name.c_str();
 
     // 1. init op attr params
     auto node_parser = TfliteNodeParserRegistry::GetInstance()->GetNodeParser(opType);
     if (node_parser == nullptr) {
-      // MS_LOGE("node %s parser is nullptr", opType.c_str());
-      return RET_NULL_PTR;
+      MS_LOG(ERROR) << "cannot find node parser, opType: "<< opType.c_str();
+      continue;
+      // return RET_NULL_PTR;
     }
 
     auto status = node_parser->Parse(tflite_op, tflite_subgraph->tensors, tflite_model->buffers,
                                      tflite_model->operator_codes, op.get(), tensorCache, false);
     if (status != RET_OK) {
-      // MS_LOGE("node %s parser failed", opType.c_str());
+      MS_LOG(ERROR) << "node " << opType.c_str() << " parser failed";
       return RET_ERROR;
     }
 
     status = SetOpOutputIdx(tflite_subgraph, tflite_op, op.get(), tensorCache);
     if (status != RET_OK) {
-      // MS_LOGE("Set Op %s Output Index Failed!", op->name.c_str());
+      MS_LOG(ERROR) << "Set Op " << op->name.c_str() << " Output Index Failed!";
       return RET_ERROR;
     }
 
@@ -230,7 +231,7 @@ MetaGraphT *TfliteModelParser::Parse(const std::string &modelFile, const std::st
   // set dst subGraph op attr etc.
   auto status = ParseOp(tflite_model, tflite_subgraph, subGraph.get(), &tensorCache);
   if (status != RET_OK) {
-    // MS_LOGE("ParseOp failed.");
+    MS_LOG(ERROR) << "ParseOp failed.";
     return nullptr;
   }
 

@@ -25,14 +25,15 @@ STATUS TfliteResizeBilinearParser::Parse(const std::unique_ptr<tflite::OperatorT
                                          const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                          const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                          schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
-  // MS_LOGD("parse TfliteResizeBilinearParser");
+  MS_LOG(DEBUG) << "parse TfliteResizeBilinearParser";
   std::unique_ptr<schema::ResizeT> attr(new schema::ResizeT());
   const auto &tfliteAttr = tfliteOp->builtin_options.AsResizeBilinearOptions();
   if (tfliteAttr == nullptr) {
-    // MS_LOGE("get op: %s attr failed", op->name.c_str());
+    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
     return RET_NULL_PTR;
   }
 
+  attr->format = schema::Format_NHWC;
   attr->method = schema::ResizeMethod_BILINEAR;
   attr->alignCorners = tfliteAttr->align_corners;
   auto tfliteResizeTensorIndex = tfliteOp->inputs[1];
@@ -42,6 +43,7 @@ STATUS TfliteResizeBilinearParser::Parse(const std::unique_ptr<tflite::OperatorT
   auto width = buffData[1];
   attr->newWidth = width;
   attr->newHeight = height;
+  // attr->preserveAspectRatio
 
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();

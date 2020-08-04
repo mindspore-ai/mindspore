@@ -24,9 +24,9 @@
 
 namespace mindspore {
 namespace lite {
-class TfliteActivationParser : public TfliteNodeParser {
+class TfliteRelu6Parser : public TfliteNodeParser {
  public:
-  TfliteActivationParser() : TfliteNodeParser("Relu6") {}
+  TfliteRelu6Parser() : TfliteNodeParser("Relu6") {}
 
   STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
                const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
