@@ -425,12 +425,13 @@ class Optimizer(Cell):
             raise TypeError(f"The parameter only support 'Parameter' or 'list' type.")
 
         lr = []
+        ids = [id(p) for p in self.parameters]
         for p in param_list:
             validator.check_value_type("parameter", p, [Parameter], self.cls_name)
-            if p not in self.parameters:
+            if id(p) not in ids:
                 raise ValueError(f"The parameter {p.name} is not in optimizer.")
             if self.is_group_lr:
-                index = self.parameters.index(p)
+                index = ids.index(id(p))
                 lr.append(get_lr_value(self.learning_rate[index]))
             else:
                 lr.append(get_lr_value(self.learning_rate))

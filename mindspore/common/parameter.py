@@ -340,7 +340,8 @@ class Parameter(MetaTensor):
                 Default: False.
 
         Returns:
-            Parameter, Parameter after init data.
+            Parameter, the `Parameter` after init data. If current `Parameter` already initialized before,
+            returns the same initialized `Parameter`.
         """
         if self.init_mode is None:
             return self

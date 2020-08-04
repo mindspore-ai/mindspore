@@ -102,16 +102,16 @@ class Vgg(nn.Cell):
             if isinstance(cell, nn.Conv2d):
                 cell.weight.default_input = init.initializer(
                     KaimingNormal(a=math.sqrt(5), mode='fan_out', nonlinearity='relu'),
-                    cell.weight.default_input.shape, cell.weight.default_input.dtype).to_tensor()
+                    cell.weight.shape, cell.weight.dtype)
                 if cell.bias is not None:
                     cell.bias.default_input = init.initializer(
-                        'zeros', cell.bias.default_input.shape, cell.bias.default_input.dtype).to_tensor()
+                        'zeros', cell.bias.shape, cell.bias.dtype)
             elif isinstance(cell, nn.Dense):
                 cell.weight.default_input = init.initializer(
-                    init.Normal(0.01), cell.weight.default_input.shape, cell.weight.default_input.dtype).to_tensor()
+                    init.Normal(0.01), cell.weight.shape, cell.weight.dtype)
                 if cell.bias is not None:
                     cell.bias.default_input = init.initializer(
-                        'zeros', cell.bias.default_input.shape, cell.bias.default_input.dtype).to_tensor()
+                        'zeros', cell.bias.shape, cell.bias.dtype)
 
 
 cfg = {

@@ -58,7 +58,7 @@ def load_backbone(net, ckpt_path, args):
     darknet_backbone_prefix = 'network.backbone'
     find_param = []
     not_found_param = []
-
+    net.init_parameters_data()
     for name, cell in net.cells_and_names():
         if name.startswith(yolo_backbone_prefix):
             name = name.replace(yolo_backbone_prefix, darknet_backbone_prefix)

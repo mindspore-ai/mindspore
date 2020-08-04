@@ -63,19 +63,19 @@ class Resnet(ImageClassificationNetwork):
             if isinstance(cell, nn.Conv2d):
                 cell.weight.default_input = init.initializer(
                     KaimingNormal(a=math.sqrt(5), mode='fan_out', nonlinearity='relu'),
-                    cell.weight.default_input.shape, cell.weight.default_input.dtype).to_tensor()
+                    cell.weight.shape, cell.weight.dtype)
             elif isinstance(cell, nn.BatchNorm2d):
-                cell.gamma.default_input = init.initializer('ones', cell.gamma.default_input.shape).to_tensor()
-                cell.beta.default_input = init.initializer('zeros', cell.beta.default_input.shape).to_tensor()
+                cell.gamma.default_input = init.initializer('ones', cell.gamma.shape)
+                cell.beta.default_input = init.initializer('zeros', cell.beta.shape)
 
         # Zero-initialize the last BN in each residual branch,
         # so that the residual branch starts with zeros, and each residual block behaves like an identity.
         # This improves the model by 0.2~0.3% according to https://arxiv.org/abs/1706.02677
         for cell in self.cells_and_names():
             if isinstance(cell, backbones.resnet.Bottleneck):
-                cell.bn3.gamma.default_input = init.initializer('zeros', cell.bn3.gamma.default_input.shape).to_tensor()
+                cell.bn3.gamma.default_input = init.initializer('zeros', cell.bn3.gamma.shape)
             elif isinstance(cell, backbones.resnet.BasicBlock):
-                cell.bn2.gamma.default_input = init.initializer('zeros', cell.bn2.gamma.default_input.shape).to_tensor()
+                cell.bn2.gamma.default_input = init.initializer('zeros', cell.bn2.gamma.shape)
 
 
 

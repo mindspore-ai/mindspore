@@ -536,6 +536,10 @@ class Cell:
         """
         Init all parameters' data and replace the original saved parameters in cell.
 
+        Notes:
+            trainable_params() and other similar interfaces may return different parameter instance after
+            `init_parameters_data`, do not save these result.
+
         Args:
             auto_parallel_mode (bool): If running in auto_parallel_mode.
 
