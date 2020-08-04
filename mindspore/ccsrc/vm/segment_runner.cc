@@ -79,6 +79,42 @@ AnfNodePtrList GetOutput(const AnfNodePtrList &lst, const NodeUsersMap &users, c
   return output;
 }
 
+namespace {
+AnfNodePtr RefSubGraphNode(const FuncGraphPtr &fg, const AnfNodePtr &node, AnfNodePtrList *inputs_ptr,
+                           AnfNodePtrToAnfNodePtrMap *eqv_ptr) {
+  MS_EXCEPTION_IF_NULL(fg);
+  MS_EXCEPTION_IF_NULL(inputs_ptr);
+  MS_EXCEPTION_IF_NULL(eqv_ptr);
+  MS_EXCEPTION_IF_NULL(node);
+  auto &inputs = *inputs_ptr;
+  auto &eqv = *eqv_ptr;
+  if (node->isa<ValueNode>() && !IsValueNode<FuncGraph>(node)) {
+    eqv[node] = node;
+  } else if (eqv.find(node) == eqv.end()) {
+    bool ignore_make_tuple = false;
+    if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+      ignore_make_tuple = true;
+      auto cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      const auto &node_inputs = cnode->inputs();
+      for (size_t i = 1; i < node_inputs.size(); ++i) {
+        if (!IsPrimitiveCNode(node_inputs[i], prim::kPrimControlDepend)) {
+          ignore_make_tuple = false;
+          break;
+        }
+      }
+    }
+    if (!ignore_make_tuple) {
+      inputs.push_back(node);
+    }
+    eqv[node] = fg->add_parameter();
+    eqv[node]->set_abstract(node->abstract());
+    eqv[node]->set_kernel_info(node->kernel_info_ptr());
+  }
+  return eqv[node];
+}
+}  // namespace
+
 std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGraph(const AnfNodePtrList &lst) {
   auto fg = std::make_shared<FuncGraph>();
   AnfNodePtrList inputs;
@@ -86,17 +122,6 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
   if (lst.empty()) {
     MS_LOG(EXCEPTION) << "Input anf node list is empty";
   }
-  auto ref = [&eqv, &inputs, &fg](const AnfNodePtr &a) -> AnfNodePtr {
-    if (a->isa<ValueNode>() && !IsValueNode<FuncGraph>(a)) {
-      eqv[a] = a;
-    } else if (eqv.find(a) == eqv.end()) {
-      inputs.push_back(a);
-      eqv[a] = fg->add_parameter();
-      eqv[a]->set_abstract(a->abstract());
-      eqv[a]->set_kernel_info(a->kernel_info_ptr());
-    }
-    return eqv[a];
-  };
   // Merge CNodes into a AnfGraph that represents a linear instruction segment
   for (auto n : lst) {
     if (!n->isa<CNode>()) {
@@ -122,11 +147,12 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
         if (inps[i]->isa<CNode>() && std::find(lst.begin(), lst.end(), inps[i]) == lst.end()) {
           args.emplace_back(NewValueNode(MakeValue(i)));
         } else {
-          args.emplace_back(ref(inps[i]));
+          args.emplace_back(RefSubGraphNode(fg, inps[i], &inputs, &eqv));
         }
       }
     } else {
-      (void)std::transform(std::begin(inps) + 1, std::end(inps), std::back_inserter(args), ref);
+      (void)std::transform(std::begin(inps) + 1, std::end(inps), std::back_inserter(args),
+                           [&fg, &inputs, &eqv](const AnfNodePtr &a) { return RefSubGraphNode(fg, a, &inputs, &eqv); });
     }
     eqv[n] = fg->NewCNode(args);
     eqv[n]->set_abstract(n->abstract());
