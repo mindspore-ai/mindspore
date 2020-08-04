@@ -65,27 +65,7 @@ OpExecInfoPtr ConstructOpExecInfo() {
   py::none py_none;
   py::args args = py::make_tuple(conv_obj, op_name, op_inputs);
   py::list args_input = args[PY_INPUTS];
-  return GenerateOpExecInfo(args, &args_input);
-}
-
-TEST_F(TestPynativeExecute, TestRunOpInVM) {
-  py::tuple result;
-  PynativeStatusCode status;
-  auto op_exec_info_ptr = ConstructOpExecInfo();
-  result = pynative::RunOpInVM(op_exec_info_ptr, &status);
-  ASSERT_EQ(status, PYNATIVE_SUCCESS);
-}
-
-TEST_F(TestPynativeExecute, TestRunOp) {
-  py::none py_none;
-  auto op_exec_info_ptr = ConstructOpExecInfo();
-  py::tuple outputs = pynative::RunOp(
-    py::make_tuple(op_exec_info_ptr->py_primitive, op_exec_info_ptr->op_name, op_exec_info_ptr->op_inputs));
-  if (outputs.size() == 0) {
-    FAIL();
-  } else {
-    SUCCEED();
-  }
+  return GenerateOpExecInfo(args);
 }
 
 TEST_F(TestPynativeExecute, TestCreateContext) {

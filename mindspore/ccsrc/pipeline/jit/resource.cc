@@ -205,6 +205,7 @@ Resource::Resource(const py::object &obj)
 Resource::~Resource() {
   MS_LOG(DEBUG) << "Resource clear";
 
+  std::unordered_map<std::string, Any>().swap(results_);
   // If exit normally, these global variables will be cleaned
   // in Resource::Clean call by MsPipeline::Compile, but if exit with MS_LOGEXCEPTION,
   // these global variables may not being cleaned, it may

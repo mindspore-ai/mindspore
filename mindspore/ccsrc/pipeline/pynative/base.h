@@ -54,12 +54,12 @@ struct OpExecInfo {
   AbstractBasePtr abstract;
   ValuePtr value = nullptr;
 
-  py::tuple op_inputs;
-  py::tuple inputs_mask;
+  py::list op_inputs;
   py::dict op_attrs;
+  std::vector<bool> inputs_mask;
 };
 using OpExecInfoPtr = std::shared_ptr<OpExecInfo>;
-OpExecInfoPtr GenerateOpExecInfo(const py::args &args, py::list *const out_args);
+OpExecInfoPtr GenerateOpExecInfo(const py::args &args);
 
 const std::set<std::string> ignore_infer_prim = {"make_ref", "mixed_precision_cast"};
 }  // namespace pynative
