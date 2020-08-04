@@ -31,7 +31,7 @@ IndirectGemmInt8_2x4:
     // r4-r8 and q4-q7 must be saved according to https://static.docs.arm.com/ihi0042/i/aapcs32.pdf
     push {r4-r8, r10, r11, lr}
     vpush {q4-q7}
-    add sp, sp, #160
+    add sp, sp, #96
 
     ldr r4, [sp]
     ldr r5, [sp, #4]
@@ -226,14 +226,17 @@ IndirectGemmInt8_2x4:
             subs r8, r8, #1
             bne LoopKsize
 
-        subs r6, r6, #4
+        cmp r6, #4
+        ble LoopOcEnd
+        sub r6, r6, #4
         cmp r3, #0
         beq NoStepFowrard
         add r3, r3, #16
     NoStepFowrard:
-        bgt LoopOc
+        b LoopOc
 
-    add sp, sp, #160
+LoopOcEnd:
+    sub sp, sp, #96
     vpop {q4-q7}
     pop {r4-r8, r10, r11, pc}
 #endif
