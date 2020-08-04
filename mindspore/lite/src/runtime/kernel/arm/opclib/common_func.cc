@@ -159,6 +159,7 @@ void ReluFp32(float *data, int ele_num) {
     float32x4_t relu_data = vld1q_f32(data + index);
     float32x4_t zero_data = vdupq_n_f32(0);
     relu_data = vmaxq_f32(relu_data, zero_data);
+    vst1q_f32(data + index, relu_data);
 #else
     data[index] = data[index] < 0 ? 0 : data[index];
     data[index + 1] = data[index + 1] < 0 ? 0 : data[index + 1];
@@ -181,6 +182,7 @@ void Relu6Fp32(float *data, int ele_num) {
     float32x4_t six_data = vdupq_n_f32(6);
     relu6_data = vmaxq_f32(relu6_data, zero_data);
     relu6_data = vminq_f32(relu6_data, six_data);
+    vst1q_f32(data + index, relu6_data);
 #else
     data[index] = data[index] < 0 ? 0 : data[index];
     data[index] = data[index] > 6 ? 6 : data[index];
