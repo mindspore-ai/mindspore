@@ -24,22 +24,8 @@ namespace mindspore {
 namespace kernel {
 class EmbeddingLookUpCPUKernel : public CPUKernel {
  public:
-  EmbeddingLookUpCPUKernel() {
-    axis_ = 0;
-    offset_ = 0;
-    split_num_ = 0;
-    input_lens_ = 0;
-    indices_lens_ = 0;
-    gatherv2_out_lens_ = 0;
-    reduce_scatter_flag_ = false;
-    gather_v2_out_ = nullptr;
-  }
-  ~EmbeddingLookUpCPUKernel() override {
-    if (gather_v2_out_ != nullptr) {
-      free(gather_v2_out_);
-      gather_v2_out_ = nullptr;
-    }
-  }
+  EmbeddingLookUpCPUKernel() {}
+  ~EmbeddingLookUpCPUKernel() override {}
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -47,21 +33,11 @@ class EmbeddingLookUpCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  protected:
-  void LookUpTable(const std::vector<kernel::AddressPtr> &inputs, size_t dim0, size_t dim1, size_t dim2,
-                   float **output_addr);
   void CheckParam(const CNodePtr &kernel_node);
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> indices_shape_;
-  std::vector<size_t> output_shape_;
-  int axis_;
-  int offset_;
-  int split_num_;
-  size_t input_lens_;
-  size_t indices_lens_;
-  size_t gatherv2_out_lens_;
-  bool reduce_scatter_flag_;
-
-  void *gather_v2_out_;
+  int offset_{0};
+  size_t indices_lens_{1};
+  size_t first_dim_size_{1};
+  size_t outer_dim_size_{1};
 };
 
 MS_REG_CPU_KERNEL(

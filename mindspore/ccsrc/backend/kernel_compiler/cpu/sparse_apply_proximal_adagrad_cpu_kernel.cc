@@ -26,12 +26,12 @@ void ComputeProximalAdagrad(MultiThreadComputeParams *input_params, size_t start
   MS_EXCEPTION_IF_NULL(input_params);
   auto var = input_params->var_;
   auto accum = input_params->accum_;
-  auto lr = input_params->lr_;
-  auto l1 = input_params->l1_;
-  auto l2 = input_params->l2_;
-  auto unique_sparse_grad = input_params->sparse_grad_;
-  auto var_first_dim_size = input_params->var_first_dim_size_;
-  auto var_outer_dim_size = input_params->var_outer_dim_size_;
+  const auto lr = input_params->lr_;
+  const auto l1 = input_params->l1_;
+  const auto l2 = input_params->l2_;
+  const auto unique_sparse_grad = input_params->sparse_grad_;
+  const auto var_first_dim_size = input_params->var_first_dim_size_;
+  const auto var_outer_dim_size = input_params->var_outer_dim_size_;
   for (size_t i = start; i < end; ++i) {
     int index = unique_sparse_grad.indices_[i];
     if (index < 0 || IntToSize(index) >= var_first_dim_size) {

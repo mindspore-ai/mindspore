@@ -22,8 +22,13 @@ namespace kernel {
 namespace ps {
 void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
   EmbeddingLookUpCPUKernel::InitKernel(kernel_node);
-
-  for (auto dim : input_shape_) {
+  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  size_t axis = kShape4dDims - input_shape.size();
+  CPUKernelUtils::ExpandDimsTo4(&input_shape);
+  CPUKernelUtils::ExpandDimsTo4(&output_shape);
+  for (auto dim : input_shape) {
     input_dims_ *= dim;
   }
 
@@ -32,14 +37,13 @@ void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
   }
   std::vector<size_t> keys{key_, key_, key_};
   std::vector<size_t> values;
-  values.insert(values.end(), input_shape_.begin(), input_shape_.end());
-  values.insert(values.end(), indices_shape_.begin(), indices_shape_.end());
-  values.insert(values.end(), output_shape_.begin(), output_shape_.end());
-  std::vector<int> lens{SizeToInt(input_shape_.size()), SizeToInt(indices_shape_.size()),
-                        SizeToInt(output_shape_.size())};
+  values.insert(values.end(), input_shape.begin(), input_shape.end());
+  values.insert(values.end(), indices_shape.begin(), indices_shape.end());
+  values.insert(values.end(), output_shape.begin(), output_shape.end());
+  std::vector<int> lens{SizeToInt(input_shape.size()), SizeToInt(indices_shape.size()), SizeToInt(output_shape.size())};
   const char *env_role = getenv(mindspore::parallel::ps::kEnvRole);
   if (env_role != nullptr && strcmp(env_role, mindspore::parallel::ps::kEnvRoleOfWorker) == 0) {
-    parallel::ps::Worker<float>::GetInstance().AddEmbeddingTable(key_, input_shape_[axis_]);
+    parallel::ps::Worker<float>::GetInstance().AddEmbeddingTable(key_, input_shape[axis]);
     parallel::ps::Worker<float>::GetInstance().InitPSEmbeddingTable(keys, values, lens);
   }
 }
