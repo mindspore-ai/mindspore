@@ -28,10 +28,10 @@ from .._c_expression import signature_dtype as sig_dtype
 
 class Primitive(Primitive_):
     """
-    Primitive is base class for primitives in python.
+    Primitive is the base class of primitives in python.
 
     Args:
-        name (str): Name for current Primitive.
+        name (str): Name for the current Primitive.
 
     Examples:
         >>> add = Primitive('add')
@@ -111,11 +111,11 @@ class Primitive(Primitive_):
 
     def set_strategy(self, strategy):
         """
-        Adds strategy to primitive attribute.
+        Add strategies to primitive attribute.
 
         Note:
-            Valid only in semi auto parallel or auto parallel mode.
-            In other parallel modes, strategies will be ignored if set.
+            It is valid only in semi auto parallel or auto parallel mode.
+            In other parallel modes, strategies set here will be ignored.
 
         Args:
             strategy (tuple): Strategy describes the distributed parallel mode of the current primitive.
@@ -125,10 +125,10 @@ class Primitive(Primitive_):
 
     def set_prim_instance_name(self, instance_name):
         """
-        Sets instance name to primitive operator.
+        Set instance name to primitive operator.
 
         Note:
-            Will be called by default when user defines primitive operator.
+            It will be called by default when user defines primitive operator.
 
         Args:
             instance_name (str): Instance name of primitive operator set by user.
@@ -146,14 +146,14 @@ class Primitive(Primitive_):
 
     def check_elim(self, *args):
         """
-        Check whether or not certain inputs should go into backend. Subclass in need should override this method.
+        Check if certain inputs should go to the backend. Subclass in need should override this method.
 
         Args:
             *args(Primitive args): Same as arguments of current Primitive.
 
         Returns:
-            A tuple of two elements, first element indicates whether or not we should filter out current arguments;
-            seconde element is the output in case where we should filter out the arguments.
+            A tuple consisting of two elements. The first element indicates whether we should filter out current
+            arguments; the seconde element is the output if we need to filter out the arguments.
         """
         return (False, None)
 
@@ -181,7 +181,7 @@ class Primitive(Primitive_):
 
     def init_prim_io_names(self, inputs, outputs):
         """
-        Initializes inputs and outpus name of Tensor or attributes.
+        Initializes the name of inputs and outpus of Tensor or attributes.
 
         Args:
             inputs (list[str]): list of inputs names.
@@ -200,15 +200,15 @@ class Primitive(Primitive_):
 
 class PrimitiveWithInfer(Primitive):
     """
-    PrimitiveWithInfer is base class for primitives in python and defines functions for infer of tracks in python.
+    PrimitiveWithInfer is the base class of primitives in python defines functions for tracking inference in python.
 
     There are four method can be overide to define the infer logic of the primitive: __infer__(), infer_shape(),
     infer_dtype(), and infer_value(). If __infer__() is defined in primitive, the __infer__() has highest priority
-    to be called. If __infer__() is not defined, infer_shape() and infer_dtype() can be defined to describe shape
-    and type infer logic. The infer_value() is used for constant propagation.
+    to be called. If __infer__() is not defined, infer_shape() and infer_dtype() can be defined to describe the infer
+    logic of the shape and type. The infer_value() is used for constant propagation.
 
     Args:
-        name (str): Name for current Primitive.
+        name (str): Name of the current Primitive.
 
     Examples:
         >>> # init a Primitive class with infer
@@ -276,7 +276,7 @@ class PrimitiveWithInfer(Primitive):
             args (Any): value of inputs.
 
         Return:
-            Value of outputs. Return `None` for, cat not infer the value at compile time.
+            Value of outputs. Return `None`, the value can not be inferred at compile time in this case.
         """
         return None
 
@@ -295,8 +295,8 @@ def prim_attr_register(fn):
     """
     Primitive attributes register.
 
-    Registering the decorator of the built-in operator primitive __init__
-    function will add all the parameters of __init__ as operator attributes.
+    Register the decorator of the built-in operator primitive '__init__'.
+    The function will add all the parameters of '__init__' as operator attributes.
 
     Args:
         fn (function): __init__ function of primitive.
@@ -325,17 +325,17 @@ def prim_attr_register(fn):
 
 def constexpr(fn=None, get_instance=True, name=None):
     """
-    Makes a PrimitiveWithInfer operator, which infer the value while compiling. We can define a function
+    Makes a PrimitiveWithInfer operator that can infer the value at compile time. We can define a function
     to compute between constant variable and used in constructß.
 
     Args:
         fn (function): A `fn` use as the infer_value of the output operator.
-        get_instance (bool): If true, returns the instance of operator, else returns the operator class.
+        get_instance (bool): If true, return the instance of operator, otherwise return the operator class.
         name (str): Defines the operator name. If `name` is None, use the function name as op name.
 
     Examples:
         >>> a = (1, 2)
-        >>> # make a operator to calculate tuple len
+        >>> # make an operator to calculate tuple len
         >>> @constexpr
         >>> def tuple_len(x):
         >>>     return len(x)
