@@ -56,10 +56,10 @@ class MS_API Context {
 
   /// \brief Constructor of MindSpore Lite Context using input value for parameters.
   ///
-  /// \param[in] threadNum Define the threadNum during the runtime.
+  /// \param[in] thread_num Define the threadNum during the runtime.
   /// \param[in] allocator Define the allocator for malloc.
-  /// \param[in] deviceCtx Define device information during the runtime.
-  Context(int threadNum, std::shared_ptr<Allocator> allocator, DeviceContext deviceCtx);
+  /// \param[in] device_ctx Define device information during the runtime.
+  Context(int thread_num, std::shared_ptr<Allocator> allocator, DeviceContext device_ctx);
 
   /// \brief Destructor of MindSpore Lite Context.
   virtual ~Context();

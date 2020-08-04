@@ -34,7 +34,7 @@ int Benchmark::GenerateRandomData(size_t size, void *data) {
   for (size_t i = 0; i < size; i++) {
     castedData[i] = static_cast<char>(i);
   }
-  return 0;
+  return RET_OK;
 }
 
 int Benchmark::GenerateInputData() {
@@ -53,7 +53,7 @@ int Benchmark::GenerateInputData() {
       return status;
     }
   }
-  return 0;
+  return RET_OK;
 }
 
 int Benchmark::LoadInput() {
@@ -70,12 +70,12 @@ int Benchmark::LoadInput() {
       return status;
     }
   }
-  return 0;
+  return RET_OK;
 }
 
 int Benchmark::ReadInputFile() {
   if (msInputs.empty()) {
-    return 0;
+    return RET_OK;
   }
 
   if (this->_flags->inDataType == kImage) {
@@ -104,7 +104,7 @@ int Benchmark::ReadInputFile() {
       memcpy(inputData, binBuf, tensorDataSize);
     }
   }
-  return 0;
+  return RET_OK;
 }
 
 // calibData is FP32
@@ -114,13 +114,13 @@ int Benchmark::ReadCalibData() {
   std::ifstream inFile(calibDataPath);
   if (!inFile.good()) {
     MS_LOG(ERROR) << "file: " << calibDataPath << " is not exist";
-    return 1;
+    return RET_ERROR;
   }
 
   if (!inFile.is_open()) {
     MS_LOG(ERROR) << "file: " << calibDataPath << " open failed";
     inFile.close();
-    return 1;
+    return RET_ERROR;
   }
 
   std::string line;
@@ -155,7 +155,7 @@ int Benchmark::ReadCalibData() {
   }
   inFile.close();
   MS_LOG(INFO) << "Finish reading calibData file";
-  return 0;
+  return RET_OK;
 }
 
 // tensorData need to be converter first
@@ -182,7 +182,7 @@ float Benchmark::CompareData(const std::string &nodeName, std::vector<int> msSha
       }
       oss << ") are different";
       MS_LOG(ERROR) << "%s", oss.str().c_str();
-      return -1;
+      return RET_ERROR;
     }
     size_t errorCount = 0;
     float meanError = 0;
@@ -218,7 +218,7 @@ float Benchmark::CompareData(const std::string &nodeName, std::vector<int> msSha
     return meanError;
   } else {
     MS_LOG(INFO) << "%s is not in Source Model output", nodeName.c_str();
-    return -1;
+    return RET_ERROR;
   }
 }
 
@@ -257,14 +257,14 @@ int Benchmark::CompareOutput() {
 
     if (meanBias > this->_flags->accuracyThreshold) {
       MS_LOG(ERROR) << "Mean bias of all nodes is too big: " << meanBias << "%%";
-      return 1;
+      return RET_ERROR;
     } else {
-      return 0;
+      return RET_OK;
     }
   } else {
     MS_LOG(ERROR) << "Error in CompareData";
     std::cout << "=======================================================" << std::endl << std::endl;
-    return 1;
+    return RET_ERROR;
   }
 }
 
@@ -309,7 +309,7 @@ int Benchmark::MarkPerformance() {
            _flags->modelPath.substr(_flags->modelPath.find_last_of(DELIM_SLASH) + 1).c_str(), _flags->numThreads,
            timeMin / 1000.0f, timeMax / 1000.0f, timeAvg / 1000.0f);
   }
-  return 0;
+  return RET_OK;
 }
 
 int Benchmark::MarkAccuracy() {
@@ -341,7 +341,7 @@ int Benchmark::MarkAccuracy() {
     MS_LOG(ERROR) << "Compare output error " << status;
     return status;
   }
-  return 0;
+  return RET_OK;
 }
 
 int Benchmark::RunBenchmark(const std::string &deviceType) {
@@ -353,15 +353,25 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
   size_t size = 0;
   char *graphBuf = ReadFile(_flags->modelPath.c_str(), &size);
   if (graphBuf == nullptr) {
-    MS_LOG(ERROR) << "Load graph failed while running %s", modelName.c_str();
-    return 1;
+    MS_LOG(ERROR) << "Read model file failed while running %s", modelName.c_str();
+    return RET_ERROR;
   }
   auto model = lite::Model::Import(graphBuf, size);
-  auto context = new lite::Context;
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "Import model file failed while running %s", modelName.c_str();
+    delete[](graphBuf);
+    return RET_ERROR;
+  }
+  delete[](graphBuf);
+  auto context = new(std::nothrow) lite::Context;
+  if (context == nullptr) {
+    MS_LOG(ERROR) << "New context failed while running %s", modelName.c_str();
+    return RET_ERROR;
+  }
   if (_flags->device == "CPU") {
     context->device_ctx_.type = lite::DT_CPU;
   } else if (_flags->device == "GPU") {
-      context->device_ctx_.type = lite::DT_GPU;
+    context->device_ctx_.type = lite::DT_GPU;
   } else {
     context->device_ctx_.type = lite::DT_NPU;
   }
@@ -375,8 +385,15 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
   }
   context->thread_num_ = _flags->numThreads;
   session = session::LiteSession::CreateSession(context);
+  delete(context);
+  if (session == nullptr) {
+    MS_LOG(ERROR) << "CreateSession failed while running %s", modelName.c_str();
+    return RET_ERROR;
+  }
   auto ret = session->CompileGraph(model.get());
   if (ret != RET_OK) {
+    MS_LOG(ERROR) << "CompileGraph failed while running %s", modelName.c_str();
+    delete(session);
     return ret;
   }
   msInputs = session->GetInputs();
@@ -394,21 +411,21 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
   auto status = LoadInput();
   if (status != 0) {
     MS_LOG(ERROR) << "Generate input data error";
-    delete graphBuf;
+    delete(session);
     return status;
   }
   if (!_flags->calibDataPath.empty()) {
     status = MarkAccuracy();
     if (status != 0) {
       MS_LOG(ERROR) << "Run MarkAccuracy error: %d" << status;
-      delete graphBuf;
+      delete(session);
       return status;
     }
   } else {
     status = MarkPerformance();
     if (status != 0) {
       MS_LOG(ERROR) << "Run MarkPerformance error: %d" << status;
-      delete graphBuf;
+      delete(session);
       return status;
     }
   }
@@ -422,8 +439,8 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
     calibData.clear();
   }
 
-  delete graphBuf;
-  return 0;
+  delete(session);
+  return RET_OK;
 }
 
 void BenchmarkFlags::InitInputDataList() {
@@ -488,10 +505,10 @@ int Benchmark::Init() {
   _flags->InitResizeDimsList();
   if (!_flags->resizeDims.empty() && _flags->resizeDims.size() != _flags->input_data_list.size()) {
     MS_LOG(ERROR) << "Size of input resizeDims should be equal to size of input inDataPath";
-    return 1;
+    return RET_ERROR;
   }
 
-  return 0;
+  return RET_OK;
 }
 
 int RunBenchmark(int argc, const char **argv) {
@@ -501,19 +518,19 @@ int RunBenchmark(int argc, const char **argv) {
   if (err.IsSome()) {
     std::cerr << err.Get() << std::endl;
     std::cerr << flags.Usage() << std::endl;
-    return -1;
+    return RET_ERROR;
   }
 
   if (flags.help) {
     std::cerr << flags.Usage() << std::endl;
-    return 0;
+    return RET_OK;
   }
 
   Benchmark mBenchmark(&flags);
   auto status = mBenchmark.Init();
   if (status != 0) {
     MS_LOG(ERROR) << "Benchmark init Error : " << status;
-    return 1;
+    return RET_ERROR;
   }
 
   if (flags.device == "NPU") {
@@ -525,12 +542,12 @@ int RunBenchmark(int argc, const char **argv) {
   if (status != 0) {
     MS_LOG(ERROR) << "Run Benchmark " << flags.modelPath.substr(flags.modelPath.find_last_of(DELIM_SLASH) + 1).c_str()
                   << " Failed : " << status;
-    return 1;
+    return RET_ERROR;
   }
 
   MS_LOG(INFO) << "Run Benchmark " << flags.modelPath.substr(flags.modelPath.find_last_of(DELIM_SLASH) + 1).c_str()
                << " Success.";
-  return 0;
+  return RET_OK;
 }
 }  // namespace lite
 }  // namespace mindspore

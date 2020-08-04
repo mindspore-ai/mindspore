@@ -220,8 +220,13 @@ void LiteSession::BindThread(bool ifBind) {
 
 LiteSession::~LiteSession() {
   for (auto *tensor : tensors) {
+    // weight data can not be to free, we will free weight data when freeing meta_graph
+    if (tensor->TensorType() == schema::NodeType_ValueNode && !IsContain(this->inputs, tensor)) {
+      tensor->SetData(nullptr);
+    }
     delete tensor;
   }
+  // inputs outputs input_map output_map are freed in tensors
   for (auto *input : inputs) {
     ((tensor::LiteTensor *)input)->SetTensorImpl(nullptr);
     delete input;
@@ -230,9 +235,26 @@ LiteSession::~LiteSession() {
     ((tensor::LiteTensor *)output)->SetTensorImpl(nullptr);
     delete output;
   }
+  for (auto iter : this->input_map) {
+    for (auto *ms_tensor : iter.second) {
+      ((tensor::LiteTensor *)ms_tensor)->SetTensorImpl(nullptr);
+      delete ms_tensor;
+    }
+    iter.second.clear();
+  }
+  input_map.clear();
+  for (auto iter : this->output_map) {
+    for (auto *ms_tensor : iter.second) {
+      ((tensor::LiteTensor *)ms_tensor)->SetTensorImpl(nullptr);
+      delete ms_tensor;
+    }
+    iter.second.clear();
+  }
+  output_map.clear();
   for (auto *kernel : kernels) {
     delete kernel;
   }
+  delete this->context_;
 }
 
 std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputsByName(const std::string &name) const {

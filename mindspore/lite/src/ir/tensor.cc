@@ -74,7 +74,11 @@ int Tensor::CopyTensor(const Tensor &srcTensor, bool copyData) {
 
 Tensor::~Tensor() {
   if (nullptr != this->data_) {
-    free(this->data_);
+    if (this->allocator_ != nullptr) {
+      this->allocator_->Free(this->data_);
+    } else {
+      free(this->data_);
+    }
   }
 }
 
@@ -320,4 +324,3 @@ MSTensor *MSTensor::CreateTensor(TypeId data_type, const std::vector<int> &shape
 }
 }  // namespace tensor
 }  // namespace mindspore
-

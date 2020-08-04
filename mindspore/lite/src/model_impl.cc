@@ -56,7 +56,7 @@ lite::Primitive *ModelImpl::GetOp(const std::string &name) const {
 }
 
 ModelImpl::~ModelImpl() {
-  delete (this->model_buf_);
+  delete[](this->model_buf_);
   for (auto iter : ops) {
     delete (iter.second);
   }
@@ -64,7 +64,7 @@ ModelImpl::~ModelImpl() {
 }
 
 void ModelImpl::FreeMetaGraph() {
-  delete this->model_buf_;
+  delete[](this->model_buf_);
   model_buf_ = nullptr;
 }
 
@@ -200,4 +200,3 @@ int ModelImpl::BuildOps() {
   return 0;
 }
 }  // namespace mindspore::lite
-
