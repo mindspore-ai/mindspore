@@ -840,3 +840,35 @@ def minimum(x, y):
         numpy.ndarray, has the same type as x.
     """
     return np.minimum(x, y)
+
+
+def all_(x, axis=(), keep_dims=False):
+    """
+    Check all array elements along a given axis evaluate to True.
+
+    Args:
+        x (numpy.ndarray): An array to be reduced.
+        axis (Union[None, int, tuple(int)): Dimensions of reduction.
+        keep_dims (bool): Whether to keep the reduced dimensions.
+
+    Returns:
+        numpy.ndarray, has the same type as x.
+    """
+    axis = None if axis == () else axis
+    return np.all(x, axis, keepdims=keep_dims)
+
+
+def any_(x, axis=(), keep_dims=False):
+    """
+    Check any array element along a given axis evaluate to True.
+
+    Args:
+        x (numpy.ndarray): An array to be reduced.
+        axis (Union[None, int, tuple(int)): Dimensions of reduction.
+        keep_dims (bool): Whether to keep the reduced dimensions.
+
+    Returns:
+        numpy.ndarray, has the same type as x.
+    """
+    axis = None if axis == () else axis
+    return np.any(x, axis, keepdims=keep_dims)
