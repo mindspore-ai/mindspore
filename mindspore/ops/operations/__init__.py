@@ -83,7 +83,10 @@ from . import _quant_ops
 from ._quant_ops import *
 from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, PopulationCount,
                         CheckValid, MakeRefKey, Partial, Depend, CheckBprop, Push, Pull)
-from .thor_ops import *
+from .thor_ops import (CusBatchMatMul, CusCholeskyTrsm, CusFusedAbsMax1, CusImg2Col, CusMatMulCubeDenseLeft,
+                       CusMatMulCubeFraczRightMul, CusMatMulCube, CusMatrixCombine, CusTranspose02314,
+                       CusMatMulCubeDenseRight,
+                       CusMatMulCubeFraczLeftCast, Im2Col)
 from .sparse_ops import SparseToDense
 
 __all__ = [
