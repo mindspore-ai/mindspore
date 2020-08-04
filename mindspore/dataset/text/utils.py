@@ -188,11 +188,10 @@ class SentencePieceVocab(cde.SentencePieceVocab):
             params(dict): A dictionary with no incoming parameters(The parameters are derived from SentencePiece
                 library).
 
-            .. code-block ::
-                {
-                  "input_sentence_size" : 0,
-                  "max_sentencepiece_length" : 16
-                }
+                .. code-block::
+
+                    input_sentence_size 0
+                    max_sentencepiece_length 16
         """
         return super().from_file(file_path, vocab_size, character_coverage,
                                  DE_C_INTER_SENTENCEPIECE_MODE[model_type], params)
