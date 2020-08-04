@@ -50,7 +50,7 @@ STATUS ConvBNFusionPass::DefinePattern() {
   convOp->types = {schema::PrimitiveType_Conv2D, schema::PrimitiveType_DepthwiseConv2D};
   auto bnOp = std::make_shared<PatternOp>();
   bnOp->id = DST_NAME;
-  bnOp->types = {schema::PrimitiveType_FusedBatchNorm, schema::PrimitiveType_CaffeBatchNorm};
+  bnOp->types = {schema::PrimitiveType_FusedBatchNorm, schema::PrimitiveType_BatchNorm};
   bnOp->left = convOp;
 
   std::unique_ptr<FusionPattern> fusionPattern(new (std::nothrow) FusionPattern("ConvBatchNormFusion"));
@@ -208,8 +208,8 @@ STATUS ConvBNFusionPass::GetBnEpsilon(schema::MetaGraphT *graph, std::shared_ptr
   MS_ASSERT(bnNode != nullptr);
   if (bnNode->primitive->value.type == schema::PrimitiveType_FusedBatchNorm) {
     eps = bnNode->primitive->value.AsFusedBatchNorm()->epsilon;
-  } else if (bnNode->primitive->value.type == schema::PrimitiveType_CaffeBatchNorm) {
-    eps = bnNode->primitive->value.AsCaffeBatchNorm()->epsilon;
+  } else if (bnNode->primitive->value.type == schema::PrimitiveType_BatchNorm) {
+    eps = bnNode->primitive->value.AsBatchNorm()->epsilon;
   } else {
     MS_LOG(ERROR) << "match pattern has error, " << bnNode->name.c_str() << " not BatchNorm node";
     return RET_ERROR;

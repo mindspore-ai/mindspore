@@ -37,7 +37,7 @@ constexpr const float POW_NUM = 0.5;
 bool IsBatchNode(const BaseRef &n) {
   if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
     auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_CaffeBatchNorm || type == schema::PrimitiveType_FusedBatchNorm;
+    return type == schema::PrimitiveType_BatchNorm || type == schema::PrimitiveType_FusedBatchNorm;
   }
   return false;
 }
@@ -115,12 +115,12 @@ const void ConvBatchNormFusion::InitTransParam(const CNodePtr &bn_node, int kern
   AnfNodePtr bn_bias_node = nullptr;
   float eps = 0;
   auto primitiveT_value = GetValueNode<std::shared_ptr<lite::PrimitiveTValue>>(bn_node->input(0));
-  if (GetCNodeType(bn_node) == schema::PrimitiveType_CaffeBatchNorm) {
+  if (GetCNodeType(bn_node) == schema::PrimitiveType_BatchNorm) {
     bn_mean_node = bn_node->input(kCaffeBNMeanIndex);
     bn_variance_node = bn_node->input(kCaffeBNVarIndex);
     CheckIfNodeIsParam(bn_mean_node);
     CheckIfNodeIsParam(bn_variance_node);
-    eps = primitiveT_value->GetPrimitiveT()->value.AsCaffeBatchNorm()->epsilon;
+    eps = primitiveT_value->GetPrimitiveT()->value.AsBatchNorm()->epsilon;
   } else if (GetCNodeType(bn_node) == schema::PrimitiveType_FusedBatchNorm) {
     bn_scale_node = bn_node->input(kTFBNScaleIndex);
     bn_bias_node = bn_node->input(kTFBNBiasIndex);

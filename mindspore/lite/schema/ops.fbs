@@ -212,8 +212,8 @@ table Conv2DGradInput {
     spatial: int = 1;
 }
 
-table CaffeBatchNorm {
-    epsilon: float;   // eg. epsilon=0.001
+table BatchNorm {
+    epsilon: float = 0.00001;   // eg. epsilon=0.001
 }
 
 table BiasGrad {

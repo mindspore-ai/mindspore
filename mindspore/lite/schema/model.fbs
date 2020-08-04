@@ -53,7 +53,7 @@ union PrimitiveType {
     Activation,
     Conv2D,
     FusedBatchNorm,
-    CaffeBatchNorm,
+    BatchNorm,
     BiasAdd,
     Pooling,
     DepthwiseConv2D,

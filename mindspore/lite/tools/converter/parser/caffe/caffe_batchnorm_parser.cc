@@ -28,13 +28,11 @@ static const int CAFFE_BATCHNORMAL_TOP_SIZE = 1;
 namespace mindspore {
 namespace lite {
 using STATUS = int;
-STATUS CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto,
-                                   const caffe::LayerParameter &weight,
-                                   schema::CNodeT *op,
-                                   std::vector<schema::TensorT *> *weightVec) {
+STATUS CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
+                                   schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   op->name = proto.name();
   // caffe batch norm attr
-  std::unique_ptr<FusedBatchNormT> attr(new FusedBatchNormT());
+  std::unique_ptr<schema::BatchNormT> attr(new schema::BatchNormT());
   const caffe::BatchNormParameter batchNormParam = proto.batch_norm_param();
 
   // check bottom size
@@ -98,7 +96,7 @@ STATUS CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto,
   weightVec->push_back(beta);
 
   op->primitive = std::make_unique<schema::PrimitiveT>();
-  op->primitive->value.type = schema::PrimitiveType_FusedBatchNorm;
+  op->primitive->value.type = schema::PrimitiveType_BatchNorm;
   op->primitive->value.value = attr.release();
 
   return RET_OK;
@@ -107,5 +105,3 @@ STATUS CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto,
 CaffeNodeRegistrar g_caffeBatchNormParser("BatchNorm", new CaffeBatchNormParser());
 }  // namespace lite
 }  // namespace mindspore
-
-
