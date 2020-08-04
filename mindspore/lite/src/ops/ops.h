@@ -705,6 +705,13 @@ class QuantDTypeCast : public Primitive {
   const schema::QuantDTypeCast *GetAttribute() const { return this->primitive->value_as_QuantDTypeCast(); }
   int InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) override;
 };
+
+class Lstm : public Primitive {
+ public:
+  explicit Lstm(schema::Primitive *primitive) : Primitive(primitive) {}
+  const schema::Lstm *GetAttribute() const { return this->primitive->value_as_Lstm(); }
+  int InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) override;
+};
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_OPS_OPS_H_
