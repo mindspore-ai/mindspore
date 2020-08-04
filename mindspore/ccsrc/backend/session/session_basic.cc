@@ -58,51 +58,38 @@ ValuePtr GetParamDefaultValue(const AnfNodePtr &node) {
   return parameter->default_param();
 }
 
-BaseRef CreateOneTensor(const AnfNodePtr &node, size_t output_index, const KernelGraph &graph,
-                        const std::vector<tensor::TensorPtr> &input_tensors) {
+tensor::TensorPtr CreateOutputTensor(const AnfNodePtr &node, size_t output_index, const KernelGraphPtr &graph,
+                                     const DeviceAddressPtr &address) {
   MS_EXCEPTION_IF_NULL(node);
-  MS_LOG(INFO) << "Create tensor for output[" << node->DebugString() << "] index[" << output_index << "]";
-  // if node is a value node, no need sync addr from device to host
-  if (!AnfAlgo::OutputAddrExist(node, output_index)) {
-    if (node->isa<ValueNode>()) {
-      auto value_node = node->cast<ValueNodePtr>();
-      MS_EXCEPTION_IF_NULL(value_node);
-      return value_node->value();
-    }
-    if (node->isa<Parameter>()) {
-      for (size_t input_idx = 0; input_idx < graph.inputs().size(); input_idx++) {
-        if (input_idx >= input_tensors.size()) {
-          MS_LOG(EXCEPTION) << "Input idx:" << input_idx << "out of range:" << input_tensors.size();
-        }
-        if (graph.inputs()[input_idx] == node) {
-          return input_tensors[input_idx];
-        }
-      }
-      MS_LOG(EXCEPTION) << "Parameter : " << node->DebugString() << " has no output addr";
-    }
-  }
-  // if proccess reach here,it remarks item_with_index is a real node(Parameter,or executable CNode)
-  auto address = AnfAlgo::GetMutableOutputAddr(node, output_index);
-  MS_EXCEPTION_IF_NULL(address);
-  auto shape = AnfAlgo::GetOutputInferShape(node, output_index);
-  TypeId type_id = kNumberTypeFloat32;
-  type_id = AnfAlgo::GetOutputDeviceDataType(node, output_index);
+  MS_EXCEPTION_IF_NULL(graph);
+  TypeId type_id = AnfAlgo::GetOutputDeviceDataType(node, output_index);
   if (type_id == kTypeUnknown) {
     type_id = AnfAlgo::GetOutputInferDataType(node, output_index);
   }
+  tensor::TensorPtr tensor;
   std::vector<int> temp_shape;
-  if (graph.IsInternalOutput(node, output_index)) {
+  if (graph->IsUniqueTargetInternalOutput(node, output_index)) {
     temp_shape.emplace_back(1);
-    tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
+    tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
     tensor->set_device_address(address);
     tensor->set_dirty(false);
     return tensor;
   }
-  (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
-  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
+
+  tensor = graph->GetInternalOutputTensor(node, output_index);
+  if (tensor == nullptr) {
+    auto shape = AnfAlgo::GetOutputInferShape(node, output_index);
+    (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
+    tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
+    bool is_internal_output = graph->IsInternalOutput(node, output_index);
+    if (is_internal_output) {
+      graph->AddInternalOutputTensor(node, output_index, tensor);
+    }
+  }
   // if in paynative mode,data only copyed to host when user want to print data
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  MS_EXCEPTION_IF_NULL(address);
   if (ms_context->execution_mode() == kPynativeMode || ms_context->device_target() == kGPUDevice) {
     tensor->set_device_address(address);
     tensor->set_dirty(false);
@@ -114,7 +101,35 @@ BaseRef CreateOneTensor(const AnfNodePtr &node, size_t output_index, const Kerne
   return tensor;
 }
 
-BaseRef CreateTensorForOutput(const AnfNodePtr &anf, const KernelGraph &graph,
+BaseRef CreateOneTensor(const AnfNodePtr &node, size_t output_index, const KernelGraphPtr &graph,
+                        const std::vector<tensor::TensorPtr> &input_tensors) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(INFO) << "Create tensor for output[" << node->DebugString() << "] index[" << output_index << "]";
+  // if node is a value node, no need sync addr from device to host
+  if (!AnfAlgo::OutputAddrExist(node, output_index)) {
+    if (node->isa<ValueNode>()) {
+      auto value_node = node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      return value_node->value();
+    }
+    if (node->isa<Parameter>()) {
+      for (size_t input_idx = 0; input_idx < graph->inputs().size(); input_idx++) {
+        if (input_idx >= input_tensors.size()) {
+          MS_LOG(EXCEPTION) << "Input idx:" << input_idx << "out of range:" << input_tensors.size();
+        }
+        if (graph->inputs()[input_idx] == node) {
+          return input_tensors[input_idx];
+        }
+      }
+      MS_LOG(EXCEPTION) << "Parameter : " << node->DebugString() << " has no output addr";
+    }
+  }
+  auto address = AnfAlgo::GetMutableOutputAddr(node, output_index);
+  return CreateOutputTensor(node, output_index, graph, address);
+}
+
+BaseRef CreateTensorForOutput(const AnfNodePtr &anf, const KernelGraphPtr &graph,
                               const std::vector<tensor::TensorPtr> &input_tensors) {
   MS_EXCEPTION_IF_NULL(anf);
   MS_LOG(INFO) << "Create tensor for output[" << anf->DebugString() << "]";
@@ -308,7 +323,7 @@ void SessionBasic::InitInternalOutputParameter(const AnfNodePtr &out_node, const
   auto real_kernel = AnfAlgo::VisitKernel(ref_node, output_idx);
   auto ref_real_node = real_kernel.first;
   auto ref_real_node_index = real_kernel.second;
-  if (ref_real_node->isa<CNode>() && node_graph->IsInternalOutput(ref_real_node, ref_real_node_index)) {
+  if (ref_real_node->isa<CNode>() && node_graph->IsUniqueTargetInternalOutput(ref_real_node, ref_real_node_index)) {
     auto kernel_info = ref_real_node->kernel_info();
     if (kernel_info == nullptr || !kernel_info->has_build_info()) {
       MS_LOG(INFO) << "No kernel info";
@@ -888,7 +903,7 @@ void SessionBasic::UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_grap
   for (auto &item : anf_outputs) {
     MS_EXCEPTION_IF_NULL(item);
     MS_LOG(INFO) << "Update output[" << item->DebugString() << "]";
-    outputs->emplace_back(CreateTensorForOutput(item, *kernel_graph, input_tensors));
+    outputs->emplace_back(CreateTensorForOutput(item, kernel_graph, input_tensors));
   }
 }
 
@@ -967,6 +982,71 @@ void SessionBasic::Summary(KernelGraph *graph) {
   summary_callback_(0, params_list);
 }
 
+namespace {
+bool CNodePrimIsValueNode(const AnfNodePtr &node) {
+  if (node == nullptr) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    return false;
+  }
+  auto prim = cnode->input(kAnfPrimitiveIndex);
+  if (prim == nullptr || !prim->isa<ValueNode>()) {
+    return false;
+  }
+  return true;
+}
+
+void HandleInternalOutput(const AnfNodePtr &front_node, const AnfNodePtr &backend_node,
+                          const FuncGraphManagerPtr &front_func_graph_manager,
+                          const std::shared_ptr<KernelGraph> &backend_graph) {
+  auto node_users = front_func_graph_manager->node_users();
+  auto users = node_users[front_node];
+  auto front_real_kernel_pair = AnfAlgo::VisitKernel(front_node, 0);
+  auto backend_real_kernel_pair = AnfAlgo::VisitKernel(backend_node, 0);
+
+  auto front_real_kernel = front_real_kernel_pair.first;
+  std::string kernel_target = GetCNodeTarget(front_real_kernel);
+  bool internal_output = CNodePrimIsValueNode(front_real_kernel);
+  bool unique_target = true;
+  if (internal_output && opt::IsNopNode(front_real_kernel)) {
+    auto pre_node_pair = AnfAlgo::GetPrevNodeOutput(front_real_kernel, 0);
+    auto pre_node_target = GetCNodeTarget(pre_node_pair.first);
+    if (pre_node_target != kernel_target) {
+      unique_target = false;
+    }
+  }
+  if (internal_output) {
+    for (auto user : users) {
+      auto cnode = user.first->cast<CNodePtr>();
+      if (cnode == nullptr) {
+        internal_output = false;
+        break;
+      }
+      auto prim = cnode->input(kAnfPrimitiveIndex);
+      if (prim == nullptr || !prim->isa<ValueNode>()) {
+        internal_output = false;
+        break;
+      }
+      if (!AnfAlgo::IsRealKernel(user.first)) {
+        internal_output = false;
+        break;
+      }
+      if (kernel_target != GetCNodeTarget(user.first)) {
+        unique_target = false;
+      }
+    }
+  }
+  if (internal_output) {
+    MS_LOG(INFO) << "Internal output: " << front_node->DebugString() << "To "
+                 << backend_real_kernel_pair.first->DebugString();
+    backend_graph->AddInternalOutput(front_node, backend_real_kernel_pair.first, backend_real_kernel_pair.second,
+                                     unique_target);
+  }
+}
+}  // namespace
+
 CNodePtr SessionBasic::ConstructOutput(const AnfNodePtrList &outputs, const std::shared_ptr<KernelGraph> &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   std::vector<AnfNodePtr> output_args;
@@ -982,9 +1062,7 @@ CNodePtr SessionBasic::ConstructOutput(const AnfNodePtrList &outputs, const std:
       if (context_ptr->execution_mode() == kPynativeMode) {
         return backend_anf;
       }
-      auto front_real_kernel_pair = AnfAlgo::VisitKernel(out, 0);
-      auto front_real_kernel = front_real_kernel_pair.first;
-      auto backend_real_kernel_pair = AnfAlgo::VisitKernel(backend_anf, 0);
+
       MS_EXCEPTION_IF_NULL(out);
       auto out_func_graph = out->func_graph();
       MS_EXCEPTION_IF_NULL(out_func_graph);
@@ -992,51 +1070,7 @@ CNodePtr SessionBasic::ConstructOutput(const AnfNodePtrList &outputs, const std:
       if (out_func_graph_manager == nullptr) {
         return backend_anf;
       }
-      auto node_users = out_func_graph_manager->node_users();
-      auto users = node_users[out];
-      bool internal_output = true;
-      std::string kernel_target = GetCNodeTarget(front_real_kernel);
-      if (front_real_kernel != nullptr && front_real_kernel->isa<CNode>()) {
-        auto front_cnode = front_real_kernel->cast<CNodePtr>();
-        if (front_cnode != nullptr) {
-          auto prim = front_cnode->input(kAnfPrimitiveIndex);
-          if (prim == nullptr || !prim->isa<ValueNode>()) {
-            internal_output = false;
-          }
-        } else {
-          internal_output = false;
-        }
-      }
-      if (internal_output && opt::IsNopNode(front_real_kernel)) {
-        auto pre_node_pair = AnfAlgo::GetPrevNodeOutput(front_real_kernel, 0);
-        auto pre_node_target = GetCNodeTarget(pre_node_pair.first);
-        if (pre_node_target != kernel_target) {
-          internal_output = false;
-        }
-      }
-      if (internal_output) {
-        for (auto user : users) {
-          auto cnode = user.first->cast<CNodePtr>();
-          if (cnode == nullptr) {
-            internal_output = false;
-            break;
-          }
-          auto prim = cnode->input(kAnfPrimitiveIndex);
-          if (prim == nullptr || !prim->isa<ValueNode>()) {
-            internal_output = false;
-            break;
-          }
-          if (!AnfAlgo::IsRealKernel(user.first) || kernel_target != GetCNodeTarget(user.first)) {
-            internal_output = false;
-            break;
-          }
-        }
-      }
-      if (internal_output) {
-        MS_LOG(INFO) << "Internal output: " << out->DebugString() << "To "
-                     << backend_real_kernel_pair.first->DebugString();
-        graph->AddInternalOutput(out, backend_real_kernel_pair.first);
-      }
+      HandleInternalOutput(out, backend_anf, out_func_graph_manager, graph);
       return backend_anf;
     }
     MS_LOG(EXCEPTION) << "Can't find the node in the equiv map!";
