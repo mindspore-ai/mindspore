@@ -20,37 +20,40 @@
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteStridedSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-                                       const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-                                       const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                                       const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                                       schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
-  MS_LOG(INFO) << "parse TfliteStridedSliceParser";
+STATUS TfliteStridedSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                       const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+                                       const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
+                                       const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_opset,
+                                       schema::CNodeT *op,
+                                       TensorCache *tensor_cache, bool quantized_model) {
+  MS_LOG(DEBUG) << "parse TfliteStridedSliceParser";
   std::unique_ptr<schema::StridedSliceT> attr(new schema::StridedSliceT());
-  const auto &tflite_attr = tfliteOp->builtin_options.AsStridedSliceOptions();
+  const auto &tflite_attr = tflite_op->builtin_options.AsStridedSliceOptions();
   if (tflite_attr == nullptr) {
-    MS_LOG(ERROR) << "get op: " << op->name << " attr failed";
+    MS_LOG(ERROR) << "get op: %s attr failed", op->name.c_str();
     return RET_NULL_PTR;
   }
 
-  if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->begin)) {
-    MS_LOG(ERROR) << "STRIDED_SLICE get begin attr failed";
-    return RET_ERROR;
-  }
-  if (GetTfliteData(tfliteOp->inputs[2], tfliteTensors, tfliteModelBuffer, attr->end)) {
-    MS_LOG(ERROR) << "STRIDED_SLICE get end attr failed";
-    return RET_ERROR;
-  }
-  if (GetTfliteData(tfliteOp->inputs[3], tfliteTensors, tfliteModelBuffer, attr->stride)) {
-    MS_LOG(ERROR) << "STRIDED_SLICE get stride attr failed";
-    return RET_ERROR;
-  }
   attr->beginMask = tflite_attr->begin_mask;
   attr->endMask = tflite_attr->end_mask;
   attr->ellipsisMask = tflite_attr->ellipsis_mask;
   attr->newAxisMask = tflite_attr->new_axis_mask;
   attr->shrinkAxisMask = tflite_attr->shrink_axis_mask;
-  // attr->isScale;  // isScale is actually not used in ms-lite
+
+  if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->begin)) {
+    MS_LOG(ERROR) << "stridedSlice -> begin get failed";
+    return RET_ERROR;
+  }
+  if (GetTfliteData(tflite_op->inputs[2], tflite_tensors, tflite_model_buffer, attr->end)) {
+    MS_LOG(ERROR) << "stridedSlice -> end get failed";
+    return RET_ERROR;
+  }
+  if (GetTfliteData(tflite_op->inputs[3], tflite_tensors, tflite_model_buffer, attr->stride)) {
+    MS_LOG(ERROR) << "stridedSlice -> stride get failed";
+    return RET_ERROR;
+  }
+  attr->isScale.assign(tflite_tensors[tflite_op->inputs[0]]->shape.begin(),
+                       tflite_tensors[tflite_op->inputs[0]]->shape.end());
 
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
@@ -60,6 +63,6 @@ STATUS TfliteStridedSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> 
   return RET_OK;
 }
 
-TfliteNodeRegister g_TfliteStridedSliceParser("StridedSlice", new TfliteStridedSliceParser());
+TfliteNodeRegister g_tfliteStridedSliceParser("StridedSlice", new TfliteStridedSliceParser());
 }  // namespace lite
 }  // namespace mindspore

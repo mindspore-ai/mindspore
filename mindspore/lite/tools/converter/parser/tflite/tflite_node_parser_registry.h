@@ -20,7 +20,7 @@
 #include <string>
 #include <unordered_map>
 #include "tools/common/node_util.h"
-#include "mindspore/lite/tools/converter/parser/tflite/tflite_node_parser.h"
+#include "tools/converter/parser/tflite/tflite_node_parser.h"
 
 namespace mindspore {
 namespace lite {

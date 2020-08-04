@@ -18,7 +18,7 @@
 #include <memory>
 #include <unordered_map>
 #include "securec/include/securec.h"
-#include "mindspore/lite/tools/converter/parser/tflite/tflite_node_parser.h"
+#include "tools/converter/parser/tflite/tflite_node_parser.h"
 
 namespace mindspore {
 namespace lite {

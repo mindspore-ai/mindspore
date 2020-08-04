@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef PREDICT_TFLITE_STRIDED_SLICE_PARSER_H
-#define PREDICT_TFLITE_STRIDED_SLICE_PARSER_H
+
+#ifndef LITE_TFLITE_STRIDED_SLICE_PARSER_H
+#define LITE_TFLITE_STRIDED_SLICE_PARSER_H
 
 #include <memory>
 #include <vector>
@@ -28,14 +29,15 @@ class TfliteStridedSliceParser : public TfliteNodeParser {
  public:
   TfliteStridedSliceParser() : TfliteNodeParser("StridedSlice") {}
 
-  STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-               const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-               const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-               const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet, schema::CNodeT *op,
+  STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+               const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+               const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
+               const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_opset, schema::CNodeT *op,
                TensorCache *tensor_cache,
-               bool quantizedModel) override;
+               bool quantized_model) override;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // PREDICT_TFLITE_STRIDED_SLICE_PARSER_H
+#endif  // LITE_TFLITE_STRIDED_SLICE_PARSER_H
+

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mindspore/lite/tools/converter/parser/tflite/tflite_slice_parser.h"
+#include "tools/converter/parser/tflite/tflite_slice_parser.h"
 #include <vector>
 #include <memory>
 

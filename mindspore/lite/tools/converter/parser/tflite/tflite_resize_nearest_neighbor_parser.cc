@@ -16,7 +16,7 @@
 
 #include <vector>
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/tflite/tflite_resize_nearest_neighbor_parser.h"
+#include "tools/converter/parser/tflite/tflite_resize_nearest_neighbor_parser.h"
 
 namespace mindspore {
 namespace lite {

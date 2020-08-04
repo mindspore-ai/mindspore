@@ -16,7 +16,7 @@
 
 #include <vector>
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/tflite/tflite_softmax_parser.h"
+#include "tools/converter/parser/tflite/tflite_softmax_parser.h"
 
 namespace mindspore {
 namespace lite {
