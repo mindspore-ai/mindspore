@@ -37,8 +37,8 @@
 namespace mindspore::lite {
 enum MS_API InDataType { kImage = 0, kBinary = 1 };
 
-constexpr float relativeTolerance = 0.01;
-constexpr float absoluteTolerance = 0.01;
+constexpr float relativeTolerance = 1e-5;
+constexpr float absoluteTolerance = 1e-8;
 
 struct MS_API CheckTensor {
   CheckTensor(const std::vector<size_t> &shape, const std::vector<float> &data) {
@@ -143,4 +143,3 @@ class MS_API Benchmark {
 int MS_API RunBenchmark(int argc, const char **argv);
 }  // namespace mindspore::lite
 #endif  // MINNIE_BENCHMARK_BENCHMARK_H_
-

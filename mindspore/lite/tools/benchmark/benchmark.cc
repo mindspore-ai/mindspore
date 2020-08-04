@@ -21,6 +21,7 @@
 #include <cmath>
 #include <algorithm>
 #include <utility>
+#include <cfloat>
 #include "src/common/common.h"
 #include "include/ms_tensor.h"
 #include "include/context.h"
@@ -191,11 +192,16 @@ float Benchmark::CompareData(const std::string &nodeName, std::vector<int> msSha
         std::cout << msTensorData[j] << " ";
       }
 
+      if (std::isnan(msTensorData[j]) || std::isinf(msTensorData[j])) {
+        MS_LOG(ERROR) << "Output tensor has nan or inf data, compare fail";
+        return RET_ERROR;
+      }
+
       auto tolerance = absoluteTolerance + relativeTolerance * fabs(calibTensor->data.at(j));
       auto absoluteError = std::fabs(msTensorData[j] - calibTensor->data.at(j));
       if (absoluteError > tolerance) {
         // just assume that atol = rtol
-        meanError += absoluteError / (fabs(calibTensor->data.at(j)) + 1);
+        meanError += absoluteError / (fabs(calibTensor->data.at(j)) + FLT_MIN);
         errorCount++;
       }
     }
@@ -296,16 +302,10 @@ int Benchmark::MarkPerformance() {
   }
   if (_flags->loopCount > 0) {
     timeAvg /= _flags->loopCount;
-    //    MS_LOG(INFO) << "CSV:%s:%d:%f:%f:%f\n", _flags->modelPath.substr(_flags->modelPath.find_last_of(DELIM_SLASH) +
-    //    1).c_str(),
-    //            _flags->numThreads, timeMin / 1000.0f, timeMax / 1000.0f, timeAvg / 1000.0f);
-    //    MS_LOG(INFO) <<"Modle = %s, numThreads = %d, MinRunTime = %f ms, MaxRuntime = %f ms, AvgRunTime = %f ms",
-    //            _flags->modelPath.substr(_flags->modelPath.find_last_of(DELIM_SLASH) + 1).c_str(), _flags->numThreads,
-    //            timeMin / 1000.0f, timeMax / 1000.0f, timeAvg / 1000.0f);
-
-    printf("CSV:%s:%d:%f:%f:%f\n", _flags->modelPath.substr(_flags->modelPath.find_last_of(DELIM_SLASH) + 1).c_str(),
-           _flags->numThreads, timeMin / 1000.0f, timeMax / 1000.0f, timeAvg / 1000.0f);
-    printf("Modle = %s, numThreads = %d, MinRunTime = %f ms, MaxRuntime = %f ms, AvgRunTime = %f ms\n",
+    MS_LOG(INFO) << "Model = " << _flags->modelPath.substr(_flags->modelPath.find_last_of(DELIM_SLASH) + 1).c_str()
+                 << ", NumThreads = " << _flags->numThreads << ", MinRunTime = " << timeMin / 1000.0f
+                 << ", MaxRuntime = " << timeMax / 1000.0f << ", AvgRunTime = " << timeAvg / 1000.0f;
+    printf("Model = %s, NumThreads = %d, MinRunTime = %f ms, MaxRuntime = %f ms, AvgRunTime = %f ms\n",
            _flags->modelPath.substr(_flags->modelPath.find_last_of(DELIM_SLASH) + 1).c_str(), _flags->numThreads,
            timeMin / 1000.0f, timeMax / 1000.0f, timeAvg / 1000.0f);
   }
@@ -325,13 +325,22 @@ int Benchmark::MarkAccuracy() {
     std::cout << std::endl;
   }
   auto status = session->RunGraph();
-  if (status != 0) {
-    MS_LOG(ERROR) << "Inference error %d" << status;
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Inference error " << status;
     return status;
   }
 
-  ReadCalibData();
-  CompareOutput();
+  status = ReadCalibData();
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Read calib data error " << status;
+    return status;
+  }
+
+  status = CompareOutput();
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Compare output error " << status;
+    return status;
+  }
   return 0;
 }
 
@@ -373,10 +382,10 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
   msInputs = session->GetInputs();
   auto endPrepareTime = GetTimeUs();
 #if defined(__arm__)
-  MS_LOG(INFO) << "PrepareTime = %lld ms, " << (endPrepareTime - startPrepareTime) / 1000;
+  MS_LOG(INFO) << "PrepareTime = " << (endPrepareTime - startPrepareTime) / 1000 << " ms";
   printf("PrepareTime = %lld ms, ", (endPrepareTime - startPrepareTime) / 1000);
 #else
-  MS_LOG(INFO) << "PrepareTime = %ld ms, " << (endPrepareTime - startPrepareTime) / 1000;
+  MS_LOG(INFO) << "PrepareTime = " << (endPrepareTime - startPrepareTime) / 1000 << " ms ";
   printf("PrepareTime = %ld ms, ", (endPrepareTime - startPrepareTime) / 1000);
 #endif
 
@@ -385,18 +394,21 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
   auto status = LoadInput();
   if (status != 0) {
     MS_LOG(ERROR) << "Generate input data error";
+    delete graphBuf;
     return status;
   }
   if (!_flags->calibDataPath.empty()) {
     status = MarkAccuracy();
     if (status != 0) {
       MS_LOG(ERROR) << "Run MarkAccuracy error: %d" << status;
+      delete graphBuf;
       return status;
     }
   } else {
     status = MarkPerformance();
     if (status != 0) {
       MS_LOG(ERROR) << "Run MarkPerformance error: %d" << status;
+      delete graphBuf;
       return status;
     }
   }
@@ -511,13 +523,14 @@ int RunBenchmark(int argc, const char **argv) {
   }
 
   if (status != 0) {
-    MS_LOG(ERROR) << "Run Benchmark Error : " << status;
+    MS_LOG(ERROR) << "Run Benchmark " << flags.modelPath.substr(flags.modelPath.find_last_of(DELIM_SLASH) + 1).c_str()
+                  << " Failed : " << status;
     return 1;
   }
 
-  MS_LOG(INFO) << "end of benchmark";
+  MS_LOG(INFO) << "Run Benchmark " << flags.modelPath.substr(flags.modelPath.find_last_of(DELIM_SLASH) + 1).c_str()
+               << " Success.";
   return 0;
 }
 }  // namespace lite
 }  // namespace mindspore
-
