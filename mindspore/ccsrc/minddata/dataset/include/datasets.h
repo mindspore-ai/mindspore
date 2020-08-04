@@ -41,6 +41,7 @@ namespace api {
 class TensorOperation;
 class SamplerObj;
 // Datasets classes (in alphabetical order)
+class CelebADataset;
 class Cifar10Dataset;
 class Cifar100Dataset;
 class CocoDataset;
@@ -58,6 +59,20 @@ class ShuffleDataset;
 class SkipDataset;
 class TakeDataset;
 class ZipDataset;
+
+/// \brief Function to create a CelebADataset
+/// \notes The generated dataset has two columns ['image', 'attr'].
+//     The type of the image tensor is uint8. The attr tensor is uint32 and one hot type.
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] dataset_type One of 'all', 'train', 'valid' or 'test'.
+/// \param[in] decode Decode the images after reading (default=False).
+/// \param[in] extensions List of file extensions to be included in the dataset (default=None).
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
+///    will be used to randomly iterate the entire dataset
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<CelebADataset> CelebA(const std::string &dataset_dir, const std::string &dataset_type = "all",
+                                      const std::shared_ptr<SamplerObj> &sampler = nullptr, const bool &decode = false,
+                                      const std::set<std::string> &extensions = {});
 
 /// \brief Function to create a Cifar10 Dataset
 /// \notes The generated dataset has two columns ['image', 'label']
@@ -93,8 +108,8 @@ std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir,
 ///    will be used to randomly iterate the entire dataset
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::string &annotation_file,
-                                  const std::string &task = "Detection", bool decode = false,
-                                  std::shared_ptr<SamplerObj> sampler = nullptr);
+                                  const std::string &task = "Detection", const bool &decode = false,
+                                  const std::shared_ptr<SamplerObj> &sampler = nullptr);
 
 /// \brief Function to create an ImageFolderDataset
 /// \notes A source dataset that reads images from a tree of directories
@@ -277,6 +292,32 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
 
 /* ####################################### Derived Dataset classes ################################# */
 
+class CelebADataset : public Dataset {
+ public:
+  /// \brief Constructor
+  CelebADataset(const std::string &dataset_dir, const std::string &dataset_type,
+                const std::shared_ptr<SamplerObj> &sampler, const bool &decode,
+                const std::set<std::string> &extensions);
+
+  /// \brief Destructor
+  ~CelebADataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return shared pointer to the list of newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::string dataset_dir_;
+  std::string dataset_type_;
+  bool decode_;
+  std::set<std::string> extensions_;
+  std::shared_ptr<SamplerObj> sampler_;
+};
+
 class Cifar10Dataset : public Dataset {
  public:
   /// \brief Constructor
@@ -322,8 +363,8 @@ class Cifar100Dataset : public Dataset {
 class CocoDataset : public Dataset {
  public:
   /// \brief Constructor
-  CocoDataset(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task, bool decode,
-              std::shared_ptr<SamplerObj> sampler);
+  CocoDataset(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task,
+              const bool &decode, const std::shared_ptr<SamplerObj> &sampler);
 
   /// \brief Destructor
   ~CocoDataset() = default;

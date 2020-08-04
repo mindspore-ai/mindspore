@@ -1639,7 +1639,7 @@ TEST_F(MindDataTestPipeline, TestCocoPanoptic) {
 }
 
 TEST_F(MindDataTestPipeline, TestCocoDefault) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoDetection.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoDefault.";
   // Create a Coco Dataset
   std::string folder_path = datasets_root_path_ + "/testCOCO/train";
   std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/train.json";
@@ -1675,7 +1675,7 @@ TEST_F(MindDataTestPipeline, TestCocoDefault) {
 }
 
 TEST_F(MindDataTestPipeline, TestCocoException) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoDetection.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoException.";
   // Create a Coco Dataset
   std::string folder_path = datasets_root_path_ + "/testCOCO/train";
   std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/train.json";
@@ -1840,4 +1840,98 @@ TEST_F(MindDataTestPipeline, TestConcatFail2) {
   // Input dataset to concat is empty
   ds = ds->Concat({});
   EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestCelebADataset) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCelebADataset.";
+
+  // Create a CelebA Dataset
+  std::string folder_path = datasets_root_path_ + "/testCelebAData/";
+  std::shared_ptr<Dataset> ds = CelebA(folder_path, "all", SequentialSampler(0, 2), false, {});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  // Check if CelebAOp read correct images/attr
+  std::string expect_file[] = {"1.JPEG", "2.jpg"};
+  std::vector<std::vector<uint32_t>> expect_attr_vector =
+    {{0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0,
+      1, 0, 0, 1}, {0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+      1, 0, 0, 0, 0, 0, 0, 0, 1}};
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto image = row["image"];
+    auto attr = row["attr"];
+
+    std::shared_ptr<Tensor> expect_image;
+    Tensor::CreateFromFile(folder_path + expect_file[i], &expect_image);
+    EXPECT_EQ(*image, *expect_image);
+
+    std::shared_ptr<Tensor> expect_attr;
+    Tensor::CreateFromVector(expect_attr_vector[i], TensorShape({40}), &expect_attr);
+    EXPECT_EQ(*attr, *expect_attr);
+
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 2);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestCelebADefault) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCelebADefault.";
+
+  // Create a CelebA Dataset
+  std::string folder_path = datasets_root_path_ + "/testCelebAData/";
+  std::shared_ptr<Dataset> ds = CelebA(folder_path);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  // Check if CelebAOp read correct images/attr
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto image = row["image"];
+    auto attr = row["attr"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    MS_LOG(INFO) << "Tensor attr shape: " << attr->shape();
+
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 2);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestCelebAException) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCelebAException.";
+
+  // Create a CelebA Dataset
+  std::string folder_path = datasets_root_path_ + "/testCelebAData/";
+  std::string invalid_folder_path = "./testNotExist";
+  std::string invalid_dataset_type = "invalid_type";
+  std::shared_ptr<Dataset> ds = CelebA(invalid_folder_path);
+  EXPECT_EQ(ds, nullptr);
+  std::shared_ptr<Dataset> ds1 = CelebA(folder_path, invalid_dataset_type);
+  EXPECT_EQ(ds1, nullptr);
 }
