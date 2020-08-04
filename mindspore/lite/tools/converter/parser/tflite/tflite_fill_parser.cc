@@ -32,6 +32,7 @@ STATUS TfliteFillParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteO
 
   if (tfliteOp->inputs.size() > 1) {
     if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->dims)) {
+      MS_LOG(ERROR) << "get Fill -> dims failed";
       return RET_ERROR;
     }
   }

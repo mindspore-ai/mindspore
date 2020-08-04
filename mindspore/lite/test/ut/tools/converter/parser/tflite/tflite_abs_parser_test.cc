@@ -20,7 +20,7 @@
 namespace mindspore {
 class TestTfliteParserAbs : public TestTfliteParser {
  public:
-  TestTfliteParserAbs() {}
+  TestTfliteParserAbs() = default;
   void SetUp() override { meta_graph = LoadAndConvert("./abs.tflite", ""); }
 };
 

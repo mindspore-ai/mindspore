@@ -26,7 +26,7 @@ namespace mindspore {
 namespace lite {
 class TfliteFloorParser : public TfliteNodeParser {
  public:
-  TfliteFloorParser() : TfliteNodeParser("Floor") {}
+  TfliteFloorParser() : TfliteNodeParser("flOOR") {}
 
   STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
                const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,

@@ -27,18 +27,20 @@ STATUS TfliteSumParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp
                               schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
   MS_LOG(INFO) << "parse TfliteSumParser";
   std::unique_ptr<schema::ReduceT> attr(new schema::ReduceT());
+
   const auto &tflite_attr = tfliteOp->builtin_options.AsReducerOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name << " attr failed";
     return RET_NULL_PTR;
   }
-  attr->mode = schema::ReduceMode_ReduceSum;
-  if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->axes)) {
-    MS_LOG(ERROR) << "SUM get axes attr failed";
-    return RET_ERROR;
-  }
   attr->keepDims = tflite_attr->keep_dims;
 
+  attr->mode = schema::ReduceMode_ReduceSum;
+
+  if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->axes)) {
+    MS_LOG(ERROR) << "get sum -> axes failed";
+    return RET_ERROR;
+  }
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Reduce;

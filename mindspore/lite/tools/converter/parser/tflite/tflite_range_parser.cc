@@ -29,34 +29,8 @@ STATUS TfliteRangeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
                               bool quantizedModel) {
   MS_LOG(DEBUG) << "parse TfliteRangeParser";
   std::unique_ptr<schema::RangeT> attr(new schema::RangeT());
-  const auto &tflite_attr = tfliteOp->builtin_options.AsRangeOptions();
-  if (tflite_attr == nullptr) {
-    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
-  }
 
-  auto start_idx = tfliteOp->inputs[1];
-  std::for_each(tfliteTensors[start_idx]->shape.begin(), tfliteTensors[start_idx]->shape.end(), [&](int32_t sha){});
-  auto &start_buf_data = tfliteModelBuffer[tfliteTensors[start_idx]->buffer];
-  auto start_data_ptr = start_buf_data->data.data();
-  attr->start = *(static_cast<int32_t *>(static_cast<void *>(start_data_ptr)));
-
-  auto limit_idx = tfliteOp->inputs[2];
-  std::for_each(tfliteTensors[limit_idx]->shape.begin(), tfliteTensors[limit_idx]->shape.end(), [&](int32_t sha){});
-  auto &limit_buf_data = tfliteModelBuffer[tfliteTensors[limit_idx]->buffer];
-  auto limit_data_ptr = limit_buf_data->data.data();
-  attr->limit = *(static_cast<int32_t *>(static_cast<void *>(limit_data_ptr)));
-
-  if (tfliteOp->inputs.size() > 2) {
-    auto delta_idx = tfliteOp->inputs[3];
-    std::for_each(tfliteTensors[delta_idx]->shape.begin(), tfliteTensors[delta_idx]->shape.end(), [&](int32_t sha){});
-    auto &delta_buf_data = tfliteModelBuffer[tfliteTensors[delta_idx]->buffer];
-    auto delta_data_ptr = delta_buf_data->data.data();
-    attr->delta = *(static_cast<int32_t *>(static_cast<void *>(delta_data_ptr)));
-  } else {
-    attr->delta = 0;    // default
-  }
-
-  attr->dType = 0;   // default
+  attr->dType = 0;
 
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();

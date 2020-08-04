@@ -29,12 +29,16 @@ STATUS TfliteTransposeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tf
   std::unique_ptr<schema::TransposeT> attr(new schema::TransposeT());
 
   if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->perm)) {
-    MS_LOG(ERROR) << "parse Transpose attr perm failed";
+    MS_LOG(ERROR) << "get transpose -> perm failed";
     return RET_ERROR;
   }
 
   auto weight_index = tfliteOp->inputs[1];
   const auto &weight_tensor = tfliteTensors[weight_index];
+  if (weight_tensor == nullptr) {
+    MS_LOG(ERROR) << "weight_tensor is null";
+    return RET_ERROR;
+  }
   std::vector<tflite::TensorT *> weight_tensors{weight_tensor.get()};
   if (RET_OK != ParseWeight(weight_tensors, tfliteModelBuffer, tensor_cache, schema::Format_KHWC)) {
     MS_LOG(ERROR) << "parse weight failed";

@@ -20,7 +20,7 @@
 namespace mindspore {
 class TestTfliteParserMaximum : public TestTfliteParser {
  public:
-  TestTfliteParserMaximum() {}
+  TestTfliteParserMaximum() = default;
   void SetUp() override { meta_graph = LoadAndConvert("./maximum.tflite"); }
 };
 

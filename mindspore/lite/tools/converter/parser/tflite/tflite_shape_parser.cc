@@ -28,8 +28,6 @@ STATUS TfliteShapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
   MS_LOG(INFO) << "parse TfliteShapeParser";
   std::unique_ptr<schema::ShapeT> attr(new schema::ShapeT());
 
-  // tflite_attr->out_type; // this attr is dropped
-
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Shape;

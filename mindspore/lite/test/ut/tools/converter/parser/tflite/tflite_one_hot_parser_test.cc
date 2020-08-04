@@ -20,7 +20,7 @@
 namespace mindspore {
 class TestTfliteParserOneHot : public TestTfliteParser {
  public:
-  TestTfliteParserOneHot() {}
+  TestTfliteParserOneHot() = default;
   void SetUp() override { meta_graph = LoadAndConvert("./one_hot.tflite"); }
 };
 

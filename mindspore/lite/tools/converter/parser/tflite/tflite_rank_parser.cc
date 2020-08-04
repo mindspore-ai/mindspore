@@ -29,10 +29,6 @@ STATUS TfliteRankParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteO
                               bool quantizedModel) {
   MS_LOG(DEBUG) << "parse TfliteRankParser";
   std::unique_ptr<schema::RankT> attr(new schema::RankT());
-  const auto &tflite_attr = tfliteOp->builtin_options.AsRankOptions();
-  if (tflite_attr == nullptr) {
-    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
-  }
 
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();

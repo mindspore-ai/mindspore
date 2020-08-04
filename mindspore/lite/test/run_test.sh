@@ -26,3 +26,5 @@ cp -fr $TEST_DATA_DIR/testPK ./data
 
 ./lite-test --gtest_filter=TestPadInt8.*
 ./lite-test --gtest_filter=TestDeconvInt8.*
+
+./lite-test --gtest_filter="TestTfliteParser*"

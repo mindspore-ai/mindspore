@@ -29,11 +29,6 @@ STATUS TfliteReverseParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
                               bool quantizedModel) {
   MS_LOG(DEBUG) << "parse TfliteReverseParser";
   std::unique_ptr<schema::ReverseT> attr(new schema::ReverseT());
-  const auto &tfliteAttr = tfliteOp->builtin_options.AsReverseV2Options();
-  if (tfliteAttr == nullptr) {
-    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
-    return RET_NULL_PTR;
-  }
 
   if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->axis)) {
     return RET_ERROR;
@@ -47,7 +42,7 @@ STATUS TfliteReverseParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
   return RET_OK;
 }
 
-TfliteNodeRegister g_tfliteReverseParser("Reverse", new TfliteReverseParser());
+TfliteNodeRegister g_tfliteReverseParser("reverse", new TfliteReverseParser());
 }  // namespace lite
 }  // namespace mindspore
 

@@ -24,10 +24,10 @@
 namespace mindspore {
 class TestTfliteParser : public Common {
  public:
-  TestTfliteParser() {}
+  TestTfliteParser() = default;
   void TearDown() override;
   schema::MetaGraphT *LoadAndConvert(const std::string &model_path, const std::string &weight_path = "");
-  schema::MetaGraphT *meta_graph;
+  schema::MetaGraphT *meta_graph = nullptr;
 };
 
 }  // namespace mindspore

@@ -29,13 +29,14 @@ STATUS TfliteSpaceToDepthParser::Parse(const std::unique_ptr<tflite::OperatorT> 
                                        TensorCache *tensor_cache, bool quantized_model) {
   MS_LOG(DEBUG) << "parse TfliteSpaceToDepthParser";
   std::unique_ptr<schema::SpaceToDepthT> attr(new schema::SpaceToDepthT());
+
   const auto &tflite_attr = tflite_op->builtin_options.AsSpaceToDepthOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op:" << op->name.c_str() << " attr failed";
     return RET_NULL_PTR;
   }
-
   attr->blockSize = tflite_attr->block_size;
+
   attr->format = schema::Format_NHWC;
 
   if (op != nullptr) {

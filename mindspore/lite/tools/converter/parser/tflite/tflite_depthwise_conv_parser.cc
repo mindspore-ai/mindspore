@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "tools/converter/parser/tflite/tflite_depthwise_conv_parser.h"
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_depthwise_conv_parser.h"
 #include "tools/common/node_util.h"
 
 namespace mindspore {
@@ -26,6 +26,7 @@ STATUS TfliteDepthwiseConv2DParser::ParseGroupDepthwiseConv(schema::CNodeT *op,
                                                             const std::unique_ptr<tflite::TensorT> &weightTensor,
                                                             TensorCache *tensor_cache) {
   std::unique_ptr<schema::Conv2DT> convAttr(new schema::Conv2DT);
+
   convAttr->format = attr->format;
   convAttr->channelIn = attr->channelIn;
   convAttr->channelOut = attr->channelIn * attr->channelMultiplier;
@@ -64,9 +65,12 @@ STATUS TfliteDepthwiseConv2DParser::ParseGroupDepthwiseConv(schema::CNodeT *op,
       }
     }
   }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  op->primitive->value.type = schema::PrimitiveType_Conv2D;
-  op->primitive->value.value = convAttr.release();
+
+  if (op != nullptr) {
+    op->primitive = std::make_unique<schema::PrimitiveT>();
+    op->primitive->value.type = schema::PrimitiveType_Conv2D;
+    op->primitive->value.value = convAttr.release();
+  }
   return RET_OK;
 }
 

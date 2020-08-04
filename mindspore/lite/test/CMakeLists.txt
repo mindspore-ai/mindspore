@@ -1,5 +1,7 @@
+set(TOP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 set(TEST_DIR ${TOP_DIR}/mindspore/lite/test)
 set(LITE_DIR ${TOP_DIR}/mindspore/lite)
+set(CCSRC_DIR ${TOP_DIR}/mindspore/ccsrc)
 include_directories(${TOP_DIR})
 include_directories(${TEST_DIR})
 include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/dependency_gtest.cmake)
@@ -12,6 +14,7 @@ set(ANF_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../../core/base/base.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/log_adapter.cc
         )
+
 if(BUILD_CONVERTER)
     set(ANF_SRC
             ${ANF_SRC}

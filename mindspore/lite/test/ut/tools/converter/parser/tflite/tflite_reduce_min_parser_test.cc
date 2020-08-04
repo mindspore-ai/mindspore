@@ -20,7 +20,7 @@
 namespace mindspore {
 class TestTfliteParserReduceMin : public TestTfliteParser {
  public:
-  TestTfliteParserReduceMin() {}
+  TestTfliteParserReduceMin() = default;
   void SetUp() override { meta_graph = LoadAndConvert("./reduce_min.tflite"); }
 };
 

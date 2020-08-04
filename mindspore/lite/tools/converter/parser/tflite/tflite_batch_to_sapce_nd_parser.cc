@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "tools/converter/parser/tflite/tflite_batch_to_sapce_nd_parser.h"
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_batch_to_sapce_nd_parser.h"
 
 namespace mindspore {
 namespace lite {
@@ -32,11 +32,11 @@ STATUS TfliteBatchToSpaceNDParser::Parse(const std::unique_ptr<tflite::OperatorT
   // blockShape should be a 1D tensor with dimension [spatial_dims_num]
   // crops should be a 2D tensor with dimension [spatial_dims_num, 2]
   if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->blockShape)) {
-    MS_LOG(ERROR) << "BatchToSpaceNd get blockShape attr failed";
+    MS_LOG(ERROR) << "get BatchToSpaceNd -> blockShape failed";
     return RET_ERROR;
   }
   if (GetTfliteData(tfliteOp->inputs[2], tfliteTensors, tfliteModelBuffer, attr->crops)) {
-    MS_LOG(ERROR) << "BatchToSpaceNd get crops attr failed";
+    MS_LOG(ERROR) << "get BatchToSpaceNd -> crops failed";
     return RET_ERROR;
   }
 

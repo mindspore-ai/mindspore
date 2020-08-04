@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "tools/converter/parser/tflite/tflite_concat_parser.h"
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_concat_parser.h"
 
 namespace mindspore {
 namespace lite {
@@ -24,18 +24,17 @@ STATUS TfliteConcatParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
                                  const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
                                  const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                  const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                                 schema::CNodeT *op,
-                                 TensorCache *tensor_cache,
-                                 bool quantizedModel) {
+                                 schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
   MS_LOG(DEBUG) << "parse TfliteConcatParser";
   std::unique_ptr<schema::ConcatT> attr(new schema::ConcatT());
+
   const auto &tfliteAttr = tfliteOp->builtin_options.AsConcatenationOptions();
   if (tfliteAttr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
     return RET_NULL_PTR;
   }
-
   attr->axis = tfliteAttr->axis;
+
   attr->n = tfliteOp->inputs.size();
 
   if (op != nullptr) {

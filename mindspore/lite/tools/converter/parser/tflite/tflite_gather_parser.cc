@@ -29,13 +29,15 @@ STATUS TfliteGatherParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
                               bool quantizedModel) {
   MS_LOG(DEBUG) << "parse TfliteGatherParser";
   std::unique_ptr<schema::GatherT> attr(new schema::GatherT());
+
   const auto &tflite_attr = tfliteOp->builtin_options.AsGatherOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
+    return RET_NULL_PTR;
   }
-
   attr->axis = tflite_attr->axis;
-  attr->batchDims = 0;    // default
+
+  attr->batchDims = 0;
 
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();

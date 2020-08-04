@@ -27,12 +27,12 @@ STATUS TfliteSqueezeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
                                   schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
   MS_LOG(INFO) << "parse TfliteSqueezeParser";
   std::unique_ptr<schema::SqueezeT> attr(new schema::SqueezeT());
+
   const auto &tflite_attr = tfliteOp->builtin_options.AsSqueezeOptions();
   if (tflite_attr == nullptr) {
-    MS_LOG(ERROR) << "get op: " << op->name << " attr failed";
+    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
     return RET_NULL_PTR;
   }
-
   attr->axis = tflite_attr->squeeze_dims;
 
   if (op != nullptr) {

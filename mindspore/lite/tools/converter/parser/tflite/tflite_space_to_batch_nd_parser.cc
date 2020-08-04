@@ -29,12 +29,13 @@ STATUS TfliteSpaceToBatchNDParser::Parse(const std::unique_ptr<tflite::OperatorT
                                          TensorCache *tensor_cache, bool quantized_model) {
   MS_LOG(DEBUG) << "parse TfliteSpaceToBatchNDParser";
   std::unique_ptr<schema::SpaceToBatchNDT> attr(new schema::SpaceToBatchNDT());
+
   if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->blockShape)) {
-    MS_LOG(ERROR) << "spaceToBatchND -> blockShape get failed";
+    MS_LOG(ERROR) << "get spaceToBatchND -> blockShape failed";
     return RET_ERROR;
   }
   if (GetTfliteData(tflite_op->inputs[2], tflite_tensors, tflite_model_buffer, attr->paddings)) {
-    MS_LOG(ERROR) << "spaceToBatchND -> paddings get failed";
+    MS_LOG(ERROR) << "get spaceToBatchND -> paddings failed";
     return RET_ERROR;
   }
 

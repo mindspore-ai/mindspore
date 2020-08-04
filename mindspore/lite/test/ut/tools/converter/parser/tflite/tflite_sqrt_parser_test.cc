@@ -20,7 +20,7 @@
 namespace mindspore {
 class TestTfliteParserSqrt : public TestTfliteParser {
  public:
-  TestTfliteParserSqrt() {}
+  TestTfliteParserSqrt() = default;
   void SetUp() override { meta_graph = LoadAndConvert("./sqrt.tflite", ""); }
 };
 

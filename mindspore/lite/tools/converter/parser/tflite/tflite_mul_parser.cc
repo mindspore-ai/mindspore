@@ -29,21 +29,52 @@ STATUS TfliteMulParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp
                               bool quantizedModel) {
   MS_LOG(DEBUG) << "parse TfliteMulParser";
   std::unique_ptr<schema::MulT> attr(new schema::MulT());
+
   const auto &tfliteAttr = tfliteOp->builtin_options.AsMulOptions();
-  if (tfliteAttr == nullptr) {
+  if (nullptr == tfliteAttr) {
     MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
     return RET_NULL_PTR;
   }
-
-  auto weight_index = tfliteOp->inputs[1];
-  const auto &weight_tensor = tfliteTensors[weight_index];
-  std::vector<tflite::TensorT *> weight_tensors{weight_tensor.get()};
-
-  if (RET_OK != ParseWeight(weight_tensors, tfliteModelBuffer, tensor_cache, schema::Format_KHWC)) {
-    MS_LOG(ERROR) << "parse weight failed";
-    return RET_ERROR;
-  }
   attr->activationType = GetActivationFunctionType(tfliteAttr->fused_activation_function);
+
+  auto x_index = tfliteOp->inputs[0];
+  const auto &x_tensor = tfliteTensors[x_index];
+  if (x_tensor == nullptr) {
+    MS_LOG(ERROR) << "the first input is null";
+    return RET_NULL_PTR;
+  }
+  auto &x_data = tfliteModelBuffer.at(x_tensor->buffer);
+  if (x_data == nullptr) {
+    MS_LOG(ERROR) << "the data of the first input is null";
+    return RET_NULL_PTR;
+  }
+  if (x_data->data.size() > 0) {
+    std::vector<tflite::TensorT *> x_tensors{x_tensor.get()};
+    if (RET_OK != ParseTensor(x_tensors, tfliteModelBuffer, tensor_cache, TF_CONST, true)) {
+      MS_LOG(ERROR) << "parse the first tensor failed";
+      return RET_ERROR;
+    }
+  }
+
+  auto y_index = tfliteOp->inputs[1];
+  const auto &y_tensor = tfliteTensors[y_index];
+  if (y_tensor == nullptr) {
+    MS_LOG(ERROR) << "the second input is null";
+    return RET_NULL_PTR;
+  }
+  auto &y_data = tfliteModelBuffer.at(y_tensor->buffer);
+  if (y_data == nullptr) {
+    MS_LOG(ERROR) << "the data of the second input is null";
+    return RET_NULL_PTR;
+  }
+  if (y_data->data.size() > 0) {
+    std::vector<tflite::TensorT *> y_tensors{y_tensor.get()};
+    if (RET_OK != ParseTensor(y_tensors, tfliteModelBuffer, tensor_cache, TF_CONST, true)) {
+      MS_LOG(ERROR) << "parse the second tensor failed";
+      return RET_ERROR;
+    }
+  }
+
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Mul;

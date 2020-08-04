@@ -211,12 +211,18 @@ MetaGraphT *TfliteModelParser::Parse(const std::string &modelFile, const std::st
     // MS_LOGE("INPUT ILLEGAL: modelFile must be *.tflite");
     return nullptr;
   }
+
+  MS_LOG(INFO) << "modelFile is :" << modelFile;
+
   std::unique_ptr<tflite::ModelT> tflite_model(new tflite::ModelT());
   tflite_model = ReadTfliteModelFromFlat(modelFile.c_str());
   if (tflite_model == nullptr) {
     // MS_LOGE("read tflite model failed");
     return nullptr;
   }
+
+  MS_LOG(INFO) << "after read model";
+
   TensorCache tensorCache;
   if (tflite_model->subgraphs.size() != 1) {
     MS_LOG(ERROR) << "read tflite model subgraphs failed";

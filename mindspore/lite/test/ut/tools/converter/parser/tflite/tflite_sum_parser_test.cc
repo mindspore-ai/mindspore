@@ -20,7 +20,7 @@
 namespace mindspore {
 class TestTfliteParserSum : public TestTfliteParser {
  public:
-  TestTfliteParserSum() {}
+  TestTfliteParserSum() = default;
 
   void SetUp() override { meta_graph = LoadAndConvert("./sum.tflite"); }
 };

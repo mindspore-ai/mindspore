@@ -21,7 +21,7 @@
 namespace mindspore {
 class TestTfliteParserRound : public TestTfliteParser {
  public:
-  TestTfliteParserRound() {}
+  TestTfliteParserRound() = default;
   void SetUp() override {
     meta_graph = LoadAndConvert("./round.tflite");
   }

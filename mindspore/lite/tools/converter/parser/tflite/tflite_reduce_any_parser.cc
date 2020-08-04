@@ -32,15 +32,17 @@ STATUS TfliteReduceAnyParser::Parse(const std::unique_ptr<tflite::OperatorT> &tf
     MS_LOG(ERROR) << "get op: " << op->name << " attr failed";
     return RET_NULL_PTR;
   }
+
+  attr->keepDims = tflite_attr->keep_dims;
   // attr->mode = schema::;
   MS_LOG(ERROR) << "ms-lite haven't supported REDUCE_ANY now";
   return RET_NOT_FIND_OP;
 
   if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->axes)) {
-    MS_LOG(ERROR) << "REDUCE_ANY get axes attr failed";
+    MS_LOG(ERROR) << "get reduce_any->axes failed";
     return RET_ERROR;
   }
-  attr->keepDims = tflite_attr->keep_dims;
+
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Reduce;

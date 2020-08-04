@@ -30,6 +30,7 @@ STATUS TfliteStackParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
   const auto &tflite_attr = tfliteOp->builtin_options.AsPackOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
+    return RET_NULL_PTR;
   }
 
   attr->axis = tflite_attr->axis;

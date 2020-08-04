@@ -31,9 +31,10 @@ STATUS TfliteTopKV2Parser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   std::unique_ptr<schema::TopKV2T> attr(new schema::TopKV2T());
 
   if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->k)) {
-    MS_LOG(ERROR) << "topKV2 -> k get failed";
+    MS_LOG(ERROR) << "get topKV2 -> k failed";
     return RET_ERROR;
   }
+
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_TopKV2;

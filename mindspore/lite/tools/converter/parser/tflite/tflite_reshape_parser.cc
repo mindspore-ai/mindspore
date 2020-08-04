@@ -37,6 +37,10 @@ STATUS TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
     }
     auto shape_tensor_index = tfliteOp->inputs[1];
     const auto & shape_tensor = tfliteTensors[shape_tensor_index];
+    if (shape_tensor == nullptr) {
+      MS_LOG(ERROR) << "shape_tensor is null";
+      return RET_NULL_PTR;
+    }
     std::vector<tflite::TensorT *> shape_tensors{shape_tensor.get()};
     if (RET_OK != ParseWeight(shape_tensors, tfliteModelBuffer, tensor_cache, schema::Format_KHWC)) {
       MS_LOG(ERROR) << "parse shape tensor error";

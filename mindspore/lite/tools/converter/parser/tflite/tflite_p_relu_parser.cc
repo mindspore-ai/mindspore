@@ -28,10 +28,12 @@ STATUS TflitePreluParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
                                 schema::CNodeT *op, TensorCache *tensor_cache, bool quantized_model) {
   MS_LOG(DEBUG) << "paser TflitePreluParser";
   std::unique_ptr<schema::PreluT> attr(new schema::PreluT());
+
   if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->slope)) {
-    MS_LOG(ERROR) << "pRelu -> slope get failed";
+    MS_LOG(ERROR) << "get pRelu -> slope failed";
     return RET_ERROR;
   }
+
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Prelu;

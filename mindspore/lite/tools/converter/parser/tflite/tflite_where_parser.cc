@@ -31,9 +31,10 @@ STATUS TfliteWhereParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
   std::unique_ptr<schema::WhereT> attr(new schema::WhereT());
 
   if (GetTfliteData(tflite_op->inputs[0], tflite_tensors, tflite_model_buffer, attr->condition)) {
-    MS_LOG(ERROR) << "where -> condition get failed";
+    MS_LOG(ERROR) << "get where -> condition failed";
     return RET_ERROR;
   }
+
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Where;
