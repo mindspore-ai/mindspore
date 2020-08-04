@@ -26,6 +26,13 @@
 
 namespace mindspore {
 namespace session {
+struct CallBackParam {
+  std::string name_callback_aram;
+};
+
+using KernelCallBack = std::function<bool(std::vector<tensor::MSTensor *> inputs,
+                                          std::vector<tensor::MSTensor *> outputs, const CallBackParam &opInfo)>;
+
 /// \brief LiteSession defined by MindSpore Lite.
 class MS_API LiteSession {
  public:
@@ -65,12 +72,15 @@ class MS_API LiteSession {
   /// \return A vector of MindSpore Lite MSTensor.
   virtual std::vector<tensor::MSTensor *> GetInputsByName(const std::string &node_name) const = 0;
 
-  /// \brief Run model compiled by this session.
+  /// \brief Run session with callback.
+  ///
+  /// \param[in] before Define a call_back_function called before running each node
+  /// \param[in] after Define a call_back_function called after running each node
   ///
   /// \note RunGraph should called after CompileGraph.
   ///
   /// \return ErrorCode of run graph.
-  virtual int RunGraph() = 0;
+  virtual int RunGraph(const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) = 0;
 
   /// \brief Get output MindSpore Lite MSTensors of model.
   ///
@@ -87,4 +97,3 @@ class MS_API LiteSession {
 }  // namespace session
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_INCLUDE_LITE_SESSION_H
-

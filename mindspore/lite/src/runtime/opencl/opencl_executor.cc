@@ -17,11 +17,12 @@
 #include "src/runtime/opencl/opencl_executor.h"
 #include "src/runtime/kernel/arm/opclib/pack.h"
 #include "include/errorcode.h"
+#include "src/common/ms_tensor_utils.h"
 
 namespace mindspore::lite::opencl {
 int OpenCLExecutor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tensor::Tensor *> &outputs,
                         std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator,
-                        const kernel::KernelCallBack &before, const kernel::KernelCallBack &after) {
+                        const session::KernelCallBack &before, const session::KernelCallBack &after) {
   MS_ASSERT(nullptr != allocator);
   for (auto &inTensor : inputs) {
     if (inTensor == nullptr) {
@@ -46,11 +47,11 @@ int OpenCLExecutor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tenso
       MS_ASSERT(nullptr != output);
       output->MallocData();
     }
-    kernel::CallBackParam callbackParam;
+    session::CallBackParam callbackParam;
     callbackParam.name_callback_aram = kernel->Name();
 
     if (before != nullptr) {
-      if (!before(kernel->GetInputs(), kernel->GetOutputs(), callbackParam)) {
+      if (!before(PackToMSTensors(kernel->GetInputs()), PackToMSTensors(kernel->GetOutputs()), callbackParam)) {
         MS_LOG(ERROR) << "run kernel before_callback failed, name: " << kernel->Name();
       }
     }
@@ -61,7 +62,7 @@ int OpenCLExecutor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tenso
     }
 
     if (after != nullptr) {
-      if (!after(kernel->GetInputs(), kernel->GetOutputs(), callbackParam)) {
+      if (!after(PackToMSTensors(kernel->GetInputs()), PackToMSTensors(kernel->GetOutputs()), callbackParam)) {
         MS_LOG(ERROR) << "run kernel after_callback failed, name: " << kernel->Name();
       }
     }

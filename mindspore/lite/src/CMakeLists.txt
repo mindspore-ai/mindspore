@@ -1,5 +1,6 @@
 set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/common/graph_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/ms_tensor_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_api.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/thread_pool.cc
