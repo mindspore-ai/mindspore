@@ -27,7 +27,6 @@ np_types = (np.int8, np.int16, np.int32, np.int64,
             np.float32, np.float64, np.bool_)
 
 
-
 class Tensor(Tensor_):
     """
     Tensor for data storage.
@@ -205,6 +204,34 @@ class Tensor(Tensor_):
             return "Unknown Tensor type!"
         return str(self.asnumpy())
 
+    def all(self, axis=(), keep_dims=False):
+        """
+        Check all array elements along a given axis evaluate to True.
+
+        Args:
+            axis (Union[None, int, tuple(int)): Dimensions of reduction.
+            keep_dims (bool): Whether to keep the reduced dimensions.
+
+        Returns:
+            Tensor, has the same data type as x.
+        """
+
+        return tensor_operator_registry.get('all')(keep_dims)(self, axis)
+
+    def any(self, axis=(), keep_dims=False):
+        """
+        Check any array element along a given axis evaluate to True.
+
+        Args:
+            axis (Union[None, int, tuple(int)): Dimensions of reduction.
+            keep_dims (bool): Whether to keep the reduced dimensions.
+
+        Returns:
+            Tensor, has the same data type as x.
+        """
+
+        return tensor_operator_registry.get('any')(keep_dims)(self, axis)
+
     @property
     def virtual_flag(self):
         """Mark tensor is virtual."""
@@ -257,6 +284,7 @@ class IndexedSlices:
         >>> values = Tensor([[1, 2]], dtype=ms.float32)
         >>> Net((3, 2))(indices, values)
     """
+
     def __init__(self, indices, values, dense_shape):
         raise NotImplementedError
 
@@ -297,5 +325,6 @@ class SparseTensor:
         >>> values = Tensor([1, 2], dtype=ms.float32)
         >>> Net((3, 4))(indices, values)
     """
+
     def __init__(self, indices, values, dense_shape):
         raise NotImplementedError

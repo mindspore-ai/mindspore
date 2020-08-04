@@ -35,9 +35,11 @@ class Registry(UserDict):
                 new_args = list(args)
                 new_args.append(obj_str)
                 return self["vm_compare"](*new_args)
+
             obj = wrap
         else:
             obj = self[obj_str]
         return obj
+
 
 tensor_operator_registry = Registry()

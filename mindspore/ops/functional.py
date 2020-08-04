@@ -30,7 +30,6 @@ dtype = P.DType()
 isconstant = Primitive('is_constant')
 isconstant.set_is_const_value(True)
 
-
 issubclass_ = P.IsSubClass()
 isinstance_ = P.IsInstance()
 fill = P.Fill()
@@ -67,6 +66,7 @@ assign_sub = P.AssignSub()
 assign = P.Assign()
 square = P.Square()
 sqrt = P.Sqrt()
+
 scalar_to_array = P.ScalarToArray()
 scalar_to_tensor = P.ScalarToTensor()
 tuple_to_array = P.TupleToArray()
@@ -82,7 +82,6 @@ pack = P.Pack()
 partial = P.Partial()
 # depend: mount a node to another node
 depend = P.Depend()
-
 
 tuple_setitem = Primitive('tuple_setitem')
 tuple_getitem = Primitive('tuple_getitem')
@@ -101,7 +100,6 @@ make_slice = Primitive('make_slice')
 tuple_equal = Primitive("tuple_equal")
 list_equal = Primitive("list_equal")
 make_ref = Primitive("make_ref")
-
 
 scalar_add = Primitive('scalar_add')
 scalar_mul = Primitive('scalar_mul')
@@ -154,7 +152,6 @@ shape_mul = Primitive("shape_mul")
 # a primitive to compare between tuple.
 stop_gradient = Primitive("stop_gradient")
 
-
 make_indexed_slices = Primitive('MakeIndexedSlices')
 indexed_slices_get_values = Primitive('IndexedSlicesGetValues')
 indexed_slices_get_indices = Primitive('IndexedSlicesGetIndices')
@@ -172,7 +169,9 @@ tensor_operator_registry.register('__truediv__', tensor_div)
 tensor_operator_registry.register('__mod__', tensor_mod)
 tensor_operator_registry.register('__pow__', tensor_pow)
 tensor_operator_registry.register('__floordiv__', tensor_floordiv)
-#ms cannot support Tensor(True) compare
+tensor_operator_registry.register('all', P.ReduceAll)
+tensor_operator_registry.register('any', P.ReduceAny)
+# ms cannot support Tensor(True) compare
 tensor_operator_registry.register('__eq__', equal)
 tensor_operator_registry.register('__ne__', not_equal)
 tensor_operator_registry.register('__neg__', neg_tensor)
@@ -181,6 +180,6 @@ tensor_operator_registry.register('__le__', tensor_le)
 tensor_operator_registry.register('__gt__', tensor_gt)
 tensor_operator_registry.register('__ge__', tensor_ge)
 tensor_operator_registry.register('shape', shape)
-#support GE backend for no compare operators
+# support GE backend for no compare operators
 tensor_operator_registry.register('vm_compare', BP.vm_compare)
 tensor_operator_registry.register('cast', cast)

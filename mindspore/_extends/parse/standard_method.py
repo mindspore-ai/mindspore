@@ -31,6 +31,41 @@ trans = P.Transpose()
 shape_ = P.Shape()
 dtype_ = P.DType()
 
+
+def all_(x, axis=(), keep_dims=False):
+    """
+    Check all array elements along a given axis evaluate to True.
+
+    Args:
+        x (Tensor): A Tensor to be reduced.
+        axis (Union[None, int, tuple(int)): Dimensions of reduction.
+        keep_dims (bool): Whether to keep the reduced dimensions.
+
+    Returns:
+        Tensor, has the same data type as x.
+    """
+
+    reduce_all = P.ReduceAll(keep_dims)
+    return reduce_all(x, axis)
+
+
+def any_(x, axis=(), keep_dims=False):
+    """
+    Check any array element along a given axis evaluate to True.
+
+    Args:
+        x (Tensor): A Tensor to be reduced.
+        axis (Union[None, int, tuple(int)): Dimensions of reduction.
+        keep_dims (bool): Whether to keep the reduced dimensions.
+
+    Returns:
+        Tensor, has the same data type as x.
+    """
+
+    reduce_any = P.ReduceAny(keep_dims)
+    return reduce_any(x, axis)
+
+
 def transpose(x):
     """Implementation of `transpose`."""
     shape = F.shape(x)
@@ -155,7 +190,6 @@ def check_is_const_int(x, op_name, arg_name):
     if not isinstance(x, int):
         raise TypeError(f"For '{op_name}', the '{arg_name}' should be a const int number, but got {x}.")
     return True
-
 
 
 @constexpr
@@ -315,5 +349,6 @@ def list_append(self_, item):
 def to_array(x):
     """Implementation of `to_array`."""
     return x.__ms_to_array__()
+
 
 tensor_operator_registry.register('__bool__', tensor_bool)

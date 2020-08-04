@@ -194,7 +194,19 @@ def vm_impl_all(self):
 
     def vm_impl(x, axis):
         x = x.asnumpy()
-        out = vm.all(x, axis)
+        out = vm.all(x, axis, self.keep_dims)
+        return Tensor(out)
+
+    return vm_impl
+
+
+@vm_impl_getters.register(P.ReduceAny)
+def vm_impl_any(self):
+    """Generate vm_impl function for Any"""
+
+    def vm_impl(x, axis):
+        x = x.asnumpy()
+        out = vm.any(x, axis, self.keep_dims)
         return Tensor(out)
 
     return vm_impl

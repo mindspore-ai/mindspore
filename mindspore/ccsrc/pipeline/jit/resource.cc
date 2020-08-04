@@ -143,6 +143,8 @@ BuiltInTypeMap &GetMethodMap() {
      }},
     {kObjectTypeTensorType,
      {
+       {"all", std::string("all_")},                // C.reduce_all
+       {"any", std::string("any_")},                // C.reduce_any
        {"__add__", std::string("add")},             // C.add
        {"__sub__", std::string("sub")},             // C.sub
        {"__mul__", std::string("mul")},             // C.mul
