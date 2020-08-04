@@ -138,7 +138,6 @@ if (BUILD_MINDDATA)
     include_directories(${TOP_DIR}/third_party/libjpeg-turbo/include)
 
     add_compile_definitions(ENABLE_ANDROID)
-    add_compile_definitions(ENABLE_EAGER)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/minddata)
 endif()
 

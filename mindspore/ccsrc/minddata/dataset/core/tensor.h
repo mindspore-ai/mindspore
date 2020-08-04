@@ -38,18 +38,21 @@
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/util/status.h"
-#include "minddata/dataset/include/de_tensor.h"
 #ifndef ENABLE_ANDROID
 #include "proto/example.pb.h"
+#else
+#include "minddata/dataset/include/de_tensor.h"
 #endif
 
 #ifdef ENABLE_PYTHON
 namespace py = pybind11;
 #endif
 namespace mindspore {
+#ifdef ENABLE_ANDROID
 namespace tensor {
 class DETensor;
 }  // namespace tensor
+#endif
 namespace dataset {
 class Tensor;
 template <typename T>
@@ -61,7 +64,9 @@ using offset_t = uint32_t;                                  // type of offset va
 using TensorPtr = std::shared_ptr<Tensor>;
 
 class Tensor {
+#ifdef ENABLE_ANDROID
   friend class tensor::DETensor;
+#endif
  public:
   Tensor() = delete;
   Tensor(const Tensor &other) = delete;
