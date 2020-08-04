@@ -49,7 +49,6 @@ std::shared_ptr<tensor::MSTensor> Execute::operator()(std::shared_ptr<tensor::MS
   return std::make_shared<tensor::DETensor>(std::move(de_output));
 }
 
-
 }  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

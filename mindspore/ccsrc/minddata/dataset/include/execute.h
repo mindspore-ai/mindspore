@@ -44,7 +44,6 @@ class Execute {
   std::shared_ptr<TensorOperation> op_;
 };
 
-
 }  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
