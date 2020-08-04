@@ -54,5 +54,5 @@ cp -r ../src ./train
 cd ./train || exit
 echo "start training for device $DEVICE_ID"
 env > env.log
-python train.py --do_train=True --device_id=$DEVICE_ID --pre_trained=$PATH1 &> log &
+python train.py --device_id=$DEVICE_ID --pre_trained=$PATH1 &> log &
 cd ..
