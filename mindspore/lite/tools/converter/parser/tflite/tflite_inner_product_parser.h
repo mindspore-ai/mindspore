@@ -19,8 +19,8 @@
 
 #include <memory>
 #include <vector>
-#include "mindspore/lite/tools/converter/parser/tflite/tflite_node_parser.h"
-#include "mindspore/lite/tools/converter/parser/tflite/tflite_node_parser_registry.h"
+#include "tools/converter/parser/tflite/tflite_node_parser.h"
+#include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
 
 namespace mindspore {
 namespace lite {

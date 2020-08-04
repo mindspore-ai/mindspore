@@ -16,7 +16,7 @@
 
 #include <memory>
 #include <vector>
-#include "mindspore/lite/tools/converter/parser/tflite/tflite_sigmoid_parser.h"
+#include "tools/converter/parser/tflite/tflite_sigmoid_parser.h"
 
 namespace mindspore {
 namespace lite {

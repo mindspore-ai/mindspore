@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mindspore/lite/tools/converter/parser/tflite/tflite_argmax_parser.h"
+#include "tools/converter/parser/tflite/tflite_argmax_parser.h"
 #include <memory>
 #include <vector>
 

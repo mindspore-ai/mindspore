@@ -677,12 +677,16 @@ table SpaceToBatch {
 }
 
 table SparseToDense {
+    outputShape: [int];
+    sparseValue: [int];
+    defaultValue: [int];
     validateIndices: bool;
 }
 
 table ReverseSequence {
     seqAxis: int;
     batchAxis: int;
+    seqLengths: [int];
 }
 
 table Rank {
@@ -781,6 +785,7 @@ table ScatterND {
 }
 
 table Unique {
+    outType: int;
 }
 
 table Unstack {
@@ -820,6 +825,7 @@ table OptMomentum {
 
 
 table Where{
+    condition: [bool];
 }
 
 table OneHot {
@@ -829,7 +835,7 @@ table OneHot {
 table Lstm{
     bidirection: bool = false;
 }
-
+ 
 table PriorBox {
     min_sizes: [int];
     max_sizes: [int];
@@ -843,3 +849,14 @@ table PriorBox {
     flip: bool = true;
     offset: float;
 }
+
+table SpaceToBatchND {
+    blockShape : [int];
+    paddings : [int];
+}
+
+table TopKV2 {
+    k : [int];
+    sorted : bool = true;
+}
+

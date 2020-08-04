@@ -187,7 +187,9 @@ union PrimitiveType {
     DivGrad,
     PowerGrad,
     ActivationGrad,
-    PriorBox
+    PriorBox,
+    SpaceToBatchND,
+    TopKV2
 }
 
 enum QuantType: int {

@@ -16,7 +16,7 @@
 
 #include <vector>
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/tflite/tflite_depthwise_conv_parser.h"
+#include "tools/converter/parser/tflite/tflite_depthwise_conv_parser.h"
 #include "tools/common/node_util.h"
 
 namespace mindspore {

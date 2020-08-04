@@ -16,7 +16,7 @@
 
 #include <vector>
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/tflite/tflite_max_pooling_parser.h"
+#include "tools/converter/parser/tflite/tflite_max_pooling_parser.h"
 
 namespace mindspore {
 namespace lite {

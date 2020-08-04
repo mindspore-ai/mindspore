@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mindspore/lite/tools/converter/parser/tflite/tflite_converter.h"
+#include "tools/converter/parser/tflite/tflite_converter.h"
 
 namespace mindspore {
 namespace lite {

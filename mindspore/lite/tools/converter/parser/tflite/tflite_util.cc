@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mindspore/lite/tools/converter/parser/tflite/tflite_util.h"
+#include "tools/converter/parser/tflite/tflite_util.h"
 #include <map>
 #include <string>
 #include "utils/log_adapter.h"
