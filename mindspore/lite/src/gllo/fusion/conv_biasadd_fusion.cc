@@ -144,7 +144,7 @@ const AnfNodePtr ConvBiasaddFusion::Process(const FuncGraphPtr &func_graph, cons
   MS_ASSERT(primitiveT_value);
   auto type = primitiveT_value->GetPrimitiveT()->value.type;
   if (type == schema::PrimitiveType_Conv2D) {
-    primitiveT_value->GetPrimitiveT()->value.AsConv2D()->hasBias = true;;
+    primitiveT_value->GetPrimitiveT()->value.AsConv2D()->hasBias = true;
   } else if (type == schema::PrimitiveType_DepthwiseConv2D) {
     primitiveT_value->GetPrimitiveT()->value.AsDepthwiseConv2D()->hasBias = true;
   } else if (type == schema::PrimitiveType_DeConv2D) {

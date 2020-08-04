@@ -85,7 +85,7 @@ kernel::LiteKernel *CpuConcatInt32KernelCreator(const std::vector<lite::tensor::
 kernel::LiteKernel *CpuConcatFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                       const std::vector<lite::tensor::Tensor *> &outputs,
                                                       OpParameter *opParameter, const Context *ctx,
-                                               const kernel::KernelKey &desc) {;
+                                               const kernel::KernelKey &desc) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
