@@ -272,12 +272,12 @@ KernelModPtr ParallelBuildManager::GenKernelMod(const string &json_name, const s
 }
 
 int ParallelBuildManager::StartCompileOp(const nlohmann::json &kernel_json) {
-  return KernelBuildClient::Instance().Start(kernel_json.dump());
+  return KernelBuildClient::Instance().TbeStart(kernel_json.dump());
 }
 
 bool ParallelBuildManager::WaitOne(int *task_id, std::string *task_result, std::string *pre_build_result) {
   MS_EXCEPTION_IF_NULL(task_id);
-  return KernelBuildClient::Instance().Wait(task_id, task_result, pre_build_result);
+  return KernelBuildClient::Instance().TbeWait(task_id, task_result, pre_build_result);
 }
 
 void ParallelBuildManager::ResetTaskInfo() {
@@ -287,7 +287,7 @@ void ParallelBuildManager::ResetTaskInfo() {
   }
   task_map_.clear();
   same_op_list_.clear();
-  KernelBuildClient::Instance().Reset();
+  KernelBuildClient::Instance().TbeReset();
 }
 }  // namespace kernel
 }  // namespace mindspore

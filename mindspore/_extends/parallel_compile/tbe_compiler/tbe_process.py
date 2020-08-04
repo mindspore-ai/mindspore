@@ -22,14 +22,14 @@ import json
 from .common import check_kernel_info, TBEException
 from .helper import _op_select_format, _check_supported
 
-def create_tbe_parallel_compiler():
+def create_tbe_parallel_process():
     """
     create TBEParallelCompiler object
 
     Returns:
         TBEParallelCompiler
     """
-    return compile_pool
+    return tbe_process
 
 def op_select_format(op_json: str):
     """
@@ -98,8 +98,8 @@ def run_compiler(op_json):
     except subprocess.CalledProcessError as e:
         return "TBEException", "PreCompileProcessFailed:\n" + e.stdout + "\n" + e.stderr + "\ninput_args: " + op_json
 
-class CompilerPool:
-    """compiler pool"""
+class TbeProcess:
+    """tbe process"""
 
     def __init__(self):
         self.__processe_num = multiprocessing.cpu_count()
@@ -168,5 +168,4 @@ class CompilerPool:
         if self.__running_tasks:
             self.__running_tasks.clear()
 
-
-compile_pool = CompilerPool()
+tbe_process = TbeProcess()

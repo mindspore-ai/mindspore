@@ -12,3 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""
+Extension  functions.
+
+Python functions that will be called in the c++ parts of MindSpore.
+"""

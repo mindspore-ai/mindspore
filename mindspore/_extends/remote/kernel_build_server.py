@@ -16,13 +16,14 @@
 import os
 import sys
 import time
-from mindspore._extends.parallel_compile.tbe_compiler.tbe_process import create_tbe_parallel_compiler, op_select_format, check_supported
+from mindspore._extends.parallel_compile.tbe_compiler.tbe_process import create_tbe_parallel_process, op_select_format, check_supported
+from mindspore._extends.parallel_compile.akg_compiler.akg_process import create_akg_parallel_process
 
 class TbeBuilder:
     """Tbe building wrapper"""
 
     def __init__(self):
-        self.tbe_builder = create_tbe_parallel_compiler()
+        self.tbe_builder = create_tbe_parallel_process()
 
     def start(self, json):
         return self.tbe_builder.start_compile_op(json)
@@ -36,6 +37,21 @@ class TbeBuilder:
     def exit(self):
         self.tbe_builder.exit()
 
+class AkgBuilder:
+    """Akg building wrapper"""
+
+    def __init__(self):
+        pass
+
+    def create(self, process_num, waitime):
+        self.akg_builder = create_akg_parallel_process(process_num, waitime)
+
+    def accept_json(self, json):
+        return self.akg_builder.accept_json(json)
+
+    def compile(self):
+        return self.akg_builder.compile()
+
 class Messager:
     '''Messager'''
 
@@ -43,6 +59,7 @@ class Messager:
         logger.info('[TRACE]', 'Messager init...')
         self.message = ''
         self.tbe_builder = TbeBuilder()
+        self.akg_builder = AkgBuilder()
 
     def get_message(self):
         """
@@ -111,12 +128,12 @@ class Messager:
         Communicate with remote
         """
         arg = self.get_message()
-        if arg == 'START':
+        if arg == 'TBE/START':
             self.send_ack()
             json = self.get_message()
             res = self.tbe_builder.start(json)
             self.send_res(res)
-        elif arg == 'WAIT':
+        elif arg == 'TBE/WAIT':
             self.send_ack()
             task_id, res, pre = self.tbe_builder.wait()
             logger.debug('[TRACE]', str(task_id) + '/' + str(res) + '/' + str(pre))
@@ -132,9 +149,30 @@ class Messager:
                 self.send_ack(False)
                 self.exit()
             self.send_res(pre)
-        elif arg == 'RESET':
+        elif arg == 'TBE/RESET':
             self.tbe_builder.reset()
             self.send_ack()
+        elif arg == 'AKG/START':
+            self.send_ack()
+            process_num_str = self.get_message()
+            self.send_ack()
+            wait_time_str = self.get_message()
+            self.akg_builder.create(int(process_num_str), int(wait_time_str))
+            self.send_ack()
+        elif arg == 'AKG/DATA':
+            self.send_ack()
+            while True:
+                req = self.get_message()
+                if req.startswith('{'):
+                    self.akg_builder.accept_json(req)
+                    self.send_ack()
+                elif req == 'AKG/WAIT':
+                    res = self.akg_builder.compile()
+                    self.send_res(res)
+                    break
+                else:
+                    self.send_ack(False)
+                    break
         elif arg == 'FORMAT':
             self.send_ack()
             json = self.get_message()
@@ -180,7 +218,7 @@ class Messager:
 class Logger:
     """
     Replace dummy 'logger' to output log as below:
-    logger = Logger("remote_kernel_build_" + time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()) + ".log")
+    logger = Logger(0, True, "remote_kernel_build_" + time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()) + ".log")
     """
     def __init__(self, level=1, dumpfile=False, filename='Logger.log'):
         """
@@ -225,7 +263,7 @@ class DummyLogger:
     def info(self, tag, msg):
         pass
 
-logger = Logger()
+logger = DummyLogger()
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
