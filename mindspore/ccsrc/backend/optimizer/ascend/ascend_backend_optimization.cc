@@ -16,7 +16,6 @@
 #include "backend/optimizer/ascend/ascend_backend_optimization.h"
 #include <memory>
 #include <string>
-#include <set>
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/ascend/ir_fission/bn_split.h"
 #include "backend/optimizer/ascend/ir_fission/bn_grad_split.h"
@@ -24,6 +23,7 @@
 #include "backend/optimizer/ascend/ir_fission/batch_norm_bert_fission.h"
 #include "backend/optimizer/ascend/ir_fission/single_batch_norm_fission.h"
 #include "backend/optimizer/ascend/ir_fission/tensor_scatter_update_fission.h"
+#include "backend/optimizer/ascend/ir_fission/reduce_min_fission.h"
 #include "backend/optimizer/ascend/ir_fusion/fused_batch_norm_fusion.h"
 #include "backend/optimizer/ascend/ir_fission/layer_norm_grad_split.h"
 #include "backend/optimizer/pass/communication_op_fusion.h"
@@ -111,18 +111,9 @@
 namespace mindspore {
 namespace opt {
 namespace {
-void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
+void AddAscendIRFusionRulesPass(PassManager *ir_fusion_pm) {
   MS_EXCEPTION_IF_NULL(ir_fusion_pm);
-  ir_fusion_pm->AddPass(std::make_shared<BatchNormBertFission>());
-  ir_fusion_pm->AddPass(std::make_shared<SingleBatchNormFission>());
-  ir_fusion_pm->AddPass(std::make_shared<SquareSumFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<ClipByNormNoDivSquareSumFusion>());
   ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLRRuleFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<SoftmaxGradExtFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<SoftmaxGradExtFusionV2>());
-  ir_fusion_pm->AddPass(std::make_shared<SoftmaxGradExtFusionV3>());
-  ir_fusion_pm->AddPass(std::make_shared<ConfusionMulGradFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<ConfusionSoftmaxGradRule>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRuleCond1>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRuleCond2>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRuleCond3>());
@@ -133,10 +124,6 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVRuleCond4>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextRightRule>());
   ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLrV2>());
-  ir_fusion_pm->AddPass(std::make_shared<ReshapeTransposeFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<TransposeReshapeFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<ClipByValueFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond1Fusion>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond2Fusion>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond3Fusion>());
@@ -146,6 +133,27 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRuleCond3>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRuleCond4>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRuleCond5>());
+  ir_fusion_pm->AddPass(std::make_shared<ClipByNormNoDivSquareSumFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<SquareSumFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<ClipByValueFusion>());
+}
+
+void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
+  MS_EXCEPTION_IF_NULL(ir_fusion_pm);
+  ir_fusion_pm->AddPass(std::make_shared<BatchNormBertFission>());
+  ir_fusion_pm->AddPass(std::make_shared<SingleBatchNormFission>());
+  ir_fusion_pm->AddPass(std::make_shared<BatchNorm2BNInfer>());
+  ir_fusion_pm->AddPass(std::make_shared<BatchNormGrad2BNInferGrad>());
+  ir_fusion_pm->AddPass(std::make_shared<BatchNormGradInferFission>());
+  ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
+  ir_fusion_pm->AddPass(std::make_shared<SoftmaxGradExtFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<SoftmaxGradExtFusionV2>());
+  ir_fusion_pm->AddPass(std::make_shared<SoftmaxGradExtFusionV3>());
+  ir_fusion_pm->AddPass(std::make_shared<ConfusionMulGradFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<ConfusionSoftmaxGradRule>());
+  ir_fusion_pm->AddPass(std::make_shared<ReshapeTransposeFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<TransposeReshapeFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
   ir_fusion_pm->AddPass(std::make_shared<MomentumLossscaleFusion>());
   ir_fusion_pm->AddPass(std::make_shared<MulAddFusion>());
   ir_fusion_pm->AddPass(std::make_shared<MulAddNFusion>());
@@ -153,15 +161,12 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
   ir_fusion_pm->AddPass(std::make_shared<DereluFusion>());
   ir_fusion_pm->AddPass(std::make_shared<TransposeTransDataFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
-  ir_fusion_pm->AddPass(std::make_shared<BatchNorm2BNInfer>());
-  ir_fusion_pm->AddPass(std::make_shared<BatchNormGrad2BNInferGrad>());
-  ir_fusion_pm->AddPass(std::make_shared<BatchNormGradInferFission>());
   ir_fusion_pm->AddPass(std::make_shared<SplitFission>());
   ir_fusion_pm->AddPass(std::make_shared<TensorScatterUpdateFission>());
   ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
   ir_fusion_pm->AddPass(std::make_shared<PackFission>());
   ir_fusion_pm->AddPass(std::make_shared<ConcatFission>());
+  ir_fusion_pm->AddPass(std::make_shared<ReduceMinFission>());
 }
 }  // namespace
 
@@ -265,9 +270,8 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
     ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormMixPrecisionFusion1>());
   }
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
-  if (context_ptr->ir_fusion_flag()) {
-    AddAscendBackendOptionalIRFusion(ir_fusion_pm.get());
-  }
+  AddAscendIRFusionRulesPass(ir_fusion_pm.get());
+  AddAscendIRFusionPass(ir_fusion_pm.get());
 
   if (context_ptr->enable_task_sink() && context_ptr->loop_sink_flag() && ConfigManager::GetInstance().iter_num() > 1) {
     ir_fusion_pm->AddPass(std::make_shared<InsertMemcpyAsyncForGetNext>());
