@@ -23,7 +23,7 @@ namespace mindspore {
 namespace dataset {
 namespace api {
 
-Execute::Execute(const std::shared_ptr<TensorOperation> &op) : op_(std::move(op)) {}
+Execute::Execute(std::shared_ptr<TensorOperation> op) : op_(std::move(op)) {}
 
 std::shared_ptr<tensor::MSTensor> Execute::operator()(std::shared_ptr<tensor::MSTensor> input) {
   // Build the op

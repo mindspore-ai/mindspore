@@ -30,10 +30,11 @@ class TensorOp;
 
 namespace api {
 
+// class to run tensor operations in eager mode
 class Execute {
  public:
   /// \brief Constructor
-  explicit Execute(const std::shared_ptr<TensorOperation> &op);
+  explicit Execute(std::shared_ptr<TensorOperation> op);
 
   /// \brief callable function to execute the TensorOperation in eager mode
   /// \param[inout] input - the tensor to be transformed
