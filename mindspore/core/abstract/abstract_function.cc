@@ -143,14 +143,23 @@ bool PrimitiveAbstractClosure::operator==(const AbstractFunction &other) const {
   return false;
 }
 
-std::size_t PrimitiveAbstractClosure::hash() const { return hash_combine(tid(), prim_->hash()); }
+std::size_t PrimitiveAbstractClosure::hash() const {
+  auto hash_value = hash_combine(tid(), prim_->hash());
+  // Keep in sync with operator==() which compares the prim_ pointer;
+  hash_value = hash_combine(hash_value, std::hash<Primitive *>{}(prim_.get()));
+  if (tracking_id() != nullptr) {
+    hash_value = hash_combine(hash_value, tracking_id()->hash());
+  }
+  return hash_value;
+}
 
 bool FuncGraphAbstractClosure::operator==(const AbstractFunction &other) const {
   if (!other.isa<FuncGraphAbstractClosure>()) {
     return false;
   }
   auto other_fg = static_cast<const FuncGraphAbstractClosure *>(&other);
-  if (func_graph_ == other_fg->func_graph_ && context_ == other_fg->context_) {
+  if (func_graph_ == other_fg->func_graph_ && context_ == other_fg->context_ &&
+      tracking_id() == other_fg->tracking_id()) {
     return true;
   }
   return false;
@@ -159,9 +168,11 @@ bool FuncGraphAbstractClosure::operator==(const AbstractFunction &other) const {
 std::size_t FuncGraphAbstractClosure::hash() const {
   auto hash_value = hash_combine(tid(), func_graph_->hash());
   hash_value = hash_combine(hash_value, context_->hash());
+  if (tracking_id() != nullptr) {
+    hash_value = hash_combine(hash_value, tracking_id()->hash());
+  }
   return hash_value;
 }
-
 std::string FuncGraphAbstractClosure::ToString() const {
   std::stringstream ss;
   ss << "FuncGraphAbstractClosure: "
@@ -174,7 +185,7 @@ bool MetaFuncGraphAbstractClosure::operator==(const AbstractFunction &other) con
     return false;
   }
   auto other_meta_fg = static_cast<const MetaFuncGraphAbstractClosure *>(&other);
-  if (meta_func_graph_ == other_meta_fg->meta_func_graph_) {
+  if (meta_func_graph_ == other_meta_fg->meta_func_graph_ && tracking_id() == other_meta_fg->tracking_id()) {
     return true;
   }
   return false;
@@ -182,6 +193,9 @@ bool MetaFuncGraphAbstractClosure::operator==(const AbstractFunction &other) con
 
 std::size_t MetaFuncGraphAbstractClosure::hash() const {
   auto hash_value = hash_combine(tid(), meta_func_graph_->hash());
+  if (tracking_id() != nullptr) {
+    hash_value = hash_combine(hash_value, tracking_id()->hash());
+  }
   return hash_value;
 }
 

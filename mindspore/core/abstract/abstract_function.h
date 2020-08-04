@@ -92,13 +92,15 @@ class PrimitiveAbstractClosure : public AbstractFuncAtom {
   // one reference cycle example is Graph::set_output() input0 local variable.
   AnfNodeWeakPtr tracking_id_;
 };
+using PrimitiveAbstractClosurePtr = std::shared_ptr<PrimitiveAbstractClosure>;
 
 class FuncGraphAbstractClosure : public AbstractFuncAtom {
  public:
   // Represents a Graph in a certain Context.
   // context: The context, or Context.empty()
-  FuncGraphAbstractClosure(const FuncGraphPtr &func_graph, const AnalysisContextPtr &context)
-      : func_graph_(func_graph), context_(context) {
+  FuncGraphAbstractClosure(const FuncGraphPtr &func_graph, const AnalysisContextPtr &context,
+                           const AnfNodePtr &tracking_id = nullptr)
+      : func_graph_(func_graph), context_(context), tracking_id_(AnfNodeWeakPtr(tracking_id)) {
     MS_EXCEPTION_IF_NULL(func_graph);
     MS_EXCEPTION_IF_NULL(context);
   }
@@ -109,8 +111,10 @@ class FuncGraphAbstractClosure : public AbstractFuncAtom {
 
   AnalysisContextPtr context() const override { return context_; }
 
+  AnfNodePtr tracking_id() const override { return tracking_id_.lock(); }
+
   AbstractFunctionPtr Copy() const override {
-    return std::make_shared<FuncGraphAbstractClosure>(func_graph_, context_);
+    return std::make_shared<FuncGraphAbstractClosure>(func_graph_, context_, tracking_id());
   }
 
   bool operator==(const AbstractFunction &other) const override;
@@ -121,13 +125,22 @@ class FuncGraphAbstractClosure : public AbstractFuncAtom {
  private:
   FuncGraphPtr func_graph_;
   AnalysisContextPtr context_;
+  // To discriminate different usage of same graph by using this tracking_id,
+  // so different tracking_id will produce different FuncGraphAbstractClosure,
+  // different FuncGraphEvaluator.
+  // Espcecially usefull for recursive func graph call, so it will not mess up
+  // the graph_context_ in FuncGraphEvaluator.
+  // Notes: Be careful to use nullptr for this variable.
+  // store it as weak_ptr to break reference cycle.
+  AnfNodeWeakPtr tracking_id_;
 };
 using FuncGraphAbstractClosurePtr = std::shared_ptr<FuncGraphAbstractClosure>;
 
 class MetaFuncGraphAbstractClosure : public AbstractFuncAtom {
  public:
-  explicit MetaFuncGraphAbstractClosure(const MetaFuncGraphPtr &meta_func_graph, const ScopePtr &scope = kDefaultScope)
-      : meta_func_graph_(meta_func_graph), scope_(scope) {}
+  explicit MetaFuncGraphAbstractClosure(const MetaFuncGraphPtr &meta_func_graph,
+                                        const AnfNodePtr &tracking_id = nullptr, const ScopePtr &scope = kDefaultScope)
+      : meta_func_graph_(meta_func_graph), tracking_id_(AnfNodeWeakPtr(tracking_id)), scope_(scope) {}
   ~MetaFuncGraphAbstractClosure() override = default;
   MS_DECLARE_PARENT(MetaFuncGraphAbstractClosure, AbstractFuncAtom)
 
@@ -137,7 +150,11 @@ class MetaFuncGraphAbstractClosure : public AbstractFuncAtom {
 
   ScopePtr GetScope() { return scope_; }
 
-  AbstractFunctionPtr Copy() const override { return std::make_shared<MetaFuncGraphAbstractClosure>(meta_func_graph_); }
+  AnfNodePtr tracking_id() const override { return tracking_id_.lock(); }
+
+  AbstractFunctionPtr Copy() const override {
+    return std::make_shared<MetaFuncGraphAbstractClosure>(meta_func_graph_, tracking_id());
+  }
   bool operator==(const AbstractFunction &other) const override;
   std::size_t hash() const override;
 
@@ -145,6 +162,9 @@ class MetaFuncGraphAbstractClosure : public AbstractFuncAtom {
 
  private:
   MetaFuncGraphPtr meta_func_graph_;
+  // refer the comment in FuncGraphAbstractClosure;
+  // store it as weak_ptr to break reference cycle.
+  AnfNodeWeakPtr tracking_id_;
   ScopePtr scope_;
 };
 using MetaFuncGraphAbstractClosurePtr = std::shared_ptr<MetaFuncGraphAbstractClosure>;

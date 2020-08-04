@@ -232,7 +232,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
 
   const PrimEvaluatorMap &prim_constructors_;
   FuncGraphManagerPtr func_graph_manager_;
-  std::unordered_map<AbstractFunctionPtr, EvaluatorPtr> constructors_;
+  std::unordered_map<AbstractFunctionPtr, EvaluatorPtr, AbstractFunctionHasher, AbstractFunctionEqual> constructors_;
   AnfNodeConfigMap anfnode_config_map_;
   // Use a list to trace multiple evaluators.
   std::list<std::pair<EvaluatorPtr, AbstractBasePtrList>> eval_trace_;
