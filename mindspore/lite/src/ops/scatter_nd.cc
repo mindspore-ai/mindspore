@@ -54,7 +54,7 @@ int ScatterND::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<ten
   }
   auto output = outputs_.front();
   auto shape_data = reinterpret_cast<int *>(shape->Data());
-  std::vector<int> out_shape(shape_data, shape_data + sizeof(shape_data) / sizeof(shape_data[0]));
+  std::vector<int> out_shape(shape_data, shape_data + shape->DataSize());
   output->set_shape(out_shape);
   output->set_data_type(update->data_type());
   output->SetFormat(update->GetFormat());

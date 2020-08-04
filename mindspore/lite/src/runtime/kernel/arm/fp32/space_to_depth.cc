@@ -85,6 +85,7 @@ int SpaceToDepthCPUKernel::Run() {
       MS_LOG(ERROR) << "SpaceToDepth error error_code[" << ret << "]";
       return ret;
     }
+    return RET_OK;
   } else {
     MS_LOG(ERROR) << "Only support NHWC now!";
     return RET_ERROR;

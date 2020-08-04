@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_BACKEND_ARM_FP32_OPT_MOMENTUM_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPT_MOMENTUM_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_OPT_MOMENTUM_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_OPT_MOMENTUM_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
@@ -37,4 +37,4 @@ class OptMomentumCPUKernel : public LiteKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPT_MOMENTUM_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_OPT_MOMENTUM_H_
