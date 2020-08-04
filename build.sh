@@ -519,6 +519,50 @@ build_opencl() {
     fi
 }
 
+build_opencv() {
+    cd ${BASEPATH}
+    if [[ "${INC_BUILD}" == "off" ]]; then
+        git submodule update --init --recursive third_party/opencv
+        cd ${BASEPATH}/third_party/opencv
+        rm -rf build && mkdir -p build && cd build && cmake ${CMAKE_MINDDATA_ARGS} -DBUILD_SHARED_LIBS=ON -DBUILD_ANDROID_PROJECTS=OFF \
+          -DBUILD_LIST=core,imgcodecs,imgproc -DBUILD_ZLIB=ON .. && make -j$THREAD_NUM
+    fi
+}
+
+build_jpeg_turbo() {
+    cd ${BASEPATH}
+    if [[ "${INC_BUILD}" == "off" ]]; then
+        git submodule update --init --recursive third_party/libjpeg-turbo
+        cd ${BASEPATH}/third_party/libjpeg-turbo
+        rm -rf build && mkdir -p build && cd build && cmake ${CMAKE_MINDDATA_ARGS} -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_INSTALL_PREFIX="${BASEPATH}/third_party/libjpeg-turbo" .. && make -j$THREAD_NUM && make install
+    fi
+}
+
+build_eigen() {
+    cd ${BASEPATH}
+    git submodule update --init --recursive third_party/eigen
+}
+
+build_minddata_lite_deps()
+{
+  echo "start build minddata lite project"
+  if [[ "${LITE_PLATFORM}" == "arm64" ]]; then
+        CMAKE_MINDDATA_ARGS="-DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake -DANDROID_NATIVE_API_LEVEL=19    \
+              -DANDROID_NDK=${ANDROID_NDK} -DANDROID_ABI=arm64-v8a -DANDROID_TOOLCHAIN_NAME=aarch64-linux-android-clang                 \
+              -DANDROID_STL=c++_shared -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
+    elif [[ "${LITE_PLATFORM}" == "arm32" ]]; then
+        CMAKE_MINDDATA_ARGS="-DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake -DANDROID_NATIVE_API_LEVEL=19    \
+              -DANDROID_NDK=${ANDROID_NDK} -DANDROID_ABI=armeabi-v7a -DANDROID_TOOLCHAIN_NAME=clang                                     \
+              -DANDROID_STL=c++_shared -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
+    else
+        CMAKE_MINDDATA_ARGS="-DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
+    fi
+  build_opencv
+  build_eigen
+  build_jpeg_turbo
+}
+
 build_lite()
 {
     echo "start build mindspore lite project"
@@ -532,6 +576,8 @@ build_lite()
     fi
     build_flatbuffer
     build_gtest
+
+    build_minddata_lite_deps
 
     cd "${BASEPATH}/mindspore/lite"
     if [[ "${INC_BUILD}" == "off" ]]; then

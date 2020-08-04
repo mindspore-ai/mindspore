@@ -38,12 +38,21 @@
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/util/status.h"
+#ifndef ENABLE_ANDROID
 #include "proto/example.pb.h"
+#else
+#include "minddata/dataset/include/de_tensor.h"
+#endif
 
 #ifdef ENABLE_PYTHON
 namespace py = pybind11;
 #endif
 namespace mindspore {
+#ifdef ENABLE_ANDROID
+namespace tensor {
+class DETensor;
+}  // namespace tensor
+#endif
 namespace dataset {
 class Tensor;
 template <typename T>
@@ -117,6 +126,7 @@ class Tensor {
   static Status CreateFromNpArray(const py::array &arr, TensorPtr *out);
 #endif
 
+#ifndef ENABLE_ANDROID
   /// Create a tensor of type DE_STRING from a BytesList.
   /// \param[in] bytes_list protobuf's Bytelist
   /// \param[in] shape shape of the outout tensor
@@ -134,6 +144,7 @@ class Tensor {
   /// \return Status Code
   static Status CreateFromByteList(const dataengine::BytesList &bytes_list, const TensorShape &shape,
                                    const DataType &type, dsize_t pad_size, TensorPtr *out);
+#endif
 
   /// Create a Tensor from a given list of values.
   /// \tparam type of the values to be inserted.
@@ -649,6 +660,9 @@ class Tensor {
   unsigned char *data_end_ = nullptr;
 
  private:
+#ifdef ENABLE_ANDROID
+  friend class tensor::DETensor;
+#endif
   /// Copy raw data of a array based on shape and strides to the destination pointer
   /// \param dst [out] Pointer to the destination array where the content is to be copied
   /// \param[in] src Pointer to the source of strided array to be copied

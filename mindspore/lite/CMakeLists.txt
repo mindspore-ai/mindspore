@@ -33,6 +33,7 @@ option(BUILD_CONVERTER "if build converter" on)
 option(ENABLE_FP16 "if build fp16 ops" off)
 option(SUPPORT_GPU "if support gpu" off)
 option(OFFLINE_COMPILE "if offline compile OpenCL kernel" off)
+option(BUILD_MINDDATA "" on)
 
 if (BUILD_DEVICE)
     add_compile_definitions(BUILD_DEVICE)
@@ -116,6 +117,31 @@ if (BUILD_DEVICE)
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8.2-a+dotprod+fp16")
         endif ()
     endif()
+endif()
+
+if (BUILD_MINDDATA)
+    # opencv
+    set(OpenCV_DIR ${TOP_DIR}/third_party/opencv/build)
+    find_package(OpenCV REQUIRED)
+    include_directories(${OpenCV_INCLUDE_DIRS})
+    # eigen
+    include_directories(${TOP_DIR}/third_party/eigen/)
+    # jpeg-turbo
+    add_library(jpeg-turbo SHARED IMPORTED)
+    set_target_properties(jpeg-turbo PROPERTIES
+        IMPORTED_LOCATION ${TOP_DIR}/third_party/libjpeg-turbo/lib/libturbojpeg.so
+    )
+    add_library(jpeg SHARED IMPORTED)
+    set_target_properties(jpeg PROPERTIES
+        IMPORTED_LOCATION ${TOP_DIR}/third_party/libjpeg-turbo/lib/libjpeg.so
+    )
+    include_directories(${TOP_DIR}/third_party/libjpeg-turbo/include)
+
+    add_compile_definitions(ENABLE_ANDROID)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/minddata)
+endif()
+
+if (BUILD_DEVICE)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/benchmark)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test)

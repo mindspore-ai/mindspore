@@ -60,7 +60,7 @@ Status PrinterPass::RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified) {
   std::cout << "Visiting ShuffleOp" << '\n';
   return Status::OK();
 }
-
+#ifndef ENABLE_ANDROID
 Status PrinterPass::RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified) {
   *modified = false;
   std::cout << "Visiting MindRecordOp" << '\n';
@@ -72,6 +72,7 @@ Status PrinterPass::RunOnNode(std::shared_ptr<TFReaderOp> node, bool *modified) 
   std::cout << "Visiting TFReaderOp" << '\n';
   return Status::OK();
 }
+#endif
 
 #ifdef ENABLE_PYTHON
 Status PrinterPass::RunOnNode(std::shared_ptr<FilterOp> node, bool *modified) {
