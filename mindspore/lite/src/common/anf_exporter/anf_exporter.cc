@@ -118,6 +118,7 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &funcGraph) {
           std::make_unique<schema::QuantParamT>(input_quant_params[0]);
         tensor_input->quantParams.emplace_back(std::move(input_quant_param));
       }
+      tensor_input->dataType = kNumberTypeInt8;
       // output
       auto output_index = node->outputIndex[0];
       auto tensor_output = metaGraphT->allTensors[output_index].get();
@@ -129,6 +130,7 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &funcGraph) {
           std::make_unique<schema::QuantParamT>(output_quant_params[0]);
         tensor_output->quantParams.emplace_back(std::move(output_quant_param));
       }
+      tensor_output->dataType = kNumberTypeInt8;
       //      // TensorType
       //      valuePtr = primitive->GetAttr(kInputTensorDataType);
       //      if (valuePtr != nullptr) {
@@ -210,17 +212,18 @@ void AnfExporter::SetOpInputNode(const CNodePtr &cnode, schema::MetaGraphT *meta
         paramTensor->data.resize(paramValue->tensor_size());
         memcpy(paramTensor->data.data(), paramValue->tensor_addr(), paramValue->tensor_size());
       }
-      //      for (auto &ite : paramValue->quant_param()) {
-      //        auto quantPar = std::make_unique<schema::QuantParamT>();
-      //        quantPar->scale = ite->scale;
-      //        quantPar->zeroPoint = ite->zeroPoint;
-      //        quantPar->min = ite->min;
-      //        quantPar->max = ite->max;
-      //        quantPar->narrowRange = ite->narrowRange;
-      //        quantPar->inited = ite->inited;
-      //        quantPar->numBits = ite->numBits;
-      //        paramTensor->quantParams.emplace_back(std::move(quantPar));
-      //      }
+      for (auto &ite : paramValue->quant_param()) {
+        auto quantPar = std::make_unique<schema::QuantParamT>();
+        quantPar->scale = ite->scale;
+        quantPar->zeroPoint = ite->zeroPoint;
+        quantPar->min = ite->min;
+        quantPar->max = ite->max;
+        quantPar->narrowRange = ite->narrowRange;
+        quantPar->inited = ite->inited;
+        quantPar->numBits = ite->numBits;
+        paramTensor->quantParams.emplace_back(std::move(quantPar));
+        paramTensor->dataType = paramValue->tensor_type();
+      }
       nodeIdMap[paramNode->fullname_with_scope()] = meta_graph->allTensors.size();
       fbNode->inputIndex.emplace_back(meta_graph->allTensors.size());
       meta_graph->allTensors.emplace_back(std::move(paramTensor));

@@ -31,14 +31,23 @@ STATUS TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
 
   const auto &tfliteAttr = tfliteOp->builtin_options.AsReshapeOptions();
   if (tfliteAttr == nullptr) {
-    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
-    return RET_NULL_PTR;
-  }
-
-  attr->format = schema::Format_NHWC;
-  attr->shape.resize(tfliteAttr->new_shape.size());
-  for (size_t i = 0; i < tfliteAttr->new_shape.size(); ++i) {
-    attr->shape[i] = tfliteAttr->new_shape[i];
+    if (tfliteOp->inputs.size() < 2) {
+      MS_LOG(ERROR) << "expected two input tensors, but got: " << tfliteOp->inputs.size();
+      return RET_ERROR;
+    }
+    auto shape_tensor_index = tfliteOp->inputs[1];
+    const auto & shape_tensor = tfliteTensors[shape_tensor_index];
+    std::vector<tflite::TensorT *> shape_tensors{shape_tensor.get()};
+    if (RET_OK != ParseWeight(shape_tensors, tfliteModelBuffer, tensor_cache, schema::Format_KHWC)) {
+      MS_LOG(ERROR) << "parse shape tensor error";
+      return RET_ERROR;
+    }
+  } else {
+    attr->format = schema::Format_NHWC;
+    attr->shape.resize(tfliteAttr->new_shape.size());
+    for (size_t i = 0; i < tfliteAttr->new_shape.size(); ++i) {
+      attr->shape[i] = tfliteAttr->new_shape[i];
+    }
   }
 
   if (op != nullptr) {

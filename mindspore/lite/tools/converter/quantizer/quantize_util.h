@@ -60,7 +60,7 @@ class QuantStrategy {
 };
 
 STATUS CalQuantizationParams(std::unique_ptr<AnfQuantParam> &quantParam, double mMin, double mMax,
-                             bool narrowRange = false, int numBits = UINT8_QUANTIZATION);
+                             bool narrowRange, int quant_max, int quant_min, int num_bits);
 
 template <typename T>
 T QuantizeData(const float originData, const AnfQuantParam *quantParam) {
@@ -96,7 +96,7 @@ T QuantizeData(const float originData, const AnfQuantParam *quantParam) {
 
 void CalFakeNode(const AnfNodePtr &inTensor);
 
-STATUS QuantFilter(ParamValueLitePtr &weightPtr, QuantType quantType = QuantType_AwareTraining,
+STATUS QuantFilter(ParamValueLitePtr &weightPtr, QuantType quantType, int quant_max, int quant_min,
                    size_t bitNum = UINT8_QUANTIZATION);
 
 STATUS PostBitPack(float *weights, size_t shapeSize, size_t bitNum = UINT8_QUANTIZATION);

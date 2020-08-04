@@ -64,7 +64,7 @@ class PostTrainingQuantizer : public Quantizer {
   int quant_min{0};
 
  private:
-  TypeId target_type_{kNumberTypeUInt8};
+  TypeId target_type_{kNumberTypeInt8};
 
   std::unique_ptr<Calibrator> calibrator_;
 

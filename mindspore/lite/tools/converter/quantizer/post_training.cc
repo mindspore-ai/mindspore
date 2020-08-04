@@ -230,6 +230,13 @@ struct DivergInfo {
     } else {
       zero_point = static_cast<int>(std::round(zero_point_from_min));
     }
+    MS_LOG(DEBUG) << "zero point:" << zero_point;
+    if (quant_min == 0 && quant_max == 255) {
+      zero_point = 128;
+    } else if (quant_min == -128 && quant_max == 127) {
+      zero_point = 0;
+    }
+
     return std::make_pair(this->cnode, zero_point);
   }
 };
@@ -466,11 +473,6 @@ Calibrator::Calibrator(string path, size_t bitNum, int quantMax, int quantMin)
 PostTrainingQuantizer::PostTrainingQuantizer(FuncGraphPtr graph, string path, int bit_num, TypeId target_type)
     : Quantizer(graph) {
   this->bit_num = bit_num;
-  calibrator_ = std::unique_ptr<Calibrator>(new Calibrator(path, this->bit_num, quant_max, quant_min));
-  if (calibrator_ == nullptr) {
-    MS_LOG(ERROR) << "creat calibrator failed!";
-    return;
-  }
   this->target_type_ = target_type;
   if (target_type == kNumberTypeInt8) {
     quant_max = (1 << (this->bit_num - 1)) - 1;  // 127
@@ -480,6 +482,11 @@ PostTrainingQuantizer::PostTrainingQuantizer(FuncGraphPtr graph, string path, in
     quant_min = 0;
   } else {
     MS_LOG(ERROR) << "unsupported quant value type: " << target_type;
+  }
+  calibrator_ = std::unique_ptr<Calibrator>(new Calibrator(path, this->bit_num, quant_max, quant_min));
+  if (calibrator_ == nullptr) {
+    MS_LOG(ERROR) << "creat calibrator failed!";
+    return;
   }
 }
 
@@ -526,7 +533,7 @@ STATUS PostTrainingQuantizer::DoWeightQuant(AnfNodePtr node) {
   }
   auto parameter = std::dynamic_pointer_cast<Parameter>(node);
   ParamValueLitePtr paramValue = std::dynamic_pointer_cast<ParamValueLite>(parameter->default_param());
-  auto status = QuantFilter(paramValue, QuantType_PostTraining, bit_num);
+  auto status = QuantFilter(paramValue, QuantType_PostTraining, quant_max, quant_min, bit_num);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
     return status;

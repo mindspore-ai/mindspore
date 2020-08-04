@@ -140,6 +140,8 @@ lite::Primitive *ModelImpl::CopyPrimitive(const schema::Primitive *srcPrim) {
       return new lite::Flatten(const_cast<schema::Primitive *>(srcPrim));
     case schema::PrimitiveType_MatMul:
       return new lite::MatMul(const_cast<schema::Primitive *>(srcPrim));
+    case schema::PrimitiveType_QuantDTypeCast:
+      return new lite::QuantDTypeCast(const_cast<schema::Primitive *>(srcPrim));
     default:
       break;
   }
