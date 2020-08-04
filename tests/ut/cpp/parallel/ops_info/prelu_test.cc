@@ -39,13 +39,13 @@ class TestPReLUInfo : public UT::Common {
 };
 
 void TestPReLUInfo::SetUp() {
-  std::vector<int32_t> dev_list;
+  RankList dev_list;
 
   for (int32_t i = 0; i < 1050; i++) {
     dev_list.push_back(i);
   }
 
-  std::vector<int32_t> stage_map;
+  RankList stage_map;
   stage_map.push_back(1024);
   stage_map.push_back(26);
   int32_t local_dev = 0;
@@ -64,18 +64,18 @@ void TestPReLUInfo::SetUp() {
 }
 
 TEST_F(TestPReLUInfo, InferDevMatrixShape1) {
-  std::vector<Dimensions> inputs = {{2, 1, 8, 16}, {1}};
+  Strategys inputs = {{2, 1, 8, 16}, {1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   prelu->Init(strategy);
-  std::vector<int32_t> dev_matrix_shape = prelu->dev_matrix_shape();
+  Shape dev_matrix_shape = prelu->dev_matrix_shape();
 
-  std::vector<int32_t> expect = {4, 2, 1, 8, 16};
+  Shape expect = {4, 2, 1, 8, 16};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 TEST_F(TestPReLUInfo, InferSliceShape1) {
-  std::vector<Dimensions> str = {{2, 1, 8, 16}, {1}};
+  Strategys str = {{2, 1, 8, 16}, {1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   prelu->Init(strategy);
@@ -98,7 +98,7 @@ TEST_F(TestPReLUInfo, InferSliceShape1) {
 }
 
 TEST_F(TestPReLUInfo, GetTensorLayout1) {
-  std::vector<Dimensions> str = {{2, 1, 8, 16}, {1}};
+  Strategys str = {{2, 1, 8, 16}, {1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   prelu->Init(strategy);
@@ -122,7 +122,7 @@ TEST_F(TestPReLUInfo, GetTensorLayout1) {
 }
 
 TEST_F(TestPReLUInfo, GetMirrorOPs1) {
-  std::vector<Dimensions> str = {{2, 1, 2, 2}, {1}};
+  Strategys str = {{2, 1, 2, 2}, {1}};
   StrategyPtr strategy = NewStrategy(0, str);
   prelu->Init(strategy);
   MirrorOps mirror_ops = prelu->mirror_ops();
@@ -139,14 +139,14 @@ TEST_F(TestPReLUInfo, GetMirrorOPs1) {
 
 TEST_F(TestPReLUInfo, CheckStrategy1) {
   // Success: {{2,1,8,16},{1}}
-  std::vector<Dimensions> inputs = {{2, 1, 8, 16}};
+  Strategys inputs = {{2, 1, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
   Status ret = prelu->Init(strategy);
   ASSERT_EQ(ret, FAILED);
 }
 
 TEST_F(TestPReLUInfo, CheckStrategy2) {
-  std::vector<Dimensions> inputs = {{2, 4, 8, 16}, {4}};
+  Strategys inputs = {{2, 4, 8, 16}, {4}};
   StrategyPtr strategy = NewStrategy(0, inputs);
   Status ret = prelu->Init(strategy);
   ASSERT_EQ(ret, SUCCESS);
@@ -169,18 +169,18 @@ TEST_F(TestPReLUInfo, AutoStrategy1) {
 }
 
 TEST_F(TestPReLUInfo, InferDevMatrixShape_2d1) {
-  std::vector<Dimensions> inputs = {{128, 1}, {1}};
+  Strategys inputs = {{128, 1}, {1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   prelu_2d->Init(strategy);
-  std::vector<int32_t> dev_matrix_shape = prelu_2d->dev_matrix_shape();
+  Shape dev_matrix_shape = prelu_2d->dev_matrix_shape();
 
-  std::vector<int32_t> expect = {8, 128, 1};
+  Shape expect = {8, 128, 1};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 TEST_F(TestPReLUInfo, InferSliceShape_2d1) {
-  std::vector<Dimensions> str = {{128, 1}, {1}};
+  Strategys str = {{128, 1}, {1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   prelu_2d->Init(strategy);
@@ -203,7 +203,7 @@ TEST_F(TestPReLUInfo, InferSliceShape_2d1) {
 }
 
 TEST_F(TestPReLUInfo, GetTensorLayout_2d1) {
-  std::vector<Dimensions> str = {{128, 1}, {1}};
+  Strategys str = {{128, 1}, {1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   prelu_2d->Init(strategy);
@@ -227,7 +227,7 @@ TEST_F(TestPReLUInfo, GetTensorLayout_2d1) {
 }
 
 TEST_F(TestPReLUInfo, GetMirrorOPs_2d1) {
-  std::vector<Dimensions> str = {{128, 1}, {1}};
+  Strategys str = {{128, 1}, {1}};
   StrategyPtr strategy = NewStrategy(0, str);
   prelu_2d->Init(strategy);
   MirrorOps mirror_ops = prelu_2d->mirror_ops();
@@ -244,14 +244,14 @@ TEST_F(TestPReLUInfo, GetMirrorOPs_2d1) {
 
 TEST_F(TestPReLUInfo, CheckStrategy_2d1) {
   // Success: {{2,1,8,16},{1}}
-  std::vector<Dimensions> inputs = {{128, 1}};
+  Strategys inputs = {{128, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
   Status ret = prelu_2d->Init(strategy);
   ASSERT_EQ(ret, FAILED);
 }
 
 TEST_F(TestPReLUInfo, CheckStrategy_2d2) {
-  std::vector<Dimensions> inputs = {{128, 4}, {4}};
+  Strategys inputs = {{128, 4}, {4}};
   StrategyPtr strategy = NewStrategy(0, inputs);
   Status ret = prelu_2d->Init(strategy);
   ASSERT_EQ(ret, SUCCESS);

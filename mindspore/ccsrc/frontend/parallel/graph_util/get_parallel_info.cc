@@ -45,13 +45,13 @@ py::dict GetParameterLayout(const FuncGraphPtr &graph) {
       auto tensor_map = tensor_layout->tensor_map().array();
       auto slice_shape = tensor_layout->slice_shape().array();
       int32_t _field_size = tensor_layout->get_field_size();
-      std::vector<int32_t> field_size;
+      Shape field_size;
       if (_field_size != 0) {
         field_size.push_back(_field_size);
       } else {
         field_size = {0};
       }
-      std::vector<std::vector<int32_t>> layout = {device_arrangement, tensor_map, slice_shape, field_size};
+      std::vector<Shape> layout = {device_arrangement, tensor_map, slice_shape, field_size};
       dict[py::str(name)] = layout;
       MS_LOG(INFO) << "GetParameterLayout name = " << name << ", layout " << tensor_layout->ToString();
     }

@@ -118,7 +118,7 @@ Status GetNextInfo::Init(const StrategyPtr &strategy) {
 }
 
 Status GetNextInfo::CheckStrategy(const StrategyPtr &strategy) {
-  std::vector<Dimensions> stras = strategy->GetInputDim();
+  Strategys stras = strategy->GetInputDim();
   for (Dimensions stra : stras) {
     if (stra.size() != 0) {
       if (is_auto_parallel_) {
@@ -215,7 +215,15 @@ Status GetNextInfo::InferReplaceOps(const StrategyPtr &) {
       out_shapes[i][0] = out_shapes[i][0] / dev_num_;
     }
   }
-  ValuePtr new_shapes = MakeValue(out_shapes);
+  std::vector<std::vector<int32_t>> out_shapes_int;
+  (void)std::transform(out_shapes.begin(), out_shapes.end(), std::back_inserter(out_shapes_int),
+                       [](const std::vector<int64_t> &shape) {
+                         std::vector<int32_t> shape_int;
+                         (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_int),
+                                              [](const int64_t &v) { return static_cast<int32_t>(v); });
+                         return shape_int;
+                       });
+  ValuePtr new_shapes = MakeValue(out_shapes_int);
   Attr attr_types = std::make_pair(TYPES, attrs_[TYPES]);
   Attr attr_shapes = std::make_pair(SHAPES, new_shapes);
   Attr attr_num = std::make_pair(GETNEXT_NUM, attrs_[GETNEXT_NUM]);
@@ -254,7 +262,7 @@ Status GetNextInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
 
 Status GetNextInfo::GenerateStrategies(int32_t stage_id) {
   is_auto_parallel_ = true;
-  std::vector<Dimensions> stra;
+  Strategys stra;
   StrategyPtr sp = std::make_shared<Strategy>(stage_id, stra);
   if (SetCostUnderStrategy(sp) == SUCCESS) {
     MS_LOG(INFO) << name_ << " : Successfully generated strategy.";

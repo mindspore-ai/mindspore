@@ -38,13 +38,13 @@ class TestTransposeInfo : public UT::Common {
 };
 
 void TestTransposeInfo::SetUp() {
-  std::vector<int32_t> dev_list;
+  RankList dev_list;
 
   for (int32_t i = 0; i < 34; i++) {
     dev_list.push_back(i);
   }
 
-  std::vector<int32_t> stage_map;
+  RankList stage_map;
   stage_map.push_back(32);
   stage_map.push_back(2);
 
@@ -68,29 +68,29 @@ void TestTransposeInfo::SetUp() {
 }
 
 TEST_F(TestTransposeInfo, InferDevMatrixShape1) {
-  std::vector<Dimensions> inputs = {{4, 8}};
+  Strategys inputs = {{4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   transpose->Init(strategy);
-  std::vector<int32_t> dev_matrix_shape = transpose->dev_matrix_shape();
+  Shape dev_matrix_shape = transpose->dev_matrix_shape();
 
-  std::vector<int32_t> expect = {4, 8};
+  Shape expect = {4, 8};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 TEST_F(TestTransposeInfo, InferDevMatrixShape2) {
-  std::vector<Dimensions> inputs = {{4, 1}};
+  Strategys inputs = {{4, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   transpose->Init(strategy);
-  std::vector<int32_t> dev_matrix_shape = transpose->dev_matrix_shape();
+  Shape dev_matrix_shape = transpose->dev_matrix_shape();
 
-  std::vector<int32_t> expect = {8, 4, 1};
+  Shape expect = {8, 4, 1};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 TEST_F(TestTransposeInfo, InferSliceShape1) {
-  std::vector<Dimensions> str = {{4, 8}};
+  Strategys str = {{4, 8}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   transpose->Init(strategy);
@@ -111,7 +111,7 @@ TEST_F(TestTransposeInfo, InferSliceShape1) {
 }
 
 TEST_F(TestTransposeInfo, GetTensorLayout1) {
-  std::vector<Dimensions> str = {{4, 8}};
+  Strategys str = {{4, 8}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   transpose->Init(strategy);
@@ -132,7 +132,7 @@ TEST_F(TestTransposeInfo, GetTensorLayout1) {
 }
 
 TEST_F(TestTransposeInfo, GetForwardOp1) {
-  std::vector<Dimensions> inputs = {{4, 8}};
+  Strategys inputs = {{4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   transpose->Init(strategy);
@@ -143,7 +143,7 @@ TEST_F(TestTransposeInfo, GetForwardOp1) {
 }
 
 TEST_F(TestTransposeInfo, GetMirrorOPs1) {
-  std::vector<Dimensions> inputs = {{4, 8}};
+  Strategys inputs = {{4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   transpose->Init(strategy);
@@ -155,7 +155,7 @@ TEST_F(TestTransposeInfo, GetMirrorOPs1) {
 }
 
 TEST_F(TestTransposeInfo, CheckStrategy1) {
-  std::vector<Dimensions> inputs = {{1, 4, 8}};
+  Strategys inputs = {{1, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = transpose->Init(strategy);
@@ -163,7 +163,7 @@ TEST_F(TestTransposeInfo, CheckStrategy1) {
 }
 
 TEST_F(TestTransposeInfo, CheckStrategy2) {
-  std::vector<Dimensions> inputs = {{2, 4, 8}, {2, 4, 8}};
+  Strategys inputs = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = transpose->Init(strategy);
@@ -171,7 +171,7 @@ TEST_F(TestTransposeInfo, CheckStrategy2) {
 }
 
 TEST_F(TestTransposeInfo, CheckStrategy3) {
-  std::vector<Dimensions> inputs = {{4, 8}};
+  Strategys inputs = {{4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = transpose->Init(strategy);

@@ -42,13 +42,13 @@ class TestMatmulInfo : public UT::Common {
 };
 
 void TestMatmulInfo::SetUp() {
-  std::vector<int32_t> dev_list;
+  RankList dev_list;
 
   for (int32_t i = 0; i < 1050; i++) {
     dev_list.push_back(i);
   }
 
-  std::vector<int32_t> stage_map;
+  RankList stage_map;
   stage_map.push_back(1024);
   stage_map.push_back(26);
 
@@ -94,77 +94,77 @@ void TestMatmulInfo::SetUp() {
 }
 
 TEST_F(TestMatmulInfo, InferDevMatrixShape1) {
-  std::vector<Dimensions> inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategys inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul1->Init(strategy);
-  std::vector<int32_t> dev_matrix_shape = matmul1->dev_matrix_shape();
+  Shape dev_matrix_shape = matmul1->dev_matrix_shape();
 
-  std::vector<int32_t> expect = {2, 4, 8, 16, 1};
+  Shape expect = {2, 4, 8, 16, 1};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 TEST_F(TestMatmulInfo, InferDevMatrixShape2) {
-  std::vector<Dimensions> inputs = {{2, 4, 8, 8}, {2, 4, 8, 2}};
+  Strategys inputs = {{2, 4, 8, 8}, {2, 4, 8, 2}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul1->Init(strategy);
-  std::vector<int32_t> dev_matrix_shape = matmul1->dev_matrix_shape();
+  Shape dev_matrix_shape = matmul1->dev_matrix_shape();
 
-  std::vector<int32_t> expect = {2, 4, 8, 8, 2};
+  Shape expect = {2, 4, 8, 8, 2};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 // matmul2
 TEST_F(TestMatmulInfo, InferDevMatrixShape3) {
-  std::vector<Dimensions> inputs = {{2, 4, 8, 16}, {1, 16}};
+  Strategys inputs = {{2, 4, 8, 16}, {1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul2->Init(strategy);
-  std::vector<int32_t> dev_matrix_shape = matmul2->dev_matrix_shape();
+  Shape dev_matrix_shape = matmul2->dev_matrix_shape();
 
-  std::vector<int32_t> expect = {2, 4, 8, 16, 1};
+  Shape expect = {2, 4, 8, 16, 1};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 // matmul2
 TEST_F(TestMatmulInfo, InferDevMatrixShape4) {
-  std::vector<Dimensions> inputs = {{2, 4, 8, 8}, {2, 8}};
+  Strategys inputs = {{2, 4, 8, 8}, {2, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul2->Init(strategy);
-  std::vector<int32_t> dev_matrix_shape = matmul2->dev_matrix_shape();
+  Shape dev_matrix_shape = matmul2->dev_matrix_shape();
 
-  std::vector<int32_t> expect = {2, 4, 8, 8, 2};
+  Shape expect = {2, 4, 8, 8, 2};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 // matmul3
 TEST_F(TestMatmulInfo, InferDevMatrixShape5) {
-  std::vector<Dimensions> inputs = {{8, 16}, {2, 4, 1, 16}};
+  Strategys inputs = {{8, 16}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul3->Init(strategy);
-  std::vector<int32_t> dev_matrix_shape = matmul3->dev_matrix_shape();
+  Shape dev_matrix_shape = matmul3->dev_matrix_shape();
 
-  std::vector<int32_t> expect = {2, 4, 8, 16, 1};
+  Shape expect = {2, 4, 8, 16, 1};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 // matmul3
 TEST_F(TestMatmulInfo, InferDevMatrixShape6) {
-  std::vector<Dimensions> inputs = {{8, 8}, {2, 4, 2, 8}};
+  Strategys inputs = {{8, 8}, {2, 4, 2, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul3->Init(strategy);
-  std::vector<int32_t> dev_matrix_shape = matmul3->dev_matrix_shape();
+  Shape dev_matrix_shape = matmul3->dev_matrix_shape();
 
-  std::vector<int32_t> expect = {2, 4, 8, 8, 2};
+  Shape expect = {2, 4, 8, 8, 2};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 TEST_F(TestMatmulInfo, InferTensorMap1) {
-  std::vector<Dimensions> str = {{2, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategys str = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   matmul1->Init(strategy);
@@ -190,7 +190,7 @@ TEST_F(TestMatmulInfo, InferTensorMap1) {
 
 // matmul2
 TEST_F(TestMatmulInfo, InferTensorMap2) {
-  std::vector<Dimensions> str = {{2, 4, 8, 16}, {1, 16}};
+  Strategys str = {{2, 4, 8, 16}, {1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   matmul2->Init(strategy);
@@ -216,7 +216,7 @@ TEST_F(TestMatmulInfo, InferTensorMap2) {
 
 // matmul3
 TEST_F(TestMatmulInfo, InferTensorMap3) {
-  std::vector<Dimensions> str = {{8, 16}, {2, 4, 1, 16}};
+  Strategys str = {{8, 16}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   matmul3->Init(strategy);
@@ -241,7 +241,7 @@ TEST_F(TestMatmulInfo, InferTensorMap3) {
 }
 
 TEST_F(TestMatmulInfo, InferSliceShape1) {
-  std::vector<Dimensions> str = {{2, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategys str = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   matmul1->Init(strategy);
@@ -267,7 +267,7 @@ TEST_F(TestMatmulInfo, InferSliceShape1) {
 
 // matmul2
 TEST_F(TestMatmulInfo, InferSliceShape2) {
-  std::vector<Dimensions> str = {{2, 4, 8, 16}, {1, 16}};
+  Strategys str = {{2, 4, 8, 16}, {1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   matmul2->Init(strategy);
@@ -293,7 +293,7 @@ TEST_F(TestMatmulInfo, InferSliceShape2) {
 
 // matmul3
 TEST_F(TestMatmulInfo, InferSliceShape3) {
-  std::vector<Dimensions> str = {{8, 16}, {2, 4, 1, 16}};
+  Strategys str = {{8, 16}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   matmul3->Init(strategy);
@@ -319,7 +319,7 @@ TEST_F(TestMatmulInfo, InferSliceShape3) {
 
 // matmul3
 TEST_F(TestMatmulInfo, GetTensorLayout3) {
-  std::vector<Dimensions> str = {{8, 16}, {2, 4, 1, 16}};
+  Strategys str = {{8, 16}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   matmul3->Init(strategy);
@@ -344,7 +344,7 @@ TEST_F(TestMatmulInfo, GetTensorLayout3) {
 }
 
 TEST_F(TestMatmulInfo, GetForwardOp1) {
-  std::vector<Dimensions> inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategys inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul1->Init(strategy);
@@ -370,7 +370,7 @@ TEST_F(TestMatmulInfo, GetForwardOp1) {
 }
 
 TEST_F(TestMatmulInfo, GetForwardOp2) {
-  std::vector<Dimensions> inputs = {{2, 4, 8, 1}, {2, 4, 1, 16}};
+  Strategys inputs = {{2, 4, 8, 1}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul1->Init(strategy);
@@ -380,7 +380,7 @@ TEST_F(TestMatmulInfo, GetForwardOp2) {
 }
 
 TEST_F(TestMatmulInfo, GetVirtualDivOp1) {
-  std::vector<Dimensions> inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategys inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul1->Init(strategy);
@@ -399,7 +399,7 @@ TEST_F(TestMatmulInfo, GetVirtualDivOp1) {
 }
 
 TEST_F(TestMatmulInfo, GetMirrorOPs1) {
-  std::vector<Dimensions> inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategys inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul1->Init(strategy);
@@ -419,7 +419,7 @@ TEST_F(TestMatmulInfo, GetMirrorOPs1) {
 
 // matmul2
 TEST_F(TestMatmulInfo, GetMirrorOPs2) {
-  std::vector<Dimensions> inputs = {{2, 4, 1, 16}, {8, 16}};
+  Strategys inputs = {{2, 4, 1, 16}, {8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul2->Init(strategy);
@@ -439,7 +439,7 @@ TEST_F(TestMatmulInfo, GetMirrorOPs2) {
 
 // matmul3
 TEST_F(TestMatmulInfo, GetMirrorOPs3) {
-  std::vector<Dimensions> inputs = {{8, 16}, {2, 4, 1, 16}};
+  Strategys inputs = {{8, 16}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul3->Init(strategy);
@@ -457,7 +457,7 @@ TEST_F(TestMatmulInfo, GetMirrorOPs3) {
 }
 
 TEST_F(TestMatmulInfo, GetMirrorOPs4) {
-  std::vector<Dimensions> inputs = {{2, 4, 1, 16}, {2, 4, 16, 8}};
+  Strategys inputs = {{2, 4, 1, 16}, {2, 4, 16, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul1->Init(strategy);
@@ -467,7 +467,7 @@ TEST_F(TestMatmulInfo, GetMirrorOPs4) {
 }
 
 TEST_F(TestMatmulInfo, InitTwice) {
-  std::vector<Dimensions> inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategys inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   // init twice
@@ -489,7 +489,7 @@ TEST_F(TestMatmulInfo, InitTwice) {
 
 TEST_F(TestMatmulInfo, CheckStrategy1) {
   // Success: {{2,4,8,16}, {2,4,16,1}}
-  std::vector<Dimensions> inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
+  Strategys inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = matmul1->Init(strategy);
@@ -498,7 +498,7 @@ TEST_F(TestMatmulInfo, CheckStrategy1) {
 
 TEST_F(TestMatmulInfo, CheckStrategy2) {
   // Success: {{2,4,8,16}, {2,4,16,1}}
-  std::vector<Dimensions> inputs = {{2, 4, 8, 16}, {4, 16, 1}};
+  Strategys inputs = {{2, 4, 8, 16}, {4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = matmul1->Init(strategy);
@@ -507,7 +507,7 @@ TEST_F(TestMatmulInfo, CheckStrategy2) {
 
 TEST_F(TestMatmulInfo, CheckStrategy3) {
   // Success: {{2,4,8,16}, {2,4,16,1}}
-  std::vector<Dimensions> inputs = {{2, 4, 8, 16}, {2, 4, 8, 1}};
+  Strategys inputs = {{2, 4, 8, 16}, {2, 4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = matmul1->Init(strategy);
@@ -516,7 +516,7 @@ TEST_F(TestMatmulInfo, CheckStrategy3) {
 
 TEST_F(TestMatmulInfo, CheckStrategy4) {
   // Success: {{2,4,8,16}, {2,4,16,1}}
-  std::vector<Dimensions> inputs = {{2, 4, 8, 16}, {2, 3, 16, 1}};
+  Strategys inputs = {{2, 4, 8, 16}, {2, 3, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = matmul1->Init(strategy);
@@ -525,7 +525,7 @@ TEST_F(TestMatmulInfo, CheckStrategy4) {
 
 TEST_F(TestMatmulInfo, CheckStrategy5) {
   // Success: {{2,4,8,16}, {2,4,16,1}}
-  std::vector<Dimensions> inputs = {{0, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategys inputs = {{0, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = matmul1->Init(strategy);
@@ -534,7 +534,7 @@ TEST_F(TestMatmulInfo, CheckStrategy5) {
 
 TEST_F(TestMatmulInfo, CheckStrategy6) {
   // Success: {{2,4,8,16}, {2,4,16,1}}
-  std::vector<Dimensions> inputs = {{-1, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategys inputs = {{-1, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = matmul1->Init(strategy);
@@ -543,7 +543,7 @@ TEST_F(TestMatmulInfo, CheckStrategy6) {
 
 TEST_F(TestMatmulInfo, CheckStrategy7) {
   // Success: {{2,4,8,16}, {2,4,16,1}}
-  std::vector<Dimensions> inputs = {{4, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategys inputs = {{4, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = matmul1->Init(strategy);
@@ -552,7 +552,7 @@ TEST_F(TestMatmulInfo, CheckStrategy7) {
 
 TEST_F(TestMatmulInfo, InitFailed) {
   // matmul4 attr is wrong
-  std::vector<Dimensions> inputs = {{4, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategys inputs = {{4, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = matmul4->Init(strategy);

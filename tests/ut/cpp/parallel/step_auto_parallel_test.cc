@@ -32,13 +32,13 @@ class TestStepAutoParallel : public UT::Common {
 };
 
 void TestStepAutoParallel::SetUp() {
-  std::vector<int32_t> dev_list;
+  RankList dev_list;
 
   for (int32_t i = 0; i < 20; i++) {
     dev_list.push_back(i);
   }
 
-  std::vector<int32_t> stage_map;
+  RankList stage_map;
   stage_map.push_back(16);
   stage_map.push_back(4);
 

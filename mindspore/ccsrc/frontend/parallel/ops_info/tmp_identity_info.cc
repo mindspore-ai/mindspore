@@ -37,18 +37,18 @@ Status TmpIdentityInfo::CheckStrategy(const mindspore::parallel::StrategyPtr &st
 }
 
 Status TmpIdentityInfo::InferDevMatrixShape() {
-  std::vector<Dimensions> stra = strategy_->GetInputDim();
+  Strategys stra = strategy_->GetInputDim();
   Dimensions input_strategy = stra.at(0);
   dev_matrix_shape_ = input_strategy;
   return SUCCESS;
 }
 
 Status TmpIdentityInfo::InferTensorMap() {
-  std::vector<int32_t> tensor_map_index;
+  Shape tensor_map_index;
   size_t size = inputs_shape_[0].size();
   // such as 4: tensor_map_index [3,2,1,0]
   for (size_t i = 0; i < size; ++i) {
-    tensor_map_index.push_back((int32_t)(size - 1 - i));
+    tensor_map_index.push_back((int64_t)(size - 1 - i));
   }
 
   inputs_tensor_map_.push_back(tensor_map_index);
