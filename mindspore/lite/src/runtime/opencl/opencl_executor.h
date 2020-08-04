@@ -20,7 +20,7 @@
 #include <vector>
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/allocator.h"
-#include "src/lite_kernel.h"
+#include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "src/executor.h"
 #include "include/lite_session.h"
 
@@ -38,15 +38,25 @@ class OpenCLExecutor : Executor {
           const session::KernelCallBack &before = nullptr, const session::KernelCallBack &after = nullptr);
 
  protected:
-  int TransformTensorLayoutFp32(tensor::Tensor *tensor, schema::Format dst_format);
+  int TransformTensorLayoutFp32(tensor::Tensor *tensor, schema::Format src_format, schema::Format dst_format,
+      bool trans_dir = false);
 
-  int TransformTensorLayoutUint8(tensor::Tensor *tensor, schema::Format dst_format);
+  int TransformTensorLayoutUint8(tensor::Tensor *tensor, schema::Format src_format, schema::Format dst_format,
+      bool trans_dir = false);
 
-  int TransformTensorLayout(tensor::Tensor *tensor, schema::Format dst_format);
+  int TransformTensorLayout(tensor::Tensor *tensor, schema::Format src_format, schema::Format dst_format,
+      bool trans_dir = false);
+
+  int TransformTensorLayoutToBuffer(tensor::Tensor *tensor, schema::Format src_format, schema::Format dst_format);
+
+  int TransformTensorLayoutToImage(tensor::Tensor *tensor, schema::Format src_format, schema::Format dst_format);
+
+  int TransformTensorLayoutFromImage(tensor::Tensor *tensor, schema::Format src_format, schema::Format dst_format);
 
  protected:
   Context *context = nullptr;
   OpenCLAllocator *allocator_;
+  bool is_image2d_out_{true};
 };
 
 }  // namespace mindspore::lite::opencl

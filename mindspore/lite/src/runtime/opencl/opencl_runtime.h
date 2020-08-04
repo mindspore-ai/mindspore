@@ -75,9 +75,16 @@ class OpenCLRuntime {
       MS_LOG(DEBUG) << "Set kernel arg[" << index << "] SVM pointer " << value;
       return clSetKernelArgSVMPointer(kernel, index, value);
     } else {
-      cl::Buffer *buffer = reinterpret_cast<cl::Buffer *>(allocator_->GetDeviceBuffer(value));
-      MS_LOG(DEBUG) << "Set kernel arg[" << index << "] OpenCL Buffer " << value;
-      return clSetKernelArg(kernel, index, sizeof((*buffer)()), &(*buffer)());
+      MEM_TYPE mem_type = allocator_->GetMemType(value);
+      if (mem_type == MEM_TYPE::BUF) {
+        cl::Buffer *buffer = reinterpret_cast<cl::Buffer *>(allocator_->GetDeviceBuffer(value));
+        MS_LOG(DEBUG) << "Set kernel arg[" << index << "] OpenCL Buffer " << value;
+        return clSetKernelArg(kernel, index, sizeof((*buffer)()), &(*buffer)());
+      } else {
+        cl::Image2D *buffer = reinterpret_cast<cl::Image2D *>(allocator_->GetDeviceBuffer(value));
+        MS_LOG(DEBUG) << "Set kernel arg[" << index << "] OpenCL Image2D " << value;
+        return clSetKernelArg(kernel, index, sizeof((*buffer)()), &(*buffer)());
+      }
     }
   }
 
@@ -107,9 +114,11 @@ class OpenCLRuntime {
                            bool sync = false) const;
   void *MapBuffer(const cl::Buffer buffer, int map_flags, size_t size, cl::CommandQueue *command_queue = nullptr,
                   bool sync = false) const;
+  void *MapBuffer(const cl::Image2D buffer, bool sync, int flags,
+                  const std::vector<size_t>& region, cl::CommandQueue *command_queue = nullptr) const;
   int MapBuffer(void *host_ptr, int map_flags, size_t size, cl::CommandQueue *command_queue = nullptr,
                 bool sync = false) const;
-  int UnmapBuffer(const cl::Buffer buffer, void *host_ptr, cl::CommandQueue *command_queue = nullptr) const;
+  int UnmapBuffer(const cl::Memory buffer, void *host_ptr, cl::CommandQueue *command_queue = nullptr) const;
   int UnmapBuffer(void *host_ptr, cl::CommandQueue *command_queue = nullptr) const;
   bool SyncCommandQueue(cl::CommandQueue *command_queue = nullptr);
 

@@ -19,7 +19,7 @@
 
 #include <vector>
 
-#include "src/lite_kernel.h"
+#include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "src/runtime/kernel/arm/opclib/fp32/softmax.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 
