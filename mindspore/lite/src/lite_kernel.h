@@ -51,14 +51,6 @@ struct KernelKey {
   }
 };
 
-class LiteKernel;
-struct CallBackParam {
-  std::string name_callback_aram;
-};
-
-using KernelCallBack = std::function<bool(std::vector<lite::tensor::Tensor *> inputs,
-                                          std::vector<lite::tensor::Tensor *> outputs, const CallBackParam &opInfo)>;
-
 class LiteKernel {
  public:
   LiteKernel() = default;

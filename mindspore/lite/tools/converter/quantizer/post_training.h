@@ -27,6 +27,7 @@
 #include "tools/converter/quantizer/quantizer.h"
 #include "src/ir/primitive_t_value.h"
 #include "tools/converter/converter.h"
+#include "include/ms_tensor.h"
 
 namespace mindspore {
 namespace lite {
@@ -71,7 +72,7 @@ class PostTrainingQuantizer : public Quantizer {
 
   STATUS PreProcess();
 
-  STATUS CheckTensorVec(const std::string &nodeName, const std::vector<tensor::Tensor *> &tensorVec) const;
+  STATUS CheckTensorVec(const std::string &nodeName, const std::vector<mindspore::tensor::MSTensor *> &tensorVec) const;
 
   STATUS DoInference();
 

@@ -165,17 +165,15 @@ std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputs() const {
   return ret;
 }
 
-int LiteSession::RunGraph() {
+int LiteSession::RunGraph(const session::KernelCallBack &before, const session::KernelCallBack &after) {
   MS_EXCEPTION_IF_NULL(this->context_);
   SetMaxWokerNum(context_->thread_num_);
   Executor executor;
-  return executor.Run(this->inputs, this->outputs, this->kernels, this->context_->allocator.get());
-}
-
-int LiteSession::RunGraph(const kernel::KernelCallBack &before, const kernel::KernelCallBack &after) {
-  MS_EXCEPTION_IF_NULL(this->context_);
-  Executor executor;
-  return executor.Run(this->inputs, this->outputs, this->kernels, this->context_->allocator.get(), before, after);
+  if (before == nullptr && after == nullptr) {
+    return executor.Run(this->inputs, this->outputs, this->kernels, this->context_->allocator.get());
+  } else {
+    return executor.Run(this->inputs, this->outputs, this->kernels, this->context_->allocator.get(), before, after);
+  }
 }
 
 std::vector<mindspore::tensor::MSTensor *> LiteSession::GetOutputs() const {
@@ -262,11 +260,10 @@ session::LiteSession *session::LiteSession::CreateSession(lite::Context *context
   auto session = new lite::LiteSession();
   auto ret = session->Init(context);
   if (ret != mindspore::lite::RET_OK) {
-      MS_LOG(ERROR) << "init sesssion failed";
-      delete session;
-      return nullptr;
+    MS_LOG(ERROR) << "init sesssion failed";
+    delete session;
+    return nullptr;
   }
   return session;
 }
 }  // namespace mindspore
-

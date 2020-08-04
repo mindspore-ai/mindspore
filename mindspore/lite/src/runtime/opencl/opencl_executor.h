@@ -22,6 +22,7 @@
 #include "src/runtime/allocator.h"
 #include "src/lite_kernel.h"
 #include "src/executor.h"
+#include "include/lite_session.h"
 
 namespace mindspore::lite::opencl {
 class OpenCLExecutor : Executor {
@@ -34,7 +35,7 @@ class OpenCLExecutor : Executor {
 
   int Run(std::vector<tensor::Tensor *> &inputs, std::vector<tensor::Tensor *> &outputs,
           std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator = nullptr,
-          const kernel::KernelCallBack &before = nullptr, const kernel::KernelCallBack &after = nullptr);
+          const session::KernelCallBack &before = nullptr, const session::KernelCallBack &after = nullptr);
 
  protected:
   int TransformTensorLayoutFp32(tensor::Tensor *tensor, schema::Format dst_format);
