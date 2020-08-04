@@ -268,6 +268,10 @@ Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, py::array arr) {
   std::shared_ptr<MemoryPool> global_pool = GlobalContext::Instance()->mem_pool();
   (*ptr)->data_allocator_ = std::make_unique<Allocator<unsigned char>>(global_pool);
   int64_t byte_size = (*ptr)->SizeInBytes();
+  if (byte_size == 0) {
+    return Status::OK();
+  }
+
   RETURN_IF_NOT_OK((*ptr)->AllocateBuffer(byte_size));
 
   unsigned char *data = static_cast<unsigned char *>(arr.request().ptr);
