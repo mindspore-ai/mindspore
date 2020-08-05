@@ -152,11 +152,6 @@ Status Mask(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
 
 Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::shared_ptr<Tensor> prepend,
                    std::shared_ptr<Tensor> append);
-
-// helper for concat, always append to the input, and pass that to the output
-Status ConcatenateHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int8_t axis,
-                         std::shared_ptr<Tensor> append);
-
 }  // namespace dataset
 }  // namespace mindspore
 
