@@ -132,6 +132,8 @@ lite::Primitive *ModelImpl::CopyPrimitive(const schema::Primitive *srcPrim) {
       return new lite::Transpose(const_cast<schema::Primitive *>(srcPrim));
     case schema::PrimitiveType_Slice:
       return new lite::Slice(const_cast<schema::Primitive *>(srcPrim));
+    case schema::PrimitiveType_Squeeze:
+      return new lite::Squeeze(const_cast<schema::Primitive *>(srcPrim));
     case schema::PrimitiveType_Nchw2Nhwc:
       return new lite::Nchw2Nhwc(const_cast<schema::Primitive *>(srcPrim));
     case schema::PrimitiveType_Nhwc2Nchw:
