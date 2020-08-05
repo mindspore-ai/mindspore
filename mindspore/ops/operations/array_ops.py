@@ -2375,6 +2375,8 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
         return tuple(x)[:-2] + tuple(self.size)
 
     def infer_dtype(self, x):
+        validator.check_subclass("x", x, mstype.tensor, self.name)
+        validator.check_tensor_type_same({"x": x}, mstype.number_type, self.name)
         return x
 
 

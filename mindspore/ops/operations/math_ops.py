@@ -1290,6 +1290,10 @@ class Reciprocal(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init Reciprocal"""
+        if context.get_context("device_target") == "GPU":
+            self.target = "GPU"
+        else:
+            self.target = "OTHER"
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
     def infer_shape(self, x):
