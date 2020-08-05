@@ -36,6 +36,9 @@ class Convolution3x3FP16CPUKernel : public ConvolutionBaseCPUKernel {
     if (fp16_weight_ != nullptr) {
       free(fp16_weight_);
     }
+    if (fp16_out_ != nullptr) {
+        free(fp16_out_);
+    }
     if (transformed_filter_addr_ != nullptr) {
       free(transformed_filter_addr_);
     }
@@ -64,6 +67,7 @@ class Convolution3x3FP16CPUKernel : public ConvolutionBaseCPUKernel {
  private:
   float16_t *fp16_input_;
   float16_t *fp16_weight_;
+  float16_t *fp16_out_;
   float16_t *transformed_filter_addr_;
   float16_t *tile_buffer_;
   float16_t *block_unit_buffer_;

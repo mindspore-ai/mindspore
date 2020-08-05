@@ -165,6 +165,7 @@ int ConvolutionWinogradCPUKernel::InitTmpBuffer() {
   int ic4 = UP_DIV(channel_in, C4NUM);
   int oc4 = UP_DIV(channel_out, C4NUM);
 
+  /*=============================trans_input_============================*/
   size_t tile_buffer_size = thread_count_ * TILE_NUM * input_unit_ * input_unit_ * ic4 * C4NUM * sizeof(float);
   trans_input_ = reinterpret_cast<float *>(malloc(tile_buffer_size));
   if (trans_input_ == nullptr) {
@@ -173,6 +174,7 @@ int ConvolutionWinogradCPUKernel::InitTmpBuffer() {
   }
   memset(trans_input_, 0, tile_buffer_size);
 
+  /*=============================gemm_out_============================*/
   gemm_out_ = reinterpret_cast<float *>(
     malloc(thread_count_ * TILE_NUM * input_unit_ * input_unit_ * oc4 * C4NUM * sizeof(float)));
   if (gemm_out_ == nullptr) {
@@ -180,6 +182,7 @@ int ConvolutionWinogradCPUKernel::InitTmpBuffer() {
     return RET_ERROR;
   }
 
+  /*=============================tmp_out_data_============================*/
   int out_w_block = UP_DIV(output_w, output_unit_);
   int out_h_block = UP_DIV(output_h, output_unit_);
   tmp_out_data_ = reinterpret_cast<float *>(
@@ -189,7 +192,8 @@ int ConvolutionWinogradCPUKernel::InitTmpBuffer() {
     return RET_ERROR;
   }
 
-  tmp_data_ = reinterpret_cast<float *>(malloc(C4NUM * input_unit_ * input_unit_ * sizeof(float)));
+  /*=============================tmp_data_============================*/
+  tmp_data_ = reinterpret_cast<float *>(malloc(thread_count_ * C4NUM * input_unit_ * input_unit_ * sizeof(float)));
   if (tmp_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_data_ failed.";
     return RET_ERROR;
@@ -201,6 +205,7 @@ int ConvolutionWinogradCPUKernel::InitTmpBuffer() {
   tmp_buffer_address_list_[2] = tmp_out_data_;
   tmp_buffer_address_list_[3] = tmp_data_;
 
+  /*=============================nhwc4_input_============================*/
   size_t nhwc4_input_size =
     ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float);
   nhwc4_input_ = malloc(nhwc4_input_size);

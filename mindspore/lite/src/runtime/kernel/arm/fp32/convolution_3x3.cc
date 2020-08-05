@@ -94,6 +94,8 @@ int Convolution3x3CPUKernel::InitTmpBuffer() {
   int iC4 = UP_DIV(conv_param_->input_channel_, C4NUM);
   int oC4 = UP_DIV(conv_param_->output_channel_, C4NUM);
   int k_plane = 16;
+
+  /*=============================tile_buffer_============================*/
   size_t tile_buffer_size = thread_count_ * TILE_NUM * k_plane * iC4 * C4NUM * sizeof(float);
   tile_buffer_ = reinterpret_cast<float *>(malloc(tile_buffer_size));
   if (tile_buffer_ == nullptr) {
@@ -102,6 +104,7 @@ int Convolution3x3CPUKernel::InitTmpBuffer() {
   }
   memset(tile_buffer_, 0, tile_buffer_size);
 
+  /*=============================block_unit_buffer_============================*/
   size_t block_unit_buffer_size = thread_count_ * k_plane * C4NUM * sizeof(float);
   block_unit_buffer_ = reinterpret_cast<float *>(malloc(block_unit_buffer_size));
   if (block_unit_buffer_ == nullptr) {
@@ -110,6 +113,7 @@ int Convolution3x3CPUKernel::InitTmpBuffer() {
   }
   memset(block_unit_buffer_, 0, block_unit_buffer_size);
 
+  /*=============================tmp_dst_buffer_============================*/
   size_t tmp_dst_buffer_size = thread_count_ * TILE_NUM * k_plane * oC4 * C4NUM * sizeof(float);
   tmp_dst_buffer_ = reinterpret_cast<float *>(malloc(tmp_dst_buffer_size));
   if (tmp_dst_buffer_ == nullptr) {
@@ -118,6 +122,7 @@ int Convolution3x3CPUKernel::InitTmpBuffer() {
   }
   memset(tmp_dst_buffer_, 0, tmp_dst_buffer_size);
 
+  /*=============================nhwc4_input_============================*/
   size_t nhwc4_input_size =
     iC4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float);
   nhwc4_input_ = malloc(nhwc4_input_size);
@@ -127,6 +132,7 @@ int Convolution3x3CPUKernel::InitTmpBuffer() {
   }
   memset(nhwc4_input_, 0, nhwc4_input_size);
 
+  /*=============================nc4hw4_out_============================*/
   size_t nc4hw4_out_size =
     oC4 * C4NUM * conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * sizeof(float);
   nc4hw4_out_ = reinterpret_cast<float *>(malloc(nc4hw4_out_size));

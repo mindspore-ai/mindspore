@@ -31,8 +31,13 @@ void AvgPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParamete
   int output_h = pooling_param->output_h_;
   int output_batch = pooling_param->output_batch_;
   int out_plane = output_w * output_h;
-  int16_t out_min = INT8_MIN;
-  int16_t out_max = INT8_MAX;
+  float input_scale = pooling_param->quant_args_[0][0].scale_;
+  int input_zp = pooling_param->quant_args_[0][0].zp_;
+  float output_scale = pooling_param->quant_args_[1][0].scale_;
+  int output_zp = pooling_param->quant_args_[1][0].zp_;
+  double real_multiplier = input_scale / output_scale;
+  int8_t out_min = INT8_MIN;
+  int8_t out_max = INT8_MAX;
 
   for (int batch = 0; batch < output_batch; batch++) {
     int in_batch_offset = batch * in_h * in_w * channel;
@@ -60,9 +65,10 @@ void AvgPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParamete
           }  // win_w loop
         }    // win_h loop
         int16_t tmp_out = round((float)tmp_avg / (float)real_count);
-        int16_t real_out = tmp_out < out_min ? out_min : tmp_out;
+        tmp_out = (int8_t)(round((tmp_out - input_zp) * real_multiplier) + output_zp);
+        int8_t real_out = tmp_out < out_min ? out_min : tmp_out;
         real_out = real_out > out_max ? out_max : real_out;
-        *(output_ptr + out_channel_offset) = (int8_t)real_out;
+        *(output_ptr + out_channel_offset) = real_out;
       }  // in_channel loop
     }    // out_plane loop
   }      // out_batch loop

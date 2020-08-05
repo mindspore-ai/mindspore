@@ -56,10 +56,14 @@ void Im2ColPackUnitFp16(float16_t *input_data, ConvParameter *conv_param, float1
         for (int m = 0; m < channel_block; m++) {
           int channel_block_stride = input_x_stride + m * C4NUM;
           int channel_block_offset = input_plane_offset + m * 16 * C4NUM;
+#ifdef ENABLE_ARM64
+          vst1_f16(packed_input + channel_block_offset, vld1_f16(input_data + channel_block_stride));
+#else
           (packed_input + channel_block_offset)[0] = (input_data + channel_block_stride)[0];
           (packed_input + channel_block_offset)[1] = (input_data + channel_block_stride)[1];
           (packed_input + channel_block_offset)[2] = (input_data + channel_block_stride)[2];
           (packed_input + channel_block_offset)[3] = (input_data + channel_block_stride)[3];
+#endif
         }  // channel_block loop
       }    // kernel_w loop
     }      // kernel_h loop

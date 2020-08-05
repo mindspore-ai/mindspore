@@ -89,6 +89,7 @@ int ConvolutionCPUKernel::InitTmpBuffer() {
   int output_tile_count = UP_DIV(output_count, TILE_NUM);
   int unit_size = kernel_plane * ic4 * C4NUM;
   int packed_input_size = output_tile_count * TILE_NUM * unit_size;
+  /*=============================packed_input============================*/
   packed_input_ = reinterpret_cast<float *>(malloc(in_batch * packed_input_size * sizeof(float)));
   if (packed_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed input failed.";
@@ -96,6 +97,7 @@ int ConvolutionCPUKernel::InitTmpBuffer() {
   }
   memset(packed_input_, 0, in_batch * packed_input_size * sizeof(float));
 
+  /*=============================nhwc4_input_============================*/
   size_t nhwc4_input_size =
     ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float);
   nhwc4_input_ = malloc(nhwc4_input_size);
@@ -105,7 +107,7 @@ int ConvolutionCPUKernel::InitTmpBuffer() {
   }
   memset(nhwc4_input_, 0, nhwc4_input_size);
 
-  // tmp out
+  /*=============================tmp_output_block_============================*/
   tmp_output_block_ = reinterpret_cast<float *>(malloc(TILE_NUM * out_channel * sizeof(float)));
   if (tmp_output_block_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp output block failed.";

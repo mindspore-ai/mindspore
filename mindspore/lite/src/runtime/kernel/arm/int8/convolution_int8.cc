@@ -116,6 +116,7 @@ int ConvolutionInt8CPUKernel::InitTmpBuffer() {
   int unit_size = plane_c4 * C4NUM * ic4 * C4NUM;
   int packed_input_size = output_tile_count * tile_num_ * unit_size;
 
+  /*=============================packed_input_============================*/
   packed_input_ = reinterpret_cast<int8_t *>(malloc(conv_param_->input_batch_ * packed_input_size));
   if (packed_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed_input_ failed.";
@@ -123,6 +124,7 @@ int ConvolutionInt8CPUKernel::InitTmpBuffer() {
   }
   memset(packed_input_, 0, conv_param_->input_batch_ * packed_input_size);
 
+  /*=============================input_sum_============================*/
   input_sum_ = reinterpret_cast<int32_t *>(malloc(tile_num_ * thread_count_ * sizeof(int32_t)));
   if (input_sum_ == nullptr) {
     MS_LOG(ERROR) << "malloc input_sum_ failed.";
@@ -130,6 +132,7 @@ int ConvolutionInt8CPUKernel::InitTmpBuffer() {
   }
   memset(input_sum_, 0, tile_num_ * thread_count_ * sizeof(int32_t));
 
+  /*=============================tmp_dst_============================*/
   size_t tmp_dst_size = thread_count_ * tile_num_ * conv_param_->output_channel_ * sizeof(int32_t);
   tmp_dst_ = reinterpret_cast<int32_t *>(malloc(tmp_dst_size));
   if (tmp_dst_ == nullptr) {
@@ -138,12 +141,14 @@ int ConvolutionInt8CPUKernel::InitTmpBuffer() {
   }
   memset(tmp_dst_, 0, tmp_dst_size);
 
+  /*=============================tmp_out_============================*/
   tmp_out_ = reinterpret_cast<int8_t *>(malloc(thread_count_ * tile_num_ * conv_param_->output_channel_));
   if (tmp_out_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_out_ failed.";
     return RET_ERROR;
   }
 
+  /*=============================nhwc4_input_============================*/
   size_t nhwc4_input_size = ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_;
   nhwc4_input_ = malloc(nhwc4_input_size);
   if (nhwc4_input_ == nullptr) {
@@ -209,6 +214,7 @@ int ConvolutionInt8CPUKernel::InitTmpBufferOpt() {
   int unit_size = kernel_plane * ic4 * C4NUM;
   int packed_input_size = output_tile_count * tile_num_ * unit_size;
 
+  /*=============================packed_input_============================*/
   packed_input_ = reinterpret_cast<int8_t *>(malloc(conv_param_->input_batch_ * packed_input_size));
   if (packed_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed_input_ failed.";
@@ -216,6 +222,7 @@ int ConvolutionInt8CPUKernel::InitTmpBufferOpt() {
   }
   memset(packed_input_, 0, conv_param_->input_batch_ * packed_input_size);
 
+  /*=============================input_sum_============================*/
   input_sum_ = reinterpret_cast<int32_t *>(malloc(tile_num_ * thread_count_ * sizeof(int32_t)));
   if (input_sum_ == nullptr) {
     MS_LOG(ERROR) << "malloc input_sum_ failed.";
@@ -223,6 +230,7 @@ int ConvolutionInt8CPUKernel::InitTmpBufferOpt() {
   }
   memset(input_sum_, 0, tile_num_ * thread_count_ * sizeof(int32_t));
 
+  /*=============================tmp_dst_============================*/
   size_t tmp_dst_size = thread_count_ * tile_num_ * conv_param_->output_channel_ * sizeof(int32_t);
   tmp_dst_ = reinterpret_cast<int32_t *>(malloc(tmp_dst_size));
   if (tmp_dst_ == nullptr) {
@@ -231,12 +239,14 @@ int ConvolutionInt8CPUKernel::InitTmpBufferOpt() {
   }
   memset(tmp_dst_, 0, tmp_dst_size);
 
+  /*=============================tmp_out_============================*/
   tmp_out_ = reinterpret_cast<int8_t *>(malloc(thread_count_ * tile_num_ * conv_param_->output_channel_));
   if (tmp_out_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_out_ failed.";
     return RET_ERROR;
   }
 
+  /*=============================nhwc4_input_============================*/
   size_t nhwc4_input_size = ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_;
   nhwc4_input_ = malloc(nhwc4_input_size);
   if (nhwc4_input_ == nullptr) {

@@ -56,7 +56,7 @@ int Convolution3x3FP16CPUKernel::InitWeightBias() {
   int iC4 = UP_DIV(input_channel, C4NUM);
   int oC8 = UP_DIV(output_channel, C8NUM);
   // init weight
-  size_t transformed_size = iC4 * C8NUM * oC8 * C8NUM * 36 * sizeof(float16_t);
+  size_t transformed_size = iC4 * C4NUM * oC8 * C8NUM * 36 * sizeof(float16_t);
   transformed_filter_addr_ = reinterpret_cast<float16_t *>(malloc(transformed_size));
   if (transformed_filter_addr_ == nullptr) {
     MS_LOG(ERROR) << "malloc transformed_filter_addr_ failed.";
@@ -101,6 +101,8 @@ int Convolution3x3FP16CPUKernel::InitTmpBuffer() {
   int k_plane = 36;
   int iC4 = UP_DIV(conv_param_->input_channel_, C4NUM);
   int oC8 = UP_DIV(conv_param_->output_channel_, C8NUM);
+
+  /*=============================tile_buffer_============================*/
   size_t tile_buffer_size = thread_count_ * tile_num * k_plane * iC4 * C4NUM * sizeof(float16_t);
   tile_buffer_ = reinterpret_cast<float16_t *>(malloc(tile_buffer_size));
   if (tile_buffer_ == nullptr) {
@@ -109,6 +111,7 @@ int Convolution3x3FP16CPUKernel::InitTmpBuffer() {
   }
   memset(tile_buffer_, 0, tile_buffer_size);
 
+  /*=============================block_unit_buffer_============================*/
   size_t block_unit_buffer_size = thread_count_ * k_plane * C4NUM * sizeof(float16_t);
   block_unit_buffer_ = reinterpret_cast<float16_t *>(malloc(block_unit_buffer_size));
   if (block_unit_buffer_ == nullptr) {
@@ -117,6 +120,7 @@ int Convolution3x3FP16CPUKernel::InitTmpBuffer() {
   }
   memset(block_unit_buffer_, 0, block_unit_buffer_size);
 
+  /*=============================tmp_dst_buffer_============================*/
   size_t tmp_dst_buffer_size = thread_count_ * tile_num * k_plane * oC8 * C8NUM * sizeof(float16_t);
   tmp_dst_buffer_ = reinterpret_cast<float16_t *>(malloc(tmp_dst_buffer_size));
   if (tmp_dst_buffer_ == nullptr) {
@@ -125,6 +129,7 @@ int Convolution3x3FP16CPUKernel::InitTmpBuffer() {
   }
   memset(tmp_dst_buffer_, 0, tmp_dst_buffer_size);
 
+  /*=============================tmp_out_============================*/
   size_t tmp_out_size = oC8 * C8NUM * conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ *
                         tile_num * sizeof(float16_t);
   tmp_out_ = reinterpret_cast<float16_t *>(malloc(tmp_out_size));
@@ -134,6 +139,7 @@ int Convolution3x3FP16CPUKernel::InitTmpBuffer() {
   }
   memset(tmp_out_, 0, tmp_out_size);
 
+  /*=============================fp16_input_============================*/
   size_t fp16_input_size = conv_param_->input_channel_ * conv_param_->input_batch_ * conv_param_->input_h_ *
                            conv_param_->input_w_ * sizeof(float16_t);
   fp16_input_ = reinterpret_cast<float16_t *>(malloc(fp16_input_size));
@@ -143,7 +149,7 @@ int Convolution3x3FP16CPUKernel::InitTmpBuffer() {
   }
   memset(fp16_input_, 0, fp16_input_size);
 
-  // init nhwc4 input
+  /*=============================nhwc4_input_============================*/
   size_t nhwc4_input_size =
     iC4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float16_t);
   nhwc4_input_ = malloc(nhwc4_input_size);
@@ -152,12 +158,19 @@ int Convolution3x3FP16CPUKernel::InitTmpBuffer() {
     return RET_ERROR;
   }
   memset(nhwc4_input_, 0, nhwc4_input_size);
+
+  /*=============================fp16_out_============================*/
+  size_t fp16_output_size = conv_param_->output_channel_ * conv_param_->output_batch_ * conv_param_->output_h_ *
+                            conv_param_->output_w_ * sizeof(float16_t);
+  fp16_out_ = reinterpret_cast<float16_t *>(malloc(fp16_output_size));
+  if (fp16_out_ == nullptr) {
+    MS_LOG(ERROR) << "malloc fp16_out_ failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
 void Convolution3x3FP16CPUKernel::ConfigInputOutput() {
-  auto output_tensor = outputs_.at(kOutputIndex);
-  output_tensor->SetFormat(schema::Format_NHWC);
   auto input_tensor = inputs_.at(kInputIndex);
   auto input_format = input_tensor->GetFormat();
   schema::Format execute_format = schema::Format_NHWC4;
@@ -201,6 +214,15 @@ int Convolution3x3FP16CPUKernel::ReSize() {
   if (tmp_out_ != nullptr) {
     free(tmp_out_);
   }
+  if (fp16_out_ != nullptr) {
+    free(fp16_out_);
+  }
+  if (fp16_input_ != nullptr) {
+    free(fp16_input_);
+  }
+  if (nhwc4_input_ != nullptr) {
+    free(nhwc4_input_);
+  }
 
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
@@ -216,9 +238,8 @@ int Convolution3x3FP16CPUKernel::ReSize() {
 }
 
 int Convolution3x3FP16CPUKernel::RunImpl(int task_id) {
-  auto output_addr = reinterpret_cast<float16_t *>(outputs_.at(kOutputIndex)->Data());
   Conv3x3Fp16(reinterpret_cast<float16_t *>(nhwc4_input_), transformed_filter_addr_,
-              reinterpret_cast<float16_t *>(bias_data_), output_addr, tile_buffer_, block_unit_buffer_, tmp_dst_buffer_,
+              reinterpret_cast<float16_t *>(bias_data_), fp16_out_, tile_buffer_, block_unit_buffer_, tmp_dst_buffer_,
               tmp_out_, task_id, conv_param_);
   return RET_OK;
 }
@@ -234,12 +255,13 @@ int Convolution3x3Fp16Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata)
 }
 
 int Convolution3x3FP16CPUKernel::Run() {
+  // cast fp32 input data to fp16
   auto input_tensor = inputs_.at(kInputIndex);
   auto ori_input_data = reinterpret_cast<float *>(input_tensor->Data());
-  // cast fp32 input data to fp16
   for (int i = 0; i < input_tensor->ElementsNum(); ++i) {
     fp16_input_[i] = (float16_t)ori_input_data[i];
   }
+
   int in_batch = conv_param_->input_batch_;
   int in_h = conv_param_->input_h_;
   int in_w = conv_param_->input_w_;
@@ -250,6 +272,13 @@ int Convolution3x3FP16CPUKernel::Run() {
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv3x3 fp16 error error_code[" << error_code << "]";
     return RET_ERROR;
+  }
+
+  // cast fp16 out to fp32 data
+  auto out_tensor = outputs_.at(kOutputIndex);
+  auto output_addr = reinterpret_cast<float *>(out_tensor->Data());
+  for (int j = 0; j < out_tensor->ElementsNum(); ++j) {
+    output_addr[j] = (float)fp16_out_[j];
   }
   return RET_OK;
 }

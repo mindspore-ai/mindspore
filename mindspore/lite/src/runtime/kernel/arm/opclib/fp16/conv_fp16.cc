@@ -54,7 +54,13 @@ void IndirectGemmFp16_16x8(float16_t *output, float16_t *input, float16_t *weigh
         }
       }
 
-      (output + out_tile_offset)[0] = tmp_out;
+      (output + out_tile_offset)[0] = tmp_out + bias[i];
+      if (relu) {
+        (output + out_tile_offset)[0] = (output + out_tile_offset)[0] < 0 ? 0 : (output + out_tile_offset)[0];
+      } else if (relu6) {
+        (output + out_tile_offset)[0] = (output + out_tile_offset)[0] < 0 ? 0 : (output + out_tile_offset)[0];
+        (output + out_tile_offset)[0] = (output + out_tile_offset)[0] > 6 ? 6 : (output + out_tile_offset)[0];
+      }
     }
   }
 }
@@ -111,7 +117,8 @@ void ConvFp16(float16_t *input_data, float16_t *packed_input, float16_t *packed_
   int out_h = conv_param->output_h_;
   int out_w = conv_param->output_w_;
   int out_channel = conv_param->output_channel_;
-
+  bool relu = conv_param->is_relu_;
+  bool relu6 = conv_param->is_relu6_;
   // todo
   int thread_count = conv_param->thread_num_;
   int tile_n = 16;
@@ -125,7 +132,6 @@ void ConvFp16(float16_t *input_data, float16_t *packed_input, float16_t *packed_
 
   // we accumulate 4 channels per time for input blocks
   int ic4 = UP_DIV(in_channel, C4NUM);
-  int oc8 = UP_DIV(in_channel, C8NUM);
   int conv_depth = kernel_h * kernel_w;
   // bytes from one output's i-th channel to the next output's i-th channel
   // we write 32 bytes per st1 instruction, after which the pointer in register will step 32B forward
@@ -137,19 +143,18 @@ void ConvFp16(float16_t *input_data, float16_t *packed_input, float16_t *packed_
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
       int start_index = thread_id * tile_n;
       int real_cal_num = (output_count - start_index) < tile_n ? (output_count - start_index) : tile_n;
-      float16_t *gemm_input =
-        (float16_t *)(packed_input + thread_id * unit_size * tile_n + gemm_in_batch_offset);
+      float16_t *gemm_input = (float16_t *)(packed_input + thread_id * unit_size * tile_n + gemm_in_batch_offset);
       Im2ColPackUnitFp16(input_data + in_batch_offset, conv_param, gemm_input, real_cal_num, start_index);
 
       int out_offset = thread_id * tile_n * out_channel + out_batch_offset;
       if (real_cal_num == tile_n) {
         float16_t *gemm_output = output_data + out_offset;
         IndirectGemmFp16_16x8(gemm_output, gemm_input, packed_weight, bias_data, conv_depth, ic4, out_channel,
-                              oc8 * C8NUM * sizeof(float16_t), 0, 0, 0, 0);
+                              out_channel * sizeof(float16_t), 0, 0, relu, relu6);
       } else {
         // res part
         IndirectGemmFp16_16x8(tmp_out_block, gemm_input, packed_weight, bias_data, conv_depth, ic4, out_channel,
-                              oc8 * C8NUM * sizeof(float16_t), 0, 0, 0, 0);
+                              out_channel * sizeof(float16_t), 0, 0, relu, relu6);
         memcpy(output_data + out_offset, tmp_out_block, real_cal_num * out_channel * sizeof(float16_t));
       }
     }
@@ -196,6 +201,8 @@ void Conv3x3Fp16(float16_t *input_data, float16_t *transed_weight, const float16
 
   // get real output
   // todo
+  bool relu = conv_param->is_relu_;
+  bool relu6 = conv_param->is_relu6_;
   for (int batch = 0; batch < output_batch; batch++) {
     int batch_size = batch * output_channel * output_h * output_w;
     for (int h = 0; h < output_h; h++) {
@@ -207,10 +214,14 @@ void Conv3x3Fp16(float16_t *input_data, float16_t *transed_weight, const float16
                            C8NUM * (h * out_w_block * output_unit + w) + oc8_res;
           int dst_offset = (h * output_w + w) * output_channel + c;
           (output_data + dst_offset)[0] = (tmp_out + src_offset)[0];
+          if (relu) {
+            (output_data + dst_offset)[0] = (output_data + dst_offset)[0] < 0 ? 0 : (output_data + dst_offset)[0];
+          } else if (relu6) {
+            (output_data + dst_offset)[0] = (output_data + dst_offset)[0] < 0 ? 0 : (output_data + dst_offset)[0];
+            (output_data + dst_offset)[0] = (output_data + dst_offset)[0] > 6 ? 6 : (output_data + dst_offset)[0];
+          }
         }
       }
     }
   }
 }
-
-

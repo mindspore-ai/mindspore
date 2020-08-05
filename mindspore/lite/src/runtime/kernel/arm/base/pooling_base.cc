@@ -37,15 +37,11 @@ int PoolingBaseCPUKernel::SetQuantParam() {
   auto in_quant_arg = input_tensor->GetQuantParams();
   auto *out_tensor = outputs_.at(kOutputIndex);
   auto out_quant_arg = out_tensor->GetQuantParams();
-  if (in_quant_arg.front().scale != out_quant_arg.front().scale ||
-      in_quant_arg.front().zeroPoint != out_quant_arg.front().zeroPoint) {
-    MS_LOG(ERROR) << "Scale/ZeroPoint of output must be equal to input's";
-    return RET_ERROR;
-  }
   pooling_quant_arg_[0][0].scale_ = in_quant_arg.front().scale;
   pooling_quant_arg_[0][0].zp_ = in_quant_arg.front().zeroPoint;
   pooling_quant_arg_[1][0].scale_ = out_quant_arg.front().scale;
   pooling_quant_arg_[1][0].zp_ = out_quant_arg.front().zeroPoint;
+  pooling_param_->quant_args_ = pooling_quant_arg_;
   return RET_OK;
 }
 
