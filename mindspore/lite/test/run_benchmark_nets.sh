@@ -6,19 +6,19 @@ while getopts "a:c:m:d:" opt
 do
     case $opt in
         a)
-                arm_path=$OPTARG
+		arm_path=$OPTARG
         echo "参数arm_path的值$OPTARG"
         ;;
         c)
-                convertor_path=$OPTARG
+		convertor_path=$OPTARG
         echo "参数convertor_path的值$OPTARG"
         ;;
         m)
-                models_path=$OPTARG
+		models_path=$OPTARG
         echo "参数models_path的值$OPTARG"
-        ;;
+        ;;		
         d)
-                device_id=$OPTARG
+		device_id=$OPTARG
         echo "参数device_id的值$OPTARG"
         ;;
         ?)
@@ -27,12 +27,12 @@ do
     esac
 done
 
-#将编译好的arm包先放在如下目录进行调试
+#将编译好的arm包先放在如下目录进行调试 
 cd $arm_path
 tar -zxf MSLite-*-linux_arm64.tar.gz
 
 
-#部署模型转换工具
+#部署模型转换工具 
 cd $convertor_path
 tar -zxf MSLite-*-linux_x86_64.tar.gz
 cd $convertor_path/MSLite-*-linux_x86_64
@@ -45,14 +45,14 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib/:./third_party/protobuf/lib
 #进行模型转换
 cd $convertor_path/MSLite-*-linux_x86_64
 #模型1：
-./converter_lite  --fmk=CAFFE --modelFile=$models_path/test.prototxt --outputFile=$models_path/test --weightFile=$models_path/test.caffemodel
+./converter_lite  --fmk=CAFFE --modelFile=$models_path/test.prototxt --outputFile=$models_path/test --weightFile=$models_path/test.caffemodel 
 #模型2：
-./converter_lite  --fmk=TFLITE --modelFile=$models_path/hiai_bigmodel_ghost_2_1_no_normalized_no_trans_tflite.tflite --outputFile=$models_path/hiai_bigmodel_ghost_2_1_no_normalized_no_trans_tflite
+./converter_lite  --fmk=TFLITE --modelFile=$models_path/hiai_bigmodel_ghost_2_1_no_normalized_no_trans_tflite.tflite --outputFile=$models_path/hiai_bigmodel_ghost_2_1_no_normalized_no_trans_tflite 
 
 
 #推送到手机上执行benchmark：
 
-#一：复制到手机所在的机器上
+#一：复制到手机所在的机器上 
 mkdir -p ./benchmark_test
 cp  $arm_path/MSLite-0.6.0-linux_arm64/lib/libmindspore-lite.so ./benchmark_test/libmindspore-lite.so
 cp  $arm_path/MSLite-0.6.0-linux_arm64/benchmark/benchmark ./benchmark_test/benchmark
@@ -75,3 +75,4 @@ echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/;./benchmark --mod
 echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath=hiai_bigmodel_ghost_2_1_no_normalized_no_trans_tflite.ms' >> adb_cmd.txt
 
 adb -s $device_id shell < adb_cmd.txt
+
