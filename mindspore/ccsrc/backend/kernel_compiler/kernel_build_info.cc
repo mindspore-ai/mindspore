@@ -52,13 +52,13 @@ TypeId KernelBuildInfo::GetOutputDeviceType(size_t output_index) const {
   return outputs_device_type_[output_index];
 }
 
-std::vector<std::string> KernelBuildInfo::GetAllInputFormats() const { return inputs_format_; }
+const std::vector<std::string> &KernelBuildInfo::GetAllInputFormats() const { return inputs_format_; }
 
-std::vector<std::string> KernelBuildInfo::GetAllOutputFormats() const { return outputs_format_; }
+const std::vector<std::string> &KernelBuildInfo::GetAllOutputFormats() const { return outputs_format_; }
 
-std::vector<TypeId> KernelBuildInfo::GetAllInputDeviceTypes() const { return inputs_device_type_; }
+const std::vector<TypeId> &KernelBuildInfo::GetAllInputDeviceTypes() const { return inputs_device_type_; }
 
-std::vector<TypeId> KernelBuildInfo::GetAllOutputDeviceTypes() const { return outputs_device_type_; }
+const std::vector<TypeId> &KernelBuildInfo::GetAllOutputDeviceTypes() const { return outputs_device_type_; }
 
 size_t KernelBuildInfo::GetInputNum() const { return inputs_format_.size(); }
 

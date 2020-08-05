@@ -25,9 +25,9 @@ AnfNodePtr CreateNewConcat(const FuncGraphPtr &func_graph, const CNodePtr &origi
                            size_t offset) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(origin_concat_cnode);
-  std::vector<AnfNodePtr> new_concat_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name()))};
+  std::vector<AnfNodePtr> new_concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name()))};
   for (size_t i = begin_index; i < begin_index + offset; ++i) {
-    new_concat_inputs.push_back(origin_concat_cnode->input(i));
+    new_concat_inputs.emplace_back(origin_concat_cnode->input(i));
   }
   CNodePtr new_concat = func_graph->NewCNode(new_concat_inputs);
   MS_EXCEPTION_IF_NULL(new_concat);
@@ -83,7 +83,7 @@ const AnfNodePtr ConcatFission::Process(const FuncGraphPtr &func_graph, const An
       cur_input_index += inputs_divisor_;
     }
     for (size_t i = cur_input_index; i <= origin_input_size; i++) {
-      base_concat_inputs.push_back(new_cnode->input(i));
+      base_concat_inputs.emplace_back(new_cnode->input(i));
     }
     CNodePtr base_concat = func_graph->NewCNode(base_concat_inputs);
     MS_EXCEPTION_IF_NULL(base_concat);

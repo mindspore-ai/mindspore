@@ -31,9 +31,8 @@ void CreateOutputsOfSquareSumAll(const FuncGraphPtr &graph, const CNodePtr &lars
     MS_LOG(EXCEPTION) << "Op lars_v2's input not equal " << kLarsV2InputNum;
   }
 
-  std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(kSquareSumAllOpName))};
-  inputs.push_back(lars_v2->input(1));
-  inputs.push_back(lars_v2->input(2));
+  std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(kSquareSumAllOpName)), lars_v2->input(1),
+                                    lars_v2->input(2)};
   auto square_sum_all = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(square_sum_all);
   square_sum_all->set_scope(lars_v2->scope());
@@ -56,13 +55,13 @@ CNodePtr CreateLarsV2Update(const FuncGraphPtr &graph, const CNodePtr &lars_v2,
   if (lars_v2->size() != kLarsV2InputNum) {
     MS_LOG(EXCEPTION) << "Op lars_v2's input not equal " << kLarsV2InputNum;
   }
-  std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(kLarsV2UpdateOpName))};
-  inputs.push_back(lars_v2->input(1));
-  inputs.push_back(lars_v2->input(2));
-  inputs.push_back(square_sum_all_outputs[0]);
-  inputs.push_back(square_sum_all_outputs[1]);
-  inputs.push_back(lars_v2->input(3));
-  inputs.push_back(lars_v2->input(4));
+  std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(kLarsV2UpdateOpName)),
+                                    lars_v2->input(1),
+                                    lars_v2->input(2),
+                                    square_sum_all_outputs[0],
+                                    square_sum_all_outputs[1],
+                                    lars_v2->input(3),
+                                    lars_v2->input(4)};
   auto lars_v2_update = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(lars_v2_update);
   lars_v2_update->set_scope(lars_v2->scope());

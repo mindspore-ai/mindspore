@@ -745,7 +745,7 @@ void AnfRuntimeAlgorithm::SetOutputInferTypeAndShape(const std::vector<TypeId> &
     for (size_t i = 0; i < types.size(); ++i) {
       std::vector<int> shape_int;
       std::transform(shapes[i].begin(), shapes[i].end(), std::back_inserter(shape_int), SizeToInt);
-      abstract_list.push_back(std::make_shared<AbstractTensor>(TypeIdToType(types[i]), shape_int));
+      abstract_list.emplace_back(std::make_shared<AbstractTensor>(TypeIdToType(types[i]), shape_int));
     }
     auto abstract_tuple = std::make_shared<AbstractTuple>(abstract_list);
     node->set_abstract(abstract_tuple);

@@ -30,12 +30,13 @@ namespace {
 bool CheckFormatForConsistency(const CNodePtr &node, const size_t input_index) {
   MS_EXCEPTION_IF_NULL(node);
   // get prior node's device output format
-  string pre_output_format = AnfAlgo::GetPrevNodeOutputFormat(node, input_index);
+  auto prev_node = AnfAlgo::GetPrevNodeOutput(node, input_index);
+  string pre_output_format = AnfAlgo::GetOutputFormat(prev_node.first, prev_node.second);
   string selected_input_format = AnfAlgo::GetInputFormat(node, input_index);
   if (pre_output_format == selected_input_format) {
     return true;
   }
-  auto input_origin_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, input_index);
+  auto input_origin_shape = AnfAlgo::GetOutputInferShape(prev_node.first, prev_node.second);
   if (pre_output_format == kOpFormat_DEFAULT || selected_input_format == kOpFormat_DEFAULT) {
     string checking_format = (pre_output_format == kOpFormat_DEFAULT) ? selected_input_format : pre_output_format;
     // when input shape size is 1D, default format and NC1HWC0 are compatible
@@ -87,7 +88,8 @@ const AnfNodePtr CheckConsistency::Process(const FuncGraphPtr &, const AnfNodePt
 
   for (auto &t : todos) {
     CNodePtr cnode = t->cast<CNodePtr>();
-    for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(cnode); i++) {
+    size_t in_num = AnfAlgo::GetInputTensorNum(cnode);
+    for (size_t i = 0; i < in_num; ++i) {
       if (!CheckFormatForConsistency(cnode, i) || !CheckDataTypeForConsistency(cnode, i)) {
         MS_LOG(EXCEPTION) << "Found inconsistent format or data type! Op: " << AnfAlgo::GetCNodeName(cnode) << "["
                           << cnode->DebugString() << "]";

@@ -27,7 +27,7 @@ AnfNodePtr CreateNewAddn(const FuncGraphPtr &func_graph, const CNodePtr &origin_
   MS_EXCEPTION_IF_NULL(origin_addn_cnode);
   std::vector<AnfNodePtr> new_addn_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimAddN->name()))};
   for (size_t i = begin_index; i < begin_index + offset; ++i) {
-    new_addn_inputs.push_back(origin_addn_cnode->input(i));
+    new_addn_inputs.emplace_back(origin_addn_cnode->input(i));
   }
   CNodePtr new_addn = func_graph->NewCNode(new_addn_inputs);
   MS_EXCEPTION_IF_NULL(new_addn);
@@ -66,7 +66,7 @@ const AnfNodePtr AddnFission::Process(const FuncGraphPtr &func_graph, const AnfN
       cur_input_index += inputs_divisor_;
     }
     for (size_t i = cur_input_index; i <= origin_input_size; i++) {
-      base_addn_inputs.push_back(new_cnode->input(i));
+      base_addn_inputs.emplace_back(new_cnode->input(i));
     }
     CNodePtr base_addn = func_graph->NewCNode(base_addn_inputs);
     MS_EXCEPTION_IF_NULL(base_addn);

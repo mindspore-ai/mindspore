@@ -32,6 +32,7 @@ void LayerNormGradSplit::CreateOutputsOfLayerNormXBackprop(
   std::vector<AnfNodePtr> *layer_norm_x_backprop_outputs) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(layer_norm_grad);
+  MS_EXCEPTION_IF_NULL(layer_norm_x_backprop_outputs);
   auto prim = std::make_shared<Primitive>(kLayerNormXBackpropOpName);
   std::vector<AnfNodePtr> layer_norm_x_backprop_inputs = {NewValueNode(prim)};
   for (size_t i = 1; i < layer_norm_grad->inputs().size(); ++i) {

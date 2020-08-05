@@ -83,11 +83,11 @@ const AnfNodePtr PackFission::Process(const FuncGraphPtr &func_graph, const AnfN
   size_t cur_input_index = 1;
   // Divide the inputs of pack by inputs_divisor_.
   while (origin_input_size - cur_input_index + 1 >= inputs_divisor_) {
-    base_concat_inputs.push_back(CreateNewPack(func_graph, cnode, cur_input_index, inputs_divisor_));
+    base_concat_inputs.emplace_back(CreateNewPack(func_graph, cnode, cur_input_index, inputs_divisor_));
     cur_input_index += inputs_divisor_;
   }
   if (cur_input_index <= origin_input_size) {
-    base_concat_inputs.push_back(
+    base_concat_inputs.emplace_back(
       CreateNewPack(func_graph, cnode, cur_input_index, origin_input_size - cur_input_index + 1));
   }
 

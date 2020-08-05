@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <string>
 #include <vector>
 #include <set>
@@ -337,5 +338,33 @@ static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
     MS_LOG(DEBUG) << "File `" << file_name << "` change mode failed! May be not exist.";
   }
 }
+
+static inline uint64_t GetCurrentUSec() {
+  struct timeval tv;
+  int ret = gettimeofday(&tv, nullptr);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "Fail gettimeofday, ret = " << ret;
+  }
+  return static_cast<uint64_t>(tv.tv_usec + tv.tv_sec * 1000000);
+}
+
+#define PROF_START(stage) uint64_t start_usec_##stage = mindspore::GetCurrentUSec()
+#define PROF_END(stage)                                                                         \
+  do {                                                                                          \
+    uint64_t end_usec_##stage = mindspore::GetCurrentUSec();                                    \
+    MS_LOG(INFO) << #stage << " costs " << (end_usec_##stage - start_usec_##stage) << " usec."; \
+  } while (0)
+
+#define PROF_MULTI_DEFINE(stage)     \
+  static uint64_t total_##stage = 0; \
+  static uint64_t count_##stage = 0;
+
+#define PROF_MULTI_START(stage) uint64_t start_usec_##stage = mindspore::GetCurrentUSec()
+
+#define PROF_MULTI_END(stage)                              \
+  ++count_##stage;                                         \
+  uint64_t end_usec_##stage = mindspore::GetCurrentUSec(); \
+  total_##stage += (end_usec_##stage - start_usec_##stage)
+
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_UTILS_UTILS_H_

@@ -63,13 +63,13 @@ class KernelBuildInfo {
 
   std::vector<Axis> GetOutputReshapeType(size_t input_index) const;
 
-  std::vector<std::string> GetAllInputFormats() const;
+  const std::vector<std::string> &GetAllInputFormats() const;
 
-  std::vector<std::string> GetAllOutputFormats() const;
+  const std::vector<std::string> &GetAllOutputFormats() const;
 
-  std::vector<TypeId> GetAllInputDeviceTypes() const;
+  const std::vector<TypeId> &GetAllInputDeviceTypes() const;
 
-  std::vector<TypeId> GetAllOutputDeviceTypes() const;
+  const std::vector<TypeId> &GetAllOutputDeviceTypes() const;
 
   std::vector<std::vector<Axis>> GetAllOutputReshapeType() const;
 
