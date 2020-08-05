@@ -61,9 +61,8 @@ do
     --device_num=$RANK_SIZE \
     --enable_data_sink="true" \
     --data_sink_steps=100 \
-    --save_ckpt_step=100 \
+    --save_ckpt_step=10000 \
     --max_ckpt_num=1 \
-    --save_ckpt_path="" \
     --load_teacher_ckpt_path="" \
     --data_dir="" \
     --schema_dir="" > log.txt 2>&1 &

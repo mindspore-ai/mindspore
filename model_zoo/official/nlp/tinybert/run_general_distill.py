@@ -84,7 +84,7 @@ def run_general_distill():
                                       args_opt.do_shuffle, args_opt.data_dir, args_opt.schema_dir)
 
     dataset_size = dataset.get_dataset_size()
-
+    print('dataset size: ', dataset_size)
     if args_opt.enable_data_sink == "true":
         repeat_count = args_opt.epoch_size * dataset.get_dataset_size() // args_opt.data_sink_steps
         time_monitor_steps = args_opt.data_sink_steps

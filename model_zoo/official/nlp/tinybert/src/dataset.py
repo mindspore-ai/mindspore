@@ -37,9 +37,6 @@ def create_tinybert_dataset(task='td', batch_size=32, device_num=1, rank=0,
     ds = de.TFRecordDataset(data_files, schema_dir, columns_list=columns_list,
                             shuffle=(do_shuffle == "true"), num_shards=device_num, shard_id=rank,
                             shard_equal_rows=True)
-
-    ori_dataset_size = ds.get_dataset_size()
-    print('origin dataset size: ', ori_dataset_size)
     type_cast_op = C.TypeCast(mstype.int32)
     ds = ds.map(input_columns="segment_ids", operations=type_cast_op)
     ds = ds.map(input_columns="input_mask", operations=type_cast_op)
