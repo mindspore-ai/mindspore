@@ -15,7 +15,6 @@
  */
 
 #include "backend/kernel_compiler/akg/akg_kernel_build.h"
-#include <Python.h>
 #include <sys/types.h>
 #include <signal.h>
 #include <unistd.h>
@@ -37,13 +36,10 @@
 #include "utils/utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/akg/akg_kernel_attrs_process.h"
+#include "backend/session/kernel_build_client.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr int ME_MAX_KERNEL_NAME_LENGTH = 200;
-constexpr int32_t ARGS_SIZE = 1;
-constexpr auto kCompileWithJsonFunc = "compilewithjson";
-
 // json key
 constexpr auto kOpDesc = "op_desc";
 constexpr auto kInputDesc = "input_desc";
@@ -69,25 +65,6 @@ std::string Vector2Str(const std::vector<T> &inputs) {
   return "";
 }
 }  // namespace
-
-std::string AkgKernelBuild::PyObjectToStr(PyObject *const PyObj) {
-  char *pChar = nullptr;
-  std::string str_res;
-  if (PyObj == nullptr) {
-    MS_LOG(ERROR) << "Input parameter is nullptr.";
-    return str_res;
-  }
-  PyObject *strArgs = PyObject_Str(PyObj);
-  if (strArgs != nullptr) {
-    (void)PyArg_Parse(strArgs, "s", &pChar);
-  }
-  if (pChar == nullptr) {
-    MS_LOG(ERROR) << "pChar is nullptr.";
-    return str_res;
-  }
-  str_res = pChar;
-  return str_res;
-}
 
 std::string GetTensorName(const nlohmann::json &node_json, const std::string &tag,
                           const std::pair<size_t, size_t> &position) {
@@ -528,32 +505,11 @@ KernelPackPtr AkgKernelBuild::OpBuild(const std::string &node_json, const AnfNod
     return cached_kernel_pack;
   }
 
-  PyObject *pModule = nullptr;
-  PyObject *pFunc = nullptr;
-  PyObject *pArg = nullptr;
-  PyObject *pRes = nullptr;
-
-  pModule = PyImport_ImportModule(kAkgModule);
-  if (pModule == nullptr) {
-    MS_LOG(ERROR) << "Failed to import [" << kAkgModule << "].";
-    return nullptr;
-  }
-
-  pFunc = PyObject_GetAttrString(pModule, kCompileWithJsonFunc);
-  pArg = PyTuple_New(ARGS_SIZE);
-  (void)PyTuple_SetItem(pArg, 0, Py_BuildValue("s", node_json.c_str()));
-
   (void)alarm(AUTODIFF_COMPILE_OVERTIME);
-  pRes = PyEval_CallObject(pFunc, pArg);
+  auto res = GpuKernelBuildClient::Instance().AkgCompileSingle(node_json);
   (void)alarm(0);
-  if (pRes == nullptr) {
-    MS_LOG(ERROR) << "No ret got, failed to call function [" << kCompileWithJsonFunc << "], args:\n("
-                  << AkgKernelBuild::PyObjectToStr(pArg) << ").";
-    return nullptr;
-  }
-  if (PyObject_IsTrue(pRes) != 1) {
-    MS_LOG(ERROR) << "Illegal ret, failed to call function [" << kCompileWithJsonFunc << "], args:\n("
-                  << AkgKernelBuild::PyObjectToStr(pArg) << ").";
+  if (!res) {
+    MS_LOG(ERROR) << "Akg compile failed, json: " << node_json;
     return nullptr;
   }
 

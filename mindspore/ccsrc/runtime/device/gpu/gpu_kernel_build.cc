@@ -21,13 +21,16 @@
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "frontend/operator/ops.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "backend/session/kernel_build_client.h"
+
 namespace mindspore {
 namespace device {
 namespace gpu {
 void GpuBuild(const KernelGraphPtr &kernel_graph) {
   kernel::KernelMeta *bin_map = kernel::KernelMeta::GetInstance();
   MS_EXCEPTION_IF_NULL(bin_map);
-  bin_map->Initialize();
+  auto pid = mindspore::kernel::GpuKernelBuildClient::Instance().AkgGetPid();
+  bin_map->Initialize(pid);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto kernels = kernel_graph->execution_order();
   for (const auto &kernel : kernels) {

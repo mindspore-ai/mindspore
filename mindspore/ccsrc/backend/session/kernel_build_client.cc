@@ -29,7 +29,7 @@ void ReplaceStr(std::string *dest, const std::string &replace, char new_char) {
   }
 }
 
-int KernelBuildClient::TbeStart(const std::string &json) {
+int AscendKernelBuildClient::TbeStart(const std::string &json) {
   // Start compiling..
   auto res = SendRequest(kTbeStart);
   if (res != kAck) {
@@ -46,7 +46,7 @@ int KernelBuildClient::TbeStart(const std::string &json) {
   return std::stoi(res);
 }
 
-bool KernelBuildClient::TbeWait(int *task_id, std::string *task_result, std::string *pre_build_result) {
+bool AscendKernelBuildClient::TbeWait(int *task_id, std::string *task_result, std::string *pre_build_result) {
   // Start waiting..
   auto res = SendRequest(kTbeWait);
   if (res != kAck) {
@@ -54,15 +54,15 @@ bool KernelBuildClient::TbeWait(int *task_id, std::string *task_result, std::str
     return false;
   }
   // Request task id.
-  *task_id = std::stoi(SendRequest(kCont));
+  *task_id = std::stoi(SendRequest(kContinue));
   // Requst task result.
-  *task_result = SendRequest(kCont);
+  *task_result = SendRequest(kContinue);
   // Request prebuild result.
-  *pre_build_result = SendRequest(kCont);
+  *pre_build_result = SendRequest(kContinue);
   return true;
 }
 
-void KernelBuildClient::TbeReset() {
+void AscendKernelBuildClient::TbeReset() {
   // Start compiling..
   auto res = SendRequest(kTbeReset);
   if (res != kAck) {
@@ -70,7 +70,7 @@ void KernelBuildClient::TbeReset() {
   }
 }
 
-bool KernelBuildClient::AkgStart(int process_num, int wait_time) {
+bool AscendKernelBuildClient::AkgStart(int process_num, int wait_time) {
   // Start compiling..
   auto res = SendRequest(kAkgStart);
   if (res != kAck) {
@@ -92,7 +92,7 @@ bool KernelBuildClient::AkgStart(int process_num, int wait_time) {
   return true;
 }
 
-bool KernelBuildClient::AkgSendData(const std::vector<std::string> &jsons) {
+bool AscendKernelBuildClient::AkgSendData(const std::vector<std::string> &jsons) {
   auto res = SendRequest(kAkgData);
   if (res != kAck) {
     MS_LOG(ERROR) << "AKG/DATA failed, res: " << res;
@@ -109,7 +109,7 @@ bool KernelBuildClient::AkgSendData(const std::vector<std::string> &jsons) {
 }
 
 // Fetch the result of AKG compiling.
-bool KernelBuildClient::AkgWait() {
+bool AscendKernelBuildClient::AkgWait() {
   auto res = SendRequest(kAkgWait);
   if (res != kTrue) {
     MS_LOG(ERROR) << "AKG/WAIT failed, res: " << res;
@@ -118,7 +118,7 @@ bool KernelBuildClient::AkgWait() {
   return true;
 }
 
-std::string KernelBuildClient::SelectFormat(const std::string &json) {
+std::string AscendKernelBuildClient::SelectFormat(const std::string &json) {
   // Start compiling..
   auto res = SendRequest(kFormat);
   if (res != kAck) {
@@ -134,7 +134,7 @@ std::string KernelBuildClient::SelectFormat(const std::string &json) {
   return res;
 }
 
-bool KernelBuildClient::CheckSupported(const std::string &json) {
+bool AscendKernelBuildClient::CheckSupported(const std::string &json) {
   // Checking support..
   auto res = SendRequest(kSupport);
   if (res != kAck) {
@@ -145,6 +145,30 @@ bool KernelBuildClient::CheckSupported(const std::string &json) {
   res = SendRequest(json);
   if (res != kTrue) {
     MS_LOG(INFO) << "SUPPORT responds failed, res: " << res;
+    return false;
+  }
+  return true;
+}
+
+int GpuKernelBuildClient::AkgGetPid() {
+  auto res = SendRequest(kAkgPid);
+  if (res == kErr) {
+    MS_LOG(ERROR) << "AKG/PID failed, res: " << res;
+    return -1;
+  }
+  return std::stoi(res);
+}
+
+bool GpuKernelBuildClient::AkgCompileSingle(const std::string json) {
+  auto res = SendRequest(kAkgCompileOp);
+  if (res != kAck) {
+    MS_LOG(ERROR) << "AKG/COMPILE failed, res: " << res;
+    return false;
+  }
+  // Send single json data.
+  res = SendRequest(json);
+  if (res != kAck) {
+    MS_LOG(ERROR) << "AKG/COMPILE responds failed, res: " << res;
     return false;
   }
   return true;

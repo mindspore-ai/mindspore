@@ -312,7 +312,7 @@ bool TbeKernelSelect::TbeCheckSupported(
   if (!ret) {
     MS_LOG(EXCEPTION) << "Gen tbe single kernel json for check support failed.";
   }
-  ret = KernelBuildClient::Instance().CheckSupported(kernel_json.dump());
+  ret = AscendKernelBuildClient::Instance().CheckSupported(kernel_json.dump());
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_tmp, cnode_ptr_.get());
   return ret;
 }
@@ -486,7 +486,7 @@ std::string TbeKernelSelect::OpSelectFormat() {
   if (!ret) {
     MS_LOG(EXCEPTION) << "GenTbeSingleKernelJson failed.";
   }
-  res_json_str = KernelBuildClient::Instance().SelectFormat(kernel_json.dump());
+  res_json_str = AscendKernelBuildClient::Instance().SelectFormat(kernel_json.dump());
   if (res_json_str.empty()) {
     MS_LOG(EXCEPTION) << "op select format error.";
   }

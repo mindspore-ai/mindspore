@@ -324,15 +324,15 @@ bool AkgOpParallelBuild(const std::vector<std::pair<AkgAscendKernelBuilder, AnfN
   }
 
   // Start building in AKG
-  if (!KernelBuildClient::Instance().AkgStart(PROCESS_NUM, TIME_OUT)) {
+  if (!AscendKernelBuildClient::Instance().AkgStart(PROCESS_NUM, TIME_OUT)) {
     MS_LOG(ERROR) << "Akg start failed.";
     return false;
   }
-  if (!KernelBuildClient::Instance().AkgSendData(jsons)) {
+  if (!AscendKernelBuildClient::Instance().AkgSendData(jsons)) {
     MS_LOG(ERROR) << "Akg send data failed.";
     return false;
   }
-  if (!KernelBuildClient::Instance().AkgWait()) {
+  if (!AscendKernelBuildClient::Instance().AkgWait()) {
     MS_LOG(ERROR) << "Akg compile failed.";
     return false;
   }
