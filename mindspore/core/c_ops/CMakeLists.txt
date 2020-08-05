@@ -1,2 +1,0 @@
-file(GLOB_RECURSE _C_OPS_ALL_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
-add_library(_mindspore_c_ops_obj OBJECT ${_C_OPS_ALL_SRC_FILES})

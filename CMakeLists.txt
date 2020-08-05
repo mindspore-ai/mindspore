@@ -98,6 +98,7 @@ endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 add_subdirectory(mindspore/ccsrc)
+add_subdirectory(mindspore/core)
 if (ENABLE_TESTCASES)
     add_subdirectory(tests)
 endif()

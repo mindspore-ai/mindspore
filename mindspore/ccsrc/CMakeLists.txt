@@ -130,7 +130,7 @@ set(SUB_COMP
         frontend/operator
         pipeline/jit
         pipeline/pynative
-        common debug gvar pybind_api utils vm
+        common debug pybind_api utils vm
 )
 
 foreach (_comp ${SUB_COMP})
@@ -141,22 +141,13 @@ foreach (_comp ${SUB_COMP})
         add_dependencies(_mindspore_${sub}_obj proto_input )
     endif ()
 endforeach ()
-add_subdirectory(${CMAKE_SOURCE_DIR}/mindspore/core/base base)
-list(APPEND SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_base_obj>)
-add_subdirectory(${CMAKE_SOURCE_DIR}/mindspore/core/abstract abstract)
-list(APPEND SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_abstract_obj>)
-add_subdirectory(${CMAKE_SOURCE_DIR}/mindspore/core/utils util)
-list(APPEND SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_core_utils_obj>)
-add_subdirectory(${CMAKE_SOURCE_DIR}/mindspore/core/ir ir)
-list(APPEND SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_ir_obj>)
-add_subdirectory(${CMAKE_SOURCE_DIR}/mindspore/core/c_ops c_ops)
-list(APPEND SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_c_ops_obj>)
-add_dependencies(_mindspore_core_utils_obj _mindspore_base_obj _mindspore_ir_obj _mindspore_abstract_obj _mindspore_c_ops_obj proto_input)
 
 set_property(SOURCE ${SUB_OBJECTS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_ME)
 add_library(mindspore STATIC ${SUB_OBJECTS_SRC})
 
 target_link_libraries(proto_input mindspore::protobuf)
+
+target_link_libraries(mindspore mindspore_core)
 
 if (ENABLE_DEBUGGER)
     # debugger: link grpc
@@ -244,7 +235,6 @@ set_target_properties(_c_expression PROPERTIES INSTALL_RPATH ${ORIGIN_PATH})
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(mindspore mindspore::pybind11_module)
-    target_link_libraries(mindspore mindspore_gvar)
     target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore -Wl,--no-whole-archive)
 else ()
     if (ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU))
@@ -255,7 +245,6 @@ else ()
     endif()
     target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore -Wl,--no-whole-archive)
     target_link_libraries(_c_expression PRIVATE mindspore::pybind11_module)
-    target_link_libraries(_c_expression PRIVATE mindspore_gvar)
 endif ()
 
 if (USE_GLOG)
@@ -299,7 +288,7 @@ add_library(inference SHARED
         ${LOAD_ONNX_SRC}
         )
 target_link_libraries(inference PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
-        -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_gvar mindspore::protobuf)
+        -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore::protobuf)
 
 if (ENABLE_CPU)
     target_link_libraries(inference PRIVATE mindspore::dnnl mindspore::mkldnn)

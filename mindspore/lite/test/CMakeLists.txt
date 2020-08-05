@@ -9,8 +9,8 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/dependency_gtest.cmake)
 ### anf src
 set(ANF_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/meta_tensor.cc
-        ${CCSRC_DIR}/gvar/logging_level.cc
-        ${CCSRC_DIR}/gvar/typeid_manager.cc
+        ${CORE_DIR}/gvar/logging_level.cc
+        ${CORE_DIR}/gvar/typeid_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../core/base/base.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/log_adapter.cc
         )

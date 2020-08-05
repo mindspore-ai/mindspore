@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_UTILS_LABEL_H_
-#define MINDSPORE_CCSRC_UTILS_LABEL_H_
+#ifndef MINDSPORE_CORE_UTILS_LABEL_H_
+#define MINDSPORE_CORE_UTILS_LABEL_H_
 #include <iostream>
 #include <memory>
 #include <string>
@@ -32,4 +32,4 @@ std::string Label(const DebugInfoPtr &debug_info, TraceLabelType trace_type = Tr
 }  // namespace label_manage
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_UTILS_LABEL_H_
+#endif  // MINDSPORE_CORE_UTILS_LABEL_H_

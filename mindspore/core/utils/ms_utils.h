@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_COMMON_UTILS_H_
-#define MINDSPORE_CCSRC_COMMON_UTILS_H_
+#ifndef MINDSPORE_CORE_UTILS_MS_UTILS_H_
+#define MINDSPORE_CORE_UTILS_MS_UTILS_H_
 
 #include <memory>
 #include <utility>
@@ -49,4 +49,4 @@ static inline int SetEnv(const char *envname, const char *envvar, int overwrite 
 }  // namespace common
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_COMMON_UTILS_H_
+#endif  // MINDSPORE_CORE_UTILS_MS_UTILS_H_
