@@ -168,8 +168,8 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     {prim::kPrimSparseTensorGetIndices, prim::kPrimSparseTensorGetValues, prim::kPrimSparseTensorGetDenseShape});
 
   // Value_Based Eliminate
-  value_based_eliminate_ =
-    MakeSubstitution(std::make_shared<ValueBasedEliminate>(), "value_based_eliminate", {prim::kPrimSelect});
+  value_based_eliminate_ = MakeSubstitution(std::make_shared<ValueBasedEliminate>(), "value_based_eliminate",
+                                            {prim::kPrimSelect, prim::kPrimMinimum, prim::kPrimMaximum});
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {

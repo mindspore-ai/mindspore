@@ -487,7 +487,7 @@ class PConstant : public PBase<PConstant<T> > {
     TypeId tensor_type = tensor_ptr->Dtype()->type_id();
     if ((tensor_type == TypeId::kNumberTypeFloat32) || (tensor_type == TypeId::kNumberTypeFloat)) {
       float *data2 = reinterpret_cast<float *>(tensor_ptr->data_c());
-      auto threshold = FLT_EPSILON * FLT_EPSILON;
+      auto threshold = FLT_MIN;
       for (int i = 0; i < tensor_ptr->DataSize(); i++) {
         if (fabs(data2[i] - check_value_) > threshold) {
           return false;
@@ -496,7 +496,7 @@ class PConstant : public PBase<PConstant<T> > {
       return true;
     } else if (tensor_type == TypeId::kNumberTypeFloat64) {
       double *data2 = reinterpret_cast<double *>(tensor_ptr->data_c());
-      auto threshold = DBL_EPSILON * DBL_EPSILON;
+      auto threshold = DBL_MIN;
       for (int i = 0; i < tensor_ptr->DataSize(); i++) {
         if (fabs(data2[i] - check_value_) > threshold) {
           return false;
