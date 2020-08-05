@@ -74,7 +74,7 @@ class KernelBuildClient {
   constexpr inline static auto kTag = "[~]";
 
   constexpr inline static int kBufferSize = 4096;
-  constexpr inline static unsigned int kTimeOutSeconds = 20;
+  constexpr inline static unsigned int kTimeOutSeconds = 350;
 
   static KernelBuildClient &Instance() {
     static KernelBuildClient instance;
