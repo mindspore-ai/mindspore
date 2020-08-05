@@ -369,6 +369,16 @@ TEST_F(MindDataTestPipeline, TestImageFolderWithSamplers) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestSamplersMoveParameters) {
+  std::vector<int64_t> indices = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23};
+  std::shared_ptr<SamplerObj> sampl1 = SubsetRandomSampler(indices);
+  EXPECT_FALSE(indices.empty());
+  EXPECT_NE(sampl1->Build(), nullptr);
+  std::shared_ptr<SamplerObj> sampl2 = SubsetRandomSampler(std::move(indices));
+  EXPECT_TRUE(indices.empty());
+  EXPECT_NE(sampl2->Build(), nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestPad) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPad.";
 

@@ -71,8 +71,8 @@ std::shared_ptr<SequentialSamplerObj> SequentialSampler(int64_t start_index, int
 }
 
 /// Function to create a Subset Random Sampler.
-std::shared_ptr<SubsetRandomSamplerObj> SubsetRandomSampler(const std::vector<int64_t> &indices, int64_t num_samples) {
-  auto sampler = std::make_shared<SubsetRandomSamplerObj>(indices, num_samples);
+std::shared_ptr<SubsetRandomSamplerObj> SubsetRandomSampler(std::vector<int64_t> indices, int64_t num_samples) {
+  auto sampler = std::make_shared<SubsetRandomSamplerObj>(std::move(indices), num_samples);
   // Input validation
   if (!sampler->ValidateParams()) {
     return nullptr;
@@ -81,9 +81,9 @@ std::shared_ptr<SubsetRandomSamplerObj> SubsetRandomSampler(const std::vector<in
 }
 
 /// Function to create a Weighted Random Sampler.
-std::shared_ptr<WeightedRandomSamplerObj> WeightedRandomSampler(const std::vector<double> &weights, int64_t num_samples,
+std::shared_ptr<WeightedRandomSamplerObj> WeightedRandomSampler(std::vector<double> weights, int64_t num_samples,
                                                                 bool replacement) {
-  auto sampler = std::make_shared<WeightedRandomSamplerObj>(weights, num_samples, replacement);
+  auto sampler = std::make_shared<WeightedRandomSamplerObj>(std::move(weights), num_samples, replacement);
   // Input validation
   if (!sampler->ValidateParams()) {
     return nullptr;
@@ -190,8 +190,8 @@ std::shared_ptr<Sampler> SequentialSamplerObj::Build() {
 }
 
 // SubsetRandomSampler
-SubsetRandomSamplerObj::SubsetRandomSamplerObj(const std::vector<int64_t> &indices, int64_t num_samples)
-    : indices_(indices), num_samples_(num_samples) {}
+SubsetRandomSamplerObj::SubsetRandomSamplerObj(std::vector<int64_t> indices, int64_t num_samples)
+    : indices_(std::move(indices)), num_samples_(num_samples) {}
 
 bool SubsetRandomSamplerObj::ValidateParams() {
   if (num_samples_ < 0) {
@@ -208,9 +208,8 @@ std::shared_ptr<Sampler> SubsetRandomSamplerObj::Build() {
 }
 
 // WeightedRandomSampler
-WeightedRandomSamplerObj::WeightedRandomSamplerObj(const std::vector<double> &weights, int64_t num_samples,
-                                                   bool replacement)
-    : weights_(weights), num_samples_(num_samples), replacement_(replacement) {}
+WeightedRandomSamplerObj::WeightedRandomSamplerObj(std::vector<double> weights, int64_t num_samples, bool replacement)
+    : weights_(std::move(weights)), num_samples_(num_samples), replacement_(replacement) {}
 
 bool WeightedRandomSamplerObj::ValidateParams() {
   if (num_samples_ < 0) {
