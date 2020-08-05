@@ -334,7 +334,11 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   operator_info->set_outputs_dtype(cnode->Type());
   operator_info->set_cnode(cnode);
   // key of strategy map
-  std::string strategy_key_name = NodeParameterName(cnode);
+  std::string strategy_key_name = "";
+  auto param_names = NodeParameterName(cnode);
+  if (!param_names.empty()) {
+    strategy_key_name = param_names[0].first;
+  }
   bool load_strategy_from_ckpt =
     StrategyCheckpoint::GetInstance().LoadCheckPointOn() && stra_map->find(strategy_key_name) != stra_map->end();
   // If no strategy has been configured for this operator, then candidate strategies are generated for
