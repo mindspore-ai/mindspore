@@ -22,6 +22,7 @@
 #include "mindspore/ccsrc/utils/utils.h"
 #include "mindspore/lite/src/gllo/common/utils.h"
 #include "include/errorcode.h"
+#include "securec/include/securec.h"
 
 namespace mindspore::opt {
 namespace {
@@ -176,7 +177,7 @@ const void ConvTransformFusion::CalNewBiasTensor(float *bias_data, int kernel_nu
   MS_ASSERT(bias_data != nullptr);
   if (bias_flag) {
     auto tmp_bias_data = new(std::nothrow) float[kernel_num];
-    if (0 != memset_s(bias_data, kernel_num * sizeof(float), 0, kernel_num * sizeof(float))) {
+    if (EOK != memset_s(bias_data, kernel_num * sizeof(float), 0, kernel_num * sizeof(float))) {
       MS_LOG(EXCEPTION) << "memset bias data failed";
     }
     for (size_t i = 0; i < kernel_num; i++) {
@@ -189,7 +190,7 @@ const void ConvTransformFusion::CalNewBiasTensor(float *bias_data, int kernel_nu
     }
     delete[] tmp_bias_data;
   } else {
-    if (0 != memset_s(bias_data, kernel_num * sizeof(float), 0, kernel_num * sizeof(float))) {
+    if (EOK != memset_s(bias_data, kernel_num * sizeof(float), 0, kernel_num * sizeof(float))) {
       MS_LOG(EXCEPTION) << "memset bias data failed";
     }
     auto ret = memcpy_s(bias_data, kernel_num * sizeof(float), trans_bias, kernel_num * sizeof(float));

@@ -80,9 +80,8 @@ int ConcatOpenCLKernel::Run_axis0() {
     ocl_runtime->MapBuffer(*buffer, CL_MAP_WRITE, tensor->Size(), command_queue, true);
   }
 
-  memcpy_s(outputs_[0]->Data(), inputs_[0]->Size(), inputs_[0]->Data(), inputs_[0]->Size());
-  memcpy_s(reinterpret_cast<char *>(outputs_[0]->Data()) + inputs_[0]->Size(), inputs_[1]->Size(), inputs_[1]->Data(),
-           inputs_[1]->Size());
+  memcpy(outputs_[0]->Data(), inputs_[0]->Data(), inputs_[0]->Size());
+  memcpy(reinterpret_cast<char *>(outputs_[0]->Data()) + inputs_[0]->Size(), inputs_[1]->Data(), inputs_[1]->Size());
 
   for (auto tensors : {&inputs_, &outputs_}) {
     for (auto &tensor : *tensors) {
@@ -202,8 +201,8 @@ int ConcatOpenCLKernel::Run() {
 
 kernel::LiteKernel *OpenCLConcatKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                              OpParameter *opParameter,
-                                              const lite::Context *ctx, const kernel::KernelKey &desc) {
+                                              OpParameter *opParameter, const lite::Context *ctx,
+                                              const kernel::KernelKey &desc) {
   auto *kernel = new ConcatOpenCLKernel(opParameter, inputs, outputs);
   auto ret = kernel->Init();
   if (0 != ret) {

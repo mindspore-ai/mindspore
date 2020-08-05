@@ -50,11 +50,7 @@ int Tensor::CopyTensorData(const Tensor &srcTensor) {
     }
     this->data_ = malloc(data_size);
   }
-  auto ret = memcpy_s(this->data_, data_size, srcTensor.data_, srcTensor.Size());
-  if (EOK != ret) {
-    MS_LOG(ERROR) << "memcpy_s failed : " << ret;
-    return mindspore::lite::RET_ERROR;
-  }
+  memcpy(this->data_, srcTensor.data_, data_size);
   return 0;
 }
 

@@ -11,12 +11,7 @@ add_executable(benchmark
         ${COMMON_SRC})
 
 if (PLATFORM_ARM32 OR PLATFORM_ARM64)
-    target_link_libraries(benchmark mindspore-lite ${SECUREC_LIBRARY})
+    target_link_libraries(benchmark mindspore-lite)
 else()
-    target_link_libraries(benchmark mindspore-lite ${SECUREC_LIBRARY} pthread)
+    target_link_libraries(benchmark mindspore-lite pthread)
 endif()
-
-target_link_libraries(benchmark
-        mindspore::json
-#        mindspore::eigen
-        )

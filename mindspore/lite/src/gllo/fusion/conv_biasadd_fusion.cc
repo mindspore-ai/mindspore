@@ -20,6 +20,7 @@
 #include "mindspore/lite/src/ir/primitive_t_value.h"
 #include "mindspore/ccsrc/utils/utils.h"
 #include "mindspore/lite/src/gllo/common/utils.h"
+#include "securec/include/securec.h"
 
 namespace mindspore::opt {
 namespace {
@@ -90,11 +91,11 @@ void GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, c
   auto add_weight_data = reinterpret_cast<float *>(add_weight_tensor->tensor_addr());
 
   if (add_weight_tensor->tensor_shape().empty()) {
-    if (0 != memset_s(add_bias_data, kernel_nums * sizeof(float), *add_weight_data, kernel_nums * sizeof(float))) {
+    if (EOK != memset_s(add_bias_data, kernel_nums * sizeof(float), *add_weight_data, kernel_nums * sizeof(float))) {
       MS_LOG(EXCEPTION) << "memset_s conv_bias_data failed";
     }
   } else {
-    if (0 != memcpy_s(add_bias_data, kernel_nums * sizeof(float), add_weight_data, kernel_nums * sizeof(float))) {
+    if (EOK != memcpy_s(add_bias_data, kernel_nums * sizeof(float), add_weight_data, kernel_nums * sizeof(float))) {
       MS_LOG(EXCEPTION) << "memset_s conv_bias_data failed";
     }
   }
