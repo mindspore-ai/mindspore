@@ -47,16 +47,6 @@ def test_roi_align():
                 [25.25, 27., 29.]]]]
     assert (output.asnumpy() == expect).all()
 
-    # test case 1
-    pooled_height, pooled_width, spatial_scale, sample_num = 3, 3, 0.25, 2
-    roi_align = P.ROIAlign(pooled_height, pooled_width, spatial_scale, sample_num)
-    output = roi_align(x, rois)
-    print(output)
-    expect = [[[[2.75, 4.5, 6.5],
-                [13.25, 15., 17.],
-                [25.25, 27., 29.]]]]
-    assert (output.asnumpy() == expect).all()
-
     # test case 2
     pooled_height, pooled_width, spatial_scale, sample_num = 4, 4, 0.2, 3
     roi_align = P.ROIAlign(pooled_height, pooled_width, spatial_scale, sample_num)
