@@ -47,6 +47,18 @@ class MS_API ServingTensor : public inference::InferTensorBase {
   ms_serving::Tensor &tensor_;
 };
 
+class ServingImages : public inference::InferImagesBase {
+ public:
+  explicit ServingImages(const ms_serving::Images &images);
+
+  size_t batch_size() const override;
+  bool get(size_t index, const void *&pic_buffer, uint32_t &pic_size) const override;
+  size_t input_index() const override;
+
+ private:
+  const ms_serving::Images &images_;
+};
+
 class ServingRequest : public inference::RequestBase {
  public:
   explicit ServingRequest(const ms_serving::PredictRequest &request);
@@ -72,6 +84,18 @@ class ServingReply : public inference::ReplyBase {
  private:
   ms_serving::PredictReply &reply_;
   std::vector<ServingTensor> cache_;
+};
+
+class ServingImagesRequest : public inference::ImagesRequestBase {
+ public:
+  explicit ServingImagesRequest(const ms_serving::PredictRequest &request);
+
+  size_t size() const override;
+  const inference::InferImagesBase *operator[](size_t index) const override;
+
+ private:
+  const ms_serving::PredictRequest &request_;
+  std::vector<ServingImages> cache_;
 };
 
 }  // namespace serving

@@ -129,10 +129,23 @@ class InferTensor : public InferTensorBase {
   void *mutable_data() override { return data_.data(); }
 };
 
+class InferImagesBase {
+ public:
+  virtual size_t batch_size() const = 0;
+  virtual bool get(size_t index, const void *&pic_buffer, uint32_t &pic_size) const = 0;
+  virtual size_t input_index() const = 0;  // the index of images as input in model
+};
+
 class RequestBase {
  public:
   virtual size_t size() const = 0;
   virtual const InferTensorBase *operator[](size_t index) const = 0;
+};
+
+class ImagesRequestBase {
+ public:
+  virtual size_t size() const = 0;
+  virtual const InferImagesBase *operator[](size_t index) const = 0;
 };
 
 class ReplyBase {

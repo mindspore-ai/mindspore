@@ -20,17 +20,19 @@ syntax = "proto3";
 package ms_serving;
 
 service MSService {
-    rpc Predict(PredictRequest) returns (PredictReply) {}
-    rpc Test(PredictRequest) returns (PredictReply) {}
+  rpc Predict(PredictRequest) returns (PredictReply) {}
+  rpc Test(PredictRequest) returns (PredictReply) {}
 }
 
 message PredictRequest {
-    repeated Tensor data = 1;
+  repeated Tensor data = 1;
+  repeated Images images = 2;
 }
 
 message PredictReply {
-    repeated Tensor result = 1;
+  repeated Tensor result = 1;
 }
+
 enum DataType {
   MS_UNKNOWN = 0;
   MS_BOOL = 1;
@@ -62,3 +64,7 @@ message Tensor {
   bytes data = 3;
 }
 
+message Images{
+  repeated bytes images = 1;
+  uint32 input_index = 2;
+}

@@ -97,7 +97,10 @@ class SessionBasic {
   virtual GraphId GetFinalRunGraph() const { return kInvalidGraphId; }
   void AssignParamKey(const KernelGraphPtr &kernel_graph);
   void InitPSParamAndOptim(const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &inputs_const);
-  virtual bool CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs) const { return true; }
+  virtual bool CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs,
+                                std::string *error_msg) const {
+    return true;
+  }
 
 #ifdef ENABLE_DEBUGGER
   // set debugger

@@ -116,7 +116,7 @@ Status MSInferSession::LoadModelFromFile(const std::string &file_name, uint32_t 
 
 Status MSInferSession::UnloadModel(uint32_t model_id) { return SUCCESS; }
 
-tensor::TensorPtr ServingTensor2MSTensor(const InferTensorBase &out_tensor) {
+Status ServingTensor2MSTensor(size_t index, const InferTensorBase &out_tensor, tensor::TensorPtr &ms_tensor) {
   std::vector<int> shape;
   for (auto dim : out_tensor.shape()) {
     shape.push_back(static_cast<int>(dim));
@@ -134,14 +134,22 @@ tensor::TensorPtr ServingTensor2MSTensor(const InferTensorBase &out_tensor) {
   auto it = type2id_map.find(out_tensor.data_type());
   if (it == type2id_map.end()) {
     MSI_LOG_WARNING << "undefined MSI data type " << out_tensor.data_type();
-    return nullptr;
+    return FAILED;
   } else {
     data_type = it->second;
   }
 
-  auto ms_tensor = std::make_shared<tensor::Tensor>(data_type, shape);
+  ms_tensor = std::make_shared<tensor::Tensor>(data_type, shape);
+  if (ms_tensor->Size() != out_tensor.data_size()) {
+    MSI_LOG_ERROR << "input " << std::to_string(index)
+                  << " data size not match shape and dtype, calculated required size " << ms_tensor->Size()
+                  << ", given " << out_tensor.data_size();
+    return INFER_STATUS(INVALID_INPUTS) << "input " << std::to_string(index)
+                                        << " data size not match shape and dtype, calculated required size "
+                                        << ms_tensor->Size() << ", given " << out_tensor.data_size();
+  }
   memcpy_s(ms_tensor->data_c(), ms_tensor->Size(), out_tensor.data(), out_tensor.data_size());
-  return ms_tensor;
+  return SUCCESS;
 }
 
 void MSTensor2ServingTensor(tensor::TensorPtr ms_tensor, InferTensorBase &out_tensor) {
@@ -189,16 +197,18 @@ Status MSInferSession::ExecuteModel(uint32_t model_id, const RequestBase &reques
       MS_LOG(ERROR) << "Execute Model " << model_id << " Failed， input tensor is null, index " << i;
       return FAILED;
     }
-    auto input = ServingTensor2MSTensor(*request[i]);
-    if (input == nullptr) {
+    tensor::TensorPtr input = nullptr;
+    auto ret = ServingTensor2MSTensor(i, *request[i], input);
+    if (ret != SUCCESS) {
       MS_LOG(ERROR) << "Tensor convert failed";
-      return FAILED;
+      return ret;
     }
     inputs.push_back(input);
   }
-  if (!CheckModelInputs(model_id, inputs)) {
+  auto ret = CheckModelInputs(model_id, inputs);
+  if (ret != SUCCESS) {
     MS_LOG(ERROR) << "Check Model " << model_id << " Inputs Failed";
-    return INVALID_INPUTS;
+    return ret;
   }
   vector<tensor::TensorPtr> outputs = RunGraph(model_id, inputs);
   if (outputs.empty()) {
@@ -354,9 +364,13 @@ Status MSInferSession::InitEnv(const std::string &device, uint32_t device_id) {
   return SUCCESS;
 }
 
-bool MSInferSession::CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs) const {
+Status MSInferSession::CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs) const {
   MS_ASSERT(session_impl_ != nullptr);
-  return session_impl_->CheckModelInputs(graph_id, inputs);
+  std::string error_msg;
+  if (!session_impl_->CheckModelInputs(graph_id, inputs, &error_msg)) {
+    return INFER_STATUS(INVALID_INPUTS) << error_msg;
+  }
+  return SUCCESS;
 }
 
 }  // namespace mindspore::inference

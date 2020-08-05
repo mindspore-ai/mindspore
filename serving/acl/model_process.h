@@ -21,7 +21,6 @@
 #include "acl/acl.h"
 #include "acl/acl_mdl.h"
 #include "acl/acl_rt.h"
-#include "serving/core/util/status.h"
 #include "include/inference.h"
 
 namespace mindspore {
@@ -34,21 +33,30 @@ struct AclTensorInfo {
   std::vector<int64_t> dims;
 };
 
+struct ImagesDvppOutput {
+  void *buffer_device = nullptr;
+  size_t buffer_size = 0;
+  size_t input_index = 0;
+};
+
 class ModelProcess {
  public:
   ModelProcess() {}
   ~ModelProcess() {}
 
-  bool LoadModelFromFile(const std::string &file_name, uint32_t &model_id);
+  Status LoadModelFromFile(const std::string &file_name, uint32_t &model_id);
   void UnLoad();
 
   // override this method to avoid request/reply data copy
-  bool Execute(const RequestBase &request, ReplyBase &reply);
-
+  Status Execute(const RequestBase &request, ReplyBase &reply);
+  Status Execute(const void *dvpp_outputs_buffer_dev, size_t dvpp_outputs_buffer_size, ReplyBase &reply);
   void SetIsDevice(bool is_device) { is_run_on_device_ = is_device; }
+
+  size_t GetBatchSize() const;
 
  private:
   uint32_t model_id_ = 0xffffffff;
+  // if run one device(AICPU), there is no need to alloc device memory and copy inputs to(/outputs from) device
   bool is_run_on_device_ = false;
   aclmdlDesc *model_desc_ = nullptr;
   aclmdlDataset *inputs_ = nullptr;
@@ -56,12 +64,15 @@ class ModelProcess {
   std::vector<AclTensorInfo> input_infos_;
   std::vector<AclTensorInfo> output_infos_;
 
-  bool CreateDataBuffer(void *&data_mem_buffer, size_t buffer_size, aclmdlDataset *dataset);
-  bool CheckAndInitInput(const RequestBase &request);
-  bool BuildOutputs(ReplyBase &reply);
+  Status PreInitModelResource();
+  Status CreateDataBuffer(void *&data_mem_buffer, size_t buffer_size, aclmdlDataset *dataset);
+  Status CheckAndInitInput(const RequestBase &request);
+  Status CheckAndInitDvppInput(const void *dvpp_outputs_buffer_dev, size_t dvpp_outputs_buffer_size,
+                               size_t input_index);
+  Status BuildOutputs(ReplyBase &reply);
 
-  bool InitInputsBuffer();
-  bool InitOutputsBuffer();
+  Status InitInputsBuffer();
+  Status InitOutputsBuffer();
   void DestroyInputsDataset();
   void DestroyInputsDataMem();
   void DestroyInputsBuffer();

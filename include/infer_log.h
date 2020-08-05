@@ -26,19 +26,10 @@
 
 #ifndef ENABLE_ACL
 #include "mindspore/core/utils/log_adapter.h"
-namespace mindspore::inference {
-#define MSI_LOG(level) MS_LOG(level)
-
-#define MSI_LOG_DEBUG MSI_LOG(DEBUG)
-#define MSI_LOG_INFO MSI_LOG(INFO)
-#define MSI_LOG_WARNING MSI_LOG(WARNING)
-#define MSI_LOG_ERROR MSI_LOG(ERROR)
-
-#define MSI_ASSERT(item) MS_ASSERT(item)
-}  // namespace mindspore::inference
-
 #else  // ENABLE_ACL
 #include "acl/acl.h"
+#endif
+
 namespace mindspore::inference {
 
 class LogStream {
@@ -58,15 +49,23 @@ class LogStream {
   }
 
   friend class LogWriter;
+  friend class Status;
 
  private:
   std::shared_ptr<std::stringstream> sstream_;
 };
 
-template <class T, typename std::enable_if<std::is_enum<T>::value, int>::type = 0>
-constexpr std::ostream &operator<<(std::ostream &stream, const T &value) {
-  return stream << static_cast<typename std::underlying_type<T>::type>(value);
-}
+#ifndef ENABLE_ACL
+#define MSI_LOG(level) MS_LOG(level)
+
+#define MSI_LOG_DEBUG MSI_LOG(DEBUG)
+#define MSI_LOG_INFO MSI_LOG(INFO)
+#define MSI_LOG_WARNING MSI_LOG(WARNING)
+#define MSI_LOG_ERROR MSI_LOG(ERROR)
+
+#define MSI_ASSERT(item) MS_ASSERT(item)
+
+#else  // ENABLE_ACL
 
 class LogWriter {
  public:
@@ -100,8 +99,10 @@ class LogWriter {
 
 #define MSI_ASSERT(item)
 
-}  // namespace mindspore::inference
-
 #endif  // ENABLE_ACL
+
+#define INFER_STATUS(code) inference::Status(code) < inference::LogStream()
+
+}  // namespace mindspore::inference
 
 #endif  // MINDSPORE_INFERENCE_LOG_H_

@@ -31,7 +31,6 @@
 #include "core/version_control/version_controller.h"
 #include "core/util/file_system_operation.h"
 #include "core/serving_tensor.h"
-#include "util/status.h"
 
 using ms_serving::MSService;
 using ms_serving::PredictReply;
@@ -45,7 +44,7 @@ namespace serving {
   {                                                                                                          \
     auto time_end_##name = std::chrono::steady_clock::now();                                                 \
     auto time_cost = std::chrono::duration<double, std::milli>(time_end_##name - time_start_##name).count(); \
-    MSI_LOG_INFO << #name " Time Cost " << time_cost << "ms ---------------------";                          \
+    MSI_LOG_INFO << #name " Time Cost # " << time_cost << " ms ---------------------";                          \
   }
 
 Status Session::CreatDeviceSession(const std::string &device, uint32_t device_id) {
@@ -75,15 +74,26 @@ Status Session::Predict(const PredictRequest &request, PredictReply &reply) {
   std::lock_guard<std::mutex> lock(mutex_);
   MSI_LOG(INFO) << "run Predict";
 
-  ServingRequest serving_request(request);
-  ServingReply serving_reply(reply);
-
-  auto ret = session_->ExecuteModel(graph_id_, serving_request, serving_reply);
-  MSI_LOG(INFO) << "run Predict finished";
-  if (Status(ret) != SUCCESS) {
-    MSI_LOG(ERROR) << "execute model return failed";
-    return Status(ret);
+  if (request.images_size() > 0) {
+    ServingImagesRequest serving_images(request);
+    ServingRequest serving_request(request);
+    ServingReply serving_reply(reply);
+    Status ret = session_->ExecuteModel(graph_id_, serving_images, serving_request, serving_reply);
+    if (ret != SUCCESS) {
+      MSI_LOG(ERROR) << "execute model with images return failed";
+      return ret;
+    }
+  } else if (request.data_size() > 0) {
+    ServingRequest serving_request(request);
+    ServingReply serving_reply(reply);
+    Status ret = session_->ExecuteModel(graph_id_, serving_request, serving_reply);
+    if (ret != SUCCESS) {
+      MSI_LOG(ERROR) << "execute model with datas return failed";
+      return ret;
+    }
   }
+
+  MSI_LOG(INFO) << "run Predict finished";
   return SUCCESS;
 }
 
@@ -98,9 +108,9 @@ Status Session::Warmup(const MindSporeModelPtr model) {
   MSI_TIME_STAMP_START(LoadModelFromFile)
   auto ret = session_->LoadModelFromFile(file_name, graph_id_);
   MSI_TIME_STAMP_END(LoadModelFromFile)
-  if (Status(ret) != SUCCESS) {
+  if (ret != SUCCESS) {
     MSI_LOG(ERROR) << "Load graph model failed, file name is " << file_name.c_str();
-    return Status(ret);
+    return ret;
   }
   model_loaded_ = true;
   MSI_LOG(INFO) << "Session Warmup finished";
@@ -123,14 +133,19 @@ std::promise<void> exit_requested;
 void ClearEnv() { Session::Instance().Clear(); }
 void HandleSignal(int sig) { exit_requested.set_value(); }
 
-grpc::Status CreatGRPCStatus(Status status) {
-  switch (status) {
+grpc::Status CreatGRPCStatus(const Status &status) {
+  switch (status.StatusCode()) {
     case SUCCESS:
       return grpc::Status::OK;
     case FAILED:
       return grpc::Status::CANCELLED;
-    case INVALID_INPUTS:
-      return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "The Predict Inputs do not match the Model Request!");
+    case INVALID_INPUTS: {
+      auto status_msg = status.StatusMessage();
+      if (status_msg.empty()) {
+        status_msg = "The Predict Inputs do not match the Model Request!";
+      }
+      return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, status_msg);
+    }
     default:
       return grpc::Status::CANCELLED;
   }

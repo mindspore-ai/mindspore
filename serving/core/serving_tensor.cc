@@ -120,7 +120,7 @@ ServingRequest::ServingRequest(const ms_serving::PredictRequest &request) : requ
                  [](const ms_serving::Tensor &item) { return ServingTensor(const_cast<ms_serving::Tensor &>(item)); });
 }
 
-size_t ServingRequest::size() const { return request_.data_size(); }
+size_t ServingRequest::size() const { return cache_.size(); }
 
 const InferTensorBase *ServingRequest::operator[](size_t index) const {
   if (index >= cache_.size()) {
@@ -129,6 +129,22 @@ const InferTensorBase *ServingRequest::operator[](size_t index) const {
   }
   return &(cache_[index]);
 }
+
+ServingImages::ServingImages(const ms_serving::Images &images) : images_(images) {}
+
+size_t ServingImages::batch_size() const { return images_.images_size(); }
+
+bool ServingImages::get(size_t index, const void *&pic_buffer, uint32_t &pic_size) const {
+  if (index >= static_cast<size_t>(images_.images_size())) {
+    MSI_LOG_ERROR << "visit invalid index " << index << " total size " << images_.images_size();
+    return false;
+  }
+  pic_buffer = images_.images(index).data();
+  pic_size = images_.images(index).size();
+  return true;
+}
+
+size_t ServingImages::input_index() const { return static_cast<size_t>(images_.input_index()); }
 
 size_t ServingReply::size() const { return cache_.size(); }
 
@@ -159,6 +175,22 @@ InferTensorBase *ServingReply::add() {
 }
 
 void ServingReply::clear() { reply_.mutable_result()->Clear(); }
+
+ServingImagesRequest::ServingImagesRequest(const ms_serving::PredictRequest &request) : request_(request) {
+  auto &images_inputs = request_.images();
+  std::transform(images_inputs.begin(), images_inputs.end(), std::back_inserter(cache_),
+                 [](const ms_serving::Images &item) { return ServingImages(const_cast<ms_serving::Images &>(item)); });
+}
+
+size_t ServingImagesRequest::size() const { return cache_.size(); }
+
+const inference::InferImagesBase *ServingImagesRequest::operator[](size_t index) const {
+  if (index >= cache_.size()) {
+    MSI_LOG_ERROR << "visit invalid index " << index << " total size " << cache_.size();
+    return nullptr;
+  }
+  return &(cache_[index]);
+}
 
 }  // namespace serving
 }  // namespace mindspore
