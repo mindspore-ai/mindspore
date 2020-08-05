@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """test cases for exp"""
+import pytest
 import mindspore.nn as nn
 import mindspore.nn.probability.bijector as msb
 from mindspore import Tensor
@@ -21,8 +22,10 @@ from mindspore import dtype
 def test_init():
     b = msb.Exp()
     assert isinstance(b, msb.Bijector)
-    b = msb.Exp(1.0)
-    assert isinstance(b, msb.Bijector)
+
+def test_type():
+    with pytest.raises(TypeError):
+        msb.Exp(name=0.1)
 
 class Net(nn.Cell):
     """
