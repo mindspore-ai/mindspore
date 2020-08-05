@@ -34,5 +34,5 @@ int mindspore::lite::AnfMatmulPopulater::Parse(mindspore::CNodePtr cnodePtr, sch
   node->primitive->value.value = attr.release();
   return 0;
 }
-AnfNodePopulaterRegistrar anfMatmulParser("Matmul", new AnfMatmulPopulater());
+AnfNodePopulaterRegistrar anfMatmulParser("MatMul", new AnfMatmulPopulater());
 }  // namespace mindspore::lite
