@@ -512,8 +512,6 @@ Status CsvOp::WorkerEntry(int32_t worker_id) {
 
 // A print method typically used for debugging
 void CsvOp::Print(std::ostream &out, bool show_all) const {
-  // Always show the id and name as first line regardless if this summary or detailed print
-  out << "(" << std::setw(2) << operator_id_ << ") <CsvOp>:";
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
     ParallelOp::Print(out, show_all);
