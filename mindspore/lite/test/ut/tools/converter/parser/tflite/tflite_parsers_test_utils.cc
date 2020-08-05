@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "ut/tools/converter/parser/tflite/tflite_parsers_test_utils.h"
-#include <iostream>
-#include "common/common_test.h"
+#include <string>
+#include "schema/inner/model_generated.h"
+#include "tools/converter/parser/tflite/tflite_model_parser.h"
 
 namespace mindspore {
-class TestTfliteParserExp : public TestTfliteParser {
- public:
-  TestTfliteParserExp() {}
-  void SetUp() override { meta_graph = LoadAndConvert("./exp.tflite", ""); }
-};
 
-TEST_F(TestTfliteParserExp, OpType) {
-  ASSERT_NE(meta_graph, nullptr);
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Exp) << "wrong Op Type";
+schema::MetaGraphT *TestTfliteParser::LoadAndConvert(const string &model_path, const string &weight_path) {
+  schema::MetaGraphT *meta_graph = nullptr;
+  lite::TfliteModelParser parser;
+  meta_graph = parser.Parse(model_path, weight_path);
+  return meta_graph;
 }
+
+void TestTfliteParser::TearDown() { free(meta_graph); }
 
 }  // namespace mindspore

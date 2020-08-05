@@ -39,6 +39,8 @@ STATUS TfliteScatterNdParser::Parse(const std::unique_ptr<tflite::OperatorT> &tf
     MS_LOG(DEBUG) << i;
   }
    */
+  // in tflite, kIndices = 0, kUpdates = 1, kShape = 2
+  // in mslite, kScatterShapeIndex = 0, kScatterIndicesIndex = 1, kScatterUpdateIndex = 2;
   std::swap(op->inputIndex[0], op->inputIndex[2]);
   std::swap(op->inputIndex[1], op->inputIndex[2]);
   /*

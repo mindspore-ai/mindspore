@@ -18,17 +18,28 @@
 #include "common/common_test.h"
 
 namespace mindspore {
-class TestTfliteParserExp : public TestTfliteParser {
+class TestTfliteParserBatchToSpaceNd : public TestTfliteParser {
  public:
-  TestTfliteParserExp() {}
-  void SetUp() override { meta_graph = LoadAndConvert("./exp.tflite", ""); }
+  TestTfliteParserBatchToSpaceNd() {}
+  void SetUp() override { meta_graph = LoadAndConvert("./batch_to_space_nd.tflite"); }
 };
 
-TEST_F(TestTfliteParserExp, OpType) {
+TEST_F(TestTfliteParserBatchToSpaceNd, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Exp) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_BatchToSpace) << "wrong Op Type";
+}
+
+TEST_F(TestTfliteParserBatchToSpaceNd, AttrValue) {
+  const std::vector<int> blockShape{2, 2};
+  const std::vector<int> crops{0, 0, 2, 0};
+  ASSERT_NE(meta_graph, nullptr);
+  ASSERT_GT(meta_graph->nodes.size(), 0);
+  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsBatchToSpace(), nullptr);
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsBatchToSpace()->blockShape, blockShape);
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsBatchToSpace()->crops, crops);
 }
 
 }  // namespace mindspore

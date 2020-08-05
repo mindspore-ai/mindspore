@@ -32,8 +32,12 @@ STATUS TfliteOneHotParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     MS_LOG(ERROR) << "get op: " << op->name << " attr failed";
     return RET_NULL_PTR;
   }
-
-  attr->axis = tflite_attr->axis;
+  auto axis = tflite_attr->axis;
+  const auto tensor_shape = tfliteTensors[tfliteOp->inputs[0]].get()->shape;
+  if (axis < 0) {
+    axis += tensor_shape.size();
+  }
+  attr->axis = axis;
 
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();

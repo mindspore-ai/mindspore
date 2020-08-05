@@ -191,8 +191,12 @@ if (SUPPORT_GPU)
 endif()
 ### converter
 if(BUILD_CONVERTER)
+    file(GLOB_RECURSE TEST_CASE_TFLITE_PARSERS_SRC
+            ${TEST_DIR}/ut/tools/converter/parser/tflite/*.cc
+            )
     set(TEST_LITE_SRC
             ${TEST_LITE_SRC}
+            ${TEST_CASE_TFLITE_PARSERS_SRC}
             ${TOP_DIR}/mindspore/core/utils/flags.cc
             ${LITE_DIR}/tools/converter/optimizer.cc
             ${LITE_DIR}/src/common/anf_importer/anf_importer.cc
