@@ -84,16 +84,16 @@ class Cell:
         self._backward_hook = None
         self.enable_hook = False
         self._bprop_debug = False
-        self._is_run = False
+        self._already_run = False
         self.cell_type = None
 
     @property
-    def is_run(self):
-        return self._is_run
+    def already_run(self):
+        return self._already_run
 
-    @is_run.setter
-    def is_run(self, value):
-        self._is_run = value
+    @already_run.setter
+    def already_run(self, value):
+        self._already_run = value
 
     @property
     def create_time(self):
@@ -260,7 +260,7 @@ class Cell:
             _pynative_exec.end_graph(self, output, *inputs)
             for i, cell in enumerate(self.cells()):
                 cell.set_grad(orign_grad[i])
-        self._is_run = True
+        self._already_run = True
         return output
 
     def __setattr__(self, name, value):

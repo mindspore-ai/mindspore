@@ -1223,6 +1223,7 @@ void PynativeExecutor::Clear(const std::string &flag) {
   }
 
   MS_LOG(DEBUG) << "Clear";
+  grad_flag_ = false;
   top_g_ = nullptr;
   df_builder_ = nullptr;
   curr_g_ = nullptr;
