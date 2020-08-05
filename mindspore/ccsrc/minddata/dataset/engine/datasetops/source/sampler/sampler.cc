@@ -101,6 +101,13 @@ Status Sampler::GetAllIdsThenReset(py::array *data) {
 
   // check this buffer is not a ctrl buffer
   CHECK_FAIL_RETURN_UNEXPECTED(db->buffer_flags() == DataBuffer::kDeBFlagNone, "ERROR ctrl buffer received");
+
+  // perform error checking! Next buffer supposed to be EOE since last one already contains all ids for current epoch
+  RETURN_IF_NOT_OK(GetNextSample(&db));
+  CHECK_FAIL_RETURN_UNEXPECTED(db->eoe(), "ERROR Non EOE received");
+  // Reset Sampler since this is the end of the epoch
+  RETURN_IF_NOT_OK(ResetSampler());
+
   {
     py::gil_scoped_acquire gil_acquire;
     if (Py_IsInitialized() == 0) {
@@ -112,11 +119,6 @@ Status Sampler::GetAllIdsThenReset(py::array *data) {
       return Status(StatusCode::kPyFuncException, e.what());
     }
   }
-  // perform error checking! Next buffer supposed to be EOE since last one already contains all ids for current epoch
-  RETURN_IF_NOT_OK(GetNextSample(&db));
-  CHECK_FAIL_RETURN_UNEXPECTED(db->eoe(), "ERROR Non EOE received");
-  // Reset Sampler since this is the end of the epoch
-  RETURN_IF_NOT_OK(ResetSampler());
   return Status::OK();
 }
 #endif
