@@ -33,7 +33,7 @@ void CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, const CNodePtr &bn_gra
                                std::vector<AnfNodePtr> *bn_update_grad_outputs) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(bn_grad_node);
-  auto bn_grad_inputs = bn_grad_node->inputs();
+  const auto &bn_grad_inputs = bn_grad_node->inputs();
   if (bn_grad_inputs.size() < kBNGradInputNum) {
     MS_LOG(EXCEPTION) << "BNGrad has wrong inputs size";
   }
@@ -58,7 +58,8 @@ void CreateOutputsOfReduceGrad(const FuncGraphPtr &graph, const CNodePtr &bn_gra
                                std::vector<AnfNodePtr> *bn_reduce_grad_outputs) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(bn_grad_node);
-  auto bn_grad_inputs = bn_grad_node->inputs();
+  MS_EXCEPTION_IF_NULL(bn_reduce_grad_outputs);
+  const auto &bn_grad_inputs = bn_grad_node->inputs();
   if (bn_grad_inputs.size() < kBNGradInputNum) {
     MS_LOG(EXCEPTION) << "BNGrad has wrong inputs size";
   }

@@ -336,13 +336,11 @@ std::shared_ptr<OpInfo> OpLib::FindOp(const std::string &op_name, OpImplyType im
                   << ", current op num: " << op_info_.size();
     return nullptr;
   }
+  std::string target_processor = is_gpu ? kCUDA : kAiCore;
   for (const auto &op_info : op_info_) {
     MS_EXCEPTION_IF_NULL(op_info);
     if (op_info->op_name() == op_name && op_info->imply_type() == imply_type) {
-      auto akg_processor_match = [&]() {
-        return is_gpu ? op_info->processor() == kCUDA : op_info->processor() == kAiCore;
-      };
-      if (imply_type != kAKG || akg_processor_match()) {
+      if (imply_type != kAKG || op_info->processor() == target_processor) {
         return op_info;
       }
     }

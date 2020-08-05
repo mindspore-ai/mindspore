@@ -550,6 +550,7 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kern
   kernel::KernelQuery(kernel_node, &kernel_info_list, kernel_type);
   auto select_status = SetMatchedKernelInfo(kernel_node, kernel_info_list);
   // If aicore not find valid kernel info reloading aicpu kernel info list to find it
+
   if (select_status == kNoMatched) {
     MS_LOG(WARNING) << "The node [" << kernel_node->DebugString()
                     << "] cannot find valid TBE kernel info, try to get aicpu kernel info";

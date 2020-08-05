@@ -313,9 +313,9 @@ void CreateMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNod
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(outputs);
   for (size_t i = 0; i < output_num; i++) {
-    auto idx = NewValueNode(SizeToInt(i));
-    MS_EXCEPTION_IF_NULL(idx);
     int temp = SizeToInt(i);
+    auto idx = NewValueNode(temp);
+    MS_EXCEPTION_IF_NULL(idx);
     auto imm = std::make_shared<Int32Imm>(temp);
     auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(imm);
     idx->set_abstract(abstract_scalar);

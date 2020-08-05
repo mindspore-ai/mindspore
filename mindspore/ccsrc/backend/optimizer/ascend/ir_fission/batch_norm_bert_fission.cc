@@ -37,7 +37,7 @@ bool GetBatchNormOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &bn, s
   }
   size_t output_num = 0;
   for (const auto &node_index : manager->node_users()[bn]) {
-    AnfNodePtr output = node_index.first;
+    const AnfNodePtr &output = node_index.first;
     MS_EXCEPTION_IF_NULL(output);
     if (!IsPrimitiveCNode(output, prim::kPrimTupleGetItem)) {
       continue;
