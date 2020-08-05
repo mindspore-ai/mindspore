@@ -49,10 +49,10 @@ STATUS TfliteDeConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     return RET_ERROR;
   }
   auto weight_shape = weight_tensor->shape;
-  attr->channelIn = weight_shape[KHWC_C];
-  attr->channelOut = weight_shape[KHWC_K];
-  attr->kernelW = weight_shape[KHWC_W];
-  attr->kernelH = weight_shape[KHWC_H];
+  attr->channelIn = weight_shape[CHWK_K];
+  attr->channelOut = weight_shape[CHWK_C];
+  attr->kernelW = weight_shape[CHWK_W];
+  attr->kernelH = weight_shape[CHWK_H];
 
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
