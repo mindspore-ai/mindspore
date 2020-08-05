@@ -26,7 +26,7 @@ usage()
   echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t on|off] [-g on|off] [-h] [-b ge] [-m infer|train] \\"
   echo "              [-a on|off] [-Q on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|d|cpu] \\"
   echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I arm64|arm32|x86_64] [-K] \\"
-  echo "              [-B on|off] [-w on|off] [-E] [-l on|off]"
+  echo "              [-B on|off] [-w on|off] [-E] [-l on|off] [-n]"
   echo ""
   echo "Options:"
   echo "    -d Debug mode"
@@ -50,6 +50,7 @@ usage()
   echo "    -Q Enable dump memory, default off"
   echo "    -D Enable dumping of function graph ir, default on"
   echo "    -z Compile dataset & mindrecord, default on"
+  echo "    -n Compile minddata lite"
   echo "    -M Enable MPI and NCCL for GPU training, gpu default on"
   echo "    -V Specify the minimum required cuda version, default CUDA 10.1"
   echo "    -I Compile lite"
@@ -92,6 +93,7 @@ checkopts()
   ENABLE_DUMPE2E="off"
   ENABLE_DUMP_IR="on"
   COMPILE_MINDDATA="on"
+  COMPILE_MINDDATA_LITE="off"
   ENABLE_MPI="off"
   CUDA_VERSION="10.1"
   COMPILE_LITE="off"
@@ -104,14 +106,18 @@ checkopts()
   ENABLE_DEBUGGER="off"
   ENABLE_IBVERBS="off"
   ENABLE_PYTHON="on"
+  ENABLE_GPU="off"
 
   # Process the options
-  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:Q:D:zM:V:K:swB:E' opt
+  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:Q:D:zM:V:K:swB:En' opt
   do
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
     case "${opt}" in
       d)
         DEBUG_MODE="on"
+        ;;
+      n)
+        COMPILE_MINDDATA_LITE="on"
         ;;
       r)
         DEBUG_MODE="off"
@@ -567,7 +573,7 @@ build_lite()
 {
     echo "start build mindspore lite project"
 
-    if [ "${ENABLE_GPU}" == "on" ] || [ "${LITE_PLATFORM}" == "arm64" ]; then
+    if [ "${ENABLE_GPU}" == "on" ] && [ "${LITE_PLATFORM}" == "arm64" ]; then
       echo "start build opencl"
       build_opencl
     fi
@@ -577,7 +583,9 @@ build_lite()
     build_flatbuffer
     build_gtest
 
-    build_minddata_lite_deps
+    if [ "${COMPILE_MINDDATA_LITE}" == "on" ]; then
+        build_minddata_lite_deps
+    fi
 
     cd "${BASEPATH}/mindspore/lite"
     if [[ "${INC_BUILD}" == "off" ]]; then
@@ -596,17 +604,20 @@ build_lite()
               -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="arm64-v8a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"  \
               -DANDROID_STL="c++_shared" -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_TRAIN=${SUPPORT_TRAIN}                     \
               -DBUILD_DEVICE=on -DPLATFORM_ARM64=on -DBUILD_CONVERTER=off -DENABLE_NEON=on -DENABLE_FP16="off"      \
-              -DSUPPORT_GPU=on -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} "${BASEPATH}/mindspore/lite"
+              -DSUPPORT_GPU=${ENABLE_GPU} -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
+              "${BASEPATH}/mindspore/lite"
     elif [[ "${LITE_PLATFORM}" == "arm32" ]]; then
         checkndk
         cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
               -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="armeabi-v7a" -DANDROID_TOOLCHAIN_NAME="clang"                      \
               -DANDROID_STL="c++_shared" -DCMAKE_BUILD_TYPE=${BUILD_TYPE}                                                      \
               -DBUILD_DEVICE=on -DPLATFORM_ARM32=on -DENABLE_NEON=on -DSUPPORT_TRAIN=${SUPPORT_TRAIN} -DBUILD_CONVERTER=off    \
-              -DSUPPORT_GPU=${ENABLE_GPU} -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} "${BASEPATH}/mindspore/lite"
+              -DSUPPORT_GPU=${ENABLE_GPU} -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
+               "${BASEPATH}/mindspore/lite"
     else
         cmake -DBUILD_DEVICE=on -DPLATFORM_ARM64=off -DBUILD_CONVERTER=${ENABLE_CONVERTER} -DSUPPORT_TRAIN=${SUPPORT_TRAIN}   \
-        -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_GPU=${ENABLE_GPU} -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} "${BASEPATH}/mindspore/lite"
+        -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_GPU=${ENABLE_GPU} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
+        -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} "${BASEPATH}/mindspore/lite"
     fi
     VERBOSE=2 make -j$THREAD_NUM
     COMPILE_RET=$?
