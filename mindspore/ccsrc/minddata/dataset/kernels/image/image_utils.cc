@@ -20,7 +20,7 @@
 #include <stdexcept>
 #include <utility>
 #include <opencv2/imgcodecs.hpp>
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/core/tensor.h"

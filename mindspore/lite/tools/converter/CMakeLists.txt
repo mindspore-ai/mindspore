@@ -43,10 +43,11 @@ set(ANF_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/label.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/info.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/profile.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/ms_context.cc
         ## ccsrc
         ${CCSRC_DIR}/debug/draw.cc
         ${CCSRC_DIR}/pybind_api/export_flags.cc
-        ${CCSRC_DIR}/utils/context/ms_context.cc
+        ${CCSRC_DIR}/utils/context/context_extends.cc
         ${CCSRC_DIR}/frontend/parallel/costmodel_context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/graph_utils_extends.cc
         )

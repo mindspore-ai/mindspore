@@ -24,7 +24,7 @@
 #include "utils/ordered_set.h"
 #include "abstract/abstract_value.h"
 #include "abstract/abstract_function.h"
-#include "debug/draw.h"
+#include "utils/flags.h"
 
 namespace mindspore {
 using mindspore::abstract::AbstractFunction;
@@ -75,7 +75,12 @@ void FuncGraph::set_output(const AnfNodePtr &value, bool force_new_ret) {
   input0->set_abstract(f);
 }
 
-void FuncGraph::DumpFuncGraph(const std::string &path) { draw::Draw(path + ".dot", shared_from_base<FuncGraph>()); }
+void FuncGraph::DumpFuncGraph(const std::string &path) {
+  // draw::Draw(path + ".dot", shared_from_base<FuncGraph>());
+  if (drawer_) {
+    drawer_(path + ".dot", shared_from_base<FuncGraph>());
+  }
+}
 
 void FuncGraph::GenerateVarParams(const FuncGraphPtr &specialized_graph,
                                   std::vector<AnfNodePtr> *specialized_parameter_list,

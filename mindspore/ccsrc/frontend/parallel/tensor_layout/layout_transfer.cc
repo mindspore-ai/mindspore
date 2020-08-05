@@ -15,7 +15,7 @@
  */
 
 #include "frontend/parallel/tensor_layout/layout_transfer.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "frontend/parallel/status.h"
 
 namespace mindspore {

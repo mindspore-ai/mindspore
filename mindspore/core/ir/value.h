@@ -31,7 +31,7 @@
 #include "ir/scalar.h"
 #include "ir/dtype/ref.h"
 #include "utils/hashing.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 class ValueSequeue : public Value {

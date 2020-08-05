@@ -17,7 +17,7 @@
 #include "backend/kernel_compiler/tbe/tbe_kernel_mod.h"
 #include <algorithm>
 #include "runtime/rt.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "graphengine/inc/framework/ge_runtime/task_info.h"
 
 namespace mindspore {

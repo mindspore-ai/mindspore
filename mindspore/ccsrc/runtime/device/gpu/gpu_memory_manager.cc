@@ -16,7 +16,7 @@
 
 #include "runtime/device/gpu/gpu_memory_manager.h"
 #include "runtime/device/gpu/gpu_memory_allocator.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "utils/convert_utils.h"
 namespace mindspore {
 namespace device {

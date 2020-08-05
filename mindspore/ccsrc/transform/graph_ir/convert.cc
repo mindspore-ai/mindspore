@@ -28,7 +28,7 @@
 #include "utils/config_manager.h"
 #include "utils/convert_utils.h"
 #include "./common.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace transform {

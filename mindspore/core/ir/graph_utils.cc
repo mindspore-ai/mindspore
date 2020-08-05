@@ -30,7 +30,7 @@
 
 #include "ir/func_graph.h"
 #include "utils/log_adapter.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, const IncludeFunc &include) {

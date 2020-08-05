@@ -21,7 +21,7 @@
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/engine/datasetops/rename_op.h"
 #include "common/common.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/engine/data_buffer.h"
 #include "gtest/gtest.h"
 #include "minddata/dataset/core/global_context.h"

@@ -30,7 +30,7 @@
 #include "utils/any.h"
 #include "ir/dtype.h"
 #include "ir/meta_func_graph.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 // namespace to support composite operators definition

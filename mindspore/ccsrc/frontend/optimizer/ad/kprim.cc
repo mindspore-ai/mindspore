@@ -32,7 +32,7 @@
 #include "frontend/operator/composite/composite.h"
 #include "utils/symbolic.h"
 #include "utils/primitive_utils.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "utils/info.h"
 #include "debug/trace.h"
 

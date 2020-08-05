@@ -26,7 +26,7 @@
 #include "backend/kernel_compiler/ascend_kernel_mod.h"
 #include "backend/kernel_compiler/hccl/hcom_util.h"
 #include "hccl/hcom.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {

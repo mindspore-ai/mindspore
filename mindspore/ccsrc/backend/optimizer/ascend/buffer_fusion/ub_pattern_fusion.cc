@@ -28,7 +28,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "frontend/operator/ops.h"
 #include "runtime/device/kernel_info.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {

@@ -20,8 +20,8 @@
 #include <memory>
 
 #include "utils/utils.h"
-#include "utils/context/ms_context.h"
-#include "common/utils.h"
+#include "utils/ms_context.h"
+#include "utils/ms_utils.h"
 #include "backend/optimizer/common/helper.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/session/anf_runtime_algorithm.h"

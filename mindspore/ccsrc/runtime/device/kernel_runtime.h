@@ -33,7 +33,7 @@
 #include "backend/session/kernel_graph.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/kernel.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "runtime/device/memory_manager.h"
 
 using mindspore::tensor::Tensor;

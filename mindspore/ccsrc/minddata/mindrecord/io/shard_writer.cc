@@ -15,7 +15,7 @@
  */
 
 #include "minddata/mindrecord/include/shard_writer.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/mindrecord/include/common/shard_utils.h"
 #include "./securec.h"
 

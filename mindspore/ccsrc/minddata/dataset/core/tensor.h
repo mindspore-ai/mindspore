@@ -33,7 +33,7 @@
 #include "pybind11/stl.h"
 #endif
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/tensor_shape.h"

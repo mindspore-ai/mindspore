@@ -24,10 +24,10 @@
 #include <set>
 #include "backend/kernel_compiler/kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "utils/config_manager.h"
 #include "utils/profile.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/session_basic.h"
 #include "frontend/operator/ops.h"

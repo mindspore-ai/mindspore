@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "minddata/dataset/util/task.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/util/task_manager.h"
 #include "utils/log_adapter.h"
 

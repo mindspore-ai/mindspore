@@ -23,7 +23,7 @@
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "backend/kernel_compiler/oplib/opinfo.h"
 

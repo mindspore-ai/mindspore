@@ -19,7 +19,7 @@
 #include <set>
 #include <map>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/cache/cache_client.h"
 #include "minddata/dataset/engine/dataset_iterator.h"

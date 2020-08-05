@@ -30,7 +30,7 @@
 #include "ir/func_graph.h"
 #include "utils/label.h"
 #include "utils/log_adapter.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace {

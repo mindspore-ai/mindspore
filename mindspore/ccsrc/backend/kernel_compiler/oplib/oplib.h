@@ -20,7 +20,7 @@
 #include <string>
 #include <memory>
 #include <nlohmann/json.hpp>
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "backend/kernel_compiler/oplib/opinfo.h"
 
 namespace mindspore {

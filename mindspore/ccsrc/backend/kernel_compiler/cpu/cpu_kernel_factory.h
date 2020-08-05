@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "runtime/device/cpu/kernel_select_cpu.h"
 

@@ -111,8 +111,6 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_device_target", &mindspore::MsContext::set_device_target, "Set device target.")
     .def("get_device_id", &mindspore::MsContext::device_id, "Get device id.")
     .def("set_device_id", &mindspore::MsContext::set_device_id, "Set device id.")
-    .def("open_tsd", &mindspore::MsContext::OpenTsd, "Open tdt dataset client.")
-    .def("close_tsd", &mindspore::MsContext::CloseTsd, "Close tdt dataset client.")
     .def("get_save_graphs_flag", &mindspore::MsContext::save_graphs_flag, "Get whether to save graphs.")
     .def("set_save_graphs_flag", &mindspore::MsContext::set_save_graphs_flag, "Set whether to save graphs.")
     .def("get_auto_mixed_precision_flag", &mindspore::MsContext::auto_mixed_precision_flag,

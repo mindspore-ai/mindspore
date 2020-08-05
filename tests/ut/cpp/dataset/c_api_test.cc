@@ -20,7 +20,7 @@
 #include <string>
 
 #include "utils/log_adapter.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "common/common.h"
 #include "gtest/gtest.h"
 #include "securec.h"

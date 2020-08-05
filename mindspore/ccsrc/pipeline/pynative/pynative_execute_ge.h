@@ -27,7 +27,7 @@
 #include "transform/graph_ir/convert.h"
 #include "transform/graph_ir/graph_runner.h"
 #include "transform/graph_ir/types.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 using GeTensor = ge::Tensor;
 using GeTensorPtr = std::shared_ptr<GeTensor>;

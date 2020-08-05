@@ -29,7 +29,7 @@
 #include "pybind11/numpy.h"
 
 #include "pipeline/pynative/base.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "ir/anf.h"
 #include "pipeline/jit/resource.h"
 #include "frontend/operator/composite/composite.h"

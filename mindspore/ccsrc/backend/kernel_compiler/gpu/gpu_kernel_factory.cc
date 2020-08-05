@@ -19,7 +19,7 @@
 #include <iostream>
 #include <string>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "runtime/device/kernel_info.h"
 #include "runtime/device/gpu/cuda_common.h"
 #include "backend/kernel_compiler/common_utils.h"

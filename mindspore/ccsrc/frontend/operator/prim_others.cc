@@ -18,12 +18,12 @@
 #include <sstream>
 
 #include "ir/dtype.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "frontend/operator/ops.h"
 #include "abstract/param_validator.h"
 #include "pipeline/jit/static_analysis/prim.h"
 #include "abstract/utils.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "utils/symbolic.h"
 
 namespace mindspore {

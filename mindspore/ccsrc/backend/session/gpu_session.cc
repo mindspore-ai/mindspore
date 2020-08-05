@@ -31,9 +31,9 @@
 #include "backend/optimizer/gpu/replace_momentum_cast_fusion.h"
 #include "backend/optimizer/gpu/replace_addn_fusion.h"
 #include "runtime/device/kernel_runtime_manager.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "common/trans.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "utils/base_ref_extends.h"
 #include "debug/tensor_load.h"
 

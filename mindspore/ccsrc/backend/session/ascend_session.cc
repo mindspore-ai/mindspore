@@ -39,7 +39,7 @@
 #include "debug/anf_ir_dump.h"
 #include "debug/anf_ir_utils.h"
 #include "debug/draw.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "backend/optimizer/common/helper.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/config_manager.h"

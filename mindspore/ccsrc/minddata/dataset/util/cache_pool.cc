@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include <algorithm>
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/util/cache_pool.h"
 #include "minddata/dataset/util/services.h"
 

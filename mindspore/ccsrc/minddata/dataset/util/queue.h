@@ -24,7 +24,7 @@
 #include <utility>
 #include <vector>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "utils/log_adapter.h"
 #include "minddata/dataset/util/allocator.h"
 #include "minddata/dataset/util/services.h"

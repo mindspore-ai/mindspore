@@ -30,7 +30,7 @@
 #include "backend/optimizer/common/common_backend_optimization.h"
 #include "backend/optimizer/pass/const_input_to_attr_registry.h"
 #include "backend/optimizer/common/helper.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "ir/dtype.h"
 #include "ir/anf.h"
 #include "ir/func_graph_cloner.h"

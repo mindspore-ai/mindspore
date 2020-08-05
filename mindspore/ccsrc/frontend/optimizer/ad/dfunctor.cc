@@ -32,7 +32,7 @@
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/composite.h"
 #include "utils/symbolic.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "./common.h"
 
 namespace mindspore {

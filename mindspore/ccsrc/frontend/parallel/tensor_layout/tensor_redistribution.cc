@@ -18,7 +18,7 @@
 #include <cfloat>
 #include <functional>
 #include <numeric>
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "frontend/parallel/status.h"
 #include "frontend/parallel/tensor_layout/shape_util.h"
 

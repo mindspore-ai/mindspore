@@ -27,7 +27,7 @@
 
 #include "proto/example.pb.h"
 #include "./securec.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/connector.h"

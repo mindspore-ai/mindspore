@@ -144,6 +144,7 @@ extern const char kFuncGraphFlagUndetermined[];
 class FuncGraph : public FuncGraphBase {
  public:
   FuncGraph();
+  using Drawer = std::function<void(const std::string &, const FuncGraphPtr &)>;
 
   ~FuncGraph() override = default;
   MS_DECLARE_PARENT(FuncGraph, FuncGraphBase);
@@ -348,6 +349,7 @@ class FuncGraph : public FuncGraphBase {
 
   bool stub() const { return stub_; }
   void set_stub(bool stub) { stub_ = stub; }
+  static void set_drawer(Drawer drawer) { drawer_ = drawer; }
 
  private:
   // graph is manipulated by manager and others
@@ -408,6 +410,7 @@ class FuncGraph : public FuncGraphBase {
   // CNode order which relates to origin code order
   std::list<CNodePtr> order_;
   bool stub_;
+  inline static Drawer drawer_ = nullptr;
 };
 
 inline CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg) {

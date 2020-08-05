@@ -26,7 +26,7 @@
 #include "backend/optimizer/pass/common_subexpression_elimination.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "utils/utils.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {

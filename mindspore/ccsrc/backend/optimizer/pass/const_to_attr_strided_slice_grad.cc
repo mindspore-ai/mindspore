@@ -18,7 +18,7 @@
 #include <vector>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "ir/primitive.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "utils/utils.h"
 #include "abstract/abstract_value.h"
 #include "backend/optimizer/common/helper.h"

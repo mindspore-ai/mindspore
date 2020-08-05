@@ -33,10 +33,10 @@
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "utils/convert_utils.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "abstract/param_validator.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace abstract {

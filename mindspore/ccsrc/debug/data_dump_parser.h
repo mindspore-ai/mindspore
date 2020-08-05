@@ -22,7 +22,7 @@
 #include <mutex>
 #include <optional>
 #include "nlohmann/json.hpp"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 class DataDumpParser {

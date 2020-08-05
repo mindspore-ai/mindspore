@@ -26,7 +26,7 @@
 #include "runtime/rt.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {

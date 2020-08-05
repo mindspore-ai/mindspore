@@ -20,7 +20,7 @@
 #include "minddata/dataset/core/client.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "common/common.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
 

@@ -24,7 +24,7 @@
 
 #include "ir/tensor.h"
 #include "pipeline/jit/resource.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 namespace mindspore {
 namespace session {
 const char kInputCtrlTensors[] = "input_ctrl_tensors";

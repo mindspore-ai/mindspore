@@ -24,10 +24,10 @@
 #include <vector>
 
 #include "backend/session/anf_runtime_algorithm.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "common/trans.h"
 #include "utils/config_manager.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "utils/utils.h"
 #include "runtime/device/ascend/profiling/profiling_manager.h"

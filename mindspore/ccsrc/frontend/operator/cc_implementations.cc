@@ -23,7 +23,7 @@
 #include "utils/misc.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 // namespace to support primitive operators definition

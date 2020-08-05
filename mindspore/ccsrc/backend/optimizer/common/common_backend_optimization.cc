@@ -23,7 +23,7 @@
 #include "backend/optimizer/pass/convert_tuple_input_to_dynamic_input.h"
 #include "backend/optimizer/pass/const_to_attr_strided_slice_grad.h"
 #include "backend/optimizer/pass/convert_const_scalar_to_tensor.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "debug/anf_ir_dump.h"
 
 namespace mindspore {

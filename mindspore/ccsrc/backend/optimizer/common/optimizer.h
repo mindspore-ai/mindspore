@@ -27,7 +27,7 @@
 #include "backend/optimizer/common/pass_manager.h"
 #include "backend/optimizer/common/pattern_engine.h"
 #include "ir/graph_utils.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "backend/optimizer/common/helper.h"
 
 namespace mindspore {

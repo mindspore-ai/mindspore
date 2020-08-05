@@ -22,7 +22,7 @@
 #include <fstream>
 #include "utils/log_adapter.h"
 #include "utils/overload.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {

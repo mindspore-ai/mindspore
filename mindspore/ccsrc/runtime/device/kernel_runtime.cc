@@ -19,10 +19,10 @@
 #include <utility>
 #include <numeric>
 #include <functional>
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "common/trans.h"
 #include "utils/utils.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "frontend/operator/ops.h"
 #include "pipeline/jit/parse/python_adapter.h"
 #include "backend/session/kernel_graph.h"

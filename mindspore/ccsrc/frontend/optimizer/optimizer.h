@@ -34,7 +34,7 @@
 #include "frontend/optimizer/opt.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/action.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {

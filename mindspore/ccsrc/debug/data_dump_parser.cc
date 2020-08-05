@@ -17,7 +17,7 @@
 #include "debug/data_dump_parser.h"
 
 #include <fstream>
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "debug/common.h"
 
 static constexpr auto kDataDumpConfigPtah = "DATA_DUMP_CONFIG_PATH";

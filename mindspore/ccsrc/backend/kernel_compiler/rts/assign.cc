@@ -19,7 +19,7 @@
 #include <memory>
 
 #include "runtime/mem.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 using ge::model_runner::MemcpyAsyncTaskInfo;
 using MemcpyAsyncTaskInfoPtr = std::shared_ptr<MemcpyAsyncTaskInfo>;

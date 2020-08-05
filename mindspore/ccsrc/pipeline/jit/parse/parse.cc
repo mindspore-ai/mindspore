@@ -28,7 +28,7 @@
 #include "frontend/operator/ops.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "frontend/operator/composite/composite.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "debug/trace.h"
 
 namespace mindspore {

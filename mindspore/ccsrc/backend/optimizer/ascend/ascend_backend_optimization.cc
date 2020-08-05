@@ -103,7 +103,7 @@
 #include "backend/optimizer/ascend/ir_fission/concat_fission.h"
 #include "backend/optimizer/ascend/ir_fission/pack_fission.h"
 #include "backend/optimizer/ascend/enhancer/concat_outputs_for_all_gather.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "utils/config_manager.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/anf_ir_utils.h"

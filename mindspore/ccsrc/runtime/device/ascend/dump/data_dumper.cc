@@ -25,7 +25,7 @@
 #include "runtime/rt_model.h"
 #include "runtime/device/ascend/dump/ge_dump.h"
 #include "proto/op_mapping_info.pb.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "debug/data_dump_parser.h"
 
 static constexpr uint32_t kAicpuLoadFlag = 1;

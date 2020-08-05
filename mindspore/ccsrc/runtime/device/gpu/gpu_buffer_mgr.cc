@@ -18,7 +18,7 @@
 #include <cuda_runtime_api.h>
 #include <utility>
 #include "utils/log_adapter.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace device {

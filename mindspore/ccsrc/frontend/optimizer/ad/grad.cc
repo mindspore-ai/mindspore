@@ -17,7 +17,7 @@
 #include "frontend/optimizer/ad/grad.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "ir/func_graph_cloner.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "utils/symbolic.h"
 #include "ir/graph_utils.h"
 

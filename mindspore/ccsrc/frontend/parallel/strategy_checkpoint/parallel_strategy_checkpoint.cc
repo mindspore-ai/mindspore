@@ -20,7 +20,7 @@
 #include <memory>
 #include <vector>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "utils/convert_utils.h"
 #include "utils/log_adapter.h"
 #include "proto/node_strategy.pb.h"

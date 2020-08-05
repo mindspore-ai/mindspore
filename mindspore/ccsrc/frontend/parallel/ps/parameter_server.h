@@ -38,7 +38,7 @@
 #include "frontend/parallel/ps/optimizer_info_builder.h"
 #include "frontend/parallel/ps/util.h"
 #include "runtime/device/cpu/kernel_select_cpu.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 #include "backend/kernel_compiler/cpu/ps/pserver_kernel.h"

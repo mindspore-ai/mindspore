@@ -27,7 +27,8 @@
 #include "ir/param_value.h"
 #include "utils/any.h"
 #include "utils/utils.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
+#include "utils/context/context_extends.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/composite.h"
 #include "frontend/operator/composite/do_signature.h"
@@ -750,7 +751,7 @@ py::tuple PynativeExecutor::RunOpInner(const OpExecInfoPtr &op_exec_info) {
 #else
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  ms_context->PynativeInitGe();
+  context::PynativeInitGe(ms_context);
   backend_policy = kMsBackendGeOnly;
 #endif
   if (vm_operators.find(op_exec_info->op_name) != vm_operators.end()) {

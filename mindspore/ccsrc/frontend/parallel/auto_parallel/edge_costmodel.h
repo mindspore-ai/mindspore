@@ -22,7 +22,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "frontend/parallel/auto_parallel/costmodel.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/tensor_layout/tensor_info.h"

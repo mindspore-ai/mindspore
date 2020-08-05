@@ -20,7 +20,7 @@
 #include <sentencepiece_processor.h>
 #include <fstream>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/util/path.h"
 
 namespace mindspore {

@@ -19,8 +19,7 @@
 #include <memory>
 
 #include "frontend/parallel/allreduce_fusion/allreduce_fusion.h"
-#include "frontend/parallel/auto_parallel/graph_costmodel.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace parallel {
@@ -135,5 +134,14 @@ void CostModelContext::set_elementwise_stra_follow(bool elementwise_follow) {
 }
 
 void CostModelContext::set_run_phase(int32_t phase) { run_phase_ = phase; }
+
+struct CostRegister {
+  CostRegister() {
+    MsContext::device_seter([](const std::string &device_target) {
+      CostModelContext::GetInstance()->set_costmodel_context_for_device(device_target);
+    });
+  }
+  ~CostRegister() = default;
+} cost_regsiter;
 }  // namespace parallel
 }  // namespace mindspore

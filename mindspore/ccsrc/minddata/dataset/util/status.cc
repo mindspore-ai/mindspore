@@ -15,7 +15,7 @@
  */
 #include "minddata/dataset/util/status.h"
 #include <sstream>
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/util/task_manager.h"
 
 namespace mindspore {
