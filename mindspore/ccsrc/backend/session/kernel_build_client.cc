@@ -29,58 +29,106 @@ void ReplaceStr(std::string *dest, const std::string &replace, char new_char) {
   }
 }
 
-int KernelBuildClient::Start(const std::string &json) {
+int KernelBuildClient::TbeStart(const std::string &json) {
   // Start compiling..
-  std::string res = SendRequest(kSTART);
-  if (res != kACK) {
+  auto res = SendRequest(kTbeStart);
+  if (res != kAck) {
     MS_LOG(ERROR) << "START failed, res: " << res;
     return -1;
   }
   // Send the json data.
   res = SendRequest(json);
-  if (res == kFAILED) {
-    MS_LOG(ERROR) << "START send data failed, res: " << res;
+  if (res == kFailed) {
+    MS_LOG(ERROR) << "TBE/START responds failed, res: " << res;
     return -1;
   }
   // Return task id.
   return std::stoi(res);
 }
 
-bool KernelBuildClient::Wait(int *task_id, std::string *task_result, std::string *pre_build_result) {
+bool KernelBuildClient::TbeWait(int *task_id, std::string *task_result, std::string *pre_build_result) {
   // Start waiting..
-  std::string res = SendRequest(kWAIT);
-  if (res != kACK) {
-    MS_LOG(ERROR) << "WAIT failed, res: " << res;
+  auto res = SendRequest(kTbeWait);
+  if (res != kAck) {
+    MS_LOG(ERROR) << "TBE/WAIT failed, res: " << res;
     return false;
   }
   // Request task id.
-  *task_id = std::stoi(SendRequest(kCONT));
+  *task_id = std::stoi(SendRequest(kCont));
   // Requst task result.
-  *task_result = SendRequest(kCONT);
+  *task_result = SendRequest(kCont);
   // Request prebuild result.
-  *pre_build_result = SendRequest(kCONT);
+  *pre_build_result = SendRequest(kCont);
   return true;
 }
 
-void KernelBuildClient::Reset() {
+void KernelBuildClient::TbeReset() {
   // Start compiling..
-  std::string res = SendRequest(kRESET);
-  if (res != kACK) {
-    MS_LOG(EXCEPTION) << "RESET response is: " << res;
+  auto res = SendRequest(kTbeReset);
+  if (res != kAck) {
+    MS_LOG(EXCEPTION) << "TBE/RESET response is: " << res;
   }
+}
+
+bool KernelBuildClient::AkgStart(int process_num, int wait_time) {
+  // Start compiling..
+  auto res = SendRequest(kAkgStart);
+  if (res != kAck) {
+    MS_LOG(ERROR) << "AKG/START failed, res: " << res;
+    return false;
+  }
+  std::string process_num_str = std::to_string(process_num);
+  res = SendRequest(process_num_str);
+  if (res != kAck) {
+    MS_LOG(ERROR) << "AKG/START(process_num) responds failed, res: " << res;
+    return false;
+  }
+  std::string wait_time_str = std::to_string(wait_time);
+  res = SendRequest(wait_time_str);
+  if (res != kAck) {
+    MS_LOG(ERROR) << "AKG/START(wait_time) responds failed, res: " << res;
+    return false;
+  }
+  return true;
+}
+
+bool KernelBuildClient::AkgSendData(const std::vector<std::string> &jsons) {
+  auto res = SendRequest(kAkgData);
+  if (res != kAck) {
+    MS_LOG(ERROR) << "AKG/DATA failed, res: " << res;
+    return false;
+  }
+  for (auto &json : jsons) {
+    res = SendRequest(json);
+    if (res != kAck) {
+      MS_LOG(ERROR) << "AKG/DATA.. responds failed, res: " << res << ", when sending [" << json << "]";
+      return false;
+    }
+  }
+  return true;
+}
+
+// Fetch the result of AKG compiling.
+bool KernelBuildClient::AkgWait() {
+  auto res = SendRequest(kAkgWait);
+  if (res != kTrue) {
+    MS_LOG(ERROR) << "AKG/WAIT failed, res: " << res;
+    return false;
+  }
+  return true;
 }
 
 std::string KernelBuildClient::SelectFormat(const std::string &json) {
   // Start compiling..
-  std::string res = SendRequest(kFORMAT);
-  if (res != kACK) {
+  auto res = SendRequest(kFormat);
+  if (res != kAck) {
     MS_LOG(ERROR) << "FORMAT failed, res: " << res;
     return "";
   }
   // Send the json data.
   res = SendRequest(json);
-  if (res == kERR) {
-    MS_LOG(ERROR) << "FORMAT send data failed, res: " << res;
+  if (res == kErr) {
+    MS_LOG(ERROR) << "FORMAT responds failed, res: " << res;
     return "";
   }
   return res;
@@ -88,15 +136,15 @@ std::string KernelBuildClient::SelectFormat(const std::string &json) {
 
 bool KernelBuildClient::CheckSupported(const std::string &json) {
   // Checking support..
-  std::string res = SendRequest(kSUPPORT);
-  if (res != kACK) {
+  auto res = SendRequest(kSupport);
+  if (res != kAck) {
     MS_LOG(ERROR) << "SUPPORT failed, res: " << res;
     return false;
   }
   // Send the json data.
   res = SendRequest(json);
-  if (res != kTRUE) {
-    MS_LOG(ERROR) << "SUPPORT send data failed, res: " << res;
+  if (res != kTrue) {
+    MS_LOG(INFO) << "SUPPORT responds failed, res: " << res;
     return false;
   }
   return true;

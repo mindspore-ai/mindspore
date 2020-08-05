@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_SESSION_KERNEL_BUILD_CLIENT_H_
 #define MINDSPORE_CCSRC_BACKEND_SESSION_KERNEL_BUILD_CLIENT_H_
 
+#include <vector>
 #include <string>
 #include <cstring>
 #include <cstdlib>
@@ -43,23 +44,26 @@ class KernelBuildClient {
     "\"";
 
   // Receive the response from server
-  constexpr inline static auto kACK = "ACK";
-  constexpr inline static auto kERR = "ERR";
-  constexpr inline static auto kFAILED = "-1";
+  constexpr inline static auto kAck = "ACK";
+  constexpr inline static auto kErr = "ERR";
+  constexpr inline static auto kFailed = "-1";
   // Send Finish request to server
-  constexpr inline static auto kFIN = "FIN";
+  constexpr inline static auto kFin = "FIN";
 
   // Send building request to server
-  constexpr inline static auto kSTART = "START";
-  constexpr inline static auto kWAIT = "WAIT";
-  constexpr inline static auto kCONT = "CONT";
-  constexpr inline static auto kSUCCESS = "Success";
-  constexpr inline static auto kRESET = "RESET";
+  constexpr inline static auto kTbeStart = "TBE/START";
+  constexpr inline static auto kTbeWait = "TBE/WAIT";
+  constexpr inline static auto kCont = "CONT";
+  constexpr inline static auto kSuccess = "Success";
+  constexpr inline static auto kTbeReset = "TBE/RESET";
+  constexpr inline static auto kAkgStart = "AKG/START";
+  constexpr inline static auto kAkgData = "AKG/DATA";
+  constexpr inline static auto kAkgWait = "AKG/WAIT";
 
   // Send server info. query to server
-  constexpr inline static auto kFORMAT = "FORMAT";
-  constexpr inline static auto kSUPPORT = "SUPPORT";
-  constexpr inline static auto kTRUE = "True";
+  constexpr inline static auto kFormat = "FORMAT";
+  constexpr inline static auto kSupport = "SUPPORT";
+  constexpr inline static auto kTrue = "True";
 
   // Revert \n, \r, [space].
   constexpr inline static auto kLF = "[LF]";
@@ -67,7 +71,7 @@ class KernelBuildClient {
   constexpr inline static auto kSP = "[SP]";
 
   // The TAG as prefix of real command from remote.
-  constexpr inline static auto kTAG = "[~]";
+  constexpr inline static auto kTag = "[~]";
 
   constexpr inline static int kBufferSize = 4096;
   constexpr inline static unsigned int kTimeOutSeconds = 20;
@@ -87,7 +91,7 @@ class KernelBuildClient {
     std::string result;
     char buf[kBufferSize];
     while (std::fgets(buf, sizeof(buf), fpipe) != nullptr) {
-      if (std::strncmp(buf, kTAG, std::strlen(kTAG)) == 0) {
+      if (std::strncmp(buf, kTag, std::strlen(kTag)) == 0) {
         start = true;
       }
       // Filter with 'kTAG' and '\n'
@@ -105,7 +109,7 @@ class KernelBuildClient {
     if (result.empty() || result.rfind(py_suffix) != (result.length() - py_suffix.length())) {
       MS_LOG(EXCEPTION) << "py file seems incorrect, result: {" << result << "}";
     }
-    result = result.substr(strlen(kTAG));
+    result = result.substr(strlen(kTag));
     MS_LOG(DEBUG) << "result: " << result;
     return result;
   }
@@ -115,7 +119,7 @@ class KernelBuildClient {
       // Exception's thrown if open failed
       if (dp_->Open({kEnv, GetScriptPath()}, true) != -1) {
         dp_->SetTimeOutSeconds(kTimeOutSeconds);
-        dp_->SetTimeOutCallback([this]() { SendRequest(kFIN); });
+        dp_->SetTimeOutCallback([this]() { SendRequest(kFin); });
         init_ = true;
       }
     }
@@ -146,13 +150,13 @@ class KernelBuildClient {
     std::string res;
     *dp_ >> res;
     // Filter out the interference
-    auto start = res.find(kTAG);
+    auto start = res.find(kTag);
     if (start == std::string::npos) {
       MS_LOG(EXCEPTION) << "Response seems incorrect, res: " << res;
     }
-    res = res.substr(start + std::strlen(kTAG), res.size() - start);
+    res = res.substr(start + std::strlen(kTag), res.size() - start);
     // Revert the line feed and space
-    if (res != kSUCCESS && res != kACK && res != kERR && res != kTRUE) {
+    if (res != kSuccess && res != kAck && res != kErr && res != kTrue) {
       ReplaceStr(&res, kLF, '\n');
       ReplaceStr(&res, kSP, ' ');
     }
@@ -164,10 +168,15 @@ class KernelBuildClient {
   std::string SelectFormat(const std::string &json);
   bool CheckSupported(const std::string &json);
 
-  // Run building.
-  int Start(const std::string &json);
-  bool Wait(int *task_id, std::string *task_result, std::string *pre_build_result);
-  void Reset();
+  // Run TBE building.
+  int TbeStart(const std::string &json);
+  bool TbeWait(int *task_id, std::string *task_result, std::string *pre_build_result);
+  void TbeReset();
+
+  // Run AKG building.
+  bool AkgStart(int process_num, int wait_time);
+  bool AkgSendData(const std::vector<std::string> &jsons);
+  bool AkgWait();
 
   KernelBuildClient(const KernelBuildClient &) = delete;
   KernelBuildClient &operator=(const KernelBuildClient &) = delete;
