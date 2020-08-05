@@ -33,7 +33,7 @@ option(BUILD_CONVERTER "if build converter" on)
 option(ENABLE_FP16 "if build fp16 ops" off)
 option(SUPPORT_GPU "if support gpu" off)
 option(OFFLINE_COMPILE "if offline compile OpenCL kernel" off)
-option(BUILD_MINDDATA "" on)
+option(BUILD_MINDDATA "" off)
 
 if (BUILD_DEVICE)
     add_compile_definitions(BUILD_DEVICE)
