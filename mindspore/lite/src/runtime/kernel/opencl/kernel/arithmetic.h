@@ -24,15 +24,16 @@
 
 namespace mindspore::kernel {
 
-class ArithmeticOpenCLKernel : public ArithmeticCPUKernel {
+class ArithmeticOpenCLKernel : public OpenCLKernel {
  public:
   explicit ArithmeticOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                                   const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
-      : ArithmeticCPUKernel(parameter, inputs, outputs, ctx) {}
+      : OpenCLKernel(parameter, inputs, outputs) {}
   ~ArithmeticOpenCLKernel() override{};
 
   int Init() override;
   int Run() override;
+  int GetImageSize(size_t idx, std::vector<size_t>* img_size) override;
 
  private:
   std::vector<size_t> InitGlobalSize() const;
@@ -42,6 +43,8 @@ class ArithmeticOpenCLKernel : public ArithmeticCPUKernel {
   cl::Kernel kernel_;
   lite::opencl::OpenCLRuntime *runtime_;
   bool element_flag_{true};
+  float weight_{1.f};
+  float bias_{.0f};
 
   std::vector<size_t> local_size_;
   std::vector<size_t> global_size_;
