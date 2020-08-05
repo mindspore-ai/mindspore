@@ -78,6 +78,8 @@ if __name__ == '__main__':
     prefix = "ssd_eval.mindrecord"
     mindrecord_dir = config.mindrecord_dir
     mindrecord_file = os.path.join(mindrecord_dir, prefix + "0")
+    if args_opt.dataset == "voc":
+        config.coco_root = config.voc_root
     if not os.path.exists(mindrecord_file):
         if not os.path.isdir(mindrecord_dir):
             os.makedirs(mindrecord_dir)
