@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 #example：sh run_benchmark_nets.sh -a /home/temp_test -c /home/temp_test -m /home/temp_test/models -d "8KE5T19620002408"
 while getopts "a:c:m:d:" opt
 do
