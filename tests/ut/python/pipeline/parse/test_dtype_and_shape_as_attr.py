@@ -35,7 +35,6 @@ def test_dtype_and_shape_as_attr():
             dtype = x.dtype
             return shape, dtype
 
-
     net = Net()
     x = Tensor(np.ones([1, 2, 3], np.int32))
     ret = net(x)
@@ -55,7 +54,6 @@ def test_dtype_and_shape_as_attr_to_new_tensor():
             y = self.fill(dtype, shape, self.value)
             return y
 
-
     net = Net(2.2)
     x = Tensor(np.ones([1, 2, 3], np.float32))
     ret = net(x)
@@ -70,7 +68,6 @@ def test_type_not_have_the_attr():
         def construct(self, x):
             shape = x.shapes
             return shape
-
 
     net = Net()
     x = Tensor(np.ones([1, 2, 3], np.int32))
@@ -87,7 +84,6 @@ def test_type_not_have_the_method():
         def construct(self, x):
             shape = x.dtypes()
             return shape
-
 
     net = Net()
     x = Tensor(np.ones([1, 2, 3], np.int32))
