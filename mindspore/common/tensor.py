@@ -108,8 +108,12 @@ class Tensor(Tensor_):
         return out
 
     def __bool__(self):
-        out = tensor_operator_registry.get('__bool__')(self)
-        return out
+        data = self.asnumpy()
+        if data.shape == ():
+            return bool(data)
+        if data.shape == (1,):
+            return bool(data[0])
+        raise ValueError("The truth value of an array with several elements is ambiguous.")
 
     def __pos__(self):
         return self

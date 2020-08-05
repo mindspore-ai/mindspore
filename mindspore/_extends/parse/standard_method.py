@@ -17,7 +17,6 @@
 """standard_method"""
 from dataclasses import dataclass
 from mindspore.common import dtype as mstype
-from mindspore.common._register_for_tensor import tensor_operator_registry
 from ...ops import functional as F
 from ...ops import operations as P
 from ...ops.primitive import constexpr
@@ -206,13 +205,11 @@ def const_tensor_to_bool(x):
     if x is None:
         raise ValueError("Only constant tensor bool can be converted to bool")
     x = x.asnumpy()
-    if x.shape not in ((), (1,)):
-        raise ValueError("The truth value of an array with several elements is ambiguous.")
     if x.shape == ():
-        value = bool(x)
-    else:
-        value = bool(x[0])
-    return value
+        return bool(x)
+    if x.shape == (1,):
+        return bool(x[0])
+    raise ValueError("The truth value of an array with several elements is ambiguous.")
 
 
 def tensor_bool(x):
@@ -349,6 +346,3 @@ def list_append(self_, item):
 def to_array(x):
     """Implementation of `to_array`."""
     return x.__ms_to_array__()
-
-
-tensor_operator_registry.register('__bool__', tensor_bool)
