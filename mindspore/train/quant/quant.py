@@ -446,7 +446,7 @@ def export(network, *inputs, file_name, mean=127.5, std_dev=127.5, file_format='
               Ascend model.
             - BINARY: Binary format for model. An intermidiate representation format for models.
     """
-    supported_device = ["Ascend"]
+    supported_device = ["Ascend", "GPU"]
     supported_formats = ['GEIR', 'BINARY']
 
     mean = validator.check_type("mean", mean, (int, float))
