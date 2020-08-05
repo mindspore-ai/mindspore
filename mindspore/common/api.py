@@ -206,23 +206,24 @@ class _MindSporeFunction:
 
 def ms_function(fn=None, obj=None, input_signature=None):
     """
-    Creates a callable MindSpore graph from a python function.
+    Create a callable MindSpore graph from a python function.
 
     This allows the MindSpore runtime to apply optimizations based on graph.
 
     Args:
         fn (Function): The Python function that will be run as a graph. Default: None.
-        obj (Object): The Python Object that provide information for identify compiled function. Default: None.
-        input_signature (MetaTensor): The MetaTensor to describe the input arguments. The MetaTensor specifies
+        obj (Object): The Python Object that provides the information for identifying the compiled function.Default:
+            None.
+        input_signature (MetaTensor): The MetaTensor which describes the input arguments. The MetaTensor specifies
             the shape and dtype of the Tensor and they will be supplied to this function. If input_signature
-            is specified, every input to `fn` must be a `Tensor`. And the input parameters of `fn` cannot accept
-            `**kwargs`. The shape and dtype of actual inputs should keep same with input_signature, or TypeError
-            will be raised. Default: None.
+            is specified, each input to `fn` must be a `Tensor`. And the input parameters of `fn` cannot accept
+            `**kwargs`. The shape and dtype of actual inputs should keep the same as input_signature. Otherwise,
+            TypeError will be raised. Default: None.
 
     Returns:
-        Function, if `fn` is not None, returns a callable that will execute the compiled function; If `fn` is None,
-        returns a decorator and when this decorator invokes with a single `fn` argument, the callable is equal to the
-        case when `fn` is not None.
+        Function, if `fn` is not None, returns a callable function that will execute the compiled function; If `fn` is
+        None, returns a decorator and when this decorator invokes with a single `fn` argument, the callable function is
+        equal to the case when `fn` is not None.
 
     Examples:
         >>> def tensor_add(x, y):

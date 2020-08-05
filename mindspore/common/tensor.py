@@ -29,14 +29,14 @@ np_types = (np.int8, np.int16, np.int32, np.int64,
 
 class Tensor(Tensor_):
     """
-    Tensor for data storage.
+    Tensor is used for data storage.
 
-    Tensor inherits tensor object in C++ side, some functions are implemented
-    in C++ side and some functions are implemented in Python layer.
+    Tensor inherits tensor object in C++.
+    Some functions are implemented in C++ and some functions are implemented in Python.
 
     Args:
         input_data (Tensor, float, int, bool, tuple, list, numpy.ndarray): Input data of the tensor.
-        dtype (:class:`mindspore.dtype`): Should be None, bool or numeric type defined in `mindspore.dtype`.
+        dtype (:class:`mindspore.dtype`): Input data should be None, bool or numeric type defined in `mindspore.dtype`.
             The argument is used to define the data type of the output tensor. If it is None, the data type of the
             output tensor will be as same as the `input_data`. Default: None.
 
@@ -44,13 +44,13 @@ class Tensor(Tensor_):
         Tensor, with the same shape as `input_data`.
 
     Examples:
-        >>> # init a tensor with input data
+        >>> # initialize a tensor with input data
         >>> t1 = Tensor(np.zeros([1, 2, 3]), mindspore.float32)
         >>> assert isinstance(t1, Tensor)
         >>> assert t1.shape == (1, 2, 3)
         >>> assert t1.dtype == mindspore.float32
         >>>
-        >>> # init a tensor with a float scalar
+        >>> # initialize a tensor with a float scalar
         >>> t2 = Tensor(0.1)
         >>> assert isinstance(t2, Tensor)
         >>> assert t2.dtype == mindspore.float64
@@ -280,18 +280,18 @@ class IndexedSlices:
     The dense tensor dense represented by an IndexedSlices slices has
     `dense[slices.indices[i], :, :, :, ...] = slices.values[i, :, :, :, ...]`.
 
-    IndexedSlices can only be used in `Cell`'s contruct method.
+    IndexedSlices can only be used in the `Cell`'s construct method.
 
-    Pynative mode not supported at the moment.
+    It is not supported in pynative mode at the moment.
 
     Args:
         indices (Tensor): A 1-D integer Tensor of shape [D0].
         values (Tensor): A Tensor of any dtype of shape [D0, D1, ..., Dn].
-        dense_shape (tuple): A integer tuple containing the shape
+        dense_shape (tuple): An integer tuple which contains the shape
             of the corresponding dense tensor.
 
     Returns:
-        IndexedSlices, composed of `indices`, `values`, `dense_shape`.
+        IndexedSlices, composed of `indices`, `values`, and `dense_shape`.
 
     Examples:
         >>> class Net(nn.Cell):
@@ -327,7 +327,7 @@ class SparseTensor:
     """
     A sparse representation of a set of nonzero elememts from a tensor at given indices.
 
-    SparseTensor can only be used in `Cell`'s contruct method.
+    SparseTensor can only be used in the `Cell`'s construct method.
 
     Pynative mode not supported at the moment.
 
@@ -344,7 +344,7 @@ class SparseTensor:
             which specifies the dense_shape of the sparse tensor.
 
     Returns:
-        SparseTensor, composed of `indices`, `values`, `dense_shape`.
+        SparseTensor, composed of `indices`, `values`, and `dense_shape`.
 
     Examples:
         >>> class Net(nn.Cell):

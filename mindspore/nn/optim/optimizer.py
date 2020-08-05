@@ -220,7 +220,7 @@ class Optimizer(Cell):
         """Check weight decay, and convert int to float."""
         if isinstance(weight_decay, (float, int)):
             weight_decay = float(weight_decay)
-            validator.check_number_range("weight_decay", weight_decay, 0.0, 1.0, Rel.INC_BOTH, self.cls_name)
+            validator.check_number_range("weight_decay", weight_decay, 0.0, float("inf"), Rel.INC_LEFT, self.cls_name)
             return weight_decay
         raise TypeError("Weight decay should be int or float.")
 
