@@ -222,7 +222,10 @@ void DatasetOp::Print(std::ostream &out, bool show_all) const {
   // When show_all is true, we display more detailed output for the op.
   // Derived printers should show their own header info, then call base class printer, followed by
   // derived-specific items.
-  // For now, the base class doesn't have any summary info to show so it's a no-op in that case.
+
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <" << Name() << ">:";
+
   if (show_all) {
     // The detailed display will show common base class info of the op.  Allow the derived class to print
     // it's own id and name though as the first line.
@@ -239,8 +242,6 @@ void DatasetOp::Print(std::ostream &out, bool show_all) const {
     if (sampler_) {
       sampler_->Print(out, show_all);
     }
-  } else {
-    out << Name() << std::endl;
   }
 }
 

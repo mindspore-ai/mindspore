@@ -42,8 +42,6 @@ ConcatOp::ConcatOp(int32_t op_connector_size) : PipelineOp(op_connector_size), c
 
 // A function that prints info about the Operator
 void ConcatOp::Print(std::ostream &out, bool show_all) const {
-  // Always show the id and name as first line regardless if this is summary or detailed print
-  out << "(" << std::setw(2) << operator_id_ << ") <" << Name() << ">:";
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
     PipelineOp::Print(out, show_all);

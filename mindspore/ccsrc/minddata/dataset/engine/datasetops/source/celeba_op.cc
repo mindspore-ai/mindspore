@@ -386,8 +386,6 @@ Status CelebAOp::LoadTensorRow(row_id_type row_id, const std::pair<std::string, 
 }
 
 void CelebAOp::Print(std::ostream &out, bool show_all) const {
-  // Always show the id and name as first line regardless if this summary or detailed print
-  out << "(" << std::setw(2) << operator_id_ << ") <CelebAOp>:";
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
     ParallelOp::Print(out, show_all);
