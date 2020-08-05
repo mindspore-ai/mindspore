@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""train_imagenet."""
+"""Train mobilenetV2 on ImageNet."""
+
 import os
 import time
 import argparse
@@ -165,15 +166,14 @@ if __name__ == '__main__':
         print("train args: ", args_opt)
         print("cfg: ", config_gpu)
 
-        # define net
+        # define network
         net = mobilenet_v2(num_classes=config_gpu.num_classes, platform="GPU")
         # define loss
         if config_gpu.label_smooth > 0:
-            loss = CrossEntropyWithLabelSmooth(
-                smooth_factor=config_gpu.label_smooth, num_classes=config_gpu.num_classes)
+            loss = CrossEntropyWithLabelSmooth(smooth_factor=config_gpu.label_smooth,
+                                               num_classes=config_gpu.num_classes)
         else:
-            loss = SoftmaxCrossEntropyWithLogits(
-                is_grad=False, sparse=True, reduction='mean')
+            loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction='mean')
         # define dataset
         epoch_size = config_gpu.epoch_size
         dataset = create_dataset(dataset_path=args_opt.dataset_path,
@@ -187,7 +187,8 @@ if __name__ == '__main__':
         if args_opt.pre_trained:
             param_dict = load_checkpoint(args_opt.pre_trained)
             load_param_into_net(net, param_dict)
-        # define optimizer
+
+        # get learning rate
         loss_scale = FixedLossScaleManager(
             config_gpu.loss_scale, drop_overflow_update=False)
         lr = Tensor(get_lr(global_step=0,
@@ -197,12 +198,14 @@ if __name__ == '__main__':
                            warmup_epochs=config_gpu.warmup_epochs,
                            total_epochs=epoch_size,
                            steps_per_epoch=step_size))
+
+        # define optimization
         opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config_gpu.momentum,
                        config_gpu.weight_decay, config_gpu.loss_scale)
         # define model
-        model = Model(net, loss_fn=loss, optimizer=opt,
-                      loss_scale_manager=loss_scale)
+        model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale)
 
+        print("============== Starting Training ==============")
         cb = [Monitor(lr_init=lr.asnumpy())]
         ckpt_save_dir = config_gpu.save_checkpoint_path + "ckpt_" + str(get_rank()) + "/"
         if config_gpu.save_checkpoint:
@@ -212,6 +215,7 @@ if __name__ == '__main__':
             cb += [ckpt_cb]
         # begin train
         model.train(epoch_size, dataset, callbacks=cb)
+        print("============== End Training ==============")
     elif args_opt.platform == "Ascend":
         # train on ascend
         print("train args: ", args_opt, "\ncfg: ", config_ascend,

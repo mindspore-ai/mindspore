@@ -91,6 +91,6 @@ if [ $1 = "Ascend" ] ; then
 elif [ $1 = "GPU" ] ; then
     run_gpu "$@"
 else
-    echo "not support platform"
+    echo "Unsupported platform."
 fi;
 

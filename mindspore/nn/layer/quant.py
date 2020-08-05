@@ -960,7 +960,7 @@ class ActQuant(_QuantActivation):
         Tensor, with the same type and shape as the `x`.
 
     Examples:
-        >>> act_quant = nn.ActQuant(nn.ReLU)
+        >>> act_quant = nn.ActQuant(nn.ReLU())
         >>> input_x = Tensor(np.array([[1, 2, -1], [-2, 0, -1]]), mindspore.float32)
         >>> result = act_quant(input_x)
     """
@@ -1009,7 +1009,7 @@ class LeakyReLUQuant(_QuantActivation):
         quant_delay (int): Quantization delay parameters according by global step. Default: 0.
 
     Inputs:
-        - **x** (Tensor) - The input of HSwishQuant.
+        - **x** (Tensor) - The input of LeakyReLUQuant.
 
     Outputs:
         Tensor, with the same type and shape as the `x`.

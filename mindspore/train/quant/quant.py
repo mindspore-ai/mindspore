@@ -306,7 +306,7 @@ class ExportToQuantInferNetwork:
         std_dev (int, float): Input data variance. Default: 127.5.
 
     Returns:
-        Cell, GEIR backend Infer network.
+        Cell, Infer network.
     """
     __quant_op_name__ = ["TensorAdd", "Sub", "Mul", "RealDiv"]
 
