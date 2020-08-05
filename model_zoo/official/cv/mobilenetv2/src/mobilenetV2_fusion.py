@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""MobileNetV2 Quant model define"""
+# """MobileNetV2 Quant model define"""
 
 import numpy as np
-
 import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore import Tensor
@@ -27,7 +26,7 @@ def _make_divisible(v, divisor, min_value=None):
     if min_value is None:
         min_value = divisor
     new_v = max(min_value, int(v + divisor / 2) // divisor * divisor)
-    # Make sure that round down does not go down by more than 10%.
+    # Make sure that round down does not go down by more than 10 %.
     if new_v < 0.9 * v:
         new_v += divisor
     return new_v
@@ -117,9 +116,7 @@ class InvertedResidual(nn.Cell):
         if expand_ratio != 1:
             layers.append(ConvBNReLU(inp, hidden_dim, kernel_size=1))
         layers.extend([
-            # dw
             ConvBNReLU(hidden_dim, hidden_dim, stride=stride, groups=hidden_dim),
-            # pw-linear
             nn.Conv2dBnAct(hidden_dim, oup, kernel_size=1, stride=1, pad_mode='pad', padding=0, group=1, has_bn=True)
         ])
         self.conv = nn.SequentialCell(layers)
@@ -196,7 +193,6 @@ class mobilenetV2(nn.Cell):
         self.head = nn.SequentialCell(head)
 
         # init weights
-        self.init_parameters_data()
         self._initialize_weights()
 
     def construct(self, x):
@@ -216,7 +212,6 @@ class mobilenetV2(nn.Cell):
         Examples:
             >>> _initialize_weights()
         """
-        self.init_parameters_data()
         for _, m in self.cells_and_names():
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
