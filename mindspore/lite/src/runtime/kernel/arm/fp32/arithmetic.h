@@ -90,6 +90,7 @@ class ArithmeticCPUKernel : public LiteKernel {
       case PrimitiveType_FloorMod:
         arithmetic_run_ = ElementFloorMod;
         arithmetic_broadcast_run_ = BroadcastFloorMod;
+        break;
       case PrimitiveType_Equal:
         arithmetic_run_ = ElementEqual;
         arithmetic_broadcast_run_ = BroadcastEqual;

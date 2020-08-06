@@ -18,13 +18,27 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/opclib/batch_to_space.h"
+#include "src/runtime/kernel/arm/opclib/int8/batch_to_space_int8.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 int BatchToSpaceInt8CPUKernel::Init() {
-  return BatchToSpaceBaseCPUKernel::Init();
+  auto ret = BatchToSpaceBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    return ret;
+  }
+  auto *input_tensor = inputs_.at(kInputIndex);
+  auto in_quant_args = input_tensor->GetQuantParams();
+  in_quant_arg_.scale_ = in_quant_args.front().scale;
+  in_quant_arg_.zp_ = in_quant_args.front().zeroPoint;
+
+  auto *out_tensor = outputs_.at(kOutputIndex);
+  auto out_quant_args = out_tensor->GetQuantParams();
+  out_quant_arg_.scale_ = out_quant_args.front().scale;
+  out_quant_arg_.zp_ = out_quant_args.front().zeroPoint;
+  return RET_OK;
 }
 
 int BatchToSpaceInt8CPUKernel::Run() {
@@ -36,12 +50,22 @@ int BatchToSpaceInt8CPUKernel::Run() {
   auto out_shape = output->shape();
   BatchToSpaceParameter *param = reinterpret_cast<BatchToSpaceParameter *>(this->opParameter);
 
-  if (IsNoCrop()) {
-    BatchToSpaceNoCropForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_,
-                              sizeof(int8_t));
+  if (in_quant_arg_.scale_ == out_quant_arg_.scale_ && in_quant_arg_.zp_ == out_quant_arg_.zp_) {
+    if (IsNoCrop()) {
+      BatchToSpaceNoCropForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_,
+                                sizeof(int8_t));
+    } else {
+      BatchToSpaceForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_, param->crops_,
+                          sizeof(int8_t));
+    }
   } else {
-    BatchToSpaceForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_, param->crops_,
-                        sizeof(int8_t));
+    if (IsNoCrop()) {
+      BatchToSpaceNoCropForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_,
+                                &in_quant_arg_, &out_quant_arg_);
+    } else {
+      BatchToSpaceForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_, param->crops_,
+                          &in_quant_arg_, &out_quant_arg_);
+    }
   }
 
   return RET_OK;

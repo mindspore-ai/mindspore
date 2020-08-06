@@ -17,7 +17,7 @@
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/opclib/arg_min_max.h"
+#include "src/runtime/kernel/arm/opclib/int8/arg_min_max_int8.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::RET_OK;
@@ -31,12 +31,45 @@ int ArgMinMaxInt8CPUKernel::Init() {
   }
   auto param = reinterpret_cast<ArgMinMaxParameter *>(opParameter);
   param->data_type_ = kNumberTypeInt8;
+  auto *input_tensor = inputs_.at(kInputIndex);
+  auto in_quant_args = input_tensor->GetQuantParams();
+  in_quant_arg_.scale_ = in_quant_args.front().scale;
+  in_quant_arg_.zp_ = in_quant_args.front().zeroPoint;
+
+  auto *out_tensor = outputs_.at(kOutputIndex);
+  auto out_quant_args = out_tensor->GetQuantParams();
+  out_quant_arg_.scale_ = out_quant_args.front().scale;
+  out_quant_arg_.zp_ = out_quant_args.front().zeroPoint;
   return RET_OK;
 }
 
 int ArgMinMaxInt8CPUKernel::Run() {
-  auto ret = ArgMinMaxBaseCPUKernel::Run();
-  FreeTmpMemory();
-  return ret;
+  auto input = inputs_.at(0);
+
+  const int8_t *input_data = reinterpret_cast<const int8_t *>(inputs_.at(0)->Data());
+  int8_t *output_data = reinterpret_cast<int8_t *>(outputs_.at(0)->Data());
+
+  auto in_shape = input->shape().data();
+  auto param = reinterpret_cast<ArgMinMaxParameter *>(opParameter);
+  if (param->topk_ == 1) {
+    ArgMinMaxQuant(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
+    return RET_OK;
+  }
+
+  switch (param->axis_) {
+  case 0:
+    ArgMinMaxDim0(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
+    break;
+  case 1:
+    ArgMinMaxDim1(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
+    break;
+  case 2:
+    ArgMinMaxDim2(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
+    break;
+  case 3:
+    ArgMinMaxDim3(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
+    break;
+  }
+  return RET_OK;
 }
 }  // namespace mindspore::kernel

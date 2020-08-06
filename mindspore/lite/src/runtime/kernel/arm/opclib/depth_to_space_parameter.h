@@ -13,12 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_ARG_MIN_MAX_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_ARG_MIN_MAX_H_
-
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_DEPTH_TO_SPACE_PARAMETER_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_DEPTH_TO_SPACE_PARAMETER_H_
 #include "src/runtime/kernel/arm/opclib/op_base.h"
-#include "src/runtime/kernel/arm/opclib/arg_min_max_parameter.h"
-#include "src/runtime/kernel/arm/opclib/quantization/quantize.h"
 
-void ArgMinMax(const void *input, void *output, const int *in_shape, ArgMinMaxParameter *param);
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_ARG_MIN_MAX_H_
+struct DepthToSpaceParameter {
+    OpParameter op_parameter_;
+    int32_t block_size_;
+    int32_t in_stride_dim0_;
+    int32_t in_stride_dim1_;
+    int32_t in_stride_dim2_;
+    int32_t out_stride_dim0_;
+    int32_t out_stride_dim1_;
+    int32_t out_stride_dim2_;
+    uint8_t data_type_size_;
+};
+
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_DEPTH_TO_SPACE_PARAMETER_H_

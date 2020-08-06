@@ -18,6 +18,7 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/opclib/depth_to_space.h"
+#include "src/runtime/kernel/arm/opclib/int8/depth_to_space_int8.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::RET_OK;
@@ -31,6 +32,16 @@ int DepthToSpaceInt8CPUKernel::Init() {
   }
   DepthToSpaceParameter *param = reinterpret_cast<DepthToSpaceParameter *>(opParameter);
   param->data_type_size_ = sizeof(int8_t);
+
+  auto *input_tensor = inputs_.at(kInputIndex);
+  auto in_quant_args = input_tensor->GetQuantParams();
+  in_quant_arg_.scale_ = in_quant_args.front().scale;
+  in_quant_arg_.zp_ = in_quant_args.front().zeroPoint;
+
+  auto *out_tensor = outputs_.at(kOutputIndex);
+  auto out_quant_args = out_tensor->GetQuantParams();
+  out_quant_arg_.scale_ = out_quant_args.front().scale;
+  out_quant_arg_.zp_ = out_quant_args.front().zeroPoint;
   return RET_OK;
 }
 
@@ -41,14 +52,11 @@ int DepthToSpaceInt8CPUKernel::Run() {
   int8_t *output_data = reinterpret_cast<int8_t *>(output->Data());
   auto in_shape = input->shape();
   DepthToSpaceParameter *param = reinterpret_cast<DepthToSpaceParameter *>(opParameter);
-  if (input->GetFormat() == schema::Format_NHWC) {
+  if (in_quant_arg_.scale_ == out_quant_arg_.scale_ && in_quant_arg_.zp_ == out_quant_arg_.zp_) {
     DepthToSpaceForNHWC(input_data, output_data, in_shape.data(), param);
-    return RET_OK;
   } else {
-    MS_LOG(ERROR) << "Depth_to_space only support NHWC now!";
-    return RET_ERROR;
+    DepthToSpaceForNHWC(input_data, output_data, in_shape.data(), param, &in_quant_arg_, &out_quant_arg_);
   }
-
   return RET_OK;
 }
 }  // namespace mindspore::kernel
