@@ -268,7 +268,7 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                 }),
                                 py::arg("input"), py::arg("dtype") = nullptr)
                            .def_property("init_flag", &Tensor::is_init, &Tensor::set_init_flag)
-                           .def_property_readonly("dtype", &Tensor::Dtype, R"mydelimiter(
+                           .def_property_readonly("_dtype", &Tensor::Dtype, R"mydelimiter(
                              Get the tensor's data type.
 
                              Returns:
@@ -279,7 +279,7 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                  >>> data.dtype
                                  Int32
                              )mydelimiter")
-                           .def_property_readonly("shape", TensorPy::GetPyTupleShape, R"mydelimiter(
+                           .def_property_readonly("_shape", TensorPy::GetPyTupleShape, R"mydelimiter(
                              Get the tensor's shape.
 
                              Returns:

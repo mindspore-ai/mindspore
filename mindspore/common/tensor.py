@@ -208,13 +208,41 @@ class Tensor(Tensor_):
             return "Unknown Tensor type!"
         return str(self.asnumpy())
 
+    @property
+    def shape(self):
+        """The shape of tensor."""
+        return self._shape
+
+    @property
+    def dtype(self):
+        """The dtype of tensor."""
+        return self._dtype
+
+    @property
+    def virtual_flag(self):
+        """Mark tensor is virtual."""
+        return self._virtual_flag
+
+    @virtual_flag.setter
+    def virtual_flag(self, value):
+        """The setter of virtual_flag."""
+        if not isinstance(value, bool):
+            raise TypeError("virtual_flag must be bool.")
+        self._virtual_flag = value
+
+    def asnumpy(self):
+        """Convert tensor to numpy array."""
+        return Tensor_.asnumpy(self)
+
     def all(self, axis=(), keep_dims=False):
         """
         Check all array elements along a given axis evaluate to True.
 
         Args:
             axis (Union[None, int, tuple(int)): Dimensions of reduction.
+                Default: (), reduce all dimensions.
             keep_dims (bool): Whether to keep the reduced dimensions.
+                Default : False, don't keep these reduced dimensions.
 
         Returns:
             Tensor, has the same data type as x.
@@ -228,25 +256,15 @@ class Tensor(Tensor_):
 
         Args:
             axis (Union[None, int, tuple(int)): Dimensions of reduction.
+                Default: (), reduce all dimensions.
             keep_dims (bool): Whether to keep the reduced dimensions.
+                Default : False, don't keep these reduced dimensions.
 
         Returns:
             Tensor, has the same data type as x.
         """
 
         return tensor_operator_registry.get('any')(keep_dims)(self, axis)
-
-    @property
-    def virtual_flag(self):
-        """Mark tensor is virtual."""
-        return self._virtual_flag
-
-    @virtual_flag.setter
-    def virtual_flag(self, value):
-        """The setter of virtual_flag."""
-        if not isinstance(value, bool):
-            raise TypeError("virtual_flag must be bool.")
-        self._virtual_flag = value
 
 
 class IndexedSlices:
