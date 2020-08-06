@@ -454,7 +454,7 @@ class HSigmoid(Cell):
     Hard sigmoid is defined as:
 
     .. math::
-        \text{hsigmoid}(x_{i}) = max(0, min(1, \frac{2 * x_{i} + 5}{10})),
+        \text{hsigmoid}(x_{i}) = max(0, min(1, \frac{x_{i} + 3}{6})),
 
     where :math:`x_{i}` is the :math:`i`-th slice along the given dim of the input Tensor.
 
