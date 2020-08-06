@@ -54,12 +54,12 @@ FusionPattern &FusionPattern::AddPatternOp(const std::string &id, const std::vec
   if (op == nullptr) {
     // MS_LOG(ERROR) << "new an object failed");
     hasError = true;
+  } else {
+    op->id = id;
+    op->types = types;
+    ops.push_back(op);
+    opMap[id] = op;
   }
-
-  op->id = id;
-  op->types = types;
-  ops.push_back(op);
-  opMap[id] = op;
 
   return *this;
 }
