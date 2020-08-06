@@ -220,6 +220,7 @@ void Cloner::SetFuncGraphInfo(const FuncGraphPtr &func_graph, FuncGraphPtr *cons
   TraceManager::DebugTrace(func_graph->debug_info(), target_relation_);
   *target_func_graph = std::make_shared<FuncGraph>();
   (*target_func_graph)->set_attrs(func_graph->attrs());
+  (*target_func_graph)->joined_shapes_ = func_graph->joined_shapes_;
   (*target_func_graph)->set_transforms(func_graph->transforms());
   (*target_func_graph)->set_has_vararg(func_graph->has_vararg());
   (*target_func_graph)->set_has_kwarg(func_graph->has_kwarg());
