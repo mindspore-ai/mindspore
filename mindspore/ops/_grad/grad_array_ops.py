@@ -673,6 +673,16 @@ def _GatherDropNegatives(params,
     return (select(is_positive, gathered, zero_slice), zero_clipped_indices, is_positive)
 
 
+@bprop_getters.register(P.UnsortedSegmentSum)
+def get_bprop_unsorted_segment_sum(self):
+    """Generate bprop for UnsortedSegmentSum"""
+
+    def bprop(x, segment_ids, num_segments, out, dout):
+        return _GatherDropNegatives(dout, segment_ids)[0], zeros_like(segment_ids), zeros_like(num_segments)
+
+    return bprop
+
+
 @bprop_getters.register(P.UnsortedSegmentMin)
 def get_bprop_unsorted_segment_min(self):
     """Generate bprop for UnsortedSegmentMin"""

@@ -1448,14 +1448,12 @@ test_case_nn_ops = [
         'block': P.UnsortedSegmentSum(),
         'desc_const': [1280],
         'desc_inputs': [[1280, 1024], Tensor(np.ones(1280).astype(np.int32))],
-        'desc_bprop': [[8192, 1024]],
-        'skip': ['backward']}),
+        'desc_bprop': [[1280, 1024]]}),
     ('UnsortedSegmentSum_1', {
         'block': P.UnsortedSegmentSum(),
         'desc_const': [4],
         'desc_inputs': [[3, 2, 1, 3], Tensor(np.array([[0, 1], [0, 1], [0, 1]]).astype(np.int32))],
-        'desc_bprop': [[4, 1, 3]],
-        'skip': ['backward']}),
+        'desc_bprop': [[4, 1, 3]]}),
     ('UnsortedSegmentMin', {
         'block': P.UnsortedSegmentMin(),
         'desc_const': [4],
