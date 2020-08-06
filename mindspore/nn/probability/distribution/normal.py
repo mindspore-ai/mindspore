@@ -256,8 +256,5 @@ class Normal(Distribution):
         sd = self._sd_value if sd is None else sd
         batch_shape = self.shape(self.zeroslike(mean) + self.zeroslike(sd))
         sample_shape = shape + batch_shape
-        mean_zero = self.const(0.0)
-        sd_one = self.const(1.0)
-        sample_norm = C.normal(sample_shape, mean_zero, sd_one, self.seed)
-        sample = mean + sample_norm * sd
-        return sample
+        sample_norm = C.normal(sample_shape, mean, sd, self.seed)
+        return sample_norm
