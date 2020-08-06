@@ -271,7 +271,8 @@ if (ENABLE_GPU)
                           ${CUDA_PATH}/lib64/libcurand.so
                           ${CUDNN_PATH}/lib64/libcudnn.so
                           ${CUDA_PATH}/lib64/libcudart.so
-                          ${CUDA_PATH}/lib64/stubs/libcuda.so)
+                          ${CUDA_PATH}/lib64/stubs/libcuda.so
+			  ${CUDA_PATH}/lib64/libcusolver.so)
     if (ENABLE_MPI)
         set_target_properties(_ms_mpi PROPERTIES INSTALL_RPATH ${ORIGIN_PATH})
     endif()
