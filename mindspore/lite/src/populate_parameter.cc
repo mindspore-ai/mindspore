@@ -1076,13 +1076,13 @@ OpParameter *PopulateStridedSliceParameter(const lite::Primitive *primitive) {
   strided_slice_param->op_parameter_.type_ = primitive->Type();
   auto n_dims = ((lite::StridedSlice *)primitive)->NDims();
   strided_slice_param->num_axes_ = n_dims;
-  auto begin = ((lite::StridedSlice *)primitive)->UpdatedBegins();
+  auto begin = ((lite::StridedSlice *)primitive)->GetBegins();
   (void)memcpy(strided_slice_param->begins_, (begin.data()), begin.size() * sizeof(int));
-  auto end = ((lite::StridedSlice *)primitive)->UpdatedEnds();
+  auto end = ((lite::StridedSlice *)primitive)->GetEnds();
   (void)memcpy(strided_slice_param->ends_, (end.data()), end.size() * sizeof(int));
-  auto stride = ((lite::StridedSlice *)primitive)->UpdatedStrides();
+  auto stride = ((lite::StridedSlice *)primitive)->GetStrides();
   (void)memcpy(strided_slice_param->strides_, (stride.data()), stride.size() * sizeof(int));
-  auto in_shape = ((lite::StridedSlice *)primitive)->UpdatedInShape();
+  auto in_shape = ((lite::StridedSlice *)primitive)->GetInShape();
   (void)memcpy(strided_slice_param->in_shape_, (in_shape.data()), in_shape.size() * sizeof(int));
   return reinterpret_cast<OpParameter *>(strided_slice_param);
 }

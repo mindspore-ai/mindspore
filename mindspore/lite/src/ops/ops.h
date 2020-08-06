@@ -660,29 +660,28 @@ class StridedSlice : public Primitive {
   explicit StridedSlice(schema::Primitive *primitive) : Primitive(primitive) {}
   const schema::StridedSlice *GetAttribute() const { return this->primitive->value_as_StridedSlice(); }
   int InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) override;
-  int NDims() { return this->updated_ndim_; }
+  int NDims() { return this->ndim_; }
   void ApplyNewAxisMask();
   std::vector<int> ApplyShrinkMask(std::vector<int> out_shape);
   void ApplyBeginMask();
   void ApplyEndMask();
   void ApplyEllipsisMask();
-  std::vector<int> UpdatedInShape() { return this->updated_in_shape_; }
-  std::vector<int> UpdatedBegins() { return this->updated_begins_; }
-  std::vector<int> UpdatedEnds() { return this->updated_ends_; }
-  std::vector<int> UpdatedStrides() { return this->updated_strides_; }
+  std::vector<int> GetInShape() { return this->in_shape_; }
+  std::vector<int> GetBegins() { return this->begins_; }
+  std::vector<int> GetEnds() { return this->ends_; }
+  std::vector<int> GetStrides() { return this->strides_; }
 
  protected:
-  int updated_ndim_;
-  int ori_ndim_;
-  std::vector<int> updated_in_shape_;
-  std::vector<int> updated_begins_;
-  std::vector<int> updated_ends_;
-  std::vector<int> updated_strides_;
-  std::vector<int> begins_mask_;
-  std::vector<int> ends_mask_;
-  std::vector<int> ellipsis_mask_;
-  std::vector<int> new_axis_mask_;
-  std::vector<int> shrink_axis_mask_;
+  int ndim_;
+  std::vector<int> in_shape_;
+  std::vector<int> begins_;
+  std::vector<int> ends_;
+  std::vector<int> strides_;
+  std::vector<bool> begins_mask_;
+  std::vector<bool> ends_mask_;
+  std::vector<bool> ellipsis_mask_;
+  std::vector<bool> new_axis_mask_;
+  std::vector<bool> shrink_axis_mask_;
 };
 
 class PriorBox : public Primitive {
