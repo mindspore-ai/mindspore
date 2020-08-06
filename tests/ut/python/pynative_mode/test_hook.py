@@ -152,7 +152,7 @@ def test_hook():
     assert cell_hook_done
     assert var_hook_done
     assert cell_bprop_done
-    print(loss_output.asnumpy().shape)
+    print(loss_output.asnumpy())
 
 
 bprop_debug = False

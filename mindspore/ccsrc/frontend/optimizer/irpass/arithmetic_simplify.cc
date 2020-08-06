@@ -20,6 +20,9 @@ namespace mindspore {
 namespace opt {
 namespace irpass {
 AnfNodePtr ArithmeticSimplify::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
+  if (MsContext::GetInstance()->execution_mode() == kPynativeMode) {
+    return nullptr;
+  }
   PatternNode x, y, z, xs;
   PConstant one_(node, false, 1);
   PConstant one_scalar_(node, false, 1, true);
@@ -68,6 +71,9 @@ AnfNodePtr ArithmeticSimplify::operator()(const OptimizerPtr &, const AnfNodePtr
 }
 
 AnfNodePtr ArithmeticSimplify2::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
+  if (MsContext::GetInstance()->execution_mode() == kPynativeMode) {
+    return nullptr;
+  }
   PatternNode x, y;
   PConstant zero_(node, false, 0);
 
