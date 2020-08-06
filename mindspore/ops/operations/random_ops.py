@@ -408,6 +408,7 @@ class RandomCategorical(PrimitiveWithInfer):
         >>> net = Net(8)
         >>> output = net(Tensor(x))
     """
+
     @prim_attr_register
     def __init__(self, dtype=mstype.int64):
         """Init RandomCategorical"""
@@ -435,3 +436,54 @@ class RandomCategorical(PrimitiveWithInfer):
         return {'shape': (x_shape),
                 'dtype': (self.dtype),
                 'value': None}
+
+
+class Multinomial(PrimitiveWithInfer):
+    r"""
+    Returns a tensor sampled from the multinomial probability distribution located in the corresponding
+    row of tensor input.
+
+    Note:
+        The rows of input do not need to sum to one (in which case we use the values as weights),
+        but must be non-negative, finite and have a non-zero sum.
+    Args:
+        seed (int): Seed data is used as entropy source for Random number engines generating pseudo-random numbers.
+          Default: 0.
+
+    Inputs:
+        - **input** (Tensor[float32]) - the input tensor containing the cumsum of probabilities, must be 1 or 2 dims.
+        - **num_samples** (int) - number of samples to draw.
+
+    Outputs:
+        Tensor. have the same rows with input, each row has num_samples sampled indices.
+
+    Examples:
+        >>> input = Tensor([0., 9., 4., 0.], mstype.float32)
+        >>> multinomial = P.Multinomial(seed=10)
+        >>> output = multinomial(input, 2)
+    """
+
+    @prim_attr_register
+    def __init__(self, seed=0):
+        """init"""
+        validator.check_value_type("seed", seed, [int], self.name)
+        self.init_prim_io_names(inputs=['input', 'num_sample'], outputs=['output'])
+
+    def __infer__(self, inputs, num_samples):
+        input_shape = inputs["shape"]
+        if len(input_shape) != 1 and len(input_shape) != 2:
+            raise ValueError("input dim must be 1 or 2")
+        validator.check_tensor_type_same({'inputs': inputs['dtype']}, [mstype.float32], self.name)
+        num_samples_value = num_samples["value"]
+        if num_samples_value is None:
+            raise ValueError(f"For {self.name}, shape nust be const")
+        validator.check_value_type("num_samples", num_samples_value, [int], self.name)
+        validator.check_integer("num_samples", num_samples_value, 0, Rel.GT, None)
+        y_shape = (num_samples_value,)
+        if len(input_shape) == 2:
+            y_shape = (input_shape[0], num_samples_value)
+        out = {
+            "shape": y_shape,
+            "dtype": mstype.int32,
+            "value": None}
+        return out

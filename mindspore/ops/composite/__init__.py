@@ -27,7 +27,7 @@ from .clip_ops import clip_by_value
 from .multitype_ops.add_impl import hyper_add
 from .multitype_ops.ones_like_impl import ones_like
 from .multitype_ops.zeros_like_impl import zeros_like
-from .random_ops import set_seed, normal
+from .random_ops import set_seed, normal, multinomial
 
 
 __all__ = [
@@ -50,4 +50,5 @@ __all__ = [
     'zip_operation',
     'set_seed',
     'normal',
+    'multinomial',
     'clip_by_value',]
