@@ -1222,7 +1222,7 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_AddN] = PopulateAddNParameter;
   populate_parameter_funcs_[schema::PrimitiveType_StridedSlice] = PopulateStridedSliceParameter;
   populate_parameter_funcs_[schema::PrimitiveType_ScatterND] = PopulateScatterNDParameter;
-  populate_parameter_funcs_[schema::PrimitiveType_Square] = PopulateSqueezeParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_Squeeze] = PopulateSqueezeParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Split] = PopulateSplitParameter;
   populate_parameter_funcs_[schema::PrimitiveType_PriorBox] = PopulatePriorBoxParameter;
   populate_parameter_funcs_[schema::PrimitiveType_QuantDTypeCast] = PopulateQuantDTypeCastParameter;
