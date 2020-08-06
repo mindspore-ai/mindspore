@@ -27,13 +27,9 @@ STATUS TfliteTransposeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tf
                                     schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
   MS_LOG(DEBUG) << "parse TfliteTransposeParser";
   std::unique_ptr<schema::TransposeT> attr(new schema::TransposeT());
-  const auto &tfliteAttr = tfliteOp->builtin_options.AsTransposeOptions();
-  if (tfliteAttr == nullptr) {
-    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
-    return RET_NULL_PTR;
-  }
 
   if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->perm)) {
+    MS_LOG(ERROR) << "parse Transpose attr perm failed";
     return RET_ERROR;
   }
 
