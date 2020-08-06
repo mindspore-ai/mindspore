@@ -24,6 +24,10 @@
 
 namespace mindspore {
 namespace context {
+#ifdef ENBALE_GE
+using mindspore::transform::DfGraphManager;
+#endif
+
 #ifndef NO_DLIB
 // Open tdt dataset
 bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
