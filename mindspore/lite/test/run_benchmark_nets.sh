@@ -75,21 +75,30 @@ cp  $models_path/*.ms ./benchmark_test/
 adb -s $device_id push ./benchmark_test /data/local/tmp/
 
 #third：run adb ,run session ,check the result:
-echo 'cd  /data/local/tmp/' > adb_cmd.txt
+echo 'cd  /data/local/tmp/benchmark_test' > adb_cmd.txt
+echo 'cp  /data/local/tmp/libc++_shared.so ./' >> adb_cmd.txt
 echo 'chmod 777 benchmark' >> adb_cmd.txt
 #model1：
-echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/;./benchmark --modelPath=test.ms' >> adb_cmd.txt
+echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath=test.ms' >> adb_cmd.txt
 #model2：
-echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath=hiai_bigmodel_ghost_2_1_no_normalized_no_trans_tflite.ms' >> adb_cmd.txt
+#echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath=hiai_bigmodel_ghost_2_1_no_normalized_no_trans_tflite.ms' >> adb_cmd.txt
 
-echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath=hiai_cn_recognize_modify_padv2.ms' >> adb_cmd.txt
+echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath=hiai_bigmodel_ghost_2_1_no_normalized_no_trans_tflite.ms --inDataPath=/data/local/tmp/input_output/input/hiai_bigmodel_ghost_2_1_no_normalized_no_trans_tflite.tflite.ms.bin --calibDataPath=/data/local/tmp/input_output/output/hiai_bigmodel_ghost_2_1_no_normalized_no_trans_tflite.tflite.ms.out' >> adb_cmd.txt
 
-echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath=hiai_detect_curve_model_float32.ms' >> adb_cmd.txt
+#echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath=hiai_cn_recognize_modify_padv2.ms' >> adb_cmd.txt
 
-echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath=hiai_detectmodel_desnet_256_128_64_32.ms' >> adb_cmd.txt
+echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath=hiai_cn_recognize_modify_padv2.ms --inDataPath=/data/local/tmp/input_output/input/hiai_cn_recognize_modify_padv2.tflite.ms.bin --calibDataPath=/data/local/tmp/input_output/output/hiai_cn_recognize_modify_padv2.tflite.ms.out' >> adb_cmd.txt
+
+#echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath=hiai_detect_curve_model_float32.ms' >> adb_cmd.txt
+
+#echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath=hiai_detectmodel_desnet_256_128_64_32.ms' >> adb_cmd.txt
 
 
-echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath=mobilenet_v2_1_0_224.ms' >> adb_cmd.txt
+#echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath=mobilenet_v2_1_0_224.ms' >> adb_cmd.txt
+
+echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath=mobilenet_v2_1_0_224.ms --inDataPath=/data/local/tmp/input_output/input/mobilenet_v2_1.0_224.tflite.ms.bin --calibDataPath=/data/local/tmp/input_output/output/mobilenet_v2_1.0_224.tflite.ms.out' >> adb_cmd.txt
+
+
 
 adb -s $device_id shell < adb_cmd.txt
 
