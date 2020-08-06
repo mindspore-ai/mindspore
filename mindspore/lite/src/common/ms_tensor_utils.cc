@@ -33,7 +33,7 @@ std::vector<MSTensor *> PackToMSTensors(const std::vector<Tensor *> &in_tensors)
       MS_LOG(ERROR) << "new LiteTensor failed";
       return ret;
     }
-    ret.emplace_back();
+    ret.emplace_back(ms_tensor);
   }
   return ret;
 }

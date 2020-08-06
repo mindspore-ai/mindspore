@@ -27,7 +27,8 @@
 namespace mindspore {
 namespace session {
 struct CallBackParam {
-  std::string name_callback_aram;
+  std::string name_callback_param;
+  std::string type_callback_param;
 };
 
 using KernelCallBack = std::function<bool(std::vector<tensor::MSTensor *> inputs,
