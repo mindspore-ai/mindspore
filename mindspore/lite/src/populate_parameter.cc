@@ -70,6 +70,7 @@
 #include "src/runtime/kernel/arm/nnacl/int8/quant_dtype_cast.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/lstm.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/embedding_lookup.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/elu.h"
 
 namespace mindspore::kernel {
 OpParameter *PopulateBatchNorm(const lite::Primitive *primitive) {
@@ -1239,6 +1240,18 @@ OpParameter *PopulateBiasAddParameter(const lite::Primitive *primitive) {
   return reinterpret_cast<OpParameter *>(arithmetic_param);
 }
 
+OpParameter *PopulateEluParameter(const lite::Primitive *primitive) {
+  EluParameter *elu_parameter = new (std::nothrow) EluParameter();
+  if (elu_parameter == nullptr) {
+    MS_LOG(ERROR) << "new EluParameter failed";
+    return nullptr;
+  }
+  elu_parameter->op_parameter_.type_ = primitive->Type();
+  auto param = primitive->Value()->value_as_Elu();
+  elu_parameter->alpha_ = param->alpha();
+  return reinterpret_cast<OpParameter *>(elu_parameter);
+}
+
 PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_SoftMax] = PopulateSoftmaxParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Activation] = PopulateActivationParameter;
@@ -1328,6 +1341,7 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_QuantDTypeCast] = PopulateQuantDTypeCastParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Lstm] = PopulateLstmParameter;
   populate_parameter_funcs_[schema::PrimitiveType_EmbeddingLookup] = PopulateEmbeddingLookupParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_Elu] = PopulateEluParameter;
 }
 
 PopulateParameterRegistry *PopulateParameterRegistry::GetInstance() {

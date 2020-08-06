@@ -782,6 +782,12 @@ class Lstm : public Primitive {
   int InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) override;
 };
 
+class Elu : public Primitive {
+ public:
+  explicit Elu(schema::Primitive *primitive) : Primitive(primitive) {}
+  const schema::Elu *GetAttribute() const { return this->primitive->value_as_Elu(); }
+};
+
 class EmbeddingLookup : public Primitive {
  public:
   explicit EmbeddingLookup(schema::Primitive *primitive) : Primitive(primitive) {}
