@@ -136,6 +136,7 @@ REGISTER(EmbeddingLookupInfo);
 REGISTER(TileInfo);
 REGISTER(StridedSliceInfo);
 REGISTER(DropoutInfo);
+REGISTER(ConcatInfo);
 }  // namespace parallel
 }  // namespace mindspore
 

@@ -222,9 +222,17 @@ def get_bprop_virtual_div_operator(self):
     dtype = P.DType()
 
     def bprop(x, out, dout):
-        if F.issubclass_(F.dtype(dout), mstype.bool_):
-            return (dout,)
-        dx = op(dout, cast(F.scalar_to_array(divisor), dtype(dout)))
+        if F.issubclass_(F.typeof(dout), mstype.tensor):
+            if F.issubclass_(F.dtype(dout), mstype.bool_):
+                return (dout,)
+            dx = op(dout, cast(F.scalar_to_array(divisor), dtype(dout)))
+            return (dx,)
+
+        dx = ()
+        input_nums = F.tuple_len(dout)
+        for i in range(input_nums):
+            ele_grad = op(dout[i], cast(F.scalar_to_array(divisor), dtype(dout[i])))
+            dx = dx + (ele_grad,)
         return (dx,)
     return bprop
 
