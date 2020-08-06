@@ -74,16 +74,22 @@ class Shape : public BaseShape {
     (void)std::transform(list.begin(), list.end(), std::back_inserter(shape_),
                          [](const int64_t &value) { return static_cast<int>(value); });
   }
+  Shape(const std::vector<int> &list, const std::vector<int> &min_shape, const std::vector<int> &max_shape)
+      : shape_(list), min_shape_(min_shape), max_shape_(max_shape) {}
   ~Shape() override = default;
   MS_DECLARE_PARENT(Shape, BaseShape)
   std::string ToString() const override;
   std::string DumpText() const override;
   bool operator==(const BaseShape &other) const override;
-  BaseShapePtr Clone() const override { return std::make_shared<Shape>(shape_); }
+  BaseShapePtr Clone() const override { return std::make_shared<Shape>(shape_, min_shape_, max_shape_); }
   void Broaden() override;
   std::vector<int> &shape() { return shape_; }
+  std::vector<int> &min_shape() { return min_shape_; }
+  std::vector<int> &max_shape() { return max_shape_; }
 
-  std::vector<int> shape_;  // use SHP_ANY to implement the any shape in python
+  std::vector<int> shape_;      // use SHP_ANY to implement the any shape in python
+  std::vector<int> min_shape_;  // record mininum length for each dynamic dimention
+  std::vector<int> max_shape_;  // record maximum length for each dynamic dimention
 };
 using ShapePtr = std::shared_ptr<Shape>;
 using ShapePtrList = std::vector<ShapePtr>;

@@ -47,7 +47,9 @@ bool BaseRefToInt(const ValuePtr &v, int *value);
 bool ValueToBool(const ValuePtr &in, bool *out);
 py::object ValuePtrToPyData(const ValuePtr &value);
 
-AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py::object &type_obj);
+AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py::object &type_obj,
+                                           const py::object &min_shape = py::none(),
+                                           const py::object &max_shape = py::none());
 
 bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple &args,
                                        const std::shared_ptr<py::object> &ret_val);

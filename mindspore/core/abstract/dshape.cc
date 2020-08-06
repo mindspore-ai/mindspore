@@ -67,6 +67,9 @@ std::string Shape::DumpText() const {
   buffer << "[";
   for (size_t i = 0; i < shape_.size(); i++) {
     buffer << (i > 0 ? ", " : "") << shape_[i];
+    if (shape_[i] == SHP_ANY && min_shape_.size() == shape_.size() && max_shape_.size() == shape_.size()) {
+      buffer << "_" << min_shape_[i] << "^" << max_shape_[i];
+    }
   }
   buffer << "]";
   return buffer.str();
