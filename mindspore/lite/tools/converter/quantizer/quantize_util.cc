@@ -23,6 +23,7 @@
 #include "mindspore/lite/tools/converter/quantizer/general_bitpacking.h"
 #include "src/common/utils.h"
 #include "abstract/abstract_value.h"
+#include "securec/include/securec.h"
 
 using std::string;
 using std::vector;
@@ -310,12 +311,12 @@ STATUS PostBitPack(float *weight, size_t shapeSize, size_t bitNum) {
     if (bitNum < 8 && bitNum > 1) {
         BitPack weight_bitpack(bitNum);
         weight_bitpack.BitPacking(qDatas, qDatas_packed);
-        if (0 != memcpy_s(rawDatas, shapeSize, &qDatas_packed[0], shapeSize)) {
+        if (EOK != memcpy_s(rawDatas, shapeSize, &qDatas_packed[0], shapeSize)) {
           MS_LOG(ERROR) << "PostBitPack memcpy_s qDatas_packed failed";
           return RET_ERROR;
         }
     } else if (bitNum == 8) {
-        if (0 != memcpy_s(rawDatas, shapeSize, &qDatas[0], shapeSize)) {
+        if (EOK != memcpy_s(rawDatas, shapeSize, &qDatas[0], shapeSize)) {
           MS_LOG(ERROR) << "PostBitPack memcpy_s qDatas failed";
           return RET_ERROR;
         }

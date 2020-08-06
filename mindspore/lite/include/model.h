@@ -23,6 +23,8 @@
 #include "schema/model_generated.h"
 
 namespace mindspore {
+#define MS_API __attribute__((visibility("default")))
+
 /// \brief ModelImpl defined by MindSpore Lite.
 ///
 /// \note List public class and interface for reference.
@@ -35,7 +37,7 @@ namespace lite {
 class Primitive;
 
 /// \brief Model defined by MindSpore Lite.
-class Model {
+class MS_API Model {
  public:
   /// \brief Static method to create a Model pointer.
   ///
@@ -78,7 +80,7 @@ class Model {
 };
 
 /// \brief ModelBuilder defined by MindSpore Lite.
-class ModelBuilder {
+class MS_API ModelBuilder {
  public:
   /// \brief OutEdge defined by MindSpore Lite.
   struct OutEdge {

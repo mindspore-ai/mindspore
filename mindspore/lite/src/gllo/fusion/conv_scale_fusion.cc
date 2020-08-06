@@ -22,6 +22,7 @@
 #include "mindspore/ccsrc/utils/utils.h"
 #include "mindspore/lite/src/gllo/common/utils.h"
 #include "include/errorcode.h"
+#include "securec/include/securec.h"
 
 namespace mindspore::opt {
 namespace {
@@ -69,7 +70,7 @@ const void ConvScaleFusion::InitTransParam(const CNodePtr &scale_node, int kerne
   auto weight_value = std::dynamic_pointer_cast<ParamValueLite>(scale_weight_param);
   auto weight_data = reinterpret_cast<const float *>(weight_value->tensor_addr());
 
-  if (0 != memcpy_s(trans_scale, kernel_num * sizeof(float), weight_data, kernel_num * sizeof(float))) {
+  if (EOK != memcpy_s(trans_scale, kernel_num * sizeof(float), weight_data, kernel_num * sizeof(float))) {
     MS_LOG(EXCEPTION) << "memcpy_s transScale failed";
   }
 
@@ -77,7 +78,7 @@ const void ConvScaleFusion::InitTransParam(const CNodePtr &scale_node, int kerne
     auto scale_bias_param = scale_bias_node->cast<ParameterPtr>()->default_param();
     auto bias_value = std::dynamic_pointer_cast<ParamValueLite>(scale_bias_param);
     auto bias_data = reinterpret_cast<const float *>(bias_value->tensor_addr());
-    if (0 != memcpy_s(trans_bias, kernel_num * sizeof(float), bias_data, kernel_num * sizeof(float))) {
+    if (EOK != memcpy_s(trans_bias, kernel_num * sizeof(float), bias_data, kernel_num * sizeof(float))) {
       MS_LOG(EXCEPTION) << "memcpy_s transScale failed";
     }
   }

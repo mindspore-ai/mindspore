@@ -21,6 +21,7 @@
 #include "mindspore/lite/src/ir/primitive_t_value.h"
 #include "mindspore/ccsrc/utils/utils.h"
 #include "mindspore/lite/src/gllo/common/utils.h"
+#include "securec/include/securec.h"
 
 namespace mindspore::opt {
 namespace {
@@ -46,7 +47,7 @@ void CalTransale(const AnfNodePtr &bn_scale_node, const AnfNodePtr &bn_var_node,
   auto bn_var_tensor = std::dynamic_pointer_cast<ParamValueLite>(bn_var_param);
   auto bn_var_data = reinterpret_cast<float *>(bn_var_tensor->tensor_addr());
   // cal transScale, tf : scale/sqrt(variance + eps); caffe : 1/sqrt(variance + eps)
-  if (memcpy_s(trans_scale, kernel_num * sizeof(float), bn_var_data, kernel_num * sizeof(float)) != 0) {
+  if (memcpy_s(trans_scale, kernel_num * sizeof(float), bn_var_data, kernel_num * sizeof(float)) != EOK) {
     MS_LOG(EXCEPTION) << "memcpy_s transScale error";
     return;
   }

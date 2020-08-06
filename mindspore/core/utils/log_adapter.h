@@ -24,7 +24,6 @@
 #include <memory>
 #include <functional>
 #include "utils/overload.h"
-#include "./securec.h"
 #ifndef USE_ANDROID_LOG
 #ifdef USE_GLOG
 #include "glog/logging.h"

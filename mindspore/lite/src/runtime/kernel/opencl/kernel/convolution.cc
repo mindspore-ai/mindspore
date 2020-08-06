@@ -66,12 +66,12 @@ int ConvolutionOpenCLKernel::InitBuffer() {
   if (io_dataformat_ == schema::Format_NHWC) {
     packed_weight_ = reinterpret_cast<float *>(allocator->Malloc(weight_tensor->Size()));
     packed_weight_ = reinterpret_cast<float *>(allocator->MapBuffer(packed_weight_, CL_MAP_WRITE, nullptr, true));
-    memcpy_s(packed_weight_, weight_tensor->Size(), weight_tensor->Data(), weight_tensor->Size());
+    memcpy(packed_weight_, weight_tensor->Data(), weight_tensor->Size());
     allocator->UnmapBuffer(packed_weight_);
 
     packed_bias_ = reinterpret_cast<float *>(allocator->Malloc(bias_tensor->Size()));
     packed_bias_ = reinterpret_cast<float *>(allocator->MapBuffer(packed_bias_, CL_MAP_WRITE, nullptr, true));
-    memcpy_s(packed_bias_, bias_tensor->Size(), bias_tensor->Data(), bias_tensor->Size());
+    memcpy(packed_bias_, bias_tensor->Data(), bias_tensor->Size());
     allocator->UnmapBuffer(packed_bias_);
   } else if (io_dataformat_ == schema::Format_NHWC4) {
     // OHWI -> OHWIIO
@@ -88,7 +88,7 @@ int ConvolutionOpenCLKernel::InitBuffer() {
 
     packed_weight_ = reinterpret_cast<float *>(allocator->Malloc(packed_weight_size));
     packed_weight_ = reinterpret_cast<float *>(allocator->MapBuffer(packed_weight_, CL_MAP_WRITE, nullptr, true));
-    memset_s(packed_weight_, packed_weight_size, 0x00, packed_weight_size);
+    memset(packed_weight_, 0x00, packed_weight_size);
     auto weight_data = reinterpret_cast<float *>(weight_tensor->Data());
     for (int co = 0; co < CO; ++co) {
       for (int kh = 0; kh < KH; ++kh) {
@@ -108,7 +108,7 @@ int ConvolutionOpenCLKernel::InitBuffer() {
     size_t packed_bias_size = CO_SLICES * CO_TILE * sizeof(float);
     packed_bias_ = reinterpret_cast<float *>(allocator->Malloc(packed_bias_size));
     packed_bias_ = reinterpret_cast<float *>(allocator->MapBuffer(packed_bias_, CL_MAP_WRITE, nullptr, true));
-    memset_s(packed_bias_, packed_bias_size, 0x00, packed_bias_size);
+    memset(packed_bias_, 0x00, packed_bias_size);
     auto bias_data = reinterpret_cast<float *>(bias_tensor->Data());
     for (int co = 0; co < CO; ++co) {
       packed_bias_[co] = bias_data[co];

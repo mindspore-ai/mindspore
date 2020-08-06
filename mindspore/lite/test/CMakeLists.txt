@@ -3,7 +3,6 @@ set(LITE_DIR ${TOP_DIR}/mindspore/lite)
 include_directories(${TOP_DIR})
 include_directories(${TEST_DIR})
 include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/dependency_gtest.cmake)
-#include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/external_libs/gtest.cmake)
 
 ### anf src
 set(ANF_SRC
@@ -294,7 +293,7 @@ endif ()
 
 add_executable(lite-test ${TEST_SRC})
 
-target_link_libraries(lite-test dl ${SECUREC_LIBRARY} ${GTEST_LIBRARY} mindspore::json)
+target_link_libraries(lite-test dl ${GTEST_LIBRARY})
 if (BUILD_MINDDATA)
     target_link_libraries(lite-test
            minddata-lite
@@ -316,5 +315,7 @@ if (BUILD_CONVERTER)
             pthread
             protobuf
             mindspore::eigen
+            mindspore::json
+            ${SECUREC_LIBRARY}
             )
 endif()

@@ -75,8 +75,6 @@ add_library(mindspore-lite SHARED ${LITE_SRC} ${ANF_SRC})
 target_link_libraries(mindspore-lite
         cpu_kernel_mid_
         ops_mid_
-        ${SECUREC_LIBRARY}
-        mindspore::json
         )
 
 add_subdirectory(runtime/kernel/arm)
@@ -88,4 +86,10 @@ if (BUILD_MINDDATA)
 endif ()
 
 add_subdirectory(ops)
+
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND (PLATFORM_ARM64 OR PLATFORM_ARM32))
+add_custom_command(TARGET mindspore-lite POST_BUILD
+        COMMAND ${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip
+        ${TOP_DIR}/mindspore/lite/build/src/libmindspore-lite.so)
+endif()
 
