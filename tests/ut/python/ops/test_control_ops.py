@@ -398,7 +398,7 @@ def test_switch_layer():
             ret = F.switch_layer(index, self.layers)(x) * self.z3
             return ret
 
-    index = Tensor(0)
+    index = Tensor(0, dtype=mstype.int32)
     net = SwitchLayerCell()
     net(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
     C.grad_by_list(net, ParameterTuple(net.trainable_params()))(index,
@@ -436,7 +436,7 @@ def test_index_to_switch_layer():
             ret = self.layers[index](x) * self.z3
             return ret
 
-    index = Tensor(0)
+    index = Tensor(0, dtype=mstype.int32)
     net = SwitchLayerCell()
     net(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
     C.grad_by_list(net, ParameterTuple(net.trainable_params()))(index,

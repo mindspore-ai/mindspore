@@ -101,6 +101,7 @@ list_type = typing.List
 tuple_type = typing.Tuple
 index_slices = typing.IndexedSlicesType()
 sparse_tensor = typing.SparseTensorType()
+undetermined = typing.UndeterminedType()
 
 number_type = (int8,
                int16,
