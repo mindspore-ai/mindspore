@@ -103,6 +103,9 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
   float *gemm_out = buffer_list[1];
   float *tmp_out_data = buffer_list[2];
   float *tmp_data = buffer_list[3];
+  int trans_input_offset = TILE_NUM * input_unit_square * ic4 * C4NUM;
+  int gemm_out_offset = TILE_NUM * input_unit_square * oc4 * C4NUM;
+  int tmp_data_offset = input_unit_square * C4NUM;
   // step 1 : filter transform (pre-processed offline)
   // step 2 : input transform (online)
   for (int b = 0; b < in_batch; b++) {
@@ -110,15 +113,16 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
       int out_tile_index = thread_id * TILE_NUM;
       int cal_num = output_count - thread_id * TILE_NUM;
       cal_num = cal_num > TILE_NUM ? TILE_NUM : cal_num;
-      WinogradInputTransform(input_data, trans_input, tmp_data, cal_num, out_tile_index, out_w_block, conv_param,
+      WinogradInputTransform(input_data, trans_input + task_id * trans_input_offset,
+                             tmp_data + task_id * tmp_data_offset, cal_num, out_tile_index, out_w_block, conv_param,
                              input_trans_func);
       // step 3 : gemm
-      gemm_func(gemm_out, trans_input, trans_weight, nullptr, input_unit_square, ic4, oc4 * C4NUM, output_offset, 1, 1,
-                0, 0);
+      gemm_func(gemm_out + task_id * gemm_out_offset, trans_input + task_id * trans_input_offset, trans_weight, nullptr,
+                input_unit_square, ic4, oc4 * C4NUM, output_offset, 1, 1, 0, 0);
 
       // step 4 : output transform
-      WinogradOutputTransform(gemm_out, tmp_out_data, bias_data, cal_num, out_tile_index, out_w_block, conv_param,
-                              output_trans_func);
+      WinogradOutputTransform(gemm_out + task_id * gemm_out_offset, tmp_out_data, bias_data, cal_num, out_tile_index,
+                              out_w_block, conv_param, output_trans_func);
     }
   }
   // get real output
@@ -191,20 +195,25 @@ void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_dat
   float *block_unit_buffer = buffer_list[1];
   float *tmp_dst_buffer = buffer_list[2];
   float *nc4hw4_out = buffer_list[3];
+  int tile_buffer_offset = TILE_NUM * input_unit_square * ic4 * C4NUM;
+  int block_unit_buffer_offset = input_unit_square * C4NUM;
+  int tmp_dst_buffer_offset = TILE_NUM * input_unit_square * oc4 * C4NUM;
 
   int input_batch = conv_param->input_batch_;
   for (int batch = 0; batch < input_batch; batch++) {
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
       int start_index = thread_id * TILE_NUM;
       int real_cal_num = (output_count - start_index) < TILE_NUM ? (output_count - start_index) : TILE_NUM;
-      Conv3x3Fp32InputTransform(input_data, tile_buffer, block_unit_buffer, start_index, real_cal_num, out_w_block,
-                                conv_param);
+      Conv3x3Fp32InputTransform(input_data, tile_buffer + task_id * tile_buffer_offset,
+                                block_unit_buffer + task_id * block_unit_buffer_offset, start_index, real_cal_num,
+                                out_w_block, conv_param);
 
-      gemm_func(tmp_dst_buffer, tile_buffer, transed_weight, nullptr, input_unit_square, ic4, oc4 * C4NUM,
+      gemm_func(tmp_dst_buffer + task_id * tmp_dst_buffer_offset, tile_buffer + task_id * tile_buffer_offset,
+                transed_weight, nullptr, input_unit_square, ic4, oc4 * C4NUM,
                 oc4 * C4NUM * input_unit_square * sizeof(float), 1, 1, 0, 0);
 
-      Conv3x3Fp32OutputTransform(tmp_dst_buffer, nc4hw4_out, bias_data, start_index, real_cal_num, out_w_block,
-                                 conv_param);
+      Conv3x3Fp32OutputTransform(tmp_dst_buffer + task_id * tmp_dst_buffer_offset, nc4hw4_out, bias_data, start_index,
+                                 real_cal_num, out_w_block, conv_param);
     }
     PackNC4HW4ToNHWCFp32(nc4hw4_out, output_data, 1, conv_param->output_h_ * conv_param->output_w_, output_channel);
   }
