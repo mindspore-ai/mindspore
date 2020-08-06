@@ -32,5 +32,4 @@ int mindspore::lite::AnfMulPopulater::Parse(mindspore::CNodePtr cnodePtr, schema
   return 0;
 }
 AnfNodePopulaterRegistrar anfMulParser("Mul", new AnfMulPopulater());
-AnfNodePopulaterRegistrar anfMatMulParser("MatMul", new AnfMulPopulater());
 }  // namespace mindspore::lite
