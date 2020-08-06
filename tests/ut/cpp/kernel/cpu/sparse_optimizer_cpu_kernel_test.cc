@@ -16,7 +16,7 @@
 
 #include <vector>
 #include "common/common_test.h"
-#include "backend/kernel_compiler/common_utils.h"
+#include "backend/kernel_compiler/cpu/sparse_optimizer_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
@@ -51,17 +51,17 @@ TEST_F(CommonUtilTest, BucketReduceSparseGradient1) {
   std::vector<int> tmp_indices(6);
   std::vector<float> tmp_grad(12);
 
-  SparseGradient unique_grad({summed_grad.data(), unique_indices.data(), 6});
-  SparseGradient workspace_grad({tmp_grad.data(), tmp_indices.data(), 6});
-  SparseGradient input_grad({grad.data(), indices.data(), 6});
+  SparseGradient<int> unique_grad({summed_grad.data(), unique_indices.data(), 6});
+  SparseGradient<int> workspace_grad({tmp_grad.data(), tmp_indices.data(), 6});
+  SparseGradient<int> input_grad({grad.data(), indices.data(), 6});
 
-  ReduceSparseGradientParam param;
+  ReduceSparseGradientParam<int> param;
   param.input_grad_ = &input_grad;
   param.workspace_grad_ = &workspace_grad;
   param.output_grad_ = &unique_grad;
   param.max_index_ = 6;
   param.value_stride_ = 2;
-  BucketReduceSparseGradient(param);
+  SparseOptimizerCPUKernel::BucketReduceSparseGradient(param);
 
   EXPECT_EQ(unique_grad.indices_size_, 3);
   std::vector<int> expect_indices({0, 1, 3});
@@ -103,17 +103,17 @@ TEST_F(CommonUtilTest, BucketReduceSparseGradient2) {
   std::vector<float> summed_grad(12);
   std::vector<int> tmp_indices(6);
   std::vector<float> tmp_grad(12);
-  SparseGradient unique_grad({summed_grad.data(), unique_indices.data(), 6});
-  SparseGradient workspace_grad({tmp_grad.data(), tmp_indices.data(), 6});
-  SparseGradient input_grad({grad.data(), indices.data(), 6});
+  SparseGradient<int> unique_grad({summed_grad.data(), unique_indices.data(), 6});
+  SparseGradient<int> workspace_grad({tmp_grad.data(), tmp_indices.data(), 6});
+  SparseGradient<int> input_grad({grad.data(), indices.data(), 6});
 
-  ReduceSparseGradientParam param;
+  ReduceSparseGradientParam<int> param;
   param.input_grad_ = &input_grad;
   param.workspace_grad_ = &workspace_grad;
   param.output_grad_ = &unique_grad;
   param.max_index_ = 6;
   param.value_stride_ = 2;
-  BucketReduceSparseGradient(param);
+  SparseOptimizerCPUKernel::BucketReduceSparseGradient(param);
 
   EXPECT_EQ(unique_grad.indices_size_, 2);
 

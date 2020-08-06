@@ -40,7 +40,6 @@ void CPUKernelRuntime::AssignKernelAddress(session::KernelGraph *kernel_graph) {
 
 void CPUKernelRuntime::AssignValueNodeAddress(session::KernelGraph *kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  size_t type_size = sizeof(float);
   for (auto &item_node : kernel_graph->graph_value_nodes()) {
     MS_EXCEPTION_IF_NULL(item_node);
     if (item_node->isa<ValueNode>()) {
@@ -53,11 +52,23 @@ void CPUKernelRuntime::AssignValueNodeAddress(session::KernelGraph *kernel_graph
       }
       auto tensor = node_value->cast<TensorPtr>();
       MS_EXCEPTION_IF_NULL(tensor);
+      size_t type_size = sizeof(float);
+      if (tensor->data_type() == kNumberTypeInt64) {
+        type_size = GetTypeByte(TypeIdToType(kNumberTypeInt64));
+      }
       ShapeVector data_shape = tensor->shape();
       size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(), type_size, std::multiplies<size_t>());
-      DeviceAddressPtr address = CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT, kNumberTypeFloat32);
+      DeviceAddressPtr address = nullptr;
+      if (tensor->data_type() == kNumberTypeInt32) {
+        address = CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT, kNumberTypeInt32);
+      } else if (tensor->data_type() == kNumberTypeInt64) {
+        address = CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT, kNumberTypeInt64);
+      } else {
+        address = CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT, kNumberTypeFloat32);
+      }
       MS_EXCEPTION_IF_NULL(address);
-      if (tensor->data_type() == kNumberTypeFloat32 || tensor->data_type() == kNumberTypeInt32) {
+      if (tensor->data_type() == kNumberTypeFloat32 || tensor->data_type() == kNumberTypeInt32 ||
+          tensor->data_type() == kNumberTypeInt64) {
         address->ptr_ = tensor->data_c();
       } else {
         address->ptr_ = resource_manager_.MemMalloc(tensor_size);
@@ -74,14 +85,20 @@ void CPUKernelRuntime::AssignValueNodeAddress(session::KernelGraph *kernel_graph
 
 void CPUKernelRuntime::AssignInputNodeAddress(const session::KernelGraph *kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  size_t type_size = sizeof(float);
   for (auto &item : kernel_graph->inputs()) {
     MS_EXCEPTION_IF_NULL(item);
     if (item->isa<Parameter>()) {
       auto output_num = AnfAlgo::GetOutputTensorNum(item);
       for (size_t index = 0; index < output_num; index++) {
         TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(item, index);
+        if (output_type_id == kTypeUnknown) {
+          output_type_id = AnfAlgo::GetOutputInferDataType(item, index);
+        }
         std::vector<size_t> fmt_shape = AnfAlgo::GetOutputDeviceShape(item, index);
+        size_t type_size = sizeof(float);
+        if (output_type_id == kNumberTypeInt64) {
+          type_size = GetTypeByte(TypeIdToType(kNumberTypeInt64));
+        }
         size_t tensor_size =
           fmt_shape.empty() ? type_size
                             : std::accumulate(fmt_shape.begin(), fmt_shape.end(), type_size, std::multiplies<size_t>());
@@ -222,7 +239,7 @@ void CPUKernelRuntime::BindInputOutput(session::KernelGraph *kernel_graph, const
         (void)tensor->data_sync();
       }
       if (tensor->data_type() == address->type_id_ || tensor->data_type() == kNumberTypeFloat32 ||
-          tensor->data_type() == kNumberTypeInt32) {
+          tensor->data_type() == kNumberTypeInt32 || tensor->data_type() == kNumberTypeInt64) {
         address->ptr_ = tensor->data_c();
       } else {
         ShapeVector data_shape = tensor->shape();

@@ -374,10 +374,12 @@ tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple) {
   }
   ScalarPtr scalar = v->cast<ScalarPtr>();
   MS_EXCEPTION_IF_NULL(scalar);
-  if (scalar->isa<IntergerImm>()) {
-    tensor = CreateTensorWithValueTuple<int>(value_tuple, kInt32, kType32Len);
+  if (scalar->isa<Int32Imm>()) {
+    tensor = CreateTensorWithValueTuple<int32_t>(value_tuple, kInt32, sizeof(int32_t));
+  } else if (scalar->isa<Int64Imm>()) {
+    tensor = CreateTensorWithValueTuple<int64_t>(value_tuple, kInt64, sizeof(int64_t));
   } else if (scalar->isa<FloatImm>()) {
-    tensor = CreateTensorWithValueTuple<float>(value_tuple, kFloat32, kType32Len);
+    tensor = CreateTensorWithValueTuple<float>(value_tuple, kFloat32, sizeof(float));
   } else {
     auto type = scalar->type();
     auto type_str = (type == nullptr) ? "nullptr" : type->ToString();
@@ -697,6 +699,9 @@ namespace {
 ValueNodePtr CreateValueNodeWithSexp(const BaseRef &sexp) {
   if (utils::isa<int>(sexp)) {
     return NewValueNode(utils::cast<int>(sexp));
+  }
+  if (utils::isa<int64_t>(sexp)) {
+    return NewValueNode(utils::cast<int64_t>(sexp));
   }
   if (utils::isa<float>(sexp)) {
     return NewValueNode(utils::cast<float>(sexp));
