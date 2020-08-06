@@ -19,6 +19,9 @@ from mindspore.ops import _utils as utils
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.common import dtype as mstype
+from mindspore.ops import operations as P
+from mindspore.ops import composite as C
+import mindspore.nn as nn
 
 def cast_to_tensor(t, dtype=mstype.float32):
     """
@@ -196,3 +199,55 @@ def check_prob(p):
     comp = np.greater(p.asnumpy(), np.ones(p.shape))
     if comp.any():
         raise ValueError('Probabilities should be less than or equal to one')
+
+
+def logits_to_probs(logits, is_binary=False):
+    """
+    converts logits into probabilities.
+    Args:
+        logits (Tensor)
+        is_binary (bool)
+    """
+    if is_binary:
+        return nn.sigmoid()(logits)
+    return nn.softmax(axis=-1)(logits)
+
+
+def clamp_probs(probs):
+    """
+    clamp probs boundary
+    Args:
+        probs (Tensor)
+    """
+    eps = P.Eps()(probs)
+    return C.clip_by_value(probs, eps, 1-eps)
+
+
+def probs_to_logits(probs, is_binary=False):
+    """
+    converts probabilities into logits.
+        Args:
+        probs (Tensor)
+        is_binary (bool)
+    """
+    ps_clamped = clamp_probs(probs)
+    if is_binary:
+        return P.Log()(ps_clamped) - P.Log()(1-ps_clamped)
+    return P.Log()(ps_clamped)
+
+def check_tensor_type(name, inputs, valid_type):
+    """
+   Check if inputs is proper.
+
+   Args:
+       inputs: Tensor to be checked.
+       name: inputs name
+
+   Raises:
+       ValueError: if inputs is not a proper Tensor.
+   """
+    if not isinstance(inputs, Tensor):
+        raise TypeError(f"{name} should be a Tensor")
+    inputs = P.DType()(inputs)
+    if inputs not in valid_type:
+        raise TypeError(f"{name} dtype is invalid")
