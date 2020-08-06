@@ -67,6 +67,7 @@
 #include "src/runtime/kernel/arm/opclib/fp32/space_to_depth.h"
 #include "src/runtime/kernel/arm/opclib/fp32/space_to_batch.h"
 #include "src/runtime/kernel/arm/opclib/int8/quant_dtype_cast.h"
+#include "src/runtime/kernel/arm/opclib/fp32/lstm.h"
 
 namespace mindspore::kernel {
 OpParameter *PopulateFillParameter(const lite::Primitive *primitive) {
@@ -1169,6 +1170,23 @@ OpParameter *PopulatePriorBoxParameter(const lite::Primitive *primitive) {
   return reinterpret_cast<OpParameter *>(prior_box_param);
 }
 
+OpParameter *PopulateLstmParameter(const lite::Primitive *primitive) {
+  LstmParameter *lstm_param = new (std::nothrow) LstmParameter();
+  if (lstm_param == nullptr) {
+    MS_LOG(ERROR) << "new LstmParameter fail!";
+    return nullptr;
+  }
+  lstm_param->op_parameter_.type_ = primitive->Type();
+  auto param = primitive->Value()->value_as_Lstm();
+  if (param == nullptr) {
+    delete (lstm_param);
+    MS_LOG(ERROR) << "get Lstm param nullptr.";
+    return nullptr;
+  }
+  lstm_param->bidirectional_ = param->bidirection();
+  return reinterpret_cast<OpParameter *>(lstm_param);
+}
+
 PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_SoftMax] = PopulateSoftmaxParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Activation] = PopulateActivationParameter;
@@ -1244,6 +1262,7 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_Split] = PopulateSplitParameter;
   populate_parameter_funcs_[schema::PrimitiveType_PriorBox] = PopulatePriorBoxParameter;
   populate_parameter_funcs_[schema::PrimitiveType_QuantDTypeCast] = PopulateQuantDTypeCastParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_Lstm] = PopulateLstmParameter;
 }
 
 PopulateParameterRegistry *PopulateParameterRegistry::GetInstance() {
