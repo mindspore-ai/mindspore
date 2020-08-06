@@ -86,7 +86,7 @@ void StridedSlice::ApplyBeginMask() {
 
 void StridedSlice::ApplyEndMask() {
   for (int i = 0; i < ndim_; i++) {
-    if (ends_.at(i)) {
+    if (ends_mask_.at(i)) {
       ends_.at(i) = in_shape_.at(i);
     }
   }

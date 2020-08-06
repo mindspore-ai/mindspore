@@ -22,12 +22,9 @@ const int32_t DIM_DEFAULT_SIZE = 4;
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeScaleParser::Parse(const caffe::LayerParameter &proto,
-                               const caffe::LayerParameter &weight,
-                               schema::CNodeT *op,
-                               std::vector<schema::TensorT *> *weightVec) {
+STATUS CaffeScaleParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
+                               schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   std::unique_ptr<schema::ScaleT> attr(new schema::ScaleT());
-  attr->format = schema::Format_NCHW;
 
   if (weight.blobs_size() + weight.bottom_size() < 2) {
     // MS_LOGE("Scale bottom size:%d, blobs size:%d invalid in layer %s", weight.bottom_size(), weight.blobs_size(),
@@ -36,12 +33,14 @@ STATUS CaffeScaleParser::Parse(const caffe::LayerParameter &proto,
   }
 
   const caffe::ScaleParameter scaleParam = weight.scale_param();
-  int32_t axis = scaleParam.axis();  // NCHW_DIM_C;
-  uint32_t axis_index = NCHW_DIM_C;
-
-  if (GetAxisIndex(axis, &axis_index)) {
-    // MS_LOGE("scale get axis failed for layer %s.", weight.name().c_str());
+  int axis = NCHW_DIM_C;
+  if (scaleParam.has_axis()) {
+    uint32_t axis_index = NCHW_DIM_C;
+    if (GetAxisIndex(scaleParam.axis(), &axis_index)) {
+      // MS_LOGE("scale get axis failed for layer %s.", weight.name().c_str());
+    }
   }
+  attr->axis = axis;
 
   // parse scale
   // todo expect only weight as scale not bias
@@ -94,4 +93,3 @@ STATUS CaffeScaleParser::GetAxisIndex(const int32_t &axis, uint32_t *axis_index)
 CaffeNodeRegistrar g_caffeScaleParser("Scale", new CaffeScaleParser());
 }  // namespace lite
 }  // namespace mindspore
-

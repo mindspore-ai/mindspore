@@ -28,15 +28,18 @@ int Nhwc2Nchw::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<ten
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
   std::vector<int> nhwc_shape = input->shape();
-  std::vector<int> nchw_shape{nhwc_shape};
-  nchw_shape[NCHW_N] = nhwc_shape[NHWC_N];
-  nchw_shape[NCHW_C] = nhwc_shape[NHWC_C];
-  nchw_shape[NCHW_H] = nhwc_shape[NHWC_H];
-  nchw_shape[NCHW_W] = nhwc_shape[NHWC_W];
-  output->set_shape(nchw_shape);
+  if (nhwc_shape.size() != 4) {
+    output->set_shape(nhwc_shape);
+  } else {
+    std::vector<int> nchw_shape{nhwc_shape};
+    nchw_shape[NCHW_N] = nhwc_shape[NHWC_N];
+    nchw_shape[NCHW_C] = nhwc_shape[NHWC_C];
+    nchw_shape[NCHW_H] = nhwc_shape[NHWC_H];
+    nchw_shape[NCHW_W] = nhwc_shape[NHWC_W];
+    output->set_shape(nchw_shape);
+  }
   output->SetFormat(schema::Format_NCHW);
   output->set_data_type(input->data_type());
   return RET_OK;
 }
 }  // namespace mindspore::lite
-

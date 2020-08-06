@@ -17,37 +17,33 @@
 #include "src/runtime/kernel/arm/opclib/scale.h"
 #include "src/runtime/kernel/arm/opclib/errorcode.h"
 
-int DoScale(float *in_data, float *out_data, float *scale, float *offset, int units_offset, int num_unit,
-            ScaleParameter *scale_param) {
+int DoScale(float *in_data, float *out_data, float *scale, float *offset, int task_id, ScaleParameter *scale_param) {
   if (in_data == nullptr || out_data == nullptr || scale == nullptr || offset == nullptr || scale_param == nullptr) {
     return OPCLIB_ERR;
   }
 
-  int in_stride_j = units_offset * scale_param->in_stride_;
-  for (int j = units_offset; j < units_offset + num_unit; j++) {
-    int channel = j % scale_param->channel_;
-    for (int k = 0; k < scale_param->in_stride_; k++) {
-      out_data[in_stride_j + k] = in_data[in_stride_j + k] * scale[channel] + offset[channel];
+  if (scale_param->has_offset_) {
+    for (int out = task_id; out < scale_param->outer_size_; out += scale_param->op_parameter_.thread_num_) {
+      int out_offset = out * scale_param->axis_size_ * scale_param->inner_size_;
+      for (int i = 0; i < scale_param->axis_size_; i++) {
+        int axis_offset = out_offset + i * scale_param->inner_size_;
+        for (int in = 0; in < scale_param->inner_size_; in++) {
+          int in_offset = axis_offset + in;
+          out_data[in_offset] = in_data[in_offset] * scale[i] + offset[i];
+        }
+      }
     }
-    in_stride_j = in_stride_j + scale_param->in_stride_;
+  } else {
+    for (int out = task_id; out < scale_param->outer_size_; out += scale_param->op_parameter_.thread_num_) {
+      int out_offset = out * scale_param->axis_size_ * scale_param->inner_size_;
+      for (int i = 0; i < scale_param->axis_size_; i++) {
+        int axis_offset = out_offset + i * scale_param->inner_size_;
+        for (int in = 0; in < scale_param->inner_size_; in++) {
+          int in_offset = axis_offset + in;
+          out_data[in_offset] = in_data[in_offset] * scale[i];
+        }
+      }
+    }
   }
   return OPCLIB_OK;
 }
-
-int DoScale(float *in_data, float *out_data, float *scale, int units_offset, int num_unit,
-            ScaleParameter *scale_param) {
-  if (in_data == nullptr || out_data == nullptr || scale == nullptr || scale_param == nullptr) {
-    return OPCLIB_ERR;
-  }
-
-  int in_stride_j = units_offset * scale_param->in_stride_;
-  for (int j = units_offset; j < units_offset + num_unit; j++) {
-    int channel = j % scale_param->channel_;
-    for (int k = 0; k < scale_param->in_stride_; k++) {
-      out_data[in_stride_j + k] = in_data[in_stride_j + k] * scale[channel];
-    }
-    in_stride_j = in_stride_j + scale_param->in_stride_;
-  }
-  return OPCLIB_OK;
-}
-

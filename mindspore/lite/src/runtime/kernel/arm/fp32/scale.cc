@@ -29,85 +29,91 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Scale;
 
 namespace mindspore::kernel {
-namespace {
-constexpr int kScaleInputNum = 1;
-constexpr int kScaleOutputNum = 1;
-}  // namespace
-int ScaleCPUKernel::Init() {
+int ScaleCPUKernel::InitScaleOffset() {
   auto param = reinterpret_cast<ScaleParameter *>(opParameter);
-  auto in_tensor = inputs_.front();
-  auto scale = inputs_.at(1);
+  auto scale_tensor = inputs_.at(1);
+  float *scale_ptr = reinterpret_cast<float *>(inputs_.at(1)->Data());
+  if (scale_ptr != nullptr) {
+    scale_ = reinterpret_cast<float *>(malloc(scale_tensor->ElementsNum() * sizeof(float)));
+    if (scale_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc buffer failed.";
+      return RET_ERROR;
+    }
+    memcpy(scale_, scale_ptr, scale_tensor->ElementsNum() * sizeof(float));
+  } else {
+    scale_ = nullptr;
+  }
 
+  if (inputs_.size() == 3) {
+    auto offset_tensor = inputs_.at(1);
+    offset_ = reinterpret_cast<float *>(malloc(offset_tensor->ElementsNum() * sizeof(float)));
+    if (offset_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc buffer failed.";
+      return RET_ERROR;
+    }
+    param->has_offset_ = true;
+  } else {
+    offset_ = nullptr;
+    param->has_offset_ = false;
+  }
+  return RET_OK;
+}
+
+int ScaleCPUKernel::InitParameter() {
+  auto param = reinterpret_cast<ScaleParameter *>(opParameter);
+  auto in_tensor = inputs_.at(0);
+  auto in_shape = in_tensor->shape();
+  auto scale_tensor = inputs_.at(1);
+  auto scale_shape = scale_tensor->shape();
+
+  if (scale_shape.size() + param->axis_ > in_shape.size()) {
+    MS_LOG(ERROR) << "Scale tensor shape is incorrect.";
+    return RET_ERROR;
+  }
+  param->outer_size_ = 1;
+  param->axis_size_ = 1;
+  param->inner_size_ = 1;
+  for (int i = 0; i < param->axis_; i++) {
+    param->outer_size_ *= in_shape[i];
+  }
+  for (int i = 0; i < scale_shape.size(); i++) {
+    if (in_shape[i + param->axis_] != scale_shape[i]) {
+      MS_LOG(ERROR) << "Scale tensor shape is incorrect.";
+      return RET_ERROR;
+    }
+    param->axis_size_ *= in_shape[i + param->axis_];
+  }
+  for (int i = param->axis_ + scale_shape.size(); i < in_shape.size(); i++) {
+    param->inner_size_ *= in_shape[i];
+  }
+  return RET_OK;
+}
+
+int ScaleCPUKernel::Init() {
   if (inputs_.size() < 2 || inputs_.size() > 3) {
     MS_LOG(ERROR) << "inputs to Scale operator should be 2 or 3, but " << inputs_.size() << " is given.";
     return RET_ERROR;
   }
 
-  if (param->axis_ < 0) {
-    MS_LOG(ERROR) << "axis illegal.";
-    return RET_ERROR;
-  }
-  if (param->num_axis_ < 1 || param->num_axis_ + param->axis_ >= in_tensor->shape().size()) {
-    MS_LOG(ERROR) << "number of axis illegal";
+  auto ret = InitParameter();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Scale fp32 InitParameter failed.";
     return RET_ERROR;
   }
 
-  param->channel_ = 1;
-  param->out_count_ = 1;
-  param->in_stride_ = 1;
-  int cur_axis;
-  for (cur_axis = 0; cur_axis < param->axis_; cur_axis++) {
-    param->out_count_ *= in_tensor->shape()[cur_axis];
-  }
-  for (int i = 0; i < param->num_axis_; i++) {
-    param->channel_ *= in_tensor->shape()[(cur_axis++)];
-  }
-  for (int i = cur_axis; i < in_tensor->shape().size(); i++) {
-    param->in_stride_ *= in_tensor->shape()[cur_axis];
-  }
-  if (scale->shape().back() != param->channel_ || scale->shape().size() > 2) {
-    MS_LOG(ERROR) << "scale shape illegal.";
+  ret = InitScaleOffset();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Scale fp32 InitScaleOffset failed.";
     return RET_ERROR;
   }
-  if (inputs_.size() == 3) {
-    if ((inputs_.at(2))->shape().back() != param->channel_ || (inputs_.at(2))->shape().size() > 2) {
-      MS_LOG(ERROR) << "offset shape illegal.";
-      return RET_ERROR;
-    }
-  }
-
-  input_ptr_ = reinterpret_cast<float *>(inputs_.front()->Data());
-  scale_ = reinterpret_cast<float *>(inputs_.at(1)->Data());
-  if (inputs_.size() == 3) {
-    offset_ = reinterpret_cast<float *>(inputs_.at(2)->Data());
-    has_offset_ = true;
-  } else {
-    offset_ = nullptr;
-    has_offset_ = false;
-  }
-  output_ptr_ = reinterpret_cast<float *>(outputs_.front()->Data());
-
-  num_unit_ = param->out_count_ * param->channel_;
-  unit_size_ = param->in_stride_;
-  thread_n_num_ = MSMIN(thread_num_, num_unit_);
-  thread_n_stride_ = UP_DIV(num_unit_, thread_n_num_);
   return RET_OK;
 }
 
+int ScaleCPUKernel::ReSize() { return RET_OK; }
+
 int ScaleCPUKernel::Scale(int task_id) {
-  int num_unit_thread = MSMIN(thread_n_stride_, num_unit_ - task_id * thread_n_stride_);
-  if (num_unit_thread <= 0) {
-    return RET_OK;
-  }
-  int thread_offset = task_id * thread_n_stride_;
-  int ret;
-  if (has_offset_) {
-    ret = DoScale(input_ptr_, output_ptr_, scale_, offset_, thread_offset, num_unit_thread,
-                  reinterpret_cast<ScaleParameter *>(opParameter));
-  } else {
-    ret = DoScale(input_ptr_, output_ptr_, scale_, thread_offset, num_unit_thread,
-                  reinterpret_cast<ScaleParameter *>(opParameter));
-  }
+  auto ret =
+    DoScale(input_ptr_, output_ptr_, scale_, offset_, task_id, reinterpret_cast<ScaleParameter *>(opParameter));
 
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error task_id[" << task_id << "] error_code[" << ret << "]";
@@ -116,11 +122,9 @@ int ScaleCPUKernel::Scale(int task_id) {
   return RET_OK;
 }
 
-int ScaleCPUKernel::ReSize() { return RET_OK; }
-
 int ScaleRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
-  auto g_kernel = reinterpret_cast<ScaleCPUKernel *>(cdata);
-  auto ret = g_kernel->Scale(task_id);
+  auto scale = reinterpret_cast<ScaleCPUKernel *>(cdata);
+  auto ret = scale->Scale(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ScaleRun error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
@@ -129,7 +133,16 @@ int ScaleRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int ScaleCPUKernel::Run() {
-  int ret = LiteBackendParallelLaunch(ScaleRun, this, thread_n_num_);
+  auto in_tensor = inputs_.front();
+  input_ptr_ = reinterpret_cast<float *>(in_tensor->Data());
+  if (scale_ == nullptr) {
+    auto scale_tensor = inputs_[1];
+    scale_ = reinterpret_cast<float *>(scale_tensor->Data());
+  }
+  auto out_tensor = outputs_.front();
+  output_ptr_ = reinterpret_cast<float *>(out_tensor->Data());
+
+  int ret = LiteBackendParallelLaunch(ScaleRun, this, opParameter->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;
@@ -160,7 +173,6 @@ kernel::LiteKernel *CpuScaleFp32KernelCreator(const std::vector<lite::tensor::Te
     delete kernel;
     return nullptr;
   }
-
   return kernel;
 }
 

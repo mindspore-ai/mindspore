@@ -26,27 +26,24 @@ class ScaleCPUKernel : public LiteKernel {
  public:
   explicit ScaleCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                           const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
-      : LiteKernel(parameter, inputs, outputs), thread_num_(ctx->thread_num_) {}
+      : LiteKernel(parameter, inputs, outputs) {
+    opParameter->thread_num_ = ctx->thread_num_;
+  }
   ~ScaleCPUKernel() override = default;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int InitParameter();
+  int InitScaleOffset();
   int Scale(int task_id);
 
  private:
-  int thread_num_;
-  int thread_n_stride_;
-  int thread_n_num_;
-  int num_unit_;
-  int unit_size_;
   float *input_ptr_;
   float *scale_;
   float *offset_;
   float *output_ptr_;
-  bool has_offset_;
 };
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SCALE_H_
-

@@ -21,15 +21,13 @@
 
 struct ScaleParameter {
   OpParameter op_parameter_;
-  int out_count_;
-  int channel_;
-  int in_stride_;
+  int outer_size_;
+  int axis_size_;
+  int inner_size_;
   int axis_;
-  int num_axis_;
+  bool has_offset_;
+  // todo yangruoqi: axis
 };
 
-int DoScale(float *in_data, float *out_data, float *scale, float *offset, int units_offset, int num_unit,
-            ScaleParameter *scale_param);
-int DoScale(float *in_data, float *out_data, float *scale, int units_offset, int num_unit, ScaleParameter *scale_param);
+int DoScale(float *in_data, float *out_data, float *scale, float *offset, int task_id, ScaleParameter *scale_param);
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_SCALE_H_
-

@@ -376,7 +376,7 @@ table BNGradInput {
     channels: int;
 }
 table Scale {
-    format: Format = 0;
+    axis: int;
 }
 
 table Eltwise {
