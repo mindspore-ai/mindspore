@@ -105,7 +105,7 @@ class CsvOp : public ParallelOp {
       return it->second.second(*this, c);
     }
 
-    int countRows(char c);
+    int countRows(int c);
 
     Status initCsvParser();
 

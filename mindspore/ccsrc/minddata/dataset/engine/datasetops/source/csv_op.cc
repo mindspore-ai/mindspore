@@ -168,7 +168,7 @@ int CsvOp::CsvParser::end_file(char c) {
   return 0;
 }
 
-int CsvOp::CsvParser::countRows(char c) {
+int CsvOp::CsvParser::countRows(int c) {
   Message m;
   if (c == '"') {
     m = Message::MS_QUOTE;
@@ -703,7 +703,7 @@ int64_t CsvOp::CountTotalRows(const std::string &file) {
   }
   csv_parser.Reset();
   while (ifs.good()) {
-    char chr = ifs.get();
+    int chr = ifs.get();
     if (csv_parser.countRows(chr) != 0) {
       break;
     }
