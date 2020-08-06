@@ -216,6 +216,9 @@ class CostGraph {
     inputs_tensor_name_list_.push_back(inputs_tensor_name);
   }
   const std::vector<std::vector<std::string>> get_inputs_tensor_name_list() const { return inputs_tensor_name_list_; }
+  void set_inputs_tensor_name_list(const std::vector<std::vector<std::string>> &inputs_tensor_name_list) {
+    inputs_tensor_name_list_ = inputs_tensor_name_list;
+  }
   void add_tuple_getitem(const std::pair<std::string, std::string> &tuple_getitem) {
     auto ret = tuple_getitem_list_.insert(tuple_getitem);
     if (ret.second == false) {

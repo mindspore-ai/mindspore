@@ -59,6 +59,8 @@ std::vector<std::vector<std::string>> RecInputTensorNames(const std::map<std::st
                                                           std::vector<std::vector<std::string>> input_tensor_names);
 
 CNodePtr GetInternalOperatorInfo(const CNodePtr &cnode, const ValueNodePtr &prim_anf_node);
+
+void ModifyInputsTensorNameListIfOperatorInfoCreated(const std::string &name, const std::string &uniqueid);
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_STEP_AUTO_PARALLEL_H_
