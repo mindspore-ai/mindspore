@@ -26,6 +26,7 @@
 #include "minddata/dataset/engine/datasetops/source/clue_op.h"
 #include "minddata/dataset/engine/datasetops/source/coco_op.h"
 #include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
+#include "minddata/dataset/engine/datasetops/source/manifest_op.h"
 #include "minddata/dataset/engine/datasetops/source/mnist_op.h"
 #include "minddata/dataset/engine/datasetops/source/text_file_op.h"
 #include "minddata/dataset/engine/datasetops/source/voc_op.h"
@@ -44,6 +45,7 @@
 // Sampler headers (in alphabetical order)
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/random_sampler.h"
+#include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/util/random.h"
@@ -159,6 +161,16 @@ std::shared_ptr<ImageFolderDataset> ImageFolder(const std::string &dataset_dir, 
 
   // Create logical representation of ImageFolderDataset.
   auto ds = std::make_shared<ImageFolderDataset>(dataset_dir, decode, sampler, recursive, extensions, class_indexing);
+
+  // Call derived class validation method.
+  return ds->ValidateParams() ? ds : nullptr;
+}
+
+// Function to create a ManifestDataset.
+std::shared_ptr<ManifestDataset> Manifest(std::string dataset_file, std::string usage,
+                                          std::shared_ptr<SamplerObj> sampler,
+                                          const std::map<std::string, int32_t> &class_indexing, bool decode) {
+  auto ds = std::make_shared<ManifestDataset>(dataset_file, usage, sampler, class_indexing, decode);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
@@ -874,6 +886,51 @@ std::vector<std::shared_ptr<DatasetOp>> ImageFolderDataset::Build() {
   node_ops.push_back(std::make_shared<ImageFolderOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_,
                                                      recursive_, decode_, exts_, class_indexing_, std::move(schema),
                                                      std::move(sampler_->Build())));
+  return node_ops;
+}
+
+ManifestDataset::ManifestDataset(std::string dataset_file, std::string usage, std::shared_ptr<SamplerObj> sampler,
+                                 const std::map<std::string, int32_t> &class_indexing, bool decode)
+    : dataset_file_(dataset_file), usage_(usage), decode_(decode), class_index_(class_indexing), sampler_(sampler) {}
+
+bool ManifestDataset::ValidateParams() {
+  Path manifest_file(dataset_file_);
+  if (!manifest_file.Exists()) {
+    MS_LOG(ERROR) << "dataset file: [" << dataset_file_ << "] is invalid or not exist";
+    return false;
+  }
+
+  std::vector<std::string> usage_list = {"train", "eval", "inference"};
+  if (find(usage_list.begin(), usage_list.end(), usage_) == usage_list.end()) {
+    MS_LOG(ERROR) << "usage should be train, eval or inference.";
+    return false;
+  }
+
+  return true;
+}
+
+std::vector<std::shared_ptr<DatasetOp>> ManifestDataset::Build() {
+  // A vector containing shared pointer to the Dataset Ops that this object will create
+  std::vector<std::shared_ptr<DatasetOp>> node_ops;
+
+  // If user does not specify Sampler, create a default sampler based on the shuffle variable.
+  if (sampler_ == nullptr) {
+    sampler_ = CreateDefaultSampler();
+  }
+
+  // Do internal Schema generation.
+  auto schema = std::make_unique<DataSchema>();
+  RETURN_EMPTY_IF_ERROR(schema->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kCv, 1)));
+  TensorShape scalar = TensorShape::CreateScalar();
+  RETURN_EMPTY_IF_ERROR(
+    schema->AddColumn(ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar)));
+
+  std::shared_ptr<ManifestOp> manifest_op;
+  manifest_op =
+    std::make_shared<ManifestOp>(num_workers_, rows_per_buffer_, dataset_file_, connector_que_size_, decode_,
+                                 class_index_, std::move(schema), std::move(sampler_->Build()), usage_);
+
+  node_ops.push_back(manifest_op);
   return node_ops;
 }
 

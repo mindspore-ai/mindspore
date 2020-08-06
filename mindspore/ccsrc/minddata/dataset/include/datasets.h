@@ -49,6 +49,7 @@ class Cifar100Dataset;
 class CLUEDataset;
 class CocoDataset;
 class ImageFolderDataset;
+class ManifestDataset;
 class MnistDataset;
 class TextFileDataset;
 class VOCDataset;
@@ -153,6 +154,21 @@ std::shared_ptr<ImageFolderDataset> ImageFolder(const std::string &dataset_dir, 
                                                 const std::shared_ptr<SamplerObj> &sampler = nullptr,
                                                 const std::set<std::string> &extensions = {},
                                                 const std::map<std::string, int32_t> &class_indexing = {});
+
+/// \brief Function to create a ManifestDataset
+/// \notes The generated dataset has two columns ['image', 'label']
+/// \param[in] dataset_file The dataset file to be read
+/// \param[in] usage Need "train", "eval" or "inference" data (default="train")
+/// \param[in] decode Decode the images after reading (default=false).
+/// \param[in] class_indexing A str-to-int mapping from label name to index (default={}, the folder
+///    names will be sorted alphabetically and each class will be given a unique index starting from 0).
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`,
+///    A `RandomSampler` will be used to randomly iterate the entire dataset
+/// \return Shared pointer to the current ManifestDataset
+std::shared_ptr<ManifestDataset> Manifest(std::string dataset_file, std::string usage = "train",
+                                          std::shared_ptr<SamplerObj> sampler = nullptr,
+                                          const std::map<std::string, int32_t> &class_indexing = {},
+                                          bool decode = false);
 
 /// \brief Function to create a MnistDataset
 /// \notes The generated dataset has two columns ['image', 'label']
@@ -498,6 +514,31 @@ class ImageFolderDataset : public Dataset {
   std::shared_ptr<SamplerObj> sampler_;
   std::map<std::string, int32_t> class_indexing_;
   std::set<std::string> exts_;
+};
+
+class ManifestDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  ManifestDataset(std::string dataset_file, std::string usage, std::shared_ptr<SamplerObj> sampler,
+                  const std::map<std::string, int32_t> &class_indexing, bool decode);
+
+  /// \brief Destructor
+  ~ManifestDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::string dataset_file_;
+  std::string usage_;
+  bool decode_;
+  std::map<std::string, int32_t> class_index_;
+  std::shared_ptr<SamplerObj> sampler_;
 };
 
 class MnistDataset : public Dataset {
