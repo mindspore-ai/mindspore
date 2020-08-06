@@ -49,6 +49,8 @@ set(ANF_SRC
         ${CCSRC_DIR}/pybind_api/export_flags.cc
         ${CCSRC_DIR}/utils/context/context_extends.cc
         ${CCSRC_DIR}/frontend/parallel/costmodel_context.cc
+        ${CCSRC_DIR}/backend/optimizer/common/pattern_engine.cc
+        ${CCSRC_DIR}/backend/optimizer/common/visit.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/graph_utils_extends.cc
         )
 
@@ -75,9 +77,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/common/node_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/common/optimizer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/common/pass_manager.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/common/pattern_engine.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/common/visit.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/common/utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/common/gllo_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/fusion/conv_biasadd_fusion.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/fusion/conv_activation_fusion.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/fusion/conv_transform_fusion.cc

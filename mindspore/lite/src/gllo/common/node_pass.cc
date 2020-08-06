@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/gllo/common/node_pass.h"
+#include "backend/optimizer/common/node_pass.h"
 
 #include <unordered_set>
 #include <deque>
@@ -22,6 +22,7 @@
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "ir/manager.h"
+#include "src/gllo/common/gllo_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -54,6 +55,9 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
       MS_EXCEPTION_IF_NULL(const_func_graph);
       todo.push_back(const_func_graph->output());
     } else if (new_node && new_node->isa<CNode>()) {
+      if (IsGraphKernel(new_node)) {
+        todo.push_back(new_node);
+      }
       auto cnode = new_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       auto inputs = cnode->inputs();

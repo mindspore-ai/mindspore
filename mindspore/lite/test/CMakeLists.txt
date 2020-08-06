@@ -63,6 +63,8 @@ if(BUILD_CONVERTER)
             ${CCSRC_DIR}/pybind_api/export_flags.cc
             ${CCSRC_DIR}/utils/context/context_extends.cc
             ${CCSRC_DIR}/frontend/parallel/costmodel_context.cc
+            ${CCSRC_DIR}/backend/optimizer/common/pattern_engine.cc
+            ${CCSRC_DIR}/backend/optimizer/common/visit.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/graph_utils_extends.cc
             )
 else()
@@ -202,12 +204,14 @@ if(BUILD_CONVERTER)
             ${LITE_DIR}/tools/converter/converter.cc
             ${LITE_DIR}/tools/converter/parser/onnx/onnx.pb.cc
             ${LITE_DIR}/test/st/converter_test.cc
+            ${LITE_DIR}/test/ut/src/gllo/fusion/conv_activation_fusion_test.cc
+            ${LITE_DIR}/test/ut/src/gllo/fusion/conv_biasadd_fusion_test.cc
+            ${LITE_DIR}/test/ut/src/gllo/fusion/conv_bn_fusion_test.cc
+            ${LITE_DIR}/test/ut/src/gllo/fusion/conv_scale_fusion_test.cc
             ${LITE_DIR}/src/gllo/common/node_pass.cc
             ${LITE_DIR}/src/gllo/common/optimizer.cc
             ${LITE_DIR}/src/gllo/common/pass_manager.cc
-            ${LITE_DIR}/src/gllo/common/pattern_engine.cc
-            ${LITE_DIR}/src/gllo/common/visit.cc
-            ${LITE_DIR}/src/gllo/common/utils.cc
+            ${LITE_DIR}/src/gllo/common/gllo_utils.cc
             ${LITE_DIR}/src/gllo/fusion/conv_biasadd_fusion.cc
             ${LITE_DIR}/src/gllo/fusion/conv_activation_fusion.cc
             ${LITE_DIR}/src/gllo/fusion/conv_transform_fusion.cc

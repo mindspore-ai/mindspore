@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_PASS_FUSION_CONV_BN_FUSION_H_
 #define MINDSPORE_LITE_SRC_PASS_FUSION_CONV_BN_FUSION_H_
 
-#include "mindspore/lite/src/gllo/fusion/conv_transform_fusion.h"
+#include "src/gllo/fusion/conv_transform_fusion.h"
 
 namespace mindspore::opt {
 class ConvBatchNormFusion : public ConvTransformFusion {

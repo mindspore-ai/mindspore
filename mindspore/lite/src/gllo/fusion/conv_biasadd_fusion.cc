@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "mindspore/lite/src/gllo/fusion/conv_biasadd_fusion.h"
-#include <mindspore/lite/src/param_value_lite.h>
+#include "src/gllo/fusion/conv_biasadd_fusion.h"
 #include <memory>
-#include "mindspore/lite/schema/inner/model_generated.h"
-#include "mindspore/lite/src/ir/primitive_t_value.h"
-#include "mindspore/ccsrc/utils/utils.h"
-#include "mindspore/lite/src/gllo/common/utils.h"
+#include "src/param_value_lite.h"
+#include "schema/inner/model_generated.h"
+#include "src/ir/primitive_t_value.h"
+#include "utils/utils.h"
+#include "src/gllo/common/gllo_utils.h"
 #include "securec/include/securec.h"
 
 namespace mindspore::opt {
@@ -142,7 +142,7 @@ const AnfNodePtr ConvBiasaddFusion::Process(const FuncGraphPtr &func_graph, cons
   CheckIfCNodeIsNull(conv_node);
   GenConvNewBias(func_graph, conv_node, add_node);
   auto primitiveT_value = GetValueNode<std::shared_ptr<lite::PrimitiveTValue>>(conv_node->input(0));
-  MS_ASSERT(primitiveT_value);
+  MS_ASSERT(primitiveT_value != nullptr);
   auto type = primitiveT_value->GetPrimitiveT()->value.type;
   if (type == schema::PrimitiveType_Conv2D) {
     primitiveT_value->GetPrimitiveT()->value.AsConv2D()->hasBias = true;

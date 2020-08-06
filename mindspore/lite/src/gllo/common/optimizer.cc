@@ -23,8 +23,7 @@
 #include <utility>
 #include <initializer_list>
 
-#include "src/gllo/common/pass_manager.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/optimizer/common/pass_manager.h"
 #include "ir/manager.h"
 
 namespace mindspore {

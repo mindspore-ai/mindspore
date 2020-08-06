@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/gllo/common/pass_manager.h"
+#include "backend/optimizer/common/pass_manager.h"
 
 #include <sys/time.h>
 #include <unordered_set>

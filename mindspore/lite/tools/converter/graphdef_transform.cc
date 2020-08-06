@@ -100,20 +100,20 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
   //  }
 
   // fusion
-  {
-    Optimizer fusionOptimizer;
-    fusionOptimizer.AddPass(new (std::nothrow) ConvBiasAddFusionPass());
-    fusionOptimizer.AddPass(new (std::nothrow) ConvBNFusionPass());
-    fusionOptimizer.AddPass(new (std::nothrow) ConvScaleFusionPass());
-    fusionOptimizer.AddPass(new (std::nothrow) ConvReluFusionPass());
-    fusionOptimizer.AddPass(new (std::nothrow) ConvRelu6FusionPass());
-    fusionOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
-    status = fusionOptimizer.Run(graphDefT);
-    if (status != RET_OK && status != RET_NO_CHANGE) {
-      MS_LOG(ERROR) << "Run fusionOptimizer graphPasses Failed";
-      return status;
-    }
-  }
+  // {
+  //   Optimizer fusionOptimizer;
+  //   fusionOptimizer.AddPass(new (std::nothrow) ConvBiasAddFusionPass());
+  //   fusionOptimizer.AddPass(new (std::nothrow) ConvBNFusionPass());
+  //   fusionOptimizer.AddPass(new (std::nothrow) ConvScaleFusionPass());
+  //   fusionOptimizer.AddPass(new (std::nothrow) ConvReluFusionPass());
+  //   fusionOptimizer.AddPass(new (std::nothrow) ConvRelu6FusionPass());
+  //   fusionOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
+  //   status = fusionOptimizer.Run(graphDefT);
+  //   if (status != RET_OK && status != RET_NO_CHANGE) {
+  //     MS_LOG(ERROR) << "Run fusionOptimizer graphPasses Failed";
+  //     return status;
+  //   }
+  // }
 
   // weight format trans
   if (ctx.formatTrans) {

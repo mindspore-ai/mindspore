@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "mindspore/lite/src/gllo/fusion/conv_transform_fusion.h"
+#include "src/gllo/fusion/conv_transform_fusion.h"
 #include <memory>
-#include "mindspore/lite/src/param_value_lite.h"
-#include "mindspore/lite/schema/inner/model_generated.h"
-#include "mindspore/lite/src/ir/primitive_t_value.h"
-#include "mindspore/ccsrc/utils/utils.h"
-#include "mindspore/lite/src/gllo/common/utils.h"
+#include "src/param_value_lite.h"
+#include "schema/inner/model_generated.h"
+#include "src/ir/primitive_t_value.h"
+#include "utils/utils.h"
+#include "src/gllo/common/gllo_utils.h"
 #include "include/errorcode.h"
 #include "securec/include/securec.h"
 
@@ -78,6 +78,16 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
   GenNewConvTensor(func_graph, conv_node, kernel_nums, trans_scale, trans_bias);
   delete[] trans_bias;
   delete[] trans_scale;
+  auto primitiveT_value = GetValueNode<std::shared_ptr<lite::PrimitiveTValue>>(conv_node->input(0));
+  MS_ASSERT(primitiveT_value != nullptr);
+  auto type = primitiveT_value->GetPrimitiveT()->value.type;
+  if (type == schema::PrimitiveType_Conv2D) {
+    primitiveT_value->GetPrimitiveT()->value.AsConv2D()->hasBias = true;
+  } else if (type == schema::PrimitiveType_DepthwiseConv2D) {
+    primitiveT_value->GetPrimitiveT()->value.AsDepthwiseConv2D()->hasBias = true;
+  } else {
+    MS_LOG(EXCEPTION) << "Unsupported opType, " << type;
+  }
   return pre_node;
 }
 

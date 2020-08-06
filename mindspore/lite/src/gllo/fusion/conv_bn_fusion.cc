@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "mindspore/lite/src/gllo/fusion/conv_bn_fusion.h"
-#include <mindspore/lite/src/param_value_lite.h>
+#include "src/gllo/fusion/conv_bn_fusion.h"
 #include <memory>
-#include "mindspore/lite/schema/inner/model_generated.h"
-#include "mindspore/lite/src/ir/primitive_t_value.h"
-#include "mindspore/ccsrc/utils/utils.h"
-#include "mindspore/lite/src/gllo/common/utils.h"
+#include "src/param_value_lite.h"
+#include "schema/inner/model_generated.h"
+#include "src/ir/primitive_t_value.h"
+#include "utils/utils.h"
+#include "src/gllo/common/gllo_utils.h"
 #include "securec/include/securec.h"
 
 namespace mindspore::opt {
