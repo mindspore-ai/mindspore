@@ -44,7 +44,7 @@ The overall network architecture of DeepFM is show below:
 
 ### Usage
 
-- sh run_train.sh [DEVICE_NUM] [DATASET_PATH] [MINDSPORE_HCCL_CONFIG_PAHT]
+- sh run_train.sh [DEVICE_NUM] [DATASET_PATH] [RANK_TABLE_FILE]
 - python train.py --dataset_path [DATASET_PATH]
 
 ### Launch
