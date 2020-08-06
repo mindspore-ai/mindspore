@@ -225,6 +225,27 @@ TEST_F(TestTensor, EqualTest) {
   ASSERT_EQ(TypeId::kNumberTypeFloat64, tensor_float64->data_type_c());
 }
 
+TEST_F(TestTensor, ValueEqualTest) {
+  py::tuple tuple = py::make_tuple(1, 2, 3, 4, 5, 6);
+  TensorPtr t1 = TensorPy::MakeTensor(py::array(tuple), kInt32);
+  TensorPtr t2 = TensorPy::MakeTensor(py::array(tuple), kInt32);
+  ASSERT_TRUE(t1->ValueEqual(*t1));
+  ASSERT_TRUE(t1->ValueEqual(*t2));
+
+  std::vector<int> shape = {6};
+  TensorPtr t3 = std::make_shared<Tensor>(kInt32->type_id(), shape);
+  TensorPtr t4 = std::make_shared<Tensor>(kInt32->type_id(), shape);
+  ASSERT_TRUE(t3->ValueEqual(*t3));
+  ASSERT_FALSE(t3->ValueEqual(*t4));
+  ASSERT_FALSE(t3->ValueEqual(*t1));
+  ASSERT_FALSE(t1->ValueEqual(*t3));
+
+  memcpy_s(t3->data_c(), t3->data().nbytes(), t1->data_c(), t1->data().nbytes());
+  ASSERT_TRUE(t1->ValueEqual(*t3));
+  ASSERT_FALSE(t3->ValueEqual(*t4));
+  ASSERT_FALSE(t4->ValueEqual(*t3));
+}
+
 TEST_F(TestTensor, PyArrayTest) {
   py::array_t<float, py::array::c_style> input({2, 3});
   auto array = input.mutable_unchecked();
