@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_TOPK_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_TOPK_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_TOPK_INT8_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_TOPK_INT8_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/opclib/fp32/topk.h"
+#include "src/runtime/kernel/arm/opclib/int8/topk_int8.h"
 
 namespace mindspore::kernel {
-class TopKCPUKernel : public LiteKernel {
+class TopKInt8CPUKernel : public LiteKernel {
  public:
-  explicit TopKCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+  explicit TopKInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                          const std::vector<lite::tensor::Tensor *> &outputs)
       : LiteKernel(parameter, inputs, outputs) {}
-  ~TopKCPUKernel() override {
+  ~TopKInt8CPUKernel() override {
     TopkParameter *parameter = reinterpret_cast<TopkParameter *>(opParameter);
     free(parameter->topk_node_list_);
   }
@@ -39,4 +39,4 @@ class TopKCPUKernel : public LiteKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_TOPK_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_TOPK_INT8_H_

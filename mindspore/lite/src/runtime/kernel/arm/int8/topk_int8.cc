@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/fp32/topk.h"
+#include "src/runtime/kernel/arm/int8/topk_int8.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 
@@ -24,7 +24,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_TopK;
 
 namespace mindspore::kernel {
-int TopKCPUKernel::Init() {
+int TopKInt8CPUKernel::Init() {
   TopkParameter *parameter = reinterpret_cast<TopkParameter *>(opParameter);
   lite::tensor::Tensor *input = inputs_.at(0);
   parameter->last_dim_size_ = input->shape()[input->shape().size() - 1];
@@ -33,7 +33,7 @@ int TopKCPUKernel::Init() {
     parameter->loop_num_ *= input->shape()[i];
   }
 
-  parameter->topk_node_list_ = malloc(sizeof(TopkNode) * parameter->last_dim_size_);
+  parameter->topk_node_list_ = malloc(sizeof(TopkNodeInt8) * parameter->last_dim_size_);
   if (parameter->topk_node_list_ == nullptr) {
     MS_LOG(ERROR) << "malloc fail.";
     return RET_ERROR;
@@ -41,24 +41,24 @@ int TopKCPUKernel::Init() {
   return RET_OK;
 }
 
-int TopKCPUKernel::ReSize() { return RET_OK; }
+int TopKInt8CPUKernel::ReSize() { return RET_OK; }
 
-int TopKCPUKernel::Run() {
-  auto input_data = reinterpret_cast<float *>(inputs_.at(0)->Data());
-  auto output_data = reinterpret_cast<float *>(outputs_.at(0)->Data());
-  auto output_index = reinterpret_cast<int32_t *>(outputs_.at(1)->Data());
+int TopKInt8CPUKernel::Run() {
+  int8_t *input_data = reinterpret_cast<int8_t *>(inputs_.at(0)->Data());
+  int8_t *output_data = reinterpret_cast<int8_t *>(outputs_.at(0)->Data());
+  int32_t *output_index = reinterpret_cast<int32_t *>(outputs_.at(1)->Data());
 
-  Topk(input_data, output_data, output_index, reinterpret_cast<TopkParameter *>(opParameter));
+  TopkInt8(input_data, output_data, output_index, reinterpret_cast<TopkParameter *>(opParameter));
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuTopKFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
+kernel::LiteKernel *CpuTopKInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
                                              const lite::Context *ctx, const KernelKey &desc) {
   MS_ASSERT(parameter != nullptr);
-  auto *kernel = new (std::nothrow) TopKCPUKernel(parameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) TopKInt8CPUKernel(parameter, inputs, outputs);
   if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new TopKCPUKernel fail!";
+    MS_LOG(ERROR) << "new TopKInt8CPUKernel fail!";
     return nullptr;
   }
 
@@ -72,5 +72,5 @@ kernel::LiteKernel *CpuTopKFp32KernelCreator(const std::vector<lite::tensor::Ten
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_TopK, CpuTopKFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_TopK, CpuTopKInt8KernelCreator)
 }  // namespace mindspore::kernel

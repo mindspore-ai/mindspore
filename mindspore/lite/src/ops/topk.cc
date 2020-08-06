@@ -35,13 +35,15 @@ int TopK::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
   auto topk_prim = this->primitive->value_as_TopK();
   MS_ASSERT(topk_prim != nullptr);
 
-  output0->set_shape(input->shape());
-  output0->set_data_type(input->data_type());
-  //  output0->shape().back() = topk_prim->k();
+  auto out_shape = input->shape();
+  out_shape[out_shape.size() - 1] = topk_prim->k();
 
-  output1->set_shape(input->shape());
-  output1->set_data_type(input->data_type());
-  //  output1->shape().back() = topk_prim->k();
+  output0->set_shape(out_shape);
+  output0->set_data_type(input->data_type());
+  output0->SetFormat(input->GetFormat());
+
+  output1->set_shape(out_shape);
+  output1->set_data_type(kNumberTypeInt32);
   output1->SetFormat(input->GetFormat());
 
   return RET_OK;
