@@ -332,6 +332,7 @@ class FuncGraph : public FuncGraphBase {
   std::unordered_map<AnfNodePtr, AnfNodePtr> &make_ref_params() { return make_ref_params_; }
 
   std::unordered_map<std::string, ValuePtr> attrs_;
+  std::vector<BaseShapePtr> joined_shapes_;
   std::unordered_map<std::string, FuncGraphTransform> transforms_;
   // parameter default value
   std::map<std::string, AnfNodePtr> parameter_default_value_;
