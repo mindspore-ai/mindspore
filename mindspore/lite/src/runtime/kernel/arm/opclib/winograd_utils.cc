@@ -584,7 +584,7 @@ void InputTransform8x8Unit(const float *src_data, float *dst_data, int src_step,
     vaddq_f32(vaddq_f32(vmulq_n_f32(vaddq_f32(t01, t02), -0.3), vmulq_n_f32(vaddq_f32(t03, t04), 1.33333333333)),
               vmulq_n_f32(vaddq_f32(t05, t06), -0.533333333333));
   float32x4_t m04 =
-    vaddq_f32(vaddq_f32(vmulq_n_f32(vsubq_f32(t01, t02), 0.3), vmulq_n_f32(vsubq_f32(t03, t04), 1.33333333333)),
+    vaddq_f32(vaddq_f32(vmulq_n_f32(vsubq_f32(t01, t02), 0.3), vmulq_n_f32(vsubq_f32(t04, t03), 1.33333333333)),
               vmulq_n_f32(vsubq_f32(t05, t06), 0.533333333333));
   float32x4_t m05 =
     vaddq_f32(vaddq_f32(vsubq_f32(vsubq_f32(vaddq_f32(vmulq_n_f32(t01, 0.03333333), vmulq_n_f32(t02, 0.0222222)),
@@ -618,7 +618,7 @@ void InputTransform8x8Unit(const float *src_data, float *dst_data, int src_step,
     vaddq_f32(vaddq_f32(vmulq_n_f32(vaddq_f32(t11, t12), -0.3), vmulq_n_f32(vaddq_f32(t13, t14), 1.33333333333)),
               vmulq_n_f32(vaddq_f32(t15, t16), -0.533333333333));
   float32x4_t m14 =
-    vaddq_f32(vaddq_f32(vmulq_n_f32(vsubq_f32(t11, t12), 0.3), vmulq_n_f32(vsubq_f32(t13, t14), 1.33333333333)),
+    vaddq_f32(vaddq_f32(vmulq_n_f32(vsubq_f32(t11, t12), 0.3), vmulq_n_f32(vsubq_f32(t14, t13), 1.33333333333)),
               vmulq_n_f32(vsubq_f32(t15, t16), 0.533333333333));
   float32x4_t m15 =
     vaddq_f32(vaddq_f32(vsubq_f32(vsubq_f32(vaddq_f32(vmulq_n_f32(t11, 0.03333333), vmulq_n_f32(t12, 0.0222222)),
@@ -652,7 +652,7 @@ void InputTransform8x8Unit(const float *src_data, float *dst_data, int src_step,
     vaddq_f32(vaddq_f32(vmulq_n_f32(vaddq_f32(t21, t22), -0.3), vmulq_n_f32(vaddq_f32(t23, t24), 1.33333333333)),
               vmulq_n_f32(vaddq_f32(t25, t26), -0.533333333333));
   float32x4_t m24 =
-    vaddq_f32(vaddq_f32(vmulq_n_f32(vsubq_f32(t21, t22), 0.3), vmulq_n_f32(vsubq_f32(t23, t24), 1.33333333333)),
+    vaddq_f32(vaddq_f32(vmulq_n_f32(vsubq_f32(t21, t22), 0.3), vmulq_n_f32(vsubq_f32(t24, t23), 1.33333333333)),
               vmulq_n_f32(vsubq_f32(t25, t26), 0.533333333333));
   float32x4_t m25 =
     vaddq_f32(vaddq_f32(vsubq_f32(vsubq_f32(vaddq_f32(vmulq_n_f32(t21, 0.03333333), vmulq_n_f32(t22, 0.0222222)),
@@ -686,7 +686,7 @@ void InputTransform8x8Unit(const float *src_data, float *dst_data, int src_step,
     vaddq_f32(vaddq_f32(vmulq_n_f32(vaddq_f32(t31, t32), -0.3), vmulq_n_f32(vaddq_f32(t33, t34), 1.33333333333)),
               vmulq_n_f32(vaddq_f32(t35, t36), -0.533333333333));
   float32x4_t m34 =
-    vaddq_f32(vaddq_f32(vmulq_n_f32(vsubq_f32(t31, t32), 0.3), vmulq_n_f32(vsubq_f32(t33, t34), 1.33333333333)),
+    vaddq_f32(vaddq_f32(vmulq_n_f32(vsubq_f32(t31, t32), 0.3), vmulq_n_f32(vsubq_f32(t34, t33), 1.33333333333)),
               vmulq_n_f32(vsubq_f32(t35, t36), 0.533333333333));
   float32x4_t m35 =
     vaddq_f32(vaddq_f32(vsubq_f32(vsubq_f32(vaddq_f32(vmulq_n_f32(t31, 0.03333333), vmulq_n_f32(t32, 0.0222222)),
@@ -720,7 +720,7 @@ void InputTransform8x8Unit(const float *src_data, float *dst_data, int src_step,
     vaddq_f32(vaddq_f32(vmulq_n_f32(vaddq_f32(t41, t42), -0.3), vmulq_n_f32(vaddq_f32(t43, t44), 1.33333333333)),
               vmulq_n_f32(vaddq_f32(t45, t46), -0.533333333333));
   float32x4_t m44 =
-    vaddq_f32(vaddq_f32(vmulq_n_f32(vsubq_f32(t41, t42), 0.3), vmulq_n_f32(vsubq_f32(t43, t44), 1.33333333333)),
+    vaddq_f32(vaddq_f32(vmulq_n_f32(vsubq_f32(t41, t42), 0.3), vmulq_n_f32(vsubq_f32(t44, t43), 1.33333333333)),
               vmulq_n_f32(vsubq_f32(t45, t46), 0.533333333333));
   float32x4_t m45 =
     vaddq_f32(vaddq_f32(vsubq_f32(vsubq_f32(vaddq_f32(vmulq_n_f32(t41, 0.03333333), vmulq_n_f32(t42, 0.0222222)),
@@ -754,7 +754,7 @@ void InputTransform8x8Unit(const float *src_data, float *dst_data, int src_step,
     vaddq_f32(vaddq_f32(vmulq_n_f32(vaddq_f32(t51, t52), -0.3), vmulq_n_f32(vaddq_f32(t53, t54), 1.33333333333)),
               vmulq_n_f32(vaddq_f32(t55, t56), -0.533333333333));
   float32x4_t m54 =
-    vaddq_f32(vaddq_f32(vmulq_n_f32(vsubq_f32(t51, t52), 0.3), vmulq_n_f32(vsubq_f32(t53, t54), 1.33333333333)),
+    vaddq_f32(vaddq_f32(vmulq_n_f32(vsubq_f32(t51, t52), 0.3), vmulq_n_f32(vsubq_f32(t54, t53), 1.33333333333)),
               vmulq_n_f32(vsubq_f32(t55, t56), 0.533333333333));
   float32x4_t m55 =
     vaddq_f32(vaddq_f32(vsubq_f32(vsubq_f32(vaddq_f32(vmulq_n_f32(t51, 0.03333333), vmulq_n_f32(t52, 0.0222222)),
@@ -788,7 +788,7 @@ void InputTransform8x8Unit(const float *src_data, float *dst_data, int src_step,
     vaddq_f32(vaddq_f32(vmulq_n_f32(vaddq_f32(t61, t62), -0.3), vmulq_n_f32(vaddq_f32(t63, t64), 1.33333333333)),
               vmulq_n_f32(vaddq_f32(t65, t66), -0.533333333333));
   float32x4_t m64 =
-    vaddq_f32(vaddq_f32(vmulq_n_f32(vsubq_f32(t61, t62), 0.3), vmulq_n_f32(vsubq_f32(t63, t64), 1.33333333333)),
+    vaddq_f32(vaddq_f32(vmulq_n_f32(vsubq_f32(t61, t62), 0.3), vmulq_n_f32(vsubq_f32(t64, t63), 1.33333333333)),
               vmulq_n_f32(vsubq_f32(t65, t66), 0.533333333333));
   float32x4_t m65 =
     vaddq_f32(vaddq_f32(vsubq_f32(vsubq_f32(vaddq_f32(vmulq_n_f32(t61, 0.03333333), vmulq_n_f32(t62, 0.0222222)),
@@ -822,7 +822,7 @@ void InputTransform8x8Unit(const float *src_data, float *dst_data, int src_step,
     vaddq_f32(vaddq_f32(vmulq_n_f32(vaddq_f32(t71, t72), -0.3), vmulq_n_f32(vaddq_f32(t73, t74), 1.33333333333)),
               vmulq_n_f32(vaddq_f32(t75, t76), -0.533333333333));
   float32x4_t m74 =
-    vaddq_f32(vaddq_f32(vmulq_n_f32(vsubq_f32(t71, t72), 0.3), vmulq_n_f32(vsubq_f32(t73, t74), 1.33333333333)),
+    vaddq_f32(vaddq_f32(vmulq_n_f32(vsubq_f32(t71, t72), 0.3), vmulq_n_f32(vsubq_f32(t74, t73), 1.33333333333)),
               vmulq_n_f32(vsubq_f32(t75, t76), 0.533333333333));
   float32x4_t m75 =
     vaddq_f32(vaddq_f32(vsubq_f32(vsubq_f32(vaddq_f32(vmulq_n_f32(t71, 0.03333333), vmulq_n_f32(t72, 0.0222222)),

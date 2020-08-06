@@ -207,7 +207,7 @@ void Conv3x3Fp16InputTransform(const float16_t *input_data, float16_t *trans_inp
     int real_y_start = origin_y > 0 ? 0 : -origin_y;
     int real_y_end = (origin_y + 6) < input_height ? 6 : (input_height - origin_y);
 
-    int src_plane_offset = input_channel * (origin_y * input_width + origin_x);
+    int src_plane_offset = ic4 * C4NUM * (origin_y * input_width + origin_x);
     int dst_plane_offset = cal_id * C4NUM;
     for (int ic = 0; ic < ic4; ic++) {
       // clear tmp buffer
@@ -216,10 +216,10 @@ void Conv3x3Fp16InputTransform(const float16_t *input_data, float16_t *trans_inp
       // get real input block with padding
       int src_ic4_offset = src_plane_offset + ic * C4NUM;
       for (int interval = real_y_start; interval < real_y_end; interval++) {
-        int src_y_offset = src_ic4_offset + interval * input_width * input_channel + real_x_start * input_channel;
+        int src_y_offset = src_ic4_offset + (interval * input_width + real_x_start) * ic4 * C4NUM;
         int dst_y_offset = interval * 6 * C4NUM + real_x_start * C4NUM;
         for (int j = 0; j < (real_x_end - real_x_start); j++) {
-          int src_x_offset = src_y_offset + j * input_channel;
+          int src_x_offset = src_y_offset + j * ic4 * C4NUM;
           int dst_x_offset = dst_y_offset + j * C4NUM;
           float16_t *src_addr = (float16_t *)(input_data) + src_x_offset;
           float16_t *dst_addr = tmp_data + dst_x_offset;
@@ -511,7 +511,7 @@ void Conv3x3Fp16OutputTransform(const float16_t *gemm_out, float16_t *out_data, 
   int output_w = conv_param->output_w_;
   int output_h = conv_param->output_h_;
   int oc8 = UP_DIV(output_channel, C8NUM);
-
+// todo outputw --> out_w_block * out_unit
   for (int i = 0; i < real_cal_num; i++) {
     int out_w_index = (start_index + i) % out_w_block;
     int out_h_index = (start_index + i) / out_w_block;

@@ -77,7 +77,6 @@ void IndirectGemmFp16_16x8_tmp(float16_t *output, float16_t *input, float16_t *w
         int oc8_block = j / 8;
         int oc8_res = j % 8;
         int weight_oc_offset = oc8_block * 36 * ic4 * C4NUM * 8 + oc8_res;
-        // todo nc4hw4 -> nhwc
         int out_oc_offset = output_tile_offset + oc8_block * 36 * C8NUM + oc8_res;
 
         for (int n = 0; n < step; n++) {
@@ -169,6 +168,7 @@ void Conv3x3Fp16(float16_t *input_data, float16_t *transed_weight, const float16
   int thread_count = conv_param->thread_num_;
   int tile_num = 16;
   int output_unit = 4;
+  int k_plane = 36;
   int ic4 = UP_DIV(conv_param->input_channel_, C4NUM);
   int oc8 = UP_DIV(conv_param->output_channel_, C8NUM);
 
@@ -181,6 +181,9 @@ void Conv3x3Fp16(float16_t *input_data, float16_t *transed_weight, const float16
   int out_h_block = UP_DIV(conv_param->output_h_, C4NUM);
   int output_count = out_w_block * out_h_block;
   int output_tile_count = UP_DIV(output_count, tile_num);
+  int tile_buffer_offset = tile_num * k_plane * ic4 * C4NUM;
+  int block_unit_buffer_offset = k_plane * C4NUM;
+  int tmp_dst_buffer_offset = tile_num * k_plane * oc8 * C8NUM;
 
   int input_batch = conv_param->input_batch_;
   for (int batch = 0; batch < input_batch; batch++) {
@@ -188,14 +191,16 @@ void Conv3x3Fp16(float16_t *input_data, float16_t *transed_weight, const float16
       int start_index = thread_id * tile_num;
       int real_cal_num = (output_count - start_index) < tile_num ? (output_count - start_index) : tile_num;
 
-      Conv3x3Fp16InputTransform(input_data, tile_buffer, block_unit_buffer, start_index, real_cal_num, out_w_block,
-                                conv_param);
+      Conv3x3Fp16InputTransform(input_data, tile_buffer + task_id * tile_buffer_offset,
+                                block_unit_buffer + task_id * block_unit_buffer_offset, start_index, real_cal_num,
+                                out_w_block, conv_param);
 
-      IndirectGemmFp16_16x8(tmp_dst_buffer, tile_buffer, transed_weight, NULL, 36, ic4, oc8 * C8NUM,
+      IndirectGemmFp16_16x8(tmp_dst_buffer + task_id * tmp_dst_buffer_offset,
+                            tile_buffer + task_id * tile_buffer_offset, transed_weight, NULL, 36, ic4, oc8 * C8NUM,
                             oc8 * C8NUM * 36 * sizeof(float16_t), 1, 1, 0, 0);
 
-      Conv3x3Fp16OutputTransform(tmp_dst_buffer, tmp_out, bias_data, start_index, real_cal_num, out_w_block,
-                                 conv_param);
+      Conv3x3Fp16OutputTransform(tmp_dst_buffer + task_id * tmp_dst_buffer_offset, tmp_out, bias_data, start_index,
+                                 real_cal_num, out_w_block, conv_param);
     }
   }
 
