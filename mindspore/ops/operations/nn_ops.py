@@ -2761,12 +2761,17 @@ class MirrorPad(PrimitiveWithInfer):
         paddings_value = paddings['value'].asnumpy()
         paddings_size = paddings_value.size
         validator.check_integer('paddings.shape', paddings_size, len(x_shape) * 2, Rel.EQ, self.name)
-        if not np.all(paddings_size >= 0):
+        if not np.all(paddings_value >= 0):
             raise ValueError('All elements of paddings must be >= 0.')
+        adjust = 0
+        if self.mode == 'SYMMETRIC':
+            adjust = 1
+        for i in range(0, int(paddings_size / 2)):
+            if (paddings_value[i, 0] >= x_shape[i] + adjust) or (paddings_value[i, 1] >= x_shape[i] + adjust):
+                raise ValueError('At least one dim has too high a padding value for this input and mode')
         y_shape = ()
         for i in range(0, int(paddings_size / 2)):
             y_shape += ((x_shape[i] + paddings_value[i, 0] + paddings_value[i, 1]),)
-
         return {'shape': y_shape,
                 'dtype': input_x['dtype'],
                 'value': None}
