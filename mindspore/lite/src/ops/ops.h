@@ -108,6 +108,12 @@ class Activation : public Primitive {
   const schema::Activation *GetAttribute() const { return this->primitive->value_as_Activation(); }
 };
 
+class Prelu : public Activation {
+ public:
+  explicit Prelu(schema::Primitive *primitive) : Activation(primitive) {}
+  const schema::Prelu *GetAttribute() const { return this->primitive->value_as_Prelu(); }
+};
+
 class Split : public Primitive {
  public:
   explicit Split(schema::Primitive *primitive) : Primitive(primitive) {}
@@ -259,10 +265,82 @@ class Div : public Arithmetic {
   const schema::Div *GetAttribute() const { return this->primitive->value_as_Div(); }
 };
 
+class LogicalAnd : public Arithmetic {
+ public:
+  explicit LogicalAnd(schema::Primitive *primitive) : Arithmetic(primitive) {}
+  const schema::LogicalAnd *GetAttribute() const { return this->primitive->value_as_LogicalAnd(); }
+};
+
+class LogicalOr : public Arithmetic {
+ public:
+  explicit LogicalOr(schema::Primitive *primitive) : Arithmetic(primitive) {}
+  const schema::LogicalOr *GetAttribute() const { return this->primitive->value_as_LogicalOr(); }
+};
+
+class Maximum : public Arithmetic {
+ public:
+  explicit Maximum(schema::Primitive *primitive) : Arithmetic(primitive) {}
+  const schema::Maximum *GetAttribute() const { return this->primitive->value_as_Maximum(); }
+};
+
+class Minimum : public Arithmetic {
+ public:
+  explicit Minimum(schema::Primitive *primitive) : Arithmetic(primitive) {}
+  const schema::Minimum *GetAttribute() const { return this->primitive->value_as_Minimum(); }
+};
+
+class FloorDiv : public Arithmetic {
+ public:
+  explicit FloorDiv(schema::Primitive *primitive) : Arithmetic(primitive) {}
+  const schema::FloorDiv *GetAttribute() const { return this->primitive->value_as_FloorDiv(); }
+};
+
+class FloorMod : public Arithmetic {
+ public:
+  explicit FloorMod(schema::Primitive *primitive) : Arithmetic(primitive) {}
+  const schema::FloorMod *GetAttribute() const { return this->primitive->value_as_FloorMod(); }
+};
+
 class SquaredDifference : public Arithmetic {
  public:
   explicit SquaredDifference(schema::Primitive *primitive) : Arithmetic(primitive) {}
   const schema::SquaredDifference *GetAttribute() const { return this->primitive->value_as_SquaredDifference(); }
+};
+
+class Equal : public Arithmetic {
+ public:
+  explicit Equal(schema::Primitive *primitive) : Arithmetic(primitive) {}
+  const schema::Equal *GetAttribute() const { return this->primitive->value_as_Equal(); }
+};
+
+class NotEqual : public Arithmetic {
+ public:
+  explicit NotEqual(schema::Primitive *primitive) : Arithmetic(primitive) {}
+  const schema::NotEqual *GetAttribute() const { return this->primitive->value_as_NotEqual(); }
+};
+
+class Less : public Arithmetic {
+ public:
+  explicit Less(schema::Primitive *primitive) : Arithmetic(primitive) {}
+  const schema::Less *GetAttribute() const { return this->primitive->value_as_Less(); }
+};
+
+class LessEqual : public Arithmetic {
+ public:
+  explicit LessEqual(schema::Primitive *primitive) : Arithmetic(primitive) {}
+  const schema::LessEqual *GetAttribute() const { return this->primitive->value_as_LessEqual(); }
+};
+
+class Greater : public Arithmetic {
+ public:
+  explicit Greater(schema::Primitive *primitive) : Arithmetic(primitive) {}
+  const schema::Greater *GetAttribute() const { return this->primitive->value_as_Greater(); }
+};
+
+class GreaterEqual : public Arithmetic {
+ public:
+  explicit GreaterEqual(schema::Primitive *primitive) : Arithmetic(primitive) {}
+  const schema::GreaterEqual *GetAttribute() const { return this->primitive->value_as_GreaterEqual(); }
 };
 
 class Eltwise : public Arithmetic {
@@ -331,6 +409,18 @@ class LogicalNot : public ArithmeticSelf {
   const schema::LogicalNot *GetAttribute() const { return this->primitive->value_as_LogicalNot(); }
 };
 
+class Floor : public ArithmeticSelf {
+ public:
+  explicit Floor(schema::Primitive *primitive) : ArithmeticSelf(primitive) {}
+  const schema::Floor *GetAttribute() const { return this->primitive->value_as_Floor(); }
+};
+
+class Ceil : public ArithmeticSelf {
+ public:
+  explicit Ceil(schema::Primitive *primitive) : ArithmeticSelf(primitive) {}
+  const schema::Ceil *GetAttribute() const { return this->primitive->value_as_Ceil(); }
+};
+
 class RealDiv : public Arithmetic {
  public:
   explicit RealDiv(schema::Primitive *primitive) : Arithmetic(primitive) {}
@@ -362,12 +452,6 @@ class Cast : public Primitive {
   explicit Cast(schema::Primitive *primitive) : Primitive(primitive) {}
   const schema::Cast *GetAttribute() const { return this->primitive->value_as_Cast(); }
   int InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) override;
-};
-
-class Ceil : public ArithmeticSelf {
- public:
-  explicit Ceil(schema::Primitive *primitive) : ArithmeticSelf(primitive) {}
-  const schema::Ceil *GetAttribute() const { return this->primitive->value_as_Ceil(); }
 };
 
 class Concat : public Primitive {
@@ -473,24 +557,6 @@ class Squeeze : public Primitive {
   explicit Squeeze(schema::Primitive *primitive) : Primitive(primitive) {}
   const schema::Squeeze *SqueezeAttribute() const { return this->primitive->value_as_Squeeze(); }
   int InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) override;
-};
-
-class Floor : public ArithmeticSelf {
- public:
-  explicit Floor(schema::Primitive *primitive) : ArithmeticSelf(primitive) {}
-  const schema::Floor *GetAttribute() const { return this->primitive->value_as_Floor(); }
-};
-
-class FloorDiv : public Arithmetic {
- public:
-  explicit FloorDiv(schema::Primitive *primitive) : Arithmetic(primitive) {}
-  const schema::Sub *GetAttribute() const { return this->primitive->value_as_Sub(); }
-};
-
-class FloorMod : public Arithmetic {
- public:
-  explicit FloorMod(schema::Primitive *primitive) : Arithmetic(primitive) {}
-  const schema::Sub *GetAttribute() const { return this->primitive->value_as_Sub(); }
 };
 
 class Transpose : public Primitive {
