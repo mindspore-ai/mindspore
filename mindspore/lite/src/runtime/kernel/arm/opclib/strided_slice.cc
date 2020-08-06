@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/opclib/fp32/strided_slice.h"
+#include "src/runtime/kernel/arm/opclib/strided_slice.h"
 #include "src/runtime/kernel/arm/opclib/errorcode.h"
 
 void PadStridedSliceParameterTo4D(StridedSliceParameter *param) {
@@ -45,7 +45,7 @@ void PadStridedSliceParameterTo4D(StridedSliceParameter *param) {
   param->num_axes_ = DIMENSION_4D;
 }
 
-int DoStridedSlice(const float *in_data, float *out_data, StridedSliceParameter *param) {
+int DoStridedSlice(const void *in_data, void *out_data, StridedSliceParameter *param) {
   if (in_data == nullptr || out_data == nullptr || param == nullptr) {
     return OPCLIB_NULL_PTR;
   }
@@ -66,17 +66,21 @@ int DoStridedSlice(const float *in_data, float *out_data, StridedSliceParameter 
   dim_offset[2] = in_shape[3];
   dim_offset[1] = dim_offset[2] * in_shape[2];
   dim_offset[0] = dim_offset[1] * in_shape[1];
-  size_t output_index = 0;
+  size_t out_offset = 0;
   for (int32_t dim0 = begins[0]; dim0 < ends[0]; dim0 += strides[0]) {
     for (int32_t dim1 = begins[1]; dim1 < ends[1]; dim1 += strides[1]) {
       for (int32_t dim2 = begins[2]; dim2 < ends[2]; dim2 += strides[2]) {
         for (int32_t dim3 = begins[3]; dim3 < ends[3]; dim3 += strides[3]) {
-          out_data[output_index++] =
-            *(in_data + dim0 * dim_offset[0] + dim1 * dim_offset[1] + dim2 * dim_offset[2] + dim3);
+          int32_t in_offset = dim0 * dim_offset[0] + dim1 * dim_offset[1] + dim2 * dim_offset[2] + dim3;
+          if (param->data_type == kDataTypeFloat) {
+            *((float *)out_data + out_offset) = *((float *)in_data + in_offset);
+          } else {
+            *((int8_t *)out_data + out_offset) = *((int8_t *)in_data + in_offset);
+          }
+          out_offset++;
         }
       }
     }
   }
-
   return OPCLIB_OK;
 }

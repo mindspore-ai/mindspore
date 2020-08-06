@@ -48,6 +48,11 @@
 #define kInputSize1 2
 #define kInputSize2 3
 
+enum LiteDataType {
+  kDataTypeFloat,
+  kDataTypeInt8,
+};
+
 struct OpParameter {
   char name_[100];
   int type_;
@@ -55,4 +60,3 @@ struct OpParameter {
 };
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_OP_BASE_H_
-

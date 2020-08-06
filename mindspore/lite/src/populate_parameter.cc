@@ -62,7 +62,7 @@
 #include "src/runtime/kernel/arm/fp32/flatten.h"
 #include "src/runtime/kernel/arm/opclib/fp32/unsqueeze.h"
 #include "src/runtime/kernel/arm/opclib/fp32/one_hot.h"
-#include "src/runtime/kernel/arm/opclib/fp32/strided_slice.h"
+#include "src/runtime/kernel/arm/opclib/strided_slice.h"
 #include "src/runtime/kernel/arm/base/prior_box.h"
 #include "src/runtime/kernel/arm/opclib/fp32/space_to_depth.h"
 #include "src/runtime/kernel/arm/opclib/fp32/space_to_batch.h"

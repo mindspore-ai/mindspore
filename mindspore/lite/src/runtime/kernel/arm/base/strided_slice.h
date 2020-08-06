@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_BACKEND_ARM_FP32_STRIDED_SLICE_H_
-#define MINDSPORE_LITE_SRC_BACKEND_ARM_FP32_STRIDED_SLICE_H_
+#ifndef MINDSPORE_LITE_SRC_BACKEND_ARM_BASE_STRIDED_SLICE_H_
+#define MINDSPORE_LITE_SRC_BACKEND_ARM_BASE_STRIDED_SLICE_H_
 
 #include <vector>
 #include "ir/anf.h"
@@ -32,13 +32,10 @@ class StridedSliceCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int StridedSlice();
 
  private:
   int thread_num_;
-  float *input_ptr_;
-  float *output_ptr_;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_BACKEND_ARM_FP32_STRIDED_SLICE_H_
+#endif  // MINDSPORE_LITE_SRC_BACKEND_ARM_BASE_STRIDED_SLICE_H_
