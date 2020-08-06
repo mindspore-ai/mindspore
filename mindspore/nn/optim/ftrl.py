@@ -24,13 +24,13 @@ _ftrl_opt = C.MultitypeFuncGraph("ftrl_opt")
 
 
 @_ftrl_opt.register("Function", "Function", "Function", "Function", "Number", "Number", "Number", "Tensor", "Tensor",
-                    "IndexedSlices", "Tensor", "Tensor", "Bool")
+                    "RowTensor", "Tensor", "Tensor", "Bool")
 def _tensor_run_opt_with_sparse(opt, spars_opt, push, pull, l1, l2, lr_power, learning_rate, linear,
                                 gradient, weight, moment, ps_parameter):
     """Apply sparse ftrl optimizer to the weight parameter when the gradient is sparse."""
     success = True
-    indices = gradient.indices()
-    values = gradient.values()
+    indices = gradient.indices
+    values = gradient.values
     if ps_parameter:
         op_shape = P.Shape()
         shapes = (op_shape(weight), op_shape(moment), op_shape(linear), op_shape(values), op_shape(indices))

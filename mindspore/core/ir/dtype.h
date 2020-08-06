@@ -154,15 +154,15 @@ class TensorType : public Object {
 };
 using TensorTypePtr = std::shared_ptr<TensorType>;
 
-class IndexedSlicesType : public Object {
+class RowTensorType : public Object {
  public:
-  IndexedSlicesType() : Object(kObjectTypeIndexedSlicesType, kObjectTypeUndeterminedType) {}
-  explicit IndexedSlicesType(const TypePtr &ele)
-      : Object(kObjectTypeIndexedSlicesType, kObjectTypeUndeterminedType, false), element_type_(ele) {}
-  ~IndexedSlicesType() override = default;
-  MS_DECLARE_PARENT(IndexedSlicesType, Object)
+  RowTensorType() : Object(kObjectTypeRowTensorType, kObjectTypeUndeterminedType) {}
+  explicit RowTensorType(const TypePtr &ele)
+      : Object(kObjectTypeRowTensorType, kObjectTypeUndeterminedType, false), element_type_(ele) {}
+  ~RowTensorType() override = default;
+  MS_DECLARE_PARENT(RowTensorType, Object)
 
-  TypeId generic_type_id() const override { return kObjectTypeIndexedSlicesType; }
+  TypeId generic_type_id() const override { return kObjectTypeRowTensorType; }
   const TypePtr element() const { return element_type_; }
   void set_element(const TypePtr &element_type) { element_type_ = element_type; }
 
@@ -175,7 +175,7 @@ class IndexedSlicesType : public Object {
  private:
   TypePtr element_type_;
 };
-using IndexedSlicesTypePtr = std::shared_ptr<IndexedSlicesType>;
+using RowTensorTypePtr = std::shared_ptr<RowTensorType>;
 
 class SparseTensorType : public Object {
  public:

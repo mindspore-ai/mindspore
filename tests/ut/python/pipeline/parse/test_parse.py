@@ -175,7 +175,7 @@ def test_bprop_with_wrong_output_num():
         def construct(self, x, y):
             return BpropWithWrongOutputNum()(x, y)
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         C.grad_all(BpropWithWrongOutputNumCell())(1, 2)
 
 def test_bprop_with_wrong_output_type():
@@ -247,7 +247,7 @@ def test_bprop_with_wrong_output_shape():
         def construct(self, x):
             return BpropWithWrongOutputShape()(x)
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         net = BpropWithWrongOutputShapeCell()
         net.set_grad()
         C.grad_all(net)(Tensor(np.ones([64, 10]).astype(np.int32)))

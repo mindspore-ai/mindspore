@@ -136,8 +136,7 @@ REGISTER_PYBIND_DEFINE(
           TensorType data(TypeIdToType(TypeId(static_cast<int>(t[0].cast<py::int_>()))));
           return data;
         }));
-    (void)py::class_<IndexedSlicesType, Type, std::shared_ptr<IndexedSlicesType>>(m_sub, "IndexedSlicesType")
-      .def(py::init());
+    (void)py::class_<RowTensorType, Type, std::shared_ptr<RowTensorType>>(m_sub, "RowTensorType").def(py::init());
     (void)py::class_<SparseTensorType, Type, std::shared_ptr<SparseTensorType>>(m_sub, "SparseTensorType")
       .def(py::init());
     (void)py::class_<UndeterminedType, Type, std::shared_ptr<UndeterminedType>>(m_sub, "UndeterminedType")

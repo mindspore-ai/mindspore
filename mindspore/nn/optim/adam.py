@@ -85,13 +85,13 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay, param, m, v, gradient, d
 
 
 @_adam_opt.register("Function", "Function", "Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
-                    "Tensor", "IndexedSlices", "Tensor", "Tensor", "Tensor", "Bool")
+                    "Tensor", "RowTensor", "Tensor", "Tensor", "Tensor", "Bool")
 def _run_opt_with_sparse(opt, sparse_opt, push, pull, beta1_power, beta2_power, beta1, beta2, eps, lr,
                          gradient, params, moment1, moment2, ps_parameter):
     """Apply sparse adam optimizer to the weight parameter when the gradient is sparse."""
     success = True
-    indices = gradient.indices()
-    values = gradient.values()
+    indices = gradient.indices
+    values = gradient.values
     if ps_parameter:
         op_shape = P.Shape()
         shapes = (op_shape(params), op_shape(moment1), op_shape(moment2),

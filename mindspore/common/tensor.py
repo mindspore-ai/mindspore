@@ -21,7 +21,7 @@ from .._checkparam import check_type, check_typename
 from . import dtype as mstype
 from ._register_for_tensor import tensor_operator_registry
 
-__all__ = ['Tensor', 'MetaTensor', 'IndexedSlices', 'SparseTensor']
+__all__ = ['Tensor', 'MetaTensor', 'RowTensor', 'SparseTensor']
 np_types = (np.int8, np.int16, np.int32, np.int64,
             np.uint8, np.uint16, np.uint32, np.uint64, np.float16,
             np.float32, np.float64, np.bool_)
@@ -267,20 +267,20 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('any')(keep_dims)(self, axis)
 
 
-class IndexedSlices:
+class RowTensor:
     """
     A sparse representation of a set of tensor slices at given indices.
 
-    An IndexedSlices is typically used to represent a subset of a larger
+    An RowTensor is typically used to represent a subset of a larger
     tensor dense of shape [L0, D1, .. , DN] where L0 >> D0.
 
     The values in indices are the indices in the first dimension of the slices
     that have been extracted from the larger tensor.
 
-    The dense tensor dense represented by an IndexedSlices slices has
+    The dense tensor dense represented by an RowTensor slices has
     `dense[slices.indices[i], :, :, :, ...] = slices.values[i, :, :, :, ...]`.
 
-    IndexedSlices can only be used in the `Cell`'s construct method.
+    RowTensor can only be used in the `Cell`'s contruct method.
 
     It is not supported in pynative mode at the moment.
 
@@ -291,7 +291,7 @@ class IndexedSlices:
             of the corresponding dense tensor.
 
     Returns:
-        IndexedSlices, composed of `indices`, `values`, and `dense_shape`.
+        RowTensor, composed of `indices`, `values`, and `dense_shape`.
 
     Examples:
         >>> class Net(nn.Cell):
@@ -299,8 +299,8 @@ class IndexedSlices:
         >>>         super(Net, self).__init__()
         >>>         self.dense_shape = dense_shape
         >>>     def construct(self, indices, values):
-        >>>         x = IndexedSlices(indices, values, self.dense_shape)
-        >>>         return x.values(), x.indices(), x.dense_shape()
+        >>>         x = RowTensor(indices, values, self.dense_shape)
+        >>>         return x.values, x.indices, x.dense_shape
         >>>
         >>> indices = Tensor([0])
         >>> values = Tensor([[1, 2]], dtype=ms.float32)
@@ -308,17 +308,20 @@ class IndexedSlices:
     """
 
     def __init__(self, indices, values, dense_shape):
-        "Init IndexedSlices"
+        "Init RowTensor"
         self.__indices = indices
         self.__values = values
         self.__dense_shape = dense_shape
 
+    @property
     def indices(self):
         return self.__indices
 
+    @property
     def values(self):
         return self.__values
 
+    @property
     def dense_shape(self):
         return self.__dense_shape
 
@@ -353,7 +356,7 @@ class SparseTensor:
         >>>         self.dense_shape = dense_shape
         >>>     def construct(self, indices, values):
         >>>         x = SparseTensor(indices, values, self.dense_shape)
-        >>>         return x.values(), x.indices(), x.dense_shape()
+        >>>         return x.values, x.indices, x.dense_shape
         >>>
         >>> indices = Tensor([[0, 1], [1, 2]])
         >>> values = Tensor([1, 2], dtype=ms.float32)
@@ -366,11 +369,14 @@ class SparseTensor:
         self.__values = values
         self.__dense_shape = dense_shape
 
+    @property
     def indices(self):
         return self.__indices
 
+    @property
     def values(self):
         return self.__values
 
+    @property
     def dense_shape(self):
         return self.__dense_shape

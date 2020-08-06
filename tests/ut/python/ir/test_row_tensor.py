@@ -13,10 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """
-@File  : test_indexed_slices.py
+@File  : test_row_tensor.py
 @Author:
 @Date  : 2020-06-08
-@Desc  : test mindspore indexed_slices's operation
+@Desc  : test mindspore row_tensor's operation
 """
 import numpy as np
 import pytest
@@ -29,7 +29,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.primitive import constexpr
 from mindspore.ops._grad.grad_base import bprop_getters
-from mindspore import Tensor, IndexedSlices, context
+from mindspore import Tensor, RowTensor, context
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common import dtype as mstype
 from mindspore._checkparam import Validator as validator
@@ -122,7 +122,7 @@ def get_bprop_sparse_gather_v2(self):
             values_shape = indices_size + x_tail_shp
             values = reshape(dout, values_shape)
             indices = reshape(indices, indices_size)
-            return IndexedSlices(indices, values, x_shp), zeros_like(indices), zeros_like(axis)
+            return RowTensor(indices, values, x_shp), zeros_like(indices), zeros_like(axis)
         if F.rank(dout) == 0:
             dout = P.ExpandDims()(dout, -1)
         if F.rank(indices) == 0:
@@ -142,10 +142,10 @@ def get_bprop_sparse_gather_v2(self):
 
 adam_opt_for_map = C.MultitypeFuncGraph("adam_opt_for_map")
 @adam_opt_for_map.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
-                           "Tensor", "Tensor", "Tensor", "IndexedSlices", "Bool")
-def _update_run_op_for_map_indexed_slices(beta1, beta2, eps, lr, weight_decay_tensor, param,
-                                          m, v, gradient, decay_flag):
-    return gradient.values()
+                           "Tensor", "Tensor", "Tensor", "RowTensor", "Bool")
+def _update_run_op_for_map_row_tensor(beta1, beta2, eps, lr, weight_decay_tensor, param,
+                                      m, v, gradient, decay_flag):
+    return gradient.values
 
 @adam_opt_for_map.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
                            "Tensor", "Tensor", "Tensor", "Tensor", "Bool")
@@ -219,35 +219,35 @@ class AdamWeightDecaySparse(Optimizer):
         return updated_velocity
 
 
-def test_indexed_slices_make_indexed_slices():
-    class MakeIndexedSlices(nn.Cell):
+def test_row_tensor_make_row_tensor():
+    class MakeRowTensor(nn.Cell):
         def __init__(self):
-            super(MakeIndexedSlices, self).__init__()
+            super(MakeRowTensor, self).__init__()
             self.dense_shape = (3, 2)
         def construct(self, indices, values):
-            ret = (IndexedSlices(indices, values, self.dense_shape),)
+            ret = (RowTensor(indices, values, self.dense_shape),)
             return ret[0]
     indices = Tensor([1, 2])
     values = Tensor([[0, 0], [1, 2]], dtype=ms.float32)
-    MakeIndexedSlices()(indices, values)
+    MakeRowTensor()(indices, values)
 
 
-class IndexedSlicesGetAttr(nn.Cell):
+class RowTensorGetAttr(nn.Cell):
     def __init__(self, dense_shape):
-        super(IndexedSlicesGetAttr, self).__init__()
+        super(RowTensorGetAttr, self).__init__()
         self.dense_shape = dense_shape
     def construct(self, indices, values):
-        x = IndexedSlices(indices, values, self.dense_shape)
-        return x.values(), x.indices(), x.dense_shape()
+        x = RowTensor(indices, values, self.dense_shape)
+        return x.values, x.indices, x.dense_shape
 
 
-def test_indexed_slices_attr():
+def test_row_tensor_attr():
     indices = Tensor([0])
     values = Tensor([[1, 2]], dtype=ms.float32)
-    IndexedSlicesGetAttr((3, 2))(indices, values)
+    RowTensorGetAttr((3, 2))(indices, values)
 
 
-def test_indexed_slices_sparse_gatherv2_grad_all():
+def test_row_tensor_sparse_gatherv2_grad_all():
     grad_all = C.GradOperation('get_all', get_all=True)
     class GradWrap(nn.Cell):
         def __init__(self, network):
@@ -255,7 +255,7 @@ def test_indexed_slices_sparse_gatherv2_grad_all():
             self.network = network
         def construct(self, x, y):
             grad = grad_all(self.network)(x, y)
-            return grad[0].indices(), grad[0].values(), grad[0].dense_shape()
+            return grad[0].indices, grad[0].values, grad[0].dense_shape
     class SparseGatherV2(nn.Cell):
         def __init__(self):
             super(SparseGatherV2, self).__init__()
@@ -268,7 +268,7 @@ def test_indexed_slices_sparse_gatherv2_grad_all():
     GradWrap(SparseGatherV2())(params, indices)
 
 
-def test_indexed_slices_sparse_gatherv2_grad_with_pram():
+def test_row_tensor_sparse_gatherv2_grad_with_pram():
     grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
     class GradWrap(nn.Cell):
         def __init__(self, network):
@@ -279,7 +279,7 @@ def test_indexed_slices_sparse_gatherv2_grad_with_pram():
             weights = self.weights
             grad = grad_by_list(self.network, weights)(x)
             x = grad[0]
-            return x.values(), x.indices(), x.dense_shape()
+            return x.values, x.indices, x.dense_shape
     class SparseGatherV2(nn.Cell):
         def __init__(self):
             super(SparseGatherV2, self).__init__()
@@ -293,7 +293,7 @@ def test_indexed_slices_sparse_gatherv2_grad_with_pram():
     network(indices)
 
 
-def test_indexed_slices_env_get():
+def test_row_tensor_env_get():
     class Loss(nn.Cell):
         def __init__(self):
             super(Loss, self).__init__()
@@ -321,7 +321,7 @@ def test_indexed_slices_env_get():
     train_network(inputs, label)
 
 
-def test_indexed_slices_model_train():
+def test_row_tensor_model_train():
     class Net(nn.Cell):
         def __init__(self, in_features, out_features):
             super(Net, self).__init__()
@@ -347,76 +347,76 @@ def test_indexed_slices_model_train():
     model.train(2, dataset, dataset_sink_mode=False)
 
 
-def test_indexed_slices_values_dim_greater_than_dense_shape_dim():
+def test_row_tensor_values_dim_greater_than_dense_shape_dim():
     indices = Tensor(np.array([0, 1], dtype=np.int32))
     values = Tensor(np.random.randn(2, 4, 5).astype(np.float32))
     dense_shape = (3, 4)
     with pytest.raises(TypeError):
-        IndexedSlicesGetAttr(dense_shape)(indices, values)
+        RowTensorGetAttr(dense_shape)(indices, values)
 
 
-def test_indexed_slices_values_dim_less_than_dense_shape_dim():
+def test_row_tensor_values_dim_less_than_dense_shape_dim():
     indices = Tensor(np.array([0, 1], dtype=np.int32))
     values = Tensor(np.random.randn(2, 4).astype(np.float32))
     dense_shape = (3, 4, 5)
     with pytest.raises(TypeError):
-        IndexedSlicesGetAttr(dense_shape)(indices, values)
+        RowTensorGetAttr(dense_shape)(indices, values)
 
 
-def test_indexed_slices_value_and_dense_shape_illegal():
+def test_row_tensor_value_and_dense_shape_illegal():
     indices = Tensor(np.array([0, 1], dtype=np.int32))
     values = Tensor(np.random.randn(2, 4).astype(np.float32))
     dense_shape = (3, 5)
     with pytest.raises(TypeError):
-        IndexedSlicesGetAttr(dense_shape)(indices, values)
+        RowTensorGetAttr(dense_shape)(indices, values)
 
 
-class IndexedSlicesValuesDouble(nn.Cell):
+class RowTensorValuesDouble(nn.Cell):
     def __init__(self):
         super().__init__()
 
     def construct(self, x):
-        indices = x.indices()
-        values = x.values() * 2
-        dense_shape = x.dense_shape()
-        return IndexedSlices(indices, values, dense_shape)
+        indices = x.indices
+        values = x.values * 2
+        dense_shape = x.dense_shape
+        return RowTensor(indices, values, dense_shape)
 
 
-class IndexedSlicesValuesAdd2(nn.Cell):
+class RowTensorValuesAdd2(nn.Cell):
     def __init__(self):
         super().__init__()
 
     def construct(self, x):
-        indices = x.indices()
-        values = x.values() + 2
-        dense_shape = x.dense_shape()
-        return IndexedSlices(indices, values, dense_shape)
+        indices = x.indices
+        values = x.values + 2
+        dense_shape = x.dense_shape
+        return RowTensor(indices, values, dense_shape)
 
 
-class IndexedSlicesWithControlIf(nn.Cell):
+class RowTensorWithControlIf(nn.Cell):
     def __init__(self, dense_shape):
         super().__init__()
-        self.op1 = IndexedSlicesValuesDouble()
-        self.op2 = IndexedSlicesValuesAdd2()
+        self.op1 = RowTensorValuesDouble()
+        self.op2 = RowTensorValuesAdd2()
         self.dense_shape = dense_shape
 
     def construct(self, a, b, indices, values):
-        x = IndexedSlices(indices, values, self.dense_shape)
+        x = RowTensor(indices, values, self.dense_shape)
         if a > b:
             x = self.op1(x)
         else:
             x = self.op2(x)
-        return x.indices(), x.values()
+        return x.indices, x.values
 
 
-def test_indexed_slices_with_control_flow_if():
+def test_row_tensor_with_control_flow_if():
     a = Tensor(np.array(0).astype(np.int32))
     b = Tensor(np.array(2).astype(np.int32))
     indices = Tensor(np.array([0, 2]).astype(np.int32))
     values = Tensor(np.ones([2, 2]).astype(np.float32))
     dense_shape = (5, 2)
 
-    net = IndexedSlicesWithControlIf(dense_shape)
+    net = RowTensorWithControlIf(dense_shape)
     net(a, b, indices, values)
 
 

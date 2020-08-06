@@ -49,6 +49,6 @@ class SparseToDense(Cell):
         self.sparse_to_dense = P.SparseToDense()
 
     def construct(self, sparse_tensor):
-        return self.sparse_to_dense(sparse_tensor.indices(),
-                                    sparse_tensor.values(),
-                                    sparse_tensor.dense_shape())
+        return self.sparse_to_dense(sparse_tensor.indices,
+                                    sparse_tensor.values,
+                                    sparse_tensor.dense_shape)

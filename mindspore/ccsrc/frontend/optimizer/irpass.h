@@ -105,8 +105,8 @@ class OptimizeIRPassLib {
   // Fusion
   SubstitutionPtr mark_interface_fusion_;
 
-  // IndexedSlices Eliminate
-  SubstitutionPtr indexed_slices_eliminate_;
+  // RowTensor Eliminate
+  SubstitutionPtr row_tensor_eliminate_;
 
   // SparseTensor Eliminate
   SubstitutionPtr sparse_tensor_eliminate_;

@@ -32,9 +32,9 @@ namespace opt {
 using mindspore::abstract::AbstractAttribute;
 using mindspore::abstract::AbstractClass;
 using mindspore::abstract::AbstractDictionary;
-using mindspore::abstract::AbstractIndexedSlices;
 using mindspore::abstract::AbstractJTagged;
 using mindspore::abstract::AbstractList;
+using mindspore::abstract::AbstractRowTensor;
 using mindspore::abstract::AbstractScalar;
 using mindspore::abstract::AbstractSparseTensor;
 using mindspore::abstract::AbstractTuple;
@@ -81,10 +81,10 @@ static AbstractBasePtr AdaptAbs(const AbstractBasePtr &t) {
     return std::make_shared<AbstractTuple>(abstract_list);
   }
 
-  if (t->isa<AbstractIndexedSlices>()) {
-    auto abs_indexed_slices = dyn_cast<AbstractIndexedSlices>(t);
-    std::vector<AbstractBasePtr> abstract_list{abs_indexed_slices->indices(), abs_indexed_slices->values(),
-                                               abs_indexed_slices->dense_shape()};
+  if (t->isa<AbstractRowTensor>()) {
+    auto abs_row_tensor = dyn_cast<AbstractRowTensor>(t);
+    std::vector<AbstractBasePtr> abstract_list{abs_row_tensor->indices(), abs_row_tensor->values(),
+                                               abs_row_tensor->dense_shape()};
     return std::make_shared<AbstractTuple>(abstract_list);
   }
 
@@ -455,16 +455,16 @@ bool CleanAfterOptA(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager
     } else if (IsValueNode<ValueList>(node)) {
       new_node = ConvertValueListNodeToValueTupleNode(node->cast<ValueNodePtr>());
     } else if (IsPrimitiveCNode(node, prim::kPrimMakeSparseTensor) ||
-               IsPrimitiveCNode(node, prim::kPrimMakeIndexedSlices)) {
+               IsPrimitiveCNode(node, prim::kPrimMakeRowTensor)) {
       new_node = ConvertMakeSparseToMakeTuple(cnode);
     } else if (IsPrimitiveCNode(node, prim::kPrimSparseTensorGetIndices) ||
-               IsPrimitiveCNode(node, prim::kPrimIndexedSlicesGetIndices)) {
+               IsPrimitiveCNode(node, prim::kPrimRowTensorGetIndices)) {
       new_node = ConvertSparseGetAttrToTupleGetItem(cnode, 0);
     } else if (IsPrimitiveCNode(node, prim::kPrimSparseTensorGetValues) ||
-               IsPrimitiveCNode(node, prim::kPrimIndexedSlicesGetValues)) {
+               IsPrimitiveCNode(node, prim::kPrimRowTensorGetValues)) {
       new_node = ConvertSparseGetAttrToTupleGetItem(cnode, 1);
     } else if (IsPrimitiveCNode(node, prim::kPrimSparseTensorGetDenseShape) ||
-               IsPrimitiveCNode(node, prim::kPrimIndexedSlicesGetDenseShape)) {
+               IsPrimitiveCNode(node, prim::kPrimRowTensorGetDenseShape)) {
       new_node = ConvertSparseGetAttrToTupleGetItem(cnode, 2);
     }
 

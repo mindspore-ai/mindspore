@@ -50,7 +50,7 @@ enum TypeId : int {
   kObjectTypeSlice,
   kObjectTypeKeyword,
   kObjectTypeTensorType,
-  kObjectTypeIndexedSlicesType,
+  kObjectTypeRowTensorType,
   kObjectTypeSparseTensorType,
   kObjectTypeUndeterminedType,
   kObjectTypeClass,

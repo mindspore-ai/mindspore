@@ -20,7 +20,7 @@
 """
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import context, Tensor, IndexedSlices, SparseTensor
+from mindspore import context, Tensor, RowTensor, SparseTensor
 from mindspore.ops import composite as C
 
 context.set_context(mode=context.PYNATIVE_MODE, enable_sparse=True)
@@ -36,18 +36,18 @@ class GradWrap(nn.Cell):
         return grad
 
 
-def test_indexed_slices_attr():
-    class IndexedSlicesGetAttr(nn.Cell):
+def test_row_tensor_attr():
+    class RowTensorGetAttr(nn.Cell):
         def __init__(self, dense_shape):
-            super(IndexedSlicesGetAttr, self).__init__()
+            super(RowTensorGetAttr, self).__init__()
             self.dense_shape = dense_shape
         def construct(self, indices, values):
-            x = IndexedSlices(indices, values, self.dense_shape)
-            return x.values(), x.indices(), x.dense_shape()
+            x = RowTensor(indices, values, self.dense_shape)
+            return x.values, x.indices, x.dense_shape
     indices = Tensor([0])
     values = Tensor([[1, 2]], dtype=ms.float32)
-    IndexedSlicesGetAttr((3, 2))(indices, values)
-    GradWrap(IndexedSlicesGetAttr((3, 2)))(indices, values)
+    RowTensorGetAttr((3, 2))(indices, values)
+    GradWrap(RowTensorGetAttr((3, 2)))(indices, values)
 
 
 def test_sparse_tensor_attr():
@@ -57,7 +57,7 @@ def test_sparse_tensor_attr():
             self.dense_shape = (3, 4)
         def construct(self, indices, values):
             x = SparseTensor(indices, values, self.dense_shape)
-            return x.values(), x.indices(), x.dense_shape()
+            return x.values, x.indices, x.dense_shape
 
     indices = Tensor([[0, 1], [1, 2]])
     values = Tensor([1, 2], dtype=ms.float32)

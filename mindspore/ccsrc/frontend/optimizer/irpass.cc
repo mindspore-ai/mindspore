@@ -43,7 +43,7 @@
 #include "frontend/optimizer/irpass/transpose_eliminate.h"
 #include "frontend/optimizer/irpass/value_based_eliminate.h"
 #include "frontend/optimizer/opt.h"
-#include "frontend/optimizer/irpass/indexed_slices_eliminate.h"
+#include "frontend/optimizer/irpass/row_tensor_eliminate.h"
 #include "frontend/optimizer/irpass/sparse_tensor_eliminate.h"
 
 namespace mindspore {
@@ -157,10 +157,10 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   mark_interface_fusion_ =
     MakeSubstitution(std::make_shared<MarkInterfaceFusion>(), "mark_interface_fusion", prim::kPrimSelect);
 
-  // IndexedSlices Eliminate
-  indexed_slices_eliminate_ = MakeSubstitution(
-    std::make_shared<IndexedSlicesEliminater>(), "indexed_slices_eliminate",
-    {prim::kPrimIndexedSlicesGetIndices, prim::kPrimIndexedSlicesGetValues, prim::kPrimIndexedSlicesGetDenseShape});
+  // RowTensor Eliminate
+  row_tensor_eliminate_ = MakeSubstitution(
+    std::make_shared<RowTensorEliminater>(), "row_tensor_eliminate",
+    {prim::kPrimRowTensorGetIndices, prim::kPrimRowTensorGetValues, prim::kPrimRowTensorGetDenseShape});
 
   // SparseTensor Eliminate
   sparse_tensor_eliminate_ = MakeSubstitution(
