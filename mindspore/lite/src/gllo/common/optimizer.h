@@ -26,9 +26,9 @@
 #include "ir/graph_utils.h"
 #include "src/common/utils.h"
 
-#include "src/gllo/common/pass_manager.h"
-#include "src/gllo/common/pattern_engine.h"
-#include "src/gllo/common/utils.h"
+#include "backend/optimizer/common/pass_manager.h"
+#include "backend/optimizer/common/pattern_engine.h"
+#include "src/gllo/common/gllo_utils.h"
 
 namespace mindspore {
 namespace opt {

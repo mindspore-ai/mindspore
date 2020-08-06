@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_PASS_FUSION_CONV_ACTIVATION_FUSION_H_
 
 #include <string>
-#include "mindspore/lite/src/gllo/common/optimizer.h"
+#include "src/gllo/common/optimizer.h"
 
 namespace mindspore {
 namespace opt {

@@ -14,28 +14,31 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PASS_COMMON_UTILS_H_
-#define MINDSPORE_LITE_SRC_PASS_COMMON_UTILS_H_
+#ifndef MINDSPORE_LITE_SRC_PASS_COMMON_GLLO_UTILS_H_
+#define MINDSPORE_LITE_SRC_PASS_COMMON_GLLO_UTILS_H_
 
-#include <mindspore/lite/src/ir/primitive_t_value.h>
 #include <memory>
+#include "src/ir/primitive_t_value.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "src/common/utils.h"
-#include "src/gllo/common/pattern_engine.h"
+#include "backend/optimizer/common/pattern_engine.h"
 #include "schema/inner/model_generated.h"
 #include "src/param_value_lite.h"
 
 using PrimitiveTValuePtr = std::shared_ptr<mindspore::lite::PrimitiveTValue>;
 namespace mindspore {
 namespace opt {
-
 bool AnfEqual(const BaseRef &a, const BaseRef &b);
 
 bool CNodeTypeEqual(const BaseRef &a, const BaseRef &b);
 
 AnfNodePtr SexpToNode(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap *primitive_vars,
                       bool multigraph = false);
+
+bool IsRealCNodeKernel(const AnfNodePtr &node);
+
+bool IsGraphKernel(const AnfNodePtr &node);
 
 void CheckIfFuncGraphIsNull(const FuncGraphPtr &graph);
 
@@ -61,4 +64,4 @@ bool IsParamNode(const BaseRef &n);
 bool IsConvNode(const BaseRef &n);
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_PASS_COMMON_UTILS_H_
+#endif  // MINDSPORE_LITE_SRC_PASS_COMMON_GLLO_UTILS_H_
