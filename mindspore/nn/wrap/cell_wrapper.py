@@ -82,7 +82,7 @@ class WithGradCell(Cell):
 
     Wraps the network with backward cell to compute gradients. A network with a loss function is necessary
     as argument. If loss function in None, the network must be a wrapper of network and loss function. This
-    Cell accepts data and label as inputs and returns gradients for each trainable parameter.
+    Cell accepts *inputs as inputs and returns gradients for each trainable parameter.
 
     Note:
         Run in PyNative mode.
@@ -95,8 +95,7 @@ class WithGradCell(Cell):
             output value. Default: None.
 
     Inputs:
-        - **data** (Tensor) - Tensor of shape :math:`(N, \ldots)`.
-        - **label** (Tensor) - Tensor of shape :math:`(N, \ldots)`.
+        - **(*inputs)** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
 
     Outputs:
         list, a list of Tensors with identical shapes as trainable weights.
@@ -126,12 +125,12 @@ class WithGradCell(Cell):
             self.network_with_loss = WithLossCell(self.network, self.loss_fn)
         self.network_with_loss.set_train()
 
-    def construct(self, data, label):
+    def construct(self, *inputs):
         weights = self.weights
         if self.sens is None:
-            grads = self.grad(self.network_with_loss, weights)(data, label)
+            grads = self.grad(self.network_with_loss, weights)(*inputs)
         else:
-            grads = self.grad(self.network_with_loss, weights)(data, label, self.sens)
+            grads = self.grad(self.network_with_loss, weights)(*inputs, self.sens)
         return grads
 
 
@@ -139,7 +138,7 @@ class TrainOneStepCell(Cell):
     r"""
     Network training package class.
 
-    Wraps the network with an optimizer. The resulting Cell be trained with input data and label.
+    Wraps the network with an optimizer. The resulting Cell be trained with input *inputs.
     Backward graph will be created in the construct function to do parameter updating. Different
     parallel modes are available to run the training.
 
@@ -149,8 +148,7 @@ class TrainOneStepCell(Cell):
         sens (Number): The scaling number to be filled as the input of backpropagation. Default value is 1.0.
 
     Inputs:
-        - **data** (Tensor) - Tensor of shape :math:`(N, \ldots)`.
-        - **label** (Tensor) - Tensor of shape :math:`(N, \ldots)`.
+        - **(*inputs)** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
 
     Outputs:
         Tensor, a scalar Tensor with shape :math:`()`.
@@ -181,11 +179,11 @@ class TrainOneStepCell(Cell):
             degree = _get_device_num()
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
 
-    def construct(self, data, label):
+    def construct(self, *inputs):
         weights = self.weights
-        loss = self.network(data, label)
+        loss = self.network(*inputs)
         sens = P.Fill()(P.DType()(loss), P.Shape()(loss), self.sens)
-        grads = self.grad(self.network, weights)(data, label, sens)
+        grads = self.grad(self.network, weights)(*inputs, sens)
         if self.reducer_flag:
             # apply grad reducer on grads
             grads = self.grad_reducer(grads)

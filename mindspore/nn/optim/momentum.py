@@ -41,7 +41,7 @@ def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, moment, 
 
 
 class Momentum(Optimizer):
-    """
+    r"""
     Implements the Momentum algorithm.
 
     Refer to the paper on the importance of initialization and momentum in deep learning for more details.
@@ -56,13 +56,13 @@ class Momentum(Optimizer):
     .. math::
             v_{t} = v_{t-1} \ast u + gradients
 
-    If use_nesterov is True:
-        .. math::
-            p_{t} =  p_{t-1} - (grad \ast lr + v_{t} \ast u \ast lr)
+        If use_nesterov is True:
+            .. math::
+                p_{t} =  p_{t-1} - (grad \ast lr + v_{t} \ast u \ast lr)
 
-    If use_nesterov is Flase:
-        .. math::
-            p_{t} = p_{t-1} - lr \ast v_{t}
+        If use_nesterov is Flase:
+            .. math::
+                p_{t} = p_{t-1} - lr \ast v_{t}
 
     Here: where grad, lr, p, v and u denote the gradients, learning_rate, params, moments, and momentum respectively.
 
