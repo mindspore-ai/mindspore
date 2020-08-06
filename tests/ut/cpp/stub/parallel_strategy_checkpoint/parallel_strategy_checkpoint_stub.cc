@@ -29,6 +29,7 @@ bool StrategyCheckpoint::CheckPointExit(const std::string path) const { return f
 
 Status StrategyCheckpoint::Load(StrategyMap* strategy_map) { return SUCCESS; }
 
-Status StrategyCheckpoint::Save(const StrategyMap& strategy_map) { return SUCCESS; }
+Status StrategyCheckpoint::Save(const StrategyMap &strategy_map, const TensorInfoMap &tensor_info_map,
+                                ManualShapeMap *manual_shape_map) { return SUCCESS; }
 }  // namespace parallel
 }  // namespace mindspore

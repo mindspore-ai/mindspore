@@ -135,7 +135,7 @@ void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes);
 void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
                            const FuncGraphManagerPtr &manager);
 
-std::string NodeParameterName(const CNodePtr &node);
+std::vector<std::pair<std::string, int>> NodeParameterName(const CNodePtr &node);
 
 void CheckpointStrategy(const FuncGraphPtr &func_graph);
 

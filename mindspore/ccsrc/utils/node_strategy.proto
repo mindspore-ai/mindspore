@@ -32,7 +32,36 @@ message ParallelStrategyItem {
     required ParallelStrategys parallel_strategys = 2;
 }
 
+message DevMatrix {
+    repeated uint32 dim = 1;
+}
+
+message TensorMap {
+    repeated int32 dim = 1;
+}
+
+message ParamSplitShape {
+    repeated int64 dim = 1;
+}
+
+message IndicesOffset {
+    repeated int64 dim = 1;
+}
+
+message ParallelLayouts {
+    repeated DevMatrix dev_matrix = 1;
+    repeated TensorMap tensor_map = 2;
+    repeated ParamSplitShape param_split_shape = 3;
+    repeated IndicesOffset indices_offset = 4;
+}
+
+message ParallelLayoutItem {
+    required string param_name = 1;
+    required ParallelLayouts parallel_layouts = 2;
+}
+
 message ParallelStrategyMap {
     required uint32 current_stage = 1;
     repeated ParallelStrategyItem parallel_strategy_item = 2;
+    repeated ParallelLayoutItem parallel_layout_item = 3;
 }

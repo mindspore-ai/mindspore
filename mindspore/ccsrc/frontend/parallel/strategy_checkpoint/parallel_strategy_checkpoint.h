@@ -19,13 +19,19 @@
 
 #include <string>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/context.h"
+#include "frontend/parallel/tensor_layout/tensor_layout.h"
+#include "frontend/parallel/tensor_layout/tensor_info.h"
 
 namespace mindspore {
 namespace parallel {
 using StrategyMap = std::unordered_map<std::string, StrategyPtr>;
+using TensorInfoMap = std::unordered_map<std::string, TensorInfo>;
+using ManualShapeMap = std::unordered_map<std::string, std::vector<std::pair<int32_t, int32_t>>>;
 class StrategyCheckpoint {
  public:
   StrategyCheckpoint() {
@@ -38,7 +44,7 @@ class StrategyCheckpoint {
   ~StrategyCheckpoint() = default;
 
   Status Load(StrategyMap *strategy_map);
-  Status Save(const StrategyMap &strategy_map);
+  Status Save(const StrategyMap &strategy_map, const TensorInfoMap &tensor_info_map, ManualShapeMap *manual_shape_map);
 
   static StrategyCheckpoint &GetInstance();
   bool LoadCheckPointOn() const { return load_checkpoint_on_; }
