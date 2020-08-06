@@ -256,6 +256,10 @@ template void Broadcast(const int &l0, const int &l1, const int &l2, const int &
                         const int &r2, const int &r3, const int &d0, const int &d1, const int &d2, const int &d3,
                         enum BroadcastOpType op, const int *input0, const int *input1, int *output,
                         cudaStream_t stream);
+template void Broadcast(const int &l0, const int &l1, const int &l2, const int &l3, const int &r0, const int &r1,
+                        const int &r2, const int &r3, const int &d0, const int &d1, const int &d2, const int &d3,
+                        enum BroadcastOpType op, const int *input0, const int *input1, bool *output,
+                        cudaStream_t stream);
 template void NoBroadcast(const int &nums, enum BroadcastOpType op, const float *input0, const float *input1,
                           bool *output, cudaStream_t stream);
 template void NoBroadcast(const int &nums, enum BroadcastOpType op, const float *input0, const float *input1,
@@ -266,6 +270,8 @@ template void NoBroadcast(const int &nums, enum BroadcastOpType op, const half *
                           half *output, cudaStream_t stream);
 template void NoBroadcast(const int &nums, enum BroadcastOpType op, const int *input0, const int *input1,
                           int *output, cudaStream_t stream);
+template void NoBroadcast(const int &nums, enum BroadcastOpType op, const int *input0, const int *input1,
+                          bool *output, cudaStream_t stream);
 template void BroadcastTo(const int &i0, const int &i1, const int &i2, const int &i3, const int &o0, const int &o1,
                           const int &o2, const int &o3, const float *input_addr, float *output_addr,
                           cudaStream_t stream);
