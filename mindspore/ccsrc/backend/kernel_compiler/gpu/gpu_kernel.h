@@ -84,6 +84,40 @@ class GpuKernel : public KernelMod {
     }
   }
 
+  // set the tensor descriptor for cudnn/cublas
+  void CudnnSetTensorNdDescriptor(const std::vector<size_t> &shape, cudnnTensorDescriptor_t descriptor,
+                                  cudnnDataType_t data_type) {
+    if (shape.size() < 3) {
+      MS_EXCEPTION(ValueError) << "cudnnSetTensorNdDescriptor don't support" << shape.size() << "D.";
+    }
+    const int nbDims = shape.size();
+    int *dim = new (std::nothrow) int[nbDims];
+    if (dim == nullptr) {
+      MS_LOG(EXCEPTION) << "malloc dim failed.";
+    }
+    int *stride = new (std::nothrow) int[nbDims];
+    if (stride == nullptr) {
+      MS_LOG(EXCEPTION) << "malloc stride failed.";
+    }
+
+    for (int i = 0; i < nbDims; i++) {
+      dim[i] = SizeToInt(shape[i]);
+      stride[i] = 1;
+    }
+
+    for (int i = nbDims - 2; i >= 0; i--) {
+      stride[i] = stride[i + 1] * SizeToInt(shape[i + 1]);
+    }
+
+    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensorNdDescriptor(descriptor, data_type, nbDims, dim, stride),
+                                "cudnnSetTensorNdDescriptor failed");
+
+    delete[] dim;
+    dim = nullptr;
+    delete[] stride;
+    stride = nullptr;
+  }
+
   // choose the suitable datatype for cudnn/cublas
   inline cudnnDataType_t GetCudnnDataType(const std::string &Type) {
     auto type = kCudnnDtypeMap.find(Type);

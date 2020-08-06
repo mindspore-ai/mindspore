@@ -69,6 +69,10 @@ class ScatterNdGpuFwdKernel : public GpuKernel {
       memcpy_flag_ = true;
     }
 
+    CHECK_CUDA_RET_WITH_EXCEPT(
+      cudaMemsetAsync(output, static_cast<T>(0.0), output_size_, reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "cudaMemSet failed in ScatterNdGpuFwdKernel::Launch.");
+
     const size_t input_size = input_size_ / sizeof(T);
     const size_t output_size = output_size_ / sizeof(T);
 

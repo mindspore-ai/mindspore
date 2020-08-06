@@ -21,5 +21,8 @@ namespace kernel {
 MS_REG_GPU_KERNEL_ONE(
   IOU, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   IOUGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(
+  IOU, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  IOUGpuKernel, half)
 }  // namespace kernel
 }  // namespace mindspore

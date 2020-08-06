@@ -83,12 +83,19 @@ class ActivationGpuFwdKernel : public GpuKernel {
       return true;
     }
     std::vector<int> shape;
-    ShapeNdTo4d(input_shape, &shape);
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetActivationDescriptor(activation_desc_, mode_, CUDNN_NOT_PROPAGATE_NAN, 0.0),
                                 "cudnnSetActivationDescriptor failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(data_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_,
-                                                           shape[0], shape[1], shape[2], shape[3]),
-                                "cudnnSetTensor4dDescriptor failed");
+
+    const int split_dim = 4;
+    if (input_shape.size() <= split_dim) {
+      ShapeNdTo4d(input_shape, &shape);
+      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(data_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_,
+                                                             shape[0], shape[1], shape[2], shape[3]),
+                                  "cudnnSetTensor4dDescriptor failed");
+    } else {
+      CudnnSetTensorNdDescriptor(input_shape, data_descriptor_, cudnn_data_type_);
+    }
+
     InitSizeLists();
     return true;
   }

@@ -22,5 +22,9 @@ MS_REG_GPU_KERNEL_TWO(
   CheckValid,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
   CheckValidGpuKernel, float, bool)
+MS_REG_GPU_KERNEL_TWO(
+  CheckValid,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
+  CheckValidGpuKernel, half, bool)
 }  // namespace kernel
 }  // namespace mindspore
