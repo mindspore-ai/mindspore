@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/fp32/strided_slice.h"
+#include "src/runtime/kernel/arm/base/strided_slice.h"
 #include <vector>
-#include "src/runtime/kernel/arm/opclib/fp32/strided_slice.h"
+#include "src/runtime/kernel/arm/opclib/strided_slice.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -30,26 +30,24 @@ using mindspore::schema::PrimitiveType_StridedSlice;
 
 namespace mindspore::kernel {
 
-int StridedSliceCPUKernel::Init() { return RET_OK; }
-
-int StridedSliceCPUKernel::ReSize() { return 0; }
-
-int StridedSliceCPUKernel::StridedSlice() {
-  StridedSliceParameter *param = reinterpret_cast<StridedSliceParameter *>(opParameter);
-  auto ret = DoStridedSlice(input_ptr_, output_ptr_, param);
-  if (ret != RET_OK) {
-    return RET_ERROR;
-  }
+int StridedSliceCPUKernel::Init() {
+  auto input = inputs_.at(0);
+  auto parameter = reinterpret_cast<StridedSliceParameter *>(opParameter);
+  MS_ASSERT(input);
+  MS_ASSERT(parameter);
+  parameter->data_type = input->data_type() == kNumberTypeInt8 ? kDataTypeInt8 : kDataTypeFloat;
   return RET_OK;
 }
 
-int StridedSliceCPUKernel::Run() {
-  auto input_tensor = inputs_.at(0);
-  auto output_tensor = outputs_.at(0);
-  input_ptr_ = reinterpret_cast<float *>(input_tensor->Data());
-  output_ptr_ = reinterpret_cast<float *>(output_tensor->Data());
+int StridedSliceCPUKernel::ReSize() { return 0; }
 
-  auto ret = StridedSlice();
+int StridedSliceCPUKernel::Run() {
+  auto input = inputs_.at(0);
+  auto output = outputs_.at(0);
+  MS_ASSERT(input);
+  MS_ASSERT(output);
+
+  auto ret = DoStridedSlice(input->Data(), output->Data(), reinterpret_cast<StridedSliceParameter *>(opParameter));
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StridedSlice error error_code[" << ret << "]";
     return RET_ERROR;
@@ -57,10 +55,10 @@ int StridedSliceCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuStridedSliceFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                     const std::vector<lite::tensor::Tensor *> &outputs,
-                                                     OpParameter *opParameter, const lite::Context *ctx,
-                                                     const kernel::KernelKey &desc) {
+kernel::LiteKernel *CpuStridedSliceKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
+                                                 const std::vector<lite::tensor::Tensor *> &outputs,
+                                                 OpParameter *opParameter, const lite::Context *ctx,
+                                                 const kernel::KernelKey &desc) {
   MS_ASSERT(desc.type == schema::PrimitiveType_StridedSlice);
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "opParameter null pointer dereferencing.";
@@ -82,5 +80,6 @@ kernel::LiteKernel *CpuStridedSliceFp32KernelCreator(const std::vector<lite::ten
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_StridedSlice, CpuStridedSliceFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_StridedSlice, CpuStridedSliceKernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_StridedSlice, CpuStridedSliceKernelCreator)
 }  // namespace mindspore::kernel
