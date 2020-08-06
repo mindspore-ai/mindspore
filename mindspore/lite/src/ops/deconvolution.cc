@@ -54,11 +54,11 @@ int DeConv2D::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tens
     output_h = (input_h - 1) * stride_h + ((kernel_h - 1) * dilate_h + 1) - pad_u_ - pad_d_;
     output_w = (input_w - 1) * stride_w + ((kernel_w - 1) * dilate_w + 1) - pad_l_ - pad_r_;
   } else if (pad_mode == schema::PadMode_SAME) {
-    output_h = (input_h - 1) * stride_h + (kernel_h - 1) * dilate_h + 1 - deconv->padUp() - deconv->padDown();
-    output_w = (input_w - 1) * stride_w + (kernel_w - 1) * dilate_w + 1 - deconv->padLeft() - deconv->padRight();
-  } else if (pad_mode == schema::PadMode_VALID) {
     output_h = input_h * stride_h;
     output_w = input_w * stride_w;
+  } else if (pad_mode == schema::PadMode_VALID) {
+    output_h = (input_h - 1) * stride_h + kernel_h;
+    output_w = (input_w - 1) * stride_w + kernel_w;
   } else {
     MS_LOG(ERROR) << "unsupported pad mode for deconv";
   }
@@ -70,4 +70,3 @@ int DeConv2D::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tens
   return RET_OK;
 }
 }  // namespace mindspore::lite
-

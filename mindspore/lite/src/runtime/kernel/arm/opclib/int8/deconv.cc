@@ -31,12 +31,11 @@ int DeConvPostInt8(const int32_t *src, const int32_t *bias, int32_t *tmp, int8_t
   size_t output_plane = conv_param->output_w_ * conv_param->output_h_;
   int oc8 = UP_DIV(output_channel, C8NUM);
   int in_plane8 = UP_ROUND(input_plane, 8);
-  int out_plane8 = UP_ROUND(output_plane, 8);
 
   for (int c = 0; c < oc8; c++) {
-    int32_t *dst_ptr = tmp + c * out_plane8 * C8NUM;
+    int32_t *dst_ptr = tmp + c * output_plane * C8NUM;
     const int32_t *src_ptr = src + c * in_plane8 * kernel_plane * C8NUM;
-    memset(dst_ptr, 0, out_plane8 * C8NUM * sizeof(int32_t));
+    memset(dst_ptr, 0, output_plane * C8NUM * sizeof(int32_t));
 
     for (int ih = 0; ih < conv_param->input_h_; ih++) {
       for (int iw = 0; iw < conv_param->input_w_; iw++) {
@@ -63,7 +62,7 @@ int DeConvPostInt8(const int32_t *src, const int32_t *bias, int32_t *tmp, int8_t
     }       /*ih*/
   }         /*oc8*/
 
-  PostFuncInt8(tmp, bias, out, output_channel, output_plane, out_plane8,
+  PostFuncInt8(tmp, bias, out, output_channel, output_plane, UP_ROUND(output_plane, 8),
                conv_param->conv_quant_arg_.quant_multiplier_[0], conv_param->conv_quant_arg_.left_shift_[0],
                conv_param->conv_quant_arg_.right_shift_[0], conv_param->conv_quant_arg_.quant_args_[2][0].zp_,
                conv_param->conv_quant_arg_.out_act_min_[0], conv_param->conv_quant_arg_.out_act_max_[0]);

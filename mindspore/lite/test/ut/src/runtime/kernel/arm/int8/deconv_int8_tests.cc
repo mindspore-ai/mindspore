@@ -258,7 +258,7 @@ TEST_F(TestDeconvInt8, DeConvInt8Test1) {
   CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->Data()), correct, total_size, 3);
 
   delete deconv_param;
-  //  delete deconv;
+  delete deconv;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;
   free(correct);

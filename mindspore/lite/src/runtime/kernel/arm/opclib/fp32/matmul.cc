@@ -28,13 +28,93 @@ void RowMajor2Row8Major(float *src_ptr, float *dst_ptr, int row, int col) {
   return;
 }
 
-void RowMajor2Col8Major(float *src_ptr, float *dst_ptr, int row, int col) {
-  for (int r = 0; r < row; r++) {
-    int rd8 = r / 8;
-    int rm8 = r % 8;
-    for (int c = 0; c < col; c++) {
-      dst_ptr[rd8 * col * 8 + c * 8 + rm8] = src_ptr[r * col + c];
+void RowMajor2Col8Major(float *src_ptr, float *dst_ptr, size_t row, size_t col) {
+  size_t row8 = row / C8NUM * C8NUM;
+  size_t col4 = col / C4NUM * C4NUM;
+  float *src_r = src_ptr;
+  float *dst_r = dst_ptr;
+
+  size_t ri = 0;
+  for (; ri < row8; ri += C8NUM) {
+    size_t ci = 0;
+    for (; ci < col4; ci += C4NUM) {
+      float *src_c = src_r + ci;
+      float *dst_c = dst_r + ci * C8NUM;
+
+      /* 8x4 row-major to col-major */
+#ifdef ENABLE_NEON
+      size_t stride = col * 4;
+      asm volatile(
+        "mov x10, %[src_c]\n"
+        "mov x11, %[dst_c]\n"
+
+        "ld1 {v0.4s}, [x10], %[stride]\n"
+        "ld1 {v1.4s}, [x10], %[stride]\n"
+        "ld1 {v2.4s}, [x10], %[stride]\n"
+        "ld1 {v3.4s}, [x10], %[stride]\n"
+
+        "zip1 v4.4s, v0.4s, v1.4s\n"
+        "zip2 v5.4s, v0.4s, v1.4s\n"
+        "zip1 v6.4s, v2.4s, v3.4s\n"
+        "zip2 v7.4s, v2.4s, v3.4s\n"
+
+        "ld1 {v8.4s},  [x10], %[stride]\n"
+        "ld1 {v9.4s},  [x10], %[stride]\n"
+        "ld1 {v10.4s}, [x10],  %[stride]\n"
+        "ld1 {v11.4s}, [x10],  %[stride]\n"
+
+        "trn1 v0.2d, v4.2d, v6.2d\n"
+        "trn2 v1.2d, v4.2d, v6.2d\n"
+        "trn1 v2.2d, v5.2d, v7.2d\n"
+        "trn2 v3.2d, v5.2d, v7.2d\n"
+
+        "zip1 v12.4s, v8.4s, v9.4s\n"
+        "zip2 v13.4s, v8.4s, v9.4s\n"
+        "zip1 v14.4s, v10.4s, v11.4s\n"
+        "zip2 v15.4s, v10.4s, v11.4s\n"
+
+        "trn1 v8.2d, v12.2d, v14.2d\n"
+        "trn2 v9.2d, v12.2d, v14.2d\n"
+        "trn1 v10.2d, v13.2d, v15.2d\n"
+        "trn2 v11.2d, v13.2d, v15.2d\n"
+
+        "st1 {v0.4s}, [x11],  #16\n"
+        "st1 {v8.4s}, [x11],  #16\n"
+        "st1 {v1.4s}, [x11],  #16\n"
+        "st1 {v9.4s}, [x11],  #16\n"
+        "st1 {v2.4s},  [x11],#16\n"
+        "st1 {v10.4s}, [x11], #16\n"
+        "st1 {v3.4s},  [x11],#16\n"
+        "st1 {v11.4s}, [x11], #16\n"
+
+        :
+        : [ dst_c ] "r"(dst_c), [ src_c ] "r"(src_c), [ stride ] "r"(stride)
+        : "x10", "x11", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14",
+          "v15");
+#else
+      for (int tr = 0; tr < 8; tr++) {
+        for (int tc = 0; tc < 4; tc++) {
+          dst_c[tc * 8 + tr] = src_c[tr * col + tc];
+        }
+      }
+#endif
     }
+    for (; ci < col; ci++) {
+      float *src_c = src_r + ci;
+      float *dst_c = dst_r + ci * C8NUM;
+      for (size_t i = 0; i < C8NUM; i++) {
+        dst_c[i] = src_c[i * col];
+      }
+    }
+    src_r += C8NUM * col;
+    dst_r += C8NUM * col;
+  }
+  for (; ri < row; ri++) {
+    for (size_t i = 0; i < col; i++) {
+      dst_r[i * C8NUM] = src_r[i];
+    }
+    src_r += col;
+    dst_r += 1;
   }
   return;
 }
