@@ -14,28 +14,30 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SOFTMAX_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SOFTMAX_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_SOFTMAX_INT8_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_SOFTMAX_INT8_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/base/softmax_base.h"
 
 namespace mindspore::kernel {
-class SoftmaxCPUKernel : public SoftmaxBaseCPUKernel {
+class SoftmaxInt8CPUKernel : public SoftmaxBaseCPUKernel {
  public:
-  SoftmaxCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                   const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
+  SoftmaxInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                       const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
       : SoftmaxBaseCPUKernel(parameter, inputs, outputs, ctx) {}
-  ~SoftmaxCPUKernel() override = default;
+  ~SoftmaxInt8CPUKernel() = default;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int DoSoftmax(int task_id);
 
  private:
-  float *sum_data;
+  float *sum_data_;
+  float *exp_data_;
+  SoftmaxQuantArg quant_params_;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SOFTMAX_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_SOFTMAX_INT8_H_

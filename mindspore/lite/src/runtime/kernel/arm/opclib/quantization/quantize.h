@@ -101,6 +101,11 @@ struct SplitQuantArg {
   int output_activation_max_;
 };
 
+struct SoftmaxQuantArg {
+  QuantArg in_quant_args_;
+  QuantArg out_quant_arg_;
+};
+
 void QuantizeMultiplier(double double_multiplier, int32_t *quantized_multiplier, int *shift);
 
 inline void QuantizeMultiplierSmallerThanOne(double double_multiplier, int32_t *quantized_multiplier,

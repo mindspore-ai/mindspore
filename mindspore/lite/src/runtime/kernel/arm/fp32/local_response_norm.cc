@@ -29,13 +29,7 @@ using mindspore::schema::PrimitiveType_LocalResponseNormalization;
 
 namespace mindspore::kernel {
 
-int LocalResponseNormCPUKernel::Init() {
-  depth_radius_ = (reinterpret_cast<LocalResponseNormParameter *>(opParameter))->depth_radius_;
-  bias_ = (reinterpret_cast<LocalResponseNormParameter *>(opParameter))->bias_;
-  alpha_ = (reinterpret_cast<LocalResponseNormParameter *>(opParameter))->alpha_;
-  beta_ = (reinterpret_cast<LocalResponseNormParameter *>(opParameter))->beta_;
-  return RET_OK;
-}
+int LocalResponseNormCPUKernel::Init() { return RET_OK; }
 
 int LocalResponseNormCPUKernel::ReSize() { return RET_OK; }
 
@@ -60,7 +54,8 @@ int LocalResponseNormCPUKernel::DoLocalResponseNorm(int task_id) {
   input_ptr += stride * task_id * channel;
   output_ptr += stride * task_id * channel;
 
-  auto error_code = LocalResponseNorm(input_ptr, count, channel, output_ptr, depth_radius_, bias_, alpha_, beta_);
+  auto error_code = LocalResponseNorm(input_ptr, count, channel, output_ptr,
+                                      reinterpret_cast<LocalResponseNormParameter *>(opParameter));
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "DoLocalResponseNorm error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;

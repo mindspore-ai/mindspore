@@ -16,10 +16,15 @@
 
 #include "src/runtime/kernel/arm/opclib/fp32/local_response_norm.h"
 
-int LocalResponseNorm(float *input_ptr, int out_size, int channel, float *output_ptr, int depth_radius, float bias,
-                      float alpha, float beta) {
+int LocalResponseNorm(float *input_ptr, int out_size, int channel, float *output_ptr,
+                      LocalResponseNormParameter *param) {
   int i, j, k;
   int left, right;
+
+  float depth_radius = param->depth_radius_;
+  float bias = param->bias_;
+  float alpha = param->alpha_;
+  float beta = param->beta_;
 
   for (i = 0; i < out_size; i++) {
     float *in_data = input_ptr + i * channel;
@@ -39,4 +44,3 @@ int LocalResponseNorm(float *input_ptr, int out_size, int channel, float *output
   }
   return 0;
 }
-

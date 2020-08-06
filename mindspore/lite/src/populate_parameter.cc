@@ -32,7 +32,7 @@
 #include "src/runtime/kernel/arm/opclib/conv_parameter.h"
 #include "src/runtime/kernel/arm/opclib/fp32/pooling.h"
 #include "src/runtime/kernel/arm/opclib/matmul.h"
-#include "src/runtime/kernel/arm/opclib/fp32/softmax.h"
+#include "src/runtime/kernel/arm/opclib/softmax_parameter.h"
 #include "src/runtime/kernel/arm/opclib/tile.h"
 #include "src/runtime/kernel/arm/opclib/fp32/topk.h"
 #include "src/runtime/kernel/arm/opclib/fp32/reduce.h"
