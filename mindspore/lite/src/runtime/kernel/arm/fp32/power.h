@@ -18,20 +18,20 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_POWER_H_
 
 #include <vector>
+#include "include/context.h"
 #include "src/lite_kernel.h"
-
 #include "src/runtime/kernel/arm/opclib/power.h"
 
 namespace mindspore::kernel {
 class PowerCPUKernel : public LiteKernel {
  public:
-  PowerCPUKernel(PowerParameter *param, const std::vector<lite::tensor::Tensor *> &inputs,
+  PowerCPUKernel(OpParameter *param, const std::vector<lite::tensor::Tensor *> &inputs,
                  const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
-      : LiteKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs),
+      : LiteKernel(param, inputs, outputs),
+        ctx_(ctx),
         thread_count_(ctx->thread_num_),
-        power_(param->power_),
-        scale_(param->scale_),
-        shift_(param->shift_) {}
+        scale_(reinterpret_cast<PowerParameter *>(opParameter)->scale_),
+        shift_(reinterpret_cast<PowerParameter *>(opParameter)->shift_) {}
   ~PowerCPUKernel() override = default;
 
   int Init() override;
@@ -40,8 +40,8 @@ class PowerCPUKernel : public LiteKernel {
   int RunImpl(int task_id);
 
  private:
+  const lite::Context *ctx_;
   int thread_count_;
-  float power_;
   float scale_;
   float shift_;
 };

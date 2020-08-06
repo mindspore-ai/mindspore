@@ -36,7 +36,8 @@ int PowerGradCPUKernel::Run() {
   auto dx_addr = reinterpret_cast<float *>(outputs_.at(0)->Data());
   auto size = inputs_.at(0)->ElementsNum();
 
-  Power(x_addr, dx_addr, size, power_ - 1, scale_, shift_);
+  float exp = power_ - 1;
+  Power(x_addr, &exp, dx_addr, size, scale_, shift_, true);
   ElementMul(dx_addr, dy_addr, dx_addr, size);
   float scale = scale_ * power_;
   for (int i = 0; i < size; i++) {
