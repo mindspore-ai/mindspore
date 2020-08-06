@@ -51,6 +51,7 @@ class DebugServices {
     condition_no_param_t inf;
     condition_no_param_t neg_inf;
     condition_no_param_t nan;
+    condition_no_param_t overflow;
     condition_with_param_t max_below;
     condition_with_param_t max_above;
     condition_with_param_t min_below;
@@ -74,9 +75,8 @@ class DebugServices {
 
   void RemoveWatchpoint(unsigned int id);
 
-  void CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot, std::vector<char *> *data_ptr,
-                        std::vector<unsigned int> *data_size, std::vector<int> *condition,
-                        std::vector<unsigned int> *wacthpoint_id);
+  void CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot, std::vector<int> *condition,
+                        std::vector<unsigned int> *watchpoint_id, const std::vector<std::string> &op_overflows);
 
   void CheckSingleWatchpoint(std::shared_ptr<TensorData> watchnode, std::string *name, std::string *slot,
                              char **data_ptr, unsigned int *data_size, int *condition, unsigned int *wacthpoint_id);
@@ -97,6 +97,12 @@ class DebugServices {
   std::unordered_map<unsigned int, watchpoint_t> watchpoint_table;
 
   TensorLoader *tensor_loader_;
+
+  void HandleWatchpointHits(const std::vector<unsigned int> &hit_encountered, std::vector<std::string> *name,
+                            std::vector<std::string> *slot, std::vector<int> *condition,
+                            std::vector<unsigned int> *watchpoint_id, std::string current_tensor_name,
+                            std::unordered_map<unsigned int, watchpoint_t> *watchpoints_to_check_table,
+                            std::string tensor_slot);
 };
 }  // namespace mindspore
 

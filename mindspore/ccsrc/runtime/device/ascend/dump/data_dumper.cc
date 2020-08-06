@@ -27,6 +27,9 @@
 #include "proto/op_mapping_info.pb.h"
 #include "utils/ms_context.h"
 #include "debug/data_dump_parser.h"
+#ifdef ENABLE_DEBUGGER
+#include "debug/debugger/debugger.h"
+#endif
 
 static constexpr uint32_t kAicpuLoadFlag = 1;
 static constexpr uint32_t kAicpuUnloadFlag = 0;
@@ -90,6 +93,18 @@ void DataDumper::LoadDumpInfo() {
   load_flag_ = true;
   // graph id may changed in Unload
   graph_id_ = kernel_graph_->graph_id();
+#ifdef ENABLE_DEBUGGER
+  auto debugger = mindspore::Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  std::map<std::pair<uint32_t, uint32_t>, std::string> &stream_task_to_opname = debugger->GetStreamTaskToOpnameMap();
+  // extract stream id, task id and opname from runtime_info_map for overflow detection
+  std::transform(runtime_info_map_.begin(), runtime_info_map_.end(),
+                 std::inserter(stream_task_to_opname, stream_task_to_opname.end()),
+                 [](const std::pair<std::string, std::shared_ptr<RuntimeInfo>> &p)
+                   -> std::pair<std::pair<uint32_t, uint32_t>, std::string> {
+                   return {{std::get<1>(*p.second), std::get<0>(*p.second)}, p.first};
+                 });
+#endif
   MS_LOG(INFO) << "[DataDump] LoadDumpInfo end";
 }
 
