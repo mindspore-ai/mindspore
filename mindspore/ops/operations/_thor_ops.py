@@ -562,3 +562,48 @@ class Im2Col(PrimitiveWithInfer):
         valid_types = [mstype.float16, mstype.float32]
         validator.check_tensor_type_same(args, valid_types, self.name)
         return x_dtype
+
+
+class UpdateThorGradient(PrimitiveWithInfer):
+    """
+    Update Thor Gradient with Approximate Fisher info matrix(for GPU backend).
+
+    The rank of input_x1 must be `3`, which indicates the A matrix.
+    The rank of input_x2 must be `2`, which indicates the 1st-order gradient.
+    The rank of input_x3 must be `4`, which indicates the G matrix.
+
+    Inputs:
+        - **input_x1** (Tensor) - The first input is the diag part of the cov matrix of feature map.
+                                  Supported dtype [float32].
+        - **input_x2** (Tensor) - The second input is the corresponding 1st-order grad. Supported dtype [float32].
+        - **input_x3** (Tensor) - The third input is the diag part of the cov matrix of dout. Supported dtype [float32].
+
+    Outputs:
+        Tensor, the shape is the same as the shape of input_x2, it will be used to update the weights.
+
+    Examples:
+        >>> input_x1 = Tensor(np.random.rand(16, 128, 128).astype(np.float32))
+        >>> input_x2 = Tensor(np.random.rand(2048, 1024).astype(np.float32))
+        >>> temp_x3 = np.random.rand(8, 128, 128).astype(np.float32)
+        >>> input_x3 = np.zeros(16,8,128,128).astype(np.float32)
+        >>> for i in range(16):
+        >>>     input_x3[i,:,:,:] = temp_x3
+        >>> input_x3 = Tensor(input_x3)
+        >>> update_thor_gradient = P.UpdateThorGradient(split_dim=128)
+        >>> output = update_thor_gradient(input_x1, input_x2, input_x3)
+    """
+
+    @prim_attr_register
+    def __init__(self, split_dim=0):
+        """init UpdateThorGradient"""
+        self.init_prim_io_names(inputs=['x1', 'x2', 'x3'], outputs=['y'])
+        self.split_dim = split_dim
+        self.add_prim_attr('split_dim', self.split_dim)
+
+    def infer_shape(self, x1_shape, x2_shape, x3_shape):
+        return x2_shape
+
+    def infer_dtype(self, x1_dtype, x2_dtype, x3_dtype):
+        validator.check_tensor_type_same({'x1_dtype': x1_dtype, 'x2_dtype': x2_dtype, 'x3_dtype': x3_dtype},
+                                         [mstype.float32], self.name)
+        return x2_dtype
