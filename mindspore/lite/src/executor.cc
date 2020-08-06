@@ -82,6 +82,8 @@ int Executor::TransformTensorLayout(tensor::Tensor *tensor, schema::Format dst_f
       return TransformTensorLayoutUint8(tensor, dst_format, allocator);
     case kNumberTypeFloat32:
       return TransformTensorLayoutFp32(tensor, dst_format, allocator);
+    default:
+      return RET_ERROR;
   }
   return RET_OK;
 }

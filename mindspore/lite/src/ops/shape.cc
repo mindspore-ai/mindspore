@@ -45,7 +45,7 @@ int Shape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor:
     MS_LOG(ERROR) << "Set shape fails.";
     return RET_ERROR;
   }
-  auto ret_dtype = out_tensor->set_data_type({in_tensor->data_type()});
+  auto ret_dtype = out_tensor->set_data_type(in_tensor->data_type());
   if (ret_dtype != in_tensor->data_type()) {
     MS_LOG(ERROR) << "Set datatype fails.";
     return RET_ERROR;

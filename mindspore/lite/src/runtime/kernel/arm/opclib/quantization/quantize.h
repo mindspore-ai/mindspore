@@ -143,7 +143,7 @@ inline void CalculateActivationRangeQuantized(bool is_relu, bool is_relu6, int32
 inline void Quantize(float *input_data, int length, float scale, int zero_point, int8_t *output_data) {
   for (int i = 0; i < length; ++i) {
     int r = (int)round(input_data[i] / scale + zero_point);
-    int8_t q = r > CHAR_MAX ? CHAR_MAX : r;
+    int8_t q = r > CHAR_MAX ? (int8_t)CHAR_MAX : (int8_t)r;
     q = q < CHAR_MIN ? CHAR_MIN : q;
     output_data[i] = q;
   }

@@ -28,7 +28,7 @@ class SpaceToBatchTestFp32 : public mindspore::Common {
   SpaceToBatchTestFp32() {}
 };
 
-int InitSpaceToBatchParameter(SpaceToBatchParameter *param) {
+void InitSpaceToBatchParameter(SpaceToBatchParameter *param) {
   param->n_dims_ = 4;
   param->n_space_dims_ = 2;
 
@@ -56,7 +56,7 @@ int InitSpaceToBatchParameter(SpaceToBatchParameter *param) {
   param->need_paddings_ = true;
 }
 
-int InitSpaceToBatchParameter2(SpaceToBatchParameter *param) {
+void InitSpaceToBatchParameter2(SpaceToBatchParameter *param) {
   param->block_sizes_[0] = 2;
   param->block_sizes_[1] = 2;
 
