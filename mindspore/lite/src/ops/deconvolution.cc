@@ -35,7 +35,7 @@ int DeConv2D::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tens
   int32_t output_n = input->Batch();
   int32_t output_h = 0;
   int32_t output_w = 0;
-  int32_t output_c = weight->Batch();
+  int32_t output_c = weight->Channel();
 
   auto deconv = GetAttribute();
   int kernel_w = deconv->kernelW();
