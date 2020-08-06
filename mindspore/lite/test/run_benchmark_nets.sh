@@ -48,6 +48,13 @@ cd $convertor_path/MSLite-*-linux_x86_64
 #model2：
 ./converter_lite  --fmk=TFLITE --modelFile=$models_path/hiai_bigmodel_ghost_2_1_no_normalized_no_trans_tflite.tflite --outputFile=$models_path/hiai_bigmodel_ghost_2_1_no_normalized_no_trans_tflite 
 
+./converter_lite  --fmk=TFLITE --modelFile=$models_path/hiai_cn_recognize_modify_padv2.tflite --outputFile=$models_path/hiai_cn_recognize_modify_padv2
+
+./converter_lite  --fmk=TFLITE --modelFile=$models_path/hiai_detect_curve_model_float32.tflite --outputFile=$models_path/hiai_detect_curve_model_float32
+
+./converter_lite  --fmk=TFLITE --modelFile=$models_path/hiai_detectmodel_desnet_256_128_64_32.tflite --outputFile=$models_path/hiai_detectmodel_desnet_256_128_64_32
+
+./converter_lite  --fmk=TFLITE --modelFile=$models_path/mobilenet_v2_1_0_224.tflite --outputFile=$models_path/mobilenet_v2_1_0_224
 
 #push to the arm and run benchmark：
 
@@ -57,10 +64,12 @@ cp  $arm_path/MSLite-0.6.0-linux_arm64/lib/libmindspore-lite.so ./benchmark_test
 cp  $arm_path/MSLite-0.6.0-linux_arm64/benchmark/benchmark ./benchmark_test/benchmark
 
 #copy the models：
+cp  $models_path/*.ms ./benchmark_test/
 #model1：
-cp  $models_path/test.ms ./benchmark_test/
+#cp  $models_path/test.ms ./benchmark_test/
 #model2：
-cp  $models_path/hiai_bigmodel_ghost_2_1_no_normalized_no_trans_tflite.ms ./benchmark_test/
+#cp  $models_path/hiai_bigmodel_ghost_2_1_no_normalized_no_trans_tflite.ms ./benchmark_test/
+#cp  $models_path/mobilenet_v2_1.0_224.tflite.ms ./benchmark_test/
 
 #second：adb push to the phone
 adb -s $device_id push ./benchmark_test /data/local/tmp/
@@ -72,6 +81,15 @@ echo 'chmod 777 benchmark' >> adb_cmd.txt
 echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/;./benchmark --modelPath=test.ms' >> adb_cmd.txt
 #model2：
 echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath=hiai_bigmodel_ghost_2_1_no_normalized_no_trans_tflite.ms' >> adb_cmd.txt
+
+echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath=hiai_cn_recognize_modify_padv2.ms' >> adb_cmd.txt
+
+echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath=hiai_detect_curve_model_float32.ms' >> adb_cmd.txt
+
+echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath=hiai_detectmodel_desnet_256_128_64_32.ms' >> adb_cmd.txt
+
+
+echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath=mobilenet_v2_1_0_224.ms' >> adb_cmd.txt
 
 adb -s $device_id shell < adb_cmd.txt
 
