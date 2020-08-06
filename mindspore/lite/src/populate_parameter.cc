@@ -47,7 +47,7 @@
 #include "src/runtime/kernel/arm/opclib/pad_parameter.h"
 #include "src/runtime/kernel/arm/opclib/fp32/fill.h"
 #include "src/runtime/kernel/arm/opclib/transpose.h"
-#include "src/runtime/kernel/arm/opclib/split.h"
+#include "src/runtime/kernel/arm/opclib/split_parameter.h"
 #include "src/runtime/kernel/arm/opclib/squeeze.h"
 #include "src/runtime/kernel/arm/opclib/fp32/gather.h"
 #include "src/runtime/kernel/arm/opclib/fp32/reverse.h"

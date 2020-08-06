@@ -14,42 +14,55 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/fp32/split.h"
-#include "src/runtime/kernel/arm/base/split_base.h"
-#include "src/runtime/kernel/arm/opclib/split.h"
+#include "src/runtime/kernel/arm/int8/split_int8.h"
+#include <limits>
 #include "src/runtime/kernel/arm/opclib/split_parameter.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel/arm/opclib/int8/split_int8.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
-using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Split;
 
 namespace mindspore::kernel {
 
-int SplitCPUKernel::Init() {
+int SplitInt8CPUKernel::Init() {
   SplitBaseCPUKernel::Init();
-  auto in_tensor = inputs_.front();
-  input_ptr_ = reinterpret_cast<float *>(in_tensor->Data());
+  auto in_tensor = inputs_.at(kInputIndex);
+  input_ptr_ = reinterpret_cast<int8_t *>(in_tensor->Data());
   for (int i = 0; i < param->num_split_; i++) {
-    output_ptr_.push_back(reinterpret_cast<float *>(outputs_.at(i)->Data()));
+    output_ptr_.push_back(reinterpret_cast<int8_t *>(outputs_.at(i)->Data()));
   }
+
+  auto in_quant_args = in_tensor->GetQuantParams();
+  param->quant_arg_.in_args_.scale_ = in_quant_args.front().scale;
+  param->quant_arg_.in_args_.zp_ = in_quant_args.front().zeroPoint;
+
+  MS_ASSERT(param->num_split_ == outputs_.size());
+  for (int i = 0; i < param->num_split_; i++) {
+    auto *out_tensor = outputs_.at(i);
+    auto out_quant_args = out_tensor->GetQuantParams();
+    param->quant_arg_.out_args_[i].scale_ = out_quant_args.front().scale;
+    param->quant_arg_.out_args_[i].zp_ = out_quant_args.front().zeroPoint;
+  }
+
+  param->quant_arg_.output_activation_max_ = std::numeric_limits<int8_t>::max();
+  param->quant_arg_.output_activation_min_ = std::numeric_limits<int8_t>::min();
+
   return RET_OK;
 }
 
-int SplitCPUKernel::ReSize() { return RET_OK; }
+int SplitInt8CPUKernel::ReSize() { return RET_OK; }
 
-int SplitCPUKernel::Split(int task_id) {
+int SplitInt8CPUKernel::Split(int task_id) {
   int num_unit_thread = MSMIN(thread_n_stride_, num_unit_ - task_id * thread_n_stride_);
   if (num_unit_thread <= 0) {
     return RET_OK;
   }
   int thread_offset = task_id * thread_n_stride_;
-  auto ret = DoSplit(input_ptr_, output_ptr_.data(), inputs_.front()->shape().data(), thread_offset, num_unit_thread,
-                     param);
+  auto ret =
+    DoSplit(input_ptr_, output_ptr_.data(), inputs_.front()->shape().data(), thread_offset, num_unit_thread, param);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Split error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
@@ -57,8 +70,8 @@ int SplitCPUKernel::Split(int task_id) {
   return RET_OK;
 }
 
-int SplitRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
-  auto g_kernel = reinterpret_cast<SplitCPUKernel *>(cdata);
+int SplitInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+  auto g_kernel = reinterpret_cast<SplitInt8CPUKernel *>(cdata);
   auto ret = g_kernel->Split(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "SplitRun error task_id[" << task_id << "] error_code[" << ret << "]";
@@ -67,8 +80,8 @@ int SplitRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
   return RET_OK;
 }
 
-int SplitCPUKernel::Run() {
-  int ret = LiteBackendParallelLaunch(SplitRun, this, thread_n_num_);
+int SplitInt8CPUKernel::Run() {
+  int ret = LiteBackendParallelLaunch(SplitInt8Run, this, thread_n_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;

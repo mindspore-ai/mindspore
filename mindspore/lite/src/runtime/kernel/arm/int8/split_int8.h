@@ -14,30 +14,34 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SPLIT_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SPLIT_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_SPLIT_INT8_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_SPLIT_INT8_H_
 
 #include <vector>
-#include "src/runtime/kernel/arm/base/split_base.h"
 #include "src/lite_kernel.h"
+#include "include/context.h"
+#include "src/runtime/kernel/arm/base/split_base.h"
+#include "src/runtime/runtime_api.h"
+
+using mindspore::lite::Context;
 
 namespace mindspore::kernel {
-class SplitCPUKernel : public SplitBaseCPUKernel {
+class SplitInt8CPUKernel : public SplitBaseCPUKernel {
  public:
-  SplitCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                 const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
+  SplitInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                     const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
       : SplitBaseCPUKernel(parameter, inputs, outputs, ctx) {}
-  ~SplitCPUKernel() override = default;
+  ~SplitInt8CPUKernel() = default;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int Split(int task_id);
+  int Split(int tId);
 
  private:
-  float *input_ptr_;
-  std::vector<float *> output_ptr_;
+  int8_t *input_ptr_;
+  std::vector<int8_t *> output_ptr_;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SPLIT_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_SPLIT_INT8_H_

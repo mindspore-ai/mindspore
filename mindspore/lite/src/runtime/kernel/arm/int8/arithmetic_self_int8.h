@@ -29,6 +29,14 @@ using mindspore::lite::Context;
 using mindspore::schema::PrimitiveType_Round;
 using mindspore::schema::PrimitiveType_Floor;
 using mindspore::schema::PrimitiveType_Ceil;
+using mindspore::schema::PrimitiveType_Abs;
+using mindspore::schema::PrimitiveType_Sin;
+using mindspore::schema::PrimitiveType_Cos;
+using mindspore::schema::PrimitiveType_Log;
+using mindspore::schema::PrimitiveType_Sqrt;
+using mindspore::schema::PrimitiveType_Rsqrt;
+using mindspore::schema::PrimitiveType_Square;
+using mindspore::schema::PrimitiveType_LogicalNot;
 
 namespace mindspore::kernel {
 class ArithmeticSelfInt8CPUKernel : public LiteKernel {
@@ -48,10 +56,34 @@ class ArithmeticSelfInt8CPUKernel : public LiteKernel {
       case PrimitiveType_Ceil:
         arithmeticSelf_run_ = ElementCeil;
         break;
+      case PrimitiveType_Abs:
+        arithmeticSelf_run_ = ElementAbs;
+        break;
+      case PrimitiveType_Sin:
+        arithmeticSelf_run_ = ElementSin;
+        break;
+      case PrimitiveType_Cos:
+        arithmeticSelf_run_ = ElementCos;
+        break;
+      case PrimitiveType_Log:
+        arithmeticSelf_run_ = ElementLog;
+        break;
+      case PrimitiveType_Sqrt:
+        arithmeticSelf_run_ = ElementSqrt;
+        break;
+      case PrimitiveType_Rsqrt:
+        arithmeticSelf_run_ = ElementRsqrt;
+        break;
+      case PrimitiveType_Square:
+        arithmeticSelf_run_ = ElementSquare;
+        break;
+      case PrimitiveType_LogicalNot:
+        arithmeticSelf_run_ = ElementLogicalNot;
+        break;
       default:
         break;
     }
-    arithmeticSelfParameter_ = reinterpret_cast<ArithmeticSelfParameter *>(parameter);
+    para_ = reinterpret_cast<ArithmeticSelfParameter *>(parameter);
   }
   ~ArithmeticSelfInt8CPUKernel() override = default;
 
@@ -65,7 +97,7 @@ class ArithmeticSelfInt8CPUKernel : public LiteKernel {
   int thread_sz_count_;
   int thread_sz_stride_;
   size_t data_size_;
-  ArithmeticSelfParameter *arithmeticSelfParameter_;
+  ArithmeticSelfParameter *para_;
   ArithmeticSelfInt8Run arithmeticSelf_run_;
   const Context *ctx_;
   int8_t *in_ptr_;

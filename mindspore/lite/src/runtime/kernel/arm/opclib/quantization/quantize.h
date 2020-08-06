@@ -89,6 +89,16 @@ struct ArithSelfQuantArg {
   QuantArg out_args_;
   int output_activation_min_;
   int output_activation_max_;
+  int output_multiplier_;
+  int shift_left_;
+  int shift_right_;
+};
+
+struct SplitQuantArg {
+  QuantArg in_args_;
+  QuantArg out_args_[20];
+  int output_activation_min_;
+  int output_activation_max_;
 };
 
 void QuantizeMultiplier(double double_multiplier, int32_t *quantized_multiplier, int *shift);

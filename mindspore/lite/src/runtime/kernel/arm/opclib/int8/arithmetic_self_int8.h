@@ -27,6 +27,22 @@ int ElementRound(int8_t *input, int8_t *output, int element_size, ArithSelfQuant
 
 int ElementFloor(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
 
-int ElementCeil(int8_t *input, int8_t *output, int number, ArithSelfQuantArg para);
+int ElementCeil(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+
+int ElementAbs(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+
+int ElementSin(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+
+int ElementCos(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+
+int ElementLog(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+
+int ElementSqrt(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+
+int ElementRsqrt(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+
+int ElementSquare(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+
+int ElementLogicalNot(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_ARITHMETIC_SELF_INT8_H_
