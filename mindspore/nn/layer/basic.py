@@ -250,6 +250,10 @@ def _is_equal_one(x):
         return False
     return bool(x.asnumpy().mean() == 1.0)
 
+@constexpr
+def _dtype_check(x_dtype):
+    if x_dtype not in [mstype.float32, mstype.float16]:
+        raise  TypeError("The input type must be float32 or float16.")
 
 class ClipByNorm(Cell):
     r"""
@@ -264,12 +268,11 @@ class ClipByNorm(Cell):
     where :math:`L_2(X)` is the :math:`L_2`-norm of :math:`X`.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape N-D.
-        - **clip_norm** (Tensor) - A scalar Tensor of shape :math:`()` or :math:`(1)` and of
-          the same type as the input Tensor.
+        - **input** (Tensor) - Tensor of shape N-D. The type should be float32 or float16.
+        - **clip_norm** (Tensor) - A scalar Tensor of shape :math:`()` or :math:`(1)`.
 
     Outputs:
-        Tensor, clipped tensor with the same shape as the input.
+        Tensor, clipped tensor with the same shape as the input, whose type is float32.
 
     Examples:
         >>> net = nn.ClipByNorm()
@@ -300,10 +303,10 @@ class ClipByNorm(Cell):
         l2sum = self.cast(self.reduce_sum(mul_x), mstype.float32)
         cond = self.greater_(l2sum, 0)
         ones_ = self.fill(self.dtype(cond), self.shape(cond), 1.0)
-
         l2sum_safe = self.select_(cond, l2sum, self.cast(ones_, self.dtype(l2sum)))
         l2norm = self.select_(cond, self.sqrt(l2sum_safe), l2sum)
 
+        _dtype_check(self.dtype(x))
         if _is_equal_one(clip_norm):
             intermediate = x
         else:
