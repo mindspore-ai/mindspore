@@ -20,6 +20,8 @@ from shutil import disk_usage
 from ..._c_expression import EventWriter_
 from ._summary_adapter import package_init_event
 
+FREE_DISK_SPACE_TIMES = 32
+
 
 class BaseWriter:
     """BaseWriter to be subclass."""
@@ -45,13 +47,13 @@ class BaseWriter:
 
     def write(self, plugin, data):
         """Write data to file."""
-        if self.writer and disk_usage(self._filepath).free < len(data) * 32:
-            raise RuntimeError(f"The disk space may be soon exhausted by the '{self._filepath}'.")
         # 8: data length
         # 4: crc32 of data length
         # 4: crc32 of data
         metadata_length = 8 + 4 + 4
         required_length = len(data) + metadata_length
+        if self.writer and disk_usage(self._filepath).free < required_length * FREE_DISK_SPACE_TIMES:
+            raise RuntimeError(f"The disk space may be soon exhausted by the '{self._filepath}'.")
         if self._max_file_size is None:
             self.writer.Write(data)
         elif self._max_file_size >= required_length:
@@ -77,7 +79,7 @@ class SummaryWriter(BaseWriter):
 
     def init_writer(self):
         """Write some metadata etc."""
-        self.writer.Write(package_init_event().SerializeToString())
+        self.write('summary', package_init_event().SerializeToString())
 
     def write(self, plugin, data):
         """Write data to file."""
