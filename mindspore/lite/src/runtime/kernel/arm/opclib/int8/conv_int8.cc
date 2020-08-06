@@ -17,25 +17,7 @@
 #include "src/runtime/kernel/arm/opclib/int8/conv_int8.h"
 #include <string.h>
 #include "src/runtime/kernel/arm/opclib/winograd_transform.h"
-
-extern "C" {
-#ifdef ENABLE_ARM
-void IndirectGemmInt16to32_8x4(int32_t *dst, const int16_t *src, const int16_t *weight, size_t ksize, size_t ic8,
-                               size_t oc4, size_t offset);
-
-#ifdef ENABLE_ARM64
-void IndirectGemmInt8_4x4(int8_t *output, const int8_t *input, const int8_t *weight, const int32_t *bias, size_t ksize,
-                          size_t ic4, size_t oc, size_t offset, const int32_t *input_sum, size_t act_min,
-                          size_t act_max, size_t out_zp, size_t out_multiplier, size_t shift_before,
-                          size_t shift_after);
-#elif defined(ENABLE_ARM32)
-void IndirectGemmInt8_2x4(int8_t *output, const int8_t *input, const int8_t *weight, const int32_t *bias, size_t ksize,
-                          size_t ic4, size_t oc, size_t offset, const int32_t *input_sum, size_t act_min,
-                          size_t act_max, size_t out_zp, size_t out_multiplier, size_t shift_before,
-                          size_t shift_after);
-#endif
-#endif
-}
+#include "src/runtime/kernel/arm/opclib/int8/common_func.h"
 
 void IndirectGemmInt8(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const int8_t *weight, const int32_t *bias,
                       int ic4, size_t kernel_plane, size_t output_channel, const int32_t *input_sum,

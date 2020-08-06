@@ -2,17 +2,17 @@
 
 .text
 .align 5
-.global DeconvDwFp32Center
+.global DeconvDwInt8Center
 #ifndef __APPLE__
-.type DeconvDwFp32Center, %function
+.type DeconvDwInt8Center, %function
 #endif
 
-// void DeconvDwFp32Center(float *dst, const float *src, const float *weight, size_t height, size_t width,
+// void DeconvDwInt8Center(int32_t *dst, const int16_t *src, const int16_t *weight, size_t height, size_t width,
 //                      size_t kernel_h, size_t kernel_w, size_t out_h_step, size_t block_channel, size_t in_sh_step, size_t in_sw_step,
 //                      size_t in_kh_step, size_t in_kw_step);
 // x0: dst, x1: src, x2: weight, x3: height, x4: weight, x5: kernel_h, x6: kernel_w, x7: out_h_step
 // x8: block_channel, x9: in_sh_step, x10: in_sw_step, x11: in_kh_step, x12: in_kw_step
-DeconvDwFp32Center:
+DeconvDwInt8Center:
     // registers v8 ~ v15 must be preserved by a callee across subroutine calls, according to
     // https://github.com/ARM-software/abi-aa/blob/master/aapcs64/aapcs64.rst#simd-and-floating-point-registers
     // x19 ~ x29 should be also preserved
@@ -35,14 +35,14 @@ DeconvDwFp32Center:
             mov x18, x15
             mov x19, x2
             mov x20, x5
-            ld1 {v1.4s}, [x16], x8
+            ld1 {v1.4h}, [x16], x8
             LoopKh:
                 mov x21, x18
                 mov x13, x6
                 LoopKw:
                     ld1 {v0.4s}, [x21]
-                    ld1 {v2.4s}, [x19], #16
-                    fmla v0.4s, v1.4s, v2.4s
+                    ld1 {v2.4h}, [x19], #8
+                    smlal v0.4s, v1.4h, v2.4h
                     st1 {v0.4s}, [x21], x12
                     subs x13, x13, #1
                     bne LoopKw
@@ -50,6 +50,7 @@ DeconvDwFp32Center:
                 subs x20, x20, #1
                 bne LoopKh
             add x15, x15, x10
+            add x16, x16, x8
             subs x17, x17, #1
             bne LoopW
         add x0, x0, x9

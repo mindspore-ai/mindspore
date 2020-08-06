@@ -16,6 +16,7 @@
 
 #include "src/runtime/kernel/arm/opclib/fp16/conv_depthwise_fp16.h"
 #include <arm_neon.h>
+#include "src/runtime/kernel/arm/opclib/fp16/common_func.h"
 
 /*conv depthwise fp16 begin*/
 void DepthwiseBorderPixelFp16(float16_t *dst, const float16_t *src, const float16_t *weight, const float16_t *bias,
@@ -79,6 +80,7 @@ void DepthwiseBorderFp16(float16_t *dst, const float16_t *src, const float16_t *
   }  // height loop
 }
 
+#ifndef ENABLE_ARM64
 void DepthwiseCenterFp16(float16_t *dst, const float16_t *src, const float16_t *weight, const float16_t *bias,
                          int height, int width, int kernel_h, int kernel_w, int out_h_step, int block_channel,
                          int in_sh_step, int in_sw_step, int in_kh_step, int in_kw_step, bool is_relu, bool is_relu6) {
@@ -97,12 +99,17 @@ void DepthwiseCenterFp16(float16_t *dst, const float16_t *src, const float16_t *
         const float16_t *src_kw = src_kh;
         const float16_t *weight_kw = weight_kh;
         for (int kw = 0; kw < kernel_w; kw++) {
+#ifdef ENABLE_ARM64
           float16x8_t src_8 = vld1q_f16(src_kw);
           float16x8_t weight_8 = vld1q_f16(weight_kw);
           float16x8_t dst_8 = vld1q_f16(dst_w);
           dst_8 = vfmaq_f16(dst_8, src_8, weight_8);
           vst1q_f16(dst_w, dst_8);
-
+#else
+          for (int c = 0; c < C8NUM; c++) {
+            dst_w[c] += src_kw[c] * weight_kw[c];
+          }
+#endif
           src_kw += in_kw_step;
           weight_kw += C8NUM;
         }  // kernel_w loop
@@ -122,6 +129,7 @@ void DepthwiseCenterFp16(float16_t *dst, const float16_t *src, const float16_t *
     src_h += in_sh_step;
   }  // dst_height loop
 }
+#endif
 
 // conv depthwise fp16: sliding window
 void ConvDwC8Fp16(float16_t *output_data, const float16_t *input_data, const float16_t *weight_data,
@@ -149,11 +157,19 @@ void ConvDwC8Fp16(float16_t *output_data, const float16_t *input_data, const flo
         int in_w_start = sliding->left_ * conv_param->stride_w_ - conv_param->pad_w_;
         const float16_t *in_t = src_data + in_h_start * sliding->in_h_step_ + in_w_start * sliding->block_channel_;
         float16_t *out_t = dst_data + sliding->top_ * sliding->out_h_step_ + sliding->left_ * sliding->block_channel_;
-
+#ifdef ENABLE_ARM64
+        ConvDwFp16Center(out_t, in_t, weight, bias, sliding->bottom_ - sliding->top_,
+                         sliding->right_ - sliding->left_, conv_param->kernel_h_, conv_param->kernel_w_,
+                         sliding->out_h_step_ * sizeof(float16_t), sliding->block_channel_ * sizeof(float16_t),
+                         sliding->in_sh_step_ * sizeof(float16_t), sliding->in_sw_step_ * sizeof(float16_t),
+                         sliding->in_kh_step_ * sizeof(float16_t), sliding->in_kw_step_ * sizeof(float16_t),
+                         conv_param->is_relu_, conv_param->is_relu6_);
+#else
         DepthwiseCenterFp16(out_t, in_t, weight, bias, sliding->bottom_ - sliding->top_,
                             sliding->right_ - sliding->left_, conv_param->kernel_h_, conv_param->kernel_w_,
                             sliding->out_h_step_, sliding->block_channel_, sliding->in_sh_step_, sliding->in_sw_step_,
                             sliding->in_kh_step_, sliding->in_kw_step_, conv_param->is_relu_, conv_param->is_relu6_);
+#endif
       }
     }  // output C8 loop
     src += sliding->in_step_;
@@ -214,6 +230,7 @@ void DeconvDepthwiseBorderFp16(float16_t *dst, const float16_t *src, const float
   }  // height loop
 }
 
+#ifndef ENABLE_ARM64
 void DeconvDepthwiseCenterFp16(float16_t *dst, const float16_t *src, const float16_t *weight, int height, int width,
                                int kernel_h, int kernel_w, int out_h_step, int block_channel, int in_sh_step,
                                int in_sw_step, int in_kh_step, int in_kw_step) {
@@ -229,12 +246,17 @@ void DeconvDepthwiseCenterFp16(float16_t *dst, const float16_t *src, const float
         float16_t *dst_kw = dst_kh;
         const float16_t *weight_kw = weight_kh;
         for (int kw = 0; kw < kernel_w; kw++) {
+#ifdef ENABLE_ARM64
           float16x8_t src_8 = vld1q_f16(src_w);
           float16x8_t weight_8 = vld1q_f16(weight_kw);
           float16x8_t dst_8 = vld1q_f16(dst_kw);
           dst_8 = vfmaq_f16(dst_8, src_8, weight_8);
           vst1q_f16(dst_kw, dst_8);
-
+#else
+          for (int c = 0; c < C8NUM; c++) {
+            dst_kw[c] += src_w[c] * weight_kw[c];
+          }
+#endif
           dst_kw += in_kw_step;
           weight_kw += C8NUM;
         }  // kernel_w loop
@@ -248,6 +270,7 @@ void DeconvDepthwiseCenterFp16(float16_t *dst, const float16_t *src, const float
     src_h += out_h_step;
   }  // dst_height loop
 }
+#endif
 
 void DeconvDepthwisePostFuncFp16(float16_t *dst, const float16_t *bias, int block_channel,
                                  const ConvParameter *conv_param) {
@@ -289,11 +312,18 @@ void DeconvDwC8Fp16(float16_t *output_data, const float16_t *input_data, const f
         float16_t *out_t = dst_data + oh_h_start * sliding->in_h_step_ + oh_w_start * sliding->block_channel_;
         const float16_t *in_t =
           src_data + sliding->top_ * sliding->out_h_step_ + sliding->left_ * sliding->block_channel_;
-
+#ifdef ENABLE_ARM64
+        DeconvDwFp16Center(out_t, in_t, weight, sliding->bottom_ - sliding->top_,
+                           sliding->right_ - sliding->left_, conv_param->kernel_h_, conv_param->kernel_w_,
+                           sliding->out_h_step_ * sizeof(float16_t), sliding->block_channel_ * sizeof(float16_t),
+                           sliding->in_sh_step_ * sizeof(float16_t), sliding->in_sw_step_ * sizeof(float16_t),
+                           sliding->in_kh_step_ * sizeof(float16_t), sliding->in_kw_step_ * sizeof(float16_t));
+#else
         DeconvDepthwiseCenterFp16(out_t, in_t, weight, sliding->bottom_ - sliding->top_,
                                   sliding->right_ - sliding->left_, conv_param->kernel_h_, conv_param->kernel_w_,
                                   sliding->out_h_step_, sliding->block_channel_, sliding->in_sh_step_,
                                   sliding->in_sw_step_, sliding->in_kh_step_, sliding->in_kw_step_);
+#endif
       }
       DeconvDepthwisePostFuncFp16(dst_data, bias, sliding->block_channel_, conv_param);
     }  // output C8 loop
