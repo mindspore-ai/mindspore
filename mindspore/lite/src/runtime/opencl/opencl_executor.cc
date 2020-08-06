@@ -48,7 +48,7 @@ int OpenCLExecutor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tenso
       output->MallocData();
     }
     session::CallBackParam callbackParam;
-    callbackParam.name_callback_aram = kernel->Name();
+    callbackParam.name_callback_param = kernel->Name();
 
     if (before != nullptr) {
       if (!before(PackToMSTensors(kernel->GetInputs()), PackToMSTensors(kernel->GetOutputs()), callbackParam)) {

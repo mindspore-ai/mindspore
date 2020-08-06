@@ -43,7 +43,8 @@ int Executor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tensor::Ten
       output->MallocData();
     }
     session::CallBackParam callbackParam;
-    callbackParam.name_callback_aram = kernel->Name();
+    callbackParam.name_callback_param = kernel->Name();
+    callbackParam.type_callback_param = kernel->type_str();
 
     if (before != nullptr) {
       if (!before(PackToMSTensors(kernel->GetInputs()), PackToMSTensors(kernel->GetOutputs()), callbackParam)) {
