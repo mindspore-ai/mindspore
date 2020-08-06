@@ -22,6 +22,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <memory>
 #include "schema/inner/model_generated.h"
 #include "ir/func_graph.h"
 
@@ -34,10 +35,13 @@ class AnfExporter {
   void SetOpOutputNode(const std::vector<schema::TensorT *> &outputTensors, schema::MetaGraphT *graph,
                        schema::CNodeT *cnode);
   void SetOpInputNode(const CNodePtr &cnode, schema::MetaGraphT *meta_graph, schema::CNodeT *fbNode);
-
+  void RemoveIfMakeTuple(const CNodePtr &cnode);
+  bool RemoveIfTupleGetItem(const CNodePtr &cnode);
+  bool AddOutPutIfReturn(const std::unique_ptr<schema::MetaGraphT> &metaGraphT, const CNodePtr &cnode);
  private:
   std::map<std::string, int> nodeIdMap;
   std::vector<schema::CNodeT *> graphInputNodes;
+  std::map<std::string, int>  mapRemoveGetItem_;
 };
 
 schema::MetaGraphT *Export(const FuncGraphPtr &funcGraph);
