@@ -414,6 +414,10 @@ class _Executor:
         if auto_parallel_mode:
             obj.parameter_layout_dict = self._executor.get_parameter_layout(phase)
         replace = obj.init_parameters_data(auto_parallel_mode=auto_parallel_mode)
+        if not enable_debug_runtime or enable_ge:
+            if auto_parallel_mode:
+                obj.load_parameter_slice(None)
+
         self._updata_param_node_default_input(phase, replace)
 
         # set parallel inputs in sink mode
