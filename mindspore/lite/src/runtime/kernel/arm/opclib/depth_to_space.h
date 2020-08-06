@@ -15,19 +15,7 @@
  */
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_DEPTH_TO_SPACE_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_DEPTH_TO_SPACE_H_
-#include "src/runtime/kernel/arm/opclib/op_base.h"
-
-struct DepthToSpaceParameter {
-    OpParameter op_parameter_;
-    int32_t block_size_;
-    int32_t in_stride_dim0_;
-    int32_t in_stride_dim1_;
-    int32_t in_stride_dim2_;
-    int32_t out_stride_dim0_;
-    int32_t out_stride_dim1_;
-    int32_t out_stride_dim2_;
-    uint8_t data_type_size_;
-};
+#include "src/runtime/kernel/arm/opclib/depth_to_space_parameter.h"
 
 void DepthToSpaceForNHWC(const void *input, void *output, int *in_shape, DepthToSpaceParameter *param);
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_DEPTH_TO_SPACE_H_

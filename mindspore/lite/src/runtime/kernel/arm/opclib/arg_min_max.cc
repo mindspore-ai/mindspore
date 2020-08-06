@@ -15,10 +15,8 @@
  */
 #include "src/runtime/kernel/arm/opclib/arg_min_max.h"
 #include "src/runtime/kernel/arm/opclib/fp32/arg_min_max.h"
-#include "src/runtime/kernel/arm/opclib/int8/arg_min_max.h"
 
 #define FLOAT_DATA_TYPE 43
-#define INT8_DATA_TYPE  32
 
 void GetCalcParameter(const int *shape, int dims_number, int axis, int *pre_axis_count, int *axis_count,
                       int *after_axis_count) {
@@ -47,16 +45,6 @@ void ArgMinMaxTopk1(const void *input, void *output, const int *shape, ArgMinMax
                axis_count, after_axis_count);
       } else {
         ArgMin(reinterpret_cast<const float *>(input), reinterpret_cast<float *>(output), param, pre_axis_count,
-               axis_count, after_axis_count);
-      }
-      break;
-    }
-    case INT8_DATA_TYPE: {
-      if (param->get_max_) {
-        ArgMax(reinterpret_cast<const int8_t *>(input), reinterpret_cast<int8_t *>(output), param, pre_axis_count,
-               axis_count, after_axis_count);
-      } else {
-        ArgMin(reinterpret_cast<const int8_t *>(input), reinterpret_cast<int8_t *>(output), param, pre_axis_count,
                axis_count, after_axis_count);
       }
       break;
@@ -100,40 +88,6 @@ void ArgMinMaxTopknFp32(const float *input, float *output, const int *in_shape, 
   }
 }
 
-void ArgMinMaxTopknInt8(const int8_t *input, int8_t *output, const int *in_shape, ArgMinMaxParameter *param) {
-  if (param->get_max_) {
-    switch (param->axis_) {
-      case 0:
-        ArgMaxDim0(input, output, in_shape, param);
-        break;
-      case 1:
-        ArgMaxDim1(input, output, in_shape, param);
-        break;
-      case 2:
-        ArgMaxDim2(input, output, in_shape, param);
-        break;
-      case 3:
-        ArgMaxDim3(input, output, in_shape, param);
-        break;
-    }
-  } else {
-    switch (param->axis_) {
-      case 0:
-        ArgMinDim0(input, output, in_shape, param);
-        break;
-      case 1:
-        ArgMinDim1(input, output, in_shape, param);
-        break;
-      case 2:
-        ArgMinDim2(input, output, in_shape, param);
-        break;
-      case 3:
-        ArgMinDim3(input, output, in_shape, param);
-        break;
-    }
-  }
-}
-
 void ArgMinMax(const void *input, void *output, const int *in_shape, ArgMinMaxParameter *param) {
   if (param->topk_ == 1) {
     ArgMinMaxTopk1(input, output, in_shape, param);
@@ -143,10 +97,6 @@ void ArgMinMax(const void *input, void *output, const int *in_shape, ArgMinMaxPa
   switch (param->data_type_) {
     case FLOAT_DATA_TYPE: {
       ArgMinMaxTopknFp32(reinterpret_cast<const float *>(input), reinterpret_cast<float *>(output), in_shape, param);
-      return;
-    }
-    case INT8_DATA_TYPE: {
-      ArgMinMaxTopknInt8(reinterpret_cast<const int8_t *>(input), reinterpret_cast<int8_t *>(output), in_shape, param);
       return;
     }
     default:

@@ -31,6 +31,9 @@ class DepthToSpaceInt8CPUKernel : public DepthToSpaceBaseCPUKernel {
   int Init() override;
   int ReSize() override { return 0; }
   int Run() override;
+ private:
+  QuantArg in_quant_arg_;
+  QuantArg out_quant_arg_;
 };
 }  // namespace mindspore::kernel
 
