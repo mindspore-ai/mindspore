@@ -26,11 +26,6 @@ struct PowerParameter {
   float shift_;
 };
 
-inline void Power(const float *input_data, float *output_data, int len, float power, float scale, float shift) {
-  for (int i = 0; i < len; ++i) {
-    output_data[i] = pow((scale * input_data[i] + shift), power);
-  }
-}
+void Power(const float *input, const float *exponent, float *output, int len, float scale, float shift, bool broadcast);
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_POWER_H_
-

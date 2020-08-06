@@ -207,6 +207,7 @@ class Power : public Primitive {
  public:
   explicit Power(schema::Primitive *primitive) : Primitive(primitive) {}
   const schema::Power *GetAttribute() const { return this->primitive->value_as_Power(); }
+  int InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) override;
 };
 
 class Range : public Primitive {
