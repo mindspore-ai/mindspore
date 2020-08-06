@@ -32,6 +32,10 @@ void GPUDeviceManager::InitDevice() {
   CHECK_CUBLAS_RET_WITH_EXCEPT(cublasCreate(&cublas_handle_), "Failed to create cuBLAS handle.");
   CHECK_CUBLAS_RET_WITH_EXCEPT(cublasSetStream(cublas_handle_, reinterpret_cast<cudaStream_t>(default_stream())),
                                "Failed to set stream for cuBLAS handle.");
+  CHECK_CUSOLVER_RET_WITH_EXCEPT(cusolverDnCreate(&cusolver_dn_handle_), "Failed to create cusolver dn handle.");
+  CHECK_CUSOLVER_RET_WITH_EXCEPT(
+    cusolverDnSetStream(cusolver_dn_handle_, reinterpret_cast<cudaStream_t>(default_stream())),
+    "Failed to set stream for cusolver dn handle");
   CHECK_OP_RET_WITH_EXCEPT(GPUMemoryAllocator::GetInstance().Init(), "Failed to Init gpu memory allocator")
 }
 
@@ -46,6 +50,9 @@ void GPUDeviceManager::ReleaseDevice() {
   }
   if (cublas_handle_ != nullptr) {
     CHECK_CUBLAS_RET_WITH_ERROR(cublasDestroy(cublas_handle_), "Failed to destroy cuBLAS handle.");
+  }
+  if (cusolver_dn_handle_ != nullptr) {
+    CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnDestroy(cusolver_dn_handle_), "Failed to destroy cusolver dn handle.");
   }
   CHECK_OP_RET_WITH_ERROR(GPUMemoryAllocator::GetInstance().Finalize(), "Failed to destroy gpu memory allocator");
 }
@@ -79,7 +86,7 @@ bool GPUDeviceManager::is_device_id_init() const { return dev_id_init_; }
 const cudnnHandle_t &GPUDeviceManager::GetCudnnHandle() const { return cudnn_handle_; }
 
 const cublasHandle_t &GPUDeviceManager::GetCublasHandle() const { return cublas_handle_; }
-
+const cusolverDnHandle_t &GPUDeviceManager::GetCusolverDnHandle() const { return cusolver_dn_handle_; }
 bool GPUDeviceManager::SyncStream(const DeviceStream &stream) const { return CudaDriver::SyncStream(stream); }
 
 bool GPUDeviceManager::CopyDeviceMemToHost(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size) const {
