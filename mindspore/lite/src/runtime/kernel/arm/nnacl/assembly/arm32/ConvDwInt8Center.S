@@ -52,7 +52,7 @@ ConvDwInt8Center:
         ldr r5, [sp, #52] // width
         ldr r0, [sp] // dst_w
         LoopW4:
-            mov r11, [sp, #76] // in_sw_step
+            ldr r11, [sp, #76] // in_sw_step
             mov r8, r1 // src_kh
             ldr r2, [sp, #8] // weight_kh
             ldr r6, [sp, #56] // kernel_h
@@ -145,8 +145,11 @@ ConvDwInt8Center:
             mov r12, #4
             mul r11, r11, r12
             add r1, r1, r11
-            subs r5, r5, #1
-            bne LoopW4
+            sub r5, r5, #4
+            cmp r5, #0
+            ble LoopWEnd
+            cmp r5, #4
+            bge LoopW4
         LoopW:
             mov r8, r1 // src_kh
             ldr r2, [sp, #8] // weight_kh
@@ -199,7 +202,7 @@ ConvDwInt8Center:
         str r12, [sp, #4]
         subs r4, r4, #1
         bne LoopH
-
+LoopWEnd:
     sub sp, sp, #112
     vpop {q4-q7}
     pop {r0-r8, r10, r11, pc}

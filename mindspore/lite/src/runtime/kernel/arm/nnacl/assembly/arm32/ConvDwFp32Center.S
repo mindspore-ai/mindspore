@@ -21,7 +21,7 @@ ConvDwFp32Center:
     // clang's rule seems more simple, though there are no subroutine calls here
     // r4-r8 and q4-q7 must be saved according to https://static.docs.arm.com/ihi0042/i/aapcs32.pdf
     push {r0-r8, r10, r11, lr}
-    vpush {v4-v7}
+    vpush {q4-q7}
     add sp, sp, #112
 
     ldr r4, [sp, #48]
@@ -38,7 +38,7 @@ ConvDwFp32Center:
         cmp r5, #4
         blt LoopW
         LoopW4:
-            mov r11, [sp, #76] // in_sw_step
+            ldr r11, [sp, #76] // in_sw_step
             mov r8, r1 // src_kh
             ldr r2, [sp, #8] // weight_kh
             ldr r6, [sp, #56] // kernel_h
@@ -100,7 +100,7 @@ ConvDwFp32Center:
             mul r11, r11, r12
             add r1, r1, r11
             sub r5, r5, #4
-            cmp r5, r5, #0
+            cmp r5, #0
             ble LoopWEnd
             cmp r5, #4
             bge LoopW
@@ -155,7 +155,7 @@ ConvDwFp32Center:
         bne LoopH
 LoopWEnd:
     sub sp, sp, #112
-    vpop {v4-v7}
+    vpop {q4-q7}
     pop {r0-r8, r10, r11, pc}
 #endif
 #endif
