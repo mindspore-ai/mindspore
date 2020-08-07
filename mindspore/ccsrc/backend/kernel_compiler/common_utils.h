@@ -40,7 +40,6 @@ constexpr auto kProcessorCuda = "cuda";
 constexpr auto kJsonSuffix = ".json";
 constexpr auto kInfoSuffix = ".info";
 constexpr unsigned int AUTODIFF_COMPILE_OVERTIME = 600;
-constexpr auto kAkgModule = "akg.ms";
 constexpr auto kArgDataformat = "data_format";
 
 const std::vector<std::string> support_devices = {"aicore", "aicpu", "cuda"};
@@ -54,7 +53,7 @@ using KernelMetaPtr = std::shared_ptr<KernelMetaInfo>;
 class KernelMeta {
  public:
   KernelMeta() = default;
-  void Initialize();
+  void Initialize(int pid);
   void RemoveKernelCache();
   std::string Search(const std::string &kernel_name) const;
   bool Insert(const std::string &kernel_name, const std::string &kernel_json);

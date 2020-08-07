@@ -74,8 +74,12 @@ const std::unordered_map<std::string, FusionType> fusion_type_maps = {
   {"SEGMENT", FusionType::SEGMENT},       {"OPAQUE", FusionType::OPAQUE},
 };
 
-void KernelMeta::Initialize() {
-  kernel_meta_path_ = std::string(kGpuKernelMeta) + "_" + std::to_string(getpid()) + "/";
+void KernelMeta::Initialize(int pid) {
+  if (pid == -1) {
+    kernel_meta_path_ = std::string(kGpuKernelMeta) + "_" + std::to_string(getpid()) + "/";
+  } else {
+    kernel_meta_path_ = std::string(kGpuKernelMeta) + "_" + std::to_string(pid) + "/";
+  }
   // remove old kernel cache
   RemoveKernelCache();
 
