@@ -753,15 +753,7 @@ OpParameter *PopulateScaleParameter(const lite::Primitive *primitive) {
     MS_LOG(ERROR) << "value_as_Scale return nullptr";
     return nullptr;
   }
-  // NCHW todo use enum
-  if (param->format() == schema::Format_NCHW) {
-    scale_param->axis_ = 1;
-    scale_param->num_axis_ = 1;
-  } else if (param->format() == schema::Format_NHWC) {
-    scale_param->axis_ = 3;
-    scale_param->num_axis_ = 1;
-  }
-
+  scale_param->axis_ = param->axis();
   return reinterpret_cast<OpParameter *>(scale_param);
 }
 

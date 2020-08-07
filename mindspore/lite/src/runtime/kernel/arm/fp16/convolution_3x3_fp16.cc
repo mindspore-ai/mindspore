@@ -278,7 +278,7 @@ int Convolution3x3FP16CPUKernel::Run() {
   auto out_tensor = outputs_.at(kOutputIndex);
   auto output_addr = reinterpret_cast<float *>(out_tensor->Data());
   for (int j = 0; j < out_tensor->ElementsNum(); ++j) {
-    output_addr[j] = (float)fp16_out_[j];
+    output_addr[j] = (reinterpret_cast<float *>(fp16_out_))[j];
   }
   return RET_OK;
 }
