@@ -39,11 +39,7 @@ int ReluInt8CPUKernel::Init() {
   quant_arg_.output_arg.zp_ = output->GetQuantParams().front().zeroPoint;
 
   const double multiplier = quant_arg_.input_arg.scale_ / quant_arg_.output_arg.scale_;
-  QuantizeMultiplierSmallerThanOne(multiplier, &quant_arg_.input_multiplier_, &quant_arg_.input_shift_);
-
-  int left_shift = -quant_arg_.input_shift_ > 0 ? -quant_arg_.input_shift_ : 0;
-  quant_arg_.right_shift_ = -quant_arg_.input_shift_ > 0 ? 0 : quant_arg_.input_shift_;
-  quant_arg_.left_shift_result_ = (1 << left_shift);
+  QuantizeRoundParameter(multiplier, &quant_arg_.input_multiplier_, &quant_arg_.left_shift_, &quant_arg_.right_shift_);
 
   return RET_OK;
 }

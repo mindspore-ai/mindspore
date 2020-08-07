@@ -25,9 +25,8 @@ struct ReluQuantArg {
   QuantArg input_arg;
   QuantArg output_arg;
   int input_multiplier_;
-  int input_shift_;
+  int left_shift_;
   int right_shift_;
-  int left_shift_result_;
 };
 
 inline void ReluInt8(const int8_t *src, int length, int8_t *dst, ReluQuantArg *arg) {
@@ -38,7 +37,7 @@ inline void ReluInt8(const int8_t *src, int length, int8_t *dst, ReluQuantArg *a
     }
     const int32_t input_val = src[i] - arg->input_arg.zp_;
     const int32_t scaled_input = SaturatingRoundingDoublingHighMul(input_val, arg->input_multiplier_);
-    const int32_t shifted_input = RoundingDivideByPOT(scaled_input * arg->left_shift_result_, -arg->right_shift_);
+    const int32_t shifted_input = RoundingDivideByPOT(scaled_input * (1 << arg->left_shift_), -arg->right_shift_);
     const int32_t output = shifted_input + arg->output_arg.zp_;
     dst[i] = (int8_t)output;
   }
