@@ -65,6 +65,7 @@ if(BUILD_CONVERTER)
             ${CCSRC_DIR}/frontend/parallel/costmodel_context.cc
             ${CCSRC_DIR}/backend/optimizer/common/pattern_engine.cc
             ${CCSRC_DIR}/backend/optimizer/common/visit.cc
+            ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/graph_utils_extends.cc
             )
 else()
@@ -212,9 +213,8 @@ if(BUILD_CONVERTER)
             ${LITE_DIR}/test/ut/tools/optimizer/fusion/conv_biasadd_fusion_test.cc
             ${LITE_DIR}/test/ut/tools/optimizer/fusion/conv_bn_fusion_test.cc
             ${LITE_DIR}/test/ut/tools/optimizer/fusion/conv_scale_fusion_test.cc
-            ${LITE_DIR}/tools/optimizer/common/node_pass.cc
-            ${LITE_DIR}/tools/optimizer/common/optimizer.cc
-            ${LITE_DIR}/tools/optimizer/common/pass_manager.cc
+            ${LITE_DIR}/tools/optimizer/common/node_pass_extends.cc
+            ${LITE_DIR}/tools/optimizer/common/pass_manager_extends.cc
             ${LITE_DIR}/tools/optimizer/common/gllo_utils.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_biasadd_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_activation_fusion.cc
