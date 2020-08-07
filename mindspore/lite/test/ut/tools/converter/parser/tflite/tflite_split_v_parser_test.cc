@@ -18,17 +18,29 @@
 #include "common/common_test.h"
 
 namespace mindspore {
-class TestTfliteParserExp : public TestTfliteParser {
+class TestTfliteParserSplitV : public TestTfliteParser {
  public:
-  TestTfliteParserExp() {}
-  void SetUp() override { meta_graph = LoadAndConvert("./exp.tflite", ""); }
+  TestTfliteParserSplitV() {}
+
+  void SetUp() override { meta_graph = LoadAndConvert("./split_v.tflite"); }
 };
 
-TEST_F(TestTfliteParserExp, OpType) {
+TEST_F(TestTfliteParserSplitV, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Exp) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Split) << "wrong Op Type";
+}
+
+TEST_F(TestTfliteParserSplitV, AttrValue) {
+  ASSERT_NE(meta_graph, nullptr);
+  ASSERT_GT(meta_graph->nodes.size(), 0);
+  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsSplit(), nullptr);
+  const std::vector<int> sizeSplits{1, 3};
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsSplit()->splitDim, 0);
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsSplit()->numberSplit, 2);
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsSplit()->sizeSplits, sizeSplits);
 }
 
 }  // namespace mindspore

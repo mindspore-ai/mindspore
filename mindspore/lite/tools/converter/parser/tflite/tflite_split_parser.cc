@@ -54,7 +54,7 @@ STATUS TfliteSplitParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
   }
   attr->numberSplit = num_splits;
 
-  for (int i = 0; i <= num_splits; i++) {
+  for (int i = 0; i < num_splits; i++) {
     attr->sizeSplits.push_back(tensor_shape[axis] / num_splits);
   }
 

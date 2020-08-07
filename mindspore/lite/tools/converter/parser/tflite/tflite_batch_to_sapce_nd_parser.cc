@@ -24,12 +24,13 @@ STATUS TfliteBatchToSpaceNDParser::Parse(const std::unique_ptr<tflite::OperatorT
                                          const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
                                          const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                          const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                                         schema::CNodeT *op,
-                                         TensorCache *tensor_cache,
-                                         bool quantizedModel) {
+                                         schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
   MS_LOG(INFO) << "parse TfliteBatchToSpaceNDParser";
   std::unique_ptr<schema::BatchToSpaceT> attr(new schema::BatchToSpaceT());
 
+  // in tflite
+  // blockShape should be a 1D tensor with dimension [spatial_dims_num]
+  // crops should be a 2D tensor with dimension [spatial_dims_num, 2]
   if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->blockShape)) {
     MS_LOG(ERROR) << "BatchToSpaceNd get blockShape attr failed";
     return RET_ERROR;
