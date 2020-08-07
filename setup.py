@@ -146,7 +146,7 @@ class BuildPy(build_py):
         super().run()
         mindspore_dir = os.path.join(pkg_dir, 'build', 'lib', 'mindspore')
         update_permissions(mindspore_dir)
-        mindspore_dir = os.path.join(pkg_dir, 'build', 'lib', '_akg')
+        mindspore_dir = os.path.join(pkg_dir, 'build', 'lib', 'akg')
         update_permissions(mindspore_dir)
 
 

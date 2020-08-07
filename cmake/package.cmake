@@ -245,29 +245,6 @@ install(
     COMPONENT mindspore
 )
 
-if (ENABLE_GPU)
-    install(
-        DIRECTORY ${CMAKE_SOURCE_DIR}/mindspore/_akg
-        DESTINATION ${INSTALL_PY_DIR}/../
-        COMPONENT mindspore
-    )
-    if (EXISTS ${incubator_tvm_gpu_ROOT})
-        file(GLOB_RECURSE GLOG_LIB_LIST ${incubator_tvm_gpu_LIBPATH}/lib*)
-        install(
-                FILES ${GLOG_LIB_LIST}
-                DESTINATION ${INSTALL_LIB_DIR}
-                COMPONENT mindspore
-        )
-        install(
-            DIRECTORY
-                ${incubator_tvm_gpu_ROOT}/topi/python/topi
-                ${incubator_tvm_gpu_ROOT}/python/tvm
-            DESTINATION ${INSTALL_PY_DIR}/../_akg
-            COMPONENT mindspore
-        )
-    endif ()
-endif ()
-
 if ((ENABLE_D OR ENABLE_GPU) AND ENABLE_AKG)
     set (AKG_PATH ${CMAKE_SOURCE_DIR}/build/mindspore/akg)
     install(

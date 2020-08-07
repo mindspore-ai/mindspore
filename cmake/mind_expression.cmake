@@ -47,11 +47,6 @@ if (ENABLE_CPU)
 endif()
 
 if (ENABLE_GPU)
-    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/dlpack.cmake)
-    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/dmlc_core.cmake)
-    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/rang.cmake)
-    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/tvm_gpu.cmake)
-
     if (ENABLE_MPI)
         include(${CMAKE_SOURCE_DIR}/cmake/external_libs/nccl.cmake)
     endif()
