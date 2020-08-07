@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/opclib/depth_to_space.h"
+#include "src/runtime/kernel/arm/nnacl/depth_to_space.h"
 
 namespace mindspore::kernel {
 class DepthToSpaceBaseCPUKernel : public LiteKernel {

@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/one_hot.h"
-#include "src/runtime/kernel/arm/opclib/fp32/one_hot.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/one_hot.h"
 #include "schema/model_generated.h"
 #include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"

@@ -16,7 +16,7 @@
 
 #include "src/runtime/opencl/opencl_executor.h"
 #include "src/runtime/kernel/opencl/utils.h"
-#include "src/runtime/kernel/arm/opclib/pack.h"
+#include "src/runtime/kernel/arm/nnacl/pack.h"
 #include "src/common/ms_tensor_utils.h"
 #include "include/errorcode.h"
 

@@ -18,8 +18,8 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/opclib/unique.h"
-#include "src/runtime/kernel/arm/opclib/arithmetic_common.h"
+#include "src/runtime/kernel/arm/nnacl/unique.h"
+#include "src/runtime/kernel/arm/nnacl/arithmetic_common.h"
 
 namespace mindspore::kernel {
 class BiasAddInt8CPUKernel : public LiteKernel {

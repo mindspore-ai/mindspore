@@ -20,7 +20,7 @@
 #include <asm/hwcap.h>
 #include "common/utils.h"
 #include "utils/log_adapter.h"
-#include "src/runtime/kernel/arm/opclib/optimized_kernel.h"
+#include "src/runtime/kernel/arm/nnacl/optimized_kernel.h"
 #endif
 
 using mindspore::kernel::kCPU;

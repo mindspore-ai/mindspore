@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/base/arg_min_max_base.h"
-#include "src/runtime/kernel/arm/opclib/arg_min_max.h"
+#include "src/runtime/kernel/arm/nnacl/arg_min_max.h"
 #include "src/runtime/kernel/arm/fp32/argminmax.h"
 #include "src/runtime/kernel/arm/int8/argminmax_int8.h"
 #include "schema/model_generated.h"

@@ -16,8 +16,8 @@
 
 #include "src/runtime/kernel/arm/fp16/convolution_fp16.h"
 #include "src/runtime/kernel/arm/fp16/convolution_3x3_fp16.h"
-#include "src/runtime/kernel/arm/opclib/fp16/conv_fp16.h"
-#include "src/runtime/kernel/arm/opclib/fp16/pack_fp16.h"
+#include "src/runtime/kernel/arm/nnacl/fp16/conv_fp16.h"
+#include "src/runtime/kernel/arm/nnacl/fp16/pack_fp16.h"
 #include "src/runtime/kernel/arm/fp16/layout_transform_fp16.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -242,7 +242,7 @@ int ConvolutionFP16CPUKernel::Run() {
   auto out_tensor = outputs_.at(kOutputIndex);
   auto output_addr = reinterpret_cast<float *>(out_tensor->Data());
   for (int j = 0; j < out_tensor->ElementsNum(); ++j) {
-    output_addr[j] = (float)fp16_out_[j];
+    output_addr[j] = static_cast<float >(fp16_out_[j]);
   }
   return RET_OK;
 }

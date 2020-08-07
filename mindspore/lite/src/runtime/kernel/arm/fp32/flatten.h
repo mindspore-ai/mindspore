@@ -20,7 +20,7 @@
 #include "src/lite_kernel.h"
 #include "ir/anf.h"
 #include "include/context.h"
-#include "src/runtime/kernel/arm/opclib/flatten.h"
+#include "src/runtime/kernel/arm/nnacl/flatten.h"
 
 using mindspore::lite::Context;
 

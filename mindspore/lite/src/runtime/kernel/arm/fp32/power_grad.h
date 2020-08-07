@@ -20,7 +20,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "ir/anf.h"
-#include "src/runtime/kernel/arm/opclib/power.h"
+#include "src/runtime/kernel/arm/nnacl/power.h"
 
 namespace mindspore::kernel {
 class PowerGradCPUKernel : public LiteKernel {

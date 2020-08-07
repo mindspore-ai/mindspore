@@ -19,8 +19,8 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/opclib/fp32/arithmetic_self.h"
-#include "src/runtime/kernel/arm/opclib/arithmetic_self_parameter.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/arithmetic_self.h"
+#include "src/runtime/kernel/arm/nnacl/arithmetic_self_parameter.h"
 #include "schema/model_generated.h"
 #include "include/context.h"
 

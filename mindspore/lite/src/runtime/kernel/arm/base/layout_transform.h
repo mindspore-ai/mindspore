@@ -20,7 +20,7 @@
 #ifdef ENABLE_FP16
 #include <arm_neon.h>
 #endif
-#include "src/runtime/kernel/arm/opclib/pack.h"
+#include "src/runtime/kernel/arm/nnacl/pack.h"
 #include "ir/dtype/type_id.h"
 #include "schema/ops_generated.h"
 

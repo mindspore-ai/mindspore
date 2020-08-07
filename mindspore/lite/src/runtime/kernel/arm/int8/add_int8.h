@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/opclib/add_int8.h"
+#include "src/runtime/kernel/arm/nnacl/add_int8.h"
 #include "src/runtime/runtime_api.h"
 
 namespace mindspore::kernel {

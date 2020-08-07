@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace lite {
 /*
- * transform GraphDef by fusion optimizer and quantizer
+ * transform GraphDef by fusion legacy_optimizer and quantizer
  * */
 
 class GraphDefTransform {

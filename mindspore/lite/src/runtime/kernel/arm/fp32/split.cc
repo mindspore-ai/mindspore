@@ -16,8 +16,8 @@
 
 #include "src/runtime/kernel/arm/fp32/split.h"
 #include "src/runtime/kernel/arm/base/split_base.h"
-#include "src/runtime/kernel/arm/opclib/split.h"
-#include "src/runtime/kernel/arm/opclib/split_parameter.h"
+#include "src/runtime/kernel/arm/nnacl/split.h"
+#include "src/runtime/kernel/arm/nnacl/split_parameter.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"

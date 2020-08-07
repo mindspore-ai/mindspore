@@ -78,15 +78,15 @@ file(GLOB KERNEL_OP_SRC
         ${LITE_DIR}/src/runtime/kernel/arm/base/*.cc
         ${LITE_DIR}/src/runtime/kernel/arm/fp32/*.cc
         ${LITE_DIR}/src/runtime/kernel/arm/int8/*.cc
-        ${LITE_DIR}/src/runtime/kernel/arm/opclib/*.cc
-        ${LITE_DIR}/src/runtime/kernel/arm/opclib/fp32/*.cc
-        ${LITE_DIR}/src/runtime/kernel/arm/opclib/int8/*.cc
-        ${LITE_DIR}/src/runtime/kernel/arm/opclib/quantization/*.cc
+        ${LITE_DIR}/src/runtime/kernel/arm/nnacl/*.cc
+        ${LITE_DIR}/src/runtime/kernel/arm/nnacl/fp32/*.cc
+        ${LITE_DIR}/src/runtime/kernel/arm/nnacl/int8/*.cc
+        ${LITE_DIR}/src/runtime/kernel/arm/nnacl/quantization/*.cc
         )
 if (PLATFORM_ARM64)
     # assembly
-    file(GLOB TEST_ASSEMBLY_SRC ${LITE_DIR}/src/runtime/kernel/arm/opclib/assembly/arm64/*.s
-            ${LITE_DIR}/src/runtime/kernel/arm/opclib/assembly/arm64/*.S)
+    file(GLOB TEST_ASSEMBLY_SRC ${LITE_DIR}/src/runtime/kernel/arm/nnacl/assembly/arm64/*.s
+            ${LITE_DIR}/src/runtime/kernel/arm/nnacl/assembly/arm64/*.S)
 
     set_property(SOURCE ${TEST_ASSEMBLY_SRC} PROPERTY LANGUAGE C)
     set(KERNEL_OP_SRC
@@ -97,8 +97,8 @@ endif()
 if (PLATFORM_ARM32)
     # assembly
     file(GLOB TEST_ASSEMBLY_SRC
-            ${LITE_DIR}/src/runtime/kernel/arm/opclib/assembly/arm32/*.S
-            ${LITE_DIR}/src/runtime/kernel/arm/opclib/assembly/arm32/*.s)
+            ${LITE_DIR}/src/runtime/kernel/arm/nnacl/assembly/arm32/*.S
+            ${LITE_DIR}/src/runtime/kernel/arm/nnacl/assembly/arm32/*.s)
     set_property(SOURCE ${TEST_ASSEMBLY_SRC} PROPERTY LANGUAGE C)
     set(KERNEL_OP_SRC
             ${KERNEL_OP_SRC}
@@ -108,7 +108,7 @@ endif()
 if (ENABLE_FP16)
     file(GLOB KERNEL_OP_FP16_SRC
             ${LITE_DIR}/src/runtime/kernel/arm/fp16/*.cc
-            ${LITE_DIR}/src/runtime/kernel/arm/opclib/fp16/*.cc
+            ${LITE_DIR}/src/runtime/kernel/arm/nnacl/fp16/*.cc
             )
     set(KERNEL_OP_SRC
             ${KERNEL_OP_SRC}
@@ -208,19 +208,19 @@ if(BUILD_CONVERTER)
             ${LITE_DIR}/tools/converter/converter.cc
             ${LITE_DIR}/tools/converter/parser/onnx/onnx.pb.cc
             ${LITE_DIR}/test/st/converter_test.cc
-            ${LITE_DIR}/test/ut/src/gllo/fusion/conv_activation_fusion_test.cc
-            ${LITE_DIR}/test/ut/src/gllo/fusion/conv_biasadd_fusion_test.cc
-            ${LITE_DIR}/test/ut/src/gllo/fusion/conv_bn_fusion_test.cc
-            ${LITE_DIR}/test/ut/src/gllo/fusion/conv_scale_fusion_test.cc
-            ${LITE_DIR}/src/gllo/common/node_pass.cc
-            ${LITE_DIR}/src/gllo/common/optimizer.cc
-            ${LITE_DIR}/src/gllo/common/pass_manager.cc
-            ${LITE_DIR}/src/gllo/common/gllo_utils.cc
-            ${LITE_DIR}/src/gllo/fusion/conv_biasadd_fusion.cc
-            ${LITE_DIR}/src/gllo/fusion/conv_activation_fusion.cc
-            ${LITE_DIR}/src/gllo/fusion/conv_transform_fusion.cc
-            ${LITE_DIR}/src/gllo/fusion/conv_scale_fusion.cc
-            ${LITE_DIR}/src/gllo/fusion/conv_bn_fusion.cc
+            ${LITE_DIR}/test/ut/tools/optimizer/fusion/conv_activation_fusion_test.cc
+            ${LITE_DIR}/test/ut/tools/optimizer/fusion/conv_biasadd_fusion_test.cc
+            ${LITE_DIR}/test/ut/tools/optimizer/fusion/conv_bn_fusion_test.cc
+            ${LITE_DIR}/test/ut/tools/optimizer/fusion/conv_scale_fusion_test.cc
+            ${LITE_DIR}/tools/optimizer/common/node_pass.cc
+            ${LITE_DIR}/tools/optimizer/common/optimizer.cc
+            ${LITE_DIR}/tools/optimizer/common/pass_manager.cc
+            ${LITE_DIR}/tools/optimizer/common/gllo_utils.cc
+            ${LITE_DIR}/tools/optimizer/fusion/conv_biasadd_fusion.cc
+            ${LITE_DIR}/tools/optimizer/fusion/conv_activation_fusion.cc
+            ${LITE_DIR}/tools/optimizer/fusion/conv_transform_fusion.cc
+            ${LITE_DIR}/tools/optimizer/fusion/conv_scale_fusion.cc
+            ${LITE_DIR}/tools/optimizer/fusion/conv_bn_fusion.cc
             )
 endif()
 ### train

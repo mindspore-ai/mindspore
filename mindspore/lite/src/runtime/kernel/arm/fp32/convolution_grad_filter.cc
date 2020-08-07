@@ -16,9 +16,9 @@
 
 #include "src/runtime/kernel/arm/fp32/convolution_grad_filter.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/opclib/pack.h"
-#include "src/runtime/kernel/arm/opclib/pack_ext.h"
-#include "src/runtime/kernel/arm/opclib/fp32/gemm.h"
+#include "src/runtime/kernel/arm/nnacl/pack.h"
+#include "src/runtime/kernel/arm/nnacl/pack_ext.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/gemm.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;

@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/sparse_softmax_cross_entropy_with_logits.h"
-#include "src/runtime/kernel/arm/opclib/fp32/softmax.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/softmax.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"

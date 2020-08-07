@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "src/runtime/kernel/arm/base/arg_min_max_base.h"
-#include "src/runtime/kernel/arm/opclib/quantization/quantize.h"
+#include "src/runtime/kernel/arm/nnacl/quantization/quantize.h"
 
 namespace mindspore::kernel {
 class ArgMinMaxInt8CPUKernel : public ArgMinMaxBaseCPUKernel {

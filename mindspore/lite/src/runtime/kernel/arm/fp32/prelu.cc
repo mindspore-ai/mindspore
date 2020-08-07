@@ -16,7 +16,7 @@
 #include "src/runtime/kernel/arm/fp32/prelu.h"
 #include <vector>
 #include "schema/model_generated.h"
-#include "src/runtime/kernel/arm/opclib/prelu.h"
+#include "src/runtime/kernel/arm/nnacl/prelu.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"

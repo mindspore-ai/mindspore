@@ -16,8 +16,8 @@
 
 #include "src/runtime/kernel/arm/int8/split_int8.h"
 #include <limits>
-#include "src/runtime/kernel/arm/opclib/split_parameter.h"
-#include "src/runtime/kernel/arm/opclib/int8/split_int8.h"
+#include "src/runtime/kernel/arm/nnacl/split_parameter.h"
+#include "src/runtime/kernel/arm/nnacl/int8/split_int8.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
 

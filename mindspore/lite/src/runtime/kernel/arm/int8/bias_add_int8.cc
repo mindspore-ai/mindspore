@@ -15,8 +15,8 @@
  */
 
 #include "src/runtime/kernel/arm/int8/bias_add_int8.h"
-#include "src/runtime/kernel/arm/opclib/fp32/arithmetic.h"
-#include "src/runtime/kernel/arm/opclib/errorcode.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/arithmetic.h"
+#include "src/runtime/kernel/arm/nnacl/errorcode.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 
@@ -35,10 +35,10 @@ int BiasAddInt8CPUKernel::Init() {
     bias_param->out_shape_[i] = dims[i];
   }
   bias_param->in_shape1_[3] = dims[3];
-  return OPCLIB_OK;
+  return NNACL_OK;
 }
 
-int BiasAddInt8CPUKernel::ReSize() { return OPCLIB_OK; }
+int BiasAddInt8CPUKernel::ReSize() { return NNACL_OK; }
 
 int BiasAddInt8CPUKernel::Run() {
   auto in = reinterpret_cast<int8_t *>(inputs_.at(0)->Data());
@@ -49,12 +49,12 @@ int BiasAddInt8CPUKernel::Run() {
   auto tile_bias = static_cast<int8_t *>(ctx_->allocator->Malloc(data_size));
   if (tile_in == nullptr || tile_bias == nullptr) {
     MS_LOG(ERROR) << "Failed to malloc momery";
-    return OPCLIB_ERR;
+    return NNACL_ERR;
   }
   BroadcastAddInt8(in, bias, tile_in, tile_bias, out, data_size, reinterpret_cast<ArithmeticParameter *>(opParameter));
   ctx_->allocator->Free(tile_in);
   ctx_->allocator->Free(tile_bias);
-  return OPCLIB_OK;
+  return NNACL_OK;
 }
 
 kernel::LiteKernel *CpuBiasAddInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,

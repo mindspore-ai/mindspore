@@ -15,8 +15,8 @@
  */
 
 #include "src/runtime/kernel/arm/int8/fullconnection_int8.h"
-#include "src/runtime/kernel/arm/opclib/int8/matmul.h"
-#include "src/runtime/kernel/arm/opclib/common_func.h"
+#include "src/runtime/kernel/arm/nnacl/int8/matmul.h"
+#include "src/runtime/kernel/arm/nnacl/common_func.h"
 #include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
 

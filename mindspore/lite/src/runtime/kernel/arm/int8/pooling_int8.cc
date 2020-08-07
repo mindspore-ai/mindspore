@@ -15,8 +15,8 @@
  */
 
 #include "src/runtime/kernel/arm/int8/pooling_int8.h"
-#include "src/runtime/kernel/arm/opclib/int8/pooling_int8.h"
-#include "src/runtime/kernel/arm/opclib/fp32/cast.h"
+#include "src/runtime/kernel/arm/nnacl/int8/pooling_int8.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/cast.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
 

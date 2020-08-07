@@ -19,7 +19,7 @@
 #include "src/ir/tensor.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
-#include "src/runtime/kernel/arm/opclib/pad_parameter.h"
+#include "src/runtime/kernel/arm/nnacl/pad_parameter.h"
 #include "src/runtime/kernel/arm/int8/pad_int8.h"
 
 namespace mindspore {

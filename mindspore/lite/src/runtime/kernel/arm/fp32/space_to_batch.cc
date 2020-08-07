@@ -18,8 +18,8 @@
 #include "schema/ops_generated.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/opclib/fp32/space_to_batch.h"
-#include "src/runtime/kernel/arm/opclib/errorcode.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/space_to_batch.h"
+#include "src/runtime/kernel/arm/nnacl/errorcode.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;
@@ -70,7 +70,7 @@ int SpaceToBatchCPUKernel::Run() {
   } else {
     ret = SpaceToBatch(input_ptr_, output_ptr_, *param, tmp_space);
   }
-  if (ret != OPCLIB_OK) {
+  if (ret != NNACL_OK) {
     MS_LOG(ERROR) << "Do space to batch fails!";
     return RET_OP_EXECUTE_FAILURE;
   }

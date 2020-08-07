@@ -21,11 +21,11 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#include "src/runtime/kernel/arm/opclib/int8/deconv.h"
-#include "src/runtime/kernel/arm/opclib/int8/matmul.h"
+#include "src/runtime/kernel/arm/nnacl/int8/deconv.h"
+#include "src/runtime/kernel/arm/nnacl/int8/matmul.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
-#include "src/runtime/kernel/arm/opclib/arithmetic_common.h"
+#include "src/runtime/kernel/arm/nnacl/arithmetic_common.h"
 
 namespace mindspore::kernel {
 class DeConvInt8CPUKernel : public ConvolutionBaseCPUKernel {

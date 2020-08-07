@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/opclib/fp32/activation.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/activation.h"
 
 namespace mindspore::kernel {
 class ActivationCPUKernel : public LiteKernel {

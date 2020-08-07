@@ -17,7 +17,7 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "src/ops/ops.h"
-#include "src/runtime/kernel/arm/opclib/op_base.h"
+#include "src/runtime/kernel/arm/nnacl/op_base.h"
 #include "utils/log_adapter.h"
 #include "src/ir/tensor.h"
 

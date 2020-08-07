@@ -19,7 +19,7 @@
 
 #include <stdlib.h>
 #include <vector>
-#include "src/runtime/kernel/arm/opclib/winograd_utils.h"
+#include "src/runtime/kernel/arm/nnacl/winograd_utils.h"
 
 namespace mindspore::kernel {
 class Matrix {

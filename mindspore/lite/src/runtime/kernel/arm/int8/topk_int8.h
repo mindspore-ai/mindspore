@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/opclib/int8/topk_int8.h"
+#include "src/runtime/kernel/arm/nnacl/int8/topk_int8.h"
 
 namespace mindspore::kernel {
 class TopKInt8CPUKernel : public LiteKernel {
