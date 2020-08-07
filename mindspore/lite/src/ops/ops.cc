@@ -39,8 +39,8 @@ Primitive *Primitive::CreatePrimitive(schema::Primitive *primitive) {
       return new lite::DepthwiseConv2D(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_FusedBatchNorm:
       return new lite::FusedBatchNorm(const_cast<schema::Primitive *>(primitive));
-    case schema::PrimitiveType_CaffeBatchNorm:
-      return new lite::CaffeBatchNorm(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_BatchNorm:
+      return new lite::BatchNorm(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_FullConnection:
       return new lite::FullConnection(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Power:

@@ -90,10 +90,10 @@ class Pooling : public Primitive {
   int pad_r_ = 0;
 };
 
-class CaffeBatchNorm : public Primitive {
+class BatchNorm : public Primitive {
  public:
-  explicit CaffeBatchNorm(schema::Primitive *primitive) : Primitive(primitive) {}
-  const schema::CaffeBatchNorm *GetAttribute() const { return this->primitive->value_as_CaffeBatchNorm(); }
+  explicit BatchNorm(schema::Primitive *primitive) : Primitive(primitive) {}
+  const schema::BatchNorm *GetAttribute() const { return this->primitive->value_as_BatchNorm(); }
 };
 
 class FusedBatchNorm : public Primitive {

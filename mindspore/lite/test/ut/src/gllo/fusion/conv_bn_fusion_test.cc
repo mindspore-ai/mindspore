@@ -96,8 +96,8 @@ MetaGraphTptr BuildCaffeGraph(schema::PrimitiveType conv_type) {
   bn_node->inputIndex = {2, 3, 4};
   bn_node->outputIndex = {5};
   bn_node->primitive = std::make_unique<schema::PrimitiveT>();
-  bn_node->primitive->value.type = schema::PrimitiveType_CaffeBatchNorm;
-  auto prim2 = new schema::CaffeBatchNormT;
+  bn_node->primitive->value.type = schema::PrimitiveType_BatchNorm;
+  auto prim2 = new schema::BatchNormT;
   bn_node->primitive->value.value = prim2;
   bn_node->name = "bn";
   meta_graph->nodes.emplace_back(std::move(bn_node));

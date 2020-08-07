@@ -39,6 +39,7 @@
 #include "src/runtime/kernel/arm/opclib/fp32/activation.h"
 #include "src/runtime/kernel/arm/opclib/fp32/arithmetic.h"
 #include "src/runtime/kernel/arm/opclib/fused_batchnorm.h"
+#include "src/runtime/kernel/arm/opclib/fp32/batchnorm.h"
 #include "src/runtime/kernel/arm/opclib/power.h"
 #include "src/runtime/kernel/arm/opclib/fp32/range.h"
 #include "src/runtime/kernel/arm/opclib/fp32/local_response_norm.h"
@@ -70,6 +71,18 @@
 #include "src/runtime/kernel/arm/opclib/fp32/lstm.h"
 
 namespace mindspore::kernel {
+OpParameter *PopulateBatchNorm(const lite::Primitive *primitive) {
+  BatchNormParameter *batch_norm_param = new (std::nothrow) BatchNormParameter();
+  if (batch_norm_param == nullptr) {
+    MS_LOG(ERROR) << "new BatchNormParameter failed.";
+    return nullptr;
+  }
+  batch_norm_param->op_parameter_.type_ = primitive->Type();
+  auto param = primitive->Value()->value_as_BatchNorm();
+  batch_norm_param->epsilon_ = param->epsilon();
+  return reinterpret_cast<OpParameter *>(batch_norm_param);
+}
+
 OpParameter *PopulateFillParameter(const lite::Primitive *primitive) {
   auto param = primitive->Value()->value_as_Fill();
   FillParameter *fill_param = new (std::nothrow) FillParameter();
@@ -1190,6 +1203,7 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_DeDepthwiseConv2D] = PopulateDeconvDwParameter;
   populate_parameter_funcs_[schema::PrimitiveType_DeConv2D] = PopulateDeconvParameter;
   populate_parameter_funcs_[schema::PrimitiveType_FusedBatchNorm] = PopulateFusedBatchNorm;
+  populate_parameter_funcs_[schema::PrimitiveType_BatchNorm] = PopulateBatchNorm;
   populate_parameter_funcs_[schema::PrimitiveType_FullConnection] = PopulateFullconnectionParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Power] = PopulatePowerParameter;
   populate_parameter_funcs_[schema::PrimitiveType_LocalResponseNormalization] = PopulateLocalResponseNormParameter;
