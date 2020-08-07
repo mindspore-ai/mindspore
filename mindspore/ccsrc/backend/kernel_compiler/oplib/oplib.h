@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <map>
 #include <nlohmann/json.hpp>
 #include "utils/ms_utils.h"
 #include "backend/kernel_compiler/oplib/opinfo.h"
@@ -30,12 +31,12 @@ class OpLib {
   OpLib() = default;
   virtual ~OpLib() = default;
   static bool RegOp(const std::string &json_string, const std::string &impl_path);
-  static void RegOpInfo(const std::shared_ptr<OpInfo> &opinfo) { op_info_.emplace_back(opinfo); }
+  static void RegOpInfo(const std::shared_ptr<OpInfo> &opinfo) { op_info_.emplace(opinfo->op_name(), opinfo); }
   static std::shared_ptr<OpInfo> FindOp(const std::string &op_name, OpImplyType imply_type);
-  static const std::vector<std::shared_ptr<OpInfo>> &GetAllOpsInfo() { return op_info_; }
+  static const std::multimap<std::string, std::shared_ptr<OpInfo>> &GetAllOpsInfo() { return op_info_; }
 
  protected:
-  static std::vector<std::shared_ptr<OpInfo>> op_info_;
+  static std::multimap<std::string, std::shared_ptr<OpInfo>> op_info_;
 
  private:
   static bool RegOpFromLocalInfo();

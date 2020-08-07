@@ -32,7 +32,7 @@ class OpInfoLoaderPy {
     auto ops = OpLib::GetAllOpsInfo();
     auto op_infos = new std::vector<OpInfo *>();
     for (auto op_info : ops) {
-      auto new_op_info = new OpInfo(*op_info);
+      auto new_op_info = new OpInfo(*op_info.second);
       op_infos->emplace_back(new_op_info);
     }
     return (size_t)op_infos;

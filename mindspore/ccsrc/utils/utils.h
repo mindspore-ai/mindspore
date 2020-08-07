@@ -359,12 +359,23 @@ static inline uint64_t GetCurrentUSec() {
   static uint64_t total_##stage = 0; \
   static uint64_t count_##stage = 0;
 
+#define PROF_LOCAL_DEFINE(stage) \
+  uint64_t total_##stage = 0;    \
+  uint64_t count_##stage = 0;
+
 #define PROF_MULTI_START(stage) uint64_t start_usec_##stage = mindspore::GetCurrentUSec()
 
-#define PROF_MULTI_END(stage)                              \
-  ++count_##stage;                                         \
-  uint64_t end_usec_##stage = mindspore::GetCurrentUSec(); \
-  total_##stage += (end_usec_##stage - start_usec_##stage)
+#define PROF_MULTI_END(stage)                                 \
+  do {                                                        \
+    ++count_##stage;                                          \
+    uint64_t end_usec_##stage = mindspore::GetCurrentUSec();  \
+    total_##stage += (end_usec_##stage - start_usec_##stage); \
+  } while (0)
+
+#define PROF_MULTI_PRINT(stage)                                                                             \
+  do {                                                                                                      \
+    MS_LOG(INFO) << #stage << " called " << count_##stage << " times, costs " << total_##stage << " usec."; \
+  } while (0)
 
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_UTILS_UTILS_H_
