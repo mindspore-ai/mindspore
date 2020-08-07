@@ -73,6 +73,7 @@ Parameters for both training and evaluation can be set in config.py.
 "momentum": 0.9,                  # momentum
 "weight_decay": 1e-4,             # weight decay 
 "epoch_size": 90,                 # only valid for taining, which is always 1 for inference 
+"pretrain_epoch_size": 0,         # epoch size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to epoch_size minus pretrain_epoch_size
 "save_checkpoint": True,          # whether save checkpoint or not
 "save_checkpoint_steps": 195,     # the step interval between two checkpoints. By default, the last checkpoint will be saved after the last step
 "keep_checkpoint_max": 10,        # only keep the last keep_checkpoint_max checkpoint
@@ -93,7 +94,7 @@ Parameters for both training and evaluation can be set in config.py.
 "momentum": 0.9,                  # momentum optimizer
 "weight_decay": 1e-4,             # weight decay 
 "epoch_size": 90,                 # only valid for taining, which is always 1 for inference 
-"pretrained_epoch_size": 1,       # epoch size that model has been trained before load pretrained checkpoint
+"pretrain_epoch_size": 0,         # epoch size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to epoch_size minus pretrain_epoch_size
 "save_checkpoint": True,          # whether save checkpoint or not
 "save_checkpoint_epochs": 1,      # the epoch interval between two checkpoints. By default, the last checkpoint will be saved after the last epoch
 "keep_checkpoint_max": 10,        # only keep the last keep_checkpoint_max checkpoint
@@ -114,8 +115,8 @@ Parameters for both training and evaluation can be set in config.py.
 "loss_scale": 1024,               # loss scale
 "momentum": 0.9,                  # momentum optimizer
 "weight_decay": 1e-4,             # weight decay
-"epoch_size": 120,                # epoch sizes for training
-"pretrain_epoch_size": 0,         # epoch size of pretrain checkpoint
+"epoch_size": 120,                # epoch size for training
+"pretrain_epoch_size": 0,         # epoch size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to epoch_size minus pretrain_epoch_size
 "save_checkpoint": True,          # whether save checkpoint or not
 "save_checkpoint_epochs": 1,      # the epoch interval between two checkpoints. By default, the last checkpoint will be saved after the last epoch
 "keep_checkpoint_max": 10,        # only keep the last keep_checkpoint_max checkpoint

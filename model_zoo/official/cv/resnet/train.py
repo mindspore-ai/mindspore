@@ -184,4 +184,5 @@ if __name__ == '__main__':
         cb += [ckpt_cb]
 
     # train model
-    model.train(config.epoch_size, dataset, callbacks=cb, dataset_sink_mode=(not args_opt.parameter_server))
+    model.train(config.epoch_size - config.pretrain_epoch_size, dataset, callbacks=cb,
+                dataset_sink_mode=(not args_opt.parameter_server))
