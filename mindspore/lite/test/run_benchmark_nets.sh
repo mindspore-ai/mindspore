@@ -68,8 +68,8 @@ rm -rf ${basepath}/benchmark_test
 mkdir -p ${basepath}/benchmark_test
 benchmark_test_path=${basepath}/benchmark_test
 cd ${benchmark_test_path}
-cp  $arm_path/MSLite-0.6.0-linux_arm64/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so
-cp  $arm_path/MSLite-0.6.0-linux_arm64/benchmark/benchmark ${benchmark_test_path}/benchmark
+cp  $arm_path/MSLite-*-linux_arm64/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so
+cp  $arm_path/MSLite-*-linux_arm64/benchmark/benchmark ${benchmark_test_path}/benchmark
 
 #copy the models：
 cp  ${ms_models_path}/*.ms ${benchmark_test_path}
