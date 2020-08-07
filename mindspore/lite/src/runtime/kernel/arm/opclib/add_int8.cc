@@ -83,7 +83,7 @@ void AddInt8NEON(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, 
 
     int16x8_t res_s16 = vcombine_s16(sum_low, sum_high);
     int8x8_t res_u8_n0 = vqmovn_s16(res_s16);
-    vst1_s8(output_data, res_u8_n0);
+    vst1_s8(output_data + *index, res_u8_n0);
   }
 }
 #endif
@@ -110,13 +110,8 @@ void AddInt8(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int6
                                                             para->output_multiplier_),
                           para->right_shift_out_) +
       para->output_offset_;
-    if (raw_output > para->output_activation_max_) {
-      output_data[index] = para->output_activation_max_;
-    } else if (raw_output < para->output_activation_min_) {
-      output_data[index] = para->output_activation_min_;
-    } else {
-      output_data[index] = (int8_t)raw_output;
-    }
+
+    output_data[index] = (int8_t)MSMAX(para->output_activation_min_, MSMIN(raw_output, para->output_activation_max_));
   }
   return;
 }
