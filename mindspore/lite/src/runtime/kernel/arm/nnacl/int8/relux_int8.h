@@ -21,15 +21,17 @@
 #include "src/runtime/kernel/arm/nnacl/errorcode.h"
 #include "src/runtime/kernel/arm/nnacl/quantization/fixed_point.h"
 
-struct ReluQuantArg {
+struct ReluXQuantArg {
   QuantArg input_arg;
   QuantArg output_arg;
   int input_multiplier_;
   int left_shift_;
   int right_shift_;
+  int quantized_output_min;
+  int quantized_output_max;
 };
 
-inline void ReluInt8(const int8_t *src, int length, int8_t *dst, ReluQuantArg *arg) {
+inline void ReluXInt8(const int8_t *src, int length, int8_t *dst, ReluXQuantArg *arg) {
   for (int i = 0; i < length; ++i) {
     if (src[i] <= arg->input_arg.zp_) {
       dst[i] = arg->output_arg.zp_;
@@ -39,8 +41,7 @@ inline void ReluInt8(const int8_t *src, int length, int8_t *dst, ReluQuantArg *a
     const int32_t scaled_input = SaturatingRoundingDoublingHighMul(input_val, arg->input_multiplier_);
     const int32_t shifted_input = RoundingDivideByPOT(scaled_input * (1 << arg->left_shift_), -arg->right_shift_);
     const int32_t output = shifted_input + arg->output_arg.zp_;
-    dst[i] = (int8_t)output;
+    dst[i] = (int8_t)MSMIN(output, arg->quantized_output_max);
   }
 }
-
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_RELU_INT8_H_
