@@ -778,6 +778,13 @@ class Lstm : public Primitive {
   const schema::Lstm *GetAttribute() const { return this->primitive->value_as_Lstm(); }
   int InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) override;
 };
+
+class EmbeddingLookup : public Primitive {
+ public:
+  explicit EmbeddingLookup(schema::Primitive *primitive) : Primitive(primitive) {}
+  const schema::EmbeddingLookup *GetAttribute() const { return this->primitive->value_as_EmbeddingLookup(); }
+  int InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) override;
+};
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_OPS_OPS_H_
