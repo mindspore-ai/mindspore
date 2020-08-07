@@ -71,8 +71,7 @@ static void AssignLabelForLabelSet(NotNull<std::shared_ptr<session::KernelGraph>
   memo->insert(graph.get());
 
   MS_LOG(INFO) << "Assign label for " << graph->ToString();
-  graph->SetExecOrderByDefault();
-  auto nodes = graph->execution_order();
+  const auto &nodes = graph->execution_order();
 
   for (auto &node : nodes) {
     if (!node->isa<CNode>()) {
@@ -103,11 +102,7 @@ static void AssignLabelForGotoSwitch(NotNull<std::shared_ptr<session::KernelGrap
 
   MS_LOG(INFO) << "Process label goto/switch for " << graph->ToString();
 
-  auto nodes = graph->execution_order();
-  auto end_goto = graph->get_end_goto();
-  if (end_goto != nullptr) {
-    nodes.push_back(end_goto);
-  }
+  const auto &nodes = graph->execution_order();
   for (auto &node : nodes) {
     if (!node->isa<CNode>()) {
       continue;
@@ -115,20 +110,18 @@ static void AssignLabelForGotoSwitch(NotNull<std::shared_ptr<session::KernelGrap
 
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    std::string node_name = AnfAlgo::GetCNodeName(node);
-    if (node_name == kLabelGotoOpName) {
+    if (IsPrimitiveCNode(cnode, prim::kPrimLabelGoto)) {
       UpdateLabelGoto(NOT_NULL(cnode));
       cnode->set_abstract(nullptr);
     }
 
-    if (node_name == kLabelSwitchOpName) {
+    if (IsPrimitiveCNode(cnode, prim::kPrimLabelSwitch)) {
       UpdateLabelSwitch(NOT_NULL(cnode));
     }
   }
   for (auto &cg : graph->child_graph_order()) {
     AssignLabelForGotoSwitch(NOT_NULL(cg), memo);
   }
-  graph->SetExecOrderByDefault();
 }
 
 void AscendLabelAssign::AssignLabel(NotNull<std::shared_ptr<session::KernelGraph>> graph) {
