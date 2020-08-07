@@ -45,8 +45,10 @@ void MemoryManager::MallocReusedDynamicMem(const session::KernelGraph *graph) {
   mem_reuse_util_ptr_->set_mem_base(base_ptr);
 }
 
-uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, MemType type, size_t size) {
+uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, MemType type, size_t size,
+                                        const DeviceAddressPtr &address) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(address);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   uint8_t *ptr = nullptr;
@@ -57,23 +59,30 @@ uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, Me
     }
     if (type == kStaticMem) {
       ptr = MallocStaticMem(size, communication_mem);
+      address->from_mem_pool_ = true;
+      if (communication_mem) {
+        address->communication_ptr_ = ptr - kMemAlignSize;
+      }
     } else if (type == kReuseDynamicCommMem) {
       MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr_);
       ptr = mem_reuse_util_ptr_->GetNodeOutputPtr(node, index);
     } else {
       ptr = MallocDynamicMem(size, communication_mem);
     }
+    address->ptr_ = ptr;
     return ptr;
   }
 
   if (type == kStaticMem) {
     ptr = MallocStaticMem(size, false);
+    address->from_mem_pool_ = true;
   } else if (type == kDynamicMem) {
     ptr = MallocDynamicMem(size, false);
   } else if (type == kReuseDynamicMem) {
     MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr_);
     ptr = mem_reuse_util_ptr_->GetNodeOutputPtr(node, index);
   }
+  address->ptr_ = ptr;
   return ptr;
 }
 
@@ -85,38 +94,16 @@ uint8_t *MemoryManager::MallocWorkSpaceMem(const AnfNodePtr &node, size_t index,
   return MallocDynamicMem(size, false);
 }
 
-uint8_t *MemoryManager::MallocMem(MemType type, size_t size) {
+uint8_t *MemoryManager::MallocMem(MemType type, size_t size, const DeviceAddressPtr &address) {
+  MS_EXCEPTION_IF_NULL(address);
   uint8_t *ptr = nullptr;
   if (type == kStaticMem) {
     ptr = MallocStaticMem(size, false);
+    address->from_mem_pool_ = true;
   } else if (type == kDynamicMem) {
     ptr = MallocDynamicMem(size, false);
   }
-  return ptr;
-}
-
-uint8_t *MemoryManager::MallocMem(const DeviceAddressPtr &address, MemType flag, size_t size,
-                                  const session::KernelWithIndex &node_with_index) {
-  MS_EXCEPTION_IF_NULL(address);
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-
-  uint8_t *ptr = nullptr;
-  if (node_with_index.first != nullptr) {
-    ptr = MallocOutputMem(node_with_index.first, node_with_index.second, flag, size);
-    MS_EXCEPTION_IF_NULL(ptr);
-    if (AnfAlgo::IsCommunicationOp(node_with_index.first) && context_ptr->enable_hccl()) {
-      address->communication_ptr_ = ptr - kMemAlignSize;
-    }
-  } else {
-    ptr = MallocMem(flag, size);
-    MS_EXCEPTION_IF_NULL(ptr);
-  }
   address->ptr_ = ptr;
-
-  if (flag == kStaticMem) {
-    address->from_mem_pool_ = true;
-  }
   return ptr;
 }
 
