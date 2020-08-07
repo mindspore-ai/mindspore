@@ -592,22 +592,22 @@ class LaplaceNet(nn.Cell):
 class GammaNet(nn.Cell):
     def __init__(self, shape=None, seed=0):
         super(GammaNet, self).__init__()
-        self.gamma = P.Gamma(seed=seed)
         self.shape = shape
+        self.seed = seed
 
     def construct(self, alpha, beta):
-        out = self.gamma(self.shape, alpha, beta)
+        out = C.gamma(self.shape, alpha, beta, self.seed)
         return out
 
 
 class PoissonNet(nn.Cell):
     def __init__(self, shape=None, seed=0):
         super(PoissonNet, self).__init__()
-        self.poisson = P.Poisson(seed=seed)
         self.shape = shape
+        self.seed = seed
 
     def construct(self, mean):
-        out = self.poisson(self.shape, mean)
+        out = C.poisson(self.shape, mean, self.seed)
         return out
 
 
