@@ -141,6 +141,8 @@ Primitive *Primitive::CreatePrimitive(schema::Primitive *primitive) {
       return new lite::QuantDTypeCast(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_MatMul:
       return new lite::MatMul(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_EmbeddingLookup:
+      return new lite::EmbeddingLookup(const_cast<schema::Primitive *>(primitive));
     default:
       break;
   }

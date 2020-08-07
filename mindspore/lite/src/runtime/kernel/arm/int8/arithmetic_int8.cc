@@ -81,10 +81,10 @@ int ArithmeticInt8CPUKernel::Init() {
       arithmetic_run_ = ElementNotEqual;
       break;
     case PrimitiveType_Less:
-      arithmetic_run_ = ElementEqual;
+      arithmetic_run_ = ElementLess;
       break;
     case PrimitiveType_LessEqual:
-      arithmetic_run_ = ElementNotEqual;
+      arithmetic_run_ = ElementLessEqual;
       break;
     case PrimitiveType_Greater:
       arithmetic_run_ = ElementGreater;

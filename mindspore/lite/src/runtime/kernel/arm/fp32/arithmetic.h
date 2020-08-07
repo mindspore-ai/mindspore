@@ -137,12 +137,12 @@ class ArithmeticCPUKernel : public LiteKernel {
         arithmetic_broadcast_run_ = BroadcastNotEqual;
         break;
       case PrimitiveType_Less:
-        arithmetic_run_ = ElementEqual;
-        arithmetic_broadcast_run_ = BroadcastEqual;
+        arithmetic_run_ = ElementLess;
+        arithmetic_broadcast_run_ = BroadcastLess;
         break;
       case PrimitiveType_LessEqual:
-        arithmetic_run_ = ElementNotEqual;
-        arithmetic_broadcast_run_ = BroadcastNotEqual;
+        arithmetic_run_ = ElementLessEqual;
+        arithmetic_broadcast_run_ = BroadcastLessEqual;
         break;
       case PrimitiveType_Greater:
         arithmetic_run_ = ElementGreater;

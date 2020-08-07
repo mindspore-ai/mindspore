@@ -727,8 +727,7 @@ table AddN {
 
 
 table EmbeddingLookup {
-    ids: [int];
-    maxNorm: float;
+    maxNorm: float = 0.0;
 }
 
 table EmbeddingLookupSparse {

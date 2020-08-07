@@ -69,6 +69,7 @@
 #include "src/runtime/kernel/arm/nnacl/fp32/space_to_batch.h"
 #include "src/runtime/kernel/arm/nnacl/int8/quant_dtype_cast.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/lstm.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/embedding_lookup.h"
 
 namespace mindspore::kernel {
 OpParameter *PopulateBatchNorm(const lite::Primitive *primitive) {
@@ -1209,6 +1210,23 @@ OpParameter *PopulateLstmParameter(const lite::Primitive *primitive) {
   return reinterpret_cast<OpParameter *>(lstm_param);
 }
 
+OpParameter *PopulateEmbeddingLookupParameter(const lite::Primitive *primitive) {
+  EmbeddingLookupParameter *embedding_lookup_parameter = new (std::nothrow) EmbeddingLookupParameter();
+  if (embedding_lookup_parameter == nullptr) {
+    MS_LOG(ERROR) << "new EmbeddingLookupParameter failed";
+    return nullptr;
+  }
+  embedding_lookup_parameter->op_parameter_.type_ = primitive->Type();
+  auto param = primitive->Value()->value_as_EmbeddingLookup();
+  embedding_lookup_parameter->max_norm_ = param->maxNorm();
+  if (embedding_lookup_parameter->max_norm_ < 0) {
+    MS_LOG(ERROR) << "Embedding lookup max norm should be positive number, got "
+                  << embedding_lookup_parameter->max_norm_;
+    return nullptr;
+  }
+  return reinterpret_cast<OpParameter *>(embedding_lookup_parameter);
+}
+
 PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_SoftMax] = PopulateSoftmaxParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Activation] = PopulateActivationParameter;
@@ -1286,6 +1304,7 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_PriorBox] = PopulatePriorBoxParameter;
   populate_parameter_funcs_[schema::PrimitiveType_QuantDTypeCast] = PopulateQuantDTypeCastParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Lstm] = PopulateLstmParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_EmbeddingLookup] = PopulateEmbeddingLookupParameter;
 }
 
 PopulateParameterRegistry *PopulateParameterRegistry::GetInstance() {
