@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/fp32/convolution_depthwise.h"
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_3x3.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -28,21 +27,31 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
 namespace mindspore::kernel {
-int ConvolutionDepthwiseCPUKernel::InitWeightBias() {
+int ConvolutionDepthwise3x3CPUKernel::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
   auto weight_tensor = inputs_[kWeightIndex];
   auto origin_weight = reinterpret_cast<float *>(weight_tensor->Data());
+  // o h w 1 -> o/4 h w 1 4
   int OC4 = UP_DIV(conv_param_->output_channel_, C4NUM);
-  int pack_weight_size = C4NUM * OC4 * conv_param_->kernel_h_ * conv_param_->kernel_w_;
+  int weight_c4_size = OC4 * C4NUM * 9;
+  auto tmp_weight = reinterpret_cast<float *>(malloc(weight_c4_size * sizeof(float)));
+  if (tmp_weight == nullptr) {
+    MS_LOG(ERROR) << "Malloc buffer failed.";
+    return RET_ERROR;
+  }
+  memset(tmp_weight, 0, weight_c4_size * sizeof(float));
+  PackNCHWToNC4HW4Fp32(origin_weight, tmp_weight, 1, conv_param_->kernel_h_ * conv_param_->kernel_w_,
+                       conv_param_->output_channel_);
 
-  packed_weight_ = reinterpret_cast<float *>(malloc(pack_weight_size * sizeof(float)));
+  // weight transform
+  int packed_weight_size = OC4 * C4NUM * 16;
+  packed_weight_ = reinterpret_cast<float *>(malloc(packed_weight_size * sizeof(float)));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-  memset(packed_weight_, 0, pack_weight_size * sizeof(float));
-  PackNCHWToNC4HW4Fp32(origin_weight, packed_weight_, 1, conv_param_->kernel_h_ * conv_param_->kernel_w_,
-                       conv_param_->output_channel_);
+  memset(packed_weight_, 0, packed_weight_size * sizeof(float));
+  ConvDw3x3Fp32FilterTrans(packed_weight_, tmp_weight, OC4);
 
   // init bias
   bias_data_ = reinterpret_cast<float *>(malloc(C4NUM * OC4 * sizeof(float)));
@@ -55,14 +64,10 @@ int ConvolutionDepthwiseCPUKernel::InitWeightBias() {
     auto ori_bias = reinterpret_cast<float *>(inputs_.at(kBiasIndex)->Data());
     memcpy(bias_data_, ori_bias, conv_param_->output_channel_ * sizeof(float));
   }
-
-  // init threadNum;
-  conv_param_->thread_num_ = MSMIN(thread_count_, OC4);
   return RET_OK;
 }
 
-int ConvolutionDepthwiseCPUKernel::InitBuffer() {
-  // malloc pack input and output buffer
+int ConvolutionDepthwise3x3CPUKernel::InitBuffer() {
   if (conv_param_->input_channel_ % C4NUM != 0) {
     need_align_ = true;
     int IC4 = UP_DIV(conv_param_->input_channel_, C4NUM);
@@ -82,68 +87,83 @@ int ConvolutionDepthwiseCPUKernel::InitBuffer() {
       return RET_ERROR;
     }
   }
+
+  // malloc transform buffer
+  trans_size_ = UP_DIV(conv_param_->output_w_, 2) * UP_DIV(conv_param_->output_h_, 2) * 16 * C4NUM;
+  size_t trans_buffer_size = thread_count_ * trans_size_ * sizeof(float);
+  trans_buffer_ = reinterpret_cast<float *>(malloc(trans_buffer_size));
+  if (trans_buffer_ == nullptr) {
+    MS_LOG(ERROR) << "malloc trans buffer failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
-int ConvolutionDepthwiseCPUKernel::Init() {
+int ConvolutionDepthwise3x3CPUKernel::Init() {
   // conv base init
   ConvolutionBaseCPUKernel::Init();
 
-  // init sliding window param
-  sliding_ = new SlidingWindowParam;
-  InitSlidingParam(sliding_, conv_param_, C4NUM);
-
   auto ret = InitWeightBias();
-  if (ret != 0) {
-    MS_LOG(ERROR) << "Convolution depthwise fp32 InitWeightBias failed.";
-    return RET_ERROR;
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Depthwise3x3 fp32 initWeightBias error!";
+    return ret;
   }
 
+  // init threadNum;
+  conv_param_->thread_num_ = MSMIN(thread_count_, UP_DIV(conv_param_->output_channel_, C4NUM));
+
   ret = InitBuffer();
-  if (ret != 0) {
-    MS_LOG(ERROR) << "Convolution depthwise fp32 InitBuffer failed.";
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Depthwise3x3 fp32 initBuffer error!";
+    return ret;
+  }
+
+  // malloc one block buffer
+  block_buffer_ = reinterpret_cast<float *>(malloc(thread_count_ * 16 * C4NUM * sizeof(float)));
+  if (block_buffer_ == nullptr) {
+    MS_LOG(ERROR) << "malloc block buffer failed.";
     return RET_ERROR;
   }
   return RET_OK;
 }
 
-int ConvolutionDepthwiseCPUKernel::ReSize() {
+int ConvolutionDepthwise3x3CPUKernel::ReSize() {
   if (need_align_) {
     free(packed_input_);
     free(packed_output_);
   }
+  free(trans_buffer_);
+
   // conv base init
   ConvolutionBaseCPUKernel::Init();
 
-  // init sliding window param
-  sliding_ = new SlidingWindowParam;
-  InitSlidingParam(sliding_, conv_param_, C4NUM);
-
   auto ret = InitBuffer();
-  if (ret != 0) {
-    MS_LOG(ERROR) << "Convolution depthwise fp32 InitBuffer failed.";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-int ConvolutionDepthwiseCPUKernel::Execute(int task_id) {
-  ConvDwC4Fp32(packed_output_, packed_input_, packed_weight_, reinterpret_cast<float *>(bias_data_), conv_param_,
-               sliding_, task_id);
-  return RET_OK;
-}
-
-int ConvDwRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
-  auto conv_dw = reinterpret_cast<ConvolutionDepthwiseCPUKernel *>(cdata);
-  auto ret = conv_dw->Execute(task_id);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConvolutionDepthwiseRun error task_id[" << task_id << "] error_code[" << ret << "]";
+    MS_LOG(ERROR) << "Depthwise3x3 fp32 initBuffer error!";
+    return ret;
+  }
+  return RET_OK;
+}
+
+int ConvolutionDepthwise3x3CPUKernel::Execute(int task_id) {
+  auto trans_buf = trans_buffer_ + task_id * trans_size_;
+  auto block_buf = block_buffer_ + task_id * 16 * C4NUM;
+  ConvDw3x3Fp32(packed_output_, packed_input_, packed_weight_, reinterpret_cast<float *>(bias_data_), trans_buf,
+                block_buf, conv_param_, task_id);
+  return RET_OK;
+}
+
+int ConvDw3x3Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+  auto conv_dw_3x3 = reinterpret_cast<ConvolutionDepthwise3x3CPUKernel *>(cdata);
+  auto ret = conv_dw_3x3->Execute(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ConvolutionDepthwise3x3Run error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
   }
   return RET_OK;
 }
 
-int ConvolutionDepthwiseCPUKernel::Run() {
+int ConvolutionDepthwise3x3CPUKernel::Run() {
   if (conv_param_->input_channel_ != conv_param_->output_channel_) {
     MS_LOG(ERROR) << "Only support input channel equals output channel.";
     return RET_ERROR;
@@ -164,9 +184,9 @@ int ConvolutionDepthwiseCPUKernel::Run() {
     packed_output_ = output_addr;
   }
 
-  auto ret = LiteBackendParallelLaunch(ConvDwRun, this, conv_param_->thread_num_);
+  auto ret = LiteBackendParallelLaunch(ConvDw3x3Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConvDwRun error: error_code[" << ret << "]";
+    MS_LOG(ERROR) << "ConvDw3x3Run error: error_code[" << ret << "]";
     return RET_ERROR;
   }
 
@@ -176,35 +196,4 @@ int ConvolutionDepthwiseCPUKernel::Run() {
   }
   return RET_OK;
 }
-
-kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *opParameter, const Context *ctx,
-                                               const kernel::KernelKey &desc) {
-  MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_DepthwiseConv2D);
-  kernel::LiteKernel *kernel;
-  kernel = new (std::nothrow) kernel::ConvolutionDepthwiseCPUKernel(opParameter, inputs, outputs, ctx);
-  //  auto param = reinterpret_cast<ConvParameter *>(opParameter);
-  //  if (param->kernel_h_ == 3 && param->kernel_w_ == 3 && param->stride_h_ == 1 && param->stride_w_ == 1 &&
-  //  param->dilation_h_ == 1 && param->dilation_w_ == 1) {
-  //    kernel = new (std::nothrow) kernel::ConvolutionDepthwise3x3CPUKernel(opParameter, inputs, outputs, ctx);
-  //  } else {
-  //  kernel = new (std::nothrow) kernel::ConvolutionDepthwiseCPUKernel(opParameter, inputs, outputs, ctx);
-  //  }
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "kernel is nullptr.";
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_DepthwiseConv2D, CpuConvDwFp32KernelCreator)
 }  // namespace mindspore::kernel
