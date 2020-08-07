@@ -33,9 +33,23 @@ int SoftmaxCPUKernel::Init() {
   SoftmaxBaseCPUKernel::Init();
 
   // malloc tmp buffer
+  auto n_dim = softmax_param_->n_dim_;
   auto axis = softmax_param_->axis_;
-  sum_data = reinterpret_cast<float *>(malloc(softmax_param_->input_shape_[axis] * sizeof(float)));
-  memset(sum_data, 0, softmax_param_->input_shape_[axis] * sizeof(float));
+  if (axis == -1) {
+    softmax_param_->axis_ += n_dim;
+    axis = softmax_param_->axis_;
+  }
+  auto in_shape = inputs_.front()->shape();
+  int out_plane_size = 1;
+  for (int i = 0; i < axis; ++i) {
+    out_plane_size *= in_shape[i];
+  }
+  int in_plane_size = 1;
+  for (int i = axis + 1; i < n_dim; i++) {
+    in_plane_size *= in_shape[i];
+  }
+  sum_data_ = reinterpret_cast<float *>(malloc(out_plane_size * in_plane_size * sizeof(float)));
+  memset(sum_data_, 0, out_plane_size * in_plane_size * sizeof(float));
   return RET_OK;
 }
 
@@ -44,7 +58,7 @@ int SoftmaxCPUKernel::ReSize() { return RET_OK; }
 int SoftmaxCPUKernel::Run() {
   auto input_ptr = reinterpret_cast<float *>(inputs_.at(kInputIndex)->Data());
   auto output_ptr = reinterpret_cast<float *>(outputs_.at(kOutputIndex)->Data());
-  Softmax(input_ptr, output_ptr, sum_data, softmax_param_);
+  Softmax(input_ptr, output_ptr, sum_data_, softmax_param_);
   return RET_OK;
 }
 
