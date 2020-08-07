@@ -51,6 +51,7 @@ set(ANF_SRC
         ${CCSRC_DIR}/frontend/parallel/costmodel_context.cc
         ${CCSRC_DIR}/backend/optimizer/common/pattern_engine.cc
         ${CCSRC_DIR}/backend/optimizer/common/visit.cc
+        ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/graph_utils_extends.cc
         )
 
@@ -74,9 +75,8 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/anf_importer/import_from_protobuf.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/onnx/onnx.pb.cc
 
-        ../optimizer/common/node_pass.cc
-        ../optimizer/common/optimizer.cc
-        ../optimizer/common/pass_manager.cc
+        ../optimizer/common/node_pass_extends.cc
+        ../optimizer/common/pass_manager_extends.cc
         ../optimizer/common/gllo_utils.cc
         ../optimizer/fusion/conv_biasadd_fusion.cc
         ../optimizer/fusion/conv_activation_fusion.cc

@@ -90,7 +90,7 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
     return nullptr;
   }
 
-  graph = anfTransform->Transform(graph);
+  // graph = anfTransform->Transform(graph);
 
   CreateQuantizer(graph, flag);
   if (mQuantizer != nullptr) {
