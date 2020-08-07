@@ -23,6 +23,7 @@
 #include <map>
 #include <utility>
 #include <string>
+#include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/include/tensor.h"
 #include "minddata/dataset/include/iterator.h"
 #include "minddata/dataset/include/samplers.h"
@@ -47,6 +48,7 @@ class Cifar100Dataset;
 class CocoDataset;
 class ImageFolderDataset;
 class MnistDataset;
+class TextFileDataset;
 class VOCDataset;
 // Dataset Op classes (in alphabetical order)
 class BatchDataset;
@@ -83,7 +85,7 @@ std::shared_ptr<CelebADataset> CelebA(const std::string &dataset_dir, const std:
 std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, std::shared_ptr<SamplerObj> sampler = nullptr);
 
 /// \brief Function to create a Cifar100 Dataset
-/// \notes The generated dataset has two columns ['image', 'coarse_label', 'fine_label']
+/// \notes The generated dataset has three columns ['image', 'coarse_label', 'fine_label']
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
 ///    will be used to randomly iterate the entire dataset
@@ -142,6 +144,25 @@ std::shared_ptr<MnistDataset> Mnist(std::string dataset_dir, std::shared_ptr<Sam
 /// \return Shared pointer to the current ConcatDataset
 std::shared_ptr<ConcatDataset> operator+(const std::shared_ptr<Dataset> &datasets1,
                                          const std::shared_ptr<Dataset> &datasets2);
+
+/// \brief Function to create a TextFileDataset
+/// \notes The generated dataset has one column ['text']
+/// \param[in] dataset_files List of files to be read to search for a pattern of files. The list
+///    will be sorted in a lexicographical order.
+/// \param[in] num_samples The number of samples to be included in the dataset.
+///    (Default = 0 means all samples.)
+/// \param[in] shuffle The mode for shuffling data every epoch. (Default=ShuffleMode.kGlobal)
+///    Can be any of:
+///    ShuffleMode.kFalse - No shuffling is performed.
+///    ShuffleMode.kFiles - Shuffle files only.
+///    ShuffleMode.kGlobal - Shuffle both the files and samples.
+/// \param[in] num_shards Number of shards that the dataset should be divided into. (Default = 1)
+/// \param[in] shard_id  The shard ID within num_shards. This argument should be
+///    specified only when num_shards is also specified. (Default = 0)
+/// \return Shared pointer to the current TextFileDataset
+std::shared_ptr<TextFileDataset> TextFile(std::vector<std::string> dataset_files, int32_t num_samples = 0,
+                                          ShuffleMode shuffle = ShuffleMode::kGlobal, int32_t num_shards = 1,
+                                          int32_t shard_id = 0);
 
 /// \brief Function to create a VOCDataset
 /// \notes The generated dataset has multi-columns :
@@ -289,9 +310,13 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   int32_t num_workers_;
   int32_t rows_per_buffer_;
   int32_t connector_que_size_;
+  int32_t worker_connector_size_;
 };
 
 /* ####################################### Derived Dataset classes ################################# */
+
+// DERIVED DATASET CLASSES FOR LEAF-NODE DATASETS
+// (In alphabetical order)
 
 class CelebADataset : public Dataset {
  public:
@@ -318,6 +343,8 @@ class CelebADataset : public Dataset {
   std::set<std::string> extensions_;
   std::shared_ptr<SamplerObj> sampler_;
 };
+// DERIVED DATASET CLASSES FOR LEAF-NODE DATASETS
+// (In alphabetical order)
 
 class Cifar10Dataset : public Dataset {
  public:
@@ -435,6 +462,33 @@ class MnistDataset : public Dataset {
   std::shared_ptr<SamplerObj> sampler_;
 };
 
+/// \class TextFileDataset
+/// \brief A Dataset derived class to represent TextFile dataset
+class TextFileDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  TextFileDataset(std::vector<std::string> dataset_files, int32_t num_samples, ShuffleMode shuffle, int32_t num_shards,
+                  int32_t shard_id);
+
+  /// \brief Destructor
+  ~TextFileDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::vector<std::string> dataset_files_;
+  int32_t num_samples_;
+  int32_t num_shards_;
+  int32_t shard_id_;
+  ShuffleMode shuffle_;
+};
+
 class VOCDataset : public Dataset {
  public:
   /// \brief Constructor
@@ -466,6 +520,9 @@ class VOCDataset : public Dataset {
   bool decode_;
   std::shared_ptr<SamplerObj> sampler_;
 };
+
+// DERIVED DATASET CLASSES FOR DATASET OPS
+// (In alphabetical order)
 
 class BatchDataset : public Dataset {
  public:

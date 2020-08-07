@@ -26,6 +26,7 @@
 #include "minddata/dataset/engine/datasetops/source/coco_op.h"
 #include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
 #include "minddata/dataset/engine/datasetops/source/mnist_op.h"
+#include "minddata/dataset/engine/datasetops/source/text_file_op.h"
 #include "minddata/dataset/engine/datasetops/source/voc_op.h"
 // Dataset operator headers (in alphabetical order)
 #include "minddata/dataset/engine/datasetops/batch_op.h"
@@ -95,6 +96,7 @@ Dataset::Dataset() {
   num_workers_ = cfg->num_parallel_workers();
   rows_per_buffer_ = cfg->rows_per_buffer();
   connector_que_size_ = cfg->op_connector_size();
+  worker_connector_size_ = cfg->worker_connector_size();
 }
 
 // FUNCTIONS TO CREATE DATASETS FOR LEAF-NODE DATASETS
@@ -140,7 +142,7 @@ std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::str
 std::shared_ptr<ImageFolderDataset> ImageFolder(std::string dataset_dir, bool decode,
                                                 std::shared_ptr<SamplerObj> sampler, std::set<std::string> extensions,
                                                 std::map<std::string, int32_t> class_indexing) {
-  // This arg is exist in ImageFolderOp, but not externalized (in Python API). The default value is false.
+  // This arg exists in ImageFolderOp, but not externalized (in Python API). The default value is false.
   bool recursive = false;
 
   // Create logical representation of ImageFolderDataset.
@@ -163,6 +165,16 @@ std::shared_ptr<ConcatDataset> operator+(const std::shared_ptr<Dataset> &dataset
                                          const std::shared_ptr<Dataset> &datasets2) {
   std::shared_ptr<ConcatDataset> ds = std::make_shared<ConcatDataset>(std::vector({datasets1, datasets2}));
 
+  // Call derived class validation method.
+  return ds->ValidateParams() ? ds : nullptr;
+}
+
+// Function to create a TextFileDataset.
+std::shared_ptr<TextFileDataset> TextFile(std::vector<std::string> dataset_files, int32_t num_samples,
+                                          ShuffleMode shuffle, int32_t num_shards, int32_t shard_id) {
+  auto ds = std::make_shared<TextFileDataset>(dataset_files, num_samples, shuffle, num_shards, shard_id);
+
+  // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
 }
 
@@ -338,6 +350,34 @@ std::shared_ptr<SamplerObj> CreateDefaultSampler() {
   const int32_t num_samples = 0;  // 0 means to sample all ids.
   bool replacement = false;
   return std::make_shared<RandomSamplerObj>(replacement, num_samples);
+}
+
+// Helper function to compute a default shuffle size
+int64_t ComputeShuffleSize(int64_t num_files, int64_t num_devices, int64_t num_rows, int64_t total_rows) {
+  const int64_t average_files_multiplier = 4;
+  const int64_t shuffle_max = 10000;
+  int64_t avg_rows_per_file = 0;
+  int64_t shuffle_size = 0;
+
+  // Adjust the num rows per shard if sharding was given
+  if (num_devices > 0) {
+    if (num_rows % num_devices == 0) {
+      num_rows = num_rows / num_devices;
+    } else {
+      num_rows = (num_rows / num_devices) + 1;
+    }
+  }
+
+  // Cap based on total rows directive.  Some ops do not have this and give value of 0.
+  if (total_rows > 0) {
+    num_rows = std::min(num_rows, total_rows);
+  }
+
+  // get the average per file
+  avg_rows_per_file = num_rows / num_files;
+
+  shuffle_size = std::max(avg_rows_per_file * average_files_multiplier, shuffle_max);
+  return shuffle_size;
 }
 
 // Helper function to validate dataset params
@@ -610,6 +650,87 @@ std::vector<std::shared_ptr<DatasetOp>> MnistDataset::Build() {
 
   node_ops.push_back(std::make_shared<MnistOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_,
                                                std::move(schema), std::move(sampler_->Build())));
+  return node_ops;
+}
+
+// Constructor for TextFileDataset
+TextFileDataset::TextFileDataset(std::vector<std::string> dataset_files, int32_t num_samples, ShuffleMode shuffle,
+                                 int32_t num_shards, int32_t shard_id)
+    : dataset_files_(dataset_files),
+      num_samples_(num_samples),
+      shuffle_(shuffle),
+      num_shards_(num_shards),
+      shard_id_(shard_id) {}
+
+bool TextFileDataset::ValidateParams() {
+  if (dataset_files_.empty()) {
+    MS_LOG(ERROR) << "TextFileDataset: dataset_files is not specified.";
+    return false;
+  }
+
+  for (auto file : dataset_files_) {
+    std::ifstream handle(file);
+    if (!handle.is_open()) {
+      MS_LOG(ERROR) << "TextFileDataset: Failed to open file: " << file;
+      return false;
+    }
+  }
+
+  if (num_samples_ < 0) {
+    MS_LOG(ERROR) << "TextFileDataset: Invalid number of samples: " << num_samples_;
+    return false;
+  }
+
+  if (num_shards_ <= 0) {
+    MS_LOG(ERROR) << "TextFileDataset: Invalid num_shards: " << num_shards_;
+    return false;
+  }
+
+  if (shard_id_ < 0 || shard_id_ >= num_shards_) {
+    MS_LOG(ERROR) << "TextFileDataset: Invalid input, shard_id: " << shard_id_ << ", num_shards: " << num_shards_;
+    return false;
+  }
+
+  return true;
+}
+
+// Function to build TextFileDataset
+std::vector<std::shared_ptr<DatasetOp>> TextFileDataset::Build() {
+  // A vector containing shared pointer to the Dataset Ops that this object will create
+  std::vector<std::shared_ptr<DatasetOp>> node_ops;
+
+  bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
+
+  // Do internal Schema generation.
+  auto schema = std::make_unique<DataSchema>();
+  RETURN_EMPTY_IF_ERROR(
+    schema->AddColumn(ColDescriptor("text", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
+
+  // Create and initalize TextFileOp
+  std::shared_ptr<TextFileOp> text_file_op = std::make_shared<TextFileOp>(
+    num_workers_, rows_per_buffer_, num_samples_, worker_connector_size_, std::move(schema), dataset_files_,
+    connector_que_size_, shuffle_files, num_shards_, shard_id_, std::move(nullptr));
+  RETURN_EMPTY_IF_ERROR(text_file_op->Init());
+
+  if (shuffle_ == ShuffleMode::kGlobal) {
+    // Inject ShuffleOp
+
+    std::shared_ptr<DatasetOp> shuffle_op = nullptr;
+    int64_t shuffle_size = 0;
+    int64_t num_rows = 0;
+
+    // First, get the number of rows in the dataset and then compute the shuffle size
+    RETURN_EMPTY_IF_ERROR(TextFileOp::CountAllFileRows(dataset_files_, &num_rows));
+    shuffle_size = ComputeShuffleSize(dataset_files_.size(), num_shards_, num_rows, 0);
+    MS_LOG(INFO) << "TextFileDataset::Build - num_rows: " << num_rows << ", shuffle_size: " << shuffle_size;
+
+    // Add the shuffle op after this op
+    shuffle_op = std::make_shared<ShuffleOp>(shuffle_size, GetSeed(), connector_que_size_, true, rows_per_buffer_);
+    node_ops.push_back(shuffle_op);
+  }
+
+  // Add TextFileOp
+  node_ops.push_back(text_file_op);
   return node_ops;
 }
 

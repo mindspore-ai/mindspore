@@ -35,6 +35,9 @@ enum class DatasetType { kUnknown, kArrow, kTf };
 // Possible flavours of Tensor implementations
 enum class TensorImpl { kNone, kFlexible, kCv, kNP };
 
+// Possible values for shuffle
+enum class ShuffleMode { kFalse = 0, kFiles = 1, kGlobal = 2 };
+
 // Possible values for Border types
 enum class BorderType { kConstant = 0, kEdge = 1, kReflect = 2, kSymmetric = 3 };
 
