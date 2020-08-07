@@ -29,7 +29,6 @@ namespace mindspore {
 namespace dataset {
 class RandomVerticalFlipWithBBoxOp : public TensorOp {
  public:
-  // Default values, also used by python_bindings.cc
   static const float kDefProbability;
   // Constructor for RandomVerticalFlipWithBBoxOp
   // @param probability: Probablity of Image flipping, 0.5 by default
