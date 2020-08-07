@@ -70,13 +70,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
 
  public:
   static constexpr int32_t kInvalidOperatorId = -1;
-
-  // Operator control flags
-  enum OpControlFlags {
-    kDeOpNone = 0,
-    kDeOpRepeated = 1,        // Operator is a node in a repeat path
-    kDeOpLastRepeat = 1 << 1  // We are in the last repeat loop
-  };
+  static constexpr int32_t kInfiniteRepeat = -1;
 
   // Flags that control operator runtime behaviours
   enum OpState { kDeOpRunning = 0, kDeOpIdle = 1, kDeOpTerminated };
@@ -238,13 +232,23 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \return T/F if this is an inlined operator
   bool inlined() const { return (oc_queue_size_ == 0); }
 
-  /// \brief Setter function
-  /// \return Sets the control flags
-  void set_control_flag(uint64_t flag) { BitSet(&op_ctrl_flags_, flag); }
+  /// \brief Setter function, set the number of total repeats for the operator
+  void set_total_repeats(int32_t total_repeats) { op_total_repeats_ = total_repeats; }
 
-  /// \brief Setter function
-  /// \return Sets the control flags
-  void ClearControlFlag(uint64_t flag) { BitClear(&op_ctrl_flags_, flag); }
+  /// \brief Setter function, set the number of repeats per epoch for the operator
+  void set_num_repeats_per_epoch(int32_t num_repeats_per_epoch) { op_num_repeats_per_epoch_ = num_repeats_per_epoch; }
+
+  /// \brief Getter function
+  /// \return The number of required repeats for the operator
+  int32_t op_total_repeats() { return op_total_repeats_; }
+
+  /// \brief Getter function
+  /// \return The number of required epochs for the operator
+  int32_t op_total_epochs() { return op_total_repeats_ / op_num_repeats_per_epoch_; }
+
+  /// \brief Getter function
+  /// \return The number of repeats per epoch for the operator
+  int32_t op_num_repeats_per_epoch() { return op_num_repeats_per_epoch_; }
 
   /// \brief Register the internal worker connectors. No op unless it is a parallel op
   /// \return Status
@@ -350,6 +354,10 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \return boolean returns true if it's a leaf
   bool IsLeaf() { return (child_.empty()); }
 
+  /// Checks if an operator has reached its last iteration
+  /// \return boolean returns true if it's last iteration
+  bool IsLastIteration() { return op_total_repeats_ == op_current_repeats_ + 1; }
+
  protected:
   /// \brief Removes a parent operator from this operator
   /// \notes External callers do not have access to this function
@@ -368,6 +376,10 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \return - Status
   virtual Status ComputeColMap();
 
+  /// Increase op_current_repeats_ by 1 when one repeat finished.
+  /// If this repeat happen to be the last repeat in the current epoch, also increase op_current_epochs_ by 1.
+  void UpdateRepeatAndEpochCounter();
+
   std::vector<std::shared_ptr<DatasetOp>> child_;                // Child nodes
   std::vector<DatasetOp *> parent_;                              // Parent nodes. No ownership
   std::shared_ptr<Sampler> sampler_;                             // Some leaf ops might have a sampler
@@ -375,7 +387,10 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   int32_t operator_id_;                                          // Generated id for the node
   ExecutionTree *tree_;                                          // Back pointer to our tree.
   OpState state_;                                                // The state of the operator, Running, Idle, Terminated
-  uint32_t op_ctrl_flags_;                                       // Flags for the operator
+  int32_t op_total_repeats_;                                     // Required number of repeats for the operator
+  int32_t op_num_repeats_per_epoch_;                             // Total number of repeats per epoch for the operator
+  int32_t op_current_repeats_;                                   // Current number of repeats the operator has handled
+  int32_t op_current_epochs_;                                    // Current number of epochs the operator has handled
   std::unique_ptr<DbConnector> out_connector_;                   // Output Connector
   std::unordered_map<std::string, int32_t> column_name_id_map_;  // Mapping between col index and col name
   std::mutex column_name_map_mutex_;                             // For protecting shared access to the column map

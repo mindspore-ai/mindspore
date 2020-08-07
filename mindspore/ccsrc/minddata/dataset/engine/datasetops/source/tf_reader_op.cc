@@ -308,13 +308,14 @@ Status TFReaderOp::operator()() {
     std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
     RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
 
-    if (!BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat)) {
+    if (IsLastIteration()) {
       finished_reading_dataset_ = true;
       NotifyToFillIOBlockQueue();
     } else {
       jagged_buffer_connector_->DoReset();
       buffer_id = 0;
     }
+    UpdateRepeatAndEpochCounter();
   }
 
   std::unique_ptr<DataBuffer> eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);

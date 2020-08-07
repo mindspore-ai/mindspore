@@ -30,7 +30,7 @@ namespace dataset {
 // The builder "build" method creates the final object.
 Status EpochCtrlOp::Builder::Build(std::shared_ptr<EpochCtrlOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<EpochCtrlOp>(build_max_repeats_);
+  *ptr = std::make_shared<EpochCtrlOp>(build_num_repeats_);
   return Status::OK();
 }
 
@@ -46,12 +46,12 @@ void EpochCtrlOp::Print(std::ostream &out, bool show_all) const {
     // Call the super class for displaying any common 1-liner info
     PipelineOp::Print(out, show_all);
     // Then show any custom derived-internal 1-liner info for this op
-    out << " [epochs: " << max_repeats_ << "]\n";
+    out << " [epochs: " << num_repeats_ << "]\n";
   } else {
     // Call the super class for displaying any common detailed info
     PipelineOp::Print(out, show_all);
     // Then show any custom derived-internal stuff
-    out << "\nCurrent epoch count: " << repeat_count_ << "\nMax epoch count: " << max_repeats_
+    out << "\nCurrent epoch count: " << repeat_count_ << "\nMax epoch count: " << num_repeats_
         << "\nLeaf Nodes in execution path:";
     if (!eoe_ops_.empty()) {
       for (size_t i = 0; i < eoe_ops_.size(); i++) {
@@ -86,24 +86,15 @@ Status EpochCtrlOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t
 }
 
 Status EpochCtrlOp::EoeReceived(int32_t worker_id) {
+  UpdateRepeatAndEpochCounter();
   repeat_count_++;
   MS_LOG(DEBUG) << "Epoch Control operator received end of epoch. Epoch count is now: " << repeat_count_
-                << ". Repeated: " << BitTest(op_ctrl_flags_, kDeOpRepeated) << ". Max epochs: " << max_repeats_;
-
-  // If we've reached the requested epoch count, then flag the leaf nodes
-  // to tell them they've got one more epoch to perform.  When they reach the end
-  // of the last epoch, they quit rather than loop again.
-  if (max_repeats_ != kInfiniteRepeat && repeat_count_ == (max_repeats_ - 1)) {
-    for (auto &eoe_op : eoe_ops_) {
-      MS_LOG(DEBUG) << "EpochCtrl setting last repeat for eoe_op: " << eoe_op->id();
-      eoe_op->set_control_flag(kDeOpLastRepeat);
-    }
-  }
+                << ". Max epochs: " << num_repeats_;
 
   // This will allow GetNextInput in DatasetOp class to pass EOE buffer instead of eating it.
   state_ = OpState::kDeOpIdle;
 
-  if (repeat_count_ != max_repeats_) {
+  if (repeat_count_ != num_repeats_) {
     for (auto &eoe_op : eoe_ops_) {
       MS_LOG(DEBUG) << "Epoch Control driving reset to op: " << eoe_op->id();
       RETURN_IF_NOT_OK(eoe_op->Reset());

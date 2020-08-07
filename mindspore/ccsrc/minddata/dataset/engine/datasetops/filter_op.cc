@@ -117,6 +117,7 @@ Status FilterOp::WorkerEntry(int32_t worker_id) {
     RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&in_buffer, worker_id));
     if (in_buffer->eoe()) {
       filter_queues_[worker_id]->EmplaceBack(std::make_pair(std::move(in_buffer), filterCtrl::kFilterEoe));
+      UpdateRepeatAndEpochCounter();
       continue;
     } else if (in_buffer->eof()) {
       filter_queues_[worker_id]->EmplaceBack(std::make_pair(std::move(in_buffer), filterCtrl::kFilterEof));

@@ -85,6 +85,10 @@ Status CacheOp::operator()() {
   TaskManager::FindMe()->Post();
   // Wait for the workers to finish caching the rows.
   RETURN_IF_NOT_OK(WaitForCachingAllRows());
+  // Current repeats and current epochs may have increased when caching all rows with DatasetOp::GetNextInput.
+  // But they shouldn't be increased because now cache op is starting to act as a leaf and its epoch hasn't started.
+  op_current_repeats_ = 0;
+  op_current_epochs_ = 0;
   RETURN_IF_NOT_OK(FetchSamplesToWorkers());
   return Status::OK();
 }

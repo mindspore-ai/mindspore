@@ -82,6 +82,7 @@ Status TakeOp::operator()() {
 
     // Loop until non EOE is received
     if (buf->eoe()) {
+      UpdateRepeatAndEpochCounter();
       take_count_ = 0;
       RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(buf)));
       RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buf));

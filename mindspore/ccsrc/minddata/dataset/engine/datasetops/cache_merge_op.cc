@@ -292,7 +292,7 @@ Status CacheMergeOp::Accept(NodePass *p, bool *modified) {
 Status CacheMergeOp::EoeReceived(int32_t worker_id) {
   // If we are in a repeat path, send the eoe up.
   // Otherwise ignore it.
-  if (BitTest(op_ctrl_flags_, kDeOpRepeated)) {
+  if (op_total_repeats_ > 1) {
     return DatasetOp::EoeReceived(worker_id);
   }
   return Status::OK();
@@ -304,7 +304,7 @@ Status CacheMergeOp::EofReceived(int32_t worker_id) {
   // getting an eoe.  However, the logic demands that all epochs close with an eoe first before eof.
   // Thus, generate an eoe first, before flowing up the eof in the non-repeated case. Base class
   // provides that for us.
-  if (!BitTest(op_ctrl_flags_, kDeOpRepeated)) {
+  if (op_total_repeats_ == 1) {
     MS_LOG(DEBUG) << "Cache merge sending eoe";
     RETURN_IF_NOT_OK(DatasetOp::EoeReceived(worker_id));
   }

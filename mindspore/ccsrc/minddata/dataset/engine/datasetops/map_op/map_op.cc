@@ -231,6 +231,7 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
     // Handle EOE and EOF ourselves. Implicit eoe/eof handling in GetNextInput does not work
     // with Performance Mode design.
     if (in_buffer->eoe()) {
+      UpdateRepeatAndEpochCounter();
       // Calling base class EoeReceived to forward eoe buffer.
       RETURN_IF_NOT_OK(EoeReceived(worker_id));
       // Fetch next data buffer and map job list

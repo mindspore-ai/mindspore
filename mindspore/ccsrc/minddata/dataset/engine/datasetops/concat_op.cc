@@ -85,6 +85,7 @@ Status ConcatOp::operator()() {
       auto eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
       RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
     }
+    UpdateRepeatAndEpochCounter();
   }
   CHECK_FAIL_RETURN_UNEXPECTED(eof_count == children_num_,
                                "Something went wrong, eof count does not match the number of children.");

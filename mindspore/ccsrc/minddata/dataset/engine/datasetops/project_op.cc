@@ -74,6 +74,9 @@ Status ProjectOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t w
   if (!((*p_buffer)->eoe()) && !((*p_buffer)->eof())) {
     RETURN_IF_NOT_OK(Project(p_buffer));
   }
+  if ((*p_buffer)->eoe()) {
+    UpdateRepeatAndEpochCounter();
+  }
   return Status::OK();
 }
 
