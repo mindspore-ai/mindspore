@@ -857,7 +857,7 @@ DeviceAddressPtr KernelRuntime::AssignSingleOpLaunchMemory(size_t size, const st
   auto device_address = CreateDeviceAddress(nullptr, size, format, type);
   MS_EXCEPTION_IF_NULL(device_address);
   MS_EXCEPTION_IF_NULL(mem_manager_);
-  auto base_ptr = mem_manager_->MallocMem(kDynamicMem, size, device_address);
+  auto base_ptr = mem_manager_->MallocMem(kStaticMem, size, device_address);
   MS_EXCEPTION_IF_NULL(base_ptr);
   return device_address;
 }
