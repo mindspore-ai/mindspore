@@ -17,7 +17,6 @@
 #define MINDSPORE_CCSRC_BACKEND_SESSION_KERNEL_GRAPH_H
 
 #include <vector>
-#include <stack>
 #include <unordered_map>
 #include <memory>
 #include <utility>
@@ -171,7 +170,7 @@ class KernelGraph : public FuncGraph {
   void VisitNodeDescendants(const AnfNodePtr &node, std::queue<AnfNodePtr> *visit_queue,
                             std::unordered_set<AnfNodePtr> *visited_nodes);
   // update node edge list
-  void UpdateNodeEdgeList(std::stack<AnfNodePtr> *seed_nodes);
+  void UpdateNodeEdgeList(std::queue<AnfNodePtr> *seed_nodes);
   // add node depend edge by data edge or control depend
   void AddDependEdge(const AnfNodePtr &node, const AnfNodePtr &input, size_t depend_edge_num);
   // handle control depend

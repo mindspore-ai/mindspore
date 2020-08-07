@@ -198,7 +198,7 @@ void KernelGraph::VisitNodeDescendants(const AnfNodePtr &node, std::queue<AnfNod
 }
 
 void KernelGraph::SetExecOrderByDefault() {
-  std::stack<AnfNodePtr> seed_nodes;
+  std::queue<AnfNodePtr> seed_nodes;
   UpdateNodeEdgeList(&seed_nodes);
   execution_order_.clear();
   std::unordered_set<AnfNodePtr> visited_nodes;
@@ -211,7 +211,7 @@ void KernelGraph::SetExecOrderByDefault() {
       VisitNodeDescendants(last_communication_node, &communication_descendants, &visited_nodes);
       last_communication_node = nullptr;
     } else {
-      zero_input_nodes.push(seed_nodes.top());
+      zero_input_nodes.push(seed_nodes.front());
       seed_nodes.pop();
     }
     // all reduce node descendant first, then common queue
@@ -785,7 +785,7 @@ bool KernelGraph::HandleControlDependNode(const AnfNodePtr &node, std::queue<Anf
   return true;
 }
 
-void KernelGraph::UpdateNodeEdgeList(std::stack<AnfNodePtr> *seed_nodes) {
+void KernelGraph::UpdateNodeEdgeList(std::queue<AnfNodePtr> *seed_nodes) {
   MS_EXCEPTION_IF_NULL(seed_nodes);
   node_output_edges_.clear();
   node_input_num_.clear();
@@ -868,7 +868,7 @@ void KernelGraph::ReplaceGraphInput(const AnfNodePtr &old_parameter, const AnfNo
 void KernelGraph::ReplaceNode(NotNull<AnfNodePtr> old_anf_node, NotNull<AnfNodePtr> new_anf_node) {
   MS_EXCEPTION_IF_NULL(inputs_);
   {
-    std::stack<AnfNodePtr> seed_nodes;
+    std::queue<AnfNodePtr> seed_nodes;
     UpdateNodeEdgeList(&seed_nodes);
   }
   auto it = node_output_edges_.find(old_anf_node);
@@ -894,7 +894,7 @@ void KernelGraph::ReplaceNode(NotNull<AnfNodePtr> old_anf_node, NotNull<AnfNodeP
     FrontBackendlMapUpdate(old_anf_node, new_anf_node);
   }
   {
-    std::stack<AnfNodePtr> seed_nodes;
+    std::queue<AnfNodePtr> seed_nodes;
     UpdateNodeEdgeList(&seed_nodes);
   }
 }
