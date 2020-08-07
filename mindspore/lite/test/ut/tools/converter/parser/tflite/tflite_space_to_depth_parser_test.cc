@@ -19,16 +19,27 @@
 #include "common/common_test.h"
 
 namespace mindspore {
-class TestTfliteParserSquare : public TestTfliteParser {
+class TestTfliteParserSpaceToDepth : public TestTfliteParser {
  public:
-  TestTfliteParserSquare() {}
-  void SetUp() override { meta_graph = LoadAndConvert("./square.tflite", ""); }
+  TestTfliteParserSpaceToDepth() {}
+  void SetUp() override {
+    meta_graph = LoadAndConvert("./space_to_depth.tflite");
+  }
 };
 
-TEST_F(TestTfliteParserSquare, OpType) {
+TEST_F(TestTfliteParserSpaceToDepth, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Square) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_SpaceToDepth) << "wrong Op Type";
+}
+
+TEST_F(TestTfliteParserSpaceToDepth, AttrValue) {
+  ASSERT_NE(meta_graph, nullptr);
+  ASSERT_GT(meta_graph->nodes.size(), 0);
+  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsSpaceToDepth(), nullptr);
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsSpaceToDepth()->blockSize, 2);
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsSpaceToDepth()->format, schema::Format_NHWC);
 }
 }  // namespace mindspore

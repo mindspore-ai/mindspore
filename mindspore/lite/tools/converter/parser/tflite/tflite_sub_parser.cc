@@ -40,7 +40,7 @@ STATUS TfliteSubParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp
   if (RET_OK != ParseWeight(weight_tensors, tfliteModelBuffer, tensor_cache, schema::Format_KHWC)) {
     MS_LOG(ERROR) << "parse weight failed";
   }
-
+  attr->activationType = GetActivationFunctionType(tfliteAttr->fused_activation_function);
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Sub;

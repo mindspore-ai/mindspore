@@ -43,7 +43,7 @@ STATUS TfliteMulParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp
     MS_LOG(ERROR) << "parse weight failed";
     return RET_ERROR;
   }
-
+  attr->activationType = GetActivationFunctionType(tfliteAttr->fused_activation_function);
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Mul;

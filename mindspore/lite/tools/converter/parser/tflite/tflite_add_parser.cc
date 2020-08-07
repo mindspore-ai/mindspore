@@ -29,6 +29,11 @@ STATUS TfliteAddParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp
                               bool quantizedModel) {
   MS_LOG(DEBUG) << "parse TfliteAddParser";
   std::unique_ptr<schema::AddT> attr(new schema::AddT());
+  const auto &tfliteAttr = tfliteOp->builtin_options.AsAddOptions();
+  if (nullptr == tfliteAttr) {
+    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
+      return RET_NULL_PTR;
+  }
 
   auto weight_index = tfliteOp->inputs[1];
   const auto &weight_tensor = tfliteTensors[weight_index];
@@ -36,7 +41,7 @@ STATUS TfliteAddParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp
   if (RET_OK != ParseWeight(weight_tensors, tfliteModelBuffer, tensor_cache, schema::Format_KHWC)) {
     return RET_ERROR;
   }
-
+  attr->activationType = GetActivationFunctionType(tfliteAttr->fused_activation_function);
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Add;

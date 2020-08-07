@@ -35,7 +35,7 @@ STATUS TfliteUniqueParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     return RET_NULL_PTR;
   }
 
-  attr->outType = GetTfliteDataType(tflite_attr->idx_out_type);
+  attr->outType = dtype_map[tflite_attr->idx_out_type];
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Unique;
