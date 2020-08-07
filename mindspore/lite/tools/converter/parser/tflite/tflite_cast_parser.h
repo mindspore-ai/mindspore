@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <vector>
+#include <map>
 #include "tools/converter/parser/tflite/tflite_node_parser.h"
 #include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
 
@@ -34,6 +35,19 @@ class TfliteCastParser : public TfliteNodeParser {
                const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_opset, schema::CNodeT *op,
                TensorCache *tensor_cache,
                bool quantized_model) override;
+
+ private:
+  std::map<int, TypeId> dtype_map = {
+           {tflite::TensorType_FLOAT64, TypeId::kNumberTypeFloat64},
+           {tflite::TensorType_FLOAT32, TypeId::kNumberTypeFloat32},
+           {tflite::TensorType_FLOAT16, TypeId::kNumberTypeFloat16},
+           {tflite::TensorType_INT64, TypeId::kNumberTypeInt64},
+           {tflite::TensorType_INT32, TypeId::kNumberTypeInt32},
+           {tflite::TensorType_INT16, TypeId::kNumberTypeInt16},
+           {tflite::TensorType_INT8, TypeId::kNumberTypeInt8},
+           {tflite::TensorType_UINT8, TypeId::kNumberTypeUInt8},
+           {tflite::TensorType_BOOL, TypeId::kNumberTypeBool},
+  };
 };
 }  // namespace lite
 }  // namespace mindspore

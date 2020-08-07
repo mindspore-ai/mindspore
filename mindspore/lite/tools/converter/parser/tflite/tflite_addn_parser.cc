@@ -30,7 +30,7 @@ STATUS TfliteAddNParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_
                                bool quantized_model) {
   MS_LOG(DEBUG) << "parse TfliteAddNParser";
   std::unique_ptr<schema::AddNT> attr(new schema::AddNT());
-  attr->N = tflite_tensors.size();
+  attr->N = tflite_tensors.size() - 1;
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_AddN;

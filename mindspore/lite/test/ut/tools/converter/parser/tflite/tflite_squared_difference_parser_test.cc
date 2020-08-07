@@ -19,16 +19,19 @@
 #include "common/common_test.h"
 
 namespace mindspore {
-class TestTfliteParserSquare : public TestTfliteParser {
+class TestTfliteParserSquaredDifference : public TestTfliteParser {
  public:
-  TestTfliteParserSquare() {}
-  void SetUp() override { meta_graph = LoadAndConvert("./square.tflite", ""); }
+  TestTfliteParserSquaredDifference() {}
+  void SetUp() override {
+    meta_graph = LoadAndConvert("./squared_difference.tflite");
+  }
 };
 
-TEST_F(TestTfliteParserSquare, OpType) {
+TEST_F(TestTfliteParserSquaredDifference, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Square) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_SquaredDifference)
+        << "wrong Op Type";
 }
 }  // namespace mindspore

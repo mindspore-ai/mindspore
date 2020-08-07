@@ -384,15 +384,19 @@ table Eltwise {
 }
 
 table Add {
+    activationType : ActivationType;
 }
 
 table Sub {
+    activationType : ActivationType;
 }
 
 table Mul {
+    activationType : ActivationType;
 }
 
 table Div {
+    activationType : ActivationType;
 }
 
 table AddGrad {

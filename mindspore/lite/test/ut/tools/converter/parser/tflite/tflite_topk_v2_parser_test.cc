@@ -19,16 +19,29 @@
 #include "common/common_test.h"
 
 namespace mindspore {
-class TestTfliteParserSquare : public TestTfliteParser {
+class TestTfliteParserTopKV2 : public TestTfliteParser {
  public:
-  TestTfliteParserSquare() {}
-  void SetUp() override { meta_graph = LoadAndConvert("./square.tflite", ""); }
+  TestTfliteParserTopKV2() {}
+  void SetUp() override {
+    meta_graph = LoadAndConvert("./topk_v2.tflite");
+  }
 };
 
-TEST_F(TestTfliteParserSquare, OpType) {
+TEST_F(TestTfliteParserTopKV2, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Square) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_TopKV2) << "wrong Op Type";
+}
+
+TEST_F(TestTfliteParserTopKV2, AttrValue) {
+  // attr->sorted default is true
+  std::vector<int> k{3};
+  ASSERT_NE(meta_graph, nullptr);
+  ASSERT_GT(meta_graph->nodes.size(), 0);
+  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsTopKV2(), nullptr);
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsTopKV2()->k, k);
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsTopKV2()->sorted, true);
 }
 }  // namespace mindspore

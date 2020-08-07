@@ -29,11 +29,6 @@ STATUS TfliteSparseToDenseParser::Parse(const std::unique_ptr<tflite::OperatorT>
                                         TensorCache *tensor_cache, bool quantized_model) {
   MS_LOG(DEBUG) << "parse TfliteSparseToDenseParser";
   std::unique_ptr<schema::SparseToDenseT> attr(new schema::SparseToDenseT());
-  const auto &tflite_attr = tflite_op->builtin_options.AsSparseToDenseOptions();
-  if (tflite_attr == nullptr) {
-    MS_LOG(ERROR) << "get op:" << op->name.c_str() << " attr failed";
-    return RET_NULL_PTR;
-  }
 
   if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->outputShape)) {
     MS_LOG(ERROR) << "sparseToDense -> outputShape get failed";
@@ -47,7 +42,7 @@ STATUS TfliteSparseToDenseParser::Parse(const std::unique_ptr<tflite::OperatorT>
     MS_LOG(ERROR) << "sparseToDense -> defaultValue get failed";
     return RET_ERROR;
   }
-  attr->validateIndices = tflite_attr->validate_indices;
+  attr->validateIndices = false;
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_SparseToDense;
