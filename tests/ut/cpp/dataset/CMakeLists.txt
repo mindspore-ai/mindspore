@@ -88,7 +88,13 @@ SET(DE_UT_SRCS
         concatenate_op_test.cc
         cyclic_array_test.cc
         perf_data_test.cc
-        c_api_test.cc
+        c_api_samplers_test.cc
+        c_api_transforms_test.cc
+        c_api_dataset_ops_test.cc
+        c_api_dataset_cifar_test.cc
+        c_api_dataset_coco_test.cc
+        c_api_dataset_voc_test.cc
+        c_api_datasets_test.cc
         tensor_op_fusion_pass_test.cc
         sliding_window_op_test.cc
         epoch_ctrl_op_test.cc
