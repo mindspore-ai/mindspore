@@ -137,7 +137,7 @@ def run_pretrain():
                                        power=cfg.Lamb.power)
         params = net_with_loss.trainable_params()
         decay_params = list(filter(cfg.Lamb.decay_filter, params))
-        other_params = list(filter(lambda x: x not in decay_params, params))
+        other_params = list(filter(lambda x: not cfg.Lamb.decay_filter(x), params))
         group_params = [{'params': decay_params, 'weight_decay': cfg.Lamb.weight_decay},
                         {'params': other_params},
                         {'order_params': params}]
@@ -153,7 +153,7 @@ def run_pretrain():
                                        power=cfg.AdamWeightDecay.power)
         params = net_with_loss.trainable_params()
         decay_params = list(filter(cfg.AdamWeightDecay.decay_filter, params))
-        other_params = list(filter(lambda x: x not in decay_params, params))
+        other_params = list(filter(lambda x: not cfg.AdamWeightDecay.decay_filter(x), params))
         group_params = [{'params': decay_params, 'weight_decay': cfg.AdamWeightDecay.weight_decay},
                         {'params': other_params, 'weight_decay': 0.0},
                         {'order_params': params}]

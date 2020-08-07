@@ -52,7 +52,7 @@ def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoin
                                        power=optimizer_cfg.AdamWeightDecay.power)
         params = network.trainable_params()
         decay_params = list(filter(optimizer_cfg.AdamWeightDecay.decay_filter, params))
-        other_params = list(filter(lambda x: x not in decay_params, params))
+        other_params = list(filter(lambda x: not cfg.AdamWeightDecay.decay_filter(x), params))
         group_params = [{'params': decay_params, 'weight_decay': optimizer_cfg.AdamWeightDecay.weight_decay},
                         {'params': other_params, 'weight_decay': 0.0}]
         optimizer = AdamWeightDecay(group_params, lr_schedule, eps=optimizer_cfg.AdamWeightDecay.eps)

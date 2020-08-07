@@ -270,6 +270,7 @@ class Parameter(MetaTensor):
         "Update the parameter by a Tensor."
         if isinstance(self, Tensor):
             # for Tensor same shape:
+            self.init_flag = False
             return self.assign_value(data)
         # create a new tensor
         return Parameter(data, self.name, self.requires_grad)

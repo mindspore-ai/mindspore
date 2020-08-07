@@ -107,7 +107,7 @@ def run_predistill():
                                    power=optimizer_cfg.AdamWeightDecay.power)
     params = netwithloss.trainable_params()
     decay_params = list(filter(optimizer_cfg.AdamWeightDecay.decay_filter, params))
-    other_params = list(filter(lambda x: x not in decay_params, params))
+    other_params = list(filter(lambda x: not cfg.AdamWeightDecay.decay_filter(x), params))
     group_params = [{'params': decay_params, 'weight_decay': optimizer_cfg.AdamWeightDecay.weight_decay},
                     {'params': other_params, 'weight_decay': 0.0},
                     {'order_params': params}]
@@ -165,7 +165,7 @@ def run_task_distill(ckpt_file):
                                    power=optimizer_cfg.AdamWeightDecay.power)
     params = netwithloss.trainable_params()
     decay_params = list(filter(optimizer_cfg.AdamWeightDecay.decay_filter, params))
-    other_params = list(filter(lambda x: x not in decay_params, params))
+    other_params = list(filter(lambda x: not cfg.AdamWeightDecay.decay_filter(x), params))
     group_params = [{'params': decay_params, 'weight_decay': optimizer_cfg.AdamWeightDecay.weight_decay},
                     {'params': other_params, 'weight_decay': 0.0},
                     {'order_params': params}]
