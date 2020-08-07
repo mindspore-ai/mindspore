@@ -75,10 +75,10 @@ T AlignByN(T number, N n) {
 }
 
 // GetGlobalSize
-std::vector<size_t> GetGlobalSize(const std::vector<size_t> &local, const std::vector<size_t> &global);
+std::vector<size_t> GetCommonGlobalSize(const std::vector<size_t> &local, const std::vector<size_t> &global);
 
 // GetLocalSize
-std::vector<size_t> GetLocalSize(const std::vector<size_t> &global, int max_size);
+std::vector<size_t> GetCommonLocalSize(const std::vector<size_t> &global, int max_size);
 
 std::string CLErrorCode(cl_int error_code);
 

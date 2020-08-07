@@ -24,9 +24,14 @@ namespace mindspore {
 
 void LoadTestData(void *dst, size_t dst_size, const std::string &file_path) {
   if (file_path.empty()) {
-    memset(dst, dst_size, dst_size);
+    memset(dst, 0x00, dst_size);
   } else {
-    memcpy(dst, reinterpret_cast<const void *>(dst_size), dst_size);
+    auto src_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &dst_size));
+    if (src_data != nullptr) {
+      memcpy(dst, src_data, dst_size);
+    } else {
+      MS_LOG(ERROR) << "read file empty.";
+    }
   }
 }
 

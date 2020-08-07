@@ -31,12 +31,11 @@
 
 #endif
 
-
-using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
 namespace mindspore::kernel {
 
@@ -117,11 +116,9 @@ int DepthwiseConv2dOpenCLKernel::InitBuffer() {
   return RET_OK;
 }
 
-int DepthwiseConv2dOpenCLKernel::ReSize() {
-  return RET_OK;
-}
+int DepthwiseConv2dOpenCLKernel::ReSize() { return RET_OK; }
 
-int DepthwiseConv2dOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t>* img_size) {
+int DepthwiseConv2dOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t CO4 = UP_DIV(outputs_[0]->Channel(), C4NUM);
   size_t im_dst_x, im_dst_y;
   if (inputs_[0]->GetFormat() == schema::Format_NHWC4) {
@@ -141,16 +138,18 @@ int DepthwiseConv2dOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t>* i
   *img_size = vec;
   return RET_OK;
 }
-int DepthwiseConv2dOpenCLKernel::GetGlobalSize(size_t idx, std::vector<size_t>* global_size) {
+
+int DepthwiseConv2dOpenCLKernel::GetGlobalSize(size_t idx, std::vector<size_t> *global_size) {
   size_t CO4 = UP_DIV(outputs_[0]->Channel(), C4NUM);
-  std::vector <size_t> global = {(size_t) outputs_[0]->Width(), (size_t) outputs_[0]->Height(), CO4};
+  std::vector<size_t> global = {(size_t)outputs_[0]->Width(), (size_t)outputs_[0]->Height(), CO4};
   *global_size = std::move(global);
   return RET_OK;
 }
-int DepthwiseConv2dOpenCLKernel::GetLocalSize(size_t idx, const std::vector<size_t>& global_size,
-    std::vector<size_t>* local_size) {
+
+int DepthwiseConv2dOpenCLKernel::GetLocalSize(size_t idx, const std::vector<size_t> &global_size,
+                                              std::vector<size_t> *local_size) {
   size_t CO4 = UP_DIV(outputs_[0]->Channel(), C4NUM);
-  std::vector <size_t> local = {1, 1, CO4};
+  std::vector<size_t> local = {1, 1, CO4};
   *local_size = std::move(local);
   return RET_OK;
 }
@@ -161,8 +160,8 @@ int DepthwiseConv2dOpenCLKernel::Run() {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   size_t CO4 = UP_DIV(outputs_[0]->Channel(), C4NUM);
   size_t CI4 = UP_DIV(inputs_[0]->Channel(), C4NUM);
-  std::vector <size_t> global = {(size_t) outputs_[0]->Width(), (size_t) outputs_[0]->Height(), CO4};
-  std::vector <size_t> local;
+  std::vector<size_t> global = {(size_t)outputs_[0]->Width(), (size_t)outputs_[0]->Height(), CO4};
+  std::vector<size_t> local;
   GetLocalSize(0, global, &local);
 
   float relu_clip1 = 6.0;
