@@ -353,17 +353,18 @@ class CosineEmbeddingLoss(_Loss):
 
     Args:
         margin (float): Should be in [-1.0, 1.0]. Default 0.0.
-        reduction (str): Specifies which reduction to apply to the output. It should be one of
-          "none", "mean", "sum", meaning no reduction, reduce mean or sum on output, respectively. Default "mean".
+        reduction (str): Specifies which reduction to be applied to the output. It should be one of
+          "none", "mean", and "sum", meaning no reduction, reduce mean and sum on output, respectively. Default "mean".
 
     Inputs:
         - **input_x1** (Tensor) - Input tensor.
         - **input_x2** (Tensor) - Its shape and data type should be the same as `input_x1`'s shape and data type.
-        - **y** (Tensor) - Contains value 1 or -1. Suppose `input_x1` shape is
-          :math:`(x_1, x_2, x_3,..., x_R)`, then `target` shape should be :math:`(x_1, x_3, x_4, ..., x_R)`.
+        - **y** (Tensor) - Contains value 1 or -1. Suppose the shape of `input_x1` is
+          :math:`(x_1, x_2, x_3,..., x_R)`, then the shape of `target` should be :math:`(x_1, x_3, x_4, ..., x_R)`.
 
     Outputs:
-        - **loss** (Tensor) - If `reduction` is "none", its shape is the same as `y`'s shape, loss value otherwise.
+        - **loss** (Tensor) - If `reduction` is "none", its shape is the same as `y`'s shape, otherwise a scalar value
+          will be returned.
 
     Examples:
         >>> x1 = Tensor(np.array([[0.3, 0.8], [0.4, 0.3]]), mindspore.float32)

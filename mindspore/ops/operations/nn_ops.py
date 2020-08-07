@@ -756,11 +756,11 @@ class Conv2D(PrimitiveWithInfer):
 
         out_j = \sum_{i=0}^{C_{in} - 1} ccor(W_{ij}, X_i) + b_j,
 
-    where :math:`ccor` is cross correlation operator, :math:`C_{in}` is the input channel number, :math:`j` ranges
-    from :math:`0` to :math:`C_{out} - 1`, :math:`W_{ij}` corresponds to :math:`i`-th channel of the :math:`j`-th
+    where :math:`ccor` is the cross correlation operator, :math:`C_{in}` is the input channel number, :math:`j` ranges
+    from :math:`0` to :math:`C_{out} - 1`, :math:`W_{ij}` corresponds to the :math:`i`-th channel of the :math:`j`-th
     filter and :math:`out_{j}` corresponds to the :math:`j`-th channel of the output. :math:`W_{ij}` is a slice
     of kernel and it has shape :math:`(\text{ks_h}, \text{ks_w})`, where :math:`\text{ks_h}` and
-    :math:`\text{ks_w}` are height and width of the convolution kernel. The full kernel has shape
+    :math:`\text{ks_w}` are the height and width of the convolution kernel. The full kernel has shape
     :math:`(C_{out}, C_{in} // \text{group}, \text{ks_h}, \text{ks_w})`, where group is the group number
     to split the input in the channel dimension.
 
@@ -1029,7 +1029,7 @@ class _Pool(PrimitiveWithInfer):
            of two `int` for height and width. Default: 1.
         strides (Union[int, tuple[int]]): The stride of the window, that should be
             a tuple of two `int` for height and width. Default: 1.
-        padding (str): The optional values for pad mode, is "same" or "valid", not case sensitive.
+        padding (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
     """
 
@@ -1104,16 +1104,16 @@ class MaxPool(_Pool):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
-        padding (str): The optional values for pad mode, is "same" or "valid", not case sensitive.
+        padding (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
 
-            - same: Adopts the way of completion. Output height and width will be the same as
-              the input. Total number of padding will be calculated for horizontal and vertical
-              direction and evenly distributed to top and bottom, left and right if possible.
+            - same: Adopts the way of completion. The height and width of the output will be the same as
+              the input. The total number of padding will be calculated in horizontal and vertical
+              directions and evenly distributed to top and bottom, left and right if possible.
               Otherwise, the last extra padding will be done from the bottom and the right side.
 
-            - valid: Adopts the way of discarding. The possibly largest height and width of output
-              will be return without padding. Extra pixels will be discarded.
+            - valid: Adopts the way of discarding. The possible largest height and width of output
+              will be returned without padding. Extra pixels will be discarded.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -1151,16 +1151,16 @@ class MaxPoolWithArgmax(_Pool):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
-        padding (str): The optional values for pad mode, is "same" or "valid", not case sensitive.
+        padding (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
 
-            - same: Adopts the way of completion. Output height and width will be the same as
-              the input. Total number of padding will be calculated for horizontal and vertical
-              direction and evenly distributed to top and bottom, left and right if possible.
+            - same: Adopts the way of completion. The height and width of the output will be the same as
+              the input. The total number of padding will be calculated in horizontal and vertical
+              directions and evenly distributed to top and bottom, left and right if possible.
               Otherwise, the last extra padding will be done from the bottom and the right side.
 
-            - valid: Adopts the way of discarding. The possibly largest height and width of output
-              will be return without padding. Extra pixels will be discarded.
+            - valid: Adopts the way of discarding. The possible largest height and width of output
+              will be returned without padding. Extra pixels will be discarded.
 
 
     Inputs:
@@ -1233,16 +1233,16 @@ class AvgPool(_Pool):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
-        padding (str): The optional values for pad mode, is "same" or "valid", not case sensitive.
+        padding (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
 
-            - same: Adopts the way of completion. Output height and width will be the same as
-              the input. Total number of padding will be calculated for horizontal and vertical
-              direction and evenly distributed to top and bottom, left and right if possible.
+            - same: Adopts the way of completion. The height and width of the output will be the same as
+              the input. The total number of padding will be calculated in horizontal and vertical
+              directions and evenly distributed to top and bottom, left and right if possible.
               Otherwise, the last extra padding will be done from the bottom and the right side.
 
-            - valid: Adopts the way of discarding. The possibly largest height and width of output
-              will be return without padding. Extra pixels will be discarded.
+            - valid: Adopts the way of discarding. The possible largest height and width of output
+              will be returned without padding. Extra pixels will be discarded.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.

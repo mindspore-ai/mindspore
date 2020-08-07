@@ -132,7 +132,7 @@ def _check_param_value(beta1, beta2, eps, prim_name):
 
 class Adam(Optimizer):
     r"""
-    Updates gradients by Adaptive Moment Estimation (Adam) algorithm.
+    Updates gradients by the Adaptive Moment Estimation (Adam) algorithm.
 
     The Adam algorithm is proposed in `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
 
@@ -157,9 +157,9 @@ class Adam(Optimizer):
         weight decay is positive. When not separating parameter groups, the `weight_decay` in the API will be applied
         on the parameters without 'beta' or 'gamma' in their names if `weight_decay` is positive.
 
-        To improve parameter groups performance, the customized order of parameters can be supported.
+        To improve parameter groups performance, the customized order of parameters is supported.
 
-        The sparse strategy is applied while the SparseGatherV2 operator being used for forward network.
+        The sparse strategy is applied while the SparseGatherV2 operator is used for forward network.
         The sparse feature is under continuous development. The sparse
         behavior is currently performed on the CPU.
 
@@ -170,36 +170,36 @@ class Adam(Optimizer):
 
             - params: Required. The value should be a list of `Parameter`.
 
-            - lr: Optional. If "lr" in the keys, the value of corresponding learning rate will be used.
+            - lr: Optional. If "lr" is in the keys, the value of the corresponding learning rate will be used.
               If not, the `learning_rate` in the API will be used.
 
-            - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
+            - weight_decay: Optional. If "weight_decay" is in the keys, the value of the corresponding weight decay
               will be used. If not, the `weight_decay` in the API will be used.
 
-            - order_params: Optional. If "order_params" in the keys, the value should be the order of parameters and
-              the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
-              in the value of 'order_params' should be in one of group parameters.
+            - order_params: Optional. If "order_params" is in the keys, the value should be the order of parameters and
+              the order will be followed in the optimizer. There are no other keys in the `dict` and the parameters
+              which in the 'order_params' should be in one of group parameters.
 
         learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or graph for the learning rate.
-            When the learning_rate is a Iterable or a Tensor with dimension of 1, use dynamic learning rate, then
+            When the learning_rate is a Iterable or a Tensor with dimension of 1, use the dynamic learning rate, then
             the i-th step will take the i-th value as the learning rate. When the learning_rate is LearningRateSchedule,
             use dynamic learning rate, the i-th learning rate will be calculated during the process of training
             according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor with
             dimension of 0, use fixed learning rate. Other cases are not supported. The float learning rate should be
             equal to or greater than 0. If the type of `learning_rate` is int, it will be converted to float.
             Default: 1e-3.
-        beta1 (float): The exponential decay rate for the 1st moment estimates. Should be in range (0.0, 1.0). Default:
-                       0.9.
-        beta2 (float): The exponential decay rate for the 2nd moment estimates. Should be in range (0.0, 1.0). Default:
-                       0.999.
+        beta1 (float): The exponential decay rate for the 1st moment estimations. Should be in range (0.0, 1.0).
+                       Default: 0.9.
+        beta2 (float): The exponential decay rate for the 2nd moment estimations. Should be in range (0.0, 1.0).
+                       Default: 0.999.
         eps (float): Term added to the denominator to improve numerical stability. Should be greater than 0. Default:
                      1e-8.
         use_locking (bool): Whether to enable a lock to protect updating variable tensors.
             If True, updating of the var, m, and v tensors will be protected by a lock.
             If False, the result is unpredictable. Default: False.
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
-            If True, updates the gradients using NAG.
-            If False, updates the gradients without using NAG. Default: False.
+            If True, update the gradients using NAG.
+            If False, update the gradients without using NAG. Default: False.
         weight_decay (float): Weight decay (L2 penalty). It should be equal to or greater than 0. Default: 0.0.
         loss_scale (float): A floating point value for the loss scale. Should be greater than 0. Default: 1.0.
 
@@ -278,11 +278,11 @@ class Adam(Optimizer):
 
 class AdamWeightDecay(Optimizer):
     """
-    Implements Adam algorithm weight decay fix.
+    Implements the Adam algorithm to fix the weight decay.
 
     Note:
         When separating parameter groups, the weight decay in each group will be applied on the parameters if the
-        weight decay is posigive. When not separating parameter groups, the `weight_decay` in the API will be applied
+        weight decay is positive. When not separating parameter groups, the `weight_decay` in the API will be applied
         on the parameters without 'beta' or 'gamma' in their names if `weight_decay` is positive.
 
         To improve parameter groups performance, the customized order of parameters can be supported.
@@ -294,27 +294,27 @@ class AdamWeightDecay(Optimizer):
 
             - params: Required. The value should be a list of `Parameter`.
 
-            - lr: Optional. If "lr" in the keys, the value of corresponding learning rate will be used.
+            - lr: Optional. If "lr" is in the keys, the value of the corresponding learning rate will be used.
               If not, the `learning_rate` in the API will be used.
 
-            - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
+            - weight_decay: Optional. If "weight_decay" is in the keys, the value of the corresponding weight decay
               will be used. If not, the `weight_decay` in the API will be used.
 
-            - order_params: Optional. If "order_params" in the keys, the value should be the order of parameters and
-              the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
-              in the value of 'order_params' should be in one of group parameters.
+            - order_params: Optional. If "order_params" is in the keys, the value should be the order of parameters and
+              the order will be followed in the optimizer. There are no other keys in the `dict` and the parameters
+              which in the 'order_params' should be in one of group parameters.
 
         learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or graph for the learning rate.
-            When the learning_rate is a Iterable or a Tensor with dimension of 1, use dynamic learning rate, then
+            When the learning_rate is a Iterable or a Tensor with dimension of 1, use the dynamic learning rate, then
             the i-th step will take the i-th value as the learning rate. When the learning_rate is LearningRateSchedule,
             use dynamic learning rate, the i-th learning rate will be calculated during the process of training
             according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor with
             dimension of 0, use fixed learning rate. Other cases are not supported. The float learning rate should be
             equal to or greater than 0. If the type of `learning_rate` is int, it will be converted to float.
             Default: 1e-3.
-        beta1 (float): The exponential decay rate for the 1st moment estimates. Default: 0.9.
+        beta1 (float): The exponential decay rate for the 1st moment estimations. Default: 0.9.
             Should be in range (0.0, 1.0).
-        beta2 (float): The exponential decay rate for the 2nd moment estimates. Default: 0.999.
+        beta2 (float): The exponential decay rate for the 2nd moment estimations. Default: 0.999.
             Should be in range (0.0, 1.0).
         eps (float): Term added to the denominator to improve numerical stability. Default: 1e-6.
             Should be greater than 0.

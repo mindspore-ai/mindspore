@@ -201,8 +201,8 @@ class DataWrapper(Cell):
 
     Args:
         network (Cell): The training network for dataset.
-        dataset_types (list): The type of dataset. The list contains describes the types of the inputs.
-        dataset_shapes (list): The shapes of dataset. The list contains multiple sublists that describes
+        dataset_types (list): The type of dataset. The list contains the types of the inputs.
+        dataset_shapes (list): The shapes of dataset. The list contains multiple sublists that describe
             the shape of the inputs.
         queue_name (str): The identification of dataset channel which specifies the dataset channel to supply
             data for the network.
