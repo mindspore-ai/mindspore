@@ -133,6 +133,10 @@ if (BUILD_MINDDATA)
     set(OpenCV_DIR ${TOP_DIR}/third_party/opencv/build)
     find_package(OpenCV REQUIRED)
     include_directories(${OpenCV_INCLUDE_DIRS})
+    # json
+    if (NOT BUILD_CONVERTER)
+        include(${TOP_DIR}/cmake/external_libs/json.cmake)
+    endif()
     # eigen
     include_directories(${TOP_DIR}/third_party/eigen/)
     # jpeg-turbo
