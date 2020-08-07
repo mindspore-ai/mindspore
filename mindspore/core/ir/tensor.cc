@@ -176,13 +176,8 @@ class TensorDataImpl : public TensorData {
   ssize_t ndim() const override { return static_cast<ssize_t>(ndim_); }
 
   void *data() override {
-    static T empty_data = static_cast<T>(0);
-    if (data_size_ == 0) {
-      // Prevent null pointer for empty shape.
-      return &empty_data;
-    }
-    // Lazy allocation.
     if (data_ == nullptr) {
+      // Lazy allocation.
       data_ = std::make_unique<T[]>(data_size_);
     }
     return data_.get();
@@ -193,8 +188,14 @@ class TensorDataImpl : public TensorData {
     if (ptr == nullptr) {
       return false;
     }
-    return (ptr == this) || ((ndim_ == ptr->ndim_) && (data_size_ == ptr->data_size_) &&
-                             (std::equal(data_.get(), data_.get() + data_size_, ptr->data_.get())));
+    if (ptr == this) {
+      return true;
+    }
+    if (data_ == nullptr || ptr->data_ == nullptr) {
+      return false;
+    }
+    return (ndim_ == ptr->ndim_) && (data_size_ == ptr->data_size_) &&
+           std::equal(data_.get(), data_.get() + data_size_, ptr->data_.get());
   }
 
   std::string ToString(const TypeId type, const std::vector<int> &shape) const override {
