@@ -510,6 +510,23 @@ OpParameter *PopulateArithmetic(const lite::Primitive *primitive) {
   arithmetic_param->op_parameter_.type_ = primitive->Type();
   arithmetic_param->broadcasting_ = ((lite::Arithmetic *)primitive)->Broadcasting();
   arithmetic_param->ndim_ = ((lite::Arithmetic *)primitive)->NDims();
+  switch (primitive->Type()) {
+    case schema::PrimitiveType_Add:
+      arithmetic_param->activation_type_ = primitive->Value()->value_as_Add()->activationType();
+      break;
+    case schema::PrimitiveType_Sub:
+      arithmetic_param->activation_type_ = primitive->Value()->value_as_Sub()->activationType();
+      break;
+    case schema::PrimitiveType_Mul:
+      arithmetic_param->activation_type_ = primitive->Value()->value_as_Mul()->activationType();
+      break;
+    case schema::PrimitiveType_Div:
+      arithmetic_param->activation_type_ = primitive->Value()->value_as_Div()->activationType();
+      break;
+    default:
+      arithmetic_param->activation_type_ = 0;
+      break;
+  }
   auto tmp_shape = ((lite::Arithmetic *)primitive)->InShape0();
   (void)memcpy(arithmetic_param->in_shape0_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
   tmp_shape = ((lite::Arithmetic *)primitive)->InShape1();

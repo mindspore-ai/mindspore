@@ -24,20 +24,28 @@
 #include "src/runtime/kernel/arm/nnacl/errorcode.h"
 
 int ElementMul(float *input0, float *input1, float *output, int element_size);
+int ElementMulRelu(float *input0, float *input1, float *output, int element_size);
+int ElementMulRelu6(float *input0, float *input1, float *output, int element_size);
 int BroadcastMul(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output, int element_size,
                  ArithmeticParameter *param);
 
 int ElementAdd(float *input0, float *input1, float *output, int element_size);
+int ElementAddRelu(float *input0, float *input1, float *output, int element_size);
+int ElementAddRelu6(float *input0, float *input1, float *output, int element_size);
 int BroadcastAdd(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output, int element_size,
                  ArithmeticParameter *param);
 int BroadcastAddInt8(int8_t *input0, int8_t *input1, int8_t *tile_input0, int8_t *tile_input1, int8_t *output,
                      int element_size, ArithmeticParameter *param);
 
 int ElementSub(float *input0, float *input1, float *output, int element_size);
+int ElementSubRelu(float *input0, float *input1, float *output, int element_size);
+int ElementSubRelu6(float *input0, float *input1, float *output, int element_size);
 int BroadcastSub(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output, int element_size,
                  ArithmeticParameter *param);
 
 int ElementDiv(float *input0, float *input1, float *output, int element_size);
+int ElementDivRelu(float *input0, float *input1, float *output, int element_size);
+int ElementDivRelu6(float *input0, float *input1, float *output, int element_size);
 int BroadcastDiv(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output, int element_size,
                  ArithmeticParameter *param);
 

@@ -27,6 +27,7 @@ struct ArithmeticParameter {
   OpParameter op_parameter_;
   bool broadcasting_;
   size_t ndim_;
+  int activation_type_;
   int in_shape0_[5];
   int in_shape1_[5];
   int out_shape_[5];
@@ -49,4 +50,3 @@ void TileDimensionsInt8(int8_t *data0, int8_t *data1, int8_t *tile_data0, int8_t
                         ArithmeticParameter *param);
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ARITHMETIC_COMMON_H_
-
