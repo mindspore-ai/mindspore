@@ -569,6 +569,39 @@ build_minddata_lite_deps()
   build_jpeg_turbo
 }
 
+prepare_md_lite() {
+    if [ "${COMPILE_MINDDATA_LITE}" == "on" ]; then
+    echo "packaging minddata"
+        cp ${BASEPATH}/mindspore/ccsrc/minddata/dataset/include/*h ${OUTPUT_DIR}/include/
+	cp ${BASEPATH}/mindspore/lite/build/minddata/libminddata-lite.so ${OUTPUT_DIR}/lib/
+        if [[ "$LITE_PLATFORM" == "x86_64" ]]; then
+	    mkdir -p ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib
+            cp -r ${BASEPATH}/third_party/libjpeg-turbo/lib/libjpeg.so ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib/
+            cp -r ${BASEPATH}/third_party/libjpeg-turbo/lib/libturbojpeg.so ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib/
+	    mkdir -p ${OUTPUT_DIR}/third_party/opencv/lib/
+	    cp -r ${BASEPATH}/third_party/opencv/build/lib/libopencv_core.so ${OUTPUT_DIR}/third_party/opencv/lib/
+            cp -r ${BASEPATH}/third_party/opencv/build/lib/libopencv_imgcodecs.so ${OUTPUT_DIR}/third_party/opencv/lib/
+            cp -r ${BASEPATH}/third_party/opencv/build/lib/libopencv_imgproc.so ${OUTPUT_DIR}/third_party/opencv/lib/
+        elif [[ "$LITE_PLATFORM" == "arm64" ]]; then
+            mkdir -p ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib
+            cp -r ${BASEPATH}/third_party/libjpeg-turbo/lib/libjpeg.so ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib/
+            cp -r ${BASEPATH}/third_party/libjpeg-turbo/lib/libturbojpeg.so ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib/
+            mkdir -p ${OUTPUT_DIR}/third_party/opencv/lib/arm64-v8a/
+            cp -r ${BASEPATH}/third_party/opencv/build/lib/arm64-v8a/libopencv_core.so ${OUTPUT_DIR}/third_party/opencv/lib/arm64-v8a/
+            cp -r ${BASEPATH}/third_party/opencv/build/lib/arm64-v8a/libopencv_imgcodecs.so ${OUTPUT_DIR}/third_party/opencv/lib/arm64-v8a/
+            cp -r ${BASEPATH}/third_party/opencv/build/lib/arm64-v8a/libopencv_imgproc.so ${OUTPUT_DIR}/third_party/opencv/lib/arm64-v8a/
+        elif [[ "$LITE_PLATFORM" == "arm32" ]]; then
+            mkdir -p ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib
+            cp -r ${BASEPATH}/third_party/libjpeg-turbo/lib/libjpeg.so ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib/
+            cp -r ${BASEPATH}/third_party/libjpeg-turbo/lib/libturbojpeg.so ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib/
+            mkdir -p ${OUTPUT_DIR}/third_party/opencv/lib/armeabi-v7a/
+            cp -r ${BASEPATH}/third_party/opencv/build/lib/armeabi-v7a/libopencv_core.so ${OUTPUT_DIR}/third_party/opencv/lib/armeabi-v7a/
+            cp -r ${BASEPATH}/third_party/opencv/build/lib/armeabi-v7a/libopencv_imgcodecs.so ${OUTPUT_DIR}/third_party/opencv/lib/armeabi-v7a/
+            cp -r ${BASEPATH}/third_party/opencv/build/lib/armeabi-v7a/libopencv_imgproc.so ${OUTPUT_DIR}/third_party/opencv/lib/armeabi-v7a/
+        fi
+    fi
+}
+
 build_lite()
 {
     echo "start build mindspore lite project"
@@ -632,6 +665,7 @@ build_lite()
             mkdir -p ${OUTPUT_DIR}/converter && mkdir -p ${OUTPUT_DIR}/time_profile
             mkdir -p ${OUTPUT_DIR}/benchmark && mkdir -p ${OUTPUT_DIR}/include && mkdir -p ${OUTPUT_DIR}/lib
             mkdir -p ${OUTPUT_DIR}/third_party
+	    prepare_md_lite
             cp ${BASEPATH}/mindspore/lite/build/tools/converter/converter_lite ${OUTPUT_DIR}/converter/
             cp ${BASEPATH}/mindspore/lite/build/tools/benchmark/benchmark ${OUTPUT_DIR}/benchmark/
             cp ${BASEPATH}/mindspore/lite/build/tools/time_profile/timeprofile ${OUTPUT_DIR}/time_profile/
@@ -657,6 +691,7 @@ build_lite()
             mkdir -p ${OUTPUT_DIR}/time_profile && mkdir -p ${OUTPUT_DIR}/benchmark
             mkdir -p ${OUTPUT_DIR}/include && mkdir -p ${OUTPUT_DIR}/lib
             mkdir -p ${OUTPUT_DIR}/third_party
+	    prepare_md_lite
             cp ${BASEPATH}/mindspore/lite/build/tools/benchmark/benchmark ${OUTPUT_DIR}/benchmark/
             cp ${BASEPATH}/mindspore/lite/build/tools/time_profile/timeprofile ${OUTPUT_DIR}/time_profile/
             cp ${BASEPATH}/mindspore/lite/include/*.h ${OUTPUT_DIR}/include/
@@ -677,6 +712,7 @@ build_lite()
             mkdir -p ${OUTPUT_DIR}/time_profile && mkdir -p ${OUTPUT_DIR}/benchmark
             mkdir -p ${OUTPUT_DIR}/include && mkdir -p ${OUTPUT_DIR}/lib
             mkdir -p ${OUTPUT_DIR}/third_party
+	    prepare_md_lite
             cp ${BASEPATH}/mindspore/lite/build/tools/benchmark/benchmark ${OUTPUT_DIR}/benchmark/
             cp ${BASEPATH}/mindspore/lite/build/tools/time_profile/timeprofile ${OUTPUT_DIR}/time_profile/
             cp ${BASEPATH}/mindspore/lite/include/*.h ${OUTPUT_DIR}/include/
