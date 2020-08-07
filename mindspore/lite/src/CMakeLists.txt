@@ -75,7 +75,6 @@ add_library(mindspore-lite SHARED ${LITE_SRC} ${ANF_SRC})
 target_link_libraries(mindspore-lite
         cpu_kernel_mid_
         ops_mid_
-        ${SECUREC_LIBRARY}
         )
 
 add_subdirectory(runtime/kernel/arm)

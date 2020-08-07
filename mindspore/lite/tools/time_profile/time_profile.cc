@@ -112,8 +112,8 @@ int TimeProfile::InitSession() {
 int TimeProfile::InitCallbackParameter() {
   // before callback
   before_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
-                        const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
-                        const session::CallBackParam &callParam) {
+                          const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
+                          const session::CallBackParam &callParam) {
     if (before_inputs.empty()) {
       MS_LOG(INFO) << "The num of beforeInputs is empty";
     }
@@ -134,8 +134,8 @@ int TimeProfile::InitCallbackParameter() {
 
   // after callback
   after_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
-                       const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
-                       const session::CallBackParam &call_param) {
+                         const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
+                         const session::CallBackParam &call_param) {
     uint64_t opEnd = GetTimeUs();
 
     if (after_inputs.empty()) {
@@ -215,25 +215,25 @@ int TimeProfile::PrintResult(const std::vector<std::string> &title,
     }
     columns.push_back(iter.first);
 
-    len = sprintf_s(stringBuf[1], 100, "%f", iter.second.second / _flags->loop_count_);
+    len = snprintf(stringBuf[1], sizeof(stringBuf[1]), "%f", iter.second.second / _flags->loop_count_);
     if (len > columnLenMax.at(1)) {
       columnLenMax.at(1) = len + 4;
     }
     columns.emplace_back(stringBuf[1]);
 
-    len = sprintf_s(stringBuf[2], 100, "%f", iter.second.second / op_cost_total_);
+    len = snprintf(stringBuf[2], sizeof(stringBuf[2]), "%f", iter.second.second / op_cost_total_);
     if (len > columnLenMax.at(2)) {
       columnLenMax.at(2) = len + 4;
     }
     columns.emplace_back(stringBuf[2]);
 
-    len = sprintf_s(stringBuf[3], 100, "%d", iter.second.first);
+    len = snprintf(stringBuf[3], sizeof(stringBuf[3]), "%d", iter.second.first);
     if (len > columnLenMax.at(3)) {
       columnLenMax.at(3) = len + 4;
     }
     columns.emplace_back(stringBuf[3]);
 
-    len = sprintf_s(stringBuf[4], 100, "%f", iter.second.second);
+    len = snprintf(stringBuf[4], sizeof(stringBuf[4]), "%f", iter.second.second);
     if (len > columnLenMax.at(4)) {
       columnLenMax.at(4) = len + 4;
     }

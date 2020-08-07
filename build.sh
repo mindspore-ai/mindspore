@@ -634,6 +634,7 @@ build_lite()
             mkdir -p ${OUTPUT_DIR}/third_party
             cp ${BASEPATH}/mindspore/lite/build/tools/converter/converter_lite ${OUTPUT_DIR}/converter/
             cp ${BASEPATH}/mindspore/lite/build/tools/benchmark/benchmark ${OUTPUT_DIR}/benchmark/
+            cp ${BASEPATH}/mindspore/lite/build/tools/time_profile/timeprofile ${OUTPUT_DIR}/time_profile/
             cp ${BASEPATH}/mindspore/lite/include/*.h ${OUTPUT_DIR}/include/
             mkdir -p ${OUTPUT_DIR}/include/ir/dtype/
             cp ${BASEPATH}/mindspore/core/ir/dtype/type_id.h ${OUTPUT_DIR}/include/ir/dtype/
@@ -657,6 +658,7 @@ build_lite()
             mkdir -p ${OUTPUT_DIR}/include && mkdir -p ${OUTPUT_DIR}/lib
             mkdir -p ${OUTPUT_DIR}/third_party
             cp ${BASEPATH}/mindspore/lite/build/tools/benchmark/benchmark ${OUTPUT_DIR}/benchmark/
+            cp ${BASEPATH}/mindspore/lite/build/tools/time_profile/timeprofile ${OUTPUT_DIR}/time_profile/
             cp ${BASEPATH}/mindspore/lite/include/*.h ${OUTPUT_DIR}/include/
             mkdir -p ${OUTPUT_DIR}/include/ir/dtype/
             cp ${BASEPATH}/mindspore/core/ir/dtype/type_id.h ${OUTPUT_DIR}/include/ir/dtype/
@@ -676,6 +678,7 @@ build_lite()
             mkdir -p ${OUTPUT_DIR}/include && mkdir -p ${OUTPUT_DIR}/lib
             mkdir -p ${OUTPUT_DIR}/third_party
             cp ${BASEPATH}/mindspore/lite/build/tools/benchmark/benchmark ${OUTPUT_DIR}/benchmark/
+            cp ${BASEPATH}/mindspore/lite/build/tools/time_profile/timeprofile ${OUTPUT_DIR}/time_profile/
             cp ${BASEPATH}/mindspore/lite/include/*.h ${OUTPUT_DIR}/include/
             mkdir -p ${OUTPUT_DIR}/include/ir/dtype/
             cp ${BASEPATH}/mindspore/core/ir/dtype/type_id.h ${OUTPUT_DIR}/include/ir/dtype/
