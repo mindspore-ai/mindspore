@@ -41,38 +41,39 @@ TEST_F(TestMatMulOpenCL, MatMulFp32) {
   std::string weight_path = "./test_data/matmul/matmul_fp32_weight.bin";
   auto weight_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(weight_path.c_str(), &weight_size));
 
-  lite::tensor::Tensor *tensor_x = new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), {1, ci});
+  lite::tensor::Tensor *tensor_x = new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), {1, 1, 1, ci});
+  tensor_x->SetData(input_data);
 
-  lite::tensor::Tensor *tensor_w = new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), {co, ci});
+  lite::tensor::Tensor *tensor_w = new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), {co, 1, 1, ci});
   tensor_w->SetData(weight_data);
 
-  lite::tensor::Tensor *tensor_out = new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), {1, co});
+  lite::tensor::Tensor *tensor_out = new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), {1, 1, 1, co});
   std::vector<lite::tensor::Tensor *> inputs{tensor_x, tensor_w};
   std::vector<lite::tensor::Tensor *> outputs{tensor_out};
   auto *arith_kernel = new kernel::MatMulOpenCLKernel(nullptr, inputs, outputs, false);
   arith_kernel->Init();
 
   std::vector<kernel::LiteKernel *> kernels{arith_kernel};
-  auto *pGraph = new kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  auto *pGraph = new kernel::SubGraphOpenCLKernel({tensor_x}, outputs, kernels, kernels, kernels);
   pGraph->Init();
-
-  memcpy(inputs[0]->Data(), input_data, sizeof(float) * ci);
   pGraph->Run();
-
-  printf("==================output data=================\n");
-  float *output_data = reinterpret_cast<float *>(tensor_out->Data());
-  std::cout << std::endl;
-  for (int i = 0; i < co; i++) {
-    std::cout << output_data[i] << ", ";
-  }
-  std::cout << std::endl;
 
   size_t output_size;
   std::string output_path = "./test_data/matmul/matmul_fp32_output.bin";
   auto correct_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(output_path.c_str(), &output_size));
+  printf("==================output data=================\n");
+  float *output_data = reinterpret_cast<float *>(tensor_out->Data());
+  std::cout << std::endl;
+  int size_n = co;
+  size_n = size_n > 100 ? 100 : size_n;
+  for (int i = 0; i < size_n; i++) {
+    std::cout << output_data[i] << " ";
+  }
+  std::cout << std::endl;
+
 
   // compare
-  CompareOutputData(output_data, correct_data, co * sizeof(float), 0.00001);
+  CompareOutputData(output_data, correct_data, co, 0.00001);
 
   delete input_data;
   delete weight_data;

@@ -144,8 +144,8 @@ int Conv2dTransposeOpenCLKernel::Run() {
                       &out_error_code);
   // local size should less than MAX_GROUP_SIZE
   std::vector<size_t> local = {16, 1, 16};
-  std::vector<size_t> global = {UP_ROUND((size_t)oh / 2, local[0]), UP_ROUND((size_t)ow / 2, local[1]),
-                                UP_ROUND((size_t)co / 4, local[2])};
+  std::vector<size_t> global = {UP_ROUND((size_t)UP_ROUND(oh / 2, 2), local[0]),
+                                UP_ROUND((size_t)UP_ROUND(ow / 2, 2), local[1]), UP_ROUND((size_t)co / 4, local[2])};
 
   cl_int2 kernel_size = {kh, kw};
   cl_int2 stride = {2, 2};
