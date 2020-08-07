@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_BACKEND_OPENCL_SUBGRAPH_OPENCL_KENEL_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "src/runtime/opencl/opencl_allocator.h"
 
 namespace mindspore::kernel {

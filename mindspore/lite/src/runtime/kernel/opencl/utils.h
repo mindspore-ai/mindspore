@@ -21,6 +21,7 @@
 #include <vector>
 #include "CL/cl2.hpp"
 #include "utils/log_adapter.h"
+#include "src/runtime/kernel/arm/opclib/op_base.h"
 
 namespace mindspore::kernel {
 
@@ -80,7 +81,6 @@ std::vector<size_t> GetGlobalSize(const std::vector<size_t> &local, const std::v
 std::vector<size_t> GetLocalSize(const std::vector<size_t> &global, int max_size);
 
 std::string CLErrorCode(cl_int error_code);
-
 
 }  // namespace mindspore::kernel
 

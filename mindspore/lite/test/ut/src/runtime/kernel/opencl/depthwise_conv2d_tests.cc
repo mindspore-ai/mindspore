@@ -35,6 +35,8 @@
     a = nullptr;           \
   }
 
+bool IMAGE2D_OPEN = true;
+
 namespace mindspore {
 class TestConvolutionDwOpenCL : public mindspore::Common {
  public:
@@ -95,6 +97,18 @@ void DepthWiseTestMain(ConvParameter *conv_param, float_t *input_data, float_t *
 
   std::vector<kernel::LiteKernel *> kernels{pKernel};
   std::vector<lite::tensor::Tensor *> inputs_{tensor_a};
+  size_t C4 = UP_DIV(inputs[0]->Channel(), C4NUM);
+  // if (IMAGE2D_OPEN && format == schema::Format_NHWC4) {
+  //   std::vector<size_t> img_size{inputs[0]->Width() * C4, (size_t)inputs[0]->Height(), CL_FLOAT};
+  //   auto in_data = allocator->Malloc(inputs[0]->Size(), img_size);
+  //   inputs[0]->SetData(in_data);
+  // } else if (IMAGE2D_OPEN && format == schema::Format_NC4HW4) {
+  //   std::vector<size_t> img_size{(size_t)inputs[0]->Width(), inputs[0]->Height() * C4, CL_FLOAT};
+  //   auto in_data = allocator->Malloc(inputs[0]->Size(), img_size);
+  //   inputs[0]->SetData(in_data);
+  // } else {
+    inputs[0]->MallocData(allocator);
+  // }
   auto *pGraph = new kernel::SubGraphOpenCLKernel(inputs_, outputs, kernels, kernels, kernels);
   pGraph->Init();
 
@@ -103,9 +117,9 @@ void DepthWiseTestMain(ConvParameter *conv_param, float_t *input_data, float_t *
 
   pGraph->Run();
   if (is_compare) {
-    float* packed_output = reinterpret_cast<float *>(outputs[0]->Data());
-    float *packed_correct_data = new float[packed_output_size];
-    memset(packed_correct_data, 0, packed_output_size * sizeof(float));
+    float_t* packed_output = reinterpret_cast<float *>(outputs[0]->Data());
+    float_t *packed_correct_data = new float_t[packed_output_size];
+    memset(packed_correct_data, 0, packed_output_size * sizeof(float_t));
     if (format == schema::Format_NC4HW4) {
       PackNHWCToNC4HW4Fp32(gnd_data, packed_correct_data, conv_param->output_batch_,
                           conv_param->output_h_ * conv_param->output_w_, conv_param->output_channel_);
@@ -128,7 +142,7 @@ void DepthWiseTestMain(ConvParameter *conv_param, float_t *input_data, float_t *
     std::cout << std::endl;
     printf("==================output data=================\n");
     std::cout << std::endl;
-    for (int i = 0; i < packed_output_size; i++) {
+    for (int i = 0; i < 80/*packed_output_size*/; i++) {
       std::cout << packed_output[i] << ", ";
     }
     std::cout << std::endl;
@@ -142,13 +156,13 @@ void DepthWiseTestMain(ConvParameter *conv_param, float_t *input_data, float_t *
     SAFE_DELETE_ARRAY(packed_correct_data)
   }
 
+  inputs[1]->SetData(nullptr);
+  inputs[2]->SetData(nullptr);
   SAFE_DELETE_ARRAY(packed_input);
   for (auto tensor : inputs) {
-    tensor->SetData(nullptr);
     SAFE_DELETE_PTR(tensor)
   }
   for (auto tensor : outputs) {
-    tensor->SetData(nullptr);
     SAFE_DELETE_PTR(tensor)
   }
   SAFE_DELETE_PTR(pKernel)
@@ -477,6 +491,7 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwNoPadFp32) {
 
   std::vector<kernel::LiteKernel *> kernels{pKernel};
   std::vector<lite::tensor::Tensor *> inputs_{tensor_a};
+  inputs[0]->MallocData();
   auto *pGraph = new kernel::SubGraphOpenCLKernel(inputs_, outputs, kernels, kernels, kernels);
   pGraph->Init();
 
@@ -516,12 +531,12 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwNoPadFp32) {
   // compare
   Common::CompareOutputData(packed_output, packed_correct_data, packed_output_size, 0.00001);
 
+  inputs[1]->SetData(nullptr);
+  inputs[2]->SetData(nullptr);
   for (auto tensor : inputs) {
-    tensor->SetData(nullptr);
     SAFE_DELETE_PTR(tensor)
   }
   for (auto tensor : outputs) {
-    tensor->SetData(nullptr);
     SAFE_DELETE_PTR(tensor)
   }
   SAFE_DELETE_PTR(pKernel)
@@ -640,6 +655,7 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwPadFp32) {
 
   std::vector<kernel::LiteKernel *> kernels{pKernel};
   std::vector<lite::tensor::Tensor *> inputs_{tensor_a};
+  inputs[0]->MallocData();
   auto *pGraph = new kernel::SubGraphOpenCLKernel(inputs_, outputs, kernels, kernels, kernels);
   pGraph->Init();
 
@@ -687,14 +703,14 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwPadFp32) {
   // compare
   Common::CompareOutputData(packed_output, packed_correct_data, packed_output_size, 0.00001);
 
+  inputs[1]->SetData(nullptr);
+  inputs[2]->SetData(nullptr);
   SAFE_DELETE_ARRAY(packed_input);
   SAFE_DELETE_ARRAY(packed_correct_data)
   for (auto tensor : inputs) {
-    tensor->SetData(nullptr);
     SAFE_DELETE_PTR(tensor)
   }
   for (auto tensor : outputs) {
-    tensor->SetData(nullptr);
     SAFE_DELETE_PTR(tensor)
   }
   SAFE_DELETE_PTR(pKernel)
@@ -742,35 +758,27 @@ TEST_F(TestConvolutionDwOpenCL, ProfilingMobilenetv2) {
   };
 
   // nhwc
-  float_t *input_data = new float_t[96*112*112]{
-    0.5488135 , 0.3834415 , 0.77815676, 0.9446689 , 0.6120957 ,
-    0.71518934, 0.79172504, 0.87001216, 0.5218483 , 0.616934  ,
-    0.60276335, 0.5288949 , 0.9786183 , 0.41466194, 0.94374806,
-    0.5448832 , 0.56804454, 0.7991586 , 0.2645556 , 0.6818203 ,
-    0.4236548 , 0.92559665, 0.46147937, 0.7742337 , 0.3595079 ,
-    0.6458941 , 0.07103606, 0.7805292 , 0.45615032, 0.43703195,
-    0.4375872 , 0.0871293 , 0.11827443, 0.56843394, 0.6976312 ,
-    0.891773  , 0.0202184 , 0.639921  , 0.0187898 , 0.06022547,
-    0.96366274, 0.83261985, 0.14335328, 0.6176355 , 0.6667667  };
+  size_t in_size = 96*112*112;
+  float_t *input_data = new float_t[in_size];
+  memset(input_data, 0, in_size);
+  for (auto i = 0; i < in_size; ++i) {
+    input_data[i] = 1;
+  }
   // co h w ci
-  float_t *weight_data = new float_t[576*3*3]{
-    0.67063785, 0.21038257, 0.12892629,
-    0.31542835, 0.36371076, 0.57019675,
-    0.43860152, 0.9883738 , 0.10204481,
-    0.20887676, 0.16130951, 0.6531083 ,
-    0.2532916 , 0.46631077, 0.2444256 ,
-    0.15896958, 0.11037514, 0.6563296 ,
-    0.13818295, 0.19658236, 0.36872518,
-    0.82099324, 0.09710128, 0.8379449 ,
-    0.09609841, 0.97645944, 0.4686512 ,
-    0.9767611 , 0.6048455 , 0.7392636 ,
-    0.03918779, 0.28280696, 0.12019656,
-    0.2961402 , 0.11872772, 0.31798318,
-    0.41426298, 0.06414749, 0.6924721 ,
-    0.56660146, 0.2653895 , 0.5232481 ,
-    0.09394051, 0.5759465 , 0.9292962  };
+  size_t wt_size = 576*3*3;
+  float_t *weight_data = new float_t[wt_size];
+  memset(weight_data, 0, wt_size);
+  for (auto i = 0; i < wt_size; ++i) {
+    weight_data[i] = 1;
+  }
+  size_t out_size = 96*112*112;
+  float_t *gnd_data = new float_t[out_size];
+  memset(gnd_data, 0, out_size);
+//  for (auto i = 0; i < in_size; ++i) {
+//    gnd_data[i] = 1;
+//  }
   for (size_t i = 0; i < src_shape.size(); ++i) {
-    const int MAX_RUN_TIMES = 10;
+    const int MAX_RUN_TIMES = 1;
     for (int j = 0; j < MAX_RUN_TIMES; ++j) {
       printf("========profiling depthwise, in shape(%d,%d,%d,%d), out shape(%d,%d,%d,%d), iter%d========\n",
         src_shape[i][0], src_shape[i][1], src_shape[i][2], src_shape[i][3],
@@ -794,8 +802,8 @@ TEST_F(TestConvolutionDwOpenCL, ProfilingMobilenetv2) {
         conv_param->dilation_h_     = 1;
         conv_param->dilation_w_     = 1;
       }
-      DepthWiseTestMain(conv_param, input_data, weight_data, nullptr, schema::Format_NC4HW4, false);
-      // DepthWiseTestMain(conv_param, input_data, weight_data, nullptr, schema::Format_NHWC4, false);
+//      DepthWiseTestMain(conv_param, input_data, weight_data, gnd_data, schema::Format_NC4HW4, false);
+       DepthWiseTestMain(conv_param, input_data, weight_data, nullptr, schema::Format_NHWC4, false);
     }
   }
   SAFE_DELETE_ARRAY(input_data);
@@ -803,4 +811,54 @@ TEST_F(TestConvolutionDwOpenCL, ProfilingMobilenetv2) {
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
+TEST_F(TestConvolutionDwOpenCL, Buffer2Image) {
+  std::vector<int> src_shape{1, 96, 64, 64};
+  std::vector<int> dst_shape{1, 96, 32, 32};
+  std::vector<int> filter_shape{96, 3, 3, 1};
+
+  // nhwc
+  size_t in_size = 96*112*112;
+  float_t *input_data = new float_t[in_size];
+  memset(input_data, 0, in_size);
+  for (auto i = 0; i < in_size; ++i) {
+    input_data[i] = 1;
+  }
+  // co h w ci
+  size_t wt_size = 576*3*3;
+  float_t *weight_data = new float_t[wt_size];
+  memset(weight_data, 0, wt_size);
+  for (auto i = 0; i < wt_size; ++i) {
+    weight_data[i] = 1;
+  }
+  size_t out_size = 96*112*112;
+  float_t *gnd_data = new float_t[out_size];
+  memset(gnd_data, 0, out_size);
+//  for (auto i = 0; i < in_size; ++i) {
+//    gnd_data[i] = 1;
+//  }
+    ConvParameter *conv_param = new ConvParameter();
+    {
+      conv_param->input_batch_    = 1;
+      conv_param->input_h_        = src_shape[2];
+      conv_param->input_w_        = src_shape[3];
+      conv_param->input_channel_  = src_shape[1];
+      conv_param->output_batch_   = 1;
+      conv_param->output_h_       = dst_shape[2];
+      conv_param->output_w_       = dst_shape[3];
+      conv_param->output_channel_ = dst_shape[1];
+      conv_param->kernel_h_       = filter_shape[1];
+      conv_param->kernel_w_       = filter_shape[2];
+      conv_param->stride_h_       = conv_param->output_h_/conv_param->input_h_;
+      conv_param->stride_w_       = conv_param->output_w_/conv_param->input_w_;
+      conv_param->pad_h_          = (conv_param->kernel_h_-1)/2;
+      conv_param->pad_w_          = (conv_param->kernel_w_-1)/2;
+      conv_param->dilation_h_     = 1;
+      conv_param->dilation_w_     = 1;
+    }
+//      DepthWiseTestMain(conv_param, input_data, weight_data, gnd_data, schema::Format_NC4HW4, true);
+      DepthWiseTestMain(conv_param, input_data, weight_data, gnd_data, schema::Format_NHWC4, true);
+  SAFE_DELETE_ARRAY(input_data);
+  SAFE_DELETE_ARRAY(weight_data);
+  lite::opencl::OpenCLRuntime::DeleteInstance();
+}
 }  // namespace mindspore

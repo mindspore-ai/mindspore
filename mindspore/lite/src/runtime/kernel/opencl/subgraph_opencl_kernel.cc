@@ -32,9 +32,10 @@ int SubGraphOpenCLKernel::Init() {
   }
   // Map buffer for write, it is not necessary for fine-grained
   for (auto &tensor : inputs_) {
-    void *data = allocator_->MapBuffer(tensor->Data(), CL_MAP_WRITE, nullptr, true);
+    void *data = tensor->Data();
     // It is required with coarse-grained SVM
     if (data != nullptr) {
+      data = allocator_->MapBuffer(data, CL_MAP_WRITE, nullptr, true);
       tensor->SetData(data);
     } else {
       MS_LOG(ERROR) << "OpenCL kernel must use GPU buffer pointer, "

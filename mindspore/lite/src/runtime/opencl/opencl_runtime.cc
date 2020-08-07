@@ -124,8 +124,13 @@ int OpenCLRuntime::Init() {
   const std::string device_name = device_->getInfo<CL_DEVICE_NAME>();
   const std::string device_version = device_->getInfo<CL_DEVICE_VERSION>();
   const std::string opencl_version = device_->getInfo<CL_DEVICE_OPENCL_C_VERSION>();
+  cl_uint align;
+  size_t ret;
+  clGetDeviceInfo((*device_)(), CL_DEVICE_IMAGE_PITCH_ALIGNMENT, sizeof(cl_uint), &align, &ret);
   MS_LOG(INFO) << "Device name:\t" << device_name;
   MS_LOG(INFO) << "Opencl version:\t" << device_version;
+  MS_LOG(INFO) << "Image alignment:\t" << align;
+  MS_LOG(INFO) << "Image ret:\t" << ret;
   MS_LOG(INFO) << "Highest OpenCL c version:\t" << opencl_version;
   MS_LOG(INFO) << "Max work item size:\t"
                << max_work_item_sizes_[0] << " : "
@@ -133,7 +138,6 @@ int OpenCLRuntime::Init() {
                << max_work_item_sizes_[2];
 
   gpu_info_ = ParseGpuInfo(device_name, device_version);
-
   cl_int err;
 #if defined(SHARING_MEM_WITH_OPENGL) && (CL_HPP_TARGET_OPENCL_VERSION >= 120)
   // create context from glcontext
@@ -164,6 +168,7 @@ int OpenCLRuntime::Init() {
   support_fp16_ = CL_SUCCESS == success && fp_config > 0;
 
   err = device_->getInfo(CL_DEVICE_SVM_CAPABILITIES, &svm_capabilities_);
+  svm_capabilities_ = 0;
   if (err != CL_SUCCESS || svm_capabilities_ == 0) {
     svm_capabilities_ = 0;
     MS_LOG(INFO) << "SVM capalibilties: "
@@ -535,7 +540,19 @@ int OpenCLRuntime::MapBuffer(void *host_ptr, int flags, size_t size, cl::Command
   return command_queue->enqueueMapSVM(host_ptr, sync, flags, size);
 }
 
-int OpenCLRuntime::UnmapBuffer(const cl::Buffer buffer, void *host_ptr, cl::CommandQueue *command_queue) const {
+void *OpenCLRuntime::MapBuffer(const cl::Image2D buffer, bool sync, int flags,
+                               const std::vector<size_t>& region, cl::CommandQueue *command_queue) const {
+  if (command_queue == nullptr) {
+    command_queue = default_command_queue_.get();
+  }
+  cl::size_type row_pitch;
+  cl::size_type slice_pitch;
+  cl::array<cl::size_type, 3> origin_{0, 0, 0};
+  cl::array<cl::size_type, 3> region_{region[0], region[1], region[2]};
+  return command_queue->enqueueMapImage(buffer, sync, flags, origin_, region_, &row_pitch, &slice_pitch);
+}
+
+int OpenCLRuntime::UnmapBuffer(const cl::Memory buffer, void *host_ptr, cl::CommandQueue *command_queue) const {
   if (command_queue == nullptr) {
     command_queue = default_command_queue_.get();
   }
