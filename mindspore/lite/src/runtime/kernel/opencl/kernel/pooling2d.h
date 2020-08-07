@@ -25,11 +25,11 @@
 
 namespace mindspore::kernel {
 
-class PoolingOpenCLKernel : public LiteKernel {
+class PoolingOpenCLKernel : public OpenCLKernel {
  public:
   explicit PoolingOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                                const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs) {
+      : OpenCLKernel(parameter, inputs, outputs) {
     parameter_ = reinterpret_cast<PoolingParameter *>(parameter);
   }
   ~PoolingOpenCLKernel() override{};
@@ -38,10 +38,11 @@ class PoolingOpenCLKernel : public LiteKernel {
   int ReSize() override;
   int Run() override;
   int InitBuffer();
+  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
 
  private:
   std::vector<size_t> InitGlobalSize() const;
-
+  enum class MEM_TYPE { BUF, IMG } mem_type_{MEM_TYPE::IMG};
   PoolingParameter *parameter_;
   cl::Kernel kernel_;
 };
@@ -49,4 +50,3 @@ class PoolingOpenCLKernel : public LiteKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_BACKEND_OPENCL_POOLING_H_
-

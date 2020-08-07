@@ -64,12 +64,18 @@ int PoolingOpenCLKernel::Init() {
 #ifdef PROGRAM_WITH_IL
   ocl_runtime->CreateKernelFromIL(kernel_(), kernel_name);
 #else
+  if (mem_type_ == MEM_TYPE::BUF) {
+    kernel_name += "_BUF";
+  } else {
+    kernel_name += "_IMG";
+  }
   std::set<std::string> build_options;
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
   outputs_[0]->SetFormat(schema::Format_NHWC4);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
+
   return RET_OK;
 }
 
@@ -81,8 +87,30 @@ std::vector<size_t> PoolingOpenCLKernel::InitGlobalSize() const {
   return global;
 }
 
-int PoolingOpenCLKernel::InitBuffer() { return 0; }
-int PoolingOpenCLKernel::ReSize() { return 0; }
+int PoolingOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
+  size_t CO4 = UP_DIV(outputs_[0]->Channel(), C4NUM);
+  size_t im_dst_x, im_dst_y;
+  if (inputs_[0]->GetFormat() == schema::Format_NHWC4) {
+    im_dst_x = outputs_[0]->Height();
+    im_dst_y = outputs_[0]->Width() * CO4;
+  } else {
+    im_dst_y = outputs_[0]->Width();
+    im_dst_x = outputs_[0]->Height() * CO4;
+  }
+#ifdef ENABLE_FP16
+  size_t img_dtype = CL_HALF_FLOAT;
+#else
+  size_t img_dtype = CL_FLOAT;
+#endif
+  img_size->clear();
+  std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
+  *img_size = vec;
+  return RET_OK;
+}
+
+int PoolingOpenCLKernel::InitBuffer() { return RET_OK; }
+
+int PoolingOpenCLKernel::ReSize() { return RET_OK; }
 
 int PoolingOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->Name() << " Running!";
@@ -110,12 +138,11 @@ int PoolingOpenCLKernel::Run() {
   std::vector<size_t> local_size;
   std::vector<size_t> global_size = InitGlobalSize();
   int max_work_group_size = ocl_runtime->GetKernelMaxWorkGroupSize(kernel_(), (*ocl_runtime->Device())());
-  local_size = GetLocalSize(global_size, max_work_group_size);
-  global_size = GetGlobalSize(local_size, global_size);
+  local_size = GetCommonLocalSize(global_size, max_work_group_size);
+  global_size = GetCommonGlobalSize(local_size, global_size);
 
   // run opengl kernel
   ocl_runtime->RunKernel(kernel_, global_size, local_size, nullptr);
-
   return RET_OK;
 }
 

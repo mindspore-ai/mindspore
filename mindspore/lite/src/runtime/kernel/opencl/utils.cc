@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace kernel {
 
-std::vector<size_t> GetGlobalSize(const std::vector<size_t> &local, const std::vector<size_t> &global) {
+std::vector<size_t> GetCommonGlobalSize(const std::vector<size_t> &local, const std::vector<size_t> &global) {
   std::vector<size_t> result(3, 1);
   for (int i = 0; i < 3; ++i) {
     result[i] = AlignByN(global[i], local[i]);
@@ -30,7 +30,7 @@ std::vector<size_t> GetGlobalSize(const std::vector<size_t> &local, const std::v
   return result;
 }
 
-std::vector<size_t> GetLocalSize(const std::vector<size_t> &global, int max_size) {
+std::vector<size_t> GetCommonLocalSize(const std::vector<size_t> &global, int max_size) {
   size_t wg_z = GetBiggestDividerWithPriority(global[2], 8);
   size_t wg_xy_size = max_size / wg_z;
   size_t wg_x = std::min(DivideRoundUp(global[0], 2), wg_xy_size);

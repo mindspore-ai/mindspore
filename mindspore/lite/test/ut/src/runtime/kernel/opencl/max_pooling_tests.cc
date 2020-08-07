@@ -43,33 +43,42 @@ TEST_F(TestMaxPoolingOpenCL, MaxPool_1_32_512_96) {
   MS_LOG(INFO) << "ocl runtime";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
+  auto allocator = ocl_runtime->GetAllocator();
 
   MS_LOG(INFO) << "PoolingParameter";
   auto param = new PoolingParameter;
   InitParameter(param);
 
   // define tensor
-  MS_LOG(INFO) << "define tensor";
+  MS_LOG(INFO) << "define tensor1";
   std::vector<int> input_shape = {1, 16, 256, 192};
   std::vector<int> output_shape = {1, 8, 128, 192};
   auto data_type = kNumberTypeFloat32;
   auto tensorType = schema::NodeType_ValueNode;
+  MS_LOG(INFO) << "define tensor2";
   auto input_tensor = new lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC4, tensorType);
   auto output_tensor = new lite::tensor::Tensor(data_type, output_shape, schema::Format_NHWC4, tensorType);
+  MS_LOG(INFO) << "define input";
   std::vector<lite::tensor::Tensor *> inputs{input_tensor};
   std::vector<lite::tensor::Tensor *> outputs{output_tensor};
 
   // run
+  MS_LOG(INFO) << "pooling_kernel";
   auto *pooling_kernel = new kernel::PoolingOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  MS_LOG(INFO) << "pooling_kernel init";
   pooling_kernel->Init();
+
   std::vector<kernel::LiteKernel *> kernels{pooling_kernel};
+  inputs[0]->MallocData(allocator);
   auto *pGraph = new kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  MS_LOG(INFO) << "pGraph init";
   pGraph->Init();
 
   // load data
-  MS_LOG(INFO) << "load data";
+  MS_LOG(INFO) << "load data1";
   std::string input_file = "maxpool_in.bin";
   std::string expect_file = "maxpool_out.bin";
+  MS_LOG(INFO) << "load data2";
   LoadTestData(input_tensor->Data(), input_tensor->Size(), input_file);
   auto *input_data = reinterpret_cast<float *>(input_tensor->Data());
   printf("input[0:10]:");
@@ -81,6 +90,7 @@ TEST_F(TestMaxPoolingOpenCL, MaxPool_1_32_512_96) {
   pGraph->Run();
 
   MS_LOG(INFO) << "compare result";
+  std::cout << "compare result" << std::endl;
   CompareOutput(output_tensor, expect_file);
 }
 

@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include "src/runtime/kernel/opencl/kernel/arithmetic.h"
 #include <set>
 #include <vector>
 #include <string>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
-#include "src/runtime/kernel/opencl/kernel/arithmetic.h"
 #ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/fp32/arithmetic_buffer.cl.inc"
 #include "src/runtime/kernel/opencl/cl/fp32/arithmetic_image2d.cl.inc"
@@ -41,8 +42,8 @@ std::vector<size_t> ArithmeticOpenCLKernel::InitGlobalSize() const {
 void ArithmeticOpenCLKernel::Image2dGetWorkGroupSize() {
   global_size_ = InitGlobalSize();
   int max_work_group_size = runtime_->GetKernelMaxWorkGroupSize(kernel_(), (*runtime_->Device())());
-  local_size_ = GetLocalSize(global_size_, max_work_group_size);
-  global_size_ = GetGlobalSize(local_size_, global_size_);
+  local_size_ = GetCommonLocalSize(global_size_, max_work_group_size);
+  global_size_ = GetCommonGlobalSize(local_size_, global_size_);
 }
 
 void ArithmeticOpenCLKernel::BufferGetWorkGroupSize() {
