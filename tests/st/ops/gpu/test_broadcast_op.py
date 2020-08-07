@@ -29,6 +29,8 @@ def test_nobroadcast():
 
     x1_np = np.random.rand(10, 20).astype(np.float32)
     x2_np = np.random.rand(10, 20).astype(np.float32)
+    x1_np_int32 = np.random.randint(0, 100, (10, 20)).astype(np.int32)
+    x2_np_int32 = np.random.randint(0, 100, (10, 20)).astype(np.int32)
 
     output_ms = P.Minimum()(Tensor(x1_np), Tensor(x2_np))
     output_np = np.minimum(x1_np, x2_np)
@@ -44,6 +46,9 @@ def test_nobroadcast():
 
     output_ms = P.Less()(Tensor(x1_np), Tensor(x2_np))
     output_np = x1_np < x2_np
+    assert np.allclose(output_ms.asnumpy(), output_np)
+    output_ms = P.Less()(Tensor(x1_np_int32), Tensor(x2_np_int32))
+    output_np = x1_np_int32 < x2_np_int32
     assert np.allclose(output_ms.asnumpy(), output_np)
 
     output_ms = P.Pow()(Tensor(x1_np), Tensor(x2_np))
@@ -71,6 +76,8 @@ def test_broadcast():
 
     x1_np = np.random.rand(3, 1, 5, 1).astype(np.float32)
     x2_np = np.random.rand(1, 4, 1, 6).astype(np.float32)
+    x1_np_int32 = np.random.randint(0, 100, (3, 1, 5, 1)).astype(np.int32)
+    x2_np_int32 = np.random.randint(0, 100, (3, 1, 5, 1)).astype(np.int32)
 
     output_ms = P.Minimum()(Tensor(x1_np), Tensor(x2_np))
     output_np = np.minimum(x1_np, x2_np)
@@ -86,6 +93,9 @@ def test_broadcast():
 
     output_ms = P.Less()(Tensor(x1_np), Tensor(x2_np))
     output_np = x1_np < x2_np
+    assert np.allclose(output_ms.asnumpy(), output_np)
+    output_ms = P.Less()(Tensor(x1_np_int32), Tensor(x2_np_int32))
+    output_np = x1_np_int32 < x2_np_int32
     assert np.allclose(output_ms.asnumpy(), output_np)
 
     output_ms = P.Pow()(Tensor(x1_np), Tensor(x2_np))
@@ -113,6 +123,8 @@ def test_broadcast_diff_dims():
 
     x1_np = np.random.rand(2).astype(np.float32)
     x2_np = np.random.rand(2, 1).astype(np.float32)
+    x1_np_int32 = np.random.randint(0, 100, (2)).astype(np.int32)
+    x2_np_int32 = np.random.randint(0, 100, (2, 1)).astype(np.int32)
 
     output_ms = P.Minimum()(Tensor(x1_np), Tensor(x2_np))
     output_np = np.minimum(x1_np, x2_np)
@@ -128,6 +140,9 @@ def test_broadcast_diff_dims():
 
     output_ms = P.Less()(Tensor(x1_np), Tensor(x2_np))
     output_np = x1_np < x2_np
+    assert np.allclose(output_ms.asnumpy(), output_np)
+    output_ms = P.Less()(Tensor(x1_np_int32), Tensor(x2_np_int32))
+    output_np = x1_np_int32 < x2_np_int32
     assert np.allclose(output_ms.asnumpy(), output_np)
 
     output_ms = P.Pow()(Tensor(x1_np), Tensor(x2_np))

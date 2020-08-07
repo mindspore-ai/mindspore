@@ -104,6 +104,9 @@ MS_REG_GPU_KERNEL_TWO(
 
 // int32
 MS_REG_GPU_KERNEL_TWO(
+  Less, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+  BroadcastOpGpuKernel, int, bool)
+MS_REG_GPU_KERNEL_TWO(
   TensorAdd, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
   BroadcastOpGpuKernel, int, int)
 MS_REG_GPU_KERNEL_TWO(
