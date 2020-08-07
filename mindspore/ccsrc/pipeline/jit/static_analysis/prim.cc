@@ -132,11 +132,11 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimControlDepend, {InferImplControlDepend, true}},
     // Debug
     {prim::kPrimDebug, {InferImplDebug, true}},
-    // IndexedSlices
-    {prim::kPrimMakeIndexedSlices, {InferImplMakeIndexedSlices, true}},
-    {prim::kPrimIndexedSlicesGetValues, {InferImplIndexedSlicesGetValues, true}},
-    {prim::kPrimIndexedSlicesGetIndices, {InferImplIndexedSlicesGetIndices, true}},
-    {prim::kPrimIndexedSlicesGetDenseShape, {InferImplIndexedSlicesGetDenseShape, true}},
+    // RowTensor
+    {prim::kPrimMakeRowTensor, {InferImplMakeRowTensor, true}},
+    {prim::kPrimRowTensorGetValues, {InferImplRowTensorGetValues, true}},
+    {prim::kPrimRowTensorGetIndices, {InferImplRowTensorGetIndices, true}},
+    {prim::kPrimRowTensorGetDenseShape, {InferImplRowTensorGetDenseShape, true}},
     // SparseTensor
     {prim::kPrimMakeSparseTensor, {InferImplMakeSparseTensor, true}},
     {prim::kPrimSparseTensorGetValues, {InferImplSparseTensorGetValues, true}},
@@ -402,8 +402,8 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
     }
     dic["dtype"] = arg_tensor->BuildType();
     dic["value"] = BuildValue(arg_tensor->BuildValue());
-  } else if (abs_base->isa<AbstractIndexedSlices>()) {
-    auto arg = dyn_cast<AbstractIndexedSlices>(abs_base);
+  } else if (abs_base->isa<AbstractRowTensor>()) {
+    auto arg = dyn_cast<AbstractRowTensor>(abs_base);
     dic["shape"] = arg->shape()->shape();
     dic["dtype"] = arg->BuildType();
     dic["value"] = BuildValue(arg->BuildValue());

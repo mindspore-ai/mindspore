@@ -120,7 +120,7 @@ void ProtoExporter::SetNodeOutputType(const TypePtr &type, const BaseShapePtr &s
         type_proto->mutable_tensor_type()->mutable_shape()->add_dim()->set_size(elem);
       }
     }
-  } else if (type->isa<IndexedSlicesType>()) {
+  } else if (type->isa<RowTensorType>()) {
     // Do Nothing
   } else if (type->isa<UndeterminedType>()) {
     // Do Nothing

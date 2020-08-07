@@ -27,7 +27,7 @@ from .grad_base import bprop_getters
 from ..primitive import constexpr
 from ... import context
 from ...common import dtype as mstype
-from ...common.tensor import IndexedSlices
+from ...common.tensor import RowTensor
 
 reduce_sum = P.ReduceSum()
 unsorted_segment_sum = P.UnsortedSegmentSum()
@@ -75,12 +75,12 @@ def dout_cast_number(dout, x):
     dx = cast(dout, get_dtype(x))
     return dx
 
-@dout_cast.register("IndexedSlices", "Tensor")
-def dout_cast_indexed_slices(dout, x):
+@dout_cast.register("RowTensor", "Tensor")
+def dout_cast_row_tensor(dout, x):
     cast = P.Cast()
     get_dtype = P.DType()
-    values = cast(dout.values(), get_dtype(x))
-    return IndexedSlices(dout.indices(), values, dout.dense_shape())
+    values = cast(dout.values, get_dtype(x))
+    return RowTensor(dout.indices, values, dout.dense_shape)
 
 
 @bprop_getters.register(P.Cast)
@@ -240,7 +240,7 @@ def get_bprop_embedding_lookup(self):
         actual_dout_shape_changed = new_indices_shape_changed + x_shp_tail
         # Reshape the 'actual_dout' on device
         actual_dout = reshape_op(dout, actual_dout_shape_changed)
-        return IndexedSlices(new_indices, actual_dout, x_shp), zeros_like(indices), zeros_like(offset)
+        return RowTensor(new_indices, actual_dout, x_shp), zeros_like(indices), zeros_like(offset)
     return bprop_sparse
 
 
@@ -369,7 +369,7 @@ def get_bprop_sparse_gather_v2(self):
             values_shape = indices_size + x_tail_shp
             values = reshape(dout, values_shape)
             indices = reshape(indices, indices_size)
-            return IndexedSlices(indices, values, x_shp), zeros_like(indices), zeros_like(axis)
+            return RowTensor(indices, values, x_shp), zeros_like(indices), zeros_like(axis)
         if F.rank(dout) == 0:
             dout = P.ExpandDims()(dout, -1)
         if F.rank(indices) == 0:

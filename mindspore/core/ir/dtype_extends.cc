@@ -190,9 +190,9 @@ TypePtr TensorStrToType(const std::string &type_name) {
   return type;
 }
 
-TypePtr IndexedSlicesStrToType(const std::string &type_name) {
-  if (type_name == "IndexedSlices") {
-    return std::make_shared<IndexedSlicesType>();
+TypePtr RowTensorStrToType(const std::string &type_name) {
+  if (type_name == "RowTensor") {
+    return std::make_shared<RowTensorType>();
   }
   auto start = type_name.find_first_of('[') + 1;
   auto end = type_name.find_last_of(']');
@@ -204,7 +204,7 @@ TypePtr IndexedSlicesStrToType(const std::string &type_name) {
   if (element_type == nullptr) {
     return nullptr;
   }
-  return std::make_shared<IndexedSlicesType>(element_type);
+  return std::make_shared<RowTensorType>(element_type);
 }
 
 TypePtr SparseTensorStrToType(const std::string &type_name) {
@@ -364,8 +364,8 @@ TypePtr StringToType(const std::string &type_name) {
     type = TensorStrToType(type_name);
   } else if (type_name.compare(0, strlen("Undetermined"), "Undetermined") == 0) {
     type = UndeterminedStrToType(type_name);
-  } else if (type_name.compare(0, strlen("IndexedSlices"), "IndexedSlices") == 0) {
-    type = IndexedSlicesStrToType(type_name);
+  } else if (type_name.compare(0, strlen("RowTensor"), "RowTensor") == 0) {
+    type = RowTensorStrToType(type_name);
   } else if (type_name.compare(0, strlen("SparseTensor"), "SparseTensor") == 0) {
     type = SparseTensorStrToType(type_name);
   } else if (type_name.compare(0, strlen("List"), "List") == 0) {
@@ -446,7 +446,7 @@ const TypePtr kTypeExternal = std::make_shared<External>();
 const TypePtr kTypeEnv = std::make_shared<EnvType>();
 const TypePtr kTypeType = std::make_shared<TypeType>();
 const TypePtr kTensorType = std::make_shared<TensorType>();
-const TypePtr kIndexedSlicesType = std::make_shared<IndexedSlicesType>();
+const TypePtr kRowTensorType = std::make_shared<RowTensorType>();
 const TypePtr kSparseTensorType = std::make_shared<SparseTensorType>();
 const TypePtr kUndeterminedType = std::make_shared<UndeterminedType>();
 const TypePtr kString = std::make_shared<String>();

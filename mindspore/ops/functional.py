@@ -152,10 +152,10 @@ shape_mul = Primitive("shape_mul")
 # a primitive to compare between tuple.
 stop_gradient = Primitive("stop_gradient")
 
-make_indexed_slices = Primitive('MakeIndexedSlices')
-indexed_slices_get_values = Primitive('IndexedSlicesGetValues')
-indexed_slices_get_indices = Primitive('IndexedSlicesGetIndices')
-indexed_slices_get_dense_shape = Primitive('IndexedSlicesGetDenseShape')
+make_row_tensor = Primitive('MakeRowTensor')
+row_tensor_get_values = Primitive('RowTensorGetValues')
+row_tensor_get_indices = Primitive('RowTensorGetIndices')
+row_tensor_get_dense_shape = Primitive('RowTensorGetDenseShape')
 
 make_sparse_tensor = Primitive('MakeSparseTensor')
 sparse_tensor_get_values = Primitive('SparseTensorGetValues')

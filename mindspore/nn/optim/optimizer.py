@@ -23,7 +23,7 @@ from mindspore.nn.cell import Cell
 from mindspore.nn.layer.container import CellList
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.initializer import initializer
-from mindspore.common.tensor import Tensor, IndexedSlices
+from mindspore.common.tensor import Tensor, RowTensor
 import mindspore.common.dtype as mstype
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
@@ -493,14 +493,14 @@ op_gather = P.GatherV2()
 _apply_decay = C.MultitypeFuncGraph("apply_decay")
 
 
-@_apply_decay.register("Number", "Bool", "Tensor", "IndexedSlices")
+@_apply_decay.register("Number", "Bool", "Tensor", "RowTensor")
 def _tensor_apply_decay_with_sparse(weight_decay, if_apply, weight, gradient):
     """Get grad with weight_decay."""
     if if_apply:
-        indices = gradient.indices()
-        values = op_add((op_gather(weight, indices, 0) * weight_decay, gradient.values()))
-        shape = gradient.dense_shape()
-        return IndexedSlices(indices, values, shape)
+        indices = gradient.indices
+        values = op_add((op_gather(weight, indices, 0) * weight_decay, gradient.values))
+        shape = gradient.dense_shape
+        return RowTensor(indices, values, shape)
     return gradient
 
 
@@ -523,12 +523,12 @@ def tensor_grad_scale(scale, grad):
     return grad * scale
 
 
-@_grad_scale.register("Number", "IndexedSlices")
+@_grad_scale.register("Number", "RowTensor")
 def tensor_grad_scale_with_sparse(scale, grad):
     """Get grad with scale."""
     if scale == 1.0:
         return grad
-    return IndexedSlices(grad.indices(), grad.values() * scale, grad.dense_shape())
+    return RowTensor(grad.indices, grad.values * scale, grad.dense_shape)
 
 
 class _ConvertToCell(LearningRateSchedule):

@@ -340,8 +340,8 @@ AbstractBasePtr InferImplControlDepend(const AnalysisEnginePtr &, const Primitiv
   return std::make_shared<AbstractScalar>(kAnyValue, kBool);
 }
 
-AbstractBasePtr InferImplMakeIndexedSlices(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const AbstractBasePtrList &args_spec_list) {
+AbstractBasePtr InferImplMakeRowTensor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const AbstractBasePtrList &args_spec_list) {
   // Inputs: two tensors and a tuple.
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 3);
@@ -393,41 +393,41 @@ AbstractBasePtr InferImplMakeIndexedSlices(const AnalysisEnginePtr &, const Prim
                               << "th dimension of values " << values_shp[i] << ", but got " << dense_shape_vec[i];
     }
   }
-  auto ret = std::make_shared<AbstractIndexedSlices>(values->element()->BuildType(), dense_shape_vec);
+  auto ret = std::make_shared<AbstractRowTensor>(values->element()->BuildType(), dense_shape_vec);
   ret->set_indices(indices);
   ret->set_values(values);
   ret->set_dense_shape(dense_shape);
   return ret;
 }
 
-AbstractBasePtr InferImplIndexedSlicesGetValues(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+AbstractBasePtr InferImplRowTensorGetValues(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const AbstractBasePtrList &args_spec_list) {
+  // Inputs: two tensors and a tuple.
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto row_tensor = CheckArg<AbstractRowTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(row_tensor->values());
+  return row_tensor->values();
+}
+
+AbstractBasePtr InferImplRowTensorGetIndices(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const AbstractBasePtrList &args_spec_list) {
+  // Inputs: two tensors and a tuple.
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto row_tensor = CheckArg<AbstractRowTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(row_tensor->indices());
+  return row_tensor->indices();
+}
+
+AbstractBasePtr InferImplRowTensorGetDenseShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                 const AbstractBasePtrList &args_spec_list) {
   // Inputs: two tensors and a tuple.
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 1);
-  auto indexed_slices = CheckArg<AbstractIndexedSlices>(op_name, args_spec_list, 0);
-  MS_EXCEPTION_IF_NULL(indexed_slices->values());
-  return indexed_slices->values();
-}
-
-AbstractBasePtr InferImplIndexedSlicesGetIndices(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const AbstractBasePtrList &args_spec_list) {
-  // Inputs: two tensors and a tuple.
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  auto indexed_slices = CheckArg<AbstractIndexedSlices>(op_name, args_spec_list, 0);
-  MS_EXCEPTION_IF_NULL(indexed_slices->indices());
-  return indexed_slices->indices();
-}
-
-AbstractBasePtr InferImplIndexedSlicesGetDenseShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const AbstractBasePtrList &args_spec_list) {
-  // Inputs: two tensors and a tuple.
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  auto indexed_slices = CheckArg<AbstractIndexedSlices>(op_name, args_spec_list, 0);
-  MS_EXCEPTION_IF_NULL(indexed_slices->dense_shape());
-  return indexed_slices->dense_shape();
+  auto row_tensor = CheckArg<AbstractRowTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(row_tensor->dense_shape());
+  return row_tensor->dense_shape();
 }
 
 AbstractBasePtr InferImplMakeSparseTensor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

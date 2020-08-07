@@ -593,15 +593,15 @@ struct AbstractBasePtrListEqual {
 std::size_t AbstractBasePtrListHash(const AbstractBasePtrList &args_spec_list);
 bool AbstractBasePtrListDeepEqual(const AbstractBasePtrList &lhs, const AbstractBasePtrList &rhs);
 
-// IndexedSlices
-class AbstractIndexedSlices : public AbstractUndetermined {
+// RowTensor
+class AbstractRowTensor : public AbstractUndetermined {
  public:
-  explicit AbstractIndexedSlices(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
+  explicit AbstractRowTensor(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
       : AbstractUndetermined(element, shape) {}
-  AbstractIndexedSlices(const TypePtr &element_type, const std::vector<int> &shape)
+  AbstractRowTensor(const TypePtr &element_type, const std::vector<int> &shape)
       : AbstractUndetermined(element_type, shape) {}
-  ~AbstractIndexedSlices() override = default;
-  MS_DECLARE_PARENT(AbstractIndexedSlices, AbstractUndetermined)
+  ~AbstractRowTensor() override = default;
+  MS_DECLARE_PARENT(AbstractRowTensor, AbstractUndetermined)
 
   const AbstractTensorPtr indices() const { return indices_; }
   void set_indices(const AbstractTensorPtr &indices) { indices_ = indices; }

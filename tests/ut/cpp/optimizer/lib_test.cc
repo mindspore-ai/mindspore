@@ -606,14 +606,14 @@ TEST_F(TestOptLib, test_adjust_allreduce_mul_add) {
   ASSERT_TRUE(CheckOpt(before2r, after2, patterns));
 }
 
-TEST_F(TestOptLib, test_indexed_slices) {
-  FuncGraphPtr before_get_indices = getPyFun.CallAndParseRet("test_indexed_slices", "before_get_indices");
-  FuncGraphPtr after_get_indices = getPyFun.CallAndParseRet("test_indexed_slices", "after_get_indices");
-  FuncGraphPtr before_get_values = getPyFun.CallAndParseRet("test_indexed_slices", "before_get_values");
-  FuncGraphPtr after_get_values = getPyFun.CallAndParseRet("test_indexed_slices", "after_get_values");
-  FuncGraphPtr before_get_dense_shape = getPyFun.CallAndParseRet("test_indexed_slices", "before_get_dense_shape");
-  FuncGraphPtr after_get_dense_shape = getPyFun.CallAndParseRet("test_indexed_slices", "after_get_dense_shape");
-  auto patterns = std::vector<SubstitutionPtr>({irpass.indexed_slices_eliminate_});
+TEST_F(TestOptLib, test_row_tensor) {
+  FuncGraphPtr before_get_indices = getPyFun.CallAndParseRet("test_row_tensor", "before_get_indices");
+  FuncGraphPtr after_get_indices = getPyFun.CallAndParseRet("test_row_tensor", "after_get_indices");
+  FuncGraphPtr before_get_values = getPyFun.CallAndParseRet("test_row_tensor", "before_get_values");
+  FuncGraphPtr after_get_values = getPyFun.CallAndParseRet("test_row_tensor", "after_get_values");
+  FuncGraphPtr before_get_dense_shape = getPyFun.CallAndParseRet("test_row_tensor", "before_get_dense_shape");
+  FuncGraphPtr after_get_dense_shape = getPyFun.CallAndParseRet("test_row_tensor", "after_get_dense_shape");
+  auto patterns = std::vector<SubstitutionPtr>({irpass.row_tensor_eliminate_});
   ASSERT_TRUE(CheckOpt(before_get_indices, after_get_indices, patterns));
   ASSERT_TRUE(CheckOpt(before_get_values, after_get_values, patterns));
   ASSERT_TRUE(CheckOpt(before_get_dense_shape, after_get_dense_shape, patterns));

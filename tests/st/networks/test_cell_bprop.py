@@ -19,25 +19,16 @@ import pytest
 import mindspore as ms
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
-from mindspore import Parameter
+from mindspore import Parameter, ParameterTuple
 from mindspore import context
 from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from .....mindspore_test_framework.utils.bprop_util import bprop
 
-
-def setup_module(module):
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-
-def teardown_module(module):
-    context.set_context(device_target="Ascend")
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 class MulAdd(nn.Cell):
-    def __init__(self):
-        super(MulAdd, self).__init__()
-
     def construct(self, x, y):
         return 2 * x + y
 
@@ -45,7 +36,9 @@ class MulAdd(nn.Cell):
         # In this test case, The user defined bprop is wrong defined purposely to distinguish from ad result
         return 2 * dout, 2 * y
 
-
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_grad_mul_add():
     mul_add = MulAdd()
     x = Tensor(1, dtype=ms.int32)
@@ -62,7 +55,9 @@ class InlineMulADD(nn.Cell):
     def construct(self, x, y):
         return self.mul_add(x, y) + x + self.param * y
 
-
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_grad_inline_mul_add():
     inline_mul_add = InlineMulADD()
     x = Tensor(1, dtype=ms.int32)
@@ -83,7 +78,9 @@ class WithParameter(nn.Cell):
         # In this test case, The user defined bprop is wrong defined purposely to distinguish from ad result
         return self.param1 * self.param2 * dout, 2 * y
 
-
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_with_param():
     with_param = WithParameter()
     with pytest.raises(RuntimeError):
@@ -91,20 +88,21 @@ def test_with_param():
 
 
 class WithNoBprop(nn.Cell):
-    def __init__(self):
-        super(WithNoBprop, self).__init__()
-
     def construct(self, x, y):
         return 2 * x + y
 
-
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_with_no_bprop():
     with_no_bprop = WithNoBprop()
     x = Tensor(1, dtype=ms.int32)
     y = Tensor(2, dtype=ms.int32)
-    C.grad_all(with_no_bprop)(x, y)
+    assert C.grad_all(with_no_bprop)(x, y) == (2, 1)
 
-
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_grad_in_bprop_1():
     class GradInBprop_1(nn.Cell):
         def __init__(self):
@@ -140,7 +138,9 @@ def test_grad_in_bprop_1():
     assert (grads[0].asnumpy() == np.ones([2, 2]).astype(np.float32)).all()
     assert (grads[1].asnumpy() == np.zeros([2, 2]).astype(np.float32)).all()
 
-
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_grad_in_bprop_2():
     class GradInBprop_1(nn.Cell):
         def __init__(self):
@@ -179,7 +179,9 @@ def test_grad_in_bprop_2():
     assert (grads[0].asnumpy() == np.ones([2, 2]).astype(np.float32)).all()
     assert (grads[1].asnumpy() == np.array([[2, 2], [2, 2]]).astype(np.float32)).all()
 
-
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_grad_in_bprop_3():
     class GradInBprop_1(nn.Cell):
         def __init__(self):
@@ -230,7 +232,9 @@ class OneInputBprop(nn.Cell):
     def bprop(self, x, out, dout):
         return (5 * x,)
 
-
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_grad_one_input_bprop():
     net = OneInputBprop()
     input1 = Tensor(np.ones([2, 2]).astype(np.float32))
@@ -239,9 +243,6 @@ def test_grad_one_input_bprop():
 
 
 class TwoInput(nn.Cell):
-    def __init__(self):
-        super().__init__()
-
     def construct(self, x, y):
         return x * y
 
@@ -258,12 +259,17 @@ class InlineBpropTwoInput(nn.Cell):
         grads = C.grad_all(self.f)(x, y)
         return grads[0] * 2, grads[1] * 2
 
-
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_grad_inline_bprop_two_input():
     net = InlineBpropTwoInput()
     input1 = Tensor(np.ones([2, 2]).astype(np.float32))
     input2 = Tensor(np.ones([2, 2]).astype(np.float32))
-    C.grad_all(net)(input1, input2)
+    grads = C.grad_all(net)(input1, input2)
+    assert (grads[0].asnumpy() == np.array([2, 2]).astype(np.float32)).all()
+    assert (grads[1].asnumpy() == np.array([2, 2]).astype(np.float32)).all()
+    assert len(grads) == 2
 
 
 class TwoInputBprop(nn.Cell):
@@ -314,7 +320,9 @@ class InlineMutilTwoInputParameterCell(nn.Cell):
         output = self.f1(x, y) + self.f2(x, y) + self.f3(x, y) + self.f4(x, y)
         return output
 
-
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_grad_inline_bprop_multi_input():
     net = InlineMutilTwoInputParameterCell()
     input1 = Tensor(np.ones([2, 2]).astype(np.float32))
@@ -335,29 +343,54 @@ class MulAddWithParam(nn.Cell):
     def construct(self, x):
         return self.mul_add(self.param, x)
 
-
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_refkey_bprop():
-    net = MulAddWithParam()
+    grad_by_list = C.GradOperation('get_by_list', get_all=True, get_by_list=True)
+    class GradWrap(nn.Cell):
+        def __init__(self, network):
+            super(GradWrap, self).__init__()
+            self.network = network
+            self.weights = ParameterTuple(filter(lambda x: x.requires_grad, network.get_parameters()))
+        def construct(self, x):
+            weights = self.weights
+            grads = grad_by_list(self.network, weights)(x)
+            return grads
+    network = GradWrap(MulAddWithParam())
     input_data = Tensor(np.array([2, 2], np.float32))
-    grads = bprop(net, input_data,
-                  grads_wrt_outputs=(Tensor(np.ones([1, 2]).astype(np.float32))),
-                  wrt=['params', 'inputs'],
-                  params=net.trainable_params())
+    grads = network(input_data)
     assert (grads[0][0].asnumpy() == np.array([4, 4]).astype(np.float32)).all()
     assert (grads[1][0].asnumpy() == np.array([2, 2]).astype(np.float32)).all()
 
 
-class MulAddWithWrongOutputType(nn.Cell):
-    def __init__(self):
-        super(MulAddWithWrongOutputType, self).__init__()
+class MulAddWithWrongOutputNum(nn.Cell):
+    def construct(self, x, y):
+        return 2 * x + y
 
+    def bprop(self, x, y, out, dout):
+        return (2 * dout,)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_grad_mul_add_with_wrong_output_num():
+    context.set_context(check_bprop=True)
+    mul_add = MulAddWithWrongOutputNum()
+    with pytest.raises(TypeError):
+        C.grad_all(mul_add)(1, 2)
+
+
+class MulAddWithWrongOutputType(nn.Cell):
     def construct(self, x, y):
         return 2 * x + y
 
     def bprop(self, x, y, out, dout):
         return 2 * dout, 2
 
-
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_grad_mul_add_with_wrong_output_type():
     context.set_context(check_bprop=True)
     mul_add = MulAddWithWrongOutputType()
@@ -376,7 +409,9 @@ class MulAddWithWrongOutputShape(nn.Cell):
     def bprop(self, x, y, out, dout):
         return 2, self.ones
 
-
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_grad_mul_add_with_wrong_output_shape():
     context.set_context(check_bprop=True)
     mul_add = MulAddWithWrongOutputShape()

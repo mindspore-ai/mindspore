@@ -1050,16 +1050,16 @@ bool AbstractBasePtrListEqual::operator()(const AbstractBasePtrList &lhs, const 
   return AbstractBasePtrListDeepEqual(lhs, rhs);
 }
 
-// IndexedSlices
-TypePtr AbstractIndexedSlices::BuildType() const {
+// RowTensor
+TypePtr AbstractRowTensor::BuildType() const {
   MS_EXCEPTION_IF_NULL(element());
   TypePtr element_type = element()->BuildType();
-  return std::make_shared<IndexedSlicesType>(element_type);
+  return std::make_shared<RowTensorType>(element_type);
 }
 
-AbstractBasePtr AbstractIndexedSlices::Clone() const {
+AbstractBasePtr AbstractRowTensor::Clone() const {
   MS_EXCEPTION_IF_NULL(element());
-  auto clone = std::make_shared<AbstractIndexedSlices>(element()->Clone());
+  auto clone = std::make_shared<AbstractRowTensor>(element()->Clone());
   ShapePtr shp = shape();
   clone->set_shape(shp->Clone());
   clone->set_value(GetValueTrack());
@@ -1069,9 +1069,9 @@ AbstractBasePtr AbstractIndexedSlices::Clone() const {
   return clone;
 }
 
-AbstractBasePtr AbstractIndexedSlices::Broaden() const {
+AbstractBasePtr AbstractRowTensor::Broaden() const {
   MS_EXCEPTION_IF_NULL(element());
-  auto broaden = std::make_shared<AbstractIndexedSlices>(element()->Broaden());
+  auto broaden = std::make_shared<AbstractRowTensor>(element()->Broaden());
   auto shp = shape();
   broaden->set_shape(shp->Clone());
   broaden->set_value(kAnyValue);
@@ -1081,9 +1081,9 @@ AbstractBasePtr AbstractIndexedSlices::Broaden() const {
   return broaden;
 }
 
-AbstractBasePtr AbstractIndexedSlices::BroadenWithShape() const {
+AbstractBasePtr AbstractRowTensor::BroadenWithShape() const {
   MS_EXCEPTION_IF_NULL(element());
-  auto broaden = std::make_shared<AbstractIndexedSlices>(element()->Broaden());
+  auto broaden = std::make_shared<AbstractRowTensor>(element()->Broaden());
   auto shp = shape()->Clone();
   shp->Broaden();
   broaden->set_shape(shp);
@@ -1094,7 +1094,7 @@ AbstractBasePtr AbstractIndexedSlices::BroadenWithShape() const {
   return broaden;
 }
 
-std::string AbstractIndexedSlices::ToString() const {
+std::string AbstractRowTensor::ToString() const {
   std::ostringstream buffer;
   BaseShapePtr shape_track = GetShapeTrack();
   MS_EXCEPTION_IF_NULL(shape_track);

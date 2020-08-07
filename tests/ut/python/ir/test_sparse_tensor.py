@@ -52,7 +52,7 @@ def test_sparse_tensor_attr():
             self.dense_shape = (3, 4)
         def construct(self, indices, values):
             x = SparseTensor(indices, values, self.dense_shape)
-            return x.values(), x.indices(), x.dense_shape()
+            return x.values, x.indices, x.dense_shape
 
     indices = Tensor([[0, 1], [1, 2]])
     values = Tensor([1, 2], dtype=ms.float32)

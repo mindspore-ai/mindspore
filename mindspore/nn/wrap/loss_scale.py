@@ -18,7 +18,7 @@ from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.train.parallel_utils import ParallelMode
 from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_mirror_mean
 from ..cell import Cell
-from ...common import Tensor, IndexedSlices
+from ...common import Tensor, RowTensor
 from ...common.parameter import Parameter
 from ...ops import functional as F
 from ...ops import composite as C
@@ -35,11 +35,11 @@ reciprocal = P.Reciprocal()
 def tensor_grad_scale(scale, grad):
     return grad * F.cast(reciprocal(scale), F.dtype(grad))
 
-@_grad_scale.register("Tensor", "IndexedSlices")
-def tensor_grad_scale_indexed_slices(scale, grad):
-    return IndexedSlices(grad.indices(),
-                         grad.values() * F.cast(reciprocal(scale), F.dtype(grad.values())),
-                         grad.dense_shape())
+@_grad_scale.register("Tensor", "RowTensor")
+def tensor_grad_scale_row_tensor(scale, grad):
+    return RowTensor(grad.indices,
+                     grad.values * F.cast(reciprocal(scale), F.dtype(grad.values)),
+                     grad.dense_shape)
 
 _grad_overflow = C.MultitypeFuncGraph("_grad_overflow")
 grad_overflow = P.FloatStatus()

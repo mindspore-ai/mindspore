@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_INDEXED_SLICES_ELIMINATE_H_
-#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_INDEXED_SLICES_ELIMINATE_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_ROW_TENSOR_ELIMINATE_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_ROW_TENSOR_ELIMINATE_H_
 
 #include <vector>
 #include <algorithm>
@@ -28,24 +28,24 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-// {prim::kPrimIndexedSlicesGetIndices, {prim::kPrimMakeIndexedSlices, Xs}}
-// {prim::kPrimIndexedSlicesGetValues, {prim::kPrimMakeIndexedSlices, Xs}}
-// {prim::kPrimIndexedSlicesGetDenseShape, {prim::kPrimMakeIndexedSlices, Xs}}
-class IndexedSlicesEliminater : public AnfVisitor {
+// {prim::kPrimRowTensorGetIndices, {prim::kPrimMakeRowTensor, Xs}}
+// {prim::kPrimRowTensorGetValues, {prim::kPrimMakeRowTensor, Xs}}
+// {prim::kPrimRowTensorGetDenseShape, {prim::kPrimMakeRowTensor, Xs}}
+class RowTensorEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     Reset();
-    AnfVisitor::Match(prim::kPrimIndexedSlicesGetIndices, {IsCNode})(node);
+    AnfVisitor::Match(prim::kPrimRowTensorGetIndices, {IsCNode})(node);
 
     if (is_match_) {
       return tuple_->input(1);
     }
-    AnfVisitor::Match(prim::kPrimIndexedSlicesGetValues, {IsCNode})(node);
+    AnfVisitor::Match(prim::kPrimRowTensorGetValues, {IsCNode})(node);
 
     if (is_match_) {
       return tuple_->input(2);
     }
-    AnfVisitor::Match(prim::kPrimIndexedSlicesGetDenseShape, {IsCNode})(node);
+    AnfVisitor::Match(prim::kPrimRowTensorGetDenseShape, {IsCNode})(node);
 
     if (is_match_) {
       return tuple_->input(3);
@@ -54,7 +54,7 @@ class IndexedSlicesEliminater : public AnfVisitor {
   }
 
   void Visit(const CNodePtr &cnode) override {
-    if (IsPrimitiveCNode(cnode, prim::kPrimMakeIndexedSlices)) {
+    if (IsPrimitiveCNode(cnode, prim::kPrimMakeRowTensor)) {
       tuple_ = cnode;
       is_match_ = true;
     }
@@ -72,4 +72,4 @@ class IndexedSlicesEliminater : public AnfVisitor {
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_INDEXED_SLICES_ELIMINATE_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_ROW_TENSOR_ELIMINATE_H_

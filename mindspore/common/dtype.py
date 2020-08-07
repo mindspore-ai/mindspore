@@ -99,7 +99,7 @@ slice_type = typing.Slice
 ellipsis_type = typing.TypeEllipsis
 list_type = typing.List
 tuple_type = typing.Tuple
-index_slices = typing.IndexedSlicesType()
+index_slices = typing.RowTensorType()
 sparse_tensor = typing.SparseTensorType()
 undetermined = typing.UndeterminedType()
 
