@@ -181,8 +181,9 @@ class CheckValid(PrimitiveWithInfer):
     Check whether the bounding box cross data and data border.
 
     Inputs:
-        - **bboxes** (Tensor) - Bounding boxes tensor with shape (N, 4).
+        - **bboxes** (Tensor) - Bounding boxes tensor with shape (N, 4). Data type should be float16 or float32.
         - **img_metas** (Tensor) - Raw image size information, format (height, width, ratio).
+          Data type should be float16 or float32.
 
     Outputs:
         Tensor, the valided tensor.
@@ -220,6 +221,9 @@ class CheckValid(PrimitiveWithInfer):
         return bboxes_shape[:-1]
 
     def infer_dtype(self, bboxes_type, metas_type):
+        valid_type = [mstype.float32, mstype.float16]
+        validator.check_tensor_type_same({"bboxes_type": bboxes_type}, valid_type, self.name)
+        validator.check_tensor_type_same({"metas_type": metas_type}, valid_type, self.name)
         return mstype.bool_
 
 
@@ -242,12 +246,12 @@ class IOU(PrimitiveWithInfer):
 
     Inputs:
         - **anchor_boxes** (Tensor) - Anchor boxes, tensor of shape (N, 4). "N" indicates the number of anchor boxes,
-          and the value "4" refers to "x0", "x1", "y0", and "y1". Data type must be float16.
+          and the value "4" refers to "x0", "x1", "y0", and "y1". Data type must be float16 or float32.
         - **gt_boxes** (Tensor) - Ground truth boxes, tensor of shape (M, 4). "M" indicates the number of ground
-          truth boxes, and the value "4" refers to "x0", "x1", "y0", and "y1". Data type must be float16.
+          truth boxes, and the value "4" refers to "x0", "x1", "y0", and "y1". Data type must be float16 or float32.
 
     Outputs:
-        Tensor, the 'iou' values, tensor of shape (M, N), with data type float16.
+        Tensor, the 'iou' values, tensor of shape (M, N), with the same data type as `anchor_boxes`.
 
     Raises:
         KeyError: When `mode` is not 'iou' or 'iof'.
@@ -274,6 +278,9 @@ class IOU(PrimitiveWithInfer):
         return iou
 
     def infer_dtype(self, anchor_boxes, gt_boxes):
+        valid_type = [mstype.float32, mstype.float16]
+        validator.check_tensor_type_same({"anchor_boxes": anchor_boxes}, valid_type, self.name)
+        validator.check_tensor_type_same({"gt_boxes": gt_boxes}, valid_type, self.name)
         return anchor_boxes
 
 
