@@ -1407,7 +1407,7 @@ class BiasAdd(PrimitiveWithInfer):
     except for the channel axis.
 
     Inputs:
-        - **input_x** (Tensor) - Input value, with shape :math:`(N, C)` or :math:`(N, C, H, W)`.
+        - **input_x** (Tensor) - Input value. The input shape can be 2-4 dimensions.
         - **bias** (Tensor) - Bias value, with shape :math:`(C)`.
 
     Outputs:
@@ -1433,8 +1433,7 @@ class BiasAdd(PrimitiveWithInfer):
 
     def infer_dtype(self, x_type, b_type):
         args = {"input_x": x_type, "bias": b_type}
-        valid_types = (mstype.int8, mstype.int32, mstype.float16, mstype.float32)
-        validator.check_tensor_type_same(args, valid_types, self.name)
+        validator.check_tensor_type_same(args, mstype.number_type, self.name)
         return x_type
 
 
