@@ -50,22 +50,59 @@ class ArithmeticCPUKernel : public LiteKernel {
   ArithmeticCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                       const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
       : LiteKernel(parameter, inputs, outputs), thread_count_(ctx->thread_num_) {
+    arithmeticParameter_ = reinterpret_cast<ArithmeticParameter *>(parameter);
     switch (parameter->type_) {
       case PrimitiveType_Mul:
-        arithmetic_run_ = ElementMul;
-        arithmetic_broadcast_run_ = BroadcastMul;
+        switch (arithmeticParameter_->activation_type_) {
+          case schema::ActivationType_RELU:
+            arithmetic_run_ = ElementMulRelu;
+            break;
+          case schema::ActivationType_RELU6:
+            arithmetic_run_ = ElementMulRelu6;
+            break;
+          default:
+            arithmetic_run_ = ElementMul;
+            break;
+        }
         break;
       case PrimitiveType_Add:
-        arithmetic_run_ = ElementAdd;
-        arithmetic_broadcast_run_ = BroadcastAdd;
+       switch (arithmeticParameter_->activation_type_) {
+          case schema::ActivationType_RELU:
+            arithmetic_run_ = ElementAddRelu;
+            break;
+          case schema::ActivationType_RELU6:
+            arithmetic_run_ = ElementAddRelu6;
+            break;
+          default:
+            arithmetic_run_ = ElementAdd;
+            break;
+        }
         break;
       case PrimitiveType_Sub:
-        arithmetic_run_ = ElementSub;
-        arithmetic_broadcast_run_ = BroadcastSub;
+      switch (arithmeticParameter_->activation_type_) {
+          case schema::ActivationType_RELU:
+            arithmetic_run_ = ElementSubRelu;
+            break;
+          case schema::ActivationType_RELU6:
+            arithmetic_run_ = ElementSubRelu6;
+            break;
+          default:
+            arithmetic_run_ = ElementSub;
+            break;
+        }
         break;
       case PrimitiveType_Div:
-        arithmetic_run_ = ElementDiv;
-        arithmetic_broadcast_run_ = BroadcastDiv;
+      switch (arithmeticParameter_->activation_type_) {
+          case schema::ActivationType_RELU:
+            arithmetic_run_ = ElementDivRelu;
+            break;
+          case schema::ActivationType_RELU6:
+            arithmetic_run_ = ElementDivRelu6;
+            break;
+          default:
+            arithmetic_run_ = ElementDiv;
+            break;
+        }
         break;
       case PrimitiveType_LogicalAnd:
         arithmetic_run_ = ElementLogicalAnd;
@@ -125,7 +162,6 @@ class ArithmeticCPUKernel : public LiteKernel {
         arithmetic_broadcast_run_ = nullptr;
         break;
     }
-    arithmeticParameter_ = reinterpret_cast<ArithmeticParameter *>(parameter);
   }
   ~ArithmeticCPUKernel() override;
 

@@ -47,7 +47,7 @@ inline int Relu6(const float *src, int length, float *dst) {
 
 inline int LRelu(const float *src, int length, float *dst, float alpha) {
   for (int i = 0; i < length; ++i) {
-    dst[i] = src[i] > (src[i] * alpha) ? src[i] : (src[i] * alpha);
+    dst[i] = src[i] > 0 ? src[i] : (src[i] * alpha);
   }
   return NNACL_OK;
 }

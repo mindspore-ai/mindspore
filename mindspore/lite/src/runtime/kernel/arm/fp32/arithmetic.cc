@@ -56,29 +56,26 @@ int ArithmeticCPUKernel::DoArithmetic(int task_id) {
   auto input1_data1 = reinterpret_cast<float *>(inputs_[1]->Data());
   auto output_data = reinterpret_cast<float *>(outputs_[0]->Data());
   auto element_num = outputs_[0]->ElementsNum();
-  if (arithmeticParameter_->broadcasting_) {
-    if (arithmetic_broadcast_run_ == nullptr) {
-      MS_LOG(ERROR) << "broadcasting_run function is nullptr!";
-      return RET_ERROR;
-    }
 
-    MS_ASSERT(thread_count_ != 0);
-    int stride = UP_DIV(element_num, thread_count_);
-    int count = MSMIN(stride, element_num - stride * task_id);
+  MS_ASSERT(thread_count_ != 0);
+  int stride = UP_DIV(element_num, thread_count_);
+  int count = MSMIN(stride, element_num - stride * task_id);
 
-    int error_code = arithmetic_run_(tile_data0_ + stride * task_id, tile_data1_ + stride * task_id,
-                                     output_data + stride * task_id, count);
-
-    if (error_code != RET_OK) {
-      return RET_ERROR;
-    }
-  } else if (arithmetic_run_ != nullptr) {
-    int error_code = arithmetic_run_(input0_data, input1_data1, output_data, element_num);
-    if (error_code != RET_OK) {
-      return RET_ERROR;
-    }
-  } else {
+  if (arithmetic_run_ == nullptr) {
     MS_LOG(ERROR) << "arithmetic_run function is nullptr!";
+    return RET_ERROR;
+  }
+
+  int error_code = RET_OK;
+  if (arithmeticParameter_->broadcasting_) {
+    error_code = arithmetic_run_(tile_data0_ + stride * task_id, tile_data1_ + stride * task_id,
+                                 output_data + stride * task_id, count);
+
+  } else {
+    error_code = arithmetic_run_(input0_data + stride * task_id, input1_data1 + stride * task_id,
+                                 output_data + stride * task_id, count);
+  }
+  if (error_code != RET_OK) {
     return RET_ERROR;
   }
   return RET_OK;
