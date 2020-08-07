@@ -130,8 +130,9 @@ int Convolution3x3FP16CPUKernel::InitTmpBuffer() {
   memset(tmp_dst_buffer_, 0, tmp_dst_buffer_size);
 
   /*=============================tmp_out_============================*/
-  size_t tmp_out_size = oC8 * C8NUM * conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ *
-                        tile_num * sizeof(float16_t);
+  int new_out_plane = UP_DIV(conv_param_->output_h_, C4NUM) * UP_DIV(conv_param_->output_w_, C4NUM) * C4NUM * C4NUM;
+  size_t tmp_out_size =
+    oC8 * C8NUM * conv_param_->output_batch_ * new_out_plane * sizeof(float16_t);
   tmp_out_ = reinterpret_cast<float16_t *>(malloc(tmp_out_size));
   if (tmp_out_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_out_ failed.";
@@ -278,7 +279,7 @@ int Convolution3x3FP16CPUKernel::Run() {
   auto out_tensor = outputs_.at(kOutputIndex);
   auto output_addr = reinterpret_cast<float *>(out_tensor->Data());
   for (int j = 0; j < out_tensor->ElementsNum(); ++j) {
-    output_addr[j] = (reinterpret_cast<float *>(fp16_out_))[j];
+    output_addr[j] = static_cast<float >(fp16_out_[j]);
   }
   return RET_OK;
 }

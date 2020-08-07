@@ -136,7 +136,7 @@ inline uint8_t QuantizeToUint8(float real_value, float scale, int32_t zp) { retu
 
 inline int32_t QuantizeToInt8(float real_value, float scale, int32_t zp) { return round(real_value / scale + zp); }
 
-inline void CalculateActivationRangeQuantized(bool is_relu, bool is_relu6, int32_t zp, int32_t scale, int *mini,
+inline void CalculateActivationRangeQuantized(bool is_relu, bool is_relu6, int32_t zp, float scale, int *mini,
                                               int *maxi) {
   int32_t min = std::numeric_limits<int8_t>::min();
   int32_t max = std::numeric_limits<int8_t>::max();

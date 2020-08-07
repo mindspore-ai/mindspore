@@ -203,19 +203,20 @@ void ConvInt8(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight, c
       // clear tmp buffer before compute
       memset(gemm_input, (int8_t)input_zp, unit_size * tile_n);
       int out_offset = thread_id * tile_n * out_channel + out_batch_offset;
-      // todo
-      size_t tmp_dst_size = thread_count * tile_n * conv_param->output_channel_ * sizeof(int32_t);
-      memset(tmp_dst, 0, tmp_dst_size);
+
+      size_t tmp_dst_size = tile_n * conv_param->output_channel_ * sizeof(int32_t);
+      int tmp_dst_offset = task_id * tile_n * conv_param->output_channel_;
+      memset(tmp_dst + tmp_dst_offset, 0, tmp_dst_size);
 
       Im2ColPackUnitInt8(input_data + in_batch_offset, gemm_input, real_cal_num, start_index, input_sum, conv_param);
       if (real_cal_num == tile_n) {
         int8_t *gemm_output = output_data + out_offset;
-        IndirectGemmInt8(gemm_output, tmp_dst, gemm_input, packed_weight, bias_data, ic4, kernel_plane, out_channel,
-                         input_sum, conv_param);
+        IndirectGemmInt8(gemm_output, tmp_dst + tmp_dst_offset, gemm_input, packed_weight, bias_data, ic4, kernel_plane,
+                         out_channel, input_sum, conv_param);
       } else {
         // res part
-        IndirectGemmInt8(tmp_out, tmp_dst, gemm_input, packed_weight, bias_data, ic4, kernel_plane, out_channel,
-                         input_sum, conv_param);
+        IndirectGemmInt8(tmp_out, tmp_dst + tmp_dst_offset, gemm_input, packed_weight, bias_data, ic4, kernel_plane,
+                         out_channel, input_sum, conv_param);
         memcpy(output_data + out_offset, tmp_out, real_cal_num * out_channel);
       }
     }
@@ -257,19 +258,20 @@ void ConvInt8Opt(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight
       // clear tmp buffer before compute
       memset(gemm_input, (int8_t)input_zp, unit_size * tile_n);
       int out_offset = thread_id * tile_n * out_channel + out_batch_offset;
-      // todo
-      size_t tmp_dst_size = thread_count * tile_n * conv_param->output_channel_ * sizeof(int32_t);
-      memset(tmp_dst, 0, tmp_dst_size);
+
+      size_t tmp_dst_size = tile_n * conv_param->output_channel_ * sizeof(int32_t);
+      int tmp_dst_offset = task_id * tile_n * conv_param->output_channel_;
+      memset(tmp_dst + tmp_dst_offset, 0, tmp_dst_size);
 
       Im2ColPackUnitInt8Opt(input_data + in_batch_offset, gemm_input, real_cal_num, start_index, input_sum, conv_param);
       if (real_cal_num == tile_n) {
         int8_t *gemm_output = output_data + out_offset;
-        IndirectGemmInt8Opt(gemm_output, tmp_dst, gemm_input, packed_weight, bias_data, ic4, kernel_plane, out_channel,
-                            input_sum, conv_param, gemm_func);
+        IndirectGemmInt8Opt(gemm_output, tmp_dst + tmp_dst_offset, gemm_input, packed_weight, bias_data, ic4,
+                            kernel_plane, out_channel, input_sum, conv_param, gemm_func);
       } else {
         // res part
-        IndirectGemmInt8Opt(tmp_out, tmp_dst, gemm_input, packed_weight, bias_data, ic4, kernel_plane, out_channel,
-                            input_sum, conv_param, gemm_func);
+        IndirectGemmInt8Opt(tmp_out, tmp_dst + tmp_dst_offset, gemm_input, packed_weight, bias_data, ic4, kernel_plane,
+                            out_channel, input_sum, conv_param, gemm_func);
         memcpy(output_data + out_offset, tmp_out, real_cal_num * out_channel);
       }
     }
@@ -290,6 +292,10 @@ void Conv3x3Int8(int16_t *input_data, int16_t *transed_weight, const int32_t *bi
   int out_h_block = UP_DIV(conv_param->output_h_, OUPUT_UNIT);
   int output_count = out_w_block * out_h_block;
   int output_tile_count = UP_DIV(output_count, TILE_NUM);
+  int oc4 = UP_DIV(output_channel, C4NUM);
+  int tile_buffer_offset = TILE_NUM * 16 * ic8 * C8NUM;
+  int block_unit_buffer_offset = 16 * C8NUM;
+  int tmp_dst_buffer_offset = TILE_NUM * 16 * oc4 * C4NUM;
 
   int input_batch = conv_param->input_batch_;
   for (int batch = 0; batch < input_batch; batch++) {
@@ -297,13 +303,15 @@ void Conv3x3Int8(int16_t *input_data, int16_t *transed_weight, const int32_t *bi
       int start_index = thread_id * TILE_NUM;
       int real_cal_num = (output_count - start_index) < TILE_NUM ? (output_count - start_index) : TILE_NUM;
 
-      Conv3x3Uint8InputTransform(input_data, tile_buffer, block_unit_buffer, start_index, real_cal_num, out_w_block,
-                                 conv_param);
+      Conv3x3Uint8InputTransform(input_data, tile_buffer + task_id * tile_buffer_offset,
+                                 block_unit_buffer + task_id * block_unit_buffer_offset, start_index, real_cal_num,
+                                 out_w_block, conv_param);
 
-      Conv3x3Uint8Gemm(tmp_dst_buffer, tile_buffer, transed_weight, output_channel, ic8, real_cal_num);
+      Conv3x3Uint8Gemm(tmp_dst_buffer + task_id * tmp_dst_buffer_offset, tile_buffer + task_id * tile_buffer_offset,
+                       transed_weight, output_channel, ic8, real_cal_num);
 
-      Conv3x3Uint8OutputTransform(tmp_dst_buffer, tmp_out, bias_data, start_index, real_cal_num, out_w_block,
-                                  conv_param);
+      Conv3x3Uint8OutputTransform(tmp_dst_buffer + task_id * tmp_dst_buffer_offset, tmp_out, bias_data, start_index,
+                                  real_cal_num, out_w_block, conv_param);
     }
   }
 
