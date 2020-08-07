@@ -12,7 +12,7 @@ add_executable(timeprofile
         ${COMMON_SRC})
 
 if (PLATFORM_ARM32 OR PLATFORM_ARM64)
-    target_link_libraries(timeprofile mindspore-lite ${SECUREC_LIBRARY})
+    target_link_libraries(timeprofile mindspore-lite)
 else()
-    target_link_libraries(timeprofile mindspore-lite ${SECUREC_LIBRARY} pthread)
+    target_link_libraries(timeprofile mindspore-lite pthread)
 endif()
