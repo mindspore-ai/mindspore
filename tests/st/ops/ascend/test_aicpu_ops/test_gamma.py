@@ -24,9 +24,9 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Net(nn.Cell):
-    def __init__(self, shape, seed=0):
+    def __init__(self, shape, seed=0, seed2=0):
         super(Net, self).__init__()
-        self.gamma = P.Gamma(seed=seed)
+        self.gamma = P.Gamma(seed=seed, seed2=seed2)
         self.shape = shape
 
     def construct(self, alpha, beta):
@@ -38,10 +38,9 @@ def test_net_1D():
     shape = (3, 2, 4)
     alpha = 1.0
     beta = 1.0
-    net = Net(shape, seed)
+    net = Net(shape=shape, seed=seed)
     talpha, tbeta = Tensor(alpha, mstype.float32), Tensor(beta, mstype.float32)
     output = net(talpha, tbeta)
-    print(output.asnumpy())
     assert output.shape == (3, 2, 4)
 
 
@@ -50,8 +49,7 @@ def test_net_ND():
     shape = (3, 1, 2)
     alpha = np.array([[[1], [2]], [[3], [4]], [[5], [6]]]).astype(np.float32)
     beta = np.array([1.0]).astype(np.float32)
-    net = Net(shape, seed)
+    net = Net(shape=shape, seed=seed)
     talpha, tbeta = Tensor(alpha), Tensor(beta)
     output = net(talpha, tbeta)
-    print(output.asnumpy())
     assert output.shape == (3, 2, 2)

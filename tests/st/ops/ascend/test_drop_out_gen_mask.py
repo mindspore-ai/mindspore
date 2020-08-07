@@ -43,4 +43,4 @@ def test_net():
     tx, ty = Tensor(x), Tensor(y)
     output = mask(tx, ty)
     print(output.asnumpy())
-    assert ([255, 255, 255, 255] == output.asnumpy()).all()
+    assert ([255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255] == output.asnumpy()).all()

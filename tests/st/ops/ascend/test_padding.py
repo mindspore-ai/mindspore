@@ -12,22 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import numpy as np
 
-"""RandomPoisson op"""
-from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataType
+import mindspore.context as context
+import mindspore.nn as nn
+import mindspore.common.dtype as mstype
+from mindspore import Tensor
+from mindspore.ops import operations as P
 
-poisson_op_info = AiCPURegOp("Poisson") \
-    .fusion_type("OPAQUE") \
-    .input(0, "shape", "required") \
-    .input(1, "mean", "required") \
-    .output(0, "output", "required") \
-    .attr("seed", "int") \
-    .attr("seed2", "int") \
-    .dtype_format(DataType.I32_Default, DataType.F32_Default, DataType.I32_Default) \
-    .dtype_format(DataType.I32_NCHW, DataType.F32_NCHW, DataType.I32_NCHW) \
-    .get_op_info()
+context.set_context(mode=context.GRAPH_MODE,
+                    device_target="Ascend")
 
-@op_info_register(poisson_op_info)
-def _poisson_aicpu():
-    """RandomPoisson AiCPU register"""
-    return
+
+class Net(nn.Cell):
+    def __init__(self, pad_dim_size):
+        super(Net, self).__init__()
+        self.padding = P.Padding(pad_dim_size)
+
+    def construct(self, x):
+        return self.padding(x)
+
+
+def test_padding():
+    x = Tensor(np.array([[8], [10]]), mstype.int32)
+    padding = Net(4)
+    out = padding(x)
+    assert(out.asnumpy() == [[8, 0, 0, 0], [10, 0, 0, 0]]).all()

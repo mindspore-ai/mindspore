@@ -17,7 +17,7 @@
 	url = https://gitee.com/mindspore/akg.git
 [submodule "graphengine"]
 	path = graphengine
-	url = https://gitee.com/mindspore/graphengine.git
+	url = https://gitee.com/ms-incubator/graphengine.git
 [submodule "third_party/OpenCL-CLHPP"]
 	path = third_party/OpenCL-CLHPP
 	url = https://github.com/KhronosGroup/OpenCL-CLHPP.git

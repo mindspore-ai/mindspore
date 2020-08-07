@@ -3372,6 +3372,7 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
         validator.check_tensor_type_same({'indices': indices_dtype}, valid_types, self.name)
         return var_dtype, accum_dtype
 
+
 class KLDivLoss(PrimitiveWithInfer):
     r"""
     Computes the Kullback-Leibler divergence between the target and the output.
@@ -3442,6 +3443,7 @@ class KLDivLoss(PrimitiveWithInfer):
         valid_types = (mstype.float16, mstype.float32)
         validator.check_tensor_type_same(args, valid_types, self.name)
         return x_type
+
 
 class BinaryCrossEntropy(PrimitiveWithInfer):
     r"""

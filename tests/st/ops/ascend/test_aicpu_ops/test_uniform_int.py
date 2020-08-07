@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -24,7 +23,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Net(nn.Cell):
-    def __init__(self, shape, seed=0):
+    def __init__(self, shape, seed=0, seed2=0):
         super(Net, self).__init__()
         self.uniformint = P.UniformInt(seed=seed)
         self.shape = shape
@@ -38,10 +37,9 @@ def test_net_1D():
     shape = (3, 2, 4)
     a = 1
     b = 5
-    net = Net(shape, seed)
+    net = Net(shape, seed=seed)
     ta, tb = Tensor(a, mstype.int32), Tensor(b, mstype.int32)
     output = net(ta, tb)
-    print(output.asnumpy())
     assert output.shape == (3, 2, 4)
 
 

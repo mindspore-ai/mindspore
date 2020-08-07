@@ -12,36 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
 
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor
 from mindspore.ops import operations as P
-from mindspore.common import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Net(nn.Cell):
-    def __init__(self, shape, seed=0):
+    def __init__(self, shape, seed=0, seed2=0):
         super(Net, self).__init__()
         self.uniformreal = P.UniformReal(seed=seed)
         self.shape = shape
 
-    def construct(self, a, b):
-        return self.uniformreal(self.shape, a, b)
+    def construct(self):
+        return self.uniformreal(self.shape)
 
 
-def test_net_1D():
+def test_net():
     seed = 10
     shape = (3, 2, 4)
-    a = 1.0
-    b = 5.0
-    net = Net(shape, seed)
-    ta, tb = Tensor(a, mstype.float32), Tensor(b, mstype.float32)
-    output = net(ta, tb)
-    print(output.asnumpy())
+    net = Net(shape, seed=seed)
+    output = net()
     assert output.shape == (3, 2, 4)
 
 
