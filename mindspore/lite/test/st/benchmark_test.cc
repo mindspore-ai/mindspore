@@ -42,10 +42,11 @@ TEST_F(BenchmarkTest, TestOCR_02) {
 }
 
 TEST_F(BenchmarkTest, TestOCR_02_GPU) {
-const char *argv[] = {"./benchmark", "--modelPath=./hiai/hiai_cv_focusShootOCRMOdel_02.ms"
-                                     "--inDataPath=./hiai/hiai_cv_focusShootOCRMOdel_02.bin"
-                                     "--calibDataPath=./hiai/hiai_cv_focusShootOCRMOdel_02.txt"};
-auto status = RunBenchmark(2, argv);
+const char *argv[] = {"./benchmark", "--modelPath=./hiai/model_02.ms",
+                                     "--inDataPath=./hiai/model_02_in.bin",
+                                     "--calibDataPath=./hiai/model_02_out.bin",
+                                     "--device=GPU"};
+auto status = RunBenchmark(5, argv);
 ASSERT_EQ(status, RET_OK);
 }
 
