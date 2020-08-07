@@ -104,10 +104,6 @@ class CheckpointConfig:
                  integrated_save=True,
                  async_save=False):
 
-        if not save_checkpoint_steps and not save_checkpoint_seconds and \
-                not keep_checkpoint_max and not keep_checkpoint_per_n_minutes:
-            raise ValueError("The input_param can't be all None or 0")
-
         if save_checkpoint_steps is not None:
             save_checkpoint_steps = check_int_non_negative(save_checkpoint_steps)
         if save_checkpoint_seconds is not None:
@@ -116,6 +112,10 @@ class CheckpointConfig:
             keep_checkpoint_max = check_int_non_negative(keep_checkpoint_max)
         if keep_checkpoint_per_n_minutes is not None:
             keep_checkpoint_per_n_minutes = check_int_non_negative(keep_checkpoint_per_n_minutes)
+
+        if not save_checkpoint_steps and not save_checkpoint_seconds and \
+                not keep_checkpoint_max and not keep_checkpoint_per_n_minutes:
+            raise ValueError("The input_param can't be all None or 0")
 
         self._save_checkpoint_steps = save_checkpoint_steps
         self._save_checkpoint_seconds = save_checkpoint_seconds
@@ -173,7 +173,6 @@ class CheckpointConfig:
         return checkpoint_policy
 
 
-
 class ModelCheckpoint(Callback):
     """
     The checkpoint callback class.
@@ -203,7 +202,7 @@ class ModelCheckpoint(Callback):
             raise ValueError("Prefix {} for checkpoint file name invalid, "
                              "please check and correct it and then continue.".format(prefix))
 
-        if directory:
+        if directory is not None:
             self._directory = _make_directory(directory)
         else:
             self._directory = _cur_dir
