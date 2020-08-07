@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace context {
-#ifdef ENBALE_GE
+#ifdef ENABLE_GE
 using mindspore::transform::DfGraphManager;
 #endif
 
