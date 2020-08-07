@@ -50,6 +50,7 @@ cd $convertor_path/MSLite-*-linux_x86_64
 
 #models_config_filename=/home/workspace/mindspore_dataset/mslite/models/models_config.txt
 models_tflite_config=${basepath}/models_tflite.cfg
+rm -rf ${basepath}/ms_models
 mkdir -p ${basepath}/ms_models
 ms_models_path=${basepath}/ms_models
 
@@ -63,6 +64,7 @@ done < ${models_tflite_config}
 #push to the arm and run benchmark：
 
 #first：copy to the server which connected to the phone
+rm -rf ${basepath}/benchmark_test
 mkdir -p ${basepath}/benchmark_test
 benchmark_test_path=${basepath}/benchmark_test
 cd ${benchmark_test_path}
@@ -79,13 +81,17 @@ adb -s $device_id push ${benchmark_test_path} /data/local/tmp/
 echo 'cd  /data/local/tmp/benchmark_test' > adb_cmd.txt
 echo 'cp  /data/local/tmp/libc++_shared.so ./' >> adb_cmd.txt
 echo 'chmod 777 benchmark' >> adb_cmd.txt
+
+adb -s $device_id shell < adb_cmd.txt
+
 #run models：
 while read line;do
 	model_name=$line
 	echo $model_name
+	echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
 	echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1'
-	echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> adb_cmd.txt
+	echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> adb_run_cmd.txt
+        adb -s $device_id shell < adb_run_cmd.txt
 done < ${models_tflite_config}
 
-adb -s $device_id shell < adb_cmd.txt
 
