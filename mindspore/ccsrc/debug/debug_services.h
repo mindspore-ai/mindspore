@@ -78,6 +78,9 @@ class DebugServices {
                         std::vector<unsigned int> *data_size, std::vector<int> *condition,
                         std::vector<unsigned int> *wacthpoint_id);
 
+  void CheckSingleWatchpoint(std::shared_ptr<TensorData> watchnode, std::string *name, std::string *slot,
+                             char **data_ptr, unsigned int *data_size, int *condition, unsigned int *wacthpoint_id);
+
   void ReadNodesTensors(std::vector<std::string> name, std::vector<std::string> *ret_name,
                         std::vector<char *> *data_ptr, std::vector<unsigned int> *data_size,
                         std::vector<TypePtr> *dtype, std::vector<std::vector<int>> *shape);

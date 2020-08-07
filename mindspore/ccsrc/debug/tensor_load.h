@@ -47,6 +47,9 @@ class TensorLoader {
     }
     tensor_list.push_back(tensor);
     tensor_list_map.insert({tensor->GetName(), tensor});
+    auto node_name = tensor->GetName();
+    node_name = node_name.substr(0, node_name.find_first_of(":"));
+    node_tensor_map.insert({node_name, tensor});
     return true;
   }
   std::vector<std::shared_ptr<TensorData>> GetTensor() { return tensor_list; }
@@ -54,6 +57,17 @@ class TensorLoader {
   uint32_t GetIterNum() { return iter_num; }
 
   std::map<std::string, std::shared_ptr<TensorData>> GetTensorMap() { return tensor_list_map; }
+
+  std::vector<std::shared_ptr<TensorData>> GetNodeTensorMap(std::string node_name) {
+    std::vector<std::shared_ptr<TensorData>> tensors;
+    for (auto itr = node_tensor_map.begin(); itr != node_tensor_map.end(); itr++) {
+      if (itr->first == node_name) {
+        tensors.push_back(itr->second);
+      }
+    }
+    return tensors;
+  }
+
   void SearchTensors(const std::vector<std::string> &search_list,
                      std::vector<std::tuple<std::string, std::shared_ptr<TensorData>>> *result_list) {
     for (auto i : search_list) {
@@ -70,6 +84,7 @@ class TensorLoader {
   void EmptyTensor() {
     std::lock_guard<std::mutex> lg(lock_);
     prev_tensor_list_map.clear();
+    node_tensor_map.clear();
     tensor_list_map.swap(prev_tensor_list_map);
     tensor_list.clear();
   }
@@ -127,6 +142,7 @@ class TensorLoader {
  private:
   std::vector<std::shared_ptr<TensorData>> tensor_list;
   std::map<std::string, std::shared_ptr<TensorData>> tensor_list_map;
+  std::multimap<std::string, std::shared_ptr<TensorData>> node_tensor_map;
   std::map<std::string, std::shared_ptr<TensorData>> prev_tensor_list_map;
   uint32_t iter_num;
   std::mutex lock_;

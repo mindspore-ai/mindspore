@@ -31,6 +31,9 @@
 #include "runtime/device/gpu/gpu_memory_copy_manager.h"
 #include "common/trans.h"
 #include "ir/dtype.h"
+#ifdef ENABLE_DEBUGGER
+#include "debug/debug_services.h"
+#endif
 
 namespace mindspore {
 namespace device {
@@ -221,10 +224,46 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
                     const std::vector<mindspore::kernel::AddressPtr> &kernel_workspaces,
                     const std::vector<mindspore::kernel::AddressPtr> &kernel_outputs, int exec_order, void *stream_ptr,
                     bool dump_enabled) {
-  if (!(debugger && (debugger->debugger_enabled() || dump_enabled))) {
+  // check if we should read the kernel data
+  bool read_data = false;
+  std::string kernel_name = kernel->fullname_with_scope();
+  if (debugger) {
+    debugger->SetCurNode(kernel_name);
+    if (dump_enabled) {
+      read_data = true;
+    } else if (debugger->debugger_enabled()) {
+      read_data = debugger->ReadNodeDataRequired();
+    }
+  }
+
+  if (!read_data) {
     return;
   }
-  std::string kernel_name = kernel->fullname_with_scope();
+
+  // get inputs
+  if (!dump_enabled) {
+    auto input_size = AnfAlgo::GetInputTensorNum(kernel);
+    for (size_t j = 0; j < input_size; ++j) {
+      auto input_kernel = kernel->input(j + 1);
+      std::string input_kernel_name = input_kernel->fullname_with_scope();
+      auto addr = kernel_inputs[j];
+      auto type = AnfAlgo::GetOutputInferDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
+      auto format = kOpFormat_DEFAULT;
+      auto gpu_addr = std::make_unique<GPUDeviceAddress>(addr->addr, addr->size, format, type);
+      string input_tensor_name = input_kernel_name + ':' + "0";
+      std::vector<int> int_shapes;
+      auto shape = AnfAlgo::GetOutputDeviceShape(input_kernel, PARAMETER_OUTPUT_INDEX);
+      (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
+                           [](size_t inner_item) { return SizeToInt(inner_item); });
+      auto ret = gpu_addr->LoadMemToHost(input_tensor_name, exec_order, format, int_shapes, type, 0, debugger, false);
+      if (!ret) {
+        MS_LOG(ERROR) << "LoadMemToHost:"
+                      << ", tensor_name:" << input_tensor_name << ", host_format:" << format << ".!";
+      }
+    }
+  }
+
+  // get outputs
   auto output_size = AnfAlgo::GetOutputTensorNum(kernel);
   for (size_t j = 0; j < output_size; ++j) {
     auto addr = kernel_outputs[j];
@@ -242,11 +281,21 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
                     << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
     }
   }
+
+  debugger->PostExecuteNode();
+}
+
+void UpdateStepNum(Debugger *debugger, bool dump_enabled) {
+  if (debugger && (debugger->debugger_enabled() || dump_enabled)) {
+    auto cur_step_num = debugger->step_num();
+    cur_step_num = cur_step_num + 1;
+    debugger->SetStepNum(cur_step_num);
+  }
 }
 
 void LoadParameters(const session::KernelGraph *graph, Debugger *debugger, bool dump_enabled) {
   MS_EXCEPTION_IF_NULL(graph);
-  if (!(debugger && (debugger->debugger_enabled() || dump_enabled))) {
+  if (!(debugger && dump_enabled)) {
     return;
   }
   const auto &parameters = graph->inputs();
@@ -616,9 +665,13 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, De
 
 #ifdef ENABLE_DEBUGGER
   bool dump_enabled = GPUKernelRuntime::DumpDataEnabledIteration();
+  if (!mock) {
+    UpdateStepNum(debugger, dump_enabled);
+  }
 #endif
   auto &kernels = graph->execution_order();
   int exec_order = 1;
+
   for (const auto &kernel : kernels) {
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
@@ -662,7 +715,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, De
   }
   if (!mock) {
 #ifdef ENABLE_DEBUGGER
-    // collect weights and bias
+    // collect weights and bias for dump mode
     LoadParameters(graph, debugger, dump_enabled);
 #endif
     CHECK_OP_RET_WITH_EXCEPT(SyncStream(), "SyncStream failed.");
