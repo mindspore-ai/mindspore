@@ -34,15 +34,15 @@ int MatmulCPUKernel::ReSize() { return RET_OK; }
 
 int MatmulCPUKernel::Init() {
   int batch = 1;
-  auto x_shape = inputs_[0]->shape();
-  auto o_shape = outputs_[0]->shape();
-  for (int i = 0; i < x_shape.size() - 2; ++i) {
-    batch *= x_shape[i];
+  auto a_shape = inputs_[0]->shape();
+  auto c_shape = outputs_[0]->shape();
+  for (int i = 0; i < a_shape.size() - 2; ++i) {
+    batch *= a_shape[i];
   }
   params_->batch = batch;
-  params_->row_ = o_shape[o_shape.size() - 2];
-  params_->col_ = o_shape[o_shape.size() - 1];
-  params_->deep_ = params_->a_transpose_ ? x_shape[x_shape.size() - 2] : x_shape[x_shape.size() - 1];
+  params_->row_ = c_shape[c_shape.size() - 2];
+  params_->col_ = c_shape[c_shape.size() - 1];
+  params_->deep_ = params_->a_transpose_ ? a_shape[a_shape.size() - 2] : a_shape[a_shape.size() - 1];
   params_->row_8_ = UP_ROUND(params_->row_, 8);
   params_->col_8_ = UP_ROUND(params_->col_, 8);
   thread_count_ = MSMIN(thread_count_, UP_DIV(params_->col_8_, 8));

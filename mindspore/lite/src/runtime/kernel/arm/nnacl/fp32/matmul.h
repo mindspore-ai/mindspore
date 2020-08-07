@@ -32,8 +32,8 @@ void MatMul8x8(const float *a, const float *b, float *c, const float *bias, floa
 extern "C" {
 #endif
 #ifdef __aarch64__
-void MatMulFloatNeon64(const float *a, const float *b, float *c, const float *bias, float maxf, float minf, int depth,
-                       int row, int col);
+void MatmulFloatNeon64(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
+                       int col);
 #endif
 #ifdef __cplusplus
 }

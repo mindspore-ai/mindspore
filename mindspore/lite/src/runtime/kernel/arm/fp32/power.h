@@ -30,6 +30,7 @@ class PowerCPUKernel : public LiteKernel {
       : LiteKernel(param, inputs, outputs),
         ctx_(ctx),
         thread_count_(ctx->thread_num_),
+        power_(reinterpret_cast<PowerParameter *>(opParameter)->power_),
         scale_(reinterpret_cast<PowerParameter *>(opParameter)->scale_),
         shift_(reinterpret_cast<PowerParameter *>(opParameter)->shift_) {}
   ~PowerCPUKernel() override = default;
@@ -42,6 +43,7 @@ class PowerCPUKernel : public LiteKernel {
  private:
   const lite::Context *ctx_;
   int thread_count_;
+  float power_;
   float scale_;
   float shift_;
 };
