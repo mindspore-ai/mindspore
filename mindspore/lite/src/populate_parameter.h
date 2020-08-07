@@ -19,7 +19,7 @@
 
 #include "schema/model_generated.h"
 #include "src/ops/ops.h"
-#include "src/runtime/kernel/arm/opclib/op_base.h"
+#include "src/runtime/kernel/arm/nnacl/op_base.h"
 
 namespace mindspore::kernel {
 typedef OpParameter *(*PopulateParameterFunc)(const lite::Primitive *);

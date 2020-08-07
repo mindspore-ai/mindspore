@@ -19,7 +19,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/fp32/pad.h"
 #include "include/errorcode.h"
-#include "src/runtime/kernel/arm/opclib/errorcode.h"
+#include "src/runtime/kernel/arm/nnacl/errorcode.h"
 #include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
@@ -65,7 +65,7 @@ int PadCPUKernel::Init() {
 int PadImpl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
   auto padKernel = reinterpret_cast<PadCPUKernel *>(cdata);
   int error_code = padKernel->RunImpl(task_id);
-  if (error_code != OPCLIB_OK) {
+  if (error_code != NNACL_OK) {
     MS_LOG(ERROR) << "Pad Run error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;
   }

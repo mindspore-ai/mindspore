@@ -19,9 +19,9 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/opclib/op_base.h"
+#include "src/runtime/kernel/arm/nnacl/op_base.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
-#include "src/runtime/kernel/arm/opclib/fp32/conv.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/conv.h"
 
 namespace mindspore::kernel {
 class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {

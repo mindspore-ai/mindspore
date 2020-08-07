@@ -17,7 +17,7 @@
 #include "src/runtime/kernel/arm/fp32/scale.h"
 #include <string.h>
 #include <vector>
-#include "src/runtime/kernel/arm/opclib/scale.h"
+#include "src/runtime/kernel/arm/nnacl/scale.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"

@@ -20,7 +20,7 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "include/context.h"
-#include "src/runtime/kernel/arm/opclib/fp32/matmul.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/matmul.h"
 #include "src/runtime/kernel/arm/base/fullconnection_base.h"
 
 using mindspore::lite::Context;

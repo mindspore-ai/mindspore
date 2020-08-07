@@ -20,8 +20,8 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "ir/anf.h"
-#include "src/runtime/kernel/arm/opclib/fp32/softmax_grad.h"
-#include "src/runtime/kernel/arm/opclib/fp32/arithmetic.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/softmax_grad.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/arithmetic.h"
 
 namespace mindspore::kernel {
 

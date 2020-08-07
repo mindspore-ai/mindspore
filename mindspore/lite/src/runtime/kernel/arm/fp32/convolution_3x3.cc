@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/convolution_3x3.h"
-#include "src/runtime/kernel/arm/opclib/fp32/conv.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/conv.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"

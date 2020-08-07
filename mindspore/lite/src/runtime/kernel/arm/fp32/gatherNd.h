@@ -18,11 +18,11 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GATHERND_H_
 
 #include <vector>
-#include "src/runtime/kernel/arm/opclib/fp32/gatherNd.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/gatherNd.h"
 #include "src/lite_kernel.h"
 
 #include "include/context.h"
-#include "src/runtime/kernel/arm/opclib/op_base.h"
+#include "src/runtime/kernel/arm/nnacl/op_base.h"
 
 using mindspore::lite::Context;
 

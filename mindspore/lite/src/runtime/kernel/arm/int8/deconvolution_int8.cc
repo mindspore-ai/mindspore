@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/int8/deconvolution_int8.h"
-#include "src/runtime/kernel/arm/opclib/quantization/fixed_point.h"
+#include "src/runtime/kernel/arm/nnacl/quantization/fixed_point.h"
 #include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"
 

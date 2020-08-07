@@ -18,7 +18,7 @@
 #include <memory>
 #include "common/common_test.h"
 #include "mindspore/lite/src/runtime/kernel/arm/fp32/activation.h"
-#include "mindspore/lite/src/runtime/kernel/arm/opclib/fp32/activation.h"
+#include "mindspore/lite/src/runtime/kernel/arm/nnacl/fp32/activation.h"
 #include "mindspore/lite/src/runtime/kernel/arm/int8/hswish_int8.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "mindspore/lite/include/context.h"

@@ -21,7 +21,7 @@
 #ifdef ENABLE_ARM
 #include <arm_neon.h>
 #endif
-#include "src/runtime/kernel/arm/opclib/op_base.h"
+#include "src/runtime/kernel/arm/nnacl/op_base.h"
 #include "include/context.h"
 #include "src/ir/tensor.h"
 #include "src/ops/ops.h"

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/base/batch_to_space_base.h"
-#include "src/runtime/kernel/arm/opclib/batch_to_space.h"
+#include "src/runtime/kernel/arm/nnacl/batch_to_space.h"
 #include "src/runtime/kernel/arm/fp32/batch_to_space.h"
 #include "src/runtime/kernel/arm/int8/batch_to_space_int8.h"
 #include "schema/model_generated.h"

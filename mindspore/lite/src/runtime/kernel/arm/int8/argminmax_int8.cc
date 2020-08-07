@@ -17,7 +17,7 @@
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/opclib/int8/arg_min_max_int8.h"
+#include "src/runtime/kernel/arm/nnacl/int8/arg_min_max_int8.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::RET_OK;

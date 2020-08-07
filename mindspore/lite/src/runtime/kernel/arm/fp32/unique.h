@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/opclib/unique.h"
+#include "src/runtime/kernel/arm/nnacl/unique.h"
 
 namespace mindspore::kernel {
 class UniqueCPUKernel : public LiteKernel {

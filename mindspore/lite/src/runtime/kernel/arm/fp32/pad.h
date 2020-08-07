@@ -19,7 +19,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 
-#include "src/runtime/kernel/arm/opclib/fp32/pad.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/pad.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 
 namespace mindspore::kernel {

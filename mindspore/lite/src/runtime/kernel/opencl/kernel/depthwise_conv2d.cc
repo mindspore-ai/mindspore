@@ -21,8 +21,8 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise.h"
-#include "src/runtime/kernel/arm/opclib/pack.h"
 #include "include/errorcode.h"
+#include "src/runtime/kernel/arm/nnacl/pack.h"
 
 #ifndef PROGRAM_WITH_IL
 

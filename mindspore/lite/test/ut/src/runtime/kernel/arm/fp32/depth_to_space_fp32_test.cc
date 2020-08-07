@@ -15,8 +15,8 @@
  */
 #include "mindspore/core/utils/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/runtime/kernel/arm/opclib/depth_to_space.h"
-#include "mindspore/lite/src/runtime/kernel/arm/opclib/arithmetic_common.h"
+#include "mindspore/lite/src/runtime/kernel/arm/nnacl/depth_to_space.h"
+#include "mindspore/lite/src/runtime/kernel/arm/nnacl/arithmetic_common.h"
 
 namespace mindspore {
 

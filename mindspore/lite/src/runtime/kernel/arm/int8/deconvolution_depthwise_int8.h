@@ -20,7 +20,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
-#include "src/runtime/kernel/arm/opclib/fp32/conv_depthwise.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/conv_depthwise.h"
 
 namespace mindspore::kernel {
 class DeconvolutionDepthwiseInt8CPUKernel : public ConvolutionBaseCPUKernel {

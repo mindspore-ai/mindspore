@@ -18,7 +18,7 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#include "src/runtime/kernel/arm/opclib/int8/conv_depthwise_int8.h"
+#include "src/runtime/kernel/arm/nnacl/int8/conv_depthwise_int8.h"
 #include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;

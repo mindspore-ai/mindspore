@@ -18,10 +18,10 @@
 #include <memory>
 #include <string>
 #include "utils/log_adapter.h"
-#include "mindspore/lite/src/gllo/fusion/conv_biasadd_fusion.h"
-#include "mindspore/lite/src/gllo/fusion/conv_activation_fusion.h"
-#include "mindspore/lite/src/gllo/fusion/conv_scale_fusion.h"
-#include "mindspore/lite/src/gllo/fusion/conv_bn_fusion.h"
+#include "mindspore/lite/tools/optimizer/fusion/conv_biasadd_fusion.h"
+#include "mindspore/lite/tools/optimizer/fusion/conv_activation_fusion.h"
+#include "mindspore/lite/tools/optimizer/fusion/conv_scale_fusion.h"
+#include "mindspore/lite/tools/optimizer/fusion/conv_bn_fusion.h"
 
 using std::string;
 namespace mindspore {

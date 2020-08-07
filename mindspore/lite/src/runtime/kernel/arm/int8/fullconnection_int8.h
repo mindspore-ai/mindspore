@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "include/context.h"
-#include "src/runtime/kernel/arm/opclib/quantization/quantize.h"
+#include "src/runtime/kernel/arm/nnacl/quantization/quantize.h"
 #include "src/runtime/kernel/arm/base/fullconnection_base.h"
 
 using mindspore::lite::Context;

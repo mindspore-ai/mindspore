@@ -50,7 +50,7 @@ int AddNCPUKernel::AddNParallelRun(int thread_id) {
   int count = MSMIN(count_per_thread, elements_num_ - thread_id * count_per_thread);
   auto stride = count_per_thread * thread_id;
   auto ret = ElementAdd(in1_addr_ + stride, in2_addr_ + stride, out_addr_ + stride, count);
-  if (ret != OPCLIB_OK) {
+  if (ret != NNACL_OK) {
     MS_LOG(ERROR) << "ElementAdd fail! ret: " << ret;
     return RET_ERROR;
   }

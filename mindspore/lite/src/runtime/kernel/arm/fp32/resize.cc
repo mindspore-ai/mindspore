@@ -18,8 +18,8 @@
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/opclib/resize.h"
-#include "src/runtime/kernel/arm/opclib/pack.h"
+#include "src/runtime/kernel/arm/nnacl/resize.h"
+#include "src/runtime/kernel/arm/nnacl/pack.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
 
@@ -140,7 +140,7 @@ int ResizeCPUKernel::Init() {
 int ResizeImpl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
   auto resize = reinterpret_cast<ResizeCPUKernel *>(cdata);
   auto error_code = resize->RunImpl(task_id);
-  if (error_code != OPCLIB_OK) {
+  if (error_code != NNACL_OK) {
     MS_LOG(ERROR) << "Resize Run error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;
   }
@@ -198,7 +198,7 @@ int ResizeCPUKernel::RunImpl(int task_id) {
     case schema::ResizeMethod_UNKNOW:
     default: {
       MS_LOG(ERROR) << "Resize unknown method " << method_;
-      ret = OPCLIB_ERR;
+      ret = NNACL_ERR;
     }
   }
   return ret;

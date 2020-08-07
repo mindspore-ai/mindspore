@@ -15,11 +15,11 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/pooling.h"
-#include "src/runtime/kernel/arm/opclib/fp32/pooling.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/pooling.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
-#include "src/runtime/kernel/arm/opclib/op_base.h"
+#include "src/runtime/kernel/arm/nnacl/op_base.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;

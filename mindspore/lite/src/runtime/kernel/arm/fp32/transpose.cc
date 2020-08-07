@@ -16,7 +16,7 @@
 
 #include "src/runtime/kernel/arm/fp32/transpose.h"
 #include <vector>
-#include "src/runtime/kernel/arm/opclib/transpose.h"
+#include "src/runtime/kernel/arm/nnacl/transpose.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"

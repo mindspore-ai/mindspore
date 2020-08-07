@@ -18,7 +18,7 @@
 #include <string>
 #include "src/kernel_registry.h"
 #include "src/runtime/opencl/opencl_runtime.h"
-#include "src/runtime/kernel/arm/opclib/fp32/matmul.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/matmul.h"
 #include "src/runtime/kernel/opencl/kernel/matmul.h"
 #ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/fp16/matmul.cl.inc"

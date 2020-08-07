@@ -74,20 +74,20 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/anf_importer/import_from_protobuf.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/onnx/onnx.pb.cc
 
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/common/node_pass.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/common/optimizer.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/common/pass_manager.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/common/gllo_utils.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/fusion/conv_biasadd_fusion.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/fusion/conv_activation_fusion.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/fusion/conv_transform_fusion.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/fusion/conv_scale_fusion.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/gllo/fusion/conv_bn_fusion.cc
+        ../optimizer/common/node_pass.cc
+        ../optimizer/common/optimizer.cc
+        ../optimizer/common/pass_manager.cc
+        ../optimizer/common/gllo_utils.cc
+        ../optimizer/fusion/conv_biasadd_fusion.cc
+        ../optimizer/fusion/conv_activation_fusion.cc
+        ../optimizer/fusion/conv_transform_fusion.cc
+        ../optimizer/fusion/conv_scale_fusion.cc
+        ../optimizer/fusion/conv_bn_fusion.cc
         )
 
 add_subdirectory(parser/caffe)
 add_subdirectory(parser/tflite)
-add_subdirectory(optimizer)
+add_subdirectory(legacy_optimizer)
 add_subdirectory(quantizer)
 
 add_executable(converter_lite

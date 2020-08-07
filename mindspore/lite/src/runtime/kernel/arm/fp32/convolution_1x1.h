@@ -21,14 +21,14 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "include/errorcode.h"
-#include "src/runtime/kernel/arm/opclib/op_base.h"
-#include "src/runtime/kernel/arm/opclib/winograd_transform.h"
+#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "src/runtime/kernel/arm/nnacl/winograd_transform.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
-#include "src/runtime/kernel/arm/opclib/fp32/conv.h"
-#include "src/runtime/kernel/arm/opclib/fp32/common_func.h"
-#include "src/runtime/kernel/arm/opclib/matmul.h"
-#include "src/runtime/kernel/arm/opclib/fp32/matmul.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/conv.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/common_func.h"
+#include "src/runtime/kernel/arm/nnacl/matmul.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/matmul.h"
 
 namespace mindspore::kernel {
 class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {

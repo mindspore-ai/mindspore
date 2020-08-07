@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/int8/concat_int8.h"
-#include "src/runtime/kernel/arm/opclib/int8/concat_int8.h"
+#include "src/runtime/kernel/arm/nnacl/int8/concat_int8.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 

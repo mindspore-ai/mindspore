@@ -21,7 +21,7 @@
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
 #include "src/runtime/kernel/arm/fp32/fullconnection.h"
-#include "src/runtime/kernel/arm/opclib/fp32/matmul.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/matmul.h"
 
 namespace mindspore {
 using mindspore::lite::tensor::Tensor;

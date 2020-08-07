@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/opclib/concat_parameter.h"
+#include "src/runtime/kernel/arm/nnacl/concat_parameter.h"
 
 namespace mindspore::kernel {
 class BatchToSpaceBaseCPUKernel : public LiteKernel {

@@ -19,7 +19,7 @@
 #include "schema/model_generated.h"
 #include "src/kernel_factory.h"
 #include "src/runtime/kernel/arm/fp32/bngrad_input.h"
-#include "src/runtime//kernel/arm/opclib/batch_norm.h"
+#include "src/runtime//kernel/arm/nnacl/batch_norm.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;

@@ -17,7 +17,7 @@
 #include <vector>
 #include "src/runtime/kernel/arm/int8/concat_int8.h"
 #include "src/runtime/kernel/arm/fp32/concat.h"
-#include "src/runtime/kernel/arm/opclib/fp32/concat.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/concat.h"
 #include "schema/model_generated.h"
 #include "src/kernel_factory.h"
 #include "include/errorcode.h"

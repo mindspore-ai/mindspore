@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GATHER_H_
 
 #include <vector>
-#include "src/runtime/kernel/arm/opclib/fp32/gather.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/gather.h"
 #include "src/lite_kernel.h"
 
 namespace mindspore::kernel {

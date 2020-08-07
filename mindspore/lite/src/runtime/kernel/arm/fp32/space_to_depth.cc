@@ -18,7 +18,7 @@
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/opclib/fp32/space_to_depth.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/space_to_depth.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
 

@@ -15,7 +15,7 @@
  */
 
 #include "mindspore/lite/src/executor.h"
-#include "src/runtime/kernel/arm/opclib/pack.h"
+#include "src/runtime/kernel/arm/nnacl/pack.h"
 #include "include/errorcode.h"
 #include "src/common/ms_tensor_utils.h"
 

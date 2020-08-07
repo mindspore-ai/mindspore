@@ -17,8 +17,8 @@
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/opclib/depth_to_space.h"
-#include "src/runtime/kernel/arm/opclib/int8/depth_to_space_int8.h"
+#include "src/runtime/kernel/arm/nnacl/depth_to_space.h"
+#include "src/runtime/kernel/arm/nnacl/int8/depth_to_space_int8.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::RET_OK;

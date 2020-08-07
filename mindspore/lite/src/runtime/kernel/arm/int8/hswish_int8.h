@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/opclib/int8/hswish_int8.h"
+#include "src/runtime/kernel/arm/nnacl/int8/hswish_int8.h"
 
 namespace mindspore::kernel {
 class HswishInt8CPUKernel : public LiteKernel {

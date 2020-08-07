@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/opclib/fp32/pooling.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/pooling.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::Context;
