@@ -39,19 +39,20 @@ def _send_data_no_flag(dataset, epoch_num):
 
 class DatasetHelper:
     """
-    Help function to use the Minddata dataset.
+    Help function to use the MindData dataset.
 
-    According to different context, change the iter of dataset, to use the same for loop in different context.
+    According to different contexts, change the iterations of dataset and use the same iteration for loop in different
+    contexts.
 
     Note:
-        The iter of DatasetHelper will give one epoch data.
+        The iteration of DatasetHelper will provide one epoch data.
 
     Args:
         dataset (DataSet): The training dataset iterator.
         dataset_sink_mode (bool): If true use GetNext to fetch the data, or else feed the data from host. Default: True.
-        sink_size (int): Control the amount of data each sink.
-                             If sink_size=-1, sink the complete dataset each epoch.
-                             If sink_size>0, sink sink_size data each epoch. Default: -1.
+        sink_size (int): Control the amount of data in each sink.
+                             If sink_size=-1, sink the complete dataset for each epoch.
+                             If sink_size>0, sink sink_size data for each epoch. Default: -1.
         epoch_num (int): Control the number of epoch data to send. Default: 1.
 
     Examples:
@@ -90,11 +91,11 @@ class DatasetHelper:
 
     # A temp solution for loop sink. Delete later
     def types_shapes(self):
-        """Get the types and shapes from dataset on current config."""
+        """Get the types and shapes from dataset on the current configuration."""
         return self.iter.types_shapes()
 
     def sink_size(self):
-        """Get sink_size for every iteration."""
+        """Get sink_size for each iteration."""
         return self.iter.get_sink_size()
 
     def stop_send(self):

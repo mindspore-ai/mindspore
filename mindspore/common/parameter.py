@@ -53,7 +53,7 @@ class Parameter(MetaTensor):
         name (str): Name of the child parameter.
         requires_grad (bool): True if the parameter requires gradient. Default: True.
         layerwise_parallel (bool): A kind of model parallel mode. When layerwise_parallel is true in paralle mode,
-            broadcast and gradients communication would not be applied on parameters. Default: False.
+            broadcast and gradients communication would not be applied to parameters. Default: False.
     """
     __base_type__ = {}
 
@@ -196,7 +196,7 @@ class Parameter(MetaTensor):
 
     @property
     def is_init(self):
-        """Get init status of the parameter."""
+        """Get the initialization status of the parameter."""
         return self._is_init
 
     @is_init.setter
@@ -322,7 +322,7 @@ class Parameter(MetaTensor):
 
     def init_data(self, layout=None, set_sliced=False):
         """
-        Init data of the parameter.
+        Initialize the parameter data.
 
         Args:
             layout (list[list[int]]): Parameter slice layout [dev_mat, tensor_map, slice_shape].
@@ -330,11 +330,11 @@ class Parameter(MetaTensor):
                 - dev_mat (list[int]): Device matrix.
                 - tensor_map (list[int]): Tensor map.
                 - slice_shape (list[int]): Shape of slice.
-            set_sliced (bool): True if should set parameter sliced after init the data of initializer.
+            set_sliced (bool): True if the parameter is set sliced after initializing the data.
                 Default: False.
 
         Returns:
-            Parameter, the `Parameter` after init data. If current `Parameter` already initialized before,
+            Parameter, the `Parameter` after initializing data. If current `Parameter` was already initialized before,
             returns the same initialized `Parameter`.
         """
         if self.init_mode is None:
@@ -371,7 +371,7 @@ class ParameterTuple(tuple):
     Class for storing tuple of parameters.
 
     Note:
-        Used to store the parameters of the network into the parameter tuple collection.
+        It is used to store the parameters of the network into the parameter tuple collection.
     """
     def __new__(cls, iterable):
         """Create instance object of ParameterTuple."""

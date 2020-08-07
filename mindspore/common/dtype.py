@@ -166,7 +166,7 @@ def pytype_to_dtype(obj):
 
 def get_py_obj_dtype(obj):
     """
-    Get the corresponding MindSpore data type by python type or variable.
+    Get the MindSpore data type which corresponds to python type or variable.
 
     Args:
         obj: An object of python type, or a variable in python type.
@@ -186,7 +186,7 @@ def get_py_obj_dtype(obj):
 
 def dtype_to_nptype(type_):
     """
-    Get numpy data type corresponding to MindSpore dtype.
+    Convert MindSpore dtype to numpy data type.
 
     Args:
         type_ (:class:`mindspore.dtype`): MindSpore's dtype.
@@ -213,7 +213,7 @@ def dtype_to_nptype(type_):
 
 def dtype_to_pytype(type_):
     """
-    Get python type corresponding to MindSpore dtype.
+    Convert MindSpore dtype to python data type.
 
     Args:
         type_ (:class:`mindspore.dtype`): MindSpore's dtype.
