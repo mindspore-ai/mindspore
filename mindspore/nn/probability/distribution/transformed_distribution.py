@@ -30,6 +30,8 @@ class TransformedDistribution(Distribution):
     Args:
         bijector (Bijector): The transformation to perform.
         distribution (Distribution): The original distribution.
+        dtype (mindspore.dtype): The type of the event samples.
+        seed (int): The seed is used in sampling. The global seed is used if it is None.
         name (str): The name of the transformed distribution. Default: 'transformed_distribution'.
 
     Note:
@@ -98,38 +100,38 @@ class TransformedDistribution(Distribution):
     def is_linear_transformation(self):
         return self._is_linear_transformation
 
-    def _cdf(self, *args, **kwargs):
+    def _cdf(self, value, *args, **kwargs):
         r"""
         .. math::
             Y = g(X)
             P(Y <= a) = P(X <= g^{-1}(a))
         """
-        inverse_value = self.bijector("inverse", *args, **kwargs)
-        return self.distribution("cdf", inverse_value)
+        inverse_value = self.bijector("inverse", value)
+        return self.distribution("cdf", inverse_value, *args, **kwargs)
 
-    def _log_cdf(self, *args, **kwargs):
-        return self.log(self._cdf(*args, **kwargs))
+    def _log_cdf(self, value, *args, **kwargs):
+        return self.log(self._cdf(value, *args, **kwargs))
 
-    def _survival_function(self, *args, **kwargs):
-        return 1.0 - self._cdf(*args, **kwargs)
+    def _survival_function(self, value, *args, **kwargs):
+        return 1.0 - self._cdf(value, *args, **kwargs)
 
-    def _log_survival(self, *args, **kwargs):
-        return self.log(self._survival_function(*args, **kwargs))
+    def _log_survival(self, value, *args, **kwargs):
+        return self.log(self._survival_function(value, *args, **kwargs))
 
-    def _log_prob(self, *args, **kwargs):
+    def _log_prob(self, value, *args, **kwargs):
         r"""
         .. math::
             Y = g(X)
             Py(a) = Px(g^{-1}(a)) * (g^{-1})'(a)
             \log(Py(a)) = \log(Px(g^{-1}(a))) + \log((g^{-1})'(a))
         """
-        inverse_value = self.bijector("inverse", *args, **kwargs)
-        unadjust_prob = self.distribution("log_prob", inverse_value)
-        log_jacobian = self.bijector("inverse_log_jacobian", *args, **kwargs)
+        inverse_value = self.bijector("inverse", value)
+        unadjust_prob = self.distribution("log_prob", inverse_value, *args, **kwargs)
+        log_jacobian = self.bijector("inverse_log_jacobian", value)
         return unadjust_prob + log_jacobian
 
-    def _prob(self, *args, **kwargs):
-        return self.exp(self._log_prob(*args, **kwargs))
+    def _prob(self, value, *args, **kwargs):
+        return self.exp(self._log_prob(value, *args, **kwargs))
 
     def _sample(self, *args, **kwargs):
         org_sample = self.distribution("sample", *args, **kwargs)

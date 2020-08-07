@@ -76,7 +76,10 @@ class Distribution(Cell):
                 self._parameters[k] = param[k]
 
         # some attributes
-        self.parameter_type = set_param_type(self.parameters['param_dict'], dtype)
+        if 'distribution' in self.parameters.keys():
+            self.parameter_type = self.parameters['distribution'].parameter_type
+        else:
+            self.parameter_type = set_param_type(self.parameters['param_dict'], dtype)
         self._broadcast_shape = self._calc_broadcast_shape()
         self._is_scalar_batch = self._check_is_scalar_batch()
 
@@ -206,8 +209,8 @@ class Distribution(Cell):
         """
         Check if the parameters used during initialization are scalars.
         """
-        if hasattr(self, 'distribution'):
-            return self._distribution.is_scalar_batch
+        if 'distribution' in self.parameters.keys():
+            return self.parameters['distribution'].is_scalar_batch
         param_dict = self.parameters['param_dict']
         for value in param_dict.values():
             if value is None:
@@ -220,8 +223,8 @@ class Distribution(Cell):
         """
         Calculate the broadcast shape of the parameters used during initialization.
         """
-        if hasattr(self, 'distribution'):
-            return self._distribution.broadcast_shape
+        if 'distribution' in self.parameters.keys():
+            return self.parameters['distribution'].broadcast_shape
         param_dict = self.parameters['param_dict']
         broadcast_shape_tensor = None
         for value in param_dict.values():
