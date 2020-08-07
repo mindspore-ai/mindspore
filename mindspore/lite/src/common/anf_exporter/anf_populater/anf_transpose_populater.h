@@ -13,24 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_ANF_NODE_PARSER_H
-#define MINDSPORE_ANF_NODE_PARSER_H
-
+#ifndef MINDSPORE_ANF_TRANSPOSE_PARSER_H
+#define MINDSPORE_ANF_TRANSPOSE_PARSER_H
+#include "src/common/anf_exporter/anf_populater/anf_node_populater.h"
 #include <vector>
-#include "ir/anf.h"
-#include "schema/inner/model_generated.h"
 namespace mindspore::lite {
-constexpr int kAnfPopulaterOne = 1;
-constexpr int kAnfPopulaterTwo = 2;
-constexpr int kAnfPopulaterThree = 3;
-class AnfNodePopulater {
+class AnfTransposePopulater : public AnfNodePopulater {
  public:
-  AnfNodePopulater() = default;
-  virtual ~AnfNodePopulater() = default;
-  virtual int Parse(CNodePtr cnodePtr, schema::CNodeT *node, std::vector<schema::TensorT *> *outputs) = 0;
+  AnfTransposePopulater() = default;
+  ~AnfTransposePopulater() override = default;
+  int Parse(CNodePtr cnodePtr, schema::CNodeT *node, std::vector<schema::TensorT *> *outputs) override;
 };
-
 }  // namespace mindspore::lite
 
-#endif  // MINDSPORE_ANF_NODE_PARSER_H
+#endif  // MINDSPORE_ANF_TRANSPOSE_PARSER_H

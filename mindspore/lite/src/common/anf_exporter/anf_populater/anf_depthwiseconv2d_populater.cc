@@ -62,6 +62,26 @@ int mindspore::lite::AnfDepwiseconv2DPopulater::Parse(mindspore::CNodePtr cnodeP
     attr->padMode = schema::PadMode_NOTSET;
   }
 
+  auto channel_multiplier = GetValue<int>(p->GetAttr("channel_multiplier"));
+  attr->channelMultiplier = channel_multiplier;
+
+  MS_ASSERT(cnodePtr->size() == kAnfPopulaterThree);
+  auto inputNode = cnodePtr->input(kAnfPopulaterTwo);
+  MS_ASSERT(inputNode != nullptr);
+  if (inputNode->isa<Parameter>()) {
+    auto paramNode = inputNode->cast<ParameterPtr>();
+    auto abstractBase = paramNode->abstract();
+    MS_ASSERT(abstractBase != nullptr);
+    if (utils::isa<abstract::AbstractTensorPtr>(abstractBase)) {
+      auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
+      MS_ASSERT(abstractTensor != nullptr);
+      if (utils::isa<abstract::ShapePtr>(abstractTensor->BuildShape())) {
+        auto dims = utils::cast<abstract::ShapePtr>(abstractTensor->BuildShape())->shape();
+        attr->channelIn = dims[kAnfPopulaterOne];
+      }
+    }
+  }
+
   node->nodeType = schema::NodeType_CNode;
   node->primitive = std::make_unique<schema::PrimitiveT>();
   node->primitive->value.type = schema::PrimitiveType_DepthwiseConv2D;

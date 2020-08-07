@@ -1,5 +1,7 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
+ *
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +16,17 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_ANF_NODE_PARSER_H
-#define MINDSPORE_ANF_NODE_PARSER_H
-
+#ifndef MINDSPORE_ANF_CONCAT_PARSER_H
+#define MINDSPORE_ANF_CONCAT_PARSER_H
+#include "src/common/anf_exporter/anf_populater/anf_node_populater.h"
 #include <vector>
-#include "ir/anf.h"
-#include "schema/inner/model_generated.h"
 namespace mindspore::lite {
-constexpr int kAnfPopulaterOne = 1;
-constexpr int kAnfPopulaterTwo = 2;
-constexpr int kAnfPopulaterThree = 3;
-class AnfNodePopulater {
+class AnfConcatPopulater : public AnfNodePopulater {
  public:
-  AnfNodePopulater() = default;
-  virtual ~AnfNodePopulater() = default;
-  virtual int Parse(CNodePtr cnodePtr, schema::CNodeT *node, std::vector<schema::TensorT *> *outputs) = 0;
+  AnfConcatPopulater() = default;
+  ~AnfConcatPopulater() override = default;
+  int Parse(CNodePtr cnodePtr, schema::CNodeT *node, std::vector<schema::TensorT *> *outputs) override;
 };
-
 }  // namespace mindspore::lite
 
-#endif  // MINDSPORE_ANF_NODE_PARSER_H
+#endif  // MINDSPORE_ANF_CONCAT_PARSER_H
