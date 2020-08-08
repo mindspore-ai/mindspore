@@ -26,6 +26,7 @@
 #include "src/runtime/kernel/arm/nnacl/fp32/slice.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/broadcast_to.h"
 #include "src/runtime/kernel/arm/nnacl/reshape_parameter.h"
+#include "src/runtime/kernel/arm/nnacl/shape.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/stack.h"
 #include "src/runtime/kernel/arm/nnacl/unstack.h"
 #include "src/runtime/kernel/arm/nnacl/depth_to_space.h"
@@ -874,6 +875,16 @@ OpParameter *PopulateReshapeParameter(const lite::Primitive *primitive) {
   return reinterpret_cast<OpParameter *>(reshape_param);
 }
 
+OpParameter *PopulateShapeParameter(const lite::Primitive *primitive) {
+  ShapeParameter *shape_param = new (std::nothrow) ShapeParameter();
+  if (shape_param == nullptr) {
+    MS_LOG(ERROR) << "new ShapeParameter failed.";
+    return nullptr;
+  }
+  shape_param->op_parameter_.type_ = primitive->Type();
+  return reinterpret_cast<OpParameter *>(shape_param);
+}
+
 OpParameter *PopulateReverseParameter(const lite::Primitive *primitive) {
   auto reverse_attr = primitive->Value()->value_as_Reverse();
   ReverseParameter *reverse_param = new (std::nothrow) ReverseParameter();
@@ -1306,6 +1317,7 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_Cast] = PopulateCastParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Scale] = PopulateScaleParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Reshape] = PopulateReshapeParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_Shape] = PopulateShapeParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Concat] = PopulateConcatParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Tile] = PopulateTileParameter;
   populate_parameter_funcs_[schema::PrimitiveType_TopK] = PopulateTopKParameter;

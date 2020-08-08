@@ -24,8 +24,17 @@ STATUS TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
                                   const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
                                   const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                   const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                                  schema::CNodeT *op,
-                                  TensorCache *tensor_cache, bool quantizedModel) {
+                                  schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse TfliteReshapeParser";
   std::unique_ptr<schema::ReshapeT> attr(new schema::ReshapeT());
 
@@ -42,7 +51,7 @@ STATUS TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
       return RET_NULL_PTR;
     }
     std::vector<tflite::TensorT *> shape_tensors{shape_tensor.get()};
-    if (RET_OK != ParseWeight(shape_tensors, tfliteModelBuffer, tensor_cache, schema::Format_KHWC)) {
+    if (RET_OK != ParseTensor(shape_tensors, tfliteModelBuffer, tensor_cache, TF_CONST)) {
       MS_LOG(ERROR) << "parse shape tensor error";
       return RET_ERROR;
     }
@@ -54,11 +63,8 @@ STATUS TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
     }
   }
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Reshape;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_Reshape;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

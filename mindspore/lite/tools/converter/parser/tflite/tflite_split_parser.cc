@@ -27,6 +27,16 @@ STATUS TfliteSplitParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
                                 schema::CNodeT *op,
                                 TensorCache *tensor_cache,
                                 bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(INFO) << "parse TfliteSplitParser";
   std::unique_ptr<schema::SplitT> attr(new schema::SplitT());
 
@@ -67,11 +77,8 @@ STATUS TfliteSplitParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
     attr->sizeSplits.push_back(tensor_shape[axis] / num_splits);
   }
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Split;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_Split;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

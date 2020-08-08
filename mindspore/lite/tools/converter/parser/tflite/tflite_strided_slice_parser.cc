@@ -26,6 +26,16 @@ STATUS TfliteStridedSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> 
                                        const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_opset,
                                        schema::CNodeT *op,
                                        TensorCache *tensor_cache, bool quantized_model) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse TfliteStridedSliceParser";
   std::unique_ptr<schema::StridedSliceT> attr(new schema::StridedSliceT());
   const auto &tflite_attr = tflite_op->builtin_options.AsStridedSliceOptions();
@@ -55,11 +65,8 @@ STATUS TfliteStridedSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> 
   attr->isScale.assign(tflite_tensors[tflite_op->inputs[0]]->shape.begin(),
                        tflite_tensors[tflite_op->inputs[0]]->shape.end());
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_StridedSlice;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_StridedSlice;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

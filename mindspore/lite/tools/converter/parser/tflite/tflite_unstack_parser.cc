@@ -26,6 +26,16 @@ STATUS TfliteUnstackParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
                                   const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
                                   const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_opset,
                                   schema::CNodeT *op, TensorCache *tensor_cache, bool quantized_model) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "paser TfliteUnstackParser";
   std::unique_ptr<schema::UnstackT> attr(new schema::UnstackT());
 
@@ -37,11 +47,8 @@ STATUS TfliteUnstackParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
   attr->num = tflite_attr->num;
   attr->axis = tflite_attr->axis;
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Unstack;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_Unstack;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

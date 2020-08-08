@@ -25,8 +25,17 @@ STATUS TfliteReverseSequenceParser::Parse(const std::unique_ptr<tflite::Operator
                                           const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
                                           const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
                                           const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_opset,
-                                          schema::CNodeT *op,
-                                          TensorCache *tensor_cache, bool quantized_model) {
+                                          schema::CNodeT *op, TensorCache *tensor_cache, bool quantized_model) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse TfliteReverseSequenceParser";
   std::unique_ptr<schema::ReverseSequenceT> attr(new schema::ReverseSequenceT());
 
@@ -43,11 +52,8 @@ STATUS TfliteReverseSequenceParser::Parse(const std::unique_ptr<tflite::Operator
     return RET_ERROR;
   }
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_ReverseSequence;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_ReverseSequence;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

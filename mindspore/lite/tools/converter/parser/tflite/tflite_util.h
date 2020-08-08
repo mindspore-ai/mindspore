@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef MS_TFLITE_UTIL_H
-#define MS_TFLITE_UTIL_H
-
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_UTIL_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_UTIL_H
 
 #include <string>
+#include <vector>
 #include "utils/log_adapter.h"
 #include "schema/inner/model_generated.h"
 #include "tools/converter/parser/tflite/schema_generated.h"
 #include "schema/inner/ops_generated.h"
 #include "ir/dtype/type_id.h"
-
-// using namespace std;
 
 namespace mindspore {
 namespace lite {
@@ -38,8 +36,10 @@ schema::ActivationType GetActivationFunctionType(tflite::ActivationFunctionType 
 std::string GetMSOpType(tflite::BuiltinOperator tfliteOpType);
 
 TypeId GetTfliteDataType(const tflite::TensorType &tflite_data_type);
+
+void Split(const std::string &src_str, std::vector<std::string> *dst_str, const std::string &chr);
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MS_TFLITE_UTIL_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_UTIL_H
 

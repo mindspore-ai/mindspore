@@ -27,6 +27,16 @@ STATUS TfliteArgmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
                                  schema::CNodeT *op,
                                  TensorCache *tensor_cache,
                                  bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse TfliteArgmaxParser";
   std::unique_ptr<schema::ArgMaxT> attr(new schema::ArgMaxT());
 
@@ -49,11 +59,8 @@ STATUS TfliteArgmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   }
   attr->axis = *(static_cast<int32_t *>(static_cast<void *>(data_ptr)));
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_ArgMax;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_ArgMax;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

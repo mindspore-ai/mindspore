@@ -26,6 +26,16 @@ STATUS TfliteBroadcastToParser::Parse(const std::unique_ptr<tflite::OperatorT> &
                                       const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                       const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                       schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse TfliteBroadcastToParser";
   std::unique_ptr<schema::BroadcastToT> attr(new schema::BroadcastToT());
 
@@ -34,11 +44,8 @@ STATUS TfliteBroadcastToParser::Parse(const std::unique_ptr<tflite::OperatorT> &
     return RET_ERROR;
   }
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_BroadcastTo;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_BroadcastTo;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

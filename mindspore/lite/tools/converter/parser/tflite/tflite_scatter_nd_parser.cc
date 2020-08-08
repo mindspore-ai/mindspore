@@ -26,6 +26,16 @@ STATUS TfliteScatterNdParser::Parse(const std::unique_ptr<tflite::OperatorT> &tf
                                     const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                     const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                     schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(INFO) << "parse TfliteScatterNdParser";
   std::unique_ptr<schema::ScatterNDT> attr(new schema::ScatterNDT());
 
@@ -51,11 +61,8 @@ STATUS TfliteScatterNdParser::Parse(const std::unique_ptr<tflite::OperatorT> &tf
   }
    */
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_ScatterND;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_ScatterND;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 
