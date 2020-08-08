@@ -20,9 +20,14 @@
 #include "src/runtime/kernel/arm/nnacl/op_base.h"
 struct ConcatParameter {
   OpParameter op_parameter_;
-  ConcatQuantArg *concat_quant_arg_;
+  ConcatQuantArg quant_arg_;
   int axis_;
   int thread_count_;
+  int input_num_;
+  const int **input_shapes_;
+  const int *output_shapes_;
+  int64_t after_axis_size;
+  int64_t count_unit_;
 };
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CONCAT_PARAMETER_H_

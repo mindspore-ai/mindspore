@@ -40,15 +40,10 @@ struct ConvQuantArg {
 };
 
 struct ConcatQuantArg {
-    int *input_sizes_;
-    int output_size_;
-    int **input_shapes_;
-    int *output_shape_;
-    float alpha;
-    size_t input_num_;
-    size_t output_dim_;
-    QuantArg *in_quant_args_;
-    QuantArg out_quant_args_;
+  QuantArg *in_args_;
+  QuantArg out_args_;
+  int output_activation_min_;
+  int output_activation_max_;
 };
 
 struct SqueezeQuantArg {
@@ -164,6 +159,13 @@ struct SplitQuantArg {
 struct SoftmaxQuantArg {
   QuantArg in_quant_args_;
   QuantArg out_quant_arg_;
+};
+
+struct ReshapeQuantArg {
+  QuantArg in_args_;
+  QuantArg out_args_;
+  int output_activation_min_;
+  int output_activation_max_;
 };
 
 void QuantizeMultiplier(double double_multiplier, int32_t *quantized_multiplier, int *shift);

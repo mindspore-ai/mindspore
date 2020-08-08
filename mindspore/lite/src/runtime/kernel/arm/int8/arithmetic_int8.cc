@@ -126,6 +126,9 @@ int ArithmeticInt8CPUKernel::DoArithmetic(int thread_id) {
     MS_ASSERT(thread_count_ != 0);
     int stride = UP_DIV(element_num, thread_count_);
     int count = MSMIN(stride, element_num - stride * thread_id);
+    if (count <= 0) {
+      return RET_OK;
+    }
 
     int error_code = arithmetic_run_(tile_data0_ + stride * thread_id, tile_data1_ + stride * thread_id,
                                      output_data + stride * thread_id, count);

@@ -15,50 +15,47 @@
  */
 
 #include "src/runtime/kernel/arm/nnacl/int8/concat_int8.h"
+#include "src/runtime/kernel/arm/nnacl/concat_parameter.h"
 #include <string.h>
 
-void Concat(int8_t **inputs, int8_t *output_ptr, ConcatQuantArg *quant_concat_parm, int axis) {
-  float output_scale = quant_concat_parm->out_quant_args_.scale_;
+void Concat(int8_t **inputs, int8_t *output, ConcatParameter *para, int axis, int64_t real_dst_count, int task_id) {
+  float output_scale = para->quant_arg_.out_args_.scale_;
   float output_inverse_scale = 1.f / output_scale;
-  int input_num = quant_concat_parm->input_num_;
-  int *output_shape = quant_concat_parm->output_shape_;
-  int output_dim = quant_concat_parm->output_dim_;
-  QuantArg *input_quant = quant_concat_parm->in_quant_args_;
-  int output_zp = quant_concat_parm->out_quant_args_.zp_;
+  int input_num = para->input_num_;
+  int count_unit_ = para->count_unit_;
+  int after_axis_size = para->after_axis_size;
+  const int *output_shape = para->output_shapes_;
+  int out_copy_size = output_shape[axis] * after_axis_size;
+  QuantArg *input_quant = para->quant_arg_.in_args_;
+  int output_zp = para->quant_arg_.out_args_.zp_;
+  int max_int8 = para->quant_arg_.output_activation_max_;
+  int min_int8 = para->quant_arg_.output_activation_min_;
+  int64_t start = task_id * count_unit_;
+  int64_t end = start + real_dst_count;
 
-  int before_axis_size = 1;
-  for (int i = 0; i < axis; i++) {
-    before_axis_size *= output_shape[i];
-  }
-
-  int after_axis_size = 1;
-  for (size_t i = axis + 1; i < output_dim; i++) {
-    after_axis_size *= output_shape[i];
-  }
-
-  for (int k = 0; k < before_axis_size; k++) {
+  for (int k = start; k < end; k++) {
     for (int i = 0; i < input_num; i++) {
-      int *input_shape = quant_concat_parm->input_shapes_[i];
-      int copy_size = input_shape[axis] * after_axis_size;
-      int8_t *input_ptr = inputs[i] + k * copy_size;
+      const int *input_shape = para->input_shapes_[i];
+      int in_copy_size = input_shape[axis] * after_axis_size;
+      int8_t *input_ptr = inputs[i] + k * in_copy_size;
+      int8_t *output_ptr = output + k * out_copy_size;
       if (input_quant[i].scale_ == output_scale && input_quant[i].zp_ == output_zp) {
-        memcpy(output_ptr, input_ptr, copy_size);
+        memcpy(output_ptr, input_ptr, in_copy_size);
       } else {
         float scale = input_quant[i].scale_ * output_inverse_scale;
         float bias = -input_quant[i].zp_ * scale;
-        for (int j = 0; j < copy_size; j++) {
+        for (int j = 0; j < in_copy_size; j++) {
           int32_t output_tmp = round(input_ptr[j] * scale + bias) + output_zp;
-          if (output_tmp > 127) {
-            output_ptr[j] = 127;
-          } else if (output_tmp < -128) {
-            output_ptr[j] = -128;
+          if (output_tmp > max_int8) {
+            output_ptr[j] = max_int8;
+          } else if (output_tmp < min_int8) {
+            output_ptr[j] = min_int8;
           } else {
-            output_ptr[j] = (int8_t)output_tmp;
+            output_ptr[j] = static_cast<int8_t>(output_tmp);
           }
         }
       }
-      output_ptr += copy_size;
+      output += in_copy_size;
     }
   }
 }
-

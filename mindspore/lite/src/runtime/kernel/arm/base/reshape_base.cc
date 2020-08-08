@@ -44,7 +44,7 @@ kernel::LiteKernel *CpuReshapeInt8KernelCreator(const std::vector<lite::tensor::
   MS_ASSERT(desc.type == schema::PrimitiveType_Reshape);
   auto *kernel = new (std::nothrow) ReshapeInt8CPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new ConcatCPUKernel fail!";
+    MS_LOG(ERROR) << "new ReshapeInt8CPUKernel fail!";
     return nullptr;
   }
   auto ret = kernel->Init();
@@ -68,7 +68,7 @@ kernel::LiteKernel *CpuReshapeInt32KernelCreator(const std::vector<lite::tensor:
   MS_ASSERT(desc.type == schema::PrimitiveType_Reshape);
   auto *kernel = new (std::nothrow) ReshapeCPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new ConcatCPUKernel fail!";
+    MS_LOG(ERROR) << "new ReshapeCPUKernel fail!";
     return nullptr;
   }
   auto ret = kernel->Init();

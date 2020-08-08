@@ -36,7 +36,7 @@ class SplitInt8CPUKernel : public SplitBaseCPUKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int Split(int tId);
+  int Split(int task_id);
 
  private:
   int8_t *input_ptr_;

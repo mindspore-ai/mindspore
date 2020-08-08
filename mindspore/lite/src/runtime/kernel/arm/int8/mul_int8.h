@@ -32,7 +32,7 @@ class MulInt8CPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int DoExecute(int tId);
+  int DoExecute(int task_id);
 
  private:
   const lite::Context *ctx_;

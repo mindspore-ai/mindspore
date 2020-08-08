@@ -30,7 +30,8 @@ using mindspore::schema::PrimitiveType_Concat;
 
 namespace mindspore::kernel {
 int ConcatBaseCPUKernel::Init() {
-  axis_ = concat_param_->axis_ >= 0 ? concat_param_->axis_ : inputs_.front()->shape().size() + concat_param_->axis_;
+  auto axis = concat_param_->axis_;
+  axis_ = axis >= 0 ? axis : inputs_.front()->shape().size() + axis;
   return RET_OK;
 }
 
