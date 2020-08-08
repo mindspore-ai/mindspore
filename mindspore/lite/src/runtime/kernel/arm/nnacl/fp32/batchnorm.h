@@ -22,9 +22,11 @@
 struct BatchNormParameter {
   OpParameter op_parameter_;
   float epsilon_;
+  int unit_;
+  int channel_;
 };
 
-void BatchNorm(const float *input_ptr, const float *mean_ptr, const float *variance_ptr, int count, int channel,
-               float epsilon, float *output_ptr);
+void BatchNorm(float *output_ptr, const float *input_ptr, const float *mean_ptr, const float *variance_ptr, int task_id,
+               BatchNormParameter *param);
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FUSED_BATCHNORM_H_

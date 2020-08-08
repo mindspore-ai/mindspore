@@ -30,10 +30,11 @@ class BatchnormCPUKernel : public LiteKernel {
   BatchnormCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                      const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                      const lite::Primitive *primitive)
-    : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+    opParameter->thread_num_ = ctx->thread_num_;
     batchnorm_param_ = reinterpret_cast<BatchNormParameter *>(parameter);
   }
-  ~BatchnormCPUKernel() override { delete batchnorm_param_; }
+  ~BatchnormCPUKernel() override = default;
 
   int Init() override;
   int ReSize() override;
@@ -41,15 +42,10 @@ class BatchnormCPUKernel : public LiteKernel {
   int DoExecute(int tid);
 
  private:
-  int thread_count_;
-  int thread_unit_;
-  int units_;
-  int channel_;
   float *in_addr_;
   float *mean_addr_;
   float *var_addr_;
   float *out_addr_;
-  const Context *ctx_;
   BatchNormParameter *batchnorm_param_;
 };
 }  // namespace mindspore::kernel

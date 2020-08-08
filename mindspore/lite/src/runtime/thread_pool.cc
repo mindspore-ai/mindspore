@@ -245,8 +245,6 @@ bool ThreadPool::SetThreadPool() {
   } else {
     AddRunThread(localMaxThreadNums);
   }
-  MS_LOG(DEBUG) << "configThreadNums=" << configThreadNums << ", curThreadNums=" << curThreadNums
-                << ", curThreadRunNums=" << curThreadRunNums << ", localMaxThreadNums=" << localMaxThreadNums;
   return true;
 }
 
@@ -276,7 +274,6 @@ void ThreadPool::AddNewThread(int newNums) {
   }
   curThreadNums += newNums;
   curThreadRunNums += newNums;
-  MS_LOG(DEBUG) << "add " << newNums << " thread";
 }
 
 bool ThreadPool::SetThreadCpuBind(bool ifBind, int mode, bool master) {
@@ -330,7 +327,6 @@ bool ThreadPool::AddTask(WorkFun &&worker, void *cdata, int numTask) {
 }
 
 bool ThreadPool::DistributeTask(ThreadPoolTask *task, int numTask) {
-  MS_LOG(DEBUG) << "numTask = " << numTask << ", curThreadRunNums = " << curThreadRunNums;
   auto taskOri = *task;
   if (numTask > curThreadRunNums) {
     task->first = [taskOri, numTask, this](int task_id, TvmEnv *penv, void *cdata) -> int {
@@ -370,12 +366,10 @@ bool ThreadPool::DistributeTask(ThreadPoolTask *task, int numTask) {
       }
     }
   }
-  MS_LOG(DEBUG) << "finish " << numTask << " task successful";
   return CheckResult();
 }
 
 void ThreadPool::AddRunThread(int num) {
-  MS_LOG(DEBUG) << "num=" << num << ", curThreadRunNums=" << curThreadRunNums;
   int activeNums = num - curThreadRunNums;
   if (activeNums <= 0 || activateList.size() < activeNums) {
     return;
@@ -389,7 +383,6 @@ void ThreadPool::AddRunThread(int num) {
 }
 
 void ThreadPool::SubRunThread(int num) {
-  MS_LOG(DEBUG) << "num=" << num << ", curThreadRunNums=" << curThreadRunNums;
   int deactiveNums = curThreadRunNums - num;
   if (deactiveNums <= 0) {
     return;

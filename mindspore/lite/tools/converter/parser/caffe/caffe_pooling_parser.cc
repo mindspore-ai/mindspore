@@ -56,6 +56,8 @@ STATUS CaffePoolingParser::Parse(const caffe::LayerParameter &proto,
     return RET_ERROR;
   }
 
+  // default roundMode RoundMode_CEIL
+  attr->roundMode = schema::RoundMode_CEIL;
   if (poolingParam.has_round_mode()) {
     if (poolingParam.round_mode() == caffe::PoolingParameter_RoundMode_FLOOR) {
       attr->roundMode = schema::RoundMode_FLOOR;
