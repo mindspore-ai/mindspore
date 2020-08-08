@@ -371,7 +371,7 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
     return RET_ERROR;
   }
   delete[](graphBuf);
-  auto context = new(std::nothrow) lite::Context;
+  auto context = new (std::nothrow) lite::Context;
   if (context == nullptr) {
     MS_LOG(ERROR) << "New context failed while running %s", modelName.c_str();
     return RET_ERROR;
@@ -393,15 +393,16 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
   }
   context->thread_num_ = _flags->numThreads;
   session = session::LiteSession::CreateSession(context);
-  delete(context);
+  delete (context);
   if (session == nullptr) {
     MS_LOG(ERROR) << "CreateSession failed while running %s", modelName.c_str();
     return RET_ERROR;
   }
-  auto ret = session->CompileGraph(model.get());
+  auto ret = session->CompileGraph(model);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "CompileGraph failed while running %s", modelName.c_str();
-    delete(session);
+    delete (session);
+    delete (model);
     return ret;
   }
   msInputs = session->GetInputs();
@@ -419,21 +420,24 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
   auto status = LoadInput();
   if (status != 0) {
     MS_LOG(ERROR) << "Generate input data error";
-    delete(session);
+    delete (session);
+    delete (model);
     return status;
   }
   if (!_flags->calibDataPath.empty()) {
     status = MarkAccuracy();
     if (status != 0) {
       MS_LOG(ERROR) << "Run MarkAccuracy error: %d" << status;
-      delete(session);
+      delete (session);
+      delete (model);
       return status;
     }
   } else {
     status = MarkPerformance();
     if (status != 0) {
       MS_LOG(ERROR) << "Run MarkPerformance error: %d" << status;
-      delete(session);
+      delete (session);
+      delete (model);
       return status;
     }
   }
@@ -447,7 +451,8 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
     calibData.clear();
   }
 
-  delete(session);
+  delete (session);
+  delete (model);
   return RET_OK;
 }
 

@@ -397,7 +397,7 @@ checkndk() {
     if [ "${ANDROID_NDK}" ]; then
         echo -e "\e[31mANDROID_NDK_PATH=$ANDROID_NDK  \e[0m"
     else
-        echo -e "\e[31mplease set ANDROID_NDK_PATH in environment variable for example: export ANDROID_NDK=/root/usr/android-ndk-r20b/ \e[0m"
+        echo -e "\e[31mplease set ANDROID_NDK in environment variable for example: export ANDROID_NDK=/root/usr/android-ndk-r20b/ \e[0m"
         exit 1
     fi
 }

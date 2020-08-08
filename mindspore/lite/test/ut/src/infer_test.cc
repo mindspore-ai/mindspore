@@ -109,7 +109,7 @@ TEST_F(InferTest, TestConvNode) {
   context->thread_num_ = 4;
   auto session = session::LiteSession::CreateSession(context);
   ASSERT_NE(nullptr, session);
-  auto ret = session->CompileGraph(model.get());
+  auto ret = session->CompileGraph(model);
   ASSERT_EQ(lite::RET_OK, ret);
   auto inputs = session->GetInputs();
   ASSERT_EQ(inputs.size(), 1);
@@ -206,7 +206,7 @@ TEST_F(InferTest, TestAddNode) {
   context->thread_num_ = 4;
   auto session = session::LiteSession::CreateSession(context);
   ASSERT_NE(nullptr, session);
-  auto ret = session->CompileGraph(model.get());
+  auto ret = session->CompileGraph(model);
   ASSERT_EQ(lite::RET_OK, ret);
   auto inputs = session->GetInputs();
   ASSERT_EQ(inputs.size(), 2);
@@ -257,7 +257,7 @@ TEST_F(InferTest, TestModel) {
   context->thread_num_ = 4;
   auto session = session::LiteSession::CreateSession(context);
   ASSERT_NE(nullptr, session);
-  auto ret = session->CompileGraph(model.get());
+  auto ret = session->CompileGraph(model);
   ASSERT_EQ(lite::RET_OK, ret);
   auto inputs = session->GetInputs();
   ASSERT_EQ(inputs.size(), 1);

@@ -24,10 +24,14 @@
 
 namespace mindspore::lite {
 
-std::shared_ptr<Model> Model::Import(const char *model_buf, size_t size) {
-  auto model = std::make_shared<Model>();
+Model *Model::Import(const char *model_buf, size_t size) {
+  auto model = new Model();
   model->model_impl_ = ModelImpl::Import(model_buf, size);
   return model;
+}
+
+Model::~Model() {
+  delete(this->model_impl_);
 }
 
 lite::Primitive *Model::GetOp(const std::string &name) const {
@@ -45,9 +49,8 @@ const schema::MetaGraph *Model::GetMetaGraph() const {
   return model_impl_->GetMetaGraph();
 }
 
-std::shared_ptr<ModelImpl> Model::model_impl() {
+ModelImpl *Model::model_impl() {
   MS_EXCEPTION_IF_NULL(model_impl_);
   return this->model_impl_;
 }
 }  // namespace mindspore::lite
-

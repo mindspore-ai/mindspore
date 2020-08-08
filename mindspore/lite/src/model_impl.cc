@@ -20,7 +20,7 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore::lite {
-std::shared_ptr<ModelImpl> ModelImpl::Import(const char *model_buf, size_t size) {
+ModelImpl *ModelImpl::Import(const char *model_buf, size_t size) {
   MS_EXCEPTION_IF_NULL(model_buf);
   flatbuffers::Verifier verify((const uint8_t *)model_buf, size);
   if (!schema::VerifyMetaGraphBuffer(verify)) {
@@ -33,7 +33,7 @@ std::shared_ptr<ModelImpl> ModelImpl::Import(const char *model_buf, size_t size)
     return nullptr;
   }
   memcpy(inner_model_buf, model_buf, size);
-  auto model = std::make_shared<ModelImpl>(inner_model_buf, size);
+  auto model = new (std::nothrow) ModelImpl(inner_model_buf, size);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Create modelImpl failed";
     return nullptr;

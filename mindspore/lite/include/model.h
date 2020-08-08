@@ -45,7 +45,7 @@ class MS_API Model {
   /// \param[in] size Define bytes numbers of model buffer.
   ///
   /// \return Pointer of MindSpore Lite Model.
-  static std::shared_ptr<Model> Import(const char *model_buf, size_t size);
+  static Model *Import(const char *model_buf, size_t size);
 
   /// \brief Constructor of MindSpore Lite Model using default value for parameters.
   ///
@@ -53,7 +53,7 @@ class MS_API Model {
   Model() = default;
 
   /// \brief Destructor of MindSpore Lite Model.
-  virtual ~Model() = default;
+  virtual ~Model();
 
   /// \brief Get MindSpore Lite Primitive by name.
   ///
@@ -70,13 +70,13 @@ class MS_API Model {
   /// \brief Get MindSpore Lite ModelImpl.
   ///
   /// \return A pointer of MindSpore Lite ModelImpl.
-  std::shared_ptr<ModelImpl> model_impl();
+  ModelImpl *model_impl();
 
   /// \brief Free MetaGraph in MindSpore Lite Model.
   void FreeMetaGraph();
 
  protected:
-  std::shared_ptr<ModelImpl> model_impl_ = nullptr;
+  ModelImpl *model_impl_ = nullptr;
 };
 
 /// \brief ModelBuilder defined by MindSpore Lite.

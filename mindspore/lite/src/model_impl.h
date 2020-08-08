@@ -27,7 +27,7 @@ namespace mindspore {
 namespace lite {
 class ModelImpl {
  public:
-  static std::shared_ptr<ModelImpl> Import(const char *model_buf, size_t size);
+  static ModelImpl *Import(const char *model_buf, size_t size);
   ModelImpl() = default;
   explicit ModelImpl(const char *model_buf, size_t size) : model_buf_(model_buf), buf_size_(size) {
     meta_graph = schema::GetMetaGraph(model_buf);
