@@ -40,10 +40,10 @@ std::vector<size_t> ArithmeticOpenCLKernel::InitGlobalSize() const {
 }
 
 void ArithmeticOpenCLKernel::Image2dGetWorkGroupSize() {
-  global_size_ = InitGlobalSize();
-  int max_work_group_size = runtime_->GetKernelMaxWorkGroupSize(kernel_(), (*runtime_->Device())());
-  local_size_ = GetCommonLocalSize(global_size_, max_work_group_size);
-  global_size_ = GetCommonGlobalSize(local_size_, global_size_);
+  size_t H = outputs_[0]->Batch() * outputs_[0]->Height();
+  size_t W = outputs_[0]->Width() * UP_DIV(outputs_[0]->Channel(), C4NUM);
+  local_size_ = {16, 16};
+  global_size_ = {H, W};
 }
 
 void ArithmeticOpenCLKernel::BufferGetWorkGroupSize() {
@@ -51,63 +51,75 @@ void ArithmeticOpenCLKernel::BufferGetWorkGroupSize() {
   global_size_ = {element_num};
 }
 
+int ArithmeticOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t>* img_size) {
+  size_t CO4 = UP_DIV(outputs_[0]->Channel(), C4NUM);
+  int H = outputs_[0]->Batch() * outputs_[0]->Height();
+  int W = outputs_[0]->Width() * CO4;
+  size_t im_dst_x, im_dst_y;
+  if (inputs_[0]->GetFormat() == schema::Format_NHWC4) {
+    im_dst_x = W;
+    im_dst_y = H;
+  } else {
+    im_dst_y = outputs_[0]->Batch() * outputs_[0]->Height() * CO4;
+    im_dst_x = outputs_[0]->Width();
+  }
+#ifdef ENABLE_FP16
+  size_t img_dtype = CL_HALF_FLOAT;
+#else
+  size_t img_dtype = CL_FLOAT;
+#endif
+  img_size->clear();
+  std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
+  *img_size = vec;
+  return 0;
+}
+
 int ArithmeticOpenCLKernel::Init() {
   runtime_ = lite::opencl::OpenCLRuntime::GetInstance();
-  std::string element_name;
-  std::string boardcast_name;
+  std::string kernel_name;
 
   if (inputs_[1]->TensorType() == schema::NodeType_ValueNode && inputs_[1]->Data() != nullptr) {
     element_flag_ = false;
+    kernel_name = "BoardcastArith";
   } else {
     element_flag_ = true;
+    switch (opParameter->type_) {
+      case PrimitiveType_Mul:
+        kernel_name = "ElementMul";
+        break;
+      case PrimitiveType_Add:
+        kernel_name = "ElementAdd";
+        break;
+      case PrimitiveType_Sub:
+        kernel_name = "ElementSub";
+        break;
+      case PrimitiveType_Div:
+        kernel_name = "ElementDiv";
+        break;
+      default:
+        MS_LOG(ERROR) << "Error Operator type " << opParameter->type_;
+        break;
+    }
   }
 
-  switch (opParameter->type_) {
-    case PrimitiveType_Mul:
-      element_name = "ElementMul";
-      boardcast_name = "BoardcastMul";
-      break;
-    case PrimitiveType_Add:
-      element_name = "ElementAdd";
-      boardcast_name = "BoardcastAdd";
-      break;
-    case PrimitiveType_Sub:
-      element_name = "ElementSub";
-      boardcast_name = "BoardcastSub";
-      break;
-    case PrimitiveType_Div:
-      element_name = "ElementDiv";
-      boardcast_name = "BoardcastDiv";
-      break;
-    default:
-      MS_LOG(ERROR) << "Error Operator type " << opParameter->type_;
-      break;
-  }
 
 #ifdef PROGRAM_WITH_IL
   runtime_->CreateKernelFromIL(kernel_(), kernel_name);
 #else
   std::string program_name = "Arithmetic";
   std::set<std::string> build_options;
-  std::string source = arithmetic_buffer_source_fp32;
+  std::string source = arithmetic_image2d_source_fp32;
   runtime_->LoadSource(program_name, source);
-
-  if (element_flag_) {
-    runtime_->BuildKernel(kernel_, program_name, element_name, build_options);
-    MS_LOG(DEBUG) << element_name << " Init Done!";
-  } else {
-    runtime_->BuildKernel(kernel_, program_name, boardcast_name, build_options);
-    MS_LOG(DEBUG) << boardcast_name << " Init Done!";
-  }
+  runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
   outputs_[0]->SetFormat(schema::Format_NHWC4);
+  Image2dGetWorkGroupSize();
   return 0;
 }
 
 int ArithmeticOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->Name() << " Running!";
   auto runtime_ = lite::opencl::OpenCLRuntime::GetInstance();
-  BufferGetWorkGroupSize();
 
   int arg_idx = 0;
   uint32_t element_num = outputs_[0]->ElementsC4Num();
@@ -116,11 +128,34 @@ int ArithmeticOpenCLKernel::Run() {
   if (element_flag_) {
     runtime_->SetKernelArg(kernel_, arg_idx++, inputs_[1]->Data());
   } else {
-    runtime_->SetKernelArg(kernel_, arg_idx++, static_cast<float *>(inputs_[1]->Data())[0]);
+    float value = static_cast<float *>(inputs_[1]->Data())[0];
+    switch (opParameter->type_) {
+      case PrimitiveType_Mul:
+        weight_ = value;
+        break;
+      case PrimitiveType_Add:
+        bias_ = value;
+        break;
+      case PrimitiveType_Sub:
+        bias_ = -1 * value;
+        break;
+      case PrimitiveType_Div:
+        bias_ = 1 / value;
+        break;
+      default:
+        MS_LOG(ERROR) << "Error Operator type " << opParameter->type_;
+        break;
+    }
+    runtime_->SetKernelArg(kernel_, arg_idx++, weight_);
+    runtime_->SetKernelArg(kernel_, arg_idx++, bias_);
+    MS_LOG(DEBUG) << arg_idx-2 << " " << weight_;
+    MS_LOG(DEBUG) << arg_idx-1 << " " << bias_;
   }
   runtime_->SetKernelArg(kernel_, arg_idx++, outputs_[0]->Data());
-  runtime_->SetKernelArg(kernel_, arg_idx++, element_num);
-
+  int H = outputs_[0]->Batch() * outputs_[0]->Height();
+  int W = outputs_[0]->Width() * UP_DIV(outputs_[0]->Channel(), C4NUM);
+  cl_int2 output_shape{H, W};
+  runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
   runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);
   return 0;
 }

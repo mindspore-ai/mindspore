@@ -61,13 +61,12 @@ void LogData(void *data, const int size, const std::string prefix) {
 }
 
 void TestCase(const std::vector<int> &shape_a, const std::vector<int> &shape_b) {
-  std::cout << "TestCase" << std::endl;
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto allocator = ocl_runtime->GetAllocator();
 
   bool is_bias_add = shape_b.empty();
   auto tensorType = schema::NodeType_ValueNode;
 
-  std::cout << "TestCase tensor" << std::endl;
   lite::tensor::Tensor *tensor_a =
     new lite::tensor::Tensor(kNumberTypeFloat32, shape_a, schema::Format_NHWC4, tensorType);
   lite::tensor::Tensor *tensor_b =
@@ -77,7 +76,6 @@ void TestCase(const std::vector<int> &shape_a, const std::vector<int> &shape_b) 
   int64_t element_num = tensor_a->ElementsC4Num();
   int64_t element_num_b = is_bias_add ? 1 : tensor_b->ElementsC4Num();
 
-  std::cout << "TestCase new data" << std::endl;
   float *data_a = new float[element_num];
   float *data_b = new float[element_num_b];
   float *data_c_cpu = new float[element_num];
@@ -87,14 +85,12 @@ void TestCase(const std::vector<int> &shape_a, const std::vector<int> &shape_b) 
   InitData(data_b, element_num_b);
   memset(data_c_ocl, 0, sizeof(float) * element_num);
 
-  std::cout << "TestCase run cpu" << std::endl;
   if (is_bias_add) {
     BoardcaseAdd(data_a, static_cast<float *>(data_b)[0], data_c_cpu, element_num);
   } else {
     ElementAdd(data_a, data_b, data_c_cpu, element_num);
   }
 
-  std::cout << "TestCase set data" << std::endl;
   std::vector<lite::tensor::Tensor *> inputs = {tensor_a};
   if (!is_bias_add) {
     inputs.push_back(tensor_b);
@@ -114,9 +110,10 @@ void TestCase(const std::vector<int> &shape_a, const std::vector<int> &shape_b) 
     new kernel::ArithmeticOpenCLKernel(reinterpret_cast<OpParameter *>(param), arithmetic_inputs, outputs, &ctx);
   arith_kernel->Init();
 
+  tensor_a->MallocData(allocator);
+  tensor_b->MallocData(allocator);
   std::vector<kernel::LiteKernel *> kernels{arith_kernel};
   auto *kernel = new kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
-  std::cout << "TestCase Init" << std::endl;
   kernel->Init();
 
   memcpy(inputs[0]->Data(), data_a, sizeof(float) * element_num);
@@ -124,7 +121,6 @@ void TestCase(const std::vector<int> &shape_a, const std::vector<int> &shape_b) 
     memcpy(inputs[1]->Data(), data_b, sizeof(float) * element_num_b);
   }
 
-  std::cout << "TestCase Run" << std::endl;
   kernel->Run();
 
   memcpy(data_c_ocl, outputs[0]->Data(), sizeof(float) * element_num);
@@ -136,7 +132,6 @@ void TestCase(const std::vector<int> &shape_a, const std::vector<int> &shape_b) 
   LogData(outputs[0]->Data(), 10, "OpenCL compute : ");
   bool cmp = DataCompare(data_c_cpu, data_c_ocl, element_num);
   MS_LOG(INFO) << "Compare " << (cmp ? "success!" : "failed!");
-  std::cout << "TestCase End" << std::endl;
 
   // free
   delete[] data_a;
@@ -162,15 +157,15 @@ class TestArithmeticOpenCL : public mindspore::Common {
 };
 
 TEST_F(TestArithmeticOpenCL, AddElementwiseTest) {
-  const std::vector<int> &shape_a = {1, 32, 32, 4};
-  const std::vector<int> &shape_b = {1, 32, 32, 4};
+  const std::vector<int> &shape_a = {1, 1024, 1024, 4};
+  const std::vector<int> &shape_b = {1, 1024, 1024, 4};
   TestCase(shape_a, shape_b);
 }
 
-// TEST_F(TestOpenCLKernel, AddBoardcaseTest) {
-//  const std::vector<int> &shape_a = {1, 4, 128, 128};
-//  const std::vector<int> &shape_b = {};
-//  TestCase(shape_a, shape_b);
-//}
+TEST_F(TestArithmeticOpenCL, AddBoardcaseTest) {
+  const std::vector<int> &shape_a = {1, 128, 128, 4};
+  const std::vector<int> &shape_b = {};
+  TestCase(shape_a, shape_b);
+}
 
 }  // namespace mindspore
