@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/int8/relu_int8.h"
+#include "src/runtime/kernel/arm/int8/relux_int8.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
@@ -27,7 +27,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::ActivationType_RELU;
 
 namespace mindspore::kernel {
-int ReluInt8CPUKernel::Init() {
+int ReluXInt8CPUKernel::Init() {
   lite::tensor::Tensor *input = inputs_.at(0);
   lite::tensor::Tensor *output = outputs_.at(0);
   MS_ASSERT(input);
@@ -44,9 +44,9 @@ int ReluInt8CPUKernel::Init() {
   return RET_OK;
 }
 
-int ReluInt8CPUKernel::ReSize() { return RET_OK; }
+int ReluXInt8CPUKernel::ReSize() { return RET_OK; }
 
-int ReluInt8CPUKernel::DoActivation(int task_id) {
+int ReluXInt8CPUKernel::DoActivation(int task_id) {
   auto input_addr = reinterpret_cast<int8_t *>(inputs_.at(0)->Data());
   auto output_addr = reinterpret_cast<int8_t *>(outputs_.at(0)->Data());
   auto length = inputs_.at(0)->ElementsNum();
@@ -54,24 +54,24 @@ int ReluInt8CPUKernel::DoActivation(int task_id) {
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);
 
-  ReluInt8(input_addr + stride * task_id, count, output_addr + stride * task_id, &quant_arg_);
+  ReluXInt8(input_addr + stride * task_id, count, output_addr + stride * task_id, &quant_arg_);
   return RET_OK;
 }
 
-int ReluInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
-  auto activation_kernel = reinterpret_cast<ReluInt8CPUKernel *>(cdata);
+int ReluXInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+  auto activation_kernel = reinterpret_cast<ReluXInt8CPUKernel *>(cdata);
   auto error_code = activation_kernel->DoActivation(task_id);
   if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "ReluInt8Run error task_id[" << task_id << "] error_code[" << error_code << "]";
+    MS_LOG(ERROR) << "ReluXInt8Run error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;
   }
   return RET_OK;
 }
 
-int ReluInt8CPUKernel::Run() {
-  int error_code = LiteBackendParallelLaunch(ReluInt8Run, this, thread_count_);
+int ReluXInt8CPUKernel::Run() {
+  int error_code = LiteBackendParallelLaunch(ReluXInt8Run, this, thread_count_);
   if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "ReluInt8Run function error error_code[" << error_code << "]";
+    MS_LOG(ERROR) << "ReluXInt8Run function error error_code[" << error_code << "]";
     return RET_ERROR;
   }
   return RET_OK;
