@@ -632,6 +632,19 @@ void FuncGraph::CheckOrder() {
     MS_LOG(DEBUG) << "Check order okay.";
   }
 }
+CNodePtr FuncGraph::NewCNode(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &inputs) {
+  auto primitive_node = std::make_shared<ValueNode>(primitive);
+  std::vector<AnfNodePtr> input_node_list = {primitive_node};
+  std::copy(inputs.begin(), inputs.end(), std::back_inserter(input_node_list));
+  return NewCNode(input_node_list);
+}
+
+ParameterPtr FuncGraph::add_parameter(const tensor::MetaTensorPtr &meta_tensor) {
+  auto parameter = add_parameter();
+  parameter->set_default_param(MakeValue(meta_tensor));
+  parameter->set_abstract(meta_tensor->ToAbstract());
+  return parameter;
+}
 
 size_t NewFgSeenGeneration() {
   static size_t fg_seen_generation = 0;
