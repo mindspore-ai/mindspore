@@ -129,16 +129,22 @@ AbstractBasePtr InferImplMakeRefKey(const AnalysisEnginePtr &, const PrimitivePt
 
 AbstractBasePtr InferImplMakeRef(const AnalysisEnginePtr &, const PrimitivePtr &,
                                  const AbstractBasePtrList &args_spec_list) {
-  // arguments: key, value, original value
+  // arguments: key, value, target type(None if no target type)
   if (args_spec_list.size() != 3) {
     MS_LOG(EXCEPTION) << "make_ref evaluator requires 3 parameters, while the input size is " << args_spec_list.size()
                       << ".";
   }
   TypePtr type = args_spec_list[0]->GetTypeTrack();
+  ValuePtr tensor_target_v = args_spec_list[2]->BuildValue();
   if (type->type_id() != kObjectTypeRefKey) {
     MS_LOG(EXCEPTION) << "First input of make_ref should be a RefKey but a " << type->ToString();
   }
-  return std::make_shared<AbstractRef>(args_spec_list[0], args_spec_list[1], args_spec_list[2]);
+  auto need_cast = !tensor_target_v->isa<None>();
+  if (need_cast && !tensor_target_v->isa<Type>()) {
+    MS_LOG(EXCEPTION) << "Third input of make_ref should be a Type but a " << tensor_target_v->ToString();
+  }
+  TypePtr cast_target = tensor_target_v->cast<TypePtr>();
+  return std::make_shared<AbstractRef>(args_spec_list[0], args_spec_list[1], need_cast, cast_target);
 }
 
 AbstractBasePtr InferImplGetRefKey(const AnalysisEnginePtr &, const PrimitivePtr &,
@@ -163,23 +169,9 @@ AbstractBasePtr InferImplGetRefValue(const AnalysisEnginePtr &, const PrimitiveP
   }
   TypePtr type = args_spec_list[0]->GetTypeTrack();
   if (type->type_id() != kObjectTypeRef) {
-    MS_LOG(EXCEPTION) << "First input of get_ref_value should be a Ref but a " << type->ToString();
+    return args_spec_list[0];
   }
   return args_spec_list[0]->cast<AbstractRefPtr>()->ref();
-}
-
-AbstractBasePtr InferImplGetRefOrigin(const AnalysisEnginePtr &, const PrimitivePtr &,
-                                      const AbstractBasePtrList &args_spec_list) {
-  // arguments: value
-  if (args_spec_list.size() != 1) {
-    MS_LOG(EXCEPTION) << "get_ref_origin requires 1 parameters, while the input size is " << args_spec_list.size()
-                      << ".";
-  }
-  TypePtr type = args_spec_list[0]->GetTypeTrack();
-  if (type->type_id() != kObjectTypeRef) {
-    MS_LOG(EXCEPTION) << "First input of get_ref_value should be a Ref but a " << type->ToString();
-  }
-  return args_spec_list[0]->cast<AbstractRefPtr>()->ref_origin();
 }
 
 AbstractBasePtr InferImplStateSetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -49,13 +49,14 @@ FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_spec_
     MS_LOG(EXCEPTION) << op_name << " requires at least two args, but got " << arg_length << ".";
   }
 
-  (void)abstract::CheckArg<AbstractFunction>(op_name, args_spec_list, 0);
+  // No need to check, check will be done in infer.
   auto ret_graph = std::make_shared<FuncGraph>();
   ret_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  ret_graph->debug_info()->set_name("UnpackCall");
 
-  AnfNodePtr fnNode = ret_graph->add_parameter();
+  AnfNodePtr fn_node = ret_graph->add_parameter();
   std::vector<AnfNodePtr> elems;
-  elems.push_back(fnNode);
+  elems.push_back(fn_node);
   for (size_t index = 1; index < arg_length; index++) {
     MS_EXCEPTION_IF_NULL(args_spec_list[index]);
     if (args_spec_list[index]->isa<AbstractTuple>()) {

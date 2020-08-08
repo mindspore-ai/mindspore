@@ -1117,11 +1117,12 @@ std::vector<AnfNodePtr> PynativeExecutor::GetWeightsArgs(const py::object &weigh
         free_param->debug_info()->set_name(param_name);
         para_node = free_param;
       }
-      AnfNodePtr value = parse::GetMixedPrecisionCastHelp(df_builder_, para_node);
+      ValuePtr target_type = parse::GetMixedPrecisionTargetType(df_builder_, para_node);
       AnfNodePtr make_ref = NewValueNode(prim::kPrimMakeRef);
       auto refkey = std::make_shared<RefKey>(para_node->cast<ParameterPtr>()->name());
       AnfNodePtr ref_key_node = NewValueNode(refkey);
-      AnfNodePtr ref_node = df_builder_->NewCNode({make_ref, ref_key_node, value, para_node});
+      AnfNodePtr target_type_node = NewValueNode(target_type);
+      AnfNodePtr ref_node = df_builder_->NewCNode({make_ref, ref_key_node, para_node, target_type_node});
       w_args.push_back(ref_node);
     }
   } else {

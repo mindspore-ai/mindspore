@@ -125,7 +125,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimMakeRef, {InferImplMakeRef, true}},
     {prim::kPrimGetRefKey, {InferImplGetRefKey, true}},
     {prim::kPrimGetRefValue, {InferImplGetRefValue, true}},
-    {prim::kPrimGetRefOrigin, {InferImplGetRefOrigin, true}},
     {prim::kPrimStateSetItem, {InferImplStateSetItem, true}},
     {prim::kPrimDepend, {InferImplDepend, true}},
     {prim::kPrimBroadcastGradientArgs, {InferImplBroadcastGradientArgs, false}},
