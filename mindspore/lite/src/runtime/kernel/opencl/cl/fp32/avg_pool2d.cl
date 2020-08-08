@@ -1,4 +1,4 @@
-__kernel void AvgPooling2d(__global float4 *input, __global float4 *output, const int4 input_shape,
+__kernel void AvgPooling2d_BUF(__global float4 *input, __global float4 *output, const int4 input_shape,
                            const int4 output_shape, const int2 stride, const int2 kernel_size, const int2 padding) {
   // axis to dst tensor coordinate
   int X = get_global_id(0);
@@ -31,7 +31,7 @@ __kernel void AvgPooling2d(__global float4 *input, __global float4 *output, cons
 
 __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
 
-__kernel void AvgPooling2dImage2d(__read_only image2d_t input, __write_only image2d_t output, const int4 input_shape,
+__kernel void AvgPooling2d_IMG(__read_only image2d_t input, __write_only image2d_t output, const int4 input_shape,
                                   const int4 output_shape, const int2 stride, const int2 kernel_size,
                                   const int2 padding) {
   // axis to dst tensor coordinate

@@ -168,6 +168,7 @@ int OpenCLExecutor::TransformTensorLayoutToBuffer(tensor::Tensor *tensor, schema
 int OpenCLExecutor::TransformTensorLayoutToImage(tensor::Tensor *tensor, schema::Format src_format,
     schema::Format dst_format) {
   if (dst_format == schema::Format_NHWC4) {
+    tensor->SetFormat(schema::Format_NHWC4);
     // convert to nhwc4
     auto *src_data = tensor->Data();
     auto *dst_data{src_data};
@@ -190,7 +191,6 @@ int OpenCLExecutor::TransformTensorLayoutToImage(tensor::Tensor *tensor, schema:
     dst_data = allocator_->CreateImageFromHost(src_data, tensor->Size(), img_size);
     tensor->SetData(dst_data);
     allocator_->Free(src_data);
-    tensor->SetFormat(schema::Format_NHWC4);
     return RET_OK;
   } else {
     MS_LOG(ERROR) << "Unsupport layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
