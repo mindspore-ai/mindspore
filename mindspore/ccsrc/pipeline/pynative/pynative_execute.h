@@ -92,6 +92,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void set_grad_flag(bool flag) { grad_flag_ = flag; }
   AnfNodePtr GetInput(const py::object &obj, bool op_mask);
   AnfNodePtr GetObjNode(const py::object &obj);
+  std::string GetCellId(const py::object &obj, const py::args &args);
   FuncGraphPtr curr_g() { return curr_g_; }
   void set_pyobj(FuncGraphPtr g, const std::string obj) { graph_info_map_[g].objects.push_back(obj); }
   void set_obj_node_map(FuncGraphPtr g, const std::string obj, AnfNodePtr node) {
@@ -141,7 +142,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   FuncGraphPtr top_g_;
   FuncGraphPtr df_builder_;
   FuncGraphPtr curr_g_;
-  std::unordered_map<std::string, AbstractListMap> prim_abs_list;
+  std::unordered_map<std::string, AbstractListMap> prim_abs_list_;
 };
 
 using PynativeExecutorPtr = std::shared_ptr<PynativeExecutor>;

@@ -69,6 +69,7 @@ const char PYTHON_MOD_GET_MODULE_NAMESPACE[] = "get_module_namespace";
 const char PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL[] = "get_class_member_namespace_symbol";
 const char PYTHON_MOD_GET_PARSE_METHOD[] = "get_parse_method_of_class";
 const char PYTHON_MOD_GET_BPROP_METHOD[] = "get_bprop_method_of_class";
+const char PYTHON_MOD_CONVERT_TO_MS_TENSOR[] = "convert_to_ms_tensor";
 
 const char PYTHON_PARSE_GET_ARGS[] = "get_args";
 const char PYTHON_PARSE_GET_ARGS_DEFAULT_VALUES[] = "get_args_default_values";

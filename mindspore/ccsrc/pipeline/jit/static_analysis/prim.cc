@@ -226,11 +226,11 @@ static AbstractBasePtrList GetUnpackGraphSpecArgsList(AbstractBasePtrList args_s
     for (size_t index = 0; index < specialize_args_before_unpack.size(); index++) {
       MS_EXCEPTION_IF_NULL(specialize_args_before_unpack[index]);
       if (specialize_args_before_unpack[index]->isa<AbstractTuple>()) {
-        AbstractTuplePtr arg_tuple = specialize_args_before_unpack[index]->cast<AbstractTuplePtr>();
+        auto arg_tuple = specialize_args_before_unpack[index]->cast<AbstractTuplePtr>();
         std::transform(arg_tuple->elements().begin(), arg_tuple->elements().end(),
                        std::back_inserter(graph_specialize_args), [](AbstractBasePtr abs) { return abs; });
       } else if (specialize_args_before_unpack[index]->isa<AbstractDictionary>()) {
-        AbstractDictionaryPtr arg_dict = specialize_args_before_unpack[index]->cast<AbstractDictionaryPtr>();
+        auto arg_dict = specialize_args_before_unpack[index]->cast<AbstractDictionaryPtr>();
         auto dict_elems = arg_dict->elements();
         (void)std::transform(
           dict_elems.begin(), dict_elems.end(), std::back_inserter(graph_specialize_args),
@@ -353,7 +353,7 @@ EvalResultPtr MixedPrecisionCastEvaluator::Run(AnalysisEnginePtr engine, const C
   }
   auto out_node = out_conf->node()->cast<CNodePtr>();
   const auto &out_node_inputs = out_node->inputs();
-  if (out_node->inputs().size() == 0 || (out_node_inputs.size() - 1) != args_conf_list.size()) {
+  if (out_node->inputs().empty() || (out_node_inputs.size() - 1) != args_conf_list.size()) {
     MS_LOG(EXCEPTION) << "MixedPrecisionCast"
                       << " args size should equal to inputs size minus 1, but args size " << args_conf_list.size()
                       << ", inputs size " << out_node_inputs.size();

@@ -929,7 +929,7 @@ void GenerateTupleSliceParameter(const AbstractTuplePtr &tuple, const AbstractSl
 
   *step_value = CheckSliceMember(slice->step(), step_default, step_name);
   if (*step_value == 0) {
-    MS_LOG(EXCEPTION) << "TupleSlice require the step value could not be 0, but got 0.";
+    MS_EXCEPTION(ValueError) << "TupleSlice require the step value could not be 0, but got 0.";
   }
 
   if (*step_value < 0) {
@@ -941,8 +941,8 @@ void GenerateTupleSliceParameter(const AbstractTuplePtr &tuple, const AbstractSl
   *stop_index = CheckSliceMember(slice->stop(), stop_default, stop_name);
   if (!CheckIndexInRange(*start_index, -tuple_size, tuple_size - 1) ||
       !CheckIndexInRange(*stop_index, -tuple_size - 1, tuple_size)) {
-    MS_LOG(EXCEPTION) << "TupleSlice the start index " << *start_index << " or end end index " << *stop_index
-                      << " out of range, tuple size " << tuple_size << ".";
+    MS_EXCEPTION(ValueError) << "TupleSlice the start index " << *start_index << " or end end index " << *stop_index
+                             << " out of range, tuple size " << tuple_size << ".";
   }
 
   *start_index = GetPositiveIndex(*start_index, tuple_size);

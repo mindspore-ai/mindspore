@@ -78,12 +78,19 @@ py::function PrimitivePy::GetBpropFunction() {
 }
 
 BaseRef PrimitivePy::RunHookFunction(const VectorRef &args) const {
-  auto py_args = ConvertDatatoPyTuple(args);
+  py::tuple py_args = ConvertDatatoPyTuple(args);
   py::object obj;
   bool is_bprop = this->HasAttr(kBpropAttrName);
   if (is_bprop) {
     SyncData(py_args);
-    obj = hook_(*py_args);
+    py::tuple convert_args(py_args.size());
+    for (size_t i = 0; i < py_args.size(); i++) {
+      convert_args[i] = py::isinstance<tensor::Tensor>(py_args[i])
+                          ? parse::python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE,
+                                                            parse::PYTHON_MOD_CONVERT_TO_MS_TENSOR, py_args[i])
+                          : py_args[i];
+    }
+    obj = hook_(*convert_args);
     return std::make_shared<PyObjectRef>(obj);
   }
   SyncData(py_args[2]);
