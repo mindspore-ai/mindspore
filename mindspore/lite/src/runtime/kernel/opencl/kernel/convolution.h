@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_CONVOLUTION_H_
 
 #include <vector>
+#include <string>
 #include "src/ir/tensor.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "schema/model_generated.h"
@@ -26,23 +27,25 @@
 
 namespace mindspore::kernel {
 
-class ConvolutionOpenCLKernel : public LiteKernel {
+class ConvolutionOpenCLKernel : public OpenCLKernel {
  public:
   explicit ConvolutionOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                                    const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs) {}
+      : OpenCLKernel(parameter, inputs, outputs) {}
   ~ConvolutionOpenCLKernel() override{};
 
   int Init() override;
-  int ReSize() override;
   int Run() override;
   int InitBuffer();
+  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
 
  private:
-  schema::Format io_dataformat_ = schema::Format_NHWC4;
   float *packed_weight_ = nullptr;
   float *packed_bias_ = nullptr;
   cl::Kernel kernel_;
+
+  std::string CodeGen();
+  int GetGlobalLocal(std::vector<size_t> *global, std::vector<size_t> *local);
 };
 }  // namespace mindspore::kernel
 
