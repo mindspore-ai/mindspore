@@ -36,8 +36,12 @@ int Nchw2NhwcCPUKernel::Run() {
   auto input = inputs_[0];
   auto output = outputs_[0];
 
-  PackNCHWToNHWCFp32(input->Data(), output->Data(), output->Batch(), output->Height() * output->Width(),
-                     output->Channel());
+  if (input->shape().size() == 4) {
+    PackNCHWToNHWCFp32(input->Data(), output->Data(), output->Batch(), output->Height() * output->Width(),
+                       output->Channel());
+  } else {
+    memcpy(output->Data(), input->Data(), input->ElementsNum() * sizeof(float));
+  }
   return RET_OK;
 }
 

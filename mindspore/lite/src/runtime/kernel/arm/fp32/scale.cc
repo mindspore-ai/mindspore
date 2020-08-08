@@ -45,12 +45,13 @@ int ScaleCPUKernel::InitScaleOffset() {
   }
 
   if (inputs_.size() == 3) {
-    auto offset_tensor = inputs_.at(1);
+    auto offset_tensor = inputs_.at(2);
     offset_ = reinterpret_cast<float *>(malloc(offset_tensor->ElementsNum() * sizeof(float)));
     if (offset_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
       return RET_ERROR;
     }
+    memcpy(offset_, offset_tensor->Data(), offset_tensor->ElementsNum() * sizeof(float));
     param->has_offset_ = true;
   } else {
     offset_ = nullptr;
