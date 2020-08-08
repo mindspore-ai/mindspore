@@ -142,6 +142,7 @@ table SoftMax {
 
 table Activation {
     type: ActivationType = 0;
+    alpha: float = 0.2;
 }
 table ActivationGrad {
     type: ActivationGradType = 0;
