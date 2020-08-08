@@ -28,6 +28,10 @@ using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 
 int SplitInt8CPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   SplitBaseCPUKernel::Init();
   auto in_tensor = inputs_.at(kInputIndex);
   input_ptr_ = reinterpret_cast<int8_t *>(in_tensor->Data());
@@ -81,7 +85,12 @@ int SplitInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int SplitInt8CPUKernel::Run() {
-  int ret = LiteBackendParallelLaunch(SplitInt8Run, this, thread_n_num_);
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return ret;
+  }
+  ret = LiteBackendParallelLaunch(SplitInt8Run, this, thread_n_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;

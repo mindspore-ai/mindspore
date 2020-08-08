@@ -22,10 +22,10 @@
 #include "include/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;
-using mindspore::lite::RET_FORMAT_ERR;
 using mindspore::lite::RET_ERROR;
-using mindspore::lite::RET_PARAM_INVALID;
+using mindspore::lite::RET_FORMAT_ERR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::RET_PARAM_INVALID;
 using mindspore::schema::PrimitiveType_DepthToSpace;
 
 namespace mindspore::kernel {
@@ -41,6 +41,11 @@ int DepthToSpaceCPUKernel::Init() {
 }
 
 int DepthToSpaceCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   auto input = inputs_[0];
   auto output = outputs_[0];
   const float *input_data = reinterpret_cast<const float *>(input->Data());

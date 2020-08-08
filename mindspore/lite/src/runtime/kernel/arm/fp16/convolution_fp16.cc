@@ -154,10 +154,14 @@ void ConvolutionFP16CPUKernel::ConfigInputOutput() {
 }
 
 int ConvolutionFP16CPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConvolutionBase init failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "ConvolutionBase init fail!ret: " << ret;
+    return ret;
   }
   ret = InitWeightBias();
   if (ret != RET_OK) {
@@ -193,7 +197,7 @@ int ConvolutionFP16CPUKernel::ReSize() {
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
-    return RET_ERROR;
+    return ret;
   }
   ret = InitTmpBuffer();
   if (ret != RET_OK) {
@@ -220,7 +224,11 @@ int ConvolutionFp16Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int ConvolutionFP16CPUKernel::Run() {
-  // cast fp32 input data to fp16
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   auto input_tensor = inputs_.at(kInputIndex);
   auto ori_input_data = reinterpret_cast<float *>(input_tensor->Data());
   for (int i = 0; i < input_tensor->ElementsNum(); ++i) {
@@ -251,7 +259,7 @@ int ConvolutionFP16CPUKernel::Run() {
 kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs,
                                              OpParameter *opParameter, const Context *ctx,
-                                             const kernel::KernelKey &desc) {
+                                             const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D);
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
@@ -267,7 +275,7 @@ kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::tensor::Ten
   conv_param->output_w_ = outputs.front()->Width();
   kernel::LiteKernel *kernel = nullptr;
   if (kernel_h == 3 && kernel_w == 3 && stride_h == 1 && stride_w == 1 && dilation_h == 1 && dilation_w == 1) {
-    kernel = new (std::nothrow) kernel::Convolution3x3FP16CPUKernel(opParameter, inputs, outputs, ctx);
+    kernel = new (std::nothrow) kernel::Convolution3x3FP16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   } else {
     bool use_winograd = false;
     int out_unit;
@@ -275,7 +283,7 @@ kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::tensor::Ten
     OutputTransformUnitFunc output_trans_func = nullptr;
     CheckIfUseWinograd(&use_winograd, &out_unit, conv_param, input_trans_func, output_trans_func);
     if (kernel_h != 1 && kernel_w != 1 && !use_winograd) {
-      kernel = new (std::nothrow) kernel::ConvolutionFP16CPUKernel(opParameter, inputs, outputs, ctx);
+      kernel = new (std::nothrow) kernel::ConvolutionFP16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
     }
   }
   if (kernel == nullptr) {

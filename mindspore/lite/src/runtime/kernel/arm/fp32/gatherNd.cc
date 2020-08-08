@@ -38,6 +38,10 @@ GatherNdCPUKernel::~GatherNdCPUKernel() {
 }
 
 int GatherNdCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto indices_tensor = inputs_.at(1);
   auto indices_shape = indices_tensor->shape();
   int indices_rank = indices_shape.size();
@@ -112,9 +116,14 @@ int GatherNdRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int GatherNdCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   in_ptr_ = reinterpret_cast<float *>(inputs_.front()->Data());
   out_ptr_ = reinterpret_cast<float *>(outputs_.front()->Data());
-  int ret = LiteBackendParallelLaunch(GatherNdRun, this, thread_sz_count_);
+  auto ret = LiteBackendParallelLaunch(GatherNdRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "gatherNd error error_code[" << ret << "]";
     return ret;
@@ -125,11 +134,11 @@ int GatherNdCPUKernel::Run() {
 kernel::LiteKernel *CpuGatherNdFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                  const std::vector<lite::tensor::Tensor *> &outputs,
                                                  OpParameter *opParameter, const lite::Context *ctx,
-                                                 const kernel::KernelKey &desc) {
+                                                 const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_GatherNd);
 
-  auto *kernel = new (std::nothrow) GatherNdCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) GatherNdCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     return nullptr;
   }
@@ -145,4 +154,3 @@ kernel::LiteKernel *CpuGatherNdFp32KernelCreator(const std::vector<lite::tensor:
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_GatherNd, CpuGatherNdFp32KernelCreator)
 }  // namespace mindspore::kernel
-

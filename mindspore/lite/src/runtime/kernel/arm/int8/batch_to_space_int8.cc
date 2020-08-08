@@ -42,6 +42,11 @@ int BatchToSpaceInt8CPUKernel::Init() {
 }
 
 int BatchToSpaceInt8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   auto input = inputs_[0];
   auto output = outputs_[0];
   const int8_t *input_data = reinterpret_cast<const int8_t *>(input->Data());

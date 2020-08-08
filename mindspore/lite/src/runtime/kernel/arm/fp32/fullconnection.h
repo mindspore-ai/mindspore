@@ -29,8 +29,9 @@ namespace mindspore::kernel {
 class FullconnectionCPUKernel : public FullconnectionBaseCPUKernel {
  public:
   FullconnectionCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                          const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : FullconnectionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+                          const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                          const lite::Primitive *primitive)
+      : FullconnectionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~FullconnectionCPUKernel() override;
 
   int Init() override;
@@ -48,4 +49,3 @@ class FullconnectionCPUKernel : public FullconnectionBaseCPUKernel {
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_FULLCONNECTION_H_
-

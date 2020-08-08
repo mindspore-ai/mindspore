@@ -173,6 +173,10 @@ int DeConvolutionCPUKernel::DoPostFunc(int task_id) {
 }
 
 int DeConvolutionCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   ConvolutionBaseCPUKernel::Init();
 
   int error_code = InitParam();
@@ -190,6 +194,11 @@ int DeConvolutionCPUKernel::Init() {
 }
 
 int DeConvolutionCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   float *src_in = reinterpret_cast<float *>(inputs_[0]->Data());
   float *src_out = reinterpret_cast<float *>(outputs_[0]->Data());
 
@@ -214,14 +223,13 @@ int DeConvolutionCPUKernel::Run() {
   return RET_OK;
 }
 
-
 kernel::LiteKernel *CpuDeConvFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                const std::vector<lite::tensor::Tensor *> &outputs,
                                                OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc) {
+                                               const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DeConv2D);
-  auto kernel = new (std::nothrow) kernel::DeConvolutionCPUKernel(opParameter, inputs, outputs, ctx);
+  auto kernel = new (std::nothrow) kernel::DeConvolutionCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
     return nullptr;

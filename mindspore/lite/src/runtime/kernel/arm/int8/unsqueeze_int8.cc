@@ -29,6 +29,10 @@ using mindspore::schema::PrimitiveType_Unsqueeze;
 
 namespace mindspore::kernel {
 int Unsqueezeint8CPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto *input_tensor = inputs_.at(0);
   auto quant_args = input_tensor->GetQuantParams();
   MS_ASSERT(quant_args.size() == 1);
@@ -80,9 +84,14 @@ int UnsqueezeIn8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int Unsqueezeint8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return ret;
+  }
   in_ptr_ = reinterpret_cast<float *>(inputs_.at(0)->Data());
   out_ptr_ = reinterpret_cast<float *>(outputs_.at(0)->Data());
-  int ret = LiteBackendParallelLaunch(UnsqueezeIn8Run, this, thread_sz_count_);
+  ret = LiteBackendParallelLaunch(UnsqueezeIn8Run, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "UnsqueezeRun error error_code[" << ret << "]";
     return ret;
@@ -93,10 +102,10 @@ int Unsqueezeint8CPUKernel::Run() {
 kernel::LiteKernel *CpuUnsqueezeInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                   const std::vector<lite::tensor::Tensor *> &outputs,
                                                   OpParameter *opParameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc) {
+                                                  const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Unsqueeze);
-  auto *kernel = new (std::nothrow) Unsqueezeint8CPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) Unsqueezeint8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new UnsqueezeCPUKernel fail!";
     return nullptr;

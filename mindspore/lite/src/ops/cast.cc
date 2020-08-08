@@ -40,7 +40,7 @@ int Cast::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
     MS_LOG(ERROR) << "Unsupport input data type " << input->data_type();
     return RET_INPUT_TENSOR_ERROR;
   }
-  if (cast_prim->dstT() != kNumberTypeFloat || cast_prim->dstT() != kNumberTypeFloat32) {
+  if (cast_prim->dstT() != kNumberTypeFloat && cast_prim->dstT() != kNumberTypeFloat32) {
     MS_LOG(ERROR) << "Invalid output datatype " << cast_prim->dstT();
     return RET_INPUT_TENSOR_ERROR;
   }

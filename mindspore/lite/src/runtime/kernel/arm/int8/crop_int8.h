@@ -29,8 +29,9 @@ namespace mindspore::kernel {
 class CropInt8CPUKernel : public CropBaseCPUKernel {
  public:
   CropInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                    const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : CropBaseCPUKernel(parameter, inputs, outputs, ctx) {
+                    const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                    const lite::Primitive *primitive)
+      : CropBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {
     crop_para_ = reinterpret_cast<CropParameter *>(opParameter);
     crop_para_->thread_count_ = opParameter->thread_num_;
   }

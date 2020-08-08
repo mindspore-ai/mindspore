@@ -100,6 +100,10 @@ int ConvolutionDepthwise3x3CPUKernel::InitBuffer() {
 }
 
 int ConvolutionDepthwise3x3CPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   // conv base init
   ConvolutionBaseCPUKernel::Init();
 
@@ -164,6 +168,11 @@ int ConvDw3x3Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int ConvolutionDepthwise3x3CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return ret;
+  }
   if (conv_param_->input_channel_ != conv_param_->output_channel_) {
     MS_LOG(ERROR) << "Only support input channel equals output channel.";
     return RET_ERROR;
@@ -184,7 +193,7 @@ int ConvolutionDepthwise3x3CPUKernel::Run() {
     packed_output_ = output_addr;
   }
 
-  auto ret = LiteBackendParallelLaunch(ConvDw3x3Run, this, conv_param_->thread_num_);
+  ret = LiteBackendParallelLaunch(ConvDw3x3Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDw3x3Run error: error_code[" << ret << "]";
     return RET_ERROR;

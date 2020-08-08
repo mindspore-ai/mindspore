@@ -96,12 +96,12 @@ int BNGradInputCPUKernel::Run() {
 kernel::LiteKernel *CpuBNGradInputFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                     const std::vector<lite::tensor::Tensor *> &outputs,
                                                     OpParameter *opParameter, const lite::Context *ctx,
-                                                    const kernel::KernelKey &desc) {
+                                                    const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_BNGradInput);
   //  parameter->name = opDef.name()->str().data();
   //  parameter->type = opDef.attr_type();
-  auto *kernel = new (std::nothrow) BNGradInputCPUKernel(opParameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) BNGradInputCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   MS_ASSERT(kernel != nullptr);
   auto ret = kernel->Init();
   if (RET_OK != ret) {

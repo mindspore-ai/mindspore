@@ -24,10 +24,7 @@
 #include "schema/model_generated.h"
 #include "include/context.h"
 
-
 using mindspore::lite::Context;
-using mindspore::schema::PrimitiveType_Round;
-using mindspore::schema::PrimitiveType_Floor;
 using mindspore::schema::PrimitiveType_Ceil;
 using mindspore::schema::PrimitiveType_Abs;
 using mindspore::schema::PrimitiveType_Sin;
@@ -37,6 +34,8 @@ using mindspore::schema::PrimitiveType_Sqrt;
 using mindspore::schema::PrimitiveType_Rsqrt;
 using mindspore::schema::PrimitiveType_Square;
 using mindspore::schema::PrimitiveType_LogicalNot;
+using mindspore::schema::PrimitiveType_Floor;
+using mindspore::schema::PrimitiveType_Round;
 
 namespace mindspore::kernel {
 class ArithmeticSelfInt8CPUKernel : public LiteKernel {
@@ -44,8 +43,9 @@ class ArithmeticSelfInt8CPUKernel : public LiteKernel {
 
  public:
   explicit ArithmeticSelfInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                   const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-    : LiteKernel(parameter, inputs, outputs), ctx_(ctx), thread_count_(ctx->thread_num_) {
+                                       const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                                       const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
     switch (parameter->type_) {
       case PrimitiveType_Round:
         arithmeticSelf_run_ = ElementRound;
@@ -106,4 +106,3 @@ class ArithmeticSelfInt8CPUKernel : public LiteKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_ARITHMETIC_SELF_INT8_H_
-

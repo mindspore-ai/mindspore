@@ -25,7 +25,7 @@ class OpenCLKernel : public LiteKernel {
  public:
   explicit OpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                         const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs) {}
+      : LiteKernel(parameter, inputs, outputs, nullptr, nullptr) {}
 
   virtual int Init() { return -1; }
   virtual int Prepare() { return -1; }

@@ -27,8 +27,9 @@ namespace mindspore::kernel {
 class BiasGradCPUKernel : public LiteKernel {
  public:
   explicit BiasGradCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                             const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs) {
+                             const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                             const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     bias_param = reinterpret_cast<ArithmeticParameter *>(parameter);
   }
   ~BiasGradCPUKernel() override = default;

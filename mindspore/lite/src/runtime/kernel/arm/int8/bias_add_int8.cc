@@ -26,6 +26,10 @@ using mindspore::schema::PrimitiveType_BiasAdd;
 
 namespace mindspore::kernel {
 int BiasAddInt8CPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto bias_param = reinterpret_cast<ArithmeticParameter *>(opParameter);
   auto dims = inputs_[0]->shape();
   bias_param->ndim_ = dims.size();
@@ -41,6 +45,11 @@ int BiasAddInt8CPUKernel::Init() {
 int BiasAddInt8CPUKernel::ReSize() { return NNACL_OK; }
 
 int BiasAddInt8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   auto in = reinterpret_cast<int8_t *>(inputs_.at(0)->Data());
   auto bias = reinterpret_cast<int8_t *>(inputs_.at(1)->Data());
   auto out = reinterpret_cast<int8_t *>(outputs_.at(0)->Data());
@@ -59,14 +68,14 @@ int BiasAddInt8CPUKernel::Run() {
 
 kernel::LiteKernel *CpuBiasAddInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                 const std::vector<lite::tensor::Tensor *> &outputs,
-                                                OpParameter *parameter, const lite::Context *ctx,
-                                                const KernelKey &desc) {
+                                                OpParameter *parameter, const lite::Context *ctx, const KernelKey &desc,
+                                                const lite::Primitive *primitive) {
   if (parameter == nullptr || ctx == nullptr) {
     MS_LOG(ERROR) << "parameter or context is nullptr";
     return nullptr;
   }
   MS_ASSERT(desc.type == PrimitiveType_BiasAdd);
-  auto *kernel = new (std::nothrow) BiasAddInt8CPUKernel(parameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) BiasAddInt8CPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create kernel failed, name: " << parameter->name_;
     return nullptr;

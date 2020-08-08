@@ -30,6 +30,10 @@ using mindspore::schema::PrimitiveType_SoftMax;
 
 namespace mindspore::kernel {
 int SoftmaxCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   SoftmaxBaseCPUKernel::Init();
 
   // malloc tmp buffer
@@ -56,6 +60,11 @@ int SoftmaxCPUKernel::Init() {
 int SoftmaxCPUKernel::ReSize() { return RET_OK; }
 
 int SoftmaxCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   auto input_ptr = reinterpret_cast<float *>(inputs_.at(kInputIndex)->Data());
   auto output_ptr = reinterpret_cast<float *>(outputs_.at(kOutputIndex)->Data());
   Softmax(input_ptr, output_ptr, sum_data_, softmax_param_);

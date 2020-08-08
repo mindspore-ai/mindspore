@@ -62,6 +62,11 @@ int MulInt8CPUKernel::Init() {
 int MulInt8CPUKernel::ReSize() { return RET_OK; }
 
 int MulInt8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   input0_data_ = static_cast<int8_t *>(inputs_.at(0)->Data());
   input1_data_ = static_cast<int8_t *>(inputs_.at(1)->Data());
   output_data_ = static_cast<int8_t *>(outputs_.at(0)->Data());
@@ -81,13 +86,13 @@ int MulInt8CPUKernel::Run() {
     }
     TileDimensionsInt8(static_cast<int8_t *>(inputs_.at(0)->Data()), static_cast<int8_t *>(inputs_.at(1)->Data()),
                        input0_data_, input1_data_, &tile_para);
-    auto ret = LiteBackendParallelLaunch(MulInt8Run, this, thread_count_);
+    ret = LiteBackendParallelLaunch(MulInt8Run, this, thread_count_);
     ctx_->allocator->Free(input0_data_);
     ctx_->allocator->Free(input1_data_);
     return ret;
   }
 
-  auto ret = LiteBackendParallelLaunch(MulInt8Run, this, thread_count_);
+  ret = LiteBackendParallelLaunch(MulInt8Run, this, thread_count_);
   return ret;
 }
 
@@ -112,10 +117,11 @@ int MulInt8CPUKernel::DoExecute(int task_id) {
 
 kernel::LiteKernel *CpuMulInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                             const std::vector<lite::tensor::Tensor *> &outputs,
-                                            OpParameter *opParameter, const lite::Context *ctx, const KernelKey &desc) {
+                                            OpParameter *opParameter, const lite::Context *ctx, const KernelKey &desc,
+                                            const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Mul);
-  auto *kernel = new (std::nothrow) MulInt8CPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) MulInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
 
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";

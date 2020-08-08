@@ -24,11 +24,10 @@ namespace mindspore::kernel {
 class UnstackCPUKernel : public LiteKernel {
  public:
   UnstackCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                   const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs) {}
-  ~UnstackCPUKernel() {
-    free(output_addr_array_);
-  }
+                   const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                   const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+  ~UnstackCPUKernel() { free(output_addr_array_); }
 
   int Init() override;
   int ReSize() override;
@@ -40,4 +39,3 @@ class UnstackCPUKernel : public LiteKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_UNSTACK_H_
-

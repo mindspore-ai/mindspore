@@ -207,7 +207,7 @@ TEST_F(TestMatMulFp32, simple) {
   int total_size = MMTestInit(&inputs_, &outputs_, a, b, a_shape, b_shape, c_shape);
   auto ctx = new lite::Context;
   ctx->thread_num_ = 1;
-  auto mm = new kernel::MatmulCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx);
+  auto mm = new kernel::MatmulCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, nullptr);
   mm->Init();
   mm->Run();
   float correct[] = {-0.1256939023733139, -0.07744802534580231,  0.07410638779401779,
@@ -258,7 +258,7 @@ TEST_F(TestMatMulFp32, simple2) {
   int total_size = MMTestInit(&inputs_, &outputs_, a, b, a_shape, b_shape, c_shape);
   auto ctx = new lite::Context;
   ctx->thread_num_ = 2;
-  auto mm = new kernel::MatmulCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx);
+  auto mm = new kernel::MatmulCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, nullptr);
   mm->Init();
   mm->Run();
   float correct[] = {
@@ -327,7 +327,7 @@ TEST_F(TestMatMulFp32, simple_transb) {
   int total_size = MMTestInit(&inputs_, &outputs_, a, b, a_shape, b_shape, c_shape);
   auto ctx = new lite::Context;
   ctx->thread_num_ = 2;
-  auto mm = new kernel::MatmulCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx);
+  auto mm = new kernel::MatmulCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, nullptr);
   mm->Init();
   mm->Run();
   float correct[] = {0.00533547, 0.002545945, 0.062974121, -0.445441471, -0.246223617, -0.142070031};
@@ -376,7 +376,7 @@ TEST_F(TestMatMulFp32, batch) {
   int total_size = MMTestInit(&inputs_, &outputs_, a, b, a_shape, b_shape, c_shape);
   auto ctx = new lite::Context;
   ctx->thread_num_ = 1;
-  auto mm = new kernel::MatmulCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx);
+  auto mm = new kernel::MatmulCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, nullptr);
   mm->Init();
   mm->Run();
   float correct[] = {21.38518524169922,  -14.514888763427734, -11.040614128112793, 16.91403579711914,

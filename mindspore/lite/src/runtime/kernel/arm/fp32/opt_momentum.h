@@ -25,8 +25,9 @@ namespace mindspore::kernel {
 class OptMomentumCPUKernel : public LiteKernel {
  public:
   explicit OptMomentumCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                   const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs) {}
+                                const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                                const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~OptMomentumCPUKernel() override {}
 
   int Init() override;

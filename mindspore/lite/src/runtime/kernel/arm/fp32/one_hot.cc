@@ -35,6 +35,10 @@ constexpr size_t kOutputNum = 1;
 }  // namespace
 
 int OneHotCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   // indices depth on_value off_value
   if (inputs_.size() != kInputNum || outputs_.size() != kOutputNum) {
     MS_LOG(ERROR) << "OneHot input size should be " << kInputNum << ", got " << inputs_.size()
@@ -148,6 +152,11 @@ int OneHotCPUKernel::GetParams() {
 }
 
 int OneHotCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   int error_code = LiteBackendParallelLaunch(RunOneHot, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "OneHot function error error_code[" << error_code << "]";
@@ -159,7 +168,7 @@ int OneHotCPUKernel::Run() {
 kernel::LiteKernel *CpuOneHotFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                const std::vector<lite::tensor::Tensor *> &outputs,
                                                OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc) {
+                                               const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter != nullptr) {
     MS_LOG(ERROR) << "OneHot opParameter nullptr.";
     return nullptr;
@@ -168,7 +177,7 @@ kernel::LiteKernel *CpuOneHotFp32KernelCreator(const std::vector<lite::tensor::T
     MS_LOG(ERROR) << "OneHot desc type should be " << schema::PrimitiveType_OneHot << " got " << desc.type;
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) OneHotCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) OneHotCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "OneHot new kernel failed.";
     return nullptr;

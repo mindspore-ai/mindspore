@@ -29,8 +29,9 @@ namespace mindspore::kernel {
 class SqueezeInt8CPUKernel : public SqueezeBaseCPUKernel {
  public:
   SqueezeInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                       const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : SqueezeBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+                       const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                       const lite::Primitive *primitive)
+      : SqueezeBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~SqueezeInt8CPUKernel() override { delete quant_Squeeze_parm_; }
 
   int Init() override;

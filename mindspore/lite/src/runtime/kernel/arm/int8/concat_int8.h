@@ -29,8 +29,9 @@ namespace mindspore::kernel {
 class ConcatInt8CPUKernel : public ConcatBaseCPUKernel {
  public:
   ConcatInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                      const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : ConcatBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+                      const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                      const lite::Primitive *primitive)
+      : ConcatBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ConcatInt8CPUKernel() override {}
 
   int Init() override;
@@ -49,4 +50,3 @@ int ConcatInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_CONCAT_INT8_H_
-

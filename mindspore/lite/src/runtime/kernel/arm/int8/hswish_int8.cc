@@ -89,6 +89,11 @@ int HswishInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int HswishInt8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   int error_code = LiteBackendParallelLaunch(HswishInt8Run, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "HswishInt8Run function error error_code[" << error_code << "]";

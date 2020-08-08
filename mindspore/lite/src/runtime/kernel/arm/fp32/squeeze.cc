@@ -28,8 +28,8 @@ using mindspore::schema::PrimitiveType_Squeeze;
 
 namespace mindspore::kernel {
 namespace {
-    constexpr int kSqueezeInputNum = 1;
-    constexpr int kSqueezeOutputNum = 1;
+constexpr int kSqueezeInputNum = 1;
+constexpr int kSqueezeOutputNum = 1;
 }  // namespace
 
 int SqueezeCPUKernel::Init() { return RET_OK; }
@@ -37,10 +37,15 @@ int SqueezeCPUKernel::Init() { return RET_OK; }
 int SqueezeCPUKernel::ReSize() { return RET_OK; }
 
 int SqueezeCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   auto input_ptr = reinterpret_cast<float *>(inputs_.front()->Data());
   auto output_ptr = reinterpret_cast<float *>(outputs_.front()->Data());
   size_t data_size = inputs_.front()->Size();
-  auto ret = DoSqueeze(input_ptr, output_ptr, data_size);
+  ret = DoSqueeze(input_ptr, output_ptr, data_size);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Do squeeze failed.";
     return RET_ERROR;
@@ -51,13 +56,13 @@ int SqueezeCPUKernel::Run() {
 kernel::LiteKernel *CpuSqueezeFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                 const std::vector<lite::tensor::Tensor *> &outputs,
                                                 OpParameter *opParameter, const lite::Context *ctx,
-                                                const kernel::KernelKey &desc) {
+                                                const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_Squeeze);
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "desc type is not Squeeze";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) SqueezeCPUKernel(opParameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) SqueezeCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "New kernel fails.";
     return nullptr;
@@ -76,4 +81,3 @@ kernel::LiteKernel *CpuSqueezeFp32KernelCreator(const std::vector<lite::tensor::
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Squeeze, CpuSqueezeFp32KernelCreator)
 }  // namespace mindspore::kernel
-

@@ -91,7 +91,7 @@ TEST_F(TestArithmeticGradFp32, TestAddGradFp32) {
   std::vector<lite::tensor::Tensor *> outputs = {all_tensors[3], all_tensors[4]};
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_AddGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc, nullptr);
   kernel_obj->Run();
 
   float *output_ptr = reinterpret_cast<float *>(outputs[1]->Data());
@@ -122,7 +122,7 @@ TEST_F(TestArithmeticGradFp32, TestAddGrad2Fp32) {
   std::vector<lite::tensor::Tensor *> outputs = {all_tensors[4], all_tensors[3]};
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_AddGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc, nullptr);
   kernel_obj->Run();
 
   float *output_ptr = reinterpret_cast<float *>(outputs[0]->Data());
@@ -153,7 +153,7 @@ TEST_F(TestArithmeticGradFp32, TestAddGrad3Fp32) {
   std::vector<lite::tensor::Tensor *> outputs = {all_tensors[3], all_tensors[4]};
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_AddGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc, nullptr);
   kernel_obj->Run();
 
   float *output_ptr = reinterpret_cast<float *>(outputs[0]->Data());
@@ -184,7 +184,7 @@ TEST_F(TestArithmeticGradFp32, TestSubGradFp32) {
   std::vector<lite::tensor::Tensor *> outputs = {all_tensors[3], all_tensors[4]};
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_SubGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc, nullptr);
   kernel_obj->Run();
 
   float *output_ptr = reinterpret_cast<float *>(outputs[1]->Data());
@@ -215,7 +215,7 @@ TEST_F(TestArithmeticGradFp32, TestSubGrad2Fp32) {
   std::vector<lite::tensor::Tensor *> outputs = {all_tensors[4], all_tensors[3]};
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_SubGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc, nullptr);
   kernel_obj->Run();
 
   float *output_ptr = reinterpret_cast<float *>(outputs[0]->Data());
@@ -246,7 +246,7 @@ TEST_F(TestArithmeticGradFp32, TestMulGradFp32) {
   std::vector<lite::tensor::Tensor *> outputs = {all_tensors[3], all_tensors[4]};
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_MulGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc, nullptr);
 
   int loop_count = 1000;
   auto time_start = mindspore::lite::GetTimeUs();
@@ -287,7 +287,7 @@ TEST_F(TestArithmeticGradFp32, TestMulGrad2Fp32) {
   std::vector<lite::tensor::Tensor *> outputs = {all_tensors[4], all_tensors[3]};
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_MulGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc, nullptr);
   kernel_obj->Run();
 
   float *output_ptr = reinterpret_cast<float *>(outputs[0]->Data());
@@ -318,7 +318,7 @@ TEST_F(TestArithmeticGradFp32, TestMulGrad3Fp32) {
   std::vector<lite::tensor::Tensor *> outputs = {all_tensors[3], all_tensors[4]};
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_MulGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc, nullptr);
   kernel_obj->Run();
 
   float *output_ptr = reinterpret_cast<float *>(outputs[1]->Data());
@@ -349,7 +349,7 @@ TEST_F(TestArithmeticGradFp32, TestMulGrad4Fp32) {
   std::vector<lite::tensor::Tensor *> outputs = {all_tensors[4], all_tensors[3]};
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_MulGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc, nullptr);
   kernel_obj->Run();
 
   float *output_ptr = reinterpret_cast<float *>(outputs[0]->Data());
@@ -380,7 +380,7 @@ TEST_F(TestArithmeticGradFp32, TestDivGradFp32) {
   std::vector<lite::tensor::Tensor *> outputs = {all_tensors[3], all_tensors[4]};
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_DivGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc, nullptr);
   kernel_obj->Run();
 
   float *output_ptr = reinterpret_cast<float *>(outputs[1]->Data());
@@ -411,7 +411,7 @@ TEST_F(TestArithmeticGradFp32, TestDivGrad2Fp32) {
   std::vector<lite::tensor::Tensor *> outputs = {all_tensors[4], all_tensors[3]};
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_DivGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc, nullptr);
   kernel_obj->Run();
 
   float *output_ptr = reinterpret_cast<float *>(outputs[0]->Data());
@@ -442,7 +442,7 @@ TEST_F(TestArithmeticGradFp32, TestDivGrad3Fp32) {
   std::vector<lite::tensor::Tensor *> outputs = {all_tensors[3], all_tensors[4]};
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_DivGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc, nullptr);
   kernel_obj->Run();
 
   float *output_ptr = reinterpret_cast<float *>(outputs[1]->Data());
@@ -473,7 +473,7 @@ TEST_F(TestArithmeticGradFp32, Test3DDivGrad2Fp32) {
   std::vector<lite::tensor::Tensor *> outputs = {all_tensors[3], all_tensors[4]};
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_DivGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), NULL, desc, nullptr);
   kernel_obj->Run();
 
   float *output_ptr = reinterpret_cast<float *>(outputs[1]->Data());

@@ -20,12 +20,11 @@
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 
-
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::schema::PrimitiveType_BiasGrad;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::schema::PrimitiveType_BiasGrad;
 
 namespace mindspore::kernel {
 int BiasGradCPUKernel::InferShape() {
@@ -68,10 +67,14 @@ int BiasGradCPUKernel::Init() {
   return RET_OK;
 }
 
-
 int BiasGradCPUKernel::ReSize() { return 0; }
 
 int BiasGradCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   auto in = reinterpret_cast<float *>(inputs_.at(0)->Data());
   auto out = reinterpret_cast<float *>(outputs_.at(0)->Data());
   // size_t data_size = inputs_.at(0)->ElementsNum();
@@ -91,14 +94,14 @@ int BiasGradCPUKernel::Run() {
   return RET_OK;
 }
 
-
 kernel::LiteKernel *CpuBiasGradFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                  const std::vector<lite::tensor::Tensor *> &outputs,
                                                  OpParameter *opParameter, const lite::Context *ctx,
-                                                 const kernel::KernelKey &desc) {
+                                                 const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_BiasGrad);
-  auto *kernel = new  (std::nothrow) BiasGradCPUKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
+  auto *kernel =
+    new (std::nothrow) BiasGradCPUKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs, ctx, primitive);
   MS_ASSERT(kernel != nullptr);
 
   auto ret = kernel->Init();

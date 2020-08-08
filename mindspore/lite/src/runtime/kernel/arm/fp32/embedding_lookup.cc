@@ -26,6 +26,10 @@ using mindspore::schema::PrimitiveType_EmbeddingLookup;
 
 namespace mindspore::kernel {
 int EmbeddingLookupCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   embedding_lookup_parameter_ = reinterpret_cast<EmbeddingLookupParameter *>(opParameter);
   embedding_lookup_parameter_->thread_num = thread_count_;
   embedding_lookup_parameter_->ids_size_ = inputs_.back()->ElementsNum();
@@ -84,6 +88,11 @@ int EmbeddingLookupRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int EmbeddingLookupCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   int dest_loc = 0;
   for (int i = 0; i < inputs_.size() - 1; i++) {
     auto input_t = reinterpret_cast<float *>(inputs_.at(i)->Data());
@@ -104,13 +113,13 @@ int EmbeddingLookupCPUKernel::Run() {
 kernel::LiteKernel *CpuEmbeddingLookupFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                         const std::vector<lite::tensor::Tensor *> &outputs,
                                                         OpParameter *parameter, const lite::Context *ctx,
-                                                        const KernelKey &desc) {
+                                                        const KernelKey &desc, const lite::Primitive *primitive) {
   if (parameter == nullptr || ctx == nullptr) {
     MS_LOG(ERROR) << "parameter or ctx is nullptr";
     return nullptr;
   }
   MS_ASSERT(desc.type == PrimitiveType_EmbeddingLookup);
-  auto *kernel = new (std::nothrow) EmbeddingLookupCPUKernel(parameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) EmbeddingLookupCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create Kernel failed, name: " << parameter->name_;
     return nullptr;

@@ -161,6 +161,10 @@ void Convolution3x3Int8CPUKernel::ConfigInputOutput() {
 }
 
 int Convolution3x3Int8CPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
@@ -232,6 +236,11 @@ int Convolution3x3Int8Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata)
 }
 
 int Convolution3x3Int8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   auto input_addr = reinterpret_cast<int8_t *>(inputs_.at(kInputIndex)->Data());
   PackInputToC8Int8(input_addr, input_data_, conv_param_);
 

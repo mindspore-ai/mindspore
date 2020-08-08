@@ -30,7 +30,7 @@ class SoftmaxOpenCLKernel : public LiteKernel {
   explicit SoftmaxOpenCLKernel(OpParameter *parameter,
                                const std::vector<lite::tensor::Tensor *> &inputs,
                                const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs) {
+      : LiteKernel(parameter, inputs, outputs, nullptr, nullptr) {
     parameter_ = reinterpret_cast<SoftmaxParameter *>(parameter);
   }
   ~SoftmaxOpenCLKernel() override{};

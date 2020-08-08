@@ -27,8 +27,9 @@ namespace mindspore::kernel {
 class Convolution3x3FP16CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   Convolution3x3FP16CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                              const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+                              const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                              const lite::Primitive *primitive)
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~Convolution3x3FP16CPUKernel() override {
     if (fp16_input_ != nullptr) {
       free(fp16_input_);
@@ -78,4 +79,3 @@ void ProcessFilterFp16(float16_t *origin_weight, float16_t *dst_weight, ConvPara
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_3x3_FP16_H_
-

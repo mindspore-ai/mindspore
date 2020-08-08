@@ -89,6 +89,11 @@ int SigmoidInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int SigmoidInt8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return ret;
+  }
   int error_code = LiteBackendParallelLaunch(SigmoidInt8Run, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SigmoidInt8Run function error error_code[" << error_code << "]";

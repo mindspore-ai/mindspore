@@ -36,7 +36,7 @@ class SubGraphOpenCLKernel : public SubGraphKernel {
                                 const std::vector<kernel::LiteKernel *> inKernels,
                                 const std::vector<kernel::LiteKernel *> outKernels,
                                 const std::vector<kernel::LiteKernel *> nodes)
-      : SubGraphKernel(inputs, outputs, inKernels, outKernels, nodes) {}
+      : SubGraphKernel(inputs, outputs, inKernels, outKernels, nodes, nullptr, nullptr) {}
   ~SubGraphOpenCLKernel() override;
 
   int Init() override;

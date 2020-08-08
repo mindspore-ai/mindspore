@@ -67,7 +67,7 @@ TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest1) {
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&param), &ctx, desc);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&param), &ctx, desc, nullptr);
   ASSERT_NE(kernel, nullptr);
   kernel->Run();
 
@@ -113,7 +113,7 @@ TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest2) {
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&param), &ctx, desc);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&param), &ctx, desc, nullptr);
   ASSERT_NE(kernel, nullptr);
   kernel->Run();
 

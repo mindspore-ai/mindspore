@@ -26,8 +26,9 @@ namespace mindspore::kernel {
 class DeconvolutionDepthwiseFp16CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   DeconvolutionDepthwiseFp16CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                      const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+                                      const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                                      const lite::Primitive *primitive)
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~DeconvolutionDepthwiseFp16CPUKernel() override {
     delete sliding_;
     free(packed_weight_);

@@ -26,6 +26,10 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 int PoolingInt8CPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto ret = PoolingBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PoolingBase Init failed.";
@@ -77,6 +81,11 @@ int PoolingInt8Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int PoolingInt8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   int error_code = LiteBackendParallelLaunch(PoolingInt8Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "poolingInt8 error error_code[" << error_code << "]";

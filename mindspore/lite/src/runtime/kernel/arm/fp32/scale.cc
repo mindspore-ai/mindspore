@@ -90,6 +90,10 @@ int ScaleCPUKernel::InitParameter() {
 }
 
 int ScaleCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   if (inputs_.size() < 2 || inputs_.size() > 3) {
     MS_LOG(ERROR) << "inputs to Scale operator should be 2 or 3, but " << inputs_.size() << " is given.";
     return RET_ERROR;
@@ -133,6 +137,11 @@ int ScaleRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int ScaleCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   auto in_tensor = inputs_.front();
   input_ptr_ = reinterpret_cast<float *>(in_tensor->Data());
   if (scale_ == nullptr) {
@@ -142,7 +151,7 @@ int ScaleCPUKernel::Run() {
   auto out_tensor = outputs_.front();
   output_ptr_ = reinterpret_cast<float *>(out_tensor->Data());
 
-  int ret = LiteBackendParallelLaunch(ScaleRun, this, opParameter->thread_num_);
+  ret = LiteBackendParallelLaunch(ScaleRun, this, opParameter->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;
@@ -154,13 +163,13 @@ int ScaleCPUKernel::Run() {
 kernel::LiteKernel *CpuScaleFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                               const std::vector<lite::tensor::Tensor *> &outputs,
                                               OpParameter *opParameter, const lite::Context *ctx,
-                                              const kernel::KernelKey &desc) {
+                                              const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_Scale);
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "opParameter is nullptr";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) ScaleCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) ScaleCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "New kernel fails.";
     return nullptr;

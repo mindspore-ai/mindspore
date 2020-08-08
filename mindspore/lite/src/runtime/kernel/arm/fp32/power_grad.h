@@ -26,12 +26,13 @@ namespace mindspore::kernel {
 class PowerGradCPUKernel : public LiteKernel {
  public:
   PowerGradCPUKernel(OpParameter *param, const std::vector<lite::tensor::Tensor *> &inputs,
-                          const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(param, inputs, outputs) {
-        PowerParameter *power_param = reinterpret_cast<PowerParameter *>(param);
-        power_ = power_param->power_;
-        scale_ = power_param->scale_;
-        shift_ = power_param->shift_;
+                     const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                     const lite::Primitive *primitive)
+      : LiteKernel(param, inputs, outputs, ctx, primitive) {
+    PowerParameter *power_param = reinterpret_cast<PowerParameter *>(param);
+    power_ = power_param->power_;
+    scale_ = power_param->scale_;
+    shift_ = power_param->shift_;
   }
   ~PowerGradCPUKernel() override = default;
 

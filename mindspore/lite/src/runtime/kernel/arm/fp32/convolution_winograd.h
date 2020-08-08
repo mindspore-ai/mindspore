@@ -28,8 +28,9 @@ namespace mindspore::kernel {
 class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
  public:
   ConvolutionWinogradCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                               const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx, int output_unit)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx), output_unit_(output_unit) {}
+                               const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                               const lite::Primitive *primitive, int output_unit)
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive), output_unit_(output_unit) {}
   ~ConvolutionWinogradCPUKernel() override {
     if (tmp_data_ != nullptr) {
       free(tmp_data_);

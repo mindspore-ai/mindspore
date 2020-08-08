@@ -44,6 +44,10 @@ FullconnectionCPUKernel::~FullconnectionCPUKernel() {
 int FullconnectionCPUKernel::ReSize() { return RET_OK; }
 
 int FullconnectionCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   fc_param_->row_ = (inputs_[0]->shape())[0];
   fc_param_->col_ = (inputs_[1]->shape())[0];
   fc_param_->deep_ = (inputs_[1]->shape())[1];
@@ -105,6 +109,11 @@ int FullconnectionCPUKernel::DoMatmul(int task_id) {
 }
 
 int FullconnectionCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   auto a_ptr = reinterpret_cast<float *>(inputs_.at(0)->Data());
   auto output_ptr = reinterpret_cast<float *>(outputs_.at(0)->Data());
 

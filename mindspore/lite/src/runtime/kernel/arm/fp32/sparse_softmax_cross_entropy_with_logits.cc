@@ -105,6 +105,10 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
 }
 
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto dims = inputs_[0]->shape();
   param->n_dim_ = 2;
   param->number_of_classes_ = dims[1];
@@ -126,10 +130,12 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Init() {
 kernel::LiteKernel *CpuSoftmaxCrossEntropyFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                             const std::vector<lite::tensor::Tensor *> &outputs,
                                                             OpParameter *opParameter, const lite::Context *ctx,
-                                                            const kernel::KernelKey &desc) {
+                                                            const kernel::KernelKey &desc,
+                                                            const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_SoftmaxCrossEntropy);
-  auto *kernel = new (std::nothrow) SparseSoftmaxCrossEntropyWithLogitsCPUKernel(opParameter, inputs, outputs);
+  auto *kernel =
+    new (std::nothrow) SparseSoftmaxCrossEntropyWithLogitsCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   MS_ASSERT(kernel != nullptr);
   auto ret = kernel->Init();
   if (RET_OK != ret) {

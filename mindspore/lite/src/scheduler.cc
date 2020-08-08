@@ -15,8 +15,8 @@
  */
 
 #include "src/scheduler.h"
-#include <algorithm>
 #include <vector>
+#include <algorithm>
 #include "include/errorcode.h"
 #include "src/kernel_factory.h"
 #if SUPPORT_GPU
@@ -69,11 +69,21 @@ int Scheduler::InitOp2Kernel(const lite::Model *model, std::vector<tensor::Tenso
                     << schema::EnumNamePrimitiveType(cNode->primitive()->value_type());
       return RET_ERROR;
     }
-    auto ret = primitive->InferShape(inputs, outputs);
-    if (0 != ret) {
-      MS_LOG(ERROR) << "InferShape failed, name: " << cNode->name()->str()
-                    << ", type: " << schema::EnumNamePrimitiveType(cNode->primitive()->value_type());
-      return ret;
+    if (!context_->infer_shape_interrupt_) {
+      auto ret = primitive->InferShape(inputs, outputs);
+      if (ret == RET_INFER_INVALID) {
+        MS_LOG(INFO) << "InferShape shouldn't be done before runtime, name: " << cNode->name()->str()
+                     << ", type: " << schema::EnumNamePrimitiveType(cNode->primitive()->value_type())
+                     << "flag set to false.";
+        primitive->SetInferFlag(false);
+        context_->InferShapeInterrupt();
+      } else if (ret != RET_OK) {
+        MS_LOG(ERROR) << "InferShape failed, name: " << cNode->name()->str()
+                      << ", type: " << schema::EnumNamePrimitiveType(cNode->primitive()->value_type());
+        return RET_INFER_ERR;
+      }
+    } else {
+      primitive->SetInferFlag(false);
     }
 
     auto *kernel = this->ScheduleNode(inputs, outputs, primitive);

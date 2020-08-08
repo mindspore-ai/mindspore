@@ -26,8 +26,9 @@ namespace mindspore::kernel {
 class ConvolutionDepthwiseCPUKernel : public ConvolutionBaseCPUKernel {
  public:
   ConvolutionDepthwiseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+                                const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                                const lite::Primitive *primitive)
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ConvolutionDepthwiseCPUKernel() override {
     delete sliding_;
     free(packed_weight_);
@@ -55,4 +56,3 @@ class ConvolutionDepthwiseCPUKernel : public ConvolutionBaseCPUKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_H_
-

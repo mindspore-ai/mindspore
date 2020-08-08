@@ -74,6 +74,11 @@ int LocalResponseNormRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int LocalResponseNormCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   int error_code = LiteBackendParallelLaunch(LocalResponseNormRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "LocalResponseNorm function error error_code[" << error_code << "]";
@@ -85,11 +90,12 @@ int LocalResponseNormCPUKernel::Run() {
 kernel::LiteKernel *CpuLocalResponseNormFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                           const std::vector<lite::tensor::Tensor *> &outputs,
                                                           OpParameter *opParameter, const lite::Context *ctx,
-                                                          const kernel::KernelKey &desc) {
+                                                          const kernel::KernelKey &desc,
+                                                          const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_LocalResponseNormalization);
 
-  auto *kernel = new (std::nothrow) LocalResponseNormCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) LocalResponseNormCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new LocalResponseNormCPUKernel fail!";
     return nullptr;

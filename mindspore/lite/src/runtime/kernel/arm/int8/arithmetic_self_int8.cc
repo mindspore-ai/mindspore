@@ -28,6 +28,10 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 int ArithmeticSelfInt8CPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   int ret = ReSize();
   auto *input_tensor = inputs_.at(kInputIndex);
   auto in_quant_args = input_tensor->GetQuantParams();
@@ -93,11 +97,16 @@ int ArithmeticSelfInt8CPUKernel::DoArithmeticSelf(int task_id) {
 }
 
 int ArithmeticSelfInt8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   auto input_tensor = inputs_.at(0);
   auto out_tensor = outputs_.at(0);
   in_ptr_ = reinterpret_cast<int8_t *>(input_tensor->Data());
   out_ptr_ = reinterpret_cast<int8_t *>(out_tensor->Data());
-  int ret = LiteBackendParallelLaunch(ArithmeticSelfInt8Runs, this, thread_sz_count_);
+  ret = LiteBackendParallelLaunch(ArithmeticSelfInt8Runs, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticSelfRun error error_code[" << ret << "]";
     return ret;
@@ -108,13 +117,14 @@ int ArithmeticSelfInt8CPUKernel::Run() {
 kernel::LiteKernel *CpuArithmeticSelfInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                        const std::vector<lite::tensor::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::Context *ctx,
-                                                       const kernel::KernelKey &desc) {
+                                                       const kernel::KernelKey &desc,
+                                                       const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Creator failed, opParameter is nullptr!";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) ArithmeticSelfInt8CPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) ArithmeticSelfInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   MS_ASSERT(kernel != nullptr);
   auto ret = kernel->Init();
   if (ret != RET_OK) {

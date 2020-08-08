@@ -28,8 +28,9 @@ namespace mindspore::kernel {
 class FlattenCPUKernel : public LiteKernel {
  public:
   FlattenCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                   const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : LiteKernel(parameter, inputs, outputs) {
+                   const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                   const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     flatten_param_ = reinterpret_cast<FlattenParameter *>(parameter);
   }
   ~FlattenCPUKernel() override { delete flatten_param_; }
@@ -44,4 +45,3 @@ class FlattenCPUKernel : public LiteKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_FLATTEN_H_
-

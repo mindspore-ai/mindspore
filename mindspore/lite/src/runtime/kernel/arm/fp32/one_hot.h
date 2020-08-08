@@ -24,8 +24,9 @@ namespace mindspore::kernel {
 class OneHotCPUKernel : public LiteKernel {
  public:
   OneHotCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                  const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
-      : LiteKernel(parameter, inputs, outputs), context_(ctx) {}
+                  const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                  const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), context_(ctx) {}
 
   ~OneHotCPUKernel() override = default;
 

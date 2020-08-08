@@ -24,14 +24,18 @@
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
-using mindspore::lite::RET_PARAM_INVALID;
 using mindspore::lite::RET_FORMAT_ERR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::RET_PARAM_INVALID;
 using mindspore::schema::PrimitiveType_ArgMax;
 using mindspore::schema::PrimitiveType_ArgMin;
 
 namespace mindspore::kernel {
 int ArgMinMaxBaseCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto param = reinterpret_cast<ArgMinMaxParameter *>(opParameter);
   switch (opParameter->type_) {
     case PrimitiveType_ArgMax:
@@ -44,6 +48,7 @@ int ArgMinMaxBaseCPUKernel::Init() {
       MS_LOG(ERROR) << "Unexpected type " << opParameter->type_;
       return RET_ERROR;
   }
+
   auto in_shape = inputs_.at(0)->shape();
   auto dims_size = in_shape.size();
   int axis = param->axis_ < 0 ? param->axis_ + dims_size : param->axis_;
@@ -56,9 +61,9 @@ int ArgMinMaxBaseCPUKernel::Init() {
   param->topk_ = MSMIN(param->topk_, in_shape[axis]);
   if (param->topk_ > 1) {
     if (context_ != nullptr && context_->allocator != nullptr) {
-      param->arg_elements_
-        = reinterpret_cast<ArgElement *>(context_->allocator->Malloc(sizeof(ArgElement) * in_shape[axis]));
-        data_from_allocator_ = true;
+      param->arg_elements_ =
+        reinterpret_cast<ArgElement *>(context_->allocator->Malloc(sizeof(ArgElement) * in_shape[axis]));
+      data_from_allocator_ = true;
     } else {
       param->arg_elements_ = reinterpret_cast<ArgElement *>(malloc(sizeof(ArgElement) * in_shape[axis]));
     }
@@ -98,12 +103,12 @@ void ArgMinMaxBaseCPUKernel::FreeTmpMemory() {
 kernel::LiteKernel *CpuArgMinMaxInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                   const std::vector<lite::tensor::Tensor *> &outputs,
                                                   OpParameter *op_parameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc) {
+                                                  const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Input op_parameter is nullptr!";
     return nullptr;
   }
-  auto kernel = new (std::nothrow) ArgMinMaxInt8CPUKernel(op_parameter, inputs, outputs, ctx);
+  auto kernel = new (std::nothrow) ArgMinMaxInt8CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ArgMinMaxInt8CPUKernel fail!";
     return nullptr;
@@ -122,12 +127,12 @@ kernel::LiteKernel *CpuArgMinMaxInt8KernelCreator(const std::vector<lite::tensor
 kernel::LiteKernel *CpuArgMinMaxFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                   const std::vector<lite::tensor::Tensor *> &outputs,
                                                   OpParameter *op_parameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc) {
+                                                  const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Input op_parameter is nullptr!";
     return nullptr;
   }
-  auto kernel = new (std::nothrow) ArgMinMaxCPUKernel(op_parameter, inputs, outputs, ctx);
+  auto kernel = new (std::nothrow) ArgMinMaxCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ArgMinMaxCPUKernel fail!";
     return nullptr;

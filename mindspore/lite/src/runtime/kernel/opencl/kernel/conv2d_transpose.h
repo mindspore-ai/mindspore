@@ -35,8 +35,8 @@ class Conv2dTransposeOpenCLKernel : public LiteKernel {
  public:
   explicit Conv2dTransposeOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                                        const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs) {}
-  ~Conv2dTransposeOpenCLKernel() override {};
+      : LiteKernel(parameter, inputs, outputs, nullptr, nullptr) {}
+  ~Conv2dTransposeOpenCLKernel() override{};
 
   int Init() override;
   int ReSize() override;
@@ -52,4 +52,3 @@ class Conv2dTransposeOpenCLKernel : public LiteKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_BACKEND_OPENCL_CONV2D_TRANSPOSE_H_
-

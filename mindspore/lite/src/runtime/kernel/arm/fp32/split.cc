@@ -31,6 +31,10 @@ using mindspore::schema::PrimitiveType_Split;
 namespace mindspore::kernel {
 
 int SplitCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   SplitBaseCPUKernel::Init();
   auto in_tensor = inputs_.front();
   input_ptr_ = reinterpret_cast<float *>(in_tensor->Data());
@@ -68,7 +72,12 @@ int SplitRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int SplitCPUKernel::Run() {
-  int ret = LiteBackendParallelLaunch(SplitRun, this, thread_n_num_);
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
+  ret = LiteBackendParallelLaunch(SplitRun, this, thread_n_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;

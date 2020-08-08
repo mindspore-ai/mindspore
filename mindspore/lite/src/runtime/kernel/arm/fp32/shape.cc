@@ -27,14 +27,19 @@ using mindspore::schema::PrimitiveType_Shape;
 
 namespace mindspore::kernel {
 namespace {
-    constexpr int kShapeInputNum = 1;
-    constexpr int kShapeOutputNum = 1;
+constexpr int kShapeInputNum = 1;
+constexpr int kShapeOutputNum = 1;
 }  // namespace
 int ShapeCPUKernel::Init() { return RET_OK; }
 
 int ShapeCPUKernel::ReSize() { return RET_OK; }
 
 int ShapeCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   auto out_tensor = outputs_.front();
   auto in_tensor = inputs_.front();
   if (in_tensor == nullptr || out_tensor == nullptr) {
@@ -55,14 +60,14 @@ int ShapeCPUKernel::Run() {
 
 kernel::LiteKernel *CpuShapeFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                              OpParameter *opParameter,
-                                              const lite::Context *ctx, const kernel::KernelKey &desc) {
+                                              OpParameter *opParameter, const lite::Context *ctx,
+                                              const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_Shape);
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "desc type is not Shape";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) ShapeCPUKernel(opParameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) ShapeCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "New kernel fails.";
     return nullptr;
@@ -81,4 +86,3 @@ kernel::LiteKernel *CpuShapeFp32KernelCreator(const std::vector<lite::tensor::Te
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Shape, CpuShapeFp32KernelCreator)
 }  // namespace mindspore::kernel
-

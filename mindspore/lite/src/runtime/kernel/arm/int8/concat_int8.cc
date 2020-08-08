@@ -27,6 +27,10 @@ using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 
 int ConcatInt8CPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   ConcatBaseCPUKernel::Init();
   auto input_num = inputs_.size();
   concat_param_->input_num_ = input_num;
@@ -75,6 +79,12 @@ int ConcatInt8CPUKernel::Init() {
 int ConcatInt8CPUKernel::ReSize() { return 0; }
 
 int ConcatInt8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
+
   auto input_num = concat_param_->input_num_;
   count_unit_ = thread_count_ > 1 ? UP_DIV(before_axis_size, thread_count_) : before_axis_size;
   concat_param_->count_unit_ = count_unit_;
@@ -88,7 +98,7 @@ int ConcatInt8CPUKernel::Run() {
   }
   output_data_ = reinterpret_cast<int8_t *>(outputs_.at(0)->Data());
 
-  auto ret = LiteBackendParallelLaunch(ConcatInt8Run, this, thread_count_);
+  ret = LiteBackendParallelLaunch(ConcatInt8Run, this, thread_count_);
 
   ctx_->allocator->Free(input_data_);
   ctx_->allocator->Free(concat_param_->input_shapes_);

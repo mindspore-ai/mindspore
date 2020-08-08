@@ -24,6 +24,10 @@ using mindspore::schema::PrimitiveType_Unstack;
 
 namespace mindspore::kernel {
 int UnstackCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto input = inputs_.at(0);
   MS_ASSERT(input != nullptr);
   size_t shape_size = input->shape().size();
@@ -56,6 +60,11 @@ int UnstackCPUKernel::Init() {
 int UnstackCPUKernel::ReSize() { return RET_OK; }
 
 int UnstackCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   float *input = reinterpret_cast<float *>(inputs_.at(0)->Data());
   size_t out_num = outputs_.size();
   for (size_t i = 0; i < out_num; i++) {
@@ -67,11 +76,11 @@ int UnstackCPUKernel::Run() {
 
 kernel::LiteKernel *CpuUnstackFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                 const std::vector<lite::tensor::Tensor *> &outputs,
-                                                OpParameter *parameter, const lite::Context *ctx,
-                                                const KernelKey &desc) {
+                                                OpParameter *parameter, const lite::Context *ctx, const KernelKey &desc,
+                                                const lite::Primitive *primitive) {
   MS_ASSERT(parameter != nullptr);
   MS_ASSERT(desc.type == PrimitiveType_Unstack);
-  auto *kernel = new (std::nothrow) UnstackCPUKernel(parameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) UnstackCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create kernel failed, name: " << parameter->name_;
     return nullptr;

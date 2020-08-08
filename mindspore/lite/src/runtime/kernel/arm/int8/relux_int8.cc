@@ -28,6 +28,11 @@ using mindspore::schema::ActivationType_RELU;
 
 namespace mindspore::kernel {
 int ReluXInt8CPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
+
   lite::tensor::Tensor *input = inputs_.at(0);
   lite::tensor::Tensor *output = outputs_.at(0);
   MS_ASSERT(input);
@@ -69,6 +74,11 @@ int ReluXInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int ReluXInt8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return ret;
+  }
   int error_code = LiteBackendParallelLaunch(ReluXInt8Run, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "ReluXInt8Run function error error_code[" << error_code << "]";

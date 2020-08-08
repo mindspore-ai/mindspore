@@ -50,7 +50,7 @@ TEST_F(TestBiasGradFp32, BiasGradFp32) {
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_BiasGrad};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(bias_param), NULL, desc);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(bias_param), NULL, desc, nullptr);
 
   kernel_obj->Run();
 

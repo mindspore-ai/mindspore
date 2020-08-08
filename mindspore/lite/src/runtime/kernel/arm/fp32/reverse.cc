@@ -89,6 +89,10 @@ int ReverseCPUKernel::ReSize() {
 }
 
 int ReverseCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   data_size_ = inputs_.at(0)->ElementsNum();
   thread_sz_count_ = MSMIN(thread_count_, data_size_);
   thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
@@ -121,9 +125,14 @@ int ReverseCPUKernel::DoReverse(int task_id) {
 }
 
 int ReverseCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   in_ptr_ = reinterpret_cast<float *>(inputs_[0]->Data());
   out_ptr_ = reinterpret_cast<float *>(outputs_[0]->Data());
-  int ret = LiteBackendParallelLaunch(ReverseRun, this, thread_sz_count_);
+  ret = LiteBackendParallelLaunch(ReverseRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Reverse run error error_code[" << ret << "]";
     return ret;
@@ -134,13 +143,13 @@ int ReverseCPUKernel::Run() {
 kernel::LiteKernel *CpuReverseFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                 const std::vector<lite::tensor::Tensor *> &outputs,
                                                 OpParameter *opParameter, const lite::Context *ctx,
-                                                const kernel::KernelKey &desc) {
+                                                const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "opParameter is NULL! ";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Reverse);
-  auto *kernel = new (std::nothrow) ReverseCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) ReverseCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Kernel is NULL! name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
@@ -159,4 +168,3 @@ kernel::LiteKernel *CpuReverseFp32KernelCreator(const std::vector<lite::tensor::
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Reverse, CpuReverseFp32KernelCreator)
 }  // namespace mindspore::kernel
-

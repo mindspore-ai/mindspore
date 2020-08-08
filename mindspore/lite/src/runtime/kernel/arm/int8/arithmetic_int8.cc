@@ -167,12 +167,12 @@ int ArithmeticInt8CPUKernel::Run() {
 kernel::LiteKernel *CpuArithmeticInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                    const std::vector<lite::tensor::Tensor *> &outputs,
                                                    OpParameter *parameter, const lite::Context *ctx,
-                                                   const kernel::KernelKey &desc) {
+                                                   const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "Input parameter is null!";
     return nullptr;
   }
-  auto kernel = new (std::nothrow) ArithmeticInt8CPUKernel(parameter, inputs, outputs, ctx);
+  auto kernel = new (std::nothrow) ArithmeticInt8CPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create ArithmeticInt8CPUKernel failed, name: " << parameter->name_;
     return nullptr;

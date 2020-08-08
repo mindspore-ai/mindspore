@@ -49,6 +49,11 @@ int PReluRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int PReluCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   auto input = inputs_.at(0);
   prelu_param_->input_num_ = input->ElementsNum();
   input_data = reinterpret_cast<float *>(input->Data());
@@ -65,13 +70,13 @@ int PReluCPUKernel::Run() {
 kernel::LiteKernel *CpuPReluFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                               const std::vector<lite::tensor::Tensor *> &outputs,
                                               OpParameter *opParameter, const lite::Context *ctx,
-                                              const kernel::KernelKey &desc) {
+                                              const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "input opParameter is nullptr!";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Prelu);
-  auto *kernel = new (std::nothrow) PReluCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) PReluCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PReluCPUKernel fail!";
     return nullptr;
@@ -88,4 +93,3 @@ kernel::LiteKernel *CpuPReluFp32KernelCreator(const std::vector<lite::tensor::Te
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Prelu, CpuPReluFp32KernelCreator)
 }  // namespace mindspore::kernel
-

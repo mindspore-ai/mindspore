@@ -27,6 +27,10 @@ using mindspore::schema::PrimitiveType_Stack;
 
 namespace mindspore::kernel {
 int StackCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   StackParameter *param = reinterpret_cast<StackParameter *>(opParameter);
   auto input0_shape = inputs_[0]->shape();
   axis_ = param->axis_ < 0 ? param->axis_ + input0_shape.size() : param->axis_;
@@ -67,6 +71,11 @@ int StackCPUKernel::Init() {
 }
 
 int StackCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   size_t inputs_num = inputs_.size();
   auto input0_shape = inputs_[0]->shape();
   auto *output_data = reinterpret_cast<float *>(outputs_[0]->Data());
@@ -87,13 +96,13 @@ int StackCPUKernel::Run() {
 kernel::LiteKernel *CpuStackFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                               const std::vector<lite::tensor::Tensor *> &outputs,
                                               OpParameter *op_parameter, const lite::Context *ctx,
-                                              const kernel::KernelKey &desc) {
+                                              const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Input op_parameter is nullptr!";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Stack);
-  auto *kernel = new (std::nothrow) StackCPUKernel(op_parameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) StackCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new StackCPUKernel fail!";
     return nullptr;

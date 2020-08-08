@@ -40,7 +40,12 @@ int ArgMinMaxCPUKernel::Init() {
 }
 
 int ArgMinMaxCPUKernel::Run() {
-  auto ret = ArgMinMaxBaseCPUKernel::Run();
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
+  }
+  ret = ArgMinMaxBaseCPUKernel::Run();
   ArgMinMaxBaseCPUKernel::FreeTmpMemory();
   return ret;
 }

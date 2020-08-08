@@ -38,6 +38,11 @@ int RangeCPUKernel::Init() { return RET_OK; }
 int RangeCPUKernel::ReSize() { return RET_OK; }
 
 int RangeCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   size_t start = (reinterpret_cast<RangeParameter *>(opParameter))->start_;
   size_t limit = (reinterpret_cast<RangeParameter *>(opParameter))->limit_;
   size_t delta = (reinterpret_cast<RangeParameter *>(opParameter))->delta_;
@@ -49,11 +54,11 @@ int RangeCPUKernel::Run() {
 kernel::LiteKernel *CpuRangeFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                               const std::vector<lite::tensor::Tensor *> &outputs,
                                               OpParameter *opParameter, const lite::Context *ctx,
-                                              const kernel::KernelKey &desc) {
+                                              const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Range);
 
-  auto *kernel = new (std::nothrow) RangeCPUKernel(opParameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) RangeCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new RangeCPUKernel fail!";
     return nullptr;
@@ -71,4 +76,3 @@ kernel::LiteKernel *CpuRangeFp32KernelCreator(const std::vector<lite::tensor::Te
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Range, CpuRangeFp32KernelCreator)
 
 }  // namespace mindspore::kernel
-

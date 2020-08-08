@@ -31,15 +31,15 @@ namespace mindspore::kernel {
 int CropBaseCPUKernel::Init() { return RET_OK; }
 
 kernel::LiteKernel *CpuCropInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                const std::vector<lite::tensor::Tensor *> &outputs,
-                                                OpParameter *opParameter, const Context *ctx,
-                                                const kernel::KernelKey &desc) {
+                                             const std::vector<lite::tensor::Tensor *> &outputs,
+                                             OpParameter *opParameter, const Context *ctx,
+                                             const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Crop);
-  auto *kernel = new (std::nothrow) CropInt8CPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) CropInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new CropCPUKernel fail!";
     return nullptr;
@@ -55,15 +55,15 @@ kernel::LiteKernel *CpuCropInt8KernelCreator(const std::vector<lite::tensor::Ten
 }
 
 kernel::LiteKernel *CpuCropInt32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                 const std::vector<lite::tensor::Tensor *> &outputs,
-                                                 OpParameter *opParameter, const Context *ctx,
-                                                 const kernel::KernelKey &desc) {
+                                              const std::vector<lite::tensor::Tensor *> &outputs,
+                                              OpParameter *opParameter, const Context *ctx,
+                                              const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Crop);
-  auto *kernel = new (std::nothrow) CropCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) CropCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new CropCPUKernel fail!";
     return nullptr;
@@ -79,15 +79,15 @@ kernel::LiteKernel *CpuCropInt32KernelCreator(const std::vector<lite::tensor::Te
 }
 
 kernel::LiteKernel *CpuCropFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                const std::vector<lite::tensor::Tensor *> &outputs,
-                                                OpParameter *opParameter, const Context *ctx,
-                                                const kernel::KernelKey &desc) {
+                                             const std::vector<lite::tensor::Tensor *> &outputs,
+                                             OpParameter *opParameter, const Context *ctx,
+                                             const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Crop);
-  auto *kernel = new (std::nothrow) CropCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) CropCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new CropCPUKernel fail!";
     return nullptr;

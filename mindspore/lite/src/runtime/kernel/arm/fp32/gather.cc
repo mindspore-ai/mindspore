@@ -92,6 +92,11 @@ int GatherRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int GatherCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   int error_code = LiteBackendParallelLaunch(GatherRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Gather function error error_code[" << error_code << "]";
@@ -103,11 +108,11 @@ int GatherCPUKernel::Run() {
 kernel::LiteKernel *CpuGatherFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                const std::vector<lite::tensor::Tensor *> &outputs,
                                                OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc) {
+                                               const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Gather);
 
-  auto *kernel = new (std::nothrow) GatherCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) GatherCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     return nullptr;
   }
@@ -123,4 +128,3 @@ kernel::LiteKernel *CpuGatherFp32KernelCreator(const std::vector<lite::tensor::T
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Gather, CpuGatherFp32KernelCreator)
 }  // namespace mindspore::kernel
-
