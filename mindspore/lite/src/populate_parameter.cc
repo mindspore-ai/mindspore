@@ -487,6 +487,7 @@ OpParameter *PopulateActivationParameter(const lite::Primitive *primitive) {
   }
   auto activation = primitive->Value()->value_as_Activation();
   act_param->type_ = static_cast<int>(activation->type());
+  act_param->alpha_ = activation->alpha();
   return reinterpret_cast<OpParameter *>(act_param);
 }
 

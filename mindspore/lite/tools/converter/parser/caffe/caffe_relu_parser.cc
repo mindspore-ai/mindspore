@@ -25,22 +25,18 @@ STATUS CaffeReluParser::Parse(const caffe::LayerParameter &proto,
                               std::vector<schema::TensorT *> *weightVec) {
   std::unique_ptr<schema::ActivationT> attr(new schema::ActivationT());
   attr->type = schema::ActivationType_RELU;
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  op->primitive->value.value = attr.release();
-  op->primitive->value.type = schema::PrimitiveType_Activation;
   // relu: negative_slope = 0, no parameter;
   // leakyrelu: negative_slope != 0;
   if (proto.has_relu_param() && proto.relu_param().has_negative_slope()) {
     float negative_slope = proto.relu_param().negative_slope();
-
     if (0 != negative_slope) {
-      std::unique_ptr<schema::LeakyReLUT> attrLeakyReLu(new schema::LeakyReLUT());
-      attrLeakyReLu->negativeSlope = negative_slope;
-      op->primitive = std::make_unique<schema::PrimitiveT>();
-      op->primitive->value.type = schema::PrimitiveType_LeakyReLU;
-      op->primitive->value.value = attrLeakyReLu.release();
+      attr->type = schema::ActivationType_LEAKY_RELU;
+      attr->alpha = negative_slope;
     }
   }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  op->primitive->value.value = attr.release();
+  op->primitive->value.type = schema::PrimitiveType_Activation;
   return RET_OK;
 }
 
