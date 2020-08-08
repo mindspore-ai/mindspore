@@ -89,10 +89,10 @@ void GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, c
   auto add_weight_param = bias_add_weight->cast<ParameterPtr>()->default_param();
   auto add_weight_tensor = std::dynamic_pointer_cast<ParamValueLite>(add_weight_param);
   auto add_weight_data = reinterpret_cast<float *>(add_weight_tensor->tensor_addr());
-
-  if (add_weight_tensor->tensor_shape().empty()) {
-    if (EOK != memset_s(add_bias_data, kernel_nums * sizeof(float), *add_weight_data, kernel_nums * sizeof(float))) {
-      MS_LOG(EXCEPTION) << "memset_s conv_bias_data failed";
+  auto add_weight_shape = add_weight_tensor->tensor_shape();
+  if (add_weight_shape.empty() || (add_weight_shape.size() == 1 && add_weight_shape[0] ==1)) {
+      for (size_t i = 0; i < kernel_nums; i++) {
+        add_bias_data[i] = *add_weight_data;
     }
   } else {
     if (EOK != memcpy_s(add_bias_data, kernel_nums * sizeof(float), add_weight_data, kernel_nums * sizeof(float))) {
