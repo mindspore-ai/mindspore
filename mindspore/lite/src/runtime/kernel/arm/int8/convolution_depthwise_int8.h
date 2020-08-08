@@ -26,8 +26,9 @@ namespace mindspore::kernel {
 class ConvolutionDepthwiseInt8CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   ConvolutionDepthwiseInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                    const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+                                    const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                                    const lite::Primitive *primitive)
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ConvolutionDepthwiseInt8CPUKernel() override {
     delete sliding;
     free(packed_weight_);

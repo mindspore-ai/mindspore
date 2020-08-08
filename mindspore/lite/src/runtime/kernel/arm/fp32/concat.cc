@@ -28,44 +28,54 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Concat;
 
 namespace mindspore::kernel {
-    int ConcatCPUKernel::Init() {
-      ConcatBaseCPUKernel::Init();
-      schema::Format input0_format = inputs_[0]->GetFormat();
-      bool need_convert_format = false;
-      for (size_t i = 1; i < inputs_.size(); ++i) {
-        if (inputs_[i]->GetFormat() != input0_format) {
-          need_convert_format = true;
-        }
-      }
-      if (!need_convert_format) {
-        outputs_[0]->SetFormat(input0_format);
-        return RET_OK;
-      }
-      MS_LOG(ERROR) << "All input format should be the same!";
-      return RET_ERROR;
+int ConcatCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
+  auto ret = ConcatBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    return ret;
+  }
+  schema::Format input0_format = inputs_[0]->GetFormat();
+  bool need_convert_format = false;
+  for (size_t i = 1; i < inputs_.size(); ++i) {
+    if (inputs_[i]->GetFormat() != input0_format) {
+      need_convert_format = true;
     }
+  }
+  if (!need_convert_format) {
+    outputs_[0]->SetFormat(input0_format);
+    return RET_OK;
+  }
+  MS_LOG(ERROR) << "All input format should be the same!";
+  return RET_ERROR;
+}
 
-    int ConcatCPUKernel::ReSize() { return RET_OK; }
+int ConcatCPUKernel::ReSize() { return RET_OK; }
 
-    int ConcatCPUKernel::Run() {
-      auto input_num = inputs_.size();
-      std::vector<void *> inputs_addr(input_num, nullptr);
-      std::vector<int *> inputs_output_shape(input_num + 1, nullptr);
+int ConcatCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
+  auto input_num = inputs_.size();
+  std::vector<void *> inputs_addr(input_num, nullptr);
+  std::vector<int *> inputs_output_shape(input_num + 1, nullptr);
 
-      std::vector <std::vector<int>> shapes;
-      for (size_t i = 0; i < input_num; ++i) {
-        inputs_addr[i] = inputs_[i]->Data();
-        shapes.push_back(inputs_[i]->shape());
-        inputs_output_shape[i] = shapes[i].data();
-      }
-      auto output_shape = outputs_.at(0)->shape();
-      inputs_output_shape[input_num] = output_shape.data();
-      auto output_addr = outputs_.at(0)->Data();
+  std::vector<std::vector<int>> shapes;
+  for (size_t i = 0; i < input_num; ++i) {
+    inputs_addr[i] = inputs_[i]->Data();
+    shapes.push_back(inputs_[i]->shape());
+    inputs_output_shape[i] = shapes[i].data();
+  }
+  auto output_shape = outputs_.at(0)->shape();
+  inputs_output_shape[input_num] = output_shape.data();
+  auto output_addr = outputs_.at(0)->Data();
 
-      Concat(reinterpret_cast<void **>(inputs_addr.data()), input_num, axis_, inputs_output_shape.data(),
-             output_shape.size(), output_addr);
-      return RET_OK;
-    }
+  Concat(reinterpret_cast<void **>(inputs_addr.data()), input_num, axis_, inputs_output_shape.data(),
+         output_shape.size(), output_addr);
+  return RET_OK;
+}
 }  // namespace mindspore::kernel
-
-

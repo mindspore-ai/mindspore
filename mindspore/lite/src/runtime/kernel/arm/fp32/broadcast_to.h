@@ -25,18 +25,18 @@ namespace mindspore::kernel {
 class BroadcastToCPUKernel : public LiteKernel {
  public:
   BroadcastToCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                       const std::vector<lite::tensor::Tensor *> &outputs) : LiteKernel(parameter, inputs, outputs) {}
+                       const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                       const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~BroadcastToCPUKernel() = default;
 
   int Init() override;
-  int ReSize() override {
-    return 0;
-  }
+  int ReSize() override { return 0; }
   int Run() override;
+
  private:
   BroadcastShapeInfo shape_info_;
 };
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_BROADCAST_TO_H_
-

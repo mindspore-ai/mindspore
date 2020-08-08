@@ -136,6 +136,10 @@ void Convolution1x1CPUKernel::Pre1x1Trans(float *src_input, float *src_output) {
 }
 
 int Convolution1x1CPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   ConvolutionBaseCPUKernel::Init();
   InitConv1x1MatmulParam();
 
@@ -178,6 +182,11 @@ int Convolution1x1Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int Convolution1x1CPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   auto src_in = reinterpret_cast<float *>(inputs_[0]->Data());
   auto src_out = reinterpret_cast<float *>(outputs_[0]->Data());
 

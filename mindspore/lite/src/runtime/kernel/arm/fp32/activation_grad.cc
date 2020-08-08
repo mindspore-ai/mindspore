@@ -20,8 +20,8 @@
 #include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
 
-using mindspore::lite::KernelRegistrar;
 using mindspore::kernel::KERNEL_ARCH::kCPU;
+using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::ActivationGradType_HSWISH;
@@ -32,8 +32,8 @@ using mindspore::schema::PrimitiveType_ActivationGrad;
 
 namespace mindspore::kernel {
 int ActivationGradCPUKernel::Init() {
-    outputs_[0]->set_shape(inputs_[0]->shape());
-    return RET_OK;
+  outputs_[0]->set_shape(inputs_[0]->shape());
+  return RET_OK;
 }
 
 int ActivationGradCPUKernel::ReSize() { return RET_OK; }
@@ -58,7 +58,7 @@ int ActivationGradCPUKernel::DoActivation(int task_id) {
     error_code = TanhGrad(yt_addr, input_addr, length, output_addr);
   } else if (type_ == schema::ActivationGradType_HSWISH) {
     error_code = HSwishGrad(yt_addr, input_addr, length, output_addr);
-    } else if (type_ == schema::ActivationGradType_HSIGMOID) {
+  } else if (type_ == schema::ActivationGradType_HSIGMOID) {
     error_code = HSigmoidGrad(yt_addr, input_addr, length, output_addr);
   } else {
     MS_LOG(ERROR) << "Activation type error";
@@ -90,17 +90,17 @@ int ActivationGradCPUKernel::Run() {
 }
 
 kernel::LiteKernel *CpuActivationGradFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                      const std::vector<lite::tensor::Tensor *> &outputs,
-                                                      OpParameter *opParameter, const lite::Context *ctx,
-                                                      const kernel::KernelKey &desc) {
+                                                       const std::vector<lite::tensor::Tensor *> &outputs,
+                                                       OpParameter *opParameter, const lite::Context *ctx,
+                                                       const kernel::KernelKey &desc,
+                                                       const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_ActivationGrad);
-  auto *kernel = new (std::nothrow) ActivationGradCPUKernel(opParameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) ActivationGradCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   MS_ASSERT(kernel != nullptr);
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "InferShape kernel failed, name: " << opParameter->name_
-                  << ", type: "
+    MS_LOG(ERROR) << "InferShape kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
   }
   return kernel;

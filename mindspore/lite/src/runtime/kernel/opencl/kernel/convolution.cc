@@ -306,7 +306,7 @@ int ConvolutionOpenCLKernel::Run() {
 kernel::LiteKernel *OpenCLConvolutionKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                    const std::vector<lite::tensor::Tensor *> &outputs,
                                                    OpParameter *opParameter, const lite::Context *ctx,
-                                                   const kernel::KernelKey &desc) {
+                                                   const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   auto *kernel = new ConvolutionOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create OpenCL Convolution kernel failed!";

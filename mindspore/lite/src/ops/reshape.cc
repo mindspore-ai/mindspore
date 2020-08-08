@@ -34,11 +34,11 @@ int Reshape::CalNewShape(const tensor::Tensor *in_tensor, std::vector<int> *out_
         inferIndex = i;
       } else {
         MS_LOG(ERROR) << "output shape should has no more than one dim which need infer";
-        return RET_ERROR;
+        return RET_INFER_ERR;
       }
     } else if (out_shape->at(i) < 0) {
       MS_LOG(ERROR) << "output shape dim should be non-negative";
-      return RET_ERROR;
+      return RET_INFER_ERR;
     } else if (out_shape->at(i) == 0) {
       out_shape->at(i) = in_tensor->shape().at(i);
       out_shapeSize *= out_shape->at(i);
@@ -49,7 +49,7 @@ int Reshape::CalNewShape(const tensor::Tensor *in_tensor, std::vector<int> *out_
 
   if (inferIndex == -1 && out_shapeSize != in_shape_size) {
     MS_LOG(ERROR) << "output shapeSize: " << out_shapeSize << " should be equal to input shapeSize: " << in_shape_size;
-    return RET_ERROR;
+    return RET_INFER_ERR;
   }
   if (inferIndex != -1) {
     out_shape->at(inferIndex) = in_shape_size / out_shapeSize;
@@ -88,7 +88,11 @@ int Reshape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
   std::vector<int> out_shape;
   if (inputs_.size() == kDoubleNum) {
     auto shape_tensor = inputs_.at(1);
-    size_t shape_size = shape_tensor->ElementsNum();
+    if (shape_tensor->Data() == nullptr) {
+      MS_LOG(INFO) << "Do infer shape in runtime.";
+      return RET_INFER_INVALID;
+    }
+    size_t shape_size = shape_tensor->shape().size();
     switch (shape_tensor->data_type()) {
       case kNumberTypeInt8: {
         auto data = reinterpret_cast<int8_t *>(shape_tensor->Data());
@@ -108,13 +112,14 @@ int Reshape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
       } break;
       default: {
         MS_LOG(ERROR) << "Reshape weight tensor has unsupported dataType: " << shape_tensor->data_type();
-        return RET_ERROR;
+        return RET_INFER_ERR;
       }
     }
   } else if (inputs_.size() == kSingleNum) {
     std::copy(reshape_prim->shape()->begin(), reshape_prim->shape()->end(), std::back_inserter(out_shape));
   } else {
     MS_LOG(ERROR) << "inputs tensor size invalid.";
+    return RET_INFER_ERR;
   }
 
   auto ret = CalNewShape(inputs_.front(), &out_shape);

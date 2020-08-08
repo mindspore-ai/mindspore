@@ -30,21 +30,24 @@ using mindspore::schema::PrimitiveType_Concat;
 
 namespace mindspore::kernel {
 int ConcatBaseCPUKernel::Init() {
-  auto axis = concat_param_->axis_;
-  axis_ = axis >= 0 ? axis : inputs_.front()->shape().size() + axis;
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
+  axis_ = concat_param_->axis_ >= 0 ? concat_param_->axis_ : inputs_.front()->shape().size() + concat_param_->axis_;
   return RET_OK;
 }
 
 kernel::LiteKernel *CpuConcatInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                const std::vector<lite::tensor::Tensor *> &outputs,
                                                OpParameter *opParameter, const Context *ctx,
-                                               const kernel::KernelKey &desc) {
+                                               const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Concat);
-  auto *kernel = new(std::nothrow) ConcatInt8CPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) ConcatInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ConcatCPUKernel fail!";
     return nullptr;
@@ -60,15 +63,15 @@ kernel::LiteKernel *CpuConcatInt8KernelCreator(const std::vector<lite::tensor::T
 }
 
 kernel::LiteKernel *CpuConcatInt32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                      const std::vector<lite::tensor::Tensor *> &outputs,
-                                                      OpParameter *opParameter, const Context *ctx,
-                                                const kernel::KernelKey &desc) {
+                                                const std::vector<lite::tensor::Tensor *> &outputs,
+                                                OpParameter *opParameter, const Context *ctx,
+                                                const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Concat);
-  auto *kernel = new(std::nothrow) ConcatCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) ConcatCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ConcatCPUKernel fail!";
     return nullptr;
@@ -84,15 +87,15 @@ kernel::LiteKernel *CpuConcatInt32KernelCreator(const std::vector<lite::tensor::
 }
 
 kernel::LiteKernel *CpuConcatFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                      const std::vector<lite::tensor::Tensor *> &outputs,
-                                                      OpParameter *opParameter, const Context *ctx,
-                                               const kernel::KernelKey &desc) {
+                                               const std::vector<lite::tensor::Tensor *> &outputs,
+                                               OpParameter *opParameter, const Context *ctx,
+                                               const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Concat);
-  auto *kernel = new(std::nothrow) ConcatCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) ConcatCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ConcatCPUKernel fail!";
     return nullptr;
@@ -111,4 +114,3 @@ REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Concat, CpuConcatInt8KernelCreat
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Concat, CpuConcatInt32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Concat, CpuConcatFp32KernelCreator)
 }  // namespace mindspore::kernel
-

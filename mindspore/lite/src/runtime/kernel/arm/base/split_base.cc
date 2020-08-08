@@ -61,13 +61,13 @@ int SplitBaseCPUKernel::Init() {
 kernel::LiteKernel *CpuSplitInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs,
                                              OpParameter *opParameter, const Context *ctx,
-                                             const kernel::KernelKey &desc) {
+                                             const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Split);
-  auto *kernel = new (std::nothrow) SplitInt8CPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) SplitInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SplitCPUKernel fail!";
     return nullptr;
@@ -85,13 +85,13 @@ kernel::LiteKernel *CpuSplitInt8KernelCreator(const std::vector<lite::tensor::Te
 kernel::LiteKernel *CpuSplitInt32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                               const std::vector<lite::tensor::Tensor *> &outputs,
                                               OpParameter *opParameter, const Context *ctx,
-                                              const kernel::KernelKey &desc) {
+                                              const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Split);
-  auto *kernel = new (std::nothrow) SplitCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) SplitCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SplitCPUKernel fail!";
     return nullptr;
@@ -109,13 +109,13 @@ kernel::LiteKernel *CpuSplitInt32KernelCreator(const std::vector<lite::tensor::T
 kernel::LiteKernel *CpuSplitFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs,
                                              OpParameter *opParameter, const Context *ctx,
-                                             const kernel::KernelKey &desc) {
+                                             const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Split);
-  auto *kernel = new (std::nothrow) SplitCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) SplitCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SplitCPUKernel fail!";
     return nullptr;

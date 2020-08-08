@@ -30,8 +30,9 @@ using mindspore::schema::RoundMode;
 class PoolingGradCPUKernel : public LiteKernel {
  public:
   explicit PoolingGradCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs) {}
+                                const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                                const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~PoolingGradCPUKernel() override = default;
 
   // int TfPadding(int input_w, int input_h, int &output_w, int &output_h);

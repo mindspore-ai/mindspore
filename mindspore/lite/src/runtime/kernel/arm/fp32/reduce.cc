@@ -91,6 +91,10 @@ int ReduceCPUKernel::CheckParameters() {
 }
 
 int ReduceCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto ret = CheckInputsOutputs();
   if (ret != RET_OK) {
     return ret;
@@ -153,6 +157,11 @@ int ReduceImpl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int ReduceCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   tmp_shape_ = inputs_.at(0)->shape();
   src_data_ = static_cast<float *>(inputs_.at(0)->Data());
   for (int i = 0; i < data_buffers_.size(); ++i) {
@@ -220,7 +229,7 @@ int ReduceCPUKernel::MallocTmpBuffer() {
 kernel::LiteKernel *CpuReduceFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                const std::vector<lite::tensor::Tensor *> &outputs,
                                                OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc) {
+                                               const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Reduce);
   if (opParameter == nullptr) {
@@ -231,8 +240,8 @@ kernel::LiteKernel *CpuReduceFp32KernelCreator(const std::vector<lite::tensor::T
     MS_LOG(ERROR) << "Reduce op desc.type should be PrimitiveType_Reduce, got " << desc.type;
     return nullptr;
   }
-  auto *kernel =
-    new (std::nothrow) ReduceCPUKernel(reinterpret_cast<ReduceParameter *>(opParameter), inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow)
+    ReduceCPUKernel(reinterpret_cast<ReduceParameter *>(opParameter), inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Reduce new ReduceCPUKernel failed.";
     return nullptr;
@@ -250,7 +259,7 @@ kernel::LiteKernel *CpuReduceFp32KernelCreator(const std::vector<lite::tensor::T
 kernel::LiteKernel *CpuMeanFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs,
                                              OpParameter *opParameter, const lite::Context *ctx,
-                                             const kernel::KernelKey &desc) {
+                                             const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Mean);
   if (opParameter == nullptr) {
@@ -261,8 +270,8 @@ kernel::LiteKernel *CpuMeanFp32KernelCreator(const std::vector<lite::tensor::Ten
     MS_LOG(ERROR) << "Reduce op desc.type should be PrimitiveType_Mean, got " << desc.type;
     return nullptr;
   }
-  auto *kernel =
-    new (std::nothrow) ReduceCPUKernel(reinterpret_cast<ReduceParameter *>(opParameter), inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow)
+    ReduceCPUKernel(reinterpret_cast<ReduceParameter *>(opParameter), inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Reduce new ReduceCPUKernel failed.";
     return nullptr;

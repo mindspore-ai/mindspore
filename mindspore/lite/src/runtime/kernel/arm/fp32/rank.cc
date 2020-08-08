@@ -38,6 +38,11 @@ int RankCPUKernel::Init() { return RET_OK; }
 int RankCPUKernel::ReSize() { return RET_OK; }
 
 int RankCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   auto output_ptr = reinterpret_cast<float *>(outputs_.at(0)->Data());
   auto in_shape = inputs_[0]->shape();
   auto rank = in_shape.size();
@@ -47,12 +52,12 @@ int RankCPUKernel::Run() {
 
 kernel::LiteKernel *CpuRankFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs,
-                                             OpParameter *opParameter,
-                                             const lite::Context *ctx, const kernel::KernelKey &desc) {
+                                             OpParameter *opParameter, const lite::Context *ctx,
+                                             const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Rank);
 
-  auto *kernel = new (std::nothrow) RankCPUKernel(opParameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) RankCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new RankCPUKernel fail!";
     return nullptr;
@@ -69,4 +74,3 @@ kernel::LiteKernel *CpuRankFp32KernelCreator(const std::vector<lite::tensor::Ten
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Rank, CpuRankFp32KernelCreator)
 }  // namespace mindspore::kernel
-

@@ -22,15 +22,20 @@
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::schema::PrimitiveType_OptMomentum;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::schema::PrimitiveType_OptMomentum;
 
 namespace mindspore::kernel {
 
 int OptMomentumCPUKernel::ReSize() { return 0; }
 
 int OptMomentumCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   if (inputs_.size() != 5 || !outputs_.empty()) {
     MS_LOG(ERROR) << "OptMomentumCPUKernel error input output size!";
     return RET_ERROR;
@@ -59,9 +64,9 @@ int OptMomentumCPUKernel::Init() { return 0; }
 kernel::LiteKernel *CpuOptMomentumFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                     const std::vector<lite::tensor::Tensor *> &outputs,
                                                     OpParameter *opParameter, const lite::Context *ctx,
-                                                    const kernel::KernelKey &desc) {
+                                                    const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_OptMomentum);
-  auto *kernel = new (std::nothrow) OptMomentumCPUKernel(opParameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) OptMomentumCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   MS_ASSERT(kernel != nullptr);
 
   auto ret = kernel->Init();

@@ -27,6 +27,10 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 int ArithmeticSelfCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   int ret = ReSize();
   return ret;
 }
@@ -68,11 +72,16 @@ int ArithmeticSelfCPUKernel::DoArithmeticSelf(int task_id) {
 }
 
 int ArithmeticSelfCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return ret;
+  }
   auto input_tensor = inputs_.at(0);
   auto out_tensor = outputs_.at(0);
   in_ptr_ = reinterpret_cast<float *>(input_tensor->Data());
   out_ptr_ = reinterpret_cast<float *>(out_tensor->Data());
-  int ret = LiteBackendParallelLaunch(ArithmeticSelfRuns, this, thread_sz_count_);
+  ret = LiteBackendParallelLaunch(ArithmeticSelfRuns, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticSelfRun error error_code[" << ret << "]";
     return ret;
@@ -83,13 +92,14 @@ int ArithmeticSelfCPUKernel::Run() {
 kernel::LiteKernel *CpuArithmeticSelfFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                        const std::vector<lite::tensor::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::Context *ctx,
-                                                       const kernel::KernelKey &desc) {
+                                                       const kernel::KernelKey &desc,
+                                                       const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Creator failed, opParameter is nullptr!";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) ArithmeticSelfCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) ArithmeticSelfCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   MS_ASSERT(kernel != nullptr);
   auto ret = kernel->Init();
   if (ret != RET_OK) {

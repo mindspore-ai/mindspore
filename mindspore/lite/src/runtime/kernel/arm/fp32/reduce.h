@@ -31,8 +31,9 @@ class ReduceCPUKernel : public LiteKernel {
 
  public:
   ReduceCPUKernel(ReduceParameter *param, const std::vector<lite::tensor::Tensor *> &inputs,
-                  const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
-      : LiteKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs),
+                  const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                  const lite::Primitive *primitive)
+      : LiteKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs, ctx, primitive),
         context_(ctx),
         keep_dims_(param->keep_dims_),
         num_axes_(param->num_axes_),

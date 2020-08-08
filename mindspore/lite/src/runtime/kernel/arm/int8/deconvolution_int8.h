@@ -31,8 +31,9 @@ namespace mindspore::kernel {
 class DeConvInt8CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   DeConvInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                      const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+                      const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                      const lite::Primitive *primitive)
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~DeConvInt8CPUKernel() override;
 
   int ReSize() override;
@@ -60,4 +61,3 @@ class DeConvInt8CPUKernel : public ConvolutionBaseCPUKernel {
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_DECONVOLUTION_INT8_H_
-

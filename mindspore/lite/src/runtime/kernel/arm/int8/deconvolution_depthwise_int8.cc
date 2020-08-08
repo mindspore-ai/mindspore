@@ -115,6 +115,10 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitBuffer() {
 }
 
 int DeconvolutionDepthwiseInt8CPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   sliding = new SlidingWindowParam;
   InitSlideParam();
 
@@ -174,6 +178,11 @@ int DeconvDwInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int DeconvolutionDepthwiseInt8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   if (conv_param_->input_channel_ != conv_param_->output_channel_) {
     MS_LOG(ERROR) << "Only support input channel equals output channel.";
     return RET_ERROR;
@@ -190,7 +199,7 @@ int DeconvolutionDepthwiseInt8CPUKernel::Run() {
     packed_output_ = output_addr;
   }
 
-  auto ret = LiteBackendParallelLaunch(DeconvDwInt8Run, this, conv_param_->thread_num_);
+  ret = LiteBackendParallelLaunch(DeconvDwInt8Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DeconvDwInt8Run error: error_code[" << ret << "]";
     return RET_ERROR;
@@ -206,10 +215,11 @@ int DeconvolutionDepthwiseInt8CPUKernel::Run() {
 kernel::LiteKernel *CpuDeconvDwInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                  const std::vector<lite::tensor::Tensor *> &outputs,
                                                  OpParameter *opParameter, const lite::Context *ctx,
-                                                 const kernel::KernelKey &desc) {
+                                                 const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DeDepthwiseConv2D);
-  auto kernel = new (std::nothrow) kernel::DeconvolutionDepthwiseInt8CPUKernel(opParameter, inputs, outputs, ctx);
+  auto kernel =
+    new (std::nothrow) kernel::DeconvolutionDepthwiseInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
     return nullptr;

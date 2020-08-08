@@ -45,7 +45,7 @@ TEST_F(TestTopKInt8, TopK) {
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
 
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), nullptr, desc);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), nullptr, desc, nullptr);
   ASSERT_NE(kernel, nullptr);
 
   auto ret = kernel->Run();

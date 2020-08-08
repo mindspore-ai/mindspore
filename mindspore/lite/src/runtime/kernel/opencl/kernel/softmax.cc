@@ -84,7 +84,7 @@ int SoftmaxOpenCLKernel::Run() {
 kernel::LiteKernel *OpenCLSoftMaxKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                const std::vector<lite::tensor::Tensor *> &outputs,
                                                OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc) {
+                                               const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   auto *kernel = new SoftmaxOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   if (inputs[0]->shape()[0] > 1) {
     MS_LOG(ERROR) << "Init `Softmax` kernel failed: Unsupported multi-batch.";
@@ -101,4 +101,3 @@ kernel::LiteKernel *OpenCLSoftMaxKernelCreator(const std::vector<lite::tensor::T
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_SoftMax, OpenCLSoftMaxKernelCreator)
 }  // namespace kernel
 }  // namespace mindspore
-

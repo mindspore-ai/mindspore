@@ -28,8 +28,9 @@ namespace mindspore::kernel {
 class ConcatBaseCPUKernel : public LiteKernel {
  public:
   ConcatBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                      const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-          : LiteKernel(parameter, inputs, outputs), ctx_(ctx), thread_count_(ctx->thread_num_) {
+                      const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                      const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
     opParameter->thread_num_ = ctx->thread_num_;
     concat_param_ = reinterpret_cast<ConcatParameter *>(opParameter);
   }
@@ -41,6 +42,7 @@ class ConcatBaseCPUKernel : public LiteKernel {
   int ReSize() override { return 0; }
 
   int Run() override { return 0; }
+
  protected:
   int thread_count_;
   int axis_;
@@ -50,4 +52,3 @@ class ConcatBaseCPUKernel : public LiteKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CONCAT_BASE_H_
-

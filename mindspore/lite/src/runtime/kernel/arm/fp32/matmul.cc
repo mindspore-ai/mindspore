@@ -33,6 +33,10 @@ MatmulCPUKernel::~MatmulCPUKernel() {
 int MatmulCPUKernel::ReSize() { return RET_OK; }
 
 int MatmulCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   int batch = 1;
   auto a_shape = inputs_[0]->shape();
   auto c_shape = outputs_[0]->shape();
@@ -88,6 +92,11 @@ int MatmulFloatRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int MatmulCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   auto a_ptr = reinterpret_cast<float *>(inputs_[0]->Data());
   auto b_ptr = reinterpret_cast<float *>(inputs_[1]->Data());
   auto c_ptr = reinterpret_cast<float *>(outputs_[0]->Data());

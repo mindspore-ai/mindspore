@@ -48,8 +48,11 @@ constexpr int RET_OP_EXECUTE_FAILURE = -304; /**< Failed to execution operator. 
 
 /* Tensor error code, range: [-401,-500] */
 constexpr int RET_FORMAT_ERR = -401; /**< Failed to checking tensor format. */
+
+/* InferShape error code, range: [-501,-600] */
+constexpr int RET_INFER_ERR = -501; /**< Failed to infer shape. */
+constexpr int RET_INFER_INVALID = -502; /**< Invalid to infer shape before runtime. */
 }  // namespace lite
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_INCLUDE_ERRORCODE_H_
-

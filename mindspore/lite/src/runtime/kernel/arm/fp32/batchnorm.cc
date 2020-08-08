@@ -53,6 +53,11 @@ int BatchNormRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int BatchnormCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   in_addr_ = reinterpret_cast<float *>(inputs_.at(0)->Data());
   mean_addr_ = reinterpret_cast<float *>(inputs_.at(1)->Data());
   var_addr_ = reinterpret_cast<float *>(inputs_.at(2)->Data());
@@ -76,10 +81,10 @@ int BatchnormCPUKernel::Run() {
 kernel::LiteKernel *CpuBatchnormKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                               const std::vector<lite::tensor::Tensor *> &outputs,
                                               OpParameter *opParameter, const lite::Context *ctx,
-                                              const kernel::KernelKey &desc) {
+                                              const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_BatchNorm);
-  auto *kernel = new (std::nothrow) BatchnormCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) BatchnormCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new BatchNormCPUKernel fail!";
     return nullptr;

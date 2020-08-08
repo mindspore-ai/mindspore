@@ -28,8 +28,9 @@ namespace mindspore::kernel {
 class ResizeCPUKernel : public LiteKernel {
  public:
   ResizeCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                  const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
-      : LiteKernel(parameter, inputs, outputs), context_(ctx) {}
+                  const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                  const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), context_(ctx) {}
 
   ~ResizeCPUKernel() {
     if (exec_input_data_ != nullptr) {
@@ -62,4 +63,3 @@ class ResizeCPUKernel : public LiteKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_RESIZE_H_
-

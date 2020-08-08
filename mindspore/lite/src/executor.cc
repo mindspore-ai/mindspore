@@ -37,11 +37,6 @@ int Executor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tensor::Ten
   kernel::LiteKernelUtil::InitTensorRefCount(kernels);
   for (auto *kernel : kernels) {
     MS_ASSERT(nullptr != kernel);
-    auto &outputs = kernel->GetOutputs();
-    for (auto *output : outputs) {
-      MS_ASSERT(nullptr != output);
-      output->MallocData();
-    }
     session::CallBackParam callbackParam;
     callbackParam.name_callback_param = kernel->Name();
     callbackParam.type_callback_param = kernel->type_str();

@@ -25,6 +25,7 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::RET_INFER_INVALID;
 using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
 namespace mindspore::kernel {
@@ -86,6 +87,10 @@ int ConvolutionDepthwiseCPUKernel::InitBuffer() {
 }
 
 int ConvolutionDepthwiseCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   // conv base init
   ConvolutionBaseCPUKernel::Init();
 
@@ -144,6 +149,11 @@ int ConvDwRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int ConvolutionDepthwiseCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return ret;
+  }
   if (conv_param_->input_channel_ != conv_param_->output_channel_) {
     MS_LOG(ERROR) << "Only support input channel equals output channel.";
     return RET_ERROR;
@@ -164,7 +174,7 @@ int ConvolutionDepthwiseCPUKernel::Run() {
     packed_output_ = output_addr;
   }
 
-  auto ret = LiteBackendParallelLaunch(ConvDwRun, this, conv_param_->thread_num_);
+  ret = LiteBackendParallelLaunch(ConvDwRun, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwRun error: error_code[" << ret << "]";
     return RET_ERROR;
@@ -180,11 +190,11 @@ int ConvolutionDepthwiseCPUKernel::Run() {
 kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                const std::vector<lite::tensor::Tensor *> &outputs,
                                                OpParameter *opParameter, const Context *ctx,
-                                               const kernel::KernelKey &desc) {
+                                               const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DepthwiseConv2D);
   kernel::LiteKernel *kernel;
-  kernel = new (std::nothrow) kernel::ConvolutionDepthwiseCPUKernel(opParameter, inputs, outputs, ctx);
+  kernel = new (std::nothrow) kernel::ConvolutionDepthwiseCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   //  auto param = reinterpret_cast<ConvParameter *>(opParameter);
   //  if (param->kernel_h_ == 3 && param->kernel_w_ == 3 && param->stride_h_ == 1 && param->stride_w_ == 1 &&
   //  param->dilation_h_ == 1 && param->dilation_w_ == 1) {
@@ -192,12 +202,13 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::tensor::T
   //  } else {
   //  kernel = new (std::nothrow) kernel::ConvolutionDepthwiseCPUKernel(opParameter, inputs, outputs, ctx);
   //  }
+
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (ret != RET_OK) {
+  if (ret != RET_OK && ret != RET_INFER_INVALID) {
     delete kernel;
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));

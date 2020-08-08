@@ -50,10 +50,10 @@ int PowerGradCPUKernel::Run() {
 kernel::LiteKernel *CpuPowerGradFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                   const std::vector<lite::tensor::Tensor *> &outputs,
                                                   OpParameter *opParameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc) {
+                                                  const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_PowerGrad);
-  auto *kernel = new (std::nothrow) PowerGradCPUKernel(opParameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) PowerGradCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "

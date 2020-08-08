@@ -29,6 +29,10 @@ using mindspore::schema::PrimitiveType_Prelu;
 
 namespace mindspore::kernel {
 int PreluInt8CPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   PreluBaseCPUKernel::Init();
   auto *input_tensor = inputs_.at(kInputIndex);
   auto in_quant_args = input_tensor->GetQuantParams();

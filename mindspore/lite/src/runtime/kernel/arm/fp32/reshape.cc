@@ -36,6 +36,11 @@ int ReshapeCPUKernel::Init() {
 int ReshapeCPUKernel::ReSize() { return RET_OK; }
 
 int ReshapeCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   auto input_ptr = inputs_.at(kInputIndex)->Data();
   auto output_ptr = outputs_.at(kOutputIndex)->Data();
   size_t data_size = inputs_.at(kInputIndex)->Size();
@@ -43,4 +48,3 @@ int ReshapeCPUKernel::Run() {
   return RET_OK;
 }
 }  // namespace mindspore::kernel
-

@@ -24,9 +24,9 @@
 #include "schema/model_generated.h"
 #include "include/context.h"
 
-
 using mindspore::lite::Context;
 using mindspore::schema::PrimitiveType_Abs;
+using mindspore::schema::PrimitiveType_Ceil;
 using mindspore::schema::PrimitiveType_Cos;
 using mindspore::schema::PrimitiveType_Exp;
 using mindspore::schema::PrimitiveType_Floor;
@@ -36,7 +36,6 @@ using mindspore::schema::PrimitiveType_Rsqrt;
 using mindspore::schema::PrimitiveType_Sin;
 using mindspore::schema::PrimitiveType_Sqrt;
 using mindspore::schema::PrimitiveType_Square;
-using mindspore::schema::PrimitiveType_Ceil;
 
 namespace mindspore::kernel {
 class ArithmeticSelfCPUKernel : public LiteKernel {
@@ -44,8 +43,9 @@ class ArithmeticSelfCPUKernel : public LiteKernel {
 
  public:
   explicit ArithmeticSelfCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                   const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : LiteKernel(parameter, inputs, outputs), ctx_(ctx), thread_count_(ctx->thread_num_) {
+                                   const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                                   const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
     switch (parameter->type_) {
       case PrimitiveType_Abs:
         arithmeticSelf_run_ = ElementAbs;
@@ -106,4 +106,3 @@ class ArithmeticSelfCPUKernel : public LiteKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARITHMETIC_SELF_H_
-

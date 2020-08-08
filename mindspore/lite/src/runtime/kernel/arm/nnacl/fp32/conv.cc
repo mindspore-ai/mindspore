@@ -130,9 +130,9 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
                        out_unit);
   int output_num = out_channel * conv_param->output_h_ * conv_param->output_w_ * conv_param->output_batch_;
   if (is_relu) {
-    ReluFp32(output_data, output_num);
+    ReluFp32(output_data, output_data, output_num);
   } else if (is_relu6) {
-    Relu6Fp32(output_data, output_num);
+    Relu6Fp32(output_data, output_data, output_num);
   } else {
     // do nothing
   }
@@ -219,9 +219,9 @@ void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_dat
   }
   int output_num = output_channel * conv_param->output_h_ * conv_param->output_w_ * conv_param->output_batch_;
   if (is_relu) {
-    ReluFp32(output_data, output_num);
+    ReluFp32(output_data, output_data, output_num);
   } else if (is_relu6) {
-    Relu6Fp32(output_data, output_num);
+    Relu6Fp32(output_data, output_data, output_num);
   } else {
     // do nothing
   }

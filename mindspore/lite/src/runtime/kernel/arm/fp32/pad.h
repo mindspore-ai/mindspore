@@ -26,8 +26,9 @@ namespace mindspore::kernel {
 class PadCPUKernel : public LiteKernel {
  public:
   PadCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-               const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
-      : LiteKernel(parameter, inputs, outputs), context_(ctx) {
+               const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+               const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), context_(ctx) {
     pad_param_ = reinterpret_cast<PadParameter *>(parameter);
   }
 

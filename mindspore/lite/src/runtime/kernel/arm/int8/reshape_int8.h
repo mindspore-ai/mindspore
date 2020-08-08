@@ -29,8 +29,9 @@ namespace mindspore::kernel {
 class ReshapeInt8CPUKernel : public ReshapeBaseCPUKernel {
  public:
   ReshapeInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                       const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : ReshapeBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+                       const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                       const lite::Primitive *primitive)
+      : ReshapeBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ReshapeInt8CPUKernel() = default;
 
   int Init() override;
@@ -50,4 +51,3 @@ int ReshapeInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_RESHAPE_INT8_H_
-

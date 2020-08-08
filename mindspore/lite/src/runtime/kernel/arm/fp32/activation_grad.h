@@ -27,8 +27,9 @@ namespace mindspore::kernel {
 class ActivationGradCPUKernel : public LiteKernel {
  public:
   explicit ActivationGradCPUKernel(OpParameter *param, const std::vector<lite::tensor::Tensor *> &inputs,
-                                   const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(param, inputs, outputs) {
+                                   const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                                   const lite::Primitive *primitive)
+      : LiteKernel(param, inputs, outputs, ctx, primitive) {
     ActivationGradParameter *param_act_grad = reinterpret_cast<ActivationGradParameter *>(param);
     type_ = param_act_grad->type_;
     alpha_ = param_act_grad->alpha_;

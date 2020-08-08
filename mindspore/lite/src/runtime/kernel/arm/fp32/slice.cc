@@ -40,6 +40,10 @@ int SliceLaunch(int thread_id, LiteParallelGroupEnv *penv, void *cdata) {
 }  // namespace
 
 int SliceCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto *param = reinterpret_cast<SliceParameter *>(opParameter);
   auto input_shape = inputs_[0]->shape();
   if (input_shape.size() != param->param_length_) {
@@ -68,6 +72,11 @@ int SliceCPUKernel::SliceParallelRun(int thread_id) {
 }
 
 int SliceCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   SliceParameter *param = reinterpret_cast<SliceParameter *>(opParameter);
   for (int i = 0; i < param->param_length_; ++i) {
     if (param->size_[i] < 0) {
@@ -86,7 +95,7 @@ int SliceCPUKernel::Run() {
     DoSliceNoParallel(input_data, output_data, param);
     return RET_OK;
   }
-  int ret = LiteBackendParallelLaunch(SliceLaunch, this, param->op_parameter_.thread_num_);
+  ret = LiteBackendParallelLaunch(SliceLaunch, this, param->op_parameter_.thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "slice launch fail!ret: " << ret;
     return RET_ERROR;
@@ -97,7 +106,7 @@ int SliceCPUKernel::Run() {
 kernel::LiteKernel *CpuSliceFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                               const std::vector<lite::tensor::Tensor *> &outputs,
                                               OpParameter *op_parameter, const lite::Context *ctx,
-                                              const kernel::KernelKey &desc) {
+                                              const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Input op_parameter is nullptr!";
     return nullptr;
@@ -108,7 +117,7 @@ kernel::LiteKernel *CpuSliceFp32KernelCreator(const std::vector<lite::tensor::Te
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Slice);
   op_parameter->thread_num_ = ctx->thread_num_;
-  auto *kernel = new (std::nothrow) SliceCPUKernel(op_parameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) SliceCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SliceCPUKernel fail!";
     return nullptr;

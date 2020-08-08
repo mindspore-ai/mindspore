@@ -29,8 +29,9 @@ namespace mindspore::kernel {
 class PreluInt8CPUKernel : public PreluBaseCPUKernel {
  public:
   PreluInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                     const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : PreluBaseCPUKernel(parameter, inputs, outputs, ctx) {
+                     const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                     const lite::Primitive *primitive)
+      : PreluBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {
     quant_prelu_parm_ = reinterpret_cast<PreluParameter *>(opParameter);
   }
   ~PreluInt8CPUKernel() override {}

@@ -29,8 +29,9 @@ namespace mindspore::kernel {
 class ReverseCPUKernel : public LiteKernel {
  public:
   ReverseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                   const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : LiteKernel(parameter, inputs, outputs), ctx_(ctx), thread_count_(ctx->thread_num_) {}
+                   const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                   const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {}
   ~ReverseCPUKernel() {
     if (tmp_ != nullptr) {
       free(tmp_);
@@ -60,4 +61,3 @@ class ReverseCPUKernel : public LiteKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_REVERSE_H_
-

@@ -40,15 +40,7 @@ int CropLaunch(int thread_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 }  // namespace
 
-int CropCPUKernel::Init() {
-  schema::Format input0_format = inputs_[0]->GetFormat();
-  if (input0_format != schema::Format_NCHW && input0_format != schema::Format_NHWC) {
-    MS_LOG(ERROR) << "Unsupport format " << input0_format;
-    return RET_FORMAT_ERR;
-  }
-  outputs_[0]->SetFormat(input0_format);
-  return RET_OK;
-}
+int CropCPUKernel::Init() { return RET_OK; }
 
 int CropCPUKernel::CropParallelRun(int thread_id) {
   auto input = inputs_[0];
@@ -61,6 +53,11 @@ int CropCPUKernel::CropParallelRun(int thread_id) {
 }
 
 int CropCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   auto input = inputs_[0];
   auto output = outputs_[0];
   auto param = reinterpret_cast<CropParameter *>(opParameter);
@@ -71,7 +68,7 @@ int CropCPUKernel::Run() {
     return RET_OK;
   }
 
-  int ret = LiteBackendParallelLaunch(CropLaunch, this, param->op_parameter_.thread_num_);
+  auto ret = LiteBackendParallelLaunch(CropLaunch, this, param->op_parameter_.thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Crop launch fail!ret: " << ret;
     return RET_ERROR;

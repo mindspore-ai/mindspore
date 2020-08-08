@@ -183,10 +183,14 @@ void Convolution3x3FP16CPUKernel::ConfigInputOutput() {
 }
 
 int Convolution3x3FP16CPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
-    return RET_ERROR;
+    return ret;
   }
   ret = InitWeightBias();
   if (ret != RET_OK) {
@@ -228,7 +232,7 @@ int Convolution3x3FP16CPUKernel::ReSize() {
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
-    return RET_ERROR;
+    return ret;
   }
   ret = InitTmpBuffer();
   if (ret != RET_OK) {
@@ -256,7 +260,11 @@ int Convolution3x3Fp16Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata)
 }
 
 int Convolution3x3FP16CPUKernel::Run() {
-  // cast fp32 input data to fp16
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   auto input_tensor = inputs_.at(kInputIndex);
   auto ori_input_data = reinterpret_cast<float *>(input_tensor->Data());
   for (int i = 0; i < input_tensor->ElementsNum(); ++i) {

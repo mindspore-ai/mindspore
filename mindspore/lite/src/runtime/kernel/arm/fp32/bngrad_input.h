@@ -25,8 +25,9 @@ namespace mindspore::kernel {
 class BNGradInputCPUKernel : public LiteKernel {
  public:
   explicit BNGradInputCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs) {}
+                                const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                                const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~BNGradInputCPUKernel() override { delete workspace; }
 
   int Init() override;

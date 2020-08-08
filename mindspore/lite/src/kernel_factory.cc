@@ -45,7 +45,7 @@ LiteKernel *KernelFactory::GetKernel(const std::vector<tensor::Tensor *> &inputs
   }
   auto creator = KernelRegistry::GetInstance()->GetCreator(key);
   if (creator != nullptr) {
-    auto kernel = creator(inputs, outputs, parameter, ctx, key);
+    auto kernel = creator(inputs, outputs, parameter, ctx, key, primitive);
     return kernel;
   }
   return nullptr;

@@ -21,18 +21,20 @@
 #include "src/lite_kernel.h"
 #include "schema/model_generated.h"
 
-
 namespace mindspore::kernel {
 class AddNCPUKernel : public LiteKernel {
  public:
   AddNCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                const std::vector<lite::tensor::Tensor *> &outputs) : LiteKernel(parameter, inputs, outputs) {}
+                const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~AddNCPUKernel() = default;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
   int AddNParallelRun(int thread_id);
+
  private:
   float *in1_addr_;
   float *in2_addr_;

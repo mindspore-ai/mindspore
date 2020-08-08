@@ -45,7 +45,6 @@ class KernelRegistry {
   int device_type_length_;
   int data_type_length_;
   int op_type_length_;
-  std::mutex lock_;
 };
 
 class KernelRegistrar {

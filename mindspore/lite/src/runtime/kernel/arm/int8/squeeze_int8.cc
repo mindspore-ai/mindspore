@@ -29,6 +29,10 @@ using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 
 int SqueezeInt8CPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   SqueezeBaseCPUKernel::Init();
   quant_Squeeze_parm_ = new (std::nothrow) SqueezeQuantArg;
   auto input_num = inputs_.size();
@@ -108,6 +112,11 @@ int SqueezeInt8CPUKernel::Init() {
 int SqueezeInt8CPUKernel::ReSize() { return 0; }
 
 int SqueezeInt8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return ret;
+  }
   auto input_dim = quant_Squeeze_parm_->input_num_;
   int8_t **inputs_array = reinterpret_cast<int8_t **>(malloc(sizeof(int8_t *) * input_dim));
   for (size_t i = 0; i < input_dim; i++) {
@@ -140,7 +149,7 @@ int SqueezeInt8CPUKernel::Run() {
     free(*(inputs_array + i));
   }
 
-  auto ret = LiteBackendParallelLaunch(SqueezeInt8Run, this, thread_count_);
+  ret = LiteBackendParallelLaunch(SqueezeInt8Run, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "RunSqueezeParam failed. errorcode: ";
   }

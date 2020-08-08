@@ -19,18 +19,17 @@
 #include <vector>
 #include "src/lite_kernel.h"
 
-
 namespace mindspore::kernel {
 class SliceCPUKernel : public LiteKernel {
  public:
   SliceCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-        const std::vector<lite::tensor::Tensor *> &outputs) : LiteKernel(parameter, inputs, outputs) {}
+                 const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                 const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~SliceCPUKernel() = default;
 
   int Init() override;
-  int ReSize() override {
-    return 0;
-  }
+  int ReSize() override { return 0; }
   int Run() override;
   int SliceParallelRun(int thread_id);
 };

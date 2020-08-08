@@ -56,6 +56,10 @@ void PoolingBaseCPUKernel::FreeQuantParam() {
 }
 
 int PoolingBaseCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   MS_ASSERT(inputs_.size() == 1);
   MS_ASSERT(outputs_.size() == 1);
   pooling_param_->thread_num_ = thread_count_;
@@ -78,13 +82,13 @@ int PoolingBaseCPUKernel::Init() {
 kernel::LiteKernel *CpuPoolingInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                 const std::vector<lite::tensor::Tensor *> &outputs,
                                                 OpParameter *opParameter, const Context *ctx,
-                                                const kernel::KernelKey &desc) {
+                                                const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Pooling);
-  auto *kernel = new (std::nothrow) PoolingInt8CPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) PoolingInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PoolingInt8CPUKernel fail!";
     return nullptr;
@@ -102,13 +106,13 @@ kernel::LiteKernel *CpuPoolingInt8KernelCreator(const std::vector<lite::tensor::
 kernel::LiteKernel *CpuPoolingFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                 const std::vector<lite::tensor::Tensor *> &outputs,
                                                 OpParameter *opParameter, const Context *ctx,
-                                                const kernel::KernelKey &desc) {
+                                                const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Pooling);
-  auto *kernel = new (std::nothrow) PoolingCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) PoolingCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PoolingCPUKernel fail!";
     return nullptr;

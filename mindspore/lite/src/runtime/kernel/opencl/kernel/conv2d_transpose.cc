@@ -171,7 +171,8 @@ int Conv2dTransposeOpenCLKernel::Run() {
 kernel::LiteKernel *OpenCLConv2dTransposeKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                        const std::vector<lite::tensor::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::Context *ctx,
-                                                       const kernel::KernelKey &desc) {
+                                                       const kernel::KernelKey &desc,
+                                                       const lite::Primitive *primitive) {
   auto *kernel = new Conv2dTransposeOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   auto ret = kernel->Init();
   if (0 != ret) {

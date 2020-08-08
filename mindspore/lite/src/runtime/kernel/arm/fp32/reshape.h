@@ -29,8 +29,9 @@ namespace mindspore::kernel {
 class ReshapeCPUKernel : public ReshapeBaseCPUKernel {
  public:
   ReshapeCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                   const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : ReshapeBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+                   const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                   const lite::Primitive *primitive)
+      : ReshapeBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ReshapeCPUKernel() = default;
 
   int Init() override;
@@ -42,4 +43,3 @@ class ReshapeCPUKernel : public ReshapeBaseCPUKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_RESHAPE_H_
-

@@ -191,7 +191,8 @@ int DepthwiseConv2dOpenCLKernel::Run() {
 kernel::LiteKernel *OpenCLDepthwiseConv2dKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                        const std::vector<lite::tensor::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::Context *ctx,
-                                                       const kernel::KernelKey &desc) {
+                                                       const kernel::KernelKey &desc,
+                                                       const lite::Primitive *primitive) {
   auto *kernel = new DepthwiseConv2dOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   auto ret = kernel->Init();
   if (0 != ret) {

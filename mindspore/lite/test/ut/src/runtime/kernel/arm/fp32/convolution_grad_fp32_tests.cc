@@ -109,7 +109,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32FilterGrad) {
 
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DGradFilter};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), NULL, desc);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), NULL, desc, nullptr);
 
   // warm up loop
   for (int i = 0; i < 3; i++) {
@@ -174,7 +174,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32InputGrad) {
 
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DGradInput};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), NULL, desc);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), NULL, desc, nullptr);
 
   // warm up loop
   for (int i = 0; i < 3; i++) {
@@ -234,7 +234,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupFilterGrad) {
 
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DGradFilter};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), NULL, desc);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), NULL, desc, nullptr);
 
   // warm up loop
   for (int i = 0; i < 3; i++) {
@@ -298,7 +298,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupInputGrad) {
 
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DGradInput};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), NULL, desc);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), NULL, desc, nullptr);
 
   // warm up loop
   for (int i = 0; i < 3; i++) {
@@ -359,7 +359,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationFilterGrad) {
 
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DGradFilter};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), NULL, desc);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), NULL, desc, nullptr);
 
   // warm up loop
   for (int i = 0; i < 3; i++) {
@@ -422,7 +422,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationInputGrad) {
 
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DGradInput};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), NULL, desc);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), NULL, desc, nullptr);
 
   // warm up loop
   for (int i = 0; i < 3; i++) {

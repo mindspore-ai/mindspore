@@ -20,8 +20,8 @@
 #include "src/runtime/kernel/arm/nnacl/int8/arg_min_max_int8.h"
 #include "include/errorcode.h"
 
-using mindspore::lite::RET_OK;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 int ArgMinMaxInt8CPUKernel::Init() {
@@ -44,6 +44,11 @@ int ArgMinMaxInt8CPUKernel::Init() {
 }
 
 int ArgMinMaxInt8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   auto input = inputs_.at(0);
 
   const int8_t *input_data = reinterpret_cast<const int8_t *>(inputs_.at(0)->Data());
@@ -70,6 +75,7 @@ int ArgMinMaxInt8CPUKernel::Run() {
     ArgMinMaxDim3(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
     break;
   }
+  FreeTmpMemory();
   return RET_OK;
 }
 }  // namespace mindspore::kernel

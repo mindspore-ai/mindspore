@@ -36,6 +36,10 @@ constexpr int kOutputNum = 1;
 }  // namespace
 
 int PadCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   if (inputs_.size() != kInputNum || outputs_.size() != kOutputNum) {
     MS_LOG(ERROR) << "Pad input size should be " << kInputNum << ", got " << inputs_.size() << ", output size should be"
                   << kOutputNum << ", got " << outputs_.size();
@@ -85,6 +89,11 @@ int PadCPUKernel::RunImpl(int task_id) {
 }
 
 int PadCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   auto output = outputs_.at(0);
   int output_size = output->DataSize();
 

@@ -33,7 +33,7 @@ namespace mindspore::kernel {
 kernel::LiteKernel *CpuActivationInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                    const std::vector<lite::tensor::Tensor *> &outputs,
                                                    OpParameter *parameter, const lite::Context *ctx,
-                                                   const KernelKey &desc) {
+                                                   const KernelKey &desc, const lite::Primitive *primitive) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "parameter is nullptr";
     return nullptr;
@@ -43,16 +43,16 @@ kernel::LiteKernel *CpuActivationInt8KernelCreator(const std::vector<lite::tenso
   kernel::LiteKernel *kernel = nullptr;
   switch (static_cast<schema::ActivationType>(type)) {
     case schema::ActivationType_RELU:
-      kernel = new (std::nothrow) ReluInt8CPUKernel(parameter, inputs, outputs, ctx);
+      kernel = new (std::nothrow) ReluInt8CPUKernel(parameter, inputs, outputs, ctx, primitive);
       break;
     case schema::ActivationType_RELU6:
-      kernel = new (std::nothrow) Relu6Int8CPUKernel(parameter, inputs, outputs, ctx);
+      kernel = new (std::nothrow) Relu6Int8CPUKernel(parameter, inputs, outputs, ctx, primitive);
       break;
     case schema::ActivationType_HSWISH:
-      kernel = new (std::nothrow) HswishInt8CPUKernel(parameter, inputs, outputs, ctx);
+      kernel = new (std::nothrow) HswishInt8CPUKernel(parameter, inputs, outputs, ctx, primitive);
       break;
     case schema::ActivationType_SIGMOID:
-      kernel = new (std::nothrow) SigmoidInt8CPUKernel(parameter, inputs, outputs, ctx);
+      kernel = new (std::nothrow) SigmoidInt8CPUKernel(parameter, inputs, outputs, ctx, primitive);
       break;
     default:
       break;

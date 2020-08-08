@@ -29,6 +29,7 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::RET_INFER_INVALID;
 using mindspore::schema::PrimitiveType_Conv2D;
 
 namespace mindspore::kernel {
@@ -136,6 +137,10 @@ void ConvolutionCPUKernel::ConfigInputOutput() {
 }
 
 int ConvolutionCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
@@ -204,6 +209,11 @@ int ConvolutionImpl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int ConvolutionCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   auto input_tensor = inputs_.at(kInputIndex);
   auto ori_input_data = input_tensor->Data();
   int in_batch = conv_param_->input_batch_;
@@ -223,7 +233,7 @@ int ConvolutionCPUKernel::Run() {
 kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs,
                                              OpParameter *opParameter, const Context *ctx,
-                                             const kernel::KernelKey &desc) {
+                                             const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D);
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
@@ -245,20 +255,21 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Ten
   kernel::LiteKernel *kernel;
   if (kernel_h == 1 && kernel_w == 1) {
     // kernel = new (std::nothrow) kernel::Convolution1x1CPUKernel(opParameter, inputs, outputs, ctx);
-    kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(opParameter, inputs, outputs, ctx);
+    kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   } else if (kernel_h == 3 && kernel_w == 3 && stride_h == 1 && stride_w == 1 && dilation_h == 1 && dilation_w == 1) {
-    kernel = new (std::nothrow) kernel::Convolution3x3CPUKernel(opParameter, inputs, outputs, ctx);
+    kernel = new (std::nothrow) kernel::Convolution3x3CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   } else if (use_winograd) {
-    kernel = new (std::nothrow) kernel::ConvolutionWinogradCPUKernel(opParameter, inputs, outputs, ctx, out_unit);
+    kernel =
+      new (std::nothrow) kernel::ConvolutionWinogradCPUKernel(opParameter, inputs, outputs, ctx, primitive, out_unit);
   } else {
-    kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(opParameter, inputs, outputs, ctx);
+    kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   }
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (ret != RET_OK) {
+  if (ret != RET_OK && ret != RET_INFER_INVALID) {
     delete kernel;
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));

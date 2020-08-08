@@ -32,6 +32,10 @@ using mindspore::schema::PrimitiveType_SpaceToDepth;
 namespace mindspore::kernel {
 
 int SpaceToDepthCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   if (inputs_[0]->GetFormat() != schema::Format_NHWC) {
     MS_LOG(ERROR) << "space_to_depth only support NHWC now!";
     return RET_FORMAT_ERR;
@@ -77,10 +81,15 @@ int SpaceToDepthRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int SpaceToDepthCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   input_ptr_ = reinterpret_cast<float *>(inputs_[0]->Data());
   output_ptr_ = reinterpret_cast<float *>(outputs_[0]->Data());
   if (inputs_[0]->GetFormat() == schema::Format_NHWC) {
-    int ret = LiteBackendParallelLaunch(SpaceToDepthRun, this, thread_h_num_);
+      ret = LiteBackendParallelLaunch(SpaceToDepthRun, this, thread_h_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "SpaceToDepth error error_code[" << ret << "]";
       return ret;
@@ -90,16 +99,18 @@ int SpaceToDepthCPUKernel::Run() {
     MS_LOG(ERROR) << "Only support NHWC now!";
     return RET_ERROR;
   }
+    return RET_OK;
 }
+
 kernel::LiteKernel *CpuSpaceToDepthFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                      const std::vector<lite::tensor::Tensor *> &outputs,
                                                      OpParameter *opParameter, const lite::Context *ctx,
-                                                     const kernel::KernelKey &desc) {
+                                                     const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) SpaceToDepthCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) SpaceToDepthCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SpaceToDepthCPUKernel fail!";
     return nullptr;

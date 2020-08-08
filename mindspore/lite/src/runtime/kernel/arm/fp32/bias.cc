@@ -31,6 +31,11 @@ namespace mindspore::kernel {
 int BiasCPUKernel::ReSize() { return RET_OK; }
 
 int BiasCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   auto in = reinterpret_cast<float *>(inputs_.at(0)->Data());
   auto bias = reinterpret_cast<float *>(inputs_.at(1)->Data());
   auto out = reinterpret_cast<float *>(outputs_.at(0)->Data());
@@ -44,6 +49,10 @@ int BiasCPUKernel::Run() {
 }
 
 int BiasCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto dims = inputs_[0]->shape();
   MS_ASSERT(dims.size() <= 5);
   bias_param_->ndim_ = dims.size();
@@ -58,10 +67,11 @@ int BiasCPUKernel::Init() {
 
 kernel::LiteKernel *CpuBiasFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
-                                             const lite::Context *ctx, const kernel::KernelKey &desc) {
+                                             const lite::Context *ctx, const kernel::KernelKey &desc,
+                                             const lite::Primitive *primitive) {
   MS_ASSERT(parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_BiasAdd);
-  auto kernel = new (std::nothrow) BiasCPUKernel(parameter, inputs, outputs);
+  auto kernel = new (std::nothrow) BiasCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create kernel failed, name: " << parameter->name_;
     return nullptr;

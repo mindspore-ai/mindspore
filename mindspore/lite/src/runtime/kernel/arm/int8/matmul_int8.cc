@@ -31,6 +31,10 @@ MatmulInt8CPUKernel::~MatmulInt8CPUKernel() {
 }
 
 int MatmulInt8CPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   int batch = 1;
   auto x_shape = inputs_[0]->shape();
   auto o_shape = outputs_[0]->shape();
@@ -109,6 +113,11 @@ int MatmulInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int MatmulInt8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   auto a_ptr = reinterpret_cast<int8_t *>(inputs_[0]->Data());
   auto b_ptr = reinterpret_cast<int8_t *>(inputs_[1]->Data());
   auto c_ptr = reinterpret_cast<int8_t *>(outputs_[0]->Data());

@@ -99,6 +99,10 @@ int LstmCPUKernel::InitWeightBias() {
 }
 
 int LstmCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto ret = InitParam();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "LstmCPUKernel InitParam error.";
@@ -137,6 +141,11 @@ int LstmCPUKernel::ReSize() {
 }
 
 int LstmCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   auto input = inputs_.at(kInputIndex);
   MS_ASSERT(input != nullptr);
   auto hidden_state = inputs_.at(4);
@@ -162,11 +171,12 @@ int LstmCPUKernel::Run() {
 
 kernel::LiteKernel *CpuLstmKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                          const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *opParameter,
-                                         const lite::Context *ctx, const kernel::KernelKey &desc) {
+                                         const lite::Context *ctx, const kernel::KernelKey &desc,
+                                         const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Lstm);
 
-  auto *kernel = new (std::nothrow) LstmCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) LstmCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
     return nullptr;

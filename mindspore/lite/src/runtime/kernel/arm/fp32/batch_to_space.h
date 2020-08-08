@@ -22,8 +22,9 @@ namespace mindspore::kernel {
 class BatchToSpaceCPUKernel : public BatchToSpaceBaseCPUKernel {
  public:
   BatchToSpaceCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                        const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
-      : BatchToSpaceBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+                        const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                        const lite::Primitive *primitive)
+      : BatchToSpaceBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 
   ~BatchToSpaceCPUKernel() = default;
 
@@ -34,4 +35,3 @@ class BatchToSpaceCPUKernel : public BatchToSpaceBaseCPUKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_BATCH_TO_SPACE_H_
-

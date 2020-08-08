@@ -25,8 +25,9 @@ namespace mindspore::kernel {
 class RangeCPUKernel : public LiteKernel {
  public:
   explicit RangeCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                          const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs) {}
+                          const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                          const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~RangeCPUKernel() override = default;
 
   int Init() override;
@@ -36,4 +37,3 @@ class RangeCPUKernel : public LiteKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_RANGE_H_
-

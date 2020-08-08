@@ -24,9 +24,10 @@ namespace mindspore::kernel {
 class BiasCPUKernel : public LiteKernel {
  public:
   BiasCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                         const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs) {
-      bias_param_ = reinterpret_cast<ArithmeticParameter*>(parameter);
+                const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+    bias_param_ = reinterpret_cast<ArithmeticParameter *>(parameter);
   }
   ~BiasCPUKernel() override = default;
 
@@ -40,4 +41,3 @@ class BiasCPUKernel : public LiteKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_BIAS_H_
-

@@ -25,6 +25,10 @@ using mindspore::schema::PrimitiveType_Tile;
 
 namespace mindspore::kernel {
 int TileCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto tile_parameter_ = reinterpret_cast<TileParameter *>(opParameter);
   for (int i = 0; i < tile_parameter_->in_dim_; ++i) {
     tile_parameter_->in_shape_[i] = inputs_[0]->shape()[i];
@@ -46,6 +50,11 @@ void TileCPUKernel::ComputeStrides(int *shape, int *strides, int ndim) {
 int TileCPUKernel::ReSize() { return RET_OK; }
 
 int TileCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   auto input_addr = reinterpret_cast<float *>(inputs_.at(0)->Data());
   auto output_addr = reinterpret_cast<float *>(outputs_.at(0)->Data());
 
@@ -55,13 +64,14 @@ int TileCPUKernel::Run() {
 
 kernel::LiteKernel *CpuTileFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
-                                             const lite::Context *ctx, const KernelKey &desc) {
+                                             const lite::Context *ctx, const KernelKey &desc,
+                                             const lite::Primitive *primitive) {
   if (parameter == nullptr || ctx == nullptr) {
     MS_LOG(ERROR) << "parameter or ctx is nullptr";
     return nullptr;
   }
   MS_ASSERT(desc.type == PrimitiveType_Tile);
-  auto *kernel = new (std::nothrow) TileCPUKernel(parameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) TileCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create kernel failed, name: " << parameter->name_;
     return nullptr;
@@ -79,4 +89,3 @@ kernel::LiteKernel *CpuTileFp32KernelCreator(const std::vector<lite::tensor::Ten
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Tile, CpuTileFp32KernelCreator)
 }  // namespace mindspore::kernel
-

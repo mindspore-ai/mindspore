@@ -24,6 +24,10 @@ using mindspore::schema::PrimitiveType_ReverseSequence;
 
 namespace mindspore::kernel {
 int ReverseSequenceCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto input0 = inputs_.at(0);
   auto input1 = inputs_.at(1);
   auto output = outputs_.at(0);
@@ -84,6 +88,11 @@ int ReverseSequenceCPUKernel::CalcCountAfterAxis(const std::vector<int> shape, i
 int ReverseSequenceCPUKernel::ReSize() { return RET_OK; }
 
 int ReverseSequenceCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   float *input0 = reinterpret_cast<float *>(inputs_.at(0)->Data());
   int *input1 = reinterpret_cast<int *>(inputs_.at(1)->Data());
   float *output = reinterpret_cast<float *>(outputs_.at(0)->Data());
@@ -94,10 +103,10 @@ int ReverseSequenceCPUKernel::Run() {
 kernel::LiteKernel *CpuReverseSequenceFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                         const std::vector<lite::tensor::Tensor *> &outputs,
                                                         OpParameter *parameter, const lite::Context *ctx,
-                                                        const KernelKey &desc) {
+                                                        const KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_ReverseSequence);
-  auto *kernel = new (std::nothrow) ReverseSequenceCPUKernel(parameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) ReverseSequenceCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create kernel failed, name: " << parameter->name_;
     return nullptr;
@@ -114,4 +123,3 @@ kernel::LiteKernel *CpuReverseSequenceFp32KernelCreator(const std::vector<lite::
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ReverseSequence, CpuReverseSequenceFp32KernelCreator)
 }  // namespace mindspore::kernel
-

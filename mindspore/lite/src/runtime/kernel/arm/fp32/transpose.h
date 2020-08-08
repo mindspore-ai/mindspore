@@ -22,14 +22,14 @@
 
 #include "src/kernel_factory.h"
 
-
 namespace mindspore::kernel {
 
 class TransposeCPUKernel : public LiteKernel {
  public:
   explicit TransposeCPUKernel(OpParameter *param, const std::vector<lite::tensor::Tensor *> &inputs,
-                              const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(param, inputs, outputs) {}
+                              const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                              const lite::Primitive *primitive)
+      : LiteKernel(param, inputs, outputs, ctx, primitive) {}
   ~TransposeCPUKernel() override = default;
 
   int Init() override;
@@ -41,4 +41,3 @@ class TransposeCPUKernel : public LiteKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_CCSRC_KERNEL_CPU_ARM_FP32_TRANSPOSE_H_
-

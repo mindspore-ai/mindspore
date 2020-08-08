@@ -88,6 +88,10 @@ int ResizeCPUKernel::CheckInputsOuputs() {
 }
 
 int ResizeCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto ret = CheckParameters();
   if (ret != RET_OK) {
     return ret;
@@ -205,6 +209,11 @@ int ResizeCPUKernel::RunImpl(int task_id) {
 }
 
 int ResizeCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   int error_code = LiteBackendParallelLaunch(ResizeImpl, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Resize run error, error_code[" << error_code << "]";
@@ -216,13 +225,13 @@ int ResizeCPUKernel::Run() {
 kernel::LiteKernel *CpuResizeFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                const std::vector<lite::tensor::Tensor *> &outputs,
                                                OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc) {
+                                               const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Resize);
-  auto *kernel = new (std::nothrow) ResizeCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) ResizeCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ResizeCPUKernel fail!";
     return nullptr;
@@ -240,4 +249,3 @@ kernel::LiteKernel *CpuResizeFp32KernelCreator(const std::vector<lite::tensor::T
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Resize, CpuResizeFp32KernelCreator)
 }  // namespace mindspore::kernel
-

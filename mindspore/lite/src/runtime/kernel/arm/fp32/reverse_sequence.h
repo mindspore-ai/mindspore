@@ -24,8 +24,9 @@ namespace mindspore::kernel {
 class ReverseSequenceCPUKernel : public LiteKernel {
  public:
   ReverseSequenceCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                           const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs) {}
+                           const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                           const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ReverseSequenceCPUKernel() = default;
 
   int Init() override;
@@ -40,4 +41,3 @@ class ReverseSequenceCPUKernel : public LiteKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_REVERSE_SEQUENCE_H_
-
