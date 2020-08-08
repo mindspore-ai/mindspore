@@ -54,5 +54,7 @@ InputTransformUnitFunc GetInputTransFunc(int input_unit);
 
 OutputTransformUnitFunc GetOutputTransFunc(int input_unit, int output_unit);
 
+void CheckIfUseWinograd(bool *use_winograd, int *output_unit, ConvParameter *conv_param,
+                        InputTransformUnitFunc input_trans_func, OutputTransformUnitFunc output_trans_func);
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_WINOGRAD_UTILS_H_
 

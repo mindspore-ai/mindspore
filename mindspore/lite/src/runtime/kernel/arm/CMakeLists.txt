@@ -1,3 +1,5 @@
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/)
+
 file(GLOB KERNEL_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/base/*.cc
         nnacl/*.cc
