@@ -130,7 +130,8 @@ TEST_F(InferTest, TestConvNode) {
   ASSERT_EQ(lite::RET_OK, ret);
   auto outputs = session->GetOutputs();
   ASSERT_EQ(outputs.size(), 1);
-  auto outTensor = outputs.front();
+  ASSERT_EQ(outputs.begin()->second.size(), 1);
+  auto outTensor = outputs.begin()->second.front();
   ASSERT_NE(nullptr, outTensor);
   ASSERT_EQ(28 * 28 * 32, outTensor->ElementsNum());
   ASSERT_EQ(TypeId::kNumberTypeFloat32, outTensor->data_type());
@@ -220,7 +221,8 @@ TEST_F(InferTest, TestAddNode) {
   ASSERT_EQ(lite::RET_OK, ret);
   auto outputs = session->GetOutputs();
   ASSERT_EQ(outputs.size(), 1);
-  auto outTensor = outputs.front();
+  ASSERT_EQ(outputs.begin()->second.size(), 1);
+  auto outTensor = outputs.begin()->second.front();
   ASSERT_NE(nullptr, outTensor);
   ASSERT_EQ(28 * 28 * 3, outTensor->ElementsNum());
   ASSERT_EQ(TypeId::kNumberTypeFloat32, outTensor->data_type());
