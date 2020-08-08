@@ -26,6 +26,7 @@ transpose_d_op_info = TBERegOp("Transpose") \
     .attr("perm", "optional", "listInt", "all") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.BOOL_Default, DataType.BOOL_Default) \
     .dtype_format(DataType.I8_Default, DataType.I8_Default) \
     .dtype_format(DataType.U8_Default, DataType.U8_Default) \
     .dtype_format(DataType.I16_Default, DataType.I16_Default) \

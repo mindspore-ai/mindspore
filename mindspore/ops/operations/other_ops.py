@@ -93,8 +93,8 @@ class BoundingBoxEncode(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0)):
-        validator.check_value_type('means', means, [tuple, list], self.name)
-        validator.check_value_type('stds', stds, [tuple, list], self.name)
+        validator.check_value_type('means', means, (tuple), self.name)
+        validator.check_value_type('stds', stds, (tuple), self.name)
         for i, value in enumerate(means):
             validator.check_value_type("means[%d]" % i, value, [float], self.name)
         for i, value in enumerate(stds):
@@ -147,8 +147,8 @@ class BoundingBoxDecode(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, max_shape, means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0), wh_ratio_clip=0.016):
-        validator.check_value_type('means', means, [tuple, list], self.name)
-        validator.check_value_type('stds', stds, [tuple, list], self.name)
+        validator.check_value_type('means', means, (tuple), self.name)
+        validator.check_value_type('stds', stds, (tuple), self.name)
         for i, value in enumerate(means):
             validator.check_value_type("means[%d]" % i, value, [float], self.name)
         for i, value in enumerate(stds):
