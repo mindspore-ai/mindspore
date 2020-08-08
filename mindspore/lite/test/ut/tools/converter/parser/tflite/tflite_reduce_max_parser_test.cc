@@ -20,7 +20,7 @@
 namespace mindspore {
 class TestTfliteParserReduceMax : public TestTfliteParser {
  public:
-  TestTfliteParserReduceMax() {}
+  TestTfliteParserReduceMax() = default;
   void SetUp() override { meta_graph = LoadAndConvert("./reduce_max.tflite"); }
 };
 

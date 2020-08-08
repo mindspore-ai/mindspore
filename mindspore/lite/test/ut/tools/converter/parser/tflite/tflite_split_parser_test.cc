@@ -20,7 +20,7 @@
 namespace mindspore {
 class TestTfliteParserSplit : public TestTfliteParser {
  public:
-  TestTfliteParserSplit() {}
+  TestTfliteParserSplit() = default;
 
   void SetUp() override { meta_graph = LoadAndConvert("./split.tflite"); }
 };

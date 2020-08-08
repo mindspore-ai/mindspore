@@ -26,7 +26,7 @@ namespace mindspore {
 namespace lite {
 class TfliteReverseParser : public TfliteNodeParser {
  public:
-  TfliteReverseParser() : TfliteNodeParser("Reverse") {}
+  TfliteReverseParser() : TfliteNodeParser("reverse") {}
 
   STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
                const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,

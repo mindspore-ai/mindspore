@@ -29,12 +29,8 @@ STATUS TfliteGatherNdParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfl
                                  bool quantizedModel) {
   MS_LOG(DEBUG) << "parse TfliteGatherNdParser";
   std::unique_ptr<schema::GatherNdT> attr(new schema::GatherNdT());
-  const auto &tflite_attr = tfliteOp->builtin_options.AsGatherNdOptions();
-  if (tflite_attr == nullptr) {
-    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
-  }
 
-  attr->batchDims = 0;    // default
+  attr->batchDims = 0;
 
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
@@ -44,7 +40,7 @@ STATUS TfliteGatherNdParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfl
   return RET_OK;
 }
 
-TfliteNodeRegister g_tfliteGatherNdParser("GatherNd", new TfliteGatherNdParser());
+TfliteNodeRegister g_tfliteGatherNdParser("GatherND", new TfliteGatherNdParser());
 }  // namespace lite
 }  // namespace mindspore
 

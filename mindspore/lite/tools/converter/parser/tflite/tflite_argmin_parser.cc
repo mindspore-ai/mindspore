@@ -24,28 +24,28 @@ STATUS TfliteArgminParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
                                  const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
                                  const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                  const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                                 schema::CNodeT *op,
-                                 TensorCache *tensor_cache,
-                                 bool quantizedModel) {
+                                 schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
   MS_LOG(DEBUG) << "parse TfliteArgminParser";
   std::unique_ptr<schema::ArgMinT> attr(new schema::ArgMinT());
-  const auto &tflite_attr = tfliteOp->builtin_options.AsArgMinOptions();
-  if (tflite_attr == nullptr) {
-    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
-  }
 
-  // get axis
-  auto axis_idx = tfliteOp->inputs[1];
-  std::for_each(tfliteTensors[axis_idx]->shape.begin(), tfliteTensors[axis_idx]->shape.end(), [&](int32_t sha){});
-  auto &buf_data = tfliteModelBuffer[tfliteTensors[axis_idx]->buffer];
-  auto data_ptr = buf_data->data.data();
-  attr->axis = *(static_cast<int32_t *>(static_cast<void *>(data_ptr)));
-
-  // the following use default values
   attr->outMaxValue = false;
   attr->topK = 1;
   attr->keepDims = false;
-  attr->axisType = 0;
+  attr->axisType = 1;
+
+  auto axis_idx = tfliteOp->inputs[1];
+  std::for_each(tfliteTensors[axis_idx]->shape.begin(), tfliteTensors[axis_idx]->shape.end(), [&](int32_t sha){});
+  auto &buf_data = tfliteModelBuffer[tfliteTensors[axis_idx]->buffer];
+  if (buf_data == nullptr) {
+    MS_LOG(ERROR) << "the buf data is null";
+    return RET_NULL_PTR;
+  }
+  auto data_ptr = buf_data->data.data();
+  if (data_ptr == nullptr) {
+    MS_LOG(ERROR) << "the data is null";
+    return RET_NULL_PTR;
+  }
+  attr->axis = *(static_cast<int32_t *>(static_cast<void *>(data_ptr)));
 
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();

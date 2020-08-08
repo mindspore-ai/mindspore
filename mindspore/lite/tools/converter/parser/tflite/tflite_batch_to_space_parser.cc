@@ -15,26 +15,26 @@
 * limitations under the License.
 */
 
+#include "tools/converter/parser/tflite/tflite_batch_to_space_parser.h"
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_batch_to_space_parser.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteBatchToSpaceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                       const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
-                                       const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                       const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_opset,
-                                       schema::CNodeT *op,
-                                       TensorCache *tensor_cache, bool quantized_model) {
+STATUS TfliteBatchToSpaceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
+                                       const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
+                                       const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
+                                       const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
+                                       schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
   MS_LOG(DEBUG) << "parse TfliteBatchToSpaceParser";
   std::unique_ptr<schema::BatchToSpaceT> attr(new schema::BatchToSpaceT());
-  if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->blockShape)) {
-    MS_LOG(ERROR) << "batchToSpace -> blockShape get failed";
+
+  if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->blockShape)) {
+    MS_LOG(ERROR) << "get batchToSpace -> blockShape failed";
     return RET_ERROR;
   }
-  if (GetTfliteData(tflite_op->inputs[2], tflite_tensors, tflite_model_buffer, attr->crops)) {
-    MS_LOG(ERROR) << "batchToSpace -> crops get failed";
+  if (GetTfliteData(tfliteOp->inputs[2], tfliteTensors, tfliteModelBuffer, attr->crops)) {
+    MS_LOG(ERROR) << "get batchToSpace -> crops failed";
     return RET_ERROR;
   }
 

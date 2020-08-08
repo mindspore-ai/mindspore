@@ -21,7 +21,7 @@
 namespace mindspore {
 class TestTfliteParserLessEqual : public TestTfliteParser {
  public:
-  TestTfliteParserLessEqual() {}
+  TestTfliteParserLessEqual() = default;
   void SetUp() override {
     meta_graph = LoadAndConvert("./less_equal.tflite");
   }

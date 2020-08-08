@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "tools/converter/parser/tflite/tflite_abs_parser.h"
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_abs_parser.h"
 
 namespace mindspore {
 namespace lite {

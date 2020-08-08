@@ -20,7 +20,7 @@
 namespace mindspore {
 class TestTfliteParserReduceProd : public TestTfliteParser {
  public:
-  TestTfliteParserReduceProd() {}
+  TestTfliteParserReduceProd() = default;
   void SetUp() override { meta_graph = LoadAndConvert("./reduce_prod.tflite"); }
 };
 

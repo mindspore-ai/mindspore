@@ -30,9 +30,11 @@ STATUS TfliteSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
   std::unique_ptr<schema::SliceT> attr(new schema::SliceT());
 
   if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->begin)) {
+    MS_LOG(ERROR) << "get slice -> begin failed";
     return RET_ERROR;
   }
   if (GetTfliteData(tfliteOp->inputs[2], tfliteTensors, tfliteModelBuffer, attr->size)) {
+    MS_LOG(ERROR) << "get slice -> size failed";
     return RET_ERROR;
   }
 

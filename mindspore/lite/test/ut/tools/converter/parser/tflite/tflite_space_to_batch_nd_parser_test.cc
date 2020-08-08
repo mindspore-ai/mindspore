@@ -21,7 +21,7 @@
 namespace mindspore {
 class TestTfliteParserSpaceToBatchND : public TestTfliteParser {
  public:
-  TestTfliteParserSpaceToBatchND() {}
+  TestTfliteParserSpaceToBatchND() = default;
   void SetUp() override {
     meta_graph = LoadAndConvert("./space_to_batch_nd.tflite");
   }

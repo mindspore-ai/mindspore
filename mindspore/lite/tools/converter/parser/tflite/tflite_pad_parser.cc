@@ -30,15 +30,15 @@ STATUS TflitePadParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp
   const auto &tflite_attr = tfliteOp->builtin_options.AsPadOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
+    return RET_NULL_PTR;
   }
 
   attr->paddingMode = schema::PaddingMode_CONSTANT;
-  if (tfliteOp->inputs.size() > 1) {
-    if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->paddings)) {
-      return RET_ERROR;
-    }
+  attr->constantValue = 0.0f;
+  if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->paddings)) {
+    MS_LOG(ERROR) << "get pad -> paddings failed";
+    return RET_ERROR;
   }
-  // attr->constantValue = 0.0f;
 
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();

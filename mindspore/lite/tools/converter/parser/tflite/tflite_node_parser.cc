@@ -86,6 +86,29 @@ STATUS TfliteNodeParser::ParseBias(const std::vector<tflite::TensorT *> &bias_te
   return RET_OK;
 }
 
+STATUS TfliteNodeParser::ParseTensor(const std::vector<tflite::TensorT *> &ts,
+                                     const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
+                                     mindspore::lite::TensorCache *tensor_cache, int node_type,
+                                     bool ifCopy) {
+  for (const auto &t : ts) {
+    auto idx = tensor_cache->FindTensor(t->name);
+    if (idx < 0) {
+      std::unique_ptr<schema::TensorT> tensor(new schema::TensorT);
+      tensor->dataType = GetTfliteDataType(t->type);
+      tensor->dims = t->shape;
+
+      // memcpy tensor data, buffer is 0 (which refers to an always existent empty buffer)
+      if (ifCopy && t->buffer > 0) {
+        CopyTfliteTensorData(tfliteModelBuffer, t, tensor.get());
+      }
+
+      MS_LOG(DEBUG) << "add weight tensor name: %s", t->name.c_str();
+      tensor_cache->AddTensor(t->name, tensor.release(), node_type);
+    }
+  }
+  return RET_OK;
+}
+
 TypeId TfliteNodeParser::GetTfliteDataType(const tflite::TensorType &tflite_data_type) {
   static std::unordered_map<int, TypeId> type_map = {
     {tflite::TensorType_FLOAT32, TypeId::kNumberTypeFloat32}, {tflite::TensorType_FLOAT16, TypeId::kNumberTypeFloat16},

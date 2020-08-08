@@ -29,14 +29,9 @@ STATUS TflitePowParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp
                               bool quantizedModel) {
   MS_LOG(DEBUG) << "parse TflitePowParser";
   std::unique_ptr<schema::PowerT> attr(new schema::PowerT());
-  const auto &tflite_attr = tfliteOp->builtin_options.AsPowOptions();
-  if (tflite_attr == nullptr) {
-    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
-  }
 
-  // the following use default values. This op is doing...
   attr->power = 0.0f;
-  attr->scale = 0.0f;
+  attr->scale = 1.0f;
   attr->shift = 0.0f;
 
   if (op != nullptr) {

@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
+#include "tools/converter/parser/tflite/tflite_cos_parser.h"
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_cos_parser.h"
 
 namespace mindspore {
 namespace lite {
 STATUS TfliteCosParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-                                 const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-                                 const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                                 const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                                 schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+                              const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
+                              const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
+                              const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
+                              schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
   MS_LOG(INFO) << "parse TfliteCosParser";
   std::unique_ptr<schema::CosT> attr(new schema::CosT());
 

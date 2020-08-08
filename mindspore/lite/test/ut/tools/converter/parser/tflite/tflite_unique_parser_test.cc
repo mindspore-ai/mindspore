@@ -21,7 +21,7 @@
 namespace mindspore {
 class TestTfliteParserUnique : public TestTfliteParser {
  public:
-  TestTfliteParserUnique() {}
+  TestTfliteParserUnique() = default;
   void SetUp() override {
     meta_graph = LoadAndConvert("./unique.tflite");
   }

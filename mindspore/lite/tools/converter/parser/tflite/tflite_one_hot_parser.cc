@@ -27,13 +27,20 @@ STATUS TfliteOneHotParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
                                  schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
   MS_LOG(INFO) << "parse TfliteOneHotParser";
   std::unique_ptr<schema::OneHotT> attr(new schema::OneHotT());
+
   const auto &tflite_attr = tfliteOp->builtin_options.AsOneHotOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name << " attr failed";
     return RET_NULL_PTR;
   }
+
   auto axis = tflite_attr->axis;
-  const auto tensor_shape = tfliteTensors[tfliteOp->inputs[0]].get()->shape;
+  const auto &tensor = tfliteTensors[tfliteOp->inputs[0]];
+  if (tensor == nullptr) {
+    MS_LOG(ERROR) << "tensor is null";
+    return RET_NULL_PTR;
+  }
+  const auto tensor_shape = tensor->shape;
   if (axis < 0) {
     axis += tensor_shape.size();
   }

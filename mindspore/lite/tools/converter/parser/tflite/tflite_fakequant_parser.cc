@@ -29,15 +29,24 @@ STATUS TfliteFakeQuantParser::Parse(const std::unique_ptr<tflite::OperatorT> &tf
 
   auto weight_index = tfliteOp->inputs[1];
   const auto &weight_tensor = tfliteTensors[weight_index];
+  if (weight_tensor == nullptr) {
+    MS_LOG(ERROR) << "weight_tensor is null";
+    return RET_NULL_PTR;
+  }
   std::vector<tflite::TensorT *> weight_tensors{weight_tensor.get()};
   if (RET_OK != ParseWeight(weight_tensors, tfliteModelBuffer, tensor_cache, schema::Format_NHWC)) {
     MS_LOG(ERROR) << "parse weight failed";
     return RET_ERROR;
   }
+
   if (tfliteOp->inputs.size() == 3) {
     attr->hasBias = true;
     auto bias_index = tfliteOp->inputs[2];
     const auto &bias_tensor = tfliteTensors[bias_index];
+    if (bias_tensor == nullptr) {
+      MS_LOG(ERROR) << "bias_tensor is null";
+      return RET_NULL_PTR;
+    }
     std::vector<tflite::TensorT *> bias_tensors{bias_tensor.get()};
     if (RET_OK != ParseBias(bias_tensors, tfliteModelBuffer, tensor_cache)) {
       MS_LOG(ERROR) << "parse bias failed";
@@ -45,6 +54,7 @@ STATUS TfliteFakeQuantParser::Parse(const std::unique_ptr<tflite::OperatorT> &tf
     }
   }
   attr->axis = 1;
+
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_FullConnection;

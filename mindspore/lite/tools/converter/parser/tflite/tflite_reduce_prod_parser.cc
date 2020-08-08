@@ -32,12 +32,14 @@ STATUS TfliteReduceProdParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
     MS_LOG(ERROR) << "get op: " << op->name << " attr failed";
     return RET_NULL_PTR;
   }
+
   attr->mode = schema::ReduceMode_ReduceProd;
+  attr->keepDims = tflite_attr->keep_dims;
   if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->axes)) {
-    MS_LOG(ERROR) << "REDUCE_PROD get axes attr failed";
+    MS_LOG(ERROR) << "get reduce_prod -> axes failed";
     return RET_ERROR;
   }
-  attr->keepDims = tflite_attr->keep_dims;
+
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Reduce;

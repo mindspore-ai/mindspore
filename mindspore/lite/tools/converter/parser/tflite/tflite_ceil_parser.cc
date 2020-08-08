@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "tools/converter/parser/tflite/tflite_ceil_parser.h"
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_ceil_parser.h"
 
 namespace mindspore {
 namespace lite {
@@ -24,9 +24,7 @@ STATUS TfliteCeilParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteO
                               const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
                               const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                               const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                              schema::CNodeT *op,
-                              TensorCache *tensor_cache,
-                              bool quantizedModel) {
+                              schema::CNodeT *op, TensorCache *tensor_cache,  bool quantizedModel) {
   MS_LOG(DEBUG) << "parse TfliteCeilParser";
   std::unique_ptr<schema::CeilT> attr(new schema::CeilT());
 

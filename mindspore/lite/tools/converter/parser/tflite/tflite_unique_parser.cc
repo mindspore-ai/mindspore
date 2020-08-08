@@ -29,6 +29,7 @@ STATUS TfliteUniqueParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
                                  TensorCache *tensor_cache, bool quantized_model) {
   MS_LOG(DEBUG) << "parse TfliteUniqueParser";
   std::unique_ptr<schema::UniqueT> attr(new schema::UniqueT());
+
   const auto &tflite_attr = tflite_op->builtin_options.AsUniqueOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: %s attr failed", op->name.c_str();
@@ -36,6 +37,7 @@ STATUS TfliteUniqueParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   }
 
   attr->outType = dtype_map[tflite_attr->idx_out_type];
+
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Unique;

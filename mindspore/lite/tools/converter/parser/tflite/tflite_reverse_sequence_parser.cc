@@ -29,13 +29,20 @@ STATUS TfliteReverseSequenceParser::Parse(const std::unique_ptr<tflite::Operator
                                           TensorCache *tensor_cache, bool quantized_model) {
   MS_LOG(DEBUG) << "parse TfliteReverseSequenceParser";
   std::unique_ptr<schema::ReverseSequenceT> attr(new schema::ReverseSequenceT());
-  const auto &tflite_attr = tflite_op->builtin_options.AsReverseSequenceOptions();
 
+  const auto &tflite_attr = tflite_op->builtin_options.AsReverseSequenceOptions();
+  if (tflite_attr == nullptr) {
+    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
+    return RET_NULL_PTR;
+  }
   attr->seqAxis = tflite_attr->seq_dim;
   attr->batchAxis = tflite_attr->batch_dim;
+
   if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->seqLengths)) {
+    MS_LOG(ERROR) << "get reverse_sequence -> seqLengths failed";
     return RET_ERROR;
   }
+
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_ReverseSequence;

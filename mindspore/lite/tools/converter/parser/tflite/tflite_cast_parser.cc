@@ -15,23 +15,33 @@
 * limitations under the License.
 */
 
+#include "tools/converter/parser/tflite/tflite_cast_parser.h"
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_cast_parser.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteCastParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                               const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
-                               const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                               const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_opset,
-                               schema::CNodeT *op,
-                               TensorCache *tensor_cache, bool quantized_model) {
+STATUS TfliteCastParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
+                               const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
+                               const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
+                               const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
+                               schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
   MS_LOG(DEBUG) << "parse TfliteCastParser";
   std::unique_ptr<schema::CastT> attr(new schema::CastT());
 
-  attr->srcT = dtype_map[tflite_tensors[tflite_op->inputs[0]]->type];
-  attr->dstT = dtype_map[tflite_tensors[tflite_op->outputs[0]]->type];
+  const auto &in_tensor = tfliteTensors[tfliteOp->inputs[0]];
+  if (in_tensor == nullptr) {
+    MS_LOG(ERROR) << "tensor is null";
+    return RET_NULL_PTR;
+  }
+  attr->srcT = dtype_map[in_tensor->type];
+
+  const auto &out_tensor = tfliteTensors[tfliteOp->outputs[0]];
+  if (out_tensor == nullptr) {
+    MS_LOG(ERROR) << "tensor is null";
+    return RET_NULL_PTR;
+  }
+  attr->dstT = dtype_map[out_tensor->type];
 
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();

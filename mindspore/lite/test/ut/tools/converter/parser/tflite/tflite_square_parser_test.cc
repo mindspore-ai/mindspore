@@ -21,7 +21,7 @@
 namespace mindspore {
 class TestTfliteParserSquare : public TestTfliteParser {
  public:
-  TestTfliteParserSquare() {}
+  TestTfliteParserSquare() = default;
   void SetUp() override { meta_graph = LoadAndConvert("./square.tflite", ""); }
 };
 

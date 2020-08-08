@@ -38,7 +38,7 @@ STATUS TfliteFloorParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
   return RET_OK;
 }
 
-TfliteNodeRegister g_tfliteFloorParser("Floor", new TfliteFloorParser());
+TfliteNodeRegister g_tfliteFloorParser("flOOR", new TfliteFloorParser());
 }  // namespace lite
 }  // namespace mindspore
 

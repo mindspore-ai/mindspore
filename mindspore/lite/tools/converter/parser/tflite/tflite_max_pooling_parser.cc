@@ -31,7 +31,9 @@ STATUS TfliteMaxPoolingParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
   const auto &tflite_attr = tflite_op->builtin_options.AsPool2DOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
+    return RET_NULL_PTR;
   }
+
   attr->format = schema::Format_NHWC;
   // attr->global
   attr->poolingMode = schema::PoolMode_MAX_POOLING;
@@ -40,6 +42,7 @@ STATUS TfliteMaxPoolingParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
   attr->strideW = tflite_attr->stride_w;
   attr->strideH = tflite_attr->stride_h;
   attr->padMode = GetPadMode(tflite_attr->padding);
+
   // calculate pad params
 
   if (op != nullptr) {

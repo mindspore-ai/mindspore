@@ -21,7 +21,7 @@
 namespace mindspore {
 class TestTfliteParserGreater : public TestTfliteParser {
  public:
-  TestTfliteParserGreater() {}
+  TestTfliteParserGreater() = default;
   void SetUp() override {
     meta_graph = LoadAndConvert("./greater.tflite");
   }

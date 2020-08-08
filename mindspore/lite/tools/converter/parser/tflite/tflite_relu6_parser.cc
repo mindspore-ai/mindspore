@@ -27,6 +27,7 @@ STATUS TfliteRelu6Parser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
                                 schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
   MS_LOG(DEBUG) << "parse TfliteRelu6Parser";
   std::unique_ptr<schema::ActivationT> attr(new schema::ActivationT());
+
   attr->type = schema::ActivationType_RELU6;
 
   if (op != nullptr) {

@@ -20,7 +20,7 @@
 namespace mindspore {
 class TestTfliteParserLogicalNot : public TestTfliteParser {
  public:
-  TestTfliteParserLogicalNot() {}
+  TestTfliteParserLogicalNot() = default;
   void SetUp() override { meta_graph = LoadAndConvert("./logical_not.tflite", ""); }
 };
 

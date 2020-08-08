@@ -22,9 +22,12 @@
 namespace mindspore {
 
 schema::MetaGraphT *TestTfliteParser::LoadAndConvert(const string &model_path, const string &weight_path) {
-  schema::MetaGraphT *meta_graph = nullptr;
   lite::TfliteModelParser parser;
   meta_graph = parser.Parse(model_path, weight_path);
+  if (meta_graph == nullptr) {
+    MS_LOG(ERROR) << "Parse to metaGraph return nullptr";
+    return nullptr;
+  }
   return meta_graph;
 }
 

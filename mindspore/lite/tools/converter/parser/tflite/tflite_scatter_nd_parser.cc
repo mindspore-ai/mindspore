@@ -28,6 +28,7 @@ STATUS TfliteScatterNdParser::Parse(const std::unique_ptr<tflite::OperatorT> &tf
                                     schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
   MS_LOG(INFO) << "parse TfliteScatterNdParser";
   std::unique_ptr<schema::ScatterNDT> attr(new schema::ScatterNDT());
+
   const auto &tflite_attr = tfliteOp->builtin_options.AsScatterNdOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name << " attr failed";

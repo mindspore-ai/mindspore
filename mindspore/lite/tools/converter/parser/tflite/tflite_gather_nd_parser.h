@@ -26,7 +26,7 @@ namespace mindspore {
 namespace lite {
 class TfliteGatherNdParser : public TfliteNodeParser {
  public:
-  TfliteGatherNdParser() : TfliteNodeParser("GatherNd") {}
+  TfliteGatherNdParser() : TfliteNodeParser("GatherND") {}
 
   STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
                const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,

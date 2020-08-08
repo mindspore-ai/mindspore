@@ -27,18 +27,22 @@ STATUS TfliteMeanPoolingParser::Parse(const std::unique_ptr<tflite::OperatorT> &
                                       schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
   MS_LOG(DEBUG) << "parser TfliteMeanPoolingParser";
   std::unique_ptr<schema::PoolingT> attr(new schema::PoolingT());
+
   const auto &tflite_attr = tflite_op->builtin_options.AsPool2DOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
+    return RET_NULL_PTR;
   }
-  attr->format = schema::Format_NHWC;
-  // attr->global
-  attr->poolingMode = schema::PoolMode_MEAN_POOLING;
   attr->windowW = tflite_attr->filter_width;
   attr->windowH = tflite_attr->filter_height;
   attr->strideW = tflite_attr->stride_w;
   attr->strideH = tflite_attr->stride_h;
   attr->padMode = GetPadMode(tflite_attr->padding);
+
+  attr->format = schema::Format_NHWC;
+  // attr->global
+  attr->poolingMode = schema::PoolMode_MEAN_POOLING;
+
   // calculate pad params
 
   if (op != nullptr) {

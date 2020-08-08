@@ -49,9 +49,10 @@ class TfliteNodeParser {
   STATUS ParseBias(const std::vector<tflite::TensorT *> &weight_tenosr,
                    const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer, TensorCache *tensor_cache);
 
-  STATUS ParseAttr(const std::vector<tflite::TensorT *> &attr_tenosrs,
-                   const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                   mindspore::lite::TensorCache *tensor_cache, schema::Format format);
+  STATUS ParseTensor(const std::vector<tflite::TensorT *> &ts,
+                     const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
+                     mindspore::lite::TensorCache *tensor_cache, int node_type,
+                     bool ifCopy);
 
   STATUS CopyTfliteTensorData(const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                               const tflite::TensorT *tflite_tensor, schema::TensorT *tensor);
