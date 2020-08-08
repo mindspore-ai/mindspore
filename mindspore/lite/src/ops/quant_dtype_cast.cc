@@ -30,6 +30,7 @@ int QuantDTypeCast::InferShape(std::vector<tensor::Tensor *> inputs_, std::vecto
   auto param = primitive->value_as_QuantDTypeCast();
   MS_ASSERT(input->data_type() == param->srcT);
   output->set_data_type(static_cast<TypeId>(param->dstT()));
+  output->SetFormat(input->GetFormat());
   return RET_OK;
 }
 }  // namespace mindspore::lite

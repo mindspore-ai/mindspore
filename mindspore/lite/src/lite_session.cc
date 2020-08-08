@@ -64,6 +64,16 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
       // no copy data, do copy when call LiteKernel::Init
       dstTensor->SetData(const_cast<unsigned char *>(srcTensor->data()->data()));
     }
+    auto quant_params = srcTensor->quantParams();
+    if (quant_params != nullptr) {
+      for (int j = 0; j < quant_params->size(); j++) {
+        tensor::QuantArg quant_arg{};
+        quant_arg.scale = quant_params->Get(j)->scale();
+        quant_arg.zeroPoint = quant_params->Get(j)->zeroPoint();
+        dstTensor->AddQuantParam(quant_arg);
+      }
+    }
+
     this->tensors.emplace_back(dstTensor);
   }
   return RET_OK;
