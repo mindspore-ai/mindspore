@@ -55,15 +55,18 @@ struct ConfigParam {
 
 class PostTrainingQuantizer : public Quantizer {
  public:
-  PostTrainingQuantizer(FuncGraphPtr graph, std::string path, int bit_num, TypeId target_type = kNumberTypeInt8);
+  PostTrainingQuantizer(FuncGraphPtr graph, std::string path, int bit_num, TypeId target_type = kNumberTypeInt8,
+                        bool per_channel = false);
 
   STATUS DoQuantize(FuncGraphPtr funcGraph) override;
 
   size_t bit_num;
-  int quant_max{255};
-  int quant_min{0};
+  int quant_max{127};
+  int quant_min{-128};
 
  private:
+  bool per_channel_;
+
   TypeId target_type_{kNumberTypeInt8};
 
   std::unique_ptr<Calibrator> calibrator_;

@@ -62,7 +62,7 @@ int QuantDTypeCastCPUKernel::Init() {
     }
     inverse_ = true;
   } else {
-    MS_LOG(ERROR) << "param data type not supported.";
+    MS_LOG(ERROR) << "param data type not supported:" << " src: " << param->srcT << " dst: " << param->dstT;
     return RET_ERROR;
   }
 
@@ -148,7 +148,6 @@ kernel::LiteKernel *CpuQuantDTypeCastFp32KernelCreator(const std::vector<lite::t
   }
   return kernel;
 }
-
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_QuantDTypeCast, CpuQuantDTypeCastFp32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_QuantDTypeCast, CpuQuantDTypeCastFp32KernelCreator)
 }  // namespace mindspore::kernel

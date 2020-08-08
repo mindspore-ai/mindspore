@@ -63,41 +63,30 @@ STATUS CalQuantizationParams(std::unique_ptr<AnfQuantParam> &quantParam, double 
                              bool narrowRange, int quant_max, int quant_min, int num_bits);
 
 template <typename T>
-T QuantizeData(const float originData, const AnfQuantParam *quantParam) {
+T QuantizeData(float originData, const AnfQuantParam *quantParam, int quant_max, int quant_min) {
   MS_ASSERT(quantParam != nullptr);
   MS_ASSERT(quantParam->inited);
   const auto scale = quantParam->scale;
-  const auto zeroPoint = quantParam->zeroPoint;
-  const auto numBit = quantParam->numBits;
+  const int zeroPoint = quantParam->zeroPoint;
   const auto narrowRange = quantParam->narrowRange;
-  const double maxLimit = static_cast<float>((1 << (unsigned int)numBit) - 1 - zeroPoint) * scale;
-  double minLimit;
-  if (narrowRange) {
-    minLimit = static_cast<float>(1 - zeroPoint) * scale;
-  } else {
-    minLimit = static_cast<float>(0 - zeroPoint) * scale;
-  }
+  const int maxLimit = quant_max;
+  const int minLimit = quant_min;
+
   return [maxLimit, minLimit, zeroPoint, scale, narrowRange, originData] {
-    double tmp = 0.0f;
-    if (originData > maxLimit) {
-      tmp = maxLimit;
-    } else if (originData < minLimit) {
-      tmp = minLimit;
-    } else {
-      tmp = originData;
+    int quant_data = std::round(originData / scale + zeroPoint);
+    if (quant_data > maxLimit) {
+      quant_data = maxLimit;
+    } else if (quant_data < minLimit) {
+      quant_data = minLimit;
     }
-    auto quantData = static_cast<T>(std::round(tmp / scale + zeroPoint));
-    if (quantData == 0 && narrowRange) {
-      quantData++;
-    }
-    return quantData;
+    return static_cast<T>(quant_data);
   }();
 }
 
 void CalFakeNode(const AnfNodePtr &inTensor);
 
 STATUS QuantFilter(ParamValueLitePtr &weightPtr, QuantType quantType, int quant_max, int quant_min,
-                   size_t bitNum = UINT8_QUANTIZATION);
+                   size_t bitNum = UINT8_QUANTIZATION, bool per_channel = false);
 
 STATUS PostBitPack(float *weights, size_t shapeSize, size_t bitNum = UINT8_QUANTIZATION);
 

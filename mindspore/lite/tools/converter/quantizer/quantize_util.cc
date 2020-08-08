@@ -98,7 +98,7 @@ bool QuantStrategy::CanOpPostQuantized(AnfNodePtr &node) const {
     static const std::vector<schema::PrimitiveType> uint8OpList = {
         schema::PrimitiveType_Nchw2Nhwc,       schema::PrimitiveType_Nhwc2Nchw, schema::PrimitiveType_Conv2D,
         schema::PrimitiveType_DepthwiseConv2D, schema::PrimitiveType_Add,       schema::PrimitiveType_Pooling,
-        schema::PrimitiveType_Concat,          schema::PrimitiveType_SoftMax,   schema::PrimitiveType_Reshape,
+        schema::PrimitiveType_Concat,          /*schema::PrimitiveType_SoftMax,*/   schema::PrimitiveType_Reshape,
         schema::PrimitiveType_Activation};
     return IsContain(uint8OpList, type);
 }
@@ -242,64 +242,122 @@ STATUS CalQuantizationParams(std::unique_ptr<AnfQuantParam> &quantParam, double 
     return RET_OK;
 }
 
-STATUS QuantFilter(ParamValueLitePtr &weightPtr, QuantType quantType, int quant_max, int quant_min, size_t bitNum) {
+STATUS QuantFilter(ParamValueLitePtr &weightPtr, QuantType quantType, int quant_max, int quant_min, size_t bitNum,
+                   bool per_channel) {
+  if (per_channel) {
+    // per channel
     auto dims = weightPtr->tensor_shape();
     if (dims.size() < 1) {
-        MS_LOG(ERROR) << "weight dims size error";
-        return RET_ERROR;
+      MS_LOG(ERROR) << "weight dims size error";
+      return RET_ERROR;
     }
-    uint32_t channels = dims[0];
+    // todo(x)
+    uint32_t channels = dims[3];
     if (channels == 0) {
-        MS_LOG(ERROR) << "channels error 0";
-        return RET_ERROR;
+      MS_LOG(ERROR) << "channels error 0";
+      return RET_ERROR;
     }
 
     size_t shapeSize = weightPtr->tensor_shape_size();
     size_t oneFilterSize = shapeSize / channels;
     auto *rawDatas = reinterpret_cast<const float *>(weightPtr->tensor_addr());
     if (rawDatas == nullptr) {
-        MS_LOG(ERROR) << "rawDatas is nullptr";
-        return RET_ERROR;
+      MS_LOG(ERROR) << "rawDatas is nullptr";
+      return RET_ERROR;
     }
 
     weightPtr->quant_param().clear();
-    vector<uint8_t> qDatas(shapeSize);
+    vector<int8_t> qDatas(shapeSize);
     for (uint32_t i = 0; i < channels; i++) {
-        float min = 0;
-        float max = 0;
-        // find min and max
-        for (uint32_t j = 0; j < oneFilterSize; j++) {
-            min = std::min(min, rawDatas[j + i * oneFilterSize]);
-            max = std::max(max, rawDatas[j + i * oneFilterSize]);
-        }
+      float min = 0;
+      float max = 0;
+      // find min and max
+      for (uint32_t j = 0; j < oneFilterSize; j++) {
+        min = std::min(min, rawDatas[j + i * oneFilterSize]);
+        max = std::max(max, rawDatas[j + i * oneFilterSize]);
+      }
 
-        std::unique_ptr<AnfQuantParam> quantParam = std::unique_ptr<AnfQuantParam>(new AnfQuantParam);
-        STATUS status = CalQuantizationParams(quantParam, min, max, false, quant_max, quant_min, bitNum);
-        if (status != RET_OK) {
-            MS_LOG(ERROR) << "CalQuantizationParams failed" << status;
-            return status;
-        }
-        // update data and datatype
-        for (uint32_t j = 0; j < oneFilterSize; j++) {
-            float rawData = rawDatas[j + i * oneFilterSize];
-            auto qData = QuantizeData<uint8_t>(rawData, quantParam.get());
-            qDatas[j + i * oneFilterSize] = qData;
-        }
+      std::unique_ptr<AnfQuantParam> quantParam = std::unique_ptr<AnfQuantParam>(new AnfQuantParam);
+      STATUS status = CalQuantizationParams(quantParam, min, max, false, quant_max, quant_min, bitNum);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "CalQuantizationParams failed" << status;
+        return status;
+      }
+      // update data and datatype
+      for (uint32_t j = 0; j < oneFilterSize; j++) {
+        float rawData = rawDatas[j + i * oneFilterSize];
+        auto qData = QuantizeData<int8_t>(rawData, quantParam.get(), quant_max, quant_min);
+        qDatas[j + i * oneFilterSize] = qData;
+      }
 
-        weightPtr->set_quant_param(quantParam);
+      weightPtr->set_quant_param(quantParam);
     }
     auto ret = memcpy_s(const_cast<float*>(rawDatas), weightPtr->tensor_size(),
-                        qDatas.data(), shapeSize * sizeof(uint8_t));
+                        qDatas.data(), shapeSize * sizeof(int8_t));
     if (ret != EOK) {
-        MS_LOG(ERROR) << "memcpy error: " << ret;
-        return RET_ERROR;
+      MS_LOG(ERROR) << "memcpy error: " << ret;
+      return RET_ERROR;
     }
     if (quantType == QuantType_WeightQuant) {
-        PostBitPack(const_cast<float*>(rawDatas), shapeSize, bitNum);
+      PostBitPack(const_cast<float*>(rawDatas), shapeSize, bitNum);
     }
 
     weightPtr->set_tensor_type(kNumberTypeInt8);
     weightPtr->set_tensor_size(shapeSize * sizeof(int8_t));
+  } else {
+    // per layer
+    size_t shapeSize = weightPtr->tensor_shape_size();
+    auto *rawDatas = static_cast<float *>(weightPtr->tensor_addr());
+    if (rawDatas == nullptr) {
+      MS_LOG(ERROR) << "rawDatas is nullptr";
+      return RET_ERROR;
+    }
+
+    weightPtr->quant_param().clear();
+    vector<int8_t> qDatas(shapeSize);
+
+    float min = 0;
+    float max = 0;
+    for (uint32_t i = 0; i < shapeSize; i++) {
+      // find max min
+      min = std::min(min, rawDatas[i]);
+      max = std::max(max, rawDatas[i]);
+    }
+
+    std::unique_ptr<AnfQuantParam> quantParam = std::unique_ptr<AnfQuantParam>(new AnfQuantParam);
+    STATUS status = CalQuantizationParams(quantParam, min, max, false, quant_max, quant_min, bitNum);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "CalQuantizationParams failed" << status;
+      return status;
+    }
+    // update data and datatype
+    for (uint32_t i = 0; i < shapeSize; i++) {
+      float rawData = rawDatas[i];
+      auto quant_data = std::round(rawData / quantParam->scale + quantParam->zeroPoint);
+      if (quant_data > quant_max) {
+        qDatas[i] = quant_max;
+      } else if (quant_data < quant_min) {
+        qDatas[i] = quant_min;
+      }  else {
+        qDatas[i] = static_cast<int8_t>(quant_data);
+      }
+    }
+
+    weightPtr->set_quant_param(quantParam);
+    auto ret = memcpy_s(rawDatas, weightPtr->tensor_size() * sizeof(int8_t),
+                        qDatas.data(), shapeSize * sizeof(int8_t));
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "memcpy error: " << ret;
+      return RET_ERROR;
+    }
+    if (quantType == QuantType_WeightQuant) {
+      PostBitPack(rawDatas, shapeSize, bitNum);
+    }
+
+    weightPtr->set_tensor_type(kNumberTypeInt8);
+    weightPtr->set_tensor_size(shapeSize * sizeof(int8_t));
+  }
+
 
     return RET_OK;
 }
