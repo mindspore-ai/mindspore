@@ -215,7 +215,7 @@ void Conv3x3Fp16(float16_t *input_data, float16_t *transed_weight, const float16
         for (int c = 0; c < output_channel; c++) {
           int oc8_block = c / C8NUM;
           int oc8_res = c % C8NUM;
-          int src_offset = oc8_block * C8NUM * out_w_block * out_h_block * tile_num +
+          int src_offset = oc8_block * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM +
                            C8NUM * (h * out_w_block * output_unit + w) + oc8_res;
           int dst_offset = (h * output_w + w) * output_channel + c;
           (output_data + dst_offset)[0] = (tmp_out + src_offset)[0];
