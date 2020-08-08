@@ -309,12 +309,7 @@ INPUT_MAP(SoftmaxCrossEntropyWithLogits) = {{1, INPUT_DESC(features)}, {2, INPUT
 ATTR_MAP(SoftmaxCrossEntropyWithLogits) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(SoftmaxCrossEntropyWithLogits) = {{0, OUTPUT_DESC(loss)}, {1, OUTPUT_DESC(backprop)}};
 
-// MeanGrad
-INPUT_MAP(MeanGrad) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(MeanGrad) = {{2, ATTR_DESC(mean_grad_output_shape_value, kOpFormat_NHWC,
-                                          AnyTraits<std::vector<int64_t>>(), AnyTraits<int64_t>())}};
-ATTR_MAP(MeanGrad) = {{"mode", ATTR_DESC(mode, AnyTraits<int64_t>())}};
-
+// SliceD
 INPUT_MAP(SliceD) = {{1, INPUT_DESC(x)}};
 INPUT_ATTR_MAP(SliceD) = {{2, ATTR_DESC(offsets, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
                           {3, ATTR_DESC(size, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())}};
@@ -430,11 +425,6 @@ OUTPUT_MAP(BoundingBoxDecode) = {{0, OUTPUT_DESC(bboxes)}};
 INPUT_MAP(TopK) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(k)}};
 ATTR_MAP(TopK) = {{"sorted", ATTR_DESC(sorted, AnyTraits<bool>())}};
 OUTPUT_MAP(TopK) = {{0, OUTPUT_DESC(values)}, {1, OUTPUT_DESC(indices)}};
-
-// Multiply
-INPUT_MAP(Multiply) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(y)}};
-ATTR_MAP(Multiply) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(Multiply) = {{0, OUTPUT_DESC(z)}};
 
 // TileD
 INPUT_MAP(TileD) = {{1, INPUT_DESC(x)}};
