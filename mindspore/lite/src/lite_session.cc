@@ -187,17 +187,8 @@ int LiteSession::RunGraph(const session::KernelCallBack &before, const session::
   }
 }
 
-std::vector<mindspore::tensor::MSTensor *> LiteSession::GetOutputs() const {
-  std::vector<mindspore::tensor::MSTensor *> ret;
-  for (auto &iter : this->output_map) {
-    auto &node_output_tensors = iter.second;
-    for (auto tensor : node_output_tensors) {
-      if (!IsContain(ret, tensor)) {
-        ret.emplace_back(tensor);
-      }
-    }
-  }
-  return ret;
+std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> LiteSession::GetOutputs() const {
+  return this->output_map;
 }
 
 int LiteSession::Init(Context *context) {

@@ -49,7 +49,7 @@ class LiteSession : public session::LiteSession {
   int RunGraph(const session::KernelCallBack &before = nullptr,
                const session::KernelCallBack &after = nullptr) override;
 
-  std::vector<mindspore::tensor::MSTensor *> GetOutputs() const override;
+  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> GetOutputs() const override;
 
   std::vector<mindspore::tensor::MSTensor *> GetOutputsByName(const std::string &name) const override;
 

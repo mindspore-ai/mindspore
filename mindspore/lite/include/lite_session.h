@@ -20,6 +20,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <unordered_map>
 #include "include/ms_tensor.h"
 #include "include/model.h"
 #include "include/context.h"
@@ -85,8 +86,8 @@ class MS_API LiteSession {
 
   /// \brief Get output MindSpore Lite MSTensors of model.
   ///
-  /// \return A vector of MindSpore Lite MSTensor.
-  virtual std::vector<tensor::MSTensor *> GetOutputs() const = 0;
+  /// \return A map of output node name and MindSpore Lite MSTensor.
+  virtual std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> GetOutputs() const = 0;
 
   /// \brief Get output MindSpore Lite MSTensors of model by node name.
   ///
