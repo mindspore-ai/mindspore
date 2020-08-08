@@ -36,115 +36,12 @@
 #include "utils/convert_utils.h"
 #include "utils/ms_context.h"
 #include "pipeline/jit/parse/data_converter.h"
+#include "abstract/primitive_infer_map.h"
 #include "abstract/param_validator.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace abstract {
-PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
-  static PrimitiveEvalImplMap prim_eval_implement_map = {
-    // Statements
-    {prim::kPrimReturn, {InferImplReturn, true}},
-    {prim::kPrimTypeOf, {InferImplTypeof, false}},
-    {prim::kPrimHasType, {InferImplHasType, false}},
-    {prim::kPrimDot, {InferImplDot, true}},
-    {prim::kPrimSwitch, {InferImplSwitch, true}},
-    {prim::kPrimSwitchLayer, {InferImplSwitchLayer, true}},
-    {prim::kPrimIs_, {InferImplIs_, true}},
-    {prim::kPrimIsNot, {InferImplIsNot, true}},
-    {prim::kPrimInDict, {InferImplInDict, true}},
-    {prim::kPrimNotInDict, {InferImplNotInDict, true}},
-    {prim::kPrimIsConsant, {InferImplIsConstant, true}},
-    // Maths
-    {prim::kPrimMaximumGrad, {InferImplMinOrMaxGrad, true}},
-    {prim::kPrimMinimumGrad, {InferImplMinOrMaxGrad, true}},
-    // Array
-    {prim::kPrimScalarToArray, {InferImplScalarToArray, true}},
-    {prim::kPrimArrayToScalar, {InferImplArrayToScalar, true}},
-    {prim::kPrimBroadcastShape, {InferImplBroadCastShape, true}},
-    {prim::kPrimPack, {InferImplPack, true}},
-    {prim::kPrimUnique, {InferImplUnique, true}},
-    {prim::kPrimUniqueGrad, {InferImplUniqueGrad, true}},
-    // Structure
-    {prim::kPrimMakeTuple, {InferImplMakeTuple, true}},
-    {prim::kPrimMakeList, {InferImplMakeList, true}},
-    {prim::kPrimMakeDict, {InferImplMakeDict, true}},
-    {prim::kPrimMakeSlice, {InferImplMakeSlice, true}},
-    {prim::kPrimMakeKeywordArg, {InferImplMakeKwarg, true}},
-    {prim::kPrimExtractKeywordArg, {InferImplExtractKwarg, true}},
-    {prim::kPrimMakeRecord, {InferImplMakeRecord, false}},
-    {prim::kPrimTupleGetItem, {InferImplTupleGetItem, true}},
-    {prim::kPrimListGetItem, {InferImplListGetItem, true}},
-    {prim::kPrimTupleSetItem, {InferImplTupleSetItem, true}},
-    {prim::kPrimListSetItem, {InferImplListSetItem, true}},
-    {prim::kPrimDictGetItem, {InferImplDictGetItem, true}},
-    {prim::kPrimDictSetItem, {InferImplDictSetItem, true}},
-    {prim::kPrimListAppend, {InferImplListAppend, true}},
-    {prim::kPrimTupleLen, {InferImplTupleLen, true}},
-    {prim::kPrimListLen, {InferImplListLen, true}},
-    {prim::kPrimArrayLen, {InferImplArrayLen, true}},
-    {prim::kPrimListMap, {InferImplListMap, false}},
-    {prim::kPrimListReduce, {InferImplListReduce, false}},
-    {prim::kPrimTupleReversed, {InferImplTupleReversed, false}},
-    {prim::kPrimReducedShape, {InferImplReduceShape, false}},
-    {prim::kPrimTupleDiv, {InferImplTupleDiv, false}},
-    {prim::kPrimTupleToArray, {InferImplTuple2Array, false}},
-    {prim::kPrimShapeMul, {InferImplShapeMul, false}},
-    {prim::kPrimTupleEqual, {InferImplTupleEqual, false}},
-    {prim::kPrimListEqual, {InferImplListEqual, false}},
-    {prim::kPrimMakeRange, {InferImplMakeRange, false}},
-    {prim::kPrimStopGradient, {InferImplStopGradient, false}},
-    {prim::kPrimStringEqual, {InferImplStringEqual, false}},
-    {prim::kPrimStringConcat, {InferImplStringConcat, false}},
-    {prim::kPrimDictLen, {InferImplDictLen, false}},
-    // NN
-    {prim::kPrimPooling, {InferImplPooling, true}},
-    {prim::kPrimPoolingGrad, {InferImplPoolingGrad, true}},
-    {prim::kPrimFusedBatchNorm, {InferImplFusedBatchNorm, true}},
-    {prim::kPrimFusedBatchNormGrad, {InferImplFusedBatchNormGrad, true}},
-    {prim::kPrimReluGrad, {InferImplReluGrad, true}},
-    {prim::kPrimConv2DBackpropInput, {InferImplConv2DBackpropInput, true}},
-    {prim::kPrimConv2DBackpropFilter, {InferImplConv2DBackpropFilter, true}},
-    {prim::kPrimBiasAddGrad, {InferImplBiasAddGrad, true}},
-    {prim::kPrimRelu, {InferImplRelu, true}},
-    {prim::kPrimFakeBprop, {InferImplFakeBprop, false}},
-    {prim::kPrimZerosLike, {InferImplZerosLike, true}},
-    {prim::kPrimBpropCut, {InferImplBpropCut, true}},
-    {prim::kPrimLayerNorm, {InferImplLayerNorm, true}},
-    {prim::kPrimLayerNormGrad, {InferImplLayerNormGrad, true}},
-    {prim::kPrimDropoutGenMask, {InferImplDropoutGenMask, true}},
-    // Others
-    {prim::kPrimIdentity, {InferImplIdentity, true}},
-    // Set impl to null as it will use PartialEvaluator;
-    {prim::kPrimPartial, {nullptr, true}},
-    {prim::kPrimJ, {InferImplJ, false}},
-    {prim::kPrimEnvGetItem, {InferImplEnvGetItem, true}},
-    {prim::kPrimEnvSetItem, {InferImplEnvSetItem, true}},
-    {prim::kPrimEnvAdd, {InferImplEnvAdd, true}},
-    {prim::kPrimMakeRefKey, {InferImplMakeRefKey, true}},
-    {prim::kPrimMakeRef, {InferImplMakeRef, true}},
-    {prim::kPrimGetRefKey, {InferImplGetRefKey, true}},
-    {prim::kPrimGetRefValue, {InferImplGetRefValue, true}},
-    {prim::kPrimStateSetItem, {InferImplStateSetItem, true}},
-    {prim::kPrimDepend, {InferImplDepend, true}},
-    {prim::kPrimBroadcastGradientArgs, {InferImplBroadcastGradientArgs, false}},
-    {prim::kPrimControlDepend, {InferImplControlDepend, true}},
-    // Debug
-    {prim::kPrimDebug, {InferImplDebug, true}},
-    // RowTensor
-    {prim::kPrimMakeRowTensor, {InferImplMakeRowTensor, true}},
-    {prim::kPrimRowTensorGetValues, {InferImplRowTensorGetValues, true}},
-    {prim::kPrimRowTensorGetIndices, {InferImplRowTensorGetIndices, true}},
-    {prim::kPrimRowTensorGetDenseShape, {InferImplRowTensorGetDenseShape, true}},
-    // SparseTensor
-    {prim::kPrimMakeSparseTensor, {InferImplMakeSparseTensor, true}},
-    {prim::kPrimSparseTensorGetValues, {InferImplSparseTensorGetValues, true}},
-    {prim::kPrimSparseTensorGetIndices, {InferImplSparseTensorGetIndices, true}},
-    {prim::kPrimSparseTensorGetDenseShape, {InferImplSparseTensorGetDenseShape, true}},
-  };
-  return prim_eval_implement_map;
-}
-
 using mindspore::parse::PyObjectWrapper;
 
 std::unordered_set<std::string> prims_to_skip_undetermined_infer{"make_tuple", "make_list", "switch", "env_setitem",
