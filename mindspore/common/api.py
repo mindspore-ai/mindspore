@@ -291,14 +291,14 @@ class _PynativeExecutor:
     def __init__(self):
         self._executor = PynativeExecutor_.get_instance()
 
-    def new_graph(self, obj, *args):
-        self._executor.new_graph(obj, *args)
+    def new_graph(self, obj, *args, **kwargs):
+        self._executor.new_graph(obj, *args, *(kwargs.values()))
 
-    def end_graph(self, obj, output, *args):
-        self._executor.end_graph(obj, output, *args)
+    def end_graph(self, obj, output, *args, **kwargs):
+        self._executor.end_graph(obj, output, *args, *(kwargs.values()))
 
-    def grad(self, grad, obj, weights, *args):
-        self._executor.grad_net(grad, obj, weights, *args)
+    def grad(self, grad, obj, weights, *args, **kwargs):
+        self._executor.grad_net(grad, obj, weights, *args, *(kwargs.values()))
 
     def clear(self, flag=""):
         self._executor.clear(flag)
@@ -306,7 +306,8 @@ class _PynativeExecutor:
     def set_grad_flag(self, flag):
         self._executor.set_grad_flag(flag)
 
-    def __call__(self, *args):
+    def __call__(self, *args, **kwargs):
+        args = args + tuple(kwargs.values())
         return self._executor(args, "")
 
 

@@ -30,6 +30,7 @@ from tests.mindspore_test_framework.pipeline.forward.compile_forward \
 
 context.set_context(mode=context.GRAPH_MODE)
 
+
 def test_list_equal():
     class Net(nn.Cell):
         def __init__(self, z: list):
@@ -156,8 +157,10 @@ def test_class_member_not_defined():
 
     z = [[1, 2], 3]
     net = Net(z)
+    x = Tensor(np.ones([6, 8, 10], np.int32))
+    y = Tensor(np.zeros([3, 4, 5], np.int32))
     with pytest.raises(TypeError) as ex:
-        net()
+        net(x, y)
     assert "'self.x' was not defined in the class '__init__' function." in str(ex.value)
 
 
@@ -181,7 +184,7 @@ def test_change_list_element():
 
 
 class ListOperate(nn.Cell):
-    def __init__(self,):
+    def __init__(self):
         super(ListOperate, self).__init__()
 
     def construct(self, t, l):
@@ -201,7 +204,7 @@ class ListOperate(nn.Cell):
 
 
 class InListNet(nn.Cell):
-    def __init__(self,):
+    def __init__(self):
         super(InListNet, self).__init__()
         self.list_ = [1, 2, 3, 4, 5, "ok"]
 
