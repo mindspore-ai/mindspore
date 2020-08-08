@@ -38,20 +38,14 @@ namespace irpass {
 
 // {prim::kPrimAddN, {prim::kPrimMakeTuple, {prim::kPrimMul, {prim::kPrimAllReduce, X}, Y}, Z}} ->
 // {prim::kPrimMul, {prim::kPrimAllReduce, {prim::kPrimAddN,{prim::kPrimMakeTuple, Z, X}}}, Y}
-class AdjustAllReduceMulAdd : public AnfVisitor {
+class AdjustAllReduceMulAdd : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override;
 
   void ProcessDependEdge(const FuncGraphPtr &fg, const AnfNodePtr &addn_maketuple, const AnfNodePtr &new_node);
-  void Visit(const AnfNodePtr &node) override;
-  void Reset();
 
  private:
-  int level_{0};
-  bool is_reduce_match_{false};
-  AnfNodePtr x_{nullptr}, y_{nullptr}, z_{nullptr}, tmp_{nullptr};
-  AnfNodePtr all_reduce_{nullptr}, mul_{nullptr}, mul_cnode_{nullptr};
-  FuncGraphPtr all_reduce_fg_{nullptr};
+  AnfNodePtr mul_cnode_{nullptr};
 };
 
 class ArithmeticSimplify : public OptimizerCaller {
