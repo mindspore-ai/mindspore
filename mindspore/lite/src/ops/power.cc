@@ -24,24 +24,20 @@ int Power::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::
   MS_ASSERT(this->primitive != nullptr);
   auto x_tensor = inputs[0];
   MS_ASSERT(x_tensor != nullptr);
-  auto exp_tensor = inputs[1];
-  MS_ASSERT(exp_tensor != nullptr);
+  tensor::Tensor *exp_tensor = nullptr;
+  if (inputs.size() == 2) {
+    exp_tensor = inputs[1];
+    MS_ASSERT(exp_tensor != nullptr);
+  }
   auto output_tensor = outputs[0];
   MS_ASSERT(output_tensor != nullptr);
-  if (inputs.size() < 2) {
-    MS_LOG(ERROR) << "input size" << inputs.size() << " is error!";
-    return RET_INPUT_TENSOR_ERROR;
-  }
-  if (exp_tensor->shape() != x_tensor->shape() && exp_tensor->shape().size() != 1) {
-    MS_LOG(ERROR) << "Power inputs shape is not equal!";
-    return RET_INPUT_TENSOR_ERROR;
+  if (exp_tensor) {
+    if (exp_tensor->shape() != x_tensor->shape() || exp_tensor->data_type() != x_tensor->data_type()) {
+      MS_LOG(ERROR) << "Power inputs shape or type is not equal!";
+      return RET_INPUT_TENSOR_ERROR;
+    }
   }
 
-  int exp_size = std::accumulate(exp_tensor->shape().begin(), exp_tensor->shape().end(), 1, std::multiplies<int>());
-  if (x_tensor->data_type() != exp_tensor->data_type() && exp_size != 1) {
-    MS_LOG(ERROR) << "Exponent tensor's shape is wrong";
-    return RET_INPUT_TENSOR_ERROR;
-  }
   output_tensor->SetFormat(x_tensor->GetFormat());
   output_tensor->set_shape(x_tensor->shape());
   output_tensor->set_data_type(x_tensor->data_type());

@@ -42,7 +42,7 @@ void RowMajor2Col8Major(float *src_ptr, float *dst_ptr, size_t row, size_t col) 
       float *dst_c = dst_r + ci * C8NUM;
 
       /* 8x4 row-major to col-major */
-#ifdef ENABLE_NEON
+#ifdef ENABLE_ARM64
       size_t stride = col * 4;
       asm volatile(
         "mov x10, %[src_c]\n"
@@ -156,6 +156,9 @@ void MatMul8x8(const float *a, const float *b, float *c, const float *bias, ActT
 
 void MatMul(const float *a, const float *b, float *c, const float *bias, ActType act_type, int deep, int row_8_,
             int col_8_) {
+#ifdef __aarch64__
+  MatmulFloatNeon64(a, b, c, bias, (int)act_type, deep, row_8_, col_8_);
+#else
   MatMul8x8(a, b, c, bias, act_type, deep, row_8_, col_8_);
-  return;
+#endif
 }
