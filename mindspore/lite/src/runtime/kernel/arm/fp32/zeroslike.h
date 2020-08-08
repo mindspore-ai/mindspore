@@ -19,7 +19,6 @@
 #include <vector>
 #include "src/lite_kernel.h"
 
-
 namespace mindspore::kernel {
 class ZerosLikeCPUKernel : public LiteKernel {
  public:

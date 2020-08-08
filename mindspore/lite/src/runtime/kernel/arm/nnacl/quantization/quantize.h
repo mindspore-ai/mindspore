@@ -40,15 +40,75 @@ struct ConvQuantArg {
 };
 
 struct ConcatQuantArg {
+    int *input_sizes_;
+    int output_size_;
+    int **input_shapes_;
+    int *output_shape_;
+    float alpha;
+    size_t input_num_;
+    size_t output_dim_;
+    QuantArg *in_quant_args_;
+    QuantArg out_quant_args_;
+};
+
+struct SqueezeQuantArg {
+    int *input_sizes_;
+    int output_size_;
+    int **input_shapes_;
+    int *output_shape_;
+    float alpha;
+    int axis_;
+    size_t input_num_;
+    size_t output_dim_;
+    QuantArg *in_quant_args_;
+    QuantArg out_quant_args_;
+};
+
+struct UnSqueezeQuantArg {
+    int *input_sizes_;
+    int output_size_;
+    int **input_shapes_;
+    int *output_shape_;
+    float alpha;
+    int axis_;
+    size_t input_num_;
+    size_t output_dim_;
+    QuantArg in_quant_args_;
+    QuantArg out_quant_args_;
+};
+
+
+struct PreluQuantArg {
   int *input_sizes_;
   int output_size_;
   int **input_shapes_;
   int *output_shape_;
   size_t input_num_;
   size_t output_dim_;
+  float alpha_;
+  QuantArg in_args_;
+  QuantArg out_args_;
+  int output_activation_min_;
+  int output_activation_max_;
   QuantArg *in_quant_args_;
   QuantArg out_quant_args_;
 };
+
+/*struct SigmoidQuantArg {
+    int *input_sizes_;
+    int output_size_;
+    int **input_shapes_;
+    int *output_shape_;
+    size_t input_num_;
+    size_t output_dim_;
+    float alpha_;
+    QuantArg in_args_;
+    QuantArg out_args_;
+    int output_activation_min_;
+    int output_activation_max_;
+    QuantArg *in_quant_args_;
+    QuantArg out_quant_args_;
+};*/
 
 struct MatmulQuantArg {
   QuantArg input;
