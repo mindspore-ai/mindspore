@@ -15,7 +15,7 @@
  */
 
 #include "backend/optimizer/mem_reuse/mem_dynamic_allocator.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "utils/convert_utils.h"
 #include "utils/log_adapter.h"
 
@@ -191,7 +191,8 @@ void DynamicMemPoolBestFit::FreeTensorMem(const DeviceMemPtr device_addr) {
   MS_EXCEPTION_IF_NULL(device_addr);
   auto mem_block = FindMemBlock(device_addr);
   if (mem_block == nullptr) {
-    MS_LOG(WARNING) << "Can't find the mem_block of the device address[" << device_addr << "].";
+    // May be destory the memory pool first, then destory the address, so this is normal case.
+    MS_LOG(DEBUG) << "Can't find the mem_block of the device address[" << device_addr << "].";
     return;
   }
   CombineMemBuf(mem_block, device_addr);
@@ -262,7 +263,7 @@ void DynamicMemPoolBestFit::EraseIdleMemBuf(size_t size, const DeviceMemPtr devi
 }
 
 void DynamicMemPoolBestFit::ReleaseDeviceRes() {
-  MS_LOG(INFO) << "The dynamic memmory pool total size is " << total_mem_statistics_ << ", total used size is "
+  MS_LOG(INFO) << "The dynamic memory pool total size is " << total_mem_statistics_ << ", total used size is "
                << total_used_mem_statistics_ << ", used peak size is " << used_mem_peak_statistics_ << ".";
   for (auto iter = global_mem_block_list_.begin(); iter != global_mem_block_list_.end(); ++iter) {
     auto device_addr = (*iter)->device_addr();

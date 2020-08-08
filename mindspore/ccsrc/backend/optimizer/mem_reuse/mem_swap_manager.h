@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_MEM_SWAP_MANAGER_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_MEM_SWAP_MANAGER_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_MEM_SWAP_MANAGER_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_MEM_SWAP_MANAGER_H_
 
 #include <unordered_map>
 #include <unordered_set>
@@ -32,7 +32,11 @@ namespace memswap {
 class MemSwapManager {
  public:
   explicit MemSwapManager(const MemCopyManagerPtr &mem_copy_manager)
-      : tensor_size_threshold_(0), tensor_size_threshold_idx_(0), tensor_size_num_(1), distance_threshold_(1) {
+      : tensor_size_threshold_(0),
+        tensor_size_threshold_idx_(0),
+        tensor_size_num_(1),
+        distance_threshold_(1),
+        distance_decay_step_(1) {
     mem_copy_manager_ = mem_copy_manager;
   }
 
@@ -42,23 +46,22 @@ class MemSwapManager {
 
   ~MemSwapManager() = default;
 
-  void Init(const mindspore::session::KernelGraph *kernel_graph);
+  bool Init(const mindspore::session::KernelGraph *kernel_graph, size_t swap_mem_size = 0);
 
-  void AddMemSwapTask(SwapKind swap_kind, const DeviceAddressPtr &device_address,
-                      const HostAddress &host_address) const;
+  void AddMemSwapTask(SwapKind swap_kind, const DeviceAddressPtr &device_address, const HostAddress &host_address,
+                      bool mock, bool profiling = false, float *cost_time = nullptr) const;
 
   bool SyncMemCopyStream(SwapKind swap_kind) const;
 
-  DeviceAddressPtr UpdateSwapQueue(SwapKind swap_kind) const;
+  DeviceAddressPtr UpdateSwapQueue(SwapKind swap_kind, bool mock) const;
 
-  // retreat to find a workable swap scheme
   bool RetreatSwapInfo();
+
+  void AdjustSwapInPos(const AnfNodePtr &kernel, size_t index);
 
   bool trigger_swap() const { return trigger_swap_; }
 
   bool mem_swap_init() const { return mem_swap_initialized_; }
-
-  KernelExecutionInfo &SearchKernelExecutionInfo(const AnfNodePtr &kernel) const;
 
   void AddKernelExecutionPerform(const AnfNodePtr &kernel, float perform);
 
@@ -70,34 +73,66 @@ class MemSwapManager {
 
   bool QueryKernelTriggerSwap(const AnfNodePtr &kernel) const;
 
-  bool QueryKernelNeedSwap(const AnfNodePtr &kernel) const;
+  bool QueryKernelTriggerSwapIn(const AnfNodePtr &kernel) const;
 
-  const std::vector<MemSwapInfo> &QueryKernelMemSwapInfo(const AnfNodePtr &kernel) const;
+  size_t QueryKernelTriggerSwapInTaskNum(const AnfNodePtr &kernel) const;
 
-  void InsertSwapInBlackList(const void *device_ptr);
+  const AnfNodePtr QueryKernelByTopoOrder(size_t index) const;
 
-  bool FindInSwapInBlackList(const void *device_ptr) const;
+  size_t QueryKernelTopoOrder(const AnfNodePtr &kernel) const;
 
-  const HostAddress &kernel_host_addr(const AnfNodePtr &kernel, size_t output_idx) const;
+  const MemSwapInfoSet &QueryKernelMemSwapInfo(const AnfNodePtr &kernel) const;
+
+  void AssignHostMemory();
+
+  const HostAddress &QueryKernelHostAddr(const AnfNodePtr &kernel, size_t output_idx) const;
+
+  void AddKernelHostAddrIsDirty(const AnfNodePtr &kernel, size_t output_idx, bool dirty);
+
+  bool QueryKernelHostAddrIsDirty(const AnfNodePtr &kernel, size_t output_idx) const;
+
+  void ResetHostAddrIsDirty();
 
   bool AllocHostPinnedMem(size_t size, void **addr) const;
 
   void ReleaseHostPinnedMem();
 
-  void ClearSwapQueue() const;
+  void ClearSwapQueue(bool mock) const;
+
+  void DumpSwapInfo() const;
+
+  void DumpUserNodes() const;
 
  private:
+  KernelExecutionInfo &SearchKernelExecutionInfo(const AnfNodePtr &kernel) const;
+
   void AddSwapInfo();
 
   void ResetSwapInfo();
 
   void SaveUserKernelTopoOrder();
 
-  void AddKernelTriggerSwap(const AnfNodePtr &kernel, bool trigger_swap);
+  bool InitSwapThreshold(size_t swap_mem_size);
 
-  void AddKernelNeedSwap(const AnfNodePtr &kernel, bool need_swap);
+  void RetreatSwapThreshold();
+
+  void CacheCurSwapInfoSet(const AnfNodePtr &kernel);
+
+  void AddFirstTimeMovePos(const AnfNodePtr &kernel, size_t index, bool first_time);
+
+  bool QueryFirstTimeMovePos(const AnfNodePtr &kernel, size_t index) const;
+
+  size_t BestSwapInPerformPos(const AnfNodePtr &trigger_kernel, const MemSwapInfo &mem_swap_info) const;
+
+  void MoveSwapInfoPos(size_t des_pos, size_t src_pos, const MemSwapInfo &mem_swap_info);
 
   void AddKernelMemSwapInfo(const AnfNodePtr &kernel, const MemSwapInfo &mem_swap_info);
+
+  void RemoveKernelMemSwapInfo(const AnfNodePtr &kernel, const MemSwapInfo &mem_swap_info);
+
+  bool CheckDistanceBetweenKernels(const TensorInfo &tensor_info) const;
+
+  std::vector<std::pair<size_t, size_t>> CheckDistanceBetweenKernelsWithIdx(const TensorInfo &tensor_info) const;
 
   bool IsCommunicationRelevantOp(const AnfNodePtr &kernel) const;
 
@@ -105,18 +140,23 @@ class MemSwapManager {
   std::vector<TensorInfo> ordered_tensors_;
   std::unordered_map<void *, KernelExecutionInfo> kernel_execution_info_;
   std::unordered_map<void *, std::map<size_t, PerformPair>> kernel_swap_perform_;
-  // trigger swap kernel key : MemSwapInfo of kernel need to be swapped
-  std::unordered_map<void *, std::vector<MemSwapInfo>> mem_swap_info_;
+  // Key: trigger swap kernel, value: MemSwapInfoSet of kernel need to be swapped
+  std::unordered_map<void *, MemSwapInfoSet> mem_swap_info_map_;
   std::vector<HostAddress> host_addrs_list_;
-  std::unordered_set<const void *> swap_in_blacklist_;
+
+  // Key: cache kernel address, value: lists of first time move pos or not
+  std::map<void *, std::vector<bool>> kernel_first_move_cache_map_;
+  std::vector<MemSwapInfo> mem_swap_info_cache_list_;
+  std::pair<size_t, size_t> best_and_cur_pos_cache_;
 
   size_t tensor_size_threshold_;
   size_t tensor_size_threshold_idx_;
   size_t tensor_size_num_;
   size_t distance_threshold_;
+  size_t distance_decay_step_;
 
   MemCopyManagerPtr mem_copy_manager_{nullptr};
-  FuncGraphManagerPtr graph_manager_{nullptr};
+  const mindspore::session::KernelGraph *kernel_graph_{nullptr};
   bool mem_swap_initialized_{false};
   bool swap_info_already_set_{false};
   bool trigger_swap_{false};
@@ -129,4 +169,4 @@ using MemSwapManagerPtr = std::shared_ptr<MemSwapManager>;
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_MEM_SWAP_MANAGER_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_MEM_SWAP_MANAGER_H_

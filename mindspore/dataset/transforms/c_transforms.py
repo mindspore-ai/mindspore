@@ -22,7 +22,7 @@ import mindspore.common.dtype as mstype
 import mindspore._c_dataengine as cde
 
 from .validators import check_num_classes, check_de_type, check_fill_value, check_slice_op, check_mask_op, \
-    check_pad_end, check_concat_type
+    check_pad_end, check_concat_type, check_random_transform_ops
 from ..core.datatypes import mstype_to_detype
 
 
@@ -46,7 +46,7 @@ class Fill(cde.FillOp):
     The output tensor will have the same shape and type as the input tensor.
 
     Args:
-        fill_value (python types (str, bytes, int, float, or bool)) : scalar value
+        fill_value (Union[str, bytes, int, float, bool])) : scalar value
             to fill created tensor with.
     """
 
@@ -78,11 +78,11 @@ class Slice(cde.SliceOp):
     (Currently only rank-1 tensors are supported).
 
     Args:
-        *slices(Variable length argument list, supported types are, int, list(int), slice, None or Ellipses):
+        slices(Union[int, list(int), slice, None, Ellipses]):
             Maximum `n` number of arguments to slice a tensor of rank `n`.
             One object in slices can be one of:
             1.  :py:obj:`int`: Slice this index only. Negative index is supported.
-            2.  :py:obj:`list(int)`: Slice these indices ion the list only. Negative indices are supdeported.
+            2.  :py:obj:`list(int)`: Slice these indices ion the list only. Negative indices are supported.
             3.  :py:obj:`slice`: Slice the generated indices from the slice object. Similar to `start:stop:step`.
             4.  :py:obj:`None`: Slice the whole dimension. Similar to `:` in python indexing.
             5.  :py:obj:`Ellipses`: Slice all dimensions between the two slices. Similar to `...` in python indexing.
@@ -139,9 +139,9 @@ class Mask(cde.MaskOp):
 
     Args:
         operator (Relational): One of the relational operator EQ, NE LT, GT, LE or GE
-        constant (python types (str, int, float, or bool): constant to be compared to.
+        constant (Union[str, int, float, bool]): constant to be compared to.
             Constant will be casted to the type of the input tensor
-        dtype (optional, mindspore.dtype): type of the generated mask. Default to bool
+        dtype (mindspore.dtype, optional): type of the generated mask. Default to bool
 
     Examples:
         >>> # Data before
@@ -171,7 +171,7 @@ class PadEnd(cde.PadEndOp):
     Args:
         pad_shape (list(int)): list on integers representing the shape needed. Dimensions that set to `None` will
             not be padded (i.e., original dim will be used). Shorter dimensions will truncate the values.
-        pad_value (python types (str, bytes, int, float, or bool), optional): value used to pad. Default to 0 or empty
+        pad_value (Union[str, bytes, int, float, bool]), optional): value used to pad. Default to 0 or empty
             string in case of Tensors of strings.
 
     Examples:
@@ -201,8 +201,8 @@ class Concatenate(cde.ConcatenateOp):
 
     Args:
         axis (int, optional): axis to concatenate the tensors along (Default=0).
-        prepend (np.array, optional): numpy array to be prepended to the already concatenated tensors (Default=None).
-        append (np.array, optional): numpy array to be appended to the already concatenated tensors (Default=None).
+        prepend (numpy.array, optional): numpy array to be prepended to the already concatenated tensors (Default=None).
+        append (numpy.array, optional): numpy array to be appended to the already concatenated tensors (Default=None).
     """
 
     @check_concat_type
@@ -232,3 +232,55 @@ class Duplicate(cde.DuplicateOp):
         >>> # | [1,2,3] | [1,2,3] |
         >>> # +---------+---------+
     """
+
+
+class Compose(cde.ComposeOp):
+    """
+    Compose a list of transforms into a single transform.
+
+    Args:
+        transforms (list): List of transformations to be applied.
+
+    Examples:
+        >>> compose = Compose([vision.Decode(), vision.RandomCrop()])
+        >>> dataset = ds.map(operations=compose)
+    """
+
+    @check_random_transform_ops
+    def __init__(self, transforms):
+        super().__init__(transforms)
+
+
+class RandomApply(cde.RandomApplyOp):
+    """
+    Randomly performs a series of transforms with a given probability.
+
+    Args:
+        transforms (list): List of transformations to be applied.
+        prob (float, optional): The probability to apply the transformation list (default=0.5)
+
+    Examples:
+        >>> rand_apply = RandomApply([vision.RandomCrop()])
+        >>> dataset = ds.map(operations=rand_apply)
+    """
+
+    @check_random_transform_ops
+    def __init__(self, transforms, prob=0.5):
+        super().__init__(prob, transforms)
+
+
+class RandomChoice(cde.RandomChoiceOp):
+    """
+    Randomly selects one transform from a list of transforms to perform operation.
+
+    Args:
+        transforms (list): List of transformations to be chosen from to apply.
+
+    Examples:
+        >>> rand_choice = RandomChoice([vision.CenterCrop(), vision.RandomCrop()])
+        >>> dataset = ds.map(operations=rand_choice)
+    """
+
+    @check_random_transform_ops
+    def __init__(self, transforms):
+        super().__init__(transforms)

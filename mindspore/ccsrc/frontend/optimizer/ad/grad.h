@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_AD_GRAD_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_AD_GRAD_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_GRAD_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_GRAD_H_
 
 #include <memory>
 #include <string>
@@ -35,4 +35,4 @@ void CleanRes();
 }  // namespace ad
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_AD_GRAD_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_GRAD_H_

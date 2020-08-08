@@ -23,12 +23,12 @@
 
 #include "utils/any.h"
 #include "utils/utils.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "frontend/operator/ops.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/static_analysis/prim.h"
 #include "backend/session/session_factory.h"
-#include "ir/tensor_py.h"
+#include "utils/tensor_py.h"
 
 const char SINGLE_OP_GRAPH[] = "single_op_graph";
 

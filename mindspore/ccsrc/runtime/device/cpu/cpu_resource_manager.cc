@@ -34,11 +34,13 @@ void CPUResourceManager::MemFree() {
   dynamic_mem_.clear();
 }
 
-void CPUResourceManager::MemPlan(const session::KernelGraph *graph) {
-  mem_plan_.MemPlan(graph);
-  size_t graph_mem_size = mem_plan_.GetGraphMemSize(graph);
+void CPUResourceManager::AssignMemory(const session::KernelGraph *graph) {
+  size_t graph_mem_size = mem_plan_.MemPlan(graph);
   if (graph_mem_size > mem_size_) {
-    MemFree();
+    if (mem_size_ > 0) {
+      dynamic_mem_[mem_ptr_] = mem_size_;
+      mem_size_ = 0;
+    }
     mem_ptr_ = reinterpret_cast<uint8_t *>(malloc(graph_mem_size));
     if (mem_ptr_ != nullptr) {
       mem_size_ = graph_mem_size;
@@ -48,9 +50,6 @@ void CPUResourceManager::MemPlan(const session::KernelGraph *graph) {
       dynamic_malloc_ = true;
     }
   }
-}
-
-void CPUResourceManager::MemMalloc(const session::KernelGraph *graph) {
   if (dynamic_malloc_) {
     return;
   }

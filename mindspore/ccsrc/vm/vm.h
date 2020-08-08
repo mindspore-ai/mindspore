@@ -96,7 +96,6 @@ class FinalVM {
  public:
   // Create a VM with the specified instructions and backend.
   explicit FinalVM(const InstSet &insts, const BackendPtr &backend);
-
   virtual ~FinalVM() = default;
 
   BaseRef Eval(const VectorRef &args);
@@ -104,10 +103,8 @@ class FinalVM {
   void InstTailCall(const VectorRef &args);
   void InstReturn(const VectorRef &args);
   void InstPartial(const VectorRef &args);
-  void InstSimuPartial(const VectorRef &args);
   void InstRealPartial(const VectorRef &args);
   void InstSwitch(const VectorRef &args);
-  void InstSimuSwitch(const VectorRef &args);
   void InstRealSwitch(const VectorRef &args);
   void InstTuple(const VectorRef &args);
   void InstPush(const VectorRef &args);
@@ -129,23 +126,16 @@ class FinalVM {
   void Popp();
   void Pushsp();
   void Popsp();
-  void PushStatus(bool is_switch_call);
-  bool PopStatus();
   void DoJmp(const BaseRef &jmp);
   void SyncData(const py::object &args);
-  void MergeJmpArgs(const BaseRef &jmp, const BaseRef &c);
-  BaseRef MergeArgs(const BaseRef &first, const BaseRef &second);
 
  private:
   InstSet insts_;
   std::deque<BaseRef> insts_stack_;
   std::stack<int> retp_;
   std::stack<int> retsp_;
-  std::stack<bool> ret_status_;
   int pc_;
   int sp_;
-  std::unordered_map<BaseRef, BaseRef, BaseRefHash> cond_jmp_;
-  std::unordered_map<BaseRef, BaseRef, BaseRefHash> cond_out_;
   BackendPtr backend_;
   const InstFunctionMap inst_function_map = {
     {Instruction::kCall, [this](const VectorRef &args) { InstCall(args); }},

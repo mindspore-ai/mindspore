@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_ENGINE_DATASETOPS_CACHE_MERGE_OP_H_
-#define DATASET_ENGINE_DATASETOPS_CACHE_MERGE_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_CACHE_MERGE_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_CACHE_MERGE_OP_H_
 
 #include <atomic>
 #include <deque>
@@ -140,6 +140,8 @@ class CacheMergeOp : public ParallelOp {
                std::shared_ptr<CacheClient> cache_client, const std::shared_ptr<Sampler> &sampler);
   ~CacheMergeOp();
   void Print(std::ostream &out, bool show_all) const override;
+  std::string Name() const override { return kCacheMergeOp; }
+
   friend std::ostream &operator<<(std::ostream &out, const CacheMergeOp &mo) {
     mo.Print(out, false);
     return out;
@@ -176,6 +178,11 @@ class CacheMergeOp : public ParallelOp {
   /// \return Status object
   Status EoeReceived(int32_t worker_id) override;
 
+  /// \brief Base-class override for handling cases when an eof is received.
+  /// \param worker_id - The worker id
+  /// \return Status - The error code return
+  Status EofReceived(int32_t worker_id) override;
+
  protected:
   Status ComputeColMap() override;
 
@@ -193,4 +200,4 @@ class CacheMergeOp : public ParallelOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_ENGINE_DATASETOPS_CACHE_MERGE_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_CACHE_MERGE_OP_H_

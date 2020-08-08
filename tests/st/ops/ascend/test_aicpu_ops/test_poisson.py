@@ -48,4 +48,5 @@ def test_net_2():
     net = Net(shape=shape)
     tmean = Tensor(mean)
     output = net(tmean)
+    print(output.asnumpy())
     assert output.shape == (4, 2)

@@ -35,8 +35,9 @@ class MindDataTestTensorDE : public UT::Common {
 };
 
 TEST_F(MindDataTestTensorDE, Basics) {
-  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2, 3}), DataType(DataType::DE_UINT64));
-  ASSERT_TRUE((t->AllocateBuffer(t->SizeInBytes())).IsOk());
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateEmpty(TensorShape({2, 3}), DataType(DataType::DE_UINT64), &t);
+
   ASSERT_EQ(t->shape(), TensorShape({2, 3}));
   ASSERT_EQ(t->type(), DataType::DE_UINT64);
   ASSERT_EQ(t->SizeInBytes(), 2 * 3 * 8);
@@ -67,28 +68,30 @@ TEST_F(MindDataTestTensorDE, Basics) {
   ASSERT_EQ(t->ToString(), "Tensor (shape: <2,3>, Type: uint64)\n[[1,2,3],[4,5,6]]");
   std::vector<uint64_t> x = {1, 2, 3, 4, 5, 6};
   std::shared_ptr<Tensor> t2;
-  Tensor::CreateTensor(&t2, x, TensorShape({2, 3}));
+  Tensor::CreateFromVector(x, TensorShape({2, 3}), &t2);
 
   ASSERT_EQ(*t == *t2, true);
   ASSERT_EQ(*t != *t2, false);
 }
 
 TEST_F(MindDataTestTensorDE, Fill) {
-  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2, 2}), DataType(DataType::DE_FLOAT32));
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateEmpty(TensorShape({2, 2}), DataType(DataType::DE_FLOAT32), &t);
   t->Fill<float>(2.5);
   std::vector<float> x = {2.5, 2.5, 2.5, 2.5};
   std::shared_ptr<Tensor> t2;
-  Tensor::CreateTensor(&t2, x, TensorShape({2, 2}));
+  Tensor::CreateFromVector(x, TensorShape({2, 2}), &t2);
   ASSERT_EQ(*t == *t2, true);
 }
 
 TEST_F(MindDataTestTensorDE, Reshape) {
-  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2, 2}), DataType(DataType::DE_UINT8));
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateEmpty(TensorShape({2, 2}), DataType(DataType::DE_UINT8), &t);
   t->Fill<uint8_t>(254);
   t->Reshape(TensorShape({4}));
   std::vector<uint8_t> x = {254, 254, 254, 254};
   std::shared_ptr<Tensor> t2;
-  Tensor::CreateTensor(&t2, x);
+  Tensor::CreateFromVector(x, &t2);
 
   ASSERT_EQ(*t == *t2, true);
   Status rc = t->Reshape(TensorShape({5}));
@@ -102,7 +105,8 @@ TEST_F(MindDataTestTensorDE, Reshape) {
 }
 
 TEST_F(MindDataTestTensorDE, CopyTensor) {
-  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({}), DataType(DataType::DE_INT16));
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateEmpty(TensorShape({}), DataType(DataType::DE_INT16), &t);
   t->SetItemAt<int16_t>({}, -66);
   ASSERT_EQ(t->shape(), TensorShape({}));
   ASSERT_EQ(t->type(), DataType::DE_INT16);
@@ -125,30 +129,31 @@ TEST_F(MindDataTestTensorDE, CopyTensor) {
 }
 
 TEST_F(MindDataTestTensorDE, InsertTensor) {
-  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2, 3}), DataType(DataType::DE_FLOAT64));
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateEmpty(TensorShape({2, 3}), DataType(DataType::DE_FLOAT64), &t);
   std::vector<double> x = {1.1, 2.1, 3.1};
   std::shared_ptr<Tensor> t2;
-  Tensor::CreateTensor(&t2, x);
+  Tensor::CreateFromVector(x, &t2);
 
   std::vector<double> y = {1.2, 2.2, 3.2};
   std::shared_ptr<Tensor> t3;
-  Tensor::CreateTensor(&t3, y);
+  Tensor::CreateFromVector(y, &t3);
 
   ASSERT_TRUE(t->InsertTensor({0}, t2).OK());
   ASSERT_TRUE(t->InsertTensor({1}, t3).OK());
   std::vector<double> z = {1.1, 2.1, 3.1, 1.2, 2.2, 3.2};
 
   std::shared_ptr<Tensor> t4;
-  Tensor::CreateTensor(&t4, z, TensorShape({2, 3}));
+  Tensor::CreateFromVector(z, TensorShape({2, 3}), &t4);
   ASSERT_EQ(*t == *t4, true);
 
   std::shared_ptr<Tensor> t5;
-  Tensor::CreateTensor<double>(&t5, 0);
+  Tensor::CreateScalar<double>(0, &t5);
 
   ASSERT_TRUE(t->InsertTensor({1, 2}, t5).OK());
   z[5] = 0;
   std::shared_ptr<Tensor> t6;
-  Tensor::CreateTensor(&t6, z, TensorShape({2, 3}));
+  Tensor::CreateFromVector(z, TensorShape({2, 3}), &t6);
 
   ASSERT_EQ(*t == *t6, true);
   ASSERT_EQ(t->InsertTensor({2}, t5).get_code(), StatusCode::kUnexpectedError);
@@ -161,7 +166,8 @@ TEST_F(MindDataTestTensorDE, InsertTensor) {
 
 // Test the bug of Tensor::ToString will exec failed for Tensor which store bool values
 TEST_F(MindDataTestTensorDE, BoolTensor) {
-  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2}), DataType(DataType::DE_BOOL));
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateEmpty(TensorShape({2}), DataType(DataType::DE_BOOL), &t);
   t->SetItemAt<bool>({0}, true);
   t->SetItemAt<bool>({1}, true);
   std::string out = t->ToString();
@@ -169,7 +175,8 @@ TEST_F(MindDataTestTensorDE, BoolTensor) {
 }
 
 TEST_F(MindDataTestTensorDE, GetItemAt) {
-  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2, 2}), DataType(DataType::DE_UINT8));
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateEmpty(TensorShape({2, 2}), DataType(DataType::DE_UINT8), &t);
   t->Fill<uint8_t>(254);
   uint64_t o1;
   t->GetItemAt<uint64_t>(&o1, {0, 0});
@@ -183,7 +190,8 @@ TEST_F(MindDataTestTensorDE, GetItemAt) {
   uint8_t o4;
   t->GetItemAt<uint8_t>(&o4, {1, 1});
   ASSERT_EQ(o4, 254);
-  std::shared_ptr<Tensor> t2 = std::make_shared<Tensor>(TensorShape({2, 2}), DataType(DataType::DE_INT8));
+  std::shared_ptr<Tensor> t2;
+  Tensor::CreateEmpty(TensorShape({2, 2}), DataType(DataType::DE_INT8), &t2);
   t2->Fill<int8_t>(-10);
   int64_t o5;
   t2->GetItemAt<int64_t>(&o5, {0, 0});
@@ -197,7 +205,8 @@ TEST_F(MindDataTestTensorDE, GetItemAt) {
   int8_t o8;
   t2->GetItemAt<int8_t>(&o8, {1, 1});
   ASSERT_EQ(o8, -10);
-  std::shared_ptr<Tensor> t3 = std::make_shared<Tensor>(TensorShape({2, 2}), DataType(DataType::DE_FLOAT32));
+  std::shared_ptr<Tensor> t3;
+  Tensor::CreateEmpty(TensorShape({2, 2}), DataType(DataType::DE_FLOAT32), &t3);
   t3->Fill<float>(1.1);
   double o9;
   t3->GetItemAt<double>(&o9, {0, 0});
@@ -208,9 +217,11 @@ TEST_F(MindDataTestTensorDE, GetItemAt) {
 }
 
 TEST_F(MindDataTestTensorDE, OperatorAssign) {
-  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2, 2}), DataType(DataType::DE_UINT8));
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateEmpty(TensorShape({2, 2}), DataType(DataType::DE_UINT8), &t);
   t->Fill<uint8_t>(1);
-  std::shared_ptr<Tensor> t2 = std::make_shared<Tensor>(TensorShape({2, 2}), DataType(DataType::DE_UINT8));
+  std::shared_ptr<Tensor> t2;
+  Tensor::CreateEmpty(TensorShape({2, 2}), DataType(DataType::DE_UINT8), &t2);
   *t2 = std::move(*t);
   uint8_t o;
   t2->GetItemAt(&o, {0, 0});
@@ -224,18 +235,20 @@ TEST_F(MindDataTestTensorDE, OperatorAssign) {
 }
 
 TEST_F(MindDataTestTensorDE, Strides) {
-  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({4, 2, 2}), DataType(DataType::DE_UINT8));
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateEmpty(TensorShape({4, 2, 2}), DataType(DataType::DE_UINT8), &t);
   std::vector<dsize_t> x1 = t->Strides();
   std::vector<dsize_t> x2 = {4, 2, 1};
   ASSERT_EQ(x1, x2);
-  t = std::make_shared<Tensor>(TensorShape({4, 2, 2}), DataType(DataType::DE_UINT32));
+  Tensor::CreateEmpty(TensorShape({4, 2, 2}), DataType(DataType::DE_UINT32), &t);
   x1 = t->Strides();
   x2 = {16, 8, 4};
   ASSERT_EQ(x1, x2);
 }
 
 void checkCvMat(TensorShape shape, DataType type) {
-  std::shared_ptr<CVTensor> t = std::make_shared<CVTensor>(shape, type);
+  std::shared_ptr<CVTensor> t;
+  CVTensor::CreateEmpty(shape, type, &t);
   cv::Mat m = t->mat();
   ASSERT_EQ(m.data, t->GetBuffer());
   ASSERT_EQ(static_cast<uchar>(m.type()) & static_cast<uchar>(CV_MAT_DEPTH_MASK), type.AsCVType());
@@ -289,8 +302,10 @@ TEST_F(MindDataTestTensorDE, CVTensorFromMat) {
   m.at<uint8_t>(0, 1) = 20;
   m.at<uint8_t>(1, 0) = 30;
   m.at<uint8_t>(1, 1) = 40;
-  std::shared_ptr<CVTensor> cvt = std::make_shared<CVTensor>(m);
-  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2, 2}), DataType(DataType::DE_UINT8));
+  std::shared_ptr<CVTensor> cvt;
+  CVTensor::CreateFromMat(m, &cvt);
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateEmpty(TensorShape({2, 2}), DataType(DataType::DE_UINT8), &t);
   t->SetItemAt<uint8_t>({0, 0}, 10);
   t->SetItemAt<uint8_t>({0, 1}, 20);
   t->SetItemAt<uint8_t>({1, 0}, 30);
@@ -302,8 +317,10 @@ TEST_F(MindDataTestTensorDE, CVTensorFromMat) {
   m2.at<uint8_t>(1) = 20;
   m2.at<uint8_t>(2) = 30;
   m2.at<uint8_t>(3) = 40;
-  std::shared_ptr<CVTensor> cvt2 = std::make_shared<CVTensor>(m2);
-  std::shared_ptr<Tensor> t2 = std::make_shared<Tensor>(TensorShape({4}), DataType(DataType::DE_UINT8));
+  std::shared_ptr<CVTensor> cvt2;
+  CVTensor::CreateFromMat(m2, &cvt2);
+  std::shared_ptr<Tensor> t2;
+  Tensor::CreateEmpty(TensorShape({4}), DataType(DataType::DE_UINT8), &t2);
   t2->SetItemAt<uint8_t>({0}, 10);
   t2->SetItemAt<uint8_t>({1}, 20);
   t2->SetItemAt<uint8_t>({2}, 30);
@@ -313,10 +330,12 @@ TEST_F(MindDataTestTensorDE, CVTensorFromMat) {
 }
 
 TEST_F(MindDataTestTensorDE, CVTensorAs) {
-  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({3, 2}), DataType(DataType::DE_FLOAT64));
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateEmpty(TensorShape({3, 2}), DataType(DataType::DE_FLOAT64), &t);
   t->Fill<double>(2.2);
   const unsigned char *addr = t->GetBuffer();
-  std::shared_ptr<Tensor> t2 = std::make_shared<Tensor>(TensorShape({3, 2}), DataType(DataType::DE_FLOAT64));
+  std::shared_ptr<Tensor> t2;
+  Tensor::CreateEmpty(TensorShape({3, 2}), DataType(DataType::DE_FLOAT64), &t2);
   t2->Fill<double>(4.4);
   std::shared_ptr<CVTensor> ctv = CVTensor::AsCVTensor(t);
   ASSERT_EQ(t->GetBuffer(), nullptr);
@@ -326,6 +345,10 @@ TEST_F(MindDataTestTensorDE, CVTensorAs) {
   ASSERT_EQ(ctv->GetBuffer(), addr);
   ASSERT_TRUE(*t2 == *ctv);
   MS_LOG(DEBUG) << *t2 << std::endl << *ctv;
+  cv::Mat m2 = ctv->matCopy();
+  m2 = 2 * m2;
+  ASSERT_EQ(ctv->GetBuffer(), addr);
+  ASSERT_TRUE(*t2 == *ctv);
 }
 
 TEST_F(MindDataTestTensorDE, CVTensorMatSlice) {
@@ -336,23 +359,26 @@ TEST_F(MindDataTestTensorDE, CVTensorMatSlice) {
   m.at<int32_t>(1, 0) = 40;
   m.at<int32_t>(1, 1) = 50;
   m.at<int32_t>(1, 2) = 60;
-  std::shared_ptr<CVTensor> cvt = std::make_shared<CVTensor>(m);
+  std::shared_ptr<CVTensor> cvt;
+  CVTensor::CreateFromMat(m, &cvt);
   cv::Mat mat;
-  cvt->Mat({1}, &mat);
+  cvt->MatAtIndex({1}, &mat);
   cv::Mat m2(3, 1, CV_32S);
   m2.at<int32_t>(0) = 40;
   m2.at<int32_t>(1) = 50;
   m2.at<int32_t>(2) = 60;
-  std::shared_ptr<CVTensor> cvt2 = std::make_shared<CVTensor>(mat);
-  std::shared_ptr<CVTensor> cvt3 = std::make_shared<CVTensor>(m2);
+  std::shared_ptr<CVTensor> cvt2;
+  CVTensor::CreateFromMat(mat, &cvt2);
+  std::shared_ptr<CVTensor> cvt3;
+  CVTensor::CreateFromMat(m2, &cvt3);
 
   ASSERT_TRUE(*cvt2 == *cvt3);
-  cvt->Mat({0}, &mat);
+  cvt->MatAtIndex({0}, &mat);
   m2.at<int32_t>(0) = 10;
   m2.at<int32_t>(1) = 20;
   m2.at<int32_t>(2) = 30;
-  cvt2 = std::make_shared<CVTensor>(mat);
-  cvt3 = std::make_shared<CVTensor>(m2);
+  CVTensor::CreateFromMat(mat, &cvt2);
+  CVTensor::CreateFromMat(m2, &cvt3);
   ASSERT_TRUE(*cvt2 == *cvt3);
 }
 
@@ -361,7 +387,7 @@ TEST_F(MindDataTestTensorDE, TensorIterator) {
   std::vector<uint32_t> values2 = {2, 3, 4, 5, 6, 7};
 
   std::shared_ptr<Tensor> t;
-  Tensor::CreateTensor(&t, values);
+  Tensor::CreateFromVector(values, &t);
 
   auto i = t->begin<uint32_t>();
   auto j = values.begin();
@@ -395,31 +421,31 @@ TEST_F(MindDataTestTensorDE, TensorIterator) {
 
 TEST_F(MindDataTestTensorDE, TensorSlice) {
   std::shared_ptr<Tensor> t;
-  Tensor::CreateTensor(&t, std::vector<dsize_t>{0, 1, 2, 3, 4});
+  Tensor::CreateFromVector(std::vector<dsize_t>{0, 1, 2, 3, 4}, &t);
   std::shared_ptr<Tensor> t2;
   auto x = std::vector<dsize_t>{0, 3, 4};
   std::shared_ptr<Tensor> expected;
-  Tensor::CreateTensor(&expected, x);
+  Tensor::CreateFromVector(x, &expected);
   t->Slice(&t2, x);
   ASSERT_EQ(*t2, *expected);
   t->Slice(&t2, std::vector<dsize_t>{0, 1, 2, 3, 4});
   ASSERT_EQ(*t2, *t);
 }
 
-TEST_F(MindDataTestTensorDE, TensorConcatenate) {
+TEST_F(MindDataTestTensorDE, TensorPartialInsert) {
   std::vector<uint32_t> values1 = {1, 2, 3, 0, 0, 0};
   std::vector<uint32_t> values2 = {4, 5, 6};
   std::vector<uint32_t> expected = {1, 2, 3, 4, 5, 6};
 
   std::shared_ptr<Tensor> t1;
-  Tensor::CreateTensor(&t1, values1);
+  Tensor::CreateFromVector(values1, &t1);
 
   std::shared_ptr<Tensor> t2;
-  Tensor::CreateTensor(&t2, values2);
+  Tensor::CreateFromVector(values2, &t2);
 
   std::shared_ptr<Tensor> out;
-  Tensor::CreateTensor(&out, expected);
-  Status s = t1->Concatenate({3}, t2);
+  Tensor::CreateFromVector(expected, &out);
+  Status s = t1->InsertTensor({3}, t2, true);
   EXPECT_TRUE(s.IsOk());
 
   auto i = out->begin<uint32_t>();
@@ -429,20 +455,85 @@ TEST_F(MindDataTestTensorDE, TensorConcatenate) {
   }
 
   // should fail if the concatenated vector is too large
-  s = t1->Concatenate({5}, t2);
+  s = t1->InsertTensor({5}, t2, true);
   EXPECT_FALSE(s.IsOk());
 }
 
 TEST_F(MindDataTestTensorDE, TensorEmpty) {
-  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2, 3}), DataType(DataType::DE_UINT64));
-  ASSERT_TRUE(t->HasData());
-}
+  TensorPtr t;
+  Status rc = Tensor::CreateEmpty(TensorShape({0}), DataType(DataType::DE_UINT64), &t);
+  ASSERT_TRUE(rc.IsOk());
 
-TEST_F(MindDataTestTensorDE, TensorEmptyInvalidate) {
-  std::vector<uint32_t> values1 = {1, 2, 3, 0, 0, 0};
-  std::shared_ptr<Tensor> t;
-  Tensor::CreateTensor(&t, values1);
-  t->Invalidate();
-  ASSERT_TRUE(t->HasData());
-}
+  ASSERT_EQ(t->shape(), TensorShape({0}));
+  ASSERT_EQ(t->type(), DataType::DE_UINT64);
+  ASSERT_EQ(t->SizeInBytes(), 0);
+  ASSERT_EQ(t->GetBuffer(), nullptr);
+  ASSERT_TRUE(!t->HasData());
 
+  rc = t->SetItemAt<uint64_t>({0}, 7);
+  ASSERT_TRUE(rc.IsError());
+
+  rc = Tensor::CreateEmpty(TensorShape({1, 0}), DataType(DataType::DE_STRING), &t);
+  ASSERT_TRUE(rc.IsOk());
+  ASSERT_EQ(t->shape(), TensorShape({1, 0}));
+  ASSERT_EQ(t->type(), DataType::DE_STRING);
+  ASSERT_EQ(t->SizeInBytes(), 0);
+  ASSERT_EQ(t->GetBuffer(), nullptr);
+  ASSERT_TRUE(!t->HasData());
+
+  std::vector<uint16_t> data;
+  rc = Tensor::CreateFromVector(data, &t);
+  ASSERT_TRUE(rc.IsOk());
+  ASSERT_EQ(t->shape(), TensorShape({0}));
+  ASSERT_EQ(t->type(), DataType::DE_UINT16);
+  ASSERT_EQ(t->SizeInBytes(), 0);
+  ASSERT_EQ(t->GetBuffer(), nullptr);
+  ASSERT_TRUE(!t->HasData());
+
+  std::vector<std::string> data2;
+  rc = Tensor::CreateFromVector(data2, &t);
+  ASSERT_TRUE(rc.IsOk());
+  ASSERT_EQ(t->shape(), TensorShape({0}));
+  ASSERT_EQ(t->type(), DataType::DE_STRING);
+  ASSERT_EQ(t->SizeInBytes(), 0);
+  ASSERT_EQ(t->GetBuffer(), nullptr);
+  ASSERT_TRUE(!t->HasData());
+
+  rc = Tensor::CreateFromVector(data, TensorShape({0, 2}), &t);
+  ASSERT_TRUE(rc.IsOk());
+  ASSERT_EQ(t->shape(), TensorShape({0, 2}));
+  ASSERT_EQ(t->type(), DataType::DE_UINT16);
+  ASSERT_EQ(t->SizeInBytes(), 0);
+  ASSERT_EQ(t->GetBuffer(), nullptr);
+  ASSERT_TRUE(!t->HasData());
+
+  rc = Tensor::CreateFromVector(data2, TensorShape({0, 0, 6}), &t);
+  ASSERT_TRUE(rc.IsOk());
+  ASSERT_EQ(t->shape(), TensorShape({0, 0, 6}));
+  ASSERT_EQ(t->type(), DataType::DE_STRING);
+  ASSERT_EQ(t->SizeInBytes(), 0);
+  ASSERT_EQ(t->GetBuffer(), nullptr);
+  ASSERT_TRUE(!t->HasData());
+
+  rc = Tensor::CreateFromMemory(TensorShape({0}), DataType(DataType::DE_INT8), nullptr, &t);
+  ASSERT_TRUE(rc.IsOk());
+  ASSERT_EQ(t->shape(), TensorShape({0}));
+  ASSERT_EQ(t->type(), DataType::DE_INT8);
+  ASSERT_EQ(t->SizeInBytes(), 0);
+  ASSERT_EQ(t->GetBuffer(), nullptr);
+  ASSERT_TRUE(!t->HasData());
+
+  rc = Tensor::CreateFromMemory(TensorShape({0}), DataType(DataType::DE_STRING), nullptr, &t);
+  ASSERT_TRUE(rc.IsOk());
+  ASSERT_EQ(t->shape(), TensorShape({0}));
+  ASSERT_EQ(t->type(), DataType::DE_STRING);
+  ASSERT_EQ(t->SizeInBytes(), 0);
+  ASSERT_EQ(t->GetBuffer(), nullptr);
+
+  std::vector<uint32_t> values = {1, 2, 3, 0, 0, 0};
+  std::shared_ptr<Tensor> t2;
+  Tensor::CreateFromVector(values, &t2);
+  ASSERT_TRUE(t2->HasData());
+  t2->Invalidate();
+  ASSERT_TRUE(!t2->HasData());
+}

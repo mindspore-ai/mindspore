@@ -246,7 +246,24 @@ def check_celebadataset(method):
 
     return new_method
 
+def check_save(method):
+    """A wrapper that wrap a parameter checker to the save op."""
 
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        _, param_dict = parse_user_args(method, *args, **kwargs)
+
+        nreq_param_int = ['num_files']
+        nreq_param_str = ['file_name', 'file_type']
+        validate_dataset_param_value(nreq_param_int, param_dict, int)
+        if(param_dict.get('num_files') <= 0 or param_dict.get('num_files') > 1000):
+            raise ValueError("num_files should between {} and {}.".format(1, 1000))
+        validate_dataset_param_value(nreq_param_str, param_dict, str)
+        if param_dict.get('file_type') != 'mindrecord':
+            raise ValueError("{} dataset format is not supported.".format(param_dict.get('file_type')))
+        return method(self, *args, **kwargs)
+
+    return new_method
 def check_minddataset(method):
     """A wrapper that wraps a parameter checker to the original Dataset(MindDataset)."""
 
@@ -256,11 +273,12 @@ def check_minddataset(method):
 
         nreq_param_int = ['num_samples', 'num_parallel_workers', 'seed', 'num_shards', 'shard_id', 'num_padded']
         nreq_param_list = ['columns_list']
-        nreq_param_bool = ['block_reader']
         nreq_param_dict = ['padded_sample']
 
         dataset_file = param_dict.get('dataset_file')
         if isinstance(dataset_file, list):
+            if len(dataset_file) > 4096:
+                raise ValueError("length of dataset_file should less than or equal to {}.".format(4096))
             for f in dataset_file:
                 check_file(f)
         else:
@@ -268,7 +286,6 @@ def check_minddataset(method):
 
         validate_dataset_param_value(nreq_param_int, param_dict, int)
         validate_dataset_param_value(nreq_param_list, param_dict, list)
-        validate_dataset_param_value(nreq_param_bool, param_dict, bool)
         validate_dataset_param_value(nreq_param_dict, param_dict, dict)
 
         check_sampler_shuffle_shard_options(param_dict)
@@ -635,6 +652,25 @@ def check_positive_int32(method):
     return new_method
 
 
+def check_device_send(method):
+    """check the input argument for to_device and device_que."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        param, param_dict = parse_user_args(method, *args, **kwargs)
+        para_list = list(param_dict.keys())
+        if "prefetch_size" in para_list:
+            if param[0] is not None:
+                check_pos_int32(param[0], "prefetch_size")
+            type_check(param[1], (bool,), "send_epoch_end")
+        else:
+            type_check(param[0], (bool,), "send_epoch_end")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_zip(method):
     """check the input arguments of zip."""
 
@@ -669,8 +705,7 @@ def check_concat(method):
         [ds], _ = parse_user_args(method, *args, **kwargs)
         type_check(ds, (list, datasets.Dataset), "datasets")
         if isinstance(ds, list):
-            dataset_names = ["dataset[{0}]".format(i) for i in range(len(ds)) if isinstance(ds, list)]
-            type_check_list(ds, (datasets.Dataset,), dataset_names)
+            type_check_list(ds, (datasets.Dataset,), "dataset")
         return method(self, *args, **kwargs)
 
     return new_method
@@ -734,8 +769,7 @@ def check_add_column(method):
 
         if shape is not None:
             type_check(shape, (list,), "shape")
-            shape_names = ["shape[{0}]".format(i) for i in range(len(shape))]
-            type_check_list(shape, (int,), shape_names)
+            type_check_list(shape, (int,), "shape")
 
         return method(self, *args, **kwargs)
 
@@ -763,6 +797,53 @@ def check_cluedataset(method):
         usage_param = param_dict.get('usage')
         if usage_param not in ['train', 'test', 'eval']:
             raise ValueError("usage should be train, test or eval")
+
+        validate_dataset_param_value(nreq_param_int, param_dict, int)
+        check_sampler_shuffle_shard_options(param_dict)
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_csvdataset(method):
+    """A wrapper that wrap a parameter checker to the original Dataset(CSVDataset)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        _, param_dict = parse_user_args(method, *args, **kwargs)
+
+        nreq_param_int = ['num_parallel_workers', 'num_shards', 'shard_id']
+
+        # check dataset_files; required argument
+        dataset_files = param_dict.get('dataset_files')
+        type_check(dataset_files, (str, list), "dataset files")
+
+        # check num_samples
+        num_samples = param_dict.get('num_samples')
+        check_value(num_samples, [-1, INT32_MAX], "num_samples")
+
+        # check field_delim
+        field_delim = param_dict.get('field_delim')
+        type_check(field_delim, (str,), 'field delim')
+        if field_delim in ['"', '\r', '\n'] or len(field_delim) > 1:
+            raise ValueError("field_delim is not legal.")
+
+        # check column_defaults
+        column_defaults = param_dict.get('column_defaults')
+        if column_defaults is not None:
+            if not isinstance(column_defaults, list):
+                raise TypeError("column_defaults should be type of list.")
+            for item in column_defaults:
+                if not isinstance(item, (str, int, float)):
+                    raise TypeError("column type is not legal.")
+
+        # check column_names: must be list of string.
+        column_names = param_dict.get("column_names")
+        if column_names is not None:
+            all_string = all(isinstance(item, str) for item in column_names)
+            if not all_string:
+                raise TypeError("column_names should be a list of str.")
 
         validate_dataset_param_value(nreq_param_int, param_dict, int)
         check_sampler_shuffle_shard_options(param_dict)
@@ -955,6 +1036,7 @@ def check_gnn_random_walk(method):
         type_check(step_home_param, (float,), "step_home_param")
         type_check(step_away_param, (float,), "step_away_param")
         type_check(default_node, (int,), "default_node")
+        check_value(default_node, (-1, INT32_MAX), "default_node")
 
         return method(self, *args, **kwargs)
 

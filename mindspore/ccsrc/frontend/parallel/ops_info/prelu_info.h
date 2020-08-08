@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_OPS_INFO_PRELU_INFO_H_
-#define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_PRELU_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_PRELU_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_PRELU_INFO_H_
 
 #include <memory>
 #include <string>
@@ -60,4 +60,4 @@ class PReLUInfo : public OperatorInfo {
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_OPS_INFO_PRELU_INFO_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_PRELU_INFO_H_

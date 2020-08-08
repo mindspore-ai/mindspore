@@ -23,7 +23,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include <Python.h>
 #include "ir/dtype.h"
 #include "ir/func_graph.h"
 #include "backend/kernel_compiler/kernel.h"
@@ -32,10 +31,10 @@
 #include "backend/kernel_compiler/akg/ascend/akg_ascend_kernel_mod.h"
 #include "backend/kernel_compiler/akg/akg_kernel_attrs_process.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "backend/session/kernel_build_client.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr int32_t PARALLEL_ARGS_SIZE = 3;
 constexpr int32_t PROCESS_NUM = 16;
 constexpr int32_t TIME_OUT = 300;
 
@@ -45,8 +44,7 @@ constexpr auto kDataType = "data_type";
 constexpr auto kInputDesc = "input_desc";
 constexpr auto kOutputDesc = "output_desc";
 constexpr auto kTensorName = "tensor_name";
-constexpr auto kCompileAkgKernelParallelFunc = "compile_akg_kernel_parallel";
-constexpr auto kMultiProcModule = "mindspore._extends.parallel_compile.akg_compiler.multi_process_compiler";
+
 namespace {
 void UpdateTensorNameInJson(const std::vector<AnfNodePtr> &anf_nodes,
                             std::map<AnfNodePtr, nlohmann::json> *node_json_map) {
@@ -319,55 +317,23 @@ bool AkgAscendKernelBuilder::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   return true;
 }
 
-void GenParallelCompileFuncArgs(const std::vector<std::string> &kernel_jsons, PyObject **p_args) {
-  MS_EXCEPTION_IF_NULL(p_args);
-  *p_args = PyTuple_New(PARALLEL_ARGS_SIZE);
-
-  PyObject *arg1 = PyList_New(kernel_jsons.size());
-  for (int i = 0; i < PyList_Size(arg1); ++i) {
-    PyList_SetItem(arg1, i, Py_BuildValue("s", kernel_jsons[i].c_str()));
-  }
-  PyObject *arg2 = Py_BuildValue("i", PROCESS_NUM);
-  PyObject *arg3 = Py_BuildValue("i", TIME_OUT);
-
-  (void)PyTuple_SetItem(*p_args, 0, arg1);
-  (void)PyTuple_SetItem(*p_args, 1, arg2);
-  (void)PyTuple_SetItem(*p_args, 2, arg3);
-}
-
 bool AkgOpParallelBuild(const std::vector<std::pair<AkgAscendKernelBuilder, AnfNodePtr>> &build_args) {
   auto [jsons, repeat_nodes] = PreProcessJsonForBuild(build_args);
   if (jsons.empty()) {
     return true;
   }
 
-  // Try to call python method to compile nodes parallely.
-  PyObject *p_module = nullptr;
-  PyObject *p_func = nullptr;
-  PyObject *p_arg = nullptr;
-  PyObject *p_res = nullptr;
-
-  p_module = PyImport_ImportModule(kMultiProcModule);
-  if (p_module == nullptr) {
-    MS_LOG(ERROR) << "Failed to import [" << kMultiProcModule << "].";
+  // Start building in AKG
+  if (!AscendKernelBuildClient::Instance().AkgStart(PROCESS_NUM, TIME_OUT)) {
+    MS_LOG(ERROR) << "Akg start failed.";
     return false;
   }
-
-  p_func = PyObject_GetAttrString(p_module, kCompileAkgKernelParallelFunc);
-  GenParallelCompileFuncArgs(jsons, &p_arg);
-  MS_LOG(DEBUG) << "Call function [" << kCompileAkgKernelParallelFunc << "], try to compile " << jsons.size()
-                << " Akg kernels parallelly.";
-  p_res = PyEval_CallObject(p_func, p_arg);
-  if (p_res == nullptr) {
-    PyErr_Print();
-    MS_LOG(ERROR) << "No ret got, failed to call function [" << kCompileAkgKernelParallelFunc << "], args:\n("
-                  << AkgKernelBuild::PyObjectToStr(p_arg) << ").";
+  if (!AscendKernelBuildClient::Instance().AkgSendData(jsons)) {
+    MS_LOG(ERROR) << "Akg send data failed.";
     return false;
   }
-  if (PyObject_IsTrue(p_res) != 1) {
-    PyErr_Print();
-    MS_LOG(ERROR) << "Illegal ret, failed to call function [" << kCompileAkgKernelParallelFunc << "], args:\n("
-                  << AkgKernelBuild::PyObjectToStr(p_arg) << ").";
+  if (!AscendKernelBuildClient::Instance().AkgWait()) {
+    MS_LOG(ERROR) << "Akg compile failed.";
     return false;
   }
 

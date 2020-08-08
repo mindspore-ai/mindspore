@@ -22,8 +22,6 @@ namespace mindspore {
 namespace dataset {
 // A print method typically used for debugging
 void CacheBase::Print(std::ostream &out, bool show_all) const {
-  // Always show the id and name as first line regardless if this summary or detailed print
-  out << "(" << std::setw(2) << operator_id_ << ") <" << Name() << ">:";
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
     ParallelOp::Print(out, show_all);
@@ -91,13 +89,14 @@ Status CacheBase::FetchSamplesToWorkers() {
     RETURN_IF_NOT_OK(
       io_block_queues_[(buf_cnt++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
     // If repeat but the not last repeat, wait for reset.
-    if (BitTest(op_ctrl_flags_, kDeOpRepeated) && !BitTest(op_ctrl_flags_, kDeOpLastRepeat)) {
+    if (!IsLastIteration()) {
       MS_LOG(DEBUG) << Name() << " Waiting for reset. Count " << ++wait_cnt << " Buffer sent " << buf_cnt;
       RETURN_IF_NOT_OK(epoch_sync_.Wait());
     } else {
       // We can break out from the loop.
       break;
     }
+    UpdateRepeatAndEpochCounter();
   } while (true);
   // Flow the eof before exit
   RETURN_IF_NOT_OK(

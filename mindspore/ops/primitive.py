@@ -18,6 +18,9 @@
 import inspect
 import copy
 from mindspore.common.api import _wrap_func
+from mindspore.common import Parameter
+from mindspore.common._register_for_tensor import tensor_operator_registry
+from mindspore import context
 from .._c_expression import Primitive_, real_run_op, prim_type
 from .._c_expression import signature_rw as sig_rw
 from .._c_expression import signature_kind as sig_kind
@@ -26,10 +29,10 @@ from .._c_expression import signature_dtype as sig_dtype
 
 class Primitive(Primitive_):
     """
-    Primitive is base class for primitives in python.
+    Primitive is the base class of primitives in python.
 
     Args:
-        name (str): Name for current Primitive.
+        name (str): Name for the current Primitive.
 
     Examples:
         >>> add = Primitive('add')
@@ -49,6 +52,7 @@ class Primitive(Primitive_):
         self.name = name
         self.attrs = {}
         self.init_attrs = {"name": name}
+        self._update_parameter = False
         Primitive_.__init__(self, name, self)
         if hasattr(self.__class__, '__mindspore_signature__'):
             sig = self._fill_signature(self.__class__.__mindspore_signature__)
@@ -108,11 +112,11 @@ class Primitive(Primitive_):
 
     def set_strategy(self, strategy):
         """
-        Adds strategy to primitive attribute.
+        Add strategies to primitive attribute.
 
         Note:
-            Valid only in semi auto parallel or auto parallel mode.
-            In other parallel modes, strategies will be ignored if set.
+            It is valid only in semi auto parallel or auto parallel mode.
+            In other parallel modes, strategies set here will be ignored.
 
         Args:
             strategy (tuple): Strategy describes the distributed parallel mode of the current primitive.
@@ -122,10 +126,10 @@ class Primitive(Primitive_):
 
     def set_prim_instance_name(self, instance_name):
         """
-        Sets instance name to primitive operator.
+        Set instance name to primitive operator.
 
         Note:
-            Will be called by default when user defines primitive operator.
+            It will be called by default when user defines primitive operator.
 
         Args:
             instance_name (str): Instance name of primitive operator set by user.
@@ -135,6 +139,8 @@ class Primitive(Primitive_):
         return self
 
     def __getattr__(self, item):
+        if item == 'infer_dynamic_shape':
+            return None
         if item in super().get_attr_dict():
             return super().get_attr_dict()[item]
         if item in self.attrs:
@@ -143,14 +149,14 @@ class Primitive(Primitive_):
 
     def check_elim(self, *args):
         """
-        Check whether or not certain inputs should go into backend. Subclass in need should override this method.
+        Check if certain inputs should go to the backend. Subclass in need should override this method.
 
         Args:
             *args(Primitive args): Same as arguments of current Primitive.
 
         Returns:
-            A tuple of two elements, first element indicates whether or not we should filter out current arguments;
-            seconde element is the output in case where we should filter out the arguments.
+            A tuple consisting of two elements. The first element indicates whether we should filter out current
+            arguments; the seconde element is the output if we need to filter out the arguments.
         """
         return (False, None)
 
@@ -178,7 +184,7 @@ class Primitive(Primitive_):
 
     def init_prim_io_names(self, inputs, outputs):
         """
-        Initializes inputs and outpus name of Tensor or attributes.
+        Initializes the name of inputs and outpus of Tensor or attributes.
 
         Args:
             inputs (list[str]): list of inputs names.
@@ -189,18 +195,23 @@ class Primitive(Primitive_):
         # for checking output number with kernel implementation
         self.add_prim_attr("output_names", outputs)
 
+    @property
+    def update_parameter(self):
+        """ Whether the primitive will update the value of parameter."""
+        return self._update_parameter
+
 
 class PrimitiveWithInfer(Primitive):
     """
-    PrimitiveWithInfer is base class for primitives in python and defines functions for infer of tracks in python.
+    PrimitiveWithInfer is the base class of primitives in python defines functions for tracking inference in python.
 
     There are four method can be overide to define the infer logic of the primitive: __infer__(), infer_shape(),
     infer_dtype(), and infer_value(). If __infer__() is defined in primitive, the __infer__() has highest priority
-    to be called. If __infer__() is not defined, infer_shape() and infer_dtype() can be defined to describe shape
-    and type infer logic. The infer_value() is used for constant propagation.
+    to be called. If __infer__() is not defined, infer_shape() and infer_dtype() can be defined to describe the infer
+    logic of the shape and type. The infer_value() is used for constant propagation.
 
     Args:
-        name (str): Name for current Primitive.
+        name (str): Name of the current Primitive.
 
     Examples:
         >>> # init a Primitive class with infer
@@ -268,27 +279,63 @@ class PrimitiveWithInfer(Primitive):
             args (Any): value of inputs.
 
         Return:
-            Value of outputs. Return `None` for, cat not infer the value at compile time.
+            Value of outputs. Return `None`, the value can not be inferred at compile time in this case.
         """
         return None
 
     def __infer__(self, *args):
         """Infer shape, type, and value at the same time by using dictionary as arguments."""
+        is_graph_mode = context.get_context("mode") == context.GRAPH_MODE
+        fn_infer_dynamic_shape = getattr(self, 'infer_dynamic_shape', None)
+        if is_graph_mode and fn_infer_dynamic_shape is not None:
+            out = fn_infer_dynamic_shape(*args)
+            tracks = ['dtype', 'value']
+            for track in tracks:
+                fn = getattr(self, 'infer_' + track)
+                # fn may return None
+                out[track] = fn(*(x[track] for x in args))
+            return out
+
         tracks = ['dtype', 'shape', 'value']
         out = {}
         for track in tracks:
             fn = getattr(self, 'infer_' + track)
             # fn may return None
             out[track] = fn(*(x[track] for x in args))
-        return out
+
+        # in non-graph_mode, it is not necessary to infer min/max shape
+        if not is_graph_mode:
+            return out
+
+        def get_specified_shape(elems, attr):
+            has_specified_shape = False
+            ret_vals = []
+            for elem in elems:
+                if attr in elem:
+                    has_specified_shape = True
+                    ret_vals.append(elem[attr])
+                else:
+                    ret_vals.append(elem['shape'])
+            return has_specified_shape, tuple(ret_vals)
+
+        has_min_shape, min_shapes = get_specified_shape(args, 'min_shape')
+        has_max_shape, max_shapes = get_specified_shape(args, 'max_shape')
+        if not (has_min_shape or has_max_shape):
+            return out
+        if has_min_shape and has_max_shape:
+            fn_infer_shape = getattr(self, 'infer_shape')
+            out['min_shape'] = fn_infer_shape(*min_shapes)
+            out['max_shape'] = fn_infer_shape(*max_shapes)
+            return out
+        raise ValueError('Input args has invalid dynamic shape, args info: {args}')
 
 
 def prim_attr_register(fn):
     """
     Primitive attributes register.
 
-    Registering the decorator of the built-in operator primitive __init__
-    function will add all the parameters of __init__ as operator attributes.
+    Register the decorator of the built-in operator primitive '__init__'.
+    The function will add all the parameters of '__init__' as operator attributes.
 
     Args:
         fn (function): __init__ function of primitive.
@@ -317,17 +364,17 @@ def prim_attr_register(fn):
 
 def constexpr(fn=None, get_instance=True, name=None):
     """
-    Makes a PrimitiveWithInfer operator, which infer the value while compiling. We can define a function
-    to compute between constant variable and used in constructß.
+    Make a PrimitiveWithInfer operator that can infer the value at compile time. We can use it to define a function to
+    compute constant value using the constants in the constructor.
 
     Args:
         fn (function): A `fn` use as the infer_value of the output operator.
-        get_instance (bool): If true, returns the instance of operator, else returns the operator class.
+        get_instance (bool): If true, return the instance of operator, otherwise return the operator class.
         name (str): Defines the operator name. If `name` is None, use the function name as op name.
 
     Examples:
         >>> a = (1, 2)
-        >>> # make a operator to calculate tuple len
+        >>> # make an operator to calculate tuple len
         >>> @constexpr
         >>> def tuple_len(x):
         >>>     return len(x)
@@ -344,7 +391,7 @@ def constexpr(fn=None, get_instance=True, name=None):
             def __init__(self):
                 op_name = name if name else fn.__name__
                 PrimitiveWithInfer.__init__(self, op_name)
-                self.const_value = True
+                self.set_is_const_value(True)
 
             def infer_value(self, *args):
                 return fn(*args)
@@ -359,7 +406,20 @@ def constexpr(fn=None, get_instance=True, name=None):
 @_wrap_func
 def _run_op(obj, op_name, args):
     """Single op execution function supported by ge in PyNative mode."""
-    output = real_run_op(obj, op_name, args)
+    cast = tensor_operator_registry.get("cast")
+    if op_name == "Cast" or obj.update_parameter:
+        cast_args = args
+    else:
+        cast_args = list()
+        for arg in args:
+            if isinstance(arg, Parameter):
+                if arg.cast_type:
+                    cast_args.append(cast(arg, arg.cast_type))
+                else:
+                    cast_args.append(arg)
+            else:
+                cast_args.append(arg)
+    output = real_run_op(obj, op_name, tuple(cast_args))
     if not output:
         raise RuntimeError("Pynative run op %s failed!" % op_name)
     if len(output) == 1:

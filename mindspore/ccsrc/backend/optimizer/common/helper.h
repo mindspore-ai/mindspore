@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_HELPER_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_HELPER_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_HELPER_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_HELPER_H_
 
 #include <vector>
 #include <memory>
@@ -24,7 +24,7 @@
 #include <unordered_set>
 #include "ir/func_graph.h"
 #include "backend/session/kernel_graph.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "backend/optimizer/common/pattern_engine.h"
 
 namespace mindspore {
@@ -194,6 +194,9 @@ bool GetBoolAttr(const AnfNodePtr &node, const std::string &attr_name);
 
 // Check node's data type is in supported data type set
 bool CheckSupportDataType(const AnfNodePtr &node, const std::set<TypeId> &supported_data_type_set);
+
+// Create a new value node of func graph,not kernel graph
+ValueNodePtr MakeValueNode(const ValueNodePtr &value_node);
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_HELPER_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_HELPER_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_ENGINE_DATASET_ITERATOR_H_
-#define DATASET_ENGINE_DATASET_ITERATOR_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASET_ITERATOR_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASET_ITERATOR_H_
 
 #include <memory>
 #include <string>
@@ -144,6 +144,9 @@ class ChildIterator : public IteratorBase {
   // @return The string to column id mapping.
   std::unordered_map<std::string, int32_t> GetColumnNameMap() const override;
 
+  // Return T/F if end of epoch
+  bool end_of_epoch() { return end_epoch_; }
+
  private:
   DatasetOp *current_op_;  // The parent operator. We consume from it's children.
   int32_t child_idx_;      // The specific child this iterator will fetch from.
@@ -153,4 +156,4 @@ class ChildIterator : public IteratorBase {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_ENGINE_DATASET_ITERATOR_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASET_ITERATOR_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_DUMP_GE_DUMP_H_
-#define MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_DUMP_GE_DUMP_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_DUMP_GE_DUMP_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_DUMP_GE_DUMP_H_
 
 #include <map>
 #include <string>
@@ -117,4 +117,4 @@ static GeFormat GetGeFormat(const std::string &format, size_t shape_size) {
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_DUMP_GE_DUMP_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_DUMP_GE_DUMP_H_

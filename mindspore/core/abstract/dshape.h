@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_ABSTRACT_DSHAPE_H_
-#define MINDSPORE_CCSRC_ABSTRACT_DSHAPE_H_
+#ifndef MINDSPORE_CORE_ABSTRACT_DSHAPE_H_
+#define MINDSPORE_CORE_ABSTRACT_DSHAPE_H_
 
 #include <vector>
 #include <string>
@@ -25,6 +25,7 @@
 #include <unordered_map>
 #include <typeindex>
 #include <memory>
+#include <algorithm>
 
 #include "utils/log_adapter.h"
 #include "base/base.h"
@@ -63,17 +64,32 @@ class Shape : public BaseShape {
   static const int SHP_ANY = -1;
   Shape() : shape_() {}
   Shape(const std::initializer_list<int> &list) : shape_(list) {}
+  Shape(const std::initializer_list<int64_t> &list) {
+    std::vector<int64_t> list_in(list);
+    (void)std::transform(list_in.begin(), list_in.end(), std::back_inserter(shape_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
+  }
   explicit Shape(const std::vector<int> &list) : shape_(list) {}
+  explicit Shape(const std::vector<int64_t> &list) {
+    (void)std::transform(list.begin(), list.end(), std::back_inserter(shape_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
+  }
+  Shape(const std::vector<int> &list, const std::vector<int> &min_shape, const std::vector<int> &max_shape)
+      : shape_(list), min_shape_(min_shape), max_shape_(max_shape) {}
   ~Shape() override = default;
   MS_DECLARE_PARENT(Shape, BaseShape)
   std::string ToString() const override;
   std::string DumpText() const override;
   bool operator==(const BaseShape &other) const override;
-  BaseShapePtr Clone() const override { return std::make_shared<Shape>(shape_); }
+  BaseShapePtr Clone() const override { return std::make_shared<Shape>(shape_, min_shape_, max_shape_); }
   void Broaden() override;
   std::vector<int> &shape() { return shape_; }
+  std::vector<int> &min_shape() { return min_shape_; }
+  std::vector<int> &max_shape() { return max_shape_; }
 
-  std::vector<int> shape_;  // use SHP_ANY to implement the any shape in python
+  std::vector<int> shape_;      // use SHP_ANY to implement the any shape in python
+  std::vector<int> min_shape_;  // record mininum length for each dynamic dimention
+  std::vector<int> max_shape_;  // record maximum length for each dynamic dimention
 };
 using ShapePtr = std::shared_ptr<Shape>;
 using ShapePtrList = std::vector<ShapePtr>;
@@ -132,4 +148,4 @@ using ListShapePtr = std::shared_ptr<ListShape>;
 }  // namespace abstract
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_ABSTRACT_DSHAPE_H_
+#endif  // MINDSPORE_CORE_ABSTRACT_DSHAPE_H_

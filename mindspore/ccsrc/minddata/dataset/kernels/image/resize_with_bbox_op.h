@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_KERNELS_IMAGE_RESIZE_WITH_BBOX_OP_H
-#define DATASET_KERNELS_IMAGE_RESIZE_WITH_BBOX_OP_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RESIZE_WITH_BBOX_OP_H
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RESIZE_WITH_BBOX_OP_H
 
 #include <string>
 #include "minddata/dataset/core/tensor.h"
@@ -34,7 +34,7 @@ class ResizeWithBBoxOp : public ResizeOp {
 
   ~ResizeWithBBoxOp() override = default;
 
-  void Print(std::ostream &out) const override { out << "ResizeWithBBoxOp: " << size1_ << " " << size2_; }
+  void Print(std::ostream &out) const override { out << Name() << ": " << size1_ << " " << size2_; }
 
   Status Compute(const TensorRow &input, TensorRow *output) override;
 
@@ -43,4 +43,4 @@ class ResizeWithBBoxOp : public ResizeOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_KERNELS_IMAGE_RESIZE_WITH_BBOX_OP_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RESIZE_WITH_BBOX_OP_H

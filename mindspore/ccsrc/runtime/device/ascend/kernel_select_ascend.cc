@@ -24,11 +24,11 @@
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "debug/anf_ir_dump.h"
 #include "frontend/operator/ops.h"
 #include "ir/func_graph.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/kernel_compiler/common_utils.h"
@@ -492,10 +492,14 @@ void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, co
         AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) != kTypeUnknown) {
       continue;
     }
+    if (AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) != kTypeUnknown &&
+        AnfAlgo::OutputAddrExist(real_input_node, 0)) {
+      continue;
+    }
     if (AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) == kTypeUnknown || is_ref) {
       std::vector<std::string> output_format = {selected_kernel_info.GetInputFormat(input_index)};
       builder->SetOutputsFormat(output_format);
-      std::vector<TypeId> output_type = {selected_kernel_info.GetInputDeviceType(input_index)};
+      std::vector<TypeId> output_type = {AnfAlgo::GetOutputInferDataType(real_input_node, 0)};
       builder->SetOutputsDeviceType(output_type);
       AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), real_input_node.get());
     }
@@ -546,6 +550,7 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kern
   kernel::KernelQuery(kernel_node, &kernel_info_list, kernel_type);
   auto select_status = SetMatchedKernelInfo(kernel_node, kernel_info_list);
   // If aicore not find valid kernel info reloading aicpu kernel info list to find it
+
   if (select_status == kNoMatched) {
     MS_LOG(WARNING) << "The node [" << kernel_node->DebugString()
                     << "] cannot find valid TBE kernel info, try to get aicpu kernel info";

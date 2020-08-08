@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_CORE_CLIENT_H_
-#define DATASET_CORE_CLIENT_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_CLIENT_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_CLIENT_H_
 
 // client.h
 // Include file for DE client functions
@@ -25,20 +25,24 @@
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/dataset_iterator.h"
+
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/datasetops/source/mindrecord_op.h"
 #include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
+#endif
 
 #ifdef ENABLE_PYTHON
 #include "minddata/dataset/engine/datasetops/barrier_op.h"
 #include "minddata/dataset/engine/datasetops/filter_op.h"
 #include "minddata/dataset/engine/datasetops/source/generator_op.h"
 #include "minddata/dataset/engine/datasetops/build_vocab_op.h"
+#include "minddata/dataset/engine/datasetops/build_sentence_piece_vocab_op.h"
 #endif
 
 #include "minddata/dataset/engine/datasetops/batch_op.h"
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
 #include "minddata/dataset/engine/datasetops/device_queue_op.h"
-#include "minddata/dataset/engine/datasetops/map_op.h"
+#include "minddata/dataset/engine/datasetops/map_op/map_op.h"
 #include "minddata/dataset/engine/datasetops/project_op.h"
 #include "minddata/dataset/engine/datasetops/rename_op.h"
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
@@ -58,4 +62,4 @@ extern Status GlobalInit();
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_CORE_CLIENT_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_CLIENT_H_

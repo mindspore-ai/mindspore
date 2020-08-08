@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_DEVICE_CPU_CPU_SIMPLE_MEM_PLAN_H_
-#define MINDSPORE_CCSRC_DEVICE_CPU_CPU_SIMPLE_MEM_PLAN_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_CPU_SIMPLE_MEM_PLAN_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_CPU_SIMPLE_MEM_PLAN_H_
 
 #include <vector>
-#include <unordered_map>
 #include "backend/session/kernel_graph.h"
 #include "runtime/device/device_address.h"
 
@@ -29,15 +28,11 @@ class CPUSimpleMemPlan {
   CPUSimpleMemPlan() = default;
   ~CPUSimpleMemPlan() = default;
 
-  void MemPlan(const session::KernelGraph *graph);
+  size_t MemPlan(const session::KernelGraph *graph);
   void MemAssign(const session::KernelGraph *graph, uint8_t *base_ptr);
-  size_t GetGraphMemSize(const session::KernelGraph *graph) const;
-
- private:
-  std::unordered_map<const session::KernelGraph *, size_t> graph_mem_size_;
 };
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_CPU_CPU_SIMPLE_MEM_PLAN_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_CPU_SIMPLE_MEM_PLAN_H_

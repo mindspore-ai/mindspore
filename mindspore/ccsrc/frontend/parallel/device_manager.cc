@@ -345,9 +345,6 @@ std::string DeviceManager::GenerateGroupNameByRanks(RankList ranks) {
 // name. Otherwise, let the pointer g point to that group.
 Group DeviceManager::CreateGroup(const std::string &group_name,
                                  const std::vector<mindspore::parallel::Device> &devices) {
-  if ((world_group() == NCCL_WORLD_GROUP) && (devices.size() != devices_.size())) {
-    MS_LOG(EXCEPTION) << "Do not support sub group for nccl";
-  }
   Group g;
   (void)gm_.CreateGroup(group_name, devices, &g);
   return g;

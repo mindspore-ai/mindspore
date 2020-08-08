@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_NN_FUSED_BATCHNORM_GRAD_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_KERNEL_GPU_NN_FUSED_BATCHNORM_GRAD_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_FUSED_BATCHNORM_GRAD_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_FUSED_BATCHNORM_GRAD_GPU_KERNEL_H_
 
 #include <vector>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
@@ -55,12 +55,12 @@ class FusedBatchNormGradGpuKernel : public GpuKernel {
     }
     auto dy = GetDeviceAddress<T>(inputs, 0);
     auto x = GetDeviceAddress<T>(inputs, 1);
-    auto scale = GetDeviceAddress<T>(inputs, 2);
-    auto save_mean = GetDeviceAddress<T>(inputs, 3);
-    auto save_variance = GetDeviceAddress<T>(inputs, 4);
+    auto scale = GetDeviceAddress<float>(inputs, 2);
+    auto save_mean = GetDeviceAddress<float>(inputs, 3);
+    auto save_variance = GetDeviceAddress<float>(inputs, 4);
     auto dx = GetDeviceAddress<T>(outputs, 0);
-    auto bn_scale = GetDeviceAddress<T>(outputs, 1);
-    auto bn_bias = GetDeviceAddress<T>(outputs, 2);
+    auto bn_scale = GetDeviceAddress<float>(outputs, 1);
+    auto bn_bias = GetDeviceAddress<float>(outputs, 2);
 
     const float alpha_data_diff = 1;
     const float beta_data_diff = 0;
@@ -175,4 +175,4 @@ class FusedBatchNormGradGpuKernel : public GpuKernel {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_NN_FUSED_BATCHNORM_GRAD_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_FUSED_BATCHNORM_GRAD_GPU_KERNEL_H_

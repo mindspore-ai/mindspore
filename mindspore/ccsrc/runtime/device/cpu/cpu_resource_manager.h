@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_DEVICE_CPU_CPU_RESOURCE_MANAGER_H_
-#define MINDSPORE_CCSRC_DEVICE_CPU_CPU_RESOURCE_MANAGER_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_CPU_RESOURCE_MANAGER_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_CPU_RESOURCE_MANAGER_H_
 
 #include <vector>
-#include <unordered_map>
+#include <map>
 #include "backend/session/kernel_graph.h"
 #include "backend/session/session_basic.h"
 #include "runtime/device/device_address.h"
@@ -30,8 +30,7 @@ class CPUResourceManager {
   CPUResourceManager() = default;
   ~CPUResourceManager();
 
-  void MemPlan(const session::KernelGraph *graph);
-  void MemMalloc(const session::KernelGraph *graph);
+  void AssignMemory(const session::KernelGraph *graph);
   void IncreaseAddressRefCount(const session::KernelGraph *graph);
   void DecreaseAddressRefCount(const AnfNodePtr &kernel);
   void *MemMalloc(size_t mem_size);
@@ -46,10 +45,10 @@ class CPUResourceManager {
   size_t mem_size_{0};
   uint8_t *mem_ptr_{nullptr};
   bool dynamic_malloc_{false};
-  std::unordered_map<void *, size_t> dynamic_mem_;
+  std::map<void *, size_t> dynamic_mem_;
 };
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_CPU_CPU_RESOURCE_MANAGER_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_CPU_RESOURCE_MANAGER_H_

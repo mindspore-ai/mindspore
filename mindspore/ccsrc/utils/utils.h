@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_UTILS_UTILS_H_
-#define MINDSPORE_MINDSPORE_CCSRC_UTILS_UTILS_H_
+#ifndef MINDSPORE_CCSRC_UTILS_UTILS_H_
+#define MINDSPORE_CCSRC_UTILS_UTILS_H_
 
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <string>
 #include <vector>
 #include <set>
@@ -228,6 +229,7 @@ constexpr auto kAttrLabelSwitchList = "label_switch_list";
 constexpr auto kAttrNewAxisMask = "new_axis_mask";
 constexpr auto kAttrShrinkAxisMask = "shrink_axis_mask";
 constexpr auto kAttrDatadumpOriginalNames = "_datadump_original_names";
+constexpr auto kAttrDatadumpIsMultiop = "_datadump_is_multiop";
 constexpr auto kAttrStreamId = "stream_id";
 constexpr auto kAttrRecordEvent = "record_event";
 constexpr auto kAttrWaitEvent = "wait_event";
@@ -246,6 +248,10 @@ constexpr auto kAttrOffset = "offset";
 constexpr auto kAttrPsKey = "ps_key";
 constexpr auto kAttrOptimizerType = "optim_type";
 constexpr auto kAttrChildGraph = "child_graph";
+constexpr auto kAttrInputNums = "inputNums";
+constexpr auto kAttrT = "T";
+constexpr auto kAttrNum = "num";
+constexpr auto kAttrRankSize = "rank_size";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
@@ -314,7 +320,6 @@ const std::set<std::string> kOptOperatorSet = {
   kApplyProximalAdagradOpName,
   kApplyProximalGradientDescentOpName,
   kApplyRMSPropOpName,
-  kPushOpName,
   kPullOpName,
 };
 
@@ -333,5 +338,44 @@ static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
     MS_LOG(DEBUG) << "File `" << file_name << "` change mode failed! May be not exist.";
   }
 }
+
+static inline uint64_t GetCurrentUSec() {
+  struct timeval tv;
+  int ret = gettimeofday(&tv, nullptr);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "Fail gettimeofday, ret = " << ret;
+  }
+  return static_cast<uint64_t>(tv.tv_usec + tv.tv_sec * 1000000);
+}
+
+#define PROF_START(stage) uint64_t start_usec_##stage = mindspore::GetCurrentUSec()
+#define PROF_END(stage)                                                                         \
+  do {                                                                                          \
+    uint64_t end_usec_##stage = mindspore::GetCurrentUSec();                                    \
+    MS_LOG(INFO) << #stage << " costs " << (end_usec_##stage - start_usec_##stage) << " usec."; \
+  } while (0)
+
+#define PROF_MULTI_DEFINE(stage)     \
+  static uint64_t total_##stage = 0; \
+  static uint64_t count_##stage = 0;
+
+#define PROF_LOCAL_DEFINE(stage) \
+  uint64_t total_##stage = 0;    \
+  uint64_t count_##stage = 0;
+
+#define PROF_MULTI_START(stage) uint64_t start_usec_##stage = mindspore::GetCurrentUSec()
+
+#define PROF_MULTI_END(stage)                                 \
+  do {                                                        \
+    ++count_##stage;                                          \
+    uint64_t end_usec_##stage = mindspore::GetCurrentUSec();  \
+    total_##stage += (end_usec_##stage - start_usec_##stage); \
+  } while (0)
+
+#define PROF_MULTI_PRINT(stage)                                                                             \
+  do {                                                                                                      \
+    MS_LOG(INFO) << #stage << " called " << count_##stage << " times, costs " << total_##stage << " usec."; \
+  } while (0)
+
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_UTILS_UTILS_H_
+#endif  // MINDSPORE_CCSRC_UTILS_UTILS_H_

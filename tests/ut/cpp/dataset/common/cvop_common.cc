@@ -19,7 +19,7 @@
 #include <vector>
 #include "cvop_common.h"
 #include "minddata/dataset/core/constants.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/core/cv_tensor.h"
 #include "utils/log_adapter.h"
 #include <fstream>
@@ -52,9 +52,11 @@ std::string CVOpCommon::GetFilename() {
 
 void CVOpCommon::GetInputImage(std::string filename) {
   try {
-    Tensor::CreateTensor(&raw_input_tensor_, filename);
+    Tensor::CreateFromFile(filename, &raw_input_tensor_);
     raw_cv_image_ = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
-    input_tensor_ = std::dynamic_pointer_cast<Tensor>(std::make_shared<CVTensor>(raw_cv_image_));
+    std::shared_ptr<CVTensor> input_cv_tensor;
+    CVTensor::CreateFromMat(raw_cv_image_, &input_cv_tensor);
+    input_tensor_ = std::dynamic_pointer_cast<Tensor>(input_cv_tensor);
     SwapRedAndBlue(input_tensor_, &input_tensor_);
     if (raw_cv_image_.data) {
       MS_LOG(INFO) << "Reading was successful. Height:" << raw_cv_image_.rows << " Width: " << raw_cv_image_.cols

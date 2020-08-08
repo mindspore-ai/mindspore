@@ -15,10 +15,11 @@
 """Model and parameters serialization."""
 import os
 import stat
+import math
+from threading import Thread, Lock
 import numpy as np
 
 import mindspore.nn as nn
-import mindspore.context as context
 from mindspore import log as logger
 from mindspore.train.checkpoint_pb2 import Checkpoint
 from mindspore.train.print_pb2 import Print
@@ -39,6 +40,9 @@ tensor_to_ms_type = {"Int8": mstype.int8, "Uint8": mstype.uint8, "Int16": mstype
 tensor_to_np_type = {"Int8": np.int8, "Uint8": np.uint8, "Int16": np.int16, "Uint16": np.uint16,
                      "Int32": np.int32, "Uint32": np.uint32, "Int64": np.int64, "Uint64": np.uint64,
                      "Float16": np.float16, "Float32": np.float32, "Float64": np.float64, "Bool": np.bool_}
+
+_ckpt_mutex = Lock()
+SLICE_SIZE = 512 * 1024 * 1024
 
 
 def _special_process_par(par, new_par):
@@ -101,7 +105,41 @@ def _update_param(param, new_param):
         param.set_parameter_data(type(param.data)(new_param.data))
 
 
-def save_checkpoint(parameter_list, ckpt_file_name):
+def _exec_save(ckpt_file_name, data_list):
+    """Execute save checkpoint into file process."""
+
+    try:
+        with _ckpt_mutex:
+            if os.path.exists(ckpt_file_name):
+                os.remove(ckpt_file_name)
+            with open(ckpt_file_name, "ab") as f:
+                for name, value in data_list.items():
+                    data_size = value[2].nbytes
+                    if data_size > SLICE_SIZE:
+                        slice_count = math.ceil(data_size / SLICE_SIZE)
+                        param_slice_list = np.array_split(value[2], slice_count)
+                    else:
+                        param_slice_list = [value[2]]
+
+                    for param_slice in param_slice_list:
+                        checkpoint_list = Checkpoint()
+                        param_value = checkpoint_list.value.add()
+                        param_value.tag = name
+                        param_tensor = param_value.tensor
+                        param_tensor.dims.extend(value[0])
+                        param_tensor.tensor_type = value[1]
+                        param_tensor.tensor_content = param_slice.tostring()
+
+                        f.write(checkpoint_list.SerializeToString())
+
+        os.chmod(ckpt_file_name, stat.S_IRUSR)
+
+    except BaseException as e:
+        logger.error("Failed to save the checkpoint file %s.", ckpt_file_name)
+        raise RuntimeError(e.__str__())
+
+
+def save_checkpoint(parameter_list, ckpt_file_name, async_save=False):
     """
     Saves checkpoint info to a specified file.
 
@@ -109,37 +147,37 @@ def save_checkpoint(parameter_list, ckpt_file_name):
         parameter_list (list): Parameters list, each element is a dict
                                like {"name":xx, "type":xx, "shape":xx, "data":xx}.
         ckpt_file_name (str): Checkpoint file name.
+        async_save (bool): Whether asynchronous execute save checkpoint into file. Default: False
 
     Raises:
         RuntimeError: Failed to save the Checkpoint file.
     """
     logger.info("Execute save checkpoint process.")
-    checkpoint_list = Checkpoint()
 
-    try:
+    data_list = {}
+    with _ckpt_mutex:
         for param in parameter_list:
-            param_value = checkpoint_list.value.add()
-            param_value.tag = param["name"]
-            param_tensor = param_value.tensor
+            key = param["name"]
+            data_list[key] = []
             if isinstance(param["data"], Parameter):
                 param["data"].init_data()
-            param_data = param["data"].asnumpy().reshape(-1)
-            param_tensor.tensor_content = param_data.tostring()
-            param_tensor.tensor_type = str(param["data"].dtype)
-
+            dims = []
             if param['data'].shape == ():
-                param_tensor.dims.append(0)
+                dims.append(0)
             else:
                 for dim in param['data'].shape:
-                    param_tensor.dims.append(dim)
+                    dims.append(dim)
+            data_list[key].append(dims)
+            tensor_type = str(param["data"].dtype)
+            data_list[key].append(tensor_type)
+            data = param["data"].asnumpy().reshape(-1)
+            data_list[key].append(data)
 
-        with open(ckpt_file_name, "wb") as f:
-            f.write(checkpoint_list.SerializeToString())
-        os.chmod(ckpt_file_name, stat.S_IRUSR)
-
-    except BaseException as e:
-        logger.error("Failed to save the checkpoint file %s.", ckpt_file_name)
-        raise RuntimeError(e.__str__())
+    if async_save:
+        thr = Thread(target=_exec_save, args=(ckpt_file_name, data_list), name="asyn_save_ckpt")
+        thr.start()
+    else:
+        _exec_save(ckpt_file_name, data_list)
     logger.info("Save checkpoint process finish.")
 
 
@@ -182,28 +220,37 @@ def load_checkpoint(ckpt_file_name, net=None):
 
     parameter_dict = {}
     try:
+        element_id = 0
+        param_data_list = []
         for element in checkpoint_list.value:
             data = element.tensor.tensor_content
             data_type = element.tensor.tensor_type
             np_type = tensor_to_np_type[data_type]
             ms_type = tensor_to_ms_type[data_type]
-            param_data = np.fromstring(data, np_type)
-            dims = element.tensor.dims
+            element_data = np.frombuffer(data, np_type)
+            param_data_list.append(element_data)
+            if (element_id == len(checkpoint_list.value) - 1) or \
+                    (element.tag != checkpoint_list.value[element_id + 1].tag):
+                param_data = np.concatenate((param_data_list), axis=0)
+                param_data_list.clear()
+                dims = element.tensor.dims
 
-            if dims == [0]:
-                if 'Float' in data_type:
-                    param_data = float(param_data[0])
-                elif 'Int' in data_type:
-                    param_data = int(param_data[0])
-                parameter_dict[element.tag] = Parameter(Tensor(param_data, ms_type), name=element.tag)
-            elif dims == [1]:
-                parameter_dict[element.tag] = Parameter(Tensor(param_data, ms_type), name=element.tag)
-            else:
-                param_dim = []
-                for dim in dims:
-                    param_dim.append(dim)
-                param_value = param_data.reshape(param_dim)
-                parameter_dict[element.tag] = Parameter(Tensor(param_value, ms_type), name=element.tag)
+                if dims == [0]:
+                    if 'Float' in data_type:
+                        param_data = float(param_data[0])
+                    elif 'Int' in data_type:
+                        param_data = int(param_data[0])
+                    parameter_dict[element.tag] = Parameter(Tensor(param_data, ms_type), name=element.tag)
+                elif dims == [1]:
+                    parameter_dict[element.tag] = Parameter(Tensor(param_data, ms_type), name=element.tag)
+                else:
+                    param_dim = []
+                    for dim in dims:
+                        param_dim.append(dim)
+                    param_value = param_data.reshape(param_dim)
+                    parameter_dict[element.tag] = Parameter(Tensor(param_value, ms_type), name=element.tag)
+
+            element_id += 1
 
         logger.info("Load checkpoint process finish.")
 
@@ -211,7 +258,7 @@ def load_checkpoint(ckpt_file_name, net=None):
         logger.error("Failed to load the checkpoint file `%s`.", ckpt_file_name)
         raise RuntimeError(e.__str__())
 
-    if net:
+    if net is not None:
         load_param_into_net(net, parameter_dict)
 
     return parameter_dict
@@ -248,7 +295,6 @@ def load_param_into_net(net, parameter_dict):
                 logger.error("Failed to combine the net and the parameters.")
                 msg = ("Argument parameter_dict element should be a Parameter, but got {}.".format(type(new_param)))
                 raise TypeError(msg)
-            param.init_data()
             _update_param(param, new_param)
         else:
             param_not_load.append(param.name)
@@ -305,7 +351,7 @@ def _save_graph(network, file_name):
         os.chmod(file_name, stat.S_IRUSR)
 
 
-def _exec_save_checkpoint(train_network, ckpt_file_name, integrated_save=True):
+def _exec_save_checkpoint(train_network, ckpt_file_name, integrated_save=True, async_save=False):
     """
     Saves checkpoint for 'ms' backend.
 
@@ -313,16 +359,15 @@ def _exec_save_checkpoint(train_network, ckpt_file_name, integrated_save=True):
         train_network (Network): The train network for training.
         ckpt_file_name (str): The name of checkpoint file.
         integrated_save (bool): Whether to integrated save in automatic model parallel scene.
+        async_save (bool): Whether asynchronous execute save checkpoint into file. Default: False.
     """
-
+    train_network.init_parameters_data()
     param_dict = {}
     for _, param in train_network.parameters_and_names():
         param_dict[param.name] = param
-
     param_list = []
     for (key, value) in param_dict.items():
         each_param = {"name": key}
-        value.init_data()
         if isinstance(value.data, Tensor):
             param_data = value.data
         else:
@@ -336,7 +381,7 @@ def _exec_save_checkpoint(train_network, ckpt_file_name, integrated_save=True):
         each_param["data"] = param_data
         param_list.append(each_param)
 
-    save_checkpoint(param_list, ckpt_file_name)
+    save_checkpoint(param_list, ckpt_file_name, async_save)
 
 
 def _get_merged_param_data(net, param_name, param_data):
@@ -359,14 +404,17 @@ def _get_merged_param_data(net, param_name, param_data):
 
     dev_mat = layout[0]
     tensor_map = layout[1]
+    field_size = layout[3]
 
     from mindspore.parallel._cell_wrapper import get_allgather_cell
-    from mindspore.parallel._tensor import _reshape_param_data
+    from mindspore.parallel._tensor import _reshape_param_data, _reshape_param_data_with_weight
     # while any dim is not equal to -1, means param is splited and needs to be merged
     for dim in tensor_map:
         if dim != -1:
             allgather_net = get_allgather_cell()
             param_data = allgather_net(param_data)
+            if field_size[0]:
+                return _reshape_param_data_with_weight(param_data, dev_mat, field_size)
             return _reshape_param_data(param_data, dev_mat, tensor_map)
 
     return param_data
@@ -405,18 +453,17 @@ def export(net, *inputs, file_name, file_format='GEIR'):
         net (Cell): MindSpore network.
         inputs (Tensor): Inputs of the `net`.
         file_name (str): File name of model to export.
-        file_format (str): MindSpore currently supports 'GEIR', 'ONNX' 'LITE' and 'BINARY' format for exported model.
+        file_format (str): MindSpore currently supports 'GEIR', 'ONNX' and 'BINARY' format for exported model.
 
             - GEIR: Graph Engine Intermidiate Representation. An intermidiate representation format of
               Ascend model.
             - ONNX: Open Neural Network eXchange. An open format built to represent machine learning models.
-            - LITE: Huawei model format for mobile. A lite model only for the MindSpore Lite
             - BINARY: Binary format for model. An intermidiate representation format for models.
     """
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
     check_input_data(*inputs, data_class=Tensor)
 
-    supported_formats = ['GEIR', 'ONNX', 'LITE', 'BINARY']
+    supported_formats = ['GEIR', 'ONNX', 'BINARY']
     if file_format not in supported_formats:
         raise ValueError(f'Illegal file format {file_format}, it must be one of {supported_formats}')
     # switch network mode to infer when it is training
@@ -426,27 +473,25 @@ def export(net, *inputs, file_name, file_format='GEIR'):
     # export model
     net.init_parameters_data()
     if file_format == 'GEIR':
-        _executor.compile(net, *inputs, phase='export')
-        _executor.export(net, file_name, file_format)
+        phase_name = 'export.geir'
+        graph_id, _ = _executor.compile(net, *inputs, phase=phase_name)
+        _executor.export(file_name, graph_id)
     elif file_format == 'ONNX':  # file_format is 'ONNX'
         # NOTICE: the pahse name `export_onnx` is used for judging whether is exporting onnx in the compile pipeline,
         #         do not change it to other values.
-        phase_name = 'export_onnx'
+        phase_name = 'export.onnx'
         graph_id, _ = _executor.compile(net, *inputs, phase=phase_name, do_convert=False)
         onnx_stream = _executor._get_func_graph_proto(graph_id)
         with open(file_name, 'wb') as f:
             os.chmod(file_name, stat.S_IWUSR | stat.S_IRUSR)
             f.write(onnx_stream)
     elif file_format == 'BINARY':  # file_format is 'BINARY'
-        phase_name = 'export_binary'
+        phase_name = 'export.binary'
         graph_id, _ = _executor.compile(net, *inputs, phase=phase_name, do_convert=False)
         onnx_stream = _executor._get_func_graph_proto(graph_id, 'binary_ir')
         with open(file_name, 'wb') as f:
             os.chmod(file_name, stat.S_IWUSR | stat.S_IRUSR)
             f.write(onnx_stream)
-    elif file_format == 'LITE':  # file_format is 'LITE'
-        context.set_context(save_ms_model=True, save_ms_model_path=file_name)
-        net(*inputs)
     # restore network training mode
     if is_training:
         net.set_train(mode=True)

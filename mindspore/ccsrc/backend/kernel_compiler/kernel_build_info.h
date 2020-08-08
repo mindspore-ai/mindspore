@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_KERNEL_BUILD_INFO_H_
-#define MINDSPORE_CCSRC_KERNEL_KERNEL_BUILD_INFO_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNEL_BUILD_INFO_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNEL_BUILD_INFO_H_
 #include <iostream>
 #include <vector>
 #include <memory>
@@ -63,13 +63,17 @@ class KernelBuildInfo {
 
   std::vector<Axis> GetOutputReshapeType(size_t input_index) const;
 
-  std::vector<std::string> GetAllInputFormats() const;
+  const std::vector<std::string> &GetAllInputFormats() const;
 
-  std::vector<std::string> GetAllOutputFormats() const;
+  const std::vector<std::string> &GetAllOutputFormats() const;
 
-  std::vector<TypeId> GetAllInputDeviceTypes() const;
+  const std::vector<TypeId> &GetAllInputDeviceTypes() const;
 
-  std::vector<TypeId> GetAllOutputDeviceTypes() const;
+  const std::vector<TypeId> &GetAllOutputDeviceTypes() const;
+
+  std::vector<std::vector<Axis>> GetAllOutputReshapeType() const;
+
+  std::vector<std::vector<Axis>> GetAllInputReshapeType() const;
 
   OpPattern op_pattern() const { return op_pattern_; }
 
@@ -109,7 +113,22 @@ class KernelBuildInfo::KernelBuildInfoBuilder {
   KernelBuildInfoBuilder() { kernel_build_info_ = std::make_shared<KernelBuildInfo>(); }
 
   explicit KernelBuildInfoBuilder(std::shared_ptr<KernelBuildInfo> kernel_build_info)
-      : kernel_build_info_(std::move(kernel_build_info)) {}
+      : kernel_build_info_(std::make_shared<KernelBuildInfo>()) {
+    SetKernelType(kernel_build_info->kernel_type());
+    SetFusionType(kernel_build_info->fusion_type());
+    SetProcessor(kernel_build_info->processor());
+    OpPattern(kernel_build_info->op_pattern());
+    for (size_t index = 0; index < kernel_build_info->GetInputNum(); ++index) {
+      kernel_build_info_->inputs_device_type_.emplace_back(kernel_build_info->GetInputDeviceType(index));
+      kernel_build_info_->inputs_format_.emplace_back(kernel_build_info->GetInputFormat(index));
+      kernel_build_info_->input_reshape_type_.emplace_back(kernel_build_info->GetInputReshapeType(index));
+    }
+    for (size_t index = 0; index < kernel_build_info->GetOutputNum(); ++index) {
+      kernel_build_info_->outputs_device_type_.emplace_back(kernel_build_info->GetOutputDeviceType(index));
+      kernel_build_info_->outputs_format_.emplace_back(kernel_build_info->GetOutputFormat(index));
+      kernel_build_info_->output_reshape_type_.emplace_back(kernel_build_info->GetOutputReshapeType(index));
+    }
+  }
 
   ~KernelBuildInfoBuilder() = default;
 
@@ -123,9 +142,9 @@ class KernelBuildInfo::KernelBuildInfoBuilder {
 
   void SetOutputsDeviceType(const std::vector<TypeId> &outputs_device_type);
 
-  void SetInputReshapeType(const std::vector<std::vector<Axis>> &input_reshape_type);
+  void SetInputsReshapeType(const std::vector<std::vector<Axis>> &input_reshape_type);
 
-  void SetOutputReshapeType(const std::vector<std::vector<Axis>> &output_reshape_type);
+  void SetOutputsReshapeType(const std::vector<std::vector<Axis>> &output_reshape_type);
 
   void SetFusionType(FusionType fusion_type);
 
@@ -137,6 +156,14 @@ class KernelBuildInfo::KernelBuildInfoBuilder {
 
   void SetOutputFormat(const std::string &format, size_t index);
 
+  void SetInputReshapeType(const std::vector<Axis> &input_reshape_type, size_t index);
+
+  void SetOutputReshapeType(const std::vector<Axis> &output_reshape_type, size_t index);
+
+  void SetInputDeviceType(const TypeId &input_device_type, size_t index);
+
+  void SetOutputDeviceType(const TypeId &output_device_type, size_t index);
+
   std::shared_ptr<KernelBuildInfo> Build();
 
  private:
@@ -144,4 +171,4 @@ class KernelBuildInfo::KernelBuildInfoBuilder {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_KERNEL_KERNEL_BUILD_INFO_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNEL_BUILD_INFO_H_

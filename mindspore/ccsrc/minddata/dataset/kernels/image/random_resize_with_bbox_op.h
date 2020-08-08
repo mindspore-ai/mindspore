@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_KERNELS_IMAGE_RANDOM_RESIZE_WITH_BBOX_OP_H
-#define DATASET_KERNELS_IMAGE_RANDOM_RESIZE_WITH_BBOX_OP_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_RESIZE_WITH_BBOX_OP_H
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_RESIZE_WITH_BBOX_OP_H
 
 #include <memory>
 #include <random>
@@ -42,7 +42,7 @@ class RandomResizeWithBBoxOp : public ResizeWithBBoxOp {
 
   // Description: A function that prints info about the node
   void Print(std::ostream &out) const override {
-    out << "RandomResizeWithBBoxOp: " << ResizeWithBBoxOp::size1_ << " " << ResizeWithBBoxOp::size2_;
+    out << Name() << ": " << ResizeWithBBoxOp::size1_ << " " << ResizeWithBBoxOp::size2_;
   }
 
   Status Compute(const TensorRow &input, TensorRow *output) override;
@@ -56,4 +56,4 @@ class RandomResizeWithBBoxOp : public ResizeWithBBoxOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_KERNELS_IMAGE_RANDOM_RESIZE_WITH_BBOX_OP_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_RESIZE_WITH_BBOX_OP_H

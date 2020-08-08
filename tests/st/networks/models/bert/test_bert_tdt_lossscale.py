@@ -28,11 +28,13 @@ import mindspore.dataset.engine.datasets as de
 import mindspore.dataset.transforms.c_transforms as C
 from mindspore import context
 from mindspore import log as logger
+from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 from mindspore.nn.optim import Lamb
 from mindspore.train.callback import Callback
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore.train.model import Model
+import mindspore.nn.learning_rate_schedule as lr_schedules
 
 _current_dir = os.path.dirname(os.path.realpath(__file__))
 DATA_DIR = ["/home/workspace/mindspore_dataset/bert/example/examples.tfrecord"]
@@ -91,6 +93,7 @@ def me_de_train_dataset(sink_mode=False):
     """test me de train dataset"""
     # apply repeat operations
     repeat_count = 1
+    sink_size = -1
     batch_size = 16
     ds = de.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["input_ids", "input_mask", "segment_ids",
                                                                 "next_sentence_labels", "masked_lm_positions",
@@ -98,12 +101,8 @@ def me_de_train_dataset(sink_mode=False):
     type_cast_op = C.TypeCast(mstype.int32)
     new_repeat_count = repeat_count
     if sink_mode:
-        repeat_count = 30
-        sink_steps = 100
-        ori_dataaet_size = ds.get_dataset_size()
-        new_size = sink_steps * batch_size
-        ds.set_dataset_size(new_size)
-        new_repeat_count = int(repeat_count * ori_dataaet_size // ds.get_dataset_size())
+        sink_size = 100
+        new_repeat_count = 3
     ds = ds.map(input_columns="masked_lm_ids", operations=type_cast_op)
     ds = ds.map(input_columns="masked_lm_positions", operations=type_cast_op)
     ds = ds.map(input_columns="next_sentence_labels", operations=type_cast_op)
@@ -112,10 +111,9 @@ def me_de_train_dataset(sink_mode=False):
     ds = ds.map(input_columns="input_ids", operations=type_cast_op)
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)
-    ds = ds.repeat(repeat_count)
     logger.info("data size: {}".format(ds.get_dataset_size()))
     logger.info("repeat_count: {}".format(ds.get_repeat_count()))
-    return ds, new_repeat_count
+    return ds, new_repeat_count, sink_size
 
 
 def weight_variable(shape):
@@ -123,6 +121,31 @@ def weight_variable(shape):
     np.random.seed(1)
     ones = np.random.uniform(-0.1, 0.1, size=shape).astype(np.float32)
     return Tensor(ones)
+
+
+class BertLearningRate(lr_schedules.LearningRateSchedule):
+    def __init__(self, learning_rate, end_learning_rate, warmup_steps, decay_steps, power):
+        super(BertLearningRate, self).__init__()
+        self.warmup_flag = False
+        if warmup_steps > 0:
+            self.warmup_flag = True
+            self.warmup_lr = lr_schedules.WarmUpLR(learning_rate, warmup_steps)
+        self.decay_lr = lr_schedules.PolynomialDecayLR(learning_rate, end_learning_rate, decay_steps, power)
+        self.warmup_steps = Tensor(np.array([warmup_steps]).astype(np.float32))
+
+        self.greater = P.Greater()
+        self.one = Tensor(np.array([1.0]).astype(np.float32))
+        self.cast = P.Cast()
+
+    def construct(self, global_step):
+        decay_lr = self.decay_lr(global_step)
+        if self.warmup_flag:
+            is_warmup = self.cast(self.greater(self.warmup_steps, global_step), mstype.float32)
+            warmup_lr = self.warmup_lr(global_step)
+            lr = (self.one - is_warmup) * decay_lr + is_warmup * warmup_lr
+        else:
+            lr = decay_lr
+        return lr
 
 
 class ModelCallback(Callback):
@@ -154,17 +177,29 @@ class TimeMonitor(Callback):
         self.epoch_mseconds_list.append(epoch_mseconds)
         self.per_step_mseconds_list.append(epoch_mseconds / self.data_size)
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_bert_percision():
     """test bert percision"""
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", reserve_class_name_in_scope=False)
-    ds, new_repeat_count = me_de_train_dataset()
+    ds, new_repeat_count, _ = me_de_train_dataset()
     version = os.getenv('VERSION', 'large')
     batch_size = 16
     config = get_config(version=version, batch_size=batch_size)
     netwithloss = BertNetworkWithLoss(config, True)
-    optimizer = Lamb(netwithloss.trainable_params(), decay_steps=ds.get_dataset_size()*new_repeat_count,
-                     start_learning_rate=5e-5, end_learning_rate=1e-9,
-                     power=10.0, warmup_steps=0, weight_decay=0.01)
+    lr = BertLearningRate(decay_steps=ds.get_dataset_size()*new_repeat_count,
+                          learning_rate=5e-5, end_learning_rate=1e-9,
+                          power=10.0, warmup_steps=0)
+    decay_filter = lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower()
+    no_decay_filter = lambda x: 'layernorm' in x.name.lower() or 'bias' in x.name.lower()
+    decay_params = list(filter(decay_filter, netwithloss.trainable_params()))
+    other_params = list(filter(no_decay_filter, netwithloss.trainable_params()))
+    group_params = [{'params': decay_params, 'weight_decay': 0.01},
+                    {'params': other_params},
+                    {'order_params': netwithloss.trainable_params()}]
+    optimizer = Lamb(group_params, lr)
     scale_window = 3
     scale_manager = DynamicLossScaleManager(2 ** 16, 2, scale_window)
     netwithgrads = BertTrainOneStepWithLossScaleCell(netwithloss, optimizer=optimizer,
@@ -174,7 +209,6 @@ def test_bert_percision():
     callback = ModelCallback()
     params = netwithloss.trainable_params()
     for param in params:
-        param.init_data()
         value = param.default_input
         name = param.name
         if isinstance(value, Tensor):
@@ -212,17 +246,31 @@ def test_bert_percision():
     print("loss scale: {}".format(loss_scale))
     assert np.allclose(loss_scale, expect_loss_scale, 0, 0)
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_bert_performance():
     """test bert performance"""
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", reserve_class_name_in_scope=False)
-    ds, new_repeat_count = me_de_train_dataset(sink_mode=True)
+    ds, new_repeat_count, sink_size = me_de_train_dataset(sink_mode=True)
     version = os.getenv('VERSION', 'large')
     batch_size = 16
     config = get_config(version=version, batch_size=batch_size)
     netwithloss = BertNetworkWithLoss(config, True)
-    optimizer = Lamb(netwithloss.trainable_params(), decay_steps=ds.get_dataset_size()*new_repeat_count,
-                     start_learning_rate=5e-5, end_learning_rate=1e-9,
-                     power=10.0, warmup_steps=0, weight_decay=0.01)
+
+    lr = BertLearningRate(decay_steps=sink_size * new_repeat_count,
+                          learning_rate=5e-5, end_learning_rate=1e-9,
+                          power=10.0, warmup_steps=0)
+    decay_filter = lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower()
+    no_decay_filter = lambda x: 'layernorm' in x.name.lower() or 'bias' in x.name.lower()
+    decay_params = list(filter(decay_filter, netwithloss.trainable_params()))
+    other_params = list(filter(no_decay_filter, netwithloss.trainable_params()))
+    group_params = [{'params': decay_params, 'weight_decay': 0.01},
+                    {'params': other_params},
+                    {'order_params': netwithloss.trainable_params()}]
+    optimizer = Lamb(group_params, lr)
+
     scale_window = 3
     scale_manager = DynamicLossScaleManager(2 ** 16, 2, scale_window)
     netwithgrads = BertTrainOneStepWithLossScaleCell(netwithloss, optimizer=optimizer,
@@ -232,7 +280,6 @@ def test_bert_performance():
     callback = ModelCallback()
     params = netwithloss.trainable_params()
     for param in params:
-        param.init_data()
         value = param.default_input
         name = param.name
         if isinstance(value, Tensor):
@@ -249,9 +296,9 @@ def test_bert_performance():
             else:
                 logger.info("***************** BERT param name is 3 {}".format(name))
                 param.default_input = weight_variable(value.asnumpy().shape)
-    time_monitor_callback = TimeMonitor(ds.get_dataset_size())
+    time_monitor_callback = TimeMonitor(sink_size)
     model.train(new_repeat_count, ds, callbacks=[time_monitor_callback, callback],
-                dataset_sink_mode=True)
+                dataset_sink_mode=True, sink_size=sink_size)
 
     # assertion occurs while the loss value, overflow state or loss_scale value is wrong
     loss_value = np.array(callback.loss_list)

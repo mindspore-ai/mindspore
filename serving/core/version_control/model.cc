@@ -15,18 +15,19 @@
  */
 #include "core/version_control/model.h"
 #include <string>
-#include "mindspore/ccsrc/utils/log_adapter.h"
+#include "include/infer_log.h"
 
 namespace mindspore {
 namespace serving {
+
 MindSporeModel::MindSporeModel(const std::string &model_name, const std::string &model_path,
                                const std::string &model_version, const time_t &last_update_time)
     : model_name_(model_name),
       model_path_(model_path),
       model_version_(model_version),
       last_update_time_(last_update_time) {
-  MS_LOG(INFO) << "init mindspore model, model_name = " << model_name_ << ", model_path = " << model_path_
-               << ", model_version = " << model_version_ << ", last_update_time = " << last_update_time_;
+  MSI_LOG(INFO) << "init mindspore model, model_name = " << model_name_ << ", model_path = " << model_path_
+                << ", model_version = " << model_version_ << ", last_update_time = " << last_update_time_;
 }
 }  // namespace serving
 }  // namespace mindspore

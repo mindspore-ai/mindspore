@@ -30,7 +30,7 @@ def serialize(dataset, json_filepath=None):
 
     Args:
         dataset (Dataset): the starting node.
-        json_filepath (string): a filepath where a serialized json file will be generated.
+        json_filepath (str): a filepath where a serialized json file will be generated.
 
     Returns:
        dict containing the serialized dataset graph.
@@ -63,7 +63,7 @@ def deserialize(input_dict=None, json_filepath=None):
 
     Args:
         input_dict (dict): a python dictionary containing a serialized dataset graph
-        json_filepath (string): a path to the json file.
+        json_filepath (str): a path to the json file.
 
     Returns:
         de.Dataset or None if error occurs.
@@ -279,7 +279,7 @@ def create_node(node):
         sampler = construct_sampler(node.get('sampler'))
         pyobj = pyclass(node['dataset_file'], node.get('columns_list'),
                         node.get('num_parallel_workers'), node.get('seed'), node.get('num_shards'),
-                        node.get('shard_id'), node.get('block_reader'), sampler)
+                        node.get('shard_id'), sampler)
 
     elif dataset_op == 'TFRecordDataset':
         pyobj = pyclass(node['dataset_files'], node.get('schema'), node.get('column_list'),

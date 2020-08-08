@@ -18,7 +18,7 @@
 #include <string>
 #include "minddata/dataset/core/client.h"
 #include "common/common.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "gtest/gtest.h"
 #include "minddata/dataset/core/global_context.h"
 #include "utils/log_adapter.h"
@@ -78,7 +78,10 @@ std::shared_ptr<de::ExecutionTree> Build(std::vector<std::shared_ptr<de::Dataset
 TEST_F(MindDataTestBatchOp, TestSimpleBatch) {
   std::string schema_file = datasets_root_path_ + "/testBatchDataset/test.data";
   bool success = false;
-  auto tree = Build({TFReader(schema_file), Batch(12)});
+  const std::shared_ptr<de::BatchOp> &op = Batch(12);
+  EXPECT_EQ(op->Name(), "BatchOp");
+
+  auto tree = Build({TFReader(schema_file), op});
   tree->Prepare();
   Status rc = tree->Launch();
   if (rc.IsError()) {
@@ -90,8 +93,8 @@ TEST_F(MindDataTestBatchOp, TestSimpleBatch) {
     rc = di.GetNextAsMap(&tensor_map);
     EXPECT_TRUE(rc.IsOk());
     std::shared_ptr<de::Tensor> t;
-    rc = de::Tensor::CreateTensor(&t, TensorImpl::kFlexible, de::TensorShape({12, 1}), de::DataType(DataType::DE_INT64),
-                                  (unsigned char *)payload);
+    rc = de::Tensor::CreateFromMemory(de::TensorShape({12, 1}), de::DataType(DataType::DE_INT64),
+                                      (unsigned char *)payload, &t);
     EXPECT_TRUE(rc.IsOk());
     // verify the actual data in Tensor is correct
     EXPECT_EQ(*t == *tensor_map["col_sint64"], true);
@@ -119,14 +122,14 @@ TEST_F(MindDataTestBatchOp, TestRepeatBatchDropTrue) {
                          -9223372036854775807 - 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9223372036854775807};
     de::DatasetIterator di(tree);
     std::shared_ptr<de::Tensor> t1, t2, t3;
-    rc = de::Tensor::CreateTensor(&t1, TensorImpl::kFlexible, de::TensorShape({7, 1}), de::DataType(DataType::DE_INT64),
-                                  (unsigned char *)payload);
+    rc = de::Tensor::CreateFromMemory(de::TensorShape({7, 1}), de::DataType(DataType::DE_INT64),
+                                      (unsigned char *)payload, &t1);
     EXPECT_TRUE(rc.IsOk());
-    rc = de::Tensor::CreateTensor(&t2, TensorImpl::kFlexible, de::TensorShape({7, 1}), de::DataType(DataType::DE_INT64),
-                                  (unsigned char *)(payload + 7));
+    rc = de::Tensor::CreateFromMemory(de::TensorShape({7, 1}), de::DataType(DataType::DE_INT64),
+                                      (unsigned char *)(payload + 7), &t2);
     EXPECT_TRUE(rc.IsOk());
-    rc = de::Tensor::CreateTensor(&t3, TensorImpl::kFlexible, de::TensorShape({7, 1}), de::DataType(DataType::DE_INT64),
-                                  (unsigned char *)(payload + 2));
+    rc = de::Tensor::CreateFromMemory(de::TensorShape({7, 1}), de::DataType(DataType::DE_INT64),
+                                      (unsigned char *)(payload + 2), &t3);
     EXPECT_TRUE(rc.IsOk());
 
     TensorMap tensor_map;
@@ -164,17 +167,17 @@ TEST_F(MindDataTestBatchOp, TestRepeatBatchDropFalse) {
                          -9223372036854775807 - 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9223372036854775807};
     de::DatasetIterator di(tree);
     std::shared_ptr<de::Tensor> t1, t2, t3, t4;
-    rc = de::Tensor::CreateTensor(&t1, TensorImpl::kFlexible, de::TensorShape({7, 1}), de::DataType(DataType::DE_INT64),
-                                  (unsigned char *)payload);
+    rc = de::Tensor::CreateFromMemory(de::TensorShape({7, 1}), de::DataType(DataType::DE_INT64),
+                                      (unsigned char *)payload, &t1);
     EXPECT_TRUE(rc.IsOk());
-    rc = de::Tensor::CreateTensor(&t2, TensorImpl::kFlexible, de::TensorShape({7, 1}), de::DataType(DataType::DE_INT64),
-                                  (unsigned char *)(payload + 7));
+    rc = de::Tensor::CreateFromMemory(de::TensorShape({7, 1}), de::DataType(DataType::DE_INT64),
+                                      (unsigned char *)(payload + 7), &t2);
     EXPECT_TRUE(rc.IsOk());
-    rc = de::Tensor::CreateTensor(&t3, TensorImpl::kFlexible, de::TensorShape({7, 1}), de::DataType(DataType::DE_INT64),
-                                  (unsigned char *)(payload + 2));
+    rc = de::Tensor::CreateFromMemory(de::TensorShape({7, 1}), de::DataType(DataType::DE_INT64),
+                                      (unsigned char *)(payload + 2), &t3);
     EXPECT_TRUE(rc.IsOk());
-    rc = de::Tensor::CreateTensor(&t4, TensorImpl::kFlexible, de::TensorShape({3, 1}), de::DataType(DataType::DE_INT64),
-                                  (unsigned char *)(payload + 9));
+    rc = de::Tensor::CreateFromMemory(de::TensorShape({3, 1}), de::DataType(DataType::DE_INT64),
+                                      (unsigned char *)(payload + 9), &t4);
     EXPECT_TRUE(rc.IsOk());
 
     TensorMap tensor_map;
@@ -216,11 +219,11 @@ TEST_F(MindDataTestBatchOp, TestBatchDropFalseRepeat) {
                          -9223372036854775807 - 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9223372036854775807};
     de::DatasetIterator di(tree);
     std::shared_ptr<de::Tensor> t1, t2;
-    rc = de::Tensor::CreateTensor(&t1, TensorImpl::kFlexible, de::TensorShape({7, 1}), de::DataType(DataType::DE_INT64),
-                                  (unsigned char *)payload);
+    rc = de::Tensor::CreateFromMemory(de::TensorShape({7, 1}), de::DataType(DataType::DE_INT64),
+                                      (unsigned char *)payload, &t1);
     EXPECT_TRUE(rc.IsOk());
-    rc = de::Tensor::CreateTensor(&t2, TensorImpl::kFlexible, de::TensorShape({5, 1}), de::DataType(DataType::DE_INT64),
-                                  (unsigned char *)(payload + 7));
+    rc = de::Tensor::CreateFromMemory(de::TensorShape({5, 1}), de::DataType(DataType::DE_INT64),
+                                      (unsigned char *)(payload + 7), &t2);
     EXPECT_TRUE(rc.IsOk());
 
     TensorMap tensor_map;
@@ -262,11 +265,11 @@ TEST_F(MindDataTestBatchOp, TestBatchDropTrueRepeat) {
                          -9223372036854775807 - 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9223372036854775807};
     de::DatasetIterator di(tree);
     std::shared_ptr<de::Tensor> t1, t2;
-    rc = de::Tensor::CreateTensor(&t1, TensorImpl::kFlexible, de::TensorShape({5, 1}), de::DataType(DataType::DE_INT64),
-                                  (unsigned char *)payload);
+    rc = de::Tensor::CreateFromMemory(de::TensorShape({5, 1}), de::DataType(DataType::DE_INT64),
+                                      (unsigned char *)payload, &t1);
     EXPECT_TRUE(rc.IsOk());
-    rc = de::Tensor::CreateTensor(&t2, TensorImpl::kFlexible, de::TensorShape({5, 1}), de::DataType(DataType::DE_INT64),
-                                  (unsigned char *)(payload + 5));
+    rc = de::Tensor::CreateFromMemory(de::TensorShape({5, 1}), de::DataType(DataType::DE_INT64),
+                                      (unsigned char *)(payload + 5), &t2);
     EXPECT_TRUE(rc.IsOk());
 
     TensorMap tensor_map;
@@ -300,7 +303,7 @@ TEST_F(MindDataTestBatchOp, TestSimpleBatchPadding) {
   std::shared_ptr<BatchOp> op;
   PadInfo m;
   std::shared_ptr<Tensor> pad_value;
-  Tensor::CreateTensor(&pad_value, TensorImpl::kFlexible, TensorShape::CreateScalar(), DataType(DataType::DE_FLOAT32));
+  Tensor::CreateEmpty(TensorShape::CreateScalar(), DataType(DataType::DE_FLOAT32), &pad_value);
   pad_value->SetItemAt<float>({}, -1);
   m.insert({"col_1d", std::make_pair(TensorShape({4}), pad_value)});
   de::BatchOp::Builder(12).SetDrop(false).SetPaddingMap(m, true).Build(&op);
@@ -359,8 +362,8 @@ TEST_F(MindDataTestBatchOp, TestSimpleBatchPadding) {
                          -1,
                          -1};
     std::shared_ptr<de::Tensor> t;
-    rc = de::Tensor::CreateTensor(&t, TensorImpl::kFlexible, de::TensorShape({12, 4}), de::DataType(DataType::DE_INT64),
-                                  (unsigned char *)payload);
+    rc = de::Tensor::CreateFromMemory(de::TensorShape({12, 4}), de::DataType(DataType::DE_INT64),
+                                      (unsigned char *)payload, &t);
     de::DatasetIterator di(tree);
     TensorMap tensor_map;
     rc = di.GetNextAsMap(&tensor_map);

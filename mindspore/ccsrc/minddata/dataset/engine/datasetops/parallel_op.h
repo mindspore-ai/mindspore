@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_ENGINE_DATASETOPS_PARALLEL_OP_H_
-#define DATASET_ENGINE_DATASETOPS_PARALLEL_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_PARALLEL_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_PARALLEL_OP_H_
 
 #include <memory>
+#include <string>
 #include <vector>
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
@@ -54,6 +55,7 @@ class ParallelOp : public DatasetOp {
   // @param out - The output stream to write output to
   // @param show_all - A bool to control if you want to show all info or just a summary
   void Print(std::ostream &out, bool show_all) const override;
+  std::string Name() const override { return kParallelOp; }
 
   // << Stream output operator overload
   // @notes This allows you to write the debug print info using stream operators
@@ -123,4 +125,4 @@ class ParallelOp : public DatasetOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_ENGINE_DATASETOPS_PARALLEL_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_PARALLEL_OP_H_

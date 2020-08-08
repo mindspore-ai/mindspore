@@ -380,7 +380,7 @@ def test_while_net():
     x = Tensor(np.ones([1, 16, 12, 12]).astype(np.float32))
     z = Tensor(np.ones([1, 16, 16, 16]).astype(np.float32))
     res = t1_while(x, y, z)
-    assert res == Tensor(np.ones([1, 16, 12, 12]).astype(np.float32) * 2306.0)
+    assert np.all(res.asnumpy() == np.ones([1, 16, 12, 12]).astype(np.float32) * 2306.0)
 
 
 @ms_function
@@ -403,7 +403,7 @@ def test_if_while():
     x = Tensor(np.random.randn(1, 16, 12, 12).astype(np.float32))
     z = Tensor(np.random.randn(1, 16, 16, 16).astype(np.float32))
     res = if_while(Tensor(np.ones([1]).astype(np.float32)), Tensor(np.ones([1]).astype(np.float32)), x, z)
-    assert res == Tensor(np.ones([64, 10]).astype(np.float32) * 4.0)
+    assert np.all(res.asnumpy() == np.ones([64, 10]).astype(np.float32) * 4.0)
 
 
 def _while(x):
@@ -550,7 +550,7 @@ def test_zeros():
     """ test_zeros """
     x = Tensor(np.ones([2, 3]).astype(np.int32))
     res = zero_like_tensor(x)
-    assert res == Tensor(np.zeros([2, 3]).astype(np.int32))
+    assert np.all(res.asnumpy() == np.zeros([2, 3]).astype(np.int32))
 
 
 @ms_function
@@ -811,7 +811,7 @@ def test_while_sp():
     z = Tensor(np.ones([1, 3]).astype(np.float32))
     x = Tensor(np.ones([1, 3]).astype(np.float32) * 2.0)
     res = while_sp(x, y, z)
-    assert res == Tensor(np.ones([1, 3]).astype(np.float32) * 1024.0)
+    assert np.all(res.asnumpy() == np.ones([1, 3]).astype(np.float32) * 1024.0)
 
 
 def grad_refactor_simple_1(x, y):
@@ -1030,7 +1030,7 @@ def test_grad_if_defer_inline():
     network.add_flags(defer_inline=False)
     inp = Tensor(np.ones([128, 96]).astype(np.float32))
     grads = C.grad_all(network)(inp)
-    assert grads == (Tensor(np.full([128, 96], 0.6, dtype=np.float32)),)
+    assert np.all(grads[0].asnumpy() == np.full([128, 96], 0.6, dtype=np.float32))
 
 
 def test_dict_const():

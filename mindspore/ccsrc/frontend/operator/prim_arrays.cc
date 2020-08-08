@@ -15,7 +15,6 @@
  */
 
 #include "pipeline/jit/static_analysis/prim.h"
-#include "frontend/operator/ops.h"
 #include "abstract/utils.h"
 #include "frontend/operator/cc_implementations.h"
 #include "abstract/param_validator.h"
@@ -78,23 +77,6 @@ AbstractBasePtr InferImplBroadCastShape(const AnalysisEnginePtr &, const Primiti
   });
 
   return std::make_shared<AbstractTuple>(elems);
-}
-
-AbstractBasePtr InferImplShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const AbstractBasePtrList &args_spec_list) {
-  // Inputs: a tensor.
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  AbstractTensorPtr arg = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  MS_LOG(DEBUG) << "InferImplShape:" << arg->ToString();
-
-  AbstractBasePtrList values;
-  auto shp = arg->shape();
-  for (int entry : shp->shape()) {
-    auto entry_v = MakeValue(entry);
-    values.push_back(std::make_shared<AbstractScalar>(entry_v, entry_v->type()));
-  }
-  return std::make_shared<AbstractTuple>(values);
 }
 
 AbstractBasePtr InferImplTile(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -165,6 +147,48 @@ AbstractBasePtr InferImplPack(const AnalysisEnginePtr &, const PrimitivePtr &pri
   (void)shape.insert(shape.begin() + axis_value, tuple_len);
   ret->set_shape(std::make_shared<Shape>(shape));
   return ret;
+}
+
+AbstractBasePtr InferImplUnique(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                const AbstractBasePtrList &args_spec_list) {
+  // inputs: a 1-d Tensor
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+
+  auto shape = input->shape();
+  if (shape->shape().size() != 1) {
+    MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 1.";
+  }
+  std::vector<int> ids_shape = {Shape::SHP_ANY};
+  std::vector<int> min_shape = {1};
+  std::vector<int> max_shape = shape->shape();
+  auto ids =
+    std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(ids_shape, min_shape, max_shape));
+  auto ids_idx = std::make_shared<AbstractTensor>(std::make_shared<Int>(32), shape->shape());
+  // outputs: ids, ids_idx
+  AbstractBasePtrList elements = {ids, ids_idx};
+  return std::make_shared<AbstractTuple>(elements);
+}
+
+AbstractBasePtr InferImplUniqueGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const AbstractBasePtrList &args_spec_list) {
+  // inputs: a 1-d Tensor
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 2);
+  AbstractTuplePtr dout = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name + " dout", dout->elements(), 2);
+  auto ids = CheckArg<AbstractTensor>(op_name, dout->elements(), 0);
+  auto ids_idx = CheckArg<AbstractTensor>(op_name, dout->elements(), 1);
+  if (ids->shape()->shape().size() != 1) {
+    MS_LOG(EXCEPTION) << "Dims of dout[0] of " << op_name << "' input must be 1.";
+  }
+  if (ids_idx->shape()->shape().size() != 1) {
+    MS_LOG(EXCEPTION) << "Dims of dout[1] of " << op_name << "' input must be 1.";
+  }
+
+  // outputs: dx
+  return std::make_shared<AbstractTensor>(ids->element(), ids_idx->shape());
 }
 }  // namespace abstract
 }  // namespace mindspore

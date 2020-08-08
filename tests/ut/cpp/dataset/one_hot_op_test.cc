@@ -29,19 +29,17 @@ class MindDataTestOneHotOp : public UT::Common {
 
 TEST_F(MindDataTestOneHotOp, TestOp) {
   MS_LOG(INFO) << "Doing MindDataTestOneHotOp.";
-  uint64_t labels[3] = {0, 1, 2};
-  TensorShape shape({3});
-  std::shared_ptr<Tensor> input = std::make_shared<Tensor>(shape, DataType(DataType::DE_UINT64),
-                                                           reinterpret_cast <unsigned char *>(labels));
+  std::vector<uint64_t> labels = {0, 1, 2};
+  std::shared_ptr<Tensor> input;
+  Tensor::CreateFromVector(labels, &input);
   std::shared_ptr<Tensor> output;
 
   std::unique_ptr<OneHotOp> op(new OneHotOp(5));
   Status s = op->Compute(input, &output);
-  uint64_t out[15] = {1, 0, 0, 0, 0,
-                      0, 1, 0, 0, 0,
-                      0, 0, 1, 0, 0};
-  std::shared_ptr<Tensor> expected = std::make_shared<Tensor>(TensorShape{3, 5}, DataType(DataType::DE_UINT64),
-                                                              reinterpret_cast <unsigned char *>(out));
+  std::vector<uint64_t> out = {1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0};
+  std::shared_ptr<Tensor> expected;
+  Tensor::CreateFromVector(out, TensorShape{3, 5}, &expected);
+
   EXPECT_TRUE(s.IsOk());
   ASSERT_TRUE(output->shape() == expected->shape());
   ASSERT_TRUE(output->type() == expected->type());

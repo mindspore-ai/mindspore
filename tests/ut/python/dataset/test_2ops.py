@@ -12,15 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from util import save_and_check
-
 import mindspore.dataset as ds
 from mindspore import log as logger
+from util import save_and_check_dict
 
 DATA_DIR = ["../data/dataset/testTFTestAllTypes/test.data"]
 SCHEMA_DIR = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
-COLUMNS = ["col_1d", "col_2d", "col_3d", "col_binary", "col_float",
-           "col_sint16", "col_sint32", "col_sint64"]
 GENERATE_GOLDEN = False
 
 
@@ -33,9 +30,6 @@ def test_2ops_repeat_shuffle():
     repeat_count = 2
     buffer_size = 5
     seed = 0
-    parameters = {"params": {'repeat_count': repeat_count,
-                             'buffer_size': buffer_size,
-                             'seed': seed}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
@@ -44,7 +38,7 @@ def test_2ops_repeat_shuffle():
     data1 = data1.shuffle(buffer_size=buffer_size)
 
     filename = "test_2ops_repeat_shuffle.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_2ops_shuffle_repeat():
@@ -56,10 +50,6 @@ def test_2ops_shuffle_repeat():
     repeat_count = 2
     buffer_size = 5
     seed = 0
-    parameters = {"params": {'repeat_count': repeat_count,
-                             'buffer_size': buffer_size,
-                             'reshuffle_each_iteration': False,
-                             'seed': seed}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
@@ -68,7 +58,7 @@ def test_2ops_shuffle_repeat():
     data1 = data1.repeat(repeat_count)
 
     filename = "test_2ops_shuffle_repeat.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_2ops_repeat_batch():
@@ -79,8 +69,6 @@ def test_2ops_repeat_batch():
     # define parameters
     repeat_count = 2
     batch_size = 5
-    parameters = {"params": {'repeat_count': repeat_count,
-                             'batch_size': batch_size}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
@@ -88,7 +76,7 @@ def test_2ops_repeat_batch():
     data1 = data1.batch(batch_size, drop_remainder=True)
 
     filename = "test_2ops_repeat_batch.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_2ops_batch_repeat():
@@ -99,8 +87,6 @@ def test_2ops_batch_repeat():
     # define parameters
     repeat_count = 2
     batch_size = 5
-    parameters = {"params": {'repeat_count': repeat_count,
-                             'batch_size': batch_size}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
@@ -108,7 +94,7 @@ def test_2ops_batch_repeat():
     data1 = data1.repeat(repeat_count)
 
     filename = "test_2ops_batch_repeat.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_2ops_batch_shuffle():
@@ -120,9 +106,6 @@ def test_2ops_batch_shuffle():
     buffer_size = 5
     seed = 0
     batch_size = 2
-    parameters = {"params": {'buffer_size': buffer_size,
-                             'seed': seed,
-                             'batch_size': batch_size}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
@@ -131,7 +114,7 @@ def test_2ops_batch_shuffle():
     data1 = data1.shuffle(buffer_size=buffer_size)
 
     filename = "test_2ops_batch_shuffle.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_2ops_shuffle_batch():
@@ -143,9 +126,6 @@ def test_2ops_shuffle_batch():
     buffer_size = 5
     seed = 0
     batch_size = 2
-    parameters = {"params": {'buffer_size': buffer_size,
-                             'seed': seed,
-                             'batch_size': batch_size}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
@@ -154,7 +134,7 @@ def test_2ops_shuffle_batch():
     data1 = data1.batch(batch_size, drop_remainder=True)
 
     filename = "test_2ops_shuffle_batch.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 if __name__ == '__main__':

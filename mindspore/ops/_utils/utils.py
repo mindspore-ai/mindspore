@@ -82,5 +82,8 @@ def get_concat_offset(x_shp, x_type, axis, prim_name):
             if j != axis and v[j] != x_shp[0][j]:
                 raise ValueError(f"For \'{prim_name}\' element {i} shape in input can not concat with first element")
         offset.append(all_shp)
-        all_shp += v[axis]
+        if all_shp == -1 or v[axis] == -1:
+            all_shp = -1
+        else:
+            all_shp += v[axis]
     return offset, all_shp, axis

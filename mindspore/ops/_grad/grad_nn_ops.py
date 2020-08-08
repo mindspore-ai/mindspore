@@ -14,7 +14,10 @@
 # ============================================================================
 
 """Define the grad rules of neural network related operations."""
+import numpy as np
 from mindspore.ops import _selected_grad_ops as SG
+from mindspore.ops.primitive import constexpr
+from mindspore.common.tensor import Tensor
 from .grad_base import bprop_getters
 from .. import functional as F
 from .. import operations as P
@@ -22,7 +25,6 @@ from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations import _grad_ops as G
 from ..operations import _inner_ops as inner
 from ... import context
-
 
 
 @bprop_getters.register(P.BiasAdd)
@@ -195,33 +197,133 @@ def get_bprop_max_pool_grad(self):
     return bprop
 
 
+def _windowed_output_size(input_size, ksize, stride, padding):
+    """
+    helper func for AvgPoolGrad
+    """
+
+    tmp_output = 0
+    tmp_pad_need = 0
+    tmp_pad_before = 0
+    tmp_pad_after = 0
+    if padding == 'VALID':
+        tmp_output = (input_size - ksize + stride) // stride
+        tmp_pad_before = 0
+        tmp_pad_after = 0
+    elif padding == 'SAME':
+        tmp_output = (input_size + stride - 1) // stride
+        tmp_pad_need = max(0, (tmp_output - 1) * stride + ksize - input_size)
+        tmp_pad_before = tmp_pad_need // 2
+        tmp_pad_after = tmp_pad_need - tmp_pad_before
+    return tmp_output, tmp_pad_before, tmp_pad_after
+
+
+@constexpr
+def _get_mean_matrix(x_shape, ksize, stride, padding, x_dtype):
+    """
+    helper func for AvgPoolGrad.
+
+    `assist_input_matrix` is a 2d matrix with input_shape after padding,
+    the value of element which is padded is 0, else are 1.
+    For each element of output, it is mapped for slide window: `[h*h_stride : h*h_stride + h_ksize,
+    w*w_stride : w*w_stride + w_ksize]` of `assist_input_matrix`, so the sum of slide window is the
+    number of input that assosiate with output element.
+    """
+
+    n_input, c_input, h_input, w_input = x_shape
+    h_ksize, w_ksize = ksize[2], ksize[3]
+    h_stride, w_stride = stride[2], stride[3]
+    n_output = n_input
+    c_output = c_input
+    h_output, w_output = 0, 0
+    pad_top, pad_bottom, pad_left, pad_right = 0, 0, 0, 0
+    h_output, pad_top, pad_bottom = _windowed_output_size(h_input, h_ksize,
+                                                          h_stride, padding)
+    w_output, pad_left, pad_right = _windowed_output_size(w_input, w_ksize,
+                                                          w_stride, padding)
+
+    output_size = n_output * c_output * h_output * w_output
+    output_shape = (n_output, c_output, h_output, w_output)
+    output = np.array([0.0] * output_size)
+    output = np.reshape(output, output_shape)
+
+    in_shape_after_padding_2d = (h_input + pad_top + pad_bottom, w_input + pad_left + pad_right)
+    assist_input_matrix = np.ones(in_shape_after_padding_2d).astype(np.float32)
+    if pad_top > 0:
+        assist_input_matrix[:pad_top, :] = 0
+    if pad_bottom > 0:
+        assist_input_matrix[-pad_bottom:, :] = 0
+    if pad_left > 0:
+        assist_input_matrix[:, :pad_left] = 0
+    if pad_right > 0:
+        assist_input_matrix[:, -pad_right:] = 0
+
+    for h in range(h_output):
+        for w in range(w_output):
+            curr_input = assist_input_matrix[h*h_stride : h*h_stride + h_ksize, w*w_stride : w*w_stride + w_ksize]
+            curr_sum = np.sum(curr_input)
+            if curr_sum > 0:
+                output[:, :, h, w] = 1. / curr_sum
+    return Tensor(output, x_dtype)
+
+
+@constexpr
+def _get_kernel_matrix(kernel_matrix_shape, x_dtype):
+    kernel_matrix = np.ones(kernel_matrix_shape)
+    return Tensor(kernel_matrix, x_dtype)
+
+
 @bprop_getters.register(P.AvgPool)
 def get_bprop_avg_pool_grad(self):
     """Grad definition for `AvgPool` operation."""
-    avgpool_grad = G.AvgPoolGrad(
-        ksize=self.ksize,
-        strides=self.strides,
-        padding=self.padding)
-    shape_op = P.Shape()
-
-    avgpool_grad_gpu = G.AvgPoolGradGpu(
-        ksize=self.ksize,
-        strides=self.strides,
-        padding=self.padding)
-
-    def bprop(x, out, dout):
-        dx = avgpool_grad(shape_op(x), dout)
-        return (dx,)
-
-    def bprop_gpu(x, out, dout):
-        dx = avgpool_grad_gpu(x, out, dout)
-        return (dx,)
 
     # the parameter of AvgPoolGrad in GPU and TBE/CPU is not same
     if self.target == "GPU":
+        avgpool_grad_gpu = G.AvgPoolGradGpu(
+                        ksize=self.ksize,
+                        strides=self.strides,
+                        padding=self.padding)
+
+        def bprop_gpu(x, out, dout):
+            dx = avgpool_grad_gpu(x, out, dout)
+            return (dx,)
+
         bprop_fn = bprop_gpu
+
+    elif self.target == "GE":
+        avgpool_grad_ge = G.AvgPoolGrad(
+                        ksize=self.ksize,
+                        strides=self.strides,
+                        padding=self.padding)
+        shape_op = P.Shape()
+
+        def bprop_ge(x, out, dout):
+            dx = avgpool_grad_ge(shape_op(x), dout)
+            return (dx,)
+
+        bprop_fn = bprop_ge
+
     else:
-        bprop_fn = bprop
+        avgpool_grad_vm = G.AvgPoolGradVm(
+                        ksize=self.ksize,
+                        strides=self.strides,
+                        padding=self.padding)
+        k_size_nchw = avgpool_grad_vm.ksize
+        stride_nchw = avgpool_grad_vm.strides
+        padding = self.padding
+
+        def bprop_vm(x, out, dout):
+            x_shape_nchw = F.shape(x)
+            x_dtype = F.dtype(x)
+            kernel_matrix_shape = (1, x_shape_nchw[1],
+                                   k_size_nchw[2],
+                                   k_size_nchw[3])
+            mean_matrix = _get_mean_matrix(x_shape_nchw, k_size_nchw, stride_nchw, padding, x_dtype)
+            kernel_matrix = _get_kernel_matrix(kernel_matrix_shape, x_dtype)
+            dx = avgpool_grad_vm(x_shape_nchw, dout, mean_matrix, kernel_matrix)
+            return (dx,)
+
+        bprop_fn = bprop_vm
 
     return bprop_fn
 
@@ -339,6 +441,7 @@ def get_bprop_softmax(self):
     sub = P.Sub()
     mul = P.Mul()
     axis = self.axis
+
     def bprop(x, out, dout):
         dx = mul(out, sub(dout, sum_func(mul(out, dout), axis)))
         return (dx,)
@@ -526,19 +629,59 @@ def get_bprop_onehot(self):
     return bprop
 
 
+@constexpr
+def _range_op(start, limit, delta, dtype):
+    """helper function for Grad TopK"""
+    output_tensor = Tensor(list(range(start, limit, delta)), dtype)
+    return output_tensor
+
+@constexpr
+def _get_1d_shape(in_shape):
+    """helper function for Grad TopK"""
+    out_shape = 1
+    for i in in_shape:
+        out_shape *= i
+    return (out_shape,)
+
 @bprop_getters.register(P.TopK)
 def get_bprop_top_kv2(self):
     """Grad definition for `TopK` operation."""
     scatter = P.ScatterNd()
     expand_dims = P.ExpandDims()
     shape_op = P.Shape()
+    reshape_op = P.Reshape()
+    dtype = P.DType()
 
     def bprop(input_x, k, out, dout):
+
+        # (n1, n2, ...., n_p), in_lastdim = n_p
+        in_shape = shape_op(input_x)
+        in_lastdim = in_shape[-1]
+
+        # (n_1, ... n_(p-1), k), ind_lastdim = k
         indices = out[1]
-        indices = expand_dims(indices, -1)
-        updates = dout[0]
-        shapes = shape_op(input_x)
-        return scatter(indices, updates, shapes), zeros_like(k)
+        ind_shape = shape_op(indices)
+        ind_lastdim = ind_shape[-1]
+
+        # (n_1*n_2..*n_(p-1), k),  outerdim = n_1*n_2..*n_(p-1)
+        ind_2d = reshape_op(indices, (-1, ind_lastdim))
+        outerdim = shape_op(ind_2d)[0]
+
+        # [0, outterdim, 2*outerdim, ..., (k-1)*outerdim]
+        indices_dtype = dtype(indices)
+        range_flatten_index = _range_op(0, outerdim * in_lastdim, in_lastdim, indices_dtype)
+
+        # expand_dims to (k, 1), then broadcast
+        ind = reshape_op(ind_2d + expand_dims(range_flatten_index, -1), (-1,))
+        in_shape_1d = _get_1d_shape(in_shape)
+
+        out_grad = reshape_op(
+            scatter(
+                expand_dims(ind, -1),
+                reshape_op(dout[0], (-1,)),
+                in_shape_1d),
+            in_shape)
+        return out_grad, zeros_like(k)
 
     return bprop
 
@@ -729,6 +872,17 @@ def get_bprop_binary_cross_entropy(self):
     def bprop(x, y, weight, out, dout):
         dx = grad(x, y, dout, weight)
         return dx, zeros_like(y), zeros_like(weight)
+
+    return bprop
+
+@bprop_getters.register(P.KLDivLoss)
+def get_bprop_kl_div_loss(self):
+    """Grad definition for `KLDivLoss` operation."""
+    grad = G.KLDivLossGrad(self.reduction)
+
+    def bprop(x, y, out, dout):
+        dx, dy = grad(x, y, dout)
+        return dx, dy
 
     return bprop
 

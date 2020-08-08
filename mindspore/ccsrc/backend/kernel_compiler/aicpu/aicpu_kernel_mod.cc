@@ -26,7 +26,7 @@
 #include "backend/kernel_compiler/aicpu/aicpu_kernel_build.h"
 #include "utils/convert_utils.h"
 #include "backend/kernel_compiler/aicpu/aicpu_util.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 using AicpuTaskInfoPtr = std::shared_ptr<ge::model_runner::AicpuTaskInfo>;
 

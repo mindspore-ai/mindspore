@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_PY_PASS_MANAGER_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_PY_PASS_MANAGER_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PY_PASS_MANAGER_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PY_PASS_MANAGER_H_
 
 #include <memory>
 #include <string>
@@ -23,11 +23,12 @@
 
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "ir/primitive_py.h"
-#include "utils/graph_utils.h"
-#include "common/utils.h"
+#include "utils/primitive_py.h"
+#include "ir/graph_utils.h"
+#include "utils/ms_utils.h"
 
 #include "pipeline/jit/parse/resolve.h"
+#include "frontend/optimizer/pattern.h"
 #include "frontend/optimizer/py_pass.h"
 #include "frontend/optimizer/pass_group.h"
 
@@ -51,7 +52,7 @@ class PyPassManager {
   // Access the only global instance
   static PyPassManagerPtr GetInstance();
   virtual ~PyPassManager() = default;
-  void Registe(const std::string &pass_name, const py::function &pattern, const py::function &target,
+  void Registe(const std::string &pass_name, const PatternPtr &pattern, const PatternPtr &target,
                Phase phase = Phase::RESOLVE, bool run_only_once = false, bool multigraph = true);
   void Unregiste(const std::string &pass_name, Phase phase);
   PassGroupPtr GetPassGroup(Phase phase);
@@ -63,4 +64,4 @@ class PyPassManager {
 }  // namespace python_pass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_PY_PASS_MANAGER_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PY_PASS_MANAGER_H_

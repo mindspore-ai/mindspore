@@ -133,7 +133,8 @@ class LSTM(Cell):
             self.transpose2 = P.Transpose()
         num_directions = 2 if self.bidirectional else 1
         self.cpu_target = False
-        if context.get_context("device_target") == "CPU":
+        enable_debug = context.get_context("enable_debug_runtime")
+        if context.get_context("device_target") == "CPU" and not enable_debug:
             self.cpu_target = True
         if not self.cpu_target:
             self.lstm = P.LSTM(input_size=self.input_size,

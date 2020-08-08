@@ -50,11 +50,11 @@ import numpy as np
 
 import mindspore._c_dataengine as cde
 
-from .utils import JiebaMode, NormalizeForm, to_str
+from .utils import JiebaMode, NormalizeForm, to_str, SPieceTokenizerOutType, SPieceTokenizerLoadType
 from .validators import check_lookup, check_jieba_add_dict, \
     check_jieba_add_word, check_jieba_init, check_with_offsets, check_unicode_script_tokenizer,\
     check_wordpiece_tokenizer, check_regex_tokenizer, check_basic_tokenizer, check_ngram, check_pair_truncate,\
-    check_to_number, check_bert_tokenizer, check_python_tokenizer
+    check_to_number, check_bert_tokenizer, check_python_tokenizer, check_slidingwindow
 from ..core.datatypes import mstype_to_detype
 
 
@@ -72,6 +72,34 @@ class Lookup(cde.LookupOp):
     def __init__(self, vocab, unknown_token=None):
         super().__init__(vocab, unknown_token)
 
+class SlidingWindow(cde.SlidingWindowOp):
+    """
+    TensorOp to construct a tensor from data (only 1-D for now), where each element in the dimension axis
+    is a slice of data starting at the corresponding position, with a specified width.
+
+    Args:
+        width (int): The width of the window. Must be an integer and greater than zero.
+        axis (int, optional): The axis along which sliding window is computed (default=0).
+
+    Examples:
+        >>> # Data before
+        >>> # |    col1     |
+        >>> # +-------------+
+        >>> # | [1,2,3,4,5] |
+        >>> # +-------------+
+        >>> data = data.map(operations=SlidingWindow(3, 0))
+        >>> # Data after
+        >>> # |     col1    |
+        >>> # +-------------+
+        >>> # |  [[1,2,3],  |
+        >>> # |   [2,3,4],  |
+        >>> # |   [3,4,5]]  |
+        >>> # +--------------+
+    """
+
+    @check_slidingwindow
+    def __init__(self, width, axis=0):
+        super().__init__(width=width, axis=axis)
 
 class Ngram(cde.NgramOp):
     """
@@ -80,7 +108,7 @@ class Ngram(cde.NgramOp):
     Refer to https://en.wikipedia.org/wiki/N-gram#Examples for an overview of what n-gram is and how it works.
 
     Args:
-        n (list of int):  n in n-gram, n >= 1. n is a list of positive integers, for e.g. n=[4,3], The result
+        n (list[int]):  n in n-gram, n >= 1. n is a list of positive integers, for e.g. n=[4,3], The result
             would be a 4-gram followed by a 3-gram in the same tensor. If number of words is not enough to make up for
             a n-gram, an empty string would be returned. For e.g. 3 grams on ["mindspore","best"] would result in an
             empty string be produced.
@@ -171,7 +199,7 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
         Add user defined word to JiebaTokenizer's dictionary.
 
         Args:
-            user_dict (str or dict): Dictionary to be added, file path or Python dictionary,
+            user_dict (Union[str, dict]): Dictionary to be added, file path or Python dictionary,
                 Python Dict format: {word1:freq1, word2:freq2,...}.
                 Jieba dictionary format : word(required), freq(optional), such as:
 
@@ -296,6 +324,36 @@ class WordpieceTokenizer(cde.WordpieceTokenizerOp):
         super().__init__(self.vocab, self.suffix_indicator, self.max_bytes_per_token,
                          self.unknown_token, self.with_offsets)
 
+DE_C_INTER_SENTENCEPIECE_LOADTYPE = {
+    SPieceTokenizerLoadType.FILE: cde.SPieceTokenizerLoadType.DE_SPIECE_TOKENIZER_LOAD_KFILE,
+    SPieceTokenizerLoadType.MODEL: cde.SPieceTokenizerLoadType.DE_SPIECE_TOKENIZER_LOAD_KMODEL
+}
+
+DE_C_INTER_SENTENCEPIECE_OUTTYPE = {
+    SPieceTokenizerOutType.STRING: cde.SPieceTokenizerOutType.DE_SPIECE_TOKENIZER_OUTTYPE_KString,
+    SPieceTokenizerOutType.INT: cde.SPieceTokenizerOutType.DE_SPIECE_TOKENIZER_OUTTYPE_KINT
+}
+
+class SentencePieceTokenizer(cde.SentencePieceTokenizerOp):
+    """
+    Tokenize scalar token or 1-D tokens to tokens by sentencepiece.
+
+    Args:
+        mode(Union[str, SentencePieceVocab]): If the input parameter is a file, then it is of type string,
+            if the input parameter is a SentencePieceVocab object, then it is of type SentencePieceVocab.
+        out_type(Union[str, int]): The type of output.
+    """
+
+    def __init__(self, mode, out_type):
+        self.out_type = out_type
+        if isinstance(mode, str):
+            model_path, model_filename = os.path.split(mode)
+            super().__init__(model_path, model_filename,
+                             DE_C_INTER_SENTENCEPIECE_LOADTYPE[SPieceTokenizerLoadType.FILE],
+                             DE_C_INTER_SENTENCEPIECE_OUTTYPE[out_type])
+        elif isinstance(mode, cde.SentencePieceVocab):
+            super().__init__(mode, DE_C_INTER_SENTENCEPIECE_LOADTYPE[SPieceTokenizerLoadType.MODEL],
+                             DE_C_INTER_SENTENCEPIECE_OUTTYPE[out_type])
 
 if platform.system().lower() != 'windows':
     class WhitespaceTokenizer(cde.WhitespaceTokenizerOp):

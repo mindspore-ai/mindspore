@@ -179,40 +179,82 @@ bool TensorType::operator==(const Type &other) const {
   return *element_type_ == *other_elem_type;
 }
 
-TypePtr IndexedSlicesType::DeepCopy() const {
+TypePtr RowTensorType::DeepCopy() const {
   MS_EXCEPTION_IF_NULL(element_type_);
   if (IsGeneric()) {
-    return std::make_shared<IndexedSlicesType>();
+    return std::make_shared<RowTensorType>();
   }
-  return std::make_shared<IndexedSlicesType>(element_type_->DeepCopy());
+  return std::make_shared<RowTensorType>(element_type_->DeepCopy());
 }
 
-std::string IndexedSlicesType::ToReprString() const {
+std::string RowTensorType::ToReprString() const {
   if (element_type_ == nullptr) {
-    return "IndexedSlices";
+    return "RowTensor";
   }
-  return "IndexedSlices[" + element_type_->ToReprString() + "]";
+  return "RowTensor[" + element_type_->ToReprString() + "]";
 }
 
-std::string IndexedSlicesType::ToString() const {
+std::string RowTensorType::ToString() const {
   if (element_type_ == nullptr) {
-    return "IndexedSlices";
+    return "RowTensor";
   }
-  return "IndexedSlices[" + element_type_->ToString() + "]";
+  return "RowTensor[" + element_type_->ToString() + "]";
 }
 
-std::string IndexedSlicesType::DumpText() const {
+std::string RowTensorType::DumpText() const {
   if (element_type_ == nullptr) {
-    return "IndexedSlices";
+    return "RowTensor";
   }
-  return "IndexedSlices[" + element_type_->DumpText() + "]";
+  return "RowTensor[" + element_type_->DumpText() + "]";
 }
 
-bool IndexedSlicesType::operator==(const Type &other) const {
+bool RowTensorType::operator==(const Type &other) const {
   if (!IsSameObjectType(*this, other)) {
     return false;
   }
-  auto other_elem_type = static_cast<const IndexedSlicesType &>(other).element_type_;
+  auto other_elem_type = static_cast<const RowTensorType &>(other).element_type_;
+  if (element_type_ == nullptr && other_elem_type == nullptr) {
+    return true;
+  } else if (element_type_ == nullptr || other_elem_type == nullptr) {
+    return false;
+  }
+  return *element_type_ == *other_elem_type;
+}
+
+TypePtr SparseTensorType::DeepCopy() const {
+  MS_EXCEPTION_IF_NULL(element_type_);
+  if (IsGeneric()) {
+    return std::make_shared<SparseTensorType>();
+  }
+  return std::make_shared<SparseTensorType>(element_type_->DeepCopy());
+}
+
+std::string SparseTensorType::ToReprString() const {
+  if (element_type_ == nullptr) {
+    return "SparseTensor";
+  }
+  return "SparseTensor[" + element_type_->ToReprString() + "]";
+}
+
+std::string SparseTensorType::ToString() const {
+  if (element_type_ == nullptr) {
+    return "SparseTensor";
+  }
+  return "SparseTensor[" + element_type_->ToString() + "]";
+}
+
+std::string SparseTensorType::DumpText() const {
+  if (element_type_ == nullptr) {
+    return "SparseTensor";
+  }
+  return "SparseTensor[" + element_type_->DumpText() + "]";
+}
+
+bool SparseTensorType::operator==(const Type &other) const {
+  if (!IsSameObjectType(*this, other)) {
+    return false;
+  }
+  auto other_elem_type = static_cast<const SparseTensorType &>(other).element_type_;
   if (element_type_ == nullptr && other_elem_type == nullptr) {
     return true;
   } else if (element_type_ == nullptr || other_elem_type == nullptr) {

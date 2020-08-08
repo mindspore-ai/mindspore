@@ -91,8 +91,6 @@ RandomDataOp::RandomDataOp(int32_t num_workers, int32_t op_connector_size, int64
 
 // A print method typically used for debugging
 void RandomDataOp::Print(std::ostream &out, bool show_all) const {
-  // Always show the id and name as first line regardless if this summary or detailed print
-  out << "(" << std::setw(2) << operator_id_ << ") <RandomDataOp>:";
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
     ParallelOp::Print(out, show_all);
@@ -221,7 +219,7 @@ Status RandomDataOp::EpochSync(int32_t worker_id, bool *quitting) {
   all_out_.Wait();
   // If we are not in a repeat loop, or that was the last repeat already, then setup our exit
   // condition from the master loop.
-  if (!BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat)) {
+  if (IsLastIteration()) {
     *quitting = true;
   }
 
@@ -231,6 +229,7 @@ Status RandomDataOp::EpochSync(int32_t worker_id, bool *quitting) {
   if (last_guy_in) {
     MS_LOG(INFO) << "RandomDataOp worker " << worker_id << " is the last one to sync. eoe sent as worker "
                  << eoe_worker_id_;
+    UpdateRepeatAndEpochCounter();
     // Prepare for sync
     all_out_.Clear();
     // Always flow eoe at the end
@@ -361,8 +360,7 @@ Status RandomDataOp::CreateRandomRow(int32_t worker_id, TensorRow *new_row) {
       return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Failed to set random bytes for a tensor.");
     }
 
-    RETURN_IF_NOT_OK(
-      Tensor::CreateTensor(&new_tensor, current_col.tensorImpl(), *new_shape, current_col.type(), buf.get()));
+    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(*new_shape, current_col.type(), buf.get(), &new_tensor));
 
     // Add this tensor to the tensor row for output
     (*new_row).push_back(std::move(new_tensor));

@@ -20,7 +20,7 @@
 #include <iomanip>
 #include <utility>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
@@ -120,7 +120,7 @@ Status CifarOp::operator()() {
       RETURN_IF_NOT_OK(io_block_queues_[(buf_cnt_++) % num_workers_]->Add(
         std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone))));
     }
-    if (!BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat)) {
+    if (IsLastIteration()) {
       RETURN_IF_NOT_OK(
         io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
       RETURN_IF_NOT_OK(
@@ -137,6 +137,7 @@ Status CifarOp::operator()() {
       wp_.Clear();
       RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
     }
+    UpdateRepeatAndEpochCounter();
   }
 }
 
@@ -190,15 +191,12 @@ Status CifarOp::LoadTensorRow(uint64_t index, TensorRow *trow) {
   std::shared_ptr<Tensor> label;
   std::shared_ptr<Tensor> fine_label;
   std::shared_ptr<Tensor> ori_image = cifar_image_label_pairs_[index].first;
-  std::shared_ptr<Tensor> copy_image =
-    std::make_shared<Tensor>(ori_image->shape(), ori_image->type(), ori_image->GetBuffer());
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&label, data_schema_->column(1).tensorImpl(), data_schema_->column(1).shape(),
-                                        data_schema_->column(1).type(),
-                                        reinterpret_cast<unsigned char *>(&cifar_image_label_pairs_[index].second[0])));
+  std::shared_ptr<Tensor> copy_image;
+  RETURN_IF_NOT_OK(Tensor::CreateFromTensor(ori_image, &copy_image));
+  RETURN_IF_NOT_OK(Tensor::CreateScalar(cifar_image_label_pairs_[index].second[0], &label));
+
   if (cifar_image_label_pairs_[index].second.size() > 1) {
-    RETURN_IF_NOT_OK(Tensor::CreateTensor(
-      &fine_label, data_schema_->column(2).tensorImpl(), data_schema_->column(2).shape(),
-      data_schema_->column(2).type(), reinterpret_cast<unsigned char *>(&cifar_image_label_pairs_[index].second[1])));
+    RETURN_IF_NOT_OK(Tensor::CreateScalar(cifar_image_label_pairs_[index].second[1], &fine_label));
     (*trow) = TensorRow(index, {copy_image, std::move(label), std::move(fine_label)});
   } else {
     (*trow) = TensorRow(index, {copy_image, std::move(label)});
@@ -220,8 +218,6 @@ Status CifarOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<Dat
 }
 
 void CifarOp::Print(std::ostream &out, bool show_all) const {
-  // Always show the id and name as first line regardless if this summary or detailed print
-  out << "(" << std::setw(2) << operator_id_ << ") <CifarOp>:";
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
     ParallelOp::Print(out, show_all);
@@ -359,9 +355,8 @@ Status CifarOp::ParseCifarData() {
       }
 
       std::shared_ptr<Tensor> image_tensor;
-      RETURN_IF_NOT_OK(Tensor::CreateTensor(&image_tensor, data_schema_->column(0).tensorImpl(),
-                                            TensorShape({kCifarImageHeight, kCifarImageWidth, kCifarImageChannel}),
-                                            data_schema_->column(0).type()));
+      RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({kCifarImageHeight, kCifarImageWidth, kCifarImageChannel}),
+                                           data_schema_->column(0).type(), &image_tensor));
       auto itr = image_tensor->begin<uint8_t>();
       uint32_t total_pix = kCifarImageHeight * kCifarImageWidth;
       for (int pix = 0; pix < total_pix; ++pix) {

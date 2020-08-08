@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_DTYPE_TYPE_H_
-#define MINDSPORE_CCSRC_IR_DTYPE_TYPE_H_
+#ifndef MINDSPORE_CORE_IR_DTYPE_TYPE_H_
+#define MINDSPORE_CORE_IR_DTYPE_TYPE_H_
 
 #include <cstddef>
 #include <iostream>
@@ -84,8 +84,6 @@ class Type : public Value {
   friend std::ostream &operator<<(std::ostream &os, const Type &type);
   friend std::ostream &operator<<(std::ostream &os, const TypePtr type);
 
-  const bool parse_info_ = true;
-
  private:
   TypeId meta_type_;
   bool is_generic_;
@@ -121,7 +119,15 @@ class Object : public Type {
   const TypeId parent_type_;
 };
 
+//
+// TypeId name map
+//
+const std::unordered_map<TypeId, std::string> type_name_map = {
+  {kNumberTypeBool, "bool_"},      {kNumberTypeInt8, "int8"},       {kNumberTypeUInt8, "uint8"},
+  {kNumberTypeInt16, "int16"},     {kNumberTypeInt32, "int32"},     {kNumberTypeInt64, "int64"},
+  {kNumberTypeFloat16, "float16"}, {kNumberTypeFloat32, "float32"}, {kNumberTypeFloat64, "float64"}};
+
 std::ostream &operator<<(std::ostream &os, const TypePtrList &types);
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_DTYPE_TYPE_H_
+#endif  // MINDSPORE_CORE_IR_DTYPE_TYPE_H_

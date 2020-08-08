@@ -26,6 +26,7 @@ namespace opt {
 ConstInputToAttrInfoRegistry::ConstInputToAttrInfoRegistry() {
   Register(prim::kPrimCast->name(), {1});
   Register(prim::kPrimAvgPoolGrad->name(), {0});
+  Register(prim::kPrimAvgPoolGradVm->name(), {0});
   Register(prim::kPrimConv2DBackpropInput->name(), {2});
   Register(prim::kPrimConv2DBackpropFilter->name(), {2});
   Register(prim::kPrimDepthwiseConv2dNativeBackpropFilter->name(), {1});
@@ -46,6 +47,7 @@ ConstInputToAttrInfoRegistry::ConstInputToAttrInfoRegistry() {
   Register(prim::kPrimCumSum->name(), {1});
   Register(prim::kPrimCumProd->name(), {1});
   Register(prim::kPrimReduceAll->name(), {1});
+  Register(prim::kPrimReduceAny->name(), {1});
   Register(prim::kPrimUnsortedSegmentMin->name(), {2});
   Register(kSparseGatherV2, {2});
   Register(kUnsortedSegmentProdOpName, {2});

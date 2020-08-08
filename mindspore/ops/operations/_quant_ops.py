@@ -386,6 +386,8 @@ class FakeQuantPerChannel(PrimitiveWithInfer):
             raise ValueError(f"For '{self.name}' x rank should be in '{self.ascend_support_x_rank}'")
         if not self.is_ascend:
             validator.check_integer("x rank", len(x_shape), 1, Rel.GE, self.name)
+        if len(x_shape) == 1:
+            self.channel_axis = 0
         validator.check("min shape", min_shape, "max shape", max_shape, Rel.EQ, self.name)
         validator.check_integer(
             "min shape", min_shape[0], x_shape[self.channel_axis], Rel.EQ, self.name)

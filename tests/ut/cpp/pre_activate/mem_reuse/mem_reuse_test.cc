@@ -26,7 +26,7 @@
 #include "frontend/operator/ops.h"
 #include "utils/log_adapter.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "pipeline/jit/resource.h"
 #include "backend/optimizer/mem_reuse/mem_reuse.h"
 
@@ -225,7 +225,6 @@ TEST_F(TestMemReuseWithPy, KernelRef) {
   ASSERT_EQ(kernel_ref_count_ptr->size_, 512);
   KernelDefPtr kernel_def_ptr = std::make_shared<KernelDef>();
   ASSERT_NE(kernel_def_ptr, nullptr);
-  ASSERT_EQ(kernel_def_ptr->dirty, false);
   MembufPtr membuf_ptr = std::make_shared<Membuf>();
   ASSERT_NE(membuf_ptr, nullptr);
 }

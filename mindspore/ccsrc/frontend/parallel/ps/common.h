@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PARALLEL_PS_COMMON_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PARALLEL_PS_COMMON_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_COMMON_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_COMMON_H_
 
 #include <iostream>
 #include <vector>
@@ -57,14 +57,22 @@ constexpr char kMomentum[] = "momentum";
 constexpr char kApplyMomentum[] = "ApplyMomentum";
 constexpr char kSparseAdam[] = "Adam";
 constexpr char kSparseFtrl[] = "Ftrl";
+constexpr char kApplyMomentumOp[] = "Momentum";
+constexpr char kSparseAdamOp[] = "Adam";
+constexpr char kSparseFtrlOp[] = "FTRL";
 
 constexpr int kInitWeightsCmd = 10;
 constexpr int kInitWeightToOptimIdCmd = 11;
 constexpr int kInitOptimInputsShapeCmd = 12;
+constexpr int kInitKeyToPushNodeIdCmd = 13;
 constexpr int kInitEmbeddingsCmd = 20;
+constexpr int kCheckReadyForPushCmd = 25;
+constexpr int kCheckReadyForPullCmd = 26;
 constexpr int kEmbeddingLookupCmd = 30;
+constexpr int kFinalizeCmd = 40;
 
 constexpr size_t kInvalidKey = UINT64_MAX;
+constexpr int kInvalidID = -1;
 
 using Key = ::ps::Key;
 using Keys = ::ps::SArray<Key>;
@@ -72,16 +80,13 @@ using Values = ::ps::SArray<float>;
 using ValuesPtr = std::shared_ptr<Values>;
 using Weight = ::ps::SArray<float>;
 using Grad = ::ps::SArray<float>;
-using LookupIds = ::ps::SArray<float>;
+using LookupIds = ::ps::SArray<Key>;
 using Lengths = ::ps::SArray<int>;
 using WeightPtr = std::shared_ptr<Weight>;
 using GradPtr = std::shared_ptr<Grad>;
-// using EmbeddingTable = std::unordered_map<int, WeightPtr>;
-// using EmbeddingTable = ::ps::SArray<float>;
-// using EmbeddingTablePtr = std::shared_ptr<EmbeddingTable>;
 using InputsShape = std::vector<std::shared_ptr<std::vector<size_t>>>;
 using InputsShapePtr = std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>>;
 }  // namespace ps
 }  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PARALLEL_PS_COMMON_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_COMMON_H_

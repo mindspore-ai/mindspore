@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_NODE_CHECK_H_
-#define MINDSPORE_CCSRC_PARALLEL_NODE_CHECK_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_NODE_CHECK_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_NODE_CHECK_H_
 
 #include "ir/primitive.h"
 
@@ -25,4 +25,4 @@ bool IsInBlackList(const PrimitivePtr &prim);
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_NODE_CHECK_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_NODE_CHECK_H_

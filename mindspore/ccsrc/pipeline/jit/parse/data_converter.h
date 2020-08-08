@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef PIPELINE_PARSE_DATA_CONVERTER_H_
-#define PIPELINE_PARSE_DATA_CONVERTER_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_DATA_CONVERTER_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_DATA_CONVERTER_H_
 
 #include <deque>
 #include <memory>
@@ -32,8 +32,8 @@ namespace mindspore {
 namespace parse {
 // data convert for parse
 namespace data_converter {
-void CacheObjectValue(const std::string &obj_key, const Any &data);
-bool GetObjectValue(const std::string &obj_key, Any *const data);
+void CacheObjectValue(const std::string &obj_key, const ValuePtr &data);
+bool GetObjectValue(const std::string &obj_key, ValuePtr *const data);
 
 void SetObjGraphValue(const std::string &obj_key, const FuncGraphPtr &data);
 
@@ -58,4 +58,4 @@ void CleanDataClassToClassMap();
 }  // namespace parse
 }  // namespace mindspore
 
-#endif  // PIPELINE_PARSE_DATA_CONVERTER_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_DATA_CONVERTER_H_

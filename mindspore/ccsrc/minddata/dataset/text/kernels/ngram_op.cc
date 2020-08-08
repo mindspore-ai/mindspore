@@ -67,7 +67,7 @@ Status NgramOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
       }
     }
   }
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(output, res, TensorShape({static_cast<dsize_t>(res.size())})));
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(res, TensorShape({static_cast<dsize_t>(res.size())}), output));
   return Status::OK();
 }
 

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_DTYPE_CONTAINER_H_
-#define MINDSPORE_CCSRC_IR_DTYPE_CONTAINER_H_
+#ifndef MINDSPORE_CORE_IR_DTYPE_CONTAINER_H_
+#define MINDSPORE_CORE_IR_DTYPE_CONTAINER_H_
 
 #include <cstddef>
 #include <iostream>
@@ -147,4 +147,4 @@ class Dictionary : public Object {
 using DictionaryPtr = std::shared_ptr<Dictionary>;
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_DTYPE_CONTAINER_H_
+#endif  // MINDSPORE_CORE_IR_DTYPE_CONTAINER_H_

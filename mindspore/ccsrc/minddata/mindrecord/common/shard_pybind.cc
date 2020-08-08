@@ -16,7 +16,7 @@
 
 #include <string>
 #include <vector>
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/mindrecord/include/common/shard_utils.h"
 #include "minddata/mindrecord/include/shard_error.h"
 #include "minddata/mindrecord/include/shard_index_generator.h"
@@ -133,6 +133,7 @@ void BindGlobalParams(py::module *m) {
   (*m).attr("MAX_PAGE_SIZE") = kMaxPageSize;
   (*m).attr("MIN_SHARD_COUNT") = kMinShardCount;
   (*m).attr("MAX_SHARD_COUNT") = kMaxShardCount;
+  (*m).attr("MAX_FILE_COUNT") = kMaxFileCount;
   (*m).attr("MIN_CONSUMER_COUNT") = kMinConsumerCount;
   (void)(*m).def("get_max_thread_num", &GetMaxThreadNum);
 }

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TRANSFORM_GRAPH_BUILDER_H_
-#define TRANSFORM_GRAPH_BUILDER_H_
+#ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_GRAPH_BUILDER_H_
+#define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_GRAPH_BUILDER_H_
 
 #include <string>
 #include <memory>
@@ -31,4 +31,4 @@ Status BuildDatasetGraph(const DatasetGraphParam &param, const std::string &phas
 }  // namespace transform
 }  // namespace mindspore
 
-#endif  // TRANSFORM_GRAPH_BUILDER_H_
+#endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_GRAPH_BUILDER_H_

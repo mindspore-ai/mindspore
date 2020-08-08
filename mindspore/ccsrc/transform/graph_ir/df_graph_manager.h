@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef TRANSFORM_DF_GRAPH_MANAGER_H_
-#define TRANSFORM_DF_GRAPH_MANAGER_H_
+#ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_DF_GRAPH_MANAGER_H_
+#define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_DF_GRAPH_MANAGER_H_
 
 #include <set>
 #include <string>
@@ -83,4 +83,4 @@ class DfGraphManager {
 }  // namespace transform
 }  // namespace mindspore
 
-#endif  // TRANSFORM_DF_GRAPH_MANAGER_H_
+#endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_DF_GRAPH_MANAGER_H_

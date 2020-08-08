@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_KERNEL_CPU_SPARSE_APPLY_FTRL_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_KERNEL_CPU_SPARSE_APPLY_FTRL_PS_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_APPLY_FTRL_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_APPLY_FTRL_PS_KERNEL_H_
 
 #include <vector>
 #include <memory>
@@ -30,7 +30,8 @@ class SparseApplyFtrlPSKernel : public SparseApplyFtrlCPUKernel, public PServerK
   SparseApplyFtrlPSKernel(size_t rank_id, size_t pserver_num) : PServerKernel(rank_id, pserver_num) {}
   ~SparseApplyFtrlPSKernel() override = default;
 
-  void InitKernel(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &) override;
+  void InitKernel(const CNodePtr &cnode,
+                  const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &) override;
   void ReInit(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &) override;
 
   bool Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -47,4 +48,4 @@ class SparseApplyFtrlPSKernel : public SparseApplyFtrlCPUKernel, public PServerK
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_CPU_SPARSE_APPLY_FTRL_PS_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_APPLY_FTRL_PS_KERNEL_H_

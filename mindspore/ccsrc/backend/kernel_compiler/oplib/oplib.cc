@@ -22,7 +22,7 @@
 #include <fstream>
 #include "utils/log_adapter.h"
 #include "utils/overload.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
@@ -60,7 +60,7 @@ constexpr auto kFormat = "format";
 constexpr auto kNeedCompile = "need_compile";
 constexpr auto kShape = "shape";
 constexpr auto kProcessor = "processor";
-std::vector<std::shared_ptr<OpInfo>> OpLib::op_info_;
+std::multimap<std::string, std::shared_ptr<OpInfo>> OpLib::op_info_;
 
 static std::string ImplTypeToStr(OpImplyType impl_type) {
   switch (impl_type) {
@@ -133,11 +133,11 @@ void OpLib::DecodeAKGSpecificInfo(const nlohmann::json &obj, const std::shared_p
 }
 
 bool OpLib::RegOpFromLocalInfo() {
-  MS_LOG(INFO) << "Start";
   static bool has_load = false;
   if (has_load) {
     return true;
   }
+  MS_LOG(INFO) << "Start";
   has_load = true;
   std::string dir = common::GetEnv("MINDSPORE_OP_INFO_PATH");
   if (dir.empty()) {
@@ -224,7 +224,7 @@ bool OpLib::DecodeOpInfo(const nlohmann::json &obj, const mindspore::kernel::OpI
     MS_LOG(ERROR) << "GetRefInfo Failed";
     return false;
   }
-  op_info_.push_back(op_info);
+  op_info_.emplace(op_info->op_name(), op_info);
   return true;
 }
 
@@ -336,16 +336,17 @@ std::shared_ptr<OpInfo> OpLib::FindOp(const std::string &op_name, OpImplyType im
                   << ", current op num: " << op_info_.size();
     return nullptr;
   }
-  for (const auto &op_info : op_info_) {
+  std::string target_processor = is_gpu ? kCUDA : kAiCore;
+  for (auto [iter, end] = op_info_.equal_range(op_name); iter != end; ++iter) {
+    auto &op_info = iter->second;
     MS_EXCEPTION_IF_NULL(op_info);
-    if (op_info->op_name() == op_name && op_info->imply_type() == imply_type) {
-      auto akg_processor_match = [&]() {
-        return is_gpu ? op_info->processor() == kCUDA : op_info->processor() == kAiCore;
-      };
-      if (imply_type != kAKG || akg_processor_match()) {
-        return op_info;
-      }
+    if (op_info->imply_type() != imply_type) {
+      continue;
     }
+    if (imply_type == kAKG && op_info->processor() != target_processor) {
+      continue;
+    }
+    return op_info;
   }
   MS_LOG(INFO) << "FindOp failed: opname: " << op_name << ", imply_type: " << ImplTypeToStr(imply_type)
                << ", current op num: " << op_info_.size();
@@ -378,7 +379,8 @@ bool OpLib::GetRefInfo(const std::shared_ptr<OpInfo> &op_info) {
 
 bool OpLib::CheckRepetition(const std::shared_ptr<OpInfo> &op_info) {
   MS_EXCEPTION_IF_NULL(op_info);
-  for (const auto &exist_op_info : op_info_) {
+  for (auto [iter, end] = op_info_.equal_range(op_info->op_name()); iter != end; ++iter) {
+    auto &exist_op_info = iter->second;
     MS_EXCEPTION_IF_NULL(exist_op_info);
     if (exist_op_info->equals_to(op_info)) {
       return true;

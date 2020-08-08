@@ -20,7 +20,7 @@
 #include <memory>
 #include <vector>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "utils/convert_utils.h"
 #include "utils/log_adapter.h"
 #include "proto/node_strategy.pb.h"
@@ -66,10 +66,10 @@ Status StrategyCheckpoint::Load(StrategyMap *strategy_map) {
     straspb::ParallelStrategys parallel_strategys = parallel_strategy_item.parallel_strategys();
     auto stage = (int32_t)parallel_strategys.stage();
     size_t strategys_num = IntToSize(parallel_strategys.parallel_strategy_size());
-    std::vector<std::vector<int32_t>> strategy_inputs;
+    Strategys strategy_inputs;
     for (size_t j = 0; j < strategys_num; j++) {
       straspb::ParallelStrategy parallel_strategy = parallel_strategys.parallel_strategy(SizeToInt(j));
-      std::vector<int32_t> dimension;
+      Dimensions dimension;
       size_t dim_num = IntToSize(parallel_strategy.dim_size());
       for (size_t k = 0; k < dim_num; k++) {
         dimension.push_back(parallel_strategy.dim(SizeToInt(k)));
@@ -84,7 +84,8 @@ Status StrategyCheckpoint::Load(StrategyMap *strategy_map) {
   return SUCCESS;
 }
 
-Status StrategyCheckpoint::Save(const StrategyMap &strategy_map) {
+Status StrategyCheckpoint::Save(const StrategyMap &strategy_map, const TensorInfoMap &tensor_info_map,
+                                ManualShapeMap *manual_shape_map) {
   straspb::ParallelStrategyMap parallel_strategy_map;
   parallel_strategy_map.set_current_stage(IntToUint(++current_stage_));
   for (auto &node_stra : strategy_map) {
@@ -103,6 +104,33 @@ Status StrategyCheckpoint::Save(const StrategyMap &strategy_map) {
       }
     }
   }
+  for (auto &node_tensor_info : tensor_info_map) {
+    TensorInfo tensor_info = node_tensor_info.second;
+    TensorLayout tensor_layout = tensor_info.tensor_layout();
+    straspb::ParallelLayoutItem *parallel_layout_item = parallel_strategy_map.add_parallel_layout_item();
+    MS_EXCEPTION_IF_NULL(parallel_layout_item);
+    parallel_layout_item->set_param_name(node_tensor_info.first);
+    straspb::ParallelLayouts *parallel_layouts = parallel_layout_item->mutable_parallel_layouts();
+    straspb::DevMatrix *dev_matrix = parallel_layouts->add_dev_matrix();
+    MS_EXCEPTION_IF_NULL(dev_matrix);
+    for (auto dim : tensor_layout.device_arrangement().array()) {
+      dev_matrix->add_dim(IntToUint(dim));
+    }
+    straspb::TensorMap *tensor_map = parallel_layouts->add_tensor_map();
+    MS_EXCEPTION_IF_NULL(tensor_map);
+    for (auto dim : tensor_layout.tensor_map().array()) {
+      tensor_map->add_dim(dim);
+    }
+    straspb::ParamSplitShape *param_split_shape = parallel_layouts->add_param_split_shape();
+    straspb::IndicesOffset *indices_offset = parallel_layouts->add_indices_offset();
+    MS_EXCEPTION_IF_NULL(manual_shape_map);
+    auto manual_shape = (*manual_shape_map)[node_tensor_info.first];
+    for (auto dim_pair : manual_shape) {
+      param_split_shape->add_dim(dim_pair.first);
+      indices_offset->add_dim(dim_pair.second);
+    }
+  }
+
   std::fstream output(save_file_, std::ios::out | std::ios::trunc | std::ios::binary);
   if (!parallel_strategy_map.SerializeToOstream(&output)) {
     MS_LOG(ERROR) << "Save strategy file failed";

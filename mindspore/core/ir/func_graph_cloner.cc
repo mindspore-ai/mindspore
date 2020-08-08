@@ -20,11 +20,12 @@
 
 #include "ir/manager.h"
 #include "ir/param_value.h"
-#include "frontend/operator/ops.h"
+#include "base/core_ops.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "utils/profile.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
+#include "ir/graph_utils.h"
 
 // namespace to support intermediate representation definition
 namespace mindspore {
@@ -87,6 +88,7 @@ void Cloner::CloneCNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
   CNodePtr new_node = std::make_shared<CNode>(AnfNodePtrList{}, target);
   auto old_node = node->cast<CNodePtr>();
   new_node->set_abstract(old_node->abstract());
+  new_node->set_forward(old_node->forward());
   ScopePtr scope = (node->scope() != kDefaultScope) ? node->scope() : this->scope();
   new_node->set_scope(scope);
   new_node->set_kernel_info(old_node->kernel_info_ptr());
@@ -102,6 +104,7 @@ void Cloner::CloneValueNode(const AnfNodePtr &node) {
   ScopePtr scope = (node->scope() != kDefaultScope) ? node->scope() : this->scope();
   new_const->set_scope(scope);
   new_const->set_abstract(node->abstract());
+  new_const->set_has_new_value(node->cast<ValueNodePtr>()->has_new_value());
   repl_node_[node] = new_const;
   TraceManager::EndTrace();
 }
@@ -114,6 +117,7 @@ void Cloner::CloneValueNode(const AnfNodePtr &node, const FuncGraphPtr &target) 
   ScopePtr scope = (node->scope() != kDefaultScope) ? node->scope() : this->scope();
   new_const->set_scope(scope);
   new_const->set_abstract(node->abstract());
+  new_const->set_has_new_value(node->cast<ValueNodePtr>()->has_new_value());
   repl_node_[node] = new_const;
   TraceManager::EndTrace();
 }
@@ -180,11 +184,15 @@ void Cloner::CloneFuncGraphValueNodes(const FuncGraphPtr &func_graph, const Func
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(target_func_graph);
   MS_EXCEPTION_IF_NULL(manager_);
-  auto return_node = repl_node_[func_graph->get_return()]->cast<CNodePtr>();
-  if (return_node == nullptr) {
-    MS_LOG(EXCEPTION) << "Can't find replicate node for return.";
+
+  auto old_return = func_graph->get_return();
+  if (old_return != nullptr) {
+    auto return_node = repl_node_[old_return]->cast<CNodePtr>();
+    if (return_node == nullptr) {
+      MS_LOG(EXCEPTION) << "Can't find replicate node for return.";
+    }
+    target_func_graph->set_return(return_node);
   }
-  target_func_graph->set_return(return_node);
 
   auto &cnodes = func_graph->func_graph_cnodes_index();
   for (auto &cnode : cnodes) {
@@ -212,6 +220,7 @@ void Cloner::SetFuncGraphInfo(const FuncGraphPtr &func_graph, FuncGraphPtr *cons
   TraceManager::DebugTrace(func_graph->debug_info(), target_relation_);
   *target_func_graph = std::make_shared<FuncGraph>();
   (*target_func_graph)->set_attrs(func_graph->attrs());
+  (*target_func_graph)->joined_shapes_ = func_graph->joined_shapes_;
   (*target_func_graph)->set_transforms(func_graph->transforms());
   (*target_func_graph)->set_has_vararg(func_graph->has_vararg());
   (*target_func_graph)->set_has_kwarg(func_graph->has_kwarg());
@@ -400,11 +409,16 @@ void Cloner::LiftParameters(const FuncGraphPtr &func_graph_user, const FuncGraph
 }
 
 void Cloner::Lift() {
-  for (auto &func_graph_params : repl_func_graph_params_) {
-    auto &func_graph = func_graph_params.first;
-    auto &params = func_graph_params.second;
-    for (auto &cnode : func_graph->func_graph_cnodes_index()) {
-      LiftParameters(cnode.first->first->func_graph(), func_graph, params);
+  // lift inner graph first
+  auto sorted = BroadFirstSearchGraphUsed(*(manager_->roots().begin()));
+  for (auto r_iter = sorted.rbegin(); r_iter != sorted.rend(); ++r_iter) {
+    auto func_graph = *r_iter;
+    auto iter = repl_func_graph_params_.find(func_graph);
+    if (iter != repl_func_graph_params_.end()) {
+      auto &params = iter->second;
+      for (auto &cnode : func_graph->func_graph_cnodes_index()) {
+        LiftParameters(cnode.first->first->func_graph(), func_graph, params);
+      }
     }
   }
 }

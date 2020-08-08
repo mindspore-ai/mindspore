@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "debug/anf_ir_utils.h"
 #include "backend/session/gpu_session.h"
 #include "runtime/device/gpu/kernel_info_setter.h"
 #include "runtime/device/gpu/gpu_kernel_build.h"
@@ -25,12 +26,16 @@
 #include "backend/optimizer/pass/getitem_tuple.h"
 #include "backend/optimizer/gpu/adam_weight_decay_fusion.h"
 #include "backend/optimizer/gpu/adam_fusion.h"
+#include "backend/optimizer/gpu/replace_bn_cast_fusion.h"
+#include "backend/optimizer/gpu/replace_bn_grad_cast_fusion.h"
+#include "backend/optimizer/gpu/replace_momentum_cast_fusion.h"
+#include "backend/optimizer/gpu/replace_addn_fusion.h"
 #include "runtime/device/kernel_runtime_manager.h"
-#include "predict/predict.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "common/trans.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "utils/base_ref_extends.h"
+#include "debug/tensor_load.h"
 
 namespace mindspore {
 namespace session {
@@ -59,6 +64,10 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::AdamWeightDecayFusion>());
   pm->AddPass(std::make_shared<opt::AdamFusion>());
+  pm->AddPass(std::make_shared<opt::ReplaceBNCastFusion>());
+  pm->AddPass(std::make_shared<opt::ReplaceBNGradCastFusion>());
+  pm->AddPass(std::make_shared<opt::ReplaceMomentumCastFusion>());
+  pm->AddPass(std::make_shared<opt::ReplaceAddNFusion>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -90,12 +99,13 @@ void GPUSession::AllocateMemory(KernelGraph *kernel_graph) const {
   runtime_instance->AssignMemory(kernel_graph);
 }
 
-void GPUSession::RunOpAllocateMemory(const std::vector<tensor::TensorPtr> &input_tensors,
+void GPUSession::RunOpAllocateMemory(const ValuePtr &pre_output_value,
+                                     const std::vector<tensor::TensorPtr> &input_tensors,
                                      KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  runtime_instance->RunOpAssignMemory(input_tensors, kernel_graph);
+  runtime_instance->RunOpAssignMemory(pre_output_value, input_tensors, kernel_graph);
 }
 
 void GPUSession::RunOpClearMemory(KernelGraph *kernel_graph) const {
@@ -153,7 +163,11 @@ void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
 void GPUSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
+#ifdef ENABLE_DEBUGGER
+  if (!runtime_instance->Run(kernel_graph.get(), debugger_.get())) {
+#else
   if (!runtime_instance->Run(kernel_graph.get())) {
+#endif
     MS_LOG(EXCEPTION) << "GPU execute graph failed!";
   }
 }
@@ -163,16 +177,30 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   auto graph_id = graph_sum_;
   auto graph = ConstructKernelGraph(lst, outputs);
   MS_EXCEPTION_IF_NULL(graph);
+  // Prepare ms context info for dump .pb graph
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->save_graphs_flag();
   // Optimize
   Optimize(graph);
   // Select kernel build info
   SelectKernel(graph);
-  // Convert kernel Graph to model
-  predictmodel::StepConvertGraph(graph);
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  // Assign parameter keys.
+  AssignParamKey(graph);
+#endif
   // Start gpu kernel runtime
   StartKernelRT();
+  // Dump .pb graph before hardware optimization
+  if (save_graphs) {
+    DumpIRProto(graph, "before_hwopt_" + std::to_string(graph_id));
+  }
   // HardwareOptimize
   HardwareOptimize(graph);
+  // Dump .pb graph after hardware optimization
+  if (save_graphs) {
+    DumpIRProto(graph, "after_hwopt_" + std::to_string(graph_id));
+  }
   // Assign CUDA streams
   AssignStream(graph);
   // Hide NoOp from execution graph
@@ -184,7 +212,7 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   Reorder(&execution_order);
   graph->set_execution_order(execution_order);
   // Get summary nodes.
-  GetSummaryNodes(graph.get());
+  SetSummaryNodes(graph.get());
   // Remove NoOp from execution graph
   opt::RemoveNopNode(graph.get());
   // Set graph manager.
@@ -202,16 +230,24 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
 
 void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
   auto &kernel_graph = graphs_[graph_id];
+#ifdef ENABLE_DEBUGGER
+  PreIterationDbg(kernel_graph);
+#endif
   // Load input data from user input
   LoadInputData(kernel_graph, inputs);
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  // Initialize parameter server
+  InitPSParamAndOptim(kernel_graph, inputs);
+#endif
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  // Convert inputs to model
-  predictmodel::StepConvertWeight(inputs);
   {
     py::gil_scoped_release gil_release;
     // Run graph on GPU
     Execute(kernel_graph);
   }
+#ifdef ENABLE_DEBUGGER
+  PostLoadTensor(kernel_graph);
+#endif
   // Get result from GPU
   UpdateOutputs(kernel_graph, outputs, inputs);
   // Summary
@@ -220,6 +256,9 @@ void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
   if (context_ptr->enable_gpu_summary()) {
     Summary(kernel_graph.get());
   }
+#ifdef ENABLE_DEBUGGER
+  PostIterationDbg(kernel_graph);
+#endif
 }
 
 void GPUSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
@@ -245,13 +284,27 @@ py::tuple GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // Remove NoOp from execution graph
   opt::RemoveNopNode(kernel_graph.get());
-  RunOpAllocateMemory(input_tensors, kernel_graph.get());
+  RunOpAllocateMemory(op_run_info.value, input_tensors, kernel_graph.get());
   // Execute the computation
   LoadInputData(kernel_graph, input_tensors);
-  Execute(kernel_graph);
+  {
+    py::gil_scoped_release gil_release;
+    Execute(kernel_graph);
+  }
   // Fetch outputs
   VectorRef outputs;
-  UpdateOutputs(kernel_graph, &outputs, input_tensors);
+  if (op_run_info.value != nullptr) {
+    std::vector<tensor::TensorPtr> pre_output_tensors;
+    TensorValueToTensor(op_run_info.value, &pre_output_tensors);
+    for (auto &pre_output : pre_output_tensors) {
+      tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(pre_output->data_type(), pre_output->shape());
+      tensor->set_device_address(pre_output->device_address());
+      tensor->set_dirty(false);
+      outputs.emplace_back(tensor);
+    }
+  } else {
+    UpdateOutputs(kernel_graph, &outputs, input_tensors);
+  }
   // Trans output to tuple
   auto output_tensors = TransformBaseRefListToTuple(outputs);
   if (!utils::isa<PyObjectRef>(output_tensors) ||
@@ -263,6 +316,70 @@ py::tuple GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph
   RunOpClearMemory(kernel_graph.get());
   return tuple_tensors;
 }
+
+#ifdef ENABLE_DEBUGGER
+void GPUSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+#ifdef ENABLE_DUMP_E2E
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  (void)runtime_instance->DumpData(kernel_graph.get(), debugger_.get());
+#endif
+}
+
+bool GPUSession::DumpDataEnabledIteration() const {
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  return runtime_instance->DumpDataEnabledIteration();
+}
+
+void GPUSession::PreIterationDbg(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  if (debugger_) {
+    debugger_->PreExecute(kernel_graph);
+  }
+  PreLoadTensor(kernel_graph);
+}
+
+void GPUSession::PostIterationDbg(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  bool dump_enabled = DumpDataEnabledIteration();
+  // debug used for dump
+  if (debugger_ && dump_enabled) {
+    Dump(kernel_graph);
+  }
+  if (debugger_) {
+    debugger_->PostExecute();
+  }
+}
+
+void GPUSession::PreLoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  bool dump_enabled = DumpDataEnabledIteration();
+  if (!(debugger_ && (debugger_->debugger_enabled() || dump_enabled))) {
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  DebugServices *debug_services = debugger_->debug_services();
+  TensorLoader *tensor_loader = debug_services->tensor_loader();
+  tensor_loader->EmptyTensor();
+  uint32_t iter_num = tensor_loader->GetIterNum();
+  tensor_loader->set_iter_num(++iter_num);
+}
+
+void GPUSession::PostLoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  bool dump_enabled = DumpDataEnabledIteration();
+  if (!(debugger_ && (debugger_->debugger_enabled() || dump_enabled))) {
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  DebugServices *debug_services = debugger_->debug_services();
+  TensorLoader *tensor_loader = debug_services->tensor_loader();
+  tensor_loader->EmptyPrevTensor();
+}
+#endif
+
 }  // namespace gpu
 }  // namespace session
 }  // namespace mindspore

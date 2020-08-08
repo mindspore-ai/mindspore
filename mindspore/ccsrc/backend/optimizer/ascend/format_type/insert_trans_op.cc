@@ -22,7 +22,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {
@@ -46,14 +46,13 @@ const AnfNodePtr InsertTransOp::Process(const FuncGraphPtr &func_graph, const An
   if (node == nullptr || !AnfAlgo::IsRealKernel(node)) {
     return nullptr;
   }
-  AnfNodePtr front_node;
+  AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
+  MS_LOG(DEBUG) << "process op: " << node->DebugString();
+  AnfNodePtr new_node = InsertTransOpForInput(func_graph, node, kernel_select_);
   auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();
   if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(node)) {
-    front_node = kernel_graph->GetFrontNodeByInternalOutput(node);
+    kernel_graph->ReplaceInternalOutput(node, new_node);
   }
-  AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
-  MS_LOG(DEBUG) << "====process op: " << node->DebugString();
-  AnfNodePtr new_node = InsertTransOpForInput(func_graph, node, kernel_select_);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->execution_mode() == kPynativeMode && !ms_context->enable_pynative_hook()) {
@@ -61,12 +60,7 @@ const AnfNodePtr InsertTransOp::Process(const FuncGraphPtr &func_graph, const An
       return new_node;
     }
   }
-  auto final_node = InsertTransOpForOutput(func_graph, new_node, kernel_select_);
-  if (kernel_graph != nullptr && front_node != nullptr) {
-    auto old_node = kernel_graph->GetInternalOutputByFrontNode(front_node);
-    kernel_graph->ReplaceInternalOutput(old_node, final_node);
-  }
-  return final_node;
+  return InsertTransOpForOutput(func_graph, new_node, kernel_select_);
 }
 }  // namespace opt
 }  // namespace mindspore

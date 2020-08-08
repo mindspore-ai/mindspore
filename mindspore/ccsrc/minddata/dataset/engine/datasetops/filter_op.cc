@@ -90,8 +90,6 @@ Status FilterOp::ValidateInColumns(const std::vector<std::string> *input_columns
 
 // A print method typically used for debugging.
 void FilterOp::Print(std::ostream &out, bool show_all) const {
-  // Always show the id and name as first line regardless if this summary or detailed print
-  out << "(" << std::setw(2) << operator_id_ << ") <FilterOp>:";
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
     ParallelOp::Print(out, show_all);
@@ -119,6 +117,7 @@ Status FilterOp::WorkerEntry(int32_t worker_id) {
     RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&in_buffer, worker_id));
     if (in_buffer->eoe()) {
       filter_queues_[worker_id]->EmplaceBack(std::make_pair(std::move(in_buffer), filterCtrl::kFilterEoe));
+      UpdateRepeatAndEpochCounter();
       continue;
     } else if (in_buffer->eof()) {
       filter_queues_[worker_id]->EmplaceBack(std::make_pair(std::move(in_buffer), filterCtrl::kFilterEof));

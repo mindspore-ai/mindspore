@@ -20,7 +20,6 @@ from numpy.random import normal
 from mindspore import Tensor
 from mindspore import context
 from mindspore.common.api import ms_function
-from mindspore.ops.composite import core
 
 
 def setup_module(module):
@@ -34,7 +33,6 @@ def test_remove_phi_and_fv():
     """ test_remove_phi_and_fv """
 
     @ms_function
-    @core(loop_can_unroll=True)
     def loop(x, input_data):
         def fv_func(y):
             return x * y
@@ -60,7 +58,6 @@ def test_remove_multiple_phi():
     """ test_remove_multiple_phi """
 
     @ms_function
-    @core(loop_can_unroll=True)
     def loop(x):
         def mul(a, b):
             return a * b
@@ -83,7 +80,6 @@ def test_remove_multiple_phi_recursive():
     """ test_remove_multiple_phi_recursive """
 
     @ms_function
-    @core(loop_can_unroll=True)
     def loop(x):
         def mul(a, b):
             return a * b

@@ -21,6 +21,7 @@
 #include "debug/debugger/debugger.h"
 #include "pipeline/jit/pipeline.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "runtime/device/kernel_runtime_manager.h"
 
 using debugger::EventReply;
 using debugger::GraphProto;
@@ -41,17 +42,23 @@ Debugger::Debugger()
     : grpc_client_(nullptr),
       debug_services_(nullptr),
       device_id_(0),
+      device_target_(""),
       num_step_(0),
       debugger_enabled_(false),
+      run_level_(""),
+      node_name_(""),
+      cur_name_(""),
       is_dataset_graph_(false),
       partial_memory_(false) {}
 
-void Debugger::Init(const uint32_t device_id) {
+void Debugger::Init(const uint32_t device_id, const std::string device_target) {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
   // save device_id
   MS_LOG(INFO) << "Debugger got device_id: " << device_id;
   device_id_ = device_id;
+  MS_LOG(INFO) << "Debugger got device_target: " << device_target;
+  device_target_ = device_target;
 }
 
 void Debugger::EnableDebugger() {
@@ -62,6 +69,14 @@ void Debugger::EnableDebugger() {
   grpc_client_ = nullptr;
   debug_services_ = nullptr;
 
+  // see if dump is enabled
+  bool dump_enabled = false;
+  if (device_target_ == kGPUDevice) {
+    auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
+    MS_EXCEPTION_IF_NULL(runtime_instance);
+    dump_enabled = runtime_instance->DumpDataEnabled();
+  }
+
   // get env variables to configure debugger
   const char *env_enable_str = std::getenv("ENABLE_MS_DEBUGGER");
   if (env_enable_str != nullptr) {
@@ -70,7 +85,8 @@ void Debugger::EnableDebugger() {
       debugger_enabled_ = true;
     }
   }
-  if (!debugger_enabled_) {
+
+  if (!debugger_enabled_ && !dump_enabled) {
     MS_LOG(WARNING) << "Not enabling debugger. Set environment variable ENABLE_MS_DEBUGGER=1 to enable debugger.";
     return;
   }
@@ -118,7 +134,10 @@ void Debugger::EnableDebugger() {
   }
 
   // initialize grpc client
-  grpc_client_ = std::make_unique<GrpcClient>(host, port);
+  if (debugger_enabled_) {
+    grpc_client_ = std::make_unique<GrpcClient>(host, port);
+  }
+
   debug_services_ = std::make_unique<DebugServices>();
 }
 
@@ -127,6 +146,7 @@ void Debugger::Reset() {
   std::lock_guard<std::mutex> a_lock(access_lock_);
   // reset components
   device_id_ = 0;
+  device_target_ = "";
   num_step_ = 0;
   debugger_enabled_ = false;
   is_dataset_graph_ = false;
@@ -147,10 +167,46 @@ void Debugger::PostExecute() {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
   // analyze tensor data and send the watchpoints been hit
+  if (run_level_ == "node") {
+    MS_LOG(INFO) << "Debugger is in node level mode ";
+    return;
+  }
   if (debugger_enabled_ && !is_dataset_graph_) {
-    num_step_++;
     MS_LOG(INFO) << "Debugger suspend at end of step; number of steps executed: " << num_step_;
-    SendWatchpointsAndSuspend(CheckWatchpoints());
+    CommandLoop();
+  }
+}
+
+bool Debugger::ReadNodeDataRequired() {
+  if (debugger_enabled_ && !is_dataset_graph_) {
+    auto watchpoint_table = debug_services_->GetWatchpointTable();
+    auto is_watchpoint = debug_services_->IsWatchPoint(cur_name_, watchpoint_table);
+    // if node has a watchpoint on it, is next_to node, or continue_to node then read the kernel tensor data
+    if (is_watchpoint || (run_level_ == "node" && (node_name_ == "" || node_name_ == cur_name_))) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void Debugger::PostExecuteNode() {
+  // access lock for public method
+  std::lock_guard<std::mutex> a_lock(access_lock_);
+  if (debugger_enabled_ && !is_dataset_graph_) {
+    auto watchpoint_table = debug_services_->GetWatchpointTable();
+    auto is_watchpoint = debug_services_->IsWatchPoint(cur_name_, watchpoint_table);
+    // if kernel is watchpoint,and get hit. suspend.
+    if (is_watchpoint) {
+      auto hits = CheckSingleWatchpoint(cur_name_);
+      if (!hits.empty()) {
+        SendWatchpointsAndSuspend(hits);
+      }
+    }
+    // if kernel is not watchpoint and is next_to or continue_to node, suspend.
+    if (run_level_ == "node" && (node_name_ == "" || node_name_ == cur_name_)) {
+      CommandLoop();
+    }
+    return;
   }
 }
 
@@ -215,6 +271,8 @@ void Debugger::SendGraphAndSuspend(const GraphProto &graph_proto) {
   Metadata metadata;
   metadata.set_device_name(device_name);
   metadata.set_cur_step(num_step_);
+  metadata.set_backend(device_target_);
+  metadata.set_cur_node(cur_name_);
   EventReply reply_metadata = grpc_client_->SendMetadata(metadata);
   if (reply_metadata.status() != reply_metadata.OK) {
     MS_LOG(ERROR) << "Error: SendMetadata failed";
@@ -232,8 +290,11 @@ void Debugger::CommandLoop() {
   // prepare metadata
   std::string device_name = std::to_string(device_id_) + ":" + std::to_string(graph_ptr_->graph_id());
   Metadata metadata;
+
   metadata.set_device_name(device_name);
   metadata.set_cur_step(num_step_);
+  metadata.set_backend(device_target_);
+  metadata.set_cur_node(cur_name_);
 
   // loop exit flag
   bool run = false;
@@ -274,6 +335,16 @@ void Debugger::CommandLoop() {
         break;
       case DebuggerCommand::kRunCMD:
         MS_LOG(INFO) << "RunCMD";
+        {
+          // print run cmd content
+          // get run_level and node_name
+          run_level_ = GetRunLevel(reply);
+          node_name_ = GetNodeName(reply);
+
+          MS_LOG(INFO) << "run_level: " << run_level_;
+          MS_LOG(INFO) << "node_name_: " << node_name_;
+        }
+
         // exit loop
         run = true;
         break;
@@ -428,6 +499,35 @@ std::list<WatchpointHit> Debugger::CheckWatchpoints() const {
   return hits;
 }
 
+std::list<WatchpointHit> Debugger::CheckSingleWatchpoint(std::string watchnode) const {
+  auto tensor_loader = debug_services_->tensor_loader();
+  auto tensors = tensor_loader->GetNodeTensorMap(watchnode);
+  std::list<WatchpointHit> hits;
+  for (std::vector<std::shared_ptr<TensorData>>::iterator it = tensors.begin(); it != tensors.end(); ++it) {
+    auto cur_tensor = *it;
+    std::string name = "";
+    std::string slot = "";
+    char *data_ptr = nullptr;
+    unsigned int data_size = 0;
+    int condition = -1;
+    unsigned int watchpoint_id = -1;
+    WatchpointHit hit;
+    debug_services_->CheckSingleWatchpoint(cur_tensor, &name, &slot, &data_ptr, &data_size, &condition, &watchpoint_id);
+    if (name != "") {
+      hit.set_id(watchpoint_id);
+      // here TensorProto act as a tensor indicator, not sending tensor content
+      TensorProto *tensor_item = hit.mutable_tensor();
+      tensor_item->set_node_name(name);
+      tensor_item->set_slot(slot);
+      tensor_item->set_finished(true);
+      WatchCondition *condition_item = hit.mutable_watch_condition();
+      condition_item->set_condition(debugger::WatchCondition_Condition(condition));
+      hits.push_back(hit);
+    }
+  }
+  return hits;
+}
+
 void Debugger::SendWatchpointsAndSuspend(const std::list<WatchpointHit> &points) {
   // send info about watchpoint
   if (!points.empty()) {
@@ -474,6 +574,24 @@ ProtoVector<WatchNode> GetWatchnodes(const EventReply &reply) {
   return reply.set_cmd().watch_nodes();
 }
 
+std::string GetRunLevel(const EventReply &reply) {
+  if (!reply.has_run_cmd()) {
+    MS_LOG(ERROR) << "Error: Not RunCMD, can not get RunLevel. Returning default value: "
+                     "";
+    return "";
+  }
+  return reply.run_cmd().run_level();
+}
+
+std::string GetNodeName(const EventReply &reply) {
+  if (!reply.has_run_cmd()) {
+    MS_LOG(ERROR) << "Error: Not RunCMD, can not get NodeName. Returning default value: "
+                     "";
+    return "";
+  }
+  return reply.run_cmd().node_name();
+}
+
 WatchCondition GetWatchcondition(const EventReply &reply) {
   if (!reply.has_set_cmd() || !reply.set_cmd().has_watch_condition()) {
     MS_LOG(ERROR) << "Error: Can not get WatchCondition from command. Returning default value: WatchCondition().";
@@ -518,5 +636,21 @@ std::string GetTensorFullName(const TensorProto &tensor) {
 }
 
 bool Debugger::partial_memory() { return partial_memory_; }
+
+void Debugger::SetCurNode(std::string cur_name) {
+  // access lock for public method
+  std::lock_guard<std::mutex> a_lock(access_lock_);
+  cur_name_ = cur_name;
+}
+
+std::string Debugger::run_level() const { return run_level_; }
+
+void Debugger::SetStepNum(int32_t cur_num_step) {
+  // access lock for public method
+  std::lock_guard<std::mutex> a_lock(access_lock_);
+  num_step_ = cur_num_step;
+}
+
+int32_t Debugger::step_num() const { return num_step_; }
 
 }  // namespace mindspore

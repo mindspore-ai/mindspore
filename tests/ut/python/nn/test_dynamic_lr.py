@@ -28,7 +28,7 @@ decay_epoch = 2
 min_lr = 0.01
 max_lr = 0.1
 power = 0.5
-
+warmup_epoch = 2
 
 class TestInputs:
     def test_milestone1(self):
@@ -234,3 +234,8 @@ def test_polynomial_decay():
     lr2 = dr.polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_epoch, decay_epoch, power,
                                  True)
     assert len(lr2) == total_step
+
+
+def test_warmup():
+    lr1 = dr.warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch)
+    assert len(lr1) == total_step

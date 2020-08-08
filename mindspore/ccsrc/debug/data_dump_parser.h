@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_DEBUG_ASYNC_DUMP_JSON_PARE_H_
-#define MINDSPORE_MINDSPORE_CCSRC_DEBUG_ASYNC_DUMP_JSON_PARE_H_
+#ifndef MINDSPORE_CCSRC_DEBUG_ASYNC_DUMP_JSON_PARE_H_
+#define MINDSPORE_CCSRC_DEBUG_ASYNC_DUMP_JSON_PARE_H_
 
 #include <string>
-#include <set>
+#include <map>
 #include <mutex>
 #include <optional>
 #include "nlohmann/json.hpp"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 class DataDumpParser {
@@ -38,8 +38,10 @@ class DataDumpParser {
   bool enable() const { return enable_; }
   const std::string &net_name() const { return net_name_; }
   uint32_t dump_mode() const { return dump_mode_; }
+  uint32_t op_debug_mode() const { return op_debug_mode_; }
   uint32_t dump_step() const { return dump_step_; }
-  const std::set<std::string> &kernel_set() const { return kernel_set_; }
+  void MatchKernel(const std::string &kernel_name);
+  void PrintUnusedKernel();
 
  private:
   DataDumpParser() = default;
@@ -49,13 +51,16 @@ class DataDumpParser {
   void ResetParam();
   bool IsConfigExist(const nlohmann::json &dump_settings) const;
   bool ParseDumpSetting(const nlohmann::json &dump_settings);
+  void CheckDumpMode(uint32_t dump_mode) const;
+  void CheckOpDebugMode(uint32_t op_debug_mode) const;
 
   std::mutex lock_;
   bool enable_{false};
   std::string net_name_;
+  uint32_t op_debug_mode_{0};
   uint32_t dump_mode_{0};
   uint32_t dump_step_{0};
-  std::set<std::string> kernel_set_;
+  std::map<std::string, uint32_t> kernel_map_;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_ASYNC_DUMP_JSON_PARE_H_
+#endif  // MINDSPORE_CCSRC_DEBUG_ASYNC_DUMP_JSON_PARE_H_

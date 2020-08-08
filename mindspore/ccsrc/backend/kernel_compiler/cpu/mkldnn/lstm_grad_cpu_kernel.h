@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_KERNEL_CPU_LSTM_GRAD_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_KERNEL_CPU_LSTM_GRAD_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LSTM_GRAD_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LSTM_GRAD_CPU_KERNEL_H_
 
+#include <string>
 #include <vector>
 #include <memory>
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_cpu_kernel.h"
@@ -32,6 +33,17 @@ class LSTMGradCPUKernel : public MKLCPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
+  void AddArgumentOp(const dnnl::memory::desc &src_desc, const dnnl::memory::desc &src_h_desc,
+                     const dnnl::memory::desc &src_c_desc, const dnnl::memory::desc &bias_desc,
+                     const dnnl::memory::desc &dst_desc, const dnnl::memory::desc &dst_h_desc,
+                     const dnnl::memory::desc &dst_c_desc);
+  void SetArgumentHandleOp(const std::vector<kernel::AddressPtr> &inputs,
+                           const std::vector<kernel::AddressPtr> &outputs, const dnnl::memory &weights_memory,
+                           const dnnl::memory &weights_h_memory, const dnnl::memory &bias_memory,
+                           const dnnl::memory &diff_weights_memory, const dnnl::memory &diff_weights_h_memory,
+                           const dnnl::memory &diff_bias_memory);
+  void Memset_op(const dnnl::memory &mem, string name);
+  void CheckParam(const CNodePtr &kernel_node);
   int weight_size_ = 0;
   int weight_h_size_ = 0;
   int input_size_;
@@ -68,4 +80,4 @@ MS_REG_CPU_KERNEL(LSTMGrad,
                   LSTMGradCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_KERNEL_CPU_LSTM_GRAD_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LSTM_GRAD_CPU_KERNEL_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef PIPELINE_PARSE_RESOLVE_H_
-#define PIPELINE_PARSE_RESOLVE_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_RESOLVE_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_RESOLVE_H_
 
 #include <memory>
 #include <string>
@@ -80,7 +80,7 @@ using SymbolPtr = std::shared_ptr<Symbol>;
 // PyObjectWrapper class wrappers resolved python object for further processing.
 class PyObjectWrapper : public Named {
  public:
-  explicit PyObjectWrapper(const py::object &obj, const std::string name = "Python object") : Named(name), obj_(obj) {}
+  explicit PyObjectWrapper(const py::object &obj, const std::string &name = "Python object") : Named(name), obj_(obj) {}
   ~PyObjectWrapper() override = default;
   MS_DECLARE_PARENT(PyObjectWrapper, Named);
   py::object obj() { return obj_; }
@@ -93,7 +93,7 @@ class PyObjectWrapper : public Named {
 // ClassObject class wrappers dataclass
 class ClassObject : public PyObjectWrapper {
  public:
-  explicit ClassObject(const py::object &obj, const std::string name = "Python dataclass")
+  explicit ClassObject(const py::object &obj, const std::string &name = "Python dataclass")
       : PyObjectWrapper(obj, name) {}
   ~ClassObject() override = default;
   MS_DECLARE_PARENT(ClassObject, PyObjectWrapper);
@@ -103,7 +103,7 @@ class ClassObject : public PyObjectWrapper {
 // ClassType class wrappers class name in python
 class ClassType : public PyObjectWrapper {
  public:
-  explicit ClassType(const py::object &obj, const std::string name = "Python class type")
+  explicit ClassType(const py::object &obj, const std::string &name = "Python class type")
       : PyObjectWrapper(obj, name) {}
   ~ClassType() override = default;
   MS_DECLARE_PARENT(ClassType, PyObjectWrapper);
@@ -145,6 +145,10 @@ using SymbolResolverPtr = std::shared_ptr<SymbolResolver>;
 AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr &name_space, const SymbolPtr &symbol,
                          const AnfNodePtr &node);
 
+// Resolve Cell with attr name.
+AnfNodePtr ResolveCellwithAttr(const FuncGraphManagerPtr &manager, const NameSpacePtr &name_space,
+                               const SymbolPtr &symbol, const AnfNodePtr &node, const std::string &attr);
+
 // Resolve one graph which normally is the root graph. FuncGraph shall be managed by res->manager().
 bool ResolveFuncGraph(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePtr &res, bool use_profile = true);
 
@@ -155,4 +159,4 @@ bool ResolveAll(const FuncGraphManagerPtr &manager);
 }  // namespace parse
 }  // namespace mindspore
 
-#endif  // PIPELINE_PARSE_RESOLVE_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_RESOLVE_H_

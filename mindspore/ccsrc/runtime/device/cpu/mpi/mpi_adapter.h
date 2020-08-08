@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_DEVICE_CPU_MPI_MPI_ADAPTER_H_
-#define MINDSPORE_CCSRC_DEVICE_CPU_MPI_MPI_ADAPTER_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_MPI_MPI_ADAPTER_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_MPI_MPI_ADAPTER_H_
 #ifdef ENABLE_MPI
 #include <mpi.h>
 #include <vector>
@@ -71,4 +71,4 @@ class MPIAdapter {
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_DEVICE_CPU_MPI_MPI_ADAPTER_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_MPI_MPI_ADAPTER_H_

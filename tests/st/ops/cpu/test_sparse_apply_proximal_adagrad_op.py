@@ -14,6 +14,7 @@
 # ============================================================================
 
 import numpy as np
+import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -37,6 +38,9 @@ class Net(nn.Cell):
         return out
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_net():
     gradient = Tensor(np.ones([3, 3, 3]).astype(np.float32))
     indices = Tensor([0, 1, 2], mstype.int32)

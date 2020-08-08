@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_SLICE_GRAD_GPU_KERNEL_H
-#define MINDSPORE_CCSRC_KERNEL_GPU_SLICE_GRAD_GPU_KERNEL_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SLICE_GRAD_GPU_KERNEL_H
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SLICE_GRAD_GPU_KERNEL_H
 
 #include <vector>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
@@ -38,13 +38,8 @@ class SliceGradGpuKernel : public GpuKernel {
     T *dy = GetDeviceAddress<T>(inputs, 0);
     T *dx = GetDeviceAddress<T>(outputs, 0);
     FillDeviceArray(outputs[0]->size / sizeof(T), dx, 0.f, reinterpret_cast<cudaStream_t>(stream_ptr));
-    if (is_strided_slice_) {
-      CalStridedSliceGrad(output_size_ / sizeof(T), dy, input_shape_, begin_, size_, strides_, dx,
-                          reinterpret_cast<cudaStream_t>(stream_ptr));
-    } else {
-      CalSliceGrad(output_size_ / sizeof(T), dy, input_shape_, begin_, size_, dx,
-                   reinterpret_cast<cudaStream_t>(stream_ptr));
-    }
+    CalSliceGrad(output_size_ / sizeof(T), dy, input_shape_, begin_, size_, dx,
+                 reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
@@ -140,8 +135,8 @@ class SliceGradGpuKernel : public GpuKernel {
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;
-};
+};  // namespace kernel
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_SLICE_GRAD_GPU_KERNEL_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SLICE_GRAD_GPU_KERNEL_H

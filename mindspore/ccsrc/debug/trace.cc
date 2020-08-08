@@ -28,11 +28,12 @@
 #include <algorithm>
 
 #include "ir/meta_func_graph.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "frontend/operator/composite/composite.h"
 #include "ir/tensor.h"
 #include "debug/anf_ir_utils.h"
 #include "pipeline/jit/static_analysis/evaluator.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 // namespace to support debug trace infomation
@@ -495,5 +496,17 @@ void ClearTraceStack() {
   }
   cnode_debug_stack.clear();
 }
+
+// Register trace provider to LogWriter.
+struct TraceProviderRegister {
+  TraceProviderRegister() {
+    LogWriter::set_trace_provider([](std::ostringstream &oss) {
+      TraceGraphEval();
+      GetEvalStackInfo(oss);
+    });
+  }
+  ~TraceProviderRegister() = default;
+} trace_provider_regsiter;
+
 }  // namespace trace
 }  // namespace mindspore

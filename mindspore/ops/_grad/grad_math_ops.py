@@ -17,6 +17,7 @@
 
 from functools import reduce
 import numpy as np
+import mindspore as ms
 from mindspore.ops import _selected_grad_ops as SG
 from .. import functional as F
 from .. import operations as P
@@ -33,6 +34,7 @@ shape_op = P.Shape()
 reduce_sum = P.ReduceSum()
 reshape = P.Reshape()
 tile = P.Tile()
+is_sub_class = P.IsSubClass()
 
 
 def binop_grad_common(x, y, dx, dy):
@@ -250,6 +252,21 @@ def get_bprop_div_no_nan(self):
     return bprop
 
 
+@bprop_getters.register(P.Xdivy)
+def get_bprop_xdivy(self):
+    """Grad definition for `Xdivy` operation."""
+    div_op = P.Xdivy()
+
+    def bprop(x, y, out, dout):
+        x_dtype = F.dtype(x)
+        not_zero_x = F.cast(F.not_equal(x, F.cast(0.0, x_dtype)), x_dtype)
+        bc_x = div_op(not_zero_x, y) * dout
+        bc_y = div_op(-x, F.square(y)) * dout
+        return binop_grad_common(x, y, bc_x, bc_y)
+
+    return bprop
+
+
 @bprop_getters.register(P.Floor)
 def get_bprop_floor(self):
     """Grad definition for `floor` operation."""
@@ -282,14 +299,9 @@ def get_bprop_ceil(self):
 @bprop_getters.register(P.FloorDiv)
 def get_bprop_floordiv(self):
     """Grad definition for `FloorDiv` operation."""
-    div_op = P.FloorDiv()
-    neg = P.Neg()
-    mul_op = P.Mul()
 
     def bprop(x, y, out, dout):
-        bc_x = div_op(dout, y)
-        bc_y = neg(mul_op(bc_x, out))
-        return binop_grad_common(x, y, bc_x, bc_y)
+        return zeros_like(x), zeros_like(y)
 
     return bprop
 
@@ -301,6 +313,29 @@ def get_bprop_floormod(self):
     def bprop(x, y, out, dout):
         bc_x = dout
         bc_y = -dout * (x // y)
+        return binop_grad_common(x, y, bc_x, bc_y)
+
+    return bprop
+
+
+@bprop_getters.register(P.TruncateDiv)
+def get_bprop_truncate_div(self):
+    """Grad definition for `TruncateDiv` operation."""
+
+    def bprop(x, y, out, dout):
+        return zeros_like(x), zeros_like(y)
+
+    return bprop
+
+
+@bprop_getters.register(P.TruncateMod)
+def get_bprop_truncate_mod(self):
+    """Grad definition for `TruncateMod` operation."""
+    div_op = P.TruncateDiv()
+
+    def bprop(x, y, out, dout):
+        bc_x = dout
+        bc_y = -dout * div_op(x, y)
         return binop_grad_common(x, y, bc_x, bc_y)
 
     return bprop
@@ -333,18 +368,59 @@ def get_bprop_square(self):
     return bprop
 
 
+@bprop_getters.register(P.SquaredDifference)
+def get_bprop_squared_difference(self):
+    """Grad definition for `SquaredDifference` operation."""
+    neg = P.Neg()
+
+    def bprop(x, y, out, dout):
+        x_grad = 2 * dout * (x - y)
+        bc_x = x_grad
+        bc_y = neg(x_grad)
+        return binop_grad_common(x, y, bc_x, bc_y)
+
+    return bprop
+
+
+@bprop_getters.register(P.Xlogy)
+def get_bprop_xlogy(self):
+    """Grad definition for `Xlogy` operation."""
+    log_op = P.Xlogy()
+    div_op = P.Xdivy()
+
+    def bprop(x, y, out, dout):
+        x_dtype = F.dtype(x)
+        not_zero_x = F.cast(F.not_equal(x, F.cast(0.0, x_dtype)), x_dtype)
+        bc_x = log_op(not_zero_x, y) * dout
+        bc_y = div_op(x, y) * dout
+        return binop_grad_common(x, y, bc_x, bc_y)
+
+    return bprop
+
+@bprop_getters.register(P.SquareSumAll)
+def get_bprop_square_sum_all(self):
+    """Grad definition for `Square` operation."""
+    mul_func = P.Mul()
+    fill_func = P.Fill()
+    dtype = P.DType()
+
+    def bprop(x, y, out, dout):
+        temp_x = mul_func(dout[0], x)
+        temp_y = mul_func(dout[1], y)
+        dx = mul_func(fill_func(dtype(temp_x), shape_op(x), 2.0), temp_x)
+        dy = mul_func(fill_func(dtype(temp_y), shape_op(y), 2.0), temp_y)
+        return (dx, dy)
+
+    return bprop
+
+
 @bprop_getters.register(P.Sqrt)
 def get_bprop_sqrt(self):
     """Grad definition for `Sqrt` operation."""
-    mul_func = P.Mul()
-    fill_func = P.Fill()
-    div_op = P.RealDiv()
-    sqrt = P.Sqrt()
-    dtype = P.DType()
+    sqrt_grad = G.SqrtGrad()
 
     def bprop(x, out, dout):
-        temp = div_op(fill_func(dtype(x), shape_op(x), 0.5), sqrt(x))
-        dx = mul_func(dout, temp)
+        dx = sqrt_grad(out, dout)
         return (dx,)
 
     return bprop
@@ -353,10 +429,10 @@ def get_bprop_sqrt(self):
 @bprop_getters.register(P.Rsqrt)
 def get_bprop_rsqrt(self):
     """Grad definition for `Rsqrt` operation."""
+    rsqrt_grad = G.RsqrtGrad()
 
     def bprop(x, out, dout):
-        grad = F.fill(F.dtype(x), F.shape(x), -0.5) / (F.sqrt(x) * x)
-        dx = dout * grad
+        dx = rsqrt_grad(out, dout)
         return (dx,)
 
     return bprop
@@ -365,15 +441,22 @@ def get_bprop_rsqrt(self):
 @bprop_getters.register(P.Reciprocal)
 def get_bprop_reciprocal(self):
     """Grad definition for `Reciprocal` operation."""
-    neg = P.Neg()
-    mul = P.Mul()
-    square = P.Square()
-    reciprocal = P.Reciprocal()
+    if self.target == "GPU":
+        neg = P.Neg()
+        mul = P.Mul()
+        square = P.Square()
+        reciprocal = P.Reciprocal()
 
-    def bprop(x, out, dout):
-        g = neg(reciprocal(square(x)))
-        dx = mul(dout, g)
-        return (dx,)
+        def bprop(x, out, dout):
+            g = neg(reciprocal(square(x)))
+            dx = mul(dout, g)
+            return (dx,)
+    else:
+        reciprocal_grad = G.ReciprocalGrad()
+
+        def bprop(x, out, dout):
+            dx = reciprocal_grad(out, dout)
+            return (dx,)
 
     return bprop
 
@@ -604,6 +687,16 @@ def get_bprop_cumprod(self):
 @bprop_getters.register(P.ReduceAll)
 def get_bprop_reduceall(self):
     """Grad definition for `ReduceAll` operation."""
+
+    def bprop(x, axis, out, dout):
+        return zeros_like(x), zeros_like(axis)
+
+    return bprop
+
+
+@bprop_getters.register(P.ReduceAny)
+def get_bprop_reduceany(self):
+    """Grad definition for `ReduceAny` operation."""
 
     def bprop(x, axis, out, dout):
         return zeros_like(x), zeros_like(axis)
@@ -952,7 +1045,8 @@ def get_bprop_scalar_accumulatenv2(self):
         dx = ()
         for _ in range(len(x)):
             dx = dx + (dout,)
-        return dx
+        return (dx,)
+
     return bprop
 
 
@@ -961,10 +1055,16 @@ def get_bprop_scalar_addn(self):
     """Generate bprop for AddN"""
 
     def bprop(x, out, dout):
+        if is_sub_class(F.typeof(x), ms.list_):
+            dx = []
+            for _ in range(len(x)):
+                dx.append(dout)
+            return (dx,)
+
         dx = ()
         for _ in range(len(x)):
             dx = dx + (dout,)
-        return dx
+        return (dx,)
 
     return bprop
 
@@ -1024,6 +1124,22 @@ def get_bprop_atan(self):
     def bprop(x, out, dout):
         dx = input_grad(x, dout)
         return (dx,)
+    return bprop
+
+
+@bprop_getters.register(P.Tan)
+def get_bprop_tan(self):
+    """Grad definition for `Tan` operation."""
+    reciprocal = P.Reciprocal()
+    square = P.Square()
+    cos = P.Cos()
+
+    def bprop(x, out, dout):
+        cosx = cos(x)
+        secx2 = square(reciprocal(cosx))
+        dx = secx2 * dout
+        return (dx,)
+
     return bprop
 
 

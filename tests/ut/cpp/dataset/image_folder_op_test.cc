@@ -18,7 +18,7 @@
 #include <memory>
 #include <string>
 #include "common/common.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/core/client.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
@@ -68,8 +68,7 @@ std::shared_ptr<ImageFolderOp> ImageFolder(int64_t num_works, int64_t rows, int6
 Status Create1DTensor(std::shared_ptr<Tensor> *sample_ids, int64_t num_elements, unsigned char *data = nullptr,
                       DataType::Type data_type = DataType::DE_UINT32) {
   TensorShape shape(std::vector<int64_t>(1, num_elements));
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(sample_ids, TensorImpl::kFlexible, shape, DataType(data_type), data));
-  (*sample_ids)->AllocateBuffer((*sample_ids)->SizeInBytes());  // allocate memory in case user forgets!
+  RETURN_IF_NOT_OK(Tensor::CreateFromMemory(shape, DataType(data_type), data, sample_ids));
 
   return Status::OK();
 }

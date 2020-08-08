@@ -17,7 +17,7 @@
 #include <string>
 #include <utility>
 #include <algorithm>
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
@@ -34,7 +34,7 @@ void PoolingGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
   std::vector<int> padding_r;
   const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PADDING);
-  kernel_size_ = kernel_sizes[3];
+  kernel_size_ = {IntToSize(kernel_sizes[2]), IntToSize(kernel_sizes[3])};
   stride_ = strides[3];
   GetPadding(kernel_node, pad_mode, src_shape_, kernel_size_, stride_, &padding_l_, &padding_r);
 }
@@ -77,7 +77,7 @@ void PoolingGradCPUKernel::ChannelPoolingGrad(const float *input, const float *d
   size_t diff_index = 0;
   for (size_t h = 0; h < dst_shape_[2]; ++h) {
     box[0].first = IntToSize(std::max(h_start, 0));
-    box[0].second = IntToSize(std::min(h_start + kernel_size_, src_height));
+    box[0].second = IntToSize(std::min(h_start + SizeToInt(kernel_size_[1]), src_height));
     for (size_t w = 0; w < src_shape_[3]; ++w) {
       row_max_pair[w].first = 0;
       row_max_pair[w].second = 0;
@@ -85,7 +85,7 @@ void PoolingGradCPUKernel::ChannelPoolingGrad(const float *input, const float *d
     int w_start = -padding_l_[1];
     for (size_t w = 0; w < dst_shape_[3]; ++w) {
       box[1].first = IntToSize(std::max(w_start, 0));
-      box[1].second = IntToSize(std::min(w_start + kernel_size_, src_width));
+      box[1].second = IntToSize(std::min(w_start + SizeToInt(kernel_size_[0]), src_width));
       RowPoolingGrad(input, output, diff[diff_index], box, &row_max_pair);
       diff_index += 1;
       w_start += stride_;

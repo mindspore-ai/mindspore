@@ -19,10 +19,10 @@
 #include "backend/kernel_compiler/kernel.h"
 #include "runtime/device/ascend/profiling/profiling_manager.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "utils/utils.h"
 #include "runtime/device/ascend/profiling/reporter/task_desc_reporter.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "runtime/device/ascend/profiling/reporter/point_reporter.h"
 
 namespace mindspore {
@@ -167,7 +167,7 @@ std::string ProfilingUtils::GetGraphLastTbeKernelName(const std::vector<CNodePtr
   std::string last_tbe_kernel_name;
   // find last tbe_kernel
   for (auto iter = cnode_exec_order.rbegin(); iter != cnode_exec_order.rend(); ++iter) {
-    if (AnfAlgo::GetKernelType(*iter) == TBE_KERNEL) {
+    if (AnfAlgo::GetKernelType(*iter) == TBE_KERNEL || AnfAlgo::GetKernelType(*iter) == AKG_KERNEL) {
       last_tbe_kernel_name = (*iter)->fullname_with_scope();
       break;
     }
@@ -319,7 +319,7 @@ void ProfilingUtils::SetGraphProfilingCNode(uint32_t graph_id, const std::vector
 
 bool ProfilingUtils::ValidComputeGraph(NotNull<const session::KernelGraph *> graph_ptr) {
   for (const auto &node : graph_ptr->execution_order()) {
-    if (AnfAlgo::GetKernelType(node) == TBE_KERNEL) {
+    if (AnfAlgo::GetKernelType(node) == TBE_KERNEL || AnfAlgo::GetKernelType(node) == AKG_KERNEL) {
       return true;
     }
   }

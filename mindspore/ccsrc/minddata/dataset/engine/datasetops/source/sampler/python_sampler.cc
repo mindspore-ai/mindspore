@@ -41,7 +41,7 @@ Status PythonSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
       try {
         py::object py_ret = py_sampler_instance.attr("_get_indices")();
         py::array np_sample_ids = py_ret.cast<py::array>();
-        Tensor::CreateTensor(&sample_ids, np_sample_ids);  // copy numpy to tensor
+        Tensor::CreateFromNpArray(np_sample_ids, &sample_ids);  // copy numpy to tensor
 
         if (HasChildSampler()) {
           for (auto it = sample_ids->begin<int64_t>(); it != sample_ids->end<int64_t>(); ++it) {

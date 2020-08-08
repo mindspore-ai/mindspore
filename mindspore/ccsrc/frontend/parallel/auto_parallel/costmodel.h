@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_AUTO_PARALLEL_COSTMODEL_H_
-#define MINDSPORE_CCSRC_PARALLEL_AUTO_PARALLEL_COSTMODEL_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_AUTO_PARALLEL_COSTMODEL_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_AUTO_PARALLEL_COSTMODEL_H_
 
 #include <algorithm>
 #include <memory>
@@ -79,6 +79,8 @@ class StrategyWithCost {
  public:
   StrategyWithCost(StrategyPtr strategy, std::vector<TensorInfo> inputs_, std::vector<TensorInfo> outputs_)
       : strategy_ptr(std::move(strategy)), inputs_ptr(std::move(inputs_)), outputs_ptr(std::move(outputs_)) {}
+  StrategyWithCost(StrategyPtr strategy, CostPtrList c_list)
+      : strategy_ptr(std::move(strategy)), cost_list(std::move(c_list)) {}
 
   StrategyWithCost(const StrategyWithCost &swc) = delete;
   StrategyWithCost(StrategyWithCost &&swc)
@@ -99,6 +101,7 @@ enum DecisionType {
   EDGE_ELIMINATION,
   MERGE_ELIMINATION,
   CONTRACT_ELIMINATION,
+  SOURCE_ELIMINATION,
   TRIANGLE_ELIMINATION,
   STAR_ELIMINATION,
   FINAL_TYPE,
@@ -199,6 +202,38 @@ struct ContractEliminationDecision : public Decision {
   MS_DECLARE_PARENT(ContractEliminationDecision, Decision);
 };
 
+/* 'SourceEliminationDecision' is for the source Elimination in DP algorithm:
+ *                    1                             1,5
+ *                   /  \                          // \\
+ *                  /    \                        //   \\
+ *                 /      \                      //     \\
+ *                /        \                    //       \\
+ *               2 <-  5 -> 3    ==>           2          3
+ *                \        /                    \        /
+ *                  \    /                        \    /
+ *                    \ /                           \ /
+ *                     4                             4
+ *
+ *  In the original graph, '1' has two alive outgoing edges and no incoming edges. '5' has two alive outgoing edges and
+ *  no incoming edges. '4' has two alive incoming edges and no outgoing edges. Source Elimination will merge '5' into
+ * '1' new edges are generated to replace the old ones incident to '1' and '5'.
+ *
+ */
+struct SourceEliminationDecision : public Decision {
+  SourceEliminationDecision(StrategyPtr op1_stra, CostPtr op1_c, StrategyPtr op2_stra, CostPtr op2_c)
+      : op1_strategy_(std::move(op1_stra)),
+        op1_cost_(std::move(op1_c)),
+        op2_strategy_(std::move(op2_stra)),
+        op2_cost_(std::move(op2_c)) {
+    type_ = DecisionType::SOURCE_ELIMINATION;
+  }
+  StrategyPtr op1_strategy_;
+  CostPtr op1_cost_;
+  StrategyPtr op2_strategy_;
+  CostPtr op2_cost_;
+  MS_DECLARE_PARENT(SourceEliminationDecision, Decision);
+};
+
 /* 'TriangleEliminationDecision' is for the Triangle Elimination in DP algorithm:
  *
  *       u
@@ -296,6 +331,7 @@ using OpEliminationDecisionPtr = std::shared_ptr<OpEliminationDecision>;
 using EdgeEliminationDecisionPtr = std::shared_ptr<EdgeEliminationDecision>;
 using MergeEliminationDecisionPtr = std::shared_ptr<MergeEliminationDecision>;
 using ContractEliminationDecisionPtr = std::shared_ptr<ContractEliminationDecision>;
+using SourceEliminationDecisionPtr = std::shared_ptr<SourceEliminationDecision>;
 using TriangleEliminationDecisionPtr = std::shared_ptr<TriangleEliminationDecision>;
 using StarEliminationDecisionPtr = std::shared_ptr<StarEliminationDecision>;
 using FinalDecisionPtr = std::shared_ptr<FinalDecision>;
@@ -308,4 +344,4 @@ void RefineForPracticalCost(const CostPtr &, bool is_redistribution);
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_AUTO_PARALLEL_COSTMODEL_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_AUTO_PARALLEL_COSTMODEL_H_

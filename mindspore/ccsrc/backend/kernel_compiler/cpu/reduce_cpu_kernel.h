@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_KERNEL_CPU_REDUCE_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_KERNEL_CPU_REDUCE_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_REDUCE_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_REDUCE_CPU_KERNEL_H_
 #include <vector>
 #include <memory>
 #include <string>
@@ -34,7 +34,8 @@ class ReduceCPUKernel : public CPUKernel {
  private:
   void Transpose(const int size, const float *input, const std::vector<size_t> &input_shape,
                  const std::vector<size_t> &input_axis, const int shape_size, float *output);
-  size_t reduce_type_;
+  void ConvertDataToOutput(const float *input, float *output);
+  size_t reduce_type_ = 0;
   std::vector<size_t> axis_;
   std::vector<size_t> shape_;
   size_t left_dims_ = 1;
@@ -48,4 +49,4 @@ MS_REG_CPU_KERNEL(ReduceSum, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOu
                   ReduceCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_KERNEL_CPU_REDUCE_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_REDUCE_CPU_KERNEL_H_

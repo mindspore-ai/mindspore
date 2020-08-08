@@ -17,172 +17,187 @@
  */
 
 #include "pipeline/jit/resource.h"
-#include "pipeline/jit/pipeline.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
-#include "debug/draw.h"
 #include "debug/trace.h"
 #include "ir/dtype.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "frontend/operator/ops.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "frontend/optimizer/ad/dfunctor.h"
-#include "vm/segment_runner.h"
 
 namespace mindspore {
 // namespace to support opmap definition
 namespace pipeline {
 
-MethodMap &GetMethodMap() {
-  static MethodMap method_map = {
-    {kObjectTypeString,
-     {
-       {"__bool__", std::string("str_bool")}  // C.str_bool
-     }},
-    {kMetaTypeNone,
-     {
-       {"__bool__", std::string("none_bool")}  // C.none_bool
-     }},
-    {kNumberTypeBool,
-     {
-       {"__and__", prim::kPrimBoolAnd},     // P.bool_and
-       {"__or__", prim::kPrimBoolOr},       // P.bool_or
-       {"__eq__", prim::kPrimBoolEq},       // P.bool_eq
-       {"__ne__", std::string("bool_ne")},  // C.bool_ne
-       {"__bool__", prim::kPrimIdentity}    // P.identity
-     }},
-    {kNumberTypeInt,
-     {
-       {"__add__", prim::kPrimScalarAdd},              // P.scalar_add
-       {"__sub__", prim::kPrimScalarSub},              // P.scalar_sub
-       {"__mul__", prim::kPrimScalarMul},              // P.scalar_mul
-       {"__floordiv__", std::string("int_floordiv")},  // C.int_floordiv
-       {"__truediv__", std::string("int_truediv")},    // C.int_truediv
-       {"__mod__", prim::kPrimScalarMod},              // P.scalar_mod
-       {"__pow__", prim::kPrimScalarPow},              // P.scalar_pow
-       {"__floor__", prim::kPrimIdentity},             // P.identity
-       {"__trunc__", prim::kPrimIdentity},             // P.identity
-       {"__pos__", prim::kPrimScalarUadd},             // P.scalar_uadd
-       {"__neg__", prim::kPrimScalarUsub},             // P.scalar_usub
-       {"__eq__", prim::kPrimScalarEq},                // P.scalar_eq
-       {"__ne__", prim::kPrimScalarNe},                // P.scalar_ne
-       {"__lt__", prim::kPrimScalarLt},                // P.scalar_lt
-       {"__gt__", prim::kPrimScalarGt},                // P.scalar_gt
-       {"__le__", prim::kPrimScalarLe},                // P.scalar_le
-       {"__ge__", prim::kPrimScalarGe},                // P.scalar_ge
-       {"__bool__", std::string("int_bool")},          // C.int_bool
-       {"__ms_to_array__", prim::kPrimScalarToArray},  // P.scalar_to_array
-     }},
-    {kNumberTypeUInt,
-     {
-       {"__add__", prim::kPrimScalarAdd},              // P.scalar_add,
-       {"__sub__", prim::kPrimScalarSub},              // P.scalar_sub,
-       {"__mul__", prim::kPrimScalarMul},              // P.scalar_mul,
-       {"__floordiv__", prim::kPrimScalarDiv},         // P.scalar_div,
-       {"__truediv__", std::string("int_truediv")},    // C.int_truediv
-       {"__mod__", prim::kPrimScalarMod},              // P.scalar_mod,
-       {"__pow__", prim::kPrimScalarPow},              // P.scalar_pow,
-       {"__floor__", prim::kPrimIdentity},             // P.identity,
-       {"__trunc__", prim::kPrimIdentity},             // P.identity,
-       {"__pos__", prim::kPrimScalarUadd},             // P.scalar_uadd,
-       {"__neg__", prim::kPrimScalarUsub},             // P.scalar_usub,
-       {"__eq__", prim::kPrimScalarEq},                // P.scalar_eq,
-       {"__ne__", prim::kPrimScalarNe},                // P.scalar_ne,
-       {"__lt__", prim::kPrimScalarLt},                // P.scalar_lt,
-       {"__gt__", prim::kPrimScalarGt},                // P.scalar_gt,
-       {"__le__", prim::kPrimScalarLe},                // P.scalar_le,
-       {"__ge__", prim::kPrimScalarGe},                // P.scalar_ge,
-       {"__bool__", std::string("int_bool")},          // C.int_bool
-       {"__ms_to_array__", prim::kPrimScalarToArray},  // P.scalar_to_array,
-     }},
-    {kNumberTypeFloat,
-     {
-       {"__add__", prim::kPrimScalarAdd},                // P.scalar_add,
-       {"__sub__", prim::kPrimScalarSub},                // P.scalar_sub,
-       {"__mul__", prim::kPrimScalarMul},                // P.scalar_mul,
-       {"__floordiv__", std::string("float_floordiv")},  // C.float_floordiv
-       {"__truediv__", prim::kPrimScalarDiv},            // P.scalar_div,
-       {"__mod__", prim::kPrimScalarMod},                // P.scalar_mod,
-       {"__pow__", prim::kPrimScalarPow},                // P.scalar_pow,
-       {"__floor__", prim::kPrimScalarFloor},            // P.scalar_floor,
-       {"__trunc__", prim::kPrimScalarTrunc},            // P.scalar_trunc,
-       {"__pos__", prim::kPrimScalarUadd},               // P.scalar_uadd,
-       {"__neg__", prim::kPrimScalarUsub},               // P.scalar_usub,
-       {"__eq__", prim::kPrimScalarEq},                  // P.scalar_eq,
-       {"__ne__", prim::kPrimScalarNe},                  // P.scalar_ne,
-       {"__lt__", prim::kPrimScalarLt},                  // P.scalar_lt,
-       {"__gt__", prim::kPrimScalarGt},                  // P.scalar_gt,
-       {"__le__", prim::kPrimScalarLe},                  // P.scalar_le,
-       {"__ge__", prim::kPrimScalarGe},                  // P.scalar_ge,
-       {"__bool__", std::string("float_bool")},          // C.float_bool
-       {"__ms_to_array__", prim::kPrimScalarToArray},    // P.scalar_to_array,
-     }},
-    {kObjectTypeTuple,
-     {
-       {"__len__", prim::kPrimTupleLen},                  // P.tuple_len,
-       {"__getitem__", prim::kPrimTupleGetItem},          // P.tuple_getitem,
-       {"__setitem__", prim::kPrimTupleSetItem},          // P.tuple_setitem,
-       {"__ms_iter__", prim::kPrimIdentity},              // P.identity,
-       {"__ms_next__", std::string("tuple_next")},        // C.tuple_next,
-       {"__ms_hasnext__", std::string("tuple_hasnext")},  // C.tuple_hasnext
-       {"__bool__", std::string("tuple_bool")}            // C.tuple_bool
-     }},
-    {kObjectTypeList,
-     {
-       {"__len__", prim::kPrimListLen},            // P.list_len,
-       {"__getitem__", prim::kPrimListGetItem},    // P.list_getitem,
-       {"__setitem__", prim::kPrimListSetItem},    // P.list_setitem,
-       {"__ms_iter__", prim::kPrimIdentity},       // P.identity
-       {"__ms_next__", std::string("list_next")},  // C.list_next
-       {"append", std::string("list_append")},     // C.list_next
-       {"__bool__", std::string("list_bool")},     // C.list_bool
-       {"__ms_hasnext__", std::string("list_hasnext")},
-     }},
-    {kObjectTypeDictionary,
-     {
-       {"__len__", prim::kPrimDictLen},          // P.dict_len
-       {"__getitem__", prim::kPrimDictGetItem},  // P.dict_getitem
-       {"__setitem__", prim::kPrimDictSetItem},  // P.dict_setitem,
-       {"__bool__", std::string("dict_bool")}    // C.dict_bool
-     }},
+BuiltInTypeMap &GetMethodMap() {
+  static BuiltInTypeMap method_map = {{kObjectTypeString,
+                                       {
+                                         {"__bool__", std::string("str_bool")}  // C.str_bool
+                                       }},
+                                      {kMetaTypeNone,
+                                       {
+                                         {"__bool__", std::string("none_bool")}  // C.none_bool
+                                       }},
+                                      {kNumberTypeBool,
+                                       {
+                                         {"__and__", prim::kPrimBoolAnd},     // P.bool_and
+                                         {"__or__", prim::kPrimBoolOr},       // P.bool_or
+                                         {"__eq__", prim::kPrimBoolEq},       // P.bool_eq
+                                         {"__ne__", std::string("bool_ne")},  // C.bool_ne
+                                         {"__bool__", prim::kPrimIdentity}    // P.identity
+                                       }},
+                                      {kNumberTypeInt,
+                                       {
+                                         {"__add__", prim::kPrimScalarAdd},              // P.scalar_add
+                                         {"__sub__", prim::kPrimScalarSub},              // P.scalar_sub
+                                         {"__mul__", prim::kPrimScalarMul},              // P.scalar_mul
+                                         {"__floordiv__", std::string("int_floordiv")},  // C.int_floordiv
+                                         {"__truediv__", std::string("int_truediv")},    // C.int_truediv
+                                         {"__mod__", prim::kPrimScalarMod},              // P.scalar_mod
+                                         {"__pow__", prim::kPrimScalarPow},              // P.scalar_pow
+                                         {"__floor__", prim::kPrimIdentity},             // P.identity
+                                         {"__trunc__", prim::kPrimIdentity},             // P.identity
+                                         {"__pos__", prim::kPrimScalarUadd},             // P.scalar_uadd
+                                         {"__neg__", prim::kPrimScalarUsub},             // P.scalar_usub
+                                         {"__eq__", prim::kPrimScalarEq},                // P.scalar_eq
+                                         {"__ne__", prim::kPrimScalarNe},                // P.scalar_ne
+                                         {"__lt__", prim::kPrimScalarLt},                // P.scalar_lt
+                                         {"__gt__", prim::kPrimScalarGt},                // P.scalar_gt
+                                         {"__le__", prim::kPrimScalarLe},                // P.scalar_le
+                                         {"__ge__", prim::kPrimScalarGe},                // P.scalar_ge
+                                         {"__bool__", std::string("int_bool")},          // C.int_bool
+                                         {"__ms_to_array__", prim::kPrimScalarToArray},  // P.scalar_to_array
+                                       }},
+                                      {kNumberTypeUInt,
+                                       {
+                                         {"__add__", prim::kPrimScalarAdd},              // P.scalar_add,
+                                         {"__sub__", prim::kPrimScalarSub},              // P.scalar_sub,
+                                         {"__mul__", prim::kPrimScalarMul},              // P.scalar_mul,
+                                         {"__floordiv__", prim::kPrimScalarDiv},         // P.scalar_div,
+                                         {"__truediv__", std::string("int_truediv")},    // C.int_truediv
+                                         {"__mod__", prim::kPrimScalarMod},              // P.scalar_mod,
+                                         {"__pow__", prim::kPrimScalarPow},              // P.scalar_pow,
+                                         {"__floor__", prim::kPrimIdentity},             // P.identity,
+                                         {"__trunc__", prim::kPrimIdentity},             // P.identity,
+                                         {"__pos__", prim::kPrimScalarUadd},             // P.scalar_uadd,
+                                         {"__neg__", prim::kPrimScalarUsub},             // P.scalar_usub,
+                                         {"__eq__", prim::kPrimScalarEq},                // P.scalar_eq,
+                                         {"__ne__", prim::kPrimScalarNe},                // P.scalar_ne,
+                                         {"__lt__", prim::kPrimScalarLt},                // P.scalar_lt,
+                                         {"__gt__", prim::kPrimScalarGt},                // P.scalar_gt,
+                                         {"__le__", prim::kPrimScalarLe},                // P.scalar_le,
+                                         {"__ge__", prim::kPrimScalarGe},                // P.scalar_ge,
+                                         {"__bool__", std::string("int_bool")},          // C.int_bool
+                                         {"__ms_to_array__", prim::kPrimScalarToArray},  // P.scalar_to_array,
+                                       }},
+                                      {kNumberTypeFloat,
+                                       {
+                                         {"__add__", prim::kPrimScalarAdd},                // P.scalar_add,
+                                         {"__sub__", prim::kPrimScalarSub},                // P.scalar_sub,
+                                         {"__mul__", prim::kPrimScalarMul},                // P.scalar_mul,
+                                         {"__floordiv__", std::string("float_floordiv")},  // C.float_floordiv
+                                         {"__truediv__", prim::kPrimScalarDiv},            // P.scalar_div,
+                                         {"__mod__", prim::kPrimScalarMod},                // P.scalar_mod,
+                                         {"__pow__", prim::kPrimScalarPow},                // P.scalar_pow,
+                                         {"__floor__", prim::kPrimScalarFloor},            // P.scalar_floor,
+                                         {"__trunc__", prim::kPrimScalarTrunc},            // P.scalar_trunc,
+                                         {"__pos__", prim::kPrimScalarUadd},               // P.scalar_uadd,
+                                         {"__neg__", prim::kPrimScalarUsub},               // P.scalar_usub,
+                                         {"__eq__", prim::kPrimScalarEq},                  // P.scalar_eq,
+                                         {"__ne__", prim::kPrimScalarNe},                  // P.scalar_ne,
+                                         {"__lt__", prim::kPrimScalarLt},                  // P.scalar_lt,
+                                         {"__gt__", prim::kPrimScalarGt},                  // P.scalar_gt,
+                                         {"__le__", prim::kPrimScalarLe},                  // P.scalar_le,
+                                         {"__ge__", prim::kPrimScalarGe},                  // P.scalar_ge,
+                                         {"__bool__", std::string("float_bool")},          // C.float_bool
+                                         {"__ms_to_array__", prim::kPrimScalarToArray},    // P.scalar_to_array,
+                                       }},
+                                      {kObjectTypeTuple,
+                                       {
+                                         {"__len__", prim::kPrimTupleLen},                  // P.tuple_len,
+                                         {"__getitem__", prim::kPrimTupleGetItem},          // P.tuple_getitem,
+                                         {"__setitem__", prim::kPrimTupleSetItem},          // P.tuple_setitem,
+                                         {"__ms_iter__", prim::kPrimIdentity},              // P.identity,
+                                         {"__ms_next__", std::string("tuple_next")},        // C.tuple_next,
+                                         {"__ms_hasnext__", std::string("tuple_hasnext")},  // C.tuple_hasnext
+                                         {"__bool__", std::string("tuple_bool")}            // C.tuple_bool
+                                       }},
+                                      {kObjectTypeList,
+                                       {
+                                         {"__len__", prim::kPrimListLen},            // P.list_len,
+                                         {"__getitem__", prim::kPrimListGetItem},    // P.list_getitem,
+                                         {"__setitem__", prim::kPrimListSetItem},    // P.list_setitem,
+                                         {"__ms_iter__", prim::kPrimIdentity},       // P.identity
+                                         {"__ms_next__", std::string("list_next")},  // C.list_next
+                                         {"append", std::string("list_append")},     // C.list_next
+                                         {"__bool__", std::string("list_bool")},     // C.list_bool
+                                         {"__ms_hasnext__", std::string("list_hasnext")},
+                                       }},
+                                      {kObjectTypeDictionary,
+                                       {
+                                         {"__len__", prim::kPrimDictLen},          // P.dict_len
+                                         {"__getitem__", prim::kPrimDictGetItem},  // P.dict_getitem
+                                         {"__setitem__", prim::kPrimDictSetItem},  // P.dict_setitem,
+                                         {"__bool__", std::string("dict_bool")}    // C.dict_bool
+                                       }},
+                                      {kObjectTypeTensorType,
+                                       {
+                                         {"all", std::string("all_")},                // C.reduce_all
+                                         {"any", std::string("any_")},                // C.reduce_any
+                                         {"__add__", std::string("add")},             // C.add
+                                         {"__sub__", std::string("sub")},             // C.sub
+                                         {"__mul__", std::string("mul")},             // C.mul
+                                         {"__truediv__", std::string("truediv")},     // C.truediv
+                                         {"__floordiv__", std::string("floordiv")},   // C.floordiv
+                                         {"__mod__", std::string("mod")},             // C.mod
+                                         {"__pow__", std::string("pow_")},            // C.pow
+                                         {"__floor__", std::string("array_floor")},   // C.array_floor
+                                         {"__trunc__", std::string("array_trunc")},   // C.array_trunc
+                                         {"__pos__", std::string("array_uadd")},      // C.array_uadd
+                                         {"__neg__", std::string("array_usub")},      // C.array_usub
+                                         {"__eq__", std::string("eq")},               // C.eq
+                                         {"__ne__", std::string("ne")},               // C.ne
+                                         {"__lt__", std::string("lt")},               // C.lt
+                                         {"__gt__", std::string("gt")},               // C.gt
+                                         {"__le__", std::string("le")},               // C.le
+                                         {"__ge__", std::string("ge")},               // C.ge
+                                         {"__matmul__", prim::kPrimDot},              // P.dot,
+                                         {"__len__", prim::kPrimArrayLen},            // P.array_len,
+                                         {"__getitem__", prim::kPrimArrayGetItem},    // P.array_getitem,
+                                         {"__setitem__", prim::kPrimArraySetItem},    // P.array_setitem,
+                                         {"__ms_iter__", std::string("array_iter")},  // C.array_iter
+                                         {"__ms_to_array__", prim::kPrimIdentity},    // P.identity,
+                                         {"item", prim::kPrimArrayToScalar},          // P.array_to_scalar,
+                                         {"transpose", std::string("transpose")},     // P.transpose
+                                         {"__bool__", std::string("tensor_bool")},    // C.tensor_bool
+                                       }},
+                                      {kObjectTypeJTagged, {}},
+                                      {kObjectTypeSymbolicKeyType, {}},
+                                      {kObjectTypeEnvType, {}}};
+  return method_map;
+}
+
+BuiltInTypeMap &GetAttrMap() {
+  static BuiltInTypeMap attr_map = {
     {kObjectTypeTensorType,
      {
-       {"__add__", std::string("add")},             // C.add
-       {"__sub__", std::string("sub")},             // C.sub
-       {"__mul__", std::string("mul")},             // C.mul
-       {"__truediv__", std::string("truediv")},     // C.truediv
-       {"__floordiv__", std::string("floordiv")},   // C.floordiv
-       {"__mod__", std::string("mod")},             // C.mod
-       {"__pow__", std::string("pow_")},            // C.pow
-       {"__floor__", std::string("array_floor")},   // C.array_floor
-       {"__trunc__", std::string("array_trunc")},   // C.array_trunc
-       {"__pos__", std::string("array_uadd")},      // C.array_uadd
-       {"__neg__", std::string("array_usub")},      // C.array_usub
-       {"__eq__", std::string("eq")},               // C.eq
-       {"__ne__", std::string("ne")},               // C.ne
-       {"__lt__", std::string("lt")},               // C.lt
-       {"__gt__", std::string("gt")},               // C.gt
-       {"__le__", std::string("le")},               // C.le
-       {"__ge__", std::string("ge")},               // C.ge
-       {"__matmul__", prim::kPrimDot},              // P.dot,
-       {"__len__", prim::kPrimArrayLen},            // P.array_len,
-       {"__getitem__", prim::kPrimArrayGetItem},    // P.array_getitem,
-       {"__setitem__", prim::kPrimArraySetItem},    // P.array_setitem,
-       {"__ms_iter__", std::string("array_iter")},  // C.array_iter
-       {"__ms_to_array__", prim::kPrimIdentity},    // P.identity,
-       {"item", prim::kPrimArrayToScalar},          // P.array_to_scalar,
-       {"transpose", std::string("transpose")},     // P.transpose
-       {"__bool__", std::string("tensor_bool")},    // C.tensor_bool
+       {"shape", std::string("shape_")},  // C.shape_
+       {"dtype", std::string("dtype_")},  // C.dtype_
      }},
-    {kObjectTypeIndexedSlicesType,
+    {kObjectTypeRowTensorType,
      {
-       {"values", prim::kPrimIndexedSlicesGetValues},           // F.indexed_slices_get_values
-       {"indices", prim::kPrimIndexedSlicesGetIndices},         // F.indexed_slices_get_indices
-       {"dense_shape", prim::kPrimIndexedSlicesGetDenseShape},  // F.indexed_slices_get_dense_shape
+       {"values", prim::kPrimRowTensorGetValues},           // F.row_tensor_get_values
+       {"indices", prim::kPrimRowTensorGetIndices},         // F.row_tensor_get_indices
+       {"dense_shape", prim::kPrimRowTensorGetDenseShape},  // F.row_tensor_get_dense_shape
      }},
-    {kObjectTypeJTagged, {}},
-    {kObjectTypeSymbolicKeyType, {}},
-    {kObjectTypeEnvType, {}}};
-  return method_map;
+    {kObjectTypeSparseTensorType,
+     {
+       {"values", prim::kPrimSparseTensorGetValues},           // F.sparse_tensor_get_values
+       {"indices", prim::kPrimSparseTensorGetIndices},         // F.sparse_tensor_get_indices
+       {"dense_shape", prim::kPrimSparseTensorGetDenseShape},  // F.sparse_tensor_get_dense_shape
+     }},
+  };
+  return attr_map;
 }
 
 Resource::Resource(const py::object &obj)
@@ -193,6 +208,7 @@ Resource::Resource(const py::object &obj)
 Resource::~Resource() {
   MS_LOG(DEBUG) << "Resource clear";
 
+  std::unordered_map<std::string, Any>().swap(results_);
   // If exit normally, these global variables will be cleaned
   // in Resource::Clean call by MsPipeline::Compile, but if exit with MS_LOGEXCEPTION,
   // these global variables may not being cleaned, it may
@@ -212,31 +228,42 @@ Resource::~Resource() {
   }
 }
 
-bool Resource::IsTypeInMethodMap(const TypeId &type) {
-  TypeId type_id = NormalizeTypeId(type);
-  const MethodMap &method_map = GetMethodMap();
-  auto iter = method_map.find(static_cast<int>(type_id));
-  if (iter != method_map.end()) {
-    return true;
+Any GetMethodOrAttr(const string &name, const TypeId &type_id, const BuiltInTypeMap &method_map) {
+  auto type_method_map = method_map.find(static_cast<int>(type_id));
+  if (type_method_map == method_map.end()) {
+    return Any();
   }
-  return false;
+  auto method = type_method_map->second.find(name);
+  if (method == type_method_map->second.end()) {
+    return Any();
+  }
+  return method->second;
+}
+
+bool Resource::IsTypeInBuiltInMap(const TypeId &type) {
+  TypeId type_id = NormalizeTypeId(type);
+  const BuiltInTypeMap &method_map = GetMethodMap();
+  auto iter = method_map.find(static_cast<int>(type_id));
+  if (iter == method_map.end()) {
+    const BuiltInTypeMap &attr_map = GetAttrMap();
+    iter = attr_map.find(static_cast<int>(type_id));
+    if (iter == attr_map.end()) {
+      return false;
+    }
+  }
+  return true;
 }
 
 Any Resource::GetMethodPtr(const TypeId &type, const std::string &name) {
   TypeId type_id = NormalizeTypeId(type);
-  const MethodMap &method_map = GetMethodMap();
-  auto iter = method_map.find(static_cast<int>(type_id));
-  if (iter == method_map.end()) {
-    MS_LOG(WARNING) << "Object type: " << type_id << " not in the method_map";
-    return Any();
-  }
+  const BuiltInTypeMap &method_map = GetMethodMap();
+  return GetMethodOrAttr(name, type_id, method_map);
+}
 
-  auto iter_map = iter->second.find(name);
-  if (iter_map == iter->second.end()) {
-    MS_LOG(WARNING) << "Object type: " << type_id << " have no method: " << name;
-    return Any();
-  }
-  return iter_map->second;
+Any Resource::GetAttrPtr(const TypeId &type, const std::string &name) {
+  TypeId type_id = NormalizeTypeId(type);
+  const BuiltInTypeMap &attr_map = GetAttrMap();
+  return GetMethodOrAttr(name, type_id, attr_map);
 }
 
 void Resource::Clean() {

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_PERF_DATA_H
-#define DATASET_PERF_DATA_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_PERF_DATA_H
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_PERF_DATA_H
 
 #include <vector>
 #include "minddata/dataset/core/constants.h"
@@ -85,4 +85,4 @@ class PerfData {
 
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_PERF_DATA_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_PERF_DATA_H

@@ -39,5 +39,5 @@ def test_tensor_orign_ops():
     assert np.all(z.asnumpy() - (x.asnumpy() + y.asnumpy()) < 0.0001)
     z = x * y
     assert np.all(z.asnumpy() - (x.asnumpy() * y.asnumpy()) < 0.0001)
-    assert x == y
+    assert np.all(x.asnumpy() == y.asnumpy())
     assert x != 'zero'

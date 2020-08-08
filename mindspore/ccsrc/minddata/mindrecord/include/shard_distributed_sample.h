@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDRECORD_INCLUDE_SHARD_DISTRIBUTED_SAMPLE_H_
-#define MINDRECORD_INCLUDE_SHARD_DISTRIBUTED_SAMPLE_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_DISTRIBUTED_SAMPLE_H_
+#define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_DISTRIBUTED_SAMPLE_H_
 
 #include <memory>
 #include <string>
@@ -29,9 +29,10 @@ namespace mindspore {
 namespace mindrecord {
 class ShardDistributedSample : public ShardSample {
  public:
-  ShardDistributedSample(int num_shards, int shard_id, int no_of_padded_samples, bool shuffle, uint32_t seed);
+  ShardDistributedSample(int num_shards, int shard_id, int no_of_padded_samples, bool shuffle, uint32_t seed,
+                         int no_of_samples = 0);
 
-  ShardDistributedSample(int num_shards, int shard_id, bool shuffle, uint32_t seed);
+  ShardDistributedSample(int num_shards, int shard_id, bool shuffle, uint32_t seed, int no_of_samples = 0);
 
   void SetNumPaddedSamples(int no_of_padded_samples) { no_of_padded_samples_ = no_of_padded_samples; }
 
@@ -50,4 +51,4 @@ class ShardDistributedSample : public ShardSample {
 }  // namespace mindrecord
 }  // namespace mindspore
 
-#endif  // MINDRECORD_INCLUDE_SHARD_DISTRIBUTED_SAMPLE_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_DISTRIBUTED_SAMPLE_H_

@@ -20,7 +20,7 @@ namespace mindspore {
 namespace kernel {
 namespace ps {
 void SparseApplyFtrlPSKernel::InitKernel(
-  const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
+  const CNodePtr &cnode, const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
   const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
   std::vector<size_t> var_shape = *(shape_vec[0]);
   std::vector<size_t> accum_shape = *(shape_vec[1]);
@@ -46,10 +46,24 @@ void SparseApplyFtrlPSKernel::InitKernel(
   if (grad_shape[0] != indices_size_) {
     MS_LOG(EXCEPTION) << "The first dimension of grad shape must be equal to indices";
   }
-  lr_ = 0.01;
-  l1_ = 1e-8;
-  l2_ = 1e-8;
-  lr_power_ = -0.5;
+  lr_ = AnfAlgo::GetNodeAttr<float>(cnode, "lr");
+  if (lr_ <= 0) {
+    MS_LOG(EXCEPTION) << "lr should be a positive scalar";
+  }
+  l1_ = AnfAlgo::GetNodeAttr<float>(cnode, "l1");
+  if (l1_ < 0) {
+    MS_LOG(EXCEPTION) << "l1 should be a non-negative scalar";
+  }
+  l2_ = AnfAlgo::GetNodeAttr<float>(cnode, "l2");
+  if (l2_ < 0) {
+    MS_LOG(EXCEPTION) << "l2 should be a non-negative scalar";
+  }
+  lr_power_ = AnfAlgo::GetNodeAttr<float>(cnode, "lr_power");
+  if (lr_power_ > 0) {
+    MS_LOG(EXCEPTION) << "lr_power should be a non-positive scalar";
+  }
+  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
+  workspace_size_list_.emplace_back(indices_size_ * sizeof(int));
   workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
   workspace_size_list_.emplace_back(indices_size_ * sizeof(int));
 }
@@ -64,7 +78,7 @@ void SparseApplyFtrlPSKernel::ReInit(const std::shared_ptr<std::vector<std::shar
 
 void SparseApplyFtrlPSKernel::ReInit(const std::vector<AddressPtr> &inputs) {
   const auto &indices_addr = inputs[4];
-  indices_size_ = indices_addr->size;
+  indices_size_ = indices_addr->size / sizeof(int);
   workspace_size_list_[0] = indices_size_ * var_outer_dim_size_ * sizeof(float);
   workspace_size_list_[1] = indices_size_ * sizeof(int);
 }

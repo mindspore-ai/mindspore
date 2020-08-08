@@ -99,6 +99,10 @@ def _check_input_filter_size(input_shape, param_name, filter_size, func_name):
     validator.check(param_name + " shape[2]", input_shape[2], "filter_size", filter_size, Rel.GE, func_name)
     validator.check(param_name + " shape[3]", input_shape[3], "filter_size", filter_size, Rel.GE, func_name)
 
+@constexpr
+def _check_input_dtype(input_dtype, param_name, allow_dtypes, cls_name):
+    validator.check_type_name(param_name, input_dtype, allow_dtypes, cls_name)
+
 def _conv2d(in_channels, out_channels, kernel_size, weight, stride=1, padding=0):
     return Conv2d(in_channels, out_channels, kernel_size=kernel_size, stride=stride,
                   weight_init=weight, padding=padding, pad_mode="valid")
@@ -211,6 +215,7 @@ class SSIM(Cell):
         self.concat = P.Concat(axis=1)
 
     def construct(self, img1, img2):
+        _check_input_dtype(F.dtype(img1), "img1", [mstype.float32, mstype.float16], self.cls_name)
         _check_input_filter_size(F.shape(img1), "img1", self.filter_size, self.cls_name)
         P.SameTypeShape()(img1, img2)
         max_val = _convert_img_dtype_to_float32(self.max_val, self.max_val)

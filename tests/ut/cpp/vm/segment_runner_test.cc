@@ -21,7 +21,7 @@
 #include "utils/log_adapter.h"
 #include "ir/func_graph_cloner.h"
 #include "pipeline/jit/parse/parse.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "pipeline/jit/resource.h"
 #include "debug/draw.h"
 #include "frontend/operator/ops.h"
@@ -57,11 +57,11 @@ TEST_F(TestCompileSegmentRunner, test_MsVmConvert1) {
 
   std::vector<BaseRef> todos(splits.size());
   auto it = std::copy_if(std::begin(splits), std::end(splits), std::begin(todos),
-                         [](const BaseRef& seg) -> bool { return utils::isa<VectorRef>(seg); });
+                         [](const BaseRef &seg) -> bool { return utils::isa<VectorRef>(seg); });
   todos.resize(std::distance(todos.begin(), it));
   ASSERT_EQ(todos.size(), 1);
 
-  AnfNodePtrList anf_list; 
+  AnfNodePtrList anf_list;
   for (auto &item : utils::cast<VectorRef>(todos[0])) {
     anf_list.push_back(utils::cast<AnfNodePtr>(item));
   }
@@ -81,11 +81,11 @@ TEST_F(TestCompileSegmentRunner, test_MsVmConvert2) {
 
   std::vector<BaseRef> todos(splits.size());
   auto it = std::copy_if(std::begin(splits), std::end(splits), std::begin(todos),
-                         [](const BaseRef& seg) -> bool { return utils::isa<VectorRef>(seg); });
+                         [](const BaseRef &seg) -> bool { return utils::isa<VectorRef>(seg); });
   todos.resize(std::distance(todos.begin(), it));
   ASSERT_EQ(todos.size(), 1);
 
-  AnfNodePtrList anf_list; 
+  AnfNodePtrList anf_list;
   for (auto &item : utils::cast<VectorRef>(todos[0])) {
     anf_list.push_back(utils::cast<AnfNodePtr>(item));
   }
@@ -105,11 +105,11 @@ TEST_F(TestCompileSegmentRunner, test_if) {
 
   std::vector<BaseRef> todos(splits.size());
   auto it = std::copy_if(std::begin(splits), std::end(splits), std::begin(todos),
-                         [](const BaseRef& seg) -> bool { return utils::isa<VectorRef>(seg); });
+                         [](const BaseRef &seg) -> bool { return utils::isa<VectorRef>(seg); });
   todos.resize(std::distance(todos.begin(), it));
   ASSERT_EQ(todos.size(), 1);
 
-  AnfNodePtrList anf_list; 
+  AnfNodePtrList anf_list;
   for (auto &item : utils::cast<VectorRef>(todos[0])) {
     anf_list.push_back(utils::cast<AnfNodePtr>(item));
   }
@@ -122,13 +122,13 @@ TEST_F(TestCompileSegmentRunner, test_if) {
 
 TEST_F(TestCompileSegmentRunner, test_RunOperation1) {
   VectorRef args({1});
-  auto res = RunOperation(prim::kPrimIdentity, args);
+  auto res = RunOperation(std::make_shared<PrimitivePy>(py::str(prim::kPrimIdentity->name()), py::none()), args);
   ASSERT_EQ(py::cast<int>(BaseRefToPyData(res)), 1);
 }
 
 TEST_F(TestCompileSegmentRunner, test_RunOperation2) {
   VectorRef args({1, 2});
-  auto res = RunOperation(prim::kPrimScalarGt, args);
+  auto res = RunOperation(std::make_shared<PrimitivePy>(py::str(prim::kPrimScalarGt->name()), py::none()), args);
   ASSERT_EQ(py::cast<bool>(BaseRefToPyData(res)), false);
 }
 }  // namespace compile

@@ -156,6 +156,5 @@ const AnfNodePtr OptimizeDependence::GetConvertNode(const FuncGraphPtr &graph, c
   }
   return replace_node;
 }
-
 }  // namespace opt
 }  // namespace mindspore

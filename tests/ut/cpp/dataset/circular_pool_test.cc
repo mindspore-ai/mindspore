@@ -19,7 +19,7 @@
 #include "minddata/dataset/util/circular_pool.h"
 #include "minddata/dataset/util/services.h"
 #include "common/common.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "utils/log_adapter.h"
 #include "./securec.h"
 

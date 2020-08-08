@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_SESSION_SESSION_BASIC_H
-#define MINDSPORE_CCSRC_SESSION_SESSION_BASIC_H
+#ifndef MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_BASIC_H
+#define MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_BASIC_H
 
 #include <vector>
 #include <string>
@@ -32,6 +32,7 @@
 #include "utils/contract.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "runtime/device/kernel_info.h"
+#include "utils/ms_context.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif
@@ -91,31 +92,30 @@ class SessionBasic {
   CNodePtr HandleSwitchInputs(const AnfNodePtr &anf_node, KernelGraph *graph);
   std::vector<AnfNodePtr> CreateSwitchOrPartialNode(const CNodePtr &cnode, KernelGraph *graph);
 
-  // set parameters of final graph
-  virtual GraphId SetFinalGraphInput(const std::vector<AnfNodePtr> &) { return kInvalidGraphId; }
-  // set output of final graph
-  virtual void SetFinalGraphOutput(const BaseRef &) {}
-  // insert switch and set the relative active ops
-  virtual void SwitchCompile(GraphId, GraphId, GraphId, const AnfNodePtr &) {}
-  // set args of child graph.the arg maybe come from a output of other child graphs,or from final graph's parameter
-  virtual void SetChildGraphInput(GraphId, const VectorRef &) {}
   // get graph id in child graphs by ME front anf node pointer
   virtual GraphId GetGraphIdByNode(const AnfNodePtr &) const { return kInvalidGraphId; }
   virtual GraphId GetFinalRunGraph() const { return kInvalidGraphId; }
-  virtual void SetActive(GraphId, GraphId) {}
-  virtual void GetSummaryNodes(KernelGraph *graph);
+  void AssignParamKey(const KernelGraphPtr &kernel_graph);
+  void InitPSParamAndOptim(const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &inputs_const);
+  virtual bool CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs,
+                                std::string *error_msg) const {
+    return true;
+  }
 
 #ifdef ENABLE_DEBUGGER
   // set debugger
   void SetDebugger() {
     debugger_ = Debugger::GetInstance();
-    debugger_->Init(device_id_);
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    debugger_->Init(device_id_, ms_context->device_target());
   }
 #endif
 
  protected:
+  virtual void SetSummaryNodes(KernelGraph *graph);
   // Get graph by graph id ,if not exist return null ptr
-  KernelGraphPtr GetGraph(GraphId graph_id);
+  KernelGraphPtr GetGraph(GraphId graph_id) const;
   virtual void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                              const std::vector<tensor::TensorPtr> &inputs_const) const;
   void UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_graph, VectorRef *const outputs,
@@ -140,6 +140,7 @@ class SessionBasic {
   AnfNodePtr CreateNewParameterFromCNode(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph);
   void AddParameterToGraphInputs(const std::vector<AnfNodePtr> &parameters, KernelGraph *graph);
   void InitInternalOutputParameter(const AnfNodePtr &out_node, const AnfNodePtr &parameter);
+  AnfNodePtr FindPullNode(const AnfNodePtr &push_node, const std::vector<AnfNodePtr> &node_list);
 
   std::unordered_map<GraphId, std::shared_ptr<KernelGraph>> graphs_;
   std::unordered_map<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;
@@ -157,4 +158,4 @@ using SessionPtr = std::shared_ptr<session::SessionBasic>;
 using NamedSummaryOutputs = std::map<std::string, std::pair<AnfNodePtr, int>>;
 }  // namespace session
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_SESSION_SESSION_BASIC_H
+#endif  // MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_BASIC_H

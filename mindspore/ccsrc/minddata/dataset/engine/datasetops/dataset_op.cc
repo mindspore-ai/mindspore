@@ -26,6 +26,7 @@
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/datasetops/device_queue_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
+#include "minddata/dataset/engine/datasetops/epoch_ctrl_op.h"
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/opt/pass.h"
@@ -41,7 +42,10 @@ DatasetOp::DatasetOp(int32_t op_connector_size, std::shared_ptr<Sampler> sampler
       operator_id_(kInvalidOperatorId),
       tree_(nullptr),
       state_(OpState::kDeOpIdle),
-      op_ctrl_flags_(kDeOpNone),
+      op_total_repeats_(kInfiniteRepeat),
+      op_num_repeats_per_epoch_(kInfiniteRepeat),
+      op_current_repeats_(0),
+      op_current_epochs_(0),
       out_connector_(nullptr) {
   // The operator starts out with an invalid operator id.  The only way to
   // get it out of invalid state is to assign the operator to an execution tree.
@@ -100,6 +104,15 @@ Status DatasetOp::InsertAsParent(std::shared_ptr<DatasetOp> to_add) {
   if (tree_->root()->id() == this->id()) {
     tree_->AssignRoot(to_add);
   }
+  return Status::OK();
+}
+// Removes child operator in this operator.
+Status DatasetOp::RemoveChildren() {
+  for (const auto &child : child_) {
+    child->RemoveParent(this);
+  }
+  child_.clear();
+
   return Status::OK();
 }
 
@@ -185,6 +198,12 @@ void DatasetOp::Parent(DatasetOp **parent, int32_t parent_index) const {
   }
 }
 
+// Getter function to get all of our children.
+std::vector<std::shared_ptr<DatasetOp>> DatasetOp::children() const { return child_; }
+
+// Getter function to get all of our parents.
+std::vector<DatasetOp *> DatasetOp::parents() const { return parent_; }
+
 // Creates the connector within this operator
 void DatasetOp::CreateConnector(int32_t num_producers, int32_t num_consumers) {
   MS_LOG(DEBUG) << "Creating connector in tree operator: " << operator_id_ << ". Producer: " << num_producers
@@ -206,7 +225,10 @@ void DatasetOp::Print(std::ostream &out, bool show_all) const {
   // When show_all is true, we display more detailed output for the op.
   // Derived printers should show their own header info, then call base class printer, followed by
   // derived-specific items.
-  // For now, the base class doesn't have any summary info to show so it's a no-op in that case.
+
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <" << Name() << ">:";
+
   if (show_all) {
     // The detailed display will show common base class info of the op.  Allow the derived class to print
     // it's own id and name though as the first line.
@@ -218,8 +240,8 @@ void DatasetOp::Print(std::ostream &out, bool show_all) const {
     for (size_t i = 0; i < parent_.size(); i++) {
       out << "\n  Parent[" << i << "] id: " << parent_[i]->id();
     }
-    out << "\nConnector queue size   : " << oc_queue_size_ << "\nOperator control flags : 0x" << std::hex
-        << std::setw(8) << std::setfill('0') << op_ctrl_flags_ << std::dec << std::setfill(' ');
+    out << "\nConnector queue size   : " << oc_queue_size_ << "\nTotal repeats : " << op_total_repeats_
+        << "\nNumber repeats per epoch : " << op_num_repeats_per_epoch_;
     if (sampler_) {
       sampler_->Print(out, show_all);
     }
@@ -228,15 +250,8 @@ void DatasetOp::Print(std::ostream &out, bool show_all) const {
 
 // Gets the next buffer from the given child
 Status DatasetOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id, bool retry_if_eoe) {
-#if defined(_WIN32) || defined(_WIN64)
-  RETURN_IF_NOT_OK(out_connector_->PopWithRetry(static_cast<int>(worker_id), p_buffer, retry_if_eoe));
-#else
-  std::unique_ptr<DataBuffer> next_buff;
   // pop is a blocked call and will throw an interruption if the whole group shuts down.
-  RETURN_IF_NOT_OK(out_connector_->PopWithRetry(static_cast<int>(worker_id), &next_buff, retry_if_eoe));
-
-  *p_buffer = std::move(next_buff);
-#endif
+  RETURN_IF_NOT_OK(out_connector_->PopWithRetry(static_cast<int>(worker_id), p_buffer, retry_if_eoe));
   return Status::OK();
 }
 
@@ -253,6 +268,7 @@ Status DatasetOp::GetNextInput(std::unique_ptr<DataBuffer> *p_buffer, int32_t wo
   RETURN_IF_NOT_OK(child->GetNextBuffer(&buf, worker_id));
   // Loop until non EOE is received
   while (buf->eoe()) {
+    UpdateRepeatAndEpochCounter();
     RETURN_IF_NOT_OK(EoeReceived(worker_id));
     if (state_ == OpState::kDeOpIdle) {
       *p_buffer = std::move(buf);
@@ -372,6 +388,13 @@ uint32_t DatasetOp::GenerateCRC(const std::shared_ptr<DatasetOp> &op) {
   op->tree_->Print(ss, op);
   std::string ss_str = ss.str();
 
+  // Filter out the Num workers field when generating the check sum
+  ss_str = std::regex_replace(ss_str, std::regex("Num workers.*\n"), "");
+  ss_str = std::regex_replace(ss_str, std::regex("\\[workers.*\\]"), "");
+
+  // Filter out Number of rows when generating the check sum
+  ss_str = std::regex_replace(ss_str, std::regex("Number of rows.*\n"), "");
+
   // Filter out the Operator control flags field when generating the check sum
   ss_str = std::regex_replace(ss_str, std::regex("Operator control flags.*\n"), "");
 
@@ -384,8 +407,15 @@ uint32_t DatasetOp::GenerateCRC(const std::shared_ptr<DatasetOp> &op) {
   ss_str = std::regex_replace(ss_str, std::regex("Cache crc.*\n"), "");
   ss_str = std::regex_replace(ss_str, std::regex("Server cache id.*\n"), "");
 
+  MS_LOG(DEBUG) << "Printing the tree for generating crc:\n" << ss_str;
+
   uint32_t cache_crc = system::Crc32c::GetMaskCrc32cValue(ss_str.c_str(), ss_str.length());
   return cache_crc;
+}
+
+void DatasetOp::UpdateRepeatAndEpochCounter() {
+  op_current_repeats_++;
+  if (op_current_repeats_ % op_num_repeats_per_epoch_ == 0) op_current_epochs_++;
 }
 }  // namespace dataset
 }  // namespace mindspore

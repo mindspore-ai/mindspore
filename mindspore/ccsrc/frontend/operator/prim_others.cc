@@ -18,12 +18,12 @@
 #include <sstream>
 
 #include "ir/dtype.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "frontend/operator/ops.h"
 #include "abstract/param_validator.h"
 #include "pipeline/jit/static_analysis/prim.h"
 #include "abstract/utils.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "utils/symbolic.h"
 
 namespace mindspore {
@@ -340,8 +340,8 @@ AbstractBasePtr InferImplControlDepend(const AnalysisEnginePtr &, const Primitiv
   return std::make_shared<AbstractScalar>(kAnyValue, kBool);
 }
 
-AbstractBasePtr InferImplMakeIndexedSlices(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const AbstractBasePtrList &args_spec_list) {
+AbstractBasePtr InferImplMakeRowTensor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const AbstractBasePtrList &args_spec_list) {
   // Inputs: two tensors and a tuple.
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 3);
@@ -349,6 +349,26 @@ AbstractBasePtr InferImplMakeIndexedSlices(const AnalysisEnginePtr &, const Prim
   auto values = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
   auto dense_shape = CheckArg<AbstractTuple>(op_name, args_spec_list, 2);
 
+  auto indices_dtype = indices->element()->BuildType();
+  if (!indices_dtype->isa<Int>()) {
+    MS_EXCEPTION(TypeError) << "The dtype of indices must be a Int, but got " << indices_dtype->ToString();
+  }
+  auto indices_shp = indices->shape()->shape();
+  if (indices_shp.size() != 1) {
+    MS_EXCEPTION(TypeError) << "Indices must be a 1 dimension tensor, but got a " << indices_shp.size()
+                            << " dimension tensor";
+  }
+  auto values_shp = values->shape()->shape();
+  if (indices_shp[0] != values_shp[0]) {
+    MS_EXCEPTION(TypeError) << "The first dimension of indices must be the same with the first dimension of values "
+                            << values_shp[0] << ", but got " << indices_shp[0];
+  }
+
+  for (auto elem_type : dense_shape->ElementsType()) {
+    if (!elem_type->isa<Int>()) {
+      MS_EXCEPTION(TypeError) << "The element type of dense_shape must be Int, but got " << elem_type->ToString();
+    }
+  }
   auto dense_shape_value = dense_shape->BuildValue()->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(dense_shape_value);
   auto shp = dense_shape_value->value();
@@ -358,53 +378,145 @@ AbstractBasePtr InferImplMakeIndexedSlices(const AnalysisEnginePtr &, const Prim
                          auto elem = GetValue<int>(e);
                          return elem;
                        });
-  auto ret = std::make_shared<AbstractIndexedSlices>(values->element()->BuildType(), dense_shape_vec);
+  if (dense_shape_vec.size() != values_shp.size()) {
+    MS_EXCEPTION(TypeError) << "The size of dense_shape must be the same with the dimension of values "
+                            << values_shp.size() << ", but got " << dense_shape_value->size();
+  }
+  for (size_t i = 0; i < dense_shape_vec.size(); i++) {
+    if (dense_shape_vec[i] < 0) {
+      MS_EXCEPTION(TypeError) << "The " << i << "th element of dense_shape must be positive, but got "
+                              << dense_shape_vec[i];
+    }
+    // The 0th mode might be less or exceed dense_shape[0] due to duplicated selection
+    if (i != 0 && dense_shape_vec[i] != values_shp[i]) {
+      MS_EXCEPTION(TypeError) << "The " << i << "th element of dense_shape must be same with the " << i
+                              << "th dimension of values " << values_shp[i] << ", but got " << dense_shape_vec[i];
+    }
+  }
+  auto ret = std::make_shared<AbstractRowTensor>(values->element()->BuildType(), dense_shape_vec);
   ret->set_indices(indices);
   ret->set_values(values);
   ret->set_dense_shape(dense_shape);
   return ret;
 }
 
-AbstractBasePtr InferImplIndexedSlicesGetValues(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+AbstractBasePtr InferImplRowTensorGetValues(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const AbstractBasePtrList &args_spec_list) {
+  // Inputs: two tensors and a tuple.
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto row_tensor = CheckArg<AbstractRowTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(row_tensor->values());
+  return row_tensor->values();
+}
+
+AbstractBasePtr InferImplRowTensorGetIndices(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const AbstractBasePtrList &args_spec_list) {
+  // Inputs: two tensors and a tuple.
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto row_tensor = CheckArg<AbstractRowTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(row_tensor->indices());
+  return row_tensor->indices();
+}
+
+AbstractBasePtr InferImplRowTensorGetDenseShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                 const AbstractBasePtrList &args_spec_list) {
   // Inputs: two tensors and a tuple.
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 1);
-  auto indexed_slices = CheckArg<AbstractIndexedSlices>(op_name, args_spec_list, 0);
-  MS_EXCEPTION_IF_NULL(indexed_slices->values());
-  return indexed_slices->values();
+  auto row_tensor = CheckArg<AbstractRowTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(row_tensor->dense_shape());
+  return row_tensor->dense_shape();
 }
 
-AbstractBasePtr InferImplIndexedSlicesGetIndices(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const AbstractBasePtrList &args_spec_list) {
+AbstractBasePtr InferImplMakeSparseTensor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const AbstractBasePtrList &args_spec_list) {
   // Inputs: two tensors and a tuple.
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  auto indexed_slices = CheckArg<AbstractIndexedSlices>(op_name, args_spec_list, 0);
-  MS_EXCEPTION_IF_NULL(indexed_slices->indices());
-  return indexed_slices->indices();
-}
+  CheckArgsSize(op_name, args_spec_list, 3);
+  auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto values = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  auto dense_shape = CheckArg<AbstractTuple>(op_name, args_spec_list, 2);
 
-AbstractBasePtr InferImplIndexedSlicesGetDenseShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const AbstractBasePtrList &args_spec_list) {
-  // Inputs: two tensors and a tuple.
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  auto indexed_slices = CheckArg<AbstractIndexedSlices>(op_name, args_spec_list, 0);
-  MS_EXCEPTION_IF_NULL(indexed_slices->dense_shape());
-  return indexed_slices->dense_shape();
-}
-
-AbstractBasePtr InferImplIsIndexedSlices(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const AbstractBasePtrList &args_spec_list) {
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  bool ret = false;
-  if (args_spec_list[0]->isa<AbstractIndexedSlices>()) {
-    ret = true;
+  auto indices_dtype = indices->element()->BuildType();
+  if (!indices_dtype->isa<Int>()) {
+    MS_EXCEPTION(TypeError) << "The dtype of indices must be a Int, but got " << indices_dtype->ToString();
   }
-  MS_LOG(DEBUG) << "IsIndexedSlices result: " << ret << ", input: " << args_spec_list[0]->ToString();
-  return std::make_shared<AbstractScalar>(ret);
+  auto indices_shp = indices->shape()->shape();
+  if (indices_shp.size() != 2) {
+    MS_EXCEPTION(TypeError) << "Indices must be a 2 dimension tensor, but got a " << indices_shp.size()
+                            << " dimension tensor";
+  }
+  auto values_shp = values->shape()->shape();
+  if (values_shp.size() != 1) {
+    MS_EXCEPTION(TypeError) << "Values must be a 1 dimension tensor, but got a " << values_shp.size()
+                            << " dimension tensor";
+  }
+  if (indices_shp[0] != values_shp[0]) {
+    MS_EXCEPTION(TypeError) << "The first dimension of indices must be the same with the first dimension of values "
+                            << values_shp[0] << ", but got " << indices_shp[0];
+  }
+
+  for (auto elem_type : dense_shape->ElementsType()) {
+    if (!elem_type->isa<Int>()) {
+      MS_EXCEPTION(TypeError) << "The element type of dense_shape must be Int, but got " << elem_type->ToString();
+    }
+  }
+  auto dense_shape_value = dense_shape->BuildValue()->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(dense_shape_value);
+  auto shp = dense_shape_value->value();
+  std::vector<int> dense_shape_vec;
+  (void)std::transform(std::begin(shp), std::end(shp), std::back_inserter(dense_shape_vec),
+                       [](const ValuePtr &e) -> int {
+                         auto elem = GetValue<int>(e);
+                         return elem;
+                       });
+  if (IntToSize(indices_shp[1]) != dense_shape_vec.size()) {
+    MS_EXCEPTION(TypeError) << "The size of dense_shape must be equal with the second dimension of indices "
+                            << indices_shp[1] << ", but got " << dense_shape_vec.size();
+  }
+  for (auto dense_shape_elem : dense_shape_vec) {
+    if (dense_shape_elem < 0) {
+      MS_EXCEPTION(TypeError) << "The element of dense_shape must be positive, but got "
+                              << dense_shape_value->ToString();
+    }
+  }
+  auto ret = std::make_shared<AbstractSparseTensor>(values->element()->BuildType(), dense_shape_vec);
+  ret->set_indices(indices);
+  ret->set_values(values);
+  ret->set_dense_shape(dense_shape);
+  return ret;
+}
+
+AbstractBasePtr InferImplSparseTensorGetValues(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const AbstractBasePtrList &args_spec_list) {
+  // Inputs: two tensors and a tuple.
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto sparse_tensor = CheckArg<AbstractSparseTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(sparse_tensor->values());
+  return sparse_tensor->values();
+}
+
+AbstractBasePtr InferImplSparseTensorGetIndices(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const AbstractBasePtrList &args_spec_list) {
+  // Inputs: two tensors and a tuple.
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto sparse_tensor = CheckArg<AbstractSparseTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(sparse_tensor->indices());
+  return sparse_tensor->indices();
+}
+
+AbstractBasePtr InferImplSparseTensorGetDenseShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const AbstractBasePtrList &args_spec_list) {
+  // Inputs: two tensors and a tuple.
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto sparse_tensor = CheckArg<AbstractSparseTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(sparse_tensor->dense_shape());
+  return sparse_tensor->dense_shape();
 }
 }  // namespace abstract
 }  // namespace mindspore

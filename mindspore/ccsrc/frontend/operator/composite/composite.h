@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPERATOR_COMPOSITE_H_
-#define MINDSPORE_CCSRC_OPERATOR_COMPOSITE_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_H_
 
 #include <vector>
 #include <string>
@@ -121,6 +121,16 @@ class MakeTupleGradient : public MetaFuncGraph {
 };
 using MakeTupleGradientPtr = std::shared_ptr<MakeTupleGradient>;
 
+class MakeListGradient : public MetaFuncGraph {
+ public:
+  explicit MakeListGradient(const std::string &name) : MetaFuncGraph(name) {}
+  ~MakeListGradient() override = default;
+  MS_DECLARE_PARENT(MakeListGradient, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  friend bool operator==(const MakeListGradient &lhs, const MakeListGradient &rhs) { return lhs.name_ == rhs.name_; }
+};
+using MakeListGradientPtr = std::shared_ptr<MakeListGradient>;
+
 class GradOperation : public MetaFuncGraph {
  public:
   explicit GradOperation(const std::string &name, bool get_all = false, bool get_by_list = false,
@@ -189,4 +199,4 @@ using TupleGetItemTensorPtr = std::shared_ptr<TupleGetItemTensor>;
 }  // namespace prim
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_OPERATOR_COMPOSITE_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_H_

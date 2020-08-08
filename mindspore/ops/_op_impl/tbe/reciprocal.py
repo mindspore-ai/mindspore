@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""Add op"""
+"""Reciprocal op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 reciprocal_op_info = TBERegOp("Reciprocal") \
@@ -32,5 +32,5 @@ reciprocal_op_info = TBERegOp("Reciprocal") \
 
 @op_info_register(reciprocal_op_info)
 def _reciprocal_tbe():
-    """Add TBE register"""
+    """Reciprocal TBE register"""
     return

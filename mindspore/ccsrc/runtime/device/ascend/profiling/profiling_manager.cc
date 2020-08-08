@@ -22,8 +22,8 @@
 #include "runtime/device/ascend/profiling/plugin_impl.h"
 #include "runtime/device/ascend/profiling/profiling_engine_impl.h"
 #include "utils/log_adapter.h"
-#include "utils/context/ms_context.h"
-#include "common/utils.h"
+#include "utils/ms_context.h"
+#include "utils/ms_utils.h"
 #include "utils/convert_utils.h"
 #include "runtime/base.h"
 
@@ -144,17 +144,17 @@ bool ProfilingManager::StartupProfiling(uint32_t device_id) {
   nlohmann::json startCfg;
   startCfg["startCfg"] = devices;
 
-  if (!ProfStartUp(NOT_NULL(&startCfg))) {
+  if (!ProfStartUp(startCfg)) {
     MS_LOG(ERROR) << "ProfMgrStartUp failed.";
     return false;
   }
   return true;
 }
 
-bool ProfilingManager::ProfStartUp(NotNull<nlohmann::json *> startCfg) {
+bool ProfilingManager::ProfStartUp(const nlohmann::json &startCfg) {
   // convert json to string
   std::stringstream ss;
-  ss << *startCfg;
+  ss << startCfg;
   std::string cfg = ss.str();
   MS_LOG(INFO) << "profiling config " << cfg;
   auto ret = rtProfilerStart();
@@ -181,7 +181,8 @@ bool ProfilingManager::StopProfiling() {
   }
   Msprof::Engine::Reporter *reporter = PluginImpl::GetPluginReporter();
   if (reporter != nullptr) {
-    MS_LOG(INFO) << "report data end, ret = " << reporter->Flush();
+    auto ret = reporter->Flush();
+    MS_LOG(INFO) << "report data end, ret = " << ret;
   }
 
   auto rt_ret = rtProfilerStop();

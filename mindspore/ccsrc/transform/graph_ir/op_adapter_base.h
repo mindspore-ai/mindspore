@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TRANSFORM_OP_ADAPTER_BASE_H_
-#define TRANSFORM_OP_ADAPTER_BASE_H_
+#ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_ADAPTER_BASE_H_
+#define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_ADAPTER_BASE_H_
 
 #include <unordered_map>
 #include <string>
@@ -195,4 +195,4 @@ struct AnyTraits<int> {
 using ExtraAttr = std::unordered_map<std::string, ValuePtr>;
 }  // namespace transform
 }  // namespace mindspore
-#endif  // TRANSFORM_OP_ADAPTER_BASE_H_
+#endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_ADAPTER_BASE_H_

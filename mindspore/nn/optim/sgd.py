@@ -40,14 +40,26 @@ class SGD(Optimizer):
     momentum in deep learning <http://proceedings.mlr.press/v28/sutskever13.html>`_.
 
     Note:
-        The SGD optimizer supports separating parameter groups. Different parameter groups can set different
-        `learning_rate` and `weight_decay`.
-
         When separating parameter groups, the weight decay in each group will be applied on the parameters if the
-        value of weight_decay > 0. When not separating parameter groups, the `weight_decay` in the API will be
-        applied on the parameters if `weight_decay` > 0 and the 'beta' and 'gamma' are not in the name of parameters.
+        weight decay is positive. When not separating parameter groups, the `weight_decay` in the API will be applied
+        on the parameters without 'beta' or 'gamma' in their names if `weight_decay` is positive.
 
-       To improve parameter groups performance, the customized order of parameters can be supported.
+        To improve parameter groups performance, the customized order of parameters can be supported.
+
+    .. math::
+        v_{t+1} = u \ast v_{t} + gradient \ast (1-dampening)
+
+    If nesterov is True:
+        .. math::
+            p_{t+1} = p_{t} - lr \ast (gradient + u \ast v_{t+1})
+
+    If nesterov is Flase:
+        .. math::
+            p_{t+1} = p_{t} - lr \ast v_{t+1}
+
+    To be noticed, for the first step, v_{t+1} = gradient
+
+    Here : where p, v and u denote the parameters, accum, and momentum respectively.
 
     Args:
         params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
@@ -66,18 +78,19 @@ class SGD(Optimizer):
               the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
               in the value of 'order_params' should be in one of group parameters.
 
-        learning_rate (Union[float, Tensor, Iterable]): A value for the learning rate. When the learning_rate is
-                                                        Iterable or a Tensor and the dims of the Tensor is 1,
-                                                        use dynamic learning rate, then the i-th step will
-                                                        take the i-th value as the learning rate.
-                                                        When the learning_rate is float or learning_rate is a Tensor
-                                                        but the dims of the Tensor is 0, use fixed learning rate.
-                                                        Other cases are not supported. It should be equal to or
-                                                        greater than 0. Default: 0.1.
+        learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or graph for the learning rate.
+            When the learning_rate is a Iterable or a Tensor with dimension of 1, use dynamic learning rate, then
+            the i-th step will take the i-th value as the learning rate. When the learning_rate is LearningRateSchedule,
+            use dynamic learning rate, the i-th learning rate will be calculated during the process of training
+            according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor with
+            dimension of 0, use fixed learning rate. Other cases are not supported. The float learning rate should be
+            equal to or greater than 0. If the type of `learning_rate` is int, it will be converted to float.
+            Default: 0.1.
         momentum (float): A floating point value the momentum. should be at least 0.0. Default: 0.0.
         dampening (float): A floating point value of dampening for momentum. should be at least 0.0. Default: 0.0.
         weight_decay (float): Weight decay (L2 penalty). It should be equal to or greater than 0. Default: 0.0.
-        nesterov (bool): Enables the Nesterov momentum. Default: False.
+        nesterov (bool): Enables the Nesterov momentum. If use nesterov, momentum must be positive,
+                         and dampening must equal to 0.0. Default: False.
         loss_scale (float): A floating point value for the loss scale, which should be larger
                             than 0.0. Default: 1.0.
 
@@ -101,7 +114,7 @@ class SGD(Optimizer):
         >>> group_params = [{'params': conv_params, 'weight_decay': 0.01},
         >>>                 {'params': no_conv_params, 'lr': 0.01},
         >>>                 {'order_params': net.trainable_params()}]
-        >>> opt = nn.SGD(group_params, learning_rate=0.1, weight_decay=0.0)
+        >>> optim = nn.SGD(group_params, learning_rate=0.1, weight_decay=0.0)
         >>> # The conv_params's parameters will use a learning rate of default value 0.1 and a weight decay of 0.01.
         >>> # The no_conv_params's parameters will use a learning rate of 0.01 and a weight decay of default value 0.0.
         >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
@@ -135,6 +148,10 @@ class SGD(Optimizer):
             weight_decay = float(weight_decay)
 
         validator.check_value_type("nesterov", nesterov, [bool], self.cls_name)
+
+        if nesterov and (momentum <= 0.0 or dampening != 0.0):
+            raise ValueError("If use nesterov, momentum must be positive and dampening must equal to 0.0,"
+                             "but got momentum {}, dampening {}".format(momentum, dampening))
         self.nesterov = nesterov
 
         self.opt = P.SGD(dampening, weight_decay, nesterov)

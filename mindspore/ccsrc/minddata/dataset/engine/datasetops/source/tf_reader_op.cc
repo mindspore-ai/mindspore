@@ -27,7 +27,7 @@
 
 #include "proto/example.pb.h"
 #include "./securec.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/connector.h"
@@ -158,8 +158,6 @@ TFReaderOp::TFReaderOp(int32_t num_workers, int32_t worker_connector_size, int64
 
 // A print method typically used for debugging
 void TFReaderOp::Print(std::ostream &out, bool show_all) const {
-  // Always show the id and name as first line regardless if this summary or detailed print
-  out << "(" << std::setw(2) << operator_id_ << ") <TFReaderOp>:";
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
     ParallelOp::Print(out, show_all);
@@ -310,13 +308,14 @@ Status TFReaderOp::operator()() {
     std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
     RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
 
-    if (!BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat)) {
+    if (IsLastIteration()) {
       finished_reading_dataset_ = true;
       NotifyToFillIOBlockQueue();
     } else {
       jagged_buffer_connector_->DoReset();
       buffer_id = 0;
     }
+    UpdateRepeatAndEpochCounter();
   }
 
   std::unique_ptr<DataBuffer> eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
@@ -677,8 +676,7 @@ Status TFReaderOp::LoadFeature(const std::unique_ptr<TensorQTable> *tensor_table
       // into the tensor
       TensorShape current_shape = TensorShape::CreateUnknownRankShape();
       RETURN_IF_NOT_OK(current_col.MaterializeTensorShape(num_elements, &current_shape));
-      RETURN_IF_NOT_OK(
-        Tensor::CreateTensor(&ts, current_col.tensorImpl(), current_shape, current_col.type(), data_ptr));
+      RETURN_IF_NOT_OK(Tensor::CreateFromMemory(current_shape, current_col.type(), data_ptr, &ts));
       break;
     }
     case dataengine::Feature::KindCase::kInt64List: {
@@ -735,7 +733,7 @@ Status TFReaderOp::LoadBytesList(const ColDescriptor &current_col, const dataeng
   if (current_col.type() == DataType::DE_STRING) {
     TensorShape shape = TensorShape::CreateScalar();
     RETURN_IF_NOT_OK(current_col.MaterializeTensorShape(*num_elements, &shape));
-    RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, bytes_list, shape));
+    RETURN_IF_NOT_OK(Tensor::CreateFromByteList(bytes_list, shape, tensor));
     return Status::OK();
   }
 
@@ -763,7 +761,7 @@ Status TFReaderOp::LoadBytesList(const ColDescriptor &current_col, const dataeng
   // know how many elements there are and the total bytes, create tensor here:
   TensorShape current_shape = TensorShape::CreateScalar();
   RETURN_IF_NOT_OK(current_col.MaterializeTensorShape((*num_elements) * pad_size, &current_shape));
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, bytes_list, current_shape, current_col.type(), pad_size));
+  RETURN_IF_NOT_OK(Tensor::CreateFromByteList(bytes_list, current_shape, current_col.type(), pad_size, tensor));
 
   return Status::OK();
 }
@@ -836,10 +834,7 @@ Status TFReaderOp::LoadIntList(const ColDescriptor &current_col, const dataengin
   // know how many elements there are, create tensor here:
   TensorShape current_shape = TensorShape::CreateUnknownRankShape();
   RETURN_IF_NOT_OK(current_col.MaterializeTensorShape(*num_elements, &current_shape));
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, current_col.tensorImpl(), current_shape, current_col.type()));
-
-  // Tensors are lazily allocated, this eagerly allocates memory for the tensor.
-  RETURN_IF_NOT_OK((*tensor)->AllocateBuffer((*tensor)->SizeInBytes()));
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(current_shape, current_col.type(), tensor));
 
   int64_t i = 0;
   auto it = (*tensor)->begin<T>();

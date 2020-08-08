@@ -17,11 +17,13 @@
 #include "minddata/dataset/engine/datasetops/build_vocab_op.h"
 
 #include <algorithm>
+#include <iomanip>
 #include <limits>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include "minddata/dataset/core/config_manager.h"
+#include "minddata/dataset/engine/opt/pass.h"
 
 namespace mindspore {
 namespace dataset {
@@ -201,6 +203,28 @@ BuildVocabOp::Builder::Builder()
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   builder_num_workers_ = cfg->num_parallel_workers();
   builder_connector_size_ = cfg->op_connector_size();
+}
+
+// A print method typically used for debugging
+void BuildVocabOp::Print(std::ostream &out, bool show_all) const {
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nCode is needed here to show more info about the op."
+        << "\n\n";
+  }
+}
+
+// Pre-Visitor accept method for NodePass
+Status BuildVocabOp::PreAccept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call the pre-visitation
+  return p->PreRunOnNode(shared_from_base<BuildVocabOp>(), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

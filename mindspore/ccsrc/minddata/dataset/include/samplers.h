@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_API_SAMPLERS_H_
-#define DATASET_API_SAMPLERS_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_API_SAMPLERS_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_API_SAMPLERS_H_
 
 #include <vector>
 #include <memory>
@@ -52,9 +52,12 @@ class WeightedRandomSamplerObj;
 /// \param[in] shuffle - If true, the indices are shuffled.
 /// \param[in] num_samples - The number of samples to draw (default to all elements).
 /// \param[in] seed - The seed in use when shuffle is true.
+/// \param[in] even_dist - If true, each shard would return the same number of rows (default to true).
+///     If false the total rows returned by all the shards would not have overlap.
 /// \return Shared pointer to the current Sampler.
 std::shared_ptr<DistributedSamplerObj> DistributedSampler(int64_t num_shards, int64_t shard_id, bool shuffle = true,
-                                                          int64_t num_samples = 0, uint32_t seed = 1);
+                                                          int64_t num_samples = 0, uint32_t seed = 1,
+                                                          bool even_dist = true);
 
 /// Function to create a PK Sampler.
 /// \notes Samples K elements for each P class in the dataset.
@@ -84,8 +87,7 @@ std::shared_ptr<SequentialSamplerObj> SequentialSampler(int64_t start_index = 0,
 /// \param[in] indices - A vector sequence of indices.
 /// \param[in] num_samples - The number of samples to draw (default to all elements).
 /// \return Shared pointer to the current Sampler.
-std::shared_ptr<SubsetRandomSamplerObj> SubsetRandomSampler(const std::vector<int64_t> &indices,
-                                                            int64_t num_samples = 0);
+std::shared_ptr<SubsetRandomSamplerObj> SubsetRandomSampler(std::vector<int64_t> indices, int64_t num_samples = 0);
 
 /// Function to create a Weighted Random Sampler.
 /// \notes Samples the elements from [0, len(weights) - 1] randomly with the given
@@ -94,13 +96,14 @@ std::shared_ptr<SubsetRandomSamplerObj> SubsetRandomSampler(const std::vector<in
 /// \param[in] num_samples - The number of samples to draw (default to all elements).
 /// \param[in] replacement - If True, put the sample ID back for the next draw.
 /// \return Shared pointer to the current Sampler.
-std::shared_ptr<WeightedRandomSamplerObj> WeightedRandomSampler(const std::vector<double> &weights,
-                                                                int64_t num_samples = 0, bool replacement = true);
+std::shared_ptr<WeightedRandomSamplerObj> WeightedRandomSampler(std::vector<double> weights, int64_t num_samples = 0,
+                                                                bool replacement = true);
 
 /* ####################################### Derived Sampler classes ################################# */
 class DistributedSamplerObj : public SamplerObj {
  public:
-  DistributedSamplerObj(int64_t num_shards, int64_t shard_id, bool shuffle, int64_t num_samples, uint32_t seed);
+  DistributedSamplerObj(int64_t num_shards, int64_t shard_id, bool shuffle, int64_t num_samples, uint32_t seed,
+                        bool even_dist);
 
   ~DistributedSamplerObj() = default;
 
@@ -114,6 +117,7 @@ class DistributedSamplerObj : public SamplerObj {
   bool shuffle_;
   int64_t num_samples_;
   uint32_t seed_;
+  bool even_dist_;
 };
 
 class PKSamplerObj : public SamplerObj {
@@ -164,7 +168,7 @@ class SequentialSamplerObj : public SamplerObj {
 
 class SubsetRandomSamplerObj : public SamplerObj {
  public:
-  SubsetRandomSamplerObj(const std::vector<int64_t> &indices, int64_t num_samples);
+  SubsetRandomSamplerObj(std::vector<int64_t> indices, int64_t num_samples);
 
   ~SubsetRandomSamplerObj() = default;
 
@@ -173,14 +177,13 @@ class SubsetRandomSamplerObj : public SamplerObj {
   bool ValidateParams() override;
 
  private:
-  const std::vector<int64_t> &indices_;
+  const std::vector<int64_t> indices_;
   int64_t num_samples_;
 };
 
 class WeightedRandomSamplerObj : public SamplerObj {
  public:
-  explicit WeightedRandomSamplerObj(const std::vector<double> &weights, int64_t num_samples = 0,
-                                    bool replacement = true);
+  explicit WeightedRandomSamplerObj(std::vector<double> weights, int64_t num_samples = 0, bool replacement = true);
 
   ~WeightedRandomSamplerObj() = default;
 
@@ -189,11 +192,11 @@ class WeightedRandomSamplerObj : public SamplerObj {
   bool ValidateParams() override;
 
  private:
-  const std::vector<double> &weights_;
+  const std::vector<double> weights_;
   int64_t num_samples_;
   bool replacement_;
 };
 }  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_API_SAMPLERS_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_API_SAMPLERS_H_

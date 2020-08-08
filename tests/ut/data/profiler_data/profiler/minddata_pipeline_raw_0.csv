@@ -1,0 +1,5 @@
+op_id,op_type,num_workers,output_queue_size,output_queue_average_size,output_queue_length,output_queue_usage_rate,sample_interval,parent_id,children_id
+0,Batch,4,,,,,10,,[1]
+1,Shuffle,1,"[10, 20, 30]",20.0,64,0.3125,10,0,"[2, 3]"
+2,TFReader,4,"[10, 20, 30]",20.0,64,0.3125,10,1,
+3,TFReader,4,"[10, 20, 30]",20.0,64,0.3125,10,1,

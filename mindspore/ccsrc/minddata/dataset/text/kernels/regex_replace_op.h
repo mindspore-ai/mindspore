@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_TEXT_KERNELS_REGEX_REPLACE_OP_H_
-#define DATASET_TEXT_KERNELS_REGEX_REPLACE_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_TEXT_KERNELS_REGEX_REPLACE_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_TEXT_KERNELS_REGEX_REPLACE_OP_H_
 #include <memory>
 #include <string>
 
@@ -38,8 +38,6 @@ class RegexReplaceOp : public TensorOp {
 
   ~RegexReplaceOp() override = default;
 
-  void Print(std::ostream &out) const override { out << "RegexReplaceOp"; }
-
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
   std::string Name() const override { return kRegexReplaceOp; }
@@ -54,4 +52,4 @@ class RegexReplaceOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_TEXT_KERNELS_REGEX_REPLACE_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_TEXT_KERNELS_REGEX_REPLACE_OP_H_

@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_ABSTRACT_ABSTRACT_VALUE_H_
-#define MINDSPORE_CCSRC_ABSTRACT_ABSTRACT_VALUE_H_
+#ifndef MINDSPORE_CORE_ABSTRACT_ABSTRACT_VALUE_H_
+#define MINDSPORE_CORE_ABSTRACT_ABSTRACT_VALUE_H_
 
 #include <utility>
 #include <vector>
@@ -27,6 +27,7 @@
 
 #include "utils/log_adapter.h"
 #include "utils/hashing.h"
+#include "utils/any.h"
 #include "base/base.h"
 #include "ir/dtype.h"
 #include "ir/value.h"
@@ -193,7 +194,6 @@ class AbstractFunction : public AbstractBase {
 
   static AbstractFunctionPtr MakeAbstractFunction(const AbstractFuncAtomPtrList &func_list);
 
-  virtual EvaluatorPtr GetEvaluator(AnalysisEnginePtr engine) = 0;
   virtual AnfNodePtr tracking_id() const { return nullptr; }
   virtual void set_tracking_id(AnfNodePtr) {}
   virtual AnalysisContextPtr context() const { return nullptr; }
@@ -593,21 +593,50 @@ struct AbstractBasePtrListEqual {
 std::size_t AbstractBasePtrListHash(const AbstractBasePtrList &args_spec_list);
 bool AbstractBasePtrListDeepEqual(const AbstractBasePtrList &lhs, const AbstractBasePtrList &rhs);
 
-// IndexedSlices
-class AbstractIndexedSlices : public AbstractUndetermined {
+// RowTensor
+class AbstractRowTensor : public AbstractUndetermined {
  public:
-  explicit AbstractIndexedSlices(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
+  explicit AbstractRowTensor(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
       : AbstractUndetermined(element, shape) {}
-  AbstractIndexedSlices(const TypePtr &element_type, const std::vector<int> &shape)
+  AbstractRowTensor(const TypePtr &element_type, const std::vector<int> &shape)
       : AbstractUndetermined(element_type, shape) {}
-  ~AbstractIndexedSlices() override = default;
-  MS_DECLARE_PARENT(AbstractIndexedSlices, AbstractUndetermined)
+  ~AbstractRowTensor() override = default;
+  MS_DECLARE_PARENT(AbstractRowTensor, AbstractUndetermined)
 
   const AbstractTensorPtr indices() const { return indices_; }
-  const AbstractTensorPtr values() const { return values_; }
-  const AbstractTuplePtr dense_shape() const { return dense_shape_; }
   void set_indices(const AbstractTensorPtr &indices) { indices_ = indices; }
+  const AbstractTensorPtr values() const { return values_; }
   void set_values(const AbstractTensorPtr &values) { values_ = values; }
+  const AbstractTuplePtr dense_shape() const { return dense_shape_; }
+  void set_dense_shape(const AbstractTuplePtr &dense_shape) { dense_shape_ = dense_shape; }
+  TypePtr BuildType() const override;
+  AbstractBasePtr Clone() const override;
+  AbstractBasePtr Broaden() const override;
+  AbstractBasePtr BroadenWithShape() const;
+
+  std::string ToString() const override;
+
+ private:
+  AbstractTensorPtr indices_;
+  AbstractTensorPtr values_;
+  AbstractTuplePtr dense_shape_;
+};
+
+// SparseTensor
+class AbstractSparseTensor : public AbstractUndetermined {
+ public:
+  explicit AbstractSparseTensor(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
+      : AbstractUndetermined(element, shape) {}
+  AbstractSparseTensor(const TypePtr &element_type, const std::vector<int> &shape)
+      : AbstractUndetermined(element_type, shape) {}
+  ~AbstractSparseTensor() override = default;
+  MS_DECLARE_PARENT(AbstractSparseTensor, AbstractUndetermined)
+
+  const AbstractTensorPtr indices() const { return indices_; }
+  void set_indices(const AbstractTensorPtr &indices) { indices_ = indices; }
+  const AbstractTensorPtr values() const { return values_; }
+  void set_values(const AbstractTensorPtr &values) { values_ = values; }
+  const AbstractTuplePtr dense_shape() const { return dense_shape_; }
   void set_dense_shape(const AbstractTuplePtr &dense_shape) { dense_shape_ = dense_shape; }
   TypePtr BuildType() const override;
   AbstractBasePtr Clone() const override;
@@ -623,4 +652,4 @@ class AbstractIndexedSlices : public AbstractUndetermined {
 };
 }  // namespace abstract
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_ABSTRACT_ABSTRACT_VALUE_H_
+#endif  // MINDSPORE_CORE_ABSTRACT_ABSTRACT_VALUE_H_

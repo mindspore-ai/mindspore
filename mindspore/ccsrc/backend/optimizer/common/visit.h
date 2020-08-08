@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_VISIT_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_VISIT_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_VISIT_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_VISIT_H_
 
 #include <unordered_map>
 #include <stdexcept>
@@ -27,7 +27,7 @@
 #include <memory>
 
 #include "base/base.h"
-#include "utils/base_ref.h"
+#include "base/base_ref.h"
 
 // namespace to support utils definition
 namespace mindspore {
@@ -58,4 +58,4 @@ class DefaultVisitor : public Visitor {
 std::shared_ptr<VectorRef> ExpandList(const std::vector<BaseRef> &list);
 bool CheckIfNeedExpand(const std::vector<BaseRef> &list);
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_VISIT_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_VISIT_H_

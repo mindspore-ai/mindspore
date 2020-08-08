@@ -70,6 +70,10 @@ if (ENABLE_GPU)
     add_compile_definitions(ENABLE_GPU_COLLECTIVE)
 endif()
 
+if (ENABLE_CPU)
+    add_compile_definitions(ENABLE_CPU)
+endif()
+
 if (ENABLE_GE)
     add_compile_definitions(ENABLE_GE)
     add_compile_definitions(CUSTOM_OP)
@@ -114,10 +118,6 @@ endif()
 
 if(ENABLE_DUMP_E2E)
     add_compile_definitions(ENABLE_DUMP_E2E)
-endif()
-
-if(ENABLE_DATA_DUMP)
-    add_compile_definitions(ENABLE_DATA_DUMP)
 endif()
 
 if(ENABLE_DEBUGGER)

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_IRPASS_MARK_INTERFACE_FUSION_H
-#define MINDSPORE_CCSRC_OPTIMIZER_IRPASS_MARK_INTERFACE_FUSION_H
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_MARK_INTERFACE_FUSION_H
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_MARK_INTERFACE_FUSION_H
 
 #include <string>
 #include <sstream>
@@ -24,9 +24,9 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/irpass.h"
-#include "ir/visitor.h"
+#include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "frontend/operator/composite/composite.h"
 
 namespace mindspore {
@@ -83,4 +83,4 @@ class MarkInterfaceFusion : public AnfVisitor {
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_IRPASS_MARK_INTERFACE_FUSION_H
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_MARK_INTERFACE_FUSION_H

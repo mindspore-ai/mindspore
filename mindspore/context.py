@@ -235,22 +235,6 @@ class _Context:
             raise RuntimeError("Device id set failed!!!")
 
     @property
-    def save_ms_model(self):
-        return self._context_handle.get_save_ms_model_flag()
-
-    @save_ms_model.setter
-    def save_ms_model(self, save_ms_model_flag):
-        self._context_handle.set_save_ms_model_flag(save_ms_model_flag)
-
-    @property
-    def save_ms_model_path(self):
-        return self._context_handle.get_save_ms_model_path()
-
-    @save_ms_model_path.setter
-    def save_ms_model_path(self, save_ms_model_path):
-        self._context_handle.set_save_ms_model_path(save_ms_model_path)
-
-    @property
     def enable_auto_mixed_precision(self):
         return self._context_handle.get_auto_mixed_precision_flag()
 
@@ -443,7 +427,7 @@ def _context():
 
 @args_type_check(device_num=int, global_rank=int, mirror_mean=bool, cast_before_mirror=bool, parallel_mode=str,
                  auto_parallel_search_mode=str, parameter_broadcast=bool, strategy_ckpt_load_file=str,
-                 strategy_ckpt_save_file=str, full_batch=bool)
+                 strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool)
 def set_auto_parallel_context(**kwargs):
     """
     Set auto parallel context.
@@ -487,6 +471,9 @@ def set_auto_parallel_context(**kwargs):
         strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. Default: ''
         strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. Default: ''
         full_batch (bool): Whether to load the whole batch on each device. Default: False.
+        enable_parallel_optimizer(bool): This is a developing feature, which shards the weight update  computation in
+                       data parallel training in the benefit of time and memory saving.
+
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
@@ -532,12 +519,13 @@ def reset_auto_parallel_context():
     - parameter_broadcast: False.
     - strategy_ckpt_load_file: "".
     - strategy_ckpt_save_file: "".
+    - enable_parallel_optimizer: False.
     """
     _reset_auto_parallel_context()
 
 
 @args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=bool,
-                 save_graphs_path=str, save_ms_model=bool, save_ms_model_path=str, enable_dump=bool,
+                 save_graphs_path=str, enable_dump=bool,
                  save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
                  enable_profiling=bool, profiling_options=str, enable_auto_mixed_precision=bool,
                  enable_graph_kernel=bool, check_bprop=bool, max_device_memory=str, print_file_path=str,
@@ -565,8 +553,6 @@ def set_context(**kwargs):
         device_id (int): Id of target device, the value must be in [0, device_num_per_host-1],
                     while device_num_per_host should no more than 4096. Default: 0.
         save_graphs (bool): Whether to save graphs. Default: False.
-        save_ms_model (bool): Whether to save lite model converted by graph. Default: False.
-        save_ms_model_path (str): Path to save converted lite model. Default: "."
         save_graphs_path (str): Path to save graphs. Default: "."
         enable_auto_mixed_precision (bool): Whether to enable auto mixed precision. Default: True.
         enable_graph_kernel (bool): Whether to enable composition of basic primitives. These primitives would be
@@ -611,7 +597,6 @@ def set_context(**kwargs):
         >>> context.set_context(device_id=0)
         >>> context.set_context(save_graphs=True, save_graphs_path="./model.ms")
         >>> context.set_context(enable_reduce_precision=True)
-        >>> context.set_context(save_ms_model=True, save_ms_model_path=".")
         >>> context.set_context(enable_dump=True, save_dump_path=".")
         >>> context.set_context(reserve_class_name_in_scope=True)
         >>> context.set_context(variable_memory_max_size="6GB")

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_IRPASS_GRADIENT_ELIMINATE_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_IRPASS_GRADIENT_ELIMINATE_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_GRADIENT_ELIMINATE_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_GRADIENT_ELIMINATE_H_
 
 #include <vector>
 #include <algorithm>
@@ -23,8 +23,8 @@
 
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/irpass.h"
-#include "ir/visitor.h"
-#include "common/utils.h"
+#include "frontend/optimizer/anf_visitor.h"
+#include "utils/ms_utils.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/ad/grad.h"
 
@@ -58,4 +58,4 @@ class ExpandJPrim : public AnfVisitor {
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_IRPASS_GRADIENT_ELIMINATE_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_GRADIENT_ELIMINATE_H_

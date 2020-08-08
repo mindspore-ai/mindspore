@@ -23,8 +23,8 @@
 #include <utility>
 #include <stack>
 
-#include "debug/trace_base.h"
-#include "debug/info.h"
+#include "utils/trace_base.h"
+#include "utils/info.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"

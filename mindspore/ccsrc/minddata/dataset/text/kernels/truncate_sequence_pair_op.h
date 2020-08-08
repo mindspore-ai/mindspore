@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_KERNELS_DATA_TRUNCATE_SEQUENCE_PAIR_OP_H_
-#define DATASET_KERNELS_DATA_TRUNCATE_SEQUENCE_PAIR_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_TRUNCATE_SEQUENCE_PAIR_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_TRUNCATE_SEQUENCE_PAIR_OP_H_
 
 #include <algorithm>
 #include <memory>
@@ -36,8 +36,6 @@ class TruncateSequencePairOp : public TensorOp {
 
   ~TruncateSequencePairOp() override = default;
 
-  void Print(std::ostream &out) const override { out << "TruncateSequencePairOp"; }
-
   Status Compute(const TensorRow &input, TensorRow *output) override;
 
   std::string Name() const override { return kTruncateSequencePairOp; }
@@ -47,4 +45,4 @@ class TruncateSequencePairOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_KERNELS_DATA_TRUNCATE_SEQUENCE_PAIR_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_TRUNCATE_SEQUENCE_PAIR_OP_H_

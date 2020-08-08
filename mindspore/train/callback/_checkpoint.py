@@ -15,10 +15,10 @@
 """Checkpoint related classes and functions."""
 
 import os
-import shutil
 import stat
 import time
 
+import threading
 import mindspore.context as context
 from mindspore import log as logger
 from mindspore._checkparam import check_bool, check_int_non_negative
@@ -86,6 +86,7 @@ class CheckpointConfig:
             Can't be used with keep_checkpoint_max at the same time.
         integrated_save (bool): Whether to intergrated save in automatic model parallel scene. Default: True.
             Integrated save function is only supported in automatic parallel scene, not supported in manual parallel.
+        async_save (bool): Whether asynchronous execute save checkpoint into file. Default: False
 
     Raises:
         ValueError: If the input_param is None or 0.
@@ -100,20 +101,21 @@ class CheckpointConfig:
                  save_checkpoint_seconds=0,
                  keep_checkpoint_max=5,
                  keep_checkpoint_per_n_minutes=0,
-                 integrated_save=True):
+                 integrated_save=True,
+                 async_save=False):
+
+        if save_checkpoint_steps is not None:
+            save_checkpoint_steps = check_int_non_negative(save_checkpoint_steps)
+        if save_checkpoint_seconds is not None:
+            save_checkpoint_seconds = check_int_non_negative(save_checkpoint_seconds)
+        if keep_checkpoint_max is not None:
+            keep_checkpoint_max = check_int_non_negative(keep_checkpoint_max)
+        if keep_checkpoint_per_n_minutes is not None:
+            keep_checkpoint_per_n_minutes = check_int_non_negative(keep_checkpoint_per_n_minutes)
 
         if not save_checkpoint_steps and not save_checkpoint_seconds and \
                 not keep_checkpoint_max and not keep_checkpoint_per_n_minutes:
             raise ValueError("The input_param can't be all None or 0")
-
-        if save_checkpoint_steps:
-            save_checkpoint_steps = check_int_non_negative(save_checkpoint_steps)
-        if save_checkpoint_seconds:
-            save_checkpoint_seconds = check_int_non_negative(save_checkpoint_seconds)
-        if keep_checkpoint_max:
-            keep_checkpoint_max = check_int_non_negative(keep_checkpoint_max)
-        if keep_checkpoint_per_n_minutes:
-            keep_checkpoint_per_n_minutes = check_int_non_negative(keep_checkpoint_per_n_minutes)
 
         self._save_checkpoint_steps = save_checkpoint_steps
         self._save_checkpoint_seconds = save_checkpoint_seconds
@@ -129,6 +131,7 @@ class CheckpointConfig:
                 self._keep_checkpoint_max = 1
 
         self._integrated_save = check_bool(integrated_save)
+        self._async_save = check_bool(async_save)
 
     @property
     def save_checkpoint_steps(self):
@@ -155,6 +158,11 @@ class CheckpointConfig:
         """Get the value of _integrated_save."""
         return self._integrated_save
 
+    @property
+    def async_save(self):
+        """Get the value of _async_save."""
+        return self._async_save
+
     def get_checkpoint_policy(self):
         """Get the policy of checkpoint."""
         checkpoint_policy = {'save_checkpoint_steps': self._save_checkpoint_steps,
@@ -163,7 +171,6 @@ class CheckpointConfig:
                              'keep_checkpoint_per_n_minutes': self._keep_checkpoint_per_n_minutes}
 
         return checkpoint_policy
-
 
 
 class ModelCheckpoint(Callback):
@@ -195,7 +202,7 @@ class ModelCheckpoint(Callback):
             raise ValueError("Prefix {} for checkpoint file name invalid, "
                              "please check and correct it and then continue.".format(prefix))
 
-        if directory:
+        if directory is not None:
             self._directory = _make_directory(directory)
         else:
             self._directory = _cur_dir
@@ -237,6 +244,12 @@ class ModelCheckpoint(Callback):
         cb_params = run_context.original_args()
         _to_save_last_ckpt = True
         self._save_ckpt(cb_params, _to_save_last_ckpt)
+
+        thread_list = threading.enumerate()
+        if len(thread_list) > 1:
+            for thread in thread_list:
+                if thread.getName() == "asyn_save_ckpt":
+                    thread.join()
 
         from mindspore.parallel._cell_wrapper import destroy_allgather_cell
         destroy_allgather_cell()
@@ -282,8 +295,6 @@ class ModelCheckpoint(Callback):
             global _save_dir
             _save_dir = self._directory
             cur_file = os.path.join(self._directory, cur_ckpoint_file)
-            tmp_ckpt_file_name_for_cur_process = str(os.getpid()) + "-" + 'parameters.ckpt'
-            gen_file = os.path.join(_save_dir, tmp_ckpt_file_name_for_cur_process)
             self._last_time_for_keep = time.time()
             self._last_triggered_step = cb_params.cur_step_num
 
@@ -291,10 +302,9 @@ class ModelCheckpoint(Callback):
                 set_cur_net(cb_params.train_network)
                 cb_params.train_network.exec_checkpoint_graph()
 
-            _exec_save_checkpoint(cb_params.train_network, gen_file, self._config.integrated_save)
+            _exec_save_checkpoint(cb_params.train_network, cur_file, self._config.integrated_save,
+                                  self._config.async_save)
 
-            if os.path.exists(gen_file):
-                shutil.move(gen_file, cur_file)
             self._latest_ckpt_file_name = cur_file
 
     @property

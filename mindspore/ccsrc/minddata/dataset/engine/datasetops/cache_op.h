@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_ENGINE_DATASETOPS_CACHE_OP_H_
-#define DATASET_ENGINE_DATASETOPS_CACHE_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_CACHE_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_CACHE_OP_H_
 
 #include <atomic>
 #include <string>
@@ -140,7 +140,7 @@ class CacheOp : public CacheBase, public RandomAccessOp {
   /// \brief Base-class override for handling cases if we allow cache miss
   bool AllowCacheMiss() override { return false; }
   /// \brief Base-class override for the name of this operator
-  std::string Name() const override { return "CacheOp"; }
+  std::string Name() const override { return kCacheOp; }
   /// \brief A public wrapper for creating the cache through the client
   /// \param[in] cache_crc The crc that identifies the cache
   /// \see cache_pass.cc
@@ -165,4 +165,4 @@ class CacheOp : public CacheBase, public RandomAccessOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_ENGINE_DATASETOPS_CACHE_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_CACHE_OP_H_

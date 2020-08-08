@@ -23,16 +23,17 @@ using mindspore::MsLogLevel::ERROR;
 namespace mindspore {
 namespace mindrecord {
 ShardDistributedSample::ShardDistributedSample(int num_shards, int shard_id, int no_of_padded_samples, bool shuffle,
-                                               uint32_t seed)
-    : ShardSample(1, num_shards, shard_id),
+                                               uint32_t seed, int no_of_samples)
+    : ShardSample(1, num_shards, shard_id, no_of_samples),
       shuffle_(shuffle),
       no_of_padded_samples_(no_of_padded_samples),
       first_epoch_(true) {
   shuffle_op_ = std::make_shared<ShardShuffle>(seed, kShuffleSample);
 }
 
-ShardDistributedSample::ShardDistributedSample(int num_shards, int shard_id, bool shuffle, uint32_t seed)
-    : ShardDistributedSample(num_shards, shard_id, 0, shuffle, seed) {}
+ShardDistributedSample::ShardDistributedSample(int num_shards, int shard_id, bool shuffle, uint32_t seed,
+                                               int no_of_samples)
+    : ShardDistributedSample(num_shards, shard_id, 0, shuffle, seed, no_of_samples) {}
 
 int64_t ShardDistributedSample::GetNumSamples(int64_t dataset_size, int64_t num_classes) {
   if (no_of_padded_samples_ <= 0) {

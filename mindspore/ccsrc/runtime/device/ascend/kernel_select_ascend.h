@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_KERNEL_SELECT_ASCEND_ANFALGO_H_
-#define MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_KERNEL_SELECT_ASCEND_ANFALGO_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_KERNEL_SELECT_ASCEND_ANFALGO_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_KERNEL_SELECT_ASCEND_ANFALGO_H_
 #include "ir/anf.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
 namespace mindspore {
@@ -35,4 +35,4 @@ void SelectGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_KERNEL_SELECT_ASCEND_ANFALGO_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_KERNEL_SELECT_ASCEND_ANFALGO_H_

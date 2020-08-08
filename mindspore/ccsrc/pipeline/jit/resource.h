@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PIPELINE_RESOURCE_H_
-#define MINDSPORE_CCSRC_PIPELINE_RESOURCE_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_RESOURCE_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_RESOURCE_H_
 
 #include <iostream>
 #include <vector>
@@ -44,9 +44,11 @@ const char kOutput[] = "output";
 
 class InferenceResource;
 
-using MethodMap = std::unordered_map<int, std::unordered_map<std::string, Any>>;
+using BuiltInTypeMap = std::unordered_map<int, std::unordered_map<std::string, Any>>;
 
-MethodMap &GetMethodMap();
+BuiltInTypeMap &GetMethodMap();
+
+BuiltInTypeMap &GetAttrMap();
 
 class ResourceBase {
  public:
@@ -87,9 +89,11 @@ class Resource : public ResourceBase {
 
   abstract::AnalysisEnginePtr engine() { return engine_; }
 
-  static bool IsTypeInMethodMap(const TypeId &type);
+  static bool IsTypeInBuiltInMap(const TypeId &type);
 
   static Any GetMethodPtr(const TypeId &type, const std::string &name);
+
+  static Any GetAttrPtr(const TypeId &type, const std::string &name);
 
   const py::object &input() const { return input_; }
 
@@ -117,4 +121,4 @@ using ResourcePtr = std::shared_ptr<pipeline::Resource>;
 }  // namespace pipeline
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_RESOURCE_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_RESOURCE_H_

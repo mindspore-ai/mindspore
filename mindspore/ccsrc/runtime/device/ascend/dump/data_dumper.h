@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_DUMP_DATADUMP_H_
-#define MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_DUMP_DATADUMP_H_
-#ifdef ENABLE_DATA_DUMP
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_DUMP_DATADUMP_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_DUMP_DATADUMP_H_
 #include <tuple>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
+#include <functional>
 #include "backend/session/kernel_graph.h"
 
 namespace aicpu {
@@ -37,27 +37,42 @@ namespace ascend {
 using RuntimeInfo = std::tuple<uint32_t, uint32_t, void *>;
 class DataDumper {
  public:
-  DataDumper(const session::KernelGraph *kernel_graph,
-             const std::map<std::string, std::shared_ptr<RuntimeInfo>> &runtime_info_map)
-      : load_flag_(false),
+  DataDumper(const session::KernelGraph *kernel_graph, NotNull<std::function<void *()>> model_handle)
+      : model_handle_(model_handle),
+        debug_task_id_(-1),
+        debug_stream_id_(-1),
+        op_debug_buffer_addr_(nullptr),
+        op_debug_dump_args_(nullptr),
+        load_flag_(false),
         dev_load_mem_(nullptr),
         dev_unload_mem_(nullptr),
-        kernel_graph_(kernel_graph),
-        runtime_info_map_(runtime_info_map) {}
+        graph_id_(UINT32_MAX),
+        kernel_graph_(kernel_graph) {}
   ~DataDumper();
+  void set_runtime_info(const std::map<std::string, std::shared_ptr<RuntimeInfo>> &runtime_info) {
+    runtime_info_map_ = runtime_info;
+  }
   void LoadDumpInfo();
-
   void UnloadDumpInfo();
+  void OpDebugRegister();
+  void OpDebugUnregister();
 
  private:
   void ReleaseDevMem(void **ptr) const;
   bool KernelNeedDump(const CNodePtr &kernel) const;
   void SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_info) const;
+  void SetOpDebugMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_info) const;
   void ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aicpu::dump::Task *> dump_task) const;
 
+  std::function<void *()> model_handle_;
+  uint32_t debug_task_id_;
+  uint32_t debug_stream_id_;
+  void *op_debug_buffer_addr_;
+  void *op_debug_dump_args_;
   bool load_flag_;
   void *dev_load_mem_;
   void *dev_unload_mem_;
+  uint32_t graph_id_;
   std::vector<std::string> dump_kernel_names_;
   const session::KernelGraph *kernel_graph_;
   std::map<std::string, std::shared_ptr<RuntimeInfo>> runtime_info_map_;
@@ -65,5 +80,4 @@ class DataDumper {
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
-#endif
-#endif  // MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_DUMP_DATADUMP_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_DUMP_DATADUMP_H_

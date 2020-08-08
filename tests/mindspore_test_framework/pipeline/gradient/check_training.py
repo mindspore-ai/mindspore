@@ -31,7 +31,7 @@ Example:
             'block': {
                 'model': network,
                 'loss': SquaredLoss(),
-                'opt': Lamb(network.trainable_params(), decay_steps=num_epochs, warmup_steps=10, weight_decay=0.01),
+                'opt': Lamb(network.trainable_params(), lr=0.02, weight_decay=0.01),
                 'num_epochs': num_epochs,
                 'loss_upper_bound': 0.3,
             },

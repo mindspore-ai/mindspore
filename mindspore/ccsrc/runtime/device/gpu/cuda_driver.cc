@@ -209,6 +209,16 @@ bool CudaDriver::QueryEvent(const DeviceEvent &event) {
   }
 }
 
+bool CudaDriver::ElapsedTime(float *cost_time, const DeviceEvent &start, const DeviceEvent &end) {
+  auto ret = cudaEventElapsedTime(cost_time, (cudaEvent_t)start, (cudaEvent_t)end);
+  if (ret == cudaSuccess) {
+    return true;
+  } else {
+    MS_LOG(ERROR) << "cudaEventElapsedTime failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
+    return false;
+  }
+}
+
 int CudaDriver::device_count() {
   int dev_count;
   auto ret = cudaGetDeviceCount(&dev_count);

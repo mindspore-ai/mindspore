@@ -21,7 +21,7 @@
 #include "backend/optimizer/common/pass_manager.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_info.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 #define private public
 #define protected public
@@ -50,6 +50,8 @@ class TestHWInsertTransOp : public BackendCommon {
     KernelBuildInfoBuilder builder;
     builder.SetInputsFormat({format, format});
     builder.SetInputsDeviceType({kFloat16->type_id(), kFloat16->type_id()});
+    builder.SetInputsReshapeType({{},{}});
+    builder.SetOutputsReshapeType({});
     builder.SetOutputsFormat({format});
     builder.SetOutputsDeviceType({kFloat16->type_id()});
     add->set_kernel_info(std::make_shared<device::KernelInfo>());
@@ -70,6 +72,8 @@ class TestHWInsertTransOp : public BackendCommon {
     EXPECT_NE(ret->input(1)->cast<CNodePtr>()->input(1)->cast<CNodePtr>()->input(1), nullptr);
     auto max_pool = ret->input(1)->cast<CNodePtr>()->input(1)->cast<CNodePtr>()->input(1);
     KernelBuildInfoBuilder builder;
+    builder.SetInputsReshapeType({{}});
+    builder.SetOutputsReshapeType({{},{}});
     builder.SetInputsFormat({kOpFormat_DEFAULT});
     builder.SetInputsDeviceType({kFloat16->type_id()});
     builder.SetOutputsFormat({format, format});
@@ -88,6 +92,8 @@ class MockInsertTransOpKernelSelectTrans4Dto5D : public KernelSelect {
   ~MockInsertTransOpKernelSelectTrans4Dto5D() override = default;
   void SelectKernel(const CNodePtr &cnode) override {
     KernelBuildInfoBuilder builder;
+    builder.SetInputsReshapeType({{}});
+    builder.SetOutputsReshapeType({{}});
     builder.SetInputsFormat({"NCHW"});
     builder.SetInputsDeviceType({kFloat16->type_id()});
     builder.SetOutputsFormat({"NC1HWC0"});

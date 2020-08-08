@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_KERNELS_IMAGE_NORMALIZE_OP_H_
-#define DATASET_KERNELS_IMAGE_NORMALIZE_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_NORMALIZE_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_NORMALIZE_OP_H_
 
 #include <memory>
 #include <string>
@@ -39,10 +39,10 @@ class NormalizeOp : public TensorOp {
   std::string Name() const override { return kNormalizeOp; }
 
  private:
-  std::shared_ptr<CVTensor> mean_;
-  std::shared_ptr<CVTensor> std_;
+  std::shared_ptr<Tensor> mean_;
+  std::shared_ptr<Tensor> std_;
 };
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_KERNELS_IMAGE_NORMALIZE_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_NORMALIZE_OP_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_ENGINE_DATASETOPS_PROJECT_OP_H_
-#define DATASET_ENGINE_DATASETOPS_PROJECT_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_PROJECT_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_PROJECT_OP_H_
 
 #include <memory>
 #include <string>
@@ -109,7 +109,7 @@ class ProjectOp : public PipelineOp {
 
   // Op name getter
   // @return Name of the current Op
-  std::string Name() const override { return "ProjectOp"; }
+  std::string Name() const override { return kProjectOp; }
 
  private:
   std::vector<std::string> columns_to_project_;
@@ -124,4 +124,4 @@ class ProjectOp : public PipelineOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_ENGINE_DATASETOPS_PROJECT_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_PROJECT_OP_H_

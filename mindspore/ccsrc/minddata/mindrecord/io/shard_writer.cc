@@ -15,7 +15,7 @@
  */
 
 #include "minddata/mindrecord/include/shard_writer.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/mindrecord/include/common/shard_utils.h"
 #include "./securec.h"
 
@@ -83,7 +83,7 @@ MSRStatus ShardWriter::OpenDataFiles(bool append) {
       // if not append and mindrecord file exist, return FAILED
       fs->open(common::SafeCStr(file), std::ios::in | std::ios::binary);
       if (fs->good()) {
-        MS_LOG(ERROR) << "MindRecord file already existed.";
+        MS_LOG(ERROR) << "MindRecord file already existed, please delete file: " << common::SafeCStr(file);
         fs->close();
         return FAILED;
       }
@@ -635,6 +635,42 @@ MSRStatus ShardWriter::WriteRawDataPreCheck(std::map<uint64_t, std::vector<json>
   }
   *schema_count = std::get<1>(v);
   *row_count = std::get<2>(v);
+  return SUCCESS;
+}
+MSRStatus ShardWriter::MergeBlobData(const std::vector<string> &blob_fields,
+                                     const std::map<std::string, std::unique_ptr<std::vector<uint8_t>>> &row_bin_data,
+                                     std::shared_ptr<std::vector<uint8_t>> *output) {
+  if (blob_fields.empty()) {
+    return SUCCESS;
+  }
+  if (blob_fields.size() == 1) {
+    auto &blob = row_bin_data.at(blob_fields[0]);
+    auto blob_size = blob->size();
+    *output = std::make_shared<std::vector<uint8_t>>(blob_size);
+    std::copy(blob->begin(), blob->end(), (*output)->begin());
+  } else {
+    size_t output_size = 0;
+    for (auto &field : blob_fields) {
+      output_size += row_bin_data.at(field)->size();
+    }
+    output_size += blob_fields.size() * sizeof(uint64_t);
+    *output = std::make_shared<std::vector<uint8_t>>(output_size);
+    std::vector<uint8_t> buf(sizeof(uint64_t), 0);
+    size_t idx = 0;
+    for (auto &field : blob_fields) {
+      auto &blob = row_bin_data.at(field);
+      uint64_t blob_size = blob->size();
+      // big edian
+      for (size_t i = 0; i < buf.size(); ++i) {
+        buf[buf.size() - 1 - i] = std::numeric_limits<uint8_t>::max() & blob_size;
+        blob_size >>= 8u;
+      }
+      std::copy(buf.begin(), buf.end(), (*output)->begin() + idx);
+      idx += buf.size();
+      std::copy(blob->begin(), blob->end(), (*output)->begin() + idx);
+      idx += blob->size();
+    }
+  }
   return SUCCESS;
 }
 
@@ -1249,6 +1285,22 @@ void ShardWriter::SetLastBlobPage(const int &shard_id, std::shared_ptr<Page> &la
     auto page = shard_header_->GetPage(shard_id, last_blob_page_id);
     last_blob_page = page.first;
   }
+}
+
+MSRStatus ShardWriter::initialize(const std::unique_ptr<ShardWriter> *writer_ptr,
+                                  const std::vector<std::string> &file_names) {
+  if (nullptr == writer_ptr) {
+    MS_LOG(ERROR) << "ShardWriter pointer is NULL.";
+    return FAILED;
+  }
+  auto res = (*writer_ptr)->Open(file_names, false);
+  if (SUCCESS != res) {
+    MS_LOG(ERROR) << "Failed to open mindrecord files to writer.";
+    return FAILED;
+  }
+  (*writer_ptr)->SetHeaderSize(1 << 24);
+  (*writer_ptr)->SetPageSize(1 << 25);
+  return SUCCESS;
 }
 }  // namespace mindrecord
 }  // namespace mindspore

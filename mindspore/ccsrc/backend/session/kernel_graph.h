@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_SESSION_KERNEL_GRAPH_H
-#define MINDSPORE_CCSRC_SESSION_KERNEL_GRAPH_H
+#ifndef MINDSPORE_CCSRC_BACKEND_SESSION_KERNEL_GRAPH_H
+#define MINDSPORE_CCSRC_BACKEND_SESSION_KERNEL_GRAPH_H
 
 #include <vector>
 #include <unordered_map>
@@ -27,7 +27,7 @@
 #include <unordered_set>
 #include "ir/func_graph.h"
 #include "ir/anf.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "utils/contract.h"
 #include "runtime/device/kernel_info.h"
 
@@ -49,13 +49,17 @@ class KernelGraph : public FuncGraph {
 
   const std::vector<AnfNodePtr> &inputs() const;
   std::vector<AnfNodePtr> *MutableInputs() const { return inputs_.get(); }
+  void ReplaceGraphInput(const AnfNodePtr &old_parameter, const AnfNodePtr &new_parameter);
   std::vector<AnfNodePtr> outputs() const;
   CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs) override;
   void CreateKernelInfoFromNewParameter(const CNodePtr &cnode);
   CNodePtr NewCNode(const CNodePtr &cnode);
   ParameterPtr NewParameter(const ParameterPtr &parameter = nullptr);
+  ParameterPtr NewParameter(const abstract::AbstractBasePtr &abstract);
+  ValueNodePtr NewValueNode(const AbstractBasePtr &abstract, const ValuePtr &value);
   ValueNodePtr NewValueNode(const ValueNodePtr &value_node = nullptr);
-  std::vector<AnfNodePtr> SplitTupleValueNodeToNodeList(const ValueNodePtr &value_node);
+  // trans tuple output to maketuple + no_tuple out
+  AnfNodePtr TransTupleToMakeTuple(const AnfNodePtr &node);
   void set_execution_order(const std::vector<CNodePtr> &order) { execution_order_ = order; }
   const std::vector<CNodePtr> &execution_order() const { return execution_order_; }
   void SetExecOrderByDefault();
@@ -127,16 +131,8 @@ class KernelGraph : public FuncGraph {
   void set_parent_graph(const std::shared_ptr<KernelGraph> &parent_graph) { parent_graph_ = parent_graph; }
   // find anf node in graph
   std::vector<CNodePtr> FindNodeByPrimitive(const PrimitivePtr &primitive) const;
-  // get real inputs
-  const std::vector<std::pair<AnfNodePtr, std::vector<AnfNodePtr>>> &real_inputs() const { return real_inputs_; }
-  void SetRealInput(const AnfNodePtr &parameter, const AnfNodePtr &arg);
-  // mark unreused args
-  void AddUnreuseArgs(const AnfNodePtr &arg, const std::shared_ptr<KernelGraph> &from_graph);
-  const std::map<AnfNodePtr, std::shared_ptr<KernelGraph>> &unreuse_args() const { return unreuse_args_; }
   // used to dump ir
   std::string ToString() const override;
-  // update the real input if the node is a call
-  void UpdateCallRealInput();
 
   void set_start_label(const CNodePtr &start_label) { start_label_ = start_label; }
   CNodePtr get_start_label() { return start_label_; }
@@ -147,13 +143,16 @@ class KernelGraph : public FuncGraph {
   void PrintGraphExecuteOrder() const;
   const std::map<std::string, std::pair<AnfNodePtr, int>> &summary_nodes() const { return summary_nodes_; }
   void set_summary_nodes(const std::map<std::string, std::pair<AnfNodePtr, int>> &nodes) { summary_nodes_ = nodes; }
-  void AddInternalOutput(const AnfNodePtr &front_node, const AnfNodePtr &node);
-  void ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node);
+  void AddInternalOutput(const AnfNodePtr &front_node, const AnfNodePtr &node, int output_idx = 0,
+                         bool unique_target = false);
+  void ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node, int src_output_idx = -1,
+                             int dst_output_idx = -1);
   AnfNodePtr GetInternalOutputByFrontNode(const AnfNodePtr &front_node) const;
-  bool IsInternalOutput(const AnfNodePtr &node) const;
-  AnfNodePtr GetFrontNodeByInternalOutput(const AnfNodePtr &node) const;
-  void AddFinalOutputKernel(const AnfNodePtr &node);
-  bool IsFinalOutputKernel(const AnfNodePtr &node) const;
+  bool IsInternalOutput(const AnfNodePtr &node, int output_idx = -1) const;
+  bool IsUniqueTargetInternalOutput(const AnfNodePtr &node, int output_idx) const;
+  void AddInternalOutputTensor(const AnfNodePtr &node, int output_idx, const tensor::TensorPtr &tensor);
+  tensor::TensorPtr GetInternalOutputTensor(const AnfNodePtr &node, int output_idx);
+
   uint32_t current_epoch() const { return current_epoch_; }
   void set_current_epoch(uint32_t epoch) { current_epoch_ = epoch; }
   void UpdateChildGraphOrder();
@@ -166,6 +165,8 @@ class KernelGraph : public FuncGraph {
  private:
   // remove value node form graph
   bool RemoveValueNodeFromGraph(const ValueNodePtr &value_node);
+  void SetKernelInfoForNode(const AnfNodePtr &node) const;
+  AnfNodePtr MakeValueNode(const AnfNodePtr &node);
   void VisitNodeDescendants(const AnfNodePtr &node, std::queue<AnfNodePtr> *visit_queue,
                             std::unordered_set<AnfNodePtr> *visited_nodes);
   // update node edge list
@@ -177,6 +178,10 @@ class KernelGraph : public FuncGraph {
   bool HandleControlDependNode(const AnfNodePtr &node, std::queue<AnfNodePtr> *que,
                                std::unordered_set<AnfNodePtr> *visited_nodes);
   void UpdateControlDependRelations(const std::vector<AnfNodePtr> &depends);
+  AnfNodePtr TransValueNodeTuple(const AbstractBasePtr abstract, const ValuePtr &value);
+  AnfNodePtr TransParameterTuple(const AbstractBasePtr &abstract);
+  AnfNodePtr TransCNodeTuple(const CNodePtr &node);
+  AnfNodePtr CreatTupleGetItemNode(const AnfNodePtr &node, size_t output_idx);
 
   std::shared_ptr<std::vector<AnfNodePtr>> inputs_;
   std::vector<AnfNodePtr> child_graph_result_;
@@ -204,9 +209,6 @@ class KernelGraph : public FuncGraph {
   // valid inputs
   std::vector<bool> valid_inputs_;
 
-  // new members for control sink process
-  // all child grahs refers to partial node
-  std::map<AnfNodePtr, std::shared_ptr<KernelGraph>> node_to_child_graphs_;
   // child graph execute order in root graph
   std::vector<std::shared_ptr<KernelGraph>> child_graph_order_;
 
@@ -215,19 +217,16 @@ class KernelGraph : public FuncGraph {
 
   // parameter graph
   std::shared_ptr<KernelGraph> parent_graph_;
-  // record real parameters,inputs_ is the formal parameters
-  std::vector<std::pair<AnfNodePtr, std::vector<AnfNodePtr>>> real_inputs_;
-  std::map<AnfNodePtr, std::shared_ptr<KernelGraph>> unreuse_args_;
 
   CNodePtr start_label_;
   CNodePtr end_goto_;
   bool null_output_;
   std::unordered_map<AnfNodePtr, AnfNodePtr> front_to_internal_outputs_map_;
-  std::unordered_map<AnfNodePtr, AnfNodePtr> internal_outputs_to_front_map_;
-  std::set<AnfNodePtr> final_output_kernels_;
+  std::unordered_map<AnfNodePtr, std::unordered_map<int, std::pair<AnfNodePtr, bool>>> internal_outputs_to_front_map_;
+  std::unordered_map<AnfNodePtr, std::unordered_map<int, tensor::TensorPtr>> internal_outputs_tensor_map_;
   uint32_t current_epoch_;
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_SESSION_KERNEL_GRAPH_H
+#endif  // MINDSPORE_CCSRC_BACKEND_SESSION_KERNEL_GRAPH_H

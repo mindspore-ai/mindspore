@@ -25,43 +25,10 @@
 #include <ctime>
 #include <fstream>
 #include <memory>
-#include "mindspore/ccsrc/utils/log_adapter.h"
+#include "include/infer_log.h"
 
 namespace mindspore {
 namespace serving {
-char *ReadFile(const char *file, size_t *size) {
-  if (file == nullptr) {
-    MS_LOG(ERROR) << "file is nullptr";
-    return nullptr;
-  }
-  MS_ASSERT(size != nullptr);
-  std::string realPath = file;
-  std::ifstream ifs(realPath);
-  if (!ifs.good()) {
-    MS_LOG(ERROR) << "file: " << realPath << " is not exist";
-    return nullptr;
-  }
-
-  if (!ifs.is_open()) {
-    MS_LOG(ERROR) << "file: " << realPath << "open failed";
-    return nullptr;
-  }
-
-  ifs.seekg(0, std::ios::end);
-  *size = ifs.tellg();
-  std::unique_ptr<char> buf(new (std::nothrow) char[*size]);
-  if (buf == nullptr) {
-    MS_LOG(ERROR) << "malloc buf failed, file: " << realPath;
-    ifs.close();
-    return nullptr;
-  }
-
-  ifs.seekg(0, std::ios::beg);
-  ifs.read(buf.get(), *size);
-  ifs.close();
-
-  return buf.release();
-}
 
 bool DirOrFileExist(const std::string &file_path) {
   int ret = access(file_path.c_str(), 0);
@@ -74,7 +41,7 @@ std::vector<std::string> GetAllSubDirs(const std::string &dir_path) {
   std::vector<std::string> SubDirs;
 
   if ((dir = opendir(dir_path.c_str())) == NULL) {
-    MS_LOG(ERROR) << "Open " << dir_path << " error!";
+    MSI_LOG(ERROR) << "Open " << dir_path << " error!";
     return std::vector<std::string>();
   }
 

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_ENGINE_DATASETOPS_BARRIER_OP_H_
-#define DATASET_ENGINE_DATASETOPS_BARRIER_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_BARRIER_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_BARRIER_OP_H_
 
 #include <memory>
 #include <string>
@@ -121,6 +121,10 @@ class BarrierOp : public PipelineOp {
   // @param show_all - if it should print everything
   void Print(std::ostream &out, bool show_all) const override;
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return kBarrierOp; }
+
   // Provide stream operator for displaying it
   friend std::ostream &operator<<(std::ostream &out, const BarrierOp &bo) {
     bo.Print(out, false);
@@ -166,4 +170,4 @@ class BarrierOp : public PipelineOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_ENGINE_DATASETOPS_BARRIER_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_BARRIER_OP_H_

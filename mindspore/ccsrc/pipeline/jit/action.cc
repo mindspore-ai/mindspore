@@ -34,12 +34,17 @@
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "pipeline/jit/static_analysis/program_specialize.h"
 #include "pipeline/jit/resource.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "pipeline/jit/remove_value_node_dup.h"
 #include "frontend/optimizer/optimizer.h"
 #include "vm/transform.h"
 #include "parse/python_adapter.h"
 #include "frontend/optimizer/py_pass_manager.h"
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#include "frontend/parallel/ps/parameter_server.h"
+#include "frontend/parallel/ps/scheduler.h"
+#include "frontend/parallel/ps/worker.h"
+#endif
 
 namespace mindspore {
 namespace pipeline {
@@ -228,8 +233,7 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
   for (const auto &param : func_graph->parameters()) {
     auto param_node = std::static_pointer_cast<Parameter>(param);
     if (param_node->has_default()) {
-      const auto &param_value = param_node->default_param();
-      ValuePtr value = param_value->value();
+      ValuePtr value = param_node->default_param();
       constexpr bool broaden = true;
       AbstractBasePtr ptr = abstract::FromValue(value, broaden);
 
@@ -347,7 +351,7 @@ bool ExecuteAction(const ResourcePtr &res) {
     }
     auto graph_id = res->results()[kOutput].cast<GraphId>();
     std::shared_ptr<compile::Backend> bc_ptr = res->results()[kBackend].cast<std::shared_ptr<compile::Backend>>();
-    std::shared_ptr<compile::MsBackend> msbc_ptr = std::dynamic_pointer_cast<compile::MsBackend>(bc_ptr);
+    compile::MsBackend *msbc_ptr = std::dynamic_pointer_cast<compile::MsBackend>(bc_ptr).get();
     MS_EXCEPTION_IF_NULL(msbc_ptr);
     compile::VmEvalFuncPtr run =
       std::make_shared<compile::VmEvalFunc>([msbc_ptr, graph_id](const VectorRef &args) -> BaseRef {
@@ -373,6 +377,25 @@ bool ExecuteAction(const ResourcePtr &res) {
   res->results()[kOutput] = run;
   return true;
 }
+
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+bool StartPSWorkerAction(const ResourcePtr &res) {
+  parallel::ps::Worker<float>::GetInstance().Run();
+  return true;
+}
+
+bool StartPSServerAction(const ResourcePtr &res) {
+  FuncGraphPtr func_graph = res->func_graph();
+  auto &ps = parallel::ps::ParameterServer<float>::GetInstance();
+  ps.Run(func_graph);
+  return true;
+}
+
+bool StartPSSchedulerAction(const ResourcePtr &res) {
+  parallel::ps::Scheduler::GetInstance().Run();
+  return true;
+}
+#endif
 
 // The parallel primitive related valuenode might be partitioned so that its value changes by device,
 // that will result in a syncronization error due to different executing order.
@@ -481,7 +504,11 @@ std::vector<ActionItem> VmPipeline() {
   actions.emplace_back(std::make_pair("py_opt", OptActionPyStub));
 
   actions.emplace_back(std::make_pair("validate", ValidateAction));
-
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  if (parallel::ps::Util::IsRoleOfWorker()) {
+    actions.emplace_back(std::make_pair("worker", StartPSWorkerAction));
+  }
+#endif
   // compile the ANF graph
   actions.emplace_back(std::make_pair("task_emit", TaskEmitAction));
 
@@ -490,5 +517,21 @@ std::vector<ActionItem> VmPipeline() {
 
   return actions;
 }
+
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+std::vector<ActionItem> PServerPipeline() {
+  auto actions = CommonPipeline();
+  actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
+  actions.emplace_back(std::make_pair("validate", ValidateAction));
+  actions.emplace_back(std::make_pair("pserver", StartPSServerAction));
+  return actions;
+}
+
+std::vector<ActionItem> PSchedulerPipeline() {
+  std::vector<ActionItem> actions;
+  actions.emplace_back(std::make_pair("scheduler", StartPSSchedulerAction));
+  return actions;
+}
+#endif
 }  // namespace pipeline
 }  // namespace mindspore

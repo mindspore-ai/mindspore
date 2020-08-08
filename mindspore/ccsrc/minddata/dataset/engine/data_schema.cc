@@ -23,7 +23,7 @@
 #include <sstream>
 #include <nlohmann/json.hpp>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "utils/log_adapter.h"

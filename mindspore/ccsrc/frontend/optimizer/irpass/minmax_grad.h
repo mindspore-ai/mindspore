@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_IRPASS_MINMAX_GRAD_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_IRPASS_MINMAX_GRAD_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_MINMAX_GRAD_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_MINMAX_GRAD_H_
 
 #include <vector>
 #include <memory>
 
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/irpass.h"
-#include "ir/visitor.h"
+#include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"
 
 namespace mindspore {
@@ -107,4 +107,4 @@ class MinMaximumGrad : public AnfVisitor {
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_IRPASS_MINMAX_GRAD_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_MINMAX_GRAD_H_

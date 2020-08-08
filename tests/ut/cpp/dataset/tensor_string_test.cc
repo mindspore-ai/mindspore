@@ -35,13 +35,15 @@ class MindDataTestStringTensorDE : public UT::Common {
 };
 
 TEST_F(MindDataTestStringTensorDE, Basics) {
-  std::shared_ptr<Tensor> t = std::make_shared<Tensor>("Hi");
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateScalar<std::string>("Hi", &t);
   ASSERT_TRUE(t->shape() == TensorShape({}));
   std::string_view s = "";
   t->GetItemAt(&s, {});
   ASSERT_TRUE(s == "Hi");
 
-  std::shared_ptr<Tensor> t2 = std::make_shared<Tensor>(std::vector<std::string>{"Hi", "Bye"});
+  std::shared_ptr<Tensor> t2;
+  Tensor::CreateFromVector(std::vector<std::string>{"Hi", "Bye"}, &t2);
   ASSERT_TRUE(t2->shape() == TensorShape({2}));
   t2->GetItemAt(&s, {0});
   ASSERT_TRUE(s == "Hi");
@@ -49,7 +51,9 @@ TEST_F(MindDataTestStringTensorDE, Basics) {
   ASSERT_TRUE(s == "Bye");
 
   std::vector<std::string> strings{"abc", "defg", "hi", "klmno", "123", "789"};
-  std::shared_ptr<Tensor> t3 = std::make_shared<Tensor>(strings, TensorShape({2, 3}));
+  std::shared_ptr<Tensor> t3;
+  Tensor::CreateFromVector(strings, TensorShape({2, 3}), &t3);
+
   ASSERT_TRUE(t3->shape() == TensorShape({2, 3}));
   uint32_t index = 0;
   for (uint32_t i = 0; i < 2; i++) {
@@ -62,8 +66,10 @@ TEST_F(MindDataTestStringTensorDE, Basics) {
 }
 
 TEST_F(MindDataTestStringTensorDE, Basics2) {
-  std::shared_ptr<Tensor> t =
-    std::make_shared<Tensor>(std::vector<std::string>{"abc", "defg", "hi", "klmno", "123", "789"}, TensorShape({2, 3}));
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateFromVector(std::vector<std::string>{"abc", "defg", "hi", "klmno", "123", "789"}, TensorShape({2, 3}),
+                           &t);
+
   ASSERT_TRUE(t->SizeInBytes() == 6 * 5 + 20 + 4);
   std::vector<uint32_t> offsets = {0, 4, 9, 12, 18, 22, 26};
   uint32_t ctr = 0;
@@ -86,7 +92,8 @@ TEST_F(MindDataTestStringTensorDE, Basics2) {
 
 TEST_F(MindDataTestStringTensorDE, Empty) {
   std::vector<std::string> strings{"abc", "defg", "", "", "123", ""};
-  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(strings, TensorShape({2, 3}));
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateFromVector(strings, TensorShape({2, 3}), &t);
   //  abc_defg___123__
   //  0123456789012345
   ASSERT_TRUE(t->SizeInBytes() == 6 * 5 + 10 + 4);
@@ -112,7 +119,9 @@ TEST_F(MindDataTestStringTensorDE, Empty) {
 
 TEST_F(MindDataTestStringTensorDE, SetItem) {
   std::vector<std::string> strings{"abc", "defg", "hi", "klmno", "123", "789"};
-  std::shared_ptr<Tensor> t3 = std::make_shared<Tensor>(strings, TensorShape({2, 3}));
+  std::shared_ptr<Tensor> t3;
+  Tensor::CreateFromVector(strings, TensorShape({2, 3}), &t3);
+
   ASSERT_TRUE(t3->shape() == TensorShape({2, 3}));
 
   t3->SetItemAt({0, 1}, std::string{"xyzz"});
@@ -136,7 +145,8 @@ TEST_F(MindDataTestStringTensorDE, SetItem) {
 
 TEST_F(MindDataTestStringTensorDE, Iterator) {
   std::vector<std::string> strings{"abc", "defg", "hi", "klmno", "123", "789"};
-  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(strings, TensorShape({2, 3}));
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateFromVector(strings, TensorShape({2, 3}), &t);
   uint32_t index = 0;
   auto itr = t->begin<std::string_view>();
   for (; itr != t->end<std::string_view>(); itr++) {

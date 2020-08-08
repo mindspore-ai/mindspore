@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_KERNEL_REFCOUNT_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_KERNEL_REFCOUNT_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_KERNEL_REFCOUNT_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_KERNEL_REFCOUNT_H_
 #include <vector>
 #include <map>
 #include <string>
@@ -25,7 +25,8 @@
 namespace mindspore {
 namespace memreuse {
 enum RefCountType { kDynamicRefCount, kStaticRefCount };
-enum NodeType { NORMAL, SPECIAL };
+enum NodeType { kCommonNode, kCommunicationNode };
+enum KernelRefType { kCommon, kRefNodeInput, kRefNodeOutput, kCommNotReuse, kCommReuse, kSummary };
 static constexpr int kInitIndex = -1;
 class KernelRefCount {
  public:
@@ -36,6 +37,7 @@ class KernelRefCount {
   size_t offset_;
   size_t size_;
   int index_;
+  KernelRefType type_;
   // remember to reset offset
   KernelRefCount()
       : stream_id_(0),
@@ -44,6 +46,7 @@ class KernelRefCount {
         offset_(0),
         size_(0),
         index_(kInitIndex),
+        type_(kCommon),
         reftype_(kStaticRefCount) {}
   ~KernelRefCount() = default;
   void SetKernelRefCountInfo(int index, size_t size, RefCountType reftype);
@@ -65,7 +68,7 @@ class KernelDef {
   KernelMap inputs_;
   KernelMap outputs_;
   KernelMap wk_space_;
-  NodeType dirty = NORMAL;
+  NodeType type_ = kCommonNode;
   KernelDef() = default;
   ~KernelDef() = default;
   void set_input_refs(const KernelRefCountPtrList &kernelRefPtrList) { input_refs_ = kernelRefPtrList; }
@@ -95,4 +98,4 @@ class KernelDef {
 using KernelDefPtr = std::shared_ptr<KernelDef>;
 }  // namespace memreuse
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_KERNEL_REFCOUNT_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_KERNEL_REFCOUNT_H_

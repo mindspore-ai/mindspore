@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_AD_D_FUNCTOR_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_AD_D_FUNCTOR_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_D_FUNCTOR_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_D_FUNCTOR_H_
 
 #include <memory>
 #include <string>
@@ -95,6 +95,7 @@ class DFunctor : public std::enable_shared_from_this<DFunctor> {
   // Update k hole with adjoint_definition, only applied in recursive case.
   void UpdateAdjoint(const AdjointPtr &adjoint_definition);
   void CallDoutHoleOnTape();
+  void ReplaceEquivdout(const CNodePtr &cnode, const ValuePtr &forward);
 
   std::unordered_map<AnfNodePtr, AdjointPtr> anfnode_to_adjoin_;
   // Cache for indirect fv backpropagation, K o K can only do backprop layer by layer.
@@ -207,4 +208,4 @@ FuncGraphPtr KPrim::BpropToK(const T &primal, const FuncGraphPtr &bprop_fg) {
 }  // namespace ad
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_AD_D_FUNCTOR_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_D_FUNCTOR_H_

@@ -272,7 +272,7 @@ OperatorInfoPtr GetDistributeOperator(const CNodePtr &node) {
   if (!IsParallelCareNode(node)) {
     return nullptr;
   }
-  OperatorInfoPtr distribute_operator = node->operator_info();
+  OperatorInfoPtr distribute_operator = node->user_data<OperatorInfo>();
   if (distribute_operator == nullptr) {
     MS_LOG(EXCEPTION) << "GetDistributeOperator:distribute_operator is nullptr";
   }
@@ -302,16 +302,20 @@ void Redistribution(const std::pair<AnfNodePtr, int> &node_pair, const OperatorI
   MS_LOG(DEBUG) << "Redistribution: middle_node " << middle_node->ToString() << " next_node " << next_node->ToString();
   // extract tensor layout in and out
   if (distribute_operator->outputs_tensor_info().empty()) {
-    MS_LOG(EXCEPTION) << "Failure:pre_node's tensorinfo_in is empty";
+    MS_LOG(WARNING) << "pre_node's tensorinfo_in is empty, operator name is " << distribute_operator->name();
+    return;
   }
 
   if (IntToSize(index - 1) >= next_distribute_operator->inputs_tensor_info().size()) {
-    MS_LOG(EXCEPTION) << "The index is out of range, the index is " << index - 1 << ", the vector size is "
-                      << next_distribute_operator->inputs_tensor_info().size();
+    MS_LOG(WARNING) << "The index is out of range, the index is " << index - 1 << ", the vector size is "
+                    << next_distribute_operator->inputs_tensor_info().size() << "next operator name is "
+                    << next_distribute_operator->name();
+    return;
   }
   TensorInfo tensorinfo_out = next_distribute_operator->inputs_tensor_info()[IntToSize(index - 1)];
   TensorLayout tensorlayout_out = tensorinfo_out.tensor_layout();
   TensorLayout tensorlayout_in = GetTensorInLayout(middle_node, middle_prim, distribute_operator);
+
   if (tensor_redistribution.Init(tensorlayout_in, tensorlayout_out, dev_list) == FAILED) {
     MS_LOG(ERROR) << "Redistribution: middle_prim " << middle_prim->name() << " next_prim : " << next_prim_name;
     MS_LOG(ERROR) << "Redistribution: middle_node " << middle_node->ToString() << " next_node "
@@ -405,7 +409,7 @@ bool IsParallelCareNode(const CNodePtr &cnode) {
   if (prim->name() == GET_NEXT) {
     return true;
   }
-  if ((prim->name() == CAST) && (cnode->operator_info() == nullptr)) {
+  if ((prim->name() == CAST) && !cnode->has_user_data<OperatorInfo>()) {
     return false;
   }
 
@@ -442,7 +446,7 @@ void StepRedistribution(const CNodePtr &node, const OperatorInfoPtr &distribute_
       if (node_prim->name() == DEPEND && node_pair.second != 1) {
         continue;
       }
-      if (IsParallelCareNode(use_cnode) && (use_cnode->operator_info() != nullptr)) {
+      if (IsParallelCareNode(use_cnode) && use_cnode->has_user_data<OperatorInfo>()) {
         Redistribution(node_pair, distribute_operator, insert_node_new, node_pair.second, tensor_redistribution,
                        pre_node);
       } else {
@@ -455,7 +459,7 @@ void StepRedistribution(const CNodePtr &node, const OperatorInfoPtr &distribute_
 void SplitTensor(const AnfNodePtr &node, const CNodePtr &next_node, int index) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(next_node);
-  OperatorInfoPtr op_info = next_node->operator_info();
+  OperatorInfoPtr op_info = next_node->user_data<OperatorInfo>();
   MS_EXCEPTION_IF_NULL(op_info);
 
   // If the shape of tensor is [] or [1], no need to split it.
@@ -580,7 +584,7 @@ void ReplaceOneOp(const Operator &replace_op, const CNodePtr &node) {
 
 void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
   // step1:get graph manager distribute_operator
-  OperatorInfoPtr distribute_operator = node->operator_info();
+  OperatorInfoPtr distribute_operator = node->user_data<OperatorInfo>();
   if (distribute_operator == nullptr) {
     MS_LOG(EXCEPTION) << "Failure:AddNode error since distribute_operator is nullptr";
   }
@@ -618,7 +622,7 @@ void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
       (void)prim->SetAttrs(attrs);
     }
     if (index == replace_op.size() - 1) {
-      (void)replace_node->set_operator_info(node->operator_info());
+      replace_node->set_user_data<OperatorInfo>(node->user_data<OperatorInfo>());
     }
     replace_node->set_in_forward_flag(true);
     replace_input[0]->set_scope(scope);
@@ -698,7 +702,7 @@ LossNodeInfo GetLossNodeInfo(const AnfNodePtr &loss_node) {
   auto pre_cnode = pre_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(pre_cnode);
   auto pre_prim = GetValueNode<PrimitivePtr>(pre_cnode->input(0));
-  if (pre_prim->name() == CAST && pre_cnode->operator_info() == nullptr) {
+  if (pre_prim->name() == CAST && !pre_cnode->has_user_data<OperatorInfo>()) {
     pre_node = pre_cnode->input(1);
   }
 
@@ -1015,14 +1019,16 @@ StrategyPtr ExtractStrategy(std::unordered_map<std::string, ValuePtr> attrs) {
   }
   if (var->size() > 0) {
     std::vector<ValuePtr> elements = var->value();
-    std::vector<Dimensions> strategy;
+    Strategys strategy;
     for (uint32_t index = 0; index < elements.size(); ++index) {
       Dimensions dim;
       if (elements[index]->isa<ValueSequeue>()) {
         ValueTuplePtr value_tuple = elements[index]->cast<ValueTuplePtr>();
         std::vector<ValuePtr> value_vector = value_tuple->value();
-        (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(dim),
-                             [](const ValuePtr &value) { return static_cast<int32_t>(GetValue<int>(value)); });
+        (void)std::transform(
+          value_vector.begin(), value_vector.end(), std::back_inserter(dim), [](const ValuePtr &value) {
+            return value->isa<Int64Imm>() ? GetValue<int64_t>(value) : static_cast<int64_t>(GetValue<int>(value));
+          });
         strategy.push_back(dim);
       } else {
         MS_LOG(EXCEPTION) << "Failure:Strategy's format is wrong! Need ValueSequeue";
@@ -1071,12 +1077,20 @@ Shapes GetNodeShape(const AnfNodePtr &node) {
     for (auto &shape : tuple_shape) {
       auto each_shape = dyn_cast<abstract::Shape>(shape);
       MS_EXCEPTION_IF_NULL(each_shape);
-      shapes.push_back(each_shape->shape());
+      std::vector<int> shape_int = each_shape->shape();
+      Shape new_shape;
+      (void)std::transform(shape_int.begin(), shape_int.end(), std::back_inserter(new_shape),
+                           [](const int &value) { return static_cast<int64_t>(value); });
+      shapes.push_back(new_shape);
     }
   } else {
     auto shape_ptr = dyn_cast<abstract::Shape>(base_shape_ptr);
     MS_EXCEPTION_IF_NULL(shape_ptr);
-    shapes.push_back(shape_ptr->shape());
+    std::vector<int> shape_int = shape_ptr->shape();
+    Shape new_shape;
+    (void)std::transform(shape_int.begin(), shape_int.end(), std::back_inserter(new_shape),
+                         [](const int &value) { return static_cast<int64_t>(value); });
+    shapes.push_back(new_shape);
   }
   return shapes;
 }
@@ -1194,7 +1208,7 @@ std::pair<AnfNodePtr, int> FindParallelCareNode(const AnfNodePtr &node) {
     if (node_prim->name() == DEPEND && node_pair.second != 1) {
       continue;
     }
-    if (IsParallelCareNode(cnode) && cnode->operator_info() != nullptr) {
+    if (IsParallelCareNode(cnode) && cnode->has_user_data<OperatorInfo>()) {
       return node_pair;
     } else if (FindParallelCareNode(node_pair.first).first != nullptr) {
       return FindParallelCareNode(node_pair.first);
@@ -1244,7 +1258,7 @@ void SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNodePtr, i
   MS_LOG(DEBUG) << "SetParallelShape " << parameter->ToString() << " shape " << parameter->Shape()->ToString();
   CNodePtr cnode = res.first->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  OperatorInfoPtr distribute_operator = cnode->operator_info();
+  OperatorInfoPtr distribute_operator = cnode->user_data<OperatorInfo>();
   if (distribute_operator == nullptr) {
     MS_LOG(EXCEPTION) << "Failure:node " << cnode->ToString() << " 's OperatorInfoPtr is nullptr";
   }
@@ -1267,7 +1281,7 @@ void SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNodePtr, i
   TensorLayout tensor_layout = tensorinfo_in.tensor_layout();
   ParameterPtr parameter_ptr = parameter->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(parameter_ptr);
-  parameter_ptr->set_tensor_layout(std::make_shared<TensorLayout>(tensor_layout));
+  parameter_ptr->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(tensor_layout));
 }
 
 void CoverSliceShape(const FuncGraphPtr &root) {
@@ -1291,11 +1305,8 @@ void CoverSliceShape(const FuncGraphPtr &root) {
   g_RefMap.clear();
 }
 
-bool ParameterIsCloned(const FuncGraphPtr &root, const AnfNodePtr &parameter_node) {
-  MS_EXCEPTION_IF_NULL(root);
+bool ParameterIsCloned(const AnfNodePtr &parameter_node) {
   MS_EXCEPTION_IF_NULL(parameter_node);
-  FuncGraphManagerPtr manager = root->manager();
-  MS_EXCEPTION_IF_NULL(manager);
   auto cloned_parameter = parameter_node->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(cloned_parameter);
 
@@ -1303,8 +1314,12 @@ bool ParameterIsCloned(const FuncGraphPtr &root, const AnfNodePtr &parameter_nod
   if (!cloned_parameter->has_default()) {
     return false;
   }
-
-  bool cloned = cloned_parameter->default_param()->cloned();
+  auto obj = py::cast(cloned_parameter->default_param());
+  auto param_value = py::cast<ParamValuePtr>(obj.attr("_value"));
+  if (param_value == nullptr) {
+    return false;
+  }
+  bool cloned = param_value->cloned();
   if (!cloned) {
     return false;
   }
@@ -1320,12 +1335,16 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
     auto cloned_parameter = cloned_parameter_node->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(cloned_parameter);
 
-    if (!ParameterIsCloned(root, cloned_parameter_node)) {
+    if (!ParameterIsCloned(cloned_parameter_node)) {
       continue;
     }
-
+    auto obj = py::cast(cloned_parameter->default_param());
+    auto param_value = py::cast<ParamValuePtr>(obj.attr("_value"));
+    if (param_value == nullptr) {
+      continue;
+    }
     // get the cloned index
-    int32_t cloned_index = cloned_parameter->default_param()->cloned_index();
+    int32_t cloned_index = param_value->cloned_index();
 
     // find the be cloned parameter
     bool found_be_cloned_parameter = false;
@@ -1340,12 +1359,18 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
       }
 
       const auto &param_value_cloned = be_cloned_parameter->default_param();
-      if (!param_value_cloned->be_cloned()) {
+
+      auto obj_in = py::cast(param_value_cloned);
+      auto param_value_in = py::cast<ParamValuePtr>(obj_in.attr("_value"));
+      if (param_value_in == nullptr) {
+        continue;
+      }
+      if (!param_value_in->be_cloned()) {
         continue;
       }
 
       // get the be cloned index
-      auto &be_cloned_index = param_value_cloned->be_cloned_index();
+      auto &be_cloned_index = param_value_in->be_cloned_index();
       if (std::find(be_cloned_index.begin(), be_cloned_index.end(), cloned_index) != be_cloned_index.end()) {
         found_be_cloned_parameter = true;
         cloned_from_parameter = be_cloned_parameter;
@@ -1355,7 +1380,7 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
 
     if (found_be_cloned_parameter) {
       // set the shape and tensor layout for cloned parameter
-      cloned_parameter->set_tensor_layout(cloned_from_parameter->tensor_layout());
+      cloned_parameter->set_user_data<TensorLayout>(cloned_from_parameter->user_data<TensorLayout>());
       MS_EXCEPTION_IF_NULL(cloned_parameter_node->abstract());
       MS_EXCEPTION_IF_NULL(cloned_from_node->abstract());
       auto cloned_abstract = cloned_parameter_node->abstract()->Clone();
@@ -1369,10 +1394,6 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
       MS_LOG(EXCEPTION) << "The parameter: " << cloned_parameter->name() << " is cloned, cloned index is  "
                         << cloned_index << ", but not found the be cloned parameter";
     }
-  }
-  std::string env = common::GetEnv("SLICE_ENV");
-  if (!env.empty()) {
-    MS_LOG(INFO) << "Slice tensors shape will be configured from env:" << env;
   }
 }
 
@@ -1401,7 +1422,7 @@ void SetVirtualDatasetStrategy(const CNodePtr &node) {
       if (shape_list[0][i].empty()) {
         MS_LOG(EXCEPTION) << "shape_list[ " << i << " ].size() is zero";
       }
-      std::vector<int32_t> input_strategy = {dev_num};
+      Dimensions input_strategy = {dev_num};
       for (size_t j = 1; j < shape_list[0][i].size(); j++) {
         input_strategy.push_back(1);
       }
@@ -1454,18 +1475,22 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
       (*operator_).set_outputs_dtype(cnode->Type());
       (*operator_).set_cnode(cnode);
       if (prim->name() == RESHAPE) {
-        (void)cnode->set_operator_info(operator_);
+        cnode->set_user_data<OperatorInfo>(operator_);
         continue;
       }
       // load strategy checkpoint
       // key of strategy map
-      std::string strategy_key_name = NodeParameterName(cnode);
+      std::string strategy_key_name = "";
+      auto param_names = NodeParameterName(cnode);
+      if (!param_names.empty()) {
+        strategy_key_name = param_names[0].first;
+      }
       bool load_strategy_from_ckpt =
         StrategyCheckpoint::GetInstance().LoadCheckPointOn() && stra_map.find(strategy_key_name) != stra_map.end();
       if (!StrategyFound(attrs) && !load_strategy_from_ckpt) {
         MS_LOG(INFO) << "ExtractInformation: the strategy of node " << node->ToString() << " prim " << prim->name()
                      << " is empty, using batch parallel";
-        std::shared_ptr<std::vector<Dimensions>> strategy_v_ptr = operator_->GenerateBatchStrategies();
+        std::shared_ptr<Strategys> strategy_v_ptr = operator_->GenerateBatchStrategies();
         if (strategy_v_ptr == nullptr) {
           MS_LOG(EXCEPTION) << "Failure:Generate batch parallel strategy failed";
         }
@@ -1489,7 +1514,7 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
         if (operator_->Init(strategyPtr) == FAILED) {
           MS_LOG(EXCEPTION) << "Failure:operator " << prim->name() << " init failed";
         }
-        (void)cnode->set_operator_info(operator_);
+        cnode->set_user_data<OperatorInfo>(operator_);
       } else {
         MS_LOG(EXCEPTION) << "ERROR:strategy_ptr is nullptr";
       }
@@ -1532,13 +1557,13 @@ std::shared_ptr<TensorLayout> FindNextLayout(const CNodePtr &cnode) {
     if (node_prim->name() == DEPEND && node_pair.second != 1) {
       continue;
     }
-    if (IsParallelCareNode(use_apply) && (use_apply->operator_info() != nullptr)) {
+    if (IsParallelCareNode(use_apply) && use_apply->has_user_data<OperatorInfo>()) {
       MS_LOG(INFO) << "FindNextLayout success prim " << node_prim->name();
       auto layout = GetInputLayoutFromCNode(node_pair);
       return std::make_shared<TensorLayout>(layout);
     }
     MS_LOG(DEBUG) << "FindNextLayout failed prim " << node_prim->name() << "  " << IsParallelCareNode(use_apply)
-                  << "   " << (use_apply->operator_info() != nullptr);
+                  << "   " << use_apply->has_user_data<OperatorInfo>();
 
     auto layout_ptr = FindNextLayout(use_apply);
     if (layout_ptr) {
@@ -1570,7 +1595,7 @@ std::shared_ptr<TensorLayout> FindPrevParallelCareNodeLayout(const AnfNodePtr &n
   if (!IsValueNode<Primitive>(cnode->input(0))) {
     return nullptr;
   }
-  if (IsParallelCareNode(cnode) && (cnode->operator_info() != nullptr)) {
+  if (IsParallelCareNode(cnode) && cnode->has_user_data<OperatorInfo>()) {
     auto layout_ptr = GetOutputLayoutFromCNode(cnode, output_index);
     if (!layout_ptr) {
       MS_LOG(EXCEPTION) << "Failure:GetLayoutFromCNode failed";
@@ -1614,7 +1639,7 @@ std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node) {
   if (!IsValueNode<Primitive>(cnode->input(0))) {
     return nullptr;
   }
-  if (IsParallelCareNode(cnode) && (cnode->operator_info() != nullptr)) {
+  if (IsParallelCareNode(cnode) && cnode->has_user_data<OperatorInfo>()) {
     auto layout_ptr = GetOutputLayoutFromCNode(cnode, 0);
     if (!layout_ptr) {
       MS_LOG(EXCEPTION) << "Failure:GetLayoutFromCNode failed";
@@ -1654,12 +1679,12 @@ void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes) {
       continue;
     }
     ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
-    if (!IsParallelCareNode(cnode) || (cnode->operator_info() == nullptr)) {
+    if (!IsParallelCareNode(cnode) || !cnode->has_user_data<OperatorInfo>()) {
       continue;
     }
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
     MS_EXCEPTION_IF_NULL(prim);
-    OperatorInfoPtr operator_info = cnode->operator_info();
+    OperatorInfoPtr operator_info = cnode->user_data<OperatorInfo>();
     if (operator_info == nullptr) {
       MS_LOG(EXCEPTION) << "Failure:Primitive " << prim->ToString() << " OperatorInstance is nullptr";
     }
@@ -1704,7 +1729,7 @@ CNodePtr FindLossCNode(const FuncGraphPtr &func_graph) {
 
   auto current_prim = GetValueNode<PrimitivePtr>(pre_cnode->input(0));
   // return -> cast
-  if (current_prim->name() == CAST && pre_cnode->operator_info() == nullptr) {
+  if (current_prim->name() == CAST && !pre_cnode->has_user_data<OperatorInfo>()) {
     pre_cnode = pre_cnode->input(1)->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(pre_cnode);
     current_prim = GetValueNode<PrimitivePtr>(pre_cnode->input(0));
@@ -1761,7 +1786,7 @@ TensorLayouts GetLossNodeGradOutputLayout(const CNodePtr &loss_cnode) {
     return ret;
   }
 
-  OperatorInfoPtr operator_info = loss_cnode->operator_info();
+  OperatorInfoPtr operator_info = loss_cnode->user_data<OperatorInfo>();
   MS_EXCEPTION_IF_NULL(operator_info);
   TensorInfo loss_grad_tensor_info;
   size_t op_output_size = operator_info->outputs_tensor_info().size();
@@ -1799,7 +1824,7 @@ void SplitSens(const CNodePtr &grad_sens_node, const TensorLayout &loss_grad_lay
     if (sens_tensor_node->isa<Parameter>()) {
       auto sens_tensor_param = sens_tensor_node->cast<ParameterPtr>();
       MS_LOG(DEBUG) << "loss layout " << loss_grad_layout.ToString();
-      sens_tensor_param->set_tensor_layout(std::make_shared<TensorLayout>(loss_grad_layout));
+      sens_tensor_param->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(loss_grad_layout));
     }
     MS_LOG(INFO) << "The shape of sens is " << ShapeToString(sens_shape) << ", no need to split sens";
     return;
@@ -1824,7 +1849,7 @@ void SplitSens(const CNodePtr &grad_sens_node, const TensorLayout &loss_grad_lay
       cloned_abstract->set_shape(parallel_shape);
       sens_tensor_node->set_abstract(cloned_abstract);
       auto sens_tensor_param = sens_tensor_node->cast<ParameterPtr>();
-      sens_tensor_param->set_tensor_layout(std::make_shared<TensorLayout>(loss_grad_layout));
+      sens_tensor_param->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(loss_grad_layout));
       return;
     }
     MS_LOG(EXCEPTION) << "The type of sens node is not Tensor or Parameter, it is unsupported now.";
@@ -1890,8 +1915,24 @@ void HandleDropoutNode(const OperatorInfoPtr &distribute_operator, const CNodePt
   ReplaceOneOp(replace_op[0], cnode->input(DROPOUT_GEN_MASK_INDEX)->cast<CNodePtr>());
 }
 
+void HandleTileNode(const OperatorInfoPtr &distribute_operator, const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (cnode->size() < 3 || !IsValueNode<Primitive>(cnode->input(0))) {
+    return;
+  }
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  if (prim->name() != TILE) {
+    return;
+  }
+
+  TileInfoPtr tile = std::dynamic_pointer_cast<TileInfo>(distribute_operator);
+  MS_EXCEPTION_IF_NULL(tile);
+  tile->UpdateMultiples(cnode);
+}
+
 void HandleSpecialNode(const OperatorInfoPtr &distribute_operator, const CNodePtr &cnode) {
   HandleDropoutNode(distribute_operator, cnode);
+  HandleTileNode(distribute_operator, cnode);
 }
 
 std::set<FuncGraphPtr> FindForwardGraphByRootNodes(const AnfNodeSet &root_all_nodes) {
@@ -2081,26 +2122,29 @@ void HandleSymbolicKeyInstance(const FuncGraphPtr &root, const std::vector<AnfNo
   }
 }
 
-std::string NodeParameterName(const CNodePtr &node) {
+std::vector<std::pair<std::string, int>> NodeParameterName(const CNodePtr &node) {
   std::vector<AnfNodePtr> node_inputs{node->inputs()};
-  for (auto input : node_inputs) {
+  std::vector<std::pair<std::string, int>> param_names;
+  for (int i = 0; i < UintToInt(node_inputs.size()); ++i) {
+    auto input = node_inputs[i];
     if (input->isa<Parameter>()) {
       auto input_parameter = input->cast<ParameterPtr>();
       if (input_parameter->has_default()) {
-        const auto &param_value = input_parameter->default_param();
-        if (param_value->requires_grad()) {
-          return param_value->name();
+        if (ParameterRequireGrad(input_parameter)) {
+          param_names.push_back({input_parameter->name(), i});
         }
       }
     }
   }
-  return "";
+  return param_names;
 }
 
 void CheckpointStrategy(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(DEBUG) << "Save strategy to checkpoint begin";
   StrategyMap stra_map;
+  TensorInfoMap tensor_info_map;
+  ManualShapeMap manual_shape_map;
   auto ret = func_graph->get_return();
   auto all_nodes = DeepScopedGraphSearch(ret);
   for (auto &node : all_nodes) {
@@ -2109,23 +2153,45 @@ void CheckpointStrategy(const FuncGraphPtr &func_graph) {
     if ((cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0))) {
       continue;
     }
-    std::string param_name = NodeParameterName(cnode);
-    if (param_name.empty()) {
+    auto param_names = NodeParameterName(cnode);
+    if (param_names.empty()) {
       continue;
     }
+    string param_name = param_names[0].first;
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(cnode->input(0));
     MS_EXCEPTION_IF_NULL(prim);
-    OperatorInfoPtr operator_info = cnode->operator_info();
+    OperatorInfoPtr operator_info = cnode->user_data<OperatorInfo>();
     if (operator_info) {
       if (operator_info->name().find(RESHAPEINFO) != std::string::npos) {
         continue;
       }
+      std::vector<TensorInfo> input_tensor_info = operator_info->inputs_tensor_info();
       StrategyPtr strategyPtr = operator_info->strategy();
       MS_EXCEPTION_IF_NULL(node->scope());
       stra_map[param_name] = strategyPtr;
+      for (auto param_name_pair : param_names) {
+        if (param_name_pair.second - 1 >= UintToInt(input_tensor_info.size())) {
+          continue;
+        }
+        tensor_info_map[param_name_pair.first] = input_tensor_info[param_name_pair.second - 1];
+      }
+      if (operator_info->name().find(EMBEDDING_LOOKUP) != std::string::npos ||
+          operator_info->name().find(GATHERV2) != std::string::npos) {
+        auto gatherv2_info = std::dynamic_pointer_cast<GatherV2PInfo>(operator_info);
+        auto param_split_shapes = gatherv2_info->param_split_shapes();
+        auto index_offsets = gatherv2_info->index_offsets();
+        if (param_split_shapes.size() != index_offsets.size()) {
+          MS_LOG(EXCEPTION) << "In manual split, the param_split_shapes and index_offsets lenght should be same.";
+        }
+        std::vector<std::pair<int32_t, int32_t>> manual_shape;
+        for (int i = 0; i < UintToInt(param_split_shapes.size()); ++i) {
+          manual_shape.push_back({param_split_shapes[i], index_offsets[i]});
+        }
+        manual_shape_map[param_name] = manual_shape;
+      }
     }
   }
-  if (StrategyCheckpoint::GetInstance().Save(stra_map) != SUCCESS) {
+  if (StrategyCheckpoint::GetInstance().Save(stra_map, tensor_info_map, &manual_shape_map) != SUCCESS) {
     MS_LOG(EXCEPTION) << "Save strategy checkpoint failed";
   }
 }

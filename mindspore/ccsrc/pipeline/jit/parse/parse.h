@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef PIPELINE_PARSE_PARSE_H_
-#define PIPELINE_PARSE_PARSE_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_PARSE_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_PARSE_H_
 
 #include <vector>
 #include <string>
@@ -47,6 +47,10 @@ enum ParseStatusCode : int {
   PARSE_NOT_SUPPORTED_COMPARE_EXPR,  // the comparison is not supported
   PARSE_FAILURE = 0xFF
 };
+
+// max loop count of for statement, when loop count is less then this value, the for loop will be unrolled, otherwise it
+//  will be sunk(i.e. not unrolled)
+const int MAX_FOR_LOOP_COUNT = 600;
 
 class AstNodeType;
 class ParseAst;
@@ -138,6 +142,8 @@ class Parser {
   AnfNodePtr ParseNameConstant(const FunctionBlockPtr &block, const py::object &node);
   // process a function call
   AnfNodePtr ParseCall(const FunctionBlockPtr &block, const py::object &node);
+  // process function 'super'
+  AnfNodePtr ParseSuper(const FunctionBlockPtr &block, const py::list &args);
   // process the if expression
   AnfNodePtr ParseIfExp(const FunctionBlockPtr &block, const py::object &node);
   // process class type define
@@ -357,4 +363,4 @@ AnfNodePtr GetMixedPrecisionCastHelp(const FuncGraphPtr &func_graph, const AnfNo
 }  // namespace parse
 }  // namespace mindspore
 
-#endif  // PIPELINE_PARSE_PARSE_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_PARSE_H_

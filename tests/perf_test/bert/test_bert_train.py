@@ -22,11 +22,14 @@ import os
 import mindspore.common.dtype as mstype
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore.nn.optim import AdamWeightDecayDynamicLR
+from mindspore.ops import operations as P
+from mindspore.nn.optim import AdamWeightDecay
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
-from model_zoo.bert.src import BertConfig, BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell
+from mindspore.nn import learning_rate_schedule as lr_schedules
+from model_zoo.official.nlp.bert.src import BertConfig, BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell
 from ...dataset_mock import MindData
 from ...ops_common import nn, np, batch_tuple_tensor, build_construct_graph
+
 
 _current_dir = os.path.dirname(os.path.realpath(__file__)) + "/../python/test_data"
 context.set_context(mode=context.GRAPH_MODE)
@@ -98,6 +101,25 @@ def get_config(version='base', batch_size=1):
     return BertConfig(batch_size=batch_size)
 
 
+class BertLearningRate(lr_schedules.LearningRateSchedule):
+    def __init__(self, decay_steps, warmup_steps=100, learning_rate=0.1, end_learning_rate=0.0001, power=1.0):
+        super(BertLearningRate, self).__init__()
+        self.warmup_lr = lr_schedules.WarmUpLR(learning_rate, warmup_steps)
+        self.decay_lr = lr_schedules.PolynomialDecayLR(learning_rate, end_learning_rate, decay_steps, power)
+        self.warmup_steps = Tensor(np.array([warmup_steps]).astype(np.float32))
+
+        self.greater = P.Greater()
+        self.one = Tensor(np.array([1.0]).astype(np.float32))
+        self.cast = P.Cast()
+
+    def construct(self, global_step):
+        is_warmup = self.cast(self.greater(self.warmup_steps, global_step), mstype.float32)
+        warmup_lr = self.warmup_lr(global_step)
+        decay_lr = self.decay_lr(global_step)
+        lr = (self.one - is_warmup) * decay_lr + is_warmup * warmup_lr
+        return lr
+
+
 def test_bert_train():
     """
     the main function
@@ -123,7 +145,8 @@ def test_bert_train():
 
     config = get_config(version=version, batch_size=batch_size)
     netwithloss = BertNetworkWithLoss(config, True)
-    optimizer = AdamWeightDecayDynamicLR(netwithloss.trainable_params(), 10)
+    lr = BertLearningRate(10)
+    optimizer = AdamWeightDecay(netwithloss.trainable_params(), lr)
     net = ModelBert(netwithloss, optimizer=optimizer)
     net.set_train()
     build_construct_graph(net, *inputs, execute=False)
@@ -147,7 +170,8 @@ def test_bert_withlossscale_train():
 
     config = get_config(version=version, batch_size=batch_size)
     netwithloss = BertNetworkWithLoss(config, True)
-    optimizer = AdamWeightDecayDynamicLR(netwithloss.trainable_params(), 10)
+    lr = BertLearningRate(10)
+    optimizer = AdamWeightDecay(netwithloss.trainable_params(), lr)
     net = ModelBert(netwithloss, optimizer=optimizer)
     net.set_train()
     build_construct_graph(net, *inputs, execute=True)
@@ -173,7 +197,8 @@ def bert_withlossscale_manager_train():
 
     config = get_config(version=version, batch_size=batch_size)
     netwithloss = BertNetworkWithLoss(config, True)
-    optimizer = AdamWeightDecayDynamicLR(netwithloss.trainable_params(), 10)
+    lr = BertLearningRate(10)
+    optimizer = AdamWeightDecay(netwithloss.trainable_params(), lr)
     net = ModelBert(netwithloss, optimizer=optimizer)
     net.set_train()
     build_construct_graph(net, *inputs, execute=True)
@@ -200,7 +225,8 @@ def bert_withlossscale_manager_train_feed():
 
     config = get_config(version=version, batch_size=batch_size)
     netwithloss = BertNetworkWithLoss(config, True)
-    optimizer = AdamWeightDecayDynamicLR(netwithloss.trainable_params(), 10)
+    lr = BertLearningRate(10)
+    optimizer = AdamWeightDecay(netwithloss.trainable_params(), lr)
     net = ModelBert(netwithloss, optimizer=optimizer)
     net.set_train()
     build_construct_graph(net, *inputs, execute=True)

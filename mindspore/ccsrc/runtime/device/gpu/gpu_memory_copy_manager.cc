@@ -47,11 +47,20 @@ void GPUMemCopyManager::AddMemSwapOutTask(const DeviceAddressPtr &device_address
   swap_out_queue_.emplace(device_address, event);
 }
 
-void GPUMemCopyManager::AddMemSwapInTask(const DeviceAddressPtr &device_address, const HostAddress &host_addr) {
+void GPUMemCopyManager::AddMemSwapInTask(const DeviceAddressPtr &device_address, const HostAddress &host_addr,
+                                         bool profiling, float *cost_time) {
   MS_EXCEPTION_IF_NULL(device_address);
   MS_EXCEPTION_IF_NULL(host_addr.addr);
-  DeviceEvent event = nullptr;
-  CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateEvent(&event, cudaEventDisableTiming), "Failed to create CUDA event.");
+  DeviceEvent start = nullptr;
+  DeviceEvent end = nullptr;
+  if (profiling) {
+    CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateEvent(&start), "Failed to create CUDA event.");
+    CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateEvent(&end), "Failed to create CUDA event.");
+    CHECK_OP_RET_WITH_EXCEPT(CudaDriver::RecordEvent(start, swap_in_stream_),
+                             "Failed to record CUDA event to swap in stream.");
+  } else {
+    CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateEvent(&end, cudaEventDisableTiming), "Failed to create CUDA event.");
+  }
   DeviceMemPtr device_ptr = const_cast<DeviceMemPtr>(device_address->GetPtr());
   MS_EXCEPTION_IF_NULL(device_ptr);
   device_address->set_status(DeviceAddressStatus::kInHostToDevice);
@@ -59,9 +68,27 @@ void GPUMemCopyManager::AddMemSwapInTask(const DeviceAddressPtr &device_address,
   CHECK_OP_RET_WITH_EXCEPT(
     CudaDriver::CopyHostMemToDeviceAsync(device_ptr, host_addr.addr, host_addr.size, swap_in_stream_),
     "Failed to copy host memory to device.");
-  CHECK_OP_RET_WITH_EXCEPT(CudaDriver::RecordEvent(event, swap_in_stream_),
+  CHECK_OP_RET_WITH_EXCEPT(CudaDriver::RecordEvent(end, swap_in_stream_),
                            "Failed to record CUDA event to swap in stream.");
-  swap_in_queue_.emplace(device_address, event);
+  if (profiling) {
+    CHECK_OP_RET_WITH_EXCEPT(CudaDriver::SyncEvent(start), "Failed to sync event.");
+    CHECK_OP_RET_WITH_EXCEPT(CudaDriver::SyncEvent(end), "Failed to sync event.");
+    CHECK_OP_RET_WITH_EXCEPT(CudaDriver::ElapsedTime(cost_time, start, end), "Failed to record elapsed time.");
+    CHECK_OP_RET_WITH_EXCEPT(CudaDriver::DestroyEvent(start), "Failed to destroy event.");
+  }
+  swap_in_queue_.emplace(device_address, end);
+}
+
+void GPUMemCopyManager::AddMemSwapOutTaskMock(const DeviceAddressPtr &device_address) {
+  MS_EXCEPTION_IF_NULL(device_address);
+  device_address->set_status(DeviceAddressStatus::kInDeviceToHost);
+  swap_out_queue_mock_.emplace(device_address);
+}
+
+void GPUMemCopyManager::AddMemSwapInTaskMock(const DeviceAddressPtr &device_address) {
+  MS_EXCEPTION_IF_NULL(device_address);
+  device_address->set_status(DeviceAddressStatus::kInHostToDevice);
+  swap_in_queue_mock_.emplace(device_address);
 }
 
 bool GPUMemCopyManager::SyncMemCopyStream(SwapKind swap_kind) {
@@ -104,6 +131,24 @@ DeviceAddressPtr GPUMemCopyManager::UpdateSwapInQueue() {
   return device_address;
 }
 
+DeviceAddressPtr GPUMemCopyManager::UpdateSwapOutQueueMock() {
+  if (swap_out_queue_mock_.empty()) {
+    return nullptr;
+  }
+  auto device_address = swap_out_queue_mock_.front();
+  swap_out_queue_mock_.pop();
+  return device_address;
+}
+
+DeviceAddressPtr GPUMemCopyManager::UpdateSwapInQueueMock() {
+  if (swap_in_queue_mock_.empty()) {
+    return nullptr;
+  }
+  auto device_address = swap_in_queue_mock_.front();
+  swap_in_queue_mock_.pop();
+  return device_address;
+}
+
 bool GPUMemCopyManager::AllocHostPinnedMem(size_t size, void **addr) const {
   auto alloc_size = CudaDriver::AllocHostPinnedMem(size, addr);
   return alloc_size == size;
@@ -124,6 +169,15 @@ void GPUMemCopyManager::ClearSwapQueue() {
     auto &event = swap_in_queue_.front().second;
     CHECK_OP_RET_WITH_EXCEPT(CudaDriver::DestroyEvent(event), "Failed to destroy CUDA event of swap in.");
     swap_in_queue_.pop();
+  }
+}
+
+void GPUMemCopyManager::ClearSwapQueueMock() {
+  while (!swap_out_queue_mock_.empty()) {
+    swap_out_queue_mock_.pop();
+  }
+  while (!swap_in_queue_mock_.empty()) {
+    swap_in_queue_mock_.pop();
   }
 }
 }  // namespace gpu

@@ -155,7 +155,7 @@ def train_process(q, device_id, epoch_size, device_num, enable_hccl):
 
     # train dataset
     dataset = create_dataset(dataset_path=dataset_path, do_train=True,
-                             repeat_num=epoch_size, batch_size=config.batch_size)
+                             repeat_num=1, batch_size=config.batch_size)
 
     step_size = dataset.get_dataset_size()
     eval_interval = config.eval_interval
@@ -163,7 +163,7 @@ def train_process(q, device_id, epoch_size, device_num, enable_hccl):
 
     # evalutation dataset
     eval_dataset = create_dataset(dataset_path=eval_path, do_train=False,
-                                  repeat_num=epoch_size, batch_size=config.eval_batch_size)
+                                  repeat_num=1, batch_size=config.eval_batch_size)
 
     # loss scale
     loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
@@ -174,9 +174,14 @@ def train_process(q, device_id, epoch_size, device_num, enable_hccl):
                                   steps_per_epoch=step_size, lr_decay_mode=config.lr_decay_mode))
 
     # optimizer
-    decayed_params = list(filter(lambda x: 'beta' not in x.name and 'gamma' not in x.name and 'bias' not in x.name,
-                                 net.trainable_params()))
-    no_decayed_params = [param for param in net.trainable_params() if param not in decayed_params]
+    decayed_params = []
+    no_decayed_params = []
+    for param in net.trainable_params():
+        if 'beta' not in param.name and 'gamma' not in param.name and 'bias' not in param.name:
+            decayed_params.append(param)
+        else:
+            no_decayed_params.append(param)
+
     group_params = [{'params': decayed_params, 'weight_decay': config.weight_decay},
                     {'params': no_decayed_params, 'weight_decay': 0.0},
                     {'order_params': net.trainable_params()}]
@@ -260,14 +265,14 @@ def train_process_thor(q, device_id, epoch_size, device_num, enable_hccl):
 
     # train dataset
     dataset = create_dataset(dataset_path=dataset_path, do_train=True,
-                             repeat_num=epoch_size, batch_size=thor_config.batch_size)
+                             repeat_num=1, batch_size=thor_config.batch_size)
 
     step_size = dataset.get_dataset_size()
     eval_interval = thor_config.eval_interval
 
     # evalutation dataset
     eval_dataset = create_dataset(dataset_path=eval_path, do_train=False,
-                                  repeat_num=epoch_size, batch_size=thor_config.eval_batch_size)
+                                  repeat_num=1, batch_size=thor_config.eval_batch_size)
 
     # loss scale
     loss_scale = FixedLossScaleManager(thor_config.loss_scale, drop_overflow_update=False)

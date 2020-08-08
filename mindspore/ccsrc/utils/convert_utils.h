@@ -21,13 +21,14 @@
 #include <memory>
 #include <utility>
 #include <stack>
+#include <vector>
 #include <unordered_map>
 #include <unordered_set>
 
 #include "pybind11/pybind11.h"
 #include "utils/convert_utils_base.h"
 #include "utils/any.h"
-#include "utils/base_ref.h"
+#include "base/base_ref.h"
 #include "base/base.h"
 #include "ir/anf.h"
 
@@ -46,7 +47,9 @@ bool BaseRefToInt(const ValuePtr &v, int *value);
 bool ValueToBool(const ValuePtr &in, bool *out);
 py::object ValuePtrToPyData(const ValuePtr &value);
 
-AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py::object &type_obj);
+AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py::object &type_obj,
+                                           const py::object &min_shape = py::none(),
+                                           const py::object &max_shape = py::none());
 
 bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple &args,
                                        const std::shared_ptr<py::object> &ret_val);
@@ -69,6 +72,8 @@ using NodeMapEquiv = std::unordered_map<AnfNodePtr, AnfNodePtr>;
 bool Isomorphic(FuncGraphPtr g1, FuncGraphPtr g2, FuncGraphPairMapEquiv *equiv_func_graph, NodeMapEquiv *equiv_node);
 
 tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar);
+
+void TensorValueToTensor(const ValuePtr &value, std::vector<tensor::TensorPtr> *tensors);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_UTILS_CONVERT_UTILS_H_

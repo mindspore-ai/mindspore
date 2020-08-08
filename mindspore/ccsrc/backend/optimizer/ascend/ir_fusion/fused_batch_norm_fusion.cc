@@ -44,7 +44,7 @@ void GetBNOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &bn, std::vect
     MS_LOG(EXCEPTION) << "The bn node " << bn->DebugString() << " should has some outputs";
   }
   for (const auto &node_index : manager->node_users()[bn]) {
-    AnfNodePtr output = node_index.first;
+    const AnfNodePtr &output = node_index.first;
     MS_EXCEPTION_IF_NULL(output);
     bn_outputs->push_back(output);
   }

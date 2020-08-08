@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_DEVICE_CPU_CPU_KERNEL_RUNTIME_H_
-#define MINDSPORE_CCSRC_DEVICE_CPU_CPU_KERNEL_RUNTIME_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_CPU_KERNEL_RUNTIME_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_CPU_KERNEL_RUNTIME_H_
 
 #include <memory>
 #include <vector>
 #include <string>
-#include <unordered_map>
+#include <map>
 #include <set>
 #include "runtime/device/kernel_runtime.h"
 #include "backend/session/kernel_graph.h"
@@ -36,9 +36,9 @@ class CPUKernelRuntime : public KernelRuntime {
   ~CPUKernelRuntime() override = default;
 
   bool Init() override { return true; }
-  bool Run(session::KernelGraph *graph) override;
+  bool Run(session::KernelGraph *graph, Debugger *debugger = nullptr) override;
   void AssignKernelAddress(session::KernelGraph *kernel_graph);
-  void BindInputOutput(const session::KernelGraph *kernel_graph, const std::vector<tensor::TensorPtr> &inputs,
+  void BindInputOutput(session::KernelGraph *kernel_graph, const std::vector<tensor::TensorPtr> &inputs,
                        VectorRef *outputs, std::vector<tensor::TensorPtr> *need_sync_outputs);
   void IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
   void DecreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
@@ -49,22 +49,21 @@ class CPUKernelRuntime : public KernelRuntime {
                                        TypeId type_id) override;
 
  private:
-  tensor::TensorPtr CreatTensorForOutput(const CNodePtr &node, size_t index,
-                                         std::set<DeviceAddressPtr> *bound_addresses,
+  tensor::TensorPtr CreatTensorForOutput(session::KernelGraph *kernel_graph, const CNodePtr &node, size_t index,
                                          std::vector<tensor::TensorPtr> *need_sync_outputs);
 
-  BaseRef CreatTensorForOutput(const session::KernelWithIndex &kernel_with_index,
-                               const std::unordered_map<AnfNode *, tensor::TensorPtr> &input_map,
-                               std::set<DeviceAddressPtr> *bound_addresses,
+  BaseRef CreatTensorForOutput(session::KernelGraph *kernel_graph, const session::KernelWithIndex &kernel_with_index,
                                std::vector<tensor::TensorPtr> *need_sync_outputs);
   void AssignValueNodeAddress(session::KernelGraph *kernel_graph);
   void AssignInputNodeAddress(const session::KernelGraph *kernel_graph);
   void AssignKernelOutputAddress(const session::KernelGraph *kernel_graph);
   void AddRuntimeAddress(DeviceAddress *address, std::vector<kernel::AddressPtr> *input_list);
   CPUResourceManager resource_manager_;
+  std::set<DeviceAddressPtr> bound_addresses_;
+  std::map<AnfNodePtr, tensor::TensorPtr> input_param_tensor_map_;
 };
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_CPU_CPU_KERNEL_RUNTIME_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_CPU_KERNEL_RUNTIME_H_

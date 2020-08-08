@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_KERNEL_AICPU_AICPU_KERNEL_META_DATA_H_
-#define MINDSPORE_MINDSPORE_CCSRC_KERNEL_AICPU_AICPU_KERNEL_META_DATA_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AICPU_AICPU_KERNEL_META_DATA_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AICPU_AICPU_KERNEL_META_DATA_H_
 
 #include <string>
 #include <vector>
@@ -27,4 +27,4 @@ namespace kernel {
 void AicpuMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list);
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_KERNEL_AICPU_AICPU_KERNEL_META_DATA_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AICPU_AICPU_KERNEL_META_DATA_H_

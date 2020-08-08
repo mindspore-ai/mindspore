@@ -715,6 +715,21 @@ ATTR_MAP(MaxPoolGrad) = {{"ksize", ATTR_DESC(ksize, AnyTraits<int>(), AnyTraits<
                          {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
 OUTPUT_MAP(MaxPoolGrad) = {{0, OUTPUT_DESC(y)}};
 
+// RsqrtGrad
+INPUT_MAP(RsqrtGrad) = {{1, INPUT_DESC(y)}, {2, INPUT_DESC(dy)}};
+ATTR_MAP(RsqrtGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(RsqrtGrad) = {{0, OUTPUT_DESC(z)}};
+
+// SqrtGrad
+INPUT_MAP(SqrtGrad) = {{1, INPUT_DESC(y)}, {2, INPUT_DESC(dy)}};
+ATTR_MAP(SqrtGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(SqrtGrad) = {{0, OUTPUT_DESC(z)}};
+
+// ReciprocalGrad
+INPUT_MAP(ReciprocalGrad) = {{1, INPUT_DESC(y)}, {2, INPUT_DESC(dy)}};
+ATTR_MAP(ReciprocalGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(ReciprocalGrad) = {{0, OUTPUT_DESC(z)}};
+
 // avgpoolgrad
 INPUT_MAP(AvgPoolGrad) = {{1, INPUT_DESC(orig_input_shape)}, {2, INPUT_DESC(input_grad)}};
 ATTR_MAP(AvgPoolGrad) = {{"ksize", ATTR_DESC(ksize, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
@@ -746,7 +761,7 @@ ATTR_MAP(ExtractImagePatches) = {{"ksizes", ATTR_DESC(ksizes, AnyTraits<int>(), 
 OUTPUT_MAP(ExtractImagePatches) = {{0, OUTPUT_DESC(y)}};
 
 // Conv2D
-INPUT_MAP(Conv2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}};
+INPUT_MAP(Conv2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}, {3, INPUT_DESC(bias)}};
 ATTR_MAP(Conv2D) = {
   {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
@@ -783,7 +798,7 @@ ATTR_MAP(Conv2DBackpropFilterD) = {
 OUTPUT_MAP(Conv2DBackpropFilterD) = {{0, OUTPUT_DESC(y)}};
 
 // DepthwiseConv2D
-INPUT_MAP(DepthwiseConv2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}};
+INPUT_MAP(DepthwiseConv2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}, {3, INPUT_DESC(bias)}};
 ATTR_MAP(DepthwiseConv2D) = {
   {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
@@ -815,7 +830,7 @@ ATTR_MAP(DepthwiseConv2DBackpropFilterD) = {
 OUTPUT_MAP(DepthwiseConv2DBackpropFilterD) = {{0, OUTPUT_DESC(filter_grad)}};
 
 // MatMulV2
-INPUT_MAP(MatMulV2) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+INPUT_MAP(MatMulV2) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(bias)}};
 ATTR_MAP(MatMulV2) = {{"transpose_a", ATTR_DESC(transpose_x1, AnyTraits<bool>())},
                       {"transpose_b", ATTR_DESC(transpose_x2, AnyTraits<bool>())}};
 OUTPUT_MAP(MatMulV2) = {{0, OUTPUT_DESC(y)}};
@@ -1273,12 +1288,41 @@ INPUT_ATTR_MAP(ApplyRMSPropD) = {{6, ATTR_DESC(rho, AnyTraits<float>())},
 ATTR_MAP(ApplyRMSPropD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyRMSPropD) = {{0, OUTPUT_DESC(var)}};
 
-// ApplyCenteredRMSProp
-INPUT_MAP(ApplyCenteredRMSProp) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(mg)},       {3, INPUT_DESC(ms)},
-                                   {4, INPUT_DESC(mom)}, {5, INPUT_DESC(grad)},     {6, INPUT_DESC(lr)},
-                                   {7, INPUT_DESC(rho)}, {8, INPUT_DESC(momentum)}, {9, INPUT_DESC(epsilon)}};
-ATTR_MAP(ApplyCenteredRMSProp) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
-OUTPUT_MAP(ApplyCenteredRMSProp) = {{0, OUTPUT_DESC(var)}};
+// ApplyCenteredRMSPropD
+INPUT_MAP(ApplyCenteredRMSPropD) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(mg)},       {3, INPUT_DESC(ms)},
+                                    {4, INPUT_DESC(mom)}, {5, INPUT_DESC(grad)},     {6, INPUT_DESC(lr)},
+                                    {7, INPUT_DESC(rho)}, {8, INPUT_DESC(momentum)}, {9, INPUT_DESC(epsilon)}};
+ATTR_MAP(ApplyCenteredRMSPropD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyCenteredRMSPropD) = {
+  {0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(mg)}, {2, OUTPUT_DESC(ms)}, {3, OUTPUT_DESC(mom)}};
+
+// BasicLSTMCell
+INPUT_MAP(BasicLSTMCell) = {
+  {1, INPUT_DESC(x)}, {2, INPUT_DESC(h)}, {3, INPUT_DESC(c)}, {4, INPUT_DESC(w)}, {5, INPUT_DESC(b)}};
+ATTR_MAP(BasicLSTMCell) = {{"keep_prob", ATTR_DESC(keep_prob, AnyTraits<float>())},
+                           {"forget_bias", ATTR_DESC(forget_bias, AnyTraits<float>())},
+                           {"state_is_tuple", ATTR_DESC(state_is_tuple, AnyTraits<bool>())},
+                           {"activation", ATTR_DESC(activation, AnyTraits<std::string>())}};
+OUTPUT_MAP(BasicLSTMCell) = {{0, OUTPUT_DESC(ct)}, {1, OUTPUT_DESC(ht)}, {2, OUTPUT_DESC(it)},    {3, OUTPUT_DESC(jt)},
+                             {4, OUTPUT_DESC(ft)}, {5, OUTPUT_DESC(ot)}, {7, OUTPUT_DESC(tanhct)}};
+
+// BasicLSTMCellInputGrad
+INPUT_MAP(BasicLSTMCellInputGrad) = {{1, INPUT_DESC(dgate)}, {2, INPUT_DESC(w)}};
+ATTR_MAP(BasicLSTMCellInputGrad) = {{"keep_prob", ATTR_DESC(keep_prob, AnyTraits<float>())}};
+OUTPUT_MAP(BasicLSTMCellInputGrad) = {{0, OUTPUT_DESC(dxt)}, {1, OUTPUT_DESC(dht)}};
+
+// BasicLSTMCellWeightGrad
+INPUT_MAP(BasicLSTMCellWeightGrad) = {{1, INPUT_DESC(h)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(dgate)}};
+ATTR_MAP(BasicLSTMCellWeightGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(BasicLSTMCellWeightGrad) = {{0, OUTPUT_DESC(dw)}, {1, OUTPUT_DESC(db)}};
+
+// BasicLSTMCellCStateGrad
+INPUT_MAP(BasicLSTMCellCStateGrad) = {{1, INPUT_DESC(c)},  {2, INPUT_DESC(dht)},   {3, INPUT_DESC(dct)},
+                                      {4, INPUT_DESC(it)}, {5, INPUT_DESC(jt)},    {6, INPUT_DESC(ft)},
+                                      {7, INPUT_DESC(ot)}, {8, INPUT_DESC(tanhct)}};
+ATTR_MAP(BasicLSTMCellCStateGrad) = {{"forget_bias", ATTR_DESC(forget_bias, AnyTraits<float>())},
+                                     {"activation", ATTR_DESC(activation, AnyTraits<std::string>())}};
+OUTPUT_MAP(BasicLSTMCellCStateGrad) = {{0, OUTPUT_DESC(dgate)}, {1, OUTPUT_DESC(dct_1)}};
 
 // L2Loss
 INPUT_MAP(L2Loss) = {{1, INPUT_DESC(x)}};
@@ -1307,7 +1351,8 @@ OUTPUT_MAP(AscendQuant) = {{0, OUTPUT_DESC(y)}};
 // AscendDequant
 INPUT_MAP(AscendDequant) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(deq_scale)}};
 ATTR_MAP(AscendDequant) = {{"sqrt_mode", ATTR_DESC(sqrt_mode, AnyTraits<bool>())},
-                           {"relu_flag", ATTR_DESC(relu_flag, AnyTraits<bool>())}};
+                           {"relu_flag", ATTR_DESC(relu_flag, AnyTraits<bool>())},
+                           {"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(AscendDequant) = {{0, OUTPUT_DESC(y)}};
 #ifdef ENABLE_GE
 // Print

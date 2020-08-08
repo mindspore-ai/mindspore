@@ -16,7 +16,7 @@
 #include <iomanip>
 #include <utility>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/datasetops/concat_op.h"
@@ -42,8 +42,6 @@ ConcatOp::ConcatOp(int32_t op_connector_size) : PipelineOp(op_connector_size), c
 
 // A function that prints info about the Operator
 void ConcatOp::Print(std::ostream &out, bool show_all) const {
-  // Always show the id and name as first line regardless if this is summary or detailed print
-  out << "(" << std::setw(2) << operator_id_ << ") <ConcatOp>:";
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
     PipelineOp::Print(out, show_all);
@@ -87,6 +85,7 @@ Status ConcatOp::operator()() {
       auto eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
       RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
     }
+    UpdateRepeatAndEpochCounter();
   }
   CHECK_FAIL_RETURN_UNEXPECTED(eof_count == children_num_,
                                "Something went wrong, eof count does not match the number of children.");

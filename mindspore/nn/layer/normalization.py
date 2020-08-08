@@ -44,7 +44,8 @@ class _BatchNorm(Cell):
                  moving_mean_init='zeros',
                  moving_var_init='ones',
                  use_batch_statistics=None,
-                 device_num_each_group=1):
+                 device_num_each_group=1,
+                 input_dims='2d'):
         super(_BatchNorm, self).__init__()
         if num_features < 1:
             raise ValueError("num_features must be at least 1")
@@ -55,6 +56,7 @@ class _BatchNorm(Cell):
         self.use_batch_statistics = use_batch_statistics
         self.num_features = num_features
         self.eps = eps
+        self.input_dims = input_dims
         self.moving_mean = Parameter(initializer(
             moving_mean_init, num_features), name="mean", requires_grad=False)
         self.moving_variance = Parameter(initializer(
@@ -99,6 +101,9 @@ class _BatchNorm(Cell):
                                              epsilon=self.eps,
                                              momentum=self.momentum)
         self.bn_infer = P.BatchNorm(is_training=False, epsilon=self.eps)
+        self.enable_global_sync = self.is_global and (self.is_ge_backend or (self.is_graph_mode and self.is_ascend))
+        self.enable_default_train = self.is_graph_mode and not self.is_global and \
+                                    (self.is_ge_backend or self.is_ascend)
 
         data_parallel_strategy = ((1,), (1,))
         data_parallel_strategy_one = ((1,), ())
@@ -145,45 +150,43 @@ class _BatchNorm(Cell):
         return y
 
     def construct(self, x):
+        _shape_check_bn(self.shape(x), self.input_dims)
         if self.use_batch_statistics is None:
             flag = self.training
         else:
             flag = self.use_batch_statistics
-        if flag:
-            if self.is_ge_backend and self.is_global:
-                axes, re_shape = _shape_infer(F.shape(x), self.num_features)
-                y = self._global_sync(x, axes, re_shape)
-            elif self.is_graph_mode and (self.is_ge_backend or self.is_ascend):
-                if self.is_global:
-                    axes, re_shape = _shape_infer(F.shape(x), self.num_features)
-                    y = self._global_sync(x, axes, re_shape)
-                else:
-                    y, batch_mean, batch_var, _, _ = \
-                        self.bn_train(x,
-                                      self.gamma,
-                                      self.beta,
-                                      None,
-                                      None)
 
-                    mean_sub = self.sub_mean(self.moving_mean, batch_mean)
-                    temp_mean = self.mul_mean(mean_sub, self.momentum)
-                    mean_sub2 = self.sub_var(self.moving_variance, batch_var)
-                    temp_variance = self.mul_var(mean_sub2, self.momentum)
-                    y = F.depend(y, self.assign_sub_mean(self.moving_mean, temp_mean))
-                    y = F.depend(y, self.assign_sub_var(self.moving_variance, temp_variance))
-            else:
-                y = self.bn_train(x,
-                                  self.gamma,
-                                  self.beta,
-                                  self.moving_mean,
-                                  self.moving_variance)[0]
-        else:
-            y = self.bn_infer(x,
-                              self.gamma,
-                              self.beta,
-                              self.moving_mean,
-                              self.moving_variance)[0]
-        return y
+        if flag:
+            if self.enable_global_sync:
+                axes, re_shape = _shape_infer(F.shape(x), self.num_features)
+                return self._global_sync(x, axes, re_shape)
+
+            if self.enable_default_train:
+                y, batch_mean, batch_var, _, _ = self.bn_train(x,
+                                                               self.gamma,
+                                                               self.beta,
+                                                               None,
+                                                               None)
+
+                mean_sub = self.sub_mean(self.moving_mean, batch_mean)
+                temp_mean = self.mul_mean(mean_sub, self.momentum)
+                mean_sub2 = self.sub_var(self.moving_variance, batch_var)
+                temp_variance = self.mul_var(mean_sub2, self.momentum)
+                y = F.depend(y, self.assign_sub_mean(self.moving_mean, temp_mean))
+                y = F.depend(y, self.assign_sub_var(self.moving_variance, temp_variance))
+                return y
+
+            return self.bn_train(x,
+                                 self.gamma,
+                                 self.beta,
+                                 self.moving_mean,
+                                 self.moving_variance)[0]
+
+        return self.bn_infer(x,
+                             self.gamma,
+                             self.beta,
+                             self.moving_mean,
+                             self.moving_variance)[0]
 
     def extend_repr(self):
         return 'num_features={}, eps={}, momentum={}, gamma={}, beta={}, moving_mean={}, moving_variance={}'.format(
@@ -199,7 +202,18 @@ def _channel_check(channel, num_channel):
 @constexpr
 def _shape_check(in_shape):
     if len(in_shape) != 4:
-        raise ValueError("The input must has 4 dims")
+        raise ValueError("The input must has 4 dims.")
+
+
+@constexpr
+def _shape_check_bn(in_shape, in_dims):
+    dim = len(in_shape)
+    if in_dims == '1d' and dim != 2:
+        raise ValueError("The input must has 2 dims.")
+    if in_dims == '2d' and dim != 4:
+        raise ValueError("The input must has 4 dims.")
+    if in_dims == 'both' and dim != 2 and dim != 4:
+        raise ValueError("The input must has 2 dims or 4 dims.")
 
 
 @constexpr
@@ -253,10 +267,10 @@ class BatchNorm1d(_BatchNorm):
             mean and variance. Default: None.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in})`.
 
     Outputs:
-        Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+        Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out})`.
 
     Examples:
         >>> net = nn.BatchNorm1d(num_features=16)
@@ -282,7 +296,8 @@ class BatchNorm1d(_BatchNorm):
                                           beta_init,
                                           moving_mean_init,
                                           moving_var_init,
-                                          use_batch_statistics)
+                                          use_batch_statistics,
+                                          input_dims='1d')
 
     def _check_data_dim(self, x):
         if x.dim() != 2:
@@ -357,7 +372,8 @@ class BatchNorm2d(_BatchNorm):
                                           beta_init,
                                           moving_mean_init,
                                           moving_var_init,
-                                          use_batch_statistics)
+                                          use_batch_statistics,
+                                          input_dims='2d')
 
     def _check_data_dim(self, x):
         if x.dim() != 4:
@@ -435,7 +451,8 @@ class GlobalBatchNorm(_BatchNorm):
                                               moving_mean_init,
                                               moving_var_init,
                                               use_batch_statistics,
-                                              device_num_each_group)
+                                              device_num_each_group,
+                                              input_dims='both')
         self.group = check_int_positive(device_num_each_group)
         if self.group <= 1:
             raise ValueError("the number of group must be greater than 1.")

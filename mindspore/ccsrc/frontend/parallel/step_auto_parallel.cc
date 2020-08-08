@@ -41,6 +41,7 @@
 #include "frontend/parallel/context.h"
 #include "frontend/parallel/ops_info/tmp_identity_info.h"
 #include "frontend/parallel/ops_info/reshape_info.h"
+#include "frontend/parallel/graph_util/node_info.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 #include "pipeline/jit/parse/python_adapter.h"
@@ -122,12 +123,7 @@ std::vector<bool> ExtractInputParameterByNode(const CNodePtr &node) {
 
     if (input->isa<Parameter>()) {
       auto input_parameter = input->cast<ParameterPtr>();
-      if (input_parameter->has_default()) {
-        bool requires_grad = input_parameter->default_param()->requires_grad();
-        is_parameter.push_back(requires_grad);
-      } else {
-        is_parameter.push_back(false);
-      }
+      is_parameter.push_back(ParameterRequireGrad(input_parameter));
     } else if (input->isa<CNode>() || IsValueNode<tensor::Tensor>(input) || IsValueNode<RefKey>(input)) {
       is_parameter.push_back(false);
     }
@@ -260,7 +256,7 @@ bool IsSplittableOperator(const std::string &op_name) {
      REDUCE_MAX, REDUCE_MIN, ARGMAXWITHVALUE, ARGMINWITHVALUE, REDUCE_SUM, CONV2D, FUSE_BATCH_NORM, POOLING,
      MAX_POOL_WITH_ARGMAX, SIMPLE_MEAN, FLATTEN, BATCH_NORM, LAYER_NORM, BIAS_ADD, ASSIGN_SUB, COS, ACOS, EXP,
      LOG, REDUCE_MEAN, REAL_DIV, SIGMOID, POW, MAXIMUM, MINIMUM, EQUAL, NOT_EQUAL, LOGICALNOT, GATHERV2, SQRT,
-     STRIDEDSLICE, GET_NEXT, CAST, NEG, SQUARE, BATCH_MATMUL, EXPAND_DIMS, SQUEEZE, SPARSE_GATHERV2,
+     STRIDEDSLICE, GET_NEXT, CAST, NEG, SQUARE, BATCH_MATMUL, EXPAND_DIMS, SQUEEZE, SPARSE_GATHERV2, TILE, DROPOUT,
      SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, SIGMOID_CROSS_ENTROPY_WITH_LOGITS, SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS};
   // clang-format on
 
@@ -338,7 +334,11 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   operator_info->set_outputs_dtype(cnode->Type());
   operator_info->set_cnode(cnode);
   // key of strategy map
-  std::string strategy_key_name = NodeParameterName(cnode);
+  std::string strategy_key_name = "";
+  auto param_names = NodeParameterName(cnode);
+  if (!param_names.empty()) {
+    strategy_key_name = param_names[0].first;
+  }
   bool load_strategy_from_ckpt =
     StrategyCheckpoint::GetInstance().LoadCheckPointOn() && stra_map->find(strategy_key_name) != stra_map->end();
   // If no strategy has been configured for this operator, then candidate strategies are generated for
@@ -435,7 +435,7 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
       std::vector<std::string> inputs_tensor_name = ExtractInputsTensorName(cnode);
 
       entire_costgraph->AddOperator(operator_info);
-      (void)cnode->set_operator_info(operator_info);
+      cnode->set_user_data<OperatorInfo>(operator_info);
       MS_LOG(INFO) << "The CNode with UniqueId: " << cnode->UniqueId()
                    << " and UniqueIdThroughCopy: " << cnode->UniqueIdThroughCopy()
                    << " is set OperatorInfo: " << operator_info->name() << ", Primitive: " << prim->name();
@@ -501,7 +501,7 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
       std::vector<std::string> inputs_tensor_name = ExtractInputsTensorName(cnode);
 
       entire_costgraph->AddOperator(operator_info);
-      (void)cnode->set_operator_info(operator_info);
+      cnode->set_user_data<OperatorInfo>(operator_info);
       MS_LOG(INFO) << "The CNode with UniqueId: " << cnode->UniqueId()
                    << " and UniqueIdThroughCopy: " << cnode->UniqueIdThroughCopy()
                    << " is set OperatorInfo: " << operator_info->name() << ", Primitive: " << prim->name();
@@ -520,7 +520,7 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
           MS_LOG(EXCEPTION) << "The OperatorInfo: " << current_op_ptr->name()
                             << " does not match the Prim: " << prim->name();
         }
-        (void)cnode->set_operator_info(current_op_ptr);
+        cnode->set_user_data<OperatorInfo>(current_op_ptr);
         MS_LOG(INFO) << "The CNode with UniqueId: " << cnode->UniqueId()
                      << " and UniqueIdThroughCopy: " << cnode->UniqueIdThroughCopy()
                      << " is set OperatorInfo: " << current_op_ptr->name() << ", Primitive: " << prim->name();
@@ -549,6 +549,8 @@ void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes) {
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
     size_t edge_count = 0;
 
+    auto node_op_info = cnode->user_data<OperatorInfo>();
+
     for (size_t i = 1; i < inputs.size(); ++i) {
       auto prev_cnode = inputs[i]->cast<CNodePtr>();
       bool bool_result_prev_cnode = (prev_cnode == nullptr) || (!IsValueNode<Primitive>(prev_cnode->input(0)));
@@ -563,8 +565,8 @@ void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes) {
         (IsAutoParallelCareNode(prev_cnode)) || (prev_prim->name() == TUPLE_GETITEM) || (prev_prim->name() == DEPEND);
       while (bool_result) {
         if (IsAutoParallelCareNode(prev_cnode)) {
-          std::string edge_name =
-            prev_cnode->operator_info()->name() + OPERATOR_TO_OPERATOR_CONNECTOR + cnode->operator_info()->name();
+          auto prev_op_info = prev_cnode->user_data<OperatorInfo>();
+          std::string edge_name = prev_op_info->name() + OPERATOR_TO_OPERATOR_CONNECTOR + node_op_info->name();
           // If the edge between these two operators already has been added, then the edge will not be added again.
           if (entire_costgraph->IsEdgeInCostGraph(edge_name, output_index, i - 1)) {
             break;
@@ -577,22 +579,20 @@ void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes) {
           if (follow_strategy) {
             // Redistribution in not allowed on the edge.
             // Elementwise operators have the same strategy as their previous operators.
-            edge_ptr = std::make_shared<Edge>(edge_name, prev_cnode->operator_info(), cnode->operator_info(),
-                                              output_index, i - 1, false, true);
+            edge_ptr = std::make_shared<Edge>(edge_name, prev_op_info, node_op_info, output_index, i - 1, false, true);
           } else {
-            edge_ptr = std::make_shared<Edge>(edge_name, prev_cnode->operator_info(), cnode->operator_info(),
-                                              output_index, i - 1, false);
+            edge_ptr = std::make_shared<Edge>(edge_name, prev_op_info, node_op_info, output_index, i - 1, false);
           }
 
           // Init costs for this edge
           if (edge_ptr->InitEdgeCost() != SUCCESS) {
             MS_LOG(EXCEPTION) << "Edge cost initialization failed";
           }
-          cnode->operator_info()->AddPrevEdge(edge_ptr);
-          prev_cnode->operator_info()->AddSuccEdge(edge_ptr);
-          entire_costgraph->AddEdge(prev_cnode->operator_info(), cnode->operator_info(), edge_ptr);
-          MS_LOG(INFO) << "Successfully adding the edge between " << prev_cnode->operator_info()->name() << " and "
-                       << cnode->operator_info()->name();
+          node_op_info->AddPrevEdge(edge_ptr);
+          prev_op_info->AddSuccEdge(edge_ptr);
+          entire_costgraph->AddEdge(prev_op_info, node_op_info, edge_ptr);
+          MS_LOG(INFO) << "Successfully adding the edge between " << prev_op_info->name() << " and "
+                       << node_op_info->name();
           edge_count++;
 
           break;
@@ -633,7 +633,7 @@ void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes) {
           (IsAutoParallelCareNode(prev_cnode)) || (prev_prim->name() == TUPLE_GETITEM) || (prev_prim->name() == DEPEND);
       }
     }
-    MS_LOG(INFO) << "Successfully created " << edge_count << " edges for: " << cnode->operator_info()->name();
+    MS_LOG(INFO) << "Successfully created " << edge_count << " edges for: " << node_op_info->name();
   }
 
   MS_LOG(INFO) << "Constructing edges for cost graph ends.";
@@ -750,7 +750,8 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
     for (auto &target : target_set) {
       auto target_cnode = target.first->cast<CNodePtr>();
       auto input_index = target.second;
-      (void)target_without_duplicate.insert(std::to_string(input_index) + target_cnode->operator_info()->name());
+      (void)target_without_duplicate.insert(std::to_string(input_index) +
+                                            target_cnode->user_data<OperatorInfo>()->name());
     }
     if (target_without_duplicate.size() <= 1) {
       continue;
@@ -782,7 +783,7 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
       std::vector<int> shape_int = input_shape->shape();
       Shape shape;
       (void)std::transform(shape_int.begin(), shape_int.end(), std::back_inserter(shape),
-                           [](int sub_shape) { return static_cast<int32_t>(sub_shape); });
+                           [](int sub_shape) { return static_cast<int64_t>(sub_shape); });
       Shapes inputs_shape = {shape};
       Shapes outputs_shape = {shape};
       // 2) init the attr
@@ -797,12 +798,7 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
       std::vector<bool> is_parameter;
       auto casted_target_parameter = target_parameter->cast<ParameterPtr>();
       MS_EXCEPTION_IF_NULL(casted_target_parameter);
-      if (casted_target_parameter->has_default()) {
-        bool requires_grad = casted_target_parameter->default_param()->requires_grad();
-        is_parameter.push_back(requires_grad);
-      } else {
-        is_parameter.push_back(false);
-      }
+      is_parameter.push_back(ParameterRequireGrad(casted_target_parameter));
       if (tmp_identity_ptr->set_is_parameter(is_parameter) != SUCCESS) {
         MS_LOG(EXCEPTION) << "Setting parameter for TmpIdentityInfo failed";
       }
@@ -830,24 +826,24 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
       auto target_cnode = target.first->cast<CNodePtr>();
       auto prim = GetValueNode<PrimitivePtr>(target_cnode->input(0));
       auto input_index = target.second;
+      auto target_op_info = target_cnode->user_data<OperatorInfo>();
 
-      std::string edge_name =
-        std::string(IDENTITY_INFO) + OPERATOR_TO_OPERATOR_CONNECTOR + target_cnode->operator_info()->name();
+      std::string edge_name = std::string(IDENTITY_INFO) + OPERATOR_TO_OPERATOR_CONNECTOR + target_op_info->name();
       // If the edge between these two operators already has been added, then the edge will not be added again.
       if (entire_costgraph->IsEdgeInCostGraph(edge_name, 0, IntToSize(input_index - 1))) {
         continue;
       }
-      std::shared_ptr<Edge> edge_ptr = std::make_shared<Edge>(
-        edge_name, tmp_identity_ptr, target_cnode->operator_info(), 0, input_index - 1, false, true);
+      std::shared_ptr<Edge> edge_ptr =
+        std::make_shared<Edge>(edge_name, tmp_identity_ptr, target_op_info, 0, input_index - 1, false, true);
 
       if (edge_ptr->InitEdgeCost() != SUCCESS) {
         MS_LOG(EXCEPTION) << "Edge cost initialization failed";
       }
-      target_cnode->operator_info()->AddPrevEdge(edge_ptr);
+      target_op_info->AddPrevEdge(edge_ptr);
       tmp_identity_ptr->AddSuccEdge(edge_ptr);
-      entire_costgraph->AddEdge(tmp_identity_ptr, target_cnode->operator_info(), edge_ptr);
+      entire_costgraph->AddEdge(tmp_identity_ptr, target_op_info, edge_ptr);
       MS_LOG(INFO) << "Successfully adding the edge between " << tmp_identity_ptr->name() << " and "
-                   << target_cnode->operator_info()->name();
+                   << target_op_info->name();
       add_identity_edge = true;
     }
     if (new_identity && add_identity_edge) {
@@ -861,20 +857,13 @@ bool FindReshape(const CNodePtr &cnode) {
   if ((cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0))) {
     return false;
   }
-  ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
-  if (!IsParallelCareNode(cnode) || (cnode->operator_info() == nullptr)) {
+  if (!IsParallelCareNode(cnode) || !cnode->has_user_data<OperatorInfo>()) {
     return false;
   }
+  ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
   PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
   MS_EXCEPTION_IF_NULL(prim);
-  OperatorInfoPtr operator_info = cnode->operator_info();
-  if (operator_info == nullptr) {
-    MS_LOG(EXCEPTION) << "Failure:Primitive " << prim->ToString() << " OperatorInstance is nullptr";
-  }
-  if (prim->name() != RESHAPE) {
-    return false;
-  }
-  return true;
+  return (prim->name() == RESHAPE);
 }
 
 // find previous node, then obtain its strategy_cost_ vector to get its layout vector.
@@ -890,8 +879,9 @@ bool FindPreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_operator_
   if (!IsValueNode<Primitive>(cnode->input(0))) {
     return false;
   }
-  if (IsParallelCareNode(cnode) && (cnode->operator_info() != nullptr)) {
-    *pre_operator_info = cnode->operator_info();
+  auto node_op_info = cnode->user_data<OperatorInfo>();
+  if (IsParallelCareNode(cnode) && (node_op_info != nullptr)) {
+    *pre_operator_info = node_op_info;
     *out_index = 0;
     return true;
   }
@@ -905,8 +895,9 @@ bool FindPreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_operator_
       MS_LOG(EXCEPTION) << "tuple get item's second input is not a cnode";
     }
     CNodePtr pre_cnode = pre_node->cast<CNodePtr>();
-    if (IsParallelCareNode(pre_cnode) && (pre_cnode->operator_info() != nullptr)) {
-      *pre_operator_info = pre_cnode->operator_info();
+    auto pre_op_info = pre_cnode->user_data<OperatorInfo>();
+    if (IsParallelCareNode(pre_cnode) && (pre_op_info != nullptr)) {
+      *pre_operator_info = pre_op_info;
       return true;
     }
     return false;
@@ -945,14 +936,15 @@ bool FindNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_operator
     if (node_prim->name() == DEPEND && node_pair.second != 1) {
       continue;
     }
-    if (IsParallelCareNode(use_apply) && (use_apply->operator_info() != nullptr)) {
+    auto op_info = use_apply->user_data<OperatorInfo>();
+    if (IsParallelCareNode(use_apply) && (op_info != nullptr)) {
       MS_LOG(INFO) << "FindNextNodeStraCosts success prim " << node_prim->name();
-      *next_operator_info = use_apply->operator_info();
+      *next_operator_info = op_info;
       *in_index = node_pair.second - 1;
       return true;
     }
     MS_LOG(DEBUG) << "FindNextNodeStraCosts failed prim " << node_prim->name() << "  " << IsParallelCareNode(use_apply)
-                  << "   " << (use_apply->operator_info() != nullptr);
+                  << "   " << (op_info != nullptr);
 
     if (FindNextNodeStraCosts(use_apply, next_operator_info, in_index)) {
       return true;
@@ -973,8 +965,8 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
     int32_t out_index = 0;
     OperatorInfoPtr pre_operator_info;
     std::vector<std::shared_ptr<StrategyWithCost>> pre_stra_costs;
+    auto operator_info = cnode->user_data<OperatorInfo>();
     if (pre_node->isa<Parameter>()) {
-      OperatorInfoPtr operator_info = cnode->operator_info();
       auto reshape_info = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
       reshape_info->SetCostForReshapeWithParameter();
       pre_operator_info = reshape_info;
@@ -995,7 +987,6 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
     }
     // set input_layout and output_layout for reshape.
     // init reshape and set cost for each input_layout and output_layout.
-    OperatorInfoPtr operator_info = cnode->operator_info();
     auto reshape_info = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
     reshape_info->set_pre_operator_name(pre_operator_info->name());
     reshape_info->set_pre_operator_index(out_index);

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_SESSION_ASCEND_CONTROL_PARSER_H
-#define MINDSPORE_CCSRC_SESSION_ASCEND_CONTROL_PARSER_H
+#ifndef MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_CONTROL_PARSER_H
+#define MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_CONTROL_PARSER_H
 
 #include <set>
 #include <map>
@@ -23,7 +23,7 @@
 #include <utility>
 #include <functional>
 #include "backend/session/kernel_graph.h"
-#include "utils/base_ref.h"
+#include "base/base_ref.h"
 #include "utils/contract.h"
 #include "utils/union_find_set.h"
 
@@ -66,7 +66,8 @@ class AscendControlParser {
   static AnfNodePtr InsertAssignToGraph(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> from, NotNull<AnfNodePtr> to);
   static std::vector<std::pair<KernelGraphPtr, std::vector<AnfNodePtr>>> ParseCallNode(NotNull<CNodePtr> call_node);
   static std::tuple<KernelGraphPtr, std::vector<AnfNodePtr>> ParsePartial(NotNull<AnfNodePtr> node);
-
+  static void AttachChildGraphToReturnNode(NotNull<KernelGraphPtr> graph,
+                                           const NotNull<std::set<KernelGraphPtr> *> memo);
   // root graph order
   static bool CheckLabelIndex(uint32_t order_index, uint32_t label_index, const CNodePtr &cnode,
                               NotNull<KernelGraphPtr> graph);
@@ -89,4 +90,4 @@ class AscendControlParser::ReferenceCounter {
 }  // namespace session
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_SESSION_ASCEND_CONTROL_PARSER_H
+#endif  // MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_CONTROL_PARSER_H

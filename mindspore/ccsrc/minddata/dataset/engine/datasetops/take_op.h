@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_ENGINE_DATASETOPS_TAKE_OP_H_
-#define DATASET_ENGINE_DATASETOPS_TAKE_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_TAKE_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_TAKE_OP_H_
 
 #include <memory>
 #include <string>
@@ -86,7 +86,7 @@ class TakeOp : public PipelineOp {
 
   // Op name getter
   // @return Name of the current Op
-  std::string Name() const override { return "TakeOp"; }
+  std::string Name() const override { return kTakeOp; }
 
  private:
   int32_t max_takes_;   // The number of takes that the user requested
@@ -97,4 +97,4 @@ class TakeOp : public PipelineOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_ENGINE_DATASETOPS_TAKE_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_TAKE_OP_H_

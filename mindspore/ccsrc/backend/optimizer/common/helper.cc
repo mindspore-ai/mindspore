@@ -23,12 +23,12 @@
 #include <set>
 #include <deque>
 #include "utils/utils.h"
-#include "utils/base_ref.h"
+#include "base/base_ref.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "frontend/operator/ops.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "runtime/device/kernel_info.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {
@@ -313,9 +313,9 @@ void CreateMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNod
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(outputs);
   for (size_t i = 0; i < output_num; i++) {
-    auto idx = NewValueNode(SizeToInt(i));
-    MS_EXCEPTION_IF_NULL(idx);
     int temp = SizeToInt(i);
+    auto idx = NewValueNode(temp);
+    MS_EXCEPTION_IF_NULL(idx);
     auto imm = std::make_shared<Int32Imm>(temp);
     auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(imm);
     idx->set_abstract(abstract_scalar);
@@ -781,5 +781,27 @@ bool CheckSupportDataType(const AnfNodePtr &node, const std::set<TypeId> &suppor
   MS_LOG(DEBUG) << "Not supported data type. Node:" << node->DebugString();
   return false;
 }
+
+ValueNodePtr MakeValueNode(const ValueNodePtr &value_node) {
+  MS_EXCEPTION_IF_NULL(value_node);
+  ValueNodePtr new_value_node = std::make_shared<ValueNode>(value_node->value());
+  new_value_node->set_abstract(value_node->abstract());
+  // create kernel_info fo new value node
+  auto kernel_info = std::make_shared<device::KernelInfo>();
+  new_value_node->set_kernel_info(kernel_info);
+  // create kernel_build_info for new value node
+  auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  // set the format of value_node to DEFAULT_FORMAT
+  kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{kOpFormat_DEFAULT});
+  // set value node initial device data type = infer data type
+  std::vector<TypeId> types;
+  for (size_t index = 0; index < AnfAlgo::GetOutputTensorNum(value_node); ++index) {
+    types.push_back(kTypeUnknown);
+  }
+  kernel_build_info_builder->SetOutputsDeviceType(types);
+  AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), new_value_node.get());
+  return new_value_node;
+}
+
 }  // namespace opt
 }  // namespace mindspore

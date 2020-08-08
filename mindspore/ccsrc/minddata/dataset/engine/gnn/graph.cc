@@ -57,8 +57,7 @@ Status Graph::CreateTensorByVector(const std::vector<std::vector<T>> &data, Data
   std::shared_ptr<Tensor> tensor;
   size_t m = data.size();
   size_t n = data[0].size();
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(
-    &tensor, TensorImpl::kFlexible, TensorShape({static_cast<dsize_t>(m), static_cast<dsize_t>(n)}), type, nullptr));
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({static_cast<dsize_t>(m), static_cast<dsize_t>(n)}), type, &tensor));
   auto ptr = tensor->begin<T>();
   for (const auto &id_m : data) {
     CHECK_FAIL_RETURN_UNEXPECTED(id_m.size() == n, "Each member of the vector has a different size");
@@ -310,8 +309,7 @@ Status Graph::GetNodeFeature(const std::shared_ptr<Tensor> &nodes, const std::ve
     dsize_t size = std::accumulate(shape_vec.begin(), shape_vec.end(), 1, std::multiplies<dsize_t>());
     shape = shape.PrependDim(size);
     std::shared_ptr<Tensor> fea_tensor;
-    RETURN_IF_NOT_OK(
-      Tensor::CreateTensor(&fea_tensor, TensorImpl::kFlexible, shape, default_feature->Value()->type(), nullptr));
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(shape, default_feature->Value()->type(), &fea_tensor));
 
     dsize_t index = 0;
     for (auto node_itr = nodes->begin<NodeIdType>(); node_itr != nodes->end<NodeIdType>(); ++node_itr) {
@@ -358,8 +356,7 @@ Status Graph::GetEdgeFeature(const std::shared_ptr<Tensor> &edges, const std::ve
     dsize_t size = std::accumulate(shape_vec.begin(), shape_vec.end(), 1, std::multiplies<dsize_t>());
     shape = shape.PrependDim(size);
     std::shared_ptr<Tensor> fea_tensor;
-    RETURN_IF_NOT_OK(
-      Tensor::CreateTensor(&fea_tensor, TensorImpl::kFlexible, shape, default_feature->Value()->type(), nullptr));
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(shape, default_feature->Value()->type(), &fea_tensor));
 
     dsize_t index = 0;
     for (auto edge_itr = edges->begin<EdgeIdType>(); edge_itr != edges->end<EdgeIdType>(); ++edge_itr) {

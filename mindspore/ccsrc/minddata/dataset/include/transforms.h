@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_API_TRANSFORMS_H_
-#define DATASET_API_TRANSFORMS_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_API_TRANSFORMS_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_API_TRANSFORMS_H_
 
 #include <vector>
 #include <memory>
@@ -46,57 +46,21 @@ class TensorOperation : public std::enable_shared_from_this<TensorOperation> {
 // Transform operations for performing computer vision.
 namespace vision {
 
-class NormalizeOperation;
-class DecodeOperation;
-class ResizeOperation;
-class RandomCropOperation;
+// Transform Op classes (in alphabetical order)
 class CenterCropOperation;
-class UniformAugOperation;
-class RandomHorizontalFlipOperation;
-class RandomVerticalFlipOperation;
-class RandomRotationOperation;
-class PadOperation;
+class CropOperation;
 class CutOutOperation;
+class DecodeOperation;
+class NormalizeOperation;
+class PadOperation;
 class RandomColorAdjustOperation;
-
-/// \brief Function to create a Normalize TensorOperation.
-/// \notes Normalize the input image with respect to mean and standard deviation.
-/// \param[in] mean - a vector of mean values for each channel, w.r.t channel order.
-/// \param[in] std - a vector of standard deviations for each channel, w.r.t. channel order.
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<NormalizeOperation> Normalize(std::vector<float> mean, std::vector<float> std);
-
-/// \brief Function to create a Decode TensorOperation.
-/// \notes Decode the input image in RGB mode.
-/// \param[in] rgb - a boolean of whether to decode in RGB mode or not.
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<DecodeOperation> Decode(bool rgb = true);
-
-/// \brief Function to create a Resize TensorOperation.
-/// \notes Resize the input image to the given size..
-/// \param[in] size - a vector representing the output size of the resized image.
-///               If size is a single value, the image will be resized to this value with
-///               the same image aspect ratio. If size has 2 values, it should be (height, width).
-/// \param[in] interpolation An enum for the mode of interpolation
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<ResizeOperation> Resize(std::vector<int32_t> size,
-                                        InterpolationMode interpolation = InterpolationMode::kLinear);
-
-/// \brief Function to create a RandomCrop TensorOperation.
-/// \notes Crop the input image at a random location.
-/// \param[in] size - a vector representing the output size of the cropped image.
-///               If size is a single value, a square crop of size (size, size) is returned.
-///               If size has 2 values, it should be (height, width).
-/// \param[in] padding - a vector with the value of pixels to pad the image. If 4 values are provided,
-///                  it pads the left, top, right and bottom respectively.
-/// \param[in] pad_if_needed - a boolean whether to pad the image if either side is smaller than
-///                        the given output size.
-/// \param[in] fill_value - a vector representing the pixel intensity of the borders, it is used to
-///                     fill R, G, B channels respectively.
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<RandomCropOperation> RandomCrop(std::vector<int32_t> size, std::vector<int32_t> padding = {0, 0, 0, 0},
-                                                bool pad_if_needed = false,
-                                                std::vector<uint8_t> fill_value = {0, 0, 0});
+class RandomCropOperation;
+class RandomHorizontalFlipOperation;
+class RandomRotationOperation;
+class RandomVerticalFlipOperation;
+class ResizeOperation;
+class SwapRedBlueOperation;
+class UniformAugOperation;
 
 /// \brief Function to create a CenterCrop TensorOperation.
 /// \notes Crops the input image at the center to the given size.
@@ -106,37 +70,32 @@ std::shared_ptr<RandomCropOperation> RandomCrop(std::vector<int32_t> size, std::
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<CenterCropOperation> CenterCrop(std::vector<int32_t> size);
 
-/// \brief Function to create a UniformAugment TensorOperation.
-/// \notes Tensor operation to perform randomly selected augmentation.
-/// \param[in] operations - a vector of TensorOperation operations.
-/// \param[in] num_ops - integer representing the number of OPs to be selected and applied.
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<UniformAugOperation> UniformAugment(std::vector<std::shared_ptr<TensorOperation>> operations,
-                                                    int32_t num_ops = 2);
-
-/// \brief Function to create a RandomHorizontalFlip TensorOperation.
-/// \notes Tensor operation to perform random horizontal flip.
-/// \param[in] prob - float representing the probability of flip.
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<RandomHorizontalFlipOperation> RandomHorizontalFlip(float prob = 0.5);
-
-/// \brief Function to create a RandomVerticalFlip TensorOperation.
-/// \notes Tensor operation to perform random vertical flip.
-/// \param[in] prob - float representing the probability of flip.
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<RandomVerticalFlipOperation> RandomVerticalFlip(float prob = 0.5);
-
-/// \brief Function to create a RandomRotation TensorOp
-/// \notes Rotates the image according to parameters
-/// \param[in] degrees A float vector size 2, representing the starting and ending degree
-/// \param[in] resample An enum for the mode of interpolation
-/// \param[in] expand A boolean representing whether the image is expanded after rotation
-/// \param[in] center A float vector size 2, representing the x and y center of rotation.
-/// \param[in] fill_value A uint8_t vector size 3, representing the rgb value of the fill color
+/// \brief Function to create a Crop TensorOp
+/// \notes Crop an image based on location and crop size
+/// \param[in] coordinates Starting location of crop. Must be a vector of two values, in the form of {x_coor, y_coor}
+/// \param[in] size Size of the cropped area. Must be a vector of two values, in the form of {height, width}
 /// \return Shared pointer to the current TensorOp
-std::shared_ptr<RandomRotationOperation> RandomRotation(
-  std::vector<float> degrees, InterpolationMode resample = InterpolationMode::kNearestNeighbour, bool expand = false,
-  std::vector<float> center = {-1, -1}, std::vector<uint8_t> fill_value = {0, 0, 0});
+std::shared_ptr<CropOperation> Crop(std::vector<int32_t> coordinates, std::vector<int32_t> size);
+
+/// \brief Function to create a CutOut TensorOp
+/// \notes Randomly cut (mask) out a given number of square patches from the input image
+/// \param[in] length Integer representing the side length of each square patch
+/// \param[in] num_patches Integer representing the number of patches to be cut out of an image
+/// \return Shared pointer to the current TensorOp
+std::shared_ptr<CutOutOperation> CutOut(int32_t length, int32_t num_patches = 1);
+
+/// \brief Function to create a Decode TensorOperation.
+/// \notes Decode the input image in RGB mode.
+/// \param[in] rgb - a boolean of whether to decode in RGB mode or not.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<DecodeOperation> Decode(bool rgb = true);
+
+/// \brief Function to create a Normalize TensorOperation.
+/// \notes Normalize the input image with respect to mean and standard deviation.
+/// \param[in] mean - a vector of mean values for each channel, w.r.t channel order.
+/// \param[in] std - a vector of standard deviations for each channel, w.r.t. channel order.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<NormalizeOperation> Normalize(std::vector<float> mean, std::vector<float> std);
 
 /// \brief Function to create a Pad TensorOp
 /// \notes Pads the image according to padding parameters
@@ -160,13 +119,6 @@ std::shared_ptr<RandomRotationOperation> RandomRotation(
 std::shared_ptr<PadOperation> Pad(std::vector<int32_t> padding, std::vector<uint8_t> fill_value = {0},
                                   BorderType padding_mode = BorderType::kConstant);
 
-/// \brief Function to create a CutOut TensorOp
-/// \notes Randomly cut (mask) out a given number of square patches from the input image
-/// \param[in] length Integer representing the side length of each square patch
-/// \param[in] num_patches Integer representing the number of patches to be cut out of an image
-/// \return Shared pointer to the current TensorOp
-std::shared_ptr<CutOutOperation> CutOut(int32_t length, int32_t num_patches = 1);
-
 /// \brief Randomly adjust the brightness, contrast, saturation, and hue of the input image
 /// \param[in] brightness Brightness adjustment factor. Must be a vector of one or two values
 ///     if it's a vector of two values it needs to be in the form of [min, max]. Default value is {1, 1}
@@ -183,21 +135,113 @@ std::shared_ptr<RandomColorAdjustOperation> RandomColorAdjust(std::vector<float>
                                                               std::vector<float> saturation = {1.0, 1.0},
                                                               std::vector<float> hue = {0.0, 0.0});
 
+/// \brief Function to create a RandomCrop TensorOperation.
+/// \notes Crop the input image at a random location.
+/// \param[in] size - a vector representing the output size of the cropped image.
+///               If size is a single value, a square crop of size (size, size) is returned.
+///               If size has 2 values, it should be (height, width).
+/// \param[in] padding - a vector with the value of pixels to pad the image. If 4 values are provided,
+///                  it pads the left, top, right and bottom respectively.
+/// \param[in] pad_if_needed - a boolean whether to pad the image if either side is smaller than
+///                        the given output size.
+/// \param[in] fill_value - a vector representing the pixel intensity of the borders, it is used to
+///                     fill R, G, B channels respectively.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<RandomCropOperation> RandomCrop(std::vector<int32_t> size, std::vector<int32_t> padding = {0, 0, 0, 0},
+                                                bool pad_if_needed = false,
+                                                std::vector<uint8_t> fill_value = {0, 0, 0});
+
+/// \brief Function to create a RandomHorizontalFlip TensorOperation.
+/// \notes Tensor operation to perform random horizontal flip.
+/// \param[in] prob - float representing the probability of flip.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<RandomHorizontalFlipOperation> RandomHorizontalFlip(float prob = 0.5);
+
+/// \brief Function to create a RandomRotation TensorOp
+/// \notes Rotates the image according to parameters
+/// \param[in] degrees A float vector size 2, representing the starting and ending degree
+/// \param[in] resample An enum for the mode of interpolation
+/// \param[in] expand A boolean representing whether the image is expanded after rotation
+/// \param[in] center A float vector size 2, representing the x and y center of rotation.
+/// \param[in] fill_value A uint8_t vector size 3, representing the rgb value of the fill color
+/// \return Shared pointer to the current TensorOp
+std::shared_ptr<RandomRotationOperation> RandomRotation(
+  std::vector<float> degrees, InterpolationMode resample = InterpolationMode::kNearestNeighbour, bool expand = false,
+  std::vector<float> center = {-1, -1}, std::vector<uint8_t> fill_value = {0, 0, 0});
+
+/// \brief Function to create a RandomVerticalFlip TensorOperation.
+/// \notes Tensor operation to perform random vertical flip.
+/// \param[in] prob - float representing the probability of flip.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<RandomVerticalFlipOperation> RandomVerticalFlip(float prob = 0.5);
+
+/// \brief Function to create a Resize TensorOperation.
+/// \notes Resize the input image to the given size..
+/// \param[in] size - a vector representing the output size of the resized image.
+///               If size is a single value, the image will be resized to this value with
+///               the same image aspect ratio. If size has 2 values, it should be (height, width).
+/// \param[in] interpolation An enum for the mode of interpolation
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<ResizeOperation> Resize(std::vector<int32_t> size,
+                                        InterpolationMode interpolation = InterpolationMode::kLinear);
+
+/// \brief Function to create a SwapRedBlue TensorOp
+/// \notes Swaps the red and blue channels in image
+/// \return Shared pointer to the current TensorOp
+std::shared_ptr<SwapRedBlueOperation> SwapRedBlue();
+
+/// \brief Function to create a UniformAugment TensorOperation.
+/// \notes Tensor operation to perform randomly selected augmentation.
+/// \param[in] transforms - a vector of TensorOperation transforms.
+/// \param[in] num_ops - integer representing the number of OPs to be selected and applied.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<UniformAugOperation> UniformAugment(std::vector<std::shared_ptr<TensorOperation>> transforms,
+                                                    int32_t num_ops = 2);
+
 /* ####################################### Derived TensorOperation classes ################################# */
 
-class NormalizeOperation : public TensorOperation {
+class CenterCropOperation : public TensorOperation {
  public:
-  NormalizeOperation(std::vector<float> mean, std::vector<float> std);
+  explicit CenterCropOperation(std::vector<int32_t> size);
 
-  ~NormalizeOperation() = default;
+  ~CenterCropOperation() = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
   bool ValidateParams() override;
 
  private:
-  std::vector<float> mean_;
-  std::vector<float> std_;
+  std::vector<int32_t> size_;
+};
+
+class CropOperation : public TensorOperation {
+ public:
+  CropOperation(std::vector<int32_t> coordinates, std::vector<int32_t> size);
+
+  ~CropOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
+
+ private:
+  std::vector<int32_t> coordinates_;
+  std::vector<int32_t> size_;
+};
+
+class CutOutOperation : public TensorOperation {
+ public:
+  explicit CutOutOperation(int32_t length, int32_t num_patches = 1);
+
+  ~CutOutOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
+
+ private:
+  int32_t length_;
+  int32_t num_patches_;
 };
 
 class DecodeOperation : public TensorOperation {
@@ -214,20 +258,54 @@ class DecodeOperation : public TensorOperation {
   bool rgb_;
 };
 
-class ResizeOperation : public TensorOperation {
+class NormalizeOperation : public TensorOperation {
  public:
-  explicit ResizeOperation(std::vector<int32_t> size,
-                           InterpolationMode interpolation_mode = InterpolationMode::kLinear);
+  NormalizeOperation(std::vector<float> mean, std::vector<float> std);
 
-  ~ResizeOperation() = default;
+  ~NormalizeOperation() = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
   bool ValidateParams() override;
 
  private:
-  std::vector<int32_t> size_;
-  InterpolationMode interpolation_;
+  std::vector<float> mean_;
+  std::vector<float> std_;
+};
+
+class PadOperation : public TensorOperation {
+ public:
+  PadOperation(std::vector<int32_t> padding, std::vector<uint8_t> fill_value = {0},
+               BorderType padding_mode = BorderType::kConstant);
+
+  ~PadOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
+
+ private:
+  std::vector<int32_t> padding_;
+  std::vector<uint8_t> fill_value_;
+  BorderType padding_mode_;
+};
+
+class RandomColorAdjustOperation : public TensorOperation {
+ public:
+  RandomColorAdjustOperation(std::vector<float> brightness = {1.0, 1.0}, std::vector<float> contrast = {1.0, 1.0},
+                             std::vector<float> saturation = {1.0, 1.0}, std::vector<float> hue = {0.0, 0.0});
+
+  ~RandomColorAdjustOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
+
+ private:
+  std::vector<float> brightness_;
+  std::vector<float> contrast_;
+  std::vector<float> saturation_;
+  std::vector<float> hue_;
 };
 
 class RandomCropOperation : public TensorOperation {
@@ -248,54 +326,11 @@ class RandomCropOperation : public TensorOperation {
   std::vector<uint8_t> fill_value_;
 };
 
-class CenterCropOperation : public TensorOperation {
- public:
-  explicit CenterCropOperation(std::vector<int32_t> size);
-
-  ~CenterCropOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  bool ValidateParams() override;
-
- private:
-  std::vector<int32_t> size_;
-};
-
-class UniformAugOperation : public TensorOperation {
- public:
-  explicit UniformAugOperation(std::vector<std::shared_ptr<TensorOperation>> operations, int32_t num_ops = 2);
-
-  ~UniformAugOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  bool ValidateParams() override;
-
- private:
-  std::vector<std::shared_ptr<TensorOperation>> operations_;
-  int32_t num_ops_;
-};
-
 class RandomHorizontalFlipOperation : public TensorOperation {
  public:
   explicit RandomHorizontalFlipOperation(float probability = 0.5);
 
   ~RandomHorizontalFlipOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  bool ValidateParams() override;
-
- private:
-  float probability_;
-};
-
-class RandomVerticalFlipOperation : public TensorOperation {
- public:
-  explicit RandomVerticalFlipOperation(float probability = 0.5);
-
-  ~RandomVerticalFlipOperation() = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -324,57 +359,63 @@ class RandomRotationOperation : public TensorOperation {
   std::vector<uint8_t> fill_value_;
 };
 
-class PadOperation : public TensorOperation {
+class RandomVerticalFlipOperation : public TensorOperation {
  public:
-  PadOperation(std::vector<int32_t> padding, std::vector<uint8_t> fill_value = {0},
-               BorderType padding_mode = BorderType::kConstant);
+  explicit RandomVerticalFlipOperation(float probability = 0.5);
 
-  ~PadOperation() = default;
+  ~RandomVerticalFlipOperation() = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
   bool ValidateParams() override;
 
  private:
-  std::vector<int32_t> padding_;
-  std::vector<uint8_t> fill_value_;
-  BorderType padding_mode_;
+  float probability_;
 };
 
-class CutOutOperation : public TensorOperation {
+class ResizeOperation : public TensorOperation {
  public:
-  explicit CutOutOperation(int32_t length, int32_t num_patches = 1);
+  explicit ResizeOperation(std::vector<int32_t> size,
+                           InterpolationMode interpolation_mode = InterpolationMode::kLinear);
 
-  ~CutOutOperation() = default;
+  ~ResizeOperation() = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
   bool ValidateParams() override;
 
  private:
-  int32_t length_;
-  int32_t num_patches_;
+  std::vector<int32_t> size_;
+  InterpolationMode interpolation_;
 };
 
-class RandomColorAdjustOperation : public TensorOperation {
+class UniformAugOperation : public TensorOperation {
  public:
-  RandomColorAdjustOperation(std::vector<float> brightness = {1.0, 1.0}, std::vector<float> contrast = {1.0, 1.0},
-                             std::vector<float> saturation = {1.0, 1.0}, std::vector<float> hue = {0.0, 0.0});
+  explicit UniformAugOperation(std::vector<std::shared_ptr<TensorOperation>> transforms, int32_t num_ops = 2);
 
-  ~RandomColorAdjustOperation() = default;
+  ~UniformAugOperation() = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
   bool ValidateParams() override;
 
  private:
-  std::vector<float> brightness_;
-  std::vector<float> contrast_;
-  std::vector<float> saturation_;
-  std::vector<float> hue_;
+  std::vector<std::shared_ptr<TensorOperation>> transforms_;
+  int32_t num_ops_;
+};
+
+class SwapRedBlueOperation : public TensorOperation {
+ public:
+  SwapRedBlueOperation();
+
+  ~SwapRedBlueOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
 };
 }  // namespace vision
 }  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_API_TRANSFORMS_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_API_TRANSFORMS_H_

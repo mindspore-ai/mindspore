@@ -21,23 +21,22 @@ from .._checkparam import check_type, check_typename
 from . import dtype as mstype
 from ._register_for_tensor import tensor_operator_registry
 
-__all__ = ['Tensor', 'MetaTensor', 'IndexedSlices']
+__all__ = ['Tensor', 'MetaTensor', 'RowTensor', 'SparseTensor']
 np_types = (np.int8, np.int16, np.int32, np.int64,
             np.uint8, np.uint16, np.uint32, np.uint64, np.float16,
             np.float32, np.float64, np.bool_)
 
 
-
 class Tensor(Tensor_):
     """
-    Tensor for data storage.
+    Tensor is used for data storage.
 
-    Tensor inherits tensor object in C++ side, some functions are implemented
-    in C++ side and some functions are implemented in Python layer.
+    Tensor inherits tensor object in C++.
+    Some functions are implemented in C++ and some functions are implemented in Python.
 
     Args:
         input_data (Tensor, float, int, bool, tuple, list, numpy.ndarray): Input data of the tensor.
-        dtype (:class:`mindspore.dtype`): Should be None, bool or numeric type defined in `mindspore.dtype`.
+        dtype (:class:`mindspore.dtype`): Input data should be None, bool or numeric type defined in `mindspore.dtype`.
             The argument is used to define the data type of the output tensor. If it is None, the data type of the
             output tensor will be as same as the `input_data`. Default: None.
 
@@ -45,13 +44,13 @@ class Tensor(Tensor_):
         Tensor, with the same shape as `input_data`.
 
     Examples:
-        >>> # init a tensor with input data
+        >>> # initialize a tensor with input data
         >>> t1 = Tensor(np.zeros([1, 2, 3]), mindspore.float32)
         >>> assert isinstance(t1, Tensor)
         >>> assert t1.shape == (1, 2, 3)
         >>> assert t1.dtype == mindspore.float32
         >>>
-        >>> # init a tensor with a float scalar
+        >>> # initialize a tensor with a float scalar
         >>> t2 = Tensor(0.1)
         >>> assert isinstance(t2, Tensor)
         >>> assert t2.dtype == mindspore.float64
@@ -75,7 +74,7 @@ class Tensor(Tensor_):
         self._virtual_flag = False
 
     def __repr__(self):
-        return str(self.__str__())
+        return str(Tensor_.__str__(self))
 
     def __add__(self, other):
         out = tensor_operator_registry.get('__add__')(self, other)
@@ -107,6 +106,14 @@ class Tensor(Tensor_):
     def __neg__(self):
         out = tensor_operator_registry.get('__neg__')(self)
         return out
+
+    def __bool__(self):
+        data = self.asnumpy()
+        if data.shape == ():
+            return bool(data)
+        if data.shape == (1,):
+            return bool(data[0])
+        raise ValueError("The truth value of an array with several elements is ambiguous.")
 
     def __pos__(self):
         return self
@@ -181,6 +188,9 @@ class Tensor(Tensor_):
     def __imod__(self, other):
         return self.__mod__(other)
 
+    def __rmod__(self, other):
+        return tensor_operator_registry.get('__mod__')(other, self)
+
     def __pow__(self, other):
         return tensor_operator_registry.get('__pow__')(self, other)
 
@@ -190,10 +200,23 @@ class Tensor(Tensor_):
     def __ifloordiv__(self, other):
         return self.__floordiv__(other)
 
+    def __rfloordiv__(self, other):
+        return tensor_operator_registry.get('__floordiv__')(other, self)
+
     def __str__(self):
         if self.dtype == mstype.type_none:
             return "Unknown Tensor type!"
         return str(self.asnumpy())
+
+    @property
+    def shape(self):
+        """The shape of tensor."""
+        return self._shape
+
+    @property
+    def dtype(self):
+        """The dtype of tensor."""
+        return self._dtype
 
     @property
     def virtual_flag(self):
@@ -207,7 +230,153 @@ class Tensor(Tensor_):
             raise TypeError("virtual_flag must be bool.")
         self._virtual_flag = value
 
+    def asnumpy(self):
+        """Convert tensor to numpy array."""
+        return Tensor_.asnumpy(self)
 
-class IndexedSlices:
+    def all(self, axis=(), keep_dims=False):
+        """
+        Check all array elements along a given axis evaluate to True.
+
+        Args:
+            axis (Union[None, int, tuple(int)): Dimensions of reduction.
+                Default: (), reduce all dimensions.
+            keep_dims (bool): Whether to keep the reduced dimensions.
+                Default : False, don't keep these reduced dimensions.
+
+        Returns:
+            Tensor, has the same data type as x.
+        """
+
+        return tensor_operator_registry.get('all')(keep_dims)(self, axis)
+
+    def any(self, axis=(), keep_dims=False):
+        """
+        Check any array element along a given axis evaluate to True.
+
+        Args:
+            axis (Union[None, int, tuple(int)): Dimensions of reduction.
+                Default: (), reduce all dimensions.
+            keep_dims (bool): Whether to keep the reduced dimensions.
+                Default : False, don't keep these reduced dimensions.
+
+        Returns:
+            Tensor, has the same data type as x.
+        """
+
+        return tensor_operator_registry.get('any')(keep_dims)(self, axis)
+
+
+class RowTensor:
+    """
+    A sparse representation of a set of tensor slices at given indices.
+
+    An RowTensor is typically used to represent a subset of a larger
+    tensor dense of shape [L0, D1, .. , DN] where L0 >> D0.
+
+    The values in indices are the indices in the first dimension of the slices
+    that have been extracted from the larger tensor.
+
+    The dense tensor dense represented by an RowTensor slices has
+    `dense[slices.indices[i], :, :, :, ...] = slices.values[i, :, :, :, ...]`.
+
+    RowTensor can only be used in the `Cell`'s contruct method.
+
+    It is not supported in pynative mode at the moment.
+
+    Args:
+        indices (Tensor): A 1-D integer Tensor of shape [D0].
+        values (Tensor): A Tensor of any dtype of shape [D0, D1, ..., Dn].
+        dense_shape (tuple): An integer tuple which contains the shape
+            of the corresponding dense tensor.
+
+    Returns:
+        RowTensor, composed of `indices`, `values`, and `dense_shape`.
+
+    Examples:
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self, dense_shape):
+        >>>         super(Net, self).__init__()
+        >>>         self.dense_shape = dense_shape
+        >>>     def construct(self, indices, values):
+        >>>         x = RowTensor(indices, values, self.dense_shape)
+        >>>         return x.values, x.indices, x.dense_shape
+        >>>
+        >>> indices = Tensor([0])
+        >>> values = Tensor([[1, 2]], dtype=ms.float32)
+        >>> Net((3, 2))(indices, values)
+    """
+
     def __init__(self, indices, values, dense_shape):
-        raise NotImplementedError
+        "Init RowTensor"
+        self.__indices = indices
+        self.__values = values
+        self.__dense_shape = dense_shape
+
+    @property
+    def indices(self):
+        return self.__indices
+
+    @property
+    def values(self):
+        return self.__values
+
+    @property
+    def dense_shape(self):
+        return self.__dense_shape
+
+
+class SparseTensor:
+    """
+    A sparse representation of a set of nonzero elememts from a tensor at given indices.
+
+    SparseTensor can only be used in the `Cell`'s construct method.
+
+    Pynative mode not supported at the moment.
+
+    For a tensor dense, its SparseTensor(indices, values, dense_shape) has
+    `dense[indices[i]] = values[i]`.
+
+    Args:
+        indices (Tensor): A 2-D integer Tensor of shape `[N, ndims]`,
+            where N and ndims are the number of values and number of dimensions in
+            the SparseTensor, respectively.
+        values (Tensor): A 1-D tensor of any type and shape `[N]`, which
+            supplies the values for each element in indices.
+        dense_shape (tuple): A integer tuple of size `ndims`,
+            which specifies the dense_shape of the sparse tensor.
+
+    Returns:
+        SparseTensor, composed of `indices`, `values`, and `dense_shape`.
+
+    Examples:
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self, dense_shape):
+        >>>         super(Net, self).__init__()
+        >>>         self.dense_shape = dense_shape
+        >>>     def construct(self, indices, values):
+        >>>         x = SparseTensor(indices, values, self.dense_shape)
+        >>>         return x.values, x.indices, x.dense_shape
+        >>>
+        >>> indices = Tensor([[0, 1], [1, 2]])
+        >>> values = Tensor([1, 2], dtype=ms.float32)
+        >>> Net((3, 4))(indices, values)
+    """
+
+    def __init__(self, indices, values, dense_shape):
+        "Init SparseTensor"
+        self.__indices = indices
+        self.__values = values
+        self.__dense_shape = dense_shape
+
+    @property
+    def indices(self):
+        return self.__indices
+
+    @property
+    def values(self):
+        return self.__values
+
+    @property
+    def dense_shape(self):
+        return self.__dense_shape

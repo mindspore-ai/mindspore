@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_ENGINE_OPT_PASS_UTIL_PRINTER_H
-#define DATASET_ENGINE_OPT_PASS_UTIL_PRINTER_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PASS_UTIL_PRINTER_H
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PASS_UTIL_PRINTER_H
 
 #include <memory>
 #include "minddata/dataset/engine/opt/pass.h"
@@ -39,9 +39,11 @@ class PrinterPass : public NodePass {
 
   Status RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified) override;
 
+#ifndef ENABLE_ANDROID
   Status RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified) override;
 
   Status RunOnNode(std::shared_ptr<TFReaderOp> node, bool *modified) override;
+#endif
 
 #ifdef ENABLE_PYTHON
   Status RunOnNode(std::shared_ptr<FilterOp> node, bool *modified) override;
@@ -61,4 +63,4 @@ class PrinterPass : public NodePass {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_ENGINE_OPT_PASS_UTIL_PRINTER_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PASS_UTIL_PRINTER_H

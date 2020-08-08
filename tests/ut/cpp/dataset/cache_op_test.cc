@@ -75,7 +75,8 @@ TEST_F(MindDataTestCacheOp, TestCacheServer) {
   EXPECT_TRUE(rc.IsOk());
 
   // Create a tensor, take a snapshot and restore it back, and compare.
-  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2, 3}), DataType(DataType::DE_UINT64));
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateEmpty(TensorShape({2, 3}), DataType(DataType::DE_UINT64), &t);
   t->SetItemAt<uint64_t>({0, 0}, 1);
   t->SetItemAt<uint64_t>({0, 1}, 2);
   t->SetItemAt<uint64_t>({0, 2}, 3);
@@ -129,7 +130,8 @@ TEST_F(MindDataTestCacheOp, TestConcurrencyRequest) {
   rc = myClient.CreateCache(1, true);
   EXPECT_TRUE(rc.IsOk());
   std::cout << myClient << std::endl;
-  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2, 3}), DataType(DataType::DE_UINT64));
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateEmpty(TensorShape({2, 3}), DataType(DataType::DE_UINT64), &t);
   t->SetItemAt<uint64_t>({0, 0}, 1);
   t->SetItemAt<uint64_t>({0, 1}, 2);
   t->SetItemAt<uint64_t>({0, 2}, 3);
@@ -397,23 +399,17 @@ TEST_F(MindDataTestCacheOp, TestImageFolderCacheMerge) {
 
   std::shared_ptr<CacheClient> myClient = std::make_shared<CacheClient>(1, 0, true);
 
-  std::shared_ptr<CacheMergeOp> myMergeOp;
-  rc = CacheMergeOp::Builder().SetNumWorkers(3).SetOpConnectorSize(3).SetNumCleaner(2).SetClient(myClient).Build(
-    &myMergeOp);
-  EXPECT_TRUE(rc.IsOk());
+  // In a mappable dataset, it uses a complex interactions of cache lookup op and cache merge op.
+  // Rather than manually build this, the way to do it is to choose the position of the cache in the tree by
+  // adding a CacheOp.  Then, the tree prepare code will drive a transform that will remove the CacheOp and
+  // replace it with the required tree structures for cache lookup op and cache merge op.
 
-  std::shared_ptr<CacheLookupOp> myLookupOp;
-  rc = CacheLookupOp::Builder()
-         .SetNumWorkers(3)
-         .SetOpConnectorSize(3)
-         .SetClient(myClient)
-         .SetSampler(seq_sampler)
-         .Build(&myLookupOp);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<CacheOp> myCacheOp;
+  rc = CacheOp::Builder().SetNumWorkers(4).SetClient(myClient).SetRowsPerBuffer(3).Build(&myCacheOp);
 
   std::shared_ptr<ImageFolderOp> so;
   ImageFolderOp::Builder builder;
-  builder.SetSampler(myLookupOp)
+  builder.SetSampler(std::move(seq_sampler))
     .SetOpConnectorSize(3)
     .SetNumWorkers(3)
     .SetRowsPerBuffer(2)
@@ -432,20 +428,18 @@ TEST_F(MindDataTestCacheOp, TestImageFolderCacheMerge) {
   auto myTree = std::make_shared<ExecutionTree>();
   rc = myTree->AssociateNode(so);
   EXPECT_TRUE(rc.IsOk());
-  rc = myTree->AssociateNode(myLookupOp);
+
+  rc = myTree->AssociateNode(myCacheOp);
   EXPECT_TRUE(rc.IsOk());
-  rc = myTree->AssociateNode(myMergeOp);
-  EXPECT_TRUE(rc.IsOk());
+
   rc = myTree->AssociateNode(myRepeatOp);
   EXPECT_TRUE(rc.IsOk());
   rc = myTree->AssignRoot(myRepeatOp);
   EXPECT_TRUE(rc.IsOk());
 
-  rc = myRepeatOp->AddChild(myMergeOp);
+  rc = myRepeatOp->AddChild(myCacheOp);
   EXPECT_TRUE(rc.IsOk());
-  rc = myMergeOp->AddChild(myLookupOp);
-  EXPECT_TRUE(rc.IsOk());
-  rc = myMergeOp->AddChild(so);
+  rc = myCacheOp->AddChild(so);
   EXPECT_TRUE(rc.IsOk());
 
   rc = myTree->Prepare();

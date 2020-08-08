@@ -17,7 +17,7 @@
 import numpy as np
 import pytest
 
-from mindspore import Tensor, Parameter, ParameterTuple
+from mindspore import context, Tensor, Parameter, ParameterTuple
 from mindspore._checkparam import _check_str_by_regular
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import initializer
@@ -43,11 +43,11 @@ def test_parameter_tuple_illegal():
     ParameterTuple(ptuple)
     with pytest.raises(TypeError):
         ParameterTuple(p1)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         ParameterTuple(plist2)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         ParameterTuple(ptuple_str)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         ParameterTuple(pstr)
     with pytest.raises(TypeError):
         ParameterTuple(pnum)
@@ -134,3 +134,40 @@ def test_check_str_by_regular():
         _check_str_by_regular(str5)
     with pytest.raises(ValueError):
         _check_str_by_regular(str6)
+
+def test_parameter_lazy_init():
+    # support lazy init in SEMI_AUTO_PARALLEL mode
+    context.reset_auto_parallel_context()
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8)
+    # Call init_data() without set default_input.
+    para = Parameter(initializer('ones', [1, 2, 3], mstype.float32), 'test1')
+    assert not isinstance(para.default_input, Tensor)
+    para = para.init_data()
+    assert isinstance(para.default_input, Tensor)
+    assert np.array_equal(para.default_input.asnumpy(), np.ones((1, 2, 3)))
+
+    # Call init_data() after default_input is set.
+    para = Parameter(initializer('ones', [1, 2, 3], mstype.float32), 'test2')
+    assert not isinstance(para.default_input, Tensor)
+    # expect type error when not init
+    with pytest.raises(TypeError):
+        para.default_input = Tensor(np.zeros((1, 2, 3)))
+    # init then assign
+    para = para.init_data()
+    # check the type
+    with pytest.raises(ValueError):
+        para.default_input = Tensor(np.zeros((1, 2, 3)))
+    # check the shape
+    with pytest.raises(ValueError):
+        para.default_input = Tensor(np.zeros((1, 2)))
+    # expect change ok
+    para.default_input = Tensor(np.zeros((1, 2, 3)).astype(np.float32))
+    assert np.array_equal(para.default_input.asnumpy(), np.zeros((1, 2, 3)))
+    para.default_input = initializer('ones', [1, 2, 3], mstype.float32)
+    assert isinstance(para.default_input, Tensor)
+    # same object and has inited
+    assert np.array_equal(para.default_input.asnumpy(), np.ones((1, 2, 3)))
+    # expect no effect.
+    para.init_data()
+    assert np.array_equal(para.default_input.asnumpy(), np.ones((1, 2, 3)))
+    context.reset_auto_parallel_context()

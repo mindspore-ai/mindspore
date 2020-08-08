@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef PIPELINE_STATIC_ANALYSIS_STATIC_ANALYSIS_H_
-#define PIPELINE_STATIC_ANALYSIS_STATIC_ANALYSIS_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_STATIC_ANALYSIS_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_STATIC_ANALYSIS_H_
 
 #include <list>
 #include <memory>
@@ -33,9 +33,9 @@
 
 #include "utils/log_adapter.h"
 #include "ir/anf.h"
-#include "ir/primitive_py.h"
+#include "utils/primitive_py.h"
 #include "abstract/analysis_context.h"
-#include "pipeline/jit/static_analysis/abstract_function.h"
+#include "abstract/abstract_function.h"
 #include "pipeline/jit/parse/parse.h"
 
 namespace mindspore {
@@ -232,7 +232,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
 
   const PrimEvaluatorMap &prim_constructors_;
   FuncGraphManagerPtr func_graph_manager_;
-  std::unordered_map<AbstractFunctionPtr, EvaluatorPtr> constructors_;
+  std::unordered_map<AbstractFunctionPtr, EvaluatorPtr, AbstractFunctionHasher, AbstractFunctionEqual> constructors_;
   AnfNodeConfigMap anfnode_config_map_;
   // Use a list to trace multiple evaluators.
   std::list<std::pair<EvaluatorPtr, AbstractBasePtrList>> eval_trace_;
@@ -277,4 +277,4 @@ EvalResultPtr EvalOnePrim(const PrimitivePtr &p, const AbstractBasePtrList &arg_
 }  // namespace abstract
 }  // namespace mindspore
 
-#endif  // PIPELINE_STATIC_ANALYSIS_STATIC_ANALYSIS_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_STATIC_ANALYSIS_H_

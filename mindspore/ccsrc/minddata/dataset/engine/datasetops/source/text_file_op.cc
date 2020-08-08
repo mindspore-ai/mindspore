@@ -21,7 +21,7 @@
 #include <string>
 #include <utility>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/engine/datasetops/source/text_file_op.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/util/task_manager.h"
@@ -58,7 +58,7 @@ Status TextFileOp::Builder::Build(std::shared_ptr<TextFileOp> *op) {
   // Throttle the number of workers if we have more workers than files!
   if (static_cast<size_t>(builder_num_workers_) > builder_text_files_list_.size()) {
     builder_num_workers_ = builder_text_files_list_.size();
-    MS_LOG(WARNING) << "TextFileOp operator parallelism reduced to " << builder_num_workers_ << " workers.";
+    MS_LOG(DEBUG) << "TextFileOp operator parallelism reduced to " << builder_num_workers_ << " workers.";
   }
 
   builder_schema_ = std::make_unique<DataSchema>();
@@ -98,8 +98,6 @@ TextFileOp::TextFileOp(int32_t num_workers, int64_t rows_per_buffer, int64_t tot
 
 // A print method typically used for debugging
 void TextFileOp::Print(std::ostream &out, bool show_all) const {
-  // Always show the id and name as first line regardless if this summary or detailed print
-  out << "(" << std::setw(2) << operator_id_ << ") <TextFileOp>:";
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
     ParallelOp::Print(out, show_all);
@@ -146,7 +144,7 @@ Status TextFileOp::LoadTensor(const std::string &line, std::unique_ptr<TensorQTa
   (*tensor_table)->push_back(std::move(tRow));
 
   std::shared_ptr<Tensor> tensor;
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&tensor, {line}, TensorShape::CreateScalar()));
+  RETURN_IF_NOT_OK(Tensor::CreateScalar(line, &tensor));
   (**tensor_table)[row][0] = std::move(tensor);
   return Status::OK();
 }
@@ -421,13 +419,14 @@ Status TextFileOp::operator()() {
     std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
     RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
 
-    if (!BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat)) {
+    if (IsLastIteration()) {
       finished_reading_dataset_ = true;
       NotifyToFillIOBlockQueue();
     } else {
       jagged_buffer_connector_->DoReset();
       buffer_id = 0;
     }
+    UpdateRepeatAndEpochCounter();
   }
 
   std::unique_ptr<DataBuffer> eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);

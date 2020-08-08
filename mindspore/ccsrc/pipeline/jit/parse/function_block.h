@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef PIPELINE_PARSE_FUNCTION_BLOCK_H_
-#define PIPELINE_PARSE_FUNCTION_BLOCK_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_FUNCTION_BLOCK_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_FUNCTION_BLOCK_H_
 
 #include <vector>
 #include <string>
@@ -52,7 +52,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   AnfNodePtr ReadVariable(const std::string &var_name);
   void AddPrevBlock(const FunctionBlockPtr &block);
   void SetPhiArgument(const ParameterPtr &phi);
-  void CollectRemovablePhi(const ParameterPtr &phi);
+  bool CollectRemovablePhi(const ParameterPtr &phi);
   // A block is matured if all its predecessors is generated
   void Mature();
   CNodePtr ForceToBoolNode(const AnfNodePtr &cond);
@@ -68,7 +68,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   void AddGlobalVar(const std::string &var_name) { (void)global_vars_.insert(var_name); }
   bool IsGlobalVar(const std::string &var_name) { return global_vars_.find(var_name) != global_vars_.end(); }
   AnfNodePtr MakeResolveAstOp(const py::object &op);
-  AnfNodePtr MakeResolveClassMember(std::string attr);
+  AnfNodePtr MakeResolveClassMember(const std::string &attr);
   AnfNodePtr MakeResolveSymbol(const std::string &value);
   AnfNodePtr MakeResolveOperation(const std::string &value);
   AnfNodePtr MakeResolve(const std::shared_ptr<NameSpace> &name_space, const std::shared_ptr<Symbol> &resolve_symbol);
@@ -115,4 +115,4 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
 }  // namespace parse
 }  // namespace mindspore
 
-#endif  // PIPELINE_PARSE_FUNCTION_BLOCK_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_FUNCTION_BLOCK_H_

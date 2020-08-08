@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_KERNELS_IMAGE_RANDOM_ROTATION_OP_H_
-#define DATASET_KERNELS_IMAGE_RANDOM_ROTATION_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_ROTATION_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_ROTATION_OP_H_
 
 #include <memory>
 #include <random>
@@ -58,10 +58,6 @@ class RandomRotationOp : public TensorOp {
 
   ~RandomRotationOp() override = default;
 
-  // Print function for RandomRotation
-  // @param out output stream to print to
-  void Print(std::ostream &out) const override { out << "RandomRotationOp: "; }
-
   // Overrides the base class compute function
   // Calls the rotate function in ImageUtils, this function takes an input tensor
   // and transforms its data using openCV, the output memory is manipulated to contain the result
@@ -87,4 +83,4 @@ class RandomRotationOp : public TensorOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_KERNELS_IMAGE_RANDOM_ROTATION_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_ROTATION_OP_H_

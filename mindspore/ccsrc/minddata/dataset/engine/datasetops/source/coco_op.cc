@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iomanip>
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
@@ -167,7 +167,7 @@ Status CocoOp::operator()() {
       RETURN_IF_NOT_OK(io_block_queues_[(buf_cnt_++) % num_workers_]->Add(
         std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone))));
     }
-    if (!BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat)) {
+    if (IsLastIteration()) {
       std::unique_ptr<IOBlock> eoe_block = std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe);
       std::unique_ptr<IOBlock> eof_block = std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof);
       RETURN_IF_NOT_OK(io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::move(eoe_block)));
@@ -184,12 +184,11 @@ Status CocoOp::operator()() {
       wp_.Clear();
       RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
     }
+    UpdateRepeatAndEpochCounter();
   }
 }
 
 void CocoOp::Print(std::ostream &out, bool show_all) const {
-  // Always show the id and name as first line regardless if this summary or detailed print
-  out << "(" << std::setw(2) << operator_id_ << ") <CocoOp>:";
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
     ParallelOp::Print(out, show_all);
@@ -215,7 +214,7 @@ Status CocoOp::LoadTensorRow(row_id_type row_id, const std::string &image_id, Te
   auto itr = coordinate_map_.find(image_id);
   if (itr == coordinate_map_.end()) RETURN_STATUS_UNEXPECTED("Invalid image_id found :" + image_id);
 
-  std::string kImageFile = image_folder_path_ + image_id;
+  std::string kImageFile = image_folder_path_ + std::string("/") + image_id;
   RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile, data_schema_->column(0), &image));
 
   auto bboxRow = itr->second;
@@ -239,9 +238,8 @@ Status CocoOp::LoadTensorRow(row_id_type row_id, const std::string &image_id, Te
   }
 
   std::vector<dsize_t> bbox_dim = {bbox_row_num, bbox_column_num};
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&coordinate, data_schema_->column(1).tensorImpl(), TensorShape(bbox_dim),
-                                        data_schema_->column(1).type(),
-                                        reinterpret_cast<unsigned char *>(&bbox_row[0])));
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(bbox_row, TensorShape(bbox_dim), &coordinate));
+
   if (task_type_ == TaskType::Detection) {
     RETURN_IF_NOT_OK(LoadDetectionTensorRow(row_id, image_id, image, coordinate, trow));
   } else if (task_type_ == TaskType::Stuff || task_type_ == TaskType::Keypoint) {
@@ -278,13 +276,12 @@ Status CocoOp::LoadDetectionTensorRow(row_id_type row_id, const std::string &ima
       iscrowd_row.push_back(annotation[i]);
     }
   }
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(
-    &category_id, data_schema_->column(2).tensorImpl(), TensorShape({static_cast<dsize_t>(category_id_row.size()), 1}),
-    data_schema_->column(2).type(), reinterpret_cast<unsigned char *>(&category_id_row[0])));
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(
+    category_id_row, TensorShape({static_cast<dsize_t>(category_id_row.size()), 1}), &category_id));
 
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(
-    &iscrowd, data_schema_->column(3).tensorImpl(), TensorShape({static_cast<dsize_t>(iscrowd_row.size()), 1}),
-    data_schema_->column(3).type(), reinterpret_cast<unsigned char *>(&iscrowd_row[0])));
+  RETURN_IF_NOT_OK(
+    Tensor::CreateFromVector(iscrowd_row, TensorShape({static_cast<dsize_t>(iscrowd_row.size()), 1}), &iscrowd));
+
   (*trow) = TensorRow(row_id, {std::move(image), std::move(coordinate), std::move(category_id), std::move(iscrowd)});
   return Status::OK();
 }
@@ -302,9 +299,8 @@ Status CocoOp::LoadSimpleTensorRow(row_id_type row_id, const std::string &image_
 
   item_queue = itr_item->second;
   std::vector<dsize_t> bbox_dim = {static_cast<dsize_t>(item_queue.size()), 1};
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&item, data_schema_->column(2).tensorImpl(), TensorShape(bbox_dim),
-                                        data_schema_->column(2).type(),
-                                        reinterpret_cast<unsigned char *>(&item_queue[0])));
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(item_queue, TensorShape(bbox_dim), &item));
+
   (*trow) = TensorRow(row_id, {std::move(image), std::move(coordinate), std::move(item)});
   return Status::OK();
 }
@@ -334,18 +330,14 @@ Status CocoOp::LoadMixTensorRow(row_id_type row_id, const std::string &image_id,
       area_row.push_back(annotation[i]);
     }
   }
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(
+    category_id_row, TensorShape({static_cast<dsize_t>(category_id_row.size()), 1}), &category_id));
 
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(
-    &category_id, data_schema_->column(2).tensorImpl(), TensorShape({static_cast<dsize_t>(category_id_row.size()), 1}),
-    data_schema_->column(2).type(), reinterpret_cast<unsigned char *>(&category_id_row[0])));
+  RETURN_IF_NOT_OK(
+    Tensor::CreateFromVector(iscrowd_row, TensorShape({static_cast<dsize_t>(iscrowd_row.size()), 1}), &iscrowd));
 
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(
-    &iscrowd, data_schema_->column(3).tensorImpl(), TensorShape({static_cast<dsize_t>(iscrowd_row.size()), 1}),
-    data_schema_->column(3).type(), reinterpret_cast<unsigned char *>(&iscrowd_row[0])));
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(area_row, TensorShape({static_cast<dsize_t>(area_row.size()), 1}), &area));
 
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(
-    &area, data_schema_->column(4).tensorImpl(), TensorShape({static_cast<dsize_t>(area_row.size()), 1}),
-    data_schema_->column(4).type(), reinterpret_cast<unsigned char *>(&area_row[0])));
   (*trow) = TensorRow(
     row_id, {std::move(image), std::move(coordinate), std::move(category_id), std::move(iscrowd), std::move(area)});
   return Status::OK();
@@ -596,7 +588,7 @@ Status CocoOp::LaunchThreadsAndInitOp() {
 }
 
 Status CocoOp::ReadImageToTensor(const std::string &path, const ColDescriptor &col, std::shared_ptr<Tensor> *tensor) {
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, path));
+  RETURN_IF_NOT_OK(Tensor::CreateFromFile(path, tensor));
 
   if (decode_ == true) {
     Status rc = Decode(*tensor, tensor);

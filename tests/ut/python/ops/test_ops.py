@@ -237,6 +237,44 @@ class ScatterAdd(nn.Cell):
         return out
 
 
+class ScatterNonAliasingAdd(nn.Cell):
+    """ScatterNonAliasingAdd net definition"""
+
+    def __init__(self, ref_shape, dtype=np.float32):
+        super(ScatterNonAliasingAdd, self).__init__()
+        self.scatter_no_aliasing_add = P.ScatterNonAliasingAdd()
+        self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
+
+    def construct(self, indices, updates):
+        out = self.scatter_no_aliasing_add(self.ref, indices, updates)
+        return out
+
+
+class ScatterNdSub(nn.Cell):
+    """ScatterNdSub net definition"""
+
+    def __init__(self, ref_shape, dtype=np.float32):
+        super(ScatterNdSub, self).__init__()
+        self.scatter_nd_sub = P.ScatterNdSub()
+        self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
+
+    def construct(self, indices, updates):
+        out = self.scatter_nd_sub(self.ref, indices, updates)
+        return out
+
+class ScatterNdAdd(nn.Cell):
+    """ScatterNdAdd net definition"""
+
+    def __init__(self, ref_shape, dtype=np.float32):
+        super(ScatterNdAdd, self).__init__()
+        self.scatter_nd_add = P.ScatterNdAdd()
+        self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
+
+    def construct(self, indices, updates):
+        out = self.scatter_nd_add(self.ref, indices, updates)
+        return out
+
+
 class ScatterSub(nn.Cell):
     """ScatterSub net definition"""
 
@@ -810,6 +848,10 @@ test_case_math_ops = [
         'block': P.Asinh(),
         'desc_inputs': [[3, 4, 5]],
         'desc_bprop': [[3, 4, 5]]}),
+    ('Tan', {
+        'block': P.Tan(),
+        'desc_inputs': [[2, 3]],
+        'desc_bprop': [[2, 3]]}),
     ('Reciprocal', {
         'block': P.Reciprocal(),
         'desc_inputs': [[2, 3, 3, 5]],
@@ -912,6 +954,14 @@ test_case_math_ops = [
         'block': P.FloorMod(),
         'desc_inputs': [[3, 4, 5], [2, 3, 4, 5]],
         'desc_bprop': [[2, 3, 4, 5]]}),
+    ('TruncateDiv', {
+        'block': P.TruncateDiv(),
+        'desc_inputs': [[3, 4, 5], [2, 3, 4, 5]],
+        'desc_bprop': [[2, 3, 4, 5]]}),
+    ('TruncateMod', {
+        'block': P.TruncateMod(),
+        'desc_inputs': [[3, 4, 5], [2, 3, 4, 5]],
+        'desc_bprop': [[2, 3, 4, 5]]}),
     ('identity', {
         'block': ops.functional.identity,
         'desc_inputs': [[2, 2]],
@@ -948,6 +998,18 @@ test_case_math_ops = [
         'desc_const': [(0, 3, 1, 2)],
         'desc_inputs': [],
         'skip': ['backward']}),
+    ('Xdivy', {
+        'block': P.Xdivy(),
+        'desc_inputs': [[4, 5], [2, 3, 4, 5]],
+        'desc_bprop': [[2, 3, 4, 5]]}),
+    ('Xlogy', {
+        'block': P.Xlogy(),
+        'desc_inputs': [[4, 5], [2, 3, 4, 5]],
+        'desc_bprop': [[2, 3, 4, 5]]}),
+    ('SquaredDifference', {
+        'block': P.SquaredDifference(),
+        'desc_inputs': [[4, 5], [2, 3, 4, 5]],
+        'desc_bprop': [[2, 3, 4, 5]]}),
     ('Square', {
         'block': P.Square(),
         'desc_inputs': [[4]],
@@ -1111,13 +1173,19 @@ test_case_math_ops = [
         'block': P.SquareSumAll(),
         'desc_inputs': [Tensor(np.array([0, 1, 4, 5]).astype(np.float32)),
                         Tensor(np.array([1, 1, 3, 7]).astype(np.float32))],
-        'skip': ['backward']}),
+        'desc_bprop': [Tensor(np.array(0.1).astype(np.float32)),
+                       Tensor(np.array(0.1).astype(np.float32))]}),
     ('Cos', {
         'block': P.Cos(),
         'desc_inputs': [[2, 3]],
         'desc_bprop': [[2, 3]]}),
     ('ReduceAll', {
         'block': P.ReduceAll(),
+        'desc_const': [1],
+        'desc_inputs': [Tensor(np.array([[True, False], [True, True]]))],
+        'desc_bprop': []}),
+    ('ReduceAny', {
+        'block': P.ReduceAny(),
         'desc_const': [1],
         'desc_inputs': [Tensor(np.array([[True, False], [True, True]]))],
         'desc_bprop': []}),
@@ -1246,13 +1314,6 @@ test_case_nn_ops = [
         'block': P.AvgPool(ksize=(2, 2), strides=(2, 2), padding="VALID"),
         'desc_inputs': [[100, 3, 28, 28]],
         'desc_bprop': [[100, 3, 14, 14]]}),
-    ('AvgPoolGrad', {
-        'block': G.AvgPoolGrad(ksize=(2, 2), strides=(2, 2), padding="VALID"),
-        'desc_const': [(3, 4, 6, 6)],
-        'const_first': True,
-        'desc_inputs': [[3, 4, 6, 6]],
-        'desc_bprop': [[3, 4, 6, 6]],
-        'skip': ['backward']}),
     ('MaxPoolWithArgmax', {
         'block': P.MaxPoolWithArgmax(ksize=2, strides=2),
         'desc_inputs': [[128, 32, 32, 64]],
@@ -1372,14 +1433,12 @@ test_case_nn_ops = [
         'block': P.UnsortedSegmentSum(),
         'desc_const': [1280],
         'desc_inputs': [[1280, 1024], Tensor(np.ones(1280).astype(np.int32))],
-        'desc_bprop': [[8192, 1024]],
-        'skip': ['backward']}),
+        'desc_bprop': [[1280, 1024]]}),
     ('UnsortedSegmentSum_1', {
         'block': P.UnsortedSegmentSum(),
         'desc_const': [4],
         'desc_inputs': [[3, 2, 1, 3], Tensor(np.array([[0, 1], [0, 1], [0, 1]]).astype(np.int32))],
-        'desc_bprop': [[4, 1, 3]],
-        'skip': ['backward']}),
+        'desc_bprop': [[4, 1, 3]]}),
     ('UnsortedSegmentMin', {
         'block': P.UnsortedSegmentMin(),
         'desc_const': [4],
@@ -1719,13 +1778,11 @@ test_case_array_ops = [
     ('AddN', {
         'block': NetForTupleInput(P.AddN()),
         'desc_inputs': [[2, 3, 3, 5], [2, 3, 3, 5]],
-        'desc_bprop': [[2, 3, 3, 5]],
-        'skip': ['backward']}),
+        'desc_bprop': [[2, 3, 3, 5]]}),
     ('AccumulateNV2', {
         'block': NetForTupleInput(P.AccumulateNV2()),
         'desc_inputs': [[2, 3, 3, 5], [2, 3, 3, 5]],
-        'desc_bprop': [[2, 3, 3, 5]],
-        'skip': ['backward']}),
+        'desc_bprop': [[2, 3, 3, 5]]}),
     ('Shape', {
         'block': P.Shape(),
         'desc_inputs': [[3, 3, 2, 2]],
@@ -1786,6 +1843,14 @@ test_case_array_ops = [
         'desc_const': [(2, 1, 1, 2)],
         'desc_inputs': [[2, 2, 2]],
         'desc_bprop': [[2, 2, 2, 4]]}),
+    ('ReverseV2', {
+        'block': P.ReverseV2(axis=[1]),
+        'desc_inputs': [(Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]).astype(np.float32)))],
+        'desc_bprop': [(Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]).astype(np.float32)))]}),
+    ('Rint', {
+        'block': P.Rint(),
+        'desc_inputs': [(Tensor(np.array([-1.6, -0.1, 1.5, 2.0]).astype(np.float32)))],
+        'skip': ['backward']}),
     ('ConcatV2_0', {
         'block': P.Concat(),
         'desc_inputs': [
@@ -2049,6 +2114,21 @@ test_case_other_ops = [
         'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
                         Tensor(np.array([2.0, 3.0, 4.0], np.float32))),
         'skip': ['backward']}),
+    ('ScatterNonAliasingAdd_1d', {
+        'block': ScatterNonAliasingAdd((8,)),
+        'desc_inputs': (Tensor(np.array([[2], [3], [4], [5]], np.int32)),
+                        Tensor(np.array([2.0, 3.0, 4.0, 8.0], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterNdAdd', {
+        'block': ScatterNdAdd((8,)),
+        'desc_inputs': (Tensor(np.array([[2], [3], [4], [5]], np.int32)),
+                        Tensor(np.array([2.0, 3.0, 4.0, 8.0], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterNdSub', {
+        'block': ScatterNdAdd((8,)),
+        'desc_inputs': (Tensor(np.array([[2], [3], [4], [5]], np.int32)),
+                        Tensor(np.array([2.0, 3.0, 4.0, 8.0], np.float32))),
+        'skip': ['backward']}),
     ('ScatterAdd', {
         'block': ScatterAdd((6,)),
         'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
@@ -2228,36 +2308,36 @@ test_case_other_ops = [
 ]
 
 test_case_quant_ops = [
-    ('AscendQuant_1', {
-        'block': inner.AscendQuant(0.5, 0.0, False, "Round"),
+    ('Quant_1', {
+        'block': inner.Quant(0.5, 0.0, False, "Round"),
         'desc_inputs': [Tensor(np.random.rand(1, 2, 4, 4), mstype.float32)],
         'skip': ['backward']}),
-    ('AscendQuant_2', {
-        'block': inner.AscendQuant(80.0, 10.0, True, "Round"),
+    ('Quant_2', {
+        'block': inner.Quant(80.0, 10.0, True, "Round"),
         'desc_inputs': [Tensor([100.0, 200.0], mstype.float32)],
         'skip': ['backward']}),
-    ('AscendQuant_3', {
-        'block': inner.AscendQuant(80.0, 0.0, False, "Floor"),
+    ('Quant_3', {
+        'block': inner.Quant(80.0, 0.0, False, "Floor"),
         'desc_inputs': [Tensor([100.0, 200.0], mstype.float32)],
         'skip': ['backward']}),
-    ('AscendQuant_4', {
-        'block': inner.AscendQuant(80.0, 0.0, False, "Ceil"),
+    ('Quant_4', {
+        'block': inner.Quant(80.0, 0.0, False, "Ceil"),
         'desc_inputs': [Tensor([100.0, 200.0], mstype.float32)],
         'skip': ['backward']}),
-    ('AscendQuant_5', {
-        'block': inner.AscendQuant(80.0, 0.0, False, "Trunc"),
+    ('Quant_5', {
+        'block': inner.Quant(80.0, 0.0, False, "Trunc"),
         'desc_inputs': [Tensor([100.0, 200.0], mstype.float32)],
         'skip': ['backward']}),
-    ('AscendQuant_6', {
-        'block': inner.AscendQuant(-80.0, 10.0, False, "Round"),
+    ('Quant_6', {
+        'block': inner.Quant(-80.0, 10.0, False, "Round"),
         'desc_inputs': [Tensor([100.0, 200.0], mstype.float32)],
         'skip': ['backward']}),
-    ('AscendQuant_7', {
-        'block': inner.AscendQuant(80.0, -10.0, False, "Round"),
+    ('Quant_7', {
+        'block': inner.Quant(80.0, -10.0, False, "Round"),
         'desc_inputs': [Tensor([100.0, 200.0], mstype.float32)],
         'skip': ['backward']}),
-    ('AscendQuant_8', {
-        'block': inner.AscendQuant(80.0, 10.0, False, "Round"),
+    ('Quant_8', {
+        'block': inner.Quant(80.0, 10.0, False, "Round"),
         'desc_inputs': [Tensor([100.0, 200.0], mstype.float16)],
         'skip': ['backward']}),
 ]

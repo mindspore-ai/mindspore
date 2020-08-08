@@ -1,0 +1,4 @@
+Default/Cast-op6 32 1 0
+Default/TransData-op7 32 2 0
+Default/network-WithLossCell/_backbone-ResNet/conv1-Conv2d/Cast-op5 32 3 0
+Default/network-WithLossCell/_backbone-ResNet/layer1-SequentialCell/0-ResidualBlock/conv1-Conv2d/Cast-op28 4 4 0

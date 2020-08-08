@@ -23,7 +23,7 @@ from setuptools import setup, find_packages
 from setuptools.command.egg_info import egg_info
 from setuptools.command.build_py import build_py
 
-version = '0.5.0'
+version = '0.6.0'
 
 backend_policy = os.getenv('BACKEND_POLICY')
 commit_id = os.getenv('COMMIT_ID').replace("\n", "")
@@ -146,7 +146,7 @@ class BuildPy(build_py):
         super().run()
         mindspore_dir = os.path.join(pkg_dir, 'build', 'lib', 'mindspore')
         update_permissions(mindspore_dir)
-        mindspore_dir = os.path.join(pkg_dir, 'build', 'lib', '_akg')
+        mindspore_dir = os.path.join(pkg_dir, 'build', 'lib', 'akg')
         update_permissions(mindspore_dir)
 
 

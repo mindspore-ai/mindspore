@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_MANAGER_H_
-#define MINDSPORE_CCSRC_IR_MANAGER_H_
+#ifndef MINDSPORE_CORE_IR_MANAGER_H_
+#define MINDSPORE_CORE_IR_MANAGER_H_
 
 #include <unordered_set>
 #include <set>
@@ -34,10 +34,10 @@
 #include "utils/signal.h"
 #include "utils/ordered_set.h"
 #include "utils/ordered_map.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "utils/counter.h"
 #include "utils/hashing.h"
-#include "utils/base_ref.h"
+#include "base/base_ref.h"
 #include "ir/anf.h"
 
 namespace mindspore {
@@ -463,4 +463,4 @@ struct Change {
 
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_MANAGER_H_
+#endif  // MINDSPORE_CORE_IR_MANAGER_H_

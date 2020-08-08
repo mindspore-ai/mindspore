@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef PIPELINE_STATIC_ANALYSIS_EVALUATOR_H_
-#define PIPELINE_STATIC_ANALYSIS_EVALUATOR_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_EVALUATOR_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_EVALUATOR_H_
 
 #include <memory>
 #include <string>
@@ -25,7 +25,7 @@
 #include <vector>
 
 #include "pipeline/jit/static_analysis/static_analysis.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace abstract {
@@ -327,4 +327,4 @@ class JEvaluator : public Evaluator {
 };
 }  // namespace abstract
 }  // namespace mindspore
-#endif  // PIPELINE_STATIC_ANALYSIS_EVALUATOR_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_EVALUATOR_H_

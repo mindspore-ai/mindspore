@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_OPS_INFO_RESHAPE_INFO_H_
-#define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_RESHAPE_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_RESHAPE_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_RESHAPE_INFO_H_
 
 #include <ir/value.h>
 
@@ -97,11 +97,12 @@ class ReshapeInfo : public OperatorInfo {
   TensorLayout output_layout_;
   bool input_layout_set_flag_;
   bool output_layout_set_flag_;
-  bool is_generating_costs_;
+  bool is_generating_costs_ = false;
+  bool is_skip_ = false;
   std::string pre_operator_name_;
   std::string next_operator_name_;
 };
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_OPS_INFO_RESHAPE_INFO_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_RESHAPE_INFO_H_

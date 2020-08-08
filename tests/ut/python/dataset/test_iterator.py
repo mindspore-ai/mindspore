@@ -33,7 +33,7 @@ def check(project_columns):
         assert all([np.array_equal(d1, d2) for d1, d2 in zip(data_actual, data_expected)])
 
 
-def test_case_iterator():
+def test_iterator_create_tuple():
     """
     Test creating tuple iterator
     """
@@ -73,7 +73,7 @@ def test_iterator_weak_ref():
 
     _cleanup()
     with pytest.raises(AttributeError) as info:
-        itr2.get_next()
+        itr2.__next__()
     assert "object has no attribute 'depipeline'" in str(info.value)
 
     del itr1
@@ -95,7 +95,9 @@ class MyDict(dict):
 
 
 def test_tree_copy():
-    #  Testing copying the tree with a pyfunc that cannot be pickled
+    """
+    Testing copying the tree with a pyfunc that cannot be pickled
+    """
 
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=COLUMNS)
     data1 = data.map(operations=[MyDict()])
@@ -110,4 +112,6 @@ def test_tree_copy():
 
 
 if __name__ == '__main__':
+    test_iterator_create_tuple()
+    test_iterator_weak_ref()
     test_tree_copy()

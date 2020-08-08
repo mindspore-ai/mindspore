@@ -16,7 +16,7 @@
 #include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
 #include <fstream>
 #include <iomanip>
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
@@ -151,7 +151,7 @@ Status ImageFolderOp::operator()() {
       RETURN_IF_NOT_OK(
         io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(keys, IOBlock::kDeIoBlockNone)));
     }
-    if (!BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat)) {
+    if (IsLastIteration()) {
       std::unique_ptr<IOBlock> eoe_block = std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe);
       std::unique_ptr<IOBlock> eof_block = std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof);
       RETURN_IF_NOT_OK(io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::move(eoe_block)));
@@ -168,6 +168,7 @@ Status ImageFolderOp::operator()() {
       wp_.Clear();
       RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
     }
+    UpdateRepeatAndEpochCounter();
   }
 }
 
@@ -201,10 +202,8 @@ Status ImageFolderOp::WorkerEntry(int32_t worker_id) {
 // Load 1 TensorRow (image,label) using 1 ImageLabelPair. 1 function call produces 1 TensorTow in a DataBuffer
 Status ImageFolderOp::LoadTensorRow(row_id_type row_id, ImageLabelPair pairPtr, TensorRow *trow) {
   std::shared_ptr<Tensor> image, label;
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&label, data_schema_->column(1).tensorImpl(), data_schema_->column(1).shape(),
-                                        data_schema_->column(1).type(),
-                                        reinterpret_cast<unsigned char *>(&pairPtr->second)));
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&image, folder_path_ + (pairPtr->first)));
+  RETURN_IF_NOT_OK(Tensor::CreateScalar(pairPtr->second, &label));
+  RETURN_IF_NOT_OK(Tensor::CreateFromFile(folder_path_ + (pairPtr->first), &image));
 
   if (decode_ == true) {
     Status rc = Decode(image, &image);
@@ -230,8 +229,6 @@ Status ImageFolderOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_p
 }
 
 void ImageFolderOp::Print(std::ostream &out, bool show_all) const {
-  // Always show the id and name as first line regardless if this summary or detailed print
-  out << "(" << std::setw(2) << operator_id_ << ") <ImageFolderOp>:";
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
     ParallelOp::Print(out, show_all);

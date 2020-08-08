@@ -25,19 +25,21 @@
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/engine/perf/profiling.h"
 #include "minddata/dataset/engine/perf/device_queue_tracing.h"
+#include "minddata/dataset/engine/datasetops/epoch_ctrl_op.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/util/task_manager.h"
 
 namespace mindspore {
 namespace dataset {
 DeviceQueueOp::DeviceQueueOp(std::string channel_name, DeviceType device_type, int32_t device_id, int32_t prefetch_size,
-                             int32_t op_connector_size, int64_t num_batch)
+                             int32_t op_connector_size, bool send_epoch_end)
     : PipelineOp(op_connector_size),
       channel_name_(channel_name),
       device_type_(device_type),
       device_id_(device_id),
       prefetch_size_(prefetch_size),
-      num_batch_(num_batch) {}
+      send_epoch_end_(send_epoch_end),
+      stop_send_(false) {}
 
 DeviceQueueOp::~DeviceQueueOp() {}
 
@@ -53,14 +55,26 @@ DeviceQueueOp::Builder::Builder(int32_t prefetch_size)
     : builder_prefetch_size_(prefetch_size),
       builder_device_id_(0),
       builder_device_type_(DeviceType::CPU),
-      builder_channel_name_(""),
-      builder_num_batch_(0) {
+      builder_channel_name_("") {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   builder_op_connector_size_ = cfg->op_connector_size();
 }
 
 Status DeviceQueueOp::EoeReceived(int32_t worker_id) {
   state_ = OpState::kDeOpIdle;
+  return Status::OK();
+}
+
+Status DeviceQueueOp::CheckExceptions(const std::unique_ptr<DataBuffer> &buffer) const {
+  // this method checks if the buffer meets the conditions to be sent to TDT
+  if (buffer->NumRows() != 0) {
+    TensorRow row;
+    buffer->GetRow(0, &row);
+    for (const auto &item : row) {
+      CHECK_FAIL_RETURN_UNEXPECTED(item->type().IsNumeric(), "Cannot send tensor of string type to device.");
+      CHECK_FAIL_RETURN_UNEXPECTED(item->HasData(), "Cannot send tensor with no data.");
+    }
+  }
   return Status::OK();
 }
 
@@ -82,23 +96,10 @@ Status DeviceQueueOp::operator()() {
   return Status::OK();
 }
 
-Status DeviceQueueOp::CheckExceptions(const std::unique_ptr<DataBuffer> &buffer) const {
-  // this method checks if the buffer meets the conditions to be sent to TDT
-  if (buffer->NumRows() != 0) {
-    TensorRow row;
-    buffer->GetRow(0, &row);
-    for (const auto &item : row) {
-      CHECK_FAIL_RETURN_UNEXPECTED(item->type().IsNumeric(), "Cannot send tensor of string type to device.");
-    }
-  }
-  return Status::OK();
-}
-
 #ifdef ENABLE_TDTQUE
 Status DeviceQueueOp::SendDataToAscend() {
   MS_LOG(INFO) << "Device queue, sending data to Ascend.";
   int64_t total_batch = 0;
-  bool is_break_loop = false;
   double batch_start_time, end_time;
   int32_t batch_cost, tdt_cost;
   int32_t connector_size = 0;
@@ -115,15 +116,20 @@ Status DeviceQueueOp::SendDataToAscend() {
   std::unique_ptr<DataBuffer> current_buffer;
   RETURN_IF_NOT_OK(GetNextInput(&current_buffer));
 
-  while (!current_buffer->eof() && !is_break_loop) {
-    while (!current_buffer->eoe() && !is_break_loop) {
+  while (!current_buffer->eof()) {
+    while (!current_buffer->eoe()) {
       RETURN_IF_NOT_OK(CheckExceptions(current_buffer));
       TensorRow currRow;
-      for (int row_id = 0; row_id < current_buffer->NumRows() && !is_break_loop; row_id++) {
+      for (int row_id = 0; row_id < current_buffer->NumRows(); row_id++) {
         RETURN_IF_NOT_OK(current_buffer->GetRow(row_id, &currRow));
         auto status = tdtInstancePtr->hostPush(currRow, true, channel_name_, isProfilingEnable, tdt_cost);
         if (status == TdtStatus::FAILED) {
-          return Status(StatusCode::kTDTPushFailure, "TDT Push Failed");
+          if (stop_send_) {
+            MS_LOG(INFO) << "stop_send received";
+            return Status::OK();
+          } else {
+            return Status(StatusCode::kTDTPushFailure, "TDT Push Failed");
+          }
         }
 
         if (isProfilingEnable) {
@@ -140,15 +146,25 @@ Status DeviceQueueOp::SendDataToAscend() {
           profiling_node->Record(CONNECTOR_DEPTH, connector_capacity, total_batch + 1, connector_size);
         }
         total_batch++;
-        if (num_batch_ > 0 && total_batch == num_batch_) {
-          is_break_loop = true;
-        }
       }
       if (isProfilingEnable) {
         connector_size = ChildOpConnectorSize();
         connector_capacity = ChildOpConnectorCapacity();
       }
       RETURN_IF_NOT_OK(GetNextInput(&current_buffer));
+    }
+    if (current_buffer->eoe() && send_epoch_end_) {
+      TensorRow currRow;
+      auto status =
+        tdtInstancePtr->hostPush(currRow, true, channel_name_, isProfilingEnable, tdt_cost, tdt::TDT_END_OF_SEQUENCE);
+      if (status == TdtStatus::FAILED) {
+        if (stop_send_) {
+          MS_LOG(INFO) << "stop_send received";
+          return Status::OK();
+        } else {
+          return Status(StatusCode::kTDTPushFailure, "TDT Push Failed");
+        }
+      }
     }
     if (isProfilingEnable) {
       connector_size = ChildOpConnectorSize();
@@ -158,7 +174,7 @@ Status DeviceQueueOp::SendDataToAscend() {
   }
 
   tree_->SetFinished();
-  MS_LOG(INFO) << "Device queue total batch is " << total_batch << ", number of batches is " << num_batch_ << ".";
+  MS_LOG(INFO) << "Device queue total batch is " << total_batch;
 
   return Status::OK();
 }
@@ -196,27 +212,22 @@ Status DeviceQueueOp::SendDataToGPU() {
         }
         RETURN_IF_NOT_OK(RetryPushGPUData(data_size, curr_row, handle));
         total_batch++;
-        if (num_batch_ > 0 && total_batch == num_batch_) {
-          is_break_loop = true;
-        }
       }
-      if (!TaskManager::FindMe()->Interrupted())
+      if (!TaskManager::FindMe()->Interrupted() && !GpuBufferMgr::GetInstance().IsClosed())
         RETURN_IF_NOT_OK(GetNextInput(&current_buffer));
       else
         is_break_loop = true;
     }
-    if (!TaskManager::FindMe()->Interrupted())
+    if (!TaskManager::FindMe()->Interrupted() && !GpuBufferMgr::GetInstance().IsClosed())
       RETURN_IF_NOT_OK(GetNextInput(&current_buffer));
     else
       is_break_loop = true;
   }
 
-  MS_LOG(INFO) << "Device queue total batch is " << total_batch << ", number of batches is " << num_batch_ << ".";
+  MS_LOG(INFO) << "Device queue total batch is " << total_batch << ".";
 
   GpuBufferMgr::GetInstance().Close(handle);
-
   GpuBufferMgr::GetInstance().CloseConfirm();
-
   return Status::OK();
 }
 
@@ -240,8 +251,11 @@ Status DeviceQueueOp::RetryPushGPUData(const std::vector<size_t> &data_size, con
       if (ret == BlockQueueStatus_T::ERROR_INPUT) {
         return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "invalid input Data, please check it.");
       } else {
-        MS_LOG(WARNING) << "Retry pushing data...";
-        continue;
+        if (!stop_send_) {
+          MS_LOG(WARNING) << "Retry pushing data...";
+          continue;
+        }
+        break;
       }
     } else {
       break;
@@ -283,20 +297,16 @@ Status DeviceQueueOp::SendDataToCPU() {
       MS_LOG(DEBUG) << "Feature size is " << curr_row[0]->SizeInBytes() << ".";
       MS_LOG(DEBUG) << "Label size is " << curr_row[1]->SizeInBytes() << ".";
       total_batch++;
-      if (num_batch_ > 0 && total_batch == num_batch_) {
-        break;
-      }
+      if (stop_send_) break;
     }
   }
 
-  MS_LOG(INFO) << "Device queue total batch is " << total_batch << ", number of batches is " << num_batch_ << ".";
+  MS_LOG(INFO) << "Device queue total batch is " << total_batch << ".";
 
   return Status::OK();
 }
 
 void DeviceQueueOp::Print(std::ostream &out, bool show_all) const {
-  // Always show the id and name as first line regardless if this summary or detailed print
-  out << "(" << std::setw(2) << operator_id_ << ") <DeviceQueueOp>:";
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
     PipelineOp::Print(out, show_all);

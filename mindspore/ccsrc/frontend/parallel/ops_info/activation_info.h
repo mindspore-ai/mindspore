@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_OPS_INFO_ACTIVATION_INFO_H_
-#define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_ACTIVATION_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_ACTIVATION_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_ACTIVATION_INFO_H_
 
 #include <ir/value.h>
 #include <memory>
@@ -219,6 +219,20 @@ class SigmoidInfo : public ActivationOther {
       : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
   ~SigmoidInfo() override = default;
 };
+
+class DropoutInfo : public ActivationOther {
+ public:
+  DropoutInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+              const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
+  ~DropoutInfo() override = default;
+  Status GenerateStrategies(int32_t stage_id) override;
+
+ protected:
+  Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status GetAttrs() override { return SUCCESS; }
+  Status InferTensorInfo() override;
+};
 }  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PARALLEL_OPS_INFO_ACTIVATION_INFO_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_ACTIVATION_INFO_H_

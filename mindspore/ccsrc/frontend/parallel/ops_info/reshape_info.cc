@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <vector>
+#include <utility>
 
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
@@ -56,7 +57,7 @@ Status ReshapeInfo::CheckStrategy(const StrategyPtr &strategy) {
  * only support batch parallel reshape operator in ReID (batch parallel degree can be smaller than device number)
  */
 Status ReshapeInfo::InferDevMatrixShape() {
-  std::vector<Dimensions> stra = strategy_->GetInputDim();
+  Strategys stra = strategy_->GetInputDim();
   input_strategy_ = stra.at(0);
   dev_matrix_shape_.push_back(input_strategy_[0]);
   return SUCCESS;
@@ -145,17 +146,25 @@ Status ReshapeInfo::ComputeReplaceOp() {
   MS_LOG(DEBUG) << name_ << ": input " << input_layout_.ToString();
   MS_LOG(DEBUG) << name_ << ": output " << output_layout_.ToString();
   MS_LOG(DEBUG) << name_ << ": dev_list " << dev_list.size();
-  RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution.InferTensorRedistributionOperatorList();
-  if (redistribution_oplist_ptr == nullptr) {
-    if (is_generating_costs_) {
-      MS_LOG(DEBUG) << name_ << "InferTensorRedistribution failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << "InferTensorRedistribution failed.";
+  if (is_skip_) {
+    ConstructOperator constructor;
+    replace_op_ = constructor.SkipRedisReshapeOP(output_layout_.slice_shape().array());
+    replace_op_info_.clear();
+    MS_LOG(INFO) << "skip reshape redistribution and reshape slice_shape is "
+                 << ShapeToString(output_layout_.slice_shape().array());
+  } else {
+    RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution.InferTensorRedistributionOperatorList();
+    if (redistribution_oplist_ptr == nullptr) {
+      if (is_generating_costs_) {
+        MS_LOG(DEBUG) << name_ << "InferTensorRedistribution failed.";
+      } else {
+        MS_LOG(ERROR) << name_ << "InferTensorRedistribution failed.";
+      }
+      return FAILED;
     }
-    return FAILED;
+    replace_op_ = redistribution_oplist_ptr->first;
+    replace_op_info_ = redistribution_oplist_ptr->second;
   }
-  replace_op_ = redistribution_oplist_ptr->first;
-  replace_op_info_ = redistribution_oplist_ptr->second;
   MS_LOG(DEBUG) << name_ << ": replace op size = " << replace_op_.size();
   return SUCCESS;
 }
@@ -172,7 +181,7 @@ Status ReshapeInfo::InferTensorMap() {
     return FAILED;
   }
 
-  std::vector<int32_t> tensor_map_index_input;
+  Shape tensor_map_index_input;
   tensor_map_index_input.push_back(0);
 
   for (size_t j = 1; j < inputs_shape_[0].size(); ++j) {
@@ -180,7 +189,7 @@ Status ReshapeInfo::InferTensorMap() {
   }
   inputs_tensor_map_.push_back(tensor_map_index_input);
 
-  std::vector<int32_t> tensor_map_index_output;
+  Shape tensor_map_index_output;
   tensor_map_index_output.push_back(0);
 
   for (size_t j = 1; j < outputs_shape_[0].size(); ++j) {
@@ -196,7 +205,7 @@ Status ReshapeInfo::InferTensorMap() {
  */
 Strategys ReshapeInfo::GetOutputsStrategy() {
   Strategys outputs_strategy;
-  std::vector<int32_t> strategy;
+  Dimensions strategy;
   strategy.push_back(input_strategy_[0]);
   for (size_t j = 1; j < outputs_shape_[0].size(); ++j) {
     strategy.push_back(1);
@@ -255,6 +264,19 @@ Status ReshapeInfo::InferTensorLayout(TensorLayouts *inputs_layout, TensorLayout
 }
 
 Status ReshapeInfo::InferTensorInfo() {
+  // skip reshape infer if skip_redistribution is true
+  if (is_skip_) {
+    TensorLayout layout;
+    Shape shape;
+    Shape slice_shape;
+    layout.set_skip_redistribution(true);
+    TensorInfo tensor_info_in(layout, shape, slice_shape);
+    inputs_tensor_info_.push_back(tensor_info_in);
+    outputs_tensor_info_.push_back(tensor_info_in);
+    MS_LOG(DEBUG) << name() << "skip redistribution reshape InferTensorInfo";
+    return SUCCESS;
+  }
+
   Shapes inputs_slice_shape, outputs_slice_shape;
   Strategys inputs_strategy = strategy_->GetInputDim();
   Strategys outputs_strategy = GetOutputsStrategy();
@@ -303,7 +325,7 @@ void ReshapeInfo::device_number(const StrategyPtr &strategy) {
 }
 
 Status ReshapeInfo::InferDefaultLayout(const Shape &shape, TensorLayout *const layout) {
-  std::vector<int32_t> tensor_map_index;
+  Shape tensor_map_index;
   for (size_t i = 0; i < shape.size(); i++) {
     tensor_map_index.push_back(MAP_NONE);
   }
@@ -316,6 +338,16 @@ Status ReshapeInfo::InferDefaultLayout(const Shape &shape, TensorLayout *const l
 }
 
 Status ReshapeInfo::Init(const StrategyPtr &strategy) {
+  auto reshape_skip_redis_iter = attrs_.find(SKIP_REDISTRIBUTION);
+  if (reshape_skip_redis_iter != attrs_.end()) {
+    MS_EXCEPTION_IF_NULL(reshape_skip_redis_iter->second);
+    if (!reshape_skip_redis_iter->second->isa<BoolImm>()) {
+      MS_LOG(ERROR) << name_ << ": skip_redistribution is not a bool.";
+      return FAILED;
+    }
+    is_skip_ = reshape_skip_redis_iter->second->cast<BoolImmPtr>()->value();
+  }
+
   ResetQueueMember();
   device_number(strategy);
   if (strategy) {
@@ -472,7 +504,7 @@ Status ReshapeInfo::GenetateStrategyCosts(const std::vector<std::shared_ptr<Stra
       MS_LOG(ERROR) << "Infer strategy by tensor_info failed";
       return FAILED;
     }
-    std::vector<Dimensions> stra_inputs = {stra};
+    Strategys stra_inputs = {stra};
     StrategyPtr reshape_stra = std::make_shared<Strategy>(pre_stra_cost->strategy_ptr->GetInputStage(), stra_inputs);
     if (next_stra_costs.empty()) {
       if (Init(nullptr) == FAILED) {

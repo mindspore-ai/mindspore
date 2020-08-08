@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <utility>
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {

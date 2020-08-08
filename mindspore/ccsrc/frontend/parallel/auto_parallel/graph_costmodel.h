@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_AUTO_PARALLEL_GRAPH_COSTMODEL_H_
-#define MINDSPORE_CCSRC_PARALLEL_AUTO_PARALLEL_GRAPH_COSTMODEL_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_AUTO_PARALLEL_GRAPH_COSTMODEL_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_AUTO_PARALLEL_GRAPH_COSTMODEL_H_
 
 #include <map>
 #include <memory>
@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 #include "mindspore/ccsrc/common.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "frontend/parallel/auto_parallel/edge_costmodel.h"
 #include "frontend/parallel/costmodel_context.h"
 #include "frontend/parallel/ops_info/operator_info.h"
@@ -31,24 +31,6 @@
 
 namespace mindspore {
 namespace parallel {
-#define OPERATOR_TO_OPERATOR_CONNECTOR "-"
-#define DEFAULT_DEVICE_MEMORY_CAPACITY (1024.0 * 1024.0 * 1024.0 * 16.0)
-#define DEFAULT_COST_MODEL_ALPHA 1.0
-#define DEFAULT_COST_MODEL_BETA 400.0
-#define DEFAULT_COST_MODEL_GAMMA 0.001
-#define DEFAULT_COST_MODEL_SIMPLIFY_CALCULATION true
-#define DEFAULT_COST_MODEL_COMMUNI_THRESHOLD 2048.0
-#define DEFAULT_COST_MODEL_COMMUNI_CONST 3072.0
-#define DEFAULT_COST_MODEL_COMMUNI_BIAS 1024.0
-#define DEFAULT_TENSOR_SLICE_ALIGNMENT_ENABLE false
-#define DEFAULT_TENSOR_SLICE_ALIGNMENT_SIZE 16
-#define DEFAULT_FULLY_USE_DEVICES true
-#define DEFAULT_ELEMENTWISE_OP_STRA_FOLLOW false
-#define DEFAULT_IS_MULTI_SUBGRAPHS false
-#define DEFAULT_RUN_PHASE 0
-#define TRAINING_PHASE 0
-#define INFERENCE_PHASE 1
-
 class CostGraph;
 using CostGraphPtr = std::shared_ptr<CostGraph>;
 extern CostGraphPtr entire_costgraph;
@@ -73,7 +55,7 @@ class CostGraph {
   CostGraph() {
     dev_memory_ = DEFAULT_DEVICE_MEMORY_CAPACITY;
     costmodel_alpha_ = DEFAULT_COST_MODEL_ALPHA;
-    costmodel_beta_ = DEFAULT_COST_MODEL_BETA;
+    costmodel_beta_ = DEFAULT_COST_MODEL_BETA_ASCEND;
   }
   ~CostGraph() = default;
   void AddOperator(const OperatorInfoPtr &op) { ops_.push_back(op); }
@@ -179,6 +161,14 @@ class CostGraph {
   void CreateStarEliminationSubCostList(const StrategyPtr &, const CostPtrList &, const CostPtrList &,
                                         const StrategyPtr &, const CostPtrList &, std::vector<StrategyPtr>,
                                         CostPtrList &, CostPtrList &, CostPtrList *);
+  // Return <op1, op2>. we merge 'op2' into 'op1'
+  std::pair<OperatorInfoPtr, OperatorInfoPtr> CheckSourceElimination() const;
+  void CreateSourceEliminationSubCostList(StrategyPtr, const CostPtrList &, StrategyPtr, const CostPtrList &,
+                                          CostPtrList *);
+  // We merge 'op2' into op1. The returned value are '<Edges1, Edges2>'. 'Edges1' are newly updated edges for 'op1',
+  // 'Edges2' are newly updated edges for 'op2'.
+  std::pair<std::vector<std::shared_ptr<Edge>>, std::vector<std::shared_ptr<Edge>>> EliminationSources(
+    OperatorInfoPtr op1, OperatorInfoPtr op2);
   // Calculate memory cost for training phase or inference phase.
   Status CalculateMemoryCost();
   // When the input of a operator is neither a WEIGHT, nor a output of a subsequent operator involving WEIGHT, then
@@ -235,4 +225,4 @@ class CostGraph {
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_AUTO_PARALLEL_GRAPH_COSTMODEL_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_AUTO_PARALLEL_GRAPH_COSTMODEL_H_

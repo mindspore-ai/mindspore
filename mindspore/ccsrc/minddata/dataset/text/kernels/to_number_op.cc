@@ -114,7 +114,7 @@ Status ToNumberOp::ToSignedIntegral(const std::shared_ptr<Tensor> &input, std::s
     casted.push_back(casted_result);
   }
 
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(output, casted, input->shape()));
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(casted, input->shape(), output));
   return Status::OK();
 }
 
@@ -157,7 +157,7 @@ Status ToNumberOp::ToUnsignedIntegral(const std::shared_ptr<Tensor> &input, std:
     casted.push_back(casted_result);
   }
 
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(output, casted, input->shape()));
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(casted, input->shape(), output));
   return Status::OK();
 }
 
@@ -165,7 +165,7 @@ Status ToNumberOp::ToFloat16(const std::shared_ptr<Tensor> &input, std::shared_p
   // special case, float16 does not exist in c++, no native support for
   // casting, so cast to float first then use this method, which use Eigen.
   std::shared_ptr<Tensor> temp;
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&temp, TensorImpl::kFlexible, input->shape(), DataType("float32")));
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), DataType("float32"), &temp));
   RETURN_IF_NOT_OK(ToFloat(input, &temp));
   RETURN_IF_NOT_OK(mindspore::dataset::ToFloat16(temp, output));
   return Status::OK();
@@ -200,7 +200,7 @@ Status ToNumberOp::ToFloat(const std::shared_ptr<Tensor> &input, std::shared_ptr
     casted.push_back(casted_result);
   }
 
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(output, casted, input->shape()));
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(casted, input->shape(), output));
   return Status::OK();
 }
 
@@ -233,7 +233,7 @@ Status ToNumberOp::ToDouble(const std::shared_ptr<Tensor> &input, std::shared_pt
     casted.push_back(casted_result);
   }
 
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(output, casted, input->shape()));
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(casted, input->shape(), output));
   return Status::OK();
 }
 

@@ -25,7 +25,7 @@
 
 #include "abstract/dshape.h"
 #include "abstract/abstract_value.h"
-#include "pipeline/jit/static_analysis/abstract_function.h"
+#include "abstract/abstract_function.h"
 #include "pipeline/jit/parse/python_adapter.h"
 #include "pipeline/jit/parse/parse.h"
 #include "pipeline/jit/parse/parse_base.h"

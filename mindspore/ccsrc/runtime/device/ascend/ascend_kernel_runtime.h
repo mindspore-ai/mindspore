@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_DEVICE_ASCEND_ASCEND_KERNEL_RUNTIME_H_
-#define MINDSPORE_CCSRC_DEVICE_ASCEND_ASCEND_KERNEL_RUNTIME_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_KERNEL_RUNTIME_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_KERNEL_RUNTIME_H_
 #include <memory>
 #include <vector>
 #include <string>
@@ -24,10 +24,8 @@
 #include "framework/ge_runtime/davinci_model.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "backend/session/session_basic.h"
-#ifdef ENABLE_DATA_DUMP
 #include "debug/data_dump_parser.h"
 #include "runtime/device/ascend/dump/data_dumper.h"
-#endif
 
 using ge::model_runner::TaskInfo;
 using std::unordered_map;
@@ -40,7 +38,7 @@ class AscendKernelRuntime : public KernelRuntime {
   AscendKernelRuntime() = default;
   ~AscendKernelRuntime() override;
   bool Init() override;
-  bool DumpData(session::KernelGraph *graph) override;
+  bool DumpData(session::KernelGraph *graph, Debugger *debugger = nullptr) override;
   bool LoadData(session::KernelGraph *graph, Debugger *debugger) override;
   bool GenTask(const session::KernelGraph *graph) override;
   bool RunTask(const session::KernelGraph *graph) override;
@@ -65,19 +63,18 @@ class AscendKernelRuntime : public KernelRuntime {
   bool GraphWithEmptyTaskList(const session::KernelGraph *graph) const;
   bool CheckGraphIdValid(GraphId graph_id) const;
   static void DebugTaskIdName(GraphId graph_id);
+  void DistributeDebugTask(NotNull<const session::KernelGraph *> graph, NotNull<std::function<void *()>> model_handle);
+  void LaunchDataDump(GraphId graph_id);
 
   rtContext_t rt_context_{nullptr};
   bool initialized_{false};
   unordered_map<GraphId, vector<std::shared_ptr<TaskInfo>>> task_map_;
   unordered_map<GraphId, std::shared_ptr<ge::model_runner::DavinciModel>> graph_model_map_;
-#ifdef ENABLE_DATA_DUMP
-  void LaunchDataDump(NotNull<const session::KernelGraph *> graph);
   unordered_map<GraphId, std::shared_ptr<DataDumper>> graph_data_dumper_;
-#endif
 };
 
 MS_REG_KERNEL_RUNTIME(kAscendDevice, AscendKernelRuntime);
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_DEVICE_ASCEND_ASCEND_KERNEL_RUNTIME_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_KERNEL_RUNTIME_H_

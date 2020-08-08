@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_NN_FUSED_BATCH_NORM_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_KERNEL_GPU_NN_FUSED_BATCH_NORM_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_FUSED_BATCH_NORM_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_FUSED_BATCH_NORM_GPU_KERNEL_H_
 
 #include <vector>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
@@ -56,17 +56,17 @@ class FusedBatchNormGpuKernel : public GpuKernel {
       return true;
     }
     auto x = GetDeviceAddress<T>(inputs, 0);
-    auto scale = GetDeviceAddress<T>(inputs, 1);
-    auto bias = GetDeviceAddress<T>(inputs, 2);
-    auto runing_mean = GetDeviceAddress<T>(inputs, 3);
-    auto runnig_variance = GetDeviceAddress<T>(inputs, 4);
+    auto scale = GetDeviceAddress<float>(inputs, 1);
+    auto bias = GetDeviceAddress<float>(inputs, 2);
+    auto runing_mean = GetDeviceAddress<float>(inputs, 3);
+    auto runnig_variance = GetDeviceAddress<float>(inputs, 4);
     auto y = GetDeviceAddress<T>(outputs, 0);
 
     const float alpha = 1;
     const float beta = 0;
     if (is_train_) {
-      auto save_mean = GetDeviceAddress<T>(outputs, 3);
-      auto save_variance = GetDeviceAddress<T>(outputs, 4);
+      auto save_mean = GetDeviceAddress<float>(outputs, 3);
+      auto save_variance = GetDeviceAddress<float>(outputs, 4);
       CHECK_CUDNN_RET_WITH_EXCEPT(
         cudnnBatchNormalizationForwardTraining(handle_, mode_, &alpha, &beta, x_desc_, x, y_desc_, y,
                                                scale_bias_mean_var_desc_, scale, bias, exp_avg_factor_, runing_mean,
@@ -187,4 +187,4 @@ class FusedBatchNormGpuKernel : public GpuKernel {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_NN_FUSED_BATCH_NORM_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_FUSED_BATCH_NORM_GPU_KERNEL_H_

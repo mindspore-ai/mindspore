@@ -52,19 +52,22 @@ TypeId KernelBuildInfo::GetOutputDeviceType(size_t output_index) const {
   return outputs_device_type_[output_index];
 }
 
-std::vector<std::string> KernelBuildInfo::GetAllInputFormats() const { return inputs_format_; }
+const std::vector<std::string> &KernelBuildInfo::GetAllInputFormats() const { return inputs_format_; }
 
-std::vector<std::string> KernelBuildInfo::GetAllOutputFormats() const { return outputs_format_; }
+const std::vector<std::string> &KernelBuildInfo::GetAllOutputFormats() const { return outputs_format_; }
 
-std::vector<TypeId> KernelBuildInfo::GetAllInputDeviceTypes() const { return inputs_device_type_; }
+const std::vector<TypeId> &KernelBuildInfo::GetAllInputDeviceTypes() const { return inputs_device_type_; }
 
-std::vector<TypeId> KernelBuildInfo::GetAllOutputDeviceTypes() const { return outputs_device_type_; }
+const std::vector<TypeId> &KernelBuildInfo::GetAllOutputDeviceTypes() const { return outputs_device_type_; }
 
 size_t KernelBuildInfo::GetInputNum() const { return inputs_format_.size(); }
 
 size_t KernelBuildInfo::GetOutputNum() const { return outputs_format_.size(); }
 
 std::vector<Axis> KernelBuildInfo::GetInputReshapeType(size_t input_index) const {
+  if (input_reshape_type_.empty()) {
+    return {};
+  }
   if (input_index >= input_reshape_type_.size()) {
     MS_LOG(EXCEPTION) << "The index [" << input_index << "] is exceed the number of input node size "
                       << input_reshape_type_.size();
@@ -73,6 +76,9 @@ std::vector<Axis> KernelBuildInfo::GetInputReshapeType(size_t input_index) const
 }
 
 std::vector<Axis> KernelBuildInfo::GetOutputReshapeType(size_t output_index) const {
+  if (output_reshape_type_.empty()) {
+    return {};
+  }
   if (output_index >= output_reshape_type_.size()) {
     MS_LOG(EXCEPTION) << "The index [" << output_index << "] is exceed the number of output node size "
                       << output_reshape_type_.size();
@@ -158,13 +164,13 @@ void KernelBuildInfo::KernelBuildInfoBuilder::SetProcessor(Processor processor) 
 
 std::shared_ptr<KernelBuildInfo> KernelBuildInfo::KernelBuildInfoBuilder::Build() { return kernel_build_info_; }
 
-void KernelBuildInfo::KernelBuildInfoBuilder::SetInputReshapeType(
+void KernelBuildInfo::KernelBuildInfoBuilder::SetInputsReshapeType(
   const std::vector<std::vector<Axis>> &input_reshape_type) {
   MS_EXCEPTION_IF_NULL(kernel_build_info_);
   kernel_build_info_->input_reshape_type_ = input_reshape_type;
 }
 
-void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputReshapeType(
+void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputsReshapeType(
   const std::vector<std::vector<Axis>> &output_reshape_type) {
   MS_EXCEPTION_IF_NULL(kernel_build_info_);
   kernel_build_info_->output_reshape_type_ = output_reshape_type;
@@ -188,6 +194,37 @@ void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputFormat(const std::string 
     MS_LOG(EXCEPTION) << "index outof range!";
   }
   kernel_build_info_->outputs_format_[index] = format;
+}
+void KernelBuildInfo::KernelBuildInfoBuilder::SetInputReshapeType(const std::vector<Axis> &input_reshape_type,
+                                                                  size_t index) {
+  if (index >= kernel_build_info_->input_reshape_type_.size()) {
+    MS_LOG(EXCEPTION) << "index outof range!";
+  }
+  std::copy(input_reshape_type.begin(), input_reshape_type.end(),
+            std::back_inserter(kernel_build_info_->input_reshape_type_[index]));
+}
+
+void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputReshapeType(const std::vector<Axis> &output_reshape_type,
+                                                                   size_t index) {
+  if (index >= kernel_build_info_->output_reshape_type_.size()) {
+    MS_LOG(EXCEPTION) << "index outof range!";
+  }
+  std::copy(output_reshape_type.begin(), output_reshape_type.end(),
+            std::back_inserter(kernel_build_info_->output_reshape_type_[index]));
+}
+
+void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputDeviceType(const TypeId &output_device_type, size_t index) {
+  if (index >= kernel_build_info_->outputs_device_type_.size()) {
+    MS_LOG(EXCEPTION) << "index outof range!";
+  }
+  kernel_build_info_->outputs_device_type_[index] = output_device_type;
+}
+
+void KernelBuildInfo::KernelBuildInfoBuilder::SetInputDeviceType(const TypeId &input_device_type, size_t index) {
+  if (index >= kernel_build_info_->inputs_device_type_.size()) {
+    MS_LOG(EXCEPTION) << "index outof range!";
+  }
+  kernel_build_info_->inputs_device_type_[index] = input_device_type;
 }
 }  // namespace kernel
 }  // namespace mindspore

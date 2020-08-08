@@ -28,9 +28,7 @@
 namespace mindspore {
 namespace dataset {
 CacheMergeOp::~CacheMergeOp() = default;
-void CacheMergeOp::Print(std::ostream &out, bool show_all)
-  const {  // Always show the id and name as first line regardless if this is summary or detailed print
-  out << "(" << std::setw(2) << operator_id_ << ") <CacheMergeOp>:";
+void CacheMergeOp::Print(std::ostream &out, bool show_all) const {
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
     ParallelOp::Print(out, show_all);
@@ -96,7 +94,7 @@ Status CacheMergeOp::WorkerEntry(int32_t worker_id) {
       RETURN_IF_NOT_OK(cache_hit_stream->GetNextBuffer(&db_ptr, worker_id));
     }
   }
-  RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::move(db_ptr)));
+  RETURN_IF_NOT_OK(EofReceived(worker_id));
   return Status::OK();
 }
 Status CacheMergeOp::CacheMissWorkerEntry(int32_t workerId) {
@@ -226,7 +224,8 @@ void CacheMergeOp::TensorRowRequest::WakeUpAny(TensorRow &&row) {
   if (GetState() == State::kEmpty) {
     // We will do a deep copy
     for (auto &ts : row) {
-      auto out_ts = std::make_shared<Tensor>(ts->shape(), ts->type(), ts->GetBuffer(), ts->SizeInBytes());
+      std::shared_ptr<Tensor> out_ts;
+      Tensor::CreateFromTensor(ts, &out_ts);
       cleaner_copy_.push_back(out_ts);
     }
     cleaner_copy_.setId(row.getId());
@@ -293,10 +292,24 @@ Status CacheMergeOp::Accept(NodePass *p, bool *modified) {
 Status CacheMergeOp::EoeReceived(int32_t worker_id) {
   // If we are in a repeat path, send the eoe up.
   // Otherwise ignore it.
-  if (BitTest(op_ctrl_flags_, kDeOpRepeated)) {
+  if (op_total_repeats_ > 1) {
     return DatasetOp::EoeReceived(worker_id);
   }
   return Status::OK();
+}
+
+// Base-class override for handling cases when an eof is received.
+Status CacheMergeOp::EofReceived(int32_t worker_id) {
+  // If we are not in a repeated path, then the merge op gets a eof by itself, without first
+  // getting an eoe.  However, the logic demands that all epochs close with an eoe first before eof.
+  // Thus, generate an eoe first, before flowing up the eof in the non-repeated case. Base class
+  // provides that for us.
+  if (op_total_repeats_ == 1) {
+    MS_LOG(DEBUG) << "Cache merge sending eoe";
+    RETURN_IF_NOT_OK(DatasetOp::EoeReceived(worker_id));
+  }
+  MS_LOG(DEBUG) << "Cache merge sending eof";
+  return DatasetOp::EofReceived(worker_id);
 }
 }  // namespace dataset
 }  // namespace mindspore

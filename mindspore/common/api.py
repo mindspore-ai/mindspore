@@ -62,6 +62,7 @@ def _wrap_func(fn):
     Returns:
         Function, a new function with return suitable format data.
     """
+
     @wraps(fn)
     def wrapper(*arg, **kwargs):
         results = fn(*arg, **kwargs)
@@ -74,6 +75,7 @@ def _wrap_func(fn):
             if isinstance(data, list):
                 return list(_convert_data(x) for x in data)
             return data
+
         return _convert_data(results)
 
     return wrapper
@@ -106,6 +108,7 @@ class _MindSporeFunction:
         obj (Object): If function is a method, obj is the owner of function,
              else, obj is none.
     """
+
     def __init__(self, fn, input_signature=None, obj=None):
         self.fn = fn
         self.save_graphs = context.get_context("save_graphs")
@@ -203,23 +206,24 @@ class _MindSporeFunction:
 
 def ms_function(fn=None, obj=None, input_signature=None):
     """
-    Creates a callable MindSpore graph from a python function.
+    Create a callable MindSpore graph from a python function.
 
     This allows the MindSpore runtime to apply optimizations based on graph.
 
     Args:
         fn (Function): The Python function that will be run as a graph. Default: None.
-        obj (Object): The Python Object that provide information for identify compiled function. Default: None.
-        input_signature (MetaTensor): The MetaTensor to describe the input arguments. The MetaTensor specifies
+        obj (Object): The Python Object that provides the information for identifying the compiled function.Default:
+            None.
+        input_signature (MetaTensor): The MetaTensor which describes the input arguments. The MetaTensor specifies
             the shape and dtype of the Tensor and they will be supplied to this function. If input_signature
-            is specified, every input to `fn` must be a `Tensor`. And the input parameters of `fn` cannot accept
-            `**kwargs`. The shape and dtype of actual inputs should keep same with input_signature, or TypeError
-            will be raised. Default: None.
+            is specified, each input to `fn` must be a `Tensor`. And the input parameters of `fn` cannot accept
+            `**kwargs`. The shape and dtype of actual inputs should keep the same as input_signature. Otherwise,
+            TypeError will be raised. Default: None.
 
     Returns:
-        Function, if `fn` is not None, returns a callable that will execute the compiled function; If `fn` is None,
-        returns a decorator and when this decorator invokes with a single `fn` argument, the callable is equal to the
-        case when `fn` is not None.
+        Function, if `fn` is not None, returns a callable function that will execute the compiled function; If `fn` is
+        None, returns a decorator and when this decorator invokes with a single `fn` argument, the callable function is
+        equal to the case when `fn` is not None.
 
     Examples:
         >>> def tensor_add(x, y):
@@ -245,13 +249,13 @@ def ms_function(fn=None, obj=None, input_signature=None):
         >>> out = tensor_add_with_dec(x, y)
         >>> out = tensor_add_with_sig(x, y)
     """
+
     def wrap_mindspore(func):
         @wraps(func)
         def staging_specialize(*args):
             process_obj = obj
             if args and not isinstance(args[0], MsTensor) and hasattr(args[0], func.__name__):
                 process_obj = args[0]
-            args = (x.default_input if hasattr(x, 'default_input') else x for x in args)
             return _MindSporeFunction(func, input_signature, process_obj)(*args)
 
         return staging_specialize
@@ -274,6 +278,7 @@ def _generate_pip_args(obj, *args, method="construct"):
     args_names = tuple(arguments_dict.keys())
     obj.__parse_method__ = parse_method
     return args_names, args_list
+
 
 class _PynativeExecutor:
     """
@@ -303,6 +308,7 @@ class _PynativeExecutor:
 
     def __call__(self, *args):
         return self._executor(args, "")
+
 
 class _Executor:
     """
@@ -348,28 +354,8 @@ class _Executor:
             raise RuntimeError("Failure to init and dataset subgraph!")
         return True
 
-    def _build_data_graph(self, obj, params, phase):
-        if params is None:
-            self._executor.build_data_graph(obj.parameters_dict(), phase, obj.parameters_broadcast_dict())
-        elif isinstance(params, OrderedDict):
-            self._executor.build_data_graph(params, phase)
-        else:
-            raise TypeError('Parameters need OrderedDict type, but got {}'.
-                            format(type(params)))
-
-    def _params_init_data(self, obj, params, auto_parallel_mode=False):
-        """Init parameters' data."""
-        if params is not None:
-            for key, param in params.items():
-                if not auto_parallel_mode:
-                    param.init_data()
-                elif key not in obj.parameter_layout_dict:
-                    logger.debug("Layout dict does not contain the key %s.", key)
-                    param.init_data(set_sliced=True)
-                else:
-                    layout = obj.parameter_layout_dict[key]
-                    param.init_data(layout, set_sliced=True)
-        obj.init_parameters_data(auto_parallel_mode=auto_parallel_mode)
+    def _build_data_graph(self, obj, phase):
+        self._executor.build_data_graph(obj.parameters_dict(), phase, obj.parameters_broadcast_dict())
 
     def _set_dataset_mode(self, args_list):
         """set dataset mode."""
@@ -380,7 +366,7 @@ class _Executor:
         else:
             _set_dataset_mode_config('normal')
 
-    def compile(self, obj, *args, phase='predict', params=None, do_convert=True, auto_parallel_mode=False):
+    def compile(self, obj, *args, phase='predict', do_convert=True, auto_parallel_mode=False):
         """
         Compiles graph.
 
@@ -388,7 +374,6 @@ class _Executor:
             obj (Function/Cell): The function or cell instance need compile.
             args (tuple): Function or cell input arguments.
             phase (str): The name of compile phase. Default: 'predict'.
-            params (OrderedDict): The parameters dictionary used for init data graph. Default: None.
             do_convert (bool): When set to True, convert ME graph to GE graph after compiling graph.
             auto_parallel_mode: When set to True, use auto parallel mode to compile graph.
 
@@ -429,10 +414,12 @@ class _Executor:
 
         if auto_parallel_mode:
             obj.parameter_layout_dict = self._executor.get_parameter_layout(phase)
-        self._params_init_data(obj, params, auto_parallel_mode)
+        replace = obj.init_parameters_data(auto_parallel_mode=auto_parallel_mode)
         if not enable_debug_runtime or enable_ge:
             if auto_parallel_mode:
-                obj.load_parameter_slice(params)
+                obj.load_parameter_slice(None)
+
+        self._updata_param_node_default_input(phase, replace)
 
         # set parallel inputs in sink mode
         if auto_parallel_mode and (args and isinstance(args[0], Tensor) and args[0].virtual_flag):
@@ -440,15 +427,19 @@ class _Executor:
 
         # the following GE init process is not needed when use vm or ms backend
         if enable_ge:
-            self._build_data_graph(obj, params, phase)
+            self._build_data_graph(obj, phase)
 
             if "export" not in phase:
                 init_phase = "init_subgraph" + "." + str(obj.create_time)
                 _exec_init_graph(obj, init_phase)
         elif not enable_ge and "export" in phase:
-            self._build_data_graph(obj, params, phase)
+            self._build_data_graph(obj, phase)
 
         return phase, True
+
+    def _updata_param_node_default_input(self, phase, replace):
+        new_param = {x.name: replace[x] for x in replace if id(x) != id(replace[x])}
+        return self._executor.updata_param_node_default_input(phase, new_param)
 
     def _get_strategy(self, obj):
         real_phase = self.phase_prefix + obj.phase + '.' + str(obj.create_time)
@@ -515,24 +506,23 @@ class _Executor:
             return None
         return self._executor.get_func_graph_proto(exec_id, ir_type)
 
-    def export(self, net, file_name, file_format='GEIR'):
+    def export(self, file_name, graph_id):
         """
         Export graph.
 
         Args:
-            net (Cell): MindSpore network
             file_name (str): File name of model to export
-            file_format (str): MindSpore currently support 'GEIR' and 'ONNX' format for exported model
+            graph_id (str): id of graph to be exported
         """
         from .._c_expression import export_graph
-        phase = 'export' + '.' + self.phase_prefix + '.' + str(net.create_time)
-        export_graph(file_name, file_format, phase)
+        export_graph(file_name, 'GEIR', graph_id)
 
     def fetch_info_for_quant_export(self, exec_id):
         """Get graph proto from pipeline."""
         if self._executor.has_compiled(exec_id) is False:
             return None
         return self._executor.fetch_info_for_quant_export(exec_id)
+
 
 _executor = _Executor()
 _pynative_exec = _PynativeExecutor()

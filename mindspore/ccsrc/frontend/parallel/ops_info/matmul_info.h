@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_OPS_INFO_MATMUL_INFO_H_
-#define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_MATMUL_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_MATMUL_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_MATMUL_INFO_H_
 
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/operator_costmodel.h"
 #include "frontend/parallel/ops_info/operator_info.h"
@@ -62,6 +62,7 @@ class MatMulBase : public OperatorInfo {
   bool transpose_a_ = false;
   bool transpose_b_ = false;
   bool forward_reduce_scatter_ = false;
+  int32_t field_size_ = 0;
   size_t mat_a_dimension_ = 0;
   size_t mat_b_dimension_ = 0;
 };
@@ -93,4 +94,4 @@ class BatchMatMulInfo : public MatMul {
 };
 }  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PARALLEL_OPS_INFO_MATMUL_INFO_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_MATMUL_INFO_H_

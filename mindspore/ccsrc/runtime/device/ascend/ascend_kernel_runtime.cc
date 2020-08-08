@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define PATH_MAX 0x3ffff
+#define PATH_MAX 4096
 #include "runtime/device/ascend/ascend_kernel_runtime.h"
 #include <string>
 #include <vector>
@@ -23,7 +23,8 @@
 #include <algorithm>
 #include "runtime/device/ascend/ascend_device_address.h"
 #include "runtime/device/cpu/mpi/mpi_adapter.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
+#include "utils/context/context_extends.h"
 #include "utils/mpi/mpi_config.h"
 #include "runtime/device/ascend/profiling/profiling_manager.h"
 #include "hccl/hcom.h"
@@ -37,7 +38,6 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/ascend/profiling/profiling_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
-#include "backend/kernel_compiler/tbe/tbe_python_funcs.h"
 #include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
 #include "runtime/device/ascend/ascend_memory_manager.h"
 #include "debug/tensor_load.h"
@@ -48,6 +48,10 @@ using mindspore::device::ascend::ProfilingUtils;
 using mindspore::device::ascend::tasksink::TaskGenerator;
 using mindspore::kernel::tbe::TbeUtils;
 using std::vector;
+
+constexpr uint32_t kTupleTaskId = 0;
+constexpr uint32_t kTupleStreamId = 1;
+constexpr uint32_t kTupleArgs = 2;
 
 namespace mindspore {
 namespace device {
@@ -91,13 +95,17 @@ std::string GetRankId() {
 AscendKernelRuntime::~AscendKernelRuntime() { graph_model_map_.clear(); }
 
 void AscendKernelRuntime::ClearGraphModelMap() {
-#ifdef ENABLE_DATA_DUMP
   for (auto &iter : graph_data_dumper_) {
     MS_LOG(INFO) << "[DataDump] Unload data dumper:" << iter.first;
-    iter.second->UnloadDumpInfo();
+    auto &data_dumper = iter.second;
+    MS_EXCEPTION_IF_NULL(data_dumper);
+    data_dumper->UnloadDumpInfo();
+    data_dumper->OpDebugUnregister();
   }
   graph_data_dumper_.clear();
-#endif
+  // tell users which dump kernel name not used
+  DataDumpParser::GetInstance().PrintUnusedKernel();
+
   for (auto &iter : graph_model_map_) {
     MS_LOG(INFO) << "Ge UnloadModel " << iter.first;
     auto ret = ModelRunner::Instance().UnloadModel(iter.first);
@@ -108,18 +116,29 @@ void AscendKernelRuntime::ClearGraphModelMap() {
 }
 
 void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
-  MS_LOG(DEBUG) << "Clear graph:" << graph_id << " runtime resource";
-  auto iter = graph_model_map_.find(graph_id);
-  if (iter == graph_model_map_.end()) {
+  MS_LOG(DEBUG) << "Clear graph:" << graph_id << " data dumper";
+  if (auto dumper_iter = graph_data_dumper_.find(graph_id); dumper_iter != graph_data_dumper_.end()) {
+    MS_LOG(DEBUG) << "Unload dump info " << graph_id;
+    auto &data_dumper = dumper_iter->second;
+    MS_EXCEPTION_IF_NULL(data_dumper);
+    data_dumper->UnloadDumpInfo();
+    data_dumper->OpDebugUnregister();
+    graph_data_dumper_.erase(dumper_iter);
+  } else {
     MS_LOG(DEBUG) << "GraphId:" << graph_id << " not found";
-    return;
   }
-  MS_LOG(DEBUG) << "Ge UnloadModel " << iter->first;
-  auto ret = ModelRunner::Instance().UnloadModel(iter->first);
-  if (!ret) {
-    MS_LOG(ERROR) << "UnloadModel failed";
+
+  MS_LOG(DEBUG) << "Clear graph:" << graph_id << " runtime resource";
+  if (auto model_iter = graph_model_map_.find(graph_id); model_iter != graph_model_map_.end()) {
+    MS_LOG(DEBUG) << "Ge UnloadModel " << graph_id;
+    auto ret = ModelRunner::Instance().UnloadModel(graph_id);
+    if (!ret) {
+      MS_LOG(ERROR) << "UnloadModel failed";
+    }
+    graph_model_map_.erase(model_iter);
+  } else {
+    MS_LOG(DEBUG) << "GraphId:" << graph_id << " not found";
   }
-  graph_model_map_.erase(iter);
 }
 
 bool AscendKernelRuntime::NeedDestroyHccl() {
@@ -167,9 +186,7 @@ bool AscendKernelRuntime::Init() {
   }
 #endif
 
-#ifdef ENABLE_DATA_DUMP
   DataDumpParser::GetInstance().ParseDumpConfig();
-#endif
 
   // Start up profiling before rtSetDevice
   ret = ProfilingManager::GetInstance().StartupProfiling(device_id_);
@@ -272,7 +289,7 @@ void DumpParameters(mindspore::session::KernelGraph *graph, const string &dump_p
 }  // namespace
 #endif
 
-bool AscendKernelRuntime::DumpData(mindspore::session::KernelGraph *graph) {
+bool AscendKernelRuntime::DumpData(mindspore::session::KernelGraph *graph, Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(graph);
 #ifdef ENABLE_DUMP_E2E
   MS_LOG(INFO) << "Start dump step";
@@ -502,17 +519,26 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
   bool status =
     ModelRunner::Instance().LoadDavinciModel(device_id_, 0, model_iter->first, model_iter->second, listener);
   if (!status) {
-    MS_LOG(EXCEPTION) << "Load Task Failed";
+    MS_LOG(EXCEPTION) << "Load Model Failed";
   }
+
+  std::function<void *()> model_handle =
+    std::bind(&ModelRunner::GetModelHandle, &ModelRunner::Instance(), model_iter->first);
+  DistributeDebugTask(NOT_NULL(graph), NOT_NULL(model_handle));
+
+  status = ModelRunner::Instance().DistributeTask(model_iter->first);
+  if (!status) {
+    MS_LOG(EXCEPTION) << "Distribute Task Failed";
+  }
+
   if (ProfilingManager::GetInstance().IsProfiling()) {
     auto task_ids = ModelRunner::Instance().GetTaskIdList(model_iter->first);
     auto stream_ids = ModelRunner::Instance().GetStreamIdList(model_iter->first);
     ProfilingUtils::ReportProfilingData(task_ids, stream_ids, NOT_NULL(graph));
   }
 
-#ifdef ENABLE_DATA_DUMP
-  LaunchDataDump(NOT_NULL(graph));
-#endif
+  LaunchDataDump(graph->graph_id());
+
   if (!ModelRunner::Instance().LoadModelComplete(model_iter->first)) {
     MS_LOG(ERROR) << "Call ge runtime LoadModelComplete failed";
     return false;
@@ -520,35 +546,40 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
   return true;
 }
 
-#ifdef ENABLE_DATA_DUMP
-void AscendKernelRuntime::LaunchDataDump(NotNull<const session::KernelGraph *> graph) {
+void AscendKernelRuntime::DistributeDebugTask(NotNull<const session::KernelGraph *> graph,
+                                              NotNull<std::function<void *()>> model_handle) {
   if (!DataDumpParser::GetInstance().DumpEnabled()) {
     return;
   }
-  auto runtime_info_map = ModelRunner::Instance().GetRuntimeInfoMap(graph->graph_id());
-  auto data_dumper = std::make_shared<DataDumper>(graph.get(), runtime_info_map);
+  auto data_dumper = std::make_shared<DataDumper>(graph.get(), model_handle);
   MS_EXCEPTION_IF_NULL(data_dumper);
-  data_dumper->LoadDumpInfo();
   auto ret = graph_data_dumper_.try_emplace(graph->graph_id(), data_dumper);
+  data_dumper->OpDebugRegister();
   if (!ret.second) {
     MS_LOG(WARNING) << "[DataDump] Insert graphId:" << graph->graph_id() << " data dumper failed";
   }
 }
-#endif
+
+void AscendKernelRuntime::LaunchDataDump(GraphId graph_id) {
+  if (!DataDumpParser::GetInstance().DumpEnabled()) {
+    return;
+  }
+  auto runtime_info_map = ModelRunner::Instance().GetRuntimeInfoMap(graph_id);
+  if (auto dumper_iter = graph_data_dumper_.find(graph_id); dumper_iter != graph_data_dumper_.end()) {
+    auto &data_dumper = dumper_iter->second;
+    MS_EXCEPTION_IF_NULL(data_dumper);
+    data_dumper->set_runtime_info(runtime_info_map);
+    data_dumper->LoadDumpInfo();
+  } else {
+    MS_LOG(EXCEPTION) << "GraphId:" << graph_id << " not found";
+  }
+}
 
 void AscendKernelRuntime::DebugTaskIdName(GraphId graph_id) {
-  auto task_ids = ModelRunner::Instance().GetTaskIdList(graph_id);
-  auto graph_task_names = ProfilingUtils::graph_kernel_name();
-  auto iter = graph_task_names.find(graph_id);
-  if (iter != graph_task_names.end()) {
-    const auto &task_names = iter->second;
-    if (task_ids.size() != task_names.size()) {
-      MS_LOG(WARNING) << "Task_ids and task_names size not match";
-      return;
-    }
-    for (size_t i = 0; i < task_ids.size(); ++i) {
-      MS_LOG(INFO) << "Task_id:" << task_ids[i] << " task_name:" << task_names[i];
-    }
+  auto runtime_info_map = ModelRunner::Instance().GetRuntimeInfoMap(graph_id);
+  for (auto iter : runtime_info_map) {
+    MS_LOG(WARNING) << "Task name:" << iter.first << " task_id:" << std::get<kTupleTaskId>(*iter.second)
+                    << " stream_id:" << std::get<kTupleStreamId>(*iter.second);
   }
 }
 
@@ -658,7 +689,7 @@ bool AscendKernelRuntime::ResetDevice() {
 bool AscendKernelRuntime::HcclInit() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (!context_ptr->IsTsdOpened()) {
+  if (!context::IsTsdOpened(context_ptr)) {
     MS_LOG(EXCEPTION) << "Hccl dependent tsd is not open";
   }
   MS_LOG(INFO) << "Do hcom init";

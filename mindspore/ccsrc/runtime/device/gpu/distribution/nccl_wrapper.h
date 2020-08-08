@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_DEVICE_GPU_DISTRIBUTION_NCCL_WRAPPER_H_
-#define MINDSPORE_CCSRC_DEVICE_GPU_DISTRIBUTION_NCCL_WRAPPER_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_DISTRIBUTION_NCCL_WRAPPER_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_DISTRIBUTION_NCCL_WRAPPER_H_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,32 +33,26 @@ class NCCLWrapper {
   NCCLWrapper &operator=(const NCCLWrapper &) = delete;
   static NCCLWrapper &instance();
   ncclUniqueId nccl_unique_id() const;
-  void set_nccl_unique_id(ncclUniqueId unique_id);
-  void set_rank(int rank_id, int rank_size);
   void InitNCCLComm();
-  void InitNCCLComm(ncclComm_t *comm, int rank_size, ncclUniqueId unique_id, int rank);
   ncclResult_t AllReduce(const void *input_addr, void *output_addr, size_t count, ncclDataType_t datatype,
                          ncclRedOp_t op, cudaStream_t stream, const std::string &group_name = NCCL_WORLD_GROUP);
   ncclResult_t AllGather(const void *input_addr, void *output_addr, size_t count, ncclDataType_t datatype,
                          cudaStream_t stream, const std::string &group_name = NCCL_WORLD_GROUP);
   ncclResult_t ReduceScatter(const void *input_addr, void *output_addr, size_t count, ncclDataType_t datatype,
                              ncclRedOp_t op, cudaStream_t stream, const std::string &group_name = NCCL_WORLD_GROUP);
-  void SetGroupNameToNCCLComm(const std::string &group_name, const ncclComm_t comm);
+  void AddGroupInfo(const std::string &group_name, NcclGroupInfo *group);
   void DestroyGroup(const std::string &group_name);
 
  private:
-  NCCLWrapper() : rank_id_(-1), rank_size_(0) {}
+  NCCLWrapper() : comm_init_done_(false) {}
   ~NCCLWrapper() = default;
 
  private:
-  int rank_id_;
-  int rank_size_;
-  ncclUniqueId unique_id_;
-  ncclComm_t comm_;
-  std::map<std::string, ncclComm_t> group_to_comm_map_;
+  bool comm_init_done_;
+  std::map<std::string, NcclGroupInfo> group_info_;
 };
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_GPU_DISTRIBUTION_NCCL_WRAPPER_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_DISTRIBUTION_NCCL_WRAPPER_H_

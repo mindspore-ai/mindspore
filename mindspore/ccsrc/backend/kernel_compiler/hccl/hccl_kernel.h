@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_HCCL_HCCL_KERNEL_H_
-#define MINDSPORE_CCSRC_KERNEL_HCCL_HCCL_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_HCCL_HCCL_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_HCCL_HCCL_KERNEL_H_
 
 #include <map>
 #include <memory>
@@ -26,7 +26,7 @@
 #include "backend/kernel_compiler/ascend_kernel_mod.h"
 #include "backend/kernel_compiler/hccl/hcom_util.h"
 #include "hccl/hcom.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {

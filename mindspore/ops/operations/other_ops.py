@@ -93,14 +93,20 @@ class BoundingBoxEncode(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0)):
-        validator.check_value_type('means', means, [tuple], self.name)
-        validator.check_value_type('stds', stds, [tuple], self.name)
+        validator.check_value_type('means', means, [tuple, list], self.name)
+        validator.check_value_type('stds', stds, [tuple, list], self.name)
+        for i, value in enumerate(means):
+            validator.check_value_type("means[%d]" % i, value, [float], self.name)
+        for i, value in enumerate(stds):
+            validator.check_value_type("stds[%d]" % i, value, [float], self.name)
         validator.check_integer("means len", len(means), 4, Rel.EQ, self.name)
         validator.check_integer("stds len", len(stds), 4, Rel.EQ, self.name)
 
     def infer_shape(self, anchor_box, groundtruth_box):
         validator.check('anchor_box shape[0]', anchor_box[0], 'groundtruth_box shape[0]', groundtruth_box[0], Rel.EQ,
                         self.name)
+        validator.check("anchor_box rank", len(anchor_box), "", 2, Rel.EQ, self.name)
+        validator.check("groundtruth_box rank", len(groundtruth_box), "", 2, Rel.EQ, self.name)
         validator.check_integer('anchor_box shape[1]', anchor_box[1], 4, Rel.EQ, self.name)
         validator.check_integer('groundtruth_box shape[1]', groundtruth_box[1], 4, Rel.EQ, self.name)
         return anchor_box
@@ -141,8 +147,12 @@ class BoundingBoxDecode(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, max_shape, means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0), wh_ratio_clip=0.016):
-        validator.check_value_type('means', means, [tuple], self.name)
-        validator.check_value_type('stds', stds, [tuple], self.name)
+        validator.check_value_type('means', means, [tuple, list], self.name)
+        validator.check_value_type('stds', stds, [tuple, list], self.name)
+        for i, value in enumerate(means):
+            validator.check_value_type("means[%d]" % i, value, [float], self.name)
+        for i, value in enumerate(stds):
+            validator.check_value_type("stds[%d]" % i, value, [float], self.name)
         validator.check_value_type('wh_ratio_clip', wh_ratio_clip, [float], self.name)
         validator.check_integer("means len", len(means), 4, Rel.EQ, self.name)
         validator.check_integer("stds len", len(stds), 4, Rel.EQ, self.name)
@@ -152,6 +162,8 @@ class BoundingBoxDecode(PrimitiveWithInfer):
 
     def infer_shape(self, anchor_box, deltas):
         validator.check('anchor_box shape[0]', anchor_box[0], 'deltas shape[0]', deltas[0], Rel.EQ, self.name)
+        validator.check("anchor_box rank", len(anchor_box), "", 2, Rel.EQ, self.name)
+        validator.check("deltas rank", len(deltas), "", 2, Rel.EQ, self.name)
         validator.check_integer('anchor_box shape[1]', anchor_box[1], 4, Rel.EQ, self.name)
         validator.check_integer('deltas shape[1]', deltas[1], 4, Rel.EQ, self.name)
         return anchor_box
@@ -262,8 +274,6 @@ class IOU(PrimitiveWithInfer):
         return iou
 
     def infer_dtype(self, anchor_boxes, gt_boxes):
-        args = {"anchor_boxes": anchor_boxes, "gt_boxes": gt_boxes}
-        validator.check_tensor_type_same(args, (mstype.float16,), self.name)
         return anchor_boxes
 
 
@@ -379,8 +389,8 @@ class CheckBprop(PrimitiveWithInfer):
         validator.check_value_type('grads', xshapes, (tuple,), tips)
         validator.check_value_type('params', yshapes, (tuple,), tips)
         if len(xshapes) < len(yshapes):
-            raise TypeError(f"{tips}, the size of output should be {len(yshapes)},"
-                            f" but got {len(xshapes)}.")
+            raise ValueError(f"{tips}, the size of output should be {len(yshapes)},"
+                             f" but got {len(xshapes)}.")
         checking_range = len(yshapes)
         for i in range(checking_range):
             xshape = xshapes[i]
@@ -388,8 +398,8 @@ class CheckBprop(PrimitiveWithInfer):
             if not xshape or not yshape:
                 continue
             if xshape != yshape:
-                raise TypeError(f"{tips}, the shape of {i}th output should be {yshape},"
-                                f" but got {xshape}.")
+                raise ValueError(f"{tips}, the shape of {i}th output should be {yshape},"
+                                 f" but got {xshape}.")
         return xshapes
 
     def infer_dtype(self, xdtypes, ydtypes):
@@ -397,8 +407,8 @@ class CheckBprop(PrimitiveWithInfer):
         validator.check_value_type('grads', xdtypes, (tuple,), tips)
         validator.check_value_type('params', ydtypes, (tuple,), tips)
         if len(xdtypes) < len(ydtypes):
-            raise TypeError(f"{tips}, the size of output should be {len(ydtypes)},"
-                            f" but got {len(xdtypes)}.")
+            raise ValueError(f"{tips}, the size of output should be {len(ydtypes)},"
+                             f" but got {len(xdtypes)}.")
         checking_range = len(ydtypes)
         for i in range(checking_range):
             xdtype = xdtypes[i]
@@ -511,6 +521,7 @@ class Push(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, optim_type='ApplyMomentum', only_shape_indices=None):
         """init Push"""
+        self.add_prim_attr("primitive_target", "CPU")
         self.init_prim_io_names(inputs=['optim_inputs', 'optim_input_shapes'], outputs=['key'])
 
     def infer_shape(self, inputs, shapes):
@@ -534,6 +545,7 @@ class Pull(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init Pull"""
+        self.add_prim_attr("primitive_target", "CPU")
         self.init_prim_io_names(inputs=['key', 'weight'], outputs=['output'])
 
     def infer_shape(self, key_shape, weight_shape):

@@ -15,10 +15,14 @@
  */
 #ifndef MINDSPORE_STATUS_H
 #define MINDSPORE_STATUS_H
+#include "include/inference.h"
+
 namespace mindspore {
 namespace serving {
-using Status = uint32_t;
-enum ServingStatus { SUCCESS = 0, FAILED };
+using inference::Status;
+using inference::SUCCESS;
+using inference::FAILED;
+using inference::INVALID_INPUTS;
 }  // namespace serving
 }  // namespace mindspore
 

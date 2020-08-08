@@ -73,9 +73,7 @@ Status Sampler::CreateSamplerTensor(std::shared_ptr<Tensor> *sample_ids, int64_t
     col_desc_ = std::make_unique<ColDescriptor>("sampleIds", DataType(DataType::DE_INT64), TensorImpl::kFlexible, 1);
   }
   TensorShape shape(std::vector<dsize_t>(1, num_elements));
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(sample_ids, col_desc_->tensorImpl(), shape, col_desc_->type()));
-  RETURN_IF_NOT_OK(
-    (*sample_ids)->AllocateBuffer((*sample_ids)->SizeInBytes()));  // allocate memory in case user forgets!
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(shape, col_desc_->type(), sample_ids));
   return Status::OK();
 }
 
@@ -103,6 +101,13 @@ Status Sampler::GetAllIdsThenReset(py::array *data) {
 
   // check this buffer is not a ctrl buffer
   CHECK_FAIL_RETURN_UNEXPECTED(db->buffer_flags() == DataBuffer::kDeBFlagNone, "ERROR ctrl buffer received");
+
+  // perform error checking! Next buffer supposed to be EOE since last one already contains all ids for current epoch
+  RETURN_IF_NOT_OK(GetNextSample(&db));
+  CHECK_FAIL_RETURN_UNEXPECTED(db->eoe(), "ERROR Non EOE received");
+  // Reset Sampler since this is the end of the epoch
+  RETURN_IF_NOT_OK(ResetSampler());
+
   {
     py::gil_scoped_acquire gil_acquire;
     if (Py_IsInitialized() == 0) {
@@ -114,11 +119,6 @@ Status Sampler::GetAllIdsThenReset(py::array *data) {
       return Status(StatusCode::kPyFuncException, e.what());
     }
   }
-  // perform error checking! Next buffer supposed to be EOE since last one already contains all ids for current epoch
-  RETURN_IF_NOT_OK(GetNextSample(&db));
-  CHECK_FAIL_RETURN_UNEXPECTED(db->eoe(), "ERROR Non EOE received");
-  // Reset Sampler since this is the end of the epoch
-  RETURN_IF_NOT_OK(ResetSampler());
   return Status::OK();
 }
 #endif

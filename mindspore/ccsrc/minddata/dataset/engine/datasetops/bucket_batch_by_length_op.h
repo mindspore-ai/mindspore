@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_ENGINE_DATASETOPS_BUCKET_BATCH_BY_LENGTH_OP_H_
-#define DATASET_ENGINE_DATASETOPS_BUCKET_BATCH_BY_LENGTH_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_BUCKET_BATCH_BY_LENGTH_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_BUCKET_BATCH_BY_LENGTH_OP_H_
 
 #include <map>
 #include <memory>
@@ -109,10 +109,7 @@ class BucketBatchByLengthOp : public PipelineOp {
   // @return Status - The error code returned
   Status EoeReceived(int32_t) override;
 
-  // A print method typically used for debugging
-  // @param out - The output stream to write output to
-  // @param show_all - A bool to control if you want to show all info or just a summary
-  void Print(std::ostream &out, bool show_all) const override;
+  std::string Name() const override { return kBucketBatchByLengthOp; }
 
   // << Stream output operator overload
   // @notes This allows you to write the debug print info using stream operators
@@ -152,4 +149,4 @@ class BucketBatchByLengthOp : public PipelineOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_ENGINE_DATASETOPS_BUCKET_BATCH_BY_LENGTH_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_BUCKET_BATCH_BY_LENGTH_OP_H_

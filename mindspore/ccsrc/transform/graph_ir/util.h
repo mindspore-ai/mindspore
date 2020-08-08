@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TRANSFORM_UTIL_H_
-#define TRANSFORM_UTIL_H_
+#ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_UTIL_H_
+#define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_UTIL_H_
 
 #include <string>
 #include <vector>
@@ -238,4 +238,4 @@ class TransformUtil {
 }  // namespace transform
 }  // namespace mindspore
 
-#endif  // TRANSFORM_UTIL_H_
+#endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_UTIL_H_

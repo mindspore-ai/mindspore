@@ -1,11 +1,15 @@
 file(GLOB_RECURSE _CURRENT_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
 add_library(kernels-image OBJECT
+    auto_contrast_op.cc
     center_crop_op.cc
+    crop_op.cc
     cut_out_op.cc
     decode_op.cc
+    equalize_op.cc
     hwc_to_chw_op.cc
     image_utils.cc
+    invert_op.cc
     normalize_op.cc
     pad_op.cc
     random_color_adjust_op.cc
@@ -19,11 +23,13 @@ add_library(kernels-image OBJECT
     bounding_box_augment_op.cc
     random_resize_op.cc
     random_rotation_op.cc
+    random_select_subpolicy_op.cc
     random_vertical_flip_op.cc
     random_vertical_flip_with_bbox_op.cc
     rescale_op.cc
     resize_bilinear_op.cc
     resize_op.cc
+    swap_red_blue_op.cc
     uniform_aug_op.cc
     resize_with_bbox_op.cc
     random_resize_with_bbox_op.cc

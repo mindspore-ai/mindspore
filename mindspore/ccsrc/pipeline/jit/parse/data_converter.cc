@@ -30,7 +30,7 @@
 #include "frontend/operator/composite/composite.h"
 #include "ir/func_graph_cloner.h"
 #include "utils/symbolic.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "debug/trace.h"
 #include "frontend/optimizer/ad/grad.h"
 
@@ -73,7 +73,7 @@ FuncGraphPtr ConvertToBpropCut(const py::object &obj) {
 namespace {
 bool ConvertTuple(const py::object &obj, ValuePtr *const data, bool use_signature) {
   MS_LOG(DEBUG) << "Converting python tuple";
-  py::tuple tuple = obj.cast<py::tuple>();
+  auto tuple = obj.cast<py::tuple>();
   std::vector<ValuePtr> value_list;
   for (size_t it = 0; it < tuple.size(); ++it) {
     ValuePtr out = nullptr;
@@ -91,7 +91,7 @@ bool ConvertTuple(const py::object &obj, ValuePtr *const data, bool use_signatur
 bool ConvertList(const py::object &obj, ValuePtr *const data, bool use_signature) {
   MS_LOG(DEBUG) << "Converting python list";
 
-  py::list list = obj.cast<py::list>();
+  auto list = obj.cast<py::list>();
   std::vector<ValuePtr> value_list;
   for (size_t it = 0; it < list.size(); ++it) {
     ValuePtr out = nullptr;
@@ -124,11 +124,12 @@ bool ConvertCellList(const py::object &obj, ValuePtr *const data, bool use_signa
 bool ConvertDict(const py::object &obj, ValuePtr *data, bool use_signature) {
   MS_LOG(DEBUG) << "Converting python dict";
 
-  py::dict dict_values = obj.cast<py::dict>();
+  auto dict_values = obj.cast<py::dict>();
   std::vector<std::pair<std::string, ValuePtr>> key_values;
   for (auto item : dict_values) {
     if (!py::isinstance<py::str>(item.first)) {
-      MS_LOG(EXCEPTION) << "The key of dict is only support str.";
+      MS_LOG(ERROR) << "The key of dict is only support str.";
+      return false;
     }
     std::string key = py::str(item.first);
     ValuePtr out = nullptr;
@@ -158,7 +159,7 @@ void ConvertDataClass(py::object obj, ValuePtr *const data) {
 }
 
 bool ConvertPrimitive(py::object obj, ValuePtr *const data, bool use_signature = false) {
-  MS_LOG(DEBUG) << "Converting primitive object";
+  MS_LOG(DEBUG) << "Converting primitive object" << use_signature;
 
   // need check the primitive is class type or instance
   auto obj_type = data_converter::GetObjType(obj);
@@ -184,6 +185,7 @@ bool ConvertPrimitive(py::object obj, ValuePtr *const data, bool use_signature =
     } else {
       *data = primitive;
     }
+    MS_LOG(DEBUG) << "Converting primitive object ok " << (*data)->ToString();
   }
   return true;
 }
@@ -203,45 +205,10 @@ bool ConvertMetaFuncGraph(const py::object &obj, ValuePtr *const data, bool use_
   return true;
 }
 
-bool ConvertDataType(const py::object &obj, ValuePtr *const data) {
-  MS_LOG(DEBUG) << "Converting type object";
-  auto typeptr = obj.cast<TypePtr>();
-  if (typeptr == nullptr) {
-    MS_LOG(ERROR) << "Resolve TypePtr error, get ptr is null";
-    return false;
-  }
-  *data = typeptr;
-  return true;
-}
-
-bool ConvertMetaTensor(const py::object &obj, ValuePtr *const data) {
-  MS_LOG(DEBUG) << "Converting MetaTensor object.";
-
-  auto m_tensor = obj.cast<MetaTensorPtr>();
-  if (m_tensor == nullptr) {
-    MS_LOG(ERROR) << "Resolve MetaTensor error, get ptr is null.";
-    return false;
-  }
-  *data = m_tensor;
-  return true;
-}
-
-bool ConvertTensor(const py::object &obj, ValuePtr *const data) {
-  MS_LOG(DEBUG) << "Converting tensor object";
-
-  auto m_tensor = obj.cast<TensorPtr>();
-  if (m_tensor == nullptr) {
-    MS_LOG(ERROR) << "Resolve Tensor error, get ptr is null";
-    return false;
-  }
-  *data = m_tensor;
-  return true;
-}
-
 bool ConvertSlice(const py::object &obj, ValuePtr *const data) {
   MS_LOG(DEBUG) << "Converting slice object";
 
-  py::slice slice_obj = obj.cast<py::slice>();
+  auto slice_obj = obj.cast<py::slice>();
   auto convert_func = [obj](std::string attr) -> ValuePtr {
     auto py_attr = py::getattr(obj, attr.c_str());
     if (py::isinstance<py::none>(py_attr)) {
@@ -359,17 +326,19 @@ bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature
     ConvertDataClass(obj, &converted);
   } else if (py::hasattr(obj, PYTHON_PRIMITIVE_FLAG)) {
     ret = ConvertPrimitive(obj, &converted, use_signature);
-  } else if (py::hasattr(obj, PYTHON_METAFUNCGRAPH_FLAG)) {
+  } else if (py::isinstance<MetaFuncGraph>(obj)) {
     ret = ConvertMetaFuncGraph(obj, &converted, use_signature);
-  } else if (py::hasattr(obj, PYTHON_DTYPE_FLAG)) {
-    ret = ConvertDataType(obj, &converted);
-  } else if (py::hasattr(obj, PYTHON_TENSOR_FLAG)) {
-    ret = ConvertTensor(obj, &converted);
-  } else if (py::hasattr(obj, PYTHON_META_TENSOR_FLAG)) {
-    ret = ConvertMetaTensor(obj, &converted);
-  } else if (py::hasattr(obj, PYTHON_ENVINSTANCE_FLAG)) {
-    std::shared_ptr<EnvInstance> env = obj.cast<std::shared_ptr<EnvInstance>>();
+  } else if (py::isinstance<Type>(obj)) {
+    converted = obj.cast<TypePtr>();
+  } else if (py::isinstance<Tensor>(obj)) {
+    converted = obj.cast<TensorPtr>();
+  } else if (py::isinstance<MetaTensor>(obj)) {
+    converted = obj.cast<MetaTensorPtr>();
+  } else if (py::isinstance<EnvInstance>(obj)) {
+    auto env = obj.cast<std::shared_ptr<EnvInstance>>();
     converted = env;
+  } else if (py::hasattr(obj, PYTHON_CLASS_MEMBER_NAMESPACE)) {
+    converted = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, obj);
   } else if (py::hasattr(obj, "__parameter__")) {
     auto to_convert = py::cast<py::object>(python_adapter::GetPyObjAttr(obj, "default_input"));
     ret = ConvertData(to_convert, &converted);
@@ -387,12 +356,12 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python
   std::string obj_id = results[0] + python_mod_get_parse_method;
   std::string obj_key = results[1];
   FuncGraphPtr func_graph = nullptr;
-  Any value = Any();
+  ValuePtr value = nullptr;
   bool is_cache = data_converter::GetObjectValue(obj_id, &value);
   if (is_cache) {
-    if (value.is<FuncGraphPtr>()) {
+    if (value && value->isa<FuncGraph>()) {
       MS_LOG(DEBUG) << "Get the cache data, obj = " << obj_id;
-      func_graph = value.cast<FuncGraphPtr>();
+      func_graph = value->cast<FuncGraphPtr>();
       return func_graph;
     }
   }
@@ -405,7 +374,7 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python
 
   data_converter::MakeProperNameToFuncGraph(func_graph, obj_id);
   data_converter::CacheObjectValue(obj_id, func_graph);
-  if (obj_key != "") {
+  if (!obj_key.empty()) {
     MS_LOG(DEBUG) << "Add graph:" << obj_key << ", func_graph:" << func_graph->ToString();
     data_converter::SetObjGraphValue(obj_key, func_graph);
   }
@@ -413,10 +382,9 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python
   return func_graph;
 }
 namespace data_converter {
-static std::unordered_map<std::string, Any> object_map_ = std::unordered_map<std::string, Any>();
+static std::unordered_map<std::string, ValuePtr> object_map_;
 
-static std::unordered_map<std::string, std::vector<FuncGraphPtr>> object_graphs_map_ =
-  std::unordered_map<std::string, std::vector<FuncGraphPtr>>();
+static std::unordered_map<std::string, std::vector<FuncGraphPtr>> object_graphs_map_;
 
 void SetObjGraphValue(const std::string &obj_key, const FuncGraphPtr &data) {
   object_graphs_map_[obj_key].push_back(data);
@@ -428,8 +396,8 @@ const std::unordered_map<std::string, std::vector<FuncGraphPtr>> &GetObjGraphs()
   return object_graphs_map_;
 }
 
-void CacheObjectValue(const std::string &obj_key, const Any &data) { object_map_[obj_key] = data; }
-bool GetObjectValue(const std::string &obj_key, Any *const data) {
+void CacheObjectValue(const std::string &obj_key, const ValuePtr &data) { object_map_[obj_key] = data; }
+bool GetObjectValue(const std::string &obj_key, ValuePtr *const data) {
   if (object_map_.count(obj_key)) {
     *data = object_map_[obj_key];
     return true;
@@ -472,7 +440,7 @@ bool IsCellInstance(const py::object &obj) {
 py::object CreatePythonObject(const py::object &type, const py::tuple &params) {
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   py::object obj;
-  if (params.size() == 0) {
+  if (params.empty()) {
     obj = python_adapter::CallPyModFn(mod, PYTHON_MOD_CREATE_OBJ_INSTANCE, type);
   } else {
     obj = python_adapter::CallPyModFn(mod, PYTHON_MOD_CREATE_OBJ_INSTANCE, type, params);
@@ -531,7 +499,7 @@ ClassPtr ParseDataClass(const py::object &cls_obj) {
   ClassAttrVector attributes;
   py::dict names = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_DATACLASS_ATTRS, cls_obj);
   for (auto &item : names) {
-    TypePtr type_value = item.second.cast<TypePtr>();
+    auto type_value = item.second.cast<TypePtr>();
     MS_EXCEPTION_IF_NULL(type_value);
     MS_LOG(DEBUG) << "(Name: " << py::cast<std::string>(item.first) << ", type: " << type_value->ToString() << ")";
     attributes.push_back(std::make_pair(py::cast<std::string>(item.first), type_value));
@@ -540,8 +508,8 @@ ClassPtr ParseDataClass(const py::object &cls_obj) {
   std::unordered_map<std::string, ValuePtr> methods_map;
   py::dict methods = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_DATACLASS_METHODS, cls_obj);
   for (auto &item : methods) {
-    std::string fun_name = item.first.cast<std::string>();
-    py::object obj = py::cast<py::object>(item.second);
+    auto fun_name = item.first.cast<std::string>();
+    auto obj = py::cast<py::object>(item.second);
     std::shared_ptr<PyObjectWrapper> method_obj = std::make_shared<PyObjectWrapper>(obj, fun_name);
     methods_map[fun_name] = method_obj;
   }

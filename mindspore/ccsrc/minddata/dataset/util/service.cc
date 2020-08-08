@@ -34,7 +34,18 @@ Status Service::ServiceStart() {
       state_ = STATE::kStartInProg;
       // At this point, we will let go of the lock. This allow others to proceed.
       lck.Unlock();
-      RETURN_IF_NOT_OK(DoServiceStart());
+      // Call the real implementation from the derived class.
+      Status rc = DoServiceStart();
+      // If we hit any error, change the state back into the initial state.
+      // It is possible that the user may want to drive a clean up by calling
+      // ServiceStop but if it will end up in a loop because of the state is still
+      // kStartInProg.
+      if (rc.IsError()) {
+        lck.Lock();
+        state_ = STATE::kStopped;
+        lck.Unlock();
+        return rc;
+      }
       // Lock again to change state.
       lck.Lock();
       state_ = STATE::kRunning;

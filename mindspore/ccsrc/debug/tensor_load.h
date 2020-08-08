@@ -24,6 +24,10 @@
 #include <string>
 #include <utility>
 #include "debug/tensor_data.h"
+#include "ir/dtype.h"
+#ifdef ENABLE_DUMP_E2E
+#include "debug/e2e_dump.h"
+#endif
 namespace mindspore {
 class TensorLoader {
  public:
@@ -43,6 +47,9 @@ class TensorLoader {
     }
     tensor_list.push_back(tensor);
     tensor_list_map.insert({tensor->GetName(), tensor});
+    auto node_name = tensor->GetName();
+    node_name = node_name.substr(0, node_name.find_first_of(":"));
+    node_tensor_map.insert({node_name, tensor});
     return true;
   }
   std::vector<std::shared_ptr<TensorData>> GetTensor() { return tensor_list; }
@@ -50,6 +57,17 @@ class TensorLoader {
   uint32_t GetIterNum() { return iter_num; }
 
   std::map<std::string, std::shared_ptr<TensorData>> GetTensorMap() { return tensor_list_map; }
+
+  std::vector<std::shared_ptr<TensorData>> GetNodeTensorMap(std::string node_name) {
+    std::vector<std::shared_ptr<TensorData>> tensors;
+    for (auto itr = node_tensor_map.begin(); itr != node_tensor_map.end(); itr++) {
+      if (itr->first == node_name) {
+        tensors.push_back(itr->second);
+      }
+    }
+    return tensors;
+  }
+
   void SearchTensors(const std::vector<std::string> &search_list,
                      std::vector<std::tuple<std::string, std::shared_ptr<TensorData>>> *result_list) {
     for (auto i : search_list) {
@@ -66,17 +84,65 @@ class TensorLoader {
   void EmptyTensor() {
     std::lock_guard<std::mutex> lg(lock_);
     prev_tensor_list_map.clear();
+    node_tensor_map.clear();
     tensor_list_map.swap(prev_tensor_list_map);
     tensor_list.clear();
   }
 
   void EmptyPrevTensor() { prev_tensor_list_map.clear(); }
 
+  void EmptyCurrentTensor() {
+    tensor_list_map.clear();
+    tensor_list.clear();
+  }
+
   void set_iter_num(uint32_t iter_num) { this->iter_num = iter_num; }
+
+#ifdef ENABLE_DUMP_E2E
+  bool DumpTensorToFile(std::string tensor_name, bool trans_flag, const std::string &filepath,
+                        const std::string &host_fmt, const std::vector<int> &host_shape, TypeId host_type,
+                        TypeId addr_type_id, std::string addr_format, size_t slot) const {
+    bool ret = false;
+    if (filepath.empty()) {
+      MS_LOG(ERROR) << "Dump file path is null!";
+      return ret;
+    }
+    std::string shape = "shape";
+    if (host_shape.size()) {
+      for (auto &value : host_shape) {
+        shape = shape + '_' + std::to_string(value);
+      }
+    } else {
+      shape = shape + "_0";
+    }
+    std::string file_extension = ".bin";
+    std::string path = "";
+    if (trans_flag) {
+      path = filepath + '_' + shape + '_' + TypeIdLabel(host_type) + '_' + host_fmt + file_extension;
+    } else {
+      path = filepath + '_' + shape + '_' + TypeIdToType(addr_type_id)->ToString() + '_' + addr_format + file_extension;
+    }
+
+    MS_LOG(INFO) << "Dump path is " << path;
+
+    std::string tensor_loader_name = tensor_name + ":" + std::to_string(slot);
+    auto iter = tensor_list_map.find(tensor_loader_name);
+    if (iter != tensor_list_map.end()) {
+      std::shared_ptr<TensorData> node = iter->second;
+      mindspore::tensor::TensorPtr out_tensor = node->GetTensor();
+      size_t host_size = out_tensor->data().nbytes();
+
+      ret = mindspore::Dump::DumpToFile(path, out_tensor->data_c(), host_size);
+    }
+
+    return ret;
+  }
+#endif
 
  private:
   std::vector<std::shared_ptr<TensorData>> tensor_list;
   std::map<std::string, std::shared_ptr<TensorData>> tensor_list_map;
+  std::multimap<std::string, std::shared_ptr<TensorData>> node_tensor_map;
   std::map<std::string, std::shared_ptr<TensorData>> prev_tensor_list_map;
   uint32_t iter_num;
   std::mutex lock_;

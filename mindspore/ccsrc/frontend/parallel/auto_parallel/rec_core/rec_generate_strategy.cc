@@ -45,10 +45,9 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
   GenerateRemainingOperatorStrategy(graph, ops, input_tensor_names, index_list, no_stra_op_list);
 }
 
-std::vector<std::vector<int32_t>> PrepareMatMul(const std::shared_ptr<Graph> &graph,
-                                                const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                const size_t iter_graph, const size_t iter_ops) {
-  std::vector<std::vector<int32_t>> strategies;
+Strategys PrepareMatMul(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                        const size_t iter_graph, const size_t iter_ops) {
+  Strategys strategies;
   auto attrs = ops[iter_ops]->attrs();
   bool transpose_a = attrs[TRANSPOSE_A]->cast<BoolImmPtr>()->value();
   bool transpose_b = attrs[TRANSPOSE_B]->cast<BoolImmPtr>()->value();
@@ -105,41 +104,40 @@ std::vector<std::vector<int32_t>> PrepareMatMul(const std::shared_ptr<Graph> &gr
   }
 
   for (size_t iter_op_inputs = 0; iter_op_inputs < ops[iter_ops]->inputs_tensor_info().size(); iter_op_inputs++) {
-    std::vector<int32_t> s;
+    Dimensions s;
     if (transpose_a && (iter_op_inputs == 0)) {
       s.push_back(
-        static_cast<int32_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_w));
+        static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_w));
       s.push_back(
-        static_cast<int32_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_h));
+        static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_h));
     } else if (transpose_b && (iter_op_inputs == 1)) {
       s.push_back(
-        static_cast<int32_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_w));
+        static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_w));
       s.push_back(
-        static_cast<int32_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_h));
+        static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_h));
     } else {
       s.push_back(
-        static_cast<int32_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_h));
+        static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_h));
       s.push_back(
-        static_cast<int32_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_w));
+        static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_w));
     }
     strategies.push_back(s);
   }
   return strategies;
 }
 
-std::vector<std::vector<int32_t>> PrepareBiasAdd(const std::shared_ptr<std::vector<int32_t>> &s) {
-  std::vector<std::vector<int32_t>> strategies;
+Strategys PrepareBiasAdd(const std::shared_ptr<Dimensions> &s) {
+  Strategys strategies;
   strategies.push_back(*s);
-  std::vector<int32_t> s_biasadd;
+  Dimensions s_biasadd;
   s_biasadd.push_back(s->at(1));
   strategies.push_back(s_biasadd);
   return strategies;
 }
 
-std::vector<std::vector<int32_t>> PrepareOneHot(const std::shared_ptr<Graph> &graph,
-                                                const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                const size_t iter_graph, const size_t iter_ops) {
-  std::vector<std::vector<int32_t>> strategies = MakeRecSearchStrategy(graph, ops, iter_graph, iter_ops);
+Strategys PrepareOneHot(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                        const size_t iter_graph, const size_t iter_ops) {
+  Strategys strategies = MakeRecSearchStrategy(graph, ops, iter_graph, iter_ops);
 
   int32_t axis = -1;
   auto iter = ops[iter_ops]->attrs().find(AXIS);
@@ -158,15 +156,14 @@ std::vector<std::vector<int32_t>> PrepareOneHot(const std::shared_ptr<Graph> &gr
     graph->nodes[iter_graph].tensor_parm.tensor_str.str_w = 1.0;
   }
 
-  std::vector<int32_t> s_empty = {};
+  Dimensions s_empty = {};
   strategies.push_back(s_empty);
   strategies.push_back(s_empty);
   return strategies;
 }
 
-std::vector<std::vector<int32_t>> PrepareGatherV2(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                  const size_t iter_ops, std::vector<int32_t> s) {
-  std::vector<std::vector<int32_t>> strategies;
+Strategys PrepareGatherV2(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s) {
+  Strategys strategies;
 
   auto axis_input = GetValue<int>(ops[iter_ops]->input_value().at(2));
   if (axis_input < 0) {
@@ -179,23 +176,104 @@ std::vector<std::vector<int32_t>> PrepareGatherV2(const std::vector<std::shared_
   s[axis] = 1;
   strategies.push_back(s);
 
-  auto pos = ops[iter_ops]->name().find("Info");
-  auto name = ops[iter_ops]->name().substr(0, pos);
-  if (name == "GatherV2") {
-    return strategies;
+  return strategies;
+}
+
+Strategys PrepareGatherV2P(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s) {
+  Strategys strategies;
+
+  auto output_shape = ops[iter_ops]->outputs_tensor_info()[0].shape();
+  Dimensions index(output_shape.size() - 1, 0);
+  for (size_t i = 0; i < index.size(); i++) {
+    index[i] = i;
+  }
+  std::sort(index.begin(), index.end(),
+            [&output_shape](const int &a, const int &b) { return (output_shape[a + 1] > output_shape[b + 1]); });
+  std::transform(std::begin(index), std::end(index), std::begin(index), [](int x) { return x + 1; });
+  index.insert(index.begin(), 0);
+
+  Dimensions strategie(output_shape.size(), 1);
+  size_t num_device = g_device_manager->DeviceNum();
+  size_t cut = 1;
+  for (size_t i = 0; i < index.size(); i++) {
+    while (output_shape[index[i]] % 2 == 0 && output_shape[index[i]] > 0 && cut < num_device) {
+      output_shape[index[i]] /= 2;
+      cut *= 2;
+      strategie[index[i]] *= 2;
+    }
+    if (cut == num_device) {
+      break;
+    }
   }
 
-  std::vector<int32_t> s_indices;
-  for (size_t i = 0; i < ops[iter_ops]->inputs_tensor_info()[1].shape().size(); i++) {
-    s_indices.push_back(1);
+  auto axis_input = GetValue<int>(ops[iter_ops]->input_value().at(2));
+  if (axis_input < 0) {
+    axis_input += SizeToInt(ops[iter_ops]->inputs_tensor_info()[0].shape().size());
   }
-  strategies.push_back(s_indices);
+  int32_t axis = axis_input;
+  if (axis >= SizeToInt(s.size())) {
+    MS_LOG(EXCEPTION) << "Failure: GatherV2' axis out of range.";
+  }
+  if (axis == 0) {
+    s.clear();
+    s.push_back(1);
+    for (size_t i = 1; i < ops[iter_ops]->inputs_tensor_info()[0].shape().size(); i++) {
+      s.push_back(strategie[ops[iter_ops]->inputs_tensor_info()[1].shape().size() - 1 + i]);
+    }
+    strategies.push_back(s);
+    s.clear();
+    for (size_t i = 0; i < ops[iter_ops]->inputs_tensor_info()[1].shape().size(); i++) {
+      s.push_back(strategie[i]);
+    }
+    strategies.push_back(s);
+  } else if (axis == 1) {
+    s.clear();
+    s.push_back(strategie[0]);
+    s.push_back(1);
+    strategies.push_back(s);
+    s.clear();
+    for (size_t i = 0; i < ops[iter_ops]->inputs_tensor_info()[1].shape().size(); i++) {
+      s.push_back(strategie[ops[iter_ops]->inputs_tensor_info()[0].shape().size() - 1 + i]);
+    }
+    strategies.push_back(s);
+  } else {
+    MS_LOG(EXCEPTION) << "Failure: GatherV2's axis is neither 0 nor 1.";
+  }
 
   return strategies;
 }
 
-std::vector<std::vector<int32_t>> PrepareL2Normalize(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                     const size_t iter_ops, std::vector<int32_t> s) {
+Dimensions PrepareGatherV2POutputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                          const size_t incoming_op_index) {
+  auto output_shape = ops[incoming_op_index]->outputs_tensor_info()[0].shape();
+  Dimensions index(output_shape.size() - 1, 0);
+  for (size_t i = 0; i < index.size(); i++) {
+    index[i] = i;
+  }
+  std::sort(index.begin(), index.end(),
+            [&output_shape](const int &a, const int &b) { return (output_shape[a + 1] > output_shape[b + 1]); });
+  std::transform(std::begin(index), std::end(index), std::begin(index), [](int x) { return x + 1; });
+  index.insert(index.begin(), 0);
+
+  Dimensions strategie(output_shape.size(), 1);
+  size_t num_device = g_device_manager->DeviceNum();
+  size_t cut = 1;
+  for (size_t i = 0; i < index.size(); i++) {
+    while (output_shape[index[i]] % 2 == 0 && output_shape[index[i]] > 0 && cut < num_device) {
+      output_shape[index[i]] /= 2;
+      cut *= 2;
+      strategie[index[i]] *= 2;
+    }
+    if (cut == num_device) {
+      break;
+    }
+  }
+
+  return strategie;
+}
+
+Strategys PrepareL2Normalize(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                             Dimensions s) {
   int32_t axis = 0;
   auto iter = ops[iter_ops]->attrs().find(AXIS);
   if (iter != ops[iter_ops]->attrs().end()) {
@@ -215,14 +293,14 @@ std::vector<std::vector<int32_t>> PrepareL2Normalize(const std::vector<std::shar
 
   s[IntToSize(axis_index)] = 1;
 
-  std::vector<std::vector<int32_t>> strategies;
+  Strategys strategies;
   strategies.push_back(s);
   return strategies;
 }
 
-std::vector<std::vector<int32_t>> MakeRecSearchStrategy(const std::shared_ptr<Graph> &graph,
-                                                        const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                        const size_t iter_graph, const size_t iter_ops) {
+Strategys MakeRecSearchStrategy(const std::shared_ptr<Graph> &graph,
+                                const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
+                                const size_t iter_ops) {
   if (ops.empty()) {
     MS_LOG(EXCEPTION) << "Failure: Operators is empty.";
   }
@@ -231,31 +309,31 @@ std::vector<std::vector<int32_t>> MakeRecSearchStrategy(const std::shared_ptr<Gr
   }
 
   StrategyPtr origin_strategy = ops[iter_ops]->strategy();
-  std::vector<std::vector<int32_t>> strategies;
+  Strategys strategies;
   for (size_t iter_op_inputs = 0; iter_op_inputs < ops[iter_ops]->inputs_tensor_info().size(); iter_op_inputs++) {
     if (iter_op_inputs >= origin_strategy->GetInputDim().size()) {
       MS_LOG(EXCEPTION) << "Failure: Strategy's InputDim out of range.";
     }
 
     size_t output_size = origin_strategy->GetInputDim()[iter_op_inputs].size();
-    std::vector<int32_t> s;
+    Dimensions s;
     if (output_size == 4) {
       s.push_back(
-        static_cast<int32_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_n));
+        static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_n));
       s.push_back(
-        static_cast<int32_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_c));
+        static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_c));
       s.push_back(
-        static_cast<int32_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_h));
+        static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_h));
       s.push_back(
-        static_cast<int32_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_w));
+        static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_w));
     } else if (output_size == 2) {
       s.push_back(
-        static_cast<int32_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_h));
+        static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_h));
       s.push_back(
-        static_cast<int32_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_w));
+        static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_w));
     } else if (output_size == 1) {
       s.push_back(
-        static_cast<int32_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_w));
+        static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_w));
     } else if (output_size == 0) {
       s = {};
     } else {
@@ -266,9 +344,9 @@ std::vector<std::vector<int32_t>> MakeRecSearchStrategy(const std::shared_ptr<Gr
   return strategies;
 }
 
-std::vector<std::vector<int32_t>> MakeDataParallelStrategy(const std::shared_ptr<Graph> &graph,
-                                                           const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                           const size_t iter_graph, const size_t iter_ops) {
+Strategys MakeDataParallelStrategy(const std::shared_ptr<Graph> &graph,
+                                   const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
+                                   const size_t iter_ops) {
   if (ops.empty()) {
     MS_LOG(EXCEPTION) << "Failure: Operators is empty.";
   }
@@ -277,7 +355,7 @@ std::vector<std::vector<int32_t>> MakeDataParallelStrategy(const std::shared_ptr
   }
 
   StrategyPtr origin_strategy = ops[iter_ops]->strategy();
-  std::vector<std::vector<int32_t>> strategies;
+  Strategys strategies;
   size_t max_device_num = g_device_manager->DeviceNum();
   size_t target_tensor_batch = ops[iter_ops]->inputs_tensor_info()[0].shape()[0];
   for (size_t iter_op_inputs = 0; iter_op_inputs < ops[iter_ops]->inputs_tensor_info().size(); iter_op_inputs++) {
@@ -285,7 +363,7 @@ std::vector<std::vector<int32_t>> MakeDataParallelStrategy(const std::shared_ptr
       MS_LOG(EXCEPTION) << "Failure: Strategy's InputDim out of range.";
     }
 
-    std::vector<int32_t> s;
+    Dimensions s;
     size_t input_size = origin_strategy->GetInputDim()[iter_op_inputs].size();
     for (size_t dim = 0; dim < input_size; dim++) {
       if (input_size == 1 || input_size == 2 || input_size == 4) {
@@ -318,9 +396,8 @@ std::vector<std::vector<int32_t>> MakeDataParallelStrategy(const std::shared_ptr
   return strategies;
 }
 
-std::vector<std::vector<int32_t>> PrepareStrategy(const std::shared_ptr<Graph> &graph,
-                                                  const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                  const size_t iter_graph, const size_t iter_ops) {
+Strategys PrepareStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                          const size_t iter_graph, const size_t iter_ops) {
   if (ops.empty()) {
     MS_LOG(EXCEPTION) << "Failure: Operators is empty.";
   }
@@ -348,7 +425,7 @@ void GeneratePartitionedOperatorStrategy(const std::shared_ptr<Graph> &graph,
                                          const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                          const std::shared_ptr<std::vector<size_t>> &index_list) {
   for (size_t iter_ops = 0; iter_ops < (size_t)index_list->size(); iter_ops++) {
-    std::vector<std::vector<int32_t>> strategies;
+    Strategys strategies;
     size_t iter_graph = index_list->at(iter_ops);
     if (iter_graph != SIZE_MAX && ops[iter_ops]->type() != GET_NEXT) {
       strategies = PrepareStrategy(graph, ops, iter_graph, iter_ops);
@@ -375,10 +452,10 @@ size_t FindIndexOfOperatorIncoming(const std::vector<std::vector<std::string>> &
   return incoming_op_index;
 }
 
-std::vector<int32_t> CopyIncomingOperatorOutputStrategy(const std::shared_ptr<Graph> &graph,
-                                                        const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                        const size_t iter_ops, const size_t iter_graph) {
-  std::vector<int32_t> s;
+Dimensions CopyIncomingOperatorOutputStrategy(const std::shared_ptr<Graph> &graph,
+                                              const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                              const size_t iter_ops, const size_t iter_graph) {
+  Dimensions s;
   for (auto input : ops[iter_ops]->inputs_tensor_info()) {
     auto input_stra_dim = input.shape().size();
     if (input_stra_dim == 0) {
@@ -402,12 +479,22 @@ std::vector<int32_t> CopyIncomingOperatorOutputStrategy(const std::shared_ptr<Gr
   return s;
 }
 
-std::vector<int32_t> PrepareIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                          const size_t incoming_op_index) {
-  std::vector<int32_t> s;
-  if (ops[incoming_op_index]->type() == RESHAPE || ops[incoming_op_index]->type() == GATHERV2 ||
-      ops[incoming_op_index]->type() == TRANSPOSE) {
+Dimensions PrepareIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                const size_t incoming_op_index) {
+  Dimensions s;
+  if (ops[incoming_op_index]->type() == RESHAPE || ops[incoming_op_index]->type() == TRANSPOSE) {
     return s;
+  }
+  if (ops[incoming_op_index]->type() == GATHERV2) {
+    auto pos = ops[incoming_op_index]->name().find("Info");
+    auto name = ops[incoming_op_index]->name().substr(0, pos);
+    if (name == "GatherV2") {
+      return s;
+    } else if (name == "GatherV2P") {
+      return PrepareGatherV2POutputStrategy(ops, incoming_op_index);
+    } else {
+      MS_LOG(EXCEPTION) << "Failure: Unknown type of GatherV2." << std::endl;
+    }
   }
   auto strategy = ops[incoming_op_index]->selected_strategy();
   if (strategy->GetInputNumber() == 0) {
@@ -426,8 +513,8 @@ std::vector<int32_t> PrepareIncomingOperatorInputStrategy(const std::vector<std:
   return s;
 }
 
-std::vector<int32_t> GetAxisList(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const int iter_ops) {
-  std::vector<int32_t> axis_list;
+Dimensions GetAxisList(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const int iter_ops) {
+  Dimensions axis_list;
   auto axis_param = ops[iter_ops]->attrs().find(AXIS)->second;
   std::vector<ValuePtr> elements;
   if (axis_param->isa<ValueTuple>()) {
@@ -448,10 +535,10 @@ std::vector<int32_t> GetAxisList(const std::vector<std::shared_ptr<OperatorInfo>
   return axis_list;
 }
 
-std::vector<int32_t> ModifyStrategyIfSqueezeIncoming(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                     const size_t incoming_op_index, std::vector<int32_t> s) {
-  std::vector<int32_t> s_Squeeze;
-  std::vector<int32_t> stra_dim_list;
+Dimensions ModifyStrategyIfSqueezeIncoming(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                           const size_t incoming_op_index, Dimensions s) {
+  Dimensions s_Squeeze;
+  Dimensions stra_dim_list;
   for (size_t i = 0; i < s.size(); i++) {
     stra_dim_list.push_back(i);
   }
@@ -488,8 +575,8 @@ bool GetKeepDims(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const si
   return keepdims;
 }
 
-std::vector<int32_t> GetDimList(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops) {
-  std::vector<int32_t> dim_list;
+Dimensions GetDimList(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops) {
+  Dimensions dim_list;
   bool keep_dims = GetKeepDims(ops, iter_ops);
   if (keep_dims != false) {
     return dim_list;
@@ -499,10 +586,13 @@ std::vector<int32_t> GetDimList(const std::vector<std::shared_ptr<OperatorInfo>>
   if (input_value.back()->isa<ValueTuple>()) {
     auto attr_axis = GetValue<std::vector<int>>(input_value.back());
     if (attr_axis.empty()) {
-      MS_LOG(EXCEPTION) << "Failure: This output is a 0-D tensor." << std::endl;
-    }
-    for (auto &axis : attr_axis) {
-      axis < 0 ? dim_list.push_back(axis + SizeToInt(input_dim)) : dim_list.push_back(axis);
+      for (size_t i = 0; i < input_dim; i++) {
+        dim_list.push_back(SizeToInt(i));
+      }
+    } else {
+      for (auto &axis : attr_axis) {
+        axis < 0 ? dim_list.push_back(axis + SizeToInt(input_dim)) : dim_list.push_back(axis);
+      }
     }
   } else if (input_value.back()->isa<Int32Imm>()) {
     int axis = GetValue<int>(input_value.back());
@@ -513,10 +603,10 @@ std::vector<int32_t> GetDimList(const std::vector<std::shared_ptr<OperatorInfo>>
   return dim_list;
 }
 
-std::vector<int32_t> ModifyStrategyIfReduceIncoming(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                    const size_t incoming_op_index, std::vector<int32_t> s) {
-  std::vector<int32_t> s_Reduce;
-  std::vector<int32_t> axis_list;
+Dimensions ModifyStrategyIfReduceIncoming(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                          const size_t incoming_op_index, Dimensions s) {
+  Dimensions s_Reduce;
+  Dimensions axis_list;
   for (size_t i = 0; i < s.size(); i++) {
     axis_list.push_back(i);
   }
@@ -536,8 +626,8 @@ std::vector<int32_t> ModifyStrategyIfReduceIncoming(const std::vector<std::share
   return s_Reduce;
 }
 
-std::vector<int32_t> GetDimListFromAttrs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops) {
-  std::vector<int32_t> dim_list;
+Dimensions GetDimListFromAttrs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops) {
+  Dimensions dim_list;
   auto iter = ops[iter_ops]->attrs().find(AXIS);
   if (iter == ops[iter_ops]->attrs().end()) {
     MS_LOG(EXCEPTION) << ops[iter_ops]->name() << ": Don't have attr axis.";
@@ -564,15 +654,15 @@ std::vector<int32_t> GetDimListFromAttrs(const std::vector<std::shared_ptr<Opera
   return dim_list;
 }
 
-std::vector<int32_t> ModifyStrategyIfArgIncoming(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                 const size_t incoming_op_index, std::vector<int32_t> s) {
+Dimensions ModifyStrategyIfArgIncoming(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                       const size_t incoming_op_index, Dimensions s) {
   bool keepdims = GetKeepDims(ops, incoming_op_index);
   if (keepdims) {
     return s;
   }
 
-  std::vector<int32_t> s_Arg;
-  std::vector<int32_t> axis_list;
+  Dimensions s_Arg;
+  Dimensions axis_list;
   for (size_t i = 0; i < s.size(); i++) {
     axis_list.push_back(i);
   }
@@ -592,9 +682,9 @@ std::vector<int32_t> ModifyStrategyIfArgIncoming(const std::vector<std::shared_p
   return s_Arg;
 }
 
-std::vector<int32_t> CopyIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                       const size_t iter_ops, const size_t incoming_op_index) {
-  std::vector<int32_t> s;
+Dimensions CopyIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                             const size_t iter_ops, const size_t incoming_op_index) {
+  Dimensions s;
   s = PrepareIncomingOperatorInputStrategy(ops, incoming_op_index);
   if (s.size() != 0) {
     if (ops[incoming_op_index]->type() == SQUEEZE) {
@@ -611,11 +701,9 @@ std::vector<int32_t> CopyIncomingOperatorInputStrategy(const std::vector<std::sh
   return s;
 }
 
-std::vector<std::vector<int32_t>> GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                                 const size_t iter_ops,
-                                                                 std::vector<int32_t> basic_stra) {
-  std::vector<int32_t> s_empty = {};
-  std::vector<std::vector<int32_t>> stra;
+Strategys GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                                         Dimensions basic_stra) {
+  Strategys stra;
   MS_EXCEPTION_IF_NULL(ops[iter_ops]);
 
   if (basic_stra.size() == 0) {
@@ -626,26 +714,124 @@ std::vector<std::vector<int32_t>> GenerateStrategiesFromStrategy(const std::vect
     return stra;
   }
 
-  auto s_ptr = std::make_shared<std::vector<int32_t>>(basic_stra);
+  auto s_ptr = std::make_shared<Dimensions>(basic_stra);
   if (ops[iter_ops]->type() == BIAS_ADD) {
     return PrepareBiasAdd(s_ptr);
   }
   if (ops[iter_ops]->type() == GATHERV2) {
-    return PrepareGatherV2(ops, iter_ops, basic_stra);
+    auto pos = ops[iter_ops]->name().find("Info");
+    auto name = ops[iter_ops]->name().substr(0, pos);
+    if (name == "GatherV2") {
+      return PrepareGatherV2(ops, iter_ops, basic_stra);
+    } else if (name == "GatherV2P") {
+      return PrepareGatherV2P(ops, iter_ops, basic_stra);
+    } else {
+      MS_LOG(EXCEPTION) << "Failure: Unknown type of GatherV2." << std::endl;
+    }
   }
   if (ops[iter_ops]->type() == L2_NORMALIZE) {
     return PrepareL2Normalize(ops, iter_ops, basic_stra);
   }
+  if (ops[iter_ops]->type() == TENSOR_ADD || ops[iter_ops]->type() == SUB || ops[iter_ops]->type() == MUL ||
+      ops[iter_ops]->type() == DIV) {
+    return CheckBroadcast(ops, iter_ops, basic_stra);
+  }
 
+  return CheckDivisible(ops, iter_ops, basic_stra);
+}
+
+// Function to deal with ops with broadcasting, like TensorAdd/Sub/Mul/Div etc.
+Strategys CheckBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s) {
+  Strategys stra;
+
+  size_t first_tensor_dim = ops[iter_ops]->inputs_tensor_info()[0].shape().size();
+  size_t second_tensor_dim = ops[iter_ops]->inputs_tensor_info()[1].shape().size();
+
+  // Do Broadcasting in the second tensor.
+  if (second_tensor_dim < first_tensor_dim) {
+    bool braoadcast_first_tensor = false;
+    // Push back the first tensor's strategy.
+    stra.push_back(s);
+    // Push back the second tensor's strategy after applying broadcast.
+    stra.push_back(ApplyBroadcast(ops, iter_ops, s, second_tensor_dim, first_tensor_dim, braoadcast_first_tensor));
+  } else if (second_tensor_dim > first_tensor_dim) {  // Do Broadcasting in the first tensor.
+    bool braoadcast_first_tensor = true;
+    // Push back the first tensor's strategy after applying broadcast.
+    stra.push_back(ApplyBroadcast(ops, iter_ops, s, first_tensor_dim, second_tensor_dim, braoadcast_first_tensor));
+    // Push back the second tensor's strategy.
+    stra.push_back(s);
+  } else {  // Broadcasting can be ignored or No broadcasting needs to be applied.
+    stra = CheckDivisible(ops, iter_ops, s);
+  }
+
+  return stra;
+}
+
+Dimensions ApplyBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s,
+                          size_t target_tensor_dim, size_t refer_tensor_dim, bool braoadcast_first_tensor) {
+  Dimensions s_empty = {};
+  Dimensions s_broadcast;
+  int target_tensor_index = 0;
+  int refer_tensor_index = 0;
+
+  // Indexing target and refer tensor.
+  if (braoadcast_first_tensor) {
+    target_tensor_index = 0;
+    refer_tensor_index = 1;
+  } else {
+    target_tensor_index = 1;
+    refer_tensor_index = 0;
+  }
+
+  // When target tensor with an empty dim.
+  if (target_tensor_dim == 0) {
+    return s_empty;
+  } else if (target_tensor_dim == 1) {  // When target tensor with a single dim.
+    bool broadcast_dim_found = false;
+    for (size_t iter = 0; iter < refer_tensor_dim; iter++) {
+      // Find and copy that dim's strategy from the refer tensor.
+      if ((ops[iter_ops]->inputs_tensor_info()[refer_tensor_index].shape()[iter] ==
+           ops[iter_ops]->inputs_tensor_info()[target_tensor_index].shape()[0]) &&
+          (ops[iter_ops]->inputs_tensor_info()[refer_tensor_index].shape()[iter] > 1) &&
+          (refer_tensor_dim == s.size())) {
+        s_broadcast.push_back(s.at(iter));
+        broadcast_dim_found = true;
+        break;
+      }
+    }
+    // Cannot decide which dim it is, push back one.
+    if (broadcast_dim_found == false) {
+      s_broadcast.push_back(1);
+    }
+  } else {
+    // Cannot decide which dim needs to do broadcast, push back one(s).
+    for (size_t iter = 0; iter < target_tensor_dim; iter++) {
+      s_broadcast.push_back(1);
+    }
+  }
+
+  return s_broadcast;
+}
+
+// Check whether the operator can be divided by the current strategy.
+Strategys CheckDivisible(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                         Dimensions basic_stra) {
+  Dimensions s_empty = {};
+  Strategys stra;
+
+  // For all the input tensors.
   for (size_t iter_op_inputs = 0; iter_op_inputs < (size_t)ops[iter_ops]->inputs_tensor_info().size();
        iter_op_inputs++) {
+    // If input tensor is empty, return strategy as void.
     if (ops[iter_ops]->inputs_tensor_info()[iter_op_inputs].shape().size() == 0) {
       stra.push_back(s_empty);
       continue;
     }
 
-    std::vector<int32_t> tmp_stra = basic_stra;
+    Dimensions tmp_stra = basic_stra;
     bool modified = false;
+
+    // Make sure each tensor's dim shape is greater than 1. If not, push back strategy as 1 instead.
     for (size_t j = 0; j < (size_t)ops[iter_ops]->inputs_tensor_info()[iter_op_inputs].shape().size(); j++) {
       if (ops[iter_ops]->inputs_tensor_info()[iter_op_inputs].shape()[j] == 1) {
         tmp_stra[j] = 1;
@@ -658,6 +844,7 @@ std::vector<std::vector<int32_t>> GenerateStrategiesFromStrategy(const std::vect
       stra.push_back(basic_stra);
     }
   }
+
   return stra;
 }
 
@@ -673,8 +860,8 @@ void GenerateEliminatedOperatorStrategyForward(const std::shared_ptr<Graph> &gra
 
   for (size_t iter_list = no_stra_op_list->size(); iter_list > 0; iter_list--) {
     size_t iter_ops = no_stra_op_list->at(iter_list - 1);
-    std::vector<std::vector<int32_t>> stra;
-    std::vector<int32_t> s;
+    Strategys stra;
+    Dimensions s;
     size_t incoming_op_index = FindIndexOfOperatorIncoming(input_tensor_names, iter_ops);
     if (incoming_op_index != SIZE_MAX) {
       auto iter_graph = index_list->at(incoming_op_index);
@@ -701,9 +888,9 @@ void GenerateEliminatedOperatorStrategyForward(const std::shared_ptr<Graph> &gra
   }
 }
 
-std::vector<int32_t> ModifyStrategyIfSqueezeOutgoing(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                     const size_t iter_ops, std::vector<int32_t> s) {
-  std::vector<int32_t> s_Squeeze;
+Dimensions ModifyStrategyIfSqueezeOutgoing(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                                           Dimensions s) {
+  Dimensions s_Squeeze;
   auto axis_list = GetAxisList(ops, iter_ops);
   size_t s_index = 0;
   size_t axis_list_index = 0;
@@ -728,10 +915,10 @@ std::vector<int32_t> ModifyStrategyIfSqueezeOutgoing(const std::vector<std::shar
   return s_Squeeze;
 }
 
-std::vector<int32_t> CopyOutgoingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                       const std::vector<std::vector<std::string>> &input_tensor_names,
-                                                       const size_t iter_ops) {
-  std::vector<int32_t> s;
+Dimensions CopyOutgoingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                             const std::vector<std::vector<std::string>> &input_tensor_names,
+                                             const size_t iter_ops) {
+  Dimensions s;
   if (ops[iter_ops]->type() == REDUCE_MAX || ops[iter_ops]->type() == REDUCE_MIN ||
       ops[iter_ops]->type() == REDUCE_SUM || ops[iter_ops]->type() == REDUCE_MEAN || ops[iter_ops]->type() == RESHAPE ||
       ops[iter_ops]->type() == GATHERV2 || ops[iter_ops]->type() == TRANSPOSE ||
@@ -775,8 +962,8 @@ void GenerateEliminatedOperatorStrategyBackward(const std::vector<std::shared_pt
 
   for (size_t iter_list = no_stra_op_list->size(); iter_list > 0; iter_list--) {
     auto iter_ops = no_stra_op_list->at(iter_list - 1);
-    std::vector<std::vector<int32_t>> stra;
-    std::vector<int32_t> s = CopyOutgoingOperatorInputStrategy(ops, input_tensor_names, iter_ops);
+    Strategys stra;
+    Dimensions s = CopyOutgoingOperatorInputStrategy(ops, input_tensor_names, iter_ops);
 
     if (s.size() != 0 && ops[iter_ops]->type() == SQUEEZE) {
       s = ModifyStrategyIfSqueezeOutgoing(ops, iter_ops, s);
@@ -815,8 +1002,8 @@ void GenerateRemainingOperatorStrategy(const std::shared_ptr<Graph> &graph,
 
   for (size_t iter_list = 0; iter_list < no_stra_op_list->size(); iter_list++) {
     auto iter_ops = no_stra_op_list->at(iter_list);
-    std::vector<std::vector<int32_t>> stra;
-    std::vector<int32_t> s;
+    Strategys stra;
+    Dimensions s;
 
     size_t max_dim_num = 0;
     for (size_t iter_op_inputs = 0; iter_op_inputs < ops[iter_ops]->inputs_tensor_info().size(); iter_op_inputs++) {

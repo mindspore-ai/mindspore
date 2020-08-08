@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_IRPASS_ITEM_TUPLE_ELIMINATE_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_IRPASS_ITEM_TUPLE_ELIMINATE_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_ITEM_TUPLE_ELIMINATE_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_ITEM_TUPLE_ELIMINATE_H_
 
 #include <algorithm>
 #include <memory>
 #include <vector>
 
-#include "ir/optimizer_caller.h"
-#include "ir/visitor.h"
+#include "frontend/optimizer/optimizer_caller.h"
+#include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"
@@ -38,6 +38,7 @@ class GetitemEliminater : public AnfVisitor {
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     Reset();
     AnfVisitor::Match(prim::kPrimTupleGetItem, {IsCNode, IsVNode})(node);
+    AnfVisitor::Match(prim::kPrimListGetItem, {IsCNode, IsVNode})(node);
 
     if (is_match_) {
       return tuple_->input(id_);
@@ -46,14 +47,18 @@ class GetitemEliminater : public AnfVisitor {
   }
 
   void Visit(const CNodePtr &cnode) override {
-    if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple)) {
+    if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) || IsPrimitiveCNode(cnode, prim::kPrimMakeList)) {
       tuple_ = cnode;
     }
   }
 
   void Visit(const ValueNodePtr &vnode) override {
     if (tuple_ != nullptr && IsValueNode<Int32Imm>(vnode)) {
-      id_ = IntToSize(GetValue<int>(vnode->value()) + 1);
+      int idx = GetValue<int>(vnode->value());
+      if (idx < 0) {
+        idx = idx + tuple_->size() - 1;
+      }
+      id_ = IntToSize(idx + 1);
       if (tuple_->size() > id_) {
         is_match_ = true;
       }
@@ -80,9 +85,12 @@ class GetitemConstEliminater : public AnfVisitor {
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     Reset();
     AnfVisitor::Match(prim::kPrimTupleGetItem, {IsVNode, IsVNode})(node);
+    AnfVisitor::Match(prim::kPrimListGetItem, {IsVNode, IsVNode})(node);
 
     if (is_match_) {
-      return NewValueNode((*tuple_)[id_]);
+      auto out = NewValueNode((*tuple_)[id_]);
+      out->set_has_new_value(has_new_value_);
+      return out;
     }
     return nullptr;
   }
@@ -90,6 +98,7 @@ class GetitemConstEliminater : public AnfVisitor {
   void Visit(const ValueNodePtr &vnode) override {
     if (IsValueNode<ValueTuple>(vnode)) {
       tuple_ = GetValueNode<ValueTuplePtr>(vnode);
+      has_new_value_ = vnode->has_new_value();
     }
     if (tuple_ != nullptr && IsValueNode<Int32Imm>(vnode)) {
       id_ = IntToSize(GetValue<int>(vnode->value()));
@@ -109,6 +118,7 @@ class GetitemConstEliminater : public AnfVisitor {
   bool is_match_{false};
   size_t id_{0};
   ValueTuplePtr tuple_{nullptr};
+  bool has_new_value_{false};
 };
 
 // setitem((a, b, c, ...), 0, z) => (z, b, c, ...)
@@ -138,7 +148,7 @@ class SetitemEliminater : public AnfVisitor {
   }
 
   void Visit(const CNodePtr &cnode) override {
-    if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple)) {
+    if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) || IsPrimitiveCNode(cnode, prim::kPrimMakeList)) {
       auto &inputs = cnode->inputs();
       (void)std::copy(inputs.begin(), inputs.end(), std::back_inserter(args_));
     }
@@ -234,6 +244,7 @@ class GetitemDependReorder : public AnfVisitor {
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     Reset();
     AnfVisitor::Match(prim::kPrimTupleGetItem, {IsCNode, IsValueNode<Int32Imm>})(node);
+    AnfVisitor::Match(prim::kPrimListGetItem, {IsCNode, IsValueNode<Int32Imm>})(node);
     if (x_ == nullptr) {
       return nullptr;
     }
@@ -298,4 +309,4 @@ class ItemTupleEliminater : public OptimizerCaller {
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_IRPASS_ITEM_TUPLE_ELIMINATE_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_ITEM_TUPLE_ELIMINATE_H_

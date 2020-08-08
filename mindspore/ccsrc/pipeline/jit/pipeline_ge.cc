@@ -161,7 +161,7 @@ void ConvertObjectToTensors(const py::dict &dict, TensorOrderMap *const tensors)
       // convert int to tensor with shape([1])
       tensor = std::make_shared<Tensor>(kNumberTypeInt32, std::vector<int>({1}));
       *(static_cast<float *>(tensor->data_c())) = py::cast<float>(item.second.attr("default_input"));
-    } else if (py::hasattr(item.second.attr("default_input"), PYTHON_TENSOR_FLAG)) {
+    } else if (py::isinstance<Tensor>(item.second.attr("default_input"))) {
       // cast tensor
       tensor = py::cast<std::shared_ptr<Tensor>>(item.second.attr("default_input"));
     }

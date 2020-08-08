@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_SESSION_SESSION_CONTEXT_H
-#define MINDSPORE_CCSRC_SESSION_SESSION_CONTEXT_H
+#ifndef MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_CONTEXT_H
+#define MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_CONTEXT_H
 #include <vector>
 #include <map>
 #include <functional>
@@ -24,7 +24,7 @@
 
 #include "ir/tensor.h"
 #include "pipeline/jit/resource.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 namespace mindspore {
 namespace session {
 const char kInputCtrlTensors[] = "input_ctrl_tensors";
@@ -47,4 +47,4 @@ class Context : public pipeline::ResourceBase {
 }  // namespace session
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_SESSION_SESSION_CONTEXT_H
+#endif  // MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_CONTEXT_H

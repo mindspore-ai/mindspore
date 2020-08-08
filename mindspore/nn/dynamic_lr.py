@@ -231,8 +231,9 @@ def cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch):
         >>> cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch)
         [0.1, 0.1, 0.05500000000000001, 0.05500000000000001, 0.01, 0.01]
     """
-    validator.check_float_positive('min_lr', min_lr, None)
-    validator.check_float_legal_value('min_lr', min_lr, None)
+    if not isinstance(min_lr, float):
+        raise TypeError("min_lr must be float.")
+    validator.check_number_range("min_lr", min_lr, 0.0, float("inf"), Rel.INC_LEFT, None)
     validator.check_float_positive('max_lr', max_lr, None)
     validator.check_float_legal_value('max_lr', max_lr, None)
     validator.check_integer('total_step', total_step, 0, Rel.GT, None)
@@ -288,8 +289,9 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
     """
     validator.check_float_positive('learning_rate', learning_rate, None)
     validator.check_float_legal_value('learning_rate', learning_rate, None)
-    validator.check_float_positive('end_learning_rate', end_learning_rate, None)
-    validator.check_float_legal_value('end_learning_rate', end_learning_rate, None)
+    if not isinstance(end_learning_rate, float):
+        raise TypeError("end_learning_rate must be float.")
+    validator.check_number_range("end_learning_rate", end_learning_rate, 0.0, float("inf"), Rel.INC_LEFT, None)
     validator.check_float_positive('power', power, None)
     validator.check_float_legal_value('power', power, None)
     validator.check_integer('total_step', total_step, 0, Rel.GT, None)
@@ -311,11 +313,58 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
     return lr
 
 
+def warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch):
+    r"""
+    Get learning rate warming up.
+
+    For the i-th step, the formula of computing warmup_learning_rate[i] is:
+
+    .. math::
+        warmup\_learning\_rate[i] = learning\_rate * tmp\_epoch / tmp\_warmup\_epoch
+
+    Where :math:`tmp\_epoch=min(current\_epoch, warmup\_epoch),\ current\_epoch=floor(\frac{i}{step\_per\_epoch})`
+
+    Args:
+        learning_rate (float): The initial value of learning rate.
+        warmup_steps (int): The warm up steps of learning rate.
+
+    Inputs:
+        Tensor. The current step number.
+
+    Returns:
+        Tensor. The learning rate value for the current step.
+
+    Examples:
+        >>> learning_rate = 0.1
+        >>> total_step = 6
+        >>> step_per_epoch = 2
+        >>> warmup_epoch = 2
+        >>> warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch)
+        [0.0, 0.0, 0.05, 0.05, 0.1, 0.1]
+    """
+    if not isinstance(learning_rate, float):
+        raise TypeError("learning_rate must be float.")
+    validator.check_number_range("learning_rate", learning_rate, 0.0, float("inf"), Rel.INC_LEFT, None)
+    validator.check_integer('warmup_epoch', warmup_epoch, 0, Rel.GT, None)
+    validator.check_integer('total_step', total_step, 0, Rel.GT, None)
+    validator.check_integer('step_per_epoch', step_per_epoch, 0, Rel.GT, None)
+
+    function = lambda x, y: (x, min(x, y))
+
+    lr = []
+    for i in range(total_step):
+        current_epoch = math.floor(i / step_per_epoch)
+        warmup_epoch, tmp_epoch = function(warmup_epoch, current_epoch)
+        lr.append(learning_rate * tmp_epoch/ warmup_epoch)
+    return lr
+
+
 __all__ = [
     'piecewise_constant_lr',
     'exponential_decay_lr',
     'natural_exp_decay_lr',
     'inverse_decay_lr',
     'cosine_decay_lr',
-    'polynomial_decay_lr'
+    'polynomial_decay_lr',
+    'warmup_lr'
 ]

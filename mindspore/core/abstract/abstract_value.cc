@@ -38,9 +38,24 @@ bool AbstractBase::operator==(const AbstractBase &other) const {
                       << this->ToString() << ", other: " << other.ToString();
   }
 
-  bool value_equal = *value_ == *other.value_;
-  bool type_equal = *type_ == *other.type_;
-  bool shape_equal = *shape_ == *other.shape_;
+  bool value_equal = false;
+  if (value_ == other.value_) {
+    value_equal = true;
+  } else if (*value_ == *other.value_) {
+    value_equal = true;
+  }
+  bool type_equal = false;
+  if (type_ == other.type_) {
+    type_equal = true;
+  } else if (*type_ == *other.type_) {
+    type_equal = true;
+  }
+  bool shape_equal = false;
+  if (shape_ == other.shape_) {
+    shape_equal = true;
+  } else if (*shape_ == *other.shape_) {
+    shape_equal = true;
+  }
   return value_equal && type_equal && shape_equal;
 }
 
@@ -1035,16 +1050,16 @@ bool AbstractBasePtrListEqual::operator()(const AbstractBasePtrList &lhs, const 
   return AbstractBasePtrListDeepEqual(lhs, rhs);
 }
 
-// IndexedSlices
-TypePtr AbstractIndexedSlices::BuildType() const {
+// RowTensor
+TypePtr AbstractRowTensor::BuildType() const {
   MS_EXCEPTION_IF_NULL(element());
   TypePtr element_type = element()->BuildType();
-  return std::make_shared<IndexedSlicesType>(element_type);
+  return std::make_shared<RowTensorType>(element_type);
 }
 
-AbstractBasePtr AbstractIndexedSlices::Clone() const {
+AbstractBasePtr AbstractRowTensor::Clone() const {
   MS_EXCEPTION_IF_NULL(element());
-  auto clone = std::make_shared<AbstractIndexedSlices>(element()->Clone());
+  auto clone = std::make_shared<AbstractRowTensor>(element()->Clone());
   ShapePtr shp = shape();
   clone->set_shape(shp->Clone());
   clone->set_value(GetValueTrack());
@@ -1054,9 +1069,9 @@ AbstractBasePtr AbstractIndexedSlices::Clone() const {
   return clone;
 }
 
-AbstractBasePtr AbstractIndexedSlices::Broaden() const {
+AbstractBasePtr AbstractRowTensor::Broaden() const {
   MS_EXCEPTION_IF_NULL(element());
-  auto broaden = std::make_shared<AbstractIndexedSlices>(element()->Broaden());
+  auto broaden = std::make_shared<AbstractRowTensor>(element()->Broaden());
   auto shp = shape();
   broaden->set_shape(shp->Clone());
   broaden->set_value(kAnyValue);
@@ -1066,9 +1081,9 @@ AbstractBasePtr AbstractIndexedSlices::Broaden() const {
   return broaden;
 }
 
-AbstractBasePtr AbstractIndexedSlices::BroadenWithShape() const {
+AbstractBasePtr AbstractRowTensor::BroadenWithShape() const {
   MS_EXCEPTION_IF_NULL(element());
-  auto broaden = std::make_shared<AbstractIndexedSlices>(element()->Broaden());
+  auto broaden = std::make_shared<AbstractRowTensor>(element()->Broaden());
   auto shp = shape()->Clone();
   shp->Broaden();
   broaden->set_shape(shp);
@@ -1079,7 +1094,66 @@ AbstractBasePtr AbstractIndexedSlices::BroadenWithShape() const {
   return broaden;
 }
 
-std::string AbstractIndexedSlices::ToString() const {
+std::string AbstractRowTensor::ToString() const {
+  std::ostringstream buffer;
+  BaseShapePtr shape_track = GetShapeTrack();
+  MS_EXCEPTION_IF_NULL(shape_track);
+  MS_EXCEPTION_IF_NULL(element());
+  auto value_track = GetValueTrack();
+  MS_EXCEPTION_IF_NULL(value_track);
+  buffer << type_name() << "("
+         << "shape: " << shape_track->ToString() << ", element: " << element()->ToString()
+         << ", value_ptr: " << value_track << ", value: " << value_track->ToString() << ")"
+         << ", indices: " << indices_->ToString() << ", values" << values_->ToString()
+         << ", dense_shape: " << dense_shape_->ToString();
+  return buffer.str();
+}
+
+// SparseTensor
+TypePtr AbstractSparseTensor::BuildType() const {
+  MS_EXCEPTION_IF_NULL(element());
+  TypePtr element_type = element()->BuildType();
+  return std::make_shared<SparseTensorType>(element_type);
+}
+
+AbstractBasePtr AbstractSparseTensor::Clone() const {
+  MS_EXCEPTION_IF_NULL(element());
+  auto clone = std::make_shared<AbstractSparseTensor>(element()->Clone());
+  ShapePtr shp = shape();
+  clone->set_shape(shp->Clone());
+  clone->set_value(GetValueTrack());
+  clone->set_indices(indices_->Clone()->cast<AbstractTensorPtr>());
+  clone->set_values(values_->Clone()->cast<AbstractTensorPtr>());
+  clone->set_dense_shape(dense_shape_->Clone()->cast<AbstractTuplePtr>());
+  return clone;
+}
+
+AbstractBasePtr AbstractSparseTensor::Broaden() const {
+  MS_EXCEPTION_IF_NULL(element());
+  auto broaden = std::make_shared<AbstractSparseTensor>(element()->Broaden());
+  auto shp = shape();
+  broaden->set_shape(shp->Clone());
+  broaden->set_value(kAnyValue);
+  broaden->set_indices(indices_->Clone()->cast<AbstractTensorPtr>());
+  broaden->set_values(values_->Clone()->cast<AbstractTensorPtr>());
+  broaden->set_dense_shape(dense_shape_->Clone()->cast<AbstractTuplePtr>());
+  return broaden;
+}
+
+AbstractBasePtr AbstractSparseTensor::BroadenWithShape() const {
+  MS_EXCEPTION_IF_NULL(element());
+  auto broaden = std::make_shared<AbstractSparseTensor>(element()->Broaden());
+  auto shp = shape()->Clone();
+  shp->Broaden();
+  broaden->set_shape(shp);
+  broaden->set_value(kAnyValue);
+  broaden->set_indices(indices_->Clone()->cast<AbstractTensorPtr>());
+  broaden->set_values(values_->Clone()->cast<AbstractTensorPtr>());
+  broaden->set_dense_shape(dense_shape_->Clone()->cast<AbstractTuplePtr>());
+  return broaden;
+}
+
+std::string AbstractSparseTensor::ToString() const {
   std::ostringstream buffer;
   BaseShapePtr shape_track = GetShapeTrack();
   MS_EXCEPTION_IF_NULL(shape_track);

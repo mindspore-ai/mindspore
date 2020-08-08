@@ -38,7 +38,7 @@ Status VirtualDatasetInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  std::vector<Dimensions> stra = strategy->GetInputDim();
+  Strategys stra = strategy->GetInputDim();
   if (stra.size() < 1) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Strategy size must be larger than 1.";
@@ -80,12 +80,12 @@ Status VirtualDatasetInfo::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status VirtualDatasetInfo::InferDevMatrixShape() {
-  std::vector<Dimensions> stra = strategy_->GetInputDim();
+  Strategys stra = strategy_->GetInputDim();
   Dimensions strategy_first = stra.at(0);
   int32_t stage = strategy_->GetInputStage();
   CheckGlobalDeviceManager();
   int32_t dev_num = SizeToInt(g_device_manager->GetDeviceListByStageId(stage).size());
-  int32_t batch_split_num = strategy_first.at(0);
+  int32_t batch_split_num = ((int32_t)(strategy_first.at(0)));
   dev_matrix_shape_.push_back(batch_split_num);
   if (dev_num > batch_split_num) {
     dev_matrix_shape_.push_back(dev_num / batch_split_num);
@@ -103,11 +103,11 @@ Status VirtualDatasetInfo::InferTensorMap() {
   bool full_batch = ParallelContext::GetInstance()->full_batch();
 
   for (size_t i = 0; i < strategy_->GetInputNumber(); i++) {
-    std::vector<int32_t> tensor_map_index;
+    Shape tensor_map_index;
     if (full_batch) {
       tensor_map_index.push_back(MAP_NONE);
     } else {
-      tensor_map_index.push_back((int32_t)(LAST_INDEX(SizeToUint(dev_matrix_shape_.size()))));
+      tensor_map_index.push_back((int64_t)(LAST_INDEX(dev_matrix_shape_.size())));
     }
     for (size_t j = 1; j < strategy_->GetInputDim()[i].size(); ++j) {
       tensor_map_index.push_back(MAP_NONE);
@@ -193,7 +193,7 @@ Status VirtualDatasetInfo::GenerateStrategies(int32_t stage_id) {
     total_dev_num = g_device_manager->GetDeviceListByStageId(stage_id).size();
   }
   StrategyPtr sp;
-  std::vector<Dimensions> strategy;
+  Strategys strategy;
   for (auto &shape : inputs_shape_) {
     Shape temp;
     temp.emplace_back(SizeToInt(total_dev_num));

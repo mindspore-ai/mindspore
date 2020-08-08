@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_ARRAYREDUCE_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_KERNEL_GPU_ARRAYREDUCE_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYREDUCE_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYREDUCE_GPU_KERNEL_H_
 
 #include <map>
 #include <string>
@@ -29,6 +29,7 @@ const std::map<std::string, cudnnReduceTensorOp_t> kReduceTypeMap = {
   {"ReduceMax", CUDNN_REDUCE_TENSOR_MAX},
   {"ReduceMean", CUDNN_REDUCE_TENSOR_AVG},
   {"ReduceSum", CUDNN_REDUCE_TENSOR_ADD},
+  {"ReduceMin", CUDNN_REDUCE_TENSOR_MIN},
 };
 template <typename T>
 class ArrayReduceGpuKernel : public GpuKernel {
@@ -234,4 +235,4 @@ class ArrayReduceGpuKernel : public GpuKernel {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_ARRAYREDUCE_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYREDUCE_GPU_KERNEL_H_

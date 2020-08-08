@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_DEVICE_GPU_CUDA_DRIVER_H_
-#define MINDSPORE_CCSRC_DEVICE_GPU_CUDA_DRIVER_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_CUDA_DRIVER_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_CUDA_DRIVER_H_
 
 #include <cuda_runtime_api.h>
 
@@ -57,6 +57,7 @@ class CudaDriver {
   static bool RecordEvent(DeviceEvent event, DeviceStream stream = 0);
   static bool SyncEvent(const DeviceEvent &event);
   static bool QueryEvent(const DeviceEvent &event);
+  static bool ElapsedTime(float *cost_time, const DeviceEvent &start, const DeviceEvent &end);
 
   // Encapsulate the cuda APIs associated with device management.
   static int device_count();
@@ -76,4 +77,4 @@ class CudaDriver {
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_GPU_CUDA_DRIVER_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_CUDA_DRIVER_H_

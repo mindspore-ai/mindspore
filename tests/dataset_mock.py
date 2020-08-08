@@ -50,11 +50,18 @@ class MindData:
     def input_indexs(self):
         return self._input_indexs
 
-    def device_que(self):
+    def device_que(self, send_epoch_end=True):
         self.queue_name = '6ba41974-209e-11ea-88b0-a24efeb2c736'
+        self.send_epoch_end = send_epoch_end
         return self
 
-    def send(self):
+    def create_tuple_iterator(self):
+        return self.__iter__()
+
+    def send(self, num_epochs=-1):
+        pass
+
+    def stop_send(self):
         pass
 
     def __len__(self):

@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_ASCEND_KERNEL_MOD_H_
-#define MINDSPORE_CCSRC_KERNEL_ASCEND_KERNEL_MOD_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ASCEND_KERNEL_MOD_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ASCEND_KERNEL_MOD_H_
 
 #include <vector>
 #include <memory>
 #include "framework/ge_runtime/task_info.h"
 #include "backend/kernel_compiler/kernel.h"
-#ifdef ENABLE_DATA_DUMP
 #include "debug/data_dump_parser.h"
-#endif
 
 using TaskInfoPtr = std::shared_ptr<ge::model_runner::TaskInfo>;
 namespace mindspore {
@@ -34,13 +32,7 @@ class AscendKernelMod : public KernelMod {
                                            const std::vector<AddressPtr> &, uint32_t) = 0;
   uint32_t block_dim() { return block_dim_; }
   uint32_t stream_id() { return stream_id_; }
-  virtual bool NeedDump() {
-#ifdef ENABLE_DATA_DUMP
-    return DataDumpParser::GetInstance().NeedDump(kernel_name_);
-#else
-    return false;
-#endif
-  }
+  virtual bool NeedDump() { return DataDumpParser::GetInstance().NeedDump(kernel_name_); }
 
  protected:
   uint32_t block_dim_{1};
@@ -49,4 +41,4 @@ class AscendKernelMod : public KernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_ASCEND_KERNEL_MOD_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ASCEND_KERNEL_MOD_H_

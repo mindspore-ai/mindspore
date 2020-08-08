@@ -163,7 +163,7 @@ def _calculate_in_and_out(arr):
     """
     dim = len(arr.shape)
     if dim < 2:
-        raise ValueError("If initialize data with xavier uniform, the dimension of data must greater than 1.")
+        raise ValueError("If initialize data with xavier uniform, the dimension of data must be greater than 1.")
 
     n_in = arr.shape[1]
     n_out = arr.shape[0]

@@ -402,31 +402,36 @@ AbstractBasePtr InferImplDropoutGenMask(const AnalysisEnginePtr &, const Primiti
   for (std::size_t i = 0; i < x_shape->size(); ++i) {
     auto value_track = x_shape_data[i]->GetValueTrack();
     MS_EXCEPTION_IF_NULL(value_track);
-    if (!value_track->isa<Int32Imm>()) {
-      MS_LOG(EXCEPTION) << "DropOutGenMask input x_shape elements is not int32, but " << value_track->ToString() << ".";
+    int64_t e_value = 0;
+    if (value_track->isa<Int64Imm>()) {
+      e_value = GetValue<int64_t>(value_track);
+    } else if (value_track->isa<Int32Imm>()) {
+      e_value = static_cast<int64_t>(GetValue<int>(value_track));
+    } else {
+      MS_LOG(EXCEPTION) << "DropOutGenMask input x_shape elements is not int64 or int32, but "
+                        << value_track->ToString() << ".";
     }
 
-    int e_value = GetValue<int>(value_track);
     if (e_value <= 0) {
       MS_LOG(EXCEPTION) << "DropOutGenMask product of x_shape should be > 0";
     }
-    if (std::numeric_limits<int>::max() / count / e_value < 1) {
+    if (std::numeric_limits<int64_t>::max() / count / e_value < 1) {
       MS_LOG(EXCEPTION) << "integer multiply integer overflow";
     }
     count = count * e_value;
   }
 
   // convert to bytes(8 bits) mask, using round up
-  int n128s = count / 128;
+  int64_t n128s = count / 128;
   if ((count % 128) != 0) {
     n128s++;
   }
-  int bytes_count = n128s * 16;
-  std::vector<int> shape_y{bytes_count};
+  int64_t bytes_count = n128s * 16;
+  std::vector<int64_t> shape_y{bytes_count};
 
   primitive->set_attr("T", kInt32);
   return std::make_shared<AbstractTensor>(std::make_shared<AbstractScalar>(kAnyValue, kUInt8),
-                                          std::make_shared<Shape>(std::vector<int>{shape_y}));
+                                          std::make_shared<Shape>(std::vector<int64_t>{shape_y}));
 }
 }  // namespace abstract
 }  // namespace mindspore

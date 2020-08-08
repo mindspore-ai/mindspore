@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "ir/func_graph.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/graph_util/graph_info.h"
@@ -37,14 +37,21 @@ py::dict GetParameterLayout(const FuncGraphPtr &graph) {
 
   for (auto para : graph_params) {
     std::string name = std::static_pointer_cast<Parameter>(para)->name();
-    std::shared_ptr<parallel::TensorLayout> tensor_layout = std::static_pointer_cast<Parameter>(para)->tensor_layout();
+    auto tensor_layout = para->user_data<parallel::TensorLayout>();
     if (tensor_layout == nullptr) {
       MS_LOG(INFO) << "GetParameterLayout nullptr name = " << name;
     } else {
       auto device_arrangement = tensor_layout->device_arrangement().array();
       auto tensor_map = tensor_layout->tensor_map().array();
       auto slice_shape = tensor_layout->slice_shape().array();
-      std::vector<std::vector<int32_t>> layout = {device_arrangement, tensor_map, slice_shape};
+      int32_t _field_size = tensor_layout->get_field_size();
+      Shape field_size;
+      if (_field_size != 0) {
+        field_size.push_back(_field_size);
+      } else {
+        field_size = {0};
+      }
+      std::vector<Shape> layout = {device_arrangement, tensor_map, slice_shape, field_size};
       dict[py::str(name)] = layout;
       MS_LOG(INFO) << "GetParameterLayout name = " << name << ", layout " << tensor_layout->ToString();
     }
@@ -63,7 +70,7 @@ py::dict GetCNodeStrategy(const FuncGraphPtr &graph) {
     if (node->isa<CNode>()) {
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
-      auto distributed_operation_info = cnode->operator_info();
+      auto distributed_operation_info = cnode->user_data<OperatorInfo>();
       if (distributed_operation_info != nullptr) {
         auto strategyPtr = distributed_operation_info->strategy();
         if (strategyPtr != nullptr) {

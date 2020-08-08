@@ -29,6 +29,8 @@ enum BroadcastOpType {
   BROADCAST_TYPE_MUL = 6,
   BROADCAST_TYPE_SUB = 7,
   BROADCAST_TYPE_ADD = 8,
+  BROADCAST_TYPE_FLOORDIV = 9,
+  BROADCAST_TYPE_ABSGRAD = 10,
   BROADCAST_TYPE_INVALID = 0xffffffff,
 };
 
@@ -40,5 +42,9 @@ void Broadcast(const int &l0, const int &l1, const int &l2, const int &l3, const
 template <typename T, typename S>
 void NoBroadcast(const int &size, enum BroadcastOpType op, const T *input0, const T *input1, S *output,
                  cudaStream_t stream);
+
+template <typename T>
+void BroadcastTo(const int &i0, const int &i1, const int &i2, const int &i3, const int &o0, const int &o1,
+                 const int &o2, const int &o3, const T *input_addr, T *output_addr, cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_BROADCAST_H_

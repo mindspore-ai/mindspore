@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_UNARYOP_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_KERNEL_GPU_UNARYOP_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_UNARYOP_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_UNARYOP_GPU_KERNEL_H_
 
 #include <cuda_runtime_api.h>
 #include <vector>
@@ -36,6 +36,8 @@ enum UnaryOptype {
   UNARY_OP_SQUARE,
   UNARY_OP_SQRT,
   UNARY_OP_RSQRT,
+  UNARY_OP_ABS,
+  UNARY_OP_FLOOR,
   UNARY_OP_INVALID_TYPE = 255
 };
 static const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {{"Exp", UNARY_OP_EXP},
@@ -45,7 +47,9 @@ static const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {{"Exp", UNARY
                                                                    {"ZerosLike", UNARY_OP_ZEROSLIKE},
                                                                    {"Square", UNARY_OP_SQUARE},
                                                                    {"Sqrt", UNARY_OP_SQRT},
-                                                                   {"Rsqrt", UNARY_OP_RSQRT}};
+                                                                   {"Rsqrt", UNARY_OP_RSQRT},
+                                                                   {"Abs", UNARY_OP_ABS},
+                                                                   {"Floor", UNARY_OP_FLOOR}};
 template <typename T>
 class UnaryOpGpuKernel : public GpuKernel {
  public:
@@ -99,6 +103,14 @@ class UnaryOpGpuKernel : public GpuKernel {
       case UNARY_OP_ZEROSLIKE: {
         Zeroslike(output_addr, output_size_ / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
         return true;
+      }
+      case UNARY_OP_ABS: {
+        Abs(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case UNARY_OP_FLOOR: {
+        Floor(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
       }
       default: {
         MS_LOG(EXCEPTION) << "Unary operation " << unary_op_type_ << " is not supported.";
@@ -158,4 +170,4 @@ class UnaryOpGpuKernel : public GpuKernel {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_UNARYOP_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_UNARYOP_GPU_KERNEL_H_

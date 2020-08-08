@@ -43,16 +43,15 @@ class MindDataTestTypeCast : public UT::Common {
 
 template<typename FROM, typename TO>
 void testCast(std::vector<FROM> values, const DataType &from, const DataType &to) {
-  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({static_cast<int64_t>(values.size())}),
-                                                       DataType(from),
-                                                       reinterpret_cast<unsigned char *>(&values[0]));
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateFromVector(values, &t);
 
   std::unique_ptr<TypeCastOp> op(new TypeCastOp(to));
   EXPECT_TRUE(op->OneToOne());
   std::shared_ptr<Tensor> output;
   EXPECT_TRUE(op->Compute(t, &output));
   ASSERT_TRUE(t->shape() == output->shape());
-  ASSERT_TRUE(DataType(to)==output->type());
+  ASSERT_TRUE(DataType(to) == output->type());
   MS_LOG(DEBUG) << *output << std::endl;
   auto out = output->begin<TO>();
   auto v = values.begin();

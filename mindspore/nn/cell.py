@@ -26,6 +26,7 @@ from ..common.parameter import Parameter, ParameterTuple
 from .._c_expression import init_backend
 from ..ops.primitive import Primitive
 from ..ops.operations import HookBackward
+from ..ops.functional import cast
 from ..parallel._tensor import _load_tensor_by_layout
 from ..common.tensor import Tensor
 
@@ -57,9 +58,11 @@ class Cell:
         >>>    def construct(self, x):
         >>>        return self.relu(x)
     """
+
     def __init__(self, auto_prefix=True, flags=None):
         self._params = OrderedDict()
         self._cells = OrderedDict()
+        self._params_list = OrderedDict()
         self.training = False
         self.requires_grad = False
         self.pynative = False
@@ -81,16 +84,16 @@ class Cell:
         self._backward_hook = None
         self.enable_hook = False
         self._bprop_debug = False
-        self._is_run = False
+        self._already_run = False
         self.cell_type = None
 
     @property
-    def is_run(self):
-        return self._is_run
+    def already_run(self):
+        return self._already_run
 
-    @is_run.setter
-    def is_run(self, value):
-        self._is_run = value
+    @already_run.setter
+    def already_run(self, value):
+        self._already_run = value
 
     @property
     def create_time(self):
@@ -188,11 +191,22 @@ class Cell:
         if '_params' in self.__dict__:
             params = self.__dict__['_params']
             if name in params:
+                if context.get_context("mode") == context.PYNATIVE_MODE:
+                    return self.cast_param(params[name])
                 return params[name]
         if '_cells' in self.__dict__:
             cells = self.__dict__['_cells']
             if name in cells:
                 return cells[name]
+        if context.get_context("mode") == context.PYNATIVE_MODE and '_params_list' in self.__dict__:
+            params_list = self.__dict__['_params_list']
+            if name in params_list:
+                para_list = params_list[name]
+                cast_list = list()
+                for para in para_list:
+                    cast_list.append(self.cast_param(para))
+                para_list = ParameterTuple(cast_list)
+                return para_list
         raise AttributeError("'{}' object has no attribute '{}'.".format(type(self).__name__, name))
 
     def __del__(self):
@@ -215,7 +229,6 @@ class Cell:
         for item in inputs:
             if isinstance(item, numpy.ndarray):
                 raise TypeError("cell inputs should not be numpy array.")
-        self.init_parameters_data()
         orign_grad = []
         if self.requires_grad is True:
             _pynative_exec.set_grad_flag(True)
@@ -225,22 +238,35 @@ class Cell:
                 cell.set_grad(True)
         else:
             _pynative_exec.set_grad_flag(False)
-        if self.enable_hook:
-            output = self._hook_construct(*inputs)
+        cast_inputs = list()
+        if hasattr(self, "_mindspore_flags"):
+            if self._mindspore_flags.get('fp16'):
+                for item in inputs:
+                    cast_inputs.append(cast(item, mstype.float16))
+            if self._mindspore_flags.get('fp32'):
+                for item in inputs:
+                    cast_inputs.append(cast(item, mstype.float32))
+        if cast_inputs:
+            cast_inputs = tuple(cast_inputs)
         else:
-            output = self.construct(*inputs)
+            cast_inputs = inputs
+        if self.enable_hook:
+            output = self._hook_construct(*cast_inputs)
+        else:
+            output = self.construct(*cast_inputs)
         if isinstance(output, Parameter):
             output = output.data
         if self.requires_grad is True:
             _pynative_exec.end_graph(self, output, *inputs)
             for i, cell in enumerate(self.cells()):
                 cell.set_grad(orign_grad[i])
-        self._is_run = True
+        self._already_run = True
         return output
 
     def __setattr__(self, name, value):
         cells = self.__dict__.get('_cells')
         params = self.__dict__.get('_params')
+        params_list = self.__dict__.get('_params_list')
         if isinstance(value, Parameter):
             if params is None:
                 raise AttributeError("Can not assign params before Cell.__init__() call.")
@@ -256,7 +282,14 @@ class Cell:
                 raise AttributeError("Can not assign params before Cell.__init__() call.")
             for item in value:
                 self.insert_param_to_cell(item.name, item, check_name=False)
-            object.__setattr__(self, name, value)
+            if context.get_context("mode") == context.PYNATIVE_MODE:
+                if name in self.__dict__:
+                    del self.__dict__[name]
+                if name in params:
+                    del params[name]
+                params_list[name] = value
+            else:
+                object.__setattr__(self, name, value)
         elif isinstance(value, Cell):
             if cells is None:
                 raise AttributeError("Can not assign cells before Cell.__init__() call.")
@@ -316,19 +349,8 @@ class Cell:
             params (dict): The parameters dictionary used for init data graph.
         """
         if params is None:
-            for key in self.parameters_dict():
-                tensor = self.parameters_dict()[key].data
-                if key not in self.parameter_layout_dict:
-                    logger.info("layout dict does not contain the key %s", key)
-                    continue
-                if self.parameters_dict()[key].sliced:
-                    logger.debug("Param %s is already sliced.", key)
-                    continue
-                layout = self.parameter_layout_dict[key]
-                new_tensor = _load_tensor_by_layout(tensor, layout)
-                self.parameters_dict()[key].set_parameter_data(new_tensor)
-                self.parameters_dict()[key].sliced = True
-        elif isinstance(params, OrderedDict):
+            params = self.parameters_dict()
+        if isinstance(params, OrderedDict):
             for key in params:
                 tensor = params[key].data
                 if key not in self.parameter_layout_dict:
@@ -339,8 +361,7 @@ class Cell:
                     continue
                 layout = self.parameter_layout_dict[key]
                 new_tensor = _load_tensor_by_layout(tensor, layout)
-                params[key].set_parameter_data(new_tensor)
-                params[key].sliced = True
+                params[key].set_parameter_data(new_tensor, True)
         else:
             raise TypeError('Parameters need OrderedDict type, but got {}'.
                             format(type(params)))
@@ -458,6 +479,22 @@ class Cell:
             raise TypeError("The type of parameter should be 'Parameter' if not None.")
         self._params[param_name] = param
 
+    def cast_param(self, param):
+        """
+        Cast parameter according to auto mix precison level in pynative mode.
+
+        Args:
+            param (Parameter): The parameter to cast.
+        """
+        if hasattr(self, "_mindspore_flags"):
+            if self._mindspore_flags.get('fp16'):
+                param.cast_type = mstype.float16
+            elif self._mindspore_flags.get('fp32'):
+                param.cast_type = mstype.float32
+            else:
+                param.cast_type = None
+        return param
+
     def insert_child_to_cell(self, child_name, child):
         """
         Adds a child cell to the current cell.
@@ -495,17 +532,50 @@ class Cell:
         """
         raise NotImplementedError
 
-    def init_parameters_data(self, recurse=True, auto_parallel_mode=False):
-        """Init parameters' data."""
-        for param in self.get_parameters(expand=recurse):
-            if not auto_parallel_mode:
-                param.init_data()
-            elif param.name not in self.parameter_layout_dict:
-                logger.debug("Layout dict does not contain the key %s.", param.name)
-                param.init_data(set_sliced=True)
-            else:
-                layout = self.parameter_layout_dict[param.name]
-                param.init_data(layout, set_sliced=True)
+    def init_parameters_data(self, auto_parallel_mode=False):
+        """
+        Init all parameters' data and replace the original saved parameters in cell.
+
+        Notes:
+            trainable_params() and other similar interfaces may return different parameter instance after
+            `init_parameters_data`, do not save these result.
+
+        Args:
+            auto_parallel_mode (bool): If running in auto_parallel_mode.
+
+        Returns:
+            Dict[Parameter, Parameter], returns a dict of original parameter and replaced parameter.
+        """
+        replace = dict()
+        def _updata(param):
+            if param in replace:
+                return replace[param]
+            layout = None
+            set_sliced = False
+            if auto_parallel_mode:
+                set_sliced = True
+                if param.name not in self.parameter_layout_dict:
+                    logger.debug("Layout dict does not contain the key %s.", param.name)
+                else:
+                    layout = self.parameter_layout_dict[param.name]
+            new_p = param.init_data(layout, set_sliced=set_sliced)
+            replace[param] = new_p
+            return new_p
+        # replace all original usage.
+        cells = self.cells_and_names()
+        for _, cell in cells:
+            params = cell._params.items()
+            for param_name, param in params:
+                cell._params[param_name] = _updata(param)
+            cell_dict = cell.__dict__
+            for key in cell_dict:
+                if isinstance(cell_dict[key], ParameterTuple):
+                    param_tuple = cell_dict[key]
+                    new_param_tuple = []
+                    for param in param_tuple:
+                        new_param_tuple.append(_updata(param))
+                    cell.__dict__[key] = ParameterTuple(new_param_tuple)
+        return replace
 
     def parameters_dict(self, recurse=True):
         """
@@ -632,9 +702,10 @@ class Cell:
         for cell_name, cell in cells:
             params = cell._params.items()
             for par_name, par in params:
-                if par and par not in params_set:
+                if par.inited_param is not None:
+                    par = par.inited_param
+                if par is not None and par not in params_set:
                     params_set.add(par)
-
                     par_new_name = par_name
                     if cell_name:
                         par_new_name = cell_name + '.' + par_new_name
@@ -816,7 +887,7 @@ class Cell:
 
     def register_backward_hook(self, fn):
         """
-        Set the cell backward hook function.
+        Set the cell backward hook function. Note that this function is only supported in Pynative Mode.
 
         Note:
             fn should be defined as following code shows, `cell_name` is the name of registered cell,
@@ -831,7 +902,7 @@ class Cell:
         self._backward_hook = HookBackward(fn, self.cls_name + "(" + str(id(self)) + ")")
         self.enable_hook = True
 
-    def set_param_ps(self, recurse=True):
+    def set_param_ps(self, recurse=True, init_in_server=False):
         """
         Set whether the trainable parameter is updated by parameter server.
 
@@ -843,7 +914,8 @@ class Cell:
         """
         params = self.trainable_params(recurse)
         for param in params:
-            param.set_param_ps()
+            param.set_param_ps(init_in_server)
+
 
 class GraphKernel(Cell):
     """
@@ -861,6 +933,7 @@ class GraphKernel(Cell):
         >>>    def construct(self, x):
         >>>        return self.max(P.Fill()(P.DType()(x), P.Shape()(x), 0.0), x)
     """
+
     def __init__(self, auto_prefix=True, pips=None):
         super(GraphKernel, self).__init__(auto_prefix, pips)
         class_name = self.__class__.__name__

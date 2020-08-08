@@ -467,24 +467,6 @@ TEST_F(TestPrim, test_env_add) {
   ASSERT_TRUE(*res == *exp);
 }
 
-TEST_F(TestPrim, test_shape) {
-  PrimitivePtr shap = std::make_shared<Primitive>("Shape");
-  FuncGraphPtr func_graph = MakeFuncGraph(shap, 1);
-
-  auto a = UTPrimUtils::ArrayFloat64Of({2, 3});
-
-  AbstractBasePtrList args_spec_list = {a};
-
-  AbstractTuplePtr res = dyn_cast<AbstractTuple>(engine_->Run(func_graph, args_spec_list).inferred->abstract());
-  auto ret = res->BuildValue()->cast<ValueTuplePtr>()->value();
-
-  std::vector<ValuePtr> element_list = {MakeValue(2), MakeValue(3)};
-  ASSERT_TRUE(ret.size() == element_list.size());
-  for (int i = 0; i < element_list.size(); i++) {
-    ASSERT_TRUE(*ret[i] == *element_list[i]);
-  }
-}
-
 TEST_F(TestPrim, test_relu) {
   PrimitivePtr relu = prim::kPrimRelu;
   relu->AddAttr("T", MakeValue(static_cast<int>(kNumberTypeFloat64)));

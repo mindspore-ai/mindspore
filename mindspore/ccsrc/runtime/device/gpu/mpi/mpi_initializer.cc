@@ -15,45 +15,24 @@
  */
 
 #include "runtime/device/gpu/mpi/mpi_initializer.h"
-
+#include <dlfcn.h>
 #include <mpi.h>
 #include <pybind11/operators.h>
 #include <iostream>
+#include <string>
 
 namespace mindspore {
 namespace device {
 namespace gpu {
-MPIInitializer::MPIInitializer() {
-  int init_flag = 0;
-  if (MPI_Initialized(&init_flag) != MPI_SUCCESS) {
-    return;
-  }
-  if (init_flag == 0) {
-    auto ret = MPI_Init(nullptr, nullptr);
-    if (ret != MPI_SUCCESS) {
-      return;
-    }
-  }
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank_id_);
-  MPI_Comm_size(MPI_COMM_WORLD, &rank_size_);
-}
-
-MPIInitializer::~MPIInitializer() {
-  int finalized_flag = 0;
-  (void)MPI_Finalized(&finalized_flag);
-  if (finalized_flag == 0) {
-    (void)MPI_Finalize();
-  }
-}
 
 MPIInitializer &MPIInitializer::GetInstance() {
   static MPIInitializer instance;
   return instance;
 }
 
-int MPIInitializer::get_rank_id() { return MPIInitializer::GetInstance().rank_id_; }
+int MPIInitializer::get_rank_id(const std::string &group) { return GetRankIDByGroup(group); }
 
-int MPIInitializer::get_rank_size() { return MPIInitializer::GetInstance().rank_size_; }
+int MPIInitializer::get_rank_size(const std::string &group) { return GetGroupSize(group); }
 
 PYBIND11_MODULE(_ms_mpi, mpi_initializer) {
   mpi_initializer.doc() = "mindspore mpi python wrapper";

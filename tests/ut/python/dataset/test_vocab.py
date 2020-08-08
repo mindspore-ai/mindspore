@@ -133,7 +133,9 @@ def test_from_file():
     assert test_config("w1 w2 w3 s1 s2 s3", 3, ["s1", "s2", "s3"], False) == [0, 1, 2, 3, 4, 5]
     # text exception special_words contains duplicate words
     assert "special_tokens contains duplicate" in test_config("w1", None, ["s1", "s1"], True)
-
+    # test exception when vocab_size is negative
+    assert "Input vocab_size must be greater than 0" in test_config("w1 w2", 0, [], True)
+    assert "Input vocab_size must be greater than 0" in test_config("w1 w2", -1, [], True)
 
 if __name__ == '__main__':
     test_from_dict_exception()

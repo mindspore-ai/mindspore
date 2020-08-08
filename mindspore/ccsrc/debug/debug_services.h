@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_DEBUG_DEBUG_SERVICES_H_
 #define MINDSPORE_CCSRC_DEBUG_DEBUG_SERVICES_H_
 
+#include <math.h>
 #include <vector>
 #include <string>
 #include <memory>
@@ -76,6 +77,9 @@ class DebugServices {
   void CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot, std::vector<char *> *data_ptr,
                         std::vector<unsigned int> *data_size, std::vector<int> *condition,
                         std::vector<unsigned int> *wacthpoint_id);
+
+  void CheckSingleWatchpoint(std::shared_ptr<TensorData> watchnode, std::string *name, std::string *slot,
+                             char **data_ptr, unsigned int *data_size, int *condition, unsigned int *wacthpoint_id);
 
   void ReadNodesTensors(std::vector<std::string> name, std::vector<std::string> *ret_name,
                         std::vector<char *> *data_ptr, std::vector<unsigned int> *data_size,

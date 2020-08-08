@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_OPS_INFO_OPS_UTILS_H_
-#define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_OPS_UTILS_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_OPS_UTILS_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_OPS_UTILS_H_
 
 namespace mindspore {
 namespace parallel {
@@ -29,6 +29,11 @@ constexpr int32_t NO_SPLIT_STRATEGY = 1;
 constexpr int32_t SPLIT_FLAG = 1;
 constexpr int32_t NO_SPLIT_FLAG = 0;
 constexpr size_t MATMUL_ATTRS_SIZE = 2;
+constexpr size_t STRIDED_SLICE_ATTRS_SIZE = 5;
+constexpr size_t STRIDED_SLICE_INPUTS_SIZE = 4;
+constexpr size_t STRIDED_SLICE_BEGIN_INDEX = 1;
+constexpr size_t STRIDED_SLICE_END_INDEX = 2;
+constexpr size_t STRIDED_SLICE_STRIDES_INDEX = 3;
 constexpr size_t MATMUL_INPUTS_SIZE = 2;
 constexpr size_t MATMUL_OUTPUTS_SIZE = 1;
 constexpr size_t ACTIVATION_ATTR_SIZE = 1;
@@ -100,6 +105,7 @@ constexpr char CONCAT_DIM[] = "concat_dim";
 constexpr char FORWARD[] = "forward";
 constexpr char BACKWARD[] = "backward";
 constexpr char REDISTRIBUTION[] = "redistribution";
+constexpr char SKIP_REDISTRIBUTION[] = "skip_redistribution";
 constexpr char REPLACE[] = "replace";
 constexpr char CONNSYMBOL[] = "/";
 constexpr char INSTANCE_NAME[] = "instance_name";
@@ -131,6 +137,7 @@ constexpr char FORWARD_OP[] = "forward_op";
 constexpr char REDISTRIBUTION_OP[] = "redistribution_op";
 constexpr char DARA_PARALLEL[] = "data_parallel";
 constexpr char FORWARD_REDUCE_SCATTER[] = "forward_reduce_scatter";
+constexpr char FIELD_SIZE[] = "field_size";
 constexpr char OPTIMIZER_SUB_STRING[] = "optimizer";
 constexpr char DEVICE[] = "Device";
 
@@ -180,6 +187,7 @@ constexpr char RELU[] = "ReLU";
 constexpr char ONEHOT[] = "OneHot";
 constexpr char DROPOUT_DO_MASK[] = "DropoutDoMask";
 constexpr char DROPOUT_GEN_MASK[] = "DropoutGenMask";
+constexpr char TILE[] = "Tile";
 constexpr char REDUCE_MAX[] = "ReduceMax";
 constexpr char REDUCE_MIN[] = "ReduceMin";
 constexpr char REDUCE_SUM[] = "ReduceSum";
@@ -230,6 +238,8 @@ constexpr char UNSORTEF_SEGMENT_PRODD[] = "UnsortedSegmentProdD";
 constexpr char DEPTHWISE_CONV2D_NATIVE[] = "DepthwiseConv2dNative";
 constexpr char DEPTHWISE_CONV2D[] = "DepthwiseConv2D";
 constexpr char ADD[] = "Add";
+constexpr char DROPOUT[] = "Dropout";
+constexpr char KStridedSlice[] = "StridedSlice";
 
 // Parallel don't care
 constexpr char TUPLE_GETITEM[] = "tuple_getitem";
@@ -293,4 +303,4 @@ constexpr size_t THIRD_FROM_END(size_t s) { return s - 3; }
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_OPS_INFO_OPS_UTILS_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_OPS_UTILS_H_

@@ -22,6 +22,5 @@ namespace mindspore {
 namespace dataset {
 const int32_t ResizeBilinearOp::kDefWidth = 0;
 
-void ResizeBilinearOp::Print(std::ostream &out) const { out << "ResizeBilinearOp: "; }
 }  // namespace dataset
 }  // namespace mindspore

@@ -47,7 +47,9 @@ include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-rpath,$ORIGIN:$ORIGIN/lib")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default")
 
-ms_build_flatbuffers("engine/cache/de_tensor.fbs" ${CMAKE_CURRENT_SOURCE_DIR} generated_engine_files ${CMAKE_BINARY_DIR})
+include_directories("${CMAKE_BINARY_DIR}/minddata/dataset/engine/cache")
+set(MD_FLATBUFFER_OU "${CMAKE_BINARY_DIR}/minddata/dataset/engine/cache")
+ms_build_flatbuffers("engine/cache/de_tensor.fbs" ${CMAKE_CURRENT_SOURCE_DIR} generated_engine_files ${MD_FLATBUFFER_OU})
 
 ################## Include sub-modules ###############################
 add_subdirectory(util)
@@ -64,6 +66,7 @@ add_dependencies(kernels core)
 add_dependencies(engine-datasetops-source core)
 add_dependencies(engine-datasetops-source-sampler core)
 add_dependencies(engine-datasetops core)
+add_dependencies(engine-datasetops-mapop core)
 add_dependencies(engine-opt core)
 add_dependencies(engine-perf core)
 add_dependencies(engine-gnn core)
@@ -87,6 +90,7 @@ set(submodules
     $<TARGET_OBJECTS:cpp-API>
     $<TARGET_OBJECTS:engine-datasetops-source>
     $<TARGET_OBJECTS:engine-datasetops-source-sampler>
+    $<TARGET_OBJECTS:engine-datasetops-mapop>
     $<TARGET_OBJECTS:engine-gnn>
     $<TARGET_OBJECTS:engine-perf>
     $<TARGET_OBJECTS:engine-datasetops>
@@ -112,23 +116,33 @@ endif ()
 
 add_dependencies(_c_dataengine generated_engine_files)
 
+if (ENABLE_PYTHON)
 set_target_properties(_c_dataengine PROPERTIES
     PREFIX "${PYTHON_MODULE_PREFIX}"
     SUFFIX "${PYTHON_MODULE_EXTENSION}"
     )
+endif()
 
 ######################################################################
 
 ################# Link with external libraries ########################
 target_link_libraries(_c_dataengine PRIVATE mindspore mindspore_gvar)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module ${PYTHON_LIBRARIES} mindspore::protobuf ${SECUREC_LIBRARY})
+    if (ENABLE_PYTHON)
+        target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module ${PYTHON_LIBRARIES} mindspore::protobuf ${SECUREC_LIBRARY})  
+    else()
+        target_link_libraries(_c_dataengine PRIVATE mindspore::protobuf ${SECUREC_LIBRARY})
+    endif()
 else()
     set(ICU_LIB mindspore::icuuc mindspore::icudata mindspore::icui18n)
-    target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module -ldl mindspore::protobuf ${SECUREC_LIBRARY})
+    if (ENABLE_PYTHON)
+        target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module -ldl mindspore::protobuf ${SECUREC_LIBRARY}) 
+    else()
+        target_link_libraries(_c_dataengine PRIVATE -ldl mindspore::protobuf ${SECUREC_LIBRARY})
+    endif()
 endif()
 target_link_libraries(_c_dataengine PUBLIC mindspore::jpeg_turbo mindspore::opencv_core mindspore::opencv_imgcodecs
-        mindspore::opencv_imgproc mindspore::tinyxml2  ${ICU_LIB})
+        mindspore::opencv_imgproc mindspore::tinyxml2 mindspore::sentencepiece mindspore::sentencepiece_train ${ICU_LIB})
 if (ENABLE_GPUQUE)
     target_link_libraries(_c_dataengine PRIVATE gpu_queue
                                      ${CUDNN_PATH}/lib64/libcudnn.so
@@ -146,6 +160,12 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_link_libraries(_c_dataengine PRIVATE _c_mindrecord ${MINDRECORD_LINK_OBJECT} mindspore::sqlite)
 else()
     target_link_libraries(_c_dataengine PRIVATE _c_mindrecord)
+    if (ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU))
+        target_link_libraries(_c_dataengine PRIVATE mindspore::pslite mindspore::protobuf ${zeromq_DIRPATH}/zmq_install/lib/libzmq.a)
+        if (${ENABLE_IBVERBS} STREQUAL "ON")
+            target_link_libraries(_c_dataengine PRIVATE ibverbs rdmacm)
+        endif()
+    endif()
 endif()
 
 if (USE_GLOG)

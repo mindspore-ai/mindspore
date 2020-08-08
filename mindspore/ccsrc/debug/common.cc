@@ -21,7 +21,7 @@
 #include "utils/system/env.h"
 #include "utils/system/file_system.h"
 #include "utils/log_adapter.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 std::optional<std::string> Common::GetRealPath(const std::string &input_path) {
@@ -80,9 +80,9 @@ bool Common::CreateNotExistDirs(const std::string &path) {
         char tmp_char = temp_path[i];
         temp_path[i] = '\0';
         std::string path_handle(temp_path);
-        if (!fs->FileExist(temp_path)) {
+        if (!fs->FileExist(path_handle)) {
           MS_LOG(INFO) << "Dir " << path_handle << " does not exit, creating...";
-          if (!fs->CreateDir(temp_path)) {
+          if (!fs->CreateDir(path_handle)) {
             MS_LOG(ERROR) << "Create " << path_handle << " dir error";
             return false;
           }
@@ -119,6 +119,10 @@ std::optional<std::string> Common::GetConfigFile(const std::string &env) {
   if (!fs->FileExist(dump_config_file)) {
     MS_LOG(ERROR) << dump_config_file << " not exist.";
     return {};
+  }
+  auto suffix = dump_config_file.substr(dump_config_file.find_last_of('.') + 1);
+  if (suffix != "json") {
+    MS_LOG(EXCEPTION) << "[DataDump] dump config file suffix only support json! But got:." << suffix;
   }
   return dump_config_file;
 }

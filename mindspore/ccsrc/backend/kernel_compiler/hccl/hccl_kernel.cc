@@ -18,7 +18,7 @@
 #include "runtime/device/ascend/tasksink/runtime_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/utils.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 using HcclTaskInfoPtr = std::shared_ptr<ge::model_runner::HcclTaskInfo>;
 using ge::model_runner::HcclTaskInfo;

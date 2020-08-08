@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_FUNC_GRAPH_H_
-#define MINDSPORE_CCSRC_IR_FUNC_GRAPH_H_
+#ifndef MINDSPORE_CORE_IR_FUNC_GRAPH_H_
+#define MINDSPORE_CORE_IR_FUNC_GRAPH_H_
 
 #include <map>
 #include <string>
@@ -32,7 +32,8 @@
 #include "ir/manager.h"
 #include "utils/ordered_set.h"
 #include "utils/ordered_map.h"
-#include "utils/base_ref.h"
+#include "base/base_ref.h"
+#include "ir/func_graph_cloner.h"
 
 namespace mindspore {
 using BaseRefCounterMap = OrderedMap<BaseRef, int, BaseRefHash>;
@@ -143,12 +144,14 @@ extern const char kFuncGraphFlagUndetermined[];
 class FuncGraph : public FuncGraphBase {
  public:
   FuncGraph();
+  using Drawer = std::function<void(const std::string &, const FuncGraphPtr &)>;
 
   ~FuncGraph() override = default;
   MS_DECLARE_PARENT(FuncGraph, FuncGraphBase);
 
   // get the graph's abstract
   abstract::AbstractFunctionPtr abstract();
+  abstract::AbstractBasePtr ToAbstract() override;
 
   // return the graph's output, or nullptr if not yet deduced
   AnfNodePtr output() const;
@@ -229,7 +232,8 @@ class FuncGraph : public FuncGraphBase {
     }
     this->debug_info_ = info;
   }
-
+  // clear all info from manager
+  void ClearAllManagerInfo();
   // get all nodes belonging to this func graph
   const AnfNodeSet &nodes();
   void CopyNodes(const FuncGraphPtr &source);
@@ -328,6 +332,7 @@ class FuncGraph : public FuncGraphBase {
   std::unordered_map<AnfNodePtr, AnfNodePtr> &make_ref_params() { return make_ref_params_; }
 
   std::unordered_map<std::string, ValuePtr> attrs_;
+  std::vector<BaseShapePtr> joined_shapes_;
   std::unordered_map<std::string, FuncGraphTransform> transforms_;
   // parameter default value
   std::map<std::string, AnfNodePtr> parameter_default_value_;
@@ -345,6 +350,7 @@ class FuncGraph : public FuncGraphBase {
 
   bool stub() const { return stub_; }
   void set_stub(bool stub) { stub_ = stub; }
+  static void set_drawer(Drawer drawer) { drawer_ = drawer; }
 
  private:
   // graph is manipulated by manager and others
@@ -405,6 +411,7 @@ class FuncGraph : public FuncGraphBase {
   // CNode order which relates to origin code order
   std::list<CNodePtr> order_;
   bool stub_;
+  inline static Drawer drawer_ = nullptr;
 };
 
 inline CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg) {
@@ -420,4 +427,4 @@ std::shared_ptr<OrderedSet<CNodePtr>> FindRoots(const std::vector<CNodePtr> &seg
 std::shared_ptr<OrderedSet<CNodePtr>> FindLeaves(const std::vector<CNodePtr> &segment);
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_FUNC_GRAPH_H_
+#endif  // MINDSPORE_CORE_IR_FUNC_GRAPH_H_

@@ -22,8 +22,11 @@ namespace kernel {
 namespace ps {
 void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
   EmbeddingLookUpCPUKernel::InitKernel(kernel_node);
-
-  for (auto dim : input_shape_) {
+  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  size_t axis = kShape2dDims - input_shape.size();
+  for (auto dim : input_shape) {
     input_dims_ *= dim;
   }
 
@@ -32,14 +35,15 @@ void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
   }
   std::vector<size_t> keys{key_, key_, key_};
   std::vector<size_t> values;
-  values.insert(values.end(), input_shape_.begin(), input_shape_.end());
-  values.insert(values.end(), indices_shape_.begin(), indices_shape_.end());
-  values.insert(values.end(), output_shape_.begin(), output_shape_.end());
-  std::vector<int> lens{SizeToInt(input_shape_.size()), SizeToInt(indices_shape_.size()),
-                        SizeToInt(output_shape_.size())};
+  values.insert(values.end(), input_shape.begin(), input_shape.end());
+  values.insert(values.end(), indices_shape.begin(), indices_shape.end());
+  values.insert(values.end(), output_shape.begin(), output_shape.end());
+  MS_LOG(INFO) << "Init embedding lookup proxy kernel, input shape:" << input_shape
+               << ", indices_shape:" << indices_shape << ", output_shape:" << output_shape;
+  std::vector<int> lens{SizeToInt(input_shape.size()), SizeToInt(indices_shape.size()), SizeToInt(output_shape.size())};
   const char *env_role = getenv(mindspore::parallel::ps::kEnvRole);
   if (env_role != nullptr && strcmp(env_role, mindspore::parallel::ps::kEnvRoleOfWorker) == 0) {
-    parallel::ps::Worker<float>::GetInstance().AddEmbeddingTable(key_, input_shape_[axis_]);
+    parallel::ps::Worker<float>::GetInstance().AddEmbeddingTable(key_, input_shape[axis]);
     parallel::ps::Worker<float>::GetInstance().InitPSEmbeddingTable(keys, values, lens);
   }
 }
@@ -53,15 +57,15 @@ bool EmbeddingLookUpProxyKernel::Launch(const std::vector<kernel::AddressPtr> &i
   size_t output_size = outputs[0]->size;
 
   size_t size = input_size / sizeof(float);
-  ::ps::SArray<float> lookup_ids(size, 0);
+  ::ps::SArray<int> lookup_ids(size, 0);
   ::ps::SArray<int> lengths{size};
-  ::ps::SArray<float> lookup_result;
+  ::ps::SArray<float> lookup_result(output_size / sizeof(float), 0);
 
   auto ret = memcpy_s(lookup_ids.data(), input_size, indices_addr, input_size);
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "Lookup id memcpy failed.";
   }
-  parallel::ps::Worker<float>::GetInstance().DoPSEmbeddingLookup({key_}, lookup_ids, lengths, lookup_result,
+  parallel::ps::Worker<float>::GetInstance().DoPSEmbeddingLookup({key_}, lookup_ids, lengths, &lookup_result,
                                                                  parallel::ps::kEmbeddingLookupCmd);
 
   auto ret2 = memcpy_s(output_addr, output_size, lookup_result.data(), output_size);

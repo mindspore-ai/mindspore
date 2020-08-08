@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_CONNECTOR_SIZE_H
-#define DATASET_CONNECTOR_SIZE_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_CONNECTOR_SIZE_H
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_CONNECTOR_SIZE_H
 
 #include <string>
 #include <vector>
@@ -69,4 +69,4 @@ class ConnectorSize : public Sampling {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_CONNECTOR_SIZE_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_CONNECTOR_SIZE_H

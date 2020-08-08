@@ -31,6 +31,10 @@ service EventListener {
 message Metadata {
   string device_name = 1;
   int32 cur_step = 2;
+  // define the backend is 'GPU' or "Ascend"
+  string backend = 3;
+  // the full name of current node
+  string cur_node = 4;
 }
 
 message EventReply {
@@ -44,10 +48,20 @@ message EventReply {
 
   oneof cmd {
     bool exit = 2;
-    int32 run_cmd = 3;
+    RunCMD run_cmd = 3;
     SetCMD set_cmd = 4;
     ViewCMD view_cmd = 5;
   }
+}
+
+message RunCMD {
+    // step level or node level.  "step" or "node"
+    string run_level = 1;
+    oneof cmd {
+        int32 run_steps = 2;
+        // the next node full name
+        string node_name = 3;
+    }
 }
 
 message SetCMD {

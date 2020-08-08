@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_ENGINE_OPT_PASS_PRE_REMOVAL_PASS_H_
-#define DATASET_ENGINE_OPT_PASS_PRE_REMOVAL_PASS_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PASS_PRE_REMOVAL_PASS_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PASS_PRE_REMOVAL_PASS_H_
 
 #include <memory>
 #include <vector>
@@ -30,6 +30,45 @@ class DatasetOp;
 /// \brief This is a tree pass that will remove nodes.  It uses removal_nodes to first identify which
 ///     nodes should be removed, and then removes them.
 class RemovalPass : public TreePass {
+  /// \class RemovalNodes
+  /// \brief This is a NodePass who's job is to identify which nodes should be removed.
+  ///     It works in conjunction with the removal_pass.
+  class RemovalNodes : public NodePass {
+   public:
+    /// \brief Constructor
+    /// \param[in] removal_pass Raw pointer back to controlling tree pass
+    RemovalNodes();
+
+    /// \brief Destructor
+    ~RemovalNodes() = default;
+
+    /// \brief Identifies the subtree below this node as a cached descendant tree.
+    /// \param[in] node The node being visited
+    /// \param[inout] modified Indicator if the node was changed at all
+    /// \return Status The error code return
+    Status PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified) override;
+
+    /// \brief Resets the tracking of the cache within the tree
+    /// \param[in] node The node being visited
+    /// \param[inout] modified Indicator if the node was changed at all
+    /// \return Status The error code return
+    Status RunOnNode(std::shared_ptr<CacheOp> node, bool *modified) override;
+
+    /// \brief Perform ShuffleOp removal check
+    /// \param[in] node The node being visited
+    /// \param[inout] modified Indicator if the node was changed at all
+    /// \return Status The error code return
+    Status RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified) override;
+
+    /// \brief Getter
+    /// \return All the nodes to be removed
+    std::vector<std::shared_ptr<DatasetOp>> nodes_to_remove() { return nodes_to_remove_; }
+
+   private:
+    bool is_caching_;
+    std::vector<std::shared_ptr<DatasetOp>> nodes_to_remove_;
+  };
+
  public:
   /// \brief Constructor
   RemovalPass();
@@ -42,15 +81,8 @@ class RemovalPass : public TreePass {
   /// \param[inout] Indicate of the tree was modified.
   /// \return Status The error code return
   Status RunOnTree(ExecutionTree *tree, bool *modified) override;
-
-  /// \brief Adds an operator to the list of operators to be removed
-  /// \param[in] dataset_op The operator to add to the removal list
-  void AddToRemovalList(std::shared_ptr<DatasetOp> dataset_op);
-
- private:
-  std::vector<std::shared_ptr<DatasetOp>> removal_nodes_;
 };
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_ENGINE_OPT_PASS_PRE_REMOVAL_PASS_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PASS_PRE_REMOVAL_PASS_H_

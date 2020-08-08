@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_NN_CONV2D_GRAD_INPUT_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_KERNEL_GPU_NN_CONV2D_GRAD_INPUT_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_CONV2D_GRAD_INPUT_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_CONV2D_GRAD_INPUT_GPU_KERNEL_H_
 
 #include <vector>
 #include <string>
@@ -114,12 +114,14 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
     group_ = GetAttr<int>(kernel_node, "group");
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetConvolutionGroupCount(conv_desc_, group_), "cudnnSetConvGroupCount failed");
 
-    pad_height_ = GetAttr<int>(kernel_node, "pad");
-    pad_width_ = pad_height_;
+    auto pad_list = GetAttr<std::vector<int>>(kernel_node, "pad_list");
+    pad_height_ = pad_list[0];
+    pad_width_ = pad_list[2];
+    auto symmetry_pad = (pad_height_ == pad_list[1]) && (pad_width_ == pad_list[3]);
     pad_mode_ = GetAttr<std::string>(kernel_node, "pad_mode");
     SetStrideAndDilation(kernel_node);
     cudnnTensorDescriptor_t dx_desc_real = nullptr;
-    if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) {
+    if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase || !symmetry_pad) {
       SetPad(input_shape, kernel_node);
       dx_desc_real = use_pad_ ? padded_descriptor_ : dx_desc_;
     } else {
@@ -312,4 +314,4 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_NN_CONV2D_GRAD_INPUT_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_CONV2D_GRAD_INPUT_GPU_KERNEL_H_

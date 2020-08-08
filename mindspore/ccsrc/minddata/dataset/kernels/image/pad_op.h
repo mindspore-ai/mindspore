@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_KERNELS_IMAGE_PAD_OP_H_
-#define DATASET_KERNELS_IMAGE_PAD_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_PAD_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_PAD_OP_H_
 
 #include <memory>
 #include <vector>
@@ -49,8 +49,6 @@ class PadOp : public TensorOp {
 
   ~PadOp() override = default;
 
-  void Print(std::ostream &out) const override { out << "PadOp: "; }
-
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
 
@@ -69,4 +67,4 @@ class PadOp : public TensorOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_KERNELS_IMAGE_PAD_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_PAD_OP_H_

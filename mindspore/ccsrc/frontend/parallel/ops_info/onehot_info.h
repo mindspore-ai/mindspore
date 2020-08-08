@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_OPS_INFO_ONEHOT_INFO_H_
-#define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_ONEHOT_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_ONEHOT_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_ONEHOT_INFO_H_
 
 #include <memory>
 #include <string>
@@ -41,7 +41,7 @@ class OneHotInfo : public OperatorInfo {
   Status GenerateStrategies(int32_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
-  std::shared_ptr<std::vector<std::vector<int32_t>>> GenerateBatchStrategies() override;
+  std::shared_ptr<Strategys> GenerateBatchStrategies() override;
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
@@ -65,4 +65,4 @@ class OneHotInfo : public OperatorInfo {
 };
 }  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PARALLEL_OPS_INFO_ONEHOT_INFO_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_ONEHOT_INFO_H_

@@ -23,6 +23,7 @@
 #include "minddata/dataset/engine/opt/pre/removal_pass.h"
 #include "minddata/dataset/engine/opt/pre/cache_transform_pass.h"
 #include "minddata/dataset/engine/opt/post/repeat_pass.h"
+#include "minddata/dataset/engine/opt/pre/epoch_injection_pass.h"
 #include "mindspore/ccsrc/minddata/dataset/engine/opt/optional/tensor_op_fusion_pass.h"
 #include "minddata/dataset/engine/perf/profiling.h"
 #include "minddata/dataset/engine/perf/monitor.h"
@@ -50,11 +51,11 @@ Status ExecutionTree::AssociateNode(const std::shared_ptr<DatasetOp> &op) {
   if (op->tree_ == this) {
     return Status::OK();
   }
-  if (tree_state_ != kDeTStateInit && tree_state_ != kDeTStateBuilding) {
+  if (tree_state_ != kDeTStateInit && tree_state_ != kDeTStateBuilding && tree_state_ != kDeTStatePrepare) {
     std::string err_msg =
       "Invalid tree state for adding a node. Current state: " + std::to_string(static_cast<int>(tree_state_)) +
       " Expected states: " + std::to_string(static_cast<int>(kDeTStateInit)) + " or " +
-      std::to_string(static_cast<int>(kDeTStateBuilding));
+      std::to_string(static_cast<int>(kDeTStateBuilding)) + " or " + std::to_string(static_cast<int>(kDeTStatePrepare));
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
@@ -200,7 +201,9 @@ Status ExecutionTree::LaunchWorkers(int32_t num_workers, std::function<Status(ui
 //    For example, repeatOp inlining
 //
 // @return Status - The error code return
-Status ExecutionTree::Prepare() {
+Status ExecutionTree::Prepare(int32_t num_epochs) {
+  num_epochs_ = num_epochs;
+
   // Pre optimization compulsory transformation
   RETURN_IF_NOT_OK(this->PrepareTreePreAction());
 
@@ -222,6 +225,7 @@ Status ExecutionTree::PrepareTreePreAction() {
   std::vector<std::unique_ptr<Pass>> pre_actions;
   // Construct pre actions
   MS_LOG(INFO) << "Running pre pass loops.";
+  pre_actions.push_back(std::make_unique<EpochInjectionPass>());
   pre_actions.push_back(std::make_unique<RemovalPass>());
   pre_actions.push_back(std::make_unique<CacheTransformPass>());
   // Apply pre action passes
@@ -278,6 +282,11 @@ Status ExecutionTree::PrepareDeprecated() {
       " Expected state: " + std::to_string(static_cast<int>(kDeTStatePrepare));
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
+
+  if (root_ == nullptr) {
+    RETURN_STATUS_UNEXPECTED("Please assign one operator as the root of this tree.");
+  }
+
   // Start the recursive prepare
   RETURN_IF_NOT_OK(this->PrepareNode(root_));
   tree_state_ = kDeTStateReady;

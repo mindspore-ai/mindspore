@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_DTYPE_REF_H_
-#define MINDSPORE_CCSRC_IR_DTYPE_REF_H_
+#ifndef MINDSPORE_CORE_IR_DTYPE_REF_H_
+#define MINDSPORE_CORE_IR_DTYPE_REF_H_
 
 #include <cstddef>
 #include <iostream>
@@ -72,4 +72,4 @@ extern const TypePtr kRefKeyType;
 extern const TypePtr kRefType;
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_DTYPE_REF_H_
+#endif  // MINDSPORE_CORE_IR_DTYPE_REF_H_

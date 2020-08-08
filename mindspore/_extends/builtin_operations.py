@@ -14,7 +14,10 @@
 # ============================================================================
 """builtin_operations"""
 import numpy as np
+from mindspore.ops import functional as F
+from mindspore.ops import composite as C
 from mindspore.common.tensor import Tensor
+import mindspore.common.dtype as mstype
 from mindspore.common.dtype import dtype_to_nptype, get_py_obj_dtype
 
 
@@ -113,6 +116,7 @@ def bool_or(x, y):
     """Implement `bool_or`."""
     return x or y
 
+
 def vm_compare(*args):
     """Implement `vm_compare` for tensor."""
     obj_str = args[-1]
@@ -141,9 +145,11 @@ def list_len(x):
     """Implement `list_len`."""
     return len(x)
 
+
 def Depend(value, expr):
     """Implement `Depend`."""
     return value
+
 
 # only used in PyNative mode
 def make_ref(key, value, ref):
@@ -171,3 +177,16 @@ def tuple_to_array(x):
 def stop_gradient(x):
     """Implement `stop_gradient`."""
     return x
+
+
+hyper_map = C.HyperMap()
+
+
+def mixed_precision_cast(dst_type, x):
+    """Implement `mixed_precision_cast`."""
+    def cast_inner(data):
+        if isinstance(data, Tensor) and data.dtype in (mstype.float32, mstype.float16):
+            return F.cast(data, dst_type)
+        return data
+
+    return hyper_map(cast_inner, x)

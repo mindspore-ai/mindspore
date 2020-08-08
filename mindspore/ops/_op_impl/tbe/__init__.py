@@ -81,6 +81,9 @@ from .sub import _sub_tbe
 from .reduce_mean_d import _reduce_mean_d_tbe
 from .scatter_nd import _scatter_nd_tbe
 from .scatter_nd_d import _scatter_nd_d_tbe
+from .scatter_nd_add import _scatter_nd_add_tbe
+from .scatter_nd_sub import _scatter_nd_sub_tbe
+from .scatter_non_aliasing_add import _scatter_non_aliasing_add_tbe
 from .reduce_mean import _reduce_mean_tbe
 from .tile import _tile_tbe
 from .atomic_addr_clean import _atomic_addr_clean_tbe
@@ -92,7 +95,10 @@ from .bn_training_update import _bn_training_update_tbe
 from .bn_training_update_grad import _bn_training_update_grad_tbe
 from .bn_infer import _bn_infer_tbe
 from .bn_infer_grad import _bn_infer_grad_tbe
+from .bn_inference import _bn_inference_tbe
 from .reciprocal import _reciprocal_tbe
+from .reverse_v2_d import _reverse_v2_d_tbe
+from .rint import _rint_tbe
 from .strided_slice_d import _strided_slice_d_tbe
 from .strided_slice_grad_d import _strided_slice_grad_d_tbe
 from .split_d import _split_d_tbe
@@ -102,6 +108,8 @@ from .elu import _elu_tbe
 from .elu_grad import _elu_grad_tbe
 from .div import _div_tbe
 from .log import _log_tbe
+from .xdivy import _xdivy_tbe
+from .xlogy import _xlogy_tbe
 from .floor_div import _floor_div_tbe
 from .zeros_like import _zeros_like_tbe
 from .neg import _neg_tbe
@@ -127,11 +135,14 @@ from .softplus import _softplus_tbe
 from .softplus_grad import _softplus_grad_tbe
 from .softmax_grad_ext import _softmax_grad_ext_tbe
 from .square import _square_tbe
+from .squared_difference import _squared_difference_tbe
 from .sqrt import _sqrt_tbe
 from .sparse_apply_ftrl_d import _sparse_apply_ftrl_d
 from .sparse_apply_proximal_adagrad import _sparse_apply_proximal_adagrad
 from .apply_proximal_adagrad import _apply_proximal_adagrad
 from .transpose_d import _transpose_d_tbe
+from .truncate_div import _truncate_div_tbe
+from .truncate_mod import _truncate_mod_tbe
 from .unsorted_segment_sum import _unsorted_segment_sum_tbe
 from .unsorted_segment_prod import _unsorted_segment_prod_tbe
 from .logsoftmax_grad import _logsoftmax_grad_tbe
@@ -188,6 +199,7 @@ from .floor_mod import _floor_mod_tbe
 from .scatter_nd_update import _scatter_nd_update_tbe
 from .avg_pool import _avg_pool_tbe
 from .avg_pool_grad import _avg_pool_grad_tbe
+from .avg_pool_grad_vm import _avg_pool_grad_vm_tbe
 from .ones_like import _ones_like_tbe
 from .batch_to_space import _batch_to_space_tbe
 from .space_to_batch import _space_to_batch_tbe
@@ -222,10 +234,14 @@ from .binary_cross_entropy import _binary_cross_entropy_tbe
 from .binary_cross_entropy_grad import _binary_cross_entropy_grad_tbe
 from .sin import _sin_tbe
 from .cos import _cos_tbe
+from .tan import _tan_tbe
 from .cum_sum import _cum_sum_tbe
 from .apply_rms_prop import _apply_rms_prop_tbe
 from .cumprod import _cumprop_tbe
 from .reduce_prod import _reduce_prod_tbe
+from .reciprocal_grad import _reciprocal_grad_tbe
+from .sqrt_grad import _sqrt_grad_tbe
+from .rsqrt_grad import _rsqrt_grad_tbe
 from .flatten_grad import _flatten_grad_tbe
 from .scatter_add import _scatter_add_tbe
 from .atan2 import _atan2_tbe
@@ -237,6 +253,7 @@ from .bitwise_and import _bitwise_and_tbe
 from .bitwise_or import _bitwise_or_tbe
 from .bitwise_xor import _bitwise_xor_tbe
 from .reduce_all import _reduce_all_tbe
+from .reduce_any import _reduce_any_tbe
 from .sparse_apply_adagrad import _sparse_apply_adagrad_tbe
 from .unsorted_segment_min import _unsorted_segment_min_tbe
 from .asin import _asin_tbe

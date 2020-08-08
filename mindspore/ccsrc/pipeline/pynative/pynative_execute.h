@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PYNATIVE_PYNATIVE_EXECUTE_H_
-#define MINDSPORE_CCSRC_PYNATIVE_PYNATIVE_EXECUTE_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_EXECUTE_H_
+#define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_EXECUTE_H_
 
 #include <vector>
 #include <utility>
@@ -29,7 +29,7 @@
 #include "pybind11/numpy.h"
 
 #include "pipeline/pynative/base.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "ir/anf.h"
 #include "pipeline/jit/resource.h"
 #include "frontend/operator/composite/composite.h"
@@ -41,12 +41,20 @@ namespace py = pybind11;
 using ResourcePtr = std::shared_ptr<pipeline::Resource>;
 using GradOperationPtr = std::shared_ptr<prim::GradOperation>;
 
+struct PrimAbsInfo {
+  abstract::AbstractBasePtr abs;
+  std::unordered_map<std::string, ValuePtr> attrs;
+};
+
+using AbstractListMap = std::unordered_map<abstract::AbstractBasePtrList, PrimAbsInfo,
+                                           abstract::AbstractBasePtrListHasher, abstract::AbstractBasePtrListEqual>;
+
 py::object RunOpInVM(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status);
 
 py::tuple RunOp(const py::args &args);
 
-py::tuple ConvertInputs(const PrimitivePyPtr &prim, const py::list &py_args, py::tuple *const out_args,
-                        py::list *const out_args_list);
+void ConvertInputs(const PrimitivePyPtr &prim, const py::list &py_args, py::tuple *const out_args,
+                   py::list *const out_args_list);
 
 void ClearPyNativeSession();
 
@@ -82,7 +90,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void ClearRes();
   bool grad_flag() { return grad_flag_; }
   void set_grad_flag(bool flag) { grad_flag_ = flag; }
-  AnfNodePtr GetInput(const py::object &obj, const py::object &op_mask);
+  AnfNodePtr GetInput(const py::object &obj, bool op_mask);
   AnfNodePtr GetObjNode(const py::object &obj);
   FuncGraphPtr curr_g() { return curr_g_; }
   void set_pyobj(FuncGraphPtr g, const std::string obj) { graph_info_map_[g].objects.push_back(obj); }
@@ -95,7 +103,14 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void set_obj_node_map(FuncGraphPtr g, const std::string obj, AnfNodePtr node, std::vector<int> index) {
     graph_info_map_[g].obj_node_map[obj] = std::make_pair(node, index);
   }
-  AnfNodePtr MakeCNode(const OpExecInfoPtr &op_exec_info, const py::args &args, const py::tuple &out);
+  AnfNodePtr MakeCNode(const OpExecInfoPtr &op_exec_info, std::vector<bool> *op_masks,
+                       abstract::AbstractBasePtrList *args_spec_list);
+  void MakeCNode(const OpExecInfoPtr &op_exec_info, const py::object &out, const AnfNodePtr &cnode);
+  ValuePtr GetForwardValue(const OpExecInfoPtr &op_exec_info);
+  void SaveOpForwardValue(const OpExecInfoPtr &op_exec_info, const ValuePtr &value);
+  void SaveForwardResult(const CNodePtr &cnode, const py::object &out);
+  void SaveAllResult(const OpExecInfoPtr &op_exec_info, const CNodePtr &cnode, const py::tuple &out);
+
   py::object Run(const py::tuple &args, const py::object &phase);
 
   void Pushp();
@@ -104,6 +119,8 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
                          size_t arg_size);
   void SetTupleOutput(const py::object &obj, const AnfNodePtr &cnode, std::vector<int> idx);
   AnfNodePtr MakeValueNode(const py::object &obj, const std::string &obj_id);
+  py::tuple RunOpInner(const py::args &args);
+  py::tuple RunOpInner(const OpExecInfoPtr &op_exec_info);
 
   ~PynativeExecutor();
 
@@ -115,11 +132,16 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   bool grad_flag_;
   std::unordered_map<std::string, FuncGraphPtr> graph_map_;
   std::unordered_map<std::string, FuncGraphPtr> cell_graph_map_;
+  std::unordered_map<std::string, ResourcePtr> cell_resource_map_;
   std::unordered_map<FuncGraphPtr, GraphInfo> graph_info_map_;
+  std::unordered_map<std::string, ValuePtr> op_forward_map_;
+  std::unordered_map<std::string, size_t> op_id_map_;
+  std::unordered_map<std::string, abstract::AbstractBasePtr> node_abs_map_;
   std::stack<FuncGraphPtr> graph_p_;
   FuncGraphPtr top_g_;
   FuncGraphPtr df_builder_;
   FuncGraphPtr curr_g_;
+  std::unordered_map<std::string, AbstractListMap> prim_abs_list;
 };
 
 using PynativeExecutorPtr = std::shared_ptr<PynativeExecutor>;
@@ -127,4 +149,4 @@ using PynativeExecutorPtr = std::shared_ptr<PynativeExecutor>;
 }  // namespace pynative
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PYNATIVE_PYNATIVE_EXECUTE_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_EXECUTE_H_

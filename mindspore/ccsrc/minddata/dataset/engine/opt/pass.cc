@@ -16,12 +16,15 @@
 
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/engine/datasetops/batch_op.h"
+#include "minddata/dataset/engine/datasetops/build_vocab_op.h"
+#include "minddata/dataset/engine/datasetops/build_sentence_piece_vocab_op.h"
 #include "minddata/dataset/engine/datasetops/cache_op.h"
 #include "minddata/dataset/engine/datasetops/cache_merge_op.h"
 #include "minddata/dataset/engine/datasetops/cache_lookup_op.h"
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
 #include "minddata/dataset/engine/datasetops/device_queue_op.h"
-#include "minddata/dataset/engine/datasetops/map_op.h"
+#include "minddata/dataset/engine/datasetops/epoch_ctrl_op.h"
+#include "minddata/dataset/engine/datasetops/map_op/map_op.h"
 #include "minddata/dataset/engine/datasetops/project_op.h"
 #include "minddata/dataset/engine/datasetops/rename_op.h"
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
@@ -31,10 +34,14 @@
 #include "minddata/dataset/engine/datasetops/source/cifar_op.h"
 #include "minddata/dataset/engine/datasetops/source/coco_op.h"
 #include "minddata/dataset/engine/datasetops/source/manifest_op.h"
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/datasetops/source/mindrecord_op.h"
+#endif
 #include "minddata/dataset/engine/datasetops/source/mnist_op.h"
 #include "minddata/dataset/engine/datasetops/source/random_data_op.h"
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
+#endif
 #include "minddata/dataset/engine/datasetops/source/voc_op.h"
 #ifdef ENABLE_PYTHON
 #include "minddata/dataset/engine/datasetops/filter_op.h"
@@ -133,6 +140,7 @@ Status NodePass::RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified) {
   return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
 }
 
+#ifndef ENABLE_ANDROID
 Status NodePass::RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified) {
   // Fallback to base class visitor by default
   return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
@@ -142,6 +150,7 @@ Status NodePass::RunOnNode(std::shared_ptr<TFReaderOp> node, bool *modified) {
   // Fallback to base class visitor by default
   return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
 }
+#endif
 
 #ifdef ENABLE_PYTHON
 Status NodePass::RunOnNode(std::shared_ptr<FilterOp> node, bool *modified) {
@@ -150,6 +159,16 @@ Status NodePass::RunOnNode(std::shared_ptr<FilterOp> node, bool *modified) {
 }
 
 Status NodePass::RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::RunOnNode(std::shared_ptr<ManifestOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::RunOnNode(std::shared_ptr<VOCOp> node, bool *modified) {
   // Fallback to base class visitor by default
   return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
 }
@@ -190,17 +209,7 @@ Status NodePass::RunOnNode(std::shared_ptr<MnistOp> node, bool *modified) {
   return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
 }
 
-Status NodePass::RunOnNode(std::shared_ptr<ManifestOp> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
-}
-
 Status NodePass::RunOnNode(std::shared_ptr<CifarOp> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
-}
-
-Status NodePass::RunOnNode(std::shared_ptr<VOCOp> node, bool *modified) {
   // Fallback to base class visitor by default
   return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
 }
@@ -230,6 +239,11 @@ Status NodePass::RunOnNode(std::shared_ptr<CacheLookupOp> node, bool *modified) 
   return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
 }
 
+Status NodePass::RunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
 Status NodePass::PreRunOnNode(std::shared_ptr<RepeatOp> node, bool *modified) {
   // Fallback to base class visitor by default
   return PreRunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
@@ -241,6 +255,21 @@ Status NodePass::PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified) {
 }
 
 Status NodePass::PreRunOnNode(std::shared_ptr<CacheMergeOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return PreRunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::PreRunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return PreRunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::PreRunOnNode(std::shared_ptr<BuildVocabOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return PreRunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::PreRunOnNode(std::shared_ptr<BuildSentencePieceVocabOp> node, bool *modified) {
   // Fallback to base class visitor by default
   return PreRunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
 }

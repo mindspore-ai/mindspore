@@ -22,7 +22,7 @@
 #include "frontend/operator/ops.h"
 #include "utils/log_adapter.h"
 #include "debug/draw.h"
-#include "debug/label.h"
+#include "utils/label.h"
 #include "./common.h"
 
 namespace mindspore {

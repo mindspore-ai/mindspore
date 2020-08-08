@@ -129,14 +129,14 @@ class GradOperation(GradOperation_):
             output = fn(*args)
             _pynative_exec.end_graph(fn, output, *args)
         else:
-            if fn.is_run and not fn.requires_grad:
+            if fn.already_run and not fn.requires_grad:
                 raise ValueError("obj must set_grad.")
-            if not fn.is_run:
+            if not fn.already_run:
                 self.need_forward = True
-                print("already has forward run before grad by user")
             if self.need_forward:
                 fn.set_grad()
                 fn(*args)
+                fn.already_run = False
 
     def __call__(self, fn, weights=None):
         grad_ = GradOperation('grad', self.get_all, self.get_by_list, self.sens_param)

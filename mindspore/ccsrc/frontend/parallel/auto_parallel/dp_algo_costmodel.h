@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_AUTO_PARALLEL_DP_ALGO_COSTMODEL_H_
-#define MINDSPORE_CCSRC_PARALLEL_AUTO_PARALLEL_DP_ALGO_COSTMODEL_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_AUTO_PARALLEL_DP_ALGO_COSTMODEL_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_AUTO_PARALLEL_DP_ALGO_COSTMODEL_H_
 
 #include <memory>
 #include <utility>
@@ -42,7 +42,7 @@ namespace parallel {
 //       the operators' strategies can be all determined.
 
 struct Elimination : public Base {
-  enum EliminationType { OPERA, EDGE, MERGE, CONTRACT, TRIANGLE, STAR };
+  enum EliminationType { OPERA, EDGE, MERGE, CONTRACT, SOURCE, TRIANGLE, STAR };
   Elimination(EdgePtr n_edge, EliminationType ty) : new_edge_(std::move(n_edge)), type_(ty) {}
 
   EdgePtr new_edge_;
@@ -100,6 +100,26 @@ struct ContractElimination : public Elimination {
   MS_DECLARE_PARENT(ContractElimination, Elimination);
 };
 
+// Source Elimination
+struct SourceElimination : public Elimination {
+  SourceElimination(OperatorInfoPtr p_source, std::vector<EdgePtr> p_succ_edges, std::vector<EdgePtr> p_new_succ_edges,
+                    OperatorInfoPtr s_source, std::vector<EdgePtr> s_succ_edges, std::vector<EdgePtr> s_new_succ_edges)
+      : Elimination(nullptr, Elimination::EliminationType::SOURCE),
+        primary_source_(std::move(p_source)),
+        primary_succ_edges_(std::move(p_succ_edges)),
+        primary_new_succ_edges_(std::move(p_new_succ_edges)),
+        secondary_source_(std::move(s_source)),
+        secondary_succ_edges_(std::move(s_succ_edges)),
+        secondary_new_succ_edges_(std::move(s_new_succ_edges)) {}
+  OperatorInfoPtr primary_source_;
+  std::vector<EdgePtr> primary_succ_edges_;
+  std::vector<EdgePtr> primary_new_succ_edges_;
+  OperatorInfoPtr secondary_source_;
+  std::vector<EdgePtr> secondary_succ_edges_;
+  std::vector<EdgePtr> secondary_new_succ_edges_;
+  MS_DECLARE_PARENT(SourceElimination, Elimination);
+};
+
 // Triangle Elimination
 struct TriangleElimination : public Elimination {
   TriangleElimination(OperatorInfoPtr elim_node, EdgePtr l_edge, OperatorInfoPtr l_node, EdgePtr r_edge,
@@ -138,6 +158,7 @@ using OpEliminationPtr = std::shared_ptr<OpElimination>;
 using EdgeEliminationPtr = std::shared_ptr<EdgeElimination>;
 using MergeEliminationPtr = std::shared_ptr<MergeElimination>;
 using ContractEliminationPtr = std::shared_ptr<ContractElimination>;
+using SourceEliminationPtr = std::shared_ptr<SourceElimination>;
 using TriangleEliminationPtr = std::shared_ptr<TriangleElimination>;
 using StarEliminationPtr = std::shared_ptr<StarElimination>;
 
@@ -149,4 +170,4 @@ Status RecoverStrategy(std::vector<EliminationPtr> eliminations);
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_AUTO_PARALLEL_DP_ALGO_COSTMODEL_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_AUTO_PARALLEL_DP_ALGO_COSTMODEL_H_

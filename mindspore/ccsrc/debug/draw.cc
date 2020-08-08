@@ -23,16 +23,13 @@
 #include <vector>
 #include <string>
 
-#include "pybind11/pybind11.h"
 #include "ir/meta_func_graph.h"
 #include "ir/param_value.h"
 #include "ir/primitive.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "utils/utils.h"
 #include "frontend/operator/composite/composite.h"
 #include "ir/tensor.h"
-
-namespace py = pybind11;
 
 namespace mindspore {
 
@@ -321,8 +318,9 @@ void BaseDigraph::FuncGraphParameters(const FuncGraphPtr &key) {
     buffer_ << parameter->ToString();
     auto param = parameter->cast<ParameterPtr>();
     if (param->has_default()) {
-      auto tensor = param->default_param()->value();
-      if (tensor) {
+      auto tensor_v = param->default_param();
+      if (tensor_v && tensor_v->isa<tensor::Tensor>()) {
+        auto tensor = tensor_v->cast<tensor::TensorPtr>();
         auto &shape = tensor->shape();
         std::ostringstream shape_str;
         std::copy(shape.begin(), shape.end(), std::ostream_iterator<int>(shape_str, ","));
@@ -437,7 +435,7 @@ static void DrawParallelInfo(Graphviz *const graph_obj, const CNodePtr &node) {
   if (graph_obj == nullptr || node == nullptr) {
     return;
   }
-  auto distributed_operation_info = node->operator_info();
+  auto distributed_operation_info = node->user_data<parallel::OperatorInfo>();
   if (distributed_operation_info != nullptr) {
     auto strategyPtr = distributed_operation_info->strategy();
     if (strategyPtr != nullptr) {
@@ -645,5 +643,13 @@ void ModelDigraph::Edge(AnfNodePtr start, AnfNodePtr end, int idx, int id_start)
   buffer_ << "[arrowhead=vee,";
   buffer_ << "]" << std::endl;
 }
+
+struct DrawerRegister {
+  DrawerRegister() {
+    FuncGraph::set_drawer(
+      [](const std::string &filename, const FuncGraphPtr &func_graph) { Draw(filename, func_graph); });
+  }
+  ~DrawerRegister() = default;
+} drawer_regsiter;
 }  // namespace draw
 }  // namespace mindspore

@@ -19,7 +19,7 @@
 
 #include "common/common_test.h"
 #include "ir/value.h"
-#include "ir/primitive_py.h"
+#include "utils/primitive_py.h"
 #include "frontend/operator/ops.h"
 #include "./common.h"
 
@@ -267,11 +267,6 @@ TEST_F(TestOps, BroadCastShapeTest) {
   ASSERT_EQ(prim->name(), kPrimBroadcastShape->name());
 }
 
-TEST_F(TestOps, ShapeTest) {
-  auto prim = std::make_shared<Primitive>("Shape");
-  ASSERT_EQ(prim->name(), kPrimShape->name());
-}
-
 TEST_F(TestOps, ArrayMapTest) {
   auto prim = std::make_shared<Primitive>("array_map");
   ASSERT_EQ(prim->name(), kPrimArrayMap->name());
@@ -454,8 +449,7 @@ TEST_F(TestOps, GetConv2DPrimPyTest) {
   ASSERT_TRUE(conv2d_ptr);
   if (nullptr != conv2d_ptr) {
     MS_LOG(INFO) << "Get PrimitivePyPtr: " << conv2d_ptr->name();
-    auto func = conv2d_ptr->GetComputeFunction();
-    if (py::isinstance<py::none>(func)) {
+    if(!conv2d_ptr->HasComputeFunction()){
       MS_LOG(EXCEPTION) << "" << conv2d_ptr->name() << "'s compute function is not implemented";
     }
 

@@ -18,7 +18,7 @@
 #include <utility>
 #include <iomanip>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #ifdef ENABLE_PYTHON
 #include "minddata/dataset/core/pybind_support.h"
 #endif
@@ -135,8 +135,6 @@ Status BatchOp::operator()() {
 }
 
 void BatchOp::Print(std::ostream &out, bool show_all) const {
-  // Always show the id and name as first line regardless if this summary or detailed print
-  out << "(" << std::setw(2) << operator_id_ << ") <BatchOp>:";
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
     ParallelOp::Print(out, show_all);
@@ -176,12 +174,15 @@ Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, const std::u
 
     std::shared_ptr<Tensor> new_tensor;
     if (first_type.IsNumeric()) {  // numeric tensor
-      RETURN_IF_NOT_OK(Tensor::CreateTensor(&new_tensor, TensorImpl::kFlexible, new_shape, first_type));
+      RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, first_type, &new_tensor));
       dsize_t j = 0;
       for (auto row : **src) {
         std::shared_ptr<Tensor> old_tensor = row.at(i);  // row j, column i
         if (old_tensor->shape() == first_shape) {        // check the newly popped rows have the same dim as the first
-          RETURN_IF_NOT_OK(new_tensor->InsertTensor({j++}, old_tensor));
+          if (new_shape.NumOfElements() != 0) {
+            RETURN_IF_NOT_OK(new_tensor->InsertTensor({j++}, old_tensor));
+          }
+          // Don't do anything if the tensor has no data
         } else {
           RETURN_STATUS_UNEXPECTED("[Batch ERROR] Inconsistent TensorShapes of Column " + std::to_string(i));
         }
@@ -194,7 +195,7 @@ Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, const std::u
           strings.emplace_back(*itr);
         }
       }
-      RETURN_IF_NOT_OK(Tensor::CreateTensor(&new_tensor, strings, new_shape));
+      RETURN_IF_NOT_OK(Tensor::CreateFromVector(strings, new_shape, &new_tensor));
     }
     batched_row.emplace_back(new_tensor);
   }
@@ -352,7 +353,7 @@ Status BatchOp::InvokeBatchMapFunc(TensorBatchTable *input, TensorBatchTable *ou
         py::list output_list = py::cast<py::list>(ret_tuple[i]);
         for (size_t j = 0; j < output_list.size(); j++) {
           std::shared_ptr<Tensor> out;
-          RETURN_IF_NOT_OK(Tensor::CreateTensor(&out, py::cast<py::array>(output_list[j])));
+          RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(py::cast<py::array>(output_list[j]), &out));
           output_batch.push_back(std::move(out));
         }
         output->push_back(std::move(output_batch));

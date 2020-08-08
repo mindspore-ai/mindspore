@@ -22,6 +22,7 @@
 #include "utils/utils.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "backend/optimizer/common/optimizer.h"
+#include "ir/param_value.h"
 #define private public
 #define protected public
 #include "backend/optimizer/ascend/enhancer/insert_memcpy_async_for_hccl_op.h"
@@ -44,12 +45,10 @@ class MockInsertMemcpyForHcclKernelQuery : public KernelQuery {
   ~MockInsertMemcpyForHcclKernelQuery() override = default;
   bool IsTbeRef(const AnfNodePtr &node) override {
     MS_EXCEPTION_IF_NULL(node);
-    auto cnode = node->cast<CNodePtr>();
-    if (cnode == nullptr) {
+    if (!node->isa<CNode>()) {
       return false;
     }
-    auto name = AnfAlgo::GetCNodeName(cnode);
-    return name == "ApplyMomentum";
+    return AnfAlgo::GetCNodeName(node->cast<CNodePtr>()) == "ApplyMomentum";
   }
 };
 
@@ -105,6 +104,10 @@ TEST_F(TestHWInsertMemcpyForHccl, test_cond2) {
   AbstractBasePtrList args_spec_list{x_abstract};
   auto kg = GetKernelGraph(g, args_spec_list);
   EXPECT_NE(kg, nullptr);
+  for (auto p : kg->parameters()) {
+    auto param = p->cast<ParameterPtr>();
+    EXPECT_NE(param, nullptr);
+  }
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
@@ -146,9 +149,14 @@ TEST_F(TestHWInsertMemcpyForHccl, test_cond4) {
   ASSERT_TRUE(g != nullptr);
   std::vector<int> shp_x{1, 64, 112, 112};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
-  AbstractBasePtrList args_spec_list{x_abstract, x_abstract, x_abstract, x_abstract, x_abstract};
+  AbstractBasePtrList args_spec_list{x_abstract, x_abstract};
   auto kg = GetKernelGraph(g, args_spec_list);
   EXPECT_NE(kg, nullptr);
+
+  for (auto p : kg->parameters()) {
+    auto param = p->cast<ParameterPtr>();
+    EXPECT_NE(param, nullptr);
+  }
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
@@ -159,6 +167,34 @@ TEST_F(TestHWInsertMemcpyForHccl, test_cond4) {
   auto new_graph = optimizer->Optimize(kg);
 
   FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_insert_memcpy_async_for_hccl_op_cond4", "after");
+  EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
+}
+
+TEST_F(TestHWInsertMemcpyForHccl, test_cond5) {
+  get_py_fun_.SetDoResolve(true);
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_insert_memcpy_async_for_hccl_op_cond5", "before");
+  ASSERT_TRUE(g != nullptr);
+  std::vector<int> shp_x{1, 64, 112, 112};
+  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
+  AbstractBasePtrList args_spec_list{x_abstract, x_abstract, x_abstract};
+  auto kg = GetKernelGraph(g, args_spec_list);
+  EXPECT_NE(kg, nullptr);
+
+  for (auto p : kg->parameters()) {
+    auto param = p->cast<ParameterPtr>();
+    EXPECT_NE(param, nullptr);
+  }
+
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  auto pass = std::make_shared<opt::InsertMemcpyAsyncForHcclOp>();
+  pass->kernel_query_ = std::make_shared<MockInsertMemcpyForHcclKernelQuery>();
+  pm->AddPass(pass);
+  optimizer->AddPassManager(pm);
+  auto new_graph = optimizer->Optimize(kg);
+  kg->SetExecOrderByDefault();
+
+  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_insert_memcpy_async_for_hccl_op_cond5", "after");
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
 }  // namespace opt

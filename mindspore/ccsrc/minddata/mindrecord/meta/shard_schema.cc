@@ -15,7 +15,7 @@
  */
 
 #include "minddata/mindrecord/include/shard_schema.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 using mindspore::LogStream;
 using mindspore::ExceptionType::NoExceptionType;

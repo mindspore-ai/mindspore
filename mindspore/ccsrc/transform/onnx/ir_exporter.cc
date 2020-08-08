@@ -187,7 +187,7 @@ void IrExportBuilder::BuildParameters(const FuncGraphPtr &func_graph, onnx::Grap
     onnx::TensorProto *initializer_proto = graph_proto->add_initializer();
     initializer_proto->set_name(param_name);
     SetParamToTensorProto(param, initializer_proto);
-    auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(param->default_param()->value());
+    auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(param->default_param());
     if (tensor) {
       initializer_proto->set_raw_data(tensor->data_c(), tensor->data().nbytes());
     }

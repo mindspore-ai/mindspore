@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_OPS_INFO_GATHER_V2_P_INFO_H_
-#define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_GATHER_V2_P_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_GATHER_V2_P_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_GATHER_V2_P_INFO_H_
 
 #include <memory>
 #include <string>
@@ -45,7 +45,9 @@ class GatherV2PInfo : public OperatorInfo {
   Status GenerateStrategies(int32_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
-  std::shared_ptr<std::vector<std::vector<int32_t>>> GenerateBatchStrategies() override;
+  std::shared_ptr<Strategys> GenerateBatchStrategies() override;
+  const std::vector<int64_t> &param_split_shapes() const { return param_split_shapes_; }
+  const std::vector<int64_t> &index_offsets() const { return index_offsets_; }
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
@@ -56,7 +58,6 @@ class GatherV2PInfo : public OperatorInfo {
   Status InferTensorMap() override;
   Status GetAttrs() override;
 
- private:
   Status ComputeReplaceGraph(const CNodePtr &cnode);
   Status CheckManualSplit();
   Status ComputeReplaceOp();
@@ -67,14 +68,14 @@ class GatherV2PInfo : public OperatorInfo {
   int32_t axis_;
   std::string target_ = DEVICE;
   std::string replace_op_name_ = GATHERV2;
-  int32_t bias_;
-  int32_t index_offset_;
-  int32_t slice_size_;
+  int64_t bias_;
+  int64_t index_offset_;
+  int64_t slice_size_;
   Shape out_dev_matrix_shape_;
   Group group_;
   bool manual_split_ = false;
-  std::vector<int32_t> param_split_shapes_;
-  std::vector<int32_t> index_offsets_;
+  std::vector<int64_t> param_split_shapes_;
+  std::vector<int64_t> index_offsets_;
 };
 
 class SparseGatherV2Info : public GatherV2PInfo {
@@ -97,4 +98,4 @@ class EmbeddingLookupInfo : public GatherV2PInfo {
 };
 }  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PARALLEL_OPS_INFO_GATHER_V2_P_INFO_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_GATHER_V2_P_INFO_H_

@@ -51,8 +51,6 @@ ProjectOp::ProjectOp(const std::vector<std::string> &columns_to_project)
     : PipelineOp(0), columns_to_project_(columns_to_project) {}
 
 void ProjectOp::Print(std::ostream &out, bool show_all) const {
-  // Always show the id and name as first line regardless if this summary or detailed print
-  out << "(" << std::setw(2) << operator_id_ << ") <ProjectOp>:";
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
     PipelineOp::Print(out, show_all);
@@ -75,6 +73,9 @@ Status ProjectOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t w
   RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(p_buffer, worker_id, retry_if_eoe));
   if (!((*p_buffer)->eoe()) && !((*p_buffer)->eof())) {
     RETURN_IF_NOT_OK(Project(p_buffer));
+  }
+  if ((*p_buffer)->eoe()) {
+    UpdateRepeatAndEpochCounter();
   }
   return Status::OK();
 }

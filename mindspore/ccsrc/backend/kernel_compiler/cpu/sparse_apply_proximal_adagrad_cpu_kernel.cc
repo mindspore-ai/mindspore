@@ -26,12 +26,12 @@ void ComputeProximalAdagrad(MultiThreadComputeParams *input_params, size_t start
   MS_EXCEPTION_IF_NULL(input_params);
   auto var = input_params->var_;
   auto accum = input_params->accum_;
-  auto lr = input_params->lr_;
-  auto l1 = input_params->l1_;
-  auto l2 = input_params->l2_;
-  auto unique_sparse_grad = input_params->sparse_grad_;
-  auto var_first_dim_size = input_params->var_first_dim_size_;
-  auto var_outer_dim_size = input_params->var_outer_dim_size_;
+  const auto lr = input_params->lr_;
+  const auto l1 = input_params->l1_;
+  const auto l2 = input_params->l2_;
+  const auto unique_sparse_grad = input_params->sparse_grad_;
+  const auto var_first_dim_size = input_params->var_first_dim_size_;
+  const auto var_outer_dim_size = input_params->var_outer_dim_size_;
   for (size_t i = start; i < end; ++i) {
     int index = unique_sparse_grad.indices_[i];
     if (index < 0 || IntToSize(index) >= var_first_dim_size) {
@@ -59,6 +59,8 @@ void ComputeProximalAdagrad(MultiThreadComputeParams *input_params, size_t start
 void SparseApplyProximalAdagradCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_node);
+  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
+  workspace_size_list_.emplace_back(indices_size_ * sizeof(int));
   workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
   workspace_size_list_.emplace_back(indices_size_ * sizeof(int));
 }
@@ -119,9 +121,19 @@ bool SparseApplyProximalAdagradCPUKernel::Launch(const std::vector<kernel::Addre
   auto indices = reinterpret_cast<int *>(inputs[6]->addr);
   auto new_grad = reinterpret_cast<float *>(workspace[0]->addr);
   auto new_indices = reinterpret_cast<int *>(workspace[1]->addr);
+  auto workspace_grad = reinterpret_cast<float *>(workspace[2]->addr);
+  auto workspace_indices = reinterpret_cast<int *>(workspace[3]->addr);
+
   SparseGradient unique_sparse_grad({new_grad, new_indices, indices_size_});
-  ReduceSparseGradient(SparseGradient({grad, indices, indices_size_}), &unique_sparse_grad, var_first_dim_size_,
-                       var_outer_dim_size_);
+  SparseGradient workspace_sparse_grad({workspace_grad, workspace_indices, indices_size_});
+  SparseGradient input_sparse_grad({grad, indices, indices_size_});
+  ReduceSparseGradientParam param;
+  param.input_grad_ = &input_sparse_grad;
+  param.workspace_grad_ = &workspace_sparse_grad;
+  param.output_grad_ = &unique_sparse_grad;
+  param.max_index_ = var_first_dim_size_;
+  param.value_stride_ = var_outer_dim_size_;
+  BucketReduceSparseGradient(param);
 
   MultiThreadComputeParams input_params;
   input_params.var_ = var;

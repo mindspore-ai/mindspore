@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "minddata/dataset/engine/tdt/tdt_plugin.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "utils/log_adapter.h"
 #include "minddata/dataset/engine/perf/profiling.h"
 
@@ -29,20 +29,27 @@ std::shared_ptr<TdtPlugin> TdtPlugin::GetInstance() {
   return instance_ptr_;
 }
 
-TdtStatus TdtPlugin::hostPush(TensorRow ts_row, bool is_wait, std::string channel_name, bool profiling, int32_t &time) {
+TdtStatus TdtPlugin::hostPush(TensorRow ts_row, bool is_wait, std::string channel_name, bool profiling, int32_t &time,
+                              tdt::TdtDataType tdt_type) {
   MS_LOG(DEBUG) << "TDT channel name is " << channel_name << ".";
   std::vector<DataItem> items;
   double start_time;
-  auto ret = translate(ts_row, items);
-  if (ret != SUCCESS) {
-    MS_LOG(ERROR) << "TDT converting tensor failed!";
-    return FAILED;
+  if (tdt_type == tdt::TDT_TENSOR) {
+    auto ret = translate(ts_row, items);
+    if (ret != SUCCESS) {
+      MS_LOG(ERROR) << "TDT converting tensor failed!";
+      return FAILED;
+    }
+  } else if (tdt_type == tdt::TDT_END_OF_SEQUENCE) {
+    DataItem data_item;
+    data_item.dataType_ = tdt::TDT_END_OF_SEQUENCE;
+    items.emplace_back(data_item);
+    MS_LOG(INFO) << "TDT data type is TDT_END_OF_SEQUENCE";
   }
   if (profiling) {
     start_time = ProfilingTime::GetCurMilliSecond();
   }
   if (tdt::TdtHostPushData(channel_name, items) != 0) {
-    MS_LOG(ERROR) << "TDT pushing data failed!";
     return FAILED;
   }
   if (profiling) {
@@ -122,8 +129,8 @@ TdtStatus TdtPlugin::translate(const TensorRow &ts_row, std::vector<DataItem> &i
     data_item.dataPtr_ =
       std::shared_ptr<void>(reinterpret_cast<uchar *>(&(*ts->begin<uint8_t>())), [](const void *elem) {});
     items.emplace_back(data_item);
-    MS_LOG(DEBUG) << "TDT data type is " << datatype << ", data shape is " << dataShapes << ", data length is "
-                  << ts->Size() << ".";
+    MS_LOG(INFO) << "TDT data type is TDT_TENSOR, tensor type is " << datatype << ", tensor shape is " << dataShapes
+                 << ", data length is " << ts->Size() << ".";
   }
   return SUCCESS;
 }

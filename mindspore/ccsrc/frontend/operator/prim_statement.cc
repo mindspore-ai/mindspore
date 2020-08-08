@@ -108,11 +108,6 @@ AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &p
   auto fb = args_spec_list[2];
   MS_EXCEPTION_IF_NULL(cond);
 
-  auto unroll_flag = prim->GetAttr(prim::SWITCH_UNROLL_FLAG);
-  if (unroll_flag != nullptr && GetValue<int>(unroll_flag) == 0) {
-    return tb->Join(fb);
-  }
-
   ValuePtr v = cond->GetValueTrack();
   MS_EXCEPTION_IF_NULL(v);
   // for tensor as condition, keeps both true and false branch.
@@ -137,7 +132,17 @@ AbstractBasePtr InferImplSwitchLayer(const AnalysisEnginePtr &, const PrimitiveP
   // Inputs: index, branch
   const std::string op_name = primitive->name();
   abstract::CheckArgsSize(op_name, args_spec_list, 2);
-  (void)CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto index = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto &input_shape = index->shape()->shape();
+  if (input_shape.size() != 0) {
+    MS_EXCEPTION(ValueError) << op_name << " index must be a 0 dimension tensor, but got a " << input_shape.size()
+                             << " dimension tensor";
+  }
+  auto dtype = index->element()->BuildType();
+  if (dtype->type_id() != kInt32->type_id()) {
+    MS_EXCEPTION(ValueError) << op_name << " index must be a int32, but got " << dtype->ToString();
+  }
+
   AbstractTuplePtr branches_abs = CheckArg<AbstractTuple>(op_name, args_spec_list, 1);
   AbstractBasePtrList branches = branches_abs->elements();
   const size_t maximum_layer_num = 1000;

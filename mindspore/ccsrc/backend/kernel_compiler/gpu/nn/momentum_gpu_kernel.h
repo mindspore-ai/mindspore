@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_NN_MOMENTUM_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_KERNEL_GPU_NN_MOMENTUM_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_MOMENTUM_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_MOMENTUM_GPU_KERNEL_H_
 
 #include <vector>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
@@ -23,7 +23,7 @@
 #include "backend/kernel_compiler/gpu/cuda_impl/momentum_impl.cuh"
 namespace mindspore {
 namespace kernel {
-template <typename T, typename S>
+template <typename T, typename S, typename G>
 class MomentumGpuKernel : public GpuKernel {
  public:
   MomentumGpuKernel()
@@ -38,7 +38,7 @@ class MomentumGpuKernel : public GpuKernel {
     T *variable = GetDeviceAddress<T>(inputs, 0);
     T *accumulation = GetDeviceAddress<T>(inputs, 1);
     S *learning_rate = GetDeviceAddress<S>(inputs, 2);
-    T *gradient = GetDeviceAddress<T>(inputs, 3);
+    G *gradient = GetDeviceAddress<G>(inputs, 3);
     S *momentum = GetDeviceAddress<S>(inputs, 4);
     MomentumUpdateVariable(inputs[0]->size / sizeof(T), variable, accumulation, learning_rate, gradient, momentum,
                            reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -54,7 +54,7 @@ class MomentumGpuKernel : public GpuKernel {
     variable_size_ = sizeof(T);
     accumulation_size_ = sizeof(T);
     learning_rate_size_ = sizeof(S);
-    gradient_size_ = sizeof(T);
+    gradient_size_ = sizeof(G);
     momentum_size_ = sizeof(S);
 
     auto variable_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -97,4 +97,4 @@ class MomentumGpuKernel : public GpuKernel {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_NN_MOMENTUM_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_MOMENTUM_GPU_KERNEL_H_

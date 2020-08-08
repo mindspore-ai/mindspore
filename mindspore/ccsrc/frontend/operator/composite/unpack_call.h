@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPERATOR_COMPOSITE_UNPACK_CALL_H_
-#define MINDSPORE_CCSRC_OPERATOR_COMPOSITE_UNPACK_CALL_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_UNPACK_CALL_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_UNPACK_CALL_H_
 
 #include <vector>
 #include <string>
@@ -30,7 +30,7 @@
 #include "utils/any.h"
 #include "ir/dtype.h"
 #include "ir/meta_func_graph.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 // namespace to support composite operators definition
@@ -49,4 +49,4 @@ using UnpackCallPtr = std::shared_ptr<UnpackCall>;
 }  // namespace prim
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_OPERATOR_COMPOSITE_UNPACK_CALL_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_UNPACK_CALL_H_

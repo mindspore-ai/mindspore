@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_PATTERN_ENGINE_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_PATTERN_ENGINE_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_PATTERN_ENGINE_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_PATTERN_ENGINE_H_
 
 #include <string>
 #include <sstream>
@@ -36,7 +36,7 @@
 #include "backend/optimizer/common/visit.h"
 #include "base/base.h"
 #include "utils/log_adapter.h"
-#include "utils/base_ref.h"
+#include "base/base_ref.h"
 
 namespace mindspore {
 class CondVar;
@@ -201,4 +201,4 @@ struct hash<mindspore::VarPtr> {
   }
 };
 }  // namespace std
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_PATTERN_ENGINE_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_PATTERN_ENGINE_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_OPT_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_OPT_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_OPT_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_OPT_H_
 
 #include <memory>
 #include <string>
@@ -23,7 +23,7 @@
 
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "ir/optimizer_caller.h"
+#include "frontend/optimizer/optimizer_caller.h"
 #include "frontend/operator/ops.h"
 
 namespace mindspore {
@@ -75,4 +75,4 @@ class SubstitutionList {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_OPT_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_OPT_H_

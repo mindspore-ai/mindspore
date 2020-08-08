@@ -27,7 +27,7 @@
 #include <thread>
 #include <vector>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
 #include "minddata/mindrecord/include/shard_segment.h"

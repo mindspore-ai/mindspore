@@ -13,80 +13,48 @@
 # limitations under the License.
 # ============================================================================
 """grad reducer cell for distributed training"""
+from mindspore import context
 from mindspore.nn.cell import Cell
 from mindspore.communication.management import GlobalComm, get_group_size
+from mindspore.common.tensor import RowTensor
 from mindspore.ops import functional as F, composite as C, operations as P
-from mindspore.ops.operations.comm_ops import AllReduce, ReduceOp, AllGather
+from mindspore.ops.operations.comm_ops import AllReduce, AllGather
+from mindspore.parallel._auto_parallel_context import auto_parallel_context
 import mindspore.common.dtype as mstype
 
 reduce_opt = C.MultitypeFuncGraph("reduce_opt")
 
-_all_reduce = AllReduce()
-_all_gather = None
+
+def _init_allreduce_operators(length, split_indices):
+    """ initialize allreduce communication operators"""
+    group = 1
+    fusion = ()
+    for i in range(length):
+        fusion = fusion + (group,)
+        if split_indices[group - 1] <= i + 1:
+            if group >= len(split_indices):
+                continue
+            group = group + 1
+    index = tuple(range(1, length + 1))
+    op_list = ()
+    for i in range(length):
+        op = AllReduce('sum', GlobalComm.WORLD_COMM_GROUP)
+        op.add_prim_attr('fusion', fusion[i])
+        op.add_prim_attr('index', index[i])
+        op_list = op_list + (op,)
+    return op_list
 
 
-def _init_optimizer_communication():
-    global _all_reduce
-    global _all_gather
-
-    _all_reduce = AllReduce(ReduceOp.SUM, GlobalComm.WORLD_COMM_GROUP)
-    _all_reduce.add_prim_attr('fusion', 1)
-    _all_gather = AllGather(GlobalComm.WORLD_COMM_GROUP)
-
-
-@reduce_opt.register("Function", "Number", "Bool", "Tensor")
-def _tensors_allreduce_mean(mul, degree, allreduce_filter, grad):
-    """
-    Apply mean and allreduce on gradient. Allreduce is a communication operation used for distributed deep learning.
-
-    Args:
-        mul (Primitive): Div operation.
-        degree (int): The mean coefficient.
-        allreduce_filter (bool): When it is true, allreduce would apply.
-        grad (Tensor): The gradient tensor before operation.
-
-    Returns:
-        Tensor, the gradient tensor after operation.
-    """
-    if allreduce_filter:
-        degree = F.scalar_cast(degree, F.dtype(grad))
-        grad = _all_reduce(grad)
-        cast_op = P.Cast()
-        return mul(grad, cast_op(F.scalar_to_array(1.0/degree), F.dtype(grad)))
-    return grad
-
-
-@reduce_opt.register("Function", "Number", "Bool", "Tuple")
-def _tensors_allreduce_mean_with_sparse(mul, degree, allreduce_filter, grad):
-    """
-    Apply mean and allgather on gradient instead of allreduce for sparse feature.
-    Allgather is a communication operation used for distributed deep learning.
-
-    Args:
-        mul (Primitive): Div operation.
-        degree (int): The mean coefficient.
-        allreduce_filter (bool): When it is true, allgather would apply.
-        grad (Tuple): The indices, gradient tensor and tensor_shape before operation.
-
-    Returns:
-        Tuple, include indices, the gradient tensor and tensor_shape after operation.
-    """
-    if allreduce_filter:
-        indices = _all_gather(grad[0])
-        degree = F.scalar_cast(degree, F.dtype(grad[1]))
-        dout = _all_gather(grad[1])
-        cast_op = P.Cast()
-        dout = mul(dout, cast_op(F.scalar_to_array(1.0 / degree), F.dtype(dout)))
-        grad = (indices, dout, grad[2])
-    return grad
-
-
-@reduce_opt.register("Bool", "Tensor")
-def _tensors_allreduce(allreduce_filter, grad):
+@reduce_opt.register("Number", "Bool", "Function", "Function", "Bool", "Tensor")
+def _tensors_allreduce(degree, mean, allgather, allreduce, allreduce_filter, grad):
     """
     Apply allreduce on gradient.
 
     Args:
+        degree (int): The mean coefficient.
+        mean (bool): When mean is true, the mean coefficient (degree) would apply on gradients.
+        allgather (Primitive): The communication operator for sparse gradients.
+        allreduce (Primitive): The communication operator for gradients.
         allreduce_filter (bool): When it is true, allreduce would apply.
         grad (Tensor): The gradient tensor before operation.
 
@@ -94,27 +62,106 @@ def _tensors_allreduce(allreduce_filter, grad):
         Tensor, the gradient tensor after operation.
     """
     if allreduce_filter:
-        return _all_reduce(grad)
+        grad = allreduce(grad)
+        if mean:
+            degree = F.scalar_cast(degree, F.dtype(grad))
+            cast_op = P.Cast()
+            mul_op = P.Mul()
+            grad = mul_op(grad, cast_op(F.scalar_to_array(1.0 / degree), F.dtype(grad)))
+        return grad
     return grad
 
 
-@reduce_opt.register("Bool", "Tuple")
-def _tensors_allreduce_with_sparse(allreduce_filter, grad):
+@reduce_opt.register("Number", "Bool", "Function", "Function", "Bool", "Tensor", "Bool")
+def _tensors_allreduce_ps(degree, mean, allgather, allreduce, allreduce_filter, grad, ps_parameter):
     """
-    Apply mean and allgather on gradient instead of allreduce for sparse feature.
+    Apply allreduce on gradient.
+
+    Args:
+        degree (int): The mean coefficient.
+        mean (bool): When mean is true, the mean coefficient (degree) would apply on gradients.
+        allgather (Primitive): The communication operator for sparse gradients.
+        allreduce (Primitive): The communication operator for gradients.
+        allreduce_filter (bool): When it is true, allreduce would apply.
+        grad (Tensor): The gradient tensor before operation.
+        ps_parameter (bool): Use parameter server or not.
+
+    Returns:
+        Tensor, the gradient tensor after operation.
+    """
+    if ps_parameter:
+        return grad
+
+    if allreduce_filter:
+        grad = allreduce(grad)
+        if mean:
+            degree = F.scalar_cast(degree, F.dtype(grad))
+            cast_op = P.Cast()
+            mul_op = P.Mul()
+            grad = mul_op(grad, cast_op(F.scalar_to_array(1.0/degree), F.dtype(grad)))
+        return grad
+    return grad
+
+
+@reduce_opt.register("Number", "Bool", "Function", "Function", "Bool", "RowTensor")
+def _tensors_allreduce_with_sparse(degree, mean, allgather, allreduce, allreduce_filter, grad):
+    """
+    Apply allgather on gradient instead of allreduce for sparse feature.
     Allgather is a communication operation used for distributed deep learning.
 
     Args:
+        degree (int): The mean coefficient.
+        mean (bool): When mean is true, the mean coefficient (degree) would apply on gradients.
+        allgather (Primitive): The communication operator for sparse gradients.
+        allreduce (Primitive): The communication operator for gradients.
         allreduce_filter (bool): When it is true, allgather would apply.
-        grad (Tuple): The indices, gradient tensor and tensor_shape before operation.
+        grad (tuple): The indices, gradient tensor and tensor_shape before operation.
 
     Returns:
-        Tuple, include indices, the gradient tensor and tensor_shape after operation.
+        RowTensor, the gradient after operation.
     """
     if allreduce_filter:
-        indices = _all_gather(grad[0])
-        dout = _all_gather(grad[1])
-        grad = (indices, dout, grad[2])
+        indices = allgather(grad.indices)
+        dout = allgather(grad.values)
+        if mean:
+            degree = F.scalar_cast(degree, F.dtype(grad.values))
+            cast_op = P.Cast()
+            mul_op = P.Mul()
+            dout = mul_op(dout, cast_op(F.scalar_to_array(1.0 / degree), F.dtype(dout)))
+        grad = RowTensor(indices, dout, grad.dense_shape)
+    return grad
+
+
+@reduce_opt.register("Number", "Bool", "Function", "Function", "Bool", "RowTensor", "Bool")
+def _tensors_allreduce_with_sparse_ps(degree, mean, allgather, allreduce, allreduce_filter, grad, ps_parameter):
+    """
+    Apply allgather on gradient instead of allreduce for sparse feature.
+    Allgather is a communication operation used for distributed deep learning.
+
+    Args:
+        degree (int): The mean coefficient.
+        mean (bool): When mean is true, the mean coefficient (degree) would apply on gradients.
+        allgather (Primitive): The communication operator for sparse gradients.
+        allreduce (Primitive): The communication operator for gradients.
+        allreduce_filter (bool): When it is true, allgather would apply.
+        grad (tuple): The indices, gradient tensor and tensor_shape before operation.
+        ps_parameter (bool): Use parameter server or not.
+
+    Returns:
+        RowTensor, the gradient after operation.
+    """
+    if ps_parameter:
+        return grad
+
+    if allreduce_filter:
+        indices = allgather(grad.indices)
+        dout = allgather(grad.values)
+        if mean:
+            degree = F.scalar_cast(degree, F.dtype(grad.values))
+            cast_op = P.Cast()
+            mul_op = P.Mul()
+            dout = mul_op(dout, cast_op(F.scalar_to_array(1.0 / degree), F.dtype(dout)))
+        grad = RowTensor(indices, dout, grad.dense_shape)
     return grad
 
 
@@ -135,18 +182,18 @@ def _tensors_get_datatype(grad):
     return F.dtype(grad)
 
 
-@_get_datatype.register("Tuple")
+@_get_datatype.register("RowTensor")
 def _tensors_get_datatype_with_sparse(grad):
     """
     Acquire gradient datatype.
 
     Args:
-        grad (Tuple): The gradient tensor before operation.
+        grad (RowTensor): The gradient before operation.
 
     Returns:
         mstype, the datatype of gradient.
     """
-    return F.dtype(grad[1])
+    return F.dtype(grad.values)
 
 
 _cast_datatype = C.MultitypeFuncGraph("_cast_datatype")
@@ -167,20 +214,20 @@ def _tensors_cast_datatype(datatype, grad):
     return F.cast(grad, datatype)
 
 
-@_cast_datatype.register("TypeType", "Tuple")
+@_cast_datatype.register("TypeType", "RowTensor")
 def _tensors_cast_datatype_with_sparse(datatype, grad):
     """
     Cast gradient to datatype.
 
     Args:
         datatype (mstype): the destination datatype of gradient.
-        grad (Tuple): The gradient tensor before operation.
+        grad (RowTensor): The gradient before operation.
 
     Returns:
-        Tuple, the gradient tuple after operation.
+        RowTensor, the gradient after operation.
     """
-    dout = F.cast(grad[1], datatype)
-    return (grad[0], dout, grad[2])
+    dout = F.cast(grad.values, datatype)
+    return RowTensor(grad.indices, dout, grad.dense_shape)
 
 
 class DistributedGradReducer(Cell):
@@ -259,7 +306,6 @@ class DistributedGradReducer(Cell):
     def __init__(self, parameters, mean=True, degree=None):
         super(DistributedGradReducer, self).__init__(auto_prefix=False)
         self.map_ = C.Map()
-        self.mul = P.Mul()
         if degree is None:
             self.degree = get_group_size()
         else:
@@ -268,7 +314,18 @@ class DistributedGradReducer(Cell):
             self.degree = degree
         self.mean = mean
         self.allreduce_filter = tuple(x.layerwise_parallel is False for x in parameters)
-        _init_optimizer_communication()
+        is_parallel_optimizer = context.get_auto_parallel_context("enable_parallel_optimizer")
+        split_indices = auto_parallel_context().get_all_reduce_fusion_split_indices()
+        if is_parallel_optimizer and split_indices:
+            self.split_fusion = True
+            self.op_list = _init_allreduce_operators(len(parameters), split_indices)
+        else:
+            self.split_fusion = False
+            self.allreduce = AllReduce().add_prim_attr('fusion', 1)
+        self.allgather = AllGather(GlobalComm.WORLD_COMM_GROUP)
+        ps_filter = lambda x: x.is_param_ps
+        self.ps_parameters = tuple(ps_filter(x) for x in parameters)
+        self.enable_parameter_server = any(self.ps_parameters)
 
     def construct(self, grads):
         """
@@ -284,11 +341,19 @@ class DistributedGradReducer(Cell):
         """
         datatypes = self.map_(F.partial(_get_datatype), grads)
         grads = self.map_(F.partial(_cast_datatype, mstype.float32), grads)
-
-        if self.mean:
-            new_grad = self.map_(F.partial(reduce_opt, self.mul, self.degree), self.allreduce_filter, grads)
+        if self.split_fusion:
+            if self.enable_parameter_server:
+                new_grad = self.map_(F.partial(reduce_opt, self.degree, self.mean, self.allgather),
+                                     self.op_list, self.allreduce_filter, grads, self.ps_parameters)
+            else:
+                new_grad = self.map_(F.partial(reduce_opt, self.degree, self.mean, self.allgather),
+                                     self.op_list, self.allreduce_filter, grads)
         else:
-            new_grad = self.map_(F.partial(reduce_opt), self.allreduce_filter, grads)
-
+            if self.enable_parameter_server:
+                new_grad = self.map_(F.partial(reduce_opt, self.degree, self.mean, self.allgather,
+                                               self.allreduce), self.allreduce_filter, grads, self.ps_parameters)
+            else:
+                new_grad = self.map_(F.partial(reduce_opt, self.degree, self.mean, self.allgather,
+                                               self.allreduce), self.allreduce_filter, grads)
         new_grad = self.map_(F.partial(_cast_datatype), datatypes, new_grad)
         return new_grad

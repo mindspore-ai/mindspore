@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_ENGINE_DATASETOPS_REPEAT_OP_H_
-#define DATASET_ENGINE_DATASETOPS_REPEAT_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_REPEAT_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_REPEAT_OP_H_
 
 #include <memory>
 #include <string>
@@ -26,8 +26,6 @@ namespace mindspore {
 namespace dataset {
 class RepeatOp : public PipelineOp {
  public:
-  static constexpr int32_t kInfiniteRepeat = -1;
-
   // The nested builder class inside of the RepeatOp is used to help manage all of the arguments
   // for constructing it.  This repeat op is very simple though, so this builder is really just
   // provided for a consistent look and feel for creators of Dataset operators overall.
@@ -46,8 +44,8 @@ class RepeatOp : public PipelineOp {
     // @return shared_ptr to the new RepeatOp object
     Status Build(std::shared_ptr<RepeatOp> *);
 
-   private:
-    int32_t build_max_repeats_;
+   protected:
+    int32_t build_num_repeats_;
 
     Status SanityCheck() const;
   };
@@ -129,18 +127,29 @@ class RepeatOp : public PipelineOp {
 
   // Op name getter
   // @return Name of the current Op
-  std::string Name() const override { return "RepeatOp"; }
+  std::string Name() const override { return kRepeatOp; }
 
-  /// \brief Adds an operator to the repeat ops list of tracked leaf/eoe nodes
-  /// \param[in] eoe_op The input leaf/eoe operator to add to the list
+  /// \brief Getter function
+  /// \return The number of repeats that the user requested
+  int32_t num_repeats() { return num_repeats_; }
+
+  // \brief Adds an operator to the repeat ops list of tracked leaf/eoe nodes
+  // \param[in] eoe_op The input leaf/eoe operator to add to the list
   void AddToEoeList(std::shared_ptr<DatasetOp> eoe_op) { eoe_ops_.push_back(std::move(eoe_op)); }
 
- private:
-  int32_t max_repeats_;                              // The number of repeats that the user requested
-  int32_t repeat_count_;                             // A counter for the current number of executed repeats
+ protected:
+  // The number of repeats that the user requested.
+  // Note that num_repeats_ is different with op_total_repeats_ or op_num_repeats_per_epoch_ in base DatasetOp class.
+  // For example, for repeat1 op in pipeline tfreader -> repeat1(3) -> repeat2(2) -> epoch ctrl(4),
+  // num_repeats_ = 3, op_total_repeats_ = 24, op_num_repeats_per_epoch_ = 6.
+  int32_t num_repeats_;
+  // A counter for the current number of executed repeats.
+  // Note that repeat_count_ is different with op_current_repeats_ in the base DatasetOp class
+  // because it counts the repeats in the current epoch, whereas op_current_repeats_ counts the global total repeats.
+  int32_t repeat_count_;
   std::vector<std::shared_ptr<DatasetOp>> eoe_ops_;  // List of operators that can generate EOE underneath this repeat.
 };
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_ENGINE_DATASETOPS_REPEAT_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_REPEAT_OP_H_

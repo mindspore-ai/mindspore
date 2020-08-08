@@ -32,13 +32,13 @@ class TestStepAutoParallel : public UT::Common {
 };
 
 void TestStepAutoParallel::SetUp() {
-  std::vector<int32_t> dev_list;
+  RankList dev_list;
 
   for (int32_t i = 0; i < 20; i++) {
     dev_list.push_back(i);
   }
 
-  std::vector<int32_t> stage_map;
+  RankList stage_map;
   stage_map.push_back(16);
   stage_map.push_back(4);
 
@@ -153,7 +153,7 @@ TEST_F(TestStepAutoParallel, test_create_op_instance) {
   StrategyPtr strategyPtr;
 
   std::shared_ptr<OperatorInfo> matmul_info = NewOperatorInstance(prim, attrs, shape);
-  node->set_operator_info(matmul_info);
+  node->set_user_data<OperatorInfo>(matmul_info);
   std::string name_expect = "MatMulInfo00";
   std::string name_test = matmul_info->name();
   ASSERT_EQ(name_expect, name_test);

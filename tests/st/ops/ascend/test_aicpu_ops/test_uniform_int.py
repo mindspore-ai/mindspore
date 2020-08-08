@@ -41,3 +41,15 @@ def test_net_1D():
     ta, tb = Tensor(a, mstype.int32), Tensor(b, mstype.int32)
     output = net(ta, tb)
     assert output.shape == (3, 2, 4)
+
+
+def test_net_ND():
+    seed = 10
+    shape = (3, 2, 1)
+    a = np.array([[[1, 2]], [[3, 4]], [[5, 6]]]).astype(np.int32)
+    b = np.array([10]).astype(np.int32)
+    net = Net(shape, seed)
+    ta, tb = Tensor(a), Tensor(b)
+    output = net(ta, tb)
+    print(output.asnumpy())
+    assert output.shape == (3, 2, 2)

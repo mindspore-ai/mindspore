@@ -42,6 +42,16 @@ def _ones_like_tensor(x):
     return P.Fill()(P.DType()(x), P.Shape()(x), 1.0)
 
 
+@ones_like_leaf.register("SparseTensor")
+def _ones_like_sparse_tensor(x):
+    """Returns a tensor with the same shape and dtype as x and all elements are 1."""
+    values_ = F.sparse_tensor_get_values(x)
+    values = P.Fill()(P.DType()(values_),
+                      P.Shape()(values_),
+                      1.0)
+    return F.make_sparse_tensor(F.sparse_tensor_get_indices(x), values, F.sparse_tensor_get_dense_shape(x))
+
+
 ones_like = base.HyperMap(ones_like_leaf)
 """
 `ones_like` is a function which can generate a graph of `ones_like` operation according to input tensor dtype.

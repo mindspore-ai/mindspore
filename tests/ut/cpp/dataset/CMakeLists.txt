@@ -55,7 +55,7 @@ SET(DE_UT_SRCS
         resize_bilinear_op_test.cc
         resize_op_test.cc
         resize_with_bbox_op_test.cc
-	    schema_test.cc
+        schema_test.cc
         shuffle_op_test.cc
         stand_alone_samplers_test.cc
         status_test.cc
@@ -71,14 +71,12 @@ SET(DE_UT_SRCS
         subset_random_sampler_test.cc
         weighted_random_sampler_test.cc
         mnist_op_test.cc
-        manifest_op_test.cc
-        voc_op_test.cc
         cifar_op_test.cc
         celeba_op_test.cc
         take_op_test.cc
         clue_op_test.cc
+        csv_op_test.cc
         text_file_op_test.cc
-        filter_op_test.cc
         concat_op_test.cc
         jieba_tokenizer_op_test.cc
         tokenizer_op_test.cc
@@ -91,8 +89,23 @@ SET(DE_UT_SRCS
         cyclic_array_test.cc
         perf_data_test.cc
         c_api_test.cc
-		tensor_op_fusion_pass_test.cc
+        tensor_op_fusion_pass_test.cc
+        sliding_window_op_test.cc
+        epoch_ctrl_op_test.cc
+        sentence_piece_vocab_op_test.cc
+	swap_red_blue_test.cc
+	distributed_sampler_test.cc
         )
+
+if (ENABLE_PYTHON)
+    set(DE_UT_SRCS
+            ${DE_UT_SRCS}
+            filter_op_test.cc
+            manifest_op_test.cc
+            voc_op_test.cc
+            sentence_piece_vocab_op_test.cc
+            )
+endif ()
 
 add_executable(de_ut_tests ${DE_UT_SRCS})
 

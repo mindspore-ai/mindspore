@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_DEVICE_MANAGER_H_
-#define MINDSPORE_CCSRC_PARALLEL_DEVICE_MANAGER_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_DEVICE_MANAGER_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_DEVICE_MANAGER_H_
 
 #include <cstdint>
 #include <cstring>
@@ -25,7 +25,7 @@
 #include <utility>
 #include <vector>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "frontend/parallel/device.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/group_manager.h"
@@ -127,4 +127,4 @@ class DeviceManager {
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_DEVICE_MANAGER_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_DEVICE_MANAGER_H_

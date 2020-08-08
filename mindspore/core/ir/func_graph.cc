@@ -22,11 +22,12 @@
 #include <sstream>
 #include <utility>
 
-#include "debug/trace.h"
+#include "utils/trace_base.h"
 #include "ir/manager.h"
-#include "frontend/operator/ops.h"
+#include "utils/flags.h"
 #include "utils/ordered_set.h"
 #include "utils/convert_utils_base.h"
+#include "abstract/abstract_function.h"
 
 namespace mindspore {
 /*
@@ -47,6 +48,11 @@ FuncGraph::FuncGraph()
       manager_(std::weak_ptr<FuncGraphManager>()),
       stub_(false) {
   debug_info_ = std::make_shared<GraphDebugInfo>();
+}
+
+abstract::AbstractBasePtr FuncGraph::ToAbstract() {
+  auto temp_context = abstract::AnalysisContext::DummyContext();
+  return std::make_shared<abstract::FuncGraphAbstractClosure>(shared_from_base<FuncGraph>(), temp_context);
 }
 
 AnfNodePtr FuncGraph::output() const {
@@ -415,6 +421,15 @@ std::shared_ptr<std::list<FuncGraphPtr>> FuncGraph::recursive_graphs() {
   auto mng = manager_.lock();
   MS_EXCEPTION_IF_NULL(mng);
   return mng->recursive_graphs(shared_from_base<FuncGraph>());
+}
+
+void FuncGraph::ClearAllManagerInfo() {
+  ClearNodes();
+  ClearValueNodes();
+  ClearFuncGraphCNodesIndex();
+  ClearFreeVariables();
+  ClearFuncGraphsUsed();
+  ClearJFuncGraphs();
 }
 
 AnfNodePtr FuncGraph::GetDefaultValueByName(const std::string &name) {

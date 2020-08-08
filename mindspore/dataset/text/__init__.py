@@ -19,13 +19,16 @@ utils provides some general methods for nlp text processing.
 """
 import platform
 from .transforms import Lookup, JiebaTokenizer, UnicodeCharTokenizer, Ngram, WordpieceTokenizer, TruncateSequencePair, \
-    ToNumber
-from .utils import to_str, to_bytes, JiebaMode, Vocab, NormalizeForm
+    ToNumber, SlidingWindow, SentencePieceTokenizer
+from .utils import to_str, to_bytes, JiebaMode, Vocab, NormalizeForm, SentencePieceVocab, SentencePieceModel, \
+    SPieceTokenizerOutType, SPieceTokenizerLoadType
+
 
 __all__ = [
     "Lookup", "JiebaTokenizer", "UnicodeCharTokenizer", "Ngram",
     "to_str", "to_bytes", "Vocab", "WordpieceTokenizer", "TruncateSequencePair", "ToNumber",
-    "PythonTokenizer"
+    "PythonTokenizer", "SlidingWindow", "SentencePieceVocab", "SentencePieceTokenizer", "SPieceTokenizerOutType",
+    "SentencePieceModel", "SPieceTokenizerLoadType"
 ]
 
 if platform.system().lower() != 'windows':

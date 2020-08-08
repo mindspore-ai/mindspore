@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_KERNELS_IMAGE_RANDOM_VERTICAL_FLIP_WITH_BBOX_OP_H_
-#define DATASET_KERNELS_IMAGE_RANDOM_VERTICAL_FLIP_WITH_BBOX_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_VERTICAL_FLIP_WITH_BBOX_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_VERTICAL_FLIP_WITH_BBOX_OP_H_
 
 #include <memory>
 #include <random>
@@ -29,7 +29,6 @@ namespace mindspore {
 namespace dataset {
 class RandomVerticalFlipWithBBoxOp : public TensorOp {
  public:
-  // Default values, also used by python_bindings.cc
   static const float kDefProbability;
   // Constructor for RandomVerticalFlipWithBBoxOp
   // @param probability: Probablity of Image flipping, 0.5 by default
@@ -38,8 +37,6 @@ class RandomVerticalFlipWithBBoxOp : public TensorOp {
   }
 
   ~RandomVerticalFlipWithBBoxOp() override = default;
-
-  void Print(std::ostream &out) const override { out << "RandomVerticalFlipWithBBoxOp"; }
 
   Status Compute(const TensorRow &input, TensorRow *output) override;
 
@@ -52,4 +49,4 @@ class RandomVerticalFlipWithBBoxOp : public TensorOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_KERNELS_IMAGE_RANDOM_VERTICAL_FLIP_WITH_BBOX_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_VERTICAL_FLIP_WITH_BBOX_OP_H_

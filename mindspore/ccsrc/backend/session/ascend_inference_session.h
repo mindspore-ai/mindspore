@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_SESSION_ASCEND_INFERENCE_SESSION_H
-#define MINDSPORE_CCSRC_SESSION_ASCEND_INFERENCE_SESSION_H
+#ifndef MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_INFERENCE_SESSION_H
+#define MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_INFERENCE_SESSION_H
 #include <unordered_map>
 #include <string>
 #include <memory>
@@ -39,8 +39,14 @@ class AscendInferenceSession : public AscendSession {
   void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                      const std::vector<tensor::TensorPtr> &inputs_const) const;
   GraphId CompileGraph(NotNull<FuncGraphPtr> func_graph) override;
+  bool CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs,
+                        std::string *error_msg) const override;
+  bool CompareInput(const tensor::TensorPtr &input, const ParameterPtr &parameter) const;
+  template <typename T>
+  std::string PrintInputShape(std::vector<T> shape) const;
+  std::string InputsInfo(const std::vector<ParameterPtr> &paras, const std::vector<tensor::TensorPtr> &inputs) const;
 };
 MS_REG_SESSION(kDavinciInferenceDevice, AscendInferenceSession);
 }  // namespace session
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_SESSION_ASCEND_INFERENCE_SESSION_H
+#endif  // MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_INFERENCE_SESSION_H

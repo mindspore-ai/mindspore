@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <unordered_map>
 
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/helper.h"
@@ -25,29 +26,25 @@
 namespace mindspore {
 namespace opt {
 namespace {
-CNodePtr ConvertTupleInputToMakeTuple(const FuncGraphPtr &graph, const CNodePtr &cnode_ptr) {
-  MS_EXCEPTION_IF_NULL(cnode_ptr);
+AnfNodePtr ConvertTupleInputToMakeTuple(const FuncGraphPtr &graph, const AnfNodePtr &tuple_anf,
+                                        std::unordered_map<AnfNodePtr, AnfNodePtr> *transed_nodes) {
+  MS_EXCEPTION_IF_NULL(tuple_anf);
   MS_EXCEPTION_IF_NULL(graph);
-  std::vector<AnfNodePtr> convert_inputs = {cnode_ptr->input(0)};
-  for (size_t index = 0; index < AnfAlgo::GetInputTensorNum(cnode_ptr); ++index) {
-    auto input_node = AnfAlgo::GetInputNode(cnode_ptr, index);
-    if (AnfAlgo::IsTupleOutput(input_node)) {
-      std::vector<TypeId> types;
-      std::vector<std::vector<size_t>> shapes;
-      std::vector<AnfNodePtr> make_tuple_inputs_list = {NewValueNode(prim::kPrimMakeTuple)};
-      for (size_t tuple_out_index = 0; tuple_out_index < AnfAlgo::GetOutputTensorNum(input_node); ++tuple_out_index) {
-        make_tuple_inputs_list.emplace_back(CreatTupleGetItemNode(graph, input_node, tuple_out_index));
-        types.push_back(AnfAlgo::GetOutputInferDataType(input_node, tuple_out_index));
-        shapes.emplace_back(AnfAlgo::GetOutputInferShape(input_node, tuple_out_index));
-      }
-      auto make_tuple = graph->NewCNode(make_tuple_inputs_list);
-      AnfAlgo::SetOutputInferTypeAndShape(types, shapes, make_tuple.get());
-      convert_inputs.emplace_back(make_tuple);
-    } else {
-      convert_inputs.push_back(input_node);
-    }
+  MS_EXCEPTION_IF_NULL(transed_nodes);
+
+  if (!AnfAlgo::IsTupleOutput(tuple_anf)) {
+    return tuple_anf;
   }
-  return graph->NewCNode(convert_inputs);
+  auto transed_node_it = transed_nodes->find(tuple_anf);
+  if (transed_node_it != transed_nodes->end()) {
+    return transed_node_it->second;
+  }
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  auto make_tuple = kernel_graph->TransTupleToMakeTuple(tuple_anf);
+  (*transed_nodes)[tuple_anf] = make_tuple;
+  // replace graph inputs if input is a parameter
+  kernel_graph->ReplaceGraphInput(tuple_anf, make_tuple);
+  return make_tuple;
 }
 }  // namespace
 
@@ -64,15 +61,24 @@ const AnfNodePtr ConvertTupleOutputToMaketuple::Process(const FuncGraphPtr &func
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  std::unordered_map<AnfNodePtr, AnfNodePtr> transed_nodes;
   if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem) || IsPrimitiveCNode(cnode, prim::kPrimControlDepend)) {
     return nullptr;
   }
-  if (std::any_of(cnode->inputs().begin() + 1, cnode->inputs().end(), [](const AnfNodePtr &node) {
-        return node->Type() != nullptr && AnfAlgo::IsRealKernel(node) && AnfAlgo::IsTupleOutput(node);
-      })) {
-    return ConvertTupleInputToMakeTuple(func_graph, cnode);
+  bool cnode_input_changed = false;
+  for (size_t i = 0; i < cnode->inputs().size(); ++i) {
+    const auto &input = cnode->inputs()[i];
+    if (input->Type() != nullptr && AnfAlgo::IsRealKernel(input) && AnfAlgo::IsTupleOutput(input) &&
+        !AnfAlgo::CheckPrimitiveType(input, prim::kPrimCall)) {
+      cnode->set_input(i, ConvertTupleInputToMakeTuple(func_graph, input, &transed_nodes));
+      cnode_input_changed = true;
+    }
   }
-  return nullptr;
+  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  if (kernel_graph == nullptr || !cnode_input_changed) {
+    return nullptr;
+  }
+  return kernel_graph->NewCNode(cnode);
 }
 }  // namespace opt
 }  // namespace mindspore

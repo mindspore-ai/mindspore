@@ -23,7 +23,6 @@ from .._utils import get_concat_offset
 from ...common import dtype as mstype
 from .. import functional as F
 
-
 class AbsGrad(PrimitiveWithInfer):
     """Computes gradients for abs operation."""
 
@@ -116,6 +115,74 @@ class AsinhGrad(PrimitiveWithInfer):
         return x
 
 
+class ReciprocalGrad(PrimitiveWithInfer):
+    """Performs grad of Reciprocal operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        """init ReciprocalGrad"""
+
+    def infer_shape(self, x_shape, dout_shape):
+        validator.check("x shape", x_shape, "dout shape", dout_shape, Rel.EQ, self.name)
+        return x_shape
+
+    def infer_dtype(self, x_dtype, dout_dtype):
+        args = {"x": x_dtype, "dout": dout_dtype}
+        validator.check_tensor_type_same(args, [mstype.float16, mstype.float32], self.name)
+        return x_dtype
+
+
+class RsqrtGrad(PrimitiveWithInfer):
+    """Performs grad of Rsqrt operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        """init RsqrtGrad"""
+
+    def infer_shape(self, x_shape, dout_shape):
+        validator.check("x shape", x_shape, "dout shape", dout_shape, Rel.EQ, self.name)
+        return x_shape
+
+    def infer_dtype(self, x_dtype, dout_dtype):
+        args = {"x": x_dtype, "dout": dout_dtype}
+        validator.check_tensor_type_same(args, [mstype.float16, mstype.float32, mstype.int32, mstype.int8], self.name)
+        return x_dtype
+
+
+class SoftmaxGrad(PrimitiveWithInfer):
+    """Performs grad of Softmax operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        """init SoftmaxGrad"""
+
+    def infer_shape(self, x_shape, dout_shape):
+        validator.check("x shape", x_shape, "dout shape", dout_shape, Rel.EQ, self.name)
+        return x_shape
+
+    def infer_dtype(self, x_dtype, dout_dtype):
+        args = {"x": x_dtype, "dout": dout_dtype}
+        validator.check_tensor_type_same(args, [mstype.float16, mstype.float32], self.name)
+        return x_dtype
+
+
+class SqrtGrad(PrimitiveWithInfer):
+    """Performs grad of Sqrt operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        """init SqrtGrad"""
+
+    def infer_shape(self, x_shape, dout_shape):
+        validator.check("x shape", x_shape, "dout shape", dout_shape, Rel.EQ, self.name)
+        return x_shape
+
+    def infer_dtype(self, x_dtype, dout_dtype):
+        args = {"x": x_dtype, "dout": dout_dtype}
+        validator.check_tensor_type_same(args, [mstype.float16, mstype.float32], self.name)
+        return x_dtype
+
+
 class BatchNormGrad(PrimitiveWithInfer):
     """Performs grad of BatchNorm operation."""
 
@@ -143,6 +210,23 @@ class BiasAddGrad(Primitive):
 
     def __call__(self, d_output):
         raise NotImplementedError
+
+
+class KLDivLossGrad(PrimitiveWithInfer):
+    """Computes gradients for `KLDivLoss` operation."""
+
+    @prim_attr_register
+    def __init__(self, reduction='mean'):
+        self.reduction = validator.check_string('reduction', reduction, ['none', 'mean', 'sum'], self.name)
+
+    def infer_shape(self, x_shape, y_shape, doutput_shape):
+        validator.check('x_shape', x_shape, 'y_shape', y_shape, Rel.EQ, self.name)
+        return x_shape, y_shape
+
+    def infer_dtype(self, x_type, y_type, doutput_type):
+        args = {'x_type': x_type, 'y_type': y_type, 'doutput_type': doutput_type}
+        validator.check_tensor_type_same(args, (mstype.float16, mstype.float32), self.name)
+        return x_type, y_type
 
 
 class BinaryCrossEntropyGrad(PrimitiveWithInfer):
@@ -406,6 +490,18 @@ class FusedBatchNormGrad(Primitive):
     def __call__(self, dy, x, scale, save_mean, save_inv_variance):
         raise NotImplementedError
 
+
+class UniqueGrad(Primitive):
+    """Gradients of Unique operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['dy', 'y'], outputs=['dx'])
+
+    def __call__(self, dy, x, scale, save_mean, save_inv_variance):
+        raise NotImplementedError
+
+
 class BNTrainingReduceGrad(PrimitiveWithInfer):
     """Gradients of FusedBatchNorm operation."""
 
@@ -420,6 +516,7 @@ class BNTrainingReduceGrad(PrimitiveWithInfer):
     def infer_dtype(self, grads, x, diff_scale, diff_offset, scale, batch_mean, batch_variance):
         return grads
 
+
 class BNTrainingUpdateGrad(PrimitiveWithInfer):
     """Gradients of FusedBatchNorm operation."""
 
@@ -433,6 +530,7 @@ class BNTrainingUpdateGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, grads, x, batch_mean, batch_variance):
         return (batch_mean, batch_variance)
+
 
 class GeluGrad(PrimitiveWithInfer):
     """Gradients of Gelu operation."""
@@ -492,13 +590,31 @@ class _PoolGrad(PrimitiveWithInfer):
 
 
 class AvgPoolGrad(_PoolGrad):
-    """Gradients of the avg pool operation."""
+    """Gradients of the avg pool operation for ge."""
 
     @prim_attr_register
     def __init__(self, ksize=1, strides=1, padding="VALID"):
         super(AvgPoolGrad, self).__init__(ksize, strides, padding)
 
     def __infer__(self, origin_input, dout):
+        out = {
+            'value': None,
+            'shape': tuple(origin_input['value']),
+            'dtype': dout['dtype'],
+        }
+
+        return out
+
+
+class AvgPoolGradVm(_PoolGrad):
+    """Gradients of the avg pool operation for vm."""
+
+    @prim_attr_register
+    def __init__(self, ksize=1, strides=1, padding="VALID"):
+        super(AvgPoolGradVm, self).__init__(ksize, strides, padding)
+        self.init_prim_io_names(inputs=['x_origin', 'grad', 'mean_matrix', 'kernel_matrix'], outputs=['output'])
+
+    def __infer__(self, origin_input, dout, mean_matrix, kernel_matrix):
         out = {
             'value': None,
             'shape': tuple(origin_input['value']),
@@ -1319,6 +1435,7 @@ class EmbeddingLookupCommGrad(PrimitiveWithInfer):
     This works ONLY when 'reduce_scatter_flag' is True in 'EmbeddingLookup'. Roughly speaking,
     this primitive is implemented by StridedSlice --> _HostAllGather --> Concat. This primitive runs on host.
     """
+
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['dy', 'split_num'], outputs=['output'])
@@ -1519,6 +1636,7 @@ class InvGrad(PrimitiveWithInfer):
 
 class LRNGrad(PrimitiveWithInfer):
     """Computes gradients for LRN operation."""
+
     @prim_attr_register
     def __init__(self, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5):
         self.init_prim_io_names(inputs=['grads', 'x', 'y'], outputs=['z'])

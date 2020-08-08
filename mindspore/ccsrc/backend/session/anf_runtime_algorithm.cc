@@ -27,7 +27,7 @@
 #include "backend/optimizer/common/helper.h"
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "common/trans.h"
 
 namespace mindspore {
@@ -221,6 +221,11 @@ std::string AnfRuntimeAlgorithm::GetCNodeName(const AnfNodePtr &node) {
     }
     auto func_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
     MS_EXCEPTION_IF_NULL(func_graph);
+    if (func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
+      std::string fg_name = "GraphKernel_";
+      fg_name += GetValue<std::string>(func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
+      return fg_name;
+    }
     return func_graph->ToString();
   }
   MS_LOG(EXCEPTION) << "Unknown anf node type " << node->DebugString();
@@ -405,7 +410,7 @@ KernelWithIndex AnfRuntimeAlgorithm::GetPrevNodeOutput(const AnfNodePtr &anf_nod
   }
   auto node = cnode->input(input_idx + 1);
   MS_EXCEPTION_IF_NULL(node);
-  return VisitKernel(node, 0);
+  return VisitKernelWithReturnType(node, 0);
 }
 
 std::string AnfRuntimeAlgorithm::GetPrevNodeOutputFormat(const AnfNodePtr &anf_node, size_t input_idx) {
@@ -707,6 +712,18 @@ DeviceAddress *AnfRuntimeAlgorithm::GetWorkspaceAddr(const AnfNodePtr &node, siz
   return addr;
 }
 
+// get workspace device mutable addr of anf_node
+DeviceAddressPtr AnfRuntimeAlgorithm::GetMutableWorkspaceAddr(const AnfNodePtr &node, size_t index) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto addr = kernel_info->GetMutableWorkspaceAddr(index);
+  if (addr == nullptr) {
+    MS_LOG(EXCEPTION) << "Index " << index << " of node " << node->DebugString() << "] workspace addr is not exist";
+  }
+  return addr;
+}
+
 // set infer shapes and types of anf node
 void AnfRuntimeAlgorithm::SetOutputInferTypeAndShape(const std::vector<TypeId> &types,
                                                      const std::vector<std::vector<size_t>> &shapes, AnfNode *node) {
@@ -728,7 +745,7 @@ void AnfRuntimeAlgorithm::SetOutputInferTypeAndShape(const std::vector<TypeId> &
     for (size_t i = 0; i < types.size(); ++i) {
       std::vector<int> shape_int;
       std::transform(shapes[i].begin(), shapes[i].end(), std::back_inserter(shape_int), SizeToInt);
-      abstract_list.push_back(std::make_shared<AbstractTensor>(TypeIdToType(types[i]), shape_int));
+      abstract_list.emplace_back(std::make_shared<AbstractTensor>(TypeIdToType(types[i]), shape_int));
     }
     auto abstract_tuple = std::make_shared<AbstractTuple>(abstract_list);
     node->set_abstract(abstract_tuple);

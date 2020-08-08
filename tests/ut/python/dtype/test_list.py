@@ -18,8 +18,10 @@ import numpy as np
 import pytest
 import mindspore.nn as nn
 import mindspore.context as context
+import mindspore as ms
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
 from tests.ut.python.ut_filter import non_graph_engine
 from tests.mindspore_test_framework.mindspore_test import mindspore_test
@@ -48,7 +50,7 @@ def test_list_equal():
     ret = net(x, y)
 
     print(ret.asnumpy())
-    assert ret == x
+    assert np.all(ret.asnumpy() == x.asnumpy())
     assert ret.dtype == mstype.int32
     assert ret.shape == (6, 8, 10)
 
@@ -70,7 +72,7 @@ def test_list_not_equal():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = [1, 2, 3]
     net = Net(z)
-    assert net(x, y) == y
+    assert np.all(net(x, y).asnumpy() == y.asnumpy())
 
 
 def test_list_expansion():
@@ -91,7 +93,7 @@ def test_list_expansion():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = [1, 2, 3]
     net = Net(z)
-    assert net(x, y) == x
+    assert np.all(net(x, y).asnumpy() == x.asnumpy())
 
 
 def test_list_append():
@@ -114,7 +116,7 @@ def test_list_append():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = [1, 2, 3]
     net = Net(z)
-    assert net(x, y) == y
+    assert np.all(net(x, y).asnumpy() == y.asnumpy())
 
 
 def test_class_member_list_append():
@@ -282,3 +284,26 @@ test_exec_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 def test_exec():
     context.set_context(mode=context.GRAPH_MODE)
     return test_exec_case
+
+
+def test_grad_make_list():
+    class MyWhileNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+
+        def construct(self, idx, x):
+            return x[idx, :, :]
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+
+        def construct(self, *inputs):
+            return C.grad_all(self.net)(*inputs)
+
+    while_net = MyWhileNet()
+    net = GradNet(while_net)
+    idx = Tensor(np.array(0), dtype=ms.int32)
+    x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
+    net(idx, x)

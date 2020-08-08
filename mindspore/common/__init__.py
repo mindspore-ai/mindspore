@@ -17,10 +17,10 @@ from . import dtype
 from .api import ms_function
 from .dtype import *
 from .parameter import Parameter, ParameterTuple
-from .tensor import MetaTensor, Tensor, IndexedSlices
+from .tensor import MetaTensor, Tensor, RowTensor, SparseTensor
 
 __all__ = [
-    "MetaTensor", "Tensor", "IndexedSlices",  # tensor
+    "MetaTensor", "Tensor", "RowTensor", "SparseTensor",  # tensor
     'ms_function',  # api
     'Parameter', 'ParameterTuple',  # parameter
     "dtype"

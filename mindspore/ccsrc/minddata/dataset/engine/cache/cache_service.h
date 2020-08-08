@@ -14,8 +14,8 @@
  * limitations under the License.
 */
 
-#ifndef DATASET_ENGINE_CACHE_SERVICE_H_
-#define DATASET_ENGINE_CACHE_SERVICE_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CACHE_SERVICE_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CACHE_SERVICE_H_
 
 #include <algorithm>
 #include <atomic>
@@ -25,10 +25,10 @@
 #include <utility>
 #include <vector>
 
-#include "./de_tensor_generated.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/cache/cache_request.h"
+#include "minddata/dataset/engine/cache/de_tensor_generated.h"
 #include "minddata/dataset/util/arena.h"
 #include "minddata/dataset/util/btree.h"
 #include "minddata/dataset/util/cache_pool.h"
@@ -84,6 +84,7 @@ class CacheService : public Service {
    public:
     using state_type = std::underlying_type<State>::type;
     ServiceStat() : min_(0), max_(0), state_(0) {}
+    ~ServiceStat() = default;
     CachePool::CacheStat stat_{};
     row_id_type min_;
     row_id_type max_;
@@ -140,4 +141,4 @@ class CacheService : public Service {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_ENGINE_CACHE_SERVICE_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CACHE_SERVICE_H_

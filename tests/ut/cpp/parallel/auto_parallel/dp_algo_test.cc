@@ -154,13 +154,13 @@ class TestDPAlgo : public UT::Common {
 void TestDPAlgo::SetUp() {
   cost_graph = std::make_shared<CostGraph>();
   cost_graph->SetDeviceMemoryAndCostParameter();
-  std::vector<int32_t> dev_list;
+  RankList dev_list;
 
   for (int32_t i = 0; i < 10; i++) {
     dev_list.push_back(i);
   }
 
-  std::vector<int32_t> stage_map;
+  RankList stage_map;
   stage_map.push_back(8);
   stage_map.push_back(2);
 
@@ -1327,8 +1327,8 @@ TEST_F(TestDPAlgo, test_GetStrategy_for_DoubleStarGraph) {
 
   for (auto &op : cost_graph->GetOperators()) {
     StrategyPtr s_strategy = op->selected_strategy();
-    std::vector<int32_t> strategy_0 = s_strategy->GetInputDim()[0];
-    std::vector<int32_t> strategy_1 = s_strategy->GetInputDim()[1];
+    Dimensions strategy_0 = s_strategy->GetInputDim()[0];
+    Dimensions strategy_1 = s_strategy->GetInputDim()[1];
 
     std::string string_strategy_0 = "[";
     for (size_t i = 0; i < strategy_0.size(); ++i) {

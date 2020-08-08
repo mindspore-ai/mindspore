@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_ENGINE_DATASETOPS_SOURCE_MINDRECORD_OP_H_
-#define DATASET_ENGINE_DATASETOPS_SOURCE_MINDRECORD_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_MINDRECORD_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_MINDRECORD_OP_H_
 #pragma once
 
 #include <cstdint>
@@ -94,11 +94,6 @@ class MindRecordOp : public ParallelOp {
       return *this;
     }
 
-    Builder &SetBlockReader() {
-      build_block_reader_ = true;
-      return *this;
-    }
-
     Builder &SetLoadDataset(bool load_dataset) {
       build_load_dataset_ = load_dataset;
       return *this;
@@ -132,7 +127,6 @@ class MindRecordOp : public ParallelOp {
     bool build_load_dataset_;
     std::vector<std::string> build_columns_to_load_;
     std::vector<std::shared_ptr<ShardOperator>> build_operators_;
-    bool build_block_reader_;
     int64_t build_num_padded_;
     py::handle build_sample_;
     std::map<std::string, std::string> build_sample_bytes_;
@@ -148,9 +142,8 @@ class MindRecordOp : public ParallelOp {
   // @param operators - ShardOperators for Shuffle, Category, Sample
   MindRecordOp(int32_t num_mind_record_workers, int32_t rows_per_buffer, std::vector<std::string> dataset_file,
                bool load_dataset, int32_t op_connector_queue_size, const std::vector<std::string> &columns_to_load,
-               const std::vector<std::shared_ptr<ShardOperator>> &operators, const bool &block_reader,
-               int64_t num_padded_, const mindrecord::json &sample_json,
-               const std::map<std::string, std::string> &sample_bytes_);
+               const std::vector<std::shared_ptr<ShardOperator>> &operators, int64_t num_padded_,
+               const mindrecord::json &sample_json, const std::map<std::string, std::string> &sample_bytes_);
 
   // Destructor
   ~MindRecordOp() override;
@@ -206,8 +199,6 @@ class MindRecordOp : public ParallelOp {
   // Getter method
   std::vector<std::string> columns_to_load() const { return columns_to_load_; }
 
-  bool block_reader() const { return block_reader_; }
-
   bool load_dataset() const { return load_dataset_; }
 
   Status Init();
@@ -232,8 +223,6 @@ class MindRecordOp : public ParallelOp {
   Status LoadTensorRow(TensorRow *tensor_row, const std::vector<uint8_t> &columns_blob,
                        const mindrecord::json &columns_json, const mindrecord::TaskType task_type);
 
-  Status FetchBlockBuffer(const int32_t &buffer_id);
-
   // Private function for computing the assignment of the column name map.
   // @return - Status
   Status ComputeColMap() override;
@@ -244,12 +233,10 @@ class MindRecordOp : public ParallelOp {
   std::vector<std::string> columns_to_load_;               // Columns to load from dataset
   std::vector<std::shared_ptr<ShardOperator>> operators_;  // ShardOperators to use
   int32_t num_mind_record_workers_;                        // number of workers to be spawned by ShardReader
-  bool block_reader_;                                      // block reader switch
   int32_t buffers_needed_;                                 // Counter for the buffers that were fetched
   int64_t buf_cnt_;                                        // Buffer counter
   int32_t num_rows_;                                       // One more than the last row id in the range for this cache
   std::atomic<int32_t> ended_worker_;
-  std::atomic<int32_t> buffer_water_mark_;
 
   int64_t num_padded_;
   mindrecord::json sample_json_;
@@ -263,14 +250,8 @@ class MindRecordOp : public ParallelOp {
   WaitPost shard_reader_wait_post_;
   QueueList<std::unique_ptr<IOBlock>> io_blk_queues_;
 
-  // For block reader
-  std::mutex mtx_block_reader_;
-  std::condition_variable cv_reader_;
-  std::vector<std::unique_ptr<std::vector<ShardTuple>>> block_buffer_;
-  std::unordered_set<int32_t> block_set_;
-
   std::mutex ended_worker_mutex_;
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_ENGINE_DATASETOPS_SOURCE_MINDRECORD_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_MINDRECORD_OP_H_

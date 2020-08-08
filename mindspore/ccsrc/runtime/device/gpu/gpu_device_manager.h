@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_DEVICE_GPU_GPU_DEVICE_MANAGER_H_
-#define MINDSPORE_CCSRC_DEVICE_GPU_GPU_DEVICE_MANAGER_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_DEVICE_MANAGER_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_DEVICE_MANAGER_H_
 
 #include <cudnn.h>
 #include <cublas_v2.h>
+#include <cusolverDn.h>
 #include <vector>
 #include <memory>
 #include "runtime/device/gpu/cuda_driver.h"
@@ -43,6 +44,7 @@ class GPUDeviceManager {
 
   const cudnnHandle_t &GetCudnnHandle() const;
   const cublasHandle_t &GetCublasHandle() const;
+  const cusolverDnHandle_t &GetCusolverDnHandle() const;
 
   bool CopyDeviceMemToHost(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size) const;
   bool CopyHostMemToDevice(const DeviceMemPtr &dst, const void *src, size_t size) const;
@@ -73,6 +75,8 @@ class GPUDeviceManager {
   // handle used for cuBLAS kernels.
   cublasHandle_t cublas_handle_{nullptr};
 
+  // handle used for cusolver dn kernels;
+  cusolverDnHandle_t cusolver_dn_handle_{nullptr};
   bool dev_id_init_;
   uint32_t cur_dev_id_;
 };
@@ -80,4 +84,4 @@ class GPUDeviceManager {
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_GPU_GPU_DEVICE_MANAGER_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_DEVICE_MANAGER_H_

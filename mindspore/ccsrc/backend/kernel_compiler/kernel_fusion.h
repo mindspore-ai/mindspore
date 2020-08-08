@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_KERNELFUSION_H_
-#define MINDSPORE_CCSRC_KERNEL_KERNELFUSION_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNELFUSION_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNELFUSION_H_
 #include <vector>
 #include <map>
 #include "backend/kernel_compiler/kernel.h"
@@ -25,6 +25,10 @@ namespace kernel {
  * @brief fuse op and return a callable mod
  */
 struct FusionScopeInfo {
+  FusionScopeInfo() {}
+  FusionScopeInfo(int32_t id, const std::vector<AnfNodePtr> &in, const std::vector<AnfNodePtr> &comp,
+                  const std::vector<AnfNodePtr> &out)
+      : scope_id(id), input_nodes(in), compute_nodes(comp), output_nodes(out) {}
   int32_t scope_id;
   std::vector<AnfNodePtr> input_nodes;
   std::vector<AnfNodePtr> compute_nodes;
@@ -35,4 +39,4 @@ std::map<int32_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_KERNELFUSION_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNELFUSION_H_

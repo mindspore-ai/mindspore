@@ -170,6 +170,8 @@ class ActivationCost : public OperatorCost {
 using ActivationCostPtr = std::shared_ptr<ActivationCost>;
 using TransposeCost = ActivationCost;
 using TransposeCostPtr = std::shared_ptr<TransposeCost>;
+using StridedSliceCost = ActivationCost;
+using StridedSliceCostPtr = std::shared_ptr<StridedSliceCost>;
 
 class SoftmaxCost : public OperatorCost {
  public:
@@ -195,6 +197,8 @@ class SoftmaxCost : public OperatorCost {
                                     int32_t) const override;
 };
 using SoftmaxCostPtr = std::shared_ptr<SoftmaxCost>;
+using TileCost = SoftmaxCost;
+using TileCostPtr = std::shared_ptr<TileCost>;
 
 class TmpIdentityCost : public OperatorCost {
  public:

@@ -1,5 +1,12 @@
 file(GLOB_RECURSE _PARALLEL_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
-list(REMOVE_ITEM _PARALLEL_SRC_FILES  "ps/util.cc" "ps/scheduler.cc" "ps/optimizer_info.cc" "ps/optimizer_info_builder.cc")
+
+if (NOT (ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU)))
+    list(REMOVE_ITEM _PARALLEL_SRC_FILES "ps/optimizer_info_builder.cc")
+    list(REMOVE_ITEM _PARALLEL_SRC_FILES "ps/optimizer_info.cc")
+    list(REMOVE_ITEM _PARALLEL_SRC_FILES "ps/scheduler.cc")
+    list(REMOVE_ITEM _PARALLEL_SRC_FILES "ps/util.cc")
+endif()
+
 if (ENABLE_DUMP_PROTO)
     list(REMOVE_ITEM _PARALLEL_SRC_FILES "parallel/strategy_checkpoint/parallel_strategy_checkpoint.cc")
 endif ()

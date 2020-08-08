@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_ENGINE_OPT_PASS_H_
-#define DATASET_ENGINE_OPT_PASS_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PASS_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PASS_H_
 
 #include <memory>
 #include <queue>
@@ -37,9 +37,11 @@ class SkipOp;
 
 class ShuffleOp;
 
+#ifndef ENABLE_ANDROID
 class MindRecordOp;
 
 class TFReaderOp;
+#endif
 
 #ifdef ENABLE_PYTHON
 class FilterOp;
@@ -77,6 +79,12 @@ class CacheMergeOp;
 
 class CacheLookupOp;
 
+class EpochCtrlOp;
+
+class BuildVocabOp;
+
+class BuildSentencePieceVocabOp;
+
 // The base class Pass is the basic unit of tree transformation.
 // The actual implementation of the passes will be derived from here.
 class Pass : public std::enable_shared_from_this<Pass> {
@@ -85,6 +93,8 @@ class Pass : public std::enable_shared_from_this<Pass> {
   // @param tree - Pointer to the execution tree to be transformed.
   // @param modified - Pointer to the modified flag,
   virtual Status Run(ExecutionTree *tree, bool *modified) = 0;
+
+  virtual ~Pass() = default;
 };
 
 // TreePass is a basic Pass class which performs transformation on ExecutionTree directly.
@@ -150,14 +160,20 @@ class NodePass : public Pass {
 
   virtual Status RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified);
 
+#ifndef ENABLE_ANDROID
   virtual Status RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified);
 
   virtual Status RunOnNode(std::shared_ptr<TFReaderOp> node, bool *modified);
+#endif
 
 #ifdef ENABLE_PYTHON
   virtual Status RunOnNode(std::shared_ptr<FilterOp> node, bool *modified);
 
+  virtual Status RunOnNode(std::shared_ptr<ManifestOp> node, bool *modified);
+
   virtual Status RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<VOCOp> node, bool *modified);
 #endif
 
   virtual Status RunOnNode(std::shared_ptr<RandomDataOp> node, bool *modified);
@@ -174,11 +190,7 @@ class NodePass : public Pass {
 
   virtual Status RunOnNode(std::shared_ptr<MnistOp> node, bool *modified);
 
-  virtual Status RunOnNode(std::shared_ptr<ManifestOp> node, bool *modified);
-
   virtual Status RunOnNode(std::shared_ptr<CifarOp> node, bool *modified);
-
-  virtual Status RunOnNode(std::shared_ptr<VOCOp> node, bool *modified);
 
   virtual Status RunOnNode(std::shared_ptr<CocoOp> node, bool *modified);
 
@@ -190,11 +202,19 @@ class NodePass : public Pass {
 
   virtual Status RunOnNode(std::shared_ptr<CacheLookupOp> node, bool *modified);
 
+  virtual Status RunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified);
+
   virtual Status PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified);
 
   virtual Status PreRunOnNode(std::shared_ptr<RepeatOp> node, bool *modified);
 
   virtual Status PreRunOnNode(std::shared_ptr<CacheMergeOp> node, bool *modified);
+
+  virtual Status PreRunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified);
+
+  virtual Status PreRunOnNode(std::shared_ptr<BuildVocabOp> node, bool *modified);
+
+  virtual Status PreRunOnNode(std::shared_ptr<BuildSentencePieceVocabOp> node, bool *modified);
 
  private:
   // Helper function to perform DFS visit
@@ -210,4 +230,4 @@ class NodePass : public Pass {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_ENGINE_OPT_PASS_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PASS_H_

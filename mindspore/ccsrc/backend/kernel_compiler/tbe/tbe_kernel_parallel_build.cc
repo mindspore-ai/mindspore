@@ -23,24 +23,18 @@
 #include <vector>
 #include <string>
 
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "backend/kernel_compiler/tbe/tbe_adapter.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_build.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_mod.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "./common.h"
-#include "backend/kernel_compiler/tbe/tbe_python_funcs.h"
 #include "backend/kernel_compiler/tbe/tbe_convert_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
 
 namespace mindspore {
 namespace kernel {
 using mindspore::kernel::tbe::TbeUtils;
-constexpr auto kParallelCompileModule = "mindspore._extends.parallel_compile.tbe_compiler.tbe_process";
-constexpr auto kCreateParallelCompiler = "create_tbe_parallel_compiler";
-constexpr auto kStartCompileOp = "start_compile_op";
-constexpr auto kWaitOne = "wait_one";
-constexpr auto kResetTaskInfo = "reset_task_info";
 
 bool TbeOpParallelPreBuild(const std::vector<AnfNodePtr> &anf_nodes) {
   auto build_manger = std::make_shared<ParallelBuildManager>();
@@ -61,14 +55,14 @@ bool TbeOpParallelPreBuild(const std::vector<AnfNodePtr> &anf_nodes) {
   }
   while (!build_manger->IsAllPreTaskFinish()) {
     int task_id = -1;
-    char *task_result = nullptr;
-    char *pre_build_result = nullptr;
+    std::string task_result;
+    std::string pre_build_result;
     auto ret = build_manger->WaitOne(&task_id, &task_result, &pre_build_result);
     if (!ret) {
       MS_EXCEPTION(ArgumentError) << "Pre Build Failed. wait one ret:" << ret << ", task id:" << task_id;
     }
 
-    if ((task_result != nullptr) && (strcmp(task_result, "Success") != 0)) {
+    if (task_result != "Success") {
       MS_EXCEPTION(ArgumentError) << "task pre compile Failed, task id:" << task_id << ", cause:" << task_result;
     }
 
@@ -116,14 +110,14 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
   }
   while (!build_manger->IsAllTaskFinish()) {
     int task_id = -1;
-    char *task_result = nullptr;
-    char *pre_build_result = nullptr;
+    std::string task_result;
+    std::string pre_build_result;
     auto ret = build_manger->WaitOne(&task_id, &task_result, &pre_build_result);
     if (!ret) {
       MS_EXCEPTION(ArgumentError) << "Build Failed. wait one ret:" << ret << ", task id:" << task_id;
     }
 
-    if ((task_result != nullptr) && (strcmp(task_result, "Success") != 0)) {
+    if (task_result != "Success") {
       MS_EXCEPTION(ArgumentError) << "task compile Failed, task id:" << task_id << ", cause:" << task_result;
     }
     (void)build_manger->TaskFinishProcess(task_id);
@@ -131,42 +125,9 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
   return build_manger->GenSameOpKernelMod();
 }
 
-ParallelBuildManager::ParallelBuildManager() { tbe_parallel_compiler_ = TbePythonFuncs::TbeParallelCompiler(); }
+ParallelBuildManager::ParallelBuildManager() {}
 
 ParallelBuildManager::~ParallelBuildManager() { ResetTaskInfo(); }
-
-int32_t ParallelBuildManager::StartCompileOp(const nlohmann::json &kernel_json) const {
-  PyObject *pRes = nullptr;
-  PyObject *pArgs = PyTuple_New(1);
-  std::string json_str = kernel_json.dump();
-  PyObject *arg1 = Py_BuildValue("s", json_str.c_str());
-  (void)PyTuple_SetItem(pArgs, 0, arg1);
-  pRes = PyObject_CallMethod(tbe_parallel_compiler_, kStartCompileOp, "O", pArgs);
-  if (pRes == nullptr) {
-    PyErr_Print();
-    MS_EXCEPTION(ArgumentError) << "Failed to call function start_compile_op";
-  }
-  int task_id;
-  (void)PyArg_Parse(pRes, "i", &task_id);
-  MS_LOG(INFO) << "start compile , task id:" << task_id;
-  return task_id;
-}
-
-bool ParallelBuildManager::WaitOne(int *task_id, char **task_result, char **pre_build_result) const {
-  MS_LOG(INFO) << "wait task start.";
-  MS_EXCEPTION_IF_NULL(task_id);
-  MS_EXCEPTION_IF_NULL(task_result);
-  PyObject *pRes = nullptr;
-  PyObject *pArg = Py_BuildValue("()");
-  pRes = PyObject_CallMethod(tbe_parallel_compiler_, kWaitOne, "O", pArg);
-  if (pRes == nullptr) {
-    PyErr_Print();
-    MS_EXCEPTION(ArgumentError) << "Failed to call function wait_one";
-    return false;
-  }
-  (void)PyArg_ParseTuple(pRes, "iss", task_id, task_result, pre_build_result);
-  return true;
-}
 
 void ParallelBuildManager::SavePreTaskInfo(int32_t task_id, const mindspore::AnfNodePtr &anf_node) {
   MS_LOG(INFO) << "SavePreTaskInfo, task id: " << task_id;
@@ -310,6 +271,15 @@ KernelModPtr ParallelBuildManager::GenKernelMod(const string &json_name, const s
   return kernel_mod_ptr;
 }
 
+int ParallelBuildManager::StartCompileOp(const nlohmann::json &kernel_json) {
+  return AscendKernelBuildClient::Instance().TbeStart(kernel_json.dump());
+}
+
+bool ParallelBuildManager::WaitOne(int *task_id, std::string *task_result, std::string *pre_build_result) {
+  MS_EXCEPTION_IF_NULL(task_id);
+  return AscendKernelBuildClient::Instance().TbeWait(task_id, task_result, pre_build_result);
+}
+
 void ParallelBuildManager::ResetTaskInfo() {
   if (task_map_.empty()) {
     MS_LOG(INFO) << "All tasks are compiled success.";
@@ -317,10 +287,7 @@ void ParallelBuildManager::ResetTaskInfo() {
   }
   task_map_.clear();
   same_op_list_.clear();
-  if (tbe_parallel_compiler_ != nullptr) {
-    PyObject *pArg = Py_BuildValue("()");
-    (void)PyObject_CallMethod(tbe_parallel_compiler_, kResetTaskInfo, "O", pArg);
-  }
+  AscendKernelBuildClient::Instance().TbeReset();
 }
 }  // namespace kernel
 }  // namespace mindspore

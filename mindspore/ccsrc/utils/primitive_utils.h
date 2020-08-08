@@ -19,6 +19,8 @@
 
 #include <string>
 #include "pybind11/pybind11.h"
+#include "base/base_ref.h"
+#include "utils/convert_utils.h"
 
 namespace py = pybind11;
 
@@ -28,6 +30,10 @@ py::function GetBpropFunctionByObj(py::object obj);
 py::function GetBpropFunction(std::string name);
 
 py::function GetComputeFunction(std::string name);
+
+BaseRef RunComputeFunction(const PrimitivePtr &prim, const VectorRef &args);
+
+py::tuple ConvertDatatoPyTuple(const VectorRef &args);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_UTILS_PRIMITIVE_UTILS_H_

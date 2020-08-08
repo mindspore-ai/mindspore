@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_KERNELS_DATA_FILL_OP_H_
-#define DATASET_KERNELS_DATA_FILL_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_FILL_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_FILL_OP_H_
 
 #include <string>
 #include <vector>
@@ -31,7 +31,6 @@ class FillOp : public TensorOp {
   explicit FillOp(std::shared_ptr<Tensor> value) : fill_value_(value) {}
 
   ~FillOp() override = default;
-  void Print(std::ostream &out) const override { out << "FillOp"; }
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 

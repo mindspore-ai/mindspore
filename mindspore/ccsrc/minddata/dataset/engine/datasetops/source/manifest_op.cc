@@ -20,7 +20,7 @@
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
@@ -112,7 +112,7 @@ Status ManifestOp::AddIoBlock(std::unique_ptr<DataBuffer> *sampler_buffer) {
       RETURN_IF_NOT_OK(io_block_queues_[(buf_cnt_++) % num_workers_]->Add(
         std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone))));
     }
-    if (!BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat)) {
+    if (IsLastIteration()) {
       RETURN_IF_NOT_OK(
         io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
       RETURN_IF_NOT_OK(
@@ -129,6 +129,7 @@ Status ManifestOp::AddIoBlock(std::unique_ptr<DataBuffer> *sampler_buffer) {
       wp_.Clear();
       RETURN_IF_NOT_OK(sampler_->GetNextSample(sampler_buffer));
     }
+    UpdateRepeatAndEpochCounter();
   }
 }
 
@@ -185,17 +186,14 @@ Status ManifestOp::LoadTensorRow(row_id_type row_id, const std::pair<std::string
   std::vector<int32_t> label_index(data.second.size());
   (void)std::transform(data.second.begin(), data.second.end(), label_index.begin(),
                        [this](const std::string &label_name) { return label_index_[label_name]; });
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(label_index, &label));
   if (label_index.size() == 1) {
-    RETURN_IF_NOT_OK(Tensor::CreateTensor(&label, data_schema_->column(1).tensorImpl(), TensorShape({}),
-                                          data_schema_->column(1).type(),
-                                          reinterpret_cast<unsigned char *>(&label_index[0])));
+    label->Reshape(TensorShape({}));
   } else {
-    RETURN_IF_NOT_OK(Tensor::CreateTensor(
-      &label, data_schema_->column(1).tensorImpl(), TensorShape(std::vector<dsize_t>(1, label_index.size())),
-      data_schema_->column(1).type(), reinterpret_cast<unsigned char *>(&label_index[0])));
+    label->Reshape(TensorShape(std::vector<dsize_t>(1, label_index.size())));
   }
 
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&image, data.first));
+  RETURN_IF_NOT_OK(Tensor::CreateFromFile(data.first, &image));
   if (decode_ == true) {
     Status rc = Decode(image, &image);
     if (rc.IsError()) {
@@ -220,8 +218,6 @@ Status ManifestOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<
 }
 
 void ManifestOp::Print(std::ostream &out, bool show_all) const {
-  // Always show the id and name as first line regardless if this summary or detailed print
-  out << "(" << std::setw(2) << operator_id_ << ") <ManifestOp>:";
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
     ParallelOp::Print(out, show_all);

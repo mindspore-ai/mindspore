@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_UTIL_RANDOM_H_
-#define DATASET_UTIL_RANDOM_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_RANDOM_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_RANDOM_H_
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <stdlib.h>
@@ -71,4 +71,4 @@ inline uint32_t GetSeed() {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_UTIL_RANDOM_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_RANDOM_H_

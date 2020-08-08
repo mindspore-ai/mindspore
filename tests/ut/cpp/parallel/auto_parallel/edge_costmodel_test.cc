@@ -43,13 +43,13 @@ class TestEdgeCostModel : public UT::Common {
 };
 
 void TestEdgeCostModel::SetUp() {
-  std::vector<int32_t> dev_list;
+  RankList dev_list;
 
   for (int32_t i = 0; i < 10; i++) {
     dev_list.push_back(i);
   }
 
-  std::vector<int32_t> stage_map;
+  RankList stage_map;
   stage_map.push_back(8);
   stage_map.push_back(2);
 

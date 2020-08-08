@@ -113,6 +113,8 @@ def check_parameter_available(func):
         Wrapper. If not available, raise Error.
     """
     def wrapper(*args, **kargs):
+        if MS_ROLE in ("MS_PSERVER", "MS_SCHED"):
+            return func(*args, **kargs)
         group = None
         if "group" in kargs.keys():
             group = kargs.get("group")
@@ -161,10 +163,7 @@ def _get_rank_helper(group, backend):
         else:
             rank_id = hccl.get_rank_id(group)
     elif backend == Backend.NCCL:
-        if group == NCCL_WORLD_COMM_GROUP:
-            rank_id = mpi.get_rank_id()
-        else:
-            raise RuntimeError("Nccl doesn't support get_rank_id by user group now.")
+        rank_id = mpi.get_rank_id(group)
     else:
         raise ValueError("Invalid backend: '{}'".format(backend))
     return rank_id
@@ -223,10 +222,7 @@ def _get_size_helper(group, backend):
         else:
             size = hccl.get_rank_size(group)
     elif backend == Backend.NCCL:
-        if group == NCCL_WORLD_COMM_GROUP:
-            size = mpi.get_rank_size()
-        else:
-            raise RuntimeError("Nccl doesn't support get_rank_size by user group now.")
+        size = mpi.get_rank_size(group)
     else:
         raise ValueError("Invalid backend: '{}'".format(backend))
     return size

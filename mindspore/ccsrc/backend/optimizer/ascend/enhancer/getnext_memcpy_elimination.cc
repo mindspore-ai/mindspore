@@ -56,12 +56,19 @@ const AnfNodePtr GetnextMemcpyElimination::Process(const FuncGraphPtr &graph, co
     return nullptr;
   }
 
-  // 3. next_node is not nop node and it has only one input which is memcpy's output
+  // 3. next_node is not nop node, not graph output and it has only one input which is memcpy's output
   for (auto &item : next_nodes) {
     auto next_node = item.first->cast<CNodePtr>();
     if (opt::IsNopNode(next_node)) {
       return nullptr;
     }
+
+    auto graph_outputs = AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
+    auto iter = std::find(graph_outputs.begin(), graph_outputs.end(), next_node);
+    if (iter != graph_outputs.end()) {
+      return nullptr;
+    }
+
     if (next_node->inputs().size() != 2) {
       MS_LOG(DEBUG) << "next node has more than one input";
       return nullptr;

@@ -34,5 +34,9 @@ template <typename T>
 void Rsqrt(T *input, T *output, size_t count, cudaStream_t cuda_stream);
 template <typename T>
 void Zeroslike(T *output, size_t count, cudaStream_t cuda_stream);
+template <typename T>
+void Abs(T *input, T *output, size_t count, cudaStream_t cuda_stream);
+template <typename T>
+void Floor(T *input, T *output, size_t count, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_UNARYOPIMPL_H_

@@ -20,7 +20,7 @@
 #include <functional>
 #include "frontend/operator/ops.h"
 #include "utils/utils.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "utils/log_adapter.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_graph.h"

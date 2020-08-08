@@ -16,7 +16,7 @@
 #include <string>
 #include "runtime/device/ascend/ascend_memory_manager.h"
 #include "runtime/device/ascend/ascend_memory_pool.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "runtime/mem.h"
 namespace mindspore {
 namespace device {
@@ -24,17 +24,18 @@ namespace ascend {
 constexpr uint64_t kAscendDeviceMemGB = 30;
 constexpr uint64_t kMemSizeGB = 30;
 constexpr uint64_t kAscendDeviceMemSize = (kAscendDeviceMemGB << kMemSizeGB);
+constexpr uint64_t kReservedMemorySize = 10 * 1024 * 1024;
 
 void AscendMemoryManager::MallocDeviceMemory() {
   auto context_mem = GetDeviceMemSizeFromContext();
   device_mem_size_ = context_mem == 0 ? kAscendDeviceMemSize : context_mem;
-  dynamic_mem_offset_ = device_mem_size_;
-  auto ret = rtMalloc(reinterpret_cast<void **>(&device_mem_base_), dynamic_mem_offset_, RT_MEMORY_HBM);
+  auto ret = rtMalloc(reinterpret_cast<void **>(&device_mem_base_), device_mem_size_, RT_MEMORY_HBM);
 
   if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "rtMalloc mem size[" << dynamic_mem_offset_ << "] fail, ret[" << ret << "]";
+    MS_EXCEPTION(DeviceProcessError) << "rtMalloc mem size[" << device_mem_size_ << "] fail, ret[" << ret << "]";
   }
 
+  dynamic_mem_offset_ = device_mem_size_ - kReservedMemorySize;
   AscendMemoryPool::GetInstance().set_device_mem_pool_base(device_mem_base_);
   AscendMemoryPool::GetInstance().set_graph_dynamic_mem_offset(dynamic_mem_offset_);
 }
@@ -79,7 +80,7 @@ void AscendMemoryManager::FreeDeviceMemory() {
 
 void AscendMemoryManager::ResetDynamicMemory() {
   total_dynamic_size_ = 0;
-  dynamic_mem_offset_ = device_mem_size_;
+  dynamic_mem_offset_ = device_mem_size_ - kReservedMemorySize;
   AscendMemoryPool::GetInstance().set_graph_dynamic_mem_offset(dynamic_mem_offset_);
 }
 
@@ -95,6 +96,12 @@ uint8_t *AscendMemoryManager::MallocStaticMem(size_t size, bool communication_me
   } else {
     align_size = GetCommonAlignSize(size);
   }
+
+  auto device_mem_pool_offset = AscendMemoryPool::GetInstance().device_mem_pool_offset();
+  MS_LOG(INFO) << "Malloc Memory: Static, total[" << device_mem_size_ << "] (dynamic[" << total_dynamic_size_
+               << "] memory pool[" << device_mem_pool_offset << "])"
+               << " malloc [" << align_size << "] communication_mem: " << communication_mem;
+
   if (communication_mem) {
     // create protect area [kMemAlignSize -- data -- kMemAlignSize]
     uint8_t *alloc_address = reinterpret_cast<uint8_t *>(AscendMemoryPool::GetInstance().AllocTensorMem(align_size));
@@ -111,12 +118,17 @@ uint8_t *AscendMemoryManager::MallocDynamicMem(size_t size, bool communication_m
   } else {
     align_size = GetCommonAlignSize(size);
   }
+
+  auto device_mem_pool_offset = AscendMemoryPool::GetInstance().device_mem_pool_offset();
+  MS_LOG(INFO) << "Malloc Memory: Dynamic, total[" << device_mem_size_ << "] (dynamic[" << total_dynamic_size_
+               << "] memory pool[" << device_mem_pool_offset << "])"
+               << " malloc [" << align_size << "] communication_mem: " << communication_mem;
+
   if (dynamic_mem_offset_ < align_size) {
     MS_LOG(EXCEPTION) << "Out of memory!!! total[" << device_mem_size_ << "] (dynamic[" << total_dynamic_size_
                       << "]) malloc [" << align_size << "] failed!";
   }
   auto new_offset = dynamic_mem_offset_ - align_size;
-  auto device_mem_pool_offset = AscendMemoryPool::GetInstance().device_mem_pool_offset();
   if (new_offset <= device_mem_pool_offset) {
     MS_LOG(EXCEPTION) << "Out of memory!!! total[" << device_mem_size_ << "] (dynamic[" << total_dynamic_size_
                       << "] memory pool[" << device_mem_pool_offset << "])"
@@ -127,9 +139,9 @@ uint8_t *AscendMemoryManager::MallocDynamicMem(size_t size, bool communication_m
   AscendMemoryPool::GetInstance().set_graph_dynamic_mem_offset(dynamic_mem_offset_);
   if (communication_mem) {
     // create protect area [kMemAlignSize -- data -- kMemAlignSize]
-    return device_mem_base_ + new_offset + kMemAlignSize;
+    return device_mem_base_ + dynamic_mem_offset_ + kMemAlignSize;
   } else {
-    return device_mem_base_ + new_offset;
+    return device_mem_base_ + dynamic_mem_offset_;
   }
 }
 }  // namespace ascend

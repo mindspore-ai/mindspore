@@ -288,7 +288,7 @@ class Range(PrimitiveWithInfer):
         return x_dtype
 
 
-class AscendQuant(PrimitiveWithInfer):
+class Quant(PrimitiveWithInfer):
     r"""
     Returns the quantized value of input_x.
 
@@ -320,7 +320,7 @@ class AscendQuant(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor([100.0, 150.0], mstype.float32)
-        >>> quant = P.AscendQuant(80.0, 0.0, False, "Round")
+        >>> quant = P.Quant(80.0, 0.0, False, "Round")
         >>> y = quant(input_x)
     """
 
@@ -341,7 +341,7 @@ class AscendQuant(PrimitiveWithInfer):
         return mstype.int8
 
 
-class AscendDequant(PrimitiveWithInfer):
+class Dequant(PrimitiveWithInfer):
     r"""
     Returns the dequantized value of input_x.
     This operation will do ReLU to the dequantized value if `relu_flag` is True.
@@ -373,13 +373,14 @@ class AscendDequant(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor([100.0, 150.0], mstype.float32)
-        >>> dequant = P.AscendDequant(False, False)
+        >>> dequant = P.Dequant(False, False)
         >>> y = dequant(input_x)
     """
     @prim_attr_register
     def __init__(self, sqrt_mode=False, relu_flag=False):
         self.sqrt_mode = validator.check_value_type("sqrt_mode", sqrt_mode, [bool], self.name)
         self.relu_flag = validator.check_value_type("relu_flag", relu_flag, [bool], self.name)
+        self.add_prim_attr("dtype", mstype.float16)
 
     def infer_shape(self, x_shape, deq_scale_shape):
         return x_shape

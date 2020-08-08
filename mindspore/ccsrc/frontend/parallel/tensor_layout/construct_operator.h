@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_TENSOR_LAYOUT_CONSTRUCT_OPERATOR_H_
-#define MINDSPORE_CCSRC_PARALLEL_TENSOR_LAYOUT_CONSTRUCT_OPERATOR_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_CONSTRUCT_OPERATOR_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_CONSTRUCT_OPERATOR_H_
 
 #include <string>
 #include <utility>
@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace parallel {
-using Args = std::vector<std::int32_t>;
+using Args = std::vector<std::int64_t>;
 
 class ConstructOperator {
  public:
@@ -35,11 +35,12 @@ class ConstructOperator {
   ConstructOperator() : dev_size_(0) {}
   ~ConstructOperator() = default;
   Status Init(const RankList &dev_list, const Shape &dev_matrix_shape);
+  OperatorVector SkipRedisReshapeOP(Shape shape);
   Status ReshapeOP(Shape shape);
   Status StridedSliceOP(Args args);
-  Status AllGatherOP(int32_t dev_dim);
-  Status SplitOP(int32_t split_count);
-  Status ConcatOP(int32_t concat_dim);
+  Status AllGatherOP(int64_t dev_dim);
+  Status SplitOP(int64_t split_count);
+  Status ConcatOP(int64_t concat_dim);
   Status AlltoAllOP(Args args);
   Operator GetOperator() const { return op_; }
   void UpdateTensorShape(const Shape &tensor_shape) { tensor_shape_ = tensor_shape; }
@@ -55,4 +56,4 @@ class ConstructOperator {
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_TENSOR_LAYOUT_CONSTRUCT_OPERATOR_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_CONSTRUCT_OPERATOR_H_

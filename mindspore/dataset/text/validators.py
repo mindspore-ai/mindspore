@@ -23,7 +23,7 @@ import mindspore._c_dataengine as cde
 from mindspore._c_expression import typing
 
 from ..core.validator_helpers import parse_user_args, type_check, type_check_list, check_uint32, \
-    INT32_MAX, check_value, check_positive
+    INT32_MAX, check_value, check_positive, check_pos_int32
 
 
 def check_unique_list_of_words(words, arg_name):
@@ -67,7 +67,7 @@ def check_from_file(method):
             check_unique_list_of_words(special_tokens, "special_tokens")
         type_check_list([file_path, delimiter], (str,), ["file_path", "delimiter"])
         if vocab_size is not None:
-            check_value(vocab_size, (-1, INT32_MAX), "vocab_size")
+            check_positive(vocab_size, "vocab_size")
         type_check(special_first, (bool,), special_first)
 
         return method(self, *args, **kwargs)
@@ -297,8 +297,7 @@ def check_from_dataset(method):
         if columns is not None:
             if not isinstance(columns, list):
                 columns = [columns]
-                col_names = ["col_{0}".format(i) for i in range(len(columns))]
-                type_check_list(columns, (str,), col_names)
+                type_check_list(columns, (str,), "col")
 
         if freq_range is not None:
             type_check(freq_range, (tuple,), "freq_range")
@@ -328,6 +327,17 @@ def check_from_dataset(method):
 
     return new_method
 
+def check_slidingwindow(method):
+    """A wrapper that wrap a parameter checker to the original function(sliding window operation)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [width, axis], _ = parse_user_args(method, *args, **kwargs)
+        check_pos_int32(width, "width")
+        type_check(axis, (int,), "axis")
+        return method(self, *args, **kwargs)
+
+    return new_method
 
 def check_ngram(method):
     """A wrapper that wraps a parameter checker to the original function."""
@@ -409,3 +419,81 @@ def check_python_tokenizer(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def check_from_dataset_sentencepiece(method):
+    """A wrapper that wraps a parameter checker to the original function (from_dataset)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [_, col_names, vocab_size, character_coverage, model_type, params], _ = parse_user_args(method, *args, **kwargs)
+
+        if col_names is not None:
+            type_check(col_names, (list,), "col_names")
+
+        if vocab_size is not None:
+            check_uint32(vocab_size, "vocab_size")
+
+        if character_coverage is not None:
+            type_check(character_coverage, (float,), "character_coverage")
+
+        if model_type is not None:
+            from .utils import SentencePieceModel
+            type_check(model_type, (str, SentencePieceModel), "model_type")
+
+        if params is not None:
+            type_check(params, (dict,), "params")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_from_file_sentencepiece(method):
+    """A wrapper that wraps a parameter checker to the original function (from_file)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [file_path, vocab_size, character_coverage, model_type, params], _ = parse_user_args(method, *args, **kwargs)
+
+        if file_path is not None:
+            type_check(file_path, (list,), "file_path")
+
+        if vocab_size is not None:
+            check_uint32(vocab_size, "vocab_size")
+
+        if character_coverage is not None:
+            type_check(character_coverage, (float,), "character_coverage")
+
+        if model_type is not None:
+            from .utils import SentencePieceModel
+            type_check(model_type, (str, SentencePieceModel), "model_type")
+
+        if params is not None:
+            type_check(params, (dict,), "params")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_save_model(method):
+    """A wrapper that wraps a parameter checker to the original function (save_model)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [vocab, path, filename], _ = parse_user_args(method, *args, **kwargs)
+
+        if vocab is not None:
+            type_check(vocab, (cde.SentencePieceVocab,), "vocab")
+
+        if path is not None:
+            type_check(path, (str,), "path")
+
+        if filename is not None:
+            type_check(filename, (str,), "filename")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+    

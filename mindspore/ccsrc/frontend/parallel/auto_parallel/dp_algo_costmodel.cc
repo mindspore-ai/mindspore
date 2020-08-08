@@ -42,66 +42,76 @@ Status GetStrategy(const CostGraphPtr &graph) {
       auto elimi = std::make_shared<OpElimination>(n_edge, l_edge, node, r_edge);
       eliminations.emplace_back(std::move(elimi));
     }
-    auto edges = graph->CheckEdgeElimination();
-    if ((!flag) && (!edges.empty())) {
-      // Applying the Edge Elimination
-      flag = true;
-      auto n_edge = graph->EliminationEdges(edges);
-      auto elimi = std::make_shared<EdgeElimination>(n_edge, edges);
-      eliminations.emplace_back(std::move(elimi));
+    if (!flag) {
+      auto edges = graph->CheckEdgeElimination();
+      if (!edges.empty()) {
+        // Applying the Edge Elimination
+        flag = true;
+        auto n_edge = graph->EliminationEdges(edges);
+        auto elimi = std::make_shared<EdgeElimination>(n_edge, edges);
+        eliminations.emplace_back(std::move(elimi));
+      }
     }
-    auto merge_node = graph->CheckMergeElimination();
-    if ((!flag) && (merge_node != nullptr)) {
-      // Applying the Merge Elimination
-      flag = true;
-      auto succ_edge = merge_node->GetAliveSuccEdges()[0];
-      auto target_node = graph->EliminationMerge(merge_node);
-      auto elimi = std::make_shared<MergeElimination>(merge_node, succ_edge, target_node);
-      eliminations.emplace_back(std::move(elimi));
+    if (!flag) {
+      auto merge_node = graph->CheckMergeElimination();
+      if (merge_node != nullptr) {
+        // Applying the Merge Elimination
+        flag = true;
+        auto succ_edge = merge_node->GetAliveSuccEdges()[0];
+        auto target_node = graph->EliminationMerge(merge_node);
+        auto elimi = std::make_shared<MergeElimination>(merge_node, succ_edge, target_node);
+        eliminations.emplace_back(std::move(elimi));
+      }
     }
-    auto contracted_node = graph->CheckContractElimination();
-    if ((!flag) && (contracted_node != nullptr)) {
-      // Applying the Contract Elimination
-      flag = true;
-      auto prev_edge = contracted_node->GetAlivePrevEdges()[0];
-      auto target_node = graph->EliminationContract(contracted_node);
-      auto elimi = std::make_shared<ContractElimination>(target_node, prev_edge, contracted_node);
-      eliminations.emplace_back(std::move(elimi));
+    if (!flag) {
+      auto contracted_node = graph->CheckContractElimination();
+      if ((contracted_node != nullptr)) {
+        // Applying the Contract Elimination
+        flag = true;
+        auto prev_edge = contracted_node->GetAlivePrevEdges()[0];
+        auto target_node = graph->EliminationContract(contracted_node);
+        auto elimi = std::make_shared<ContractElimination>(target_node, prev_edge, contracted_node);
+        eliminations.emplace_back(std::move(elimi));
+      }
     }
-    auto triangle_pair = graph->CheckTriangleElimination();
-    if ((!flag) && (triangle_pair.first != nullptr)) {
-      // Applying the Triangle Elimination
-      flag = true;
-      auto eliminated_node = triangle_pair.first;
-      auto l_r_edge = triangle_pair.second;
+    if (!flag) {
+      auto triangle_pair = graph->CheckTriangleElimination();
+      if (triangle_pair.first != nullptr) {
+        // Applying the Triangle Elimination
+        flag = true;
+        auto eliminated_node = triangle_pair.first;
+        auto l_r_edge = triangle_pair.second;
 
-      auto left_node = l_r_edge->prev_operator();
-      auto left_edge = eliminated_node->GetAliveSuccEdges()[0];
-      auto right_edge = eliminated_node->GetAliveSuccEdges()[1];
-      MS_EXCEPTION_IF_NULL(left_edge);
-      if (left_edge->next_operator() != left_node) {
-        auto tmp = left_edge;
-        left_edge = right_edge;
-        right_edge = tmp;
+        auto left_node = l_r_edge->prev_operator();
+        auto left_edge = eliminated_node->GetAliveSuccEdges()[0];
+        auto right_edge = eliminated_node->GetAliveSuccEdges()[1];
+        MS_EXCEPTION_IF_NULL(left_edge);
+        if (left_edge->next_operator() != left_node) {
+          auto tmp = left_edge;
+          left_edge = right_edge;
+          right_edge = tmp;
+        }
+        auto left_node_cpy = graph->EliminationTriangle(eliminated_node, l_r_edge);
+        auto right_node = l_r_edge->next_operator();
+        auto elimi =
+          std::make_shared<TriangleElimination>(eliminated_node, left_edge, left_node_cpy, right_edge, right_node);
+        eliminations.emplace_back(std::move(elimi));
       }
-      auto left_node_cpy = graph->EliminationTriangle(eliminated_node, l_r_edge);
-      auto right_node = l_r_edge->next_operator();
-      auto elimi =
-        std::make_shared<TriangleElimination>(eliminated_node, left_edge, left_node_cpy, right_edge, right_node);
-      eliminations.emplace_back(std::move(elimi));
     }
-    auto star_center = graph->CheckStarElimination();
-    if ((!flag) && (star_center != nullptr)) {
-      // Applying the Star Elimination
-      flag = true;
-      auto succ_edges = graph->EliminationStar(star_center);
-      std::vector<OperatorInfoPtr> succ_nodes;
-      for (size_t i = 0; i < succ_edges.size(); ++i) {
-        MS_EXCEPTION_IF_NULL(succ_edges[i]);
-        succ_nodes.push_back(succ_edges[i]->next_operator());
+    if (!flag) {
+      auto star_center = graph->CheckStarElimination();
+      if (star_center != nullptr) {
+        // Applying the Star Elimination
+        flag = true;
+        auto succ_edges = graph->EliminationStar(star_center);
+        std::vector<OperatorInfoPtr> succ_nodes;
+        for (size_t i = 0; i < succ_edges.size(); ++i) {
+          MS_EXCEPTION_IF_NULL(succ_edges[i]);
+          succ_nodes.push_back(succ_edges[i]->next_operator());
+        }
+        auto elimi = std::make_shared<StarElimination>(star_center, succ_edges, succ_nodes);
+        eliminations.emplace_back(std::move(elimi));
       }
-      auto elimi = std::make_shared<StarElimination>(star_center, succ_edges, succ_nodes);
-      eliminations.emplace_back(std::move(elimi));
     }
   }
 

@@ -19,6 +19,8 @@ import inspect
 from multiprocessing import cpu_count
 import os
 import numpy as np
+
+import mindspore._c_dataengine as cde
 from ..engine import samplers
 
 # POS_INT_MIN is used to limit values from starting from 0
@@ -153,8 +155,8 @@ def parse_user_args(method, *args, **kwargs):
 
     Args:
         method (method): a callable function.
-        *args: user passed args.
-        **kwargs: user passed kwargs.
+        args: user passed args.
+        kwargs: user passed kwargs.
 
     Returns:
         user_filled_args (list): values of what the user passed in for the arguments.
@@ -179,16 +181,18 @@ def type_check_list(args, types, arg_names):
     Check the type of each parameter in the list.
 
     Args:
-        args (list, tuple): a list or tuple of any variable.
+        args (Union[list, tuple]): a list or tuple of any variable.
         types (tuple): tuple of all valid types for arg.
-        arg_names (list, tuple of str): the names of args.
+        arg_names (Union[list, tuple of str]): the names of args.
 
     Returns:
         Exception: when the type is not correct, otherwise nothing.
     """
     type_check(args, (list, tuple,), arg_names)
-    if len(args) != len(arg_names):
+    if len(args) != len(arg_names) and not isinstance(arg_names, str):
         raise ValueError("List of arguments is not the same length as argument_names.")
+    if isinstance(arg_names, str):
+        arg_names = ["{0}[{1}]".format(arg_names, i) for i in range(len(args))]
     for arg, arg_name in zip(args, arg_names):
         type_check(arg, types, arg_name)
 
@@ -198,7 +202,7 @@ def type_check(arg, types, arg_name):
     Check the type of the parameter.
 
     Args:
-        arg : any variable.
+        arg (Any) : any variable.
         types (tuple): tuple of all valid types for arg.
         arg_name (str): the name of arg.
 
@@ -296,7 +300,6 @@ def check_padding_options(param_dict):
     """
 
     columns_list = param_dict.get('columns_list')
-    block_reader = param_dict.get('block_reader')
     padded_sample, num_padded = param_dict.get('padded_sample'), param_dict.get('num_padded')
     if padded_sample is not None:
         if num_padded is None:
@@ -308,9 +311,6 @@ def check_padding_options(param_dict):
         for column in columns_list:
             if column not in padded_sample:
                 raise ValueError("padded_sample cannot match columns_list.")
-        if block_reader:
-            raise RuntimeError("block_reader and padded_sample cannot be specified at the same time.")
-
     if padded_sample is None and num_padded is not None:
         raise RuntimeError("num_padded is specified but padded_sample is not.")
 
@@ -342,7 +342,7 @@ def check_gnn_list_or_ndarray(param, param_name):
     Check if the input parameter is list or numpy.ndarray.
 
     Args:
-        param (list, nd.ndarray): param.
+        param (Union[list, nd.ndarray]): param.
         param_name (str): param_name.
 
     Returns:
@@ -358,3 +358,9 @@ def check_gnn_list_or_ndarray(param, param_name):
         if not param.dtype == np.int32:
             raise TypeError("Each member in {0} should be of type int32. Got {1}.".format(
                 param_name, param.dtype))
+
+
+def check_tensor_op(param, param_name):
+    """check whether param is a tensor op or a callable python function"""
+    if not isinstance(param, cde.TensorOp) and not callable(param):
+        raise TypeError("{0} is not a c_transform op (TensorOp) nor a callable pyfunc.".format(param_name))

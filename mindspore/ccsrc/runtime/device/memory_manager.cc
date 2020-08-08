@@ -16,7 +16,7 @@
 
 #include "runtime/device/memory_manager.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 using mindspore::memreuse::BestFitMemReuse;
 using mindspore::memreuse::MemReuseUtilPtr;
 namespace mindspore {
@@ -29,7 +29,7 @@ size_t MemoryManager::GetCommunicationAlignSize(size_t input_size) const {
   return (input_size + kMemAlignSize - 1) / kMemAlignSize * kMemAlignSize + 2 * kMemAlignSize;
 }
 
-void MemoryManager::MallocReusedDynamicMem(session::KernelGraph *graph) {
+void MemoryManager::MallocReusedDynamicMem(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MemReuseUtilPtr mem_reuse_util_ptr = std::make_shared<memreuse::MemReuseUtil>();
   MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr);
@@ -45,8 +45,10 @@ void MemoryManager::MallocReusedDynamicMem(session::KernelGraph *graph) {
   mem_reuse_util_ptr_->set_mem_base(base_ptr);
 }
 
-uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, int flag, size_t size) {
+uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, MemType type, size_t size,
+                                        const DeviceAddressPtr &address) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(address);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   uint8_t *ptr = nullptr;
@@ -55,40 +57,53 @@ uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, in
     if (context_ptr->enable_hccl()) {
       communication_mem = true;
     }
-    if (flag == kStaticMem) {
+    if (type == kStaticMem) {
       ptr = MallocStaticMem(size, communication_mem);
+      address->from_mem_pool_ = true;
+      if (communication_mem) {
+        address->communication_ptr_ = ptr - kMemAlignSize;
+      }
+    } else if (type == kReuseDynamicCommMem) {
+      MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr_);
+      ptr = mem_reuse_util_ptr_->GetNodeOutputPtr(node, index);
     } else {
       ptr = MallocDynamicMem(size, communication_mem);
     }
+    address->ptr_ = ptr;
     return ptr;
   }
 
-  if (flag == kStaticMem) {
+  if (type == kStaticMem) {
     ptr = MallocStaticMem(size, false);
-  } else if (flag == kDynamicMem) {
+    address->from_mem_pool_ = true;
+  } else if (type == kDynamicMem) {
     ptr = MallocDynamicMem(size, false);
-  } else if (flag == kReuseDynamicMem) {
+  } else if (type == kReuseDynamicMem) {
     MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr_);
     ptr = mem_reuse_util_ptr_->GetNodeOutputPtr(node, index);
   }
+  address->ptr_ = ptr;
   return ptr;
 }
 
-uint8_t *MemoryManager::MallocWorkSpaceMem(const AnfNodePtr &node, size_t index, int flag, size_t size) {
-  if (flag == kReuseDynamicMem) {
+uint8_t *MemoryManager::MallocWorkSpaceMem(const AnfNodePtr &node, size_t index, MemType type, size_t size) {
+  if (type == kReuseDynamicMem) {
     MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr_);
     return mem_reuse_util_ptr_->GetNodeWorkSpacePtr(node, index);
   }
   return MallocDynamicMem(size, false);
 }
 
-uint8_t *MemoryManager::MallocMem(int flag, size_t size) {
+uint8_t *MemoryManager::MallocMem(MemType type, size_t size, const DeviceAddressPtr &address) {
+  MS_EXCEPTION_IF_NULL(address);
   uint8_t *ptr = nullptr;
-  if (flag == kStaticMem) {
+  if (type == kStaticMem) {
     ptr = MallocStaticMem(size, false);
-  } else if (flag == kDynamicMem) {
+    address->from_mem_pool_ = true;
+  } else if (type == kDynamicMem) {
     ptr = MallocDynamicMem(size, false);
   }
+  address->ptr_ = ptr;
   return ptr;
 }
 

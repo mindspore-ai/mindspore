@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_VISITOR_H_
-#define MINDSPORE_CCSRC_IR_VISITOR_H_
+#ifndef MINDSPORE_CORE_IR_VISITOR_H_
+#define MINDSPORE_CORE_IR_VISITOR_H_
 
 #include <vector>
-#include "ir/optimizer_caller.h"
+#include "ir/anf.h"
 
 namespace mindspore {
 using VisitFuncType = std::function<void(const AnfNodePtr &)>;
-class AnfVisitor : public OptimizerCaller {
+using PredicateFuncType = std::function<bool(const AnfNodePtr &)>;
+class AnfIrVisitor {
  public:
   virtual void Visit(const AnfNodePtr &);
   virtual void Visit(const CNodePtr &);
   virtual void Visit(const ValueNodePtr &);
   virtual void Visit(const ParameterPtr &);
-  VisitFuncType Match(const PrimitivePtr &, const std::vector<opt::PredicateFuncType> & = {});
-  virtual ~AnfVisitor() = default;
+  VisitFuncType Match(const PrimitivePtr &, const std::vector<PredicateFuncType> & = {});
+  virtual ~AnfIrVisitor() = default;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_IR_VISITOR_H_
+#endif  // MINDSPORE_CORE_IR_VISITOR_H_

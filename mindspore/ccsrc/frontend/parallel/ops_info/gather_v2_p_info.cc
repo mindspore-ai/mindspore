@@ -73,8 +73,8 @@ Status GatherV2PInfo::GetAttrs() {
             MS_LOG(ERROR) << "Failure: Size of manual_split element must be 2.";
             return FAILED;
           }
-          param_split_shapes_.push_back(static_cast<int32_t>(GetValue<int>(value_vector[0])));
-          index_offsets_.push_back(static_cast<int32_t>(GetValue<int>(value_vector[1])));
+          param_split_shapes_.push_back(static_cast<int64_t>(GetValue<int>(value_vector[0])));
+          index_offsets_.push_back(static_cast<int64_t>(GetValue<int>(value_vector[1])));
         } else {
           MS_LOG(ERROR) << "Failure: Manual split strategy's format is wrong! Need ValueSequeue";
           return FAILED;
@@ -93,14 +93,14 @@ Status GatherV2PInfo::GetAttrs() {
 
 Status GatherV2PInfo::CheckManualSplit() {
   auto param_shape = inputs_shape_.at(0);
-  int32_t split_shape_sum = std::accumulate(param_split_shapes_.begin(), param_split_shapes_.end(), 0,
-                                            [](int32_t s, int32_t shape) { return s + shape; });
+  int64_t split_shape_sum = std::accumulate(param_split_shapes_.begin(), param_split_shapes_.end(), 0,
+                                            [](int64_t s, int64_t shape) { return s + shape; });
   if (split_shape_sum < param_shape.at(0)) {
     MS_LOG(ERROR) << "Failure: Sum of splited shapes should not be smaller than param_shape.";
     return FAILED;
   }
 
-  if (std::any_of(index_offsets_.begin(), index_offsets_.end(), [](const int32_t &offset) { return offset < 0; })) {
+  if (std::any_of(index_offsets_.begin(), index_offsets_.end(), [](const int64_t &offset) { return offset < 0; })) {
     MS_LOG(ERROR) << "Failure: Index offset must not less than 0.";
     return FAILED;
   }
@@ -269,8 +269,8 @@ Status GatherV2PInfo::InferTensorMap() {
   size_t param_size = inputs_shape_.at(0).size();
   size_t index_size = inputs_shape_.at(1).size();
   size_t total_size = param_size + index_size;
-  std::vector<int32_t> tensor_map_index;
-  std::vector<int32_t> tensor_map_params;
+  Shape tensor_map_index;
+  Shape tensor_map_params;
   auto param_strategy = strategy_->GetInputDim().at(0);
   if (param_strategy.at(IntToSize(axis_)) != 1) {
     tensor_map_index.insert(tensor_map_index.begin(), index_size, -1);
@@ -288,7 +288,7 @@ Status GatherV2PInfo::InferTensorMap() {
   }
 
   // infer output tensor map
-  std::vector<int32_t> tensor_map_out;
+  Shape tensor_map_out;
   if (param_strategy.at(IntToSize(axis_)) == 1) {
     // param_strategy(axis) == 1
     for (size_t i = 0; i < param_size; ++i) {
@@ -427,8 +427,8 @@ Status GatherV2PInfo::InferGroup() {
   return SUCCESS;
 }
 
-std::vector<int32_t> GetRankFromGroup(const Group &group) {
-  std::vector<int32_t> rank_list;
+RankList GetRankFromGroup(const Group &group) {
+  RankList rank_list;
   auto device_list = group.GetDevicesList();
   for (auto &device : device_list) {
     rank_list.insert(rank_list.end(), device.rank() % 8);
@@ -455,6 +455,9 @@ Status GatherV2PInfo::InferForwardCommunication() {
     MS_LOG(ERROR) << name_ << ": Infer Group failed.";
     return FAILED;
   }
+  if (group_.name().empty()) {
+    return SUCCESS;
+  }
   attr_group = std::make_pair(GROUP, MakeValue(group_.name()));
   Attr attr_op = std::make_pair(OP, MakeValue(REDUCE_OP_SUM));
   OperatorAttrs attrs = {attr_op, attr_group};
@@ -472,7 +475,7 @@ Status GatherV2PInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "GenerateGraph Init failed";
     return FAILED;
   }
-  if (manual_split_) {
+  if (manual_split_ && target_ != CPU) {
     if (InferOffset() != SUCCESS) {
       MS_LOG(ERROR) << name_ << ": Infer Bias failed.";
       return FAILED;
@@ -519,7 +522,7 @@ Status GatherV2PInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
 }
 
 ReplaceGraphPtr GatherV2PInfo::replace_graph(const CNodePtr &cnode) {
-  if (manual_split_) {
+  if (manual_split_ && target_ != CPU) {
     if (ComputeReplaceGraph(cnode) != SUCCESS) {
       MS_LOG(ERROR) << name_ << ": ComputeReplaceGraph failed.";
       return nullptr;
@@ -540,13 +543,25 @@ ReplaceGraphPtr GatherV2PInfo::replace_graph(const CNodePtr &cnode) {
 }
 
 Status GatherV2PInfo::ComputeReplaceOp() {
-  if (InferBias() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer offset failed.";
-    return FAILED;
+  int64_t bias = 0;
+  if (manual_split_) {
+    if (InferOffset() != SUCCESS) {
+      MS_LOG(ERROR) << name_ << ": Infer offset failed.";
+      return FAILED;
+    }
+    bias = index_offset_;
+  } else {
+    if (InferBias() != SUCCESS) {
+      MS_LOG(ERROR) << name_ << ": Infer offset failed.";
+      return FAILED;
+    }
+    bias = bias_;
   }
+
   OperatorName op_name = EMBEDDING_LOOKUP;
   OperatorAttrs attrs;
-  Attr param_offset = std::make_pair("offset", MakeValue(bias_));
+  int32_t bias_int = static_cast<int32_t>(bias);
+  Attr param_offset = std::make_pair("offset", MakeValue(bias_int));
   OperatorParams params = {std::make_pair(param_offset, 3)};
   OperatorArgs args = std::make_pair(attrs, params);
   Operator op = std::make_pair(op_name, args);
@@ -620,7 +635,7 @@ Status GatherV2PInfo::GenerateStrategies(int32_t stage_id) {
   return SUCCESS;
 }
 
-std::shared_ptr<std::vector<std::vector<int32_t>>> GatherV2PInfo::GenerateBatchStrategies() {
+std::shared_ptr<Strategys> GatherV2PInfo::GenerateBatchStrategies() {
   CheckGlobalDeviceManager();
   size_t dev_num = g_device_manager->GetDeviceListByStageId(0).size();
   Dimensions param_strategy(inputs_shape_[0].size(), 1);
@@ -629,8 +644,8 @@ std::shared_ptr<std::vector<std::vector<int32_t>>> GatherV2PInfo::GenerateBatchS
   for (size_t i = 1; i < inputs_shape_[1].size(); i++) {
     index_strategy.push_back(1);
   }
-  std::vector<Dimensions> strategy_v = {param_strategy, index_strategy};
-  return std::make_shared<std::vector<std::vector<int32_t>>>(strategy_v);
+  Strategys strategy_v = {param_strategy, index_strategy};
+  return std::make_shared<Strategys>(strategy_v);
 }
 }  // namespace parallel
 }  // namespace mindspore

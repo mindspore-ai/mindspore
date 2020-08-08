@@ -1,0 +1,141 @@
+/**
+ * Copyright 2020 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef MINDSPORE_CCSRC_KERNEL_GPU_ROI_ALIGN_GRAD_GPU_KERNEL_H
+#define MINDSPORE_CCSRC_KERNEL_GPU_ROI_ALIGN_GRAD_GPU_KERNEL_H
+
+#include <vector>
+#include "backend/kernel_compiler/gpu/gpu_kernel.h"
+#include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
+#include "backend/kernel_compiler/gpu/cuda_impl/roi_align_impl.cuh"
+
+namespace mindspore {
+namespace kernel {
+template <typename T>
+class ROIAlignGradGpuFwdKernel : public GpuKernel {
+ public:
+  ROIAlignGradGpuFwdKernel() : dy_size_(0), rois_size_(0), output_size_(0) {}
+  ~ROIAlignGradGpuFwdKernel() = default;
+
+  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
+  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
+  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    const T *dy = GetDeviceAddress<T>(inputs, 0);
+    const T *rois = GetDeviceAddress<T>(inputs, 1);
+
+    T *dx = GetDeviceAddress<T>(outputs, 0);
+
+    ROIAlignGrad(dy, rois, roi_rows_, roi_cols_, dx, spatial_scale_, sample_num_, roi_end_mode_, channels_, height_,
+                 width_, pooled_height_, pooled_width_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    return true;
+  }
+
+  bool Init(const CNodePtr &kernel_node) override {
+    // Get the number of input args
+    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    if (input_num != 2) {
+      MS_LOG(ERROR) << "Input number is " << input_num << ", but ROIAlignGrad needs 2 input.";
+      return false;
+    }
+
+    // Get the number of output args
+    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    if (output_num != 1) {
+      MS_LOG(ERROR) << "Output number is " << output_num << ", but ROIAlignGrad needs 1 output.";
+      return false;
+    }
+
+    // Get the input shapes
+    auto dy_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto rois_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+
+    auto dy_shape_size = dy_shape.size();
+    if (dy_shape_size != 4) {
+      MS_LOG(ERROR) << "dy shape size is " << dy_shape_size << ", but shoud be 4.";
+      return false;
+    }
+
+    // Parse y diff
+    dy_shape_ = {static_cast<int>(dy_shape[0]), static_cast<int>(dy_shape[1]), static_cast<int>(dy_shape[2]),
+                 static_cast<int>(dy_shape[3])};
+    dy_size_ = dy_shape_[0] * dy_shape_[1] * dy_shape_[2] * dy_shape_[3] * sizeof(T);
+
+    // Get rois rows and cols
+    roi_rows_ = rois_shape[0];
+    roi_cols_ = rois_shape[1];
+    rois_shape_ = {roi_rows_, roi_cols_};
+    rois_size_ = roi_rows_ * roi_cols_ * sizeof(T);
+
+    // Get primitive args
+    xdiff_shape_ = GetAttr<std::vector<int>>(kernel_node, "xdiff_shape");
+    pooled_height_ = GetAttr<int>(kernel_node, "pooled_height");
+    pooled_width_ = GetAttr<int>(kernel_node, "pooled_width");
+    spatial_scale_ = static_cast<T>(GetAttr<float>(kernel_node, "spatial_scale"));
+    sample_num_ = GetAttr<int>(kernel_node, "sample_num");
+    roi_end_mode_ = 1;
+
+    // Get channels, height & width
+    channels_ = xdiff_shape_[1];
+    height_ = xdiff_shape_[2];
+    width_ = xdiff_shape_[3];
+
+    // Get output_shape
+    output_shape_ = {roi_rows_, channels_, height_, width_};
+    output_size_ = roi_rows_ * channels_ * height_ * width_ * sizeof(T);
+
+    InitSizeLists();
+    return true;
+  }
+
+ protected:
+  void InitSizeLists() override {
+    input_size_list_.push_back(dy_size_);
+    input_size_list_.push_back(rois_size_);
+    output_size_list_.push_back(output_size_);
+  }
+
+ private:
+  std::vector<int> xdiff_shape_;
+  int pooled_height_;
+  int pooled_width_;
+  T spatial_scale_;
+  int sample_num_;
+  int roi_end_mode_;
+
+  int roi_rows_;
+  int roi_cols_;
+  int channels_;
+  int height_;
+  int width_;
+
+  std::vector<size_t> input_size_list_;
+  std::vector<size_t> output_size_list_;
+  std::vector<size_t> workspace_size_list_;
+
+  std::vector<int> dy_shape_;
+  std::vector<int> rois_shape_;
+  std::vector<int> output_shape_;
+
+  size_t dy_size_;
+  size_t rois_size_;
+  size_t output_size_;
+};  // namespace kernel
+}  // namespace kernel
+}  // namespace mindspore
+
+#endif  // MINDSPORE_CCSRC_KERNEL_GPU_ROI_ALIGN_GRAD_GPU_KERNEL_H

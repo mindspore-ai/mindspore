@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PYNATIVE_PYNATIVE_EXECUTE_GE_H_
-#define MINDSPORE_CCSRC_PYNATIVE_PYNATIVE_EXECUTE_GE_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_EXECUTE_GE_H_
+#define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_EXECUTE_GE_H_
 
 #include <vector>
 #include <utility>
@@ -27,7 +27,7 @@
 #include "transform/graph_ir/convert.h"
 #include "transform/graph_ir/graph_runner.h"
 #include "transform/graph_ir/types.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 using GeTensor = ge::Tensor;
 using GeTensorPtr = std::shared_ptr<GeTensor>;
@@ -43,4 +43,4 @@ py::object RunOpInGE(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
 }  // namespace pynative
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PYNATIVE_PYNATIVE_EXECUTE_GE_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_EXECUTE_GE_H_

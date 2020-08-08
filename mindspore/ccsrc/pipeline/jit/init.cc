@@ -68,6 +68,8 @@ PYBIND11_MODULE(_c_expression, m) {
          py::arg("type") = py::str("onnx_ir"), "Get graph proto string by specifying ir type.")
     .def("compile", &ExecutorPy::Compile, py::arg("obj"), py::arg("args"), py::arg("phase") = py::str(""),
          py::arg("use_vm") = py::bool_(false), "Compile obj by executor.")
+    .def("updata_param_node_default_input", &ExecutorPy::UpdataParamNodeDefaultInput, py::arg("phase"),
+         py::arg("params"), "Fetch the inputs of Conv or Matmul for quant export.")
     .def("get_parameter_layout", &ExecutorPy::GetParameterLayout, py::arg("phase") = py::str("train"),
          "Get Parameter Tensor Layout Dictionary.")
     .def("get_strategy", &ExecutorPy::GetCNodeStrategy, py::arg("phase") = py::str("train"),
@@ -81,9 +83,7 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("has_compiled", &ExecutorPy::HasCompiled, py::arg("phase") = py::str(""), "get if cell compiled.")
     .def("run_init_graph", &ExecutorPy::RunInitGraph, "Run init Graph.");
 
-  (void)py::class_<EnvInstance, std::shared_ptr<EnvInstance>>(m, "EnvInstance_")
-    .def_readonly(mindspore::PYTHON_ENVINSTANCE_FLAG, &mindspore::EnvInstance::parse_info_)
-    .def(py::init());
+  (void)py::class_<EnvInstance, std::shared_ptr<EnvInstance>>(m, "EnvInstance_").def(py::init());
 
   (void)m.def("generate_key", &mindspore::pipeline::GenerateKey, "Generate the function graph key.");
   (void)m.def("real_run_op", &mindspore::pynative::RunOp, "Run op pynatively.");
@@ -111,8 +111,6 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_device_target", &mindspore::MsContext::set_device_target, "Set device target.")
     .def("get_device_id", &mindspore::MsContext::device_id, "Get device id.")
     .def("set_device_id", &mindspore::MsContext::set_device_id, "Set device id.")
-    .def("open_tsd", &mindspore::MsContext::OpenTsd, "Open tdt dataset client.")
-    .def("close_tsd", &mindspore::MsContext::CloseTsd, "Close tdt dataset client.")
     .def("get_save_graphs_flag", &mindspore::MsContext::save_graphs_flag, "Get whether to save graphs.")
     .def("set_save_graphs_flag", &mindspore::MsContext::set_save_graphs_flag, "Set whether to save graphs.")
     .def("get_auto_mixed_precision_flag", &mindspore::MsContext::auto_mixed_precision_flag,
@@ -125,10 +123,6 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set whether to enable reduce precision.")
     .def("get_save_graphs_path", &mindspore::MsContext::save_graphs_path, "Get save graphs path.")
     .def("set_save_graphs_path", &mindspore::MsContext::set_save_graphs_path, "Set save graphs path.")
-    .def("get_save_ms_model_flag", &mindspore::MsContext::save_ms_model_flag, "Get whether to save ms model.")
-    .def("set_save_ms_model_flag", &mindspore::MsContext::set_save_ms_model_flag, "Set whether to save ms model.")
-    .def("get_save_ms_model_path", &mindspore::MsContext::save_ms_model_path, "Get path to save ms model.")
-    .def("set_save_ms_model_path", &mindspore::MsContext::set_save_ms_model_path, "Set path to save ms model")
     .def("get_enable_dump", &mindspore::MsContext::enable_dump, "Get whether to enable dump.")
     .def("set_enable_dump", &mindspore::MsContext::set_enable_dump, "Set whether to enable dump.")
     .def("get_save_dump_path", &mindspore::MsContext::save_dump_path, "Get path to dump.")

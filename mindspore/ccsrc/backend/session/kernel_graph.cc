@@ -79,31 +79,6 @@ std::vector<AnfNodePtr> GetCallRealOutputs(const AnfNodePtr &call_node) {
   return real_inputs;
 }
 
-AnfNodePtr MakeValueNode(const AnfNodePtr &node) {
-  auto value_node = node->cast<ValueNodePtr>();
-  if (value_node == nullptr) {
-    return nullptr;
-  }
-
-  ValueNodePtr new_value_node = std::make_shared<ValueNode>(value_node->value());
-  new_value_node->set_abstract(value_node->abstract());
-  // create kernel_info fo new value node
-  auto kernel_info = std::make_shared<device::KernelInfo>();
-  new_value_node->set_kernel_info(kernel_info);
-  // create kernel_build_info for new value node
-  auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-  // set the format of value_node to DEFAULT_FORMAT
-  kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{kOpFormat_DEFAULT});
-  // set value node initial device data type = infer data type
-  std::vector<TypeId> types;
-  for (size_t index = 0; index < AnfAlgo::GetOutputTensorNum(value_node); ++index) {
-    types.push_back(kTypeUnknown);
-  }
-  kernel_build_info_builder->SetOutputsDeviceType(types);
-  AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), new_value_node.get());
-  return new_value_node;
-}
-
 bool IsSameLabel(const CNodePtr &left, const CNodePtr &right) {
   if (left == right) {
     return true;
@@ -120,7 +95,50 @@ bool IsSameLabel(const CNodePtr &left, const CNodePtr &right) {
   }
   return false;
 }
+
+void SyncDeviceInfoToValueNode(const ValueNodePtr &value_node, std::vector<std::string> *device_formats,
+                               std::vector<TypeId> *device_types) {
+  MS_EXCEPTION_IF_NULL(value_node);
+  MS_EXCEPTION_IF_NULL(device_formats);
+  MS_EXCEPTION_IF_NULL(device_types);
+  ValuePtr value = value_node->value();
+  std::vector<tensor::TensorPtr> tensors;
+  TensorValueToTensor(value, &tensors);
+  if (!tensors.empty()) {
+    if (tensors.size() != AnfAlgo::GetOutputTensorNum(value_node)) {
+      MS_LOG(EXCEPTION) << "The size of tensors converted from value [" << tensors.size()
+                        << "] is not equal to output size of value node [" << AnfAlgo::GetOutputTensorNum(value_node)
+                        << "]";
+    }
+    device_formats->clear();
+    device_types->clear();
+    for (const auto &tensor : tensors) {
+      MS_EXCEPTION_IF_NULL(tensor);
+      auto device_sync = tensor->device_address();
+      if (device_sync != nullptr) {
+        auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(device_sync);
+        MS_EXCEPTION_IF_NULL(device_address);
+        device_formats->emplace_back(device_address->format());
+        device_types->emplace_back(device_address->type_id());
+        continue;
+      }
+      device_formats->emplace_back(kOpFormat_DEFAULT);
+      device_types->emplace_back(kTypeUnknown);
+    }
+  }
+}
 }  // namespace
+AnfNodePtr KernelGraph::MakeValueNode(const AnfNodePtr &node) {
+  auto value_node = node->cast<ValueNodePtr>();
+  if (value_node == nullptr) {
+    return nullptr;
+  }
+  ValueNodePtr new_value_node = std::make_shared<ValueNode>(value_node->value());
+  new_value_node->set_abstract(value_node->abstract());
+  this->SetKernelInfoForNode(new_value_node);
+  return new_value_node;
+}
+
 std::vector<AnfNodePtr> KernelGraph::outputs() const {
   auto graph_output = output();
   if (IsPrimitiveCNode(graph_output, prim::kPrimMakeTuple)) {
@@ -290,28 +308,10 @@ CNodePtr KernelGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
   MS_EXCEPTION_IF_NULL(cnode);
   cnode->set_abstract(std::make_shared<abstract::AbstractNone>());
   CreateKernelInfoFromNewParameter(cnode);
-
-  auto kernel_info = std::make_shared<device::KernelInfo>();
-  std::vector<size_t> feature_map_input_indexs;
-  // if the node only has the primitive(such as getNext) or the node's input has a feature map input
-  // then the node's output is a feature map output
-  for (size_t index = 1; index < inputs.size(); ++index) {
-    auto node = inputs[index];
-    if (AnfAlgo::IsFeatureMapOutput(node)) {
-      feature_map_input_indexs.push_back(index);
-    }
-  }
   if (AnfAlgo::GetCNodeName(cnode) == prim::kPrimCast->name()) {
     AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(false), cnode);
   }
-  if (inputs.size() == 1 || !feature_map_input_indexs.empty()) {
-    kernel_info->SetFeatureMapFlag(true);
-  }
-  if (AnfAlgo::IsRealCNodeKernel(cnode)) {
-    AnfAlgo::SetNodeAttr(kIsFeatureMapOutput, MakeValue(kernel_info->is_feature_map()), cnode);
-    AnfAlgo::SetNodeAttr(kIsFeatureMapInputList, MakeValue(feature_map_input_indexs), cnode);
-  }
-  cnode->set_kernel_info(kernel_info);
+  SetKernelInfoForNode(cnode);
   AnfAlgo::SetGraphId(graph_id_, cnode.get());
   return cnode;
 }
@@ -351,6 +351,53 @@ void KernelGraph::CreateKernelInfoFromNewParameter(const CNodePtr &cnode) {
   }
 }
 
+void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
+  MS_EXCEPTION_IF_NULL(node);
+  auto kernel_info = std::make_shared<device::KernelInfo>();
+  node->set_kernel_info(kernel_info);
+  if (node->isa<CNode>()) {
+    std::vector<size_t> feature_map_input_indexs;
+    kernel_info->SetFeatureMapFlag(false);
+    for (size_t index = 0; index < AnfAlgo::GetInputTensorNum(node); ++index) {
+      if (AnfAlgo::IsFeatureMapInput(node, index)) {
+        kernel_info->SetFeatureMapFlag(true);
+        feature_map_input_indexs.push_back(index);
+      }
+    }
+    if (AnfAlgo::GetInputTensorNum(node) == 0) {
+      kernel_info->SetFeatureMapFlag(true);
+    }
+    if (AnfAlgo::IsRealKernel(node)) {
+      // if the node only has the primitive(such as getNext) or the node's input has a feature map input
+      // then the node's output is a feature map output
+      AnfAlgo::SetNodeAttr(kIsFeatureMapOutput, MakeValue(kernel_info->is_feature_map()), node);
+      AnfAlgo::SetNodeAttr(kIsFeatureMapInputList, MakeValue(feature_map_input_indexs), node);
+    }
+    return;
+  }
+  auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  // set the format of value_node to DEFAULT_FORMAT
+  std::vector<TypeId> types;
+  std::vector<std::string> formats = {kOpFormat_DEFAULT};
+  if (node->isa<ValueNode>()) {
+    kernel_info->SetFeatureMapFlag(false);
+    types.emplace_back(kTypeUnknown);
+    auto value_node = node->cast<ValueNodePtr>();
+    SyncDeviceInfoToValueNode(value_node, &formats, &types);
+  }
+  if (node->isa<Parameter>()) {
+    auto parameter = node->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(parameter);
+    bool is_weight = AnfAlgo ::IsParameterWeight(parameter);
+    kernel_info->SetFeatureMapFlag(!is_weight);
+    types.push_back(is_weight ? kTypeUnknown : AnfAlgo::GetOutputInferDataType(parameter, 0));
+  }
+  // set parameter initaial device data type
+  kernel_build_info_builder->SetOutputsFormat(formats);
+  kernel_build_info_builder->SetOutputsDeviceType(types);
+  AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), node.get());
+}
+
 CNodePtr KernelGraph::NewCNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto new_cnode = std::make_shared<CNode>(*cnode);
@@ -366,81 +413,31 @@ CNodePtr KernelGraph::NewCNode(const CNodePtr &cnode) {
 }
 
 ParameterPtr KernelGraph::NewParameter(const ParameterPtr &parameter) {
-  ParameterPtr new_parameter = add_parameter();
+  auto abstract = parameter == nullptr ? std::make_shared<abstract::AbstractNone>() : parameter->abstract();
+  auto new_parameter = NewParameter(abstract);
   MS_EXCEPTION_IF_NULL(new_parameter);
-  // create kernel_info form new parameter
-  auto kernel_info = std::make_shared<device::KernelInfo>();
-  size_t output_tensor_num = 1;
-  // if use default parameter = nullptr,it remarks create a new parameter from no parameter
-  if (parameter == nullptr) {
-    new_parameter->set_abstract(std::make_shared<abstract::AbstractNone>());
-    kernel_info->SetFeatureMapFlag(true);
-  } else {
-    // if don't use default parameter = nullptr,it remarks create a new parameter from a old parameter
-    new_parameter->set_abstract(parameter->abstract());
+
+  // if don't use default parameter = nullptr,it remarks create a new parameter from a old parameter
+  if (parameter != nullptr) {
     new_parameter->set_name(parameter->name());
     if (AnfAlgo::IsParameterWeight(parameter)) {
       new_parameter->set_default_param(parameter->default_param());
-      kernel_info->SetFeatureMapFlag(false);
-    } else {
-      kernel_info->SetFeatureMapFlag(true);
     }
   }
-  new_parameter->set_kernel_info(kernel_info);
-  // create kernel_build_info for new parameter
-  auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-  // create init data type,
-  std::vector<TypeId> init_data_type = {};
-
-  TypeId infer_data_type = AnfAlgo::GetOutputInferDataType(new_parameter, 0);
-  init_data_type.push_back(AnfAlgo::IsParameterWeight(new_parameter) ? kTypeUnknown : infer_data_type);
-
-  // set the format of parameter to DEFAULT_FORMAT
-  kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>(output_tensor_num, kOpFormat_DEFAULT));
-  // set parameter initaial device data type
-  kernel_build_info_builder->SetOutputsDeviceType(init_data_type);
-  AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), new_parameter.get());
+  // create kernel_info form new parameter
+  SetKernelInfoForNode(new_parameter);
   AnfAlgo::SetGraphId(graph_id_, new_parameter.get());
   return new_parameter;
 }
 
-std::vector<AnfNodePtr> KernelGraph::SplitTupleValueNodeToNodeList(const ValueNodePtr &value_node) {
-  MS_EXCEPTION_IF_NULL(value_node);
-  auto node_value = value_node->value();
-  auto output_size = AnfAlgo::GetOutputTensorNum(value_node);
-  std::vector<AnfNodePtr> convert_inputs;
-  if (!node_value->isa<ValueTuple>()) {
-    MS_LOG(EXCEPTION) << "Multiple output valuenode's value must be a value tuple but got " << node_value->ToString();
-  }
-  auto value_tuple = node_value->cast<ValueTuplePtr>();
-  MS_EXCEPTION_IF_NULL(value_tuple);
-  if (value_tuple->size() != output_size) {
-    MS_LOG(EXCEPTION) << "Value tuple size" << value_tuple->size()
-                      << " is not mathced with the value node's output size" << output_size;
-  }
-  for (size_t index = 0; index < value_tuple->value().size(); ++index) {
-    auto new_value_node = std::make_shared<ValueNode>(value_tuple->value()[index]);
-    AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(value_node, index)},
-                                        {AnfAlgo::GetOutputInferShape(value_node, index)}, new_value_node.get());
-    AddValueNodeToGraph(new_value_node);
-    auto kernel_info = std::make_shared<device::KernelInfo>();
-    new_value_node->set_kernel_info(kernel_info);
-    kernel_info->SetFeatureMapFlag(false);
-    // create kernel_build_info for new value node
-    auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-    // set the format of value_node to DEFAULT_FORMAT
-    kernel_build_info_builder->SetOutputsFormat({kOpFormat_DEFAULT});
-    // set value node initial device data type = infer data type
-    kernel_build_info_builder->SetOutputsDeviceType({kTypeUnknown});
-    AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), new_value_node.get());
-    AnfAlgo::SetGraphId(graph_id_, new_value_node.get());
-    AddValueNodeToGraph(new_value_node);
-    convert_inputs.emplace_back(new_value_node);
-  }
-  if (!RemoveValueNodeFromGraph(value_node)) {
-    MS_LOG(WARNING) << "Failed to remove the value_node " << value_node->DebugString();
-  }
-  return convert_inputs;
+ParameterPtr KernelGraph::NewParameter(const abstract::AbstractBasePtr &abstract) {
+  ParameterPtr new_parameter = add_parameter();
+  new_parameter->set_abstract(abstract);
+  MS_EXCEPTION_IF_NULL(new_parameter);
+  // create kernel_info form new parameter
+  SetKernelInfoForNode(new_parameter);
+  AnfAlgo::SetGraphId(graph_id_, new_parameter.get());
+  return new_parameter;
 }
 
 ValueNodePtr KernelGraph::NewValueNode(const ValueNodePtr &value_node) {
@@ -448,6 +445,110 @@ ValueNodePtr KernelGraph::NewValueNode(const ValueNodePtr &value_node) {
   auto new_value_node = MakeValueNode(value_node)->cast<ValueNodePtr>();
   AnfAlgo::SetGraphId(graph_id_, new_value_node.get());
   return new_value_node;
+}
+
+ValueNodePtr KernelGraph::NewValueNode(const AbstractBasePtr &abstract, const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(abstract);
+  MS_EXCEPTION_IF_NULL(value);
+  ValueNodePtr new_value_node = std::make_shared<ValueNode>(value);
+  new_value_node->set_abstract(abstract);
+  SetKernelInfoForNode(new_value_node);
+  AnfAlgo::SetGraphId(graph_id(), new_value_node.get());
+  return new_value_node;
+}
+
+AnfNodePtr KernelGraph::TransValueNodeTuple(const AbstractBasePtr abstract, const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(abstract);
+  MS_EXCEPTION_IF_NULL(value);
+  if (!abstract->isa<abstract::AbstractTuple>()) {
+    auto new_value_node = NewValueNode(abstract, value);
+    AddValueNodeToGraph(new_value_node);
+    return new_value_node;
+  }
+  auto tuple_abstract = abstract->cast<abstract::AbstractTuplePtr>();
+  auto value_tuple = value->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(tuple_abstract);
+  MS_EXCEPTION_IF_NULL(value_tuple);
+  if (tuple_abstract->size() != value_tuple->size()) {
+    MS_LOG(EXCEPTION) << "Abstract size:" << tuple_abstract->size()
+                      << " is not equal to value size:" << value_tuple->size();
+  }
+  std::vector<AnfNodePtr> make_tuple_inputs = {
+    mindspore::NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name()))};
+  for (size_t index = 0; index < tuple_abstract->size(); ++index) {
+    make_tuple_inputs.push_back(TransValueNodeTuple((*tuple_abstract)[index], (*value_tuple)[index]));
+  }
+  auto make_tuple = NewCNode(make_tuple_inputs);
+  make_tuple->set_abstract(tuple_abstract);
+  return make_tuple;
+}
+
+AnfNodePtr KernelGraph::TransParameterTuple(const AbstractBasePtr &abstract) {
+  MS_EXCEPTION_IF_NULL(abstract);
+  if (!abstract->isa<abstract::AbstractTuple>()) {
+    return NewParameter(abstract);
+  }
+  auto tuple_abstract = abstract->cast<abstract::AbstractTuplePtr>();
+  MS_EXCEPTION_IF_NULL(tuple_abstract);
+  std::vector<AnfNodePtr> make_tuple_inputs = {
+    mindspore::NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name()))};
+  for (size_t index = 0; index < tuple_abstract->size(); ++index) {
+    make_tuple_inputs.push_back(TransParameterTuple((*tuple_abstract)[index]));
+  }
+  auto make_tuple = NewCNode(make_tuple_inputs);
+  make_tuple->set_abstract(tuple_abstract);
+  return make_tuple;
+}
+
+AnfNodePtr KernelGraph::CreatTupleGetItemNode(const AnfNodePtr &node, size_t output_idx) {
+  auto idx = mindspore::NewValueNode(SizeToInt(output_idx));
+  MS_EXCEPTION_IF_NULL(idx);
+  auto imm = std::make_shared<Int32Imm>(SizeToInt(output_idx));
+  auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(imm);
+  idx->set_abstract(abstract_scalar);
+  AnfNodePtr tuple_getitem = NewCNode({mindspore::NewValueNode(prim::kPrimTupleGetItem), node, idx});
+  MS_EXCEPTION_IF_NULL(tuple_getitem);
+  tuple_getitem->set_scope(node->scope());
+  std::vector<size_t> origin_shape = AnfAlgo::GetOutputInferShape(node, output_idx);
+  TypeId origin_type = AnfAlgo::GetOutputInferDataType(node, output_idx);
+  AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {origin_shape}, tuple_getitem.get());
+  return tuple_getitem;
+}
+
+AnfNodePtr KernelGraph::TransCNodeTuple(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  std::vector<TypeId> types;
+  std::vector<std::vector<size_t>> shapes;
+  std::vector<AnfNodePtr> make_tuple_inputs_list = {mindspore::NewValueNode(prim::kPrimMakeTuple)};
+  for (size_t tuple_out_index = 0; tuple_out_index < AnfAlgo::GetOutputTensorNum(node); ++tuple_out_index) {
+    make_tuple_inputs_list.emplace_back(CreatTupleGetItemNode(node, tuple_out_index));
+    types.push_back(AnfAlgo::GetOutputInferDataType(node, tuple_out_index));
+    shapes.emplace_back(AnfAlgo::GetOutputInferShape(node, tuple_out_index));
+  }
+  auto make_tuple = NewCNode(make_tuple_inputs_list);
+  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, make_tuple.get());
+  return make_tuple;
+}
+
+AnfNodePtr KernelGraph::TransTupleToMakeTuple(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!AnfAlgo::IsTupleOutput(node)) {
+    return node;
+  }
+  if (node->isa<Parameter>()) {
+    return TransParameterTuple(node->abstract());
+  } else if (node->isa<ValueNode>()) {
+    auto value_node = node->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
+    auto make_tuple = TransValueNodeTuple(value_node->abstract(), value_node->value());
+    if (RemoveValueNodeFromGraph(value_node)) {
+      MS_LOG(WARNING) << "Failed to remove the value_node " << value_node->DebugString();
+    }
+    return make_tuple;
+  } else if (node->isa<CNode>()) {
+    return TransCNodeTuple(node->cast<CNodePtr>());
+  }
+  MS_LOG(EXCEPTION) << "Unexpected node:" << node->DebugString();
 }
 
 const std::vector<AnfNodePtr> &KernelGraph::inputs() const {
@@ -747,6 +848,23 @@ bool KernelGraph::RemoveValueNodeFromGraph(const ValueNodePtr &value_node) {
   return false;
 }
 
+void KernelGraph::ReplaceGraphInput(const AnfNodePtr &old_parameter, const AnfNodePtr &new_parameter) {
+  // update graph inputs
+  MS_EXCEPTION_IF_NULL(old_parameter);
+  MS_EXCEPTION_IF_NULL(new_parameter);
+  if (old_parameter == new_parameter) {
+    return;
+  }
+  for (size_t i = 0; i < inputs_->size(); i++) {
+    if ((*inputs_)[i] == old_parameter) {
+      MS_LOG(INFO) << "Replace input of graph:" << graph_id_ << ", old graph input: " << old_parameter->DebugString()
+                   << ",new graph input:" << new_parameter->DebugString();
+      (*inputs_)[i] = new_parameter;
+      break;
+    }
+  }
+}
+
 void KernelGraph::ReplaceNode(NotNull<AnfNodePtr> old_anf_node, NotNull<AnfNodePtr> new_anf_node) {
   MS_EXCEPTION_IF_NULL(inputs_);
   {
@@ -770,15 +888,7 @@ void KernelGraph::ReplaceNode(NotNull<AnfNodePtr> old_anf_node, NotNull<AnfNodeP
           output_cnode->set_input(i, new_anf_node);
         }
       }
-      // update graph inputs
-      for (size_t i = 0; i < inputs_->size(); i++) {
-        if ((*inputs_)[i] == old_anf_node.get()) {
-          MS_LOG(INFO) << "Replace input of graph:" << graph_id_ << ", old graph input: " << old_anf_node->DebugString()
-                       << ",new graph input:" << new_anf_node->DebugString();
-          (*inputs_)[i] = new_anf_node.get();
-          break;
-        }
-      }
+      ReplaceGraphInput(old_anf_node, new_anf_node);
     }
     // update front to backend map
     FrontBackendlMapUpdate(old_anf_node, new_anf_node);
@@ -786,27 +896,6 @@ void KernelGraph::ReplaceNode(NotNull<AnfNodePtr> old_anf_node, NotNull<AnfNodeP
   {
     std::queue<AnfNodePtr> seed_nodes;
     UpdateNodeEdgeList(&seed_nodes);
-  }
-  // update graph inputs in child graph
-  auto it_real_inputs = std::find_if(real_inputs_.begin(), real_inputs_.end(),
-                                     [&old_anf_node](const std::pair<AnfNodePtr, std::vector<AnfNodePtr>> &n) -> bool {
-                                       return n.first == old_anf_node.get();
-                                     });
-  if (it_real_inputs != real_inputs_.end()) {
-    // erase old parameter in map
-    auto old_args = it_real_inputs->second;
-    real_inputs_.erase(it_real_inputs);
-    // insert new parameter to map
-    auto iter = std::find_if(real_inputs_.begin(), real_inputs_.end(),
-                             [&new_anf_node](const std::pair<AnfNodePtr, std::vector<AnfNodePtr>> &n) -> bool {
-                               return n.first == new_anf_node.get();
-                             });
-    if (iter != real_inputs_.end()) {
-      MS_LOG(WARNING) << new_anf_node->DebugString() << " Already exist in real inputs, will be rewrited.";
-      iter->second = old_args;
-    } else {
-      real_inputs_.emplace_back(new_anf_node, old_args);
-    }
   }
 }
 
@@ -842,56 +931,6 @@ std::vector<CNodePtr> KernelGraph::FindNodeByPrimitive(const PrimitivePtr &primi
   return result;
 }
 
-void KernelGraph::SetRealInput(const AnfNodePtr &parameter, const AnfNodePtr &arg) {
-  MS_EXCEPTION_IF_NULL(parameter);
-  MS_EXCEPTION_IF_NULL(arg);
-  MS_LOG(INFO) << "Parameter: " << parameter->DebugString() << ", real input : " << arg->DebugString();
-  MS_EXCEPTION_IF_NULL(parameter);
-  MS_EXCEPTION_IF_NULL(arg);
-  auto iter = std::find_if(
-    real_inputs_.begin(), real_inputs_.end(),
-    [&parameter](const std::pair<AnfNodePtr, std::vector<AnfNodePtr>> &n) -> bool { return n.first == parameter; });
-  if (iter != real_inputs_.end()) {
-    auto &args = iter->second;
-    args.push_back(arg);
-  } else {
-    real_inputs_.emplace_back(parameter, std::vector<AnfNodePtr>(1, arg));
-  }
-}
-
-void KernelGraph::AddUnreuseArgs(const AnfNodePtr &arg, const std::shared_ptr<KernelGraph> &from_graph) {
-  unreuse_args_[arg] = from_graph;
-}
-
-void KernelGraph::UpdateCallRealInput() {
-  MS_LOG(INFO) << "Update graph id: " << graph_id_;
-  std::vector<std::pair<AnfNodePtr, std::vector<AnfNodePtr>>> real_inputs_map;
-  for (auto &it : real_inputs_) {
-    auto parameter = it.first;
-    MS_EXCEPTION_IF_NULL(parameter);
-    auto real_inputs = it.second;
-    std::vector<AnfNodePtr> new_real_inputs;
-    for (auto &real_input : real_inputs) {
-      // if real input is a call node ,find the child graph output act as the new real input
-      auto tmp_real_input = GetCallRealOutputs(real_input);
-      std::copy(tmp_real_input.begin(), tmp_real_input.end(), std::back_inserter(new_real_inputs));
-      // replace the call in unreuse_args_
-      auto unreuse_arg_it = unreuse_args_.find(real_input);
-      if (unreuse_arg_it != unreuse_args_.end()) {
-        auto old_graph = unreuse_arg_it->second;
-        for (auto new_real_input : new_real_inputs) {
-          // if call reference graph output is parameter, it will be allowed to reuse
-          if (!new_real_input->isa<Parameter>()) {
-            unreuse_args_[new_real_input] = old_graph;
-          }
-        }
-      }
-    }
-    real_inputs_map.emplace_back(parameter, new_real_inputs);
-  }
-  real_inputs_ = real_inputs_map;
-}
-
 void KernelGraph::PrintGraphExecuteOrder() const {
   MS_LOG(INFO) << "Graph:" << graph_id_ << "execution order";
   for (size_t i = 0; i < execution_order_.size(); i++) {
@@ -922,17 +961,44 @@ void KernelGraph::PrintGraphExecuteOrder() const {
   }
 }
 
-void KernelGraph::AddInternalOutput(const AnfNodePtr &front_node, const AnfNodePtr &node) {
+void KernelGraph::AddInternalOutput(const AnfNodePtr &front_node, const AnfNodePtr &node, int output_idx,
+                                    bool unique_target) {
   if (front_node == nullptr || node == nullptr) {
     MS_LOG(INFO) << "Front node or node is nullptr";
     return;
   }
   MS_LOG(INFO) << "Add internal node " << node->DebugString() << " with front node " << front_node->DebugString();
   front_to_internal_outputs_map_[front_node] = node;
-  internal_outputs_to_front_map_[node] = front_node;
+  if (AnfAlgo::CheckPrimitiveType(front_node, prim::kPrimTupleGetItem)) {
+    output_idx = AnfAlgo::GetTupleGetItemOutIndex(front_node->cast<CNodePtr>());
+  }
+  internal_outputs_to_front_map_[node][output_idx] = std::pair<AnfNodePtr, bool>(front_node, unique_target);
 }
 
-void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node) {
+void KernelGraph::AddInternalOutputTensor(const AnfNodePtr &node, int output_idx, const tensor::TensorPtr &tensor) {
+  if (node == nullptr) {
+    return;
+  }
+  internal_outputs_tensor_map_[node][output_idx] = tensor;
+}
+
+tensor::TensorPtr KernelGraph::GetInternalOutputTensor(const AnfNodePtr &node, int output_idx) {
+  if (node == nullptr) {
+    return nullptr;
+  }
+  auto iter = internal_outputs_tensor_map_.find(node);
+  if (iter == internal_outputs_tensor_map_.end()) {
+    return nullptr;
+  }
+  auto idx_iter = iter->second.find(output_idx);
+  if (idx_iter == iter->second.end()) {
+    return nullptr;
+  }
+  return idx_iter->second;
+}
+
+void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node, int src_output_idx,
+                                        int dst_output_idx) {
   if (new_node == nullptr || node == nullptr) {
     MS_LOG(INFO) << "New node or node is nullptr";
     return;
@@ -947,9 +1013,30 @@ void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr
     return;
   }
   MS_LOG(INFO) << "Replace internal node " << node->DebugString() << " To " << new_node->DebugString();
-  internal_outputs_to_front_map_[new_node] = iter->second;
-  front_to_internal_outputs_map_[iter->second] = new_node;
-  internal_outputs_to_front_map_.erase(iter);
+  auto &front_nodes = iter->second;
+  // Move all front nodes to new node mapping
+  if (src_output_idx == -1) {
+    internal_outputs_to_front_map_[new_node] = front_nodes;
+    for (const auto &front_node_iter : front_nodes) {
+      front_to_internal_outputs_map_[front_node_iter.second.first] = new_node;
+    }
+    internal_outputs_to_front_map_.erase(iter);
+    return;
+  }
+  // Move specified front node to new node mapping
+  int index = SizeToInt(src_output_idx);
+  auto front_node_iter = front_nodes.find(index);
+  if (front_node_iter == front_nodes.end()) {
+    MS_LOG(INFO) << "The output " << src_output_idx << " of node " << node->DebugString() << " is not an internal node";
+    return;
+  }
+  auto front_node_pair = front_node_iter->second;
+  internal_outputs_to_front_map_[new_node][dst_output_idx] = front_node_pair;
+  front_to_internal_outputs_map_[front_node_pair.first] = new_node;
+  front_nodes.erase(index);
+  if (front_nodes.empty()) {
+    internal_outputs_to_front_map_.erase(iter);
+  }
 }
 
 AnfNodePtr KernelGraph::GetInternalOutputByFrontNode(const AnfNodePtr &front_node) const {
@@ -960,36 +1047,32 @@ AnfNodePtr KernelGraph::GetInternalOutputByFrontNode(const AnfNodePtr &front_nod
   return nullptr;
 }
 
-bool KernelGraph::IsInternalOutput(const AnfNodePtr &node) const {
-  if (internal_outputs_to_front_map_.find(node) != internal_outputs_to_front_map_.end()) {
-    return true;
-  }
-  return false;
-}
-
-AnfNodePtr KernelGraph::GetFrontNodeByInternalOutput(const AnfNodePtr &node) const {
-  auto iter = internal_outputs_to_front_map_.find(node);
-  if (iter != internal_outputs_to_front_map_.end()) {
-    return iter->second;
-  }
-  return nullptr;
-}
-
-void KernelGraph::AddFinalOutputKernel(const AnfNodePtr &node) {
-  if (node == nullptr) {
-    return;
-  }
-  (void)final_output_kernels_.insert(node);
-}
-
-bool KernelGraph::IsFinalOutputKernel(const AnfNodePtr &node) const {
-  if (node == nullptr) {
+bool KernelGraph::IsInternalOutput(const AnfNodePtr &node, int output_idx) const {
+  auto front_nodes_iter = internal_outputs_to_front_map_.find(node);
+  if (front_nodes_iter == internal_outputs_to_front_map_.end()) {
     return false;
   }
-  if (final_output_kernels_.find(node) != final_output_kernels_.end()) {
+  if (output_idx == -1) {
     return true;
   }
-  return false;
+  auto &front_nodes = front_nodes_iter->second;
+  if (front_nodes.find(output_idx) == front_nodes.end()) {
+    return false;
+  }
+  return true;
+}
+
+bool KernelGraph::IsUniqueTargetInternalOutput(const AnfNodePtr &node, int output_idx) const {
+  auto front_nodes_iter = internal_outputs_to_front_map_.find(node);
+  if (front_nodes_iter == internal_outputs_to_front_map_.end()) {
+    return false;
+  }
+  auto &front_nodes = front_nodes_iter->second;
+  auto idx_iter = front_nodes.find(output_idx);
+  if (idx_iter == front_nodes.end()) {
+    return false;
+  }
+  return idx_iter->second.second;
 }
 
 void KernelGraph::UpdateChildGraphOrder() {

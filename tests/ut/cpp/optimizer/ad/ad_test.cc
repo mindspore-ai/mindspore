@@ -23,7 +23,7 @@
 #include "ir/value.h"
 #include "ir/func_graph_cloner.h"
 #include "utils/log_adapter.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/parse/parse.h"
 #include "debug/draw.h"

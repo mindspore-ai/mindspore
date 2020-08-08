@@ -53,4 +53,3 @@ def test_net_ND():
     talpha, tbeta = Tensor(alpha), Tensor(beta)
     output = net(talpha, tbeta)
     assert output.shape == (3, 2, 2)
-

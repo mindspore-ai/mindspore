@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_DEVICE_GPU_COLLECTIVE_COMMON_H_
-#define MINDSPORE_CCSRC_DEVICE_GPU_COLLECTIVE_COMMON_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_COLLECTIVE_COMMON_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_COLLECTIVE_COMMON_H_
 
+#include <nccl.h>
 #include <sstream>
 #include "pybind11/pybind11.h"
 
@@ -25,6 +26,12 @@ namespace device {
 namespace gpu {
 constexpr int MAX_HOSTNAME_LEN = 1024;
 constexpr char NCCL_WORLD_GROUP[] = "nccl_world_group";
+struct NcclGroupInfo {
+  int size;
+  int rank;
+  ncclUniqueId unique_id;
+  ncclComm_t comm;
+};
 #define CHECK_RET(expression, result, message)                                                                         \
   {                                                                                                                    \
     auto ret = (expression);                                                                                           \
@@ -39,4 +46,4 @@ constexpr char NCCL_WORLD_GROUP[] = "nccl_world_group";
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_GPU_COLLECTIVE_COMMON_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_COLLECTIVE_COMMON_H_

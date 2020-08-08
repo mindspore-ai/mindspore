@@ -18,7 +18,7 @@
 #include <vector>
 #include "minddata/dataset/core/client.h"
 #include "common/common.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "gtest/gtest.h"
 #include "minddata/mindrecord/include/shard_category.h"
 #include "minddata/mindrecord/include/shard_error.h"
@@ -435,7 +435,6 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordBlockReaderRepeat) {
       .SetLoadDataset(true)
       .SetRowsPerBuffer(3)
       .SetNumMindRecordWorkers(4)
-      .SetBlockReader()
       .SetColumnsToLoad(column_list);
   rc = builder.Build(&my_mindrecord_op);
   ASSERT_TRUE(rc.IsOk());

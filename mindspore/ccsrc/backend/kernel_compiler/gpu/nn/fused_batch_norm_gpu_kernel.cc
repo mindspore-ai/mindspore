@@ -34,15 +34,15 @@ MS_REG_GPU_KERNEL_ONE(FusedBatchNorm,
 MS_REG_GPU_KERNEL_ONE(FusedBatchNorm,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat16)
-                        .AddOutputAttr(kNumberTypeFloat16)
-                        .AddOutputAttr(kNumberTypeFloat16)
-                        .AddOutputAttr(kNumberTypeFloat16)
-                        .AddOutputAttr(kNumberTypeFloat16),
+                        .AddOutputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32),
                       FusedBatchNormGpuKernel, half)
 MS_REG_GPU_KERNEL_ONE(BatchNorm,
                       KernelAttr()
@@ -60,15 +60,15 @@ MS_REG_GPU_KERNEL_ONE(BatchNorm,
 MS_REG_GPU_KERNEL_ONE(BatchNorm,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat16)
-                        .AddOutputAttr(kNumberTypeFloat16)
-                        .AddOutputAttr(kNumberTypeFloat16)
-                        .AddOutputAttr(kNumberTypeFloat16)
-                        .AddOutputAttr(kNumberTypeFloat16),
+                        .AddOutputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32),
                       FusedBatchNormGpuKernel, half)
 }  // namespace kernel
 }  // namespace mindspore

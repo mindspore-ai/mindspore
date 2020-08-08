@@ -20,6 +20,7 @@ import mindspore as ms
 from mindspore import Tensor
 from mindspore import context
 from mindspore import nn
+from mindspore.common import dtype as mstype
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
@@ -115,8 +116,7 @@ def test_if_none():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = None
     net = Net(z)
-    assert net(x, y) == y
-
+    assert np.all(net(x, y).asnumpy() == y.asnumpy())
 
 def test_if_str_is_not_none_right():
     class Net(nn.Cell):
@@ -136,7 +136,7 @@ def test_if_str_is_not_none_right():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = "ok"
     net = Net(z)
-    assert net(x, y) == y
+    assert np.all(net(x, y).asnumpy() == y.asnumpy())
 
 
 def test_if_str_is_not_none_left():
@@ -157,7 +157,7 @@ def test_if_str_is_not_none_left():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = "ok"
     net = Net(z)
-    assert net(x, y) == y
+    assert np.all(net(x, y).asnumpy() == y.asnumpy())
 
 
 def test_if_none_equal_none():
@@ -178,7 +178,7 @@ def test_if_none_equal_none():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = None
     net = Net(z)
-    assert net(x, y) == x
+    assert np.all(net(x, y).asnumpy() == x.asnumpy())
 
 
 def test_if_str_is_null():
@@ -199,7 +199,7 @@ def test_if_str_is_null():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = ""
     net = Net(z)
-    assert net(x, y) == y
+    assert np.all(net(x, y).asnumpy() == y.asnumpy())
 
 
 def test_if_str_is_true():
@@ -220,7 +220,7 @@ def test_if_str_is_true():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = "ok"
     net = Net(z)
-    assert net(x, y) == x
+    assert np.all(net(x, y).asnumpy() == x.asnumpy())
 
 
 def test_if_str_equal():
@@ -241,7 +241,7 @@ def test_if_str_equal():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = "ok"
     net = Net(z)
-    assert net(x, y) == x
+    assert np.all(net(x, y).asnumpy() == x.asnumpy())
 
 
 def test_if_tuple_is_null():
@@ -262,7 +262,7 @@ def test_if_tuple_is_null():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = ()
     net = Net(z)
-    assert net(x, y) == y
+    assert np.all(net(x, y).asnumpy() == y.asnumpy())
 
 
 def test_if_tuple_is_not_null():
@@ -283,7 +283,7 @@ def test_if_tuple_is_not_null():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = (1, 2, 3)
     net = Net(z)
-    assert net(x, y) == x
+    assert np.all(net(x, y).asnumpy() == x.asnumpy())
 
 
 def test_if_dict_is_null():
@@ -304,7 +304,7 @@ def test_if_dict_is_null():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = {}
     net = Net(z)
-    assert net(x, y) == y
+    assert np.all(net(x, y).asnumpy() == y.asnumpy())
 
 
 def test_if_dict_is_not_null():
@@ -325,7 +325,7 @@ def test_if_dict_is_not_null():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = {"one": 1, "two": 2}
     net = Net(z)
-    assert net(x, y) == x
+    assert np.all(net(x, y).asnumpy() == x.asnumpy())
 
 
 def test_if_else_assign():
@@ -355,7 +355,7 @@ def test_if_else_assign():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = [1, 2]
     net = Net(z)
-    assert net(x, y) == x
+    assert np.all(net(x, y).asnumpy() == x.asnumpy())
 
 
 def test_if_compile_true():
@@ -398,7 +398,7 @@ def test_switch_layer():
             ret = F.switch_layer(index, self.layers)(x) * self.z3
             return ret
 
-    index = Tensor(0)
+    index = Tensor(0, dtype=mstype.int32)
     net = SwitchLayerCell()
     net(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
     C.grad_by_list(net, ParameterTuple(net.trainable_params()))(index,
@@ -436,7 +436,7 @@ def test_index_to_switch_layer():
             ret = self.layers[index](x) * self.z3
             return ret
 
-    index = Tensor(0)
+    index = Tensor(0, dtype=mstype.int32)
     net = SwitchLayerCell()
     net(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
     C.grad_by_list(net, ParameterTuple(net.trainable_params()))(index,
@@ -639,3 +639,33 @@ def test_large_for_loop_with_continue_break():
     t = Tensor(np.ones([2, 3], dtype=np.float32))
     net = Net()
     net(t)
+
+
+def test_mixed_precision_cast():
+    x = Tensor(np.ones([2, 3], dtype=np.float32))
+    z = F.mixed_precision_cast(mstype.float16, x)
+    assert z.dtype == mstype.float16
+
+
+def test_while_concat():
+    class Net(nn.Cell):
+        def __init__(self, data):
+            super(Net, self).__init__()
+            self.start = Tensor(0, dtype=mstype.int32)
+            self.end = Tensor(2, dtype=mstype.int32)
+            self.out = Tensor(np.zeros([2, 3], dtype=np.float32))
+            self.concat = P.Concat()
+
+        def construct(self, inputs):
+            idx = self.start
+            end = self.end
+            out = self.out
+            while idx < end:
+                xi = inputs[idx, :, :]
+                out = self.concat((out, xi))
+                idx = idx + 1
+            return out
+
+    x = Tensor(np.arange(10 * 2 * 3).reshape(10, 2, 3).astype(np.float32))
+    net = Net(x)
+    net(x)

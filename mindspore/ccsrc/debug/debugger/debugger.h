@@ -55,7 +55,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   // init
   // only save device_id
-  void Init(const uint32_t device_id);
+  void Init(const uint32_t device_id, const std::string device_target);
 
   // reset debugger
   void Reset();
@@ -69,6 +69,10 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // don't need a graph_ptr because it is saved during pre_execute
   void PostExecute();
 
+  bool ReadNodeDataRequired();
+
+  void PostExecuteNode();
+
   // suspend the execution after a debug_op
   void PostDebugOp();
 
@@ -77,6 +81,14 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   bool debugger_enabled() const;
 
   bool partial_memory();
+
+  void SetCurNode(std::string cur_name);
+
+  std::string run_level() const;
+
+  void SetStepNum(int32_t cur_num_step);
+
+  int32_t step_num() const;
 
  private:
   // private constructor for singleton
@@ -119,6 +131,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // analyze tensors and check watchpoint conditions
   // return names of tensors and what condition they hit
   std::list<WatchpointHit> CheckWatchpoints() const;
+  std::list<WatchpointHit> CheckSingleWatchpoint(std::string watchnode) const;
 
   // send watchpoints that hit and enter command wait loop
   void SendWatchpointsAndSuspend(const std::list<WatchpointHit> &points);
@@ -128,8 +141,12 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   std::unique_ptr<DebugServices> debug_services_;
   KernelGraphPtr graph_ptr_;
   uint32_t device_id_;
+  std::string device_target_;
   int32_t num_step_;
   bool debugger_enabled_;
+  std::string run_level_;
+  std::string node_name_;
+  std::string cur_name_;
   bool is_dataset_graph_;
   bool partial_memory_;
   std::mutex access_lock_;
@@ -153,6 +170,8 @@ DebuggerCommand GetCommand(const EventReply &reply);
 
 // parse other data out of EventReply
 ProtoVector<WatchNode> GetWatchnodes(const EventReply &reply);
+std::string GetNodeName(const EventReply &reply);
+std::string GetRunLevel(const EventReply &reply);
 WatchCondition GetWatchcondition(const EventReply &reply);
 int32_t GetWatchpointID(const EventReply &reply);
 bool GetWatchpointDelete(const EventReply &reply);

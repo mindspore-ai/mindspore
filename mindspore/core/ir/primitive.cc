@@ -17,8 +17,39 @@
 #include "ir/primitive.h"
 
 #include <utility>
+#include "abstract/abstract_function.h"
 
 namespace mindspore {
+
+static std::string MakeId() {
+  // Use atomic to make id generator thread safe.
+  static std::atomic<uint64_t> last_id{1};
+  return "P" + std::to_string(last_id.fetch_add(1, std::memory_order_relaxed));
+}
+
+Primitive::Primitive(const std::string &name, const bool is_base, const PrimType prim_type)
+    : Named(name),
+      is_base_(is_base),
+      has_signature_(false),
+      prim_type_(prim_type),
+      record_evaluate_add_attr_(false),
+      is_const_value_(false),
+      id_(MakeId()) {}
+
+Primitive::Primitive(const Primitive &prim)
+    : Named(prim),
+      attrs_(prim.attrs_),
+      instance_name_(prim.instance_name_),
+      is_base_(prim.is_base_),
+      has_signature_(prim.has_signature_),
+      prim_type_(prim.prim_type_),
+      record_evaluate_add_attr_(false),
+      id_(prim.id_) {}
+
+abstract::AbstractBasePtr Primitive::ToAbstract() {
+  return std::make_shared<abstract::PrimitiveAbstractClosure>(shared_from_base<Primitive>(), nullptr);
+}
+
 bool Primitive::operator==(const Value &other) const {
   if (other.isa<Primitive>()) {
     auto other_prim = static_cast<const Primitive &>(other);

@@ -46,10 +46,10 @@ def test_random_crop_with_bbox_op_c(plot_vis=False):
     test_op = c_vision.RandomCropWithBBox([512, 512], [200, 200, 200, 200])
 
     # map to apply ops
-    dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                            output_columns=["image", "annotation"],
-                            columns_order=["image", "annotation"],
-                            operations=[test_op])  # Add column for "annotation"
+    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+                            output_columns=["image", "bbox"],
+                            columns_order=["image", "bbox"],
+                            operations=[test_op])  # Add column for "bbox"
 
     unaugSamp, augSamp = [], []
 
@@ -108,9 +108,9 @@ def test_random_crop_with_bbox_op2_c(plot_vis=False):
     test_op = c_vision.RandomCropWithBBox(512, [200, 200, 200, 200], fill_value=(255, 255, 255))
 
     # map to apply ops
-    dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                            output_columns=["image", "annotation"],
-                            columns_order=["image", "annotation"],
+    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+                            output_columns=["image", "bbox"],
+                            columns_order=["image", "bbox"],
                             operations=[test_op])
 
     filename = "random_crop_with_bbox_01_c_result.npz"
@@ -145,9 +145,9 @@ def test_random_crop_with_bbox_op3_c(plot_vis=False):
     test_op = c_vision.RandomCropWithBBox(512, [200, 200, 200, 200], padding_mode=mode.Border.EDGE)
 
     # map to apply ops
-    dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                            output_columns=["image", "annotation"],
-                            columns_order=["image", "annotation"],
+    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+                            output_columns=["image", "bbox"],
+                            columns_order=["image", "bbox"],
                             operations=[test_op])
 
     unaugSamp, augSamp = [], []
@@ -175,16 +175,18 @@ def test_random_crop_with_bbox_op_edge_c(plot_vis=False):
     test_op = c_vision.RandomCropWithBBox(512, [200, 200, 200, 200], padding_mode=mode.Border.EDGE)
 
     # maps to convert data into valid edge case data
-    dataVoc1 = dataVoc1.map(input_columns=["image", "annotation"],
-                            output_columns=["image", "annotation"],
-                            columns_order=["image", "annotation"],
-                            operations=[lambda img, bboxes: (img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype))])
+    dataVoc1 = dataVoc1.map(input_columns=["image", "bbox"],
+                            output_columns=["image", "bbox"],
+                            columns_order=["image", "bbox"],
+                            operations=[lambda img, bboxes: (
+                                img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype))])
 
     # Test Op added to list of Operations here
-    dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                            output_columns=["image", "annotation"],
-                            columns_order=["image", "annotation"],
-                            operations=[lambda img, bboxes: (img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype)), test_op])
+    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+                            output_columns=["image", "bbox"],
+                            columns_order=["image", "bbox"],
+                            operations=[lambda img, bboxes: (
+                                img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype)), test_op])
 
     unaugSamp, augSamp = [], []
 
@@ -210,10 +212,10 @@ def test_random_crop_with_bbox_op_invalid_c():
         test_op = c_vision.RandomCropWithBBox([512, 512, 375])
 
         # map to apply ops
-        dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                                output_columns=["image", "annotation"],
-                                columns_order=["image", "annotation"],
-                                operations=[test_op])  # Add column for "annotation"
+        dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+                                output_columns=["image", "bbox"],
+                                columns_order=["image", "bbox"],
+                                operations=[test_op])  # Add column for "bbox"
 
         for _ in dataVoc2.create_dict_iterator():
             break
@@ -239,6 +241,43 @@ def test_random_crop_with_bbox_op_bad_c():
     check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WrongShape, "4 features")
 
 
+def test_random_crop_with_bbox_op_bad_padding():
+    """
+    Test RandomCropWithBBox Op on invalid constructor parameters, expected to raise ValueError
+    """
+    logger.info("test_random_crop_with_bbox_op_invalid_c")
+
+    dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train", decode=True, shuffle=False)
+
+    try:
+        test_op = c_vision.RandomCropWithBBox([512, 512], padding=-1)
+
+        dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+                                output_columns=["image", "bbox"],
+                                columns_order=["image", "bbox"],
+                                operations=[test_op])
+
+        for _ in dataVoc2.create_dict_iterator():
+            break
+    except ValueError as err:
+        logger.info("Got an exception in DE: {}".format(str(err)))
+        assert "Input padding is not within the required interval of (0 to 2147483647)." in str(err)
+
+    try:
+        test_op = c_vision.RandomCropWithBBox([512, 512], padding=[16777216, 16777216, 16777216, 16777216])
+
+        dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+                                output_columns=["image", "bbox"],
+                                columns_order=["image", "bbox"],
+                                operations=[test_op])
+
+        for _ in dataVoc2.create_dict_iterator():
+            break
+    except RuntimeError as err:
+        logger.info("Got an exception in DE: {}".format(str(err)))
+        assert "RandomCropBBoxOp padding size is too big, it\'s more than 3 times the original size." in str(err)
+
+
 if __name__ == "__main__":
     test_random_crop_with_bbox_op_c(plot_vis=True)
     test_random_crop_with_bbox_op_coco_c(plot_vis=True)
@@ -247,3 +286,4 @@ if __name__ == "__main__":
     test_random_crop_with_bbox_op_edge_c(plot_vis=True)
     test_random_crop_with_bbox_op_invalid_c()
     test_random_crop_with_bbox_op_bad_c()
+    test_random_crop_with_bbox_op_bad_padding()

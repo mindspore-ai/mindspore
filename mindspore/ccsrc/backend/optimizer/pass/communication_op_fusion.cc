@@ -16,10 +16,11 @@
 #include "backend/optimizer/pass/communication_op_fusion.h"
 
 #include <vector>
+#include <set>
 #include <memory>
 #include <unordered_map>
 
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "frontend/operator/ops.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -89,6 +90,13 @@ std::string GetFusionGroupKey(const AnfNodePtr &node) {
   }
   return group + op + std::to_string(fusion);
 }
+
+void CheckInputs(const std::vector<AnfNodePtr> &fusion_inputs) {
+  std::set<AnfNodePtr> inputs_set(fusion_inputs.begin(), fusion_inputs.end());
+  if (inputs_set.size() < fusion_inputs.size()) {
+    MS_LOG(EXCEPTION) << "Different communication op in one segment cannot share the same input";
+  }
+}
 }  // namespace
 
 bool CommunicationOpFusion::GetSplitSegments(const CommunicationOpInfo &communication_op_info, size_t *segment_num,
@@ -100,7 +108,10 @@ bool CommunicationOpFusion::GetSplitSegments(const CommunicationOpInfo &communic
 
   auto parallel_context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context);
-  const auto &split_indices = parallel_context->GetAllReduceFusionSplitIndices(group);
+  std::vector<uint32_t> split_indices;
+  if (!parallel_context->enable_parallel_optimizer()) {
+    split_indices = parallel_context->GetAllReduceFusionSplitIndices(group);
+  }
 
   size_t segments = 0;
   if (split_indices.size() != 0) {
@@ -160,6 +171,7 @@ AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr 
     MS_EXCEPTION_IF_NULL(cnode);
     fusion_inputs.insert(fusion_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
   }
+  CheckInputs(fusion_inputs);
   AnfNodePtr fused_node = func_graph->NewCNode(fusion_inputs);
   MS_EXCEPTION_IF_NULL(fused_node);
   auto kernel_info = std::make_shared<device::KernelInfo>();
@@ -169,9 +181,6 @@ AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr 
   for (size_t idx = start_index; idx <= end_index; ++idx) {
     auto cnode = communication_op_info.communication_op_nodes[idx];
     MS_EXCEPTION_IF_NULL(cnode);
-    AnfAlgo::CopyNodeAttr("fusion", cnode, fused_node);
-    AnfAlgo::CopyNodeAttr("op", cnode, fused_node);
-    AnfAlgo::CopyNodeAttr("group", cnode, fused_node);
     abstract_list.push_back(cnode->abstract());
   }
   auto kernel_build_info = GenerateKernelBuildInfo(communication_op_info, start_index, end_index);
@@ -179,6 +188,13 @@ AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr 
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
   MS_EXCEPTION_IF_NULL(abstract_tuple);
   fused_node->set_abstract(abstract_tuple);
+  auto final_node = communication_op_info.communication_op_nodes[end_index];
+  AnfAlgo::CopyNodeAttr(kAttrFusion, final_node, fused_node);
+  AnfAlgo::CopyNodeAttr(kAttrOp, final_node, fused_node);
+  AnfAlgo::CopyNodeAttr(kAttrGroup, final_node, fused_node);
+  if (AnfAlgo::HasNodeAttr(kAttrRankSize, final_node)) {
+    AnfAlgo::CopyNodeAttr(kAttrRankSize, final_node, fused_node);
+  }
   return fused_node;
 }
 

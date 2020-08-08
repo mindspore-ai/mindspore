@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_INCLUDE_DATASETS_H_
-#define DATASET_INCLUDE_DATASETS_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASETS_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASETS_H_
 
 #include <vector>
 #include <memory>
@@ -40,14 +40,76 @@ namespace api {
 
 class TensorOperation;
 class SamplerObj;
+// Datasets classes (in alphabetical order)
+class CelebADataset;
+class Cifar10Dataset;
+class Cifar100Dataset;
+class CocoDataset;
 class ImageFolderDataset;
 class MnistDataset;
+class VOCDataset;
+// Dataset Op classes (in alphabetical order)
 class BatchDataset;
-class RepeatDataset;
+class ConcatDataset;
 class MapDataset;
-class ShuffleDataset;
-class Cifar10Dataset;
 class ProjectDataset;
+class RenameDataset;
+class RepeatDataset;
+class ShuffleDataset;
+class SkipDataset;
+class TakeDataset;
+class ZipDataset;
+
+/// \brief Function to create a CelebADataset
+/// \notes The generated dataset has two columns ['image', 'attr'].
+//     The type of the image tensor is uint8. The attr tensor is uint32 and one hot type.
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] dataset_type One of 'all', 'train', 'valid' or 'test'.
+/// \param[in] decode Decode the images after reading (default=False).
+/// \param[in] extensions List of file extensions to be included in the dataset (default=None).
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
+///    will be used to randomly iterate the entire dataset
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<CelebADataset> CelebA(const std::string &dataset_dir, const std::string &dataset_type = "all",
+                                      const std::shared_ptr<SamplerObj> &sampler = nullptr, const bool &decode = false,
+                                      const std::set<std::string> &extensions = {});
+
+/// \brief Function to create a Cifar10 Dataset
+/// \notes The generated dataset has two columns ['image', 'label']
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
+///    will be used to randomly iterate the entire dataset
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, std::shared_ptr<SamplerObj> sampler = nullptr);
+
+/// \brief Function to create a Cifar100 Dataset
+/// \notes The generated dataset has two columns ['image', 'coarse_label', 'fine_label']
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
+///    will be used to randomly iterate the entire dataset
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir,
+                                          std::shared_ptr<SamplerObj> sampler = nullptr);
+
+/// \brief Function to create a CocoDataset
+/// \notes The generated dataset has multi-columns :
+///        - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
+///                                     ['iscrowd', dtype=uint32]].
+///        - task='Stuff', column: [['image', dtype=uint8], ['segmentation',dtype=float32], ['iscrowd', dtype=uint32]].
+///        - task='Keypoint', column: [['image', dtype=uint8], ['keypoints', dtype=float32],
+///                                    ['num_keypoints', dtype=uint32]].
+///        - task='Panoptic', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
+///                                    ['iscrowd', dtype=uint32], ['area', dtype=uitn32]].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] annotation_file Path to the annotation json
+/// \param[in] task Set the task type of reading coco data, now support 'Detection'/'Stuff'/'Panoptic'/'Keypoint'
+/// \param[in] decode Decode the images after reading
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
+///    will be used to randomly iterate the entire dataset
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::string &annotation_file,
+                                  const std::string &task = "Detection", const bool &decode = false,
+                                  const std::shared_ptr<SamplerObj> &sampler = nullptr);
 
 /// \brief Function to create an ImageFolderDataset
 /// \notes A source dataset that reads images from a tree of directories
@@ -73,15 +135,37 @@ std::shared_ptr<ImageFolderDataset> ImageFolder(std::string dataset_dir, bool de
 /// \return Shared pointer to the current MnistDataset
 std::shared_ptr<MnistDataset> Mnist(std::string dataset_dir, std::shared_ptr<SamplerObj> sampler = nullptr);
 
-/// \brief Function to create a Cifar10 Dataset
-/// \notes The generated dataset has two columns ['image', 'label']
+/// \brief Function to create a ConcatDataset
+/// \notes Reload "+" operator to concat two datasets
+/// \param[in] datasets1 Shared pointer to the first dataset to be concatenated
+/// \param[in] datasets2 Shared pointer to the second dataset to be concatenated
+/// \return Shared pointer to the current ConcatDataset
+std::shared_ptr<ConcatDataset> operator+(const std::shared_ptr<Dataset> &datasets1,
+                                         const std::shared_ptr<Dataset> &datasets2);
+
+/// \brief Function to create a VOCDataset
+/// \notes The generated dataset has multi-columns :
+///        - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['label', dtype=uint32],
+///                                     ['difficult', dtype=uint32], ['truncate', dtype=uint32]].
+///        - task='Segmentation', column: [['image', dtype=uint8], ['target',dtype=uint8]].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
-/// \param[in] num_samples The number of images to be included in the dataset
+/// \param[in] task Set the task type of reading voc data, now only support "Segmentation" or "Detection"
+/// \param[in] mode Set the data list txt file to be readed
+/// \param[in] class_indexing A str-to-int mapping from label name to index
+/// \param[in] decode Decode the images after reading
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
 ///    will be used to randomly iterate the entire dataset
 /// \return Shared pointer to the current Dataset
-std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, int32_t num_samples,
-                                        std::shared_ptr<SamplerObj> sampler);
+std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::string &task = "Segmentation",
+                                const std::string &mode = "train",
+                                const std::map<std::string, int32_t> &class_index = {}, bool decode = false,
+                                std::shared_ptr<SamplerObj> sampler = nullptr);
+
+/// \brief Function to create a ZipDataset
+/// \notes Applies zip to the dataset
+/// \param[in] datasets List of shared pointers to the datasets that we want to zip
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<ZipDataset> Zip(const std::vector<std::shared_ptr<Dataset>> &datasets);
 
 /// \class Dataset datasets.h
 /// \brief A base class to represent a dataset in the data pipeline.
@@ -96,8 +180,8 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   ~Dataset() = default;
 
   /// \brief Pure virtual function to convert a Dataset class into a runtime dataset object
-  /// \return shared pointer to the list of newly created DatasetOps
-  virtual std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> Build() = 0;
+  /// \return The list of shared pointers to the newly created DatasetOps
+  virtual std::vector<std::shared_ptr<DatasetOp>> Build() = 0;
 
   /// \brief Pure virtual function for derived class to implement parameters validation
   /// \return bool True if all the params are valid
@@ -125,13 +209,11 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \return Shared pointer to the current BatchDataset
   std::shared_ptr<BatchDataset> Batch(int32_t batch_size, bool drop_remainder = false);
 
-  /// \brief Function to create a RepeatDataset
-  /// \notes Repeats this dataset count times. Repeat indefinitely if count is -1
-  /// \param[in] count Number of times the dataset should be repeated
-  /// \return Shared pointer to the current Dataset
-  /// \note Repeat will return shared pointer to `Dataset` instead of `RepeatDataset`
-  ///    due to a limitation in the current implementation
-  std::shared_ptr<Dataset> Repeat(int32_t count = -1);
+  /// \brief Function to create a ConcatDataset
+  /// \notes Concat the datasets in the input
+  /// \param[in] datasets List of shared pointers to the dataset that should be concatenated together
+  /// \return Shared pointer to the current ConcatDataset
+  std::shared_ptr<ConcatDataset> Concat(const std::vector<std::shared_ptr<Dataset>> &datasets);
 
   /// \brief Function to create a MapDataset
   /// \notes Applies each operation in operations to this dataset
@@ -153,17 +235,51 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
                                   std::vector<std::string> output_columns = {},
                                   const std::vector<std::string> &project_columns = {});
 
+  /// \brief Function to create a Project Dataset
+  /// \notes Applies project to the dataset
+  /// \param[in] columns The name of columns to project
+  /// \return Shared pointer to the current Dataset
+  std::shared_ptr<ProjectDataset> Project(const std::vector<std::string> &columns);
+
+  /// \brief Function to create a Rename Dataset
+  /// \notes Renames the columns in the input dataset
+  /// \param[in] input_columns List of the input columns to rename
+  /// \param[in] output_columns List of the output columns
+  /// \return Shared pointer to the current Dataset
+  std::shared_ptr<RenameDataset> Rename(const std::vector<std::string> &input_columns,
+                                        const std::vector<std::string> &output_columns);
+
+  /// \brief Function to create a RepeatDataset
+  /// \notes Repeats this dataset count times. Repeat indefinitely if count is -1
+  /// \param[in] count Number of times the dataset should be repeated
+  /// \return Shared pointer to the current Dataset
+  /// \note Repeat will return shared pointer to `Dataset` instead of `RepeatDataset`
+  ///    due to a limitation in the current implementation
+  std::shared_ptr<Dataset> Repeat(int32_t count = -1);
+
   /// \brief Function to create a Shuffle Dataset
   /// \notes Randomly shuffles the rows of this dataset
   /// \param[in] buffer_size The size of the buffer (must be larger than 1) for shuffling
   /// \return Shared pointer to the current ShuffleDataset
   std::shared_ptr<ShuffleDataset> Shuffle(int32_t shuffle_size);
 
-  /// \brief Function to create a Project Dataset
-  /// \notes Applies project to the dataset
-  /// \param[in] columns The name of columns to project
+  /// \brief Function to create a SkipDataset
+  /// \notes Skips count elements in this dataset.
+  /// \param[in] count Number of elements the dataset to be skipped.
+  /// \return Shared pointer to the current SkipDataset
+  std::shared_ptr<SkipDataset> Skip(int32_t count);
+
+  /// \brief Function to create a TakeDataset
+  /// \notes Takes count elements in this dataset.
+  /// \param[in] count Number of elements the dataset to be taken.
   /// \return Shared pointer to the current Dataset
-  std::shared_ptr<ProjectDataset> Project(const std::vector<std::string> &columns);
+  std::shared_ptr<Dataset> Take(int32_t count = -1);
+
+  /// \brief Function to create a Zip Dataset
+  /// \notes Applies zip to the dataset
+  /// \param[in] datasets A list of shared pointers to the datasets that we want to zip
+  /// \return Shared pointer to the current Dataset
+  std::shared_ptr<ZipDataset> Zip(const std::vector<std::shared_ptr<Dataset>> &datasets);
 
  protected:
   std::vector<std::shared_ptr<Dataset>> children;
@@ -175,6 +291,99 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
 };
 
 /* ####################################### Derived Dataset classes ################################# */
+
+class CelebADataset : public Dataset {
+ public:
+  /// \brief Constructor
+  CelebADataset(const std::string &dataset_dir, const std::string &dataset_type,
+                const std::shared_ptr<SamplerObj> &sampler, const bool &decode,
+                const std::set<std::string> &extensions);
+
+  /// \brief Destructor
+  ~CelebADataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return shared pointer to the list of newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::string dataset_dir_;
+  std::string dataset_type_;
+  bool decode_;
+  std::set<std::string> extensions_;
+  std::shared_ptr<SamplerObj> sampler_;
+};
+
+class Cifar10Dataset : public Dataset {
+ public:
+  /// \brief Constructor
+  Cifar10Dataset(const std::string &dataset_dir, std::shared_ptr<SamplerObj> sampler);
+
+  /// \brief Destructor
+  ~Cifar10Dataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::string dataset_dir_;
+  std::shared_ptr<SamplerObj> sampler_;
+};
+
+class Cifar100Dataset : public Dataset {
+ public:
+  /// \brief Constructor
+  Cifar100Dataset(const std::string &dataset_dir, std::shared_ptr<SamplerObj> sampler);
+
+  /// \brief Destructor
+  ~Cifar100Dataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::string dataset_dir_;
+  std::shared_ptr<SamplerObj> sampler_;
+};
+
+class CocoDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  CocoDataset(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task,
+              const bool &decode, const std::shared_ptr<SamplerObj> &sampler);
+
+  /// \brief Destructor
+  ~CocoDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return shared pointer to the list of newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::string dataset_dir_;
+  std::string annotation_file_;
+  std::string task_;
+  bool decode_;
+  std::shared_ptr<SamplerObj> sampler_;
+};
 
 /// \class ImageFolderDataset
 /// \brief A Dataset derived class to represent ImageFolder dataset
@@ -188,8 +397,8 @@ class ImageFolderDataset : public Dataset {
   ~ImageFolderDataset() = default;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return shared pointer to the list of newly created DatasetOps
-  std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> Build() override;
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
   /// \return bool true if all the params are valid
@@ -213,8 +422,8 @@ class MnistDataset : public Dataset {
   ~MnistDataset() = default;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return shared pointer to the list of newly created DatasetOps
-  std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> Build() override;
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
   /// \return bool true if all the params are valid
@@ -222,6 +431,32 @@ class MnistDataset : public Dataset {
 
  private:
   std::string dataset_dir_;
+  std::shared_ptr<SamplerObj> sampler_;
+};
+
+class VOCDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  VOCDataset(const std::string &dataset_dir, const std::string &task, const std::string &mode,
+             const std::map<std::string, int32_t> &class_index, bool decode, std::shared_ptr<SamplerObj> sampler);
+
+  /// \brief Destructor
+  ~VOCDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return shared pointer to the list of newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::string dataset_dir_;
+  std::string task_;
+  std::string mode_;
+  std::map<std::string, int32_t> class_index_;
+  bool decode_;
   std::shared_ptr<SamplerObj> sampler_;
 };
 
@@ -235,8 +470,8 @@ class BatchDataset : public Dataset {
   ~BatchDataset() = default;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return shared pointer to the list of newly created DatasetOps
-  std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> Build() override;
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
   /// \return bool true if all the params are valid
@@ -250,6 +485,91 @@ class BatchDataset : public Dataset {
   std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map_;
 };
 
+class ConcatDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  explicit ConcatDataset(const std::vector<std::shared_ptr<Dataset>> &datasets);
+
+  /// \brief Destructor
+  ~ConcatDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::vector<std::shared_ptr<Dataset>> datasets_;
+};
+
+class MapDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  MapDataset(std::vector<std::shared_ptr<TensorOperation>> operations, std::vector<std::string> input_columns = {},
+             std::vector<std::string> output_columns = {}, const std::vector<std::string> &columns = {});
+
+  /// \brief Destructor
+  ~MapDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::vector<std::shared_ptr<TensorOperation>> operations_;
+  std::vector<std::string> input_columns_;
+  std::vector<std::string> output_columns_;
+  std::vector<std::string> project_columns_;
+};
+
+class ProjectDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  explicit ProjectDataset(const std::vector<std::string> &columns);
+
+  /// \brief Destructor
+  ~ProjectDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::vector<std::string> columns_;
+};
+
+class RenameDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  explicit RenameDataset(const std::vector<std::string> &input_columns, const std::vector<std::string> &output_columns);
+
+  /// \brief Destructor
+  ~RenameDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::vector<std::string> input_columns_;
+  std::vector<std::string> output_columns_;
+};
+
 class RepeatDataset : public Dataset {
  public:
   /// \brief Constructor
@@ -259,8 +579,8 @@ class RepeatDataset : public Dataset {
   ~RepeatDataset() = default;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return shared pointer to the list of newly created DatasetOps
-  std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> Build() override;
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
   /// \return bool true if all the params are valid
@@ -276,7 +596,7 @@ class ShuffleDataset : public Dataset {
 
   ~ShuffleDataset() = default;
 
-  std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> Build() override;
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   bool ValidateParams() override;
 
@@ -286,72 +606,67 @@ class ShuffleDataset : public Dataset {
   bool reset_every_epoch_;
 };
 
-class MapDataset : public Dataset {
+class SkipDataset : public Dataset {
  public:
   /// \brief Constructor
-  MapDataset(std::vector<std::shared_ptr<TensorOperation>> operations, std::vector<std::string> input_columns = {},
-             std::vector<std::string> output_columns = {}, const std::vector<std::string> &columns = {});
+  explicit SkipDataset(int32_t count);
 
   /// \brief Destructor
-  ~MapDataset() = default;
+  ~SkipDataset() = default;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return shared pointer to the list of newly created DatasetOps
-  std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> Build() override;
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
   /// \return bool true if all the params are valid
   bool ValidateParams() override;
 
  private:
-  std::vector<std::shared_ptr<TensorOperation>> operations_;
-  std::vector<std::string> input_columns_;
-  std::vector<std::string> output_columns_;
-  std::vector<std::string> project_columns_;
+  int32_t skip_count_;
 };
 
-class Cifar10Dataset : public Dataset {
+class TakeDataset : public Dataset {
  public:
   /// \brief Constructor
-  Cifar10Dataset(const std::string &dataset_dir, int32_t num_samples, std::shared_ptr<SamplerObj> sampler);
+  explicit TakeDataset(int32_t count);
 
   /// \brief Destructor
-  ~Cifar10Dataset() = default;
+  ~TakeDataset() = default;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
   /// \return shared pointer to the list of newly created DatasetOps
-  std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> Build() override;
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
   /// \return bool true if all the params are valid
   bool ValidateParams() override;
 
  private:
-  std::string dataset_dir_;
-  int32_t num_samples_;
-  std::shared_ptr<SamplerObj> sampler_;
+  int32_t take_count_;
 };
 
-class ProjectDataset : public Dataset {
+class ZipDataset : public Dataset {
  public:
   /// \brief Constructor
-  explicit ProjectDataset(const std::vector<std::string> &columns);
+  explicit ZipDataset(const std::vector<std::shared_ptr<Dataset>> &datasets);
 
   /// \brief Destructor
-  ~ProjectDataset() = default;
+  ~ZipDataset() = default;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return shared pointer to the list of newly created DatasetOps
-  std::shared_ptr<std::vector<std::shared_ptr<DatasetOp>>> Build() override;
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
   /// \return bool true if all the params are valid
   bool ValidateParams() override;
 
  private:
-  std::vector<std::string> columns_;
+  std::vector<std::shared_ptr<Dataset>> datasets_;
 };
+
 }  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_INCLUDE_DATASETS_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASETS_H_

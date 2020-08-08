@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_OPS_INFO_REDUCE_SUM_INFO_H_
-#define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_REDUCE_SUM_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_REDUCE_SUM_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_REDUCE_SUM_INFO_H_
 
 #include <memory>
 #include <string>
@@ -138,4 +138,4 @@ class ReduceMinInfo : public ReduceMethod {
 };
 }  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PARALLEL_OPS_INFO_REDUCE_SUM_INFO_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_REDUCE_SUM_INFO_H_

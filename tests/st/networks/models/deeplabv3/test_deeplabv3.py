@@ -63,6 +63,7 @@ class LossCallBack(Callback):
                                                            str(cb_params.net_outputs)))
 
 def model_fine_tune(train_net, fix_weight_layer):
+    train_net.init_parameters_data()
     for para in train_net.trainable_params():
         para.set_parameter_data(Tensor(np.ones(para.data.shape).astype(np.float32) * 0.02))
         if fix_weight_layer in para.name:
@@ -79,7 +80,7 @@ def test_deeplabv3_1p():
     args_opt.base_size = config.crop_size
     args_opt.crop_size = config.crop_size
     args_opt.batch_size = config.batch_size
-    train_dataset = create_dataset(args_opt, data_url, epoch_size, config.batch_size,
+    train_dataset = create_dataset(args_opt, data_url, 1, config.batch_size,
                                    usage="eval")
     dataset_size = train_dataset.get_dataset_size()
     callback = LossCallBack(dataset_size)

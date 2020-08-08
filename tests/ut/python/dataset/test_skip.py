@@ -13,9 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
+import pytest
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision
+from mindspore import log as logger
+
 
 DATA_DIR_TF2 = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR_TF2 = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
@@ -196,6 +199,29 @@ def test_skip_filter_2():
     assert buf == [5, 6, 7, 8, 9, 10]
 
 
+def test_skip_exception_1():
+    data1 = ds.GeneratorDataset(generator_md, ["data"])
+
+    try:
+        data1 = data1.skip(count=-1)
+        num_iter = 0
+        for _ in data1.create_dict_iterator():
+            num_iter += 1
+
+    except RuntimeError as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+        assert "Skip count must be positive integer or 0." in str(e)
+
+
+def test_skip_exception_2():
+    ds1 = ds.GeneratorDataset(generator_md, ["data"])
+
+    with pytest.raises(ValueError) as e:
+        ds1 = ds1.skip(-2)
+    assert "Input count is not within the required interval" in str(e.value)
+
+
+
 if __name__ == "__main__":
     test_tf_skip()
     test_generator_skip()
@@ -208,3 +234,5 @@ if __name__ == "__main__":
     test_skip_take_2()
     test_skip_filter_1()
     test_skip_filter_2()
+    test_skip_exception_1()
+    test_skip_exception_2()

@@ -73,7 +73,7 @@ if __name__ == "__main__":
     epoch_size = 3
     args_opt.base_size = config.crop_size
     args_opt.crop_size = config.crop_size
-    train_dataset = create_dataset(args_opt, args_opt.data_url, epoch_size, config.batch_size,
+    train_dataset = create_dataset(args_opt, args_opt.data_url, 1, config.batch_size,
                                    usage="train", shuffle=False)
     dataset_size = train_dataset.get_dataset_size()
     callback = LossCallBack(dataset_size)

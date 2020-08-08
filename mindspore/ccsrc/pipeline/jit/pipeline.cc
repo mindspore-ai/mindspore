@@ -32,6 +32,7 @@
 #include "debug/anf_ir_utils.h"
 #include "utils/config_manager.h"
 #include "utils/convert_utils.h"
+#include "utils/context/context_extends.h"
 #include "utils/utils.h"
 #include "vm/segment_runner.h"
 #include "frontend/parallel/context.h"
@@ -40,6 +41,13 @@
 #include "debug/trace.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "frontend/optimizer/py_pass_manager.h"
+#include "pybind_api/pybind_patch.h"
+
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#include "frontend/parallel/ps/common.h"
+#include "frontend/parallel/ps/util.h"
+#include "frontend/parallel/ps/worker.h"
+#endif
 
 #if (ENABLE_GE || ENABLE_D)
 #include "pipeline/jit/pipeline_ge.h"
@@ -119,7 +127,7 @@ py::bool_ VerifyInputSignature(const py::list input_signature, const py::tuple i
 
   size_t count = 0;
   for (auto arg_obj : inputs) {
-    if (py::hasattr(arg_obj, PYTHON_TENSOR_FLAG)) {
+    if (py::isinstance<Tensor>(arg_obj)) {
       MS_LOG(DEBUG) << "Verify Tensor";
       std::shared_ptr<Tensor> m_tensor = arg_obj.cast<std::shared_ptr<Tensor>>();
       if (m_tensor == nullptr) {
@@ -255,6 +263,7 @@ void ExecutorPy::DelNetRes(const std::string &id) {
     for (auto &item : tmp_info) {
       if (item.first.find(id) != string::npos) {
         MS_LOG(DEBUG) << "Delete network res:" << item.first;
+        item.second = nullptr;
         (void)info_.erase(item.first);
         flag = true;
       }
@@ -378,16 +387,6 @@ void ExecutorPy::SaveCompiledGraph(const std::string &phase_s) {
   MS_LOG(INFO) << "End save compiled func graph!";
 }
 
-bool ExecutorPy::ChangeExportGeirUseVmFlag(bool use_vm, const std::string &phase_s) const {
-  std::string phase_prefix = GetPhasePrefix(phase_s);
-
-  if (use_vm && phase_prefix == "export") {
-    MS_LOG(INFO) << "Use ge backend to export geir";
-    use_vm = false;
-  }
-  return use_vm;
-}
-
 void ExecutorPy::GetGeBackendPolicy() const {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -395,6 +394,40 @@ void ExecutorPy::GetGeBackendPolicy() const {
   if (backend != "ge") {
     MS_LOG(EXCEPTION) << backend << " backend policy is not supported under ge backend!";
   }
+}
+
+bool IsPhaseExportGeir(const std::string &phase_s) {
+  auto phase_to_export = "export.geir";
+  return phase_s.rfind(phase_to_export) != std::string::npos;
+}
+
+std::vector<ActionItem> GetPipline(const ResourcePtr &resource, const std::string &phase_s, bool use_vm) {
+  bool is_geir = IsPhaseExportGeir(phase_s);
+
+  std::string backend = MsContext::GetInstance()->backend_policy();
+
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  if (mindspore::parallel::ps::Util::IsParamServerMode()) {
+    mindspore::parallel::ps::Util::SetInternalEnvVar();
+  }
+  if (parallel::ps::Util::IsRoleOfPServer()) {
+    resource->results()[kBackend] = compile::CreateBackend();
+    return PServerPipeline();
+  }
+  if (parallel::ps::Util::IsRoleOfScheduler()) {
+    return PSchedulerPipeline();
+  }
+#endif
+
+  if (use_vm && backend != "ge" && !is_geir) {
+    // Create backend and session
+    auto backend_ptr = compile::CreateBackend();
+    // Connect session to debugger
+    backend_ptr->SetDebugger();
+    resource->results()[kBackend] = backend_ptr;
+    return VmPipeline();
+  }
+  return GePipeline();
 }
 
 bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, const py::object &phase, bool use_vm) {
@@ -415,22 +448,8 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
   std::string phase_s = py::cast<std::string>(phase);
   MS_LOG(INFO) << "ExecutorPy compile phase:" << phase_s << "!";
   ResourcePtr resource = std::make_shared<Resource>(obj);
-  std::vector<ActionItem> p_actions;
 
-  use_vm = ChangeExportGeirUseVmFlag(use_vm, phase_s);
-
-  std::string backend = MsContext::GetInstance()->backend_policy();
-  if (use_vm && backend != "ge") {
-    // Create backend and session
-    auto backend_ptr = compile::CreateBackend();
-    // Connect session to debugger
-    backend_ptr->SetDebugger();
-    resource->results()[kBackend] = backend_ptr;
-    p_actions = VmPipeline();
-  } else {
-    p_actions = GePipeline();
-  }
-
+  auto p_actions = GetPipline(resource, phase_s, use_vm);
   std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(p_actions, phase_s));
 
   // get the parameters items and add the value to args_spec
@@ -464,8 +483,8 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
 }
 
 std::vector<ActionItem> ExecutorPy::FilterActions(const std::vector<ActionItem> &actions, const std::string &phase) {
-  // phase does not contain 'export_onnx'
-  if (GetPhasePrefix(phase).find("export_onnx") == std::string::npos) {
+  // filter action after validate when 'export'.
+  if (GetPhasePrefix(phase).rfind("export", 0) == std::string::npos) {
     return actions;
   }
   MS_LOG(INFO) << "Phase is '" << phase << "', filter out actions after stage 'validate'";
@@ -521,6 +540,9 @@ bool ExecutorPy::Compile(const py::object &obj, const py::tuple &args, const py:
   } catch (const py::index_error &ex) {
     ReleaseResource(phase);
     throw py::index_error(ex);
+  } catch (const py::attribute_error &ex) {
+    ReleaseResource(phase);
+    throw py::attribute_error(ex);
   } catch (const std::exception &ex) {
     ReleaseResource(phase);
     // re-throw this exception to Python interpreter to handle it
@@ -698,7 +720,11 @@ void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef 
       if (!param_ptr->has_default()) {
         MS_LOG(EXCEPTION) << "Parameter[" << i << "] has no default param";
       }
-      arg_list->push_back(param_ptr->default_param()->value());
+      if (!param_ptr->default_param()->isa<Tensor>()) {
+        MS_LOG(EXCEPTION) << "Parameter[" << param_ptr->ToString()
+                          << "] is not initialized, need to call `.init_data()`";
+      }
+      arg_list->push_back(param_ptr->default_param());
     }
   }
 }
@@ -761,6 +787,24 @@ FuncGraphPtr ExecutorPy::BuildGraph(const py::dict &init_params, const std::stri
 #endif
 }
 
+void ExecutorPy::UpdataParamNodeDefaultInput(const std::string &phase,
+                                             const std::unordered_map<std::string, tensor::TensorPtr> &params_value) {
+  FuncGraphPtr func_graph = info_[phase]->resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_LOG(DEBUG) << "UpdataParamNodeDefaultInput for func graph(" << func_graph->ToString() << ") phase(" << phase
+                << ")!";
+  auto &params = func_graph->parameters();
+  for (const auto &param : params) {
+    MS_EXCEPTION_IF_NULL(param);
+    auto param_cast = param->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param_cast);
+    auto iter = params_value.find(param_cast->name());
+    if (iter != params_value.end()) {
+      param_cast->set_default_param(iter->second);
+    }
+  }
+}
+
 void ExecutorPy::RunInitGraph(const py::dict &init_params, const std::string &phase) {
 #if ENABLE_GE
   RunGEInitGraph(init_params, phase);
@@ -774,10 +818,13 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
 #ifndef NO_DLIB
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (!ms_context->IsTsdOpened() || !ms_context->IsGeInited()) {
+  if (!context::IsTsdOpened(ms_context) || !context::IsGeInited(ms_context)) {
     (void)InitBackend();
   }
 #endif
+  if (iter_num == -1) {
+    iter_num = INT32_MAX;
+  }
   if (name == kMsConvert || name == kMsVm) {
     return InitExecDatasetVm(queue_name, iter_num, batch_size, types, shapes, input_indexes, need_run);
   }
@@ -865,7 +912,7 @@ void InitHccl() {
   mindspore::parse::python_adapter::set_python_env_flag(true);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  (void)ms_context->OpenTsd();
+  (void)context::OpenTsd(ms_context);
   uint32_t device_id = ms_context->device_id();
   std::string device_name = ms_context->device_target();
   ms_context->set_enable_hccl(true);
@@ -898,8 +945,8 @@ void ExportGraph(const std::string &file_name, const std::string &, const std::s
 void ReleaseGeTsd() {
   auto context_ptr = MsContext::GetInstance();
   if (context_ptr != nullptr) {
-    (void)context_ptr->FinalizeGe(true);
-    (void)context_ptr->CloseTsd(true);
+    (void)context::FinalizeGe(context_ptr, true);
+    (void)context::CloseTsd(context_ptr, true);
   }
 }
 
@@ -909,17 +956,17 @@ void InitBackend() {
   // open tsd before ge initialize
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (!ms_context->OpenTsd()) {
+  if (!context::OpenTsd(ms_context)) {
     MS_LOG(EXCEPTION) << "Open tsd failed";
   }
-  (void)ms_context->InitGe();
+  (void)context::InitGe(ms_context);
 }
 
 void FinalizeBackend() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  (void)context_ptr->FinalizeGe();
-  (void)context_ptr->CloseTsd();
+  (void)context::FinalizeGe(context_ptr);
+  (void)context::CloseTsd(context_ptr);
 }
 
 void ClearResAtexit() {
@@ -927,12 +974,19 @@ void ClearResAtexit() {
   pynative::ClearPyNativeSession();
   session::ClearPythonParasMap();
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
-
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  if (mindspore::parallel::ps::Util::IsParamServerMode()) {
+    if (parallel::ps::Util::IsRoleOfWorker()) {
+      parallel::ps::Worker<float>::GetInstance().Finalize();
+    }
+  }
+#endif
   ad::g_k_prims.clear();
 
   abstract::ClearPrimEvaluatorMap();
   compile::ClearConvertCache();
   pipeline::GetMethodMap().clear();
+  pipeline::GetAttrMap().clear();
   pipeline::ExecutorPy::ClearRes();
   pipeline::ReclaimOptimizer();
   pynative::PynativeExecutor::GetInstance()->ClearRes();

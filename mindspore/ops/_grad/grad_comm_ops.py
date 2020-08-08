@@ -17,6 +17,7 @@
 import mindspore.common.dtype as mstype
 from mindspore.ops import functional as F
 from .. import operations as P
+from ...common.tensor import RowTensor
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations.comm_ops import (AllGather, _HostAllGather, AllReduce, _AlltoAll, Broadcast,
                                    _GetTensorSlice, _MirrorOperator, ReduceOp,
@@ -46,9 +47,9 @@ def get_bprop_all_reduce(self):
             if F.issubclass_(F.typeof(dout), mstype.tensor):
                 dx = all_reduce_grad(dout)
             else:
-                indices = all_gather(dout[0])
-                grad = all_gather(dout[1])
-                dx = (indices, grad, dout[2])
+                indices = all_gather(dout.indices)
+                grad = all_gather(dout.values)
+                dx = RowTensor(indices, grad, dout.dense_shape)
             return (dx,)
     else:
 
@@ -59,12 +60,12 @@ def get_bprop_all_reduce(self):
                 z = cast(z, dtype(dx))
                 dx = mul(dx, z)
             else:
-                indices = all_gather(dout[0])
-                grad = all_gather(dout[1])
+                indices = all_gather(dout.indices)
+                grad = all_gather(dout.values)
                 z = equal(x, out)
                 z = cast(z, dtype(grad))
                 grad = mul(grad, z)
-                dx = (indices, grad, dout[2])
+                dx = RowTensor(indices, grad, dout.dense_shape)
             return (dx,)
     return bprop
 
@@ -194,19 +195,19 @@ def get_bprop_mirror_operator(self):
                 num = F.scalar_cast(dev_num, F.dtype(dx))
                 dx = mul(dx, cast(F.scalar_to_array(float_one/num), F.dtype(dx)))
             else:
-                indices = all_gather(dout[0])
-                grad = all_gather(dout[1])
+                indices = all_gather(dout.indices)
+                grad = all_gather(dout.values)
                 float_one = F.scalar_cast(1.0, F.dtype(grad))
                 num = F.scalar_cast(dev_num, F.dtype(grad))
                 grad = mul(grad, cast(F.scalar_to_array(float_one/num), F.dtype(grad)))
-                dx = (indices, grad, dout[2])
+                dx = RowTensor(indices, grad, dout.dense_shape)
         else:
             if F.issubclass_(F.typeof(dout), mstype.tensor):
                 dx = all_reduce(dout)
             else:
-                indices = all_gather(dout[0])
-                grad = all_gather(dout[1])
-                dx = (indices, grad, dout[2])
+                indices = all_gather(dout.indices)
+                grad = all_gather(dout.values)
+                dx = RowTensor(indices, grad, dout.dense_shape)
 
         return (dx,)
     return bprop

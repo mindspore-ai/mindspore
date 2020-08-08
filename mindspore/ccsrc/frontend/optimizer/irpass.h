@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_IRPASS_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_IRPASS_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_H_
 
 #include <memory>
 
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/opt.h"
-#include "ir/visitor.h"
+#include "frontend/optimizer/anf_visitor.h"
 
 namespace mindspore {
 namespace opt {
@@ -105,8 +105,14 @@ class OptimizeIRPassLib {
   // Fusion
   SubstitutionPtr mark_interface_fusion_;
 
-  // IndexedSlices Eliminate
-  SubstitutionPtr indexed_slices_eliminate_;
+  // RowTensor Eliminate
+  SubstitutionPtr row_tensor_eliminate_;
+
+  // SparseTensor Eliminate
+  SubstitutionPtr sparse_tensor_eliminate_;
+
+  // Value_Based Eliminate
+  SubstitutionPtr value_based_eliminate_;
 };
 
 // the collection of irpass for resolve action
@@ -115,6 +121,7 @@ class ResolveIRPassLib {
   ResolveIRPassLib();
   ~ResolveIRPassLib() = default;
 
+  SubstitutionPtr resolver_resolve_attr_;
   SubstitutionPtr resolver_resolve_;
   SubstitutionPtr resolver_getattr_;
 };
@@ -189,4 +196,4 @@ inline bool IsCNodeDup(const AnfNodePtr &node) {
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_IRPASS_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_H_

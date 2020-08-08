@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_STEP_PARALLEL_H_
-#define MINDSPORE_CCSRC_PARALLEL_STEP_PARALLEL_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_STEP_PARALLEL_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_STEP_PARALLEL_H_
 
 #include <vector>
 
@@ -135,7 +135,7 @@ void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes);
 void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
                            const FuncGraphManagerPtr &manager);
 
-std::string NodeParameterName(const CNodePtr &node);
+std::vector<std::pair<std::string, int>> NodeParameterName(const CNodePtr &node);
 
 void CheckpointStrategy(const FuncGraphPtr &func_graph);
 
@@ -152,4 +152,4 @@ std::set<FuncGraphPtr> ForwardGraph(const FuncGraphPtr &root);
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_STEP_PARALLEL_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_STEP_PARALLEL_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_KERNEL_QUERY_H_
-#define MINDSPORE_CCSRC_KERNEL_KERNEL_QUERY_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNEL_QUERY_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNEL_QUERY_H_
 
 #include <vector>
 #include <string>
@@ -32,4 +32,4 @@ bool IsSupportedByAICPU(const AnfNodePtr &kernel_node, const KernelBuildInfoPtr 
 bool IsSupportedByAICore(const AnfNodePtr &kernel_node, const KernelBuildInfoPtr &select_kernel_build_info);
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_KERNEL_KERNEL_QUERY_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNEL_QUERY_H_

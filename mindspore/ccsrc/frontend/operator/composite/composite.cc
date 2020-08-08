@@ -25,7 +25,7 @@
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "abstract/abstract_value.h"
-#include "pipeline/jit/static_analysis/abstract_function.h"
+#include "abstract/abstract_function.h"
 #include "abstract/dshape.h"
 #include "abstract/param_validator.h"
 #include "frontend/operator/cc_implementations.h"
@@ -490,6 +490,47 @@ FuncGraphPtr MakeTupleGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
   return fg;
 }
 
+FuncGraphPtr MakeListGradient::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
+  int list_size = SizeToInt(args_spec_list.size());
+
+  std::ostringstream ss;
+  ss << "▶make_list_" << list_size;
+  FuncGraphPtr fg = std::make_shared<FuncGraph>();
+  fg->debug_info()->set_name(ss.str());
+
+  std::vector<AnfNodePtr> params;
+  params.push_back(NewValueNode(prim::kPrimMakeList));
+  for (int i = 0; i < list_size; ++i) {
+    params.push_back(fg->add_parameter());
+  }
+
+  // make fprob first result, maketuple's forward result.
+  AnfNodePtr out = fg->NewCNode(params);
+
+  // make fprob second result, maketuple's backward function.
+  FuncGraphPtr b = std::make_shared<FuncGraph>();
+
+  ss.clear();
+  ss << "◀make_list_" << list_size;
+  b->debug_info()->set_name(ss.str());
+  AnfNodePtr dout = b->add_parameter();
+
+  std::vector<AnfNodePtr> grads;
+  grads.push_back(NewValueNode(prim::kPrimMakeTuple));
+  grads.push_back(NewValueNode(newenv));
+  for (int i = 0; i < list_size; ++i) {
+    grads.push_back(b->NewCNode({NewValueNode(prim::kPrimListGetItem), dout, NewValueNode(i)}));
+  }
+
+  b->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  b->set_output(b->NewCNode(grads));
+
+  fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  fg->set_output(fg->NewCNode({NewValueNode(prim::kPrimMakeTuple), out, NewValueNode(b)}));
+  (void)fg->transforms().emplace("primal", FuncGraphTransform(prim::kPrimMakeList));
+  return fg;
+}
+
 GradOperation::GradOperation(const std::string &name, bool get_all, bool get_by_list, bool sens_param)
     : MetaFuncGraph(name), get_all_(get_all), get_by_list_(get_by_list), sens_param_(sens_param) {
   if (get_by_list) {
@@ -803,6 +844,18 @@ FuncGraphPtr TupleAdd::GenerateFuncGraph(const AbstractBasePtrList &args_spec_li
   abstract::AbstractTuplePtr a_tuple = dyn_cast<AbstractTuple>(abs_a);
   abstract::AbstractTuplePtr b_tuple = dyn_cast<AbstractTuple>(abs_b);
   if (a_tuple == nullptr || b_tuple == nullptr) {
+    TypePtrList types;
+    (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(types),
+                         [](const AbstractBasePtr &arg) -> TypePtr {
+                           MS_EXCEPTION_IF_NULL(arg);
+                           return arg->BuildType();
+                         });
+    auto stub = GenerateStubFunc(types);
+    if (stub != nullptr) {
+      MS_LOG(DEBUG) << "GenerateStubFunc for TupleAdd "
+                    << ", function: " << stub->ToString();
+      return stub;
+    }
     MS_LOG(EXCEPTION) << "TupleAdd argument should be tuple,but " << args_spec_list[0]->ToString() << ", "
                       << args_spec_list[1]->ToString();
   }

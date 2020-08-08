@@ -39,6 +39,7 @@ if(ENABLE_MINDDATA)
             dataset/filter_op_test.cc
             dataset/voc_op_test.cc
             dataset/manifest_op_test.cc
+            dataset/sentence_piece_vocab_op_test.cc
         )
         list(REMOVE_ITEM UT_SRCS ${PYTHON_RELATED_SRCS})
     endif()
@@ -50,11 +51,16 @@ else()
         endif()
     endforeach ()
 endif()
+# removing serving ut
+file(GLOB_RECURSE SERVING_ACL_UT_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} serving/*.cc)
+list(REMOVE_ITEM UT_SRCS ${SERVING_ACL_UT_SRCS})
+add_subdirectory(serving)
 
 file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/core/base/*.cc"
         "../../../mindspore/core/abstract/*.cc"
         "../../../mindspore/core/ir/*.cc"
+        "../../../mindspore/core/utils/*.cc"
         "../../../mindspore/ccsrc/common/*.cc"
         "../../../mindspore/ccsrc/utils/*.cc"
         "../../../mindspore/ccsrc/pipeline/jit/parse/*.cc"
@@ -76,6 +82,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/backend/session/kernel_graph.cc"
         "../../../mindspore/ccsrc/backend/session/session_basic.cc"
         "../../../mindspore/ccsrc/backend/session/session_factory.cc"
+        "../../../mindspore/ccsrc/backend/session/kernel_build_client.cc"
         "../../../mindspore/ccsrc/vm/*.cc"
         "../../../mindspore/ccsrc/pipeline/pynative/*.cc"
         "../../../mindspore/ccsrc/pybind_api/*.cc"
@@ -122,6 +129,11 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/backend/kernel_compiler/cpu/sparse_apply_proximal_adagrad_cpu_kernel.cc"
         )
 
+if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+    list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/common/duplex_pipe.cc")
+else()
+    list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/common/duplex_pipe_win.cc")
+endif()
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/debug/dump_proto.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/core/ir/lite/tensor.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.cc")
@@ -155,7 +167,7 @@ file(GLOB_RECURSE UT_SUTB_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "stub/ge/*.cc"
         )
 
-add_executable(ut_tests ${UT_SRCS} ${MINDSPORE_SRC_LIST} ${UT_SUTB_SRC_LIST})
+add_executable(ut_tests ${UT_SRCS} ${MINDSPORE_SRC_LIST} ${UT_SUTB_SRC_LIST} $<TARGET_OBJECTS:ut_serving_obj>)
 
 if (ENABLE_GE)
     if(ENABLE_TRAIN)
@@ -180,3 +192,14 @@ if (USE_GLOG)
 endif()
 
 target_link_libraries(ut_tests PRIVATE securec graph)
+
+# link grpc
+if (EXISTS ${grpc_ROOT}/lib64)
+    set(gRPC_DIR "${grpc_ROOT}/lib64/cmake/grpc")
+else ()
+    set(gRPC_DIR "${grpc_ROOT}/lib/cmake/grpc")
+endif ()
+find_package(gRPC CONFIG REQUIRED)
+target_link_libraries(ut_tests PRIVATE gRPC::grpc++)
+target_link_libraries(ut_tests PRIVATE gRPC::grpc++_reflection)
+target_link_libraries(ut_tests PRIVATE protobuf::libprotobuf)

@@ -27,14 +27,14 @@ void ComputeLazyAdam(MultiThreadComputeParams *input_params, size_t start, size_
   auto var = input_params->var_;
   auto m = input_params->m_;
   auto v = input_params->v_;
-  auto lr = input_params->lr_;
-  auto beta1 = input_params->beta1_;
-  auto beta2 = input_params->beta2_;
-  auto epsilon = input_params->epsilon_;
-  auto use_nesterov = input_params->use_nesterov_;
-  auto unique_sparse_grad = input_params->sparse_grad_;
-  auto var_first_dim_size = input_params->var_first_dim_size_;
-  auto var_outer_dim_size = input_params->var_outer_dim_size_;
+  const auto lr = input_params->lr_;
+  const auto beta1 = input_params->beta1_;
+  const auto beta2 = input_params->beta2_;
+  const auto epsilon = input_params->epsilon_;
+  const auto use_nesterov = input_params->use_nesterov_;
+  const auto unique_sparse_grad = input_params->sparse_grad_;
+  const auto var_first_dim_size = input_params->var_first_dim_size_;
+  const auto var_outer_dim_size = input_params->var_outer_dim_size_;
   for (size_t i = start; i < end; ++i) {
     int index = unique_sparse_grad.indices_[i];
     if (index < 0 || IntToSize(index) >= var_first_dim_size) {
@@ -123,13 +123,19 @@ bool SparseApplyLazyAdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> 
   auto indices = reinterpret_cast<int *>(inputs[10]->addr);
   auto new_grad = reinterpret_cast<float *>(workspace[0]->addr);
   auto new_indices = reinterpret_cast<int *>(workspace[1]->addr);
-  auto tmp_grad = reinterpret_cast<float *>(workspace[2]->addr);
-  auto tmp_indices = reinterpret_cast<int *>(workspace[3]->addr);
+  auto workspace_grad = reinterpret_cast<float *>(workspace[2]->addr);
+  auto workspace_indices = reinterpret_cast<int *>(workspace[3]->addr);
 
   SparseGradient unique_sparse_grad({new_grad, new_indices, indices_size_});
-  SparseGradient tmp_sparse_grad({tmp_grad, tmp_indices, indices_size_});
-  TwoLevelReduceSparseGradient(SparseGradient({grad, indices, indices_size_}), &tmp_sparse_grad, &unique_sparse_grad,
-                               var_first_dim_size_, var_outer_dim_size_);
+  SparseGradient workspace_sparse_grad({workspace_grad, workspace_indices, indices_size_});
+  SparseGradient input_sparse_grad({grad, indices, indices_size_});
+  ReduceSparseGradientParam param;
+  param.input_grad_ = &input_sparse_grad;
+  param.workspace_grad_ = &workspace_sparse_grad;
+  param.output_grad_ = &unique_sparse_grad;
+  param.max_index_ = var_first_dim_size_;
+  param.value_stride_ = var_outer_dim_size_;
+  BucketReduceSparseGradient(param);
 
   lr = lr * std::sqrt(1 - beta2_power) / (1 - beta1_power);
   MultiThreadComputeParams input_params;

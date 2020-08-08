@@ -28,10 +28,12 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         SameTypeShape, ScatterAdd, ScatterSub, ScatterMul, ScatterDiv, ScatterMax, ScatterMin,
                         ScatterUpdate, ScalarToArray, ScalarToTensor, ScatterNd, ScatterNdUpdate, Select,
                         Shape, Size, Slice, Split, TransShape, ParallelConcat, Padding,
+                        ScatterNdAdd, ScatterNdSub, ScatterNonAliasingAdd, ReverseV2, Rint,
                         Squeeze, StridedSlice, Tile, TensorScatterUpdate,
                         Transpose, TruncatedNormal, TupleToArray, UnsortedSegmentMin, UnsortedSegmentProd,
                         UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch, BatchToSpace,
-                        SpaceToBatchND, BatchToSpaceND, BroadcastTo, InplaceUpdate, ReverseSequence, EmbeddingLookup)
+                        SpaceToBatchND, BatchToSpaceND, BroadcastTo, InplaceUpdate, ReverseSequence, EmbeddingLookup,
+                        Unique)
 from .comm_ops import (AllGather, AllReduce, _AlltoAll, ReduceScatter, Broadcast,
                        _MirrorOperator, ReduceOp, _VirtualDataset,
                        _VirtualDiv, _GetTensorSlice,
@@ -43,19 +45,19 @@ from .inner_ops import ScalarCast
 
 from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, AssignSub, Atan2, BatchMatMul, BitwiseAnd, BitwiseOr,
                        BitwiseXor, Inv, Invert, ApproximateEqual, InplaceAdd, InplaceSub,
-                       ReduceMax, ReduceMin, ReduceMean, ReduceSum, ReduceAll, ReduceProd, CumProd,
+                       ReduceMax, ReduceMin, ReduceMean, ReduceSum, ReduceAll, ReduceProd, CumProd, ReduceAny,
                        Cos, Div, DivNoNan, Equal, EqualCount, Exp, Expm1, Erf, Erfc, Floor, FloorDiv, FloorMod, Ceil,
                        Acosh, Greater, GreaterEqual, Less, LessEqual, Log, Log1p, LogicalAnd, Mod,
                        LogicalNot, LogicalOr, MatMul, Maximum,
                        Minimum, Mul, Neg, NMSWithMask, NotEqual,
                        NPUAllocFloatStatus, NPUClearFloatStatus,
                        NPUGetFloatStatus, Pow, RealDiv, IsNan, IsInf, IsFinite, FloatStatus,
-                       Reciprocal, CumSum, HistogramFixedWidth,
-                       Sin, Sqrt, Rsqrt, BesselI0e, BesselI1e,
-                       Square, Sub, TensorAdd, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Sinh, Eps)
+                       Reciprocal, CumSum, HistogramFixedWidth, SquaredDifference, Xdivy, Xlogy,
+                       Sin, Sqrt, Rsqrt, BesselI0e, BesselI1e, TruncateDiv, TruncateMod,
+                       Square, Sub, TensorAdd, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Sinh, Eps, Tan)
 
 from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, Poisson, UniformInt, UniformReal,
-                         RandomCategorical, Laplace)
+                         RandomCategorical, Laplace, Multinomial)
 from .nn_ops import (LSTM, SGD, Adam, FusedSparseAdam, FusedSparseLazyAdam, ApplyMomentum, BatchNorm,
                      BiasAdd, Conv2D,
                      DepthwiseConv2dNative,
@@ -72,7 +74,7 @@ from .nn_ops import (LSTM, SGD, Adam, FusedSparseAdam, FusedSparseLazyAdam, Appl
                      SmoothL1Loss, Softmax, Softsign, Softplus, LRN, RNNTLoss,
                      SoftmaxCrossEntropyWithLogits, ROIAlign,
                      SparseSoftmaxCrossEntropyWithLogits, Tanh,
-                     TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrl,
+                     TopK, BinaryCrossEntropy, KLDivLoss, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrl,
                      ApplyProximalAdagrad, SparseApplyProximalAdagrad, SparseApplyAdagradV2, SparseApplyFtrlV2,
                      FusedSparseFtrl, FusedSparseProximalAdagrad,
                      ApplyAdaMax, ApplyAdadelta, ApplyAdagrad, ApplyAdagradV2,
@@ -82,7 +84,11 @@ from . import _quant_ops
 from ._quant_ops import *
 from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, PopulationCount,
                         CheckValid, MakeRefKey, Partial, Depend, CheckBprop, Push, Pull)
-from .thor_ops import *
+from ._thor_ops import (CusBatchMatMul, CusCholeskyTrsm, CusFusedAbsMax1, CusImg2Col, CusMatMulCubeDenseLeft,
+                        CusMatMulCubeFraczRightMul, CusMatMulCube, CusMatrixCombine, CusTranspose02314,
+                        CusMatMulCubeDenseRight,
+                        CusMatMulCubeFraczLeftCast, Im2Col, UpdateThorGradient, Cholesky)
+from .sparse_ops import SparseToDense
 
 __all__ = [
     'ReverseSequence',
@@ -105,6 +111,9 @@ __all__ = [
     'Rsqrt',
     'Sqrt',
     'Square',
+    'SquaredDifference',
+    'Xdivy',
+    'Xlogy',
     'Conv2D',
     'Flatten',
     'MaxPoolWithArgmax',
@@ -176,6 +185,7 @@ __all__ = [
     'Tanh',
     'RandomChoiceWithMask',
     'StandardNormal',
+    'Multinomial',
     'Gamma',
     'Poisson',
     'UniformInt',
@@ -215,6 +225,7 @@ __all__ = [
     'CTCLoss',
     'RNNTLoss',
     'ReduceAll',
+    'ReduceAny',
     'ScalarToArray',
     'ScalarToTensor',
     'TupleToArray',
@@ -234,6 +245,11 @@ __all__ = [
     'ScatterNd',
     'ScatterMax',
     'ScatterMin',
+    'ScatterNdAdd',
+    'ScatterNdSub',
+    'ScatterNonAliasingAdd',
+    'ReverseV2',
+    'Rint',
     'ResizeNearestNeighbor',
     'HistogramFixedWidth',
     'Pad',
@@ -279,6 +295,8 @@ __all__ = [
     'SigmoidCrossEntropyWithLogits',
     'FloorDiv',
     'FloorMod',
+    'TruncateDiv',
+    'TruncateMod',
     'Ceil',
     'Acosh',
     'Asinh',
@@ -298,6 +316,7 @@ __all__ = [
     "LSTM",
     "Abs",
     "BinaryCrossEntropy",
+    "KLDivLoss",
     "SparseApplyAdagrad",
     "SparseApplyAdagradV2",
     "SpaceToDepth",
@@ -337,6 +356,7 @@ __all__ = [
     "BesselI1e",
     "Atan",
     "Atanh",
+    "Tan",
     "BasicLSTMCell",
     "BroadcastTo",
     "DataFormatDimMap",
@@ -348,7 +368,8 @@ __all__ = [
     "PopulationCount",
     "ParallelConcat",
     "Push",
-    "Pull"
+    "Pull",
+    'SparseToDense',
 ]
 
 __all__.sort()

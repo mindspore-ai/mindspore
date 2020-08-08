@@ -225,7 +225,7 @@ def test_div():
 @non_graph_engine
 def test_parameter():
     x = Parameter(initializer(1, [1], ms.float32), name="beta1_power")
-    x.init_data()
+    x = x.init_data()
     z = x / 2
     print(z)
 
@@ -472,3 +472,7 @@ def test_tensor_operation():
     assert np.all(x.asnumpy() == np.ones((3, 3)))
     with pytest.raises(ValueError):
         res = x * (2, 3)
+    res = 5 % x
+    assert np.all(x.asnumpy() == np.ones((3, 3)))
+    res = 5 // x
+    assert np.all(x.asnumpy() == np.ones((3, 3)))

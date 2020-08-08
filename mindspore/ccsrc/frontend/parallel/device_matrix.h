@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_DEVICE_MATRIX_H_
-#define MINDSPORE_CCSRC_PARALLEL_DEVICE_MATRIX_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_DEVICE_MATRIX_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_DEVICE_MATRIX_H_
 
 #include <cstdint>
 #include <string>
@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace parallel {
 using RankList = std::vector<int32_t>;
-using Shape = std::vector<int32_t>;
+using Shape = std::vector<int64_t>;
 
 class DeviceMatrix {
  public:
@@ -48,8 +48,8 @@ class DeviceMatrix {
 };
 
 std::string ShapeToString(const Shape &shape);
-std::string ListToString(const std::vector<int32_t> &list);
+std::string ListToString(const RankList &list);
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_DEVICE_MATRIX_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_DEVICE_MATRIX_H_

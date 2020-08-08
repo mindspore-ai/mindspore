@@ -23,14 +23,15 @@
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_build.h"
 #include "nlohmann/json.hpp"
-#include "utils/context/ms_context.h"
-#include "backend/kernel_compiler/tbe/tbe_python_funcs.h"
+#include "utils/ms_context.h"
 #include "backend/optimizer/common/helper.h"
 #include "backend/kernel_compiler/tbe/tbe_convert_utils.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_select/tbe_kernel_broadcast_selecter.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_select/tbe_kernel_reduce_selecter.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_select/common_utils.h"
+#include "backend/kernel_compiler/tbe/tbe_kernel_select/tbe_property_checker.h"
+#include "backend/session/kernel_build_client.h"
 
 namespace mindspore {
 namespace kernel {
@@ -59,6 +60,10 @@ void TbeKernelSelect::TbeMetadataInfoEx() {
     MS_LOG(INFO) << "Warning: Cann't find tbe core opinfo, node type: " << node_name_;
     return;
   }
+  if (!TbePropertyChecker::CheckTbeProperties(cnode_ptr_)) {
+    MS_LOG(INFO) << "Warning: node(" << cnode_ptr_->fullname_with_scope() << ") not support tbe aicore.";
+    return;
+  }
   MS_LOG(INFO) << "Start to tbe metadata info. node type: " << node_name_
                << ", node name: " << cnode_ptr_->fullname_with_scope();
   OpPattern pattern = op_info_ptr->op_pattern();
@@ -77,7 +82,6 @@ void TbeKernelSelect::TbeMetadataInfoEx() {
   }
   // check support
   FilterInVaildKernelInfo();
-  MS_LOG(INFO) << "End get kernel build info size: " << kernel_info_list_->size() << ", after tbe select.";
 }
 
 void TbeKernelSelect::GetCommonPatternKernelInfo(const OpInfo &op_info) {
@@ -113,7 +117,7 @@ void TbeKernelSelect::GetCommonPatternKernelInfo(const OpInfo &op_info) {
     }
     builder.SetInputsDeviceType(inputs_device_type);
     builder.SetInputsFormat(inputs_format);
-    builder.SetInputReshapeType(inputs_reshape_type);
+    builder.SetInputsReshapeType(inputs_reshape_type);
     // output
     std::vector<std::string> outputs_format;
     std::vector<TypeId> outputs_device_type;
@@ -124,7 +128,7 @@ void TbeKernelSelect::GetCommonPatternKernelInfo(const OpInfo &op_info) {
     }
     builder.SetOutputsDeviceType(outputs_device_type);
     builder.SetOutputsFormat(outputs_format);
-    builder.SetOutputReshapeType(outputs_reshape_type);
+    builder.SetOutputsReshapeType(outputs_reshape_type);
     kernel_info_list_->emplace_back(builder.Build());
   }
   MS_LOG(INFO) << "end.";
@@ -216,38 +220,37 @@ void TbeKernelSelect::FilterInVaildKernelInfo() {
     MS_LOG(INFO) << "Warning: get kernel build info failed.";
     return;
   }
-  auto kernel_build_info_iter = kernel_info_list_->begin();
-  while (kernel_build_info_iter != kernel_info_list_->end()) {
-    if (!FilterInVaildShape(kernel_build_info_iter)) {
-      MS_LOG(INFO) << "Filter invaild shape, filter item info: " << (*kernel_build_info_iter)->ToString();
-      kernel_build_info_iter = kernel_info_list_->erase(kernel_build_info_iter);
+  std::vector<std::shared_ptr<KernelBuildInfo>> new_kernel_info_list;
+  for (auto iter = kernel_info_list_->begin(); iter != kernel_info_list_->end(); ++iter) {
+    if (!FilterInVaildShape(iter)) {
+      MS_LOG(INFO) << "Filter invaild shape, filter item info: " << (*iter)->ToString();
       continue;
     }
-    if (!TbeCheckSupported(kernel_build_info_iter)) {
-      MS_LOG(INFO) << "Check support shape, filter item info: " << (*kernel_build_info_iter)->ToString();
-      kernel_build_info_iter = kernel_info_list_->erase(kernel_build_info_iter);
+    if (!TbeCheckSupported(iter)) {
+      MS_LOG(INFO) << "Check support shape, filter item info: " << (*iter)->ToString();
       continue;
     }
-    kernel_build_info_iter++;
+    new_kernel_info_list.emplace_back(*iter);
   }
+  (*kernel_info_list_) = new_kernel_info_list;
 }
 
 bool TbeKernelSelect::FilterInVaildShape(
   const mindspore::kernel::TbeKernelSelect::KernelBuildInfoIter &kernel_build_info_iter) {
   MS_EXCEPTION_IF_NULL((*kernel_build_info_iter));
-  auto kernel_build_info_inputs_format = (*kernel_build_info_iter)->GetAllInputFormats();
+  const auto &kernel_build_info_inputs_format = (*kernel_build_info_iter)->GetAllInputFormats();
   for (size_t i = 0; i < kernel_build_info_inputs_format.size(); ++i) {
     auto shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, i);
-    auto format = kernel_build_info_inputs_format.at(i);
+    const auto &format = kernel_build_info_inputs_format[i];
     if (!IsShapeMatchFormat(shape, format)) {
       MS_LOG(INFO) << "The " << i << "th input check failed.";
       return false;
     }
   }
-  auto kernel_build_info_outputs_format = (*kernel_build_info_iter)->GetAllOutputFormats();
+  const auto &kernel_build_info_outputs_format = (*kernel_build_info_iter)->GetAllOutputFormats();
   for (size_t j = 0; j < kernel_build_info_outputs_format.size(); ++j) {
     auto shape = AnfAlgo::GetOutputInferShape(cnode_ptr_, j);
-    auto format = kernel_build_info_outputs_format.at(j);
+    const auto &format = kernel_build_info_outputs_format[j];
     if (!IsShapeMatchFormat(shape, format)) {
       MS_LOG(INFO) << "The " << j << "th input check failed.";
       return false;
@@ -309,7 +312,7 @@ bool TbeKernelSelect::TbeCheckSupported(
   if (!ret) {
     MS_LOG(EXCEPTION) << "Gen tbe single kernel json for check support failed.";
   }
-  ret = TbePythonFuncs::CheckSupported(kernel_json);
+  ret = AscendKernelBuildClient::Instance().CheckSupported(kernel_json.dump());
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_tmp, cnode_ptr_.get());
   return ret;
 }
@@ -339,12 +342,12 @@ bool TbeKernelSelect::GenBuilderItem(bool is_input, size_t kernel_build_info_ind
   size_t io_info_num = ios_info.size();
   for (; io_info_index < io_info_num && real_io_tensor_index < real_io_tensor_num; io_info_index++) {
     std::shared_ptr<OpIOInfo> io_info_item = ios_info[io_info_index];
-    auto kernel_build_info_dtype = io_info_item->dtypes().at(kernel_build_info_index);
+    const auto &kernel_build_info_dtype = io_info_item->dtypes()[kernel_build_info_index];
     std::string kernel_build_info_format;
     if (!io_info_item->formats().empty()) {
-      kernel_build_info_format = io_info_item->formats().at(kernel_build_info_index);
+      kernel_build_info_format = io_info_item->formats()[kernel_build_info_index];
     }
-    std::string io_param_type = io_info_item->param_type();
+    const std::string &io_param_type = io_info_item->param_type();
     std::vector<Axis> reshape_type;
     StringToAxisVector(io_info_item->reshape_type(), &reshape_type);
     if (io_param_type == kParamTypeDynamic) {
@@ -362,6 +365,7 @@ bool TbeKernelSelect::GenBuilderItem(bool is_input, size_t kernel_build_info_ind
         }
         dynamic_input_index++;
         real_io_tensor_index += dynamic_input_size;
+
       } else {
         if (ios_info.size() != 1) {
           MS_LOG(EXCEPTION) << "if output is dynamic, so output must has one output.";
@@ -383,7 +387,6 @@ bool TbeKernelSelect::GenBuilderItem(bool is_input, size_t kernel_build_info_ind
       MS_LOG(EXCEPTION) << "op info's param type is not match: " << io_param_type;
     }
   }
-
   if (io_info_index != io_info_num) {
     MS_LOG(INFO) << "Warning: io_info_index(" << io_info_index << ") != io_info_num(" << io_info_num
                  << "), this node may has optional input/output.";
@@ -483,7 +486,7 @@ std::string TbeKernelSelect::OpSelectFormat() {
   if (!ret) {
     MS_LOG(EXCEPTION) << "GenTbeSingleKernelJson failed.";
   }
-  res_json_str = TbePythonFuncs::OpSelectFormat(kernel_json);
+  res_json_str = AscendKernelBuildClient::Instance().SelectFormat(kernel_json.dump());
   if (res_json_str.empty()) {
     MS_LOG(EXCEPTION) << "op select format error.";
   }

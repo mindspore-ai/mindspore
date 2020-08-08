@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_KERNELS_DATA_CONCATENATE_OP_H_
-#define DATASET_KERNELS_DATA_CONCATENATE_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_CONCATENATE_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_CONCATENATE_OP_H_
 
 #include <string>
 #include <vector>
@@ -40,7 +40,6 @@ class ConcatenateOp : public TensorOp {
 
   /// Print method to see which tensor Op this is.
   /// @param std::ostream &out - output stream object.
-  void Print(std::ostream &out) const override { out << "ConcatenateOp"; }
 
   /// Compute method allowing multiple tensors as inputs
   /// @param TensorRow &input - input tensor rows

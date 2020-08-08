@@ -17,7 +17,7 @@
 #include "frontend/parallel/ps/util.h"
 #include <unordered_map>
 #include "frontend/parallel/ps/common.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace parallel {
@@ -33,6 +33,13 @@ std::unordered_map<int, std::string> Util::id_to_optimizers{
   {1, kSparseAdam},
   {2, kSparseFtrl},
 };
+
+std::unordered_map<int, std::string> Util::id_to_optimizer_nodes{
+  {0, kApplyMomentumOp},
+  {1, kSparseAdamOp},
+  {2, kSparseFtrlOp},
+};
+
 bool Util::IsParamServerMode() { return IsRoleOfWorker() || IsRoleOfPServer() || IsRoleOfScheduler(); }
 
 bool Util::IsRoleOfWorker() {
@@ -108,6 +115,13 @@ int Util::optimizer_id(std::string name) {
 std::string Util::optimizer_name(int id) {
   if (id_to_optimizers.count(id) > 0) {
     return id_to_optimizers[id];
+  }
+  return "";
+}
+
+std::string Util::optimizer_node_name(int id) {
+  if (id_to_optimizer_nodes.count(id) > 0) {
+    return id_to_optimizer_nodes[id];
   }
   return "";
 }

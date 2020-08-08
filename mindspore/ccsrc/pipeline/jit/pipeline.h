@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PIPELINE_PIPELINE_H_
-#define MINDSPORE_CCSRC_PIPELINE_PIPELINE_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PIPELINE_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_PIPELINE_H_
 
 #include <vector>
 #include <utility>
@@ -88,6 +88,8 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
 
   FuncGraphPtr BuildGraph(const py::dict &init_params, const std::string &phase,
                           const py::object &broadcast_params = {});
+  void UpdataParamNodeDefaultInput(const std::string &phase,
+                                   const std::unordered_map<std::string, tensor::TensorPtr> &params);
   void RunInitGraph(const py::dict &init_params, const std::string &phase);
   py::dict GetParameterLayout(const std::string &phase);
   py::dict GetCNodeStrategy(const std::string &phase);
@@ -101,7 +103,6 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
  private:
   ExecutorPy();
   void ConvertObjectToTensors(const py::dict &dict, std::map<std::string, tensor::TensorPtr> *tensors);
-  bool ChangeExportGeirUseVmFlag(bool use_vm, const std::string &phase_s) const;
   void GetGeBackendPolicy() const;
   // filter some pipeline actions according to phase, e.g. when exporting onnx, it is no need to execute actions after
   // 'validate' stage
@@ -145,4 +146,4 @@ void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef 
 }  // namespace pipeline
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_PIPELINE_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_PIPELINE_H_

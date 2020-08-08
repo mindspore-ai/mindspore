@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PYNATIVE_BASE_H_
-#define MINDSPORE_CCSRC_PYNATIVE_BASE_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_PYNATIVE_BASE_H_
+#define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_BASE_H_
 
 #include <vector>
 #include <utility>
@@ -26,7 +26,8 @@
 #include <unordered_set>
 
 #include "pybind11/pybind11.h"
-#include "ir/primitive_py.h"
+#include "ir/anf.h"
+#include "utils/primitive_py.h"
 #include "abstract/abstract_value.h"
 
 namespace mindspore {
@@ -48,19 +49,21 @@ enum PynativeStatusCode {
 enum RunOpArgsEnum { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_ARGS_NUM };
 
 struct OpExecInfo {
-  PrimitivePyPtr py_primitive;
   std::string op_name;
+  std::string prim_id;
+  PrimitivePyPtr py_primitive;
   AbstractBasePtr abstract;
+  ValuePtr value = nullptr;
 
-  py::tuple op_inputs;
-  py::tuple inputs_mask;
+  py::list op_inputs;
   py::dict op_attrs;
+  std::vector<bool> inputs_mask;
 };
 using OpExecInfoPtr = std::shared_ptr<OpExecInfo>;
-OpExecInfoPtr GenerateOpExecInfo(const py::args &args, py::list *const out_args);
+OpExecInfoPtr GenerateOpExecInfo(const py::args &args);
 
-const std::set<std::string> ignore_infer_prim = {"make_ref"};
+const std::set<std::string> ignore_infer_prim = {"make_ref", "mixed_precision_cast"};
 }  // namespace pynative
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PYNATIVE_BASE_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_BASE_H_

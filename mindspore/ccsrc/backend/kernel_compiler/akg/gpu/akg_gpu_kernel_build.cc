@@ -20,7 +20,7 @@
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/kernel_compiler/akg/akg_kernel_build.h"
 #include "backend/kernel_compiler/akg/gpu/akg_gpu_kernel_mod.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {

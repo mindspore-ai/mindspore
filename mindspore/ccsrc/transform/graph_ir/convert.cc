@@ -23,12 +23,12 @@
 
 #include "frontend/operator/ops.h"
 #include "utils/log_adapter.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "utils/symbolic.h"
 #include "utils/config_manager.h"
 #include "utils/convert_utils.h"
 #include "./common.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace transform {
@@ -61,7 +61,6 @@ const char kNameReduceSum[] = "ReduceSum";
 const char kNameIsFinite[] = "isFinite";
 const char kNameReciprocal[] = "Reciprocal";
 const char kNameRsqrt[] = "Rsqrt";
-const char kNameRsqrtGrad[] = "RsqrtGrad";
 const char kNameSqrt[] = "Sqrt";
 const char kNameSquare[] = "Square";
 const char kNameSquaredDifference[] = "SquaredDifference";
@@ -83,6 +82,9 @@ const char kNameFlattenGrad[] = "FlattenGrad";
 const char kNameConvolution[] = "Convolution";
 const char kNameBiasAdd[] = "BiasAdd";
 const char kNameMaxPoolGrad[] = "MaxPoolGrad";
+const char kNameRsqrtGrad[] = "RsqrtGrad";
+const char kNameSqrtGrad[] = "SqrtGrad";
+const char kNameReciprocalGrad[] = "ReciprocalGrad";
 const char kNameAvgPoolGrad[] = "AvgPoolGrad";
 const char kNameMaxPoolGradWithArgmax[] = "MaxPoolGradWithArgmax";
 const char kNameApplyMomentum[] = "ApplyMomentum";
@@ -201,12 +203,16 @@ const char kNameBatchToSpace[] = "BatchToSpace";
 const char kNameAtan2[] = "Atan2";
 const char kNameApplyRMSProp[] = "ApplyRMSProp";
 const char kNameApplyCenteredRMSProp[] = "ApplyCenteredRMSProp";
+const char kNameBasicLSTMCell[] = "BasicLSTMCell";
+const char kNameBasicLSTMCellInputGrad[] = "BasicLSTMCellInputGrad";
+const char kNameBasicLSTMCellWeightGrad[] = "BasicLSTMCellWeightGrad";
+const char kNameBasicLSTMCellCStateGrad[] = "BasicLSTMCellCStateGrad";
 const char kNameL2Loss[] = "L2Loss";
 const char kNameCTCLoss[] = "CTCLoss";
 const char kNameRange[] = "Range";
 const char kNameSquareSumAll[] = "SquareSumAll";
-const char kNameAscendQuant[] = "AscendQuant";
-const char kNameAscendDequant[] = "AscendDequant";
+const char kNameAscendQuant[] = "Quant";
+const char kNameAscendDequant[] = "Dequant";
 const char kNameCase[] = "Case";
 
 // -----------------OpAdapter initialization--------------
@@ -229,6 +235,9 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameAllgather), ADPT_DESC(HcomAllGather)},
     {string(kNameReduceScatter), ADPT_DESC(HcomReduceScatter)},
     {string(kNameMaxPoolGrad), ADPT_DESC(MaxPoolGrad)},
+    {string(kNameSqrtGrad), ADPT_DESC(SqrtGrad)},
+    {string(kNameReciprocalGrad), ADPT_DESC(ReciprocalGrad)},
+    {string(kNameRsqrtGrad), ADPT_DESC(RsqrtGrad)},
     {string(kNameAvgPoolGrad), ADPT_DESC(AvgPoolGrad)},
     {string(kNameMaxPoolGradWithArgmax), ADPT_DESC(MaxPoolGradWithArgmax)},
     {string(kNameExtractImagePatches), ADPT_DESC(ExtractImagePatches)},
@@ -409,7 +418,11 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameBatchToSpace), ADPT_DESC(BatchToSpaceD)},
     {string(kNameAtan2), ADPT_DESC(Atan2)},
     {string(kNameApplyRMSProp), ADPT_DESC(ApplyRMSPropD)},
-    {string(kNameApplyCenteredRMSProp), ADPT_DESC(ApplyCenteredRMSProp)},
+    {string(kNameApplyCenteredRMSProp), ADPT_DESC(ApplyCenteredRMSPropD)},
+    {string(kNameBasicLSTMCell), ADPT_DESC(BasicLSTMCell)},
+    {string(kNameBasicLSTMCellInputGrad), ADPT_DESC(BasicLSTMCellInputGrad)},
+    {string(kNameBasicLSTMCellWeightGrad), ADPT_DESC(BasicLSTMCellWeightGrad)},
+    {string(kNameBasicLSTMCellCStateGrad), ADPT_DESC(BasicLSTMCellCStateGrad)},
     {string(kNameL2Loss), ADPT_DESC(L2Loss)},
     {string(kNameCTCLoss), ADPT_DESC(CTCLoss)},
     {string(kNameRange), ADPT_DESC(RangeD)},
@@ -1334,9 +1347,11 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
   }
 
   for (size_t i = 1; i < input_size; i++) {
-    auto pred = inputs[i];
+    AnfNodePtr pred = nullptr;
     if (case_flag != 0) {
       pred = case_input_handle_cache_[node.get()]->at(i - 1);
+    } else {
+      pred = inputs[i];
     }
 
     while (pred->isa<CNode>() && GetCNodeTargetFuncName(pred->cast<CNodePtr>()) == "Depend") {

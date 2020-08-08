@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_ENGINE_DATASETOPS_RENAME_OP_H_
-#define DATASET_ENGINE_DATASETOPS_RENAME_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_RENAME_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_RENAME_OP_H_
 
 #include <memory>
 #include <queue>
@@ -118,7 +118,7 @@ class RenameOp : public PipelineOp {
 
   // Op name getter
   // @return Name of the current Op
-  std::string Name() const override { return "RenameOp"; }
+  std::string Name() const override { return kRenameOp; }
 
  protected:
   // Rename core functionality
@@ -135,4 +135,4 @@ class RenameOp : public PipelineOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_ENGINE_DATASETOPS_RENAME_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_RENAME_OP_H_

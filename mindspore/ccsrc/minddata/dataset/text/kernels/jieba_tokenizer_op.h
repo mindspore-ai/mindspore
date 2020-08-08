@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_ENGINE_TEXT_JIEBA_OP_H_
-#define DATASET_ENGINE_TEXT_JIEBA_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_TEXT_JIEBA_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_TEXT_JIEBA_OP_H_
 
 #include <string>
 #include <memory>
@@ -46,8 +46,7 @@ class JiebaTokenizerOp : public TensorOp {
   ~JiebaTokenizerOp() override = default;
 
   void Print(std::ostream &out) const override {
-    out << "JiebaTokenizerOp: " << jieba_mode_ << "hmm_model_path_ " << hmm_model_path_ << "mp_dict_path_"
-        << mp_dict_path_;
+    out << Name() << ": " << jieba_mode_ << "hmm_model_path_ " << hmm_model_path_ << "mp_dict_path_" << mp_dict_path_;
   }
 
   Status Compute(const TensorRow &input, TensorRow *output) override;
@@ -68,4 +67,4 @@ class JiebaTokenizerOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_ENGINE_TEXT_JIEBA_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_TEXT_JIEBA_OP_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TRANSFORM_OP_ADAPTER_UTIL_H_
-#define TRANSFORM_OP_ADAPTER_UTIL_H_
+#ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_ADAPTER_UTIL_H_
+#define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_ADAPTER_UTIL_H_
 
 #include <string>
 #include <vector>
@@ -63,4 +63,4 @@ bool IsCustomPrim(const PrimitivePtr &prim);
 bool IsCustomCNode(const AnfNodePtr &node);
 }  // namespace transform
 }  // namespace mindspore
-#endif  // TRANSFORM_OP_ADAPTER_UTIL_H_
+#endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_ADAPTER_UTIL_H_

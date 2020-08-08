@@ -44,12 +44,14 @@ def test_getnext_memcpy_elimination(tag):
         res = get_next()
         res = memcpy_async_attr(res)
         res = cast(res)
+        res = add(res)
         return res
 
     @fns
     def after():
         res = get_next()
         res = cast(res)
+        res = add(res)
         return res
 
     return fns[tag]

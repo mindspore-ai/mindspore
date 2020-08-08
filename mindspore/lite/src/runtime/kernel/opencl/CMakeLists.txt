@@ -1,0 +1,13 @@
+set(OPENCL_KERNEL_SRC
+    ${CMAKE_CURRENT_SOURCE_DIR}/subgraph_opencl_kernel.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel/arithmetic.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel/convolution.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel/depthwise_conv2d.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel/pooling2d.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel/matmul.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel/softmax.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel/concat.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel/conv2d_transpose.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel/transpose.cc
+    )

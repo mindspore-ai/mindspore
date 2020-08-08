@@ -70,6 +70,7 @@ parse_expr_statement_white_list = (
     "append",
 )
 
+
 def create_slice_obj(start, end, step):
     """Create slice object"""
     return slice(start, end, step)
@@ -201,17 +202,9 @@ def get_object_key(obj):
     if isinstance(obj, types.MethodType):
         method_instance = obj.__self__
         instance_id = "%s_ID%d" % (str(method_instance.__class__.__name__), id(method_instance))
-        obj_id = instance_id + obj_id
+        obj_id = instance_id + obj_id + str(obj.__hash__())
     return obj_id, obj_key
 
-def get_default_input(obj):
-    if hasattr(obj, '__parameter__'):
-        return obj.default_input
-    if isinstance(obj, tuple):
-        convert = lambda x: x.default_input if hasattr(x, '__parameter__') else x
-        args = tuple(convert(x) for x in obj)
-        return args
-    return obj
 
 def is_class_member(node):
     """Check the attr is class member variable."""
@@ -224,9 +217,11 @@ def is_class_member(node):
             return True
     return False
 
+
 def get_obj_id(obj):
     """Get the obj id."""
     return str(id(obj))
+
 
 def get_obj_type(obj):
     """Get the obj type."""
@@ -319,6 +314,7 @@ def get_dataclass_methods(cls):
                for name in dir(cls)
                if isinstance(getattr(cls, name), (types.FunctionType,))}
     return methods
+
 
 class Parser:
     """
@@ -452,6 +448,28 @@ class Parser:
         ops_info = parse_object_map.get(type(obj), SYMBOL_UNDEFINE)
         logger.debug("ops info = %r", ops_info)
         return ops_info
+
+    def analyze_super(self, class_type_node, subclass_instance):
+        """Analyze super and return a class instance."""
+        sub_class = type(subclass_instance)
+        if class_type_node is None:
+            return super(sub_class, subclass_instance)
+        if isinstance(class_type_node, ast.Name):
+            class_name = getattr(class_type_node, 'id')
+        elif isinstance(class_type_node, ast.Attribute):
+            class_name = getattr(class_type_node, 'attr')
+        else:
+            raise ValueError(f"When call 'super', the first arg should be a class type, "
+                             f"but got {class_type_node.__class__.__name__}.")
+
+        target_father_class = None
+        for class_element in sub_class.mro():
+            if class_element.__name__ == class_name:
+                target_father_class = class_element
+                break
+        if target_father_class is None:
+            raise ValueError("When call 'super', the second arg should be an instance of first arg.")
+        return super(target_father_class, subclass_instance)
 
     def get_location(self, node):
         """

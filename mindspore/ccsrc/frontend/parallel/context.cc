@@ -24,12 +24,12 @@
 #include <utility>
 #include <map>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "frontend/parallel/device_manager.h"
 
 namespace mindspore {
 namespace parallel {
-static std::map<std::string, std::vector<int>> param_shapes;
+static std::map<std::string, Shape> param_shapes;
 
 std::vector<std::string> PARALLEL_MODE_LIST = {STAND_ALONE, DATA_PARALLEL, HYBRID_PARALLEL, SEMI_AUTO_PARALLEL,
                                                AUTO_PARALLEL};
@@ -44,7 +44,10 @@ std::shared_ptr<ParallelContext> ParallelContext::GetInstance() {
   return inst_context_;
 }
 
-ParallelContext::ParallelContext() { Reset(); }
+ParallelContext::ParallelContext() {
+  communication_backend_ = HCCL_BACKEND;
+  Reset();
+}
 
 void ParallelContext::Reset() {
   mirror_mean_ = false;
@@ -53,7 +56,6 @@ void ParallelContext::Reset() {
   loss_repeated_mean_ = true;
   device_num_ = 1;
   global_rank_ = 0;
-  communication_backend_ = HCCL_BACKEND;
   device_num_is_set_ = false;
   global_rank_is_set_ = false;
   parallel_mode_ = STAND_ALONE;
@@ -63,6 +65,8 @@ void ParallelContext::Reset() {
   strategy_ckpt_load_file_ = "";
   strategy_ckpt_save_file_ = "";
   enable_parallel_optimizer_ = false;
+  all_reduce_fusion_split_indices_.clear();
+  all_reduce_fusion_split_sizes_.clear();
 }
 
 void ParallelContext::set_device_num(int32_t device_num) {
@@ -169,7 +173,7 @@ void ParallelParameterContextRestoreInNoTraining(const FuncGraphPtr &func_graph,
     MS_LOG(WARNING) << "Can not found the shape for parameter " << param_node->name();
     return;
   }
-  std::vector<int> shape = iter->second;
+  Shape shape = iter->second;
   std::shared_ptr<abstract::BaseShape> base_shape = std::make_shared<abstract::Shape>(shape);
   ptr->set_shape(base_shape);
   MS_LOG(DEBUG) << "The parameter name is " << param_node->name() << ", the shape is " << shape;
@@ -185,7 +189,10 @@ void ParallelParameterContextCkptInTraining(const FuncGraphPtr &func_graph, cons
     return;
   }
 
-  std::vector<int> shape = dyn_cast<abstract::Shape>(ptr->GetShapeTrack())->shape();
+  std::vector<int> shape_int = dyn_cast<abstract::Shape>(ptr->GetShapeTrack())->shape();
+  Shape shape;
+  (void)std::transform(shape_int.begin(), shape_int.end(), std::back_inserter(shape),
+                       [](const int &value) { return static_cast<int64_t>(value); });
   auto ret = param_shapes.try_emplace(param_node->name(), shape);
   if (!ret.second) {
     MS_LOG(EXCEPTION) << "The shape for parameter name " << param_node->name() << " is existed";

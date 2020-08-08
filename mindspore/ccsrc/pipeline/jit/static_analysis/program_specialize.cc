@@ -23,8 +23,8 @@
 #include "./common.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/do_signature.h"
-#include "pipeline/jit/static_analysis/abstract_function.h"
-#include "utils/graph_utils.h"
+#include "abstract/abstract_function.h"
+#include "ir/graph_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/profile.h"
 #include "debug/trace.h"
@@ -82,6 +82,9 @@ std::shared_ptr<FuncGraphSpecializer> ProgramSpecializer::GetFuncGraphSpecialize
   if (iter != specializations_.end()) {
     return iter->second;
   }
+  if (context->func_graph()) {
+    MS_LOG(EXCEPTION) << "Specialize inner error";
+  }
   return nullptr;
 }
 
@@ -115,6 +118,7 @@ AnfNodePtr FuncGraphSpecializer::ReplicateDisconnectedNode(const AnfNodePtr &nod
   std::shared_ptr<FuncGraphSpecializer> specializer = shared_from_this();
   while (fg != nullptr && fg != specializer->func_graph_) {
     specializer = specializer->parent_;
+    MS_EXCEPTION_IF_NULL(specializer);
   }
   // If had replicated, just return that.
   auto iter = specializer->repl_node_->find(node);
@@ -539,8 +543,7 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &new_node) {
       MS_LOG(DEBUG) << "FindUniqueArgvals return status: " << status;
       // if a node is a poly node, or an input parameter is a PartialAbstractClosure, expand it early
       if (status == kSpecializeFindUniqueArgvalPoly ||
-          (func->isa<Parameter>() && (func->func_graph()->has_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER) ||
-                                      func->abstract()->isa<PartialAbstractClosure>()))) {
+          (func->isa<Parameter>() && func->func_graph()->has_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER))) {
         auto wrapped_node = BuildSpecializedParameterNode(new_node);
         new_inputs[0] = wrapped_node;
       }
@@ -654,17 +657,7 @@ static PrimitivePtr BuildPrimtiveValueWithAttributes(const PrimitivePtr &prim, c
     }
   }
   if (!is_attr_same) {
-    if (prim->isa<PrimitivePy>()) {
-      PrimitivePyPtr prim_py = prim->cast<PrimitivePyPtr>();
-      auto clone_fn = prim_py->GetPyObj().attr("_clone");
-      py::object new_obj = clone_fn();
-      auto cloned_prim = new_obj.cast<PrimitivePyPtr>();
-      for (auto &item : *attrs) {
-        cloned_prim->AddAttr(item.first, item.second);
-      }
-      return cloned_prim;
-    }
-    auto cloned_prim = std::make_shared<Primitive>(*prim);
+    auto cloned_prim = prim->Clone();
     for (auto &item : *attrs) {
       cloned_prim->AddAttr(item.first, item.second);
     }

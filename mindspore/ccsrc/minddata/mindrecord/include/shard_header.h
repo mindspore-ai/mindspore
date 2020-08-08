@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDRECORD_INCLUDE_SHARD_HEADER_H_
-#define MINDRECORD_INCLUDE_SHARD_HEADER_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_HEADER_H_
+#define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_HEADER_H_
 
 #include <memory>
 #include <set>
@@ -124,6 +124,10 @@ class ShardHeader {
 
   MSRStatus FileToPages(const std::string dump_file_name);
 
+  static MSRStatus initialize(const std::shared_ptr<ShardHeader> *header_ptr, const json &schema,
+                              const std::vector<std::string> &index_fields, std::vector<std::string> &blob_fields,
+                              uint64_t &schema_id);
+
  private:
   MSRStatus InitializeHeader(const std::vector<json> &headers, bool load_dataset);
 
@@ -148,7 +152,7 @@ class ShardHeader {
 
   MSRStatus CheckIndexField(const std::string &field, const json &schema);
 
-  void ParsePage(const json &page, int shard_index, bool load_dataset);
+  MSRStatus ParsePage(const json &page, int shard_index, bool load_dataset);
 
   MSRStatus ParseStatistics(const json &statistics);
 
@@ -183,4 +187,4 @@ class ShardHeader {
 }  // namespace mindrecord
 }  // namespace mindspore
 
-#endif  // MINDRECORD_INCLUDE_SHARD_HEADER_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_HEADER_H_

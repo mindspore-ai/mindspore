@@ -130,7 +130,7 @@ def test_concatenate_op_incorrect_dim():
     def gen():
         yield (np.array([["ss", "ad"], ["ss", "ad"]], dtype='S'),)
 
-    prepend_tensor = np.array([3, 5], dtype=np.float)
+    prepend_tensor = np.array(["ss", "ss"], dtype='S')
     concatenate_op = data_trans.Concatenate(0, prepend_tensor)
     data = ds.GeneratorDataset(gen, column_names=["col"])
 

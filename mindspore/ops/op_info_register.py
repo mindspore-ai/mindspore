@@ -28,13 +28,14 @@ BUILT_IN_CUSTOM_OPS_REGISTER_PATH = "mindspore/ops/_op_impl/_custom_op"
 
 def op_info_register(op_info):
     """
-    A decorator used as register of operator implementation.
+    A decorator which is used to register an operator.
 
     Note:
-        'op_info' must be a str of json format represent the op info, the op info will be added into oplib.
+        'op_info' should represent the operator information by string with json format.
+        The 'op_info' will be added into oplib.
 
     Args:
-        op_info (str or dict): op info of json format.
+        op_info (str or dict): operator information in json format.
 
     Returns:
         Function, returns a decorator for op info register.
@@ -220,18 +221,19 @@ class AkgRegOp(RegOp):
         self.imply_type = "AKG"
         self.processor = processor
 
-    def input(self, index=None, name=None, **kwargs):
+    def input(self, index=None, name=None, param_type=None, **kwargs):
         """
         Register Akg op input information.
 
         Args:
             index (int): Order of the input. Default: None.
             name (str): Name of the input. Default: None.
-            kwargs (dict): Other information for the input.
+            param_type (str): Param type of the input. Default: None.
+            kwargs (dict): Other information of the input.
         """
-        param_list = [index, name]
-        key_list = ["index", "name"]
-        fn_list = [self._is_int, self._is_string]
+        param_list = [index, name, param_type]
+        key_list = ["index", "name", "param_type"]
+        fn_list = [self._is_int, self._is_string, self._is_string]
         input_dict = self._check_param(param_list, key_list, fn_list, kwargs)
         self.inputs.append(input_dict)
         return self
@@ -243,7 +245,7 @@ class AkgRegOp(RegOp):
         Args:
             index (int): Order of the output. Default: None.
             name (str): Name of the output. Default: None.
-            kwargs (dict): Other information for the output.
+            kwargs (dict): Other information of the output.
         """
         param_list = [index, name]
         key_list = ["index", "name"]
@@ -260,7 +262,7 @@ class AkgRegOp(RegOp):
             name (str): Name of the attribute. Default: None.
             param_type (str): Param type of the attribute. Default: None.
             value_type (str): Value type of the attribute. Default: None.
-            kwargs (dict): Other information for the attribute.
+            kwargs (dict): Other information of the attribute.
         """
         param_list = [name, param_type, value_type]
         key_list = ["name", "param_type", "type"]
@@ -295,7 +297,7 @@ class AiCPURegOp(RegOp):
             index (int): Order of the input. Default: None.
             name (str): Name of the input. Default: None.
             param_type (str): Param type of the input. Default: None.
-            kwargs (dict): Other information for the input.
+            kwargs (dict): Other information of the input.
         """
         param_list = [index, name, param_type]
         key_list = ["index", "name", "param_type"]
@@ -312,7 +314,7 @@ class AiCPURegOp(RegOp):
             index (int): Order of the output. Default: None.
             name (str): Name of the output. Default: None.
             param_type (str): Param type of the output. Default: None.
-            kwargs (dict): Other information for the output.
+            kwargs (dict): Other information of the output.
         """
         param_list = [index, name, param_type]
         key_list = ["index", "name", "param_type"]
@@ -328,8 +330,8 @@ class AiCPURegOp(RegOp):
         Args:
             name (str): Name of the attribute. Default: None.
             value_type (str): Value type of the attribute. Default: None.
-            value (str): Value type of the attribute. Default: None.
-            kwargs (dict): Other information for the attribute.
+            value (str): Value of the attribute. Default: None.
+            kwargs (dict): Other information of the attribute.
         """
         param_list = [name, value_type, value]
         key_list = ["name", "type", "value"]
@@ -356,7 +358,7 @@ class TBERegOp(RegOp):
 
     def async_flag(self, async_flag):
         """
-        Define the calculation efficiency of operator, whether to support asynchronous calculation.
+        Define the calculation efficiency of the operator, whether the asynchronous calculation is supported.
 
         Args:
             async_flag (bool): Value of async flag. Default: false.
@@ -367,10 +369,10 @@ class TBERegOp(RegOp):
 
     def binfile_name(self, binfile_name):
         """
-        Binary file name of operator. The option is optional.
+        Set the binary file name of the operator, it is optional.
 
         Args:
-            binfile_name (str): File name of operator binary.
+            binfile_name (str): The binary file name of the operator.
         """
         self._is_string(binfile_name)
         self.binfile_name_ = binfile_name
@@ -378,7 +380,7 @@ class TBERegOp(RegOp):
 
     def compute_cost(self, compute_cost):
         """
-        Define the calculation efficiency of operator, which refers to cost model value of the tiling module.
+        Define the calculation efficiency of operator, which refers to the value of the cost model in the tiling module.
 
         Args:
             compute_cost (int): Value of compute cost. Default: 10.
@@ -400,7 +402,7 @@ class TBERegOp(RegOp):
 
     def partial_flag(self, partial_flag):
         """
-        Define the calculation efficiency of operator, whether to support partial calculation.
+        Define the calculation efficiency of operator, whether the partial calculation is supported.
 
         Args:
             partial_flag (bool): Value of partial flag. Default: true.
@@ -422,7 +424,7 @@ class TBERegOp(RegOp):
 
     def dynamic_format(self, dynamic_format):
         """
-        Whether the operator supports dynamic selection of format and dtype.
+        Whether the operator supports dynamic selection of format and dtype or not.
 
         Args:
             dynamic_format (bool): Value of dynamic format. Default: false.
@@ -452,7 +454,7 @@ class TBERegOp(RegOp):
             value_type (str): Type of the attribute. Default: None.
             value (str): Value of the attribute. Default: None.
             default_value (str): Default value of attribute. Default: None.
-            kwargs (dict): Other information for the attribute.
+            kwargs (dict): Other information of the attribute.
         """
         param_list = [name, param_type, value_type, value, default_value]
         key_list = ["name", "param_type", "type", "value", "default_value"]
@@ -468,10 +470,10 @@ class TBERegOp(RegOp):
         Args:
             index (int): Order of the input. Default: None.
             name (str): Name of the input. Default: None.
-            need_compile (bool): The input need compile whether or not. Default: None.
+            need_compile (bool): Whether the input needs to be compiled or not. Default: None.
             param_type (str): Type of the input. Default: None.
             shape (str): Shape of the input. Default: None.
-            kwargs (dict): Other information for the input.
+            kwargs (dict): Other information of the input.
         """
         param_list = [index, name, need_compile, param_type, shape]
         key_list = ["index", "name", "need_compile", "param_type", "shape"]
@@ -487,10 +489,10 @@ class TBERegOp(RegOp):
         Args:
             index (int): Order of the output. Default: None.
             name (str): Name of the output. Default: None.
-            need_compile (bool): The output need compile whether or not. Default: None.
+            need_compile (bool): Whether the output needs to be compiled or not. Default: None.
             param_type (str): Type of the output. Default: None.
             shape (str): Shape of the output. Default: None.
-            kwargs (dict): Other information for the output.
+            kwargs (dict): Other information of the output.
         """
         param_list = [index, name, need_compile, param_type, shape]
         key_list = ["index", "name", "need_compile", "param_type", "shape"]
@@ -504,7 +506,7 @@ class DataType:
     """
     Various combinations of dtype and format.
 
-    The current list below maybe not completed. If necessary, please add it.
+    The current list below may be incomplete. Please add it if necessary.
     """
 
     None_None = ("", "")

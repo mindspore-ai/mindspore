@@ -15,12 +15,15 @@ add_library(engine OBJECT
     data_schema.cc
     dataset_iterator.cc
     )
-target_include_directories(engine PRIVATE ${pybind11_INCLUDE_DIRS})
+
+if (ENABLE_PYTHON)
+    target_include_directories(engine PRIVATE ${pybind11_INCLUDE_DIRS})
+endif()
 
 if (ENABLE_TDTQUE)
   add_dependencies(engine engine-datasetops engine-datasetops-source engine-tdt engine-opt engine-gnn engine-perf
-                   engine-cache-client engine-cache-server)
+                   engine-cache-client engine-cache-server engine-datasetops-mapop)
 else ()
   add_dependencies(engine engine-datasetops engine-datasetops-source engine-opt engine-gnn engine-perf
-                   engine-cache-client engine-cache-server)
+                   engine-cache-client engine-cache-server engine-datasetops-mapop)
 endif ()

@@ -16,7 +16,7 @@
 
 #include "minddata/mindrecord/include/shard_distributed_sample.h"
 #include "minddata/mindrecord/include/shard_reader.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 using mindspore::LogStream;
 using mindspore::ExceptionType::NoExceptionType;
@@ -43,9 +43,6 @@ ShardReader::ShardReader() {
   page_size_ = 0;
   header_size_ = 0;
   num_rows_ = 0;
-  row_id_ = 0;
-  num_blocks_ = 0;
-  block_reader_ = false;
   num_padded_ = 0;
 }
 
@@ -252,7 +249,7 @@ std::vector<std::tuple<int, int, int, uint64_t>> ShardReader::ReadRowGroupSummar
   if (shard_count <= 0) {
     return row_group_summary;
   }
-  if (shard_count <= kMaxShardCount) {
+  if (shard_count <= kMaxFileCount) {
     for (int shard_id = 0; shard_id < shard_count; ++shard_id) {
       // return -1 when page's size equals to 0.
       auto last_page_id = shard_header_->GetLastPageId(shard_id);
@@ -855,8 +852,7 @@ MSRStatus ShardReader::CountTotalRows(const std::vector<std::string> &file_paths
 
 MSRStatus ShardReader::Open(const std::vector<std::string> &file_paths, bool load_dataset, int n_consumer,
                             const std::vector<std::string> &selected_columns,
-                            const std::vector<std::shared_ptr<ShardOperator>> &operators, const bool &block_reader,
-                            int num_padded) {
+                            const std::vector<std::shared_ptr<ShardOperator>> &operators, int num_padded) {
   // Open file and set header by ShardReader
   auto ret = Init(file_paths, load_dataset);
   if (SUCCESS != ret) {
@@ -890,19 +886,8 @@ MSRStatus ShardReader::Open(const std::vector<std::string> &file_paths, bool loa
 
   operators_ = operators;
 
-  if (block_reader) {
-    block_reader_ = true;
-    if (Open() == FAILED) {
-      return FAILED;
-    }
-    delivery_block_ = std::vector<std::shared_ptr<std::pair<std::vector<std::vector<uint64_t>>, std::vector<json>>>>(
-      kNumPageInBuffer, std::shared_ptr<std::pair<std::vector<std::vector<uint64_t>>, std::vector<json>>>{});
-    buf_ = std::vector<std::vector<uint8_t>>(kNumPageInBuffer, std::vector<uint8_t>(page_size_));
-  } else {
-    block_reader_ = false;
-    if (Open(n_consumer) == FAILED) {
-      return FAILED;
-    }
+  if (Open(n_consumer) == FAILED) {
+    return FAILED;
   }
   return SUCCESS;
 }
@@ -960,26 +945,10 @@ MSRStatus ShardReader::Launch(bool isSimpleReader) {
   }
 
   for (int x = 0; x < n_consumer_; ++x) {
-    if (block_reader_) {
-      thread_set_[x] = std::thread(&ShardReader::ConsumerByBlock, this, x);
-    } else {
-      thread_set_[x] = std::thread(&ShardReader::ConsumerByRow, this, x);
-    }
+    thread_set_[x] = std::thread(&ShardReader::ConsumerByRow, this, x);
   }
 
   MS_LOG(INFO) << "Launch read thread successfully.";
-  return SUCCESS;
-}
-
-MSRStatus ShardReader::CreateTasksByBlock(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
-                                          const std::vector<std::shared_ptr<ShardOperator>> &operators) {
-  CheckIfColumnInIndex(selected_columns_);
-  for (const auto &rg : row_group_summary) {
-    auto shard_id = std::get<0>(rg);
-    auto group_id = std::get<1>(rg);
-    auto n_Rows = std::get<3>(rg);
-    tasks_.InsertTask(TaskType::kCommonTask, shard_id, group_id, std::vector<uint64_t>{n_Rows}, json{});
-  }
   return SUCCESS;
 }
 
@@ -1054,7 +1023,7 @@ MSRStatus ShardReader::CreateTasksByRow(const std::vector<std::tuple<int, int, i
   }
   auto offsets = std::get<1>(ret);
   auto local_columns = std::get<2>(ret);
-  if (shard_count_ <= kMaxShardCount) {
+  if (shard_count_ <= kMaxFileCount) {
     for (int shard_id = 0; shard_id < shard_count_; shard_id++) {
       for (uint32_t i = 0; i < offsets[shard_id].size(); i += 1) {
         tasks_.InsertTask(TaskType::kCommonTask, offsets[shard_id][i][0], offsets[shard_id][i][1],
@@ -1070,47 +1039,39 @@ MSRStatus ShardReader::CreateTasksByRow(const std::vector<std::tuple<int, int, i
 
 MSRStatus ShardReader::CreateTasks(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
                                    const std::vector<std::shared_ptr<ShardOperator>> &operators) {
-  if (block_reader_) {
-    if (SUCCESS != CreateTasksByBlock(row_group_summary, operators)) {
+  int category_operator = -1;
+  for (uint32_t i = 0; i < operators.size(); ++i) {
+    const auto &op = operators[i];
+    if (std::dynamic_pointer_cast<ShardCategory>(op)) {
+      category_operator = static_cast<int>(i);
+      break;
+    }
+  }
+  if (-1 == category_operator) {
+    if (SUCCESS != CreateTasksByRow(row_group_summary, operators)) {
       return FAILED;
     }
-  } else {
-    int category_operator = -1;
-    for (uint32_t i = 0; i < operators.size(); ++i) {
-      const auto &op = operators[i];
-      if (std::dynamic_pointer_cast<ShardCategory>(op)) {
-        category_operator = static_cast<int>(i);
-        break;
+    if (num_padded_ > 0) {
+      for (int i = 0; i < num_padded_; ++i) {
+        tasks_.InsertTask(TaskType::kPaddedTask, 0, 0, {}, json());
       }
     }
-    if (-1 == category_operator) {
-      if (SUCCESS != CreateTasksByRow(row_group_summary, operators)) {
-        return FAILED;
-      }
-      if (num_padded_ > 0) {
-        for (int i = 0; i < num_padded_; ++i) {
-          tasks_.InsertTask(TaskType::kPaddedTask, 0, 0, {}, json());
-        }
-      }
-    } else {
-      if (SUCCESS != CreateTasksByCategory(row_group_summary, operators[category_operator])) {
-        return FAILED;
-      }
+  } else {
+    if (SUCCESS != CreateTasksByCategory(row_group_summary, operators[category_operator])) {
+      return FAILED;
     }
   }
 
   for (uint32_t operator_no = 0; operator_no < operators.size(); operator_no++) {
     const auto &op = operators[operator_no];
     if (std::dynamic_pointer_cast<ShardCategory>(op)) continue;
-    if (block_reader_ && std::dynamic_pointer_cast<ShardShuffle>(op)) continue;
     if (SUCCESS != (*op)(tasks_)) {
       return FAILED;
     }
   }
 
   if (tasks_.permutation_.empty()) tasks_.MakePerm();
-  num_rows_ = block_reader_ ? tasks_.SizeOfRows() : tasks_.Size();
-  num_blocks_ = block_reader_ ? tasks_.Size() : 0;
+  num_rows_ = tasks_.Size();
   MS_LOG(INFO) << "Total rows is " << num_rows_;
   return SUCCESS;
 }
@@ -1207,140 +1168,10 @@ MSRStatus ShardReader::ConsumerByRow(int consumer_id) {
   }
 }
 
-MSRStatus ShardReader::ReadBlob(const int &shard_id, const uint64_t &page_offset, const int &page_length,
-                                const int &buf_id) {
-  auto &io_seekg = file_streams_[shard_id]->seekg(page_offset, std::ios::beg);
-  if (!io_seekg.good() || io_seekg.fail() || io_seekg.bad()) {
-    MS_LOG(ERROR) << "File seekg failed";
-    file_streams_[shard_id]->close();
-    return FAILED;
-  }
-
-  auto &io_read = file_streams_[shard_id]->read(reinterpret_cast<char *>(&buf_[buf_id][0]), page_length);
-  if (!io_read.good() || io_read.fail() || io_read.bad()) {
-    MS_LOG(ERROR) << "File read failed";
-    file_streams_[shard_id]->close();
-    return FAILED;
-  }
-  return SUCCESS;
-}
-
-MSRStatus ShardReader::ConsumerByBlock(int consumer_id) {
-  // Set thread name
-#if !defined(_WIN32) && !defined(_WIN64)
-  auto thread_id = kThreadName + std::to_string(consumer_id);
-  prctl(PR_SET_NAME, common::SafeCStr(thread_id), 0, 0, 0);
-#endif
-
-  // Loop forever
-  for (;;) {
-    int task_id = 0;
-
-    // Get next task ID
-    task_id = task_id_++;
-
-    // All tasks are done, either quit or repeat again
-    if (task_id >= num_blocks_) {
-      std::unique_lock<std::mutex> lck(mtx_delivery_);
-      cv_delivery_.wait(lck, [this] { return interrupt_ || task_id_ < num_blocks_; });
-      if (interrupt_) {
-        return SUCCESS;
-      }
-      continue;
-    }
-
-    // Pick up task from task list
-    auto task = tasks_.GetTaskByID(tasks_.permutation_[task_id]);
-
-    auto shard_id = std::get<0>(std::get<1>(task));
-    auto group_id = std::get<1>(std::get<1>(task));
-    auto row_group_brief = ReadRowGroupBrief(group_id, shard_id, selected_columns_);
-    if (SUCCESS != std::get<0>(row_group_brief)) {
-      return FAILED;
-    }
-    auto page_length = std::get<2>(row_group_brief);
-    auto page_offset = std::get<3>(row_group_brief);
-
-    MS_LOG(DEBUG) << "Block task " << task_id << tasks_.permutation_[task_id] << ", shard " << shard_id << ", group "
-                  << group_id << ", page length " << page_length << ", page offset " << page_offset;
-
-    // Deliver block data to output map
-    auto offset_and_labels = std::make_pair(std::get<4>(row_group_brief), std::get<5>(row_group_brief));
-
-    int deliver_id = deliver_id_;
-    // Hanging if maximum map size exceeded otherwise, set batch data in buffer
-    {
-      std::unique_lock<std::mutex> lck(mtx_delivery_);
-      cv_delivery_.wait(lck, [task_id, this] { return interrupt_ || task_id < deliver_id_ + kNumPageInBuffer; });
-      if (interrupt_) {
-        return SUCCESS;
-      }
-    }
-
-    auto buf_id = task_id % kNumPageInBuffer;
-    delivery_block_[buf_id] =
-      std::make_shared<std::pair<std::vector<std::vector<uint64_t>>, std::vector<json>>>(offset_and_labels);
-
-    // Read blob
-    if (ReadBlob(shard_id, page_offset, page_length, buf_id) != SUCCESS) {
-      return FAILED;
-    }
-
-    {
-      std::unique_lock<std::mutex> lck(mtx_delivery_);
-      delivery_block_set_.insert(task_id);
-    }
-    cv_iterator_.notify_one();
-  }
-}
-
-std::shared_ptr<std::vector<std::tuple<std::vector<uint8_t>, json>>> ShardReader::GetRowFromBuffer(int buf_id,
-                                                                                                   int rowId) {
-  auto &blob_page = buf_[buf_id];
-  auto &offsets = (*delivery_block_[buf_id]).first;
-  auto &labels = (*delivery_block_[buf_id]).second;
-  auto &addr_start = offsets[rowId][0];
-  auto &addr_end = offsets[rowId][1];
-  std::vector<uint8_t> images(blob_page.begin() + addr_start, blob_page.begin() + addr_end);
-  std::vector<std::tuple<std::vector<uint8_t>, json>> batch;
-  batch.emplace_back(std::move(images), std::move(labels[rowId]));
-  return std::make_shared<std::vector<std::tuple<std::vector<uint8_t>, json>>>(std::move(batch));
-}
-
-std::vector<std::tuple<std::vector<uint8_t>, json>> ShardReader::GetBlockNext() {
-  if (deliver_id_ >= num_blocks_) {
-    return std::vector<std::tuple<std::vector<uint8_t>, json>>();
-  }
-
-  if (row_id_ == 0) {
-    std::unique_lock<std::mutex> lck(mtx_delivery_);
-    cv_iterator_.wait(lck, [this] { return interrupt_ || (delivery_block_set_.count(deliver_id_) > 0); });
-
-    if (interrupt_) {
-      return std::vector<std::tuple<std::vector<uint8_t>, json>>();
-    }
-  }
-  auto buf_id = deliver_id_ % kNumPageInBuffer;
-  auto res = GetRowFromBuffer(buf_id, row_id_);
-
-  row_id_++;
-  if (row_id_ == (*delivery_block_[buf_id]).first.size()) {
-    row_id_ = 0;
-    {
-      std::unique_lock<std::mutex> lck(mtx_delivery_);
-      delivery_block_set_.erase(deliver_id_++);
-    }
-    cv_delivery_.notify_all();
-  }
-
-  return *res;
-}
-
 std::vector<std::tuple<std::vector<uint8_t>, json>> ShardReader::GetNext() {
   if (interrupt_) {
     return std::vector<std::tuple<std::vector<uint8_t>, json>>();
   }
-  if (block_reader_) return GetBlockNext();
   if (deliver_id_ >= static_cast<int>(tasks_.Size())) {
     return std::vector<std::tuple<std::vector<uint8_t>, json>>();
   }
@@ -1365,9 +1196,6 @@ std::pair<TaskType, std::vector<std::tuple<std::vector<uint8_t>, json>>> ShardRe
   const int64_t &task_id, const int32_t &consumer_id) {
   if (interrupt_) {
     return std::make_pair(TaskType::kCommonTask, std::vector<std::tuple<std::vector<uint8_t>, json>>());
-  }
-  if (block_reader_) {
-    return std::make_pair(TaskType::kCommonTask, GetBlockNext());
   }
   const auto &ret = ConsumerOneTask(task_id, consumer_id);
   if (SUCCESS != ret.first) {
@@ -1423,7 +1251,6 @@ void ShardReader::Reset() {
 }
 
 void ShardReader::ShuffleTask() {
-  if (block_reader_) return;
   // exist shuffle and distributed sampler in ops, skip shuffle
   bool has_sharding = false;
   for (const auto &op : operators_) {

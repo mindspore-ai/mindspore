@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_PRIMITIVE_H_
-#define MINDSPORE_CCSRC_IR_PRIMITIVE_H_
+#ifndef MINDSPORE_CORE_IR_PRIMITIVE_H_
+#define MINDSPORE_CORE_IR_PRIMITIVE_H_
 
 #include <unordered_map>
 #include <vector>
@@ -25,7 +25,6 @@
 
 #include "ir/dtype/type.h"
 #include "abstract/abstract_value.h"
-#include "frontend/parallel/ops_info/operator_info.h"
 #include "utils/base_ref_extends.h"
 
 namespace mindspore {
@@ -41,24 +40,10 @@ enum PrimType {
 
 class Primitive : public Named {
  public:
-  explicit Primitive(const std::string &name, const bool is_base = true, const PrimType prim_type = kPrimTypeBuiltIn)
-      : Named(name),
-        is_base_(is_base),
-        has_signature_(false),
-        prim_type_(prim_type),
-        record_evaluate_add_attr_(false) {}
-
-  Primitive(const Primitive &prim)
-      : Named(prim),
-        attrs_(prim.attrs_),
-        instance_name_(prim.instance_name_),
-        is_base_(prim.is_base_),
-        has_signature_(prim.has_signature_),
-        prim_type_(prim.prim_type_),
-        record_evaluate_add_attr_(false) {}
-
+  explicit Primitive(const std::string &name, const bool is_base = true, const PrimType prim_type = kPrimTypeBuiltIn);
+  Primitive(const Primitive &prim);
   MS_DECLARE_PARENT(Primitive, Named);
-
+  abstract::AbstractBasePtr ToAbstract();
   abstract::AbstractBasePtr ToPrimAbstract(const AnfNodePtr &anf_node);
   std::string ToString() const override { return name(); }
   void BeginRecordAddAttr() {
@@ -83,6 +68,7 @@ class Primitive : public Named {
 
   void set_attr(const std::string &attrName, const ValuePtr &attr) { attrs_[attrName] = attr; }
   void EraseAttr(const std::string &attrName) { (void)attrs_.erase(attrName); }
+  virtual BaseRef RunComputeFunction(const VectorRef &args) const { return nullptr; }
 
   ValuePtr GetAttr(const std::string &attrName) const {
     auto iter = attrs_.find(attrName);
@@ -91,6 +77,12 @@ class Primitive : public Named {
 
   const std::unordered_map<std::string, ValuePtr> &attrs() const { return attrs_; }
   const std::unordered_map<std::string, ValuePtr> &evaluate_added_attrs() const { return evaluate_added_attrs_; }
+  void set_evaluate_added_attrs(const std::unordered_map<std::string, ValuePtr> &attrs) {
+    for (auto &attr : attrs) {
+      MS_LOG(INFO) << " set evalu attrl " << name() << attr.first;
+      attrs_[attr.first] = attr.second;
+    }
+  }
 
   // if Primitive has any attribute, for Primitives like scalar_add, return, etc, don't have any attribute.
   bool HasAttr() const { return !attrs_.empty(); }
@@ -99,6 +91,7 @@ class Primitive : public Named {
     return !(iter == attrs_.cend());
   }
   void set_prim_type(const PrimType t) { prim_type_ = t; }
+  virtual PrimitivePtr Clone() { return std::make_shared<Primitive>(*this); }
   void set_instance_name(const std::string s) { instance_name_ = s; }
   bool HasPyEvaluator() const { return prim_type_ == kPrimTypePyInferShape || prim_type_ == kPrimTypeUserCustom; }
   bool HasPyInferTensor() const { return prim_type_ == kPrimTypePyInferTensor; }
@@ -116,6 +109,9 @@ class Primitive : public Named {
   bool is_base() const { return is_base_; }
   virtual BaseRef RunHookFunction(const VectorRef &args) const { MS_LOG(EXCEPTION) << "call a empty function!"; }
   virtual void CopyHookFunction(const PrimitivePtr &primitive) { MS_LOG(EXCEPTION) << "call a empty function!"; }
+  void set_is_const_value(bool value) { is_const_value_ = value; }
+  bool is_const_value() const { return is_const_value_; }
+  std::string id() const { return id_; }
 
  protected:
   std::unordered_map<std::string, ValuePtr> attrs_;
@@ -127,6 +123,8 @@ class Primitive : public Named {
   bool has_signature_;
   PrimType prim_type_;
   bool record_evaluate_add_attr_;
+  bool is_const_value_;
+  std::string id_{""};
 };
 
 inline std::ostream &operator<<(std::ostream &os, const PrimitivePtr &p) {
@@ -149,4 +147,4 @@ struct PrimitiveHasher {
   }
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_IR_PRIMITIVE_H_
+#endif  // MINDSPORE_CORE_IR_PRIMITIVE_H_

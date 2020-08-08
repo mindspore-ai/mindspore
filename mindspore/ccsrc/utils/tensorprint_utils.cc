@@ -21,6 +21,8 @@
 #include <string>
 #include <vector>
 #include "ir/tensor.h"
+#include "pybind11/pybind11.h"
+#include "utils/ms_utils.h"
 #include "runtime/device/convert_tensor_utils.h"
 #include "./securec.h"
 #ifndef NO_DLIB
@@ -29,6 +31,7 @@
 #include "tdt/data_common.h"
 #endif
 
+namespace py = pybind11;
 namespace mindspore {
 const char kShapeSeperator[] = ",";
 const char kShapeScalar[] = "[0]";

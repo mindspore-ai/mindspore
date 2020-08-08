@@ -32,6 +32,7 @@
 #include "ir/tensor.h"
 #include "ir/param_value.h"
 #include "utils/base_ref_extends.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 py::object BuiltinsToPyData(const Any &value);
@@ -47,6 +48,10 @@ py::object ValuePtrToPyData(const ValuePtr &value) {
   if (value->isa<Int32Imm>()) {
     MS_LOG(DEBUG) << "int";
     py::int_ v = value->cast<Int32ImmPtr>()->value();
+    ret = v;
+  } else if (value->isa<Int64Imm>()) {
+    MS_LOG(DEBUG) << "int64";
+    py::int_ v = value->cast<Int64ImmPtr>()->value();
     ret = v;
   } else if (value->isa<UInt64Imm>()) {
     MS_LOG(DEBUG) << "uint64";
@@ -366,9 +371,9 @@ py::object VectorRefToPyData(const VectorRef &value_list) {
   return ret;
 }
 
-AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py::object &type_obj) {
-  if ((py::isinstance<py::list>(shape_obj) || py::isinstance<py::tuple>(shape_obj)) &&
-      py::hasattr(type_obj, PYTHON_DTYPE_FLAG)) {
+AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py::object &type_obj,
+                                           const py::object &min_shape, const py::object &max_shape) {
+  if ((py::isinstance<py::list>(shape_obj) || py::isinstance<py::tuple>(shape_obj)) && py::isinstance<Type>(type_obj)) {
     auto ret_vec = shape_obj.cast<std::vector<int>>();
     auto ret_dtype = type_obj.cast<TypePtr>();
     MS_EXCEPTION_IF_NULL(ret_dtype);
@@ -378,12 +383,23 @@ AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py
       return abs_scalar;
     }
     AbstractBasePtr tensor = nullptr;
+    std::vector<int> min_shape_vec;
+    std::vector<int> max_shape_vec;
+    if (!min_shape.is_none()) {
+      min_shape_vec = min_shape.cast<std::vector<int>>();
+    }
+    if (!max_shape.is_none()) {
+      max_shape_vec = max_shape.cast<std::vector<int>>();
+    }
+    auto ret_shape = std::make_shared<abstract::Shape>(ret_vec, min_shape_vec, max_shape_vec);
     if (ret_dtype->isa<TensorType>()) {
       auto tensor_type = type_obj.cast<TensorTypePtr>();
       MS_EXCEPTION_IF_NULL(tensor_type);
-      tensor = std::make_shared<abstract::AbstractTensor>(tensor_type->element(), ret_vec);
+      auto element = std::make_shared<abstract::AbstractScalar>(kAnyValue, tensor_type->element());
+      tensor = std::make_shared<abstract::AbstractTensor>(element, ret_shape);
     } else {
-      tensor = std::make_shared<abstract::AbstractTensor>(ret_dtype, ret_vec);
+      auto element = std::make_shared<abstract::AbstractScalar>(kAnyValue, ret_dtype);
+      tensor = std::make_shared<abstract::AbstractTensor>(element, ret_shape);
     }
     return tensor;
   } else if (py::isinstance<py::tuple>(shape_obj) && py::isinstance<py::tuple>(type_obj)) {
@@ -401,6 +417,13 @@ AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py
     auto abstract_none = std::make_shared<abstract::AbstractNone>();
     return abstract_none;
   } else {
+    // When sparse enabled, the undetermined might be raised and eliminated in opt passes
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    bool enable_sparse = context->enable_sparse();
+    if (enable_sparse) {
+      return std::make_shared<abstract::AbstractUndetermined>();
+    }
     MS_LOG(EXCEPTION) << "Python evaluator return invalid shape or type. " << (std::string)py::str(type_obj);
   }
 }
@@ -449,7 +472,7 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
       if (!param->has_default()) {
         MS_LOG(EXCEPTION) << "Can not determine value of Parameter " << index << " (" << param->name() << ")";
       }
-      auto tensor = param->default_param()->value();
+      auto tensor = param->default_param();
       *ret_val = py::cast(tensor);
     }
     return true;
@@ -606,5 +629,26 @@ tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar) {
   }
   MS_EXCEPTION_IF_NULL(tensor);
   return tensor;
+}
+
+void TensorValueToTensor(const ValuePtr &value, std::vector<tensor::TensorPtr> *tensors) {
+  MS_EXCEPTION_IF_NULL(value);
+  MS_EXCEPTION_IF_NULL(tensors);
+  if (value->isa<ValueTuple>()) {
+    auto value_tuple = value->cast<ValueTuplePtr>();
+    MS_EXCEPTION_IF_NULL(value_tuple);
+    for (size_t i = 0; i < value_tuple->size(); ++i) {
+      ValuePtr element = value_tuple->value()[i];
+      if (element->isa<tensor::Tensor>()) {
+        auto tensor = element->cast<tensor::TensorPtr>();
+        MS_EXCEPTION_IF_NULL(tensor);
+        tensors->push_back(tensor);
+      }
+    }
+  } else if (value->isa<tensor::Tensor>()) {
+    tensor::TensorPtr tensor = value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    tensors->push_back(tensor);
+  }
 }
 }  // namespace mindspore

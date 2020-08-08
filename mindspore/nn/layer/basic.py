@@ -33,7 +33,6 @@ from .activation import get_activation
 from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 
-
 __all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold',
            'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag']
 
@@ -251,6 +250,10 @@ def _is_equal_one(x):
         return False
     return bool(x.asnumpy().mean() == 1.0)
 
+@constexpr
+def _dtype_check(x_dtype):
+    if x_dtype not in [mstype.float32, mstype.float16]:
+        raise  TypeError("The input type must be float32 or float16.")
 
 class ClipByNorm(Cell):
     r"""
@@ -265,12 +268,11 @@ class ClipByNorm(Cell):
     where :math:`L_2(X)` is the :math:`L_2`-norm of :math:`X`.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape N-D.
-        - **clip_norm** (Tensor) - A scalar Tensor of shape :math:`()` or :math:`(1)` and of
-          the same type as the input Tensor.
+        - **input** (Tensor) - Tensor of shape N-D. The type should be float32 or float16.
+        - **clip_norm** (Tensor) - A scalar Tensor of shape :math:`()` or :math:`(1)`.
 
     Outputs:
-        Tensor, clipped tensor with the same shape as the input.
+        Tensor, clipped tensor with the same shape as the input, whose type is float32.
 
     Examples:
         >>> net = nn.ClipByNorm()
@@ -286,7 +288,6 @@ class ClipByNorm(Cell):
         self.select_ = P.Select()
         self.greater_ = P.Greater()
         self.cast = P.Cast()
-        self.zero = Tensor(np.array([0.0]).astype(np.float32))
         self.sqrt = P.Sqrt()
         self.max_op = P.Maximum()
         self.shape = P.Shape()
@@ -300,12 +301,12 @@ class ClipByNorm(Cell):
         """add ms_function decorator for pynative mode"""
         mul_x = F.square(x)
         l2sum = self.cast(self.reduce_sum(mul_x), mstype.float32)
-        cond = self.greater_(l2sum, self.zero)
+        cond = self.greater_(l2sum, 0)
         ones_ = self.fill(self.dtype(cond), self.shape(cond), 1.0)
-
         l2sum_safe = self.select_(cond, l2sum, self.cast(ones_, self.dtype(l2sum)))
         l2norm = self.select_(cond, self.sqrt(l2sum_safe), l2sum)
 
+        _dtype_check(self.dtype(x))
         if _is_equal_one(clip_norm):
             intermediate = x
         else:
@@ -407,11 +408,13 @@ class OneHot(Cell):
         super(OneHot, self).__init__()
         self.onehot = P.OneHot(axis)
         self.depth = depth
-        self.on_value = Tensor(on_value, dtype)
-        self.off_value = Tensor(off_value, dtype)
+        self.dtype = dtype
+        self.on_value = on_value
+        self.off_value = off_value
 
     def construct(self, indices):
-        return self.onehot(indices, self.depth, self.on_value, self.off_value)
+        return self.onehot(indices, self.depth, F.cast(self.on_value, self.dtype), F.cast(self.off_value, self.dtype))
+
 
 
 class Pad(Cell):
@@ -591,7 +594,7 @@ class MatrixDiagPart(Cell):
         Tensor, same type as input `x`. The shape should be x.shape[:-2] + [min(x.shape[-2:])].
 
     Examples:
-        >>> x = Tensor([[[-1, 0], [0, 1]], [-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
+        >>> x = Tensor([[[-1, 0], [0, 1]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
         >>> matrix_diag_part = nn.MatrixDiagPart()
         >>> result = matrix_diag_part(x)
         [[-1., 1.], [-1., 1.], [-1., 1.]]
@@ -622,11 +625,11 @@ class MatrixSetDiag(Cell):
         Tensor, same type as input `x`. The shape same as `x`.
 
     Examples:
-        >>> x = Tensor([[[-1, 0], [0, 1]], [-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
+        >>> x = Tensor([[[-1, 0], [0, 1]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
         >>> diagonal = Tensor([[-1., 2.], [-1., 1.], [-1., 1.]], mindspore.float32)
         >>> matrix_set_diag = nn.MatrixSetDiag()
         >>> result = matrix_set_diag(x, diagonal)
-        [[[-1, 0], [0, 2]], [-1, 0], [0, 1]], [[-1, 0], [0, 1]]]
+        [[[-1, 0], [0, 2]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]]
     """
     def __init__(self):
         super(MatrixSetDiag, self).__init__()

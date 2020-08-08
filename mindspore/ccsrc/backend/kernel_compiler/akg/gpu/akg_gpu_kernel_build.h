@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_AKG_GPU_AKG_GPU_KERNEL_BUILD_H_
-#define MINDSPORE_CCSRC_KERNEL_AKG_GPU_AKG_GPU_KERNEL_BUILD_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_GPU_AKG_GPU_KERNEL_BUILD_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_GPU_AKG_GPU_KERNEL_BUILD_H_
 #include "backend/kernel_compiler/kernel.h"
 #include "base/base.h"
 
@@ -25,4 +25,4 @@ KernelModPtr AkgGpuKernelBuild(const AnfNodePtr &anf_node);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_AKG_GPU_AKG_GPU_KERNEL_BUILD_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_GPU_AKG_GPU_KERNEL_BUILD_H_

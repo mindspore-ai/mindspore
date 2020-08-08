@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_TENSOR_LAYOUT_SHAPE_UTIL_H_
-#define MINDSPORE_CCSRC_PARALLEL_TENSOR_LAYOUT_SHAPE_UTIL_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_SHAPE_UTIL_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_SHAPE_UTIL_H_
 
 #include <cstdint>
 #include <map>
@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "frontend/parallel/status.h"
+#include "frontend/parallel/device_matrix.h"
 
 namespace mindspore {
 namespace parallel {
@@ -39,7 +40,7 @@ namespace parallel {
  * shape_accum = [2, 2 * 8, 2 * 8 * 32]
  *
  */
-Status ShapeToAccumulateProduct(const std::vector<int32_t> &shape, std::vector<int64_t> *shape_accum);
+Status ShapeToAccumulateProduct(const Shape &shape, Shape *shape_accum);
 
 /*
  * compute the accumulating product of all the values in shape from right to left,
@@ -53,7 +54,7 @@ Status ShapeToAccumulateProduct(const std::vector<int32_t> &shape, std::vector<i
  * shape_accum = [2 * 8 * 32, 8 * 32, 32]
  *
  */
-Status ShapeToAccumulateProductReverse(const std::vector<int32_t> &shape, std::vector<int64_t> *shape_accum);
+Status ShapeToAccumulateProductReverse(const Shape &shape, Shape *shape_accum);
 
 /*
  * compute the original shape from the accumulating product shape_accum,
@@ -68,7 +69,7 @@ Status ShapeToAccumulateProductReverse(const std::vector<int32_t> &shape, std::v
  * shape = [2, 8, 32]
  *
  */
-Status AccumulateProductToShape(const std::vector<int64_t> &shape_accum, std::vector<int32_t> *shape);
+Status AccumulateProductToShape(const Shape &shape_accum, Shape *shape);
 
 /*
  * compute the original shape from the accumulating product shape_accum,
@@ -83,7 +84,7 @@ Status AccumulateProductToShape(const std::vector<int64_t> &shape_accum, std::ve
  * shape = [2, 8, 32]
  *
  */
-Status AccumulateProductReverseToShape(const std::vector<int64_t> &shape_accum_reverse, std::vector<int32_t> *shape);
+Status AccumulateProductReverseToShape(const Shape &shape_accum_reverse, Shape *shape);
 
 /*
  * given two accumulate product in1_accum and in2_accum, compute the union of in1_accum and in2_accum,
@@ -101,8 +102,7 @@ Status AccumulateProductReverseToShape(const std::vector<int64_t> &shape_accum_r
  * in2_accum = [8, 16]
  * out_accum = [2, 4, 8, 16]
  */
-Status UnifyAccumulateProduct(const std::vector<int64_t> &in1_accum, const std::vector<int64_t> &in2_accum,
-                              std::vector<int64_t> *out_accum);
+Status UnifyAccumulateProduct(const Shape &in1_accum, const Shape &in2_accum, Shape *out_accum);
 
 /*
  * given two shape in1 = [din1_n-1, din1_n-2, ..., din1_0] and in2 = [din2_m-1, din2_m-2, ..., din2_m]
@@ -117,7 +117,7 @@ Status UnifyAccumulateProduct(const std::vector<int64_t> &in1_accum, const std::
  * in2 = [2, 16]
  * out = [2, 4, 4]
  */
-Status UnifyShape(const std::vector<int32_t> &in1, const std::vector<int32_t> &in2, std::vector<int32_t> *out);
+Status UnifyShape(const Shape &in1, const Shape &in2, Shape *out);
 
 /*
  * given two accumulate product in reverse order of in and expand,
@@ -141,9 +141,8 @@ Status UnifyShape(const std::vector<int32_t> &in1, const std::vector<int32_t> &i
  * expand_accum_reverse = [2 * 4 * 8, 4 * 8, 8]
  * out_accum_reverse = [2 * 4 * 2 * 4 * 8, 4 * 2 * 4 * 8, 2 * 4 * 8, 4 * 8, 8]
  */
-Status ExpandAccumulateProduct(const std::vector<int64_t> &in_accum_reverse,
-                               const std::vector<int64_t> &expand_accum_reverse,
-                               std::vector<int64_t> *out_accum_reverse);
+Status ExpandAccumulateProduct(const Shape &in_accum_reverse, const Shape &expand_accum_reverse,
+                               Shape *out_accum_reverse);
 
 /*
  * given a shape in = [din_n-1, din_n-2, ..., d_0], and the expand shape expand= [dexp_m-1, dexp_m-2, ..., dexp_0],
@@ -165,8 +164,8 @@ Status ExpandAccumulateProduct(const std::vector<int64_t> &in_accum_reverse,
  * expand = [2, 4, 8]
  * out = [2, 4, 2, 4, 8]
  */
-Status ExpandShape(const std::vector<int32_t> &in, const std::vector<int32_t> &expand, std::vector<int32_t> *out);
+Status ExpandShape(const Shape &in, const Shape &expand, Shape *out);
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_TENSOR_LAYOUT_SHAPE_UTIL_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_SHAPE_UTIL_H_

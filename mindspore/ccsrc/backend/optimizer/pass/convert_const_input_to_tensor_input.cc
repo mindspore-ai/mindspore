@@ -19,7 +19,7 @@
 #include <memory>
 #include <utility>
 
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "backend/optimizer/common/helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_graph.h"
@@ -29,28 +29,8 @@
 namespace mindspore {
 namespace opt {
 namespace {
-ValueNodePtr MakeValueNode(const ValueNodePtr &value_node) {
-  MS_EXCEPTION_IF_NULL(value_node);
-  ValueNodePtr new_value_node = std::make_shared<ValueNode>(value_node->value());
-  new_value_node->set_abstract(value_node->abstract());
-  // create kernel_info fo new value node
-  auto kernel_info = std::make_shared<device::KernelInfo>();
-  new_value_node->set_kernel_info(kernel_info);
-  // create kernel_build_info for new value node
-  auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-  // set the format of value_node to DEFAULT_FORMAT
-  kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{kOpFormat_DEFAULT});
-  // set value node initial device data type = infer data type
-  std::vector<TypeId> types;
-  for (size_t index = 0; index < AnfAlgo::GetOutputTensorNum(value_node); ++index) {
-    types.push_back(kTypeUnknown);
-  }
-  kernel_build_info_builder->SetOutputsDeviceType(types);
-  AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), new_value_node.get());
-  return new_value_node;
-}
 
-AnfNodePtr CreateTensorInput(const KernelGraphPtr &kernel_graph, const AnfNodePtr &input_node) {
+AnfNodePtr CreateTensorInput(const AnfNodePtr &node, const KernelGraphPtr &kernel_graph, const AnfNodePtr &input_node) {
   MS_EXCEPTION_IF_NULL(input_node);
   auto value_node = input_node->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(value_node);
@@ -60,6 +40,9 @@ AnfNodePtr CreateTensorInput(const KernelGraphPtr &kernel_graph, const AnfNodePt
   if (value->isa<Scalar>()) {
     tensor_ptr = ScalarToTensor(value->cast<ScalarPtr>());
   } else if (value->isa<ValueTuple>()) {
+    if (!AnfAlgo::IsRealCNodeKernel(node)) {
+      return nullptr;
+    }
     tensor_ptr = CreateTupleTensor(value->cast<ValueTuplePtr>());
   } else {
     MS_LOG(EXCEPTION) << "The value should be a scalar or value tuple";
@@ -93,7 +76,7 @@ AnfNodePtr ConstInputToTensorInput(const FuncGraphPtr &func_graph, const CNodePt
   for (size_t i = 0; i < inputs.size() - 1; ++i) {
     auto input_node = inputs[i + 1];
     if (IsValueNode<Scalar>(input_node) || IsValueNode<ValueTuple>(input_node)) {
-      auto tensor_input = CreateTensorInput(kernel_graph, input_node);
+      auto tensor_input = CreateTensorInput(cnode, kernel_graph, input_node);
       if (tensor_input == nullptr) {
         new_inputs.push_back(input_node);
         continue;
@@ -140,6 +123,9 @@ AnfNodePtr ProcessGraphKernelOp(const AnfNodePtr &node) {
 const AnfNodePtr ConvertConstInputToTensorInput::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                          const EquivPtr &) const {
   if (node == nullptr || func_graph == nullptr || !AnfAlgo::IsRealCNodeKernel(node)) {
+    return nullptr;
+  }
+  if (!node->isa<CNode>()) {
     return nullptr;
   }
   if (AnfAlgo::IsGraphKernel(node)) {

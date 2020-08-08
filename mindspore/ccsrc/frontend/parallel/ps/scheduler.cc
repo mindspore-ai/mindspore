@@ -23,9 +23,8 @@ namespace parallel {
 namespace ps {
 void Scheduler::Run() {
   ::ps::Start(0);
-  while (true) {
-    sleep(1);
-  }
+  ::ps::Finalize(0, true);
+  exit(1);
 }
 }  // namespace ps
 }  // namespace parallel

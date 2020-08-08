@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_KERNELS_IMAGE_RANDOM_COLOR_ADJUST_OP_H_
-#define DATASET_KERNELS_IMAGE_RANDOM_COLOR_ADJUST_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_COLOR_ADJUST_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_COLOR_ADJUST_OP_H_
 
 #include <memory>
 #include <random>
@@ -47,10 +47,6 @@ class RandomColorAdjustOp : public TensorOp {
 
   ~RandomColorAdjustOp() override = default;
 
-  // Print function for RandomJitter.
-  // @param out output stream to print to.
-  void Print(std::ostream &out) const override { out << "RandomColorAdjustOp: "; }
-
   // Overrides the base class compute function.
   // Calls multiple transform functions in ImageUtils, this function takes an input tensor.
   // and transforms its data using openCV, the output memory is manipulated to contain the result.
@@ -77,4 +73,4 @@ class RandomColorAdjustOp : public TensorOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_KERNELS_IMAGE_RANDOM_COLOR_ADJUST_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_COLOR_ADJUST_OP_H_

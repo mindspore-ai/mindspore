@@ -19,7 +19,7 @@
 #include <string>
 
 #include "common/common.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/core/client.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/datasetops/source/manifest_op.h"
@@ -71,9 +71,9 @@ TEST_F(MindDataTestManifest, TestSequentialManifestWithRepeat) {
     di.GetNextAsMap(&tensor_map);
     EXPECT_TRUE(rc.IsOk());
     uint64_t i = 0;
-    uint32_t label = 0;
+    int32_t label = 0;
     while (tensor_map.size() != 0) {
-      tensor_map["label"]->GetItemAt<uint32_t>(&label, {});
+      tensor_map["label"]->GetItemAt<int32_t>(&label, {});
       EXPECT_TRUE(res[i] == label);
       MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
       i++;
@@ -101,9 +101,9 @@ TEST_F(MindDataTestManifest, TestSubsetRandomSamplerManifest) {
     rc = di.GetNextAsMap(&tensor_map);
     EXPECT_TRUE(rc.IsOk());
     uint64_t i = 0;
-    uint32_t label = 0;
+    int32_t label = 0;
     while (tensor_map.size() != 0) {
-      tensor_map["label"]->GetItemAt<uint32_t>(&label, {});
+      tensor_map["label"]->GetItemAt<int32_t>(&label, {});
       i++;
       di.GetNextAsMap(&tensor_map);
       EXPECT_EQ(label, 1);
@@ -131,9 +131,9 @@ TEST_F(MindDataTestManifest, MindDataTestManifestClassIndex) {
     di.GetNextAsMap(&tensor_map);
     EXPECT_TRUE(rc.IsOk());
     uint64_t i = 0;
-    uint32_t label = 0;
+    int32_t label = 0;
     while (tensor_map.size() != 0) {
-      tensor_map["label"]->GetItemAt<uint32_t>(&label, {});
+      tensor_map["label"]->GetItemAt<int32_t>(&label, {});
       EXPECT_TRUE(label == res[i]);
       MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
       i++;
@@ -160,9 +160,9 @@ TEST_F(MindDataTestManifest, MindDataTestManifestNumSamples) {
     di.GetNextAsMap(&tensor_map);
     EXPECT_TRUE(rc.IsOk());
     uint64_t i = 0;
-    uint32_t label = 0;
+    int32_t label = 0;
     while (tensor_map.size() != 0) {
-      tensor_map["label"]->GetItemAt<uint32_t>(&label, {});
+      tensor_map["label"]->GetItemAt<int32_t>(&label, {});
       EXPECT_TRUE(0 == label);
       MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
       i++;
@@ -176,7 +176,7 @@ TEST_F(MindDataTestManifest, MindDataTestManifestEval) {
   std::string file = datasets_root_path_ + "/testManifestData/cpp.json";
   int64_t num_samples = 1;
   int64_t start_index = 0;
-  auto seq_sampler = std::make_shared<SequentialSampler>(num_samples, start_index);  
+  auto seq_sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
   auto tree = Build({Manifest(16, 2, 32, file, "eval", std::move(seq_sampler), {})});
   tree->Prepare();
   Status rc = tree->Launch();
@@ -189,9 +189,9 @@ TEST_F(MindDataTestManifest, MindDataTestManifestEval) {
     di.GetNextAsMap(&tensor_map);
     EXPECT_TRUE(rc.IsOk());
     uint64_t i = 0;
-    uint32_t label = 0;
+    int32_t label = 0;
     while (tensor_map.size() != 0) {
-      tensor_map["label"]->GetItemAt<uint32_t>(&label, {});
+      tensor_map["label"]->GetItemAt<int32_t>(&label, {});
       EXPECT_TRUE(0 == label);
       MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
       i++;

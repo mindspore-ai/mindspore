@@ -14,17 +14,36 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_COSTMODEL_CONTEXT_H_
-#define MINDSPORE_CCSRC_PARALLEL_COSTMODEL_CONTEXT_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_COSTMODEL_CONTEXT_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_COSTMODEL_CONTEXT_H_
 
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "utils/log_adapter.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace parallel {
+#define OPERATOR_TO_OPERATOR_CONNECTOR "-"
+#define DEFAULT_DEVICE_MEMORY_CAPACITY (1024.0 * 1024.0 * 1024.0 * 16.0)
+#define DEFAULT_COST_MODEL_ALPHA 1.0
+#define DEFAULT_COST_MODEL_BETA_ASCEND 400.0  // for 'device_target = Ascend'
+#define DEFAULT_COST_MODEL_BETA_GPU 50.0      // for 'device_target = GPU'
+#define DEFAULT_COST_MODEL_GAMMA 0.001
+#define DEFAULT_COST_MODEL_SIMPLIFY_CALCULATION true
+#define DEFAULT_COST_MODEL_COMMUNI_THRESHOLD 2048.0
+#define DEFAULT_COST_MODEL_COMMUNI_CONST 3072.0
+#define DEFAULT_COST_MODEL_COMMUNI_BIAS 1024.0
+#define DEFAULT_TENSOR_SLICE_ALIGNMENT_ENABLE false
+#define DEFAULT_TENSOR_SLICE_ALIGNMENT_SIZE 16
+#define DEFAULT_FULLY_USE_DEVICES true
+#define DEFAULT_ELEMENTWISE_OP_STRA_FOLLOW false
+#define DEFAULT_IS_MULTI_SUBGRAPHS false
+#define DEFAULT_RUN_PHASE 0
+#define TRAINING_PHASE 0
+#define INFERENCE_PHASE 1
 class CostModelContext {
  public:
   ~CostModelContext() = default;
@@ -35,6 +54,7 @@ class CostModelContext {
 
   static std::shared_ptr<CostModelContext> GetInstance();
 
+  void set_costmodel_context_for_device(const std::string &);
   // DEVICE_MEMORY_CAPACITY
   void set_device_memory_capacity(double);
   double device_memory_capacity() const { return device_memory_capacity_; }
@@ -178,4 +198,4 @@ class CostModelContext {
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_COSTMODEL_CONTEXT_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_COSTMODEL_CONTEXT_H_

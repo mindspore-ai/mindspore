@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_IRPASS_SPECIALIZE_TRANSFORM_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_IRPASS_SPECIALIZE_TRANSFORM_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_SPECIALIZE_TRANSFORM_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_SPECIALIZE_TRANSFORM_H_
 
 #include <map>
 #include <vector>
@@ -26,7 +26,7 @@
 
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"
-#include "ir/visitor.h"
+#include "frontend/optimizer/anf_visitor.h"
 #include "ir/manager.h"
 #include "ir/func_graph.h"
 #include "ir/func_graph_cloner.h"
@@ -302,4 +302,4 @@ class UnusedOutputEliminater : public AnfVisitor {
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_IRPASS_SPECIALIZE_TRANSFORM_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_SPECIALIZE_TRANSFORM_H_

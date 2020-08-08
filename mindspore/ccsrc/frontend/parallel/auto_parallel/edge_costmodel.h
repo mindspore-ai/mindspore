@@ -22,7 +22,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "frontend/parallel/auto_parallel/costmodel.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/tensor_layout/tensor_info.h"
@@ -80,6 +80,8 @@ class Edge {
   std::string edge_name() const { return edge_name_; }
   // Init cost_map_: for each output layout and input layout, calculate the cost
   Status InitEdgeCost();
+  std::map<CostPtrKey, CostPtrList> GetCostMap() { return cost_map_; }
+  void SetCostMapAndInputOutput(std::map<CostPtrKey, CostPtrList> &);
   // For two operators u--->v, given the output tensor layout of u,
   // and the input tensor layout of v, return the redistribution cost,
   // and the op_list to carry out the redistribution.

@@ -15,7 +15,7 @@
  */
 #include "backend/kernel_compiler/cpu/mkldnn/conv2d_grad_filter_cpu_kernel.h"
 #include <string>
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
@@ -32,8 +32,6 @@ void Conv2dGradFilterCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
   dnnl::memory::desc weights_desc = GetDefaultMemDesc(weight_shape);
   dnnl::memory::desc dst_desc = GetDefaultMemDesc(dst_shape);
-
-  int kernel_size = SizeToInt(weight_shape[3]);
   auto stride_ori = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, STRIDE);
   auto dilation_ori = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, DILATION);
   if (stride_ori.size() != 2 || stride_ori[0] != stride_ori[1]) {
@@ -53,6 +51,7 @@ void Conv2dGradFilterCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
   std::vector<int> int_padding_l;
   std::vector<int> int_padding_r;
+  std::vector<size_t> kernel_size({weight_shape[2], weight_shape[3]});
   GetPadding(kernel_node, pad_mode, src_shape, kernel_size, stride, &int_padding_l, &int_padding_r);
   if (int_padding_l.size() != 2 || int_padding_r.size() != 2) {
     MS_LOG(EXCEPTION) << "get padding failed";

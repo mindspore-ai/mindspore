@@ -293,7 +293,7 @@ Status CelebAOp::AddIOBlock(std::unique_ptr<DataBuffer> *data_buffer) {
       RETURN_IF_NOT_OK(io_block_queues_[(buff_count++) % num_workers_]->Add(
         std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone))));
     }
-    if (!BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat)) {
+    if (IsLastIteration()) {
       RETURN_IF_NOT_OK(
         io_block_queues_[(buff_count++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
       RETURN_IF_NOT_OK(
@@ -310,6 +310,7 @@ Status CelebAOp::AddIOBlock(std::unique_ptr<DataBuffer> *data_buffer) {
       wp_.Clear();
       RETURN_IF_NOT_OK(sampler_->GetNextSample(data_buffer));
     }
+    UpdateRepeatAndEpochCounter();
   }
 }
 
@@ -359,7 +360,7 @@ Status CelebAOp::LoadTensorRow(row_id_type row_id, const std::pair<std::string, 
 
   Path path(folder_path_);
   Path image_path = path / image_label.first;
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&image, image_path.toString()));
+  RETURN_IF_NOT_OK(Tensor::CreateFromFile(image_path.toString(), &image));
   if (decode_ == true) {
     Status rc = Decode(image, &image);
     if (rc.IsError()) {
@@ -369,9 +370,8 @@ Status CelebAOp::LoadTensorRow(row_id_type row_id, const std::pair<std::string, 
     }
   }
 
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&label, data_schema_->column(1).tensorImpl(),
-                                        TensorShape({1, (uint32_t)image_label.second.size()}),
-                                        data_schema_->column(1).type()));
+  RETURN_IF_NOT_OK(
+    Tensor::CreateEmpty(TensorShape({1, (uint32_t)image_label.second.size()}), data_schema_->column(1).type(), &label));
   RETURN_IF_NOT_OK(label->Zero());
   for (uint32_t index = 0; index < image_label.second.size(); index++) {
     if (image_label.second[index] == 1) {
@@ -387,8 +387,6 @@ Status CelebAOp::LoadTensorRow(row_id_type row_id, const std::pair<std::string, 
 }
 
 void CelebAOp::Print(std::ostream &out, bool show_all) const {
-  // Always show the id and name as first line regardless if this summary or detailed print
-  out << "(" << std::setw(2) << operator_id_ << ") <CelebAOp>:";
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
     ParallelOp::Print(out, show_all);

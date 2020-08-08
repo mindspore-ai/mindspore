@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_MEM_REUSE_ALLOCATOR_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_MEM_REUSE_ALLOCATOR_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_MEM_REUSE_ALLOCATOR_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_MEM_REUSE_ALLOCATOR_H_
 #include <cmath>
 #include <map>
 #include <list>
@@ -40,11 +40,11 @@ static constexpr int kDynamicMem = -1;
 static constexpr int kWorkspaceMem = 1;
 static constexpr size_t kTotalSize = 0;
 enum Status { kUnused, kReused };
-enum MEMTYPE { NEW, IN_STREAM_REUSE, BETWEEN_STREAMS_REUSE, KERNEL_DEPENDENCE_REUSE };
+enum MemType { kNew, kInStreamReuse, kBetweenStreamReuse, kKernelDependenceReuse };
 class Membuf {
  public:
   Membuf() = default;
-  Membuf(Status status, size_t size, size_t offset, int index, MEMTYPE type, const KernelDefPtr &used_kernel)
+  Membuf(Status status, size_t size, size_t offset, int index, MemType type, const KernelDefPtr &used_kernel)
       : status_(status), size_(size), offset_(offset), index_(index), type_(type), used_kernel_(used_kernel) {}
   ~Membuf() = default;
   // Memory block status flags
@@ -53,7 +53,7 @@ class Membuf {
   size_t offset_{0};
   // Store the tensor index stored in this memory block at a certain moment
   int index_{0};
-  MEMTYPE type_{NEW};
+  MemType type_{kNew};
   KernelDefPtr used_kernel_;
 };
 using MembufPtr = std::shared_ptr<Membuf>;
@@ -74,6 +74,14 @@ class BestFitMemReuse {
    * Assign output tensor memory offset of current kernel
    */
   void AssignNodeOutputOffset();
+  /**
+   * Assign output tensor memory offset of common kernel
+   */
+  void AssignCommonNodeOutputOffset();
+  /**
+   * Assign output tensor memory offset of communication kernel
+   */
+  void AssignCommunicationNodeOutputOffset();
   /**
    * Update input tensor's status of current kernel, and the status of membuf used by current kernel
    */
@@ -110,8 +118,10 @@ class BestFitMemReuse {
   void AddNewMembufPtr(KernelRefCount *tensor_desc, int flag);
   // Merge unused membuf
   void ReleaseMembuf(size_t tensor_index, int flag);
-  // Memory address alignment 512
-  size_t AlignMemorySize(size_t size) const;
+  // Memory address alignment for common memory
+  size_t AlignCommonMemorySize(size_t size) const;
+  // Memory address alignment for communication used memory
+  size_t AlignCommunicationMemorySize(size_t size) const;
   int GetRealIndex(size_t index, int flag = kDynamicMem) const;
   size_t GetTensorIndex(int index) const;
   size_t GetWorkspaceIndex(int index) const;
@@ -153,7 +163,12 @@ class BestFitMemReuse {
   // kernel_front_map_, key: the kernel_def, value: kernels before this kernel_def
   std::map<KernelDefPtr, std::set<KernelDefPtr>> kernel_front_map_;
   std::vector<std::vector<uint32_t>> stream_groups_;
+  size_t total_refinput_size{0};
+  size_t total_refoutput_size{0};
+  size_t total_comm_reuse_size{0};
+  size_t total_comm_output_reuse_size{0};
+  size_t total_comm_not_reuse_size{0};
 };
 }  // namespace memreuse
 }  // namespace mindspore
-#endif  // #define MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_MEM_REUSE_ALLOCATOR_H_
+#endif  // #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_MEM_REUSE_ALLOCATOR_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_ENGINE_TDT_TDT_PLUGIN_H_
-#define DATASET_ENGINE_TDT_TDT_PLUGIN_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_TDT_TDT_PLUGIN_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_TDT_TDT_PLUGIN_H_
 
 #include <dlfcn.h>
 #include <functional>
@@ -38,7 +38,8 @@ class TdtPlugin {
  public:
   static std::shared_ptr<TdtPlugin> GetInstance();
 
-  TdtStatus hostPush(TensorRow ts_row, bool is_wait, std::string channel_name, bool profilig, int32_t &time);
+  TdtStatus hostPush(TensorRow ts_row, bool is_wait, std::string channel_name, bool profilig, int32_t &time,
+                     tdt::TdtDataType tdt_type = tdt::TDT_TENSOR);
 
  private:
   TdtPlugin() {}
@@ -51,4 +52,4 @@ class TdtPlugin {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_ENGINE_TDT_TDT_PLUGIN_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_TDT_TDT_PLUGIN_H_

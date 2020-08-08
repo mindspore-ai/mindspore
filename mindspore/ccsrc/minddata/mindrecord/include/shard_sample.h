@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDRECORD_INCLUDE_SHARD_SAMPLE_H_
-#define MINDRECORD_INCLUDE_SHARD_SAMPLE_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_SAMPLE_H_
+#define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_SAMPLE_H_
 
 #include <memory>
 #include <string>
@@ -32,7 +32,7 @@ class ShardSample : public ShardOperator {
 
   ShardSample(int num, int den);
 
-  ShardSample(int num, int den, int par);
+  ShardSample(int num, int den, int par, int no_of_samples = 0);
 
   ShardSample(const std::vector<int64_t> &indices, uint32_t seed);
 
@@ -58,4 +58,4 @@ class ShardSample : public ShardOperator {
 }  // namespace mindrecord
 }  // namespace mindspore
 
-#endif  // MINDRECORD_INCLUDE_SHARD_SAMPLE_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_SAMPLE_H_

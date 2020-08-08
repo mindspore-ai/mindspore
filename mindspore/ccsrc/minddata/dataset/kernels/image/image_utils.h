@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_
-#define DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_
 
 #include <setjmp.h>
 
@@ -175,6 +175,14 @@ Status AdjustBrightness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
 // @param output: Adjusted image of same shape and type.
 Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &alpha);
 
+// Returns image with contrast maximized.
+// @param input: Tensor of shape <H,W,3>/<H,W,1>/<H,W> in RGB/Grayscale and any OpenCv compatible type, see CVTensor.
+// @param cutoff: Cutoff percentage of how many pixels are to be removed (high pixels change to 255 and low change to 0)
+//                from the high and low ends of the histogram.
+// @param ignore: Pixel values to be ignored in the algorithm.
+Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &cutoff,
+                    const std::vector<uint32_t> &ignore);
+
 // Returns image with adjusted saturation.
 // @param input: Tensor of shape <H,W,3> in RGB order and any OpenCv compatible type, see CVTensor.
 // @param alpha: Alpha value to adjust saturation by. Should be a positive number.
@@ -191,6 +199,12 @@ Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
 //             If user input one value in python, the range is [-value, value].
 // @param output: Adjusted image of same shape and type.
 Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &hue);
+
+/// \brief Returns image with equalized histogram.
+/// \param[in] input: Tensor of shape <H,W,3>/<H,W,1>/<H,W> in RGB/Grayscale and
+///                   any OpenCv compatible type, see CVTensor.
+/// \param[out] output: Equalized image of same shape and type.
+Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
 
 // Masks out a random section from the image with set dimension
 // @param input: input Tensor
@@ -256,4 +270,4 @@ Status UpdateBBoxesForResize(const std::shared_ptr<Tensor> &bboxList, const size
 
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_

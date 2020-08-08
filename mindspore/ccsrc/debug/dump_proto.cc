@@ -24,7 +24,7 @@
 
 #include "debug/anf_ir_utils.h"
 #include "proto/anf_ir.pb.h"
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "utils/symbolic.h"
 
 namespace mindspore {
@@ -120,9 +120,11 @@ void ProtoExporter::SetNodeOutputType(const TypePtr &type, const BaseShapePtr &s
         type_proto->mutable_tensor_type()->mutable_shape()->add_dim()->set_size(elem);
       }
     }
-  } else if (type->isa<IndexedSlicesType>()) {
+  } else if (type->isa<RowTensorType>()) {
     // Do Nothing
   } else if (type->isa<UndeterminedType>()) {
+    // Do Nothing
+  } else if (type->isa<SparseTensorType>()) {
     // Do Nothing
   } else if (type->isa<Tuple>()) {
     TuplePtr tuple_type = dyn_cast<Tuple>(type);

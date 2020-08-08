@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_DEVICE_KERNEL_ADJUST_H_
-#define MINDSPORE_MINDSPORE_CCSRC_DEVICE_KERNEL_ADJUST_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_KERNEL_ADJUST_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_KERNEL_ADJUST_H_
 
 #include <memory>
 #include <map>
@@ -80,4 +80,4 @@ class KernelAdjust {
 };
 }  // namespace device
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_DEVICE_KERNEL_ADJUST_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_KERNEL_ADJUST_H_

@@ -23,7 +23,7 @@
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/parse/parse.h"
 #include "frontend/operator/ops.h"
-#include "debug/info.h"
+#include "utils/info.h"
 #include "debug/trace.h"
 #include "pybind11/pybind11.h"
 
@@ -99,7 +99,7 @@ AnfNodePtr FunctionBlock::MakeResolveAstOp(const py::object &op) {
 }
 
 // Resolve class member, two possible: method, member variable
-AnfNodePtr FunctionBlock::MakeResolveClassMember(std::string attr) {
+AnfNodePtr FunctionBlock::MakeResolveClassMember(const std::string &attr) {
   py::object namespace_var =
     parser_.ast()->CallParseModFunction(PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, parser_.ast()->obj());
   NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var);
@@ -109,7 +109,7 @@ AnfNodePtr FunctionBlock::MakeResolveClassMember(std::string attr) {
 
 // Make a resolve node for symbol string
 AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &value) {
-  if (value.compare(0, strlen("self."), "self.") == 0) {
+  if (value.compare(0, strlen("self"), "self") == 0) {
     auto start = value.find_first_of('.') + 1;
     if (start >= value.size()) {
       MS_LOG(ERROR) << "Find invalid resolve symbol str: " << value;
@@ -145,22 +145,18 @@ AnfNodePtr FunctionBlock::MakeResolve(const NameSpacePtr &name_space, const Symb
 void FunctionBlock::SetPhiArgument(const ParameterPtr &phi) {
   std::string var = phi_nodes_[phi];
   MS_LOG(DEBUG) << "graph " << func_graph_->ToString() << " set phi " << phi->ToString() << " for var " << var;
+  auto removable = CollectRemovablePhi(phi);
+  // If the phi node is not necessary, not need to add to jumps_ of the prev blocks.
+  if (removable) {
+    MS_LOG(DEBUG) << "remove the phi when call graph " << func_graph_->ToString() << " var " << var;
+    return;
+  }
   for (auto &pred : prev_blocks_) {
     MS_EXCEPTION_IF_NULL(pred);
     MS_LOG(DEBUG) << "graph " << func_graph_->ToString() << " pred_blocks_ " << pred->func_graph_->ToString();
     AnfNodePtr arg_node = pred->ReadVariable(var);
     CNodePtr jump = pred->jumps_[this];
     jump->add_input(arg_node);
-  }
-  // If the phi node in the body part of a for/while loop is being removed,
-  // then the closure convert phase will generate a cycle in graph if the
-  // loop is kept after specialization. This should be investigate further.
-  // Just now user has to set a flag on a function to indicate the for loop
-  // will definitely can be unroll as the sequence in for statement is fixed
-  // size in compile time.
-  if (parser_.func_graph()->has_flag(GRAPH_FLAG_LOOP_CAN_UNROLL) ||
-      parser_.func_graph()->has_flag(GRAPH_FLAG_HAS_EFFECT)) {
-    CollectRemovablePhi(phi);
   }
 }
 
@@ -207,13 +203,13 @@ AnfNodePtr FunctionBlock::SearchReplaceNode(const std::string &var, const Parame
 // 2. it's costly to iterate the graph to replace the phi for each phi.
 // Args :
 // phi  : This parameter node is functioning as a phi node.
-void FunctionBlock::CollectRemovablePhi(const ParameterPtr &phi) {
+bool FunctionBlock::CollectRemovablePhi(const ParameterPtr &phi) {
   MS_EXCEPTION_IF_NULL(phi);
   std::string var = phi_nodes_[phi];
-  MS_LOG(DEBUG) << "check phi " << phi->ToString() << " for " << var << " in graph " << func_graph_->ToString();
+  MS_LOG(DEBUG) << "check phi " << phi->DebugString() << " for " << var;
   if (prev_blocks_.size() == 0) {
-    MS_LOG(DEBUG) << "no phi " << phi->ToString() << " for var " << var << " in graph " << func_graph_->ToString();
-    return;
+    MS_LOG(DEBUG) << "no phi " << phi->DebugString() << " for var " << var;
+    return false;
   }
   AnfNodePtr arg_node = SearchReplaceNode(var, phi);
   if (arg_node != nullptr) {
@@ -235,13 +231,16 @@ void FunctionBlock::CollectRemovablePhi(const ParameterPtr &phi) {
           const auto &param = phi_iter.second->cast<ParameterPtr>();
           if (param == phi) {
             MS_LOG(DEBUG) << "graph " << prev->func_graph_->ToString() << " var " << phi_iter.first->DebugString()
-                          << " can be replaced from " << param->DebugString() << " with " << arg_node->DebugString();
+                          << " can be replaced from " << param->DebugString() << " with " << arg_node->DebugString()
+                          << " in graph " << arg_node->func_graph()->ToString();
             prev->removable_phis_[phi_iter.first] = arg_node;
           }
         }
       }
     }
+    return true;
   }
+  return false;
 }
 
 // A block should be marked matured if its predecessor blocks have been processed
@@ -299,13 +298,8 @@ void FunctionBlock::ConditionalJump(AnfNodePtr condNode, const FunctionBlockPtr 
     MS_LOG(EXCEPTION) << "Failure: have return node! NodeInfo: "
                       << trace::GetDebugInfo(func_graph()->get_return()->debug_info());
   }
-  // Here we need set an attribute to primtive 'switch', so we create a new variable instead of global 'kPrimSwitch'
-  auto prim_switch = std::make_shared<Primitive>(prim::kPrimSwitch->name());
-  if (!unroll_loop) {
-    prim_switch->AddAttr(prim::SWITCH_UNROLL_FLAG, MakeValue(0));
-  }
   CNodePtr switch_app =
-    func_graph()->NewCNode({NewValueNode(prim_switch), condNode, NewValueNode(true_block->func_graph()),
+    func_graph()->NewCNode({NewValueNode(prim::kPrimSwitch), condNode, NewValueNode(true_block->func_graph()),
                             NewValueNode(false_block->func_graph())});
   CNodePtr switch_app_new = func_graph()->NewCNode({switch_app});
   func_graph()->set_output(switch_app_new);

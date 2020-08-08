@@ -124,10 +124,7 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node, cons
       MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
     }
 
-    auto param_value = std::make_shared<ParamValue>();
-    MS_EXCEPTION_IF_NULL(param_value);
-    param_value->set_value(tensor_info);
-    node->set_default_param(param_value);
+    node->set_default_param(tensor_info);
   }
   anfnode_build_map_[value_proto.name()] = node;
   return true;

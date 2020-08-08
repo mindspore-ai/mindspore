@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_META_TENSOR_H_
-#define MINDSPORE_CCSRC_IR_META_TENSOR_H_
+#ifndef MINDSPORE_CORE_IR_META_TENSOR_H_
+#define MINDSPORE_CORE_IR_META_TENSOR_H_
 
 #include <utility>
 #include <vector>
@@ -24,7 +24,7 @@
 
 #include "base/base.h"
 #include "ir/dtype.h"
-#include "utils/convert_utils.h"
+#include "utils/convert_utils_base.h"
 #include "utils/hashing.h"
 
 // brief mindspore namespace.
@@ -163,7 +163,6 @@ class MetaTensor : public Value {
       return false;
     }
   }
-  const bool parse_info_ = true;
 
  protected:
   // brief Data type of the tensor.
@@ -192,4 +191,4 @@ using MetaTensorPtr = std::shared_ptr<MetaTensor>;
 }  // namespace tensor
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_META_TENSOR_H_
+#endif  // MINDSPORE_CORE_IR_META_TENSOR_H_

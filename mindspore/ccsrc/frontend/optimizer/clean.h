@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_CLEAN_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_CLEAN_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CLEAN_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CLEAN_H_
 
 #include <memory>
 #include "ir/anf.h"
@@ -32,6 +32,7 @@ namespace opt {
 
 // Remove the class type from graphs
 bool SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager);
+bool CleanAfterOptA(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager);
 
 // Remove most uses of tuples from the graph
 // tuples that are returned will be kept
@@ -40,4 +41,4 @@ void EraseTuple(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager);
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_CLEAN_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CLEAN_H_

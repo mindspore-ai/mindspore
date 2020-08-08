@@ -17,9 +17,53 @@
  */
 
 #include "ir/meta_func_graph.h"
+#include "base/core_ops.h"
+#include "utils/ms_context.h"
+#include "abstract/abstract_function.h"
 
 // namespace to support intermediate representation definition
 namespace mindspore {
+
+abstract::AbstractBasePtr MetaFuncGraph::ToAbstract() {
+  return std::make_shared<abstract::MetaFuncGraphAbstractClosure>(shared_from_base<MetaFuncGraph>());
+}
+
+FuncGraphPtr MetaFuncGraph::GenerateStubFunc(const TypePtrList &types) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool enable_sparse = context->enable_sparse();
+  if (!enable_sparse) {
+    return nullptr;
+  }
+
+  std::vector<AnfNodePtr> parameters;
+  ParameterPtr undetermined_param = nullptr;
+  auto stub = std::make_shared<FuncGraph>();
+  for (size_t i = 0; i < types.size(); ++i) {
+    auto param = stub->add_parameter();
+    parameters.push_back(param);
+    if (types[i]->type_id() == kObjectTypeUndeterminedType) {
+      undetermined_param = param;
+    }
+  }
+  if (undetermined_param != nullptr) {
+    std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimMakeTuple)};
+    for (size_t i = 0; i < types.size(); ++i) {
+      if (types[i]->type_id() == kObjectTypeFunction) {
+        std::vector<AnfNodePtr> call_prim{parameters[i], undetermined_param};
+        inputs.push_back(stub->NewCNode(call_prim));
+      } else {
+        inputs.push_back(parameters[i]);
+      }
+    }
+    auto stub_output = stub->NewCNode(inputs);
+    stub->set_output(stub_output);
+    stub->set_stub(true);
+    return stub;
+  }
+  return nullptr;
+}
+
 FuncGraphPtr MetaFuncGraph::GenerateFuncGraph(const abstract::AbstractBasePtrList &args_spec_list) {
   TypePtrList types;
   (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(types),

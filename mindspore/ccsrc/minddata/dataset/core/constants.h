@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_CORE_CONSTANTS_H_
-#define DATASET_CORE_CONSTANTS_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_CONSTANTS_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_CONSTANTS_H_
 
 #include <cstdint>
 #include <limits>
@@ -25,6 +25,9 @@ namespace dataset {
 // Various type defines for convenience
 using uchar = unsigned char;
 using dsize_t = int64_t;
+
+// Target devices to perform map operation
+enum class MapTargetDevice { kCpu, kGpu, kDvpp };
 
 // Possible dataset types for holding the data and client type
 enum class DatasetType { kUnknown, kArrow, kTf };
@@ -63,4 +66,4 @@ using row_id_type = int64_t;
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_CORE_CONSTANTS_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_CONSTANTS_H_

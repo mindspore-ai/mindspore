@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_KERNELS_TENSOR_OP_H_
-#define DATASET_KERNELS_TENSOR_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_TENSOR_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_TENSOR_OP_H_
 
 #include <memory>
 #include <string>
@@ -86,12 +86,19 @@
 namespace mindspore {
 namespace dataset {
 
+// base class
+constexpr char kTensorOp[] = "TensorOp";
+
 // image
+constexpr char kAutoContrastOp[] = "AutoContrastOp";
 constexpr char kBoundingBoxAugmentOp[] = "BoundingBoxAugmentOp";
 constexpr char kDecodeOp[] = "DecodeOp";
 constexpr char kCenterCropOp[] = "CenterCropOp";
 constexpr char kCutOutOp[] = "CutOutOp";
+constexpr char kCropOp[] = "CropOp";
+constexpr char kEqualizeOp[] = "EqualizeOp";
 constexpr char kHwcToChwOp[] = "HwcToChwOp";
+constexpr char kInvertOp[] = "InvertOp";
 constexpr char kNormalizeOp[] = "NormalizeOp";
 constexpr char kPadOp[] = "PadOp";
 constexpr char kRandomColorAdjustOp[] = "RandomColorAdjustOp";
@@ -111,6 +118,7 @@ constexpr char kRescaleOp[] = "RescaleOp";
 constexpr char kResizeBilinearOp[] = "ResizeBilinearOp";
 constexpr char kResizeOp[] = "ResizeOp";
 constexpr char kResizeWithBBoxOp[] = "ResizeWithBBoxOp";
+constexpr char kSwapRedBlueOp[] = "SwapRedBlueOp";
 constexpr char kUniformAugOp[] = "UniformAugOp";
 
 // text
@@ -120,6 +128,7 @@ constexpr char kCaseFoldOp[] = "CaseFoldOp";
 constexpr char kJiebaTokenizerOp[] = "JiebaTokenizerOp";
 constexpr char kLookupOp[] = "LookupOp";
 constexpr char kNgramOp[] = "NgramOp";
+constexpr char kSlidingWindowOp[] = "SlidingWindowOp";
 constexpr char kNormalizeUTF8Op[] = "NormalizeUTF8Op";
 constexpr char kRegexReplaceOp[] = "RegexReplaceOp";
 constexpr char kRegexTokenizerOp[] = "RegexTokenizerOp";
@@ -129,9 +138,14 @@ constexpr char kUnicodeCharTokenizerOp[] = "UnicodeCharTokenizerOp";
 constexpr char kUnicodeScriptTokenizerOp[] = "UnicodeScriptTokenizerOp";
 constexpr char kWhitespaceTokenizerOp[] = "WhitespaceTokenizerOp";
 constexpr char kWordpieceTokenizerOp[] = "WordpieceTokenizerOp";
+constexpr char kRandomChoiceOp[] = "RandomChoiceOp";
+constexpr char kRandomApplyOp[] = "RandomApplyOp";
+constexpr char kComposeOp[] = "ComposeOp";
+constexpr char kRandomSelectSubpolicyOp[] = "RandomSelectSubpolicyOp";
+constexpr char kSentencepieceTokenizerOp[] = "SentencepieceTokenizerOp";
 
 // data
-constexpr char kConcatenateOp[] = "kConcatenateOp";
+constexpr char kConcatenateOp[] = "ConcatenateOp";
 constexpr char kDuplicateOp[] = "DuplicateOp";
 constexpr char kFillOp[] = "FillOp";
 constexpr char kMaskOp[] = "MaskOp";
@@ -154,7 +168,7 @@ class TensorOp {
 
   // A function that prints info about the tensor operation
   // @param out
-  virtual void Print(std::ostream &out) const;
+  virtual void Print(std::ostream &out) const { out << Name() << std::endl; }
 
   // Provide stream operator for displaying it
   // @param output stream
@@ -209,4 +223,4 @@ class TensorOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_KERNELS_TENSOR_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_TENSOR_OP_H_

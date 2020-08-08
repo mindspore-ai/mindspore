@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_SESSION_ANF_RUNTIME_ALGORITHM_H
-#define MINDSPORE_CCSRC_SESSION_ANF_RUNTIME_ALGORITHM_H
+#ifndef MINDSPORE_CCSRC_BACKEND_SESSION_ANF_RUNTIME_ALGORITHM_H
+#define MINDSPORE_CCSRC_BACKEND_SESSION_ANF_RUNTIME_ALGORITHM_H
 #include <iostream>
 #include <string>
 #include <vector>
@@ -149,6 +149,8 @@ class AnfRuntimeAlgorithm {
   static void SetWorkspaceAddr(const DeviceAddressPtr &addr, size_t output_idx, AnfNode *node);
   // get workspace device addr of anf_node
   static DeviceAddress *GetWorkspaceAddr(const AnfNodePtr &node, size_t output_idx);
+  // get workspace device mutable addr of anf_node
+  static DeviceAddressPtr GetMutableWorkspaceAddr(const AnfNodePtr &node, size_t index);
   // set infer shapes and types of anf node
   static void SetOutputInferTypeAndShape(const std::vector<TypeId> &types,
                                          const std::vector<std::vector<size_t>> &shapes, AnfNode *node);
@@ -213,4 +215,4 @@ class AnfRuntimeAlgorithm {
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_SESSION_ANF_RUNTIME_ALGORITHM_H
+#endif  // MINDSPORE_CCSRC_BACKEND_SESSION_ANF_RUNTIME_ALGORITHM_H

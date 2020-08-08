@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_UTIL_QUEUE_H_
-#define DATASET_UTIL_QUEUE_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_QUEUE_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_QUEUE_H_
 
 #include <atomic>
 #include <memory>
@@ -24,7 +24,7 @@
 #include <utility>
 #include <vector>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "utils/log_adapter.h"
 #include "minddata/dataset/util/allocator.h"
 #include "minddata/dataset/util/services.h"
@@ -253,4 +253,4 @@ class QueueList {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_UTIL_QUEUE_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_QUEUE_H_

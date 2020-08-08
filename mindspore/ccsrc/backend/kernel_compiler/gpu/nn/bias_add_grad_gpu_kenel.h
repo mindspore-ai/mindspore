@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_NN_BIAS_ADD_GRAD_GPU_KENEL_H_
-#define MINDSPORE_CCSRC_KERNEL_GPU_NN_BIAS_ADD_GRAD_GPU_KENEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_BIAS_ADD_GRAD_GPU_KENEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_BIAS_ADD_GRAD_GPU_KENEL_H_
 
 #include <cuda_runtime_api.h>
 #include <cublas_v2.h>
@@ -155,4 +155,4 @@ class BiasAddGradGpuKernel : public GpuKernel {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_NN_BIAS_ADD_GRAD_GPU_KENEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_BIAS_ADD_GRAD_GPU_KENEL_H_

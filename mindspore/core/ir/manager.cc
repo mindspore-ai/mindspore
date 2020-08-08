@@ -19,14 +19,11 @@
 #include "ir/manager.h"
 
 #include <algorithm>
-#include <numeric>
 #include <list>
 
-#include "debug/trace_base.h"
 #include "ir/func_graph.h"
-#include "utils/profile.h"
 #include "utils/convert_utils_base.h"
-#include "frontend/operator/ops.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 
@@ -387,12 +384,17 @@ FuncGraphSetPtr FuncGraphManager::MaybeDropNodes(const std::vector<AnfNodePtr> &
       continue;
     }
     AnfNodeIndexSet &users = node_users_[node];
-
-    std::vector<AnfNodePtr> parameters;
-    if (!users.empty() ||
-        (node->isa<Parameter>() && parameters.end() != std::find(parameters.begin(), parameters.end(), node))) {
+    if (!users.empty()) {
       continue;
     }
+
+    if (node->isa<Parameter>() && node->func_graph() != nullptr) {
+      auto &parameters = node->func_graph()->parameters();
+      if (std::find(parameters.begin(), parameters.end(), node) != parameters.end()) {
+        continue;
+      }
+    }
+
     if (IsValueNode<FuncGraph>(node)) {
       auto fg = GetValueNode<FuncGraphPtr>(node);
       func_graphs_to_check->add(fg);
@@ -520,12 +522,7 @@ void FuncGraphManager::MoveAllNodes(FuncGraphPtr source, FuncGraphPtr target) {
   target->CopyFuncGraphsUsed(source);
   target->CopyJFuncGraphs(source);
   signals_->InvalidateComputer();
-  source->ClearNodes();
-  source->ClearValueNodes();
-  source->ClearFuncGraphCNodesIndex();
-  source->ClearFreeVariables();
-  source->ClearFuncGraphsUsed();
-  source->ClearJFuncGraphs();
+  source->ClearAllManagerInfo();
 }
 
 FuncGraphTransaction FuncGraphManager::Transact() {

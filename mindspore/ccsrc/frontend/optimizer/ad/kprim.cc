@@ -20,7 +20,7 @@
 #include <string>
 #include <utility>
 #include "ir/anf.h"
-#include "ir/primitive_py.h"
+#include "utils/primitive_py.h"
 #include "ir/meta_func_graph.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/manager.h"
@@ -32,8 +32,8 @@
 #include "frontend/operator/composite/composite.h"
 #include "utils/symbolic.h"
 #include "utils/primitive_utils.h"
-#include "utils/context/ms_context.h"
-#include "debug/info.h"
+#include "utils/ms_context.h"
+#include "utils/info.h"
 #include "debug/trace.h"
 
 #include "./common.h"
@@ -88,6 +88,12 @@ MetaFuncGraphPtr KPrim::KMetaFuncGraph(const PrimitivePtr &prim) {
     return meta;
   }
 
+  if (prim->Hash() == prim::kPrimMakeList->Hash() && prim->name() == prim::kPrimMakeList->name()) {
+    MetaFuncGraphPtr meta = std::make_shared<prim::MakeListGradient>("make_list_gradient");
+    bprop_registry_meta_[prim::kPrimMakeList] = meta;
+    return meta;
+  }
+
   MS_LOG(EXCEPTION) << "Fail to find bprop function for " << prim->name() << ".";
 }
 
@@ -102,6 +108,8 @@ FuncGraphPtr KPrim::KPrimitive(const ValueNodePtr &value_node, const pipeline::R
     fprop->transforms().emplace("primal", FuncGraphTransform(prim::kPrimSwitchLayer));
     return fprop;
   } else if (prim->Hash() == prim::kPrimMakeTuple->Hash() && prim->name() == prim::kPrimMakeTuple->name()) {
+    return nullptr;
+  } else if (prim->Hash() == prim::kPrimMakeList->Hash() && prim->name() == prim::kPrimMakeList->name()) {
     return nullptr;
   }
 
@@ -264,7 +272,7 @@ FuncGraphPtr KPrim::FakeBprop(const ValueNodePtr &value_node, const pipeline::Re
     return IsPrimitiveCNode(user.first, prim);
   });
   if (cnode == users.end()) {
-    MS_LOG(EXCEPTION) << "Fail to find cnode.";
+    MS_LOG(EXCEPTION) << "Fail to find user for " << prim->ToString();
   }
   auto inputs_num = cnode->first->cast<CNodePtr>()->inputs().size() - 1;
 

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_TENSOR_LAYOUT_TENSOR_LAYOUT_H_
-#define MINDSPORE_CCSRC_PARALLEL_TENSOR_LAYOUT_TENSOR_LAYOUT_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_TENSOR_LAYOUT_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_TENSOR_LAYOUT_H_
 
 #include <cstdint>
 #include <map>
@@ -38,8 +38,15 @@ class TensorLayout {
   std::string StandardToString() const;
   std::string OriginToString() const;
   Status Init(const Arrangement &device_arrangement, const Map &tensor_map, const Arrangement &tensor_shape);
-  Status InitFromVector(const std::vector<int32_t> &device_arrangement, const std::vector<int32_t> &tensor_map,
-                        const std::vector<int32_t> &tensor_shape);
+  Status InitFromVector(const Shape &device_arrangement, const Shape &tensor_map, const Shape &tensor_shape);
+
+  bool skip_redistribution() const { return skip_redistribution_; }
+
+  void set_skip_redistribution(bool flag) { skip_redistribution_ = flag; }
+
+  int32_t get_field_size() const { return field_size_; }
+
+  void set_field_size(int32_t field_size) { field_size_ = field_size; }
 
   Arrangement device_arrangement() const { return device_arrangement_; }
 
@@ -71,9 +78,12 @@ class TensorLayout {
 
   Arrangement slice_shape() const;
 
-  Status UpdateTensorMap(uint32_t index, int32_t value);
+  Status UpdateTensorMap(size_t index, int64_t value);
 
   TensorLayout SqueezeShape() const;
+
+  // Key for user data.
+  constexpr static char key[] = "TLayout";
 
  private:
   std::shared_ptr<TensorLayout> ExpandTensorShapeWithoutExtendDeviceArrangement(
@@ -84,7 +94,7 @@ class TensorLayout {
   int32_t GetSliceDeviceDimensionByTensorDimensionIndex(uint32_t idx) const;
   int32_t GetSliceNumByTensorDimensionIndex(uint32_t idx) const;
   bool TensorShapeDimensionIsDividedBySplitDeviceDimension() const;
-  int32_t GetTensorDimensionIndexByDeviceDimensionIndex(int32_t idx) const;
+  int32_t GetTensorDimensionIndexByDeviceDimensionIndex(int64_t idx) const;
 
   Arrangement device_arrangement_origin_;
   Map tensor_map_origin_;
@@ -92,8 +102,10 @@ class TensorLayout {
   Arrangement device_arrangement_;
   Map tensor_map_;
   Arrangement tensor_shape_;
+  bool skip_redistribution_ = false;
+  int32_t field_size_ = 0;
 };
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_TENSOR_LAYOUT_TENSOR_LAYOUT_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_TENSOR_LAYOUT_H_

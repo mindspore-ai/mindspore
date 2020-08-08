@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_KERNEL_CPU_SPARSE_APPLY_LAZY_ADAM_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_KERNEL_CPU_SPARSE_APPLY_LAZY_ADAM_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_APPLY_LAZY_ADAM_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_APPLY_LAZY_ADAM_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
@@ -33,7 +33,7 @@ class SparseApplyLazyAdamCPUKernel : public CPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
- private:
+ protected:
   size_t indices_size_{0};
   size_t var_first_dim_size_{0};
   size_t var_outer_dim_size_{1};
@@ -60,4 +60,4 @@ MS_REG_CPU_KERNEL(FusedSparseLazyAdam,
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_CPU_SPARSE_APPLY_LAZY_ADAM_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_APPLY_LAZY_ADAM_CPU_KERNEL_H_

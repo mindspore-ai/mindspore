@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_OPS_INFO_OPERATOR_INFO_H_
-#define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_OPERATOR_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_OPERATOR_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_OPERATOR_INFO_H_
 
 #include <cstdint>
 #include <map>
@@ -25,7 +25,7 @@
 #include <utility>
 #include <vector>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "base/base.h"
 #include "frontend/parallel/auto_parallel/costmodel.h"
 #include "frontend/parallel/auto_parallel/operator_costmodel.h"
@@ -43,11 +43,10 @@ using ForwardOp = OperatorVector;
 using MirrorOps = std::vector<OperatorVector>;
 using Ops = std::vector<OperatorVector>;
 using VirtualDivOp = OperatorVector;
-using TensorMaps = std::vector<std::vector<int32_t>>;
+using TensorMaps = std::vector<Shape>;
 using TensorLayouts = std::vector<TensorLayout>;
 using different_type = std::vector<int32_t>::difference_type;
 using PrimitiveAttrs = std::unordered_map<std::string, ValuePtr>;
-using Strategys = std::vector<Dimensions>;
 using ReplaceGraphPtr = std::shared_ptr<std::pair<std::vector<std::pair<AnfNodePtr, int>>, AnfNodePtr>>;
 
 class Edge;
@@ -88,7 +87,7 @@ class OperatorInfo {
   void set_cost(const OperatorCostPtr &cost) { operator_cost_ = cost; }
   virtual Status SetCostUnderStrategy(const StrategyPtr &strategy) = 0;
 
-  virtual std::shared_ptr<std::vector<std::vector<int32_t>>> GenerateBatchStrategies();
+  virtual std::shared_ptr<Strategys> GenerateBatchStrategies();
   virtual void ReComputeBatchSplitFlagList();
   void ComputeBatchSplitFlagList();
 
@@ -97,6 +96,7 @@ class OperatorInfo {
   // is checked
   Status SetCostUnderStrategyBase(const StrategyPtr &strategy);
   std::vector<std::shared_ptr<StrategyWithCost>> GetStrategyCost() { return strategy_cost_; }
+  void SetStrategyCost(const std::vector<std::shared_ptr<StrategyWithCost>> &);
   // In the training phase, when the input of a operator contains WEIGHT or a output from other operators involving
   // WEIGHT, then these input should stay in memory until it is used in the backward phase, which is kept in memory
   // at the end of forward phase.
@@ -162,6 +162,9 @@ class OperatorInfo {
   void set_type(const std::string &type) { type_ = type; }
   const std::string &type() const { return type_; }
   const std::unordered_map<std::string, ValuePtr> &attrs() const { return attrs_; }
+
+  // Key for user data.
+  constexpr static char key[] = "OpInfo";
 
  protected:
   // needed by rec_parser
@@ -267,8 +270,8 @@ Operator CreateReduceScatterOp(const std::string &reduce_op, const std::string &
 Operator CreateGetTensorSliceOp(const TensorLayout &tensor_layout);
 OperatorVector CreateMirrorOps(const std::string &group_name, size_t dev_num);
 int32_t ComputeRepeatDeviceNumByTensorMap(const Shape &dev_matrix_shape, const Shape &tensor_map);
-std::shared_ptr<std::vector<std::vector<int32_t>>> GenerateBatchStrategiesBySplitFlag(
-  const Shapes &shapes, const std::vector<bool> &split_flag_list);
+std::shared_ptr<Strategys> GenerateBatchStrategiesBySplitFlag(const Shapes &shapes,
+                                                              const std::vector<bool> &split_flag_list);
 
 void PrintStrategy(const StrategyPtr &strategy);
 // generate strategies for that all inputs' dimensions are independent, such as: ([a, b, c, d])
@@ -286,4 +289,4 @@ Shapes GetRefKeyNodeShape(const AnfNodePtr &node, const FuncGraphPtr &func_graph
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_OPS_INFO_OPERATOR_INFO_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_OPERATOR_INFO_H_

@@ -20,7 +20,7 @@
 #include <string>
 #include <memory>
 
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {

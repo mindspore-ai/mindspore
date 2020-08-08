@@ -23,9 +23,7 @@
 
 #include "ir/visitor.h"
 #include "ir/func_graph.h"
-#include "frontend/operator/ops.h"
-#include "frontend/parallel/ops_info/ops_utils.h"
-#include "debug/label.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 // namespace to support intermediate representation definition
@@ -35,18 +33,6 @@ BaseShapePtr AnfNode::Shape() const { return (abstract_ == nullptr) ? nullptr : 
 
 std::string AnfNode::ToString() const {
   return mindspore::label_manage::Label(const_cast<AnfNode *>(this)->shared_from_base<AnfNode>()->debug_info());
-}
-
-OperatorInfoPtr CNode::set_operator_info(const OperatorInfoPtr &operator_info) {
-  if (operator_info_ != nullptr) {
-    MS_LOG(WARNING) << "The CNode: " << ToString() << " has already been set OperatorInfo: " << operator_info_->name()
-                    << ", using the new one: " << operator_info->name();
-    auto old_ptr = operator_info_;
-    operator_info_ = operator_info;
-    return old_ptr;
-  }
-  operator_info_ = operator_info;
-  return nullptr;
 }
 
 std::string CNode::fullname_with_scope() {
@@ -106,7 +92,7 @@ std::string CNode::fullname_with_scope() {
   return fullname_with_scope_;
 }
 
-void CNode::accept(AnfVisitor *v) { v->Visit(shared_from_base<CNode>()); }
-void ValueNode::accept(AnfVisitor *v) { v->Visit(shared_from_base<ValueNode>()); }
-void Parameter::accept(AnfVisitor *v) { v->Visit(shared_from_base<Parameter>()); }
+void CNode::accept(AnfIrVisitor *v) { v->Visit(shared_from_base<CNode>()); }
+void ValueNode::accept(AnfIrVisitor *v) { v->Visit(shared_from_base<ValueNode>()); }
+void Parameter::accept(AnfIrVisitor *v) { v->Visit(shared_from_base<Parameter>()); }
 }  // namespace mindspore

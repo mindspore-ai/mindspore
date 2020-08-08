@@ -54,9 +54,9 @@ Shapes ArithmeticBase::InferExpendShape() {
   return input_shapes;
 }
 
-std::vector<Dimensions> ExpendStrategy(const StrategyPtr &strategy) {
-  std::vector<Dimensions> expend_strategy;
-  std::vector<Dimensions> stra = strategy->GetInputDim();
+Strategys ExpendStrategy(const StrategyPtr &strategy) {
+  Strategys expend_strategy;
+  Strategys stra = strategy->GetInputDim();
   Dimensions sub_a_strategy = stra.at(0);
   Dimensions sub_b_strategy = stra.at(1);
   size_t input_a_size = sub_a_strategy.size();
@@ -83,7 +83,7 @@ Status ArithmeticBase::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
   Shapes input_shapes = InferExpendShape();
-  std::vector<Dimensions> expend_strategy = ExpendStrategy(strategy);
+  Strategys expend_strategy = ExpendStrategy(strategy);
   Dimensions sub_a_strategy = expend_strategy.at(0);
   Dimensions sub_b_strategy = expend_strategy.at(1);
   Shape input_a_shape = input_shapes.at(0);
@@ -103,7 +103,7 @@ Status ArithmeticBase::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status ArithmeticBase::InferDevMatrixShape() {
-  std::vector<Dimensions> expend_strategy = ExpendStrategy(strategy_);
+  Strategys expend_strategy = ExpendStrategy(strategy_);
   Dimensions sub_a_strategy = expend_strategy.at(0);
   Dimensions sub_b_strategy = expend_strategy.at(1);
   Shape dev_shape;
@@ -123,7 +123,7 @@ TensorMap SetExpendTensorMap(const Shape &strategy, const Shape &dev_matrix_shap
   TensorMap tensor_map_index;
   for (size_t i = 0; i < strategy.size(); ++i) {
     if (strategy[i] == dev_matrix_shape[i]) {
-      tensor_map_index.push_back((int32_t)(LAST_INDEX(SizeToUint(strategy.size())) - i));
+      tensor_map_index.push_back((int64_t)(LAST_INDEX(strategy.size()) - i));
     } else {
       tensor_map_index.push_back(-1);
     }
@@ -159,15 +159,15 @@ void ArithmeticBase::ReComputeBatchSplitFlagList() {
 }
 
 Status ArithmeticBase::InferTensorMap() {
-  std::vector<int32_t> tensor_map_index;
-  std::vector<Dimensions> expend_strategy = ExpendStrategy(strategy_);
+  Shape tensor_map_index;
+  Strategys expend_strategy = ExpendStrategy(strategy_);
   Dimensions sub_a_expend_strategy = expend_strategy.at(0);
   Dimensions sub_b_expend_strategy = expend_strategy.at(1);
   Strategys stra = strategy_->GetInputDim();
   Dimensions sub_a_strategy = stra.at(0);
   Dimensions sub_b_strategy = stra.at(1);
   for (size_t i = 0; i < sub_a_expend_strategy.size(); ++i) {
-    tensor_map_index.push_back((int32_t)(LAST_INDEX(SizeToUint(sub_a_expend_strategy.size())) - i));
+    tensor_map_index.push_back((int64_t)(LAST_INDEX(sub_a_expend_strategy.size()) - i));
   }
 
   Shape dev_shape;
@@ -261,7 +261,7 @@ Status ArithmeticBase::InferTensorInfo() {
 
   // infer slice shape
   Shapes inputs_slice_shape, outputs_slice_shape;
-  std::vector<Dimensions> expend_strategy = ExpendStrategy(strategy_);
+  Strategys expend_strategy = ExpendStrategy(strategy_);
   Dimensions sub_a_expend_strategy = expend_strategy.at(0);
   Dimensions sub_b_expend_strategy = expend_strategy.at(1);
   Strategys inputs_strategy = strategy_->GetInputDim();

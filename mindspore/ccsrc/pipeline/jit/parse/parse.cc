@@ -17,15 +17,18 @@
  */
 
 #include "pipeline/jit/parse/parse.h"
+
+#include <utility>
 #include <string>
 #include <memory>
 #include <sstream>
 #include <unordered_map>
 #include <algorithm>
+#include "pipeline/jit/parse/resolve.h"
 #include "frontend/operator/ops.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "frontend/operator/composite/composite.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 #include "debug/trace.h"
 
 namespace mindspore {
@@ -504,14 +507,45 @@ AnfNodePtr Parser::GenerateMakeTuple(const FunctionBlockPtr &block, const std::v
                        [](AnfNodePtr arg) -> AnfNodePtr { return arg; });
   return block->func_graph()->NewCNode(make_tuple_nodes);
 }
+
+AnfNodePtr Parser::ParseSuper(const FunctionBlockPtr &block, const py::list &args) {
+  py::object father_class;
+  if (args.empty()) {
+    father_class = py::none();
+  } else if (args.size() == 2) {
+    father_class = args[0];
+    auto arg_type = AstSubType(py::cast<int32_t>(ast_->CallParserObjMethod(PYTHON_PARSE_GET_AST_TYPE, args[1])));
+    if (arg_type != AST_SUB_TYPE_NAME || py::cast<std::string>(python_adapter::GetPyObjAttr(args[1], "id")) != "self") {
+      MS_EXCEPTION(ArgumentError) << "When call 'super', the second arg should be 'self'.";
+    }
+  } else {
+    MS_EXCEPTION(ArgumentError) << "When call 'super', the args number should be 0 or 2, but got" << args.size() << ".";
+  }
+  py::object target_class_instance = ast()->CallParserObjMethod(PYTHON_PARSE_ANALYZE_SUPER, father_class, ast()->obj());
+  py::object namespace_var = ast_->CallParseModFunction(PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, target_class_instance);
+  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var);
+  SymbolPtr symbol = std::make_shared<Symbol>("namespace");
+  return block->MakeResolve(name_space, symbol);
+}
+
 // process function call, eg : f1(x, y) ...
 AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Call";
   // process function call
   py::object function_ast_node = python_adapter::GetPyObjAttr(node, "func");
+  py::list args = python_adapter::GetPyObjAttr(node, "args");
+
+  auto arg_type =
+    AstSubType(py::cast<int32_t>(ast_->CallParserObjMethod(PYTHON_PARSE_GET_AST_TYPE, function_ast_node)));
+  if (arg_type == AST_SUB_TYPE_NAME) {
+    auto name_id = py::cast<std::string>(python_adapter::GetPyObjAttr(function_ast_node, "id"));
+    if (name_id == "super") {
+      return ParseSuper(block, args);
+    }
+  }
+
   AnfNodePtr call_function_anf_node = ParseExprNode(block, function_ast_node);
   // function call arguments should be passed in as groups and unpacked later using unpack call
-  py::list args = python_adapter::GetPyObjAttr(node, "args");
   std::vector<AnfNodePtr> packed_arguments;
   std::vector<AnfNodePtr> group_arguments;
 
@@ -1027,13 +1061,13 @@ FunctionBlockPtr Parser::GenerateBlockInFor(const TraceInfoPtr &trace_info) {
 FunctionBlockPtr Parser::ParseFor(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast For, create an if else statement";
   MS_EXCEPTION_IF_NULL(block);
-  // create statement 'len(xs) < prim::MAX_FOR_LOOP_COUNT'
+  // create statement 'len(xs) < MAX_FOR_LOOP_COUNT'
   AnfNodePtr op_len = block->MakeResolveSymbol(NAMED_PRIMITIVE_LEN);
   py::object iter_obj = python_adapter::GetPyObjAttr(node, NAMED_PRIMITIVE_ITER);
   AnfNodePtr iter_node = ParseExprNode(block, iter_obj);
   CNodePtr len_iter = block->func_graph()->NewCNode({op_len, iter_node});
-  CNodePtr bool_node = block->func_graph()->NewCNode(
-    {NewValueNode(prim::kPrimScalarLt), len_iter, NewValueNode(prim::MAX_FOR_LOOP_COUNT)});
+  CNodePtr bool_node =
+    block->func_graph()->NewCNode({NewValueNode(prim::kPrimScalarLt), len_iter, NewValueNode(MAX_FOR_LOOP_COUNT)});
 
   // create statement 'if len(xs) < prim::MAX_FOR_LOOP_COUNT then ParseForIter else ParseForLoop'
   TraceManager::DebugTrace(std::make_shared<TraceIfStmtTrueBranch>(block->func_graph()->debug_info()));
@@ -1157,7 +1191,12 @@ FunctionBlockPtr Parser::ParseForLoop(const FunctionBlockPtr &block, const py::o
   py::object iter_obj = python_adapter::GetPyObjAttr(node, "iter");
   AnfNodePtr iter_node = ParseExprNode(block, iter_obj);
   MS_EXCEPTION_IF_NULL(iter_node);
-  CNodePtr len_iter = block->func_graph()->NewCNode({op_len, iter_node});
+  // Generate node for loop count and convert it to tensor, to make the loop not unroll
+  CNodePtr scalar_len = block->func_graph()->NewCNode({op_len, iter_node});
+  auto scalar_to_tensor = prim::GetPythonOps("ScalarToTensor", "mindspore.ops.operations");
+  auto scalar_to_tensor_node = block->func_graph()->NewCNode({NewValueNode(scalar_to_tensor)});
+
+  CNodePtr len_iter = block->func_graph()->NewCNode({scalar_to_tensor_node, scalar_len});
 
   FunctionBlockPtr header_block =
     GenerateBlockInFor(std::make_shared<TraceForHeader>(block->func_graph()->debug_info()));
@@ -1165,7 +1204,9 @@ FunctionBlockPtr Parser::ParseForLoop(const FunctionBlockPtr &block, const py::o
   // create loop variable 'i'
   ParameterPtr loop_var = header_block->func_graph()->add_parameter();
   // create loop condition 'i < len(xs)'
-  CNodePtr cond_node = header_block->func_graph()->NewCNode({NewValueNode(prim::kPrimScalarLt), loop_var, len_iter});
+  auto prim_less = prim::GetPythonOps("Less", "mindspore.ops.operations");
+  auto less_node = header_block->func_graph()->NewCNode({NewValueNode(prim_less)});
+  CNodePtr cond_node = header_block->func_graph()->NewCNode({less_node, loop_var, len_iter});
 
   // generate the body of the for statement
   FunctionBlockPtr body_block = GenerateBlockInFor(std::make_shared<TraceForBody>(block->func_graph()->debug_info()));
@@ -1436,35 +1477,59 @@ FunctionBlockPtr Parser::ParsePass(const FunctionBlockPtr &block, const py::obje
   return block;
 }
 
+AnfNodePtr FindPhis(const std::unordered_map<ParameterPtr, AnfNodePtr> &removable_phis, const AnfNodePtr &node) {
+  const auto &inp = node->cast<ParameterPtr>();
+  const auto &iter = removable_phis.find(inp);
+  if (iter == removable_phis.end()) {
+    return node;
+  }
+  return FindPhis(removable_phis, iter->second);
+}
+
 void Parser::RemoveUnnecessaryPhis() {
   // merge all removable phis to one map;
   std::unordered_map<ParameterPtr, AnfNodePtr> removable_phis;
+  std::vector<ParameterPtr> phis;
   for (FunctionBlockPtr &block : func_block_list_) {
     MS_EXCEPTION_IF_NULL(block);
     removable_phis.insert(block->removable_phis().begin(), block->removable_phis().end());
+    std::transform(block->removable_phis().begin(), block->removable_phis().end(), std::back_inserter(phis),
+                   [](std::pair<ParameterPtr, AnfNodePtr> pair) { return pair.first; });
   }
-
   if (removable_phis.size() == 0) {
     return;
   }
-  for (auto &node : DeepUsedGraphSearch(func_graph_->get_return())) {
-    if (node->isa<CNode>()) {
-      const auto &cnode = node->cast<CNodePtr>();
-      auto &inputs = cnode->inputs();
-      for (std::size_t i = 0; i < inputs.size(); i++) {
-        if (inputs[i]->isa<Parameter>()) {
-          const auto &inp = inputs[i]->cast<ParameterPtr>();
-          const auto &iter = removable_phis.find(inp);
-          if (iter == removable_phis.end()) {
-            continue;
-          }
-          auto &argNode = iter->second;
-          MS_LOG(DEBUG) << "graph " << cnode->func_graph()->ToString() << " replace phi " << inp->ToString() << " in "
-                        << cnode->DebugString() << " with " << argNode->DebugString();
-          cnode->set_input(i, argNode);
-        }
-      }
+  auto fg_name = func_graph_->ToString();
+  auto mng = Manage(func_graph_, false);
+  // replace the nodes
+  // remove from inside to outside
+  for (int idx = SizeToInt(phis.size() - 1); idx >= 0; idx--) {
+    auto phi = phis[IntToSize(idx)];
+    auto new_node = FindPhis(removable_phis, phi);
+    MS_LOG(DEBUG) << "phi " << phi->DebugString() << " to " << new_node->DebugString();
+    mng->Replace(phi, new_node);
+  }
+  // remove the parameter
+  for (FunctionBlockPtr &block : func_block_list_) {
+    MS_EXCEPTION_IF_NULL(block);
+    auto &local_removable_phis = block->removable_phis();
+    if (local_removable_phis.size() == 0) {
+      continue;
     }
+    auto func_graph = block->func_graph();
+    auto &parameters = func_graph->parameters();
+    std::vector<AnfNodePtr> new_parameters(parameters.size());
+    auto it = std::copy_if(
+      parameters.begin(), parameters.end(), new_parameters.begin(), [&local_removable_phis](AnfNodePtr param) {
+        return local_removable_phis.find(param->cast<ParameterPtr>()) == local_removable_phis.end();
+      });
+
+    // shrink container to new size
+    new_parameters.resize(std::distance(new_parameters.begin(), it));
+    func_graph->set_parameters(new_parameters);
+  }
+  for (auto fg : mng->func_graphs()) {
+    fg->ClearAllManagerInfo();
   }
 }
 

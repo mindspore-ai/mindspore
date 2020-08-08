@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_DEVICE_GPU_GPU_COMMON_H_
-#define MINDSPORE_CCSRC_DEVICE_GPU_GPU_COMMON_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_COMMON_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_COMMON_H_
 
 #include <iostream>
 #include <vector>
@@ -93,6 +93,22 @@ namespace gpu {
     }                                                                                \
   }
 
+#define CHECK_CUSOLVER_RET_WITH_EXCEPT(expression, message)                                \
+  {                                                                                        \
+    cusolverStatus_t status = (expression);                                                \
+    if (status != CUSOLVER_STATUS_SUCCESS) {                                               \
+      MS_LOG(EXCEPTION) << "cusolver Error: " << message << " | Error Number: " << status; \
+    }                                                                                      \
+  }
+
+#define CHECK_CUSOLVER_RET_WITH_ERROR(expression, message)                             \
+  {                                                                                    \
+    cusolverStatus_t status = (expression);                                            \
+    if (status != CUSOLVER_STATUS_SUCCESS) {                                           \
+      MS_LOG(ERROR) << "cusolver Error: " << message << " | Error Number: " << status; \
+    }                                                                                  \
+  }
+
 #define CHECK_NCCL_RET_WITH_EXCEPT(expression, message)                                \
   {                                                                                    \
     int result = (expression);                                                         \
@@ -119,4 +135,4 @@ inline bool CheckNullInput(std::vector<size_t> input_shape) {
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_GPU_GPU_COMMON_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_COMMON_H_

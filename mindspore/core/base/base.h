@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BASE_BASE_H_
-#define MINDSPORE_CCSRC_BASE_BASE_H_
+#ifndef MINDSPORE_CORE_BASE_BASE_H_
+#define MINDSPORE_CORE_BASE_BASE_H_
 
 #include <atomic>
 #include <iostream>
@@ -131,6 +131,11 @@ class AnfNode;
 using AnfNodePtr = std::shared_ptr<AnfNode>;
 using AnfNodePtrList = std::vector<AnfNodePtr>;
 using AnfNodeSet = OrderedSet<AnfNodePtr>;
+using AnfNodeWeakPtr = std::weak_ptr<AnfNode>;
+
+class FuncGraph;
+using FuncGraphPtr = std::shared_ptr<FuncGraph>;
+using FuncGraphWeakPtr = std::weak_ptr<FuncGraph>;
 
 namespace abstract {
 class AbstractBase;
@@ -149,4 +154,4 @@ struct MS_EXPORT TypeIdManager {
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BASE_BASE_H_
+#endif  // MINDSPORE_CORE_BASE_BASE_H_

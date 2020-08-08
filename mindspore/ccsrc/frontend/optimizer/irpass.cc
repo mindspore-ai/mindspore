@@ -41,8 +41,10 @@
 #include "frontend/optimizer/irpass/symbol_resolver.h"
 #include "frontend/optimizer/irpass/tile_eliminate.h"
 #include "frontend/optimizer/irpass/transpose_eliminate.h"
+#include "frontend/optimizer/irpass/value_based_eliminate.h"
 #include "frontend/optimizer/opt.h"
-#include "frontend/optimizer/irpass/indexed_slices_eliminate.h"
+#include "frontend/optimizer/irpass/row_tensor_eliminate.h"
+#include "frontend/optimizer/irpass/sparse_tensor_eliminate.h"
 
 namespace mindspore {
 namespace opt {
@@ -64,7 +66,7 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
 
   // ops eliminate
   item_tuple_eliminate_ = MakeSubstitution(std::make_shared<ItemTupleEliminater>(), "item_tuple_eliminate",
-                                           {prim::kPrimTupleGetItem, prim::kPrimTupleSetItem});
+                                           {prim::kPrimTupleGetItem, prim::kPrimTupleSetItem, prim::kPrimListGetItem});
   tile_eliminate_ = MakeSubstitution(std::make_shared<TileMultiplyByOne>(), "tile_eliminate", prim::kPrimTile);
   cast_eliminate_ = MakeSubstitution(std::make_shared<CastEliminater>(), "cast_eliminate", prim::kPrimCast);
   reshape_eliminate_ = MakeSubstitution(std::make_shared<ReshapeEliminater>(), "reshape_eliminate", prim::kPrimReshape);
@@ -155,13 +157,24 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   mark_interface_fusion_ =
     MakeSubstitution(std::make_shared<MarkInterfaceFusion>(), "mark_interface_fusion", prim::kPrimSelect);
 
-  // IndexedSlices Eliminate
-  indexed_slices_eliminate_ = MakeSubstitution(
-    std::make_shared<IndexedSlicesEliminater>(), "indexed_slices_eliminate",
-    {prim::kPrimIndexedSlicesGetIndices, prim::kPrimIndexedSlicesGetValues, prim::kPrimIndexedSlicesGetDenseShape});
+  // RowTensor Eliminate
+  row_tensor_eliminate_ = MakeSubstitution(
+    std::make_shared<RowTensorEliminater>(), "row_tensor_eliminate",
+    {prim::kPrimRowTensorGetIndices, prim::kPrimRowTensorGetValues, prim::kPrimRowTensorGetDenseShape});
+
+  // SparseTensor Eliminate
+  sparse_tensor_eliminate_ = MakeSubstitution(
+    std::make_shared<SparseTensorEliminater>(), "sparse_tensor_eliminate",
+    {prim::kPrimSparseTensorGetIndices, prim::kPrimSparseTensorGetValues, prim::kPrimSparseTensorGetDenseShape});
+
+  // Value_Based Eliminate
+  value_based_eliminate_ = MakeSubstitution(std::make_shared<ValueBasedEliminate>(), "value_based_eliminate",
+                                            {prim::kPrimSelect, prim::kPrimMinimum, prim::kPrimMaximum});
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {
+  resolver_resolve_attr_ =
+    MakeSubstitution(std::make_shared<ResolveAttr>(), "resolver_resolve_attr", prim::kPrimGetAttr);
   resolver_resolve_ = MakeSubstitution(std::make_shared<ResolverResolve>(), "resolver_resolve", prim::kPrimResolve);
   resolver_getattr_ = MakeSubstitution(std::make_shared<ResolverGetattr>(), "resolver_getattr", prim::kPrimGetAttr);
 }

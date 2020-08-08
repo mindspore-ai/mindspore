@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_KERNEL_CPU_POOLING_GRAD_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_KERNEL_CPU_POOLING_GRAD_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_POOLING_GRAD_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_POOLING_GRAD_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
@@ -37,7 +37,8 @@ class PoolingGradCPUKernel : public MKLCPUKernel {
   void RowPoolingGrad(const float *input, float *output, float diff, const std::vector<std::pair<size_t, size_t>> &box,
                       std::vector<std::pair<size_t, float>> *row_max_pair);
   void ChannelPoolingGrad(const float *input, const float *diff, float *output);
-  int stride_{0}, kernel_size_{0};
+  int stride_{0};
+  std::vector<size_t> kernel_size_;
   std::vector<int> padding_l_;
   std::vector<size_t> src_shape_;
   std::vector<size_t> dst_shape_;
@@ -53,4 +54,4 @@ MS_REG_CPU_KERNEL(MaxPoolGrad,
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_CPU_POOLING_GRAD_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_POOLING_GRAD_CPU_KERNEL_H_

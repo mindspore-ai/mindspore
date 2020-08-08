@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_IR_FUSION_SOFTMAX_GRAD_EXT_FUSION_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_IR_FUSION_SOFTMAX_GRAD_EXT_FUSION_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_SOFTMAX_GRAD_EXT_FUSION_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_SOFTMAX_GRAD_EXT_FUSION_H_
 
 #include <memory>
 #include <string>
@@ -59,4 +59,4 @@ class SoftmaxGradExtFusionV3 : public SoftmaxGradExtFusion {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_IR_FUSION_SOFTMAX_GRAD_EXT_FUSION_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_SOFTMAX_GRAD_EXT_FUSION_H_

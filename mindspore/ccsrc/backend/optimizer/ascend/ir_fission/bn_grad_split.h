@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_IR_FISSION_BN_GRAD_SPLIT_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_IR_FISSION_BN_GRAD_SPLIT_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_BN_GRAD_SPLIT_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_BN_GRAD_SPLIT_H_
 
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/common/helper.h"
@@ -30,4 +30,4 @@ class BnGradSplit : public PatternProcessPass {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_IR_FISSION_BN_GRAD_SPLIT_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_BN_GRAD_SPLIT_H_

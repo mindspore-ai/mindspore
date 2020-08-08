@@ -61,8 +61,6 @@ GeneratorOp::GeneratorOp(py::function generator_function, std::vector<std::strin
 GeneratorOp::~GeneratorOp() { this->Dealloc(); }
 
 void GeneratorOp::Print(std::ostream &out, bool show_all) const {
-  // Always show the id and name as first line regardless if this summary or detailed print
-  out << "(" << std::setw(2) << operator_id_ << ") <GeneratorOp>:";
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
     PipelineOp::Print(out, show_all);
@@ -129,7 +127,7 @@ Status GeneratorOp::PyRowToTensorRow(py::object py_data, TensorRow *tensor_row) 
                     "Generator should return a tuple of numpy arrays.");
     }
     std::shared_ptr<Tensor> tensor;
-    RETURN_IF_NOT_OK(Tensor::CreateTensor(&tensor, ret_py_ele.cast<py::array>()));
+    RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(ret_py_ele.cast<py::array>(), &tensor));
     if ((!column_types_.empty()) && (column_types_[i] != DataType::DE_UNKNOWN) &&
         (column_types_[i] != tensor->type())) {
       return Status(StatusCode::kPyFuncException, __LINE__, __FILE__, "Generator type check failed.");
@@ -218,7 +216,7 @@ Status GeneratorOp::operator()() {
       MS_LOG(DEBUG) << "Generator operator sends out EOE.";
       std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
       RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
-      if (!BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat)) {
+      if (IsLastIteration()) {
         // If last repeat or not repeated, push out EOF and exit master loop
         MS_LOG(DEBUG) << "Generator operator sends out EOF.";
         std::unique_ptr<DataBuffer> eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
@@ -233,6 +231,7 @@ Status GeneratorOp::operator()() {
         // Clear the status of the wait post
         wp_.Clear();
       }
+      UpdateRepeatAndEpochCounter();
     }
   }
   return Status::OK();

@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_DEVICE_GPU_MPI_MPI_INITIALIZER_H_
-#define MINDSPORE_CCSRC_DEVICE_GPU_MPI_MPI_INITIALIZER_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_MPI_MPI_INITIALIZER_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_MPI_MPI_INITIALIZER_H_
+
+#include <string>
+#include "runtime/device/gpu/distribution/collective_wrapper.h"
 
 namespace mindspore {
 namespace device {
@@ -25,18 +28,15 @@ class MPIInitializer {
   MPIInitializer(MPIInitializer const &) = delete;
   MPIInitializer &operator=(const MPIInitializer &) = delete;
   static MPIInitializer &GetInstance();
-  static int get_rank_id();
-  static int get_rank_size();
+  static int get_rank_id(const std::string &group);
+  static int get_rank_size(const std::string &groups);
 
  private:
-  MPIInitializer();
-  ~MPIInitializer();
-
-  int rank_id_;
-  int rank_size_;
+  MPIInitializer() = default;
+  ~MPIInitializer() = default;
 };
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_GPU_MPI_MPI_INITIALIZER_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_MPI_MPI_INITIALIZER_H_

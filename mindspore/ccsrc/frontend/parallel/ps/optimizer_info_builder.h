@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PARALLEL_PS_OPTIMIZER_INFO_BUILDER_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_OPTIMIZER_INFO_BUILDER_H_
 
 #include <vector>
 #include <memory>
 #include "backend/kernel_compiler/kernel.h"
-#include "backend/kernel_compiler/ps/pserver_kernel.h"
+#include "backend/kernel_compiler/cpu/ps/pserver_kernel.h"
 #include "frontend/parallel/ps/optimizer_info.h"
 
 namespace mindspore {
@@ -63,4 +63,4 @@ class SparseFtrlOptimInfoBuilder : public OptimizerInfoBuilder {
 }  // namespace ps
 }  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PARALLEL_PS_OPTIMIZER_INFO_BUILDER_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_OPTIMIZER_INFO_BUILDER_H_

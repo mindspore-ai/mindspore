@@ -36,6 +36,11 @@ BasePtr AbsOf(const AnfNodePtr &node) {
   if (node_abs == nullptr) {
     return kAnyValue;
   }
+  // Ignore the tracking_id and prim pointer hash;
+  if (node_abs->isa<abstract::PrimitiveAbstractClosure>()) {
+    auto prim_abs = node_abs->cast<abstract::PrimitiveAbstractClosurePtr>();
+    return prim_abs->prim();
+  }
 
   return node_abs;
 }

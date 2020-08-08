@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_MEM_REUSE_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_MEM_REUSE_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_MEM_REUSE_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_MEM_REUSE_H_
 #include <map>
 #include <memory>
 #include <vector>
@@ -52,7 +52,7 @@ class MemReuseUtil {
     MS_LOG(INFO) << "Total Reused WorkSpafce Memory Size: " << total_reuseworkspace_size_;
   }
 
-  void SetAllInfo(KernelGraph *graph);
+  void SetAllInfo(const KernelGraph *graph);
   bool InitDynamicOutputKernelRef();
   bool InitDynamicWorkspaceKernelRef();
   bool InitDynamicKernelRef(const KernelGraph *graph);
@@ -64,6 +64,7 @@ class MemReuseUtil {
   void SetKernelDefInputs();
   void SetReuseRefCount();
   void SetSummaryNodesRefCount();
+  void SetRefNodesInputRefCount();
   // Set the reference count of graph output specially.
   void SetGraphOutputRefCount();
   // Reset the dynamic used reference count by ref_count_.
@@ -83,6 +84,7 @@ class MemReuseUtil {
   void set_mem_base(uint8_t *mem_base) { mem_base_ = mem_base; }
   uint8_t *GetNodeOutputPtr(const AnfNodePtr &node, size_t index) const;
   uint8_t *GetNodeWorkSpacePtr(const AnfNodePtr &node, size_t index) const;
+  bool is_all_nop_node() const { return is_all_nop_node_; }
 
  private:
   int util_index_;
@@ -104,4 +106,4 @@ using MemReuseUtilPtr = std::shared_ptr<MemReuseUtil>;
 }  // namespace memreuse
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_MEM_REUSE_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_MEM_REUSE_H_

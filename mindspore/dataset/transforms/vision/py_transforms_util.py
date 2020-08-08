@@ -148,7 +148,7 @@ def to_tensor(img, output_type):
     Change the input image (PIL Image or Numpy image array) to numpy format.
 
     Args:
-        img (PIL Image or numpy.ndarray): Image to be converted.
+        img (Union[PIL Image, numpy.ndarray]): Image to be converted.
         output_type: The datatype of the numpy output. e.g. np.float32
 
     Returns:
@@ -284,7 +284,7 @@ def resize(img, size, interpolation=Inter.BILINEAR):
 
     Args:
         img (PIL Image): Image to be resized.
-        size (int or sequence): The output size of the resized image.
+        size (Union[int, sequence]): The output size of the resized image.
             If size is an int, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of (height, width), this will be the desired output size.
@@ -321,7 +321,7 @@ def center_crop(img, size):
 
     Args:
         img (PIL Image): Image to be cropped.
-        size (int or tuple): The size of the crop box.
+        size (Union[int, tuple]): The size of the crop box.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
 
@@ -346,7 +346,7 @@ def random_resize_crop(img, size, scale, ratio, interpolation=Inter.BILINEAR, ma
 
     Args:
         img (PIL Image): Image to be randomly cropped and resized.
-        size (int or sequence): The size of the output image.
+        size (Union[int, sequence]): The size of the output image.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         scale (tuple): Range (min, max) of respective size of the original size to be cropped.
@@ -416,10 +416,10 @@ def random_crop(img, size, padding, pad_if_needed, fill_value, padding_mode):
 
     Args:
         img (PIL Image): Image to be randomly cropped.
-        size (int or sequence): The output size of the cropped image.
+        size (Union[int, sequence]): The output size of the cropped image.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
-        padding (int or sequence, optional): The number of pixels to pad the image.
+        padding (Union[int, sequence], optional): The number of pixels to pad the image.
             If a single number is provided, it pads all borders with this value.
             If a tuple or list of 2 values are provided, it pads the (left and top)
             with the first value and (right and bottom) with the second value.
@@ -428,7 +428,7 @@ def random_crop(img, size, padding, pad_if_needed, fill_value, padding_mode):
             Default is None.
         pad_if_needed (bool): Pad the image if either side is smaller than
             the given output size. Default is False.
-        fill_value (int or tuple): The pixel intensity of the borders if
+        fill_value (Union[int, tuple]): The pixel intensity of the borders if
             the padding_mode is 'constant'. If it is a 3-tuple, it is used to
             fill R, G, B channels respectively.
         padding_mode (str): The method of padding. Can be any of
@@ -602,7 +602,7 @@ def rotate(img, angle, resample, expand, center, fill_value):
     Args:
         img (PIL Image): Image to be rotated.
         angle (int or float): Rotation angle in degrees, counter-clockwise.
-        resample (Inter.NEAREST, or Inter.BILINEAR, Inter.BICUBIC, optional): An optional resampling filter.
+        resample (Union[Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC], optional): An optional resampling filter.
             If omitted, or if the image has mode "1" or "P", it is set to be Inter.NEAREST.
         expand (bool, optional):  Optional expansion flag. If set to True, expand the output
             image to make it large enough to hold the entire rotated image.
@@ -610,7 +610,7 @@ def rotate(img, angle, resample, expand, center, fill_value):
             Note that the expand flag assumes rotation around the center and no translation.
         center (tuple, optional): Optional center of rotation (a 2-tuple).
             Origin is the top left corner.
-        fill_value (int or tuple): Optional fill color for the area outside the rotated image.
+        fill_value (Union[int, tuple]): Optional fill color for the area outside the rotated image.
             If it is a 3-tuple, it is used for R, G, B channels respectively.
             If it is an int, it is used for all RGB channels.
 
@@ -634,16 +634,16 @@ def random_color_adjust(img, brightness, contrast, saturation, hue):
 
     Args:
         img (PIL Image): Image to have its color adjusted randomly.
-        brightness (float or tuple): Brightness adjustment factor. Cannot be negative.
+        brightness (Union[float, tuple]): Brightness adjustment factor. Cannot be negative.
             If it is a float, the factor is uniformly chosen from the range [max(0, 1-brightness), 1+brightness].
             If it is a sequence, it should be [min, max] for the range.
-        contrast (float or tuple): Contrast adjustment factor. Cannot be negative.
+        contrast (Union[float, tuple]): Contrast adjustment factor. Cannot be negative.
             If it is a float, the factor is uniformly chosen from the range [max(0, 1-contrast), 1+contrast].
             If it is a sequence, it should be [min, max] for the range.
-        saturation (float or tuple): Saturation adjustment factor. Cannot be negative.
+        saturation (Union[float, tuple]): Saturation adjustment factor. Cannot be negative.
             If it is a float, the factor is uniformly chosen from the range [max(0, 1-saturation), 1+saturation].
             If it is a sequence, it should be [min, max] for the range.
-        hue (float or tuple): Hue adjustment factor.
+        hue (Union[float, tuple]): Hue adjustment factor.
             If it is a float, the range will be [-hue, hue]. Value should be 0 <= hue <= 0.5.
             If it is a sequence, it should be [min, max] where -0.5 <= min <= max <= 0.5.
 
@@ -696,10 +696,10 @@ def random_rotation(img, degrees, resample, expand, center, fill_value):
 
     Args:
         img (PIL Image): Image to be rotated.
-        degrees (int or float or sequence): Range of random rotation degrees.
+        degrees (Union[int, float, sequence]): Range of random rotation degrees.
             If degrees is a number, the range will be converted to (-degrees, degrees).
             If degrees is a sequence, it should be (min, max).
-        resample (Inter.NEAREST, or Inter.BILINEAR, Inter.BICUBIC, optional): An optional resampling filter.
+        resample (Union[Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC], optional): An optional resampling filter.
             If omitted, or if the image has mode "1" or "P", it is set to be Inter.NEAREST.
         expand (bool, optional):  Optional expansion flag. If set to True, expand the output
             image to make it large enough to hold the entire rotated image.
@@ -707,7 +707,7 @@ def random_rotation(img, degrees, resample, expand, center, fill_value):
             Note that the expand flag assumes rotation around the center and no translation.
         center (tuple, optional): Optional center of rotation (a 2-tuple).
             Origin is the top left corner.
-        fill_value (int or tuple): Optional fill color for the area outside the rotated image.
+        fill_value (Union[int, tuple]): Optional fill color for the area outside the rotated image.
             If it is a 3-tuple, it is used for R, G, B channels respectively.
             If it is an int, it is used for all RGB channels.
 
@@ -789,7 +789,7 @@ def five_crop(img, size):
 
     Args:
         img (PIL Image): PIL Image to be cropped.
-        size (int or sequence): The output size of the crop.
+        size (Union[int, sequence]): The output size of the crop.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
 
@@ -829,7 +829,7 @@ def ten_crop(img, size, use_vertical_flip=False):
 
     Args:
         img (PIL Image): PIL Image to be cropped.
-        size (int or sequence): The output size of the crop.
+        size (Union[int, sequence]): The output size of the crop.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         use_vertical_flip (bool): Flip the image vertically instead of horizontally if set to True.
@@ -895,14 +895,14 @@ def pad(img, padding, fill_value, padding_mode):
 
     Args:
         img (PIL Image): Image to be padded.
-        padding (int or sequence, optional): The number of pixels to pad the image.
+        padding (Union[int, sequence], optional): The number of pixels to pad the image.
             If a single number is provided, it pads all borders with this value.
             If a tuple or list of 2 values are provided, it pads the (left and top)
             with the first value and (right and bottom) with the second value.
             If 4 values are provided as a list or tuple,
             it pads the left, top, right and bottom respectively.
             Default is None.
-        fill_value (int or tuple): The pixel intensity of the borders if
+        fill_value (Union[int, tuple]): The pixel intensity of the borders if
             the padding_mode is "constant". If it is a 3-tuple, it is used to
             fill R, G, B channels respectively.
         padding_mode (str): The method of padding. Can be any of
@@ -1137,12 +1137,12 @@ def random_affine(img, angle, translations, scale, shear, resample, fill_value=0
 
     Args:
         img (PIL Image): Image to be applied affine transformation.
-        angle (int or float): Rotation angle in degrees, clockwise.
+        angle (Union[int, float]): Rotation angle in degrees, clockwise.
         translations (sequence): Translations in horizontal and vertical axis.
         scale (float): Scale parameter, a single number.
-        shear (float or sequence): Shear amount parallel to x and y axis.
-        resample (Inter.NEAREST, or Inter.BILINEAR, Inter.BICUBIC, optional): An optional resampling filter.
-        fill_value (tuple or int, optional): Optional fill_value to fill the area outside the transform
+        shear (Union[float, sequence]): Shear amount parallel to x and y axis.
+        resample (Union[Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC], optional): An optional resampling filter.
+        fill_value (Union[tuple int], optional): Optional fill_value to fill the area outside the transform
             in the output image. Used only in Pillow versions > 5.0.0.
             If None, no filling is performed.
 
@@ -1457,13 +1457,15 @@ def random_sharpness(img, degrees):
     return ImageEnhance.Sharpness(img).enhance(v)
 
 
-def auto_contrast(img):
+def auto_contrast(img, cutoff, ignore):
 
     """
     Automatically maximize the contrast of the input PIL image.
 
     Args:
         img (PIL Image): Image to be augmented with AutoContrast.
+        cutoff (float, optional): Percent of pixels to cut off from the histogram (default=0.0).
+        ignore (Union[int, sequence], optional): Pixel values to ignore (default=None).
 
     Returns:
         img (PIL Image), Augmented image.
@@ -1473,7 +1475,7 @@ def auto_contrast(img):
     if not is_pil(img):
         raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
 
-    return ImageOps.autocontrast(img)
+    return ImageOps.autocontrast(img, cutoff, ignore)
 
 
 def invert_color(img):

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_OPLIB_OPINFO_H_
-#define MINDSPORE_CCSRC_KERNEL_OPLIB_OPINFO_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_OPLIB_OPINFO_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_OPLIB_OPINFO_H_
 #include <vector>
 #include <string>
 #include <memory>
@@ -59,13 +59,13 @@ class OpIOInfo {
   ~OpIOInfo() = default;
 
   int index() const { return index_; }
-  std::string name() const { return name_; }
+  const std::string &name() const { return name_; }
   bool need_compile() const { return need_compile_; }
-  std::string param_type() const { return param_type_; }
-  std::string reshape_type() const { return reshape_type_; }
-  std::string shape() const { return shape_; }
-  std::vector<std::string> dtypes() const { return dtypes_; }
-  std::vector<std::string> formats() const { return formats_; }
+  const std::string &param_type() const { return param_type_; }
+  const std::string &reshape_type() const { return reshape_type_; }
+  const std::string &shape() const { return shape_; }
+  const std::vector<std::string> &dtypes() const { return dtypes_; }
+  const std::vector<std::string> &formats() const { return formats_; }
 
   void set_index(const int index) { index_ = index; }
   void set_name(const std::string &name) { name_ = name; }
@@ -172,4 +172,4 @@ class OpInfo {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_KERNEL_OPLIB_OPINFO_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_OPLIB_OPINFO_H_

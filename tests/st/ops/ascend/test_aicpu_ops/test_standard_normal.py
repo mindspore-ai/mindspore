@@ -13,13 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
-import numpy as np
-import pytest
-
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor
-from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -43,5 +38,4 @@ def test_net():
     shape = (3, 2, 4)
     net = Net(shape, seed, seed2)
     output = net()
-    print(output.asnumpy())
     assert output.shape == (3, 2, 4)

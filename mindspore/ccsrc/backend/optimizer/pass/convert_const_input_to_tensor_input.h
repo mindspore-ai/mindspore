@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_PASS_CONVERT_CONST_INPUT_TO_TENSOR_INPUT_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_PASS_CONVERT_CONST_INPUT_TO_TENSOR_INPUT_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CONVERT_CONST_INPUT_TO_TENSOR_INPUT_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CONVERT_CONST_INPUT_TO_TENSOR_INPUT_H_
 #include <string>
 
 #include "ir/anf.h"
+#include "utils/convert_utils.h"
 #include "backend/optimizer/common/optimizer.h"
 
 namespace mindspore {
@@ -32,4 +33,4 @@ class ConvertConstInputToTensorInput : public PatternProcessPass {
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_PASS_CONVERT_CONST_INPUT_TO_TENSOR_INPUT_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CONVERT_CONST_INPUT_TO_TENSOR_INPUT_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDRECORD_INCLUDE_COMMON_SHARD_UTILS_H_
-#define MINDRECORD_INCLUDE_COMMON_SHARD_UTILS_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_COMMON_SHARD_UTILS_H_
+#define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_COMMON_SHARD_UTILS_H_
 
 #include <libgen.h>
 #include <limits.h>
@@ -104,7 +104,8 @@ const uint64_t kInt64Len = 8;
 const uint64_t kMinFileSize = kInt64Len;
 
 const int kMinShardCount = 1;
-const int kMaxShardCount = 1000;
+const int kMaxShardCount = 1000;  // write
+const int kMaxFileCount = 4096;   // read
 
 const int kMinConsumerCount = 1;
 const int kMaxConsumerCount = 128;
@@ -137,6 +138,10 @@ const std::set<std::string> kScalarFieldTypeSet = {"string", "int32", "int64", "
 // number field list
 const std::set<std::string> kNumberFieldTypeSet = {"int32", "int64", "float32", "float64"};
 
+const std::unordered_map<std::string, std::string> kTypesMap = {
+  {"bool", "int32"},      {"int8", "int32"},      {"uint8", "bytes"},     {"int16", "int32"},
+  {"uint16", "int32"},    {"int32", "int32"},     {"uint32", "int64"},    {"int64", "int64"},
+  {"float16", "float32"}, {"float32", "float32"}, {"float64", "float64"}, {"string", "string"}};
 /// \brief split a string using a character
 /// \param[in] field target string
 /// \param[in] separator a character for spliting
@@ -179,4 +184,4 @@ uint32_t GetMaxThreadNum();
 }  // namespace mindrecord
 }  // namespace mindspore
 
-#endif  // MINDRECORD_INCLUDE_COMMON_SHARD_UTILS_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_COMMON_SHARD_UTILS_H_

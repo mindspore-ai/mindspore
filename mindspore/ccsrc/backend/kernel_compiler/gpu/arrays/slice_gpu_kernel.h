@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_SLICE_GPU_KERNEL_H
-#define MINDSPORE_CCSRC_KERNEL_GPU_SLICE_GPU_KERNEL_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SLICE_GPU_KERNEL_H
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SLICE_GPU_KERNEL_H
 
 #include <vector>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
@@ -41,14 +41,9 @@ class SliceGpuFwdKernel : public GpuKernel {
     }
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 0);
-    if (is_strided_slice_) {
-      CalStridedSlice(output_size_ / sizeof(T), input, input_shape_, begin_, size_, strides_, output,
-                      reinterpret_cast<cudaStream_t>(stream_ptr));
-    } else {
-      Slice4DKernel(begin_[0], begin_[1], begin_[2], begin_[3], size_[0], size_[1], size_[2], size_[3], input_shape_[0],
-                    input_shape_[1], input_shape_[2], input_shape_[3], input, output,
-                    reinterpret_cast<cudaStream_t>(stream_ptr));
-    }
+    Slice4DKernel(begin_[0], begin_[1], begin_[2], begin_[3], size_[0], size_[1], size_[2], size_[3], input_shape_[0],
+                  input_shape_[1], input_shape_[2], input_shape_[3], input, output,
+                  reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
@@ -159,4 +154,4 @@ class SliceGpuFwdKernel : public GpuKernel {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_SLICE_GPU_KERNEL_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SLICE_GPU_KERNEL_H

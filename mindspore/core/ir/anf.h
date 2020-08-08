@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_ANF_H_
-#define MINDSPORE_CCSRC_IR_ANF_H_
+#ifndef MINDSPORE_CORE_IR_ANF_H_
+#define MINDSPORE_CORE_IR_ANF_H_
 
 #include <functional>
 #include <string>
@@ -27,9 +27,10 @@
 #include <utility>
 
 #include "base/base.h"
+#include "base/user_data.h"
 #include "ir/kernel_info_dev.h"
 #include "ir/scope.h"
-#include "debug/info.h"
+#include "utils/info.h"
 
 // A MindSpore ANF IR defined here.
 // with BNF followed:
@@ -41,12 +42,6 @@
 // ANode: Atomic  Node
 // CNode: Complex Node
 namespace mindspore {
-namespace parallel {
-class TensorLayout;
-class OperatorInfo;
-}  // namespace parallel
-using OperatorInfoPtr = std::shared_ptr<parallel::OperatorInfo>;
-
 namespace abstract {
 class BaseShape;
 class AbstractBase;
@@ -55,8 +50,13 @@ using BaseShapePtr = std::shared_ptr<abstract::BaseShape>;
 using AbstractBasePtr = std::shared_ptr<abstract::AbstractBase>;
 using AbstractBasePtrList = std::vector<AbstractBasePtr>;
 
+class Value;
+using ValuePtr = std::shared_ptr<Value>;
+using ValuePtrList = std::vector<ValuePtr>;
+
 class ValueNode;
 using ValueNodePtr = std::shared_ptr<ValueNode>;
+
 class CNode;
 using CNodePtr = std::shared_ptr<CNode>;
 
@@ -72,7 +72,7 @@ class BaseRef;
 class Var;
 using VarPtr = std::shared_ptr<Var>;
 
-class AnfVisitor;
+class AnfIrVisitor;
 
 class ParamValue;
 using ParamValuePtr = std::shared_ptr<ParamValue>;
@@ -105,7 +105,7 @@ class AnfNode : public Base {
   ~AnfNode() override = default;
   MS_DECLARE_PARENT(AnfNode, Base);
 
-  virtual void accept(AnfVisitor *) {}
+  virtual void accept(AnfIrVisitor *) {}
   FuncGraphPtr func_graph() const { return func_graph_.lock(); }
 
   void set_func_graph(const FuncGraphPtr &func_graph) { func_graph_ = FuncGraphWeakPtr(func_graph); }
@@ -157,6 +157,33 @@ class AnfNode : public Base {
   }
   size_t seen_{0};
 
+  template <typename T>
+  void set_user_data(const std::string &key, const std::shared_ptr<T> &value) {
+    user_data_.set<T>(key, value);
+  }
+
+  template <typename T>
+  void set_user_data(const std::shared_ptr<T> &value) {
+    user_data_.set<T>(T::key, value);
+  }
+
+  template <typename T>
+  std::shared_ptr<T> user_data(const std::string &key) const {
+    return user_data_.get<T>(key);
+  }
+
+  template <typename T>
+  std::shared_ptr<T> user_data() const {
+    return user_data_.get<T>(T::key);
+  }
+
+  bool has_user_data(const std::string &key) const { return user_data_.has(key); }
+
+  template <typename T>
+  bool has_user_data() const {
+    return user_data_.has(T::key);
+  }
+
  protected:
   // Hold a weak ref to Graph as Graph also hold ref to AnfNode.
   // Otherwise, func_graph_ and AnfNode will make a reference cycle.
@@ -170,6 +197,7 @@ class AnfNode : public Base {
   std::hash<const AnfNode *> hash_;
   ScopePtr scope_;
   KernelInfoDevicePtr kernel_info_;
+  UserData user_data_;
 };
 
 // CNode represents the complex node with a set of arguments.
@@ -193,7 +221,7 @@ class CNode : public AnfNode {
   ~CNode() override = default;
   MS_DECLARE_PARENT(CNode, AnfNode);
 
-  void accept(AnfVisitor *v) override;
+  void accept(AnfIrVisitor *v) override;
   // check whether this cnode has some primitive value as the first input.
   bool IsApply(const PrimitivePtr &) const;
 
@@ -204,6 +232,9 @@ class CNode : public AnfNode {
   void set_input(size_t i, const AnfNodePtr &input);
   void set_inputs(const std::vector<AnfNodePtr> &inputs) { inputs_ = inputs; }
 
+  void set_forward(const ValuePtr &forward) { forward_ = forward; }
+  const ValuePtr &forward() const { return forward_; }
+
   bool stop_gradient() const { return stop_gradient_; }
   void set_stop_gradient(bool stop_gradient) { stop_gradient_ = stop_gradient; }
 
@@ -211,9 +242,6 @@ class CNode : public AnfNode {
   void set_fullname_with_scope(const std::string full_name) { fullname_with_scope_ = full_name; }
   std::string DebugString(int recursive_level = 1) const override;
   std::string DebugString(bool recursive) const override { return DebugString(recursive ? 1 : 0); }
-
-  OperatorInfoPtr set_operator_info(const OperatorInfoPtr &operator_info);
-  OperatorInfoPtr operator_info() { return operator_info_; }
 
   void set_in_forward_flag(bool flag) { in_forward_flag_ = flag; }
   bool in_forward_flag() const { return in_forward_flag_; }
@@ -224,8 +252,8 @@ class CNode : public AnfNode {
   std::vector<AnfNodePtr> inputs_;
   VarPtr func_graph_as_var_;
   bool stop_gradient_;
-  OperatorInfoPtr operator_info_ = nullptr;
   bool in_forward_flag_ = false;
+  ValuePtr forward_ = nullptr;
 };
 
 // ANode represents the atomic node. It's derived Parameter and ValueNode.
@@ -244,27 +272,22 @@ class ANode : public AnfNode {
 class Parameter : public ANode {
  public:
   explicit Parameter(const FuncGraphPtr &func_graph)
-      : ANode(func_graph), name_(""), has_default_(false), default_param_(nullptr), tensor_layout_(nullptr) {}
+      : ANode(func_graph), name_(""), has_default_(false), default_param_(nullptr) {}
   ~Parameter() override = default;
   MS_DECLARE_PARENT(Parameter, ANode);
 
-  void accept(AnfVisitor *v) override;
-
+  void accept(AnfIrVisitor *v) override;
+  std::string DebugString(int recursive_level = 1) const override;
   std::string name() const { return name_; }
   void set_name(const std::string &name) { name_ = name; }
   std::string fullname_with_scope() override { return name(); };
 
   bool has_default() const { return has_default_; }
-  void set_default_param(ParamValuePtr param) {
+  void set_default_param(ValuePtr param) {
     default_param_ = param;
     has_default_ = true;
   }
-  ParamValuePtr default_param() const { return default_param_; }
-
-  std::shared_ptr<parallel::TensorLayout> tensor_layout() const { return tensor_layout_; }
-  void set_tensor_layout(const std::shared_ptr<parallel::TensorLayout> &tensor_layout) {
-    tensor_layout_ = tensor_layout;
-  }
+  ValuePtr default_param() const { return default_param_; }
 
   bool operator==(const AnfNode &other) const override {
     if (!other.isa<Parameter>()) {
@@ -280,8 +303,7 @@ class Parameter : public ANode {
  private:
   std::string name_;
   bool has_default_;
-  ParamValuePtr default_param_;
-  std::shared_ptr<parallel::TensorLayout> tensor_layout_;
+  ValuePtr default_param_;
 };
 using ParameterPtr = std::shared_ptr<Parameter>;
 
@@ -310,8 +332,6 @@ class Value : public Base {
  protected:
   TypePtr type_{nullptr};
 };
-using ValuePtr = std::shared_ptr<Value>;
-using ValuePtrList = std::vector<ValuePtr>;
 
 // ValueNode is used to hold value. Unlike CNode and Parameter, ValueNode
 // does not belong to any particular function graph.
@@ -321,9 +341,13 @@ class ValueNode : public ANode {
   ~ValueNode() override = default;
   MS_DECLARE_PARENT(ValueNode, ANode);
 
-  void accept(AnfVisitor *v) override;
+  void accept(AnfIrVisitor *v) override;
+  void set_value(const ValuePtr &value) { value_ = value; }
   const ValuePtr &value() const { return value_; }
   std::string fullname_with_scope() override;
+
+  void set_has_new_value(bool flag) { has_new_value_ = flag; }
+  bool has_new_value() const { return has_new_value_; }
 
   std::string ToString() const override;
   std::string DebugString(int recursive_level = 1) const override;
@@ -344,6 +368,7 @@ class ValueNode : public ANode {
 
  private:
   ValuePtr value_;
+  bool has_new_value_ = false;
 };
 
 template <typename T>
@@ -442,4 +467,4 @@ using TaggedGraph = std::pair<FuncGraphPtr, TaggedNodeMap>;
 std::string GetCNodeTarget(const AnfNodePtr &node);
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_ANF_H_
+#endif  // MINDSPORE_CORE_IR_ANF_H_

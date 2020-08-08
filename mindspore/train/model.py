@@ -16,12 +16,13 @@
 from collections.abc import Iterable
 
 import os
+import math
 import numpy as np
 
 from mindspore import log as logger
 from ..common.tensor import Tensor
 from ..nn.metrics import get_metrics
-from .._checkparam import check_input_data, check_output_data, check_int_positive, check_bool
+from .._checkparam import check_input_data, check_output_data, check_int_positive, check_bool, check_int
 from .callback import _InternalCallbackParam, RunContext, _CallbackManager
 from .. import context
 from ..parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
@@ -30,6 +31,8 @@ from ..nn.metrics import Loss
 from .. import nn
 from ..nn.wrap.cell_wrapper import _VirtualDatasetCell
 from .parallel_utils import ParallelMode
+from ._utils import _to_full_tensor
+from ..parallel._utils import _need_to_full
 from ..common import dtype as mstype
 from .dataset_helper import DatasetHelper
 from . import amp
@@ -42,20 +45,20 @@ class Model:
     `Model` groups layers into an object with training and inference features.
 
     Args:
-        network (Cell): The training or testing network.
+        network (Cell): A training or testing network.
         loss_fn (Cell): Objective function, if loss_fn is None, the
                              network should contain the logic of loss and grads calculation, and the logic
                              of parallel if needed. Default: None.
         optimizer (Cell): Optimizer for updating the weights. Default: None.
-        metrics (Union[dict, set]): Dict or set of metrics to be evaluated by the model during
+        metrics (Union[dict, set]): A Dictionary or a set of metrics to be evaluated by the model during
                         training and testing. eg: {'accuracy', 'recall'}. Default: None.
         eval_network (Cell): Network for evaluation. If not defined, `network` and `loss_fn` would be wrapped as
                              `eval_network`. Default: None.
-        eval_indexes (list): In case of defining the `eval_network`, if `eval_indexes` is None, all outputs of
+        eval_indexes (list): When defining the `eval_network`, if `eval_indexes` is None, all outputs of the
                              `eval_network` would be passed to metrics, otherwise `eval_indexes` must contain three
-                             elements, representing the positions of loss value, predict value and label, the loss
-                             value would be passed to `Loss` metric, predict value and label would be passed to other
-                             metric. Default: None.
+                             elements, including the positions of loss value, predicted value and label. The loss
+                             value would be passed to the `Loss` metric, the predicted value and label would be passed
+                             to other metric. Default: None.
         amp_level (str): Option for argument `level` in `mindspore.amp.build_train_network`, level for mixed
             precision training. Supports [O0, O2, O3]. Default: "O0".
 
@@ -65,10 +68,11 @@ class Model:
 
             O2 is recommended on GPU, O3 is recommended on Ascend.
 
-        loss_scale_manager (Union[None, LossScaleManager]): If None, not scale the loss, or else
-            scale the loss by LossScaleManager. If it is set, overwrite the level setting. It's a eyword argument.
+        loss_scale_manager (Union[None, LossScaleManager]): If it is None, the loss would not be scaled. Otherwise,
+            scale the loss by LossScaleManager. It is a key argument.
             e.g. Use `loss_scale_manager=None` to set the value.
-        keep_batchnorm_fp32 (bool): Keep Batchnorm run in `float32`. If set, overwrite the level setting. Default: True.
+        keep_batchnorm_fp32 (bool): Keep Batchnorm running in `float32`. If it is set to true, the level setting before
+            will be overwritten. Default: True.
 
     Examples:
         >>> class Net(nn.Cell):
@@ -171,7 +175,7 @@ class Model:
         else:
             if self._loss_fn is None:
                 raise ValueError("loss_fn can not be None.")
-            self._eval_network = nn.WithEvalCell(self._network, self._loss_fn, self._amp_level == "O2")
+            self._eval_network = nn.WithEvalCell(self._network, self._loss_fn, self._amp_level in ["O2", "O3"])
             self._eval_indexes = [0, 1, 2]
 
         if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
@@ -225,7 +229,7 @@ class Model:
             scaling_sens /= self._device_number
         return scaling_sens
 
-    def _exec_preprocess(self, network, is_train, phase, dataset, dataset_sink_mode):
+    def _exec_preprocess(self, network, is_train, phase, dataset, dataset_sink_mode, sink_size=-1, epoch_num=1):
         """Initializes dataset."""
         need_wrap = False
         if dataset_sink_mode:
@@ -237,7 +241,7 @@ class Model:
             if not is_train:
                 dataset.__loop_size__ = 1
 
-        dataset_helper = DatasetHelper(dataset, dataset_sink_mode)
+        dataset_helper = DatasetHelper(dataset, dataset_sink_mode, sink_size, epoch_num)
 
         # remove later to deal with loop sink
         if need_wrap:
@@ -252,16 +256,16 @@ class Model:
 
     def init(self, train_dataset=None, valid_dataset=None):
         """
-        Initializes compute graphs and data graphs with sink mode.
+        Initialize compute graphs and data graphs with the sink mode.
 
         Note:
             Pre-init process only supports `GRAPH_MODE` and `Ascend` target currently.
 
         Args:
-            train_dataset (Dataset): A training dataset iterator. If define `train_dataset`, training graphs will be
+            train_dataset (Dataset): A training dataset iterator. If `train_dataset` is defined, training graphs will be
                                      initialized. Default: None.
-            valid_dataset (Dataset): A evaluating dataset iterator. If define `valid_dataset`, evaluation graphs will
-                                     be initialized, and `metrics` in `Model` can not be None. Default: None.
+            valid_dataset (Dataset): A evaluating dataset iterator. If `valid_dataset` is defined, evaluation graphs
+                                     will be initialized, and `metrics` in `Model` can not be None. Default: None.
 
         Examples:
             >>> train_dataset = get_train_dataset()
@@ -317,21 +321,23 @@ class Model:
                 self._eval_network.compile(*inputs)
                 break
 
-    def _train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=True):
+    def _train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=True, sink_size=-1):
         """
         Training.
 
         Args:
             epoch (int): Total number of iterations on the data.
             train_dataset (Dataset): A training dataset iterator. If there is no
-                                     loss_fn, a tuple with multiply data (data1, data2, data3, ...) will be
+                                     loss_fn, a tuple with multiple data (data1, data2, data3, ...) will be
                                      returned and passed to the network. Otherwise, a tuple (data, label) will
-                                     be returned, and the data and label are passed to the network and loss
+                                     be returned. The data and label would be passed to the network and loss
                                      function respectively.
-            callbacks (list): List of callback object. Callbacks which should be executed while training. Default: None.
-            dataset_sink_mode (bool): Determines whether to pass the data through dataset channel. Default: True.
+            callbacks (list): List of callback objects which should be executed while training. Default: None.
+            dataset_sink_mode (bool): Determine whether the data should be passed through the dataset channel.
+                                      Default: True.
                                       Configure pynative mode, the training process will be performed with
                                       dataset not sink.
+            sink_size (int): Control the amount of data in each sink. Default: -1.
         """
         epoch = check_int_positive(epoch)
         self._train_network.set_train()
@@ -342,7 +348,10 @@ class Model:
         cb_params = _InternalCallbackParam()
         cb_params.train_network = self._train_network
         cb_params.epoch_num = epoch
-        cb_params.batch_num = train_dataset.get_dataset_size()
+        if dataset_sink_mode and sink_size > 0:
+            cb_params.batch_num = sink_size
+        else:
+            cb_params.batch_num = train_dataset.get_dataset_size()
         cb_params.mode = "train"
         cb_params.loss_fn = self._loss_fn
         cb_params.optimizer = self._optimizer
@@ -351,6 +360,7 @@ class Model:
         cb_params.train_dataset = train_dataset
         cb_params.list_callback = self._transform_callbacks(callbacks)
         cb_params.train_dataset_element = None
+        cb_params.network = self._network
         ms_role = os.getenv("MS_ROLE")
         if ms_role in ("MS_PSERVER", "MS_SCHED"):
             epoch = 1
@@ -364,7 +374,7 @@ class Model:
                                "So the training process will be performed with dataset not sink.")
                 self._train_process(epoch, train_dataset, list_callback, cb_params)
             else:
-                self._train_dataset_sink_process(epoch, train_dataset, list_callback, cb_params)
+                self._train_dataset_sink_process(epoch, train_dataset, list_callback, cb_params, sink_size)
 
     @staticmethod
     def _transform_callbacks(callbacks):
@@ -377,30 +387,37 @@ class Model:
 
         return [callbacks]
 
-    def _train_dataset_sink_process(self, epoch, train_dataset, list_callback=None, cb_params=None):
+    def _train_dataset_sink_process(self, epoch, train_dataset, list_callback=None, cb_params=None, sink_size=-1):
         """
         Training process. The data would be passed to network through dataset channel.
 
         Args:
             epoch (int): Total number of iterations on the data.
             train_dataset (Dataset): A training dataset iterator. If there is no
-                                     loss_fn, a tuple with multiply data (data1, data2, data3, ...) should be
+                                     loss_fn, a tuple with multiple data (data1, data2, data3, ...) should be
                                      returned and passed to the network. Otherwise, a tuple (data, label) should
-                                     be returned, and the data and label are passed to the network and loss
+                                     be returned. The data and label would be passed to the network and loss
                                      function respectively.
             list_callback (Callback): Executor of callback list. Default: None.
             cb_params (_InternalCallbackParam): Callback parameters. Default: None.
+            sink_size (int): Control the amount of data in each sink. Default: -1.
         """
+        if sink_size == -1:
+            epoch_num = epoch
+        else:
+            epoch_num = math.ceil(epoch * sink_size / train_dataset.get_dataset_size())
+
         dataset_helper, train_network = self._exec_preprocess(self._train_network,
                                                               is_train=True,
                                                               phase='train',
                                                               dataset=train_dataset,
-                                                              dataset_sink_mode=True)
+                                                              dataset_sink_mode=True,
+                                                              sink_size=sink_size,
+                                                              epoch_num=epoch_num)
         self._train_network = train_network
         cb_params.train_network = self._train_network
         cb_params.cur_step_num = 0
 
-        loop_size = dataset_helper.loop_size()
         run_context = RunContext(cb_params)
         list_callback.begin(run_context)
 
@@ -412,9 +429,11 @@ class Model:
 
             # for data sink dataset_helper only iter once, other wise iter epoch_size times.
             for inputs in dataset_helper:
-                cb_params.cur_step_num += loop_size
+                if _need_to_full() and context.get_context("device_target") == "GPU":
+                    inputs = _to_full_tensor(inputs, self._device_number, self._global_rank)
                 list_callback.step_begin(run_context)
                 outputs = self._train_network(*inputs)
+                cb_params.cur_step_num += dataset_helper.sink_size()
                 cb_params.net_outputs = outputs
                 list_callback.step_end(run_context)
 
@@ -422,6 +441,7 @@ class Model:
             should_stop = should_stop or run_context.get_stop_requested()
             if should_stop:
                 break
+        dataset_helper.stop_send()
 
         list_callback.end(run_context)
 
@@ -432,9 +452,9 @@ class Model:
         Args:
             epoch (int): Total number of iterations on the data.
             train_dataset (Dataset): A training dataset iterator. If there is no
-                                     loss_fn, a tuple with multiply data (data1, data2, data3, ...) should be
+                                     loss_fn, a tuple with multiple data (data1, data2, data3, ...) should be
                                      returned and passed to the network. Otherwise, a tuple (data, label) should
-                                     be returned, and the data and label are passed to the network and loss
+                                     be returned. The data and label would be passed to the network and loss
                                      function respectively.
             list_callback (Callback): Executor of callback list. Default: None.
             cb_params (_InternalCallbackParam): Callback parameters. Default: None.
@@ -490,7 +510,7 @@ class Model:
 
         list_callback.end(run_context)
 
-    def train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=True):
+    def train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=True, sink_size=-1):
         """
         Training API where the iteration is controlled by python front-end.
 
@@ -500,22 +520,27 @@ class Model:
             CPU is not supported when dataset_sink_mode is true.
             If dataset_sink_mode is True, epoch of training should be equal to the count of repeat
             operation in dataset processing. Otherwise, errors could occur since the amount of data
-            is not the amount training requires.
+            is not equal to the required amount of training .
             If dataset_sink_mode is True, data will be sent to device. If device is Ascend, features
             of data will be transferred one by one. The limitation of data transmission per time is 256M.
 
         Args:
-            epoch (int): Total number of iterations on the data.
+            epoch (int): Generally, total number of iterations on the data per epoch.
+                         When dataset_sink_mode is set to true and sink_size>0, each epoch sink sink_size
+                         steps on the data instead of total number of iterations.
             train_dataset (Dataset): A training dataset iterator. If there is no
-                                     loss_fn, a tuple with multiply data (data1, data2, data3, ...) should be
+                                     loss_fn, a tuple with multiple data (data1, data2, data3, ...) should be
                                      returned and passed to the network. Otherwise, a tuple (data, label) should
-                                     be returned, and the data and label are passed to the network and loss
+                                     be returned. The data and label would be passed to the network and loss
                                      function respectively.
-            callbacks (list): List of callback object. Callbacks which should be excuted while training. Default: None.
+            callbacks (list): List of callback objects which should be executed while training. Default: None.
             dataset_sink_mode (bool): Determines whether to pass the data through dataset channel. Default: True.
                                       Configure pynative mode, the training process will be performed with
                                       dataset not sink.
-
+            sink_size (int): Control the amount of data in each sink.
+                             If sink_size=-1, sink the complete dataset for each epoch.
+                             If sink_size>0, sink sink_size data for each epoch.
+                             If dataset_sink_mode is False, set sink_size as invalid. Default: -1.
 
         Examples:
             >>> dataset = get_dataset()
@@ -526,17 +551,19 @@ class Model:
             >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager)
             >>> model.train(2, dataset)
         """
-        repeat_count = train_dataset.get_repeat_count()
-        if epoch != repeat_count and dataset_sink_mode is True:
-            logger.warning(f"The epoch_size {epoch} is not the same with dataset repeat_count {repeat_count}")
         check_bool(dataset_sink_mode)
+        check_int(sink_size)
+        if sink_size < -1 or sink_size == 0:
+            raise ValueError("The sink_size must be -1 or positive, but got sink_size {}.".format(sink_size))
+
         _device_number_check(self._parallel_mode, self._device_number)
         _parameter_broadcast_check(self._parallel_mode, self._parameter_broadcast)
 
         self._train(epoch,
                     train_dataset,
                     callbacks=callbacks,
-                    dataset_sink_mode=dataset_sink_mode)
+                    dataset_sink_mode=dataset_sink_mode,
+                    sink_size=sink_size)
 
     def _eval_dataset_sink_process(self, valid_dataset, list_callback=None, cb_params=None):
         """
@@ -548,7 +575,7 @@ class Model:
             cb_params (_InternalCallbackParam): Callback parameters. Default: None.
 
         Returns:
-            Dict, returns the loss value & metrics values for the model in test mode.
+            Dict, which returns the loss value and metrics values for the model in the test mode.
         """
         run_context = RunContext(cb_params)
 
@@ -587,7 +614,7 @@ class Model:
             cb_params (_InternalCallbackParam): Callback parameters. Default: None.
 
         Returns:
-            Dict, returns the loss value & metrics values for the model in test mode.
+            Dict, which returns the loss value and metrics values for the model in the test mode.
         """
         run_context = RunContext(cb_params)
         list_callback.begin(run_context)
@@ -604,6 +631,8 @@ class Model:
             cb_params.net_outputs = outputs
             list_callback.step_end(run_context)
             self._update_metrics(outputs)
+
+        valid_dataset.reset()
 
         metrics = self._get_metrics()
         cb_params.metrics = metrics
@@ -623,12 +652,11 @@ class Model:
 
         Args:
             valid_dataset (Dataset): Dataset to evaluate the model.
-            callbacks (list): List of callback object. Callbacks which should be excuted
-                              while training. Default: None.
+            callbacks (list): List of callback objects which should be executed while training. Default: None.
             dataset_sink_mode (bool): Determines whether to pass the data through dataset channel. Default: True.
 
         Returns:
-            Dict, returns the loss value & metrics values for the model in test mode.
+            Dict, which returns the loss value and metrics values for the model in the test mode.
 
         Examples:
             >>> dataset = get_dataset()
@@ -649,6 +677,7 @@ class Model:
         cb_params.mode = "eval"
         cb_params.cur_step_num = 0
         cb_params.list_callback = self._transform_callbacks(callbacks)
+        cb_params.network = self._network
 
         self._eval_network.set_train(mode=False)
         self._eval_network.phase = 'eval'
@@ -662,9 +691,9 @@ class Model:
 
     def predict(self, *predict_data):
         """
-        Generates output predictions for the input samples.
+        Generate output predictions for the input samples.
 
-        Data could be single tensor, or list of tensor, tuple of tensor.
+        Data could be a single tensor, a list of tensor, or a tuple of tensor.
 
         Note:
             Batch data should be put together in one tensor.

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef PIPELINE_PARSE_PARSE_BASE_H_
-#define PIPELINE_PARSE_PARSE_BASE_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_PARSE_BASE_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_PARSE_BASE_H_
 #include <string>
 #include <memory>
 #include "pybind11/pybind11.h"
@@ -81,10 +81,10 @@ const char PYTHON_PARSE_GET_LOCATION[] = "get_location";
 const char PYTHON_PARSE_EXPAND_EXPR_STATEMENT[] = "expand_expr_statement";
 const char PYTHON_PARSE_GENERATE_SCOPE[] = "generate_scope";
 const char PYTHON_PARSE_GET_SCOPE_NAME[] = "get_scope_name";
+const char PYTHON_PARSE_ANALYZE_SUPER[] = "analyze_super";
 
 const char PYTHON_PARSE_CLASS_SLICE[] = "create_slice_obj";
 const char PYTHON_PARSE_CLASS_ELLIPSIS[] = "create_ellipsis_obj";
-const char PYTHON_MOD_GET_DEFAULT_INPUT[] = "get_default_input";
 
 // define the common name
 const char NAMED_PRIMITIVE_LEN[] = "len";
@@ -149,4 +149,4 @@ FuncGraphPtr ParsePythonCode(const py::object &obj,
 }  // namespace parse
 }  // namespace mindspore
 
-#endif  // PIPELINE_PARSE_PARSE_BASE_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_PARSE_BASE_H_

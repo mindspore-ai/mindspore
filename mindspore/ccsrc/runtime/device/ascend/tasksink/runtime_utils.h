@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_TASKSINK_RUNTIME_UTILS_H_
-#define MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_TASKSINK_RUNTIME_UTILS_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_TASKSINK_RUNTIME_UTILS_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_TASKSINK_RUNTIME_UTILS_H_
 
 #include <memory>
 #include "runtime/rt.h"
@@ -36,4 +36,4 @@ class RuntimeUtils {
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_TASKSINK_RUNTIME_UTILS_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_TASKSINK_RUNTIME_UTILS_H_

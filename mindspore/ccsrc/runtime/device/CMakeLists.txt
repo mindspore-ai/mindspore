@@ -18,17 +18,20 @@ if (ENABLE_CPU)
 endif ()
 
 if (ENABLE_MPI)
-    # _ms_mpi
-    file(GLOB_RECURSE MPI_SRC_LIST "cpu/mpi/mpi_adapter.cc")
-    set_property(SOURCE ${MPI_SRC_LIST}
-        PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
-    add_library(mpi_adapter SHARED ${MPI_SRC_LIST})
-    target_link_libraries(mpi_adapter PRIVATE mindspore::ompi)
+    if (ENABLE_CPU)
+        file(GLOB_RECURSE MPI_SRC_LIST "cpu/mpi/mpi_adapter.cc")
+        set_property(SOURCE ${MPI_SRC_LIST}
+            PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
+        add_library(mpi_adapter SHARED ${MPI_SRC_LIST})
+        target_link_libraries(mpi_adapter PRIVATE mindspore::ompi)
+    endif ()
 
-    set_property(SOURCE "gpu/mpi/mpi_initializer.cc"
-        PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
-    pybind11_add_module(_ms_mpi "gpu/mpi/mpi_initializer.cc")
-    target_link_libraries(_ms_mpi PRIVATE mindspore::pybind11_module mindspore::ompi)
+    if (ENABLE_GPU)
+        set_property(SOURCE "gpu/mpi/mpi_initializer.cc"
+            PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
+        pybind11_add_module(_ms_mpi "gpu/mpi/mpi_initializer.cc")
+        target_link_libraries(_ms_mpi PRIVATE mindspore::pybind11_module mindspore::ompi)
+    endif ()
 endif ()
 
 # gpu
@@ -55,6 +58,7 @@ if (ENABLE_GPU)
             PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
         add_library(gpu_collective SHARED ${GPU_COLLECTIVE_SRCS})
         target_link_libraries(gpu_collective PRIVATE mindspore::ompi mindspore::nccl)
+        target_link_libraries(_ms_mpi PRIVATE gpu_collective)
     endif ()
 
     # add_library(_mindspore_device_cuda_obj OBJECT ${CUDA_SRC_LIST})

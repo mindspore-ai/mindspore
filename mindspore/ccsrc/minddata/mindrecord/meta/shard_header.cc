@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/mindrecord/include/shard_error.h"
 #include "minddata/mindrecord/include/shard_page.h"
 
@@ -55,7 +55,9 @@ MSRStatus ShardHeader::InitializeHeader(const std::vector<json> &headers, bool l
       header_size_ = header["header_size"].get<uint64_t>();
       page_size_ = header["page_size"].get<uint64_t>();
     }
-    ParsePage(header["page"], shard_index, load_dataset);
+    if (SUCCESS != ParsePage(header["page"], shard_index, load_dataset)) {
+      return FAILED;
+    }
     shard_index++;
   }
   return SUCCESS;
@@ -248,11 +250,16 @@ MSRStatus ShardHeader::ParseIndexFields(const json &index_fields) {
   return SUCCESS;
 }
 
-void ShardHeader::ParsePage(const json &pages, int shard_index, bool load_dataset) {
+MSRStatus ShardHeader::ParsePage(const json &pages, int shard_index, bool load_dataset) {
   // set shard_index when load_dataset is false
-  if (pages_.empty() && shard_count_ <= kMaxShardCount) {
+  if (shard_count_ > kMaxFileCount) {
+    MS_LOG(ERROR) << "The number of mindrecord files is greater than max value: " << kMaxFileCount;
+    return FAILED;
+  }
+  if (pages_.empty() && shard_count_ <= kMaxFileCount) {
     pages_.resize(shard_count_);
   }
+
   for (auto &page : pages) {
     int page_id = page["page_id"];
     int shard_id = page["shard_id"];
@@ -275,6 +282,7 @@ void ShardHeader::ParsePage(const json &pages, int shard_index, bool load_datase
       pages_[shard_index].push_back(std::move(parsed_page));
     }
   }
+  return SUCCESS;
 }
 
 MSRStatus ShardHeader::ParseStatistics(const json &statistics) {
@@ -715,10 +723,42 @@ MSRStatus ShardHeader::FileToPages(const std::string dump_file_name) {
 
   std::string line;
   while (std::getline(page_in_handle, line)) {
-    ParsePage(json::parse(line), -1, true);
+    if (SUCCESS != ParsePage(json::parse(line), -1, true)) {
+      return FAILED;
+    }
   }
 
   page_in_handle.close();
+  return SUCCESS;
+}
+
+MSRStatus ShardHeader::initialize(const std::shared_ptr<ShardHeader> *header_ptr, const json &schema,
+                                  const std::vector<std::string> &index_fields, std::vector<std::string> &blob_fields,
+                                  uint64_t &schema_id) {
+  if (nullptr == header_ptr) {
+    MS_LOG(ERROR) << "ShardHeader pointer is NULL.";
+    return FAILED;
+  }
+  auto schema_ptr = Schema::Build("mindrecord", schema);
+  if (nullptr == schema_ptr) {
+    MS_LOG(ERROR) << "Got unexpected error when building mindrecord schema.";
+    return FAILED;
+  }
+  schema_id = (*header_ptr)->AddSchema(schema_ptr);
+  // create index
+  std::vector<std::pair<uint64_t, std::string>> id_index_fields;
+  if (!index_fields.empty()) {
+    for (auto &el : index_fields) {
+      id_index_fields.emplace_back(schema_id, el);
+    }
+    if (SUCCESS != (*header_ptr)->AddIndexFields(id_index_fields)) {
+      MS_LOG(ERROR) << "Got unexpected error when adding mindrecord index.";
+      return FAILED;
+    }
+  }
+
+  auto build_schema_ptr = (*header_ptr)->GetSchemas()[0];
+  blob_fields = build_schema_ptr->GetBlobFields();
   return SUCCESS;
 }
 }  // namespace mindrecord

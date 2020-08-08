@@ -23,11 +23,11 @@
 #include <unordered_set>
 #include <algorithm>
 
-#include "utils/graph_utils.h"
+#include "ir/graph_utils.h"
 #include "utils/symbolic.h"
 #include "ir/meta_func_graph.h"
 #include "ir/param_value.h"
-#include "ir/tensor_py.h"
+#include "utils/tensor_py.h"
 #include "pipeline/jit/parse/python_adapter.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "frontend/operator/composite/composite.h"
@@ -36,8 +36,8 @@
 #include "utils/ordered_set.h"
 #include "utils/utils.h"
 #include "debug/trace.h"
-#include "debug/label.h"
-#include "utils/context/ms_context.h"
+#include "utils/label.h"
+#include "utils/ms_context.h"
 #include "frontend/operator/ops.h"
 
 using mindspore::tensor::TensorPy;
@@ -198,6 +198,7 @@ std::string AnfExporter::GetMultitypeFuncGraphText(const prim::MultitypeFuncGrap
  * │   └── MapPy
  * ├── Tail
  * ├── MakeTupleGradient
+ * ├── MakeListGradient
  * ├── GradOperation
  * └── TupleAdd
  */
@@ -240,6 +241,8 @@ std::string AnfExporter::GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_
   } else if (meta_func_graph->isa<prim::Tail>()) {
     // do nothing
   } else if (meta_func_graph->isa<prim::MakeTupleGradient>()) {
+    // do nothing
+  } else if (meta_func_graph->isa<prim::MakeListGradient>()) {
     // do nothing
   } else if (meta_func_graph->isa<prim::TupleAdd>()) {
     // do nothing
@@ -1667,7 +1670,7 @@ class IrParser {
 
         // load parameter default value from serialized file
         py::object default_obj = LoadObject(lexer_.GetTokenText());
-        auto param_value_new = py::cast<ParamValuePtr>(default_obj);
+        auto param_value_new = py::cast<tensor::TensorPtr>(default_obj);
         param->set_default_param(param_value_new);
 
         tok = lexer_.GetNextToken();

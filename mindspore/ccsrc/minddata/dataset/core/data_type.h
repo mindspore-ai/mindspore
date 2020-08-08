@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_CORE_DATA_TYPE_H_
-#define DATASET_CORE_DATA_TYPE_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_DATA_TYPE_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_DATA_TYPE_H_
 
 #include <opencv2/core/hal/interface.h>
 
@@ -285,6 +285,11 @@ inline DataType DataType::FromCType<std::string_view>() {
 }
 
 template <>
+inline DataType DataType::FromCType<std::string>() {
+  return DataType(DataType::DE_STRING);
+}
+
+template <>
 inline bool DataType::IsLooselyCompatible<bool>() const {
   return type_ == DataType::DE_BOOL;
 }
@@ -347,4 +352,4 @@ inline bool DataType::IsLooselyCompatible<uint8_t>() const {
 }
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_CORE_DATA_TYPE_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_DATA_TYPE_H_

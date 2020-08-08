@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_ABSTRACT_ANALYSIS_CONTEXT_H_
-#define MINDSPORE_CCSRC_ABSTRACT_ANALYSIS_CONTEXT_H_
+#ifndef MINDSPORE_CORE_ABSTRACT_ANALYSIS_CONTEXT_H_
+#define MINDSPORE_CORE_ABSTRACT_ANALYSIS_CONTEXT_H_
 
 #include <memory>
 #include <string>
@@ -85,4 +85,4 @@ struct ContextEqual {
 extern const AnalysisContextPtr kDummyAnalysisContext;
 }  // namespace abstract
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_ABSTRACT_ANALYSIS_CONTEXT_H_
+#endif  // MINDSPORE_CORE_ABSTRACT_ANALYSIS_CONTEXT_H_

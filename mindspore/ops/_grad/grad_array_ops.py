@@ -15,6 +15,8 @@
 
 """array_ops"""
 
+import mindspore as ms
+from mindspore.ops import composite as C
 from .. import operations as P
 from ..operations import _grad_ops as G
 from ..operations import _inner_ops as inner
@@ -25,6 +27,7 @@ from .grad_base import bprop_getters
 from ..primitive import constexpr
 from ... import context
 from ...common import dtype as mstype
+from ...common.tensor import RowTensor
 
 reduce_sum = P.ReduceSum()
 unsorted_segment_sum = P.UnsortedSegmentSum()
@@ -34,6 +37,7 @@ reshape = P.Reshape()
 size_op = P.Size()
 invert_permutation = P.InvertPermutation()
 logical_and = P.LogicalAnd()
+is_sub_class = P.IsSubClass()
 
 
 @bprop_getters.register(P.Fill)
@@ -56,6 +60,29 @@ def get_bprop_dtype(self):
     return bprop
 
 
+dout_cast = C.MultitypeFuncGraph("dout_cast")
+@dout_cast.register("Tensor", "Tensor")
+def dout_cast_tensor(dout, x):
+    cast = P.Cast()
+    get_dtype = P.DType()
+    dx = cast(dout, get_dtype(x))
+    return dx
+
+@dout_cast.register("Number", "Number")
+def dout_cast_number(dout, x):
+    cast = P.Cast()
+    get_dtype = P.DType()
+    dx = cast(dout, get_dtype(x))
+    return dx
+
+@dout_cast.register("RowTensor", "Tensor")
+def dout_cast_row_tensor(dout, x):
+    cast = P.Cast()
+    get_dtype = P.DType()
+    values = cast(dout.values, get_dtype(x))
+    return RowTensor(dout.indices, values, dout.dense_shape)
+
+
 @bprop_getters.register(P.Cast)
 def get_bprop_cast(self):
     """Generate bprop for Cast"""
@@ -65,6 +92,13 @@ def get_bprop_cast(self):
     def bprop(x, t, out, dout):
         dx = cast(dout, get_dtype(x))
         return dx, zeros_like(t)
+
+    def bprop_sparse(x, t, out, dout):
+        dx = dout_cast(dout, x)
+        return dx, zeros_like(t)
+
+    if context.get_context('enable_sparse'):
+        return bprop_sparse
 
     return bprop
 
@@ -206,27 +240,8 @@ def get_bprop_embedding_lookup(self):
         actual_dout_shape_changed = new_indices_shape_changed + x_shp_tail
         # Reshape the 'actual_dout' on device
         actual_dout = reshape_op(dout, actual_dout_shape_changed)
-        return (new_indices, actual_dout, x_shp), zeros_like(indices), zeros_like(offset)
+        return RowTensor(new_indices, actual_dout, x_shp), zeros_like(indices), zeros_like(offset)
     return bprop_sparse
-
-
-@bprop_getters.register(P.EmbeddingLookup)
-def get_bprop_embedding_look_up(self):
-    """Generate bprop for EmbeddingLookup"""
-    sub_op = P.Sub()
-    reshape_op = P.Reshape()
-    def bprop(x, indices, offset, out, dout):
-        x_shp = shape_op(x)
-        new_indices = sub_op(indices, offset)
-        # Reshape the 'new_indices'
-        new_indices_shape_changed = (size_op(new_indices),)
-        new_indices = reshape_op(new_indices, new_indices_shape_changed)
-        actual_dout_shape_changed = new_indices_shape_changed
-        if len(x_shp) > 1:
-            actual_dout_shape_changed += x_shp[1:]
-        actual_dout = reshape_op(dout, actual_dout_shape_changed)
-        return (new_indices, actual_dout, x_shp), zeros_like(indices), zeros_like(offset)
-    return bprop
 
 
 @bprop_getters.register(P.Transpose)
@@ -354,7 +369,7 @@ def get_bprop_sparse_gather_v2(self):
             values_shape = indices_size + x_tail_shp
             values = reshape(dout, values_shape)
             indices = reshape(indices, indices_size)
-            return (indices, values, x_shp), zeros_like(indices), zeros_like(axis)
+            return RowTensor(indices, values, x_shp), zeros_like(indices), zeros_like(axis)
         if F.rank(dout) == 0:
             dout = P.ExpandDims()(dout, -1)
         if F.rank(indices) == 0:
@@ -390,10 +405,27 @@ def get_bprop_pack(self):
     def bprop(x, out, dout):
         pack_grad = P.Unpack(axis)
         out = pack_grad(dout)
+        if is_sub_class(F.typeof(x), ms.list_):
+            ret = []
+            for item in out:
+                ret.append(item)
+            return (ret,)
         return (out,)
 
     return bprop
 
+
+@bprop_getters.register(P.ReverseV2)
+def get_bprop_reverse_v2(self):
+    """Generate bprop for ReverseV2"""
+    axis = self.axis
+
+    def bprop(x, out, dout):
+        reverse_grad = P.ReverseV2(axis)
+        dx = reverse_grad(dout)
+        return (dx,)
+
+    return  bprop
 
 @bprop_getters.register(P.Unpack)
 def get_bprop_unpack(self):
@@ -513,6 +545,16 @@ def get_bprop_scatter_nd_update(self):
     return bprop
 
 
+@bprop_getters.register(P.ScatterNonAliasingAdd)
+def get_bprop_scatter_non_aliasing_add_update(self):
+    """Generate bprop for ScatterNonAliasingAdd"""
+    op = P.GatherNd()
+
+    def bprop(x, indices, update, out, dout):
+        return dout, zeros_like(indices), op(dout, indices)
+
+    return bprop
+
 @bprop_getters.register(P.TensorScatterUpdate)
 def get_bprop_tensor_scatter_update(self):
     """Generate bprop for TensorScatterUpdate"""
@@ -525,6 +567,7 @@ def get_bprop_tensor_scatter_update(self):
         return x_grad, zeros_like(indices), update_grad
 
     return bprop
+
 
 
 @bprop_getters.register(P.ScatterMax)
@@ -628,6 +671,16 @@ def _GatherDropNegatives(params,
         is_positive = logical_and(is_positive, fill(mstype.bool_, gathered_shape, 1))
     zero_slice = zeros_like(gathered)
     return (select(is_positive, gathered, zero_slice), zero_clipped_indices, is_positive)
+
+
+@bprop_getters.register(P.UnsortedSegmentSum)
+def get_bprop_unsorted_segment_sum(self):
+    """Generate bprop for UnsortedSegmentSum"""
+
+    def bprop(x, segment_ids, num_segments, out, dout):
+        return _GatherDropNegatives(dout, segment_ids)[0], zeros_like(segment_ids), zeros_like(num_segments)
+
+    return bprop
 
 
 @bprop_getters.register(P.UnsortedSegmentMin)
@@ -763,4 +816,14 @@ def get_bprop_trans_shape(self):
     def bprop(x, shape, out, dout):
         dx = op(dout, shape_op(x))
         return (dx, zeros_like(shape))
+    return bprop
+
+
+@bprop_getters.register(P.Unique)
+def get_bprop_unique(self):
+    """Generate bprop for Unique"""
+    op = G.UniqueGrad()
+    def bprop(x, out, dout):
+        dx = op(dout, out)
+        return (dx,)
     return bprop

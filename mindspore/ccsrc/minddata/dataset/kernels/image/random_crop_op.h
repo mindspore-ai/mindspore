@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_KERNELS_IMAGE_RANDOM_CROP_OP_H_
-#define DATASET_KERNELS_IMAGE_RANDOM_CROP_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_CROP_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_CROP_OP_H_
 
 #include <memory>
 #include <random>
@@ -52,7 +52,7 @@ class RandomCropOp : public TensorOp {
 
   ~RandomCropOp() override = default;
 
-  void Print(std::ostream &out) const override { out << "RandomCropOp: " << crop_height_ << " " << crop_width_; }
+  void Print(std::ostream &out) const override { out << Name() << ": " << crop_height_ << " " << crop_width_; }
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
@@ -98,4 +98,4 @@ class RandomCropOp : public TensorOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_KERNELS_IMAGE_RANDOM_CROP_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_CROP_OP_H_

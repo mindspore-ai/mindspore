@@ -34,7 +34,9 @@ using mindspore::abstract::AbstractClass;
 using mindspore::abstract::AbstractDictionary;
 using mindspore::abstract::AbstractJTagged;
 using mindspore::abstract::AbstractList;
+using mindspore::abstract::AbstractRowTensor;
 using mindspore::abstract::AbstractScalar;
+using mindspore::abstract::AbstractSparseTensor;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractUndetermined;
 
@@ -59,9 +61,31 @@ static AbstractBasePtr Reabs(const AbstractBasePtr &t) {
                          [](const AbstractAttribute &item) { return item.second; });
     return std::make_shared<AbstractTuple>(baselist);
   }
+
+  return nullptr;
+}
+
+static AbstractBasePtr AdaptAbs(const AbstractBasePtr &t) {
+  if (t == nullptr) {
+    return nullptr;
+  }
+
   if (t->isa<AbstractList>()) {
     auto abs_list = dyn_cast<AbstractList>(t);
     return std::make_shared<AbstractTuple>(abs_list->elements());
+  }
+
+  if (t->isa<AbstractSparseTensor>()) {
+    auto abs_sparse = dyn_cast<AbstractSparseTensor>(t);
+    std::vector<AbstractBasePtr> abstract_list{abs_sparse->indices(), abs_sparse->values(), abs_sparse->dense_shape()};
+    return std::make_shared<AbstractTuple>(abstract_list);
+  }
+
+  if (t->isa<AbstractRowTensor>()) {
+    auto abs_row_tensor = dyn_cast<AbstractRowTensor>(t);
+    std::vector<AbstractBasePtr> abstract_list{abs_row_tensor->indices(), abs_row_tensor->values(),
+                                               abs_row_tensor->dense_shape()};
+    return std::make_shared<AbstractTuple>(abstract_list);
   }
 
   return nullptr;
@@ -358,14 +382,6 @@ bool SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr 
       new_node = EraseMakeKeywordArgNode(cnode);
     } else if (IsPrimitiveCNode(node, prim::kPrimExtractKeywordArg)) {
       new_node = EraseExtractKeywordArg(cnode);
-    } else if (IsPrimitiveCNode(node, prim::kPrimMakeList)) {
-      new_node = ConvertMakeListToMakeTuple(cnode);
-    } else if (IsPrimitiveCNode(node, prim::kPrimListGetItem)) {
-      new_node = ConvertListGetItemToTupleGetItem(cnode);
-    } else if (IsPrimitiveCNode(node, prim::kPrimListSetItem)) {
-      new_node = ConvertListSetItemToTupleSetItem(cnode);
-    } else if (IsValueNode<ValueList>(node)) {
-      new_node = ConvertValueListNodeToValueTupleNode(node->cast<ValueNodePtr>());
     }
 
     if (new_node != nullptr) {
@@ -378,6 +394,90 @@ bool SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr 
 
   for (auto &node : manager->all_nodes()) {
     auto ret = Reabs(node->abstract());
+    if (ret) {
+      MS_LOG(DEBUG) << "Replace " << node->DebugString() << "'s abstract " << node->abstract()->ToString() << " with "
+                    << ret->ToString();
+      node->set_abstract(ret);
+      changed = true;
+    }
+  }
+  return changed;
+}
+
+AnfNodePtr ConvertMakeSparseToMakeTuple(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(node->func_graph());
+
+  std::vector<AnfNodePtr> inputs;
+  inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+  // Inputs of node should be [make_sparse, indices, values, dense_shape], so offset by 1 to get items;
+  (void)inputs.insert(inputs.end(), node->inputs().begin() + 1, node->inputs().end());
+  return node->func_graph()->NewCNode(inputs);
+}
+
+AnfNodePtr ConvertSparseGetAttrToTupleGetItem(const CNodePtr &node, const int &index) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(node->func_graph());
+
+  const auto &inputs = node->inputs();
+  // Inputs should be [spase_getattr, sparse]
+  if (inputs.size() < 2) {
+    MS_LOG(EXCEPTION) << "Node's input number < 2.";
+  }
+
+  AnfNodePtr sparse = inputs[1];
+  MS_EXCEPTION_IF_NULL(sparse);
+  auto cons_node = NewValueNode(index);
+  AbstractBasePtr aptr = std::make_shared<AbstractScalar>(std::make_shared<Int32Imm>(index));
+  cons_node->set_abstract(aptr);
+
+  return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleGetItem), sparse, cons_node});
+}
+
+bool CleanAfterOptA(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
+  MS_EXCEPTION_IF_NULL(manager);
+  manager->AddFuncGraph(root);
+
+  bool changed = false;
+
+  // Since `manager->Replace(...);` will modify member `all_nodes_`, so `all_node` can't be a ref var
+  auto all_node = manager->all_nodes();
+  for (auto &node : all_node) {
+    MS_EXCEPTION_IF_NULL(node);
+    auto cnode = node->cast<CNodePtr>();
+    AnfNodePtr new_node = nullptr;
+    if (IsPrimitiveCNode(node, prim::kPrimMakeList)) {
+      new_node = ConvertMakeListToMakeTuple(cnode);
+    } else if (IsPrimitiveCNode(node, prim::kPrimListGetItem)) {
+      new_node = ConvertListGetItemToTupleGetItem(cnode);
+    } else if (IsPrimitiveCNode(node, prim::kPrimListSetItem)) {
+      new_node = ConvertListSetItemToTupleSetItem(cnode);
+    } else if (IsValueNode<ValueList>(node)) {
+      new_node = ConvertValueListNodeToValueTupleNode(node->cast<ValueNodePtr>());
+    } else if (IsPrimitiveCNode(node, prim::kPrimMakeSparseTensor) ||
+               IsPrimitiveCNode(node, prim::kPrimMakeRowTensor)) {
+      new_node = ConvertMakeSparseToMakeTuple(cnode);
+    } else if (IsPrimitiveCNode(node, prim::kPrimSparseTensorGetIndices) ||
+               IsPrimitiveCNode(node, prim::kPrimRowTensorGetIndices)) {
+      new_node = ConvertSparseGetAttrToTupleGetItem(cnode, 0);
+    } else if (IsPrimitiveCNode(node, prim::kPrimSparseTensorGetValues) ||
+               IsPrimitiveCNode(node, prim::kPrimRowTensorGetValues)) {
+      new_node = ConvertSparseGetAttrToTupleGetItem(cnode, 1);
+    } else if (IsPrimitiveCNode(node, prim::kPrimSparseTensorGetDenseShape) ||
+               IsPrimitiveCNode(node, prim::kPrimRowTensorGetDenseShape)) {
+      new_node = ConvertSparseGetAttrToTupleGetItem(cnode, 2);
+    }
+
+    if (new_node != nullptr) {
+      new_node->set_abstract(node->abstract());
+      MS_LOG(DEBUG) << "Replace node: " << node->DebugString() << " with new_node: " << new_node->DebugString();
+      (void)manager->Replace(node, new_node);
+      changed = true;
+    }
+  }
+
+  for (auto &node : manager->all_nodes()) {
+    auto ret = AdaptAbs(node->abstract());
     if (ret) {
       MS_LOG(DEBUG) << "Replace " << node->DebugString() << "'s abstract " << node->abstract()->ToString() << " with "
                     << ret->ToString();

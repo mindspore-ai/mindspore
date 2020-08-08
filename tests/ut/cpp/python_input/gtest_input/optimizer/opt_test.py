@@ -1130,17 +1130,17 @@ def test_adjust_allreduce_mul_add(tag):
     return fns[tag]
 
 
-def test_indexed_slices(tag):
+def test_row_tensor(tag):
     """ test_add_zero """
     fns = FnDict()
-    make_indexed_slices = Primitive('MakeIndexedSlices')
-    indexed_slices_get_values = Primitive('IndexedSlicesGetValues')
-    indexed_slices_get_indices = Primitive('IndexedSlicesGetIndices')
-    indexed_slices_get_dense_shape = Primitive('IndexedSlicesGetDenseShape')
+    make_row_tensor = Primitive('MakeRowTensor')
+    row_tensor_get_values = Primitive('RowTensorGetValues')
+    row_tensor_get_indices = Primitive('RowTensorGetIndices')
+    row_tensor_get_dense_shape = Primitive('RowTensorGetDenseShape')
 
     @fns
     def before_get_indices(x, y, z):
-        return indexed_slices_get_indices(make_indexed_slices(x, y, z))
+        return row_tensor_get_indices(make_row_tensor(x, y, z))
 
     @fns
     def after_get_indices(x, y, z):
@@ -1148,7 +1148,7 @@ def test_indexed_slices(tag):
 
     @fns
     def before_get_values(x, y, z):
-        return indexed_slices_get_values(make_indexed_slices(x, y, z))
+        return row_tensor_get_values(make_row_tensor(x, y, z))
 
     @fns
     def after_get_values(x, y, z):
@@ -1156,7 +1156,42 @@ def test_indexed_slices(tag):
 
     @fns
     def before_get_dense_shape(x, y, z):
-        return indexed_slices_get_dense_shape(make_indexed_slices(x, y, z))
+        return row_tensor_get_dense_shape(make_row_tensor(x, y, z))
+
+    @fns
+    def after_get_dense_shape(x, y, z):
+        return z
+
+    return fns[tag]
+
+
+def test_sparse_tensor(tag):
+    """ test_add_zero """
+    fns = FnDict()
+    make_sparse_tensor = Primitive('MakeSparseTensor')
+    sparse_tensor_get_values = Primitive('SparseTensorGetValues')
+    sparse_tensor_get_indices = Primitive('SparseTensorGetIndices')
+    sparse_tensor_get_dense_shape = Primitive('SparseTensorGetDenseShape')
+
+    @fns
+    def before_get_indices(x, y, z):
+        return sparse_tensor_get_indices(make_sparse_tensor(x, y, z))
+
+    @fns
+    def after_get_indices(x, y, z):
+        return x
+
+    @fns
+    def before_get_values(x, y, z):
+        return sparse_tensor_get_values(make_sparse_tensor(x, y, z))
+
+    @fns
+    def after_get_values(x, y, z):
+        return y
+
+    @fns
+    def before_get_dense_shape(x, y, z):
+        return sparse_tensor_get_dense_shape(make_sparse_tensor(x, y, z))
 
     @fns
     def after_get_dense_shape(x, y, z):

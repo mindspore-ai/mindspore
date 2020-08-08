@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_ENGINE_DATASETOPS_SOURCE_VOC_OP_H_
-#define DATASET_ENGINE_DATASETOPS_SOURCE_VOC_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_VOC_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_VOC_OP_H_
 
 #include <map>
 #include <memory>
@@ -40,7 +40,7 @@ namespace dataset {
 template <typename T>
 class Queue;
 
-using Bbox = std::vector<std::pair<std::string, std::vector<float>>>;
+using Annotation = std::vector<std::pair<std::string, std::vector<float>>>;
 
 class VOCOp : public ParallelOp, public RandomAccessOp {
  public:
@@ -234,10 +234,9 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   Status ReadImageToTensor(const std::string &path, const ColDescriptor &col, std::shared_ptr<Tensor> *tensor);
 
   // @param const std::string &path - path to the image file
-  // @param const ColDescriptor &col - contains tensor implementation and datatype
-  // @param std::shared_ptr<Tensor> tensor - return
+  // @param TensorRow *row - return
   // @return Status - The error code return
-  Status ReadAnnotationToTensor(const std::string &path, const ColDescriptor &col, std::shared_ptr<Tensor> *tensor);
+  Status ReadAnnotationToTensor(const std::string &path, TensorRow *row);
 
   // @param const std::vector<uint64_t> &keys - keys in ioblock
   // @param std::unique_ptr<DataBuffer> db
@@ -287,8 +286,8 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   QueueList<std::unique_ptr<IOBlock>> io_block_queues_;
   std::map<std::string, int32_t> class_index_;
   std::map<std::string, int32_t> label_index_;
-  std::map<std::string, Bbox> label_map_;
+  std::map<std::string, Annotation> annotation_map_;
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_ENGINE_DATASETOPS_SOURCE_VOC_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_VOC_OP_H_

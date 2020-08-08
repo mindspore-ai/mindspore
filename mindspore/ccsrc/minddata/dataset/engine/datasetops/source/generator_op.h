@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_ENGINE_DATASETOPS_SOURCE_GENERATOR_OP_H_
-#define DATASET_ENGINE_DATASETOPS_SOURCE_GENERATOR_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_GENERATOR_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_GENERATOR_OP_H_
 
 #include <condition_variable>
 #include <memory>
@@ -27,6 +27,9 @@
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/pipeline_op.h"
 #include "minddata/dataset/util/wait_post.h"
+#include "pybind11/pybind11.h"
+
+namespace py = pybind11;
 
 namespace mindspore {
 namespace dataset {
@@ -160,4 +163,4 @@ class GeneratorOp : public PipelineOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_ENGINE_DATASETOPS_SOURCE_GENERATOR_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_GENERATOR_OP_H_

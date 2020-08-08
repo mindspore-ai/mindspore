@@ -32,7 +32,7 @@ bool CheckOutputsIndex(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
     return false;
   }
   for (const auto &node_index : manager->node_users()[node]) {
-    AnfNodePtr output = node_index.first;
+    const AnfNodePtr &output = node_index.first;
     MS_EXCEPTION_IF_NULL(output);
     if (!IsPrimitiveCNode(output, prim::kPrimTupleGetItem)) {
       continue;

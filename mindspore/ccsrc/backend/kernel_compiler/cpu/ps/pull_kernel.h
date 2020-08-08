@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_PS_PULL_KERNEL_H_
-#define MINDSPORE_CCSRC_KERNEL_PS_PULL_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_PS_PULL_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_PS_PULL_KERNEL_H_
 
 #include <vector>
 #include <string>
@@ -33,8 +33,9 @@ class PullKernel : public CPUKernel {
   ~PullKernel() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &) {
-    // If the paramter is embedding table, don't Pull from PServer.
-    if (param_name_.find("embedding") == std::string::npos && param_name_.find("wide_w") == std::string::npos) {
+    bool init_in_server = mindspore::parallel::ps::Worker<float>::GetInstance().GetParamInitInServer(param_name_);
+    // If init_in_server, forward kernel should run in server too.
+    if (!init_in_server) {
       parallel::ps::Worker<T>::GetInstance().Pull(key_, inputs[1]->addr, inputs[1]->size);
     }
     return true;
@@ -82,4 +83,4 @@ class PullKernel : public CPUKernel {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_PS_PULL_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_PS_PULL_KERNEL_H_

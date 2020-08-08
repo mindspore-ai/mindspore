@@ -164,7 +164,7 @@ def train_process(q, device_id, epoch_size, num_classes, device_num, batch_size,
 
     model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'})
 
-    dataset = create_dataset(epoch_size, training=True,
+    dataset = create_dataset(1, training=True,
                              batch_size=batch_size, rank_id=device_id, rank_size=device_num,
                              enable_hccl=enable_hccl)
 

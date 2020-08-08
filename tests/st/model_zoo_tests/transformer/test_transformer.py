@@ -25,12 +25,12 @@ from mindspore.train.model import Model
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore.train.callback import Callback
 from mindspore import context
-from model_zoo.Transformer.src.transformer_model import TransformerConfig
-from model_zoo.Transformer.src.transformer_for_train import TransformerNetworkWithLoss, \
-                                      TransformerTrainOneStepWithLossScaleCell
-from model_zoo.Transformer.src.config import cfg
-from model_zoo.Transformer.src.dataset import create_transformer_dataset
-from model_zoo.Transformer.src.lr_schedule import create_dynamic_lr
+from model_zoo.official.nlp.transformer.src.transformer_model import TransformerConfig
+from model_zoo.official.nlp.transformer.src.transformer_for_train import TransformerNetworkWithLoss, \
+                                            TransformerTrainOneStepWithLossScaleCell
+from model_zoo.official.nlp.transformer.src.config import cfg
+from model_zoo.official.nlp.transformer.src.dataset import create_transformer_dataset
+from model_zoo.official.nlp.transformer.src.lr_schedule import create_dynamic_lr
 
 DATA_DIR = ["/home/workspace/mindspore_dataset/transformer/test-mindrecord"]
 
@@ -120,10 +120,10 @@ def test_transformer():
     batch_size = 96
     epoch_size = 3
     config = get_config(version=version, batch_size=batch_size)
-    dataset, repeat_count = create_transformer_dataset(epoch_count=epoch_size,
-                                                       do_shuffle="false",
-                                                       enable_data_sink="false",
-                                                       dataset_path=DATA_DIR)
+    dataset = create_transformer_dataset(epoch_count=1,
+                                         do_shuffle="false",
+                                         enable_data_sink="false",
+                                         dataset_path=DATA_DIR)
 
     netwithloss = TransformerNetworkWithLoss(config, True)
 
@@ -146,7 +146,7 @@ def test_transformer():
     netwithgrads.set_train(True)
     time_monitor_callback = TimeMonitor(dataset.get_dataset_size())
     model = Model(netwithgrads)
-    model.train(repeat_count, dataset, callbacks=[time_monitor_callback, callback], dataset_sink_mode=False)
+    model.train(epoch_size, dataset, callbacks=[time_monitor_callback, callback], dataset_sink_mode=False)
 
     # assertion occurs while the loss value, overflow state or loss_scale value is wrong
     loss_value = np.array(callback.loss_list)

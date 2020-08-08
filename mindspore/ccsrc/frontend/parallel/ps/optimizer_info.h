@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PARALLEL_PS_OPTIMIZER_INFO_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PARALLEL_PS_OPTIMIZER_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_OPTIMIZER_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_OPTIMIZER_INFO_H_
 
 #include <vector>
 #include "backend/kernel_compiler/kernel.h"
@@ -33,6 +33,7 @@ class OptimizerInfo {
   virtual void Update(const Values &values, const Lengths &lengths) {}
   virtual void UpdateWeight(const WeightPtr &weight);
   virtual void Accumulate(const Values &values, const Lengths &lengths) = 0;
+  virtual void ComputeMean(size_t n) {}
   virtual void Reset() {}
   void AddWorkspace(const AddressPtr &workspace);
 
@@ -58,6 +59,8 @@ class DenseOptimInfo : public OptimizerInfo {
   ~DenseOptimInfo() override = default;
 
   void Accumulate(const Values &values, const Lengths &lens) override;
+  void ComputeMean(size_t n) override;
+  void Reset() override;
 };
 
 class SparseOptimInfo : public OptimizerInfo {
@@ -81,6 +84,7 @@ class MomentumOptimInfo : public DenseOptimInfo {
 
   const AddressPtr &gradient();
   const AddressPtr &indices();
+  size_t grad_index() override;
 };
 
 class SparseAdamOptimInfo : public SparseOptimInfo {
@@ -88,7 +92,7 @@ class SparseAdamOptimInfo : public SparseOptimInfo {
   SparseAdamOptimInfo(const AddressPtr &weight, const AddressPtr &m, const AddressPtr &v, const AddressPtr &beta1_power,
                       const AddressPtr &beta2_power, const AddressPtr &learning_rate, const AddressPtr &beta1,
                       const AddressPtr &beta2, const AddressPtr &epsilon, const AddressPtr &grad,
-                      const AddressPtr &indices, size_t grads_offset, size_t indices_offset);
+                      const AddressPtr &indices);
   ~SparseAdamOptimInfo() override = default;
 
   void Update(const Values &values, const Lengths &lens) override;
@@ -102,7 +106,7 @@ class SparseAdamOptimInfo : public SparseOptimInfo {
 class SparseFtrlOptimInfo : public SparseOptimInfo {
  public:
   SparseFtrlOptimInfo(const AddressPtr &weight, const AddressPtr &accum, const AddressPtr &linear,
-                      const AddressPtr &grad, const AddressPtr &indices, size_t grads_offset, size_t indices_offset);
+                      const AddressPtr &grad, const AddressPtr &indices);
   ~SparseFtrlOptimInfo() override = default;
 
   const AddressPtr &gradient();
@@ -114,4 +118,4 @@ class SparseFtrlOptimInfo : public SparseOptimInfo {
 }  // namespace ps
 }  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PARALLEL_PS_OPTIMIZER_INFO_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_OPTIMIZER_INFO_H_

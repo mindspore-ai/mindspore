@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDRECORD_INCLUDE_SHARD_INDEX_GENERATOR_H_
-#define MINDRECORD_INCLUDE_SHARD_INDEX_GENERATOR_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_INDEX_GENERATOR_H_
+#define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_INDEX_GENERATOR_H_
 
 #include <fstream>
 #include <iostream>
@@ -56,6 +56,8 @@ class ShardIndexGenerator {
 
   /// \brief create databases for indexes
   MSRStatus WriteToDatabase();
+
+  static MSRStatus finalize(const std::vector<std::string> file_names);
 
  private:
   static int Callback(void *not_used, int argc, char **argv, char **az_col_name);
@@ -117,4 +119,4 @@ class ShardIndexGenerator {
 };
 }  // namespace mindrecord
 }  // namespace mindspore
-#endif  // MINDRECORD_INCLUDE_SHARD_INDEX_GENERATOR_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_INDEX_GENERATOR_H_

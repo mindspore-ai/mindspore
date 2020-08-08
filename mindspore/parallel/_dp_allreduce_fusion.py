@@ -16,8 +16,6 @@
 
 import ctypes
 
-from mindspore import log as logger
-
 _MAX_GROUP_NAME_LEN = 127
 _HCCL_LIB = 'libhccl.so'
 
@@ -25,8 +23,8 @@ _HCCL_LIB = 'libhccl.so'
 def _load_lib():
     try:
         hccl_lib = ctypes.CDLL(_HCCL_LIB)
-    except RuntimeError:
-        logger.error('Get hccl lib error')
+    except Exception:
+        raise RuntimeError('Get hccl lib error')
 
     return hccl_lib
 
@@ -69,8 +67,9 @@ def _set_fusion_strategy_by_idx(idxList, group="hccl_world_group"):
     try:
         lib_ctype = _load_lib()
     except RuntimeError:
-        logger.error('Load HCCL lib failed')
-
+        import hccl_test.manage.api as hccl
+        hccl.set_fusion_strategy_by_idx()
+        return
     if isinstance(group, (str)):
         group_len = len(group)
         if (group_len > _MAX_GROUP_NAME_LEN or group_len == 0):
@@ -126,7 +125,9 @@ def _set_fusion_strategy_by_size(dataSizeList, group="hccl_world_group"):
     try:
         lib_ctype = _load_lib()
     except RuntimeError:
-        logger.error('Load HCCL lib failed')
+        import hccl_test.manage.api as hccl
+        hccl.set_fusion_strategy_by_size()
+        return
     if isinstance(group, (str)):
         group_len = len(group)
         if group_len > _MAX_GROUP_NAME_LEN or group_len == 0:

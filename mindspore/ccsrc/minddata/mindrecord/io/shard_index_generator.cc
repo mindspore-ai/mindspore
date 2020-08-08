@@ -16,7 +16,7 @@
 #include <thread>
 
 #include "minddata/mindrecord/include/shard_index_generator.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 using mindspore::LogStream;
 using mindspore::ExceptionType::NoExceptionType;
@@ -621,6 +621,22 @@ void ShardIndexGenerator::DatabaseWriter() {
     MS_LOG(INFO) << "Generate index db for shard: " << shard_no << " successfully.";
     shard_no = task_++;
   }
+}
+MSRStatus ShardIndexGenerator::finalize(const std::vector<std::string> file_names) {
+  if (file_names.empty()) {
+    MS_LOG(ERROR) << "Mindrecord files is empty.";
+    return FAILED;
+  }
+  ShardIndexGenerator sg{file_names[0]};
+  if (SUCCESS != sg.Build()) {
+    MS_LOG(ERROR) << "Failed to build index generator.";
+    return FAILED;
+  }
+  if (SUCCESS != sg.WriteToDatabase()) {
+    MS_LOG(ERROR) << "Failed to write to database.";
+    return FAILED;
+  }
+  return SUCCESS;
 }
 }  // namespace mindrecord
 }  // namespace mindspore

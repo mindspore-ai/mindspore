@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_OPS_INFO_DROPOUT_DO_MASK_INFO_H_
-#define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_DROPOUT_DO_MASK_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_DROPOUT_DO_MASK_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_DROPOUT_DO_MASK_INFO_H_
 
 #include <memory>
 #include <string>
@@ -40,7 +40,7 @@ class DropoutDoMaskInfo : public OperatorInfo {
   Status GenerateStrategies(int32_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   Status InitForCostModel(const StrategyPtr &strategy) override;
-  std::shared_ptr<std::vector<std::vector<int32_t>>> GenerateBatchStrategies() override;
+  std::shared_ptr<Strategys> GenerateBatchStrategies() override;
   std::vector<Operator> GetDropoutGenMaskReplaceOp(const CNodePtr &cnode);
 
  protected:
@@ -57,4 +57,4 @@ using DropoutDoMaskInfoPtr = std::shared_ptr<DropoutDoMaskInfo>;
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_OPS_INFO_DROPOUT_DO_MASK_INFO_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_DROPOUT_DO_MASK_INFO_H_

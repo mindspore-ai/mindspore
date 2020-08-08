@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_DEVICE_GPU_GPU_DEVICE_ADDRESS_H_
-#define MINDSPORE_CCSRC_DEVICE_GPU_GPU_DEVICE_ADDRESS_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_DEVICE_ADDRESS_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_DEVICE_ADDRESS_H_
 
 #include <string>
 #include <vector>
 #include "runtime/device/device_address.h"
 
 namespace mindspore {
+#ifdef ENABLE_DEBUGGER
+class Debugger;
+#endif
 namespace device {
 namespace gpu {
 class GPUDeviceAddress : public DeviceAddress {
@@ -37,6 +40,11 @@ class GPUDeviceAddress : public DeviceAddress {
   DeviceAddressStatus status() const { return status_; }
   DeviceAddressType DeviceType() const override { return DeviceAddressType::kGPU; }
 
+#ifdef ENABLE_DEBUGGER
+  bool LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &host_fmt,
+                     const std::vector<int> &host_shape, TypeId host_type, size_t slot, Debugger *debugger,
+                     bool keep_prev) const;
+#endif
  private:
   DeviceAddressStatus status_{DeviceAddressStatus::kInDevice};
 };
@@ -44,4 +52,4 @@ class GPUDeviceAddress : public DeviceAddress {
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_GPU_GPU_DEVICE_ADDRESS_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_DEVICE_ADDRESS_H_

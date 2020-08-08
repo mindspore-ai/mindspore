@@ -1,0 +1,55 @@
+{
+  "sampling_interval": 10,
+  "op_info": [
+    {
+      "op_id": 4,
+      "op_type": "TFReader",
+      "num_workers": 4,
+      "metrics": null,
+      "children": [3]
+    },
+    {
+      "op_id": 3,
+      "op_type": "TFReader",
+      "num_workers": 4,
+      "metrics": {
+        "output_queue": {
+          "size": [10, 20, 30],
+          "length": 64
+        }
+      },
+      "children": null
+    },
+    {
+      "op_id": 2,
+      "op_type": "TFReader",
+      "num_workers": 4,
+      "metrics": {
+        "output_queue": {
+          "size": [10, 20, 30],
+          "length": 64
+        }
+      },
+      "children": null
+    },
+    {
+      "op_id": 1,
+      "op_type": "Shuffle",
+      "num_workers": 1,
+      "metrics": {
+        "output_queue": {
+          "size": [10, 20, 30],
+          "length": 64
+        }
+      },
+      "children": [2, 4]
+    },
+    {
+      "op_id": 0,
+      "op_type": "Batch",
+      "num_workers": 4,
+      "metrics": null,
+      "children": [1]
+    }
+  ]
+}

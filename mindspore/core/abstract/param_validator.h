@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_ABSTRACT_PARAM_VALIDATOR_H_
-#define MINDSPORE_CCSRC_ABSTRACT_PARAM_VALIDATOR_H_
+#ifndef MINDSPORE_CORE_ABSTRACT_PARAM_VALIDATOR_H_
+#define MINDSPORE_CORE_ABSTRACT_PARAM_VALIDATOR_H_
 
 #include <memory>
 #include <string>
@@ -66,7 +66,8 @@ ABSTRACT_REPORT_NAME_TRAITS(Function)
 ABSTRACT_REPORT_NAME_TRAITS(Type)
 ABSTRACT_REPORT_NAME_TRAITS(KeywordArg)
 ABSTRACT_REPORT_NAME_TRAITS(Class)
-ABSTRACT_REPORT_NAME_TRAITS(IndexedSlices)
+ABSTRACT_REPORT_NAME_TRAITS(RowTensor)
+ABSTRACT_REPORT_NAME_TRAITS(SparseTensor)
 ABSTRACT_REPORT_NAME_TRAITS(Sequeue)
 
 template <typename T>
@@ -97,4 +98,4 @@ void CheckArgsSpec(const AbstractBasePtrList &args_list) {
 }  // namespace abstract
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_ABSTRACT_PARAM_VALIDATOR_H_
+#endif  // MINDSPORE_CORE_ABSTRACT_PARAM_VALIDATOR_H_

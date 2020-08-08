@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_DEVICE_ASCEND_PROFILING_PLUGIN_IMPL_H_
-#define MINDSPORE_CCSRC_DEVICE_ASCEND_PROFILING_PLUGIN_IMPL_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_PROFILING_PLUGIN_IMPL_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_PROFILING_PLUGIN_IMPL_H_
 
 #include <string>
 #include "./prof_engine.h"
@@ -42,4 +42,4 @@ class PluginImpl : public PluginIntf {
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_ASCEND_PROFILING_PLUGIN_IMPL_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_PROFILING_PLUGIN_IMPL_H_

@@ -19,8 +19,8 @@
 #include "debug/anf_ir_utils.h"
 #include "debug/draw.h"
 #include "ir/func_graph.h"
-#include "utils/context/ms_context.h"
-#include "utils/graph_utils.h"
+#include "utils/ms_context.h"
+#include "ir/graph_utils.h"
 
 namespace mindspore {
 namespace parallel {

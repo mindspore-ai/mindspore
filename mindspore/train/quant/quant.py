@@ -29,14 +29,15 @@ from ...common import dtype as mstype
 from ...common.api import _executor
 from ...nn.layer import quant
 from ...ops import functional as F
+from ...ops import operations as P
 from ...ops.operations import _inner_ops as inner
 from ...train import serialization
 from . import quant_utils
 
 _ACTIVATION_MAP = {nn.ReLU: quant.ActQuant,
                    nn.ReLU6: quant.ActQuant,
-                   nn.LeakyReLU: quant.ActQuant,
                    nn.Sigmoid: quant.ActQuant,
+                   nn.LeakyReLU: quant.LeakyReLUQuant,
                    nn.HSigmoid: quant.HSigmoidQuant,
                    nn.HSwish: quant.HSwishQuant}
 
@@ -167,32 +168,60 @@ class ConvertToQuantNetwork:
         convert Conv2d cell to quant cell
         """
         conv_inner = subcell.conv
-        if subcell.has_bn and self.bn_fold:
-            bn_inner = subcell.batchnorm
-            conv_inner = quant.Conv2dBatchNormQuant(conv_inner.in_channels,
-                                                    conv_inner.out_channels,
-                                                    kernel_size=conv_inner.kernel_size,
-                                                    stride=conv_inner.stride,
-                                                    pad_mode=conv_inner.pad_mode,
-                                                    padding=conv_inner.padding,
-                                                    dilation=conv_inner.dilation,
-                                                    group=conv_inner.group,
-                                                    eps=bn_inner.eps,
-                                                    quant_delay=self.weight_qdelay,
-                                                    freeze_bn=self.freeze_bn,
-                                                    per_channel=self.weight_channel,
-                                                    num_bits=self.weight_bits,
-                                                    fake=True,
-                                                    symmetric=self.weight_symmetric,
-                                                    narrow_range=self.weight_range)
-            # change original network BatchNormal OP parameters to quant network
-            conv_inner.gamma = subcell.batchnorm.gamma
-            conv_inner.beta = subcell.batchnorm.beta
-            conv_inner.moving_mean = subcell.batchnorm.moving_mean
-            conv_inner.moving_variance = subcell.batchnorm.moving_variance
-            del subcell.batchnorm
-            subcell.batchnorm = None
-            subcell.has_bn = False
+        if subcell.has_bn:
+            if self.bn_fold:
+                bn_inner = subcell.batchnorm
+                conv_inner = quant.Conv2dBnFoldQuant(conv_inner.in_channels,
+                                                     conv_inner.out_channels,
+                                                     kernel_size=conv_inner.kernel_size,
+                                                     stride=conv_inner.stride,
+                                                     pad_mode=conv_inner.pad_mode,
+                                                     padding=conv_inner.padding,
+                                                     dilation=conv_inner.dilation,
+                                                     group=conv_inner.group,
+                                                     eps=bn_inner.eps,
+                                                     momentum=bn_inner.momentum,
+                                                     quant_delay=self.weight_qdelay,
+                                                     freeze_bn=self.freeze_bn,
+                                                     per_channel=self.weight_channel,
+                                                     num_bits=self.weight_bits,
+                                                     fake=True,
+                                                     symmetric=self.weight_symmetric,
+                                                     narrow_range=self.weight_range)
+                # change original network BatchNormal OP parameters to quant network
+                conv_inner.gamma = subcell.batchnorm.gamma
+                conv_inner.beta = subcell.batchnorm.beta
+                conv_inner.moving_mean = subcell.batchnorm.moving_mean
+                conv_inner.moving_variance = subcell.batchnorm.moving_variance
+                del subcell.batchnorm
+                subcell.batchnorm = None
+                subcell.has_bn = False
+            else:
+                bn_inner = subcell.batchnorm
+                conv_inner = quant.Conv2dBnWithoutFoldQuant(conv_inner.in_channels,
+                                                            conv_inner.out_channels,
+                                                            kernel_size=conv_inner.kernel_size,
+                                                            stride=conv_inner.stride,
+                                                            pad_mode=conv_inner.pad_mode,
+                                                            padding=conv_inner.padding,
+                                                            dilation=conv_inner.dilation,
+                                                            group=conv_inner.group,
+                                                            eps=bn_inner.eps,
+                                                            momentum=bn_inner.momentum,
+                                                            has_bn=True,
+                                                            quant_delay=self.weight_qdelay,
+                                                            per_channel=self.weight_channel,
+                                                            num_bits=self.weight_bits,
+                                                            symmetric=self.weight_symmetric,
+                                                            narrow_range=self.weight_range)
+                # change original network BatchNormal OP parameters to quant network
+                conv_inner.batchnorm.gamma = subcell.batchnorm.gamma
+                conv_inner.batchnorm.beta = subcell.batchnorm.beta
+                conv_inner.batchnorm.moving_mean = subcell.batchnorm.moving_mean
+                conv_inner.batchnorm.moving_variance = subcell.batchnorm.moving_variance
+                del subcell.batchnorm
+                subcell.batchnorm = None
+                subcell.has_bn = False
         else:
             conv_inner = quant.Conv2dQuant(conv_inner.in_channels,
                                            conv_inner.out_channels,
@@ -259,7 +288,7 @@ class ConvertToQuantNetwork:
         act_class = activation.__class__
         if act_class not in _ACTIVATION_MAP:
             raise ValueError("Unsupported activation in auto quant: ", act_class)
-        return _ACTIVATION_MAP[act_class](activation=act_class,
+        return _ACTIVATION_MAP[act_class](activation=activation,
                                           num_bits=self.act_bits,
                                           quant_delay=self.act_qdelay,
                                           per_channel=self.act_channel,
@@ -278,7 +307,7 @@ class ExportToQuantInferNetwork:
         std_dev (int, float): Input data variance. Default: 127.5.
 
     Returns:
-        Cell, GEIR backend Infer network.
+        Cell, Infer network.
     """
     __quant_op_name__ = ["TensorAdd", "Sub", "Mul", "RealDiv"]
 
@@ -329,17 +358,15 @@ class ExportToQuantInferNetwork:
             return None
 
         # Build the `Quant` `Dequant` op.
-        # AscendQuant only support perlayer version. Need check here.
-        quant_op = inner.AscendQuant(float(scale_a_in), float(zp_a_in))
+        # Quant only support perlayer version. Need check here.
+        quant_op = inner.Quant(float(scale_a_in), float(zp_a_in))
         sqrt_mode = False
         scale_deq = scale_a_out * scale_w
         if (scale_deq < 2 ** -14).all():
             scale_deq = np.sqrt(scale_deq)
             sqrt_mode = True
-        dequant_op = inner.AscendDequant(sqrt_mode)
+        dequant_op = inner.Dequant(sqrt_mode)
 
-        # get op
-        op_core = cell_core.matmul if isinstance(cell_core, quant.DenseQuant) else cell_core.conv
         if isinstance(activation, _AddFakeQuantAfterSubCell):
             activation = activation.subcell
         elif hasattr(activation, "get_origin"):
@@ -351,14 +378,21 @@ class ExportToQuantInferNetwork:
         if isinstance(cell_core, (quant.DenseQuant, quant.Conv2dQuant)):
             if cell_core.has_bias:
                 bias = cell_core.bias.data.asnumpy()
-        elif isinstance(cell_core, quant.Conv2dBatchNormQuant):
+        elif isinstance(cell_core, (quant.Conv2dBnFoldQuant, quant.Conv2dBnWithoutFoldQuant)):
             weight, bias = quant_utils.fold_batchnorm(weight, cell_core)
 
         # apply the quant
-        weight = Tensor(quant_utils.weight2int(weight, scale_w, zp_w), self.data_type)
+        weight = quant_utils.weight2int(weight, scale_w, zp_w)
         if bias is not None:
             bias = Tensor(scale_a_in * scale_w * bias, mstype.int32)
         scale_deq = Tensor(scale_deq, mstype.float16)
+        # get op
+        if isinstance(cell_core, quant.DenseQuant):
+            op_core = P.MatMul()
+            weight = np.transpose(weight)
+        else:
+            op_core = cell_core.conv
+        weight = Tensor(weight, self.data_type)
         block = quant.QuantBlock(op_core, weight, quant_op, dequant_op, scale_deq, bias, activation)
         return block
 
@@ -411,11 +445,15 @@ def export(network, *inputs, file_name, mean=127.5, std_dev=127.5, file_format='
         file_name (str): File name of model to export.
         mean (int): Input data mean. Default: 127.5.
         std_dev (int, float): Input data variance. Default: 127.5.
-        file_format (str): MindSpore currently supports 'GEIR' format for exported quantization aware model.
-            - GEIR: Graph Engine Intermediate Representation. An Intermediate representation format of Ascend model.
+        file_format (str): MindSpore currently supports 'GEIR', 'ONNX' and 'BINARY' format for exported
+            quantization aware model. Default: 'GEIR'.
+
+            - GEIR: Graph Engine Intermidiate Representation. An intermidiate representation format of
+              Ascend model.
+            - BINARY: Binary format for model. An intermidiate representation format for models.
     """
-    supported_device = ["Ascend"]
-    supported_formats = ['GEIR']
+    supported_device = ["Ascend", "GPU"]
+    supported_formats = ['GEIR', 'BINARY']
 
     mean = validator.check_type("mean", mean, (int, float))
     std_dev = validator.check_type("std_dev", std_dev, (int, float))
@@ -428,10 +466,9 @@ def export(network, *inputs, file_name, mean=127.5, std_dev=127.5, file_format='
 
     network.set_train(False)
 
-    if file_format == 'GEIR':
-        exporter = ExportToQuantInferNetwork(network, mean, std_dev, *inputs)
-        deploy_net = exporter.run()
-        serialization.export(deploy_net, *inputs, file_name=file_name, file_format=file_format)
+    exporter = ExportToQuantInferNetwork(network, mean, std_dev, *inputs)
+    deploy_net = exporter.run()
+    serialization.export(deploy_net, *inputs, file_name=file_name, file_format=file_format)
 
 
 def convert_quant_network(network,

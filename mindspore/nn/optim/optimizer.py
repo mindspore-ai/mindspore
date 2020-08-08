@@ -20,16 +20,18 @@ import numpy as np
 import mindspore
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.nn.cell import Cell
+from mindspore.nn.layer.container import CellList
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.initializer import initializer
-from mindspore.common.tensor import Tensor
+from mindspore.common.tensor import Tensor, RowTensor
 import mindspore.common.dtype as mstype
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore import log as logger
 from mindspore.parallel._utils import _get_global_rank, _get_device_num, _get_parallel_mode
-from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.train.parallel_utils import ParallelMode
+from mindspore import context
+from mindspore.nn.learning_rate_schedule import LearningRateSchedule
 
 __all__ = ['Optimizer']
 
@@ -44,25 +46,22 @@ class Optimizer(Cell):
         This class defines the API to add Ops to train a model. Never use
         this class directly, but instead instantiate one of its subclasses.
 
-        Some optimizers support separating parameter groups. Different parameter groups can set different
-        `learning_rate` and `weight_decay`.
+        Different parameter groups can set different `learning_rate` and `weight_decay`.
 
         When separating parameter groups, the weight decay in each group will be applied on the parameters if the
-        value of weight_decay > 0. When not separating parameter groups, the `weight_decay` in the API will be
-        applied on the parameters if `weight_decay` > 0 and the 'beta' and 'gamma' are not in the name of parameters.
+        weight_decay is positive. For most optimizer, when not separating parameters, the `weight_decay` in the API will
+        be applied on the parameters without 'beta' or 'gamma' in their names if `weight_decay` is positive.
 
         To improve parameter groups performance, the customized order of parameters can be supported.
 
     Args:
-        learning_rate (Union[float, Tensor, Iterable]): A value for the learning rate. When the learning_rate is
-                                                        Iterable or a Tensor and the dims of the Tensor is 1,
-                                                        use dynamic learning rate, then the i-th step will
-                                                        take the i-th value as the learning rate.
-                                                        When the learning_rate is float or learning_rate is a Tensor
-                                                        but the dims of the Tensor is 0, use fixed learning rate.
-                                                        Other cases are not supported. It should be equal to or greater
-                                                        than 0. If the type of `learning_rate` input is int, it will be
-                                                        converted to float.
+        learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or graph for the learning
+            rate. When the learning_rate is a Iterable or a Tensor with dimension of 1, use dynamic learning rate, then
+            the i-th step will take the i-th value as the learning rate. When the learning_rate is LearningRateSchedule,
+            use dynamic learning rate, the i-th learning rate will be calculated during the process of training
+            according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor with
+            dimension of 0, use fixed learning rate. Other cases are not supported. The float learning rate should be
+            equal to or greater than 0. If the type of `learning_rate` is int, it will be converted to float.
         parameters (Union[list[Parameter], list[dict]]): When the `parameters` is a list of `Parameter` which will be
             updated, the element in `parameters` should be class `Parameter`. When the `parameters` is a list of `dict`,
             the "params", "lr", "weight_decay" and "order_params" are the keys can be parsed.
@@ -91,7 +90,7 @@ class Optimizer(Cell):
 
     def __init__(self, learning_rate, parameters, weight_decay=0.0, loss_scale=1.0):
         super(Optimizer, self).__init__(auto_prefix=False)
-        if parameters and not isinstance(parameters, list):
+        if parameters is not None and not isinstance(parameters, list):
             parameters = list(parameters)
 
         if not parameters:
@@ -104,32 +103,17 @@ class Optimizer(Cell):
             loss_scale = float(loss_scale)
         validator.check_value_type("loss_scale", loss_scale, [float], self.cls_name)
         validator.check_number_range("loss_scale", loss_scale, 0.0, float("inf"), Rel.INC_NEITHER, self.cls_name)
+        self.loss_scale = loss_scale
 
-        if isinstance(weight_decay, int):
-            weight_decay = float(weight_decay)
-        validator.check_value_type("weight_decay", weight_decay, [float], self.cls_name)
-        validator.check_number_range("weight_decay", weight_decay, 0.0, float("inf"), Rel.INC_LEFT, self.cls_name)
+        weight_decay = self._preprocess_weight_decay(weight_decay)
 
+        self.dynamic_lr = False
+        self.assignadd = None
+        self.global_step = None
         self.is_group = False
         self.is_group_lr = False
         self.is_group_params_ordered = False
-        self.loss_scale = loss_scale
-        if isinstance(learning_rate, int):
-            learning_rate = float(learning_rate)
-        if isinstance(learning_rate, float):
-            self.dynamic_lr = False
-            self.gather = None
-            self.assignadd = None
-            self.global_step = None
-            self.scalar_lr = learning_rate
-        else:
-            self.dynamic_lr = True
-            self.gather = P.GatherV2()
-            self.assignadd = P.AssignAdd()
-            self.global_step = Parameter(initializer(0, [1], mindspore.int32), name='global_step')
-            self.scalar_lr = None
-
-        learning_rate = self._get_single_lr(learning_rate)
+        learning_rate = self._preprocess_single_lr(learning_rate)
         if isinstance(parameters[0], dict):
             self.is_group = True
             self.group_params = []
@@ -137,33 +121,42 @@ class Optimizer(Cell):
             self.group_weight_decay = []
             self._init_group_params(parameters, learning_rate, weight_decay)
 
-        if self.is_group_lr:
-            self.learning_rate = ParameterTuple(self.group_lr)
-        else:
-            self.learning_rate = Parameter(learning_rate, name="learning_rate")
+        # The final value of dynamic_lr can be determined after the process of parse_single_lr and init_group_params
+        if self.dynamic_lr:
+            self.assignadd = P.AssignAdd()
+            self.global_step = Parameter(initializer(0, [1], mindspore.int32), name='global_step')
 
+        if self.is_group_lr:
+            if self.dynamic_lr:
+                self.learning_rate = CellList(self.group_lr)
+            else:
+                self.learning_rate = ParameterTuple(self.group_lr)
+        else:
+            self.learning_rate = self._build_single_lr(learning_rate, 'learning_rate')
         if self.is_group:
             self.parameters = ParameterTuple(self.group_params)
             self.weight_decay = tuple(self.group_weight_decay)
             decay_filter = lambda x: x > 0
             self.decay_flags = tuple(decay_filter(x) for x in self.weight_decay)
+            self.exec_weight_decay = any(self.decay_flags)
         else:
             self.parameters = ParameterTuple(parameters)
             self.weight_decay = weight_decay * loss_scale
             decay_filter = lambda x: 'beta' not in x.name and 'gamma' not in x.name
             self.decay_flags = tuple(decay_filter(x) for x in self.parameters)
+            self.exec_weight_decay = self.weight_decay > 0
+        ps_filter = lambda x: x.is_param_ps
+        self.ps_parameters = tuple(ps_filter(x) for x in self.parameters)
         self.reciprocal_scale = 1.0 / loss_scale
-        self.exec_weight_decay = any(self.decay_flags)
         self.param_length = len(self.parameters)
         self.map_ = C.Map()
 
-        use_parallel = auto_parallel_context().get_enable_parallel_optimizer()
+        use_parallel = context.get_auto_parallel_context("enable_parallel_optimizer")
         self.use_parallel = use_parallel
         if use_parallel:
-            if self.cls_name not in ["Lamb", "AdamWeightDecayDynamicLR", "AdamWeightDecay"]:
+            if self.cls_name not in ["Lamb", "AdamWeightDecay"]:
                 raise RuntimeError("Optimizer segmentation does not support optimizer {}".format(self.cls_name))
-            if _get_parallel_mode() not in [ParallelMode.HYBRID_PARALLEL, ParallelMode.DATA_PARALLEL,
-                                            ParallelMode.AUTO_PARALLEL]:
+            if _get_parallel_mode() != ParallelMode.DATA_PARALLEL:
                 raise RuntimeError("Optimizer segmentation does not support parallel mode {}".format
                                    (_get_parallel_mode()))
             self.dev_num = _get_device_num()
@@ -175,6 +168,7 @@ class Optimizer(Cell):
             self.param_names = []
             for param in self.parameters:
                 self.param_names.append(param.name)
+
         else:
             self.optim_filter = (True,) * self.param_length
 
@@ -191,13 +185,12 @@ class Optimizer(Cell):
         Returns:
             tuple[Tensor], The gradients after weight decay.
         """
-        params = self.parameters
-        if self.is_group:
-            if self.exec_weight_decay:
+        if self.exec_weight_decay:
+            params = self.parameters
+            if self.is_group:
                 gradients = self.map_(F.partial(_apply_decay), self.weight_decay, self.decay_flags,
                                       params, gradients)
-        else:
-            if self.weight_decay > 0:
+            else:
                 gradients = self.map_(F.partial(_apply_decay, self.weight_decay), self.decay_flags,
                                       params, gradients)
 
@@ -223,24 +216,53 @@ class Optimizer(Cell):
 
         return gradients
 
-    def _get_single_lr(self, learning_rate):
-        """Get learning rate in Tensor type."""
-        if isinstance(learning_rate, float):
+    def _preprocess_weight_decay(self, weight_decay):
+        """Check weight decay, and convert int to float."""
+        if isinstance(weight_decay, (float, int)):
+            weight_decay = float(weight_decay)
+            validator.check_number_range("weight_decay", weight_decay, 0.0, float("inf"), Rel.INC_LEFT, self.cls_name)
+            return weight_decay
+        raise TypeError("Weight decay should be int or float.")
+
+    def _preprocess_single_lr(self, learning_rate):
+        """Check lr value, and convert lr to a float, a Tensor or a LearningRateSchedule."""
+        if isinstance(learning_rate, (float, int)):
+            learning_rate = float(learning_rate)
             validator.check_number_range("learning rate", learning_rate, 0.0, float("inf"), Rel.INC_LEFT, self.cls_name)
-            lr = Tensor(learning_rate, mstype.float32)
-        elif isinstance(learning_rate, Iterable):
-            lr = Tensor(np.array(list(learning_rate)).astype(np.float32))
-        elif isinstance(learning_rate, Tensor):
+            return learning_rate
+        if isinstance(learning_rate, Tensor) and learning_rate.dim() == 0:
+            return learning_rate
+
+        self.dynamic_lr = True
+        if isinstance(learning_rate, Iterable):
+            return Tensor(np.array(list(learning_rate)).astype(np.float32))
+        if isinstance(learning_rate, Tensor):
             if learning_rate.dim() > 1:
-                raise ValueError("Learning rate should be a 0 or 1 dim `Tensor`,"
+                raise ValueError("The dim of `Tensor` type Learning rate should be a 0 or 1,"
                                  f"but got {learning_rate.dim()}.")
             if learning_rate.dim() == 1 and learning_rate.size() < 2:
-                logger.warning("If want to use the dynamic learning rate, please make sure that the number "
-                               "of elements in the list, tuple or tensor passed is greater than 1.")
-            lr = learning_rate
-        else:
-            raise TypeError("Learning rate should be float, Tensor or Iterable.")
-        return lr
+                logger.warning("If use `Tensor` type dynamic learning rate, please make sure that the number"
+                               "of elements in the tensor passed is greater than 1.")
+            return learning_rate
+        if isinstance(learning_rate, LearningRateSchedule):
+            return learning_rate
+        raise TypeError("Learning rate should be int, float, Tensor, Iterable or LearningRateSchedule.")
+
+    def _build_single_lr(self, learning_rate, name):
+        """Build learning rate value, convert learning rate to a Parameter or a LearningRateSchedule."""
+        if isinstance(learning_rate, float):
+            learning_rate = Parameter(Tensor(learning_rate, mstype.float32), name)
+            if self.is_group_lr and self.dynamic_lr:
+                learning_rate = _ConvertToCell(learning_rate)
+            return learning_rate
+        if isinstance(learning_rate, Tensor) and learning_rate.dim() == 0:
+            learning_rate = Parameter(learning_rate, name)
+            if self.is_group_lr and self.dynamic_lr:
+                learning_rate = _ConvertToCell(learning_rate)
+            return learning_rate
+        if isinstance(learning_rate, Tensor) and learning_rate.dim() == 1:
+            return _IteratorLearningRate(learning_rate, name)
+        return learning_rate
 
     def _check_group_params(self, parameters):
         """Check group params."""
@@ -268,13 +290,12 @@ class Optimizer(Cell):
     def _parse_group_params(self, parameters, learning_rate):
         """Parse group params."""
         self._check_group_params(parameters)
-        if self.dynamic_lr:
-            dynamic_lr_length = learning_rate.size()
+        if isinstance(learning_rate, Tensor) and learning_rate.dim() == 1:
+            tensor_lr_length = learning_rate.size()
         else:
-            dynamic_lr_length = 0
+            tensor_lr_length = 0
 
         for group_param in parameters:
-            lr_length = dynamic_lr_length
             if 'order_params' in group_param.keys():
                 if len(group_param.keys()) > 1:
                     raise ValueError("The order params dict in group parameters should "
@@ -286,53 +307,38 @@ class Optimizer(Cell):
 
             if 'lr' in group_param.keys():
                 self.is_group_lr = True
-                self._get_single_lr(group_param['lr'])
-                if isinstance(group_param['lr'], Iterable):
-                    lr_length = len(group_param['lr'])
-                    self.dynamic_lr = True
-                elif isinstance(group_param['lr'], Tensor):
-                    lr_length = group_param['lr'].size()
-                    self.dynamic_lr = True
+                group_lr = self._preprocess_single_lr(group_param['lr'])
 
-            if dynamic_lr_length not in (lr_length, 0):
-                raise ValueError("The dynamic learning rate in group should be the same size.")
-
-            dynamic_lr_length = lr_length
-        self.dynamic_lr_length = dynamic_lr_length
+                if isinstance(group_lr, Tensor) and group_lr.dim() == 1:
+                    group_lr_length = group_lr.size()
+                    if tensor_lr_length == 0:
+                        tensor_lr_length = group_lr_length
+                    elif group_lr_length != tensor_lr_length:
+                        raise ValueError("The Tensor type dynamic learning rate in group should be the same size.")
 
     def _init_group_params(self, parameters, learning_rate, weight_decay):
         """Init learning rate or weight decay in group params."""
-        origin_dynamic_lr = self.dynamic_lr
         self._parse_group_params(parameters, learning_rate)
-        if self.dynamic_lr and not origin_dynamic_lr:
-            self.gather = P.GatherV2()
-            self.assignadd = P.AssignAdd()
-            self.global_step = Parameter(initializer(0, [1], mindspore.int32), name='global_step')
+        default_lr = self._build_single_lr(learning_rate, 'learning_rate')
 
         params_store = []
-        for group_param in parameters:
+        for group_num, group_param in enumerate(parameters):
             if 'order_params' in group_param.keys():
                 ordered_parameters = group_param['order_params']
                 continue
 
             self.group_params += group_param['params']
+
             if 'lr' in group_param.keys():
-                params_dynamic_lr = isinstance(group_param['lr'], (Iterable, Tensor))
-                if self.dynamic_lr and not params_dynamic_lr:
-                    lr = Tensor(np.array([group_param['lr']] * self.dynamic_lr_length).astype(np.float32))
-                else:
-                    lr = self._get_single_lr(group_param['lr'])
+                lr_param_name = 'learning_rate_group_' + str(group_num)
+                lr = self._preprocess_single_lr(group_param['lr'])
+                lr = self._build_single_lr(lr, lr_param_name)
             else:
-                if self.dynamic_lr and not origin_dynamic_lr:
-                    lr = Tensor(np.array([self.scalar_lr] * self.dynamic_lr_length).astype(np.float32))
-                else:
-                    lr = learning_rate
+                lr = default_lr
 
             if 'weight_decay' in group_param.keys():
-                validator.check_float_legal_value('weight_decay', group_param['weight_decay'], None)
-                validator.check_number_range('weight_decay', group_param['weight_decay'], 0.0, float("inf"),
-                                             Rel.INC_LEFT, self.cls_name)
-                weight_decay_ = group_param['weight_decay'] * self.loss_scale
+                cur_weight_decay = self._preprocess_weight_decay(group_param['weight_decay'])
+                weight_decay_ = cur_weight_decay * self.loss_scale
             else:
                 weight_decay_ = weight_decay * self.loss_scale
 
@@ -346,7 +352,7 @@ class Optimizer(Cell):
                     raise RuntimeError(f"The {param.name} parameter has appeared in parameter groups.")
 
                 params_store.append(param.name)
-                self.group_lr.append(Parameter(lr, name="lr_" + param.name))
+                self.group_lr.append(lr)
                 self.group_weight_decay.append(weight_decay_)
 
         if self.is_group_params_ordered:
@@ -382,19 +388,17 @@ class Optimizer(Cell):
         Returns:
             float, the learning rate of current step.
         """
-        if self.is_group_lr:
-            lr = self.learning_rate
-            if self.dynamic_lr:
+        lr = self.learning_rate
+        if self.dynamic_lr:
+            if self.is_group_lr:
                 lr = ()
-                for i in range(self.param_length):
-                    current_dynamic_lr = self.gather(self.learning_rate[i], self.global_step, 0)
+                for learning_rate in self.learning_rate:
+                    current_dynamic_lr = learning_rate(self.global_step)
                     lr += (current_dynamic_lr,)
-                F.control_depend(lr, self.assignadd(self.global_step, 1))
-        else:
-            lr = self.learning_rate
-            if self.dynamic_lr:
-                lr = self.gather(self.learning_rate, self.global_step, 0)
-                F.control_depend(lr, self.assignadd(self.global_step, 1))
+            else:
+                lr = self.learning_rate(self.global_step)
+
+            F.control_depend(lr, self.assignadd(self.global_step, 1))
         return lr
 
     def get_lr_parameter(self, param):
@@ -407,29 +411,32 @@ class Optimizer(Cell):
         Returns:
             Parameter, single `Parameter` or `list[Parameter]` according to the input type.
         """
-        if not isinstance(param, (Parameter, list)):
+        def get_lr_value(learning_rate):
+            if isinstance(learning_rate, (_ConvertToCell, _IteratorLearningRate)):
+                return learning_rate.learning_rate
+
+            return learning_rate
+
+        if isinstance(param, Parameter):
+            param_list = [param]
+        elif isinstance(param, list):
+            param_list = param
+        else:
             raise TypeError(f"The parameter only support 'Parameter' or 'list' type.")
 
-        if isinstance(param, list):
-            lr = []
-            for p in param:
-                validator.check_value_type("parameter", p, [Parameter], self.cls_name)
-                if p not in self.parameters:
-                    raise ValueError(f"The parameter {p.name} is not in optimizer.")
-                if self.is_group_lr:
-                    index = self.parameters.index(p)
-                    lr.append(self.learning_rate[index])
-                else:
-                    lr.append(self.learning_rate)
-        else:
-            if param not in self.parameters:
-                raise ValueError(f"The parameter {param.name} is not in optimizer.")
+        lr = []
+        ids = [id(p) for p in self.parameters]
+        for p in param_list:
+            validator.check_value_type("parameter", p, [Parameter], self.cls_name)
+            if id(p) not in ids:
+                raise ValueError(f"The parameter {p.name} is not in optimizer.")
             if self.is_group_lr:
-                index = self.parameters.index(param)
-                lr = self.learning_rate[index]
+                index = ids.index(id(p))
+                lr.append(get_lr_value(self.learning_rate[index]))
             else:
-                lr = self.learning_rate
-        return lr
+                lr.append(get_lr_value(self.learning_rate))
+
+        return lr if isinstance(param, list) else lr[0]
 
     def _get_parameter_group_id(self):
         """
@@ -460,7 +467,7 @@ class Optimizer(Cell):
             param_group.append(F.make_tuple())
             key_group.append(F.make_tuple())
         for i in range(self.param_length):
-            param_group[self.param_rank[i]] = param_group[self.param_rank[i]] + (optim_result[i],)
+            param_group[self.param_rank[i]] = param_group[self.param_rank[i]] + (self.parameters[i],)
             key = P.MakeRefKey(self.param_names[i])()
             key_group[self.param_rank[i]] = key_group[self.param_rank[i]] + (key,)
         new_param_group = []
@@ -470,9 +477,9 @@ class Optimizer(Cell):
             new_param_group.append(next_params)
             for i in range(F.tuple_len(next_params)):
                 F.assign(key_group[root][i], next_params[i])
-        status = True
+        status = F.control_depend(optim_result, new_param_group[0][0])
         for i in range(self.dev_num - 1):
-            status = F.control_depend(new_param_group[i][0], new_param_group[i+1])
+            status = F.depend(F.control_depend(new_param_group[i], new_param_group[i+1][0]), status)
 
         return status
 
@@ -486,12 +493,14 @@ op_gather = P.GatherV2()
 _apply_decay = C.MultitypeFuncGraph("apply_decay")
 
 
-@_apply_decay.register("Number", "Bool", "Tensor", "Tuple")
+@_apply_decay.register("Number", "Bool", "Tensor", "RowTensor")
 def _tensor_apply_decay_with_sparse(weight_decay, if_apply, weight, gradient):
     """Get grad with weight_decay."""
     if if_apply:
-        weight = op_gather(weight, gradient[0], 0)
-        return gradient[0], op_add((weight * weight_decay, gradient[1])), gradient[2]
+        indices = gradient.indices
+        values = op_add((op_gather(weight, indices, 0) * weight_decay, gradient.values))
+        shape = gradient.dense_shape
+        return RowTensor(indices, values, shape)
     return gradient
 
 
@@ -514,9 +523,39 @@ def tensor_grad_scale(scale, grad):
     return grad * scale
 
 
-@_grad_scale.register("Number", "Tuple")
+@_grad_scale.register("Number", "RowTensor")
 def tensor_grad_scale_with_sparse(scale, grad):
     """Get grad with scale."""
     if scale == 1.0:
         return grad
-    return grad[0], grad[1] * scale, grad[2]
+    return RowTensor(grad.indices, grad.values * scale, grad.dense_shape)
+
+
+class _ConvertToCell(LearningRateSchedule):
+    """Inner api, convert learning rate of scalar to LearningRateSchedule."""
+    def __init__(self, learning_rate):
+        super(_ConvertToCell, self).__init__()
+        if not isinstance(learning_rate, Parameter):
+            raise TypeError('Learning rate must be Parameter.')
+        self.learning_rate = learning_rate
+
+    def construct(self, global_step):
+        return self.learning_rate + 1.0 - 1.0
+
+
+class _IteratorLearningRate(LearningRateSchedule):
+    """Inner api, convert learning rate of Tensor(list) to LearningRateSchedule."""
+    def __init__(self, learning_rate, name):
+        super(_IteratorLearningRate, self).__init__()
+        if isinstance(learning_rate, Tensor):
+            if learning_rate.dim() != 1:
+                raise ValueError("The dim of `Tensor` type dynamic learning rate should be a 1,"
+                                 f"but got {learning_rate.dim()}.")
+        else:
+            raise TypeError("Learning rate should be Tensor.")
+
+        self.learning_rate = Parameter(learning_rate, name)
+        self.gather = P.GatherV2()
+
+    def construct(self, global_step):
+        return self.gather(self.learning_rate, global_step, 0)

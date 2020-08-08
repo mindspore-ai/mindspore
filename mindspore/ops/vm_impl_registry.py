@@ -37,10 +37,10 @@ Examples:
 
 def get_vm_impl_fn(prim):
     """
-    Gets vm function by primitive obj or primitive name for c++
+    Get the virtual implementation function by a primitive object or primitive name.
 
     Args:
-        prim (Union[Primitive, str]): primitive obj or primitive name for operator register by name.
+        prim (Union[Primitive, str]): primitive object or name for operator register.
 
     Returns:
         function, vm function

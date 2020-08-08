@@ -40,7 +40,9 @@ Status IteratorBase::GetNextAsMap(TensorMap *out_map) {
   out_map->clear();
 
   TensorRow curr_row;
+  MS_LOG(INFO) << "get next as map start.";
   RETURN_IF_NOT_OK(FetchNextTensorRow(&curr_row));
+  MS_LOG(INFO) << "fetchNextTensor success.";
 
   // Return empty map if there's no data
   if (curr_row.empty()) {
@@ -105,7 +107,8 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
   // Once eof is handled, always return empty row.  Class must be destroyed and recreated if you
   // want to iterate again.
   if (eof_handled_) {
-    return Status::OK();
+    std::string err = "EOF buffer encountered. Users try to fetch data beyond the specified number of epochs.";
+    RETURN_STATUS_UNEXPECTED(err);
   }
 
   // Check if we need to get a new DataBuffer to iterate.
@@ -119,36 +122,22 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
     // Since GetNextBuffer was used rather than GetNextInput(), it means we need to manually
     // handle eoe and eof messages here.
     //
-    // An eoe buffer means we have iterated fully to the end of the tree.
-    // An eoe buffer will be immediately followed by an eof buffer, which signals the shutdown of
-    // all operators.
+    // An eoe buffer means we have iterated an epoch.
+    // The next buffer in the pipeline might be an EOF or a databuffer for next epoch
     if (curr_buffer_->eoe()) {
-      MS_LOG(DEBUG) << "End of data iteration. Fetch eof and then return empty row.";
-
-      // Before returning the last empty vector, fetch the eof buffer which should be the last
-      // buffer, and then free it.
-      RETURN_IF_NOT_OK(root_->GetNextBuffer(&curr_buffer_));
-
-      if (!curr_buffer_->eof()) {
-        RETURN_STATUS_UNEXPECTED("Non-eof after getting eoe in iterator!");
-      }
-      eof_handled_ = true;
-      curr_buffer_.reset();  // explicitly free the eof buffer
-      // Set tree to Finished state
-      root_->Tree()->SetFinished();
-
+      MS_LOG(INFO) << "End of data iteration.";
+      curr_buffer_.reset();  // explicitly free the eoe buffer
       return Status::OK();
     }
 
+    // An eof buffer means it is the end of execution and all operators are shutting down.
+    // Because there is no more data to return to the caller, this will change `eof_handled_` state and
+    // returns status unexpected error.
     if (curr_buffer_->eof()) {
-      // An eof by itself, without being preceded by an eoe, is possible if a repeat operator
-      // exists below us in the stack. Repeat operator eats eoe's but eventually allows the
-      // flow of an eof up the pipeline by itself.
       eof_handled_ = true;
       curr_buffer_.reset();  // explicitly free the eof buffer
-      // Set tree to Finished state
-      root_->Tree()->SetFinished();
-      return Status::OK();
+      std::string err = "EOF buffer encountered. Users try to fetch data beyond the specified number of epochs.";
+      RETURN_STATUS_UNEXPECTED(err);
     }
   }
 
@@ -208,20 +197,24 @@ Status ChildIterator::FetchNextTensorRow(TensorRow *out_row) {
   // Once eof is handled, always return empty row.  Class must be destroyed and recreated if you
   // want to iterate again.
   if (eof_handled_) {
-    return Status::OK();
+    std::string err = "EOF buffer encountered. Users try to fetch data beyond the specified number of epochs.";
+    RETURN_STATUS_UNEXPECTED(err);
   }
 
   // Check if we need to get a new DataBuffer to iterate.
   if (curr_buffer_ == nullptr || curr_buffer_->NumRows() == 0) {
+    // GetNextInput() depends on current_op's EoeReceived. So, EOE buffer might be already be handled and
+    // this child iterator might not see EOE buffer.
     RETURN_IF_NOT_OK(current_op_->GetNextInput(&curr_buffer_, worker_id_, child_idx_));
 
-    // Unlike the DatasetIterator, this child iterator does not quit after eoe.
-    // Instead, if an eoe is picked up here, we simply return an empty vector and it's up to the
+    // If an eoe is picked up here, we simply return an empty vector and it's up to the
     // caller to decide what it wants to do next.
     if (curr_buffer_->eoe()) {
       MS_LOG(DEBUG) << "Child iterator picked up EOE.";
       end_epoch_ = true;
       return Status::OK();
+    } else {
+      end_epoch_ = false;
     }
 
     if (curr_buffer_->eof()) {

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
-#ifndef DATASET_KERNELS_IMAGE_UNIFORM_AUG_OP_H_
-#define DATASET_KERNELS_IMAGE_UNIFORM_AUG_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_UNIFORM_AUG_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_UNIFORM_AUG_OP_H_
 
 #include <memory>
 #include <random>
@@ -40,7 +40,7 @@ class UniformAugOp : public TensorOp {
   // Destructor
   ~UniformAugOp() override = default;
 
-  void Print(std::ostream &out) const override { out << "UniformAugOp:: number of ops " << num_ops_; }
+  void Print(std::ostream &out) const override { out << Name() << ":: number of ops " << num_ops_; }
 
   // Overrides the base class compute function
   // @return Status - The error code return
@@ -56,4 +56,4 @@ class UniformAugOp : public TensorOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_KERNELS_IMAGE_UNIFORM_AUG_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_UNIFORM_AUG_OP_H_

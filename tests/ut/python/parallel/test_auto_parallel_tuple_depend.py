@@ -46,7 +46,7 @@ class GradWrap(nn.Cell):
 
 
 def bn_with_initialize(out_channels):
-    bn = nn.BatchNorm2d(out_channels, momentum=0.1, eps=1e-5)
+    bn = nn.BatchNorm1d(out_channels, momentum=0.1, eps=1e-5)
     return bn
 
 

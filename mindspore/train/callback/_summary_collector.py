@@ -73,7 +73,8 @@ class SummaryCollector(Callback):
         summary_dir (str): The collected data will be persisted to this directory.
             If the directory does not exist, it will be created automatically.
         collect_freq (int): Set the frequency of data collection, it should be greater then zero,
-            and the unit is `step`. Default: 10. The first step will be recorded at any time.
+            and the unit is `step`. Default: 10. If a frequency is set, we will collect data
+            at (current steps % freq) == 0, and the first step will be collected at any time.
             It is important to note that if the data sink mode is used, the unit will become the `epoch`.
             It is not recommended to collect data too frequently, which can affect performance.
         collect_specified_data (Union[None, dict]): Perform custom operations on the collected data. Default: None.
@@ -108,6 +109,18 @@ class SummaryCollector(Callback):
         custom_lineage_data (Union[dict, None]): Allows you to customize the data and present it on the MingInsight
             lineage page. In the custom data, the key type support str, and the value type support str/int/float.
             Default: None, it means there is no custom data.
+        collect_tensor_freq (Optional[int]): Same semantic as the `collect_freq`, but controls TensorSummary only.
+            Because TensorSummary data is too large compared to other summary data, this parameter is used to reduce
+            its collection. By default, TensorSummary data will be collected at most 21 steps, but not more than how
+            many steps other summary data will be collected.
+            Default: None, which means to follow the behavior as described above. For example, given `collect_freq=10`,
+            when the total steps is 600, TensorSummary will be collected 21 steps, while other summary data 61 steps,
+            but when the total steps is 20, both TensorSummary and other summary will be collected 3 steps.
+            Also note that when in parallel mode, the total steps will be splitted evenly, which will
+            affect how many steps TensorSummary will be collected.
+        max_file_size (Optional[int]): The maximum size in bytes each file can be written to the disk.
+            Default: None, which means no limit. For example, to write not larger than 4GB,
+            specify `max_file_size=4 * 1024**3`.
 
     Raises:
         ValueError: If the parameter value is not expected.
@@ -145,15 +158,27 @@ class SummaryCollector(Callback):
         'histogram_regular': None
     }
 
-    def __init__(self, summary_dir, collect_freq=10, collect_specified_data=None,
-                 keep_default_action=True, custom_lineage_data=None):
+    def __init__(self,
+                 summary_dir,
+                 collect_freq=10,
+                 collect_specified_data=None,
+                 keep_default_action=True,
+                 custom_lineage_data=None,
+                 collect_tensor_freq=None,
+                 max_file_size=None):
         super(SummaryCollector, self).__init__()
 
         self._summary_dir = self._process_summary_dir(summary_dir)
         self._record = None
 
-        self._check_collect_freq(collect_freq)
+        self._check_positive('collect_freq', collect_freq)
         self._collect_freq = collect_freq
+
+        self._check_positive('collect_tensor_freq', collect_tensor_freq, allow_none=True)
+        self._collect_tensor_freq = collect_tensor_freq
+
+        self._check_positive('max_file_size', max_file_size, allow_none=True)
+        self._max_file_size = max_file_size
 
         self._check_action(keep_default_action)
 
@@ -165,16 +190,15 @@ class SummaryCollector(Callback):
         self._custom_lineage_data = custom_lineage_data
 
         self._temp_optimizer = None
-        self._has_saved_train_network = False
+        self._has_saved_graph = False
         self._has_saved_custom_data = False
         self._is_parse_loss_success = True
         self._first_step = True
         self._dataset_sink_mode = True
 
     def __enter__(self):
-        self._first_step = True
-        self._dataset_sink_mode = True
-        self._record = SummaryRecord(log_dir=self._summary_dir)
+        self._record = SummaryRecord(log_dir=self._summary_dir, max_file_size=self._max_file_size)
+        self._first_step, self._dataset_sink_mode = True, True
         return self
 
     def __exit__(self, *err):
@@ -198,11 +222,13 @@ class SummaryCollector(Callback):
         return summary_dir
 
     @staticmethod
-    def _check_collect_freq(freq):
-        """Check collect freq type and value."""
-        check_value_type('collect_freq', freq, int)
-        if freq <= 0:
-            raise ValueError(f'For `collect_freq` the value should be greater than 0, but got `{freq}`.')
+    def _check_positive(name, value, allow_none=False):
+        """Check if the value to be int type and positive."""
+        if allow_none and value is None:
+            return
+        check_value_type(name, value, int)
+        if value <= 0:
+            raise ValueError(f'For `{name}` the value should be greater than 0, but got `{value}`.')
 
     @staticmethod
     def _check_custom_lineage_data(custom_lineage_data):
@@ -269,42 +295,49 @@ class SummaryCollector(Callback):
                              'but got `{cb_params.mode}` mode.')
 
         self._record.set_mode(cb_params.mode)
-        if cb_params.mode == ModeEnum.TRAIN.value:
-            # Note: if model.init is not executed then the computed graph will not be obtained here
-            # The purpose of recording the graph here was to collect_freq if it was set to a large size,
-            # but also want to see the graph as soon after compilation.
-            self._collect_graphs(cb_params)
 
+        if cb_params.mode == ModeEnum.TRAIN.value:
+            if self._collect_tensor_freq is None:
+                default_tensor_summary_limit = 20
+                total_step = cb_params.epoch_num * cb_params.batch_num
+                self._collect_tensor_freq = max(self._collect_freq, total_step // default_tensor_summary_limit)
+
+    def step_end(self, run_context):
+        cb_params = run_context.original_args()
+        if cb_params.mode != ModeEnum.TRAIN.value:
+            return
+
+        if not self._has_saved_graph:
+            self._collect_graphs(cb_params)
             self._collect_dataset_graph(cb_params)
+            self._has_saved_graph = True
+            self._record.record(cb_params.cur_step_num)
 
         if self._custom_lineage_data and not self._has_saved_custom_data:
             packaged_custom_data = self._package_custom_lineage_data(self._custom_lineage_data)
             self._record.add_value('custom_lineage_data', 'custom_lineage_data', packaged_custom_data)
             self._has_saved_custom_data = True
+            self._record.record(cb_params.cur_step_num)
 
-        # There's nothing special about setting step to 0 here, just to satisfy the interface call
-        self._record.record(step=0)
-
-    def step_end(self, run_context):
-        cb_params = run_context.original_args()
         if self._first_step:
             # Notice: This way of determining whether dataset sink mode is True does not work in the eval scenario
-            self._dataset_sink_mode = bool(cb_params.cur_step_num == cb_params.batch_num)
+            self._dataset_sink_mode = cb_params.cur_step_num == cb_params.batch_num
+            self._collect_at_step_end(cb_params, plugin_filter=None)
+            self._first_step = False
+        else:
+            current = cb_params.cur_epoch_num if self._dataset_sink_mode else cb_params.cur_step_num
+            if current % self._collect_freq == 0 and current % self._collect_tensor_freq == 0:
+                self._collect_at_step_end(cb_params, plugin_filter=None)
+            elif current % self._collect_tensor_freq == 0:
+                self._collect_at_step_end(cb_params, lambda plugin: plugin == PluginEnum.TENSOR.value)
+            elif current % self._collect_freq == 0:
+                self._collect_at_step_end(cb_params, lambda plugin: plugin != PluginEnum.TENSOR.value)
 
-        if cb_params.mode == ModeEnum.TRAIN.value:
-
-            if not self._is_collect_this_step(cb_params):
-                return
-
-            if not self._has_saved_train_network:
-                self._collect_graphs(cb_params)
-
-            self._collect_input_data(cb_params)
-            self._collect_metric(cb_params)
-            self._collect_histogram(cb_params)
-
-        self._first_step = False
-        self._record.record(cb_params.cur_step_num)
+    def _collect_at_step_end(self, cb_params, plugin_filter):
+        self._collect_input_data(cb_params)
+        self._collect_metric(cb_params)
+        self._collect_histogram(cb_params)
+        self._record.record(cb_params.cur_step_num, plugin_filter=plugin_filter)
 
     def end(self, run_context):
         cb_params = run_context.original_args()
@@ -330,18 +363,6 @@ class SummaryCollector(Callback):
                     continue
                 raise ValueError(f"There are more than one {self.__class__.__name__} instance in callback list,"
                                  f"but expected only one {self.__class__.__name__} instance.")
-
-    def _is_collect_this_step(self, cb_params):
-        """Decide whether to collect data for the current step."""
-        # Make sure the first step data is recorded
-        if not self._first_step:
-            if self._dataset_sink_mode:
-                if cb_params.cur_epoch_num % self._collect_freq:
-                    return False
-            else:
-                if cb_params.cur_step_num % self._collect_freq:
-                    return False
-        return True
 
     @staticmethod
     def _package_custom_lineage_data(custom_lineage_data):
@@ -411,7 +432,6 @@ class SummaryCollector(Callback):
         if graph_proto is None:
             return
 
-        self._has_saved_train_network = True
         self._record.add_value(PluginEnum.GRAPH.value, 'train_network/auto', graph_proto)
 
     def _collect_metric(self, cb_params):
@@ -582,7 +602,7 @@ class SummaryCollector(Callback):
         else:
             train_lineage[LineageMetadata.learning_rate] = None
         train_lineage[LineageMetadata.optimizer] = type(optimizer).__name__ if optimizer else None
-        train_lineage[LineageMetadata.train_network] = self._get_backbone(cb_params.train_network)
+        train_lineage[LineageMetadata.train_network] = type(cb_params.network).__name__
 
         loss_fn = self._get_loss_fn(cb_params)
         train_lineage[LineageMetadata.loss_function] = type(loss_fn).__name__ if loss_fn else None
@@ -738,30 +758,6 @@ class SummaryCollector(Callback):
             ckpt_file_path = os.path.realpath(ckpt_file_path)
 
         return ckpt_file_path
-
-    @staticmethod
-    def _get_backbone(network):
-        """
-        Get the name of backbone network.
-
-        Args:
-            network (Cell): The train network.
-
-        Returns:
-            Union[str, None], If parse success, will return the name of the backbone network, else return None.
-        """
-        backbone_name = None
-        backbone_key = '_backbone'
-
-        for _, cell in network.cells_and_names():
-            if hasattr(cell, backbone_key):
-                backbone_network = getattr(cell, backbone_key)
-                backbone_name = type(backbone_network).__name__
-
-        if backbone_name is None and network is not None:
-            backbone_name = type(network).__name__
-
-        return backbone_name
 
     @staticmethod
     def _get_loss_fn(cb_params):

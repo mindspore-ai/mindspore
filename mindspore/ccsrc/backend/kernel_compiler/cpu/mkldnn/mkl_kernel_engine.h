@@ -23,7 +23,7 @@
 #include <vector>
 #include <memory>
 #include "dnnl.hpp"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_IRPASS_PRIM_ELIMINATE_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_IRPASS_PRIM_ELIMINATE_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_PRIM_ELIMINATE_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_PRIM_ELIMINATE_H_
 
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/irpass.h"
-#include "ir/visitor.h"
+#include "frontend/optimizer/anf_visitor.h"
 
 namespace mindspore {
 namespace opt {
@@ -46,4 +46,4 @@ class PrimEliminater : public AnfVisitor {
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_IRPASS_PRIM_ELIMINATE_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_PRIM_ELIMINATE_H_

@@ -16,7 +16,6 @@
 #include "backend/optimizer/ascend/ascend_backend_optimization.h"
 #include <memory>
 #include <string>
-#include <set>
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/ascend/ir_fission/bn_split.h"
 #include "backend/optimizer/ascend/ir_fission/bn_grad_split.h"
@@ -24,6 +23,7 @@
 #include "backend/optimizer/ascend/ir_fission/batch_norm_bert_fission.h"
 #include "backend/optimizer/ascend/ir_fission/single_batch_norm_fission.h"
 #include "backend/optimizer/ascend/ir_fission/tensor_scatter_update_fission.h"
+#include "backend/optimizer/ascend/ir_fission/reduce_min_fission.h"
 #include "backend/optimizer/ascend/ir_fusion/fused_batch_norm_fusion.h"
 #include "backend/optimizer/ascend/ir_fission/layer_norm_grad_split.h"
 #include "backend/optimizer/pass/communication_op_fusion.h"
@@ -59,6 +59,7 @@
 #include "backend/optimizer/ascend/format_type/insert_trans_op.h"
 #include "backend/optimizer/ascend/format_type/rectify_do_mask_kernel_info.h"
 #include "backend/optimizer/ascend/format_type/chang_axis_of_reduce_kernel.h"
+#include "backend/optimizer/ascend/format_type/split_unsupported_transdata.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
 #include "backend/optimizer/pass/optimize_dependence.h"
 #include "backend/optimizer/pass/erase_visit_attr.h"
@@ -87,6 +88,7 @@
 #include "backend/optimizer/ascend/buffer_fusion/segment_eltwise_fusion_pass.h"
 #include "backend/optimizer/ascend/format_type/deal_ref_trans_and_cast.h"
 #include "backend/optimizer/ascend/enhancer/insert_memcpy_async_for_hccl_op.h"
+#include "backend/optimizer/ascend/enhancer/insert_memcpy_async_for_cascade.h"
 #include "backend/optimizer/ascend/enhancer/insert_pad_for_nms_with_mask.h"
 #include "backend/optimizer/ascend/format_type/insert_transdata_for_runop.h"
 #include "backend/optimizer/ascend/enhancer/getnext_memcpy_elimination.h"
@@ -97,7 +99,11 @@
 #include "backend/optimizer/ascend/format_type/modify_ops_attrs.h"
 #include "backend/optimizer/ascend/format_type/remove_no_use_reshape_op.h"
 #include "backend/optimizer/ascend/ir_fusion/add_input_to_output.h"
-#include "utils/context/ms_context.h"
+#include "backend/optimizer/ascend/format_type/remove_internal_output.h"
+#include "backend/optimizer/ascend/ir_fission/concat_fission.h"
+#include "backend/optimizer/ascend/ir_fission/pack_fission.h"
+#include "backend/optimizer/ascend/enhancer/concat_outputs_for_all_gather.h"
+#include "utils/ms_context.h"
 #include "utils/config_manager.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/anf_ir_utils.h"
@@ -105,18 +111,9 @@
 namespace mindspore {
 namespace opt {
 namespace {
-void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
+void AddAscendIRFusionRulesPass(PassManager *ir_fusion_pm) {
   MS_EXCEPTION_IF_NULL(ir_fusion_pm);
-  ir_fusion_pm->AddPass(std::make_shared<BatchNormBertFission>());
-  ir_fusion_pm->AddPass(std::make_shared<SingleBatchNormFission>());
-  ir_fusion_pm->AddPass(std::make_shared<SquareSumFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<ClipByNormNoDivSquareSumFusion>());
   ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLRRuleFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<SoftmaxGradExtFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<SoftmaxGradExtFusionV2>());
-  ir_fusion_pm->AddPass(std::make_shared<SoftmaxGradExtFusionV3>());
-  ir_fusion_pm->AddPass(std::make_shared<ConfusionMulGradFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<ConfusionSoftmaxGradRule>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRuleCond1>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRuleCond2>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRuleCond3>());
@@ -127,10 +124,6 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVRuleCond4>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextRightRule>());
   ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLrV2>());
-  ir_fusion_pm->AddPass(std::make_shared<ReshapeTransposeFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<TransposeReshapeFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<ClipByValueFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond1Fusion>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond2Fusion>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond3Fusion>());
@@ -140,6 +133,27 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRuleCond3>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRuleCond4>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRuleCond5>());
+  ir_fusion_pm->AddPass(std::make_shared<ClipByNormNoDivSquareSumFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<SquareSumFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<ClipByValueFusion>());
+}
+
+void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
+  MS_EXCEPTION_IF_NULL(ir_fusion_pm);
+  ir_fusion_pm->AddPass(std::make_shared<BatchNormBertFission>());
+  ir_fusion_pm->AddPass(std::make_shared<SingleBatchNormFission>());
+  ir_fusion_pm->AddPass(std::make_shared<BatchNorm2BNInfer>());
+  ir_fusion_pm->AddPass(std::make_shared<BatchNormGrad2BNInferGrad>());
+  ir_fusion_pm->AddPass(std::make_shared<BatchNormGradInferFission>());
+  ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
+  ir_fusion_pm->AddPass(std::make_shared<SoftmaxGradExtFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<SoftmaxGradExtFusionV2>());
+  ir_fusion_pm->AddPass(std::make_shared<SoftmaxGradExtFusionV3>());
+  ir_fusion_pm->AddPass(std::make_shared<ConfusionMulGradFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<ConfusionSoftmaxGradRule>());
+  ir_fusion_pm->AddPass(std::make_shared<ReshapeTransposeFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<TransposeReshapeFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
   ir_fusion_pm->AddPass(std::make_shared<MomentumLossscaleFusion>());
   ir_fusion_pm->AddPass(std::make_shared<MulAddFusion>());
   ir_fusion_pm->AddPass(std::make_shared<MulAddNFusion>());
@@ -147,13 +161,12 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
   ir_fusion_pm->AddPass(std::make_shared<DereluFusion>());
   ir_fusion_pm->AddPass(std::make_shared<TransposeTransDataFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
-  ir_fusion_pm->AddPass(std::make_shared<BatchNorm2BNInfer>());
-  ir_fusion_pm->AddPass(std::make_shared<BatchNormGrad2BNInferGrad>());
-  ir_fusion_pm->AddPass(std::make_shared<BatchNormGradInferFission>());
   ir_fusion_pm->AddPass(std::make_shared<SplitFission>());
   ir_fusion_pm->AddPass(std::make_shared<TensorScatterUpdateFission>());
   ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
+  ir_fusion_pm->AddPass(std::make_shared<PackFission>());
+  ir_fusion_pm->AddPass(std::make_shared<ConcatFission>());
+  ir_fusion_pm->AddPass(std::make_shared<ReduceMinFission>());
 }
 }  // namespace
 
@@ -201,6 +214,7 @@ void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph)
   data_layout_pm->AddPass(std::make_shared<OptimizeDependence>());
   data_layout_pm->AddPass(std::make_shared<TransDataSplit>());
   data_layout_pm->AddPass(std::make_shared<EraseVisitAttr>());
+  data_layout_pm->AddPass(std::make_shared<RemoveInternalOutputTransOp>());
   optimizer->AddPassManager(data_layout_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -221,7 +235,9 @@ void AscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel_grap
   mixed_precision_pm->AddPass(std::make_shared<MergeCastToOp>());
   mixed_precision_pm->AddPass(std::make_shared<LayerNormBetaGammaBackpropFusion>());
   mixed_precision_pm->AddPass(std::make_shared<EraseVisitAttr>());
+  mixed_precision_pm->AddPass(std::make_shared<SplitUnsupportedTransData>());
   mixed_precision_pm->AddPass(std::make_shared<ConvertUnSupportNodeToAICPU>());
+  mixed_precision_pm->AddPass(std::make_shared<RemoveInternalOutputCast>());
   optimizer->AddPassManager(mixed_precision_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -254,9 +270,8 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
     ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormMixPrecisionFusion1>());
   }
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
-  if (context_ptr->ir_fusion_flag()) {
-    AddAscendBackendOptionalIRFusion(ir_fusion_pm.get());
-  }
+  AddAscendIRFusionRulesPass(ir_fusion_pm.get());
+  AddAscendIRFusionPass(ir_fusion_pm.get());
 
   if (context_ptr->enable_task_sink() && context_ptr->loop_sink_flag() && ConfigManager::GetInstance().iter_num() > 1) {
     ir_fusion_pm->AddPass(std::make_shared<InsertMemcpyAsyncForGetNext>());
@@ -331,8 +346,10 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   auto other_pm = std::make_shared<PassManager>("other_pm");
   other_pm->AddPass(std::make_shared<AllReduceFusion>());
   other_pm->AddPass(std::make_shared<AllGatherFusion>());
+  other_pm->AddPass(std::make_shared<ConcatOutputsForAllGather>());
   other_pm->AddPass(std::make_shared<ReduceScatterFusion>());
   other_pm->AddPass(std::make_shared<BroadcastFusion>());
+  other_pm->AddPass(std::make_shared<InsertMemcpyAsyncForCascade>());
   other_pm->AddPass(std::make_shared<ParameterTransOpFusion>());
   other_pm->AddPass(std::make_shared<RefreshParameterFormat>());
   optimizer->AddPassManager(other_pm);

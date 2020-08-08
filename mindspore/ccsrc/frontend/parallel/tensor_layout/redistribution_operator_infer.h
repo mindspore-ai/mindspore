@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_TENSOR_LAYOUT_REDISTRIBUTION_OPERATOR_INFER_H_
-#define MINDSPORE_CCSRC_PARALLEL_TENSOR_LAYOUT_REDISTRIBUTION_OPERATOR_INFER_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_REDISTRIBUTION_OPERATOR_INFER_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_REDISTRIBUTION_OPERATOR_INFER_H_
 
 #include <algorithm>
 #include <string>
@@ -28,10 +28,10 @@
 #include "utils/convert_utils.h"
 namespace mindspore {
 namespace parallel {
-using DeviceArrangement = std::vector<int32_t>;
-using TensorMap = std::vector<int32_t>;
-using TensorShape = std::vector<int32_t>;
-using RedistributionOperatorMap = std::unordered_map<uint32_t, int32_t>;
+using DeviceArrangement = Shape;
+using TensorMap = Shape;
+using TensorShape = Shape;
+using RedistributionOperatorMap = std::unordered_map<uint32_t, int64_t>;
 using OperatorR = std::pair<OperatorName, Args>;
 using OperatorC = std::pair<OperatorR, Shape>;
 using OperatorList = std::vector<OperatorC>;
@@ -74,4 +74,4 @@ class RedistributionOperatorInfer {
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PARALLEL_TENSOR_LAYOUT_REDISTRIBUTION_OPERATOR_INFER_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_REDISTRIBUTION_OPERATOR_INFER_H_

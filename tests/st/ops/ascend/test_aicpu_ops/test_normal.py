@@ -56,3 +56,4 @@ def test_net_ND():
     tmean, tstddev = Tensor(mean, mstype.float32), Tensor(stddev, mstype.float32)
     output = net(tmean, tstddev)
     assert output.shape == (3, 2, 2)
+

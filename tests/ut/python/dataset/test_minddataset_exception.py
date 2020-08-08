@@ -99,8 +99,13 @@ def test_invalid_mindrecord():
         num_iter = 0
         for _ in data_set.create_dict_iterator():
             num_iter += 1
-        assert num_iter == 0
-    os.remove('dummy.mindrecord')
+        try:
+            assert num_iter == 0
+        except Exception as error:
+            os.remove('dummy.mindrecord')
+            raise error
+        else:
+            os.remove('dummy.mindrecord')
 
 
 def test_minddataset_lack_db():
@@ -113,8 +118,13 @@ def test_minddataset_lack_db():
         num_iter = 0
         for _ in data_set.create_dict_iterator():
             num_iter += 1
-        assert num_iter == 0
-    os.remove(CV_FILE_NAME)
+        try:
+            assert num_iter == 0
+        except Exception as error:
+            os.remove(CV_FILE_NAME)
+            raise error
+        else:
+            os.remove(CV_FILE_NAME)
 
 
 def test_cv_minddataset_pk_sample_error_class_column():
@@ -189,10 +199,16 @@ def test_minddataset_invalidate_num_shards():
         num_iter = 0
         for _ in data_set.create_dict_iterator():
             num_iter += 1
-    assert 'Input shard_id is not within the required interval of (0 to 0).' in str(error_info)
+    try:
+        assert 'Input shard_id is not within the required interval of (0 to 0).' in str(error_info.value)
+    except Exception as error:
+        os.remove(CV_FILE_NAME)
+        os.remove("{}.db".format(CV_FILE_NAME))
+        raise error
+    else:
+        os.remove(CV_FILE_NAME)
+        os.remove("{}.db".format(CV_FILE_NAME))
 
-    os.remove(CV_FILE_NAME)
-    os.remove("{}.db".format(CV_FILE_NAME))
 
 def test_minddataset_invalidate_shard_id():
     create_cv_mindrecord(1)
@@ -203,9 +219,15 @@ def test_minddataset_invalidate_shard_id():
         num_iter = 0
         for _ in data_set.create_dict_iterator():
             num_iter += 1
-    assert 'Input shard_id is not within the required interval of (0 to 0).' in str(error_info)
-    os.remove(CV_FILE_NAME)
-    os.remove("{}.db".format(CV_FILE_NAME))
+    try:
+        assert 'Input shard_id is not within the required interval of (0 to 0).' in str(error_info.value)
+    except Exception as error:
+        os.remove(CV_FILE_NAME)
+        os.remove("{}.db".format(CV_FILE_NAME))
+        raise error
+    else:
+        os.remove(CV_FILE_NAME)
+        os.remove("{}.db".format(CV_FILE_NAME))
 
 
 def test_minddataset_shard_id_bigger_than_num_shard():
@@ -217,14 +239,65 @@ def test_minddataset_shard_id_bigger_than_num_shard():
         num_iter = 0
         for _ in data_set.create_dict_iterator():
             num_iter += 1
-    assert 'Input shard_id is not within the required interval of (0 to 1).' in str(error_info)
+    try:
+        assert 'Input shard_id is not within the required interval of (0 to 1).' in str(error_info.value)
+    except Exception as error:
+        os.remove(CV_FILE_NAME)
+        os.remove("{}.db".format(CV_FILE_NAME))
+        raise error
 
     with pytest.raises(Exception) as error_info:
         data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers, True, 2, 5)
         num_iter = 0
         for _ in data_set.create_dict_iterator():
             num_iter += 1
-    assert 'Input shard_id is not within the required interval of (0 to 1).' in str(error_info)
+    try:
+        assert 'Input shard_id is not within the required interval of (0 to 1).' in str(error_info.value)
+    except Exception as error:
+        os.remove(CV_FILE_NAME)
+        os.remove("{}.db".format(CV_FILE_NAME))
+        raise error
+    else:
+        os.remove(CV_FILE_NAME)
+        os.remove("{}.db".format(CV_FILE_NAME))
 
-    os.remove(CV_FILE_NAME)
-    os.remove("{}.db".format(CV_FILE_NAME))
+
+def test_cv_minddataset_partition_num_samples_equals_0():
+    """tutorial for cv minddataset."""
+    create_cv_mindrecord(1)
+    columns_list = ["data", "label"]
+    num_readers = 4
+
+    def partitions(num_shards):
+        for partition_id in range(num_shards):
+            data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers,
+                                      num_shards=num_shards,
+                                      shard_id=partition_id, num_samples=0)
+            num_iter = 0
+            for _ in data_set.create_dict_iterator():
+                num_iter += 1
+    with pytest.raises(Exception) as error_info:
+        partitions(5)
+    try:
+        assert 'num_samples should be a positive integer value, but got num_samples=0' in str(error_info.value)
+    except Exception as error:
+        os.remove(CV_FILE_NAME)
+        os.remove("{}.db".format(CV_FILE_NAME))
+        raise error
+    else:
+        os.remove(CV_FILE_NAME)
+        os.remove("{}.db".format(CV_FILE_NAME))
+
+if __name__ == '__main__':
+    test_cv_lack_json()
+    test_cv_lack_mindrecord()
+    test_invalid_mindrecord()
+    test_minddataset_lack_db()
+    test_cv_minddataset_pk_sample_error_class_column()
+    test_cv_minddataset_pk_sample_exclusive_shuffle()
+    test_cv_minddataset_reader_different_schema()
+    test_cv_minddataset_reader_different_page_size()
+    test_minddataset_invalidate_num_shards()
+    test_minddataset_invalidate_shard_id()
+    test_minddataset_shard_id_bigger_than_num_shard()
+    test_cv_minddataset_partition_num_samples_equals_0()

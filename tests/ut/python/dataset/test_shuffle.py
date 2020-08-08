@@ -13,10 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
-from util import save_and_check
-
 import mindspore.dataset as ds
 from mindspore import log as logger
+from util import save_and_check_dict
 
 # Note: Number of rows in test.data dataset:  12
 DATA_DIR = ["../data/dataset/testTFTestAllTypes/test.data"]
@@ -31,7 +30,6 @@ def test_shuffle_01():
     # define parameters
     buffer_size = 5
     seed = 1
-    parameters = {"params": {'buffer_size': buffer_size, "seed": seed}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
@@ -39,7 +37,7 @@ def test_shuffle_01():
     data1 = data1.shuffle(buffer_size=buffer_size)
 
     filename = "shuffle_01_result.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_shuffle_02():
@@ -50,7 +48,6 @@ def test_shuffle_02():
     # define parameters
     buffer_size = 12
     seed = 1
-    parameters = {"params": {'buffer_size': buffer_size, "seed": seed}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
@@ -58,7 +55,7 @@ def test_shuffle_02():
     data1 = data1.shuffle(buffer_size=buffer_size)
 
     filename = "shuffle_02_result.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_shuffle_03():
@@ -69,7 +66,6 @@ def test_shuffle_03():
     # define parameters
     buffer_size = 2
     seed = 1
-    parameters = {"params": {'buffer_size': buffer_size, "seed": seed}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
@@ -77,7 +73,7 @@ def test_shuffle_03():
     data1 = data1.shuffle(buffer_size)
 
     filename = "shuffle_03_result.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_shuffle_04():
@@ -88,7 +84,6 @@ def test_shuffle_04():
     # define parameters
     buffer_size = 2
     seed = 1
-    parameters = {"params": {'buffer_size': buffer_size, "seed": seed}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, num_samples=2)
@@ -96,7 +91,7 @@ def test_shuffle_04():
     data1 = data1.shuffle(buffer_size=buffer_size)
 
     filename = "shuffle_04_result.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_shuffle_05():
@@ -107,7 +102,6 @@ def test_shuffle_05():
     # define parameters
     buffer_size = 13
     seed = 1
-    parameters = {"params": {'buffer_size': buffer_size, "seed": seed}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
@@ -115,7 +109,7 @@ def test_shuffle_05():
     data1 = data1.shuffle(buffer_size=buffer_size)
 
     filename = "shuffle_05_result.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_shuffle_06():

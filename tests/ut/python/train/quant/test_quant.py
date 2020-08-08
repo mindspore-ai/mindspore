@@ -20,7 +20,7 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore import nn
 from mindspore.train.quant import quant as qat
-from model_zoo.mobilenetv2_quant.src.mobilenetV2 import mobilenetV2
+from model_zoo.official.cv.mobilenetv2_quant.src.mobilenetV2 import mobilenetV2
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
@@ -69,17 +69,24 @@ def test_qat_lenet():
     net = qat.convert_quant_network(
         net, bn_fold=True, per_channel=[True, False], symmetric=[True, False])
     # should load the checkpoint. mock here
-    for param in net.get_parameters():
-        param.init_data()
+    net.init_parameters_data()
     qat.export(net, img, file_name="quant.pb")
 
 
 @pytest.mark.skip(reason="no `te.lang.cce` in ut env")
-def test_qat_mobile():
+def test_qat_mobile_per_channel_tf():
     network = mobilenetV2(num_classes=1000)
     img = Tensor(np.ones((1, 3, 224, 224)).astype(np.float32))
     network = qat.convert_quant_network(network, bn_fold=True, per_channel=[True, False], symmetric=[True, False])
     # should load the checkpoint. mock here
-    for param in network.get_parameters():
-        param.init_data()
+    network.init_parameters_data()
+    qat.export(network, img, file_name="quant.pb")
+
+@pytest.mark.skip(reason="no `te.lang.cce` in ut env")
+def test_qat_mobile_per_channel_ff():
+    network = mobilenetV2(num_classes=1000)
+    img = Tensor(np.ones((1, 3, 224, 224)).astype(np.float32))
+    network = qat.convert_quant_network(network, bn_fold=True, per_channel=[False, False], symmetric=[True, False])
+    # should load the checkpoint. mock here
+    network.init_parameters_data()
     qat.export(network, img, file_name="quant.pb")

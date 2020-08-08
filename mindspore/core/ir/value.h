@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_VALUE_H_
-#define MINDSPORE_CCSRC_IR_VALUE_H_
+#ifndef MINDSPORE_CORE_IR_VALUE_H_
+#define MINDSPORE_CORE_IR_VALUE_H_
 
 #include <type_traits>
 #include <algorithm>
@@ -31,7 +31,7 @@
 #include "ir/scalar.h"
 #include "ir/dtype/ref.h"
 #include "utils/hashing.h"
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 class ValueSequeue : public Value {
@@ -303,4 +303,4 @@ inline ValueNodePtr NewValueNode(const T &x) {
 }
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_VALUE_H_
+#endif  // MINDSPORE_CORE_IR_VALUE_H_

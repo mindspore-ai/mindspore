@@ -16,9 +16,10 @@
 Testing the resize with bounding boxes op in DE
 """
 import numpy as np
+import pytest
+
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as c_vision
-
 from mindspore import log as logger
 from util import visualize_with_bounding_boxes, InvalidBBoxType, check_bad_bbox, \
     save_and_check_md5
@@ -47,9 +48,9 @@ def test_resize_with_bbox_op_voc_c(plot_vis=False):
     test_op = c_vision.ResizeWithBBox(100)
 
     # map to apply ops
-    dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                            output_columns=["image", "annotation"],
-                            columns_order=["image", "annotation"],
+    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+                            output_columns=["image", "bbox"],
+                            columns_order=["image", "bbox"],
                             operations=[test_op])
 
     filename = "resize_with_bbox_op_01_c_voc_result.npz"
@@ -118,15 +119,15 @@ def test_resize_with_bbox_op_edge_c(plot_vis=False):
     test_op = c_vision.ResizeWithBBox(500)
 
     # maps to convert data into valid edge case data
-    dataVoc1 = dataVoc1.map(input_columns=["image", "annotation"],
-                            output_columns=["image", "annotation"],
-                            columns_order=["image", "annotation"],
+    dataVoc1 = dataVoc1.map(input_columns=["image", "bbox"],
+                            output_columns=["image", "bbox"],
+                            columns_order=["image", "bbox"],
                             operations=[lambda img, bboxes: (
                                 img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype))])
 
-    dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                            output_columns=["image", "annotation"],
-                            columns_order=["image", "annotation"],
+    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+                            output_columns=["image", "bbox"],
+                            columns_order=["image", "bbox"],
                             operations=[lambda img, bboxes: (
                                 img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype)), test_op])
 
@@ -170,6 +171,18 @@ def test_resize_with_bbox_op_bad_c():
     check_bad_bbox(data_voc2, test_op, InvalidBBoxType.NegativeXY, "min_x")
     data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
     check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WrongShape, "4 features")
+
+
+def test_resize_with_bbox_op_params_outside_of_interpolation_dict():
+    """
+    Test passing in a invalid key for interpolation
+    """
+    logger.info("test_resize_with_bbox_op_params_outside_of_interpolation_dict")
+
+    size = (500, 500)
+    more_para = None
+    with pytest.raises(KeyError, match="None"):
+        c_vision.ResizeWithBBox(size, more_para)
 
 
 if __name__ == "__main__":

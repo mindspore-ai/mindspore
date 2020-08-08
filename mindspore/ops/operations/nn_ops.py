@@ -498,7 +498,7 @@ class HSigmoid(PrimitiveWithInfer):
     Hard sigmoid is defined as:
 
     .. math::
-        \text{hsigmoid}(x_{i}) = max(0, min(1, \frac{2 * x_{i} + 5}{10})),
+        \text{hsigmoid}(x_{i}) = max(0, min(1, \frac{x_{i} + 3}{6})),
 
     where :math:`x_{i}` is the :math:`i`-th slice along the given dim of the input Tensor.
 
@@ -618,6 +618,7 @@ class FusedBatchNorm(Primitive):
         self.mode = validator.check_integer('mode', mode, [0, 1], Rel.IN, self.name)
         self.epsilon = validator.check_number_range('epsilon', epsilon, 0, 1, Rel.INC_RIGHT, self.name)
         self.momentum = validator.check_number_range('momentum', momentum, 0, 1, Rel.INC_BOTH, self.name)
+        self._update_parameter = True
 
 
 class BNTrainingReduce(PrimitiveWithInfer):
@@ -842,7 +843,7 @@ class Conv2D(PrimitiveWithInfer):
         self.group = validator.check_integer('group', group, 0, Rel.GT, self.name)
         self.add_prim_attr('offset_a', 0)
 
-    def infer_shape(self, x_shape, w_shape):
+    def infer_shape(self, x_shape, w_shape, b_shape=None):
         validator.check_integer("weight rank", len(w_shape), 4, Rel.EQ, self.name)
         validator.check_integer("x rank", len(x_shape), 4, Rel.EQ, self.name)
         validator.check(f"x_shape[1] / group", x_shape[1] // self.group, "w_shape[1]", w_shape[1], Rel.EQ, self.name)
@@ -887,7 +888,7 @@ class Conv2D(PrimitiveWithInfer):
         out_shape = [x_shape[0], out_channel, h_out, w_out]
         return out_shape
 
-    def infer_dtype(self, x_dtype, w_dtype):
+    def infer_dtype(self, x_dtype, w_dtype, b_dtype=None):
         args = {'x': x_dtype, 'w': w_dtype}
         valid_types = [mstype.int8, mstype.int32, mstype.float16, mstype.float32]
         validator.check_tensor_type_same(args, valid_types, self.name)
@@ -968,7 +969,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         self.group = validator.check_integer("group", group, 0, Rel.GT, self.name)
         self.add_prim_attr('offset_a', 0)
 
-    def infer_shape(self, x_shape, w_shape):
+    def infer_shape(self, x_shape, w_shape, b_shape=None):
         validator.check_integer("weight rank", len(w_shape), 4, Rel.EQ, self.name)
         validator.check_integer("x rank", len(x_shape), 4, Rel.EQ, self.name)
         validator.check("x_shape[1]", x_shape[1], "w_shape[1]", w_shape[1], Rel.EQ, self.name)
@@ -1011,7 +1012,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         out_shape = [x_shape[0], out_channel, h_out, w_out]
         return out_shape
 
-    def infer_dtype(self, x_dtype, w_dtype):
+    def infer_dtype(self, x_dtype, w_dtype, b_dtype=None):
         args = {'x': x_dtype, 'w': w_dtype}
         validator.check_tensor_type_same(args, mstype.number_type, self.name)
         if x_dtype.element_type() == mstype.int8:
@@ -1180,6 +1181,7 @@ class MaxPoolWithArgmax(_Pool):
     def __init__(self, ksize=1, strides=1, padding="valid"):
         super(MaxPoolWithArgmax, self).__init__(ksize, strides, padding)
         self.is_tbe = context.get_context("device_target") == "Ascend"
+        self.is_gpu = context.get_context("device_target") == "GPU"
 
     def infer_shape(self, x_shape):
         out_shape = _Pool.infer_shape(self, x_shape)
@@ -1206,6 +1208,8 @@ class MaxPoolWithArgmax(_Pool):
         out_dtype = x_dtype
         validator.check_tensor_type_same({"x": x_dtype}, (mstype.float16, mstype.float32), self.name)
         argmax_dtype = mstype.uint16
+        if self.is_gpu:
+            argmax_dtype = mstype.int32
         return out_dtype, argmax_dtype
 
 
@@ -1276,6 +1280,8 @@ class AvgPool(_Pool):
     def __init__(self, ksize=1, strides=1, padding="valid"):
         if context.get_context("device_target") == "GPU":
             self.target = "GPU"
+        elif context.get_context("enable_ge"):
+            self.target = "GE"
         else:
             self.target = "OTHER"
         super(AvgPool, self).__init__(ksize, strides, padding)
@@ -1332,10 +1338,9 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         validator.check_value_type('pad', pad, (int, tuple), self.name)
         if isinstance(pad, int):
             pad = (pad,) * 4
-            self.padding = pad
         else:
             validator.check_integer('pad size', len(pad), 4, Rel.EQ, self.name)
-
+        self.padding = pad
         self.pad_mode = validator.check_string('pad_mode', pad_mode, ['valid', 'same', 'pad'], self.name)
         if pad_mode != 'pad' and pad != (0, 0, 0, 0):
             raise ValueError(f"For '{self.name}', padding must be zero when pad_mode is '{pad_mode}'.")
@@ -1691,7 +1696,9 @@ class L2Loss(PrimitiveWithInfer):
     Set `input_x` as x and output as loss.
 
     .. math::
-        loss = sum(x ** 2) / 2
+        loss = sum(x ** 2) / nelement(x)
+
+    :math:`nelement(x)` represents the number of `input_x`.
 
     Inputs:
         - **input_x** (Tensor) - A input Tensor.
@@ -2042,6 +2049,7 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, use_locking=False):
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
+        self.is_ascend = context.get_context("device_target") == "Ascend"
 
     def infer_shape(self, var_shape, mean_gradient_shape, mean_square_shape, moment_shape, grad_shape,
                     learning_rate_shape, decay_shape, momentum_shape, epsilon_shape):
@@ -2049,6 +2057,8 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
         validator.check("var_shape", var_shape, "mean_square_shape", mean_square_shape, Rel.EQ, self.name)
         validator.check("var_shape", var_shape, "moment_shape", moment_shape, Rel.EQ, self.name)
         validator.check("var_shape", var_shape, "grad_shape", grad_shape, Rel.EQ, self.name)
+        if self.is_ascend:
+            return var_shape, mean_gradient_shape, mean_square_shape, moment_shape
         return var_shape
 
     def infer_dtype(self, var_dtype, mean_gradient_dtype, mean_square_dtype, moment_dtype, grad_dtype,
@@ -2062,6 +2072,8 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
         validator.check_type_same(args_rho, valid_types, self.name)
         args_lr = {"learning_rate": learning_rate_dtype, "rho": rho_dtype}
         validator.check_scalar_or_tensor_type_same(args_lr, valid_types, self.name, allow_mix=True)
+        if self.is_ascend:
+            return var_dtype, mean_gradient_dtype, mean_square_dtype, moment_dtype
         return var_dtype
 
 
@@ -2749,12 +2761,17 @@ class MirrorPad(PrimitiveWithInfer):
         paddings_value = paddings['value'].asnumpy()
         paddings_size = paddings_value.size
         validator.check_integer('paddings.shape', paddings_size, len(x_shape) * 2, Rel.EQ, self.name)
-        if not np.all(paddings_size >= 0):
+        if not np.all(paddings_value >= 0):
             raise ValueError('All elements of paddings must be >= 0.')
+        adjust = 0
+        if self.mode == 'SYMMETRIC':
+            adjust = 1
+        for i in range(0, int(paddings_size / 2)):
+            if (paddings_value[i, 0] >= x_shape[i] + adjust) or (paddings_value[i, 1] >= x_shape[i] + adjust):
+                raise ValueError('At least one dim has too high a padding value for this input and mode')
         y_shape = ()
         for i in range(0, int(paddings_size / 2)):
             y_shape += ((x_shape[i] + paddings_value[i, 0] + paddings_value[i, 1]),)
-
         return {'shape': y_shape,
                 'dtype': input_x['dtype'],
                 'value': None}
@@ -3193,11 +3210,11 @@ class FusedSparseFtrl(PrimitiveWithInfer):
         use_locking (bool): Use locks for update operation if True . Default: False.
 
     Inputs:
-        - **var** (Parameter): The variable to be updated. The data type must be float32.
-        - **accum** (Parameter): The accum to be updated, must be same type and shape as `var`.
-        - **linear** (Parameter): The linear to be updated, must be same type and shape as `var`.
-        - **grad** (Tensor): A tensor of the same type as `var`, for the gradient.
-        - **indices** (Tensor): A vector of indices into the first dimension of `var` and `accum`. The shape
+        - **var** (Parameter) - The variable to be updated. The data type must be float32.
+        - **accum** (Parameter) - The accum to be updated, must be same type and shape as `var`.
+        - **linear** (Parameter) - The linear to be updated, must be same type and shape as `var`.
+        - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
+        - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`. The shape
           of `indices` must be the same as `grad` in first dimension. The type must be int32.
 
     Outputs:
@@ -3288,9 +3305,9 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. The data type must be float32.
         - **accum** (Parameter) - Variable tensor to be updated. Has the same dtype as `var`.
-        - **lr** (Tensor): The learning rate value. The data type must be float32.
-        - **l1** (Tensor): l1 regularization strength. The data type must be float32.
-        - **l2** (Tensor): l2 regularization strength. The data type must be float32.
+        - **lr** (Tensor) - The learning rate value. The data type must be float32.
+        - **l1** (Tensor) - l1 regularization strength. The data type must be float32.
+        - **l2** (Tensor) - l2 regularization strength. The data type must be float32.
         - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient. The data type must be float32.
         - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`. The data type
           must be int32.
@@ -3354,6 +3371,78 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
                        mstype.uint16, mstype.uint32, mstype.uint64]
         validator.check_tensor_type_same({'indices': indices_dtype}, valid_types, self.name)
         return var_dtype, accum_dtype
+
+
+class KLDivLoss(PrimitiveWithInfer):
+    r"""
+    Computes the Kullback-Leibler divergence between the target and the output.
+
+    Note:
+        Sets input as :math:`x`, input label as :math:`y`, output as :math:`\ell(x, y)`.
+        Let,
+
+        .. math::
+            L = \{l_1,\dots,l_N\}^\top, \quad
+            l_n = y_n \cdot (\log y_n - x_n)
+
+        Then,
+
+        .. math::
+            \ell(x, y) = \begin{cases}
+            L, & \text{if reduction} = \text{'none';}\\
+            \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+            \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+            \end{cases}
+
+    Args:
+        reduction (str): Specifies the reduction to apply to the output.
+            Its value should be one of 'none', 'mean', 'sum'. Default: 'mean'.
+
+    Inputs:
+        - **input_x** (Tensor) - The input Tensor. The data type must be float32.
+        - **input_y** (Tensor) - The label Tensor which has same shape as `input_x`. The data type must be float32.
+
+    Outputs:
+        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and same shape as `input_x`.
+        Otherwise it is a scalar.
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as P
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.kldiv_loss = P.KLDivLoss()
+        >>>     def construct(self, x, y):
+        >>>         result = self.kldiv_loss(x, y)
+        >>>         return result
+        >>>
+        >>> net = Net()
+        >>> input_x = Tensor(np.array([0.2, 0.7, 0.1]), mindspore.float32)
+        >>> input_y = Tensor(np.array([0., 1., 0.]), mindspore.float32)
+        >>> result = net(input_x, input_y)
+    """
+
+    @prim_attr_register
+    def __init__(self, reduction='mean'):
+        self.reduction = validator.check_string('reduction', reduction, ['none', 'mean', 'sum'], self.name)
+
+    def infer_shape(self, x_shape, y_shape):
+        validator.check('x_shape', x_shape, 'y_shape', y_shape, Rel.EQ, self.name)
+        if self.reduction in ('mean', 'sum'):
+            shape = []
+        else:
+            shape = x_shape
+        return shape
+
+    def infer_dtype(self, x_type, y_type):
+        args = {'x': x_type, 'y': y_type}
+        valid_types = (mstype.float16, mstype.float32)
+        validator.check_tensor_type_same(args, valid_types, self.name)
+        return x_type
 
 
 class BinaryCrossEntropy(PrimitiveWithInfer):
@@ -3755,12 +3844,12 @@ class ApplyAdagradV2(PrimitiveWithInfer):
         update_slots (bool): If `True`, `accum` will be updated. Default: True.
 
     Inputs:
-        - **var** (Parameter) - Variable to be updated. With float32 or float16 data type.
+        - **var** (Parameter) - Variable to be updated. With float32 data type.
         - **accum** (Parameter) - Accum to be updated. The shape and dtype should be the same as `var`.
-          With float32 or float16 data type.
-        - **lr** (Union[Number, Tensor]) - The learning rate value, should be scalar. With float32 or float16 data type.
+          With float32 data type.
+        - **lr** (Union[Number, Tensor]) - The learning rate value, should be scalar. With float32 data type.
         - **grad** (Tensor) - A tensor for gradient. The shape and dtype should be the same as `var`.
-          With float32 or float16 data type.
+          With float32 data type.
 
     Outputs:
         Tuple of 2 Tensor, the updated parameters.
@@ -3812,9 +3901,8 @@ class ApplyAdagradV2(PrimitiveWithInfer):
 
     def infer_dtype(self, var_dtype, accum_dtype, lr_dtype, grad_dtype):
         args = {'var': var_dtype, 'accum': accum_dtype, 'grad': grad_dtype}
-        valid_types = [mstype.float16, mstype.float32]
-        validator.check_tensor_type_same(args, valid_types, self.name)
-        validator.check_scalar_or_tensor_type_same({'lr': lr_dtype}, valid_types, self.name)
+        validator.check_tensor_type_same(args, [mstype.float32], self.name)
+        validator.check_scalar_or_tensor_type_same({'lr': lr_dtype}, [mstype.float32], self.name)
         return var_dtype, accum_dtype
 
 
@@ -4278,6 +4366,7 @@ class ApplyPowerSign(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
+          If data type of `var` is float16, all inputs must have the same data type as `var`.
         - **m** (Parameter) - Variable tensor to be updated. Has the same dtype as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value, should be a scalar.
           With float32 or float16 data type.
@@ -4320,11 +4409,11 @@ class ApplyPowerSign(PrimitiveWithInfer):
     __mindspore_signature__ = (
         ('var', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
         ('m', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
-        ('lr', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T1),
-        ('logbase', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T2),
+        ('lr', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('logbase', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
         ('sign_decay', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE,
-         sig_dtype.T3),
-        ('beta', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T4),
+         sig_dtype.T),
+        ('beta', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
         ('grad', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
     )
 
@@ -4588,16 +4677,16 @@ class ApplyFtrl(PrimitiveWithInfer):
         use_locking (bool): Use locks for update operation if True . Default: False.
 
     Inputs:
-        - **var** (Tensor): The variable to be updated.
-        - **accum** (Tensor): The accum to be updated, must be same type and shape as `var`.
-        - **linear** (Tensor): The linear to be updated, must be same type and shape as `var`.
-        - **grad** (Tensor): Gradient.
-        - **lr** (Union[Number, Tensor]): The learning rate value, must be positive. Default: 0.001.
-        - **l1** (Union[Number, Tensor]): l1 regularization strength, must be greater than or equal to zero.
+        - **var** (Tensor) - The variable to be updated.
+        - **accum** (Tensor) - The accum to be updated, must be same type and shape as `var`.
+        - **linear** (Tensor) - The linear to be updated, must be same type and shape as `var`.
+        - **grad** (Tensor) - Gradient.
+        - **lr** (Union[Number, Tensor]) - The learning rate value, must be positive. Default: 0.001.
+        - **l1** (Union[Number, Tensor]) - l1 regularization strength, must be greater than or equal to zero.
           Default: 0.0.
-        - **l2** (Union[Number, Tensor]): l2 regularization strength, must be greater than or equal to zero.
+        - **l2** (Union[Number, Tensor]) - l2 regularization strength, must be greater than or equal to zero.
           Default: 0.0.
-        - **lr_power** (Union[Number, Tensor]): Learning rate power controls how the learning rate decreases
+        - **lr_power** (Union[Number, Tensor]) - Learning rate power controls how the learning rate decreases
           during training, must be less than or equal to zero. Use fixed learning rate if lr_power is zero.
           Default: -0.5.
 
@@ -4678,17 +4767,17 @@ class SparseApplyFtrl(PrimitiveWithInfer):
         use_locking (bool): Use locks for update operation if True . Default: False.
 
     Inputs:
-        - **var** (Parameter): The variable to be updated. The data type must be float32.
-        - **accum** (Parameter): The accum to be updated, must be same type and shape as `var`.
-        - **linear** (Parameter): The linear to be updated, must be same type and shape as `var`.
-        - **grad** (Tensor): A tensor of the same type as `var`, for the gradient.
-        - **indices** (Tensor): A vector of indices into the first dimension of `var` and `accum`.
+        - **var** (Parameter) - The variable to be updated. The data type must be float32.
+        - **accum** (Parameter) - The accum to be updated, must be same type and shape as `var`.
+        - **linear** (Parameter) - The linear to be updated, must be same type and shape as `var`.
+        - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
+        - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
           The shape of `indices` must be the same as `grad` in first dimension. The type must be int32.
 
     Outputs:
-        - **var** (Tensor): Tensor, has the same shape and type as `var`.
-        - **accum** (Tensor): Tensor, has the same shape and type as `accum`.
-        - **linear** (Tensor): Tensor, has the same shape and type as `linear`.
+        - **var** (Tensor) - Tensor, has the same shape and type as `var`.
+        - **accum** (Tensor) - Tensor, has the same shape and type as `accum`.
+        - **linear** (Tensor) - Tensor, has the same shape and type as `linear`.
 
     Examples:
         >>> import mindspore
@@ -4776,9 +4865,9 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
     Outputs:
         Tuple of 3 Tensor, the updated parameters.
 
-        - **var** (Tensor): Tensor, has the same shape and type as `var`.
-        - **accum** (Tensor): Tensor, has the same shape and type as `accum`.
-        - **linear** (Tensor): Tensor, has the same shape and type as `linear`.
+        - **var** (Tensor) - Tensor, has the same shape and type as `var`.
+        - **accum** (Tensor) - Tensor, has the same shape and type as `accum`.
+        - **linear** (Tensor) - Tensor, has the same shape and type as `linear`.
 
     Examples:
         >>> import mindspore

@@ -16,7 +16,7 @@
 #include <iomanip>
 #include <utility>
 
-#include "common/utils.h"
+#include "utils/ms_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/datasetops/take_op.h"
@@ -53,8 +53,6 @@ TakeOp::TakeOp(int32_t count, int32_t op_connector_size)
 
 // A print method typically used for debugging
 void TakeOp::Print(std::ostream &out, bool show_all) const {
-  // Always show the id and name as first line regardless if this summary or detailed print
-  out << "(" << std::setw(2) << operator_id_ << ") <TakeOp>:";
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
     PipelineOp::Print(out, show_all);
@@ -84,6 +82,7 @@ Status TakeOp::operator()() {
 
     // Loop until non EOE is received
     if (buf->eoe()) {
+      UpdateRepeatAndEpochCounter();
       take_count_ = 0;
       RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(buf)));
       RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buf));

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_TENSOR_H_
-#define MINDSPORE_CCSRC_IR_TENSOR_H_
+#ifndef MINDSPORE_CORE_IR_TENSOR_H_
+#define MINDSPORE_CORE_IR_TENSOR_H_
 
 #include <memory>
 #include <string>
@@ -25,7 +25,6 @@
 #include "Eigen/Core"
 #include "ir/device_sync.h"
 #include "ir/meta_tensor.h"
-#include "include/ms_tensor.h"
 #include "utils/log_adapter.h"
 
 using float16 = Eigen::half;
@@ -83,7 +82,7 @@ class Tensor : public MetaTensor {
   // param data The shared tensor data.
   Tensor(TypeId data_type, const std::vector<int> &shape, TensorDataPtr data);
 
-  // brief Create an all zero tensor.
+  // brief Create a lazy allocated tensor.
   //
   // param data_type [TypeId] Data type of the tensor.
   // param shape The shape represented by std::vector<int> of the tensor.
@@ -225,8 +224,6 @@ class Tensor : public MetaTensor {
 
   std::string id() const { return id_; }
 
-  const bool parse_info_ = true;
-
  private:
   bool init_flag_{false};
   TensorDataPtr data_{nullptr};
@@ -237,40 +234,6 @@ class Tensor : public MetaTensor {
 using TensorPtr = std::shared_ptr<Tensor>;
 using TensorPtrList = std::vector<std::shared_ptr<Tensor>>;
 }  // namespace tensor
-
-namespace inference {
-class Tensor : public MSTensor {
- public:
-  Tensor(TypeId data_type, const std::vector<int> &shape);
-
-  explicit Tensor(std::shared_ptr<tensor::Tensor> tensor_ptr);
-
-  ~Tensor() = default;
-
-  TypeId data_type() const override;
-
-  TypeId set_data_type(const TypeId data_type) override;
-
-  std::vector<int> shape() const override;
-
-  size_t set_shape(const std::vector<int> &shape) override;
-
-  int DimensionSize(size_t index) const override;
-
-  int ElementsNum() const override;
-
-  std::size_t hash() const override;
-
-  std::shared_ptr<tensor::Tensor> tensor() const;
-
-  size_t Size() const override;
-
-  void *MutableData() const override;
-
- protected:
-  std::shared_ptr<tensor::Tensor> tensor_impl_;
-};
-}  // namespace inference
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_TENSOR_H_
+#endif  // MINDSPORE_CORE_IR_TENSOR_H_

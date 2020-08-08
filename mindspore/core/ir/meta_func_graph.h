@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_META_FUNC_GRAPH_H_
-#define MINDSPORE_CCSRC_IR_META_FUNC_GRAPH_H_
+#ifndef MINDSPORE_CORE_IR_META_FUNC_GRAPH_H_
+#define MINDSPORE_CORE_IR_META_FUNC_GRAPH_H_
 
 #include <unordered_map>
 #include <string>
@@ -49,7 +49,7 @@ class MetaFuncGraph : public FuncGraphBase {
   virtual abstract::AbstractBasePtrList NormalizeArgs(const abstract::AbstractBasePtrList &args_spec_list) const {
     return args_spec_list;
   }
-
+  abstract::AbstractBasePtr ToAbstract() override;
   const std::vector<Signature> &signatures() const { return signatures_; }
   void set_signatures(const std::vector<Signature> &signatures) { signatures_ = signatures; }
   // Generate a Graph for the given abstract arguments.
@@ -72,13 +72,13 @@ class MetaFuncGraph : public FuncGraphBase {
       return false;
     }
   }
-  const bool parse_info_ = true;
 
  protected:
   template <typename Derived>
   std::shared_ptr<Derived> shared_from_base() {
     return std::static_pointer_cast<Derived>(shared_from_this());
   }
+  FuncGraphPtr GenerateStubFunc(const TypePtrList &types);
   std::string name_;
   std::vector<Signature> signatures_;
   std::unordered_map<TypePtrList, FuncGraphPtr, TypeListHasher, TypeListEqual> cache_;
@@ -87,4 +87,4 @@ class MetaFuncGraph : public FuncGraphBase {
 using MetaFuncGraphPtr = std::shared_ptr<MetaFuncGraph>;
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_META_FUNC_GRAPH_H_
+#endif  // MINDSPORE_CORE_IR_META_FUNC_GRAPH_H_

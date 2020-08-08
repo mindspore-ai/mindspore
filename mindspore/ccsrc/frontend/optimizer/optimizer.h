@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_OPTIMIZER_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_OPTIMIZER_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_OPTIMIZER_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_OPTIMIZER_H_
 
 #include <algorithm>
 #include <functional>
@@ -34,7 +34,7 @@
 #include "frontend/optimizer/opt.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/action.h"
-#include "utils/context/ms_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {
@@ -239,4 +239,4 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_OPTIMIZER_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_OPTIMIZER_H_

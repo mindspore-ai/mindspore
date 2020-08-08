@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_TBE_TBE_KERNEL_BUILD_H_
-#define MINDSPORE_CCSRC_KERNEL_TBE_TBE_KERNEL_BUILD_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_TBE_TBE_KERNEL_BUILD_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_TBE_TBE_KERNEL_BUILD_H_
 
 #include <string>
 #include <unordered_map>
@@ -26,7 +26,6 @@
 #include <nlohmann/json.hpp>
 #include "ir/dtype.h"
 #include "backend/kernel_compiler/kernel.h"
-#include "pybind11/stl.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "backend/kernel_compiler/tbe/tbe_adapter.h"
 
@@ -119,4 +118,4 @@ class TbeKernelJsonCreator {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_TBE_TBE_KERNEL_BUILD_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_TBE_TBE_KERNEL_BUILD_H_

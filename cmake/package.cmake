@@ -40,6 +40,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     set(jpeg_turbo_LIBPATH ${jpeg_turbo_LIBPATH}/../bin/)
     set(sqlite_LIBPATH ${sqlite_LIBPATH}/../bin/)
     set(tinyxml2_LIBPATH ${tinyxml2_LIBPATH}/../bin/)
+    set(sentencepiece_LIBPATH ${sentencepiece_LIBPATH}/../bin/)
 else ()
     set(INSTALL_LIB_DIR "lib")
 endif ()
@@ -91,6 +92,14 @@ if (ENABLE_MINDDATA)
         DESTINATION ${INSTALL_LIB_DIR}
         COMPONENT mindspore
     )
+    file(GLOB_RECURSE SENTENCEPIECE_LIB_LIST
+        ${sentencepiece_LIBPATH}/libsentencepiece*
+    )
+    install(
+    FILES ${SENTENCEPIECE_LIB_LIST}
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
+    )
     if (CMAKE_SYSTEM_NAME MATCHES "Windows")
         message("icu4c does not support windows system temporarily")
     else()
@@ -123,24 +132,39 @@ if (ENABLE_CPU)
 endif ()
 
 if (ENABLE_MPI)
-    install(
-        TARGETS _ms_mpi
-        DESTINATION ${INSTALL_BASE_DIR}
-        COMPONENT mindspore
+    if (ENABLE_GPU)
+        install(
+            TARGETS _ms_mpi
+            DESTINATION ${INSTALL_BASE_DIR}
+            COMPONENT mindspore
+        )
+    endif ()
+    if (ENABLE_CPU)
+        install(
+            TARGETS mpi_adapter
+            DESTINATION ${INSTALL_LIB_DIR}
+            COMPONENT mindspore
+        )
+    endif ()
+    file(GLOB_RECURSE MPI_LIB_LIST
+        ${ompi_LIBPATH}/libmpi${CMAKE_SHARED_LIBRARY_SUFFIX}*
+        ${ompi_LIBPATH}/libopen*${CMAKE_SHARED_LIBRARY_SUFFIX}*
     )
     install(
-        TARGETS mpi_adapter
+        FILES ${MPI_LIB_LIST}
         DESTINATION ${INSTALL_LIB_DIR}
         COMPONENT mindspore
     )
 endif ()
 
 if (ENABLE_GPU)
+    if (ENABLE_MPI)
         install(
             TARGETS gpu_collective
             DESTINATION ${INSTALL_LIB_DIR}
             COMPONENT mindspore
         )
+    endif ()
     install(
         TARGETS gpu_queue
         DESTINATION ${INSTALL_LIB_DIR}
@@ -216,34 +240,12 @@ install(
         ${CMAKE_SOURCE_DIR}/mindspore/common
         ${CMAKE_SOURCE_DIR}/mindspore/ops
         ${CMAKE_SOURCE_DIR}/mindspore/communication
+        ${CMAKE_SOURCE_DIR}/mindspore/profiler
     DESTINATION ${INSTALL_PY_DIR}
     COMPONENT mindspore
 )
 
-if (ENABLE_GPU)
-    install(
-        DIRECTORY ${CMAKE_SOURCE_DIR}/mindspore/_akg
-        DESTINATION ${INSTALL_PY_DIR}/../
-        COMPONENT mindspore
-    )
-    if (EXISTS ${incubator_tvm_gpu_ROOT})
-        file(GLOB_RECURSE GLOG_LIB_LIST ${incubator_tvm_gpu_LIBPATH}/lib*)
-        install(
-                FILES ${GLOG_LIB_LIST}
-                DESTINATION ${INSTALL_LIB_DIR}
-                COMPONENT mindspore
-        )
-        install(
-            DIRECTORY
-                ${incubator_tvm_gpu_ROOT}/topi/python/topi
-                ${incubator_tvm_gpu_ROOT}/python/tvm
-            DESTINATION ${INSTALL_PY_DIR}/../_akg
-            COMPONENT mindspore
-        )
-    endif ()
-endif ()
-
-if (ENABLE_D AND ENABLE_AKG)
+if ((ENABLE_D OR ENABLE_GPU) AND ENABLE_AKG)
     set (AKG_PATH ${CMAKE_SOURCE_DIR}/build/mindspore/akg)
     install(
         DIRECTORY
@@ -265,6 +267,13 @@ if (ENABLE_SERVING)
     install(
         TARGETS ms_serving
         DESTINATION ${INSTALL_BASE_DIR}
+        COMPONENT mindspore
+    )
+
+    install(
+        FILES ${CMAKE_SOURCE_DIR}/build/mindspore/serving/ms_service_pb2.py
+              ${CMAKE_SOURCE_DIR}/build/mindspore/serving/ms_service_pb2_grpc.py
+        DESTINATION ${INSTALL_PY_DIR}
         COMPONENT mindspore
     )
 

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_IRPASS_MERGE_ADDN_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_IRPASS_MERGE_ADDN_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_MERGE_ADDN_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_MERGE_ADDN_H_
 
 #include <vector>
 #include <algorithm>
@@ -23,7 +23,7 @@
 
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"
-#include "ir/visitor.h"
+#include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"
 
 namespace mindspore {
@@ -37,9 +37,11 @@ class MergeAddN : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     Reset();
-    optimizer_ = optimizer;
+    mng_ = optimizer->resource()->manager();
     is_outer_ = true;
     AnfVisitor::Match(prim::kPrimAddN, {IsCNode})(node);
+    // do not hold this manager
+    mng_ = nullptr;
     if (!is_match_ || node->func_graph() == nullptr) {
       return nullptr;
     }
@@ -104,8 +106,7 @@ class MergeAddN : public AnfVisitor {
   }
 
   bool is_unique(const AnfNodePtr &node) {
-    auto mng = optimizer_->resource()->manager();
-    auto &node_users = mng->node_users();
+    auto &node_users = mng_->node_users();
     if (node_users.find(node) == node_users.end()) {
       return false;
     }
@@ -124,7 +125,7 @@ class MergeAddN : public AnfVisitor {
   }
 
  private:
-  OptimizerPtr optimizer_{nullptr};
+  FuncGraphManagerPtr mng_{nullptr};
   std::vector<AnfNodePtr> Xs_{}, Ys_{}, args_{};
   bool is_inner_{false}, is_outer_{false}, is_match_{false};
 };
@@ -317,4 +318,4 @@ class AddNEliminater : public AnfVisitor {
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_IRPASS_MERGE_ADDN_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_MERGE_ADDN_H_

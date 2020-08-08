@@ -104,7 +104,7 @@ def weight2int(data, scale, zero_point):
         raise ValueError("`scale` and `zero_point` should have the same shape.")
     if scale.shape[0] < 0:
         raise ValueError("`scale` and `zero_point` shape should greater than zero.")
-    if len(scale.shape) > 1:
+    if len(scale.shape) >= 1 and scale.shape[0] > 1:
         # for perchannel
         if scale.shape[0] == data.shape[0]:
             # `Conv2d` or `Dense` op weight
@@ -176,13 +176,13 @@ def scale_zp_from_data(op, minq, maxq, data_type):
 
 def fold_batchnorm(weight, cell_quant):
     r"""
-    Fold the batchnorm in `Conv2dBatchNormQuant` to weight.
+    Fold the batchnorm in `Conv2dBnFoldQuant` to weight.
 
     Calculate from `FakeQuantWithMinMax`'s Parameter or Fake quant primitive.
 
     Args:
         weight (numpy.ndarray): Weight of `cell_quant`.
-        cell_quant (Cell): Object of `mindspore.nn.layer.Conv2dBatchNormQuant`.
+        cell_quant (Cell): Object of `mindspore.nn.layer.Conv2dBnFoldQuant`.
 
     Returns:
         weight (numpy.ndarray): Folded weight.

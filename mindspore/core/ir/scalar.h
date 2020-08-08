@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_IR_SCALAR_H_
-#define MINDSPORE_CCSRC_IR_SCALAR_H_
+#ifndef MINDSPORE_CORE_IR_SCALAR_H_
+#define MINDSPORE_CORE_IR_SCALAR_H_
 
 #include <type_traits>
 #include <algorithm>
@@ -359,4 +359,4 @@ IMM_TRAITS(FP64ImmPtr, double)
 
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_IR_SCALAR_H_
+#endif  // MINDSPORE_CORE_IR_SCALAR_H_

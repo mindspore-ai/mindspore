@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_OPTIMIZER_PASS_H_
-#define MINDSPORE_CCSRC_OPTIMIZER_PASS_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PASS_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PASS_H_
 #include <string>
 #include <memory>
 #include <unordered_map>
 
 #include "ir/anf.h"
+#include "frontend/optimizer/pattern.h"
 #include "pybind_api/api_register.h"
 #include "pybind_api/export_flags.h"
 
@@ -33,17 +34,17 @@ using NodeEquivPtr = std::shared_ptr<NodeEquiv>;
 
 class PythonPass {
  public:
-  explicit PythonPass(const std::string &name, const py::function &src, const py::function &dst,
-                      bool run_only_once = false, bool multigraph = true);
+  explicit PythonPass(const std::string &name, const PatternPtr &src, const PatternPtr &dst, bool run_only_once = false,
+                      bool multigraph = true)
+      : src_pattern_(src), dst_pattern_(dst), name_(name), run_only_once_(run_only_once), multigraph_(multigraph) {}
   ~PythonPass() = default;
   bool Run(const FuncGraphPtr &func_graph);
   std::string name() const { return name_; }
   AnfNodePtr Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node);
 
  private:
-  void Build(const py::function &src, const py::function &dst);
-  AnfNodePtr src_node_ = nullptr;
-  AnfNodePtr dst_node_ = nullptr;
+  PatternPtr src_pattern_;
+  PatternPtr dst_pattern_;
   const std::string name_;
   bool run_only_once_;
   bool multigraph_ = true;
@@ -53,4 +54,4 @@ using PythonPassPtr = std::shared_ptr<PythonPass>;
 }  // namespace python_pass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_PASS_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PASS_H_

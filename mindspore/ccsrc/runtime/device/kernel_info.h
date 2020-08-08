@@ -54,6 +54,7 @@ class KernelInfo : public KernelInfoDevice {
   bool OutputAddrExist(size_t index) const;
   bool SetOutputAddr(const DeviceAddressPtr &output_address, size_t index);
   DeviceAddress *GetWorkspaceAddr(size_t index) const;
+  DeviceAddressPtr GetMutableWorkspaceAddr(size_t index) const;
   bool SetWorkspaceAddr(const DeviceAddressPtr &output_address, size_t index);
   void set_kernel_mod(const kernel::KernelModPtr &kernel_mod);
   kernel::KernelMod *MutableKernelMod() const;

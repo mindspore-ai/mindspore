@@ -21,7 +21,7 @@ if (ENABLE_PYTHON)
     add_compile_definitions(ENABLE_PYTHON)
 endif()
 
-set(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -g2 -ggdb -fno-inline-functions -fno-omit-frame-pointer -Wl,--allow-shlib-undefined -D_LIBCPP_INLINE_VISIBILITY='' -D'_LIBCPP_EXTERN_TEMPLATE(...)=' -DHALF_ENABLE_CPP11_USER_LITERALS=0 -D_FORTIFY_SOURCE=2 -Wno-cpp")
+set(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -g2 -ggdb -fno-inline-functions -fno-omit-frame-pointer -Wl,--allow-shlib-undefined -D_LIBCPP_INLINE_VISIBILITY='' -D_LIBCPP_DISABLE_EXTERN_TEMPLATE=1 -DHALF_ENABLE_CPP11_USER_LITERALS=0 -D_FORTIFY_SOURCE=2 -Wno-cpp")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/local/include -std=c++17 -Werror -Wall -Wno-deprecated-declarations -fPIC")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -42,7 +42,7 @@ if (NOT Patch_FOUND)
 endif ()
 message(PATCH_EXECUTABLE = ${Patch_EXECUTABLE})
 
-if (ENABLE_AKG AND ENABLE_D)
+if (ENABLE_AKG AND (ENABLE_D OR ENABLE_GPU))
     add_subdirectory("${CMAKE_SOURCE_DIR}/akg")
 endif()
 
@@ -50,6 +50,8 @@ include(${CMAKE_SOURCE_DIR}/cmake/mind_expression.cmake)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/flatbuffers/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/flatbuffers/include/flatbuffers)
+
+if (NOT ENABLE_ACL)
 
 include(${CMAKE_SOURCE_DIR}/cmake/dependency_utils.cmake)
 find_package(Python3 3.7 COMPONENTS Interpreter Development)
@@ -100,8 +102,13 @@ if (ENABLE_TESTCASES)
     add_subdirectory(tests)
 endif()
 
+endif() # NOT ENABLE_ACL
+
 if (ENABLE_SERVING)
     add_subdirectory(serving)
+    add_subdirectory(serving/example/cpp_client)
 endif()
 
+if (NOT ENABLE_ACL)
 include(cmake/package.cmake)
+endif() # NOT ENABLE_ACL
