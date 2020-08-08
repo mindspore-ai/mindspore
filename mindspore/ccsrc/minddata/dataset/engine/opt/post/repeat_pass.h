@@ -92,6 +92,12 @@ class RepeatPass : public NodePass {
   /// \return Status The error code return
   Status RunOnNode(std::shared_ptr<CacheLookupOp> node, bool *modified) override;
 
+  /// \brief Set the epoch count for DeviceQueue
+  /// \param[in] node The node being visited
+  /// \param[inout] modified Indicator if the node was changed at all
+  /// \return Status The error code return
+  Status RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *modified) override;
+
   /// \brief All operators have a flag that might be set related to the repeat and any leaf nodes need to be set up
   ///     for use with a controlling repeat above it.
   /// \param[in] node The node being visited
