@@ -75,15 +75,15 @@ run_gpu()
     python ${BASEPATH}/../train.py \
         --dataset_path=$4 \
         --device_target=$1 \
-        --quantization_aware=True \
-        &> ../train.log &  # dataset train folder
+        --pre_trained=$5 \
+        --quantization_aware=True &> ../train.log &  # dataset train folder
 }
 
-if [ $# -gt 6 ] || [ $# -lt 4 ]
+if [ $# -gt 6 ] || [ $# -lt 5 ]
 then
     echo "Usage:\n \
-          Ascend: sh run_train.sh Ascend [DEVICE_NUM] [SERVER_IP(x.x.x.x)] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH]\n \
-          GPU: sh run_train.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]\n \
+          Ascend: sh run_train_quant.sh Ascend [DEVICE_NUM] [SERVER_IP(x.x.x.x)] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH]\n \
+          GPU: sh run_train_quant.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH]\n \
           "
 exit 1
 fi
