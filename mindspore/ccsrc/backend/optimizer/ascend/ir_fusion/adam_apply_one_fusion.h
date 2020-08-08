@@ -40,6 +40,7 @@ class AdamApplyOneFusion : public PatternProcessPass {
     add2_y_ = std::make_shared<Var>();
     add0_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimTensorAdd->name()));
     add1_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimTensorAdd->name()));
+    sub0_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimSub->name()));
   }
 
   ~AdamApplyOneFusion() override = default;
@@ -47,12 +48,14 @@ class AdamApplyOneFusion : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  protected:
-  AnfNodePtr CreateAdamApplyOneNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv) const;
+  AnfNodePtr CreateAdamApplyOneNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
+                                    const AnfNodePtr &final_node) const;
   std::vector<VarPtr> input_vars_;
   std::vector<VarPtr> mul_x_input_vars_;
   VarPtr add2_y_;
   VarPtr add0_var_;
   VarPtr add1_var_;
+  VarPtr sub0_var_;
 };
 
 class AdamApplyOneCond1Fusion : public AdamApplyOneFusion {
@@ -88,6 +91,51 @@ class AdamApplyOneCond4Fusion : public AdamApplyOneFusion {
       : AdamApplyOneFusion("adam_apply_one_cond4_fusion", multigraph) {}
 
   ~AdamApplyOneCond4Fusion() override = default;
+  const BaseRef DefinePattern() const override;
+};
+
+class AdamApplyOneAssignFusion : public AdamApplyOneFusion {
+ public:
+  explicit AdamApplyOneAssignFusion(bool multigraph = true)
+      : AdamApplyOneFusion("adam_apply_one_assign_fusion", multigraph) {}
+
+  ~AdamApplyOneAssignFusion() override = default;
+  const BaseRef DefinePattern() const override;
+};
+
+class AdamApplyOneAssignCond1Fusion : public AdamApplyOneFusion {
+ public:
+  explicit AdamApplyOneAssignCond1Fusion(bool multigraph = true)
+      : AdamApplyOneFusion("adam_apply_one_assign_cond1_fusion", multigraph) {}
+
+  ~AdamApplyOneAssignCond1Fusion() override = default;
+  const BaseRef DefinePattern() const override;
+};
+
+class AdamApplyOneAssignCond2Fusion : public AdamApplyOneFusion {
+ public:
+  explicit AdamApplyOneAssignCond2Fusion(bool multigraph = true)
+      : AdamApplyOneFusion("adam_apply_one_assign_cond2_fusion", multigraph) {}
+
+  ~AdamApplyOneAssignCond2Fusion() override = default;
+  const BaseRef DefinePattern() const override;
+};
+
+class AdamApplyOneAssignCond3Fusion : public AdamApplyOneFusion {
+ public:
+  explicit AdamApplyOneAssignCond3Fusion(bool multigraph = true)
+      : AdamApplyOneFusion("adam_apply_one_assign_cond3_fusion", multigraph) {}
+
+  ~AdamApplyOneAssignCond3Fusion() override = default;
+  const BaseRef DefinePattern() const override;
+};
+
+class AdamApplyOneAssignCond4Fusion : public AdamApplyOneFusion {
+ public:
+  explicit AdamApplyOneAssignCond4Fusion(bool multigraph = true)
+      : AdamApplyOneFusion("adam_apply_one_assign_cond4_fusion", multigraph) {}
+
+  ~AdamApplyOneAssignCond4Fusion() override = default;
   const BaseRef DefinePattern() const override;
 };
 }  // namespace opt
