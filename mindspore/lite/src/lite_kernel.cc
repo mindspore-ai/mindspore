@@ -74,10 +74,6 @@ std::vector<lite::tensor::Tensor *> LiteKernelUtil::SubgraphInputTensors(
   for (const auto &kernel : kernels) {
     all_output_tensors.insert(all_output_tensors.end(), kernel->GetOutputs().begin(), kernel->GetOutputs().end());
   }
-  std::sort(all_output_tensors.begin(), all_output_tensors.end());
-  auto end_iter = std::unique(all_output_tensors.begin(), all_output_tensors.end());
-  all_output_tensors.erase(end_iter, all_output_tensors.end());
-
   std::vector<kernel::LiteKernel *> input_kernels = SubgraphInputKernels(kernels);
   for (const auto &kernel : input_kernels) {
     for (const auto &tensor : kernel->GetInputs()) {
@@ -97,10 +93,6 @@ std::vector<lite::tensor::Tensor *> LiteKernelUtil::SubgraphOutputTensors(
   for (const auto &kernel : kernels) {
     all_input_tensors.insert(all_input_tensors.end(), kernel->GetInputs().begin(), kernel->GetInputs().end());
   }
-  std::sort(all_input_tensors.begin(), all_input_tensors.end());
-  auto end_iter = std::unique(all_input_tensors.begin(), all_input_tensors.end());
-  all_input_tensors.erase(end_iter, all_input_tensors.end());
-
   std::vector<kernel::LiteKernel *> output_kernels = SubgraphOutputKernels(kernels);
   for (const auto &kernel : output_kernels) {
     for (const auto &tensor : kernel->GetOutputs()) {
