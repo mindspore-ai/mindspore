@@ -1248,6 +1248,16 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_Add] = PopulateArithmetic;
   populate_parameter_funcs_[schema::PrimitiveType_Sub] = PopulateArithmetic;
   populate_parameter_funcs_[schema::PrimitiveType_Div] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_LogicalAnd] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_LogicalOr] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_Equal] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_Less] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_Greater] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_NotEqual] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_LessEqual] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_GreaterEqual] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_Maximum] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_Minimum] = PopulateArithmetic;
   populate_parameter_funcs_[schema::PrimitiveType_FloorDiv] = PopulateArithmetic;
   populate_parameter_funcs_[schema::PrimitiveType_FloorMod] = PopulateArithmetic;
   populate_parameter_funcs_[schema::PrimitiveType_SquaredDifference] = PopulateArithmetic;
@@ -1265,6 +1275,7 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_LogicalNot] = PopulateArithmeticSelf;
   populate_parameter_funcs_[schema::PrimitiveType_Floor] = PopulateArithmeticSelf;
   populate_parameter_funcs_[schema::PrimitiveType_Ceil] = PopulateArithmeticSelf;
+  populate_parameter_funcs_[schema::PrimitiveType_Round] = PopulateArithmeticSelf;
   populate_parameter_funcs_[schema::PrimitiveType_ArgMax] = PopulateArgMaxParameter;
   populate_parameter_funcs_[schema::PrimitiveType_ArgMin] = PopulateArgMinParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Cast] = PopulateCastParameter;
