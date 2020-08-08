@@ -21,7 +21,6 @@
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/concat.h"
 
-
 int DivideRoundUp(int n, int div) {
   int q = n / div;
   return n % div == 0 ? q : q + 1;
@@ -77,15 +76,26 @@ void ConcatComputeByCPU_3input_dim4_axis3(float *input0, float *input1, float *i
         postion = i * output_shape[1] * output_shape[2] * output_shape[3] + j * output_shape[2] * output_shape[3] +
                   k * output_shape[3];
         for (int w = 0; w < output_shape[3]; w++) {
-          if (w < input_shape0[3] + input_shape1[3]) {
-            output[postion++] = (w < input_shape0[3]) ? input0[index0++] : input1[index1++];
+          if (w < input_shape0[3]) {
+            int align = DivideRoundUp(input_shape0[3], 4) * 4;
+            index0 = i * input_shape0[1] * input_shape0[2] * align + j * input_shape0[2] * align + k * align + w;
+            output[postion++] = input0[index0];
+          } else if (w >= input_shape0[3] && w < (input_shape0[3] + input_shape1[3])) {
+            int align = DivideRoundUp(input_shape1[3], 4) * 4;
+            index1 = i * input_shape1[1] * input_shape1[2] * align + j * input_shape1[2] * align + k * align + w -
+                     input_shape0[3];
+            output[postion++] = input1[index1];
           } else if ((input_shape0[3] + input_shape1[3]) <= w &&
                      w < (input_shape0[3] + input_shape1[3] + input_shape2[3])) {
-            output[postion++] = input2[index2++];
+            int align = DivideRoundUp(input_shape2[3], 4) * 4;
+            index2 = i * input_shape2[1] * input_shape2[2] * align + j * input_shape2[2] * align + k * align + w -
+                     input_shape0[3] - input_shape1[3];
+            output[postion++] = input2[index2];
           } else {
-            for (int ind = input_shape0[3] + input_shape1[3]; ind < output_shape[3]; ind++) {
+            for (int ind = input_shape0[3] + input_shape1[3] + input_shape2[3]; ind < output_shape[3]; ind++) {
               output[postion++] = 0;
             }
+            break;
           }
         }
       }
@@ -96,18 +106,31 @@ void ConcatComputeByCPU_3input_dim4_axis3(float *input0, float *input1, float *i
 namespace mindspore {
 class TestConcatOpenCL : public mindspore::Common {
  public:
-  TestConcatOpenCL(){}
+  TestConcatOpenCL() {}
 };
+
+template <typename T>
+void CompareOutputData1(T *output_data, T *correct_data, int size, float err_bound) {
+  for (size_t i = 0; i < size; i++) {
+    T abs = fabs(output_data[i] - correct_data[i]);
+    //          printf("i=%d %.3f %.3f\n", i, output_data[i], correct_data[i]);
+    ASSERT_LE(abs, err_bound);
+  }
+}
+
 TEST_F(TestConcatOpenCL, ConcatFp32_2input_dim4_axis3) {
   MS_LOG(INFO) << "begin test";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
+  auto allocator = ocl_runtime->GetAllocator();
 
   MS_LOG(INFO) << "init tensors";
-  constexpr int INPUT_NUM = 3;
-  std::array<std::vector<int>, INPUT_NUM> input_shapes = {
-    std::vector<int>{1, 240, 240, 16}, std::vector<int>{1, 240, 240, 16}, std::vector<int>{1, 240, 240, 64}};
-  std::vector<int> output_shape = {1, 240, 240, 96};
+  constexpr int INPUT_NUM = 2;
+  //  std::array<std::vector<int>, INPUT_NUM> input_shapes = {
+  //    std::vector<int>{1, 120, 120, 16}, std::vector<int>{1, 120, 120, 16},std::vector<int>{1, 120, 120, 96}};
+  std::array<std::vector<int>, INPUT_NUM> input_shapes = {std::vector<int>{1, 32, 512, 48},
+                                                          std::vector<int>{1, 32, 512, 48}};
+  std::vector<int> output_shape = {1, 32, 512, 96};
   output_shape[3] = DivideRoundUp(output_shape[3], 4) * 4;
   auto data_type = kNumberTypeFloat32;
   auto tensor_type = schema::NodeType_ValueNode;
@@ -118,32 +141,30 @@ TEST_F(TestConcatOpenCL, ConcatFp32_2input_dim4_axis3) {
   auto *output_tensor = new lite::tensor::Tensor(data_type, output_shape, schema::Format_NHWC, tensor_type);
   std::vector<lite::tensor::Tensor *> outputs{output_tensor};
   std::cout << "input_shapes size=: " << input_shapes.size() << std::endl;
-  MS_LOG(INFO) << "initialize tensors";
+
+  std::cout << "initialize tensors";
   auto param = new ConcatParameter();
   param->axis_ = 3;
   auto *concat_kernel = new kernel::ConcatOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
   concat_kernel->Init();
-
   MS_LOG(INFO) << "initialize sub_graph";
   std::vector<kernel::LiteKernel *> kernels{concat_kernel};
   auto *sub_graph = new kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  // to do allocate memory for inputs and outputs
+  for (auto &input_tensor : inputs) {
+    input_tensor->MallocData(allocator);
+  }
   sub_graph->Init();
-
+  unsigned int seed = 123;
   MS_LOG(INFO) << "initialize input data";
-  srand(time(NULL));
   for (auto &input_tensor : inputs) {
     auto input_data = reinterpret_cast<float *>(input_tensor->Data());
-    static unsigned int seed = 123;
     for (int i = 0; i < input_tensor->ElementsNum(); ++i) {
       input_data[i] = static_cast<float>(rand_r(&seed) % 10 + 1);
     }
-    printf("\n");
   }
 
-  MS_LOG(INFO) << "==================output data================";
-  sub_graph->Run();
-  auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->Data());
-  printf("\n");
+  // compute the result for CPU
   auto *input_data0 = reinterpret_cast<float *>(inputs[0]->Data());
   auto *input_data1 = reinterpret_cast<float *>(inputs[1]->Data());
   std::vector<float> output_data_cpu(output_shape[0] * output_shape[1] * output_shape[2] * output_shape[3]);
@@ -156,8 +177,10 @@ TEST_F(TestConcatOpenCL, ConcatFp32_2input_dim4_axis3) {
     ConcatComputeByCPU_3input_dim4_axis3(input_data0, input_data1, input_data2, output_data_cpu.data(), input_shapes[0],
                                          input_shapes[1], input_shapes[2], output_shape, param->axis_);
   }
-  printf("\n");
-  CompareOutputData(output_data_gpu, output_data_cpu.data(), output_tensor->ElementsNum(), 0.00001);
-  MS_LOG(INFO) << "Testconcat passed";
+
+  std::cout << "==================output data================" << std::endl;
+  sub_graph->Run();
+  auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->Data());
+  CompareOutputData1(output_data_gpu, output_data_cpu.data(), output_tensor->ElementsNum(), 0.00001);
 }
 }  // namespace mindspore

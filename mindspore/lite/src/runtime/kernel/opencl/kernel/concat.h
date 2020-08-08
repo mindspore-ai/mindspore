@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_BACKEND_OPENCL_Concat_H_
-#define MINDSPORE_LITE_SRC_BACKEND_OPENCL_Concat_H_
+#ifndef MINDSPORE_LITE_SRC_BACKEND_OPENCL_CONCAT_H_
+#define MINDSPORE_LITE_SRC_BACKEND_OPENCL_CONCAT_H_
 
 #include <vector>
 #include "ir/anf.h"
@@ -25,11 +25,11 @@
 
 namespace mindspore::kernel {
 
-class ConcatOpenCLKernel : public LiteKernel {
+class ConcatOpenCLKernel : public OpenCLKernel {
  public:
   explicit ConcatOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                               const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs) {}
+      : OpenCLKernel(parameter, inputs, outputs) {}
 
   ~ConcatOpenCLKernel() override{};
 
@@ -40,6 +40,7 @@ class ConcatOpenCLKernel : public LiteKernel {
   int Run_axis0();
 
   int Run() override;
+  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
 
  private:
   cl::Kernel kernel_;

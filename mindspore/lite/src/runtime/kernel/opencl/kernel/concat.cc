@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <cstring>
 #include <string>
 #include <algorithm>
 #include <set>
@@ -27,6 +28,26 @@ using mindspore::schema::PrimitiveType_Concat;
 
 namespace mindspore::kernel {
 
+int ConcatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
+  size_t CO4 = UP_DIV(outputs_[0]->Channel(), C4NUM);
+  size_t im_dst_x, im_dst_y;
+  if (inputs_[0]->GetFormat() == schema::Format_NHWC4) {
+    im_dst_x = outputs_[0]->Width() * CO4;
+    im_dst_y = outputs_[0]->Height();
+  } else {
+    im_dst_y = outputs_[0]->Height() * CO4;
+    im_dst_x = outputs_[0]->Width();
+  }
+#ifdef ENABLE_FP16
+  size_t img_dtype = CL_HALF_FLOAT;
+#else
+  size_t img_dtype = CL_FLOAT;
+#endif
+  img_size->clear();
+  std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
+  *img_size = vec;
+  return 1;
+}
 int ConcatOpenCLKernel::Init() {
   if (inputs_[0]->shape().size() != 4) {
     MS_LOG(ERROR) << "only support dim=4";
@@ -132,72 +153,45 @@ int ConcatOpenCLKernel::Run() {
   }
 
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  std::vector<size_t> local;
-  std::vector<size_t> global;
+  MS_LOG(INFO) << " judge the numbers of input vector";
+  auto input0_shape = inputs_[0]->shape();
+  auto input1_shape = inputs_[1]->shape();
+  auto input2_shape = inputs_[2]->shape();
+  auto output_shape = outputs_[0]->shape();
+
+  cl_int2 input0_shape2_ = {DivideRoundUp(input0_shape[3], 4), DivideRoundUp(input1_shape[3], 4)};  // change
+  cl_int3 input0_shape3_ = {DivideRoundUp(input0_shape[3], 4), DivideRoundUp(input1_shape[3], 4),
+                            DivideRoundUp(input2_shape[3], 4)};
+  cl_int4 output_shape_ = {output_shape[0], output_shape[1], output_shape[2], DivideRoundUp(output_shape[3], 4)};
+
+  uint32_t OH = output_shape[0] * output_shape[1];  // N*H
+  uint32_t OW = output_shape[2];
+
+  std::vector<size_t> local = {1, 1};
+  std::vector<size_t> global = {OH, OW};
+  //    ConcatGetWorkGroup(global, &local, 512);
+
+  int arg_cn = 0;
   if (inputs_.size() == 2) {
-    auto input0_shape = inputs_[0]->shape();
-    auto input1_shape = inputs_[1]->shape();
-    auto output_shape = outputs_[0]->shape();
-
-    cl_int4 input0_shape_ = {input0_shape[0], input0_shape[1], input0_shape[2], input0_shape[3]};
-    cl_int4 input1_shape_ = {input1_shape[0], input1_shape[1], input1_shape[2], input1_shape[3]};
-    cl_int4 output_shape_ = {output_shape[0], output_shape[1], output_shape[2], output_shape[3]};
-
-    uint32_t OH = output_shape[0] * output_shape[1];  // N*H
-    uint32_t OW = output_shape[2];
-    uint32_t OC = output_shape[3];
-    global = {OH, OW, OC};  // HWC
-    ConcatGetWorkGroup(global, &local, 384);
-    std::cout << "local size=:" << std::endl;
-    for (int i = 0; i < local.size(); i++) {
-      std::cout << local[i] << "    ";
-    }
-    std::cout << std::endl;
-    int arg_cn = 0;
+    MS_LOG(INFO) << " SetKernelArg";
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, outputs_[0]->Data());
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, inputs_[0]->Data());
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, inputs_[1]->Data());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, outputs_[0]->Data());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, input0_shape_);
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, input1_shape_);
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, input0_shape2_);
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, output_shape_);
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, param->axis_);
-  }
-  if (inputs_.size() == 3) {
-    auto input0_shape = inputs_[0]->shape();
-    auto input1_shape = inputs_[1]->shape();
-    auto input2_shape = inputs_[2]->shape();
-    auto output_shape = outputs_[0]->shape();
-
-    cl_int4 input0_shape_ = {input0_shape[0], input0_shape[1], input0_shape[2], input0_shape[3]};
-    cl_int4 input1_shape_ = {input1_shape[0], input1_shape[1], input1_shape[2], input1_shape[3]};
-    cl_int4 input2_shape_ = {input2_shape[0], input2_shape[1], input2_shape[2], input2_shape[3]};
-    cl_int4 output_shape_ = {output_shape[0], output_shape[1], output_shape[2], output_shape[3]};
-
-    uint32_t OH = output_shape[0] * output_shape[1];  // N*H
-    uint32_t OW = output_shape[2];
-    uint32_t OC = output_shape[3];
-    global = {OH, OW, OC};  // HWC
-    ConcatGetWorkGroup(global, &local, 384);
-    std::cout << "local size=:" << std::endl;
-    for (int i = 0; i < local.size(); i++) {
-      std::cout << local[i] << "    ";
-    }
-    std::cout << std::endl;
-    int arg_cn = 0;
+  } else if (inputs_.size() == 3) {
+    MS_LOG(INFO) << " SetKernelArg";
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, outputs_[0]->Data());
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, inputs_[0]->Data());
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, inputs_[1]->Data());
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, inputs_[2]->Data());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, outputs_[0]->Data());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, input0_shape_);
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, input1_shape_);
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, input2_shape_);
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, input0_shape3_);
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, output_shape_);
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, param->axis_);
   }
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
 
   return 0;
-}
+}  // namespace mindspore::kernel
 
 kernel::LiteKernel *OpenCLConcatKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                               const std::vector<lite::tensor::Tensor *> &outputs,
