@@ -920,7 +920,7 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr funcGraph) {
     return RET_ERROR;
   }
 
-  auto ret = session_->CompileGraph(model.get());
+  auto ret = session_->CompileGraph(model);
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "compile graph error";
     return RET_ERROR;

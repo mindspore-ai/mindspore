@@ -278,7 +278,7 @@ int TimeProfile::RunTimeProfile() {
   }
   auto model = lite::Model::Import(graphBuf, size);
 
-  auto ret = session_->CompileGraph(model.get());
+  auto ret = session_->CompileGraph(model);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Compile graph failed.";
     return RET_ERROR;
@@ -336,6 +336,8 @@ int TimeProfile::RunTimeProfile() {
   }
   ms_inputs_.clear();
   delete graphBuf;
+  delete session_;
+  delete model;
   return ret;
 }
 
