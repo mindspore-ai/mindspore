@@ -30,10 +30,14 @@ if(ENABLE_GPU)
     if(NOT CUDNN_PATH OR CUDNN_PATH STREQUAL "")
         set(CUDNN_PATH ${CUDA_PATH})
     endif()
+    if(NOT CUPTI_INCLUDE_DIRS OR CUPTI_INCLUDE_DIRS STREQUAL "")
+        set(CUPTI_INCLUDE_DIRS  ${CUDA_PATH}/extras/CUPTI/include)
+    endif()
     message("CUDA_PATH: ${CUDA_PATH}")
     message("CUDA_INCLUDE_DIRS: ${CUDA_INCLUDE_DIRS}")
     message("CUDNN_PATH: ${CUDNN_PATH}")
-    include_directories(${CUDNN_PATH} ${CUDA_PATH} ${CUDA_INCLUDE_DIRS})
+    message("CUPTI_INCLUDE_DIRS: ${CUPTI_INCLUDE_DIRS}")
+    include_directories(${CUDNN_PATH} ${CUDA_PATH} ${CUDA_INCLUDE_DIRS} ${CUPTI_INCLUDE_DIRS})
 
     file(GLOB_RECURSE GPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
             "runtime/device/gpu/*.cc"
@@ -130,7 +134,7 @@ set(SUB_COMP
         frontend/operator
         pipeline/jit
         pipeline/pynative
-        common debug pybind_api utils vm
+        common debug pybind_api utils vm profiler
 )
 
 foreach (_comp ${SUB_COMP})
@@ -259,7 +263,7 @@ if (ENABLE_GPU)
                           ${CUDNN_PATH}/lib64/libcudnn.so
                           ${CUDA_PATH}/lib64/libcudart.so
                           ${CUDA_PATH}/lib64/stubs/libcuda.so
-			  ${CUDA_PATH}/lib64/libcusolver.so)
+                          ${CUDA_PATH}/lib64/libcusolver.so)
     if (ENABLE_MPI)
         set_target_properties(_ms_mpi PROPERTIES INSTALL_RPATH ${ORIGIN_PATH})
     endif()
