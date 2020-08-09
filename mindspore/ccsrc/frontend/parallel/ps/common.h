@@ -56,9 +56,11 @@ constexpr char kMomentum[] = "momentum";
 
 constexpr char kApplyMomentum[] = "ApplyMomentum";
 constexpr char kSparseAdam[] = "Adam";
+constexpr char kSparseLazyAdam[] = "LazyAdam";
 constexpr char kSparseFtrl[] = "Ftrl";
 constexpr char kApplyMomentumOp[] = "Momentum";
 constexpr char kSparseAdamOp[] = "Adam";
+constexpr char kSparseLazyAdamOp[] = "LazyAdam";
 constexpr char kSparseFtrlOp[] = "FTRL";
 
 constexpr int kInitWeightsCmd = 10;

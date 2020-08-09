@@ -328,15 +328,8 @@ class TrainStepWrap(nn.Cell):
         self.weights_w = ParameterTuple(weights_w)
         self.weights_d = ParameterTuple(weights_d)
 
-        if host_device_mix and is_auto_parallel:
+        if (host_device_mix and is_auto_parallel) or parameter_server:
             self.optimizer_d = LazyAdam(
-                self.weights_d, learning_rate=3.5e-4, eps=1e-8, loss_scale=sens)
-            self.optimizer_w = FTRL(learning_rate=5e-2, params=self.weights_w,
-                                    l1=1e-8, l2=1e-8, initial_accum=1.0, loss_scale=sens)
-            self.optimizer_w.sparse_opt.add_prim_attr("primitive_target", "CPU")
-            self.optimizer_d.sparse_opt.add_prim_attr("primitive_target", "CPU")
-        elif parameter_server:
-            self.optimizer_d = Adam(
                 self.weights_d, learning_rate=3.5e-4, eps=1e-8, loss_scale=sens)
             self.optimizer_w = FTRL(learning_rate=5e-2, params=self.weights_w,
                                     l1=1e-8, l2=1e-8, initial_accum=1.0, loss_scale=sens)
