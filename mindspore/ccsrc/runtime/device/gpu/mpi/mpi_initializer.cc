@@ -19,6 +19,7 @@
 #include <mpi.h>
 #include <pybind11/operators.h>
 #include <iostream>
+#include <vector>
 #include <string>
 
 namespace mindspore {

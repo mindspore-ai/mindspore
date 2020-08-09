@@ -15,7 +15,7 @@
  */
 #include "backend/kernel_compiler/cpu/reduce_scatter_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
-#include "runtime/device/cpu/mpi/mpi_adapter.h"
+#include "runtime/device/cpu/mpi/mpi_interface.h"
 #include "ir/primitive.h"
 
 namespace mindspore {
@@ -24,7 +24,7 @@ namespace {
 constexpr auto kRanksGroup = "group";
 }  // namespace
 
-ReduceScatterCPUKernel::ReduceScatterCPUKernel() : op_type_(device::cpu::kOpTypeSum) {}
+ReduceScatterCPUKernel::ReduceScatterCPUKernel() : op_type_(kMPIOpTypeSum) {}
 
 void ReduceScatterCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   auto op = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("op");
@@ -46,9 +46,7 @@ bool ReduceScatterCPUKernel::Launch(const std::vector<kernel::AddressPtr> &input
   auto input_addr = reinterpret_cast<float *>(inputs[0]->addr);
   auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
   auto output_data_num = outputs[0]->size / sizeof(float);
-  auto mpi_instance = device::cpu::MPIAdapter::Instance();
-  MS_EXCEPTION_IF_NULL(mpi_instance);
-  return mpi_instance->ReduceScatter(input_addr, output_addr, ranks_group_, output_data_num, op_type_);
+  return MPIReduceScatter(input_addr, output_addr, ranks_group_, output_data_num, op_type_);
 }
 }  // namespace kernel
 }  // namespace mindspore

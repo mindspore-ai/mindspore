@@ -146,15 +146,6 @@ if (ENABLE_MPI)
             COMPONENT mindspore
         )
     endif ()
-    file(GLOB_RECURSE MPI_LIB_LIST
-        ${ompi_LIBPATH}/libmpi${CMAKE_SHARED_LIBRARY_SUFFIX}*
-        ${ompi_LIBPATH}/libopen*${CMAKE_SHARED_LIBRARY_SUFFIX}*
-    )
-    install(
-        FILES ${MPI_LIB_LIST}
-        DESTINATION ${INSTALL_LIB_DIR}
-        COMPONENT mindspore
-    )
 endif ()
 
 if (ENABLE_GPU)
