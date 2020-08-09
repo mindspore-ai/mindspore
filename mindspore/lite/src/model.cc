@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#ifdef SUPPORT_TRAIN
-#include "src/train/model_impl.h"
-#else
+// #ifdef SUPPORT_TRAIN
+// #include "src/train/model_impl.h"
+// #else
 #include "src/model_impl.h"
-#endif
+// #endif
 #include "include/model.h"
 #include "utils/log_adapter.h"
 

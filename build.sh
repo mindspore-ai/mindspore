@@ -109,7 +109,7 @@ checkopts()
   ENABLE_GPU="off"
 
   # Process the options
-  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:Q:D:zM:V:K:swB:En' opt
+  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:Q:D:zM:V:K:swB:EnT:' opt
   do
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
     case "${opt}" in
@@ -281,6 +281,11 @@ checkopts()
       E)
         ENABLE_IBVERBS="on"
         echo "enable IBVERBS for parameter server"
+        ;;
+      T) 
+        check_on_off $OPTARG T
+        SUPPORT_TRAIN=$OPTARG
+        echo "support train on device "
         ;;
       *)
         echo "Unknown option ${opt}!"

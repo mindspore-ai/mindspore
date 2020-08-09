@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#include "mindspore/lite/src/train/lite_kernel_runtime.h"
+#include "src/train/lite_kernel_runtime.h"
+#include "backend/session/anf_runtime_algorithm.h"
 namespace mindspore::lite {
 std::vector<CNodePtr> LiteInferKernelRuntime::GetGraphInputs(const std::vector<CNodePtr> &execution_order) {
   std::vector<CNodePtr> graph_inputs;
@@ -34,7 +35,8 @@ std::vector<CNodePtr> LiteInferKernelRuntime::GetGraphInputs(const std::vector<C
 }
 
 void LiteInferKernelRuntime::BindInputOutput(const session::KernelGraph *graph,
-                                             const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
+                                             const std::vector<tensor::Tensor *> &inputs,
+                                             std::vector<tensor::Tensor *> *outputs) {
   MS_EXCEPTION_IF_NULL(graph);
   auto execution_order = graph->execution_order();
   auto graph_inputs = GetGraphInputs(execution_order);
@@ -56,15 +58,17 @@ void LiteInferKernelRuntime::BindInputOutput(const session::KernelGraph *graph,
       auto liteKernel = dynamic_cast<kernel::LiteKernel *>(AnfAlgo::GetKernelMod(return_input));
       auto output_tensors = liteKernel->GetOutputs();
       for (auto output_tensor : output_tensors) {
-        tensor::TensorPtr output_tensor_ptr(output_tensor);
-        outputs->push_back(output_tensor_ptr);
+        // tensor::TensorPtr output_tensor_ptr(output_tensor);
+        outputs->push_back(output_tensor);
       }
     }
   }
 }
 
-bool LiteInferKernelRuntime::Run(session::KernelGraph *graph) {
+bool LiteInferKernelRuntime::Run(session::KernelGraph *graph, const std::vector<tensor::Tensor *> &inputs,
+                                 std::vector<tensor::Tensor *> *outputs) {
   MS_EXCEPTION_IF_NULL(graph);
+  BindInputOutput(graph, inputs, *outputs);
   std::vector<kernel::LiteKernel *> kernels;
   auto nodes = graph->execution_order();
   for (const auto &node : nodes) {
@@ -76,8 +80,7 @@ bool LiteInferKernelRuntime::Run(session::KernelGraph *graph) {
   }
   kernel::LiteKernelUtil::TopologicalSortKernels(kernels);
   Executor executor;
-  auto ret = executor.Run(kernels);
+  auto ret = executor.Run(inputs, *outputs, kernels);
   return 0 == ret;
 }
 }  // namespace mindspore::lite
-

@@ -15,12 +15,13 @@
  */
 
 #include <algorithm>
+#include "src/train/train_anf_session.h"
 #include "include/context.h"
 #include "mindspore/ccsrc/runtime/device/kernel_info.h"
 #include "mindspore/lite/src/train/train_session.h"
 #include "mindspore/lite/src/kernel_factory.h"
 #include "mindspore/lite/src/param_value_lite.h"
-#include "utils/ms_utils.h"
+#include "common/utils.h"
 #include "mindspore/lite/src/ops/ops.h"
 #include "ir/anf.h"
 #include "mindspore/lite/src/ir/tensor.h"
@@ -67,12 +68,12 @@ static TypeId GetAnfNodeOutTypeId(const AnfNodePtr &anfNodePtr) {
   }
 }
 
-void TrainSession::Init(lite::Context *context) {
+void TrainANFSession::Init(lite::Context *context) {
   MS_EXCEPTION_IF_NULL(context);
   this->context_ = std::make_shared<lite::Context>(context->thread_num_, context->allocator, context->device_ctx_);
 }
 
-lite::tensor::Tensor *TrainSession::GetTensorForAnfNode(const AnfNodePtr anf_node) {
+lite::tensor::Tensor *TrainANFSession::GetTensorForAnfNode(const AnfNodePtr anf_node) {
   lite::tensor::Tensor *out_tensor = tensors_[anf_node];
   if (out_tensor == NULL) {
     out_tensor = new lite::tensor::Tensor(GetAnfNodeOutTypeId(anf_node),
@@ -82,7 +83,7 @@ lite::tensor::Tensor *TrainSession::GetTensorForAnfNode(const AnfNodePtr anf_nod
   return out_tensor;
 }
 
-int TrainSession::BuildKernelInputAndOutputFromFuncGraph(const KernelGraphPtr &kernel_graph) {
+int TrainANFSession::BuildKernelInputAndOutputFromFuncGraph(const KernelGraphPtr &kernel_graph) {
   auto return_node = kernel_graph->get_return();
   auto node_list = TopoSort(return_node);
   auto model_imp = std::dynamic_pointer_cast<lite::train::ModelImpl>(func_graph_);
@@ -135,32 +136,17 @@ int TrainSession::BuildKernelInputAndOutputFromFuncGraph(const KernelGraphPtr &k
   }
   return 0;
 }
-#if 0
-GraphId TrainSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
-  auto graph_id = graph_sum_;
-  auto graph = SessionBasic::ConstructKernelGraph(lst, outputs);
-  MS_EXCEPTION_IF_NULL(graph);
 
-  BuildKernel(graph.get());
-  MS_LOG(INFO) << "Assign kernel address";
-  runtime_.AssignKernelAddress(graph.get());
-  return graph_id;
-}
+GraphId TrainANFSession::graph_sum_ = 0;
 
-GraphId TrainSession::CompileGraph(const char *model_buf, size_t size) { return 0; }
-#else
-GraphId TrainSession::graph_sum_ = 0;
-
-KernelGraphPtr TrainSession::NewKernelGraph() {
+KernelGraphPtr TrainANFSession::NewKernelGraph() {
   auto graph = std::make_shared<KernelGraph>();
   graph->set_graph_id(graph_sum_);
   graphs_[graph_sum_++] = graph;
   return graph;
 }
 
-#endif
-
-std::shared_ptr<KernelGraph> TrainSession::ConstructKernelGraph(const FuncGraphPtr &func_graph) {
+std::shared_ptr<KernelGraph> TrainANFSession::ConstructKernelGraph(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   auto graph = NewKernelGraph();
   graph->set_return(func_graph->get_return());
@@ -176,7 +162,7 @@ std::shared_ptr<KernelGraph> TrainSession::ConstructKernelGraph(const FuncGraphP
   graph->set_execution_order(cnode_order);
   return graph;
 }
-GraphId TrainSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
+GraphId TrainANFSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   auto graph = ConstructKernelGraph(func_graph);
   func_graph_ = func_graph;
   MS_EXCEPTION_IF_NULL(graph);
@@ -197,8 +183,8 @@ GraphId TrainSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   return graph_id;
 }
 
-void TrainSession::RunGraph(const GraphId &graph_id, const std::vector<lite::tensor::Tensor *> &inputs,
-                            std::vector<lite::tensor::Tensor *> *outputs) {
+void TrainANFSession::RunGraph(const GraphId &graph_id, const std::vector<lite::tensor::Tensor *> &inputs,
+                               std::vector<lite::tensor::Tensor *> *outputs) {
   auto &kernel_graph = graphs_[graph_id];
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_LOG(INFO) << "Bind input output address";
@@ -208,14 +194,14 @@ void TrainSession::RunGraph(const GraphId &graph_id, const std::vector<lite::ten
   //  Reorder(&execution_order);
   //  kernel_graph->set_execution_order(execution_order);
   MS_LOG(INFO) << "Run graph start";
-  auto ret = runtime_.Run(kernel_graph.get(), (std::vector<lite::tensor::Tensor *> &)inputs, outputs);
+  auto ret = runtime_.Run(kernel_graph.get(), (std::vector<lite::tensor::Tensor *> &)inputs, *outputs);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Run graph failed";
   }
   MS_LOG(INFO) << "Run graph end";
 }
 
-void TrainSession::SetKernelInfo(const KernelGraph *kernel_graph) {
+void TrainANFSession::SetKernelInfo(const KernelGraph *kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto &kernel_nodes = kernel_graph->execution_order();
   for (const auto &kernel_node : kernel_nodes) {
@@ -225,7 +211,7 @@ void TrainSession::SetKernelInfo(const KernelGraph *kernel_graph) {
   }
 }
 
-int TrainSession::BuildKernel(const KernelGraph *kernel_graph) {
+int TrainANFSession::BuildKernel(const KernelGraph *kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   for (auto iter = kernel_relation_infos_.begin(); iter != kernel_relation_infos_.end(); ++iter) {
     std::string kernel_name = iter->first;

@@ -13,18 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_GRAD_ARITHMETIC_GRAD_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_GRAD_ARITHMETIC_GRAD_H_
 
-#include <vector>
-#include <memory>
-#include "utils/base_ref.h"
-#include "include/ms_tensor.h"
+void ElementDivNegSquare(const float *nom, const float *denom, float *output, int element_size);
+void ElementMulAndDivNegSquare(const float *a, const float *b, const float *denom, float *output, int element_size);
 
-#ifndef MINDSPORE_LITE_SRC_TRAIN_BASE_REF_UTILS_H_
-#define MINDSPORE_LITE_SRC_TRAIN_BASE_REF_UTILS_H_
-namespace mindspore {
-std::vector<std::shared_ptr<tensor::MSTensor>> TransformBaseRefToMSTensor(const BaseRef &base_ref);
-
-std::vector<std::vector<std::shared_ptr<tensor::MSTensor>>> TransformVectorRefToMultiTensor(
-  const VectorRef &vector_ref);
-}  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_TRAIN_BASE_REF_UTILS_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_ARITHMETIC_GRAD_H_

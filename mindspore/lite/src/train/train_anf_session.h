@@ -37,10 +37,10 @@ struct KernelRelation {
   CNodePtr cnode;
 };
 
-class TrainSession {
+class TrainANFSession {
  public:
-  explicit TrainSession(lite::Context * context) { Init(context); }
-  ~TrainSession() = default;
+  explicit TrainANFSession(lite::Context *context) { Init(context); }
+  ~TrainANFSession() = default;
 
   GraphId CompileGraph(NotNull<FuncGraphPtr> func_graph);
 

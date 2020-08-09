@@ -60,7 +60,7 @@ class LiteKernel {
   explicit LiteKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                       const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                       const lite::Primitive *primitive)
-      : opParameter(parameter), inputs_(inputs), outputs_(outputs), train_mode(false), primitive_(primitive),
+      : opParameter(parameter), inputs_(inputs), outputs_(outputs), primitive_(primitive),
         context_(ctx) {
     this->in_kernel_.clear();
     this->out_kernel_.clear();
@@ -136,7 +136,7 @@ class LiteKernel {
   std::vector<lite::tensor::Tensor *> outputs_;
   std::vector<LiteKernel *> in_kernel_;
   std::vector<LiteKernel *> out_kernel_;
-  bool train_mode;
+  bool train_mode = false;
   bool need_reinit = false;
 };
 

@@ -14,17 +14,10 @@
  * limitations under the License.
  */
 
-#include <vector>
-#include <memory>
-#include "utils/base_ref.h"
-#include "include/ms_tensor.h"
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_GRAD_GEMM_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_GRAD_GEMM_H_
 
-#ifndef MINDSPORE_LITE_SRC_TRAIN_BASE_REF_UTILS_H_
-#define MINDSPORE_LITE_SRC_TRAIN_BASE_REF_UTILS_H_
-namespace mindspore {
-std::vector<std::shared_ptr<tensor::MSTensor>> TransformBaseRefToMSTensor(const BaseRef &base_ref);
+void gemm(int transpose_a, int transpose_b, int M, int N, int K, float alpha, float *mat_a, int lda, float *mat_b,
+          int ldb, float beta, float *mat_c, int ldc);
 
-std::vector<std::vector<std::shared_ptr<tensor::MSTensor>>> TransformVectorRefToMultiTensor(
-  const VectorRef &vector_ref);
-}  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_TRAIN_BASE_REF_UTILS_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_GRAD_GEMM_H_
