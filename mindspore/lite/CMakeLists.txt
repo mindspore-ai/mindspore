@@ -68,7 +68,7 @@ set(ANF_SRC
         ${CORE_DIR}/gvar/logging_level.cc
         ${CORE_DIR}/gvar/typeid_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../core/base/base.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../core/utils/log_adapter.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/common/log_adapter.cc
         )
 if (BUILD_CONVERTER)
     if (PLATFORM_ARM64 OR PLATFORM_ARM32)
