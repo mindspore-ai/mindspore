@@ -42,6 +42,8 @@ class OhemLoss(nn.Cell):
         self.loss_weight = 1.0
 
     def construct(self, logits, labels):
+        if not self.training:
+            return 0
         logits = self.transpose(logits, (0, 2, 3, 1))
         logits = self.reshape(logits, (-1, self.num))
         labels = F.cast(labels, mstype.int32)
