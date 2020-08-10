@@ -36,11 +36,7 @@ int SplitCPUKernel::Init() {
     return RET_OK;
   }
   SplitBaseCPUKernel::Init();
-  auto in_tensor = inputs_.front();
-  input_ptr_ = reinterpret_cast<float *>(in_tensor->Data());
-  for (int i = 0; i < param->num_split_; i++) {
-    output_ptr_.push_back(reinterpret_cast<float *>(outputs_.at(i)->Data()));
-  }
+  output_ptr_.resize(param->num_split_);
   return RET_OK;
 }
 
@@ -73,6 +69,11 @@ int SplitRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 
 int SplitCPUKernel::Run() {
   auto ret = Prepare();
+  auto in_tensor = inputs_.front();
+  input_ptr_ = reinterpret_cast<float *>(in_tensor->Data());
+  for (int i = 0; i < output_ptr_.size(); i++) {
+    output_ptr_[i] = reinterpret_cast<float *>(outputs_.at(i)->Data());
+  }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
