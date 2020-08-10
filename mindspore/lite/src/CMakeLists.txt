@@ -23,6 +23,7 @@ endif()
 
 if (SUPPORT_TRAIN)
     set(ANF_SRC
+             ${ANF_SRC}
 #            ${CCSRC_DIR}/common/trans.cc
 #            ${CCSRC_DIR}/utils/lite/base_ref_utils.cc
 #            ${CCSRC_DIR}/runtime/kernel/kernel_compiler/kernel_build_info.cc
@@ -40,14 +41,17 @@ if (SUPPORT_TRAIN)
     set(LITE_SRC
             ${LITE_SRC}
             ${ANF_SRC}
-            ${PASS_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/anf_importer/anf_importer.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/anf_importer/import_from_meta_graph.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/ir/primitive_value.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/train/lite_kernel_runtime.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/train/train_session.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/train/model_impl.cc
+        #   ${PASS_SRC}
+        #   ${CMAKE_CURRENT_SOURCE_DIR}/common/anf_importer/anf_importer.cc
+        #   ${CMAKE_CURRENT_SOURCE_DIR}/common/anf_importer/import_from_meta_graph.cc
+        #   ${CMAKE_CURRENT_SOURCE_DIR}/ir/primitive_value.cc
+        #   ${CMAKE_CURRENT_SOURCE_DIR}/train/lite_kernel_runtime.cc
+        #   ${CMAKE_CURRENT_SOURCE_DIR}/train/train_session.cc
+        #   ${CMAKE_CURRENT_SOURCE_DIR}/train/model_impl.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc # temporary
+            ${CMAKE_CURRENT_SOURCE_DIR}/model_impl.cc   # temporary
             )
+            
 else ()
     set(LITE_SRC
             ${LITE_SRC}

@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-#include <vector>
-#include <memory>
-#include "utils/base_ref.h"
-#include "include/ms_tensor.h"
+#include "src/runtime/kernel/arm/nnacl/fp32_grad/arithmetic_grad.h"
 
-#ifndef MINDSPORE_LITE_SRC_TRAIN_BASE_REF_UTILS_H_
-#define MINDSPORE_LITE_SRC_TRAIN_BASE_REF_UTILS_H_
-namespace mindspore {
-std::vector<std::shared_ptr<tensor::MSTensor>> TransformBaseRefToMSTensor(const BaseRef &base_ref);
+void ElementDivNegSquare(const float *nom, const float *denom, float *output, int element_size) {
+  for (int i = 0; i < element_size; i++) {
+    output[i] = -nom[i] / (denom[i] * denom[i]);
+  }
+}
 
-std::vector<std::vector<std::shared_ptr<tensor::MSTensor>>> TransformVectorRefToMultiTensor(
-  const VectorRef &vector_ref);
-}  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_TRAIN_BASE_REF_UTILS_H_
+void ElementMulAndDivNegSquare(const float *a, const float *b, const float *denom, float *output, int element_size) {
+  for (int i = 0; i < element_size; i++) {
+    output[i] = -a[i] * b[i] / (denom[i] * denom[i]);
+  }
+}
