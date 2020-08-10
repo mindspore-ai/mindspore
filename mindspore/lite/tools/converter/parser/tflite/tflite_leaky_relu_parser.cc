@@ -26,18 +26,19 @@ STATUS TfliteLeakyReluParser::Parse(const std::unique_ptr<tflite::OperatorT> &tf
                                 const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                 schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
   MS_LOG(DEBUG) << "parse TfliteLeakyReluParser";
-  std::unique_ptr<schema::LeakyReLUT> attr(new schema::LeakyReLUT());
+  std::unique_ptr<schema::ActivationT> attr(new schema::ActivationT());
 
   const auto &tflite_attr = tfliteOp->builtin_options.AsLeakyReluOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
     return RET_NULL_PTR;
   }
-  attr->negativeSlope = tflite_attr->alpha;
+  attr->type = schema::ActivationType_LEAKY_RELU;
+  attr->alpha = tflite_attr->alpha;
 
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_LeakyReLU;
+    op->primitive->value.type = schema::PrimitiveType_Activation;
     op->primitive->value.value = attr.release();
   }
   return RET_OK;
