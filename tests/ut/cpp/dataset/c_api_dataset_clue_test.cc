@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 #include "common/common.h"
-#include "minddata/dataset/include/datasets.h"
-#include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/core/config_manager.h"
+#include "minddata/dataset/core/global_context.h"
+#include "minddata/dataset/include/datasets.h"
 
 using namespace mindspore::dataset::api;
 using mindspore::dataset::ShuffleMode;
@@ -26,76 +26,6 @@ using mindspore::dataset::GlobalContext;
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
-
-TEST_F(MindDataTestPipeline, TestCLUEDatasetBasic) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetBasic.";
-
-  // Create a CLUEFile Dataset, with single CLUE file
-  std::string clue_file = datasets_root_path_ + "/testCLUE/afqmc/train.json";
-  std::string task = "AFQMC";
-  std::string usage = "train";
-  std::shared_ptr<Dataset> ds = CLUE({clue_file}, task, usage, 2);
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
-  iter->GetNextRow(&row);
-
-  EXPECT_NE(row.find("sentence1"), row.end());
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    auto text = row["sentence1"];
-    MS_LOG(INFO) << "Tensor text shape: " << text->shape();
-    i++;
-    iter->GetNextRow(&row);
-  }
-
-  // Expect 2 samples
-  EXPECT_EQ(i, 2);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-}
-
-TEST_F(MindDataTestPipeline, TestCLUEDatasetDistribution) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetDistribution.";
-
-  // Create a CLUEFile Dataset, with single CLUE file
-  std::string clue_file = datasets_root_path_ + "/testCLUE/afqmc/train.json";
-  std::string task = "AFQMC";
-  std::string usage = "train";
-  std::shared_ptr<Dataset> ds = CLUE({clue_file}, task, usage, 0, ShuffleMode::kGlobal, 3, 0);
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
-  iter->GetNextRow(&row);
-
-  EXPECT_NE(row.find("sentence1"), row.end());
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    auto text = row["sentence1"];
-    MS_LOG(INFO) << "Tensor text shape: " << text->shape();
-    i++;
-    iter->GetNextRow(&row);
-  }
-
-  // Expect 1 samples
-  EXPECT_EQ(i, 1);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-}
 
 TEST_F(MindDataTestPipeline, TestCLUEDatasetAFQMC) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetAFQMC.";
@@ -194,6 +124,41 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetAFQMC) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestCLUEDatasetBasic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetBasic.";
+
+  // Create a CLUEFile Dataset, with single CLUE file
+  std::string clue_file = datasets_root_path_ + "/testCLUE/afqmc/train.json";
+  std::string task = "AFQMC";
+  std::string usage = "train";
+  std::shared_ptr<Dataset> ds = CLUE({clue_file}, task, usage, 2);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  EXPECT_NE(row.find("sentence1"), row.end());
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto text = row["sentence1"];
+    MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    i++;
+    iter->GetNextRow(&row);
+  }
+
+  // Expect 2 samples
+  EXPECT_EQ(i, 2);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
 TEST_F(MindDataTestPipeline, TestCLUEDatasetCMNLI) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetCMNLI.";
 
@@ -284,6 +249,74 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetCSL) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestCLUEDatasetDistribution) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetDistribution.";
+
+  // Create a CLUEFile Dataset, with single CLUE file
+  std::string clue_file = datasets_root_path_ + "/testCLUE/afqmc/train.json";
+  std::string task = "AFQMC";
+  std::string usage = "train";
+  std::shared_ptr<Dataset> ds = CLUE({clue_file}, task, usage, 0, ShuffleMode::kGlobal, 3, 0);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  EXPECT_NE(row.find("sentence1"), row.end());
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto text = row["sentence1"];
+    MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    i++;
+    iter->GetNextRow(&row);
+  }
+
+  // Expect 1 samples
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestCLUEDatasetException) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetException.";
+  // Create a CLUE Dataset
+  std::string clue_file = datasets_root_path_ + "/testCLUE/wsc/train.json";
+  std::string task = "WSC";
+  std::string usage = "train";
+  std::string invalid_clue_file = "./NotExistFile";
+
+  std::shared_ptr<Dataset> ds0 = CLUE({}, task, usage);
+  EXPECT_EQ(ds0, nullptr);
+
+  std::shared_ptr<Dataset> ds1 = CLUE({invalid_clue_file}, task, usage);
+  EXPECT_EQ(ds1, nullptr);
+
+  std::shared_ptr<Dataset> ds2 = CLUE({clue_file}, "invalid_task", usage);
+  EXPECT_EQ(ds2, nullptr);
+
+  std::shared_ptr<Dataset> ds3 = CLUE({clue_file}, task, "invalid_usage");
+  EXPECT_EQ(ds3, nullptr);
+
+  std::shared_ptr<Dataset> ds4 = CLUE({clue_file}, task, usage, 0, ShuffleMode::kGlobal, 2, 2);
+  EXPECT_EQ(ds4, nullptr);
+
+  std::shared_ptr<Dataset> ds5 = CLUE({clue_file}, task, usage, -1, ShuffleMode::kGlobal);
+  EXPECT_EQ(ds5, nullptr);
+
+  std::shared_ptr<Dataset> ds6 = CLUE({clue_file}, task, usage, 0, ShuffleMode::kGlobal, -1);
+  EXPECT_EQ(ds6, nullptr);
+
+  std::shared_ptr<Dataset> ds7 = CLUE({clue_file}, task, usage, 0, ShuffleMode::kGlobal, 0, -1);
+  EXPECT_EQ(ds7, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestCLUEDatasetIFLYTEK) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetIFLYTEK.";
 
@@ -327,6 +360,129 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetIFLYTEK) {
 
   // Manually terminate the pipeline
   iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleFiles) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetShuffleFiles.";
+  // Test CLUE Dataset with files shuffle, num_parallel_workers=1
+
+  // Set configuration
+  uint32_t original_seed = GlobalContext::config_manager()->seed();
+  uint32_t original_num_parallel_workers = GlobalContext::config_manager()->num_parallel_workers();
+  MS_LOG(DEBUG) << "ORIGINAL seed: " << original_seed << ", num_parallel_workers: " << original_num_parallel_workers;
+  GlobalContext::config_manager()->set_seed(135);
+  GlobalContext::config_manager()->set_num_parallel_workers(1);
+
+  // Create a CLUE Dataset, with two text files
+  // Note: train.json has 3 rows
+  // Note: dev.json has 3 rows
+  // Use default of all samples
+  // They have the same keywords
+  // Set shuffle to files shuffle
+  std::string clue_file1 = datasets_root_path_ + "/testCLUE/afqmc/train.json";
+  std::string clue_file2 = datasets_root_path_ + "/testCLUE/afqmc/dev.json";
+  std::string task = "AFQMC";
+  std::string usage = "train";
+  std::shared_ptr<Dataset> ds = CLUE({clue_file1, clue_file2}, task, usage, 0, ShuffleMode::kFiles);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset.
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  EXPECT_NE(row.find("sentence1"), row.end());
+  std::vector<std::string> expected_result = {
+    "蚂蚁借呗等额还款能否换成先息后本",
+    "蚂蚁花呗说我违约了",
+    "帮我看看本月花呗账单结清了没",
+    "你有花呗吗",
+    "吃饭能用花呗吗",
+    "蚂蚁花呗支付金额有什么限制"
+  };
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto text = row["sentence1"];
+    std::string_view sv;
+    text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    // Compare against expected result
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    i++;
+    iter->GetNextRow(&row);
+  }
+
+  // Expect 3 + 3 = 6 samples
+  EXPECT_EQ(i, 6);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+
+  // Restore configuration
+  GlobalContext::config_manager()->set_seed(original_seed);
+  GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
+}
+
+TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleGlobal) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetShuffleGlobal.";
+  // Test CLUE Dataset with GLOBLE shuffle
+
+  // Set configuration
+  uint32_t original_seed = GlobalContext::config_manager()->seed();
+  uint32_t original_num_parallel_workers = GlobalContext::config_manager()->num_parallel_workers();
+  MS_LOG(DEBUG) << "ORIGINAL seed: " << original_seed << ", num_parallel_workers: " << original_num_parallel_workers;
+  GlobalContext::config_manager()->set_seed(135);
+  GlobalContext::config_manager()->set_num_parallel_workers(4);
+
+  // Create a CLUEFile Dataset, with single CLUE file
+  std::string clue_file = datasets_root_path_ + "/testCLUE/afqmc/train.json";
+  std::string task = "AFQMC";
+  std::string usage = "train";
+  std::shared_ptr<Dataset> ds = CLUE({clue_file}, task, usage, 0, ShuffleMode::kGlobal);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  EXPECT_NE(row.find("sentence1"), row.end());
+  std::vector<std::string> expected_result = {
+    "蚂蚁花呗说我违约了",
+    "帮我看看本月花呗账单结清了没",
+    "蚂蚁借呗等额还款能否换成先息后本"
+  };
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto text = row["sentence1"];
+    MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    std::string_view sv;
+    text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    i++;
+    iter->GetNextRow(&row);
+  }
+
+  // Expect 3 samples
+  EXPECT_EQ(i, 3);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+
+  // Restore configuration
+  GlobalContext::config_manager()->set_seed(original_seed);
+  GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
 TEST_F(MindDataTestPipeline, TestCLUEDatasetTNEWS) {
@@ -417,160 +573,4 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetWSC) {
 
   // Manually terminate the pipeline
   iter->Stop();
-}
-
-TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleGlobal) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetShuffleGlobal.";
-  // Test CLUE Dataset with GLOBLE shuffle
-
-  // Set configuration
-  uint32_t original_seed = GlobalContext::config_manager()->seed();
-  uint32_t original_num_parallel_workers = GlobalContext::config_manager()->num_parallel_workers();
-  MS_LOG(DEBUG) << "ORIGINAL seed: " << original_seed << ", num_parallel_workers: " << original_num_parallel_workers;
-  GlobalContext::config_manager()->set_seed(135);
-  GlobalContext::config_manager()->set_num_parallel_workers(4);
-
-  // Create a CLUEFile Dataset, with single CLUE file
-  std::string clue_file = datasets_root_path_ + "/testCLUE/afqmc/train.json";
-  std::string task = "AFQMC";
-  std::string usage = "train";
-  std::shared_ptr<Dataset> ds = CLUE({clue_file}, task, usage, 0, ShuffleMode::kGlobal);
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
-  iter->GetNextRow(&row);
-
-  EXPECT_NE(row.find("sentence1"), row.end());
-  std::vector<std::string> expected_result = {
-    "蚂蚁花呗说我违约了",
-    "帮我看看本月花呗账单结清了没",
-    "蚂蚁借呗等额还款能否换成先息后本"
-  };
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    auto text = row["sentence1"];
-    MS_LOG(INFO) << "Tensor text shape: " << text->shape();
-    std::string_view sv;
-    text->GetItemAt(&sv, {0});
-    std::string ss(sv);
-    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
-    MS_LOG(INFO) << "Tensor text shape: " << text->shape();
-    i++;
-    iter->GetNextRow(&row);
-  }
-
-  // Expect 3 samples
-  EXPECT_EQ(i, 3);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-
-  // Restore configuration
-  GlobalContext::config_manager()->set_seed(original_seed);
-  GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
-}
-
-TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleFiles) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetShuffleFiles.";
-  // Test CLUE Dataset with files shuffle, num_parallel_workers=1
-
-  // Set configuration
-  uint32_t original_seed = GlobalContext::config_manager()->seed();
-  uint32_t original_num_parallel_workers = GlobalContext::config_manager()->num_parallel_workers();
-  MS_LOG(DEBUG) << "ORIGINAL seed: " << original_seed << ", num_parallel_workers: " << original_num_parallel_workers;
-  GlobalContext::config_manager()->set_seed(135);
-  GlobalContext::config_manager()->set_num_parallel_workers(1);
-
-  // Create a CLUE Dataset, with two text files
-  // Note: train.json has 3 rows
-  // Note: dev.json has 3 rows
-  // Use default of all samples
-  // They have the same keywords
-  // Set shuffle to files shuffle
-  std::string clue_file1 = datasets_root_path_ + "/testCLUE/afqmc/train.json";
-  std::string clue_file2 = datasets_root_path_ + "/testCLUE/afqmc/dev.json";
-  std::string task = "AFQMC";
-  std::string usage = "train";
-  std::shared_ptr<Dataset> ds = CLUE({clue_file1, clue_file2}, task, usage, 0, ShuffleMode::kFiles);
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset.
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
-  iter->GetNextRow(&row);
-
-  EXPECT_NE(row.find("sentence1"), row.end());
-  std::vector<std::string> expected_result = {
-    "蚂蚁借呗等额还款能否换成先息后本",
-    "蚂蚁花呗说我违约了",
-    "帮我看看本月花呗账单结清了没",
-    "你有花呗吗",
-    "吃饭能用花呗吗",
-    "蚂蚁花呗支付金额有什么限制"
-  };
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    auto text = row["sentence1"];
-    std::string_view sv;
-    text->GetItemAt(&sv, {0});
-    std::string ss(sv);
-    // Compare against expected result
-    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
-    i++;
-    iter->GetNextRow(&row);
-  }
-
-  // Expect 3 + 3 = 6 samples
-  EXPECT_EQ(i, 6);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-
-  // Restore configuration
-  GlobalContext::config_manager()->set_seed(original_seed);
-  GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
-}
-
-TEST_F(MindDataTestPipeline, TestCLUEDatasetException) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetException.";
-  // Create a CLUE Dataset
-  std::string clue_file = datasets_root_path_ + "/testCLUE/wsc/train.json";
-  std::string task = "WSC";
-  std::string usage = "train";
-  std::string invalid_clue_file = "./NotExistFile";
-
-  std::shared_ptr<Dataset> ds0 = CLUE({}, task, usage);
-  EXPECT_EQ(ds0, nullptr);
-
-  std::shared_ptr<Dataset> ds1 = CLUE({invalid_clue_file}, task, usage);
-  EXPECT_EQ(ds1, nullptr);
-
-  std::shared_ptr<Dataset> ds2 = CLUE({clue_file}, "invalid_task", usage);
-  EXPECT_EQ(ds2, nullptr);
-
-  std::shared_ptr<Dataset> ds3 = CLUE({clue_file}, task, "invalid_usage");
-  EXPECT_EQ(ds3, nullptr);
-
-  std::shared_ptr<Dataset> ds4 = CLUE({clue_file}, task, usage, 0, ShuffleMode::kGlobal, 2, 2);
-  EXPECT_EQ(ds4, nullptr);
-
-  std::shared_ptr<Dataset> ds5 = CLUE({clue_file}, task, usage, -1, ShuffleMode::kGlobal);
-  EXPECT_EQ(ds5, nullptr);
-
-  std::shared_ptr<Dataset> ds6 = CLUE({clue_file}, task, usage, 0, ShuffleMode::kGlobal, -1);
-  EXPECT_EQ(ds6, nullptr);
-
-  std::shared_ptr<Dataset> ds7 = CLUE({clue_file}, task, usage, 0, ShuffleMode::kGlobal, 0, -1);
-  EXPECT_EQ(ds7, nullptr);
 }

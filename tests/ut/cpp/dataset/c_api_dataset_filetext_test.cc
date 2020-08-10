@@ -13,41 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <fstream>
-#include <iostream>
-#include <memory>
-#include <vector>
-#include <string>
-
-#include "utils/log_adapter.h"
-#include "utils/ms_utils.h"
 #include "common/common.h"
-#include "gtest/gtest.h"
-#include "./securec.h"
-
-#include "minddata/dataset/core/client.h"
 #include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/global_context.h"
-#include "minddata/dataset/core/tensor.h"
-#include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/include/datasets.h"
-#include "minddata/dataset/include/iterator.h"
-#include "minddata/dataset/include/samplers.h"
-#include "minddata/dataset/include/status.h"
-#include "minddata/dataset/include/transforms.h"
 
 using namespace mindspore::dataset;
 using namespace mindspore::dataset::api;
-using mindspore::LogStream;
-using mindspore::dataset::DataType;
 using mindspore::dataset::ShuffleMode;
-using mindspore::dataset::Status;
 using mindspore::dataset::Tensor;
-using mindspore::dataset::TensorImpl;
-using mindspore::dataset::TensorShape;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::ERROR;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
@@ -107,6 +81,87 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetBasic) {
   // Restore configuration
   GlobalContext::config_manager()->set_seed(original_seed);
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
+}
+
+TEST_F(MindDataTestPipeline, TestTextFileDatasetFail1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail1.";
+
+  // Attempt to create a TextFile Dataset
+  // with invalid samplers=-1
+  std::string tf_file1 = datasets_root_path_ + "/testTextFileDataset/1.txt";
+  std::shared_ptr<Dataset> ds = TextFile({tf_file1}, -1);
+
+  // Expect failure: Number of samples cannot be negative
+  EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestTextFileDatasetFail2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail2.";
+
+  // Attempt to create a TextFile Dataset
+  // with wrongful empty dataset_files input
+  std::shared_ptr<Dataset> ds = TextFile({});
+
+  // Expect failure: dataset_files is not specified
+  EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestTextFileDatasetFail3) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail3.";
+
+  // Attempt to create a TextFile Dataset
+  // with non-existent dataset_files input
+  std::shared_ptr<Dataset> ds = TextFile({"notexist.txt"}, 0, ShuffleMode::kFalse);
+
+  // Expect failure: specified dataset_files does not exist
+  EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestTextFileDatasetFail4) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail4.";
+
+  // Attempt to create a TextFile Dataset
+  // with empty string dataset_files input
+  std::shared_ptr<Dataset> ds = TextFile({""}, 0, ShuffleMode::kFiles);
+
+  // Expect failure: specified dataset_files does not exist
+  EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestTextFileDatasetFail5) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail5.";
+
+  // Attempt to create a TextFile Dataset
+  // with invalid num_shards=0 value
+  std::string tf_file1 = datasets_root_path_ + "/testTextFileDataset/1.txt";
+  std::shared_ptr<Dataset> ds = TextFile({tf_file1}, 1, ShuffleMode::kFalse, 0);
+
+  // Expect failure: Number of shards cannot be <=0
+  EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestTextFileDatasetFail6) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail6.";
+
+  // Attempt to create a TextFile Dataset
+  // with invalid shard_id=-1 value
+  std::string tf_file1 = datasets_root_path_ + "/testTextFileDataset/1.txt";
+  std::shared_ptr<Dataset> ds = TextFile({tf_file1}, 0, ShuffleMode::kFiles, -1);
+
+  // Expect failure: shard_id cannot be negative
+  EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestTextFileDatasetFail7) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail7.";
+
+  // Attempt to create a TextFile Dataset
+  // with invalid shard_id=2 and num_shards=2 combination
+  std::string tf_file1 = datasets_root_path_ + "/testTextFileDataset/1.txt";
+  std::shared_ptr<Dataset> ds = TextFile({tf_file1}, 0, ShuffleMode::kGlobal, 2, 2);
+
+  // Expect failure: Cannot have shard_id >= num_shards
+  EXPECT_EQ(ds, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFalse1) {
@@ -215,6 +270,125 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFalse4Shard) {
 
   // Expect 3 samples for this shard
   EXPECT_EQ(i, 3);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+
+  // Restore configuration
+  GlobalContext::config_manager()->set_seed(original_seed);
+  GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
+}
+
+TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFiles1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetShuffleFiles1.";
+  // Test TextFile Dataset with files shuffle, num_parallel_workers=1
+
+  // Set configuration
+  uint32_t original_seed = GlobalContext::config_manager()->seed();
+  uint32_t original_num_parallel_workers = GlobalContext::config_manager()->num_parallel_workers();
+  MS_LOG(DEBUG) << "ORIGINAL seed: " << original_seed << ", num_parallel_workers: " << original_num_parallel_workers;
+  GlobalContext::config_manager()->set_seed(135);
+  GlobalContext::config_manager()->set_num_parallel_workers(1);
+
+  // Create a TextFile Dataset, with two text files
+  // Note: 1.txt has 3 rows
+  // Note: 2.txt has 2 rows
+  // Use default of all samples
+  // Set shuffle to files shuffle
+  std::string tf_file1 = datasets_root_path_ + "/testTextFileDataset/1.txt";
+  std::string tf_file2 = datasets_root_path_ + "/testTextFileDataset/2.txt";
+  std::shared_ptr<Dataset> ds = TextFile({tf_file1, tf_file2}, 0, ShuffleMode::kFiles);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset.
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  EXPECT_NE(row.find("text"), row.end());
+  std::vector<std::string> expected_result = {
+    "This is a text file.", "Be happy every day.", "Good luck to everyone.", "Another file.", "End of file.",
+  };
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto text = row["text"];
+    MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    std::string_view sv;
+    text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
+    // Compare against expected result
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    i++;
+    iter->GetNextRow(&row);
+  }
+
+  // Expect 2 + 3 = 5 samples
+  EXPECT_EQ(i, 5);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+
+  // Restore configuration
+  GlobalContext::config_manager()->set_seed(original_seed);
+  GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
+}
+
+TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFiles4) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetShuffleFiles4.";
+  // Test TextFile Dataset with files shuffle, num_parallel_workers=4
+
+  // Set configuration
+  uint32_t original_seed = GlobalContext::config_manager()->seed();
+  uint32_t original_num_parallel_workers = GlobalContext::config_manager()->num_parallel_workers();
+  MS_LOG(DEBUG) << "ORIGINAL seed: " << original_seed << ", num_parallel_workers: " << original_num_parallel_workers;
+  GlobalContext::config_manager()->set_seed(135);
+  GlobalContext::config_manager()->set_num_parallel_workers(4);
+
+  // Create a TextFile Dataset, with two text files
+  // Note: 1.txt has 3 rows
+  // Note: 2.txt has 2 rows
+  // Use default of all samples
+  // Set shuffle to files shuffle
+  std::string tf_file1 = datasets_root_path_ + "/testTextFileDataset/1.txt";
+  std::string tf_file2 = datasets_root_path_ + "/testTextFileDataset/2.txt";
+  std::shared_ptr<Dataset> ds = TextFile({tf_file1, tf_file2}, 0, ShuffleMode::kFiles);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset.
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  EXPECT_NE(row.find("text"), row.end());
+  std::vector<std::string> expected_result = {"This is a text file.", "Another file.", "Be happy every day.",
+                                              "End of file.", "Good luck to everyone."};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto text = row["text"];
+    MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    std::string_view sv;
+    text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
+    // Compare against expected result
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    i++;
+    iter->GetNextRow(&row);
+  }
+
+  // Expect 2 + 3 = 5 samples
+  EXPECT_EQ(i, 5);
 
   // Manually terminate the pipeline
   iter->Stop();
@@ -393,204 +567,4 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleGlobal4) {
   // Restore configuration
   GlobalContext::config_manager()->set_seed(original_seed);
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
-}
-
-TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFiles1) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetShuffleFiles1.";
-  // Test TextFile Dataset with files shuffle, num_parallel_workers=1
-
-  // Set configuration
-  uint32_t original_seed = GlobalContext::config_manager()->seed();
-  uint32_t original_num_parallel_workers = GlobalContext::config_manager()->num_parallel_workers();
-  MS_LOG(DEBUG) << "ORIGINAL seed: " << original_seed << ", num_parallel_workers: " << original_num_parallel_workers;
-  GlobalContext::config_manager()->set_seed(135);
-  GlobalContext::config_manager()->set_num_parallel_workers(1);
-
-  // Create a TextFile Dataset, with two text files
-  // Note: 1.txt has 3 rows
-  // Note: 2.txt has 2 rows
-  // Use default of all samples
-  // Set shuffle to files shuffle
-  std::string tf_file1 = datasets_root_path_ + "/testTextFileDataset/1.txt";
-  std::string tf_file2 = datasets_root_path_ + "/testTextFileDataset/2.txt";
-  std::shared_ptr<Dataset> ds = TextFile({tf_file1, tf_file2}, 0, ShuffleMode::kFiles);
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset.
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
-  iter->GetNextRow(&row);
-
-  EXPECT_NE(row.find("text"), row.end());
-  std::vector<std::string> expected_result = {
-    "This is a text file.", "Be happy every day.", "Good luck to everyone.", "Another file.", "End of file.",
-  };
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    auto text = row["text"];
-    MS_LOG(INFO) << "Tensor text shape: " << text->shape();
-    std::string_view sv;
-    text->GetItemAt(&sv, {0});
-    std::string ss(sv);
-    MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
-    // Compare against expected result
-    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
-    i++;
-    iter->GetNextRow(&row);
-  }
-
-  // Expect 2 + 3 = 5 samples
-  EXPECT_EQ(i, 5);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-
-  // Restore configuration
-  GlobalContext::config_manager()->set_seed(original_seed);
-  GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
-}
-
-TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFiles4) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetShuffleFiles4.";
-  // Test TextFile Dataset with files shuffle, num_parallel_workers=4
-
-  // Set configuration
-  uint32_t original_seed = GlobalContext::config_manager()->seed();
-  uint32_t original_num_parallel_workers = GlobalContext::config_manager()->num_parallel_workers();
-  MS_LOG(DEBUG) << "ORIGINAL seed: " << original_seed << ", num_parallel_workers: " << original_num_parallel_workers;
-  GlobalContext::config_manager()->set_seed(135);
-  GlobalContext::config_manager()->set_num_parallel_workers(4);
-
-  // Create a TextFile Dataset, with two text files
-  // Note: 1.txt has 3 rows
-  // Note: 2.txt has 2 rows
-  // Use default of all samples
-  // Set shuffle to files shuffle
-  std::string tf_file1 = datasets_root_path_ + "/testTextFileDataset/1.txt";
-  std::string tf_file2 = datasets_root_path_ + "/testTextFileDataset/2.txt";
-  std::shared_ptr<Dataset> ds = TextFile({tf_file1, tf_file2}, 0, ShuffleMode::kFiles);
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset.
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
-  iter->GetNextRow(&row);
-
-  EXPECT_NE(row.find("text"), row.end());
-  std::vector<std::string> expected_result = {"This is a text file.", "Another file.", "Be happy every day.",
-                                              "End of file.", "Good luck to everyone."};
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    auto text = row["text"];
-    MS_LOG(INFO) << "Tensor text shape: " << text->shape();
-    std::string_view sv;
-    text->GetItemAt(&sv, {0});
-    std::string ss(sv);
-    MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
-    // Compare against expected result
-    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
-    i++;
-    iter->GetNextRow(&row);
-  }
-
-  // Expect 2 + 3 = 5 samples
-  EXPECT_EQ(i, 5);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-
-  // Restore configuration
-  GlobalContext::config_manager()->set_seed(original_seed);
-  GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
-}
-
-TEST_F(MindDataTestPipeline, TestTextFileDatasetFail1) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail1.";
-
-  // Attempt to create a TextFile Dataset
-  // with invalid samplers=-1
-  std::string tf_file1 = datasets_root_path_ + "/testTextFileDataset/1.txt";
-  std::shared_ptr<Dataset> ds = TextFile({tf_file1}, -1);
-
-  // Expect failure: Number of samples cannot be negative
-  EXPECT_EQ(ds, nullptr);
-}
-
-TEST_F(MindDataTestPipeline, TestTextFileDatasetFail2) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail2.";
-
-  // Attempt to create a TextFile Dataset
-  // with wrongful empty dataset_files input
-  std::shared_ptr<Dataset> ds = TextFile({});
-
-  // Expect failure: dataset_files is not specified
-  EXPECT_EQ(ds, nullptr);
-}
-
-TEST_F(MindDataTestPipeline, TestTextFileDatasetFail3) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail3.";
-
-  // Attempt to create a TextFile Dataset
-  // with non-existent dataset_files input
-  std::shared_ptr<Dataset> ds = TextFile({"notexist.txt"}, 0, ShuffleMode::kFalse);
-
-  // Expect failure: specified dataset_files does not exist
-  EXPECT_EQ(ds, nullptr);
-}
-
-TEST_F(MindDataTestPipeline, TestTextFileDatasetFail4) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail4.";
-
-  // Attempt to create a TextFile Dataset
-  // with empty string dataset_files input
-  std::shared_ptr<Dataset> ds = TextFile({""}, 0, ShuffleMode::kFiles);
-
-  // Expect failure: specified dataset_files does not exist
-  EXPECT_EQ(ds, nullptr);
-}
-
-TEST_F(MindDataTestPipeline, TestTextFileDatasetFail5) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail5.";
-
-  // Attempt to create a TextFile Dataset
-  // with invalid num_shards=0 value
-  std::string tf_file1 = datasets_root_path_ + "/testTextFileDataset/1.txt";
-  std::shared_ptr<Dataset> ds = TextFile({tf_file1}, 1, ShuffleMode::kFalse, 0);
-
-  // Expect failure: Number of shards cannot be <=0
-  EXPECT_EQ(ds, nullptr);
-}
-
-TEST_F(MindDataTestPipeline, TestTextFileDatasetFail6) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail6.";
-
-  // Attempt to create a TextFile Dataset
-  // with invalid shard_id=-1 value
-  std::string tf_file1 = datasets_root_path_ + "/testTextFileDataset/1.txt";
-  std::shared_ptr<Dataset> ds = TextFile({tf_file1}, 0, ShuffleMode::kFiles, -1);
-
-  // Expect failure: shard_id cannot be negative
-  EXPECT_EQ(ds, nullptr);
-}
-
-TEST_F(MindDataTestPipeline, TestTextFileDatasetFail7) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail7.";
-
-  // Attempt to create a TextFile Dataset
-  // with invalid shard_id=2 and num_shards=2 combination
-  std::string tf_file1 = datasets_root_path_ + "/testTextFileDataset/1.txt";
-  std::shared_ptr<Dataset> ds = TextFile({tf_file1}, 0, ShuffleMode::kGlobal, 2, 2);
-
-  // Expect failure: Cannot have shard_id >= num_shards
-  EXPECT_EQ(ds, nullptr);
 }
