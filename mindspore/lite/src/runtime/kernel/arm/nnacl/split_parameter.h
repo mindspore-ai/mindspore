@@ -17,9 +17,10 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_SPLIT_PARAMETER_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_SPLIT_PARAMETER_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
+#include "nnacl/quantization/quantize.h"
 
-struct SplitParameter {
+typedef struct SplitParameter {
   OpParameter op_parameter_;
   SplitQuantArg quant_arg_;
   int num_split_;
@@ -28,6 +29,6 @@ struct SplitParameter {
   int split_dim_;
   int n_dims_;
   int split_count_;
-};
+} SplitParameter;
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_SPLIT_PARAMETER_H_

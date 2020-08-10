@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/pack.h"
+#include "nnacl/pack.h"
 #include <cstring>
 #include <cstdlib>
 

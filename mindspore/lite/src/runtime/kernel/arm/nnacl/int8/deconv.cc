@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/int8/deconv.h"
+#include "nnacl/int8/deconv.h"
+#include "nnacl/int8/matmul_int8.h"
 
 int DeConvInt8(const int8_t *input, const int8_t *weight, int32_t *output, size_t row8, size_t col8, size_t deep,
                ConvParameter *conv_param) {

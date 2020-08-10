@@ -20,9 +20,9 @@
 #ifdef ENABLE_ARM
 #include <arm_neon.h>
 #endif
-#include "src/runtime/kernel/arm/nnacl/matrix_table.h"
-#include "src/runtime/kernel/arm/nnacl/conv_parameter.h"
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/matrix_table.h"
+#include "nnacl/conv_parameter.h"
+#include "nnacl/op_base.h"
 
 using InputTransformUnitFunc = void (*)(const float *src_data, float *dst_data, int src_step, int dst_step);
 using OutputTransformUnitFunc = void (*)(const float *src_data, float *dst_data, const float *bias_data, int src_step,

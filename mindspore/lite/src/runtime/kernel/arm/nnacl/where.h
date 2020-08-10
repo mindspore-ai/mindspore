@@ -16,16 +16,16 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_WHERE_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_WHERE_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct WhereParameter {
+typedef struct WhereParameter {
   OpParameter op_parameter_;
   int num_;
   int num1_;
   int num2_;
   int number_;
   int thread_num_;
-};
+} WhereParameter;
 
 void Where(bool *input, float *input1, float *input2, float *output, WhereParameter *where_param_, int task_id);
 

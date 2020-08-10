@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/unsqueeze_parameter.h"
-#include "src/runtime/kernel/arm/nnacl/int8/unsqueeze_int8.h"
+#include "nnacl/unsqueeze_parameter.h"
+#include "nnacl/int8/unsqueeze_int8.h"
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/errorcode.h"
 
 int Unsqueeze(int8_t *input_ptr, int8_t *output_ptr, UnSqueezeParameter *para_, size_t data_size, int task_id) {
   float output_scale = para_->quant_arg.out_quant_args_.scale_;

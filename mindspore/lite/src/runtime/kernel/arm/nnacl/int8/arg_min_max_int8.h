@@ -16,8 +16,8 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_ARG_MIN_MAX_INT8_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_ARG_MIN_MAX_INT8_H_
 
-#include "src/runtime/kernel/arm/nnacl/arg_min_max_parameter.h"
-#include "src/runtime/kernel/arm/nnacl/quantization/quantize.h"
+#include "nnacl/arg_min_max_parameter.h"
+#include "nnacl/quantization/quantize.h"
 
 void ArgMinMaxQuant(const int8_t *input, int8_t *output, const int *in_shape, ArgMinMaxParameter *param,
                     QuantArg *in_quant, QuantArg *out_quant);

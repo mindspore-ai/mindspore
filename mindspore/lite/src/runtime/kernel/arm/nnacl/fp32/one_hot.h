@@ -20,9 +20,9 @@
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct OneHotParameter {
+typedef struct OneHotParameter {
   OpParameter op_parameter_;
   int axis_;
   int depth_;
@@ -30,7 +30,7 @@ struct OneHotParameter {
   float off_value_;
   int outer_size_;
   int inner_size_;
-};
+} OneHotParameter;
 
 int OneHot(const int *indices, float *output, const OneHotParameter *one_hot_param, const int tid,
            const int thread_num);

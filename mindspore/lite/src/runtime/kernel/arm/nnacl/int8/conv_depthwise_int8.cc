@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/int8/conv_depthwise_int8.h"
+#include "nnacl/int8/conv_depthwise_int8.h"
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/quantization/fixed_point.h"
-#include "src/runtime/kernel/arm/nnacl/int8/common_func.h"
+#include "nnacl/quantization/fixed_point.h"
+#include "nnacl/int8/common_func.h"
 
 /*conv depthwise int8 begin*/
 void DepthwiseBorderPixelInt8(int8_t *dst, const int16_t *src, const int16_t *weight, const int32_t *bias, int height,

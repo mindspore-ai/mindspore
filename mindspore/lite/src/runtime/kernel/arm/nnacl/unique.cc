@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/unique.h"
+#include "nnacl/unique.h"
 
 int Find(float *array, int len, float target) {
   for (int i = 0; i < len; ++i) {

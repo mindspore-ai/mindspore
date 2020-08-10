@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/lstm.h"
+#include "nnacl/fp32/lstm.h"
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/fp32/activation.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/arithmetic.h"
+#include "nnacl/fp32/activation.h"
+#include "nnacl/fp32/arithmetic.h"
 
 void InitGate(float *gate_buffer, const float *bias, LstmParameter *lstm_parm) {
   int gate_offest = 0;

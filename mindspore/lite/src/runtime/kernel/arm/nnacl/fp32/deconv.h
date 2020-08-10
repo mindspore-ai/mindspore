@@ -16,10 +16,10 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_DECONV_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_DECONV_H_
 
-#include "src/runtime/kernel/arm/nnacl/pack.h"
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/conv_parameter.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/strassen_matmul.h"
+#include "nnacl/pack.h"
+#include "nnacl/op_base.h"
+#include "nnacl/conv_parameter.h"
+#include "nnacl/fp32/strassen_matmul.h"
 
 void PackDeConvWeightFp32(const float *weight, float *dst, int input_channel, int output_channel, int plane);
 

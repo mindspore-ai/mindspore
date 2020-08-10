@@ -16,8 +16,8 @@
 
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_RESHAHPE_INT8_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_RESHAHPE_INT8_H_
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/reshape_parameter.h"
+#include "nnacl/op_base.h"
+#include "nnacl/reshape_parameter.h"
 
 void Reshape(int8_t *input_ptr, int8_t *output_ptr, int64_t real_dst_count, ReshapeQuantArg para);
 

@@ -16,13 +16,13 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_SPARSETODENSE_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_SPARSETODENSE_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct SparseToDenseParameter {
+typedef struct SparseToDenseParameter {
   OpParameter op_parameter_;
   int thread_num_;
   int count_ = 0;
-};
+} SparseToDenseParameter;
 
 void SparseToDense(int *input, int *output_shape_, float *snum, float *dnum, int sp_num, float *output,
                    SparseToDenseParameter *s2d_param_, int task_id);

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/int8/sigmoid_int8.h"
+#include "nnacl/int8/sigmoid_int8.h"
 
 int SigmoidInt8(const int8_t *src, int length, int8_t *dst, SigmoidQuantArg *arg) {
   for (int i = 0; i < length; i++) {

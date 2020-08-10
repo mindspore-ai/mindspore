@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include <cstdint>
-#include "src/runtime/kernel/arm/nnacl/fp32_grad/pooling_grad.h"
+#include "nnacl/fp32_grad/pooling_grad.h"
 
 void AvgPoolingGrad(const float *input_ptr, float *output_ptr, PoolingParameter *pooling_param) {
   int stride_w = pooling_param->stride_w_;

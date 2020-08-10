@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp16/winograd_transform_fp16.h"
+#include "nnacl/fp16/winograd_transform_fp16.h"
 
 // for fp16 convolution 3x3 filter/input/output transform F(4,3)
 void Conv3x3Fp16InputUnit(float16_t *tmp_data, float16_t *trans_input_data, size_t step) {

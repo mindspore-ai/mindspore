@@ -16,8 +16,8 @@
 
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_SPLIT_INT8_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_SPLIT_INT8_H_
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/split_parameter.h"
+#include "nnacl/op_base.h"
+#include "nnacl/split_parameter.h"
 
 int DoSplit(int8_t *in_data, int8_t **out_data, const int *input_shape, int offset, int num_unit,
             SplitParameter *split_param);

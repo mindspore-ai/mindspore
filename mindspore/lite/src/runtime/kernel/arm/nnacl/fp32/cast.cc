@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/cast.h"
+#include "nnacl/fp32/cast.h"
 
 void Uint8ToFloat32(const uint8_t *input, float *output, int number) {
   for (int i = 0; i < number; ++i) {

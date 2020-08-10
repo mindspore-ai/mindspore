@@ -20,15 +20,15 @@
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 #define REVERSE_SHAPE_MAX_SIZE 4
 
 // For reverse.
-struct ReverseParameter {
+typedef struct ReverseParameter {
   OpParameter op_parameter_;
   int axis_[REVERSE_SHAPE_MAX_SIZE];
   int num_axis_;
-};
+} ReverseParameter;
 
 int Reverse(const float *input, float *output, size_t elem_size, int *index);
 

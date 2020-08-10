@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/int8/split_int8.h"
-#include "src/runtime/kernel/arm/nnacl/split_parameter.h"
+#include "nnacl/int8/split_int8.h"
+#include "nnacl/split_parameter.h"
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/errorcode.h"
 
 int DoSplit(int8_t *in_data, int8_t **out_data, const int *input_shape, int offset, int num_unit,
             SplitParameter *param) {

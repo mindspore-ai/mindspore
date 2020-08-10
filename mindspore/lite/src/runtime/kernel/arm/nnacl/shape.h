@@ -17,11 +17,11 @@
 #ifndef MINDSPORE_CCSRC_KERNEL_CPU_ARM_NNACL_SHAPE_H_
 #define MINDSPORE_CCSRC_KERNEL_CPU_ARM_NNACL_SHAPE_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct ShapeParameter {
+typedef struct ShapeParameter {
   OpParameter op_parameter_;
-};
+} ShapeParameter;
 
 #endif  // MINDSPORE_CCSRC_KERNEL_CPU_ARM_NNACL_SHAPE_H_
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/nnacl/sparse_to_dense.h"
+#include "nnacl/sparse_to_dense.h"
 
 void SparseToDense(int *input, int *output_shape_, float *snum, float *dnum, int sp_num, float *output,
                    SparseToDenseParameter *s2d_param_, int task_id) {

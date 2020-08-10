@@ -15,7 +15,7 @@
  */
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_DEPTH_TO_SPACE_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_DEPTH_TO_SPACE_H_
-#include "src/runtime/kernel/arm/nnacl/depth_to_space_parameter.h"
+#include "nnacl/depth_to_space_parameter.h"
 
 void DepthToSpaceForNHWC(const void *input, void *output, int *in_shape, DepthToSpaceParameter *param);
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_DEPTH_TO_SPACE_H_

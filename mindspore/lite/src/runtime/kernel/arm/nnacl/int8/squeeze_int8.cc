@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/nnacl/squeeze_parameter.h"
-#include "src/runtime/kernel/arm/nnacl/int8/squeeze_int8.h"
+#include "nnacl/squeeze_parameter.h"
+#include "nnacl/int8/squeeze_int8.h"
 #include <string.h>
 
 void Squeeze(int8_t **inputs, int8_t *output_ptr, int task_id, SqueezeQuantArg *quant_Squeeze_parm,

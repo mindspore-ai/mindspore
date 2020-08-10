@@ -16,10 +16,10 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_SLICE_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_SLICE_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 #define SLICE_SHAPE_MAX_SIZE 4
 
-struct SliceParameter {
+typedef struct SliceParameter {
     OpParameter op_parameter_;
     int32_t begin_[SLICE_SHAPE_MAX_SIZE];
     int32_t end_[SLICE_SHAPE_MAX_SIZE];
@@ -27,7 +27,7 @@ struct SliceParameter {
     int32_t shape_[SLICE_SHAPE_MAX_SIZE];
     int32_t param_length_;
     int32_t thread_id_;
-};
+} SliceParameter;
 
 void PadSliceParameterTo4D(SliceParameter *param);
 void DoSlice(const float *input, float *output, SliceParameter *param);

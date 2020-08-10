@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/int8/mul_int8.h"
-#include "src/runtime/kernel/arm/nnacl/mul_parameter.h"
+#include "nnacl/int8/mul_int8.h"
+#include "nnacl/mul_parameter.h"
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
-#include "src/runtime/kernel/arm/nnacl/add_int8.h"
+#include "nnacl/add_int8.h"
 #endif
-#include "src/runtime/kernel/arm/nnacl/quantization/fixed_point.h"
+#include "nnacl/quantization/fixed_point.h"
 
 #ifdef ENABLE_NEON
 

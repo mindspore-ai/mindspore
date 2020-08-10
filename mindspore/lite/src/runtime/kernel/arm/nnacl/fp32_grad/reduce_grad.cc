@@ -15,7 +15,7 @@
  */
 #include <cstddef>
 #include <algorithm>
-#include "mindspore/lite/src/runtime/kernel/arm/nnacl/fp32_grad/reduce_grad.h"
+#include "mindspore/lite/nnacl/fp32_grad/reduce_grad.h"
 
 static inline bool NextIndex(const int num_dims, const int *dims, int *current) {
   int carry = 1;
@@ -108,8 +108,7 @@ void ReduceSumByAxes(const float *input, const int *input_dims, float *output, c
     if (output_dims[idx] != input_dims[idx]) same_shape = false;
   }
   if (same_shape) {
-    std::copy(input, input + num_outputs * sizeof(float), output);
-    // memcpy(output, input, num_outputs*sizeof(float));
+    memcpy(output, input, num_outputs * sizeof(float));
     return;
   }
 

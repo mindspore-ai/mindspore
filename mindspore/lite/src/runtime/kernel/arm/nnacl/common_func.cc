@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/common_func.h"
-#include "src/runtime/kernel/arm/nnacl/quantization/fixed_point.h"
+#include "nnacl/common_func.h"
+#include "nnacl/quantization/fixed_point.h"
 
 #ifndef ENABLE_ARM64
 void IndirectGemmFp32(float *output, const float *input, const float *weight, const float *bias, size_t step, int ic4,

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/one_hot.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/fp32/one_hot.h"
+#include "nnacl/errorcode.h"
 
 int OneHot(const int *indices, float *output, const OneHotParameter *one_hot_param, const int tid,
            const int thread_num) {

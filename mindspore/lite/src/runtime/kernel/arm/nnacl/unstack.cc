@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/unstack.h"
+#include "nnacl/unstack.h"
 #include <string.h>
 
 void Unistack(float *input, float **output, UnstackParameter *para) {

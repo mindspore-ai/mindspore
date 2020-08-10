@@ -17,6 +17,7 @@
 #include "src/runtime/kernel/arm/int8/sigmoid_int8.h"
 #include <limits>
 #include "src/runtime/kernel/arm/nnacl/int8/sigmoid_int8.h"
+#include "src/runtime/kernel/arm/nnacl/quantization/quantize.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"

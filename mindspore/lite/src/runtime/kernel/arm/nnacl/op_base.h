@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_OP_BASE_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_OP_BASE_H_
 
-#include <iostream>
-#include "src/runtime/kernel/arm/nnacl/quantization/quantize.h"
+#include <stdint.h>
+#include <stdlib.h>
 
 #define C4NUM 4
 #define C8NUM 8
@@ -48,15 +48,15 @@
 #define kInputSize1 2
 #define kInputSize2 3
 
-enum LiteDataType {
+typedef enum LiteDataType {
   kDataTypeFloat,
   kDataTypeInt8,
-};
+} LiteDataType;
 
-struct OpParameter {
+typedef struct OpParameter {
   char name_[100];
   int type_;
   int thread_num_;
-};
+} OpParameter;
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_OP_BASE_H_

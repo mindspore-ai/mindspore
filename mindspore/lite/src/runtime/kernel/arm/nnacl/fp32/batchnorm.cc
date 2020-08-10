@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/batchnorm.h"
+#include "nnacl/fp32/batchnorm.h"
+#include <math.h>
 
 void BatchNorm(float *output_ptr, const float *input_ptr, const float *mean_ptr, const float *variance_ptr, int task_id,
                BatchNormParameter *param) {

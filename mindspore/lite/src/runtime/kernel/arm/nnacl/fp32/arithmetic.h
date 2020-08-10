@@ -19,9 +19,9 @@
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/arithmetic_common.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/op_base.h"
+#include "nnacl/arithmetic_common.h"
+#include "nnacl/errorcode.h"
 
 int ElementMul(float *input0, float *input1, float *output, int element_size);
 int ElementMulRelu(float *input0, float *input1, float *output, int element_size);

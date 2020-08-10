@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PACK_EXT_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PACK_EXT_H_
 
-#include "src/runtime/kernel/arm/nnacl/conv_parameter.h"
+#include "nnacl/conv_parameter.h"
 
 void im2col_hwc(const float *in_data, float *data_col, ConvParameter *conv_param);
 void im2row_hwc(const float *in_data, float *data_row, ConvParameter *conv_param);

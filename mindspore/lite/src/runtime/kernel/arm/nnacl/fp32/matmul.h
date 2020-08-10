@@ -18,9 +18,9 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_MATMUL_H_
 
 #include <float.h>
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/matmul.h"
+#include "nnacl/errorcode.h"
+#include "nnacl/op_base.h"
+#include "nnacl/matmul_parameter.h"
 
 void MatMul(const float *a, const float *b, float *c, const float *bias, ActType act_type, int depth, int row, int col);
 void RowMajor2Row8Major(float *src_ptr, float *dst_ptr, int row, int col);

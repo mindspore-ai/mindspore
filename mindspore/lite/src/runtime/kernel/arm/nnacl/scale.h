@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_SCALE_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_SCALE_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct ScaleParameter {
+typedef struct ScaleParameter {
   OpParameter op_parameter_;
   int outer_size_;
   int axis_size_;
@@ -27,7 +27,7 @@ struct ScaleParameter {
   int axis_;
   bool has_offset_;
   // todo yangruoqi: axis
-};
+} ScaleParameter;
 
 int DoScale(float *in_data, float *out_data, float *scale, float *offset, int task_id, ScaleParameter *scale_param);
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_SCALE_H_

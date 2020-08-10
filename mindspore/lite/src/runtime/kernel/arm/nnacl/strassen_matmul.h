@@ -17,18 +17,17 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_STRASSEN_MATMUL_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_STRASSEN_MATMUL_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
 /* hw*inc4  X  inc4*oc4 */
-struct StrassenMatMulParameter {
+typedef struct StrassenMatMulParameter {
   OpParameter op_parameter;
-  int row_{};      /*  h * w        */
-  int col_{};      /*  oc4 / 4      */
-  int deep_{};     /*  inc4 / 4     */
-  int a_stride_{}; /*  h * w * 4    */
-  int b_stride_{}; /*  inc4  * 4    */
-  int c_stride_{}; /*  h * w * 4    */
-};
+  int row_;      /*  h * w        */
+  int col_;      /*  oc4 / 4      */
+  int deep_;     /*  inc4 / 4     */
+  int a_stride_; /*  h * w * 4    */
+  int b_stride_; /*  inc4  * 4    */
+  int c_stride_; /*  h * w * 4    */
+} StrassenMatMulParameter;
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_STRASSEN_MATMUL_H_
-

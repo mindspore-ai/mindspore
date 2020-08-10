@@ -19,12 +19,12 @@
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
-#include "src/runtime/kernel/arm/nnacl/pack.h"
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/common_func.h"
-#include "src/runtime/kernel/arm/nnacl/conv_parameter.h"
-#include "src/runtime/kernel/arm/nnacl/winograd_utils.h"
-#include "src/runtime/kernel/arm/nnacl/quantization/quantize.h"
+#include "nnacl/pack.h"
+#include "nnacl/op_base.h"
+#include "nnacl/common_func.h"
+#include "nnacl/conv_parameter.h"
+#include "nnacl/winograd_utils.h"
+#include "nnacl/quantization/quantize.h"
 
 typedef void (*GEMM_FUNC)(int8_t *dst, const int8_t *src, const int8_t *weight, const int32_t *bias, size_t ksize,
                           size_t ic4, size_t output_channel, size_t offset, const int32_t *input_sum, size_t act_min,

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/matmul.h"
+#include "nnacl/fp32/matmul.h"
 
 void RowMajor2Row8Major(float *src_ptr, float *dst_ptr, int row, int col) {
   for (int r = 0; r < row; r++) {

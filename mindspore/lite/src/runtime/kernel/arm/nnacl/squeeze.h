@@ -17,12 +17,12 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_SQUEEZE_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_SQUEEZE_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct SqueezeParameter {
+typedef struct SqueezeParameter {
   OpParameter op_parameter_;
   int axes_[8];
-};
+} SqueezeParameter;
 
 int DoSqueeze(float *input_ptr, float *output_ptr, size_t data_size);
 

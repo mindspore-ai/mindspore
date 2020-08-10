@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/crop_parameter.h"
-#include "src/runtime/kernel/arm/nnacl/int8/crop_int8.h"
+#include "nnacl/crop_parameter.h"
+#include "nnacl/int8/crop_int8.h"
 #include <string.h>
 
 void Crop(const int8_t *input, int8_t *output, int task_id, CropParameter *para) {

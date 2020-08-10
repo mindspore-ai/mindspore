@@ -17,11 +17,12 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_RELU_INT8_H_
 
 #include <math.h>
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
-#include "src/runtime/kernel/arm/nnacl/quantization/fixed_point.h"
+#include "nnacl/op_base.h"
+#include "nnacl/errorcode.h"
+#include "nnacl/quantization/fixed_point.h"
+#include "nnacl/quantization/quantize.h"
 
-struct ReluXQuantArg {
+typedef struct ReluXQuantArg {
   QuantArg input_arg;
   QuantArg output_arg;
   int input_multiplier_;
@@ -29,7 +30,7 @@ struct ReluXQuantArg {
   int right_shift_;
   int quantized_output_min;
   int quantized_output_max;
-};
+} ReluXQuantArg;
 
 inline void ReluXInt8(const int8_t *src, int length, int8_t *dst, ReluXQuantArg *arg) {
   for (int i = 0; i < length; ++i) {

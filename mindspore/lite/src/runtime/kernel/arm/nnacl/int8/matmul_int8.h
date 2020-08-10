@@ -14,25 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_MATMUL_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_MATMUL_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_MATMUL_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_MATMUL_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-enum ActType { ActType_No, ActType_Relu, ActType_Relu6 };
+void MatMulInt8(const int8_t *a, const int8_t *b, int32_t *c, const int row8, const int col8, const int deep,
+                const int32_t a_zp, const int32_t b_zp);
+void RowMajor2Row8MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col);
+void RowMajor2Col8MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col);
 
-struct MatMulParameter {
-  OpParameter op_parameter_;
-  int row_;
-  int col_;
-  int row_8_;
-  int col_8_;
-  int deep_;
-  bool has_bias_;
-  int batch;
-  bool a_transpose_; /* false :  row-major  */
-  bool b_transpose_; /* true  :  col-major  */
-  ActType act_type_;
-};
-
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_MATMUL_H_
+#endif  // MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_INT8_MATMUL_H_

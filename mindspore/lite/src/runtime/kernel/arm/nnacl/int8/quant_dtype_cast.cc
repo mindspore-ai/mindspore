@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/int8/quant_dtype_cast.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include <math.h>
+#include "nnacl/int8/quant_dtype_cast.h"
+#include "nnacl/errorcode.h"
 
 int DequantizeInt8(int8_t *quant_values, float *real_values, float scale, int32_t zp, int size) {
   if (quant_values == nullptr || real_values == nullptr) {

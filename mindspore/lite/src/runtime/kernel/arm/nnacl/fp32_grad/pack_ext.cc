@@ -15,7 +15,7 @@
  */
 
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/fp32_grad/pack_ext.h"
+#include "nnacl/fp32_grad/pack_ext.h"
 
 static int is_a_ge_zero_and_a_lt_b(int a, int b) { return (unsigned)(a) < (unsigned)(b); }
 

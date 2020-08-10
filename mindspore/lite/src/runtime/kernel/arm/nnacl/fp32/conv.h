@@ -20,12 +20,12 @@
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
-#include "src/runtime/kernel/arm/nnacl/pack.h"
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/common_func.h"
-#include "src/runtime/kernel/arm/nnacl/conv_parameter.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/strassen_matmul.h"
-#include "src/runtime/kernel/arm/nnacl/winograd_utils.h"
+#include "nnacl/pack.h"
+#include "nnacl/op_base.h"
+#include "nnacl/common_func.h"
+#include "nnacl/conv_parameter.h"
+#include "nnacl/fp32/strassen_matmul.h"
+#include "nnacl/winograd_utils.h"
 
 using TmpBufferAddress = float *;
 typedef void (*GEMM_FUNC_FP32)(float *output, const float *input, const float *weight, const float *bias, size_t step,

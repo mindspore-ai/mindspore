@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/pooling.h"
+#include "nnacl/fp32/pooling.h"
 #include <float.h>
 
 void AvgPooling(const float *input_ptr, float *output_ptr, PoolingParameter *pooling_param, int task_id) {

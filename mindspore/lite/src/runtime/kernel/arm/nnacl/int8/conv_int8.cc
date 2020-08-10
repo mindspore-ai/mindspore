@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/int8/conv_int8.h"
+#include "nnacl/int8/conv_int8.h"
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/winograd_transform.h"
-#include "src/runtime/kernel/arm/nnacl/int8/common_func.h"
+#include "nnacl/winograd_transform.h"
+#include "nnacl/int8/common_func.h"
 
 void IndirectGemmInt8(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const int8_t *weight, const int32_t *bias,
                       int ic4, size_t kernel_plane, size_t output_channel, const int32_t *input_sum,

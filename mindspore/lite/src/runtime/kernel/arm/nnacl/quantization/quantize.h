@@ -22,14 +22,14 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <limits>
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct QuantArg {
+typedef struct QuantArg {
   double scale_;
   int32_t zp_;
-};
+} QuantArg;
 
-struct ConvQuantArg {
+typedef struct ConvQuantArg {
   QuantArg **quant_args_;
   double *real_multiplier_;
   int32_t *left_shift_;
@@ -37,43 +37,42 @@ struct ConvQuantArg {
   int32_t *quant_multiplier_;
   int32_t *out_act_min_;
   int32_t *out_act_max_;
-};
+} ConvQuantArg;
 
-struct ConcatQuantArg {
+typedef struct ConcatQuantArg {
   QuantArg *in_args_;
   QuantArg out_args_;
   int output_activation_min_;
   int output_activation_max_;
-};
+} ConcatQuantArg;
 
-struct SqueezeQuantArg {
-    int *input_sizes_;
-    int output_size_;
-    int **input_shapes_;
-    int *output_shape_;
-    float alpha;
-    int axis_;
-    size_t input_num_;
-    size_t output_dim_;
-    QuantArg *in_quant_args_;
-    QuantArg out_quant_args_;
-};
+typedef struct SqueezeQuantArg {
+  int *input_sizes_;
+  int output_size_;
+  int **input_shapes_;
+  int *output_shape_;
+  float alpha;
+  int axis_;
+  size_t input_num_;
+  size_t output_dim_;
+  QuantArg *in_quant_args_;
+  QuantArg out_quant_args_;
+} SqueezeQuantArg;
 
-struct UnSqueezeQuantArg {
-    int *input_sizes_;
-    int output_size_;
-    int **input_shapes_;
-    int *output_shape_;
-    float alpha;
-    int axis_;
-    size_t input_num_;
-    size_t output_dim_;
-    QuantArg in_quant_args_;
-    QuantArg out_quant_args_;
-};
+typedef struct UnSqueezeQuantArg {
+  int *input_sizes_;
+  int output_size_;
+  int **input_shapes_;
+  int *output_shape_;
+  float alpha;
+  int axis_;
+  size_t input_num_;
+  size_t output_dim_;
+  QuantArg in_quant_args_;
+  QuantArg out_quant_args_;
+} UnSqueezeQuantArg;
 
-
-struct PreluQuantArg {
+typedef struct PreluQuantArg {
   int *input_sizes_;
   int output_size_;
   int **input_shapes_;
@@ -87,9 +86,9 @@ struct PreluQuantArg {
   int output_activation_max_;
   QuantArg *in_quant_args_;
   QuantArg out_quant_args_;
-};
+} PreluQuantArg;
 
-/*struct SigmoidQuantArg {
+/*typedef struct SigmoidQuantArg {
     int *input_sizes_;
     int output_size_;
     int **input_shapes_;
@@ -103,9 +102,9 @@ struct PreluQuantArg {
     int output_activation_max_;
     QuantArg *in_quant_args_;
     QuantArg out_quant_args_;
-};*/
+} SigmoidQuantArg;*/
 
-struct MatmulQuantArg {
+typedef struct MatmulQuantArg {
   QuantArg input;
   QuantArg weight;
   QuantArg output;
@@ -114,15 +113,15 @@ struct MatmulQuantArg {
   int32_t left_shift;
   int32_t right_shift;
   int32_t quant_multiplier;
-};
+} MatmulQuantArg;
 
-struct PadQuantArg {
+typedef struct PadQuantArg {
   QuantArg *in_quant_args_ = nullptr;
   QuantArg *out_quanr_args_ = nullptr;
   int8_t *constant_value_ = nullptr;
-};
+} PadQuantArg;
 
-struct MulQuantArg {
+typedef struct MulQuantArg {
   QuantArg in_quant_args_[2];
   QuantArg out_quant_arg_;
   int output_multiplier_;
@@ -130,16 +129,16 @@ struct MulQuantArg {
   int output_activation_max_;
   int shift_left_;
   int shift_right_;
-};
+} MulQuantArg;
 
-struct CropQuantArg {
+typedef struct CropQuantArg {
   QuantArg in_args_;
   QuantArg out_args_;
   int output_activation_min_;
   int output_activation_max_;
-};
+} CropQuantArg;
 
-struct ArithSelfQuantArg {
+typedef struct ArithSelfQuantArg {
   QuantArg in_args_;
   QuantArg out_args_;
   int output_activation_min_;
@@ -147,26 +146,26 @@ struct ArithSelfQuantArg {
   int output_multiplier_;
   int shift_left_;
   int shift_right_;
-};
+} ArithSelfQuantArg;
 
-struct SplitQuantArg {
+typedef struct SplitQuantArg {
   QuantArg in_args_;
   QuantArg out_args_[20];
   int output_activation_min_;
   int output_activation_max_;
-};
+} SplitQuantArg;
 
-struct SoftmaxQuantArg {
+typedef struct SoftmaxQuantArg {
   QuantArg in_quant_args_;
   QuantArg out_quant_arg_;
-};
+} SoftmaxQuantArg;
 
-struct ReshapeQuantArg {
+typedef struct ReshapeQuantArg {
   QuantArg in_args_;
   QuantArg out_args_;
   int output_activation_min_;
   int output_activation_max_;
-};
+} ReshapeQuantArg;
 
 void QuantizeMultiplier(double double_multiplier, int32_t *quantized_multiplier, int *shift);
 
@@ -200,8 +199,8 @@ inline int32_t QuantizeToInt8(float real_value, float scale, int32_t zp) { retur
 
 inline void CalculateActivationRangeQuantized(bool is_relu, bool is_relu6, int32_t zp, float scale, int *mini,
                                               int *maxi) {
-  int32_t min = std::numeric_limits<int8_t>::min();
-  int32_t max = std::numeric_limits<int8_t>::max();
+  int32_t min = CHAR_MIN;
+  int32_t max = CHAR_MAX;
   int32_t quantized_zero = QuantizeToInt8(0, scale, zp);
   int32_t quantized_six = QuantizeToInt8(6, scale, zp);
   if (is_relu) {

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp16/conv_depthwise_fp16.h"
+#include "nnacl/fp16/conv_depthwise_fp16.h"
 #include <arm_neon.h>
-#include "src/runtime/kernel/arm/nnacl/fp16/common_func.h"
+#include "nnacl/fp16/common_func.h"
 
 /*conv depthwise fp16 begin*/
 void DepthwiseBorderPixelFp16(float16_t *dst, const float16_t *src, const float16_t *weight, const float16_t *bias,

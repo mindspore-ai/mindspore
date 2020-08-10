@@ -20,9 +20,10 @@
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
+#include "nnacl/quantization/quantize.h"
 
-struct PoolingParameter {
+typedef struct PoolingParameter {
   OpParameter op_parameter_;
   QuantArg **quant_args_;
   bool global_;
@@ -47,7 +48,7 @@ struct PoolingParameter {
   int stride_w_;
   int stride_h_;
   int thread_num_;
-};
+} PoolingParameter;
 
 void AvgPooling(const float *input_ptr, float *output_ptr, PoolingParameter *pooling_param, int task_id);
 

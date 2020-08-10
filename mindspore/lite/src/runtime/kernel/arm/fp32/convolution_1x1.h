@@ -27,7 +27,7 @@
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/conv.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/common_func.h"
-#include "src/runtime/kernel/arm/nnacl/matmul.h"
+#include "src/runtime/kernel/arm/nnacl/matmul_parameter.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/matmul.h"
 
 namespace mindspore::kernel {

@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_PRELU_INT8_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_PRELU_INT8_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/prelu_parameter.h"
+#include "nnacl/op_base.h"
+#include "nnacl/prelu_parameter.h"
 
 void prelu(int8_t *inputs, int8_t *output_ptr, PreluParameter *quant_Prelu_parm, int task_id);
 

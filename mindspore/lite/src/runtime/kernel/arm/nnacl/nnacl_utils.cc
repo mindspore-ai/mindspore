@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/nnacl_utils.h"
+#include "nnacl/nnacl_utils.h"
 #ifdef __ANDROID__
 #include <sys/auxv.h>
 #endif

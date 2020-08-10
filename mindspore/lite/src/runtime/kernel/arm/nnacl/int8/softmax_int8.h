@@ -17,8 +17,9 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_SOFTMAX_INT8_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_SOFTMAX_INT8_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/softmax_parameter.h"
+#include "nnacl/op_base.h"
+#include "nnacl/softmax_parameter.h"
+#include "nnacl/quantization/quantize.h"
 
 int Softmax(const int8_t *input_ptr, int8_t *output_ptr, int count, float *exp_data, float *sum_data,
             SoftmaxQuantArg quant_param, SoftmaxParameter *parameter);

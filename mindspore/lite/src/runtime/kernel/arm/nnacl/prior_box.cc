@@ -15,8 +15,8 @@
  */
 
 #include <memory.h>
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
-#include "src/runtime/kernel/arm/nnacl/prior_box.h"
+#include "nnacl/errorcode.h"
+#include "nnacl/prior_box.h"
 
 int PriorBox(const float *input_data, float *output_data, const size_t size, const int tid, const int thread_num) {
   size_t unit_size = size / thread_num;

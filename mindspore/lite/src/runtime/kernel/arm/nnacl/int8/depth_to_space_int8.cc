@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/nnacl/int8/depth_to_space_int8.h"
+#include "nnacl/int8/depth_to_space_int8.h"
 #include <string.h>
 
 void DepthToSpaceForNHWC(const int8_t *input, int8_t *output, int *in_shape, DepthToSpaceParameter *param,

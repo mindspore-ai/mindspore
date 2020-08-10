@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/elu.h"
+#include "nnacl/fp32/elu.h"
+#include <math.h>
 #include "include/errorcode.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/errorcode.h"
 #include "mindspore/core/utils/log_adapter.h"
 
 void Calculate_Data(float *input_data, float *output_data, int num, EluParameter *parameter) {

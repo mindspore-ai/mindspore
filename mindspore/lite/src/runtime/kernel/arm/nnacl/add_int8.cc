@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/add_int8.h"
+#include "nnacl/add_int8.h"
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
-#include "src/runtime/kernel/arm/nnacl/quantization/fixed_point.h"
+#include "nnacl/quantization/fixed_point.h"
 
 #ifdef ENABLE_NEON
 int16x8_t LoadAndAddOffset(int8_t *data, int index, int offset) {

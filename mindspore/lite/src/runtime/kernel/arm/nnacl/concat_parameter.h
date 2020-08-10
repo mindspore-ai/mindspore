@@ -17,8 +17,10 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CONCAT_PARAMETER_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CONCAT_PARAMETER_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-struct ConcatParameter {
+#include "nnacl/op_base.h"
+#include "nnacl/quantization/quantize.h"
+
+typedef struct ConcatParameter {
   OpParameter op_parameter_;
   ConcatQuantArg quant_arg_;
   int axis_;
@@ -28,7 +30,6 @@ struct ConcatParameter {
   const int *output_shapes_;
   int64_t after_axis_size;
   int64_t count_unit_;
-};
+} ConcatParameter;
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CONCAT_PARAMETER_H_
-

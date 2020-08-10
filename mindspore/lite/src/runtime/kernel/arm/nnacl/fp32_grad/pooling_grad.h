@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_GRAD_POOLING_GRAD_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_GRAD_POOLING_GRAD_H_
 
-#include "src/runtime/kernel/arm/nnacl/fp32/pooling.h"
+#include "nnacl/fp32/pooling.h"
 
 void AvgPoolingGrad(const float *input_ptr, float *output_ptr, PoolingParameter *pooling_param);
 void MaxPoolingGrad(const float *dy, const int *indices_ptr, float *output_ptr, PoolingParameter *pooling_param);

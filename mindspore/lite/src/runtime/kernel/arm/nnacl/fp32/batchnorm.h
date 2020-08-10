@@ -17,14 +17,14 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_BATCHNORM_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_BATCHNORM_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct BatchNormParameter {
+typedef struct BatchNormParameter {
   OpParameter op_parameter_;
   float epsilon_;
   int unit_;
   int channel_;
-};
+} BatchNormParameter;
 
 void BatchNorm(float *output_ptr, const float *input_ptr, const float *mean_ptr, const float *variance_ptr, int task_id,
                BatchNormParameter *param);

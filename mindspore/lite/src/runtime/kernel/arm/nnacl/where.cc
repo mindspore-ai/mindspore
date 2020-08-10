@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/nnacl/where.h"
+#include "nnacl/where.h"
 
 void Where(bool *input, float *input1, float *input2, float *output, WhereParameter *where_param_, int task_id) {
   for (int i = task_id; i < where_param_->number_; i += where_param_->op_parameter_.thread_num_) {

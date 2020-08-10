@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/power.h"
+#include "nnacl/power.h"
 
 bool CheckInteger(float f) { return floorf(f) == f; }
 

@@ -19,8 +19,8 @@
 
 #include <arm_neon.h>
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/fp16/pack_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/fp16/conv_fp16.h"
+#include "nnacl/fp16/pack_fp16.h"
+#include "nnacl/fp16/conv_fp16.h"
 
 // for fp16 convolution 3x3 filter/input/output transform
 void Conv3x3Fp16InputUnit(float16_t *tmp_data, float16_t *trans_input_data, size_t step);

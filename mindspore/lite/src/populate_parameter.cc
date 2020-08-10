@@ -31,7 +31,7 @@
 #include "src/runtime/kernel/arm/nnacl/depth_to_space.h"
 #include "src/runtime/kernel/arm/nnacl/conv_parameter.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/pooling.h"
-#include "src/runtime/kernel/arm/nnacl/matmul.h"
+#include "src/runtime/kernel/arm/nnacl/matmul_parameter.h"
 #include "src/runtime/kernel/arm/nnacl/softmax_parameter.h"
 #include "src/runtime/kernel/arm/nnacl/tile.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/topk.h"

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/int8/softmax_int8.h"
-#include <cmath>
+#include "nnacl/int8/softmax_int8.h"
+#include <math.h>
 
 int Softmax(const int8_t *input_ptr, int8_t *output_ptr, int count, float *exp_data, float *sum_data,
             SoftmaxQuantArg quant_param, SoftmaxParameter *parameter) {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/winograd_utils.h"
+#include "nnacl/winograd_utils.h"
 #include <cstdio>
 
 #define MIN_UNIT 2

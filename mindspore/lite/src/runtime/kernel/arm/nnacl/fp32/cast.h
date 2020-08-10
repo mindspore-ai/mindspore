@@ -19,14 +19,14 @@
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
 // For cast.
-struct CastParameter {
+typedef struct CastParameter {
   OpParameter op_parameter_;
   int src_type_;
   int dst_type_;
-};
+} CastParameter;
 
 void Uint8ToFloat32(const uint8_t *input, float *output, int number);
 void Uint8ToInt8(const uint8_t *input, int8_t *output, int number);

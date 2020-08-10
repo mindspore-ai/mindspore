@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/local_response_norm.h"
+#include "nnacl/fp32/local_response_norm.h"
+#include <math.h>
 
 int LocalResponseNorm(float *input_ptr, int out_size, int channel, float *output_ptr,
                       LocalResponseNormParameter *param) {

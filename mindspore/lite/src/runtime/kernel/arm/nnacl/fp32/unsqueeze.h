@@ -17,15 +17,15 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_UNSQUEEZE_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_UNSQUEEZE_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
 #define UNSQUEEZE_DIMS_MAX_SIZE 4
 
-struct UnsqueezeParameter {
+typedef struct UnsqueezeParameter {
   OpParameter op_parameter_;
   int dims_[UNSQUEEZE_DIMS_MAX_SIZE];
   int num_dim_;
-};
+} UnsqueezeParameter;
 
 int Unsqueeze(float *input_ptr, float *output_ptr, size_t data_size);
 
