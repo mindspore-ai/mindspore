@@ -36,6 +36,22 @@ MS_REG_GPU_KERNEL_ONE(MaximumGrad,
                       BroadcastOpGradGpuKernel, float)
 MS_REG_GPU_KERNEL_ONE(MinimumGrad,
                       KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddOutputAttr(kNumberTypeFloat16)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      BroadcastOpGradGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(MaximumGrad,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddOutputAttr(kNumberTypeFloat16)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      BroadcastOpGradGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(MinimumGrad,
+                      KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)

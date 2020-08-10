@@ -15,6 +15,7 @@
  */
 
 #include "backend/kernel_compiler/gpu/cuda_impl/broadcast_grad_impl.cuh"
+#include "backend/kernel_compiler/gpu/cuda_impl/util.cuh"
 #include "runtime/device/gpu/cuda_common.h"
 
 template <typename T>
@@ -22,9 +23,9 @@ struct MinimumGradFunc {
   __device__ __forceinline__ void operator()(const T &x1, const T &x2, const bool &grad_x1, const bool &grad_x2,
                                              const T &dy, T *dx1, T *dx2) {
     if (grad_x1 && x1 < x2) {
-      atomicAdd(dx1, dy);
+      ms_atomic_add(dx1, dy);
     } else if (grad_x2 && x1 >= x2) {
-      atomicAdd(dx2, dy);
+      ms_atomic_add(dx2, dy);
     }
   }
 };
@@ -34,9 +35,9 @@ struct MaximumGradFunc {
   __device__ __forceinline__ void operator()(const T &x1, const T &x2, const bool &grad_x1, const bool &grad_x2,
                                              const T &dy, T *dx1, T *dx2) {
     if (grad_x1 && x1 > x2) {
-      atomicAdd(dx1, dy);
+      ms_atomic_add(dx1, dy);
     } else if (grad_x2 && x1 <= x2) {
-      atomicAdd(dx2, dy);
+      ms_atomic_add(dx2, dy);
     }
   }
 };
@@ -117,6 +118,9 @@ template void NoBroadcastGrad(const int &nums, const bool &grad_x1, const bool &
                               cudaStream_t stream);
 template void NoBroadcastGrad(const int &nums, const bool &grad_x1, const bool &grad_x2, enum BroadcastGradOpType op,
                               const int *x1, const int *x2, const int *dy, int *dx1, int *dx2, cudaStream_t stream);
+template void NoBroadcastGrad(const int &nums, const bool &grad_x1, const bool &grad_x2, enum BroadcastGradOpType op,
+                              const half *x1, const half *x2, const half *dy, half *dx1, half *dx2,
+                              cudaStream_t stream);
 template void BroadcastGrad(const int &l0, const int &l1, const int &l2, const int &l3, const int &r0, const int &r1,
                             const int &r2, const int &r3, const int &d0, const int &d1, const int &d2, const int &d3,
                             const bool &grad_x1, const bool &grad_x2, enum BroadcastGradOpType op, const float *x1,
@@ -125,3 +129,7 @@ template void BroadcastGrad(const int &l0, const int &l1, const int &l2, const i
                             const int &r2, const int &r3, const int &d0, const int &d1, const int &d2, const int &d3,
                             const bool &grad_x1, const bool &grad_x2, enum BroadcastGradOpType op, const int *x1,
                             const int *x2, const int *dy, int *dx1, int *dx2, cudaStream_t stream);
+template void BroadcastGrad(const int &l0, const int &l1, const int &l2, const int &l3, const int &r0, const int &r1,
+                            const int &r2, const int &r3, const int &d0, const int &d1, const int &d2, const int &d3,
+                            const bool &grad_x1, const bool &grad_x2, enum BroadcastGradOpType op, const half *x1,
+                            const half *x2, const half *dy, half *dx1, half *dx2, cudaStream_t stream);

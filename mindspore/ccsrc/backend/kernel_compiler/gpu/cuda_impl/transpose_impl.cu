@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 
 #include <cuda_runtime.h>
+
 #include "transpose_impl.cuh"
 #include "runtime/device/gpu/cuda_common.h"
+
 template <typename T>
 __global__ void Transpose(const int size, const T* input, const int* input_shape, const int* input_axis,
                           const int shape_size, T* output) {
@@ -63,3 +65,5 @@ template void CalTranspose<float>(const int size, const float* input, const int*
                                   const int shape_size, float* output, cudaStream_t cuda_stream);
 template void CalTranspose<half>(const int size, const half* input, const int* input_shape, const int* input_axis,
                                  const int shape_size, half* output, cudaStream_t cuda_stream);
+template void CalTranspose<int>(const int size, const int* input, const int* input_shape, const int* input_axis,
+                                 const int shape_size, int* output, cudaStream_t cuda_stream);
