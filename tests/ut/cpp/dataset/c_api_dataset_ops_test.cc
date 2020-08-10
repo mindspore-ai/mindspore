@@ -425,6 +425,58 @@ TEST_F(MindDataTestPipeline, TestProjectMap) {
   iter->Stop();
 }
 
+
+TEST_F(MindDataTestPipeline, TestProjectMapAutoInjection) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline.TestProjectMapAutoInjection";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> resize_op = vision::Resize({30, 30});
+  EXPECT_NE(resize_op, nullptr);
+
+  // Create a Map operation on ds
+  // {"image"} is the project columns. This will trigger auto injection of ProjectOp after MapOp.
+  ds = ds->Map({resize_op}, {}, {}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  // 'label' is dropped during the project op
+  EXPECT_EQ(row.find("label"), row.end());
+  // 'image' column should still exist
+  EXPECT_NE(row.find("image"), row.end());
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    EXPECT_EQ(image->shape()[0], 30);
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 20);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
 TEST_F(MindDataTestPipeline, TestZipSuccess) {
   // Testing the member zip() function
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestZipSuccess.";
