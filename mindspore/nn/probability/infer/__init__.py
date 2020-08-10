@@ -13,12 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """
-Probability.
-
-The high-level components used to construct the probabilistic network.
+Infer algorithms in Probabilistic Programming.
 """
 
-from . import bijector
-from . import distribution
-from . import infer
-from . import dpn
+from .variational import *
+
+__all__ = []
+__all__.extend(variational.__all__)

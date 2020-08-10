@@ -13,12 +13,14 @@
 # limitations under the License.
 # ============================================================================
 """
-Probability.
+SVI and ELBO.
 
-The high-level components used to construct the probabilistic network.
+The SVI interface is for variational inference.
+The ELBO interface is called as loss while model training.
 """
 
-from . import bijector
-from . import distribution
-from . import infer
-from . import dpn
+from .svi import SVI
+from .elbo import ELBO
+
+__all__ = ['SVI',
+           'ELBO']

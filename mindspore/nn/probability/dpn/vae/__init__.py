@@ -13,12 +13,13 @@
 # limitations under the License.
 # ============================================================================
 """
-Probability.
+Variational auto-encoder (VAE).
 
-The high-level components used to construct the probabilistic network.
+The interface of VAE, which allows to construct probablity model like DNN model.
 """
 
-from . import bijector
-from . import distribution
-from . import infer
-from . import dpn
+from .vae import VAE
+from .cvae import ConditionalVAE
+
+__all__ = ['VAE',
+           'ConditionalVAE']
