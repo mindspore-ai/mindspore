@@ -20,6 +20,7 @@ SET(DE_UT_SRCS
         circular_pool_test.cc
         client_config_test.cc
         connector_test.cc
+        cutmix_batch_op_test.cc
         cut_out_op_test.cc
         datatype_test.cc
         decode_op_test.cc

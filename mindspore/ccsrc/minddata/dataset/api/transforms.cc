@@ -19,6 +19,7 @@
 
 #include "minddata/dataset/kernels/image/center_crop_op.h"
 #include "minddata/dataset/kernels/image/crop_op.h"
+#include "minddata/dataset/kernels/image/cutmix_batch_op.h"
 #include "minddata/dataset/kernels/image/cut_out_op.h"
 #include "minddata/dataset/kernels/image/decode_op.h"
 #include "minddata/dataset/kernels/image/hwc_to_chw_op.h"
@@ -62,6 +63,16 @@ std::shared_ptr<CenterCropOperation> CenterCrop(std::vector<int32_t> size) {
 // Function to create CropOperation.
 std::shared_ptr<CropOperation> Crop(std::vector<int32_t> coordinates, std::vector<int32_t> size) {
   auto op = std::make_shared<CropOperation>(coordinates, size);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
+// Function to create CutMixBatchOperation.
+std::shared_ptr<CutMixBatchOperation> CutMixBatch(ImageBatchFormat image_batch_format, float alpha, float prob) {
+  auto op = std::make_shared<CutMixBatchOperation>(image_batch_format, alpha, prob);
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -336,6 +347,27 @@ std::shared_ptr<TensorOp> CropOperation::Build() {
   width = size_[1];
 
   std::shared_ptr<CropOp> tensor_op = std::make_shared<CropOp>(x, y, height, width);
+  return tensor_op;
+}
+
+// CutMixBatchOperation
+CutMixBatchOperation::CutMixBatchOperation(ImageBatchFormat image_batch_format, float alpha, float prob)
+    : image_batch_format_(image_batch_format), alpha_(alpha), prob_(prob) {}
+
+bool CutMixBatchOperation::ValidateParams() {
+  if (alpha_ < 0) {
+    MS_LOG(ERROR) << "CutMixBatch: alpha cannot be negative.";
+    return false;
+  }
+  if (prob_ < 0 || prob_ > 1) {
+    MS_LOG(ERROR) << "CutMixBatch: Probability has to be between 0 and 1.";
+    return false;
+  }
+  return true;
+}
+
+std::shared_ptr<TensorOp> CutMixBatchOperation::Build() {
+  std::shared_ptr<CutMixBatchOp> tensor_op = std::make_shared<CutMixBatchOp>(image_batch_format_, alpha_, prob_);
   return tensor_op;
 }
 

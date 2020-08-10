@@ -655,7 +655,7 @@ Status BatchTensorToCVTensorVector(const std::shared_ptr<Tensor> &input,
   TensorShape remaining({-1});
   std::vector<int64_t> index(tensor_shape.size(), 0);
   if (tensor_shape.size() <= 1) {
-    RETURN_STATUS_UNEXPECTED("Tensor must be at least 2-D in order to unpack");
+    RETURN_STATUS_UNEXPECTED("Tensor must be at least 2-D in order to unpack.");
   }
   TensorShape element_shape(std::vector<int64_t>(tensor_shape.begin() + 1, tensor_shape.end()));
 
@@ -664,12 +664,45 @@ Status BatchTensorToCVTensorVector(const std::shared_ptr<Tensor> &input,
     std::shared_ptr<Tensor> out;
 
     RETURN_IF_NOT_OK(input->StartAddrOfIndex(index, &start_addr_of_index, &remaining));
-    RETURN_IF_NOT_OK(input->CreateFromMemory(element_shape, input->type(), start_addr_of_index, &out));
+    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(element_shape, input->type(), start_addr_of_index, &out));
     std::shared_ptr<CVTensor> cv_out = CVTensor::AsCVTensor(std::move(out));
     if (!cv_out->mat().data) {
-      RETURN_STATUS_UNEXPECTED("Could not convert to CV Tensor");
+      RETURN_STATUS_UNEXPECTED("Could not convert to CV Tensor.");
     }
     output->push_back(cv_out);
+  }
+  return Status::OK();
+}
+
+Status BatchTensorToTensorVector(const std::shared_ptr<Tensor> &input, std::vector<std::shared_ptr<Tensor>> *output) {
+  std::vector<int64_t> tensor_shape = input->shape().AsVector();
+  TensorShape remaining({-1});
+  std::vector<int64_t> index(tensor_shape.size(), 0);
+  if (tensor_shape.size() <= 1) {
+    RETURN_STATUS_UNEXPECTED("Tensor must be at least 2-D in order to unpack.");
+  }
+  TensorShape element_shape(std::vector<int64_t>(tensor_shape.begin() + 1, tensor_shape.end()));
+
+  for (; index[0] < tensor_shape[0]; index[0]++) {
+    uchar *start_addr_of_index = nullptr;
+    std::shared_ptr<Tensor> out;
+
+    RETURN_IF_NOT_OK(input->StartAddrOfIndex(index, &start_addr_of_index, &remaining));
+    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(element_shape, input->type(), start_addr_of_index, &out));
+    output->push_back(out);
+  }
+  return Status::OK();
+}
+
+Status TensorVectorToBatchTensor(const std::vector<std::shared_ptr<Tensor>> &input, std::shared_ptr<Tensor> *output) {
+  if (input.empty()) {
+    RETURN_STATUS_UNEXPECTED("TensorVectorToBatchTensor: Received an empty vector.");
+  }
+  std::vector<int64_t> tensor_shape = input.front()->shape().AsVector();
+  tensor_shape.insert(tensor_shape.begin(), input.size());
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape(tensor_shape), input.at(0)->type(), output));
+  for (int i = 0; i < input.size(); i++) {
+    RETURN_IF_NOT_OK((*output)->InsertTensor({i}, input[i]));
   }
   return Status::OK();
 }

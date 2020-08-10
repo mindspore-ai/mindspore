@@ -110,5 +110,12 @@ PYBIND_REGISTER(InterpolationMode, 0, ([](const py::module *m) {
                     .export_values();
                 }));
 
+PYBIND_REGISTER(ImageBatchFormat, 0, ([](const py::module *m) {
+                  (void)py::enum_<ImageBatchFormat>(*m, "ImageBatchFormat", py::arithmetic())
+                    .value("DE_IMAGE_BATCH_FORMAT_NHWC", ImageBatchFormat::kNHWC)
+                    .value("DE_IMAGE_BATCH_FORMAT_NCHW", ImageBatchFormat::kNCHW)
+                    .export_values();
+                }));
+
 }  // namespace dataset
 }  // namespace mindspore

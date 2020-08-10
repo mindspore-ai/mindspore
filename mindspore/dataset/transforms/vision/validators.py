@@ -19,7 +19,7 @@ from functools import wraps
 import numpy as np
 from mindspore._c_dataengine import TensorOp
 
-from .utils import Inter, Border
+from .utils import Inter, Border, ImageBatchFormat
 from ...core.validator_helpers import check_value, check_uint8, FLOAT_MAX_INTEGER, check_pos_float32, \
     check_2tuple, check_range, check_positive, INT32_MAX, parse_user_args, type_check, type_check_list, \
     check_tensor_op, UINT8_MAX
@@ -35,6 +35,20 @@ def check_crop_size(size):
             check_value(value, (1, FLOAT_MAX_INTEGER))
     else:
         raise TypeError("Size should be a single integer or a list/tuple (h, w) of length 2.")
+
+
+def check_cut_mix_batch_c(method):
+    """Wrapper method to check the parameters of CutMixBatch."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [image_batch_format, alpha, prob], _ = parse_user_args(method, *args, **kwargs)
+        type_check(image_batch_format, (ImageBatchFormat,), "image_batch_format")
+        check_pos_float32(alpha)
+        check_value(prob, [0, 1], "prob")
+        return method(self, *args, **kwargs)
+
+    return new_method
 
 
 def check_resize_size(size):

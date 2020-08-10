@@ -158,11 +158,24 @@ Status ConcatenateHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
                          std::shared_ptr<Tensor> append);
 
 /// Convert an n-dimensional Tensor to a vector of (n-1)-dimensional CVTensors
-/// @param input[in] input tensor
-/// @param output[out] output tensor
-/// @return Status ok/error
+/// \param input[in] input tensor
+/// \param output[out] output vector of CVTensors
+/// \return Status ok/error
 Status BatchTensorToCVTensorVector(const std::shared_ptr<Tensor> &input,
                                    std::vector<std::shared_ptr<CVTensor>> *output);
+
+/// Convert an n-dimensional Tensor to a vector of (n-1)-dimensional Tensors
+/// \param input[in] input tensor
+/// \param output[out] output vector of tensors
+/// \return Status ok/error
+Status BatchTensorToTensorVector(const std::shared_ptr<Tensor> &input, std::vector<std::shared_ptr<Tensor>> *output);
+
+/// Convert a vector of (n-1)-dimensional Tensors to an n-dimensional Tensor
+/// \param input[in] input vector of tensors
+/// \param output[out] output tensor
+/// \return Status ok/error
+Status TensorVectorToBatchTensor(const std::vector<std::shared_ptr<Tensor>> &input, std::shared_ptr<Tensor> *output);
+
 }  // namespace dataset
 }  // namespace mindspore
 

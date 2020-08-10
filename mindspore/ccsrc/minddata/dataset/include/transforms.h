@@ -49,6 +49,7 @@ namespace vision {
 // Transform Op classes (in alphabetical order)
 class CenterCropOperation;
 class CropOperation;
+class CutMixBatchOperation;
 class CutOutOperation;
 class DecodeOperation;
 class HwcToChwOperation;
@@ -84,6 +85,16 @@ std::shared_ptr<CenterCropOperation> CenterCrop(std::vector<int32_t> size);
 /// \param[in] size Size of the cropped area. Must be a vector of two values, in the form of {height, width}
 /// \return Shared pointer to the current TensorOp
 std::shared_ptr<CropOperation> Crop(std::vector<int32_t> coordinates, std::vector<int32_t> size);
+
+/// \brief Function to apply CutMix on a batch of images
+/// \notes Masks a random section of each image with the corresponding part of another randomly selected image in
+///     that batch
+/// \param[in] image_batch_format The format of the batch
+/// \param[in] alpha The hyperparameter of beta distribution (default = 1.0)
+/// \param[in] prob The probability by which CutMix is applied to each image (default = 1.0)
+/// \return Shared pointer to the current TensorOp
+std::shared_ptr<CutMixBatchOperation> CutMixBatch(ImageBatchFormat image_batch_format, float alpha = 1.0,
+                                                  float prob = 1.0);
 
 /// \brief Function to create a CutOut TensorOp
 /// \notes Randomly cut (mask) out a given number of square patches from the input image
@@ -296,6 +307,22 @@ class CropOperation : public TensorOperation {
   std::vector<int32_t> size_;
 };
 
+class CutMixBatchOperation : public TensorOperation {
+ public:
+  explicit CutMixBatchOperation(ImageBatchFormat image_batch_format, float alpha = 1.0, float prob = 1.0);
+
+  ~CutMixBatchOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
+
+ private:
+  float alpha_;
+  float prob_;
+  ImageBatchFormat image_batch_format_;
+};
+
 class CutOutOperation : public TensorOperation {
  public:
   explicit CutOutOperation(int32_t length, int32_t num_patches = 1);
@@ -309,6 +336,7 @@ class CutOutOperation : public TensorOperation {
  private:
   int32_t length_;
   int32_t num_patches_;
+  ImageBatchFormat image_batch_format_;
 };
 
 class DecodeOperation : public TensorOperation {

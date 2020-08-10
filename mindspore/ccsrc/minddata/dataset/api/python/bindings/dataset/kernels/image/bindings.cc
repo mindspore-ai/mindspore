@@ -22,6 +22,7 @@
 #include "minddata/dataset/kernels/image/auto_contrast_op.h"
 #include "minddata/dataset/kernels/image/bounding_box_augment_op.h"
 #include "minddata/dataset/kernels/image/center_crop_op.h"
+#include "minddata/dataset/kernels/image/cutmix_batch_op.h"
 #include "minddata/dataset/kernels/image/cut_out_op.h"
 #include "minddata/dataset/kernels/image/decode_op.h"
 #include "minddata/dataset/kernels/image/equalize_op.h"
@@ -102,6 +103,13 @@ PYBIND_REGISTER(MixUpBatchOp, 1, ([](const py::module *m) {
                   (void)py::class_<MixUpBatchOp, TensorOp, std::shared_ptr<MixUpBatchOp>>(
                     *m, "MixUpBatchOp", "Tensor operation to mixup a batch of images")
                     .def(py::init<float>(), py::arg("alpha"));
+                }));
+
+PYBIND_REGISTER(CutMixBatchOp, 1, ([](const py::module *m) {
+                  (void)py::class_<CutMixBatchOp, TensorOp, std::shared_ptr<CutMixBatchOp>>(
+                    *m, "CutMixBatchOp", "Tensor operation to cutmix a batch of images")
+                    .def(py::init<ImageBatchFormat, float, float>(), py::arg("image_batch_format"), py::arg("alpha"),
+                         py::arg("prob"));
                 }));
 
 PYBIND_REGISTER(ResizeOp, 1, ([](const py::module *m) {

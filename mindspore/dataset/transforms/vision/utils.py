@@ -30,3 +30,9 @@ class Border(str, Enum):
     EDGE: str = "edge"
     REFLECT: str = "reflect"
     SYMMETRIC: str = "symmetric"
+
+
+# Image Batch Format
+class ImageBatchFormat(IntEnum):
+    NHWC = 0
+    NCHW = 1
