@@ -228,6 +228,9 @@ static int GetBiggestDivider(int x, int y) {
 int ConvolutionOpenCLKernel::GetGlobalLocal(std::vector<size_t> *global, std::vector<size_t> *local) {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   auto param = reinterpret_cast<ConvParameter *>(opParameter);
+  param->output_h_ = outputs_[0]->Height();
+  param->output_w_ = outputs_[0]->Width();
+  param->output_channel_ = outputs_[0]->Channel();
 
   constexpr size_t work_group_size[] = {4, 4, 1};
   auto max_work_item_sizes = ocl_runtime->GetWorkItemSize();
@@ -287,7 +290,7 @@ int ConvolutionOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_s
 }
 
 int ConvolutionOpenCLKernel::Run() {
-  std::cout << "ConvolutionOpenCLKernel::Run()\n";
+  MS_LOG(DEBUG) << this->Name() << " Running!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
 
   int arg_cn = 0;

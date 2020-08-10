@@ -109,7 +109,7 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t>& img_size) 
     auto mem_buf = iter->second;
     bool is_match{mem_buf->img_size.size() == img_size.size()};
     for (int i = 0; i < img_size.size() && is_match; ++i) {
-      is_match = img_size[i] == mem_buf->img_size[i];
+      is_match &= img_size[i] == mem_buf->img_size[i];
     }
     if (is_match) {
       free_list_.erase(iter);
@@ -166,7 +166,7 @@ void *OpenCLAllocator::CreateImageFromHost(void *data, size_t size, const std::v
     auto mem_buf = iter->second;
     bool is_match{mem_buf->img_size.size() == img_size.size()};
     for (int i = 0; i < img_size.size() && is_match; ++i) {
-      is_match = img_size[i] == mem_buf->img_size[i];
+      is_match &= img_size[i] == mem_buf->img_size[i];
     }
     if (is_match) {
       free_list_.erase(iter);

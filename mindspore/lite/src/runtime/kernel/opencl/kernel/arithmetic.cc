@@ -148,8 +148,6 @@ int ArithmeticOpenCLKernel::Run() {
     }
     runtime_->SetKernelArg(kernel_, arg_idx++, weight_);
     runtime_->SetKernelArg(kernel_, arg_idx++, bias_);
-    MS_LOG(DEBUG) << arg_idx-2 << " " << weight_;
-    MS_LOG(DEBUG) << arg_idx-1 << " " << bias_;
   }
   runtime_->SetKernelArg(kernel_, arg_idx++, outputs_[0]->Data());
   int H = outputs_[0]->Batch() * outputs_[0]->Height();
