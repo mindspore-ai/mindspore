@@ -19,6 +19,8 @@
 #include <algorithm>
 #include "include/errorcode.h"
 #include "src/kernel_factory.h"
+#include "src/common/graph_util.h"
+#include "src/common/utils.h"
 #if SUPPORT_GPU
 #include "src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #endif
@@ -51,6 +53,7 @@ int Scheduler::InitOp2Kernel(const lite::Model *model, std::vector<tensor::Tenso
   auto meta_graph = model->GetMetaGraph();
   MS_EXCEPTION_IF_NULL(meta_graph);
   uint32_t kernelCount = meta_graph->nodes()->size();
+  auto graph_output_node_indexes = GetGraphOutputNodes(meta_graph);
   for (uint32_t i = 0; i < kernelCount; i++) {
     auto cNode = meta_graph->nodes()->GetAs<schema::CNode>(i);
     std::vector<tensor::Tensor *> inputs;
@@ -93,6 +96,7 @@ int Scheduler::InitOp2Kernel(const lite::Model *model, std::vector<tensor::Tenso
       return RET_ERROR;
     }
     kernel->set_name(cNode->name()->str());
+    kernel->set_is_model_output(IsContain(graph_output_node_indexes, size_t(i)));
     kernels->emplace_back(kernel);
   }
   return RET_OK;
@@ -158,10 +162,10 @@ kernel::LiteKernel *Scheduler::CreateSubKernel(const std::vector<kernel::LiteKer
         output_tensors.emplace_back(tensor);
       }
     }
-//    std::vector<tensor::Tensor *> input_tensors = kernel::LiteKernelUtil::SubgraphInputTensors(kernels);
-//    std::vector<tensor::Tensor *> output_tensors = kernel::LiteKernelUtil::SubgraphOutputTensors(kernels);
-//    std::vector<kernel::LiteKernel *> input_kernels = kernel::LiteKernelUtil::SubgraphInputKernels(kernels);
-//    std::vector<kernel::LiteKernel *> output_kernels = kernel::LiteKernelUtil::SubgraphOutputKernels(kernels);
+    //    std::vector<tensor::Tensor *> input_tensors = kernel::LiteKernelUtil::SubgraphInputTensors(kernels);
+    //    std::vector<tensor::Tensor *> output_tensors = kernel::LiteKernelUtil::SubgraphOutputTensors(kernels);
+    //    std::vector<kernel::LiteKernel *> input_kernels = kernel::LiteKernelUtil::SubgraphInputKernels(kernels);
+    //    std::vector<kernel::LiteKernel *> output_kernels = kernel::LiteKernelUtil::SubgraphOutputKernels(kernels);
     sub_kernel =
       new kernel::SubGraphOpenCLKernel(input_tensors, output_tensors, input_kernels, output_kernels, kernels);
     sub_kernel->Init();

@@ -79,7 +79,33 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
   return RET_OK;
 }
 
-void LiteSession::InitGraphInOutTensor(const lite::Model *model) {
+void LiteSession::InitGraphInputTensors(const lite::Model *model) {
+  auto meta_graph = model->GetMetaGraph();
+  MS_ASSERT(this->inputs.empty());
+  MS_ASSERT(meta_graph != nullptr);
+  for (size_t i = 0; i < meta_graph->inputIndex()->size(); i++) {
+    auto in_tensor_idx = size_t(meta_graph->inputIndex()->GetAs<uint32_t>(i));
+    MS_ASSERT(in_tensor_idx < this->tensors.size());
+    auto *in_tensor = this->tensors.at(in_tensor_idx);
+    MS_ASSERT(in_tensor != nullptr);
+    this->inputs.emplace_back(in_tensor);
+  }
+}
+
+void LiteSession::InitGraphOutputTensors(const lite::Model *model) {
+  auto meta_graph = model->GetMetaGraph();
+  MS_ASSERT(this->outputs.empty());
+  MS_ASSERT(meta_graph != nullptr);
+  for (size_t i = 0; i < meta_graph->outputIndex()->size(); i++) {
+    auto out_tensor_idx = size_t(meta_graph->outputIndex()->GetAs<uint32_t>(i));
+    MS_ASSERT(out_tensor_idx < this->tensors.size());
+    auto *out_tensor = this->tensors.at(out_tensor_idx);
+    MS_ASSERT(out_tensor != nullptr);
+    this->outputs.emplace_back(out_tensor);
+  }
+}
+
+void LiteSession::InitGraphInputMap(const lite::Model *model) {
   auto meta_graph = model->GetMetaGraph();
   MS_ASSERT(this->input_map.empty());
   MS_ASSERT(meta_graph != nullptr);
@@ -108,7 +134,12 @@ void LiteSession::InitGraphInOutTensor(const lite::Model *model) {
       this->input_map[in_node->name()->str()].emplace_back(ms_tensor);
     }
   }
+}
 
+void LiteSession::InitGraphOutputMap(const lite::Model *model) {
+  auto meta_graph = model->GetMetaGraph();
+  MS_ASSERT(this->output_map.empty());
+  MS_ASSERT(meta_graph != nullptr);
   auto graph_output_node_indexes = GetGraphOutputNodes(meta_graph);
   for (auto out_node_index : graph_output_node_indexes) {
     auto *out_node = meta_graph->nodes()->GetAs<schema::CNode>(out_node_index);
@@ -136,6 +167,13 @@ void LiteSession::InitGraphInOutTensor(const lite::Model *model) {
   }
 }
 
+void LiteSession::InitGraphInOutTensors(const lite::Model *model) {
+  InitGraphInputTensors(model);
+  InitGraphOutputTensors(model);
+  InitGraphInputMap(model);
+  InitGraphOutputMap(model);
+}
+
 int LiteSession::CompileGraph(Model *model) {
   // model.MetaGraph ==> kernels
   if (model == nullptr) {
@@ -149,7 +187,7 @@ int LiteSession::CompileGraph(Model *model) {
     return ret;
   }
 
-  InitGraphInOutTensor(model);
+  InitGraphInOutTensors(model);
 
   // scheduler kernels
   Scheduler scheduler(context_);
@@ -228,15 +266,7 @@ LiteSession::~LiteSession() {
     }
     delete tensor;
   }
-  // inputs outputs input_map output_map are freed in tensors
-  for (auto *input : inputs) {
-    ((tensor::LiteTensor *)input)->SetTensorImpl(nullptr);
-    delete input;
-  }
-  for (auto *output : outputs) {
-    ((tensor::LiteTensor *)output)->SetTensorImpl(nullptr);
-    delete output;
-  }
+  // tensor::Tensor * in input_map output_map are freed in tensors
   for (auto iter : this->input_map) {
     for (auto *ms_tensor : iter.second) {
       ((tensor::LiteTensor *)ms_tensor)->SetTensorImpl(nullptr);

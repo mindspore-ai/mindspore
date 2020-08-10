@@ -58,7 +58,10 @@ int Executor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tensor::Ten
       }
     }
     for (auto input_kernel : kernel->GetInKernels()) {
-      MS_EXCEPTION_IF_NULL(input_kernel);
+      MS_ASSERT(input_kernel != nullptr);
+      if (input_kernel->is_model_output()) {
+        continue;
+      }
       ret = input_kernel->DecOutTensorRefCount();
       if (0 != ret) {
         MS_LOG(WARNING) << "DecOutTensorRefCount for kernel" << kernel->Name() << " failed";

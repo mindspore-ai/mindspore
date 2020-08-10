@@ -60,8 +60,7 @@ class LiteKernel {
   explicit LiteKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                       const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                       const lite::Primitive *primitive)
-      : opParameter(parameter), inputs_(inputs), outputs_(outputs), primitive_(primitive),
-        context_(ctx) {
+      : opParameter(parameter), inputs_(inputs), outputs_(outputs), primitive_(primitive), context_(ctx) {
     opParameter->thread_num_ = ctx->thread_num_;
     this->in_kernel_.clear();
     this->out_kernel_.clear();
@@ -95,6 +94,10 @@ class LiteKernel {
   virtual bool is_eval() { return train_mode == false; }
   void set_name(const std::string &name) { this->name = name; }
 
+  void set_is_model_output(bool is_model_output) { this->is_model_output_ = is_model_output; }
+
+  bool is_model_output() { return this->is_model_output_; }
+
   schema::PrimitiveType type() { return (schema::PrimitiveType)this->opParameter->type_; }
 
   std::string type_str() { return schema::EnumNamePrimitiveType((schema::PrimitiveType)this->opParameter->type_); }
@@ -123,9 +126,7 @@ class LiteKernel {
 
   void set_desc(const KernelKey kernel_key) { desc = kernel_key; }
 
-  void SetNeedReInit() {
-    need_reinit = true;
-  }
+  void SetNeedReInit() { need_reinit = true; }
 
  protected:
   bool InferShapeDone() {
@@ -138,8 +139,8 @@ class LiteKernel {
   KernelKey desc;
   std::string name;
   OpParameter *opParameter = nullptr;
-  const lite::Primitive *primitive_;
-  const lite::Context *context_;
+  const lite::Primitive *primitive_ = nullptr;
+  const lite::Context *context_ = nullptr;
   // tensor will free in ~lite_session()
   std::vector<lite::tensor::Tensor *> inputs_;
   std::vector<lite::tensor::Tensor *> outputs_;
@@ -147,6 +148,7 @@ class LiteKernel {
   std::vector<LiteKernel *> out_kernel_;
   bool train_mode = false;
   bool need_reinit = false;
+  bool is_model_output_ = false;
 };
 
 class SubGraphKernel : public LiteKernel {
