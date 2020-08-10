@@ -66,6 +66,9 @@ class GraphConvolution(nn.Cell):
         self.matmul = P.MatMul()
 
     def construct(self, adj, input_feature):
+        """
+        GCN graph convolution layer.
+        """
         dropout = input_feature
         if self.dropout_flag:
             dropout = self.dropout(dropout)

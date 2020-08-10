@@ -99,7 +99,7 @@ class BertFinetuneCell(nn.Cell):
                   token_type_id,
                   label_ids,
                   sens=None):
-
+        """Bert Finetune"""
 
         weights = self.weights
         init = False
@@ -195,6 +195,7 @@ class BertSquadCell(nn.Cell):
                   unique_id,
                   is_impossible,
                   sens=None):
+        """BertSquad"""
         weights = self.weights
         init = self.alloc_status()
         loss = self.network(input_ids,
@@ -313,6 +314,7 @@ class BertSquad(nn.Cell):
         self.squeeze = P.Squeeze(axis=-1)
 
     def construct(self, input_ids, input_mask, token_type_id, start_position, end_position, unique_id, is_impossible):
+        """interface for SQuAD finetuning task"""
         logits = self.bert(input_ids, input_mask, token_type_id)
         if self.is_training:
             unstacked_logits_0 = self.squeeze(logits[:, :, 0:1])

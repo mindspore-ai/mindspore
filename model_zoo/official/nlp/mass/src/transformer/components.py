@@ -52,6 +52,7 @@ class LayerNorm(nn.Cell):
         self.get_shape = P.Shape()
 
     def construct(self, input_tensor):
+        """layer norm"""
         shape = self.get_shape(input_tensor)
         batch_size = shape[0]
         max_len = shape[1]

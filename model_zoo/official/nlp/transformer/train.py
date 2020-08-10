@@ -69,6 +69,7 @@ class LossCallBack(Callback):
             time_stamp_init = True
 
     def step_end(self, run_context):
+        """Monitor the loss in training."""
         global time_stamp_first
         time_stamp_current = get_ms_timestamp()
         cb_params = run_context.original_args()

@@ -297,6 +297,9 @@ class AttentionHead(nn.Cell):
         self.activation = activation
 
     def construct(self, input_feature, bias_mat, training=True):
+        """
+        Attention Head for Graph Attention Networks.
+        """
         if training is True:
             input_feature = self.in_drop(input_feature)
 

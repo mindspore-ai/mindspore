@@ -147,6 +147,7 @@ class DenseLayer(nn.Cell):
         return act_func
 
     def construct(self, x):
+        """Dense Layer for Deep Layer of DeepFM Model."""
         x = self.act_func(x)
         if self.training:
             x = self.dropout(x)

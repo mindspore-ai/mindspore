@@ -137,6 +137,7 @@ class EmbeddingLookup(nn.Cell):
         self.shape = tuple(embedding_shape)
 
     def construct(self, input_ids):
+        """Get output and embeddings lookup table"""
         extended_ids = self.expand(input_ids, -1)
         flat_ids = self.reshape(extended_ids, self.shape_flat)
         if self.use_one_hot_embeddings:
@@ -205,6 +206,7 @@ class EmbeddingPostprocessor(nn.Cell):
                                                   name='full_position_embeddings')
 
     def construct(self, token_type_ids, word_embeddings):
+        """Postprocessors apply positional and token type embeddings to word embeddings."""
         output = word_embeddings
         if self.use_token_type:
             flat_ids = self.reshape(token_type_ids, self.shape_flat)
@@ -288,6 +290,7 @@ class RelaPosMatrixGenerator(nn.Cell):
         self.cast = P.Cast()
 
     def construct(self):
+        """Generates matrix of relative positions between inputs."""
         range_vec_row_out = self.cast(F.tuple_to_array(F.make_range(self._length)), mstype.int32)
         range_vec_col_out = self.range_mat(range_vec_row_out, (self._length, -1))
         tile_row_out = self.tile(range_vec_row_out, (self._length,))
@@ -342,9 +345,9 @@ class RelaPosEmbeddingsGenerator(nn.Cell):
         self.matmul = P.BatchMatMul()
 
     def construct(self):
+        """Generate embedding for each relative position of dimension depth."""
         relative_positions_matrix_out = self.relative_positions_matrix()
 
-        # Generate embedding for each relative position of dimension depth.
         if self.use_one_hot_embeddings:
             flat_relative_positions_matrix = self.reshape(relative_positions_matrix_out, (-1,))
             one_hot_relative_positions_matrix = self.one_hot(
@@ -495,7 +498,7 @@ class BertAttention(nn.Cell):
                                            use_one_hot_embeddings=use_one_hot_embeddings)
 
     def construct(self, from_tensor, to_tensor, attention_mask):
-        # reshape 2d/3d input tensors to 2d
+        """reshape 2d/3d input tensors to 2d"""
         from_tensor_2d = self.reshape(from_tensor, self.shape_from_2d)
         to_tensor_2d = self.reshape(to_tensor, self.shape_to_2d)
         query_out = self.query_layer(from_tensor_2d)
@@ -784,6 +787,7 @@ class BertTransformer(nn.Cell):
         self.out_shape = (batch_size, seq_length, hidden_size)
 
     def construct(self, input_tensor, attention_mask):
+        """Multi-layer bert transformer."""
         prev_output = self.reshape(input_tensor, self.shape)
 
         all_encoder_layers = ()
@@ -915,7 +919,7 @@ class BertModel(nn.Cell):
         self._create_attention_mask_from_input_mask = CreateAttentionMaskFromInputMask(config)
 
     def construct(self, input_ids, token_type_ids, input_mask):
-
+        """Bidirectional Encoder Representations from Transformers."""
         # embedding
         if not self.token_type_ids_from_dataset:
             token_type_ids = self.token_type_ids
