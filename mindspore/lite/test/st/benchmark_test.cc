@@ -50,6 +50,15 @@ auto status = RunBenchmark(5, argv);
 ASSERT_EQ(status, RET_OK);
 }
 
+TEST_F(BenchmarkTest, Test_MV2_GPU) {
+const char *argv[] = {"./benchmark", "--modelPath=./hiai/mobilenet_v2.ms",
+                                     "--inDataPath=./hiai/mobilenet_v2_in.bin",
+                                     "--calibDataPath=./hiai/mobilenet_v2_out.bin",
+                                     "--device=GPU"};
+auto status = RunBenchmark(5, argv);
+ASSERT_EQ(status, RET_OK);
+}
+
 TEST_F(BenchmarkTest, TestHebing) {
   const char *argv[] = {"./benchmark", "--modelPath=./hiai/model_hebing_3branch.ms",
                                        "--inDataPath=./hiai/model_hebing_3branch.bin",

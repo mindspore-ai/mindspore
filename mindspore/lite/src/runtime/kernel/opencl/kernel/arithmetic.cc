@@ -43,7 +43,7 @@ void ArithmeticOpenCLKernel::Image2dGetWorkGroupSize() {
   size_t H = outputs_[0]->Batch() * outputs_[0]->Height();
   size_t W = outputs_[0]->Width() * UP_DIV(outputs_[0]->Channel(), C4NUM);
   local_size_ = {16, 16};
-  global_size_ = {H, W};
+  global_size_ = {W, H};
 }
 
 void ArithmeticOpenCLKernel::BufferGetWorkGroupSize() {
@@ -140,7 +140,7 @@ int ArithmeticOpenCLKernel::Run() {
         bias_ = -1 * value;
         break;
       case PrimitiveType_Div:
-        bias_ = 1 / value;
+        weight_ = 1 / value;
         break;
       default:
         MS_LOG(ERROR) << "Error Operator type " << opParameter->type_;
@@ -152,7 +152,7 @@ int ArithmeticOpenCLKernel::Run() {
   runtime_->SetKernelArg(kernel_, arg_idx++, outputs_[0]->Data());
   int H = outputs_[0]->Batch() * outputs_[0]->Height();
   int W = outputs_[0]->Width() * UP_DIV(outputs_[0]->Channel(), C4NUM);
-  cl_int2 output_shape{H, W};
+  cl_int2 output_shape{W, H};
   runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
   runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);
   return 0;
