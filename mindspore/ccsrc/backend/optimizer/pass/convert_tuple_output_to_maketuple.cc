@@ -62,7 +62,14 @@ const AnfNodePtr ConvertTupleOutputToMaketuple::Process(const FuncGraphPtr &func
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   std::unordered_map<AnfNodePtr, AnfNodePtr> transed_nodes;
-  if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem) || IsPrimitiveCNode(cnode, prim::kPrimControlDepend)) {
+  if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem)) {
+    auto real_input = AnfAlgo::GetTupleGetItemRealInput(cnode);
+    MS_EXCEPTION_IF_NULL(real_input);
+    if (!real_input->isa<Parameter>() && !real_input->isa<ValueNode>()) {
+      return nullptr;
+    }
+  }
+  if (IsPrimitiveCNode(cnode, prim::kPrimControlDepend)) {
     return nullptr;
   }
   bool cnode_input_changed = false;
