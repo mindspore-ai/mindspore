@@ -463,6 +463,55 @@ TEST_F(MindDataTestPipeline, TestDecode) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestHwcToChw) {
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> channel_swap = vision::HWC2CHW();
+  EXPECT_NE(channel_swap, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({channel_swap});
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    // check if the image is in NCHW
+    EXPECT_EQ(batch_size == image->shape()[0] && 3 == image->shape()[1] 
+              && 2268 == image->shape()[2] && 4032 == image->shape()[3], true);
+    iter->GetNextRow(&row);
+  }
+  EXPECT_EQ(i, 20);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
 TEST_F(MindDataTestPipeline, TestRandomColorAdjust) {
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";

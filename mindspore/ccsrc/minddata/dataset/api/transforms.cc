@@ -21,6 +21,7 @@
 #include "minddata/dataset/kernels/image/crop_op.h"
 #include "minddata/dataset/kernels/image/cut_out_op.h"
 #include "minddata/dataset/kernels/image/decode_op.h"
+#include "minddata/dataset/kernels/image/hwc_to_chw_op.h"
 #include "minddata/dataset/kernels/image/mixup_batch_op.h"
 #include "minddata/dataset/kernels/image/normalize_op.h"
 #include "minddata/dataset/kernels/data/one_hot_op.h"
@@ -76,6 +77,16 @@ std::shared_ptr<CutOutOperation> CutOut(int32_t length, int32_t num_patches) {
 // Function to create DecodeOperation.
 std::shared_ptr<DecodeOperation> Decode(bool rgb) {
   auto op = std::make_shared<DecodeOperation>(rgb);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
+// Function to create HwcToChwOperation.
+std::shared_ptr<HwcToChwOperation> HWC2CHW() {
+  auto op = std::make_shared<HwcToChwOperation>();
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -292,6 +303,11 @@ DecodeOperation::DecodeOperation(bool rgb) : rgb_(rgb) {}
 bool DecodeOperation::ValidateParams() { return true; }
 
 std::shared_ptr<TensorOp> DecodeOperation::Build() { return std::make_shared<DecodeOp>(rgb_); }
+
+// HwcToChwOperation
+bool HwcToChwOperation::ValidateParams() { return true; }
+
+std::shared_ptr<TensorOp> HwcToChwOperation::Build() { return std::make_shared<HwcToChwOp>(); }
 
 // MixUpOperation
 MixUpBatchOperation::MixUpBatchOperation(float alpha) : alpha_(alpha) {}

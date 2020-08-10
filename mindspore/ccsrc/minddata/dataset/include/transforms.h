@@ -51,6 +51,7 @@ class CenterCropOperation;
 class CropOperation;
 class CutOutOperation;
 class DecodeOperation;
+class HwcToChwOperation;
 class MixUpBatchOperation;
 class NormalizeOperation;
 class OneHotOperation;
@@ -91,6 +92,11 @@ std::shared_ptr<CutOutOperation> CutOut(int32_t length, int32_t num_patches = 1)
 /// \param[in] rgb - a boolean of whether to decode in RGB mode or not.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<DecodeOperation> Decode(bool rgb = true);
+
+/// \brief Function to create a HwcToChw TensorOperation.
+/// \notes Transpose the input image; shape (H, W, C) to shape (C, H, W).
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<HwcToChwOperation> HWC2CHW();
 
 /// \brief Function to create a MixUpBatch TensorOperation.
 /// \notes Apply MixUp transformation on an input batch of images and labels. The labels must be in one-hot format and
@@ -271,6 +277,15 @@ class DecodeOperation : public TensorOperation {
 
  private:
   bool rgb_;
+};
+
+class HwcToChwOperation : public TensorOperation {
+ public:
+  ~HwcToChwOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
 };
 
 class MixUpBatchOperation : public TensorOperation {
