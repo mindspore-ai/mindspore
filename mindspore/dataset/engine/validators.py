@@ -23,6 +23,7 @@ from functools import wraps
 
 import numpy as np
 from mindspore._c_expression import typing
+from mindspore.dataset.callback import DSCallback
 from ..core.validator_helpers import parse_user_args, type_check, type_check_list, check_value, \
     INT32_MAX, check_valid_detype, check_dir, check_file, check_sampler_shuffle_shard_options, \
     validate_dataset_param_value, check_padding_options, check_gnn_list_or_ndarray, check_num_parallel_workers, \
@@ -31,6 +32,7 @@ from ..core.validator_helpers import parse_user_args, type_check, type_check_lis
 from . import datasets
 from . import samplers
 from . import cache_client
+from .. import callback
 
 
 def check_imagefolderdatasetv2(method):
@@ -247,6 +249,7 @@ def check_celebadataset(method):
 
     return new_method
 
+
 def check_save(method):
     """A wrapper that wrap a parameter checker to the save op."""
 
@@ -257,7 +260,7 @@ def check_save(method):
         nreq_param_int = ['num_files']
         nreq_param_str = ['file_name', 'file_type']
         validate_dataset_param_value(nreq_param_int, param_dict, int)
-        if(param_dict.get('num_files') <= 0 or param_dict.get('num_files') > 1000):
+        if (param_dict.get('num_files') <= 0 or param_dict.get('num_files') > 1000):
             raise ValueError("num_files should between {} and {}.".format(1, 1000))
         validate_dataset_param_value(nreq_param_str, param_dict, str)
         if param_dict.get('file_type') != 'mindrecord':
@@ -265,6 +268,8 @@ def check_save(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
 def check_minddataset(method):
     """A wrapper that wraps a parameter checker to the original Dataset(MindDataset)."""
 
@@ -361,6 +366,7 @@ def check_generatordataset(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
 
 def check_random_dataset(method):
     """A wrapper that wraps a parameter checker to the original Dataset(RandomDataset)."""
@@ -545,7 +551,8 @@ def check_map(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [input_columns, _, output_columns, columns_order, num_parallel_workers, python_multiprocessing, cache], _ = \
+        [input_columns, _, output_columns, columns_order, num_parallel_workers, python_multiprocessing, cache,
+         callbacks], _ = \
             parse_user_args(method, *args, **kwargs)
 
         nreq_param_columns = ['input_columns', 'output_columns']
@@ -558,9 +565,17 @@ def check_map(method):
         if cache is not None:
             type_check(cache, (cache_client.DatasetCache,), "cache")
 
+        if callbacks is not None:
+            if isinstance(callbacks, (list, tuple)):
+                type_check_list(callbacks, (callback.DSCallback,), "callbacks")
+            else:
+                type_check(callbacks, (callback.DSCallback,), "callbacks")
+
         for param_name, param in zip(nreq_param_columns, [input_columns, output_columns]):
             if param is not None:
                 check_columns(param, param_name)
+        if callbacks is not None:
+            type_check(callbacks, (list, DSCallback), "callbacks")
 
         return method(self, *args, **kwargs)
 

@@ -16,15 +16,19 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_MAP_OP_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_MAP_OP_H_
 
+#include <atomic>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+#include "minddata/dataset/callback/ds_callback.h"
+#include "minddata/dataset/engine/datasetops/map_op/map_job.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/queue.h"
-#include "minddata/dataset/engine/datasetops/map_op/map_job.h"
+#include "minddata/dataset/util/wait_post.h"
 
 namespace mindspore {
 namespace dataset {
@@ -108,6 +112,13 @@ class MapOp : public ParallelOp {
       return *this;
     }
 
+    // Setter method.
+    // @return Builder setter method returns reference to the builder.
+    Builder &AddCallbacks(const std::vector<std::shared_ptr<DSCallback>> &callbacks) {
+      builder_callbacks_.insert(builder_callbacks_.end(), callbacks.begin(), callbacks.end());
+      return *this;
+    }
+
     // The builder "build" method creates the final object.
     // @param ptr The shared_ptr to the new MapOp object
     // @return Status
@@ -116,6 +127,7 @@ class MapOp : public ParallelOp {
    private:
     std::vector<std::string> build_in_col_names_;
     std::vector<std::string> build_out_col_names_;
+    std::vector<std::shared_ptr<DSCallback>> builder_callbacks_;
     std::vector<std::shared_ptr<TensorOp>> build_tensor_funcs_;
     int32_t build_num_workers_;
     int32_t build_op_connector_size_;
@@ -186,6 +198,7 @@ class MapOp : public ParallelOp {
   // A unit of job for map worker thread.
   // MapWorkerJob holds a list of MapJob where each MapJob can be a CpuMapJob, GpuMapJob or DvppMapJob.
   struct MapWorkerJob {
+    explicit MapWorkerJob(std::unique_ptr<DataBuffer> db) : databuffer(std::move(db)) {}
     std::vector<std::shared_ptr<MapJob>> jobs;
     std::unique_ptr<DataBuffer> databuffer;
   };
@@ -214,6 +227,12 @@ class MapOp : public ParallelOp {
 
   // Indices of the columns to process.
   std::vector<size_t> to_process_indices_;
+
+  // wait post used to perform the pausing logic in MapOp
+  WaitPost master_pause_wp_;
+
+  // count number of workers that have signaled master
+  std::atomic_int num_workers_paused_;
 
   // Private function for worker/thread to loop continuously. It comprises the main
   // logic of MapOp: getting the data from previous Op, validating user specified column names,
@@ -247,6 +266,13 @@ class MapOp : public ParallelOp {
   // Private function for initializing private variables such as in_columns_, out_columns_.
   // @return - Status
   Status InitPrivateVariable(std::unordered_map<std::string, int32_t> *col_name_id_map);
+
+  // This function should only be called from master thread. It intends to suspend the operation of all workers and
+  // have them wait on the QueueList. Master thread would send a token to each worker then wait on a WaitPost.
+  // Workers upon receiving the suspension token from master thread, increment an atomic count, the last worker
+  // who does the increment wakes up the master.
+  // @return - Status
+  Status PauseFromMaster() override;
 };
 }  // namespace dataset
 }  // namespace mindspore

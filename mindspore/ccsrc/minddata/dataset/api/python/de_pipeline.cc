@@ -20,6 +20,7 @@
 #include <map>
 
 #include "utils/ms_utils.h"
+#include "minddata/dataset/callback/py_ds_callback.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/cache/cache_client.h"
 #include "minddata/dataset/engine/dataset_iterator.h"
@@ -738,8 +739,13 @@ Status DEPipeline::ParseMapOp(const py::dict &args, std::shared_ptr<DatasetOp> *
         (void)map_builder.SetTensorFuncs(std::move(tensor_op_list));
       } else if (key == "cache") {
         cache_client = value.cast<std::shared_ptr<CacheClient>>();
+      } else if (key == "callbacks") {
+        std::vector<std::shared_ptr<DSCallback>> callbacks;
+        std::transform(value.begin(), value.end(), std::back_inserter(callbacks),
+                       [](py::handle cb) { return cb.cast<std::shared_ptr<PyDSCallback>>(); });
+        (void)map_builder.AddCallbacks(callbacks);
       } else {
-        RETURN_STATUS_UNEXPECTED("Error: Unhandled key: " + key);
+        RETURN_STATUS_UNEXPECTED("Error in parsing MapOp: Unhandled key: " + key);
       }
     }
   }
