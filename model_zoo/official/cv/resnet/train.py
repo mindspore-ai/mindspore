@@ -41,6 +41,7 @@ parser.add_argument('--device_num', type=int, default=1, help='Device num.')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
 parser.add_argument('--device_target', type=str, default='Ascend', help='Device target')
 parser.add_argument('--pre_trained', type=str, default=None, help='Pretrained checkpoint path')
+parser.add_argument('--parameter_server', type=bool, default=False, help='Run parameter server train')
 args_opt = parser.parse_args()
 
 random.seed(1)
@@ -92,6 +93,8 @@ if __name__ == '__main__':
 
     # define net
     net = resnet(class_num=config.class_num)
+    if args_opt.parameter_server:
+        net.set_param_ps()
 
     # init weight
     if args_opt.pre_trained:
@@ -181,4 +184,4 @@ if __name__ == '__main__':
         cb += [ckpt_cb]
 
     # train model
-    model.train(config.epoch_size, dataset, callbacks=cb)
+    model.train(config.epoch_size, dataset, callbacks=cb, dataset_sink_mode=(not args_opt.parameter_server))

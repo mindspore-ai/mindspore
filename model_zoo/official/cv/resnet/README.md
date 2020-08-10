@@ -41,20 +41,22 @@ ImageNet2012
 └──resnet
   ├── README.md
   ├── script
-    ├── run_distribute_train.sh         # launch distributed training(8 pcs)
-    ├── run_eval.sh                     # launch evaluation
-    └── run_standalone_train.sh         # launch standalone training(1 pcs)
-    ├── run_distribute_train_gpu.sh     # launch gpu distributed training(8 pcs)
-    ├── run_eval_gpu.sh                 # launch gpu evaluation
-    └── run_standalone_train_gpu.sh     # launch gpu standalone training(1 pcs)
+    ├── run_distribute_train.sh            # launch distributed training(8 pcs)
+    ├── run_parameter_server_train.sh      # launch Ascend parameter server training(8 pcs)
+    ├── run_eval.sh                        # launch evaluation
+    └── run_standalone_train.sh            # launch standalone training(1 pcs)
+    ├── run_distribute_train_gpu.sh        # launch gpu distributed training(8 pcs)
+    ├── run_parameter_server_train_gpu.sh  # launch gpu parameter server training(8 pcs)
+    ├── run_eval_gpu.sh                    # launch gpu evaluation
+    └── run_standalone_train_gpu.sh        # launch gpu standalone training(1 pcs)
   ├── src
-    ├── config.py                       # parameter configuration
-    ├── dataset.py                      # data preprocessing
-    ├── crossentropy.py                 # loss definition for ImageNet2012 dataset
-    ├── lr_generator.py                 # generate learning rate for each step
-    └── resnet.py                       # resnet backbone, including resnet50 and resnet101
-  ├── eval.py                           # eval net
-  └── train.py                          # train net
+    ├── config.py                          # parameter configuration
+    ├── dataset.py                         # data preprocessing
+    ├── crossentropy.py                    # loss definition for ImageNet2012 dataset
+    ├── lr_generator.py                    # generate learning rate for each step
+    └── resnet.py                          # resnet backbone, including resnet50 and resnet101
+  ├── eval.py                              # eval net
+  └── train.py                             # train net
 ```
 
 
@@ -251,4 +253,15 @@ sh run_standalone_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATA
 
 # infer example
 sh run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+```
+
+### Running parameter server mode training
+```
+# parameter server training Ascend example
+sh run_parameter_server_train.sh [resnet50|resnet101] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+
+# parameter server training GPU example
+sh run_parameter_server_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+
+> The way to evaluate is the same as the examples above.
 ```
