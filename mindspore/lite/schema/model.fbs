@@ -56,6 +56,7 @@ union PrimitiveType {
     BatchNorm,
     BiasAdd,
     Pooling,
+    ROIPooling,
     DepthwiseConv2D,
     DeDepthwiseConv2D,
     Resize,

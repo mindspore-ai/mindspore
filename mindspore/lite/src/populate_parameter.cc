@@ -32,6 +32,7 @@
 #include "src/runtime/kernel/arm/nnacl/conv_parameter.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/pooling.h"
 #include "src/runtime/kernel/arm/nnacl/matmul_parameter.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/roi_pooling.h"
 #include "src/runtime/kernel/arm/nnacl/softmax_parameter.h"
 #include "src/runtime/kernel/arm/nnacl/tile.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/topk.h"
@@ -73,6 +74,21 @@
 #include "src/runtime/kernel/arm/nnacl/fp32/elu.h"
 
 namespace mindspore::kernel {
+
+OpParameter *PopulateROIPoolingParameter(const lite::Primitive *primitive) {
+  auto pooling_primitive = primitive->Value()->value_as_ROIPooling();
+  ROIPoolingParameter *param = new (std::nothrow) ROIPoolingParameter();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "new PoolingParameter failed.";
+    return nullptr;
+  }
+  param->op_parameter_.type_ = primitive->Type();
+  param->pooledH_ = pooling_primitive->pooledH();
+  param->pooledW_ = pooling_primitive->pooledW();
+  param->scale_ = pooling_primitive->scale();
+  return reinterpret_cast<OpParameter *>(param);
+}
+
 OpParameter *PopulateBatchNorm(const lite::Primitive *primitive) {
   BatchNormParameter *batch_norm_param = new (std::nothrow) BatchNormParameter();
   if (batch_norm_param == nullptr) {
@@ -1259,6 +1275,7 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_Reduce] = PopulateReduceParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Mean] = PopulateMeanParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Pooling] = PopulatePoolingParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_ROIPooling] = PopulateROIPoolingParameter;
   populate_parameter_funcs_[schema::PrimitiveType_DepthwiseConv2D] = PopulateConvDwParameter;
   populate_parameter_funcs_[schema::PrimitiveType_DeDepthwiseConv2D] = PopulateDeconvDwParameter;
   populate_parameter_funcs_[schema::PrimitiveType_DeConv2D] = PopulateDeconvParameter;

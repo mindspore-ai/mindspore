@@ -35,6 +35,8 @@ Primitive *Primitive::CreatePrimitive(schema::Primitive *primitive) {
       return new lite::Reduce(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Pooling:
       return new lite::Pooling(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_ROIPooling:
+      return new lite::ROIPooling(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_DepthwiseConv2D:
       return new lite::DepthwiseConv2D(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_FusedBatchNorm:
