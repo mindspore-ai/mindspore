@@ -189,7 +189,9 @@ union PrimitiveType {
     ActivationGrad,
     PriorBox,
     SpaceToBatchND,
-    TopKV2
+    TopKV2,
+    Return,
+    MakeTuple
 }
 
 enum QuantType: int {

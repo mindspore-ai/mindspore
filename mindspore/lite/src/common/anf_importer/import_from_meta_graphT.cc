@@ -71,11 +71,11 @@ int AnfImporterFromMetaGraphT::ConverterCNode() {
   for (size_t i = 0; i < meta_graph_->nodes.size(); i++) {
     auto &cNode = meta_graph_->nodes.at(i);
     MS_EXCEPTION_IF_NULL(cNode);
-    auto tensor_id = cNode->outputIndex.front();
-    if (nullptr != GetNode(tensor_id)) {
-      continue;
-    }
 
+    bool flag = false;
+    if (cNode->outputIndex.size() > 1) {
+      flag = true;
+    }
     auto primTValue = std::make_shared<PrimitiveTValue>(cNode->primitive.release());
     cNode->primitive = nullptr;
     auto value_node = NewValueNode(primTValue);
@@ -90,9 +90,39 @@ int AnfImporterFromMetaGraphT::ConverterCNode() {
       // todo: CheckInputNodeType, the first node should be op;
       op_inputs.push_back(node);
     }
-    auto cnode = func_graph_->NewCNode(op_inputs);
-    cnode->set_fullname_with_scope(cNode->name);
-    AddNode(tensor_id, cnode);
+
+    auto new_cnode = func_graph_->NewCNode(op_inputs);
+    new_cnode->set_fullname_with_scope(cNode->name);
+
+    std::vector<uint32_t> out_tensor_ids = cNode->outputIndex;
+
+    AbstractBasePtrList ptr_list;
+    int total = 0;
+    for (auto out_tensor_id : out_tensor_ids) {
+      if (nullptr != GetNode(out_tensor_id)) {
+        ptr_list.push_back(GetNode(out_tensor_id)->abstract());
+        continue;
+      }
+      std::vector<int> shape;
+      auto &tensor = meta_graph_->allTensors.at(out_tensor_id);
+      for (int &dim : tensor->dims) {
+        shape.push_back(dim);
+      }
+      auto type_id = static_cast<TypeId>(tensor->dataType);
+      auto type_ptr = TypeIdToType(type_id);
+      auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape);
+      auto getItemPrim = NewValueNode(prim::kPrimTupleGetItem);
+      if (flag) {
+        auto getItemIndex = NewValueNode(MakeValue<int>(total++));
+        std::vector<AnfNodePtr> inputs{getItemPrim, new_cnode, getItemIndex};
+        CNodePtr new_item_cnode = func_graph_->NewCNode(inputs);
+        AddNode(out_tensor_id, new_item_cnode);
+      } else {
+        AddNode(out_tensor_id, new_cnode);
+      }
+      ptr_list.push_back(std::move(abstract_tensor));
+    }
+    new_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(ptr_list));
   }
   return RET_OK;
 }
@@ -120,4 +150,3 @@ void AnfImporterFromMetaGraphT::AddReturnCNode() {
 
 FuncGraphPtr AnfImporterFromMetaGraphT::GetResult() { return this->func_graph_; }
 }  // namespace mindspore::lite
-
