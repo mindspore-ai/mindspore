@@ -35,7 +35,7 @@ class TransposeOpenCLKernel : public OpenCLKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-
+  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
  private:
   cl::Kernel kernel_;
 };
