@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 import numpy as np
-import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -31,29 +29,28 @@ class Net(nn.Cell):
         self.shape = shape
         self.seed = seed
 
-    def construct(self, mean, stddev):
+    def construct(self, a, b):
         C.set_seed(20)
-        return C.normal(self.shape, mean, stddev, self.seed)
+        return C.uniform(self.shape, a, b, self.seed)
 
 
 def test_net_1D():
     seed = 10
     shape = (3, 2, 4)
-    mean = 1.0
-    stddev = 1.0
+    a = 1.0
+    b = 6.0
     net = Net(shape, seed)
-    tmean, tstddev = Tensor(mean, mstype.float32), Tensor(stddev, mstype.float32)
-    output = net(tmean, tstddev)
+    ta, tb = Tensor(a, mstype.float32), Tensor(b, mstype.float32)
+    output = net(ta, tb)
     assert output.shape == (3, 2, 4)
 
 
 def test_net_ND():
     seed = 10
     shape = (3, 1, 2)
-    mean = np.array([[[1], [2]], [[3], [4]], [[5], [6]]]).astype(np.float32)
-    stddev = np.array([1.0]).astype(np.float32)
+    a = np.array([[[1], [2]], [[3], [4]], [[5], [6]]]).astype(np.float32)
+    b = np.array([1.0]).astype(np.float32)
     net = Net(shape, seed)
-    tmean, tstddev = Tensor(mean, mstype.float32), Tensor(stddev, mstype.float32)
-    output = net(tmean, tstddev)
+    ta, tb = Tensor(a, mstype.float32), Tensor(b, mstype.float32)
+    output = net(ta, tb)
     assert output.shape == (3, 2, 2)
-
