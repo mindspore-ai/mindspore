@@ -465,6 +465,7 @@ std::string Tensor::GetShapeAndDataTypeInfo() const {
 std::string Tensor::ToString() const {
   const int small_tensor_size = 30;
   std::ostringstream buf;
+  data_sync();
   buf << "Tensor shape:[" << shape() << "]" << this->Dtype()->ToString();
   // only print small tensor
   if (DataSize() < small_tensor_size) {
@@ -477,6 +478,7 @@ std::string Tensor::ToStringRepr() const {
   std::ostringstream buf;
   auto type_ptr = this->Dtype();
   MS_EXCEPTION_IF_NULL(type_ptr);
+  data_sync();
   buf << "Tensor shape:[" << shape() << "]" << type_ptr->ToString();
   buf << "\nvalue:" << data().ToString(data_type_, shape());
   return buf.str();
