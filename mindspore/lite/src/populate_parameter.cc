@@ -1228,6 +1228,17 @@ OpParameter *PopulateEmbeddingLookupParameter(const lite::Primitive *primitive) 
   return reinterpret_cast<OpParameter *>(embedding_lookup_parameter);
 }
 
+OpParameter *PopulateBiasAddParameter(const lite::Primitive *primitive) {
+  ArithmeticParameter *arithmetic_param = new (std::nothrow) ArithmeticParameter();
+  if (arithmetic_param == nullptr) {
+    MS_LOG(ERROR) << "new Bias Add Parameter failed";
+    return nullptr;
+  }
+  arithmetic_param->op_parameter_.type_ = primitive->Type();
+
+  return reinterpret_cast<OpParameter *>(arithmetic_param);
+}
+
 PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_SoftMax] = PopulateSoftmaxParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Activation] = PopulateActivationParameter;
@@ -1262,7 +1273,7 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_FloorDiv] = PopulateArithmetic;
   populate_parameter_funcs_[schema::PrimitiveType_FloorMod] = PopulateArithmetic;
   populate_parameter_funcs_[schema::PrimitiveType_SquaredDifference] = PopulateArithmetic;
-  populate_parameter_funcs_[schema::PrimitiveType_BiasAdd] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_BiasAdd] = PopulateBiasAddParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Eltwise] = PopulateEltwiseParameter;
   populate_parameter_funcs_[schema::PrimitiveType_ExpandDims] = PopulateExpandDimsParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Abs] = PopulateArithmeticSelf;
