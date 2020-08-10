@@ -41,6 +41,9 @@ AnfNodePtr ArithmeticSimplify::operator()(const OptimizerPtr &, const AnfNodePtr
   }
   // Prim Eliminate (identity)
   MATCH_REPLACE(node, PPrimitive(prim::kPrimIdentity, x), x);
+  if (MsContext::GetInstance()->execution_mode() == kPynativeMode) {
+    return nullptr;
+  }
 
   // ConstantDuplicateMul
   auto const_dup_lambda = [&node, &x, &const_, &const_2]() -> AnfNodePtr {
