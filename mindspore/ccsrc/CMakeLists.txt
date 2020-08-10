@@ -155,11 +155,7 @@ if (ENABLE_DEBUGGER)
 endif()
 
 target_link_libraries(mindspore proto_input)
-if (ENABLE_MPI AND ENABLE_CPU)
-    target_link_libraries(mindspore securec mindspore::flatbuffers mpi_adapter)
-else ()
-    target_link_libraries(mindspore securec mindspore::flatbuffers)
-endif ()
+target_link_libraries(mindspore securec mindspore::flatbuffers)
 
 if (NOT WIN32)
   target_link_libraries(mindspore dl)
