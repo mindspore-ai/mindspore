@@ -51,7 +51,9 @@ class CenterCropOperation;
 class CropOperation;
 class CutOutOperation;
 class DecodeOperation;
+class MixUpBatchOperation;
 class NormalizeOperation;
+class OneHotOperation;
 class PadOperation;
 class RandomColorAdjustOperation;
 class RandomCropOperation;
@@ -90,12 +92,25 @@ std::shared_ptr<CutOutOperation> CutOut(int32_t length, int32_t num_patches = 1)
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<DecodeOperation> Decode(bool rgb = true);
 
+/// \brief Function to create a MixUpBatch TensorOperation.
+/// \notes Apply MixUp transformation on an input batch of images and labels. The labels must be in one-hot format and
+///    Batch must be called before calling this function.
+/// \param[in] alpha hyperparameter of beta distribution (default = 1.0)
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<MixUpBatchOperation> MixUpBatch(float alpha = 1);
+
 /// \brief Function to create a Normalize TensorOperation.
 /// \notes Normalize the input image with respect to mean and standard deviation.
 /// \param[in] mean - a vector of mean values for each channel, w.r.t channel order.
 /// \param[in] std - a vector of standard deviations for each channel, w.r.t. channel order.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<NormalizeOperation> Normalize(std::vector<float> mean, std::vector<float> std);
+
+/// \brief Function to create a OneHot TensorOperation.
+/// \notes Convert the labels into OneHot format.
+/// \param[in] num_classes number of classes.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<OneHotOperation> OneHot(int32_t num_classes);
 
 /// \brief Function to create a Pad TensorOp
 /// \notes Pads the image according to padding parameters
@@ -258,6 +273,20 @@ class DecodeOperation : public TensorOperation {
   bool rgb_;
 };
 
+class MixUpBatchOperation : public TensorOperation {
+ public:
+  explicit MixUpBatchOperation(float alpha = 1);
+
+  ~MixUpBatchOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
+
+ private:
+  float alpha_;
+};
+
 class NormalizeOperation : public TensorOperation {
  public:
   NormalizeOperation(std::vector<float> mean, std::vector<float> std);
@@ -271,6 +300,20 @@ class NormalizeOperation : public TensorOperation {
  private:
   std::vector<float> mean_;
   std::vector<float> std_;
+};
+
+class OneHotOperation : public TensorOperation {
+ public:
+  explicit OneHotOperation(int32_t num_classes_);
+
+  ~OneHotOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
+
+ private:
+  float num_classes_;
 };
 
 class PadOperation : public TensorOperation {
