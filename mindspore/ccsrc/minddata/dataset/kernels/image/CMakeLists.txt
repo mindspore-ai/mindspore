@@ -29,11 +29,13 @@ add_library(kernels-image OBJECT
     random_resize_op.cc
     random_rotation_op.cc
     random_select_subpolicy_op.cc
+    random_solarize_op.cc
     random_vertical_flip_op.cc
     random_vertical_flip_with_bbox_op.cc
     rescale_op.cc
     resize_bilinear_op.cc
     resize_op.cc
+    solarize_op.cc
     swap_red_blue_op.cc
     uniform_aug_op.cc
     resize_with_bbox_op.cc
