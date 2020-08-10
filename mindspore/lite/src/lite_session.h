@@ -56,7 +56,15 @@ class LiteSession : public session::LiteSession {
  protected:
   int ConvertTensors(const lite::Model *model);
 
-  void InitGraphInOutTensor(const lite::Model *model);
+  void InitGraphInOutTensors(const lite::Model *model);
+
+  void InitGraphInputTensors(const lite::Model *model);
+
+  void InitGraphOutputTensors(const lite::Model *model);
+
+  void InitGraphInputMap(const lite::Model *model);
+
+  void InitGraphOutputMap(const lite::Model *model);
 
  protected:
   Context *context_ = nullptr;
