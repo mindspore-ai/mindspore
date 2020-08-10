@@ -13,27 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CAFFEPRELU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CAFFEPRELU_H_
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PRELU_PARAMETER_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PRELU_PARAMETER_H_
+#include "src/runtime/kernel/arm/nnacl/op_base.h"
 
-#include "nnacl/op_base.h"
-#include "nnacl/quantization/quantize.h"
-
-#define PRELU_OFFSET_MAX_SIZE 65535
-
-typedef struct PreluParameter {
+struct CaffePReluParameter {
   OpParameter op_parameter_;
-  PreluQuantArg quant_arg;
-  double alpha_;
-  int thread_count_;
-  float slope_[PRELU_OFFSET_MAX_SIZE];
-  int64_t in_offset_[PRELU_OFFSET_MAX_SIZE];
-  int64_t axis_;
-  const int *in_shape_;
-  const int *out_shape_;
-  int input_dim_;
-  int element_num;
-} PreluParameter;
+  float *negtive_slope_;
+  bool channeShared;
+  int channel_num_;
+  int input_num_;
+  int thread_num_;
+};
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PRELU_PARAMETER_H_
+void PRelu(float *input, float *output, CaffePReluParameter *prelu_param_, int task_id);
+
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CAFFEPRELU_H_

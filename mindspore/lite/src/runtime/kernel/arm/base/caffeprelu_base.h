@@ -14,28 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_Prelu_BASE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_Prelu_BASE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CAFFEPRELU_BASE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CAFFEPRELU_BASE_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/nnacl/prelu_parameter.h"
+#include "src/runtime/kernel/arm/nnacl/caffeprelu_parameter.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 
 using mindspore::lite::Context;
 
 namespace mindspore::kernel {
-class PreluBaseCPUKernel : public LiteKernel {
+class CaffePreluBaseCPUKernel : public LiteKernel {
  public:
-  PreluBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                     const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
-                     const lite::Primitive *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx) {
-    opParameter->thread_num_ = ctx->thread_num_;
-    prelu_param_ = reinterpret_cast<PreluParameter *>(opParameter);
+  CaffePreluBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                          const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                          const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
+    prelu_param_ = reinterpret_cast<CaffePreluParameter *>(parameter);
   }
 
-  ~PreluBaseCPUKernel() = default;
+  ~CaffePreluBaseCPUKernel() = default;
 
   int Init() override;
 
@@ -44,9 +43,10 @@ class PreluBaseCPUKernel : public LiteKernel {
   int Run() override { return 0; }
 
  protected:
+  int thread_count_;
   const Context *ctx_;
-  PreluParameter *prelu_param_;
+  CaffePreluParameter *prelu_param_;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_Prelu_BASE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CAFFEPRELU_BASE_H_

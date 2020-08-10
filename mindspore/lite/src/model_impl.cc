@@ -179,7 +179,9 @@ lite::Primitive *ModelImpl::CopyPrimitive(const schema::Primitive *src_prim) {
     case schema::PrimitiveType_StridedSlice:
       return new lite::StridedSlice(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Prelu:
-      return new lite::Prelu(const_cast<schema::Primitive *>(src_prim));
+      return new lite::Prelu(const_cast<schema::Primitive *>(srcPrim));
+    case schema::PrimitiveType_CaffePReLU:
+      return new lite::CaffePReLU(const_cast<schema::Primitive *>(srcPrim));
     case schema::PrimitiveType_Round:
       return new lite::Round(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Reverse:
