@@ -37,12 +37,10 @@ int Executor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tensor::Ten
   kernel::LiteKernelUtil::InitTensorRefCount(kernels);
   for (auto *kernel : kernels) {
     MS_ASSERT(nullptr != kernel);
-    session::CallBackParam callbackParam;
-    callbackParam.name_callback_param = kernel->Name();
-    callbackParam.type_callback_param = kernel->type_str();
 
     if (before != nullptr) {
-      if (!before(PackToMSTensors(kernel->GetInputs()), PackToMSTensors(kernel->GetOutputs()), callbackParam)) {
+      if (!before(PackToMSTensors(kernel->GetInputs()), PackToMSTensors(kernel->GetOutputs()),
+                  {kernel->Name(), kernel->type_str()})) {
         MS_LOG(ERROR) << "run kernel before_callback failed, name: " << kernel->Name();
       }
     }
@@ -53,7 +51,8 @@ int Executor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tensor::Ten
     }
 
     if (after != nullptr) {
-      if (!after(PackToMSTensors(kernel->GetInputs()), PackToMSTensors(kernel->GetOutputs()), callbackParam)) {
+      if (!after(PackToMSTensors(kernel->GetInputs()), PackToMSTensors(kernel->GetOutputs()),
+                 {kernel->Name(), kernel->type_str()})) {
         MS_LOG(ERROR) << "run kernel after_callback failed, name: " << kernel->Name();
       }
     }
