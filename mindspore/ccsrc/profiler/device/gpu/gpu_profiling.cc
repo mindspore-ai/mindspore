@@ -19,6 +19,7 @@
 #include <chrono>
 #include "profiler/device/gpu/gpu_profiling.h"
 #include "profiler/device/gpu/cupti_interface.h"
+#include "profiler/device/gpu/data_saver.h"
 #include "utils/log_adapter.h"
 #include "pybind_api/api_register.h"
 
@@ -478,7 +479,11 @@ void GPUProfiler::Stop() {
 void GPUProfiler::SaveProfileData() {
   if (profile_data_path_.empty()) {
     MS_LOG(WARNING) << "profile_data_path is empty, skip save profile data.";
-    return;
+  } else {
+    DataSaver dataSaver;
+    dataSaver.ParseOpInfo(op_info_map_);
+    dataSaver.ParseEvent(events_);
+    dataSaver.WriteFile(profile_data_path_);
   }
   op_info_map_.clear();
   op_name_map_.clear();
