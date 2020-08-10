@@ -19,25 +19,24 @@
 
 #include "nnacl/conv_parameter.h"
 
-typedef struct SlidingWindowParam {
-  int left_;
-  int right_;
-  int top_;
-  int bottom_;
-  int c_block_;
-  int block_channel_;
-  int out_step_;
-  int out_h_step_;
-  int in_step_;
-  int in_h_step_;
-  int in_sh_step_;  // stride H
-  int in_sw_step_;  // stride W
-  int in_kh_step_;  // kernel H
-  int in_kw_step_;  // kernel W
-  int kernel_step_;
-} SlidingWindowParam;
+#ifndef ENABLE_ARM64
+void DepthwiseCenter(float *dst, const float *src, const float *weight, const float *bias, int height, int width,
+                     int kernel_h, int kernel_w, int out_h_step, int block_channel, int in_sh_step, int in_sw_step,
+                     int in_kh_step, int in_kw_step, bool is_relu, bool is_relu6);
+#endif
 
 void InitSlidingParam(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block);
+
+void InitSlidingParamConv(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block);
+
+void AppendSlidingParamConv(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block);
+
+void InitSlidingParamConvDw(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block);
+
+void AppendSlidingParamConvDw(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block);
+
+void DepthwiseBorder(float *dst, const float *src, const float *weight, const float *bias, int top, int bottom,
+                     int left, int right, const ConvParameter *conv_param, const SlidingWindowParam *sliding);
 
 void ConvDwC4Fp32(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
                   const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id);

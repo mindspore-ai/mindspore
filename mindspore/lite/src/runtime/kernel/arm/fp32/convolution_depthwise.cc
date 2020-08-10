@@ -24,8 +24,8 @@
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
-using mindspore::lite::RET_OK;
 using mindspore::lite::RET_INFER_INVALID;
+using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
 namespace mindspore::kernel {
@@ -96,7 +96,7 @@ int ConvolutionDepthwiseCPUKernel::Init() {
 
   // init sliding window param
   sliding_ = new SlidingWindowParam;
-  InitSlidingParam(sliding_, conv_param_, C4NUM);
+  InitSlidingParamConvDw(sliding_, conv_param_, C4NUM);
 
   auto ret = InitWeightBias();
   if (ret != 0) {
@@ -122,7 +122,7 @@ int ConvolutionDepthwiseCPUKernel::ReSize() {
 
   // init sliding window param
   sliding_ = new SlidingWindowParam;
-  InitSlidingParam(sliding_, conv_param_, C4NUM);
+  InitSlidingParamConvDw(sliding_, conv_param_, C4NUM);
 
   auto ret = InitBuffer();
   if (ret != 0) {

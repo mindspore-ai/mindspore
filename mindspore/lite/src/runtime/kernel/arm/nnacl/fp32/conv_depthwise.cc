@@ -47,9 +47,35 @@ void InitSlidingParam(SlidingWindowParam *sliding, const ConvParameter *conv_par
   sliding->bottom_ = bottom;
   sliding->c_block_ = UP_DIV(conv_param->output_channel_, block);
   sliding->block_channel_ = UP_DIV(conv_param->output_channel_, block) * block;
-
   sliding->out_step_ = conv_param->output_h_ * conv_param->output_w_ * sliding->block_channel_;
   sliding->out_h_step_ = conv_param->output_w_ * sliding->block_channel_;
+}
+
+void InitSlidingParamConv(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block) {
+  InitSlidingParam(sliding, conv_param, block);
+  AppendSlidingParamConv(sliding, conv_param, block);
+}
+
+void AppendSlidingParamConv(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block) {
+  int in_channel = conv_param->input_channel_;
+  int ic4 = UP_DIV(in_channel, C4NUM);
+  int ic4_channel = ic4 * C4NUM;
+  sliding->ic4_channel_ = ic4_channel;
+  sliding->in_step_ = conv_param->input_h_ * conv_param->input_w_ * ic4_channel;  // for batch loop
+  sliding->in_h_step_ = conv_param->input_w_ * ic4_channel;
+  sliding->in_sh_step_ = conv_param->input_w_ * ic4_channel * conv_param->stride_h_;    // stride H
+  sliding->in_sw_step_ = ic4_channel * conv_param->stride_w_;                           // stride W
+  sliding->in_kh_step_ = conv_param->input_w_ * ic4_channel * conv_param->dilation_h_;  // kernel H
+  sliding->in_kw_step_ = ic4_channel * conv_param->dilation_w_;                         // kernel W
+  sliding->kernel_step_ = conv_param->kernel_w_ * conv_param->kernel_h_ * ic4_channel * block;
+}
+
+void InitSlidingParamConvDw(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block) {
+  InitSlidingParam(sliding, conv_param, block);
+  AppendSlidingParamConvDw(sliding, conv_param, block);
+}
+
+void AppendSlidingParamConvDw(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block) {
   sliding->in_step_ = conv_param->input_h_ * conv_param->input_w_ * sliding->block_channel_;  // for batch loop
   sliding->in_h_step_ = conv_param->input_w_ * sliding->block_channel_;
   sliding->in_sh_step_ = conv_param->input_w_ * sliding->block_channel_ * conv_param->stride_h_;    // stride H

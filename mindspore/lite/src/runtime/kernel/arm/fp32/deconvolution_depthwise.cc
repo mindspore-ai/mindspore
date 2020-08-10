@@ -39,7 +39,7 @@ int DeconvolutionDepthwiseCPUKernel::InitSlideParam() {
 
   // init sliding window param
   sliding_ = new SlidingWindowParam;
-  InitSlidingParam(sliding_, conv_param_, C4NUM);
+  InitSlidingParamConvDw(sliding_, conv_param_, C4NUM);
   return RET_OK;
 }
 

@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/convolution.h"
+#include "src/runtime/kernel/arm/fp32/convolution_slidewindow.h"
 #include "src/runtime/kernel/arm/fp32/convolution_1x1.h"
 #include "src/runtime/kernel/arm/fp32/convolution_3x3.h"
 #include "src/runtime/kernel/arm/fp32/convolution_winograd.h"
@@ -230,6 +231,19 @@ int ConvolutionCPUKernel::Run() {
   return RET_OK;
 }
 
+bool CheckIfUseSlideWindow(ConvParameter *conv_param) {
+  int in_channel = conv_param->input_channel_;
+  int out_h = conv_param->output_h_;
+  int out_w = conv_param->output_w_;
+  int out_channel = conv_param->output_channel_;
+  int ic4 = UP_DIV(in_channel, C4NUM);
+  int oc4 = UP_DIV(out_channel, C4NUM);
+  if (out_h * out_w <= 32 || ic4 < 4 || oc4 < 4) {
+    return true;
+  }
+  return false;
+}
+
 kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs,
                                              OpParameter *opParameter, const Context *ctx,
@@ -252,6 +266,8 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Ten
   InputTransformUnitFunc input_trans_func = nullptr;
   OutputTransformUnitFunc output_trans_func = nullptr;
   CheckIfUseWinograd(&use_winograd, &out_unit, conv_param, input_trans_func, output_trans_func);
+  bool use_sw = CheckIfUseSlideWindow(conv_param);
+
   kernel::LiteKernel *kernel;
   if (kernel_h == 1 && kernel_w == 1) {
     kernel = new (std::nothrow) kernel::Convolution1x1CPUKernel(opParameter, inputs, outputs, ctx, primitive);
@@ -260,6 +276,8 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Ten
   } else if (use_winograd) {
     kernel =
       new (std::nothrow) kernel::ConvolutionWinogradCPUKernel(opParameter, inputs, outputs, ctx, primitive, out_unit);
+  } else if (use_sw) {
+    kernel = new (std::nothrow) kernel::ConvolutionSWCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   } else {
     kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   }
