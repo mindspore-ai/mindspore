@@ -104,7 +104,7 @@ class TFRecordToMR:
     Args:
         source (str): the TFRecord file to be transformed.
         destination (str): the MindRecord file path to tranform into.
-        feature_dict (dict): a dictionary than states the feature type, i.e.
+        feature_dict (dict): a dictionary that states the feature type, i.e.
             feature_dict = {"xxxx": tf.io.FixedLenFeature([], tf.string), \
                             "yyyy": tf.io.FixedLenFeature([], tf.int64)}
 

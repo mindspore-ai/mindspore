@@ -29,19 +29,23 @@ namespace mindspore {
 namespace mindrecord {
 class ShardPkSample : public ShardCategory {
  public:
-  ShardPkSample(const std::string &category_field, int64_t num_elements);
+  ShardPkSample(const std::string &category_field, int64_t num_elements, int64_t num_samples);
 
-  ShardPkSample(const std::string &category_field, int64_t num_elements, int64_t num_categories);
+  ShardPkSample(const std::string &category_field, int64_t num_elements, int64_t num_categories, int64_t num_samples);
 
-  ShardPkSample(const std::string &category_field, int64_t num_elements, int64_t num_categories, uint32_t seed);
+  ShardPkSample(const std::string &category_field, int64_t num_elements, int64_t num_categories, uint32_t seed,
+                int64_t num_samples);
 
   ~ShardPkSample() override{};
 
   MSRStatus SufExecute(ShardTask &tasks) override;
 
+  int64_t GetNumSamples() const { return num_samples_; }
+
  private:
   bool shuffle_;
   std::shared_ptr<ShardShuffle> shuffle_op_;
+  int64_t num_samples_;
 };
 }  // namespace mindrecord
 }  // namespace mindspore

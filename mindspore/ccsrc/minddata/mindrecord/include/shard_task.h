@@ -53,7 +53,8 @@ class ShardTask {
 
   std::tuple<TaskType, std::tuple<int, int>, std::vector<uint64_t>, json> &GetRandomTask();
 
-  static ShardTask Combine(std::vector<ShardTask> &category_tasks, bool replacement, int64_t num_elements);
+  static ShardTask Combine(std::vector<ShardTask> &category_tasks, bool replacement, int64_t num_elements,
+                           int64_t num_samples);
 
   uint32_t categories;
 

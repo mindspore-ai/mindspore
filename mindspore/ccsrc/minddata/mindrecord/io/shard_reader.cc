@@ -827,6 +827,12 @@ MSRStatus ShardReader::CountTotalRows(const std::vector<std::string> &file_paths
       std::string category_field = category_op->GetCategoryField();
       auto num_classes = GetNumClasses(category_field);
       num_samples = category_op->GetNumSamples(num_samples, num_classes);
+      if (std::dynamic_pointer_cast<ShardPkSample>(op)) {
+        auto tmp = std::dynamic_pointer_cast<ShardPkSample>(op)->GetNumSamples();
+        if (tmp != 0) {
+          num_samples = std::min(num_samples, tmp);
+        }
+      }
     } else if (std::dynamic_pointer_cast<ShardSample>(op)) {
       if (std::dynamic_pointer_cast<ShardDistributedSample>(op)) {
         auto sampler_op = std::dynamic_pointer_cast<ShardDistributedSample>(op);
@@ -958,6 +964,14 @@ MSRStatus ShardReader::CreateTasksByCategory(const std::vector<std::tuple<int, i
   auto category_op = std::dynamic_pointer_cast<ShardCategory>(op);
   auto categories = category_op->GetCategories();
   int64_t num_elements = category_op->GetNumElements();
+  int64_t num_samples = 0;
+  if (std::dynamic_pointer_cast<ShardPkSample>(op)) {
+    num_samples = std::dynamic_pointer_cast<ShardPkSample>(op)->GetNumSamples();
+    if (num_samples < 0) {
+      MS_LOG(ERROR) << "Parameter num_samples is not positive or zero";
+      return FAILED;
+    }
+  }
   if (num_elements <= 0) {
     MS_LOG(ERROR) << "Parameter num_element is not positive";
     return FAILED;
@@ -1006,7 +1020,7 @@ MSRStatus ShardReader::CreateTasksByCategory(const std::vector<std::tuple<int, i
     }
     MS_LOG(INFO) << "Category #" << categoryNo << " has " << categoryTasks[categoryNo].Size() << " tasks";
   }
-  tasks_ = ShardTask::Combine(categoryTasks, category_op->GetReplacement(), num_elements);
+  tasks_ = ShardTask::Combine(categoryTasks, category_op->GetReplacement(), num_elements, num_samples);
   if (SUCCESS != (*category_op)(tasks_)) {
     return FAILED;
   }
