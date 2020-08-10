@@ -72,10 +72,15 @@ void SetMaxType(TypeId *max_type_id, size_t *max_type_number, const TypeId type_
 bool GetTensorOrScalarTypeInfo(AbstractBasePtr arg_value, bool is_write, TypeId *arg_type_id,
                                TypeId *arg_type = nullptr) {
   if (arg_value->isa<abstract::AbstractRef>()) {
-    if (is_write) {
-      arg_value = arg_value->cast<abstract::AbstractRefPtr>()->ref_origin();
-    } else {
-      arg_value = arg_value->cast<abstract::AbstractRefPtr>()->ref();
+    auto ref = arg_value->cast<abstract::AbstractRefPtr>();
+    arg_value = ref->ref();
+    if (!is_write && ref->need_cast()) {
+      auto tensor_type = ref->target_type();
+      *arg_type_id = tensor_type->type_id();
+      if (arg_type != nullptr) {
+        *arg_type = kObjectTypeTensorType;
+      }
+      return true;
     }
   }
   if (arg_value->isa<abstract::AbstractTensor>()) {
@@ -248,6 +253,8 @@ void DoAutoCast(const std::string &func_name, const std::vector<Signature> &sign
     if (arg_value->isa<abstract::AbstractTensor>() && arg_type_id == it->second) {
       continue;
     }
+    MS_LOG(DEBUG) << "do cast for inputs " << i << " " << (*op_inputs)[i + 1]->ToString() << " " << arg_type_id
+                  << " to " << it->second;
     (*op_inputs)[i + 1] = DoCast((*op_inputs)[i + 1], it->second, graph);
   }
 }
@@ -289,16 +296,23 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func
 
     TypePtr type = args_spec_list[i]->GetTypeTrack();
     if (type && type->type_id() == kObjectTypeRef) {
+      auto ref_abs = args_spec_list[i]->cast<abstract::AbstractRefPtr>();
       if (sig == SignatureEnumRW::kRWRead) {
-        param = func_graph->NewCNode({NewValueNode(prim::kPrimGetRefValue), param});
+        param = NewCNode({NewValueNode(prim::kPrimGetRefValue), param}, func_graph);
+        if (ref_abs && ref_abs->need_cast()) {
+          auto cast = prim::GetPythonOps("cast", "mindspore.ops.functional");
+          param = NewCNode({NewValueNode(cast), param, NewValueNode(ref_abs->target_type())}, func_graph);
+        }
       } else if (sig == SignatureEnumRW::kRWWrite) {
-        param = func_graph->NewCNode({NewValueNode(prim::kPrimGetRefOrigin), param});
+        param = NewCNode({NewValueNode(prim::kPrimGetRefValue), param}, func_graph);
         write_indices.insert(i);
       }
       // If sig is SignatureEnumRW::kRWRef, not do anything.
     } else if (sig == SignatureEnumRW::kRWWrite && type->type_id() != kObjectTypeRefKey) {
       MS_EXCEPTION(TypeError) << "Function " << func_name << "'s input " << i << " should be a Parameter.";
     }
+    MS_LOG(DEBUG) << "Function " << func_name << "'s input " << i << " " << param->DebugString(2) << " type "
+                  << args_spec_list[i]->ToString();
     op_inputs.push_back(param);
   }
   // process default

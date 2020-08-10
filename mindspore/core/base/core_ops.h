@@ -121,7 +121,6 @@ inline const PrimitivePtr kPrimEnvAdd = std::make_shared<Primitive>("env_add");
 inline const PrimitivePtr kPrimMakeRefKey = std::make_shared<Primitive>("MakeRefKey");
 inline const PrimitivePtr kPrimGetRefKey = std::make_shared<Primitive>("get_ref_key");
 inline const PrimitivePtr kPrimGetRefValue = std::make_shared<Primitive>("get_ref_value");
-inline const PrimitivePtr kPrimGetRefOrigin = std::make_shared<Primitive>("get_ref_origin");
 inline const PrimitivePtr kPrimInsertGradientOf = std::make_shared<Primitive>("InsertGradientOf");
 inline const PrimitivePtr kPrimHookBackward = std::make_shared<Primitive>("HookBackward");
 inline const PrimitivePtr kPrimPrintShapeType = std::make_shared<Primitive>("PrintShapeType");

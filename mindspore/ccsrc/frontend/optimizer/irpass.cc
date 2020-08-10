@@ -95,10 +95,10 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   // Ref eliminate
   make_ref_eliminate_ =
     MakeSubstitution(std::make_shared<MakeRefEliminater>(), "make_ref_eliminate", prim::kPrimMakeRef);
-  get_ref_param_eliminate_ = MakeSubstitution(std::make_shared<GetRefParamEliminater>(), "get_ref_param_eliminate",
-                                              {prim::kPrimGetRefValue, prim::kPrimGetRefOrigin});
+  get_ref_param_eliminate_ =
+    MakeSubstitution(std::make_shared<GetRefParamEliminater>(), "get_ref_param_eliminate", {prim::kPrimGetRefValue});
   get_make_ref_eliminate_ = MakeSubstitution(std::make_shared<GetMakeRefEliminater>(), "get_make_ref_eliminate",
-                                             {prim::kPrimGetRefKey, prim::kPrimGetRefValue, prim::kPrimGetRefOrigin});
+                                             {prim::kPrimGetRefKey, prim::kPrimGetRefValue});
 
   replace_refkey_by_param_ = MakeSubstitution(std::make_shared<ReplaceRefkeyByParam>(), "replace_refkey_by_param",
                                               IsValueNode<RefKey>, opt::FORCE_RENORM);

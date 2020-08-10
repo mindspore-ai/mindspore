@@ -171,9 +171,7 @@ AnalysisContextPtr AnalysisContext::SpecializeKey() const {
                          }
                          if (arg->isa<AbstractRef>()) {
                            MS_LOG(DEBUG) << "refkey broaden";
-                           auto arg_spec = dyn_cast<AbstractRef>(arg);
-                           auto ret_spec = arg_spec->Broaden();
-                           return ret_spec;
+                           return arg->Broaden();
                          }
                          return arg;
                        });
