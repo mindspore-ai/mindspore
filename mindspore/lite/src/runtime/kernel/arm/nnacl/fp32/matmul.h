@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_MATMUL_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_MATMUL_H_
 
+#include <string.h>
 #include <float.h>
 #include "src/runtime/kernel/arm/nnacl/errorcode.h"
 #include "src/runtime/kernel/arm/nnacl/op_base.h"
@@ -25,7 +26,7 @@
 void MatMul(const float *a, const float *b, float *c, const float *bias, ActType act_type, int depth, int row, int col);
 void RowMajor2Row8Major(float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Col8Major(float *src_ptr, float *dst_ptr, size_t row, size_t col);
-void Row8x8Major2RowMajor(float *src_ptr, float *dst_ptr, int row, int col);
+void Row8x8Major2RowMajor(float *src_ptr, float *dst_ptr, size_t row, size_t col, size_t stride);
 void MatMul8x8(const float *a, const float *b, float *c, const float *bias, float maxf, float minf, int deep,
                int row_8_, int col_8_);
 #ifdef __cplusplus

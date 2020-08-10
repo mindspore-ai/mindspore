@@ -118,7 +118,7 @@ int MatmulCPUKernel::Run() {
       RowMajor2Row8Major(cur_b_ptr, b_r8_ptr_, params_->deep_, params_->col_);
     }
     LiteBackendParallelLaunch(MatmulFloatRun, this, thread_count_);
-    Row8x8Major2RowMajor(c_r8x8_ptr_, cur_c_ptr, params_->row_, params_->col_);
+    Row8x8Major2RowMajor(c_r8x8_ptr_, cur_c_ptr, params_->row_, params_->col_, params_->col_);
   }
   return RET_OK;
 }

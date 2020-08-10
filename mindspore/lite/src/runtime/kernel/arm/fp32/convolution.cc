@@ -28,8 +28,8 @@
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
-using mindspore::lite::RET_OK;
 using mindspore::lite::RET_INFER_INVALID;
+using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Conv2D;
 
 namespace mindspore::kernel {
@@ -254,8 +254,7 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Ten
   CheckIfUseWinograd(&use_winograd, &out_unit, conv_param, input_trans_func, output_trans_func);
   kernel::LiteKernel *kernel;
   if (kernel_h == 1 && kernel_w == 1) {
-    // kernel = new (std::nothrow) kernel::Convolution1x1CPUKernel(opParameter, inputs, outputs, ctx);
-    kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+    kernel = new (std::nothrow) kernel::Convolution1x1CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   } else if (kernel_h == 3 && kernel_w == 3 && stride_h == 1 && stride_w == 1 && dilation_h == 1 && dilation_w == 1) {
     kernel = new (std::nothrow) kernel::Convolution3x3CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   } else if (use_winograd) {
