@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T>
 class CumSumGpuKernel : public GpuKernel {
  public:
-  CumSumGpuKernel() : axis_(0), input_size_0_(0), stride_(0), stride2_(0) {}
+  CumSumGpuKernel() : exclusive_(false), reverse_(false), axis_(0), input_size_0_(0), stride_(0), stride2_(0) {}
   ~CumSumGpuKernel() = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -38,7 +38,8 @@ class CumSumGpuKernel : public GpuKernel {
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
-    CumSum(input_addr, output_addr, dims_[0], dims_[1], dims_[2], stride_, stride2_,
+    T *ws_addr = GetDeviceAddress<T>(workspace, 0);
+    CumSum(input_addr, output_addr, ws_addr, dims_[0], dims_[1], dims_[2], stride_, stride2_, exclusive_, reverse_,
            reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -51,6 +52,8 @@ class CumSumGpuKernel : public GpuKernel {
     input_size_0_ = sizeof(T);
     shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     axis_ = GetAttr<int>(kernel_node, "axis");
+    exclusive_ = GetAttr<bool>(kernel_node, "exclusive");
+    reverse_ = GetAttr<bool>(kernel_node, "reverse");
     int input_dim_length = SizeToInt(shape_.size());
     if (axis_ >= input_dim_length) {
       MS_LOG(EXCEPTION) << "Axis out of bounds.";
@@ -70,6 +73,7 @@ class CumSumGpuKernel : public GpuKernel {
   void InitSizeLists() override {
     input_size_list_.push_back(input_size_0_);
     output_size_list_.push_back(input_size_0_);
+    workspace_size_list_.push_back(input_size_0_);
   }
 
  private:
@@ -87,6 +91,8 @@ class CumSumGpuKernel : public GpuKernel {
     stride2_ = dims_[2];
     return;
   }
+  bool exclusive_;
+  bool reverse_;
   int axis_;
   size_t input_size_0_;
   size_t stride_;
