@@ -32,10 +32,6 @@ using mindspore::schema::PrimitiveType_ArgMin;
 
 namespace mindspore::kernel {
 int ArgMinMaxBaseCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
-    return RET_OK;
-  }
   auto param = reinterpret_cast<ArgMinMaxParameter *>(opParameter);
   switch (opParameter->type_) {
     case PrimitiveType_ArgMax:
@@ -49,8 +45,13 @@ int ArgMinMaxBaseCPUKernel::Init() {
       return RET_ERROR;
   }
 
+  return RET_OK;
+}
+
+int ArgMinMaxBaseCPUKernel::ReSize() {
   auto in_shape = inputs_.at(0)->shape();
   auto dims_size = in_shape.size();
+  auto param = reinterpret_cast<ArgMinMaxParameter *>(opParameter);
   int axis = param->axis_ < 0 ? param->axis_ + dims_size : param->axis_;
   param->axis_ = axis;
   param->dims_size_ = dims_size;

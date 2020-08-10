@@ -37,7 +37,15 @@ int DepthToSpaceCPUKernel::Init() {
   }
   DepthToSpaceParameter *param = reinterpret_cast<DepthToSpaceParameter *>(opParameter);
   param->data_type_size_ = sizeof(float);
-  return RET_OK;
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+
+  return ReSize();
+}
+
+int DepthToSpaceCPUKernel::ReSize() {
+  return DepthToSpaceBaseCPUKernel::ReSize();
 }
 
 int DepthToSpaceCPUKernel::Run() {

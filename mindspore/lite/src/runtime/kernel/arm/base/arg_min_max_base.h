@@ -26,15 +26,13 @@ class ArgMinMaxBaseCPUKernel : public LiteKernel {
   ArgMinMaxBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                          const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                          const lite::Primitive *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), data_from_allocator_(false) {
-    opParameter->thread_num_ = ctx->thread_num_;
-  }
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), data_from_allocator_(false) {}
 
   virtual ~ArgMinMaxBaseCPUKernel() { FreeTmpMemory(); }
 
   int Init() override;
 
-  int ReSize() override { return 0; }
+  int ReSize() override;
 
   int Run() override;
 

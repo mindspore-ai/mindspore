@@ -40,14 +40,21 @@ int ArgMinMaxInt8CPUKernel::Init() {
   auto out_quant_args = out_tensor->GetQuantParams();
   out_quant_arg_.scale_ = out_quant_args.front().scale;
   out_quant_arg_.zp_ = out_quant_args.front().zeroPoint;
-  return RET_OK;
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
+
+int ArgMinMaxInt8CPUKernel::ReSize() {
+  return ArgMinMaxBaseCPUKernel::ReSize();
 }
 
 int ArgMinMaxInt8CPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
   }
   auto input = inputs_.at(0);
 
