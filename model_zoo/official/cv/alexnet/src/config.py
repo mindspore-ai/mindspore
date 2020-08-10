@@ -22,7 +22,7 @@ alexnet_cfg = edict({
     'num_classes': 10,
     'learning_rate': 0.002,
     'momentum': 0.9,
-    'epoch_size': 1,
+    'epoch_size': 30,
     'batch_size': 32,
     'buffer_size': 1000,
     'image_height': 227,
