@@ -31,11 +31,9 @@ using mindspore::lite::RET_PARAM_INVALID;
 using mindspore::schema::PrimitiveType_DepthToSpace;
 
 namespace mindspore::kernel {
-int DepthToSpaceBaseCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
-    return RET_OK;
-  }
+int DepthToSpaceBaseCPUKernel::Init() { return RET_OK; }
+
+int DepthToSpaceBaseCPUKernel::ReSize() {
   if (inputs_[0]->GetFormat() != schema::Format_NHWC) {
     MS_LOG(ERROR) << "depth_to_space only support NHWC now!";
     return RET_FORMAT_ERR;

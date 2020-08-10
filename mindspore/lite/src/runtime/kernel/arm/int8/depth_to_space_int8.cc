@@ -42,7 +42,14 @@ int DepthToSpaceInt8CPUKernel::Init() {
   auto out_quant_args = out_tensor->GetQuantParams();
   out_quant_arg_.scale_ = out_quant_args.front().scale;
   out_quant_arg_.zp_ = out_quant_args.front().zeroPoint;
-  return RET_OK;
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
+
+int DepthToSpaceInt8CPUKernel::ReSize() {
+  return DepthToSpaceBaseCPUKernel::ReSize();
 }
 
 int DepthToSpaceInt8CPUKernel::Run() {

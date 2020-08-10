@@ -30,15 +30,19 @@ using mindspore::schema::PrimitiveType_BatchToSpace;
 
 namespace mindspore::kernel {
 int BatchToSpaceBaseCPUKernel::Init() {
-  if (inputs_[0]->GetFormat() != schema::Format_NHWC) {
-    MS_LOG(ERROR) << "batch_to_space only support NHWC now!";
-    return RET_FORMAT_ERR;
-  }
   BatchToSpaceParameter *param = reinterpret_cast<BatchToSpaceParameter *>(this->opParameter);
   for (int i = 0; i < BATCH_TO_SPACE_CROPS_SIZE; ++i) {
     if (param->crops_[i] != 0) {
       no_crop_ = false;
     }
+  }
+  return RET_OK;
+}
+
+int BatchToSpaceBaseCPUKernel::ReSize() {
+  if (inputs_[0]->GetFormat() != schema::Format_NHWC) {
+    MS_LOG(ERROR) << "batch_to_space only support NHWC now!";
+    return RET_FORMAT_ERR;
   }
   return RET_OK;
 }
