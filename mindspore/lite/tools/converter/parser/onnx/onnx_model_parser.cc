@@ -47,7 +47,6 @@ TypeId OnnxModelParser::GetDateTypeFromOnnx(onnx::TensorProto_DataType onnx_type
 
 std::vector<int32_t> OnnxModelParser::GetDimsFromOnnxValue(const onnx::ValueInfoProto &onnx_value) {
   std::vector<int32_t> dims;
-  const auto shape_info = onnx_value.type().tensor_type().shape();
   for (const auto &it : onnx_value.type().tensor_type().shape().dim()) {
     dims.emplace_back(it.dim_value());
   }
@@ -97,7 +96,7 @@ STATUS OnnxModelParser::SetGraphConstTensor(const onnx::GraphProto &onnx_graph, 
     if (CopyOnnxTensorData(onnx_const_value, tensor.get())) {
       return RET_ERROR;
     }
-    const auto index = tensor_cache->AddTensor(onnx_const_value.name(), tensor.release(), GRAPH_INPUT);
+    // const auto index = tensor_cache->AddTensor(onnx_const_value.name(), tensor.release(), GRAPH_INPUT);
     // MS_LOGD("add const tensor: %s, index %d", onnx_const_value.name().c_str(), index)
   }
   return RET_OK;
@@ -288,11 +287,6 @@ void OnnxModelParser::SetOpQuantParams(const onnx::GraphProto &onnx_graph, const
     std::unique_ptr<schema::QuantParamT> quant_param(new (std::nothrow) schema::QuantParamT());
     if (quant_param == nullptr) {
       // MS_LOGE("new QuantParamT failed, node: %s", dst_op->name.c_str());
-      return;
-    }
-    // std::unique_ptr<mindspore::lite::QuantParamArrayT> quant_param_array(new (std::nothrow) QuantParamArrayT());
-    if (quant_param == nullptr) {
-      // MS_LOGE("new QuantParamArrayT failed, node: %s", dst_op->name.c_str());
       return;
     }
     int argNum = 0;

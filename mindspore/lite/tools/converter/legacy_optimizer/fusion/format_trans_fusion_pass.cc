@@ -149,8 +149,14 @@ STATUS FormatTransFusionPass::DoFusion(schema::MetaGraphT *graph, const std::str
   } else {
     MS_ASSERT(false);
   }
-  MS_ASSERT(srcPath != nullptr);
-  MS_ASSERT(dstPath != nullptr);
+  if (srcPath == nullptr) {
+    MS_LOG(ERROR) << "srcPath is failed to get";
+    return RET_ERROR;
+  }
+  if (dstPath == nullptr) {
+    MS_LOG(ERROR) << "dstPath is failed to get";
+    return RET_ERROR;
+  }
   auto srcNode = graph->nodes.at(srcPath->nodeIdx).get();
   auto dstNode = graph->nodes.at(dstPath->nodeIdx).get();
   MS_ASSERT(srcNode != nullptr);
