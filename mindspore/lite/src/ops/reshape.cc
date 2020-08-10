@@ -92,7 +92,7 @@ int Reshape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
       MS_LOG(INFO) << "Do infer shape in runtime.";
       return RET_INFER_INVALID;
     }
-    size_t shape_size = shape_tensor->shape().size();
+    size_t shape_size = shape_tensor->ElementsNum();
     switch (shape_tensor->data_type()) {
       case kNumberTypeInt8: {
         auto data = reinterpret_cast<int8_t *>(shape_tensor->Data());
