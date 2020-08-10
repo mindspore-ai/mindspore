@@ -27,20 +27,12 @@ resize_nearest_neighbor_op_info = TBERegOp("ResizeNearestNeighbor") \
     .attr("align_corners", "optional", "bool", "all") \
     .input(0, "images", False, "required", "all") \
     .output(0, "y", True, "required", "all") \
-    .dtype_format(DataType.I8_Default, DataType.I8_Default) \
-    .dtype_format(DataType.I8_5HD, DataType.I8_5HD) \
-    .dtype_format(DataType.U8_Default, DataType.U8_Default) \
-    .dtype_format(DataType.U8_5HD, DataType.U8_5HD) \
-    .dtype_format(DataType.I32_Default, DataType.I32_Default) \
-    .dtype_format(DataType.I32_5HD, DataType.I32_5HD) \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
     .dtype_format(DataType.F16_5HD, DataType.F16_5HD) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.F32_5HD, DataType.F32_5HD) \
     .get_op_info()
 
 
 @op_info_register(resize_nearest_neighbor_op_info)
-def _resize_nearest_neighbor_d_tbe():
+def _resize_nearest_neighbor_tbe():
     """ResizeNearestNeighbor TBE register"""
     return

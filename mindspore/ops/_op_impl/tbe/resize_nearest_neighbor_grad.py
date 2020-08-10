@@ -13,29 +13,25 @@
 # limitations under the License.
 # ============================================================================
 
-"""ResizeNearestNeighbor op"""
+"""ResizeNearestNeighborgrad op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-resize_nearest_neighbor_d_op_info = TBERegOp("ResizeNearestNeighbor") \
+resize_nearest_neighbor_grad_op_info = TBERegOp("ResizeNearestNeighborGrad") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
-    .binfile_name("resize_nearest_neighbor_d.so") \
+    .binfile_name("resize_nearest_neighbor_grad_d.so") \
     .compute_cost(10) \
-    .kernel_name("resize_nearest_neighbor_d") \
+    .kernel_name("resize_nearest_neighbor_grad_d") \
     .partial_flag(True) \
     .attr("size", "required", "listInt", "all") \
     .attr("align_corners", "optional", "bool", "all") \
-    .input(0, "images", False, "required", "all") \
-    .output(0, "y", True, "required", "all") \
-    .dtype_format(DataType.I8_5HD, DataType.I8_5HD) \
-    .dtype_format(DataType.U8_5HD, DataType.U8_5HD) \
-    .dtype_format(DataType.I32_5HD, DataType.I32_5HD) \
-    .dtype_format(DataType.F16_5HD, DataType.F16_5HD) \
+    .input(0, "grads", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
     .dtype_format(DataType.F32_5HD, DataType.F32_5HD) \
     .get_op_info()
 
 
-@op_info_register(resize_nearest_neighbor_d_op_info)
-def _resize_nearest_neighbor_d_tbe():
-    """ResizeNearestNeighbor TBE register"""
+@op_info_register(resize_nearest_neighbor_grad_op_info)
+def _resize_nearest_neighbor_grad_tbe():
+    """ResizeNearestNeighborGrad TBE register"""
     return
