@@ -473,7 +473,7 @@ def export(network, *inputs, file_name, mean=127.5, std_dev=127.5, file_format='
 
 def convert_quant_network(network,
                           bn_fold=False,
-                          freeze_bn=0,
+                          freeze_bn=10000,
                           quant_delay=(0, 0),
                           num_bits=(8, 8),
                           per_channel=(False, False),

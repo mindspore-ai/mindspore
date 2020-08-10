@@ -396,7 +396,7 @@ class FakeQuantWithMinMax(Cell):
 
 class Conv2dBnFoldQuant(Cell):
     r"""
-    2D convolution with BatchNormal op folded layer.
+    2D convolution with BatchNormal op folded construct.
 
     For a more Detailed overview of Conv2d op.
 
@@ -434,10 +434,9 @@ class Conv2dBnFoldQuant(Cell):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> batchnorm_quant = nn.Conv2dBnFoldQuant(1, 6, kernel_size= (2, 2), stride=(1, 1), pad_mode="valid",
-        >>>                                           dilation=(1, 1))
-        >>> input_x = Tensor(np.random.randint(-2, 2, (2, 1, 1, 3)), mindspore.float32)
-        >>> result = batchnorm_quant(input_x)
+        >>> conv2d_bn = nn.Conv2dBnFoldQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid")
+        >>> x = Tensor(np.random.randint(-2, 2, (2, 1, 1, 3)), mindspore.float32)
+        >>> y = conv2d_bn(x)
     """
 
     def __init__(self,
@@ -508,7 +507,7 @@ class Conv2dBnFoldQuant(Cell):
             channel_axis = 0
         self.weight = Parameter(initializer(weight_init, weight_shape), name='weight')
 
-        # initialize batchnorm Parameter
+        # initialize BatchNorm Parameter
         self.gamma = Parameter(initializer(gamma_init, [out_channels]), name='gamma')
         self.beta = Parameter(initializer(beta_init, [out_channels]), name='beta')
         self.moving_mean = Parameter(initializer(mean_init, [out_channels]), name='moving_mean', requires_grad=False)
@@ -583,7 +582,7 @@ class Conv2dBnFoldQuant(Cell):
 
 class Conv2dBnWithoutFoldQuant(Cell):
     r"""
-    2D convolution + batchnorm without fold with fake quant op layer.
+    2D convolution + batchnorm without fold with fake quant construct.
 
     For a more Detailed overview of Conv2d op.
 
@@ -617,10 +616,9 @@ class Conv2dBnWithoutFoldQuant(Cell):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> conv2d_quant = nn.Conv2dQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
-        >>>                               dilation=(1, 1))
-        >>> input_x = Tensor(np.random.randint(-2, 2, (2, 1, 1, 3)), mstype.float32)
-        >>> result = conv2d_quant(input_x)
+        >>> conv2d_quant = nn.Conv2dBnWithoutFoldQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid")
+        >>> x = Tensor(np.random.randint(-2, 2, (2, 1, 1, 3)), mstype.float32)
+        >>> y = conv2d_quant(x)
     """
 
     def __init__(self,
@@ -687,7 +685,7 @@ class Conv2dBnWithoutFoldQuant(Cell):
                                                      quant_delay=quant_delay)
         self.has_bn = validator.check_bool("has_bn", has_bn)
         if has_bn:
-            self.batchnorm = BatchNorm2d(out_channels)
+            self.batchnorm = BatchNorm2d(out_channels, eps=eps, momentum=momentum)
 
     def construct(self, x):
         weight = self.fake_quant_weight(self.weight)
@@ -740,10 +738,9 @@ class Conv2dQuant(Cell):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> conv2d_quant = nn.Conv2dQuant(1, 6, kernel_size= (2, 2), stride=(1, 1), pad_mode="valid",
-        >>>                               dilation=(1, 1))
-        >>> input_x = Tensor(np.random.randint(-2, 2, (2, 1, 1, 3)), mindspore.float32)
-        >>> result = conv2d_quant(input_x)
+        >>> conv2d_quant = nn.Conv2dQuant(1, 6, kernel_size= (2, 2), stride=(1, 1), pad_mode="valid")
+        >>> x = Tensor(np.random.randint(-2, 2, (2, 1, 1, 3)), mindspore.float32)
+        >>> y = conv2d_quant(x)
     """
 
     def __init__(self,
