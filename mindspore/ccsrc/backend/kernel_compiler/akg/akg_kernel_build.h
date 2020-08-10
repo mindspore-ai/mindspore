@@ -25,6 +25,7 @@
 #include "backend/kernel_compiler/kernel.h"
 #include "ir/dtype.h"
 #include "ir/primitive.h"
+#include "pybind11/pybind11.h"
 #include <nlohmann/json.hpp>
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/oplib/oplib.h"

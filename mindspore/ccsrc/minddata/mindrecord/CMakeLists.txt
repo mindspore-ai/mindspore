@@ -28,9 +28,9 @@ set_target_properties(_c_mindrecord PROPERTIES
 
 # add link library
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    target_link_libraries(_c_mindrecord PRIVATE mindspore::sqlite mindspore mindspore_gvar mindspore::protobuf)
+    target_link_libraries(_c_mindrecord PRIVATE mindspore::sqlite mindspore mindspore::protobuf)
 else()
-    target_link_libraries(_c_mindrecord PRIVATE mindspore::sqlite ${PYTHON_LIB} ${SECUREC_LIBRARY} mindspore mindspore_gvar mindspore::protobuf)
+    target_link_libraries(_c_mindrecord PRIVATE mindspore::sqlite ${PYTHON_LIB} ${SECUREC_LIBRARY} mindspore mindspore::protobuf)
 endif()
 
 if (USE_GLOG)

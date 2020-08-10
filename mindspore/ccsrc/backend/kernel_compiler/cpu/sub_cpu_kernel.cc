@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <thread>
 #include "backend/kernel_compiler/cpu/sub_cpu_kernel.h"
+#include <sys/time.h>
+#include <thread>
 #include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {

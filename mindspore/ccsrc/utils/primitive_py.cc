@@ -24,6 +24,7 @@
 #include "utils/convert_utils_base.h"
 #include "utils/primitive_utils.h"
 #include "utils/base_ref_py.h"
+#include "utils/base_ref_extends.h"
 #include "pybind_api/api_register.h"
 #include "pybind_api/export_flags.h"
 

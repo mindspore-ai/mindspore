@@ -31,7 +31,7 @@ add_library(minddata-lite SHARED
         ${MINDDATA_DIR}/util/path.cc
         ${MINDDATA_DIR}/api/transforms.cc
         ${CORE_DIR}/utils/log_adapter.cc
-        ${CCSRC_DIR}/gvar/logging_level.cc
+        ${CORE_DIR}/gvar/logging_level.cc
         )
 
 target_link_libraries(minddata-lite

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_UTILS_PROFILE_H_
-#define MINDSPORE_CCSRC_UTILS_PROFILE_H_
+#ifndef MINDSPORE_CORE_UTILS_PROFILE_H_
+#define MINDSPORE_CORE_UTILS_PROFILE_H_
 
 #include <map>
 #include <string>
@@ -230,4 +230,4 @@ class MsProfile {
 #define WITH(x) NoProfTransaction(x) -
 #endif
 
-#endif  // MINDSPORE_CCSRC_UTILS_PROFILE_H_
+#endif  // MINDSPORE_CORE_UTILS_PROFILE_H_
