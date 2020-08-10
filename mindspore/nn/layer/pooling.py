@@ -84,16 +84,16 @@ class MaxPool2d(_PoolNd):
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
-        pad_mode (str): The optional values for pad mode, is "same" or "valid", not case sensitive.
+        pad_mode (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
 
-            - same: Adopts the way of completion. Output height and width will be the same as
-              the input. Total number of padding will be calculated for horizontal and vertical
-              direction and evenly distributed to top and bottom, left and right if possible.
+            - same: Adopts the way of completion. The height and width of the output will be the same as
+              the input. The total number of padding will be calculated in horizontal and vertical
+              directions and evenly distributed to top and bottom, left and right if possible.
               Otherwise, the last extra padding will be done from the bottom and the right side.
 
-            - valid: Adopts the way of discarding. The possibly largest height and width of output
-              will be return without padding. Extra pixels will be discarded.
+            - valid: Adopts the way of discarding. The possible largest height and width of output
+              will be returned without padding. Extra pixels will be discarded.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -158,23 +158,23 @@ class AvgPool2d(_PoolNd):
         pad_mode for training only supports "same" and "valid".
 
     Args:
-        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value,
-            is an int number that represents height and width are both kernel_size,
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value.
+            The data type of kernel_size should be int and the value represents the height and width,
             or a tuple of two int numbers that represent height and width respectively.
             Default: 1.
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
-        pad_mode (str): The optional values for pad mode, is "same" or "valid", not case sensitive.
+        pad_mode (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
 
-            - same: Adopts the way of completion. Output height and width will be the same as
-              the input. Total number of padding will be calculated for horizontal and vertical
-              direction and evenly distributed to top and bottom, left and right if possible.
+            - same: Adopts the way of completion. The height and width of the output will be the same as
+              the input. The total number of padding will be calculated in horizontal and vertical
+              directions and evenly distributed to top and bottom, left and right if possible.
               Otherwise, the last extra padding will be done from the bottom and the right side.
 
-            - valid: Adopts the way of discarding. The possibly largest height and width of output
-              will be return without padding. Extra pixels will be discarded.
+            - valid: Adopts the way of discarding. The possible largest height and width of output
+              will be returned without padding. Extra pixels will be discarded.
 
 
     Inputs:
@@ -238,16 +238,16 @@ class AvgPool1d(_PoolNd):
         kernel_size (int): The size of kernel window used to take the average value, Default: 1.
         stride (int): The distance of kernel moving, an int number that represents
             the width of movement is strides, Default: 1.
-        pad_mode (str): The optional values for pad mode, is "same" or "valid", not case sensitive.
+        pad_mode (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
 
-            - same: Adopts the way of completion. Output height and width will be the same as
-              the input. Total number of padding will be calculated for horizontal and vertical
-              direction and evenly distributed to top and bottom, left and right if possible.
+            - same: Adopts the way of completion. The height and width of the output will be the same as
+              the input. The total number of padding will be calculated in horizontal and vertical
+              directions and evenly distributed to top and bottom, left and right if possible.
               Otherwise, the last extra padding will be done from the bottom and the right side.
 
-            - valid: Adopts the way of discarding. The possibly largest height and width of output
-              will be return without padding. Extra pixels will be discarded.
+            - valid: Adopts the way of discarding. The possible largest height and width of output
+              will be returned without padding. Extra pixels will be discarded.
 
 
     Inputs:
