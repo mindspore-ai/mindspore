@@ -39,7 +39,7 @@ class ReplaceApplicator : public AnfVisitor {
     }
 
     auto fg = GetValueNode<FuncGraphPtr>(node);
-    if (fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || fg->stub()) {
+    if (fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || fg->stub() || *(fg->switch_layer_input())) {
       return nullptr;
     }
 

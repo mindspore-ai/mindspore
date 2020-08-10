@@ -113,6 +113,9 @@ class OptimizeIRPassLib {
 
   // Value_Based Eliminate
   SubstitutionPtr value_based_eliminate_;
+
+  // SwitchLayer defer inline
+  SubstitutionPtr switch_layer_defer_inline_;
 };
 
 // the collection of irpass for resolve action

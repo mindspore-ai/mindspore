@@ -49,6 +49,8 @@ DFunctor::DFunctor(const FuncGraphPtr &primal_graph, const pipeline::ResourceBas
     std::string grad_op_name = GetValue<std::string>(primal_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
     k_graph_->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(grad_op_name));
   }
+  // To keep switch_layer's inputs from being inlined
+  k_graph_->set_switch_layer_input(primal_graph->switch_layer_input());
   TraceManager::EndTrace();
 
   TraceManager::DebugTrace(std::make_shared<TraceGradBprop>(primal_graph->debug_info()));

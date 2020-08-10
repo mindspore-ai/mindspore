@@ -45,6 +45,7 @@
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/irpass/row_tensor_eliminate.h"
 #include "frontend/optimizer/irpass/sparse_tensor_eliminate.h"
+#include "frontend/optimizer/irpass/switch_layer_defer_inline.h"
 
 namespace mindspore {
 namespace opt {
@@ -170,6 +171,10 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   // Value_Based Eliminate
   value_based_eliminate_ = MakeSubstitution(std::make_shared<ValueBasedEliminate>(), "value_based_eliminate",
                                             {prim::kPrimSelect, prim::kPrimMinimum, prim::kPrimMaximum});
+
+  // switch_layer defer inline
+  switch_layer_defer_inline_ =
+    MakeSubstitution(std::make_shared<SwitchLayerDeferInline>(), "switch_layer_defer_inline", prim::kPrimSwitchLayer);
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {

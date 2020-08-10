@@ -444,6 +444,26 @@ def test_index_to_switch_layer():
     C.grad_all(net)(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
 
 
+def test_switch_layer_with_single_prim():
+    class SwitchLayerCell(nn.Cell):
+        def __init__(self):
+            super(SwitchLayerCell, self).__init__()
+            self.layers = (nn.ReLU(), nn.ReLU())
+            self.z3 = Parameter(
+                Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z3')
+
+        def construct(self, index, x):
+            ret = self.layers[index](x) * self.z3
+            return ret
+
+    index = Tensor(0, dtype=mstype.int32)
+    net = SwitchLayerCell()
+    net(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+    C.grad_by_list(net, ParameterTuple(net.trainable_params()))(index,
+                                                                Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+    C.grad_all(net)(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+
+
 def test_control_depend_check():
     with pytest.raises(TypeError) as e:
         P.ControlDepend(0.0)

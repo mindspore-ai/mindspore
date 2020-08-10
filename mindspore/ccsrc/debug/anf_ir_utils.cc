@@ -607,6 +607,9 @@ void AnfExporter::ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &fun
   std::vector<AnfNodePtr> parameters = func_graph->parameters();
   OrderedMap<AnfNodePtr, int, ParamPtrHasher, ParamPtrEqual> param_map;
 
+  if (*(func_graph->switch_layer_input())) {
+    ofs << "switch_layer_input: " << *(func_graph->switch_layer_input()) << "\n";
+  }
   ofs << "# [No." << (exported.size() + 1) << "] " << func_graph->DumpText() << "."
       << func_graph->debug_info()->get_id() << "\n";
   if (label_manage::GetGlobalTraceLabelType() == label_manage::TraceLabelType::kWithUniqueId) {

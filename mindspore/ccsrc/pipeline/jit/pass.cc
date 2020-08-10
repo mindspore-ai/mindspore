@@ -90,6 +90,7 @@ bool CleanAfterOptAPass(const ResourcePtr &res) {
 namespace {
 OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig a_1 = opt::OptPassConfig({
+    irpass.switch_layer_defer_inline_,
     irpass.switch_simplify_,
 
     // Safe inlining

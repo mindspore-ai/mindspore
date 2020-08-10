@@ -353,6 +353,8 @@ class FuncGraph : public FuncGraphBase {
   bool stub() const { return stub_; }
   void set_stub(bool stub) { stub_ = stub; }
   static void set_drawer(Drawer drawer) { drawer_ = drawer; }
+  std::shared_ptr<bool> switch_layer_input() const { return switch_layer_input_; }
+  void set_switch_layer_input(std::shared_ptr<bool> switch_layer_input) { switch_layer_input_ = switch_layer_input; }
 
  private:
   // graph is manipulated by manager and others
@@ -414,6 +416,9 @@ class FuncGraph : public FuncGraphBase {
   std::list<CNodePtr> order_;
   bool stub_;
   inline static Drawer drawer_ = nullptr;
+  // Design switch_layer_input as a ptr to
+  // share between derived backpropagator and cloned graphs
+  std::shared_ptr<bool> switch_layer_input_;
 };
 
 inline CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg) {

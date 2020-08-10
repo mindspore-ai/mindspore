@@ -48,6 +48,7 @@ FuncGraph::FuncGraph()
       manager_(std::weak_ptr<FuncGraphManager>()),
       stub_(false) {
   debug_info_ = std::make_shared<GraphDebugInfo>();
+  switch_layer_input_ = std::make_shared<bool>(false);
 }
 
 abstract::AbstractBasePtr FuncGraph::ToAbstract() {
