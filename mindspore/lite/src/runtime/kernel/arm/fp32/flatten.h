@@ -33,7 +33,7 @@ class FlattenCPUKernel : public LiteKernel {
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     flatten_param_ = reinterpret_cast<FlattenParameter *>(parameter);
   }
-  ~FlattenCPUKernel() override { delete flatten_param_; }
+  ~FlattenCPUKernel() override = default;;
 
   int Init() override;
   int ReSize() override;
