@@ -22,7 +22,7 @@ mnist_cfg = edict({
     'num_classes': 10,
     'lr': 0.01,
     'momentum': 0.9,
-    'epoch_size': 1,
+    'epoch_size': 10,
     'batch_size': 32,
     'buffer_size': 1000,
     'image_height': 32,
