@@ -15,7 +15,6 @@
  */
 
 #include "src/runtime/kernel/arm/nnacl/fp32/elu.h"
-#include <string.h>
 #include "include/errorcode.h"
 #include "src/runtime/kernel/arm/nnacl/errorcode.h"
 #include "mindspore/core/utils/log_adapter.h"

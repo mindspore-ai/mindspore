@@ -28,11 +28,17 @@ namespace mindspore::kernel {
 int EluCPUKernel::Init() {
   elu_parameter_ = reinterpret_cast<EluParameter *>(opParameter);
   elu_parameter_->thread_num_ = thread_count_;
+
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
+
+int EluCPUKernel::ReSize() {
   elu_parameter_->in_size_ = inputs_.front()->ElementsNum();
   return RET_OK;
 }
-
-int EluCPUKernel::ReSize() { return RET_OK; }
 
 int EluCPUKernel::DoExcute(int task_id) { Elu(input_addr, output_addr, elu_parameter_, task_id); }
 
@@ -47,6 +53,11 @@ int EluRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int EluCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   input_addr = reinterpret_cast<float *>(inputs_.front()->Data());
   output_addr = reinterpret_cast<float *>(outputs_.front()->Data());
 

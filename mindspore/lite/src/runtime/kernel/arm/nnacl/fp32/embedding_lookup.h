@@ -19,15 +19,15 @@
 
 #include "src/runtime/kernel/arm/nnacl/op_base.h"
 
-struct EmbeddingLookupParameter {
-    OpParameter op_parameter_;
-    bool *is_regulated_;
-    float max_norm_;
-    int ids_size_;
-    int layer_size_;
-    int layer_num_;
-    int thread_num;
-};
+typedef struct {
+  OpParameter op_parameter_;
+  bool *is_regulated_;
+  float max_norm_;
+  int ids_size_;
+  int layer_size_;
+  int layer_num_;
+  int thread_num;
+} EmbeddingLookupParameter;
 
 int EmbeddingLookup(float *input_data, int *ids, float *output_data, EmbeddingLookupParameter *parameter, int task_id);
 

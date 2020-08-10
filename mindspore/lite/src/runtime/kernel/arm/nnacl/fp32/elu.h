@@ -19,12 +19,12 @@
 
 #include "src/runtime/kernel/arm/nnacl/op_base.h"
 
-struct EluParameter {
+typedef struct {
   OpParameter op_parameter_;
   float alpha_;
   int thread_num_;
   int in_size_;
-};
+} EluParameter;
 
 int Elu(float *input_data, float *output_data, EluParameter *parameter, int task_id);
 

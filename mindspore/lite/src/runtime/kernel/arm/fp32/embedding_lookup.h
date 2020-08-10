@@ -28,7 +28,14 @@ class EmbeddingLookupCPUKernel : public LiteKernel {
                                     const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                                     const lite::Primitive *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {}
-  ~EmbeddingLookupCPUKernel() override{};
+  ~EmbeddingLookupCPUKernel() override {
+    if (input_addr_ != nullptr) {
+      free(input_addr_);
+    }
+    if (embedding_lookup_parameter_->is_regulated_ != nullptr) {
+      free(embedding_lookup_parameter_->is_regulated_);
+    }
+  };
 
   int Init() override;
   int ReSize() override;
