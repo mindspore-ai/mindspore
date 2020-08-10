@@ -118,6 +118,9 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
 std::vector<bool> ExtractInputParameterByNode(const CNodePtr &node) {
   std::vector<bool> is_parameter;
   std::vector<AnfNodePtr> node_inputs{node->inputs()};
+  if ((node_inputs.size() == 2) && AnfNodeIsPrimitive(node_inputs[1], MAKE_TUPLE)) {
+    node_inputs = node_inputs[1]->cast<CNodePtr>()->inputs();
+  }
   for (size_t i = 1; i < node_inputs.size(); ++i) {
     auto input = node_inputs[i];
 
@@ -192,6 +195,10 @@ std::vector<size_t> ExtractInputTypeLengthByNode(const CNodePtr &node) {
   std::vector<size_t> inputs_type_len;
   std::vector<AnfNodePtr> node_inputs{node->inputs()};
 
+  if ((node_inputs.size() == 2) && AnfNodeIsPrimitive(node_inputs[1], MAKE_TUPLE)) {
+    node_inputs = node_inputs[1]->cast<CNodePtr>()->inputs();
+  }
+
   // extract input element length
   for (auto &input : node_inputs) {
     if (IsValueNode<RefKey>(input)) {
@@ -255,7 +262,7 @@ bool IsSplittableOperator(const std::string &op_name) {
      FLOORDIV, L2_NORMALIZE, TENSOR_ADD, MAXPOOL, MAXPOOLV2, VIRTUAL_DATA_SET, RELU, ONEHOT, DROPOUT_DO_MASK,
      REDUCE_MAX, REDUCE_MIN, ARGMAXWITHVALUE, ARGMINWITHVALUE, REDUCE_SUM, CONV2D, FUSE_BATCH_NORM, POOLING,
      MAX_POOL_WITH_ARGMAX, SIMPLE_MEAN, FLATTEN, BATCH_NORM, LAYER_NORM, BIAS_ADD, ASSIGN_SUB, COS, ACOS, EXP,
-     LOG, REDUCE_MEAN, REAL_DIV, SIGMOID, POW, MAXIMUM, MINIMUM, EQUAL, NOT_EQUAL, LOGICALNOT, GATHERV2, SQRT,
+     LOG, REDUCE_MEAN, REAL_DIV, SIGMOID, POW, MAXIMUM, MINIMUM, EQUAL, NOT_EQUAL, LOGICALNOT, GATHERV2, SQRT, CONCAT,
      STRIDEDSLICE, GET_NEXT, CAST, NEG, SQUARE, BATCH_MATMUL, EXPAND_DIMS, SQUEEZE, SPARSE_GATHERV2, TILE, DROPOUT,
      SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, SIGMOID_CROSS_ENTROPY_WITH_LOGITS, SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS};
   // clang-format on
@@ -275,7 +282,7 @@ bool IsAutoParallelCareNode(const CNodePtr &cnode) {
     return false;
   }
   bool bool_result = IsParallelCareNode(cnode) && !IsSplittableOperator(prim->name());
-  if (bool_result) {
+  if (bool_result && (prim->name() != MAKE_TUPLE)) {
     MS_LOG(EXCEPTION) << "Should implementing OperatorInfo for: " << prim->name();
   } else if (prim->name() == CAST) {
     if (cnode->fullname_with_scope().find(OPTIMIZER_SUB_STRING) != std::string::npos) {
