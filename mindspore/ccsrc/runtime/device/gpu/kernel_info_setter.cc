@@ -19,6 +19,7 @@
 #include <memory>
 #include "backend/kernel_compiler/kernel.h"
 #include "utils/utils.h"
+#include "utils/ms_context.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -157,25 +158,87 @@ void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, co
     }
   }
 }
+
+bool IsNeedProcessFormatInfo(const CNodePtr &kernel_node, const std::vector<TypeId> &inputs_type) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->execution_mode() == kPynativeMode) {
+    return false;
+  }
+  if (!AnfAlgo::IsRealCNodeKernel(kernel_node)) {
+    return false;
+  }
+  auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+  auto iter = kKernelFormatPositionMap.find(kernel_name);
+  if (iter == kKernelFormatPositionMap.end()) {
+    return false;
+  }
+  if (inputs_type.size() == 0) {
+    return false;
+  }
+  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  if (input_shape.size() != 4) {
+    return false;
+  }
+  return false;
+}
+
+void UpdateKernelFormatInfo(const CNodePtr &kernel_node, const std::vector<TypeId> &inputs_type,
+                            std::vector<std::string> *inputs_format, std::vector<std::string> *outputs_format,
+                            std::string *origin_data_format) {
+  auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+  auto iter = kKernelFormatPositionMap.find(kernel_name);
+  if (iter == kKernelFormatPositionMap.end()) {
+    return;
+  }
+  auto cal_format = (inputs_type[0] == kNumberTypeFloat16) ? kOpFormat_NHWC : kOpFormat_NCHW;
+  MS_LOG(DEBUG) << "Kernel node: " << kernel_node->fullname_with_scope() << ", format: " << cal_format;
+  auto inputs_format_position = iter->second.first;
+  for (const auto &input_format_position : inputs_format_position) {
+    if (input_format_position >= inputs_format->size()) {
+      MS_LOG(EXCEPTION) << "The position [" << input_format_position << "] is out of range of the input size ["
+                        << inputs_format->size() << "] #kernel_node [" << kernel_node->fullname_with_scope() << "]";
+    }
+    (*inputs_format)[input_format_position] = cal_format;
+  }
+  auto outputs_format_position = iter->second.second;
+  for (const auto &output_format_position : outputs_format_position) {
+    if (output_format_position >= outputs_format->size()) {
+      MS_LOG(EXCEPTION) << "The position [" << output_format_position << "] is out of range of the output size ["
+                        << outputs_format->size() << "] #kernel_node [" << kernel_node->fullname_with_scope() << "]";
+    }
+    (*outputs_format)[output_format_position] = cal_format;
+  }
+  auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+  MS_EXCEPTION_IF_NULL(prim);
+  if (prim->HasAttr("data_format")) {
+    *origin_data_format = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "data_format");
+  }
+}
 }  // namespace
 
 void SetKernelInfo(const CNodePtr &kernel_node) {
   std::vector<std::string> inputs_format;
   std::vector<TypeId> inputs_type;
-  std::shared_ptr<KernelBuildInfo::KernelBuildInfoBuilder> builder =
-    std::make_shared<KernelBuildInfo::KernelBuildInfoBuilder>();
   for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); ++input_index) {
     inputs_format.emplace_back(kOpFormat_DEFAULT);
     inputs_type.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_index));
   }
-  builder->SetInputsFormat(inputs_format);
-  builder->SetInputsDeviceType(inputs_type);
   std::vector<std::string> outputs_format;
   std::vector<TypeId> outputs_type;
   for (size_t output_index = 0; output_index < AnfAlgo::GetOutputTensorNum(kernel_node); ++output_index) {
     outputs_format.emplace_back(kOpFormat_DEFAULT);
     outputs_type.push_back(AnfAlgo::GetOutputInferDataType(kernel_node, output_index));
   }
+  std::string origin_data_format = kOpFormat_DEFAULT;
+  if (IsNeedProcessFormatInfo(kernel_node, inputs_type)) {
+    UpdateKernelFormatInfo(kernel_node, inputs_type, &inputs_format, &outputs_format, &origin_data_format);
+  }
+  std::shared_ptr<KernelBuildInfo::KernelBuildInfoBuilder> builder =
+    std::make_shared<KernelBuildInfo::KernelBuildInfoBuilder>();
+  builder->SetOriginDataFormat(origin_data_format);
+  builder->SetInputsFormat(inputs_format);
+  builder->SetInputsDeviceType(inputs_type);
   builder->SetOutputsFormat(outputs_format);
   builder->SetOutputsDeviceType(outputs_type);
 

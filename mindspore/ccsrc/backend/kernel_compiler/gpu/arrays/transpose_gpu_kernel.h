@@ -62,7 +62,7 @@ class TransposeGpuFwdKernel : public GpuKernel {
       MS_LOG(ERROR) << "Output number is " << output_num << ", but transpose needs 1 output.";
       return false;
     }
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     shape_size_ = input_shape.size();
     if (shape_size_ > TRANSPOSE_MAX_DIMENSION) {
       MS_LOG(EXCEPTION) << "Input is " << shape_size_ << "-D, but transpose supports max " << TRANSPOSE_MAX_DIMENSION

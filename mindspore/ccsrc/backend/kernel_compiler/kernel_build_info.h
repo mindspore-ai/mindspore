@@ -38,6 +38,7 @@ class KernelBuildInfo {
     op_pattern_ = kCommonPattern;
     input_reshape_type_ = {};
     output_reshape_type_ = {};
+    origin_data_format_ = kOpFormat_DEFAULT;
     inputs_format_ = {};
     outputs_format_ = {};
     inputs_device_type_ = {};
@@ -63,6 +64,8 @@ class KernelBuildInfo {
   bool IsOutputDefaultPadding() const;
 
   std::vector<Axis> GetOutputReshapeType(size_t input_index) const;
+
+  const std::string &GetOriginDataFormat() const;
 
   const std::vector<std::string> &GetAllInputFormats() const;
 
@@ -97,6 +100,7 @@ class KernelBuildInfo {
 
  private:
   KernelType kernel_type_;
+  std::string origin_data_format_;
   std::vector<std::string> inputs_format_;
   OpPattern op_pattern_;
   std::vector<std::string> outputs_format_;
@@ -134,6 +138,8 @@ class KernelBuildInfo::KernelBuildInfoBuilder {
   ~KernelBuildInfoBuilder() = default;
 
   void SetKernelType(const KernelType &kernel_type);
+
+  void SetOriginDataFormat(const std::string &origin_data_format);
 
   void SetInputsFormat(const std::vector<std::string> &inputs_format);
 

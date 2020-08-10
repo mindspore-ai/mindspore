@@ -252,7 +252,7 @@ Status DeviceQueueOp::RetryPushGPUData(const std::vector<size_t> &data_size, con
         return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "invalid input Data, please check it.");
       } else {
         if (!stop_send_) {
-          MS_LOG(WARNING) << "Retry pushing data...";
+          MS_LOG(DEBUG) << "Retry pushing data...";
           continue;
         }
         break;
