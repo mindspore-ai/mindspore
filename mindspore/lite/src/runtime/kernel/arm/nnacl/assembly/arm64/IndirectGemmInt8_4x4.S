@@ -87,14 +87,15 @@ IndirectGemmInt8_4x4:
             ld1 {v2.16b, v3.16b}, [x12], #32
             smull v10.8h, v0.8b, v6.8b
             smull v11.8h, v0.8b, v7.8b
+            saddlp v16.4s, v8.8h
             smlal2 v10.8h, v0.16b, v6.16b
             smlal2 v11.8h, v0.16b, v7.16b
-            saddlp v16.4s, v8.8h
+            saddlp v17.4s, v9.8h
             smull v14.8h, v1.8b, v6.8b
             smull v15.8h, v1.8b, v7.8b
+            saddlp v18.4s, v10.8h
             smlal2 v14.8h, v1.16b, v6.16b
             smlal2 v15.8h, v1.16b, v7.16b
-            saddlp v17.4s, v9.8h
 
             subs x13, x5, #1
             beq LoopIcEnd
@@ -102,55 +103,55 @@ IndirectGemmInt8_4x4:
             LoopIc:
                 // load input for output 1-8
                 ld1 {v0.16b, v1.16b}, [x12], #32
-                sadalp v18.4s, v10.8h
+                sadalp v19.4s, v11.8h
                 smull v8.8h, v2.8b, v4.8b
                 smull v9.8h, v2.8b, v5.8b
-                sadalp v19.4s, v11.8h
+                sadalp v20.4s, v12.8h
                 smlal2 v8.8h, v2.16b, v4.16b
                 smlal2 v9.8h, v2.16b, v5.16b
-                sadalp v20.4s, v12.8h
+                sadalp v21.4s, v13.8h
                 smull v10.8h, v2.8b, v6.8b
                 smull v11.8h, v2.8b, v7.8b
-                sadalp v21.4s, v13.8h
+                sadalp v22.4s, v14.8h
                 smlal2 v10.8h, v2.16b, v6.16b
                 smlal2 v11.8h, v2.16b, v7.16b
-                sadalp v22.4s, v14.8h
+                sadalp v23.4s, v15.8h
                 smull v12.8h, v3.8b, v4.8b
                 smull v13.8h, v3.8b, v5.8b
-                sadalp v23.4s, v15.8h
+                sadalp v24.4s, v8.8h
                 smlal2 v12.8h, v3.16b, v4.16b
                 smlal2 v13.8h, v3.16b, v5.16b
-                sadalp v24.4s, v8.8h
                 ld1 {v4.16b, v5.16b}, [x2], #32
+                sadalp v25.4s, v9.8h
                 smull v14.8h, v3.8b, v6.8b
                 smull v15.8h, v3.8b, v7.8b
-                sadalp v25.4s, v9.8h
+                sadalp v26.4s, v10.8h
                 smlal2 v14.8h, v3.16b, v6.16b
                 smlal2 v15.8h, v3.16b, v7.16b
-                sadalp v26.4s, v10.8h
                 ld1 {v6.16b, v7.16b}, [x2], #32
+                sadalp v27.4s, v11.8h
                 smull v8.8h, v0.8b, v4.8b
                 smull v9.8h, v0.8b, v5.8b
-                sadalp v27.4s, v11.8h
+                sadalp v28.4s, v12.8h
                 smlal2 v8.8h, v0.16b, v4.16b
                 smlal2 v9.8h, v0.16b, v5.16b
-                sadalp v28.4s, v12.8h
                 ld1 {v2.16b, v3.16b}, [x12], #32
+                sadalp v29.4s, v13.8h
                 smull v12.8h, v1.8b, v4.8b
                 smull v13.8h, v1.8b, v5.8b
-                sadalp v29.4s, v13.8h
+                sadalp v30.4s, v14.8h
                 smlal2 v12.8h, v1.16b, v4.16b
                 smlal2 v13.8h, v1.16b, v5.16b
-                sadalp v30.4s, v14.8h
+                sadalp v31.4s, v15.8h
                 smull v10.8h, v0.8b, v6.8b
                 smull v11.8h, v0.8b, v7.8b
-                sadalp v31.4s, v15.8h
+                sadalp v16.4s, v8.8h
                 smlal2 v10.8h, v0.16b, v6.16b
                 smlal2 v11.8h, v0.16b, v7.16b
-                sadalp v16.4s, v8.8h
+                sadalp v17.4s, v9.8h
                 smull v14.8h, v1.8b, v6.8b
                 smull v15.8h, v1.8b, v7.8b
-                sadalp v17.4s, v9.8h
+                saddlp v18.4s, v10.8h
                 smlal2 v14.8h, v1.16b, v6.16b
                 smlal2 v15.8h, v1.16b, v7.16b
 
@@ -158,33 +159,32 @@ IndirectGemmInt8_4x4:
                 bne LoopIc
 
             LoopIcEnd:
-                sadalp v18.4s, v10.8h
+                sadalp v19.4s, v11.8h
                 smull v8.8h, v2.8b, v4.8b
                 smull v9.8h, v2.8b, v5.8b
-                sadalp v19.4s, v11.8h
+                sadalp v20.4s, v12.8h
                 smlal2 v8.8h, v2.16b, v4.16b
                 smlal2 v9.8h, v2.16b, v5.16b
-                sadalp v20.4s, v12.8h
+                sadalp v21.4s, v13.8h
                 smull v10.8h, v2.8b, v6.8b
                 smull v11.8h, v2.8b, v7.8b
-                sadalp v21.4s, v13.8h
+                sadalp v22.4s, v14.8h
                 smlal2 v10.8h, v2.16b, v6.16b
                 smlal2 v11.8h, v2.16b, v7.16b
-                sadalp v22.4s, v14.8h
+                sadalp v23.4s, v15.8h
                 smull v12.8h, v3.8b, v4.8b
                 smull v13.8h, v3.8b, v5.8b
-                sadalp v23.4s, v15.8h
+                sadalp v24.4s, v8.8h
                 smlal2 v12.8h, v3.16b, v4.16b
                 smlal2 v13.8h, v3.16b, v5.16b
-                sadalp v24.4s, v8.8h
+                sadalp v25.4s, v9.8h
                 smull v14.8h, v3.8b, v6.8b
                 smull v15.8h, v3.8b, v7.8b
-                sadalp v25.4s, v9.8h
+                sadalp v26.4s, v10.8h
                 smlal2 v14.8h, v3.16b, v6.16b
                 smlal2 v15.8h, v3.16b, v7.16b
-                sadalp v26.4s, v10.8h
                 sadalp v27.4s, v11.8h
-                sadalp v28.4s ,v12.8h
+                sadalp v28.4s, v12.8h
                 sadalp v29.4s, v13.8h
                 sadalp v30.4s, v14.8h
                 sadalp v31.4s, v15.8h
@@ -204,6 +204,7 @@ IndirectGemmInt8_4x4:
                 addp v26.4s, v26.4s, v27.4s
                 addp v28.4s, v28.4s, v29.4s
                 addp v30.4s, v30.4s, v31.4s
+                dup v12.4s, wzr
                 cbz x3, NoReadBias
                 ld1 {v12.4s}, [x3]            
             NoReadBias:
@@ -221,40 +222,40 @@ IndirectGemmInt8_4x4:
                 add v28.4s, v28.4s, v12.4s
 
                 dup v2.4s, w18
-                sqshl v16.4s, v16.4s ,v2.4s
-                sqshl v20.4s, v20.4s ,v2.4s
-                sqshl v24.4s, v24.4s ,v2.4s
-                sqshl v28.4s, v28.4s ,v2.4s
+                sqshl v16.4s, v16.4s, v2.4s
+                sqshl v20.4s, v20.4s, v2.4s
+                sqshl v24.4s, v24.4s, v2.4s
+                sqshl v28.4s, v28.4s, v2.4s
 
                 dup v3.4s, w17
-                sqrdmulh v16.4s, v16.4s ,v3.4s
-                sqrdmulh v20.4s, v20.4s ,v3.4s
-                sqrdmulh v24.4s, v24.4s ,v3.4s
-                sqrdmulh v28.4s, v28.4s ,v3.4s
+                sqrdmulh v16.4s, v16.4s, v3.4s
+                sqrdmulh v20.4s, v20.4s, v3.4s
+                sqrdmulh v24.4s, v24.4s, v3.4s
+                sqrdmulh v28.4s, v28.4s, v3.4s
 
                 dup v4.4s, w19
-                sqrshl v16.4s, v16.4s ,v4.4s
-                sqrshl v20.4s, v20.4s ,v4.4s
-                sqrshl v24.4s, v24.4s ,v4.4s
-                sqrshl v28.4s, v28.4s ,v4.4s
+                sqrshl v16.4s, v16.4s, v4.4s
+                sqrshl v20.4s, v20.4s, v4.4s
+                sqrshl v24.4s, v24.4s, v4.4s
+                sqrshl v28.4s, v28.4s, v4.4s
                 
                 dup v5.4s, w16
-                add v16.4s, v16.4s ,v5.4s
-                add v20.4s, v20.4s ,v5.4s
-                add v24.4s, v24.4s ,v5.4s
-                add v28.4s, v28.4s ,v5.4s
+                add v16.4s, v16.4s, v5.4s
+                add v20.4s, v20.4s, v5.4s
+                add v24.4s, v24.4s, v5.4s
+                add v28.4s, v28.4s, v5.4s
 
                 dup v0.4s, w8
-                smax v16.4s, v16.4s ,v0.4s
-                smax v20.4s, v20.4s ,v0.4s
-                smax v24.4s, v24.4s ,v0.4s
-                smax v28.4s, v28.4s ,v0.4s
+                smax v16.4s, v16.4s, v0.4s
+                smax v20.4s, v20.4s, v0.4s
+                smax v24.4s, v24.4s, v0.4s
+                smax v28.4s, v28.4s, v0.4s
 
                 dup v1.4s, w9
-                smin v16.4s, v16.4s ,v1.4s
-                smin v20.4s, v20.4s ,v1.4s
-                smin v24.4s, v24.4s ,v1.4s
-                smin v28.4s, v28.4s ,v1.4s
+                smin v16.4s, v16.4s, v1.4s
+                smin v20.4s, v20.4s, v1.4s
+                smin v24.4s, v24.4s, v1.4s
+                smin v28.4s, v28.4s, v1.4s
 
                 sqxtn v13.4h, v16.4s
                 sqxtn2 v13.8h, v20.4s
