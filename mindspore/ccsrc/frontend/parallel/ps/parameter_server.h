@@ -42,6 +42,7 @@
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 #include "backend/kernel_compiler/cpu/ps/pserver_kernel.h"
+#include "backend/kernel_compiler/cpu/ps/sparse_apply_adam_ps_kernel.h"
 #include "backend/kernel_compiler/cpu/ps/sparse_apply_lazy_adam_ps_kernel.h"
 #include "backend/kernel_compiler/cpu/ps/sparse_apply_ftrl_ps_kernel.h"
 #include "backend/kernel_compiler/cpu/ps/apply_momentum_ps_kernel.h"
@@ -374,6 +375,11 @@ void ParameterServer<T>::InitOptimInputsShape(const Keys &keys, const Values &va
       const CNodePtr cnode = GetCNode(optim_op_name);
       MS_EXCEPTION_IF_NULL(cnode);
       if (optim_name == kSparseAdam) {
+        std::shared_ptr<PServerKernel> optimizer =
+          std::make_shared<kernel::ps::SparseApplyAdamPSKernel>(rank_id_, pserver_num_);
+        optimizer->InitKernel(cnode, optim_inputs_shape_[key]);
+        optimizers_[key] = optimizer;
+      } else if (optim_name == kSparseLazyAdam) {
         std::shared_ptr<PServerKernel> optimizer =
           std::make_shared<kernel::ps::SparseApplyLazyAdamPSKernel>(rank_id_, pserver_num_);
         optimizer->InitKernel(cnode, optim_inputs_shape_[key]);

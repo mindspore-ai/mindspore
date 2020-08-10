@@ -25,19 +25,22 @@ namespace ps {
 std::unordered_map<std::string, int> Util::optimizer_to_ids{
   {kApplyMomentum, 0},
   {kSparseAdam, 1},
-  {kSparseFtrl, 2},
+  {kSparseLazyAdam, 2},
+  {kSparseFtrl, 3},
 };
 
 std::unordered_map<int, std::string> Util::id_to_optimizers{
   {0, kApplyMomentum},
   {1, kSparseAdam},
-  {2, kSparseFtrl},
+  {2, kSparseLazyAdam},
+  {3, kSparseFtrl},
 };
 
 std::unordered_map<int, std::string> Util::id_to_optimizer_nodes{
   {0, kApplyMomentumOp},
   {1, kSparseAdamOp},
-  {2, kSparseFtrlOp},
+  {2, kSparseLazyAdamOp},
+  {3, kSparseFtrlOp},
 };
 
 bool Util::IsParamServerMode() { return IsRoleOfWorker() || IsRoleOfPServer() || IsRoleOfScheduler(); }
