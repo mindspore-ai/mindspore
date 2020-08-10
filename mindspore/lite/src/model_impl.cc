@@ -166,6 +166,8 @@ lite::Primitive *ModelImpl::CopyPrimitive(const schema::Primitive *srcPrim) {
       return new lite::Exp(const_cast<schema::Primitive *>(srcPrim));
     case schema::PrimitiveType_Gather:
       return new lite::Gather(const_cast<schema::Primitive *>(srcPrim));
+    case schema::PrimitiveType_GatherNd:
+      return new lite::GatherNd(const_cast<schema::Primitive *>(srcPrim));
     case schema::PrimitiveType_LocalResponseNormalization:
       return new lite::LocalResponseNormalization(const_cast<schema::Primitive *>(srcPrim));
     case schema::PrimitiveType_Maximum:
@@ -180,6 +182,8 @@ lite::Primitive *ModelImpl::CopyPrimitive(const schema::Primitive *srcPrim) {
       return new lite::Prelu(const_cast<schema::Primitive *>(srcPrim));
     case schema::PrimitiveType_Round:
       return new lite::Round(const_cast<schema::Primitive *>(srcPrim));
+    case schema::PrimitiveType_Reverse:
+      return new lite::Reverse(const_cast<schema::Primitive *>(srcPrim));
     case schema::PrimitiveType_ReverseSequence:
       return new lite::ReverseSequence(const_cast<schema::Primitive *>(srcPrim));
     case schema::PrimitiveType_LogicalAnd:
@@ -212,6 +216,8 @@ lite::Primitive *ModelImpl::CopyPrimitive(const schema::Primitive *srcPrim) {
       return new lite::Split(const_cast<schema::Primitive *>(srcPrim));
     case schema::PrimitiveType_OneHot:
       return new lite::OneHot(const_cast<schema::Primitive *>(srcPrim));
+    case schema::PrimitiveType_Resize:
+      return new lite::Resize(const_cast<schema::Primitive *>(srcPrim));
     case schema::PrimitiveType_MatMul:
       return new lite::MatMul(const_cast<schema::Primitive *>(srcPrim));
     case schema::PrimitiveType_QuantDTypeCast:
