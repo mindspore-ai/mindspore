@@ -20,7 +20,7 @@
 namespace mindspore {
 namespace lite {
 void CaffeDeconvolutionParser::ParseGroupDeconvolution(schema::CNodeT *op, schema::DeConv2DT *attr) {
-  if (attr == nullptr || attr->group == 1 || attr->group != attr->channelIn) {
+  if (attr == nullptr || attr->group == 1) {
     return;
   }
 
