@@ -96,7 +96,7 @@ static const std::vector<schema::PrimitiveType> nhwcOpList = {
   schema::PrimitiveType_Conv2D,          schema::PrimitiveType_DeConv2D,
   schema::PrimitiveType_DepthwiseConv2D, schema::PrimitiveType_DeDepthwiseConv2D,
   schema::PrimitiveType_Pooling,         schema::PrimitiveType_Resize,
-  schema::PrimitiveType_FusedBatchNorm};
+  schema::PrimitiveType_BatchNorm};
 
 static const std::vector<schema::PrimitiveType> fp32FullOpList = {
   schema::PrimitiveType_Concat, schema::PrimitiveType_Add,
