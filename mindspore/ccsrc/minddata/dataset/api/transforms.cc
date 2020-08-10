@@ -138,8 +138,9 @@ std::shared_ptr<RandomColorAdjustOperation> RandomColorAdjust(std::vector<float>
 
 // Function to create RandomCropOperation.
 std::shared_ptr<RandomCropOperation> RandomCrop(std::vector<int32_t> size, std::vector<int32_t> padding,
-                                                bool pad_if_needed, std::vector<uint8_t> fill_value) {
-  auto op = std::make_shared<RandomCropOperation>(size, padding, pad_if_needed, fill_value);
+                                                bool pad_if_needed, std::vector<uint8_t> fill_value,
+                                                BorderType padding_mode) {
+  auto op = std::make_shared<RandomCropOperation>(size, padding, pad_if_needed, fill_value, padding_mode);
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -453,8 +454,12 @@ std::shared_ptr<TensorOp> RandomColorAdjustOperation::Build() {
 
 // RandomCropOperation
 RandomCropOperation::RandomCropOperation(std::vector<int32_t> size, std::vector<int32_t> padding, bool pad_if_needed,
-                                         std::vector<uint8_t> fill_value)
-    : size_(size), padding_(padding), pad_if_needed_(pad_if_needed), fill_value_(fill_value) {}
+                                         std::vector<uint8_t> fill_value, BorderType padding_mode)
+    : size_(size),
+      padding_(padding),
+      pad_if_needed_(pad_if_needed),
+      fill_value_(fill_value),
+      padding_mode_(padding_mode) {}
 
 bool RandomCropOperation::ValidateParams() {
   if (size_.empty() || size_.size() > 2) {
@@ -493,7 +498,7 @@ std::shared_ptr<TensorOp> RandomCropOperation::Build() {
   }
 
   auto tensor_op = std::make_shared<RandomCropOp>(crop_height, crop_width, pad_top, pad_bottom, pad_left, pad_right,
-                                                  BorderType::kConstant, pad_if_needed_, fill_r, fill_g, fill_b);
+                                                  padding_mode_, pad_if_needed_, fill_r, fill_g, fill_b);
   return tensor_op;
 }
 
