@@ -381,6 +381,7 @@ class DeepLabV3(nn.Cell):
         self.concat = P.Concat(axis=2)
         self.expand_dims = P.ExpandDims()
         self.reduce_mean = P.ReduceMean()
+        self.argmax = P.Argmax(axis=1)
         self.sample_common = P.ResizeBilinear((int(feature_shape[2]),
                                                int(feature_shape[3])),
                                               align_corners=True)
@@ -419,6 +420,8 @@ class DeepLabV3(nn.Cell):
                 logits_i = self.expand_dims(logits_i, 2)
                 logits = self.concat((logits, logits_i))
         logits = self.reduce_mean(logits, 2)
+        if not self.training:
+            logits = self.argmax(logits)
         return logits
 
 
