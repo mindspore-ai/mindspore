@@ -99,7 +99,7 @@ def run_general_distill():
                                    power=common_cfg.AdamWeightDecay.power)
     params = netwithloss.trainable_params()
     decay_params = list(filter(common_cfg.AdamWeightDecay.decay_filter, params))
-    other_params = list(filter(lambda x: not cfg.AdamWeightDecay.decay_filter(x), params))
+    other_params = list(filter(lambda x: not common_cfg.AdamWeightDecay.decay_filter(x), params))
     group_params = [{'params': decay_params, 'weight_decay': common_cfg.AdamWeightDecay.weight_decay},
                     {'params': other_params, 'weight_decay': 0.0},
                     {'order_params': params}]

@@ -50,7 +50,7 @@ def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoin
                                        power=optimizer_cfg.AdamWeightDecay.power)
         params = net_with_loss.trainable_params()
         decay_params = list(filter(optimizer_cfg.AdamWeightDecay.decay_filter, params))
-        other_params = list(filter(lambda x: not cfg.AdamWeightDecay.decay_filter(x), params))
+        other_params = list(filter(lambda x: not optimizer_cfg.AdamWeightDecay.decay_filter(x), params))
         group_params = [{'params': decay_params, 'weight_decay': optimizer_cfg.AdamWeightDecay.weight_decay},
                         {'params': other_params, 'weight_decay': 0.0}]
 
@@ -70,7 +70,9 @@ def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoin
 
     # load checkpoint into network
     ckpt_config = CheckpointConfig(save_checkpoint_steps=steps_per_epoch, keep_checkpoint_max=1)
-    ckpoint_cb = ModelCheckpoint(prefix="classifier", directory=save_checkpoint_path, config=ckpt_config)
+    ckpoint_cb = ModelCheckpoint(prefix="classifier",
+                                 directory=None if save_checkpoint_path == "" else save_checkpoint_path,
+                                 config=ckpt_config)
     param_dict = load_checkpoint(load_checkpoint_path)
     load_param_into_net(network, param_dict)
 
