@@ -218,6 +218,8 @@ lite::Primitive *ModelImpl::CopyPrimitive(const schema::Primitive *srcPrim) {
       return new lite::QuantDTypeCast(const_cast<schema::Primitive *>(srcPrim));
     case schema::PrimitiveType_EmbeddingLookup:
       return new lite::EmbeddingLookup(const_cast<schema::Primitive *>(srcPrim));
+    case schema::PrimitiveType_Elu:
+      return new lite::Elu(const_cast<schema::Primitive *>(srcPrim));
     default:
       break;
   }
