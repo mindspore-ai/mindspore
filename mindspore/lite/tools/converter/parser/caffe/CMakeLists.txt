@@ -18,6 +18,8 @@ add_library(caffe_parser_mid OBJECT
         ${CMAKE_CURRENT_SOURCE_DIR}/caffe_deconvolution_parser.h
         ${CMAKE_CURRENT_SOURCE_DIR}/caffe_eltwise_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/caffe_eltwise_parser.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_flatten_parser.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_flatten_parser.h
         ${CMAKE_CURRENT_SOURCE_DIR}/caffe_innerproduct_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/caffe_innerproduct_parser.h
         ${CMAKE_CURRENT_SOURCE_DIR}/caffe_inspector.cc
