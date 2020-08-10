@@ -33,6 +33,7 @@ const int8_t MAX_ELTWISE_NUM = 3;
 const int8_t MIN_ELTWISE_SIZE = 2;
 const int8_t ELTWISE_INPUT_SIZE = 2;
 const int8_t ELTWISE_DOUBLE_IN_INPUT_SIZE = 3;
+const int8_t ELTWISE_DOUBLE_OUTPUT_SIZE = 2;
 const int8_t CONV_DOUBLE_IN_INPUT_SIZE = 3;
 const int8_t CONV_QUART_IN_INPUT_SIZE = 5;
 const int8_t ELTWISE_USE = 1;
