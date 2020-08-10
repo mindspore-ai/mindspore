@@ -864,3 +864,9 @@ table TopKV2 {
     sorted : bool = true;
 }
 
+
+table MakeTuple {
+}
+
+table Return {
+}

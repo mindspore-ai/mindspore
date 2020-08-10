@@ -32,8 +32,8 @@ class AnfExporter {
   AnfExporter() = default;
   virtual ~AnfExporter() = default;
   schema::MetaGraphT *Export(const FuncGraphPtr &funcGraph);
-  void SetOpOutputNode(const std::vector<schema::TensorT *> &outputTensors, schema::MetaGraphT *graph,
-                       schema::CNodeT *cnode);
+  void SetOpOutputNode(const CNodePtr &cnode, const std::vector<schema::TensorT *> &outputTensors,
+                       schema::MetaGraphT *graph, schema::CNodeT *fbnode);
   void SetOpInputNode(const CNodePtr &cnode, schema::MetaGraphT *meta_graph, schema::CNodeT *fbNode);
   void RemoveIfMakeTuple(const CNodePtr &cnode);
   bool RemoveIfTupleGetItem(const CNodePtr &cnode);
@@ -47,4 +47,3 @@ class AnfExporter {
 schema::MetaGraphT *Export(const FuncGraphPtr &funcGraph);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_ANF_EXPORTER_ANF_EXPORTER_H_
-
