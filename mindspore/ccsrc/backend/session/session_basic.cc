@@ -1007,7 +1007,7 @@ void SessionBasic::Summary(KernelGraph *graph) {
 }
 
 namespace {
-bool CNodePrimIsValueNode(const AnfNodePtr &node) {
+bool CNodeFirstInputIsPrimitive(const AnfNodePtr &node) {
   if (node == nullptr) {
     return false;
   }
@@ -1016,7 +1016,7 @@ bool CNodePrimIsValueNode(const AnfNodePtr &node) {
     return false;
   }
   auto prim = cnode->input(kAnfPrimitiveIndex);
-  if (prim == nullptr || !prim->isa<ValueNode>()) {
+  if (prim == nullptr || !IsValueNode<Primitive>(prim)) {
     return false;
   }
   return true;
@@ -1032,7 +1032,7 @@ void HandleInternalOutput(const AnfNodePtr &front_node, const AnfNodePtr &backen
 
   auto front_real_kernel = front_real_kernel_pair.first;
   std::string kernel_target = GetCNodeTarget(front_real_kernel);
-  bool internal_output = CNodePrimIsValueNode(front_real_kernel);
+  bool internal_output = CNodeFirstInputIsPrimitive(front_real_kernel);
   bool unique_target = true;
   if (internal_output && opt::IsNopNode(front_real_kernel)) {
     auto pre_node_pair = AnfAlgo::GetPrevNodeOutput(front_real_kernel, 0);
@@ -1043,13 +1043,7 @@ void HandleInternalOutput(const AnfNodePtr &front_node, const AnfNodePtr &backen
   }
   if (internal_output) {
     for (auto user : users) {
-      auto cnode = user.first->cast<CNodePtr>();
-      if (cnode == nullptr) {
-        internal_output = false;
-        break;
-      }
-      auto prim = cnode->input(kAnfPrimitiveIndex);
-      if (prim == nullptr || !prim->isa<ValueNode>()) {
+      if (!CNodeFirstInputIsPrimitive(user.first)) {
         internal_output = false;
         break;
       }
