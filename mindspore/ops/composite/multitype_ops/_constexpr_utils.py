@@ -58,6 +58,26 @@ def check_equal(param1, param2, msg="{},{}"):
 
 
 @constexpr
+def check_int_positive(arg_name, arg_value, op_name):
+    """Int type judgment."""
+    if isinstance(arg_value, int):
+        if arg_value > 0:
+            return arg_value
+        raise ValueError("For \'{}\' the `{}` must be positive, but got {}".format(op_name, arg_name, arg_value))
+    raise TypeError("For \'{}\' the `{}` must be int, cannot be {}".format(op_name, arg_name, type(arg_value)))
+
+
+@constexpr
+def check_non_negative(arg_name, arg_value, op_name):
+    """Int type judgment."""
+    if isinstance(arg_value, int):
+        if arg_value >= 0:
+            return arg_value
+        raise ValueError("For \'{}\' the `{}` must be non_negative, but got {}".format(op_name, arg_name, arg_value))
+    raise TypeError("For \'{}\' the `{}` must be int, cannot be {}".format(op_name, arg_name, type(arg_value)))
+
+
+@constexpr
 def check_ellipsis_shape_size(data_shape, value_shape, data_size, value_size):
     """Checks the shape and size of the sensor and value."""
     if data_shape == value_shape or data_size == value_size or value_size == 1:

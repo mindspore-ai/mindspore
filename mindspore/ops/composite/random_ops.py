@@ -21,7 +21,6 @@ from ..primitive import constexpr
 from .multitype_ops import _constexpr_utils as const_utils
 from ...common import dtype as mstype
 from ..._checkparam import Validator as validator
-from ..._checkparam import check_int_positive
 from ..._checkparam import Rel
 
 # set graph-level RNG seed
@@ -41,7 +40,7 @@ def set_seed(seed):
     Examples:
         >>> C.set_seed(10)
     """
-    check_int_positive(seed)
+    const_utils.check_int_positive("seed", seed, "set_seed")
     global _GRAPH_SEED
     _GRAPH_SEED = seed
 
@@ -60,7 +59,6 @@ def get_seed():
         >>> C.get_seed(10)
     """
     return _GRAPH_SEED
-
 
 def normal(shape, mean, stddev, seed=0):
     """
@@ -88,13 +86,121 @@ def normal(shape, mean, stddev, seed=0):
     stddev_dtype = F.dtype(stddev)
     const_utils.check_tensors_dtype_same(mean_dtype, mstype.float32, "normal")
     const_utils.check_tensors_dtype_same(stddev_dtype, mstype.float32, "normal")
+    const_utils.check_non_negative("seed", seed, "normal")
     seed1 = get_seed()
     seed2 = seed
     stdnormal = P.StandardNormal(seed1, seed2)
-    rnd = stdnormal(shape)
-    value = rnd * stddev + mean
+    random_normal = stdnormal(shape)
+    value = random_normal * stddev + mean
     return value
 
+def uniform(shape, a, b, seed=0, dtype=mstype.float32):
+    """
+    Generates random numbers according to the Uniform random number distribution.
+
+    Args:
+        shape (tuple): The shape of random tensor to be generated.
+        a (Tensor): The a distribution parameter.
+          It defines the minimum possibly generated value. With int32 or float32 data type.
+          If dtype is int32, only one number is allowed.
+        b (Tensor): The b distribution parameter.
+          It defines the maximum possibly generated value. With int32 or float32 data type.
+          If dtype is int32, only one number is allowed.
+        seed (int): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
+          Default: 0.
+
+    Returns:
+        Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of a and b.
+        The dtype is designated as the input `dtype`.
+
+    Examples:
+        >>> For discrete uniform distribution, only one number is allowed for both a and b:
+        >>> shape = (4, 2)
+        >>> a = Tensor(1, mstype.int32)
+        >>> b = Tensor(2, mstype.int32)
+        >>> output = C.uniform(shape, a, b, seed=5)
+        >>>
+        >>> For continuous uniform distribution, a and b can be multi-dimentional:
+        >>> shape = (4, 2)
+        >>> a = Tensor([1.0, 2.0], mstype.float32)
+        >>> b = Tensor([4.0, 5.0], mstype.float32)
+        >>> output = C.uniform(shape, a, b, seed=5)
+    """
+    a_dtype = F.dtype(a)
+    b_dtype = F.dtype(b)
+    const_utils.check_tensors_dtype_same(a_dtype, dtype, "uniform")
+    const_utils.check_tensors_dtype_same(b_dtype, dtype, "uniform")
+    const_utils.check_non_negative("seed", seed, "uniform")
+    seed1 = get_seed()
+    seed2 = seed
+    if const_utils.is_same_type(dtype, mstype.int32):
+        random_uniform = P.UniformInt(seed1, seed2)
+        value = random_uniform(shape, a, b)
+    else:
+        uniform_real = P.UniformReal(seed1, seed2)
+        random_uniform = uniform_real(shape)
+        value = random_uniform * (b - a) + a
+    return value
+
+def gamma(shape, alpha, beta, seed=0):
+    """
+    Generates random numbers according to the Gamma random number distribution.
+
+    Args:
+        shape (tuple): The shape of random tensor to be generated.
+        alpha (Tensor): The alpha α distribution parameter. With float32 data type.
+        beta (Tensor): The beta β distribution parameter. With float32 data type.
+        seed (int): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
+          Default: 0.
+
+    Returns:
+        Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of alpha and beta.
+        The dtype is float32.
+
+    Examples:
+        >>> shape = (4, 16)
+        >>> alpha = Tensor(1.0, mstype.float32)
+        >>> beta = Tensor(1.0, mstype.float32)
+        >>> output = C.gamma(shape, alpha, beta, seed=5)
+    """
+    alpha_dtype = F.dtype(alpha)
+    beta_dtype = F.dtype(beta)
+    const_utils.check_tensors_dtype_same(alpha_dtype, mstype.float32, "gamma")
+    const_utils.check_tensors_dtype_same(beta_dtype, mstype.float32, "gamma")
+    const_utils.check_non_negative("seed", seed, "gamma")
+    seed1 = get_seed()
+    seed2 = seed
+    random_gamma = P.Gamma(seed1, seed2)
+    value = random_gamma(shape, alpha, beta)
+    return value
+
+def poisson(shape, mean, seed=0):
+    """
+    Generates random numbers according to the Poisson random number distribution.
+
+    Args:
+        shape (tuple): The shape of random tensor to be generated.
+        mean (Tensor): The mean μ distribution parameter. With float32 data type.
+        seed (int): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
+          Default: 0.
+
+    Returns:
+        Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of mean.
+        The dtype is float32.
+
+    Examples:
+        >>> shape = (4, 16)
+        >>> mean = Tensor(1.0, mstype.float32)
+        >>> output = C.poisson(shape, mean, seed=5)
+    """
+    mean_dtype = F.dtype(mean)
+    const_utils.check_tensors_dtype_same(mean_dtype, mstype.float32, "poisson")
+    const_utils.check_non_negative("seed", seed, "poisson")
+    seed1 = get_seed()
+    seed2 = seed
+    random_poisson = P.Poisson(seed1, seed2)
+    value = random_poisson(shape, mean)
+    return value
 
 def multinomial(inputs, num_sample=None, replacement=True, seed=0):
     r"""
@@ -133,108 +239,12 @@ def multinomial(inputs, num_sample=None, replacement=True, seed=0):
         n_dist = 1
         if len(shape(inputs)) > 1:
             n_dist = shape(inputs)[-2]
-        random_uniform = P.UniformReal(seed=seed)((n_dist * num_sample,))
+        a = Tensor(0.0, mstype.float32)
+        b = Tensor(1.0, mstype.float32)
+        random_uniform = P.UniformReal(seed=seed)((n_dist * num_sample,), a, b)
         if n_dist != 1:
             random_uniform = reshape(random_uniform, (n_dist, num_sample))
         vals = P.RealDiv()(P.Log()(random_uniform), inputs + 1e-6)
         _, indices = P.TopK()(vals, num_sample)
         return indices
     return P.Multinomial(seed=seed)(inputs, num_sample)
-
-def uniform(shape, a, b, seed=0, dtype=mstype.float32):
-    """
-    Generates random numbers according to the Uniform random number distribution.
-
-    Args:
-        shape (tuple): The shape of random tensor to be generated.
-        a (Tensor): The a distribution parameter.
-          It defines the minimum possibly generated value. With int32 or float32 data type.
-          If dtype is int32, only one number is allowed.
-        b (Tensor): The b distribution parameter.
-          It defines the maximum possibly generated value. With int32 or float32 data type.
-          If dtype is int32, only one number is allowed.
-        seed (int): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
-          Default: 0.
-
-    Returns:
-        Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of a and b.
-        The dtype is float32.
-
-    Examples:
-        >>> shape = (4, 16)
-        >>> a = Tensor(1.0, mstype.float32)
-        >>> b = Tensor(1.0, mstype.float32)
-        >>> output = C.uniform(shape, a, b, seed=5)
-    """
-    a_dtype = F.dtype(a)
-    b_dtype = F.dtype(b)
-    const_utils.check_tensors_dtype_same(a_dtype, dtype, "uniform")
-    const_utils.check_tensors_dtype_same(b_dtype, dtype, "uniform")
-    seed1 = get_seed()
-    seed2 = seed
-    if const_utils.is_same_type(dtype, mstype.int32):
-        rnd = P.UniformInt(seed1, seed2)
-        value = rnd(shape, a, b)
-    else:
-        uniform_real = P.UniformReal(seed1, seed2)
-        rnd = uniform_real(shape)
-        value = rnd * (b - a) + a
-    return value
-
-def gamma(shape, alpha, beta, seed=0):
-    """
-    Generates random numbers according to the Gamma random number distribution.
-
-    Args:
-        shape (tuple): The shape of random tensor to be generated.
-        alpha (Tensor): The alpha α distribution parameter. With float32 data type.
-        beta (Tensor): The beta β distribution parameter. With float32 data type.
-        seed (int): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
-          Default: 0.
-
-    Returns:
-        Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of alpha and beta.
-        The dtype is float32.
-
-    Examples:
-        >>> shape = (4, 16)
-        >>> alpha = Tensor(1.0, mstype.float32)
-        >>> beta = Tensor(1.0, mstype.float32)
-        >>> output = C.gamma(shape, alpha, beta, seed=5)
-    """
-    alpha_dtype = F.dtype(alpha)
-    beta_dtype = F.dtype(beta)
-    const_utils.check_tensors_dtype_same(alpha_dtype, mstype.float32, "gamma")
-    const_utils.check_tensors_dtype_same(beta_dtype, mstype.float32, "gamma")
-    seed1 = get_seed()
-    seed2 = seed
-    random_gamma = P.Gamma(seed1, seed2)
-    value = random_gamma(shape, alpha, beta)
-    return value
-
-def poisson(shape, mean, seed=0):
-    """
-    Generates random numbers according to the Poisson random number distribution.
-
-    Args:
-        shape (tuple): The shape of random tensor to be generated.
-        mean (Tensor): The mean μ distribution parameter. With float32 data type.
-        seed (int): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
-          Default: 0.
-
-    Returns:
-        Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of mean.
-        The dtype is float32.
-
-    Examples:
-        >>> shape = (4, 16)
-        >>> mean = Tensor(1.0, mstype.float32)
-        >>> output = C.poisson(shape, mean, seed=5)
-    """
-    mean_dtype = F.dtype(mean)
-    const_utils.check_tensors_dtype_same(mean_dtype, mstype.float32, "poisson")
-    seed1 = get_seed()
-    seed2 = seed
-    random_poisson = P.Poisson(seed1, seed2)
-    value = random_poisson(shape, mean)
-    return value

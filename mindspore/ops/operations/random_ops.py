@@ -46,8 +46,8 @@ class StandardNormal(PrimitiveWithInfer):
     def __init__(self, seed=0, seed2=0):
         """Init StandardNormal"""
         self.init_prim_io_names(inputs=['shape'], outputs=['output'])
-        validator.check_value_type('seed', seed, [int], self.name)
-        validator.check_value_type('seed2', seed2, [int], self.name)
+        validator.check_integer("seed", seed, 0, Rel.GE, self.name)
+        validator.check_integer("seed2", seed2, 0, Rel.GE, self.name)
 
     def __infer__(self, shape):
         shape_v = shape["value"]
@@ -151,8 +151,8 @@ class Gamma(PrimitiveWithInfer):
     def __init__(self, seed=0, seed2=0):
         """Init Gamma"""
         self.init_prim_io_names(inputs=['shape', 'alpha', 'beta'], outputs=['output'])
-        validator.check_value_type('seed', seed, [int], self.name)
-        validator.check_value_type('seed2', seed2, [int], self.name)
+        validator.check_integer("seed", seed, 0, Rel.GE, self.name)
+        validator.check_integer("seed2", seed2, 0, Rel.GE, self.name)
 
     def __infer__(self, shape, alpha, beta):
         shape_v = shape["value"]
@@ -203,8 +203,8 @@ class Poisson(PrimitiveWithInfer):
     def __init__(self, seed=0, seed2=0):
         """Init Poisson"""
         self.init_prim_io_names(inputs=['shape', 'mean'], outputs=['output'])
-        validator.check_value_type('seed', seed, [int], self.name)
-        validator.check_value_type('seed2', seed2, [int], self.name)
+        validator.check_integer("seed", seed, 0, Rel.GE, self.name)
+        validator.check_integer("seed2", seed2, 0, Rel.GE, self.name)
 
     def __infer__(self, shape, mean):
         shape_v = shape["value"]
@@ -259,8 +259,8 @@ class UniformInt(PrimitiveWithInfer):
     def __init__(self, seed=0, seed2=0):
         """Init UniformInt"""
         self.init_prim_io_names(inputs=['shape', 'a', 'b'], outputs=['output'])
-        validator.check_value_type('seed', seed, [int], self.name)
-        validator.check_value_type('seed2', seed2, [int], self.name)
+        validator.check_integer("seed", seed, 0, Rel.GE, self.name)
+        validator.check_integer("seed2", seed2, 0, Rel.GE, self.name)
 
     def __infer__(self, shape, a, b):
         shape_v = shape["value"]
@@ -306,8 +306,8 @@ class UniformReal(PrimitiveWithInfer):
     def __init__(self, seed=0, seed2=0):
         """Init UniformReal"""
         self.init_prim_io_names(inputs=['shape'], outputs=['output'])
-        validator.check_value_type('seed', seed, [int], self.name)
-        validator.check_value_type('seed2', seed2, [int], self.name)
+        validator.check_integer("seed", seed, 0, Rel.GE, self.name)
+        validator.check_integer("seed2", seed2, 0, Rel.GE, self.name)
 
     def __infer__(self, shape):
         shape_v = shape["value"]
