@@ -50,10 +50,6 @@ class Flags : public virtual mindspore::lite::FlagParser {
  private:
   bool ValidateString(std::string pattern, std::string input);
 
-  //  int ValidateAwareQuantizerCLI();
-  //
-  //  int ValidateWeighQuantCLI();
-
  public:
   std::string modelFile;
   std::string outputFile;

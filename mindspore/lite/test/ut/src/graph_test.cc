@@ -28,7 +28,7 @@
 #include "mindspore/lite/schema/inner/anf_ir_generated.h"
 
 namespace mindspore {
-class TestLiteInference : public mindspore::Common {
+class TestLiteInference : public mindspore::CommonTest {
  public:
   TestLiteInference() {}
 };

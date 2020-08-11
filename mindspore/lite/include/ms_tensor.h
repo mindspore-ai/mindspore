@@ -25,7 +25,7 @@
 namespace mindspore {
 #define MS_API __attribute__((visibility("default")))
 namespace tensor {
-/// \brief MSTensor defined by MindSpore Lite.
+/// \brief MSTensor defined tensor in MindSpore Lite.
 class MS_API MSTensor {
  public:
   /// \brief Constructor of MindSpore Lite MSTensor.
@@ -41,7 +41,7 @@ class MS_API MSTensor {
   /// \note TypeId is defined in mindspore/mindspore/core/ir/dtype/type_id.h. Only number types in TypeId enum is
   /// suitable for MSTensor.
   ///
-  /// \return A pointer of MSTensor.
+  /// \return the pointer of MSTensor.
   static MSTensor *CreateTensor(TypeId data_type, const std::vector<int> &shape);
 
   /// \brief Destructor of MindSpore Lite Model.
@@ -69,7 +69,7 @@ class MS_API MSTensor {
 
   /// \brief Set shape for the MindSpore Lite MSTensor.
   ///
-  /// \param[in] shape Define A vector of int as shape to be set into the MindSpore Lite MSTensor.
+  /// \param[in] shape Define a vector of int as shape to be set into the MindSpore Lite MSTensor.
   ///
   /// \return size of shape of the MindSpore Lite MSTensor after set.
   virtual size_t set_shape(const std::vector<int> &shape) = 0;
@@ -96,15 +96,13 @@ class MS_API MSTensor {
   /// \return Byte size of data in MSTensor.
   virtual size_t Size() const = 0;
 
-  /// \brief Get pointer of data in MSTensor.
+  /// \brief Get the pointer of data in MSTensor.
   ///
   /// \note The data pointer can be used to both write or read data in MSTensor.
   ///
-  /// \return A pointer points to data in MSTensor.
+  /// \return the pointer points to data in MSTensor.
   virtual void *MutableData() const = 0;
 };
-
-using MultiTensor = std::vector<std::vector<std::shared_ptr<tensor::MSTensor>>>;
 }  // namespace tensor
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_MS_TENSOR_H_

@@ -24,7 +24,7 @@
 
 namespace mindspore {
 
-class TestSqueezeInt8 : public mindspore::Common {
+class TestSqueezeInt8 : public mindspore::CommonTest {
  public:
   TestSqueezeInt8() {}
 };

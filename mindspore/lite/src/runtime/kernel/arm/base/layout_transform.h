@@ -38,4 +38,3 @@ LayoutConvertor LayoutTransform(TypeId data_type, schema::Format src_format, sch
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_LAYOUT_TRANSFORM_H_
-

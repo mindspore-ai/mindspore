@@ -22,7 +22,7 @@
 #include "mindspore/lite/src/runtime/kernel/arm/nnacl/pack.h"
 
 namespace mindspore {
-class TestPack : public mindspore::Common {
+class TestPack : public mindspore::CommonTest {
  public:
   TestPack() {}
 };

@@ -41,9 +41,9 @@ int ReshapeCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  auto input_ptr = inputs_.at(kInputIndex)->Data();
-  auto output_ptr = outputs_.at(kOutputIndex)->Data();
-  size_t data_size = inputs_.at(kInputIndex)->Size();
+  auto input_ptr = in_tensors_.at(kInputIndex)->Data();
+  auto output_ptr = out_tensors_.at(kOutputIndex)->Data();
+  size_t data_size = in_tensors_.at(kInputIndex)->Size();
   Reshape(input_ptr, output_ptr, data_size);
   return RET_OK;
 }

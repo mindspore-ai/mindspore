@@ -30,7 +30,7 @@ using mindspore::schema::PrimitiveType_ExpandDims;
 namespace mindspore::kernel {
 int ExpandDimsCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   int ret = ReSize();
@@ -38,7 +38,7 @@ int ExpandDimsCPUKernel::Init() {
 }
 
 int ExpandDimsCPUKernel::ReSize() {
-  data_size_ = inputs_.at(0)->ElementsNum();
+  data_size_ = in_tensors_.at(0)->ElementsNum();
   thread_sz_count_ = MSMIN(thread_count_, data_size_);
   thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
   return RET_OK;
@@ -74,8 +74,8 @@ int ExpandDimsCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  in_ptr_ = reinterpret_cast<float *>(inputs_.at(0)->Data());
-  out_ptr_ = reinterpret_cast<float *>(outputs_.at(0)->Data());
+  in_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
+  out_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
   auto ret = LiteBackendParallelLaunch(ExpandDimsRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ExpandDimsRun error error_code[" << ret << "]";

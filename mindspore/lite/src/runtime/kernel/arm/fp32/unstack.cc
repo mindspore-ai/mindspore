@@ -25,14 +25,14 @@ using mindspore::schema::PrimitiveType_Unstack;
 namespace mindspore::kernel {
 int UnstackCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
-  auto input = inputs_.at(0);
+  auto input = in_tensors_.at(0);
   MS_ASSERT(input != nullptr);
   size_t shape_size = input->shape().size();
 
-  auto para = reinterpret_cast<UnstackParameter *>(opParameter);
+  auto para = reinterpret_cast<UnstackParameter *>(op_parameter_);
   para->pre_dims_ = 1;
   para->axis_dim_ = 1;
   para->after_dims_ = 1;
@@ -49,7 +49,7 @@ int UnstackCPUKernel::Init() {
     }
   }
 
-  output_addr_array_ = reinterpret_cast<float **>(malloc(sizeof(float *) * outputs_.size()));
+  output_addr_array_ = reinterpret_cast<float **>(malloc(sizeof(float *) * out_tensors_.size()));
   if (output_addr_array_ == nullptr) {
     MS_LOG(ERROR) << "Failed to malloc memory";
     return lite::RET_ERROR;
@@ -65,12 +65,12 @@ int UnstackCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  float *input = reinterpret_cast<float *>(inputs_.at(0)->Data());
-  size_t out_num = outputs_.size();
+  float *input = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
+  size_t out_num = out_tensors_.size();
   for (size_t i = 0; i < out_num; i++) {
-    output_addr_array_[i] = reinterpret_cast<float *>(outputs_.at(i)->Data());
+    output_addr_array_[i] = reinterpret_cast<float *>(out_tensors_.at(i)->Data());
   }
-  Unistack(input, output_addr_array_, reinterpret_cast<UnstackParameter *>(opParameter));
+  Unistack(input, output_addr_array_, reinterpret_cast<UnstackParameter *>(op_parameter_));
   return RET_OK;
 }
 

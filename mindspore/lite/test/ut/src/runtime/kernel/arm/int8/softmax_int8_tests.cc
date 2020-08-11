@@ -23,7 +23,7 @@
 
 namespace mindspore {
 
-class TestSoftmaxInt8 : public mindspore::Common {
+class TestSoftmaxInt8 : public mindspore::CommonTest {
  public:
   TestSoftmaxInt8() {}
 };

@@ -21,7 +21,7 @@
 #include "mindspore/lite/src/lite_kernel.h"
 
 namespace mindspore {
-class TestBatchnormFp32 : public mindspore::Common {
+class TestBatchnormFp32 : public mindspore::CommonTest {
  public:
   TestBatchnormFp32() {}
 };

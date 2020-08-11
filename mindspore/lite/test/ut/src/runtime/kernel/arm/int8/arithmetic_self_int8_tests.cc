@@ -24,7 +24,7 @@
 
 namespace mindspore {
 
-class TestArithmeticSelfInt8 : public mindspore::Common {
+class TestArithmeticSelfInt8 : public mindspore::CommonTest {
  public:
   TestArithmeticSelfInt8() {}
 };

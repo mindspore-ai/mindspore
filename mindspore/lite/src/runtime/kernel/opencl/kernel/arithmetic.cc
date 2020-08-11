@@ -32,36 +32,36 @@ using mindspore::lite::KernelRegistrar;
 namespace mindspore::kernel {
 
 std::vector<size_t> ArithmeticOpenCLKernel::InitGlobalSize() const {
-  const size_t global_x = outputs_[0]->Width();
-  const size_t global_y = outputs_[0]->Height();
-  const size_t global_z = UP_ROUND_DIV(outputs_[0]->Channel(), 4);
+  const size_t global_x = out_tensors_[0]->Width();
+  const size_t global_y = out_tensors_[0]->Height();
+  const size_t global_z = UP_ROUND_DIV(out_tensors_[0]->Channel(), 4);
   std::vector<size_t> global = {global_x, global_y, global_z};
   return global;
 }
 
 void ArithmeticOpenCLKernel::Image2dGetWorkGroupSize() {
-  size_t H = outputs_[0]->Batch() * outputs_[0]->Height();
-  size_t W = outputs_[0]->Width() * UP_DIV(outputs_[0]->Channel(), C4NUM);
+  size_t H = out_tensors_[0]->Batch() * out_tensors_[0]->Height();
+  size_t W = out_tensors_[0]->Width() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   local_size_ = {16, 16};
   global_size_ = {W, H};
 }
 
 void ArithmeticOpenCLKernel::BufferGetWorkGroupSize() {
-  uint32_t element_num = outputs_[0]->ElementsC4Num();
+  uint32_t element_num = out_tensors_[0]->ElementsC4Num();
   global_size_ = {element_num};
 }
 
-int ArithmeticOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t>* img_size) {
-  size_t CO4 = UP_DIV(outputs_[0]->Channel(), C4NUM);
-  int H = outputs_[0]->Batch() * outputs_[0]->Height();
-  int W = outputs_[0]->Width() * CO4;
+int ArithmeticOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
+  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
+  int H = out_tensors_[0]->Batch() * out_tensors_[0]->Height();
+  int W = out_tensors_[0]->Width() * CO4;
   size_t im_dst_x, im_dst_y;
-  if (inputs_[0]->GetFormat() == schema::Format_NHWC4) {
+  if (in_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
     im_dst_x = W;
     im_dst_y = H;
   } else {
-    im_dst_y = outputs_[0]->Batch() * outputs_[0]->Height() * CO4;
-    im_dst_x = outputs_[0]->Width();
+    im_dst_y = out_tensors_[0]->Batch() * out_tensors_[0]->Height() * CO4;
+    im_dst_x = out_tensors_[0]->Width();
   }
 #ifdef ENABLE_FP16
   size_t img_dtype = CL_HALF_FLOAT;
@@ -78,12 +78,12 @@ int ArithmeticOpenCLKernel::Init() {
   runtime_ = lite::opencl::OpenCLRuntime::GetInstance();
   std::string kernel_name;
 
-  if (inputs_[1]->TensorType() == schema::NodeType_ValueNode && inputs_[1]->Data() != nullptr) {
+  if (in_tensors_[1]->TensorType() == schema::NodeType_ValueNode && in_tensors_[1]->Data() != nullptr) {
     element_flag_ = false;
     kernel_name = "BoardcastArith";
   } else {
     element_flag_ = true;
-    switch (opParameter->type_) {
+    switch (op_parameter_->type_) {
       case PrimitiveType_Mul:
         kernel_name = "ElementMul";
         break;
@@ -97,11 +97,10 @@ int ArithmeticOpenCLKernel::Init() {
         kernel_name = "ElementDiv";
         break;
       default:
-        MS_LOG(ERROR) << "Error Operator type " << opParameter->type_;
+        MS_LOG(ERROR) << "Error Operator type " << op_parameter_->type_;
         break;
     }
   }
-
 
 #ifdef PROGRAM_WITH_IL
   runtime_->CreateKernelFromIL(kernel_(), kernel_name);
@@ -112,24 +111,24 @@ int ArithmeticOpenCLKernel::Init() {
   runtime_->LoadSource(program_name, source);
   runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
-  outputs_[0]->SetFormat(schema::Format_NHWC4);
+  out_tensors_[0]->SetFormat(schema::Format_NHWC4);
   Image2dGetWorkGroupSize();
   return 0;
 }
 
 int ArithmeticOpenCLKernel::Run() {
-  MS_LOG(DEBUG) << this->Name() << " Running!";
+  MS_LOG(DEBUG) << this->name() << " Running!";
   auto runtime_ = lite::opencl::OpenCLRuntime::GetInstance();
 
   int arg_idx = 0;
-  uint32_t element_num = outputs_[0]->ElementsC4Num();
+  uint32_t element_num = out_tensors_[0]->ElementsC4Num();
 
-  runtime_->SetKernelArg(kernel_, arg_idx++, inputs_[0]->Data());
+  runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
   if (element_flag_) {
-    runtime_->SetKernelArg(kernel_, arg_idx++, inputs_[1]->Data());
+    runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[1]->Data());
   } else {
-    float value = static_cast<float *>(inputs_[1]->Data())[0];
-    switch (opParameter->type_) {
+    float value = static_cast<float *>(in_tensors_[1]->Data())[0];
+    switch (op_parameter_->type_) {
       case PrimitiveType_Mul:
         weight_ = value;
         break;
@@ -143,15 +142,15 @@ int ArithmeticOpenCLKernel::Run() {
         weight_ = 1 / value;
         break;
       default:
-        MS_LOG(ERROR) << "Error Operator type " << opParameter->type_;
+        MS_LOG(ERROR) << "Error Operator type " << op_parameter_->type_;
         break;
     }
     runtime_->SetKernelArg(kernel_, arg_idx++, weight_);
     runtime_->SetKernelArg(kernel_, arg_idx++, bias_);
   }
-  runtime_->SetKernelArg(kernel_, arg_idx++, outputs_[0]->Data());
-  int H = outputs_[0]->Batch() * outputs_[0]->Height();
-  int W = outputs_[0]->Width() * UP_DIV(outputs_[0]->Channel(), C4NUM);
+  runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
+  int H = out_tensors_[0]->Batch() * out_tensors_[0]->Height();
+  int W = out_tensors_[0]->Width() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   cl_int2 output_shape{W, H};
   runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
   runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);

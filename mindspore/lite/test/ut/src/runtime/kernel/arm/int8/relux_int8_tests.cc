@@ -22,7 +22,7 @@
 #include "mindspore/lite/include/context.h"
 
 namespace mindspore {
-class TestReluXInt8 : public mindspore::Common {
+class TestReluXInt8 : public mindspore::CommonTest {
  public:
   TestReluXInt8() {}
 };

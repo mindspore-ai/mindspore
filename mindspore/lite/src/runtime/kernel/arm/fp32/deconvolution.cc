@@ -64,14 +64,14 @@ int DeConvolutionCPUKernel::ReSize() {
 }
 
 int DeConvolutionCPUKernel::InitWeightBias() {
-  if (inputs_.size() == 3) {
+  if (in_tensors_.size() == 3) {
     bias_data_ = malloc(UP_ROUND(conv_param_->output_channel_, C4NUM) * sizeof(float));
     if (bias_data_ == nullptr) {
       MS_LOG(ERROR) << "deconv malloc bias_data_ error!";
       return RET_ERROR;
     }
     memset(bias_data_, 0, UP_ROUND(conv_param_->output_channel_, C4NUM) * sizeof(float));
-    memcpy(bias_data_, inputs_[2]->Data(), conv_param_->output_channel_ * sizeof(float));
+    memcpy(bias_data_, in_tensors_[2]->Data(), conv_param_->output_channel_ * sizeof(float));
   } else {
     bias_data_ = nullptr;
   }
@@ -84,7 +84,7 @@ int DeConvolutionCPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(weight_ptr_, 0, weight_pack_size);
-  PackNHWCToC8HWN8Fp32(reinterpret_cast<float *>(inputs_[1]->Data()), weight_ptr_, conv_param_->input_channel_,
+  PackNHWCToC8HWN8Fp32(reinterpret_cast<float *>(in_tensors_[1]->Data()), weight_ptr_, conv_param_->input_channel_,
                        kernel_plane_, conv_param_->output_channel_);
   return RET_OK;
 }
@@ -100,7 +100,7 @@ int DeConvolutionCPUKernel::InitParam() {
   matmul_param_->row_8_ = UP_ROUND(matmul_param_->row_, C8NUM);
   matmul_param_->col_8_ = UP_ROUND(conv_param_->output_channel_, C8NUM) * kernel_plane_;
 
-  thread_count_ = MSMIN(opParameter->thread_num_, UP_DIV(conv_param_->output_channel_, C8NUM));
+  thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(conv_param_->output_channel_, C8NUM));
   thread_stride_ = UP_DIV(UP_DIV(conv_param_->output_channel_, C8NUM), thread_count_);
 
   pack_input_ = reinterpret_cast<float *>(malloc(matmul_param_->row_8_ * matmul_param_->deep_ * sizeof(float)));
@@ -174,7 +174,7 @@ int DeConvolutionCPUKernel::DoPostFunc(int task_id) {
 
 int DeConvolutionCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   ConvolutionBaseCPUKernel::Init();
@@ -199,8 +199,8 @@ int DeConvolutionCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  float *src_in = reinterpret_cast<float *>(inputs_[0]->Data());
-  float *src_out = reinterpret_cast<float *>(outputs_[0]->Data());
+  float *src_in = reinterpret_cast<float *>(in_tensors_[0]->Data());
+  float *src_out = reinterpret_cast<float *>(out_tensors_[0]->Data());
 
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
     input_ptr_ = src_in + batch_index * input_plane_ * conv_param_->input_channel_;

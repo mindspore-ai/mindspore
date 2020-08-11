@@ -29,7 +29,7 @@ class Executor {
 
   int Prepare(std::vector<kernel::LiteKernel *> &kernels) { return 0; }
 
-  int Run(std::vector<tensor::Tensor *> &inputs, std::vector<tensor::Tensor *> &outputs,
+  int Run(std::vector<tensor::Tensor *> &in_tensors, std::vector<tensor::Tensor *> &out_tensors,
           std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator = nullptr,
           const session::KernelCallBack &before = nullptr, const session::KernelCallBack &after = nullptr);
 
@@ -39,9 +39,6 @@ class Executor {
   int TransformTensorLayoutUint8(tensor::Tensor *tensor, schema::Format dst_format, Allocator *allocator = nullptr);
 
   int TransformTensorLayout(tensor::Tensor *tensor, schema::Format dst_format, Allocator *allocator = nullptr);
-
- protected:
-  Context *context = nullptr;
 };
 
 }  // namespace mindspore::lite

@@ -32,7 +32,7 @@ using mindspore::schema::PrimitiveType_SpaceToBatch;
 namespace mindspore::kernel {
 
 int SpaceToBatchCPUKernel::Init() {
-  SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->opParameter);
+  SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->op_parameter_);
   for (int i = 0; i < SPACE_TO_BATCH_PADDINGS_SIZE; ++i) {
     if (param->paddings_[i] != 0) {
       param->need_paddings_ = true;
@@ -48,11 +48,11 @@ int SpaceToBatchCPUKernel::Init() {
 }
 
 int SpaceToBatchCPUKernel::ReSize() {
-  if (inputs_[0]->GetFormat() != schema::Format_NHWC) {
+  if (in_tensors_[0]->GetFormat() != schema::Format_NHWC) {
     MS_LOG(ERROR) << "space_to_batch only support NHWC now!";
     return RET_FORMAT_ERR;
   }
-  SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->opParameter);
+  SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->op_parameter_);
   param->num_elements_ = EnumElement(param->in_shape_, param->n_dims_);
   param->num_elements_padded_ = EnumElement(param->padded_in_shape_, param->n_dims_);
   return RET_OK;
@@ -64,11 +64,11 @@ int SpaceToBatchCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  auto input = inputs_[0];
-  auto output = outputs_[0];
+  auto input = in_tensors_[0];
+  auto output = out_tensors_[0];
   input_ptr_ = reinterpret_cast<const float *>(input->Data());
   output_ptr_ = reinterpret_cast<float *>(output->Data());
-  SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->opParameter);
+  SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->op_parameter_);
 
   float *tmp_space[3] = {nullptr, nullptr, nullptr};
   if (param->need_paddings_) {

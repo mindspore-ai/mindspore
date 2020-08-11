@@ -18,14 +18,13 @@
 #include <string>
 #include "tools/converter/converter_flags.h"
 
-
 namespace mindspore {
 namespace lite {
 namespace converter {
 Flags::Flags() {
-  AddFlag(&Flags::fmkIn, "fmk", "Input model framework type. TF | CAFFE | ONNX | MS | TFLITE", "");
-  AddFlag(&Flags::modelFile, "modelFile",
-          "Input model file path. TF: *.pb | CAFFE: *.prototxt | ONNX: *.onnx | MS: *.ms", "");
+  AddFlag(&Flags::fmkIn, "fmk", "Input model framework type. TFLITE | CAFFE | MS", "");
+  AddFlag(&Flags::modelFile, "modelFile", "Input model file path. TFLITE: *.tflite | CAFFE: *.prototxt | MS: *.mindir",
+          "");
   AddFlag(&Flags::outputFile, "outputFile", "Output model file path. Will add .ms automatically", "");
   AddFlag(&Flags::weightFile, "weightFile",
           "Input model weight file path. Needed when fmk is CAFFE. CAFFE: *.caffemodel", "");
@@ -79,18 +78,14 @@ int Flags::Init(int argc, const char **argv) {
     MS_LOG(ERROR) << "INPUT INVALID: inputInferenceType is invalid: %s", this->inputInferenceTypeIn.c_str();
     return 1;
   }
-  if (this->fmkIn == "TF") {
-    this->fmk = FmkType_TF;
-  } else if (this->fmkIn == "CAFFE") {
+  if (this->fmkIn == "CAFFE") {
     this->fmk = FmkType_CAFFE;
-  } else if (this->fmkIn == "ONNX") {
-    this->fmk = FmkType_ONNX;
   } else if (this->fmkIn == "MS") {
     this->fmk = FmkType_MS;
   } else if (this->fmkIn == "TFLITE") {
     this->fmk = FmkType_TFLITE;
   } else {
-    MS_LOG(ERROR) << "INPUT ILLEGAL: fmk must be TF|CAFFE|ONNX|MS";
+    MS_LOG(ERROR) << "INPUT ILLEGAL: fmk must be TFLITE|CAFFE|MS";
     return 1;
   }
 
@@ -111,66 +106,8 @@ int Flags::Init(int argc, const char **argv) {
     return 1;
   }
 
-  //  auto status = ValidateAwareQuantizerCLI();
-  //  if (status != RET_OK) {
-  //    MS_PRINT_ERROR("Parse aware quantization command line failed: %d", status);
-  //    return status;
-  //  }
-  //  status = ValidateWeighQuantCLI();
-  //  if (status != RET_OK) {
-  //    MS_PRINT_ERROR("ValidateWeighQuantCLI failed: %d", status);
-  //    return status;
-  //  }
   return 0;
 }
-
-// bool Flags::ValidateString(const string pattern, const string input) {
-//  std::regex repPattern(pattern, std::regex_constants::extended);
-//  std::match_results<string::const_iterator> regResult;
-//  return regex_match(input, regResult, repPattern);
-//}
-
-// int Flags::ValidateAwareQuantizerCLI() {
-//  // check input inference type
-//  if (this->inputInferenceType == DataType_DT_FLOAT) {
-//    if (this->mean.empty()) {
-//      MS_PRINT_ERROR("mean value shound not be null!")
-//      return RET_PARAM_INVALID;
-//    }
-//    if (this->stdDev.empty()) {
-//      MS_PRINT_ERROR("standard deviation value shound not be null!")
-//      return RET_PARAM_INVALID;
-//    }
-//    const std::string pattern = "^[+-]?([0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*)([eE][+-]?[0-9]+)?$";
-//    if (!ValidateString(pattern, this->mean)) {
-//      MS_PRINT_ERROR("invalid input mean values: %s", this->mean.c_str());
-//      return RET_PARAM_INVALID;
-//    }
-//    if (!ValidateString(pattern, this->stdDev)) {
-//      MS_PRINT_ERROR("invalid input standard deviation value: %s", this->stdDev.c_str());
-//      return RET_PARAM_INVALID;
-//    }
-//  } else {
-//    if (!this->mean.empty()) {
-//      MS_PRINT_INFO("useless mean value: %s", this->mean.c_str());
-//    }
-//    if (!this->stdDev.empty()) {
-//      MS_PRINT_INFO("useless stdDev value: %s", this->stdDev.c_str());
-//    }
-//  }
-//  return RET_OK;
-//}
-
-// int Flags::ValidateWeighQuantCLI() {
-//  if (!this->quantSize.empty()) {
-//    if (!ValidateString("^[0-9]*$", this->quantSize)) {
-//      MS_PRINT_ERROR("invalid input quantSize: %s, only support positive integer type!", this->quantSize.c_str());
-//      return RET_PARAM_INVALID;
-//    }
-//  }
-//  return RET_OK;
-//}
 }  // namespace converter
 }  // namespace lite
 }  // namespace mindspore
-

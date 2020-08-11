@@ -28,7 +28,7 @@ class SoftmaxBaseCPUKernel : public LiteKernel {
                        const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                        const lite::Primitive *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
-    softmax_param_ = reinterpret_cast<SoftmaxParameter *>(opParameter);
+    softmax_param_ = reinterpret_cast<SoftmaxParameter *>(op_parameter_);
   }
   ~SoftmaxBaseCPUKernel() = default;
 

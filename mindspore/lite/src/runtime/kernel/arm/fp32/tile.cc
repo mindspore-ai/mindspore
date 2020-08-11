@@ -26,13 +26,13 @@ using mindspore::schema::PrimitiveType_Tile;
 namespace mindspore::kernel {
 int TileCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
-  auto tile_parameter_ = reinterpret_cast<TileParameter *>(opParameter);
+  auto tile_parameter_ = reinterpret_cast<TileParameter *>(op_parameter_);
   for (int i = 0; i < tile_parameter_->in_dim_; ++i) {
-    tile_parameter_->in_shape_[i] = inputs_[0]->shape()[i];
-    tile_parameter_->out_shape_[i] = outputs_[0]->shape()[i];
+    tile_parameter_->in_shape_[i] = in_tensors_[0]->shape()[i];
+    tile_parameter_->out_shape_[i] = out_tensors_[0]->shape()[i];
   }
   ComputeStrides(tile_parameter_->in_shape_, tile_parameter_->in_strides_, tile_parameter_->in_dim_);
   ComputeStrides(tile_parameter_->out_shape_, tile_parameter_->out_strides_, tile_parameter_->in_dim_);
@@ -55,10 +55,10 @@ int TileCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  auto input_addr = reinterpret_cast<float *>(inputs_.at(0)->Data());
-  auto output_addr = reinterpret_cast<float *>(outputs_.at(0)->Data());
+  auto input_addr = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
 
-  Tile(input_addr, output_addr, reinterpret_cast<TileParameter *>(opParameter));
+  Tile(input_addr, output_addr, reinterpret_cast<TileParameter *>(op_parameter_));
   return RET_OK;
 }
 

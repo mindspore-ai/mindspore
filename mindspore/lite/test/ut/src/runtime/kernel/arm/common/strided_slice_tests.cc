@@ -20,7 +20,7 @@
 #include "mindspore/lite/src/kernel_registry.h"
 
 namespace mindspore {
-class TestStridedSlice : public mindspore::Common {
+class TestStridedSlice : public mindspore::CommonTest {
  public:
   TestStridedSlice() {}
 };

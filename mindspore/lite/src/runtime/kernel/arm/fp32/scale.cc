@@ -47,8 +47,8 @@ void ScaleCPUKernel::FreeTmpBuffer() {
 
 int ScaleCPUKernel::InitScaleOffset() {
   FreeTmpBuffer();
-  auto scale_tensor = inputs_.at(1);
-  float *scale_ptr = reinterpret_cast<float *>(inputs_.at(1)->Data());
+  auto scale_tensor = in_tensors_.at(1);
+  float *scale_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->Data());
   if (scale_ptr != nullptr) {
     scale_param_->const_scale_ = true;
     scale_ = reinterpret_cast<float *>(malloc(scale_tensor->ElementsNum() * sizeof(float)));
@@ -62,8 +62,8 @@ int ScaleCPUKernel::InitScaleOffset() {
     scale_ = nullptr;
   }
 
-  if (inputs_.size() == 3) {
-    auto offset_tensor = inputs_.at(2);
+  if (in_tensors_.size() == 3) {
+    auto offset_tensor = in_tensors_.at(2);
     offset_ = reinterpret_cast<float *>(malloc(offset_tensor->ElementsNum() * sizeof(float)));
     if (offset_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
@@ -79,9 +79,9 @@ int ScaleCPUKernel::InitScaleOffset() {
 }
 
 int ScaleCPUKernel::InitParameter() {
-  auto in_tensor = inputs_.at(0);
+  auto in_tensor = in_tensors_.at(0);
   auto in_shape = in_tensor->shape();
-  auto scale_tensor = inputs_.at(1);
+  auto scale_tensor = in_tensors_.at(1);
   auto scale_shape = scale_tensor->shape();
 
   if (scale_shape.size() + scale_param_->axis_ > in_shape.size()) {
@@ -108,8 +108,8 @@ int ScaleCPUKernel::InitParameter() {
 }
 
 int ScaleCPUKernel::Init() {
-  if (inputs_.size() < 2 || inputs_.size() > 3) {
-    MS_LOG(ERROR) << "inputs to Scale operator should be 2 or 3, but " << inputs_.size() << " is given.";
+  if (in_tensors_.size() < 2 || in_tensors_.size() > 3) {
+    MS_LOG(ERROR) << "inputs to Scale operator should be 2 or 3, but " << in_tensors_.size() << " is given.";
     return RET_ERROR;
   }
 
@@ -159,16 +159,16 @@ int ScaleCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  auto in_tensor = inputs_.front();
+  auto in_tensor = in_tensors_.front();
   input_ptr_ = reinterpret_cast<float *>(in_tensor->Data());
   if (scale_ == nullptr) {
-    auto scale_tensor = inputs_[1];
+    auto scale_tensor = in_tensors_[1];
     scale_ = reinterpret_cast<float *>(scale_tensor->Data());
   }
-  auto out_tensor = outputs_.front();
+  auto out_tensor = out_tensors_.front();
   output_ptr_ = reinterpret_cast<float *>(out_tensor->Data());
 
-  ret = LiteBackendParallelLaunch(ScaleRun, this, opParameter->thread_num_);
+  ret = LiteBackendParallelLaunch(ScaleRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;

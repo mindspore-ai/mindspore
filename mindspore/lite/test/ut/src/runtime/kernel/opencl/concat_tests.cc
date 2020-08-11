@@ -104,7 +104,7 @@ void ConcatComputeByCPU_3input_dim4_axis3(float *input0, float *input1, float *i
 }
 
 namespace mindspore {
-class TestConcatOpenCL : public mindspore::Common {
+class TestConcatOpenCL : public mindspore::CommonTest {
  public:
   TestConcatOpenCL() {}
 };

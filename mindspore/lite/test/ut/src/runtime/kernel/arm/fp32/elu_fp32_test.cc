@@ -24,7 +24,7 @@
 namespace mindspore {
 using mindspore::lite::tensor::Tensor;
 
-class TestEluFp32 : public mindspore::Common {
+class TestEluFp32 : public mindspore::CommonTest {
  public:
   TestEluFp32() {}
 };

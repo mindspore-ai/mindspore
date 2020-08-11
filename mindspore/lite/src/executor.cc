@@ -20,11 +20,11 @@
 #include "src/common/ms_tensor_utils.h"
 
 namespace mindspore::lite {
-int Executor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tensor::Tensor *> &outputs,
+int Executor::Run(std::vector<tensor::Tensor *> &in_tensors, std::vector<tensor::Tensor *> &out_tensors,
                   std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator,
                   const session::KernelCallBack &before, const session::KernelCallBack &after) {
   MS_ASSERT(nullptr != allocator);
-  for (auto &inTensor : inputs) {
+  for (auto &inTensor : in_tensors) {
     if (inTensor == nullptr) {
       MS_LOG(ERROR) << "Graph input tensor is nullptr";
       return RET_ERROR;
@@ -39,31 +39,31 @@ int Executor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tensor::Ten
     MS_ASSERT(nullptr != kernel);
 
     if (before != nullptr) {
-      if (!before(PackToMSTensors(kernel->GetInputs()), PackToMSTensors(kernel->GetOutputs()),
-                  {kernel->Name(), kernel->type_str()})) {
-        MS_LOG(ERROR) << "run kernel before_callback failed, name: " << kernel->Name();
+      if (!before(PackToMSTensors(kernel->in_tensors()), PackToMSTensors(kernel->out_tensors()),
+                  {kernel->name(), kernel->type_str()})) {
+        MS_LOG(ERROR) << "run kernel before_callback failed, name: " << kernel->name();
       }
     }
     auto ret = kernel->Run();
     if (0 != ret) {
-      MS_LOG(ERROR) << "run kernel failed, name: " << kernel->Name();
+      MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
       return ret;
     }
 
     if (after != nullptr) {
-      if (!after(PackToMSTensors(kernel->GetInputs()), PackToMSTensors(kernel->GetOutputs()),
-                 {kernel->Name(), kernel->type_str()})) {
-        MS_LOG(ERROR) << "run kernel after_callback failed, name: " << kernel->Name();
+      if (!after(PackToMSTensors(kernel->in_tensors()), PackToMSTensors(kernel->out_tensors()),
+                 {kernel->name(), kernel->type_str()})) {
+        MS_LOG(ERROR) << "run kernel after_callback failed, name: " << kernel->name();
       }
     }
-    for (auto input_kernel : kernel->GetInKernels()) {
+    for (auto input_kernel : kernel->in_kernels()) {
       MS_ASSERT(input_kernel != nullptr);
       if (input_kernel->is_model_output()) {
         continue;
       }
       ret = input_kernel->DecOutTensorRefCount();
       if (0 != ret) {
-        MS_LOG(WARNING) << "DecOutTensorRefCount for kernel" << kernel->Name() << " failed";
+        MS_LOG(WARNING) << "DecOutTensorRefCount for kernel" << kernel->name() << " failed";
       }
     }
   }

@@ -30,9 +30,7 @@ Model *Model::Import(const char *model_buf, size_t size) {
   return model;
 }
 
-Model::~Model() {
-  delete(this->model_impl_);
-}
+Model::~Model() { delete (this->model_impl_); }
 
 lite::Primitive *Model::GetOp(const std::string &name) const {
   MS_EXCEPTION_IF_NULL(model_impl_);
@@ -46,7 +44,7 @@ void Model::FreeMetaGraph() {
 
 const schema::MetaGraph *Model::GetMetaGraph() const {
   MS_EXCEPTION_IF_NULL(model_impl_);
-  return model_impl_->GetMetaGraph();
+  return model_impl_->meta_graph();
 }
 
 ModelImpl *Model::model_impl() {

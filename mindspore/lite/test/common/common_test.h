@@ -23,7 +23,7 @@
 #include <algorithm>
 #include "gtest/gtest.h"
 namespace mindspore {
-class Common : public testing::Test {
+class CommonTest : public testing::Test {
  public:
   // TestCase only enter once
   static void SetUpTestCase();

@@ -39,10 +39,10 @@ GatherNdCPUKernel::~GatherNdCPUKernel() {
 
 int GatherNdCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
-  auto indices_tensor = inputs_.at(1);
+  auto indices_tensor = in_tensors_.at(1);
   auto indices_shape = indices_tensor->shape();
   int indices_rank = indices_shape.size();
   count_ = 1;
@@ -64,9 +64,9 @@ int GatherNdCPUKernel::Init() {
 }
 
 int GatherNdCPUKernel::ReSize() {
-  auto in_shape = inputs_.front()->shape();
+  auto in_shape = in_tensors_.front()->shape();
   int in_rank = in_shape.size();
-  auto indices_tensor = inputs_.at(1);
+  auto indices_tensor = in_tensors_.at(1);
   auto indices_shape = indices_tensor->shape();
   int indices_rank = indices_shape.size();
   int idx_lastshape = indices_shape[indices_rank - 1];
@@ -121,8 +121,8 @@ int GatherNdCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  in_ptr_ = reinterpret_cast<float *>(inputs_.front()->Data());
-  out_ptr_ = reinterpret_cast<float *>(outputs_.front()->Data());
+  in_ptr_ = reinterpret_cast<float *>(in_tensors_.front()->Data());
+  out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->Data());
   auto ret = LiteBackendParallelLaunch(GatherNdRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "gatherNd error error_code[" << ret << "]";

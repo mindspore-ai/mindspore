@@ -21,7 +21,7 @@
 
 namespace mindspore {
 
-class TestArgMinMaxTestFp32 : public mindspore::Common {
+class TestArgMinMaxTestFp32 : public mindspore::CommonTest {
  public:
   TestArgMinMaxTestFp32() = default;
 };

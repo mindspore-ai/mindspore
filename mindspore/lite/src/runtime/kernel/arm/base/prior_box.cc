@@ -41,11 +41,11 @@ int PriorBoxCPUKernel::Init() {
   }
 
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
-  MS_ASSERT(inputs_.size() == kInputNum);
-  MS_ASSERT(outputs_.size() == kOutputNum);
+  MS_ASSERT(in_tensors_.size() == kInputNum);
+  MS_ASSERT(out_tensors_.size() == kOutputNum);
 
   auto ret = GeneratePriorBox();
 
@@ -53,11 +53,11 @@ int PriorBoxCPUKernel::Init() {
 }
 
 int PriorBoxCPUKernel::GeneratePriorBox() {
-  const int fmap_w = inputs_[0]->Width();
-  const int fmap_h = inputs_[0]->Height();
+  const int fmap_w = in_tensors_[0]->Width();
+  const int fmap_h = in_tensors_[0]->Height();
 
-  const int image_w = prior_box_param_->image_size_w > 0 ? prior_box_param_->image_size_w : inputs_[1]->Width();
-  const int image_h = prior_box_param_->image_size_h > 0 ? prior_box_param_->image_size_h : inputs_[1]->Height();
+  const int image_w = prior_box_param_->image_size_w > 0 ? prior_box_param_->image_size_w : in_tensors_[1]->Width();
+  const int image_h = prior_box_param_->image_size_h > 0 ? prior_box_param_->image_size_h : in_tensors_[1]->Height();
 
   const float step_w =
     prior_box_param_->step_w > 0.0f ? prior_box_param_->step_w : static_cast<float>(image_w) / fmap_w;
@@ -128,7 +128,7 @@ int PriorBoxCPUKernel::GeneratePriorBox() {
   }
 
   // variance
-  for (auto i = 0; i < outputs_[0]->Height() / PRIOR_BOX_VAR_NUM; i++) {
+  for (auto i = 0; i < out_tensors_[0]->Height() / PRIOR_BOX_VAR_NUM; i++) {
     for (auto j = 0; j < PRIOR_BOX_VAR_NUM; j++) {
       output_.emplace_back(prior_box_param_->variances[j]);
     }
@@ -138,7 +138,7 @@ int PriorBoxCPUKernel::GeneratePriorBox() {
 
 int PriorBoxCPUKernel::PriorBoxImpl(int task_id) {
   auto src = output_.data();
-  auto output = outputs_.at(0);
+  auto output = out_tensors_.at(0);
   if (output == nullptr) {
     return RET_NULL_PTR;
   }

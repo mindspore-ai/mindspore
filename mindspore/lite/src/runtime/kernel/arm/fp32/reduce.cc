@@ -43,20 +43,20 @@ constexpr size_t kOutputNum = 1;
 }  // namespace
 
 int ReduceCPUKernel::CheckInputsOutputs() {
-  if (inputs_.size() != kInputNum) {
-    MS_LOG(ERROR) << "Reduce inputs size should be " << kInputNum << " but got " << inputs_.size();
+  if (in_tensors_.size() != kInputNum) {
+    MS_LOG(ERROR) << "Reduce inputs size should be " << kInputNum << " but got " << in_tensors_.size();
     return RET_ERROR;
   }
-  if (outputs_.size() != kOutputNum) {
-    MS_LOG(ERROR) << "Reduce outputs size should be " << kOutputNum << " but got " << outputs_.size();
+  if (out_tensors_.size() != kOutputNum) {
+    MS_LOG(ERROR) << "Reduce outputs size should be " << kOutputNum << " but got " << out_tensors_.size();
     return RET_ERROR;
   }
-  auto input = inputs_.at(0);
+  auto input = in_tensors_.at(0);
   if (input == nullptr) {
     MS_LOG(ERROR) << "Reduce input is nullptr";
     return RET_NULL_PTR;
   }
-  auto output = outputs_.at(0);
+  auto output = out_tensors_.at(0);
   if (output == nullptr) {
     MS_LOG(ERROR) << "Reduce output is nullptr";
     return RET_NULL_PTR;
@@ -65,7 +65,7 @@ int ReduceCPUKernel::CheckInputsOutputs() {
 }
 
 int ReduceCPUKernel::CheckParameters() {
-  size_t input_rank = inputs_.at(0)->shape().size();
+  size_t input_rank = in_tensors_.at(0)->shape().size();
   if (static_cast<size_t>(num_axes_) > input_rank) {
     MS_LOG(ERROR) << "Reduce num of reduce axes " << num_axes_ << " larger than input rank " << input_rank;
     return RET_ERROR;
@@ -92,7 +92,7 @@ int ReduceCPUKernel::CheckParameters() {
 
 int ReduceCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   auto ret = CheckInputsOutputs();
@@ -162,8 +162,8 @@ int ReduceCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  tmp_shape_ = inputs_.at(0)->shape();
-  src_data_ = static_cast<float *>(inputs_.at(0)->Data());
+  tmp_shape_ = in_tensors_.at(0)->shape();
+  src_data_ = static_cast<float *>(in_tensors_.at(0)->Data());
   for (int i = 0; i < data_buffers_.size(); ++i) {
     dst_data_ = data_buffers_[i];
     int axis = axes_[i];
@@ -195,7 +195,7 @@ int ReduceCPUKernel::Run() {
     inner_size_ *= tmp_shape_[i];
   }
   axis_size_ = tmp_shape_[last_reduce_axis];
-  dst_data_ = reinterpret_cast<float *>(outputs_.at(0)->Data());
+  dst_data_ = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
   auto error_code = LiteBackendParallelLaunch(ReduceImpl, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
@@ -206,7 +206,7 @@ int ReduceCPUKernel::Run() {
 }
 
 int ReduceCPUKernel::MallocTmpBuffer() {
-  auto input_shape = inputs_.at(0)->shape();
+  auto input_shape = in_tensors_.at(0)->shape();
   for (auto i = 0; i < num_axes_ - 1; i++) {
     int axis = axes_[i];
     size_t size = 1;

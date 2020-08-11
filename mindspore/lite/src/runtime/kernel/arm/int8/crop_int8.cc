@@ -31,12 +31,12 @@ int CropInt8CPUKernel::Init() {
   if (ret != RET_OK) {
     return ret;
   }
-  auto *input_tensor = inputs_.at(kInputIndex);
+  auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->GetQuantParams();
   crop_para_->quant_arg.in_args_.scale_ = in_quant_args.front().scale;
   crop_para_->quant_arg.in_args_.zp_ = in_quant_args.front().zeroPoint;
 
-  auto *out_tensor = outputs_.at(kOutputIndex);
+  auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_args = out_tensor->GetQuantParams();
   crop_para_->quant_arg.out_args_.scale_ = out_quant_args.front().scale;
   crop_para_->quant_arg.out_args_.zp_ = out_quant_args.front().zeroPoint;
@@ -50,9 +50,9 @@ int CropInt8CPUKernel::Init() {
 }
 
 int CropInt8CPUKernel::ReSize() {
-  auto *input_tensor = inputs_.at(kInputIndex);
+  auto *input_tensor = in_tensors_.at(kInputIndex);
   crop_para_->in_shape_ = input_tensor->shape().data();
-  auto *out_tensor = outputs_.at(kOutputIndex);
+  auto *out_tensor = out_tensors_.at(kOutputIndex);
   crop_para_->out_shape_ = out_tensor->shape().data();
   auto input_dim = input_tensor->shape().size();
   MS_ASSERT(input_dim <= CROP_OFFSET_MAX_SIZE);
@@ -98,8 +98,8 @@ int CropInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int CropInt8CPUKernel::DoExecute(int task_id) {
-  auto input_tensor = inputs_.at(kInputIndex);
-  auto out_tensor = outputs_.at(kOutputIndex);
+  auto input_tensor = in_tensors_.at(kInputIndex);
+  auto out_tensor = out_tensors_.at(kOutputIndex);
   int8_t *input_data = reinterpret_cast<int8_t *>(input_tensor->Data());
   int8_t *output_data = reinterpret_cast<int8_t *>(out_tensor->Data());
   Crop(input_data, output_data, task_id, crop_para_);

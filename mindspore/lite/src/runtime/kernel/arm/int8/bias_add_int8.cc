@@ -27,11 +27,11 @@ using mindspore::schema::PrimitiveType_BiasAdd;
 namespace mindspore::kernel {
 int BiasAddInt8CPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
-  auto bias_param = reinterpret_cast<ArithmeticParameter *>(opParameter);
-  auto dims = inputs_[0]->shape();
+  auto bias_param = reinterpret_cast<ArithmeticParameter *>(op_parameter_);
+  auto dims = in_tensors_[0]->shape();
   bias_param->ndim_ = dims.size();
   for (int i = 0; i < bias_param->ndim_; i++) {
     bias_param->in_shape0_[i] = dims[i];
@@ -50,17 +50,18 @@ int BiasAddInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  auto in = reinterpret_cast<int8_t *>(inputs_.at(0)->Data());
-  auto bias = reinterpret_cast<int8_t *>(inputs_.at(1)->Data());
-  auto out = reinterpret_cast<int8_t *>(outputs_.at(0)->Data());
-  size_t data_size = inputs_.at(0)->ElementsNum();
+  auto in = reinterpret_cast<int8_t *>(in_tensors_.at(0)->Data());
+  auto bias = reinterpret_cast<int8_t *>(in_tensors_.at(1)->Data());
+  auto out = reinterpret_cast<int8_t *>(out_tensors_.at(0)->Data());
+  size_t data_size = in_tensors_.at(0)->ElementsNum();
   auto tile_in = static_cast<int8_t *>(ctx_->allocator->Malloc(data_size));
   auto tile_bias = static_cast<int8_t *>(ctx_->allocator->Malloc(data_size));
   if (tile_in == nullptr || tile_bias == nullptr) {
     MS_LOG(ERROR) << "Failed to malloc momery";
     return NNACL_ERR;
   }
-  BroadcastAddInt8(in, bias, tile_in, tile_bias, out, data_size, reinterpret_cast<ArithmeticParameter *>(opParameter));
+  BroadcastAddInt8(in, bias, tile_in, tile_bias, out, data_size,
+                   reinterpret_cast<ArithmeticParameter *>(op_parameter_));
   ctx_->allocator->Free(tile_in);
   ctx_->allocator->Free(tile_bias);
   return NNACL_OK;

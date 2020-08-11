@@ -26,7 +26,7 @@
 namespace mindspore {
 using mindspore::lite::tensor::Tensor;
 
-class TestConv1x1Fp32 : public mindspore::Common {
+class TestConv1x1Fp32 : public mindspore::CommonTest {
  public:
   TestConv1x1Fp32() {}
 };

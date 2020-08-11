@@ -45,14 +45,14 @@ DeconvolutionDepthwiseFp16CPUKernel::~DeconvolutionDepthwiseFp16CPUKernel() {
 }
 
 int DeconvolutionDepthwiseFp16CPUKernel::InitSlideParam() {
-  conv_param_->input_batch_ = outputs_.front()->shape().at(kNHWC_N);
-  conv_param_->input_h_ = outputs_.front()->shape().at(kNHWC_H);
-  conv_param_->input_w_ = outputs_.front()->shape().at(kNHWC_W);
-  conv_param_->input_channel_ = outputs_.front()->shape().at(kNHWC_C);
-  conv_param_->output_batch_ = inputs_.front()->shape().at(kNHWC_N);
-  conv_param_->output_h_ = inputs_.front()->shape().at(kNHWC_H);
-  conv_param_->output_w_ = inputs_.front()->shape().at(kNHWC_W);
-  conv_param_->output_channel_ = inputs_.front()->shape().at(kNHWC_C);
+  conv_param_->input_batch_ = out_tensors_.front()->shape().at(kNHWC_N);
+  conv_param_->input_h_ = out_tensors_.front()->shape().at(kNHWC_H);
+  conv_param_->input_w_ = out_tensors_.front()->shape().at(kNHWC_W);
+  conv_param_->input_channel_ = out_tensors_.front()->shape().at(kNHWC_C);
+  conv_param_->output_batch_ = in_tensors_.front()->shape().at(kNHWC_N);
+  conv_param_->output_h_ = in_tensors_.front()->shape().at(kNHWC_H);
+  conv_param_->output_w_ = in_tensors_.front()->shape().at(kNHWC_W);
+  conv_param_->output_channel_ = in_tensors_.front()->shape().at(kNHWC_C);
 
   // init sliding_ window param
   InitSlidingParam(sliding_, conv_param_, C8NUM);
@@ -83,7 +83,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::InitBuffer() {
 int DeconvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
   int OC8 = UP_DIV(conv_param_->output_channel_, C8NUM);
-  auto weight_tensor = inputs_[kWeightIndex];
+  auto weight_tensor = in_tensors_[kWeightIndex];
   auto origin_weight = reinterpret_cast<float *>(weight_tensor->Data());
   int pack_weight_size = C8NUM * OC8 * conv_param_->kernel_h_ * conv_param_->kernel_w_;
 
@@ -103,8 +103,8 @@ int DeconvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(bias_data_, 0, C8NUM * OC8 * sizeof(float16_t));
-  if (inputs_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<float *>(inputs_.at(kBiasIndex)->Data());
+  if (in_tensors_.size() == kInputSize2) {
+    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->Data());
     for (int i = 0; i < conv_param_->output_channel_; i++) {
       reinterpret_cast<float *>(bias_data_)[i] = (float16_t)ori_bias[i];
     }
@@ -116,7 +116,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
 
 int DeconvolutionDepthwiseFp16CPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   sliding_ = new SlidingWindowParam;
@@ -124,7 +124,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::Init() {
   // conv base init
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
-     return ret;
+    return ret;
   }
 
   ret = InitWeightBias();
@@ -189,7 +189,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  auto input_tensor = inputs_.at(kInputIndex);
+  auto input_tensor = in_tensors_.at(kInputIndex);
   auto input_addr = reinterpret_cast<float *>(input_tensor->Data());
   // pack input: to nhwc8
   PackNHWCFp32ToNHWC8Fp16(input_addr, packed_input_, conv_param_->input_batch_,
@@ -201,7 +201,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  auto output_addr = reinterpret_cast<float *>(outputs_.at(kOutputIndex)->Data());
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
   PackNHWC8Fp16ToNHWCFp32(packed_output_, output_addr, conv_param_->output_batch_,
                           conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
   return RET_OK;

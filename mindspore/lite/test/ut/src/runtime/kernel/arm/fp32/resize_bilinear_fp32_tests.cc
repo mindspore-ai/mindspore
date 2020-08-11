@@ -20,7 +20,7 @@
 
 namespace mindspore {
 
-class TestResizeBilinearFp32 : public mindspore::Common {
+class TestResizeBilinearFp32 : public mindspore::CommonTest {
  public:
   TestResizeBilinearFp32() = default;
 

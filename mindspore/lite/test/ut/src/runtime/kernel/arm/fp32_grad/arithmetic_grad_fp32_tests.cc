@@ -26,7 +26,7 @@
 
 namespace mindspore {
 
-class TestArithmeticGradFp32 : public mindspore::Common {
+class TestArithmeticGradFp32 : public mindspore::CommonTest {
  public:
   TestArithmeticGradFp32() {}
 };

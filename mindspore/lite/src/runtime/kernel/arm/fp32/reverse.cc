@@ -31,15 +31,15 @@ namespace mindspore::kernel {
 
 int ReverseCPUKernel::Stride(int index) {
   int i, stride = 1;
-  for (i = index + 1; i < inputs_[0]->shape().size(); ++i) {
-    stride *= inputs_[0]->shape()[i];
+  for (i = index + 1; i < in_tensors_[0]->shape().size(); ++i) {
+    stride *= in_tensors_[0]->shape()[i];
   }
   return stride;
 }
 
 int ReverseCPUKernel::ReSize() {
-  auto *param = reinterpret_cast<ReverseParameter *>(opParameter);
-  auto input_shape = inputs_[0]->shape();
+  auto *param = reinterpret_cast<ReverseParameter *>(op_parameter_);
+  auto input_shape = in_tensors_[0]->shape();
   if (param->num_axis_ > input_shape.size()) {
     MS_LOG(ERROR) << "Reverse dims : " << param->num_axis_
                   << "is greater than input shape size :" << input_shape.size();
@@ -90,10 +90,10 @@ int ReverseCPUKernel::ReSize() {
 
 int ReverseCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
-  data_size_ = inputs_.at(0)->ElementsNum();
+  data_size_ = in_tensors_.at(0)->ElementsNum();
   thread_sz_count_ = MSMIN(thread_count_, data_size_);
   thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
   int ret = ReSize();
@@ -130,8 +130,8 @@ int ReverseCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  in_ptr_ = reinterpret_cast<float *>(inputs_[0]->Data());
-  out_ptr_ = reinterpret_cast<float *>(outputs_[0]->Data());
+  in_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->Data());
+  out_ptr_ = reinterpret_cast<float *>(out_tensors_[0]->Data());
   ret = LiteBackendParallelLaunch(ReverseRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Reverse run error error_code[" << ret << "]";

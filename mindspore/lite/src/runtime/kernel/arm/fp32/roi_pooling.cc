@@ -62,12 +62,12 @@ int ROIPoolingCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail! ret: " << ret;
     return ret;
   }
-  in_ptr_ = reinterpret_cast<float *>(inputs_.front()->Data());
-  out_ptr_ = reinterpret_cast<float *>(outputs_.front()->Data());
-  roi_ptr_ = reinterpret_cast<float *>(inputs_.at(1)->Data());
-  in_shape_ = reinterpret_cast<const int *>(inputs_.front()->shape().data());
-  out_shape_ = reinterpret_cast<const int *>(outputs_.front()->shape().data());
-  dim_ = inputs_.front()->shape().size();
+  in_ptr_ = reinterpret_cast<float *>(in_tensors_.front()->Data());
+  out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->Data());
+  roi_ptr_ = reinterpret_cast<float *>(in_tensors_.at(1)->Data());
+  in_shape_ = reinterpret_cast<const int *>(in_tensors_.front()->shape().data());
+  out_shape_ = reinterpret_cast<const int *>(out_tensors_.front()->shape().data());
+  dim_ = in_tensors_.front()->shape().size();
   thread_count_ = 1;
   ret = LiteBackendParallelLaunch(ROIPoolingRun, this, thread_count_);
   if (ret != RET_OK) {

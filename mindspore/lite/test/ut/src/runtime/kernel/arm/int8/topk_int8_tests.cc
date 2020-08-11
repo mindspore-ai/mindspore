@@ -21,7 +21,7 @@
 #include "mindspore/lite/src/kernel_registry.h"
 
 namespace mindspore {
-class TestTopKInt8 : public mindspore::Common {
+class TestTopKInt8 : public mindspore::CommonTest {
  public:
   TestTopKInt8() {}
 };

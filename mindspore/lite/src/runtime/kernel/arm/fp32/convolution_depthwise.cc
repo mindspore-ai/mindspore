@@ -49,7 +49,7 @@ ConvolutionDepthwiseCPUKernel::~ConvolutionDepthwiseCPUKernel() {
 
 int ConvolutionDepthwiseCPUKernel::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
-  auto weight_tensor = inputs_[kWeightIndex];
+  auto weight_tensor = in_tensors_[kWeightIndex];
   auto origin_weight = reinterpret_cast<float *>(weight_tensor->Data());
   int OC4 = UP_DIV(conv_param_->output_channel_, C4NUM);
   int pack_weight_size = C4NUM * OC4 * conv_param_->kernel_h_ * conv_param_->kernel_w_;
@@ -70,8 +70,8 @@ int ConvolutionDepthwiseCPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(bias_data_, 0, C4NUM * OC4 * sizeof(float));
-  if (inputs_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<float *>(inputs_.at(kBiasIndex)->Data());
+  if (in_tensors_.size() == kInputSize2) {
+    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->Data());
     memcpy(bias_data_, ori_bias, conv_param_->output_channel_ * sizeof(float));
   }
 
@@ -106,7 +106,7 @@ int ConvolutionDepthwiseCPUKernel::InitBuffer() {
 
 int ConvolutionDepthwiseCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   // conv base init
@@ -183,7 +183,7 @@ int ConvolutionDepthwiseCPUKernel::Run() {
     MS_LOG(ERROR) << "Only support input channel equals output channel.";
     return RET_ERROR;
   }
-  auto input_tensor = inputs_.at(kInputIndex);
+  auto input_tensor = in_tensors_.at(kInputIndex);
   auto input_addr = reinterpret_cast<float *>(input_tensor->Data());
 
   // pack input: to nhwc4
@@ -194,7 +194,7 @@ int ConvolutionDepthwiseCPUKernel::Run() {
     packed_input_ = input_addr;
   }
 
-  auto output_addr = reinterpret_cast<float *>(outputs_.at(kOutputIndex)->Data());
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
   if (!need_align_) {
     packed_output_ = output_addr;
   }

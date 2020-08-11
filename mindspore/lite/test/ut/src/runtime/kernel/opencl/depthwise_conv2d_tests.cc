@@ -38,7 +38,7 @@
 bool IMAGE2D_OPEN = true;
 
 namespace mindspore {
-class TestConvolutionDwOpenCL : public mindspore::Common {
+class TestConvolutionDwOpenCL : public mindspore::CommonTest {
  public:
   TestConvolutionDwOpenCL(){}
 };
@@ -152,7 +152,7 @@ void DepthWiseTestMain(ConvParameter *conv_param, float_t *input_data, float_t *
     }
     std::cout << std::endl;
     // compare
-    Common::CompareOutputData(packed_output, packed_correct_data, packed_output_size, 0.00001);
+    CommonTest::CompareOutputData(packed_output, packed_correct_data, packed_output_size, 0.00001);
     SAFE_DELETE_ARRAY(packed_correct_data)
   }
 
@@ -529,7 +529,7 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwNoPadFp32) {
   }
   std::cout << std::endl;
   // compare
-  Common::CompareOutputData(packed_output, packed_correct_data, packed_output_size, 0.00001);
+  CommonTest::CompareOutputData(packed_output, packed_correct_data, packed_output_size, 0.00001);
 
   inputs[1]->SetData(nullptr);
   inputs[2]->SetData(nullptr);
@@ -701,7 +701,7 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwPadFp32) {
   }
   std::cout << std::endl;
   // compare
-  Common::CompareOutputData(packed_output, packed_correct_data, packed_output_size, 0.00001);
+  CommonTest::CompareOutputData(packed_output, packed_correct_data, packed_output_size, 0.00001);
 
   inputs[1]->SetData(nullptr);
   inputs[2]->SetData(nullptr);

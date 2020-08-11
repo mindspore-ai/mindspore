@@ -25,19 +25,13 @@
 namespace mindspore::lite {
 class Scheduler {
  public:
-  explicit Scheduler(const Context *ctx) {
-    context_ = const_cast<Context *>(ctx);
-  }
+  explicit Scheduler(const Context *ctx) { context_ = const_cast<Context *>(ctx); }
   int Schedule(const lite::Model *model, std::vector<tensor::Tensor *> *tensors,
                std::vector<kernel::LiteKernel *> *kernels);
 
  protected:
-  kernel::LiteKernel *ScheduleNode(const std::vector<tensor::Tensor *> &inputs,
-                                   const std::vector<tensor::Tensor *> &outputs, const lite::Primitive *primitive);
-  // find schedule able kernels and save in markedKernelGroup
-  int MarkKernels(const std::vector<kernel::LiteKernel *> &kernels);
-  // use SubGraphKernel to replace group in kernels
-  int MergeKernels(std::vector<kernel::LiteKernel *> *kernels);
+  kernel::LiteKernel *ScheduleNode(const std::vector<tensor::Tensor *> &in_tensors,
+                                   const std::vector<tensor::Tensor *> &out_tensors, const lite::Primitive *primitive);
 
  private:
   int InitOp2Kernel(const lite::Model *model, std::vector<tensor::Tensor *> *tensors,
@@ -49,7 +43,6 @@ class Scheduler {
   kernel::LiteKernel *CreateSubKernel(const std::vector<kernel::LiteKernel *> &kernels, kernel::KERNEL_ARCH arch);
 
  protected:
-  std::vector<std::vector<size_t>> markedKernelGroup;
   Context *context_ = nullptr;
 };
 }  // namespace mindspore::lite

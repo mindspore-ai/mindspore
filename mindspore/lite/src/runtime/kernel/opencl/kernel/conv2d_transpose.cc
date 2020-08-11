@@ -31,7 +31,7 @@ using mindspore::schema::PrimitiveType_DeConv2D;
 namespace mindspore::kernel {
 
 int Conv2dTransposeOpenCLKernel::Init() {
-  ConvParameter *param = reinterpret_cast<ConvParameter *>(opParameter);
+  ConvParameter *param = reinterpret_cast<ConvParameter *>(op_parameter_);
   if (param->kernel_h_ != 2 || param->kernel_w_ != 2 || param->stride_h_ != 2 || param->stride_w_ != 2) {
     MS_LOG(ERROR) << "only support kh=kw=2 and stride_h=stride_w=2.";
     return 1;
@@ -66,7 +66,7 @@ int Conv2dTransposeOpenCLKernel::Init() {
   padWeight_ = reinterpret_cast<FLOAT_T *>(allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true));
   PadWeight();
   allocator->UnmapBuffer(padWeight_);
-  outputs_[0]->SetFormat(schema::Format_NHWC4);
+  out_tensors_[0]->SetFormat(schema::Format_NHWC4);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return 0;
 }
@@ -75,14 +75,14 @@ int Conv2dTransposeOpenCLKernel::ReSize() { return 0; }
 
 void Conv2dTransposeOpenCLKernel::PadWeight() {
   // OHWI to OHWI4(I)4(O)
-  ConvParameter *param = reinterpret_cast<ConvParameter *>(opParameter);
+  ConvParameter *param = reinterpret_cast<ConvParameter *>(op_parameter_);
   int ci = param->input_channel_;
   int co = param->output_channel_;
   int kh = param->kernel_h_;
   int kw = param->kernel_w_;
   int div_ci = UP_DIV(ci, 4);
   int div_co = UP_DIV(co, 4);
-  auto origin_weight = reinterpret_cast<FLOAT_T *>(inputs_.at(kWeightIndex)->Data());
+  auto origin_weight = reinterpret_cast<FLOAT_T *>(in_tensors_.at(kWeightIndex)->Data());
   int index = 0;
   for (int co_i = 0; co_i < div_co; co_i++) {
     for (int kw_i = 0; kw_i < kw; kw_i++) {
@@ -107,23 +107,23 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
 }
 
 int Conv2dTransposeOpenCLKernel::Run() {
-  MS_LOG(DEBUG) << this->Name() << " Running!";
-  std::vector<int> shapex = inputs_[0]->shape();
+  MS_LOG(DEBUG) << this->name() << " Running!";
+  std::vector<int> shapex = in_tensors_[0]->shape();
   int n = shapex[0];
   if (n > 1) {
     MS_LOG(ERROR) << "Conv2dTranspose n > 1 not supported!";
     return 1;
   }
-  ConvParameter *param = reinterpret_cast<ConvParameter *>(opParameter);
+  ConvParameter *param = reinterpret_cast<ConvParameter *>(op_parameter_);
   int ci = param->input_channel_;
   int co = param->output_channel_;
   int kh = param->kernel_h_;
   int kw = param->kernel_w_;
   int pad = param->pad_h_;
-  int oh = outputs_[0]->shape()[1];
-  int ow = outputs_[0]->shape()[2];
-  int h = inputs_[0]->shape()[1];
-  int w = inputs_[0]->shape()[2];
+  int oh = out_tensors_[0]->shape()[1];
+  int ow = out_tensors_[0]->shape()[2];
+  int h = in_tensors_[0]->shape()[1];
+  int w = in_tensors_[0]->shape()[2];
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
 
   cl::ImageFormat image_format;
@@ -137,9 +137,9 @@ int Conv2dTransposeOpenCLKernel::Run() {
   }
   cl_int in_error_code, in_error_code_weight, in_error_code_bias, out_error_code;
   cl::Image2D img_x(*ocl_runtime->Context(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, image_format, w * ci / 4, h, 0,
-                    inputs_[0]->Data(), &in_error_code);
+                    in_tensors_[0]->Data(), &in_error_code);
   cl::Image2D img_bias(*ocl_runtime->Context(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, image_format, co / 4, 1, 0,
-                       inputs_[2]->Data(), &in_error_code_bias);
+                       in_tensors_[2]->Data(), &in_error_code_bias);
   cl::Image2D out_mem(*ocl_runtime->Context(), CL_MEM_WRITE_ONLY, image_format, ow * co / 4, oh, 0, nullptr,
                       &out_error_code);
   // local size should less than MAX_GROUP_SIZE
@@ -164,7 +164,8 @@ int Conv2dTransposeOpenCLKernel::Run() {
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
   auto origin = cl::array<cl::size_type, 3U>{0, 0, 0};
   auto region = cl::array<cl::size_type, 3U>{(size_t)(ow * co / 4), (size_t)(oh), 1};
-  ocl_runtime->GetDefaultCommandQueue()->enqueueReadImage(out_mem, CL_TRUE, origin, region, 0, 0, outputs_[0]->Data());
+  ocl_runtime->GetDefaultCommandQueue()->enqueueReadImage(out_mem, CL_TRUE, origin, region, 0, 0,
+                                                          out_tensors_[0]->Data());
   return 0;
 }
 

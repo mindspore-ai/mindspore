@@ -24,13 +24,13 @@ extern "C" {
 
 namespace mindspore {
 
-void Common::SetUpTestCase() {}
+void CommonTest::SetUpTestCase() {}
 
-void Common::TearDownTestCase() {}
+void CommonTest::TearDownTestCase() {}
 
-void Common::SetUp() {}
+void CommonTest::SetUp() {}
 
-void Common::TearDown() {}
+void CommonTest::TearDown() {}
 
 }  // namespace mindspore
 

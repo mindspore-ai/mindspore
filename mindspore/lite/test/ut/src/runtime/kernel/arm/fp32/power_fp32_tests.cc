@@ -20,7 +20,7 @@
 #include "src/lite_kernel.h"
 
 namespace mindspore {
-class TestPowerFp32 : public mindspore::Common {
+class TestPowerFp32 : public mindspore::CommonTest {
  public:
   TestPowerFp32() {}
 };

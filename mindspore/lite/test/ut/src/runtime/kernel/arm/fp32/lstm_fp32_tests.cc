@@ -22,7 +22,7 @@
 #include "mindspore/lite/src/ops/ops.h"
 
 namespace mindspore {
-class LstmFp32 : public mindspore::Common {
+class LstmFp32 : public mindspore::CommonTest {
  public:
   LstmFp32() {}
 };
@@ -131,7 +131,7 @@ void CompareOutput(lite::tensor::Tensor *output, std::vector<float> data) {
   }
   std::cout << std::endl;
 
-  Common::CompareOutputData(reinterpret_cast<float *>(output->Data()), data.data(), output->ElementsNum(), 0.0001);
+  CommonTest::CompareOutputData(reinterpret_cast<float *>(output->Data()), data.data(), output->ElementsNum(), 0.0001);
 }
 
 TEST_F(LstmFp32, LstmForwardFp32Accuracy) {

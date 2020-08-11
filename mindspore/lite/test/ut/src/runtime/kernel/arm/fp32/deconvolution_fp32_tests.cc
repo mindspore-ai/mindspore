@@ -23,7 +23,7 @@
 #include "mindspore/lite/src/runtime/kernel/arm/nnacl/fp32/deconv.h"
 
 namespace mindspore {
-class TestDeConvolutionFp32 : public mindspore::Common {
+class TestDeConvolutionFp32 : public mindspore::CommonTest {
  public:
   TestDeConvolutionFp32() {}
 };

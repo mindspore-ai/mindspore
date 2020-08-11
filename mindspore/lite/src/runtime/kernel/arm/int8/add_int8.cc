@@ -29,9 +29,9 @@ using mindspore::schema::PrimitiveType_Add;
 
 namespace mindspore::kernel {
 int QuantizedAddCPUKernel::Init() {
-  lite::tensor::Tensor *input0 = inputs_.at(0);
-  lite::tensor::Tensor *input1 = inputs_.at(1);
-  lite::tensor::Tensor *output = outputs_.at(0);
+  lite::tensor::Tensor *input0 = in_tensors_.at(0);
+  lite::tensor::Tensor *input1 = in_tensors_.at(1);
+  lite::tensor::Tensor *output = out_tensors_.at(0);
   MS_ASSERT(input0);
   MS_ASSERT(input1);
   MS_ASSERT(output);
@@ -81,27 +81,27 @@ int QuantizedAddCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  input0_data_ = static_cast<int8_t *>(inputs_.at(0)->Data());
-  input1_data_ = static_cast<int8_t *>(inputs_.at(1)->Data());
-  output_data_ = static_cast<int8_t *>(outputs_.at(0)->Data());
+  input0_data_ = static_cast<int8_t *>(in_tensors_.at(0)->Data());
+  input1_data_ = static_cast<int8_t *>(in_tensors_.at(1)->Data());
+  output_data_ = static_cast<int8_t *>(out_tensors_.at(0)->Data());
 
-  elements_num_ = inputs_.at(0)->ElementsNum();
+  elements_num_ = in_tensors_.at(0)->ElementsNum();
   count_unit_ = thread_count_ > 1 ? UP_DIV(elements_num_, thread_count_) : elements_num_;
 
-  if (inputs_.at(0)->ElementsNum() != inputs_.at(1)->ElementsNum()) {
-    input0_data_ = static_cast<int8_t *>(ctx_->allocator->Malloc(outputs_.at(0)->Size()));
-    input1_data_ = static_cast<int8_t *>(ctx_->allocator->Malloc(outputs_.at(0)->Size()));
+  if (in_tensors_.at(0)->ElementsNum() != in_tensors_.at(1)->ElementsNum()) {
+    input0_data_ = static_cast<int8_t *>(ctx_->allocator->Malloc(out_tensors_.at(0)->Size()));
+    input1_data_ = static_cast<int8_t *>(ctx_->allocator->Malloc(out_tensors_.at(0)->Size()));
 
     ArithmeticParameter tile_para = {0};
-    tile_para.ndim_ = outputs_.at(0)->shape().size();
+    tile_para.ndim_ = out_tensors_.at(0)->shape().size();
     for (size_t i = 0; i < tile_para.ndim_; i++) {
-      tile_para.in_shape0_[i] = inputs_.at(0)->DimensionSize(i);
-      tile_para.in_shape1_[i] = inputs_.at(1)->DimensionSize(i);
-      tile_para.out_shape_[i] = outputs_.at(0)->DimensionSize(i);
+      tile_para.in_shape0_[i] = in_tensors_.at(0)->DimensionSize(i);
+      tile_para.in_shape1_[i] = in_tensors_.at(1)->DimensionSize(i);
+      tile_para.out_shape_[i] = out_tensors_.at(0)->DimensionSize(i);
     }
-    TileDimensionsUint8(static_cast<uint8_t *>(inputs_.at(0)->Data()), static_cast<uint8_t *>(inputs_.at(1)->Data()),
-                        reinterpret_cast<uint8_t *>(input0_data_), reinterpret_cast<uint8_t *>(input1_data_),
-                        &tile_para);
+    TileDimensionsUint8(static_cast<uint8_t *>(in_tensors_.at(0)->Data()),
+                        static_cast<uint8_t *>(in_tensors_.at(1)->Data()), reinterpret_cast<uint8_t *>(input0_data_),
+                        reinterpret_cast<uint8_t *>(input1_data_), &tile_para);
     ret = LiteBackendParallelLaunch(AddInt8Run, this, thread_count_);
     ctx_->allocator->Free(input0_data_);
     ctx_->allocator->Free(input1_data_);

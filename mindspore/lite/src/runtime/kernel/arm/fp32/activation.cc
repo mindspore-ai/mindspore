@@ -37,9 +37,9 @@ int ActivationCPUKernel::Init() { return RET_OK; }
 int ActivationCPUKernel::ReSize() { return RET_OK; }
 
 int ActivationCPUKernel::DoActivation(int task_id) {
-  auto input_addr = reinterpret_cast<float *>(inputs_.at(0)->Data());
-  auto output_addr = reinterpret_cast<float *>(outputs_.at(0)->Data());
-  auto length = inputs_.at(0)->ElementsNum();
+  auto input_addr = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  auto length = in_tensors_.at(0)->ElementsNum();
 
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);

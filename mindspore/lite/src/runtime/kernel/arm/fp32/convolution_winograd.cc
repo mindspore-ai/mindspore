@@ -103,7 +103,7 @@ int ConvolutionWinogradCPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "Malloc filter matrix failed.";
     return RET_ERROR;
   }
-  auto weight_tensor = inputs_.at(kWeightIndex);
+  auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto weight_data = reinterpret_cast<float *>(weight_tensor->Data());
   WinogradFilterTransform(weight_data, trans_weight_, kernel_unit_, input_unit_, conv_param_, oc_block);
 
@@ -111,11 +111,11 @@ int ConvolutionWinogradCPUKernel::InitWeightBias() {
   size_t new_bias_size = oc4 * C4NUM * sizeof(float);
   bias_data_ = reinterpret_cast<float *>(malloc(new_bias_size));
   memset(bias_data_, 0, new_bias_size);
-  if (inputs_.size() == kInputSize2) {
-    auto ori_bias_addr = reinterpret_cast<float *>(inputs_.at(kBiasIndex)->Data());
+  if (in_tensors_.size() == kInputSize2) {
+    auto ori_bias_addr = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->Data());
     memcpy(bias_data_, ori_bias_addr, output_channel * sizeof(float));
   } else {
-    MS_ASSERT(inputs_.size() == kInputSize1);
+    MS_ASSERT(in_tensors_.size() == kInputSize1);
   }
   return RET_OK;
 }
@@ -218,13 +218,13 @@ int ConvolutionWinogradCPUKernel::InitTmpBuffer() {
 }
 
 int ConvolutionWinogradCPUKernel::ConfigInputOutput() {
-  auto input_tensor = inputs_.at(kInputIndex);
+  auto input_tensor = in_tensors_.at(kInputIndex);
   auto ret = CheckLayout(input_tensor);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Check layout failed.";
     return RET_ERROR;
   }
-  auto output_tensor = outputs_.at(kOutputIndex);
+  auto output_tensor = out_tensors_.at(kOutputIndex);
   output_tensor->SetFormat(schema::Format_NHWC);
 
   // choose input transformer function (4x4 unit or 8x8 unit)
@@ -248,7 +248,7 @@ int ConvolutionWinogradCPUKernel::ConfigInputOutput() {
 
 int ConvolutionWinogradCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   auto ret = ConvolutionBaseCPUKernel::Init();
@@ -325,7 +325,7 @@ int ConvolutionWinogradCPUKernel::RunImpl(int task_id) {
     MS_LOG(ERROR) << "gemm_func is nullptr.";
     return RET_ERROR;
   }
-  auto output_addr = reinterpret_cast<float *>(outputs_.at(kOutputIndex)->Data());
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
   ConvWinogardFp32(reinterpret_cast<float *>(nhwc4_input_), reinterpret_cast<float *>(trans_weight_->GetData()),
                    reinterpret_cast<const float *>(bias_data_), output_addr, tmp_buffer_address_list_, task_id,
                    conv_param_, input_trans_func_, output_trans_func_, gemm_func_);
@@ -348,7 +348,7 @@ int ConvolutionWinogradCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto input_tensor = inputs_.at(kInputIndex);
+  auto input_tensor = in_tensors_.at(kInputIndex);
   auto ori_input_data = input_tensor->Data();
   int in_batch = conv_param_->input_batch_;
   int in_h = conv_param_->input_h_;

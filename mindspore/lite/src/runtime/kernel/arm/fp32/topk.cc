@@ -26,11 +26,11 @@ using mindspore::schema::PrimitiveType_TopK;
 namespace mindspore::kernel {
 int TopKCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
-  TopkParameter *parameter = reinterpret_cast<TopkParameter *>(opParameter);
-  lite::tensor::Tensor *input = inputs_.at(0);
+  TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
+  lite::tensor::Tensor *input = in_tensors_.at(0);
   parameter->last_dim_size_ = input->shape()[input->shape().size() - 1];
   parameter->loop_num_ = 1;
   for (int i = 0; i < input->shape().size() - 1; ++i) {
@@ -53,11 +53,11 @@ int TopKCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  auto input_data = reinterpret_cast<float *>(inputs_.at(0)->Data());
-  auto output_data = reinterpret_cast<float *>(outputs_.at(0)->Data());
-  auto output_index = reinterpret_cast<int32_t *>(outputs_.at(1)->Data());
+  auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
+  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  auto output_index = reinterpret_cast<int32_t *>(out_tensors_.at(1)->Data());
 
-  Topk(input_data, output_data, output_index, reinterpret_cast<TopkParameter *>(opParameter));
+  Topk(input_data, output_data, output_index, reinterpret_cast<TopkParameter *>(op_parameter_));
   return RET_OK;
 }
 

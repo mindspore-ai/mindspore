@@ -33,8 +33,8 @@ using mindspore::schema::PrimitiveType_ArgMin;
 
 namespace mindspore::kernel {
 int ArgMinMaxBaseCPUKernel::Init() {
-  auto param = reinterpret_cast<ArgMinMaxParameter *>(opParameter);
-  switch (opParameter->type_) {
+  auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
+  switch (op_parameter_->type_) {
     case PrimitiveType_ArgMax:
       param->get_max_ = true;
       break;
@@ -42,7 +42,7 @@ int ArgMinMaxBaseCPUKernel::Init() {
       param->get_max_ = false;
       break;
     default:
-      MS_LOG(ERROR) << "Unexpected type " << opParameter->type_;
+      MS_LOG(ERROR) << "Unexpected type " << op_parameter_->type_;
       return RET_ERROR;
   }
 
@@ -50,9 +50,9 @@ int ArgMinMaxBaseCPUKernel::Init() {
 }
 
 int ArgMinMaxBaseCPUKernel::ReSize() {
-  auto in_shape = inputs_.at(0)->shape();
+  auto in_shape = in_tensors_.at(0)->shape();
   auto dims_size = in_shape.size();
-  auto param = reinterpret_cast<ArgMinMaxParameter *>(opParameter);
+  auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
   int axis = param->axis_ < 0 ? param->axis_ + dims_size : param->axis_;
   param->axis_ = axis;
   param->dims_size_ = dims_size;
@@ -75,25 +75,25 @@ int ArgMinMaxBaseCPUKernel::ReSize() {
     }
   }
   ComputeStrides(in_shape.data(), param->in_strides_, in_shape.size());
-  auto out_shape = outputs_.at(0)->shape();
+  auto out_shape = out_tensors_.at(0)->shape();
   ComputeStrides(out_shape.data(), param->out_strides_, out_shape.size());
   return RET_OK;
 }
 
 int ArgMinMaxBaseCPUKernel::Run() {
-  auto input = inputs_.at(0);
+  auto input = in_tensors_.at(0);
 
-  auto input_data = reinterpret_cast<const void *>(inputs_.at(0)->Data());
-  auto output_data = outputs_.at(0)->Data();
+  auto input_data = reinterpret_cast<const void *>(in_tensors_.at(0)->Data());
+  auto output_data = out_tensors_.at(0)->Data();
 
   auto shape = input->shape().data();
-  auto param = reinterpret_cast<ArgMinMaxParameter *>(opParameter);
+  auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
   ArgMinMax(input_data, output_data, reinterpret_cast<const int *>(shape), param);
   return RET_OK;
 }
 
 void ArgMinMaxBaseCPUKernel::FreeTmpMemory() {
-  auto param = reinterpret_cast<ArgMinMaxParameter *>(opParameter);
+  auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
   if (param->arg_elements_ == nullptr) {
     return;
   }

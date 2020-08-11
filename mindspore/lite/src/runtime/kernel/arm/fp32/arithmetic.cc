@@ -53,7 +53,7 @@ int ArithmeticCPUKernel::Init() {
 
 int ArithmeticCPUKernel::ReSize() {
   FreeTileData();
-  auto element_num = outputs_[0]->ElementsNum();
+  auto element_num = out_tensors_[0]->ElementsNum();
 
   tile_data0_ = new float[element_num];
   tile_data1_ = new float[element_num];
@@ -61,10 +61,10 @@ int ArithmeticCPUKernel::ReSize() {
 }
 
 int ArithmeticCPUKernel::DoArithmetic(int task_id) {
-  auto input0_data = reinterpret_cast<float *>(inputs_[0]->Data());
-  auto input1_data1 = reinterpret_cast<float *>(inputs_[1]->Data());
-  auto output_data = reinterpret_cast<float *>(outputs_[0]->Data());
-  auto element_num = outputs_[0]->ElementsNum();
+  auto input0_data = reinterpret_cast<float *>(in_tensors_[0]->Data());
+  auto input1_data1 = reinterpret_cast<float *>(in_tensors_[1]->Data());
+  auto output_data = reinterpret_cast<float *>(out_tensors_[0]->Data());
+  auto element_num = out_tensors_[0]->ElementsNum();
 
   MS_ASSERT(thread_count_ != 0);
   int stride = UP_DIV(element_num, thread_count_);
@@ -107,8 +107,8 @@ int ArithmeticCPUKernel::Run() {
     return ret;
   }
   if (arithmeticParameter_->broadcasting_) {
-    auto input_data0 = reinterpret_cast<float *>(inputs_[0]->Data());
-    auto input_data1 = reinterpret_cast<float *>(inputs_[1]->Data());
+    auto input_data0 = reinterpret_cast<float *>(in_tensors_[0]->Data());
+    auto input_data1 = reinterpret_cast<float *>(in_tensors_[1]->Data());
     TileDimensions(input_data0, input_data1, tile_data0_, tile_data1_, arithmeticParameter_);
   }
   int error_code = LiteBackendParallelLaunch(ArithmeticsRun, this, thread_count_);

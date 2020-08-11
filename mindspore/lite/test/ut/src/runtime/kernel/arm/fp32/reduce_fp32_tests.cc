@@ -20,7 +20,7 @@
 
 namespace mindspore {
 
-class TestReduceFp32 : public mindspore::Common {
+class TestReduceFp32 : public mindspore::CommonTest {
  public:
   TestReduceFp32() = default;
   int tid = 0;

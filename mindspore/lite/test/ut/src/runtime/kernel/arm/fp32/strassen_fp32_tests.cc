@@ -23,7 +23,7 @@
 #include "mindspore/lite/src/runtime/kernel/arm/nnacl/conv_parameter.h"
 
 namespace mindspore {
-class TestStrassenFp32 : public mindspore::Common {
+class TestStrassenFp32 : public mindspore::CommonTest {
  public:
   TestStrassenFp32() {}
 };

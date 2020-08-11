@@ -49,12 +49,12 @@ int ResizeImpl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int ResizeCPUKernel::RunImpl(int task_id) {
-  auto input = inputs_.at(0);
+  auto input = in_tensors_.at(0);
   auto input_data = reinterpret_cast<float *>(input->Data());
   if (input_data == nullptr) {
     return RET_NULL_PTR;
   }
-  auto output_data = reinterpret_cast<float *>(outputs_.at(0)->Data());
+  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
   if (output_data == nullptr) {
     return RET_NULL_PTR;
   }
@@ -66,7 +66,7 @@ int ResizeCPUKernel::RunImpl(int task_id) {
   int ret = 0;
   switch (method_) {
     case static_cast<int>(schema::ResizeMethod_BILINEAR): {
-      ret = ResizeBilinear(input_data, output_data, input_shape.data(), outputs_[0]->shape().data(),
+      ret = ResizeBilinear(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
                              align_corners_, task_id, context_->thread_num_);
       break;
     }
@@ -75,7 +75,7 @@ int ResizeCPUKernel::RunImpl(int task_id) {
         MS_LOG(ERROR) << "ResizeNearestNeighbor not support align_corners.";
         return RET_ERROR;
       }
-      ret = ResizeNearestNeighbor(input_data, output_data, input_shape.data(), outputs_[0]->shape().data(), task_id,
+      ret = ResizeNearestNeighbor(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(), task_id,
                                     context_->thread_num_);
       break;
     }

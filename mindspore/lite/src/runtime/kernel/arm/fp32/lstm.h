@@ -28,7 +28,7 @@ class LstmCPUKernel : public LiteKernel {
                 const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                 const lite::Primitive *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
-    lstm_parm_ = reinterpret_cast<LstmParameter *>(opParameter);
+    lstm_parm_ = reinterpret_cast<LstmParameter *>(op_parameter_);
   }
 
   ~LstmCPUKernel() override {

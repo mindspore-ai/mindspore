@@ -33,8 +33,8 @@ int Nhwc2NchwCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto input = inputs_[0];
-  auto output = outputs_[0];
+  auto input = in_tensors_[0];
+  auto output = out_tensors_[0];
 
   if (input->shape().size() == 4) {
     PackNHWCToNCHWFp32(input->Data(), output->Data(), output->Batch(), output->Height() * output->Width(),

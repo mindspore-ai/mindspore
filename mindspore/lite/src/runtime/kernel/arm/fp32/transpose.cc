@@ -39,9 +39,9 @@ int TransposeCPUKernel::Init() {
 }
 
 int TransposeCPUKernel::ReSize() {
-  auto &inTensor = inputs_.front();
-  auto &outTensor = outputs_.front();
-  auto param = reinterpret_cast<TransposeParameter *>(opParameter);
+  auto &inTensor = in_tensors_.front();
+  auto &outTensor = out_tensors_.front();
+  auto param = reinterpret_cast<TransposeParameter *>(op_parameter_);
   auto in_shape = inTensor->shape();
   auto out_shape = outTensor->shape();
   param->strides_[param->num_axes_ - 1] = 1;
@@ -60,10 +60,10 @@ int TransposeCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  MS_ASSERT(inputs_.size() == TransposeInputNum);
-  MS_ASSERT(outputs_.size() == TransposeOutputNum);
-  auto &inTensor = inputs_.front();
-  auto &outTensor = outputs_.front();
+  MS_ASSERT(in_tensors_.size() == TransposeInputNum);
+  MS_ASSERT(out_tensors_.size() == TransposeOutputNum);
+  auto &inTensor = in_tensors_.front();
+  auto &outTensor = out_tensors_.front();
   if (inTensor == nullptr || outTensor == nullptr) {
     MS_LOG(ERROR) << "null pointer dreferencing.";
     return RET_ERROR;
@@ -75,7 +75,8 @@ int TransposeCPUKernel::Run() {
   auto *input_shape = &in_shape.front();
   auto *output_shape = &out_shape.front();
 
-  ret = DoTranspose(in_data, out_data, input_shape, output_shape, reinterpret_cast<TransposeParameter *>(opParameter));
+  ret =
+    DoTranspose(in_data, out_data, input_shape, output_shape, reinterpret_cast<TransposeParameter *>(op_parameter_));
   return ret;
 }
 

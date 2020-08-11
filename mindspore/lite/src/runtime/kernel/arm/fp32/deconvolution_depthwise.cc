@@ -46,14 +46,14 @@ DeconvolutionDepthwiseCPUKernel::~DeconvolutionDepthwiseCPUKernel() {
 }
 
 int DeconvolutionDepthwiseCPUKernel::InitSlideParam() {
-  conv_param_->input_batch_ = outputs_.front()->shape().at(kNHWC_N);
-  conv_param_->input_h_ = outputs_.front()->shape().at(kNHWC_H);
-  conv_param_->input_w_ = outputs_.front()->shape().at(kNHWC_W);
-  conv_param_->input_channel_ = outputs_.front()->shape().at(kNHWC_C);
-  conv_param_->output_batch_ = inputs_.front()->shape().at(kNHWC_N);
-  conv_param_->output_h_ = inputs_.front()->shape().at(kNHWC_H);
-  conv_param_->output_w_ = inputs_.front()->shape().at(kNHWC_W);
-  conv_param_->output_channel_ = inputs_.front()->shape().at(kNHWC_C);
+  conv_param_->input_batch_ = out_tensors_.front()->shape().at(kNHWC_N);
+  conv_param_->input_h_ = out_tensors_.front()->shape().at(kNHWC_H);
+  conv_param_->input_w_ = out_tensors_.front()->shape().at(kNHWC_W);
+  conv_param_->input_channel_ = out_tensors_.front()->shape().at(kNHWC_C);
+  conv_param_->output_batch_ = in_tensors_.front()->shape().at(kNHWC_N);
+  conv_param_->output_h_ = in_tensors_.front()->shape().at(kNHWC_H);
+  conv_param_->output_w_ = in_tensors_.front()->shape().at(kNHWC_W);
+  conv_param_->output_channel_ = in_tensors_.front()->shape().at(kNHWC_C);
 
   // init sliding window param
   sliding_ = new SlidingWindowParam;
@@ -63,7 +63,7 @@ int DeconvolutionDepthwiseCPUKernel::InitSlideParam() {
 
 int DeconvolutionDepthwiseCPUKernel::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
-  auto weight_tensor = inputs_[kWeightIndex];
+  auto weight_tensor = in_tensors_[kWeightIndex];
   auto origin_weight = reinterpret_cast<float *>(weight_tensor->Data());
   int OC4 = UP_DIV(conv_param_->output_channel_, C4NUM);
   int pack_weight_size = C4NUM * OC4 * conv_param_->kernel_h_ * conv_param_->kernel_w_;
@@ -84,8 +84,8 @@ int DeconvolutionDepthwiseCPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(bias_data_, 0, C4NUM * OC4 * sizeof(float));
-  if (inputs_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<float *>(inputs_.at(kBiasIndex)->Data());
+  if (in_tensors_.size() == kInputSize2) {
+    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->Data());
     memcpy(bias_data_, ori_bias, conv_param_->output_channel_ * sizeof(float));
   }
 
@@ -121,7 +121,7 @@ int DeconvolutionDepthwiseCPUKernel::InitBuffer() {
 
 int DeconvolutionDepthwiseCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   InitSlideParam();
@@ -192,7 +192,7 @@ int DeconvolutionDepthwiseCPUKernel::Run() {
     MS_LOG(ERROR) << "Only support input channel equals output channel.";
     return RET_ERROR;
   }
-  auto input_tensor = inputs_.at(kInputIndex);
+  auto input_tensor = in_tensors_.at(kInputIndex);
   auto input_addr = reinterpret_cast<float *>(input_tensor->Data());
 
   // pack input: to nhwc4
@@ -203,9 +203,9 @@ int DeconvolutionDepthwiseCPUKernel::Run() {
     packed_input_ = input_addr;
   }
 
-  auto output_addr = reinterpret_cast<float *>(outputs_.at(kOutputIndex)->Data());
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
   if (!need_align_) {
-    memset(output_addr, 0, outputs_.at(kOutputIndex)->ElementsNum() * sizeof(float));
+    memset(output_addr, 0, out_tensors_.at(kOutputIndex)->ElementsNum() * sizeof(float));
     packed_output_ = output_addr;
   }
 

@@ -49,7 +49,7 @@ ConvolutionDepthwiseInt8CPUKernel::~ConvolutionDepthwiseInt8CPUKernel() {
 int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   // init weight, int8 -> int16
   // o, h, w, i -> o/8, h, w, i, 8; o == group, i == 1
-  auto origin_weight = reinterpret_cast<int8_t *>(inputs_[kWeightIndex]->Data());
+  auto origin_weight = reinterpret_cast<int8_t *>(in_tensors_[kWeightIndex]->Data());
   int OC4 = UP_DIV(conv_param_->output_channel_, C4NUM);
   int pack_weight_size = C4NUM * OC4 * conv_param_->kernel_h_ * conv_param_->kernel_w_;
   packed_weight_ = reinterpret_cast<int16_t *>(malloc(pack_weight_size * sizeof(int16_t)));
@@ -67,8 +67,8 @@ int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(bias_data_, 0, C4NUM * OC4 * sizeof(int32_t));
-  if (inputs_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<int32_t *>(inputs_.at(kBiasIndex)->Data());
+  if (in_tensors_.size() == kInputSize2) {
+    auto ori_bias = reinterpret_cast<int32_t *>(in_tensors_.at(kBiasIndex)->Data());
     memcpy(bias_data_, ori_bias, conv_param_->output_channel_ * sizeof(int32_t));
   }
   return RET_OK;
@@ -100,7 +100,7 @@ int ConvolutionDepthwiseInt8CPUKernel::InitBuffer() {
 
 int ConvolutionDepthwiseInt8CPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   // conv base init
@@ -185,11 +185,11 @@ int ConvolutionDepthwiseInt8CPUKernel::Run() {
   }
 
   // pack input, assume input format: NHWC -> NHWC4
-  auto input_tensor = inputs_.at(kInputIndex);
+  auto input_tensor = in_tensors_.at(kInputIndex);
   auto input_addr = reinterpret_cast<int8_t *>(input_tensor->Data());
   PackDepthwiseInt8Input(input_addr, packed_input_, conv_param_);
 
-  auto output_addr = reinterpret_cast<int8_t *>(outputs_.at(kOutputIndex)->Data());
+  auto output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(kOutputIndex)->Data());
   if (!need_align_) {
     packed_output_ = output_addr;
   }

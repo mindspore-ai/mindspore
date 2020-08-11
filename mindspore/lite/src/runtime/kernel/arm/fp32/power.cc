@@ -55,15 +55,15 @@ int PowerCPUKernel::Run() {
 }
 
 int PowerCPUKernel::RunImpl(int task_id) {
-  auto x_addr = reinterpret_cast<float *>(inputs_[0]->Data());
-  auto output_addr = reinterpret_cast<float *>(outputs_[0]->Data());
-  auto size = inputs_[0]->ElementsNum();
+  auto x_addr = reinterpret_cast<float *>(in_tensors_[0]->Data());
+  auto output_addr = reinterpret_cast<float *>(out_tensors_[0]->Data());
+  auto size = in_tensors_[0]->ElementsNum();
   int stride = UP_DIV(size, thread_count_);
   int len = MSMIN(stride, size - stride * task_id);
   float *exp_addr = nullptr;
   bool broadcast = true;
-  if (inputs_.size() == 2) {
-    exp_addr = reinterpret_cast<float *>(inputs_[1]->Data());
+  if (in_tensors_.size() == 2) {
+    exp_addr = reinterpret_cast<float *>(in_tensors_[1]->Data());
     broadcast = false;
   }
   float *cur_exp;
@@ -82,8 +82,7 @@ kernel::LiteKernel *CpuPowerFp32KernelCreator(const std::vector<lite::tensor::Te
                                               const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Power);
-  PowerCPUKernel *kernel =
-    new (std::nothrow) PowerCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  PowerCPUKernel *kernel = new (std::nothrow) PowerCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PowerCPUKernel fail!";
     return nullptr;

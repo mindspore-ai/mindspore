@@ -21,7 +21,7 @@
 #include "mindspore/lite/include/context.h"
 
 namespace mindspore {
-class TestSigmoidInt8 : public mindspore::Common {
+class TestSigmoidInt8 : public mindspore::CommonTest {
  public:
   TestSigmoidInt8() {}
 };

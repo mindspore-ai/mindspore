@@ -24,7 +24,7 @@
 
 namespace mindspore {
 
-class TestMaxPoolingOpenCL : public mindspore::Common {};
+class TestMaxPoolingOpenCL : public mindspore::CommonTest {};
 
 void InitParameter(PoolingParameter *param) {
   param->window_h_ = 2;

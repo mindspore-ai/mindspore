@@ -28,7 +28,7 @@ using mindspore::kernel::SubGraphOpenCLKernel;
 
 namespace mindspore {
 
-class TestConvolutionOpenCL : public mindspore::Common {};
+class TestConvolutionOpenCL : public mindspore::CommonTest {};
 
 void LoadData(void *dst, size_t dst_size, const std::string &file_path) {
   if (file_path.empty()) {

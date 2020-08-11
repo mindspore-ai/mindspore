@@ -27,7 +27,7 @@
 #include "src/common/anf_exporter/anf_exporter.h"
 
 namespace mindspore {
-class ConvBiasAddFusionTest : public mindspore::Common {
+class ConvBiasAddFusionTest : public mindspore::CommonTest {
  public:
   ConvBiasAddFusionTest() = default;
 };

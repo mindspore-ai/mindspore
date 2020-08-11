@@ -46,7 +46,7 @@ int SoftmaxOpenCLKernel::Init() {
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
-  outputs_[0]->SetFormat(schema::Format_NHWC4);
+  out_tensors_[0]->SetFormat(schema::Format_NHWC4);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return 0;
 }
@@ -55,21 +55,22 @@ int SoftmaxOpenCLKernel::InitBuffer() { return 0; }
 int SoftmaxOpenCLKernel::ReSize() { return 0; }
 
 int SoftmaxOpenCLKernel::Run() {
-  MS_LOG(DEBUG) << this->Name() << " Running!";
+  MS_LOG(DEBUG) << this->name() << " Running!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   auto allocator = ocl_runtime->GetAllocator();
 
   // global and local workers
-  const uint32_t grid_x = inputs_[0]->shape()[2];  // W
-  const uint32_t grid_y = inputs_[0]->shape()[1];  // H
+  const uint32_t grid_x = in_tensors_[0]->shape()[2];  // W
+  const uint32_t grid_y = in_tensors_[0]->shape()[1];  // H
   const uint32_t grid_z = 1;
   std::vector<size_t> global = {grid_x, grid_y, grid_z};
   std::vector<size_t> local = {1, 1, 1};
 
   // input and output
-  cl::Buffer *input = reinterpret_cast<cl::Buffer *>(allocator->GetDeviceBuffer(inputs_[0]->Data()));
-  cl::Buffer *output = reinterpret_cast<cl::Buffer *>(allocator->GetDeviceBuffer(outputs_[0]->Data()));
-  cl_int4 input_size = {inputs_[0]->shape()[0], inputs_[0]->shape()[1], inputs_[0]->shape()[2], inputs_[0]->shape()[3]};
+  cl::Buffer *input = reinterpret_cast<cl::Buffer *>(allocator->GetDeviceBuffer(in_tensors_[0]->Data()));
+  cl::Buffer *output = reinterpret_cast<cl::Buffer *>(allocator->GetDeviceBuffer(out_tensors_[0]->Data()));
+  cl_int4 input_size = {in_tensors_[0]->shape()[0], in_tensors_[0]->shape()[1], in_tensors_[0]->shape()[2],
+                        in_tensors_[0]->shape()[3]};
   int arg_idx = 0;
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, *input);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, *output);

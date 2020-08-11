@@ -25,7 +25,7 @@
 #include "mindspore/core/utils/log_adapter.h"
 
 namespace mindspore {
-class InferTest : public mindspore::Common {
+class InferTest : public mindspore::CommonTest {
  public:
   InferTest() {}
 };

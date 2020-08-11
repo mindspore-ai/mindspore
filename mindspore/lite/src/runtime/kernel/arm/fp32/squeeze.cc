@@ -42,9 +42,9 @@ int SqueezeCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  auto input_ptr = reinterpret_cast<float *>(inputs_.front()->Data());
-  auto output_ptr = reinterpret_cast<float *>(outputs_.front()->Data());
-  size_t data_size = inputs_.front()->Size();
+  auto input_ptr = reinterpret_cast<float *>(in_tensors_.front()->Data());
+  auto output_ptr = reinterpret_cast<float *>(out_tensors_.front()->Data());
+  size_t data_size = in_tensors_.front()->Size();
   ret = DoSqueeze(input_ptr, output_ptr, data_size);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Do squeeze failed.";

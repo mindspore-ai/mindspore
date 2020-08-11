@@ -33,9 +33,9 @@ int PoolingBaseCPUKernel::SetQuantParam() {
   pooling_quant_arg_ = reinterpret_cast<QuantArg **>(malloc(2 * sizeof(QuantArg *)));
   pooling_quant_arg_[0] = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
   pooling_quant_arg_[1] = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
-  auto *input_tensor = inputs_.at(kInputIndex);
+  auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_arg = input_tensor->GetQuantParams();
-  auto *out_tensor = outputs_.at(kOutputIndex);
+  auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_arg = out_tensor->GetQuantParams();
   pooling_quant_arg_[0][0].scale_ = in_quant_arg.front().scale;
   pooling_quant_arg_[0][0].zp_ = in_quant_arg.front().zeroPoint;
@@ -57,15 +57,15 @@ void PoolingBaseCPUKernel::FreeQuantParam() {
 
 int PoolingBaseCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
-  MS_ASSERT(inputs_.size() == 1);
-  MS_ASSERT(outputs_.size() == 1);
+  MS_ASSERT(in_tensors_.size() == 1);
+  MS_ASSERT(out_tensors_.size() == 1);
   pooling_param_->thread_num_ = thread_count_;
-  MS_ASSERT(this->opParameter != nullptr);
-  auto in_tensor = this->inputs_.front();
-  auto out_tensor = this->outputs_.front();
+  MS_ASSERT(this->op_parameter_ != nullptr);
+  auto in_tensor = this->in_tensors_.front();
+  auto out_tensor = this->out_tensors_.front();
   MS_ASSERT(in_tensor != nullptr);
   MS_ASSERT(out_tensor != nullptr);
   pooling_param_->input_batch_ = in_tensor->Batch();

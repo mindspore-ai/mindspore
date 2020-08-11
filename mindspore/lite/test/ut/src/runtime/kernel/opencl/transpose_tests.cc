@@ -23,7 +23,7 @@
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/transpose.h"
 
 namespace mindspore {
-class TestTransposeOpenCL : public mindspore::Common {
+class TestTransposeOpenCL : public mindspore::CommonTest {
  public:
   TestTransposeOpenCL() {}
 };

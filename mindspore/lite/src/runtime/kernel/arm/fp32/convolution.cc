@@ -52,7 +52,7 @@ int ConvolutionCPUKernel::InitWeightBias() {
   int pack_weight_size = oc_block_num * oc_block * ic4 * C4NUM * kernel_plane;
 
   // init weight
-  auto origin_weight = reinterpret_cast<float *>(inputs_.at(kWeightIndex)->Data());
+  auto origin_weight = reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->Data());
   packed_weight_ = reinterpret_cast<float *>(malloc(pack_weight_size * sizeof(float)));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed weight failed.";
@@ -68,11 +68,11 @@ int ConvolutionCPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(bias_data_, 0, oc_block_num * oc_block * sizeof(float));
-  if (inputs_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<float *>(inputs_.at(kBiasIndex)->Data());
+  if (in_tensors_.size() == kInputSize2) {
+    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->Data());
     memcpy(bias_data_, ori_bias, out_channel * sizeof(float));
   } else {
-    MS_ASSERT(inputs_.size() == kInputSize1);
+    MS_ASSERT(in_tensors_.size() == kInputSize1);
   }
   return RET_OK;
 }
@@ -120,11 +120,11 @@ int ConvolutionCPUKernel::InitTmpBuffer() {
 
 void ConvolutionCPUKernel::ConfigInputOutput() {
   // set output format
-  auto output_tensor = outputs_.at(kOutputIndex);
+  auto output_tensor = out_tensors_.at(kOutputIndex);
   output_tensor->SetFormat(schema::Format_NHWC);
 
   // select trans func for input
-  auto input_tensor = inputs_.at(kInputIndex);
+  auto input_tensor = in_tensors_.at(kInputIndex);
   auto ret = CheckLayout(input_tensor);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Check layout failed.";
@@ -139,7 +139,7 @@ void ConvolutionCPUKernel::ConfigInputOutput() {
 
 int ConvolutionCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   auto ret = ConvolutionBaseCPUKernel::Init();
@@ -193,7 +193,7 @@ int ConvolutionCPUKernel::RunImpl(int task_id) {
     MS_LOG(ERROR) << "gemm_func is nullptr.";
     return RET_ERROR;
   }
-  auto output_addr = reinterpret_cast<float *>(outputs_.at(kOutputIndex)->Data());
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
   ConvFp32(reinterpret_cast<float *>(nhwc4_input_), packed_input_, packed_weight_,
            reinterpret_cast<float *>(bias_data_), tmp_output_block_, output_addr, task_id, conv_param_, gemm_func_);
   return RET_OK;
@@ -215,7 +215,7 @@ int ConvolutionCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto input_tensor = inputs_.at(kInputIndex);
+  auto input_tensor = in_tensors_.at(kInputIndex);
   auto ori_input_data = input_tensor->Data();
   int in_batch = conv_param_->input_batch_;
   int in_h = conv_param_->input_h_;

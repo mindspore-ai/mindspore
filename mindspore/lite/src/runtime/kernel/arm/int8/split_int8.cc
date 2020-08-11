@@ -32,14 +32,14 @@ int SplitInt8CPUKernel::Init() {
   if (ret != RET_OK) {
     return ret;
   }
-  auto in_tensor = inputs_.at(kInputIndex);
+  auto in_tensor = in_tensors_.at(kInputIndex);
 
   auto in_quant_args = in_tensor->GetQuantParams();
   param->quant_arg_.in_args_.scale_ = in_quant_args.front().scale;
   param->quant_arg_.in_args_.zp_ = in_quant_args.front().zeroPoint;
   MS_ASSERT(param->num_split_ == outputs_.size());
   for (int i = 0; i < param->num_split_; i++) {
-    auto *out_tensor = outputs_.at(i);
+    auto *out_tensor = out_tensors_.at(i);
     auto out_quant_args = out_tensor->GetQuantParams();
     param->quant_arg_.out_args_[i].scale_ = out_quant_args.front().scale;
     param->quant_arg_.out_args_[i].zp_ = out_quant_args.front().zeroPoint;
@@ -63,7 +63,7 @@ int SplitInt8CPUKernel::Split(int task_id) {
   }
   int thread_offset = task_id * thread_n_stride_;
   auto ret =
-    DoSplit(input_ptr_, output_ptr_.data(), inputs_.front()->shape().data(), thread_offset, num_unit_thread, param);
+    DoSplit(input_ptr_, output_ptr_.data(), in_tensors_.front()->shape().data(), thread_offset, num_unit_thread, param);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Split error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
@@ -87,11 +87,11 @@ int SplitInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return ret;
   }
-  auto in_tensor = inputs_.at(kInputIndex);
+  auto in_tensor = in_tensors_.at(kInputIndex);
   input_ptr_ = reinterpret_cast<int8_t *>(in_tensor->Data());
   MS_ASSERT(param->num_split_ == outputs_.size());
   for (int i = 0; i < param->num_split_; i++) {
-    output_ptr_.push_back(reinterpret_cast<int8_t *>(outputs_.at(i)->Data()));
+    output_ptr_.push_back(reinterpret_cast<int8_t *>(out_tensors_.at(i)->Data()));
   }
 
   ret = LiteBackendParallelLaunch(SplitInt8Run, this, thread_n_num_);

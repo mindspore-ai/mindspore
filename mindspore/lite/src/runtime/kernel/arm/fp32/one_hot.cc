@@ -36,17 +36,17 @@ constexpr size_t kOutputNum = 1;
 
 int OneHotCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   // indices depth on_value off_value
-  if (inputs_.size() != kInputNum || outputs_.size() != kOutputNum) {
-    MS_LOG(ERROR) << "OneHot input size should be " << kInputNum << ", got " << inputs_.size()
-                  << ", output size should be" << kOutputNum << ", got " << outputs_.size();
+  if (in_tensors_.size() != kInputNum || out_tensors_.size() != kOutputNum) {
+    MS_LOG(ERROR) << "OneHot input size should be " << kInputNum << ", got " << in_tensors_.size()
+                  << ", output size should be" << kOutputNum << ", got " << out_tensors_.size();
     return RET_ERROR;
   }
 
-  auto indices = inputs_.at(0);
+  auto indices = in_tensors_.at(0);
   if (indices == nullptr) {
     MS_LOG(ERROR) << "OneHot inputs[0] indices nullptr";
     return RET_NULL_PTR;
@@ -64,7 +64,7 @@ int OneHotCPUKernel::Init() {
   }
   thread_num_ = context_->thread_num_;
 
-  const int indices_rank = static_cast<int>(inputs_.at(0)->shape().size());
+  const int indices_rank = static_cast<int>(in_tensors_.at(0)->shape().size());
   if (axis_ < 0) {
     axis_ += indices_rank + 1;
   }
@@ -87,8 +87,8 @@ int RunOneHot(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int OneHotCPUKernel::OneHotImpl(int task_id) {
-  auto indices_data = static_cast<int *>(inputs_.at(0)->Data());
-  auto output = outputs_.at(0);
+  auto indices_data = static_cast<int *>(in_tensors_.at(0)->Data());
+  auto output = out_tensors_.at(0);
   if (output == nullptr) {
     MS_LOG(ERROR) << "OneHot output nullptr";
     return RET_NULL_PTR;
@@ -99,20 +99,20 @@ int OneHotCPUKernel::OneHotImpl(int task_id) {
   if (ret != RET_OK) {
     return ret;
   }
-  auto one_hot_param = reinterpret_cast<OneHotParameter *>(opParameter);
+  auto one_hot_param = reinterpret_cast<OneHotParameter *>(op_parameter_);
 
   ret = OneHot(indices_data, output_data, one_hot_param, task_id, thread_num_);
   return ret;
 }
 
 int OneHotCPUKernel::GetParams() {
-  auto one_hot_param = reinterpret_cast<OneHotParameter *>(opParameter);
+  auto one_hot_param = reinterpret_cast<OneHotParameter *>(op_parameter_);
   if (one_hot_param == nullptr) {
     MS_LOG(ERROR) << "cast OneHotParameter nullptr";
     return RET_NULL_PTR;
   }
 
-  auto depth_tensor = inputs_.at(1);
+  auto depth_tensor = in_tensors_.at(1);
   if (depth_tensor == nullptr) {
     MS_LOG(ERROR) << "OneHot inputs[1] depth nullptr";
     return RET_NULL_PTR;
@@ -123,7 +123,7 @@ int OneHotCPUKernel::GetParams() {
   }
   one_hot_param->depth_ = *depth;
 
-  auto on_value_tensor = inputs_.at(2);
+  auto on_value_tensor = in_tensors_.at(2);
   if (on_value_tensor == nullptr) {
     MS_LOG(ERROR) << "OneHot inputs[2] on_value nullptr";
     return RET_NULL_PTR;
@@ -134,7 +134,7 @@ int OneHotCPUKernel::GetParams() {
   }
   one_hot_param->on_value_ = *on_value;
 
-  auto off_value_tensor = inputs_.at(3);
+  auto off_value_tensor = in_tensors_.at(3);
   if (off_value_tensor == nullptr) {
     MS_LOG(ERROR) << "OneHot inputs[3] off_value nullptr";
     return RET_NULL_PTR;

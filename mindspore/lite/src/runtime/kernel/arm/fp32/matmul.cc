@@ -34,12 +34,12 @@ int MatmulCPUKernel::ReSize() { return RET_OK; }
 
 int MatmulCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   int batch = 1;
-  auto a_shape = inputs_[0]->shape();
-  auto c_shape = outputs_[0]->shape();
+  auto a_shape = in_tensors_[0]->shape();
+  auto c_shape = out_tensors_[0]->shape();
   for (int i = 0; i < a_shape.size() - 2; ++i) {
     batch *= a_shape[i];
   }
@@ -97,9 +97,9 @@ int MatmulCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto a_ptr = reinterpret_cast<float *>(inputs_[0]->Data());
-  auto b_ptr = reinterpret_cast<float *>(inputs_[1]->Data());
-  auto c_ptr = reinterpret_cast<float *>(outputs_[0]->Data());
+  auto a_ptr = reinterpret_cast<float *>(in_tensors_[0]->Data());
+  auto b_ptr = reinterpret_cast<float *>(in_tensors_[1]->Data());
+  auto c_ptr = reinterpret_cast<float *>(out_tensors_[0]->Data());
   auto a_stride = params_->row_ * params_->deep_;
   auto b_stride = params_->deep_ * params_->col_;
   auto c_stride = params_->row_ * params_->col_;

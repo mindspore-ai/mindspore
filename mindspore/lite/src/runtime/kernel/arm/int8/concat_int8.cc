@@ -28,7 +28,7 @@ namespace mindspore::kernel {
 
 int ConcatInt8CPUKernel::Init() {
   ConcatBaseCPUKernel::Init();
-  auto input_num = inputs_.size();
+  auto input_num = in_tensors_.size();
   concat_param_->quant_arg_.in_args_ =
     reinterpret_cast<QuantArg *>(ctx_->allocator->Malloc(sizeof(QuantArg) * input_num));
   if (concat_param_->quant_arg_.in_args_ == nullptr) {
@@ -36,13 +36,13 @@ int ConcatInt8CPUKernel::Init() {
     return RET_ERROR;
   }
   for (size_t i = 0; i < input_num; i++) {
-    auto *input_tensor = inputs_.at(i);
+    auto *input_tensor = in_tensors_.at(i);
     auto quant_args = input_tensor->GetQuantParams();
     concat_param_->quant_arg_.in_args_[i].scale_ = quant_args.front().scale;
     concat_param_->quant_arg_.in_args_[i].zp_ = quant_args.front().zeroPoint;
   }
 
-  auto output_tensor = outputs_.at(kOutputIndex);
+  auto output_tensor = out_tensors_.at(kOutputIndex);
   auto quant_args = output_tensor->GetQuantParams();
   concat_param_->quant_arg_.out_args_.scale_ = quant_args.front().scale;
   concat_param_->quant_arg_.out_args_.zp_ = quant_args.front().zeroPoint;
@@ -64,20 +64,20 @@ int ConcatInt8CPUKernel::ReSize() {
   if (concat_param_->input_shapes_ != nullptr) {
     ctx_->allocator->Free(concat_param_->input_shapes_);
   }
-  auto input_num = inputs_.size();
+  auto input_num = in_tensors_.size();
   concat_param_->input_num_ = input_num;
   concat_param_->input_shapes_ = reinterpret_cast<const int **>(ctx_->allocator->Malloc(sizeof(int *) * input_num));
   for (size_t i = 0; i < input_num; i++) {
-    concat_param_->input_shapes_[i] = reinterpret_cast<const int *>(inputs_.at(i)->shape().data());
+    concat_param_->input_shapes_[i] = reinterpret_cast<const int *>(in_tensors_.at(i)->shape().data());
   }
 
   before_axis_size = 1;
   for (int i = 0; i < axis_; i++) {
-    before_axis_size *= outputs_.at(kOutputIndex)->DimensionSize(i);
+    before_axis_size *= out_tensors_.at(kOutputIndex)->DimensionSize(i);
   }
 
   int64_t after_axis_size = 1;
-  auto output_tensor = outputs_.at(kOutputIndex);
+  auto output_tensor = out_tensors_.at(kOutputIndex);
   int output_dim = output_tensor->shape().size();
   concat_param_->output_shapes_ = output_tensor->shape().data();
   for (size_t i = axis_ + 1; i < output_dim; i++) {
@@ -103,9 +103,9 @@ int ConcatInt8CPUKernel::Run() {
     return RET_ERROR;
   }
   for (size_t i = 0; i < input_num; i++) {
-    input_data_[i] = static_cast<int8_t *>(inputs_.at(i)->Data());
+    input_data_[i] = static_cast<int8_t *>(in_tensors_.at(i)->Data());
   }
-  output_data_ = reinterpret_cast<int8_t *>(outputs_.at(0)->Data());
+  output_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->Data());
 
   ret = LiteBackendParallelLaunch(ConcatInt8Run, this, thread_count_);
 

@@ -35,9 +35,7 @@ int BatchToSpaceCPUKernel::Init() {
   return ReSize();
 }
 
-int BatchToSpaceCPUKernel::ReSize() {
-  return BatchToSpaceBaseCPUKernel::ReSize();
-}
+int BatchToSpaceCPUKernel::ReSize() { return BatchToSpaceBaseCPUKernel::ReSize(); }
 
 int BatchToSpaceCPUKernel::Run() {
   auto prepare_ret = Prepare();
@@ -45,13 +43,13 @@ int BatchToSpaceCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto input = inputs_[0];
-  auto output = outputs_[0];
+  auto input = in_tensors_[0];
+  auto output = out_tensors_[0];
   const float *input_data = reinterpret_cast<const float *>(input->Data());
   float *output_data = reinterpret_cast<float *>(output->Data());
   auto in_shape = input->shape();
   auto out_shape = output->shape();
-  BatchToSpaceParameter *param = reinterpret_cast<BatchToSpaceParameter *>(this->opParameter);
+  BatchToSpaceParameter *param = reinterpret_cast<BatchToSpaceParameter *>(this->op_parameter_);
 
   if (IsNoCrop()) {
     BatchToSpaceNoCropForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_,

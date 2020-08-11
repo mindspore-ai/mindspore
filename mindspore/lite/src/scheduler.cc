@@ -107,10 +107,10 @@ void Scheduler::ConstructSubgraphs(std::vector<kernel::LiteKernel *> *kernels) {
   std::vector<kernel::LiteKernel *> sub_kernels;
   std::vector<std::vector<kernel::LiteKernel *>> sub_kernels_list;
 
-  kernel::KERNEL_ARCH prev_arch = kernels->front()->Desc().arch;
+  kernel::KERNEL_ARCH prev_arch = kernels->front()->desc().arch;
   for (uint32_t i = 0; i < kernel_count; ++i) {
     auto curr_kernel = kernels->at(i);
-    auto curr_arch = curr_kernel->Desc().arch;
+    auto curr_arch = curr_kernel->desc().arch;
     if (curr_arch == prev_arch) {
       sub_kernels.emplace_back(curr_kernel);
     }
@@ -124,10 +124,10 @@ void Scheduler::ConstructSubgraphs(std::vector<kernel::LiteKernel *> *kernels) {
 
   std::vector<kernel::LiteKernel *> subgraph_kernels;
   for (auto temp_kernels : sub_kernels_list) {
-    kernel::KERNEL_ARCH arch = temp_kernels.front()->Desc().arch;
+    kernel::KERNEL_ARCH arch = temp_kernels.front()->desc().arch;
     if (arch == kernel::KERNEL_ARCH::kCPU) {
       for (auto kernel : temp_kernels) {
-        for (auto tensor : kernel->GetOutputs()) {
+        for (auto tensor : kernel->out_tensors()) {
           tensor->set_allocator(context_->allocator.get());
         }
       }
@@ -152,12 +152,12 @@ kernel::LiteKernel *Scheduler::CreateSubKernel(const std::vector<kernel::LiteKer
     std::vector<kernel::LiteKernel *> output_kernels{tail_kernel};
     std::vector<tensor::Tensor *> input_tensors;
     std::vector<tensor::Tensor *> output_tensors;
-    for (auto tensor : head_kernel->GetInputs()) {
+    for (auto tensor : head_kernel->in_tensors()) {
       if (tensor->Data() == nullptr) {
         input_tensors.emplace_back(tensor);
       }
     }
-    for (auto tensor : tail_kernel->GetOutputs()) {
+    for (auto tensor : tail_kernel->out_tensors()) {
       if (tensor->Data() == nullptr) {
         output_tensors.emplace_back(tensor);
       }
@@ -178,20 +178,16 @@ kernel::LiteKernel *Scheduler::CreateSubKernel(const std::vector<kernel::LiteKer
   return sub_kernel;
 }
 
-int Scheduler::MarkKernels(const std::vector<kernel::LiteKernel *> &kernels) { return 0; }
-
-int Scheduler::MergeKernels(std::vector<kernel::LiteKernel *> *kernels) { return 0; }
-
-kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<tensor::Tensor *> &inputs,
-                                            const std::vector<tensor::Tensor *> &outputs,
+kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<tensor::Tensor *> &in_tensors,
+                                            const std::vector<tensor::Tensor *> &out_tensors,
                                             const lite::Primitive *primitive) {
   // todo: support NPU, APU
   MS_ASSERT(nullptr != primitive);
-  auto data_type = inputs.front()->data_type();
+  auto data_type = in_tensors.front()->data_type();
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, primitive->Type()};
   if (context_->device_ctx_.type == DT_GPU) {
     desc.arch = kernel::KERNEL_ARCH::kGPU;
-    auto *kernel = KernelFactory::GetInstance()->GetKernel(inputs, outputs, primitive, context_, desc);
+    auto *kernel = KernelFactory::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, desc);
     if (nullptr != kernel) {
       kernel->set_desc(desc);
       return kernel;
@@ -203,16 +199,16 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<tensor::Tensor *> 
   if (data_type == kNumberTypeFloat32) {
     // check if support fp16
     kernel::KernelKey key{desc.arch, kNumberTypeFloat16, desc.type};
-    kernel = KernelFactory::GetInstance()->GetKernel(inputs, outputs, primitive, context_, key);
+    kernel = KernelFactory::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, key);
     if (kernel != nullptr) {
       MS_LOG(DEBUG) << "Get fp16 op success.";
       kernel->set_desc(desc);
       return kernel;
     }
     MS_LOG(DEBUG) << "Get fp16 op failed, back to fp32 op.";
-    kernel = KernelFactory::GetInstance()->GetKernel(inputs, outputs, primitive, context_, desc);
+    kernel = KernelFactory::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, desc);
   } else {
-    kernel = KernelFactory::GetInstance()->GetKernel(inputs, outputs, primitive, context_, desc);
+    kernel = KernelFactory::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, desc);
   }
   if (kernel != nullptr) {
     kernel->set_desc(desc);

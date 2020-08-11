@@ -23,7 +23,7 @@
 #include "mindspore/lite/src/ops/ops.h"
 
 namespace mindspore {
-class TestConvolutionDwFp32 : public mindspore::Common {
+class TestConvolutionDwFp32 : public mindspore::CommonTest {
  public:
   TestConvolutionDwFp32() {}
 };

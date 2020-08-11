@@ -29,14 +29,14 @@ using mindspore::schema::PrimitiveType_Concat;
 namespace mindspore::kernel {
 
 int ConcatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  size_t CO4 = UP_DIV(outputs_[0]->Channel(), C4NUM);
+  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   size_t im_dst_x, im_dst_y;
-  if (inputs_[0]->GetFormat() == schema::Format_NHWC4) {
-    im_dst_x = outputs_[0]->Width() * CO4;
-    im_dst_y = outputs_[0]->Height();
+  if (in_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
+    im_dst_x = out_tensors_[0]->Width() * CO4;
+    im_dst_y = out_tensors_[0]->Height();
   } else {
-    im_dst_y = outputs_[0]->Height() * CO4;
-    im_dst_x = outputs_[0]->Width();
+    im_dst_y = out_tensors_[0]->Height() * CO4;
+    im_dst_x = out_tensors_[0]->Width();
   }
 #ifdef ENABLE_FP16
   size_t img_dtype = CL_HALF_FLOAT;
@@ -49,11 +49,11 @@ int ConcatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) 
   return 1;
 }
 int ConcatOpenCLKernel::Init() {
-  if (inputs_[0]->shape().size() != 4) {
+  if (in_tensors_[0]->shape().size() != 4) {
     MS_LOG(ERROR) << "only support dim=4";
   }
 
-  auto param = reinterpret_cast<ConcatParameter *>(this->opParameter);
+  auto param = reinterpret_cast<ConcatParameter *>(this->op_parameter_);
   MS_LOG(INFO) << "concat at axis=:  " << param->axis_;
   if (param->axis_ != 0 && param->axis_ != 3) {
     MS_LOG(ERROR) << "only support axis=0 or axis=3";
@@ -62,7 +62,7 @@ int ConcatOpenCLKernel::Init() {
   if (param->axis_ == 0) {
     return 0;
   }
-  if (inputs_.size() == 2) {
+  if (in_tensors_.size() == 2) {
     std::set<std::string> build_options;
     std::string source = concat_source_fp32;
     std::string program_name = "Concat";
@@ -72,7 +72,7 @@ int ConcatOpenCLKernel::Init() {
     ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
   }
 
-  if (inputs_.size() == 3) {
+  if (in_tensors_.size() == 3) {
     std::set<std::string> build_options;
     std::string source = concat_source_fp32;
     std::string program_name = "Concat3input";
@@ -92,19 +92,20 @@ int ConcatOpenCLKernel::Run_axis0() {
   auto allocator_ = ocl_runtime->GetAllocator();
   cl::CommandQueue *command_queue = ocl_runtime->GetDefaultCommandQueue();
 
-  for (auto &tensor : inputs_) {
+  for (auto &tensor : in_tensors_) {
     auto buffer = static_cast<cl::Buffer *>(allocator_->GetDeviceBuffer(tensor->Data()));
     ocl_runtime->MapBuffer(*buffer, CL_MAP_READ, tensor->Size(), command_queue, true);
   }
-  for (auto &tensor : outputs_) {
+  for (auto &tensor : out_tensors_) {
     auto buffer = static_cast<cl::Buffer *>(allocator_->GetDeviceBuffer(tensor->Data()));
     ocl_runtime->MapBuffer(*buffer, CL_MAP_WRITE, tensor->Size(), command_queue, true);
   }
 
-  memcpy(outputs_[0]->Data(), inputs_[0]->Data(), inputs_[0]->Size());
-  memcpy(reinterpret_cast<char *>(outputs_[0]->Data()) + inputs_[0]->Size(), inputs_[1]->Data(), inputs_[1]->Size());
+  memcpy(out_tensors_[0]->Data(), in_tensors_[0]->Data(), in_tensors_[0]->Size());
+  memcpy(reinterpret_cast<char *>(out_tensors_[0]->Data()) + in_tensors_[0]->Size(), in_tensors_[1]->Data(),
+         in_tensors_[1]->Size());
 
-  for (auto tensors : {&inputs_, &outputs_}) {
+  for (auto tensors : {&in_tensors_, &out_tensors_}) {
     for (auto &tensor : *tensors) {
       auto buffer = static_cast<cl::Buffer *>(allocator_->GetDeviceBuffer(tensor->Data()));
       ocl_runtime->UnmapBuffer(*buffer, tensor->Data());
@@ -147,16 +148,16 @@ void ConcatGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *
   local->push_back(z);
 }
 int ConcatOpenCLKernel::Run() {
-  MS_LOG(DEBUG) << this->Name() << " Running!";
-  auto param = reinterpret_cast<ConcatParameter *>(this->opParameter);
+  MS_LOG(DEBUG) << this->name() << " Running!";
+  auto param = reinterpret_cast<ConcatParameter *>(this->op_parameter_);
   if (param->axis_ == 0) {
     return Run_axis0();
   }
 
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  auto input0_shape = inputs_[0]->shape();
-  auto input1_shape = inputs_[1]->shape();
-  auto output_shape = outputs_[0]->shape();
+  auto input0_shape = in_tensors_[0]->shape();
+  auto input1_shape = in_tensors_[1]->shape();
+  auto output_shape = out_tensors_[0]->shape();
 
   cl_int2 input0_shape2_ = {DivideRoundUp(input0_shape[3], 4), DivideRoundUp(input1_shape[3], 4)};  // change
   cl_int4 output_shape_ = {output_shape[0], output_shape[1], output_shape[2], DivideRoundUp(output_shape[3], 4)};
@@ -169,20 +170,20 @@ int ConcatOpenCLKernel::Run() {
   //    ConcatGetWorkGroup(global, &local, 512);
 
   int arg_cn = 0;
-  if (inputs_.size() == 2) {
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, outputs_[0]->Data());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, inputs_[0]->Data());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, inputs_[1]->Data());
+  if (in_tensors_.size() == 2) {
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->Data());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->Data());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->Data());
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, input0_shape2_);
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, output_shape_);
-  } else if (inputs_.size() == 3) {
-    auto input2_shape = inputs_[2]->shape();
+  } else if (in_tensors_.size() == 3) {
+    auto input2_shape = in_tensors_[2]->shape();
     cl_int3 input0_shape3_ = {DivideRoundUp(input0_shape[3], 4), DivideRoundUp(input1_shape[3], 4),
                               DivideRoundUp(input2_shape[3], 4)};
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, outputs_[0]->Data());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, inputs_[0]->Data());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, inputs_[1]->Data());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, inputs_[2]->Data());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->Data());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->Data());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->Data());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[2]->Data());
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, input0_shape3_);
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, output_shape_);
   }

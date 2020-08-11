@@ -27,7 +27,7 @@ using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 int PoolingInt8CPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   auto ret = PoolingBaseCPUKernel::Init();
@@ -60,8 +60,8 @@ int PoolingInt8CPUKernel::ReSize() {
 }
 
 int PoolingInt8CPUKernel::RunImpl(int task_id) {
-  auto input_data = reinterpret_cast<int8_t *>(inputs_.at(kInputIndex)->Data());
-  auto output_data = reinterpret_cast<int8_t *>(outputs_.at(kOutputIndex)->Data());
+  auto input_data = reinterpret_cast<int8_t *>(in_tensors_.at(kInputIndex)->Data());
+  auto output_data = reinterpret_cast<int8_t *>(out_tensors_.at(kOutputIndex)->Data());
   if (pooling_param_->max_pooling_) {
     MaxPoolingInt8(input_data, output_data, pooling_param_, task_id);
   } else {

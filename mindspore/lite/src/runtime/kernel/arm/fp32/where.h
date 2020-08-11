@@ -32,7 +32,7 @@ class WhereCPUKernel : public LiteKernel {
                  const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                  const lite::Primitive *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
-    where_param_ = reinterpret_cast<WhereParameter *>(opParameter);
+    where_param_ = reinterpret_cast<WhereParameter *>(op_parameter_);
   }
   ~WhereCPUKernel() = default;
 

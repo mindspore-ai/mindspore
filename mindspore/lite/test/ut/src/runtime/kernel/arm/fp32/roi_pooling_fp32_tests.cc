@@ -20,7 +20,7 @@
 #include "src/lite_kernel.h"
 
 namespace mindspore {
-class TestROIPoolingFp32 : public mindspore::Common {
+class TestROIPoolingFp32 : public mindspore::CommonTest {
  public:
   TestROIPoolingFp32() {}
 };

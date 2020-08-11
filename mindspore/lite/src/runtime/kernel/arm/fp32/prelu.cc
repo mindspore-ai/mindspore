@@ -51,10 +51,10 @@ int PReluCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto input = inputs_.at(0);
+  auto input = in_tensors_.at(0);
   prelu_param_->input_num_ = input->ElementsNum();
   input_data = reinterpret_cast<float *>(input->Data());
-  output_data = reinterpret_cast<float *>(outputs_.at(0)->Data());
+  output_data = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
 
   auto ret = LiteBackendParallelLaunch(PReluRun, this, prelu_param_->thread_num_);
   if (ret != RET_OK) {

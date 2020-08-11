@@ -33,16 +33,16 @@ int UniqueCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  auto input = reinterpret_cast<float *>(inputs_.at(0)->Data());
-  auto output0 = reinterpret_cast<float *>(outputs_.at(0)->Data());
-  auto output1 = reinterpret_cast<int *>(outputs_.at(1)->Data());
+  auto input = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
+  auto output0 = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  auto output1 = reinterpret_cast<int *>(out_tensors_.at(1)->Data());
 
   int output0_len = 0;
-  Unique(input, inputs_.at(0)->ElementsNum(), output0, &output0_len, output1);
+  Unique(input, in_tensors_.at(0)->ElementsNum(), output0, &output0_len, output1);
 
-  std::vector<int> out_shape = outputs_.at(0)->shape();
+  std::vector<int> out_shape = out_tensors_.at(0)->shape();
   out_shape[out_shape.size() - 1] = output0_len;
-  outputs_.at(0)->set_shape(out_shape);
+  out_tensors_.at(0)->set_shape(out_shape);
   return RET_OK;
 }
 

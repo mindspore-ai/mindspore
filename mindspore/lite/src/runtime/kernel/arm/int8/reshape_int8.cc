@@ -28,12 +28,12 @@ namespace mindspore::kernel {
 
 int ReshapeInt8CPUKernel::Init() {
   ReshapeBaseCPUKernel::Init();
-  auto *input_tensor = inputs_.at(kInputIndex);
+  auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->GetQuantParams();
   reshape_param_->quant_para_.in_args_.scale_ = in_quant_args.front().scale;
   reshape_param_->quant_para_.in_args_.zp_ = in_quant_args.front().zeroPoint;
 
-  auto *out_tensor = outputs_.at(kOutputIndex);
+  auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_args = out_tensor->GetQuantParams();
   reshape_param_->quant_para_.out_args_.scale_ = out_quant_args.front().scale;
   reshape_param_->quant_para_.out_args_.zp_ = out_quant_args.front().zeroPoint;
@@ -52,15 +52,15 @@ int ReshapeInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  MS_ASSERT(inputs_.size() == 1);
-  MS_ASSERT(outputs_.size() == 1);
-  input_data_ = static_cast<int8_t *>(inputs_.at(kInputIndex)->Data());
-  output_data_ = static_cast<int8_t *>(outputs_.at(kOutputIndex)->Data());
+  MS_ASSERT(in_tensors_.size() == 1);
+  MS_ASSERT(out_tensors_.size() == 1);
+  input_data_ = static_cast<int8_t *>(in_tensors_.at(kInputIndex)->Data());
+  output_data_ = static_cast<int8_t *>(out_tensors_.at(kOutputIndex)->Data());
 
-  elements_num_ = inputs_.at(kInputIndex)->ElementsNum();
-  count_unit_ = opParameter->thread_num_ > 1 ? UP_DIV(elements_num_, opParameter->thread_num_) : elements_num_;
+  elements_num_ = in_tensors_.at(kInputIndex)->ElementsNum();
+  count_unit_ = op_parameter_->thread_num_ > 1 ? UP_DIV(elements_num_, op_parameter_->thread_num_) : elements_num_;
 
-  ret = LiteBackendParallelLaunch(ReshapeInt8Run, this, opParameter->thread_num_);
+  ret = LiteBackendParallelLaunch(ReshapeInt8Run, this, op_parameter_->thread_num_);
   return ret;
 }
 

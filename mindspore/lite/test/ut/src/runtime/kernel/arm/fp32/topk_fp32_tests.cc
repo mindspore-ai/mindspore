@@ -21,7 +21,7 @@
 #include "mindspore/lite/src/kernel_registry.h"
 
 namespace mindspore {
-class TestTopKFp32 : public mindspore::Common {
+class TestTopKFp32 : public mindspore::CommonTest {
  public:
   TestTopKFp32() {}
 };

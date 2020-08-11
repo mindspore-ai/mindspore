@@ -19,6 +19,7 @@
 
 namespace mindspore {
 namespace lite {
+/// \brief STATUS defined error code in MindSpore Lite.
 using STATUS = int;
 
 /* Success */
@@ -33,8 +34,8 @@ constexpr int RET_SUCCESS_EXIT = -5;  /**< No error but exit. */
 constexpr int RET_MEMORY_FAILED = -6; /**< Create memory failed. */
 
 /* Executor error code, range: [-101,-200] */
-constexpr int RET_OUT_OF_TENSOR_RANGE = -101; /**< Failed to checking range. */
-constexpr int RET_INPUT_TENSOR_ERROR = -102;  /**< Failed to checking input tensor. */
+constexpr int RET_OUT_OF_TENSOR_RANGE = -101; /**< Failed to check range. */
+constexpr int RET_INPUT_TENSOR_ERROR = -102;  /**< Failed to check input tensor. */
 constexpr int RET_REENTRANT_ERROR = -103;     /**< Exist executor running. */
 
 /* Graph error code, range: [-201,-300] */

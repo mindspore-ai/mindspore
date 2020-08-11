@@ -22,7 +22,7 @@
 #include "mindspore/lite/src/lite_kernel.h"
 
 namespace mindspore {
-class TestMatmulInt8 : public mindspore::Common {
+class TestMatmulInt8 : public mindspore::CommonTest {
  public:
   TestMatmulInt8() {}
 };

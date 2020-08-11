@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace lite {
-class ConverterTest : public mindspore::Common {
+class ConverterTest : public mindspore::CommonTest {
  public:
   ConverterTest() {}
 };

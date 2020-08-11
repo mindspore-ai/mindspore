@@ -39,8 +39,8 @@ int StridedSliceCPUKernel::Init() {
 }
 
 int StridedSliceCPUKernel::ReSize() {
-  auto input = inputs_.at(0);
-  auto parameter = reinterpret_cast<StridedSliceParameter *>(opParameter);
+  auto input = in_tensors_.at(0);
+  auto parameter = reinterpret_cast<StridedSliceParameter *>(op_parameter_);
   MS_ASSERT(input);
   MS_ASSERT(parameter);
   parameter->data_type = input->data_type() == kNumberTypeInt8 ? kDataTypeInt8 : kDataTypeFloat;
@@ -54,12 +54,12 @@ int StridedSliceCPUKernel::Run() {
     return ret;
   }
 
-  auto input = inputs_.at(0);
-  auto output = outputs_.at(0);
+  auto input = in_tensors_.at(0);
+  auto output = out_tensors_.at(0);
   MS_ASSERT(input);
   MS_ASSERT(output);
 
-  ret = DoStridedSlice(input->Data(), output->Data(), reinterpret_cast<StridedSliceParameter *>(opParameter));
+  ret = DoStridedSlice(input->Data(), output->Data(), reinterpret_cast<StridedSliceParameter *>(op_parameter_));
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StridedSlice error error_code[" << ret << "]";
     return RET_ERROR;

@@ -23,7 +23,7 @@
 
 namespace mindspore {
 
-class TestSoftmaxCrossEntropyFp32 : public mindspore::Common {
+class TestSoftmaxCrossEntropyFp32 : public mindspore::CommonTest {
  public:
   TestSoftmaxCrossEntropyFp32() {}
 };

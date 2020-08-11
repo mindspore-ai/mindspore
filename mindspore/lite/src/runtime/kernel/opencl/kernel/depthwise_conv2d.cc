@@ -42,8 +42,8 @@ namespace mindspore::kernel {
 int DepthwiseConv2dOpenCLKernel::Init() {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   std::string kernel_name = "DepthwiseConv2d";
-  auto in_format = inputs_[0]->GetFormat();
-  outputs_[0]->SetFormat(in_format);
+  auto in_format = in_tensors_[0]->GetFormat();
+  out_tensors_[0]->SetFormat(in_format);
   if (in_format != schema::Format_NHWC4 && in_format != schema::Format_NC4HW4) {
     MS_LOG(ERROR) << "input format(" << in_format << ") "
                   << "format not support!";
@@ -58,7 +58,7 @@ int DepthwiseConv2dOpenCLKernel::Init() {
   } else if (in_format == schema::Format_NHWC4) {
     kernel_name += "_NHWC4";
   }
-  auto parameter = reinterpret_cast<ConvParameter *>(opParameter);
+  auto parameter = reinterpret_cast<ConvParameter *>(op_parameter_);
   if (parameter->kernel_h_ == 1) {
     kernel_name += "_1x1";
   }
@@ -81,37 +81,37 @@ int DepthwiseConv2dOpenCLKernel::Init() {
 }
 
 int DepthwiseConv2dOpenCLKernel::InitBuffer() {
-  auto parameter = reinterpret_cast<ConvParameter *>(opParameter);
+  auto parameter = reinterpret_cast<ConvParameter *>(op_parameter_);
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   auto allocator = ocl_runtime->GetAllocator();
 
   // weight: o, h, w, i; o == group, i == 1
-  auto origin_weight = reinterpret_cast<FLOAT_t *>(inputs_.at(kWeightIndex)->Data());
-  int CO4 = UP_DIV(outputs_[0]->Channel(), C4NUM);
+  auto origin_weight = reinterpret_cast<FLOAT_t *>(in_tensors_.at(kWeightIndex)->Data());
+  int CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   int pack_weight_size = C4NUM * CO4 * parameter->kernel_h_ * parameter->kernel_w_;
 
   packed_weight_ = reinterpret_cast<FLOAT_t *>(allocator->Malloc(pack_weight_size * sizeof(FLOAT_t)));
   packed_weight_ = reinterpret_cast<FLOAT_t *>(allocator->MapBuffer(packed_weight_, CL_MAP_WRITE, nullptr, true));
   int plane = parameter->kernel_h_ * parameter->kernel_w_;
 #ifdef ENABLE_FP16
-  PackNCHWToNC4HW4Fp16(origin_weight, packed_weight_, 1, plane, outputs_[0]->Channel());
+  PackNCHWToNC4HW4Fp16(origin_weight, packed_weight_, 1, plane, out_tensors_[0]->Channel());
 #else
-  PackNCHWToNC4HW4Fp32(origin_weight, packed_weight_, 1, plane, outputs_[0]->Channel());
+  PackNCHWToNC4HW4Fp32(origin_weight, packed_weight_, 1, plane, out_tensors_[0]->Channel());
 #endif
 
   allocator->UnmapBuffer(packed_weight_);
 
   // init bias
-  if (inputs_.size() == kInputSize2) {
+  if (in_tensors_.size() == kInputSize2) {
     bias_data_ = reinterpret_cast<FLOAT_t *>(allocator->Malloc(C4NUM * CO4 * sizeof(FLOAT_t)));
     bias_data_ = reinterpret_cast<FLOAT_t *>(allocator->MapBuffer(bias_data_, CL_MAP_WRITE, nullptr, true));
     size_t up_co_size = C4NUM * CO4 * sizeof(FLOAT_t);
     memset(bias_data_, 0, up_co_size);
-    auto ori_bias = reinterpret_cast<FLOAT_t *>(inputs_.at(kBiasIndex)->Data());
-    memcpy(bias_data_, ori_bias, outputs_[0]->Channel() * sizeof(FLOAT_t));
+    auto ori_bias = reinterpret_cast<FLOAT_t *>(in_tensors_.at(kBiasIndex)->Data());
+    memcpy(bias_data_, ori_bias, out_tensors_[0]->Channel() * sizeof(FLOAT_t));
     allocator->UnmapBuffer(bias_data_);
   } else {
-    MS_ASSERT(inputs_.size() == kInputSize1);
+    MS_ASSERT(in_tensors_.size() == kInputSize1);
   }
   return RET_OK;
 }
@@ -119,14 +119,14 @@ int DepthwiseConv2dOpenCLKernel::InitBuffer() {
 int DepthwiseConv2dOpenCLKernel::ReSize() { return RET_OK; }
 
 int DepthwiseConv2dOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  size_t CO4 = UP_DIV(outputs_[0]->Channel(), C4NUM);
+  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   size_t im_dst_x, im_dst_y;
-  if (inputs_[0]->GetFormat() == schema::Format_NHWC4) {
-    im_dst_x = outputs_[0]->Width() * CO4;
-    im_dst_y = outputs_[0]->Height();
+  if (in_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
+    im_dst_x = out_tensors_[0]->Width() * CO4;
+    im_dst_y = out_tensors_[0]->Height();
   } else {
-    im_dst_y = outputs_[0]->Height() * CO4;
-    im_dst_x = outputs_[0]->Width();
+    im_dst_y = out_tensors_[0]->Height() * CO4;
+    im_dst_x = out_tensors_[0]->Width();
   }
 #ifdef ENABLE_FP16
   size_t img_dtype = CL_HALF_FLOAT;
@@ -140,27 +140,27 @@ int DepthwiseConv2dOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *i
 }
 
 int DepthwiseConv2dOpenCLKernel::GetGlobalSize(size_t idx, std::vector<size_t> *global_size) {
-  size_t CO4 = UP_DIV(outputs_[0]->Channel(), C4NUM);
-  std::vector<size_t> global = {(size_t)outputs_[0]->Width(), (size_t)outputs_[0]->Height(), CO4};
+  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
+  std::vector<size_t> global = {(size_t)out_tensors_[0]->Width(), (size_t)out_tensors_[0]->Height(), CO4};
   *global_size = std::move(global);
   return RET_OK;
 }
 
 int DepthwiseConv2dOpenCLKernel::GetLocalSize(size_t idx, const std::vector<size_t> &global_size,
                                               std::vector<size_t> *local_size) {
-  size_t CO4 = UP_DIV(outputs_[0]->Channel(), C4NUM);
+  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   std::vector<size_t> local = {1, 1, CO4};
   *local_size = std::move(local);
   return RET_OK;
 }
 
 int DepthwiseConv2dOpenCLKernel::Run() {
-  MS_LOG(DEBUG) << this->Name() << " Running!";
-  auto parameter = reinterpret_cast<ConvParameter *>(opParameter);
+  MS_LOG(DEBUG) << this->name() << " Running!";
+  auto parameter = reinterpret_cast<ConvParameter *>(op_parameter_);
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  size_t CO4 = UP_DIV(outputs_[0]->Channel(), C4NUM);
-  size_t CI4 = UP_DIV(inputs_[0]->Channel(), C4NUM);
-  std::vector<size_t> global = {(size_t)outputs_[0]->Width(), (size_t)outputs_[0]->Height(), CO4};
+  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
+  size_t CI4 = UP_DIV(in_tensors_[0]->Channel(), C4NUM);
+  std::vector<size_t> global = {(size_t)out_tensors_[0]->Width(), (size_t)out_tensors_[0]->Height(), CO4};
   std::vector<size_t> local;
   GetLocalSize(0, global, &local);
 
@@ -169,9 +169,9 @@ int DepthwiseConv2dOpenCLKernel::Run() {
   cl_int2 stride = {parameter->stride_h_, parameter->stride_w_};
   cl_int2 padding = {-parameter->pad_h_, -parameter->pad_w_};
   cl_int2 dilation = {parameter->dilation_h_, parameter->dilation_w_};
-  cl_int4 src_size = {inputs_[0]->Width(), inputs_[0]->Height(), (cl_int)CI4, inputs_[0]->Batch()};
-  cl_int4 dst_size = {(cl_int)outputs_[0]->Width(), (cl_int)outputs_[0]->Height(), (cl_int)CO4,
-                      (cl_int)outputs_[0]->Batch()};
+  cl_int4 src_size = {in_tensors_[0]->Width(), in_tensors_[0]->Height(), (cl_int)CI4, in_tensors_[0]->Batch()};
+  cl_int4 dst_size = {(cl_int)out_tensors_[0]->Width(), (cl_int)out_tensors_[0]->Height(), (cl_int)CO4,
+                      (cl_int)out_tensors_[0]->Batch()};
 
   ocl_runtime->SetKernelArg(kernel_, 1, packed_weight_);
   ocl_runtime->SetKernelArg(kernel_, 2, bias_data_);
@@ -182,8 +182,8 @@ int DepthwiseConv2dOpenCLKernel::Run() {
   ocl_runtime->SetKernelArg(kernel_, 8, dilation);
   ocl_runtime->SetKernelArg(kernel_, 9, src_size);
   ocl_runtime->SetKernelArg(kernel_, 10, dst_size);
-  ocl_runtime->SetKernelArg(kernel_, 0, inputs_[0]->Data());
-  ocl_runtime->SetKernelArg(kernel_, 4, outputs_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, 0, in_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, 4, out_tensors_[0]->Data());
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
   return RET_OK;
 }

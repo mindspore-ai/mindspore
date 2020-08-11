@@ -30,17 +30,17 @@ using mindspore::schema::PrimitiveType_QuantDTypeCast;
 
 namespace mindspore::kernel {
 int QuantDTypeCastCPUKernel::Init() {
-  if (inputs_.size() != 1) {
-    MS_LOG(ERROR) << "inputs number should be 1, but " << inputs_.size() << " is given.";
+  if (in_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "inputs number should be 1, but " << in_tensors_.size() << " is given.";
     return RET_PARAM_INVALID;
   }
-  if (outputs_.size() != 1) {
-    MS_LOG(ERROR) << "outputs number should be 1, but " << inputs_.size() << " is given.";
+  if (out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "outputs number should be 1, but " << out_tensors_.size() << " is given.";
     return RET_PARAM_INVALID;
   }
-  auto in_tensor = inputs_.front();
-  auto out_tensor = outputs_.front();
-  auto param = reinterpret_cast<QuantDTypeCastParameter *>(opParameter);
+  auto in_tensor = in_tensors_.front();
+  auto out_tensor = out_tensors_.front();
+  auto param = reinterpret_cast<QuantDTypeCastParameter *>(op_parameter_);
   if (param->srcT == kNumberTypeFloat32 && param->dstT == kNumberTypeInt8) {
     if (in_tensor->data_type() != kNumberTypeFloat32 || out_tensor->data_type() != kNumberTypeInt8) {
       MS_LOG(ERROR) << "param data type and tensor data type do not match.";
@@ -65,7 +65,7 @@ int QuantDTypeCastCPUKernel::Init() {
 }
 
 int QuantDTypeCastCPUKernel::ReSize() {
-  auto in_tensor = inputs_.front();
+  auto in_tensor = in_tensors_.front();
   num_unit_ = static_cast<int>(in_tensor->DataSize());
   thread_n_num_ = MSMIN(thread_num_, num_unit_);
   thread_n_stride_ = UP_DIV(num_unit_, thread_n_num_);
@@ -78,7 +78,7 @@ int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
     return RET_OK;
   }
   int thread_offset = task_id * thread_n_stride_;
-  auto quant_arg = inputs_.front()->GetQuantParams().front();
+  auto quant_arg = in_tensors_.front()->GetQuantParams().front();
   int ret;
   if (inverse_) {
     ret = DequantizeInt8(int8_ptr_ + thread_offset, float32_ptr_ + thread_offset, quant_arg.scale, quant_arg.zeroPoint,
@@ -111,11 +111,11 @@ int QuantDTypeCastCPUKernel::Run() {
     return prepare_ret;
   }
   if (inverse_) {
-    int8_ptr_ = reinterpret_cast<int8_t *>(inputs_[0]->Data());
-    float32_ptr_ = reinterpret_cast<float *>(outputs_[0]->Data());
+    int8_ptr_ = reinterpret_cast<int8_t *>(in_tensors_[0]->Data());
+    float32_ptr_ = reinterpret_cast<float *>(out_tensors_[0]->Data());
   } else {
-    float32_ptr_ = reinterpret_cast<float *>(inputs_[0]->Data());
-    int8_ptr_ = reinterpret_cast<int8_t *>(outputs_[0]->Data());
+    float32_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->Data());
+    int8_ptr_ = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
   }
 
   int ret = LiteBackendParallelLaunch(QuantDTypeCastRun, this, thread_n_num_);

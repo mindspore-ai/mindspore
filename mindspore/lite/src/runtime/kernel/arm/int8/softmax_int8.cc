@@ -31,14 +31,14 @@ int SoftmaxInt8CPUKernel::Init() {
     return ret;
   }
 
-  auto *input_tensor = inputs_.at(kInputIndex);
+  auto *input_tensor = in_tensors_.at(kInputIndex);
   MS_ASSERT(input_tensor);
 
   auto in_quant_args = input_tensor->GetQuantParams();
   quant_params_.in_quant_args_.scale_ = in_quant_args.front().scale;
   quant_params_.in_quant_args_.zp_ = in_quant_args.front().zeroPoint;
 
-  auto *out_tensor = outputs_.at(kOutputIndex);
+  auto *out_tensor = out_tensors_.at(kOutputIndex);
   MS_ASSERT(out_tensor);
 
   auto out_quant_args = out_tensor->GetQuantParams();
@@ -79,11 +79,11 @@ int SoftmaxInt8CPUKernel::ReSize() {
 }
 
 int SoftmaxInt8CPUKernel::DoSoftmax(int task_id) {
-  MS_ASSERT(inputs_.size() == 1);
-  MS_ASSERT(outputs_.size() == 1);
+  MS_ASSERT(in_tensors_.size() == 1);
+  MS_ASSERT(out_tensors_.size() == 1);
 
-  auto input_ptr = reinterpret_cast<int8_t *>(inputs_.at(0)->Data());
-  auto output_ptr = reinterpret_cast<int8_t *>(outputs_.at(0)->Data());
+  auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(0)->Data());
+  auto output_ptr = reinterpret_cast<int8_t *>(out_tensors_.at(0)->Data());
 
   int outter_size = 1, inner_size = 1;
   for (int i = 0; i < softmax_param_->axis_; i++) {
@@ -124,7 +124,7 @@ int SoftmaxInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return RET_ERROR;
   }
-  auto input_ptr = reinterpret_cast<int8_t *>(inputs_.at(0)->Data());
+  auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(0)->Data());
   int ele_size = softmax_param_->element_size_;
   for (int i = 0; i < ele_size; i++) {
     float input_scaled = ((input_ptr[i] - quant_params_.in_quant_args_.zp_) * quant_params_.in_quant_args_.scale_);

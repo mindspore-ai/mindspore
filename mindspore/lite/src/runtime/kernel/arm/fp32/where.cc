@@ -53,9 +53,9 @@ int WhereCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  auto input = inputs_.at(0);
-  auto input1 = inputs_.at(1);
-  auto input2 = inputs_.at(2);
+  auto input = in_tensors_.at(0);
+  auto input1 = in_tensors_.at(1);
+  auto input2 = in_tensors_.at(2);
   int num = input->ElementsNum();
   int num1_ = input1->ElementsNum();
   int num2_ = input2->ElementsNum();
@@ -63,7 +63,7 @@ int WhereCPUKernel::Run() {
   input_data = reinterpret_cast<bool *>(input->Data());
   input_data1 = reinterpret_cast<float *>(input1->Data());
   input_data2 = reinterpret_cast<float *>(input2->Data());
-  output_data = reinterpret_cast<float *>(outputs_.at(0)->Data());
+  output_data = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
   int num_max = num > num1_ ? num : (num1_ > num2_ ? num1_ : num2_);
   where_param_->num_ = num;
   where_param_->num1_ = num1_;

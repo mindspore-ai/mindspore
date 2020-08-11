@@ -28,14 +28,14 @@ using mindspore::schema::PrimitiveType_Lstm;
 
 namespace mindspore::kernel {
 int LstmCPUKernel::InitParam() {
-  auto input = inputs_.front();
+  auto input = in_tensors_.front();
   MS_ASSERT(input != nullptr);
   std::vector<int> in_shape = input->shape();
   lstm_parm_->seq_len_ = in_shape[0];
   lstm_parm_->batch_ = in_shape[1];
   lstm_parm_->input_size_ = in_shape[2];
 
-  auto weight_i = inputs_[1];
+  auto weight_i = in_tensors_[1];
   MS_ASSERT(weight_i != nullptr);
   std::vector<int> w_shape = weight_i->shape();
   lstm_parm_->hidden_size_ = w_shape[1] / 4;
@@ -57,7 +57,7 @@ int LstmCPUKernel::InitBuffer() {
 
 int LstmCPUKernel::InitWeightBias() {
   // copy weight_i and weight_h
-  auto weight_i = inputs_.at(1);
+  auto weight_i = in_tensors_.at(1);
   MS_ASSERT(weight_i != nullptr);
   weight_i_ptr_ = reinterpret_cast<float *>(malloc(weight_i->ElementsNum() * sizeof(float)));
   if (weight_i_ptr_ == nullptr) {
@@ -66,7 +66,7 @@ int LstmCPUKernel::InitWeightBias() {
   }
   memcpy(weight_i_ptr_, weight_i->Data(), weight_i->ElementsNum() * sizeof(float));
 
-  auto weight_h = inputs_.at(2);
+  auto weight_h = in_tensors_.at(2);
   MS_ASSERT(weight_h != nullptr);
   weight_h_ptr_ = reinterpret_cast<float *>(malloc(weight_h->ElementsNum() * sizeof(float)));
   if (weight_h_ptr_ == nullptr) {
@@ -83,7 +83,7 @@ int LstmCPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
 
-  auto bias_data = reinterpret_cast<float *>(inputs_.at(3)->Data());
+  auto bias_data = reinterpret_cast<float *>(in_tensors_.at(3)->Data());
   int state_bias_offset = 4 * lstm_parm_->hidden_size_;
   for (int i = 0; i < state_bias_offset; i++) {
     bias_ptr_[i] = bias_data[i] + bias_data[i + state_bias_offset];
@@ -100,7 +100,7 @@ int LstmCPUKernel::InitWeightBias() {
 
 int LstmCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   auto ret = InitParam();
@@ -146,21 +146,21 @@ int LstmCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto input = inputs_.at(kInputIndex);
+  auto input = in_tensors_.at(kInputIndex);
   MS_ASSERT(input != nullptr);
-  auto hidden_state = inputs_.at(4);
+  auto hidden_state = in_tensors_.at(4);
   MS_ASSERT(hidden_state != nullptr);
-  auto cell_state = inputs_.at(5);
+  auto cell_state = in_tensors_.at(5);
   MS_ASSERT(cell_state != nullptr);
-  auto output = outputs_.at(0);
+  auto output = out_tensors_.at(0);
   MS_ASSERT(output != nullptr);
 
   auto input_ptr = reinterpret_cast<float *>(input->Data());
   auto output_ptr = reinterpret_cast<float *>(output->Data());
 
-  auto output_hidden_state = outputs_[1];
+  auto output_hidden_state = out_tensors_[1];
   memcpy(output_hidden_state->Data(), hidden_state->Data(), hidden_state->ElementsNum() * sizeof(float));
-  auto output_cell_state = outputs_[2];
+  auto output_cell_state = out_tensors_[2];
   memcpy(output_cell_state->Data(), cell_state->Data(), cell_state->ElementsNum() * sizeof(float));
 
   Lstm(output_ptr, input_ptr, weight_i_ptr_, weight_h_ptr_, bias_ptr_,

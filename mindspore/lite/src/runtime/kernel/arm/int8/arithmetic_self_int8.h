@@ -25,17 +25,17 @@
 #include "include/context.h"
 
 using mindspore::lite::Context;
-using mindspore::schema::PrimitiveType_Ceil;
 using mindspore::schema::PrimitiveType_Abs;
-using mindspore::schema::PrimitiveType_Sin;
+using mindspore::schema::PrimitiveType_Ceil;
 using mindspore::schema::PrimitiveType_Cos;
-using mindspore::schema::PrimitiveType_Log;
-using mindspore::schema::PrimitiveType_Sqrt;
-using mindspore::schema::PrimitiveType_Rsqrt;
-using mindspore::schema::PrimitiveType_Square;
-using mindspore::schema::PrimitiveType_LogicalNot;
 using mindspore::schema::PrimitiveType_Floor;
+using mindspore::schema::PrimitiveType_Log;
+using mindspore::schema::PrimitiveType_LogicalNot;
 using mindspore::schema::PrimitiveType_Round;
+using mindspore::schema::PrimitiveType_Rsqrt;
+using mindspore::schema::PrimitiveType_Sin;
+using mindspore::schema::PrimitiveType_Sqrt;
+using mindspore::schema::PrimitiveType_Square;
 
 namespace mindspore::kernel {
 class ArithmeticSelfInt8CPUKernel : public LiteKernel {

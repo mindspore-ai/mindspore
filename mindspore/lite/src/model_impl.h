@@ -30,25 +30,24 @@ class ModelImpl {
   static ModelImpl *Import(const char *model_buf, size_t size);
   ModelImpl() = default;
   explicit ModelImpl(const char *model_buf, size_t size) : model_buf_(model_buf), buf_size_(size) {
-    meta_graph = schema::GetMetaGraph(model_buf);
+    meta_graph_ = schema::GetMetaGraph(model_buf);
   }
   virtual ~ModelImpl();
   lite::Primitive *GetOp(const std::string &name) const;
-  const schema::MetaGraph *GetMetaGraph() const;
+  const schema::MetaGraph *meta_graph() const;
   void FreeMetaGraph();
   int BuildOps();
 
  protected:
-  lite::Primitive *CopyPrimitive(const schema::Primitive *srcPrim);
+  lite::Primitive *CopyPrimitive(const schema::Primitive *src_prim);
 
  protected:
   const char *model_buf_;
   size_t buf_size_;
-  const schema::MetaGraph *meta_graph = nullptr;
-  std::map<std::string, lite::Primitive *> ops;
+  const schema::MetaGraph *meta_graph_ = nullptr;
+  std::map<std::string, lite::Primitive *> ops_;
 };
 }  // namespace lite
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_INCLUDE_MODEL_H_
-

@@ -45,10 +45,10 @@ int ResizeInt8CPUKernel::Init() {
   MS_ASSERT(quant_in_);
   quant_out_ = new (std::nothrow) QuantArg;
   MS_ASSERT(quant_out_);
-  auto input = inputs_.at(0);
+  auto input = in_tensors_.at(0);
   quant_in_->zp_ = input->GetQuantParams().front().zeroPoint;
   quant_in_->scale_ = input->GetQuantParams().front().scale;
-  auto output = outputs_.at(0);
+  auto output = out_tensors_.at(0);
   quant_out_->zp_ = output->GetQuantParams().front().zeroPoint;
   quant_out_->scale_ = output->GetQuantParams().front().scale;
 
@@ -73,12 +73,12 @@ int ResizeInt8Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int ResizeInt8CPUKernel::RunImpl(int task_id) {
-  auto input = inputs_.at(0);
+  auto input = in_tensors_.at(0);
   auto input_data = reinterpret_cast<const int8_t *>(input->Data());
   if (input_data == nullptr) {
     return RET_NULL_PTR;
   }
-  auto output_data = reinterpret_cast<int8_t *>(outputs_.at(0)->Data());
+  auto output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->Data());
   if (output_data == nullptr) {
     return RET_NULL_PTR;
   }
@@ -91,8 +91,8 @@ int ResizeInt8CPUKernel::RunImpl(int task_id) {
   int ret = 0;
   switch (method_) {
     case static_cast<int>(schema::ResizeMethod_BILINEAR): {
-      ret = ResizeBilinearInt8(input_data, output_data, input_shape.data(), outputs_[0]->shape().data(), align_corners_,
-                               quant_in_, quant_out_, multiplier_, task_id, context_->thread_num_);
+      ret = ResizeBilinearInt8(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
+                               align_corners_, quant_in_, quant_out_, multiplier_, task_id, context_->thread_num_);
 
       break;
     }
@@ -100,11 +100,12 @@ int ResizeInt8CPUKernel::RunImpl(int task_id) {
       bool same_zp = quant_in_->zp_ == quant_out_->zp_;
       bool same_scale = abs(quant_out_->scale_ - quant_in_->scale_) < 1e-6;
       if (same_zp && same_scale) {
-        ret = ResizeNearestNeighborInt8Simple(input_data, output_data, input_shape.data(), outputs_[0]->shape().data(),
-                                              align_corners_, task_id, context_->thread_num_);
+        ret =
+          ResizeNearestNeighborInt8Simple(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
+                                          align_corners_, task_id, context_->thread_num_);
       } else {
         ret =
-          ResizeNearestNeighborInt8(input_data, output_data, input_shape.data(), outputs_[0]->shape().data(),
+          ResizeNearestNeighborInt8(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
                                     align_corners_, multiplier_, quant_in_, quant_out_, task_id, context_->thread_num_);
       }
       break;

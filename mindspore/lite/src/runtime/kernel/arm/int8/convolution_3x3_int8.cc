@@ -78,7 +78,7 @@ int Convolution3x3Int8CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(transformed_filter_addr_, 0, transformed_size);
-  auto weight_data = reinterpret_cast<int8_t *>(inputs_.at(kWeightIndex)->Data());
+  auto weight_data = reinterpret_cast<int8_t *>(in_tensors_.at(kWeightIndex)->Data());
   ProcessFilterUint8(weight_data, transformed_filter_addr_, conv_param_);
 
   // init bias
@@ -89,11 +89,11 @@ int Convolution3x3Int8CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(bias_data_, 0, new_bias_size);
-  if (inputs_.size() == kInputSize2) {
-    auto ori_bias_addr = reinterpret_cast<int32_t *>(inputs_.at(kBiasIndex)->Data());
+  if (in_tensors_.size() == kInputSize2) {
+    auto ori_bias_addr = reinterpret_cast<int32_t *>(in_tensors_.at(kBiasIndex)->Data());
     memcpy(bias_data_, ori_bias_addr, output_channel * sizeof(int32_t));
   } else {
-    MS_ASSERT(inputs_.size() == kInputSize1);
+    MS_ASSERT(in_tensors_.size() == kInputSize1);
   }
   return RET_OK;
 }
@@ -156,13 +156,13 @@ int Convolution3x3Int8CPUKernel::InitTmpBuffer() {
 }
 
 void Convolution3x3Int8CPUKernel::ConfigInputOutput() {
-  auto output_tensor = outputs_.at(kOutputIndex);
+  auto output_tensor = out_tensors_.at(kOutputIndex);
   output_tensor->SetFormat(schema::Format_NHWC);
 }
 
 int Convolution3x3Int8CPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   auto ret = ConvolutionBaseCPUKernel::Init();
@@ -219,7 +219,7 @@ int Convolution3x3Int8CPUKernel::ReSize() {
 }
 
 int Convolution3x3Int8CPUKernel::RunImpl(int task_id) {
-  auto output_addr = reinterpret_cast<int8_t *>(outputs_.at(kOutputIndex)->Data());
+  auto output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(kOutputIndex)->Data());
   Conv3x3Int8(input_data_, transformed_filter_addr_, reinterpret_cast<int32_t *>(bias_data_), output_addr, tile_buffer_,
               block_unit_buffer_, tmp_dst_buffer_, tmp_out_, task_id, conv_param_);
   return RET_OK;
@@ -241,7 +241,7 @@ int Convolution3x3Int8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  auto input_addr = reinterpret_cast<int8_t *>(inputs_.at(kInputIndex)->Data());
+  auto input_addr = reinterpret_cast<int8_t *>(in_tensors_.at(kInputIndex)->Data());
   PackInputToC8Int8(input_addr, input_data_, conv_param_);
 
   int error_code = LiteBackendParallelLaunch(Convolution3x3Int8Impl, this, thread_count_);

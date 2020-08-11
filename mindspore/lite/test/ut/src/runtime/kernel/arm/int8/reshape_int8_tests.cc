@@ -24,7 +24,7 @@
 
 namespace mindspore {
 
-class TestReshapeInt8 : public mindspore::Common {
+class TestReshapeInt8 : public mindspore::CommonTest {
  public:
   TestReshapeInt8() {}
 };

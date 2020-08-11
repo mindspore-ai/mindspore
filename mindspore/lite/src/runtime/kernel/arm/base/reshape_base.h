@@ -30,7 +30,7 @@ class ReshapeBaseCPUKernel : public LiteKernel {
                        const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                        const lite::Primitive *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx) {
-    reshape_param_ = reinterpret_cast<ReshapeParameter *>(opParameter);
+    reshape_param_ = reinterpret_cast<ReshapeParameter *>(op_parameter_);
   }
   ~ReshapeBaseCPUKernel() = default;
 

@@ -27,7 +27,7 @@
 #include "src/common/anf_exporter/anf_exporter.h"
 
 namespace mindspore {
-class ConvScaleFusionTest : public mindspore::Common {
+class ConvScaleFusionTest : public mindspore::CommonTest {
  public:
   ConvScaleFusionTest() = default;
 };

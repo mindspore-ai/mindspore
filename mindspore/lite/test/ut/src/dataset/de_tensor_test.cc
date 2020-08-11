@@ -30,7 +30,7 @@ using Tensor = mindspore::dataset::Tensor;
 using DataType = mindspore::dataset::DataType;
 using TensorShape = mindspore::dataset::TensorShape;
 
-class MindDataTestTensorDE : public mindspore::Common {
+class MindDataTestTensorDE : public mindspore::CommonTest {
  public:
   MindDataTestTensorDE() {}
 };

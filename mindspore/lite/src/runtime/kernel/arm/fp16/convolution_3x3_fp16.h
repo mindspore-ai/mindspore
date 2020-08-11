@@ -38,7 +38,7 @@ class Convolution3x3FP16CPUKernel : public ConvolutionBaseCPUKernel {
       free(fp16_weight_);
     }
     if (fp16_out_ != nullptr) {
-        free(fp16_out_);
+      free(fp16_out_);
     }
     if (transformed_filter_addr_ != nullptr) {
       free(transformed_filter_addr_);

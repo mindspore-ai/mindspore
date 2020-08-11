@@ -29,12 +29,12 @@ int BatchToSpaceInt8CPUKernel::Init() {
   if (ret != RET_OK) {
     return ret;
   }
-  auto *input_tensor = inputs_.at(kInputIndex);
+  auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->GetQuantParams();
   in_quant_arg_.scale_ = in_quant_args.front().scale;
   in_quant_arg_.zp_ = in_quant_args.front().zeroPoint;
 
-  auto *out_tensor = outputs_.at(kOutputIndex);
+  auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_args = out_tensor->GetQuantParams();
   out_quant_arg_.scale_ = out_quant_args.front().scale;
   out_quant_arg_.zp_ = out_quant_args.front().zeroPoint;
@@ -44,9 +44,7 @@ int BatchToSpaceInt8CPUKernel::Init() {
   return ReSize();
 }
 
-int BatchToSpaceInt8CPUKernel::ReSize() {
-  return BatchToSpaceBaseCPUKernel::ReSize();
-}
+int BatchToSpaceInt8CPUKernel::ReSize() { return BatchToSpaceBaseCPUKernel::ReSize(); }
 
 int BatchToSpaceInt8CPUKernel::Run() {
   auto ret = Prepare();
@@ -54,13 +52,13 @@ int BatchToSpaceInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  auto input = inputs_[0];
-  auto output = outputs_[0];
+  auto input = in_tensors_[0];
+  auto output = out_tensors_[0];
   const int8_t *input_data = reinterpret_cast<const int8_t *>(input->Data());
   int8_t *output_data = reinterpret_cast<int8_t *>(output->Data());
   auto in_shape = input->shape();
   auto out_shape = output->shape();
-  BatchToSpaceParameter *param = reinterpret_cast<BatchToSpaceParameter *>(this->opParameter);
+  BatchToSpaceParameter *param = reinterpret_cast<BatchToSpaceParameter *>(this->op_parameter_);
 
   if (in_quant_arg_.scale_ == out_quant_arg_.scale_ && in_quant_arg_.zp_ == out_quant_arg_.zp_) {
     if (IsNoCrop()) {

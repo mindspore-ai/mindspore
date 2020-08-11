@@ -32,7 +32,7 @@ class PreluInt8CPUKernel : public PreluBaseCPUKernel {
                      const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                      const lite::Primitive *primitive)
       : PreluBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    quant_prelu_parm_ = reinterpret_cast<PreluParameter *>(opParameter);
+    quant_prelu_parm_ = reinterpret_cast<PreluParameter *>(op_parameter_);
   }
   ~PreluInt8CPUKernel() override {}
 

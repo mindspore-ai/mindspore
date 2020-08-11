@@ -50,14 +50,14 @@ int MatMulOpenCLKernel::Init() {
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
-  auto weight_format = inputs_[1]->GetFormat();
+  auto weight_format = in_tensors_[1]->GetFormat();
   if (weight_format != schema::Format_NHWC) {
     MS_LOG(ERROR) << "weight format(" << weight_format << ") "
                   << "format not support!";
     return 1;
   }
-  int ci = inputs_[1]->shape()[3];
-  int co = inputs_[1]->shape()[0];
+  int ci = in_tensors_[1]->shape()[3];
+  int co = in_tensors_[1]->shape()[0];
   sizeCI = {ci, UP_DIV(ci, 4)};
   sizeCO = {co, UP_DIV(co, 4)};
   auto allocator = ocl_runtime->GetAllocator();
@@ -68,7 +68,7 @@ int MatMulOpenCLKernel::Init() {
   PadWeight();
   allocator->UnmapBuffer(padWeight_);
   allocator->UnmapBuffer(bias_);
-  outputs_[0]->SetFormat(schema::Format_NHWC4);
+  out_tensors_[0]->SetFormat(schema::Format_NHWC4);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return 0;
 }
@@ -76,7 +76,7 @@ int MatMulOpenCLKernel::Init() {
 int MatMulOpenCLKernel::ReSize() { return 0; }
 
 void MatMulOpenCLKernel::PadWeight() {
-  auto origin_weight = reinterpret_cast<FLOAT_T *>(inputs_.at(kWeightIndex)->Data());
+  auto origin_weight = reinterpret_cast<FLOAT_T *>(in_tensors_.at(kWeightIndex)->Data());
   int divCI = sizeCI.s[1];
   int divCO = sizeCO.s[1];
   int index = 0;
@@ -96,7 +96,7 @@ void MatMulOpenCLKernel::PadWeight() {
     }
   }
   if (hasBias_) {
-    memcpy(bias_, inputs_[2]->Data(), sizeof(FLOAT_T) * sizeCO.s[0]);
+    memcpy(bias_, in_tensors_[2]->Data(), sizeof(FLOAT_T) * sizeCO.s[0]);
     for (int i = sizeCO.s[0]; i < sizeCO.s[1] * 4; i++) {
       bias_[i] = 0;
     }
@@ -108,8 +108,8 @@ void MatMulOpenCLKernel::PadWeight() {
 }
 
 int MatMulOpenCLKernel::Run() {
-  MS_LOG(DEBUG) << this->Name() << " Running!";
-  std::vector<int> shapex = inputs_[0]->shape();
+  MS_LOG(DEBUG) << this->name() << " Running!";
+  std::vector<int> shapex = in_tensors_[0]->shape();
   int n = shapex[0];
   if (n > 1) {
     MS_LOG(ERROR) << "MatMul n > 1 not supported!";
@@ -131,7 +131,7 @@ int MatMulOpenCLKernel::Run() {
   }
   cl_int in_error_code, in_error_code_weight, in_error_code_bias, out_error_code;
   cl::Image2D img_input(*ocl_runtime->Context(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, image_format, sizeCI.s[1], 1,
-                        0, inputs_[0]->Data(), &in_error_code);
+                        0, in_tensors_[0]->Data(), &in_error_code);
   cl::Image2D img_bias(*ocl_runtime->Context(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, image_format, sizeCO.s[1], 1,
                        0, bias_, &in_error_code_bias);
   cl::Image2D img_out(*ocl_runtime->Context(), CL_MEM_WRITE_ONLY, image_format, sizeCO.s[1], 1, 0, nullptr,
@@ -147,7 +147,8 @@ int MatMulOpenCLKernel::Run() {
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
   auto origin = cl::array<cl::size_type, 3U>{0, 0, 0};
   auto region = cl::array<cl::size_type, 3U>{(size_t)(sizeCO.s[1]), 1, 1};
-  ocl_runtime->GetDefaultCommandQueue()->enqueueReadImage(img_out, CL_TRUE, origin, region, 0, 0, outputs_[0]->Data());
+  ocl_runtime->GetDefaultCommandQueue()->enqueueReadImage(img_out, CL_TRUE, origin, region, 0, 0,
+                                                          out_tensors_[0]->Data());
   return 0;
 }
 

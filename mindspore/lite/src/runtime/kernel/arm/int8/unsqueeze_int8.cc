@@ -30,10 +30,10 @@ using mindspore::schema::PrimitiveType_Unsqueeze;
 namespace mindspore::kernel {
 int Unsqueezeint8CPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
-  auto *input_tensor = inputs_.at(0);
+  auto *input_tensor = in_tensors_.at(0);
   auto quant_args = input_tensor->GetQuantParams();
   MS_ASSERT(quant_args.size() == 1);
   Unsq_para_->quant_arg.in_quant_args_.scale_ = quant_args.front().scale;
@@ -49,7 +49,7 @@ int Unsqueezeint8CPUKernel::Init() {
 }
 
 int Unsqueezeint8CPUKernel::ReSize() {
-  data_size_ = inputs_.at(0)->ElementsNum();
+  data_size_ = in_tensors_.at(0)->ElementsNum();
   thread_sz_count_ = MSMIN(thread_count_, data_size_);
   thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
   return RET_OK;
@@ -61,9 +61,9 @@ int Unsqueezeint8CPUKernel::DoUnsqueeze(int task_id) {
     return RET_OK;
   }
 
-  auto input_ptr = reinterpret_cast<int8_t *>(inputs_.front()->Data());
-  auto output_ptr = reinterpret_cast<int8_t *>(outputs_.front()->Data());
-  size_t data_size = outputs_.front()->Size();
+  auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_.front()->Data());
+  auto output_ptr = reinterpret_cast<int8_t *>(out_tensors_.front()->Data());
+  size_t data_size = out_tensors_.front()->Size();
 
   int ret = Unsqueeze(input_ptr, output_ptr, Unsq_para_, data_size, task_id);
   if (ret != RET_OK) {
@@ -89,8 +89,8 @@ int Unsqueezeint8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return ret;
   }
-  in_ptr_ = reinterpret_cast<float *>(inputs_.at(0)->Data());
-  out_ptr_ = reinterpret_cast<float *>(outputs_.at(0)->Data());
+  in_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
+  out_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
   ret = LiteBackendParallelLaunch(UnsqueezeIn8Run, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "UnsqueezeRun error error_code[" << ret << "]";

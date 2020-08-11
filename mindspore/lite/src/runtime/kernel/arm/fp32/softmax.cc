@@ -52,7 +52,7 @@ int SoftmaxCPUKernel::ReSize() {
     softmax_param_->axis_ += n_dim;
     axis = softmax_param_->axis_;
   }
-  auto in_shape = inputs_.front()->shape();
+  auto in_shape = in_tensors_.front()->shape();
   int out_plane_size = 1;
   for (int i = 0; i < axis; ++i) {
     out_plane_size *= in_shape[i];
@@ -75,8 +75,8 @@ int SoftmaxCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return RET_ERROR;
   }
-  auto input_ptr = reinterpret_cast<float *>(inputs_.at(kInputIndex)->Data());
-  auto output_ptr = reinterpret_cast<float *>(outputs_.at(kOutputIndex)->Data());
+  auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->Data());
+  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
   Softmax(input_ptr, output_ptr, sum_data_, softmax_param_);
   return RET_OK;
 }

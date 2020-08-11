@@ -30,7 +30,7 @@ using mindspore::schema::PrimitiveType_Pooling;
 namespace mindspore::kernel {
 int PoolingCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   auto ret = PoolingBaseCPUKernel::Init();
@@ -51,8 +51,8 @@ int PoolingCPUKernel::ReSize() {
 }
 
 int PoolingCPUKernel::RunImpl(int task_id) {
-  auto input_ptr = reinterpret_cast<float *>(inputs_.at(kInputIndex)->Data());
-  auto output_ptr = reinterpret_cast<float *>(outputs_.at(kOutputIndex)->Data());
+  auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->Data());
+  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
   if (pooling_param_->max_pooling_) {
     MaxPooling(input_ptr, output_ptr, pooling_param_, task_id);
   } else {

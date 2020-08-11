@@ -48,19 +48,19 @@ int ConcatCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto input_num = inputs_.size();
+  auto input_num = in_tensors_.size();
   std::vector<void *> inputs_addr(input_num, nullptr);
   std::vector<int *> inputs_output_shape(input_num + 1, nullptr);
 
   std::vector<std::vector<int>> shapes;
   for (size_t i = 0; i < input_num; ++i) {
-    inputs_addr[i] = inputs_[i]->Data();
-    shapes.push_back(inputs_[i]->shape());
+    inputs_addr[i] = in_tensors_[i]->Data();
+    shapes.push_back(in_tensors_[i]->shape());
     inputs_output_shape[i] = shapes[i].data();
   }
-  auto output_shape = outputs_.at(0)->shape();
+  auto output_shape = out_tensors_.at(0)->shape();
   inputs_output_shape[input_num] = output_shape.data();
-  auto output_addr = outputs_.at(0)->Data();
+  auto output_addr = out_tensors_.at(0)->Data();
 
   Concat(reinterpret_cast<void **>(inputs_addr.data()), input_num, axis_, inputs_output_shape.data(),
          output_shape.size(), output_addr);

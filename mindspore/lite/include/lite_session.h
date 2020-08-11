@@ -27,15 +27,17 @@
 
 namespace mindspore {
 namespace session {
+/// \brief CallBackParam defined input arguments for callBack function.
 struct CallBackParam {
-  std::string name_callback_param;
-  std::string type_callback_param;
+  std::string name_callback_param; /**< node name argument */
+  std::string type_callback_param; /**< node type argument */
 };
 
+/// \brief KernelCallBack defined the function pointer for callBack.
 using KernelCallBack = std::function<bool(std::vector<tensor::MSTensor *> inputs,
                                           std::vector<tensor::MSTensor *> outputs, const CallBackParam &opInfo)>;
 
-/// \brief LiteSession defined by MindSpore Lite.
+/// \brief LiteSession defined session in MindSpore Lite for compiling Model and forwarding model.
 class MS_API LiteSession {
  public:
   /// \brief Static method to create a LiteSession pointer.
@@ -48,52 +50,52 @@ class MS_API LiteSession {
   /// \brief Destructor of MindSpore Lite LiteSession.
   virtual ~LiteSession() = default;
 
-  /// \brief Try to bind or unbind threads in the thread pool to specified cpu core.
+  /// \brief Try to bind or unbind threads in the thread pool to the specified cpu core.
   ///
-  /// \param[in] if_bind Define weather to bind or unbind threads.
+  /// \param[in] if_bind Define whether to bind or unbind threads.
   virtual void BindThread(bool if_bind) = 0;
 
-  /// \brief Compile MindSpore lite model.
+  /// \brief Compile MindSpore Lite model.
   ///
   /// \note CompileGraph should called before RunGraph.
   ///
   /// \param[in] model Define the model to be compiled.
   ///
-  /// \return ErrorCode of compile graph.
+  /// \return STATUS as an error code of compiling graph, STATUS is defined in errorcode.h.
   virtual int CompileGraph(lite::Model *model) = 0;
 
   /// \brief Get input MindSpore Lite MSTensors of model.
   ///
-  /// \return A vector of MindSpore Lite MSTensor.
+  /// \return The vector of MindSpore Lite MSTensor.
   virtual std::vector<tensor::MSTensor *> GetInputs() const = 0;
 
   /// \brief Get input MindSpore Lite MSTensors of model by node name.
   ///
   /// \param[in] node_name Define node name.
   ///
-  /// \return A vector of MindSpore Lite MSTensor.
+  /// \return The vector of MindSpore Lite MSTensor.
   virtual std::vector<tensor::MSTensor *> GetInputsByName(const std::string &node_name) const = 0;
 
   /// \brief Run session with callback.
   ///
-  /// \param[in] before Define a call_back_function called before running each node
-  /// \param[in] after Define a call_back_function called after running each node
+  /// \param[in] before Define a call_back_function called before running each node.
+  /// \param[in] after Define a call_back_function called after running each node.
   ///
   /// \note RunGraph should called after CompileGraph.
   ///
-  /// \return ErrorCode of run graph.
+  /// \return STATUS as an error code of running graph, STATUS is defined in errorcode.h.
   virtual int RunGraph(const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) = 0;
 
   /// \brief Get output MindSpore Lite MSTensors of model.
   ///
-  /// \return A map of output node name and MindSpore Lite MSTensor.
+  /// \return The map of output node name and MindSpore Lite MSTensor.
   virtual std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> GetOutputs() const = 0;
 
   /// \brief Get output MindSpore Lite MSTensors of model by node name.
   ///
   /// \param[in] node_name Define node name.
   ///
-  /// \return A vector of MindSpore Lite MSTensor.
+  /// \return The vector of MindSpore Lite MSTensor.
   virtual std::vector<tensor::MSTensor *> GetOutputsByName(const std::string &node_name) const = 0;
 };
 }  // namespace session

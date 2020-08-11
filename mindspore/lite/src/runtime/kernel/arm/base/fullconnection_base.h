@@ -31,7 +31,7 @@ class FullconnectionBaseCPUKernel : public LiteKernel {
                               const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                               const lite::Primitive *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
-    fc_param_ = reinterpret_cast<MatMulParameter *>(opParameter);
+    fc_param_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
   }
   ~FullconnectionBaseCPUKernel() = default;
 
