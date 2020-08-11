@@ -38,8 +38,8 @@ Status Monitor::operator()() {
   while (!this_thread::is_interrupted() && !(tree_->isFinished())) {
     for (auto &node : tree_->GetProfilingManager()->GetSamplingNodes()) {
       RETURN_IF_NOT_OK(node.second->Sample());
-      std::this_thread::sleep_for(std::chrono::milliseconds(sampling_interval_));
     }
+    std::this_thread::sleep_for(std::chrono::milliseconds(sampling_interval_));
   }
 
   // Output all profiling data upon request.
