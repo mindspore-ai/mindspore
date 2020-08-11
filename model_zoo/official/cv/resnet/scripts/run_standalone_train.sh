@@ -16,13 +16,13 @@
 
 if [ $# != 3 ] && [ $# != 4 ]
 then 
-    echo "Usage: sh run_standalone_train.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
+    echo "Usage: sh run_standalone_train.sh [resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
 exit 1
 fi
 
-if [ $1 != "resnet50" ] && [ $1 != "resnet101" ]
+if [ $1 != "resnet50" ] && [ $1 != "resnet101" ] && [ $1 != "se-resnet50" ]
 then 
-    echo "error: the selected net is neither resnet50 nor resnet101"
+    echo "error: the selected net is neither resnet50 nor resnet101 and se-resnet50"
 exit 1
 fi
 
@@ -38,6 +38,11 @@ then
 exit 1
 fi
 
+if [ $1 == "se-resnet50" ] && [ $2 == "cifar10" ]
+then
+    echo "error: evaluating se-resnet50 with cifar10 dataset is unsupported now!"
+exit 1
+fi
 
 get_real_path(){
   if [ "${1:0:1}" == "/" ]; then

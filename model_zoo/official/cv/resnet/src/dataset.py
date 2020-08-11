@@ -22,7 +22,6 @@ import mindspore.dataset.transforms.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
 from mindspore.communication.management import init, get_rank, get_group_size
 
-
 def create_dataset1(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend"):
     """
     create a train or evaluate cifar10 dataset for resnet50
@@ -191,6 +190,59 @@ def create_dataset3(dataset_path, do_train, repeat_num=1, batch_size=32, target=
 
     return ds
 
+def create_dataset4(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend"):
+    """
+    create a train or eval imagenet2012 dataset for se-resnet50
+
+    Args:
+        dataset_path(string): the path of dataset.
+        do_train(bool): whether dataset is used for train or eval.
+        repeat_num(int): the repeat times of dataset. Default: 1
+        batch_size(int): the batch size of dataset. Default: 32
+        target(str): the device target. Default: Ascend
+
+    Returns:
+        dataset
+    """
+    if target == "Ascend":
+        device_num, rank_id = _get_rank_info()
+    if device_num == 1:
+        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=12, shuffle=True)
+    else:
+        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=12, shuffle=True,
+                                     num_shards=device_num, shard_id=rank_id)
+    image_size = 224
+    mean = [123.68, 116.78, 103.94]
+    std = [1.0, 1.0, 1.0]
+
+    # define map operations
+    if do_train:
+        trans = [
+            C.RandomCropDecodeResize(image_size, scale=(0.08, 1.0), ratio=(0.75, 1.333)),
+            C.RandomHorizontalFlip(prob=0.5),
+            C.Normalize(mean=mean, std=std),
+            C.HWC2CHW()
+        ]
+    else:
+        trans = [
+            C.Decode(),
+            C.Resize(292),
+            C.CenterCrop(256),
+            C.Normalize(mean=mean, std=std),
+            C.HWC2CHW()
+        ]
+
+    type_cast_op = C2.TypeCast(mstype.int32)
+    ds = ds.map(input_columns="image", num_parallel_workers=12, operations=trans)
+    ds = ds.map(input_columns="label", num_parallel_workers=12, operations=type_cast_op)
+
+    # apply batch operations
+    ds = ds.batch(batch_size, drop_remainder=True)
+
+    # apply dataset repeat operation
+    ds = ds.repeat(repeat_num)
+
+    return ds
 
 def _get_rank_info():
     """
