@@ -33,8 +33,8 @@ KernelFactory *KernelFactory::GetInstance() {
   return &instance;
 }
 
-LiteKernel *KernelFactory::GetKernel(const std::vector<tensor::Tensor *> &inputs,
-                                     const std::vector<tensor::Tensor *> &outputs, const lite::Primitive *primitive,
+LiteKernel *KernelFactory::GetKernel(const std::vector<tensor::Tensor *> &in_tensors,
+                                     const std::vector<tensor::Tensor *> &out_tensors, const lite::Primitive *primitive,
                                      const Context *ctx, const kernel::KernelKey &key) {
   MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(ctx);
@@ -45,7 +45,7 @@ LiteKernel *KernelFactory::GetKernel(const std::vector<tensor::Tensor *> &inputs
   }
   auto creator = KernelRegistry::GetInstance()->GetCreator(key);
   if (creator != nullptr) {
-    auto kernel = creator(inputs, outputs, parameter, ctx, key, primitive);
+    auto kernel = creator(in_tensors, out_tensors, parameter, ctx, key, primitive);
     return kernel;
   }
   return nullptr;

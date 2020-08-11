@@ -23,7 +23,6 @@
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 
-
 namespace mindspore::kernel {
 class TransposeOpenCLKernel : public OpenCLKernel {
  public:
@@ -36,6 +35,7 @@ class TransposeOpenCLKernel : public OpenCLKernel {
   int ReSize() override;
   int Run() override;
   int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
+
  private:
   cl::Kernel kernel_;
 };

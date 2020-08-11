@@ -32,7 +32,7 @@ class PoolingBaseCPUKernel : public LiteKernel {
                        const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                        const lite::Primitive *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
-    pooling_param_ = reinterpret_cast<PoolingParameter *>(opParameter);
+    pooling_param_ = reinterpret_cast<PoolingParameter *>(op_parameter_);
   }
   ~PoolingBaseCPUKernel() = default;
 

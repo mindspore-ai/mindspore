@@ -32,7 +32,7 @@ using mindspore::schema::PrimitiveType_SpaceToDepth;
 namespace mindspore::kernel {
 
 int SpaceToDepthCPUKernel::Init() {
-  SpaceToDepthParameter *param = reinterpret_cast<SpaceToDepthParameter *>(opParameter);
+  SpaceToDepthParameter *param = reinterpret_cast<SpaceToDepthParameter *>(op_parameter_);
   if (param->block_size_ <= 0) {
     MS_LOG(ERROR) << "Input block_size should > 0!";
     return RET_PARAM_INVALID;
@@ -45,13 +45,13 @@ int SpaceToDepthCPUKernel::Init() {
 }
 
 int SpaceToDepthCPUKernel::ReSize() {
-if (inputs_[0]->GetFormat() != schema::Format_NHWC) {
+if (in_tensors_[0]->GetFormat() != schema::Format_NHWC) {
     MS_LOG(ERROR) << "space_to_depth only support NHWC now!";
     return RET_FORMAT_ERR;
   }
 
-  num_unit_ = static_cast<int>(inputs_[0]->shape().at(kNHWC_H));
-  thread_h_num_ = MSMIN(opParameter->thread_num_, num_unit_);
+  num_unit_ = static_cast<int>(in_tensors_[0]->shape().at(kNHWC_H));
+  thread_h_num_ = MSMIN(op_parameter_->thread_num_, num_unit_);
   thread_h_stride_ = UP_DIV(num_unit_, thread_h_num_);
   return RET_OK;
 }
@@ -62,9 +62,9 @@ int SpaceToDepthCPUKernel::SpaceToDepth(int task_id) {
     return RET_OK;
   }
   int thread_offset = task_id * thread_h_stride_;
-  auto in_shape = inputs_[0]->shape();
-  auto out_shape = outputs_[0]->shape();
-  SpaceToDepthParameter *param = reinterpret_cast<SpaceToDepthParameter *>(opParameter);
+  auto in_shape = in_tensors_[0]->shape();
+  auto out_shape = out_tensors_[0]->shape();
+  SpaceToDepthParameter *param = reinterpret_cast<SpaceToDepthParameter *>(op_parameter_);
   auto ret = SpaceToDepthForNHWC(input_ptr_, output_ptr_, in_shape.data(), out_shape.data(), in_shape.size(),
                                  param->block_size_, thread_offset, thread_offset + num_unit_thread);
   if (ret != RET_OK) {
@@ -90,10 +90,10 @@ int SpaceToDepthCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  input_ptr_ = reinterpret_cast<float *>(inputs_[0]->Data());
-  output_ptr_ = reinterpret_cast<float *>(outputs_[0]->Data());
-  if (inputs_[0]->GetFormat() == schema::Format_NHWC) {
-      ret = LiteBackendParallelLaunch(SpaceToDepthRun, this, thread_h_num_);
+  input_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->Data());
+  output_ptr_ = reinterpret_cast<float *>(out_tensors_[0]->Data());
+  if (in_tensors_[0]->GetFormat() == schema::Format_NHWC) {
+    ret = LiteBackendParallelLaunch(SpaceToDepthRun, this, thread_h_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "SpaceToDepth error error_code[" << ret << "]";
       return ret;
@@ -103,7 +103,7 @@ int SpaceToDepthCPUKernel::Run() {
     MS_LOG(ERROR) << "Only support NHWC now!";
     return RET_ERROR;
   }
-    return RET_OK;
+  return RET_OK;
 }
 
 kernel::LiteKernel *CpuSpaceToDepthFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,

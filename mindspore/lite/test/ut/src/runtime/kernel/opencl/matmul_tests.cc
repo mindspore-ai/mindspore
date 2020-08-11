@@ -23,7 +23,7 @@
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/matmul.h"
 
 namespace mindspore {
-class TestMatMulOpenCL : public mindspore::Common {
+class TestMatMulOpenCL : public mindspore::CommonTest {
  public:
   TestMatMulOpenCL() {}
 };

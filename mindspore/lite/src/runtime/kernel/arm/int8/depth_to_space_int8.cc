@@ -30,15 +30,15 @@ int DepthToSpaceInt8CPUKernel::Init() {
   if (ret != RET_OK) {
     return ret;
   }
-  DepthToSpaceParameter *param = reinterpret_cast<DepthToSpaceParameter *>(opParameter);
+  DepthToSpaceParameter *param = reinterpret_cast<DepthToSpaceParameter *>(op_parameter_);
   param->data_type_size_ = sizeof(int8_t);
 
-  auto *input_tensor = inputs_.at(kInputIndex);
+  auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->GetQuantParams();
   in_quant_arg_.scale_ = in_quant_args.front().scale;
   in_quant_arg_.zp_ = in_quant_args.front().zeroPoint;
 
-  auto *out_tensor = outputs_.at(kOutputIndex);
+  auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_args = out_tensor->GetQuantParams();
   out_quant_arg_.scale_ = out_quant_args.front().scale;
   out_quant_arg_.zp_ = out_quant_args.front().zeroPoint;
@@ -48,9 +48,7 @@ int DepthToSpaceInt8CPUKernel::Init() {
   return ReSize();
 }
 
-int DepthToSpaceInt8CPUKernel::ReSize() {
-  return DepthToSpaceBaseCPUKernel::ReSize();
-}
+int DepthToSpaceInt8CPUKernel::ReSize() { return DepthToSpaceBaseCPUKernel::ReSize(); }
 
 int DepthToSpaceInt8CPUKernel::Run() {
   auto ret = Prepare();
@@ -58,12 +56,12 @@ int DepthToSpaceInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  auto input = inputs_[0];
-  auto output = outputs_[0];
+  auto input = in_tensors_[0];
+  auto output = out_tensors_[0];
   const int8_t *input_data = reinterpret_cast<const int8_t *>(input->Data());
   int8_t *output_data = reinterpret_cast<int8_t *>(output->Data());
   auto in_shape = input->shape();
-  DepthToSpaceParameter *param = reinterpret_cast<DepthToSpaceParameter *>(opParameter);
+  DepthToSpaceParameter *param = reinterpret_cast<DepthToSpaceParameter *>(op_parameter_);
   if (in_quant_arg_.scale_ == out_quant_arg_.scale_ && in_quant_arg_.zp_ == out_quant_arg_.zp_) {
     DepthToSpaceForNHWC(input_data, output_data, in_shape.data(), param);
   } else {

@@ -29,7 +29,7 @@ class ScaleCPUKernel : public LiteKernel {
                           const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                           const lite::Primitive *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
-    scale_param_ = reinterpret_cast<ScaleParameter *>(opParameter);
+    scale_param_ = reinterpret_cast<ScaleParameter *>(op_parameter_);
   }
   ~ScaleCPUKernel() override;
 

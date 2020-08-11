@@ -38,9 +38,9 @@ int ZerosLikeCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  auto input = inputs_.at(0);
+  auto input = in_tensors_.at(0);
   auto input_data = reinterpret_cast<float *>(input->Data());
-  auto output_data = reinterpret_cast<float *>(outputs_.at(0)->Data());
+  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
   ApproximateZerosLike(input_data, output_data, input->ElementsNum());
   return RET_OK;
 }

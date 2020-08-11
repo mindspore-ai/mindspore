@@ -26,7 +26,7 @@ using mindspore::schema::PrimitiveType_EmbeddingLookup;
 
 namespace mindspore::kernel {
 int EmbeddingLookupCPUKernel::Init() {
-  embedding_lookup_parameter_ = reinterpret_cast<EmbeddingLookupParameter *>(opParameter);
+  embedding_lookup_parameter_ = reinterpret_cast<EmbeddingLookupParameter *>(op_parameter_);
   embedding_lookup_parameter_->thread_num = thread_count_;
 
   if (!InferShapeDone()) {
@@ -36,17 +36,17 @@ int EmbeddingLookupCPUKernel::Init() {
 }
 
 int EmbeddingLookupCPUKernel::ReSize() {
-  embedding_lookup_parameter_->ids_size_ = inputs_.back()->ElementsNum();
+  embedding_lookup_parameter_->ids_size_ = in_tensors_.back()->ElementsNum();
 
   embedding_lookup_parameter_->layer_size_ = 1;
-  auto in_shape = inputs_.front()->shape();
+  auto in_shape = in_tensors_.front()->shape();
   for (int i = 1; i < in_shape.size(); ++i) {
     embedding_lookup_parameter_->layer_size_ *= in_shape[i];
   }
 
   embedding_lookup_parameter_->layer_num_ = 0;
-  for (int i = 0; i < inputs_.size() - 1; ++i) {
-    embedding_lookup_parameter_->layer_num_ += inputs_[i]->shape()[0];
+  for (int i = 0; i < in_tensors_.size() - 1; ++i) {
+    embedding_lookup_parameter_->layer_num_ += in_tensors_[i]->shape()[0];
   }
 
   if (input_addr_ != nullptr) {
@@ -112,13 +112,13 @@ int EmbeddingLookupCPUKernel::Run() {
     return prepare_ret;
   }
   int dest_loc = 0;
-  for (int i = 0; i < inputs_.size() - 1; i++) {
-    auto input_t = reinterpret_cast<float *>(inputs_.at(i)->Data());
-    memcpy(input_addr_ + dest_loc, input_t, sizeof(float) * inputs_.at(i)->ElementsNum());
-    dest_loc += inputs_.at(i)->ElementsNum();
+  for (int i = 0; i < in_tensors_.size() - 1; i++) {
+    auto input_t = reinterpret_cast<float *>(in_tensors_.at(i)->Data());
+    memcpy(input_addr_ + dest_loc, input_t, sizeof(float) * in_tensors_.at(i)->ElementsNum());
+    dest_loc += in_tensors_.at(i)->ElementsNum();
   }
-  output_addr_ = reinterpret_cast<float *>(outputs_.front()->Data());
-  ids_addr_ = reinterpret_cast<int *>(inputs_.back()->Data());
+  output_addr_ = reinterpret_cast<float *>(out_tensors_.front()->Data());
+  ids_addr_ = reinterpret_cast<int *>(in_tensors_.back()->Data());
 
   auto ret = LiteBackendParallelLaunch(EmbeddingLookupRun, this, embedding_lookup_parameter_->thread_num);
   if (ret != RET_OK) {

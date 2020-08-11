@@ -27,7 +27,7 @@
 #include "mindspore/lite/src/kernel_registry.h"
 
 namespace mindspore {
-class TestConvolutionGradFp32 :  public mindspore::Common {
+class TestConvolutionGradFp32 :  public mindspore::CommonTest {
  public:
   TestConvolutionGradFp32() {}
 };

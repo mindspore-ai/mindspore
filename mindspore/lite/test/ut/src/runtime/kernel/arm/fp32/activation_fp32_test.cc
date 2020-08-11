@@ -22,7 +22,7 @@
 
 namespace mindspore {
 
-class TestActivationFp32 : public mindspore::Common {
+class TestActivationFp32 : public mindspore::CommonTest {
  public:
   TestActivationFp32() {}
 };

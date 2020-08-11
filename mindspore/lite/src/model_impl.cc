@@ -47,8 +47,8 @@ ModelImpl *ModelImpl::Import(const char *model_buf, size_t size) {
 }
 
 lite::Primitive *ModelImpl::GetOp(const std::string &name) const {
-  auto iter = ops.find(name);
-  if (iter == ops.end()) {
+  auto iter = ops_.find(name);
+  if (iter == ops_.end()) {
     return nullptr;
   } else {
     return iter->second;
@@ -57,10 +57,10 @@ lite::Primitive *ModelImpl::GetOp(const std::string &name) const {
 
 ModelImpl::~ModelImpl() {
   delete[](this->model_buf_);
-  for (auto iter : ops) {
+  for (auto iter : ops_) {
     delete (iter.second);
   }
-  ops.clear();
+  ops_.clear();
 }
 
 void ModelImpl::FreeMetaGraph() {
@@ -68,168 +68,168 @@ void ModelImpl::FreeMetaGraph() {
   model_buf_ = nullptr;
 }
 
-const schema::MetaGraph *ModelImpl::GetMetaGraph() const { return this->meta_graph; }
+const schema::MetaGraph *ModelImpl::meta_graph() const { return this->meta_graph_; }
 
-lite::Primitive *ModelImpl::CopyPrimitive(const schema::Primitive *srcPrim) {
-  MS_EXCEPTION_IF_NULL(srcPrim);
-  auto op_type = srcPrim->value_type();
+lite::Primitive *ModelImpl::CopyPrimitive(const schema::Primitive *src_prim) {
+  MS_EXCEPTION_IF_NULL(src_prim);
+  auto op_type = src_prim->value_type();
   switch (op_type) {
     case schema::PrimitiveType_SoftMax:
-      return new lite::SoftMax(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::SoftMax(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Activation:
-      return new lite::Activation(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Activation(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Conv2D:
-      return new lite::Conv2D(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Conv2D(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_DeConv2D:
-      return new lite::DeConv2D(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::DeConv2D(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Reduce:
-      return new lite::Reduce(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Reduce(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Pooling:
-      return new lite::Pooling(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Pooling(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_DepthwiseConv2D:
-      return new lite::DepthwiseConv2D(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::DepthwiseConv2D(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_FusedBatchNorm:
-      return new lite::FusedBatchNorm(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::FusedBatchNorm(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_BatchNorm:
-      return new lite::BatchNorm(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::BatchNorm(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_FullConnection:
-      return new lite::FullConnection(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::FullConnection(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Power:
-      return new lite::Power(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Power(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Range:
-      return new lite::Range(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Range(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Mul:
-      return new lite::Mul(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Mul(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Add:
-      return new lite::Add(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Add(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Sub:
-      return new lite::Sub(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Sub(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Div:
-      return new lite::Div(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Div(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_BiasAdd:
-      return new lite::BiasAdd(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::BiasAdd(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_ExpandDims:
-      return new lite::ExpandDims(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::ExpandDims(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_ArgMax:
-      return new lite::ArgMax(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::ArgMax(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_ArgMin:
-      return new lite::ArgMin(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::ArgMin(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Cast:
-      return new lite::Cast(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Cast(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Reshape:
-      return new lite::Reshape(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Reshape(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Scale:
-      return new lite::Scale(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Scale(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Eltwise:
-      return new lite::Eltwise(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Eltwise(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Concat:
-      return new lite::Concat(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Concat(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Fill:
-      return new lite::Fill(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Fill(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Transpose:
-      return new lite::Transpose(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Transpose(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Slice:
-      return new lite::Slice(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Slice(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Squeeze:
-      return new lite::Squeeze(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Squeeze(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Nchw2Nhwc:
-      return new lite::Nchw2Nhwc(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Nchw2Nhwc(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Nhwc2Nchw:
-      return new lite::Nhwc2Nchw(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Nhwc2Nchw(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Flatten:
-      return new lite::Flatten(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Flatten(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Mean:
-      return new lite::Mean(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Mean(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Stack:
-      return new lite::Stack(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Stack(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Crop:
-      return new lite::Crop(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Crop(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_SquaredDifference:
-      return new lite::SquaredDifference(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::SquaredDifference(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_AddN:
-      return new lite::AddN(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::AddN(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Abs:
-      return new lite::Abs(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Abs(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Sin:
-      return new lite::Sin(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Sin(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Cos:
-      return new lite::Cos(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Cos(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Log:
-      return new lite::Log(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Log(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Sqrt:
-      return new lite::Sqrt(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Sqrt(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Rsqrt:
-      return new lite::Rsqrt(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Rsqrt(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Square:
-      return new lite::Square(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Square(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Exp:
-      return new lite::Exp(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Exp(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Gather:
-      return new lite::Gather(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Gather(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_GatherNd:
-      return new lite::GatherNd(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::GatherNd(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_LocalResponseNormalization:
-      return new lite::LocalResponseNormalization(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::LocalResponseNormalization(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Maximum:
-      return new lite::Maximum(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Maximum(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Minimum:
-      return new lite::Minimum(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Minimum(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Pad:
-      return new lite::Pad(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Pad(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_StridedSlice:
-      return new lite::StridedSlice(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::StridedSlice(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Prelu:
-      return new lite::Prelu(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Prelu(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Round:
-      return new lite::Round(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Round(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Reverse:
-      return new lite::Reverse(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Reverse(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_ReverseSequence:
-      return new lite::ReverseSequence(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::ReverseSequence(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_LogicalAnd:
-      return new lite::LogicalAnd(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::LogicalAnd(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_LogicalOr:
-      return new lite::LogicalOr(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::LogicalOr(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_LogicalNot:
-      return new lite::LogicalNot(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::LogicalNot(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_FloorDiv:
-      return new lite::FloorDiv(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::FloorDiv(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_FloorMod:
-      return new lite::FloorMod(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::FloorMod(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Equal:
-      return new lite::Equal(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Equal(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_NotEqual:
-      return new lite::NotEqual(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::NotEqual(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Less:
-      return new lite::Less(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Less(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_LessEqual:
-      return new lite::LessEqual(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::LessEqual(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Greater:
-      return new lite::Greater(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Greater(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_GreaterEqual:
-      return new lite::GreaterEqual(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::GreaterEqual(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Floor:
-      return new lite::Floor(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Floor(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Ceil:
-      return new lite::Ceil(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Ceil(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Split:
-      return new lite::Split(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Split(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_OneHot:
-      return new lite::OneHot(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::OneHot(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Resize:
-      return new lite::Resize(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Resize(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_MatMul:
-      return new lite::MatMul(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::MatMul(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_QuantDTypeCast:
-      return new lite::QuantDTypeCast(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::QuantDTypeCast(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_EmbeddingLookup:
-      return new lite::EmbeddingLookup(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::EmbeddingLookup(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Elu:
-      return new lite::Elu(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Elu(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_DeDepthwiseConv2D:
-      return new lite::DeconvDepthwiseConv2D(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::DeconvDepthwiseConv2D(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Shape:
-      return new lite::Shape(const_cast<schema::Primitive *>(srcPrim));
+      return new lite::Shape(const_cast<schema::Primitive *>(src_prim));
     default:
       break;
   }
@@ -237,17 +237,17 @@ lite::Primitive *ModelImpl::CopyPrimitive(const schema::Primitive *srcPrim) {
 }
 
 int ModelImpl::BuildOps() {
-  if (this->meta_graph == nullptr) {
+  if (this->meta_graph_ == nullptr) {
     MS_LOG(ERROR) << "mete_graph is nullptr";
     return -1;
   }
-  MS_EXCEPTION_IF_NULL(meta_graph->nodes());
-  for (size_t i = 0; i < meta_graph->nodes()->size(); i++) {
-    auto cNode = meta_graph->nodes()->GetAs<schema::CNode>(i);
+  MS_EXCEPTION_IF_NULL(meta_graph_->nodes());
+  for (size_t i = 0; i < meta_graph_->nodes()->size(); i++) {
+    auto cNode = meta_graph_->nodes()->GetAs<schema::CNode>(i);
     auto name = cNode->name()->str();
     auto srcPrim = cNode->primitive();
 
-    this->ops[name] = CopyPrimitive(srcPrim);
+    this->ops_[name] = CopyPrimitive(srcPrim);
     //    flatbuffers::FlatBufferBuilder fbb(1024);
     //    schema::Conv2DBuilder conv2DBuilder(fbb);
     //    conv2DBuilder.add_padMode(srcPrim->value_as_Conv2D()->padMode());

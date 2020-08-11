@@ -50,17 +50,17 @@ int TransposeOpenCLKernel::Init() {
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
-  auto input_format = inputs_[0]->GetFormat();
+  auto input_format = in_tensors_[0]->GetFormat();
   if (input_format != schema::Format_NHWC4) {
     MS_LOG(ERROR) << "input format(" << input_format << ") "
                   << "format not support!";
     return RET_ERROR;
   }
-  if ((inputs_[0]->Height() * inputs_[0]->Width()) % 4 != 0) {
+  if ((in_tensors_[0]->Height() * in_tensors_[0]->Width()) % 4 != 0) {
     MS_LOG(ERROR) << "input H * W % 4 != 0 not support!";
     return RET_ERROR;
   }
-  outputs_[0]->SetFormat(schema::Format_NCHW);
+  out_tensors_[0]->SetFormat(schema::Format_NCHW);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
@@ -69,8 +69,8 @@ int TransposeOpenCLKernel::ReSize() { return 0; }
 
 int TransposeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;
-  im_dst_x = UP_DIV(outputs_[0]->Height() * outputs_[0]->Width(), C4NUM);
-  im_dst_y = outputs_[0]->Channel();
+  im_dst_x = UP_DIV(out_tensors_[0]->Height() * out_tensors_[0]->Width(), C4NUM);
+  im_dst_y = out_tensors_[0]->Channel();
 #ifdef ENABLE_FP16
   size_t img_dtype = CL_HALF_FLOAT;
 #else
@@ -83,8 +83,8 @@ int TransposeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_siz
 }
 
 int TransposeOpenCLKernel::Run() {
-  MS_LOG(DEBUG) << this->Name() << " Running!";
-  std::vector<int> shapex = inputs_[0]->shape();
+  MS_LOG(DEBUG) << this->name() << " Running!";
+  std::vector<int> shapex = in_tensors_[0]->shape();
   int h = shapex[1];
   int w = shapex[2];
   int c = shapex[3];
@@ -97,8 +97,8 @@ int TransposeOpenCLKernel::Run() {
 
   cl_int2 HW = {h * w, hw4};
   cl_int2 C = {c, c4};
-  ocl_runtime->SetKernelArg(kernel_, 0, inputs_[0]->Data());
-  ocl_runtime->SetKernelArg(kernel_, 1, outputs_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, 0, in_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, 1, out_tensors_[0]->Data());
   ocl_runtime->SetKernelArg(kernel_, 2, HW);
   ocl_runtime->SetKernelArg(kernel_, 3, C);
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);

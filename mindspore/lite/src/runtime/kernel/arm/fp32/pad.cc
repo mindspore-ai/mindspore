@@ -37,17 +37,17 @@ constexpr int kOutputNum = 1;
 
 int PadCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
-  if (inputs_.size() != kInputNum || outputs_.size() != kOutputNum) {
-    MS_LOG(ERROR) << "Pad input size should be " << kInputNum << ", got " << inputs_.size() << ", output size should be"
-                  << kOutputNum << ", got " << outputs_.size();
+  if (in_tensors_.size() != kInputNum || out_tensors_.size() != kOutputNum) {
+    MS_LOG(ERROR) << "Pad input size should be " << kInputNum << ", got " << in_tensors_.size()
+                  << ", output size should be" << kOutputNum << ", got " << out_tensors_.size();
     return RET_ERROR;
   }
 
-  auto input = inputs_.at(0);
-  auto output = outputs_.at(0);
+  auto input = in_tensors_.at(0);
+  auto output = out_tensors_.at(0);
   if (input == nullptr || output == nullptr) {
     MS_LOG(ERROR) << "Pad input or output nullptr";
     return RET_NULL_PTR;
@@ -77,8 +77,8 @@ int PadImpl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int PadCPUKernel::RunImpl(int task_id) {
-  auto input = inputs_.at(0);
-  auto output = outputs_.at(0);
+  auto input = in_tensors_.at(0);
+  auto output = out_tensors_.at(0);
 
   auto input_data = reinterpret_cast<float *>(input->Data());
   auto output_data = reinterpret_cast<float *>(output->Data());
@@ -94,7 +94,7 @@ int PadCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto output = outputs_.at(0);
+  auto output = out_tensors_.at(0);
   int output_size = output->DataSize();
 
   auto output_data = reinterpret_cast<float *>(output->Data());

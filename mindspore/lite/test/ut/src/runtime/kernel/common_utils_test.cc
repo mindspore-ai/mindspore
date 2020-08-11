@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace kernel {
-class CommonUtilTest : public mindspore::Common {
+class CommonUtilTest : public mindspore::CommonTest {
  public:
   CommonUtilTest() = default;
 };

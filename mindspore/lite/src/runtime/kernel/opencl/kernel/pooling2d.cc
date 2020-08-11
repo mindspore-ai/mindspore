@@ -73,25 +73,25 @@ int PoolingOpenCLKernel::Init() {
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
-  outputs_[0]->SetFormat(schema::Format_NHWC4);
+  out_tensors_[0]->SetFormat(schema::Format_NHWC4);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
 
   return RET_OK;
 }
 
 std::vector<size_t> PoolingOpenCLKernel::InitGlobalSize() const {
-  const size_t global_x = outputs_[0]->Height();
-  const size_t global_y = outputs_[0]->Width();
-  const size_t global_z = UP_DIV(outputs_[0]->Channel(), C4NUM);
+  const size_t global_x = out_tensors_[0]->Height();
+  const size_t global_y = out_tensors_[0]->Width();
+  const size_t global_z = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   std::vector<size_t> global = {global_x, global_y, global_z};
   return global;
 }
 
 int PoolingOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  size_t CO4 = UP_DIV(outputs_[0]->Channel(), C4NUM);
+  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   size_t im_dst_x, im_dst_y;
-  im_dst_x = outputs_[0]->Width() * CO4;
-  im_dst_y = outputs_[0]->Height();
+  im_dst_x = out_tensors_[0]->Width() * CO4;
+  im_dst_y = out_tensors_[0]->Height();
 #ifdef ENABLE_FP16
   size_t img_dtype = CL_HALF_FLOAT;
 #else
@@ -108,21 +108,21 @@ int PoolingOpenCLKernel::InitBuffer() { return RET_OK; }
 int PoolingOpenCLKernel::ReSize() { return RET_OK; }
 
 int PoolingOpenCLKernel::Run() {
-  MS_LOG(DEBUG) << this->Name() << " Running!";
+  MS_LOG(DEBUG) << this->name() << " Running!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
 
   // attribute
-  int slices = UP_DIV(outputs_[0]->Channel(), C4NUM);
-  cl_int4 input_shape = {inputs_[0]->Height(), inputs_[0]->Width(), inputs_[0]->Channel(), slices};
-  cl_int4 output_shape = {outputs_[0]->Height(), outputs_[0]->Width(), outputs_[0]->Channel(), slices};
+  int slices = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
+  cl_int4 input_shape = {in_tensors_[0]->Height(), in_tensors_[0]->Width(), in_tensors_[0]->Channel(), slices};
+  cl_int4 output_shape = {out_tensors_[0]->Height(), out_tensors_[0]->Width(), out_tensors_[0]->Channel(), slices};
   cl_int2 stride = {parameter_->stride_h_, parameter_->stride_w_};
   cl_int2 kernel_size = {parameter_->window_h_, parameter_->window_w_};
   cl_int2 padding = {parameter_->pad_u_, parameter_->pad_l_};
 
   // binding parameters
   int arg_idx = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, inputs_[0]->Data());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, outputs_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, input_shape);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, output_shape);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, stride);

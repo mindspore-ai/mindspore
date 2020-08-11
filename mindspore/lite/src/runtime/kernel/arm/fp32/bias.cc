@@ -29,7 +29,7 @@ using mindspore::schema::PrimitiveType_BiasAdd;
 
 namespace mindspore::kernel {
 int BiasCPUKernel::ReSize() {
-  auto dims = inputs_[0]->shape();
+  auto dims = in_tensors_[0]->shape();
   MS_ASSERT(dims.size() <= 5);
   bias_param_->ndim_ = dims.size();
   for (int i = 0; i < bias_param_->ndim_; i++) {
@@ -47,10 +47,10 @@ int BiasCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto in = reinterpret_cast<float *>(inputs_.at(0)->Data());
-  auto bias = reinterpret_cast<float *>(inputs_.at(1)->Data());
-  auto out = reinterpret_cast<float *>(outputs_.at(0)->Data());
-  size_t data_size = inputs_.at(0)->ElementsNum();
+  auto in = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
+  auto bias = reinterpret_cast<float *>(in_tensors_.at(1)->Data());
+  auto out = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  size_t data_size = in_tensors_.at(0)->ElementsNum();
   auto tile_in = new float[data_size];
   auto tile_bias = new float[data_size];
   BroadcastAdd(in, bias, tile_in, tile_bias, out, data_size, bias_param_);

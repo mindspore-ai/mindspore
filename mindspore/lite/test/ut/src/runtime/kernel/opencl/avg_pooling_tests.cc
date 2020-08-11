@@ -24,7 +24,7 @@
 
 namespace mindspore {
 
-class TestAvgPoolingOpenCL : public mindspore::Common {};
+class TestAvgPoolingOpenCL : public mindspore::CommonTest {};
 
 void InitAvgPoolingParam(PoolingParameter *param) {
   param->input_batch_ = 1;

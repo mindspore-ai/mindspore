@@ -24,7 +24,7 @@
 #include "mindspore/core/utils/log_adapter.h"
 
 namespace mindspore {
-class TestConv2dTransposeOpenCL : public mindspore::Common {
+class TestConv2dTransposeOpenCL : public mindspore::CommonTest {
  public:
   TestConv2dTransposeOpenCL() {}
 };

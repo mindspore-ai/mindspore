@@ -22,7 +22,7 @@
 #include "mindspore/lite/include/context.h"
 
 namespace mindspore {
-class TestQuantizedAdd : public mindspore::Common {
+class TestQuantizedAdd : public mindspore::CommonTest {
  public:
   TestQuantizedAdd() {}
 };

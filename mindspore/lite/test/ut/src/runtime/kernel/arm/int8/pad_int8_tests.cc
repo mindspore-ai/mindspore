@@ -26,7 +26,7 @@ namespace mindspore {
 using mindspore::lite::tensor::QuantArg;
 using mindspore::lite::tensor::Tensor;
 
-class TestPadInt8 : public mindspore::Common {
+class TestPadInt8 : public mindspore::CommonTest {
  public:
   TestPadInt8() {}
 };

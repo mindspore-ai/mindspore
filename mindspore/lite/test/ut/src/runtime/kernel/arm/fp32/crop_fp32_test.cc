@@ -17,7 +17,7 @@
 #include "mindspore/lite/src/runtime/kernel/arm/nnacl/fp32/crop.h"
 
 namespace mindspore {
-class CropTestFp32 : public mindspore::Common {
+class CropTestFp32 : public mindspore::CommonTest {
  public:
   CropTestFp32() = default;
 };

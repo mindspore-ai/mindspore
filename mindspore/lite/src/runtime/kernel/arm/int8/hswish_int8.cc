@@ -30,8 +30,8 @@ using mindspore::schema::ActivationType_HSWISH;
 
 namespace mindspore::kernel {
 int HswishInt8CPUKernel::Init() {
-  lite::tensor::Tensor *input = inputs_.at(0);
-  lite::tensor::Tensor *output = outputs_.at(0);
+  lite::tensor::Tensor *input = in_tensors_.at(0);
+  lite::tensor::Tensor *output = out_tensors_.at(0);
   MS_ASSERT(input);
   MS_ASSERT(output);
 
@@ -67,9 +67,9 @@ void HswishInt8CPUKernel::MultiplierInt32ToInt16(int32_t input, int16_t *output)
 int HswishInt8CPUKernel::ReSize() { return RET_OK; }
 
 int HswishInt8CPUKernel::DoActivation(int task_id) {
-  auto input_addr = reinterpret_cast<int8_t *>(inputs_.at(0)->Data());
-  auto output_addr = reinterpret_cast<int8_t *>(outputs_.at(0)->Data());
-  auto length = inputs_.at(0)->ElementsNum();
+  auto input_addr = reinterpret_cast<int8_t *>(in_tensors_.at(0)->Data());
+  auto output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(0)->Data());
+  auto length = in_tensors_.at(0)->ElementsNum();
 
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);

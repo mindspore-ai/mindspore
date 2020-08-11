@@ -35,7 +35,7 @@ int DepthToSpaceCPUKernel::Init() {
   if (ret != RET_OK) {
     return ret;
   }
-  DepthToSpaceParameter *param = reinterpret_cast<DepthToSpaceParameter *>(opParameter);
+  DepthToSpaceParameter *param = reinterpret_cast<DepthToSpaceParameter *>(op_parameter_);
   param->data_type_size_ = sizeof(float);
   if (!InferShapeDone()) {
     return RET_OK;
@@ -52,12 +52,12 @@ int DepthToSpaceCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto input = inputs_[0];
-  auto output = outputs_[0];
+  auto input = in_tensors_[0];
+  auto output = out_tensors_[0];
   const float *input_data = reinterpret_cast<const float *>(input->Data());
   float *output_data = reinterpret_cast<float *>(output->Data());
   auto in_shape = input->shape();
-  DepthToSpaceParameter *param = reinterpret_cast<DepthToSpaceParameter *>(opParameter);
+  DepthToSpaceParameter *param = reinterpret_cast<DepthToSpaceParameter *>(op_parameter_);
   if (input->GetFormat() == schema::Format_NHWC) {
     DepthToSpaceForNHWC(input_data, output_data, in_shape.data(), param);
     return RET_OK;

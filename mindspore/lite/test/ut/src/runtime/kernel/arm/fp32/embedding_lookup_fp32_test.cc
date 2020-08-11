@@ -24,7 +24,7 @@
 namespace mindspore {
 using mindspore::lite::tensor::Tensor;
 
-class TestEmbeddingLookupFp32 : public mindspore::Common {
+class TestEmbeddingLookupFp32 : public mindspore::CommonTest {
  public:
   TestEmbeddingLookupFp32() {}
 };

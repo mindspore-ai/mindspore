@@ -31,8 +31,8 @@ class KernelFactory {
   virtual ~KernelFactory();
 
   static KernelFactory *GetInstance();
-  kernel::LiteKernel *GetKernel(const std::vector<tensor::Tensor *> &inputs,
-                                const std::vector<tensor::Tensor *> &outputs, const lite::Primitive *primitive,
+  kernel::LiteKernel *GetKernel(const std::vector<tensor::Tensor *> &in_tensors,
+                                const std::vector<tensor::Tensor *> &out_tensors, const lite::Primitive *primitive,
                                 const Context *ctx, const kernel::KernelKey &key);
 };
 }  // namespace mindspore::lite

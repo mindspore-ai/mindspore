@@ -34,8 +34,8 @@ int LocalResponseNormCPUKernel::Init() { return RET_OK; }
 int LocalResponseNormCPUKernel::ReSize() { return RET_OK; }
 
 int LocalResponseNormCPUKernel::DoLocalResponseNorm(int task_id) {
-  auto input_tensor = inputs_.front();
-  auto out_tensor = outputs_.front();
+  auto input_tensor = in_tensors_.front();
+  auto out_tensor = out_tensors_.front();
   auto input_ptr = reinterpret_cast<float *>(input_tensor->Data());
   auto output_ptr = reinterpret_cast<float *>(out_tensor->Data());
 
@@ -55,7 +55,7 @@ int LocalResponseNormCPUKernel::DoLocalResponseNorm(int task_id) {
   output_ptr += stride * task_id * channel;
 
   auto error_code = LocalResponseNorm(input_ptr, count, channel, output_ptr,
-                                      reinterpret_cast<LocalResponseNormParameter *>(opParameter));
+                                      reinterpret_cast<LocalResponseNormParameter *>(op_parameter_));
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "DoLocalResponseNorm error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;

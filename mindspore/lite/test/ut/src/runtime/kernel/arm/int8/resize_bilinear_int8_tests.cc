@@ -27,7 +27,7 @@ namespace mindspore {
 using mindspore::lite::tensor::QuantArg;
 using mindspore::lite::tensor::Tensor;
 
-class TestResizeBilinearInt8 : public mindspore::Common {
+class TestResizeBilinearInt8 : public mindspore::CommonTest {
  public:
   TestResizeBilinearInt8() = default;
   void TearDown() override;

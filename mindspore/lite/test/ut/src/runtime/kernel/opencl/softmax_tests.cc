@@ -24,7 +24,7 @@
 
 namespace mindspore {
 
-class TestSoftmaxOpenCL : public mindspore::Common {};
+class TestSoftmaxOpenCL : public mindspore::CommonTest {};
 
 void InitSoftaxParam(SoftmaxParameter *param) { param->axis_ = -1; }
 

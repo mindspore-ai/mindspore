@@ -25,8 +25,8 @@
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
-using mindspore::lite::RET_OK;
 using mindspore::lite::RET_NULL_PTR;
+using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SoftMax;
 
 namespace mindspore::kernel {
@@ -40,7 +40,7 @@ int SoftmaxBaseCPUKernel::Init() {
 }
 
 int SoftmaxBaseCPUKernel::ReSize() {
-  auto input_tensor = inputs_.front();
+  auto input_tensor = in_tensors_.front();
   auto in_shape = input_tensor->shape();
   auto in_dims = in_shape.size();
   int ele_size = 1;

@@ -22,7 +22,7 @@
 #include "schema/inner/model_generated.h"
 
 namespace mindspore {
-class TestTfliteParser : public Common {
+class TestTfliteParser : public CommonTest {
  public:
   TestTfliteParser() = default;
   void TearDown() override;

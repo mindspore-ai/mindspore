@@ -38,7 +38,7 @@ class LiteSession : public session::LiteSession {
 
   int Init(Context *context);
 
-  void BindThread(bool ifBind) override;
+  void BindThread(bool if_bind) override;
 
   int CompileGraph(Model *model) override;
 
@@ -68,16 +68,16 @@ class LiteSession : public session::LiteSession {
 
  protected:
   Context *context_ = nullptr;
-  std::vector<kernel::LiteKernel *> kernels;
-  std::vector<tensor::Tensor *> tensors;
+  std::vector<kernel::LiteKernel *> kernels_;
+  std::vector<tensor::Tensor *> tensors_;
   // graph input tensors
-  std::vector<tensor::Tensor *> inputs;
+  std::vector<tensor::Tensor *> inputs_;
   // graph output tensors
-  std::vector<tensor::Tensor *> outputs;
+  std::vector<tensor::Tensor *> outputs_;
   // graph input node name -- input tensors
-  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> input_map;
+  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> input_map_;
   // graph output node name -- output tensors
-  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> output_map;
+  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> output_map_;
 };
 }  // namespace lite
 }  // namespace mindspore

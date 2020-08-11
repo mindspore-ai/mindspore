@@ -63,7 +63,7 @@ int Convolution3x3FP16CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(transformed_filter_addr_, 0, transformed_size);
-  float *origin_weight = reinterpret_cast<float *>(inputs_.at(kWeightIndex)->Data());
+  float *origin_weight = reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->Data());
   size_t fp16_weight_size = input_channel * output_channel * kernel_h * kernel_w * sizeof(float16_t);
   fp16_weight_ = reinterpret_cast<float16_t *>(malloc(fp16_weight_size));
   if (fp16_weight_ == nullptr) {
@@ -85,8 +85,8 @@ int Convolution3x3FP16CPUKernel::InitWeightBias() {
   }
   memset(bias_data_, 0, new_bias_size);
   auto fp16_bias_data = reinterpret_cast<float16_t *>(bias_data_);
-  if (inputs_.size() == kInputSize2) {
-    auto ori_bias_addr = reinterpret_cast<float *>(inputs_.at(kBiasIndex)->Data());
+  if (in_tensors_.size() == kInputSize2) {
+    auto ori_bias_addr = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->Data());
     for (int i = 0; i < output_channel; ++i) {
       fp16_bias_data[i] = (float16_t)ori_bias_addr[i];
     }
@@ -131,8 +131,7 @@ int Convolution3x3FP16CPUKernel::InitTmpBuffer() {
 
   /*=============================tmp_out_============================*/
   int new_out_plane = UP_DIV(conv_param_->output_h_, C4NUM) * UP_DIV(conv_param_->output_w_, C4NUM) * C4NUM * C4NUM;
-  size_t tmp_out_size =
-    oC8 * C8NUM * conv_param_->output_batch_ * new_out_plane * sizeof(float16_t);
+  size_t tmp_out_size = oC8 * C8NUM * conv_param_->output_batch_ * new_out_plane * sizeof(float16_t);
   tmp_out_ = reinterpret_cast<float16_t *>(malloc(tmp_out_size));
   if (tmp_out_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_out_ failed.";
@@ -172,7 +171,7 @@ int Convolution3x3FP16CPUKernel::InitTmpBuffer() {
 }
 
 void Convolution3x3FP16CPUKernel::ConfigInputOutput() {
-  auto input_tensor = inputs_.at(kInputIndex);
+  auto input_tensor = in_tensors_.at(kInputIndex);
   auto input_format = input_tensor->GetFormat();
   schema::Format execute_format = schema::Format_NHWC4;
   convert_func_ = LayoutTransformFp16(input_format, execute_format);
@@ -184,7 +183,7 @@ void Convolution3x3FP16CPUKernel::ConfigInputOutput() {
 
 int Convolution3x3FP16CPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   auto ret = ConvolutionBaseCPUKernel::Init();
@@ -265,7 +264,7 @@ int Convolution3x3FP16CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  auto input_tensor = inputs_.at(kInputIndex);
+  auto input_tensor = in_tensors_.at(kInputIndex);
   auto ori_input_data = reinterpret_cast<float *>(input_tensor->Data());
   for (int i = 0; i < input_tensor->ElementsNum(); ++i) {
     fp16_input_[i] = (float16_t)ori_input_data[i];
@@ -284,10 +283,10 @@ int Convolution3x3FP16CPUKernel::Run() {
   }
 
   // cast fp16 out to fp32 data
-  auto out_tensor = outputs_.at(kOutputIndex);
+  auto out_tensor = out_tensors_.at(kOutputIndex);
   auto output_addr = reinterpret_cast<float *>(out_tensor->Data());
   for (int j = 0; j < out_tensor->ElementsNum(); ++j) {
-    output_addr[j] = static_cast<float >(fp16_out_[j]);
+    output_addr[j] = static_cast<float>(fp16_out_[j]);
   }
   return RET_OK;
 }

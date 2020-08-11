@@ -19,7 +19,7 @@
 
 namespace mindspore {
 
-class TestResizeNearestNeighborFp32 : public mindspore::Common {
+class TestResizeNearestNeighborFp32 : public mindspore::CommonTest {
  public:
   TestResizeNearestNeighborFp32() = default;
 

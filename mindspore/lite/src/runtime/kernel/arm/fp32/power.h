@@ -31,9 +31,9 @@ class PowerCPUKernel : public LiteKernel {
       : LiteKernel(param, inputs, outputs, ctx, primitive),
         ctx_(ctx),
         thread_count_(ctx->thread_num_),
-        power_(reinterpret_cast<PowerParameter *>(opParameter)->power_),
-        scale_(reinterpret_cast<PowerParameter *>(opParameter)->scale_),
-        shift_(reinterpret_cast<PowerParameter *>(opParameter)->shift_) {}
+        power_(reinterpret_cast<PowerParameter *>(op_parameter_)->power_),
+        scale_(reinterpret_cast<PowerParameter *>(op_parameter_)->scale_),
+        shift_(reinterpret_cast<PowerParameter *>(op_parameter_)->shift_) {}
   ~PowerCPUKernel() override = default;
 
   int Init() override;

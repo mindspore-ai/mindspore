@@ -44,12 +44,12 @@ int ScatterNDCPUKernel::Init() {
 }
 
 int ScatterNDCPUKernel::ReSize() {
-auto shape = inputs_.at(kScatterShapeIndex);
-  auto indices = inputs_.at(kScatterIndicesIndex);
-  auto update = inputs_.at(kScatterUpdateIndex);
+auto shape = in_tensors_.at(kScatterShapeIndex);
+  auto indices = in_tensors_.at(kScatterIndicesIndex);
+  auto update = in_tensors_.at(kScatterUpdateIndex);
 
   update_ptr_ = reinterpret_cast<float *>(update->Data());
-  output_ptr_ = reinterpret_cast<float *>(outputs_.at(0)->Data());
+  output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
 
   // check indices shape
   auto shape_rank = shape->ElementsNum();
@@ -119,7 +119,7 @@ auto shape = inputs_.at(kScatterShapeIndex);
     output_unit_offsets_.push_back(tmp_stride);
   }
 
-  thread_n_num_ = MSMIN(opParameter->thread_num_, num_unit_);
+  thread_n_num_ = MSMIN(op_parameter_->thread_num_, num_unit_);
   thread_n_stride_ = UP_DIV(num_unit_, thread_n_num_);
   return RET_OK;
 }

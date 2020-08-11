@@ -48,24 +48,24 @@ int CastCPUKernel::Init() {
 }
 
 int CastCPUKernel::ReSize() {
-  data_num_ = inputs_[0]->ElementsNum();
+  data_num_ = in_tensors_[0]->ElementsNum();
   if (data_num_ == 0) {
     return RET_OK;
   }
-  opParameter->thread_num_ = MSMIN(opParameter->thread_num_, data_num_);
-  stride_ = UP_DIV(data_num_, opParameter->thread_num_);
+  op_parameter_->thread_num_ = MSMIN(op_parameter_->thread_num_, data_num_);
+  stride_ = UP_DIV(data_num_, op_parameter_->thread_num_);
   return RET_OK;
 }
 
 int CastCPUKernel::DoCast(int thread_id) {
-  auto input = inputs_.at(0);
+  auto input = in_tensors_.at(0);
   int data_num = MSMIN(stride_, data_num_ - thread_id * stride_);
   if (data_num <= 0) {
     return RET_OK;
   }
 
   auto offset = thread_id * stride_;
-  auto output_data = reinterpret_cast<float *>(outputs_.at(0)->Data());
+  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
   switch (input->data_type()) {
     case kNumberTypeUInt8:
       Uint8ToFloat32(reinterpret_cast<uint8_t *>(input->Data()) + offset, output_data + offset, data_num);
@@ -89,7 +89,7 @@ int CastCPUKernel::Run() {
   if (data_num_ == 0) {
     return RET_OK;
   }
-  return LiteBackendParallelLaunch(CastRun, this, opParameter->thread_num_);
+  return LiteBackendParallelLaunch(CastRun, this, op_parameter_->thread_num_);
 }
 
 kernel::LiteKernel *CpuCastFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,

@@ -73,7 +73,7 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
   int32_t input_zp = conv_param_->conv_quant_arg_.quant_args_[0][0].zp_;
 
   // init weight
-  auto origin_weight = reinterpret_cast<int8_t *>(inputs_.at(kWeightIndex)->Data());
+  auto origin_weight = reinterpret_cast<int8_t *>(in_tensors_.at(kWeightIndex)->Data());
   packed_weight_ = reinterpret_cast<int8_t *>(malloc(pack_weight_size));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed_weight_ failed.";
@@ -91,11 +91,11 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(bias_data_, 0, oc4 * C4NUM * sizeof(int32_t));
-  if (inputs_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<int32_t *>(inputs_.at(kBiasIndex)->Data());
+  if (in_tensors_.size() == kInputSize2) {
+    auto ori_bias = reinterpret_cast<int32_t *>(in_tensors_.at(kBiasIndex)->Data());
     memcpy(bias_data_, ori_bias, out_channel * sizeof(int32_t));
   } else {
-    MS_ASSERT(inputs_.size() == kInputSize1);
+    MS_ASSERT(in_tensors_.size() == kInputSize1);
   }
   auto *bias_data = reinterpret_cast<int32_t *>(bias_data_);
   int c4_kernel_plane_size = kernel_plane * ic4 * C4NUM;
@@ -172,7 +172,7 @@ int ConvolutionInt8CPUKernel::InitWeightBiasOpt() {
   int32_t input_zp = conv_param_->conv_quant_arg_.quant_args_[0][0].zp_;
 
   // init weight
-  auto origin_weight = reinterpret_cast<int8_t *>(inputs_.at(kWeightIndex)->Data());
+  auto origin_weight = reinterpret_cast<int8_t *>(in_tensors_.at(kWeightIndex)->Data());
   packed_weight_ = reinterpret_cast<int8_t *>(malloc(pack_weight_size));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed_weight_ failed.";
@@ -190,11 +190,11 @@ int ConvolutionInt8CPUKernel::InitWeightBiasOpt() {
     return RET_ERROR;
   }
   memset(bias_data_, 0, oc4 * C4NUM * sizeof(int32_t));
-  if (inputs_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<int32_t *>(inputs_.at(kBiasIndex)->Data());
+  if (in_tensors_.size() == kInputSize2) {
+    auto ori_bias = reinterpret_cast<int32_t *>(in_tensors_.at(kBiasIndex)->Data());
     memcpy(bias_data_, ori_bias, out_channel * sizeof(int32_t));
   } else {
-    MS_ASSERT(inputs_.size() == kInputSize1);
+    MS_ASSERT(in_tensors_.size() == kInputSize1);
   }
   auto *bias_data = reinterpret_cast<int32_t *>(bias_data_);
   int c4_kernel_plane_size = kernel_plane * ic4 * C4NUM;
@@ -258,9 +258,9 @@ int ConvolutionInt8CPUKernel::InitTmpBufferOpt() {
 }
 
 void ConvolutionInt8CPUKernel::ConfigInputOutput() {
-  auto output_tensor = outputs_.at(kOutputIndex);
+  auto output_tensor = out_tensors_.at(kOutputIndex);
   output_tensor->SetFormat(schema::Format_NHWC);
-  auto input_tensor = inputs_.at(kInputIndex);
+  auto input_tensor = in_tensors_.at(kInputIndex);
   auto ret = CheckLayout(input_tensor);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Check layout failed.";
@@ -270,7 +270,7 @@ void ConvolutionInt8CPUKernel::ConfigInputOutput() {
 
 int ConvolutionInt8CPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   auto ret = ConvolutionBaseCPUKernel::Init();
@@ -359,7 +359,7 @@ int ConvolutionInt8CPUKernel::ReSize() {
 }
 
 int ConvolutionInt8CPUKernel::RunImpl(int task_id) {
-  auto output_addr = reinterpret_cast<int8_t *>(outputs_.at(kOutputIndex)->Data());
+  auto output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(kOutputIndex)->Data());
   if (support_optimize_) {
     ConvInt8Opt(reinterpret_cast<int8_t *>(nhwc4_input_), packed_input_, packed_weight_,
                 reinterpret_cast<int32_t *>(bias_data_), tmp_dst_, tmp_out_, output_addr, input_sum_, task_id,
@@ -388,7 +388,7 @@ int ConvolutionInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  auto input_tensor = inputs_.at(kInputIndex);
+  auto input_tensor = in_tensors_.at(kInputIndex);
   auto ori_input_data = input_tensor->Data();
   int in_batch = conv_param_->input_batch_;
   int in_h = conv_param_->input_h_;

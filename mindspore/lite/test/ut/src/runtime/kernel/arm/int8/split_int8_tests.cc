@@ -24,7 +24,7 @@
 
 namespace mindspore {
 
-class TestSplitInt8 : public mindspore::Common {
+class TestSplitInt8 : public mindspore::CommonTest {
  public:
   TestSplitInt8() {}
 };

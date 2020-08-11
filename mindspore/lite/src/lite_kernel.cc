@@ -20,13 +20,13 @@
 
 namespace mindspore::kernel {
 void LiteKernel::InitOutTensorRefCount() {
-  for (auto *tensor : this->outputs_) {
-    tensor->SetRefCount(this->out_kernel_.size());
+  for (auto *tensor : this->out_tensors_) {
+    tensor->SetRefCount(this->out_kernels_.size());
   }
 }
 
 int LiteKernel::DecOutTensorRefCount() {
-  for (auto *tensor : this->outputs_) {
+  for (auto *tensor : this->out_tensors_) {
     tensor->decRefCount();
     if (0 >= tensor->RefCount()) {
       auto ret = tensor->FreeData();
@@ -43,7 +43,7 @@ std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphInputKernels(
   const std::vector<kernel::LiteKernel *> &kernels) {
   std::vector<kernel::LiteKernel *> input_kernels;
   for (const auto kernel : kernels) {
-    for (auto input : kernel->GetInKernels()) {
+    for (auto input : kernel->in_kernels()) {
       auto iter = std::find(kernels.begin(), kernels.end(), input);
       if (iter == kernels.end()) {
         input_kernels.emplace_back(input);
@@ -57,7 +57,7 @@ std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphOutputKernels(
   const std::vector<kernel::LiteKernel *> &kernels) {
   std::vector<kernel::LiteKernel *> output_kernels;
   for (const auto kernel : kernels) {
-    for (const auto output : kernel->GetOutKernels()) {
+    for (const auto output : kernel->out_kernels()) {
       auto iter = std::find(kernels.begin(), kernels.end(), output);
       if (iter == kernels.end()) {
         output_kernels.emplace_back(output);
@@ -72,11 +72,11 @@ std::vector<lite::tensor::Tensor *> LiteKernelUtil::SubgraphInputTensors(
   std::vector<lite::tensor::Tensor *> input_tensors;
   std::vector<lite::tensor::Tensor *> all_output_tensors;
   for (const auto &kernel : kernels) {
-    all_output_tensors.insert(all_output_tensors.end(), kernel->GetOutputs().begin(), kernel->GetOutputs().end());
+    all_output_tensors.insert(all_output_tensors.end(), kernel->out_tensors().begin(), kernel->out_tensors().end());
   }
   std::vector<kernel::LiteKernel *> input_kernels = SubgraphInputKernels(kernels);
   for (const auto &kernel : input_kernels) {
-    for (const auto &tensor : kernel->GetInputs()) {
+    for (const auto &tensor : kernel->in_tensors()) {
       auto iter = std::find(all_output_tensors.begin(), all_output_tensors.end(), tensor);
       if (iter == all_output_tensors.end() && tensor->Data() == nullptr) {
         input_tensors.emplace_back(tensor);
@@ -91,11 +91,11 @@ std::vector<lite::tensor::Tensor *> LiteKernelUtil::SubgraphOutputTensors(
   std::vector<lite::tensor::Tensor *> output_tensors;
   std::vector<lite::tensor::Tensor *> all_input_tensors;
   for (const auto &kernel : kernels) {
-    all_input_tensors.insert(all_input_tensors.end(), kernel->GetInputs().begin(), kernel->GetInputs().end());
+    all_input_tensors.insert(all_input_tensors.end(), kernel->in_tensors().begin(), kernel->in_tensors().end());
   }
   std::vector<kernel::LiteKernel *> output_kernels = SubgraphOutputKernels(kernels);
   for (const auto &kernel : output_kernels) {
-    for (const auto &tensor : kernel->GetOutputs()) {
+    for (const auto &tensor : kernel->out_tensors()) {
       auto iter = std::find(all_input_tensors.begin(), all_input_tensors.end(), tensor);
       if (iter == all_input_tensors.end()) {
         output_tensors.emplace_back(tensor);
@@ -111,13 +111,13 @@ void LiteKernelUtil::TopologicalSortKernels(std::vector<kernel::LiteKernel *> &k
       if (search_kernel == kernel) {
         continue;
       }
-      for (auto *tensor : kernel->GetInputs()) {
-        if (lite::IsContain(search_kernel->GetOutputs(), tensor)) {
+      for (auto *tensor : kernel->in_tensors()) {
+        if (lite::IsContain(search_kernel->out_tensors(), tensor)) {
           kernel->AddInKernel(search_kernel);
         }
       }
-      for (auto *tensor : kernel->GetOutputs()) {
-        if (lite::IsContain(search_kernel->GetInputs(), tensor)) {
+      for (auto *tensor : kernel->out_tensors()) {
+        if (lite::IsContain(search_kernel->in_tensors(), tensor)) {
           kernel->AddOutKernel(search_kernel);
         }
       }

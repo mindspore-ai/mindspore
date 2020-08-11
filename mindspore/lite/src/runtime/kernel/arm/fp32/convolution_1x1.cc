@@ -68,14 +68,14 @@ void Convolution1x1CPUKernel::InitConv1x1MatmulParam() {
 }
 
 int Convolution1x1CPUKernel::InitConv1x1BiasWeight() {
-  if (inputs_.size() == 3) {
+  if (in_tensors_.size() == 3) {
     bias_data_ = malloc(matmul_param_->col_8_ * sizeof(float));
     if (bias_data_ == nullptr) {
       MS_LOG(ERROR) << "Conv1x1 Malloc bias_ptr_ error!";
       return RET_ERROR;
     }
     memset(bias_data_, 0, matmul_param_->col_8_ * sizeof(float));
-    memcpy(bias_data_, inputs_[2]->Data(), conv_param_->output_channel_ * sizeof(float));
+    memcpy(bias_data_, in_tensors_[2]->Data(), conv_param_->output_channel_ * sizeof(float));
   } else {
     bias_data_ = nullptr;
   }
@@ -86,7 +86,7 @@ int Convolution1x1CPUKernel::InitConv1x1BiasWeight() {
     return RET_ERROR;
   }
   memset(weight_ptr_, 0, matmul_param_->deep_ * matmul_param_->col_8_ * sizeof(float));
-  RowMajor2Col8Major(reinterpret_cast<float *>(inputs_[1]->Data()), weight_ptr_, matmul_param_->col_,
+  RowMajor2Col8Major(reinterpret_cast<float *>(in_tensors_[1]->Data()), weight_ptr_, matmul_param_->col_,
                      matmul_param_->deep_);
   return RET_OK;
 }
@@ -103,7 +103,7 @@ int Convolution1x1CPUKernel::InitConv1x1Param() {
     memset(input_ptr_, 0, matmul_param_->row_ * matmul_param_->deep_ * sizeof(float));
   }
 
-  thread_count_ = MSMIN(opParameter->thread_num_, UP_DIV(matmul_param_->col_, C8NUM));
+  thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(matmul_param_->col_, C8NUM));
   thread_stride_ = UP_DIV(UP_DIV(matmul_param_->col_, C8NUM), thread_count_) * C8NUM;
 
   pack_input_ = reinterpret_cast<float *>(malloc(matmul_param_->row_8_ * matmul_param_->deep_ * sizeof(float)));
@@ -137,7 +137,7 @@ void Convolution1x1CPUKernel::Pre1x1Trans(float *src_input, float *src_output) {
 
 int Convolution1x1CPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   ConvolutionBaseCPUKernel::Init();
@@ -204,8 +204,8 @@ int Convolution1x1CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto src_in = reinterpret_cast<float *>(inputs_[0]->Data());
-  auto src_out = reinterpret_cast<float *>(outputs_[0]->Data());
+  auto src_in = reinterpret_cast<float *>(in_tensors_[0]->Data());
+  auto src_out = reinterpret_cast<float *>(out_tensors_[0]->Data());
 
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
     Pre1x1Trans(src_in + batch_index * conv_param_->input_h_ * conv_param_->input_w_ * conv_param_->input_channel_,

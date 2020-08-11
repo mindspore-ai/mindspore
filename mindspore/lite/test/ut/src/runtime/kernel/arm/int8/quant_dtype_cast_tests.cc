@@ -24,7 +24,7 @@
 
 namespace mindspore {
 
-class QuantDTypeCastTestFp32 : public mindspore::Common {
+class QuantDTypeCastTestFp32 : public mindspore::CommonTest {
  public:
   QuantDTypeCastTestFp32() {}
 };

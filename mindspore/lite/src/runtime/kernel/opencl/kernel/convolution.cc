@@ -43,10 +43,10 @@ int ConvolutionOpenCLKernel::Init() {
 }
 
 std::string ConvolutionOpenCLKernel::CodeGen() {
-  auto param = reinterpret_cast<ConvParameter *>(opParameter);
+  auto param = reinterpret_cast<ConvParameter *>(op_parameter_);
 
-  auto input_tensor = inputs_[0];
-  auto output_tensor = outputs_[0];
+  auto input_tensor = in_tensors_[0];
+  auto output_tensor = out_tensors_[0];
   const size_t CI = input_tensor->Channel();
   const size_t CI_SLICES = UP_DIV(CI, C4NUM);
   const size_t CI_ALIGN = UP_DIV(CI, C4NUM) * C4NUM;
@@ -170,7 +170,7 @@ int ConvolutionOpenCLKernel::InitBuffer() {
   auto allocator = ocl_runtime->GetAllocator();
 
   // weight: OHWI -> OHWIIO
-  auto weight_tensor = inputs_[1];
+  auto weight_tensor = in_tensors_[1];
   auto weight_shape = weight_tensor->shape();
   size_t CO = weight_shape[0];
   size_t KH = weight_shape[1];
@@ -202,7 +202,7 @@ int ConvolutionOpenCLKernel::InitBuffer() {
   allocator->UnmapBuffer(packed_weight_);
 
   // align bias
-  auto bias_tensor = inputs_[2];
+  auto bias_tensor = in_tensors_[2];
   size_t packed_bias_size = CO_SLICES * CO_TILE * sizeof(float);
   packed_bias_ = reinterpret_cast<float *>(allocator->Malloc(packed_bias_size));
   packed_bias_ = reinterpret_cast<float *>(allocator->MapBuffer(packed_bias_, CL_MAP_WRITE, nullptr, true));
@@ -227,10 +227,10 @@ static int GetBiggestDivider(int x, int y) {
 
 int ConvolutionOpenCLKernel::GetGlobalLocal(std::vector<size_t> *global, std::vector<size_t> *local) {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  auto param = reinterpret_cast<ConvParameter *>(opParameter);
-  param->output_h_ = outputs_[0]->Height();
-  param->output_w_ = outputs_[0]->Width();
-  param->output_channel_ = outputs_[0]->Channel();
+  auto param = reinterpret_cast<ConvParameter *>(op_parameter_);
+  param->output_h_ = out_tensors_[0]->Height();
+  param->output_w_ = out_tensors_[0]->Width();
+  param->output_channel_ = out_tensors_[0]->Channel();
 
   constexpr size_t work_group_size[] = {4, 4, 1};
   auto max_work_item_sizes = ocl_runtime->GetWorkItemSize();
@@ -261,21 +261,21 @@ int ConvolutionOpenCLKernel::GetGlobalLocal(std::vector<size_t> *global, std::ve
 }
 
 int ConvolutionOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  size_t CO_SLICES = UP_DIV(outputs_[0]->Channel(), C4NUM);
+  size_t CO_SLICES = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   size_t im_dst_x, im_dst_y;
-  if (inputs_[0]->GetFormat() == schema::Format_NHWC4) {
-    if (outputs_[0]->Width() * CO_SLICES < 65536) {
+  if (in_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
+    if (out_tensors_[0]->Width() * CO_SLICES < 65536) {
       {
-        im_dst_x = outputs_[0]->Width() * CO_SLICES;
-        im_dst_y = outputs_[0]->Height();
+        im_dst_x = out_tensors_[0]->Width() * CO_SLICES;
+        im_dst_y = out_tensors_[0]->Height();
       }
     } else {
-      im_dst_x = outputs_[0]->Height() * CO_SLICES;
-      im_dst_y = outputs_[0]->Width();
+      im_dst_x = out_tensors_[0]->Height() * CO_SLICES;
+      im_dst_y = out_tensors_[0]->Width();
     }
   } else {
-    im_dst_y = outputs_[0]->Height() * CO_SLICES;
-    im_dst_x = outputs_[0]->Width();
+    im_dst_y = out_tensors_[0]->Height() * CO_SLICES;
+    im_dst_x = out_tensors_[0]->Width();
   }
 #ifdef ENABLE_FP16
   size_t img_dtype = CL_HALF_FLOAT;
@@ -290,14 +290,14 @@ int ConvolutionOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_s
 }
 
 int ConvolutionOpenCLKernel::Run() {
-  MS_LOG(DEBUG) << this->Name() << " Running!";
+  MS_LOG(DEBUG) << this->name() << " Running!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
 
   int arg_cn = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, inputs_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->Data());
   ocl_runtime->SetKernelArg(kernel_, arg_cn++, packed_weight_);
   ocl_runtime->SetKernelArg(kernel_, arg_cn++, packed_bias_);
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, outputs_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->Data());
 
   std::vector<size_t> global;
   std::vector<size_t> local;

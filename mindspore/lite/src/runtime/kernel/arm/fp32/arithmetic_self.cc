@@ -35,7 +35,7 @@ int ArithmeticSelfCPUKernel::Init() {
 }
 
 int ArithmeticSelfCPUKernel::ReSize() {
-  data_size_ = inputs_[0]->ElementsNum();
+  data_size_ = in_tensors_[0]->ElementsNum();
   thread_sz_count_ = MSMIN(thread_count_, data_size_);
   thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
   return RET_OK;
@@ -76,8 +76,8 @@ int ArithmeticSelfCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  auto input_tensor = inputs_.at(0);
-  auto out_tensor = outputs_.at(0);
+  auto input_tensor = in_tensors_.at(0);
+  auto out_tensor = out_tensors_.at(0);
   in_ptr_ = reinterpret_cast<float *>(input_tensor->Data());
   out_ptr_ = reinterpret_cast<float *>(out_tensor->Data());
   ret = LiteBackendParallelLaunch(ArithmeticSelfRuns, this, thread_sz_count_);

@@ -25,24 +25,24 @@
 namespace mindspore {
 #define MS_API __attribute__((visibility("default")))
 
-/// \brief ModelImpl defined by MindSpore Lite.
+/// \brief ModelImpl defined the implement class of Model in MindSpore Lite.
 ///
 /// \note List public class and interface for reference.
 class ModelImpl;
 
 namespace lite {
-/// \brief Primitive defined by MindSpore Lite.
+/// \brief Primitive defined as prototype of operator.
 ///
 /// \note List public class and interface for reference.
 class Primitive;
 
-/// \brief Model defined by MindSpore Lite.
+/// \brief Model defined model in MindSpore Lite for managing graph.
 class MS_API Model {
  public:
   /// \brief Static method to create a Model pointer.
   ///
   /// \param[in] model_buf Define the buffer read from a model file.
-  /// \param[in] size Define bytes numbers of model buffer.
+  /// \param[in] size Define bytes number of model buffer.
   ///
   /// \return Pointer of MindSpore Lite Model.
   static Model *Import(const char *model_buf, size_t size);
@@ -59,17 +59,17 @@ class MS_API Model {
   ///
   /// \param[in] name Define name of primitive to be returned.
   ///
-  /// \return A pointer of MindSpore Lite Primitive.
+  /// \return the pointer of MindSpore Lite Primitive.
   lite::Primitive *GetOp(const std::string &name) const;
 
-  /// \brief Get MindSpore Lite MetaGraph.
+  /// \brief Get graph defined in flatbuffers.
   ///
-  /// \return A pointer of MindSpore Lite MetaGraph.
+  /// \return the pointer of graph defined in flatbuffers.
   const schema::MetaGraph *GetMetaGraph() const;
 
   /// \brief Get MindSpore Lite ModelImpl.
   ///
-  /// \return A pointer of MindSpore Lite ModelImpl.
+  /// \return the pointer of MindSpore Lite ModelImpl.
   ModelImpl *model_impl();
 
   /// \brief Free MetaGraph in MindSpore Lite Model.
@@ -84,7 +84,7 @@ class MS_API ModelBuilder {
  public:
   /// \brief OutEdge defined by MindSpore Lite.
   struct OutEdge {
-    std::string nodeId;  /**< Id of a node linked by this edge */
+    std::string nodeId;  /**< ID of a node linked by this edge */
     size_t outEdgeIndex; /**< Index of this edge */
   };
 
@@ -101,12 +101,12 @@ class MS_API ModelBuilder {
   /// \param[in] op Define the primitive to be added.
   /// \param[in] inputs Define input edge of primitive to be added.
   ///
-  /// \return Id of the primitive added.
+  /// \return ID of the primitive added.
   virtual std::string AddOp(const lite::Primitive &op, const std::vector<OutEdge> &inputs) = 0;
 
   /// \brief Finish constructing the model.
   ///
-  /// \return A pointer of MindSpore Lite Model.
+  /// \return the pointer of MindSpore Lite Model.
   virtual Model *Construct();
 };
 }  // namespace lite

@@ -47,7 +47,7 @@ FusedBatchnormCPUKernel::~FusedBatchnormCPUKernel() {
 }
 
 int FusedBatchnormCPUKernel::InitConstTensor() {
-  auto scale = inputs_[1];
+  auto scale = in_tensors_[1];
   scale_addr_ = reinterpret_cast<float *>(malloc(scale->ElementsNum() * sizeof(float)));
   if (scale_addr_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
@@ -55,7 +55,7 @@ int FusedBatchnormCPUKernel::InitConstTensor() {
   }
   memcpy(scale_addr_, scale->Data(), scale->ElementsNum() * sizeof(float));
 
-  auto offset = inputs_[2];
+  auto offset = in_tensors_[2];
   offset_addr_ = reinterpret_cast<float *>(malloc(offset->ElementsNum() * sizeof(float)));
   if (offset_addr_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
@@ -63,7 +63,7 @@ int FusedBatchnormCPUKernel::InitConstTensor() {
   }
   memcpy(offset_addr_, offset->Data(), offset->ElementsNum() * sizeof(float));
 
-  auto mean = inputs_[3];
+  auto mean = in_tensors_[3];
   mean_addr_ = reinterpret_cast<float *>(malloc(mean->ElementsNum() * sizeof(float)));
   if (mean_addr_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
@@ -71,7 +71,7 @@ int FusedBatchnormCPUKernel::InitConstTensor() {
   }
   memcpy(mean_addr_, mean->Data(), mean->ElementsNum() * sizeof(float));
 
-  auto variance = inputs_[4];
+  auto variance = in_tensors_[4];
   var_addr_ = reinterpret_cast<float *>(malloc(variance->ElementsNum() * sizeof(float)));
   if (var_addr_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
@@ -83,10 +83,10 @@ int FusedBatchnormCPUKernel::InitConstTensor() {
 
 int FusedBatchnormCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
-  auto input_shapes = inputs_[0]->shape();
+  auto input_shapes = in_tensors_[0]->shape();
   auto n_dim = input_shapes.size();
   batchnorm_param_->channel_ = input_shapes[n_dim - 1];
   batchnorm_param_->unit_ = 1;
@@ -105,7 +105,7 @@ int FusedBatchnormCPUKernel::Init() {
 }
 
 int FusedBatchnormCPUKernel::ReSize() {
-  auto input_shapes = inputs_[0]->shape();
+  auto input_shapes = in_tensors_[0]->shape();
   batchnorm_param_->unit_ = 1;
   for (int i = 0; i < input_shapes.size() - 1; i++) {
     batchnorm_param_->unit_ *= input_shapes[i];
@@ -134,8 +134,8 @@ int FusedBatchnormCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail! Ret error code: " << prepare_ret;
     return prepare_ret;
   }
-  in_addr_ = reinterpret_cast<float *>(inputs_.at(0)->Data());
-  out_addr_ = reinterpret_cast<float *>(outputs_.at(0)->Data());
+  in_addr_ = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
+  out_addr_ = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
 
   int ret = LiteBackendParallelLaunch(FusedBatchNormRun, this, batchnorm_param_->op_parameter_.thread_num_);
   if (ret != RET_OK) {

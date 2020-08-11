@@ -45,12 +45,12 @@ int FullconnectionCPUKernel::ReSize() { return RET_OK; }
 
 int FullconnectionCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
-  fc_param_->row_ = (inputs_[0]->shape())[0];
-  fc_param_->col_ = (inputs_[1]->shape())[0];
-  fc_param_->deep_ = (inputs_[1]->shape())[1];
+  fc_param_->row_ = (in_tensors_[0]->shape())[0];
+  fc_param_->col_ = (in_tensors_[1]->shape())[0];
+  fc_param_->deep_ = (in_tensors_[1]->shape())[1];
 
   fc_param_->row_8_ = UP_ROUND(fc_param_->row_, 8);
   fc_param_->col_8_ = UP_ROUND(fc_param_->col_, 8);
@@ -60,8 +60,8 @@ int FullconnectionCPUKernel::Init() {
 
   bias_ptr_ = reinterpret_cast<float *>(malloc(fc_param_->col_8_ * sizeof(float)));
   memset(bias_ptr_, 0, fc_param_->col_8_ * sizeof(float));
-  if (inputs_.size() == 3) {
-    memcpy(bias_ptr_, inputs_[2]->Data(), fc_param_->col_ * sizeof(float));
+  if (in_tensors_.size() == 3) {
+    memcpy(bias_ptr_, in_tensors_[2]->Data(), fc_param_->col_ * sizeof(float));
   }
 
   a_c8_ptr_ = reinterpret_cast<float *>(malloc(fc_param_->row_8_ * fc_param_->deep_ * sizeof(float)));
@@ -75,7 +75,7 @@ int FullconnectionCPUKernel::Init() {
     return RET_MEMORY_FAILED;
   }
   memset(b_r8_ptr_, 0, fc_param_->col_8_ * fc_param_->deep_ * sizeof(float));
-  RowMajor2Col8Major(reinterpret_cast<float *>(inputs_[1]->Data()), b_r8_ptr_, fc_param_->col_, fc_param_->deep_);
+  RowMajor2Col8Major(reinterpret_cast<float *>(in_tensors_[1]->Data()), b_r8_ptr_, fc_param_->col_, fc_param_->deep_);
 
   c_r8x8_ptr_ = reinterpret_cast<float *>(malloc(fc_param_->row_8_ * fc_param_->col_8_ * sizeof(float)));
   if (c_r8x8_ptr_ == nullptr) {
@@ -114,8 +114,8 @@ int FullconnectionCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto a_ptr = reinterpret_cast<float *>(inputs_.at(0)->Data());
-  auto output_ptr = reinterpret_cast<float *>(outputs_.at(0)->Data());
+  auto a_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
+  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
 
   RowMajor2Col8Major(a_ptr, a_c8_ptr_, fc_param_->row_, fc_param_->deep_);
 

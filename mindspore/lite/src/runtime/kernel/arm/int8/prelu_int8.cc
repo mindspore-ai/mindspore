@@ -30,19 +30,19 @@ using mindspore::schema::PrimitiveType_Prelu;
 namespace mindspore::kernel {
 int PreluInt8CPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   PreluBaseCPUKernel::Init();
-  auto *input_tensor = inputs_.at(kInputIndex);
+  auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->GetQuantParams();
   quant_prelu_parm_->quant_arg.in_args_.scale_ = in_quant_args.front().scale;
   quant_prelu_parm_->quant_arg.in_args_.zp_ = in_quant_args.front().zeroPoint;
   auto input_dim = input_tensor->shape().size();
   MS_ASSERT(input_dim <= CROP_OFFSET_MAX_SIZE);
   quant_prelu_parm_->input_dim_ = input_dim;
-  quant_prelu_parm_->element_num = inputs_[0]->Size();
-  auto *out_tensor = outputs_.at(kOutputIndex);
+  quant_prelu_parm_->element_num = in_tensors_[0]->Size();
+  auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_args = out_tensor->GetQuantParams();
   quant_prelu_parm_->quant_arg.out_args_.scale_ = out_quant_args.front().scale;
   quant_prelu_parm_->quant_arg.out_args_.zp_ = out_quant_args.front().zeroPoint;
@@ -69,8 +69,8 @@ int PreluInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int PreluInt8CPUKernel::DoExecute(int task_id) {
-  auto input_tensor = inputs_.at(kInputIndex);
-  auto out_tensor = outputs_.at(kOutputIndex);
+  auto input_tensor = in_tensors_.at(kInputIndex);
+  auto out_tensor = out_tensors_.at(kOutputIndex);
   int8_t *input_data = reinterpret_cast<int8_t *>(input_tensor->Data());
   int8_t *output_data = reinterpret_cast<int8_t *>(out_tensor->Data());
   prelu(input_data, output_data, quant_prelu_parm_, task_id);

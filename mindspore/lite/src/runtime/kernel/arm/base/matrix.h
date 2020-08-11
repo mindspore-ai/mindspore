@@ -95,4 +95,3 @@ void MatrixMultiply(const float *matrix_a, const float *matrix_b, float *matrix_
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_MATRIX_H_
-

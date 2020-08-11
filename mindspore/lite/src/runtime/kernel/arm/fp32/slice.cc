@@ -40,8 +40,8 @@ int SliceLaunch(int thread_id, LiteParallelGroupEnv *penv, void *cdata) {
 }  // namespace
 
 int SliceCPUKernel::ReSize() {
-  auto *param = reinterpret_cast<SliceParameter *>(opParameter);
-  auto input_shape = inputs_[0]->shape();
+  auto *param = reinterpret_cast<SliceParameter *>(op_parameter_);
+  auto input_shape = in_tensors_[0]->shape();
   if (input_shape.size() != param->param_length_) {
     MS_LOG(ERROR) << "Input begin's lenth " << param->param_length_ << "is not equal to input shape size "
                   << input_shape.size();
@@ -66,9 +66,9 @@ int SliceCPUKernel::Init() {
 }
 
 int SliceCPUKernel::SliceParallelRun(int thread_id) {
-  const float *input_data = reinterpret_cast<const float *>(inputs_[0]->Data());
-  float *output_data = reinterpret_cast<float *>(outputs_[0]->Data());
-  SliceParameter *param = reinterpret_cast<SliceParameter *>(opParameter);
+  const float *input_data = reinterpret_cast<const float *>(in_tensors_[0]->Data());
+  float *output_data = reinterpret_cast<float *>(out_tensors_[0]->Data());
+  SliceParameter *param = reinterpret_cast<SliceParameter *>(op_parameter_);
   DoSlice(input_data, output_data, param);
   return RET_OK;
 }
@@ -79,7 +79,7 @@ int SliceCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  SliceParameter *param = reinterpret_cast<SliceParameter *>(opParameter);
+  SliceParameter *param = reinterpret_cast<SliceParameter *>(op_parameter_);
   for (int i = 0; i < param->param_length_; ++i) {
     if (param->size_[i] < 0) {
       param->size_[i] = param->shape_[i] - param->begin_[i];
@@ -91,8 +91,8 @@ int SliceCPUKernel::Run() {
     PadSliceParameterTo4D(param);
   }
 
-  const float *input_data = reinterpret_cast<const float *>(inputs_[0]->Data());
-  float *output_data = reinterpret_cast<float *>(outputs_[0]->Data());
+  const float *input_data = reinterpret_cast<const float *>(in_tensors_[0]->Data());
+  float *output_data = reinterpret_cast<float *>(out_tensors_[0]->Data());
   if (param->size_[1] < param->op_parameter_.thread_num_) {
     DoSliceNoParallel(input_data, output_data, param);
     return RET_OK;

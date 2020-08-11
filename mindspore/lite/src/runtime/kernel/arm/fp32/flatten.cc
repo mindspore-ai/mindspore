@@ -29,7 +29,7 @@ using mindspore::schema::PrimitiveType_Flatten;
 namespace mindspore::kernel {
 int FlattenCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
 
@@ -38,7 +38,7 @@ int FlattenCPUKernel::Init() {
 }
 
 int FlattenCPUKernel::ReSize() {
-  auto output_shape = outputs_[0]->shape();
+  auto output_shape = out_tensors_[0]->shape();
   flatten_param_->size = sizeof(float);
   for (int i = 0; i < output_shape.size(); i++) {
     flatten_param_->size *= output_shape[i];
@@ -52,8 +52,8 @@ int FlattenCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto input = reinterpret_cast<float *>(inputs_[0]->Data());
-  auto output = reinterpret_cast<float *>(outputs_[0]->Data());
+  auto input = reinterpret_cast<float *>(in_tensors_[0]->Data());
+  auto output = reinterpret_cast<float *>(out_tensors_[0]->Data());
   Flatten(input, output, flatten_param_);
   return RET_OK;
 }

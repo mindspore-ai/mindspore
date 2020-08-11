@@ -77,8 +77,8 @@ void ConvolutionBaseCPUKernel::FreeQuantParam() {
 }
 
 int ConvolutionBaseCPUKernel::Init() {
-  auto input = this->inputs_.front();
-  auto output = this->outputs_.front();
+  auto input = this->in_tensors_.front();
+  auto output = this->out_tensors_.front();
   conv_param_->input_batch_ = input->Batch();
   conv_param_->input_h_ = input->Height();
   conv_param_->input_w_ = input->Width();
@@ -118,9 +118,9 @@ int ConvolutionBaseCPUKernel::SetQuantParam() {
       return RET_ERROR;
     }
   }
-  auto input_tensor = inputs_.at(kInputIndex);
-  auto weight_tensor = inputs_.at(kWeightIndex);
-  auto output_tensor = outputs_.at(kOutputIndex);
+  auto input_tensor = in_tensors_.at(kInputIndex);
+  auto weight_tensor = in_tensors_.at(kWeightIndex);
+  auto output_tensor = out_tensors_.at(kOutputIndex);
   auto input_quant_arg = input_tensor->GetQuantParams().front();
   auto weight_quant_arg = weight_tensor->GetQuantParams().front();
   auto output_quant_arg = output_tensor->GetQuantParams().front();

@@ -26,13 +26,13 @@ using mindspore::schema::PrimitiveType_BroadcastTo;
 
 namespace mindspore::kernel {
 int BroadcastToCPUKernel::ReSize() {
-  auto input_shape = inputs_[0]->shape();
+  auto input_shape = in_tensors_[0]->shape();
   for (size_t i = 0; i < input_shape.size(); ++i) {
     shape_info_.input_shape_[i] = input_shape[i];
   }
 
   shape_info_.input_shape_size_ = static_cast<int>(input_shape.size());
-  auto output_shape = outputs_[0]->shape();
+  auto output_shape = out_tensors_[0]->shape();
   for (size_t i = 0; i < output_shape.size(); ++i) {
     shape_info_.output_shape_[i] = output_shape[i];
   }
@@ -54,8 +54,8 @@ int BroadcastToCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto input_data = reinterpret_cast<float *>(inputs_.at(0)->Data());
-  auto output_data = reinterpret_cast<float *>(outputs_.at(0)->Data());
+  auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
+  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
 
   return BroadcastTo(input_data, &shape_info_, output_data);
 }

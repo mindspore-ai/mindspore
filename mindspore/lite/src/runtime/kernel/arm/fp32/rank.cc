@@ -43,8 +43,8 @@ int RankCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto output_ptr = reinterpret_cast<float *>(outputs_.at(0)->Data());
-  auto in_shape = inputs_[0]->shape();
+  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  auto in_shape = in_tensors_[0]->shape();
   auto rank = in_shape.size();
   Rank(output_ptr, rank);
   return RET_OK;

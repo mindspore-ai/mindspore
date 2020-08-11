@@ -26,7 +26,7 @@ using mindspore::schema::PrimitiveType_Elu;
 
 namespace mindspore::kernel {
 int EluCPUKernel::Init() {
-  elu_parameter_ = reinterpret_cast<EluParameter *>(opParameter);
+  elu_parameter_ = reinterpret_cast<EluParameter *>(op_parameter_);
   elu_parameter_->thread_num_ = thread_count_;
 
   if (!InferShapeDone()) {
@@ -37,7 +37,7 @@ int EluCPUKernel::Init() {
 }
 
 int EluCPUKernel::ReSize() {
-  elu_parameter_->in_size_ = inputs_.front()->ElementsNum();
+  elu_parameter_->in_size_ = in_tensors_.front()->ElementsNum();
   return RET_OK;
 }
 
@@ -59,8 +59,8 @@ int EluCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  input_addr = reinterpret_cast<float *>(inputs_.front()->Data());
-  output_addr = reinterpret_cast<float *>(outputs_.front()->Data());
+  input_addr = reinterpret_cast<float *>(in_tensors_.front()->Data());
+  output_addr = reinterpret_cast<float *>(out_tensors_.front()->Data());
 
   auto ret = LiteBackendParallelLaunch(EluRun, this, elu_parameter_->thread_num_);
   if (ret != RET_OK) {

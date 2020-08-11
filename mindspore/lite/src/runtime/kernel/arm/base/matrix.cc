@@ -20,13 +20,13 @@
 namespace mindspore::kernel {
 Matrix *TransformMatrixGenerator(int m, int k) {
   auto matrix = new Matrix;
-  auto aa =  malloc(m * k * sizeof(float));
+  auto aa = malloc(m * k * sizeof(float));
   matrix->SetData(aa);
   matrix->SetNum(m, k);
-//  matrix->data_ = malloc(m * k * sizeof(float));
-//  matrix->m_ = m;
-//  matrix->k_ = k;
-//  matrix->row_major_ = true;
+  //  matrix->data_ = malloc(m * k * sizeof(float));
+  //  matrix->m_ = m;
+  //  matrix->k_ = k;
+  //  matrix->row_major_ = true;
   return matrix;
 }
 
@@ -80,4 +80,3 @@ void MatrixMultiply(const float *matrix_a, const float *matrix_b, float *matrix_
   }
 }
 }  // namespace mindspore::kernel
-

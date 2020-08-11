@@ -23,7 +23,7 @@
 
 namespace mindspore {
 
-class TestBiasGradFp32 : public mindspore::Common {
+class TestBiasGradFp32 : public mindspore::CommonTest {
  public:
   TestBiasGradFp32() {}
 };

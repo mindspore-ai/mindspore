@@ -22,7 +22,7 @@
 #include "src/lite_kernel.h"
 
 namespace mindspore {
-class TestMatMulFp32 : public mindspore::Common {
+class TestMatMulFp32 : public mindspore::CommonTest {
  public:
   TestMatMulFp32() {}
 };

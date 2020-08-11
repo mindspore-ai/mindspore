@@ -24,16 +24,16 @@
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::lite::RET_PARAM_INVALID;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::RET_PARAM_INVALID;
 
 using mindspore::schema::PrimitiveType_Equal;
-using mindspore::schema::PrimitiveType_NotEqual;
-using mindspore::schema::PrimitiveType_LessEqual;
 using mindspore::schema::PrimitiveType_Greater;
 using mindspore::schema::PrimitiveType_GreaterEqual;
 using mindspore::schema::PrimitiveType_Less;
+using mindspore::schema::PrimitiveType_LessEqual;
+using mindspore::schema::PrimitiveType_NotEqual;
 
 namespace mindspore::kernel {
 namespace {
@@ -49,7 +49,7 @@ int ArithmeticsInt8Launch(int thread_id, LiteParallelGroupEnv *penv, void *cdata
 }  // namespace
 
 void ArithmeticInt8CPUKernel::FreeTileData() {
-  auto param = reinterpret_cast<ArithmeticParameter *>(opParameter);
+  auto param = reinterpret_cast<ArithmeticParameter *>(op_parameter_);
   if (!param->broadcasting_) {
     return;
   }
@@ -77,7 +77,7 @@ ArithmeticInt8CPUKernel::~ArithmeticInt8CPUKernel() {
 }
 
 int ArithmeticInt8CPUKernel::Init() {
-  switch (opParameter->type_) {
+  switch (op_parameter_->type_) {
     case PrimitiveType_Equal:
       arithmetic_run_ = ElementEqual;
       break;
@@ -97,7 +97,7 @@ int ArithmeticInt8CPUKernel::Init() {
       arithmetic_run_ = ElementGreaterEqual;
       break;
     default:
-      MS_LOG(ERROR) << "Error Operator type " << opParameter->type_;
+      MS_LOG(ERROR) << "Error Operator type " << op_parameter_->type_;
       arithmetic_run_ = nullptr;
       return RET_PARAM_INVALID;
   }
@@ -110,8 +110,8 @@ int ArithmeticInt8CPUKernel::Init() {
 
 int ArithmeticInt8CPUKernel::ReSize() {
   FreeTileData();
-  auto data_size = outputs_[0]->Size();
-  auto param = reinterpret_cast<ArithmeticParameter *>(opParameter);
+  auto data_size = out_tensors_[0]->Size();
+  auto param = reinterpret_cast<ArithmeticParameter *>(op_parameter_);
   if (param->broadcasting_) {
     if (context_->allocator != nullptr) {
       tile_data0_ = reinterpret_cast<int8_t *>(context_->allocator->Malloc(data_size));
@@ -128,14 +128,14 @@ int ArithmeticInt8CPUKernel::ReSize() {
 }
 
 int ArithmeticInt8CPUKernel::DoArithmetic(int thread_id) {
-  auto input0_data = reinterpret_cast<int8_t *>(inputs_[0]->Data());
-  auto input1_data1 = reinterpret_cast<int8_t *>(inputs_[1]->Data());
-  auto output_data = reinterpret_cast<int8_t *>(outputs_[0]->Data());
-  auto element_num = outputs_[0]->ElementsNum();
-  auto param = reinterpret_cast<ArithmeticParameter *>(opParameter);
+  auto input0_data = reinterpret_cast<int8_t *>(in_tensors_[0]->Data());
+  auto input1_data1 = reinterpret_cast<int8_t *>(in_tensors_[1]->Data());
+  auto output_data = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
+  auto element_num = out_tensors_[0]->ElementsNum();
+  auto param = reinterpret_cast<ArithmeticParameter *>(op_parameter_);
   if (param->broadcasting_ && arithmetic_run_ != nullptr) {
     MS_ASSERT(opParameter->thread_num_ != 0);
-    int stride = UP_DIV(element_num, opParameter->thread_num_);
+    int stride = UP_DIV(element_num, op_parameter_->thread_num_);
     int count = MSMIN(stride, element_num - stride * thread_id);
     if (count <= 0) {
       return RET_OK;
@@ -166,13 +166,13 @@ int ArithmeticInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  auto param = reinterpret_cast<ArithmeticParameter *>(opParameter);
+  auto param = reinterpret_cast<ArithmeticParameter *>(op_parameter_);
   if (param->broadcasting_) {
-    auto input_data0 = reinterpret_cast<int8_t *>(inputs_[0]->Data());
-    auto input_data1 = reinterpret_cast<int8_t *>(inputs_[1]->Data());
+    auto input_data0 = reinterpret_cast<int8_t *>(in_tensors_[0]->Data());
+    auto input_data1 = reinterpret_cast<int8_t *>(in_tensors_[1]->Data());
     TileDimensionsInt8(input_data0, input_data1, tile_data0_, tile_data1_, param);
   }
-  int error_code = LiteBackendParallelLaunch(ArithmeticsInt8Launch, this, opParameter->thread_num_);
+  int error_code = LiteBackendParallelLaunch(ArithmeticsInt8Launch, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Arithmetic launch function fail! ret: " << error_code;
     return RET_ERROR;
@@ -195,8 +195,8 @@ kernel::LiteKernel *CpuArithmeticInt8KernelCreator(const std::vector<lite::tenso
   }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
+    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_
+                  << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
     delete kernel;
     return nullptr;
   }

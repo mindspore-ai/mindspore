@@ -23,7 +23,7 @@
 
 namespace mindspore {
 using lite::tensor::Tensor;
-class TestFcInt8 : public mindspore::Common {
+class TestFcInt8 : public mindspore::CommonTest {
  public:
   TestFcInt8() {}
 };

@@ -30,7 +30,7 @@ using mindspore::dataset::api::vision::Resize;
 using Execute = mindspore::dataset::api::Execute;
 using Path = mindspore::dataset::Path;
 
-class MindDataTestEager : public mindspore::Common {
+class MindDataTestEager : public mindspore::CommonTest {
  public:
   MindDataTestEager() {}
 };

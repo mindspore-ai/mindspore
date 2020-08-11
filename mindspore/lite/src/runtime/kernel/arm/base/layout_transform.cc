@@ -59,4 +59,3 @@ LayoutConvertor LayoutTransform(TypeId data_type, schema::Format src_format, sch
   }
 }
 }  // namespace mindspore::kernel
-

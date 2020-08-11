@@ -68,7 +68,7 @@ int ConvolutionDepthwiseFp16CPUKernel::InitBuffer() {
 int ConvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
   int OC8 = UP_DIV(conv_param_->output_channel_, C8NUM);
-  auto weight_tensor = inputs_[kWeightIndex];
+  auto weight_tensor = in_tensors_[kWeightIndex];
   auto origin_weight = reinterpret_cast<float *>(weight_tensor->Data());
   int pack_weight_size = C8NUM * OC8 * conv_param_->kernel_h_ * conv_param_->kernel_w_;
 
@@ -89,8 +89,8 @@ int ConvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
   }
   memset(bias_data_, 0, C8NUM * OC8 * sizeof(float16_t));
   auto bias_fp16 = reinterpret_cast<float16_t *>(bias_data_);
-  if (inputs_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<float *>(inputs_.at(kBiasIndex)->Data());
+  if (in_tensors_.size() == kInputSize2) {
+    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->Data());
     for (int i = 0; i < conv_param_->output_channel_; i++) {
       bias_fp16[i] = (float16_t)ori_bias[i];
     }
@@ -102,7 +102,7 @@ int ConvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
 
 int ConvolutionDepthwiseFp16CPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   // conv base init
@@ -176,7 +176,7 @@ int ConvolutionDepthwiseFp16CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  auto input_tensor = inputs_.at(kInputIndex);
+  auto input_tensor = in_tensors_.at(kInputIndex);
   auto input_addr = reinterpret_cast<float *>(input_tensor->Data());
   // pack input: to nhwc8
   PackNHWCFp32ToNHWC8Fp16(input_addr, packed_input_, conv_param_->input_batch_,
@@ -188,7 +188,7 @@ int ConvolutionDepthwiseFp16CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  auto output_addr = reinterpret_cast<float *>(outputs_.at(kOutputIndex)->Data());
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
   PackNHWC8Fp16ToNHWCFp32(packed_output_, output_addr, conv_param_->output_batch_,
                           conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
 

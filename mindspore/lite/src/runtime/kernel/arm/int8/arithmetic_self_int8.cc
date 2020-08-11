@@ -29,16 +29,16 @@ using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 int ArithmeticSelfInt8CPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   int ret = ReSize();
-  auto *input_tensor = inputs_.at(kInputIndex);
+  auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->GetQuantParams();
   para_->quant_arg_.in_args_.scale_ = in_quant_args.front().scale;
   para_->quant_arg_.in_args_.zp_ = in_quant_args.front().zeroPoint * (-1);
 
-  auto *out_tensor = outputs_.at(kOutputIndex);
+  auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_args = out_tensor->GetQuantParams();
   para_->quant_arg_.out_args_.scale_ = out_quant_args.front().scale;
   para_->quant_arg_.out_args_.zp_ = out_quant_args.front().zeroPoint;
@@ -61,7 +61,7 @@ int ArithmeticSelfInt8CPUKernel::Init() {
 }
 
 int ArithmeticSelfInt8CPUKernel::ReSize() {
-  data_size_ = inputs_[0]->ElementsNum();
+  data_size_ = in_tensors_[0]->ElementsNum();
   thread_sz_count_ = MSMIN(thread_count_, data_size_);
   thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
   return RET_OK;
@@ -102,8 +102,8 @@ int ArithmeticSelfInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  auto input_tensor = inputs_.at(0);
-  auto out_tensor = outputs_.at(0);
+  auto input_tensor = in_tensors_.at(0);
+  auto out_tensor = out_tensors_.at(0);
   in_ptr_ = reinterpret_cast<int8_t *>(input_tensor->Data());
   out_ptr_ = reinterpret_cast<int8_t *>(out_tensor->Data());
   ret = LiteBackendParallelLaunch(ArithmeticSelfInt8Runs, this, thread_sz_count_);

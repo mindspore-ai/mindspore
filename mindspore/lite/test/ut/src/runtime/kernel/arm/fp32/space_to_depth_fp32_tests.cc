@@ -24,7 +24,7 @@
 
 namespace mindspore {
 
-class SpaceToDepthTestFp32 : public mindspore::Common {
+class SpaceToDepthTestFp32 : public mindspore::CommonTest {
  public:
   SpaceToDepthTestFp32() {}
 };

@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace lite {
-class BenchmarkTest : public mindspore::Common {
+class BenchmarkTest : public mindspore::CommonTest {
  public:
   BenchmarkTest() {}
 };

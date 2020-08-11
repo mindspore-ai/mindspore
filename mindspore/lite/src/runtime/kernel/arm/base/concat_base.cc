@@ -32,7 +32,7 @@ namespace mindspore::kernel {
 int ConcatBaseCPUKernel::Init() { return RET_OK; }
 
 int ConcatBaseCPUKernel::ReSize() {
-  axis_ = concat_param_->axis_ >= 0 ? concat_param_->axis_ : inputs_.front()->shape().size() + concat_param_->axis_;
+  axis_ = concat_param_->axis_ >= 0 ? concat_param_->axis_ : in_tensors_.front()->shape().size() + concat_param_->axis_;
   return RET_OK;
 }
 

@@ -31,7 +31,7 @@ namespace mindspore::kernel {
 int SplitBaseCPUKernel::Init() { return RET_OK; }
 
 int SplitBaseCPUKernel::ReSize() {
-  auto in_tensor = inputs_.front();
+  auto in_tensor = in_tensors_.front();
   auto input_shape = in_tensor->shape();
 
   param->strides_[input_shape.size() - 1] = 1;
@@ -61,9 +61,9 @@ int SplitBaseCPUKernel::ReSize() {
 }
 
 kernel::LiteKernel *CpuSplitInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs,
-                                             OpParameter *opParameter, const Context *ctx,
-                                             const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                              const std::vector<lite::tensor::Tensor *> &outputs,
+                                              OpParameter *opParameter, const Context *ctx,
+                                              const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
@@ -85,9 +85,9 @@ kernel::LiteKernel *CpuSplitInt8KernelCreator(const std::vector<lite::tensor::Te
 }
 
 kernel::LiteKernel *CpuSplitInt32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                              const std::vector<lite::tensor::Tensor *> &outputs,
-                                              OpParameter *opParameter, const Context *ctx,
-                                              const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                               const std::vector<lite::tensor::Tensor *> &outputs,
+                                               OpParameter *opParameter, const Context *ctx,
+                                               const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
@@ -109,9 +109,9 @@ kernel::LiteKernel *CpuSplitInt32KernelCreator(const std::vector<lite::tensor::T
 }
 
 kernel::LiteKernel *CpuSplitFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs,
-                                             OpParameter *opParameter, const Context *ctx,
-                                             const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                              const std::vector<lite::tensor::Tensor *> &outputs,
+                                              OpParameter *opParameter, const Context *ctx,
+                                              const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;

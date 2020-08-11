@@ -40,8 +40,8 @@ int ShapeCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return RET_ERROR;
   }
-  auto out_tensor = outputs_.front();
-  auto in_tensor = inputs_.front();
+  auto out_tensor = out_tensors_.front();
+  auto in_tensor = in_tensors_.front();
   if (in_tensor == nullptr || out_tensor == nullptr) {
     MS_LOG(ERROR) << "null pointer dereferencing.";
     return RET_ERROR;

@@ -54,11 +54,11 @@ int SparseToDenseCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  auto input = inputs_.at(0);
-  auto input1 = inputs_.at(1);
-  auto input2 = inputs_.at(2);
-  auto input3 = inputs_.at(3);
-  auto output0 = outputs_.at(0);
+  auto input = in_tensors_.at(0);
+  auto input1 = in_tensors_.at(1);
+  auto input2 = in_tensors_.at(2);
+  auto input3 = in_tensors_.at(3);
+  auto output0 = out_tensors_.at(0);
 
   input_data_ = reinterpret_cast<int *>(input->Data());
   total_number_ = reinterpret_cast<int *>(input1->Data());
@@ -66,7 +66,7 @@ int SparseToDenseCPUKernel::Run() {
   dnum_ = reinterpret_cast<float *>(input3->Data());
   sp_num_ = static_cast<int>(input->ElementsNum() / 2);
 
-  output_data = reinterpret_cast<float *>(outputs_.at(0)->Data());
+  output_data = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
   std::vector<int> temp_shape = output0->shape();
   output_shape_ = reinterpret_cast<int *>(temp_shape.data());
 

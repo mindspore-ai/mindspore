@@ -25,7 +25,7 @@
 #include "src/runtime/kernel/arm/nnacl/fp16/conv_fp16.h"
 
 namespace mindspore {
-class TestConvolutionFp16 : public mindspore::Common {
+class TestConvolutionFp16 : public mindspore::CommonTest {
  public:
   TestConvolutionFp16() {}
 };

@@ -57,102 +57,109 @@ struct KernelKey {
 class LiteKernel {
  public:
   LiteKernel() = default;
-  explicit LiteKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                      const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+  explicit LiteKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &in_tensors,
+                      const std::vector<lite::tensor::Tensor *> &out_tensors, const lite::Context *ctx,
                       const lite::Primitive *primitive)
-      : opParameter(parameter), inputs_(inputs), outputs_(outputs), primitive_(primitive), context_(ctx) {
-    if (opParameter && ctx) {
-      opParameter->thread_num_ = ctx->thread_num_;
+      : op_parameter_(parameter),
+        in_tensors_(in_tensors),
+        out_tensors_(out_tensors),
+        primitive_(primitive),
+        context_(ctx) {
+    if (op_parameter_ && ctx) {
+      op_parameter_->thread_num_ = ctx->thread_num_;
     }
-    this->in_kernel_.clear();
-    this->out_kernel_.clear();
+    this->in_kernels_.clear();
+    this->out_kernels_.clear();
   }
 
-  virtual ~LiteKernel() { delete opParameter; }
+  virtual ~LiteKernel() { delete op_parameter_; }
 
   virtual int Prepare() {
     if (!InferShapeDone()) {
-      (const_cast<lite::Primitive *>(primitive_))->InferShape(inputs_, outputs_);
-      if (need_reinit) {
+      (const_cast<lite::Primitive *>(primitive_))->InferShape(in_tensors_, out_tensors_);
+      if (need_reinit_) {
         Init();
       }
     }
 
-    auto &outputs = this->GetOutputs();
+    auto &outputs = this->out_tensors();
     for (auto *output : outputs) {
       MS_ASSERT(output != nullptr);
       output->MallocData();
     }
     return RET_OK;
   }
+
   virtual int Init() { return -1; }
+
   virtual int ReSize() { return -1; }
+
   virtual int Run() { return -1; }
 
-  std::string Name() { return this->name; }
-  virtual void train() { train_mode = true; }
-  virtual bool is_train() { return train_mode == true; }
-  virtual void eval() { train_mode = false; }
-  virtual bool is_eval() { return train_mode == false; }
-  void set_name(const std::string &name) { this->name = name; }
+  std::string name() { return this->name_; }
+
+  virtual void train() { train_mode_ = true; }
+
+  virtual bool is_train() { return train_mode_; }
+
+  virtual void eval() { train_mode_ = false; }
+
+  virtual bool is_eval() { return !train_mode_; }
+
+  void set_name(const std::string &name) { this->name_ = name; }
 
   void set_is_model_output(bool is_model_output) { this->is_model_output_ = is_model_output; }
 
-  bool is_model_output() { return this->is_model_output_; }
+  bool is_model_output() const { return this->is_model_output_; }
 
-  schema::PrimitiveType type() { return (schema::PrimitiveType)this->opParameter->type_; }
-
-  std::string type_str() {
-    return this->opParameter ? schema::EnumNamePrimitiveType((schema::PrimitiveType)this->opParameter->type_)
-                             : "ERROR:undefined primitive!";
+  schema::PrimitiveType Type() {
+    return (this->op_parameter_ != nullptr) ? schema::PrimitiveType(this->op_parameter_->type_)
+                                            : schema::PrimitiveType_NONE;
   }
 
-  void SetInputs(const std::vector<lite::tensor::Tensor *> &inputs) { this->inputs_ = inputs; }
+  std::string type_str() { return schema::EnumNamePrimitiveType(this->Type()); }
 
-  void SetOutputs(const std::vector<lite::tensor::Tensor *> &outputs) { this->outputs_ = outputs; }
+  void set_in_tensors(const std::vector<lite::tensor::Tensor *> &in_tensors) { this->in_tensors_ = in_tensors; }
 
-  std::vector<lite::tensor::Tensor *> &GetInputs() { return this->inputs_; }
+  void set_out_tensors(const std::vector<lite::tensor::Tensor *> &out_tensors) { this->out_tensors_ = out_tensors; }
 
-  std::vector<lite::tensor::Tensor *> &GetOutputs() { return this->outputs_; }
+  std::vector<lite::tensor::Tensor *> &in_tensors() { return this->in_tensors_; }
 
-  void AddInKernel(LiteKernel *kernel) { this->in_kernel_.emplace_back(kernel); }
+  std::vector<lite::tensor::Tensor *> &out_tensors() { return this->out_tensors_; }
 
-  void AddOutKernel(LiteKernel *kernel) { this->out_kernel_.emplace_back(kernel); }
+  void AddInKernel(LiteKernel *kernel) { this->in_kernels_.emplace_back(kernel); }
 
-  std::vector<LiteKernel *> &GetInKernels() { return this->in_kernel_; }
+  void AddOutKernel(LiteKernel *kernel) { this->out_kernels_.emplace_back(kernel); }
 
-  std::vector<LiteKernel *> &GetOutKernels() { return this->out_kernel_; }
+  std::vector<LiteKernel *> &in_kernels() { return this->in_kernels_; }
+
+  std::vector<LiteKernel *> &out_kernels() { return this->out_kernels_; }
 
   void InitOutTensorRefCount();
 
   int DecOutTensorRefCount();
 
-  const KernelKey Desc() const { return desc; }
+  KernelKey desc() const { return desc_; }
 
-  void set_desc(const KernelKey kernel_key) { desc = kernel_key; }
+  void set_desc(const KernelKey kernel_key) { desc_ = kernel_key; }
 
-  void SetNeedReInit() { need_reinit = true; }
+  void set_need_reinit() { need_reinit_ = true; }
 
  protected:
-  bool InferShapeDone() {
-    if (primitive_ != nullptr && !primitive_->GetInferFlag()) {
-      return false;
-    }
-    return true;
-  }
+  bool InferShapeDone() { return !(primitive_ != nullptr && !primitive_->GetInferFlag()) && true; }
 
-  KernelKey desc;
-  std::string name;
-  OpParameter *opParameter = nullptr;
+  KernelKey desc_;
+  std::string name_;
+  OpParameter *op_parameter_ = nullptr;
   const lite::Primitive *primitive_ = nullptr;
   const lite::Context *context_ = nullptr;
   // tensor will free in ~lite_session()
-  std::vector<lite::tensor::Tensor *> inputs_;
-  std::vector<lite::tensor::Tensor *> outputs_;
-  std::vector<LiteKernel *> in_kernel_;
-  std::vector<LiteKernel *> out_kernel_;
-  bool train_mode = false;
-  bool need_reinit = false;
+  std::vector<lite::tensor::Tensor *> in_tensors_;
+  std::vector<lite::tensor::Tensor *> out_tensors_;
+  std::vector<LiteKernel *> in_kernels_;
+  std::vector<LiteKernel *> out_kernels_;
+  bool train_mode_ = false;
+  bool need_reinit_ = false;
   bool is_model_output_ = false;
 };
 

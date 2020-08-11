@@ -26,12 +26,12 @@ using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 int FullconnectionInt8CPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
-  fc_param_->row_ = (inputs_[0]->shape())[0];
-  fc_param_->col_ = (inputs_[1]->shape())[0];
-  fc_param_->deep_ = (inputs_[1]->shape())[1];
+  fc_param_->row_ = (in_tensors_[0]->shape())[0];
+  fc_param_->col_ = (in_tensors_[1]->shape())[0];
+  fc_param_->deep_ = (in_tensors_[1]->shape())[1];
   fc_param_->row_8_ = UP_ROUND(fc_param_->row_, 8);
   fc_param_->col_8_ = UP_ROUND(fc_param_->col_, 8);
 
@@ -50,7 +50,7 @@ int FullconnectionInt8CPUKernel::Init() {
     return RET_MEMORY_FAILED;
   }
   memset(b_r8_ptr_, 0, fc_param_->col_8_ * fc_param_->deep_ * sizeof(int8_t));
-  auto weight_data = reinterpret_cast<int8_t *>(inputs_[1]->Data());
+  auto weight_data = reinterpret_cast<int8_t *>(in_tensors_[1]->Data());
   RowMajor2Col8MajorInt8(weight_data, b_r8_ptr_, fc_param_->col_, fc_param_->deep_);
   c_r8x8_ptr_ = reinterpret_cast<int *>(ctx_->allocator->Malloc(fc_param_->row_8_ * fc_param_->col_8_ * sizeof(int)));
   if (!c_r8x8_ptr_) {
@@ -63,21 +63,21 @@ int FullconnectionInt8CPUKernel::Init() {
     return RET_MEMORY_FAILED;
   }
   memset(bias_ptr_, 0, bias_len);
-  if (inputs_.size() == 3) {
-    memcpy(bias_ptr_, inputs_[2]->Data(), bias_len);
+  if (in_tensors_.size() == 3) {
+    memcpy(bias_ptr_, in_tensors_[2]->Data(), bias_len);
   }
 
-  auto input_tensor = inputs_[0];
+  auto input_tensor = in_tensors_[0];
   auto params = input_tensor->GetQuantParams();
   MS_ASSERT(params.size() == 1);
   quant_params_.input.zp_ = params.front().zeroPoint;
   quant_params_.input.scale_ = params.front().scale;
-  auto weight_tensor = inputs_[1];
+  auto weight_tensor = in_tensors_[1];
   params = weight_tensor->GetQuantParams();
   MS_ASSERT(params.size() == 1);
   quant_params_.weight.zp_ = params.front().zeroPoint;
   quant_params_.weight.scale_ = params.front().scale;
-  auto output_tensor = outputs_[0];
+  auto output_tensor = out_tensors_[0];
   params = output_tensor->GetQuantParams();
   MS_ASSERT(params.size() == 1);
   quant_params_.output.zp_ = params.front().zeroPoint;
@@ -122,8 +122,8 @@ int FullconnectionInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  auto a_ptr = reinterpret_cast<int8_t *>(inputs_[0]->Data());
-  auto output_ptr = reinterpret_cast<int8_t *>(outputs_[0]->Data());
+  auto a_ptr = reinterpret_cast<int8_t *>(in_tensors_[0]->Data());
+  auto output_ptr = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
   auto &p = quant_params_;
   RowMajor2Col8MajorInt8(a_ptr, a_c8_ptr_, fc_param_->row_, fc_param_->deep_);
   LiteBackendParallelLaunch(FcInt8Run, this, thread_count_);

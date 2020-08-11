@@ -23,7 +23,7 @@
 
 namespace mindspore {
 
-class SpaceToBatchTestFp32 : public mindspore::Common {
+class SpaceToBatchTestFp32 : public mindspore::CommonTest {
  public:
   SpaceToBatchTestFp32() {}
 };

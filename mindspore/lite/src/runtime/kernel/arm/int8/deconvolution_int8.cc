@@ -58,13 +58,13 @@ int DeConvInt8CPUKernel::InitParam() {
   fc_param_->col_8_ = UP_ROUND(conv_param_->output_channel_, C8NUM) * conv_param_->kernel_h_ * conv_param_->kernel_w_;
 
   size_t oc8 = UP_DIV(conv_param_->output_channel_, C8NUM);
-  thread_count_ = MSMIN(opParameter->thread_num_, oc8);
+  thread_count_ = MSMIN(op_parameter_->thread_num_, oc8);
   thread_stride_ = UP_DIV(oc8, thread_count_) * C8NUM;
   return RET_OK;
 }
 
 int DeConvInt8CPUKernel::InitBiasWeight() {
-  if (inputs_.size() == 3) {
+  if (in_tensors_.size() == 3) {
     size_t size = UP_ROUND(conv_param_->output_channel_, C8NUM) * sizeof(int32_t);
     bias_data_ = malloc(size);
     if (bias_data_ == nullptr) {
@@ -72,7 +72,7 @@ int DeConvInt8CPUKernel::InitBiasWeight() {
       return RET_ERROR;
     }
     memset(bias_data_, 0, size);
-    memcpy(bias_data_, inputs_[0]->Data(), conv_param_->output_channel_ * sizeof(int32_t));
+    memcpy(bias_data_, in_tensors_[0]->Data(), conv_param_->output_channel_ * sizeof(int32_t));
   } else {
     bias_data_ = nullptr;
   }
@@ -86,7 +86,7 @@ int DeConvInt8CPUKernel::InitBiasWeight() {
     return RET_ERROR;
   }
   memset(weight_ptr_, 0, size);
-  PackNHWCToC8HWN8Int8(inputs_[1]->Data(), weight_ptr_, conv_param_->input_channel_,
+  PackNHWCToC8HWN8Int8(in_tensors_[1]->Data(), weight_ptr_, conv_param_->input_channel_,
                        conv_param_->kernel_h_ * conv_param_->kernel_w_, conv_param_->output_channel_);
   return RET_OK;
 }
@@ -116,7 +116,7 @@ int DeConvInt8CPUKernel::InitData() {
 
 int DeConvInt8CPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   ConvolutionBaseCPUKernel::Init();
@@ -205,8 +205,8 @@ int DeConvInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  int8_t *src_in = reinterpret_cast<int8_t *>(inputs_[0]->Data());
-  int8_t *src_out = reinterpret_cast<int8_t *>(outputs_[0]->Data());
+  int8_t *src_in = reinterpret_cast<int8_t *>(in_tensors_[0]->Data());
+  int8_t *src_out = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
 
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
     RowMajor2Col8MajorInt8(src_in + batch_index * fc_param_->row_ * conv_param_->input_channel_, input_ptr_,

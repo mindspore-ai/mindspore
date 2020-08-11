@@ -26,7 +26,7 @@
 
 namespace mindspore {
 
-class TestOpenCLKernel : public mindspore::Common {
+class TestOpenCLKernel : public mindspore::CommonTest {
  public:
   TestOpenCLKernel() {}
 };

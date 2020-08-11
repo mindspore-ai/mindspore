@@ -67,7 +67,7 @@ class ArithmeticCPUKernel : public LiteKernel {
         }
         break;
       case PrimitiveType_Add:
-       switch (arithmeticParameter_->activation_type_) {
+        switch (arithmeticParameter_->activation_type_) {
           case schema::ActivationType_RELU:
             arithmetic_run_ = ElementAddRelu;
             break;
@@ -80,7 +80,7 @@ class ArithmeticCPUKernel : public LiteKernel {
         }
         break;
       case PrimitiveType_Sub:
-      switch (arithmeticParameter_->activation_type_) {
+        switch (arithmeticParameter_->activation_type_) {
           case schema::ActivationType_RELU:
             arithmetic_run_ = ElementSubRelu;
             break;
@@ -93,7 +93,7 @@ class ArithmeticCPUKernel : public LiteKernel {
         }
         break;
       case PrimitiveType_Div:
-      switch (arithmeticParameter_->activation_type_) {
+        switch (arithmeticParameter_->activation_type_) {
           case schema::ActivationType_RELU:
             arithmetic_run_ = ElementDivRelu;
             break;

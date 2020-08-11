@@ -25,17 +25,17 @@ using mindspore::schema::PrimitiveType_ReverseSequence;
 namespace mindspore::kernel {
 int ReverseSequenceCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
-  auto input0 = inputs_.at(0);
-  auto input1 = inputs_.at(1);
-  auto output = outputs_.at(0);
+  auto input0 = in_tensors_.at(0);
+  auto input1 = in_tensors_.at(1);
+  auto output = out_tensors_.at(0);
   MS_ASSERT(input0 != nullptr);
   MS_ASSERT(input1 != nullptr);
   MS_ASSERT(output != nullptr);
 
-  auto para = reinterpret_cast<ReverseSequenceParameter *>(opParameter);
+  auto para = reinterpret_cast<ReverseSequenceParameter *>(op_parameter_);
 
   ConvertAxisToPositive(input0->shape(), &(para->batch_axis_));
   ConvertAxisToPositive(input0->shape(), &(para->seq_axis_));
@@ -93,10 +93,10 @@ int ReverseSequenceCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  float *input0 = reinterpret_cast<float *>(inputs_.at(0)->Data());
-  int *input1 = reinterpret_cast<int *>(inputs_.at(1)->Data());
-  float *output = reinterpret_cast<float *>(outputs_.at(0)->Data());
-  ReverseSequence(input0, input1, output, reinterpret_cast<ReverseSequenceParameter *>(opParameter));
+  float *input0 = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
+  int *input1 = reinterpret_cast<int *>(in_tensors_.at(1)->Data());
+  float *output = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  ReverseSequence(input0, input1, output, reinterpret_cast<ReverseSequenceParameter *>(op_parameter_));
   return RET_OK;
 }
 

@@ -27,8 +27,8 @@ using mindspore::schema::PrimitiveType_Stack;
 
 namespace mindspore::kernel {
 int StackCPUKernel::ReSize() {
-  StackParameter *param = reinterpret_cast<StackParameter *>(opParameter);
-  auto input0_shape = inputs_[0]->shape();
+  StackParameter *param = reinterpret_cast<StackParameter *>(op_parameter_);
+  auto input0_shape = in_tensors_[0]->shape();
   axis_ = param->axis_ < 0 ? param->axis_ + input0_shape.size() : param->axis_;
   return RET_OK;
 }
@@ -47,12 +47,12 @@ int StackCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  size_t inputs_num = inputs_.size();
-  auto input0_shape = inputs_[0]->shape();
-  auto *output_data = reinterpret_cast<float *>(outputs_[0]->Data());
+  size_t inputs_num = in_tensors_.size();
+  auto input0_shape = in_tensors_[0]->shape();
+  auto *output_data = reinterpret_cast<float *>(out_tensors_[0]->Data());
   float *inputs[inputs_num];
   for (size_t i = 0; i < inputs_num; ++i) {
-    inputs[i] = reinterpret_cast<float *>(inputs_[i]->Data());
+    inputs[i] = reinterpret_cast<float *>(in_tensors_[i]->Data());
   }
   DoStack(inputs, inputs_num, input0_shape.data(), input0_shape.size(), axis_, output_data);
   return RET_OK;

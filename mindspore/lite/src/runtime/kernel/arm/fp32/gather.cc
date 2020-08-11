@@ -30,17 +30,17 @@ using mindspore::schema::PrimitiveType_Gather;
 namespace mindspore::kernel {
 
 int GatherCPUKernel::Init() {
-  axis_ = (reinterpret_cast<GatherParameter *>(opParameter))->axis_;
-  batchDims_ = (reinterpret_cast<GatherParameter *>(opParameter))->batchDims_;
+  axis_ = (reinterpret_cast<GatherParameter *>(op_parameter_))->axis_;
+  batchDims_ = (reinterpret_cast<GatherParameter *>(op_parameter_))->batchDims_;
   return RET_OK;
 }
 
 int GatherCPUKernel::ReSize() { return RET_OK; }
 
 int GatherCPUKernel::DoGather(int task_id) {
-  auto input_tensor = inputs_.at(0);
-  auto indices_tensor = inputs_.at(1);
-  auto out_tensor = outputs_.at(0);
+  auto input_tensor = in_tensors_.at(0);
+  auto indices_tensor = in_tensors_.at(1);
+  auto out_tensor = out_tensors_.at(0);
 
   auto input_ptr = reinterpret_cast<float *>(input_tensor->Data());
   auto indices_ptr = reinterpret_cast<int *>(indices_tensor->Data());

@@ -27,7 +27,7 @@
 #include "mindspore/lite/src/runtime/kernel/arm/fp32_grad/activation_grad.h"
 
 namespace mindspore {
-class TestActGradFp32 :  public mindspore::Common {
+class TestActGradFp32 :  public mindspore::CommonTest {
  public:
   TestActGradFp32() {}
 };

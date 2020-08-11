@@ -35,7 +35,7 @@ constexpr int kRank = 4;
 }  // namespace
 
 int ResizeBaseCPUKernel::CheckParameters() {
-  auto parameter = reinterpret_cast<ResizeParameter *>(opParameter);
+  auto parameter = reinterpret_cast<ResizeParameter *>(op_parameter_);
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "cast ResizeParameter failed.";
     return RET_NULL_PTR;
@@ -65,19 +65,19 @@ int ResizeBaseCPUKernel::CheckParameters() {
 }
 
 int ResizeBaseCPUKernel::CheckInputsOuputs() {
-  if (inputs_.size() != kInputNum) {
-    MS_LOG(ERROR) << "Resize input num should be " << kInputNum << ", but got " << inputs_.size();
+  if (in_tensors_.size() != kInputNum) {
+    MS_LOG(ERROR) << "Resize input num should be " << kInputNum << ", but got " << in_tensors_.size();
     return RET_ERROR;
   }
-  auto input = inputs_.at(0);
+  auto input = in_tensors_.at(0);
   if (input == nullptr) {
     return RET_NULL_PTR;
   }
-  if (outputs_.size() != kOutputNum) {
-    MS_LOG(ERROR) << "Resize output num should be " << kOutputNum << ", but got " << outputs_.size();
+  if (out_tensors_.size() != kOutputNum) {
+    MS_LOG(ERROR) << "Resize output num should be " << kOutputNum << ", but got " << out_tensors_.size();
     return RET_ERROR;
   }
-  auto output = outputs_.at(0);
+  auto output = out_tensors_.at(0);
   if (output == nullptr) {
     return RET_NULL_PTR;
   }
@@ -94,7 +94,7 @@ int ResizeBaseCPUKernel::Init() {
     return ret;
   }
 
-  auto input = inputs_.at(0);
+  auto input = in_tensors_.at(0);
   auto input_shape = input->shape();
   if (input_shape.size() != kRank) {
     MS_LOG(ERROR) << "Resize op support input rank 4, got " << input_shape.size();

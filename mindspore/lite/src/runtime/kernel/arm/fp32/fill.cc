@@ -36,10 +36,10 @@ constexpr int kOutputNum = 1;
 
 int FillCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
-  data_size_ = outputs_.front()->ElementsNum();
+  data_size_ = out_tensors_.front()->ElementsNum();
   thread_sz_count_ = MSMIN(thread_count_, data_size_);
   thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
   return RET_OK;
@@ -77,8 +77,8 @@ int FillCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto fillData = inputs_.at(inputs_.size() - 1);
-  auto output = outputs_.front();
+  auto fillData = in_tensors_.at(in_tensors_.size() - 1);
+  auto output = out_tensors_.front();
   auto fill_data = reinterpret_cast<float *>(fillData->Data());
   src_data_ = fill_data[0];
   out_ptr_ = reinterpret_cast<float *>(output->Data());

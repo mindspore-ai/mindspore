@@ -24,7 +24,7 @@
 #include "mindspore/lite/include/context.h"
 
 namespace mindspore {
-class TestHSwishInt8 : public mindspore::Common {
+class TestHSwishInt8 : public mindspore::CommonTest {
  public:
   TestHSwishInt8() {}
 };

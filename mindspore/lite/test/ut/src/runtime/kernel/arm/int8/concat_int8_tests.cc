@@ -24,7 +24,7 @@
 
 namespace mindspore {
 
-class TestConcatInt8 : public mindspore::Common {
+class TestConcatInt8 : public mindspore::CommonTest {
  public:
   TestConcatInt8() {}
 };

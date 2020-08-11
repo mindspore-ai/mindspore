@@ -32,12 +32,12 @@ MatmulInt8CPUKernel::~MatmulInt8CPUKernel() {
 
 int MatmulInt8CPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   int batch = 1;
-  auto x_shape = inputs_[0]->shape();
-  auto o_shape = outputs_[0]->shape();
+  auto x_shape = in_tensors_[0]->shape();
+  auto o_shape = out_tensors_[0]->shape();
   for (int i = 0; i < x_shape.size() - 2; ++i) {
     batch *= x_shape[i];
   }
@@ -66,17 +66,17 @@ int MatmulInt8CPUKernel::Init() {
   }
   memset(c_r8x8_ptr_, 0, params_->row_8_ * params_->col_8_ * sizeof(int));
 
-  auto input_tensor = inputs_[0];
+  auto input_tensor = in_tensors_[0];
   auto params = input_tensor->GetQuantParams();
   MS_ASSERT(params.size() == 1);
   quant_params_.input.zp_ = params.front().zeroPoint;
   quant_params_.input.scale_ = params.front().scale;
-  auto weight_tensor = inputs_[1];
+  auto weight_tensor = in_tensors_[1];
   params = weight_tensor->GetQuantParams();
   MS_ASSERT(params.size() == 1);
   quant_params_.weight.zp_ = params.front().zeroPoint;
   quant_params_.weight.scale_ = params.front().scale;
-  auto output_tensor = outputs_[0];
+  auto output_tensor = out_tensors_[0];
   params = output_tensor->GetQuantParams();
   MS_ASSERT(params.size() == 1);
   quant_params_.output.zp_ = params.front().zeroPoint;
@@ -118,9 +118,9 @@ int MatmulInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  auto a_ptr = reinterpret_cast<int8_t *>(inputs_[0]->Data());
-  auto b_ptr = reinterpret_cast<int8_t *>(inputs_[1]->Data());
-  auto c_ptr = reinterpret_cast<int8_t *>(outputs_[0]->Data());
+  auto a_ptr = reinterpret_cast<int8_t *>(in_tensors_[0]->Data());
+  auto b_ptr = reinterpret_cast<int8_t *>(in_tensors_[1]->Data());
+  auto c_ptr = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
   auto a_stride = params_->row_ * params_->deep_;
   auto b_stride = params_->deep_ * params_->col_;
   auto c_stride = params_->row_ * params_->col_;

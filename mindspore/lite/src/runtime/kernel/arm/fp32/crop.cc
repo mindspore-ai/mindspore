@@ -43,12 +43,12 @@ int CropLaunch(int thread_id, LiteParallelGroupEnv *penv, void *cdata) {
 int CropCPUKernel::Init() { return RET_OK; }
 
 int CropCPUKernel::CropParallelRun(int thread_id) {
-  auto input = inputs_[0];
-  auto output = outputs_[0];
+  auto input = in_tensors_[0];
+  auto output = out_tensors_[0];
   float *input_data = reinterpret_cast<float *>(input->Data());
   float *output_data = reinterpret_cast<float *>(output->Data());
   Crop4D(input_data, output_data, input->shape().data(), output->shape().data(),
-         reinterpret_cast<CropParameter *>(opParameter));
+         reinterpret_cast<CropParameter *>(op_parameter_));
   return RET_OK;
 }
 
@@ -58,9 +58,9 @@ int CropCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto input = inputs_[0];
-  auto output = outputs_[0];
-  auto param = reinterpret_cast<CropParameter *>(opParameter);
+  auto input = in_tensors_[0];
+  auto output = out_tensors_[0];
+  auto param = reinterpret_cast<CropParameter *>(op_parameter_);
   if (output->shape()[1] < param->op_parameter_.thread_num_) {
     float *input_data = reinterpret_cast<float *>(input->Data());
     float *output_data = reinterpret_cast<float *>(output->Data());

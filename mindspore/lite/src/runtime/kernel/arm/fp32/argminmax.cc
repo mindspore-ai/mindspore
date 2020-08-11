@@ -34,7 +34,7 @@ int ArgMinMaxCPUKernel::Init() {
   if (ret != RET_OK) {
     return ret;
   }
-  auto param = reinterpret_cast<ArgMinMaxParameter *>(opParameter);
+  auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
   param->data_type_ = kNumberTypeFloat32;
   if (!InferShapeDone()) {
     return RET_OK;

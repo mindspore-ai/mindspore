@@ -27,18 +27,18 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Prelu;
 
 namespace mindspore::kernel {
-int PreluBaseCPUKernel::Init() {return RET_OK;}
+int PreluBaseCPUKernel::Init() { return RET_OK; }
 
 kernel::LiteKernel *CpuPreluInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *opParameter, const Context *ctx,
-                                               const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                              const std::vector<lite::tensor::Tensor *> &outputs,
+                                              OpParameter *opParameter, const Context *ctx,
+                                              const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Prelu);
-  auto *kernel = new(std::nothrow) PreluInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  auto *kernel = new (std::nothrow) PreluInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PreluCPUKernel fail!";
     return nullptr;
@@ -55,4 +55,3 @@ kernel::LiteKernel *CpuPreluInt8KernelCreator(const std::vector<lite::tensor::Te
 
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Prelu, CpuPreluInt8KernelCreator)
 }  // namespace mindspore::kernel
-

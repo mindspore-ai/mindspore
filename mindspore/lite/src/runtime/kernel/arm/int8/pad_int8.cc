@@ -47,8 +47,8 @@ int PadInt8CPUKernel::SetQuantParam() {
     return RET_MEMORY_FAILED;
   }
 
-  auto *input_tensor = inputs_.at(kInputIndex);
-  auto *out_tensor = outputs_.at(kOutputIndex);
+  auto *input_tensor = in_tensors_.at(kInputIndex);
+  auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto in_quant_arg = input_tensor->GetQuantParams();
   auto out_quant_arg = out_tensor->GetQuantParams();
 
@@ -69,8 +69,8 @@ int PadInt8CPUKernel::SetQuantParam() {
 }
 
 int PadInt8CPUKernel::InitPadParam() {
-  auto in_dims = inputs_[0]->shape();
-  auto out_dims = outputs_[0]->shape();
+  auto in_dims = in_tensors_[0]->shape();
+  auto out_dims = out_tensors_[0]->shape();
   int ndims = in_dims.size();
 
   int in[] = {1, 1, 1, 1};
@@ -94,7 +94,7 @@ int PadInt8CPUKernel::ReSize() {
 
 int PadInt8CPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   int error_code = InitPadParam();
@@ -117,10 +117,10 @@ int PadInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  int8_t *in_data = reinterpret_cast<int8_t *>(inputs_[0]->Data());
-  int8_t *out_data = reinterpret_cast<int8_t *>(outputs_[0]->Data());
+  int8_t *in_data = reinterpret_cast<int8_t *>(in_tensors_[0]->Data());
+  int8_t *out_data = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
 
-  memset(out_data, pad_param_->pad_quant_arg_.constant_value_[0], outputs_[0]->ElementsNum() * sizeof(int8_t));
+  memset(out_data, pad_param_->pad_quant_arg_.constant_value_[0], out_tensors_[0]->ElementsNum() * sizeof(int8_t));
   PadConstant4D(in_data, out_data, in_dims_, out_dims_, pad_param_->paddings_);
   return RET_OK;
 }

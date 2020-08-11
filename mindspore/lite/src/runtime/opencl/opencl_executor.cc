@@ -44,7 +44,7 @@ int OpenCLExecutor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tenso
   for (auto *kernel : kernels) {
     MS_ASSERT(nullptr != kernel);
     kernel::OpenCLKernel *op_kernel = reinterpret_cast<kernel::OpenCLKernel*>(kernel);
-    auto &outputs = kernel->GetOutputs();
+    auto &outputs = kernel->out_tensors();
     for (auto i = 0; i < outputs.size(); ++i) {
       auto *output = outputs.at(i);
       MS_ASSERT(nullptr != output);
@@ -59,29 +59,29 @@ int OpenCLExecutor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tenso
       output->set_allocator(allocator);
     }
     session::CallBackParam callbackParam;
-    callbackParam.name_callback_param = kernel->Name();
+    callbackParam.name_callback_param = kernel->name();
 
     if (before != nullptr) {
-      if (!before(PackToMSTensors(kernel->GetInputs()), PackToMSTensors(kernel->GetOutputs()), callbackParam)) {
-        MS_LOG(ERROR) << "run kernel before_callback failed, name: " << kernel->Name();
+      if (!before(PackToMSTensors(kernel->in_tensors()), PackToMSTensors(kernel->out_tensors()), callbackParam)) {
+        MS_LOG(ERROR) << "run kernel before_callback failed, name: " << kernel->name();
       }
     }
     auto ret = kernel->Run();
     if (0 != ret) {
-      MS_LOG(ERROR) << "run kernel failed, name: " << kernel->Name();
+      MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
       return ret;
     }
 
     if (after != nullptr) {
-      if (!after(PackToMSTensors(kernel->GetInputs()), PackToMSTensors(kernel->GetOutputs()), callbackParam)) {
-        MS_LOG(ERROR) << "run kernel after_callback failed, name: " << kernel->Name();
+      if (!after(PackToMSTensors(kernel->in_tensors()), PackToMSTensors(kernel->out_tensors()), callbackParam)) {
+        MS_LOG(ERROR) << "run kernel after_callback failed, name: " << kernel->name();
       }
     }
-    for (auto input_kernel : kernel->GetInKernels()) {
+    for (auto input_kernel : kernel->in_kernels()) {
       MS_EXCEPTION_IF_NULL(input_kernel);
       ret = input_kernel->DecOutTensorRefCount();
       if (0 != ret) {
-        MS_LOG(WARNING) << "DecOutTensorRefCount for kernel" << kernel->Name() << " failed";
+        MS_LOG(WARNING) << "DecOutTensorRefCount for kernel" << kernel->name() << " failed";
       }
     }
   }

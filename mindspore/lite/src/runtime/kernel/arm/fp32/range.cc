@@ -43,10 +43,10 @@ int RangeCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  size_t start = (reinterpret_cast<RangeParameter *>(opParameter))->start_;
-  size_t limit = (reinterpret_cast<RangeParameter *>(opParameter))->limit_;
-  size_t delta = (reinterpret_cast<RangeParameter *>(opParameter))->delta_;
-  auto output_ptr = reinterpret_cast<float *>(outputs_.at(0)->Data());
+  size_t start = (reinterpret_cast<RangeParameter *>(op_parameter_))->start_;
+  size_t limit = (reinterpret_cast<RangeParameter *>(op_parameter_))->limit_;
+  size_t delta = (reinterpret_cast<RangeParameter *>(op_parameter_))->delta_;
+  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
   Range(output_ptr, start, limit, delta);
   return RET_OK;
 }

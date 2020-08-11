@@ -25,7 +25,7 @@ namespace mindspore {
 using mindspore::lite::tensor::QuantArg;
 using mindspore::lite::tensor::Tensor;
 
-class TestResizeNearestNeighborInt8 : public mindspore::Common {
+class TestResizeNearestNeighborInt8 : public mindspore::CommonTest {
  public:
   TestResizeNearestNeighborInt8() = default;
   void Prepare(const std::vector<int> &in_shape, const std::vector<int> &out_shape, int8_t *input_data,

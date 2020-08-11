@@ -43,7 +43,7 @@ int ConvolutionFP16CPUKernel::InitWeightBias() {
   int pack_weight_size = oc8 * ic4 * C8NUM * C4NUM * kernel_plane;
 
   // init weight
-  float *origin_weight = reinterpret_cast<float *>(inputs_.at(kWeightIndex)->Data());
+  float *origin_weight = reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->Data());
   size_t fp16_weight_size = in_channel * out_channel * kernel_h * kernel_w * sizeof(float16_t);
   fp16_weight_ = reinterpret_cast<float16_t *>(malloc(fp16_weight_size));
   if (fp16_weight_ == nullptr) {
@@ -70,8 +70,8 @@ int ConvolutionFP16CPUKernel::InitWeightBias() {
   }
   memset(bias_data_, 0, oc8 * C8NUM * sizeof(float16_t));
   auto fp16_bias_data = reinterpret_cast<float16_t *>(bias_data_);
-  if (inputs_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<float *>(inputs_.at(kBiasIndex)->Data());
+  if (in_tensors_.size() == kInputSize2) {
+    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->Data());
     for (int i = 0; i < out_channel; ++i) {
       fp16_bias_data[i] = (float16_t)ori_bias[i];
     }
@@ -143,7 +143,7 @@ int ConvolutionFP16CPUKernel::InitTmpBuffer() {
 }
 
 void ConvolutionFP16CPUKernel::ConfigInputOutput() {
-  auto input_tensor = inputs_.at(kInputIndex);
+  auto input_tensor = in_tensors_.at(kInputIndex);
   auto input_format = input_tensor->GetFormat();
   schema::Format execute_format = schema::Format_NHWC4;
   convert_func_ = LayoutTransformFp16(input_format, execute_format);
@@ -155,7 +155,7 @@ void ConvolutionFP16CPUKernel::ConfigInputOutput() {
 
 int ConvolutionFP16CPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+    set_need_reinit();
     return RET_OK;
   }
   auto ret = ConvolutionBaseCPUKernel::Init();
@@ -229,7 +229,7 @@ int ConvolutionFP16CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  auto input_tensor = inputs_.at(kInputIndex);
+  auto input_tensor = in_tensors_.at(kInputIndex);
   auto ori_input_data = reinterpret_cast<float *>(input_tensor->Data());
   for (int i = 0; i < input_tensor->ElementsNum(); ++i) {
     fp16_input_[i] = (float16_t)ori_input_data[i];
@@ -248,7 +248,7 @@ int ConvolutionFP16CPUKernel::Run() {
   }
 
   // cast fp16 out to fp32 data
-  auto out_tensor = outputs_.at(kOutputIndex);
+  auto out_tensor = out_tensors_.at(kOutputIndex);
   auto output_addr = reinterpret_cast<float *>(out_tensor->Data());
   for (int j = 0; j < out_tensor->ElementsNum(); ++j) {
     output_addr[j] = static_cast<float>(fp16_out_[j]);
@@ -293,8 +293,8 @@ kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::tensor::Ten
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     delete kernel;
-    MS_LOG(INFO) << "Init fp16 kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    MS_LOG(INFO) << "Init fp16 kernel failed, name: " << opParameter->name_
+                 << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     return nullptr;
   }
   return kernel;
