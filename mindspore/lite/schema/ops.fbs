@@ -262,6 +262,12 @@ table BiasAdd {
     axis: [int];
 }
 
+table ROIPooling {
+    pooledH: int;
+    pooledW: int;
+    scale: float;
+}
+
 table Pooling {
     format: Format = 0;
     poolingMode: PoolMode;

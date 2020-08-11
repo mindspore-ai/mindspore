@@ -56,6 +56,13 @@ class Primitive {
   bool infer_flag_ = true;
 };
 
+class ROIPooling : public Primitive {
+ public:
+  explicit ROIPooling(schema::Primitive *primitive) : Primitive(primitive) {}
+  const schema::ROIPooling *GetAttribute() const { return this->primitive->value_as_ROIPooling(); }
+  int InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) override;
+};
+
 class Conv2D : public Primitive {
  public:
   explicit Conv2D(schema::Primitive *primitive) : Primitive(primitive) {}
