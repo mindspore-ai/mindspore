@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import pytest
 import mindspore.dataset as ds
 from mindspore import log as logger
-from util import config_get_set_num_parallel_workers
+from util import config_get_set_num_parallel_workers, config_get_set_seed
 
 
 DATA_FILE = "../data/dataset/testTextFileDataset/1.txt"
@@ -39,8 +40,18 @@ def test_textline_dataset_all_file():
     assert count == 5
 
 
-def test_textline_dataset_totext():
+def test_textline_dataset_num_samples_zero():
+    data = ds.TextFileDataset(DATA_FILE, num_samples=0)
+    count = 0
+    for i in data.create_dict_iterator():
+        logger.info("{}".format(i["text"]))
+        count += 1
+    assert count == 3
+
+
+def test_textline_dataset_shuffle_false4():
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
+    original_seed = config_get_set_seed(987)
     data = ds.TextFileDataset(DATA_ALL_FILE, shuffle=False)
     count = 0
     line = ["This is a text file.", "Another file.",
@@ -50,8 +61,94 @@ def test_textline_dataset_totext():
         assert strs == line[count]
         count += 1
     assert count == 5
-    # Restore configuration num_parallel_workers
+    # Restore configuration
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
+    ds.config.set_seed(original_seed)
+
+
+def test_textline_dataset_shuffle_false1():
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
+    original_seed = config_get_set_seed(987)
+    data = ds.TextFileDataset(DATA_ALL_FILE, shuffle=False)
+    count = 0
+    line = ["This is a text file.", "Be happy every day.", "Good luck to everyone.",
+            "Another file.", "End of file."]
+    for i in data.create_dict_iterator():
+        strs = i["text"].item().decode("utf8")
+        assert strs == line[count]
+        count += 1
+    assert count == 5
+    # Restore configuration
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+    ds.config.set_seed(original_seed)
+
+
+def test_textline_dataset_shuffle_files4():
+    original_num_parallel_workers = config_get_set_num_parallel_workers(4)
+    original_seed = config_get_set_seed(135)
+    data = ds.TextFileDataset(DATA_ALL_FILE, shuffle=ds.Shuffle.FILES)
+    count = 0
+    line = ["This is a text file.", "Another file.",
+            "Be happy every day.", "End of file.", "Good luck to everyone."]
+    for i in data.create_dict_iterator():
+        strs = i["text"].item().decode("utf8")
+        assert strs == line[count]
+        count += 1
+    assert count == 5
+    # Restore configuration
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+    ds.config.set_seed(original_seed)
+
+
+def test_textline_dataset_shuffle_files1():
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
+    original_seed = config_get_set_seed(135)
+    data = ds.TextFileDataset(DATA_ALL_FILE, shuffle=ds.Shuffle.FILES)
+    count = 0
+    line = ["This is a text file.", "Be happy every day.", "Good luck to everyone.",
+            "Another file.", "End of file."]
+    for i in data.create_dict_iterator():
+        strs = i["text"].item().decode("utf8")
+        assert strs == line[count]
+        count += 1
+    assert count == 5
+    # Restore configuration
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+    ds.config.set_seed(original_seed)
+
+
+def test_textline_dataset_shuffle_global4():
+    original_num_parallel_workers = config_get_set_num_parallel_workers(4)
+    original_seed = config_get_set_seed(246)
+    data = ds.TextFileDataset(DATA_ALL_FILE, shuffle=ds.Shuffle.GLOBAL)
+    count = 0
+    line = ["Another file.", "Good luck to everyone.", "End of file.",
+            "This is a text file.", "Be happy every day."]
+    for i in data.create_dict_iterator():
+        strs = i["text"].item().decode("utf8")
+        assert strs == line[count]
+        count += 1
+    assert count == 5
+    # Restore configuration
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+    ds.config.set_seed(original_seed)
+
+
+def test_textline_dataset_shuffle_global1():
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
+    original_seed = config_get_set_seed(246)
+    data = ds.TextFileDataset(DATA_ALL_FILE, shuffle=ds.Shuffle.GLOBAL)
+    count = 0
+    line = ["Another file.", "Good luck to everyone.", "This is a text file.",
+            "End of file.", "Be happy every day."]
+    for i in data.create_dict_iterator():
+        strs = i["text"].item().decode("utf8")
+        assert strs == line[count]
+        count += 1
+    assert count == 5
+    # Restore configuration
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+    ds.config.set_seed(original_seed)
 
 
 def test_textline_dataset_num_samples():
@@ -94,11 +191,33 @@ def test_textline_dataset_to_device():
     data = data.to_device()
     data.send()
 
+def test_textline_dataset_exceptions():
+    with pytest.raises(ValueError) as error_info:
+        _ = ds.TextFileDataset(DATA_FILE, num_samples=-1)
+    assert "Input num_samples is not within the required interval" in str(error_info.value)
+
+    with pytest.raises(ValueError) as error_info:
+        _ = ds.TextFileDataset("does/not/exist/no.txt")
+    assert "The following patterns did not match any files" in str(error_info.value)
+
+    with pytest.raises(ValueError) as error_info:
+        _ = ds.TextFileDataset("")
+    assert "The following patterns did not match any files" in str(error_info.value)
+
+
 if __name__ == "__main__":
     test_textline_dataset_one_file()
     test_textline_dataset_all_file()
-    test_textline_dataset_totext()
+    test_textline_dataset_num_samples_zero()
+    test_textline_dataset_shuffle_false4()
+    test_textline_dataset_shuffle_false1()
+    test_textline_dataset_shuffle_files4()
+    test_textline_dataset_shuffle_files1()
+    test_textline_dataset_shuffle_global4()
+    test_textline_dataset_shuffle_global1()
     test_textline_dataset_num_samples()
     test_textline_dataset_distribution()
     test_textline_dataset_repeat()
     test_textline_dataset_get_datasetsize()
+    test_textline_dataset_to_device()
+    test_textline_dataset_exceptions()

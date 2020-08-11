@@ -5012,7 +5012,7 @@ class CSVDataset(SourceDataset):
 class TextFileDataset(SourceDataset):
     """
     A source dataset that reads and parses datasets stored on disk in text format.
-    The generated dataset has one columns ['text'].
+    The generated dataset has one column ['text'].
 
     Args:
         dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for a

@@ -89,6 +89,23 @@ TEST_F(MindDataTestTextFileOp, TestTextFileBasic) {
   ASSERT_EQ(row_count, 3);
 }
 
+TEST_F(MindDataTestTextFileOp, TestTextFileFileNotExist) {
+  // Start with an empty execution tree
+  auto tree = std::make_shared<ExecutionTree>();
+
+  std::string dataset_path = datasets_root_path_ + "/does/not/exist/0.txt";
+
+  std::shared_ptr<TextFileOp> op;
+  TextFileOp::Builder builder;
+  builder.SetTextFilesList({dataset_path})
+      .SetRowsPerBuffer(16)
+      .SetNumWorkers(16)
+      .SetOpConnectorSize(2);
+
+  Status rc = builder.Build(&op);
+  ASSERT_TRUE(rc.IsOk());
+}
+
 TEST_F(MindDataTestTextFileOp, TestTotalRows) {
   std::string tf_file1 = datasets_root_path_ + "/testTextFileDataset/1.txt";
   std::string tf_file2 = datasets_root_path_ + "/testTextFileDataset/2.txt";
@@ -110,3 +127,14 @@ TEST_F(MindDataTestTextFileOp, TestTotalRows) {
   ASSERT_EQ(total_rows, 5);
   files.clear();
 }
+
+TEST_F(MindDataTestTextFileOp, TestTotalRowsFileNotExist) {
+  std::string tf_file1 = datasets_root_path_ + "/does/not/exist/0.txt";
+  std::vector<std::string> files;
+  files.push_back(tf_file1);
+  int64_t total_rows = 0;
+  TextFileOp::CountAllFileRows(files, &total_rows);
+  ASSERT_EQ(total_rows, 0);
+}
+
+
