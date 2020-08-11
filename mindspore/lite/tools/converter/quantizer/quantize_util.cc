@@ -89,7 +89,7 @@ bool QuantStrategy::CanOpPostQuantized(AnfNodePtr &node) const {
 
     auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveTValue>>(cnode->input(0));
     if (primitiveT_value == nullptr) {
-        MS_LOG(ERROR) << "PrimitiveT_value is nullptr: " << cnode->fullname_with_scope();
+        MS_LOG(WARNING) << "PrimitiveT_value is nullptr: " << cnode->fullname_with_scope();
         return false;
     }
 
@@ -344,7 +344,7 @@ STATUS QuantFilter(ParamValueLitePtr &weightPtr, QuantType quantType, int quant_
     }
 
     weightPtr->set_quant_param(quantParam);
-    auto ret = memcpy_s(rawDatas, weightPtr->tensor_size() * sizeof(int8_t),
+    auto ret = memcpy_s(rawDatas, weightPtr->tensor_size(),
                         qDatas.data(), shapeSize * sizeof(int8_t));
     if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy error: " << ret;

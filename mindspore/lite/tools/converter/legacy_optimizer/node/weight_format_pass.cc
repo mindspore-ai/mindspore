@@ -277,8 +277,9 @@ int WeightFormatPass::QuantDataFormatTrans(GraphNode *graphNode) {
     } else if (weightTensor->format == schema::Format_CHWK) {  // from onnx
       if (weightTensor->dataType == kNumberTypeInt8) {         // DataType_DT_UINT8) {
         status = TransFilterFormat<int8_t>(weightTensor.get(), kCHWK2KHWC);
+        MS_LOG(DEBUG) << node->name << " weight trans format: CHWK->KHWC";
       } else {
-        status = TransFilterFormat<float>(weightTensor.get(), kCHWK2HWCK);
+        status = TransFilterFormat<float>(weightTensor.get(), kCHWK2KHWC);
       }
     } else if (weightTensor->format == schema::Format_KCHW) {
       if (weightTensor->dataType == kNumberTypeInt8) {  // DataType_DT_UINT8) {
@@ -291,8 +292,8 @@ int WeightFormatPass::QuantDataFormatTrans(GraphNode *graphNode) {
       return -1;
     }
     if (status == 0) {
-      node->primitive->value.AsDepthwiseConv2D()->format = schema::Format_NCHW;
-      weightTensor->format = schema::Format_HWCK;
+      node->primitive->value.AsDepthwiseConv2D()->format = schema::Format_NHWC;
+      weightTensor->format = schema::Format_KHWC;
     } else {
       MS_LOG(WARNING) << "TransFilter %ToHWCK failed, node : "
                       << (weightTensor->format == schema::Format_CHWK ? "CHWK" : "CKHW"),

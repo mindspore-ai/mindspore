@@ -39,7 +39,7 @@ class SoftmaxCPUKernel : public SoftmaxBaseCPUKernel {
   int Run() override;
 
  private:
-  float *sum_data_;
+  float *sum_data_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
