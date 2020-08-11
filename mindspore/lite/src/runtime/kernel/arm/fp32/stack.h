@@ -19,35 +19,22 @@
 #include <vector>
 #include "src/lite_kernel.h"
 
-#include "src/runtime/kernel/arm/base/layout_transform.h"
-
 namespace mindspore::kernel {
 class StackCPUKernel : public LiteKernel {
  public:
   StackCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                  const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                  const lite::Primitive *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive),
-        convert_functions_(inputs_.size(), nullptr),
-        packed_inputs_(inputs_.size(), nullptr) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
 
-  ~StackCPUKernel() {
-    for (size_t i = 0; i < packed_inputs_.size(); ++i) {
-      if (packed_inputs_[i] != nullptr) {
-        free(packed_inputs_[i]);
-        packed_inputs_[i] = nullptr;
-      }
-    }
-  }
+  ~StackCPUKernel() = default;
 
   int Init() override;
-  int ReSize() override { return 0; }
+  int ReSize() override;
   int Run() override;
 
  private:
   int axis_;
-  std::vector<LayoutConvertor> convert_functions_;
-  std::vector<float *> packed_inputs_;
 };
 }  // namespace mindspore::kernel
 

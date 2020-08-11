@@ -44,9 +44,7 @@ int DepthToSpaceCPUKernel::Init() {
   return ReSize();
 }
 
-int DepthToSpaceCPUKernel::ReSize() {
-  return DepthToSpaceBaseCPUKernel::ReSize();
-}
+int DepthToSpaceCPUKernel::ReSize() { return DepthToSpaceBaseCPUKernel::ReSize(); }
 
 int DepthToSpaceCPUKernel::Run() {
   auto prepare_ret = Prepare();

@@ -27,10 +27,6 @@ using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 
 int ReshapeInt8CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
-    return RET_OK;
-  }
   ReshapeBaseCPUKernel::Init();
   auto *input_tensor = inputs_.at(kInputIndex);
   auto in_quant_args = input_tensor->GetQuantParams();
@@ -53,7 +49,7 @@ int ReshapeInt8CPUKernel::ReSize() { return 0; }
 int ReshapeInt8CPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
   MS_ASSERT(inputs_.size() == 1);
@@ -62,9 +58,9 @@ int ReshapeInt8CPUKernel::Run() {
   output_data_ = static_cast<int8_t *>(outputs_.at(kOutputIndex)->Data());
 
   elements_num_ = inputs_.at(kInputIndex)->ElementsNum();
-  count_unit_ = thread_count_ > 1 ? UP_DIV(elements_num_, thread_count_) : elements_num_;
+  count_unit_ = opParameter->thread_num_ > 1 ? UP_DIV(elements_num_, opParameter->thread_num_) : elements_num_;
 
-  ret = LiteBackendParallelLaunch(ReshapeInt8Run, this, thread_count_);
+  ret = LiteBackendParallelLaunch(ReshapeInt8Run, this, opParameter->thread_num_);
   return ret;
 }
 

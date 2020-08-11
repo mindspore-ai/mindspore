@@ -36,7 +36,10 @@ int SoftmaxBaseCPUKernel::Init() {
     MS_LOG(ERROR) << "SoftmaxParameter nullptr";
     return RET_NULL_PTR;
   }
+  return RET_OK;
+}
 
+int SoftmaxBaseCPUKernel::ReSize() {
   auto input_tensor = inputs_.front();
   auto in_shape = input_tensor->shape();
   auto in_dims = in_shape.size();

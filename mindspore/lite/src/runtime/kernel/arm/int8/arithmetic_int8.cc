@@ -48,7 +48,7 @@ int ArithmeticsInt8Launch(int thread_id, LiteParallelGroupEnv *penv, void *cdata
 }
 }  // namespace
 
-ArithmeticInt8CPUKernel::~ArithmeticInt8CPUKernel() {
+void ArithmeticInt8CPUKernel::FreeTileData() {
   auto param = reinterpret_cast<ArithmeticParameter *>(opParameter);
   if (!param->broadcasting_) {
     return;
@@ -70,6 +70,10 @@ ArithmeticInt8CPUKernel::~ArithmeticInt8CPUKernel() {
   }
   tile_data0_ = nullptr;
   tile_data1_ = nullptr;
+}
+
+ArithmeticInt8CPUKernel::~ArithmeticInt8CPUKernel() {
+  FreeTileData();
 }
 
 int ArithmeticInt8CPUKernel::Init() {
@@ -97,6 +101,15 @@ int ArithmeticInt8CPUKernel::Init() {
       arithmetic_run_ = nullptr;
       return RET_PARAM_INVALID;
   }
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+
+  return ReSize();
+}
+
+int ArithmeticInt8CPUKernel::ReSize() {
+  FreeTileData();
   auto data_size = outputs_[0]->Size();
   auto param = reinterpret_cast<ArithmeticParameter *>(opParameter);
   if (param->broadcasting_) {
@@ -114,8 +127,6 @@ int ArithmeticInt8CPUKernel::Init() {
   return RET_OK;
 }
 
-int ArithmeticInt8CPUKernel::ReSize() { return RET_OK; }
-
 int ArithmeticInt8CPUKernel::DoArithmetic(int thread_id) {
   auto input0_data = reinterpret_cast<int8_t *>(inputs_[0]->Data());
   auto input1_data1 = reinterpret_cast<int8_t *>(inputs_[1]->Data());
@@ -123,8 +134,8 @@ int ArithmeticInt8CPUKernel::DoArithmetic(int thread_id) {
   auto element_num = outputs_[0]->ElementsNum();
   auto param = reinterpret_cast<ArithmeticParameter *>(opParameter);
   if (param->broadcasting_ && arithmetic_run_ != nullptr) {
-    MS_ASSERT(thread_count_ != 0);
-    int stride = UP_DIV(element_num, thread_count_);
+    MS_ASSERT(opParameter->thread_num_ != 0);
+    int stride = UP_DIV(element_num, opParameter->thread_num_);
     int count = MSMIN(stride, element_num - stride * thread_id);
     if (count <= 0) {
       return RET_OK;
@@ -150,13 +161,18 @@ int ArithmeticInt8CPUKernel::DoArithmetic(int thread_id) {
 }
 
 int ArithmeticInt8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
+  }
   auto param = reinterpret_cast<ArithmeticParameter *>(opParameter);
   if (param->broadcasting_) {
     auto input_data0 = reinterpret_cast<int8_t *>(inputs_[0]->Data());
     auto input_data1 = reinterpret_cast<int8_t *>(inputs_[1]->Data());
     TileDimensionsInt8(input_data0, input_data1, tile_data0_, tile_data1_, param);
   }
-  int error_code = LiteBackendParallelLaunch(ArithmeticsInt8Launch, this, thread_count_);
+  int error_code = LiteBackendParallelLaunch(ArithmeticsInt8Launch, this, opParameter->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Arithmetic launch function fail! ret: " << error_code;
     return RET_ERROR;

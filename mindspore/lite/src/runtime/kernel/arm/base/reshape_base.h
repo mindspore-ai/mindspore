@@ -29,7 +29,7 @@ class ReshapeBaseCPUKernel : public LiteKernel {
   ReshapeBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                        const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                        const lite::Primitive *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx) {
     reshape_param_ = reinterpret_cast<ReshapeParameter *>(opParameter);
   }
   ~ReshapeBaseCPUKernel() = default;
@@ -39,7 +39,6 @@ class ReshapeBaseCPUKernel : public LiteKernel {
   int Run() override { return 0; }
 
  protected:
-  int thread_count_;
   const Context *ctx_;
   ReshapeParameter *reshape_param_;
 };

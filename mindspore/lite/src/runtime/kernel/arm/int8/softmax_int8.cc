@@ -26,11 +26,10 @@ using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 
 int SoftmaxInt8CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
-    return RET_OK;
+  auto ret = SoftmaxBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    return ret;
   }
-  SoftmaxBaseCPUKernel::Init();
 
   auto *input_tensor = inputs_.at(kInputIndex);
   MS_ASSERT(input_tensor);
@@ -46,17 +45,38 @@ int SoftmaxInt8CPUKernel::Init() {
   quant_params_.out_quant_arg_.scale_ = out_quant_args.front().scale;
   quant_params_.out_quant_arg_.zp_ = out_quant_args.front().zeroPoint;
 
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+
+  return ReSize();
+}
+
+void SoftmaxInt8CPUKernel::FreeTmpBuffer() {
+  if (exp_data_ != nullptr) {
+    free(exp_data_);
+    exp_data_ = nullptr;
+  }
+  if (sum_data_ != nullptr) {
+    free(sum_data_);
+    sum_data_ = nullptr;
+  }
+}
+
+int SoftmaxInt8CPUKernel::ReSize() {
+  auto ret = SoftmaxBaseCPUKernel::ReSize();
+  if (ret != RET_OK) {
+    return ret;
+  }
+  FreeTmpBuffer();
+  exp_data_ = reinterpret_cast<float *>(malloc(softmax_param_->element_size_ * sizeof(float)));
   int inner_size = 1;
   for (int i = softmax_param_->axis_ + 1; i < softmax_param_->n_dim_; i++) {
     inner_size *= softmax_param_->input_shape_[i];
   }
-
-  exp_data_ = reinterpret_cast<float *>(malloc(softmax_param_->element_size_ * sizeof(float)));
   sum_data_ = reinterpret_cast<float *>(malloc(inner_size * sizeof(float)));
   return RET_OK;
 }
-
-int SoftmaxInt8CPUKernel::ReSize() { return RET_OK; }
 
 int SoftmaxInt8CPUKernel::DoSoftmax(int task_id) {
   MS_ASSERT(inputs_.size() == 1);
@@ -101,7 +121,7 @@ int SoftmaxRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 int SoftmaxInt8CPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return RET_ERROR;
   }
   auto input_ptr = reinterpret_cast<int8_t *>(inputs_.at(0)->Data());

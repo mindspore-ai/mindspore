@@ -27,37 +27,45 @@ using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 
 int CropInt8CPUKernel::Init() {
-  CropBaseCPUKernel::Init();
+  auto ret = CropBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    return ret;
+  }
   auto *input_tensor = inputs_.at(kInputIndex);
   auto in_quant_args = input_tensor->GetQuantParams();
   crop_para_->quant_arg.in_args_.scale_ = in_quant_args.front().scale;
   crop_para_->quant_arg.in_args_.zp_ = in_quant_args.front().zeroPoint;
-  auto input_dim = input_tensor->shape().size();
-  MS_ASSERT(input_dim <= CROP_OFFSET_MAX_SIZE);
-  crop_para_->input_dim_ = input_dim;
 
   auto *out_tensor = outputs_.at(kOutputIndex);
   auto out_quant_args = out_tensor->GetQuantParams();
   crop_para_->quant_arg.out_args_.scale_ = out_quant_args.front().scale;
   crop_para_->quant_arg.out_args_.zp_ = out_quant_args.front().zeroPoint;
 
-  crop_para_->in_shape_ = input_tensor->shape().data();
-  crop_para_->out_shape_ = out_tensor->shape().data();
-
   crop_para_->quant_arg.output_activation_max_ = std::numeric_limits<int8_t>::max();
   crop_para_->quant_arg.output_activation_min_ = std::numeric_limits<int8_t>::min();
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
 
+int CropInt8CPUKernel::ReSize() {
+  auto *input_tensor = inputs_.at(kInputIndex);
+  crop_para_->in_shape_ = input_tensor->shape().data();
+  auto *out_tensor = outputs_.at(kOutputIndex);
+  crop_para_->out_shape_ = out_tensor->shape().data();
+  auto input_dim = input_tensor->shape().size();
+  MS_ASSERT(input_dim <= CROP_OFFSET_MAX_SIZE);
+  crop_para_->input_dim_ = input_dim;
   PadOffset(input_dim, crop_para_);
   return RET_OK;
 }
 
-int CropInt8CPUKernel::ReSize() { return 0; }
-
 int CropInt8CPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
   }
   ret = LiteBackendParallelLaunch(CropInt8Run, this, thread_count_);
   return ret;

@@ -28,7 +28,7 @@ class ReluXInt8CPUKernel : public LiteKernel {
   ReluXInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                      const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                      const lite::Primitive *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     type_ = (reinterpret_cast<ActivationParameter *>(parameter))->type_;
   }
   ~ReluXInt8CPUKernel() override = default;
@@ -41,7 +41,6 @@ class ReluXInt8CPUKernel : public LiteKernel {
   ReluXQuantArg quant_arg_;
 
  private:
-  int thread_count_;
   int type_;
 };
 

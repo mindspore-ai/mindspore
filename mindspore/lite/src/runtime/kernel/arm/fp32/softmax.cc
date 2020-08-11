@@ -30,13 +30,22 @@ using mindspore::schema::PrimitiveType_SoftMax;
 
 namespace mindspore::kernel {
 int SoftmaxCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+  auto ret = SoftmaxBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    return ret;
+  }
+
+  if (!InferShapeDone()) {
     return RET_OK;
   }
-  SoftmaxBaseCPUKernel::Init();
+  return ReSize();
+}
 
-  // malloc tmp buffer
+int SoftmaxCPUKernel::ReSize() {
+  auto ret = SoftmaxBaseCPUKernel::ReSize();
+  if (ret != RET_OK) {
+    return ret;
+  }
   auto n_dim = softmax_param_->n_dim_;
   auto axis = softmax_param_->axis_;
   if (axis == -1) {
@@ -52,17 +61,18 @@ int SoftmaxCPUKernel::Init() {
   for (int i = axis + 1; i < n_dim; i++) {
     in_plane_size *= in_shape[i];
   }
+  if (sum_data_ != nullptr) {
+    free(sum_data_);
+  }
   sum_data_ = reinterpret_cast<float *>(malloc(out_plane_size * in_plane_size * sizeof(float)));
   memset(sum_data_, 0, out_plane_size * in_plane_size * sizeof(float));
   return RET_OK;
 }
 
-int SoftmaxCPUKernel::ReSize() { return RET_OK; }
-
 int SoftmaxCPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return RET_ERROR;
   }
   auto input_ptr = reinterpret_cast<float *>(inputs_.at(kInputIndex)->Data());

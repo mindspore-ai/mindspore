@@ -29,7 +29,7 @@ class ArithmeticInt8CPUKernel : public LiteKernel {
   ArithmeticInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                           const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                           const lite::Primitive *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_), context_(ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ArithmeticInt8CPUKernel();
 
   int Init() override;
@@ -38,10 +38,10 @@ class ArithmeticInt8CPUKernel : public LiteKernel {
   int DoArithmetic(int thread_id);
 
  private:
+  void FreeTileData();
   int thread_count_;
   int8_t *tile_data0_;
   int8_t *tile_data1_;
-  const lite::Context *context_;
   ArithmeticRunInt8 arithmetic_run_;
 };
 }  // namespace mindspore::kernel

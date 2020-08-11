@@ -57,7 +57,7 @@ int AddNCPUKernel::AddNParallelRun(int thread_id) {
 int AddNCPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
   elements_num_ = inputs_[0]->ElementsNum();

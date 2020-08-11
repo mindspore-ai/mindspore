@@ -38,8 +38,8 @@ int ReshapeCPUKernel::ReSize() { return RET_OK; }
 int ReshapeCPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
   }
   auto input_ptr = inputs_.at(kInputIndex)->Data();
   auto output_ptr = outputs_.at(kOutputIndex)->Data();

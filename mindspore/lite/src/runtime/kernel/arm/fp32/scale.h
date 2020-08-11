@@ -24,13 +24,13 @@ namespace mindspore::kernel {
 
 class ScaleCPUKernel : public LiteKernel {
  public:
-  explicit ScaleCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+  ScaleCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                           const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                           const lite::Primitive *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
-        opParameter->thread_num_ = ctx->thread_num_;
-      }
-  ~ScaleCPUKernel() override = default;
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+  ~ScaleCPUKernel() {
+    FreeTmpBuffer();
+  }
 
   int Init() override;
   int ReSize() override;
@@ -40,6 +40,7 @@ class ScaleCPUKernel : public LiteKernel {
   int Scale(int task_id);
 
  private:
+  void FreeTmpBuffer();
   float *input_ptr_;
   float *scale_;
   float *offset_;

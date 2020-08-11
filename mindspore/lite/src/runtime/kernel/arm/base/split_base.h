@@ -35,7 +35,7 @@ class SplitBaseCPUKernel : public LiteKernel {
   ~SplitBaseCPUKernel() = default;
 
   int Init() override;
-  int ReSize() override { return 0; }
+  int ReSize() override;
   int Run() override { return 0; }
 
  protected:

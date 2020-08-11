@@ -29,11 +29,9 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Concat;
 
 namespace mindspore::kernel {
-int ConcatBaseCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
-    return RET_OK;
-  }
+int ConcatBaseCPUKernel::Init() { return RET_OK; }
+
+int ConcatBaseCPUKernel::ReSize() {
   axis_ = concat_param_->axis_ >= 0 ? concat_param_->axis_ : inputs_.front()->shape().size() + concat_param_->axis_;
   return RET_OK;
 }

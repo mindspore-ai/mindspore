@@ -25,14 +25,12 @@ class CastCPUKernel : public LiteKernel {
   CastCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                 const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                 const lite::Primitive *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
-      opParameter->thread_num_ = ctx->thread_num_;
-    }
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
 
   ~CastCPUKernel() = default;
 
   int Init() override;
-  int ReSize() override { return 0; };
+  int ReSize() override;
   int Run() override;
   int DoCast(int thread_id);
 

@@ -29,7 +29,7 @@ class SliceCPUKernel : public LiteKernel {
   ~SliceCPUKernel() = default;
 
   int Init() override;
-  int ReSize() override { return 0; }
+  int ReSize() override;
   int Run() override;
   int SliceParallelRun(int thread_id);
 };

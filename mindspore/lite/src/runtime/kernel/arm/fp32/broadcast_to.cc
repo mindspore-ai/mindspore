@@ -25,12 +25,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BroadcastTo;
 
 namespace mindspore::kernel {
-
-int BroadcastToCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
-    return RET_OK;
-  }
+int BroadcastToCPUKernel::ReSize() {
   auto input_shape = inputs_[0]->shape();
   for (size_t i = 0; i < input_shape.size(); ++i) {
     shape_info_.input_shape_[i] = input_shape[i];
@@ -43,6 +38,14 @@ int BroadcastToCPUKernel::Init() {
   }
   shape_info_.output_shape_size_ = static_cast<int>(output_shape.size());
   return RET_OK;
+}
+
+int BroadcastToCPUKernel::Init() {
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+
+  return ReSize();
 }
 
 int BroadcastToCPUKernel::Run() {

@@ -40,7 +40,6 @@ class ReshapeInt8CPUKernel : public ReshapeBaseCPUKernel {
   int DoExecute(int task_id);
 
  private:
-  int thread_count_;
   int64_t elements_num_;
   int64_t count_unit_;
   int8_t *input_data_ = nullptr;

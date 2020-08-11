@@ -39,8 +39,8 @@ int SqueezeCPUKernel::ReSize() { return RET_OK; }
 int SqueezeCPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
   }
   auto input_ptr = reinterpret_cast<float *>(inputs_.front()->Data());
   auto output_ptr = reinterpret_cast<float *>(outputs_.front()->Data());

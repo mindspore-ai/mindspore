@@ -32,6 +32,7 @@ int EluCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
   }
+
   return ReSize();
 }
 

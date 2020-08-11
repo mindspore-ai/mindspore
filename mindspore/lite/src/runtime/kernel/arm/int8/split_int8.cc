@@ -28,21 +28,15 @@ using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 
 int SplitInt8CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
-    return RET_OK;
+  auto ret = SplitBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    return ret;
   }
-  SplitBaseCPUKernel::Init();
   auto in_tensor = inputs_.at(kInputIndex);
-  input_ptr_ = reinterpret_cast<int8_t *>(in_tensor->Data());
-  for (int i = 0; i < param->num_split_; i++) {
-    output_ptr_.push_back(reinterpret_cast<int8_t *>(outputs_.at(i)->Data()));
-  }
 
   auto in_quant_args = in_tensor->GetQuantParams();
   param->quant_arg_.in_args_.scale_ = in_quant_args.front().scale;
   param->quant_arg_.in_args_.zp_ = in_quant_args.front().zeroPoint;
-
   MS_ASSERT(param->num_split_ == outputs_.size());
   for (int i = 0; i < param->num_split_; i++) {
     auto *out_tensor = outputs_.at(i);
@@ -53,11 +47,14 @@ int SplitInt8CPUKernel::Init() {
 
   param->quant_arg_.output_activation_max_ = std::numeric_limits<int8_t>::max();
   param->quant_arg_.output_activation_min_ = std::numeric_limits<int8_t>::min();
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
 
-  return RET_OK;
+  return ReSize();
 }
 
-int SplitInt8CPUKernel::ReSize() { return RET_OK; }
+int SplitInt8CPUKernel::ReSize() { return SplitBaseCPUKernel::ReSize(); }
 
 int SplitInt8CPUKernel::Split(int task_id) {
   int num_unit_thread = MSMIN(thread_n_stride_, num_unit_ - task_id * thread_n_stride_);
@@ -90,6 +87,13 @@ int SplitInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return ret;
   }
+  auto in_tensor = inputs_.at(kInputIndex);
+  input_ptr_ = reinterpret_cast<int8_t *>(in_tensor->Data());
+  MS_ASSERT(param->num_split_ == outputs_.size());
+  for (int i = 0; i < param->num_split_; i++) {
+    output_ptr_.push_back(reinterpret_cast<int8_t *>(outputs_.at(i)->Data()));
+  }
+
   ret = LiteBackendParallelLaunch(SplitInt8Run, this, thread_n_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";

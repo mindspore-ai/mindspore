@@ -29,7 +29,19 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Scale;
 
 namespace mindspore::kernel {
+void ScaleCPUKernel::FreeTmpBuffer() {
+  if (scale_ != nullptr) {
+    free(scale_);
+    scale_ = nullptr;
+  }
+  if (offset_ != nullptr) {
+    free(offset_);
+    offset_ = nullptr;
+  }
+}
+
 int ScaleCPUKernel::InitScaleOffset() {
+  FreeTmpBuffer();
   auto param = reinterpret_cast<ScaleParameter *>(opParameter);
   auto scale_tensor = inputs_.at(1);
   float *scale_ptr = reinterpret_cast<float *>(inputs_.at(1)->Data());
@@ -91,15 +103,18 @@ int ScaleCPUKernel::InitParameter() {
 }
 
 int ScaleCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
-    return RET_OK;
-  }
   if (inputs_.size() < 2 || inputs_.size() > 3) {
     MS_LOG(ERROR) << "inputs to Scale operator should be 2 or 3, but " << inputs_.size() << " is given.";
     return RET_ERROR;
   }
 
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
+
+int ScaleCPUKernel::ReSize() {
   auto ret = InitParameter();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale fp32 InitParameter failed.";
@@ -113,8 +128,6 @@ int ScaleCPUKernel::Init() {
   }
   return RET_OK;
 }
-
-int ScaleCPUKernel::ReSize() { return RET_OK; }
 
 int ScaleCPUKernel::Scale(int task_id) {
   auto ret =
@@ -140,8 +153,8 @@ int ScaleRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 int ScaleCPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
   }
   auto in_tensor = inputs_.front();
   input_ptr_ = reinterpret_cast<float *>(in_tensor->Data());
@@ -157,7 +170,7 @@ int ScaleCPUKernel::Run() {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;
   }
-
+  FreeTmpBuffer();
   return RET_OK;
 }
 

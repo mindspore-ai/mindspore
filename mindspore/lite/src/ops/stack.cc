@@ -44,7 +44,13 @@ int Stack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::
     MS_LOG(ERROR) << "Invalid axis " << stack_prim->axis();
     return RET_PARAM_INVALID;
   }
+  schema::Format input0_format = input->GetFormat();
   for (size_t i = 1; i < inputs.size(); ++i) {
+    if (inputs[i]->GetFormat() != input0_format) {
+      MS_LOG(ERROR) << "All inputs should have the same format!";
+      return RET_PARAM_INVALID;
+    }
+
     auto input_shape_tmp = inputs[i]->shape();
     if (input_shape_tmp.size() != input_shape.size()) {
       MS_LOG(ERROR) << "All input shape size should be the same!";

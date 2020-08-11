@@ -31,16 +31,21 @@ using mindspore::schema::PrimitiveType_Split;
 namespace mindspore::kernel {
 
 int SplitCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+  auto ret = SplitBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    return ret;
+  }
+
+  output_ptr_.resize(param->num_split_);
+
+  if (!InferShapeDone()) {
     return RET_OK;
   }
-  SplitBaseCPUKernel::Init();
-  output_ptr_.resize(param->num_split_);
-  return RET_OK;
+
+  return ReSize();
 }
 
-int SplitCPUKernel::ReSize() { return RET_OK; }
+int SplitCPUKernel::ReSize() { return SplitBaseCPUKernel::ReSize(); }
 
 int SplitCPUKernel::Split(int task_id) {
   int num_unit_thread = MSMIN(thread_n_stride_, num_unit_ - task_id * thread_n_stride_);
@@ -69,14 +74,14 @@ int SplitRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 
 int SplitCPUKernel::Run() {
   auto ret = Prepare();
-  auto in_tensor = inputs_.front();
-  input_ptr_ = reinterpret_cast<float *>(in_tensor->Data());
-  for (int i = 0; i < output_ptr_.size(); i++) {
-    output_ptr_[i] = reinterpret_cast<float *>(outputs_.at(i)->Data());
-  }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
+  }
+  auto in_tensor = inputs_.front();
+  input_ptr_ = reinterpret_cast<float *>(in_tensor->Data());
+  for (int i = 0; i < param->num_split_; i++) {
+    output_ptr_.push_back(reinterpret_cast<float *>(outputs_.at(i)->Data()));
   }
   ret = LiteBackendParallelLaunch(SplitRun, this, thread_n_num_);
   if (ret != RET_OK) {
