@@ -90,7 +90,7 @@ int ConvolutionDepthwiseInt8CPUKernel::Init() {
 
   // init sliding window param
   sliding = new SlidingWindowParam;
-  InitSlidingParam(sliding, conv_param_, C4NUM);
+  InitSlidingParamConvDw(sliding, conv_param_, C4NUM);
 
   // init quant param
   ConvolutionBaseCPUKernel::SetQuantParam();
@@ -119,7 +119,7 @@ int ConvolutionDepthwiseInt8CPUKernel::ReSize() {
   ConvolutionBaseCPUKernel::Init();
 
   // init sliding window param
-  InitSlidingParam(sliding, conv_param_, C4NUM);
+  InitSlidingParamConvDw(sliding, conv_param_, C4NUM);
 
   // init quant param
   ConvolutionBaseCPUKernel::SetQuantParam();

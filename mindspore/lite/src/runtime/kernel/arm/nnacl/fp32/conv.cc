@@ -18,6 +18,177 @@
 #include <string.h>
 #include "nnacl/winograd_transform.h"
 
+void SWBorderPixel(float *dst, const float *src, const float *weight, const float *bias, int height, int width,
+                   int in_kh_step, int in_kw_step, int kernel_h, int kernel_w, int ic4, bool is_relu, bool is_relu6) {
+  for (int c = 0; c < C4NUM; c++) {
+    dst[c] = 0;
+  }
+  const float *weight_oc = weight;
+  for (int oc = 0; oc < C4NUM; ++oc) {
+    const float *weight_kh = weight_oc;
+    const float *src_kh = src;
+    for (int kh = 0; kh < height; kh++) {
+      const float *src_kw = src_kh;
+      const float *weight_kw = weight_kh;
+      for (int kw = 0; kw < width; kw++) {
+        const float *src_ic4 = src_kw;
+        const float *weight_ic4 = weight_kw;
+        for (int ic = 0; ic < ic4; ++ic) {
+          for (int c = 0; c < C4NUM; c++) {
+            dst[oc] += src_ic4[c] * weight_ic4[c];
+          }
+          src_ic4 += C4NUM;
+          weight_ic4 += C4NUM;
+        }  // ic4 loop
+        src_kw += in_kw_step;
+        weight_kw += ic4 * C4NUM;
+      }  // kernel_w loop
+      src_kh += in_kh_step;
+      weight_kh += kernel_w * ic4 * C4NUM;
+    }  // kernel_h loop
+    dst[oc] += bias[oc];
+    dst[oc] = (is_relu) ? (MSMAX(0, dst[oc])) : (dst[oc]);
+    dst[oc] = (is_relu6) ? (MSMIN(6, MSMAX(0, dst[oc]))) : (dst[oc]);
+    weight_oc += kernel_h * kernel_w * ic4 * C4NUM;
+  }  // oc loop
+}
+
+void SWBorder(float *dst, const float *src, const float *weight, const float *bias, int top, int bottom, int left,
+              int right, const ConvParameter *conv_param, const SlidingWindowParam *sliding) {
+  int ic4 = sliding->ic4_channel_ / C4NUM;
+  float *dst_h = dst + top * sliding->out_h_step_;
+  for (int oh = top; oh < bottom; oh++) {
+    int ih = oh * conv_param->stride_h_ - conv_param->pad_h_;
+    int start_kh = MSMAX(0, UP_DIV(-ih, conv_param->dilation_h_));
+    int end_kh = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->input_h_ - ih, conv_param->dilation_h_));
+    const float *src_h = src + ih * sliding->in_h_step_;
+
+    float *dst_kernel = dst_h + left * sliding->block_channel_;
+    for (int ow = left; ow < right; ow++) {
+      int iw = ow * conv_param->stride_w_ - conv_param->pad_w_;
+      int start_kw = MSMAX(0, UP_DIV(-iw, conv_param->dilation_w_));
+      int end_kw = MSMIN(conv_param->kernel_w_, UP_DIV(conv_param->input_w_ - iw, conv_param->dilation_w_));
+      const float *src_w = src_h + iw * sliding->ic4_channel_;
+
+      const float *src_kernel = src_w + start_kh * sliding->in_kh_step_ + start_kw * sliding->in_kw_step_;
+      const float *weight_kernel = weight + (start_kh * conv_param->kernel_w_ + start_kw) * sliding->ic4_channel_;
+
+      SWBorderPixel(dst_kernel, src_kernel, weight_kernel, bias, end_kh - start_kh, end_kw - start_kw,
+                    sliding->in_kh_step_, sliding->in_kw_step_, conv_param->kernel_h_, conv_param->kernel_w_, ic4,
+                    conv_param->is_relu_, conv_param->is_relu6_);
+
+      dst_kernel += sliding->block_channel_;
+    }  // width loop
+    dst_h += sliding->out_h_step_;
+  }  // height loop
+}
+
+void SWCenter(float *dst, const float *src, const float *weight, const float *bias, int height, int width, int kernel_h,
+              int kernel_w, int out_h_step, int block_channel, int ic4, int in_sh_step, int in_sw_step, int in_kh_step,
+              int in_kw_step, bool is_relu, bool is_relu6) {
+  float *dst_h = dst;
+  const float *src_h = src;
+  for (int oh = 0; oh < height; oh++) {
+    float *dst_w = dst_h;
+    const float *src_w = src_h;
+    for (int ow = 0; ow < width; ow++) {
+      const float *weight_oc = weight;
+      for (int c = 0; c < C4NUM; c++) {
+        dst_w[c] = 0;
+      }
+
+      for (int oc = 0; oc < C4NUM; oc++) {
+        const float *weight_kh = weight_oc;
+        const float *src_kh = src_w;
+        for (int kh = 0; kh < kernel_h; kh++) {
+          const float *src_kw = src_kh;
+          const float *weight_kw = weight_kh;
+          for (int kw = 0; kw < kernel_w; kw++) {
+            const float *src_ic4 = src_kw;
+            const float *weight_ic4 = weight_kw;
+            for (int ic = 0; ic < ic4; ++ic) {
+              for (int c = 0; c < C4NUM; c++) {
+                dst_w[oc] += src_ic4[c] * weight_ic4[c];
+              }
+
+              src_ic4 += C4NUM;
+              weight_ic4 += C4NUM;
+            }  // ic4 loop
+            src_kw += in_kw_step;
+            weight_kw += ic4 * C4NUM;
+          }  // kernel_w loop
+          src_kh += in_kh_step;
+          weight_kh += kernel_w * ic4 * C4NUM;
+        }  // kernel_h loop
+           // add biad relu
+
+        dst_w[oc] += bias[oc];
+        dst_w[oc] = (is_relu) ? (MSMAX(0, dst_w[oc])) : (dst_w[oc]);
+        dst_w[oc] = (is_relu6) ? (MSMIN(6, MSMAX(0, dst_w[oc]))) : (dst_w[oc]);
+        weight_oc += kernel_h * kernel_w * ic4 * C4NUM;
+      }  // oc block
+
+      dst_w += block_channel;
+      src_w += in_sw_step;
+    }  // dst_width loop
+    dst_h += out_h_step;
+    src_h += in_sh_step;
+  }  // dst_height loop
+}
+
+// fp32 sliding window
+void ConvSWFp32(const float *input_data, const float *packed_weight, const float *bias_data, float *tmp_out_block,
+                float *output_data, int task_id, ConvParameter *conv_param, SlidingWindowParam *slidingWindow_param) {
+  int ic4 = slidingWindow_param->ic4_channel_ / C4NUM;
+  int ic4_res = conv_param->input_channel_ % C4NUM;
+  const float *src = input_data;
+  float *dst;
+  if (ic4_res == 0) {
+    dst = output_data;
+  } else {
+    dst = tmp_out_block;
+  }
+
+  for (int b = 0; b < conv_param->output_batch_; b++) {
+    for (int oc = task_id; oc < slidingWindow_param->c_block_; oc += conv_param->thread_num_) {
+      const float *src_data = src;
+      float *dst_data = dst + oc * C4NUM;
+      const float *weight = packed_weight + oc * slidingWindow_param->kernel_step_;
+      const float *bias = bias_data + oc * C4NUM;
+      SWBorder(dst_data, src_data, weight, bias, 0, slidingWindow_param->top_, 0, conv_param->output_w_, conv_param,
+               slidingWindow_param);
+      SWBorder(dst_data, src_data, weight, bias, slidingWindow_param->bottom_, conv_param->output_h_, 0,
+               conv_param->output_w_, conv_param, slidingWindow_param);
+      SWBorder(dst_data, src_data, weight, bias, slidingWindow_param->top_, slidingWindow_param->bottom_, 0,
+               slidingWindow_param->left_, conv_param, slidingWindow_param);
+      SWBorder(dst_data, src_data, weight, bias, slidingWindow_param->top_, slidingWindow_param->bottom_,
+               slidingWindow_param->right_, conv_param->output_w_, conv_param, slidingWindow_param);
+
+      if (slidingWindow_param->right_ > slidingWindow_param->left_ &&
+          slidingWindow_param->bottom_ > slidingWindow_param->top_) {
+        int in_h_start = slidingWindow_param->top_ * conv_param->stride_h_ - conv_param->pad_h_;
+        int in_w_start = slidingWindow_param->left_ * conv_param->stride_w_ - conv_param->pad_w_;
+        const float *in_t =
+          src_data + in_h_start * slidingWindow_param->in_h_step_ + in_w_start * slidingWindow_param->ic4_channel_;
+        float *out_t = dst_data + slidingWindow_param->top_ * slidingWindow_param->out_h_step_ +
+                       slidingWindow_param->left_ * slidingWindow_param->block_channel_;
+        SWCenter(out_t, in_t, weight, bias, slidingWindow_param->bottom_ - slidingWindow_param->top_,
+                 slidingWindow_param->right_ - slidingWindow_param->left_, conv_param->kernel_h_, conv_param->kernel_w_,
+                 slidingWindow_param->out_h_step_, slidingWindow_param->block_channel_, ic4,
+                 slidingWindow_param->in_sh_step_, slidingWindow_param->in_sw_step_, slidingWindow_param->in_kh_step_,
+                 slidingWindow_param->in_kw_step_, conv_param->is_relu_, conv_param->is_relu6_);
+      }
+    }  // output C4 loop
+    src += slidingWindow_param->in_step_;
+    dst += slidingWindow_param->out_step_;
+  }  // batch loop
+  // output nhwc4
+  if (ic4_res != 0) {
+    PackNHWC4ToNHWCFp32(tmp_out_block, output_data, conv_param->output_batch_,
+                        conv_param->output_h_ * conv_param->output_w_, conv_param->output_channel_);
+  }
+}
+
 // fp32 conv common
 void ConvFp32(float *input_data, float *packed_input, float *packed_weight, const float *bias_data,
               float *tmp_out_block, float *output_data, int task_id, ConvParameter *conv_param,

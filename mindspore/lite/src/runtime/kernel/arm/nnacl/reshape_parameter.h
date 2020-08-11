@@ -27,4 +27,3 @@ typedef struct ReshapeParameter {
 } ReshapeParameter;
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_RESHAHPE_PARAMETER_H_
-

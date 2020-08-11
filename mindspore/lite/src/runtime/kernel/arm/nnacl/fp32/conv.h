@@ -26,11 +26,23 @@
 #include "nnacl/conv_parameter.h"
 #include "nnacl/fp32/strassen_matmul.h"
 #include "nnacl/winograd_utils.h"
+#include "nnacl/fp32/conv_depthwise.h"
 
 using TmpBufferAddress = float *;
 typedef void (*GEMM_FUNC_FP32)(float *output, const float *input, const float *weight, const float *bias, size_t step,
                                size_t ic4, size_t output_channel, size_t offset, size_t mode, size_t writeC4,
                                size_t relu, size_t relu6);
+
+void SWBorder(float *dst, const float *src, const float *weight, const float *bias, int top, int bottom, int left,
+              int right, const ConvParameter *conv_param, const SlidingWindowParam *sliding);
+
+void SWCenter(float *dst, const float *src, const float *weight, const float *bias, int height, int width, int kernel_h,
+              int kernel_w, int out_h_step, int block_channel, int ic4, int in_sh_step, int in_sw_step, int in_kh_step,
+              int in_kw_step, bool is_relu, bool is_relu6);
+
+// fp32 sliding window
+void ConvSWFp32(const float *input_data, const float *packed_weight, const float *bias_data, float *tmp_out_block,
+                float *output_data, int task_id, ConvParameter *conv_param, SlidingWindowParam *slidingWindow_param);
 
 // fp32 convolution common (im2col+gemm)
 void ConvFp32(float *input_data, float *packed_input, float *packed_weight, const float *bias_data,

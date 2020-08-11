@@ -67,7 +67,7 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitSlideParam() {
   conv_param_->output_channel_ = inputs_.front()->shape().at(kNHWC_C);
 
   // init sliding window param
-  InitSlidingParam(sliding, conv_param_, C4NUM);
+  InitSlidingParamConvDw(sliding, conv_param_, C4NUM);
 
   sliding->in_h_step_ = conv_param_->input_w_ * C4NUM;
   sliding->in_sh_step_ = conv_param_->input_w_ * C4NUM * conv_param_->stride_h_;    // stride H
