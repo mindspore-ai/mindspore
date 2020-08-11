@@ -117,7 +117,7 @@ def train_and_eval(config):
 
     eval_callback = EvalCallBack(model, ds_eval, auc_metric, config, host_device_mix=host_device_mix)
 
-    callback = LossCallBack(config=config)
+    callback = LossCallBack(config=config, per_print_times=20)
     ckptconfig = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size(), keep_checkpoint_max=5)
     ckpoint_cb = ModelCheckpoint(prefix='widedeep_train',
                                  directory=config.ckpt_path, config=ckptconfig)

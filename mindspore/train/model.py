@@ -31,8 +31,7 @@ from ..nn.metrics import Loss
 from .. import nn
 from ..nn.wrap.cell_wrapper import _VirtualDatasetCell
 from .parallel_utils import ParallelMode
-from ._utils import _to_full_tensor
-from ..parallel._utils import _need_to_full
+from ..parallel._utils import _need_to_full, _to_full_tensor
 from ..common import dtype as mstype
 from .dataset_helper import DatasetHelper
 from . import amp

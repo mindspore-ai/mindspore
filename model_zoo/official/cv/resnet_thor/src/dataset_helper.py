@@ -15,12 +15,11 @@
 """Dataset help for minddata dataset"""
 import math
 import os
-
 from mindspore._checkparam import check_bool, check_int
 from mindspore import context
-from mindspore.train._utils import _exec_datagraph, _get_types_and_shapes, _to_full_shapes
+from mindspore.train._utils import _exec_datagraph, _get_types_and_shapes
 from mindspore.nn.wrap import GetNextSingleOp
-from mindspore.parallel._utils import _get_device_num, _need_to_full
+from mindspore.parallel._utils import _get_device_num, _need_to_full, _to_full_shapes
 
 
 def _send_data(dataset, epoch_num):

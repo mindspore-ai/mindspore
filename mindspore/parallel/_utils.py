@@ -14,7 +14,11 @@
 # ============================================================================
 """Utils of auto parallel"""
 
+import numpy as np
 from mindspore._c_expression import reset_op_id
+from mindspore.common.tensor import Tensor
+from mindspore.common.dtype import dtype_to_nptype
+from mindspore.common import dtype as mstype
 from mindspore.communication.management import get_group_size, get_rank
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 
@@ -37,6 +41,52 @@ def _need_to_full():
             and (not full_batch))
     return need
 
+def _to_full_shapes(shapes, device_num):
+    """Expanding batch dimension according to device_num, adapt to mindspore minddata graph solution."""
+    new_shapes = []
+    for shape in shapes:
+        new_shape = ()
+        for i, item in enumerate(shape):
+            if i == 0:
+                new_shape += (item * device_num,)
+            else:
+                new_shape += (item,)
+        new_shapes.append(new_shape)
+    return new_shapes
+
+def _to_full_tensor(elem, device_num, global_rank, scaling_sens=None):
+    """Convert numpy to tensor, expanding batch dimension according to device_num, adapt to feed the data
+       from host solution."""
+    lst = []
+    if not isinstance(elem, (tuple, list)):
+        elem = [elem]
+    if global_rank >= device_num:
+        raise ValueError("The global rank must be smaller than device number, the global rank is {}, "
+                         "the device num is {}".format(global_rank, device_num))
+
+    for data in elem:
+        if isinstance(data, np.ndarray):
+            data = Tensor(data)
+        if not isinstance(data, Tensor):
+            raise ValueError("elements in tensors must be Tensor")
+        shape_ = data.shape
+        type_ = data.dtype
+        new_shape = ()
+        batchsize_per_device = 1
+        for i, item in enumerate(shape_):
+            if i == 0:
+                new_shape += (item * device_num,)
+                batchsize_per_device = item
+            else:
+                new_shape += (item,)
+        new_tensor_numpy = np.zeros(new_shape, dtype_to_nptype(type_))
+        start = global_rank * batchsize_per_device
+        new_tensor_numpy[start: start + batchsize_per_device] = data.asnumpy()
+        new_tensor = Tensor(new_tensor_numpy)
+        lst.append(new_tensor)
+    if scaling_sens:
+        lst.append(Tensor(scaling_sens, mstype.float32))
+    return tuple(lst)
 
 def _get_mirror_mean():
     """Get if using mirror_mean."""
