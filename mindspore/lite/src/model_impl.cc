@@ -226,6 +226,8 @@ lite::Primitive *ModelImpl::CopyPrimitive(const schema::Primitive *srcPrim) {
       return new lite::EmbeddingLookup(const_cast<schema::Primitive *>(srcPrim));
     case schema::PrimitiveType_Elu:
       return new lite::Elu(const_cast<schema::Primitive *>(srcPrim));
+    case schema::PrimitiveType_DeDepthwiseConv2D:
+      return new lite::DeconvDepthwiseConv2D(const_cast<schema::Primitive *>(srcPrim));
     default:
       break;
   }
