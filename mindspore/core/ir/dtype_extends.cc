@@ -338,21 +338,21 @@ TypePtr FunctionStrToType(const std::string &type_name) {
 
 TypePtr StringToType(const std::string &type_name) {
   TypePtr type = nullptr;
-  if (type_name.compare("None") == 0) {
+  if (type_name == "None") {
     type = std::make_shared<TypeNone>();
-  } else if (type_name.compare("Ellipsis") == 0) {
+  } else if (type_name == "Ellipsis") {
     type = std::make_shared<TypeEllipsis>();
-  } else if (type_name.compare("TypeType") == 0) {
+  } else if (type_name == "TypeType") {
     type = std::make_shared<TypeType>();
-  } else if (type_name.compare("SymbolicKeyType") == 0) {
+  } else if (type_name == "SymbolicKeyType") {
     type = std::make_shared<SymbolicKeyType>();
-  } else if (type_name.compare("RefKeyType") == 0) {
+  } else if (type_name == "RefKeyType") {
     type = std::make_shared<RefKeyType>();
-  } else if (type_name.compare("EnvType") == 0) {
+  } else if (type_name == "EnvType") {
     type = std::make_shared<EnvType>();
-  } else if (type_name.compare("Number") == 0) {
+  } else if (type_name == "Number") {
     type = std::make_shared<Number>();
-  } else if (type_name.compare("Bool") == 0) {
+  } else if (type_name == "Bool") {
     type = std::make_shared<Bool>();
   } else if (type_name.compare(0, strlen("Int"), "Int") == 0) {
     type = StringToNumberType<Int>(type_name, "Int");
@@ -372,16 +372,18 @@ TypePtr StringToType(const std::string &type_name) {
     type = ListStrToType(type_name);
   } else if (type_name.compare(0, strlen("Tuple"), "Tuple") == 0) {
     type = TupleStrToType(type_name);
-  } else if (type_name.compare("Slice") == 0) {
+  } else if (type_name == "Slice") {
     type = std::make_shared<Slice>();
-  } else if (type_name.compare("Dictionary") == 0) {
+  } else if (type_name == "Dictionary") {
     type = std::make_shared<Dictionary>();
-  } else if (type_name.compare("String") == 0) {
+  } else if (type_name == "String") {
     type = std::make_shared<String>();
-  } else if (type_name.compare("Problem") == 0) {
+  } else if (type_name == "Problem") {
     type = std::make_shared<Problem>();
   } else if (type_name.compare(0, strlen("Function"), "Function") == 0) {
     type = FunctionStrToType(type_name);
+  } else if (type_name == "mstype") {
+    type = std::make_shared<TypeType>();
   } else {
     // - unsupported to convert
     // Class
@@ -389,7 +391,6 @@ TypePtr StringToType(const std::string &type_name) {
     // JTagged
     // Anything
     // External
-    // Problem
     MS_LOG(EXCEPTION) << "Unsupported type name: " << type_name << "!";
   }
   return type;
@@ -403,10 +404,7 @@ bool IsParentOrChildrenType(TypePtr const &x, TypePtr const &base_type) {
   if (base_type->type_id() == kTypeUnknown || x->type_id() == kTypeUnknown) {
     return false;
   }
-  if (base_type->type_id() == x->parent_type() || x->type_id() == base_type->parent_type()) {
-    return true;
-  }
-  return false;
+  return base_type->type_id() == x->parent_type() || x->type_id() == base_type->parent_type();
 }
 
 bool IsIdentidityOrSubclass(TypePtr const &x, TypePtr const &base_type) {

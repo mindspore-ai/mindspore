@@ -96,7 +96,7 @@ def test_float_tensor_and_str_add():
     y = "ok"
     with pytest.raises(TypeError) as er:
         ret = x + y
-    assert "For 'TensorAdd', the 1th input is a not support type: str" in str(er.value)
+    assert "For 'TensorAdd', the 1th input is a not support implicit conversion type: str" in str(er.value)
 
 
 def test_float_tensor_and_tuple_add():
@@ -104,7 +104,7 @@ def test_float_tensor_and_tuple_add():
     y = (1, 2, 3)
     with pytest.raises(TypeError) as er:
         ret = x + y
-    assert "For 'TensorAdd', the 1th input is a not support type: tuple" in str(er.value)
+    assert "For 'TensorAdd', the 1th input is a not support implicit conversion type: tuple" in str(er.value)
 
 
 def test_float_tensor_and_list_add():
@@ -112,7 +112,7 @@ def test_float_tensor_and_list_add():
     y = [1, 2, 3]
     with pytest.raises(TypeError) as er:
         ret = x + y
-    assert "For 'TensorAdd', the 1th input is a not support type: list" in str(er.value)
+    assert "For 'TensorAdd', the 1th input is a not support implicit conversion type: list" in str(er.value)
 
 
 def test_float_tensor_and_bool_tensors_add_grad():

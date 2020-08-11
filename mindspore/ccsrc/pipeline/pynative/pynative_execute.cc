@@ -261,17 +261,19 @@ void ConvertInputs(const PrimitivePyPtr &prim, const py::list &args, const OpExe
     auto obj = out_args[i];
     if (py::isinstance<tensor::Tensor>(obj)) {
       auto arg = py::cast<tensor::TensorPtr>(obj);
-      if (arg->data_type() == it->second) {
+      TypeId arg_type_id = arg->data_type();
+      if (prim::type_map.find(arg_type_id) == prim::type_map.end() || arg_type_id == it->second) {
         continue;
       }
       if (signature[i].rw == SignatureEnumRW::kRWWrite) {
-        prim::RaiseExceptionForConvertRefDtype(prim->name(), TypeIdToMsTypeStr(arg->data_type()),
+        prim::RaiseExceptionForConvertRefDtype(prim->name(), TypeIdToMsTypeStr(arg_type_id),
                                                TypeIdToMsTypeStr(it->second));
       }
     }
 
     if (!py::isinstance<tensor::Tensor>(obj) && !py::isinstance<py::int_>(obj) && !py::isinstance<py::float_>(obj)) {
-      MS_EXCEPTION(TypeError) << "For '" << prim->name() << "', the " << i << "th input is a not support type: "
+      MS_EXCEPTION(TypeError) << "For '" << prim->name() << "', the " << i
+                              << "th input is a not support implicit conversion type: "
                               << py::cast<std::string>(obj.attr("__class__").attr("__name__")) << ", and the value is "
                               << py::cast<py::str>(obj) << ".";
     }
