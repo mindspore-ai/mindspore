@@ -29,6 +29,7 @@
 #include "src/ir/primitive_t_value.h"
 #include "src/ir/tensor.h"
 #include "src/param_value_lite.h"
+#include "src/common/utils.h"
 
 namespace mindspore::lite {
 std::set<std::string> RemoveNodeInAnfExporter{"tuple_getitem", "make_tuple"};
@@ -249,8 +250,9 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &funcGraph) {
       if (tensor->data.empty()) {
         tensor->nodeType = schema::NodeType_ValueNode;
         tensor->format = schema::Format_NHWC;
-        // tensor->refCount = lite::MSCONST_WEIGHT_REFCOUNT;
-        metaGraphT->inputIndex.emplace_back(input);
+        if (!IsContain(metaGraphT->inputIndex, input)) {
+          metaGraphT->inputIndex.emplace_back(input);
+        }
       }
     }
   }
