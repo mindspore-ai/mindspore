@@ -43,6 +43,7 @@
 #include "minddata/dataset/kernels/image/random_resize_op.h"
 #include "minddata/dataset/kernels/image/random_resize_with_bbox_op.h"
 #include "minddata/dataset/kernels/image/random_rotation_op.h"
+#include "minddata/dataset/kernels/image/random_sharpness_op.h"
 #include "minddata/dataset/kernels/image/random_select_subpolicy_op.h"
 #include "minddata/dataset/kernels/image/random_solarize_op.h"
 #include "minddata/dataset/kernels/image/random_vertical_flip_op.h"
@@ -331,6 +332,15 @@ PYBIND_REGISTER(RandomRotationOp, 1, ([](const py::module *m) {
                       py::arg("interpolation") = RandomRotationOp::kDefInterpolation,
                       py::arg("expand") = RandomRotationOp::kDefExpand, py::arg("fillR") = RandomRotationOp::kDefFillR,
                       py::arg("fillG") = RandomRotationOp::kDefFillG, py::arg("fillB") = RandomRotationOp::kDefFillB);
+                }));
+
+PYBIND_REGISTER(RandomSharpnessOp, 1, ([](const py::module *m) {
+                  (void)py::class_<RandomSharpnessOp, TensorOp, std::shared_ptr<RandomSharpnessOp>>(
+                    *m, "RandomSharpnessOp",
+                    "Tensor operation to apply RandomSharpness."
+                    "Takes a range for degrees")
+                    .def(py::init<float, float>(), py::arg("startDegree") = RandomSharpnessOp::kDefStartDegree,
+                         py::arg("endDegree") = RandomSharpnessOp::kDefEndDegree);
                 }));
 
 PYBIND_REGISTER(RandomSelectSubpolicyOp, 1, ([](const py::module *m) {

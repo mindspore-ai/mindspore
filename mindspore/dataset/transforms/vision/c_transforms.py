@@ -48,7 +48,7 @@ from .validators import check_prob, check_crop, check_resize_interpolation, chec
     check_mix_up_batch_c, check_normalize_c, check_random_crop, check_random_color_adjust, check_random_rotation, \
     check_range, check_resize, check_rescale, check_pad, check_cutout, check_uniform_augment_cpp, \
     check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_auto_contrast, check_random_affine, \
-    check_random_solarize, check_soft_dvpp_decode_random_crop_resize_jpeg, FLOAT_MAX_INTEGER
+    check_random_solarize, check_soft_dvpp_decode_random_crop_resize_jpeg, check_positive_degrees, FLOAT_MAX_INTEGER
 
 DE_C_INTER_MODE = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBOUR,
                    Inter.LINEAR: cde.InterpolationMode.DE_INTER_LINEAR,
@@ -88,6 +88,31 @@ class AutoContrast(cde.AutoContrastOp):
         if isinstance(ignore, int):
             ignore = [ignore]
         super().__init__(cutoff, ignore)
+
+
+class RandomSharpness(cde.RandomSharpnessOp):
+    """
+    Adjust the sharpness of the input image by a fixed or random degree. degree of 0.0 gives a blurred image,
+            a degree of 1.0 gives the original image, and a degree of 2.0 gives a sharpened image.
+
+    Args:
+        degrees (sequence): Range of random sharpness adjustment degrees.
+            it should be in (min, max) format. If min=max, then it is a
+            single fixed magnitude operation (default = (0.1, 1.9)).
+
+    Raises:
+        TypeError : If degrees is not a list or tuple.
+        ValueError: If degrees is not positive.
+        ValueError: If degrees is in (max, min) format instead of (min, max).
+
+    Examples:
+         >>>c_transform.RandomSharpness(degrees=(0.2,1.9))
+    """
+
+    @check_positive_degrees
+    def __init__(self, degrees=(0.1, 1.9)):
+        self.degrees = degrees
+        super().__init__(*degrees)
 
 
 class Equalize(cde.EqualizeOp):
