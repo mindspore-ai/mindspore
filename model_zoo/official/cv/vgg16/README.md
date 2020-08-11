@@ -212,7 +212,7 @@ parameters/options:
 Usage: sh script/run_distribute_train.sh [RANK_TABLE_FILE] [DATA_PATH]
 
 parameters/options:
-  RANK_TABLE_FILE   HCCL configuration file path.
+  RANK_TABLE_FILE              HCCL configuration file path.
   DATA_PATH                    the storage path of dataset.
 ```
 

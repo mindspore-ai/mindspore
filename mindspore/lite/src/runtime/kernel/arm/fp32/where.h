@@ -29,8 +29,9 @@ namespace mindspore::kernel {
 class WhereCPUKernel : public LiteKernel {
  public:
   WhereCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                 const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
-      : LiteKernel(parameter, inputs, outputs), ctx_(ctx), thread_count_(ctx->thread_num_) {
+                 const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                 const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
     where_param_ = reinterpret_cast<WhereParameter *>(opParameter);
   }
   ~WhereCPUKernel() = default;
@@ -53,4 +54,3 @@ class WhereCPUKernel : public LiteKernel {
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_WHERE_H_
-

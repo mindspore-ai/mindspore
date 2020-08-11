@@ -30,10 +30,6 @@ using mindspore::schema::PrimitiveType_BatchToSpace;
 
 namespace mindspore::kernel {
 int BatchToSpaceBaseCPUKernel::Init() {
-  if (inputs_[0]->GetFormat() != schema::Format_NHWC) {
-    MS_LOG(ERROR) << "batch_to_space only support NHWC now!";
-    return RET_FORMAT_ERR;
-  }
   BatchToSpaceParameter *param = reinterpret_cast<BatchToSpaceParameter *>(this->opParameter);
   for (int i = 0; i < BATCH_TO_SPACE_CROPS_SIZE; ++i) {
     if (param->crops_[i] != 0) {
@@ -43,16 +39,24 @@ int BatchToSpaceBaseCPUKernel::Init() {
   return RET_OK;
 }
 
+int BatchToSpaceBaseCPUKernel::ReSize() {
+  if (inputs_[0]->GetFormat() != schema::Format_NHWC) {
+    MS_LOG(ERROR) << "batch_to_space only support NHWC now!";
+    return RET_FORMAT_ERR;
+  }
+  return RET_OK;
+}
+
 kernel::LiteKernel *CpuBatchToSpaceInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                      const std::vector<lite::tensor::Tensor *> &outputs,
                                                      OpParameter *op_parameter, const lite::Context *ctx,
-                                                     const kernel::KernelKey &desc) {
+                                                     const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_BatchToSpace);
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Input op_parameter is nullptr!";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) BatchToSpaceInt8CPUKernel(op_parameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) BatchToSpaceInt8CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new BatchToSpaceInt8CPUKernel fail!";
     return nullptr;
@@ -71,13 +75,13 @@ kernel::LiteKernel *CpuBatchToSpaceInt8KernelCreator(const std::vector<lite::ten
 kernel::LiteKernel *CpuBatchToSpaceFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                      const std::vector<lite::tensor::Tensor *> &outputs,
                                                      OpParameter *op_parameter, const lite::Context *ctx,
-                                                     const kernel::KernelKey &desc) {
+                                                     const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_BatchToSpace);
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Input op_parameter is nullptr!";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) BatchToSpaceCPUKernel(op_parameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) BatchToSpaceCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new BatchToSpaceCPUKernel fail!";
     return nullptr;

@@ -21,7 +21,7 @@
 namespace mindspore {
 class TestTfliteParserUnstack : public TestTfliteParser {
  public:
-  TestTfliteParserUnstack() {}
+  TestTfliteParserUnstack() = default;
   void SetUp() override {
     meta_graph = LoadAndConvert("./unstack.tflite");
   }

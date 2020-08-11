@@ -56,6 +56,19 @@ class Common : public testing::Test {
     }
   }
 
+  void CompareOutputInt8(int8_t *output_data, int8_t *correct_data, int size, float err_percent) {
+    int bias_count = 0;
+    for (size_t i = 0; i < size; i++) {
+      int8_t diff = abs(output_data[i] - correct_data[i]);
+      ASSERT_LE(diff, 1);
+      if (diff == 1) {
+        bias_count++;
+      }
+    }
+    float bias_percent = static_cast<float>(bias_count) / size;
+    ASSERT_LE(bias_percent, err_percent);
+  }
+
   void ReadFile(const char *file, size_t *size, char **buf) {
     ASSERT_NE(nullptr, file);
     ASSERT_NE(nullptr, size);

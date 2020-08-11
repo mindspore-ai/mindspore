@@ -53,13 +53,13 @@ int SoftmaxBaseCPUKernel::Init() {
 kernel::LiteKernel *CpuSoftmaxInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                 const std::vector<lite::tensor::Tensor *> &outputs,
                                                 OpParameter *opParameter, const lite::Context *ctx,
-                                                const kernel::KernelKey &desc) {
+                                                const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_SoftMax);
-  auto *kernel = new (std::nothrow) SoftmaxInt8CPUKernel(opParameter, inputs, outputs, ctx);
+  SoftmaxInt8CPUKernel *kernel = new (std::nothrow) SoftmaxInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SoftmaxCPUKernel fail!";
     return nullptr;
@@ -77,13 +77,13 @@ kernel::LiteKernel *CpuSoftmaxInt8KernelCreator(const std::vector<lite::tensor::
 kernel::LiteKernel *CpuSoftmaxFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                 const std::vector<lite::tensor::Tensor *> &outputs,
                                                 OpParameter *opParameter, const lite::Context *ctx,
-                                                const kernel::KernelKey &desc) {
+                                                const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_SoftMax);
-  auto *kernel = new (std::nothrow) SoftmaxCPUKernel(opParameter, inputs, outputs, ctx);
+  SoftmaxCPUKernel *kernel = new (std::nothrow) SoftmaxCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SoftmaxCPUKernel fail!";
     return nullptr;

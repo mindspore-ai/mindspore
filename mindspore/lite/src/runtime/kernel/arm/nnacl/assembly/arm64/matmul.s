@@ -1,9 +1,9 @@
 #ifdef __aarch64__
     .text
     .align 5
-    .global MatMulFloatNeon64
+    .global MatmulFloatNeon64
 #ifndef __APPLE__
-    .type MatMulFloatNeon64, %function
+    .type MatmulFloatNeon64, %function
 #endif
 
 // A: LM  [row_8 * depth] col_8_major
@@ -46,41 +46,39 @@
 //                                                  accumulators 8x8 block
 /////////////////////////////////////////////////////////////////////////////////
 //
-// void MatMulFloatNeon64(const float *a, const float *b, float *c, const float *bias, float maxf, float minf, int depth, int row, int col)
+// void MatmulFloatNeon64(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row, int col)
 // x0: a
 // x1: b
 // x2: c
 // x3: bias
-// v0.s[0]: maxf
-// v1.s[0]: minf
-// w4: depth
-// w5: row
-// w6: col
+// w4: act_type
+// w5: depth
+// w6: row
+// w7: col
 
-MatMulFloatNeon64:
+MatmulFloatNeon64:
   sub sp, sp, #128
   st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
   st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
 
-  mov w7, v0.s[0]
-  mov w8, v1.s[0]
-  mov w9, 0     // rm col offset
-  mov w10, 0    // lm row offset
+  mov w9, #0     // rm col offset
+  mov w10, #0    // lm row offset
   mov w18, #32  // sizeof(float)*8
-  mul w15, w4, w18  // the stride of lm/rm: sizeof(float)*8*depth
-
+  mul w15, w5, w18  // the stride of lm/rm: sizeof(float)*8*depth
+  mov x11, x3       // bias flag
 L1:
-  cmp w9, w6
+  cmp w9, w7
   beq End1
 
-  mov w10, 0    // reset lm row offset
+  mov w10, #0    // reset lm row offset
   mov x12, x0   // reload lm ptr
-  mov x14, x3   // reload bias ptr
 L2:
   cmp w10, w6
   beq End2
 
-  mov w13, w4   // reload depth
+  mov x16, x1   // reload rm ptr
+  mov w13, w5   // reload depth
+  mov x14, x3     // reload bias ptr
   dup v16.4s, wzr
   dup v17.4s, wzr
   dup v18.4s, wzr
@@ -103,7 +101,7 @@ OptLoopMul4:
   blt CommLoopMul
 
   ld1 {v0.4s, v1.4s}, [x12], #32
-  ld1 {v8.4s, v9.4s}, [x1], #32
+  ld1 {v8.4s, v9.4s}, [x16], #32
   fmla v16.4s, v8.4s, v0.s[0]
   fmla v17.4s, v9.4s, v0.s[0]
   fmla v18.4s, v8.4s, v0.s[1]
@@ -112,7 +110,7 @@ OptLoopMul4:
   fmla v21.4s, v9.4s, v0.s[2]
   fmla v22.4s, v8.4s, v0.s[3]
   fmla v23.4s, v9.4s, v0.s[3]
-  ld1 {v10.4s, v11.4s}, [x1], #32
+  ld1 {v10.4s, v11.4s}, [x16], #32
   fmla v24.4s, v8.4s, v1.s[0]
   fmla v25.4s, v9.4s, v1.s[0]
   fmla v26.4s, v8.4s, v1.s[1]
@@ -130,7 +128,7 @@ OptLoopMul4:
   fmla v21.4s, v11.4s, v2.s[2]
   fmla v22.4s, v10.4s, v2.s[3]
   fmla v23.4s, v11.4s, v2.s[3]
-  ld1 {v12.4s, v13.4s}, [x1], #32
+  ld1 {v12.4s, v13.4s}, [x16], #32
   fmla v24.4s, v10.4s, v3.s[0]
   fmla v25.4s, v11.4s, v3.s[0]
   fmla v26.4s, v10.4s, v3.s[1]
@@ -153,7 +151,7 @@ OptLoopMul4:
   fmla v25.4s, v13.4s, v5.s[0]
   fmla v26.4s, v12.4s, v5.s[1]
   fmla v27.4s, v13.4s, v5.s[1]
-  ld1 {v14.4s, v15.4s}, [x1], #32
+  ld1 {v14.4s, v15.4s}, [x16], #32
   fmla v28.4s, v12.4s, v5.s[2]
   fmla v29.4s, v13.4s, v5.s[2]
   fmla v30.4s, v12.4s, v5.s[3]
@@ -182,7 +180,7 @@ CommLoopMul:
   blt Bias
 
   ld1 {v0.4s, v1.4s}, [x12], #32
-  ld1 {v2.4s, v3.4s}, [x1], #32
+  ld1 {v2.4s, v3.4s}, [x16], #32
   fmla v16.4s, v2.4s, v0.s[0]
   fmla v17.4s, v3.4s, v0.s[0]
   fmla v18.4s, v2.4s, v0.s[1]
@@ -203,8 +201,7 @@ CommLoopMul:
   b CommLoopMul
 
 Bias:
-  cmp x3, #0
-  beq Relu
+  cbz x11, Activation
   ld1 {v0.4s}, [x14], #16
   ld1 {v1.4s}, [x14], #16
   fadd v16.4s, v16.4s, v0.4s
@@ -224,9 +221,34 @@ Bias:
   fadd v30.4s, v30.4s, v0.4s
   fadd v31.4s, v31.4s, v1.4s
 
+Activation:
+  cmp w4, #2
+  beq Relu6
+  cmp w4, #1
+  beq Relu
+  b TransToOut
+Relu6:
+  mov w8, #6
+  dup v15.4s, w8
+  scvtf v15.4s, v15.4s
+  fmin v16.4s, v16.4s, v15.4s
+  fmin v17.4s, v17.4s, v15.4s
+  fmin v18.4s, v18.4s, v15.4s
+  fmin v19.4s, v19.4s, v15.4s
+  fmin v20.4s, v20.4s, v15.4s
+  fmin v21.4s, v21.4s, v15.4s
+  fmin v22.4s, v22.4s, v15.4s
+  fmin v23.4s, v23.4s, v15.4s
+  fmin v24.4s, v24.4s, v15.4s
+  fmin v25.4s, v25.4s, v15.4s
+  fmin v26.4s, v26.4s, v15.4s
+  fmin v27.4s, v27.4s, v15.4s
+  fmin v28.4s, v28.4s, v15.4s
+  fmin v29.4s, v29.4s, v15.4s
+  fmin v30.4s, v30.4s, v15.4s
+  fmin v31.4s, v31.4s, v15.4s
 Relu:
-  dup v15.4s, w7
-  dup v14.4s, w8
+  dup v14.4s, wzr
   fmax v16.4s, v16.4s, v14.4s
   fmax v17.4s, v17.4s, v14.4s
   fmax v18.4s, v18.4s, v14.4s
@@ -243,24 +265,6 @@ Relu:
   fmax v29.4s, v29.4s, v14.4s
   fmax v30.4s, v30.4s, v14.4s
   fmax v31.4s, v31.4s, v14.4s
-
-  fmin v16.4s, v16.4s, v15.4s
-  fmin v17.4s, v17.4s, v15.4s
-  fmin v18.4s, v18.4s, v15.4s
-  fmin v19.4s, v19.4s, v15.4s
-  fmin v20.4s, v20.4s, v15.4s
-  fmin v20.4s, v20.4s, v15.4s
-  fmin v21.4s, v21.4s, v15.4s
-  fmin v22.4s, v22.4s, v15.4s
-  fmin v23.4s, v23.4s, v15.4s
-  fmin v24.4s, v24.4s, v15.4s
-  fmin v25.4s, v25.4s, v15.4s
-  fmin v26.4s, v26.4s, v15.4s
-  fmin v27.4s, v27.4s, v15.4s
-  fmin v28.4s, v28.4s, v15.4s
-  fmin v29.4s, v29.4s, v15.4s
-  fmin v30.4s, v30.4s, v15.4s
-  fmin v31.4s, v31.4s, v15.4s
 
 TransToOut:
   st1 {v16.4s}, [x2], #16
@@ -280,11 +284,13 @@ TransToOut:
   st1 {v30.4s}, [x2], #16
   st1 {v31.4s}, [x2], #16
 
-  add w10, w10, #8    // lhs row offset + 8
+  add w10, w10, #8    // lm row offset + 8
   b L2
 
 End2:
-  add w9, w9, #8      // rhs col offset + 8
+  add w9, w9, #8      // rm col offset + 8
+  add x1, x1, x15     // rm ptr + stride
+  add x3, x3, x18     // bias ptr + stride
   b L1
 
 End1:

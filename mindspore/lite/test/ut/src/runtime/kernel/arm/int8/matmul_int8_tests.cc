@@ -108,7 +108,7 @@ TEST_F(TestMatmulInt8, mmint8) {
   auto ctx = new lite::Context;
   ctx->thread_num_ = 2;
   kernel::MatmulInt8CPUKernel *mm =
-    new kernel::MatmulInt8CPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx);
+    new kernel::MatmulInt8CPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, nullptr);
 
   mm->Init();
   mm->Run();

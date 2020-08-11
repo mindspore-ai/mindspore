@@ -27,8 +27,9 @@ namespace mindspore::kernel {
 class Convolution3x3Int8CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   Convolution3x3Int8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                              const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+                              const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                              const lite::Primitive *primitive)
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~Convolution3x3Int8CPUKernel() override;
 
   int Init() override;
@@ -51,4 +52,3 @@ void ProcessFilterUint8(int8_t *origin_weight, int16_t *dst_weight, ConvParamete
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_CONVOLUTION_3X3_INT8_H_
-

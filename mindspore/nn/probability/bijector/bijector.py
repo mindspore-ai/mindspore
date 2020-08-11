@@ -14,6 +14,7 @@
 # ============================================================================
 """Bijector"""
 from mindspore.nn.cell import Cell
+from mindspore._checkparam import Validator as validator
 from ..distribution import Distribution
 from ..distribution import TransformedDistribution
 
@@ -39,6 +40,9 @@ class Bijector(Cell):
         Constructor of bijector class.
         """
         super(Bijector, self).__init__()
+        validator.check_value_type('name', name, [str], 'Bijector')
+        validator.check_value_type('is_constant_jacobian', is_constant_jacobian, [bool], name)
+        validator.check_value_type('is_injective', is_injective, [bool], name)
         self._name = name
         self._dtype = dtype
         self._parameters = {}
@@ -69,31 +73,31 @@ class Bijector(Cell):
     def is_injective(self):
         return self._is_injective
 
-    def forward(self, *args):
+    def forward(self, *args, **kwargs):
         """
         Forward transformation: transform the input value to another distribution.
         """
-        return self._forward(*args)
+        return self._forward(*args, **kwargs)
 
-    def inverse(self, *args):
+    def inverse(self, *args, **kwargs):
         """
         Inverse transformation: transform the input value back to the original distribution.
         """
-        return self._inverse(*args)
+        return self._inverse(*args, **kwargs)
 
-    def forward_log_jacobian(self, *args):
+    def forward_log_jacobian(self, *args, **kwargs):
         """
         Logarithm of the derivative of forward transformation.
         """
-        return self._forward_log_jacobian(*args)
+        return self._forward_log_jacobian(*args, **kwargs)
 
-    def inverse_log_jacobian(self, *args):
+    def inverse_log_jacobian(self, *args, **kwargs):
         """
         Logarithm of the derivative of forward transformation.
         """
-        return self._inverse_log_jacobian(*args)
+        return self._inverse_log_jacobian(*args, **kwargs)
 
-    def __call__(self, *args):
+    def __call__(self, *args, **kwargs):
         """
         Call Bijector directly.
         This __call__ may go into two directions:
@@ -107,9 +111,9 @@ class Bijector(Cell):
         """
         if isinstance(args[0], Distribution):
             return TransformedDistribution(self, args[0])
-        return super(Bijector, self).__call__(*args)
+        return super(Bijector, self).__call__(*args, **kwargs)
 
-    def construct(self, name, *args):
+    def construct(self, name, *args, **kwargs):
         """
         Override construct in Cell.
 
@@ -120,11 +124,11 @@ class Bijector(Cell):
             Always raise RuntimeError as Distribution should not be called directly.
         """
         if name == 'forward':
-            return self.forward(*args)
+            return self.forward(*args, **kwargs)
         if name == 'inverse':
-            return self.inverse(*args)
+            return self.inverse(*args, **kwargs)
         if name == 'forward_log_jacobian':
-            return self.forward_log_jacobian(*args)
+            return self.forward_log_jacobian(*args, **kwargs)
         if name == 'inverse_log_jacobian':
-            return self.inverse_log_jacobian(*args)
+            return self.inverse_log_jacobian(*args, **kwargs)
         return None

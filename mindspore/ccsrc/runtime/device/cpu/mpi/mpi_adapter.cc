@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 #include "runtime/device/cpu/mpi/mpi_adapter.h"
-#ifdef ENABLE_MPI
 #include <algorithm>
 #include <sstream>
+#include <vector>
+#include <string>
 #include "pybind11/pybind11.h"
-#endif  // ENABLE_MPI
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -32,8 +32,6 @@ std::shared_ptr<MPIAdapter> MPIAdapter::Instance() {
   }
   return instance_;
 }
-
-#ifdef ENABLE_MPI
 
 #define RAISE_EXCEPTION(message)                                    \
   {                                                                 \
@@ -271,7 +269,6 @@ bool MPIAdapter::AllGather(const float *input, float *output, const std::vector<
   }
   return true;
 }
-#endif  // ENABLE_MPI
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore

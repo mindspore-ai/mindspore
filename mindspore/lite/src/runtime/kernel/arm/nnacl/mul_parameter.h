@@ -17,12 +17,13 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_MUL_PARAMETER_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_MUL_PARAMETER_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
+#include "nnacl/quantization/quantize.h"
 
-struct MulParameter {
+typedef struct MulParameter {
   OpParameter op_parameter_;
   int thread_count_;
   MulQuantArg mul_quant_arg_;
-};
+} MulParameter;
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_MUL_PARAMETER_H_

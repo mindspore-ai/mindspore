@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/int8/batch_to_space_int8.h"
-#include "src/runtime/kernel/arm/nnacl/arithmetic_common.h"
+#include "nnacl/int8/batch_to_space_int8.h"
+#include "nnacl/arithmetic_common.h"
 
 void BatchToSpaceNoCropForNHWC(const int8_t *input, int8_t *output, const int *in_shape, int out_n, const int *block,
                                QuantArg *in_quant_arg, QuantArg *out_quant_arg) {

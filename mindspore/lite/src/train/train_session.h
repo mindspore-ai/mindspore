@@ -19,47 +19,58 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <unordered_map>
+#include "include/context.h"
 #include "backend/session/session_basic.h"
 #include "backend/session/kernel_graph.h"
 #include "mindspore/lite/src/train/lite_kernel_runtime.h"
-#include "backend/session/session_factory.h"
+// #include "backend/session/session_factory.h"
 namespace mindspore {
 namespace lite::tensor {
 class Tensor;
 }
 namespace session {
 struct KernelRelation {
-    std::string node_full_name;
-    std::vector<tensor::Tensor *> input_tensor;
-    std::vector<tensor::Tensor *> output_tensor;
-    CNodePtr cnode;
+  std::string node_full_name;
+  std::vector<lite::tensor::Tensor *> input_tensor;
+  std::vector<lite::tensor::Tensor *> output_tensor;
+  CNodePtr cnode;
 };
 
-class TrainSession : public SessionBasic {
+class TrainSession {
  public:
-  TrainSession() : SessionBasic() {}
-  ~TrainSession() override = default;
-  void Init(uint32_t device_id) override {
-    SessionBasic::Init(device_id);
-    context_ = std::make_shared<Context>(kCPUDevice, device_id);
-  }
+  explicit TrainSession(lite::Context * context) { Init(context); }
+  ~TrainSession() = default;
 
-  GraphId CompileGraph(NotNull<FuncGraphPtr> func_graph) override;
+  GraphId CompileGraph(NotNull<FuncGraphPtr> func_graph);
 
-  void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) override;
+  void RunGraph(const GraphId &graph_id, const std::vector<lite::tensor::Tensor *> &inputs,
+                std::vector<lite::tensor::Tensor *> *outputs);
+
+  // void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) override
+  // {};
+ protected:
+  void Init(lite::Context *context);
+  std::shared_ptr<lite::Context> context_ = nullptr;
+  std::unordered_map<GraphId, std::shared_ptr<KernelGraph>> graphs_;
+  static GraphId graph_sum_;
+  KernelGraphPtr NewKernelGraph();
 
  private:
-  GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
-  GraphId CompileGraph(const char *model_buf, size_t size);
+  // GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
+  // GraphId CompileGraph(const char *model_buf, size_t size);
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const FuncGraphPtr &func_graph);
   int BuildKernelInputAndOutputFromFuncGraph(const KernelGraphPtr &kernel_graph);
+
+  lite::tensor::Tensor *GetTensorForAnfNode(const AnfNodePtr anf_node);
+
   void SetKernelInfo(const KernelGraph *kernel_graph);
   int BuildKernel(const KernelGraph *kernel_graph);
   lite::LiteInferKernelRuntime runtime_;
   std::map<std::string, KernelRelation> kernel_relation_infos_;
+  FuncGraphPtr func_graph_ = NULL;
+  std::map<AnfNodePtr, lite::tensor::Tensor *> tensors_;
 };
-MS_REG_SESSION(kCPUDevice, TrainSession);
 }  // namespace session
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_TRAIN_TRAIN_SESSION_H_
-

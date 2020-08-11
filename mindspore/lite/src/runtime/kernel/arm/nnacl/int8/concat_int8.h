@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_CONCAT_INT8_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_CONCAT_INT8_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
+#include "nnacl/concat_parameter.h"
 
-void Concat(int8_t **inputs, int8_t *output_ptr, ConcatQuantArg *quant_concat_parm, int axis);
+void Concat(int8_t **inputs, int8_t *output_ptr, ConcatParameter *para, int axis, int64_t real_dst_count, int task_id);
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_CONCAT_INT8_H_
-

@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_TRANSPOSE_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_TRANSPOSE_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct TransposeParameter {
+typedef struct TransposeParameter {
   OpParameter op_parameter_;
   int perm_[8];
   bool conjugate_;
@@ -27,13 +27,14 @@ struct TransposeParameter {
   int strides_[8];
   int out_strides_[8];
   int data_size_;
-};
+} TransposeParameter;
 
 int DoTranspose(float *in_data, float *out_data, int *input_shape, int *output_shape,
                 TransposeParameter *transpose_param);
 void TransposeDim2(float *in_data, float *out_data, int *strides, int *out_strides, int *perm, int *output_shape);
 void TransposeDim3(float *in_data, float *out_data, int *strides, int *out_strides, int *perm, int *output_shape);
 void TransposeDim4(float *in_data, float *out_data, int *strides, int *out_strides, int *perm, int *output_shape);
+void TransposeDim5(float *in_data, float *out_data, int *strides, int *out_strides, int *perm, int *output_shape);
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_TRANSPOSE_H_
 

@@ -21,8 +21,8 @@
 #include "src/runtime/kernel/arm/nnacl/int8/depth_to_space_int8.h"
 #include "include/errorcode.h"
 
-using mindspore::lite::RET_OK;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 int DepthToSpaceInt8CPUKernel::Init() {
@@ -42,10 +42,22 @@ int DepthToSpaceInt8CPUKernel::Init() {
   auto out_quant_args = out_tensor->GetQuantParams();
   out_quant_arg_.scale_ = out_quant_args.front().scale;
   out_quant_arg_.zp_ = out_quant_args.front().zeroPoint;
-  return RET_OK;
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
+
+int DepthToSpaceInt8CPUKernel::ReSize() {
+  return DepthToSpaceBaseCPUKernel::ReSize();
 }
 
 int DepthToSpaceInt8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   auto input = inputs_[0];
   auto output = outputs_[0];
   const int8_t *input_data = reinterpret_cast<const int8_t *>(input->Data());

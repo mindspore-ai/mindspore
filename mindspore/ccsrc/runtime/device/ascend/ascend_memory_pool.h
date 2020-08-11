@@ -31,7 +31,9 @@ class AscendMemoryPool : public DynamicMemPoolBestFit {
 
   size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr) override;
   bool FreeDeviceMem(const DeviceMemPtr &addr) override;
+  void set_device_mem_size(uint64_t device_mem_size);
   void set_device_mem_pool_base(uint8_t *device_mem_pool_base);
+  void set_device_mem_pool_offset(uint64_t device_mem_pool_offset);
   void set_graph_dynamic_mem_offset(uint64_t graph_dynamic_mem_offset);
 
   uint64_t device_mem_pool_offset() const;
@@ -52,6 +54,7 @@ class AscendMemoryPool : public DynamicMemPoolBestFit {
  private:
   AscendMemoryPool() = default;
   uint8_t *device_mem_pool_base_{nullptr};
+  uint64_t device_mem_size_{0};
   uint64_t device_mem_pool_offset_{0};
   uint64_t graph_dynamic_mem_offset_{0};
 };

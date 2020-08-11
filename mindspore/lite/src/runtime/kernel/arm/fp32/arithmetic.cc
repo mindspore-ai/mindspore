@@ -41,6 +41,10 @@ ArithmeticCPUKernel::~ArithmeticCPUKernel() {
   }
 }
 int ArithmeticCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto element_num = outputs_[0]->ElementsNum();
 
   tile_data0_ = new float[element_num];
@@ -92,6 +96,11 @@ int ArithmeticsRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int ArithmeticCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return ret;
+  }
   if (arithmeticParameter_->broadcasting_) {
     auto input_data0 = reinterpret_cast<float *>(inputs_[0]->Data());
     auto input_data1 = reinterpret_cast<float *>(inputs_[1]->Data());
@@ -108,9 +117,9 @@ int ArithmeticCPUKernel::Run() {
 kernel::LiteKernel *CpuArithmeticFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                    const std::vector<lite::tensor::Tensor *> &outputs,
                                                    OpParameter *parameter, const lite::Context *ctx,
-                                                   const kernel::KernelKey &desc) {
+                                                   const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(parameter != nullptr);
-  auto kernel = new (std::nothrow) ArithmeticCPUKernel(parameter, inputs, outputs, ctx);
+  auto kernel = new (std::nothrow) ArithmeticCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create kernel failed, name: " << parameter->name_;
     return nullptr;

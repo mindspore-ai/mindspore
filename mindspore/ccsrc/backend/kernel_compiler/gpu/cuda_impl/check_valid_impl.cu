@@ -25,10 +25,10 @@ __global__ void CheckValidKernel(const size_t size, const T *box, const T *img_m
     const size_t right_y = i * 4 + 3;
 
     S valid_flag = false;
-    valid_flag |= !(box[left_x] >= 0.f);
-    valid_flag |= !(box[left_y] >= 0.f);
-    valid_flag |= !(img_metas[0] * img_metas[2] - 1.f >= box[right_x]);
-    valid_flag |= !(img_metas[1] * img_metas[2] - 1.f >= box[right_y]);
+    valid_flag |= !(box[left_x] >= static_cast<T>(0.0));
+    valid_flag |= !(box[left_y] >= static_cast<T>(0.0));
+    valid_flag |= !(img_metas[1] * img_metas[2] - static_cast<T>(1.0) >= box[right_x]);
+    valid_flag |= !(img_metas[0] * img_metas[2] - static_cast<T>(1.0) >= box[right_y]);
 
     valid[i] = !valid_flag;
   }
@@ -42,4 +42,6 @@ void CheckValid(const size_t &size, const T *box, const T *img_metas, S *valid, 
 }
 
 template void CheckValid(const size_t &size, const float *box, const float *img_metas, bool *valid,
+                         cudaStream_t cuda_stream);
+template void CheckValid(const size_t &size, const half *box, const half *img_metas, bool *valid,
                          cudaStream_t cuda_stream);

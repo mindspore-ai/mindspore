@@ -269,6 +269,10 @@ void ConvolutionInt8CPUKernel::ConfigInputOutput() {
 }
 
 int ConvolutionInt8CPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
@@ -379,6 +383,11 @@ int ConvolutionInt8Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int ConvolutionInt8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   auto input_tensor = inputs_.at(kInputIndex);
   auto ori_input_data = input_tensor->Data();
   int in_batch = conv_param_->input_batch_;
@@ -398,7 +407,7 @@ int ConvolutionInt8CPUKernel::Run() {
 kernel::LiteKernel *CpuConvInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs,
                                              OpParameter *opParameter, const Context *ctx,
-                                             const kernel::KernelKey &desc) {
+                                             const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D);
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
@@ -410,9 +419,9 @@ kernel::LiteKernel *CpuConvInt8KernelCreator(const std::vector<lite::tensor::Ten
   int dilation_w = conv_param->dilation_w_;
   kernel::LiteKernel *kernel;
   if (kernel_h == 3 && kernel_w == 3 && stride_h == 1 && stride_w == 1 && dilation_h == 1 && dilation_w == 1) {
-    kernel = new (std::nothrow) kernel::Convolution3x3Int8CPUKernel(opParameter, inputs, outputs, ctx);
+    kernel = new (std::nothrow) kernel::Convolution3x3Int8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   } else {
-    kernel = new (std::nothrow) kernel::ConvolutionInt8CPUKernel(opParameter, inputs, outputs, ctx);
+    kernel = new (std::nothrow) kernel::ConvolutionInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   }
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";

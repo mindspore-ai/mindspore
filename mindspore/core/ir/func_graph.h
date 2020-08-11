@@ -170,7 +170,9 @@ class FuncGraph : public FuncGraphBase {
 
   // create a cnode with given inputs, bound to this graph, and set to specific scope
   CNodePtr NewCNodeWithScope(const std::vector<AnfNodePtr> &inputs, const ScopePtr &scope);
+  virtual CNodePtr NewCNode(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &prim_inputs);
 
+  virtual ParameterPtr add_parameter(const tensor::MetaTensorPtr &meta_tensor);
   // Functions for handling variable argument, keyword-only arguments and variable keyword argument
   AnfNodePtr GetDefaultValueByName(const std::string &name);
   void set_param_default_value(const std::string &name, const AnfNodePtr &node) {

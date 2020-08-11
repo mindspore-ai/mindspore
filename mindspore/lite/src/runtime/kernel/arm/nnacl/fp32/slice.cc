@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/slice.h"
+#include "nnacl/fp32/slice.h"
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/op_base.h"
+#include "nnacl/errorcode.h"
 
 void PadSliceParameterTo4D(SliceParameter *param) {
   int32_t begin[DIMENSION_4D];

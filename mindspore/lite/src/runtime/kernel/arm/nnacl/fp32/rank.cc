@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/rank.h"
+#include "nnacl/fp32/rank.h"
 
 void Rank(float* output, int rank) {
     output[0] = (float)(rank);

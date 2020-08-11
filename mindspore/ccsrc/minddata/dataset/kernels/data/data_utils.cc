@@ -20,6 +20,7 @@
 #include <limits>
 #include <string>
 #include <vector>
+#include <utility>
 
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/data_type.h"
@@ -645,6 +646,31 @@ Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::
 
   output->push_back(out);
 
+  return Status::OK();
+}
+
+Status BatchTensorToCVTensorVector(const std::shared_ptr<Tensor> &input,
+                                   std::vector<std::shared_ptr<CVTensor>> *output) {
+  std::vector<int64_t> tensor_shape = input->shape().AsVector();
+  TensorShape remaining({-1});
+  std::vector<int64_t> index(tensor_shape.size(), 0);
+  if (tensor_shape.size() <= 1) {
+    RETURN_STATUS_UNEXPECTED("Tensor must be at least 2-D in order to unpack");
+  }
+  TensorShape element_shape(std::vector<int64_t>(tensor_shape.begin() + 1, tensor_shape.end()));
+
+  for (; index[0] < tensor_shape[0]; index[0]++) {
+    uchar *start_addr_of_index = nullptr;
+    std::shared_ptr<Tensor> out;
+
+    RETURN_IF_NOT_OK(input->StartAddrOfIndex(index, &start_addr_of_index, &remaining));
+    RETURN_IF_NOT_OK(input->CreateFromMemory(element_shape, input->type(), start_addr_of_index, &out));
+    std::shared_ptr<CVTensor> cv_out = CVTensor::AsCVTensor(std::move(out));
+    if (!cv_out->mat().data) {
+      RETURN_STATUS_UNEXPECTED("Could not convert to CV Tensor");
+    }
+    output->push_back(cv_out);
+  }
   return Status::OK();
 }
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/arithmetic_common.h"
+#include "nnacl/arithmetic_common.h"
 
 void TileOneDimension(float *inData, float *outData, int dim, size_t ndim, int *inShape, int *inStrides,
                       int *outStrides, int *multiple) {

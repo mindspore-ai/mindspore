@@ -25,27 +25,38 @@ STATUS TfliteTransposeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tf
                                     const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                     const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                     schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse TfliteTransposeParser";
   std::unique_ptr<schema::TransposeT> attr(new schema::TransposeT());
 
   if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->perm)) {
-    MS_LOG(ERROR) << "parse Transpose attr perm failed";
+    MS_LOG(ERROR) << "get transpose -> perm failed";
     return RET_ERROR;
   }
 
   auto weight_index = tfliteOp->inputs[1];
   const auto &weight_tensor = tfliteTensors[weight_index];
+  if (weight_tensor == nullptr) {
+    MS_LOG(ERROR) << "weight_tensor is null";
+    return RET_ERROR;
+  }
   std::vector<tflite::TensorT *> weight_tensors{weight_tensor.get()};
-  if (RET_OK != ParseWeight(weight_tensors, tfliteModelBuffer, tensor_cache, schema::Format_KHWC)) {
+  if (RET_OK != ParseTensor(weight_tensors, tfliteModelBuffer, tensor_cache, TF_CONST)) {
     MS_LOG(ERROR) << "parse weight failed";
     return RET_ERROR;
   }
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Transpose;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_Transpose;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

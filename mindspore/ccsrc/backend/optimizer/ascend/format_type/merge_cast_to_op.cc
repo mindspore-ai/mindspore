@@ -172,7 +172,6 @@ AnfNodePtr MergeCastToNextOp(const FuncGraphPtr &graph, const CNodePtr &node, co
                << "ori kernel info" << ori_kernel_info->ToString() << "alternative kernel info"
                << (*alternative_kernel_info)->ToString();
   AnfAlgo::SetSelectKernelBuildInfo(*alternative_kernel_info, next_cnode.get());
-  ChangeNodeInferInfo(next_cnode, node, cast_index);
   if (node->inputs().size() < kCastInputNum) {
     MS_LOG(EXCEPTION) << "Op[" << node->DebugString() << "] has wrong input num:";
   }

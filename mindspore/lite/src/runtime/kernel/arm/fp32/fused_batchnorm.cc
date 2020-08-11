@@ -28,6 +28,10 @@ using mindspore::schema::PrimitiveType_FusedBatchNorm;
 
 namespace mindspore::kernel {
 int FusedBatchnormCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   input_shape_ = reinterpret_cast<int *>(malloc(sizeof(int) * inputs_[0]->shape().size()));
   memcpy(input_shape_, inputs_[0]->shape().data(), inputs_[0]->shape().size() * sizeof(int));
   return RET_OK;
@@ -36,6 +40,11 @@ int FusedBatchnormCPUKernel::Init() {
 int FusedBatchnormCPUKernel::ReSize() { return RET_OK; }
 
 int FusedBatchnormCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   auto input_addr = reinterpret_cast<float *>(inputs_.at(0)->Data());
   auto scale_addr = reinterpret_cast<float *>(inputs_.at(1)->Data());
   auto offest_addr = reinterpret_cast<float *>(inputs_.at(2)->Data());
@@ -51,10 +60,11 @@ int FusedBatchnormCPUKernel::Run() {
 kernel::LiteKernel *CpuFusedBatchnormKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                    const std::vector<lite::tensor::Tensor *> &outputs,
                                                    OpParameter *opParameter, const lite::Context *ctx,
-                                                   const kernel::KernelKey &desc) {
+                                                   const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_FusedBatchNorm);
-  auto *kernel = new (std::nothrow) FusedBatchnormCPUKernel(opParameter, inputs, outputs);
+  FusedBatchnormCPUKernel *kernel = new (std::nothrow) FusedBatchnormCPUKernel(opParameter, inputs, outputs, ctx,
+                                                                               primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new FusedBatchnormCPUKernel fail!";
     return nullptr;

@@ -17,7 +17,7 @@ import numpy as np
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
-from ._utils.utils import cast_to_tensor, check_greater_zero
+from ._utils.utils import cast_to_tensor, check_greater_zero, check_type
 
 class Exponential(Distribution):
     """
@@ -96,9 +96,11 @@ class Exponential(Distribution):
         Constructor of Exponential distribution.
         """
         param = dict(locals())
-        super(Exponential, self).__init__(dtype, name, param)
+        valid_dtype = mstype.float_type
+        check_type(dtype, valid_dtype, "Exponential")
+        super(Exponential, self).__init__(seed, dtype, name, param)
         if rate is not None:
-            self._rate = cast_to_tensor(rate, mstype.float32)
+            self._rate = cast_to_tensor(rate, dtype)
             check_greater_zero(self._rate, "rate")
         else:
             self._rate = rate
@@ -135,7 +137,7 @@ class Exponential(Distribution):
     def _mean(self, rate=None):
         r"""
         .. math::
-            MEAN(EXP) = \fract{1.0}{\lambda}.
+            MEAN(EXP) = \frac{1.0}{\lambda}.
         """
         rate = self.rate if rate is None else rate
         return 1.0 / rate
@@ -152,7 +154,7 @@ class Exponential(Distribution):
     def _sd(self, rate=None):
         r"""
         .. math::
-            sd(EXP) = \fract{1.0}{\lambda}.
+            sd(EXP) = \frac{1.0}{\lambda}.
         """
         rate = self.rate if rate is None else rate
         return 1.0 / rate

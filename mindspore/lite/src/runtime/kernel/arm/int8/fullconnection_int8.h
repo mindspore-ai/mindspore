@@ -28,8 +28,9 @@ namespace mindspore::kernel {
 class FullconnectionInt8CPUKernel : public FullconnectionBaseCPUKernel {
  public:
   FullconnectionInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                              const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : FullconnectionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+                              const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                              const lite::Primitive *primitive)
+      : FullconnectionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~FullconnectionInt8CPUKernel() override {
     ctx_->allocator->Free(a_c8_ptr_);
     ctx_->allocator->Free(b_r8_ptr_);

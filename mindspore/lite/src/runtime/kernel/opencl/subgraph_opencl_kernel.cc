@@ -24,6 +24,7 @@ SubGraphOpenCLKernel::~SubGraphOpenCLKernel() { UnInit(); }
 
 int SubGraphOpenCLKernel::Init() {
   allocator_ = lite::opencl::OpenCLRuntime::GetInstance()->GetAllocator();
+  MS_LOG(DEBUG) << "input num=" << inputs_.size() << ", output num=" << outputs_.size();
   for (const auto tensor : inputs_) {
     tensor->set_allocator(allocator_);
   }
@@ -38,8 +39,7 @@ int SubGraphOpenCLKernel::Init() {
       data = allocator_->MapBuffer(data, CL_MAP_WRITE, nullptr, true);
       tensor->SetData(data);
     } else {
-      MS_LOG(ERROR) << "OpenCL kernel must use GPU buffer pointer, "
-                    << "please make sure that this buffer allocate by OpenCLAllocator!";
+      MS_LOG(ERROR) << "SubGraphOpenCLKernel input nullptr!";
     }
   }
   return 0;

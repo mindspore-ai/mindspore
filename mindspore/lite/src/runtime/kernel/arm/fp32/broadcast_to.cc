@@ -27,6 +27,10 @@ using mindspore::schema::PrimitiveType_BroadcastTo;
 namespace mindspore::kernel {
 
 int BroadcastToCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto input_shape = inputs_[0]->shape();
   for (size_t i = 0; i < input_shape.size(); ++i) {
     shape_info_.input_shape_[i] = input_shape[i];
@@ -42,6 +46,11 @@ int BroadcastToCPUKernel::Init() {
 }
 
 int BroadcastToCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   auto input_data = reinterpret_cast<float *>(inputs_.at(0)->Data());
   auto output_data = reinterpret_cast<float *>(outputs_.at(0)->Data());
 
@@ -51,13 +60,13 @@ int BroadcastToCPUKernel::Run() {
 kernel::LiteKernel *CpuBroadcastToFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                     const std::vector<lite::tensor::Tensor *> &outputs,
                                                     OpParameter *op_parameter, const lite::Context *ctx,
-                                                    const kernel::KernelKey &desc) {
+                                                    const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Input op_parameter is nullptr!";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_BroadcastTo);
-  auto *kernel = new (std::nothrow) BroadcastToCPUKernel(op_parameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) BroadcastToCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new BroadcastToCPUKernel fail!";
     return nullptr;

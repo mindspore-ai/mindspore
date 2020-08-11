@@ -36,7 +36,7 @@ class MatMulOpenCLKernel : public LiteKernel {
  public:
   explicit MatMulOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                               const std::vector<lite::tensor::Tensor *> &outputs, bool hasBias)
-      : LiteKernel(parameter, inputs, outputs) {
+      : LiteKernel(parameter, inputs, outputs, nullptr, nullptr) {
     hasBias_ = hasBias;
   }
   ~MatMulOpenCLKernel() override{};

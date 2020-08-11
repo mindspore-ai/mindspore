@@ -20,8 +20,8 @@
 #include "src/runtime/kernel/arm/nnacl/int8/arg_min_max_int8.h"
 #include "include/errorcode.h"
 
-using mindspore::lite::RET_OK;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 int ArgMinMaxInt8CPUKernel::Init() {
@@ -40,10 +40,22 @@ int ArgMinMaxInt8CPUKernel::Init() {
   auto out_quant_args = out_tensor->GetQuantParams();
   out_quant_arg_.scale_ = out_quant_args.front().scale;
   out_quant_arg_.zp_ = out_quant_args.front().zeroPoint;
-  return RET_OK;
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
+
+int ArgMinMaxInt8CPUKernel::ReSize() {
+  return ArgMinMaxBaseCPUKernel::ReSize();
 }
 
 int ArgMinMaxInt8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
+  }
   auto input = inputs_.at(0);
 
   const int8_t *input_data = reinterpret_cast<const int8_t *>(inputs_.at(0)->Data());
@@ -70,6 +82,7 @@ int ArgMinMaxInt8CPUKernel::Run() {
     ArgMinMaxDim3(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
     break;
   }
+  FreeTmpMemory();
   return RET_OK;
 }
 }  // namespace mindspore::kernel

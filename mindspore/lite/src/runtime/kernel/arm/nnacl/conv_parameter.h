@@ -20,10 +20,10 @@
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/quantization/quantize.h"
+#include "nnacl/op_base.h"
+#include "nnacl/quantization/quantize.h"
 
-struct ConvParameter {
+typedef struct ConvParameter {
   OpParameter op_parameter_;
   ConvQuantArg conv_quant_arg_;
   int kernel_h_;
@@ -53,7 +53,26 @@ struct ConvParameter {
   int output_unit_;
   bool is_relu_;
   bool is_relu6_;
-};
+} ConvParameter;
+
+
+typedef struct SlidingWindowParam {
+  int left_;
+  int right_;
+  int top_;
+  int bottom_;
+  int c_block_;
+  int block_channel_;
+  int ic4_channel_;
+  int out_step_;
+  int out_h_step_;
+  int in_step_;
+  int in_h_step_;
+  int in_sh_step_;  // stride H
+  int in_sw_step_;  // stride W
+  int in_kh_step_;  // kernel H
+  int in_kw_step_;  // kernel W
+  int kernel_step_;
+} SlidingWindowParam;
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CONV_PARAMETER_H_
-

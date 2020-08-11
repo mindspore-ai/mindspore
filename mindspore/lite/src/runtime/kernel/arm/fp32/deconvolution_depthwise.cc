@@ -39,7 +39,7 @@ int DeconvolutionDepthwiseCPUKernel::InitSlideParam() {
 
   // init sliding window param
   sliding_ = new SlidingWindowParam;
-  InitSlidingParam(sliding_, conv_param_, C4NUM);
+  InitSlidingParamConvDw(sliding_, conv_param_, C4NUM);
   return RET_OK;
 }
 
@@ -102,6 +102,10 @@ int DeconvolutionDepthwiseCPUKernel::InitBuffer() {
 }
 
 int DeconvolutionDepthwiseCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   InitSlideParam();
   // conv base init
   ConvolutionBaseCPUKernel::Init();
@@ -155,6 +159,11 @@ int DeconvDwRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int DeconvolutionDepthwiseCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   if (conv_param_->input_channel_ != conv_param_->output_channel_) {
     MS_LOG(ERROR) << "Only support input channel equals output channel.";
     return RET_ERROR;
@@ -192,10 +201,11 @@ int DeconvolutionDepthwiseCPUKernel::Run() {
 kernel::LiteKernel *CpuDeconvDwFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                  const std::vector<lite::tensor::Tensor *> &outputs,
                                                  OpParameter *opParameter, const lite::Context *ctx,
-                                                 const kernel::KernelKey &desc) {
+                                                 const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DeDepthwiseConv2D);
-  auto kernel = new (std::nothrow) kernel::DeconvolutionDepthwiseCPUKernel(opParameter, inputs, outputs, ctx);
+  auto kernel =
+    new (std::nothrow) kernel::DeconvolutionDepthwiseCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
     return nullptr;

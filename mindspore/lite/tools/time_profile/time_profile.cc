@@ -42,12 +42,14 @@ int TimeProfile::GenerateInputData() {
     auto input_data = tensor->MutableData();
     if (input_data == nullptr) {
       MS_LOG(ERROR) << "MallocData for inTensor failed";
+      return RET_ERROR;
     }
     MS_ASSERT(tensor->GetData() != nullptr);
     auto tensor_byte_size = tensor->Size();
     auto status = GenerateRandomData(tensor_byte_size, input_data);
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "Generate RandomData for inTensor failed %d" << status;
+      MS_LOG(ERROR) << "Generate RandomData for inTensor failed " << status;
+      return RET_ERROR;
     }
   }
   return RET_OK;
@@ -63,10 +65,14 @@ int TimeProfile::ReadInputFile() {
 
   size_t size;
   char *bin_buf = ReadFile(_flags->in_data_path_.c_str(), &size);
-
+  if (bin_buf == nullptr) {
+    MS_LOG(ERROR) << "Input data file error, required: ";
+    return RET_ERROR;
+  }
   auto tensor_data_size = inTensor->Size();
   if (size != tensor_data_size) {
-    MS_LOG(ERROR) << "Input binary file size error, required: %zu, in fact: %zu" << tensor_data_size << size;
+    MS_LOG(ERROR) << "Input binary file size error, required: " << tensor_data_size << " in fact: %zu" << size;
+    return RET_ERROR;
   }
   auto input_data = inTensor->MutableData();
   memcpy(input_data, bin_buf, tensor_data_size);
@@ -79,11 +85,13 @@ int TimeProfile::LoadInput() {
     auto status = GenerateInputData();
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Generate input data error " << status;
+      return RET_ERROR;
     }
   } else {
     auto status = ReadInputFile();
     if (status != RET_OK) {
       MS_LOG(ERROR) << "ReadInputFile error, " << status;
+      return RET_ERROR;
     }
   }
   return RET_OK;
@@ -93,7 +101,8 @@ int TimeProfile::InitSession() {
   size_t size = 0;
   char *graph_buf = ReadFile(_flags->model_path_.c_str(), &size);
   if (graph_buf == nullptr) {
-    MS_LOG(ERROR) << "Load graph failed, path %s" << _flags->model_path_;
+    MS_LOG(ERROR) << "Load graph failed, path " << _flags->model_path_;
+    return RET_ERROR;
   }
 
   auto ctx = new lite::Context;
@@ -104,6 +113,7 @@ int TimeProfile::InitSession() {
   session_ = session::LiteSession::CreateSession(ctx);
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "New session failed while running.";
+    return RET_ERROR;
   }
 
   return RET_OK;
@@ -165,17 +175,31 @@ int TimeProfile::Init() {
   MS_LOG(INFO) << "InDataPath = " << _flags->in_data_path_;
   MS_LOG(INFO) << "LoopCount = " << _flags->loop_count_;
   MS_LOG(INFO) << "NumThreads = " << _flags->num_threads_;
-  if (_flags->cpu_bind_mode_ == -1) {
+
+  if (_flags->num_threads_ < 1) {
+    MS_LOG(ERROR) << "NumThreads: " << _flags->num_threads_ << " must greater than or equal 1";
+    return RET_ERROR;
+  }
+
+  if (_flags->loop_count_ < 1) {
+    MS_LOG(ERROR) << "LoopCount: " << _flags->loop_count_ << " must greater than or equal 1";
+    return RET_ERROR;
+  }
+
+  if (_flags->cpu_bind_mode_ == CpuBindMode::MID_CPU) {
     MS_LOG(INFO) << "cpuBindMode = MID_CPU";
-  } else if (_flags->cpu_bind_mode_ == 1) {
+  } else if (_flags->cpu_bind_mode_ == CpuBindMode::HIGHER_CPU) {
     MS_LOG(INFO) << "cpuBindMode = HIGHER_CPU";
-  } else {
+  } else if (_flags->cpu_bind_mode_ == CpuBindMode::NO_BIND) {
     MS_LOG(INFO) << "cpuBindMode = NO_BIND";
+  } else {
+    MS_LOG(ERROR) << "cpuBindMode Error";
+    return RET_ERROR;
   }
 
   if (_flags->model_path_.empty()) {
     MS_LOG(ERROR) << "modelPath is required";
-    return 1;
+    return RET_ERROR;
   }
 
   auto status = InitSession();
@@ -274,11 +298,11 @@ int TimeProfile::RunTimeProfile() {
   char *graphBuf = ReadFile(_flags->model_path_.c_str(), &size);
   if (graphBuf == nullptr) {
     MS_LOG(ERROR) << "Load graph failed while running %s", modelName.c_str();
-    return 1;
+    return RET_ERROR;
   }
   auto model = lite::Model::Import(graphBuf, size);
 
-  auto ret = session_->CompileGraph(model.get());
+  auto ret = session_->CompileGraph(model);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Compile graph failed.";
     return RET_ERROR;
@@ -300,6 +324,7 @@ int TimeProfile::RunTimeProfile() {
     ret = session_->RunGraph(before_call_back_, after_call_back_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Run graph failed.";
+      return RET_ERROR;
     }
     auto outputs = session_->GetOutputs();
 
@@ -307,21 +332,11 @@ int TimeProfile::RunTimeProfile() {
     uint64_t time = run_end - run_begin;
     time_avg += time;
     session_->BindThread(false);
-    /*
-    for(auto &output : outputs) {
-      for (auto &outputTensor : output.second) {
-        delete outputTensor;
-      }
-    }*/
     outputs.clear();
   }
 
   time_avg /= _flags->loop_count_;
   float runCost = static_cast<float>(time_avg) / 1000.0f;
-
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Run session failed.";
-  }
 
   const std::vector<std::string> per_op_name = {"opName", "avg(ms)", "percent", "calledTimes", "opTotalTime"};
   const std::vector<std::string> per_op_type = {"opType", "avg(ms)", "percent", "calledTimes", "opTotalTime"};
@@ -336,6 +351,8 @@ int TimeProfile::RunTimeProfile() {
   }
   ms_inputs_.clear();
   delete graphBuf;
+  delete session_;
+  delete model;
   return ret;
 }
 
@@ -358,11 +375,13 @@ int RunTimeProfile(int argc, const char **argv) {
   auto ret = time_profile.Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init TimeProfile failed.";
+    return RET_ERROR;
   }
 
   ret = time_profile.RunTimeProfile();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run TimeProfile failed.";
+    return RET_ERROR;
   }
 
   return RET_OK;

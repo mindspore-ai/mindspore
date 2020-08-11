@@ -25,13 +25,15 @@
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
-using mindspore::lite::RET_PARAM_INVALID;
 using mindspore::lite::RET_FORMAT_ERR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::RET_PARAM_INVALID;
 using mindspore::schema::PrimitiveType_DepthToSpace;
 
 namespace mindspore::kernel {
-int DepthToSpaceBaseCPUKernel::Init() {
+int DepthToSpaceBaseCPUKernel::Init() { return RET_OK; }
+
+int DepthToSpaceBaseCPUKernel::ReSize() {
   if (inputs_[0]->GetFormat() != schema::Format_NHWC) {
     MS_LOG(ERROR) << "depth_to_space only support NHWC now!";
     return RET_FORMAT_ERR;
@@ -62,13 +64,13 @@ int DepthToSpaceBaseCPUKernel::Init() {
 kernel::LiteKernel *CpuDepthToSpaceInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                      const std::vector<lite::tensor::Tensor *> &outputs,
                                                      OpParameter *op_parameter, const lite::Context *ctx,
-                                                     const kernel::KernelKey &desc) {
+                                                     const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_DepthToSpace);
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Input op_parameter is nullptr!";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) DepthToSpaceInt8CPUKernel(op_parameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) DepthToSpaceInt8CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new BatchToSpaceInt8CPUKernel fail!";
     return nullptr;
@@ -87,13 +89,13 @@ kernel::LiteKernel *CpuDepthToSpaceInt8KernelCreator(const std::vector<lite::ten
 kernel::LiteKernel *CpuDepthToSpaceFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                      const std::vector<lite::tensor::Tensor *> &outputs,
                                                      OpParameter *op_parameter, const lite::Context *ctx,
-                                                     const kernel::KernelKey &desc) {
+                                                     const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_DepthToSpace);
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Input op_parameter is nullptr!";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) DepthToSpaceCPUKernel(op_parameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) DepthToSpaceCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new DepthToSpaceCPUKernel fail!";
     return nullptr;

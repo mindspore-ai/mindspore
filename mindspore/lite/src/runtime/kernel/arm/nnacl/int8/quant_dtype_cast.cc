@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/int8/quant_dtype_cast.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include <math.h>
+#include "nnacl/int8/quant_dtype_cast.h"
+#include "nnacl/errorcode.h"
 
 int DequantizeInt8(int8_t *quant_values, float *real_values, float scale, int32_t zp, int size) {
   if (quant_values == nullptr || real_values == nullptr) {
@@ -23,7 +24,7 @@ int DequantizeInt8(int8_t *quant_values, float *real_values, float scale, int32_
   }
 
   for (int i = 0; i < size; ++i) {
-    real_values[i] = (quant_values[i] + zp) * scale;
+    real_values[i] = (quant_values[i] - zp) * scale;
   }
   return NNACL_OK;
 }
@@ -34,7 +35,14 @@ int QuantizeToInt8(float *real_values, int8_t *quant_values, float scale, int32_
   }
 
   for (int i = 0; i < size; ++i) {
-    quant_values[i] = (int8_t)round(real_values[i] / scale + zp);
+    float temp = round(real_values[i] / scale + zp);
+    if (temp > 127) {
+      quant_values[i] = 127;
+    } else if (temp < -128) {
+      quant_values[i] = -128;
+    } else {
+      quant_values[i] = (int8_t)temp;
+    }
   }
   return NNACL_OK;
 }

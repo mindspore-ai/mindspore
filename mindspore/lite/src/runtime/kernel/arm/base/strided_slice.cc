@@ -42,12 +42,18 @@ int StridedSliceCPUKernel::Init() {
 int StridedSliceCPUKernel::ReSize() { return 0; }
 
 int StridedSliceCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
+
   auto input = inputs_.at(0);
   auto output = outputs_.at(0);
   MS_ASSERT(input);
   MS_ASSERT(output);
 
-  auto ret = DoStridedSlice(input->Data(), output->Data(), reinterpret_cast<StridedSliceParameter *>(opParameter));
+  ret = DoStridedSlice(input->Data(), output->Data(), reinterpret_cast<StridedSliceParameter *>(opParameter));
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StridedSlice error error_code[" << ret << "]";
     return RET_ERROR;
@@ -58,13 +64,13 @@ int StridedSliceCPUKernel::Run() {
 kernel::LiteKernel *CpuStridedSliceKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                  const std::vector<lite::tensor::Tensor *> &outputs,
                                                  OpParameter *opParameter, const lite::Context *ctx,
-                                                 const kernel::KernelKey &desc) {
+                                                 const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_StridedSlice);
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "opParameter null pointer dereferencing.";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) StridedSliceCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) StridedSliceCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "New kernel fails.";
     return nullptr;

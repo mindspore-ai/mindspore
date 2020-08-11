@@ -54,7 +54,12 @@ int CropInt8CPUKernel::Init() {
 int CropInt8CPUKernel::ReSize() { return 0; }
 
 int CropInt8CPUKernel::Run() {
-  auto ret = LiteBackendParallelLaunch(CropInt8Run, this, thread_count_);
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
+  ret = LiteBackendParallelLaunch(CropInt8Run, this, thread_count_);
   return ret;
 }
 

@@ -17,21 +17,21 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_TOPK_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_TOPK_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct TopkNode {
+typedef struct TopkNode {
   float element;
   int32_t index;
-};
+} TopkNode;
 
-struct TopkParameter {
+typedef struct TopkParameter {
   OpParameter op_parameter_;
   int last_dim_size_;
   int loop_num_;
   int k_;
   bool sorted_;
   void *topk_node_list_;
-};
+} TopkParameter;
 
 void Topk(float *input_data, float *output_data, int32_t *output_index, TopkParameter *parameter);
 

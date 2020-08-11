@@ -24,7 +24,6 @@ namespace ascend {
 constexpr uint64_t kAscendDeviceMemGB = 30;
 constexpr uint64_t kMemSizeGB = 30;
 constexpr uint64_t kAscendDeviceMemSize = (kAscendDeviceMemGB << kMemSizeGB);
-constexpr uint64_t kReservedMemorySize = 10 * 1024 * 1024;
 
 void AscendMemoryManager::MallocDeviceMemory() {
   auto context_mem = GetDeviceMemSizeFromContext();
@@ -35,8 +34,9 @@ void AscendMemoryManager::MallocDeviceMemory() {
     MS_EXCEPTION(DeviceProcessError) << "rtMalloc mem size[" << device_mem_size_ << "] fail, ret[" << ret << "]";
   }
 
-  dynamic_mem_offset_ = device_mem_size_ - kReservedMemorySize;
+  AscendMemoryPool::GetInstance().set_device_mem_size(device_mem_size_);
   AscendMemoryPool::GetInstance().set_device_mem_pool_base(device_mem_base_);
+  AscendMemoryPool::GetInstance().set_device_mem_pool_offset(device_mem_size_);
   AscendMemoryPool::GetInstance().set_graph_dynamic_mem_offset(dynamic_mem_offset_);
 }
 
@@ -69,18 +69,11 @@ void AscendMemoryManager::FreeDeviceMemory() {
     }
     device_mem_base_ = nullptr;
   }
-  if (device_mem_pool_base_ != nullptr) {
-    auto ret = rtFree(device_mem_pool_base_);
-    if (ret != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "rtFree mem size[" << device_mem_pool_size_ << "] fail, ret[" << ret << "]";
-    }
-    device_mem_pool_base_ = nullptr;
-  }
 }
 
 void AscendMemoryManager::ResetDynamicMemory() {
   total_dynamic_size_ = 0;
-  dynamic_mem_offset_ = device_mem_size_ - kReservedMemorySize;
+  dynamic_mem_offset_ = 0;
   AscendMemoryPool::GetInstance().set_graph_dynamic_mem_offset(dynamic_mem_offset_);
 }
 
@@ -99,7 +92,7 @@ uint8_t *AscendMemoryManager::MallocStaticMem(size_t size, bool communication_me
 
   auto device_mem_pool_offset = AscendMemoryPool::GetInstance().device_mem_pool_offset();
   MS_LOG(INFO) << "Malloc Memory: Static, total[" << device_mem_size_ << "] (dynamic[" << total_dynamic_size_
-               << "] memory pool[" << device_mem_pool_offset << "])"
+               << "] memory pool[" << device_mem_size_ - device_mem_pool_offset << "])"
                << " malloc [" << align_size << "] communication_mem: " << communication_mem;
 
   if (communication_mem) {
@@ -123,15 +116,11 @@ uint8_t *AscendMemoryManager::MallocDynamicMem(size_t size, bool communication_m
   MS_LOG(INFO) << "Malloc Memory: Dynamic, total[" << device_mem_size_ << "] (dynamic[" << total_dynamic_size_
                << "] memory pool[" << device_mem_pool_offset << "])"
                << " malloc [" << align_size << "] communication_mem: " << communication_mem;
-
-  if (dynamic_mem_offset_ < align_size) {
+  auto offset = dynamic_mem_offset_;
+  auto new_offset = dynamic_mem_offset_ + align_size;
+  if (new_offset >= device_mem_pool_offset) {
     MS_LOG(EXCEPTION) << "Out of memory!!! total[" << device_mem_size_ << "] (dynamic[" << total_dynamic_size_
-                      << "]) malloc [" << align_size << "] failed!";
-  }
-  auto new_offset = dynamic_mem_offset_ - align_size;
-  if (new_offset <= device_mem_pool_offset) {
-    MS_LOG(EXCEPTION) << "Out of memory!!! total[" << device_mem_size_ << "] (dynamic[" << total_dynamic_size_
-                      << "] memory pool[" << device_mem_pool_offset << "])"
+                      << "] memory pool[" << device_mem_size_ - device_mem_pool_offset << "])"
                       << " malloc [" << align_size << "] failed!";
   }
   total_dynamic_size_ += align_size;
@@ -139,9 +128,9 @@ uint8_t *AscendMemoryManager::MallocDynamicMem(size_t size, bool communication_m
   AscendMemoryPool::GetInstance().set_graph_dynamic_mem_offset(dynamic_mem_offset_);
   if (communication_mem) {
     // create protect area [kMemAlignSize -- data -- kMemAlignSize]
-    return device_mem_base_ + dynamic_mem_offset_ + kMemAlignSize;
+    return device_mem_base_ + offset + kMemAlignSize;
   } else {
-    return device_mem_base_ + dynamic_mem_offset_;
+    return device_mem_base_ + offset;
   }
 }
 }  // namespace ascend

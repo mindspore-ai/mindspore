@@ -15,7 +15,7 @@
  */
 #include "backend/kernel_compiler/cpu/allgather_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
-#include "runtime/device/cpu/mpi/mpi_adapter.h"
+#include "runtime/device/cpu/mpi/mpi_interface.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -45,9 +45,7 @@ bool AllGatherCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   auto input_addr = reinterpret_cast<float *>(inputs[0]->addr);
   auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
   auto input_data_num = inputs[0]->size / sizeof(float);
-  auto mpi_instance = device::cpu::MPIAdapter::Instance();
-  MS_EXCEPTION_IF_NULL(mpi_instance);
-  return mpi_instance->AllGather(input_addr, output_addr, ranks_group_, input_data_num);
+  return MPIAllGather(input_addr, output_addr, ranks_group_, input_data_num);
 }
 }  // namespace kernel
 }  // namespace mindspore

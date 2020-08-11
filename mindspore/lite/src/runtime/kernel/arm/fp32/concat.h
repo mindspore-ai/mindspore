@@ -28,8 +28,9 @@ namespace mindspore::kernel {
 class ConcatCPUKernel : public ConcatBaseCPUKernel {
  public:
   ConcatCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                  const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-          : ConcatBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+                  const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                  const lite::Primitive *primitive)
+      : ConcatBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 
   ~ConcatCPUKernel() = default;
 
@@ -42,4 +43,3 @@ class ConcatCPUKernel : public ConcatBaseCPUKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONCAT_H_
-

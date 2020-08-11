@@ -31,6 +31,10 @@ using mindspore::schema::PrimitiveType_SpaceToBatch;
 namespace mindspore::kernel {
 
 int SpaceToBatchCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   if (inputs_[0]->GetFormat() != schema::Format_NHWC) {
     MS_LOG(ERROR) << "space_to_batch only support NHWC now!";
     return RET_FORMAT_ERR;
@@ -50,13 +54,17 @@ int SpaceToBatchCPUKernel::Init() {
 }
 
 int SpaceToBatchCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   auto input = inputs_[0];
   auto output = outputs_[0];
   input_ptr_ = reinterpret_cast<const float *>(input->Data());
   output_ptr_ = reinterpret_cast<float *>(output->Data());
   SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->opParameter);
 
-  int ret;
   float *tmp_space[3] = {nullptr, nullptr, nullptr};
   if (param->need_paddings_) {
     tmp_space[0] = reinterpret_cast<float *>(malloc(param->num_elements_padded_ * sizeof(float)));
@@ -81,12 +89,12 @@ int SpaceToBatchCPUKernel::Run() {
 kernel::LiteKernel *CpuSpaceToBatchFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                      const std::vector<lite::tensor::Tensor *> &outputs,
                                                      OpParameter *opParameter, const lite::Context *ctx,
-                                                     const kernel::KernelKey &desc) {
+                                                     const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) SpaceToBatchCPUKernel(opParameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) SpaceToBatchCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SpaceToBatchCPUKernel fail!";
     return nullptr;

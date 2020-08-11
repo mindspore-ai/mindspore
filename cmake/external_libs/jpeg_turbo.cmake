@@ -8,11 +8,12 @@ endif()
 set(jpeg_turbo_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
 mindspore_add_pkg(jpeg_turbo
         VER 2.0.4
-        LIBS jpeg
+        LIBS jpeg turbojpeg
         URL https://github.com/libjpeg-turbo/libjpeg-turbo/archive/2.0.4.tar.gz
         MD5 44c43e4a9fb352f47090804529317c88
-        CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -DCMAKE_SKIP_RPATH=TRUE
+        CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -DCMAKE_SKIP_RPATH=TRUE -DWITH_SIMD=ON
         PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/jpeg_turbo/jpeg_turbo.patch001
         )
 include_directories(${jpeg_turbo_INC})
 add_library(mindspore::jpeg_turbo ALIAS jpeg_turbo::jpeg)
+add_library(mindspore::turbojpeg ALIAS jpeg_turbo::turbojpeg)

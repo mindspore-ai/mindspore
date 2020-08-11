@@ -15,8 +15,8 @@
  */
 
 #include <float.h>
-#include "src/runtime/kernel/arm/nnacl/fp32/reduce.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/fp32/reduce.h"
+#include "nnacl/errorcode.h"
 
 int ReduceMean(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
                const int *src_shape, float *dst_data, const int tid, const int thread_num) {

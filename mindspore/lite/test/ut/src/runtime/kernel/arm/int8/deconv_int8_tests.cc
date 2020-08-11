@@ -160,7 +160,7 @@ TEST_F(TestDeconvInt8, MatMulTest1) {
   RowMajor2Col8MajorInt8(a_row_major_10_12, a_col8_major, 10, 12);
   RowMajor2Col8MajorInt8(b_col_major_12_18, b_row8_major, 18, 12);
   MatMulInt8(a_col8_major, b_row8_major, c_row8x8_major, 16, 24, 12, zp_a, zp_b);
-  Row8x8Major2RowMajor(reinterpret_cast<float *>(c_row8x8_major), reinterpret_cast<float *>(out_row_major), 10, 18);
+  Row8x8Major2RowMajor(reinterpret_cast<float *>(c_row8x8_major), reinterpret_cast<float *>(out_row_major), 10, 18, 18);
   CompareOutputData(out_row_major, co_row_major_10_18, 180, 1);
 }
 
@@ -250,8 +250,8 @@ TEST_F(TestDeconvInt8, DeConvInt8Test1) {
   ctx->thread_num_ = 2;
   int8_t *correct;
   int total_size = DeConvInt8TestInit1(&inputs_, &outputs_, deconv_param, &correct);
-  mindspore::kernel::DeConvInt8CPUKernel *deconv =
-    new mindspore::kernel::DeConvInt8CPUKernel(reinterpret_cast<OpParameter *>(deconv_param), inputs_, outputs_, ctx);
+  mindspore::kernel::DeConvInt8CPUKernel *deconv = new mindspore::kernel::DeConvInt8CPUKernel(
+    reinterpret_cast<OpParameter *>(deconv_param), inputs_, outputs_, ctx, nullptr);
 
   deconv->Init();
   deconv->Run();

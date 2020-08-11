@@ -20,8 +20,8 @@
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/pooling.h"
+#include "nnacl/op_base.h"
+#include "nnacl/fp32/pooling.h"
 
 void AvgPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter *pooling_param, int task_id);
 

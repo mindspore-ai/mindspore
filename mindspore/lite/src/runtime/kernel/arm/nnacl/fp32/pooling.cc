@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/pooling.h"
+#include "nnacl/fp32/pooling.h"
 #include <float.h>
 
 void AvgPooling(const float *input_ptr, float *output_ptr, PoolingParameter *pooling_param, int task_id) {
@@ -150,12 +150,12 @@ void MaxPooling(const float *input_ptr, float *output_ptr, PoolingParameter *poo
           int in_channel_offset = in_batch_offset + j * C4NUM;
           int out_channel_offset = out_plane_offset + j * C4NUM;
 #ifdef ENABLE_NEON
-          float32x4_t tmp_max = vdupq_n_f32(FLT_MIN);
+          float32x4_t tmp_max = vdupq_n_f32(-FLT_MAX);
 #else
-          float tmp_max1 = FLT_MIN;
-          float tmp_max2 = FLT_MIN;
-          float tmp_max3 = FLT_MIN;
-          float tmp_max4 = FLT_MIN;
+          float tmp_max1 = -FLT_MAX;
+          float tmp_max2 = -FLT_MAX;
+          float tmp_max3 = -FLT_MAX;
+          float tmp_max4 = -FLT_MAX;
 #endif
           for (int h = 0; h < win_h; h++) {
             for (int w = 0; w < win_w; w++) {
@@ -188,7 +188,7 @@ void MaxPooling(const float *input_ptr, float *output_ptr, PoolingParameter *poo
         for (int k = channel_s; k < channel; k++) {
           int in_channel_offset = in_batch_offset + k;
           int out_channel_offset = out_plane_offset + k;
-          float tmp_max = FLT_MIN;
+          float tmp_max = -FLT_MAX;
           for (int h = 0; h < win_h; h++) {
             for (int w = 0; w < win_w; w++) {
               if ((in_h_index + h) < 0 || (in_h_index + h) >= in_h || (in_w_index + w) < 0 ||

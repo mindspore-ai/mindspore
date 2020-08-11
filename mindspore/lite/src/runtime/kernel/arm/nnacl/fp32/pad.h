@@ -21,8 +21,8 @@
 #endif
 #include <memory.h>
 #include <float.h>
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/pad_parameter.h"
+#include "nnacl/op_base.h"
+#include "nnacl/pad_parameter.h"
 
 void Pad(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
          const int *paddings, const int tid, const int thread_num);

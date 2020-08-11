@@ -63,7 +63,7 @@ TEST_F(TestStridedSlice, StridedSlice) {
   ASSERT_NE(creator, nullptr);
 
   auto ctx = std::make_shared<lite::Context>();
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc, nullptr);
   ASSERT_NE(kernel, nullptr);
 
   auto ret = kernel->Run();
@@ -109,7 +109,7 @@ TEST_F(TestStridedSlice, StridedSliceInt8) {
   ASSERT_NE(creator, nullptr);
 
   auto ctx = std::make_shared<lite::Context>();
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc, nullptr);
   ASSERT_NE(kernel, nullptr);
 
   auto ret = kernel->Run();

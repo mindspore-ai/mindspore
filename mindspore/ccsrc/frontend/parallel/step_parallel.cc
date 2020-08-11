@@ -267,6 +267,33 @@ TensorLayout GetTensorInLayout(const CNodePtr &middle_node, const PrimitivePtr &
   return tensorinfo_in.tensor_layout();
 }
 
+bool AnfNodeIsPrimitive(const AnfNodePtr &anf_node, const std::string &prim_name) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  auto cnode = anf_node->cast<CNodePtr>();
+  if ((cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0))) {
+    return false;
+  }
+
+  auto value_node = cnode->input(0)->cast<ValueNodePtr>();
+  auto prim = GetValueNode<PrimitivePtr>(value_node);
+  MS_EXCEPTION_IF_NULL(prim);
+  if (prim->name() == prim_name) {
+    return true;
+  }
+  return false;
+}
+
+std::string GetPrimName(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!IsValueNode<Primitive>(node->input(0))) {
+    MS_LOG(EXCEPTION) << "The node is not a primitive";
+  }
+  auto value_node = node->input(0)->cast<ValueNodePtr>();
+  auto prim = GetValueNode<PrimitivePtr>(value_node);
+  MS_EXCEPTION_IF_NULL(prim);
+  return prim->name();
+}
+
 OperatorInfoPtr GetDistributeOperator(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!IsParallelCareNode(node)) {
@@ -274,7 +301,7 @@ OperatorInfoPtr GetDistributeOperator(const CNodePtr &node) {
   }
   OperatorInfoPtr distribute_operator = node->user_data<OperatorInfo>();
   if (distribute_operator == nullptr) {
-    MS_LOG(EXCEPTION) << "GetDistributeOperator:distribute_operator is nullptr";
+    MS_LOG(EXCEPTION) << "Distribute operator is nullptr, the prim is " << GetPrimName(node);
   }
   return distribute_operator;
 }
@@ -423,6 +450,11 @@ void StepRedistribution(const CNodePtr &node, const OperatorInfoPtr &distribute_
   MS_EXCEPTION_IF_NULL(manager);
   AnfNodeIndexSet node_set = manager->node_users()[node];
   CNodePtr insert_node_new;
+
+  if (AnfNodeIsPrimitive(node, MAKE_TUPLE)) {
+    MS_LOG(INFO) << "No need to insert redistribution op betweend make_tuple node and the next node";
+    return;
+  }
   if (IsValueNode<Primitive>(node->input(0))) {
     auto current_value = node->input(0)->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(current_value);
@@ -875,9 +907,15 @@ void InsertMirrorOps(const MirrorOps &mirror_ops, const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(func_graph);
   FuncGraphManagerPtr manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
+
+  if ((node->inputs().size() == 2) && AnfNodeIsPrimitive(node->input(1), MAKE_TUPLE)) {
+    MS_LOG(INFO) << "The mirror for " << GetPrimName(node) << " has handle by make_tuple node";
+    return;
+  }
+
   if (mirror_ops.size() != node_size - 1) {
-    MS_LOG(EXCEPTION) << "Failure:Mirrorops's size is wrong! mirror_ops size is  " << mirror_ops.size()
-                      << ", node_size is  " << node_size;
+    MS_LOG(EXCEPTION) << "Mirrorops's size is wrong! mirror_ops size is " << mirror_ops.size() << ", node_size is "
+                      << node_size - 1;
   }
   for (size_t index = 1; index < node_size; ++index) {
     OperatorVector backward_op = mirror_ops[index - 1];
@@ -993,7 +1031,7 @@ OperatorInfoPtr OperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs 
                                  const std::vector<Shapes> &shape_list) {
   MS_EXCEPTION_IF_NULL(prim);
   OperatorInfoPtr operator_ = OperatorInstanceByName(prim->name(), attrs, shape_list);
-  if (operator_ == nullptr) {
+  if ((operator_ == nullptr) && (prim->name() != MAKE_TUPLE)) {
     MS_LOG(INFO) << "Creat " << prim->name() << " failed, use batch parallel";
     operator_ = OperatorInstanceByName(BATCH_PARALLEL, attrs, shape_list);
     MS_EXCEPTION_IF_NULL(operator_);
@@ -1177,7 +1215,12 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
       continue;
     }
     if (input_shapes.size() != 1) {
-      MS_LOG(EXCEPTION) << "ExtractShape:Get input shape failed";
+      if (inputs_size == 2) {  // like concat
+        shape_inputs = input_shapes;
+        break;
+      } else {
+        MS_LOG(EXCEPTION) << "ExtractShape: Get input shape failed";
+      }
     }
     shape_inputs.push_back(input_shapes[0]);
   }
@@ -1269,8 +1312,8 @@ void SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNodePtr, i
   }
   TensorInfo tensorinfo_in = distribute_operator->inputs_tensor_info()[IntToSize(res.second - 1)];
   Shape slice_shape = tensorinfo_in.slice_shape();
-  MS_LOG(DEBUG) << "SetParallelShape slice_shape  " << parameter->ToString() << "  shape "
-                << MakeValue(slice_shape)->ToString();
+  MS_LOG(INFO) << "SetParallelShape slice_shape  " << parameter->ToString() << "  shape "
+               << MakeValue(slice_shape)->ToString() << ", op name is " << distribute_operator->name();
   std::shared_ptr<abstract::BaseShape> parallel_shape = std::make_shared<abstract::Shape>(slice_shape);
   MS_EXCEPTION_IF_NULL(parallel_shape);
   // Don't modify it in-place as the pointer of this AbstractValue may used as cache key in StaticAnalysis.
@@ -1450,6 +1493,9 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
     SetVirtualDatasetStrategy(cnode);
     ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
+    if (prim->name() == MAKE_TUPLE) {
+      continue;
+    }
     auto attrs = prim->attrs();
     MS_LOG(INFO) << "extract information: node: " << node->ToString() << " prim " << prim->name();
     if (IsParallelCareNode(cnode)) {
@@ -2045,13 +2091,13 @@ void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePt
     MS_EXCEPTION_IF_NULL(node);
     if (node->isa<CNode>()) {
       auto cnode = node->cast<CNodePtr>();
-      if (!IsValueNode<Primitive>(cnode->input(0))) {
+      // the make_tuple is parallel care node, but it may have not operator info
+      if (!IsParallelCareNode(cnode) || !cnode->has_user_data<OperatorInfo>()) {
         continue;
       }
+
       OperatorInfoPtr distribute_operator = GetDistributeOperator(cnode);
-      if (distribute_operator == nullptr) {
-        continue;
-      }
+      MS_EXCEPTION_IF_NULL(distribute_operator);
 
       // insert forward ops
       InsertForwardOps(distribute_operator, cnode);
@@ -2074,13 +2120,12 @@ void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePt
     MS_EXCEPTION_IF_NULL(node);
     if (node->isa<CNode>()) {
       auto cnode = node->cast<CNodePtr>();
-      if (!IsValueNode<Primitive>(cnode->input(0))) {
+      if (!IsParallelCareNode(cnode) || !cnode->has_user_data<OperatorInfo>()) {
         continue;
       }
+
       OperatorInfoPtr distribute_operator = GetDistributeOperator(cnode);
-      if (distribute_operator == nullptr) {
-        continue;
-      }
+      MS_EXCEPTION_IF_NULL(distribute_operator);
       // StepReplace
       StepReplace(distribute_operator, cnode);
     }
@@ -2330,6 +2375,44 @@ Status ParallelInit() {
   return SUCCESS;
 }
 
+void HandleForwardMakeTuple(const std::vector<AnfNodePtr> &all_nodes) {
+  for (auto &node : all_nodes) {
+    if (!AnfNodeIsPrimitive(node, MAKE_TUPLE)) {
+      continue;
+    }
+
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (!cnode->in_forward_flag()) {
+      continue;
+    }
+
+    FuncGraphManagerPtr manager = cnode->func_graph()->manager();
+    MS_EXCEPTION_IF_NULL(manager);
+    auto make_tuple_user = manager->node_users()[cnode];
+    if (make_tuple_user.size() != 1) {
+      MS_LOG(EXCEPTION) << "Now the make_tuple's user must be 1, but got " << make_tuple_user.size();
+    }
+    CNodePtr make_tuple_next_cnode = make_tuple_user.pop().first->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(make_tuple_next_cnode);
+
+    std::string make_tuple_user_prim_name = GetPrimName(make_tuple_next_cnode);
+    if (!IsParallelCareNode(make_tuple_next_cnode)) {
+      MS_LOG(INFO) << "The make_tuple's user is " << make_tuple_user_prim_name << ", no need to set operator info";
+      continue;
+    }
+    if (make_tuple_next_cnode->inputs().size() != 2) {
+      MS_LOG(EXCEPTION) << "Now the make_tuple's user only support 1 input, but got "
+                        << make_tuple_next_cnode->inputs().size() - 1;
+    }
+
+    MS_LOG(INFO) << "Set the make_tuple's operator info, and the op name is " << make_tuple_user_prim_name;
+    OperatorInfoPtr op_info = GetDistributeOperator(make_tuple_next_cnode);
+    MS_EXCEPTION_IF_NULL(op_info);
+    cnode->set_user_data<OperatorInfo>(op_info);
+  }
+}
+
 bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
   MS_EXCEPTION_IF_NULL(root);
   MS_EXCEPTION_IF_NULL(optimizer);
@@ -2383,6 +2466,9 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
     ExtractInformation(all_nodes);
     ReshapeInit(all_nodes);
   }
+
+  HandleForwardMakeTuple(all_nodes);
+
   // save strategy as checkpoint for multi-train
   if (StrategyCheckpoint::GetInstance().SaveCheckPointOn()) {
     CheckpointStrategy(root);

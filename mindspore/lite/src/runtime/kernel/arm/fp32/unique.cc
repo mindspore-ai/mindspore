@@ -28,6 +28,11 @@ int UniqueCPUKernel::Init() { return RET_OK; }
 int UniqueCPUKernel::ReSize() { return RET_OK; }
 
 int UniqueCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   auto input = reinterpret_cast<float *>(inputs_.at(0)->Data());
   auto output0 = reinterpret_cast<float *>(outputs_.at(0)->Data());
   auto output1 = reinterpret_cast<int *>(outputs_.at(1)->Data());
@@ -43,11 +48,11 @@ int UniqueCPUKernel::Run() {
 
 kernel::LiteKernel *CpuUniqueFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *parameter, const lite::Context *ctx,
-                                               const KernelKey &desc) {
+                                               OpParameter *parameter, const lite::Context *ctx, const KernelKey &desc,
+                                               const lite::Primitive *primitive) {
   MS_ASSERT(parameter);
   MS_ASSERT(desc.type == PrimitiveType_Unique);
-  auto *kernel = new (std::nothrow) UniqueCPUKernel(parameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) UniqueCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create kernel failed, name: " << parameter->name_;
     return nullptr;
@@ -64,4 +69,3 @@ kernel::LiteKernel *CpuUniqueFp32KernelCreator(const std::vector<lite::tensor::T
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Unique, CpuUniqueFp32KernelCreator)
 }  // namespace mindspore::kernel
-

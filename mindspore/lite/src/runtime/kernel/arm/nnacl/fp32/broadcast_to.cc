@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/broadcast_to.h"
+#include "nnacl/fp32/broadcast_to.h"
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
 void PadBroadcastShapeInfo(BroadcastShapeInfo *shape_info) {
   if (shape_info->input_shape_size_ < DIMENSION_4D) {

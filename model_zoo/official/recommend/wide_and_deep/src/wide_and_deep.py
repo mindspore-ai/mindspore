@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """wide and deep model"""
+import numpy as np
 from mindspore import nn
 from mindspore import Parameter, ParameterTuple
 import mindspore.common.dtype as mstype
@@ -28,7 +29,6 @@ from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_
 from mindspore.train.parallel_utils import ParallelMode
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.communication.management import get_group_size
-import numpy as np
 
 np_type = np.float32
 ms_type = mstype.float32
@@ -328,15 +328,8 @@ class TrainStepWrap(nn.Cell):
         self.weights_w = ParameterTuple(weights_w)
         self.weights_d = ParameterTuple(weights_d)
 
-        if host_device_mix and is_auto_parallel:
+        if (host_device_mix and is_auto_parallel) or parameter_server:
             self.optimizer_d = LazyAdam(
-                self.weights_d, learning_rate=3.5e-4, eps=1e-8, loss_scale=sens)
-            self.optimizer_w = FTRL(learning_rate=5e-2, params=self.weights_w,
-                                    l1=1e-8, l2=1e-8, initial_accum=1.0, loss_scale=sens)
-            self.optimizer_w.sparse_opt.add_prim_attr("primitive_target", "CPU")
-            self.optimizer_d.sparse_opt.add_prim_attr("primitive_target", "CPU")
-        elif parameter_server:
-            self.optimizer_d = Adam(
                 self.weights_d, learning_rate=3.5e-4, eps=1e-8, loss_scale=sens)
             self.optimizer_w = FTRL(learning_rate=5e-2, params=self.weights_w,
                                     l1=1e-8, l2=1e-8, initial_accum=1.0, loss_scale=sens)

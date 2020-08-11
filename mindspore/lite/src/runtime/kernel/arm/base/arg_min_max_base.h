@@ -24,23 +24,21 @@ namespace mindspore::kernel {
 class ArgMinMaxBaseCPUKernel : public LiteKernel {
  public:
   ArgMinMaxBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                         const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
-      : LiteKernel(parameter, inputs, outputs), context_(ctx), data_from_allocator_(false) {
-    opParameter->thread_num_ = ctx->thread_num_;
-  }
+                         const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                         const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), data_from_allocator_(false) {}
 
   virtual ~ArgMinMaxBaseCPUKernel() { FreeTmpMemory(); }
 
   int Init() override;
 
-  int ReSize() override { return 0; }
+  int ReSize() override;
 
   int Run() override;
 
   void FreeTmpMemory();
 
  private:
-  const lite::Context *context_;
   bool data_from_allocator_;
 };
 }  // namespace mindspore::kernel

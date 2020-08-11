@@ -20,7 +20,7 @@
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
 #include "src/runtime/kernel/arm/fp32/convolution_1x1.h"
-#include "src/runtime/kernel/arm/nnacl/matmul.h"
+#include "src/runtime/kernel/arm/nnacl/matmul_parameter.h"
 #include "src/runtime/kernel/arm/nnacl/strassen_matmul.h"
 
 namespace mindspore {
@@ -296,7 +296,7 @@ TEST_F(TestConv1x1Fp32, Conv1x1Test1) {
   float *correct;
   int total_size = Conv1x1TestInit1(&inputs_, &outputs_, conv_param, &correct);
   kernel::Convolution1x1CPUKernel *conv1x1 =
-    new kernel::Convolution1x1CPUKernel(reinterpret_cast<OpParameter *>(conv_param), inputs_, outputs_, ctx);
+    new kernel::Convolution1x1CPUKernel(reinterpret_cast<OpParameter *>(conv_param), inputs_, outputs_, ctx, nullptr);
 
   conv1x1->Init();
   conv1x1->Run();
@@ -364,7 +364,7 @@ TEST_F(TestConv1x1Fp32, Conv1x1Test2) {
   float *correct;
   int total_size = Conv1x1TestInit2(&inputs_, &outputs_, conv_param, &correct);
   kernel::Convolution1x1CPUKernel *conv1x1 =
-    new kernel::Convolution1x1CPUKernel(reinterpret_cast<OpParameter *>(conv_param), inputs_, outputs_, ctx);
+    new kernel::Convolution1x1CPUKernel(reinterpret_cast<OpParameter *>(conv_param), inputs_, outputs_, ctx, nullptr);
 
   conv1x1->Init();
   conv1x1->Run();

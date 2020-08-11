@@ -67,6 +67,21 @@ int TransposeOpenCLKernel::Init() {
 
 int TransposeOpenCLKernel::ReSize() { return 0; }
 
+int TransposeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
+  size_t im_dst_x, im_dst_y;
+  im_dst_x = UP_DIV(outputs_[0]->Height() * outputs_[0]->Width(), C4NUM);
+  im_dst_y = outputs_[0]->Channel();
+#ifdef ENABLE_FP16
+  size_t img_dtype = CL_HALF_FLOAT;
+#else
+  size_t img_dtype = CL_FLOAT;
+#endif
+  img_size->clear();
+  std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
+  *img_size = vec;
+  return RET_OK;
+}
+
 int TransposeOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->Name() << " Running!";
   std::vector<int> shapex = inputs_[0]->shape();
@@ -93,7 +108,7 @@ int TransposeOpenCLKernel::Run() {
 kernel::LiteKernel *OpenCLTransposeKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                  const std::vector<lite::tensor::Tensor *> &outputs,
                                                  OpParameter *opParameter, const lite::Context *ctx,
-                                                 const kernel::KernelKey &desc) {
+                                                 const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   auto *kernel = new TransposeOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   auto ret = kernel->Init();
   if (0 != ret) {

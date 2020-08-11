@@ -20,7 +20,7 @@
 namespace mindspore {
 class TestTfliteParserMinimum : public TestTfliteParser {
  public:
-  TestTfliteParserMinimum() {}
+  TestTfliteParserMinimum() = default;
   void SetUp() override { meta_graph = LoadAndConvert("./minimum.tflite"); }
 };
 

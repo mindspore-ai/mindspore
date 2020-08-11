@@ -20,10 +20,10 @@
 #include <arm_neon.h>
 #endif
 #include <memory.h>
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 #define PRIOR_BOX_MAX_NUM 8
 #define PRIOR_BOX_VAR_NUM 4
-struct PriorBoxParameter {
+typedef struct PriorBoxParameter {
   OpParameter op_parameter_;
   int32_t min_sizes_size;
   int32_t min_sizes[PRIOR_BOX_MAX_NUM];
@@ -39,7 +39,7 @@ struct PriorBoxParameter {
   bool clip;
   bool flip;
   float offset;
-};
+} PriorBoxParameter;
 
 int PriorBox(const float *input_data, float *output_data, const size_t size, const int tid, const int thread_num);
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PRIOR_BOX_H_

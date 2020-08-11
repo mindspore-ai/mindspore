@@ -66,6 +66,9 @@ TEST_F(TestTransposeOpenCL, TransposeFp32) {
   size_n = size_n > 100 ? 100 : size_n;
   for (int i = 0; i < size_n; i++) {
     std::cout << output_data[i] << " ";
+    if ((i + 1) % c == 0) {
+      std::cout << std::endl;
+    }
   }
   std::cout << std::endl;
 

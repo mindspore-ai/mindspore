@@ -21,7 +21,7 @@
 namespace mindspore {
 class TestTfliteParserSquaredDifference : public TestTfliteParser {
  public:
-  TestTfliteParserSquaredDifference() {}
+  TestTfliteParserSquaredDifference() = default;
   void SetUp() override {
     meta_graph = LoadAndConvert("./squared_difference.tflite");
   }

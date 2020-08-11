@@ -28,6 +28,10 @@ using mindspore::schema::PrimitiveType_Unsqueeze;
 
 namespace mindspore::kernel {
 int UnsqueezeCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   int ret = ReSize();
   return ret;
 }
@@ -64,9 +68,14 @@ int UnsqueezeRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int UnsqueezeCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   in_ptr_ = reinterpret_cast<float *>(inputs_.at(0)->Data());
   out_ptr_ = reinterpret_cast<float *>(outputs_.at(0)->Data());
-  int ret = LiteBackendParallelLaunch(UnsqueezeRun, this, thread_sz_count_);
+  ret = LiteBackendParallelLaunch(UnsqueezeRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "UnsqueezeRun error error_code[" << ret << "]";
     return ret;
@@ -75,12 +84,12 @@ int UnsqueezeCPUKernel::Run() {
 }
 
 kernel::LiteKernel *CpuUnsqueezeFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                    const std::vector<lite::tensor::Tensor *> &outputs,
-                                                    OpParameter *opParameter, const lite::Context *ctx,
-                                                    const kernel::KernelKey &desc) {
+                                                  const std::vector<lite::tensor::Tensor *> &outputs,
+                                                  OpParameter *opParameter, const lite::Context *ctx,
+                                                  const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Unsqueeze);
-  auto *kernel = new (std::nothrow) UnsqueezeCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) UnsqueezeCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new UnsqueezeCPUKernel fail!";
     return nullptr;
@@ -97,4 +106,3 @@ kernel::LiteKernel *CpuUnsqueezeFp32KernelCreator(const std::vector<lite::tensor
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Unsqueeze, CpuUnsqueezeFp32KernelCreator)
 }  // namespace mindspore::kernel
-

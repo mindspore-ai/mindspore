@@ -28,7 +28,8 @@ using mindspore::schema::PrimitiveType_MatMul;
 namespace mindspore::kernel {
 kernel::LiteKernel *CpuMatmulKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                            const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *opParameter,
-                                           const lite::Context *ctx, const kernel::KernelKey &desc) {
+                                           const lite::Context *ctx, const kernel::KernelKey &desc,
+                                           const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Concat);
   auto input_tensor = inputs.at(kInputIndex);
@@ -37,7 +38,7 @@ kernel::LiteKernel *CpuMatmulKernelCreator(const std::vector<lite::tensor::Tenso
   switch (data_type) {
     case kNumberTypeInt8:
     case kNumberTypeUInt8: {
-      kernel = new (std::nothrow) MatmulInt8CPUKernel(opParameter, inputs, outputs, ctx);
+      kernel = new (std::nothrow) MatmulInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
       if (!kernel) {
         MS_LOG(ERROR) << "kernel is nullptr.";
         return nullptr;
@@ -46,7 +47,7 @@ kernel::LiteKernel *CpuMatmulKernelCreator(const std::vector<lite::tensor::Tenso
     }
 
     case kNumberTypeFloat32: {
-      kernel = new (std::nothrow) MatmulCPUKernel(opParameter, inputs, outputs, ctx);
+      kernel = new (std::nothrow) MatmulCPUKernel(opParameter, inputs, outputs, ctx, primitive);
       if (!kernel) {
         MS_LOG(ERROR) << "kernel is nullptr.";
         return nullptr;
@@ -69,4 +70,5 @@ kernel::LiteKernel *CpuMatmulKernelCreator(const std::vector<lite::tensor::Tenso
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_MatMul, CpuMatmulKernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_MatMul, CpuMatmulKernelCreator)
 }  // namespace mindspore::kernel

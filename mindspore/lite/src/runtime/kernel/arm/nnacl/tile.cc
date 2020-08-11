@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/tile.h"
+#include "nnacl/tile.h"
 #include <string.h>
 
 void CopyData(float *input_data, float *output_data, size_t size, size_t multiple) {

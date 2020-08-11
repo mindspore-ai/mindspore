@@ -1,8 +1,9 @@
 #define FLT half
 #define FLT4 half4
 #define READ_IMAGE read_imageh
+#define WRITE_IMAGE write_imageh
 __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
-__kernel void transpose(__read_only image2d_t src_data, __global float4 *dst_data, int2 HW, int2 C) {
+__kernel void transpose(__read_only image2d_t src_data, __write_only image2d_t dst_data, int2 HW, int2 C) {
   int X = get_global_id(0);
   int Y = get_global_id(1);
   if (X >= HW.y || Y >= C.y) {
@@ -37,8 +38,8 @@ __kernel void transpose(__read_only image2d_t src_data, __global float4 *dst_dat
   result[3].z = x2.w;
   result[3].w = x3.w;
 
-  dst_data[4 * Y * HW.y + X] = result[0];
-  dst_data[(4 * Y + 1) * HW.y + X] = result[1];
-  dst_data[(4 * Y + 2) * HW.y + X] = result[2];
-  dst_data[(4 * Y + 3) * HW.y + X] = result[3];
+  WRITE_IMAGE(dst_data, (int2)(X, 4 * Y), result[0]);
+  WRITE_IMAGE(dst_data, (int2)(X, 4 * Y + 1), result[1]);
+  WRITE_IMAGE(dst_data, (int2)(X, 4 * Y + 2), result[2]);
+  WRITE_IMAGE(dst_data, (int2)(X, 4 * Y + 3), result[3]);
 }

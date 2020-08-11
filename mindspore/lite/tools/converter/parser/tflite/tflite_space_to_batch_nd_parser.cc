@@ -27,22 +27,30 @@ STATUS TfliteSpaceToBatchNDParser::Parse(const std::unique_ptr<tflite::OperatorT
                                          const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_opset,
                                          schema::CNodeT *op,
                                          TensorCache *tensor_cache, bool quantized_model) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse TfliteSpaceToBatchNDParser";
   std::unique_ptr<schema::SpaceToBatchNDT> attr(new schema::SpaceToBatchNDT());
+
   if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->blockShape)) {
-    MS_LOG(ERROR) << "spaceToBatchND -> blockShape get failed";
+    MS_LOG(ERROR) << "get spaceToBatchND -> blockShape failed";
     return RET_ERROR;
   }
   if (GetTfliteData(tflite_op->inputs[2], tflite_tensors, tflite_model_buffer, attr->paddings)) {
-    MS_LOG(ERROR) << "spaceToBatchND -> paddings get failed";
+    MS_LOG(ERROR) << "get spaceToBatchND -> paddings failed";
     return RET_ERROR;
   }
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_SpaceToBatchND;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_SpaceToBatchND;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

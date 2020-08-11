@@ -247,6 +247,10 @@ int ConvolutionWinogradCPUKernel::ConfigInputOutput() {
 }
 
 int ConvolutionWinogradCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
@@ -339,6 +343,11 @@ int ConvolutionWinogradImpl(int task_id, LiteParallelGroupEnv *penv, void *cdata
 }
 
 int ConvolutionWinogradCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   auto input_tensor = inputs_.at(kInputIndex);
   auto ori_input_data = input_tensor->Data();
   int in_batch = conv_param_->input_batch_;

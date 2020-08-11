@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_CONV_DEPTHWISE_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_CONV_DEPTHWISE_H_
 
-#include "src/runtime/kernel/arm/nnacl/conv_parameter.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/conv_depthwise.h"
+#include "nnacl/conv_parameter.h"
+#include "nnacl/fp32/conv_depthwise.h"
 
 void ConvDwInt8(int8_t *output_data, const int16_t *input_data, const int16_t *weight_data, const int32_t *bias_data,
                 const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id);

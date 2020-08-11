@@ -19,9 +19,9 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-
 #include "include/context.h"
 #include "src/runtime/kernel/arm/base/reshape_base.h"
+#include "src/runtime/runtime_api.h"
 
 using mindspore::lite::Context;
 
@@ -29,19 +29,25 @@ namespace mindspore::kernel {
 class ReshapeInt8CPUKernel : public ReshapeBaseCPUKernel {
  public:
   ReshapeInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                       const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : ReshapeBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+                       const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                       const lite::Primitive *primitive)
+      : ReshapeBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ReshapeInt8CPUKernel() = default;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int DoExecute(int task_id);
 
  private:
-  QuantArg in_quant_arg_;
-  QuantArg out_quant_arg_;
+  int thread_count_;
+  int64_t elements_num_;
+  int64_t count_unit_;
+  int8_t *input_data_ = nullptr;
+  int8_t *output_data_ = nullptr;
 };
+
+int ReshapeInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_RESHAPE_INT8_H_
-

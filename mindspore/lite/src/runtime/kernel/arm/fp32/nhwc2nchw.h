@@ -29,8 +29,9 @@ namespace mindspore::kernel {
 class Nhwc2NchwCPUKernel : public LiteKernel {
  public:
   Nhwc2NchwCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                              const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs) {}
+                     const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                     const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~Nhwc2NchwCPUKernel() override = default;
 
   int Init() override;
@@ -39,4 +40,3 @@ class Nhwc2NchwCPUKernel : public LiteKernel {
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_NHWC2NCHW_H_
-

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/int8/pad.h"
-#include "src/runtime/kernel/arm/nnacl/common_func.h"
+#include "nnacl/int8/pad.h"
+#include "nnacl/common_func.h"
 
 void PadConstant4D(const int8_t *in_data, int8_t *out_data, const int32_t *in_dims, const int32_t *out_dims,
                    const int32_t *paddings) {

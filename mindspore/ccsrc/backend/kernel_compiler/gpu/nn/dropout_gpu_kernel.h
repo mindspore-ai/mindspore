@@ -54,12 +54,18 @@ class DropoutGpuFwdKernel : public GpuKernel {
     float *mask_f = GetDeviceAddress<float>(workspace, 0);
 
     if (!states_init_) {
-      curandCreateGenerator(&mask_generator_, CURAND_RNG_PSEUDO_DEFAULT);
-      curandSetPseudoRandomGeneratorSeed(mask_generator_, time(NULL));
+      CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&mask_generator_, CURAND_RNG_PSEUDO_DEFAULT),
+                                   "Failed to create generator");
+      CHECK_CURAND_RET_WITH_EXCEPT(curandSetPseudoRandomGeneratorSeed(mask_generator_, time(NULL)),
+                                   "Failed to SetPseudoRandomGeneratorSeed");
+      MS_EXCEPTION_IF_NULL(mask_generator_);
       states_init_ = true;
     }
+    CHECK_CURAND_RET_WITH_EXCEPT(curandSetStream(mask_generator_, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                 "Failed to set stream for generator");
     // curandGen only support float or double for mask.
-    curandGenerateUniform(mask_generator_, mask_f, num_count_);
+    CHECK_CURAND_RET_WITH_EXCEPT(curandGenerateUniform(mask_generator_, mask_f, num_count_),
+                                 "Failed to generate uniform");
     DropoutForward(input, mask, output, mask_f, num_count_, keep_prob_, reinterpret_cast<cudaStream_t>(stream_ptr));
 
     return true;

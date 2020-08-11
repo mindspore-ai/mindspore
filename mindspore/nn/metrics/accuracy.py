@@ -21,9 +21,9 @@ class Accuracy(EvaluationBase):
     r"""
     Calculates the accuracy for classification and multilabel data.
 
-    The accuracy class creates two local variables, correct number and total number that are used to compute the
+    The accuracy class creates two local variables, the correct number and the total number that are used to compute the
     frequency with which predictions matches labels. This frequency is ultimately returned as the accuracy: an
-    idempotent operation that simply divides correct number by total number.
+    idempotent operation that simply divides the correct number by the total number.
 
     .. math::
         \text{accuracy} =\frac{\text{true_positive} + \text{true_negative}}
@@ -58,17 +58,17 @@ class Accuracy(EvaluationBase):
 
         Args:
             inputs: Input `y_pred` and `y`. `y_pred` and `y` are a `Tensor`, a list or an array.
-                For 'classification' evaluation type, `y_pred` is in most cases (not strictly) a list
+                For the 'classification' evaluation type, `y_pred` is in most cases (not strictly) a list
                 of floating numbers in range :math:`[0, 1]`
                 and the shape is :math:`(N, C)`, where :math:`N` is the number of cases and :math:`C`
                 is the number of categories. Shape of `y` can be :math:`(N, C)` with values 0 and 1 if one-hot
                 encoding is used or the shape is :math:`(N,)` with integer values if index of category is used.
                 For 'multilabel' evaluation type, `y_pred` and `y` can only be one-hot encoding with
-                values 0 or 1. Indices with 1 indicate positive category. The shape of `y_pred` and `y`
+                values 0 or 1. Indices with 1 indicate the positive category. The shape of `y_pred` and `y`
                 are both :math:`(N, C)`.
 
         Raises:
-            ValueError: If the number of the input is not 2.
+            ValueError: If the number of the inputs is not 2.
         """
         if len(inputs) != 2:
             raise ValueError('Accuracy need 2 inputs (y_pred, y), but got {}'.format(len(inputs)))

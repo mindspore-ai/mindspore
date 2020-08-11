@@ -61,11 +61,19 @@ namespace api {
   } while (false)
 
 // Function to create the iterator, which will build and launch the execution tree.
-std::shared_ptr<Iterator> Dataset::CreateIterator() {
+std::shared_ptr<Iterator> Dataset::CreateIterator(std::vector<std::string> columns) {
   std::shared_ptr<Iterator> iter;
   try {
+    auto ds = shared_from_this();
+
+    // The specified columns will be selected from the dataset and passed down the pipeline
+    // in the order specified, other columns will be discarded.
+    if (!columns.empty()) {
+      ds = ds->Project(columns);
+    }
+
     iter = std::make_shared<Iterator>();
-    Status rc = iter->BuildAndLaunchTree(shared_from_this());
+    Status rc = iter->BuildAndLaunchTree(ds);
     if (rc.IsError()) {
       MS_LOG(ERROR) << "CreateIterator failed." << rc;
       return nullptr;
@@ -629,13 +637,13 @@ bool VOCDataset::ValidateParams() {
     }
     Path imagesets_file = dir / "ImageSets" / "Segmentation" / mode_ + ".txt";
     if (!imagesets_file.Exists()) {
-      MS_LOG(ERROR) << "[Segmentation] imagesets_file is invalid or not exist";
+      MS_LOG(ERROR) << "Invalid mode: " << mode_ << ", file \"" << imagesets_file << "\" is not exists!";
       return false;
     }
   } else if (task_ == "Detection") {
     Path imagesets_file = dir / "ImageSets" / "Main" / mode_ + ".txt";
     if (!imagesets_file.Exists()) {
-      MS_LOG(ERROR) << "[Detection] imagesets_file is invalid or not exist.";
+      MS_LOG(ERROR) << "Invalid mode: " << mode_ << ", file \"" << imagesets_file << "\" is not exists!";
       return false;
     }
   } else {
@@ -655,18 +663,33 @@ std::vector<std::shared_ptr<DatasetOp>> VOCDataset::Build() {
     sampler_ = CreateDefaultSampler();
   }
 
-  std::shared_ptr<VOCOp::Builder> builder = std::make_shared<VOCOp::Builder>();
-  (void)builder->SetDir(dataset_dir_);
-  (void)builder->SetTask(task_);
-  (void)builder->SetMode(mode_);
-  (void)builder->SetNumWorkers(num_workers_);
-  (void)builder->SetSampler(std::move(sampler_->Build()));
-  (void)builder->SetDecode(decode_);
-  (void)builder->SetClassIndex(class_index_);
+  auto schema = std::make_unique<DataSchema>();
+  VOCOp::TaskType task_type_;
 
-  std::shared_ptr<VOCOp> op;
-  RETURN_EMPTY_IF_ERROR(builder->Build(&op));
-  node_ops.push_back(op);
+  if (task_ == "Segmentation") {
+    task_type_ = VOCOp::TaskType::Segmentation;
+    RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+      ColDescriptor(std::string(kColumnImage), DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
+    RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+      ColDescriptor(std::string(kColumnTarget), DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
+  } else if (task_ == "Detection") {
+    task_type_ = VOCOp::TaskType::Detection;
+    RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+      ColDescriptor(std::string(kColumnImage), DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
+    RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+      ColDescriptor(std::string(kColumnBbox), DataType(DataType::DE_FLOAT32), TensorImpl::kFlexible, 1)));
+    RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+      ColDescriptor(std::string(kColumnLabel), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
+    RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+      ColDescriptor(std::string(kColumnDifficult), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
+    RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+      ColDescriptor(std::string(kColumnTruncate), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
+  }
+
+  std::shared_ptr<VOCOp> voc_op;
+  voc_op = std::make_shared<VOCOp>(task_type_, mode_, dataset_dir_, class_index_, num_workers_, rows_per_buffer_,
+                                   connector_que_size_, decode_, std::move(schema), std::move(sampler_->Build()));
+  node_ops.push_back(voc_op);
   return node_ops;
 }
 

@@ -70,6 +70,7 @@ bool SymbolResolver::Resolve() {
 }
 
 namespace {
+// if any mixed precision flag add a cast node after the parameter node.
 // argument obj should be python Parameter object
 // it will be converted to Parameter node here
 AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object &obj) {
@@ -112,11 +113,12 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
   }
   auto iter = func_graph->make_ref_params().find(para_node);
   if (iter == func_graph->make_ref_params().end()) {
-    AnfNodePtr value = GetMixedPrecisionCastHelp(func_graph, para_node);
+    ValuePtr target_type = GetMixedPrecisionTargetType(func_graph, para_node);
 
     AnfNodePtr make_ref = NewValueNode(prim::kPrimMakeRef);
     AnfNodePtr ref_key = NewValueNode(std::make_shared<RefKey>(param_name));
-    AnfNodePtr ref_node = func_graph->NewCNode({make_ref, ref_key, value, para_node});
+    AnfNodePtr target_type_node = NewValueNode(target_type);
+    AnfNodePtr ref_node = func_graph->NewCNode({make_ref, ref_key, para_node, target_type_node});
     func_graph->make_ref_params()[para_node] = ref_node;
     func_graph->add_parameter_obj_node(ref_node);
     return ref_node;

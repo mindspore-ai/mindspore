@@ -27,26 +27,38 @@ STATUS TfliteExpandDimsParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
                               schema::CNodeT *op,
                               TensorCache *tensor_cache,
                               bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse TfliteExpandDimsParser";
   std::unique_ptr<schema::ExpandDimsT> attr(new schema::ExpandDimsT());
+
   const auto &tflite_attr = tfliteOp->builtin_options.AsExpandDimsOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
+    return RET_NULL_PTR;
   }
 
-  // get axis
-  auto axis_idx = tfliteOp->inputs[1];
-  std::for_each(tfliteTensors[axis_idx]->shape.begin(), tfliteTensors[axis_idx]->shape.end(), [&](int32_t sha){});
-  auto &buf_data = tfliteModelBuffer[tfliteTensors[axis_idx]->buffer];
-  auto data_ptr = buf_data->data.data();
-  attr->dim = *(static_cast<int32_t *>(static_cast<void *>(data_ptr)));
+  attr->dim = -1;
 
+  MS_LOG(ERROR) << "The attr dim is folded by TFLite.";
+  return RET_ERROR;
+
+  /*
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_ExpandDims;
     op->primitive->value.value = attr.release();
   }
   return RET_OK;
+   */
 }
 
 TfliteNodeRegister g_tfliteExpandDimsParser("ExpandDims", new TfliteExpandDimsParser());

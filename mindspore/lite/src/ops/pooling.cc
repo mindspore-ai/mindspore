@@ -56,13 +56,11 @@ int Pooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
   } else {
     auto round_mode = pooling_prim->roundMode();
     if (round_mode == schema::RoundMode_FLOOR) {
-      output_h = std::floor((input_h + pad_u_ + pad_d_ - window_h) / pooling_prim->strideH() + 1);
-      output_w = std::floor((input_w + pad_l_ + pad_r_ - window_w) / pooling_prim->strideW() + 1);
+      output_h = std::floor(static_cast<float>(input_h + pad_u_ + pad_d_ - window_h) / pooling_prim->strideH()) + 1;
+      output_w = std::floor(static_cast<float>(input_w + pad_l_ + pad_r_ - window_w) / pooling_prim->strideW()) + 1;
     } else if (round_mode == schema::RoundMode_CEIL) {
-      output_h =
-        std::ceil((input_h + pooling_prim->padUp() + pooling_prim->padDown() - window_h) / pooling_prim->strideH() + 1);
-      output_w = std::ceil(
-        (input_w + pooling_prim->padLeft() + pooling_prim->padRight() - window_w) / pooling_prim->strideW() + 1);
+      output_h = std::ceil(static_cast<float>(input_h + pad_u_ + pad_d_ - window_h) / pooling_prim->strideH()) + 1;
+      output_w = std::ceil(static_cast<float>(input_w + pad_l_ + pad_r_ - window_w) / pooling_prim->strideW()) + 1;
     } else {
       MS_LOG(ERROR) << "unsupported round mode.";
     }
@@ -80,4 +78,3 @@ int Pooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
   return RET_OK;
 }
 }  // namespace mindspore::lite
-

@@ -56,7 +56,7 @@ if args_opt.device_target == "Ascend":
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="Ascend",
                         device_id=device_id, save_graphs=False)
-elif args_opt.platform == "GPU":
+elif args_opt.device_target == "GPU":
     init("nccl")
     context.set_auto_parallel_context(device_num=get_group_size(),
                                       parallel_mode=ParallelMode.DATA_PARALLEL,
@@ -205,5 +205,5 @@ def train_on_gpu():
 if __name__ == '__main__':
     if args_opt.device_target == "Ascend":
         train_on_ascend()
-    elif args_opt.platform == "GPU":
+    elif args_opt.device_target == "GPU":
         train_on_gpu()

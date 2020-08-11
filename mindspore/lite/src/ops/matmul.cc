@@ -35,7 +35,7 @@ int MatMul::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
 
   std::vector<int> a_shape = input0->shape();
   std::vector<int> b_shape = input1->shape();
-  if (a_shape.size() < 3 || b_shape.size() < 3) {
+  if (a_shape.size() < 2 || b_shape.size() < 2) {
     MS_LOG(ERROR) << "inputs shape is invalid";
     return RET_INPUT_TENSOR_ERROR;
   }

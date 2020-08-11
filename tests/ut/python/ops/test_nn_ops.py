@@ -584,7 +584,10 @@ test_cases = [
     ('ReduceLogSumExp', {
         'block': nn.ReduceLogSumExp((0,), False),
         'desc_inputs': [Tensor(np.array([3, 4, 5, 6]).astype(np.float32))],
-        'desc_bprop': [Tensor(np.array([1, 2, 3, 4]).astype(np.float32))],
+        'skip': ['backward']}),
+    ('LGamma', {
+        'block': nn.LGamma(),
+        'desc_inputs': [Tensor(np.array([3, 4, 5, 6]).astype(np.float32))],
         'skip': ['backward']}),
     ('FlattenNet', {
         'block': FlattenNet(),

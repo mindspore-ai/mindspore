@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/scale.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/scale.h"
+#include "nnacl/errorcode.h"
 
 int DoScale(float *in_data, float *out_data, float *scale, float *offset, int task_id, ScaleParameter *scale_param) {
   if (in_data == nullptr || out_data == nullptr || scale == nullptr || offset == nullptr || scale_param == nullptr) {

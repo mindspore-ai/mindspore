@@ -99,6 +99,7 @@ constexpr char kCropOp[] = "CropOp";
 constexpr char kEqualizeOp[] = "EqualizeOp";
 constexpr char kHwcToChwOp[] = "HwcToChwOp";
 constexpr char kInvertOp[] = "InvertOp";
+constexpr char kMixUpBatchOp[] = "MixUpBatchOp";
 constexpr char kNormalizeOp[] = "NormalizeOp";
 constexpr char kPadOp[] = "PadOp";
 constexpr char kRandomColorAdjustOp[] = "RandomColorAdjustOp";
@@ -120,6 +121,8 @@ constexpr char kResizeOp[] = "ResizeOp";
 constexpr char kResizeWithBBoxOp[] = "ResizeWithBBoxOp";
 constexpr char kSwapRedBlueOp[] = "SwapRedBlueOp";
 constexpr char kUniformAugOp[] = "UniformAugOp";
+constexpr char kSoftDvppDecodeRandomCropResizeJpegOp[] = "SoftDvppDecodeRandomCropResizeJpegOp";
+constexpr char kSoftDvppDecodeReiszeJpegOp[] = "SoftDvppDecodeReiszeJpegOp";
 
 // text
 constexpr char kBasicTokenizerOp[] = "BasicTokenizerOp";

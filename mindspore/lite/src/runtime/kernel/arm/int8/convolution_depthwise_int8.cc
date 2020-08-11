@@ -81,12 +81,16 @@ int ConvolutionDepthwiseInt8CPUKernel::InitBuffer() {
 }
 
 int ConvolutionDepthwiseInt8CPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   // conv base init
   ConvolutionBaseCPUKernel::Init();
 
   // init sliding window param
   sliding = new SlidingWindowParam;
-  InitSlidingParam(sliding, conv_param_, C4NUM);
+  InitSlidingParamConvDw(sliding, conv_param_, C4NUM);
 
   // init quant param
   ConvolutionBaseCPUKernel::SetQuantParam();
@@ -115,7 +119,7 @@ int ConvolutionDepthwiseInt8CPUKernel::ReSize() {
   ConvolutionBaseCPUKernel::Init();
 
   // init sliding window param
-  InitSlidingParam(sliding, conv_param_, C4NUM);
+  InitSlidingParamConvDw(sliding, conv_param_, C4NUM);
 
   // init quant param
   ConvolutionBaseCPUKernel::SetQuantParam();
@@ -145,6 +149,11 @@ int ConvDwInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int ConvolutionDepthwiseInt8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   if (conv_param_->input_channel_ != conv_param_->output_channel_) {
     MS_LOG(ERROR) << "Only support input channel equals output channel.";
     return RET_ERROR;
@@ -160,7 +169,7 @@ int ConvolutionDepthwiseInt8CPUKernel::Run() {
     packed_output_ = output_addr;
   }
 
-  auto ret = LiteBackendParallelLaunch(ConvDwInt8Run, this, conv_param_->thread_num_);
+  ret = LiteBackendParallelLaunch(ConvDwInt8Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwInt8Run error: error_code[" << ret << "]";
     return RET_ERROR;
@@ -176,10 +185,11 @@ int ConvolutionDepthwiseInt8CPUKernel::Run() {
 kernel::LiteKernel *CpuConvDwInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                const std::vector<lite::tensor::Tensor *> &outputs,
                                                OpParameter *opParameter, const Context *ctx,
-                                               const kernel::KernelKey &desc) {
+                                               const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DepthwiseConv2D);
-  auto kernel = new (std::nothrow) kernel::ConvolutionDepthwiseInt8CPUKernel(opParameter, inputs, outputs, ctx);
+  auto kernel =
+    new (std::nothrow) kernel::ConvolutionDepthwiseInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
     return nullptr;

@@ -51,8 +51,12 @@ class CenterCropOperation;
 class CropOperation;
 class CutOutOperation;
 class DecodeOperation;
+class HwcToChwOperation;
+class MixUpBatchOperation;
 class NormalizeOperation;
+class OneHotOperation;
 class PadOperation;
+class RandomAffineOperation;
 class RandomColorAdjustOperation;
 class RandomCropOperation;
 class RandomHorizontalFlipOperation;
@@ -90,12 +94,30 @@ std::shared_ptr<CutOutOperation> CutOut(int32_t length, int32_t num_patches = 1)
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<DecodeOperation> Decode(bool rgb = true);
 
+/// \brief Function to create a HwcToChw TensorOperation.
+/// \notes Transpose the input image; shape (H, W, C) to shape (C, H, W).
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<HwcToChwOperation> HWC2CHW();
+
+/// \brief Function to create a MixUpBatch TensorOperation.
+/// \notes Apply MixUp transformation on an input batch of images and labels. The labels must be in one-hot format and
+///    Batch must be called before calling this function.
+/// \param[in] alpha hyperparameter of beta distribution (default = 1.0)
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<MixUpBatchOperation> MixUpBatch(float alpha = 1);
+
 /// \brief Function to create a Normalize TensorOperation.
 /// \notes Normalize the input image with respect to mean and standard deviation.
 /// \param[in] mean - a vector of mean values for each channel, w.r.t channel order.
 /// \param[in] std - a vector of standard deviations for each channel, w.r.t. channel order.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<NormalizeOperation> Normalize(std::vector<float> mean, std::vector<float> std);
+
+/// \brief Function to create a OneHot TensorOperation.
+/// \notes Convert the labels into OneHot format.
+/// \param[in] num_classes number of classes.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<OneHotOperation> OneHot(int32_t num_classes);
 
 /// \brief Function to create a Pad TensorOp
 /// \notes Pads the image according to padding parameters
@@ -118,6 +140,23 @@ std::shared_ptr<NormalizeOperation> Normalize(std::vector<float> mean, std::vect
 /// \return Shared pointer to the current TensorOp
 std::shared_ptr<PadOperation> Pad(std::vector<int32_t> padding, std::vector<uint8_t> fill_value = {0},
                                   BorderType padding_mode = BorderType::kConstant);
+
+/// \brief Function to create a RandomAffine TensorOperation.
+/// \notes Applies a Random Affine transformation on input image in RGB or Greyscale mode.
+/// \param[in] degrees A float vector size 2, representing the starting and ending degree
+/// \param[in] translate_range A float vector size 2, representing percentages of translation on x and y axes.
+/// \param[in] scale_range A float vector size 2, representing the starting and ending scales in the range.
+/// \param[in] shear_ranges A float vector size 4, representing the starting and ending shear degrees vertically and
+///    horizontally.
+/// \param[in] interpolation An enum for the mode of interpolation
+/// \param[in] fill_value A uint8_t vector size 3, representing the pixel intensity of the borders, it is used to
+///    fill R, G, B channels respectively.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<RandomAffineOperation> RandomAffine(
+  const std::vector<float_t> &degrees, const std::vector<float_t> &translate_range = {0.0, 0.0},
+  const std::vector<float_t> &scale_range = {1.0, 1.0}, const std::vector<float_t> &shear_ranges = {0.0, 0.0, 0.0, 0.0},
+  InterpolationMode interpolation = InterpolationMode::kNearestNeighbour,
+  const std::vector<uint8_t> &fill_value = {0, 0, 0});
 
 /// \brief Randomly adjust the brightness, contrast, saturation, and hue of the input image
 /// \param[in] brightness Brightness adjustment factor. Must be a vector of one or two values
@@ -148,8 +187,8 @@ std::shared_ptr<RandomColorAdjustOperation> RandomColorAdjust(std::vector<float>
 ///                     fill R, G, B channels respectively.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<RandomCropOperation> RandomCrop(std::vector<int32_t> size, std::vector<int32_t> padding = {0, 0, 0, 0},
-                                                bool pad_if_needed = false,
-                                                std::vector<uint8_t> fill_value = {0, 0, 0});
+                                                bool pad_if_needed = false, std::vector<uint8_t> fill_value = {0, 0, 0},
+                                                BorderType padding_mode = BorderType::kConstant);
 
 /// \brief Function to create a RandomHorizontalFlip TensorOperation.
 /// \notes Tensor operation to perform random horizontal flip.
@@ -258,6 +297,29 @@ class DecodeOperation : public TensorOperation {
   bool rgb_;
 };
 
+class HwcToChwOperation : public TensorOperation {
+ public:
+  ~HwcToChwOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
+};
+
+class MixUpBatchOperation : public TensorOperation {
+ public:
+  explicit MixUpBatchOperation(float alpha = 1);
+
+  ~MixUpBatchOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
+
+ private:
+  float alpha_;
+};
+
 class NormalizeOperation : public TensorOperation {
  public:
   NormalizeOperation(std::vector<float> mean, std::vector<float> std);
@@ -271,6 +333,20 @@ class NormalizeOperation : public TensorOperation {
  private:
   std::vector<float> mean_;
   std::vector<float> std_;
+};
+
+class OneHotOperation : public TensorOperation {
+ public:
+  explicit OneHotOperation(int32_t num_classes_);
+
+  ~OneHotOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
+
+ private:
+  float num_classes_;
 };
 
 class PadOperation : public TensorOperation {
@@ -288,6 +364,29 @@ class PadOperation : public TensorOperation {
   std::vector<int32_t> padding_;
   std::vector<uint8_t> fill_value_;
   BorderType padding_mode_;
+};
+
+class RandomAffineOperation : public TensorOperation {
+ public:
+  RandomAffineOperation(const std::vector<float_t> &degrees, const std::vector<float_t> &translate_range = {0.0, 0.0},
+                        const std::vector<float_t> &scale_range = {1.0, 1.0},
+                        const std::vector<float_t> &shear_ranges = {0.0, 0.0, 0.0, 0.0},
+                        InterpolationMode interpolation = InterpolationMode::kNearestNeighbour,
+                        const std::vector<uint8_t> &fill_value = {0, 0, 0});
+
+  ~RandomAffineOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
+
+ private:
+  std::vector<float_t> degrees_;          // min_degree, max_degree
+  std::vector<float_t> translate_range_;  // maximum x translation percentage, maximum y translation percentage
+  std::vector<float_t> scale_range_;      // min_scale, max_scale
+  std::vector<float_t> shear_ranges_;     // min_x_shear, max_x_shear, min_y_shear, max_y_shear
+  InterpolationMode interpolation_;
+  std::vector<uint8_t> fill_value_;
 };
 
 class RandomColorAdjustOperation : public TensorOperation {
@@ -311,7 +410,8 @@ class RandomColorAdjustOperation : public TensorOperation {
 class RandomCropOperation : public TensorOperation {
  public:
   RandomCropOperation(std::vector<int32_t> size, std::vector<int32_t> padding = {0, 0, 0, 0},
-                      bool pad_if_needed = false, std::vector<uint8_t> fill_value = {0, 0, 0});
+                      bool pad_if_needed = false, std::vector<uint8_t> fill_value = {0, 0, 0},
+                      BorderType padding_mode = BorderType::kConstant);
 
   ~RandomCropOperation() = default;
 
@@ -324,6 +424,7 @@ class RandomCropOperation : public TensorOperation {
   std::vector<int32_t> padding_;
   bool pad_if_needed_;
   std::vector<uint8_t> fill_value_;
+  BorderType padding_mode_;
 };
 
 class RandomHorizontalFlipOperation : public TensorOperation {

@@ -15,8 +15,8 @@
  */
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_BATCH_TO_SPACE_INT8_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_BATCH_TO_SPACE_INT8_H_
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/quantization/quantize.h"
+#include "nnacl/op_base.h"
+#include "nnacl/quantization/quantize.h"
 
 void BatchToSpaceNoCropForNHWC(const int8_t *input, int8_t *output, const int *in_shape, int out_n, const int *block,
                                QuantArg *in_quant_arg, QuantArg *out_quant_arg);

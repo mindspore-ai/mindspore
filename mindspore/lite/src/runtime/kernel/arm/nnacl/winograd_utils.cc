@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/winograd_utils.h"
+#include "nnacl/winograd_utils.h"
 #include <cstdio>
 
 #define MIN_UNIT 2
@@ -4708,3 +4708,28 @@ OutputTransformUnitFunc GetOutputTransFunc(int input_unit, int output_unit) {
     return nullptr;
   }
 }
+
+void CheckIfUseWinograd(bool *use_winograd, int *output_unit, ConvParameter *conv_param,
+                        InputTransformUnitFunc input_trans_func, OutputTransformUnitFunc output_trans_func) {
+  if (conv_param->kernel_w_ == conv_param->kernel_h_ && conv_param->dilation_h_ == 1 && conv_param->dilation_w_ == 1 &&
+      conv_param->stride_h_ == 1 && conv_param->stride_w_ == 1) {
+    *output_unit = SelectOutputUnit(conv_param);
+    if (*output_unit > 1) {
+      *use_winograd = true;
+      int input_unit = conv_param->kernel_h_ + *output_unit - 1;
+      input_trans_func = GetInputTransFunc(input_unit);
+      if (input_trans_func == nullptr) {
+        *use_winograd = false;
+      }
+      output_trans_func = GetOutputTransFunc(input_unit, *output_unit);
+      if (output_trans_func == nullptr) {
+        *use_winograd = false;
+      }
+    } else {
+      *use_winograd = false;
+    }
+  } else {
+    *use_winograd = false;
+  }
+}
+

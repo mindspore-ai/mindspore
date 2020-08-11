@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """test cases for powertransform"""
+import pytest
 import mindspore.nn as nn
 import mindspore.nn.probability.bijector as msb
 from mindspore import Tensor
@@ -23,6 +24,12 @@ def test_init():
     assert isinstance(b, msb.Bijector)
     b = msb.PowerTransform(1)
     assert isinstance(b, msb.Bijector)
+
+def test_type():
+    with pytest.raises(TypeError):
+        msb.PowerTransform(power='power')
+    with pytest.raises(TypeError):
+        msb.PowerTransform(name=0.1)
 
 class Net(nn.Cell):
     """

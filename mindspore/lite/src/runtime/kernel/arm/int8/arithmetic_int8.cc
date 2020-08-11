@@ -126,6 +126,9 @@ int ArithmeticInt8CPUKernel::DoArithmetic(int thread_id) {
     MS_ASSERT(thread_count_ != 0);
     int stride = UP_DIV(element_num, thread_count_);
     int count = MSMIN(stride, element_num - stride * thread_id);
+    if (count <= 0) {
+      return RET_OK;
+    }
 
     int error_code = arithmetic_run_(tile_data0_ + stride * thread_id, tile_data1_ + stride * thread_id,
                                      output_data + stride * thread_id, count);
@@ -164,12 +167,12 @@ int ArithmeticInt8CPUKernel::Run() {
 kernel::LiteKernel *CpuArithmeticInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                    const std::vector<lite::tensor::Tensor *> &outputs,
                                                    OpParameter *parameter, const lite::Context *ctx,
-                                                   const kernel::KernelKey &desc) {
+                                                   const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "Input parameter is null!";
     return nullptr;
   }
-  auto kernel = new (std::nothrow) ArithmeticInt8CPUKernel(parameter, inputs, outputs, ctx);
+  auto kernel = new (std::nothrow) ArithmeticInt8CPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create ArithmeticInt8CPUKernel failed, name: " << parameter->name_;
     return nullptr;

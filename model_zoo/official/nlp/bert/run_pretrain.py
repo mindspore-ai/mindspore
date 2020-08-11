@@ -142,10 +142,11 @@ def run_pretrain():
         raise ValueError("Don't support optimizer {}, only support [Lamb, Momentum, AdamWeightDecay]".
                          format(cfg.optimizer))
     callback = [TimeMonitor(args_opt.data_sink_steps), LossCallBack()]
-    if args_opt.enable_save_ckpt == "true":
+    if args_opt.enable_save_ckpt == "true" and args_opt.device_id % min(8, device_num) == 0:
         config_ck = CheckpointConfig(save_checkpoint_steps=args_opt.save_checkpoint_steps,
                                      keep_checkpoint_max=args_opt.save_checkpoint_num)
-        ckpoint_cb = ModelCheckpoint(prefix='checkpoint_bert', directory=ckpt_save_dir, config=config_ck)
+        ckpoint_cb = ModelCheckpoint(prefix='checkpoint_bert',
+                                     directory=None if ckpt_save_dir == "" else ckpt_save_dir, config=config_ck)
         callback.append(ckpoint_cb)
 
     if args_opt.load_checkpoint_path:

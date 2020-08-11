@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_TILE_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_TILE_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct TileParameter {
+typedef struct TileParameter {
   OpParameter op_parameter_;
   int in_dim_;
   int in_shape_[5];
@@ -27,7 +27,7 @@ struct TileParameter {
   int multiples_[5];
   int in_strides_[5];
   int out_strides_[5];
-};
+} TileParameter;
 
 void Tile(float *input_data, float *output_data, TileParameter *parameter);
 

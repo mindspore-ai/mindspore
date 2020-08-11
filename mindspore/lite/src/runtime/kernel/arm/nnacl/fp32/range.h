@@ -17,15 +17,15 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_RANGE_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_RANGE_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct RangeParameter {
+typedef struct RangeParameter {
   OpParameter op_parameter_;
   int dType_;
   int start_;
   int limit_;
   int delta_;
-};
+} RangeParameter;
 
 void Range(float *output_ptr, int start, int limit, int delta);
 

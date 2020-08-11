@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/fill.h"
+#include "nnacl/fp32/fill.h"
 
 int Fill(float *output, int size, float data) {
   for (int i = 0; i < size; ++i) {

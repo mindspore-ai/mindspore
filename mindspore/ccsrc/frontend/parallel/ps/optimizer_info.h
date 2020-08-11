@@ -82,6 +82,7 @@ class MomentumOptimInfo : public DenseOptimInfo {
                     const AddressPtr &gradient, const AddressPtr &momentum);
   ~MomentumOptimInfo() override = default;
 
+  void Update(const Values &values, const Lengths &lens) override;
   const AddressPtr &gradient();
   const AddressPtr &indices();
   size_t grad_index() override;

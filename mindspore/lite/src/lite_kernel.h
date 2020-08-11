@@ -25,6 +25,7 @@
 #include "include/context.h"
 #include "src/ir/tensor.h"
 #include "src/ops/ops.h"
+#include "include/errorcode.h"
 
 #ifdef ENABLE_FP16
 using FLOAT_t = float16_t;
@@ -34,6 +35,8 @@ using FLOAT_t = float;
 
 // using mindspore::kernel::AddressPtr;
 namespace mindspore::kernel {
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 enum KERNEL_ARCH { kCPU, kGPU, kNPU, kKernelArch_MIN = kCPU, kKernelArch_MAX = kNPU };
 struct KernelKey {
   KERNEL_ARCH arch;
@@ -55,15 +58,33 @@ class LiteKernel {
  public:
   LiteKernel() = default;
   explicit LiteKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                      const std::vector<lite::tensor::Tensor *> &outputs)
-      : opParameter(parameter), inputs_(inputs), outputs_(outputs), train_mode(false) {
+                      const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                      const lite::Primitive *primitive)
+      : opParameter(parameter), inputs_(inputs), outputs_(outputs), primitive_(primitive), context_(ctx) {
+    if (opParameter && ctx) {
+      opParameter->thread_num_ = ctx->thread_num_;
+    }
     this->in_kernel_.clear();
     this->out_kernel_.clear();
   }
 
   virtual ~LiteKernel() { delete opParameter; }
 
-  virtual int Prepare() { return -1; }
+  virtual int Prepare() {
+    if (!InferShapeDone()) {
+      (const_cast<lite::Primitive *>(primitive_))->InferShape(inputs_, outputs_);
+      if (need_reinit) {
+        Init();
+      }
+    }
+
+    auto &outputs = this->GetOutputs();
+    for (auto *output : outputs) {
+      MS_ASSERT(output != nullptr);
+      output->MallocData();
+    }
+    return RET_OK;
+  }
   virtual int Init() { return -1; }
   virtual int ReSize() { return -1; }
   virtual int Run() { return -1; }
@@ -75,9 +96,16 @@ class LiteKernel {
   virtual bool is_eval() { return train_mode == false; }
   void set_name(const std::string &name) { this->name = name; }
 
+  void set_is_model_output(bool is_model_output) { this->is_model_output_ = is_model_output; }
+
+  bool is_model_output() { return this->is_model_output_; }
+
   schema::PrimitiveType type() { return (schema::PrimitiveType)this->opParameter->type_; }
 
-  std::string type_str() { return schema::EnumNamePrimitiveType((schema::PrimitiveType)this->opParameter->type_); }
+  std::string type_str() {
+    return this->opParameter ? schema::EnumNamePrimitiveType((schema::PrimitiveType)this->opParameter->type_)
+                             : "ERROR:undefined primitive!";
+  }
 
   void SetInputs(const std::vector<lite::tensor::Tensor *> &inputs) { this->inputs_ = inputs; }
 
@@ -103,16 +131,29 @@ class LiteKernel {
 
   void set_desc(const KernelKey kernel_key) { desc = kernel_key; }
 
+  void SetNeedReInit() { need_reinit = true; }
+
  protected:
+  bool InferShapeDone() {
+    if (primitive_ != nullptr && !primitive_->GetInferFlag()) {
+      return false;
+    }
+    return true;
+  }
+
   KernelKey desc;
   std::string name;
   OpParameter *opParameter = nullptr;
+  const lite::Primitive *primitive_ = nullptr;
+  const lite::Context *context_ = nullptr;
   // tensor will free in ~lite_session()
   std::vector<lite::tensor::Tensor *> inputs_;
   std::vector<lite::tensor::Tensor *> outputs_;
   std::vector<LiteKernel *> in_kernel_;
   std::vector<LiteKernel *> out_kernel_;
-  bool train_mode;
+  bool train_mode = false;
+  bool need_reinit = false;
+  bool is_model_output_ = false;
 };
 
 class SubGraphKernel : public LiteKernel {
@@ -121,8 +162,9 @@ class SubGraphKernel : public LiteKernel {
                           const std::vector<lite::tensor::Tensor *> &outputs,
                           const std::vector<kernel::LiteKernel *> &inKernels,
                           const std::vector<kernel::LiteKernel *> &outKernels,
-                          const std::vector<kernel::LiteKernel *> &nodes)
-      : LiteKernel(nullptr, inputs, outputs),
+                          const std::vector<kernel::LiteKernel *> &nodes, const lite::Context *ctx,
+                          const lite::Primitive *primitive)
+      : LiteKernel(nullptr, inputs, outputs, ctx, primitive),
         inputs_(inputs),
         outputs_(outputs),
         inkernels_(inKernels),
@@ -144,7 +186,7 @@ class SubGraphKernel : public LiteKernel {
 
 typedef LiteKernel *(*KernelCreator)(const std::vector<lite::tensor::Tensor *> &inputs,
                                      const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
-                                     const lite::Context *ctx, const KernelKey &desc);
+                                     const lite::Context *ctx, const KernelKey &desc, const lite::Primitive *primitive);
 
 class LiteKernelUtil {
  public:

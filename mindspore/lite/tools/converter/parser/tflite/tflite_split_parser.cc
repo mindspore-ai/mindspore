@@ -27,17 +27,38 @@ STATUS TfliteSplitParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
                                 schema::CNodeT *op,
                                 TensorCache *tensor_cache,
                                 bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(INFO) << "parse TfliteSplitParser";
   std::unique_ptr<schema::SplitT> attr(new schema::SplitT());
+
   const auto &tflite_attr = tfliteOp->builtin_options.AsSplitOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name << " attr failed";
     return RET_NULL_PTR;
   }
+  auto num_splits = tflite_attr->num_splits;
 
-  const auto tensor_shape = tfliteTensors[tfliteOp->inputs[1]].get()->shape;
-  auto axis =
-      *(reinterpret_cast<int32_t *>(tfliteModelBuffer[tfliteTensors[tfliteOp->inputs[0]]->buffer]->data.data()));
+  const auto &shape_tensor = tfliteTensors[tfliteOp->inputs[1]];
+  if (shape_tensor == nullptr) {
+    MS_LOG(ERROR) << "shape_tensor is null";
+    return RET_NULL_PTR;
+  }
+  const auto tensor_shape = shape_tensor->shape;
+  const auto &axis_tensor = tfliteTensors[tfliteOp->inputs[0]];
+  if (axis_tensor == nullptr) {
+    MS_LOG(ERROR) << "axis_tensor is null";
+    return RET_NULL_PTR;
+  }
+  auto axis = *(reinterpret_cast<int32_t *>(tfliteModelBuffer[axis_tensor->buffer]->data.data()));
   if (axis < 0) {
     axis += tensor_shape.size();
   }
@@ -46,8 +67,6 @@ STATUS TfliteSplitParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
     return RET_ERROR;
   }
   attr->splitDim = axis;
-
-  auto num_splits = tflite_attr->num_splits;
   if (tensor_shape[axis] % num_splits != 0) {
     MS_LOG(ERROR) << "num_splits can't divide tensor's length at axis " << axis;
     return RET_ERROR;
@@ -58,11 +77,8 @@ STATUS TfliteSplitParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
     attr->sizeSplits.push_back(tensor_shape[axis] / num_splits);
   }
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Split;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_Split;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

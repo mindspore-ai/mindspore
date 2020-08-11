@@ -27,15 +27,16 @@
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/conv.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/common_func.h"
-#include "src/runtime/kernel/arm/nnacl/matmul.h"
+#include "src/runtime/kernel/arm/nnacl/matmul_parameter.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/matmul.h"
 
 namespace mindspore::kernel {
 class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   Convolution1x1CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                          const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {
+                          const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                          const lite::Primitive *primitive)
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {
     matmul_param_ = new MatMulParameter();
   }
   ~Convolution1x1CPUKernel();
@@ -45,6 +46,7 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
 
  public:
   int DoConv1x1(int task_id);
+  int DoConv1x1Post(int task_id);
 
  private:
   int InitConv1x1Param();

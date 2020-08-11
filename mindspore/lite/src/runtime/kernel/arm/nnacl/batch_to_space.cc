@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/batch_to_space.h"
-#include "src/runtime/kernel/arm/nnacl/arithmetic_common.h"
+#include "nnacl/batch_to_space.h"
+#include "nnacl/arithmetic_common.h"
 
 void BatchToSpaceNoCropForNHWC(const void *input, void *output, const int *in_shape, int out_n, const int *block,
                                int data_size) {

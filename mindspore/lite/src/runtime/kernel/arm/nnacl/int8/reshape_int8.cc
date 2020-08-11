@@ -14,28 +14,27 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/int8/reshape_int8.h"
+#include "nnacl/int8/reshape_int8.h"
+#include "nnacl/reshape_parameter.h"
 #include <string.h>
 
-void Reshape(int8_t *input_ptr, int8_t *output_ptr, size_t data_size, int input_num, QuantArg in_quant_arg,
-             QuantArg out_quant_arg) {
-  if (in_quant_arg.scale_ == out_quant_arg.scale_ && in_quant_arg.zp_ == out_quant_arg.zp_) {
-    memcpy(output_ptr, input_ptr, data_size);
+void Reshape(int8_t *input_ptr, int8_t *output_ptr, int64_t real_dst_count, ReshapeQuantArg para) {
+  if (para.in_args_.scale_ == para.out_args_.scale_ && para.in_args_.zp_ == para.out_args_.zp_) {
+    memcpy(output_ptr, input_ptr, real_dst_count);
   } else {
-    float output_inverse_scale = 1.f / out_quant_arg.scale_;
-    float scale = in_quant_arg.scale_ * output_inverse_scale;
-    float bias = -in_quant_arg.zp_ * scale;
-    int32_t output_zp = out_quant_arg.zp_;
-    for (int i = 0; i < input_num; i++) {
+    float output_inverse_scale = 1.f / para.out_args_.scale_;
+    float scale = para.in_args_.scale_ * output_inverse_scale;
+    float bias = -para.in_args_.zp_ * scale;
+    int32_t output_zp = para.out_args_.zp_;
+    for (int i = 0; i < real_dst_count; i++) {
       int32_t output_tmp = round(input_ptr[i] * scale + bias) + output_zp;
-      if (output_tmp > 127) {
-        output_ptr[i] = 127;
-      } else if (output_tmp < -128) {
-        output_ptr[i] = -128;
+      if (output_tmp > para.output_activation_max_) {
+        output_ptr[i] = para.output_activation_max_;
+      } else if (output_tmp < para.output_activation_min_) {
+        output_ptr[i] = para.output_activation_min_;
       } else {
-        output_ptr[i] = (int8_t)output_tmp;
+        output_ptr[i] = static_cast<int8_t>(output_tmp);
       }
     }
   }
 }
-

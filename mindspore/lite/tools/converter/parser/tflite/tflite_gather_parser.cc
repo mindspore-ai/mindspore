@@ -27,21 +27,30 @@ STATUS TfliteGatherParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
                               schema::CNodeT *op,
                               TensorCache *tensor_cache,
                               bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse TfliteGatherParser";
   std::unique_ptr<schema::GatherT> attr(new schema::GatherT());
+
   const auto &tflite_attr = tfliteOp->builtin_options.AsGatherOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
+    return RET_NULL_PTR;
   }
-
   attr->axis = tflite_attr->axis;
-  attr->batchDims = 0;    // default
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Gather;
-    op->primitive->value.value = attr.release();
-  }
+  attr->batchDims = 0;
+
+  op->primitive->value.type = schema::PrimitiveType_Gather;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

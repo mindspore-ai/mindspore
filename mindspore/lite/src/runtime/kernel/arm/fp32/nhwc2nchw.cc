@@ -28,21 +28,30 @@ int Nhwc2NchwCPUKernel::Init() { return RET_OK; }
 int Nhwc2NchwCPUKernel::ReSize() { return RET_OK; }
 
 int Nhwc2NchwCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   auto input = inputs_[0];
   auto output = outputs_[0];
 
-  PackNHWCToNCHWFp32(input->Data(), output->Data(), output->Batch(), output->Height() * output->Width(),
-                     output->Channel());
+  if (input->shape().size() == 4) {
+    PackNHWCToNCHWFp32(input->Data(), output->Data(), output->Batch(), output->Height() * output->Width(),
+                       output->Channel());
+  } else {
+    memcpy(output->Data(), input->Data(), input->ElementsNum() * sizeof(float));
+  }
   return RET_OK;
 }
 
 kernel::LiteKernel *CpuNhwc2NchwFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                   const std::vector<lite::tensor::Tensor *> &outputs,
                                                   OpParameter *opParameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc) {
+                                                  const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Nhwc2Nchw);
-  auto *kernel = new (std::nothrow) Nhwc2NchwCPUKernel(opParameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) Nhwc2NchwCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new Nhwc2NchwCPUKernel fail!";
     return nullptr;
@@ -59,4 +68,3 @@ kernel::LiteKernel *CpuNhwc2NchwFp32KernelCreator(const std::vector<lite::tensor
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Nhwc2Nchw, CpuNhwc2NchwFp32KernelCreator)
 }  // namespace mindspore::kernel
-

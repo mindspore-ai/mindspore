@@ -28,8 +28,10 @@
 #include "minddata/dataset/kernels/image/hwc_to_chw_op.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/kernels/image/invert_op.h"
+#include "minddata/dataset/kernels/image/mixup_batch_op.h"
 #include "minddata/dataset/kernels/image/normalize_op.h"
 #include "minddata/dataset/kernels/image/pad_op.h"
+#include "minddata/dataset/kernels/image/random_affine_op.h"
 #include "minddata/dataset/kernels/image/random_color_adjust_op.h"
 #include "minddata/dataset/kernels/image/random_crop_and_resize_op.h"
 #include "minddata/dataset/kernels/image/random_crop_and_resize_with_bbox_op.h"
@@ -48,6 +50,8 @@
 #include "minddata/dataset/kernels/image/resize_bilinear_op.h"
 #include "minddata/dataset/kernels/image/resize_op.h"
 #include "minddata/dataset/kernels/image/resize_with_bbox_op.h"
+#include "minddata/dataset/kernels/image/soft_dvpp/soft_dvpp_decode_random_crop_resize_jpeg_op.h"
+#include "minddata/dataset/kernels/image/soft_dvpp/soft_dvpp_decode_resize_jpeg_op.h"
 #include "minddata/dataset/kernels/image/uniform_aug_op.h"
 
 namespace mindspore {
@@ -92,6 +96,12 @@ PYBIND_REGISTER(CenterCropOp, 1, ([](const py::module *m) {
                     .def(py::init<int32_t, int32_t>(), py::arg("height"), py::arg("width") = CenterCropOp::kDefWidth);
                 }));
 
+PYBIND_REGISTER(MixUpBatchOp, 1, ([](const py::module *m) {
+                  (void)py::class_<MixUpBatchOp, TensorOp, std::shared_ptr<MixUpBatchOp>>(
+                    *m, "MixUpBatchOp", "Tensor operation to mixup a batch of images")
+                    .def(py::init<float>(), py::arg("alpha"));
+                }));
+
 PYBIND_REGISTER(ResizeOp, 1, ([](const py::module *m) {
                   (void)py::class_<ResizeOp, TensorOp, std::shared_ptr<ResizeOp>>(
                     *m, "ResizeOp", "Tensor operation to resize an image. Takes height, width and mode")
@@ -106,6 +116,19 @@ PYBIND_REGISTER(ResizeWithBBoxOp, 1, ([](const py::module *m) {
                     .def(py::init<int32_t, int32_t, InterpolationMode>(), py::arg("targetHeight"),
                          py::arg("targetWidth") = ResizeWithBBoxOp::kDefWidth,
                          py::arg("interpolation") = ResizeWithBBoxOp::kDefInterpolation);
+                }));
+
+PYBIND_REGISTER(RandomAffineOp, 1, ([](const py::module *m) {
+                  (void)py::class_<RandomAffineOp, TensorOp, std::shared_ptr<RandomAffineOp>>(
+                    *m, "RandomAffineOp", "Tensor operation to apply random affine transformations on an image.")
+                    .def(py::init<std::vector<float_t>, std::vector<float_t>, std::vector<float_t>,
+                                  std::vector<float_t>, InterpolationMode, std::vector<uint8_t>>(),
+                         py::arg("degrees") = RandomAffineOp::kDegreesRange,
+                         py::arg("translate_range") = RandomAffineOp::kTranslationPercentages,
+                         py::arg("scale_range") = RandomAffineOp::kScaleRange,
+                         py::arg("shear_ranges") = RandomAffineOp::kShearRanges,
+                         py::arg("interpolation") = RandomAffineOp::kDefInterpolation,
+                         py::arg("fill_value") = RandomAffineOp::kFillValue);
                 }));
 
 PYBIND_REGISTER(
@@ -341,6 +364,24 @@ PYBIND_REGISTER(RandomSelectSubpolicyOp, 1, ([](const py::module *m) {
                       return std::make_shared<RandomSelectSubpolicyOp>(cpp_policy);
                     }));
                 }));
+PYBIND_REGISTER(SoftDvppDecodeResizeJpegOp, 1, ([](const py::module *m) {
+                  (void)py::class_<SoftDvppDecodeResizeJpegOp, TensorOp, std::shared_ptr<SoftDvppDecodeResizeJpegOp>>(
+                    *m, "SoftDvppDecodeResizeJpegOp", "TensorOp to use soft dvpp decode and resize jpeg image.")
+                    .def(py::init<int32_t, int32_t>(), py::arg("targetHeight"), py::arg("targetWidth"));
+                }));
+PYBIND_REGISTER(
+  SoftDvppDecodeRandomCropResizeJpegOp, 1, ([](const py::module *m) {
+    (void)
+      py::class_<SoftDvppDecodeRandomCropResizeJpegOp, TensorOp, std::shared_ptr<SoftDvppDecodeRandomCropResizeJpegOp>>(
+        *m, "SoftDvppDecodeRandomCropResizeJpegOp",
+        "TensorOp to use soft dvpp decode, random crop and resize jepg image.")
+        .def(py::init<int32_t, int32_t, float, float, float, float, int32_t>(), py::arg("targetHeight"),
+             py::arg("targetWidth"), py::arg("scaleLb") = RandomCropDecodeResizeOp::kDefScaleLb,
+             py::arg("scaleUb") = RandomCropDecodeResizeOp::kDefScaleUb,
+             py::arg("aspectLb") = RandomCropDecodeResizeOp::kDefAspectLb,
+             py::arg("aspectUb") = RandomCropDecodeResizeOp::kDefAspectUb,
+             py::arg("maxIter") = RandomCropDecodeResizeOp::kDefMaxIter);
+  }));
 
 }  // namespace dataset
 }  // namespace mindspore

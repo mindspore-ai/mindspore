@@ -152,7 +152,8 @@ TEST_F(LstmFp32, LstmForwardFp32Accuracy) {
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, mindspore::schema::PrimitiveType_Lstm};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  kernel::LiteKernel *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(lstm_param), ctx, desc);
+  kernel::LiteKernel *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(lstm_param), ctx, desc,
+                                       nullptr);
   ASSERT_NE(kernel, nullptr);
   // op run
   kernel->Run();
@@ -299,7 +300,8 @@ TEST_F(LstmFp32, LstmBackwardFp32Accuracy) {
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, mindspore::schema::PrimitiveType_Lstm};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  kernel::LiteKernel *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(lstm_param), ctx, desc);
+  kernel::LiteKernel *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(lstm_param), ctx, desc,
+                                       nullptr);
   ASSERT_NE(kernel, nullptr);
   // op run
   kernel->Run();

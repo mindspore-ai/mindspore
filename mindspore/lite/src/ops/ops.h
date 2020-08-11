@@ -45,12 +45,15 @@ class Primitive {
   static Primitive *CreatePrimitive(schema::Primitive *primitive);
   virtual ~Primitive() {}
   const schema::Primitive *Value() const { return this->primitive; }
+  const bool GetInferFlag() const { return this->infer_flag_; }
+  void SetInferFlag(bool flag) { this->infer_flag_ = flag; }
   schema::PrimitiveType Type() const { return this->primitive->value_type(); }
   const void *Attribute() const { return this->primitive->value(); }
   virtual int InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_);
 
  protected:
   schema::Primitive *primitive;
+  bool infer_flag_ = true;
 };
 
 class Conv2D : public Primitive {
@@ -777,6 +780,12 @@ class Lstm : public Primitive {
   explicit Lstm(schema::Primitive *primitive) : Primitive(primitive) {}
   const schema::Lstm *GetAttribute() const { return this->primitive->value_as_Lstm(); }
   int InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) override;
+};
+
+class Elu : public Primitive {
+ public:
+  explicit Elu(schema::Primitive *primitive) : Primitive(primitive) {}
+  const schema::Elu *GetAttribute() const { return this->primitive->value_as_Elu(); }
 };
 
 class EmbeddingLookup : public Primitive {

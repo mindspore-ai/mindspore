@@ -19,13 +19,13 @@
 #include <vector>
 #include "src/lite_kernel.h"
 
-
 namespace mindspore::kernel {
 class ZerosLikeCPUKernel : public LiteKernel {
  public:
   ZerosLikeCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                     const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs) {}
+                     const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                     const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
 
   ~ZerosLikeCPUKernel() = default;
 
@@ -36,4 +36,3 @@ class ZerosLikeCPUKernel : public LiteKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ZEROSLIKE_H_
-

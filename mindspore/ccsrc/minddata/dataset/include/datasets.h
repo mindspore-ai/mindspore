@@ -196,8 +196,9 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   }
 
   /// \brief Function to create an Iterator over the Dataset pipeline
+  /// \param[in] columns List of columns to be used to specify the order of columns
   /// \return Shared pointer to the Iterator
-  std::shared_ptr<Iterator> CreateIterator();
+  std::shared_ptr<Iterator> CreateIterator(std::vector<std::string> columns = {});
 
   /// \brief Function to create a BatchDataset
   /// \notes Combines batch_size number of consecutive rows into batches
@@ -452,6 +453,12 @@ class VOCDataset : public Dataset {
   bool ValidateParams() override;
 
  private:
+  const std::string kColumnImage = "image";
+  const std::string kColumnTarget = "target";
+  const std::string kColumnBbox = "bbox";
+  const std::string kColumnLabel = "label";
+  const std::string kColumnDifficult = "difficult";
+  const std::string kColumnTruncate = "truncate";
   std::string dataset_dir_;
   std::string task_;
   std::string mode_;

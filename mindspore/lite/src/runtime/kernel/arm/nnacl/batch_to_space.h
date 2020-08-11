@@ -15,16 +15,16 @@
  */
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_BATCH_TO_SPACE_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_BATCH_TO_SPACE_H_
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
 #define BATCH_TO_SPACE_BLOCK_SHAPE_SIZE 2
-#define BATCH_TO_SPACE_CROPS_SIZE       4
+#define BATCH_TO_SPACE_CROPS_SIZE 4
 
-struct BatchToSpaceParameter {
-    OpParameter op_parameter_;
-    int32_t block_shape_[BATCH_TO_SPACE_BLOCK_SHAPE_SIZE];
-    int32_t crops_[BATCH_TO_SPACE_CROPS_SIZE];
-};
+typedef struct BatchToSpaceParameter {
+  OpParameter op_parameter_;
+  int32_t block_shape_[BATCH_TO_SPACE_BLOCK_SHAPE_SIZE];
+  int32_t crops_[BATCH_TO_SPACE_CROPS_SIZE];
+} BatchToSpaceParameter;
 
 void BatchToSpaceNoCropForNHWC(const void *input, void *output, const int *in_shape, int out_n, const int *block,
                                int data_size);

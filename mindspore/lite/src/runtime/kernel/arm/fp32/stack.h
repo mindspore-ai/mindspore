@@ -25,8 +25,9 @@ namespace mindspore::kernel {
 class StackCPUKernel : public LiteKernel {
  public:
   StackCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                 const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs),
+                 const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                 const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive),
         convert_functions_(inputs_.size(), nullptr),
         packed_inputs_(inputs_.size(), nullptr) {}
 
@@ -51,4 +52,3 @@ class StackCPUKernel : public LiteKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_STACK_H_
-

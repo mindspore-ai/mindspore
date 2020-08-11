@@ -25,7 +25,9 @@
 namespace mindspore::lite {
 class Scheduler {
  public:
-  explicit Scheduler(const Context *ctx) : context_(ctx) {}
+  explicit Scheduler(const Context *ctx) {
+    context_ = const_cast<Context *>(ctx);
+  }
   int Schedule(const lite::Model *model, std::vector<tensor::Tensor *> *tensors,
                std::vector<kernel::LiteKernel *> *kernels);
 
@@ -48,7 +50,7 @@ class Scheduler {
 
  protected:
   std::vector<std::vector<size_t>> markedKernelGroup;
-  const Context *context_ = nullptr;
+  Context *context_ = nullptr;
 };
 }  // namespace mindspore::lite
 

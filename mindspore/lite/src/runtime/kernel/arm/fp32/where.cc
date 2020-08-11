@@ -48,6 +48,11 @@ int WhereRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
   return RET_OK;
 }
 int WhereCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   auto input = inputs_.at(0);
   auto input1 = inputs_.at(1);
   auto input2 = inputs_.at(2);
@@ -74,7 +79,7 @@ int WhereCPUKernel::Run() {
     MS_LOG(ERROR) << "Error, inputs' length are zero !!!";
     return RET_ERROR;
   }
-  auto ret = LiteBackendParallelLaunch(WhereRun, this, where_param_->thread_num_);
+  ret = LiteBackendParallelLaunch(WhereRun, this, where_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "WhereDwRun error: error_code[" << ret << "]";
     return RET_ERROR;
@@ -85,13 +90,13 @@ int WhereCPUKernel::Run() {
 kernel::LiteKernel *CpuWhereFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                               const std::vector<lite::tensor::Tensor *> &outputs,
                                               OpParameter *opParameter, const lite::Context *ctx,
-                                              const kernel::KernelKey &desc) {
+                                              const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "input opParameter is nullptr!";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Where);
-  auto *kernel = new (std::nothrow) WhereCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) WhereCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new WhereCPUKernel fail!";
     return nullptr;

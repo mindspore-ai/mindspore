@@ -39,6 +39,7 @@ class Loss(nn.Cell):
         self.param = param
 
     def construct(self, preds):
+        """Calculate loss"""
         param = self.l2_loss(self.param)
         loss = self.weight_decay * param
         preds = self.cast(preds, mstype.float32)

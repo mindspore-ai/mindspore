@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/int8/arithmetic_int8.h"
+#include "nnacl/int8/arithmetic_int8.h"
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/errorcode.h"
 
 int ElementNotEqual(int8_t *input0, int8_t *input1, int8_t *output, int element_size) {
   for (int index = 0; index < element_size; ++index) {

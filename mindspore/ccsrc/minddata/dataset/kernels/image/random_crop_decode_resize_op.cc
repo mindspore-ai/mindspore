@@ -37,22 +37,9 @@ Status RandomCropDecodeResizeOp::Compute(const std::shared_ptr<Tensor> &input, s
     RETURN_IF_NOT_OK(op.Compute(input, &decoded));
     return RandomCropAndResizeOp::Compute(decoded, output);
   } else {
-    struct jpeg_decompress_struct cinfo {};
-    struct JpegErrorManagerCustom jerr {};
-    cinfo.err = jpeg_std_error(&jerr.pub);
-    jerr.pub.error_exit = JpegErrorExitCustom;
-    try {
-      jpeg_create_decompress(&cinfo);
-      JpegSetSource(&cinfo, input->GetBuffer(), input->SizeInBytes());
-      (void)jpeg_read_header(&cinfo, TRUE);
-      jpeg_calc_output_dimensions(&cinfo);
-    } catch (std::runtime_error &e) {
-      jpeg_destroy_decompress(&cinfo);
-      RETURN_STATUS_UNEXPECTED(e.what());
-    }
-    int h_in = cinfo.output_height;
-    int w_in = cinfo.output_width;
-    jpeg_destroy_decompress(&cinfo);
+    int h_in = 0;
+    int w_in = 0;
+    RETURN_IF_NOT_OK(GetJpegImageInfo(input, &w_in, &h_in));
 
     int x = 0;
     int y = 0;

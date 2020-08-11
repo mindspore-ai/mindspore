@@ -15,27 +15,34 @@
 * limitations under the License.
 */
 
+#include "tools/converter/parser/tflite/tflite_addn_parser.h"
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_addn_parser.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteAddNParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                               const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
-                               const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                               const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_opset,
-                               schema::CNodeT *op,
-                               TensorCache *tensor_cache,
-                               bool quantized_model) {
+STATUS TfliteAddNParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
+                               const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
+                               const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
+                               const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
+                               schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse TfliteAddNParser";
   std::unique_ptr<schema::AddNT> attr(new schema::AddNT());
-  attr->N = tflite_tensors.size() - 1;
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_AddN;
-    op->primitive->value.value = attr.release();
-  }
+
+  attr->N = tfliteTensors.size() - 1;
+
+  op->primitive->value.type = schema::PrimitiveType_AddN;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

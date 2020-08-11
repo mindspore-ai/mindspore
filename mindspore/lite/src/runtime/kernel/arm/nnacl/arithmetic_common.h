@@ -20,10 +20,10 @@
 #include <arm_neon.h>
 #endif
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/arithmetic_common.h"
+#include "nnacl/op_base.h"
+#include "nnacl/arithmetic_common.h"
 
-struct ArithmeticParameter {
+typedef struct ArithmeticParameter {
   OpParameter op_parameter_;
   bool broadcasting_;
   size_t ndim_;
@@ -38,7 +38,8 @@ struct ArithmeticParameter {
 
   int multiples0_[5];
   int multiples1_[5];
-};
+} ArithmeticParameter;
+
 void TileOneDimension(float *inData, float *outData, int dim, size_t ndim, int *inShape, int *inStrides,
                       int *outStrides, int *multiple);
 void ComputeStrides(int *shape, int *strides, int ndim);

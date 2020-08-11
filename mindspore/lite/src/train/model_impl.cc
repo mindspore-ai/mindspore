@@ -16,10 +16,33 @@
 
 #include <string>
 #include "src/train/model_impl.h"
-#include "schema/model_generated.h"
 #include "ir/func_graph.h"
+#include "schema/model_generated.h"
+#include "src/common/anf_importer/import_from_meta_graph.h"
 
 namespace mindspore::lite::train {
+
+std::shared_ptr<ModelImpl> ModelImpl::Import(const char *model_buf, size_t size) {
+  MS_EXCEPTION_IF_NULL(model_buf);
+  flatbuffers::Verifier verify((const uint8_t *)model_buf, size);
+  if (!schema::VerifyMetaGraphBuffer(verify)) {
+    MS_LOG(ERROR) << "The buffer is invalid and fail to create graph.";
+    return nullptr;
+  }
+  // todo hangangqiang remove when copy primitive done
+  auto *inner_buf = new char[size];
+  memcpy(inner_buf, model_buf, size);
+  auto meta_graph = schema::GetMetaGraph(inner_buf);
+  auto func_graph_model = std::make_shared<ModelImpl>(meta_graph);
+  auto ret = func_graph_model->BuildOps();
+  if (0 != ret) {
+    MS_LOG(ERROR) << "BuildOps failed";
+    return nullptr;
+  }
+  AnfImporterFromMetaGraph anfImporter(func_graph_model);
+  anfImporter.Import();
+  return func_graph_model;
+}
 
 const lite::Primitive *ModelImpl::GetOp(const std::string &name) const {
   auto iter = ops.find(name);
@@ -98,6 +121,8 @@ lite::Primitive *ModelImpl::CopyPrimitive(const schema::Primitive *srcPrim) {
       return new lite::Nchw2Nhwc(const_cast<schema::Primitive *>(srcPrim));
     case schema::PrimitiveType_Nhwc2Nchw:
       return new lite::Nhwc2Nchw(const_cast<schema::Primitive *>(srcPrim));
+    case schema::PrimitiveType_MatMul:
+      return new lite::MatMul(const_cast<schema::Primitive *>(srcPrim));
     default:
       break;
   }
@@ -115,5 +140,6 @@ int ModelImpl::BuildOps() {
     auto srcPrim = cNode->primitive();
     this->ops[name] = CopyPrimitive(srcPrim);
   }
+  return 0;
 }
 }  // namespace mindspore::lite::train

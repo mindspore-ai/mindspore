@@ -109,7 +109,7 @@ checkopts()
   ENABLE_GPU="off"
 
   # Process the options
-  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:Q:D:zM:V:K:swB:En' opt
+  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:Q:D:zM:V:K:swB:EnT:' opt
   do
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
     case "${opt}" in
@@ -282,6 +282,11 @@ checkopts()
         ENABLE_IBVERBS="on"
         echo "enable IBVERBS for parameter server"
         ;;
+      T) 
+        check_on_off $OPTARG T
+        SUPPORT_TRAIN=$OPTARG
+        echo "support train on device "
+        ;;
       *)
         echo "Unknown option ${opt}!"
         usage
@@ -397,7 +402,7 @@ checkndk() {
     if [ "${ANDROID_NDK}" ]; then
         echo -e "\e[31mANDROID_NDK_PATH=$ANDROID_NDK  \e[0m"
     else
-        echo -e "\e[31mplease set ANDROID_NDK_PATH in environment variable for example: export ANDROID_NDK=/root/usr/android-ndk-r20b/ \e[0m"
+        echo -e "\e[31mplease set ANDROID_NDK in environment variable for example: export ANDROID_NDK=/root/usr/android-ndk-r20b/ \e[0m"
         exit 1
     fi
 }
@@ -569,6 +574,39 @@ build_minddata_lite_deps()
   build_jpeg_turbo
 }
 
+prepare_md_lite() {
+    if [ "${COMPILE_MINDDATA_LITE}" == "on" ]; then
+    echo "packaging minddata"
+        cp ${BASEPATH}/mindspore/ccsrc/minddata/dataset/include/*h ${OUTPUT_DIR}/include/
+	cp ${BASEPATH}/mindspore/lite/build/minddata/libminddata-lite.so ${OUTPUT_DIR}/lib/
+        if [[ "$LITE_PLATFORM" == "x86_64" ]]; then
+	    mkdir -p ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib
+            cp -r ${BASEPATH}/third_party/libjpeg-turbo/lib/libjpeg.so ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib/
+            cp -r ${BASEPATH}/third_party/libjpeg-turbo/lib/libturbojpeg.so ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib/
+	    mkdir -p ${OUTPUT_DIR}/third_party/opencv/lib/
+	    cp -r ${BASEPATH}/third_party/opencv/build/lib/libopencv_core.so ${OUTPUT_DIR}/third_party/opencv/lib/
+            cp -r ${BASEPATH}/third_party/opencv/build/lib/libopencv_imgcodecs.so ${OUTPUT_DIR}/third_party/opencv/lib/
+            cp -r ${BASEPATH}/third_party/opencv/build/lib/libopencv_imgproc.so ${OUTPUT_DIR}/third_party/opencv/lib/
+        elif [[ "$LITE_PLATFORM" == "arm64" ]]; then
+            mkdir -p ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib
+            cp -r ${BASEPATH}/third_party/libjpeg-turbo/lib/libjpeg.so ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib/
+            cp -r ${BASEPATH}/third_party/libjpeg-turbo/lib/libturbojpeg.so ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib/
+            mkdir -p ${OUTPUT_DIR}/third_party/opencv/lib/arm64-v8a/
+            cp -r ${BASEPATH}/third_party/opencv/build/lib/arm64-v8a/libopencv_core.so ${OUTPUT_DIR}/third_party/opencv/lib/arm64-v8a/
+            cp -r ${BASEPATH}/third_party/opencv/build/lib/arm64-v8a/libopencv_imgcodecs.so ${OUTPUT_DIR}/third_party/opencv/lib/arm64-v8a/
+            cp -r ${BASEPATH}/third_party/opencv/build/lib/arm64-v8a/libopencv_imgproc.so ${OUTPUT_DIR}/third_party/opencv/lib/arm64-v8a/
+        elif [[ "$LITE_PLATFORM" == "arm32" ]]; then
+            mkdir -p ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib
+            cp -r ${BASEPATH}/third_party/libjpeg-turbo/lib/libjpeg.so ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib/
+            cp -r ${BASEPATH}/third_party/libjpeg-turbo/lib/libturbojpeg.so ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib/
+            mkdir -p ${OUTPUT_DIR}/third_party/opencv/lib/armeabi-v7a/
+            cp -r ${BASEPATH}/third_party/opencv/build/lib/armeabi-v7a/libopencv_core.so ${OUTPUT_DIR}/third_party/opencv/lib/armeabi-v7a/
+            cp -r ${BASEPATH}/third_party/opencv/build/lib/armeabi-v7a/libopencv_imgcodecs.so ${OUTPUT_DIR}/third_party/opencv/lib/armeabi-v7a/
+            cp -r ${BASEPATH}/third_party/opencv/build/lib/armeabi-v7a/libopencv_imgproc.so ${OUTPUT_DIR}/third_party/opencv/lib/armeabi-v7a/
+        fi
+    fi
+}
+
 build_lite()
 {
     echo "start build mindspore lite project"
@@ -632,6 +670,7 @@ build_lite()
             mkdir -p ${OUTPUT_DIR}/converter && mkdir -p ${OUTPUT_DIR}/time_profile
             mkdir -p ${OUTPUT_DIR}/benchmark && mkdir -p ${OUTPUT_DIR}/include && mkdir -p ${OUTPUT_DIR}/lib
             mkdir -p ${OUTPUT_DIR}/third_party
+	    prepare_md_lite
             cp ${BASEPATH}/mindspore/lite/build/tools/converter/converter_lite ${OUTPUT_DIR}/converter/
             cp ${BASEPATH}/mindspore/lite/build/tools/benchmark/benchmark ${OUTPUT_DIR}/benchmark/
             cp ${BASEPATH}/mindspore/lite/build/tools/time_profile/timeprofile ${OUTPUT_DIR}/time_profile/
@@ -643,8 +682,7 @@ build_lite()
             cp ${BASEPATH}/mindspore/lite/build/src/libmindspore-lite.so ${OUTPUT_DIR}/lib/
             mkdir -p ${OUTPUT_DIR}/third_party/protobuf/lib
             cp -r ${BASEPATH}/third_party/protobuf/build/include/ ${OUTPUT_DIR}/third_party/protobuf/
-            cp -r ${BASEPATH}/third_party/protobuf/build/lib/libprotobuf.so.19 ${OUTPUT_DIR}/third_party/protobuf/lib/
-            cp -r ${BASEPATH}/third_party/protobuf/build/lib/libprotobuf.so.19.0.0 ${OUTPUT_DIR}/third_party/protobuf/lib/
+            cp -r ${BASEPATH}/third_party/protobuf/build/lib/libprotobuf.so.19.0.0 ${OUTPUT_DIR}/third_party/protobuf/lib/libprotobuf.so.19
             mkdir -p ${OUTPUT_DIR}/third_party/flatbuffers
             cp -r ${BASEPATH}/third_party/flatbuffers/include/ ${OUTPUT_DIR}/third_party/flatbuffers/
             cd ..
@@ -657,6 +695,7 @@ build_lite()
             mkdir -p ${OUTPUT_DIR}/time_profile && mkdir -p ${OUTPUT_DIR}/benchmark
             mkdir -p ${OUTPUT_DIR}/include && mkdir -p ${OUTPUT_DIR}/lib
             mkdir -p ${OUTPUT_DIR}/third_party
+	    prepare_md_lite
             cp ${BASEPATH}/mindspore/lite/build/tools/benchmark/benchmark ${OUTPUT_DIR}/benchmark/
             cp ${BASEPATH}/mindspore/lite/build/tools/time_profile/timeprofile ${OUTPUT_DIR}/time_profile/
             cp ${BASEPATH}/mindspore/lite/include/*.h ${OUTPUT_DIR}/include/
@@ -677,6 +716,7 @@ build_lite()
             mkdir -p ${OUTPUT_DIR}/time_profile && mkdir -p ${OUTPUT_DIR}/benchmark
             mkdir -p ${OUTPUT_DIR}/include && mkdir -p ${OUTPUT_DIR}/lib
             mkdir -p ${OUTPUT_DIR}/third_party
+	    prepare_md_lite
             cp ${BASEPATH}/mindspore/lite/build/tools/benchmark/benchmark ${OUTPUT_DIR}/benchmark/
             cp ${BASEPATH}/mindspore/lite/build/tools/time_profile/timeprofile ${OUTPUT_DIR}/time_profile/
             cp ${BASEPATH}/mindspore/lite/include/*.h ${OUTPUT_DIR}/include/

@@ -14,12 +14,12 @@ endif ()
 
 if (ENABLE_CPU)
     file(GLOB_RECURSE CPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "cpu/*.cc")
-    list(REMOVE_ITEM CPU_SRC_LIST "cpu/mpi/mpi_adapter.cc")
+    list(REMOVE_ITEM CPU_SRC_LIST "cpu/mpi/mpi_adapter.cc", "cpu/mpi/mpi_export.cc")
 endif ()
 
 if (ENABLE_MPI)
     if (ENABLE_CPU)
-        file(GLOB_RECURSE MPI_SRC_LIST "cpu/mpi/mpi_adapter.cc")
+        file(GLOB_RECURSE MPI_SRC_LIST "cpu/mpi/mpi_adapter.cc", "cpu/mpi/mpi_export.cc")
         set_property(SOURCE ${MPI_SRC_LIST}
             PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
         add_library(mpi_adapter SHARED ${MPI_SRC_LIST})

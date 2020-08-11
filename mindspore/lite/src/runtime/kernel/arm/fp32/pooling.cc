@@ -29,6 +29,10 @@ using mindspore::schema::PrimitiveType_Pooling;
 
 namespace mindspore::kernel {
 int PoolingCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto ret = PoolingBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PoolingBase Init failed.";
@@ -68,6 +72,11 @@ int PoolingImpl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int PoolingCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   int error_code = LiteBackendParallelLaunch(PoolingImpl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "pooling error error_code[" << error_code << "]";

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/int8/mul_int8.h"
-#include "src/runtime/kernel/arm/nnacl/mul_parameter.h"
+#include "nnacl/int8/mul_int8.h"
+#include "nnacl/mul_parameter.h"
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
-#include "src/runtime/kernel/arm/nnacl/add_int8.h"
+#include "nnacl/add_int8.h"
 #endif
-#include "src/runtime/kernel/arm/nnacl/quantization/fixed_point.h"
+#include "nnacl/quantization/fixed_point.h"
 
 #ifdef ENABLE_NEON
 
@@ -58,6 +58,7 @@ void MulInt8NEON(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, 
     int16x8_t res_s16 = vcombine_s16(sum_low, sum_high);
     int8x8_t res_u8_n0 = vqmovn_s16(res_s16);
     vst1_s8(output_data, res_u8_n0);
+    output_data += 8;
   }
 }
 #endif

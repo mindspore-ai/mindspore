@@ -32,6 +32,18 @@ def test_arguments():
     g = msd.Geometric([0.0, 0.3, 0.5, 1.0], dtype=dtype.int32)
     assert isinstance(g, msd.Distribution)
 
+def test_type():
+    with pytest.raises(TypeError):
+        msd.Geometric([0.1], dtype=dtype.float32)
+
+def test_name():
+    with pytest.raises(TypeError):
+        msd.Geometric([0.1], name=1.0)
+
+def test_seed():
+    with pytest.raises(TypeError):
+        msd.Geometric([0.1], seed='seed')
+
 def test_prob():
     """
     Invalid probability.

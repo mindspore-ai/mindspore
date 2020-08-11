@@ -15,37 +15,58 @@
 * limitations under the License.
 */
 
+#include "tools/converter/parser/tflite/tflite_batch_to_space_parser.h"
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_batch_to_space_parser.h"
+#include <string>
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteBatchToSpaceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                       const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
-                                       const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                       const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_opset,
-                                       schema::CNodeT *op,
-                                       TensorCache *tensor_cache, bool quantized_model) {
-  MS_LOG(DEBUG) << "parse TfliteBatchToSpaceParser";
+STATUS TfliteBatchToSpaceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
+                                       const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
+                                       const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
+                                       const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
+                                       schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
+  std::vector<std::string> node_name_str;
+  Split(op->name.data(), &node_name_str, "-");
+  const char *node_name = node_name_str.data()->c_str();
+  if (std::strcmp(node_name, "BatchToSpace") == 0) {
+    MS_LOG(DEBUG) << "parse TfliteBatchToSpaceParser";
+  } else if (std::strcmp(node_name, "BatchToSpaceND") == 0) {
+    MS_LOG(DEBUG) << "parse TfliteBatchToSpaceNDParser";
+    // in tflite
+    // blockShape should be a 1D tensor with dimension [spatial_dims_num]
+    // crops should be a 2D tensor with dimension [spatial_dims_num, 2]
+  }
+
   std::unique_ptr<schema::BatchToSpaceT> attr(new schema::BatchToSpaceT());
-  if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->blockShape)) {
-    MS_LOG(ERROR) << "batchToSpace -> blockShape get failed";
+
+  if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->blockShape)) {
+    MS_LOG(ERROR) << "get batchToSpace -> blockShape failed";
     return RET_ERROR;
   }
-  if (GetTfliteData(tflite_op->inputs[2], tflite_tensors, tflite_model_buffer, attr->crops)) {
-    MS_LOG(ERROR) << "batchToSpace -> crops get failed";
+  if (GetTfliteData(tfliteOp->inputs[2], tfliteTensors, tfliteModelBuffer, attr->crops)) {
+    MS_LOG(ERROR) << "get batchToSpace -> crops failed";
     return RET_ERROR;
   }
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_BatchToSpace;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_BatchToSpace;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 
 TfliteNodeRegister g_tfliteBatchToSpaceParser("BatchToSpace", new TfliteBatchToSpaceParser());
+TfliteNodeRegister g_TfliteBatchToSpaceNDParser("BatchToSpaceND", new TfliteBatchToSpaceNDParser());
+
 }  // namespace lite
 }  // namespace mindspore

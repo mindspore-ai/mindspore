@@ -36,12 +36,9 @@ int AddNLaunch(int thread_id, LiteParallelGroupEnv *penv, void *cdata) {
   auto kernel = reinterpret_cast<AddNCPUKernel *>(cdata);
   return kernel->AddNParallelRun(thread_id);
 }
-}
+}  // namespace
 
-int AddNCPUKernel::Init() {
-  elements_num_ = inputs_[0]->ElementsNum();
-  return RET_OK;
-}
+int AddNCPUKernel::Init() { return RET_OK; }
 
 int AddNCPUKernel::ReSize() { return RET_OK; }
 
@@ -58,6 +55,12 @@ int AddNCPUKernel::AddNParallelRun(int thread_id) {
 }
 
 int AddNCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return ret;
+  }
+  elements_num_ = inputs_[0]->ElementsNum();
   auto input0_data = reinterpret_cast<float *>(inputs_[0]->Data());
   auto input1_data = reinterpret_cast<float *>(inputs_[1]->Data());
   auto output_data = reinterpret_cast<float *>(outputs_[0]->Data());
@@ -71,7 +74,7 @@ int AddNCPUKernel::Run() {
   in1_addr_ = input0_data;
   in2_addr_ = input1_data;
   out_addr_ = output_data;
-  int ret = LiteBackendParallelLaunch(AddNLaunch, this, opParameter->thread_num_);
+  ret = LiteBackendParallelLaunch(AddNLaunch, this, opParameter->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "addn launch fail!ret: " << ret;
     return RET_ERROR;
@@ -91,7 +94,7 @@ int AddNCPUKernel::Run() {
 kernel::LiteKernel *CpuAddNFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs,
                                              OpParameter *op_parameter, const lite::Context *ctx,
-                                             const kernel::KernelKey &desc) {
+                                             const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Input op_parameter is nullptr!";
     return nullptr;
@@ -102,7 +105,7 @@ kernel::LiteKernel *CpuAddNFp32KernelCreator(const std::vector<lite::tensor::Ten
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_AddN);
   op_parameter->thread_num_ = ctx->thread_num_;
-  auto *kernel = new (std::nothrow) AddNCPUKernel(op_parameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) AddNCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new AddNCPUKernel fail!";
     return nullptr;

@@ -15,31 +15,38 @@
 * limitations under the License.
 */
 
+#include "tools/converter/parser/tflite/tflite_broadcast_to_parser.h"
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_broadcast_to_parser.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteBroadcastToParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                      const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
-                                      const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                      const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_opset,
-                                      schema::CNodeT *op,
-                                      TensorCache *tensor_cache, bool quantized_model) {
+STATUS TfliteBroadcastToParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
+                                      const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
+                                      const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
+                                      const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
+                                      schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse TfliteBroadcastToParser";
   std::unique_ptr<schema::BroadcastToT> attr(new schema::BroadcastToT());
-  if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->dst_shape)) {
-    MS_LOG(ERROR) << "broadCastTo -> dst_shape get failed";
+
+  if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->dst_shape)) {
+    MS_LOG(ERROR) << "get broadCastTo -> dst_shape failed";
     return RET_ERROR;
   }
 
-    if (op != nullptr) {
-      op->primitive = std::make_unique<schema::PrimitiveT>();
-      op->primitive->value.type = schema::PrimitiveType_BroadcastTo;
-      op->primitive->value.value = attr.release();
-    }
-    return RET_OK;
+  op->primitive->value.type = schema::PrimitiveType_BroadcastTo;
+  op->primitive->value.value = attr.release();
+  return RET_OK;
 }
 
 TfliteNodeRegister g_tfliteBroadcastToParser("BroadcastTo", new TfliteBroadcastToParser());

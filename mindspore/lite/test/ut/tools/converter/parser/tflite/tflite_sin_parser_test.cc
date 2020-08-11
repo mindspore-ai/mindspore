@@ -20,7 +20,7 @@
 namespace mindspore {
 class TestTfliteParserSin : public TestTfliteParser {
  public:
-  TestTfliteParserSin() {}
+  TestTfliteParserSin() = default;
   void SetUp() override { meta_graph = LoadAndConvert("./sin.tflite", ""); }
 };
 

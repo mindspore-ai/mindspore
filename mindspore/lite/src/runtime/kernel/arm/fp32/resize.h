@@ -18,48 +18,26 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/nnacl/resize.h"
-#include "src/runtime/kernel/arm/base/layout_transform.h"
+#include "src/runtime/kernel/arm/base/resize_base.h"
 
 using mindspore::schema::PrimitiveType_Resize;
 using mindspore::schema::ResizeMethod;
 
 namespace mindspore::kernel {
-class ResizeCPUKernel : public LiteKernel {
+class ResizeCPUKernel : public ResizeBaseCPUKernel {
  public:
   ResizeCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                  const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
-      : LiteKernel(parameter, inputs, outputs), context_(ctx) {}
+                  const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                  const lite::Primitive *primitive)
+      : ResizeBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 
-  ~ResizeCPUKernel() {
-    if (exec_input_data_ != nullptr) {
-      free(exec_input_data_);
-      exec_input_data_ = nullptr;
-    }
-  }
+  ~ResizeCPUKernel() = default;
 
   int Init() override;
   int ReSize() override { return 0; };
   int Run() override;
   int RunImpl(int task_id);
-
- protected:
-  const lite::Context *context_;
-
- private:
-  int CheckParameters();
-  int CheckInputsOuputs();
-
- private:
-  ResizeMethod method_;
-  int64_t new_height_;
-  int64_t new_width_;
-  bool align_corners_;
-  bool preserve_aspect_ratio;
-  LayoutConvertor layout_convertor_ = nullptr;
-  float *exec_input_data_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_RESIZE_H_
-

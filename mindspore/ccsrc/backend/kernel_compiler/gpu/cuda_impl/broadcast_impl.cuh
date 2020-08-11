@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_BROADCAST_H_
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_BROADCAST_H_
 
+#include <vector>
 #include "runtime/device/gpu/cuda_common.h"
 
 enum BroadcastOpType {
@@ -31,13 +32,14 @@ enum BroadcastOpType {
   BROADCAST_TYPE_ADD = 8,
   BROADCAST_TYPE_FLOORDIV = 9,
   BROADCAST_TYPE_ABSGRAD = 10,
+  BROADCAST_TYPE_DIV = 11,
   BROADCAST_TYPE_INVALID = 0xffffffff,
 };
 
 template <typename T, typename S>
-void Broadcast(const int &l0, const int &l1, const int &l2, const int &l3, const int &r0, const int &r1, const int &r2,
-               const int &r3, const int &d0, const int &d1, const int &d2, const int &d3, enum BroadcastOpType op,
-               const T *input0, const T *input1, S *output, cudaStream_t stream);
+void Broadcast(const std::vector<int> &lhs_shape, const std::vector<int> &rhs_shape,
+               const std::vector<int> &output_shape, enum BroadcastOpType op, const T *input0, const T *input1,
+               S *output, cudaStream_t stream);
 
 template <typename T, typename S>
 void NoBroadcast(const int &size, enum BroadcastOpType op, const T *input0, const T *input1, S *output,

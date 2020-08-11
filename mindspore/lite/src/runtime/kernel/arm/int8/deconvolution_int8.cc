@@ -115,6 +115,10 @@ int DeConvInt8CPUKernel::InitData() {
 }
 
 int DeConvInt8CPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   ConvolutionBaseCPUKernel::Init();
   int error_code = ConvolutionBaseCPUKernel::SetQuantParam();
   if (error_code != RET_OK) {
@@ -196,6 +200,11 @@ int DeConvInt8CPUKernel::DoPostFunc(int task_id) {
 }
 
 int DeConvInt8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   int8_t *src_in = reinterpret_cast<int8_t *>(inputs_[0]->Data());
   int8_t *src_out = reinterpret_cast<int8_t *>(outputs_[0]->Data());
 
@@ -222,10 +231,10 @@ int DeConvInt8CPUKernel::Run() {
 kernel::LiteKernel *CpuDeConvInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                const std::vector<lite::tensor::Tensor *> &outputs,
                                                OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc) {
+                                               const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DeConv2D);
-  auto kernel = new (std::nothrow) kernel::DeConvInt8CPUKernel(opParameter, inputs, outputs, ctx);
+  auto kernel = new (std::nothrow) kernel::DeConvInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
     return nullptr;

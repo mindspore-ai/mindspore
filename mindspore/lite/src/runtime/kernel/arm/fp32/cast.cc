@@ -30,9 +30,6 @@ using mindspore::schema::PrimitiveType_Cast;
 
 namespace mindspore::kernel {
 namespace {
-constexpr int kInputNum = 1;
-constexpr int kOutputNum = 1;
-const std::vector<int> kSupportInputDataType = {kNumberTypeUInt8, kNumberTypeInt32};
 int CastRun(int thread_id, LiteParallelGroupEnv *penv, void *cdata) {
   if (cdata == nullptr) {
     MS_LOG(ERROR) << "input cdata is nullptr!";
@@ -44,12 +41,16 @@ int CastRun(int thread_id, LiteParallelGroupEnv *penv, void *cdata) {
 }  // namespace
 
 int CastCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   data_num_ = inputs_[0]->ElementsNum();
   if (data_num_ == 0) {
     return RET_OK;
   }
-  thread_num_ = MSMIN(thread_num_, data_num_);
-  stride_ = UP_DIV(data_num_, thread_num_);
+  opParameter->thread_num_ = MSMIN(opParameter->thread_num_, data_num_);
+  stride_ = UP_DIV(data_num_, opParameter->thread_num_);
   return RET_OK;
 }
 
@@ -77,16 +78,21 @@ int CastCPUKernel::DoCast(int thread_id) {
 }
 
 int CastCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   if (data_num_ == 0) {
     return RET_OK;
   }
-  return LiteBackendParallelLaunch(CastRun, this, thread_num_);
+  return LiteBackendParallelLaunch(CastRun, this, opParameter->thread_num_);
 }
 
 kernel::LiteKernel *CpuCastFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs,
                                              OpParameter *opParameter, const lite::Context *ctx,
-                                             const kernel::KernelKey &desc) {
+                                             const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
@@ -99,7 +105,7 @@ kernel::LiteKernel *CpuCastFp32KernelCreator(const std::vector<lite::tensor::Ten
     MS_LOG(ERROR) << "context thread num is 0!";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) CastCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) CastCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new CastCPUKernel fail!";
     return nullptr;

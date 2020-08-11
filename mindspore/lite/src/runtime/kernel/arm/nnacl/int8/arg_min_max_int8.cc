@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/nnacl/int8/arg_min_max_int8.h"
+#include "nnacl/int8/arg_min_max_int8.h"
 #include <float.h>
 
 void CalcParameter(const int *shape, int dims_number, int axis, int *pre_axis_count, int *axis_count,

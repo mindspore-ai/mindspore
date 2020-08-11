@@ -30,13 +30,17 @@ using mindspore::schema::PrimitiveType_ScatterND;
 
 namespace mindspore::kernel {
 namespace {
-    constexpr int kScatterNDInputNum = 3;
-    constexpr int kScatterNDOutputNum = 1;
-    constexpr int kScatterShapeIndex = 0;
-    constexpr int kScatterIndicesIndex = 1;
-    constexpr int kScatterUpdateIndex = 2;
+constexpr int kScatterNDInputNum = 3;
+constexpr int kScatterNDOutputNum = 1;
+constexpr int kScatterShapeIndex = 0;
+constexpr int kScatterIndicesIndex = 1;
+constexpr int kScatterUpdateIndex = 2;
 }  // namespace
 int ScatterNDCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto shape = inputs_.at(kScatterShapeIndex);
   auto indices = inputs_.at(kScatterIndicesIndex);
   auto update = inputs_.at(kScatterUpdateIndex);
@@ -146,7 +150,12 @@ int ScatterNDRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int ScatterNDCPUKernel::Run() {
-  int ret = LiteBackendParallelLaunch(ScatterNDRun, this, thread_n_num_);
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
+  ret = LiteBackendParallelLaunch(ScatterNDRun, this, thread_n_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ScatterND error error_code[" << ret << "]";
     return RET_ERROR;
@@ -158,13 +167,13 @@ int ScatterNDCPUKernel::Run() {
 kernel::LiteKernel *CpuScatterNDFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                   const std::vector<lite::tensor::Tensor *> &outputs,
                                                   OpParameter *opParameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc) {
+                                                  const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_ScatterND);
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "desc type is not scatterND";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) ScatterNDCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) ScatterNDCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "New kernel fails.";
     return nullptr;
@@ -183,4 +192,3 @@ kernel::LiteKernel *CpuScatterNDFp32KernelCreator(const std::vector<lite::tensor
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ScatterND, CpuScatterNDFp32KernelCreator)
 }  // namespace mindspore::kernel
-

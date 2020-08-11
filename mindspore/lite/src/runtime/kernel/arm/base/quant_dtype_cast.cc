@@ -34,6 +34,10 @@ constexpr int kQuantDTypeCastOutputNum = 1;
 }  // namespace
 
 int QuantDTypeCastCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   if (inputs_.size() != 1) {
     MS_LOG(ERROR) << "inputs number should be 1, but " << inputs_.size() << " is given.";
     return RET_ERROR;
@@ -58,7 +62,7 @@ int QuantDTypeCastCPUKernel::Init() {
     }
     inverse_ = true;
   } else {
-    MS_LOG(ERROR) << "param data type not supported.";
+    MS_LOG(ERROR) << "param data type not supported:" << " src: " << param->srcT << " dst: " << param->dstT;
     return RET_ERROR;
   }
 
@@ -83,8 +87,8 @@ int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
     ret = DequantizeInt8(int8_ptr_ + thread_offset, float32_ptr_ + thread_offset, quant_arg.scale, quant_arg.zeroPoint,
                          num_unit_thread);
   } else {
-    ret = QuantizeToInt8(float32_ptr_ + thread_offset, int8_ptr_ + thread_offset, quant_arg.scale,
-                         quant_arg.zeroPoint, num_unit_thread);
+    ret = QuantizeToInt8(float32_ptr_ + thread_offset, int8_ptr_ + thread_offset, quant_arg.scale, quant_arg.zeroPoint,
+                         num_unit_thread);
   }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "QuantDTypeCast error task_id[" << task_id << "] error_code[" << ret << "]";
@@ -124,12 +128,13 @@ int QuantDTypeCastCPUKernel::Run() {
 kernel::LiteKernel *CpuQuantDTypeCastFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                        const std::vector<lite::tensor::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::Context *ctx,
-                                                       const kernel::KernelKey &desc) {
+                                                       const kernel::KernelKey &desc,
+                                                       const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) QuantDTypeCastCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) QuantDTypeCastCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new QuantDTypeCastCPUKernel fail!";
     return nullptr;
@@ -143,6 +148,6 @@ kernel::LiteKernel *CpuQuantDTypeCastFp32KernelCreator(const std::vector<lite::t
   }
   return kernel;
 }
-
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_QuantDTypeCast, CpuQuantDTypeCastFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_QuantDTypeCast, CpuQuantDTypeCastFp32KernelCreator)
 }  // namespace mindspore::kernel

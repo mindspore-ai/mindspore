@@ -25,7 +25,7 @@
 
 #include "ir/dtype/type.h"
 #include "abstract/abstract_value.h"
-#include "utils/base_ref_extends.h"
+#include "base/base_ref.h"
 
 namespace mindspore {
 // Supported meta type

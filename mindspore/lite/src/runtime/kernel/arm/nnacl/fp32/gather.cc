@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/gather.h"
+#include "nnacl/fp32/gather.h"
 #include <string.h>
 
 inline int Stride(int *shape, int rank, int index) {

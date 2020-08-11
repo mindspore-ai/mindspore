@@ -25,26 +25,33 @@ STATUS TflitePadParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp
                                 const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                 const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                 schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse TflitePadParser";
   std::unique_ptr<schema::PadT> attr(new schema::PadT());
   const auto &tflite_attr = tfliteOp->builtin_options.AsPadOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
+    return RET_NULL_PTR;
   }
 
   attr->paddingMode = schema::PaddingMode_CONSTANT;
-  if (tfliteOp->inputs.size() > 1) {
-    if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->paddings)) {
-      return RET_ERROR;
-    }
+  attr->constantValue = 0.0f;
+  if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->paddings)) {
+    MS_LOG(ERROR) << "get pad -> paddings failed";
+    return RET_ERROR;
   }
-  // attr->constantValue = 0.0f;
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Pad;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_Pad;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

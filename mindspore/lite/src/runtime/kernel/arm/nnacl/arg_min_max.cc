@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/nnacl/arg_min_max.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/arg_min_max.h"
+#include "nnacl/arg_min_max.h"
+#include "nnacl/fp32/arg_min_max.h"
 
 #define FLOAT_DATA_TYPE 43
 

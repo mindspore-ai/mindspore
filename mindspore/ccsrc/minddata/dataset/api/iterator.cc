@@ -30,6 +30,19 @@ void Iterator::GetNextRow(TensorMap *row) {
   }
 }
 
+// Get the next row from the data pipeline.
+void Iterator::GetNextRow(TensorVec *row) {
+  TensorRow tensor_row;
+  Status rc = iterator_->FetchNextTensorRow(&tensor_row);
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "GetNextRow: Failed to get next row.";
+    row->clear();
+  }
+  // Generate a vector as return
+  row->clear();
+  std::copy(tensor_row.begin(), tensor_row.end(), std::back_inserter(*row));
+}
+
 // Shut down the data pipeline.
 void Iterator::Stop() {
   // Releasing the iterator_ unique_ptre. This should trigger the destructor of iterator_.
@@ -61,13 +74,20 @@ Status Iterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds) {
       RETURN_STATUS_UNEXPECTED("Node operation returned nothing");
     }
 
-    auto root_op = root_ops.front();
-
-    RETURN_UNEXPECTED_IF_NULL(root_op);
-
-    RETURN_IF_NOT_OK(tree_->AssociateNode(root_op));
-
-    q.push(std::make_pair(ds, root_op));
+    // Iterate through all the DatasetOps returned by Dataset's Build(), associate them
+    // with the execution tree and add the child and parent relationship between the nodes
+    // Note that some Dataset objects might return more than one DatasetOps
+    // e.g. MapDataset will return [ProjectOp, MapOp] if project_columns is set for MapDataset
+    std::shared_ptr<DatasetOp> prev_op = nullptr;
+    for (auto op : root_ops) {
+      RETURN_IF_NOT_OK(tree_->AssociateNode(op));
+      if (prev_op != nullptr) {
+        RETURN_IF_NOT_OK(prev_op->AddChild(op));
+      }
+      prev_op = op;
+    }
+    // Add the last DatasetOp to the queue to be BFS.
+    q.push(std::make_pair(ds, root_ops.back()));
 
     // Traverse down to the children and convert them to the corresponding DatasetOps (i.e. execution tree nodes)
     while (!q.empty()) {
@@ -94,7 +114,7 @@ Status Iterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds) {
         q.push(std::make_pair(child, child_ops.back()));
       }
     }
-    RETURN_IF_NOT_OK(tree_->AssignRoot(root_op));
+    RETURN_IF_NOT_OK(tree_->AssignRoot(root_ops.front()));
   }
 
   // Launch the execution tree.

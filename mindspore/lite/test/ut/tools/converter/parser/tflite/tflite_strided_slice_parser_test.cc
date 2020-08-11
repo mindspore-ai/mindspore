@@ -21,7 +21,7 @@
 namespace mindspore {
 class TestTfliteParserStridedSlice : public TestTfliteParser {
  public:
-  TestTfliteParserStridedSlice() {}
+  TestTfliteParserStridedSlice() = default;
   void SetUp() override {
     meta_graph = LoadAndConvert("./strided_slice.tflite");
   }

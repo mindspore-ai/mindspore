@@ -25,11 +25,22 @@ STATUS TfliteStackParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
                                 const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                 const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                 schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse TfliteStackParser";
   std::unique_ptr<schema::StackT> attr(new schema::StackT());
   const auto &tflite_attr = tfliteOp->builtin_options.AsPackOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
+    return RET_NULL_PTR;
   }
 
   attr->axis = tflite_attr->axis;
@@ -37,11 +48,8 @@ STATUS TfliteStackParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
   attr->isScale.assign(tfliteTensors[tfliteOp->inputs[0]]->shape.begin(),
                        tfliteTensors[tfliteOp->inputs[0]]->shape.end());
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Stack;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_Stack;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

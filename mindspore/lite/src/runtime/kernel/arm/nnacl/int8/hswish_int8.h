@@ -17,11 +17,11 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_HSWISH_INT8_H_
 
 #include <math.h>
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
-#include "src/runtime/kernel/arm/nnacl/quantization/fixed_point.h"
+#include "nnacl/op_base.h"
+#include "nnacl/errorcode.h"
+#include "nnacl/quantization/fixed_point.h"
 
-struct HswishQuantArg {
+typedef struct HswishQuantArg {
   double input_scale;
   int32_t input_zp;
   double output_scale;
@@ -30,7 +30,7 @@ struct HswishQuantArg {
   int32_t relu6_multiplier_exponent;
   int16_t output_multiplier_fixedpoint_int16;
   int32_t output_multiplier_exponent;
-};
+} HswishQuantArg;
 
 int HSwishInt8(const int8_t *src, int length, int8_t *dst, HswishQuantArg *arg);
 

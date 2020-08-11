@@ -27,18 +27,26 @@ STATUS TfliteWhereParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
                                 const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_opset,
                                 schema::CNodeT *op,
                                 TensorCache *tensor_cache, bool quantized_model) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse TfliteWhereParser";
   std::unique_ptr<schema::WhereT> attr(new schema::WhereT());
 
   if (GetTfliteData(tflite_op->inputs[0], tflite_tensors, tflite_model_buffer, attr->condition)) {
-    MS_LOG(ERROR) << "where -> condition get failed";
+    MS_LOG(ERROR) << "get where -> condition failed";
     return RET_ERROR;
   }
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Where;
-    op->primitive->value.value = attr.release();
-  }
+
+  op->primitive->value.type = schema::PrimitiveType_Where;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

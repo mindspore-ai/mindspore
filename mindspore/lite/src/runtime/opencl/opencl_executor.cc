@@ -56,6 +56,7 @@ int OpenCLExecutor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tenso
       } else {
         output->MallocData(allocator);
       }
+      output->set_allocator(allocator);
     }
     session::CallBackParam callbackParam;
     callbackParam.name_callback_param = kernel->Name();
@@ -91,7 +92,7 @@ int OpenCLExecutor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tenso
       return RET_ERROR;
     }
     if (outTensor->GetFormat() != schema::Format_NHWC) {
-        TransformTensorLayout(outTensor, outTensor->GetFormat(), schema::Format_NHWC, false);
+      TransformTensorLayout(outTensor, outTensor->GetFormat(), schema::Format_NHWC, false);
     }
   }
   return RET_OK;
@@ -168,6 +169,7 @@ int OpenCLExecutor::TransformTensorLayoutToBuffer(tensor::Tensor *tensor, schema
 int OpenCLExecutor::TransformTensorLayoutToImage(tensor::Tensor *tensor, schema::Format src_format,
     schema::Format dst_format) {
   if (dst_format == schema::Format_NHWC4) {
+    tensor->SetFormat(schema::Format_NHWC4);
     // convert to nhwc4
     auto *src_data = tensor->Data();
     auto *dst_data{src_data};
@@ -190,7 +192,6 @@ int OpenCLExecutor::TransformTensorLayoutToImage(tensor::Tensor *tensor, schema:
     dst_data = allocator_->CreateImageFromHost(src_data, tensor->Size(), img_size);
     tensor->SetData(dst_data);
     allocator_->Free(src_data);
-    tensor->SetFormat(schema::Format_NHWC4);
     return RET_OK;
   } else {
     MS_LOG(ERROR) << "Unsupport layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "

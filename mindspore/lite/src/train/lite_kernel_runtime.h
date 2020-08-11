@@ -23,35 +23,28 @@
 #include <unordered_map>
 #include "src/runtime/allocator.h"
 #include "src/executor.h"
-#include "runtime/device/kernel_runtime.h"
+// #include "runtime/device/kernel_runtime.h"
 #include "runtime/device/device_address.h"
 #include "src/lite_kernel.h"
 #include "backend/session/kernel_graph.h"
 namespace mindspore::lite {
-class LiteInferKernelRuntime : public device::KernelRuntime {
+class LiteInferKernelRuntime {
  public:
   LiteInferKernelRuntime() = default;
-  ~LiteInferKernelRuntime() override = default;
+  ~LiteInferKernelRuntime() = default;
 
-  bool Init() override { return true; }
-
-  void BindInputOutput(const session::KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
-                       VectorRef *outputs);
-
-  bool Run(session::KernelGraph *graph);
+  bool Run(session::KernelGraph *graph, const std::vector<tensor::Tensor *> &inputs,
+           std::vector<tensor::Tensor *> *outputs);
 
   void AssignKernelAddress(session::KernelGraph *graph) {}
 
  protected:
+  void BindInputOutput(const session::KernelGraph *graph, const std::vector<tensor::Tensor *> &inputs,
+                       std::vector<tensor::Tensor *> *outputs);
+
   std::vector<CNodePtr> GetGraphInputs(const std::vector<CNodePtr> &execution_order);
-  bool SyncStream() override { return true; };
-  device::DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
-                                               TypeId type_id) override {
-    return nullptr;
-  };
 };
 
 }  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_SRC_TRAIN_LITE_KERNEL_RUNTIME_H_
-

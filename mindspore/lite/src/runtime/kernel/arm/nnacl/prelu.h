@@ -16,14 +16,14 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PRELU_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PRELU_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct PReluParameter {
+typedef struct PReluParameter {
   OpParameter op_parameter_;
   float *negtive_slope_;
   int input_num_;
   int thread_num_;
-};
+} PReluParameter;
 
 void PRelu(float *input, float *output, PReluParameter *prelu_param_, int task_id);
 

@@ -28,10 +28,14 @@ using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
 namespace {
-    constexpr int kTransposeInputNum = 1;
-    constexpr int kTransposeOutputNum = 1;
+constexpr int kTransposeInputNum = 1;
+constexpr int kTransposeOutputNum = 1;
 }  // namespace
 int TransposeCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto &inTensor = inputs_.front();
   auto &outTensor = outputs_.front();
   auto param = reinterpret_cast<TransposeParameter *>(opParameter);
@@ -50,6 +54,11 @@ int TransposeCPUKernel::Init() {
 int TransposeCPUKernel::ReSize() { return RET_OK; }
 
 int TransposeCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   MS_ASSERT(inputs_.size() == TransposeInputNum);
   MS_ASSERT(outputs_.size() == TransposeOutputNum);
   auto &inTensor = inputs_.front();
@@ -65,21 +74,20 @@ int TransposeCPUKernel::Run() {
   auto *input_shape = &in_shape.front();
   auto *output_shape = &out_shape.front();
 
-  auto ret =
-    DoTranspose(in_data, out_data, input_shape, output_shape, reinterpret_cast<TransposeParameter *>(opParameter));
+  ret = DoTranspose(in_data, out_data, input_shape, output_shape, reinterpret_cast<TransposeParameter *>(opParameter));
   return ret;
 }
 
 kernel::LiteKernel *CpuTransposeFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                   const std::vector<lite::tensor::Tensor *> &outputs,
                                                   OpParameter *opParameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc) {
+                                                  const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_Transpose);
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "desc type is not Transpose";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) TransposeCPUKernel(opParameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) TransposeCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "New kernel fails.";
     return nullptr;
@@ -97,4 +105,3 @@ kernel::LiteKernel *CpuTransposeFp32KernelCreator(const std::vector<lite::tensor
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Transpose, CpuTransposeFp32KernelCreator)
 }  // namespace mindspore::kernel
-

@@ -18,18 +18,20 @@
 
 #include <vector>
 #include "src/runtime/kernel/arm/base/depth_to_space_base.h"
+#include "src/runtime/kernel/arm/nnacl/quantization/quantize.h"
 
 namespace mindspore::kernel {
 class DepthToSpaceInt8CPUKernel : public DepthToSpaceBaseCPUKernel {
  public:
   DepthToSpaceInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                            const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
-      : DepthToSpaceBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+                            const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                            const lite::Primitive *primitive)
+      : DepthToSpaceBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 
   ~DepthToSpaceInt8CPUKernel() = default;
 
   int Init() override;
-  int ReSize() override { return 0; }
+  int ReSize() override;
   int Run() override;
  private:
   QuantArg in_quant_arg_;

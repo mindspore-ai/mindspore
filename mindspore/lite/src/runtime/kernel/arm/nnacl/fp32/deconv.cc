@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/deconv.h"
+#include "nnacl/fp32/deconv.h"
 
 void PackDeConvWeightFp32(const float *weight, float *dst, int input_channel, int output_channel, int plane) {
   /* ichwoc(nhwc)  ->  oc4 * h * w * incUP4 * 4 */

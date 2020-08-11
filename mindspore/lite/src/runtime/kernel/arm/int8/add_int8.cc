@@ -18,6 +18,7 @@
 #include <limits>
 #include <algorithm>
 #include "src/runtime/kernel/arm/nnacl/arithmetic_common.h"
+#include "src/runtime/kernel/arm/nnacl/quantization/quantize.h"
 #include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -75,6 +76,11 @@ int QuantizedAddCPUKernel::Init() {
 int QuantizedAddCPUKernel::ReSize() { return 0; }
 
 int QuantizedAddCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   input0_data_ = static_cast<int8_t *>(inputs_.at(0)->Data());
   input1_data_ = static_cast<int8_t *>(inputs_.at(1)->Data());
   output_data_ = static_cast<int8_t *>(outputs_.at(0)->Data());
@@ -96,13 +102,13 @@ int QuantizedAddCPUKernel::Run() {
     TileDimensionsUint8(static_cast<uint8_t *>(inputs_.at(0)->Data()), static_cast<uint8_t *>(inputs_.at(1)->Data()),
                         reinterpret_cast<uint8_t *>(input0_data_), reinterpret_cast<uint8_t *>(input1_data_),
                         &tile_para);
-    auto ret = LiteBackendParallelLaunch(AddInt8Run, this, thread_count_);
+    ret = LiteBackendParallelLaunch(AddInt8Run, this, thread_count_);
     ctx_->allocator->Free(input0_data_);
     ctx_->allocator->Free(input1_data_);
     return ret;
   }
 
-  auto ret = LiteBackendParallelLaunch(AddInt8Run, this, thread_count_);
+  ret = LiteBackendParallelLaunch(AddInt8Run, this, thread_count_);
   return ret;
 }
 
@@ -124,13 +130,14 @@ int QuantizedAddCPUKernel::DoExecute(int tId) {
 
 kernel::LiteKernel *CpuAddInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                             const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
-                                            const lite::Context *ctx, const KernelKey &desc) {
+                                            const lite::Context *ctx, const KernelKey &desc,
+                                            const lite::Primitive *primitive) {
   if (parameter == nullptr || ctx == nullptr) {
     MS_LOG(ERROR) << "parameter or ctx is nullptr";
     return nullptr;
   }
   MS_ASSERT(desc.type == PrimitiveType_Add);
-  auto *kernel = new (std::nothrow) QuantizedAddCPUKernel(parameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) QuantizedAddCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
     return nullptr;

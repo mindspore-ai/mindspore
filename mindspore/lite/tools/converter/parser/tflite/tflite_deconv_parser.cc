@@ -14,25 +14,35 @@
  * limitations under the License.
  */
 
+#include "tools/converter/parser/tflite/tflite_deconv_parser.h"
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_deconv_parser.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteDeConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                               const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
-                               const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                               const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_op_set,
-                               schema::CNodeT *op,
-                               TensorCache *tensor_cache, bool quantized_model) {
+STATUS TfliteDeConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
+                                 const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
+                                 const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
+                                 const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
+                                 schema::CNodeT *op, TensorCache *tensor_cache,  bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse tflite Transpose_Conv parser";
   std::unique_ptr<schema::DeConv2DT> attr(new schema::DeConv2DT());
-  const auto &tflite_attr = tflite_op->builtin_options.AsTransposeConvOptions();
+  const auto &tflite_attr = tfliteOp->builtin_options.AsTransposeConvOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: %s attr failed", op->name.c_str();
     return RET_NULL_PTR;
   }
+
   attr->group = 1;
   attr->strideW = tflite_attr->stride_w;
   attr->strideH = tflite_attr->stride_h;
@@ -40,12 +50,16 @@ STATUS TfliteDeConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   attr->dilateW = 1;
   attr->padMode = GetPadMode(tflite_attr->padding);
   attr->format = schema::Format_NHWC;
-  // get the conv op weight tensor
-  auto weight_index = tflite_op->inputs[1];
-  const auto &weight_tensor = tflite_tensors[weight_index];
-  std::vector<tflite::TensorT *> weight_tensors{weight_tensor.get()};
 
-  if (RET_OK != ParseWeight(weight_tensors, tflite_model_buffer, tensor_cache, schema::Format_KHWC)) {
+  // get the conv op weight tensor
+  auto weight_index = tfliteOp->inputs[1];
+  const auto &weight_tensor = tfliteTensors[weight_index];
+  if (weight_tensor == nullptr) {
+    MS_LOG(ERROR) << "weight_tensor is null";
+    return RET_NULL_PTR;
+  }
+  std::vector<tflite::TensorT *> weight_tensors{weight_tensor.get()};
+  if (RET_OK != ParseTensor(weight_tensors, tfliteModelBuffer, tensor_cache, TF_CONST)) {
     return RET_ERROR;
   }
   auto weight_shape = weight_tensor->shape;
@@ -54,11 +68,8 @@ STATUS TfliteDeConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   attr->kernelW = weight_shape[CHWK_W];
   attr->kernelH = weight_shape[CHWK_H];
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_DeConv2D;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_DeConv2D;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

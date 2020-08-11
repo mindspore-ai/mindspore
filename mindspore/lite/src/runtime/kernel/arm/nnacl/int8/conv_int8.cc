@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/int8/conv_int8.h"
+#include "nnacl/int8/conv_int8.h"
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/winograd_transform.h"
-#include "src/runtime/kernel/arm/nnacl/int8/common_func.h"
+#include "nnacl/winograd_transform.h"
+#include "nnacl/int8/common_func.h"
 
 void IndirectGemmInt8(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const int8_t *weight, const int32_t *bias,
                       int ic4, size_t kernel_plane, size_t output_channel, const int32_t *input_sum,
@@ -29,11 +29,13 @@ void IndirectGemmInt8(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const in
   int32_t act_min = conv_param->conv_quant_arg_.out_act_min_[0];
   int32_t act_max = conv_param->conv_quant_arg_.out_act_max_[0];
 #ifdef __aarch64__
-  IndirectGemmInt8_4x4(dst, src, weight, bias, kernel_plane, ic4, output_channel, output_channel * sizeof(int8_t),
-                       input_sum, act_min, act_max, out_zp, out_multiplier, shift_before, shift_after);
+  IndirectGemmInt8_4x4(dst, src, weight, bias, UP_DIV(kernel_plane, C4NUM), ic4, output_channel,
+                       output_channel * sizeof(int8_t), input_sum, act_min, act_max, out_zp, out_multiplier,
+                       shift_before, shift_after);
 #elif defined(ENABLE_ARM32)
-  IndirectGemmInt8_2x4(dst, src, weight, bias, kernel_plane, ic4, output_channel, output_channel * sizeof(int8_t),
-                       input_sum, act_min, act_max, out_zp, out_multiplier, shift_before, shift_after);
+  IndirectGemmInt8_2x4(dst, src, weight, bias, UP_DIV(kernel_plane, C4NUM), ic4, output_channel,
+                       output_channel * sizeof(int8_t), input_sum, act_min, act_max, out_zp, out_multiplier,
+                       shift_before, shift_after);
 #else
   int tile_num = conv_param->tile_num_;
   int plane_c4 = UP_DIV(kernel_plane, C4NUM);
@@ -126,10 +128,10 @@ void IndirectGemmInt8Opt(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const
 
 void Conv3x3Uint8Gemm(int32_t *dst, const int16_t *src, const int16_t *weight, int oc, int ic8, size_t real_cal_num) {
   int oc4 = UP_DIV(oc, C4NUM);
-  int input_unit_square = 16;
 #ifdef ENABLE_ARM
   IndirectGemmInt16to32_8x4(dst, src, weight, 16, ic8, oc4, oc4 * 4 * 16 * sizeof(int32_t));
 #else
+  int input_unit_square = 16;
   for (int c = 0; c < oc4; c++) {
     int filter_oc_offset = c * input_unit_square * ic8 * C8NUM * C4NUM;
     int dst_oc_offset = c * input_unit_square * C4NUM;
@@ -198,7 +200,7 @@ void ConvInt8(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight, c
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
       int start_index = thread_id * tile_n;
       int real_cal_num = (output_count - start_index) < tile_n ? (output_count - start_index) : tile_n;
-      int32_t *tmp_input_sum = input_sum + thread_id * tile_n;
+      int32_t *tmp_input_sum = input_sum + task_id * tile_n;
       int8_t *gemm_input = packed_input + thread_id * unit_size * tile_n + gemm_in_batch_offset;
       // clear tmp buffer before compute
       memset(gemm_input, (int8_t)input_zp, unit_size * tile_n);
@@ -208,15 +210,16 @@ void ConvInt8(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight, c
       int tmp_dst_offset = task_id * tile_n * conv_param->output_channel_;
       memset(tmp_dst + tmp_dst_offset, 0, tmp_dst_size);
 
-      Im2ColPackUnitInt8(input_data + in_batch_offset, gemm_input, real_cal_num, start_index, input_sum, conv_param);
+      Im2ColPackUnitInt8(input_data + in_batch_offset, gemm_input, real_cal_num, start_index, tmp_input_sum,
+                         conv_param);
       if (real_cal_num == tile_n) {
         int8_t *gemm_output = output_data + out_offset;
         IndirectGemmInt8(gemm_output, tmp_dst + tmp_dst_offset, gemm_input, packed_weight, bias_data, ic4, kernel_plane,
-                         out_channel, input_sum, conv_param);
+                         out_channel, tmp_input_sum, conv_param);
       } else {
         // res part
         IndirectGemmInt8(tmp_out, tmp_dst + tmp_dst_offset, gemm_input, packed_weight, bias_data, ic4, kernel_plane,
-                         out_channel, input_sum, conv_param);
+                         out_channel, tmp_input_sum, conv_param);
         memcpy(output_data + out_offset, tmp_out, real_cal_num * out_channel);
       }
     }
@@ -253,7 +256,7 @@ void ConvInt8Opt(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight
       int start_index = thread_id * tile_n;
       int real_cal_num = (output_count - start_index) < tile_n ? (output_count - start_index) : tile_n;
       // todo
-      int32_t *tmp_input_sum = input_sum + thread_id * tile_n;
+      int32_t *tmp_input_sum = input_sum + task_id * tile_n;
       int8_t *gemm_input = packed_input + thread_id * unit_size * tile_n + gemm_in_batch_offset;
       // clear tmp buffer before compute
       memset(gemm_input, (int8_t)input_zp, unit_size * tile_n);
@@ -263,15 +266,16 @@ void ConvInt8Opt(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight
       int tmp_dst_offset = task_id * tile_n * conv_param->output_channel_;
       memset(tmp_dst + tmp_dst_offset, 0, tmp_dst_size);
 
-      Im2ColPackUnitInt8Opt(input_data + in_batch_offset, gemm_input, real_cal_num, start_index, input_sum, conv_param);
+      Im2ColPackUnitInt8Opt(input_data + in_batch_offset, gemm_input, real_cal_num, start_index, tmp_input_sum,
+                            conv_param);
       if (real_cal_num == tile_n) {
         int8_t *gemm_output = output_data + out_offset;
         IndirectGemmInt8Opt(gemm_output, tmp_dst + tmp_dst_offset, gemm_input, packed_weight, bias_data, ic4,
-                            kernel_plane, out_channel, input_sum, conv_param, gemm_func);
+                            kernel_plane, out_channel, tmp_input_sum, conv_param, gemm_func);
       } else {
         // res part
         IndirectGemmInt8Opt(tmp_out, tmp_dst + tmp_dst_offset, gemm_input, packed_weight, bias_data, ic4, kernel_plane,
-                            out_channel, input_sum, conv_param, gemm_func);
+                            out_channel, tmp_input_sum, conv_param, gemm_func);
         memcpy(output_data + out_offset, tmp_out, real_cal_num * out_channel);
       }
     }

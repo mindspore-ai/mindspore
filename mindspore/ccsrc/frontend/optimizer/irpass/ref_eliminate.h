@@ -37,27 +37,23 @@ class MakeRefEliminater : public OptimizerCaller {
 };
 
 // {prim::kPrimGetRefValue, Parameter} -> Parameter
-// {prim::kPrimGetRefOrigin, Parameter} -> Parameter
 class GetRefParamEliminater : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     PatternNode<AnfNodePtr> x;
     MATCH_REPLACE(node, PPrimitive(prim::kPrimGetRefValue, x), x);
-    MATCH_REPLACE(node, PPrimitive(prim::kPrimGetRefOrigin, x), x);
     return nullptr;
   }
 };
 
 // {prim::kPrimGetRefKey, {prim::kPrimMakeRef, X, Y, Z}} -> X
 // {prim::kPrimGetRefValue, {prim::kPrimMakeRef, X, Y, Z}} -> Y
-// {prim::kPrimGetRefOrigin, {prim::kPrimMakeRef, X, Y, Z}} -> Z
 class GetMakeRefEliminater : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     PatternNode<AnfNodePtr> x, y, z;
     MATCH_REPLACE(node, PPrimitive(prim::kPrimGetRefKey, PPrimitive(prim::kPrimMakeRef, x, y, z)), x);
     MATCH_REPLACE(node, PPrimitive(prim::kPrimGetRefValue, PPrimitive(prim::kPrimMakeRef, x, y, z)), y);
-    MATCH_REPLACE(node, PPrimitive(prim::kPrimGetRefOrigin, PPrimitive(prim::kPrimMakeRef, x, y, z)), z);
 
     return nullptr;
   }

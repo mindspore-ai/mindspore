@@ -85,14 +85,20 @@ int ConvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
 }
 
 int ConvolutionDepthwiseFp16CPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   // conv base init
-  ConvolutionBaseCPUKernel::Init();
-
+  auto ret = ConvolutionBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    return ret;
+  }
   // init sliding_ window param
   sliding_ = new SlidingWindowParam;
   InitSlidingParam(sliding_, conv_param_, C8NUM);
 
-  auto ret = InitWeightBias();
+  ret = InitWeightBias();
   if (ret != 0) {
     MS_LOG(ERROR) << "Convolution depthwise fp16 InitWeightBias failed.";
     return RET_ERROR;
@@ -138,6 +144,11 @@ int ConvDwFp16Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int ConvolutionDepthwiseFp16CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   if (conv_param_->input_channel_ != conv_param_->output_channel_) {
     MS_LOG(ERROR) << "Only support input channel equals output channel.";
     return RET_ERROR;
@@ -149,7 +160,7 @@ int ConvolutionDepthwiseFp16CPUKernel::Run() {
   PackNHWCFp32ToNHWC8Fp16(input_addr, packed_input_, conv_param_->input_batch_,
                           conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
 
-  auto ret = LiteBackendParallelLaunch(ConvDwFp16Run, this, conv_param_->thread_num_);
+  ret = LiteBackendParallelLaunch(ConvDwFp16Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwFp16Run error: error_code[" << ret << "]";
     return RET_ERROR;
@@ -165,10 +176,10 @@ int ConvolutionDepthwiseFp16CPUKernel::Run() {
 kernel::LiteKernel *CpuConvDwFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                const std::vector<lite::tensor::Tensor *> &outputs,
                                                OpParameter *opParameter, const Context *ctx,
-                                               const kernel::KernelKey &desc) {
+                                               const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DepthwiseConv2D);
-  auto kernel = new (std::nothrow) ConvolutionDepthwiseFp16CPUKernel(opParameter, inputs, outputs, ctx);
+  auto kernel = new (std::nothrow) ConvolutionDepthwiseFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
     return nullptr;

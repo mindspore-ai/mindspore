@@ -61,6 +61,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/core/abstract/*.cc"
         "../../../mindspore/core/ir/*.cc"
         "../../../mindspore/core/utils/*.cc"
+        "../../../mindspore/core/c_ops/*.cc"
         "../../../mindspore/ccsrc/common/*.cc"
         "../../../mindspore/ccsrc/utils/*.cc"
         "../../../mindspore/ccsrc/pipeline/jit/parse/*.cc"
@@ -180,12 +181,12 @@ if (ENABLE_GE)
 endif()
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
-    target_link_libraries(ut_tests PRIVATE mindspore::gtest mindspore_gvar ${PYTHON_LIBRARIES} pthread util dl)
+    target_link_libraries(ut_tests PRIVATE mindspore::gtest ${PYTHON_LIBRARIES} pthread util dl)
     if (ENABLE_MINDDATA)
         target_link_libraries(ut_tests PRIVATE _c_dataengine _c_mindrecord)
     endif()
 else()
-    target_link_libraries(ut_tests PRIVATE mindspore::gtest mindspore_gvar ${PYTHON_LIBRARIES})
+    target_link_libraries(ut_tests PRIVATE mindspore::gtest  ${PYTHON_LIBRARIES})
 endif()
 if (USE_GLOG)
     target_link_libraries(ut_tests PRIVATE mindspore::glog)

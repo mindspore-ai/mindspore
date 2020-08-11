@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/common_func.h"
-#include "src/runtime/kernel/arm/nnacl/quantization/fixed_point.h"
+#include "nnacl/common_func.h"
+#include "nnacl/quantization/fixed_point.h"
 
 #ifndef ENABLE_ARM64
 void IndirectGemmFp32(float *output, const float *input, const float *weight, const float *bias, size_t step, int ic4,
@@ -151,7 +151,7 @@ int8_t MinInt8(int8_t a, int8_t b) { return b ^ ((a ^ b) & -(a < b)); }
 
 int8_t MaxInt8(int8_t a, int8_t b) { return a ^ ((a ^ b) & -(a < b)); }
 
-void ReluFp32(float *data, int ele_num) {
+void ReluFp32(float *data, float *dst, int ele_num) {
   int four_block = UP_DIV(ele_num, C4NUM);
   for (int i = 0; i < four_block - 1; i++) {
     int index = i * C4NUM;
@@ -159,7 +159,7 @@ void ReluFp32(float *data, int ele_num) {
     float32x4_t relu_data = vld1q_f32(data + index);
     float32x4_t zero_data = vdupq_n_f32(0);
     relu_data = vmaxq_f32(relu_data, zero_data);
-    vst1q_f32(data + index, relu_data);
+    vst1q_f32(dst + index, relu_data);
 #else
     data[index] = data[index] < 0 ? 0 : data[index];
     data[index + 1] = data[index + 1] < 0 ? 0 : data[index + 1];
@@ -172,7 +172,7 @@ void ReluFp32(float *data, int ele_num) {
   }
 }
 
-void Relu6Fp32(float *data, int ele_num) {
+void Relu6Fp32(float *data, float *dst, int ele_num) {
   int four_block = UP_DIV(ele_num, C4NUM);
   for (int i = 0; i < four_block - 1; i++) {
     int index = i * C4NUM;
@@ -182,7 +182,7 @@ void Relu6Fp32(float *data, int ele_num) {
     float32x4_t six_data = vdupq_n_f32(6);
     relu6_data = vmaxq_f32(relu6_data, zero_data);
     relu6_data = vminq_f32(relu6_data, six_data);
-    vst1q_f32(data + index, relu6_data);
+    vst1q_f32(dst + index, relu6_data);
 #else
     data[index] = data[index] < 0 ? 0 : data[index];
     data[index] = data[index] > 6 ? 6 : data[index];

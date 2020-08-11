@@ -14,21 +14,30 @@
  * limitations under the License.
  */
 
+#include "tools/converter/parser/tflite/tflite_conv_parser.h"
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_conv_parser.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                               const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+STATUS TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
+                               const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
                                const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                               schema::CNodeT *op,
-                               TensorCache *tensor_cache, bool quantizedModel) {
+                               schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse TfliteConvParser";
   std::unique_ptr<schema::Conv2DT> attr(new schema::Conv2DT());
-  const auto &tfliteAttr = tflite_op->builtin_options.AsConv2DOptions();
+  const auto &tfliteAttr = tfliteOp->builtin_options.AsConv2DOptions();
   if (tfliteAttr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
     return RET_NULL_PTR;
@@ -41,12 +50,16 @@ STATUS TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_
   attr->padMode = GetPadMode(tfliteAttr->padding);
   attr->format = schema::Format_NHWC;
   attr->activationType = GetActivationFunctionType(tfliteAttr->fused_activation_function);
-  // get the conv op weight tensor
-  auto weight_index = tflite_op->inputs[1];
-  const auto &weight_tensor = tflite_tensors[weight_index];
-  std::vector<tflite::TensorT *> weight_tensors{weight_tensor.get()};
 
-  if (RET_OK != ParseWeight(weight_tensors, tfliteModelBuffer, tensor_cache, schema::Format_KHWC)) {
+  // get the conv op weight tensor
+  auto weight_index = tfliteOp->inputs[1];
+  const auto &weight_tensor = tfliteTensors[weight_index];
+  if (weight_tensor == nullptr) {
+    MS_LOG(ERROR) << "weight_tensor is null";
+    return RET_NULL_PTR;
+  }
+  std::vector<tflite::TensorT *> weight_tensors{weight_tensor.get()};
+  if (RET_OK != ParseTensor(weight_tensors, tfliteModelBuffer, tensor_cache, TF_CONST)) {
     MS_LOG(ERROR) << "parse weight failed";
     return RET_ERROR;
   }
@@ -55,23 +68,27 @@ STATUS TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_
   attr->channelOut = weight_shape[KHWC_K];
   attr->kernelW = weight_shape[KHWC_W];
   attr->kernelH = weight_shape[KHWC_H];
-  if (tflite_op->inputs.size() == 3) {
+
+  // get the conv op bias tensor
+  if (tfliteOp->inputs.size() == 3) {
     attr->hasBias = true;
-    auto bias_index = tflite_op->inputs[2];
-    const auto &bias_tensor = tflite_tensors[bias_index];
+    auto bias_index = tfliteOp->inputs[2];
+    const auto &bias_tensor = tfliteTensors[bias_index];
+    if (bias_tensor == nullptr) {
+      MS_LOG(ERROR) << "bias_tensor is null";
+      return RET_NULL_PTR;
+    }
     std::vector<tflite::TensorT *> bias_tensors{bias_tensor.get()};
-    if (RET_OK != ParseBias(bias_tensors, tfliteModelBuffer, tensor_cache)) {
+    if (RET_OK != ParseTensor(bias_tensors, tfliteModelBuffer, tensor_cache, TF_CONST)) {
       MS_LOG(ERROR) << "parse bias failed";
       return RET_ERROR;
     }
   }
+
   // calculate pad params
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Conv2D;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_Conv2D;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

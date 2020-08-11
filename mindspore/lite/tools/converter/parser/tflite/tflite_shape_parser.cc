@@ -25,16 +25,21 @@ STATUS TfliteShapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
                                  const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                  const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                  schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(INFO) << "parse TfliteShapeParser";
   std::unique_ptr<schema::ShapeT> attr(new schema::ShapeT());
 
-  // tflite_attr->out_type; // this attr is dropped
-
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Shape;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_Shape;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

@@ -17,11 +17,11 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_UNIQUE_H
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_UNIQUE_H
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct UniqueParameter {
+typedef struct UniqueParameter {
   OpParameter op_parameter_;
-};
+} UniqueParameter;
 
 void Unique(float *input, int input_len, float *output0, int *output0_len, int *output1);
 

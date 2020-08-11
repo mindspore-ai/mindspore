@@ -86,7 +86,8 @@ std::tuple<TaskType, std::tuple<int, int>, std::vector<uint64_t>, json> &ShardTa
   return task_list_[dis(gen)];
 }
 
-ShardTask ShardTask::Combine(std::vector<ShardTask> &category_tasks, bool replacement, int64_t num_elements) {
+ShardTask ShardTask::Combine(std::vector<ShardTask> &category_tasks, bool replacement, int64_t num_elements,
+                             int64_t num_samples) {
   ShardTask res;
   if (category_tasks.empty()) return res;
   auto total_categories = category_tasks.size();
@@ -96,9 +97,12 @@ ShardTask ShardTask::Combine(std::vector<ShardTask> &category_tasks, bool replac
     for (uint32_t i = 1; i < total_categories; i++) {
       minTasks = std::min(minTasks, category_tasks[i].Size());
     }
+    int64_t count = 0;
     for (uint32_t task_no = 0; task_no < minTasks; task_no++) {
       for (uint32_t i = 0; i < total_categories; i++) {
+        if (num_samples != 0 && count == num_samples) break;
         res.InsertTask(std::move(category_tasks[i].GetTaskByID(static_cast<int>(task_no))));
+        count++;
       }
     }
   } else {
@@ -109,9 +113,12 @@ ShardTask ShardTask::Combine(std::vector<ShardTask> &category_tasks, bool replac
     if (num_elements != std::numeric_limits<int64_t>::max()) {
       maxTasks = static_cast<decltype(maxTasks)>(num_elements);
     }
+    int64_t count = 0;
     for (uint32_t i = 0; i < total_categories; i++) {
       for (uint32_t j = 0; j < maxTasks; j++) {
+        if (num_samples != 0 && count == num_samples) break;
         res.InsertTask(category_tasks[i].GetRandomTask());
+        count++;
       }
     }
   }

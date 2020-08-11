@@ -38,7 +38,7 @@ class MaskedSoftMaxLoss(nn.Cell):
         self.num_params = len(self.params)
 
     def construct(self, logits):
-        # calc l2 loss
+        """calc l2 loss"""
         l2_loss = 0
         for i in range(self.num_params):
             l2_loss = l2_loss + self.l2_coeff * P.L2Loss()(self.params[i])
@@ -69,6 +69,7 @@ class MaskedAccuracy(nn.Cell):
         self.mask = Tensor(mask, dtype=mstype.float32)
 
     def construct(self, logits):
+        """Calculate accuracy"""
         logits = P.Reshape()(logits, (-1, self.num_class))
         labels = P.Reshape()(self.label, (-1, self.num_class))
         mask = P.Reshape()(self.mask, (-1,))

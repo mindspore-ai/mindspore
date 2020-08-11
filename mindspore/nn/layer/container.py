@@ -236,7 +236,7 @@ class CellList(_CellListBase, Cell):
         Appends cells from a Python iterable to the end of the list.
 
         Raises:
-            TypeError: If the cells is not a list of subcells.
+            TypeError: If the cells are not a list of subcells.
         """
         if not isinstance(cells, list):
             raise TypeError('Cells {} should be list of subcells'.format(cells))

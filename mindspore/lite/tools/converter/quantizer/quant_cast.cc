@@ -25,10 +25,11 @@ namespace mindspore::lite::quant {
 ValueNodePtr NewQuantCastValueNode(int src_type, int dst_type, const std::vector<schema::QuantParamT> &quant_params) {
   std::unique_ptr<schema::PrimitiveT> primitive = std::make_unique<schema::PrimitiveT>();
   schema::QuantDTypeCastT quant_dtype_cast;
-  quant_dtype_cast.srcT = src_type;  // kNumberTypeUInt8;
+  quant_dtype_cast.srcT = src_type;  // kNumberTypeInt8;
   quant_dtype_cast.dstT = dst_type;  // kNumberTypeFloat32;
   primitive->value.Set(quant_dtype_cast);
   auto primTValue = std::make_shared<PrimitiveTValue>(primitive.release());
+  primTValue->SetQuantType(schema::QuantType_PostTraining);
   for (auto &quant_param : quant_params) {
     primTValue->AddInputQuantParam(quant_param);
   }
@@ -52,7 +53,7 @@ STATUS QuantCast::Run(FuncGraphPtr graph) {
     if (first) {
       if (curnode_quant_type == schema::QuantType_PostTraining && inputDataDType == kNumberTypeFloat32) {
         auto value_node =
-          NewQuantCastValueNode(kNumberTypeFloat32, kNumberTypeUInt8, primitiveT_value->GetInputQuantParams());
+          NewQuantCastValueNode(kNumberTypeFloat32, kNumberTypeInt8, primitiveT_value->GetInputQuantParams());
         std::vector<AnfNodePtr> op_inputs = {value_node, cnode->input(1)};
         auto quant_cast_cnode = graph->NewCNode(op_inputs);
         quant_cast_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "_quant_cast");
@@ -82,11 +83,11 @@ STATUS QuantCast::Run(FuncGraphPtr graph) {
         ValueNodePtr value_node = nullptr;
         if (curnode_quant_type == schema::QuantType_PostTraining &&
             input_cnode_quant_type == schema::QuantType_QUANT_NONE) {
-          value_node = NewQuantCastValueNode(kNumberTypeFloat32, kNumberTypeUInt8,
-                                             input_cnode_primitiveT_value->GetInputQuantParams());
+          value_node = NewQuantCastValueNode(kNumberTypeFloat32, kNumberTypeInt8,
+                                             primitiveT_value->GetInputQuantParams());
         } else if (curnode_quant_type == schema::QuantType_QUANT_NONE &&
                    input_cnode_quant_type == schema::QuantType_PostTraining) {
-          value_node = NewQuantCastValueNode(kNumberTypeUInt8, kNumberTypeFloat32,
+          value_node = NewQuantCastValueNode(kNumberTypeInt8, kNumberTypeFloat32,
                                              input_cnode_primitiveT_value->GetInputQuantParams());
         }
         if (value_node == nullptr) {

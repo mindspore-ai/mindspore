@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/strided_slice.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/strided_slice.h"
+#include "nnacl/errorcode.h"
 
 void PadStridedSliceParameterTo4D(StridedSliceParameter *param) {
   int32_t begins[DIMENSION_4D];

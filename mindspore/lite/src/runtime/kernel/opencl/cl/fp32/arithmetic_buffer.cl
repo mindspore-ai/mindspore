@@ -26,26 +26,9 @@ __kernel void ElementDiv(__global float *input_a, __global float *input_b, __glo
   output[idx] = input_a[idx] * input_b[idx];
 }
 
-__kernel void BoardcastAdd(__global float *input_a, float input_b, __global float *output, const unsigned int n) {
+__kernel void BoardcastArith(__global float *input_a, float weight, float bias, __global float *output,
+                             const unsigned int n) {
   int idx = get_global_id(0);
   if (idx >= n) return;
-  output[idx] = input_a[idx] + input_b;
-}
-
-__kernel void BoardcastSub(__global float *input_a, float input_b, __global float *output, const unsigned int n) {
-  int idx = get_global_id(0);
-  if (idx >= n) return;
-  output[idx] = input_a[idx] - input_b;
-}
-
-__kernel void BoardcastMul(__global float *input_a, float input_b, __global float *output, const unsigned int n) {
-  int idx = get_global_id(0);
-  if (idx >= n) return;
-  output[idx] = input_a[idx] * input_b;
-}
-
-__kernel void BoardcastDiv(__global float *input_a, float input_b, __global float *output, const unsigned int n) {
-  int idx = get_global_id(0);
-  if (idx >= n) return;
-  output[idx] = input_a[idx] * input_b;
+  output[idx] = weight * input_a[idx] + bias;
 }

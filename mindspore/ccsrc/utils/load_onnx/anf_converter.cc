@@ -22,6 +22,7 @@
 #include <vector>
 #include <limits>
 #include <string>
+#include "utils/base_ref_extends.h"
 #include "utils/load_onnx/anf_model_parser.h"
 #include "utils/load_onnx/anf_converter.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"

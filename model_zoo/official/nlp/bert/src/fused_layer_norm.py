@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """fused layernorm"""
+import numpy as np
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common.parameter import Parameter
@@ -21,7 +22,6 @@ from mindspore.ops.primitive import constexpr
 import mindspore.common.dtype as mstype
 from mindspore.nn.cell import Cell
 
-import numpy as np
 
 
 __all__ = ['FusedLayerNorm']
@@ -101,6 +101,7 @@ class FusedLayerNorm(Cell):
         self.use_batch_norm = use_batch_norm
 
     def construct(self, input_x):
+        """Applies Layer Normalization over a mini-batch of inputs"""
         if self.use_batch_norm and self.training:
             ones = P.Fill()(mstype.float32, F.shape(input_x)[:self.begin_norm_axis], 1.0)
             zeros = P.Fill()(mstype.float32, F.shape(input_x)[:self.begin_norm_axis], 0.0)

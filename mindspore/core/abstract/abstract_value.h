@@ -535,50 +535,70 @@ using AbstractEllipsisPtr = std::shared_ptr<AbstractEllipsis>;
 
 class AbstractRefKey : public AbstractBase {
  public:
-  AbstractRefKey() : AbstractBase() { set_type(std::make_shared<RefKeyType>()); }
+  AbstractRefKey() : AbstractBase(), ref_key_value_(nullptr) { set_type(std::make_shared<RefKeyType>()); }
   ~AbstractRefKey() override = default;
   MS_DECLARE_PARENT(AbstractRefKey, AbstractBase)
 
   TypePtr BuildType() const override { return std::make_shared<RefKeyType>(); }
   bool operator==(const AbstractRefKey &other) const;
   bool operator==(const AbstractBase &other) const override;
-  AbstractBasePtr Clone() const override { return std::make_shared<AbstractRefKey>(); }
+  AbstractBasePtr Clone() const override {
+    auto cloned = std::make_shared<AbstractRefKey>();
+    cloned->set_value(GetValueTrack());
+    return cloned;
+  }
+  inline void set_value(const ValuePtr &value) {
+    AbstractBase::set_value(value);
+    ref_key_value_ = value->cast<RefKeyPtr>();
+  }
+  RefKeyPtr ref_key_value() const { return ref_key_value_; }
+  AbstractBasePtr Join(const AbstractBasePtr &other) override;
+  AbstractBasePtr Broaden() const override;
   std::string ToString() const override;
+
+ private:
+  // cache for ref_key after build value, when value is null, return nullptr.
+  RefKeyPtr ref_key_value_{nullptr};
 };
 using AbstractRefKeyPtr = std::shared_ptr<AbstractRefKey>;
 
 class AbstractRef : public AbstractBase {
  public:
-  AbstractRef(const AbstractBasePtr &ref_key, const AbstractBasePtr &ref_value, const AbstractBasePtr &ref_origin)
-      : ref_key_(ref_key), ref_(ref_value), ref_origin_(ref_origin) {
-    set_type(std::make_shared<RefType>());
-  }
+  AbstractRef(const AbstractBasePtr &ref_key, const AbstractBasePtr &ref_value, bool need_cast = false,
+              TypePtr cast_target = nullptr);
 
   ~AbstractRef() override = default;
   MS_DECLARE_PARENT(AbstractRef, AbstractBase)
 
   TypePtr BuildType() const override;
+  BaseShapePtr BuildShape() const override;
   bool operator==(const AbstractRef &other) const;
   bool operator==(const AbstractBase &other) const override;
   AbstractBasePtr Clone() const override {
-    return std::make_shared<AbstractRef>(ref_key_->Clone(), ref_->Clone(), ref_origin_->Clone());
+    return std::make_shared<AbstractRef>(ref_key_->Clone(), ref_->Clone(), need_cast_, target_type_);
   }
   std::string ToString() const override;
-  AbstractBasePtr ref() { return ref_; }
-  AbstractBasePtr ref_origin() { return ref_origin_; }
-  AbstractBasePtr ref_key() { return ref_key_; }
+  inline AbstractBasePtr ref() const { return ref_; }
+  inline AbstractBasePtr ref_key() const { return ref_key_; }
+  inline RefKeyPtr ref_key_value() const { return ref_key_value_; }
+  inline TypePtr target_type() const { return target_type_; }
+  inline bool need_cast() const { return need_cast_; }
   AbstractBasePtr Broaden() const override {
-    return std::make_shared<AbstractRef>(ref_key_->Broaden(), ref_->Broaden(), ref_origin_->Broaden());
+    return std::make_shared<AbstractRef>(ref_key_->Broaden(), ref_->Broaden(), need_cast_, target_type_);
   }
   AbstractBasePtr Join(const AbstractBasePtr &other) override;
   std::size_t hash() const override {
-    return ref_key_->hash() ^ ref_->hash() ^ ref_origin_->hash() ^ (std::hash<uint32_t>{}(this->tid()) << 1);
+    return ref_->hash() ^ (std::hash<uint32_t>{}(this->tid()) << 1);  // ref_key_->hash() ^
   }
 
  private:
   AbstractBasePtr ref_key_;
   AbstractBasePtr ref_;
-  AbstractBasePtr ref_origin_;
+  // For mix presicion, only float type need to cast to float16 of float32
+  bool need_cast_;
+  TypePtr target_type_;
+  // cache for ref_key after build value, when value is null, return nullptr.
+  RefKeyPtr ref_key_value_;
 };
 using AbstractRefPtr = std::shared_ptr<AbstractRef>;
 

@@ -17,7 +17,7 @@ import numpy as np
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
-from ._utils.utils import cast_to_tensor, check_prob
+from ._utils.utils import cast_to_tensor, check_prob, check_type
 
 class Geometric(Distribution):
     """
@@ -97,9 +97,11 @@ class Geometric(Distribution):
         Constructor of Geometric distribution.
         """
         param = dict(locals())
-        super(Geometric, self).__init__(dtype, name, param)
+        valid_dtype = mstype.int_type + mstype.uint_type
+        check_type(dtype, valid_dtype, "Geometric")
+        super(Geometric, self).__init__(seed, dtype, name, param)
         if probs is not None:
-            self._probs = cast_to_tensor(probs, dtype=mstype.float32)
+            self._probs = cast_to_tensor(probs, hint_dtype=mstype.float32)
             check_prob(self._probs)
         else:
             self._probs = probs
@@ -154,7 +156,7 @@ class Geometric(Distribution):
     def _var(self, probs1=None):
         r"""
         .. math::
-            VAR(Geo) = \fract{1 - probs1}{probs1 ^ {2}}
+            VAR(Geo) = \frac{1 - probs1}{probs1 ^ {2}}
         """
         probs1 = self.probs if probs1 is None else probs1
         return (1.0 - probs1) / self.sq(probs1)
@@ -162,7 +164,7 @@ class Geometric(Distribution):
     def _entropy(self, probs=None):
         r"""
         .. math::
-            H(Geo) = \fract{-1 * probs0 \log_2 (1-probs0)\ - prob1 * \log_2 (1-probs1)\ }{probs1}
+            H(Geo) = \frac{-1 * probs0 \log_2 (1-probs0)\ - prob1 * \log_2 (1-probs1)\ }{probs1}
         """
         probs1 = self.probs if probs is None else probs
         probs0 = 1.0 - probs1
@@ -244,7 +246,7 @@ class Geometric(Distribution):
             probs1_a (Tensor): probability of success of distribution a. Default: self.probs.
 
         .. math::
-            KL(a||b) = \log(\fract{probs1_a}{probs1_b}) + \fract{probs0_a}{probs1_a} * \log(\fract{probs0_a}{probs0_b})
+            KL(a||b) = \log(\frac{probs1_a}{probs1_b}) + \frac{probs0_a}{probs1_a} * \log(\frac{probs0_a}{probs0_b})
         """
         if dist == 'Geometric':
             probs1_a = self.probs if probs1_a is None else probs1_a

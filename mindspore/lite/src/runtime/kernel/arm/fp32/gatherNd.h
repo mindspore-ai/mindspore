@@ -30,8 +30,9 @@ namespace mindspore::kernel {
 class GatherNdCPUKernel : public LiteKernel {
  public:
   GatherNdCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                    const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : LiteKernel(parameter, inputs, outputs), ctx_(ctx), thread_count_(ctx->thread_num_) {}
+                    const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                    const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {}
   ~GatherNdCPUKernel() override;
 
   int Init() override;
@@ -53,4 +54,3 @@ class GatherNdCPUKernel : public LiteKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GATHERND_H_
-

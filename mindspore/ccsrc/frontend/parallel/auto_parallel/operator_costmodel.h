@@ -199,6 +199,8 @@ class SoftmaxCost : public OperatorCost {
 using SoftmaxCostPtr = std::shared_ptr<SoftmaxCost>;
 using TileCost = SoftmaxCost;
 using TileCostPtr = std::shared_ptr<TileCost>;
+using ConcatCost = TileCost;
+using ConcatCostPtr = std::shared_ptr<ConcatCost>;
 
 class TmpIdentityCost : public OperatorCost {
  public:

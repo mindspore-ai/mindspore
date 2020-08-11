@@ -36,15 +36,15 @@ int ReshapeBaseCPUKernel::Init() {
 kernel::LiteKernel *CpuReshapeInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                 const std::vector<lite::tensor::Tensor *> &outputs,
                                                 OpParameter *opParameter, const Context *ctx,
-                                                const kernel::KernelKey &desc) {
+                                                const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Reshape);
-  auto *kernel = new (std::nothrow) ReshapeInt8CPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) ReshapeInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new ConcatCPUKernel fail!";
+    MS_LOG(ERROR) << "new ReshapeInt8CPUKernel fail!";
     return nullptr;
   }
   auto ret = kernel->Init();
@@ -60,15 +60,15 @@ kernel::LiteKernel *CpuReshapeInt8KernelCreator(const std::vector<lite::tensor::
 kernel::LiteKernel *CpuReshapeInt32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                  const std::vector<lite::tensor::Tensor *> &outputs,
                                                  OpParameter *opParameter, const Context *ctx,
-                                                 const kernel::KernelKey &desc) {
+                                                 const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Reshape);
-  auto *kernel = new (std::nothrow) ReshapeCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) ReshapeCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new ConcatCPUKernel fail!";
+    MS_LOG(ERROR) << "new ReshapeCPUKernel fail!";
     return nullptr;
   }
   auto ret = kernel->Init();
@@ -84,13 +84,13 @@ kernel::LiteKernel *CpuReshapeInt32KernelCreator(const std::vector<lite::tensor:
 kernel::LiteKernel *CpuReshapeFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                 const std::vector<lite::tensor::Tensor *> &outputs,
                                                 OpParameter *opParameter, const Context *ctx,
-                                                const kernel::KernelKey &desc) {
+                                                const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Reshape);
-  auto *kernel = new (std::nothrow) ReshapeCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) ReshapeCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ReshapeCPUKernel fail!";
     return nullptr;

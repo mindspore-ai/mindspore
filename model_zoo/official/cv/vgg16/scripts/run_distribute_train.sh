@@ -22,7 +22,7 @@ fi
 
 if [ ! -f $1 ]
 then
-    echo "error: RANK_TABLE_FILEH=$1 is not a file"
+    echo "error: RANK_TABLE_FILE=$1 is not a file"
 exit 1
 fi
 

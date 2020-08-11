@@ -145,8 +145,8 @@ const {
   // conv has bias,bias_flag true
   bool bias_flag = false;
   if (conv_bias_node != nullptr) {
-    auto bias_weight_param = conv_weight_node->cast<ParameterPtr>()->default_param();
-    auto bias_tensor = std::dynamic_pointer_cast<ParamValueLite>(bias_weight_param);
+    auto conv_bias_param = conv_bias_node->cast<ParameterPtr>()->default_param();
+    auto bias_tensor = std::dynamic_pointer_cast<ParamValueLite>(conv_bias_param);
     bias_data = reinterpret_cast<float *>(bias_tensor->tensor_addr());
     bias_flag = true;
   } else {
@@ -187,7 +187,7 @@ const void ConvTransformFusion::CalNewBiasTensor(float *bias_data, int kernel_nu
   MS_ASSERT(bias_data != nullptr);
   if (bias_flag) {
     auto tmp_bias_data = new(std::nothrow) float[kernel_num];
-    if (EOK != memset_s(bias_data, kernel_num * sizeof(float), 0, kernel_num * sizeof(float))) {
+    if (EOK != memset_s(tmp_bias_data, kernel_num * sizeof(float), 0, kernel_num * sizeof(float))) {
       MS_LOG(EXCEPTION) << "memset bias data failed";
     }
     for (size_t i = 0; i < kernel_num; i++) {

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef PREDICT_TFLITE_NODE_PARSER_H
-#define PREDICT_TFLITE_NODE_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_NODE_PARSER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_NODE_PARSER_H
 
 #include <string>
 #include <vector>
@@ -34,29 +34,24 @@ class TfliteNodeParser {
  public:
   explicit TfliteNodeParser(const std::string &nodeName) : name(nodeName) {}
 
-  virtual ~TfliteNodeParser() {}
+  virtual ~TfliteNodeParser() = default;
 
   virtual STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
                        const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
                        const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                       const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet, schema::CNodeT *op,
-                       TensorCache *tensor_cache, bool quantizedModel) = 0;
+                       const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
+                       schema::CNodeT *op,
+                       TensorCache *tensor_cache,
+                       bool quantizedModel) = 0;
 
-  STATUS ParseWeight(const std::vector<tflite::TensorT *> &weight_tenosr,
-                     const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer, TensorCache *tensor_cache,
-                     schema::Format format);
-
-  STATUS ParseBias(const std::vector<tflite::TensorT *> &weight_tenosr,
-                   const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer, TensorCache *tensor_cache);
-
-  STATUS ParseAttr(const std::vector<tflite::TensorT *> &attr_tenosrs,
-                   const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                   mindspore::lite::TensorCache *tensor_cache, schema::Format format);
+  STATUS ParseTensor(const std::vector<tflite::TensorT *> &ts,
+                     const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
+                     mindspore::lite::TensorCache *tensor_cache,
+                     int node_type);
 
   STATUS CopyTfliteTensorData(const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                              const tflite::TensorT *tflite_tensor, schema::TensorT *tensor);
-
-  TypeId GetTfliteDataType(const tflite::TensorType &tflite_data_type);
+                              const tflite::TensorT *tflite_tensor,
+                              schema::TensorT *tensor);
 
   template <typename T>
   STATUS GetTfliteData(const int32_t tensor_index, const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
@@ -66,6 +61,10 @@ class TfliteNodeParser {
     std::for_each(tfliteTensors[tensor_index]->shape.begin(), tfliteTensors[tensor_index]->shape.end(),
                   [&](int32_t sha) { count *= sha; });
     auto &buf_data = tfliteModelBuffer[tfliteTensors[tensor_index]->buffer];
+    if (buf_data == nullptr) {
+      MS_LOG(ERROR) << "buf_data is null";
+      return RET_NULL_PTR;
+    }
     auto data_ptr = buf_data->data.data();
     switch (tfliteTensors[tensor_index]->type) {
       case tflite::TensorType_UINT8: {
@@ -116,18 +115,18 @@ class TfliteNodeParser {
         }
         break;
       }
+      default: {
+        MS_LOG(ERROR) << "wrong tensor type";
+        return RET_ERROR;
+      }
     }
     return RET_OK;
   }
 
  protected:
-  bool isQuantizedModel();
-
- protected:
   const std::string &name;
-  bool quantizedModel;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // PREDICT_TFLITE_NODE_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_NODE_PARSER_H

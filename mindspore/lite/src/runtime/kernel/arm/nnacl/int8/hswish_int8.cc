@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/int8/hswish_int8.h"
+#include "nnacl/int8/hswish_int8.h"
 
 int16_t SaturatingLeftShift(int16_t value, int shift_num) {
   int32_t result = (int32_t)value * (1 << shift_num);

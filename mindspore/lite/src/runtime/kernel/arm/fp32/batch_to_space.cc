@@ -24,10 +24,27 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 int BatchToSpaceCPUKernel::Init() {
-  return BatchToSpaceBaseCPUKernel::Init();
+  auto ret = BatchToSpaceBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    return ret;
+  }
+
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
+
+int BatchToSpaceCPUKernel::ReSize() {
+  return BatchToSpaceBaseCPUKernel::ReSize();
 }
 
 int BatchToSpaceCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   auto input = inputs_[0];
   auto output = outputs_[0];
   const float *input_data = reinterpret_cast<const float *>(input->Data());

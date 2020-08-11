@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_ARG_MIN_MAX_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_ARG_MIN_MAX_H_
 
-#include "src/runtime/kernel/arm/nnacl/arg_min_max_parameter.h"
+#include "nnacl/arg_min_max_parameter.h"
 
 void ArgMax(const float *input, float *output, ArgMinMaxParameter *param, int pre_axis_count, int axis_count,
             int after_axis_count);

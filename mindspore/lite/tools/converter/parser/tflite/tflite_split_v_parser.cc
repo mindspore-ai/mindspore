@@ -25,23 +25,43 @@ STATUS TfliteSplitVParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
                                  const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                  const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                  schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(INFO) << "parse TfliteSplitVParser";
   std::unique_ptr<schema::SplitT> attr(new schema::SplitT());
+
   const auto &tflite_attr = tfliteOp->builtin_options.AsSplitVOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name << " attr failed";
     return RET_NULL_PTR;
   }
-
   attr->numberSplit = tflite_attr->num_splits;
+
   if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->sizeSplits)) {
-    MS_LOG(ERROR) << "SPLIT_V get sizeSplits attr failed";
+    MS_LOG(ERROR) << "get splite_v -> sizeSplits failed";
     return RET_ERROR;
   }
 
-  auto axis =
-    *(reinterpret_cast<int32_t *>(tfliteModelBuffer[tfliteTensors[tfliteOp->inputs[2]]->buffer]->data.data()));
-  const auto tensor_shape = tfliteTensors[tfliteOp->inputs[0]].get()->shape;
+  const auto &tensor = tfliteTensors[tfliteOp->inputs[0]];
+  if (tensor == nullptr) {
+    MS_LOG(ERROR) << "tensor_shape is null";
+    return RET_NULL_PTR;
+  }
+  auto tensor_shape = tensor->shape;
+  const auto &axis_tensor = tfliteTensors[tfliteOp->inputs[2]];
+  if (axis_tensor == nullptr) {
+    MS_LOG(ERROR) << "axis_tensor is null";
+    return RET_NULL_PTR;
+  }
+  auto axis = *(reinterpret_cast<int32_t *>(tfliteModelBuffer[axis_tensor->buffer]->data.data()));
   if (axis < 0) {
     axis += tensor_shape.size();
   }
@@ -49,11 +69,10 @@ STATUS TfliteSplitVParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     MS_LOG(ERROR) << "axis value too large";
     return RET_ERROR;
   }
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Split;
-    op->primitive->value.value = attr.release();
-  }
+  attr->splitDim = axis;
+
+  op->primitive->value.type = schema::PrimitiveType_Split;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

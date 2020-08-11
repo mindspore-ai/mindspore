@@ -22,7 +22,7 @@
 #include <exception>
 #include <algorithm>
 #include "runtime/device/ascend/ascend_device_address.h"
-#include "runtime/device/cpu/mpi/mpi_adapter.h"
+#include "runtime/device/cpu/mpi/mpi_interface.h"
 #include "utils/ms_context.h"
 #include "utils/context/context_extends.h"
 #include "utils/mpi/mpi_config.h"
@@ -64,9 +64,7 @@ std::string GetRankId() {
   auto mpi_config_ptr = MpiConfig::GetInstance();
   MS_EXCEPTION_IF_NULL(mpi_config_ptr);
   if (mpi_config_ptr->enable_mpi()) {
-    auto mpi_instance = device::cpu::MPIAdapter::Instance();
-    MS_EXCEPTION_IF_NULL(mpi_instance);
-    int rank_id = mpi_instance->GetRankId();
+    int rank_id = GetMPIRankId();
     const char *offset = std::getenv("RANK_OFFSET");
     if (offset != nullptr) {
       try {

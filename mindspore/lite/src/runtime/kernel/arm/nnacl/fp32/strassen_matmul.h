@@ -18,11 +18,11 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_STRASSEN_MATMUL_H_
 
 #include <memory.h>
-#include "src/runtime/kernel/arm/nnacl/pack.h"
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
-#include "src/runtime/kernel/arm/nnacl/strassen_matmul.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/common_func.h"
+#include "nnacl/pack.h"
+#include "nnacl/op_base.h"
+#include "nnacl/errorcode.h"
+#include "nnacl/strassen_matmul.h"
+#include "nnacl/fp32/common_func.h"
 
 #define FP32_STRASSEN_UINT C4NUM
 #define FP32_STRASSEN_WEIGHT_UINT (C4NUM * C4NUM)

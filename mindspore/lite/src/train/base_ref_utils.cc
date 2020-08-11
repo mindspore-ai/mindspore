@@ -57,4 +57,3 @@ std::vector<std::vector<std::shared_ptr<tensor::MSTensor>>> TransformVectorRefTo
   return multiTensor;
 }
 }  // namespace mindspore
-

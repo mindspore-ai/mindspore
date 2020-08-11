@@ -56,27 +56,27 @@ class Conv2dBnAct(Cell):
     r"""
     A combination of convolution, Batchnorm, activation layer.
 
-    For a more Detailed overview of Conv2d op.
+    This part is a more detailed overview of Conv2d op.
 
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
         out_channels (int): The number of output channel :math:`C_{out}`.
         kernel_size (Union[int, tuple]): The data type is int or tuple with 2 integers. Specifies the height
-            and width of the 2D convolution window. Single int means the value if for both height and width of
+            and width of the 2D convolution window. Single int means the value is for both height and width of
             the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
             width of the kernel.
-        stride (int): Specifies stride for all spatial dimensions with the same value. Value of stride should be
-            greater or equal to 1 but bounded by the height and width of the input. Default: 1.
+        stride (int): Specifies stride for all spatial dimensions with the same value. The value of stride should be
+            greater than or equal to 1 and lower than any one of the height and width of the input. Default: 1.
         pad_mode (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
         padding (int): Implicit paddings on both sides of the input. Default: 0.
         dilation (int): Specifying the dilation rate to use for dilated convolution. If set to be :math:`k > 1`,
-            there will be :math:`k - 1` pixels skipped for each sampling location. Its value should be greater
-            or equal to 1 and bounded by the height and width of the input. Default: 1.
+            there will be :math:`k - 1` pixels skipped for each sampling location. Its value should be greater than
+            or equal to 1 and lower than any one of the height and width of the input. Default: 1.
         group (int): Split filter into groups, `in_ channels` and `out_channels` should be
             divisible by the number of groups. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the convolution kernel.
-            It can be a Tensor, a string, an Initializer or a numbers.Number. When a string is specified,
+            It can be a Tensor, a string, an Initializer or a number. When a string is specified,
             values from 'TruncatedNormal', 'Normal', 'Uniform', 'HeUniform' and 'XavierUniform' distributions as well
             as constant 'One' and 'Zero' distributions are possible. Alias 'xavier_uniform', 'he_uniform', 'ones'
             and 'zeros' are acceptable. Uppercase and lowercase are both acceptable. Refer to the values of
@@ -160,9 +160,9 @@ class Conv2dBnAct(Cell):
 
 class DenseBnAct(Cell):
     r"""
-    A combination of Dense, Batchnorm, activation layer.
+    A combination of Dense, Batchnorm, and the activation layer.
 
-    For a more Detailed overview of Dense op.
+    This part is a more detailed overview of Dense op.
 
     Args:
         in_channels (int): The number of channels in the input space.
@@ -172,11 +172,11 @@ class DenseBnAct(Cell):
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
             same as input x. The values of str refer to the function `initializer`. Default: 'zeros'.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
-        activation (Cell): Regularizer function applied to the output of the layer, eg. 'relu'. Default: None.
-        has_bn (bool): Specifies to used batchnorm or not. Default: False.
+        activation (Cell): The regularization function applied to the output of the layer, eg. 'ReLU'. Default: None.
+        has_bn (bool): Specifies to use batchnorm or not. Default: False.
         activation (string): Specifies activation type. The optional values are as following:
-            'softmax', 'logsoftmax', 'relu', 'relu6', 'tanh', 'gelu', 'sigmoid',
-            'prelu', 'leakyrelu', 'hswish', 'hsigmoid'. Default: None.
+            'Softmax', 'LogSoftmax', 'ReLU', 'ReLU6', 'Tanh', 'GELU', 'Sigmoid',
+            'PReLU', 'LeakyReLU', 'h-Swish', and 'h-Sigmoid'. Default: None.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, in\_channels)`.
@@ -292,10 +292,10 @@ class FakeQuantWithMinMax(Cell):
         per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
         channel_axis (int): Quantization by channel axis. Default: 1.
         num_channels (int): declarate the min and max channel size, Default: 1.
-        num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
-        symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
-        narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
-        quant_delay (int): Quantization delay parameters according by global step. Default: 0.
+        num_bits (int): The quantization number bit, support 4 and 8bit. Default: 8.
+        symmetric (bool): The quantization algorithm is symmetric or not. Default: False.
+        narrow_range (bool): The quantization algorithm uses narrow range or not. Default: False.
+        quant_delay (int): Quantization delay parameters according to the global step. Default: 0.
 
     Inputs:
         - **x** (Tensor) - The input of FakeQuantWithMinMax.
@@ -396,9 +396,9 @@ class FakeQuantWithMinMax(Cell):
 
 class Conv2dBnFoldQuant(Cell):
     r"""
-    2D convolution with BatchNormal op folded layer.
+    2D convolution with BatchNormal op folded construct.
 
-    For a more Detailed overview of Conv2d op.
+    This part is a more detailed overview of Conv2d op.
 
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
@@ -419,13 +419,13 @@ class Conv2dBnFoldQuant(Cell):
             mean vector. Default: 'zeros'.
         var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the
             variance vector. Default: 'ones'.
-        fake (bool): Conv2dBnFoldQuant Cell add FakeQuantWithMinMax op or not. Default: True.
+        fake (bool): Whether Conv2dBnFoldQuant Cell adds FakeQuantWithMinMax op. Default: True.
         per_channel (bool): FakeQuantWithMinMax Parameters. Default: False.
-        num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
-        symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
-        narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
-        quant_delay (int): Quantization delay parameters according by global step. Default: 0.
-        freeze_bn (int): Quantization freeze BatchNormal op according by global step. Default: 100000.
+        num_bits (int): The quantization number bit, support 4 and 8bit. Default: 8.
+        symmetric (bool): The quantization algorithm is symmetric or not. Default: False.
+        narrow_range (bool): The quantization algorithm uses narrow range or not. Default: False.
+        quant_delay (int): The Quantization delay parameters according to the global step. Default: 0.
+        freeze_bn (int): The quantization freeze BatchNormal op is according to the global step. Default: 100000.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -434,10 +434,9 @@ class Conv2dBnFoldQuant(Cell):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> batchnorm_quant = nn.Conv2dBnFoldQuant(1, 6, kernel_size= (2, 2), stride=(1, 1), pad_mode="valid",
-        >>>                                           dilation=(1, 1))
-        >>> input_x = Tensor(np.random.randint(-2, 2, (2, 1, 1, 3)), mindspore.float32)
-        >>> result = batchnorm_quant(input_x)
+        >>> conv2d_bn = nn.Conv2dBnFoldQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid")
+        >>> x = Tensor(np.random.randint(-2, 2, (2, 1, 1, 3)), mindspore.float32)
+        >>> y = conv2d_bn(x)
     """
 
     def __init__(self,
@@ -508,7 +507,7 @@ class Conv2dBnFoldQuant(Cell):
             channel_axis = 0
         self.weight = Parameter(initializer(weight_init, weight_shape), name='weight')
 
-        # initialize batchnorm Parameter
+        # initialize BatchNorm Parameter
         self.gamma = Parameter(initializer(gamma_init, [out_channels]), name='gamma')
         self.beta = Parameter(initializer(beta_init, [out_channels]), name='beta')
         self.moving_mean = Parameter(initializer(mean_init, [out_channels]), name='moving_mean', requires_grad=False)
@@ -583,9 +582,9 @@ class Conv2dBnFoldQuant(Cell):
 
 class Conv2dBnWithoutFoldQuant(Cell):
     r"""
-    2D convolution + batchnorm without fold with fake quant op layer.
+    2D convolution + batchnorm without fold with fake quant construct.
 
-    For a more Detailed overview of Conv2d op.
+    This part is a more detailed overview of Conv2d op.
 
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
@@ -605,10 +604,10 @@ class Conv2dBnWithoutFoldQuant(Cell):
             Default: 'normal'.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the bias vector. Default: 'zeros'.
         per_channel (bool): FakeQuantWithMinMax Parameters. Default: False.
-        num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
-        symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
-        narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
-        quant_delay (int): Quantization delay parameters according by global step. Default: 0.
+        num_bits (int): The quantization number bit, support 4 and 8bit. Default: 8.
+        symmetric (bool): The quantization algorithm is symmetric or not. Default: False.
+        narrow_range (bool): The quantization algorithm uses narrow range or not. Default: False.
+        quant_delay (int): Quantization delay parameters according to the global step. Default: 0.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -617,10 +616,9 @@ class Conv2dBnWithoutFoldQuant(Cell):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> conv2d_quant = nn.Conv2dQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
-        >>>                               dilation=(1, 1))
-        >>> input_x = Tensor(np.random.randint(-2, 2, (2, 1, 1, 3)), mstype.float32)
-        >>> result = conv2d_quant(input_x)
+        >>> conv2d_quant = nn.Conv2dBnWithoutFoldQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid")
+        >>> x = Tensor(np.random.randint(-2, 2, (2, 1, 1, 3)), mstype.float32)
+        >>> y = conv2d_quant(x)
     """
 
     def __init__(self,
@@ -687,7 +685,7 @@ class Conv2dBnWithoutFoldQuant(Cell):
                                                      quant_delay=quant_delay)
         self.has_bn = validator.check_bool("has_bn", has_bn)
         if has_bn:
-            self.batchnorm = BatchNorm2d(out_channels)
+            self.batchnorm = BatchNorm2d(out_channels, eps=eps, momentum=momentum)
 
     def construct(self, x):
         weight = self.fake_quant_weight(self.weight)
@@ -711,7 +709,7 @@ class Conv2dQuant(Cell):
     r"""
     2D convolution with fake quant op layer.
 
-    For a more Detailed overview of Conv2d op.
+    This part is a more detailed overview of Conv2d op.
 
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
@@ -728,10 +726,10 @@ class Conv2dQuant(Cell):
             Default: 'normal'.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the bias vector. Default: 'zeros'.
         per_channel (bool): FakeQuantWithMinMax Parameters. Default: False.
-        num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
-        symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
-        narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
-        quant_delay (int): Quantization delay parameters according by global step. Default: 0.
+        num_bits (int): The quantization number bit, support 4 and 8bit. Default: 8.
+        symmetric (bool): The quantization algorithm is symmetric or not. Default: False.
+        narrow_range (bool): The quantization algorithm uses narrow range or not. Default: False.
+        quant_delay (int): Quantization delay parameters according to the global step. Default: 0.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -740,10 +738,9 @@ class Conv2dQuant(Cell):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> conv2d_quant = nn.Conv2dQuant(1, 6, kernel_size= (2, 2), stride=(1, 1), pad_mode="valid",
-        >>>                               dilation=(1, 1))
-        >>> input_x = Tensor(np.random.randint(-2, 2, (2, 1, 1, 3)), mindspore.float32)
-        >>> result = conv2d_quant(input_x)
+        >>> conv2d_quant = nn.Conv2dQuant(1, 6, kernel_size= (2, 2), stride=(1, 1), pad_mode="valid")
+        >>> x = Tensor(np.random.randint(-2, 2, (2, 1, 1, 3)), mindspore.float32)
+        >>> y = conv2d_quant(x)
     """
 
     def __init__(self,
@@ -826,7 +823,7 @@ class DenseQuant(Cell):
     r"""
     The fully connected layer with fake quant op.
 
-    For a more Detailed overview of Dense op.
+    This part is a more detailed overview of Dense op.
 
     Args:
         in_channels (int): The dimension of the input space.
@@ -836,12 +833,12 @@ class DenseQuant(Cell):
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
             same as input x. The values of str refer to the function `initializer`. Default: 'zeros'.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
-        activation (str): Regularizer function applied to the output of the layer, eg. 'relu'. Default: None.
+        activation (str): The regularization function applied to the output of the layer, eg. 'relu'. Default: None.
         per_channel (bool): FakeQuantWithMinMax Parameters. Default: False.
-        num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
-        symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
-        narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
-        quant_delay (int): Quantization delay parameters according by global step. Default: 0.
+        num_bits (int): The quantization number bit, support 4 and 8bit. Default: 8.
+        symmetric (bool): The quantization algorithm is symmetric or not. Default: False.
+        narrow_range (bool): The quantization algorithm uses narrow range or not. Default: False.
+        quant_delay (int): Quantization delay parameters according to the global step. Default: 0.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -906,7 +903,7 @@ class DenseQuant(Cell):
                                                      quant_delay=quant_delay)
 
     def construct(self, x):
-        """Use operators to construct to Dense layer."""
+        """Use operators to construct the Dense layer."""
         output = self.fake_quant_weight(self.weight)
         output = self.matmul(x, output)
         if self.has_bias:
@@ -942,16 +939,16 @@ class ActQuant(_QuantActivation):
 
     Add Fake Quant OP after activation. Not Recommand to used these cell for Fake Quant Op
     Will climp the max range of the activation and the relu6 do the same operation.
-    For a more Detailed overview of ReLU6 op.
+    This part is a more detailed overview of ReLU6 op.
 
     Args:
         activation (Cell): Activation cell class.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
         per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
-        num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
-        symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
-        narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
-        quant_delay (int): Quantization delay parameters according by global step. Default: 0.
+        num_bits (int): The quantization number bit, support 4 and 8bit. Default: 8.
+        symmetric (bool): The quantization algorithm is symmetric or not. Default: False.
+        narrow_range (bool): The quantization algorithm uses narrow range or not. Default: False.
+        quant_delay (int): Quantization delay parameters according to the global steps. Default: 0.
 
     Inputs:
         - **x** (Tensor) - The input of ReLU6Quant.
@@ -997,16 +994,16 @@ class LeakyReLUQuant(_QuantActivation):
     r"""
     LeakyReLUQuant activation function. Add Fake Quant OP after HSwish OP.
 
-    For a more Detailed overview of HSwish op.
+    This part is a more detailed overview of HSwish op.
 
     Args:
         activation (Cell): Activation cell class.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
         per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
-        num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
-        symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
-        narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
-        quant_delay (int): Quantization delay parameters according by global step. Default: 0.
+        num_bits (int): The quantization number bit, support 4 and 8bit. Default: 8.
+        symmetric (bool): The quantization algorithm is symmetric or not. Default: False.
+        narrow_range (bool): The quantization algorithm uses narrow range or not. Default: False.
+        quant_delay (int): Quantization delay parameters according to the global step. Default: 0.
 
     Inputs:
         - **x** (Tensor) - The input of LeakyReLUQuant.
@@ -1067,16 +1064,16 @@ class HSwishQuant(_QuantActivation):
     r"""
     HSwishQuant activation function. Add Fake Quant OP after HSwish OP.
 
-    For a more Detailed overview of HSwish op.
+    This part is a more detailed overview of HSwish op.
 
     Args:
         activation (Cell): Activation cell class.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
         per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
-        num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
-        symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
-        narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
-        quant_delay (int): Quantization delay parameters according by global step. Default: 0.
+        num_bits (int): The quantization number bit, support 4 and 8bit. Default: 8.
+        symmetric (bool): The quantization algorithm is symmetric or not. Default: False.
+        narrow_range (bool): The quantization algorithm uses narrow range or not. Default: False.
+        quant_delay (int): Quantization delay parameters according to the global step. Default: 0.
 
     Inputs:
         - **x** (Tensor) - The input of HSwishQuant.
@@ -1136,16 +1133,16 @@ class HSigmoidQuant(_QuantActivation):
     r"""
     HSigmoidQuant activation function. Add Fake Quant OP before and after HSigmoid OP.
 
-    For a more Detailed overview of HSigmoid op.
+    This part is a more detailed overview of HSigmoid op.
 
     Args:
         activation (Cell): Activation cell class.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
         per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
-        num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
-        symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
-        narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
-        quant_delay (int): Quantization delay parameters according by global step. Default: 0.
+        num_bits (int): The quantization number bit, support 4 and 8bit. Default: 8.
+        symmetric (bool): The quantization algorithm is symmetric or not. Default: False.
+        narrow_range (bool): The quantization algorithm uses narrow range or not. Default: False.
+        quant_delay (int): Quantization delay parameters according to the global step. Default: 0.
 
     Inputs:
         - **x** (Tensor) - The input of HSigmoidQuant.
@@ -1205,15 +1202,15 @@ class TensorAddQuant(Cell):
     r"""
     Add Fake Quant OP after TensorAdd OP.
 
-    For a more Detailed overview of TensorAdd op.
+    This part is a more detailed overview of TensorAdd op.
 
     Args:
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
         per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
-        num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
-        symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
-        narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
-        quant_delay (int): Quantization delay parameters according by global step. Default: 0.
+        num_bits (int): The quantization number bit, support 4 and 8bit. Default: 8.
+        symmetric (bool): The quantization algorithm is symmetric or not. Default: False.
+        narrow_range (bool): The quantization algorithm uses narrow range or not. Default: False.
+        quant_delay (int): Quantization delay parameters according to the global step. Default: 0.
 
     Inputs:
         - **x** (Tensor) - The input of TensorAddQuant.
@@ -1257,15 +1254,15 @@ class MulQuant(Cell):
     r"""
     Add Fake Quant OP after Mul OP.
 
-    For a more Detailed overview of Mul op.
+    This part is a more detailed overview of Mul op.
 
     Args:
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
         per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
-        num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
-        symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
-        narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
-        quant_delay (int): Quantization delay parameters according by global step. Default: 0.
+        num_bits (int): The quantization number bit, support 4 and 8bit. Default: 8.
+        symmetric (bool): The quantization algorithm is symmetric or not. Default: False.
+        narrow_range (bool): The quantization algorithm uses narrow range or not. Default: False.
+        quant_delay (int): Quantization delay parameters according to the global step. Default: 0.
 
     Inputs:
         - **x** (Tensor) - The input of MulQuant.
@@ -1317,7 +1314,7 @@ class QuantBlock(Cell):
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
             same as input x. The values of str refer to the function `initializer`. Default: 'zeros'.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
-        activation (str): Regularizer function applied to the output of the layer, eg. 'relu'. Default: None.
+        activation (str): The regularization function applied to the output of the layer, eg. 'relu'. Default: None.
         batchnorm (bool): Specifies to used batchnorm or not. Default: None.
         activation (string): Specifies activation type. The optional values are as following:
             'softmax', 'logsoftmax', 'relu', 'relu6', 'tanh', 'gelu', 'sigmoid',

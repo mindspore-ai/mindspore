@@ -13,6 +13,7 @@ include_directories(${TOP_DIR})
 include_directories(${CORE_DIR})
 include_directories(${CCSRC_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/kernel/arm)
 include_directories(${TOP_DIR}/third_party)
 include_directories(${TOP_DIR}/third_party/flatbuffers/include)
 
@@ -65,10 +66,10 @@ endif()
 
 set(ANF_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../core/ir/meta_tensor.cc
-        ${CCSRC_DIR}/gvar/logging_level.cc
-        ${CCSRC_DIR}/gvar/typeid_manager.cc
+        ${CORE_DIR}/gvar/logging_level.cc
+        ${CORE_DIR}/gvar/typeid_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../core/base/base.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../core/utils/log_adapter.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/common/log_adapter.cc
         )
 if (BUILD_CONVERTER)
     if (PLATFORM_ARM64 OR PLATFORM_ARM32)
@@ -133,6 +134,10 @@ if (BUILD_MINDDATA)
     set(OpenCV_DIR ${TOP_DIR}/third_party/opencv/build)
     find_package(OpenCV REQUIRED)
     include_directories(${OpenCV_INCLUDE_DIRS})
+    # json
+    if (NOT BUILD_CONVERTER)
+        include(${TOP_DIR}/cmake/external_libs/json.cmake)
+    endif()
     # eigen
     include_directories(${TOP_DIR}/third_party/eigen/)
     # jpeg-turbo

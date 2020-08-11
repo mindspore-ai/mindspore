@@ -4,6 +4,7 @@ SET(DE_UT_SRCS
         common/common.cc
         common/cvop_common.cc
         common/bboxop_common.cc
+        auto_contrast_op_test.cc
         batch_op_test.cc
         bit_functions_test.cc
         storage_container_test.cc
@@ -22,11 +23,13 @@ SET(DE_UT_SRCS
         cut_out_op_test.cc
         datatype_test.cc
         decode_op_test.cc
+        equalize_op_test.cc
         execution_tree_test.cc
         global_context_test.cc
         main_test.cc
         map_op_test.cc
         mind_record_op_test.cc
+        mixup_batch_op_test.cc
         memory_pool_test.cc
         normalize_op_test.cc
         one_hot_op_test.cc
@@ -35,6 +38,7 @@ SET(DE_UT_SRCS
         path_test.cc
         project_op_test.cc
         queue_test.cc
+        random_affine_op_test.cc
         random_crop_op_test.cc
         random_crop_with_bbox_op_test.cc
         random_crop_decode_resize_op_test.cc
@@ -88,7 +92,14 @@ SET(DE_UT_SRCS
         concatenate_op_test.cc
         cyclic_array_test.cc
         perf_data_test.cc
-        c_api_test.cc
+        c_api_samplers_test.cc
+        c_api_transforms_test.cc
+        c_api_dataset_ops_test.cc
+        c_api_dataset_cifar_test.cc
+        c_api_dataset_coco_test.cc
+        c_api_dataset_voc_test.cc
+        c_api_datasets_test.cc
+        c_api_dataset_iterator_test.cc
         tensor_op_fusion_pass_test.cc
         sliding_window_op_test.cc
         epoch_ctrl_op_test.cc

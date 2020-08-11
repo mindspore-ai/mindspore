@@ -808,14 +808,40 @@ std::string AbstractJTagged::ToString() const {
   return buffer.str();
 }
 
+AbstractRef::AbstractRef(const AbstractBasePtr &ref_key, const AbstractBasePtr &ref_value, bool need_cast,
+                         TypePtr cast_target)
+    : ref_key_(ref_key), ref_(ref_value), need_cast_(false), target_type_(nullptr), ref_key_value_(nullptr) {
+  set_type(std::make_shared<RefType>());
+  auto origin_type = ref_value->BuildType();
+  if (need_cast && cast_target && origin_type && origin_type->isa<TensorType>()) {
+    auto tensor_dtype = origin_type->cast<TensorTypePtr>()->element();
+    if (tensor_dtype && IsSubType(tensor_dtype, kFloat)) {
+      if (cast_target != tensor_dtype) {
+        need_cast_ = true;
+        target_type_ = cast_target;
+      }
+    }
+  }
+  if (ref_key && ref_key->isa<AbstractRefKey>()) {
+    ref_key_value_ = ref_key->cast<AbstractRefKeyPtr>()->ref_key_value();
+  }
+}
+
+BaseShapePtr AbstractRef::BuildShape() const { return ref_->BuildShape(); }
+
 TypePtr AbstractRef::BuildType() const {
   TypePtr subtype = ref_->BuildType();
-  TypePtr subtype_origin = ref_origin_->BuildType();
+  TypePtr subtype_origin = subtype;
+  if (need_cast_) {
+    subtype_origin = std::make_shared<TensorType>(target_type_);
+  }
   return std::make_shared<RefType>(subtype, subtype_origin);
 }
 
 bool AbstractRef::operator==(const AbstractRef &other) const {
-  return (*ref_ == *other.ref_) && (*ref_key_ == *other.ref_key_) && (*ref_origin_ == *other.ref_origin_);
+  return (*ref_ == *other.ref_) && (need_cast_ == other.need_cast_) &&
+         (!need_cast_ || (*target_type_ == *other.target_type_));
+  // not compare the key for reuse the graph (*ref_key_ == *other.ref_key_);
 }
 
 bool AbstractRef::operator==(const AbstractBase &other) const {
@@ -826,27 +852,45 @@ bool AbstractRef::operator==(const AbstractBase &other) const {
   return false;
 }
 
+AbstractBasePtr AbstractRefKey::Join(const AbstractBasePtr &other) {
+  MS_EXCEPTION_IF_NULL(other);
+  if (*this == *other) {
+    auto ret = shared_from_base<AbstractBase>();
+    return ret;
+  }
+  auto value_self = GetValueTrack();
+  MS_EXCEPTION_IF_NULL(value_self);
+  ValuePtr res_value = ValueJoin(value_self, other->GetValueTrack());
+  if (res_value == value_self) {
+    auto ret = shared_from_base<AbstractBase>();
+    return ret;
+  }
+  auto ret = std::make_shared<AbstractRefKey>();
+  ret->set_value(res_value);
+  return ret;
+}
+
 AbstractBasePtr AbstractRef::Join(const AbstractBasePtr &other) {
   auto other_ref = other->cast<AbstractRefPtr>();
   if (other_ref == nullptr) {
     auto new_ref = ref_->Join(other);
-    return std::make_shared<AbstractRef>(ref_key_, new_ref, ref_origin_);
+    return std::make_shared<AbstractRef>(ref_key_, new_ref);
   }
-  if (*this == *other) {
+  if ((*this == *other) && (*ref_key_ == *other_ref->ref_key_)) {
     return shared_from_base<AbstractBase>();
   }
   auto ref_key = ref_key_->Join(other_ref->ref_key_);
   auto ref = ref_->Join(other_ref->ref());
-  auto ref_origin = ref_origin_->Join(other_ref->ref_origin_);
-
-  return std::make_shared<AbstractRef>(ref_key, ref, ref_origin);
+  return std::make_shared<AbstractRef>(ref_key, ref);
 }
 
 std::string AbstractRef::ToString() const {
   std::ostringstream buffer;
   buffer << type_name() << "("
-         << "key: " << ref_key_->ToString() << " ref_value: " << ref_->ToString()
-         << " origin_value: " << ref_origin_->ToString();
+         << "key: " << ref_key_->ToString() << " ref_value: " << ref_->ToString();
+  if (need_cast_) {
+    buffer << " cast to: " << target_type_->ToString();
+  }
   auto value = GetValueTrack();
   if (value) {
     buffer << ", value: " << value->ToString();
@@ -872,6 +916,12 @@ std::string AbstractNone::ToString() const {
 }
 
 ValuePtr AbstractNone::RealBuildValue() const { return kNone; }
+
+AbstractBasePtr AbstractRefKey::Broaden() const {
+  auto refkey = std::make_shared<AbstractRefKey>();
+  refkey->set_value(kAnyValue);
+  return refkey;
+}
 
 bool AbstractRefKey::operator==(const AbstractRefKey &other) const {
   ValuePtr value_self = GetValueTrack();

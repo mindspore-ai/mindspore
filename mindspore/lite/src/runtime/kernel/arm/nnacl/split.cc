@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/split.h"
-#include "src/runtime/kernel/arm/nnacl/split_parameter.h"
+#include "nnacl/split.h"
+#include "nnacl/split_parameter.h"
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/errorcode.h"
 
 int DoSplit(float *in_data, float **out_data, const int *input_shape, int offset, int num_unit,
             SplitParameter *split_param) {

@@ -54,7 +54,7 @@ struct DivergInfo {
   size_t bit_num;
   int quant_max = 255;
   int quant_min = 0;
-  DivergInfo(CNodePtr cnode, int bins, size_t bits, int quant_max = 255, int quant_min = 0) {
+  DivergInfo(CNodePtr cnode, int bins, size_t bits, int quant_max, int quant_min) {
     this->cnode = cnode;
     this->bin_num = bins;
     this->bit_num = bits;
@@ -81,6 +81,9 @@ struct DivergInfo {
 
   STATUS UpdateHistogram(const std::vector<float> &data, const std::vector<int> &shape) {
     for (auto value : data) {
+      if (value == 0) {
+        continue;
+      }
       int bin_index = std::min(static_cast<int>(std::fabs(value) / this->interval), bin_num - 1);
       this->histogram[bin_index]++;
     }
@@ -470,8 +473,10 @@ STATUS Calibrator::ReadConfig() {
 Calibrator::Calibrator(string path, size_t bitNum, int quantMax, int quantMin)
     : config_path_(path), bit_num_(bitNum), quant_max_(quantMax), quant_min_(quantMin) {}
 
-PostTrainingQuantizer::PostTrainingQuantizer(FuncGraphPtr graph, string path, int bit_num, TypeId target_type)
+PostTrainingQuantizer::PostTrainingQuantizer(FuncGraphPtr graph, string path, int bit_num, TypeId target_type,
+                                             bool per_channel)
     : Quantizer(graph) {
+  this->per_channel_ = per_channel;
   this->bit_num = bit_num;
   this->target_type_ = target_type;
   if (target_type == kNumberTypeInt8) {
@@ -533,7 +538,7 @@ STATUS PostTrainingQuantizer::DoWeightQuant(AnfNodePtr node) {
   }
   auto parameter = std::dynamic_pointer_cast<Parameter>(node);
   ParamValueLitePtr paramValue = std::dynamic_pointer_cast<ParamValueLite>(parameter->default_param());
-  auto status = QuantFilter(paramValue, QuantType_PostTraining, quant_max, quant_min, bit_num);
+  auto status = QuantFilter(paramValue, QuantType_PostTraining, quant_max, quant_min, bit_num, per_channel_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
     return status;
@@ -670,18 +675,32 @@ STATUS PostTrainingQuantizer::QuantNode() {
       MS_LOG(ERROR) << "PrimitiveT_value is nullptr";
       continue;
     }
-
     if (input_scale.find(cnode) == input_scale.end()) {
       primitiveT_value->SetQuantType(schema::QuantType_QUANT_NONE);
       continue;
     }
     auto input_vec = cnode->inputs();
     auto op_name = cnode->fullname_with_scope();
+    auto op_type = primitiveT_value->GetPrimitiveT()->value.type;
     MS_LOG(INFO) << "OpName: " << op_name;
-    if (input_vec.size() <= 3 && op_name != "Conv2D" && op_name != "DepthwiseConv2D") {
-      MS_LOG(INFO) << "todo(x): ";
-      // int32_t qnodeOutputZeropoint = outputZeropoint[cnode];
-      // p->AddAttr(kInputTensorDataType, MakeValue((int)targetType));
+    if (op_type != PrimitiveType_Conv2D && op_type != PrimitiveType_DepthwiseConv2D) {
+      for (auto i = 1; i < cnode->inputs().size(); i++) {
+        auto input_node = cnode->input(i);
+        if (!input_node->isa<mindspore::CNode>()) {
+          MS_LOG(WARNING) << "node: " << cnode_name << " input " << i << " not a cnode";
+          continue;
+        }
+        auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input_node);
+        auto input_cnode_primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveTValue>>(input_cnode->input(0));
+        if (input_cnode_primitiveT_value == nullptr) {
+          MS_LOG(DEBUG) << "input: " << i << " " << input_cnode->fullname_with_scope() << ": "
+                        << " PrimitiveTValue is null";
+          continue;
+        }
+        for (auto &quant_param : input_cnode_primitiveT_value->GetOutputQuantParams()) {
+          primitiveT_value->AddInputQuantParam(quant_param);
+        }
+      }
     } else {
       // do input quant
       double scale = input_scale[cnode];
@@ -920,7 +939,7 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr funcGraph) {
     return RET_ERROR;
   }
 
-  auto ret = session_->CompileGraph(model.get());
+  auto ret = session_->CompileGraph(model);
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "compile graph error";
     return RET_ERROR;

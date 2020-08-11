@@ -80,6 +80,7 @@
 #include "backend/optimizer/ascend/buffer_fusion/conv_single_in_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/conv_double_in_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/matmul_eltwise_fusion_pass.h"
+#include "backend/optimizer/ascend/buffer_fusion/matmul_confusiontranspose_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/depthwiseconv_eltwise_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/bnupdate_eltwise_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/bnupdate_eltwise_eltwise_fusion_pass.h"
@@ -124,6 +125,10 @@ void AddAscendIRFusionRulesPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVRuleCond4>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextRightRule>());
   ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLrV2>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneAssignCond1Fusion>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneAssignCond2Fusion>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneAssignCond3Fusion>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneAssignCond4Fusion>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond1Fusion>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond2Fusion>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond3Fusion>());
@@ -308,6 +313,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   }
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
+  ir_fusion_pm->AddPass(std::make_shared<SplitFission>());
   ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());

@@ -39,6 +39,11 @@ int PriorBoxCPUKernel::Init() {
     MS_LOG(ERROR) << "PriorBoxParameter nullptr";
     return RET_NULL_PTR;
   }
+
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   MS_ASSERT(inputs_.size() == kInputNum);
   MS_ASSERT(outputs_.size() == kOutputNum);
 
@@ -164,7 +169,7 @@ int PriorBoxCPUKernel::Run() {
 kernel::LiteKernel *CpuPriorBoxKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs,
                                              OpParameter *opParameter, const Context *ctx,
-                                             const kernel::KernelKey &desc) {
+                                             const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
@@ -173,7 +178,7 @@ kernel::LiteKernel *CpuPriorBoxKernelCreator(const std::vector<lite::tensor::Ten
     MS_LOG(ERROR) << "PriorBox invalid desc type " << desc.type;
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) PriorBoxCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) PriorBoxCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PriorBoxCPUKernel fail!";
     return nullptr;

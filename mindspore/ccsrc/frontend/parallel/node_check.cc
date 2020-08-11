@@ -24,7 +24,6 @@
 namespace mindspore {
 namespace parallel {
 const std::set<std::string> BLACK_LIST = {TUPLE_GETITEM,
-                                          MAKE_TUPLE,
                                           J,
                                           LIST_GETITEM,
                                           ARRAY_GETITEM,

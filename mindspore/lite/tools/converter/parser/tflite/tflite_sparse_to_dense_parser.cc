@@ -27,27 +27,36 @@ STATUS TfliteSparseToDenseParser::Parse(const std::unique_ptr<tflite::OperatorT>
                                         const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_opset,
                                         schema::CNodeT *op,
                                         TensorCache *tensor_cache, bool quantized_model) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse TfliteSparseToDenseParser";
   std::unique_ptr<schema::SparseToDenseT> attr(new schema::SparseToDenseT());
 
+  attr->validateIndices = false;
+
   if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->outputShape)) {
-    MS_LOG(ERROR) << "sparseToDense -> outputShape get failed";
+    MS_LOG(ERROR) << "get sparseToDense -> outputShape failed";
     return RET_ERROR;
   }
   if (GetTfliteData(tflite_op->inputs[2], tflite_tensors, tflite_model_buffer, attr->sparseValue)) {
-    MS_LOG(ERROR) << "sparseToDense -> sparseValue get failed";
+    MS_LOG(ERROR) << "get sparseToDense -> sparseValue failed";
     return RET_ERROR;
   }
   if (GetTfliteData(tflite_op->inputs[3], tflite_tensors, tflite_model_buffer, attr->defaultValue)) {
-    MS_LOG(ERROR) << "sparseToDense -> defaultValue get failed";
+    MS_LOG(ERROR) << "get sparseToDense -> defaultValue failed";
     return RET_ERROR;
   }
-  attr->validateIndices = false;
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_SparseToDense;
-    op->primitive->value.value = attr.release();
-  }
+
+  op->primitive->value.type = schema::PrimitiveType_SparseToDense;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

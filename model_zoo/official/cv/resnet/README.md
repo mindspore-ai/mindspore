@@ -41,20 +41,22 @@ ImageNet2012
 └──resnet
   ├── README.md
   ├── script
-    ├── run_distribute_train.sh         # launch distributed training(8 pcs)
-    ├── run_eval.sh                     # launch evaluation
-    └── run_standalone_train.sh         # launch standalone training(1 pcs)
-    ├── run_distribute_train_gpu.sh     # launch gpu distributed training(8 pcs)
-    ├── run_eval_gpu.sh                 # launch gpu evaluation
-    └── run_standalone_train_gpu.sh     # launch gpu standalone training(1 pcs)
+    ├── run_distribute_train.sh            # launch distributed training(8 pcs)
+    ├── run_parameter_server_train.sh      # launch Ascend parameter server training(8 pcs)
+    ├── run_eval.sh                        # launch evaluation
+    └── run_standalone_train.sh            # launch standalone training(1 pcs)
+    ├── run_distribute_train_gpu.sh        # launch gpu distributed training(8 pcs)
+    ├── run_parameter_server_train_gpu.sh  # launch gpu parameter server training(8 pcs)
+    ├── run_eval_gpu.sh                    # launch gpu evaluation
+    └── run_standalone_train_gpu.sh        # launch gpu standalone training(1 pcs)
   ├── src
-    ├── config.py                       # parameter configuration
-    ├── dataset.py                      # data preprocessing
-    ├── crossentropy.py                 # loss definition for ImageNet2012 dataset
-    ├── lr_generator.py                 # generate learning rate for each step
-    └── resnet.py                       # resnet backbone, including resnet50 and resnet101
-  ├── eval.py                           # eval net
-  └── train.py                          # train net
+    ├── config.py                          # parameter configuration
+    ├── dataset.py                         # data preprocessing
+    ├── crossentropy.py                    # loss definition for ImageNet2012 dataset
+    ├── lr_generator.py                    # generate learning rate for each step
+    └── resnet.py                          # resnet backbone, including resnet50 and resnet101
+  ├── eval.py                              # eval net
+  └── train.py                             # train net
 ```
 
 
@@ -71,6 +73,7 @@ Parameters for both training and evaluation can be set in config.py.
 "momentum": 0.9,                  # momentum
 "weight_decay": 1e-4,             # weight decay 
 "epoch_size": 90,                 # only valid for taining, which is always 1 for inference 
+"pretrain_epoch_size": 0,         # epoch size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to epoch_size minus pretrain_epoch_size
 "save_checkpoint": True,          # whether save checkpoint or not
 "save_checkpoint_steps": 195,     # the step interval between two checkpoints. By default, the last checkpoint will be saved after the last step
 "keep_checkpoint_max": 10,        # only keep the last keep_checkpoint_max checkpoint
@@ -91,7 +94,7 @@ Parameters for both training and evaluation can be set in config.py.
 "momentum": 0.9,                  # momentum optimizer
 "weight_decay": 1e-4,             # weight decay 
 "epoch_size": 90,                 # only valid for taining, which is always 1 for inference 
-"pretrained_epoch_size": 1,       # epoch size that model has been trained before load pretrained checkpoint
+"pretrain_epoch_size": 0,         # epoch size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to epoch_size minus pretrain_epoch_size
 "save_checkpoint": True,          # whether save checkpoint or not
 "save_checkpoint_epochs": 1,      # the epoch interval between two checkpoints. By default, the last checkpoint will be saved after the last epoch
 "keep_checkpoint_max": 10,        # only keep the last keep_checkpoint_max checkpoint
@@ -112,8 +115,8 @@ Parameters for both training and evaluation can be set in config.py.
 "loss_scale": 1024,               # loss scale
 "momentum": 0.9,                  # momentum optimizer
 "weight_decay": 1e-4,             # weight decay
-"epoch_size": 120,                # epoch sizes for training
-"pretrain_epoch_size": 0,         # epoch size of pretrain checkpoint
+"epoch_size": 120,                # epoch size for training
+"pretrain_epoch_size": 0,         # epoch size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to epoch_size minus pretrain_epoch_size
 "save_checkpoint": True,          # whether save checkpoint or not
 "save_checkpoint_epochs": 1,      # the epoch interval between two checkpoints. By default, the last checkpoint will be saved after the last epoch
 "keep_checkpoint_max": 10,        # only keep the last keep_checkpoint_max checkpoint
@@ -251,4 +254,15 @@ sh run_standalone_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATA
 
 # infer example
 sh run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+```
+
+### Running parameter server mode training
+```
+# parameter server training Ascend example
+sh run_parameter_server_train.sh [resnet50|resnet101] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+
+# parameter server training GPU example
+sh run_parameter_server_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+
+> The way to evaluate is the same as the examples above.
 ```

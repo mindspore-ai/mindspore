@@ -14,28 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_TOOLS_LITE_CONVERTER_PARSER_TFLITE_MODEL_PARSER_H
-#define MINDSPORE_CCSRC_TOOLS_LITE_CONVERTER_PARSER_TFLITE_MODEL_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_MODEL_PARSER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_MODEL_PARSER_H
 
 #include <fcntl.h>
 #include <unistd.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/text_format.h>
-
 #include <string>
 #include <vector>
 #include <memory>
 #include <map>
-
 #include "securec/include/securec.h"
 #include "tools/converter/model_parser.h"
 #include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
 #include "tools/common/tensor_util.h"
-
 #include "mindspore/lite/schema/inner/model_generated.h"
-
-// using namespace tflite;
 
 namespace mindspore {
 namespace lite {
@@ -50,8 +45,7 @@ class TfliteModelParser : public ModelParser {
  private:
   std::unique_ptr<tflite::ModelT> ReadTfliteModelFromFlat(const char *buf);
 
-  void SetInputTensor(const std::unique_ptr<tflite::ModelT> &tflite_model,
-                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, TensorCache *tensor_cache);
+  void SetInputTensor(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, TensorCache *tensor_cache);
 
   void SetGraphTensorIndex(const mindspore::lite::TensorCache &tensorCache,
                            schema::MetaGraphT *subGraphDef);
@@ -82,6 +76,5 @@ class TfliteModelParser : public ModelParser {
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // PREDICT_CONV
-// ERTER_PARSER_TFLITE_MODEL_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_MODEL_PARSER_H
 

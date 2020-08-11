@@ -16,16 +16,15 @@
 
 #include <vector>
 #include <memory>
-#include "base/base_ref.h"
+#include "utils/base_ref.h"
 #include "include/ms_tensor.h"
 
-#ifndef MINDSPORE_CCSRC_UTILS_BASE_REF_UTILS_H
-#define MINDSPORE_CCSRC_UTILS_BASE_REF_UTILS_H
+#ifndef MINDSPORE_LITE_SRC_TRAIN_BASE_REF_UTILS_H_
+#define MINDSPORE_LITE_SRC_TRAIN_BASE_REF_UTILS_H_
 namespace mindspore {
 std::vector<std::shared_ptr<tensor::MSTensor>> TransformBaseRefToMSTensor(const BaseRef &base_ref);
 
 std::vector<std::vector<std::shared_ptr<tensor::MSTensor>>> TransformVectorRefToMultiTensor(
   const VectorRef &vector_ref);
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_UTILS_BASE_REF_UTILS_H
-
+#endif  // MINDSPORE_LITE_SRC_TRAIN_BASE_REF_UTILS_H_

@@ -26,12 +26,13 @@
 #include "src/runtime/kernel/arm/nnacl/fp32/slice.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/broadcast_to.h"
 #include "src/runtime/kernel/arm/nnacl/reshape_parameter.h"
+#include "src/runtime/kernel/arm/nnacl/shape.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/stack.h"
 #include "src/runtime/kernel/arm/nnacl/unstack.h"
 #include "src/runtime/kernel/arm/nnacl/depth_to_space.h"
 #include "src/runtime/kernel/arm/nnacl/conv_parameter.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/pooling.h"
-#include "src/runtime/kernel/arm/nnacl/matmul.h"
+#include "src/runtime/kernel/arm/nnacl/matmul_parameter.h"
 #include "src/runtime/kernel/arm/nnacl/softmax_parameter.h"
 #include "src/runtime/kernel/arm/nnacl/tile.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/topk.h"
@@ -56,7 +57,7 @@
 #include "src/runtime/kernel/arm/nnacl/unique.h"
 #include "src/runtime/kernel/arm/nnacl/scale.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/gatherNd.h"
-#include "src/runtime/kernel/arm/nnacl/resize.h"
+#include "src/runtime/kernel/arm/nnacl/resize_parameter.h"
 #include "src/runtime/kernel/arm/nnacl/scatter_nd.h"
 #include "src/runtime/kernel/arm/nnacl/batch_to_space.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/crop.h"
@@ -70,6 +71,7 @@
 #include "src/runtime/kernel/arm/nnacl/int8/quant_dtype_cast.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/lstm.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/embedding_lookup.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/elu.h"
 
 namespace mindspore::kernel {
 OpParameter *PopulateBatchNorm(const lite::Primitive *primitive) {
@@ -487,6 +489,7 @@ OpParameter *PopulateActivationParameter(const lite::Primitive *primitive) {
   }
   auto activation = primitive->Value()->value_as_Activation();
   act_param->type_ = static_cast<int>(activation->type());
+  act_param->alpha_ = activation->alpha();
   return reinterpret_cast<OpParameter *>(act_param);
 }
 
@@ -872,6 +875,16 @@ OpParameter *PopulateReshapeParameter(const lite::Primitive *primitive) {
   return reinterpret_cast<OpParameter *>(reshape_param);
 }
 
+OpParameter *PopulateShapeParameter(const lite::Primitive *primitive) {
+  ShapeParameter *shape_param = new (std::nothrow) ShapeParameter();
+  if (shape_param == nullptr) {
+    MS_LOG(ERROR) << "new ShapeParameter failed.";
+    return nullptr;
+  }
+  shape_param->op_parameter_.type_ = primitive->Type();
+  return reinterpret_cast<OpParameter *>(shape_param);
+}
+
 OpParameter *PopulateReverseParameter(const lite::Primitive *primitive) {
   auto reverse_attr = primitive->Value()->value_as_Reverse();
   ReverseParameter *reverse_param = new (std::nothrow) ReverseParameter();
@@ -1010,7 +1023,7 @@ OpParameter *PopulateResizeParameter(const lite::Primitive *primitive) {
   }
   resize_param->op_parameter_.type_ = primitive->Type();
   auto param = primitive->Value()->value_as_Resize();
-  resize_param->method_ = param->method();
+  resize_param->method_ = static_cast<int>(param->method());
   resize_param->new_height_ = param->newHeight();
   resize_param->new_width_ = param->newWidth();
   resize_param->align_corners_ = param->alignCorners();
@@ -1227,6 +1240,29 @@ OpParameter *PopulateEmbeddingLookupParameter(const lite::Primitive *primitive) 
   return reinterpret_cast<OpParameter *>(embedding_lookup_parameter);
 }
 
+OpParameter *PopulateBiasAddParameter(const lite::Primitive *primitive) {
+  ArithmeticParameter *arithmetic_param = new (std::nothrow) ArithmeticParameter();
+  if (arithmetic_param == nullptr) {
+    MS_LOG(ERROR) << "new Bias Add Parameter failed";
+    return nullptr;
+  }
+  arithmetic_param->op_parameter_.type_ = primitive->Type();
+
+  return reinterpret_cast<OpParameter *>(arithmetic_param);
+}
+
+OpParameter *PopulateEluParameter(const lite::Primitive *primitive) {
+  EluParameter *elu_parameter = new (std::nothrow) EluParameter();
+  if (elu_parameter == nullptr) {
+    MS_LOG(ERROR) << "new EluParameter failed";
+    return nullptr;
+  }
+  elu_parameter->op_parameter_.type_ = primitive->Type();
+  auto param = primitive->Value()->value_as_Elu();
+  elu_parameter->alpha_ = param->alpha();
+  return reinterpret_cast<OpParameter *>(elu_parameter);
+}
+
 PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_SoftMax] = PopulateSoftmaxParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Activation] = PopulateActivationParameter;
@@ -1248,10 +1284,20 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_Add] = PopulateArithmetic;
   populate_parameter_funcs_[schema::PrimitiveType_Sub] = PopulateArithmetic;
   populate_parameter_funcs_[schema::PrimitiveType_Div] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_LogicalAnd] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_LogicalOr] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_Equal] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_Less] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_Greater] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_NotEqual] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_LessEqual] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_GreaterEqual] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_Maximum] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_Minimum] = PopulateArithmetic;
   populate_parameter_funcs_[schema::PrimitiveType_FloorDiv] = PopulateArithmetic;
   populate_parameter_funcs_[schema::PrimitiveType_FloorMod] = PopulateArithmetic;
   populate_parameter_funcs_[schema::PrimitiveType_SquaredDifference] = PopulateArithmetic;
-  populate_parameter_funcs_[schema::PrimitiveType_BiasAdd] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_BiasAdd] = PopulateBiasAddParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Eltwise] = PopulateEltwiseParameter;
   populate_parameter_funcs_[schema::PrimitiveType_ExpandDims] = PopulateExpandDimsParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Abs] = PopulateArithmeticSelf;
@@ -1265,11 +1311,13 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_LogicalNot] = PopulateArithmeticSelf;
   populate_parameter_funcs_[schema::PrimitiveType_Floor] = PopulateArithmeticSelf;
   populate_parameter_funcs_[schema::PrimitiveType_Ceil] = PopulateArithmeticSelf;
+  populate_parameter_funcs_[schema::PrimitiveType_Round] = PopulateArithmeticSelf;
   populate_parameter_funcs_[schema::PrimitiveType_ArgMax] = PopulateArgMaxParameter;
   populate_parameter_funcs_[schema::PrimitiveType_ArgMin] = PopulateArgMinParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Cast] = PopulateCastParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Scale] = PopulateScaleParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Reshape] = PopulateReshapeParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_Shape] = PopulateShapeParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Concat] = PopulateConcatParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Tile] = PopulateTileParameter;
   populate_parameter_funcs_[schema::PrimitiveType_TopK] = PopulateTopKParameter;
@@ -1305,6 +1353,7 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_QuantDTypeCast] = PopulateQuantDTypeCastParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Lstm] = PopulateLstmParameter;
   populate_parameter_funcs_[schema::PrimitiveType_EmbeddingLookup] = PopulateEmbeddingLookupParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_Elu] = PopulateEluParameter;
 }
 
 PopulateParameterRegistry *PopulateParameterRegistry::GetInstance() {

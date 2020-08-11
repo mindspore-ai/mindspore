@@ -27,18 +27,21 @@ STATUS TfliteRankParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteO
                               schema::CNodeT *op,
                               TensorCache *tensor_cache,
                               bool quantizedModel) {
-  MS_LOG(DEBUG) << "parse TfliteRankParser";
-  std::unique_ptr<schema::RankT> attr(new schema::RankT());
-  const auto &tflite_attr = tfliteOp->builtin_options.AsRankOptions();
-  if (tflite_attr == nullptr) {
-    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
   }
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Rank;
-    op->primitive->value.value = attr.release();
-  }
+  MS_LOG(DEBUG) << "parse TfliteRankParser";
+  std::unique_ptr<schema::RankT> attr(new schema::RankT());
+
+  op->primitive->value.type = schema::PrimitiveType_Rank;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

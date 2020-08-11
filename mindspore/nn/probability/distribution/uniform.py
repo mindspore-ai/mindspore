@@ -16,7 +16,7 @@
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
-from ._utils.utils import convert_to_batch, check_greater
+from ._utils.utils import convert_to_batch, check_greater, check_type
 
 class Uniform(Distribution):
     """
@@ -97,10 +97,12 @@ class Uniform(Distribution):
         Constructor of Uniform distribution.
         """
         param = dict(locals())
-        super(Uniform, self).__init__(dtype, name, param)
+        valid_dtype = mstype.float_type
+        check_type(dtype, valid_dtype, "Uniform")
+        super(Uniform, self).__init__(seed, dtype, name, param)
         if low is not None and high is not None:
-            self._low = convert_to_batch(low, self._broadcast_shape, dtype)
-            self._high = convert_to_batch(high, self._broadcast_shape, dtype)
+            self._low = convert_to_batch(low, self.broadcast_shape, dtype)
+            self._high = convert_to_batch(high, self.broadcast_shape, dtype)
             check_greater(self.low, self.high, "low value", "high value")
         else:
             self._low = low
@@ -156,7 +158,7 @@ class Uniform(Distribution):
     def _mean(self, low=None, high=None):
         r"""
         .. math::
-            MEAN(U) = \fract{low + high}{2}.
+            MEAN(U) = \frac{low + high}{2}.
         """
         low = self.low if low is None else low
         high = self.high if high is None else high
@@ -166,7 +168,7 @@ class Uniform(Distribution):
     def _var(self, low=None, high=None):
         r"""
         .. math::
-            VAR(U) = \fract{(high -low) ^ 2}{12}.
+            VAR(U) = \frac{(high -low) ^ 2}{12}.
         """
         low = self.low if low is None else low
         high = self.high if high is None else high
@@ -207,7 +209,7 @@ class Uniform(Distribution):
 
         .. math::
             pdf(x) = 0 if x < low;
-            pdf(x) = \fract{1.0}{high -low} if low <= x <= high;
+            pdf(x) = \frac{1.0}{high -low} if low <= x <= high;
             pdf(x) = 0 if x > high;
         """
         low = self.low if low is None else low
@@ -251,7 +253,7 @@ class Uniform(Distribution):
 
         .. math::
             cdf(x) = 0 if x < low;
-            cdf(x) = \fract{x - low}{high -low} if low <= x <= high;
+            cdf(x) = \frac{x - low}{high -low} if low <= x <= high;
             cdf(x) = 1 if x > high;
         """
         low = self.low if low is None else low

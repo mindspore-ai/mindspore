@@ -21,8 +21,12 @@
 #include "minddata/dataset/kernels/image/crop_op.h"
 #include "minddata/dataset/kernels/image/cut_out_op.h"
 #include "minddata/dataset/kernels/image/decode_op.h"
+#include "minddata/dataset/kernels/image/hwc_to_chw_op.h"
+#include "minddata/dataset/kernels/image/mixup_batch_op.h"
 #include "minddata/dataset/kernels/image/normalize_op.h"
+#include "minddata/dataset/kernels/data/one_hot_op.h"
 #include "minddata/dataset/kernels/image/pad_op.h"
+#include "minddata/dataset/kernels/image/random_affine_op.h"
 #include "minddata/dataset/kernels/image/random_color_adjust_op.h"
 #include "minddata/dataset/kernels/image/random_crop_op.h"
 #include "minddata/dataset/kernels/image/random_horizontal_flip_op.h"
@@ -81,9 +85,39 @@ std::shared_ptr<DecodeOperation> Decode(bool rgb) {
   return op;
 }
 
+// Function to create HwcToChwOperation.
+std::shared_ptr<HwcToChwOperation> HWC2CHW() {
+  auto op = std::make_shared<HwcToChwOperation>();
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
+// Function to create MixUpBatchOperation.
+std::shared_ptr<MixUpBatchOperation> MixUpBatch(float alpha) {
+  auto op = std::make_shared<MixUpBatchOperation>(alpha);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
 // Function to create NormalizeOperation.
 std::shared_ptr<NormalizeOperation> Normalize(std::vector<float> mean, std::vector<float> std) {
   auto op = std::make_shared<NormalizeOperation>(mean, std);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
+// Function to create OneHotOperation.
+std::shared_ptr<OneHotOperation> OneHot(int32_t num_classes) {
+  auto op = std::make_shared<OneHotOperation>(num_classes);
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -114,10 +148,27 @@ std::shared_ptr<RandomColorAdjustOperation> RandomColorAdjust(std::vector<float>
   return op;
 }
 
+// Function to create RandomAffineOperation.
+std::shared_ptr<RandomAffineOperation> RandomAffine(const std::vector<float_t> &degrees,
+                                                    const std::vector<float_t> &translate_range,
+                                                    const std::vector<float_t> &scale_range,
+                                                    const std::vector<float_t> &shear_ranges,
+                                                    InterpolationMode interpolation,
+                                                    const std::vector<uint8_t> &fill_value) {
+  auto op = std::make_shared<RandomAffineOperation>(degrees, translate_range, scale_range, shear_ranges, interpolation,
+                                                    fill_value);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
 // Function to create RandomCropOperation.
 std::shared_ptr<RandomCropOperation> RandomCrop(std::vector<int32_t> size, std::vector<int32_t> padding,
-                                                bool pad_if_needed, std::vector<uint8_t> fill_value) {
-  auto op = std::make_shared<RandomCropOperation>(size, padding, pad_if_needed, fill_value);
+                                                bool pad_if_needed, std::vector<uint8_t> fill_value,
+                                                BorderType padding_mode) {
+  auto op = std::make_shared<RandomCropOperation>(size, padding, pad_if_needed, fill_value, padding_mode);
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -271,6 +322,25 @@ bool DecodeOperation::ValidateParams() { return true; }
 
 std::shared_ptr<TensorOp> DecodeOperation::Build() { return std::make_shared<DecodeOp>(rgb_); }
 
+// HwcToChwOperation
+bool HwcToChwOperation::ValidateParams() { return true; }
+
+std::shared_ptr<TensorOp> HwcToChwOperation::Build() { return std::make_shared<HwcToChwOp>(); }
+
+// MixUpOperation
+MixUpBatchOperation::MixUpBatchOperation(float alpha) : alpha_(alpha) {}
+
+bool MixUpBatchOperation::ValidateParams() {
+  if (alpha_ < 0) {
+    MS_LOG(ERROR) << "MixUpBatch: alpha must be a positive floating value however it is: " << alpha_;
+    return false;
+  }
+
+  return true;
+}
+
+std::shared_ptr<TensorOp> MixUpBatchOperation::Build() { return std::make_shared<MixUpBatchOp>(alpha_); }
+
 // NormalizeOperation
 NormalizeOperation::NormalizeOperation(std::vector<float> mean, std::vector<float> std) : mean_(mean), std_(std) {}
 
@@ -291,6 +361,20 @@ bool NormalizeOperation::ValidateParams() {
 std::shared_ptr<TensorOp> NormalizeOperation::Build() {
   return std::make_shared<NormalizeOp>(mean_[0], mean_[1], mean_[2], std_[0], std_[1], std_[2]);
 }
+
+// OneHotOperation
+OneHotOperation::OneHotOperation(int32_t num_classes) : num_classes_(num_classes) {}
+
+bool OneHotOperation::ValidateParams() {
+  if (num_classes_ < 0) {
+    MS_LOG(ERROR) << "OneHot: Number of classes cannot be negative. Number of classes: " << num_classes_;
+    return false;
+  }
+
+  return true;
+}
+
+std::shared_ptr<TensorOp> OneHotOperation::Build() { return std::make_shared<OneHotOp>(num_classes_); }
 
 // PadOperation
 PadOperation::PadOperation(std::vector<int32_t> padding, std::vector<uint8_t> fill_value, BorderType padding_mode)
@@ -401,10 +485,90 @@ std::shared_ptr<TensorOp> RandomColorAdjustOperation::Build() {
   return tensor_op;
 }
 
+// RandomAffineOperation
+RandomAffineOperation::RandomAffineOperation(const std::vector<float_t> &degrees,
+                                             const std::vector<float_t> &translate_range,
+                                             const std::vector<float_t> &scale_range,
+                                             const std::vector<float_t> &shear_ranges, InterpolationMode interpolation,
+                                             const std::vector<uint8_t> &fill_value)
+    : degrees_(degrees),
+      translate_range_(translate_range),
+      scale_range_(scale_range),
+      shear_ranges_(shear_ranges),
+      interpolation_(interpolation),
+      fill_value_(fill_value) {}
+
+bool RandomAffineOperation::ValidateParams() {
+  // Degrees
+  if (degrees_.size() != 2) {
+    MS_LOG(ERROR) << "RandomAffine: degrees vector has incorrect size: degrees.size() = " << degrees_.size();
+    return false;
+  }
+  if (degrees_[0] > degrees_[1]) {
+    MS_LOG(ERROR) << "RandomAffine: minimum of degrees range is greater than maximum: min = " << degrees_[0]
+                  << ", max = " << degrees_[1];
+    return false;
+  }
+  // Translate
+  if (translate_range_.size() != 2) {
+    MS_LOG(ERROR) << "RandomAffine: translate_range vector has incorrect size: translate_range.size() = "
+                  << translate_range_.size();
+    return false;
+  }
+  if (translate_range_[0] > translate_range_[1]) {
+    MS_LOG(ERROR) << "RandomAffine: minimum of translate range is greater than maximum: min = " << translate_range_[0]
+                  << ", max = " << translate_range_[1];
+    return false;
+  }
+  // Scale
+  if (scale_range_.size() != 2) {
+    MS_LOG(ERROR) << "RandomAffine: scale_range vector has incorrect size: scale_range.size() = "
+                  << scale_range_.size();
+    return false;
+  }
+  if (scale_range_[0] > scale_range_[1]) {
+    MS_LOG(ERROR) << "RandomAffine: minimum of scale range is greater than maximum: min = " << scale_range_[0]
+                  << ", max = " << scale_range_[1];
+    return false;
+  }
+  // Shear
+  if (shear_ranges_.size() != 4) {
+    MS_LOG(ERROR) << "RandomAffine: shear_ranges vector has incorrect size: shear_ranges.size() = "
+                  << shear_ranges_.size();
+    return false;
+  }
+  if (shear_ranges_[0] > shear_ranges_[1]) {
+    MS_LOG(ERROR) << "RandomAffine: minimum of horizontal shear range is greater than maximum: min = "
+                  << shear_ranges_[0] << ", max = " << shear_ranges_[1];
+    return false;
+  }
+  if (shear_ranges_[2] > shear_ranges_[3]) {
+    MS_LOG(ERROR) << "RandomAffine: minimum of vertical shear range is greater than maximum: min = " << shear_ranges_[2]
+                  << ", max = " << scale_range_[3];
+    return false;
+  }
+  // Fill Value
+  if (fill_value_.size() != 3) {
+    MS_LOG(ERROR) << "RandomAffine: fill_value vector has incorrect size: fill_value.size() = " << fill_value_.size();
+    return false;
+  }
+  return true;
+}
+
+std::shared_ptr<TensorOp> RandomAffineOperation::Build() {
+  auto tensor_op = std::make_shared<RandomAffineOp>(degrees_, translate_range_, scale_range_, shear_ranges_,
+                                                    interpolation_, fill_value_);
+  return tensor_op;
+}
+
 // RandomCropOperation
 RandomCropOperation::RandomCropOperation(std::vector<int32_t> size, std::vector<int32_t> padding, bool pad_if_needed,
-                                         std::vector<uint8_t> fill_value)
-    : size_(size), padding_(padding), pad_if_needed_(pad_if_needed), fill_value_(fill_value) {}
+                                         std::vector<uint8_t> fill_value, BorderType padding_mode)
+    : size_(size),
+      padding_(padding),
+      pad_if_needed_(pad_if_needed),
+      fill_value_(fill_value),
+      padding_mode_(padding_mode) {}
 
 bool RandomCropOperation::ValidateParams() {
   if (size_.empty() || size_.size() > 2) {
@@ -443,7 +607,7 @@ std::shared_ptr<TensorOp> RandomCropOperation::Build() {
   }
 
   auto tensor_op = std::make_shared<RandomCropOp>(crop_height, crop_width, pad_top, pad_bottom, pad_left, pad_right,
-                                                  BorderType::kConstant, pad_if_needed_, fill_r, fill_g, fill_b);
+                                                  padding_mode_, pad_if_needed_, fill_r, fill_g, fill_b);
   return tensor_op;
 }
 

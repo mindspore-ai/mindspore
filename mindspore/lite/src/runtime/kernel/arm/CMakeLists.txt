@@ -1,3 +1,5 @@
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/)
+
 file(GLOB KERNEL_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/base/*.cc
         nnacl/*.cc
@@ -7,6 +9,13 @@ file(GLOB KERNEL_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/fp32/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/int8/*.cc
         )
+
+if (SUPPORT_TRAIN)
+file (GLOB TRAIN_KERNEL_SRC
+        ${CMAKE_CURRENT_SOURCE_DIR}/fp32_grad/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/nnacl/fp32_grad/*.cc
+        )
+endif()
 
 if (PLATFORM_ARM64)
     # assembly
@@ -25,5 +34,5 @@ if (PLATFORM_ARM32)
     set(KERNEL_SRC ${KERNEL_SRC} ${ASSEMBLY_SRC})
 endif()
 
-add_library(cpu_kernel_mid_ OBJECT ${KERNEL_SRC})
+add_library(cpu_kernel_mid_ OBJECT ${KERNEL_SRC} ${TRAIN_KERNEL_SRC})
 add_subdirectory(nnacl)

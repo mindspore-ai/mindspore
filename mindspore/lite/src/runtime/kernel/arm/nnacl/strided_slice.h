@@ -16,9 +16,9 @@
 #ifndef MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_STRIDED_SLICE_H_
 #define MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_STRIDED_SLICE_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct StridedSliceParameter {
+typedef struct StridedSliceParameter {
   OpParameter op_parameter_;
   int begins_[8] = {0};
   int ends_[8] = {0};
@@ -27,7 +27,7 @@ struct StridedSliceParameter {
   int num_axes_;
   int in_shape_[8];
   LiteDataType data_type;
-};
+} StridedSliceParameter;
 
 int DoStridedSlice(const void *inputs, void *output, StridedSliceParameter *param);
 #endif  // MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_STRIDED_SLICE_H_

@@ -35,6 +35,10 @@ constexpr int kOutputNum = 1;
 }  // namespace
 
 int FillCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   data_size_ = outputs_.front()->ElementsNum();
   thread_sz_count_ = MSMIN(thread_count_, data_size_);
   thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
@@ -68,12 +72,17 @@ int FillRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int FillCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   auto fillData = inputs_.at(inputs_.size() - 1);
   auto output = outputs_.front();
   auto fill_data = reinterpret_cast<float *>(fillData->Data());
   src_data_ = fill_data[0];
   out_ptr_ = reinterpret_cast<float *>(output->Data());
-  int ret = LiteBackendParallelLaunch(FillRun, this, thread_sz_count_);
+  auto ret = LiteBackendParallelLaunch(FillRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "FillRun error error_code[" << ret << "]";
     return ret;
@@ -84,14 +93,14 @@ int FillCPUKernel::Run() {
 kernel::LiteKernel *CpuFillFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs,
                                              OpParameter *opParameter, const lite::Context *ctx,
-                                             const kernel::KernelKey &desc) {
+                                             const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Create kernel failed, opParameter is nullptr, type: PrimitiveType_Fill. ";
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_Fill);
-  auto *kernel = new (std::nothrow) FillCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) FillCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new FillCPUKernel fail!";
     return nullptr;
@@ -108,4 +117,3 @@ kernel::LiteKernel *CpuFillFp32KernelCreator(const std::vector<lite::tensor::Ten
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Fill, CpuFillFp32KernelCreator)
 }  // namespace mindspore::kernel
-

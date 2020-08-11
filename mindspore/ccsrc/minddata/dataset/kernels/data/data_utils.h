@@ -152,6 +152,17 @@ Status Mask(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
 
 Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::shared_ptr<Tensor> prepend,
                    std::shared_ptr<Tensor> append);
+
+// helper for concat, always append to the input, and pass that to the output
+Status ConcatenateHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int8_t axis,
+                         std::shared_ptr<Tensor> append);
+
+/// Convert an n-dimensional Tensor to a vector of (n-1)-dimensional CVTensors
+/// @param input[in] input tensor
+/// @param output[out] output tensor
+/// @return Status ok/error
+Status BatchTensorToCVTensorVector(const std::shared_ptr<Tensor> &input,
+                                   std::vector<std::shared_ptr<CVTensor>> *output);
 }  // namespace dataset
 }  // namespace mindspore
 

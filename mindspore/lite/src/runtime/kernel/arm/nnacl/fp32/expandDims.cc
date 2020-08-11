@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/expandDims.h"
+#include "nnacl/fp32/expandDims.h"
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/errorcode.h"
 
 int ExpandDims(float *input_ptr, float *output_ptr, size_t data_size) {
   memcpy(output_ptr, input_ptr, data_size);

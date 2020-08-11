@@ -23,13 +23,14 @@ namespace mindspore::kernel {
 class BatchToSpaceInt8CPUKernel : public BatchToSpaceBaseCPUKernel {
  public:
   BatchToSpaceInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                            const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
-      : BatchToSpaceBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+                            const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                            const lite::Primitive *primitive)
+      : BatchToSpaceBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 
   ~BatchToSpaceInt8CPUKernel() = default;
 
   int Init() override;
-  int ReSize() override { return 0; }
+  int ReSize() override;
   int Run() override;
  private:
   QuantArg in_quant_arg_;

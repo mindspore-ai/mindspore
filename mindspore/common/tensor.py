@@ -210,12 +210,12 @@ class Tensor(Tensor_):
 
     @property
     def shape(self):
-        """The shape of tensor."""
+        """The shape of tensor is a tuple."""
         return self._shape
 
     @property
     def dtype(self):
-        """The dtype of tensor."""
+        """The dtype of tensor is a mindspore type."""
         return self._dtype
 
     @property
@@ -248,6 +248,8 @@ class Tensor(Tensor_):
             Tensor, has the same data type as x.
         """
 
+        if axis is None:
+            axis = ()
         return tensor_operator_registry.get('all')(keep_dims)(self, axis)
 
     def any(self, axis=(), keep_dims=False):
@@ -264,6 +266,8 @@ class Tensor(Tensor_):
             Tensor, has the same data type as x.
         """
 
+        if axis is None:
+            axis = ()
         return tensor_operator_registry.get('any')(keep_dims)(self, axis)
 
 

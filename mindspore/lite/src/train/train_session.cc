@@ -15,6 +15,8 @@
  */
 
 #include <algorithm>
+#include "include/context.h"
+#include "mindspore/ccsrc/runtime/device/kernel_info.h"
 #include "mindspore/lite/src/train/train_session.h"
 #include "mindspore/lite/src/kernel_factory.h"
 #include "mindspore/lite/src/param_value_lite.h"
@@ -25,6 +27,7 @@
 #include "abstract/abstract_value.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "src/ir/primitive_value.h"
+#include "src/train/model_impl.h"
 
 namespace mindspore {
 namespace session {
@@ -57,16 +60,32 @@ static schema::Format GetAnfNodeFormat(const AnfNodePtr &anfNodePtr) {
 static TypeId GetAnfNodeOutTypeId(const AnfNodePtr &anfNodePtr) {
   auto nodeAbstract = anfNodePtr->abstract();
   if (nodeAbstract != nullptr) {
-    return nodeAbstract->GetTypeTrack()->type_id();
+    return TypeId::kNumberTypeFloat32;  // XXX TODO nodeAbstract->GetTypeTrack()->generic_type_id();
   } else {
     MS_LOG(WARNING) << "abstract is nullptr, return kTypeUnknown";
     return TypeId::kTypeUnknown;
   }
 }
 
+void TrainSession::Init(lite::Context *context) {
+  MS_EXCEPTION_IF_NULL(context);
+  this->context_ = std::make_shared<lite::Context>(context->thread_num_, context->allocator, context->device_ctx_);
+}
+
+lite::tensor::Tensor *TrainSession::GetTensorForAnfNode(const AnfNodePtr anf_node) {
+  lite::tensor::Tensor *out_tensor = tensors_[anf_node];
+  if (out_tensor == NULL) {
+    out_tensor = new lite::tensor::Tensor(GetAnfNodeOutTypeId(anf_node),
+                                          GetAnfNodeOutDims(anf_node));  //, schema::NodeType_Parameter);
+    tensors_[anf_node] = out_tensor;
+  }
+  return out_tensor;
+}
+
 int TrainSession::BuildKernelInputAndOutputFromFuncGraph(const KernelGraphPtr &kernel_graph) {
   auto return_node = kernel_graph->get_return();
   auto node_list = TopoSort(return_node);
+  auto model_imp = std::dynamic_pointer_cast<lite::train::ModelImpl>(func_graph_);
   for (auto &node : node_list) {
     if (!node->isa<CNode>()) {
       continue;
@@ -75,11 +94,16 @@ int TrainSession::BuildKernelInputAndOutputFromFuncGraph(const KernelGraphPtr &k
     auto cnode = node->cast<CNodePtr>();
     kernel_relation.node_full_name = cnode->fullname_with_scope();
     kernel_relation.cnode = cnode;
-    auto *out_tensor =
-      new tensor::Tensor(GetAnfNodeOutTypeId(cnode), GetAnfNodeOutDims(cnode), GetAnfNodeFormat(cnode),
-                         schema::NodeType_Parameter);
-    kernel_relation.output_tensor.push_back(out_tensor);
-    tensor::Tensor *tensor_ptr = nullptr;
+    std::vector<int> *cnode_io_indices = model_imp->GetCNodeInputOutputIndices(cnode->fullname_with_scope());
+    if (cnode_io_indices == NULL) {
+      MS_LOG(WARNING) << "No IO vectors for " << cnode->fullname_with_scope();
+    } else {
+      for (int i = 0; i < cnode_io_indices[1].size(); i++) {
+        AnfNodePtr anf_node = model_imp->GetAnfNode(cnode_io_indices[1].data()[i]);
+        kernel_relation.output_tensor.push_back(GetTensorForAnfNode(anf_node));
+      }
+    }
+    lite::tensor::Tensor *tensor_ptr = nullptr;
     for (size_t index = 1; index < cnode->inputs().size(); ++index) {
       if (cnode->input(index)->isa<CNode>()) {
         auto input_cnode = cnode->input(index)->cast<CNodePtr>();
@@ -90,17 +114,17 @@ int TrainSession::BuildKernelInputAndOutputFromFuncGraph(const KernelGraphPtr &k
         auto input_parameter = cnode->input(index)->cast<ParameterPtr>();
         auto para = input_parameter->default_param();
         auto param_value = std::dynamic_pointer_cast<ParamValueLite>(para);
-        auto dims = param_value->tensor_shape();
-        tensor_ptr = new tensor::Tensor(param_value->tensor_type(), dims, schema::Format_NHWC,
-                                        schema::NodeType_ValueNode);  // XXX TODO -- extract Format from AnfNode
-        if (param_value->tensor_size() != 0) {
+        // auto dims = param_value->tensor_shape();
+        // tensor_ptr = new lite::tensor::Tensor(param_value->tensor_type(), dims); // schema::NodeType_ValueNode);
+        tensor_ptr = GetTensorForAnfNode(cnode->input(index));
+        if ((param_value != nullptr) && (param_value->tensor_size() != 0)) {
           tensor_ptr->SetData(param_value->tensor_addr());
         }
       } else if (cnode->input(index)->isa<ValueNode>()) {
         auto input_valuenode = cnode->input(index)->cast<ValueNodePtr>();
-        tensor_ptr = new tensor::Tensor(GetAnfNodeOutTypeId(input_valuenode), GetAnfNodeOutDims(input_valuenode),
-                                        schema::Format_NHWC,
-                                        schema::NodeType_Parameter);  // XXX TODO -- extract Format from AnfNode
+        // tensor_ptr = new lite::tensor::Tensor(GetAnfNodeOutTypeId(input_valuenode),
+        // GetAnfNodeOutDims(input_valuenode)); // schema::NodeType_Parameter);
+        tensor_ptr = GetTensorForAnfNode(input_valuenode);
         // todo(yankai)
       } else {
         MS_ASSERT(false);
@@ -111,7 +135,7 @@ int TrainSession::BuildKernelInputAndOutputFromFuncGraph(const KernelGraphPtr &k
   }
   return 0;
 }
-
+#if 0
 GraphId TrainSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
   auto graph_id = graph_sum_;
   auto graph = SessionBasic::ConstructKernelGraph(lst, outputs);
@@ -124,6 +148,17 @@ GraphId TrainSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrLi
 }
 
 GraphId TrainSession::CompileGraph(const char *model_buf, size_t size) { return 0; }
+#else
+GraphId TrainSession::graph_sum_ = 0;
+
+KernelGraphPtr TrainSession::NewKernelGraph() {
+  auto graph = std::make_shared<KernelGraph>();
+  graph->set_graph_id(graph_sum_);
+  graphs_[graph_sum_++] = graph;
+  return graph;
+}
+
+#endif
 
 std::shared_ptr<KernelGraph> TrainSession::ConstructKernelGraph(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -141,14 +176,14 @@ std::shared_ptr<KernelGraph> TrainSession::ConstructKernelGraph(const FuncGraphP
   graph->set_execution_order(cnode_order);
   return graph;
 }
-
 GraphId TrainSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   auto graph = ConstructKernelGraph(func_graph);
+  func_graph_ = func_graph;
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Set kernel info";
   SetKernelInfo(graph.get());
 
-  (void) BuildKernelInputAndOutputFromFuncGraph(graph);
+  (void)BuildKernelInputAndOutputFromFuncGraph(graph);
   MS_LOG(INFO) << "Build kernel";
   auto ret = BuildKernel(graph.get());
   if (0 != ret) {
@@ -162,18 +197,18 @@ GraphId TrainSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   return graph_id;
 }
 
-void TrainSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Tensor *> &inputs,
-                            std::vector<tensor::Tensor *> &outputs) {
+void TrainSession::RunGraph(const GraphId &graph_id, const std::vector<lite::tensor::Tensor *> &inputs,
+                            std::vector<lite::tensor::Tensor *> *outputs) {
   auto &kernel_graph = graphs_[graph_id];
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_LOG(INFO) << "Bind input output address";
-  runtime_.BindInputOutput(kernel_graph.get(), inputs, outputs);
+  // runtime_.BindInputOutput(kernel_graph.get(), inputs, outputs); -- will be bound in Run
   //  auto execution_order = kernel_graph->execution_order();
   // Todo : hangangqiang
   //  Reorder(&execution_order);
   //  kernel_graph->set_execution_order(execution_order);
   MS_LOG(INFO) << "Run graph start";
-  auto ret = runtime_.Run(kernel_graph.get(), (std::vector<tensor::Tensor *> &) inputs, outputs);
+  auto ret = runtime_.Run(kernel_graph.get(), (std::vector<lite::tensor::Tensor *> &)inputs, outputs);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Run graph failed";
   }
@@ -199,34 +234,34 @@ int TrainSession::BuildKernel(const KernelGraph *kernel_graph) {
     if (IsPrimitiveCNode(anf_register.cnode, prim::kPrimReturn)) {
       continue;
     }
-    lite::Context context;
-    context.deviceCtx.type = lite::DeviceType::DT_CPU;
     auto value_node_prim = anf_register.cnode->input(0);
     MS_EXCEPTION_IF_NULL(value_node_prim);
     auto prim = GetValueNode<std::shared_ptr<lite::PrimitiveValue>>(value_node_prim);
     MS_EXCEPTION_IF_NULL(prim);
-    auto node_primitive = (lite::Primitive *) (prim->GetPrimitive());
+    auto node_primitive = (lite::Primitive *)(prim->GetPrimitive());
     MS_EXCEPTION_IF_NULL(node_primitive);
     auto ret = node_primitive->InferShape(anf_register.input_tensor, anf_register.output_tensor);
     if (0 != ret) {
       MS_LOG(ERROR) << "InferShape failed, node : " << kernel_name;
       return ret;
     }
-    kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, node_primitive->Type()};
+    kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, node_primitive->Type()};
 
     auto *kernel = lite::KernelFactory::GetInstance()->GetKernel(anf_register.input_tensor, anf_register.output_tensor,
-                                                                 node_primitive, &context, desc);
+                                                                 node_primitive, context_.get(), desc);
     if (nullptr == kernel) {
       MS_LOG(ERROR) << "Create kernel return nullptr, name: " << kernel_name;
       return -1;
     }
-    kernel->train();
-    auto *kernel_info = anf_register.cnode->kernel_info();
     std::shared_ptr<kernel::LiteKernel> kernel_mod(kernel);
-    kernel_info->set_kernel_mod(kernel_mod);
+    kernel_mod->set_name(anf_register.cnode->fullname_with_scope());
+
+    // kernel->train();
+    auto kernel_info = dynamic_cast<device::KernelInfo *>(anf_register.cnode->kernel_info());
+    MS_EXCEPTION_IF_NULL(kernel_info);
+    kernel_info->set_kernel_mod(kernel_mod);  // XXX TODO -- only derived class KernelInfo has this method
   }
   return 0;
 }
 }  // namespace session
 }  // namespace mindspore
-

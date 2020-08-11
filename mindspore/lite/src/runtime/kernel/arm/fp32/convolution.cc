@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/convolution.h"
+#include "src/runtime/kernel/arm/fp32/convolution_slidewindow.h"
 #include "src/runtime/kernel/arm/fp32/convolution_1x1.h"
 #include "src/runtime/kernel/arm/fp32/convolution_3x3.h"
 #include "src/runtime/kernel/arm/fp32/convolution_winograd.h"
@@ -28,6 +29,7 @@
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_INFER_INVALID;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Conv2D;
 
@@ -136,6 +138,10 @@ void ConvolutionCPUKernel::ConfigInputOutput() {
 }
 
 int ConvolutionCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
@@ -204,6 +210,11 @@ int ConvolutionImpl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int ConvolutionCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   auto input_tensor = inputs_.at(kInputIndex);
   auto ori_input_data = input_tensor->Data();
   int in_batch = conv_param_->input_batch_;
@@ -220,36 +231,23 @@ int ConvolutionCPUKernel::Run() {
   return RET_OK;
 }
 
-void CheckIfUseWinograd(bool *use_winograd, int *output_unit, ConvParameter *conv_param,
-                        InputTransformUnitFunc input_trans_func, OutputTransformUnitFunc output_trans_func) {
-  if (conv_param->kernel_w_ == conv_param->kernel_h_ && conv_param->dilation_h_ == 1 && conv_param->dilation_w_ == 1 &&
-      conv_param->stride_h_ == 1 && conv_param->stride_w_ == 1) {
-    *output_unit = SelectOutputUnit(conv_param);
-    if (*output_unit > 1) {
-      *use_winograd = true;
-      int input_unit = conv_param->kernel_h_ + *output_unit - 1;
-      input_trans_func = GetInputTransFunc(input_unit);
-      if (input_trans_func == nullptr) {
-        MS_LOG(INFO) << "No matching input trans func. Turn back to common conv.";
-        *use_winograd = false;
-      }
-      output_trans_func = GetOutputTransFunc(input_unit, *output_unit);
-      if (output_trans_func == nullptr) {
-        MS_LOG(INFO) << "No matching output trans func. Turn back to common conv.";
-        *use_winograd = false;
-      }
-    } else {
-      *use_winograd = false;
-    }
-  } else {
-    *use_winograd = false;
+bool CheckIfUseSlideWindow(ConvParameter *conv_param) {
+  int in_channel = conv_param->input_channel_;
+  int out_h = conv_param->output_h_;
+  int out_w = conv_param->output_w_;
+  int out_channel = conv_param->output_channel_;
+  int ic4 = UP_DIV(in_channel, C4NUM);
+  int oc4 = UP_DIV(out_channel, C4NUM);
+  if (out_h * out_w <= 32 || ic4 < 4 || oc4 < 4) {
+    return true;
   }
+  return false;
 }
 
 kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs,
                                              OpParameter *opParameter, const Context *ctx,
-                                             const kernel::KernelKey &desc) {
+                                             const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D);
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
@@ -268,22 +266,27 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Ten
   InputTransformUnitFunc input_trans_func = nullptr;
   OutputTransformUnitFunc output_trans_func = nullptr;
   CheckIfUseWinograd(&use_winograd, &out_unit, conv_param, input_trans_func, output_trans_func);
+  bool use_sw = CheckIfUseSlideWindow(conv_param);
+
   kernel::LiteKernel *kernel;
   if (kernel_h == 1 && kernel_w == 1) {
-    kernel = new (std::nothrow) kernel::Convolution1x1CPUKernel(opParameter, inputs, outputs, ctx);
+    kernel = new (std::nothrow) kernel::Convolution1x1CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   } else if (kernel_h == 3 && kernel_w == 3 && stride_h == 1 && stride_w == 1 && dilation_h == 1 && dilation_w == 1) {
-    kernel = new (std::nothrow) kernel::Convolution3x3CPUKernel(opParameter, inputs, outputs, ctx);
+    kernel = new (std::nothrow) kernel::Convolution3x3CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   } else if (use_winograd) {
-    kernel = new (std::nothrow) kernel::ConvolutionWinogradCPUKernel(opParameter, inputs, outputs, ctx, out_unit);
+    kernel =
+      new (std::nothrow) kernel::ConvolutionWinogradCPUKernel(opParameter, inputs, outputs, ctx, primitive, out_unit);
+  } else if (use_sw) {
+    kernel = new (std::nothrow) kernel::ConvolutionSWCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   } else {
-    kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(opParameter, inputs, outputs, ctx);
+    kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   }
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (ret != RET_OK) {
+  if (ret != RET_OK && ret != RET_INFER_INVALID) {
     delete kernel;
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));

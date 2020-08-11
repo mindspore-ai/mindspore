@@ -41,7 +41,12 @@ int PowerImpl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int PowerCPUKernel::Run() {
-  int ret = LiteBackendParallelLaunch(PowerImpl, this, thread_count_);
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
+  auto ret = LiteBackendParallelLaunch(PowerImpl, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PowerCPUKernel error: " << ret;
     return RET_ERROR;
@@ -51,15 +56,19 @@ int PowerCPUKernel::Run() {
 
 int PowerCPUKernel::RunImpl(int task_id) {
   auto x_addr = reinterpret_cast<float *>(inputs_[0]->Data());
-  auto exp_addr = reinterpret_cast<float *>(inputs_[1]->Data());
   auto output_addr = reinterpret_cast<float *>(outputs_[0]->Data());
   auto size = inputs_[0]->ElementsNum();
   int stride = UP_DIV(size, thread_count_);
   int len = MSMIN(stride, size - stride * task_id);
-  bool broadcast = (inputs_[1]->ElementsNum() == 1) ? true : false;
+  float *exp_addr = nullptr;
+  bool broadcast = true;
+  if (inputs_.size() == 2) {
+    exp_addr = reinterpret_cast<float *>(inputs_[1]->Data());
+    broadcast = false;
+  }
   float *cur_exp;
   if (broadcast) {
-    cur_exp = exp_addr;
+    cur_exp = &power_;
   } else {
     cur_exp = exp_addr + stride * task_id;
   }
@@ -70,11 +79,11 @@ int PowerCPUKernel::RunImpl(int task_id) {
 kernel::LiteKernel *CpuPowerFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                               const std::vector<lite::tensor::Tensor *> &outputs,
                                               OpParameter *opParameter, const lite::Context *ctx,
-                                              const kernel::KernelKey &desc) {
+                                              const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Power);
-  auto *kernel =
-    new (std::nothrow) PowerCPUKernel(opParameter, inputs, outputs, ctx);
+  PowerCPUKernel *kernel =
+    new (std::nothrow) PowerCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PowerCPUKernel fail!";
     return nullptr;

@@ -26,21 +26,30 @@ STATUS TfliteSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
                                   const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                   schema::CNodeT *op,
                                   TensorCache *tensor_cache, bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse TfliteSliceParser";
   std::unique_ptr<schema::SliceT> attr(new schema::SliceT());
 
   if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->begin)) {
+    MS_LOG(ERROR) << "get slice -> begin failed";
     return RET_ERROR;
   }
   if (GetTfliteData(tfliteOp->inputs[2], tfliteTensors, tfliteModelBuffer, attr->size)) {
+    MS_LOG(ERROR) << "get slice -> size failed";
     return RET_ERROR;
   }
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Slice;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_Slice;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

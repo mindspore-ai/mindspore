@@ -109,7 +109,7 @@ TEST_F(InferTest, TestConvNode) {
   context->thread_num_ = 4;
   auto session = session::LiteSession::CreateSession(context);
   ASSERT_NE(nullptr, session);
-  auto ret = session->CompileGraph(model.get());
+  auto ret = session->CompileGraph(model);
   ASSERT_EQ(lite::RET_OK, ret);
   auto inputs = session->GetInputs();
   ASSERT_EQ(inputs.size(), 1);
@@ -130,7 +130,8 @@ TEST_F(InferTest, TestConvNode) {
   ASSERT_EQ(lite::RET_OK, ret);
   auto outputs = session->GetOutputs();
   ASSERT_EQ(outputs.size(), 1);
-  auto outTensor = outputs.front();
+  ASSERT_EQ(outputs.begin()->second.size(), 1);
+  auto outTensor = outputs.begin()->second.front();
   ASSERT_NE(nullptr, outTensor);
   ASSERT_EQ(28 * 28 * 32, outTensor->ElementsNum());
   ASSERT_EQ(TypeId::kNumberTypeFloat32, outTensor->data_type());
@@ -206,7 +207,7 @@ TEST_F(InferTest, TestAddNode) {
   context->thread_num_ = 4;
   auto session = session::LiteSession::CreateSession(context);
   ASSERT_NE(nullptr, session);
-  auto ret = session->CompileGraph(model.get());
+  auto ret = session->CompileGraph(model);
   ASSERT_EQ(lite::RET_OK, ret);
   auto inputs = session->GetInputs();
   ASSERT_EQ(inputs.size(), 2);
@@ -220,7 +221,8 @@ TEST_F(InferTest, TestAddNode) {
   ASSERT_EQ(lite::RET_OK, ret);
   auto outputs = session->GetOutputs();
   ASSERT_EQ(outputs.size(), 1);
-  auto outTensor = outputs.front();
+  ASSERT_EQ(outputs.begin()->second.size(), 1);
+  auto outTensor = outputs.begin()->second.front();
   ASSERT_NE(nullptr, outTensor);
   ASSERT_EQ(28 * 28 * 3, outTensor->ElementsNum());
   ASSERT_EQ(TypeId::kNumberTypeFloat32, outTensor->data_type());
@@ -257,7 +259,7 @@ TEST_F(InferTest, TestModel) {
   context->thread_num_ = 4;
   auto session = session::LiteSession::CreateSession(context);
   ASSERT_NE(nullptr, session);
-  auto ret = session->CompileGraph(model.get());
+  auto ret = session->CompileGraph(model);
   ASSERT_EQ(lite::RET_OK, ret);
   auto inputs = session->GetInputs();
   ASSERT_EQ(inputs.size(), 1);

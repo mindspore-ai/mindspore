@@ -20,7 +20,7 @@
 namespace mindspore {
 namespace lite {
 void CaffeConvolutionParser::ParseGroupConvolution(schema::CNodeT *op, schema::Conv2DT *attr) {
-  if (attr == nullptr || attr->group == 1 || attr->group != attr->channelOut) {
+  if (attr == nullptr || attr->group == 1) {
     return;
   }
   std::unique_ptr<schema::DepthwiseConv2DT> depthwiseConv2DParam(new schema::DepthwiseConv2DT());

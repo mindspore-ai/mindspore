@@ -20,8 +20,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/conv_parameter.h"
+#include "nnacl/op_base.h"
+#include "nnacl/conv_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,8 +29,8 @@ extern "C" {
 
 int8_t MinInt8(int8_t a, int8_t b);
 int8_t MaxInt8(int8_t a, int8_t b);
-void ReluFp32(float *data, int ele_num);
-void Relu6Fp32(float *data, int ele_num);
+void ReluFp32(float *data, float *dst, int ele_num);
+void Relu6Fp32(float *data, float *dst, int ele_num);
 void PostFuncInt8(const int *in, const int *bias, int8_t *out, int oc, int plane, int plane8, int32_t multiplier,
                   int32_t left_shift, int32_t right_shift, int32_t zp, int8_t mini, int8_t maxi);
 void SimplePostFuncInt8(const int *in, int8_t *out, int oc, int plane, int plane8, int32_t multiplier,

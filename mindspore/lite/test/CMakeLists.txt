@@ -1,5 +1,7 @@
+set(TOP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 set(TEST_DIR ${TOP_DIR}/mindspore/lite/test)
 set(LITE_DIR ${TOP_DIR}/mindspore/lite)
+set(CCSRC_DIR ${TOP_DIR}/mindspore/ccsrc)
 include_directories(${TOP_DIR})
 include_directories(${TEST_DIR})
 include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/dependency_gtest.cmake)
@@ -7,11 +9,12 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/dependency_gtest.cmake)
 ### anf src
 set(ANF_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/meta_tensor.cc
-        ${CCSRC_DIR}/gvar/logging_level.cc
-        ${CCSRC_DIR}/gvar/typeid_manager.cc
+        ${CORE_DIR}/gvar/logging_level.cc
+        ${CORE_DIR}/gvar/typeid_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../core/base/base.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/log_adapter.cc
         )
+
 if(BUILD_CONVERTER)
     set(ANF_SRC
             ${ANF_SRC}
@@ -84,6 +87,16 @@ file(GLOB KERNEL_OP_SRC
         ${LITE_DIR}/src/runtime/kernel/arm/nnacl/int8/*.cc
         ${LITE_DIR}/src/runtime/kernel/arm/nnacl/quantization/*.cc
         )
+
+file(GLOB KERNEL_OP_TRAIN_SRC
+        ${LITE_DIR}/src/runtime/kernel/arm/nnacl/fp32_grad/*.cc 
+        ${LITE_DIR}/src/runtime/kernel/arm/fp32_grad/*.cc
+)
+
+if (SUPPORT_TRAIN)
+        list(APPEND KERNEL_OP_SRC ${KERNEL_OP_TRAIN_SRC})
+endif()
+
 if (PLATFORM_ARM64)
     # assembly
     file(GLOB TEST_ASSEMBLY_SRC ${LITE_DIR}/src/runtime/kernel/arm/nnacl/assembly/arm64/*.s
@@ -242,12 +255,13 @@ if (SUPPORT_TRAIN)
             #            ${SRC_DIR}/device/kernel_info.cc
             #            ${SRC_DIR}/device/kernel_runtime.cc
             #            ${SRC_DIR}/device/lite/kernel_runtime_extends.cc
-            ${LITE_DIR}/src/common/anf_importer/anf_importer.cc
-            ${LITE_DIR}/src/common/anf_importer/import_from_meta_graph.cc
-            ${LITE_DIR}/src/ir/primitive_value.cc
-            ${LITE_DIR}/src/train/lite_kernel_runtime.cc
-            ${LITE_DIR}/src/train/train_session.cc
-            ${LITE_DIR}/src/train/model_impl.cc
+    #        ${LITE_DIR}/src/common/anf_importer/anf_importer.cc
+    #       ${LITE_DIR}/src/common/anf_importer/import_from_meta_graph.cc
+    #       ${LITE_DIR}/src/ir/primitive_value.cc
+    #       ${LITE_DIR}/src/train/lite_kernel_runtime.cc
+    #       ${LITE_DIR}/src/train/train_session.cc
+    #       ${LITE_DIR}/src/train/model_impl.cc
+            ${LITE_DIR}/src/lite_session.cc  # temporary
             )
 else()
     set(TEST_LITE_SRC
@@ -260,6 +274,10 @@ file(GLOB_RECURSE TEST_CASE_KERNEL_SRC
     ${TEST_DIR}/ut/src/runtime/kernel/arm/common/*.cc
     ${TEST_DIR}/ut/src/runtime/kernel/arm/fp32/*.cc
     ${TEST_DIR}/ut/src/runtime/kernel/arm/int8/*.cc
+)
+
+file(GLOB_RECURSE TEST_CASE_KERNEL_TRAIN_SRC
+    ${TEST_DIR}/ut/src/runtime/kernel/arm/fp32_grad/*.cc
 )
 
 set(TEST_SRC
@@ -275,7 +293,9 @@ set(TEST_SRC
 if (SUPPORT_TRAIN)
     set(TEST_SRC
             ${TEST_SRC}
-            ${TEST_DIR}/ut/src/train_test.cc
+            ${TEST_CASE_KERNEL_TRAIN_SRC}
+  #         ${TEST_DIR}/ut/src/train_test.cc
+            ${TEST_DIR}/ut/src/infer_test.cc  # temporary
             )
 else()
     set(TEST_SRC
@@ -297,6 +317,7 @@ if (SUPPORT_GPU)
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/utils_tests.cc
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/conv2d_transpose_tests.cc
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/transpose_tests.cc
+            ${TEST_DIR}/ut/src/runtime/kernel/opencl/convolution_tests.cc
             )
 endif()
 

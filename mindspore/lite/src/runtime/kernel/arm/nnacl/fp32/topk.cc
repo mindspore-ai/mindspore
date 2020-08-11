@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/topk.h"
+#include "nnacl/fp32/topk.h"
 
 int DescendCmp(const void *a, const void *b) {
   return ((const TopkNode *)b)->element - ((const TopkNode *)a)->element;

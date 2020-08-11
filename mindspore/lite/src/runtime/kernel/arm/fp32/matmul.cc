@@ -33,16 +33,20 @@ MatmulCPUKernel::~MatmulCPUKernel() {
 int MatmulCPUKernel::ReSize() { return RET_OK; }
 
 int MatmulCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   int batch = 1;
-  auto x_shape = inputs_[0]->shape();
-  auto o_shape = outputs_[0]->shape();
-  for (int i = 0; i < x_shape.size() - 2; ++i) {
-    batch *= x_shape[i];
+  auto a_shape = inputs_[0]->shape();
+  auto c_shape = outputs_[0]->shape();
+  for (int i = 0; i < a_shape.size() - 2; ++i) {
+    batch *= a_shape[i];
   }
   params_->batch = batch;
-  params_->row_ = o_shape[o_shape.size() - 2];
-  params_->col_ = o_shape[o_shape.size() - 1];
-  params_->deep_ = params_->a_transpose_ ? x_shape[x_shape.size() - 2] : x_shape[x_shape.size() - 1];
+  params_->row_ = c_shape[c_shape.size() - 2];
+  params_->col_ = c_shape[c_shape.size() - 1];
+  params_->deep_ = params_->a_transpose_ ? a_shape[a_shape.size() - 2] : a_shape[a_shape.size() - 1];
   params_->row_8_ = UP_ROUND(params_->row_, 8);
   params_->col_8_ = UP_ROUND(params_->col_, 8);
   thread_count_ = MSMIN(thread_count_, UP_DIV(params_->col_8_, 8));
@@ -88,6 +92,11 @@ int MatmulFloatRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int MatmulCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
   auto a_ptr = reinterpret_cast<float *>(inputs_[0]->Data());
   auto b_ptr = reinterpret_cast<float *>(inputs_[1]->Data());
   auto c_ptr = reinterpret_cast<float *>(outputs_[0]->Data());
@@ -109,7 +118,7 @@ int MatmulCPUKernel::Run() {
       RowMajor2Row8Major(cur_b_ptr, b_r8_ptr_, params_->deep_, params_->col_);
     }
     LiteBackendParallelLaunch(MatmulFloatRun, this, thread_count_);
-    Row8x8Major2RowMajor(c_r8x8_ptr_, cur_c_ptr, params_->row_, params_->col_);
+    Row8x8Major2RowMajor(c_r8x8_ptr_, cur_c_ptr, params_->row_, params_->col_, params_->col_);
   }
   return RET_OK;
 }

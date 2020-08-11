@@ -17,7 +17,9 @@
 #include "tools/converter/parser/tflite/tflite_util.h"
 #include <map>
 #include <string>
+#include <vector>
 #include "utils/log_adapter.h"
+#include "include/errorcode.h"
 
 namespace mindspore {
 namespace lite {
@@ -25,6 +27,7 @@ std::map<tflite::ActivationFunctionType, schema::ActivationType> tfMsActivationF
   {tflite::ActivationFunctionType_NONE, schema::ActivationType_NO_ACTIVATION},
   {tflite::ActivationFunctionType_RELU, schema::ActivationType_RELU},
   {tflite::ActivationFunctionType_RELU6, schema::ActivationType_RELU6},
+  {tflite::ActivationFunctionType_TANH, schema::ActivationType_TANH},
 };
 
 schema::ActivationType GetActivationFunctionType(tflite::ActivationFunctionType tfliteAFType) {
@@ -64,7 +67,7 @@ std::map<tflite::BuiltinOperator, std::string> tfMsOpTypeMap{
   {tflite::BuiltinOperator_POW, "Pow"},
   {tflite::BuiltinOperator_ARG_MIN, "Argmin"},
   {tflite::BuiltinOperator_CEIL, "Ceil"},
-  {tflite::BuiltinOperator_EXPAND_DIMS, "ExpandDims"},
+  // {tflite::BuiltinOperator_EXPAND_DIMS, "ExpandDims"},
   {tflite::BuiltinOperator_FILL, "Fill"},
   {tflite::BuiltinOperator_DIV, "Div"},
   {tflite::BuiltinOperator_FLOOR, "flOOR"},
@@ -136,9 +139,12 @@ std::string GetMSOpType(tflite::BuiltinOperator tfliteOpType) {
 }
 
 std::map<int, TypeId> type_map = {
-  {tflite::TensorType_FLOAT32, TypeId::kNumberTypeFloat32}, {tflite::TensorType_FLOAT16, TypeId::kNumberTypeFloat16},
-  {tflite::TensorType_INT32, TypeId::kNumberTypeInt32},     {tflite::TensorType_UINT8, TypeId::kNumberTypeUInt8},
+  {tflite::TensorType_FLOAT32, TypeId::kNumberTypeFloat32},
+  {tflite::TensorType_FLOAT16, TypeId::kNumberTypeFloat16},
+  {tflite::TensorType_INT32, TypeId::kNumberTypeInt32},
+  {tflite::TensorType_UINT8, TypeId::kNumberTypeUInt8},
   {tflite::TensorType_INT16, TypeId::kNumberTypeInt16},
+  {tflite::TensorType_INT8, TypeId::kNumberTypeInt8},
 };
 
 TypeId GetTfliteDataType(const tflite::TensorType &tflite_data_type) {
@@ -175,7 +181,21 @@ size_t GetDataTypeSize(const TypeId &data_type) {
       return sizeof(uint32_t);
     default:
       MS_LOG(ERROR) << "unsupport datatype";
+      return RET_ERROR;
   }
 }
+
+void Split(const std::string &src_str, std::vector<std::string> *dst_str, const std::string &chr) {
+  std::string ::size_type p1 = 0, p2 = src_str.find(chr);
+  while (std::string::npos != p2) {
+    dst_str->push_back(src_str.substr(p1, p2 - p1));
+    p1 = p2 + chr.size();
+    p2 = src_str.find(chr, p1);
+  }
+  if (p1 != src_str.length()) {
+    dst_str->push_back(src_str.substr(p1));
+  }
+}
+
 }  // namespace lite
 }  // namespace mindspore

@@ -33,8 +33,9 @@ using mindspore::schema::RoundMode;
 class PoolingCPUKernel : public PoolingBaseCPUKernel {
  public:
   PoolingCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                   const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-    : PoolingBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+                   const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                   const lite::Primitive *primitive)
+      : PoolingBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~PoolingCPUKernel() override = default;
 
   int Init() override;
@@ -47,4 +48,3 @@ class PoolingCPUKernel : public PoolingBaseCPUKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_POOLING_H_
-

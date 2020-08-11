@@ -29,14 +29,15 @@ namespace mindspore::kernel {
 class SplitInt8CPUKernel : public SplitBaseCPUKernel {
  public:
   SplitInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                     const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx)
-      : SplitBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+                     const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                     const lite::Primitive *primitive)
+      : SplitBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~SplitInt8CPUKernel() = default;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int Split(int tId);
+  int Split(int task_id);
 
  private:
   int8_t *input_ptr_;

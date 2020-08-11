@@ -33,7 +33,7 @@ from ..common.tensor import Tensor
 
 class Cell:
     """
-    Base class for all neural network.
+    Base class for all neural networks.
 
     A 'Cell' could be a single neural network cell, such as conv2d, relu, batch_norm, etc. or a composition of
     cells to constructing a network.
@@ -42,8 +42,8 @@ class Cell:
         In general, the autograd algorithm will automatically generate the implementation of the gradient function,
         but if bprop method is implemented, the gradient function
         will be replaced by the bprop. The bprop implementation will receive a Tensor `dout` containing the gradient
-        of the loss w.r.t. the output, and a Tensor `out` containing the forward result. The bprop need to compute the
-        gradient of the loss w.r.t. the inputs, gradient of the loss w.r.t. Parameter variables is not supported
+        of the loss w.r.t. the output, and a Tensor `out` containing the forward result. The bprop needs to compute the
+        gradient of the loss w.r.t. the inputs, gradient of the loss w.r.t. Parameter variables are not supported
         currently.
 
     Args:
@@ -138,7 +138,7 @@ class Cell:
         """
         Update the all child cells' self.param_prefix.
 
-        After invoked, can get all the cell's children's name prefix by '_param_prefix'.
+        After being invoked, it can get all the cell's children's name prefix by '_param_prefix'.
         """
         cells_name = self.cells_and_names()
 
@@ -147,9 +147,9 @@ class Cell:
 
     def update_cell_type(self, cell_type):
         """
-        Update current cell type mainly identify if quantization aware training network.
+        Update the current cell type mainly identify if quantization aware training network.
 
-        After invoked, can set the cell type to 'cell_type'.
+        After being invoked, it can set the cell type to 'cell_type'.
         """
         self.cell_type = cell_type
 
@@ -346,7 +346,7 @@ class Cell:
         Please refer to the usage in source code of `mindspore.common._Executor.compile`.
 
         Args:
-            params (dict): The parameters dictionary used for init data graph.
+            params (dict): The parameters dictionary used for initializing the data graph.
         """
         if params is None:
             params = self.parameters_dict()
@@ -499,7 +499,7 @@ class Cell:
         """
         Adds a child cell to the current cell.
 
-        Inserts a subcell with given name to current cell.
+        Inserts a subcell with a given name to the current cell.
 
         Args:
             child_name (str): Name of the child cell.
@@ -534,7 +534,7 @@ class Cell:
 
     def init_parameters_data(self, auto_parallel_mode=False):
         """
-        Init all parameters' data and replace the original saved parameters in cell.
+        Initialize all parameters and replace the original saved parameters in cell.
 
         Notes:
             trainable_params() and other similar interfaces may return different parameter instance after
@@ -655,7 +655,7 @@ class Cell:
         Yields parameters of this cell. If `expand` is True, yield parameters of this cell and all subcells.
 
         Args:
-            expand (bool): If True, yields parameters of this cell and all subcells. Otherwise, yields only parameters
+            expand (bool): If True, yields parameters of this cell and all subcells. Otherwise, only yield parameters
                            that are direct members of this cell. Default: True.
 
         Examples:
@@ -682,7 +682,7 @@ class Cell:
 
         Args:
             name_prefix (str): Namespace. Default: ''.
-            expand (bool): If True, yields parameters of this cell and all subcells. Otherwise, yields only parameters
+            expand (bool): If True, yields parameters of this cell and all subcells. Otherwise, only yield parameters
                            that are direct members of this cell. Default: True.
 
         Examples:
@@ -772,7 +772,7 @@ class Cell:
         return self._scope
 
     def generate_scope(self):
-        """Generate the scope for every cell object in the network."""
+        """Generate the scope for each cell object in the network."""
         for name, cell in self._children_scope_recursive():
             cell._set_scope(name)
 
@@ -819,14 +819,14 @@ class Cell:
         `mindspore.train.amp.build_train_network`.
 
         Note:
-            Call multiple times will overwrite the previous.
+            Multiple calls will overwrite.
 
         Args:
             dst_type (:class:`mindspore.dtype`): Transfer Cell to Run with dst_type.
                 dst_type can be `mindspore.dtype.float16` or `mindspore.dtype.float32`.
 
         Raises:
-            ValueError: If dst_type is not float32 or float16.
+            ValueError: If dst_type is not float32 nor float16.
         """
         if dst_type not in (mstype.float16, mstype.float32):
             raise ValueError("dst_type should inside float32 or float16.")
@@ -871,8 +871,8 @@ class Cell:
         Set the cell to auto parallel mode.
 
         Note:
-            If a cell needs to use auto parallel or semi auto parallel mode for training, evaluation or prediction,
-            this interface needs to be called for the cell.
+            If a cell needs to use the auto parallel or semi auto parallel mode for training, evaluation or prediction,
+            this interface needs to be called by the cell.
         """
         self._auto_parallel_mode = True
         self.add_flags(auto_parallel=True)
@@ -890,9 +890,9 @@ class Cell:
         Set the cell backward hook function. Note that this function is only supported in Pynative Mode.
 
         Note:
-            fn should be defined as following code shows, `cell_name` is the name of registered cell,
-            `grad_input` is gradient passed to the cell, `grad_output` is the gradient computed and pass to
-            next cell or primitve, which may be modified and return.
+            fn should be defined as the following code. `cell_name` is the name of registered cell.
+            `grad_input` is gradient passed to the cell. `grad_output` is the gradient computed and passed to the
+            next cell or primitve, which may be modified and returned.
             >>> hook_fn(cell_name, grad_input, grad_output) -> Tensor or None
 
         Args:
@@ -907,7 +907,7 @@ class Cell:
         Set whether the trainable parameter is updated by parameter server.
 
         Note:
-            This only works when running task in parameter server mode.
+            It only works when a running task is in the parameter server mode.
 
         Args:
             recurse (bool): Whether sets the trainable parameters of subcells. Default: True.

@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/batchnorm.h"
+#include "nnacl/fp32/batchnorm.h"
+#include <math.h>
 
-void BatchNorm(const float *input_ptr, const float *mean_ptr, const float *variance_ptr, int units, int channel,
-               float epsilon, float *output_ptr) {
-  for (int u = 0; u < units; u++) {
-    for (int c = 0; c < channel; c++) {
-      auto variance_sqrt = sqrt(variance_ptr[c] + epsilon);
-      output_ptr[u * channel + c] = (input_ptr[u * channel + c] - mean_ptr[c]) / variance_sqrt;
+void BatchNorm(float *output_ptr, const float *input_ptr, const float *mean_ptr, const float *variance_ptr, int task_id,
+               BatchNormParameter *param) {
+  for (int u = task_id; u < param->unit_; u += param->op_parameter_.thread_num_) {
+    for (int c = 0; c < param->channel_; c++) {
+      auto variance_sqrt = sqrt(variance_ptr[c] + param->epsilon_);
+      output_ptr[u * param->channel_ + c] = (input_ptr[u * param->channel_ + c] - mean_ptr[c]) / variance_sqrt;
     }
   }
 }

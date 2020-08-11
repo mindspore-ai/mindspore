@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/int8/reshape_int8.h"
+#include <limits>
 #include "src/runtime/kernel/arm/nnacl/int8/reshape_int8.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
@@ -26,49 +27,62 @@ using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 
 int ReshapeInt8CPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   ReshapeBaseCPUKernel::Init();
   auto *input_tensor = inputs_.at(kInputIndex);
   auto in_quant_args = input_tensor->GetQuantParams();
-  in_quant_arg_.scale_ = in_quant_args.front().scale;
-  in_quant_arg_.zp_ = in_quant_args.front().zeroPoint;
+  reshape_param_->quant_para_.in_args_.scale_ = in_quant_args.front().scale;
+  reshape_param_->quant_para_.in_args_.zp_ = in_quant_args.front().zeroPoint;
 
   auto *out_tensor = outputs_.at(kOutputIndex);
   auto out_quant_args = out_tensor->GetQuantParams();
-  out_quant_arg_.scale_ = out_quant_args.front().scale;
-  out_quant_arg_.zp_ = out_quant_args.front().zeroPoint;
+  reshape_param_->quant_para_.out_args_.scale_ = out_quant_args.front().scale;
+  reshape_param_->quant_para_.out_args_.zp_ = out_quant_args.front().zeroPoint;
+
+  reshape_param_->quant_para_.output_activation_min_ = std::numeric_limits<int8_t>::min();
+  reshape_param_->quant_para_.output_activation_max_ = std::numeric_limits<int8_t>::max();
+
   return RET_OK;
 }
 
 int ReshapeInt8CPUKernel::ReSize() { return 0; }
 
 int ReshapeInt8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return ret;
+  }
   MS_ASSERT(inputs_.size() == 1);
   MS_ASSERT(outputs_.size() == 1);
-  auto input_type = inputs_[kInputIndex]->data_type();
-  auto input_num = inputs_[kInputIndex]->ElementsNum();
-  auto output_num = outputs_.at(kOutputIndex)->ElementsNum();
-  MS_ASSERT(input_num == output_num);
-  int8_t *input_ptr = reinterpret_cast<int8_t *>(inputs_.at(kInputIndex)->Data());
-  int8_t *output_ptr = reinterpret_cast<int8_t *>(outputs_.at(kOutputIndex)->Data());
-  if (input_type == kNumberTypeUInt8) {
-    auto *input_tmp = reinterpret_cast<uint8_t *>(inputs_.at(kInputIndex)->Data());
-    for (size_t i = 0; i < input_num; i++) {
-      input_ptr[i] = (int8_t)(input_tmp[i] - 128);
-    }
-    in_quant_arg_.zp_ -= 128;
-    out_quant_arg_.zp_ -= 128;
-  }
+  input_data_ = static_cast<int8_t *>(inputs_.at(kInputIndex)->Data());
+  output_data_ = static_cast<int8_t *>(outputs_.at(kOutputIndex)->Data());
 
-  size_t data_size = inputs_.at(kInputIndex)->Size();
-  Reshape(input_ptr, output_ptr, data_size, input_num, in_quant_arg_, out_quant_arg_);
+  elements_num_ = inputs_.at(kInputIndex)->ElementsNum();
+  count_unit_ = thread_count_ > 1 ? UP_DIV(elements_num_, thread_count_) : elements_num_;
 
-  auto output_type = outputs_[kOutputIndex]->data_type();
-  if (output_type == kNumberTypeUInt8) {
-    for (size_t i = 0; i < output_num; i++) {
-      output_ptr[i] = (uint8_t)(output_ptr[i] + 128);
-    }
+  ret = LiteBackendParallelLaunch(ReshapeInt8Run, this, thread_count_);
+  return ret;
+}
+
+int ReshapeInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+  auto reshape = reinterpret_cast<ReshapeInt8CPUKernel *>(cdata);
+  reshape->DoExecute(task_id);
+  return lite::RET_OK;
+}
+
+int ReshapeInt8CPUKernel::DoExecute(int task_id) {
+  int64_t real_dst_count = MSMIN(elements_num_ - task_id * count_unit_, count_unit_);
+  if (real_dst_count <= 0) {
+    return lite::RET_OK;
   }
-  return RET_OK;
+  int8_t *cur_input0_data = input_data_ + task_id * count_unit_;
+  int8_t *cur_output_data = output_data_ + task_id * count_unit_;
+
+  Reshape(cur_input0_data, cur_output_data, real_dst_count, reshape_param_->quant_para_);
+  return lite::RET_OK;
 }
 }  // namespace mindspore::kernel
-

@@ -20,7 +20,7 @@
 namespace mindspore {
 namespace lite {
 void CaffeDeconvolutionParser::ParseGroupDeconvolution(schema::CNodeT *op, schema::DeConv2DT *attr) {
-  if (attr == nullptr || attr->group == 1 || attr->group != attr->channelIn) {
+  if (attr == nullptr || attr->group == 1) {
     return;
   }
 
@@ -46,14 +46,13 @@ void CaffeDeconvolutionParser::ParseGroupDeconvolution(schema::CNodeT *op, schem
   deDepthwiseConv2DParam->hasBias = attr->hasBias;
   deDepthwiseConv2DParam->activationType = attr->activationType;
   delete attr;
-  op->primitive = std::make_unique<schema::PrimitiveT>();
   op->primitive->value.type = schema::PrimitiveType_DeDepthwiseConv2D;
   op->primitive->value.value = deDepthwiseConv2DParam.release();
 }
 STATUS CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
                                        schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   op->name = proto.name();
-  schema::DeConv2DT *attr = new schema::DeConv2DT();
+  auto *attr = new schema::DeConv2DT();
   attr->format = schema::Format_NCHW;
   const caffe::ConvolutionParameter convParam = proto.convolution_param();
 

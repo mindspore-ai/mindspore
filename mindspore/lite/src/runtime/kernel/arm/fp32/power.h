@@ -26,10 +26,12 @@ namespace mindspore::kernel {
 class PowerCPUKernel : public LiteKernel {
  public:
   PowerCPUKernel(OpParameter *param, const std::vector<lite::tensor::Tensor *> &inputs,
-                 const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
-      : LiteKernel(param, inputs, outputs),
+                 const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                 const lite::Primitive *primitive)
+      : LiteKernel(param, inputs, outputs, ctx, primitive),
         ctx_(ctx),
         thread_count_(ctx->thread_num_),
+        power_(reinterpret_cast<PowerParameter *>(opParameter)->power_),
         scale_(reinterpret_cast<PowerParameter *>(opParameter)->scale_),
         shift_(reinterpret_cast<PowerParameter *>(opParameter)->shift_) {}
   ~PowerCPUKernel() override = default;
@@ -42,6 +44,7 @@ class PowerCPUKernel : public LiteKernel {
  private:
   const lite::Context *ctx_;
   int thread_count_;
+  float power_;
   float scale_;
   float shift_;
 };

@@ -112,7 +112,7 @@ class Softmax(PrimitiveWithInfer):
         axis (Union[int, tuple]): The axis to do the Softmax operation. Default: -1.
 
     Inputs:
-        - **logits** (Tensor) - The input of Softmax.
+        - **logits** (Tensor) - The input of Softmax, with float16 or float32 data type.
 
     Outputs:
         Tensor, with the same type and shape as the logits.
@@ -142,6 +142,7 @@ class Softmax(PrimitiveWithInfer):
 
     def infer_dtype(self, logits):
         validator.check_subclass("logits", logits, mstype.tensor, self.name)
+        validator.check_tensor_type_same({"logits": logits}, mstype.float_type, self.name)
         return logits
 
 
@@ -162,7 +163,7 @@ class LogSoftmax(PrimitiveWithInfer):
         axis (int): The axis to do the Log softmax operation. Default: -1.
 
     Inputs:
-        - **logits** (Tensor) - The input of Log Softmax.
+        - **logits** (Tensor) - The input of Log Softmax, with float16 or float32 data type.
 
     Outputs:
         Tensor, with the same type and shape as the logits.
@@ -185,6 +186,7 @@ class LogSoftmax(PrimitiveWithInfer):
 
     def infer_dtype(self, logits):
         validator.check_subclass("logits", logits, mstype.tensor, self.name)
+        validator.check_tensor_type_same({"logits": logits}, mstype.float_type, self.name)
         return logits
 
 
@@ -298,7 +300,7 @@ class ReLU6(PrimitiveWithInfer):
     It returns :math:`\min(\max(0,x), 6)` element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor.
+        - **input_x** (Tensor) - The input tensor. With float16 or float32 data type.
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
@@ -430,7 +432,7 @@ class HSwish(PrimitiveWithInfer):
     where :math:`x_{i}` is the :math:`i`-th slice along the given dim of the input Tensor.
 
     Inputs:
-        - **input_data** (Tensor) - The input of HSwish.
+        - **input_data** (Tensor) - The input of HSwish, data type should be float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
@@ -465,7 +467,7 @@ class Sigmoid(PrimitiveWithInfer):
     where :math:`x_i` is the element of the input.
 
     Inputs:
-        - **input_x** (Tensor) - The input of Sigmoid.
+        - **input_x** (Tensor) - The input of Sigmoid, data type should be float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as the input_x.
@@ -503,7 +505,7 @@ class HSigmoid(PrimitiveWithInfer):
     where :math:`x_{i}` is the :math:`i`-th slice along the given dim of the input Tensor.
 
     Inputs:
-        - **input_data** (Tensor) - The input of HSigmoid.
+        - **input_data** (Tensor) - The input of HSigmoid, data type should be float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
@@ -687,11 +689,11 @@ class BatchNorm(PrimitiveWithInfer):
         epsilon (float): A small value added for numerical stability. Default: 1e-5.
 
     Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, C)`.
-        - **scale** (Tensor) - Tensor of shape :math:`(C,)`.
-        - **bias** (Tensor) - Tensor of shape :math:`(C,)`.
-        - **mean** (Tensor) - Tensor of shape :math:`(C,)`.
-        - **variance** (Tensor) - Tensor of shape :math:`(C,)`.
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
+        - **scale** (Tensor) - Tensor of shape :math:`(C,)`, with float16 or float32 data type.
+        - **bias** (Tensor) - Tensor of shape :math:`(C,)`, has the same data type with `scale`.
+        - **mean** (Tensor) - Tensor of shape :math:`(C,)`, with float16 or float32 data type.
+        - **variance** (Tensor) - Tensor of shape :math:`(C,)`, has the same data type with `mean`.
 
     Outputs:
         Tuple of 5 Tensor, the normalized inputs and the updated parameters.
@@ -756,11 +758,11 @@ class Conv2D(PrimitiveWithInfer):
 
         out_j = \sum_{i=0}^{C_{in} - 1} ccor(W_{ij}, X_i) + b_j,
 
-    where :math:`ccor` is cross correlation operator, :math:`C_{in}` is the input channel number, :math:`j` ranges
-    from :math:`0` to :math:`C_{out} - 1`, :math:`W_{ij}` corresponds to :math:`i`-th channel of the :math:`j`-th
+    where :math:`ccor` is the cross correlation operator, :math:`C_{in}` is the input channel number, :math:`j` ranges
+    from :math:`0` to :math:`C_{out} - 1`, :math:`W_{ij}` corresponds to the :math:`i`-th channel of the :math:`j`-th
     filter and :math:`out_{j}` corresponds to the :math:`j`-th channel of the output. :math:`W_{ij}` is a slice
     of kernel and it has shape :math:`(\text{ks_h}, \text{ks_w})`, where :math:`\text{ks_h}` and
-    :math:`\text{ks_w}` are height and width of the convolution kernel. The full kernel has shape
+    :math:`\text{ks_w}` are the height and width of the convolution kernel. The full kernel has shape
     :math:`(C_{out}, C_{in} // \text{group}, \text{ks_h}, \text{ks_w})`, where group is the group number
     to split the input in the channel dimension.
 
@@ -1029,7 +1031,7 @@ class _Pool(PrimitiveWithInfer):
            of two `int` for height and width. Default: 1.
         strides (Union[int, tuple[int]]): The stride of the window, that should be
             a tuple of two `int` for height and width. Default: 1.
-        padding (str): The optional values for pad mode, is "same" or "valid", not case sensitive.
+        padding (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
     """
 
@@ -1104,16 +1106,16 @@ class MaxPool(_Pool):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
-        padding (str): The optional values for pad mode, is "same" or "valid", not case sensitive.
+        padding (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
 
-            - same: Adopts the way of completion. Output height and width will be the same as
-              the input. Total number of padding will be calculated for horizontal and vertical
-              direction and evenly distributed to top and bottom, left and right if possible.
+            - same: Adopts the way of completion. The height and width of the output will be the same as
+              the input. The total number of padding will be calculated in horizontal and vertical
+              directions and evenly distributed to top and bottom, left and right if possible.
               Otherwise, the last extra padding will be done from the bottom and the right side.
 
-            - valid: Adopts the way of discarding. The possibly largest height and width of output
-              will be return without padding. Extra pixels will be discarded.
+            - valid: Adopts the way of discarding. The possible largest height and width of output
+              will be returned without padding. Extra pixels will be discarded.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -1151,20 +1153,21 @@ class MaxPoolWithArgmax(_Pool):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
-        padding (str): The optional values for pad mode, is "same" or "valid", not case sensitive.
+        padding (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
 
-            - same: Adopts the way of completion. Output height and width will be the same as
-              the input. Total number of padding will be calculated for horizontal and vertical
-              direction and evenly distributed to top and bottom, left and right if possible.
+            - same: Adopts the way of completion. The height and width of the output will be the same as
+              the input. The total number of padding will be calculated in horizontal and vertical
+              directions and evenly distributed to top and bottom, left and right if possible.
               Otherwise, the last extra padding will be done from the bottom and the right side.
 
-            - valid: Adopts the way of discarding. The possibly largest height and width of output
-              will be return without padding. Extra pixels will be discarded.
+            - valid: Adopts the way of discarding. The possible largest height and width of output
+              will be returned without padding. Extra pixels will be discarded.
 
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+          Data type should be float16 or float32.
 
     Outputs:
         Tuple of 2 Tensor, the maxpool result and where max values from.
@@ -1233,16 +1236,16 @@ class AvgPool(_Pool):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
-        padding (str): The optional values for pad mode, is "same" or "valid", not case sensitive.
+        padding (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
 
-            - same: Adopts the way of completion. Output height and width will be the same as
-              the input. Total number of padding will be calculated for horizontal and vertical
-              direction and evenly distributed to top and bottom, left and right if possible.
+            - same: Adopts the way of completion. The height and width of the output will be the same as
+              the input. The total number of padding will be calculated in horizontal and vertical
+              directions and evenly distributed to top and bottom, left and right if possible.
               Otherwise, the last extra padding will be done from the bottom and the right side.
 
-            - valid: Adopts the way of discarding. The possibly largest height and width of output
-              will be return without padding. Extra pixels will be discarded.
+            - valid: Adopts the way of discarding. The possible largest height and width of output
+              will be returned without padding. Extra pixels will be discarded.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -1407,7 +1410,7 @@ class BiasAdd(PrimitiveWithInfer):
     except for the channel axis.
 
     Inputs:
-        - **input_x** (Tensor) - Input value, with shape :math:`(N, C)` or :math:`(N, C, H, W)`.
+        - **input_x** (Tensor) - Input value. The input shape can be 2-4 dimensions.
         - **bias** (Tensor) - Bias value, with shape :math:`(C)`.
 
     Outputs:
@@ -1433,8 +1436,7 @@ class BiasAdd(PrimitiveWithInfer):
 
     def infer_dtype(self, x_type, b_type):
         args = {"input_x": x_type, "bias": b_type}
-        valid_types = (mstype.int8, mstype.int32, mstype.float16, mstype.float32)
-        validator.check_tensor_type_same(args, valid_types, self.name)
+        validator.check_tensor_type_same(args, mstype.number_type, self.name)
         return x_type
 
 
@@ -1447,7 +1449,7 @@ class TopK(PrimitiveWithInfer):
             be sorted by the values in descending order. Default: False.
 
     Inputs:
-        - **input_x** (Tensor) - Input to be computed.
+        - **input_x** (Tensor) - Input to be computed, data type should be float16, float32 or int32.
         - **k** (int) - Number of top elements to be computed along the last dimension, constant input is needed.
 
     Outputs:
@@ -1499,8 +1501,8 @@ class SoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
             loss_{ij} = -\sum_j{Y_{ij} * ln(p_{ij})}
 
     Inputs:
-        - **logits** (Tensor) - Input logits, with shape :math:`(N, C)`.
-        - **labels** (Tensor) - Ground truth labels, with shape :math:`(N, C)`.
+        - **logits** (Tensor) - Input logits, with shape :math:`(N, C)`. Data type should be float16 or float32.
+        - **labels** (Tensor) - Ground truth labels, with shape :math:`(N, C)`. Has the same data type with `logits`.
 
     Outputs:
         Tuple of 2 Tensor, the loss shape is `(N,)`, and the dlogits with the same shape as `logits`.
@@ -1550,8 +1552,9 @@ class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
         is_grad (bool): If it's true, this operation returns the computed gradient. Default: False.
 
     Inputs:
-        - **logits** (Tensor) - Input logits, with shape :math:`(N, C)`.
+        - **logits** (Tensor) - Input logits, with shape :math:`(N, C)`. Data type should be float16 or float32.
         - **labels** (Tensor) - Ground truth labels, with shape :math:`(N)`.
+          Data type should be int32 or int64.
 
     Outputs:
         Tensor, if `is_grad` is False, the output tensor is the value of loss which is a scalar tensor;
@@ -1593,11 +1596,14 @@ class ApplyMomentum(PrimitiveWithInfer):
         gradient_scale (float): The scale of the gradient. Default: 1.0.
 
     Inputs:
-        - **variable** (Tensor) - Weights to be updated.
-        - **accumulation** (Tensor) - Accumulated gradient value by moment weight.
-        - **learning_rate** (float) - Learning rate.
-        - **gradient** (Tensor) - Gradients.
-        - **momentum** (float) - Momentum.
+        - **variable** (Parameter) - Weights to be updated. data type should be float.
+        - **accumulation** (Parameter) - Accumulated gradient value by moment weight.
+          Has the same data type with `variable`.
+        - **learning_rate** (Union[Number, Tensor]) - The learning rate value, should be a float number or
+          a scalar tensor with float data type.
+        - **gradient** (Tensor) - Gradients, has the same data type as `variable`.
+        - **momentum** (Union[Number, Tensor]) - Momentum, should be a float number or
+          a scalar tensor with float data type.
 
     Outputs:
         Tensor, parameters to be updated.
@@ -1659,7 +1665,7 @@ class SmoothL1Loss(PrimitiveWithInfer):
             quadratic to linear. Default: 1.0.
 
     Inputs:
-        - **prediction** (Tensor) - Predict data.
+        - **prediction** (Tensor) - Predict data. Data type should be float16 or float32.
         - **target** (Tensor) - Ground truth data, with the same type and shape as `prediction`.
 
     Outputs:
@@ -1701,7 +1707,7 @@ class L2Loss(PrimitiveWithInfer):
     :math:`nelement(x)` represents the number of `input_x`.
 
     Inputs:
-        - **input_x** (Tensor) - A input Tensor.
+        - **input_x** (Tensor) - A input Tensor. Data type should be float16 or float32.
 
     Outputs:
         Tensor. Has the same dtype as `input_x`. The output tensor is the value of loss which is a scalar tensor.
@@ -1766,6 +1772,7 @@ class DataFormatDimMap(PrimitiveWithInfer):
         validator.check_tensor_type_same({"x": x_type}, valid_types, self.name)
         return x_type
 
+
 class RNNTLoss(PrimitiveWithInfer):
     """
     Computes the RNNTLoss and its gradient with respect to the softmax outputs.
@@ -1774,7 +1781,7 @@ class RNNTLoss(PrimitiveWithInfer):
         blank_label (int): blank label. Default: 0.
 
     Inputs:
-        - **acts** (Tensor[float32]) - Tensor of shape :math:`(B, T, U, V)`.
+        - **acts** (Tensor) - Tensor of shape :math:`(B, T, U, V)`. Data type should be float16 or float32.
         - **labels** (Tensor[int32]) - Tensor of shape :math:`(B, U-1)`.
         - **input_lengths** (Tensor[int32]) - Tensor of shape :math:`(B,)`.
         - **label_lebgths** (Tensor[int32]) - Tensor of shape :math:`(B,)`.
@@ -1792,6 +1799,7 @@ class RNNTLoss(PrimitiveWithInfer):
         >>> rnnt_loss = P.RNNTLoss(blank_label=blank)
         >>> costs, grads = rnnt_loss(Tensor(acts), Tensor(labels), Tensor(input_length), Tensor(label_length))
     """
+
     @prim_attr_register
     def __init__(self, blank_label=0):
         validator.check_value_type('blank_label', blank_label, [int], self.name)
@@ -1815,7 +1823,7 @@ class RNNTLoss(PrimitiveWithInfer):
         validator.check_subclass("labels_type", labels_type, mstype.tensor, self.name)
         validator.check_subclass("input_length_type", input_length_type, mstype.tensor, self.name)
         validator.check_subclass("label_length_type", label_length_type, mstype.tensor, self.name)
-        validator.check_tensor_type_same({"acts_type": acts_type}, [mstype.float32], self.name)
+        validator.check_tensor_type_same({"acts_type": acts_type}, [mstype.float32, mstype.float16], self.name)
         validator.check_tensor_type_same({"labels_type": labels_type}, [mstype.int32], self.name)
         validator.check_tensor_type_same({"input_length_type": input_length_type}, [mstype.int32], self.name)
         validator.check_tensor_type_same({"label_length_type": label_length_type}, [mstype.int32], self.name)
@@ -1838,12 +1846,14 @@ class SGD(PrimitiveWithInfer):
         nesterov (bool): Enable Nesterov momentum. Default: False.
 
     Inputs:
-        - **parameters** (Tensor) - Parameters to be updated. Their data type can be list or tuple.
-        - **gradient** (Tensor) - Gradients.
-        - **learning_rate** (Tensor) - Learning rate. Must be float value. e.g. Tensor(0.1, mindspore.float32).
-        - **accum** (Tensor) - Accum(velocity) to be updated.
-        - **momentum** (Tensor) - Momentum. e.g. Tensor(0.1, mindspore.float32).
-        - **stat** (Tensor) - States to be updated with the same shape as gradient.
+        - **parameters** (Tensor) - Parameters to be updated. With float16 or float32 data type.
+        - **gradient** (Tensor) - Gradients. With float16 or float32 data type.
+        - **learning_rate** (Tensor) - Learning rate, a scalar tensor with float16 or float32 data type.
+          e.g. Tensor(0.1, mindspore.float32)
+        - **accum** (Tensor) - Accum(velocity) to be updated. With float16 or float32 data type.
+        - **momentum** (Tensor) - Momentum, a scalar tensor with float16 or float32 data type.
+          e.g. Tensor(0.1, mindspore.float32).
+        - **stat** (Tensor) - States to be updated with the same shape as gradient. With float16 or float32 data type.
 
     Outputs:
         Tensor, parameters to be updated.
@@ -1921,7 +1931,8 @@ class ApplyRMSProp(PrimitiveWithInfer):
         - **var** (Tensor) - Weights to be update.
         - **mean_square** (Tensor) - Mean square gradients, must have the same type as `var`.
         - **moment** (Tensor) - Delta of `var`, must have the same type as `var`.
-        - **learning_rate** (Union[Number, Tensor]) - Learning rate.
+        - **learning_rate** (Union[Number, Tensor]) - Learning rate. Should be a float number or
+          a scalar tensor with float16 or float32 data type.
         - **grad** (Tensor) - Gradients, must have the same type as `var`.
         - **decay** (float) - Decay rate. Only constant value is allowed.
         - **momentum** (float) - Momentum. Only constant value is allowed.
@@ -2017,7 +2028,8 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
         - **mean_square** (Tensor) - Mean square gradients, must have the same type as `var`.
         - **moment** (Tensor) - Delta of `var`, must have the same type as `var`.
         - **grad** (Tensor) - Gradients, must have the same type as `var`.
-        - **learning_rate** (Union[Number, Tensor]) - Learning rate.
+        - **learning_rate** (Union[Number, Tensor]) - Learning rate. Should be a float number or
+          a scalar tensor with float16 or float32 data type.
         - **decay** (float) - Decay rate.
         - **momentum** (float) - Momentum.
         - **epsilon** (float) - Ridge term.
@@ -2145,7 +2157,7 @@ class L2Normalize(PrimitiveWithInfer):
         epsilon (float): A small value added for numerical stability. Default: 1e-4.
 
     Inputs:
-        - **input_x** (Tensor) - Input to compute the normalization.
+        - **input_x** (Tensor) - Input to compute the normalization. Data type should be float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as the input.
@@ -2174,6 +2186,7 @@ class L2Normalize(PrimitiveWithInfer):
 
     def infer_dtype(self, input_x):
         validator.check_subclass("x", input_x, mstype.tensor, self.name)
+        validator.check_tensor_type_same({"input_x": input_x}, [mstype.float16, mstype.float32], self.name)
         return input_x
 
 
@@ -2328,9 +2341,11 @@ class OneHot(PrimitiveWithInfer):
 
     Inputs:
         - **indices** (Tensor) - A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
+        Data type must be int32.
         - **depth** (int) - A scalar defining the depth of the one hot dimension.
-        - **on_value** (Tensor) - A value to fill in output when `indices[j] = i`.
+        - **on_value** (Tensor) - A value to fill in output when `indices[j] = i`. With data type of float16 or float32.
         - **off_value** (Tensor) - A value to fill in output when `indices[j] != i`.
+          Has the same data type with as `on_value`.
 
     Outputs:
         Tensor, one_hot tensor. Tensor of shape :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)`.
@@ -2384,7 +2399,7 @@ class Gelu(PrimitiveWithInfer):
     where :math:`erf` is the "Gauss error function" .
 
     Inputs:
-        - **input_x** (Tensor) - Input to compute the Gelu.
+        - **input_x** (Tensor) - Input to compute the Gelu. With data type of float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as input.
@@ -2466,8 +2481,9 @@ class PReLU(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - Float tensor, representing the output of the preview layer.
+          With data type of float16 or float32.
         - **weight** (Tensor) -  Float Tensor, w > 0, there is only two shapes are legitimate,
-          1 or the number of channels at input.
+          1 or the number of channels at input. With data type of float16 or float32.
 
     Outputs:
         Tensor, with the same type as `input_x`.
@@ -2796,9 +2812,9 @@ class ROIAlign(PrimitiveWithInfer):
 
     Inputs:
         - **features** (Tensor) - The input features, whose shape should be `(N, C, H, W)`.
-        - **rois** (Tensor) - The shape is `(rois_n, 5)`. `rois_n` represents the number of RoI. The size of
-          the second dimension should be `5` and the `5` colunms are
-          `(image_index, top_left_x, top_left_y, bottom_right_x, bottom_right_y)`. `image_index` represents the
+        - **rois** (Tensor) - The shape is `(rois_n, 5)`. With data type of float16 or float32.
+          `rois_n` represents the number of RoI. The size of the second dimension should be `5` and the `5` colunms
+          are `(image_index, top_left_x, top_left_y, bottom_right_x, bottom_right_y)`. `image_index` represents the
           index of image. `top_left_x` and `top_left_y` represent the `x, y` coordinates of the top left corner
           of corresponding RoI, respectively. `bottom_right_x` and `bottom_right_y` represent the `x, y`
           coordinates of the bottom right corner of corresponding RoI, respectively.
@@ -2833,6 +2849,9 @@ class ROIAlign(PrimitiveWithInfer):
         return [rois_shape[0], inputs_shape[1], self.pooled_height, self.pooled_width]
 
     def infer_dtype(self, inputs_type, rois_type):
+        valid_types = (mstype.float16, mstype.float32)
+        validator.check_tensor_type_same({"inputs_type": inputs_type}, valid_types, self.name)
+        validator.check_tensor_type_same({"rois_type": rois_type}, valid_types, self.name)
         return inputs_type
 
 
@@ -2877,7 +2896,7 @@ class Adam(PrimitiveWithInfer):
         - **beta1** (float) - The exponential decay rate for the 1st moment estimates.
         - **beta2** (float) - The exponential decay rate for the 2nd moment estimates.
         - **epsilon** (float) - Term added to the denominator to improve numerical stability.
-        - **gradient** (Tensor) - Gradients.
+        - **gradient** (Tensor) - Gradients. Has the same type as `var`.
 
     Outputs:
         Tuple of 3 Tensor, the updated parameters.
@@ -3471,10 +3490,10 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
             Its value should be one of 'none', 'mean', 'sum'. Default: 'mean'.
 
     Inputs:
-        - **input_x** (Tensor) - The input Tensor.
-        - **input_y** (Tensor) - The label Tensor which has same shape as `input_x`.
+        - **input_x** (Tensor) - The input Tensor. The data type should be float16 or float32.
+        - **input_y** (Tensor) - The label Tensor which has same shape and data type as `input_x`.
         - **weight** (Tensor, optional) - A rescaling weight applied to the loss of each batch element.
-          And it should have same shape as `input_x`. Default: None.
+          And it should have same shape and data type as `input_x`. Default: None.
 
     Outputs:
         Tensor or Scalar, if `reduction` is 'none', then output is a tensor and same shape as `input_x`.
@@ -3844,12 +3863,13 @@ class ApplyAdagradV2(PrimitiveWithInfer):
         update_slots (bool): If `True`, `accum` will be updated. Default: True.
 
     Inputs:
-        - **var** (Parameter) - Variable to be updated. With float32 data type.
+        - **var** (Parameter) - Variable to be updated. With float16 or float32 data type.
         - **accum** (Parameter) - Accum to be updated. The shape and dtype should be the same as `var`.
-          With float32 data type.
-        - **lr** (Union[Number, Tensor]) - The learning rate value, should be scalar. With float32 data type.
+          With float16 or float32 data type.
+        - **lr** (Union[Number, Tensor]) - The learning rate value, should be a float number or
+          a scalar tensor with float16 or float32 data type.
         - **grad** (Tensor) - A tensor for gradient. The shape and dtype should be the same as `var`.
-          With float32 data type.
+          With float16 or float32 data type.
 
     Outputs:
         Tuple of 2 Tensor, the updated parameters.
@@ -3901,8 +3921,8 @@ class ApplyAdagradV2(PrimitiveWithInfer):
 
     def infer_dtype(self, var_dtype, accum_dtype, lr_dtype, grad_dtype):
         args = {'var': var_dtype, 'accum': accum_dtype, 'grad': grad_dtype}
-        validator.check_tensor_type_same(args, [mstype.float32], self.name)
-        validator.check_scalar_or_tensor_type_same({'lr': lr_dtype}, [mstype.float32], self.name)
+        validator.check_tensor_type_same(args, [mstype.float16, mstype.float32], self.name)
+        validator.check_scalar_or_tensor_type_same({'lr': lr_dtype}, [mstype.float16, mstype.float32], self.name)
         return var_dtype, accum_dtype
 
 
@@ -3921,11 +3941,10 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
         use_locking (bool): If True, updating of the var and accum tensors will be protected. Default: False.
 
     Inputs:
-        - **var** (Parameter) - Variable to be updated. The type must be float32.
-        - **accum** (Parameter) - Accum to be updated. The shape must be the same as `var`'s shape,
-          the type must be float32.
-        - **grad** (Tensor) - Gradient. The shape must be the same as `var`'s shape
-          except first dimension, the type must be float32.
+        - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
+        - **accum** (Parameter) - Accum to be updated. The shape and dtype should be the same as `var`.
+        - **grad** (Tensor) - Gradient. The shape must be the same as `var`'s shape except first dimension.
+          Has the same data type as `var`.
         - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
           The shape of `indices` must be the same as `grad` in first dimension, the type must be int32.
 
@@ -3981,7 +4000,7 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
 
     def infer_dtype(self, var_type, accum_type, grad_type, indices_type):
         args = {'var': var_type, 'accum': accum_type, 'grad': grad_type}
-        validator.check_tensor_type_same(args, (mstype.float32,), self.name)
+        validator.check_tensor_type_same(args, [mstype.float16, mstype.float32], self.name)
         validator.check_tensor_type_same({'indices': indices_type}, [mstype.int32], self.name)
         return var_type, accum_type
 
@@ -4002,11 +4021,10 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
         update_slots (bool): If `True`, the computation logic will be different to `False`. Default: True.
 
     Inputs:
-        - **var** (Parameter) - Variable to be updated. The type must be float32.
-        - **accum** (Parameter) - Accum to be updated. The shape must be the same as `var`'s shape,
-          the type must be float32.
-        - **grad** (Tensor) - Gradient. The shape must be the same as `var`'s shape except first dimension,
-          the type must be float32.
+        - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
+        - **accum** (Parameter) - Accum to be updated. The shape and dtype should be the same as `var`.
+        - **grad** (Tensor) - Gradient. The shape must be the same as `var`'s shape except first dimension.
+          Has the same data type as `var`.
         - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
           The shape of `indices` must be the same as `grad` in first dimension, the type must be int32.
 
@@ -4063,7 +4081,7 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
 
     def infer_dtype(self, var_type, accum_type, grad_type, indices_type):
         args = {'var': var_type, 'accum': accum_type, 'grad': grad_type}
-        validator.check_tensor_type_same(args, [mstype.float32], self.name)
+        validator.check_tensor_type_same(args, [mstype.float16, mstype.float32], self.name)
         validator.check_tensor_type_same({'indices': indices_type}, [mstype.int32], self.name)
         return var_type, accum_type
 
@@ -4179,12 +4197,16 @@ class SparseApplyProximalAdagrad(PrimitiveWithInfer):
         use_locking (bool): If True, updating of the var and accum tensors will be protected. Default: False.
 
     Inputs:
-        - **var** (Parameter) - Variable tensor to be updated. The data type must be float32.
+        - **var** (Parameter) - Variable tensor to be updated. The data type must be float16 or float32.
         - **accum** (Parameter) - Variable tensor to be updated. Has the same dtype as `var`.
-        - **lr** (Union[Number, Tensor]) - The learning rate value. The data type must be float32.
-        - **l1** (Union[Number, Tensor]) - l1 regularization strength. The data type must be float32.
-        - **l2** (Union[Number, Tensor]) - l2 regularization strength. The data type must be float32.
-        - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient. The data type must be float32.
+        - **lr** (Union[Number, Tensor]) - The learning rate value. Tshould be a float number or
+          a scalar tensor with float16 or float32 data type.
+        - **l1** (Union[Number, Tensor]) - l1 regularization strength. should be a float number or
+          a scalar tensor with float16 or float32 data type.
+        - **l2** (Union[Number, Tensor]) - l2 regularization strength. should be a float number or
+          a scalar tensor with float16 or float32 data type..
+        - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
+          The data type must be float16 or float32.
         - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
 
     Outputs:
@@ -4239,10 +4261,10 @@ class SparseApplyProximalAdagrad(PrimitiveWithInfer):
 
     def infer_dtype(self, var_dtype, accum_dtype, lr_dtype, l1_dtype, l2_dtype, grad_dtype, indices_dtype):
         args = {'var': var_dtype, 'accum': accum_dtype, 'grad': grad_dtype}
-        validator.check_tensor_type_same(args, [mstype.float32], self.name)
-        validator.check_scalar_or_tensor_type_same({"lr": lr_dtype}, [mstype.float32], self.name)
-        validator.check_scalar_or_tensor_type_same({"l1": l1_dtype}, [mstype.float32], self.name)
-        validator.check_scalar_or_tensor_type_same({"l2": l2_dtype}, [mstype.float32], self.name)
+        validator.check_tensor_type_same(args, [mstype.float16, mstype.float32], self.name)
+        validator.check_scalar_or_tensor_type_same({"lr": lr_dtype}, [mstype.float16, mstype.float32], self.name)
+        validator.check_scalar_or_tensor_type_same({"l1": l1_dtype}, [mstype.float16, mstype.float32], self.name)
+        validator.check_scalar_or_tensor_type_same({"l2": l2_dtype}, [mstype.float16, mstype.float32], self.name)
         valid_types = [mstype.int16, mstype.int32, mstype.int64,
                        mstype.uint16, mstype.uint32, mstype.uint64]
         validator.check_tensor_type_same({'indices': indices_dtype}, valid_types, self.name)
@@ -4677,18 +4699,19 @@ class ApplyFtrl(PrimitiveWithInfer):
         use_locking (bool): Use locks for update operation if True . Default: False.
 
     Inputs:
-        - **var** (Tensor) - The variable to be updated.
-        - **accum** (Tensor) - The accum to be updated, must be same type and shape as `var`.
-        - **linear** (Tensor) - The linear to be updated, must be same type and shape as `var`.
-        - **grad** (Tensor) - Gradient.
+        - **var** (Parameter) - The variable to be updated. The data type should be float16 or float32.
+        - **accum** (Parameter) - The accum to be updated, must be same type and shape as `var`.
+        - **linear** (Parameter) - The linear to be updated, must be same type and shape as `var`.
+        - **grad** (Tensor) - Gradient. The data type should be float16 or float32.
         - **lr** (Union[Number, Tensor]) - The learning rate value, must be positive. Default: 0.001.
+          It should be a float number or a scalar tensor with float16 or float32 data type.
         - **l1** (Union[Number, Tensor]) - l1 regularization strength, must be greater than or equal to zero.
-          Default: 0.0.
+          Default: 0.0. It should be a float number or a scalar tensor with float16 or float32 data type.
         - **l2** (Union[Number, Tensor]) - l2 regularization strength, must be greater than or equal to zero.
-          Default: 0.0.
+          Default: 0.0. It should be a float number or a scalar tensor with float16 or float32 data type.
         - **lr_power** (Union[Number, Tensor]) - Learning rate power controls how the learning rate decreases
           during training, must be less than or equal to zero. Use fixed learning rate if lr_power is zero.
-          Default: -0.5.
+          Default: -0.5. It should be a float number or a scalar tensor with float16 or float32 data type.
 
     Outputs:
         Tensor, representing the updated var.
@@ -4767,7 +4790,7 @@ class SparseApplyFtrl(PrimitiveWithInfer):
         use_locking (bool): Use locks for update operation if True . Default: False.
 
     Inputs:
-        - **var** (Parameter) - The variable to be updated. The data type must be float32.
+        - **var** (Parameter) - The variable to be updated. The data type must be float16 or float32.
         - **accum** (Parameter) - The accum to be updated, must be same type and shape as `var`.
         - **linear** (Parameter) - The linear to be updated, must be same type and shape as `var`.
         - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
@@ -4836,7 +4859,7 @@ class SparseApplyFtrl(PrimitiveWithInfer):
     def infer_dtype(self, var_dtype, accum_dtype, linear_dtype, grad_dtype, indices_dtype):
         args = {"var_dtype": var_dtype, "accum_dtype": accum_dtype,
                 "linear_dtype": linear_dtype, "grad_dtype": grad_dtype}
-        validator.check_tensor_type_same(args, [mstype.float32], self.name)
+        validator.check_tensor_type_same(args, [mstype.float16, mstype.float32], self.name)
         validator.check_tensor_type_same({"indices_dtype": indices_dtype}, [mstype.int32], self.name)
         return var_dtype, accum_dtype, linear_dtype
 
@@ -4855,7 +4878,7 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         use_locking (bool): If `True`, updating of the var and accum tensors will be protected. Default: False.
 
     Inputs:
-        - **var** (Parameter) - The variable to be updated. The data type must be float32.
+        - **var** (Parameter) - The variable to be updated. The data type must be float16 or float32.
         - **accum** (Parameter) - The accum to be updated, must be same type and shape as `var`.
         - **linear** (Parameter) - The linear to be updated, must be same type and shape as `var`.
         - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
@@ -4928,7 +4951,7 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
     def infer_dtype(self, var_dtype, accum_dtype, linear_dtype, grad_dtype, indices_dtype):
         args = {"var_dtype": var_dtype, "accum_dtype": accum_dtype,
                 "linear_dtype": linear_dtype, "grad_dtype": grad_dtype}
-        validator.check_tensor_type_same(args, [mstype.float32], self.name)
+        validator.check_tensor_type_same(args, [mstype.float16, mstype.float32], self.name)
         validator.check_tensor_type_same({"indices_dtype": indices_dtype}, [mstype.int32], self.name)
         return var_dtype, accum_dtype, linear_dtype
 
@@ -5256,7 +5279,7 @@ class InTopK(PrimitiveWithInfer):
         k (int): Special the number of top elements to look at for computing precision.
 
     Inputs:
-        - **x1** (Tensor) - A 2D Tensor define the predictions of a batch of samples with float32 data type.
+        - **x1** (Tensor) - A 2D Tensor define the predictions of a batch of samples with float16 or float32 data type.
         - **x2** (Tensor) - A 1D Tensor define the labels of a batch of samples with int32 data type.
 
     Outputs:
@@ -5277,7 +5300,7 @@ class InTopK(PrimitiveWithInfer):
         validator.check_value_type("k", k, [int], self.name)
 
     def infer_dtype(self, x1_dtype, x2_dtype):
-        validator.check_tensor_type_same({"x1": x1_dtype}, (mstype.float32,), self.name)
+        validator.check_tensor_type_same({"x1": x1_dtype}, (mstype.float16, mstype.float32,), self.name)
         validator.check_tensor_type_same({"x2": x2_dtype}, (mstype.int32,), self.name)
 
         return mstype.tensor_type(mstype.bool_)
@@ -5330,6 +5353,7 @@ class LRN(PrimitiveWithInfer):
     def infer_shape(self, x_shape):
         validator.check_integer("x_shape", len(x_shape), 4, Rel.EQ, self.name)
         return x_shape
+
 
 class CTCLossV2(PrimitiveWithInfer):
     r"""

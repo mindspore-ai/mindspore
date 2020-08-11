@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "tools/converter/parser/tflite/tflite_depthwise_conv_parser.h"
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_depthwise_conv_parser.h"
 #include "tools/common/node_util.h"
 
 namespace mindspore {
@@ -26,6 +26,7 @@ STATUS TfliteDepthwiseConv2DParser::ParseGroupDepthwiseConv(schema::CNodeT *op,
                                                             const std::unique_ptr<tflite::TensorT> &weightTensor,
                                                             TensorCache *tensor_cache) {
   std::unique_ptr<schema::Conv2DT> convAttr(new schema::Conv2DT);
+
   convAttr->format = attr->format;
   convAttr->channelIn = attr->channelIn;
   convAttr->channelOut = attr->channelIn * attr->channelMultiplier;
@@ -64,7 +65,7 @@ STATUS TfliteDepthwiseConv2DParser::ParseGroupDepthwiseConv(schema::CNodeT *op,
       }
     }
   }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
+
   op->primitive->value.type = schema::PrimitiveType_Conv2D;
   op->primitive->value.value = convAttr.release();
   return RET_OK;
@@ -75,6 +76,16 @@ STATUS TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite::Operator
                                           const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                           const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                           schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse TfliteDepthwiseConv2DParser";
   std::unique_ptr<schema::DepthwiseConv2DT> attr(new schema::DepthwiseConv2DT());
   const auto &tflite_attr = tflite_op->builtin_options.AsDepthwiseConv2DOptions();
@@ -92,10 +103,18 @@ STATUS TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite::Operator
   // get the conv op weight tensor
   auto input_index = tflite_op->inputs[0];
   const auto &input_tenosr = tflite_tensors[input_index];
+  if (input_tenosr == nullptr) {
+    MS_LOG(ERROR) << "the first input is null";
+    return RET_NULL_PTR;
+  }
   auto input_shape = input_tenosr->shape;
 
   auto weight_index = tflite_op->inputs[1];
   const auto &weight_tensor = tflite_tensors[weight_index];
+  if (weight_tensor == nullptr) {
+    MS_LOG(ERROR) << "the weight tensor is null";
+    return RET_NULL_PTR;
+  }
   auto weight_shape = weight_tensor->shape;
   attr->channelIn = input_shape[KHWC_C];
   attr->channelMultiplier = tflite_attr->depth_multiplier;
@@ -104,7 +123,7 @@ STATUS TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite::Operator
 
   std::vector<tflite::TensorT *> weight_tensors{weight_tensor.get()};
 
-  if (RET_OK != ParseWeight(weight_tensors, tfliteModelBuffer, tensor_cache, schema::Format_KHWC)) {
+  if (RET_OK != ParseTensor(weight_tensors, tfliteModelBuffer, tensor_cache, TF_CONST)) {
     MS_LOG(ERROR) << "parse weight failed";
     return RET_ERROR;
   }
@@ -114,7 +133,7 @@ STATUS TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite::Operator
     auto bias_index = tflite_op->inputs[2];
     const auto &bias_tensor = tflite_tensors[bias_index];
     std::vector<tflite::TensorT *> bias_tensors{bias_tensor.get()};
-    if (RET_OK != ParseBias(bias_tensors, tfliteModelBuffer, tensor_cache)) {
+    if (RET_OK != ParseTensor(bias_tensors, tfliteModelBuffer, tensor_cache, TF_CONST)) {
       MS_LOG(ERROR) << "parse bias failed";
       return RET_ERROR;
     }
@@ -122,11 +141,10 @@ STATUS TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite::Operator
 
   if (attr->channelMultiplier > 1) {
     if (RET_OK != ParseGroupDepthwiseConv(op, attr, weight_tensor, tensor_cache)) {
-      // MS_LOGE("Parse Group DepthwiseConv failed");
+      MS_LOG(ERROR) << "Parse Group DepthwiseConv failed";
       return RET_ERROR;
     }
   } else {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_DepthwiseConv2D;
     op->primitive->value.value = attr.release();
   }

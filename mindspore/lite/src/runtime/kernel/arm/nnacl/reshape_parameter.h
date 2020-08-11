@@ -17,12 +17,13 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_RESHAHPE_PARAMETER_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_RESHAHPE_PARAMETER_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
+#include "nnacl/quantization/quantize.h"
 
-struct ReshapeParameter {
+typedef struct ReshapeParameter {
   OpParameter op_parameter_;
+  ReshapeQuantArg quant_para_;
   int thread_count_;
-};
+} ReshapeParameter;
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_RESHAHPE_PARAMETER_H_
-

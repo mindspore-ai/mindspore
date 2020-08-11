@@ -15,10 +15,12 @@
  */
 
 #include "src/scheduler.h"
-#include <algorithm>
 #include <vector>
+#include <algorithm>
 #include "include/errorcode.h"
 #include "src/kernel_factory.h"
+#include "src/common/graph_util.h"
+#include "src/common/utils.h"
 #if SUPPORT_GPU
 #include "src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #endif
@@ -51,6 +53,7 @@ int Scheduler::InitOp2Kernel(const lite::Model *model, std::vector<tensor::Tenso
   auto meta_graph = model->GetMetaGraph();
   MS_EXCEPTION_IF_NULL(meta_graph);
   uint32_t kernelCount = meta_graph->nodes()->size();
+  auto graph_output_node_indexes = GetGraphOutputNodes(meta_graph);
   for (uint32_t i = 0; i < kernelCount; i++) {
     auto cNode = meta_graph->nodes()->GetAs<schema::CNode>(i);
     std::vector<tensor::Tensor *> inputs;
@@ -69,11 +72,21 @@ int Scheduler::InitOp2Kernel(const lite::Model *model, std::vector<tensor::Tenso
                     << schema::EnumNamePrimitiveType(cNode->primitive()->value_type());
       return RET_ERROR;
     }
-    auto ret = primitive->InferShape(inputs, outputs);
-    if (0 != ret) {
-      MS_LOG(ERROR) << "InferShape failed, name: " << cNode->name()->str()
-                    << ", type: " << schema::EnumNamePrimitiveType(cNode->primitive()->value_type());
-      return ret;
+    if (!context_->infer_shape_interrupt_) {
+      auto ret = primitive->InferShape(inputs, outputs);
+      if (ret == RET_INFER_INVALID) {
+        MS_LOG(INFO) << "InferShape shouldn't be done before runtime, name: " << cNode->name()->str()
+                     << ", type: " << schema::EnumNamePrimitiveType(cNode->primitive()->value_type())
+                     << "flag set to false.";
+        primitive->SetInferFlag(false);
+        context_->InferShapeInterrupt();
+      } else if (ret != RET_OK) {
+        MS_LOG(ERROR) << "InferShape failed, name: " << cNode->name()->str()
+                      << ", type: " << schema::EnumNamePrimitiveType(cNode->primitive()->value_type());
+        return RET_INFER_ERR;
+      }
+    } else {
+      primitive->SetInferFlag(false);
     }
 
     auto *kernel = this->ScheduleNode(inputs, outputs, primitive);
@@ -83,6 +96,7 @@ int Scheduler::InitOp2Kernel(const lite::Model *model, std::vector<tensor::Tenso
       return RET_ERROR;
     }
     kernel->set_name(cNode->name()->str());
+    kernel->set_is_model_output(IsContain(graph_output_node_indexes, size_t(i)));
     kernels->emplace_back(kernel);
   }
   return RET_OK;
@@ -132,10 +146,26 @@ kernel::LiteKernel *Scheduler::CreateSubKernel(const std::vector<kernel::LiteKer
   kernel::LiteKernel *sub_kernel = nullptr;
 #if SUPPORT_GPU
   if (arch == kernel::KERNEL_ARCH::kGPU) {
-    std::vector<tensor::Tensor *> input_tensors = kernel::LiteKernelUtil::SubgraphInputTensors(kernels);
-    std::vector<tensor::Tensor *> output_tensors = kernel::LiteKernelUtil::SubgraphOutputTensors(kernels);
-    std::vector<kernel::LiteKernel *> input_kernels = kernel::LiteKernelUtil::SubgraphInputKernels(kernels);
-    std::vector<kernel::LiteKernel *> output_kernels = kernel::LiteKernelUtil::SubgraphOutputKernels(kernels);
+    auto head_kernel = kernels.front();
+    auto tail_kernel = kernels.back();
+    std::vector<kernel::LiteKernel *> input_kernels{head_kernel};
+    std::vector<kernel::LiteKernel *> output_kernels{tail_kernel};
+    std::vector<tensor::Tensor *> input_tensors;
+    std::vector<tensor::Tensor *> output_tensors;
+    for (auto tensor : head_kernel->GetInputs()) {
+      if (tensor->Data() == nullptr) {
+        input_tensors.emplace_back(tensor);
+      }
+    }
+    for (auto tensor : tail_kernel->GetOutputs()) {
+      if (tensor->Data() == nullptr) {
+        output_tensors.emplace_back(tensor);
+      }
+    }
+    //    std::vector<tensor::Tensor *> input_tensors = kernel::LiteKernelUtil::SubgraphInputTensors(kernels);
+    //    std::vector<tensor::Tensor *> output_tensors = kernel::LiteKernelUtil::SubgraphOutputTensors(kernels);
+    //    std::vector<kernel::LiteKernel *> input_kernels = kernel::LiteKernelUtil::SubgraphInputKernels(kernels);
+    //    std::vector<kernel::LiteKernel *> output_kernels = kernel::LiteKernelUtil::SubgraphOutputKernels(kernels);
     sub_kernel =
       new kernel::SubGraphOpenCLKernel(input_tensors, output_tensors, input_kernels, output_kernels, kernels);
     sub_kernel->Init();

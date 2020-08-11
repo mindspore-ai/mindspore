@@ -93,6 +93,10 @@ int PadInt8CPUKernel::ReSize() {
 }
 
 int PadInt8CPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
   int error_code = InitPadParam();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "InitPadParam failed. errorcode: " << error_code;
@@ -108,6 +112,11 @@ int PadInt8CPUKernel::Init() {
 }
 
 int PadInt8CPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return RET_ERROR;
+  }
   int8_t *in_data = reinterpret_cast<int8_t *>(inputs_[0]->Data());
   int8_t *out_data = reinterpret_cast<int8_t *>(outputs_[0]->Data());
 

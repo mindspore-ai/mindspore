@@ -37,6 +37,7 @@ namespace api {
 class Dataset;
 
 using TensorMap = std::unordered_map<std::string, std::shared_ptr<Tensor>>;
+using TensorVec = std::vector<std::shared_ptr<Tensor>>;
 
 // Abstract class for iterating over the dataset.
 class Iterator {
@@ -53,8 +54,14 @@ class Iterator {
   Status BuildAndLaunchTree(std::shared_ptr<Dataset> ds);
 
   /// \brief Function to get the next row from the data pipeline.
+  /// \note Type of return data is a map(with column name).
   /// \param[out] row - the output tensor row.
   void GetNextRow(TensorMap *row);
+
+  /// \brief Function to get the next row from the data pipeline.
+  /// \note Type of return data is a vector(without column name).
+  /// \param[out] row - the output tensor row.
+  void GetNextRow(TensorVec *row);
 
   /// \brief Function to shut down the data pipeline.
   void Stop();

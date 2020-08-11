@@ -27,24 +27,27 @@ STATUS TfliteGatherNdParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfl
                                  schema::CNodeT *op,
                                  TensorCache *tensor_cache,
                                  bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse TfliteGatherNdParser";
   std::unique_ptr<schema::GatherNdT> attr(new schema::GatherNdT());
-  const auto &tflite_attr = tfliteOp->builtin_options.AsGatherNdOptions();
-  if (tflite_attr == nullptr) {
-    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
-  }
 
-  attr->batchDims = 0;    // default
+  attr->batchDims = 0;
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_GatherNd;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_GatherNd;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 
-TfliteNodeRegister g_tfliteGatherNdParser("GatherNd", new TfliteGatherNdParser());
+TfliteNodeRegister g_tfliteGatherNdParser("GatherND", new TfliteGatherNdParser());
 }  // namespace lite
 }  // namespace mindspore
 

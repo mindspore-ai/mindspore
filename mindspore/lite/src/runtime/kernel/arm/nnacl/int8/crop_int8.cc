@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/crop_parameter.h"
-#include "src/runtime/kernel/arm/nnacl/int8/crop_int8.h"
+#include "nnacl/crop_parameter.h"
+#include "nnacl/int8/crop_int8.h"
 #include <string.h>
 
 void Crop(const int8_t *input, int8_t *output, int task_id, CropParameter *para) {
@@ -40,6 +40,9 @@ void Crop1D(const int8_t *input, int8_t *output, int task_id, CropParameter *par
   const int out_batch = para->out_shape_[0];
   const int thread_count = para->thread_count_;
   int64_t task_id_stride = thread_count > 1 ? UP_DIV(out_batch, thread_count) : out_batch;
+  if (task_id_stride <= 0) {
+    return;
+  }
 
   float in_scale = para->quant_arg.in_args_.scale_;
   int32_t in_zp = para->quant_arg.in_args_.zp_;
@@ -78,6 +81,9 @@ void Crop2D(const int8_t *input, int8_t *output, int task_id, CropParameter *par
   const int out_height = para->out_shape_[1];
   const int thread_count = para->thread_count_;
   int64_t task_id_stride = thread_count > 1 ? UP_DIV(out_height, thread_count) : out_height;
+  if (task_id_stride <= 0) {
+    return;
+  }
 
   float in_scale = para->quant_arg.in_args_.scale_;
   int32_t in_zp = para->quant_arg.in_args_.zp_;
@@ -120,6 +126,12 @@ void Crop3D(const int8_t *input, int8_t *output, int task_id, CropParameter *par
   const int out_height = para->out_shape_[1];
   const int out_width = para->out_shape_[2];
 
+  const int thread_count = para->thread_count_;
+  int64_t task_id_stride = thread_count > 1 ? UP_DIV(out_height, thread_count) : out_height;
+  if (task_id_stride <= 0) {
+    return;
+  }
+
   const int in_stride_h = in_width;
   const int in_stride_n = in_stride_h * in_height;
 
@@ -133,8 +145,6 @@ void Crop3D(const int8_t *input, int8_t *output, int task_id, CropParameter *par
   float scale = in_scale / out_scale;
   float bias = -in_zp * scale;
 
-  const int thread_count = para->thread_count_;
-  int64_t task_id_stride = thread_count > 1 ? UP_DIV(out_height, thread_count) : out_height;
   for (int n = 0; n < out_batch; n++) {
     for (int t = 0; t < task_id_stride; t++) {
       auto h = t + task_id * task_id_stride;
@@ -173,6 +183,12 @@ void Crop4D(const int8_t *input, int8_t *output, int task_id, CropParameter *par
   const int out_width = para->out_shape_[2];
   const int out_channel = para->out_shape_[3];
 
+  const int thread_count = para->thread_count_;
+  int64_t task_id_stride = thread_count > 1 ? UP_DIV(out_height, thread_count) : out_height;
+  if (task_id_stride <= 0) {
+    return;
+  }
+
   const int in_stride_w = in_channel;
   const int in_stride_h = in_channel * in_width;
   const int in_stride_n = in_stride_h * in_height;
@@ -188,8 +204,6 @@ void Crop4D(const int8_t *input, int8_t *output, int task_id, CropParameter *par
   float scale = in_scale / out_scale;
   float bias = -in_zp * scale;
 
-  const int thread_count = para->thread_count_;
-  int64_t task_id_stride = thread_count > 1 ? UP_DIV(out_height, thread_count) : out_height;
   for (int n = 0; n < out_batch; n++) {
     for (int t = 0; t < task_id_stride; t++) {
       auto h = t + task_id * task_id_stride;

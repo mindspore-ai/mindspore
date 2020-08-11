@@ -21,7 +21,7 @@
 namespace mindspore {
 class TestTfliteParserCast : public TestTfliteParser {
  public:
-  TestTfliteParserCast() {}
+  TestTfliteParserCast() = default;
   void SetUp() override {
     meta_graph = LoadAndConvert("./cast.tflite");
   }
