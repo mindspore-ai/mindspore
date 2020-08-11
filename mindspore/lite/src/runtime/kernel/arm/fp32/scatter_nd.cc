@@ -37,11 +37,14 @@ constexpr int kScatterIndicesIndex = 1;
 constexpr int kScatterUpdateIndex = 2;
 }  // namespace
 int ScatterNDCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
-  auto shape = inputs_.at(kScatterShapeIndex);
+  return ReSize();
+}
+
+int ScatterNDCPUKernel::ReSize() {
+auto shape = inputs_.at(kScatterShapeIndex);
   auto indices = inputs_.at(kScatterIndicesIndex);
   auto update = inputs_.at(kScatterUpdateIndex);
 
@@ -116,12 +119,10 @@ int ScatterNDCPUKernel::Init() {
     output_unit_offsets_.push_back(tmp_stride);
   }
 
-  thread_n_num_ = MSMIN(thread_num_, num_unit_);
+  thread_n_num_ = MSMIN(opParameter->thread_num_, num_unit_);
   thread_n_stride_ = UP_DIV(num_unit_, thread_n_num_);
   return RET_OK;
 }
-
-int ScatterNDCPUKernel::ReSize() { return 0; }
 
 int ScatterNDCPUKernel::ScatterND(int task_id) {
   int num_unit_thread = MSMIN(thread_n_stride_, num_unit_ - task_id * thread_n_stride_);
@@ -152,8 +153,8 @@ int ScatterNDRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 int ScatterNDCPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
   }
   ret = LiteBackendParallelLaunch(ScatterNDRun, this, thread_n_num_);
   if (ret != RET_OK) {

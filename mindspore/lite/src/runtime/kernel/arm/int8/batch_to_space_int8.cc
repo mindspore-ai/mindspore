@@ -51,8 +51,8 @@ int BatchToSpaceInt8CPUKernel::ReSize() {
 int BatchToSpaceInt8CPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
   }
   auto input = inputs_[0];
   auto output = outputs_[0];

@@ -31,7 +31,7 @@ class BroadcastToCPUKernel : public LiteKernel {
   ~BroadcastToCPUKernel() = default;
 
   int Init() override;
-  int ReSize() override { return 0; }
+  int ReSize() override;
   int Run() override;
 
  private:

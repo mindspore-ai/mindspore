@@ -29,30 +29,18 @@ using mindspore::schema::PrimitiveType_Concat;
 
 namespace mindspore::kernel {
 int ConcatCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
-    return RET_OK;
-  }
   auto ret = ConcatBaseCPUKernel::Init();
   if (ret != RET_OK) {
     return ret;
   }
-  schema::Format input0_format = inputs_[0]->GetFormat();
-  bool need_convert_format = false;
-  for (size_t i = 1; i < inputs_.size(); ++i) {
-    if (inputs_[i]->GetFormat() != input0_format) {
-      need_convert_format = true;
-    }
-  }
-  if (!need_convert_format) {
-    outputs_[0]->SetFormat(input0_format);
+  if (!InferShapeDone()) {
     return RET_OK;
   }
-  MS_LOG(ERROR) << "All input format should be the same!";
-  return RET_ERROR;
+
+  return ReSize();
 }
 
-int ConcatCPUKernel::ReSize() { return RET_OK; }
+int ConcatCPUKernel::ReSize() { return ConcatBaseCPUKernel::ReSize(); }
 
 int ConcatCPUKernel::Run() {
   auto prepare_ret = Prepare();

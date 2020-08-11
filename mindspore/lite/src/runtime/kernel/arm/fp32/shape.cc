@@ -37,7 +37,7 @@ int ShapeCPUKernel::ReSize() { return RET_OK; }
 int ShapeCPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return RET_ERROR;
   }
   auto out_tensor = outputs_.front();

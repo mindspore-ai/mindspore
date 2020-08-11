@@ -32,22 +32,26 @@ using mindspore::schema::PrimitiveType_SpaceToDepth;
 namespace mindspore::kernel {
 
 int SpaceToDepthCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
-    return RET_OK;
-  }
-  if (inputs_[0]->GetFormat() != schema::Format_NHWC) {
-    MS_LOG(ERROR) << "space_to_depth only support NHWC now!";
-    return RET_FORMAT_ERR;
-  }
   SpaceToDepthParameter *param = reinterpret_cast<SpaceToDepthParameter *>(opParameter);
   if (param->block_size_ <= 0) {
     MS_LOG(ERROR) << "Input block_size should > 0!";
     return RET_PARAM_INVALID;
   }
 
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
+
+int SpaceToDepthCPUKernel::ReSize() {
+if (inputs_[0]->GetFormat() != schema::Format_NHWC) {
+    MS_LOG(ERROR) << "space_to_depth only support NHWC now!";
+    return RET_FORMAT_ERR;
+  }
+
   num_unit_ = static_cast<int>(inputs_[0]->shape().at(kNHWC_H));
-  thread_h_num_ = MSMIN(thread_num_, num_unit_);
+  thread_h_num_ = MSMIN(opParameter->thread_num_, num_unit_);
   thread_h_stride_ = UP_DIV(num_unit_, thread_h_num_);
   return RET_OK;
 }
@@ -83,8 +87,8 @@ int SpaceToDepthRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 int SpaceToDepthCPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
   }
   input_ptr_ = reinterpret_cast<float *>(inputs_[0]->Data());
   output_ptr_ = reinterpret_cast<float *>(outputs_[0]->Data());

@@ -25,20 +25,13 @@
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_FORMAT_ERR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OP_EXECUTE_FAILURE;
 using mindspore::schema::PrimitiveType_SpaceToBatch;
 
 namespace mindspore::kernel {
 
 int SpaceToBatchCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
-    return RET_OK;
-  }
-  if (inputs_[0]->GetFormat() != schema::Format_NHWC) {
-    MS_LOG(ERROR) << "space_to_batch only support NHWC now!";
-    return RET_FORMAT_ERR;
-  }
   SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->opParameter);
   for (int i = 0; i < SPACE_TO_BATCH_PADDINGS_SIZE; ++i) {
     if (param->paddings_[i] != 0) {
@@ -48,6 +41,18 @@ int SpaceToBatchCPUKernel::Init() {
   }
   param->n_dims_ = DIMENSION_4D;
   param->n_space_dims_ = SPACE_TO_BATCH_BLOCK_SIZES_SIZE;
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
+
+int SpaceToBatchCPUKernel::ReSize() {
+  if (inputs_[0]->GetFormat() != schema::Format_NHWC) {
+    MS_LOG(ERROR) << "space_to_batch only support NHWC now!";
+    return RET_FORMAT_ERR;
+  }
+  SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->opParameter);
   param->num_elements_ = EnumElement(param->in_shape_, param->n_dims_);
   param->num_elements_padded_ = EnumElement(param->padded_in_shape_, param->n_dims_);
   return RET_OK;
@@ -56,8 +61,8 @@ int SpaceToBatchCPUKernel::Init() {
 int SpaceToBatchCPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
   }
   auto input = inputs_[0];
   auto output = outputs_[0];
@@ -67,14 +72,19 @@ int SpaceToBatchCPUKernel::Run() {
 
   float *tmp_space[3] = {nullptr, nullptr, nullptr};
   if (param->need_paddings_) {
-    tmp_space[0] = reinterpret_cast<float *>(malloc(param->num_elements_padded_ * sizeof(float)));
-    (void)memset(tmp_space[0], 0, param->num_elements_padded_);
-    tmp_space[1] = reinterpret_cast<float *>(malloc(param->num_elements_padded_ * sizeof(float)));
-    (void)memset(tmp_space[1], 0, param->num_elements_padded_);
-    tmp_space[2] = reinterpret_cast<float *>(malloc(param->num_elements_padded_ * sizeof(float)));
-    (void)memset(tmp_space[2], 0, param->num_elements_padded_);
-
+    for (int i = 0; i < 3; ++i) {
+      tmp_space[i]
+        = reinterpret_cast<float *>(context_->allocator->Malloc(param->num_elements_padded_ * sizeof(float)));
+      (void)memset(tmp_space[i], 0, param->num_elements_padded_ * sizeof(float));
+      if (tmp_space[i] == nullptr) {
+        MS_LOG(ERROR) << "malloc tmp buffer fail!";
+        return RET_ERROR;
+      }
+    }
     ret = SpaceToBatch(input_ptr_, output_ptr_, *param, tmp_space);
+    for (int i = 0; i < 3; ++i) {
+      context_->allocator->Free(tmp_space);
+    }
   } else {
     ret = SpaceToBatch(input_ptr_, output_ptr_, *param, tmp_space);
   }

@@ -29,8 +29,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore::kernel {
-
-ArithmeticCPUKernel::~ArithmeticCPUKernel() {
+void ArithmeticCPUKernel::FreeTileData() {
   if (tile_data0_ != nullptr) {
     delete[](tile_data0_);
     tile_data0_ = nullptr;
@@ -40,20 +39,26 @@ ArithmeticCPUKernel::~ArithmeticCPUKernel() {
     tile_data1_ = nullptr;
   }
 }
+
+ArithmeticCPUKernel::~ArithmeticCPUKernel() {
+  FreeTileData();
+}
+
 int ArithmeticCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
+  return ReSize();
+}
+
+int ArithmeticCPUKernel::ReSize() {
+  FreeTileData();
   auto element_num = outputs_[0]->ElementsNum();
 
   tile_data0_ = new float[element_num];
   tile_data1_ = new float[element_num];
-
   return RET_OK;
 }
-
-int ArithmeticCPUKernel::ReSize() { return RET_OK; }
 
 int ArithmeticCPUKernel::DoArithmetic(int task_id) {
   auto input0_data = reinterpret_cast<float *>(inputs_[0]->Data());
@@ -98,7 +103,7 @@ int ArithmeticsRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 int ArithmeticCPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
   if (arithmeticParameter_->broadcasting_) {

@@ -31,6 +31,14 @@ using mindspore::schema::PrimitiveType_StridedSlice;
 namespace mindspore::kernel {
 
 int StridedSliceCPUKernel::Init() {
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+
+  return ReSize();
+}
+
+int StridedSliceCPUKernel::ReSize() {
   auto input = inputs_.at(0);
   auto parameter = reinterpret_cast<StridedSliceParameter *>(opParameter);
   MS_ASSERT(input);
@@ -39,13 +47,11 @@ int StridedSliceCPUKernel::Init() {
   return RET_OK;
 }
 
-int StridedSliceCPUKernel::ReSize() { return 0; }
-
 int StridedSliceCPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
   }
 
   auto input = inputs_.at(0);

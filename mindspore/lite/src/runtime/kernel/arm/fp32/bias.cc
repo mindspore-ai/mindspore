@@ -28,7 +28,18 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BiasAdd;
 
 namespace mindspore::kernel {
-int BiasCPUKernel::ReSize() { return RET_OK; }
+int BiasCPUKernel::ReSize() {
+  auto dims = inputs_[0]->shape();
+  MS_ASSERT(dims.size() <= 5);
+  bias_param_->ndim_ = dims.size();
+  for (int i = 0; i < bias_param_->ndim_; i++) {
+    bias_param_->in_shape0_[i] = dims[i];
+    bias_param_->in_shape1_[i] = 1;
+    bias_param_->out_shape_[i] = dims[i];
+  }
+  bias_param_->in_shape1_[bias_param_->ndim_ - 1] = dims[bias_param_->ndim_ - 1];
+  return RET_OK;
+}
 
 int BiasCPUKernel::Run() {
   auto prepare_ret = Prepare();
@@ -49,20 +60,11 @@ int BiasCPUKernel::Run() {
 }
 
 int BiasCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
-  auto dims = inputs_[0]->shape();
-  MS_ASSERT(dims.size() <= 5);
-  bias_param_->ndim_ = dims.size();
-  for (int i = 0; i < bias_param_->ndim_; i++) {
-    bias_param_->in_shape0_[i] = dims[i];
-    bias_param_->in_shape1_[i] = 1;
-    bias_param_->out_shape_[i] = dims[i];
-  }
-  bias_param_->in_shape1_[bias_param_->ndim_ - 1] = dims[bias_param_->ndim_ - 1];
-  return RET_OK;
+
+  return ReSize();
 }
 
 kernel::LiteKernel *CpuBiasFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,

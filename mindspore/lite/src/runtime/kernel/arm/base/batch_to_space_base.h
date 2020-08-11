@@ -27,9 +27,7 @@ class BatchToSpaceBaseCPUKernel : public LiteKernel {
   BatchToSpaceBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                             const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                             const lite::Primitive *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
-    opParameter->thread_num_ = ctx->thread_num_;
-  }
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
 
   virtual ~BatchToSpaceBaseCPUKernel() = default;
 

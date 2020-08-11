@@ -28,11 +28,6 @@ using mindspore::schema::ActivationType_RELU;
 
 namespace mindspore::kernel {
 int ReluXInt8CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
-    return RET_OK;
-  }
-
   lite::tensor::Tensor *input = inputs_.at(0);
   lite::tensor::Tensor *output = outputs_.at(0);
   MS_ASSERT(input);
@@ -56,7 +51,7 @@ int ReluXInt8CPUKernel::DoActivation(int task_id) {
   auto output_addr = reinterpret_cast<int8_t *>(outputs_.at(0)->Data());
   auto length = inputs_.at(0)->ElementsNum();
 
-  int stride = UP_DIV(length, thread_count_);
+  int stride = UP_DIV(length, opParameter->thread_num_);
   int count = MSMIN(stride, length - stride * task_id);
 
   ReluXInt8(input_addr + stride * task_id, count, output_addr + stride * task_id, &quant_arg_);
@@ -76,10 +71,10 @@ int ReluXInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 int ReluXInt8CPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  int error_code = LiteBackendParallelLaunch(ReluXInt8Run, this, thread_count_);
+  int error_code = LiteBackendParallelLaunch(ReluXInt8Run, this, opParameter->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "ReluXInt8Run function error error_code[" << error_code << "]";
     return RET_ERROR;

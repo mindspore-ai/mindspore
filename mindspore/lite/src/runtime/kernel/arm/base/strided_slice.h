@@ -27,15 +27,12 @@ class StridedSliceCPUKernel : public LiteKernel {
   StridedSliceCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                         const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                         const lite::Primitive *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_num_(ctx->thread_num_) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~StridedSliceCPUKernel() override = default;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
-
- private:
-  int thread_num_;
 };
 }  // namespace mindspore::kernel
 

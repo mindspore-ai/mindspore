@@ -32,10 +32,13 @@ constexpr int kTransposeInputNum = 1;
 constexpr int kTransposeOutputNum = 1;
 }  // namespace
 int TransposeCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
+  return ReSize();
+}
+
+int TransposeCPUKernel::ReSize() {
   auto &inTensor = inputs_.front();
   auto &outTensor = outputs_.front();
   auto param = reinterpret_cast<TransposeParameter *>(opParameter);
@@ -51,13 +54,11 @@ int TransposeCPUKernel::Init() {
   return RET_OK;
 }
 
-int TransposeCPUKernel::ReSize() { return RET_OK; }
-
 int TransposeCPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
   }
   MS_ASSERT(inputs_.size() == TransposeInputNum);
   MS_ASSERT(outputs_.size() == TransposeOutputNum);

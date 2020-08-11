@@ -28,7 +28,9 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Split;
 
 namespace mindspore::kernel {
-int SplitBaseCPUKernel::Init() {
+int SplitBaseCPUKernel::Init() { return RET_OK; }
+
+int SplitBaseCPUKernel::ReSize() {
   auto in_tensor = inputs_.front();
   auto input_shape = in_tensor->shape();
 

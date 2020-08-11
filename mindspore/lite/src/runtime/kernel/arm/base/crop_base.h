@@ -29,9 +29,7 @@ class CropBaseCPUKernel : public LiteKernel {
   CropBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                     const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                     const lite::Primitive *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {
-    opParameter->thread_num_ = ctx->thread_num_;
-  }
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {}
   ~CropBaseCPUKernel() = default;
 
   int Init() override;

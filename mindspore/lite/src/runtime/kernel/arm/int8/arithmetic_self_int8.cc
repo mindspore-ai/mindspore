@@ -99,8 +99,8 @@ int ArithmeticSelfInt8CPUKernel::DoArithmeticSelf(int task_id) {
 int ArithmeticSelfInt8CPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
   }
   auto input_tensor = inputs_.at(0);
   auto out_tensor = outputs_.at(0);

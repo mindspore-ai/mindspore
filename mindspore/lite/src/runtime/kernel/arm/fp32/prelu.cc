@@ -28,10 +28,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Prelu;
 
 namespace mindspore::kernel {
-int PReluCPUKernel::Init() {
-  prelu_param_->op_parameter_.thread_num_ = thread_count_;
-  return RET_OK;
-}
+int PReluCPUKernel::Init() { return RET_OK; }
 
 int PReluCPUKernel::DoExcute(int task_id) {
   PRelu(input_data, output_data, prelu_param_, task_id);

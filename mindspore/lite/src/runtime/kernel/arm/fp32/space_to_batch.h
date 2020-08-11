@@ -30,7 +30,7 @@ class SpaceToBatchCPUKernel : public LiteKernel {
   ~SpaceToBatchCPUKernel() = default;
 
   int Init() override;
-  int ReSize() override { return 0; }
+  int ReSize() override;
   int Run() override;
 
  private:

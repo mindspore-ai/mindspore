@@ -41,10 +41,13 @@ int CastRun(int thread_id, LiteParallelGroupEnv *penv, void *cdata) {
 }  // namespace
 
 int CastCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
+  return ReSize();
+}
+
+int CastCPUKernel::ReSize() {
   data_num_ = inputs_[0]->ElementsNum();
   if (data_num_ == 0) {
     return RET_OK;

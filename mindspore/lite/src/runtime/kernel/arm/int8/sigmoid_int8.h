@@ -27,7 +27,7 @@ class SigmoidInt8CPUKernel : public LiteKernel {
   SigmoidInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                       const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                       const lite::Primitive *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~SigmoidInt8CPUKernel() override = default;
 
   int Init() override;
@@ -36,7 +36,6 @@ class SigmoidInt8CPUKernel : public LiteKernel {
   int DoActivation(int task_id);
 
  private:
-  int thread_count_;
   SigmoidQuantArg quant_arg_;
   void MultiplierInt32ToInt16(int32_t input, int16_t *output);
 };

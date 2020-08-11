@@ -27,11 +27,43 @@ using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 
 int ConcatInt8CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+  ConcatBaseCPUKernel::Init();
+  auto input_num = inputs_.size();
+  concat_param_->quant_arg_.in_args_ =
+    reinterpret_cast<QuantArg *>(ctx_->allocator->Malloc(sizeof(QuantArg) * input_num));
+  if (concat_param_->quant_arg_.in_args_ == nullptr) {
+    MS_LOG(ERROR) << "Null pointer reference: quant_concat_parm_->in_quant_args_.";
+    return RET_ERROR;
+  }
+  for (size_t i = 0; i < input_num; i++) {
+    auto *input_tensor = inputs_.at(i);
+    auto quant_args = input_tensor->GetQuantParams();
+    concat_param_->quant_arg_.in_args_[i].scale_ = quant_args.front().scale;
+    concat_param_->quant_arg_.in_args_[i].zp_ = quant_args.front().zeroPoint;
+  }
+
+  auto output_tensor = outputs_.at(kOutputIndex);
+  auto quant_args = output_tensor->GetQuantParams();
+  concat_param_->quant_arg_.out_args_.scale_ = quant_args.front().scale;
+  concat_param_->quant_arg_.out_args_.zp_ = quant_args.front().zeroPoint;
+
+  concat_param_->quant_arg_.output_activation_min_ = std::numeric_limits<int8_t>::min();
+  concat_param_->quant_arg_.output_activation_max_ = std::numeric_limits<int8_t>::max();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
-  ConcatBaseCPUKernel::Init();
+  return ReSize();
+}
+
+
+int ConcatInt8CPUKernel::ReSize() {
+  auto ret = ConcatBaseCPUKernel::ReSize();
+  if (ret != RET_OK) {
+    return ret;
+  }
+  if (concat_param_->input_shapes_ != nullptr) {
+    ctx_->allocator->Free(concat_param_->input_shapes_);
+  }
   auto input_num = inputs_.size();
   concat_param_->input_num_ = input_num;
   concat_param_->input_shapes_ = reinterpret_cast<const int **>(ctx_->allocator->Malloc(sizeof(int *) * input_num));
@@ -52,37 +84,14 @@ int ConcatInt8CPUKernel::Init() {
     after_axis_size *= concat_param_->output_shapes_[i];
   }
   concat_param_->after_axis_size = after_axis_size;
-
-  concat_param_->quant_arg_.in_args_ =
-    reinterpret_cast<QuantArg *>(ctx_->allocator->Malloc(sizeof(QuantArg) * input_num));
-  if (concat_param_->quant_arg_.in_args_ == nullptr) {
-    MS_LOG(ERROR) << "Null pointer reference: quant_concat_parm_->in_quant_args_.";
-    return RET_ERROR;
-  }
-  for (size_t i = 0; i < input_num; i++) {
-    auto *input_tensor = inputs_.at(i);
-    auto quant_args = input_tensor->GetQuantParams();
-    concat_param_->quant_arg_.in_args_[i].scale_ = quant_args.front().scale;
-    concat_param_->quant_arg_.in_args_[i].zp_ = quant_args.front().zeroPoint;
-  }
-
-  auto quant_args = output_tensor->GetQuantParams();
-  concat_param_->quant_arg_.out_args_.scale_ = quant_args.front().scale;
-  concat_param_->quant_arg_.out_args_.zp_ = quant_args.front().zeroPoint;
-
-  concat_param_->quant_arg_.output_activation_min_ = std::numeric_limits<int8_t>::min();
-  concat_param_->quant_arg_.output_activation_max_ = std::numeric_limits<int8_t>::max();
-
   return RET_OK;
 }
-
-int ConcatInt8CPUKernel::ReSize() { return 0; }
 
 int ConcatInt8CPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
   }
 
   auto input_num = concat_param_->input_num_;

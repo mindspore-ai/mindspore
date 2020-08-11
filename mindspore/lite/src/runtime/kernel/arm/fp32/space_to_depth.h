@@ -26,16 +26,15 @@ class SpaceToDepthCPUKernel : public LiteKernel {
   SpaceToDepthCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                         const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                         const lite::Primitive *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_num_(ctx->thread_num_) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~SpaceToDepthCPUKernel() = default;
 
   int SpaceToDepth(int task_id);
   int Init() override;
-  int ReSize() override { return 0; };
+  int ReSize() override;
   int Run() override;
 
  private:
-  int thread_num_;
   int thread_h_stride_;
   int thread_h_num_;
   int num_unit_;

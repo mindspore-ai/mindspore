@@ -25,17 +25,15 @@ namespace mindspore::kernel {
 
 class ShapeCPUKernel : public LiteKernel {
  public:
-  explicit ShapeCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                          const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                          const lite::Primitive *primitive)
+  ShapeCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                 const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                 const lite::Primitive *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ShapeCPUKernel() override = default;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
-
- private:
 };
 }  // namespace mindspore::kernel
 

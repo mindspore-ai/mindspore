@@ -29,11 +29,10 @@ using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 
 int SqueezeInt8CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
-    return RET_OK;
+  auto init_ret = SqueezeBaseCPUKernel::Init();
+  if (init_ret != RET_OK) {
+    return init_ret;
   }
-  SqueezeBaseCPUKernel::Init();
   quant_Squeeze_parm_ = new (std::nothrow) SqueezeQuantArg;
   auto input_num = inputs_.size();
   quant_Squeeze_parm_->input_num_ = input_num;
@@ -52,24 +51,6 @@ int SqueezeInt8CPUKernel::Init() {
     return RET_ERROR;
   }
 
-  for (size_t i = 0; i < input_num; i++) {
-    auto *input_tensor = inputs_.at(i);
-    MS_ASSERT(input_tensor != nullptr);
-    auto input_size = input_tensor->shape().size();
-    MS_ASSERT(input_size != NULL);
-    quant_Squeeze_parm_->input_shapes_[i] = reinterpret_cast<int *>(malloc(sizeof(int) * input_size));
-    if (quant_Squeeze_parm_->input_shapes_[i] == nullptr) {
-      MS_LOG(ERROR) << "Null pointer reference: quant_Squeeze_parm_->input_shapes_[" << i << "].";
-      return RET_ERROR;
-    }
-
-    ::memcpy(quant_Squeeze_parm_->input_shapes_[i], input_tensor->shape().data(), sizeof(int) * input_size);
-    for (size_t j = 0; j < input_size; j++) {
-      auto *input_tensor_tmp = inputs_.at(i);
-      auto input_shape = input_tensor_tmp->shape()[j];
-      quant_Squeeze_parm_->input_sizes_[i] *= input_shape;
-    }
-  }
   quant_Squeeze_parm_->axis_ = 0;
   quant_Squeeze_parm_->in_quant_args_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg) * input_num));
   if (quant_Squeeze_parm_->in_quant_args_ == nullptr) {
@@ -88,6 +69,41 @@ int SqueezeInt8CPUKernel::Init() {
   MS_ASSERT(outputs_.size() == 1);
   auto output_tensor = outputs_.at(0);
   MS_ASSERT(output_tensor != nullptr);
+  auto quant_args = output_tensor->GetQuantParams();
+  MS_ASSERT(quant_args.size() == 1);
+  quant_Squeeze_parm_->out_quant_args_.scale_ = quant_args.front().scale;
+  quant_Squeeze_parm_->out_quant_args_.zp_ = quant_args.front().zeroPoint;
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+
+  return ReSize();
+}
+
+int SqueezeInt8CPUKernel::ReSize() {
+  auto input_num = inputs_.size();
+  for (size_t i = 0; i < input_num; i++) {
+    auto *input_tensor = inputs_.at(i);
+    MS_ASSERT(input_tensor != nullptr);
+    auto input_size = input_tensor->shape().size();
+    MS_ASSERT(input_size != NULL);
+    quant_Squeeze_parm_->input_shapes_[i] = reinterpret_cast<int *>(malloc(sizeof(int) * input_size));
+    if (quant_Squeeze_parm_->input_shapes_[i] == nullptr) {
+      MS_LOG(ERROR) << "Null pointer reference: quant_Squeeze_parm_->input_shapes_[" << i << "].";
+      return RET_ERROR;
+    }
+
+    ::memcpy(quant_Squeeze_parm_->input_shapes_[i], input_tensor->shape().data(), sizeof(int) * input_size);
+    for (size_t j = 0; j < input_size; j++) {
+      auto *input_tensor_tmp = inputs_.at(i);
+      auto input_shape = input_tensor_tmp->shape()[j];
+      quant_Squeeze_parm_->input_sizes_[i] *= input_shape;
+    }
+  }
+
+  MS_ASSERT(outputs_.size() == 1);
+  auto output_tensor = outputs_.at(0);
+  MS_ASSERT(output_tensor != nullptr);
   auto output_shape = output_tensor->shape();
   MS_ASSERT(output_shape != NULL);
   auto output_dim = output_shape.size();
@@ -100,21 +116,13 @@ int SqueezeInt8CPUKernel::Init() {
 
   quant_Squeeze_parm_->output_shape_ = new int[output_size];
   ::memcpy(quant_Squeeze_parm_->output_shape_, output_shape.data(), sizeof(int) * output_size);
-
-  auto quant_args = output_tensor->GetQuantParams();
-  MS_ASSERT(quant_args.size() == 1);
-  quant_Squeeze_parm_->out_quant_args_.scale_ = quant_args.front().scale;
-  quant_Squeeze_parm_->out_quant_args_.zp_ = quant_args.front().zeroPoint;
-
   return RET_OK;
 }
-
-int SqueezeInt8CPUKernel::ReSize() { return 0; }
 
 int SqueezeInt8CPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
   auto input_dim = quant_Squeeze_parm_->input_num_;

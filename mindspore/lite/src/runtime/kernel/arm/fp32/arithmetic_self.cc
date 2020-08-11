@@ -27,12 +27,11 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 int ArithmeticSelfCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
-  int ret = ReSize();
-  return ret;
+
+  return ReSize();
 }
 
 int ArithmeticSelfCPUKernel::ReSize() {
@@ -74,7 +73,7 @@ int ArithmeticSelfCPUKernel::DoArithmeticSelf(int task_id) {
 int ArithmeticSelfCPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
   auto input_tensor = inputs_.at(0);

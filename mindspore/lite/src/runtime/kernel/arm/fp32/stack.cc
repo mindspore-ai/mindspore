@@ -26,55 +26,26 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Stack;
 
 namespace mindspore::kernel {
-int StackCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
-    return RET_OK;
-  }
+int StackCPUKernel::ReSize() {
   StackParameter *param = reinterpret_cast<StackParameter *>(opParameter);
   auto input0_shape = inputs_[0]->shape();
   axis_ = param->axis_ < 0 ? param->axis_ + input0_shape.size() : param->axis_;
-  schema::Format input0_format = inputs_[0]->GetFormat();
-  bool need_convert_format = false;
-  for (size_t i = 1; i < inputs_.size(); ++i) {
-    if (inputs_[i]->GetFormat() != input0_format) {
-      need_convert_format = true;
-    }
-  }
-  if (!need_convert_format) {
-    outputs_[0]->SetFormat(input0_format);
+  return RET_OK;
+}
+
+int StackCPUKernel::Init() {
+  if (!InferShapeDone()) {
     return RET_OK;
   }
 
-  for (size_t i = 0; i < inputs_.size(); ++i) {
-    if (inputs_[i]->GetFormat() != schema::Format_NHWC) {
-      convert_functions_[i] = LayoutTransform(inputs_[i]->data_type(), inputs_[i]->GetFormat(), schema::Format_NHWC);
-      if (convert_functions_[i] == nullptr) {
-        MS_LOG(ERROR) << "Can not convert format " << inputs_[i]->GetFormat() << " to " << schema::Format_NHWC;
-        return RET_ERROR;
-      }
-      size_t packed_input_size =
-        inputs_[i]->Channel() * inputs_[i]->Batch() * inputs_[i]->Height() * inputs_[i]->Width();
-      packed_inputs_[i] = reinterpret_cast<float *>(malloc(packed_input_size * sizeof(float)));
-      if (packed_inputs_[i] == nullptr) {
-        MS_LOG(ERROR) << "malloc memory fail!";
-        return RET_ERROR;
-      }
-      memset(packed_inputs_[i], 0, packed_input_size * sizeof(float));
-    } else {
-      convert_functions_[i] = nullptr;
-      packed_inputs_[i] = nullptr;
-    }
-  }
-  outputs_[0]->SetFormat(schema::Format_NHWC);
-  return RET_OK;
+  return ReSize();
 }
 
 int StackCPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
   }
   size_t inputs_num = inputs_.size();
   auto input0_shape = inputs_[0]->shape();
@@ -82,14 +53,8 @@ int StackCPUKernel::Run() {
   float *inputs[inputs_num];
   for (size_t i = 0; i < inputs_num; ++i) {
     inputs[i] = reinterpret_cast<float *>(inputs_[i]->Data());
-    if (convert_functions_[i] != nullptr) {
-      convert_functions_[i](inputs[i], packed_inputs_[i], inputs_[i]->Batch(),
-                            inputs_[i]->Height() * inputs_[i]->Width(), inputs_[i]->Channel());
-    } else {
-      packed_inputs_[i] = inputs[i];
-    }
   }
-  DoStack(packed_inputs_.data(), inputs_num, input0_shape.data(), input0_shape.size(), axis_, output_data);
+  DoStack(inputs, inputs_num, input0_shape.data(), input0_shape.size(), axis_, output_data);
   return RET_OK;
 }
 

@@ -28,10 +28,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Reshape;
 
 namespace mindspore::kernel {
-int ReshapeBaseCPUKernel::Init() {
-  reshape_param_->thread_count_ = thread_count_;
-  return RET_OK;
-}
+int ReshapeBaseCPUKernel::Init() { return RET_OK; }
 
 kernel::LiteKernel *CpuReshapeInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                 const std::vector<lite::tensor::Tensor *> &outputs,
