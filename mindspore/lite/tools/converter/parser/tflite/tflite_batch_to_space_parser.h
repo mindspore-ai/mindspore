@@ -32,9 +32,14 @@ class TfliteBatchToSpaceParser : public TfliteNodeParser {
                const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
                const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
                const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_opset, schema::CNodeT *op,
-               TensorCache *tensor_cache,
-               bool quantized_model) override;
+               TensorCache *tensor_cache, bool quantized_model) override;
 };
+
+class TfliteBatchToSpaceNDParser : public TfliteBatchToSpaceParser {
+ public:
+  TfliteBatchToSpaceNDParser() : TfliteBatchToSpaceParser() {}
+};
+
 }  // namespace lite
 }  // namespace mindspore
 

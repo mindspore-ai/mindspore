@@ -27,6 +27,16 @@ STATUS TfliteReverseParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
                               schema::CNodeT *op,
                               TensorCache *tensor_cache,
                               bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse TfliteReverseParser";
   std::unique_ptr<schema::ReverseT> attr(new schema::ReverseT());
 
@@ -34,11 +44,8 @@ STATUS TfliteReverseParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
     return RET_ERROR;
   }
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Reverse;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_Reverse;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

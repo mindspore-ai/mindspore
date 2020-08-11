@@ -25,6 +25,16 @@ STATUS TfliteDeConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
                                  const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                  const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                  schema::CNodeT *op, TensorCache *tensor_cache,  bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse tflite Transpose_Conv parser";
   std::unique_ptr<schema::DeConv2DT> attr(new schema::DeConv2DT());
   const auto &tflite_attr = tfliteOp->builtin_options.AsTransposeConvOptions();
@@ -49,7 +59,7 @@ STATUS TfliteDeConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     return RET_NULL_PTR;
   }
   std::vector<tflite::TensorT *> weight_tensors{weight_tensor.get()};
-  if (RET_OK != ParseWeight(weight_tensors, tfliteModelBuffer, tensor_cache, schema::Format_KHWC)) {
+  if (RET_OK != ParseTensor(weight_tensors, tfliteModelBuffer, tensor_cache, TF_CONST)) {
     return RET_ERROR;
   }
   auto weight_shape = weight_tensor->shape;
@@ -58,11 +68,8 @@ STATUS TfliteDeConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   attr->kernelW = weight_shape[CHWK_W];
   attr->kernelH = weight_shape[CHWK_H];
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_DeConv2D;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_DeConv2D;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

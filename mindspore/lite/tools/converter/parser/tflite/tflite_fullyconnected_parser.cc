@@ -25,6 +25,16 @@ STATUS TfliteFullyConnectedParser::Parse(const std::unique_ptr<tflite::OperatorT
                                          const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                          const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
                                          schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   MS_LOG(DEBUG) << "parse TfliteFullyConnectedParser";
   std::unique_ptr<schema::FullConnectionT> attr(new schema::FullConnectionT());
 
@@ -35,7 +45,7 @@ STATUS TfliteFullyConnectedParser::Parse(const std::unique_ptr<tflite::OperatorT
     return RET_NULL_PTR;
   }
   std::vector<tflite::TensorT *> weight_tensors{weight_tensor.get()};
-  if (RET_OK != ParseWeight(weight_tensors, tfliteModelBuffer, tensor_cache, schema::Format_NHWC)) {
+  if (RET_OK != ParseTensor(weight_tensors, tfliteModelBuffer, tensor_cache, TF_CONST)) {
     MS_LOG(ERROR) << "parse weight failed";
     return RET_ERROR;
   }
@@ -49,18 +59,15 @@ STATUS TfliteFullyConnectedParser::Parse(const std::unique_ptr<tflite::OperatorT
       return RET_NULL_PTR;
     }
     std::vector<tflite::TensorT *> bias_tensors{bias_tensor.get()};
-    if (RET_OK != ParseBias(bias_tensors, tfliteModelBuffer, tensor_cache)) {
+    if (RET_OK != ParseTensor(bias_tensors, tfliteModelBuffer, tensor_cache, TF_CONST)) {
       MS_LOG(ERROR) << "parse bias failed";
       return RET_ERROR;
     }
   }
   attr->axis = 1;
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_FullConnection;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_FullConnection;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

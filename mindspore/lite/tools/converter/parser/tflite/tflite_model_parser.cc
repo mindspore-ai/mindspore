@@ -15,7 +15,6 @@
  */
 
 #include "tools/converter/parser/tflite/tflite_model_parser.h"
-#include <fstream>
 #include <utility>
 #include <memory>
 #include "tools/common/graph_util.h"
@@ -71,6 +70,10 @@ STATUS TfliteModelParser::ParseTfliteQuantParams(const std::unique_ptr<tflite::S
   quant_params_index.insert(quant_params_index.end(), tflite_op->outputs.begin(), tflite_op->outputs.end());
   for (const auto &index : quant_params_index) {
     const auto &tflite_tensor = tflite_subgraph->tensors[index];
+    if (tflite_tensor == nullptr) {
+      MS_LOG(ERROR) << "tensor with id = " << index <<" is null";
+      return RET_ERROR;
+    }
     if (tflite_tensor->quantization->scale.empty() && tflite_tensor->quantization->zero_point.empty() &&
         tflite_tensor->quantization->min.empty() && tflite_tensor->quantization->max.empty()) {
       continue;
@@ -101,6 +104,10 @@ STATUS TfliteModelParser::SetOpOutputIdx(const std::unique_ptr<tflite::SubGraphT
                                          TensorCache *tensorCache) {
   for (const auto &index : tflite_op->outputs) {
     const auto &tflite_tensor = tflite_subgraph->tensors[index];
+    if (tflite_tensor == nullptr) {
+      MS_LOG(ERROR) << "tensor with id = " << index <<" is null";
+      return RET_ERROR;
+    }
     std::unique_ptr<schema::TensorT> tensor(new schema::TensorT());
     tensor->dataType = GetTfliteDataType(tflite_tensor->type);
     tensor->dims = tflite_tensor->shape;
@@ -108,7 +115,6 @@ STATUS TfliteModelParser::SetOpOutputIdx(const std::unique_ptr<tflite::SubGraphT
     auto opOutputIndex = tensorCache->AddTensor(tflite_tensor->name, tensor.release(), OP_OUTPUT);
     op->outputIndex.emplace_back(opOutputIndex);
   }
-
   return RET_OK;
 }
 
@@ -123,6 +129,10 @@ STATUS TfliteModelParser::SetOpInputIdx(const std::unique_ptr<tflite::ModelT> &t
 
   for (const auto &tflite_index : op_inputs) {
     const auto &tflite_tensor = tflite_subgraph->tensors[tflite_index];
+    if (tflite_tensor == nullptr) {
+      MS_LOG(ERROR) << "tensor with id = " << tflite_index <<" is null";
+      return RET_ERROR;
+    }
     auto tensor_name = tflite_tensor->name;
     auto op = tfliteOpMap[tflite_op.get()];
     unsigned int index = tensorCache->FindTensor(tensor_name);
@@ -144,10 +154,8 @@ STATUS TfliteModelParser::ParseOp(const std::unique_ptr<tflite::ModelT> &tflite_
 
     std::unique_ptr<schema::CNodeT> op(new schema::CNodeT);
     op->name = opType + "-" + std::to_string(i++);
+    MS_LOG(INFO) << "parse op: " << op->name.c_str();
 
-    MS_LOG(INFO) << "parse op: [%s]" << op->name.c_str();
-
-    // 1. init op attr params
     auto node_parser = TfliteNodeParserRegistry::GetInstance()->GetNodeParser(opType);
     if (node_parser == nullptr) {
       MS_LOG(ERROR) << "cannot find node parser, opType: "<< opType.c_str();
@@ -164,7 +172,7 @@ STATUS TfliteModelParser::ParseOp(const std::unique_ptr<tflite::ModelT> &tflite_
 
     status = SetOpOutputIdx(tflite_subgraph, tflite_op, op.get(), tensorCache);
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "Set Op " << op->name.c_str() << " Output Index Failed!";
+      MS_LOG(ERROR) << "Set Op "<< op->name.c_str() << " Output Index Failed!";
       return RET_ERROR;
     }
 
@@ -175,8 +183,7 @@ STATUS TfliteModelParser::ParseOp(const std::unique_ptr<tflite::ModelT> &tflite_
   return RET_OK;
 }
 
-void TfliteModelParser::SetInputTensor(const std::unique_ptr<tflite::ModelT> &tflite_model,
-                                       const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+void TfliteModelParser::SetInputTensor(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                        TensorCache *tensor_cache) {
   for (const auto &index : tflite_subgraph->inputs) {
     const auto &tflite_tensor = tflite_subgraph->tensors[index];
@@ -206,35 +213,31 @@ void TfliteModelParser::SetGraphTensorIndex(const mindspore::lite::TensorCache &
 }
 
 MetaGraphT *TfliteModelParser::Parse(const std::string &modelFile, const std::string &weightFile) {
-  std::unique_ptr<schema::MetaGraphT> subGraph(new schema::MetaGraphT);
   if (ValidateFileStr(modelFile, ".tflite") != RET_OK) {
-    // MS_LOGE("INPUT ILLEGAL: modelFile must be *.tflite");
+    MS_LOG(ERROR) << "INPUT ILLEGAL: modelFile must be *.tflite";
     return nullptr;
   }
-
-  MS_LOG(INFO) << "modelFile is :" << modelFile;
 
   std::unique_ptr<tflite::ModelT> tflite_model(new tflite::ModelT());
   tflite_model = ReadTfliteModelFromFlat(modelFile.c_str());
   if (tflite_model == nullptr) {
-    // MS_LOGE("read tflite model failed");
+    MS_LOG(ERROR) << "read tflite model failed";
     return nullptr;
   }
 
-  MS_LOG(INFO) << "after read model";
-
-  TensorCache tensorCache;
   if (tflite_model->subgraphs.size() != 1) {
     MS_LOG(ERROR) << "read tflite model subgraphs failed";
     return nullptr;
   }
-
   const auto &tflite_subgraph = tflite_model->subgraphs[0];
-  subGraph->name = "MS_model converted by TF-Lite";
 
   // set dst subGraph input/output tensor
-  SetInputTensor(tflite_model, tflite_subgraph, &tensorCache);
-  // set dst subGraph op attr etc.
+  TensorCache tensorCache;
+  SetInputTensor(tflite_subgraph, &tensorCache);
+
+  // set dst subGraph op attr and tensor_cache.
+  std::unique_ptr<schema::MetaGraphT> subGraph(new schema::MetaGraphT);
+  subGraph->name = "MS_model converted by TF-Lite";
   auto status = ParseOp(tflite_model, tflite_subgraph, subGraph.get(), &tensorCache);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "ParseOp failed.";
@@ -244,21 +247,20 @@ MetaGraphT *TfliteModelParser::Parse(const std::string &modelFile, const std::st
   for (const auto &tflite_op : tflite_subgraph->operators) {
     auto status_tmp = SetOpInputIdx(tflite_model, tflite_subgraph, tflite_op, &tensorCache);
     if (status_tmp != RET_OK) {
-      // MS_LOGE("Set Op %s Input Index Failed!", tfliteOpMap.at(tflite_op.get())->name.c_str());
+      MS_LOG(ERROR) << "Set Op " <<  tfliteOpMap.at(tflite_op.get())->name.c_str() << " Input Index Failed!";
     }
   }
 
   for (const auto &tflite_op : tflite_subgraph->operators) {
     auto statusTmp = ParseTfliteQuantParams(tflite_subgraph, tflite_op);
     if (statusTmp != RET_OK) {
-      // MS_LOGE("ParseTfliteQuantParams %s Failed!", tfliteOpMap.at(tflite_op.get())->name.c_str());
+      MS_LOG(ERROR) << "ParseTfliteQuantParams " << tfliteOpMap.at(tflite_op.get())->name.c_str() << " Failed!";
     }
   }
 
   SetGraphTensorIndex(tensorCache, subGraph.get());
   SetAllTensors(tensorCache, subGraph.get());
   return subGraph.release();
-//  return Fb2Anf(subGraph.release());
 }
 }  // namespace lite
 }  // namespace mindspore
