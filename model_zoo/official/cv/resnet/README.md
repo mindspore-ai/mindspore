@@ -44,7 +44,7 @@ ImageNet2012
     ├── run_distribute_train.sh            # launch distributed training(8 pcs)
     ├── run_parameter_server_train.sh      # launch Ascend parameter server training(8 pcs)
     ├── run_eval.sh                        # launch evaluation
-    └── run_standalone_train.sh            # launch standalone training(1 pcs)
+    ├── run_standalone_train.sh            # launch standalone training(1 pcs)
     ├── run_distribute_train_gpu.sh        # launch gpu distributed training(8 pcs)
     ├── run_parameter_server_train_gpu.sh  # launch gpu parameter server training(8 pcs)
     ├── run_eval_gpu.sh                    # launch gpu evaluation
