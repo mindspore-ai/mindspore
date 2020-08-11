@@ -151,7 +151,7 @@ IndirectGemmInt8_4x4:
                 sadalp v17.4s, v9.8h
                 smull v14.8h, v1.8b, v6.8b
                 smull v15.8h, v1.8b, v7.8b
-                saddlp v18.4s, v10.8h
+                sadalp v18.4s, v10.8h
                 smlal2 v14.8h, v1.16b, v6.16b
                 smlal2 v15.8h, v1.16b, v7.16b
 
@@ -234,10 +234,22 @@ IndirectGemmInt8_4x4:
                 sqrdmulh v28.4s, v28.4s, v3.4s
 
                 dup v4.4s, w19
-                sqrshl v16.4s, v16.4s, v4.4s
-                sqrshl v20.4s, v20.4s, v4.4s
-                sqrshl v24.4s, v24.4s, v4.4s
-                sqrshl v28.4s, v28.4s, v4.4s
+                and v0.16b, v4.16b, v16.16b
+                sshr v0.4s, v0.4s, #31
+                sqadd v16.4s, v16.4s, v0.4s
+                srshl v16.4s, v16.4s, v4.4s
+                and v1.16b, v4.16b, v20.16b
+                sshr v1.4s, v1.4s, #31
+                sqadd v20.4s, v20.4s, v1.4s
+                srshl v20.4s, v20.4s, v4.4s
+                and v2.16b, v4.16b, v24.16b
+                sshr v2.4s, v2.4s, #31
+                sqadd v24.4s, v24.4s, v2.4s
+                srshl v24.4s, v24.4s, v4.4s
+                and v3.16b, v4.16b, v28.16b
+                sshr v3.4s, v3.4s, #31
+                sqadd v28.4s, v28.4s, v3.4s
+                srshl v28.4s, v28.4s, v4.4s
                 
                 dup v5.4s, w16
                 add v16.4s, v16.4s, v5.4s

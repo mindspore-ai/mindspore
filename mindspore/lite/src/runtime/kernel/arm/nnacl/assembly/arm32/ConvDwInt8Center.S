@@ -90,9 +90,21 @@ ConvDwInt8Center:
             vqrdmulh.s32 q1, q1, q10
             vqrdmulh.s32 q2, q2, q10
             vqrdmulh.s32 q3, q3, q10
+            vand q4, q0, q11
+            vshr.s32 q4, q4, #31
+            vqadd.s32 q0, q0, q4
             vrshl.s32 q0, q0, q11
+            vand q5, q1, q11
+            vshr.s32 q5, q5, #31
+            vqadd.s32 q1, q1, q5
             vrshl.s32 q1, q1, q11
+            vand q6, q2, q11
+            vshr.s32 q6, q6, #31
+            vqadd.s32 q2, q2, q6
             vrshl.s32 q2, q2, q11
+            vand q7, q3, q11
+            vshr.s32 q7, q7, #31
+            vqadd.s32 q3, q3, q7
             vrshl.s32 q3, q3, q11
             vadd.i32 q0, q0, q12
             vadd.i32 q1, q1, q12
@@ -173,6 +185,9 @@ ConvDwInt8Center:
 
             vshl.s32 q0, q0, q9
             vqrdmulh.s32 q0, q0, q10
+            vand q4, q0, q11
+            vshr.s32 q4, q4, #31
+            vqadd.s32 q0, q0, q4
             vrshl.s32 q0, q0, q11
             vadd.i32 q0, q0, q12
             vmax.s32 q0, q0, q13
