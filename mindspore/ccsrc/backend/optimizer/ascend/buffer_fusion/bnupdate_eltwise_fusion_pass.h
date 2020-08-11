@@ -39,8 +39,8 @@ class BnupdateEltwiseFusionPass : public FusionBasePass {
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 
  private:
-  void MatchBnupdateRelu(const CNodePtr &cnode, const AnfNodePtr &relu_input, const session::KernelGraph &kernel_graph,
-                         FusedNodeRecord *candidate_fusion);
+  void MatchBnupdateDoubleOutputEltwise(const CNodePtr &cnode, const AnfNodePtr &eltwise_input,
+                                        const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion);
 };
 }  // namespace opt
 }  // namespace mindspore
