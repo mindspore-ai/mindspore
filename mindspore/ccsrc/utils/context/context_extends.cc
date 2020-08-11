@@ -329,7 +329,7 @@ bool FinalizeGe(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) {
     if (ge::GEFinalize() != ge::GRAPH_SUCCESS) {
       MS_LOG(WARNING) << "Finalize GE failed!";
     }
-    ms_context_ptr->set_pynative_ge_init(true);
+    ms_context_ptr->set_pynative_ge_init(fasle);
   } else {
     MS_LOG(INFO) << "Ge is used, no need to finalize, tsd reference = " << ms_context_ptr->ge_ref() << ".";
   }
@@ -341,14 +341,14 @@ bool IsTsdOpened(const std::shared_ptr<MsContext> &ms_context_ptr) {
   if (ms_context_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
-  return ms_context_ptr->tsd_ref();
+  return ms_context_ptr->IsTsdOpened();
 }
 
 bool IsGeInited(const std::shared_ptr<MsContext> &ms_context_ptr) {
   if (ms_context_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
-  return ms_context_ptr->ge_ref();
+  return ms_context_ptr->IsGeInited();
 }
 
 // Register for device type.
