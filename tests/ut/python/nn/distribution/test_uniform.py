@@ -30,6 +30,17 @@ def test_uniform_shape_errpr():
     with pytest.raises(ValueError):
         msd.Uniform([[2.], [1.]], [[2.], [3.], [4.]], dtype=dtype.float32)
 
+def test_type():
+    with pytest.raises(TypeError):
+        msd.Uniform(0., 1., dtype=dtype.int32)
+
+def test_name():
+    with pytest.raises(TypeError):
+        msd.Uniform(0., 1., name=1.0)
+
+def test_seed():
+    with pytest.raises(TypeError):
+        msd.Uniform(0., 1., seed='seed')
 
 def test_arguments():
     """

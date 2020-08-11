@@ -18,7 +18,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
-from ._utils.utils import convert_to_batch, check_greater_equal_zero
+from ._utils.utils import convert_to_batch, check_greater_equal_zero, check_type
 
 
 class Normal(Distribution):
@@ -100,15 +100,17 @@ class Normal(Distribution):
         Constructor of normal distribution.
         """
         param = dict(locals())
-        super(Normal, self).__init__(dtype, name, param)
+        valid_dtype = mstype.float_type
+        check_type(dtype, valid_dtype, "Normal")
+        super(Normal, self).__init__(seed, dtype, name, param)
         if  mean is not None and sd is not None:
-            self._mean_value = convert_to_batch(mean, self._broadcast_shape, dtype)
-            self._sd_value = convert_to_batch(sd, self._broadcast_shape, dtype)
+            self._mean_value = convert_to_batch(mean, self.broadcast_shape, dtype)
+            self._sd_value = convert_to_batch(sd, self.broadcast_shape, dtype)
             check_greater_equal_zero(self._sd_value, "Standard deviation")
         else:
             self._mean_value = mean
             self._sd_value = sd
-        self.seed = seed
+
 
         #ops needed for the class
         self.const = P.ScalarToArray()
@@ -191,7 +193,7 @@ class Normal(Distribution):
             sd (Tensor): standard deviation the distribution. Default: self._sd_value.
 
         .. math::
-            L(x) = -1* \fract{(x - \mu)^2}{2. * \sigma^2} - \log(\sqrt(2* \pi * \sigma^2))
+            L(x) = -1* \frac{(x - \mu)^2}{2. * \sigma^2} - \log(\sqrt(2* \pi * \sigma^2))
         """
         mean = self._mean_value if mean is None else mean
         sd = self._sd_value if sd is None else sd
@@ -229,7 +231,7 @@ class Normal(Distribution):
             sd_a (Tensor): standard deviation distribution a. Default: self._sd_value.
 
         .. math::
-            KL(a||b) = 0.5 * (\fract{MEAN(a)}{STD(b)} - \fract{MEAN(b)}{STD(b)}) ^ 2 +
+            KL(a||b) = 0.5 * (\frac{MEAN(a)}{STD(b)} - \frac{MEAN(b)}{STD(b)}) ^ 2 +
                        0.5 * EXPM1(2 * (\log(STD(a)) - \log(STD(b))) - (\log(STD(a)) - \log(STD(b)))
         """
         if dist == 'Normal':

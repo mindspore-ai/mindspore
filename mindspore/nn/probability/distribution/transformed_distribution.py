@@ -14,7 +14,11 @@
 # ============================================================================
 """Transformed Distribution"""
 from mindspore.ops import operations as P
+from mindspore._checkparam import Validator as validator
+from mindspore.common import dtype as mstype
+import mindspore.nn as nn
 from .distribution import Distribution
+from ._utils.utils import check_type
 
 class TransformedDistribution(Distribution):
     """
@@ -35,12 +39,19 @@ class TransformedDistribution(Distribution):
     def __init__(self,
                  bijector,
                  distribution,
+                 dtype,
+                 seed=0,
                  name="transformed_distribution"):
         """
         Constructor of transformed_distribution class.
         """
         param = dict(locals())
-        super(TransformedDistribution, self).__init__(distribution.dtype, name, param)
+        validator.check_value_type('bijector', bijector, [nn.probability.bijector.Bijector], name)
+        validator.check_value_type('distribution', distribution, [Distribution], name)
+        valid_dtype = mstype.number_type
+        check_type(dtype, valid_dtype, "transformed_distribution")
+        super(TransformedDistribution, self).__init__(seed, dtype, name, param)
+
         self._bijector = bijector
         self._distribution = distribution
         self._is_linear_transformation = bijector.is_constant_jacobian

@@ -14,6 +14,7 @@
 # ============================================================================
 """basic"""
 from mindspore.nn.cell import Cell
+from mindspore._checkparam import Validator as validator
 from ._utils.utils import calc_broadcast_shape_from_param, check_scalar_from_param
 
 class Distribution(Cell):
@@ -38,6 +39,7 @@ class Distribution(Cell):
         original distribuion.
     """
     def __init__(self,
+                 seed,
                  dtype,
                  name,
                  param):
@@ -46,7 +48,11 @@ class Distribution(Cell):
         Constructor of distribution class.
         """
         super(Distribution, self).__init__()
+        validator.check_value_type('name', name, [str], 'distribution_name')
+        validator.check_value_type('seed', seed, [int], name)
+
         self._name = name
+        self._seed = seed
         self._dtype = dtype
         self._parameters = {}
         # parsing parameters
@@ -78,12 +84,20 @@ class Distribution(Cell):
         return self._dtype
 
     @property
+    def seed(self):
+        return self._seed
+
+    @property
     def parameters(self):
         return self._parameters
 
     @property
     def is_scalar_batch(self):
         return self._is_scalar_batch
+
+    @property
+    def broadcast_shape(self):
+        return self._broadcast_shape
 
     def _set_prob(self):
         """

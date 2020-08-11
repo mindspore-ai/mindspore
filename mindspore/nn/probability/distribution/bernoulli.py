@@ -16,7 +16,7 @@
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 from .distribution import Distribution
-from ._utils.utils import cast_to_tensor, check_prob
+from ._utils.utils import cast_to_tensor, check_prob, check_type
 
 class Bernoulli(Distribution):
     """
@@ -95,13 +95,14 @@ class Bernoulli(Distribution):
         Constructor of Bernoulli distribution.
         """
         param = dict(locals())
-        super(Bernoulli, self).__init__(dtype, name, param)
+        valid_dtype = mstype.int_type + mstype.uint_type
+        check_type(dtype, valid_dtype, "Bernoulli")
+        super(Bernoulli, self).__init__(seed, dtype, name, param)
         if probs is not None:
-            self._probs = cast_to_tensor(probs, dtype=mstype.float32)
+            self._probs = cast_to_tensor(probs, hint_dtype=mstype.float32)
             check_prob(self.probs)
         else:
             self._probs = probs
-        self.seed = seed
 
         # ops needed for the class
         self.cast = P.Cast()
@@ -231,8 +232,8 @@ class Bernoulli(Distribution):
             probs1_a (Tensor): probs1 of distribution a. Default: self.probs.
 
         .. math::
-            KL(a||b) = probs1_a * \log(\fract{probs1_a}{probs1_b}) +
-                       probs0_a * \log(\fract{probs0_a}{probs0_b})
+            KL(a||b) = probs1_a * \log(\frac{probs1_a}{probs1_b}) +
+                       probs0_a * \log(\frac{probs0_a}{probs0_b})
         """
         if dist == 'Bernoulli':
             probs1_a = self.probs if probs1_a is None else probs1_a
