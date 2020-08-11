@@ -28,7 +28,6 @@ EMB_DIM=$5
 DATASET=$6
 ENV_SH=$7
 MODE=$8
-export MINDSPORE_HCCL_CONFIG=$9
 export RANK_TABLE_FILE=$9
 DEVICE_START=0
 # shellcheck source=/dev/null
