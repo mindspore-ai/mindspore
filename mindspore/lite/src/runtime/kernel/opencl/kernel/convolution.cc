@@ -29,10 +29,12 @@ using mindspore::schema::PrimitiveType_Conv2D;
 namespace mindspore::kernel {
 
 int ConvolutionOpenCLKernel::Init() {
+  static int count = 0;
   std::cout << "ConvolutionOpenCLKernel::Init()\n";
   std::set<std::string> build_options;
   std::string source = CodeGen();
-  std::string program_name = "convolution";
+  std::string program_name = "convolution" + std::to_string(count);
+  count++;
   std::string kernel_name = "convolution";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
 
@@ -151,7 +153,11 @@ std::string ConvolutionOpenCLKernel::CodeGen() {
     "        }\n"
     "    }\n\n";
   code += "    FLT4 out0_c4_bias = out0_c4 + bias[co_slice];\n";
-
+  if (param->is_relu_) {
+    code += "    out0_c4_bias = max(out0_c4_bias, (FLT4)(0.0f));\n";
+  } else if (param->is_relu6_) {
+    code += "    out0_c4_bias = clamp(out0_c4_bias, (FLT4)(0.0f), (FLT4)(6.0f));\n";
+  }
   //  NHWC4 NHC4W4 NC4HW4
   if (OW * CO_SLICES < 65536) {
     code += "    WRITE_FLT4(output, (int2)(ow * CO_SLICES + co_slice, oh), out0_c4_bias);// NHWC4: H WC\n}";
