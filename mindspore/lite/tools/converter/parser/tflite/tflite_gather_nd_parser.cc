@@ -40,6 +40,30 @@ STATUS TfliteGatherNdParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfl
   MS_LOG(DEBUG) << "parse TfliteGatherNdParser";
   std::unique_ptr<schema::GatherNdT> attr(new schema::GatherNdT());
 
+  if (tfliteOp->inputs.size() != 2) {
+    MS_LOG(ERROR) << "The input size of gather_nd should be 2";
+    return RET_ERROR;
+  }
+
+  auto y_index = tfliteOp->inputs[1];
+  const auto &y_tensor = tfliteTensors[y_index];
+  if (y_tensor == nullptr) {
+    MS_LOG(ERROR) << "the second input is null";
+    return RET_NULL_PTR;
+  }
+  auto &y_data = tfliteModelBuffer.at(y_tensor->buffer);
+  if (y_data == nullptr) {
+    MS_LOG(ERROR) << "the data of the second input is null";
+    return RET_NULL_PTR;
+  }
+  if (!y_data->data.empty()) {
+    std::vector<tflite::TensorT *> y_tensors{y_tensor.get()};
+    if (RET_OK != ParseTensor(y_tensors, tfliteModelBuffer, tensor_cache, TF_CONST)) {
+      MS_LOG(ERROR) << "parse the second tensor failed";
+      return RET_ERROR;
+    }
+  }
+
   attr->batchDims = 0;
 
   op->primitive->value.type = schema::PrimitiveType_GatherNd;

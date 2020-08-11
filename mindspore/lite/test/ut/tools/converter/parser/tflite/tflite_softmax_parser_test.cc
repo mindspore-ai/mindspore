@@ -19,18 +19,27 @@
 #include "common/common_test.h"
 
 namespace mindspore {
-class TestTfliteParserLessEqual : public TestTfliteParser {
+class TestTfliteParserSoftmax : public TestTfliteParser {
  public:
-  TestTfliteParserLessEqual() = default;
+  TestTfliteParserSoftmax() = default;
   void SetUp() override {
-    meta_graph = LoadAndConvert("./less_equal.tflite");
+    meta_graph = LoadAndConvert("./softmax.tflite");
   }
 };
 
-TEST_F(TestTfliteParserLessEqual, OpType) {
+TEST_F(TestTfliteParserSoftmax, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_LessEqual) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_SoftMax) << "wrong Op Type";
 }
+
+TEST_F(TestTfliteParserSoftmax, AttrValue) {
+ASSERT_NE(meta_graph, nullptr);
+ASSERT_GT(meta_graph->nodes.size(), 0);
+ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
+ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsSoftMax(), nullptr);
+ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsSoftMax()->axis, -1);
+}
+
 }  // namespace mindspore

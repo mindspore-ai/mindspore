@@ -18,6 +18,32 @@
 #include "common/common_test.h"
 
 namespace mindspore {
+class TestTfliteLogicalParserAnd : public TestTfliteParser {
+ public:
+  TestTfliteLogicalParserAnd() = default;
+  void SetUp() override { meta_graph = LoadAndConvert("./logical_and.tflite", ""); }
+};
+
+TEST_F(TestTfliteLogicalParserAnd, OpType) {
+  ASSERT_NE(meta_graph, nullptr);
+  ASSERT_GT(meta_graph->nodes.size(), 0);
+  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_LogicalAnd) << "wrong Op Type";
+}
+
+class TestTfliteParserLogicalNot : public TestTfliteParser {
+ public:
+  TestTfliteParserLogicalNot() = default;
+  void SetUp() override { meta_graph = LoadAndConvert("./logical_not.tflite", ""); }
+};
+
+TEST_F(TestTfliteParserLogicalNot, OpType) {
+  ASSERT_NE(meta_graph, nullptr);
+  ASSERT_GT(meta_graph->nodes.size(), 0);
+  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_LogicalNot) << "wrong Op Type";
+}
+
 class TestTfliteParserLogicalOr : public TestTfliteParser {
  public:
   TestTfliteParserLogicalOr() = default;
@@ -30,5 +56,6 @@ TEST_F(TestTfliteParserLogicalOr, OpType) {
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_LogicalOr) << "wrong Op Type";
 }
+
 
 }  // namespace mindspore

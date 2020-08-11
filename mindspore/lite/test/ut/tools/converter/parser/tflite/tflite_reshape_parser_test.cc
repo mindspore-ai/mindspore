@@ -13,34 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "ut/tools/converter/parser/tflite/tflite_parsers_test_utils.h"
 #include <iostream>
 #include "common/common_test.h"
 
 namespace mindspore {
-class TestTfliteParserReduceMin : public TestTfliteParser {
+class TestTfliteParserReshape : public TestTfliteParser {
  public:
-  TestTfliteParserReduceMin() = default;
-  void SetUp() override { meta_graph = LoadAndConvert("./reduce_min.tflite"); }
+  TestTfliteParserReshape() = default;
+  void SetUp() override {
+    meta_graph = LoadAndConvert("./reshape.tflite");
+  }
 };
 
-TEST_F(TestTfliteParserReduceMin, OpType) {
+TEST_F(TestTfliteParserReshape, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Reduce) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Reshape) << "wrong Op Type";
 }
 
-TEST_F(TestTfliteParserReduceMin, AttrValue) {
+TEST_F(TestTfliteParserReshape, AttrValue) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsReduce(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsReduce()->mode, schema::ReduceMode_ReduceMin)
-    << "wrong reduce mode";
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsReduce()->keepDims, false);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsReduce()->axes.size(), 1);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsReduce()->axes[0], 2);
-}
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsReshape(), nullptr);
 
+  std::vector<int64_t> shape = {3, 5, 20};
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsReshape()->shape, shape);  // int32
+}
 }  // namespace mindspore

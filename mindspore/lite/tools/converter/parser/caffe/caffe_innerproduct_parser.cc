@@ -31,8 +31,9 @@ STATUS CaffeInnerProductParser::Parse(const caffe::LayerParameter &proto, const 
 
   if (innerProductParam.axis() == 1) {
     attr->axis = 1;
+    attr->useAxis = true;
   } else {
-    // MS_LOGE("InnerProduct Parse axis only support default 1, but actually %d.", innerProductParam.axis());
+    // MS_LOG(ERROR) << "InnerProduct Parse axis only support default 1, but actually " << innerProductParam.axis();
     return RET_ERROR;
   }
 

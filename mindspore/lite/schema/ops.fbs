@@ -345,6 +345,7 @@ table DetectionPostProcess {
 table FullConnection {
     hasBias: bool;
     axis: int;
+    useAxis: bool;
 }
 
 // Mean(input_tensor, axis, keep_dims)
