@@ -126,10 +126,10 @@ void IndirectGemmInt8Opt(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const
 
 void Conv3x3Uint8Gemm(int32_t *dst, const int16_t *src, const int16_t *weight, int oc, int ic8, size_t real_cal_num) {
   int oc4 = UP_DIV(oc, C4NUM);
-  int input_unit_square = 16;
 #ifdef ENABLE_ARM
   IndirectGemmInt16to32_8x4(dst, src, weight, 16, ic8, oc4, oc4 * 4 * 16 * sizeof(int32_t));
 #else
+  int input_unit_square = 16;
   for (int c = 0; c < oc4; c++) {
     int filter_oc_offset = c * input_unit_square * ic8 * C8NUM * C4NUM;
     int dst_oc_offset = c * input_unit_square * C4NUM;
