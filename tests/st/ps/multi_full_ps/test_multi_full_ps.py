@@ -21,12 +21,16 @@ import mindspore.nn as nn
 from mindspore.common.initializer import TruncatedNormal
 from mindspore import Tensor
 from mindspore.nn import TrainOneStepCell, WithLossCell
+from mindspore.communication.management import init, get_group_size
+# from resnet import resnet50
 
 parser = argparse.ArgumentParser(description="test_ps_lenet")
 parser.add_argument("--device_target", type=str, default="Ascend")
 args, _ = parser.parse_known_args()
 device_target = args.device_target
 context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
+if device_target == "GPU":
+    init('nccl')
 
 
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):
@@ -94,7 +98,8 @@ if __name__ == "__main__":
         is_grad=False, sparse=True, reduction="mean"
     )
     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
-
+    if device_target == "GPU":
+        context.set_auto_parallel_context(parallel_mode="data_parallel", mirror_mean=True, device_num=get_group_size())
     net_with_criterion = WithLossCell(network, criterion)
     train_network = TrainOneStepCell(net_with_criterion, net_opt)
     train_network.set_train()
