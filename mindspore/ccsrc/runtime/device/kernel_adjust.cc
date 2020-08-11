@@ -35,6 +35,9 @@
 #include "runtime/base.h"
 #include "runtime/device/ascend/ascend_stream_assign.h"
 
+namespace {
+constexpr auto kProfilingGraphId = "PROFILING_GRAPH_ID";
+}  // namespace
 namespace mindspore {
 namespace device {
 using device::ascend::ProfilingUtils;
@@ -556,6 +559,15 @@ void KernelAdjust::Profiling(NotNull<session::KernelGraph *> kernel_graph_ptr) {
   if (!ascend::ProfilingManager::GetInstance().IsProfiling()) {
     MS_LOG(INFO) << "No need to profiling";
     return;
+  }
+  auto graph_id_env = std::getenv(kProfilingGraphId);
+  if (graph_id_env != nullptr) {
+    auto graph_id = std::stoul(graph_id_env);
+    if (graph_id != kernel_graph_ptr->graph_id()) {
+      MS_LOG(WARNING) << "Get PROFILING_GRAPH_ID " << graph_id
+                      << " Not Match Current Graph Id:" << kernel_graph_ptr->graph_id();
+      return;
+    }
   }
   ProfilingTraceInfo profiling_trace_info = ProfilingUtils::GetProfilingTraceFromEnv(kernel_graph_ptr);
   if (!profiling_trace_info.IsValid()) {
