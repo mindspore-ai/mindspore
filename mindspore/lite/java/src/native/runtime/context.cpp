@@ -59,7 +59,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_cn_huawei_mindspore_context_Context_crea
 
 extern "C" JNIEXPORT void JNICALL Java_cn_huawei_mindspore_context_Context_free(JNIEnv *env, jobject thiz,
                                                                                 jlong context_ptr) {
-  auto *pointer = static_cast<void *>(context_ptr);
+  auto *pointer = reinterpret_cast<void *>(context_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Context pointer from java is nullptr");
     return;

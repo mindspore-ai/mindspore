@@ -24,7 +24,7 @@
 
 extern "C" JNIEXPORT jlong JNICALL Java_cn_huawei_mindspore_LiteSession_createSession(JNIEnv *env, jobject thiz,
                                                                                       jlong context_ptr) {
-  auto *pointer = static_cast<void *>(context_ptr);
+  auto *pointer = reinterpret_cast<void *>(context_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Context pointer from java is nullptr");
     return jlong(nullptr);
@@ -41,13 +41,13 @@ extern "C" JNIEXPORT jlong JNICALL Java_cn_huawei_mindspore_LiteSession_createSe
 extern "C" JNIEXPORT jboolean JNICALL Java_cn_huawei_mindspore_LiteSession_compileGraph(JNIEnv *env, jobject thiz,
                                                                                         jlong session_ptr,
                                                                                         jlong model_ptr) {
-  auto *session_pointer = static_cast<void *>(session_ptr);
+  auto *session_pointer = reinterpret_cast<void *>(session_ptr);
   if (session_pointer == nullptr) {
     MS_LOGE("Session pointer from java is nullptr");
     return (jboolean) false;
   }
   auto *lite_session_ptr = static_cast<mindspore::session::LiteSession *>(session_pointer);
-  auto *model_pointer = static_cast<void *>(model_ptr);
+  auto *model_pointer = reinterpret_cast<void *>(model_ptr);
   if (model_pointer == nullptr) {
     MS_LOGE("Model pointer from java is nullptr");
     return (jboolean) false;
@@ -60,7 +60,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_cn_huawei_mindspore_LiteSession_compi
 
 extern "C" JNIEXPORT void JNICALL Java_cn_huawei_mindspore_LiteSession_bindThread(JNIEnv *env, jobject thiz,
                                                                                   jlong session_ptr, jboolean if_bind) {
-  auto *pointer = static_cast<void *>(session_ptr);
+  auto *pointer = reinterpret_cast<void *>(session_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Session pointer from java is nullptr");
     return;
@@ -71,7 +71,7 @@ extern "C" JNIEXPORT void JNICALL Java_cn_huawei_mindspore_LiteSession_bindThrea
 
 extern "C" JNIEXPORT jboolean JNICALL Java_cn_huawei_mindspore_LiteSession_runGraph(JNIEnv *env, jobject thiz,
                                                                                     jlong session_ptr) {
-  auto *pointer = static_cast<void *>(session_ptr);
+  auto *pointer = reinterpret_cast<void *>(session_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Session pointer from java is nullptr");
     return (jboolean) false;
@@ -90,7 +90,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_cn_huawei_mindspore_LiteSession_getInp
 
   jclass long_object = env->FindClass("java/lang/Long");
   jmethodID long_object_construct = env->GetMethodID(long_object, "<init>", "(J)V");
-  auto *pointer = static_cast<void *>(session_ptr);
+  auto *pointer = reinterpret_cast<void *>(session_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Session pointer from java is nullptr");
     return ret;
@@ -114,7 +114,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_cn_huawei_mindspore_LiteSession_getInp
 
   jclass long_object = env->FindClass("java/lang/Long");
   jmethodID long_object_construct = env->GetMethodID(long_object, "<init>", "(J)V");
-  auto *pointer = static_cast<void *>(session_ptr);
+  auto *pointer = reinterpret_cast<void *>(session_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Session pointer from java is nullptr");
     return ret;
@@ -135,7 +135,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_cn_huawei_mindspore_LiteSession_getOut
   jobject hash_map = env->NewObject(hash_map_clazz, hash_map_construct);
   jmethodID hash_map_put =
     env->GetMethodID(hash_map_clazz, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
-  auto *pointer = static_cast<void *>(session_ptr);
+  auto *pointer = reinterpret_cast<void *>(session_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Session pointer from java is nullptr");
     return hash_map;
@@ -170,7 +170,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_cn_huawei_mindspore_LiteSession_getOut
 
   jclass long_object = env->FindClass("java/lang/Long");
   jmethodID long_object_construct = env->GetMethodID(long_object, "<init>", "(J)V");
-  auto *pointer = static_cast<void *>(session_ptr);
+  auto *pointer = reinterpret_cast<void *>(session_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Session pointer from java is nullptr");
     return ret;
@@ -186,7 +186,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_cn_huawei_mindspore_LiteSession_getOut
 
 extern "C" JNIEXPORT void JNICALL Java_cn_huawei_mindspore_LiteSession_free(JNIEnv *env, jobject thiz,
                                                                             jlong session_ptr) {
-  auto *pointer = static_cast<void *>(session_ptr);
+  auto *pointer = reinterpret_cast<void *>(session_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Session pointer from java is nullptr");
     return;

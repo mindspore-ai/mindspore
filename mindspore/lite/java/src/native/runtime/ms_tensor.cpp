@@ -41,7 +41,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_cn_huawei_mindspore_MSTensor_createMSTen
 
 extern "C" JNIEXPORT jintArray JNICALL Java_cn_huawei_mindspore_MSTensor_getShape(JNIEnv *env, jobject thiz,
                                                                                   jlong tensor_ptr) {
-  auto *pointer = static_cast<void *>(tensor_ptr);
+  auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Tensor pointer from java is nullptr");
     return env->NewIntArray(0);
@@ -64,7 +64,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_cn_huawei_mindspore_MSTensor_setShape
                                                                                  jint shape_len) {
   jboolean is_copy = false;
   jint *local_shape_arr = env->GetIntArrayElements(shape, &is_copy);
-  auto *pointer = static_cast<void *>(tensor_ptr);
+  auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Tensor pointer from java is nullptr");
     return static_cast<jboolean>(false);
@@ -80,7 +80,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_cn_huawei_mindspore_MSTensor_setShape
 
 extern "C" JNIEXPORT jint JNICALL Java_cn_huawei_mindspore_MSTensor_getDataType(JNIEnv *env, jobject thiz,
                                                                                 jlong tensor_ptr) {
-  auto *pointer = static_cast<void *>(tensor_ptr);
+  auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Tensor pointer from java is nullptr");
     return static_cast<jboolean>(false);
@@ -91,7 +91,7 @@ extern "C" JNIEXPORT jint JNICALL Java_cn_huawei_mindspore_MSTensor_getDataType(
 
 extern "C" JNIEXPORT jboolean JNICALL Java_cn_huawei_mindspore_MSTensor_setDataType(JNIEnv *env, jobject thiz,
                                                                                     jlong tensor_ptr, jint data_type) {
-  auto *pointer = static_cast<void *>(tensor_ptr);
+  auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Tensor pointer from java is nullptr");
     return static_cast<jboolean>(false);
@@ -103,7 +103,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_cn_huawei_mindspore_MSTensor_setDataT
 
 extern "C" JNIEXPORT jbyteArray JNICALL Java_cn_huawei_mindspore_MSTensor_getData(JNIEnv *env, jobject thiz,
                                                                                   jlong tensor_ptr) {
-  auto *pointer = static_cast<void *>(tensor_ptr);
+  auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Tensor pointer from java is nullptr");
     return env->NewByteArray(0);
@@ -123,7 +123,7 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_cn_huawei_mindspore_MSTensor_getDat
 extern "C" JNIEXPORT jboolean JNICALL Java_cn_huawei_mindspore_MSTensor_setData(JNIEnv *env, jobject thiz,
                                                                                 jlong tensor_ptr, jbyteArray data,
                                                                                 jlong data_len) {
-  auto *pointer = static_cast<void *>(tensor_ptr);
+  auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Tensor pointer from java is nullptr");
     return static_cast<jboolean>(false);
@@ -141,7 +141,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_cn_huawei_mindspore_MSTensor_setData(
 }
 
 extern "C" JNIEXPORT jlong JNICALL Java_cn_huawei_mindspore_MSTensor_size(JNIEnv *env, jobject thiz, jlong tensor_ptr) {
-  auto *pointer = static_cast<void *>(tensor_ptr);
+  auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Tensor pointer from java is nullptr");
     return 0;
@@ -152,7 +152,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_cn_huawei_mindspore_MSTensor_size(JNIEnv
 
 extern "C" JNIEXPORT jint JNICALL Java_cn_huawei_mindspore_MSTensor_elementsNum(JNIEnv *env, jobject thiz,
                                                                                 jlong tensor_ptr) {
-  auto *pointer = static_cast<void *>(tensor_ptr);
+  auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Tensor pointer from java is nullptr");
     return 0;
@@ -162,7 +162,7 @@ extern "C" JNIEXPORT jint JNICALL Java_cn_huawei_mindspore_MSTensor_elementsNum(
 }
 
 extern "C" JNIEXPORT void JNICALL Java_cn_huawei_mindspore_MSTensor_free(JNIEnv *env, jobject thiz, jlong tensor_ptr) {
-  auto *pointer = static_cast<void *>(tensor_ptr);
+  auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Tensor pointer from java is nullptr");
     return;

@@ -40,7 +40,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_cn_huawei_mindspore_Model_loadModel(JNIE
 }
 
 extern "C" JNIEXPORT void JNICALL Java_cn_huawei_mindspore_Model_free(JNIEnv *env, jobject thiz, jlong model_ptr) {
-  auto *pointer = static_cast<void *>(model_ptr);
+  auto *pointer = reinterpret_cast<void *>(model_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Model pointer from java is nullptr");
     return;

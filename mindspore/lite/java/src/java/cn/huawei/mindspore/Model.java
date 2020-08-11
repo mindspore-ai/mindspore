@@ -56,7 +56,7 @@ public class Model {
             }
             if (null != fileDescriptor) {
                 try {
-                    fis.close();
+                    fileDescriptor.close();
                 } catch (IOException e) {
                     Log.e("MS_LITE", "Close fileDescriptor failed: " + e.getMessage());
                 }
