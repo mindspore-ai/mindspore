@@ -385,9 +385,11 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::vector<schem
     int i = 0;
     for (auto outputTensor : outputTensors) {
       std::string name = cnodeName + "_o:" + std::to_string(i);
+      auto msTensor = new schema::TensorT();
+      msTensor->nodeType = schema::NodeType_Parameter;
       nodeIdMap[name] = graph->allTensors.size();
       fbnode->outputIndex.emplace_back(graph->allTensors.size());
-      graph->allTensors.emplace_back(outputTensor);
+      graph->allTensors.emplace_back(msTensor);
       i++;
     }
     return;

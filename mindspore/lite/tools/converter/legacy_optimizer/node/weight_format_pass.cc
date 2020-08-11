@@ -350,6 +350,9 @@ int WeightFormatPass::NonQuantDataFormatTrans(GraphNode *graphNode) {
       // todo(00445839): consider varible weight condition
     }
   } else if (opType == schema::PrimitiveType_DepthwiseConv2D) {  // weight should be CKHW
+    if (graphNode->subGraph->fmkType == converter::FmkType_MS) {
+      weightTensor->format = schema::Format_CKHW;
+    }
     if (weightTensor->format == schema::Format_CKHW) {           // from caffe or onnx or ms
       status = TransFilterFormat<float>(weightTensor.get(), kCKHW2KHWC);
     } else if (weightTensor->format == schema::Format_KCHW) {
@@ -362,7 +365,7 @@ int WeightFormatPass::NonQuantDataFormatTrans(GraphNode *graphNode) {
     }
     if (status == 0) {
       node->primitive->value.AsDepthwiseConv2D()->format = schema::Format_NHWC;
-      weightTensor->format = schema::Format_CKHW;
+      weightTensor->format = schema::Format_KHWC;
     } else {
       MS_LOG(WARNING) << "TransFilter HWCKToCKHW failed, node : " << node->name.c_str();
       // todo(00445839): consider varible weight condition
