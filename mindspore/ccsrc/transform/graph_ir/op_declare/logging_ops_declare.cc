@@ -23,5 +23,10 @@ INPUT_MAP(Print) = EMPTY_INPUT_MAP;
 DYN_INPUT_MAP(Print) = {{1, DYN_INPUT_DESC(x)}};
 ATTR_MAP(Print) = EMPTY_ATTR_MAP;
 REG_ADPT_DESC(Print, kNamePrint, ADPT_DESC(Print))
+
+INPUT_MAP(Assert) = {{1, INPUT_DESC(input_condition)}};
+DYN_INPUT_MAP(Assert) = {{2, DYN_INPUT_DESC(input_data)}};
+ATTR_MAP(Assert) = {{"summarize", ATTR_DESC(summarize, AnyTraits<int>())}};
+REG_ADPT_DESC(Assert, kNameAssert, ADPT_DESC(Assert))
 #endif
 }  // namespace mindspore::transform

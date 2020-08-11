@@ -16,6 +16,7 @@
 """debug_ops"""
 from types import FunctionType, MethodType
 from ..._checkparam import Validator as validator
+from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ..primitive import prim_attr_register, PrimitiveWithInfer, Primitive
 
@@ -364,3 +365,47 @@ class Debug(Primitive):
 
     def __call__(self, *args, **kwargs):
         pass
+
+
+class Assert(PrimitiveWithInfer):
+    """
+    Asserts that the given condition is true.
+    If input condition evaluates to false, print the list of tensor in data.
+
+    Args:
+        summarize (int): Print this many entries of each tensor.
+
+    Inputs:
+        - **condition** [Union[Tensor[bool], bool]] - The condition to evaluate.
+        - **input_data** (Union(tuple[Tensor], list[Tensor])) - The tensors to print out when condition is false.
+
+    Examples:
+        >>> class AssertDemo(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(AssertDemo, self).__init__()
+        >>>         self.assert = P.Assert(summarize=10)
+        >>>         self.add = P.TensorAdd()
+        >>>
+        >>>     def construct(self, x, y):
+        >>>         data = self.add(x, y)
+        >>>         self.assert(True, [data])
+        >>>         return data
+    """
+
+    @prim_attr_register
+    def __init__(self, summarize=3):
+        """init Assert"""
+        self.summarize = validator.check_value_type("summarize", summarize, [int], self.name)
+
+    def infer_shape(self, condition, inputs):
+        condition_len = len(condition)
+        validator.check_integer("condition's rank", condition_len, 1, Rel.LE, self.name)
+        if condition_len == 1:
+            validator.check_integer("condition[0]", condition[0], 1, Rel.EQ, self.name)
+        return [1]
+
+    def infer_dtype(self, condition, inputs):
+        validator.check_scalar_or_tensor_type_same({"condition": condition}, [mstype.bool_], self.name)
+        for dtype in inputs:
+            validator.check_subclass("input", dtype, [mstype.tensor], self.name)
+        return mstype.int32

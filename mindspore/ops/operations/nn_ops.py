@@ -5173,6 +5173,7 @@ class CTCLoss(PrimitiveWithInfer):
         - **inputs** (Tensor) - The input Tensor should be a `3-D` tensor whose shape is
           :math:`(max_time, batch_size, num_classes)`. `num_classes` should be `num_labels + 1` classes, `num_labels`
           indicates the number of actual labels. Blank labels are reserved. Default blank label is `num_classes - 1`.
+          Data type must be float32 or float64.
         - **labels_indices** (Tensor) - The indices of labels. `labels_indices[i, :] == [b, t]` means `labels_values[i]`
           stores the id for `(batch b, time t)`. The type must be int64 and rank must be 2.
         - **labels_values** (Tensor) - A `1-D` input tensor. The values associated with the given batch and time. The
@@ -5222,15 +5223,77 @@ class CTCLoss(PrimitiveWithInfer):
         return batch_size, inputs
 
     def infer_dtype(self, inputs, labels_indices, labels_values, sequence_length):
-        validator.check_subclass("inputs_dtype", inputs, mstype.tensor, self.name)
-        validator.check_subclass("labels_indices_dtype", labels_indices, mstype.tensor, self.name)
-        validator.check_subclass("labels_values_dtype", labels_values, mstype.tensor, self.name)
-        validator.check_subclass("sequence_length_dtype", sequence_length, mstype.tensor, self.name)
         validator.check_tensor_type_same({"inputs_dtype": inputs}, [mstype.float32, mstype.double], self.name)
         validator.check_tensor_type_same({"labels_indices_dtype": labels_indices}, [mstype.int64], self.name)
         validator.check_tensor_type_same({"labels_values_dtype": labels_values}, [mstype.int32], self.name)
         validator.check_tensor_type_same({"sequence_length_dtype": sequence_length}, [mstype.int32], self.name)
         return inputs, inputs
+
+
+class CTCGreedyDecoder(PrimitiveWithInfer):
+    """
+    Performs greedy decoding on the logits given in inputs.
+
+    Args:
+        merge_repeated (bool): If True, merge repeated classes in output. Default: True.
+
+    Inputs:
+        - **inputs** (Tensor) - The input Tensor should be a `3-D` tensor whose shape is
+          :math:`(max_time, batch_size, num_classes)`. `num_classes` should be `num_labels + 1` classes, `num_labels`
+          indicates the number of actual labels. Blank labels are reserved. Default blank label is `num_classes - 1`.
+          Data type must be float32 or float64.
+        - **sequence_length** (Tensor) - A tensor containing sequence lengths with the shape of :math:`(batch_size)`.
+          The type must be int32. Each value in the tensor should not greater than `max_time`.
+
+    Outputs:
+        - **decoded_indices** (Tensor) - A tensor with shape of :math:`(total_decoded_outputs, 2)`.
+          Data type is int64.
+        - **decoded_values** (Tensor) - A tensor with shape of :math:`(total_decoded_outputs)`,
+          it stores the decoded classes. Data type is int64.
+        - **decoded_shape** (Tensor) - The value of tensor is :math:`[batch_size, max_decoded_legth]`.
+          Data type is int64.
+        - **log_probability** (Tensor) - A tensor with shape of :math:`(batch_size, 1)`,
+          containing sequence log-probability. Has the same type as `inputs`.
+
+    Examples:
+        >>>    class CTCGreedyDecoderNet(nn.Cell):
+        >>>        def __init__(self):
+        >>>            super(CTCGreedyDecoderNet, self).__init__()
+        >>>            self.ctc_greedy_decoder = P.CTCGreedyDecoder()
+        >>>            self.assert_op = P.Assert(300)
+        >>>
+        >>>        def construct(self, inputs, sequence_length):
+        >>>            out = self.ctc_greedy_decoder(inputs,sequence_length)
+        >>>            self.assert_op(True, (out[0], out[1], out[2], out[3]))
+        >>>            return out[2]
+        >>>
+        >>> inputs = Tensor(np.random.random((2, 2, 3)), mindspore.float32)
+        >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)
+        >>> net = CTCGreedyDecoderNet()
+        >>> output = net(inputs, sequence_length)
+    """
+
+    @prim_attr_register
+    def __init__(self, merge_repeated=True):
+        self.merge_repeated = validator.check_value_type("merge_repeated", merge_repeated, [bool], self.name)
+
+    def infer_shape(self, inputs_shape, sequence_length_shape):
+        validator.check_integer("inputs rank", len(inputs_shape), 3, Rel.EQ, self.name)
+        validator.check_integer("sequence_length rank", len(sequence_length_shape), 1, Rel.EQ, self.name)
+        validator.check('inputs batch_size', inputs_shape[1], 'sequence_length batch_size',
+                        sequence_length_shape[0], Rel.EQ, self.name)
+        total_decoded_outputs = -1
+        decoded_indices_shape = [total_decoded_outputs, 2]
+        decoded_values = [total_decoded_outputs]
+        decoded_shape = [2]
+        log_probability_shape = [inputs_shape[1], 1]
+        return decoded_indices_shape, decoded_values, decoded_shape, log_probability_shape
+
+    def infer_dtype(self, inputs_dtype, sequence_length_dtype):
+        validator.check_tensor_type_same({"inputs_dtype": inputs_dtype}, [mstype.float32, mstype.double], self.name)
+        validator.check_tensor_type_same({"sequence_length_dtype": sequence_length_dtype}, [mstype.int32], self.name)
+        decoded_type = mstype.tensor_type(mstype.int64)
+        return decoded_type, decoded_type, decoded_type, inputs_dtype
 
 
 class BasicLSTMCell(PrimitiveWithInfer):
@@ -5361,6 +5424,7 @@ class InTopK(PrimitiveWithInfer):
         >>> result = in_top_k(x1, x2)
         [True  False]
     """
+
     @prim_attr_register
     def __init__(self, k):
         """Init InTopK"""

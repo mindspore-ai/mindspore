@@ -39,7 +39,7 @@ from .comm_ops import (AllGather, AllReduce, _AlltoAll, ReduceScatter, Broadcast
                        _VirtualDiv, _GetTensorSlice,
                        _HostAllGather, _HostReduceScatter)
 from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSummary,
-                        TensorSummary, HistogramSummary, Debug, Print)
+                        TensorSummary, HistogramSummary, Debug, Print, Assert)
 from .control_ops import ControlDepend, GeSwitch, Merge
 from .inner_ops import ScalarCast
 
@@ -64,7 +64,7 @@ from .nn_ops import (LSTM, SGD, Adam, FusedSparseAdam, FusedSparseLazyAdam, Appl
                      DropoutDoMask, DropoutGrad, Dropout,
                      DropoutGenMask, Flatten, FusedBatchNorm, FusedBatchNormEx, BNTrainingReduce, BNTrainingUpdate,
                      Gelu, Elu,
-                     GetNext, L2Normalize, LayerNorm, L2Loss, CTCLoss, CTCLossV2,
+                     GetNext, L2Normalize, LayerNorm, L2Loss, CTCLoss, CTCLossV2, CTCGreedyDecoder,
                      LogSoftmax,
                      MaxPool, DataFormatDimMap,
                      AvgPool, Conv2DBackpropInput, ConfusionMulGrad,
@@ -201,6 +201,7 @@ __all__ = [
     'HistogramSummary',
     "Debug",
     "Print",
+    "Assert",
     'InsertGradientOf',
     'HookBackward',
     'InvertPermutation',
@@ -225,6 +226,7 @@ __all__ = [
     'SmoothL1Loss',
     'L2Loss',
     'CTCLoss',
+    'CTCGreedyDecoder',
     'RNNTLoss',
     'ReduceAll',
     'ReduceAny',

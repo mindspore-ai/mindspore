@@ -621,6 +621,18 @@ class UniformNet(nn.Cell):
         return out
 
 
+class CTCGreedyDecoderNet(nn.Cell):
+    def __init__(self):
+        super(CTCGreedyDecoderNet, self).__init__()
+        self.ctc_greedy_decoder = P.CTCGreedyDecoder()
+        self.assert_op = P.Assert(300)
+
+    def construct(self, inputs, sequence_length):
+        out = self.ctc_greedy_decoder(inputs,sequence_length)
+        self.assert_op(True, (out[0], out[1], out[2], out[3]))
+        return out[2]
+
+
 class StridedSliceNet(nn.Cell):
     def __init__(self):
         super(StridedSliceNet, self).__init__()
@@ -1672,6 +1684,10 @@ test_case_nn_ops = [
                         Tensor(np.array([1, 2, 3, 4]).astype(np.int32)),
                         Tensor(np.array([6, 6, 6, 6]).astype(np.int32))],
         'desc_bprop': [[4], [6, 4, 6]]}),
+    ('CTCGreedyDecoder', {
+        'block': CTCGreedyDecoderNet(),
+        'desc_inputs': [[2, 2, 3], Tensor(np.array([2, 2]).astype(np.int32))],
+        'skip': ['backward']}),
     ('L2Loss_1', {
         'block': P.L2Loss(),
         'desc_inputs': [Tensor(np.array([1, 2, 3, 4]), mstype.float32)],
