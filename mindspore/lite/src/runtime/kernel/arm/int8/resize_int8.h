@@ -13,31 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_RESIZE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_RESIZE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_RESIZE_INT8_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_RESIZE_INT8_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/base/resize_base.h"
+#include "nnacl/quantization/quantize.h"
 
 using mindspore::schema::PrimitiveType_Resize;
 using mindspore::schema::ResizeMethod;
 
 namespace mindspore::kernel {
-class ResizeCPUKernel : public ResizeBaseCPUKernel {
+class ResizeInt8CPUKernel : public ResizeBaseCPUKernel {
  public:
-  ResizeCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                  const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                  const lite::Primitive *primitive)
+  ResizeInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                      const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                      const lite::Primitive *primitive)
       : ResizeBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 
-  ~ResizeCPUKernel() = default;
+  ~ResizeInt8CPUKernel() {
+    delete quant_out_;
+    quant_out_ = nullptr;
+    delete quant_in_;
+    quant_in_ = nullptr;
+    delete multiplier_;
+    multiplier_ = nullptr;
+  }
 
   int Init() override;
   int ReSize() override { return 0; };
   int Run() override;
   int RunImpl(int task_id);
+
+ private:
+  QuantArg *quant_in_;
+  QuantArg *quant_out_;
+  QuantMulArg *multiplier_;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_RESIZE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_RESIZE_INT8_H_
