@@ -182,30 +182,59 @@ class ArrayReduceGpuKernel : public GpuKernel {
   void InferInAndOutDesc(const std::vector<size_t> &input_shape, const std::vector<size_t> &output_shape) {
     std::vector<int> inputA;
     std::vector<size_t> outputC_shape = output_shape;
-    ShapeNdTo4d(input_shape, &inputA);
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(inputA_descriptor_, CUDNN_TENSOR_NCHW, data_type_, inputA[0],
-                                                           inputA[1], inputA[2], inputA[3]),
-                                "cudnnSetTensor4dDescriptor failed");
+    const int split_dim = 4;
+
+    if (input_shape.size() <= split_dim) {
+      ShapeNdTo4d(input_shape, &inputA);
+      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(inputA_descriptor_, CUDNN_TENSOR_NCHW, data_type_,
+                                                             inputA[0], inputA[1], inputA[2], inputA[3]),
+                                  "cudnnSetTensor4dDescriptor failed");
+    } else {
+      CudnnSetTensorNdDescriptor(input_shape, inputA_descriptor_, data_type_);
+      for (auto dim : input_shape) {
+        inputA.emplace_back(SizeToInt(dim));
+      }
+    }
 
     if (axis_[0] == -1) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(
-        cudnnSetTensor4dDescriptor(outputC_descriptor_, CUDNN_TENSOR_NCHW, data_type_, 1, 1, 1, 1),
-        "cudnnSetTensor4dDescriptor failed");
-      if (inputA[0] == 1 && inputA[1] == 1 && inputA[2] == 1 && inputA[3] == 1) {
-        all_match_ = true;
+      outputC_shape.resize(input_shape.size(), 1);
+      if (outputC_shape.size() <= split_dim) {
+        CHECK_CUDNN_RET_WITH_EXCEPT(
+          cudnnSetTensor4dDescriptor(outputC_descriptor_, CUDNN_TENSOR_NCHW, data_type_, 1, 1, 1, 1),
+          "cudnnSetTensor4dDescriptor failed");
+      } else {
+        CudnnSetTensorNdDescriptor(outputC_shape, outputC_descriptor_, data_type_);
       }
+
+      for (auto dim : inputA) {
+        if (dim != 1) {
+          return;
+        }
+      }
+
+      all_match_ = true;
       return;
     }
+
+    std::vector<int> outputC;
     if (!keep_dims_) {
       for (auto i : axis_) {
         (void)(outputC_shape.insert(outputC_shape.begin() + i, 1));
       }
     }
-    std::vector<int> outputC;
-    ShapeNdTo4d(outputC_shape, &outputC);
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(outputC_descriptor_, CUDNN_TENSOR_NCHW, data_type_,
-                                                           outputC[0], outputC[1], outputC[2], outputC[3]),
-                                "cudnnSetTensor4dDescriptor failed");
+
+    if (outputC_shape.size() <= split_dim) {
+      ShapeNdTo4d(outputC_shape, &outputC);
+      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(outputC_descriptor_, CUDNN_TENSOR_NCHW, data_type_,
+                                                             outputC[0], outputC[1], outputC[2], outputC[3]),
+                                  "cudnnSetTensor4dDescriptor failed");
+    } else {
+      CudnnSetTensorNdDescriptor(outputC_shape, outputC_descriptor_, data_type_);
+      for (auto dim : outputC_shape) {
+        outputC.emplace_back(SizeToInt(dim));
+      }
+    }
+
     if (inputA == outputC) {
       all_match_ = true;
     }

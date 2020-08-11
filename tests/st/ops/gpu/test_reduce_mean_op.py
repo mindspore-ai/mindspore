@@ -70,7 +70,7 @@ x11 = np.random.rand(1, 1, 1, 1).astype(np.float32)
 axis11 = (0, 1, 2, 3)
 keep_dims11 = False
 
-x12 = np.random.rand(2, 3, 4, 4).astype(np.float32)
+x12 = np.random.rand(2, 3, 4, 4, 5, 6).astype(np.float32)
 axis12 = -2
 keep_dims12 = False
 

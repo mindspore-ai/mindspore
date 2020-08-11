@@ -27,6 +27,7 @@
 #include "backend/kernel_compiler/gpu/kernel_constants.h"
 namespace mindspore {
 namespace kernel {
+constexpr int MAX_DIMS = 7;
 template <typename T, typename S>
 class BroadcastOpGpuKernel : public GpuKernel {
  public:
@@ -45,9 +46,8 @@ class BroadcastOpGpuKernel : public GpuKernel {
     S *output = GetDeviceAddress<S>(outputs, 0);
 
     if (need_broadcast_) {
-      Broadcast(lhs_shape_[0], lhs_shape_[1], lhs_shape_[2], lhs_shape_[3], rhs_shape_[0], rhs_shape_[1], rhs_shape_[2],
-                rhs_shape_[3], output_shape_[0], output_shape_[1], output_shape_[2], output_shape_[3], op_type_, lhs,
-                rhs, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+      Broadcast(lhs_shape_, rhs_shape_, output_shape_, op_type_, lhs, rhs, output,
+                reinterpret_cast<cudaStream_t>(stream_ptr));
     } else {
       NoBroadcast(output_num_, op_type_, lhs, rhs, output, reinterpret_cast<cudaStream_t>(stream_ptr));
     }
@@ -60,10 +60,13 @@ class BroadcastOpGpuKernel : public GpuKernel {
     auto shape2 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto shape3 = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     need_broadcast_ = IsBroadcast(shape1, shape2);
-    if (need_broadcast_ && shape1.size() > 4) {
-      MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than 4";
+    if (need_broadcast_ && shape1.size() > 7) {
+      MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than 7";
     }
 
+    lhs_shape_.resize(MAX_DIMS, 1);
+    rhs_shape_.resize(MAX_DIMS, 1);
+    output_shape_.resize(MAX_DIMS, 1);
     for (size_t i = 0; i < shape3.size(); i++) {
       output_shape_[i] = shape3[i];
       output_num_ *= shape3[i];
@@ -127,9 +130,9 @@ class BroadcastOpGpuKernel : public GpuKernel {
   int input1_num_;
   int input2_num_;
   int output_num_;
-  int lhs_shape_[4] = {1, 1, 1, 1};
-  int rhs_shape_[4] = {1, 1, 1, 1};
-  int output_shape_[4] = {1, 1, 1, 1};
+  std::vector<int> lhs_shape_;
+  std::vector<int> rhs_shape_;
+  std::vector<int> output_shape_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

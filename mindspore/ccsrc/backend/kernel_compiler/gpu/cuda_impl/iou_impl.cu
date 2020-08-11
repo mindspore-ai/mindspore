@@ -16,27 +16,26 @@
 
 #include "backend/kernel_compiler/gpu/cuda_impl/iou_impl.cuh"
 
-template <typename T>
-__device__ T CoordinateMax(const T a, const T b) {
+__device__ float CoordinateMax(const float a, const float b) {
   return (a > b ? a : b);
 }
 
-template <typename T>
-__device__ T CoordinateMin(const T a, const T b) {
+__device__ float CoordinateMin(const float a, const float b) {
   return (a < b ? a : b);
 }
 
 template <typename T>
 __global__ void IOUKernel(const size_t size, const T *box1, const T *box2, T *iou_results, const size_t mode,
                           const size_t input_len_0) {
-  T location_coordinate[IOU_LOCATION_NUM][IOU_DIMENSION];
-  T overlaps_coordinate[IOU_DIMENSION];
-  const T epsilon = 1e-10;
+  float location_coordinate[IOU_LOCATION_NUM][IOU_DIMENSION];
+  float overlaps_coordinate[IOU_DIMENSION];
+  const float epsilon = 1e-10;
+  const float offset = 1.0;
 
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     for (size_t j = 0; j < IOU_DIMENSION; j++) {
-      location_coordinate[0][j] = box1[(i % input_len_0) * IOU_DIMENSION + j];
-      location_coordinate[1][j] = box2[(i / input_len_0) * IOU_DIMENSION + j];
+      location_coordinate[0][j] = static_cast<float>(box1[(i % input_len_0) * IOU_DIMENSION + j]);
+      location_coordinate[1][j] = static_cast<float>(box2[(i / input_len_0) * IOU_DIMENSION + j]);
     }
 
     overlaps_coordinate[0] = CoordinateMax(location_coordinate[0][0], location_coordinate[1][0]);
@@ -44,18 +43,18 @@ __global__ void IOUKernel(const size_t size, const T *box1, const T *box2, T *io
     overlaps_coordinate[2] = CoordinateMin(location_coordinate[0][2], location_coordinate[1][2]);
     overlaps_coordinate[3] = CoordinateMin(location_coordinate[0][3], location_coordinate[1][3]);
 
-    T overlaps_w = CoordinateMax(0.f, overlaps_coordinate[2] - overlaps_coordinate[0] + 1);
-    T overlaps_h = CoordinateMax(0.f, overlaps_coordinate[3] - overlaps_coordinate[1] + 1);
-    T overlaps = overlaps_w * overlaps_h;
+    float overlaps_w = CoordinateMax(0.0, overlaps_coordinate[2] - overlaps_coordinate[0] + offset);
+    float overlaps_h = CoordinateMax(0.0, overlaps_coordinate[3] - overlaps_coordinate[1] + offset);
+    float overlaps = overlaps_w * overlaps_h;
 
-    T area1 = (location_coordinate[0][2] - location_coordinate[0][0] + 1) * (location_coordinate[0][3] -
-               location_coordinate[0][1] + 1);
-    T area2 = (location_coordinate[1][2] - location_coordinate[1][0] + 1) * (location_coordinate[1][3] -
-                                                                             location_coordinate[1][1] + 1);
+    float area1 = (location_coordinate[0][2] - location_coordinate[0][0] + offset) * (location_coordinate[0][3] -
+               location_coordinate[0][1] + offset);
+    float area2 = (location_coordinate[1][2] - location_coordinate[1][0] + offset) * (location_coordinate[1][3] -
+                                                                             location_coordinate[1][1] + offset);
     if (mode == 0) {
-      iou_results[i] = overlaps / (area1 + area2 - overlaps + epsilon);
+      iou_results[i] = static_cast<T>(overlaps / (area1 + area2 - overlaps + epsilon));
     } else {
-      iou_results[i] = overlaps / (area2 + epsilon);
+      iou_results[i] = static_cast<T>(overlaps / (area2 + epsilon));
     }
   }
 
@@ -69,4 +68,6 @@ void IOU(const size_t &size, const T *box1, const T *box2, T *iou_results, const
 }
 
 template void IOU(const size_t &size, const float *box1, const float *box2, float *iou_results, const size_t &mode,
+                  const size_t &input_len_0, cudaStream_t cuda_stream);
+template void IOU(const size_t &size, const half *box1, const half *box2, half *iou_results, const size_t &mode,
                   const size_t &input_len_0, cudaStream_t cuda_stream);
