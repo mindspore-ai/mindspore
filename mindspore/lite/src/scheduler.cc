@@ -157,7 +157,7 @@ kernel::LiteKernel *Scheduler::CreateSubKernel(const std::vector<kernel::LiteKer
         input_tensors.emplace_back(tensor);
       }
     }
-    for (auto tensor : tail_kernel->GetInputs()) {
+    for (auto tensor : tail_kernel->GetOutputs()) {
       if (tensor->Data() == nullptr) {
         output_tensors.emplace_back(tensor);
       }

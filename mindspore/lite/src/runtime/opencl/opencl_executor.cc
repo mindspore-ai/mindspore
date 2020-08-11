@@ -56,6 +56,7 @@ int OpenCLExecutor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tenso
       } else {
         output->MallocData(allocator);
       }
+      output->set_allocator(allocator);
     }
     session::CallBackParam callbackParam;
     callbackParam.name_callback_param = kernel->Name();
@@ -91,7 +92,7 @@ int OpenCLExecutor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tenso
       return RET_ERROR;
     }
     if (outTensor->GetFormat() != schema::Format_NHWC) {
-        TransformTensorLayout(outTensor, outTensor->GetFormat(), schema::Format_NHWC, false);
+      TransformTensorLayout(outTensor, outTensor->GetFormat(), schema::Format_NHWC, false);
     }
   }
   return RET_OK;

@@ -61,7 +61,9 @@ class LiteKernel {
                       const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                       const lite::Primitive *primitive)
       : opParameter(parameter), inputs_(inputs), outputs_(outputs), primitive_(primitive), context_(ctx) {
-    opParameter->thread_num_ = ctx->thread_num_;
+    if (opParameter && ctx) {
+      opParameter->thread_num_ = ctx->thread_num_;
+    }
     this->in_kernel_.clear();
     this->out_kernel_.clear();
   }
@@ -100,7 +102,10 @@ class LiteKernel {
 
   schema::PrimitiveType type() { return (schema::PrimitiveType)this->opParameter->type_; }
 
-  std::string type_str() { return schema::EnumNamePrimitiveType((schema::PrimitiveType)this->opParameter->type_); }
+  std::string type_str() {
+    return this->opParameter ? schema::EnumNamePrimitiveType((schema::PrimitiveType)this->opParameter->type_)
+                             : "ERROR:undefined primitive!";
+  }
 
   void SetInputs(const std::vector<lite::tensor::Tensor *> &inputs) { this->inputs_ = inputs; }
 
