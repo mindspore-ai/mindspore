@@ -50,6 +50,12 @@ const AnfNodePtr ConvertConstInputToAttr::Process(const FuncGraphPtr &, const An
     if (!ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(AnfAlgo::GetCNodeName(cnode), &reg)) {
       continue;
     }
+    if (AnfAlgo::GetCNodeName(cnode) == prim::kPrimEmbeddingLookup->name() ||
+        AnfAlgo::GetCNodeName(cnode) == prim::kPrimEmbeddingLookupCommGrad->name()) {
+      if (!AnfAlgo::HasNodeAttr(kAttrPrimitiveTarget, cnode)) {
+        continue;
+      }
+    }
     ConstInputToAttr(cnode, reg.GetConstInputAttrInfo());
   }
   return node;
