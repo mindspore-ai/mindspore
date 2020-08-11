@@ -4,7 +4,9 @@ include_directories(${3RD_DIR}/flatbuffers/include)
 include_directories(${3RD_DIR}/opencv/build/include/opencv4)
 
 add_library(quantizer_mid OBJECT
+    ${CMAKE_CURRENT_SOURCE_DIR}/calc_quant_param.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/quantizer.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/aware_quantizer.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/weight_quantizer.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/quantize_util.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/general_bitpacking.cc

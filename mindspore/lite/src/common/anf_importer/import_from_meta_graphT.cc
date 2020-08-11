@@ -60,6 +60,17 @@ void AnfImporterFromMetaGraphT::ConverterConstTensor() {
       param_value->set_tensor_addr(tensor_data);
       param_value->set_tensor_size(size);
     }
+    if (tensor->quantParams.size() > 0) {
+      std::unique_ptr<AnfQuantParam> quantParam = std::make_unique<AnfQuantParam>();
+      quantParam->scale = tensor->quantParams[0]->scale;
+      quantParam->zeroPoint = tensor->quantParams[0]->zeroPoint;
+      quantParam->min = tensor->quantParams[0]->min;
+      quantParam->max = tensor->quantParams[0]->max;
+      quantParam->narrowRange = tensor->quantParams[0]->narrowRange;
+      quantParam->numBits = tensor->quantParams[0]->numBits;
+      quantParam->inited = tensor->quantParams[0]->inited;
+      param_value->set_quant_param(quantParam);
+    }
     parameter->set_default_param(param_value);
     AddNode(i, parameter);
   }
@@ -77,6 +88,16 @@ int AnfImporterFromMetaGraphT::ConverterCNode() {
       flag = true;
     }
     auto primTValue = std::make_shared<PrimitiveTValue>(cNode->primitive.release());
+    // add quant parameter
+    if (cNode->quantType == schema::QuantType_AwareTrainning || cNode->quantType == schema::QuantType_PostTraining) {
+      primTValue->SetQuantType(cNode->quantType);
+      for (int index : cNode->inputIndex) {
+        primTValue->AddInputQuantParam(*(meta_graph_->allTensors[index]->quantParams[0]));
+      }
+      for (int index : cNode->outputIndex) {
+        primTValue->AddOutputQuantParam(*(meta_graph_->allTensors[index]->quantParams[0]));
+      }
+    }
     cNode->primitive = nullptr;
     auto value_node = NewValueNode(primTValue);
 

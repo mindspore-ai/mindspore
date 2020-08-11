@@ -15,22 +15,19 @@
  */
 
 #include "mindspore/lite/tools/converter/quantizer/quantizer.h"
+#include "schema/inner/model_generated.h"
 
-namespace mindspore {
-namespace lite {
-namespace quant {
-Quantizer::Quantizer(FuncGraphPtr graph) : funcGraph(graph) {
-    if (funcGraph == nullptr) {
-        return;
-    }
-}
+namespace mindspore::lite::quant {
 
 STATUS Quantizer::GenerateQuantParam() { return RET_OK; }
 
 STATUS Quantizer::RemoveFakeQuant() { return RET_OK; }
 
 STATUS Quantizer::DetermineNodeQuantType() { return RET_OK; }
-}  // namespace quant
-}  // namespace lite
-}  // namespace mindspore
 
+STATUS FbQuantizer::GenerateQuantParam() { return RET_OK; }
+
+STATUS FbQuantizer::RemoveFakeQuant() { return RET_OK; }
+
+STATUS FbQuantizer::DetermineNodeQuantType() { return RET_OK; }
+}  // namespace mindspore::lite::quant

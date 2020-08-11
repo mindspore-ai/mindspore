@@ -31,7 +31,8 @@ CaffeModelParser::~CaffeModelParser() {}
 
 const std::set<std::string> CaffeModelParser::skipedLayerType = {"Dropout"};
 
-schema::MetaGraphT *CaffeModelParser::Parse(const std::string &modelFile, const std::string &weightFile) {
+schema::MetaGraphT *CaffeModelParser::Parse(const std::string &modelFile, const std::string &weightFile,
+                                            const QuantType &quantType) {
   std::unique_ptr<schema::MetaGraphT> graph(new schema::MetaGraphT());
 
   if (ValidateFileStr(modelFile, ".prototxt") != RET_OK) {
@@ -91,7 +92,7 @@ schema::MetaGraphT *CaffeModelParser::Parse(const std::string &modelFile, const 
   // ConvertCaffeBatchNorm(graph.get());
 
   return graph.release();
-  // return Fb2Anf(graph.release());
+  //  return Fb2Anf(graph.release());
 }
 
 STATUS CaffeModelParser::SetOpInputIdx(const caffe::LayerParameter &layer, schema::CNodeT *op,

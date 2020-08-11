@@ -33,7 +33,8 @@ class CaffeModelParser : public ModelParser {
 
   virtual ~CaffeModelParser();
 
-  MetaGraphT *Parse(const std::string &modelFile, const std::string &weightFile) override;
+  MetaGraphT *Parse(const std::string &modelFile, const std::string &weightFile,
+                    const QuantType &quantType = QuantType_QUANT_NONE) override;
 
  private:
   void ConvertCaffeBatchNorm(MetaGraphT *meta_graphT);

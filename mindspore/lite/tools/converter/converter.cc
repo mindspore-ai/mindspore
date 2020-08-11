@@ -77,7 +77,7 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
     MS_ASSERT(nullptr != modelParser);
     const std::string modelFile = flag->modelFile;
     const std::string weightFile = flag->weightFile;
-    auto meta_graph = modelParser->Parse(modelFile, weightFile);
+    auto meta_graph = modelParser->Parse(modelFile, weightFile, flag->quantType);
     if (meta_graph == nullptr) {
       MS_LOG(ERROR) << "Parse to metaGraph return nullptr";
       return nullptr;
@@ -118,6 +118,7 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
 
   // transform
   transform->SetGraphDef(meta_graph);
+  transform->CreateQuantizer(flag);
   auto status = transform->Transform(*flag);
   if (status != 0) {
     MS_LOG(ERROR) << "FBTransform model failed " << status;
@@ -125,6 +126,7 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
   }
   return meta_graph;
 }
+
 void Converter::CreateQuantizer(FuncGraphPtr funcGraph, const converter::Flags *flags) {
   auto type = flags->quantType;
   switch (type) {
@@ -132,17 +134,18 @@ void Converter::CreateQuantizer(FuncGraphPtr funcGraph, const converter::Flags *
       // mQuantizer.reset(new AwareQuantizer(graphDefT, flags->inputInferenceTypeIn, flags->stdDev, flags->mean));
       break;
     }
-    case mindspore::schema::QuantType_WeightQuant: {
-      MS_LOG(INFO) << "create WeightQuantizer!";
-      mQuantizer.reset(
-        new quant::WeightQuantizer(funcGraph, flags->quantSize, flags->convWeightQuantChannelThreshold, flags->bitNum));
-      break;
-    }
-    case mindspore::schema::QuantType_PostTraining: {
-      MS_LOG(INFO) << "create PostTrainningQuantizer!";
-      mQuantizer.reset(new quant::PostTrainingQuantizer(funcGraph, flags->configFile, 8));
-      break;
-    }
+      //    case mindspore::schema::QuantType_WeightQuant: {
+      //      MS_LOG(INFO) << "create WeightQuantizer!";
+      //      mQuantizer.reset(
+      //        new quant::WeightQuantizer(funcGraph, flags->quantSize, flags->convWeightQuantChannelThreshold,
+      //        flags->bitNum));
+      //      break;
+      //    }
+      //    case mindspore::schema::QuantType_PostTraining: {
+      //      MS_LOG(INFO) << "create PostTrainningQuantizer!";
+      //      mQuantizer.reset(new quant::PostTrainingQuantizer(funcGraph, flags->configFile, 8));
+      //      break;
+      //    }
     case mindspore::schema::QuantType_QUANT_NONE:
       MS_LOG(INFO) << "Not do quantization for model!";
       break;

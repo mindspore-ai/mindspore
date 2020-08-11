@@ -19,8 +19,29 @@
 #include "tools/common/tensor_util.h"
 #include "tools/common/graph_util.h"
 
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
+std::unique_ptr<QuantParamT> GetTensorQuantParam(const std::unique_ptr<TensorT> &tensor) {
+  MS_ASSERT(tensor != nullptr);
+  auto &quantParams = tensor->quantParams;
+  if (!quantParams.empty()) {
+    return std::move(CopyQuantParamT(quantParams.front()));
+  } else {
+    return nullptr;
+  }
+}
+std::unique_ptr<schema::QuantParamT> CopyQuantParamT(const std::unique_ptr<schema::QuantParamT> &srcQuantParam) {
+  MS_ASSERT(srcQuantParam != nullptr);
+  std::unique_ptr<schema::QuantParamT> dstQuantParam = std::make_unique<schema::QuantParamT>();
+  dstQuantParam->inited = srcQuantParam->inited;
+  dstQuantParam->scale = srcQuantParam->scale;
+  dstQuantParam->zeroPoint = srcQuantParam->zeroPoint;
+  dstQuantParam->min = srcQuantParam->min;
+  dstQuantParam->max = srcQuantParam->max;
+  dstQuantParam->narrowRange = srcQuantParam->narrowRange;
+  dstQuantParam->numBits = srcQuantParam->numBits;
+  return std::move(dstQuantParam);
+}
+
 std::unique_ptr<QuantParamT> CopyQuantParamArrayT(const std::unique_ptr<QuantParamT> &srcQuantParamArray) {
   MS_ASSERT(srcQuantParamArray != nullptr);
   auto dstQuantParamArrayT = std::unique_ptr<QuantParamT>(new (std::nothrow) QuantParamT());
@@ -164,6 +185,9 @@ std::unique_ptr<TensorT> CopyTensorDefT(const std::unique_ptr<TensorT> &oldTenso
   newTensor->refCount = oldTensor->refCount;
   newTensor->nodeType = oldTensor->nodeType;
   newTensor->data = oldTensor->data;
+  if (!oldTensor->quantParams.empty()) {
+    newTensor->quantParams.emplace_back(std::move(GetTensorQuantParam(oldTensor)));
+  }
   return std::move(newTensor);
 }
 
@@ -186,6 +210,4 @@ size_t GetShapeSize(const std::vector<int32_t> &shape) {
   }
   return shapeSize;
 }
-}  // namespace lite
-}  // namespace mindspore
-
+}  // namespace mindspore::lite
