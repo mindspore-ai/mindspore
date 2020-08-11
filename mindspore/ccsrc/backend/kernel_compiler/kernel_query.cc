@@ -70,9 +70,8 @@ void KernelQueryAll(const CNodePtr &kernel_node,
                     std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
-
+  std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
   TbeMetadataInfo(kernel_node, kernel_info_list);
-
   if (kernel_info_list->empty()) {
     AicpuMetadataInfo(kernel_node, kernel_info_list);
     if (!kernel_info_list->empty()) {
@@ -81,16 +80,17 @@ void KernelQueryAll(const CNodePtr &kernel_node,
       AnfAlgo::SetNodeAttr(kAttrIsAICPUKernel, MakeValue(true), kernel_node);
     }
   }
-
   if (kernel_info_list->empty()) {
     GetRtKelInfo(kernel_node, kernel_info_list);
   }
-
   if (kernel_info_list->empty()) {
     HcclMetadataInfo(kernel_node, kernel_info_list);
   }
   if (kernel_info_list->empty()) {
-    MS_LOG(EXCEPTION) << "Op " << kernel_node->DebugString() << "kernel query fail!";
+    MS_EXCEPTION(NotExistsError)
+      << "Failed to obtain operator info, Please check whether the operator info is registered, Op full name:"
+      << kernel_node->fullname_with_scope() << "Node Type: " << op_name
+      << ", Node DebugString: " << kernel_node->DebugString();
   }
 }
 
@@ -98,8 +98,6 @@ void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel
                  KernelType kernel_type) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
-
-  std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -117,7 +115,9 @@ void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel
   }
 
   if (kernel_info_list->empty()) {
-    MS_EXCEPTION(NotExistsError) << "Op[" << kernel_node->DebugString() << "] kernel query fail!";
+    MS_EXCEPTION(NotExistsError)
+      << "Failed to obtain operator info. Please check whether the operator info is registered, Op full name:"
+      << kernel_node->fullname_with_scope() << ". Node DebugString: " << kernel_node->DebugString();
   }
   // check output
   FilterInvalidKernelInfo(kernel_node, kernel_info_list);
