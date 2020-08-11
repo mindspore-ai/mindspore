@@ -50,6 +50,7 @@ SET(DE_UT_SRCS
         random_resize_op_test.cc
         random_resize_with_bbox_op_test.cc
         random_rotation_op_test.cc
+        random_solarize_op_test.cc
         random_vertical_flip_op_test.cc
         random_vertical_flip_with_bbox_op_test.cc
         rename_op_test.cc
@@ -104,8 +105,9 @@ SET(DE_UT_SRCS
         sliding_window_op_test.cc
         epoch_ctrl_op_test.cc
         sentence_piece_vocab_op_test.cc
-	swap_red_blue_test.cc
-	distributed_sampler_test.cc
+        solarize_op_test.cc
+        swap_red_blue_test.cc
+        distributed_sampler_test.cc
         )
 
 if (ENABLE_PYTHON)

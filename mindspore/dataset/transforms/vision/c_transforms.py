@@ -48,7 +48,7 @@ from .validators import check_prob, check_crop, check_resize_interpolation, chec
     check_mix_up_batch_c, check_normalize_c, check_random_crop, check_random_color_adjust, check_random_rotation, \
     check_range, check_resize, check_rescale, check_pad, check_cutout, check_uniform_augment_cpp, \
     check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_auto_contrast, check_random_affine, \
-    check_soft_dvpp_decode_random_crop_resize_jpeg, FLOAT_MAX_INTEGER
+    check_random_solarize, check_soft_dvpp_decode_random_crop_resize_jpeg, FLOAT_MAX_INTEGER
 
 DE_C_INTER_MODE = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBOUR,
                    Inter.LINEAR: cde.InterpolationMode.DE_INTER_LINEAR,
@@ -932,3 +932,20 @@ class SoftDvppDecodeRandomCropResizeJpeg(cde.SoftDvppDecodeRandomCropResizeJpegO
         self.ratio = ratio
         self.max_attempts = max_attempts
         super().__init__(*size, *scale, *ratio, max_attempts)
+
+
+class RandomSolarize(cde.RandomSolarizeOp):
+    """
+    Invert all pixel values above a threshold.
+
+    Args:
+        threshold (sequence): Range of random solarize threshold.
+        Threshold values should always be in range of [0, 255], and
+        include at least one integer value in the given range and
+        be in (min, max) format. If min=max, then it is a single
+        fixed magnitude operation (default=(0, 255)).
+    """
+
+    @check_random_solarize
+    def __init__(self, threshold=(0, 255)):
+        super().__init__(*threshold)

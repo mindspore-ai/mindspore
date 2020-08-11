@@ -36,6 +36,7 @@ class CVOpCommon : public Common {
     kDecode,
     kChannelSwap,
     kChangeMode,
+    kRandomSolarize,
     kTemplate,
     kCrop,
     kRandomAffine,

@@ -44,6 +44,7 @@
 #include "minddata/dataset/kernels/image/random_resize_with_bbox_op.h"
 #include "minddata/dataset/kernels/image/random_rotation_op.h"
 #include "minddata/dataset/kernels/image/random_select_subpolicy_op.h"
+#include "minddata/dataset/kernels/image/random_solarize_op.h"
 #include "minddata/dataset/kernels/image/random_vertical_flip_op.h"
 #include "minddata/dataset/kernels/image/random_vertical_flip_with_bbox_op.h"
 #include "minddata/dataset/kernels/image/rescale_op.h"
@@ -382,6 +383,12 @@ PYBIND_REGISTER(
              py::arg("aspectUb") = RandomCropDecodeResizeOp::kDefAspectUb,
              py::arg("maxIter") = RandomCropDecodeResizeOp::kDefMaxIter);
   }));
+
+PYBIND_REGISTER(RandomSolarizeOp, 1, ([](const py::module *m) {
+                  (void)py::class_<RandomSolarizeOp, TensorOp, std::shared_ptr<RandomSolarizeOp>>(*m,
+                                                                                                  "RandomSolarizeOp")
+                    .def(py::init<uint8_t, uint8_t>());
+                }));
 
 }  // namespace dataset
 }  // namespace mindspore

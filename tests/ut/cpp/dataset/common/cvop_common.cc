@@ -142,6 +142,10 @@ void CVOpCommon::CheckImageShapeAndData(const std::shared_ptr<Tensor> &output_te
       expect_image_path = dir_path + "imagefolder/apple_expect_equalize.jpg";
       actual_image_path = dir_path + "imagefolder/apple_actual_equalize.jpg";
       break;
+    case kRandomSolarize:
+      expect_image_path = dir_path + "imagefolder/apple_expect_random_solarize.jpg";
+      actual_image_path = dir_path + "imagefolder/apple_actual_random_solarize.jpg";
+      break;
     default:
       MS_LOG(INFO) << "Not pass verification! Operation type does not exists.";
       EXPECT_EQ(0, 1);

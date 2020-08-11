@@ -61,6 +61,7 @@ class RandomColorAdjustOperation;
 class RandomCropOperation;
 class RandomHorizontalFlipOperation;
 class RandomRotationOperation;
+class RandomSolarizeOperation;
 class RandomVerticalFlipOperation;
 class ResizeOperation;
 class SwapRedBlueOperation;
@@ -207,6 +208,13 @@ std::shared_ptr<RandomHorizontalFlipOperation> RandomHorizontalFlip(float prob =
 std::shared_ptr<RandomRotationOperation> RandomRotation(
   std::vector<float> degrees, InterpolationMode resample = InterpolationMode::kNearestNeighbour, bool expand = false,
   std::vector<float> center = {-1, -1}, std::vector<uint8_t> fill_value = {0, 0, 0});
+
+/// \brief Function to create a RandomSolarize TensorOperation.
+/// \notes Invert pixels within specified range. If min=max, then it inverts all pixel above that threshold
+/// \param[in] threshold_min - lower limit
+/// \param[in] threshold_max - upper limit
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<RandomSolarizeOperation> RandomSolarize(uint8_t threshold_min = 0, uint8_t threshold_max = 255);
 
 /// \brief Function to create a RandomVerticalFlip TensorOperation.
 /// \notes Tensor operation to perform random vertical flip.
@@ -514,6 +522,21 @@ class SwapRedBlueOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   bool ValidateParams() override;
+};
+
+class RandomSolarizeOperation : public TensorOperation {
+ public:
+  explicit RandomSolarizeOperation(uint8_t threshold_min, uint8_t threshold_max);
+
+  ~RandomSolarizeOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
+
+ private:
+  uint8_t threshold_min_;
+  uint8_t threshold_max_;
 };
 }  // namespace vision
 }  // namespace api

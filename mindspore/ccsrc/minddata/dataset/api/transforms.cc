@@ -31,6 +31,7 @@
 #include "minddata/dataset/kernels/image/random_crop_op.h"
 #include "minddata/dataset/kernels/image/random_horizontal_flip_op.h"
 #include "minddata/dataset/kernels/image/random_rotation_op.h"
+#include "minddata/dataset/kernels/image/random_solarize_op.h"
 #include "minddata/dataset/kernels/image/random_vertical_flip_op.h"
 #include "minddata/dataset/kernels/image/resize_op.h"
 #include "minddata/dataset/kernels/image/swap_red_blue_op.h"
@@ -191,6 +192,16 @@ std::shared_ptr<RandomRotationOperation> RandomRotation(std::vector<float> degre
                                                         bool expand, std::vector<float> center,
                                                         std::vector<uint8_t> fill_value) {
   auto op = std::make_shared<RandomRotationOperation>(degrees, resample, expand, center, fill_value);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
+// Function to create RandomSolarizeOperation.
+std::shared_ptr<RandomSolarizeOperation> RandomSolarize(uint8_t threshold_min, uint8_t threshold_max) {
+  auto op = std::make_shared<RandomSolarizeOperation>(threshold_min, threshold_max);
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -651,6 +662,23 @@ std::shared_ptr<TensorOp> RandomRotationOperation::Build() {
   std::shared_ptr<RandomRotationOp> tensor_op =
     std::make_shared<RandomRotationOp>(degrees_[0], degrees_[1], center_[0], center_[1], interpolation_mode_, expand_,
                                        fill_value_[0], fill_value_[1], fill_value_[2]);
+  return tensor_op;
+}
+
+// RandomSolarizeOperation.
+RandomSolarizeOperation::RandomSolarizeOperation(uint8_t threshold_min, uint8_t threshold_max)
+    : threshold_min_(threshold_min), threshold_max_(threshold_max) {}
+
+bool RandomSolarizeOperation::ValidateParams() {
+  if (threshold_max_ < threshold_min_) {
+    MS_LOG(ERROR) << "RandomSolarize: threshold_max must be greater or equal to threshold_min";
+    return false;
+  }
+  return true;
+}
+
+std::shared_ptr<TensorOp> RandomSolarizeOperation::Build() {
+  std::shared_ptr<RandomSolarizeOp> tensor_op = std::make_shared<RandomSolarizeOp>(threshold_min_, threshold_max_);
   return tensor_op;
 }
 
