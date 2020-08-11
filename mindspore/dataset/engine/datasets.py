@@ -1301,17 +1301,6 @@ class Dataset:
             return self.children[0].get_repeat_count()
         return 1
 
-    def get_class_indexing(self):
-        """
-        Get the class index.
-
-        Return:
-            Dict, A str-to-int mapping from label name to index.
-        """
-        if self.children:
-            return self.children[0].get_class_indexing()
-        raise NotImplementedError("Dataset {} has not supported api get_class_indexing yet.".format(type(self)))
-
     def reset(self):
         """Reset the dataset for next epoch."""
 
@@ -1448,7 +1437,7 @@ class MappableDataset(SourceDataset):
             sizes (Union[list[int], list[float]]): If a list of integers [s1, s2, …, sn] is
                 provided, the dataset will be split into n datasets of size s1, size s2, …, size sn
                 respectively. If the sum of all sizes does not equal the original dataset size, an
-                an error will occur.
+                error will occur.
                 If a list of floats [f1, f2, …, fn] is provided, all floats must be between 0 and 1
                 and must sum to 1, otherwise an error will occur. The dataset will be split into n
                 Datasets of size round(f1*K), round(f2*K), …, round(fn*K) where K is the size of the
@@ -1543,7 +1532,16 @@ class DatasetOp(Dataset):
     """
 
     # No need for __init__ since it is the same as the super's init
+    def get_class_indexing(self):
+        """
+        Get the class index.
 
+        Return:
+            Dict, A str-to-int mapping from label name to index.
+        """
+        if self.children:
+            return self.children[0].get_class_indexing()
+        raise NotImplementedError("Dataset {} has not supported api get_class_indexing yet.".format(type(self)))
 
 class BucketBatchByLengthDataset(DatasetOp):
     """
@@ -2506,7 +2504,7 @@ class ImageFolderDatasetV2(MappableDataset):
     The generated dataset has two columns ['image', 'label'].
     The shape of the image column is [image_size] if decode flag is False, or [H,W,C]
     otherwise.
-    The type of the image tensor is uint8. The label is just a scalar uint64
+    The type of the image tensor is uint8. The label is just a scalar int32
     tensor.
     This dataset can take in a sampler. sampler and shuffle are mutually exclusive. Table
     below shows what input args are allowed and their expected behavior.
@@ -2578,7 +2576,7 @@ class ImageFolderDatasetV2(MappableDataset):
         >>> # 2) read all samples (image files) from folder cat and folder dog with label 0 and 1
         >>> imagefolder_dataset = ds.ImageFolderDatasetV2(dataset_dir,class_indexing={"cat":0,"dog":1})
         >>> # 3) read all samples (image files) in dataset_dir with extensions .JPEG and .png (case sensitive)
-        >>> imagefolder_dataset = ds.ImageFolderDatasetV2(dataset_dir, extensions={".JPEG",".png"})
+        >>> imagefolder_dataset = ds.ImageFolderDatasetV2(dataset_dir, extensions=[".JPEG",".png"])
     """
 
     @check_imagefolderdatasetv2
