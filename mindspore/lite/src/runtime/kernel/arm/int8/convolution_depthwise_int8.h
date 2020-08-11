@@ -29,14 +29,7 @@ class ConvolutionDepthwiseInt8CPUKernel : public ConvolutionBaseCPUKernel {
                                     const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                                     const lite::Primitive *primitive)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~ConvolutionDepthwiseInt8CPUKernel() override {
-    delete sliding;
-    free(packed_weight_);
-    free(packed_input_);
-    if (need_align_) {
-      free(packed_output_);
-    }
-  };
+  ~ConvolutionDepthwiseInt8CPUKernel() override;
 
   int Init() override;
   int ReSize() override;

@@ -28,6 +28,24 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
 namespace mindspore::kernel {
+ConvolutionDepthwiseInt8CPUKernel::~ConvolutionDepthwiseInt8CPUKernel() {
+  delete sliding;
+  if (packed_weight_ != nullptr) {
+    delete packed_weight_;
+    packed_weight_ = nullptr;
+  }
+  if (packed_input_ != nullptr) {
+    delete packed_input_;
+    packed_input_ = nullptr;
+  }
+  if (need_align_) {
+    if (packed_output_ != nullptr) {
+      delete packed_output_;
+      packed_output_ = nullptr;
+    }
+  }
+}
+
 int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   // init weight, int8 -> int16
   // o, h, w, i -> o/8, h, w, i, 8; o == group, i == 1
@@ -111,10 +129,17 @@ int ConvolutionDepthwiseInt8CPUKernel::Init() {
 }
 
 int ConvolutionDepthwiseInt8CPUKernel::ReSize() {
-  free(packed_input_);
-  if (need_align_) {
-    free(packed_output_);
+  if (packed_input_ != nullptr) {
+    delete packed_input_;
+    packed_input_ = nullptr;
   }
+  if (need_align_) {
+    if (packed_output_ != nullptr) {
+      delete packed_output_;
+      packed_output_ = nullptr;
+    }
+  }
+
   // conv base init
   ConvolutionBaseCPUKernel::Init();
 

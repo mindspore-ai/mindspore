@@ -40,7 +40,6 @@
 #include "src/runtime/kernel/arm/nnacl/fp32/reduce.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/activation.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/arithmetic.h"
-#include "src/runtime/kernel/arm/nnacl/fused_batchnorm.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/batchnorm.h"
 #include "src/runtime/kernel/arm/nnacl/power.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/range.h"
@@ -510,15 +509,15 @@ OpParameter *PopulateActivationParameter(const lite::Primitive *primitive) {
 }
 
 OpParameter *PopulateFusedBatchNorm(const lite::Primitive *primitive) {
-  FusedBatchNormParameter *fuse_batch_norm_param = new (std::nothrow) FusedBatchNormParameter();
-  if (fuse_batch_norm_param == nullptr) {
+  BatchNormParameter *batch_norm_param = new (std::nothrow) BatchNormParameter();
+  if (batch_norm_param == nullptr) {
     MS_LOG(ERROR) << "new FusedBatchNormParameter failed.";
     return nullptr;
   }
-  fuse_batch_norm_param->op_parameter_.type_ = primitive->Type();
+  batch_norm_param->op_parameter_.type_ = primitive->Type();
   auto param = primitive->Value()->value_as_FusedBatchNorm();
-  fuse_batch_norm_param->epsilon_ = param->epsilon();
-  return reinterpret_cast<OpParameter *>(fuse_batch_norm_param);
+  batch_norm_param->epsilon_ = param->epsilon();
+  return reinterpret_cast<OpParameter *>(batch_norm_param);
 }
 
 OpParameter *PopulateArithmetic(const lite::Primitive *primitive) {

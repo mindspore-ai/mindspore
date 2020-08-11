@@ -29,14 +29,7 @@ class DeconvolutionDepthwiseCPUKernel : public ConvolutionBaseCPUKernel {
                                   const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                                   const lite::Primitive *primitive)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~DeconvolutionDepthwiseCPUKernel() override {
-    delete sliding_;
-    free(packed_weight_);
-    if (need_align_) {
-      free(packed_input_);
-      free(packed_output_);
-    }
-  };
+  ~DeconvolutionDepthwiseCPUKernel() override;
 
   int Init() override;
   int InitSlideParam();

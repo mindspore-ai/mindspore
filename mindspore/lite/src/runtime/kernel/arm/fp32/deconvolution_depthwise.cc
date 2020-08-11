@@ -27,6 +27,24 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DeDepthwiseConv2D;
 
 namespace mindspore::kernel {
+DeconvolutionDepthwiseCPUKernel::~DeconvolutionDepthwiseCPUKernel() {
+  delete sliding_;
+  if (packed_weight_ != nullptr) {
+    delete packed_weight_;
+    packed_weight_ = nullptr;
+  }
+  if (need_align_) {
+    if (packed_input_ != nullptr) {
+      delete packed_input_;
+      packed_input_ = nullptr;
+    }
+    if (packed_output_ != nullptr) {
+      delete packed_output_;
+      packed_output_ = nullptr;
+    }
+  }
+}
+
 int DeconvolutionDepthwiseCPUKernel::InitSlideParam() {
   conv_param_->input_batch_ = outputs_.front()->shape().at(kNHWC_N);
   conv_param_->input_h_ = outputs_.front()->shape().at(kNHWC_H);
@@ -126,8 +144,14 @@ int DeconvolutionDepthwiseCPUKernel::Init() {
 
 int DeconvolutionDepthwiseCPUKernel::ReSize() {
   if (need_align_) {
-    free(packed_input_);
-    free(packed_output_);
+    if (packed_input_ != nullptr) {
+      delete packed_input_;
+      packed_input_ = nullptr;
+    }
+    if (packed_output_ != nullptr) {
+      delete packed_output_;
+      packed_output_ = nullptr;
+    }
   }
   InitSlideParam();
 

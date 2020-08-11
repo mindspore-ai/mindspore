@@ -29,12 +29,7 @@ class ConvolutionDepthwiseFp16CPUKernel : public ConvolutionBaseCPUKernel {
                                     const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                                     const lite::Primitive *primitive)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~ConvolutionDepthwiseFp16CPUKernel() override {
-    delete sliding_;
-    free(packed_weight_);
-    free(packed_input_);
-    free(packed_output_);
-  }
+  ~ConvolutionDepthwiseFp16CPUKernel() override;
 
   int Init() override;
   int ReSize() override;

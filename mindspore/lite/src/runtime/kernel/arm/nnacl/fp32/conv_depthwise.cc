@@ -486,6 +486,21 @@ void ConvDw3x3Fp32OutputUnit(float *src_buf, float *dst_output, const float *bia
   float32x4_t d10 = vaddq_f32(vaddq_f32(vaddq_f32(t10, t11), t12), bias_ptr);
   float32x4_t d11 = vaddq_f32(vsubq_f32(vsubq_f32(t11, t12), t13), bias_ptr);
 
+  float32x4_t zeros = {0, 0, 0, 0};
+  float32x4_t bounds = {6, 6, 6, 6};
+  if (is_relu) {
+    d00 = vmaxq_f32(d00, zeros);
+    d01 = vmaxq_f32(d01, zeros);
+    d10 = vmaxq_f32(d10, zeros);
+    d11 = vmaxq_f32(d11, zeros);
+  }
+  if (is_relu6) {
+    d00 = vminq_f32(vmaxq_f32(d00, zeros), bounds);
+    d01 = vminq_f32(vmaxq_f32(d01, zeros), bounds);
+    d10 = vminq_f32(vmaxq_f32(d10, zeros), bounds);
+    d11 = vminq_f32(vmaxq_f32(d11, zeros), bounds);
+  }
+
   vst1q_f32(dst_output, d00);
   if (w_in_range) {
     vst1q_f32(dst_output + channel, d01);
@@ -535,6 +550,19 @@ void ConvDw3x3Fp32OutputUnit(float *src_buf, float *dst_output, const float *bia
     float d01 = t01 - t02 - t03 + bias_ptr[0];
     float d10 = t10 + t11 + t12 + bias_ptr[0];
     float d11 = t11 - t12 - t13 + bias_ptr[0];
+
+    if (is_relu) {
+      d00 = MSMAX(d00, 0);
+      d01 = MSMAX(d01, 0);
+      d10 = MSMAX(d10, 0);
+      d11 = MSMAX(d11, 0);
+    }
+    if (is_relu6) {
+      d00 = MSMIN(MSMAX(d00, 0), 6);
+      d01 = MSMIN(MSMAX(d01, 0), 6);
+      d10 = MSMIN(MSMAX(d10, 0), 6);
+      d11 = MSMIN(MSMAX(d11, 0), 6);
+    }
 
     (dst_output + i)[0] = d00;
     if (w_in_range) {

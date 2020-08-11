@@ -29,4 +29,7 @@ typedef struct BatchNormParameter {
 void BatchNorm(float *output_ptr, const float *input_ptr, const float *mean_ptr, const float *variance_ptr, int task_id,
                BatchNormParameter *param);
 
+void FusedBatchNorm(float *output_ptr, const float *input_ptr, const float *scale_ptr, const float *offest_ptr,
+                    const float *mean_ptr, const float *variance_ptr, int task_id, BatchNormParameter *param);
+
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FUSED_BATCHNORM_H_

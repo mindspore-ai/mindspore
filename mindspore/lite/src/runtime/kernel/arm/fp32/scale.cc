@@ -17,7 +17,6 @@
 #include "src/runtime/kernel/arm/fp32/scale.h"
 #include <string.h>
 #include <vector>
-#include "src/runtime/kernel/arm/nnacl/scale.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -29,23 +28,29 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Scale;
 
 namespace mindspore::kernel {
+ScaleCPUKernel::~ScaleCPUKernel() { FreeTmpBuffer(); }
+
 void ScaleCPUKernel::FreeTmpBuffer() {
-  if (scale_ != nullptr) {
-    free(scale_);
-    scale_ = nullptr;
+  if (scale_param_->const_scale_) {
+    if (scale_ != nullptr) {
+      free(scale_);
+      scale_ = nullptr;
+    }
   }
-  if (offset_ != nullptr) {
-    free(offset_);
-    offset_ = nullptr;
+  if (scale_param_->has_offset_) {
+    if (offset_ != nullptr) {
+      free(offset_);
+      offset_ = nullptr;
+    }
   }
 }
 
 int ScaleCPUKernel::InitScaleOffset() {
   FreeTmpBuffer();
-  auto param = reinterpret_cast<ScaleParameter *>(opParameter);
   auto scale_tensor = inputs_.at(1);
   float *scale_ptr = reinterpret_cast<float *>(inputs_.at(1)->Data());
   if (scale_ptr != nullptr) {
+    scale_param_->const_scale_ = true;
     scale_ = reinterpret_cast<float *>(malloc(scale_tensor->ElementsNum() * sizeof(float)));
     if (scale_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
@@ -53,6 +58,7 @@ int ScaleCPUKernel::InitScaleOffset() {
     }
     memcpy(scale_, scale_ptr, scale_tensor->ElementsNum() * sizeof(float));
   } else {
+    scale_param_->const_scale_ = false;
     scale_ = nullptr;
   }
 
@@ -64,40 +70,39 @@ int ScaleCPUKernel::InitScaleOffset() {
       return RET_ERROR;
     }
     memcpy(offset_, offset_tensor->Data(), offset_tensor->ElementsNum() * sizeof(float));
-    param->has_offset_ = true;
+    scale_param_->has_offset_ = true;
   } else {
     offset_ = nullptr;
-    param->has_offset_ = false;
+    scale_param_->has_offset_ = false;
   }
   return RET_OK;
 }
 
 int ScaleCPUKernel::InitParameter() {
-  auto param = reinterpret_cast<ScaleParameter *>(opParameter);
   auto in_tensor = inputs_.at(0);
   auto in_shape = in_tensor->shape();
   auto scale_tensor = inputs_.at(1);
   auto scale_shape = scale_tensor->shape();
 
-  if (scale_shape.size() + param->axis_ > in_shape.size()) {
+  if (scale_shape.size() + scale_param_->axis_ > in_shape.size()) {
     MS_LOG(ERROR) << "Scale tensor shape is incorrect.";
     return RET_ERROR;
   }
-  param->outer_size_ = 1;
-  param->axis_size_ = 1;
-  param->inner_size_ = 1;
-  for (int i = 0; i < param->axis_; i++) {
-    param->outer_size_ *= in_shape[i];
+  scale_param_->outer_size_ = 1;
+  scale_param_->axis_size_ = 1;
+  scale_param_->inner_size_ = 1;
+  for (int i = 0; i < scale_param_->axis_; i++) {
+    scale_param_->outer_size_ *= in_shape[i];
   }
   for (int i = 0; i < scale_shape.size(); i++) {
-    if (in_shape[i + param->axis_] != scale_shape[i]) {
+    if (in_shape[i + scale_param_->axis_] != scale_shape[i]) {
       MS_LOG(ERROR) << "Scale tensor shape is incorrect.";
       return RET_ERROR;
     }
-    param->axis_size_ *= in_shape[i + param->axis_];
+    scale_param_->axis_size_ *= in_shape[i + scale_param_->axis_];
   }
-  for (int i = param->axis_ + scale_shape.size(); i < in_shape.size(); i++) {
-    param->inner_size_ *= in_shape[i];
+  for (int i = scale_param_->axis_ + scale_shape.size(); i < in_shape.size(); i++) {
+    scale_param_->inner_size_ *= in_shape[i];
   }
   return RET_OK;
 }
@@ -130,9 +135,7 @@ int ScaleCPUKernel::ReSize() {
 }
 
 int ScaleCPUKernel::Scale(int task_id) {
-  auto ret =
-    DoScale(input_ptr_, output_ptr_, scale_, offset_, task_id, reinterpret_cast<ScaleParameter *>(opParameter));
-
+  auto ret = DoScale(input_ptr_, output_ptr_, scale_, offset_, task_id, scale_param_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;

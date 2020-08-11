@@ -19,6 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
+#include "src/runtime/kernel/arm/nnacl/scale.h"
 
 namespace mindspore::kernel {
 
@@ -27,10 +28,10 @@ class ScaleCPUKernel : public LiteKernel {
   ScaleCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                           const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                           const lite::Primitive *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~ScaleCPUKernel() {
-    FreeTmpBuffer();
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+    scale_param_ = reinterpret_cast<ScaleParameter *>(opParameter);
   }
+  ~ScaleCPUKernel() override;
 
   int Init() override;
   int ReSize() override;
@@ -45,6 +46,7 @@ class ScaleCPUKernel : public LiteKernel {
   float *scale_;
   float *offset_;
   float *output_ptr_;
+  ScaleParameter *scale_param_;
 };
 }  // namespace mindspore::kernel
 

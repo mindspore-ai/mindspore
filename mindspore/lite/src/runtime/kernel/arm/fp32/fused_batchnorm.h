@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/nnacl/fused_batchnorm.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/batchnorm.h"
 
 namespace mindspore::kernel {
 class FusedBatchnormCPUKernel : public LiteKernel {
@@ -28,17 +28,26 @@ class FusedBatchnormCPUKernel : public LiteKernel {
                           const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                           const lite::Primitive *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
-    fused_batchnorm_param_ = reinterpret_cast<FusedBatchNormParameter *>(parameter);
+    batchnorm_param_ = reinterpret_cast<BatchNormParameter *>(parameter);
   }
-  ~FusedBatchnormCPUKernel() override { delete fused_batchnorm_param_; }
+  ~FusedBatchnormCPUKernel() override;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
 
+  int InitConstTensor();
+  int Execute(int task_id);
+
  private:
-  int *input_shape_{};
-  FusedBatchNormParameter *fused_batchnorm_param_;
+  float *in_addr_;
+  float *mean_addr_;
+  float *var_addr_;
+  float *scale_addr_;
+  float *offset_addr_;
+  float *out_addr_;
+
+  BatchNormParameter *batchnorm_param_;
 };
 }  // namespace mindspore::kernel
 

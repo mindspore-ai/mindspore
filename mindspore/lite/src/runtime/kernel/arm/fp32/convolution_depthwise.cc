@@ -29,6 +29,24 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
 namespace mindspore::kernel {
+ConvolutionDepthwiseCPUKernel::~ConvolutionDepthwiseCPUKernel() {
+  delete sliding_;
+  if (packed_weight_ != nullptr) {
+    delete packed_weight_;
+    packed_weight_ = nullptr;
+  }
+  if (need_align_) {
+    if (packed_input_ != nullptr) {
+      delete packed_input_;
+      packed_input_ = nullptr;
+    }
+    if (packed_output_ != nullptr) {
+      delete packed_output_;
+      packed_output_ = nullptr;
+    }
+  }
+}
+
 int ConvolutionDepthwiseCPUKernel::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
   auto weight_tensor = inputs_[kWeightIndex];
@@ -114,9 +132,16 @@ int ConvolutionDepthwiseCPUKernel::Init() {
 
 int ConvolutionDepthwiseCPUKernel::ReSize() {
   if (need_align_) {
-    free(packed_input_);
-    free(packed_output_);
+    if (packed_input_ != nullptr) {
+      delete packed_input_;
+      packed_input_ = nullptr;
+    }
+    if (packed_output_ != nullptr) {
+      delete packed_output_;
+      packed_output_ = nullptr;
+    }
   }
+
   // conv base init
   ConvolutionBaseCPUKernel::Init();
 
@@ -197,10 +222,11 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::tensor::T
   kernel = new (std::nothrow) kernel::ConvolutionDepthwiseCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   //  auto param = reinterpret_cast<ConvParameter *>(opParameter);
   //  if (param->kernel_h_ == 3 && param->kernel_w_ == 3 && param->stride_h_ == 1 && param->stride_w_ == 1 &&
-  //  param->dilation_h_ == 1 && param->dilation_w_ == 1) {
-  //    kernel = new (std::nothrow) kernel::ConvolutionDepthwise3x3CPUKernel(opParameter, inputs, outputs, ctx);
+  //      param->dilation_h_ == 1 && param->dilation_w_ == 1) {
+  //    kernel = new (std::nothrow) kernel::ConvolutionDepthwise3x3CPUKernel(opParameter, inputs, outputs, ctx,
+  //    primitive);
   //  } else {
-  //  kernel = new (std::nothrow) kernel::ConvolutionDepthwiseCPUKernel(opParameter, inputs, outputs, ctx);
+  //    kernel = new (std::nothrow) kernel::ConvolutionDepthwiseCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   //  }
 
   if (kernel == nullptr) {
