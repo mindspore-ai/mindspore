@@ -17,6 +17,7 @@
 #include "src/runtime/kernel/arm/nnacl/arg_min_max.h"
 #include "src/runtime/kernel/arm/fp32/argminmax.h"
 #include "src/runtime/kernel/arm/int8/argminmax_int8.h"
+#include "src/runtime/kernel/arm/nnacl/arithmetic_common.h"
 #include "schema/model_generated.h"
 #include "src/kernel_factory.h"
 #include "include/errorcode.h"
@@ -60,7 +61,7 @@ int ArgMinMaxBaseCPUKernel::ReSize() {
     return RET_PARAM_INVALID;
   }
   param->topk_ = MSMIN(param->topk_, in_shape[axis]);
-  if (param->topk_ > 1) {
+  if (param->topk_ > 1 || param->keep_dims_) {
     if (context_ != nullptr && context_->allocator != nullptr) {
       param->arg_elements_ =
         reinterpret_cast<ArgElement *>(context_->allocator->Malloc(sizeof(ArgElement) * in_shape[axis]));
@@ -73,6 +74,9 @@ int ArgMinMaxBaseCPUKernel::ReSize() {
       return RET_ERROR;
     }
   }
+  ComputeStrides(in_shape.data(), param->in_strides_, in_shape.size());
+  auto out_shape = outputs_.at(0)->shape();
+  ComputeStrides(out_shape.data(), param->out_strides_, out_shape.size());
   return RET_OK;
 }
 

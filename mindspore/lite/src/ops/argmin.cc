@@ -37,9 +37,9 @@ int ArgMin::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
     return RET_PARAM_INVALID;
   }
   std::vector<int> output_shape(input->shape());
-  if (argmin_prim->topK() == 1) {
+  if (argmin_prim->topK() == 1 && !argmin_prim->keepDims()) {
     output_shape.erase(output_shape.begin() + axis);
-  } else if (argmin_prim->axisType() == 1) {
+  } else {
     output_shape[axis] = argmin_prim->topK();
   }
 
