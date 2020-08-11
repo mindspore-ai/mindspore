@@ -111,10 +111,10 @@ class SummaryCollector(Callback):
             Default: None, it means there is no custom data.
         collect_tensor_freq (Optional[int]): Same semantic as the `collect_freq`, but controls TensorSummary only.
             Because TensorSummary data is too large compared to other summary data, this parameter is used to reduce
-            its collection. By default, TensorSummary data will be collected at most 21 steps, but not more than how
+            its collection. By default, TensorSummary data will be collected at most 20 steps, but not more than how
             many steps other summary data will be collected.
             Default: None, which means to follow the behavior as described above. For example, given `collect_freq=10`,
-            when the total steps is 600, TensorSummary will be collected 21 steps, while other summary data 61 steps,
+            when the total steps is 600, TensorSummary will be collected 20 steps, while other summary data 61 steps,
             but when the total steps is 20, both TensorSummary and other summary will be collected 3 steps.
             Also note that when in parallel mode, the total steps will be splitted evenly, which will
             affect how many steps TensorSummary will be collected.
@@ -176,6 +176,7 @@ class SummaryCollector(Callback):
 
         self._check_positive('collect_tensor_freq', collect_tensor_freq, allow_none=True)
         self._collect_tensor_freq = collect_tensor_freq
+        self._tensor_collect_range = None
 
         self._check_positive('max_file_size', max_file_size, allow_none=True)
         self._max_file_size = max_file_size
@@ -296,12 +297,6 @@ class SummaryCollector(Callback):
 
         self._record.set_mode(cb_params.mode)
 
-        if cb_params.mode == ModeEnum.TRAIN.value:
-            if self._collect_tensor_freq is None:
-                default_tensor_summary_limit = 20
-                total_step = cb_params.epoch_num * cb_params.batch_num
-                self._collect_tensor_freq = max(self._collect_freq, total_step // default_tensor_summary_limit)
-
     def step_end(self, run_context):
         cb_params = run_context.original_args()
         if cb_params.mode != ModeEnum.TRAIN.value:
@@ -322,16 +317,35 @@ class SummaryCollector(Callback):
         if self._first_step:
             # Notice: This way of determining whether dataset sink mode is True does not work in the eval scenario
             self._dataset_sink_mode = cb_params.cur_step_num == cb_params.batch_num
+            self._tensor_collect_range = self._get_tensor_collect_range(cb_params, self._dataset_sink_mode)
             self._collect_at_step_end(cb_params, plugin_filter=None)
             self._first_step = False
         else:
             current = cb_params.cur_epoch_num if self._dataset_sink_mode else cb_params.cur_step_num
-            if current % self._collect_freq == 0 and current % self._collect_tensor_freq == 0:
+            if current % self._collect_freq == 0 and current in self._tensor_collect_range:
                 self._collect_at_step_end(cb_params, plugin_filter=None)
-            elif current % self._collect_tensor_freq == 0:
+            elif current in self._tensor_collect_range:
                 self._collect_at_step_end(cb_params, lambda plugin: plugin == PluginEnum.TENSOR.value)
             elif current % self._collect_freq == 0:
                 self._collect_at_step_end(cb_params, lambda plugin: plugin != PluginEnum.TENSOR.value)
+
+    def _get_tensor_collect_range(self, cb_params, dataset_sink_mode):
+        """Get tensor collect range."""
+        total_step = cb_params.epoch_num
+        if not dataset_sink_mode:
+            total_step *= cb_params.batch_num
+        if self._collect_tensor_freq is not None:
+            # `total_step + 1`: `total_step` would be a value of `cb_params.cur_step_num`.
+            return range(0, total_step + 1, self._collect_tensor_freq)
+        summary_to_collect = len(range(0, total_step + 1, self._collect_freq))
+        default_tensor_summary_limit = 20
+        if summary_to_collect > default_tensor_summary_limit:
+            tensor_freq = total_step // (default_tensor_summary_limit - 1)
+            if tensor_freq > 1:
+                return range(0, total_step + 1, tensor_freq)[:default_tensor_summary_limit]
+            # `cb_params.cur_step_num` counting from `1`, when `1` is in the range, take `1` more steps.
+            return range(0, total_step + 1)[:default_tensor_summary_limit + 1]
+        return range(0, total_step + 1, self._collect_freq)
 
     def _collect_at_step_end(self, cb_params, plugin_filter):
         self._collect_input_data(cb_params)
@@ -577,7 +591,8 @@ class SummaryCollector(Callback):
         """
         learning_rate = optimizer.learning_rate
         if not isinstance(learning_rate, Parameter):
-            logger.info("The learning rate detected in the optimizer is not a Parameter type, so it is not recorded.")
+            logger.warning("The learning rate detected in the optimizer "
+                           "is not a Parameter type, so it is not recorded.")
             return None
         return learning_rate.data
 

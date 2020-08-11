@@ -156,6 +156,7 @@ class SummaryRecord:
                                         max_file_size,
                                         summary=self.full_file_name,
                                         lineage=get_event_file_name('events', '_lineage'))
+        _get_summary_tensor_data()
         atexit.register(self.close)
 
     def __enter__(self):
