@@ -521,6 +521,119 @@ TEST_F(MindDataTestPipeline, TestRandomColorAdjust) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestRandomAffineSuccess1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomAffineSuccess1 with non-default params.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> affine =
+    vision::RandomAffine({30.0, 30.0}, {0.0, 0.0}, {2.0, 2.0}, {10.0, 10.0, 20.0, 20.0});
+  EXPECT_NE(affine, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({affine});
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 20);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRandomAffineSuccess2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomAffineSuccess2 with default params.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> affine = vision::RandomAffine({0.0, 0.0});
+  EXPECT_NE(affine, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({affine});
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 20);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRandomAffineFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomAffineFail with invalid params.";
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> affine = vision::RandomAffine({0.0, 0.0}, {});
+  EXPECT_EQ(affine, nullptr);
+  // Invalid number of values for translate
+  affine = vision::RandomAffine({0.0, 0.0}, {1, 1, 1, 1});
+  EXPECT_EQ(affine, nullptr);
+  // Invalid number of values for shear
+  affine = vision::RandomAffine({30.0, 30.0}, {0.0, 0.0}, {2.0, 2.0}, {10.0, 10.0});
+  EXPECT_EQ(affine, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestRandomRotation) {
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";

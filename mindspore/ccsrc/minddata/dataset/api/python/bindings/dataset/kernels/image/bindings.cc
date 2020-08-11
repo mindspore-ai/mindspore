@@ -31,6 +31,7 @@
 #include "minddata/dataset/kernels/image/mixup_batch_op.h"
 #include "minddata/dataset/kernels/image/normalize_op.h"
 #include "minddata/dataset/kernels/image/pad_op.h"
+#include "minddata/dataset/kernels/image/random_affine_op.h"
 #include "minddata/dataset/kernels/image/random_color_adjust_op.h"
 #include "minddata/dataset/kernels/image/random_crop_and_resize_op.h"
 #include "minddata/dataset/kernels/image/random_crop_and_resize_with_bbox_op.h"
@@ -113,6 +114,19 @@ PYBIND_REGISTER(ResizeWithBBoxOp, 1, ([](const py::module *m) {
                     .def(py::init<int32_t, int32_t, InterpolationMode>(), py::arg("targetHeight"),
                          py::arg("targetWidth") = ResizeWithBBoxOp::kDefWidth,
                          py::arg("interpolation") = ResizeWithBBoxOp::kDefInterpolation);
+                }));
+
+PYBIND_REGISTER(RandomAffineOp, 1, ([](const py::module *m) {
+                  (void)py::class_<RandomAffineOp, TensorOp, std::shared_ptr<RandomAffineOp>>(
+                    *m, "RandomAffineOp", "Tensor operation to apply random affine transformations on an image.")
+                    .def(py::init<std::vector<float_t>, std::vector<float_t>, std::vector<float_t>,
+                                  std::vector<float_t>, InterpolationMode, std::vector<uint8_t>>(),
+                         py::arg("degrees") = RandomAffineOp::kDegreesRange,
+                         py::arg("translate_range") = RandomAffineOp::kTranslationPercentages,
+                         py::arg("scale_range") = RandomAffineOp::kScaleRange,
+                         py::arg("shear_ranges") = RandomAffineOp::kShearRanges,
+                         py::arg("interpolation") = RandomAffineOp::kDefInterpolation,
+                         py::arg("fill_value") = RandomAffineOp::kFillValue);
                 }));
 
 PYBIND_REGISTER(

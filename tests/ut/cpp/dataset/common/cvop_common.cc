@@ -130,6 +130,18 @@ void CVOpCommon::CheckImageShapeAndData(const std::shared_ptr<Tensor> &output_te
       expect_image_path = dir_path + "imagefolder/apple_expect_changemode.jpg";
       actual_image_path = dir_path + "imagefolder/apple_actual_changemode.jpg";
       break;
+    case kRandomAffine:
+      expect_image_path = dir_path + "imagefolder/apple_expect_randomaffine.jpg";
+      actual_image_path = dir_path + "imagefolder/apple_actual_randomaffine.jpg";
+      break;
+    case kAutoContrast:
+      expect_image_path = dir_path + "imagefolder/apple_expect_autocontrast.jpg";
+      actual_image_path = dir_path + "imagefolder/apple_actual_autocontrast.jpg";
+      break;
+    case kEqualize:
+      expect_image_path = dir_path + "imagefolder/apple_expect_equalize.jpg";
+      actual_image_path = dir_path + "imagefolder/apple_actual_equalize.jpg";
+      break;
     default:
       MS_LOG(INFO) << "Not pass verification! Operation type does not exists.";
       EXPECT_EQ(0, 1);

@@ -21,11 +21,13 @@ import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.c_transforms as C
 import mindspore.dataset.transforms.vision.py_transforms as F
 from mindspore import log as logger
-from util import visualize_list, diff_mse, save_and_check_md5
+from util import visualize_list, visualize_one_channel_dataset, diff_mse, save_and_check_md5
 
 DATA_DIR = "../data/dataset/testImageNetData/train/"
+MNIST_DATA_DIR = "../data/dataset/testMnistData"
 
 GENERATE_GOLDEN = False
+
 
 def test_equalize_py(plot=False):
     """
@@ -216,6 +218,34 @@ def test_equalize_one_channel():
         assert "The shape" in str(e)
 
 
+def test_equalize_mnist_c(plot=False):
+    """
+    Test Equalize C op with MNIST dataset (Grayscale images)
+    """
+    logger.info("Test Equalize C Op With MNIST Images")
+    ds = de.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
+    ds_equalize_c = ds.map(input_columns="image",
+                           operations=C.Equalize())
+    ds_orig = de.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
+
+    images = []
+    images_trans = []
+    labels = []
+    for _, (data_orig, data_trans) in enumerate(zip(ds_orig, ds_equalize_c)):
+        image_orig, label_orig = data_orig
+        image_trans, _ = data_trans
+        images.append(image_orig)
+        labels.append(label_orig)
+        images_trans.append(image_trans)
+
+    # Compare with expected md5 from images
+    filename = "equalize_mnist_result_c.npz"
+    save_and_check_md5(ds_equalize_c, filename, generate_golden=GENERATE_GOLDEN)
+
+    if plot:
+        visualize_one_channel_dataset(images, images_trans, labels)
+
+
 def test_equalize_md5_py():
     """
     Test Equalize py op with md5 check
@@ -258,7 +288,7 @@ if __name__ == "__main__":
     test_equalize_py(plot=False)
     test_equalize_c(plot=False)
     test_equalize_py_c(plot=False)
+    test_equalize_mnist_c(plot=True)
     test_equalize_one_channel()
     test_equalize_md5_py()
     test_equalize_md5_c()
-    

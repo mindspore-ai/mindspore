@@ -25,6 +25,7 @@
 #include "minddata/dataset/kernels/image/normalize_op.h"
 #include "minddata/dataset/kernels/data/one_hot_op.h"
 #include "minddata/dataset/kernels/image/pad_op.h"
+#include "minddata/dataset/kernels/image/random_affine_op.h"
 #include "minddata/dataset/kernels/image/random_color_adjust_op.h"
 #include "minddata/dataset/kernels/image/random_crop_op.h"
 #include "minddata/dataset/kernels/image/random_horizontal_flip_op.h"
@@ -129,6 +130,22 @@ std::shared_ptr<RandomColorAdjustOperation> RandomColorAdjust(std::vector<float>
                                                               std::vector<float> contrast,
                                                               std::vector<float> saturation, std::vector<float> hue) {
   auto op = std::make_shared<RandomColorAdjustOperation>(brightness, contrast, saturation, hue);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
+// Function to create RandomAffineOperation.
+std::shared_ptr<RandomAffineOperation> RandomAffine(const std::vector<float_t> &degrees,
+                                                    const std::vector<float_t> &translate_range,
+                                                    const std::vector<float_t> &scale_range,
+                                                    const std::vector<float_t> &shear_ranges,
+                                                    InterpolationMode interpolation,
+                                                    const std::vector<uint8_t> &fill_value) {
+  auto op = std::make_shared<RandomAffineOperation>(degrees, translate_range, scale_range, shear_ranges, interpolation,
+                                                    fill_value);
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -449,6 +466,82 @@ std::shared_ptr<TensorOp> RandomColorAdjustOperation::Build() {
 
   std::shared_ptr<RandomColorAdjustOp> tensor_op = std::make_shared<RandomColorAdjustOp>(
     brightness_lb, brightness_ub, contrast_lb, contrast_ub, saturation_lb, saturation_ub, hue_lb, hue_ub);
+  return tensor_op;
+}
+
+// RandomAffineOperation
+RandomAffineOperation::RandomAffineOperation(const std::vector<float_t> &degrees,
+                                             const std::vector<float_t> &translate_range,
+                                             const std::vector<float_t> &scale_range,
+                                             const std::vector<float_t> &shear_ranges, InterpolationMode interpolation,
+                                             const std::vector<uint8_t> &fill_value)
+    : degrees_(degrees),
+      translate_range_(translate_range),
+      scale_range_(scale_range),
+      shear_ranges_(shear_ranges),
+      interpolation_(interpolation),
+      fill_value_(fill_value) {}
+
+bool RandomAffineOperation::ValidateParams() {
+  // Degrees
+  if (degrees_.size() != 2) {
+    MS_LOG(ERROR) << "RandomAffine: degrees vector has incorrect size: degrees.size() = " << degrees_.size();
+    return false;
+  }
+  if (degrees_[0] > degrees_[1]) {
+    MS_LOG(ERROR) << "RandomAffine: minimum of degrees range is greater than maximum: min = " << degrees_[0]
+                  << ", max = " << degrees_[1];
+    return false;
+  }
+  // Translate
+  if (translate_range_.size() != 2) {
+    MS_LOG(ERROR) << "RandomAffine: translate_range vector has incorrect size: translate_range.size() = "
+                  << translate_range_.size();
+    return false;
+  }
+  if (translate_range_[0] > translate_range_[1]) {
+    MS_LOG(ERROR) << "RandomAffine: minimum of translate range is greater than maximum: min = " << translate_range_[0]
+                  << ", max = " << translate_range_[1];
+    return false;
+  }
+  // Scale
+  if (scale_range_.size() != 2) {
+    MS_LOG(ERROR) << "RandomAffine: scale_range vector has incorrect size: scale_range.size() = "
+                  << scale_range_.size();
+    return false;
+  }
+  if (scale_range_[0] > scale_range_[1]) {
+    MS_LOG(ERROR) << "RandomAffine: minimum of scale range is greater than maximum: min = " << scale_range_[0]
+                  << ", max = " << scale_range_[1];
+    return false;
+  }
+  // Shear
+  if (shear_ranges_.size() != 4) {
+    MS_LOG(ERROR) << "RandomAffine: shear_ranges vector has incorrect size: shear_ranges.size() = "
+                  << shear_ranges_.size();
+    return false;
+  }
+  if (shear_ranges_[0] > shear_ranges_[1]) {
+    MS_LOG(ERROR) << "RandomAffine: minimum of horizontal shear range is greater than maximum: min = "
+                  << shear_ranges_[0] << ", max = " << shear_ranges_[1];
+    return false;
+  }
+  if (shear_ranges_[2] > shear_ranges_[3]) {
+    MS_LOG(ERROR) << "RandomAffine: minimum of vertical shear range is greater than maximum: min = " << shear_ranges_[2]
+                  << ", max = " << scale_range_[3];
+    return false;
+  }
+  // Fill Value
+  if (fill_value_.size() != 3) {
+    MS_LOG(ERROR) << "RandomAffine: fill_value vector has incorrect size: fill_value.size() = " << fill_value_.size();
+    return false;
+  }
+  return true;
+}
+
+std::shared_ptr<TensorOp> RandomAffineOperation::Build() {
+  auto tensor_op = std::make_shared<RandomAffineOp>(degrees_, translate_range_, scale_range_, shear_ranges_,
+                                                    interpolation_, fill_value_);
   return tensor_op;
 }
 
