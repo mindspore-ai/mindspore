@@ -108,7 +108,7 @@ python eval.py > eval.log 2>&1 &  OR  sh run_eval.sh
         │   ├──config.py            // parameter configuration 
         ├── train.py               // training script 
         ├── eval.py               //  evaluation script 
-        ├── export.py            // export checkpoint files into geir/onnx 
+        ├── export.py            // export checkpoint files into air/onnx 
 ```
 
 ## [Script Parameters](#contents)
@@ -133,7 +133,7 @@ Major parameters in train.py and config.py are:
 --checkpoint_path: The absolute full path to the checkpoint file saved
                    after training.
 --onnx_filename: File name of the onnx model used in export.py. 
---geir_filename: File name of the geir model used in export.py.    
+--air_filename: File name of the air model used in export.py.    
 ```
 
 
@@ -226,7 +226,7 @@ accuracy: {'acc': 0.9217}
 | Total time                 | 1pc: 63.85 mins;  8pcs: 11.28 mins                          |
 | Parameters (M)             | 13.0                                                         |
 | Checkpoint for Fine tuning | 43.07M (.ckpt file)                                         |
-| Model for inference        | 21.50M (.onnx file),  21.60M(.geir file)                    |
+| Model for inference        | 21.50M (.onnx file),  21.60M(.air file)                    |
 | Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/googlenet |
 
 

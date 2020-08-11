@@ -396,13 +396,13 @@ void ExecutorPy::GetGeBackendPolicy() const {
   }
 }
 
-bool IsPhaseExportGeir(const std::string &phase_s) {
-  auto phase_to_export = "export.geir";
+bool IsPhaseExportAir(const std::string &phase_s) {
+  auto phase_to_export = "export.air";
   return phase_s.rfind(phase_to_export) != std::string::npos;
 }
 
 std::vector<ActionItem> GetPipline(const ResourcePtr &resource, const std::string &phase_s, bool use_vm) {
-  bool is_geir = IsPhaseExportGeir(phase_s);
+  bool is_air = IsPhaseExportAir(phase_s);
 
   std::string backend = MsContext::GetInstance()->backend_policy();
 
@@ -419,7 +419,7 @@ std::vector<ActionItem> GetPipline(const ResourcePtr &resource, const std::strin
   }
 #endif
 
-  if (use_vm && backend != "ge" && !is_geir) {
+  if (use_vm && backend != "ge" && !is_air) {
     // Create backend and session
     auto backend_ptr = compile::CreateBackend();
     // Connect session to debugger
@@ -938,8 +938,9 @@ void FinalizeHccl() {
 void ExportGraph(const std::string &file_name, const std::string &, const std::string &phase) {
 #if (ENABLE_GE || ENABLE_D)
   ExportDFGraph(file_name, phase);
+#else
+  MS_EXCEPTION(ValueError) << "Only MindSpore with Ascend backend support exporting file in 'AIR' format.";
 #endif
-  MS_LOG(WARNING) << "In ut test no export_graph";
 }
 
 void ReleaseGeTsd() {

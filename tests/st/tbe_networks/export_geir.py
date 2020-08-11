@@ -24,4 +24,4 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 def test_resnet50_export(batch_size=1, num_classes=5):
     input_np = np.random.uniform(0.0, 1.0, size=[batch_size, 3, 224, 224]).astype(np.float32)
     net = resnet50(batch_size, num_classes)
-    export(net, Tensor(input_np), file_name="./me_resnet50.pb", file_format="GEIR")
+    export(net, Tensor(input_np), file_name="./me_resnet50.pb", file_format="AIR")

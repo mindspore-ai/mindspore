@@ -515,7 +515,7 @@ class _Executor:
             graph_id (str): id of graph to be exported
         """
         from .._c_expression import export_graph
-        export_graph(file_name, 'GEIR', graph_id)
+        export_graph(file_name, 'AIR', graph_id)
 
     def fetch_info_for_quant_export(self, exec_id):
         """Get graph proto from pipeline."""
