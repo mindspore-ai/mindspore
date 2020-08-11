@@ -72,13 +72,12 @@ std::string RealPath(const char *path) {
     MS_LOG(ERROR) << "new resolvedPath failed";
     return "";
   }
-  std::string realPath = realpath(path, resolvedPath.get());
-  if (realPath.empty()) {
-    MS_LOG(ERROR) << "Proto file path is  not valid";
+  char *real_path = realpath(path, resolvedPath.get());
+  if (real_path == nullptr || strlen(real_path) == 0) {
+    MS_LOG(ERROR) << "Proto file path is not valid";
     return "";
   }
   std::string res = resolvedPath.get();
-
   return res;
 }
 

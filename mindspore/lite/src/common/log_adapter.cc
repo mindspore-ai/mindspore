@@ -47,8 +47,6 @@ bool IsPrint(int level) {
   static int ms_level = EnvToInt(env);
   if (ms_level < 0) {
     ms_level = 2;
-    printf("please set env MSLOG DEBUG/INFO/WARNING/ERROR\n");
-    printf("the default is WARNING\n");
   }
   return level >= ms_level;
 }
