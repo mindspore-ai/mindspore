@@ -52,7 +52,6 @@ ValuePtr BoolNot(const ValuePtrList &list);
 ValuePtr BoolAnd(const ValuePtrList &list);
 ValuePtr BoolOr(const ValuePtrList &list);
 ValuePtr BoolEq(const ValuePtrList &list);
-std::vector<int> BroadcastShape_(std::vector<int> s1, std::vector<int> s2);
 }  // namespace prim
 }  // namespace mindspore
 

@@ -246,6 +246,25 @@ inline const PrimitivePtr kPrimNotInDict = std::make_shared<Primitive>("not_in_d
 inline const PrimitivePtr kPrimIsConsant = std::make_shared<Primitive>("is_constant");
 inline const PrimitivePtr kPrimEquivFormat = std::make_shared<Primitive>("EquivFormat");
 
+// Structures
+inline const PrimitivePtr kPrimMakeList = std::make_shared<Primitive>("make_list");
+inline const PrimitivePtr kPrimMakeKeywordArg = std::make_shared<Primitive>("make_keyword_arg");
+inline const PrimitivePtr kPrimListGetItem = std::make_shared<Primitive>("list_getitem");
+inline const PrimitivePtr kPrimListSetItem = std::make_shared<Primitive>("list_setitem");
+inline const PrimitivePtr kPrimDictGetItem = std::make_shared<Primitive>("dict_getitem");
+inline const PrimitivePtr kPrimDictSetItem = std::make_shared<Primitive>("dict_setitem");
+inline const PrimitivePtr kPrimListAppend = std::make_shared<Primitive>("list_append");
+inline const PrimitivePtr kPrimListLen = std::make_shared<Primitive>("list_len");
+
+// Other miscellaneous
+inline const PrimitivePtr kPrimEnvSetItem = std::make_shared<Primitive>("env_setitem");
+inline const PrimitivePtr kPrimEnvGetItem = std::make_shared<Primitive>("env_getitem");
+inline const PrimitivePtr kPrimEnvAdd = std::make_shared<Primitive>("env_add");
+inline const PrimitivePtr kPrimMakeRefKey = std::make_shared<Primitive>("MakeRefKey");
+inline const PrimitivePtr kPrimGetRefKey = std::make_shared<Primitive>("get_ref_key");
+inline const PrimitivePtr kPrimMakeRef = std::make_shared<Primitive>("make_ref");
+inline const PrimitivePtr kPrimGetRefValue = std::make_shared<Primitive>("get_ref_value");
+
 // Other primitve not used by backend but used in core;
 inline const PrimitivePtr kPrimStateSetItem = std::make_shared<Primitive>("state_setitem");
 inline const PrimitivePtr kPrimJ = std::make_shared<Primitive>("J");

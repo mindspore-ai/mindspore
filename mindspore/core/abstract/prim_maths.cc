@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#include "pipeline/jit/static_analysis/prim.h"
-#include "frontend/operator/ops.h"
+#include "abstract/infer_functions.h"
 #include "abstract/utils.h"
 #include "abstract/param_validator.h"
 #include "utils/ms_utils.h"

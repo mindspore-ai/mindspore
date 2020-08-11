@@ -15,8 +15,7 @@
  */
 
 #include "abstract/param_validator.h"
-#include "pipeline/jit/static_analysis/prim.h"
-#include "frontend/operator/ops.h"
+#include "abstract/infer_functions.h"
 #include "abstract/utils.h"
 #include "utils/symbolic.h"
 

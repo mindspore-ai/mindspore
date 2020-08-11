@@ -15,8 +15,7 @@
  */
 
 #include "abstract/param_validator.h"
-#include "pipeline/jit/static_analysis/prim.h"
-#include "frontend/operator/ops.h"
+#include "abstract/infer_functions.h"
 #include "abstract/utils.h"
 #include "utils/symbolic.h"
 
@@ -32,38 +31,6 @@ AbstractBasePtr InferImplReturn(const AnalysisEnginePtr &, const PrimitivePtr &,
   }
   AbstractBasePtr abs_base = args_spec_list[0];
   return abs_base;
-}
-
-AbstractBasePtr InferImplTypeof(const AnalysisEnginePtr &, const PrimitivePtr &,
-                                const AbstractBasePtrList &args_spec_list) {
-  // Inputs: a pointer to an AbstractBase object
-  if (args_spec_list.size() != 1) {
-    MS_LOG(EXCEPTION) << "Typeof evaluator requires 1 parameter, while the input size is " << args_spec_list.size()
-                      << ".";
-  }
-  AbstractBasePtr abs_base = args_spec_list[0];
-  MS_EXCEPTION_IF_NULL(abs_base);
-  TypePtr type = abs_base->BuildType();
-  return std::make_shared<AbstractType>(type);
-}
-
-AbstractBasePtr InferImplHasType(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const AbstractBasePtrList &args_spec_list) {
-  // Inputs: a pointer to an AbstractBase object and a pointer to a Type
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 2);
-  AbstractTypePtr abs_type = CheckArg<AbstractType>(op_name, args_spec_list, 1);
-
-  auto mode_v = abs_type->GetValueTrack();
-  MS_EXCEPTION_IF_NULL(mode_v);
-  if (!mode_v->isa<Type>()) {
-    MS_LOG(EXCEPTION) << "Get the type from AbstractType value failed.";
-  }
-
-  TypePtr mode_t = mode_v->cast<TypePtr>();
-  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
-  bool v = IsSubtype(args_spec_list[0], mode_t);
-  return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(v), kBool);
 }
 
 AbstractBasePtr InferImplDot(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

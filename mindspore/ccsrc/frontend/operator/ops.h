@@ -42,28 +42,13 @@ inline const PrimitivePtr kPrimRefToEmbed = std::make_shared<Primitive>("RefToEm
 inline const PrimitivePtr kPrimCreateInstance = std::make_shared<Primitive>("create_instance");
 
 // Other miscellaneous
-inline const PrimitivePtr kPrimEnvSetItem = std::make_shared<Primitive>("env_setitem");
-inline const PrimitivePtr kPrimEnvGetItem = std::make_shared<Primitive>("env_getitem");
-inline const PrimitivePtr kPrimEnvAdd = std::make_shared<Primitive>("env_add");
-inline const PrimitivePtr kPrimMakeRefKey = std::make_shared<Primitive>("MakeRefKey");
-inline const PrimitivePtr kPrimGetRefKey = std::make_shared<Primitive>("get_ref_key");
-inline const PrimitivePtr kPrimGetRefValue = std::make_shared<Primitive>("get_ref_value");
 inline const PrimitivePtr kPrimGetRefOrigin = std::make_shared<Primitive>("get_ref_origin");
 inline const PrimitivePtr kPrimInsertGradientOf = std::make_shared<Primitive>("InsertGradientOf");
 inline const PrimitivePtr kPrimCheckBprop = std::make_shared<Primitive>("CheckBprop");
-inline const PrimitivePtr kPrimMakeRef = std::make_shared<Primitive>("make_ref");
 inline const PrimitivePtr kPrimMixedPrecisionCast = std::make_shared<Primitive>("mixed_precision_cast");
 inline const PrimitivePtr kPrimMakeRecord = std::make_shared<Primitive>("make_record");
 
 // Structures
-inline const PrimitivePtr kPrimMakeList = std::make_shared<Primitive>("make_list");
-inline const PrimitivePtr kPrimMakeKeywordArg = std::make_shared<Primitive>("make_keyword_arg");
-inline const PrimitivePtr kPrimListGetItem = std::make_shared<Primitive>("list_getitem");
-inline const PrimitivePtr kPrimListSetItem = std::make_shared<Primitive>("list_setitem");
-inline const PrimitivePtr kPrimDictGetItem = std::make_shared<Primitive>("dict_getitem");
-inline const PrimitivePtr kPrimDictSetItem = std::make_shared<Primitive>("dict_setitem");
-inline const PrimitivePtr kPrimListAppend = std::make_shared<Primitive>("list_append");
-inline const PrimitivePtr kPrimListLen = std::make_shared<Primitive>("list_len");
 
 inline const PrimitivePtr kPrimListMap = std::make_shared<Primitive>("list_map");
 inline const PrimitivePtr kPrimListReduce = std::make_shared<Primitive>("list_reduce");

@@ -14,13 +14,48 @@
  * limitations under the License.
  */
 
-#include "pipeline/jit/static_analysis/prim.h"
+#include "abstract/infer_functions.h"
 #include "abstract/utils.h"
-#include "frontend/operator/cc_implementations.h"
 #include "abstract/param_validator.h"
 
 namespace mindspore {
 namespace abstract {
+namespace {
+std::vector<int> BroadcastShape(std::vector<int> shpx, std::vector<int> shpy) {
+  int dlen = SizeToInt(shpx.size()) - SizeToInt(shpy.size());
+  if (dlen < 0) {
+    for (int i = 0; i < -dlen; ++i) {
+      (void)shpx.insert(shpx.begin(), 1);
+    }
+  } else if (dlen > 0) {
+    for (int i = 0; i < dlen; i++) {
+      (void)shpy.insert(shpy.begin(), 1);
+    }
+  }
+  if (shpx.size() != shpy.size()) {
+    MS_LOG(EXCEPTION) << "Failure: shpx.size() != shpy.size().";
+  }
+  std::vector<int> shp;
+  for (size_t i = 0; i < shpx.size(); i++) {
+    auto a = shpx[i];
+    auto b = shpy[i];
+    if (a == 1) {
+      shp.push_back(b);
+    } else if (b == 1) {
+      shp.push_back(a);
+    } else if (a == -1) {
+      shp.push_back(b);
+    } else if (b == -1) {
+      shp.push_back(a);
+    } else if (a == b) {
+      shp.push_back(a);
+    } else {
+      return std::vector<int>();
+    }
+  }
+  return shp;
+}
+}  // namespace
 AbstractBasePtr InferImplScalarToArray(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const AbstractBasePtrList &args_spec_list) {
   // Inputs: a scalar.
@@ -65,7 +100,7 @@ AbstractBasePtr InferImplBroadCastShape(const AnalysisEnginePtr &, const Primiti
   (void)std::transform(std::begin(shp_tuple_y), std::end(shp_tuple_y), std::back_inserter(shp_y),
                        [](const ValuePtr &e) -> int { return GetValue<int>(e); });
 
-  std::vector<int> res = prim::BroadcastShape_(shp_x, shp_y);
+  std::vector<int> res = BroadcastShape(shp_x, shp_y);
   if (res.empty()) {
     MS_LOG(EXCEPTION) << "BroadcastShape fail: " << args_spec_list[0]->ToString() << ","
                       << args_spec_list[1]->ToString();

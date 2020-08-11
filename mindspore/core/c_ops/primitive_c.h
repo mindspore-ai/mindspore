@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_PRIMITIVE_C_H
-#define MINDSPORE_CORE_C_OPS_PRIMITIVE_C_H
+#ifndef MINDSPORE_CORE_C_OPS_PRIMITIVE_C_H_
+#define MINDSPORE_CORE_C_OPS_PRIMITIVE_C_H_
 #include <string>
 #include <vector>
 #include "ir/primitive.h"
@@ -25,7 +25,7 @@
 namespace mindspore {
 class PrimitiveC : public Primitive {
  public:
-  explicit PrimitiveC(const std::string &name) : Primitive(name) { attrs_ = {}; }
+  explicit PrimitiveC(const std::string &name) : Primitive(name) {}
 
  protected:
   void InitIOName(const std::vector<std::string> &inputs_name, const std::vector<std::string> &outputs_name) {
@@ -34,4 +34,4 @@ class PrimitiveC : public Primitive {
   }
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_PRIMITIVE_C_H
+#endif  // MINDSPORE_CORE_C_OPS_PRIMITIVE_C_H_
