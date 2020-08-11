@@ -21,7 +21,13 @@ The high-level components(Bijectors) used to construct the probabilistic network
 from .bijector import Bijector
 from .power_transform import PowerTransform
 from .exp import Exp
+from .scalar_affine import ScalarAffine
+from .softplus import Softplus
 
-__all__ = ['Bijector',
-           'PowerTransform',
-           'Exp']
+__all__ = [
+    'Bijector',
+    'PowerTransform',
+    'Exp',
+    'ScalarAffine',
+    'Softplus',
+]

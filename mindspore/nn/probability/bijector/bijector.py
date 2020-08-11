@@ -14,6 +14,7 @@
 # ============================================================================
 """Bijector"""
 from mindspore.nn.cell import Cell
+from mindspore._checkparam import Validator as validator
 from ..distribution import Distribution
 from ..distribution import TransformedDistribution
 
@@ -39,6 +40,9 @@ class Bijector(Cell):
         Constructor of bijector class.
         """
         super(Bijector, self).__init__()
+        validator.check_value_type('name', name, [str], 'Bijector')
+        validator.check_value_type('is_constant_jacobian', is_constant_jacobian, [bool], name)
+        validator.check_value_type('is_injective', is_injective, [bool], name)
         self._name = name
         self._dtype = dtype
         self._parameters = {}
