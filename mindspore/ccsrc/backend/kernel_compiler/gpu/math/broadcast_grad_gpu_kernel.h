@@ -31,7 +31,13 @@ template <typename T>
 class BroadcastOpGradGpuKernel : public GpuKernel {
  public:
   BroadcastOpGradGpuKernel()
-      : op_type_(BROADCAST_GRAD_TYPE_INVALID), need_broadcast_(false), input1_num_(1), input2_num_(1), output_num_(1) {}
+      : op_type_(BROADCAST_GRAD_TYPE_INVALID),
+        need_broadcast_(false),
+        input1_num_(1),
+        input2_num_(1),
+        output_num_(1),
+        grad_x_(false),
+        grad_y_(false) {}
   ~BroadcastOpGradGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -52,10 +58,11 @@ class BroadcastOpGradGpuKernel : public GpuKernel {
                                "cudaMemSet Failed");
     if (need_broadcast_) {
       BroadcastGrad(x1_shape_[0], x1_shape_[1], x1_shape_[2], x1_shape_[3], x2_shape_[0], x2_shape_[1], x2_shape_[2],
-                    x2_shape_[3], dy_shape_[0], dy_shape_[1], dy_shape_[2], dy_shape_[3], op_type_, x1, x2, dy, dx1,
-                    dx2, reinterpret_cast<cudaStream_t>(stream_ptr));
+                    x2_shape_[3], dy_shape_[0], dy_shape_[1], dy_shape_[2], dy_shape_[3], grad_x_, grad_y_, op_type_,
+                    x1, x2, dy, dx1, dx2, reinterpret_cast<cudaStream_t>(stream_ptr));
     } else {
-      NoBroadcastGrad(output_num_, op_type_, x1, x2, dy, dx1, dx2, reinterpret_cast<cudaStream_t>(stream_ptr));
+      NoBroadcastGrad(output_num_, grad_x_, grad_y_, op_type_, x1, x2, dy, dx1, dx2,
+                      reinterpret_cast<cudaStream_t>(stream_ptr));
     }
 
     return true;
@@ -84,6 +91,9 @@ class BroadcastOpGradGpuKernel : public GpuKernel {
       x2_shape_[i + x2_offset] = shape2[i];
       input2_num_ *= shape2[i];
     }
+
+    grad_x_ = GetAttr<bool>(kernel_node, "grad_x");
+    grad_y_ = GetAttr<bool>(kernel_node, "grad_y");
 
     InitSizeLists();
     return true;
@@ -136,6 +146,8 @@ class BroadcastOpGradGpuKernel : public GpuKernel {
   int x1_shape_[4] = {1, 1, 1, 1};
   int x2_shape_[4] = {1, 1, 1, 1};
   int dy_shape_[4] = {1, 1, 1, 1};
+  bool grad_x_;
+  bool grad_y_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
