@@ -25,6 +25,7 @@ from dataclasses import is_dataclass
 import asttokens
 import mindspore.nn as nn
 from mindspore import log as logger
+from mindspore import Tensor as MsTensor
 from mindspore import ops
 from mindspore.common.dtype import pytype_to_dtype
 from mindspore.common.api import _MindSporeFunction
@@ -314,6 +315,11 @@ def get_dataclass_methods(cls):
                for name in dir(cls)
                if isinstance(getattr(cls, name), (types.FunctionType,))}
     return methods
+
+
+def convert_to_ms_tensor(data):
+    """Convert C++ tensor to mindspore tensor."""
+    return MsTensor(data)
 
 
 class Parser:

@@ -693,7 +693,7 @@ def get_bprop_unsorted_segment_min(self):
     select = P.Select()
 
     def bprop(x, segment_ids, num_segments, out, dout):
-        gathered_outputs, zero_clipped_indices, is_positive = _GatherDropNegatives(out, segment_ids)
+        gathered_outputs, zero_clipped_indices, is_positive = _GatherDropNegatives(out, segment_ids, None, None)
         is_selected = equal(x, gathered_outputs)
         is_selected = logical_and(is_selected, is_positive)
         num_selected = unsorted_segment_sum(cast(is_selected, get_dtype(dout)),
