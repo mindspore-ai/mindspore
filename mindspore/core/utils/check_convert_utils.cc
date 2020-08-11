@@ -39,8 +39,8 @@ const std::map<CompareRange, std::function<bool(int, std::pair<int, int>)>> kCom
    [](int num1, std::pair<int, int> range) -> bool { return num1 >= range.first && num1 <= range.second; }}};
 
 const std::map<CompareEnum, std::string> kCompareToString = {
-  {kEqual, "equal"},          {kNotEqual, "not equal"},       {kLessThan, "less than"},
-  {kLessEqual, "less eqaul"}, {kGreaterThan, "greater than"}, {kGreaterEqual, "greate equal"}};
+  {kEqual, "equal "},          {kNotEqual, "not equal "},       {kLessThan, "less than "},
+  {kLessEqual, "less eqaul "}, {kGreaterThan, "greater than "}, {kGreaterEqual, "greate equal "}};
 
 const std::map<CompareRange, std::pair<std::string, std::string>> kCompareRangeToString = {
   {kIncludeNeither, {"in (", ")"}},
@@ -162,16 +162,6 @@ std::vector<int> CheckAndConvertUtils::ConvertShapePtrToShape(const std::string 
   return shape_element->shape();
 }
 
-TypeId CheckAndConvertUtils::ConvertTypePtrToTypeId(const string &arg_name, const TypePtr &type_ptr,
-                                                    const string &prim_name) {
-  MS_EXCEPTION_IF_NULL(type_ptr);
-  if (!type_ptr->isa<TensorType>() || !type_ptr->isa<Number>()) {
-    MS_EXCEPTION(ValueError) << "The " << arg_name << "'s shape is " << type_ptr->ToString()
-                             << "should be a common type!(tensor_type && numbertype)";
-  }
-  return type_ptr->type_id();
-}
-
 void CheckAndConvertUtils::Check(const string &arg_name, int arg_value, CompareEnum compare_type,
                                  const string &value_name, int value, const string &prim_name,
                                  ExceptionType exception_type) {
@@ -231,11 +221,10 @@ void CheckAndConvertUtils::Check(const string &arg_name, const std::vector<int> 
   MS_EXCEPTION(exception_type) << buffer.str();
 }
 
-void CheckAndConvertUtils::CheckTensorTypeSame(const std::map<std::string, TypePtr> &types,
-                                               const std::set<TypeId> &check_list, const std::string &prim_name) {
+TypeId CheckAndConvertUtils::CheckTensorTypeSame(const std::map<std::string, TypePtr> &types,
+                                                 const std::set<TypeId> &check_list, const std::string &prim_name) {
   if (types.empty()) {
-    MS_LOG(WARNING) << "Tryinh to use the function to check a empty types map!";
-    return;
+    MS_EXCEPTION(ArgumentError) << "Trying to use the function to check a empty types map!";
   }
   std::set<TypeId> types_id;
   std::ostringstream buffer;
@@ -246,7 +235,11 @@ void CheckAndConvertUtils::CheckTensorTypeSame(const std::map<std::string, TypeP
       MS_EXCEPTION(TypeError) << "The " << prim_name << "'s" << type.first << " input must be tensor type but got "
                               << type.second->ToString();
     }
-    types_id.emplace(type.second->type_id());
+    auto tensor_type = type.second->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(tensor_type);
+    auto element = tensor_type->element();
+    MS_EXCEPTION_IF_NULL(element);
+    types_id.emplace(element->type_id());
   }
   if (types_id.size() > 1) {
     buffer << "'s input type is not same : ";
@@ -255,16 +248,17 @@ void CheckAndConvertUtils::CheckTensorTypeSame(const std::map<std::string, TypeP
     }
     MS_EXCEPTION(TypeError) << buffer.str();
   }
-  if (check_list.find(*(types_id.begin())) != check_list.end()) {
+  if (check_list.find(*types_id.begin()) == check_list.end()) {
     buffer << " type of ";
     for (const auto &elem : types) {
       buffer << elem.first << " should be in [";
       for (auto type_elem : check_list) {
-        buffer << type_elem << " ,";
+        buffer << TypeIdToType(type_elem)->ToString() << " ,";
       }
       buffer << "] , but got " << types.begin()->second->ToString();
     }
+    MS_EXCEPTION(TypeError) << buffer.str();
   }
-  MS_EXCEPTION(TypeError) << buffer.str();
+  return *types_id.begin();
 }
 }  // namespace mindspore

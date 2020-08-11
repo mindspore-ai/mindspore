@@ -55,15 +55,13 @@ class CheckAndConvertUtils {
                            const std::pair<int, int> &range, const std::string &prim_name);
   static std::vector<int> ConvertShapePtrToShape(const std::string &arg_name, const BaseShapePtr &shape,
                                                  const std::string &prim_name);
-  static TypeId ConvertTypePtrToTypeId(const std::string &arg_name, const TypePtr &type_ptr,
-                                       const std::string &prim_name);
   static void Check(const std::string &arg_name, int arg_value, CompareEnum compare_type, const std::string &value_name,
                     int value, const std::string &prim_name = "", ExceptionType exception_type = ValueError);
   static void Check(const std::string &arg_name, const std::vector<int> &arg_value, CompareEnum compare_type,
                     const std::string &value_name, const std::vector<int> &value, const std::string &prim_name = "",
                     ExceptionType exception_type = ValueError);
-  static void CheckTensorTypeSame(const std::map<std::string, TypePtr> &types, const std::set<TypeId> &check_list,
-                                  const std::string &prim_name);
+  static TypeId CheckTensorTypeSame(const std::map<std::string, TypePtr> &types, const std::set<TypeId> &check_list,
+                                    const std::string &prim_name);
 
  private:
   static bool IsEqualVector(const std::vector<int> &vec_1, const std::vector<int> &vec_2);
