@@ -322,10 +322,10 @@ def test_export():
 
 
 @non_graph_engine
-def test_binary_export():
+def test_mindir_export():
     net = MYNET()
     input_data = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]).astype(np.float32))
-    export(net, input_data, file_name="./me_binary_export.pb", file_format="BINARY")
+    export(net, input_data, file_name="./me_binary_export.mindir", file_format="MINDIR")
 
 
 class PrintNet(nn.Cell):

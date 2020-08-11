@@ -36,7 +36,7 @@ y = np.ones(4).astype(np.float32)
 def export_net():
     add = Net()
     output = add(Tensor(x), Tensor(y))
-    export(add, Tensor(x), Tensor(y), file_name='tensor_add.pb', file_format='BINARY')
+    export(add, Tensor(x), Tensor(y), file_name='tensor_add.pb', file_format='MINDIR')
     print(x)
     print(y)
     print(output.asnumpy())

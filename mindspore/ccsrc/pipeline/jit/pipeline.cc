@@ -68,7 +68,7 @@ using mindspore::abstract::AbstractTuplePtr;
 
 const char IR_TYPE_ANF[] = "anf_ir";
 const char IR_TYPE_ONNX[] = "onnx_ir";
-const char IR_TYPE_BINARY[] = "binary_ir";
+const char IR_TYPE_MINDIR[] = "mind_ir";
 
 ExecutorPyPtr ExecutorPy::executor_ = nullptr;
 std::mutex ExecutorPy::instance_lock_;
@@ -222,7 +222,7 @@ py::bytes ExecutorPy::GetFuncGraphProto(const std::string &phase, const std::str
     return proto_str;
   }
 
-  if (ir_type == IR_TYPE_BINARY) {
+  if (ir_type == IR_TYPE_MINDIR) {
     std::string proto_str = GetBinaryProtoString(fg_ptr);
     if (proto_str.empty()) {
       MS_LOG(EXCEPTION) << "Graph proto is empty.";

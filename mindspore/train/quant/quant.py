@@ -445,15 +445,17 @@ def export(network, *inputs, file_name, mean=127.5, std_dev=127.5, file_format='
         file_name (str): File name of model to export.
         mean (int): Input data mean. Default: 127.5.
         std_dev (int, float): Input data variance. Default: 127.5.
-        file_format (str): MindSpore currently supports 'GEIR', 'ONNX' and 'BINARY' format for exported
+        file_format (str): MindSpore currently supports 'GEIR', 'ONNX' and 'MINDIR' format for exported
             quantization aware model. Default: 'GEIR'.
 
             - GEIR: Graph Engine Intermidiate Representation. An intermidiate representation format of
               Ascend model.
-            - BINARY: Binary format for model. An intermidiate representation format for models.
+            - MINDIR: MindSpore Native Intermidiate Representation for Anf. An intermidiate representation format
+              for MindSpore models.
+              Recommended suffix for output file is '.mindir'.
     """
     supported_device = ["Ascend", "GPU"]
-    supported_formats = ['GEIR', 'BINARY']
+    supported_formats = ['GEIR', 'MINDIR']
 
     mean = validator.check_type("mean", mean, (int, float))
     std_dev = validator.check_type("std_dev", std_dev, (int, float))
