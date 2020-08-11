@@ -177,8 +177,8 @@ from .lamb_update_with_lr import _lamb_update_with_lr_tbe
 from .rsqrt import _rsqrt_tbe
 from .sigmoid import _sigmoid_tbe
 from .sigmoid_grad import _sigmoid_grad_tbe
-from .resize_nearest_neighbor_d import _resize_nearest_neighbor_d_tbe
-from .resize_nearest_neighbor_grad_d import _resize_nearest_neighbor_grad_d_tbe
+from .resize_nearest_neighbor import _resize_nearest_neighbor_tbe
+from .resize_nearest_neighbor_grad import _resize_nearest_neighbor_grad_tbe
 from .pad_d import _pad_d_tbe
 from .arg_max_with_value import _arg_max_with_value_tbe
 from .arg_min_with_value import _arg_min_with_value_tbe

@@ -75,8 +75,8 @@ class BoundingBoxEncode(PrimitiveWithInfer):
         stds (tuple): Stds for encoding bounding boxes calculation. Default: (1.0, 1.0, 1.0, 1.0).
 
     Inputs:
-        - **anchor_box** (Tensor) - Anchor boxes.
-        - **groundtruth_box** (Tensor) - Ground truth boxes.
+        - **anchor_box** (Tensor) - Anchor boxes. The shape of anchor_box must be (n, 4).
+        - **groundtruth_box** (Tensor) - Ground truth boxes. Which has the same shape with anchor_box.
 
     Outputs:
         Tensor, encoded bounding boxes.
@@ -128,8 +128,8 @@ class BoundingBoxDecode(PrimitiveWithInfer):
         wh_ratio_clip (float): The limit of width and height ratio for decoding box calculation. Default: 0.016.
 
     Inputs:
-        - **anchor_box** (Tensor) - Anchor boxes.
-        - **deltas** (Tensor) - Delta of boxes.
+        - **anchor_box** (Tensor) - Anchor boxes. The shape of anchor_box must be (n, 4).
+        - **deltas** (Tensor) - Delta of boxes. Which has the same shape with anchor_box.
 
     Outputs:
         Tensor, decoded boxes.
