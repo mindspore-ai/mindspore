@@ -592,44 +592,33 @@ class LaplaceNet(nn.Cell):
 class GammaNet(nn.Cell):
     def __init__(self, shape=None, seed=0):
         super(GammaNet, self).__init__()
-        self.gamma = P.Gamma(seed=seed)
         self.shape = shape
+        self.seed = seed
 
     def construct(self, alpha, beta):
-        out = self.gamma(self.shape, alpha, beta)
+        out = C.gamma(self.shape, alpha, beta, self.seed)
         return out
 
 
 class PoissonNet(nn.Cell):
     def __init__(self, shape=None, seed=0):
         super(PoissonNet, self).__init__()
-        self.poisson = P.Poisson(seed=seed)
         self.shape = shape
+        self.seed = seed
 
     def construct(self, mean):
-        out = self.poisson(self.shape, mean)
+        out = C.poisson(self.shape, mean, self.seed)
         return out
 
 
-class UniformIntNet(nn.Cell):
+class UniformNet(nn.Cell):
     def __init__(self, shape=None, seed=0):
-        super(UniformIntNet, self).__init__()
-        self.uniformint = P.UniformInt(seed=seed)
+        super(UniformNet, self).__init__()
         self.shape = shape
+        self.seed = seed
 
     def construct(self, a, b):
-        out = self.uniformint(self.shape, a, b)
-        return out
-
-
-class UniformRealNet(nn.Cell):
-    def __init__(self, shape=None, seed=0):
-        super(UniformRealNet, self).__init__()
-        self.uniformreal = P.UniformReal(seed=seed)
-        self.shape = shape
-
-    def construct(self, a, b):
-        out = self.uniformreal(self.shape, a, b)
+        out = C.uniform(self.shape, a, b, self.seed)
         return out
 
 
@@ -924,13 +913,9 @@ test_case_math_ops = [
         'block': PoissonNet((3, 2, 4), 0),
         'desc_inputs': [Tensor(2.0, mstype.float32)],
         'skip': ['backward']}),
-    ('UniformInt', {
-        'block': UniformIntNet((3, 2, 4), 0),
-        'desc_inputs': [Tensor(1, mstype.int32), Tensor(15, mstype.int32)],
-        'skip': ['backward']}),
-    ('UniformReal', {
-        'block': UniformRealNet((3, 2, 4), 0),
-        'desc_inputs': [Tensor(1.0, mstype.float32), Tensor(5.0, mstype.float32)],
+    ('Uniform', {
+        'block': UniformNet((3, 2, 4), 0),
+        'desc_inputs': [Tensor(0.0, mstype.float32), Tensor(1.0, mstype.float32)],
         'skip': ['backward']}),
     ('RandomChoiceWithMask', {
         'block': P.RandomChoiceWithMask(256),

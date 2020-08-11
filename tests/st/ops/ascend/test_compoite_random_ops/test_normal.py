@@ -12,44 +12,45 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import numpy as np
 
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
+from mindspore.ops import composite as C
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Net(nn.Cell):
-    def __init__(self, shape, seed=0, seed2=0):
+    def __init__(self, shape, seed=0):
         super(Net, self).__init__()
-        self.uniformint = P.UniformInt(seed=seed)
         self.shape = shape
+        self.seed = seed
 
-    def construct(self, a, b):
-        return self.uniformint(self.shape, a, b)
+    def construct(self, mean, stddev):
+        C.set_seed(20)
+        return C.normal(self.shape, mean, stddev, self.seed)
 
 
 def test_net_1D():
     seed = 10
     shape = (3, 2, 4)
-    a = 1
-    b = 5
-    net = Net(shape, seed=seed)
-    ta, tb = Tensor(a, mstype.int32), Tensor(b, mstype.int32)
-    output = net(ta, tb)
+    mean = 1.0
+    stddev = 1.0
+    net = Net(shape, seed)
+    tmean, tstddev = Tensor(mean, mstype.float32), Tensor(stddev, mstype.float32)
+    output = net(tmean, tstddev)
     assert output.shape == (3, 2, 4)
 
 
 def test_net_ND():
     seed = 10
-    shape = (3, 2, 1)
-    a = np.array([[[1, 2]], [[3, 4]], [[5, 6]]]).astype(np.int32)
-    b = np.array([10]).astype(np.int32)
+    shape = (3, 1, 2)
+    mean = np.array([[[1], [2]], [[3], [4]], [[5], [6]]]).astype(np.float32)
+    stddev = np.array([1.0]).astype(np.float32)
     net = Net(shape, seed)
-    ta, tb = Tensor(a), Tensor(b)
-    output = net(ta, tb)
-    print(output.asnumpy())
+    tmean, tstddev = Tensor(mean, mstype.float32), Tensor(stddev, mstype.float32)
+    output = net(tmean, tstddev)
     assert output.shape == (3, 2, 2)

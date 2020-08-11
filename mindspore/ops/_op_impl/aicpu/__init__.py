@@ -15,6 +15,7 @@
 """aicpu ops"""
 from .init_data_set_queue import _init_data_set_queue_aicpu
 from .embedding_lookup import _embedding_lookup_aicpu
+from .padding import _padding_aicpu
 from .dropout_genmask import _dropout_genmask_aicpu
 from .get_next import _get_next_aicpu
 from .print_tensor import _print_aicpu
@@ -43,3 +44,7 @@ from .laplace import _laplace_aicpu
 from .strided_slice import _strided_slice_aicpu
 from .strided_slice_grad import _strided_slice_grad_aicpu
 from .end_of_sequence import _end_of_sequence_aicpu
+from .fused_sparse_adam import _fused_sparse_adam_aicpu
+from .fused_sparse_lazy_adam import _fused_sparse_lazy_adam_aicpu
+from .fused_sparse_ftrl import _fused_sparse_ftrl_aicpu
+from .fused_sparse_proximal_adagrad import _fused_sparse_proximal_adagrad_aicpu
