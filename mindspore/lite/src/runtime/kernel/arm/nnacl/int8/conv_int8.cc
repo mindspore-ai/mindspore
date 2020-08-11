@@ -29,11 +29,13 @@ void IndirectGemmInt8(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const in
   int32_t act_min = conv_param->conv_quant_arg_.out_act_min_[0];
   int32_t act_max = conv_param->conv_quant_arg_.out_act_max_[0];
 #ifdef __aarch64__
-  IndirectGemmInt8_4x4(dst, src, weight, bias, kernel_plane, ic4, output_channel, output_channel * sizeof(int8_t),
-                       input_sum, act_min, act_max, out_zp, out_multiplier, shift_before, shift_after);
+  IndirectGemmInt8_4x4(dst, src, weight, bias, UP_DIV(kernel_plane, C4NUM), ic4, output_channel,
+                       output_channel * sizeof(int8_t), input_sum, act_min, act_max, out_zp, out_multiplier,
+                       shift_before, shift_after);
 #elif defined(ENABLE_ARM32)
-  IndirectGemmInt8_2x4(dst, src, weight, bias, kernel_plane, ic4, output_channel, output_channel * sizeof(int8_t),
-                       input_sum, act_min, act_max, out_zp, out_multiplier, shift_before, shift_after);
+  IndirectGemmInt8_2x4(dst, src, weight, bias, UP_DIV(kernel_plane, C4NUM), ic4, output_channel,
+                       output_channel * sizeof(int8_t), input_sum, act_min, act_max, out_zp, out_multiplier,
+                       shift_before, shift_after);
 #else
   int tile_num = conv_param->tile_num_;
   int plane_c4 = UP_DIV(kernel_plane, C4NUM);

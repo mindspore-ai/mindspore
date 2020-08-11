@@ -268,40 +268,40 @@ IndirectGemmStart:
             Relu6:
                 movi v1.4s, #6
                 scvtf v1.4s, v1.4s
-                fmin v16.4s, v16.4s ,v1.4s
-                fmin v17.4s, v17.4s ,v1.4s
-                fmin v18.4s, v18.4s ,v1.4s
-                fmin v19.4s, v19.4s ,v1.4s
-                fmin v20.4s, v20.4s ,v1.4s
-                fmin v21.4s, v21.4s ,v1.4s
-                fmin v22.4s, v22.4s ,v1.4s
-                fmin v23.4s, v23.4s ,v1.4s
-                fmin v24.4s, v24.4s ,v1.4s
-                fmin v25.4s, v25.4s ,v1.4s
-                fmin v26.4s, v26.4s ,v1.4s
-                fmin v27.4s, v27.4s ,v1.4s
-                fmin v28.4s, v28.4s ,v1.4s
-                fmin v29.4s, v29.4s ,v1.4s
-                fmin v30.4s, v30.4s ,v1.4s
-                fmin v31.4s, v31.4s ,v1.4s
+                fmin v16.4s, v16.4s, v1.4s
+                fmin v17.4s, v17.4s, v1.4s
+                fmin v18.4s, v18.4s, v1.4s
+                fmin v19.4s, v19.4s, v1.4s
+                fmin v20.4s, v20.4s, v1.4s
+                fmin v21.4s, v21.4s, v1.4s
+                fmin v22.4s, v22.4s, v1.4s
+                fmin v23.4s, v23.4s, v1.4s
+                fmin v24.4s, v24.4s, v1.4s
+                fmin v25.4s, v25.4s, v1.4s
+                fmin v26.4s, v26.4s, v1.4s
+                fmin v27.4s, v27.4s, v1.4s
+                fmin v28.4s, v28.4s, v1.4s
+                fmin v29.4s, v29.4s, v1.4s
+                fmin v30.4s, v30.4s, v1.4s
+                fmin v31.4s, v31.4s, v1.4s
             Relu:
                 dup v0.4s, wzr
-                fmax v16.4s, v16.4s ,v0.4s
-                fmax v17.4s, v17.4s ,v0.4s
-                fmax v18.4s, v18.4s ,v0.4s
-                fmax v19.4s, v19.4s ,v0.4s
-                fmax v20.4s, v20.4s ,v0.4s
-                fmax v21.4s, v21.4s ,v0.4s
-                fmax v22.4s, v22.4s ,v0.4s
-                fmax v23.4s, v23.4s ,v0.4s
-                fmax v24.4s, v24.4s ,v0.4s
-                fmax v25.4s, v25.4s ,v0.4s
-                fmax v26.4s, v26.4s ,v0.4s
-                fmax v27.4s, v27.4s ,v0.4s
-                fmax v28.4s, v28.4s ,v0.4s
-                fmax v29.4s, v29.4s ,v0.4s
-                fmax v30.4s, v30.4s ,v0.4s
-                fmax v31.4s, v31.4s ,v0.4s
+                fmax v16.4s, v16.4s, v0.4s
+                fmax v17.4s, v17.4s, v0.4s
+                fmax v18.4s, v18.4s, v0.4s
+                fmax v19.4s, v19.4s, v0.4s
+                fmax v20.4s, v20.4s, v0.4s
+                fmax v21.4s, v21.4s, v0.4s
+                fmax v22.4s, v22.4s, v0.4s
+                fmax v23.4s, v23.4s, v0.4s
+                fmax v24.4s, v24.4s, v0.4s
+                fmax v25.4s, v25.4s, v0.4s
+                fmax v26.4s, v26.4s, v0.4s
+                fmax v27.4s, v27.4s, v0.4s
+                fmax v28.4s, v28.4s, v0.4s
+                fmax v29.4s, v29.4s, v0.4s
+                fmax v30.4s, v30.4s, v0.4s
+                fmax v31.4s, v31.4s, v0.4s
 
             WriteStart:
                 cbnz x9, WriteC4
@@ -595,24 +595,24 @@ IndirectGemmStart:
             Relu6Half:
                 movi v1.4s, #6
                 scvtf v1.4s, v1.4s
-                fmin v16.4s, v16.4s ,v1.4s
-                fmin v18.4s, v18.4s ,v1.4s
-                fmin v20.4s, v20.4s ,v1.4s
-                fmin v22.4s, v22.4s ,v1.4s
-                fmin v24.4s, v24.4s ,v1.4s
-                fmin v26.4s, v26.4s ,v1.4s
-                fmin v28.4s, v28.4s ,v1.4s
-                fmin v30.4s, v30.4s ,v1.4s
+                fmin v16.4s, v16.4s, v1.4s
+                fmin v18.4s, v18.4s, v1.4s
+                fmin v20.4s, v20.4s, v1.4s
+                fmin v22.4s, v22.4s, v1.4s
+                fmin v24.4s, v24.4s, v1.4s
+                fmin v26.4s, v26.4s, v1.4s
+                fmin v28.4s, v28.4s, v1.4s
+                fmin v30.4s, v30.4s, v1.4s
             ReluHalf:
                 dup v0.4s, wzr
-                fmax v16.4s, v16.4s ,v0.4s
-                fmax v18.4s, v18.4s ,v0.4s
-                fmax v20.4s, v20.4s ,v0.4s
-                fmax v22.4s, v22.4s ,v0.4s
-                fmax v24.4s, v24.4s ,v0.4s
-                fmax v26.4s, v26.4s ,v0.4s
-                fmax v28.4s, v28.4s ,v0.4s
-                fmax v30.4s, v30.4s ,v0.4s
+                fmax v16.4s, v16.4s, v0.4s
+                fmax v18.4s, v18.4s, v0.4s
+                fmax v20.4s, v20.4s, v0.4s
+                fmax v22.4s, v22.4s, v0.4s
+                fmax v24.4s, v24.4s, v0.4s
+                fmax v26.4s, v26.4s, v0.4s
+                fmax v28.4s, v28.4s, v0.4s
+                fmax v30.4s, v30.4s, v0.4s
 
             WriteStartHalf:
                 cbnz x9, Write4
