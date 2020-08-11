@@ -14,8 +14,8 @@
 # ============================================================================
 """Parameters utils"""
 
-from mindspore.common.initializer import initializer, TruncatedNormal
 import numpy as np
+from mindspore.common.initializer import initializer, TruncatedNormal
 
 def init_net_param(network, initialize_mode='TruncatedNormal'):
     """Init the parameters in net."""

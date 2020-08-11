@@ -110,6 +110,7 @@ class BertNERModel(nn.Cell):
         self.origin_shape = (config.batch_size, config.seq_length, self.num_labels)
 
     def construct(self, input_ids, input_mask, token_type_id):
+        """Return the final logits as the results of log_softmax."""
         sequence_output, _, _ = \
             self.bert(input_ids, token_type_id, input_mask)
         seq = self.dropout(sequence_output)

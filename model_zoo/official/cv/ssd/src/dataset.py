@@ -20,8 +20,8 @@ from __future__ import division
 import os
 import json
 import xml.etree.ElementTree as et
-import cv2
 import numpy as np
+import cv2
 
 import mindspore.dataset as de
 import mindspore.dataset.transforms.vision.c_transforms as C

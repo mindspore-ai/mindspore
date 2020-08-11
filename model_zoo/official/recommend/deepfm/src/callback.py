@@ -68,6 +68,7 @@ class LossCallBack(Callback):
         self._per_print_times = per_print_times
 
     def step_end(self, run_context):
+        """Monitor the loss in training."""
         cb_params = run_context.original_args()
         loss = cb_params.net_outputs.asnumpy()
         cur_step_in_epoch = (cb_params.cur_step_num - 1) % cb_params.batch_num + 1

@@ -88,6 +88,7 @@ class BertPretrainEva(nn.Cell):
 
 
     def construct(self, input_ids, input_mask, token_type_id, masked_pos, masked_ids, masked_weights, nsp_label):
+        """Calculate prediction scores"""
         bs, _ = self.shape(input_ids)
         probs = self.bert(input_ids, input_mask, token_type_id, masked_pos)
         index = self.argmax(probs)

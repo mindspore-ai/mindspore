@@ -103,6 +103,7 @@ class GetMaskedLMOutput(nn.Cell):
                   input_tensor,
                   output_weights,
                   positions):
+        """Get output log_probs"""
         flat_offsets = self.reshape(
             self.rng * self.seq_length_tensor, self.shape_flat_offsets)
         flat_position = self.reshape(positions + flat_offsets, self.last_idx)
@@ -248,6 +249,7 @@ class BertNetworkWithLoss(nn.Cell):
                   masked_lm_positions,
                   masked_lm_ids,
                   masked_lm_weights):
+        """Get pre-training loss"""
         prediction_scores, seq_relationship_score = \
             self.bert(input_ids, input_mask, token_type_id, masked_lm_positions)
         total_loss = self.loss(prediction_scores, seq_relationship_score,

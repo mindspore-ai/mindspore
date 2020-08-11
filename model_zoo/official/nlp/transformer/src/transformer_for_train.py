@@ -55,7 +55,7 @@ class ClipGradients(nn.Cell):
                   grads,
                   clip_type,
                   clip_value):
-        # return grads
+        """return grads"""
         if clip_type != 0 and clip_type != 1:
             return grads
 

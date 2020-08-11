@@ -241,6 +241,7 @@ class BeamSearchDecoder(nn.Cell):
         return cur_input_ids, state_log_probs, state_seq, state_finished, state_length
 
     def construct(self, enc_states, enc_attention_mask):
+        """Get beam search result."""
         cur_input_ids = self.start_ids
         # beam search states
         state_log_probs = self.init_scores

@@ -13,10 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """Dataset module."""
+import numpy as np
 from PIL import Image
 import mindspore.dataset as de
 import mindspore.dataset.transforms.vision.c_transforms as C
-import numpy as np
 
 from .ei_dataset import HwVocRawDataset
 from .utils import custom_transforms as tr

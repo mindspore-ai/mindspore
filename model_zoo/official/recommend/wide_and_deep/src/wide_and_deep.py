@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """wide and deep model"""
+import numpy as np
 from mindspore import nn
 from mindspore import Parameter, ParameterTuple
 import mindspore.common.dtype as mstype
@@ -28,7 +29,6 @@ from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_
 from mindspore.train.parallel_utils import ParallelMode
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.communication.management import get_group_size
-import numpy as np
 
 np_type = np.float32
 ms_type = mstype.float32

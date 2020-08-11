@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Automatic differentiation with grad clip."""
+import numpy as np
 from mindspore.parallel._utils import (_get_device_num, _get_mirror_mean,
                                        _get_parallel_mode)
 from mindspore.train.parallel_utils import ParallelMode
@@ -24,7 +25,6 @@ from mindspore.nn.cell import Cell
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 import mindspore.nn as nn
 from mindspore.common.tensor import Tensor
-import numpy as np
 
 compute_norm = C.MultitypeFuncGraph("compute_norm")
 

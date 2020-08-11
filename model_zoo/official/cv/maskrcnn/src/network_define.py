@@ -117,8 +117,6 @@ class LossCallBack(Callback):
 
 class LossNet(nn.Cell):
     """MaskRcnn loss method"""
-    def __init__(self):
-        super(LossNet, self).__init__()
     def construct(self, x1, x2, x3, x4, x5, x6, x7):
         return x1 + x2
 
