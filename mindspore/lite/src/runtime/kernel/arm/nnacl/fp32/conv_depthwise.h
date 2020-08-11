@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_CONV_DEPTHWISE_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_CONV_DEPTHWISE_H_
 
-#include "src/runtime/kernel/arm/nnacl/conv_parameter.h"
+#include "nnacl/conv_parameter.h"
 
-struct SlidingWindowParam {
+typedef struct SlidingWindowParam {
   int left_;
   int right_;
   int top_;
@@ -35,7 +35,7 @@ struct SlidingWindowParam {
   int in_kh_step_;  // kernel H
   int in_kw_step_;  // kernel W
   int kernel_step_;
-};
+} SlidingWindowParam;
 
 void InitSlidingParam(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block);
 

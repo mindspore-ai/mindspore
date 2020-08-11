@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/gatherNd.h"
+#include "nnacl/fp32/gatherNd.h"
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/errorcode.h"
 
 int GatherNd(float *input, float *output, int *in_offset, int area, int count) {
   int i = 0;

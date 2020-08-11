@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/nnacl/flatten.h"
+#include "nnacl/flatten.h"
 #include <string.h>
 
 void Flatten(const void *input, void *output, FlattenParameter *flatten_param) {

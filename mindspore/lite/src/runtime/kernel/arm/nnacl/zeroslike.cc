@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/nnacl/zeroslike.h"
+#include "nnacl/zeroslike.h"
 #include <stdio.h>
 #include <string.h>
 

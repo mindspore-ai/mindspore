@@ -20,8 +20,8 @@
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
-#include "src/runtime/kernel/arm/nnacl/conv_parameter.h"
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/conv_parameter.h"
+#include "nnacl/op_base.h"
 
 void Im2ColPackUnitFp32(const float *input_data, ConvParameter *conv_param, float *packed_input, int real_cal_num,
                         int block_index);

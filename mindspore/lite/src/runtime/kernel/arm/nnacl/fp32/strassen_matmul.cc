@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/strassen_matmul.h"
+#include "nnacl/fp32/strassen_matmul.h"
 
 bool CheckRecursion(int row, int col, int deep, int max_recursion, int cur_recursion) {
   if (cur_recursion >= max_recursion) {

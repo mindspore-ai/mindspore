@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/transpose.h"
+#include "nnacl/transpose.h"
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/errorcode.h"
 
 void TransposeDim2(float *in_data, float *out_data, int *strides, int *out_strides, int *perm, int *output_shape) {
   const int stride0 = strides[perm[0]];

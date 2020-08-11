@@ -17,10 +17,10 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_SIGMOID_PARAMETER_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_SIGMOID_PARAMETER_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 #define SIGMOID_OFFSET_MAX_SIZE 4
 
-struct SigmoidParameter {
+typedef struct SigmoidParameter {
   OpParameter op_parameter_;
   SigmoidQuantArg quant_arg;
   double alpha_;
@@ -32,6 +32,6 @@ struct SigmoidParameter {
   const int *out_shape_;
   int input_dim_;
   int element_num;
-};
+} SigmoidParameter;
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_SIGMOID_PARAMETER_H_

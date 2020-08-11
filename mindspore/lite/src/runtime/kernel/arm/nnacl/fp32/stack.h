@@ -16,12 +16,12 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_STACK_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_STACK_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct StackParameter {
+typedef struct StackParameter {
     OpParameter op_parameter_;
     int32_t axis_;
-};
+} StackParameter;
 
 void DoStack(const float * const *inputs, size_t input_num, int *in_shape, size_t shape_size, int axis, float *output);
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_STACK_H_

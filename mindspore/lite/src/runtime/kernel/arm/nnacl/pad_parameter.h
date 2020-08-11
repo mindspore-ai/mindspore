@@ -16,17 +16,18 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PAD_PARAMETER_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PAD_PARAMETER_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
+#include "nnacl/quantization/quantize.h"
 
 #define MAX_PAD_SIZE 8
 #define DEFAULT_PAD_NDIMS 4
 
-struct PadParameter {
+typedef struct PadParameter {
   OpParameter op_parameter_;
   PadQuantArg pad_quant_arg_;
   int paddings_[MAX_PAD_SIZE] = {0};
   int pad_mode_;
   float constant_value_;
-};
+} PadParameter;
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PAD_PARAMETER_H_

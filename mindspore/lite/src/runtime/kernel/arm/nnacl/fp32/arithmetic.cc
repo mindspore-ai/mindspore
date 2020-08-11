@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/arithmetic.h"
+#include "nnacl/fp32/arithmetic.h"
+#include <math.h>
 
 int ElementMul(float *input0, float *input1, float *output, int element_size) {
   int block_mod = element_size % C4NUM;

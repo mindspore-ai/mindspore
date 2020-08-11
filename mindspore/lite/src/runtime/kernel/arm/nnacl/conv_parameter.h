@@ -20,10 +20,10 @@
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/quantization/quantize.h"
+#include "nnacl/op_base.h"
+#include "nnacl/quantization/quantize.h"
 
-struct ConvParameter {
+typedef struct ConvParameter {
   OpParameter op_parameter_;
   ConvQuantArg conv_quant_arg_;
   int kernel_h_;
@@ -53,7 +53,6 @@ struct ConvParameter {
   int output_unit_;
   bool is_relu_;
   bool is_relu6_;
-};
+} ConvParameter;
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CONV_PARAMETER_H_
-

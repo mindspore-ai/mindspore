@@ -16,16 +16,16 @@
 
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_REDUCE_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_REDUCE_H_
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 #define REDUCE_MAX_AXES_NUM 8
 
-struct ReduceParameter {
+typedef struct ReduceParameter {
   OpParameter op_parameter_;
   bool keep_dims_;
   int axes_[REDUCE_MAX_AXES_NUM];
   int num_axes_;
   int mode_;
-};
+} ReduceParameter;
 
 int ReduceMean(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
                const int *src_shape, float *dst_data, const int tid, const int thread_num);

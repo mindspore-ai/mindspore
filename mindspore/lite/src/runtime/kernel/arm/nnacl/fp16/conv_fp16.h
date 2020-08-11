@@ -17,7 +17,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP16_CONV_FP16_H_
 
 #include <arm_neon.h>
-#include "src/runtime/kernel/arm/nnacl/conv_parameter.h"
+#include "nnacl/conv_parameter.h"
 
 #ifndef ENABLE_NEON
 void IndirectGemmFp16_16x8(float16_t *output, float16_t *input, float16_t *weight, float16_t *bias, size_t step,

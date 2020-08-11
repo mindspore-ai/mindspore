@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/nnacl/fp32/space_to_depth.h"
-#include "src/runtime/kernel/arm/nnacl/arithmetic_common.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/fp32/space_to_depth.h"
+#include "nnacl/arithmetic_common.h"
+#include "nnacl/errorcode.h"
+#include "nnacl/op_base.h"
 
 int SpaceToDepthForNHWC(const float *input, float *output, int *in_shape, int *out_shape, int shape_size,
                         int block_size, int h_start, int h_end) {

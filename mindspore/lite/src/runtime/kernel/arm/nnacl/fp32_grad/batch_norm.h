@@ -17,12 +17,12 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_BATCH_NORM_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_BATCH_NORM_H_
 
-struct bnParameter {
+typedef struct bnParameter {
   int batch;
   int channels;
   int spatial;
   float eps;
-};
+} bnParameter;
 void scaleBias(const float *scales, int batch, int n, int size, float *output);
 void normalize(const float *x, const float *mean, const float *variance, float eps, int batch, int filters, int spatial,
                float *out);

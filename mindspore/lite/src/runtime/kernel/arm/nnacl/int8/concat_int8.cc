@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/int8/concat_int8.h"
-#include "src/runtime/kernel/arm/nnacl/concat_parameter.h"
+#include "nnacl/int8/concat_int8.h"
+#include "nnacl/concat_parameter.h"
 #include <string.h>
 
 void Concat(int8_t **inputs, int8_t *output, ConcatParameter *para, int axis, int64_t real_dst_count, int task_id) {

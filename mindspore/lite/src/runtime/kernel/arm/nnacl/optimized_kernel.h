@@ -20,7 +20,7 @@
 #include <dlfcn.h>
 #ifdef __ANDROID__
 #include <asm/hwcap.h>
-#include "src/runtime/kernel/arm/nnacl/nnacl_utils.h"
+#include "nnacl/nnacl_utils.h"
 #endif
 
 #define OPTIMIZE_SHARED_LIBRARY_PATH "liboptimize.so"

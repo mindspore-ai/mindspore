@@ -20,7 +20,7 @@
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
 #include "src/runtime/kernel/arm/fp32/convolution_1x1.h"
-#include "src/runtime/kernel/arm/nnacl/matmul.h"
+#include "src/runtime/kernel/arm/nnacl/matmul_parameter.h"
 #include "src/runtime/kernel/arm/nnacl/strassen_matmul.h"
 
 namespace mindspore {

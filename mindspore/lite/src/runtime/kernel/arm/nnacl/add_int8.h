@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ADD_INT8_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ADD_INT8_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct AddQuantParameter {
+typedef struct AddQuantParameter {
   int input0_offset_;
   int input1_offset_;
   int output_offset_;
@@ -40,7 +40,7 @@ struct AddQuantParameter {
   int right_shift1_;
   int left_shift_out_;
   int right_shift_out_;
-};
+} AddQuantParameter;
 
 void AddInt8(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int64_t real_dst_count,
              AddQuantParameter *para);
@@ -51,4 +51,3 @@ int16x8_t LoadAndAddOffset(int8_t *data, int index, int offset);
 #endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ADD_INT8_H_
-

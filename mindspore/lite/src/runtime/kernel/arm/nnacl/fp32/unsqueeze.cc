@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/unsqueeze.h"
+#include "nnacl/fp32/unsqueeze.h"
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/errorcode.h"
 
 int Unsqueeze(float *input_ptr, float *output_ptr, size_t data_size) {
   memcpy(output_ptr, input_ptr, data_size);

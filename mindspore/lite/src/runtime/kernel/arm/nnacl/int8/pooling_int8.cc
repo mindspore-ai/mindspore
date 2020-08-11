@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/int8/pooling_int8.h"
-#include "src/runtime/kernel/arm/nnacl/common_func.h"
+#include "nnacl/int8/pooling_int8.h"
+#include "nnacl/common_func.h"
 
 void AvgPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter *pooling_param, int task_id) {
   int stride_w = pooling_param->stride_w_;

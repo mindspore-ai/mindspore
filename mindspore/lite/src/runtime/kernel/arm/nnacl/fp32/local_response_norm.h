@@ -17,15 +17,15 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_LOCAL_RESPONSE_NORM_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_LOCAL_RESPONSE_NORM_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct LocalResponseNormParameter {
+typedef struct LocalResponseNormParameter {
   OpParameter op_parameter_;
   int depth_radius_;
   float bias_;
   float alpha_;
   float beta_;
-};
+} LocalResponseNormParameter;
 
 int LocalResponseNorm(float *input_ptr, int out_size, int channel, float *output_ptr,
                       LocalResponseNormParameter *param);

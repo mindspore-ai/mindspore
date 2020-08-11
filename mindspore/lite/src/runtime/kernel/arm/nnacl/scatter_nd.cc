@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/scatter_nd.h"
+#include "nnacl/scatter_nd.h"
 #include <string.h>
 #include <stdio.h>
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/errorcode.h"
 
 int DoScatterND(float *output_ptr, float *update, int *output_unit_offsets, int unit_size, int num_units) {
   if (output_ptr == nullptr || update == nullptr || output_unit_offsets == nullptr || unit_size <= 0 || num_units < 0) {

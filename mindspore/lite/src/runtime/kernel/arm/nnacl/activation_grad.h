@@ -17,15 +17,15 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ACTIVATION_GRAD_H_
 
 #include <math.h>
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/arithmetic.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/op_base.h"
+#include "nnacl/fp32/arithmetic.h"
+#include "nnacl/errorcode.h"
 
-struct ActivationGradParameter {
+typedef struct ActivationGradParameter {
   OpParameter op_parameter{};
   int type_;
   float alpha_{0.01};
-};
+} ActivationGradParameter;
 
 inline int ReluGrad(float *src0, float *src1, int length, float *dst) {
   for (int i = 0; i < length; ++i) {

@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_LSTM_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_LSTM_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct LstmParameter {
+typedef struct LstmParameter {
   OpParameter op_parameter_;
   int input_size_;
   int hidden_size_;  // output_size
@@ -28,7 +28,7 @@ struct LstmParameter {
   int input_step_;
   int output_step_;
   bool bidirectional_;
-};
+} LstmParameter;
 
 void Lstm(float *output, const float *input, const float *weight_i, const float *weight_h, const float *bias,
           float *hidden_state, float *cell_state, float *gate_buffer, LstmParameter *lstm_parm);

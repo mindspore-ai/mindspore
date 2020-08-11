@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/range.h"
+#include "nnacl/fp32/range.h"
 
 void Range(float *output_ptr, int start, int limit, int delta) {
   size_t index = 0;

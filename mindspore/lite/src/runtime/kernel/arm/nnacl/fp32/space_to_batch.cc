@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/nnacl/fp32/space_to_batch.h"
-#include "src/runtime/kernel/arm/nnacl/arithmetic_common.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/concat.h"
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/fp32/space_to_batch.h"
+#include "nnacl/arithmetic_common.h"
+#include "nnacl/errorcode.h"
+#include "nnacl/fp32/concat.h"
+#include "nnacl/op_base.h"
 
 int EnumElement(int *shape, int n_dims) {
   int total = 1;

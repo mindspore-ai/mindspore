@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/nnacl/fp32/crop.h"
+#include "nnacl/fp32/crop.h"
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/crop_parameter.h"
+#include "nnacl/op_base.h"
+#include "nnacl/crop_parameter.h"
 
 void Pad4DOffset(CropParameter *crop_param, int64_t *offset) {
   int axis = crop_param->axis_;

@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fused_batchnorm.h"
+#include "nnacl/fused_batchnorm.h"
+#include <math.h>
 
 void FusedBatchNorm(const float *input_ptr, const float *scale_ptr, const float *offest_ptr, const float *mean_ptr,
                     const float *variance_ptr, int *input_shapes, float epsilon, float *output_ptr) {

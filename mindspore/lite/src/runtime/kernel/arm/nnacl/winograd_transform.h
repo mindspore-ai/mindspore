@@ -21,10 +21,10 @@
 #include <arm_neon.h>
 #endif
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/pack.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/conv.h"
-#include "src/runtime/kernel/arm/nnacl/winograd_utils.h"
-#include "src/runtime/kernel/arm/nnacl/quantization/fixed_point.h"
+#include "nnacl/pack.h"
+#include "nnacl/fp32/conv.h"
+#include "nnacl/winograd_utils.h"
+#include "nnacl/quantization/fixed_point.h"
 
 #define OUPUT_UNIT 2
 

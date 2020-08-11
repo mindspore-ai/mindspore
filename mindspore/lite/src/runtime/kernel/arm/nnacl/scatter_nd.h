@@ -17,11 +17,11 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_SCATTER_ND_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_SCATTER_ND_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct ScatterNDParameter {
+typedef struct ScatterNDParameter {
   OpParameter op_parameter_;
-};
+} ScatterNDParameter;
 
 int DoScatterND(float *output_ptr, float *update, int *output_unit_offsets, int unit_size, int num_units);
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_SCATTER_ND_H_

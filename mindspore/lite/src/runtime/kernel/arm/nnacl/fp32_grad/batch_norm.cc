@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
-#include <cmath>
-#include "src/runtime/kernel/arm/nnacl/fp32_grad/batch_norm.h"
+#include <string.h>
+#include <math.h>
+#include "nnacl/fp32_grad/batch_norm.h"
 
 static void sumSpatialBatch(const float *in, int size, int ch, float *out) {
-  std::fill(out, out + ch, 0.f);
+  memset(out, 0, ch * sizeof(float));
   for (int i = 0; i < size; i++) {
     const float *ptr = in + i * ch;
     for (int c = 0; c < ch; c++) {
@@ -39,7 +39,7 @@ void normalize(const float *x, const float *mean, const float *variance, float e
     for (i = 0; i < spatial; ++i) {
       for (f = 0; f < filters; ++f) {
         int index = b * filters * spatial + i * filters + f;
-        out[index] = (x[index] - mean[f]) / (std::sqrt(variance[f]) + eps);
+        out[index] = (x[index] - mean[f]) / (sqrt(variance[f]) + eps);
       }
     }
   }
@@ -47,7 +47,7 @@ void normalize(const float *x, const float *mean, const float *variance, float e
 
 void backwardScale(const float *x_norm, const float *delta, int batch, int n, int size, float *scale_updates) {
   int i, b, f;
-  std::fill(scale_updates, scale_updates + n, 0.f);
+  memset(scale_updates, 0, n * sizeof(float));
   for (b = 0; b < batch; ++b) {
     for (i = 0; i < size; ++i) {
       for (f = 0; f < n; ++f) {
@@ -62,7 +62,7 @@ void meanVar(const float *in, int batch, int spatial, int ch, float *mean, float
   float N = batch * spatial;
   sumSpatialBatch(in, N, ch, mean);
   for (int f = 0; f < ch; ++f) mean[f] /= N;
-  std::fill(var, var + ch, 0.f);
+  memset(var, 0, ch * sizeof(float));
   for (int i = 0; i < N; i++) {
     for (int f = 0; f < ch; f++) {
       float x = in[i * ch + f];
@@ -74,13 +74,13 @@ void meanVar(const float *in, int batch, int spatial, int ch, float *mean, float
 
 void meanDelta(float *yt, int size, int ch, float eps, float *variance, float *mean_delta) {
   sumSpatialBatch(yt, size, ch, mean_delta);
-  for (int i = 0; i < ch; i++) mean_delta[i] *= -1.f / std::sqrt((variance[i] + eps));
+  for (int i = 0; i < ch; i++) mean_delta[i] *= -1.f / sqrt((variance[i] + eps));
 }
 
 void meanAdd(const float *x, const float *mean, const float *variance_delta, int batch, int filters, int spatial,
              float *mean_add, float *mean_delta) {
   int i, k;
-  std::fill(mean_add, mean_add + filters, 0.f);
+  memset(mean_add, 0, filters * sizeof(float));
   for (k = 0; k < spatial * batch; ++k) {
     for (i = 0; i < filters; ++i) {
       int index = k * filters + i;
@@ -96,7 +96,7 @@ void meanAdd(const float *x, const float *mean, const float *variance_delta, int
 void varianceDelta(const float *x, const float *delta, const float *mean, const float *variance, int batch, int filters,
                    int spatial, float eps, float *variance_delta) {
   int i, k;
-  std::fill(variance_delta, variance_delta + filters, 0.f);
+  memset(variance_delta, 0, filters * sizeof(float));
   for (k = 0; k < batch * spatial; k++) {
     for (i = 0; i < filters; i++) {
       int index = k * filters + i;
@@ -112,7 +112,7 @@ void NormalizeDelta(const float *x, const float *mean, const float *variance, co
   for (k = 0; k < batch * spatial; k++) {
     for (f = 0; f < filters; f++) {
       int index = k * filters + f;
-      delta[index] = delta[index] * 1. / (std::sqrt(variance[f] + eps)) +
+      delta[index] = delta[index] * 1. / (sqrt(variance[f] + eps)) +
                      variance_delta[f] * 2. * (x[index] - mean[f]) / (spatial * batch) +
                      mean_delta[f] / (spatial * batch);
     }

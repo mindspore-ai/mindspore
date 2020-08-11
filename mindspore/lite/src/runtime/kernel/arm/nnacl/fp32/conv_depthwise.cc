@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/conv_depthwise.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/common_func.h"
-#include "src/runtime/kernel/arm/nnacl/winograd_transform.h"
+#include "nnacl/fp32/conv_depthwise.h"
+#include "nnacl/fp32/common_func.h"
+#include "nnacl/winograd_transform.h"
 #ifdef ENABLE_ARM64
 #include <arm_neon.h>
 #endif

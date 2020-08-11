@@ -20,8 +20,9 @@
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/op_base.h"
+#include "nnacl/errorcode.h"
+#include "nnacl/quantization/quantize.h"
 
 int ElementRound(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
 

@@ -17,13 +17,14 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ARITHMETIC_SELF_PARAMETER_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ARITHMETIC_SELF_PARAMETER_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/op_base.h"
+#include "nnacl/errorcode.h"
+#include "nnacl/quantization/quantize.h"
 
 // For Abs, Cos, Exp, Log, Square, Sqrt, Rsqrt ops.
-struct ArithmeticSelfParameter {
+typedef struct ArithmeticSelfParameter {
   OpParameter op_parameter_;
   ArithSelfQuantArg quant_arg_;
-};
+} ArithmeticSelfParameter;
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ARITHMETIC_SELF_PARAMETER_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/stack.h"
-#include "src/runtime/kernel/arm/nnacl/arithmetic_common.h"
+#include "nnacl/fp32/stack.h"
+#include "nnacl/arithmetic_common.h"
 
 void DoStack(const float * const *inputs, size_t input_num, int *in_shape, size_t shape_size, int axis, float *output) {
   size_t one_input_size = 1;

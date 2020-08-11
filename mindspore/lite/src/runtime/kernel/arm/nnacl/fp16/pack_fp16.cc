@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp16/pack_fp16.h"
+#include "nnacl/fp16/pack_fp16.h"
 #include <cstring>
 #include <cstdlib>
 

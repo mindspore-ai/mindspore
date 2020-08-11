@@ -17,16 +17,16 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_UNSTACK_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_UNSTACK_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct UnstackParameter {
+typedef struct UnstackParameter {
   OpParameter op_parameter_;
   int num_;
   int axis_;
   int pre_dims_;
   int axis_dim_;
   int after_dims_;
-};
+} UnstackParameter;
 
 void Unistack(float *input, float **output, UnstackParameter *para);
 

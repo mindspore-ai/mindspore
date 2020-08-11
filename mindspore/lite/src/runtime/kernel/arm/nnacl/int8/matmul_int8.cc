@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/int8/matmul.h"
+#include "nnacl/int8/matmul_int8.h"
 #include <limits.h>
-#include "src/runtime/kernel/arm/nnacl/quantization/fixed_point.h"
+#include "nnacl/quantization/fixed_point.h"
 
 void RowMajor2Row8MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col) {
   for (int r = 0; r < row; r++) {

@@ -17,30 +17,30 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ARG_MIN_MAX_PARAMETER_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ARG_MIN_MAX_PARAMETER_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct ArgElement {
+typedef struct ArgElement {
   uint32_t index_;
   union ArgData {
     int8_t i8_data_;
     int32_t i_data_;
     float f_data_;
   } data_;
-};
+} ArgElement;
 
-struct ArgMinMaxParameter {
-    OpParameter op_parameter_;
-    bool out_value_;
-    bool keep_dims_;
-    bool get_max_;
-    int32_t axis_;
-    int32_t topk_;
-    int32_t axis_type_;
-    int32_t dims_size_;
-    int32_t data_type_;     // equals to type_id
-    int32_t in_strides_[DIMENSION_4D];
-    int32_t out_strides_[DIMENSION_4D];
-    ArgElement *arg_elements_;
-};
+typedef struct ArgMinMaxParameter {
+  OpParameter op_parameter_;
+  bool out_value_;
+  bool keep_dims_;
+  bool get_max_;
+  int32_t axis_;
+  int32_t topk_;
+  int32_t axis_type_;
+  int32_t dims_size_;
+  int32_t data_type_;  // equals to type_id
+  int32_t in_strides_[DIMENSION_4D];
+  int32_t out_strides_[DIMENSION_4D];
+  ArgElement *arg_elements_;
+} ArgMinMaxParameter;
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ARG_MIN_MAX_PARAMETER_H_

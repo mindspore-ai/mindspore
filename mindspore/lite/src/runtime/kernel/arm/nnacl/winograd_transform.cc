@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/winograd_transform.h"
+#include "nnacl/winograd_transform.h"
 
 // fp32 conv winograd
 void WinogradInputTransform(const float *input_data, float *trans_input, float *tmp_data, int cal_num,

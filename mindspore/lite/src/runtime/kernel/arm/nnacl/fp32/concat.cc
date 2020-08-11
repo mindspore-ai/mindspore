@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/concat.h"
+#include "nnacl/fp32/concat.h"
 #include <string.h>
 
 void Concat(void **input, int input_num, int axis, int **inputs_output_shape, size_t shape_size, void *output) {

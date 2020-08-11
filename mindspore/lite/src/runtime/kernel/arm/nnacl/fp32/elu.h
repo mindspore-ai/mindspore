@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_ELU_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_ELU_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-typedef struct {
+typedef struct EluParameter {
   OpParameter op_parameter_;
   float alpha_;
   int thread_num_;

@@ -13,10 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ARG_MIN_MAX_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ARG_MIN_MAX_H_
 
-#include "nnacl/arg_min_max_parameter.h"
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_MATMUL_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_MATMUL_H_
 
-void ArgMinMax(const void *input, void *output, const int *in_shape, ArgMinMaxParameter *param);
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ARG_MIN_MAX_H_
+#include "nnacl/op_base.h"
+
+typedef enum ActType { ActType_No, ActType_Relu, ActType_Relu6 } ActType;
+
+typedef struct MatMulParameter {
+  OpParameter op_parameter_;
+  int row_;
+  int col_;
+  int row_8_;
+  int col_8_;
+  int deep_;
+  bool has_bias_;
+  int batch;
+  bool a_transpose_; /* false :  row-major  */
+  bool b_transpose_; /* true  :  col-major  */
+  ActType act_type_;
+} MatMulParameter;
+
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_MATMUL_H_

@@ -15,18 +15,18 @@
  */
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_DEPTH_TO_SPACE_PARAMETER_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_DEPTH_TO_SPACE_PARAMETER_H_
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct DepthToSpaceParameter {
-    OpParameter op_parameter_;
-    int32_t block_size_;
-    int32_t in_stride_dim0_;
-    int32_t in_stride_dim1_;
-    int32_t in_stride_dim2_;
-    int32_t out_stride_dim0_;
-    int32_t out_stride_dim1_;
-    int32_t out_stride_dim2_;
-    uint8_t data_type_size_;
-};
+typedef struct DepthToSpaceParameter {
+  OpParameter op_parameter_;
+  int32_t block_size_;
+  int32_t in_stride_dim0_;
+  int32_t in_stride_dim1_;
+  int32_t in_stride_dim2_;
+  int32_t out_stride_dim0_;
+  int32_t out_stride_dim1_;
+  int32_t out_stride_dim2_;
+  uint8_t data_type_size_;
+} DepthToSpaceParameter;
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_DEPTH_TO_SPACE_PARAMETER_H_

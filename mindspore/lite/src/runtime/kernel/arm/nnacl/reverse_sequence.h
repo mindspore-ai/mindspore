@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_REVERSE_SEQUENCE_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_REVERSE_SEQUENCE_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct ReverseSequenceParameter {
+typedef struct ReverseSequenceParameter {
   OpParameter op_parameter_;
   int ndim_;
   int input_shape0_[5];
@@ -34,7 +34,7 @@ struct ReverseSequenceParameter {
   int inner_stride_;
   int copy_byte_size_;
   int total_data_size_;
-};
+} ReverseSequenceParameter;
 
 void ReverseSequence(float *input0, int *input1, float *output, ReverseSequenceParameter *para);
 

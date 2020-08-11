@@ -17,13 +17,13 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_TOPK_INT8_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_TOPK_INT8_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/topk.h"
+#include "nnacl/op_base.h"
+#include "nnacl/fp32/topk.h"
 
-struct TopkNodeInt8 {
+typedef struct TopkNodeInt8 {
   int8_t element;
   int32_t index;
-};
+} TopkNodeInt8;
 
 void TopkInt8(int8_t *input_data, int8_t *output_data, int32_t *output_index, TopkParameter *parameter);
 

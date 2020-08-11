@@ -17,13 +17,13 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_QUANTDTYPECAST_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_QUANTDTYPECAST_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct QuantDTypeCastParameter {
+typedef struct QuantDTypeCastParameter {
   OpParameter op_parameter_;
   int32_t srcT;
   int32_t dstT;
-};
+} QuantDTypeCastParameter;
 
 int DequantizeInt8(int8_t *quant_values, float *real_values, float scale, int32_t zp, int size);
 int QuantizeToInt8(float *real_values, int8_t *quant_values, float scale, int32_t zp, int size);

@@ -17,10 +17,8 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_SQUEEZE_INT8_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_SQUEEZE_INT8_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/int8/squeeze_int8.h"
-#include "src/runtime/kernel/arm/int8/squeeze_int8.h"
-
+#include "nnacl/quantization/quantize.h"
+#include "nnacl/squeeze_parameter.h"
 
 void Squeeze(int8_t **inputs, int8_t *output_ptr, int task_id, SqueezeQuantArg *quant_Squeeze_parm,
              SqueezeParameter *para_, size_t osize);

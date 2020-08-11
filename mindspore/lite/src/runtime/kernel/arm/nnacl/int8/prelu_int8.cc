@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/prelu_parameter.h"
-#include "src/runtime/kernel/arm/nnacl/int8/prelu_int8.h"
+#include "nnacl/prelu_parameter.h"
+#include "nnacl/int8/prelu_int8.h"
 
 void prelu(int8_t *inputs, int8_t *output_ptr, PreluParameter *quant_prelu_parm, int task_id) {
   float output_scale = quant_prelu_parm->quant_arg.out_args_.scale_;

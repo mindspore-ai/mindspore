@@ -15,12 +15,12 @@
  */
 #ifndef MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_FP32_SPACE_TO_DEPTH_H_
 #define MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_FP32_SPACE_TO_DEPTH_H_
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct SpaceToDepthParameter {
+typedef struct SpaceToDepthParameter {
   OpParameter op_parameter_;
   int32_t block_size_;
-};
+} SpaceToDepthParameter;
 
 int SpaceToDepthForNHWC(const float *input, float *output, int *in_shape, int *out_shape, int shape_size,
                         int block_size, int h_start, int h_end);

@@ -17,15 +17,15 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ACTIVATION_H_
 
 #include <math.h>
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
-#include "src/runtime/kernel/arm/nnacl/quantization/fixed_point.h"
+#include "nnacl/op_base.h"
+#include "nnacl/errorcode.h"
+#include "nnacl/quantization/fixed_point.h"
 
-struct ActivationParameter {
+typedef struct ActivationParameter {
   OpParameter op_parameter_;
   int type_;
   float alpha_{0.2};
-};
+} ActivationParameter;
 
 inline int Relu(const float *src, int length, float *dst) {
   for (int i = 0; i < length; ++i) {

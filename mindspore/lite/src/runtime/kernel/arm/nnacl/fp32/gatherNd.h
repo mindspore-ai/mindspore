@@ -17,12 +17,12 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_GATHERND_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_GATHERND_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct GatherNdParameter {
+typedef struct GatherNdParameter {
   OpParameter op_parameter_;
   int batchDims_;
-};
+} GatherNdParameter;
 
 int GatherNd(float *input, float *output, int *in_offset, int area, int count);
 

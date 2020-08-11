@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/reverse.h"
+#include "nnacl/fp32/reverse.h"
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/op_base.h"
+#include "nnacl/errorcode.h"
 
 int Reverse(const float *input, float *output, size_t elem_size, int *index) {
   for (int i = 0; i < elem_size; i++) {

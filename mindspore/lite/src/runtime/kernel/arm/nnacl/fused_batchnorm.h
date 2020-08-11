@@ -17,13 +17,12 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FUSED_BATCHNORM_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FUSED_BATCHNORM_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct FusedBatchNormParameter {
+typedef struct FusedBatchNormParameter {
     OpParameter op_parameter_;
     float epsilon_;
-};
-
+} FusedBatchNormParameter;
 
 void FusedBatchNorm(const float *input_ptr, const float *scale_ptr, const float *offest_ptr, const float *mean_ptr,
                     const float *variance_ptr, int *input_shapes, float epsilon, float *output_ptr);

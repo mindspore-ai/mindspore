@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/int8/topk_int8.h"
+#include "nnacl/int8/topk_int8.h"
 
 int DescendCmpInt8(const void *a, const void *b) {
   return ((const TopkNodeInt8 *)b)->element - ((const TopkNodeInt8 *)a)->element;

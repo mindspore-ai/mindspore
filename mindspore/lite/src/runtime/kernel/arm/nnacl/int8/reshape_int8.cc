@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/int8/reshape_int8.h"
-#include "src/runtime/kernel/arm/nnacl/reshape_parameter.h"
+#include "nnacl/int8/reshape_int8.h"
+#include "nnacl/reshape_parameter.h"
 #include <string.h>
 
 void Reshape(int8_t *input_ptr, int8_t *output_ptr, int64_t real_dst_count, ReshapeQuantArg para) {

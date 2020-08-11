@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/quantization/quantize.h"
+#include "nnacl/quantization/quantize.h"
 
 const uint64_t dSignMask = 1ull << 63;
 const uint64_t dExponentMask = 0x7ffull << 52;

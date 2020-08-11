@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/reshape.h"
+#include "nnacl/reshape.h"
 #include <string.h>
 
 void Reshape(void *input_ptr, void *output_ptr, size_t data_size) { memcpy(output_ptr, input_ptr, data_size); }

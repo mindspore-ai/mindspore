@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP16_CONV_DEPTHWISE_FP16_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP16_CONV_DEPTHWISE_FP16_H_
 
-#include "src/runtime/kernel/arm/nnacl/conv_parameter.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/conv_depthwise.h"
+#include "nnacl/conv_parameter.h"
+#include "nnacl/fp32/conv_depthwise.h"
 
 void ConvDwC8Fp16(float16_t *output_data, const float16_t *input_data, const float16_t *weight_data,
                   const float16_t *bias_data, const ConvParameter *conv_param, const SlidingWindowParam *sliding,

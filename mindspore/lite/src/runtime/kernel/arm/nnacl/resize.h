@@ -20,20 +20,20 @@
 #include <arm_neon.h>
 #endif
 #include <memory.h>
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 #include "schema/ops_generated.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/errorcode.h"
 
 using mindspore::schema::ResizeMethod;
 
-struct ResizeParameter {
+typedef struct ResizeParameter {
   OpParameter op_parameter_;
   ResizeMethod method_;
   int64_t new_height_;
   int64_t new_width_;
   bool align_corners_;
   bool preserve_aspect_ratio_;
-};
+} ResizeParameter;
 
 int ResizeBilinear(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
                    bool align_corners, int tid, int thread_num);

@@ -15,12 +15,12 @@
  */
 #ifndef MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_FP32_SPACE_TO_BATCH_H_
 #define MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_FP32_SPACE_TO_BATCH_H_
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
 #define SPACE_TO_BATCH_BLOCK_SIZES_SIZE 2
 #define SPACE_TO_BATCH_PADDINGS_SIZE 4
 
-struct SpaceToBatchParameter {
+typedef struct SpaceToBatchParameter {
   OpParameter op_parameter_;
   int block_sizes_[8];
   int paddings_[8];
@@ -31,7 +31,7 @@ struct SpaceToBatchParameter {
   int in_shape_[8];
   int padded_in_shape_[8];
   bool need_paddings_ = false;
-};
+} SpaceToBatchParameter;
 
 int SpaceToBatch(const float *input, float *output, SpaceToBatchParameter param, float *tmp_space[3]);
 int SpaceToBatchForNHWC(const float *input, float *output, int *in_shape, int shape_size, int *block_size);

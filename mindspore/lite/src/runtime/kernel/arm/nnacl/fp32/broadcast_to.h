@@ -19,22 +19,22 @@
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
 #define BROADCAST_TO_SHAPE_MAX_SIZE 4
 
-struct BroadcastToParameter {
+typedef struct BroadcastToParameter {
   OpParameter op_parameter_;
   int shape_[BROADCAST_TO_SHAPE_MAX_SIZE];
   size_t shape_size_;
-};
+} BroadcastToParameter;
 
-struct BroadcastShapeInfo {
+typedef struct BroadcastShapeInfo {
   int input_shape_[BROADCAST_TO_SHAPE_MAX_SIZE];
   int input_shape_size_;
   int output_shape_[BROADCAST_TO_SHAPE_MAX_SIZE];
   int output_shape_size_;
-};
+} BroadcastShapeInfo;
 
 int BroadcastTo(const float *input, BroadcastShapeInfo *shape_info, float *output);
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_BROADCAST_TO_H_

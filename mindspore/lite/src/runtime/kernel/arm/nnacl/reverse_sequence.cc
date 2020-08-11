@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/reverse_sequence.h"
+#include "nnacl/reverse_sequence.h"
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/arithmetic_common.h"
+#include "nnacl/arithmetic_common.h"
 
 void ReverseSequence(float *input0, int *input1, float *output, ReverseSequenceParameter *para) {
   (void)memcpy(output, input0, para->total_data_size_);

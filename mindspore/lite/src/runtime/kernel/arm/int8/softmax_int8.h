@@ -19,6 +19,7 @@
 
 #include <vector>
 #include "src/runtime/kernel/arm/base/softmax_base.h"
+#include "src/runtime/kernel/arm/nnacl/quantization/quantize.h"
 
 namespace mindspore::kernel {
 class SoftmaxInt8CPUKernel : public SoftmaxBaseCPUKernel {

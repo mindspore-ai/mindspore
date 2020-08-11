@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/softmax.h"
-#include <cmath>
+#include "nnacl/fp32/softmax.h"
+#include <math.h>
 
 // output = exp(input) / reduce_sum(exp(input), axis)
 void Softmax(const float *input_ptr, float *output_ptr, float *sum_data, SoftmaxParameter *parameter) {

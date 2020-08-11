@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/conv.h"
+#include "nnacl/fp32/conv.h"
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/winograd_transform.h"
+#include "nnacl/winograd_transform.h"
 
 // fp32 conv common
 void ConvFp32(float *input_data, float *packed_input, float *packed_weight, const float *bias_data,

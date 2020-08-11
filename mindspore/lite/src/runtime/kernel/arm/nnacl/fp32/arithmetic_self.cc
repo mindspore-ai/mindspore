@@ -16,7 +16,7 @@
 
 #include <string.h>
 #include <math.h>
-#include "src/runtime/kernel/arm/nnacl/fp32/arithmetic_self.h"
+#include "nnacl/fp32/arithmetic_self.h"
 
 // abs:
 int ElementAbs(float *input, float *output, int element_size) {

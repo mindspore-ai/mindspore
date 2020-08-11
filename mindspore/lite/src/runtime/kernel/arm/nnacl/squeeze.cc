@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/squeeze.h"
+#include "nnacl/squeeze.h"
 #include <string.h>
 
 int DoSqueeze(float *in_data, float *out_data, size_t data_size) {

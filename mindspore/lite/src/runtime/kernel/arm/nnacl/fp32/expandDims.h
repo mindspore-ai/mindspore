@@ -17,12 +17,12 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_EXPANDDIMS_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_EXPANDDIMS_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct ExpandDimsParameter {
+typedef struct ExpandDimsParameter {
   OpParameter op_parameter_;
   int dim_;
-};
+} ExpandDimsParameter;
 
 int ExpandDims(float *input_ptr, float *output_ptr, size_t data_size);
 

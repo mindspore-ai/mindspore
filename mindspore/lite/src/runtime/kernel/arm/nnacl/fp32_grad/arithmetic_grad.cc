@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32_grad/arithmetic_grad.h"
+#include "nnacl/fp32_grad/arithmetic_grad.h"
 
 void ElementDivNegSquare(const float *nom, const float *denom, float *output, int element_size) {
   for (int i = 0; i < element_size; i++) {

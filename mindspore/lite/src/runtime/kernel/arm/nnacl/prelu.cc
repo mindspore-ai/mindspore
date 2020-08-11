@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/nnacl/prelu.h"
+#include "nnacl/prelu.h"
 
 void PRelu(float *input, float *output, PReluParameter *prelu_param_, int task_id) {
   for (int i = task_id; i < prelu_param_->input_num_; i += prelu_param_->op_parameter_.thread_num_) {

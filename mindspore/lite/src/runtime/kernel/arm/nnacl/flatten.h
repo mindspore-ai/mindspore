@@ -15,12 +15,12 @@
  */
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FLATTEN_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FLATTEN_H_
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
-struct FlattenParameter {
+typedef struct FlattenParameter {
   OpParameter op_parameter_;
   int size;
-};
+} FlattenParameter;
 
 void Flatten(const void *input, void *output, FlattenParameter *flatten_param);
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FLATTEN_H_

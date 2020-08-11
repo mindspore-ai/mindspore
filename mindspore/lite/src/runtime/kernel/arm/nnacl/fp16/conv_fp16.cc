@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/nnacl/fp16/conv_fp16.h"
+#include "nnacl/fp16/conv_fp16.h"
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/fp16/pack_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/fp16/winograd_transform_fp16.h"
+#include "nnacl/fp16/pack_fp16.h"
+#include "nnacl/fp16/winograd_transform_fp16.h"
 
 extern "C" {
 #ifdef ENABLE_ARM64

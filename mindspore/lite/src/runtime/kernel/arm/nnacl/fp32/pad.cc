@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/fp32/pad.h"
-#include "src/runtime/kernel/arm/nnacl/common_func.h"
+#include "nnacl/fp32/pad.h"
+#include "nnacl/common_func.h"
 
 void Pad(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
          const int *paddings, const int tid, const int thread_num) {

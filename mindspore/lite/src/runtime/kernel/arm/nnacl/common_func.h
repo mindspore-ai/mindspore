@@ -20,8 +20,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#include "src/runtime/kernel/arm/nnacl/conv_parameter.h"
+#include "nnacl/op_base.h"
+#include "nnacl/conv_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
