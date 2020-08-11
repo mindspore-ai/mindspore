@@ -275,7 +275,7 @@ class _AutoParallelContext:
 
         Args:
             indices (list): Indices list.
-            group (str): The hccl communication group.
+            group (str): The communication group of hccl/nccl.
 
         Raises:
             TypeError: If type of indices item is not int.
@@ -311,7 +311,7 @@ class _AutoParallelContext:
         Get allreduce fusion split indices.
 
         Args:
-            group (str): The hccl communication group.
+            group (str): The communication group of hccl/nccl.
 
         Returns:
             Return split sizes list according to the group.
@@ -340,7 +340,7 @@ class _AutoParallelContext:
 
         Args:
             sizes (list): Sizes list.
-            group (str): The hccl communication group.
+            group (str): The communication group of hccl/nccl.
 
         Raises:
             TypeError: If type of sizes item is not int.
@@ -376,7 +376,7 @@ class _AutoParallelContext:
         Get allreduce fusion split sizes.
 
         Args:
-            group (str): The hccl communication group.
+            group (str): The communication group of hccl/nccl.
 
         Returns:
             Return split sizes list according to the group.
