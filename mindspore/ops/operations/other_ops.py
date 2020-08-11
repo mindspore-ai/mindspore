@@ -221,7 +221,7 @@ class CheckValid(PrimitiveWithInfer):
         return bboxes_shape[:-1]
 
     def infer_dtype(self, bboxes_type, metas_type):
-        valid_type = [mstype.float32, mstype.float16]
+        valid_type = [mstype.float32, mstype.float16, mstype.int16, mstype.uint8]
         validator.check_tensor_type_same({"bboxes_type": bboxes_type}, valid_type, self.name)
         validator.check_tensor_type_same({"metas_type": metas_type}, valid_type, self.name)
         return mstype.bool_

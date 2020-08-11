@@ -26,5 +26,11 @@ MS_REG_GPU_KERNEL_TWO(
   CheckValid,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
   CheckValidGpuKernel, half, bool)
+MS_REG_GPU_KERNEL_TWO(
+  CheckValid, KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
+  CheckValidGpuKernel, short, bool)  // NOLINT
+MS_REG_GPU_KERNEL_TWO(
+  CheckValid, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
+  CheckValidGpuKernel, char, bool)
 }  // namespace kernel
 }  // namespace mindspore

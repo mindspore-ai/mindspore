@@ -20,33 +20,29 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore.ops import operations as P
 
-context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+def strided_slice(nptype):
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_stridedslice():
-    x = Tensor(np.arange(0, 2*3*4*5).reshape(2, 3, 4, 5).astype(np.float32))
+    x = Tensor(np.arange(0, 2*3*4*5).reshape(2, 3, 4, 5).astype(nptype))
     y = P.StridedSlice()(x, (1, 0, 0, 2), (2, 2, 2, 4), (1, 1, 1, 1))
     expect = np.array([[[[62, 63],
                          [67, 68]],
                         [[82, 83],
-                         [87, 88]]]])
+                         [87, 88]]]]).astype(nptype)
     assert np.allclose(y.asnumpy(), expect)
 
     y = P.StridedSlice()(x, (1, 0, 0, 5), (2, 2, 2, 1), (1, 1, 1, -2))
     expect = np.array([[[[64, 62],
                          [69, 67]],
                         [[84, 82],
-                         [89, 87]]]])
+                         [89, 87]]]]).astype(nptype)
     assert np.allclose(y.asnumpy(), expect)
 
     y = P.StridedSlice()(x, (1, 0, 0, -1), (2, 2, 2, 1), (1, 1, 1, -1))
     expect = np.array([[[[64, 63, 62],
                          [69, 68, 67]],
                         [[84, 83, 82],
-                         [89, 88, 87]]]])
+                         [89, 88, 87]]]]).astype(nptype)
     assert np.allclose(y.asnumpy(), expect)
 
     # ME infer fault
@@ -81,20 +77,20 @@ def test_stridedslice():
                         [[100, 101, 102, 103],
                          [105, 106, 107, 108],
                          [110, 111, 112, 113],
-                         [115, 116, 117, 118]]]])
+                         [115, 116, 117, 118]]]]).astype(nptype)
     assert np.allclose(y.asnumpy(), expect)
 
-    x = Tensor(np.arange(0, 3*4*5).reshape(3, 4, 5).astype(np.float32))
+    x = Tensor(np.arange(0, 3*4*5).reshape(3, 4, 5).astype(nptype))
     y = P.StridedSlice()(x, (1, 0, 0), (2, -3, 3), (1, 1, 3))
-    expect = np.array([[[20]]])
+    expect = np.array([[[20]]]).astype(nptype)
     assert np.allclose(y.asnumpy(), expect)
 
-    x_np = np.arange(0, 4*5).reshape(4, 5).astype(np.float32)
+    x_np = np.arange(0, 4*5).reshape(4, 5).astype(nptype)
     y = Tensor(x_np)[:, ::-1]
     expect = x_np[:, ::-1]
     assert np.allclose(y.asnumpy(), expect)
 
-    x = Tensor(np.arange(0, 2 * 3 * 4 * 5 * 4 * 3 * 2).reshape(2, 3, 4, 5, 4, 3, 2).astype(np.float32))
+    x = Tensor(np.arange(0, 2 * 3 * 4 * 5 * 4 * 3 * 2).reshape(2, 3, 4, 5, 4, 3, 2).astype(nptype))
     y = P.StridedSlice()(x, (1, 0, 0, 2, 1, 2, 0), (2, 2, 2, 4, 2, 3, 2), (1, 1, 1, 1, 1, 1, 2))
     expect = np.array([[[[[[[1498.]]],
                           [[[1522.]]]],
@@ -103,5 +99,29 @@ def test_stridedslice():
                         [[[[[1978.]]],
                           [[[2002.]]]],
                          [[[[2098.]]],
-                          [[[2122.]]]]]]])
+                          [[[2122.]]]]]]]).astype(nptype)
     assert np.allclose(y.asnumpy(), expect)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_strided_slice_float32():
+    strided_slice(np.float32)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_strided_slice_int16():
+    strided_slice(np.int16)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_strided_slice_uint8():
+    strided_slice(np.uint8)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_strided_slice_bool():
+    strided_slice(np.bool)
