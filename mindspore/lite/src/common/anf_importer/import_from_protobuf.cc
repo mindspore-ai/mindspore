@@ -639,7 +639,7 @@ bool AnfImporterFromProtobuf::ImportNodesForGraph(const FuncGraphPtr &outputFunc
   BuildReturnForFuncGraph(outputFuncGraph, importProto, cnode_ptr);
   return true;
 }
-#endif
+#else
 
 #define PARSE_ONNXATTR_IN_SCALAR_FORM(type, valuetype)                                                \
   void ParseAttrInScalar_##type##_##valuetype(const PrimitivePtr &prim, const std::string &attr_name, \
@@ -1108,6 +1108,7 @@ bool AnfImporterFromProtobuf::ImportNodesForGraph(const FuncGraphPtr &outputFunc
   BuildReturnForFuncGraph(outputFuncGraph, importProto, cnode_ptr);
   return true;
 }
+#endif
 
 bool AnfImporterFromProtobuf::BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto) {
   MS_EXCEPTION_IF_NULL(outputFuncGraph);

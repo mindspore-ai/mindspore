@@ -23,10 +23,28 @@
 namespace mindspore::lite {
 int mindspore::lite::AnfReshapePopulater::Parse(mindspore::CNodePtr cnodePtr, schema::CNodeT *node,
                                                 std::vector<schema::TensorT *> *outputs) {
-  auto attr = std::make_unique<schema::FlattenT>();
+  auto attr = std::make_unique<schema::ReshapeT>();
+  MS_ASSERT(cnodePtr->size() == kAnfPopulaterThree);
+  auto inputNode = cnodePtr->input(kAnfPopulaterTwo);
+  if (inputNode->isa<ValueNode>()) {
+    auto valueNode = inputNode->cast<ValueNodePtr>();
+    MS_ASSERT(valueNode != nullptr);
+    auto val = valueNode->value();
+    MS_ASSERT(val != nullptr);
+    if (val->isa<ValueTuple>()) {
+      auto tuple = val->cast<ValueTuplePtr>();
+      MS_ASSERT(tuple != nullptr);
+      for (size_t i = 0; i < tuple->size(); ++i) {
+        auto elem = tuple->value()[i]->cast<Int32ImmPtr>();
+        MS_ASSERT(elem != nullptr);
+        attr->shape.emplace_back(static_cast<int>(elem->value()));
+      }
+    }
+  }
+
   node->nodeType = schema::NodeType_CNode;
   node->primitive = std::make_unique<schema::PrimitiveT>();
-  node->primitive->value.type = schema::PrimitiveType_Flatten;
+  node->primitive->value.type = schema::PrimitiveType_Reshape;
   node->primitive->value.value = attr.release();
   return 0;
 }

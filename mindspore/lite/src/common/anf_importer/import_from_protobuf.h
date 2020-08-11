@@ -77,7 +77,7 @@ class AnfImporterFromProtobuf : public AnfImporter {
                                  const onnx::TensorProto &attr_tensor);
   std::unordered_map<std::string, abstract::AbstractTensorPtr>
           GetAbstractForCNode(const onnx::AttributeProto &attr_proto);
-#endif
+#else
   bool ImportParametersForGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto);
   bool ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto);
   bool BuildParameterForFuncGraph(const ParameterPtr &node, const onnx::ValueInfoProto &value_proto);
@@ -100,6 +100,7 @@ class AnfImporterFromProtobuf : public AnfImporter {
   bool ObtainValueNodeInTypeForm(const string &value_node_name, const onnx::TensorProto &attr_tensor);
   abstract::AbstractTensorPtr GetAbstractForCNode(const onnx::AttributeProto &attr_proto);
 
+#endif
 
 
  private:

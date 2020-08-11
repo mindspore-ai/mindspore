@@ -232,7 +232,7 @@ static STATUS TransFilterData(schema::TensorT *tensor, kTransFilterType type, in
               if (type == kCKHW2HWCK) {
                 p2Buff =
                   buf.get() + ((h * filterW * filterC * filterK) + (w * filterC * filterK) + (c * filterK) + (k));
-              } else if (type == kKCHW2KHWC) {
+              } else if (type == kCKHW2KHWC) {
                 p2Buff =
                   buf.get() + ((k * filterH * filterW * filterC) + (h * filterW * filterK) + (w * filterC) + (c));
               } else {
