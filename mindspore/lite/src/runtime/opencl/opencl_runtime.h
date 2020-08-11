@@ -66,6 +66,7 @@ class OpenCLRuntime {
   bool GetFp16Enable() const;
   bool SetFp16Enable(bool enable);
   const std::vector<size_t> &GetWorkItemSize() { return max_work_item_sizes_; }
+  uint32_t GetImagePitchAlignment() { return image_pitch_align_; }
   cl_device_svm_capabilities GetSVMCapabilities() const { return svm_capabilities_; }
 
   template <typename T>
@@ -77,13 +78,13 @@ class OpenCLRuntime {
     } else {
       MEM_TYPE mem_type = allocator_->GetMemType(value);
       if (mem_type == MEM_TYPE::BUF) {
-        cl::Buffer *buffer = reinterpret_cast<cl::Buffer *>(allocator_->GetDeviceBuffer(value));
-        MS_LOG(DEBUG) << "Set kernel arg[" << index << "] OpenCL Buffer " << value;
+        cl::Buffer *buffer = reinterpret_cast<cl::Buffer *>(allocator_->GetBuffer(value));
+        MS_LOG(DEBUG) << "Set kernel arg[" << index << "] OpenCL Buffer " << buffer << ", host_ptr: " << value;
         return clSetKernelArg(kernel, index, sizeof((*buffer)()), &(*buffer)());
       } else {
-        cl::Image2D *buffer = reinterpret_cast<cl::Image2D *>(allocator_->GetDeviceBuffer(value));
-        MS_LOG(DEBUG) << "Set kernel arg[" << index << "] OpenCL Image2D " << value;
-        return clSetKernelArg(kernel, index, sizeof((*buffer)()), &(*buffer)());
+        cl::Image2D *image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(value));
+        MS_LOG(DEBUG) << "Set kernel arg[" << index << "] OpenCL Image2D " << image << ", host_ptr: " << value;
+        return clSetKernelArg(kernel, index, sizeof((*image)()), &(*image)());
       }
     }
   }
@@ -114,8 +115,8 @@ class OpenCLRuntime {
                            bool sync = false) const;
   void *MapBuffer(const cl::Buffer buffer, int map_flags, size_t size, cl::CommandQueue *command_queue = nullptr,
                   bool sync = false) const;
-  void *MapBuffer(const cl::Image2D buffer, bool sync, int flags,
-                  const std::vector<size_t>& region, cl::CommandQueue *command_queue = nullptr) const;
+  void *MapBuffer(const cl::Image2D buffer, bool sync, int flags, const std::vector<size_t> &region,
+                  cl::CommandQueue *command_queue = nullptr) const;
   int MapBuffer(void *host_ptr, int map_flags, size_t size, cl::CommandQueue *command_queue = nullptr,
                 bool sync = false) const;
   int UnmapBuffer(const cl::Memory buffer, void *host_ptr, cl::CommandQueue *command_queue = nullptr) const;
@@ -155,10 +156,10 @@ class OpenCLRuntime {
   bool support_fp16_{false};
   bool fp16_enable_{false};
   cl_device_svm_capabilities svm_capabilities_{0};
+  cl_uint image_pitch_align_{0};
   std::vector<size_t> max_work_item_sizes_;
 };
 
 }  // namespace mindspore::lite::opencl
 
 #endif  // MINDSPORE_LITE_SRC_OPENCL_RUNTIME_H_
-

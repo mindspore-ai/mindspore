@@ -39,9 +39,7 @@ struct OpenclMemory {
   OpenCLMemoryType mem_type{MS_HOST_BUFFER | MS_CL_BUFFER};
 };
 
-enum class MEM_TYPE : char {
-  BUF, IMG
-};
+enum class MEM_TYPE : char { BUF, IMG };
 
 class OpenCLAllocator : public Allocator {
  public:
@@ -49,17 +47,18 @@ class OpenCLAllocator : public Allocator {
   ~OpenCLAllocator() override;
   void SetContext(const AllocatorContext &ctx) override;
   void *Malloc(size_t size) override;
-  void *Malloc(size_t size, const std::vector<size_t>& img_size);
-  void *CreateImageFromHost(void *host_ptr, size_t size, const std::vector<size_t>& img_size);
+  void *Malloc(size_t size, const std::vector<size_t> &img_size);
+  void *CreateImageFromHost(void *host_ptr, size_t size, const std::vector<size_t> &img_size);
   void Free(void *ptr) override;
   size_t GetTotalSize() override;
 
   void Clear() override;
-  void *GetDeviceBuffer(void *buffer);
+  void *GetImage(void *host_ptr);
+  void *GetBuffer(void *host_ptr);
   void *MapBuffer(void *host_ptr, int flags, void *command_queue = nullptr, bool sync = true);
   int UnmapBuffer(void *host_ptr, void *command_queue = nullptr);
   MEM_TYPE GetMemType(void *host_ptr);
-  int GetImageSize(void *host_ptr, std::vector<size_t>* img_size);
+  int GetImageSize(void *host_ptr, std::vector<size_t> *img_size);
 
  private:
   void Lock();
@@ -68,6 +67,7 @@ class OpenCLAllocator : public Allocator {
     size_t size_;
     void *device_ptr_;
     void *host_ptr_;
+    void *image_ptr_;
     std::vector<size_t> img_size;
   };
 
@@ -84,4 +84,3 @@ class OpenCLAllocator : public Allocator {
 }  // namespace mindspore::lite::opencl
 
 #endif  // MINDSPORE_LITE_SRC_OPENCL_ALLOCATOR_H_
-

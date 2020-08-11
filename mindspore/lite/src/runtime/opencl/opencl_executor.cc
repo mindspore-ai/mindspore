@@ -206,7 +206,7 @@ int OpenCLExecutor::TransformTensorLayoutFromImage(tensor::Tensor *tensor, schem
   if (dst_format == schema::Format_NHWC) {
     auto src_data = tensor->Data();
     auto dst_data = allocator_->Malloc(tensor->Size());
-    cl::Image2D *out_mem = reinterpret_cast<cl::Image2D *>(allocator_->GetDeviceBuffer(src_data));
+    cl::Image2D *out_mem = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
     std::vector<size_t> img_size;
     allocator_->GetImageSize(src_data, &img_size);
     auto origin = cl::array < cl::size_type, 3U > {0, 0, 0};
