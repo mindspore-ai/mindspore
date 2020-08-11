@@ -875,8 +875,6 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateFromMat(out_image, &output_cv));
     // pad the dimension if shape information is only 2 dimensional, this is grayscale
-    CHECK_FAIL_RETURN_UNEXPECTED(input_cv->Rank() == 3,
-                                 "Pad error: invalid image shape, only support 3 channels image.");
     int num_channels = input_cv->shape()[2];
     if (input_cv->Rank() == 3 && num_channels == 1 && output_cv->Rank() == 2) output_cv->ExpandDim(2);
     *output = std::static_pointer_cast<Tensor>(output_cv);
