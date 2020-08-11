@@ -241,25 +241,23 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
   }
 
   // get inputs
-  if (!dump_enabled) {
-    auto input_size = AnfAlgo::GetInputTensorNum(kernel);
-    for (size_t j = 0; j < input_size; ++j) {
-      auto input_kernel = kernel->input(j + 1);
-      std::string input_kernel_name = input_kernel->fullname_with_scope();
-      auto addr = kernel_inputs[j];
-      auto type = AnfAlgo::GetOutputInferDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
-      auto format = kOpFormat_DEFAULT;
-      auto gpu_addr = std::make_unique<GPUDeviceAddress>(addr->addr, addr->size, format, type);
-      string input_tensor_name = input_kernel_name + ':' + "0";
-      std::vector<int> int_shapes;
-      auto shape = AnfAlgo::GetOutputDeviceShape(input_kernel, PARAMETER_OUTPUT_INDEX);
-      (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
-                           [](size_t inner_item) { return SizeToInt(inner_item); });
-      auto ret = gpu_addr->LoadMemToHost(input_tensor_name, exec_order, format, int_shapes, type, 0, debugger, false);
-      if (!ret) {
-        MS_LOG(ERROR) << "LoadMemToHost:"
-                      << ", tensor_name:" << input_tensor_name << ", host_format:" << format << ".!";
-      }
+  auto input_size = AnfAlgo::GetInputTensorNum(kernel);
+  for (size_t j = 0; j < input_size; ++j) {
+    auto input_kernel = kernel->input(j + 1);
+    std::string input_kernel_name = input_kernel->fullname_with_scope();
+    auto addr = kernel_inputs[j];
+    auto type = AnfAlgo::GetOutputInferDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
+    auto format = kOpFormat_DEFAULT;
+    auto gpu_addr = std::make_unique<GPUDeviceAddress>(addr->addr, addr->size, format, type);
+    string input_tensor_name = input_kernel_name + ':' + "0";
+    std::vector<int> int_shapes;
+    auto shape = AnfAlgo::GetOutputDeviceShape(input_kernel, PARAMETER_OUTPUT_INDEX);
+    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
+                         [](size_t inner_item) { return SizeToInt(inner_item); });
+    auto ret = gpu_addr->LoadMemToHost(input_tensor_name, exec_order, format, int_shapes, type, 0, debugger, false);
+    if (!ret) {
+      MS_LOG(ERROR) << "LoadMemToHost:"
+                    << ", tensor_name:" << input_tensor_name << ", host_format:" << format << ".!";
     }
   }
 
