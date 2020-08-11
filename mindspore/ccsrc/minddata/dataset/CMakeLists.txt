@@ -131,7 +131,7 @@ endif()
 ######################################################################
 
 ################# Link with external libraries ########################
-target_link_libraries(_c_dataengine PRIVATE mindspore)
+target_link_libraries(_c_dataengine PRIVATE mindspore mindspore_gvar)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     if (ENABLE_PYTHON)
         target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module ${PYTHON_LIBRARIES} mindspore::protobuf ${SECUREC_LIBRARY})  

@@ -52,6 +52,12 @@ install(
     COMPONENT mindspore
 )
 
+install(
+        TARGETS mindspore_gvar
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
+)
+
 if (USE_GLOG)
     file(GLOB_RECURSE GLOG_LIB_LIST ${glog_LIBPATH}/libglog*)
     install(

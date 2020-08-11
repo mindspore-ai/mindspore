@@ -231,6 +231,7 @@ set_target_properties(_c_expression PROPERTIES INSTALL_RPATH ${ORIGIN_PATH})
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(mindspore mindspore::pybind11_module)
+    target_link_libraries(mindspore mindspore_gvar)
     target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore -Wl,--no-whole-archive)
 else ()
     if (ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU))
@@ -241,6 +242,7 @@ else ()
     endif()
     target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore -Wl,--no-whole-archive)
     target_link_libraries(_c_expression PRIVATE mindspore::pybind11_module)
+    target_link_libraries(_c_expression PRIVATE mindspore_gvar)
 endif ()
 
 if (USE_GLOG)
@@ -284,7 +286,7 @@ add_library(inference SHARED
         ${LOAD_ONNX_SRC}
         )
 target_link_libraries(inference PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
-        -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore::protobuf)
+        -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_gvar mindspore::protobuf)
 
 if (ENABLE_CPU)
     target_link_libraries(inference PRIVATE mindspore::dnnl mindspore::mkldnn)
