@@ -162,7 +162,7 @@ TEST_F(TestShardOperator, TestShardPkSamplerBasic) {
   auto column_list = std::vector<std::string>{"file_name", "label"};
 
   std::vector<std::shared_ptr<ShardOperator>> ops;
-  ops.push_back(std::make_shared<ShardPkSample>("label", 2));
+  ops.push_back(std::make_shared<ShardPkSample>("label", 2, 0));
 
   ShardReader dataset;
   dataset.Open({file_name},true, 4, column_list, ops);
@@ -187,7 +187,7 @@ TEST_F(TestShardOperator, TestShardPkSamplerNumClass) {
   auto column_list = std::vector<std::string>{"file_name", "label"};
 
   std::vector<std::shared_ptr<ShardOperator>> ops;
-  ops.push_back(std::make_shared<ShardPkSample>("label", 2, 3, 0));
+  ops.push_back(std::make_shared<ShardPkSample>("label", 2, 3, 0, 0));
 
   ShardReader dataset;
   dataset.Open({file_name},true, 4, column_list, ops);
@@ -204,7 +204,7 @@ TEST_F(TestShardOperator, TestShardPkSamplerNumClass) {
   }
   dataset.Finish();
   ASSERT_TRUE(i == 6);
-}  // namespace mindrecord
+}
 
 TEST_F(TestShardOperator, TestShardCategory) {
   MS_LOG(INFO) << common::SafeCStr(FormatInfo("Test read imageNet"));

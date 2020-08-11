@@ -101,7 +101,6 @@ def test_cv_minddataset_pk_sample_basic(add_and_remove_cv_file):
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
         num_iter += 1
 
-
 def test_cv_minddataset_pk_sample_shuffle(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
     columns_list = ["data", "file_name", "label"]
@@ -120,9 +119,51 @@ def test_cv_minddataset_pk_sample_shuffle(add_and_remove_cv_file):
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
         num_iter += 1
+    assert num_iter == 9
 
 
-def test_cv_minddataset_pk_sample_out_of_range(add_and_remove_cv_file):
+def test_cv_minddataset_pk_sample_shuffle_1(add_and_remove_cv_file):
+    """tutorial for cv minderdataset."""
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+    sampler = ds.PKSampler(3, None, True, 'label', 5)
+    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+                              sampler=sampler)
+
+    assert data_set.get_dataset_size() == 5
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        logger.info(
+            "-------------- cv reader basic: {} ------------------------".format(num_iter))
+        logger.info("-------------- item[file_name]: \
+                {}------------------------".format(to_str(item["file_name"])))
+        logger.info(
+            "-------------- item[label]: {} ----------------------------".format(item["label"]))
+        num_iter += 1
+    assert num_iter == 5
+
+def test_cv_minddataset_pk_sample_shuffle_2(add_and_remove_cv_file):
+    """tutorial for cv minderdataset."""
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+    sampler = ds.PKSampler(3, None, True, 'label', 10)
+    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+                              sampler=sampler)
+
+    assert data_set.get_dataset_size() == 9
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        logger.info(
+            "-------------- cv reader basic: {} ------------------------".format(num_iter))
+        logger.info("-------------- item[file_name]: \
+                {}------------------------".format(to_str(item["file_name"])))
+        logger.info(
+            "-------------- item[label]: {} ----------------------------".format(item["label"]))
+        num_iter += 1
+    assert num_iter == 9
+
+
+def test_cv_minddataset_pk_sample_out_of_range_0(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
@@ -139,6 +180,45 @@ def test_cv_minddataset_pk_sample_out_of_range(add_and_remove_cv_file):
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
         num_iter += 1
+    assert num_iter == 15
+
+def test_cv_minddataset_pk_sample_out_of_range_1(add_and_remove_cv_file):
+    """tutorial for cv minderdataset."""
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+    sampler = ds.PKSampler(5, None, True, 'label', 20)
+    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+                              sampler=sampler)
+    assert data_set.get_dataset_size() == 15
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        logger.info(
+            "-------------- cv reader basic: {} ------------------------".format(num_iter))
+        logger.info("-------------- item[file_name]: \
+                {}------------------------".format(to_str(item["file_name"])))
+        logger.info(
+            "-------------- item[label]: {} ----------------------------".format(item["label"]))
+        num_iter += 1
+    assert num_iter == 15
+
+def test_cv_minddataset_pk_sample_out_of_range_2(add_and_remove_cv_file):
+    """tutorial for cv minderdataset."""
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+    sampler = ds.PKSampler(5, None, True, 'label', 10)
+    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+                              sampler=sampler)
+    assert data_set.get_dataset_size() == 10
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        logger.info(
+            "-------------- cv reader basic: {} ------------------------".format(num_iter))
+        logger.info("-------------- item[file_name]: \
+                {}------------------------".format(to_str(item["file_name"])))
+        logger.info(
+            "-------------- item[label]: {} ----------------------------".format(item["label"]))
+        num_iter += 1
+    assert num_iter == 10
 
 
 def test_cv_minddataset_subset_random_sample_basic(add_and_remove_cv_file):

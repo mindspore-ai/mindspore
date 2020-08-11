@@ -359,7 +359,8 @@ class PKSampler(BuiltinSampler):
         if not self.class_column or not isinstance(self.class_column, str):
             raise ValueError("class_column should be a not empty string value, \
                     but got class_column={}".format(class_column))
-        c_sampler = cde.MindrecordPkSampler(self.num_val, self.class_column, self.shuffle)
+        num_samples = self.num_samples if self.num_samples is not None else 0
+        c_sampler = cde.MindrecordPkSampler(self.num_val, self.class_column, self.shuffle, num_samples)
         c_child_sampler = self.create_child_for_minddataset()
         c_sampler.add_child(c_child_sampler)
         return c_sampler

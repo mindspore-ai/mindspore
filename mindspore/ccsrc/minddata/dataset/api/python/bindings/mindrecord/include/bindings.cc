@@ -48,12 +48,12 @@ PYBIND_REGISTER(
   ShardPkSample, 1, ([](const py::module *m) {
     (void)py::class_<mindrecord::ShardPkSample, mindrecord::ShardOperator, std::shared_ptr<mindrecord::ShardPkSample>>(
       *m, "MindrecordPkSampler")
-      .def(py::init([](int64_t kVal, std::string kColumn, bool shuffle) {
+      .def(py::init([](int64_t kVal, std::string kColumn, bool shuffle, int64_t num_samples) {
         if (shuffle == true) {
           return std::make_shared<mindrecord::ShardPkSample>(kColumn, kVal, std::numeric_limits<int64_t>::max(),
-                                                             GetSeed());
+                                                             GetSeed(), num_samples);
         } else {
-          return std::make_shared<mindrecord::ShardPkSample>(kColumn, kVal);
+          return std::make_shared<mindrecord::ShardPkSample>(kColumn, kVal, num_samples);
         }
       }));
   }));
