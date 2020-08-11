@@ -268,6 +268,12 @@ Status PadBBoxes(const std::shared_ptr<Tensor> *bboxList, const size_t &bboxCoun
 Status UpdateBBoxesForResize(const std::shared_ptr<Tensor> &bboxList, const size_t &bboxCount, int32_t target_width_,
                              int32_t target_height_, int orig_width, int orig_height);
 
+// Get jpeg image width and height
+// @param input: CVTensor containing the not decoded image 1D bytes
+// @param img_width: the jpeg image width
+// @param img_height: the jpeg image height
+Status GetJpegImageInfo(const std::shared_ptr<Tensor> &input, int *img_width, int *img_height);
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_
