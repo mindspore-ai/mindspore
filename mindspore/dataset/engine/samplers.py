@@ -21,6 +21,7 @@ User can also define custom sampler by extending from Sampler class.
 
 import numpy as np
 import mindspore._c_dataengine as cde
+import mindspore.dataset as ds
 
 class Sampler:
     """
@@ -541,7 +542,7 @@ class SubsetRandomSampler(BuiltinSampler):
         return self.child_sampler.is_sharded()
 
     def create_for_minddataset(self):
-        c_sampler = cde.MindrecordSubsetRandomSampler(self.indices)
+        c_sampler = cde.MindrecordSubsetRandomSampler(self.indices, ds.config.get_seed())
         c_child_sampler = self.create_child_for_minddataset()
         c_sampler.add_child(c_child_sampler)
         return c_sampler

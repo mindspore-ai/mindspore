@@ -32,45 +32,37 @@ namespace mindspore {
 namespace dataset {
 
 PYBIND_REGISTER(ConcatenateOp, 1, ([](const py::module *m) {
-                  (void)py::class_<ConcatenateOp, TensorOp, std::shared_ptr<ConcatenateOp>>(
-                    *m, "ConcatenateOp", "Tensor operation concatenate tensors.")
-                    .def(py::init<int8_t, std::shared_ptr<Tensor>, std::shared_ptr<Tensor>>(), py::arg("axis"),
-                         py::arg("prepend").none(true), py::arg("append").none(true));
+                  (void)py::class_<ConcatenateOp, TensorOp, std::shared_ptr<ConcatenateOp>>(*m, "ConcatenateOp")
+                    .def(py::init<int8_t, std::shared_ptr<Tensor>, std::shared_ptr<Tensor>>());
                 }));
 
-PYBIND_REGISTER(DuplicateOp, 1, ([](const py::module *m) {
-                  (void)py::class_<DuplicateOp, TensorOp, std::shared_ptr<DuplicateOp>>(*m, "DuplicateOp",
-                                                                                        "Duplicate tensor.")
-                    .def(py::init<>());
-                }));
+PYBIND_REGISTER(
+  DuplicateOp, 1, ([](const py::module *m) {
+    (void)py::class_<DuplicateOp, TensorOp, std::shared_ptr<DuplicateOp>>(*m, "DuplicateOp").def(py::init<>());
+  }));
 
-PYBIND_REGISTER(FillOp, 1, ([](const py::module *m) {
-                  (void)py::class_<FillOp, TensorOp, std::shared_ptr<FillOp>>(
-                    *m, "FillOp", "Tensor operation to return tensor filled with same value as input fill value.")
-                    .def(py::init<std::shared_ptr<Tensor>>());
-                }));
+PYBIND_REGISTER(
+  FillOp, 1, ([](const py::module *m) {
+    (void)py::class_<FillOp, TensorOp, std::shared_ptr<FillOp>>(*m, "FillOp").def(py::init<std::shared_ptr<Tensor>>());
+  }));
 
 PYBIND_REGISTER(MaskOp, 1, ([](const py::module *m) {
-                  (void)py::class_<MaskOp, TensorOp, std::shared_ptr<MaskOp>>(
-                    *m, "MaskOp", "Tensor mask operation using relational comparator")
+                  (void)py::class_<MaskOp, TensorOp, std::shared_ptr<MaskOp>>(*m, "MaskOp")
                     .def(py::init<RelationalOp, std::shared_ptr<Tensor>, DataType>());
                 }));
 
-PYBIND_REGISTER(OneHotOp, 1, ([](const py::module *m) {
-                  (void)py::class_<OneHotOp, TensorOp, std::shared_ptr<OneHotOp>>(
-                    *m, "OneHotOp", "Tensor operation to apply one hot encoding. Takes number of classes.")
-                    .def(py::init<int32_t>());
-                }));
+PYBIND_REGISTER(
+  OneHotOp, 1, ([](const py::module *m) {
+    (void)py::class_<OneHotOp, TensorOp, std::shared_ptr<OneHotOp>>(*m, "OneHotOp").def(py::init<int32_t>());
+  }));
 
 PYBIND_REGISTER(PadEndOp, 1, ([](const py::module *m) {
-                  (void)py::class_<PadEndOp, TensorOp, std::shared_ptr<PadEndOp>>(
-                    *m, "PadEndOp", "Tensor operation to pad end of tensor with a pad value.")
+                  (void)py::class_<PadEndOp, TensorOp, std::shared_ptr<PadEndOp>>(*m, "PadEndOp")
                     .def(py::init<TensorShape, std::shared_ptr<Tensor>>());
                 }));
 
 PYBIND_REGISTER(SliceOp, 1, ([](const py::module *m) {
-                  (void)py::class_<SliceOp, TensorOp, std::shared_ptr<SliceOp>>(*m, "SliceOp",
-                                                                                "Tensor slice operation.")
+                  (void)py::class_<SliceOp, TensorOp, std::shared_ptr<SliceOp>>(*m, "SliceOp")
                     .def(py::init<bool>())
                     .def(py::init([](const py::list &py_list) {
                       std::vector<dsize_t> c_list;
@@ -105,17 +97,15 @@ PYBIND_REGISTER(SliceOp, 1, ([](const py::module *m) {
                 }));
 
 PYBIND_REGISTER(ToFloat16Op, 1, ([](const py::module *m) {
-                  (void)py::class_<ToFloat16Op, TensorOp, std::shared_ptr<ToFloat16Op>>(
-                    *m, "ToFloat16Op", py::dynamic_attr(),
-                    "Tensor operator to type cast float32 data to a float16 type.")
+                  (void)py::class_<ToFloat16Op, TensorOp, std::shared_ptr<ToFloat16Op>>(*m, "ToFloat16Op",
+                                                                                        py::dynamic_attr())
                     .def(py::init<>());
                 }));
 
 PYBIND_REGISTER(TypeCastOp, 1, ([](const py::module *m) {
-                  (void)py::class_<TypeCastOp, TensorOp, std::shared_ptr<TypeCastOp>>(
-                    *m, "TypeCastOp", "Tensor operator to type cast data to a specified type.")
-                    .def(py::init<DataType>(), py::arg("data_type"))
-                    .def(py::init<std::string>(), py::arg("data_type"));
+                  (void)py::class_<TypeCastOp, TensorOp, std::shared_ptr<TypeCastOp>>(*m, "TypeCastOp")
+                    .def(py::init<DataType>())
+                    .def(py::init<std::string>());
                 }));
 
 PYBIND_REGISTER(RelationalOp, 0, ([](const py::module *m) {

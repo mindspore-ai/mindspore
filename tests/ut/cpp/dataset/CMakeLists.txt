@@ -58,7 +58,6 @@ SET(DE_UT_SRCS
         rename_op_test.cc
         repeat_op_test.cc
         rescale_op_test.cc
-        resize_bilinear_op_test.cc
         resize_op_test.cc
         resize_with_bbox_op_test.cc
 	rgba_to_bgr_op_test.cc

@@ -52,8 +52,8 @@ import mindspore._c_dataengine as cde
 
 from .utils import JiebaMode, NormalizeForm, to_str, SPieceTokenizerOutType, SPieceTokenizerLoadType
 from .validators import check_lookup, check_jieba_add_dict, \
-    check_jieba_add_word, check_jieba_init, check_with_offsets, check_unicode_script_tokenizer,\
-    check_wordpiece_tokenizer, check_regex_tokenizer, check_basic_tokenizer, check_ngram, check_pair_truncate,\
+    check_jieba_add_word, check_jieba_init, check_with_offsets, check_unicode_script_tokenizer, \
+    check_wordpiece_tokenizer, check_regex_tokenizer, check_basic_tokenizer, check_ngram, check_pair_truncate, \
     check_to_number, check_bert_tokenizer, check_python_tokenizer, check_slidingwindow
 from ..core.datatypes import mstype_to_detype
 
@@ -100,7 +100,8 @@ class SlidingWindow(cde.SlidingWindowOp):
 
     @check_slidingwindow
     def __init__(self, width, axis=0):
-        super().__init__(width=width, axis=axis)
+        super().__init__(width, axis)
+
 
 
 class Ngram(cde.NgramOp):
@@ -126,8 +127,7 @@ class Ngram(cde.NgramOp):
 
     @check_ngram
     def __init__(self, n, left_pad=("", 0), right_pad=("", 0), separator=" "):
-        super().__init__(ngrams=n, l_pad_len=left_pad[1], r_pad_len=right_pad[1], l_pad_token=left_pad[0],
-                         r_pad_token=right_pad[0], separator=separator)
+        super().__init__(n, left_pad[1], right_pad[1], left_pad[0], right_pad[0], separator)
 
 
 DE_C_INTER_JIEBA_MODE = {
@@ -326,6 +326,7 @@ class WordpieceTokenizer(cde.WordpieceTokenizerOp):
         super().__init__(self.vocab, self.suffix_indicator, self.max_bytes_per_token,
                          self.unknown_token, self.with_offsets)
 
+
 DE_C_INTER_SENTENCEPIECE_LOADTYPE = {
     SPieceTokenizerLoadType.FILE: cde.SPieceTokenizerLoadType.DE_SPIECE_TOKENIZER_LOAD_KFILE,
     SPieceTokenizerLoadType.MODEL: cde.SPieceTokenizerLoadType.DE_SPIECE_TOKENIZER_LOAD_KMODEL
@@ -335,6 +336,7 @@ DE_C_INTER_SENTENCEPIECE_OUTTYPE = {
     SPieceTokenizerOutType.STRING: cde.SPieceTokenizerOutType.DE_SPIECE_TOKENIZER_OUTTYPE_KString,
     SPieceTokenizerOutType.INT: cde.SPieceTokenizerOutType.DE_SPIECE_TOKENIZER_OUTTYPE_KINT
 }
+
 
 class SentencePieceTokenizer(cde.SentencePieceTokenizerOp):
     """
@@ -356,6 +358,7 @@ class SentencePieceTokenizer(cde.SentencePieceTokenizerOp):
         elif isinstance(mode, cde.SentencePieceVocab):
             super().__init__(mode, DE_C_INTER_SENTENCEPIECE_LOADTYPE[SPieceTokenizerLoadType.MODEL],
                              DE_C_INTER_SENTENCEPIECE_OUTTYPE[out_type])
+
 
 if platform.system().lower() != 'windows':
     class WhitespaceTokenizer(cde.WhitespaceTokenizerOp):
