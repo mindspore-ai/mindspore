@@ -943,9 +943,9 @@ class InplaceAdd(PrimitiveWithInfer):
             to add with v. It is a int or tuple, whose value is in [0, the first dimension size of x).
 
     Inputs:
-        - **input_x** (Tensor) - The first input is a tensor whose data type is number.
+        - **input_x** (Tensor) - The first input is a tensor whose data type is float16, float32 or int32.
         - **input_v** (Tensor) - The second input is a tensor who has the same dimension sizes as x except
-          the first dimension, which must be the same as indices's size.
+          the first dimension, which must be the same as indices's size. It has the same data type with `input_x`.
 
     Outputs:
         Tensor, has the same shape and dtype as input.
@@ -1001,9 +1001,9 @@ class InplaceSub(PrimitiveWithInfer):
             to sub with v. It is a int or tuple, whose value is in [0, the first dimension size of x).
 
     Inputs:
-        - **input_x** (Tensor) - The first input is a tensor whose data type is number.
+        - **input_x** (Tensor) - The first input is a tensor whose data type is float16, float32 or int32.
         - **input_v** (Tensor) - The second input is a tensor who has the same dimension sizes as x except
-          the first dimension, which must be the same as indices's size.
+          the first dimension, which must be the same as indices's size. It has the same data type with `input_x`.
 
     Outputs:
         Tensor, has the same shape and dtype as input.
@@ -1403,7 +1403,7 @@ class Expm1(PrimitiveWithInfer):
     Returns exponential then minus 1 of a tensor element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor.
+        - **input_x** (Tensor) - The input tensor. With float16 or float32 data type.
 
     Outputs:
         Tensor, has the same shape as the `input_x`.
@@ -1425,6 +1425,7 @@ class Expm1(PrimitiveWithInfer):
 
     def infer_dtype(self, x_type):
         validator.check_subclass("x", x_type, mstype.tensor, self.name)
+        validator.check_tensor_type_same({"x": x_type}, [mstype.float16, mstype.float32], self.name)
         return x_type
 
 
@@ -1515,7 +1516,7 @@ class Log1p(PrimitiveWithInfer):
     Returns the natural logarithm of one plus the input tensor element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor.
+        - **input_x** (Tensor) - The input tensor. With float16 or float32 data type.
 
     Outputs:
         Tensor, has the same shape as the `input_x`.
@@ -1536,6 +1537,7 @@ class Log1p(PrimitiveWithInfer):
 
     def infer_dtype(self, x):
         validator.check_subclass("x", x, mstype.tensor, self.name)
+        validator.check_tensor_type_same({"x": x}, [mstype.float16, mstype.float32], self.name)
         return x
 
 
@@ -1544,7 +1546,7 @@ class Erf(PrimitiveWithInfer):
     Computes the Gauss error function of `input_x` element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor.
+        - **input_x** (Tensor) - The input tensor. The data type must be float16 or float32.
 
     Outputs:
         Tensor, has the same shape and dtype as the `input_x`.
@@ -1574,7 +1576,7 @@ class Erfc(PrimitiveWithInfer):
     Computes the complementary error function of `input_x` element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor.
+        - **input_x** (Tensor) - The input tensor. The data type mast be float16 or float32.
 
     Outputs:
         Tensor, has the same shape and dtype as the `input_x`.
@@ -1673,6 +1675,7 @@ class Maximum(_MathBinaryOp):
             out = np.array(out, x.dtype)
             return Tensor(out)
         return None
+
 
 class RealDiv(_MathBinaryOp):
     """
@@ -1923,7 +1926,7 @@ class Floor(PrimitiveWithInfer):
     Round a tensor down to the closest integer element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor. Its element data type must be float.
+        - **input_x** (Tensor) - The input tensor. It's element data type must be float.
 
     Outputs:
         Tensor, has the same shape as `input_x`.
@@ -1981,7 +1984,7 @@ class Ceil(PrimitiveWithInfer):
     Round a tensor up to the closest integer element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor. Its element data type must be float.
+        - **input_x** (Tensor) - The input tensor. It's element data type must be float16 or float32.
 
     Outputs:
         Tensor, has the same shape as `input_x`.
@@ -2001,7 +2004,7 @@ class Ceil(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_type_same({"x": x_dtype}, mstype.float_type, self.name)
+        validator.check_tensor_type_same({"x": x_dtype}, [mstype.float16, mstype.float32], self.name)
         return x_dtype
 
 
@@ -2666,7 +2669,7 @@ class FloatStatus(PrimitiveWithInfer):
     Determine if the elements contains nan, inf or -inf. `0` for normal, `1` for overflow.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor.
+        - **input_x** (Tensor) - The input tensor. The data type must be float16 or float32.
 
     Outputs:
         Tensor, has the shape of `(1,)`, and has the same dtype of input `mindspore.dtype.float32` or
@@ -2731,6 +2734,7 @@ class NPUGetFloatStatus(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The output tensor of `NPUAllocFloatStatus`.
+          The data type must be float16 or float32.
 
     Outputs:
         Tensor, has the same shape as `input_x`. All the elements in the tensor will be zero.
@@ -2755,7 +2759,7 @@ class NPUGetFloatStatus(PrimitiveWithInfer):
         return [8]
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_type_same({'x': x_dtype}, [mstype.float32], self.name)
+        validator.check_tensor_type_same({'x': x_dtype}, [mstype.float16, mstype.float32], self.name)
         return mstype.float32
 
 
@@ -2771,6 +2775,7 @@ class NPUClearFloatStatus(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The output tensor of `NPUAllocFloatStatus`.
+          The data type must be float16 or float32.
 
     Outputs:
         Tensor, has the same shape as `input_x`. All the elements in the tensor will be zero.
@@ -2797,7 +2802,7 @@ class NPUClearFloatStatus(PrimitiveWithInfer):
         return [8]
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_type_same({'x': x_dtype}, [mstype.float32], self.name)
+        validator.check_tensor_type_same({'x': x_dtype}, [mstype.float16, mstype.float32], self.name)
         return mstype.float32
 
 
@@ -2932,6 +2937,7 @@ class NMSWithMask(PrimitiveWithInfer):
           `N` is the number of input bounding boxes. Every bounding box
           contains 5 values, the first 4 values are the coordinates of bounding
           box, and the last value is the score of this bounding box.
+          The data type must be float16 or float32.
 
     Outputs:
         tuple[Tensor], tuple of three tensors, they are selected_boxes, selected_idx and selected_mask.
@@ -3186,12 +3192,13 @@ class Atan2(_MathBinaryOp):
          [[0. 0.7853982]]
     """
 
+
 class SquareSumAll(PrimitiveWithInfer):
     """
     Returns square sum all of a tensor element-wise
 
     Inputs:
-        - **input_x1** (Tensor) - The input tensor.
+        - **input_x1** (Tensor) - The input tensor. The data type must be float16 or float32.
         - **input_x2** (Tensor) - The input tensor same type and shape as the `input_x1`.
 
     Note:
@@ -3227,7 +3234,7 @@ class BitwiseAnd(_BitwiseBinaryOp):
     Returns bitwise `and` of two tensors element-wise.
 
     Inputs:
-        - **input_x1** (Tensor) - The input tensor with int or uint type.
+        - **input_x1** (Tensor) - The input tensor with int16 or uint16 data type.
         - **input_x2** (Tensor) - The input tensor with same type as the `input_x1`.
 
     Outputs:
@@ -3247,7 +3254,7 @@ class BitwiseOr(_BitwiseBinaryOp):
     Returns bitwise `or` of two tensors element-wise.
 
     Inputs:
-        - **input_x1** (Tensor) - The input tensor with int or uint type.
+        - **input_x1** (Tensor) - The input tensor with int16 or uint16 data type.
         - **input_x2** (Tensor) - The input tensor with same type as the `input_x1`.
 
     Outputs:
@@ -3267,7 +3274,7 @@ class BitwiseXor(_BitwiseBinaryOp):
     Returns bitwise `xor` of two tensors element-wise.
 
     Inputs:
-        - **input_x1** (Tensor) - The input tensor with int or uint type.
+        - **input_x1** (Tensor) - The input tensor with int16 or uint16 data type.
         - **input_x2** (Tensor) - The input tensor with same type as the `input_x1`.
 
     Outputs:
@@ -3405,7 +3412,7 @@ class Eps(PrimitiveWithInfer):
     Creates a tensor filled with `input_x` dtype minimum val.
 
     Inputs:
-        - **input_x** (Tensor) - Input tensor.
+        - **input_x** (Tensor) - Input tensor. The data type must be float16 or float32.
 
     Outputs:
         Tensor, has the same type and shape as `input_x`, but filled with `input_x` dtype minimum val.

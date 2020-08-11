@@ -1423,7 +1423,9 @@ class UnsortedSegmentMin(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
+          The data type should be float16, float32 or int32.
         - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`, the value should be >= 0.
+          The data type must be int32.
         - **num_segments** (int) - The value spcifies the number of distinct `segment_ids`.
 
     Outputs:
@@ -2410,7 +2412,7 @@ class GatherNd(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The target tensor to gather values.
-        - **indices** (Tensor) - The index tensor.
+        - **indices** (Tensor) - The index tensor, with int data type.
 
     Outputs:
         Tensor, has the same type as `input_x` and the shape is indices_shape[:-1] + x_shape[indices_shape[-1]:].
@@ -2807,7 +2809,7 @@ class ScatterNonAliasingAdd(_ScatterNdOp):
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
     Inputs:
-        - **input_x** (Parameter) - The target parameter.
+        - **input_x** (Parameter) - The target parameter. The data type should be float16, float32 or int32.
         - **indices** (Tensor) - The index to do add operation whose data type should be mindspore.int32.
         - **updates** (Tensor) - The tensor doing the add operation with `input_x`,
           the data type is same as `input_x`, the shape is `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
