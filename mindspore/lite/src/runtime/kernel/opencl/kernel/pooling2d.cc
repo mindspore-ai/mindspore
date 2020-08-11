@@ -82,7 +82,7 @@ int PoolingOpenCLKernel::Init() {
 std::vector<size_t> PoolingOpenCLKernel::InitGlobalSize() const {
   const size_t global_x = outputs_[0]->Height();
   const size_t global_y = outputs_[0]->Width();
-  const size_t global_z = UP_ROUND_DIV(outputs_[0]->Channel(), 4);
+  const size_t global_z = UP_DIV(outputs_[0]->Channel(), C4NUM);
   std::vector<size_t> global = {global_x, global_y, global_z};
   return global;
 }
@@ -90,13 +90,8 @@ std::vector<size_t> PoolingOpenCLKernel::InitGlobalSize() const {
 int PoolingOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t CO4 = UP_DIV(outputs_[0]->Channel(), C4NUM);
   size_t im_dst_x, im_dst_y;
-  if (inputs_[0]->GetFormat() == schema::Format_NHWC4) {
-    im_dst_x = outputs_[0]->Height();
-    im_dst_y = outputs_[0]->Width() * CO4;
-  } else {
-    im_dst_y = outputs_[0]->Width();
-    im_dst_x = outputs_[0]->Height() * CO4;
-  }
+  im_dst_x = outputs_[0]->Width() * CO4;
+  im_dst_y = outputs_[0]->Height();
 #ifdef ENABLE_FP16
   size_t img_dtype = CL_HALF_FLOAT;
 #else
@@ -117,7 +112,7 @@ int PoolingOpenCLKernel::Run() {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
 
   // attribute
-  int slices = UP_ROUND_DIV(outputs_[0]->Channel(), 4);
+  int slices = UP_DIV(outputs_[0]->Channel(), C4NUM);
   cl_int4 input_shape = {inputs_[0]->Height(), inputs_[0]->Width(), inputs_[0]->Channel(), slices};
   cl_int4 output_shape = {outputs_[0]->Height(), outputs_[0]->Width(), outputs_[0]->Channel(), slices};
   cl_int2 stride = {parameter_->stride_h_, parameter_->stride_w_};
