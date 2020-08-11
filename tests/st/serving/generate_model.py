@@ -62,14 +62,14 @@ def export_add_model():
     net = AddNet()
     x = np.ones(4).astype(np.float32)
     y = np.ones(4).astype(np.float32)
-    export(net, Tensor(x), Tensor(y), file_name='add.pb', file_format='BINARY')
+    export(net, Tensor(x), Tensor(y), file_name='add.pb', file_format='MINDIR')
 
 def export_bert_model():
     net = BertModel(bert_net_cfg, False)
     input_ids = np.random.randint(0, 1000, size=(2, 32), dtype=np.int32)
     segment_ids = np.zeros((2, 32), dtype=np.int32)
     input_mask = np.zeros((2, 32), dtype=np.int32)
-    export(net, Tensor(input_ids), Tensor(segment_ids), Tensor(input_mask), file_name='bert.pb', file_format='BINARY')
+    export(net, Tensor(input_ids), Tensor(segment_ids), Tensor(input_mask), file_name='bert.pb', file_format='MINDIR')
 
 if __name__ == '__main__':
     export_add_model()

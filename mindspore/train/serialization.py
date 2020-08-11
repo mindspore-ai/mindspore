@@ -453,17 +453,19 @@ def export(net, *inputs, file_name, file_format='GEIR'):
         net (Cell): MindSpore network.
         inputs (Tensor): Inputs of the `net`.
         file_name (str): File name of model to export.
-        file_format (str): MindSpore currently supports 'GEIR', 'ONNX' and 'BINARY' format for exported model.
+        file_format (str): MindSpore currently supports 'GEIR', 'ONNX' and 'MINDIR' format for exported model.
 
             - GEIR: Graph Engine Intermidiate Representation. An intermidiate representation format of
               Ascend model.
             - ONNX: Open Neural Network eXchange. An open format built to represent machine learning models.
-            - BINARY: Binary format for model. An intermidiate representation format for models.
+            - MINDIR: MindSpore Native Intermidiate Representation for Anf. An intermidiate representation format
+              for MindSpore models.
+              Recommended suffix for output file is '.mindir'.
     """
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
     check_input_data(*inputs, data_class=Tensor)
 
-    supported_formats = ['GEIR', 'ONNX', 'BINARY']
+    supported_formats = ['GEIR', 'ONNX', 'MINDIR']
     if file_format not in supported_formats:
         raise ValueError(f'Illegal file format {file_format}, it must be one of {supported_formats}')
     # switch network mode to infer when it is training
@@ -485,10 +487,10 @@ def export(net, *inputs, file_name, file_format='GEIR'):
         with open(file_name, 'wb') as f:
             os.chmod(file_name, stat.S_IWUSR | stat.S_IRUSR)
             f.write(onnx_stream)
-    elif file_format == 'BINARY':  # file_format is 'BINARY'
-        phase_name = 'export.binary'
+    elif file_format == 'MINDIR':  # file_format is 'MINDIR'
+        phase_name = 'export.mindir'
         graph_id, _ = _executor.compile(net, *inputs, phase=phase_name, do_convert=False)
-        onnx_stream = _executor._get_func_graph_proto(graph_id, 'binary_ir')
+        onnx_stream = _executor._get_func_graph_proto(graph_id, 'mind_ir')
         with open(file_name, 'wb') as f:
             os.chmod(file_name, stat.S_IWUSR | stat.S_IRUSR)
             f.write(onnx_stream)
