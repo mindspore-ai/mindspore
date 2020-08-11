@@ -28,6 +28,22 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
 namespace mindspore::kernel {
+ConvolutionDepthwiseFp16CPUKernel::~ConvolutionDepthwiseFp16CPUKernel() {
+  delete sliding_;
+  if (packed_weight_ != nullptr) {
+    delete packed_weight_;
+    packed_weight_ = nullptr;
+  }
+  if (packed_input_ != nullptr) {
+    delete packed_input_;
+    packed_input_ = nullptr;
+  }
+  if (packed_output_ != nullptr) {
+    delete packed_output_;
+    packed_output_ = nullptr;
+  }
+}
+
 int ConvolutionDepthwiseFp16CPUKernel::InitBuffer() {
   // malloc pack input buffer
   int C8 = UP_DIV(conv_param_->input_channel_, C8NUM);
@@ -113,8 +129,14 @@ int ConvolutionDepthwiseFp16CPUKernel::Init() {
 }
 
 int ConvolutionDepthwiseFp16CPUKernel::ReSize() {
-  free(packed_input_);
-  free(packed_output_);
+  if (packed_input_ != nullptr) {
+    delete packed_input_;
+    packed_input_ = nullptr;
+  }
+  if (packed_output_ != nullptr) {
+    delete packed_output_;
+    packed_output_ = nullptr;
+  }
 
   ConvolutionBaseCPUKernel::Init();
   InitSlidingParam(sliding_, conv_param_, C8NUM);

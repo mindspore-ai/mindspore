@@ -28,6 +28,28 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DeDepthwiseConv2D;
 
 namespace mindspore::kernel {
+DeconvolutionDepthwiseInt8CPUKernel::~DeconvolutionDepthwiseInt8CPUKernel() {
+  delete sliding;
+  if (packed_weight_ != nullptr) {
+    delete packed_weight_;
+    packed_weight_ = nullptr;
+  }
+  if (packed_input_ != nullptr) {
+    delete packed_input_;
+    packed_input_ = nullptr;
+  }
+  if (need_align_) {
+    if (packed_output_ != nullptr) {
+      delete packed_output_;
+      packed_output_ = nullptr;
+    }
+  }
+  if (output_buffer_ != nullptr) {
+    delete output_buffer_;
+    output_buffer_ = nullptr;
+  }
+}
+
 int DeconvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   // init weight: int8 -> int16
   // o, h, w, i -> o/8, h, w, i, 8; o == group, i == 1
@@ -101,9 +123,9 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitBuffer() {
   }
 
   // malloc tmp buffer for int32 output
-  output_buffer =
+  output_buffer_ =
     reinterpret_cast<int32_t *>(malloc(conv_param_->output_h_ * conv_param_->output_w_ * C4NUM * sizeof(int32_t)));
-  if (output_buffer == nullptr) {
+  if (output_buffer_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
@@ -144,10 +166,21 @@ int DeconvolutionDepthwiseInt8CPUKernel::Init() {
 }
 
 int DeconvolutionDepthwiseInt8CPUKernel::ReSize() {
-  free(packed_input_);
-  if (need_align_) {
-    free(packed_output_);
+  if (packed_input_ != nullptr) {
+    delete packed_input_;
+    packed_input_ = nullptr;
   }
+  if (need_align_) {
+    if (packed_output_ != nullptr) {
+      delete packed_output_;
+      packed_output_ = nullptr;
+    }
+  }
+  if (output_buffer_ != nullptr) {
+    delete output_buffer_;
+    output_buffer_ = nullptr;
+  }
+
   InitSlideParam();
 
   // conv base init
@@ -162,7 +195,7 @@ int DeconvolutionDepthwiseInt8CPUKernel::ReSize() {
 }
 
 int DeconvolutionDepthwiseInt8CPUKernel::Execute(int task_id) {
-  DeconvDwInt8(packed_output_, output_buffer, packed_input_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_),
+  DeconvDwInt8(packed_output_, output_buffer_, packed_input_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_),
                conv_param_, sliding, task_id);
   return RET_OK;
 }

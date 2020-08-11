@@ -17,33 +17,20 @@
 #include "mindspore/core/utils/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/runtime/kernel/arm/nnacl/fp32/batchnorm.h"
-#include "mindspore/lite/src/runtime/kernel/arm/nnacl/fused_batchnorm.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "mindspore/lite/src/lite_kernel.h"
-#include "mindspore/lite/src/common/file_utils.h"
 
 namespace mindspore {
-
 class TestBatchnormFp32 : public mindspore::Common {
  public:
   TestBatchnormFp32() {}
 };
 
 TEST_F(TestBatchnormFp32, BNTest) {
-  std::vector<float> in_data = {0.0669681, 0.959215, 0.252686,  0.613594,  0.811776,  0.139469,  0.322848,  0.118354,
-                                0.082978,  0.399467, 0.961267,  0.0247456, 0.0714259, 0.0791484, 0.0648625, 0.561612,
-                                0.412069,  0.311492, 0.46109,   0.377125,  0.369283,  0.0332446, 0.696142,  0.715973,
-                                0.525524,  0.477265, 0.0336351, 0.751577,  0.377548,  0.964603,  0.0196834, 0.174865};
-  std::vector<float> in_data1 = {0.855446, 0.821765, 0.281008, 0.0798653, 0.22294,  0.793782, 0.963222, 0.17851,
-                                 0.667549, 0.274381, 0.592842, 0.216552,  0.190274, 0.237873, 0.610063, 0.307559,
-                                 0.830007, 0.760957, 0.583265, 0.763793,  0.456372, 0.391378, 0.547915, 0.862198,
-                                 0.510794, 0.826776, 0.515894, 0.30071,   0.404987, 0.184773};
-  std::vector<float> in_data2 = {0.712438, 0.4927,   0.078419, 0.310429, 0.546871, 0.0667141, 0.874321, 0.0265647,
-                                 0.685165, 0.732586, 0.952889, 0.506402, 0.540784, 0.131119,  0.357713, 0.678992,
-                                 0.960839, 0.340706, 0.697678, 0.398146, 0.313321, 0.6485,    0.739153, 0.00190134,
-                                 0.536842, 0.996873, 0.445276, 0.371212, 0.420397, 0.0930115};
-  std::vector<float> in_data3(32, 1);
-  std::vector<float> in_data4(32, 0);
+  std::vector<float> in_data = {-11.18675,  11.433986,  11.386012, 11.245945,   -2.7614849, 14.692399,
+                                -1.1983503, -6.6790967, 6.383416,  -13.3213005, -8.693595,  9.476344};
+  std::vector<float> in_data1 = {12.352293, 5.122387, 14.249514};
+  std::vector<float> in_data2 = {14.632595, 0.70900035, 11.179003};
   std::vector<lite::tensor::Tensor *> inputs_tensor;
   std::vector<lite::tensor::Tensor *> outputs_tensor;
 
@@ -51,8 +38,7 @@ TEST_F(TestBatchnormFp32, BNTest) {
   op_param.op_parameter_.type_ = schema::PrimitiveType_BatchNorm;
   op_param.epsilon_ = 0.001f;
 
-  std::vector<int> in_shape = {1, 2, 4, 4};
-
+  std::vector<int> shape = {1, 2, 2, 3};
   lite::tensor::Tensor input0_tensor;
   lite::tensor::Tensor input1_tensor;
   lite::tensor::Tensor input2_tensor;
@@ -62,39 +48,40 @@ TEST_F(TestBatchnormFp32, BNTest) {
   input0_tensor.SetData(in_data.data());
   input1_tensor.SetData(in_data1.data());
   input2_tensor.SetData(in_data2.data());
-  input0_tensor.set_shape(in_shape);
+  input0_tensor.set_shape(shape);
+  input1_tensor.set_shape({3});
+  input2_tensor.set_shape({3});
 
-  std::vector<float> output(32);
-  std::vector<float> corr_out(32);
-  std::vector<int> output_shape = {1, 2, 4, 4};
+  std::vector<float> output(12);
+  std::vector<float> corr_out = {-6.1533737, 7.4904885,  -0.8563998, -0.289212,  -9.356432,  0.13245535,
+                                 -3.5422924, -14.005781, -2.3525476, -6.7113695, -16.396551, -1.4275324};
 
   lite::tensor::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
   output0_tensor.SetData(output.data());
+  output0_tensor.set_shape(shape);
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_BatchNorm};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   lite::Context ctx;
-  ctx.thread_num_ = 7;
+  ctx.thread_num_ = 1;
   kernel::LiteKernel *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc, nullptr);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   kernel->Run();
 
-  FusedBatchNorm(in_data.data(), in_data3.data(), in_data4.data(), in_data1.data(), in_data2.data(), in_shape.data(),
-                 0.001f, corr_out.data());
-
   printf("==================output data=================\n");
-  for (int i = 0; i < 1 * 28; i++) {
+  for (int i = 0; i < output0_tensor.ElementsNum(); i++) {
     std::cout << output[i] << " ,";
   }
   std::cout << std::endl;
-  CompareOutputData(output.data(), corr_out.data(), 32, 0.00001);
+  CompareOutputData(output.data(), corr_out.data(), output0_tensor.ElementsNum(), 0.001);
 
   input0_tensor.SetData(nullptr);
   input1_tensor.SetData(nullptr);
   input2_tensor.SetData(nullptr);
   output0_tensor.SetData(nullptr);
+  MS_LOG(INFO) << "TestBathNormFp32 accuracy passed";
 }
 }  // namespace mindspore

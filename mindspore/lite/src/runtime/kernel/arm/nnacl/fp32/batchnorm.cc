@@ -19,10 +19,21 @@
 
 void BatchNorm(float *output_ptr, const float *input_ptr, const float *mean_ptr, const float *variance_ptr, int task_id,
                BatchNormParameter *param) {
-  for (int u = task_id; u < param->unit_; u += param->op_parameter_.thread_num_) {
-    for (int c = 0; c < param->channel_; c++) {
-      auto variance_sqrt = sqrt(variance_ptr[c] + param->epsilon_);
+  for (int c = task_id; c < param->channel_; c += param->op_parameter_.thread_num_) {
+    auto variance_sqrt = sqrt(variance_ptr[c] + param->epsilon_);
+    for (int u = 0; u < param->unit_; u++) {
       output_ptr[u * param->channel_ + c] = (input_ptr[u * param->channel_ + c] - mean_ptr[c]) / variance_sqrt;
+    }
+  }
+}
+
+void FusedBatchNorm(float *output_ptr, const float *input_ptr, const float *scale_ptr, const float *offest_ptr,
+                    const float *mean_ptr, const float *variance_ptr, int task_id, BatchNormParameter *param) {
+  for (int c = task_id; c < param->channel_; c += param->op_parameter_.thread_num_) {
+    auto variance_sqrt = sqrt(variance_ptr[c] + param->epsilon_);
+    for (int u = 0; u < param->unit_; u++) {
+      output_ptr[u * param->channel_ + c] =
+        (input_ptr[u * param->channel_ + c] - mean_ptr[c]) / variance_sqrt * scale_ptr[c] + offest_ptr[c];
     }
   }
 }

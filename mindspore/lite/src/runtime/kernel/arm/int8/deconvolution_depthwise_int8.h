@@ -29,14 +29,7 @@ class DeconvolutionDepthwiseInt8CPUKernel : public ConvolutionBaseCPUKernel {
                                       const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                                       const lite::Primitive *primitive)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~DeconvolutionDepthwiseInt8CPUKernel() override {
-    delete sliding;
-    free(packed_weight_);
-    free(packed_input_);
-    if (need_align_) {
-      free(packed_output_);
-    }
-  };
+  ~DeconvolutionDepthwiseInt8CPUKernel() override;
 
   int Init() override;
   int ReSize() override;
@@ -52,7 +45,7 @@ class DeconvolutionDepthwiseInt8CPUKernel : public ConvolutionBaseCPUKernel {
   int16_t *packed_weight_;
   int16_t *packed_input_;
   int8_t *packed_output_;
-  int32_t *output_buffer;
+  int32_t *output_buffer_;
   bool need_align_ = false;
 };
 }  // namespace mindspore::kernel

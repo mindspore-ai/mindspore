@@ -15,7 +15,6 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/batchnorm.h"
-#include <cmath>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -28,7 +27,42 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BatchNorm;
 
 namespace mindspore::kernel {
+BatchnormCPUKernel::~BatchnormCPUKernel() {
+  if (mean_addr_ != nullptr) {
+    free(mean_addr_);
+    mean_addr_ = nullptr;
+  }
+  if (var_addr_ != nullptr) {
+    free(var_addr_);
+    var_addr_ = nullptr;
+  }
+}
+
+int BatchnormCPUKernel::InitConstTensor() {
+  auto mean = inputs_[1];
+  mean_addr_ = reinterpret_cast<float *>(malloc(mean->ElementsNum() * sizeof(float)));
+  if (mean_addr_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc buffer failed.";
+    return RET_ERROR;
+  }
+  memcpy(mean_addr_, mean->Data(), mean->ElementsNum() * sizeof(float));
+
+  auto variance = inputs_[2];
+  var_addr_ = reinterpret_cast<float *>(malloc(variance->ElementsNum() * sizeof(float)));
+  if (var_addr_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc buffer failed.";
+    return RET_ERROR;
+  }
+  memcpy(var_addr_, variance->Data(), variance->ElementsNum() * sizeof(float));
+  return RET_OK;
+}
+
 int BatchnormCPUKernel::Init() {
+  if (context_->infer_shape_interrupt_ && !context_->running_) {
+    SetNeedReInit();
+    return RET_OK;
+  }
+
   auto input_shapes = inputs_[0]->shape();
   auto n_dim = input_shapes.size();
   batchnorm_param_->channel_ = input_shapes[n_dim - 1];
@@ -37,11 +71,24 @@ int BatchnormCPUKernel::Init() {
     batchnorm_param_->unit_ *= input_shapes[i];
   }
   batchnorm_param_->op_parameter_.thread_num_ =
-    MSMIN(batchnorm_param_->op_parameter_.thread_num_, batchnorm_param_->unit_);
+    MSMIN(batchnorm_param_->op_parameter_.thread_num_, batchnorm_param_->channel_);
+
+  auto ret = InitConstTensor();
+  if (ret != 0) {
+    MS_LOG(ERROR) << "Batchnorm fp32 InitConstTensor failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
-int BatchnormCPUKernel::ReSize() { return RET_OK; }
+int BatchnormCPUKernel::ReSize() {
+  auto input_shapes = inputs_[0]->shape();
+  batchnorm_param_->unit_ = 1;
+  for (int i = 0; i < input_shapes.size() - 1; i++) {
+    batchnorm_param_->unit_ *= input_shapes[i];
+  }
+  return RET_OK;
+}
 
 int BatchnormCPUKernel::DoExecute(int task_id) {
   BatchNorm(out_addr_, in_addr_, mean_addr_, var_addr_, task_id, batchnorm_param_);
@@ -61,12 +108,10 @@ int BatchNormRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 int BatchnormCPUKernel::Run() {
   auto prepare_ret = Prepare();
   if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    MS_LOG(ERROR) << "Prepare fail! Ret error code: " << prepare_ret;
     return prepare_ret;
   }
   in_addr_ = reinterpret_cast<float *>(inputs_.at(0)->Data());
-  mean_addr_ = reinterpret_cast<float *>(inputs_.at(1)->Data());
-  var_addr_ = reinterpret_cast<float *>(inputs_.at(2)->Data());
   out_addr_ = reinterpret_cast<float *>(outputs_.at(0)->Data());
 
   int ret = LiteBackendParallelLaunch(BatchNormRun, this, batchnorm_param_->op_parameter_.thread_num_);

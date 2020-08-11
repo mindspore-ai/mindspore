@@ -25,10 +25,9 @@ typedef struct ScaleParameter {
   int axis_size_;
   int inner_size_;
   int axis_;
-  bool has_offset_;
-  // todo yangruoqi: axis
+  bool const_scale_ = false;
+  bool has_offset_ = false;
 } ScaleParameter;
 
 int DoScale(float *in_data, float *out_data, float *scale, float *offset, int task_id, ScaleParameter *scale_param);
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_SCALE_H_
-

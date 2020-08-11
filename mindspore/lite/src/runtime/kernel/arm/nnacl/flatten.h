@@ -24,4 +24,3 @@ typedef struct FlattenParameter {
 
 void Flatten(const void *input, void *output, FlattenParameter *flatten_param);
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FLATTEN_H_
-

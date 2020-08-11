@@ -31,14 +31,14 @@ class BatchnormCPUKernel : public LiteKernel {
                      const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                      const lite::Primitive *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
-    opParameter->thread_num_ = ctx->thread_num_;
     batchnorm_param_ = reinterpret_cast<BatchNormParameter *>(parameter);
   }
-  ~BatchnormCPUKernel() override = default;
+  ~BatchnormCPUKernel() override;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int InitConstTensor();
   int DoExecute(int tid);
 
  private:

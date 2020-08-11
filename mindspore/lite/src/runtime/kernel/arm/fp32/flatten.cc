@@ -32,6 +32,12 @@ int FlattenCPUKernel::Init() {
     SetNeedReInit();
     return RET_OK;
   }
+
+  ReSize();
+  return RET_OK;
+}
+
+int FlattenCPUKernel::ReSize() {
   auto output_shape = outputs_[0]->shape();
   flatten_param_->size = sizeof(float);
   for (int i = 0; i < output_shape.size(); i++) {
@@ -39,8 +45,6 @@ int FlattenCPUKernel::Init() {
   }
   return RET_OK;
 }
-
-int FlattenCPUKernel::ReSize() { return RET_OK; }
 
 int FlattenCPUKernel::Run() {
   auto prepare_ret = Prepare();
