@@ -121,7 +121,7 @@ int FullconnectionCPUKernel::Run() {
 
   LiteBackendParallelLaunch(FcFp32MatmulRun, this, thread_count_);
 
-  Row8x8Major2RowMajor(c_r8x8_ptr_, output_ptr, fc_param_->row_, fc_param_->col_);
+  Row8x8Major2RowMajor(c_r8x8_ptr_, output_ptr, fc_param_->row_, fc_param_->col_, fc_param_->col_);
   return RET_OK;
 }
 }  // namespace mindspore::kernel

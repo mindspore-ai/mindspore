@@ -171,6 +171,17 @@ int Convolution1x1CPUKernel::DoConv1x1(int task_id) {
   return RET_OK;
 }
 
+int Convolution1x1CPUKernel::DoConv1x1Post(int task_id) {
+  int cur_oc = MSMIN(thread_stride_, matmul_param_->col_ - task_id * thread_stride_);
+  if (cur_oc <= 0) {
+    return RET_OK;
+  }
+  float *src = pack_output_ + task_id * thread_stride_ * matmul_param_->row_8_;
+  float *dst = output_ptr_ + task_id * thread_stride_;
+  Row8x8Major2RowMajor(src, dst, matmul_param_->row_, cur_oc, matmul_param_->col_);
+  return RET_OK;
+}
+
 int Convolution1x1Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
   auto conv1x1 = reinterpret_cast<Convolution1x1CPUKernel *>(cdata);
   auto error_code = conv1x1->DoConv1x1(task_id);
@@ -178,6 +189,12 @@ int Convolution1x1Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
     MS_LOG(ERROR) << "Convolution1x1Run error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;
   }
+  return RET_OK;
+}
+
+int Convolution1x1Post(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+  auto conv1x1 = reinterpret_cast<Convolution1x1CPUKernel *>(cdata);
+  conv1x1->DoConv1x1Post(task_id);
   return RET_OK;
 }
 
@@ -200,7 +217,7 @@ int Convolution1x1CPUKernel::Run() {
       return RET_ERROR;
     }
 
-    Row8x8Major2RowMajor(pack_output_, output_ptr_, matmul_param_->row_, matmul_param_->col_);
+    LiteBackendParallelLaunch(Convolution1x1Post, this, thread_count_);
   }
   return RET_OK;
 }

@@ -46,6 +46,7 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
 
  public:
   int DoConv1x1(int task_id);
+  int DoConv1x1Post(int task_id);
 
  private:
   int InitConv1x1Param();
