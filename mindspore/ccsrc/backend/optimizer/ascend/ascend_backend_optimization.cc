@@ -125,6 +125,10 @@ void AddAscendIRFusionRulesPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVRuleCond4>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextRightRule>());
   ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLrV2>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneAssignCond1Fusion>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneAssignCond2Fusion>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneAssignCond3Fusion>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneAssignCond4Fusion>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond1Fusion>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond2Fusion>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond3Fusion>());
