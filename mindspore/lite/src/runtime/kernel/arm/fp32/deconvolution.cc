@@ -64,16 +64,14 @@ int DeConvolutionCPUKernel::ReSize() {
 }
 
 int DeConvolutionCPUKernel::InitWeightBias() {
+  bias_data_ = malloc(UP_ROUND(conv_param_->output_channel_, C4NUM) * sizeof(float));
+  if (bias_data_ == nullptr) {
+    MS_LOG(ERROR) << "deconv malloc bias_data_ error!";
+    return RET_ERROR;
+  }
+  memset(bias_data_, 0, UP_ROUND(conv_param_->output_channel_, C4NUM) * sizeof(float));
   if (in_tensors_.size() == 3) {
-    bias_data_ = malloc(UP_ROUND(conv_param_->output_channel_, C4NUM) * sizeof(float));
-    if (bias_data_ == nullptr) {
-      MS_LOG(ERROR) << "deconv malloc bias_data_ error!";
-      return RET_ERROR;
-    }
-    memset(bias_data_, 0, UP_ROUND(conv_param_->output_channel_, C4NUM) * sizeof(float));
     memcpy(bias_data_, in_tensors_[2]->Data(), conv_param_->output_channel_ * sizeof(float));
-  } else {
-    bias_data_ = nullptr;
   }
 
   size_t weight_pack_size = conv_param_->input_channel_ * conv_param_->kernel_w_ * conv_param_->kernel_h_ *
@@ -134,41 +132,21 @@ int DeConvFp32Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
   return RET_OK;
 }
 
-int DeConvFp32PostRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
-  auto deconv = reinterpret_cast<DeConvolutionCPUKernel *>(cdata);
-  auto error_code = deconv->DoPostFunc(task_id);
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "DeConvFp32PostRun error task_id[" << task_id << "] error_code[" << error_code << "]";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
 int DeConvolutionCPUKernel::DoDeconv(int task_id) {
   int oc = MSMIN(thread_stride_, UP_DIV(conv_param_->output_channel_, C8NUM) - task_id * thread_stride_);
-  if (oc <= 0) {
+  int oc_res = MSMIN(thread_stride_ * C8NUM, conv_param_->output_channel_ - task_id * thread_stride_ * C8NUM);
+  if (oc <= 0 || oc_res <= 0) {
     return RET_OK;
   }
 
-  MatMul(pack_input_, weight_ptr_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_,
-         tmp_buffer_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->row_8_, nullptr, ActType_No,
-         matmul_param_->deep_, matmul_param_->row_8_, oc * C8NUM * kernel_plane_, matmul_param_->col_, false);
+  auto tmp_buffer = tmp_buffer_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->row_8_;
+  MatMul(pack_input_, weight_ptr_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_, tmp_buffer,
+         nullptr, ActType_No, matmul_param_->deep_, matmul_param_->row_8_, oc * C8NUM * kernel_plane_,
+         matmul_param_->col_, false);
 
-  return RET_OK;
-}
-
-int DeConvolutionCPUKernel::DoPostFunc(int task_id) {
-  int oc = MSMIN(thread_stride_ * C8NUM, conv_param_->output_channel_ - task_id * thread_stride_ * C8NUM);
-  if (oc <= 0) {
-    return RET_OK;
-  }
-
-  float *bias =
-    (bias_data_ == nullptr) ? nullptr : reinterpret_cast<float *>(bias_data_) + thread_stride_ * task_id * C8NUM;
-
-  DeConvPostFp32C8x8(tmp_buffer_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->row_8_,
-                     pack_output_ + task_id * thread_stride_ * C8NUM * output_plane_, bias,
-                     output_ptr_ + task_id * thread_stride_ * C8NUM, oc, conv_param_);
+  DeConvPostFp32C8x8(tmp_buffer, pack_output_ + task_id * thread_stride_ * C8NUM * output_plane_,
+                     reinterpret_cast<float *>(bias_data_) + thread_stride_ * task_id * C8NUM,
+                     output_ptr_ + task_id * thread_stride_ * C8NUM, oc_res, conv_param_);
   return RET_OK;
 }
 
@@ -211,12 +189,6 @@ int DeConvolutionCPUKernel::Run() {
     int error_code = LiteBackendParallelLaunch(DeConvFp32Run, this, thread_count_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "deconv fp32 run error! error_code[" << error_code << "]";
-      return RET_ERROR;
-    }
-
-    error_code = LiteBackendParallelLaunch(DeConvFp32PostRun, this, thread_count_);
-    if (error_code != RET_OK) {
-      MS_LOG(ERROR) << "deconv fp32 postrun error! error_code[" << error_code << "]";
       return RET_ERROR;
     }
   }

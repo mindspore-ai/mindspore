@@ -33,24 +33,27 @@ void PackDeConvWeightFp32(const float *weight, float *dst, int input_channel, in
   return;
 }
 
-int DeConvFp32(const float *input, const float *weight, float *output, float *tmp_buffer,
-               StrassenMatMulParameter matmul_param) {
-  return StrassenMatmul(input, weight, output, &matmul_param, FP32_STRASSEN_MAX_RECURSION, 0, tmp_buffer);
-}
-
 int DeConvPostFp32C8x8(const float *src, float *tmp, const float *bias, float *dst, int output_channel,
                        ConvParameter *conv_param) {
   /* row8x8-major(ih*iw x oc*kh*kw)  ->  row8-major(oh*ow x oc) */
   size_t input_plane = conv_param->input_w_ * conv_param->input_h_;
   size_t kernel_plane = conv_param->kernel_w_ * conv_param->kernel_h_;
   size_t output_plane = conv_param->output_w_ * conv_param->output_h_;
-  int oc8 = UP_DIV(output_channel, C8NUM);
+  int oc8 = UP_ROUND(output_channel, C8NUM);
   int in_plane8 = UP_ROUND(input_plane, C8NUM);
+  int src_iw_stride = C8NUM;
+  int src_ih_stride = conv_param->input_w_ * C8NUM;
+  int src_kw_stride = in_plane8 * C8NUM;
+  int src_kh_stride = in_plane8 * conv_param->kernel_w_ * C8NUM;
+  int dst_oh_stride = conv_param->output_w_ * C8NUM;
+  int dst_ow_stride = C8NUM;
+  int dst_kh_stride = conv_param->dilation_h_ * conv_param->output_w_ * C8NUM;
+  int dst_kw_stride = conv_param->dilation_w_ * C8NUM;
 
-  for (int c = 0; c < oc8; c++) {
-    float *dst_ptr = tmp + c * output_plane * C8NUM;
-    const float *src_ptr = src + c * in_plane8 * kernel_plane * C8NUM;
-    memset(dst_ptr, 0, output_plane * C8NUM * sizeof(int32_t));
+  for (int c = 0; c < oc8; c += 8) {
+    float *dst_ptr = tmp + c * output_plane;
+    const float *src_ptr = src + c * in_plane8 * kernel_plane;
+    memset(dst_ptr, 0, output_plane * C8NUM * sizeof(float));
 
     for (int ih = 0; ih < conv_param->input_h_; ih++) {
       for (int iw = 0; iw < conv_param->input_w_; iw++) {
@@ -63,14 +66,31 @@ int DeConvPostFp32C8x8(const float *src, float *tmp, const float *bias, float *d
         int kw_end = MSMIN(conv_param->kernel_w_, UP_DIV(conv_param->output_w_ - ow, conv_param->dilation_w_));
         for (int kh = kh_start; kh < kh_end; kh++) {
           for (int kw = kw_start; kw < kw_end; kw++) {
-            int src_index = ih * conv_param->input_w_ * C8NUM + iw * C8NUM +
-                            kh * in_plane8 * conv_param->kernel_w_ * C8NUM + kw * in_plane8 * C8NUM;
-            int dst_index = oh * conv_param->output_w_ * C8NUM + ow * C8NUM +
-                            kh * conv_param->dilation_h_ * conv_param->output_w_ * C8NUM +
-                            kw * conv_param->dilation_w_ * C8NUM;
+            int src_index = ih * src_ih_stride + iw * src_iw_stride + kh * src_kh_stride + kw * src_kw_stride;
+            int dst_index = oh * dst_oh_stride + ow * dst_ow_stride + kh * dst_kh_stride + kw * dst_kw_stride;
+            float *tmp_dst = dst_ptr + dst_index;
+            float *tmp_src = src_ptr + src_index;
+#ifdef ENABLE_ARM64
+            asm volatile(
+              "mov x0, %[tmp_src] \n"
+              "mov x1, %[tmp_dst] \n"
+
+              "ld1 {v0.4s, v1.4s}, [x0] \n"
+              "ld1 {v2.4s, v3.4s}, [x1] \n"
+
+              "fadd v0.4s, v0.4s, v2.4s \n"
+              "fadd v1.4s, v1.4s, v3.4s \n"
+
+              "st1 {v0.4s, v1.4s}, [x1] \n"
+
+              :
+              : [ tmp_src ] "r"(tmp_src), [ tmp_dst ] "r"(tmp_dst)
+              : "x0", "x1", "v0", "v1", "v2", "v3");
+#else
             for (int i = 0; i < C8NUM; i++) {
-              dst_ptr[dst_index + i] += src_ptr[src_index + i];
+              tmp_dst[i] += tmp_src[i];
             }
+#endif
           } /*kw*/
         }   /*kh*/
       }     /*iw*/

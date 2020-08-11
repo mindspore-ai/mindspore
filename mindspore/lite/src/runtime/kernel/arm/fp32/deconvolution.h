@@ -43,7 +43,6 @@ class DeConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
 
  public:
   int DoDeconv(int task_id);
-  int DoPostFunc(int task_id);
 
  private:
   int InitParam();
