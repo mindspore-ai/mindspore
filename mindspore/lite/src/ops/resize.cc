@@ -30,6 +30,8 @@ int Resize::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   if (input == nullptr) {
     return RET_NULL_PTR;
   }
+  MS_ASSERT(input->shape().size() == kInputRank);
+
   auto output = outputs_.front();
   if (output == nullptr) {
     return RET_NULL_PTR;

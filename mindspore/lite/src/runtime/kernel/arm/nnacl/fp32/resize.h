@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_RESIZE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_RESIZE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_RESIZE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_RESIZE_H_
 
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
@@ -22,18 +22,6 @@
 #include <memory.h>
 #include "nnacl/op_base.h"
 #include "schema/ops_generated.h"
-#include "nnacl/errorcode.h"
-
-using mindspore::schema::ResizeMethod;
-
-typedef struct ResizeParameter {
-  OpParameter op_parameter_;
-  ResizeMethod method_;
-  int64_t new_height_;
-  int64_t new_width_;
-  bool align_corners_;
-  bool preserve_aspect_ratio_;
-} ResizeParameter;
 
 int ResizeBilinear(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
                    bool align_corners, int tid, int thread_num);
@@ -41,5 +29,5 @@ int ResizeBilinear(const float *input_data, float *output_data, const int *input
 int ResizeNearestNeighbor(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
                           int tid, int thread_num);
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_RESIZE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_RESIZE_H_
 

@@ -167,6 +167,12 @@ typedef struct ReshapeQuantArg {
   int output_activation_max_;
 } ReshapeQuantArg;
 
+typedef struct QuantMulArg {
+  int32_t multiplier_;
+  int left_shift_;
+  int right_shift_;
+} QuantMulArg;
+
 void QuantizeMultiplier(double double_multiplier, int32_t *quantized_multiplier, int *shift);
 
 inline void QuantizeMultiplierSmallerThanOne(double double_multiplier, int32_t *quantized_multiplier,

@@ -13,31 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_RESIZE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_RESIZE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_RESIZE_BASE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_RESIZE_BASE_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/base/resize_base.h"
+#include "nnacl/resize_parameter.h"
 
 using mindspore::schema::PrimitiveType_Resize;
 using mindspore::schema::ResizeMethod;
 
 namespace mindspore::kernel {
-class ResizeCPUKernel : public ResizeBaseCPUKernel {
+class ResizeBaseCPUKernel : public LiteKernel {
  public:
-  ResizeCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+  ResizeBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                   const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                   const lite::Primitive *primitive)
-      : ResizeBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+    : LiteKernel(parameter, inputs, outputs, ctx, primitive), context_(ctx) {}
 
-  ~ResizeCPUKernel() = default;
+  ~ResizeBaseCPUKernel() = default;
 
   int Init() override;
   int ReSize() override { return 0; };
-  int Run() override;
-  int RunImpl(int task_id);
+
+ protected:
+  const lite::Context *context_;
+  int method_;
+  int64_t new_height_;
+  int64_t new_width_;
+  bool align_corners_;
+  bool preserve_aspect_ratio;
+
+ private:
+  int CheckParameters();
+  int CheckInputsOuputs();
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_RESIZE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_RESIZE_BASE_H_

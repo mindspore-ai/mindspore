@@ -44,8 +44,10 @@ int Pad::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Te
   }
   auto input_shape = input->shape();
   std::vector<int> output_shape;
+  MS_ASSERT(input->shape().size() <= kInputRank);
   for (size_t i = 0; i < input_shape.size(); i++) {
-    auto shape = input_shape[i] + (*paddings)[2 * i] + (*paddings)[2 * i + 1];
+    auto paddings_index = i + kInputRank - input_shape.size();
+    auto shape = input_shape[i] + (*paddings)[2 * paddings_index] + (*paddings)[2 * paddings_index + 1];
     output_shape.push_back(shape);
   }
 

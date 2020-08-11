@@ -57,7 +57,7 @@
 #include "src/runtime/kernel/arm/nnacl/unique.h"
 #include "src/runtime/kernel/arm/nnacl/scale.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/gatherNd.h"
-#include "src/runtime/kernel/arm/nnacl/resize.h"
+#include "src/runtime/kernel/arm/nnacl/resize_parameter.h"
 #include "src/runtime/kernel/arm/nnacl/scatter_nd.h"
 #include "src/runtime/kernel/arm/nnacl/batch_to_space.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/crop.h"
@@ -1023,7 +1023,7 @@ OpParameter *PopulateResizeParameter(const lite::Primitive *primitive) {
   }
   resize_param->op_parameter_.type_ = primitive->Type();
   auto param = primitive->Value()->value_as_Resize();
-  resize_param->method_ = param->method();
+  resize_param->method_ = static_cast<int>(param->method());
   resize_param->new_height_ = param->newHeight();
   resize_param->new_width_ = param->newWidth();
   resize_param->align_corners_ = param->alignCorners();
