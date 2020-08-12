@@ -31,7 +31,8 @@ class OneHot(cde.OneHotOp):
     Tensor operation to apply one hot encoding.
 
     Args:
-        num_classes (int): Number of classes of the label, it should be bigger than feature size.
+        num_classes (int): Number of classes of the label
+            it should be bigger than or equal to label class number.
 
     Raises:
         RuntimeError: feature size is bigger than num_classes.

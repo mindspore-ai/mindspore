@@ -382,6 +382,25 @@ def test_bucket_batch_multi_column():
     assert same_shape_output == same_shape_expected_output
     assert variable_shape_output == variable_shape_expected_output
 
+def test_bucket_batch_get_dataset_size():
+    dataset = ds.GeneratorDataset((lambda: generate_sequential_same_shape(10)), ["col1"])
+
+    column_names = ["col1"]
+    bucket_boundaries = [1, 2, 3]
+    bucket_batch_sizes = [3, 3, 2, 2]
+    element_length_function = (lambda x: x[0] % 4)
+
+    dataset = dataset.bucket_batch_by_length(column_names, bucket_boundaries,
+                                             bucket_batch_sizes, element_length_function)
+
+    data_size = dataset.get_dataset_size()
+
+    num_rows = 0
+    for _ in dataset.create_dict_iterator():
+        num_rows += 1
+
+    assert data_size == num_rows
+
 
 if __name__ == '__main__':
     test_bucket_batch_invalid_input()
@@ -394,3 +413,4 @@ if __name__ == '__main__':
     test_bucket_batch_drop_remainder()
     test_bucket_batch_default_length_function()
     test_bucket_batch_multi_column()
+    test_bucket_batch_get_dataset_size()
