@@ -1,4 +1,4 @@
-package cn.huawei.mindspore.context;
+package com.mindspore.lite.context;
 
 public class DeviceType {
     public static final int DT_CPU = 0;

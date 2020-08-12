@@ -21,7 +21,7 @@
 #include "include/ms_tensor.h"
 #include "ir/dtype/type_id.h"
 
-extern "C" JNIEXPORT jlong JNICALL Java_cn_huawei_mindspore_MSTensor_createMSTensor(JNIEnv *env, jobject thiz,
+extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_MSTensor_createMSTensor(JNIEnv *env, jobject thiz,
                                                                                     jint data_type, jintArray shape,
                                                                                     jint shape_len) {
   jboolean is_copy = false;
@@ -39,7 +39,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_cn_huawei_mindspore_MSTensor_createMSTen
   return reinterpret_cast<jlong>(ms_tensor);
 }
 
-extern "C" JNIEXPORT jintArray JNICALL Java_cn_huawei_mindspore_MSTensor_getShape(JNIEnv *env, jobject thiz,
+extern "C" JNIEXPORT jintArray JNICALL Java_com_mindspore_lite_MSTensor_getShape(JNIEnv *env, jobject thiz,
                                                                                   jlong tensor_ptr) {
   auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
@@ -59,7 +59,7 @@ extern "C" JNIEXPORT jintArray JNICALL Java_cn_huawei_mindspore_MSTensor_getShap
   return shape;
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_cn_huawei_mindspore_MSTensor_setShape(JNIEnv *env, jobject thiz,
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_MSTensor_setShape(JNIEnv *env, jobject thiz,
                                                                                  jlong tensor_ptr, jintArray shape,
                                                                                  jint shape_len) {
   jboolean is_copy = false;
@@ -78,7 +78,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_cn_huawei_mindspore_MSTensor_setShape
   return ret == shape_len;
 }
 
-extern "C" JNIEXPORT jint JNICALL Java_cn_huawei_mindspore_MSTensor_getDataType(JNIEnv *env, jobject thiz,
+extern "C" JNIEXPORT jint JNICALL Java_com_mindspore_lite_MSTensor_getDataType(JNIEnv *env, jobject thiz,
                                                                                 jlong tensor_ptr) {
   auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
@@ -89,7 +89,7 @@ extern "C" JNIEXPORT jint JNICALL Java_cn_huawei_mindspore_MSTensor_getDataType(
   return jint(ms_tensor_ptr->data_type());
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_cn_huawei_mindspore_MSTensor_setDataType(JNIEnv *env, jobject thiz,
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_MSTensor_setDataType(JNIEnv *env, jobject thiz,
                                                                                     jlong tensor_ptr, jint data_type) {
   auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
@@ -101,7 +101,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_cn_huawei_mindspore_MSTensor_setDataT
   return ret == data_type;
 }
 
-extern "C" JNIEXPORT jbyteArray JNICALL Java_cn_huawei_mindspore_MSTensor_getData(JNIEnv *env, jobject thiz,
+extern "C" JNIEXPORT jbyteArray JNICALL Java_com_mindspore_lite_MSTensor_getData(JNIEnv *env, jobject thiz,
                                                                                   jlong tensor_ptr) {
   auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
@@ -120,7 +120,7 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_cn_huawei_mindspore_MSTensor_getDat
   return ret;
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_cn_huawei_mindspore_MSTensor_setData(JNIEnv *env, jobject thiz,
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_MSTensor_setData(JNIEnv *env, jobject thiz,
                                                                                 jlong tensor_ptr, jbyteArray data,
                                                                                 jlong data_len) {
   auto *pointer = reinterpret_cast<void *>(tensor_ptr);
@@ -140,7 +140,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_cn_huawei_mindspore_MSTensor_setData(
   return static_cast<jboolean>(true);
 }
 
-extern "C" JNIEXPORT jlong JNICALL Java_cn_huawei_mindspore_MSTensor_size(JNIEnv *env, jobject thiz, jlong tensor_ptr) {
+extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_MSTensor_size(JNIEnv *env, jobject thiz, jlong tensor_ptr) {
   auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Tensor pointer from java is nullptr");
@@ -150,7 +150,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_cn_huawei_mindspore_MSTensor_size(JNIEnv
   return ms_tensor_ptr->Size();
 }
 
-extern "C" JNIEXPORT jint JNICALL Java_cn_huawei_mindspore_MSTensor_elementsNum(JNIEnv *env, jobject thiz,
+extern "C" JNIEXPORT jint JNICALL Java_com_mindspore_lite_MSTensor_elementsNum(JNIEnv *env, jobject thiz,
                                                                                 jlong tensor_ptr) {
   auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
@@ -161,7 +161,7 @@ extern "C" JNIEXPORT jint JNICALL Java_cn_huawei_mindspore_MSTensor_elementsNum(
   return ms_tensor_ptr->ElementsNum();
 }
 
-extern "C" JNIEXPORT void JNICALL Java_cn_huawei_mindspore_MSTensor_free(JNIEnv *env, jobject thiz, jlong tensor_ptr) {
+extern "C" JNIEXPORT void JNICALL Java_com_mindspore_lite_MSTensor_free(JNIEnv *env, jobject thiz, jlong tensor_ptr) {
   auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Tensor pointer from java is nullptr");

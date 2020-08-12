@@ -1,4 +1,4 @@
-package cn.huawei.mindspore;
+package com.mindspore.lite;
 
 public class MSTensor {
     private long tensorPtr;

@@ -20,7 +20,7 @@
 #include "common/ms_log.h"
 #include "include/model.h"
 
-extern "C" JNIEXPORT jlong JNICALL Java_cn_huawei_mindspore_Model_loadModel(JNIEnv *env, jobject thiz, jobject buffer) {
+extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_Model_loadModel(JNIEnv *env, jobject thiz, jobject buffer) {
   MS_LOGD("Start getting buffer from java");
   if (buffer == nullptr) {
     MS_LOGE("Buffer from java is nullptr");
@@ -39,7 +39,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_cn_huawei_mindspore_Model_loadModel(JNIE
   return reinterpret_cast<jlong>(model);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_cn_huawei_mindspore_Model_free(JNIEnv *env, jobject thiz, jlong model_ptr) {
+extern "C" JNIEXPORT void JNICALL Java_com_mindspore_lite_Model_free(JNIEnv *env, jobject thiz, jlong model_ptr) {
   auto *pointer = reinterpret_cast<void *>(model_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Model pointer from java is nullptr");

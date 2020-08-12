@@ -1,14 +1,12 @@
-package cn.huawei.mindspore;
+package com.mindspore.lite;
 
-import cn.huawei.mindspore.context.Context;
-
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import com.mindspore.lite.context.Context;
 
 public class LiteSession {
     static {

@@ -1,4 +1,4 @@
-package cn.huawei.mindspore.context;
+package com.mindspore.lite.context;
 
 public class Context {
     private long contextPtr;
