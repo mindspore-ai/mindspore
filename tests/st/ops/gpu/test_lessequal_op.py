@@ -38,12 +38,27 @@ def test_lessequal():
     x = Tensor(np.array([[1, 2, 3]]).astype(np.float32))
     y = Tensor(np.array([[2]]).astype(np.float32))
     expect = [[True, True, False]]
+    x1 = Tensor(np.array([[1, 2, 3]]).astype(np.int16))
+    y1 = Tensor(np.array([[2]]).astype(np.int16))
+    expect = [[True, True, False]]
+    x2 = Tensor(np.array([[1, 2, 3]]).astype(np.uint8))
+    y2 = Tensor(np.array([[2]]).astype(np.uint8))
+    expect = [[True, True, False]]
+
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     lessequal = Net()
     output = lessequal(x, y)
+    assert np.all(output.asnumpy() == expect)
+    output = lessequal(x1, y1)
+    assert np.all(output.asnumpy() == expect)
+    output = lessequal(x2, y2)
     assert np.all(output.asnumpy() == expect)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     lessequal = Net()
     output = lessequal(x, y)
+    assert np.all(output.asnumpy() == expect)
+    output = lessequal(x1, y1)
+    assert np.all(output.asnumpy() == expect)
+    output = lessequal(x2, y2)
     assert np.all(output.asnumpy() == expect)

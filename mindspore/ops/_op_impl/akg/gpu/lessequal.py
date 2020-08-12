@@ -23,6 +23,8 @@ lessequal_op_info = AkgGpuRegOp("LessEqual") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.BOOL_Default) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.BOOL_Default) \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.I16_Default, DataType.I16_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.U8_Default, DataType.U8_Default, DataType.BOOL_Default) \
     .get_op_info()
 
 
