@@ -71,7 +71,7 @@ int TimeProfile::ReadInputFile() {
   }
   auto tensor_data_size = inTensor->Size();
   if (size != tensor_data_size) {
-    MS_LOG(ERROR) << "Input binary file size error, required: " << tensor_data_size << " in fact: %zu" << size;
+    MS_LOG(ERROR) << "Input binary file size error, required: " << tensor_data_size << " in fact: " << size;
     return RET_ERROR;
   }
   auto input_data = inTensor->MutableData();
@@ -90,7 +90,7 @@ int TimeProfile::LoadInput() {
   } else {
     auto status = ReadInputFile();
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "ReadInputFile error, " << status;
+      MS_LOG(ERROR) << "ReadInputFile error " << status;
       return RET_ERROR;
     }
   }
@@ -149,10 +149,10 @@ int TimeProfile::InitCallbackParameter() {
     uint64_t opEnd = GetTimeUs();
 
     if (after_inputs.empty()) {
-      MS_LOG(INFO) << "The num of beforeInputs is empty";
+      MS_LOG(INFO) << "The num of after inputs is empty";
     }
     if (after_outputs.empty()) {
-      MS_LOG(INFO) << "The num of beforeOutputs is empty";
+      MS_LOG(INFO) << "The num of after outputs is empty";
     }
 
     float cost = static_cast<float>(opEnd - op_begin_) / 1000.0f;
@@ -297,22 +297,34 @@ int TimeProfile::RunTimeProfile() {
   size_t size = 0;
   char *graphBuf = ReadFile(_flags->model_path_.c_str(), &size);
   if (graphBuf == nullptr) {
-    MS_LOG(ERROR) << "Load graph failed while running %s", modelName.c_str();
+    MS_LOG(ERROR) << "Load graph failed while running " << modelName.c_str();
+    delete graphBuf;
+    delete session_;
     return RET_ERROR;
   }
   auto model = lite::Model::Import(graphBuf, size);
-
+  delete graphBuf;
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "Import model file failed while running " << modelName.c_str();
+    delete session_;
+    delete model;
+    return RET_ERROR;
+  }
   auto ret = session_->CompileGraph(model);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Compile graph failed.";
+    delete session_;
+    delete model;
     return RET_ERROR;
   }
 
   // load input
   MS_LOG(INFO) << "start generate input data";
   auto status = LoadInput();
-  if (status != 0) {
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "Generate input data error";
+    delete session_;
+    delete model;
     return status;
   }
 
@@ -324,6 +336,8 @@ int TimeProfile::RunTimeProfile() {
     ret = session_->RunGraph(before_call_back_, after_call_back_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Run graph failed.";
+      delete session_;
+      delete model;
       return RET_ERROR;
     }
     auto outputs = session_->GetOutputs();
@@ -345,14 +359,8 @@ int TimeProfile::RunTimeProfile() {
 
   printf("\n total time:     %5.5f ms,   kernel cost:   %5.5f ms \n\n", runCost, op_cost_total_ / _flags->loop_count_);
   printf("-------------------------------------------------------------------------\n");
-
-  for (auto &msInput : ms_inputs_) {
-    delete msInput;
-  }
-  ms_inputs_.clear();
-  delete graphBuf;
-  delete session_;
   delete model;
+  delete session_;
   return ret;
 }
 

@@ -21,7 +21,10 @@
 
 namespace mindspore::lite {
 ModelImpl *ModelImpl::Import(const char *model_buf, size_t size) {
-  MS_EXCEPTION_IF_NULL(model_buf);
+  if (model_buf == nullptr) {
+    MS_LOG(ERROR) << "The model buf is nullptr";
+    return nullptr;
+  }
   flatbuffers::Verifier verify((const uint8_t *)model_buf, size);
   if (!schema::VerifyMetaGraphBuffer(verify)) {
     MS_LOG(ERROR) << "The buffer is invalid and fail to create graph.";

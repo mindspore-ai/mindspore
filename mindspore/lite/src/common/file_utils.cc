@@ -67,7 +67,7 @@ std::string RealPath(const char *path) {
     MS_LOG(ERROR) << "path is too long";
     return "";
   }
-  std::shared_ptr<char> resolvedPath(new (std::nothrow) char[PATH_MAX]{0});
+  auto resolvedPath = std::make_unique<char[]>(PATH_MAX);
   if (resolvedPath == nullptr) {
     MS_LOG(ERROR) << "new resolvedPath failed";
     return "";
