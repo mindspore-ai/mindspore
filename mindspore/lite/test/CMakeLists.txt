@@ -289,6 +289,7 @@ set(TEST_SRC
     ${TEST_DIR}/main.cc
     ${TEST_DIR}/ut/src/runtime/kernel/arm/common/pack_tests.cc
     ${TEST_DIR}/ut/src/infer_test.cc
+    ${TEST_DIR}/ut/src/utils_test.cc
 )
 
 if (SUPPORT_TRAIN)

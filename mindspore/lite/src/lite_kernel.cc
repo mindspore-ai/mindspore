@@ -42,11 +42,16 @@ int LiteKernel::DecOutTensorRefCount() {
 std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphInputKernels(
   const std::vector<kernel::LiteKernel *> &kernels) {
   std::vector<kernel::LiteKernel *> input_kernels;
-  for (const auto kernel : kernels) {
-    for (auto input : kernel->in_kernels()) {
+  for (const auto &kernel : kernels) {
+    if (kernel->in_kernels().empty() && !kernel->in_tensors().empty()) {
+      input_kernels.emplace_back(kernel);
+      continue;
+    }
+    for (const auto &input : kernel->in_kernels()) {
       auto iter = std::find(kernels.begin(), kernels.end(), input);
-      if (iter == kernels.end()) {
-        input_kernels.emplace_back(input);
+      auto item = std::find(input_kernels.begin(), input_kernels.end(), kernel);
+      if (iter == kernels.end() && item == input_kernels.end()) {
+        input_kernels.emplace_back(kernel);
       }
     }
   }
@@ -56,11 +61,16 @@ std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphInputKernels(
 std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphOutputKernels(
   const std::vector<kernel::LiteKernel *> &kernels) {
   std::vector<kernel::LiteKernel *> output_kernels;
-  for (const auto kernel : kernels) {
-    for (const auto output : kernel->out_kernels()) {
+  for (const auto &kernel : kernels) {
+    if (kernel->out_kernels().empty() && !kernel->out_tensors().empty()) {
+      output_kernels.emplace_back(kernel);
+      continue;
+    }
+    for (const auto &output : kernel->out_kernels()) {
       auto iter = std::find(kernels.begin(), kernels.end(), output);
-      if (iter == kernels.end()) {
-        output_kernels.emplace_back(output);
+      auto item = std::find(output_kernels.begin(), output_kernels.end(), kernel);
+      if (iter == kernels.end() && item == output_kernels.end()) {
+        output_kernels.emplace_back(kernel);
       }
     }
   }
