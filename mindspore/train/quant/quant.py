@@ -435,9 +435,9 @@ class ExportToQuantInferNetwork:
         return network
 
 
-def export(network, *inputs, file_name, mean=127.5, std_dev=127.5, file_format='GEIR'):
+def export(network, *inputs, file_name, mean=127.5, std_dev=127.5, file_format='AIR'):
     """
-    Exports MindSpore quantization predict model to deploy with GEIR.
+    Exports MindSpore quantization predict model to deploy with AIR.
 
     Args:
         network (Cell): MindSpore network produced by `convert_quant_network`.
@@ -445,17 +445,17 @@ def export(network, *inputs, file_name, mean=127.5, std_dev=127.5, file_format='
         file_name (str): File name of model to export.
         mean (int): Input data mean. Default: 127.5.
         std_dev (int, float): Input data variance. Default: 127.5.
-        file_format (str): MindSpore currently supports 'GEIR', 'ONNX' and 'MINDIR' format for exported
-            quantization aware model. Default: 'GEIR'.
+        file_format (str): MindSpore currently supports 'AIR', 'ONNX' and 'MINDIR' format for exported
+            quantization aware model. Default: 'AIR'.
 
-            - GEIR: Graph Engine Intermidiate Representation. An intermidiate representation format of
+            - AIR: Graph Engine Intermidiate Representation. An intermidiate representation format of
               Ascend model.
             - MINDIR: MindSpore Native Intermidiate Representation for Anf. An intermidiate representation format
               for MindSpore models.
               Recommended suffix for output file is '.mindir'.
     """
     supported_device = ["Ascend", "GPU"]
-    supported_formats = ['GEIR', 'MINDIR']
+    supported_formats = ['AIR', 'MINDIR']
 
     mean = validator.check_type("mean", mean, (int, float))
     std_dev = validator.check_type("std_dev", std_dev, (int, float))

@@ -34,5 +34,5 @@ cifar_cfg = edict({
     'keep_checkpoint_max': 10,
     'checkpoint_path': './train_googlenet_cifar10-125_390.ckpt',
     'onnx_filename': 'googlenet.onnx',
-    'geir_filename': 'googlenet.geir'
+    'air_filename': 'googlenet.air'
 })

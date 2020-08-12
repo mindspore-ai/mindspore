@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-export quantization aware training network to infer `GEIR` backend.
+export quantization aware training network to infer `AIR` backend.
 """
 
 import argparse
@@ -53,4 +53,4 @@ if __name__ == "__main__":
 
     # export network
     inputs = Tensor(np.ones([1, 1, cfg.image_height, cfg.image_width]), mindspore.float32)
-    quant.export(network, inputs, file_name="lenet_quant", file_format='GEIR')
+    quant.export(network, inputs, file_name="lenet_quant", file_format='AIR')

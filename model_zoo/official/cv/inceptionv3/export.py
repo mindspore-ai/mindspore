@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-##############export checkpoint file into geir and onnx models#################
+##############export checkpoint file into air and onnx models#################
 """
 import argparse
 import numpy as np
@@ -37,4 +37,4 @@ if __name__ == '__main__':
 
     input_arr = Tensor(np.random.uniform(0.0, 1.0, size=[1, 3, 299, 299]), ms.float32)
     export(net, input_arr, file_name=cfg.onnx_filename, file_format="ONNX")
-    export(net, input_arr, file_name=cfg.geir_filename, file_format="GEIR")
+    export(net, input_arr, file_name=cfg.air_filename, file_format="AIR")

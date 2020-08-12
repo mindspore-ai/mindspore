@@ -87,8 +87,12 @@ def test_save_graph():
     x = Tensor(np.random.rand(2, 1, 2, 3).astype(np.float32))
     y = Tensor(np.array([1.2]).astype(np.float32))
     out_put = net(x, y)
-    _save_graph(network=net, file_name="net-graph.meta")
+    output_file = "net-graph.meta"
+    _save_graph(network=net, file_name=output_file)
     out_me_list.append(out_put)
+    assert os.path.exists(output_file)
+    os.chmod(output_file, stat.S_IWRITE)
+    os.remove(output_file)
 
 
 def test_save_checkpoint():
@@ -318,7 +322,8 @@ class MYNET(nn.Cell):
 def test_export():
     net = MYNET()
     input_data = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]).astype(np.float32))
-    export(net, input_data, file_name="./me_export.pb", file_format="GEIR")
+    with pytest.raises(ValueError):
+        export(net, input_data, file_name="./me_export.pb", file_format="AIR")
 
 
 @non_graph_engine

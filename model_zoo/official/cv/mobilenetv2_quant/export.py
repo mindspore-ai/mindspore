@@ -50,5 +50,5 @@ if __name__ == '__main__':
     # export network
     print("============== Starting export ==============")
     inputs = Tensor(np.ones([1, 3, cfg.image_height, cfg.image_width]), mindspore.float32)
-    quant.export(network, inputs, file_name="mobilenet_quant", file_format='GEIR')
+    quant.export(network, inputs, file_name="mobilenet_quant", file_format='AIR')
     print("============== End export ==============")
