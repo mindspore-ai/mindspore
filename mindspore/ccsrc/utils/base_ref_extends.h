@@ -19,7 +19,7 @@
 #include <memory>
 #include <string>
 
-#include "utils/base_ref_py.h"
+#include "pybind_api/ir/base_ref_py.h"
 #include "base/base_ref.h"
 
 namespace mindspore {

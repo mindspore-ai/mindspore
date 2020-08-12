@@ -30,7 +30,7 @@
 #include "frontend/operator/ops.h"
 #include "ir/manager.h"
 #include "ir/func_graph_cloner.h"
-#include "utils/primitive_py.h"
+#include "pybind_api/ir/primitive_py.h"
 #include "utils/convert_utils.h"
 #include "utils/primitive_utils.h"
 #include "debug/draw.h"

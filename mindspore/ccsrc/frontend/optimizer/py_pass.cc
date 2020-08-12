@@ -22,7 +22,7 @@
 
 #include "ir/func_graph.h"
 #include "ir/manager.h"
-#include "utils/primitive_py.h"
+#include "pybind_api/ir/primitive_py.h"
 #include "pipeline/jit/parse/parse_base.h"
 #include "pipeline/jit/resource.h"
 

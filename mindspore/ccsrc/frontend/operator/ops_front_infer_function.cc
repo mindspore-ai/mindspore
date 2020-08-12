@@ -24,7 +24,7 @@
 #include "abstract/abstract_value.h"
 #include "pipeline/jit/static_analysis/prim.h"
 #include "abstract/param_validator.h"
-#include "utils/tensor_py.h"
+#include "pybind_api/ir/tensor_py.h"
 #include "frontend/operator/ops.h"
 #include "abstract/infer_functions.h"
 namespace mindspore {

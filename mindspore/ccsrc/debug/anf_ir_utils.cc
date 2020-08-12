@@ -27,7 +27,7 @@
 #include "utils/symbolic.h"
 #include "ir/meta_func_graph.h"
 #include "ir/param_value.h"
-#include "utils/tensor_py.h"
+#include "pybind_api/ir/tensor_py.h"
 #include "pipeline/jit/parse/python_adapter.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "frontend/operator/composite/composite.h"
