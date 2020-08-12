@@ -26,7 +26,7 @@ void CaffePRelu(float *input, float *output, CaffePReluParameter *prelu_param_, 
     if (input[i] > 0) {
       output[i] = input[i];
     } else {
-      if (prelu_param_->channeShared) {
+      if (!prelu_param_->channeShared) {
         int temp = i % prelu_param_->channel_num_;
         output[i] = input[i] * prelu_param_->negtive_slope_[temp];
       } else {

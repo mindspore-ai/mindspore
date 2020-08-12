@@ -532,6 +532,7 @@ table MatMul {
 
 table CaffePReLU {
     channelShared : bool = false;
+    slope: [float];
 }
 
 table LeakyReLU {
@@ -847,7 +848,7 @@ table OneHot {
 table Lstm{
     bidirection: bool = false;
 }
- 
+
 table PriorBox {
     min_sizes: [int];
     max_sizes: [int];
