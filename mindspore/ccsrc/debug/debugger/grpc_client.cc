@@ -15,9 +15,11 @@
  */
 
 #include <thread>
+#include <vector>
 #include "debug/debugger/grpc_client.h"
 #include "utils/log_adapter.h"
 
+using debugger::Chunk;
 using debugger::EventListener;
 using debugger::EventReply;
 using debugger::EventReply_Status_FAILED;
@@ -25,6 +27,8 @@ using debugger::GraphProto;
 using debugger::Metadata;
 using debugger::TensorProto;
 using debugger::WatchpointHit;
+
+#define CHUNK_SIZE 1024 * 1024 * 3
 
 namespace mindspore {
 GrpcClient::GrpcClient(const std::string &host, const std::string &port) : stub_(nullptr) { Init(host, port); }
@@ -65,10 +69,43 @@ EventReply GrpcClient::SendMetadata(const Metadata &metadata) {
   return reply;
 }
 
+std::vector<std::string> ChunkString(std::string str, int graph_size) {
+  std::vector<std::string> buf;
+  int size_iter = 0;
+  while (size_iter < graph_size) {
+    int chunk_size = CHUNK_SIZE;
+    if (graph_size - size_iter < CHUNK_SIZE) {
+      chunk_size = graph_size - size_iter;
+    }
+    std::string buffer;
+    buffer.resize(chunk_size);
+    memcpy(reinterpret_cast<char *>(buffer.data()), str.data() + size_iter, chunk_size);
+    buf.push_back(buffer);
+    size_iter += CHUNK_SIZE;
+  }
+  return buf;
+}
+
 EventReply GrpcClient::SendGraph(const GraphProto &graph) {
   EventReply reply;
   grpc::ClientContext context;
-  grpc::Status status = stub_->SendGraph(&context, graph, &reply);
+  Chunk chunk;
+
+  std::unique_ptr<grpc::ClientWriter<Chunk> > writer(stub_->SendGraph(&context, &reply));
+  std::string str = graph.SerializeAsString();
+  int graph_size = graph.ByteSize();
+  auto buf = ChunkString(str, graph_size);
+
+  for (unsigned int i = 0; i < buf.size(); i++) {
+    MS_LOG(INFO) << "RPC:sending the " << i << "chunk in graph";
+    chunk.set_buffer(buf[i]);
+    if (!writer->Write(chunk)) {
+      break;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
+  writer->WritesDone();
+  grpc::Status status = writer->Finish();
 
   if (!status.ok()) {
     MS_LOG(ERROR) << "RPC failed: SendGraph";

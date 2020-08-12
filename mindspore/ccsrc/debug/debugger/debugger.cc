@@ -33,6 +33,8 @@ using debugger::WatchCondition_Condition_nan;
 using debugger::WatchNode;
 using debugger::WatchpointHit;
 
+#define CHUNK_SIZE 1024 * 1024 * 3
+
 namespace mindspore {
 
 DebuggerPtr Debugger::debugger_ = nullptr;
@@ -412,6 +414,16 @@ void Debugger::CommandLoop() {
   }
 }
 
+void AddTensorProtoInfo(TensorProto *tensor_item, TensorProto tensor) {
+  tensor_item->set_node_name(tensor.node_name());
+  tensor_item->set_slot(tensor.slot());
+  tensor_item->set_iter(tensor.iter());
+  tensor_item->set_truncate(tensor.truncate());
+  tensor_item->clear_tensor_content();
+  tensor_item->clear_data_type();
+  tensor_item->clear_dims();
+}
+
 void Debugger::SetWatchpoint(const ProtoVector<WatchNode> &nodes, const WatchCondition &condition, const int32_t id) {
   std::vector<std::tuple<std::string, bool>> check_node_list;
   std::transform(nodes.begin(), nodes.end(), std::back_inserter(check_node_list),
@@ -436,35 +448,40 @@ std::list<TensorProto> Debugger::LoadTensors(const ProtoVector<TensorProto> &ten
   // ret_name will contain tensor names that are found in TensorLoader
   // items in ret_name will be in the same order with tensors if found
   debug_services_->ReadNodesTensors(name, &ret_name, &data_ptr, &data_size, &dtype, &shape);
-
   std::list<TensorProto> tensor_list;
   unsigned int result_index = 0;
-  for (auto tensor : tensors) {
-    TensorProto tensor_item;
-    tensor_item.set_node_name(tensor.node_name());
-    tensor_item.set_slot(tensor.slot());
-    tensor_item.set_iter(tensor.iter());
-    tensor_item.set_truncate(tensor.truncate());
-    tensor_item.clear_tensor_content();
-    tensor_item.clear_data_type();
-    tensor_item.clear_dims();
-    // always set finished to true before big tensor splitting is supported
-    tensor_item.set_finished(true);
 
-    // return empty tensor if didn't find the requested tensor
+  for (auto tensor : tensors) {
+    int size_iter = 0;
     if (result_index >= ret_name.size() || ret_name[result_index] != GetTensorFullName(tensor)) {
+      TensorProto tensor_item;
+      tensor_item.set_finished(true);
+      AddTensorProtoInfo(&tensor_item, tensor);
       tensor_list.push_back(tensor_item);
       continue;
     }
+    int tensor_size = data_size[result_index];
+    while (size_iter < tensor_size) {
+      int chunk_size = CHUNK_SIZE;
+      TensorProto tensor_item;
+      tensor_item.set_finished(false);
+      if (tensor_size - size_iter <= CHUNK_SIZE) {
+        chunk_size = tensor_size - size_iter;
+        tensor_item.set_finished(true);
+      }
+      AddTensorProtoInfo(&tensor_item, tensor);
+      // return empty tensor if didn't find the requested tensor
 
-    tensor_item.set_tensor_content(data_ptr[result_index], data_size[result_index]);
-    tensor_item.set_data_type(GetDebuggerNumberDataType(dtype[result_index]));
-    for (auto &elem : shape[result_index]) {
-      tensor_item.add_dims(elem);
+      tensor_item.set_tensor_content(data_ptr[result_index] + size_iter, chunk_size);
+
+      tensor_item.set_data_type(GetDebuggerNumberDataType(dtype[result_index]));
+      for (auto &elem : shape[result_index]) {
+        tensor_item.add_dims(elem);
+      }
+      // add tensor to result list and increment result_index to check next item in ret_name
+      tensor_list.push_back(tensor_item);
+      size_iter += CHUNK_SIZE;
     }
-
-    // add tensor to result list and increment result_index to check next item in ret_name
-    tensor_list.push_back(tensor_item);
     result_index++;
   }
   return tensor_list;

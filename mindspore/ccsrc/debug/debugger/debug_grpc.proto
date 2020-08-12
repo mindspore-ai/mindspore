@@ -23,7 +23,7 @@ import "debug_graph.proto";
 service EventListener {
   rpc WaitCMD (Metadata) returns (EventReply) {};
   rpc SendMetadata (Metadata) returns (EventReply) {};
-  rpc SendGraph (GraphProto) returns (EventReply) {};
+  rpc SendGraph (stream Chunk) returns (EventReply) {};
   rpc SendTensors (stream TensorProto) returns (EventReply) {};
   rpc SendWatchpointHits (stream WatchpointHit) returns (EventReply) {};
 }
@@ -35,6 +35,10 @@ message Metadata {
   string backend = 3;
   // the full name of current node
   string cur_node = 4;
+}
+
+message Chunk {
+    bytes buffer = 1;
 }
 
 message EventReply {
