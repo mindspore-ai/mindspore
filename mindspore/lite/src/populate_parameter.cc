@@ -23,6 +23,7 @@
 #include "src/runtime/kernel/arm/nnacl/fp32/arg_min_max.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/cast.h"
 #include "src/runtime/kernel/arm/nnacl/concat_parameter.h"
+#include "src/runtime/kernel/arm/nnacl/caffeprelu_parameter.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/slice.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/broadcast_to.h"
 #include "src/runtime/kernel/arm/nnacl/reshape_parameter.h"
@@ -72,6 +73,7 @@
 #include "src/runtime/kernel/arm/nnacl/fp32/lstm.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/embedding_lookup.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/elu.h"
+#include "src/runtime/kernel/arm/nnacl/prelu_parameter.h"
 
 namespace mindspore::kernel {
 
@@ -128,6 +130,33 @@ OpParameter *PopulateExpandDimsParameter(const lite::Primitive *primitive) {
   expand_dims_param->op_parameter_.type_ = primitive->Type();
   expand_dims_param->dim_ = param->dim();
   return reinterpret_cast<OpParameter *>(expand_dims_param);
+}
+
+OpParameter *PopulateCaffePReLUParameter(const lite::Primitive *primitive) {
+  auto param = primitive->Value()->value_as_CaffePReLU();
+  CaffePreluParameter *caffePrelu_param = new (std::nothrow) CaffePreluParameter();
+  if (caffePrelu_param == nullptr) {
+    MS_LOG(ERROR) << "new caffePReluParameter failed.";
+    return nullptr;
+  }
+  caffePrelu_param->op_parameter_.type_ = primitive->Type();
+  caffePrelu_param->channelShared = param->channelShared();
+  return reinterpret_cast<OpParameter *>(caffePrelu_param);
+}
+
+OpParameter *PopulatePreluParameter(const lite::Primitive *primitive) {
+  auto param = primitive->Value()->value_as_Prelu();
+  PreluParameter *Prelu_param = new (std::nothrow) PreluParameter();
+  if (Prelu_param == nullptr) {
+    MS_LOG(ERROR) << "new caffePReluParameter failed.";
+    return nullptr;
+  }
+  Prelu_param->op_parameter_.type_ = primitive->Type();
+  auto temp = param->slope();
+  for (int i = 0; i < temp->size(); i++) {
+    Prelu_param->slope_[i] = temp->Get(i);
+  }
+  return reinterpret_cast<OpParameter *>(Prelu_param);
 }
 
 OpParameter *PopulatePoolingParameter(const lite::Primitive *primitive) {
@@ -1365,6 +1394,8 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_ScatterND] = PopulateScatterNDParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Squeeze] = PopulateSqueezeParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Split] = PopulateSplitParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_CaffePReLU] = PopulateCaffePReLUParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_Prelu] = PopulatePreluParameter;
   populate_parameter_funcs_[schema::PrimitiveType_PriorBox] = PopulatePriorBoxParameter;
   populate_parameter_funcs_[schema::PrimitiveType_QuantDTypeCast] = PopulateQuantDTypeCastParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Lstm] = PopulateLstmParameter;

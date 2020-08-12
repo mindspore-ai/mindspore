@@ -56,7 +56,7 @@ int PreluInt8CPUKernel::Init() {
 int PreluInt8CPUKernel::ReSize() { return 0; }
 
 int PreluInt8CPUKernel::Run() {
-  auto ret = LiteBackendParallelLaunch(PreluInt8Run, this, thread_count_);
+  auto ret = LiteBackendParallelLaunch(PreluInt8Run, this, quant_prelu_parm_->op_parameter_.thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "RunPreluParam failed. errorcode: ";
   }

@@ -14,26 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PRELU_PARAMETER_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PRELU_PARAMETER_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CAFFEPRELU_PARAMETER_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CAFFEPRELU_PARAMETER_H_
 
-#include "nnacl/op_base.h"
-#include "nnacl/quantization/quantize.h"
+#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#define CAFFEPRELU_OFFSET_MAX_SIZE 4
 
-#define PRELU_OFFSET_MAX_SIZE 65535
-
-typedef struct PreluParameter {
+struct CaffePreluParameter {
   OpParameter op_parameter_;
-  PreluQuantArg quant_arg;
+  bool channelShared;
   double alpha_;
-  int thread_count_;
-  float slope_[PRELU_OFFSET_MAX_SIZE];
-  int64_t in_offset_[PRELU_OFFSET_MAX_SIZE];
+  int64_t offset_[CAFFEPRELU_OFFSET_MAX_SIZE];
+  int64_t in_offset_[CAFFEPRELU_OFFSET_MAX_SIZE];
   int64_t axis_;
   const int *in_shape_;
   const int *out_shape_;
   int input_dim_;
-  int element_num;
-} PreluParameter;
+};
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PRELU_PARAMETER_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CAFFEPRELU_PARAMETER_H_

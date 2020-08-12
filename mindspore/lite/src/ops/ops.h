@@ -124,6 +124,12 @@ class Prelu : public Activation {
   const schema::Prelu *GetAttribute() const { return this->primitive->value_as_Prelu(); }
 };
 
+class CaffePReLU : public Activation {
+ public:
+  explicit CaffePReLU(schema::Primitive *primitive) : Activation(primitive) {}
+  const schema::CaffePReLU *GetAttribute() const { return this->primitive->value_as_CaffePReLU(); }
+};
+
 class Split : public Primitive {
  public:
   explicit Split(schema::Primitive *primitive) : Primitive(primitive) {}
