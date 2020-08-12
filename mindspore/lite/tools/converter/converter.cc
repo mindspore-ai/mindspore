@@ -153,6 +153,9 @@ void Converter::CreateQuantizer(FuncGraphPtr funcGraph, const converter::Flags *
 int RunConverter(int argc, const char **argv) {
   auto flags = new converter::Flags;
   auto status = flags->Init(argc, argv);
+  if (status == RET_SUCCESS_EXIT) {
+    return 0;
+  }
   if (status != 0) {
     MS_LOG(ERROR) << "converter::Flags Init failed: " << status;
     return 1;

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <regex>
 #include <string>
 #include "tools/converter/converter_flags.h"
 
@@ -43,31 +42,31 @@ int Flags::Init(int argc, const char **argv) {
   Option<std::string> err = this->ParseFlags(argc, argv);
 
   if (err.IsSome()) {
-    MS_LOG(ERROR) << err.Get();
+    std::cerr << err.Get();
     std::cerr << this->Usage() << std::endl;
     return 1;
   }
 
   if (this->help) {
-    std::cerr << this->Usage() << std::endl;
-    return 0;
+    std::cout << this->Usage() << std::endl;
+    return RET_SUCCESS_EXIT;
   }
   if (this->modelFile.empty()) {
-    MS_LOG(ERROR) << "INPUT MISSING: model file path is necessary";
+    std::cerr << "INPUT MISSING: model file path is necessary";
     return 1;
   }
   if (this->outputFile.empty()) {
-    MS_LOG(ERROR) << "INPUT MISSING: output file path is necessary";
+    std::cerr << "INPUT MISSING: output file path is necessary";
     return 1;
   }
 
   if (this->outputFile.rfind('/') == this->outputFile.length() - 1) {
-    MS_LOG(ERROR) << "INPUT ILLEGAL: outputFile must be a valid file path";
+    std::cerr << "INPUT ILLEGAL: outputFile must be a valid file path";
     return 1;
   }
 
   if (this->fmkIn.empty()) {
-    MS_LOG(ERROR) << "INPUT MISSING: fmk is necessary";
+    std::cerr << "INPUT MISSING: fmk is necessary";
     return 1;
   }
   if (this->inputInferenceTypeIn == "FLOAT") {
@@ -75,7 +74,7 @@ int Flags::Init(int argc, const char **argv) {
   } else if (this->inputInferenceTypeIn == "UINT8") {
     this->inputInferenceType = 1;
   } else {
-    MS_LOG(ERROR) << "INPUT INVALID: inputInferenceType is invalid: %s", this->inputInferenceTypeIn.c_str();
+    std::cerr << "INPUT INVALID: inputInferenceType is invalid: %s", this->inputInferenceTypeIn.c_str();
     return 1;
   }
   if (this->fmkIn == "CAFFE") {
@@ -85,12 +84,12 @@ int Flags::Init(int argc, const char **argv) {
   } else if (this->fmkIn == "TFLITE") {
     this->fmk = FmkType_TFLITE;
   } else {
-    MS_LOG(ERROR) << "INPUT ILLEGAL: fmk must be TFLITE|CAFFE|MS";
+    std::cerr << "INPUT ILLEGAL: fmk must be TFLITE|CAFFE|MS";
     return 1;
   }
 
   if (this->fmk != FmkType_CAFFE && !weightFile.empty()) {
-    MS_LOG(ERROR) << "INPUT ILLEGAL: weightFile is not a valid flag";
+    std::cerr << "INPUT ILLEGAL: weightFile is not a valid flag";
     return 1;
   }
   if (this->quantTypeIn == "AwareTrainning") {
@@ -102,7 +101,7 @@ int Flags::Init(int argc, const char **argv) {
   } else if (this->quantTypeIn.empty()) {
     this->quantType = QuantType_QUANT_NONE;
   } else {
-    MS_LOG(ERROR) << "INPUT ILLEGAL: quantType must be AwareTrainning|WeightQuant|PostTraining";
+    std::cerr << "INPUT ILLEGAL: quantType must be AwareTrainning|WeightQuant|PostTraining";
     return 1;
   }
 

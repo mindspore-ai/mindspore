@@ -26,7 +26,15 @@ namespace mindspore::lite {
 
 Model *Model::Import(const char *model_buf, size_t size) {
   auto model = new Model();
+  if (model_buf == nullptr) {
+    MS_LOG(ERROR) << "model buf is null";
+    return nullptr;
+  }
   model->model_impl_ = ModelImpl::Import(model_buf, size);
+  if (model->model_impl_ == nullptr) {
+    MS_LOG(ERROR) << "model impl is null";
+    return nullptr;
+  }
   return model;
 }
 
