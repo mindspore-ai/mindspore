@@ -2104,7 +2104,7 @@ class RepeatDataset(DatasetOp):
 
     Args:
         input_dataset (Dataset): Input Dataset to be repeated.
-        count (int): Number of times the dataset should be repeated.
+        count (int): Number of times the dataset should be repeated (default=-1, repeat indefinitely).
     """
 
     def __init__(self, input_dataset, count):
