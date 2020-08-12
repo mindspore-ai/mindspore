@@ -28,11 +28,11 @@ enum BroadcastGradOpType {
 template <typename T>
 void BroadcastGrad(const int &l0, const int &l1, const int &l2, const int &l3, const int &r0, const int &r1,
                    const int &r2, const int &r3, const int &d0, const int &d1, const int &d2, const int &d3,
-                   enum BroadcastGradOpType op, const T *x1, const T *x2, const T *dy, T *dx1, T *dx2,
-                   cudaStream_t stream);
+                   const bool &grad_x1, const bool &grad_x2, enum BroadcastGradOpType op, const T *x1, const T *x2,
+                   const T *dy, T *dx1, T *dx2, cudaStream_t stream);
 
 template <typename T>
-void NoBroadcastGrad(const int &nums, enum BroadcastGradOpType op, const T *x1, const T *x2, const T *dy, T *dx1,
-                     T *dx2, cudaStream_t stream);
+void NoBroadcastGrad(const int &nums, const bool &grad_x1, const bool &grad_x2, enum BroadcastGradOpType op,
+                     const T *x1, const T *x2, const T *dy, T *dx1, T *dx2, cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_BROADCAST_GRAD_H_
