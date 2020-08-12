@@ -17,76 +17,90 @@
 #include <memory>
 #include "mindspore/core/utils/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/common/file_utils.h"
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/softmax.h"
+#include "mindspore/lite/test/ut/src/runtime/kernel/opencl/utils_tests.h"
 
 namespace mindspore {
 
 class TestSoftmaxOpenCL : public mindspore::CommonTest {};
 
-void InitSoftaxParam(SoftmaxParameter *param) { param->axis_ = -1; }
-
-TEST_F(TestSoftmaxOpenCL, SoftmaxFp32) {
-  std::cout << "======" << std::endl;
-  MS_LOG(INFO) << "start TEST_F TestSoftmaxOpenCL";
+void RunTestCase(std::vector<int> input_shape, std::vector<int> output_shape, std::string input_file,
+                 std::string expect_file, SoftmaxParameter *param, schema::Format format) {
+  std::cout << "runtime" << std::endl;
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
+  auto allocator = ocl_runtime->GetAllocator();
 
-  MS_LOG(INFO) << "create SoftmaxParameter";
-  auto param = new SoftmaxParameter();
-  InitSoftaxParam(param);
+  // define tensor
+  MS_LOG(INFO) << "defineTensor";
+  std::cout << "defineTensor" << std::endl;
 
-  MS_LOG(INFO) << "create Tensors";
-  std::vector<int> shape_in = {1, 2, 2, 1};
-  std::vector<int> shape_out = {1, 2, 2, 1};
   auto data_type = kNumberTypeFloat32;
   auto tensorType = schema::NodeType_ValueNode;
-  lite::tensor::Tensor *tensor_in = new lite::tensor::Tensor(data_type, shape_in, schema::Format_NCHW, tensorType);
-  lite::tensor::Tensor *tensor_out = new lite::tensor::Tensor(data_type, shape_out, schema::Format_NCHW, tensorType);
-  std::vector<lite::tensor::Tensor *> inputs{tensor_in};
-  std::vector<lite::tensor::Tensor *> outputs{tensor_out};
+  auto input_tensor = new lite::tensor::Tensor(data_type, input_shape, format, tensorType);
+  auto output_tensor = new lite::tensor::Tensor(data_type, output_shape, format, tensorType);
+  std::vector<lite::tensor::Tensor *> inputs{input_tensor};
+  std::vector<lite::tensor::Tensor *> outputs{output_tensor};
 
-  MS_LOG(INFO) << "create OpenCL Kernel";
-  auto *Softmax_kernel = new kernel::SoftmaxOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
-  Softmax_kernel->Init();
-  std::vector<kernel::LiteKernel *> kernels{Softmax_kernel};
+  // run
+  MS_LOG(INFO) << "NewOpenCLKernel";
+  std::cout << "NewOpenCLKernel" << std::endl;
+  auto *kernel = new kernel::SoftmaxOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  MS_LOG(INFO) << "KernelInit";
+  std::cout << "KernelInit" << std::endl;
+  kernel->Init();
 
-  MS_LOG(INFO) << "create SubGraphOpenCLKernel";
+  std::cout << "LiteKernel" << std::endl;
+  std::vector<kernel::LiteKernel *> kernels{kernel};
+  inputs[0]->MallocData(allocator);
+  std::cout << "SubGraphOpenCLKernel" << std::endl;
   auto *pGraph = new kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  MS_LOG(INFO) << "pGraphinit";
   pGraph->Init();
 
-  MS_LOG(INFO) << "initialize data";
-  std::vector<lite::tensor::Tensor *> tensor_map = {tensor_in};
-  for (auto &tensor_file : tensor_map) {
-    auto tensor = tensor_file;
-    size_t size = tensor->Size();
-    const float data[4] = {std::log(1.0f), std::log(2.0f), std::log(3.0f), std::log(4.0f)};
-    memcpy(tensor->Data(), data, size);
-  }
+  // load data
+  MS_LOG(INFO) << "load data1";
 
-  MS_LOG(INFO) << "pGraph->Run()";
+  LoadTestData(input_tensor->Data(), input_tensor->Size(), input_file);
+  auto *input_data = reinterpret_cast<float *>(input_tensor->Data());
+  printf("\ninput[0:10]:");
+  for (int i = 0; i < 10; i++) {
+    printf("[%d]:%.3f ", i, input_data[i]);
+  }
+  printf("\n\n");
+
+  MS_LOG(INFO) << "Run";
   pGraph->Run();
 
-  MS_LOG(INFO) << "==================output data=================";
-  float *output_data = reinterpret_cast<float *>(tensor_out->Data());
-  size_t output_size = tensor_out->Size();
-
-  printf("output:");
-  for (int i = 0; i < 4; i++) {
-    printf("%.3f ", output_data[i]);
-  }
-  printf("\n");
-  float expect[4] = {1.0f, 2.0f, 3.0f, 4.0f};
-
-  for (int i = 0; i < tensor_out->ElementsNum(); ++i) {
-    if (std::fabs(output_data[i] - expect[i]) > 1e-5) {
-      printf("idx[%d] except=%.3f output=%.3f .", i, expect[i], output_data[i]);
-    }
-  }
-  printf("\nTest all close OK for %zu!\n", output_size);
-  lite::CompareOutputData(output_data, expect, 4);
+  MS_LOG(INFO) << "compare result";
+  std::cout << "compare result" << std::endl;
+  CompareOutput(output_tensor, expect_file);
 }
+
+TEST_F(TestSoftmaxOpenCL, Softmax_1) {
+  std::vector<int> input_shape = {1, 2, 2, 8};
+  std::vector<int> output_shape = {1, 2, 2, 8};
+  std::string input_file = "softmax_in.bin";
+  std::string expect_file = "softmax_out.bin";
+  auto param = new SoftmaxParameter;
+  param->axis_ = 3;
+  schema::Format format = schema::Format_NHWC4;
+
+  RunTestCase(input_shape, output_shape, input_file, expect_file, param, format);
+}
+
+// TEST_F(TestSoftmaxOpenCL, Softmax_1x1) {
+//  std::vector<int> input_shape = {1, 100};
+//  std::vector<int> output_shape = {1, 100};
+//  std::string input_file = "softmax1x1_in.bin";
+//  std::string expect_file = "softmax1x1_out.bin";
+//  auto param = new SoftmaxParameter;
+//  param->axis_ = 1;
+//  schema::Format format = schema::Format_NHWC4;
+//
+//  RunTestCase(input_shape, output_shape, input_file, expect_file, param, format);
+//}
 
 }  // namespace mindspore

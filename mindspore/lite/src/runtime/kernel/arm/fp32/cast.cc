@@ -74,7 +74,7 @@ int CastCPUKernel::DoCast(int thread_id) {
       Float32ToInt32(reinterpret_cast<float *>(input->Data()) + offset,
                      reinterpret_cast<int32_t *>(output_data) + offset, data_num);
     } else {
-      MS_LOG(ERROR) << "Unsupport datatype from " << input_data_type << " to " << output_data_type;
+      MS_LOG(ERROR) << "Unsupported datatype from " << input_data_type << " to " << output_data_type;
       return RET_ERROR;
     }
   } else {
@@ -88,7 +88,7 @@ int CastCPUKernel::DoCast(int thread_id) {
                        reinterpret_cast<float *>(output_data) + offset, data_num);
         break;
       default:
-        MS_LOG(ERROR) << "Unsupport input data type " << input_data_type;
+        MS_LOG(ERROR) << "Unsupported input data type " << input_data_type;
         return RET_ERROR;
     }
   }

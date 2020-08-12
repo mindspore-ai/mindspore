@@ -104,7 +104,7 @@ int Executor::TransformTensorLayoutFp32(tensor::Tensor *tensor, schema::Format d
     allocator->Free(src_data);
     return RET_OK;
   } else {
-    MS_LOG(ERROR) << "Unsupport layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
+    MS_LOG(ERROR) << "Unsupported layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
                   << schema::EnumNameFormat(dst_format) << " in float32";
     return RET_ERROR;
   }
@@ -116,7 +116,7 @@ int Executor::TransformTensorLayoutUint8(tensor::Tensor *tensor, schema::Format 
   MS_ASSERT(4 == tensor->shape().size());
   //  auto src_format = tensor->GetFormat();
   // todo
-  MS_LOG(ERROR) << "Unsupport layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
+  MS_LOG(ERROR) << "Unsupported layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
                 << schema::EnumNameFormat(dst_format) << " in uint8";
   return RET_ERROR;
 }

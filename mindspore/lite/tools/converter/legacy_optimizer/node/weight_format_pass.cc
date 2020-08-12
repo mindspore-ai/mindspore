@@ -157,7 +157,7 @@ int WeightFormatPass::ShapeFormatTrans(GraphNode *graphNode) {
         } else if (opType == schema::PrimitiveType_DeConv2D) {
           weightTensor->format = schema::Format_CHWK;
         } else {
-          MS_LOG(ERROR) << "unsupport format";
+          MS_LOG(ERROR) << "Unsupported format";
           return -1;
         }
       } break;

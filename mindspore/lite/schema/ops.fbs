@@ -32,6 +32,10 @@ enum Format : int {
     CKHW,
     KHWC,
     CHWK,
+    HW,
+    HW4,
+    NC,
+    NC4,
     NC4HW4 = 100,
     NUM_OF_FORMAT
 }

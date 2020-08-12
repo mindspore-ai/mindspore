@@ -85,4 +85,3 @@ std::string CLErrorCode(cl_int error_code);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_BACKEND_OPENCL_UTILS_H_
-
