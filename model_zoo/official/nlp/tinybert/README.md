@@ -46,7 +46,7 @@ usage: run_standalone_gd.py  [--distribute DISTRIBUTE] [--device_target DEVICE_T
 
 options:
     --distribute               whether to run distributely: "true" | "false"
-    --device_target            target device to run, currently only support "Ascend"
+    --device_target            targeted device to run task: "Ascend" | "GPU"
     --epoch_size               epoch size: N, default is 1
     --device_id                device id: N, default is 0
     --enable_data_sink         enable data sink: "true" | "false", default is "true"
@@ -64,7 +64,7 @@ usage: run_distribute_gd.py  [--distribute DISTRIBUTE] [--device_target DEVICE_T
 
 options:
     --distribute               whether to run distributely: "true" | "false"
-    --device_target            target device to run, currently only support "Ascend"
+    --device_target            targeted device to run task: "Ascend" | "GPU"
     --epoch_size               epoch size: N, default is 1
     --device_id                device id: N, default is 0
     --device_num               device id to run task

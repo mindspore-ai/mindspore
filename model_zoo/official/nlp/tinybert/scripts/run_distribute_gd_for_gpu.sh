@@ -16,32 +16,25 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "bash scipts/run_standalone_td.sh"
-echo "for example: bash scipts/run_standalone_td.sh"
+echo "bash run_distribute_gd_for_gpu.sh DEVICE_NUM EPOCH_SIZE DATA_DIR SCHEMA_DIR TEACHER_CKPT_PATH"
+echo "for example: bash run_distribute_gd_for_gpu.sh 8 3 /path/data/ /path/datasetSchema.json /path/bert_base.ckpt"
+echo "It is better to use absolute path."
 echo "=============================================================================================================="
 
-mkdir -p ms_log
-PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
-CUR_DIR=`pwd`
-export GLOG_log_dir=${CUR_DIR}/ms_log
-export GLOG_logtostderr=0
-python ${PROJECT_DIR}/../run_task_distill.py \
-    --device_target="Ascend" \
-    --device_id=0 \
-    --do_train="true" \
-    --do_eval="true" \
-    --td_phase1_epoch_size=10 \
-    --td_phase2_epoch_size=3 \
-    --task_name="" \
-    --do_shuffle="true" \
-    --enable_data_sink="true" \
-    --data_sink_steps=100 \
-    --save_ckpt_step=100 \
-    --max_ckpt_num=1 \
-    --load_teacher_ckpt_path="" \
-    --load_gd_ckpt_path="" \
-    --load_td1_ckpt_path="" \
-    --train_data_dir="" \
-    --eval_data_dir="" \
-    --schema_dir="" > log.txt 2>&1 &
+RANK_SIZE=$1
+EPOCH_SIZE=$2
+DATA_DIR=$3
+SCHEMA_DIR=$4
+TEACHER_CKPT_PATH=$5
 
+PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
+
+mpirun --allow-run-as-root -n $RANK_SIZE \
+	python ${PROJECT_DIR}/../run_general_distill.py  \
+	--distribute="true" \
+	--device_target="GPU" \
+	--epoch_size=$EPOCH_SIZE \
+	--save_ckpt_path="" \
+	--data_dir=$DATA_DIR \
+	--schema_dir=$SCHEMA_DIR \
+	--load_teacher_ckpt_path=$TEACHER_CKPT_PATH > log.txt 2>&1 &

@@ -20,16 +20,20 @@ import argparse
 import datetime
 import numpy
 import mindspore.communication.management as D
+import mindspore.common.dtype as mstype
 from mindspore import context
 from mindspore.train.model import Model
 from mindspore.train.callback import TimeMonitor
 from mindspore.train.parallel_utils import ParallelMode
 from mindspore.nn.optim import AdamWeightDecay
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
+from mindspore import log as logger
 from src.dataset import create_tinybert_dataset
 from src.utils import LossCallBack, ModelSaveCkpt, BertLearningRate
 from src.gd_config import common_cfg, bert_teacher_net_cfg, bert_student_net_cfg
-from src.tinybert_for_gd_td import BertTrainWithLossScaleCell, BertNetworkWithLoss_gd
+from src.tinybert_for_gd_td import BertTrainWithLossScaleCell, BertNetworkWithLoss_gd, BertTrainCell
+
+
 
 def run_general_distill():
     """
@@ -54,26 +58,44 @@ def run_general_distill():
     args_opt = parser.parse_args()
 
     context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=args_opt.device_id)
-    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=args_opt.device_id)
     context.set_context(reserve_class_name_in_scope=False)
     context.set_context(variable_memory_max_size="30GB")
 
     save_ckpt_dir = os.path.join(args_opt.save_ckpt_path,
                                  datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
 
-    if not os.path.exists(save_ckpt_dir):
-        os.makedirs(save_ckpt_dir)
 
     if args_opt.distribute == "true":
-        D.init('hccl')
-        device_num = args_opt.device_num
-        rank = args_opt.device_id % device_num
+        if args_opt.device_target == 'Ascend':
+            D.init('hccl')
+            device_num = args_opt.device_num
+            rank = args_opt.device_id % device_num
+        else:
+            D.init('nccl')
+            device_num = D.get_group_size()
+            rank = D.get_rank()
+            save_ckpt_dir = save_ckpt_dir + '_ckpt_' + str(rank)
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, mirror_mean=True,
                                           device_num=device_num)
     else:
         rank = 0
         device_num = 1
+
+    if not os.path.exists(save_ckpt_dir):
+        os.makedirs(save_ckpt_dir)
+
+    enable_loss_scale = True
+    if args_opt.device_target == "GPU":
+        if bert_teacher_net_cfg.compute_type != mstype.float32:
+            logger.warning('GPU only support fp32 temporarily, run with fp32.')
+            bert_teacher_net_cfg.compute_type = mstype.float32
+        if bert_student_net_cfg.compute_type != mstype.float32:
+            logger.warning('GPU only support fp32 temporarily, run with fp32.')
+            bert_student_net_cfg.compute_type = mstype.float32
+        # Both the forward and backward of the network are calculated using fp32,
+        # and the loss scale is not necessary
+        enable_loss_scale = False
 
     netwithloss = BertNetworkWithLoss_gd(teacher_config=bert_teacher_net_cfg,
                                          teacher_ckpt=args_opt.load_teacher_ckpt_path,
@@ -82,11 +104,11 @@ def run_general_distill():
 
     dataset = create_tinybert_dataset('gd', bert_teacher_net_cfg.batch_size, device_num, rank,
                                       args_opt.do_shuffle, args_opt.data_dir, args_opt.schema_dir)
-
     dataset_size = dataset.get_dataset_size()
     print('dataset size: ', dataset_size)
+    print("dataset repeatcount: ", dataset.get_repeat_count())
     if args_opt.enable_data_sink == "true":
-        repeat_count = args_opt.epoch_size * dataset.get_dataset_size() // args_opt.data_sink_steps
+        repeat_count = args_opt.epoch_size * dataset_size // args_opt.data_sink_steps
         time_monitor_steps = args_opt.data_sink_steps
     else:
         repeat_count = args_opt.epoch_size
@@ -110,12 +132,13 @@ def run_general_distill():
                                                                                args_opt.save_ckpt_step,
                                                                                args_opt.max_ckpt_num,
                                                                                save_ckpt_dir)]
-
-    update_cell = DynamicLossScaleUpdateCell(loss_scale_value=common_cfg.loss_scale_value,
-                                             scale_factor=common_cfg.scale_factor,
-                                             scale_window=common_cfg.scale_window)
-
-    netwithgrads = BertTrainWithLossScaleCell(netwithloss, optimizer=optimizer, scale_update_cell=update_cell)
+    if enable_loss_scale:
+        update_cell = DynamicLossScaleUpdateCell(loss_scale_value=common_cfg.loss_scale_value,
+                                                 scale_factor=common_cfg.scale_factor,
+                                                 scale_window=common_cfg.scale_window)
+        netwithgrads = BertTrainWithLossScaleCell(netwithloss, optimizer=optimizer, scale_update_cell=update_cell)
+    else:
+        netwithgrads = BertTrainCell(netwithloss, optimizer=optimizer)
     model = Model(netwithgrads)
     model.train(repeat_count, dataset, callbacks=callback,
                 dataset_sink_mode=(args_opt.enable_data_sink == "true"),

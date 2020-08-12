@@ -110,7 +110,10 @@ class EvalCallBack(Callback):
             if acc > self.global_acc:
                 self.global_acc = acc
                 print("The best acc is {}".format(acc))
-                _exec_save_checkpoint(self.network, "eval_model.ckpt")
+                eval_model_ckpt_file = "eval_model.ckpt"
+                if os.path.exists(eval_model_ckpt_file):
+                    os.remove(eval_model_ckpt_file)
+                _exec_save_checkpoint(self.network, eval_model_ckpt_file)
 
 class BertLearningRate(LearningRateSchedule):
     """
