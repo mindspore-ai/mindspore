@@ -27,6 +27,9 @@ typedef struct ReduceParameter {
   int mode_;
 } ReduceParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int ReduceMean(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
                const int *src_shape, float *dst_data, const int tid, const int thread_num);
 int ReduceSum(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
@@ -39,4 +42,8 @@ int ReduceProd(const int outer_size, const int inner_size, const int axis_size, 
                const int *src_shape, float *dst_data, const int tid, const int thread_num);
 int ReduceSumSquare(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
                     const int *src_shape, float *dst_data, const int tid, const int thread_num);
+#ifdef __cplusplus
+}
+#endif
+
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_REDUCE_H_

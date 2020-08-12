@@ -70,11 +70,11 @@ int BatchToSpaceInt8CPUKernel::Run() {
     }
   } else {
     if (IsNoCrop()) {
-      BatchToSpaceNoCropForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_,
-                                &in_quant_arg_, &out_quant_arg_);
+      BatchToSpaceNoCropForNHWCInt8(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_,
+                                    &in_quant_arg_, &out_quant_arg_);
     } else {
-      BatchToSpaceForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_, param->crops_,
-                          &in_quant_arg_, &out_quant_arg_);
+      BatchToSpaceForNHWCInt8(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_,
+                              param->crops_, &in_quant_arg_, &out_quant_arg_);
     }
   }
 

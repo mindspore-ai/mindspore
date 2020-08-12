@@ -23,6 +23,12 @@ typedef struct ScatterNDParameter {
   OpParameter op_parameter_;
 } ScatterNDParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int DoScatterND(float *output_ptr, float *update, int *output_unit_offsets, int unit_size, int num_units);
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_SCATTER_ND_H_
+#ifdef __cplusplus
+}
+#endif
 
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_SCATTER_ND_H_

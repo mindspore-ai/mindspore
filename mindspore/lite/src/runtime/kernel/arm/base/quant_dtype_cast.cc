@@ -54,7 +54,8 @@ int QuantDTypeCastCPUKernel::Init() {
     }
     inverse_ = true;
   } else {
-    MS_LOG(ERROR) << "param data type not supported:" << " src: " << param->srcT << " dst: " << param->dstT;
+    MS_LOG(ERROR) << "param data type not supported:"
+                  << " src: " << param->srcT << " dst: " << param->dstT;
     return RET_PARAM_INVALID;
   }
 
@@ -81,11 +82,11 @@ int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
   auto quant_arg = in_tensors_.front()->GetQuantParams().front();
   int ret;
   if (inverse_) {
-    ret = DequantizeInt8(int8_ptr_ + thread_offset, float32_ptr_ + thread_offset, quant_arg.scale, quant_arg.zeroPoint,
-                         num_unit_thread);
+    ret = DoDequantizeInt8(int8_ptr_ + thread_offset, float32_ptr_ + thread_offset, quant_arg.scale,
+                           quant_arg.zeroPoint, num_unit_thread);
   } else {
-    ret = QuantizeToInt8(float32_ptr_ + thread_offset, int8_ptr_ + thread_offset, quant_arg.scale, quant_arg.zeroPoint,
-                         num_unit_thread);
+    ret = DoQuantizeToInt8(float32_ptr_ + thread_offset, int8_ptr_ + thread_offset, quant_arg.scale,
+                           quant_arg.zeroPoint, num_unit_thread);
   }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "QuantDTypeCast error task_id[" << task_id << "] error_code[" << ret << "]";

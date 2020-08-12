@@ -20,8 +20,13 @@
 #include "nnacl/op_base.h"
 #include "nnacl/split_parameter.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int DoSplit(float *in_data, float **out_data, const int *input_shape, int offset, int num_unit,
             SplitParameter *split_param);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_SPLIT_H_
-

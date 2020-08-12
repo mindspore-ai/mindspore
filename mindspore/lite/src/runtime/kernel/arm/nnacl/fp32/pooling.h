@@ -24,8 +24,14 @@
 #include "nnacl/pooling_parameter.h"
 #include "nnacl/quantization/quantize.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void AvgPooling(const float *input_ptr, float *output_ptr, PoolingParameter *pooling_param, int task_id);
 
 void MaxPooling(const float *input_ptr, float *output_ptr, PoolingParameter *pooling_param, int task_id);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_POOLING_H_

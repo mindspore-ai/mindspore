@@ -65,7 +65,7 @@ int Unsqueezeint8CPUKernel::DoUnsqueeze(int task_id) {
   auto output_ptr = reinterpret_cast<int8_t *>(out_tensors_.front()->Data());
   size_t data_size = out_tensors_.front()->Size();
 
-  int ret = Unsqueeze(input_ptr, output_ptr, Unsq_para_, data_size, task_id);
+  int ret = Int8Unsqueeze(input_ptr, output_ptr, Unsq_para_, data_size, task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "UnsqueezeRun error task_id[" << task_id << "] error_code[" << ret << "]";
     return ret;

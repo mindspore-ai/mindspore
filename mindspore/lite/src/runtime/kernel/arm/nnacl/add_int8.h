@@ -42,8 +42,15 @@ typedef struct AddQuantParameter {
   int right_shift_out_;
 } AddQuantParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void AddInt8(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int64_t real_dst_count,
              AddQuantParameter *para);
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef ENABLE_NEON
 #include <arm_neon.h>

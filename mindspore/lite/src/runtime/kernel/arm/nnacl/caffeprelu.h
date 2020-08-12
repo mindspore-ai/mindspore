@@ -18,15 +18,21 @@
 
 #include "src/runtime/kernel/arm/nnacl/op_base.h"
 
-struct CaffePReluParameter {
+typedef struct CaffePReluParameter {
   OpParameter op_parameter_;
   float *negtive_slope_;
   bool channeShared;
   int channel_num_;
   int input_num_;
   int thread_num_;
-};
+} CaffePReluParameter;
 
-void PRelu(float *input, float *output, CaffePReluParameter *prelu_param_, int task_id);
+#ifdef __cplusplus
+extern "C" {
+#endif
+void CaffePRelu(float *input, float *output, CaffePReluParameter *prelu_param_, int task_id);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CAFFEPRELU_H_

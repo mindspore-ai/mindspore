@@ -82,14 +82,14 @@ file(GLOB KERNEL_OP_SRC
         ${LITE_DIR}/src/runtime/kernel/arm/base/*.cc
         ${LITE_DIR}/src/runtime/kernel/arm/fp32/*.cc
         ${LITE_DIR}/src/runtime/kernel/arm/int8/*.cc
-        ${LITE_DIR}/src/runtime/kernel/arm/nnacl/*.cc
-        ${LITE_DIR}/src/runtime/kernel/arm/nnacl/fp32/*.cc
-        ${LITE_DIR}/src/runtime/kernel/arm/nnacl/int8/*.cc
-        ${LITE_DIR}/src/runtime/kernel/arm/nnacl/quantization/*.cc
+        ${LITE_DIR}/src/runtime/kernel/arm/nnacl/*.c
+        ${LITE_DIR}/src/runtime/kernel/arm/nnacl/fp32/*.c
+        ${LITE_DIR}/src/runtime/kernel/arm/nnacl/int8/*.c
+        ${LITE_DIR}/src/runtime/kernel/arm/nnacl/quantization/*.c
         )
 
 file(GLOB KERNEL_OP_TRAIN_SRC
-        ${LITE_DIR}/src/runtime/kernel/arm/nnacl/fp32_grad/*.cc
+        ${LITE_DIR}/src/runtime/kernel/arm/nnacl/fp32_grad/*.c
         ${LITE_DIR}/src/runtime/kernel/arm/fp32_grad/*.cc
 )
 
@@ -100,6 +100,8 @@ endif()
 if (PLATFORM_ARM64)
     # assembly
     file(GLOB TEST_ASSEMBLY_SRC ${LITE_DIR}/src/runtime/kernel/arm/nnacl/assembly/arm64/*.s
+            ${LITE_DIR}/src/runtime/kernel/arm/nnacl/assembly/opt/*.s
+            ${LITE_DIR}/src/runtime/kernel/arm/nnacl/assembly/opt/*.S
             ${LITE_DIR}/src/runtime/kernel/arm/nnacl/assembly/arm64/*.S)
 
     set_property(SOURCE ${TEST_ASSEMBLY_SRC} PROPERTY LANGUAGE C)
@@ -111,6 +113,8 @@ endif()
 if (PLATFORM_ARM32)
     # assembly
     file(GLOB TEST_ASSEMBLY_SRC
+            ${LITE_DIR}/src/runtime/kernel/arm/nnacl/assembly/opt/*.s
+            ${LITE_DIR}/src/runtime/kernel/arm/nnacl/assembly/opt/*.S
             ${LITE_DIR}/src/runtime/kernel/arm/nnacl/assembly/arm32/*.S
             ${LITE_DIR}/src/runtime/kernel/arm/nnacl/assembly/arm32/*.s)
     set_property(SOURCE ${TEST_ASSEMBLY_SRC} PROPERTY LANGUAGE C)
@@ -122,7 +126,7 @@ endif()
 if (ENABLE_FP16)
     file(GLOB KERNEL_OP_FP16_SRC
             ${LITE_DIR}/src/runtime/kernel/arm/fp16/*.cc
-            ${LITE_DIR}/src/runtime/kernel/arm/nnacl/fp16/*.cc
+            ${LITE_DIR}/src/runtime/kernel/arm/nnacl/fp16/*.c
             )
     set(KERNEL_OP_SRC
             ${KERNEL_OP_SRC}

@@ -28,10 +28,16 @@ typedef struct CastParameter {
   int dst_type_;
 } CastParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void Uint8ToFloat32(const uint8_t *input, float *output, int number);
 void Uint8ToInt8(const uint8_t *input, int8_t *output, int number);
 void Int8ToUint8(const int8_t *input, uint8_t *output, int number);
 void Int32ToFloat32(const int32_t *input, float *output, int number);
 void Float32ToInt32(const float *input, int32_t *output, int number);
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CAST_H_
+#ifdef __cplusplus
+}
+#endif
 
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CAST_H_

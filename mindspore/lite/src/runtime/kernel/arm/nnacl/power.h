@@ -26,6 +26,12 @@ typedef struct PowerParameter {
   float shift_;
 } PowerParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void Power(const float *input, const float *exponent, float *output, int len, float scale, float shift, bool broadcast);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_POWER_H_

@@ -20,14 +20,21 @@
 
 typedef struct StridedSliceParameter {
   OpParameter op_parameter_;
-  int begins_[8] = {0};
-  int ends_[8] = {0};
-  int strides_[8] = {1};
+  int begins_[8];
+  int ends_[8];
+  int strides_[8];
   int isScale;
   int num_axes_;
   int in_shape_[8];
   LiteDataType data_type;
 } StridedSliceParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int DoStridedSlice(const void *inputs, void *output, StridedSliceParameter *param);
+#ifdef __cplusplus
+}
+#endif
+
 #endif  // MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_STRIDED_SLICE_H_

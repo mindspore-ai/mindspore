@@ -36,6 +36,12 @@ typedef struct BroadcastShapeInfo {
   int output_shape_size_;
 } BroadcastShapeInfo;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int BroadcastTo(const float *input, BroadcastShapeInfo *shape_info, float *output);
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_BROADCAST_TO_H_
+#ifdef __cplusplus
+}
+#endif
 
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_BROADCAST_TO_H_

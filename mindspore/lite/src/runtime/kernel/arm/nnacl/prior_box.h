@@ -41,5 +41,12 @@ typedef struct PriorBoxParameter {
   float offset;
 } PriorBoxParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int PriorBox(const float *input_data, float *output_data, const size_t size, const int tid, const int thread_num);
+#ifdef __cplusplus
+}
+#endif
+
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PRIOR_BOX_H_

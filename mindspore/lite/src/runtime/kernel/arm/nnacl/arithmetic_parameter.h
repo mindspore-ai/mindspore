@@ -19,8 +19,4 @@
 
 #include "nnacl/op_attribute.h"
 
-
-
-
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ARTITHMETIC_PARAMETER_H_
-

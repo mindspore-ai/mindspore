@@ -55,7 +55,6 @@ int ConcatInt8CPUKernel::Init() {
   return ReSize();
 }
 
-
 int ConcatInt8CPUKernel::ReSize() {
   auto ret = ConcatBaseCPUKernel::ReSize();
   if (ret != RET_OK) {
@@ -127,7 +126,7 @@ int ConcatInt8CPUKernel::DoExecute(int task_id) {
   if (real_dst_count <= 0) {
     return lite::RET_OK;
   }
-  Concat(input_data_, output_data_, concat_param_, axis_, real_dst_count, task_id);
+  Int8Concat(input_data_, output_data_, concat_param_, axis_, real_dst_count, task_id);
   return lite::RET_OK;
 }
 }  // namespace mindspore::kernel

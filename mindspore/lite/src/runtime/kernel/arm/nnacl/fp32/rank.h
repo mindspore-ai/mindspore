@@ -18,7 +18,12 @@
 
 #include "nnacl/op_base.h"
 
-void Rank(float* output, int rank);
+#ifdef __cplusplus
+extern "C" {
+#endif
+void Rank(float *output, int rank);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_RANK_H_
-

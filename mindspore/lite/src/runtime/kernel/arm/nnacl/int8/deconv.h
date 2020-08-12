@@ -23,11 +23,17 @@
 #include "nnacl/conv_parameter.h"
 #include "nnacl/common_func.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int DeConvInt8(const int8_t *input, const int8_t *weight, int32_t *output, size_t row8, size_t col8, size_t deep,
                ConvParameter *conv_param);
 
 int DeConvPostInt8(const int32_t *src, const int32_t *bias, int32_t *tmp, int8_t *out, int output_channel,
                    ConvParameter *conv_param);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_DECONV_H_
-

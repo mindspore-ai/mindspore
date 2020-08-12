@@ -20,11 +20,17 @@
 #include "nnacl/conv_parameter.h"
 #include "nnacl/fp32/conv_depthwise.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void ConvDwInt8(int8_t *output_data, const int16_t *input_data, const int16_t *weight_data, const int32_t *bias_data,
                 const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id);
 
 void DeconvDwInt8(int8_t *output_data, int32_t *output_buffer, const int16_t *input_data, const int16_t *weight_data,
                   const int32_t *bias_data, const ConvParameter *conv_param, const SlidingWindowParam *sliding,
                   int task_id);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_CONV_DEPTHWISE_H_

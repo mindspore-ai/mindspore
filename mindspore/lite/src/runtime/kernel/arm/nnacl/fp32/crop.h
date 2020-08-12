@@ -20,8 +20,14 @@
 
 #define CROP_OFFSET_MAX_SIZE 4
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void Crop4D(const float *input, float *output, const int *in_shape, const int *out_shape, CropParameter *crop_param);
 void Crop4DNoParallel(const float *input, float *output, const int *in_shape, const int *out_shape,
                       CropParameter *crop_param);
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_CROP_H_
+#ifdef __cplusplus
+}
+#endif
 
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_CROP_H_

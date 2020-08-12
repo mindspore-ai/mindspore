@@ -40,6 +40,9 @@ typedef struct ArithmeticParameter {
   int multiples1_[5];
 } ArithmeticParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void TileOneDimension(float *inData, float *outData, int dim, size_t ndim, int *inShape, int *inStrides,
                       int *outStrides, int *multiple);
 void ComputeStrides(int *shape, int *strides, int ndim);
@@ -49,5 +52,8 @@ void TileDimensionsUint8(uint8_t *data0, uint8_t *data1, uint8_t *tile_data0, ui
                          ArithmeticParameter *param);
 void TileDimensionsInt8(int8_t *data0, int8_t *data1, int8_t *tile_data0, int8_t *tile_data1,
                         ArithmeticParameter *param);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ARITHMETIC_COMMON_H_

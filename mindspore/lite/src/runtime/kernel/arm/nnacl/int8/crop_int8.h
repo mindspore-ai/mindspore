@@ -19,10 +19,16 @@
 #include "nnacl/op_base.h"
 #include "nnacl/crop_parameter.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void Crop(const int8_t *input, int8_t *output, int task_id, CropParameter *para);
 void Crop1D(const int8_t *input, int8_t *output, int task_id, CropParameter *para);
 void Crop2D(const int8_t *input, int8_t *output, int task_id, CropParameter *para);
 void Crop3D(const int8_t *input, int8_t *output, int task_id, CropParameter *para);
-void Crop4D(const int8_t *input, int8_t *output, int task_id, CropParameter *para);
+void Int8Crop4D(const int8_t *input, int8_t *output, int task_id, CropParameter *para);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_CROP_INT8_H_

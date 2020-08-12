@@ -29,12 +29,17 @@ typedef struct TransposeParameter {
   int data_size_;
 } TransposeParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int DoTranspose(float *in_data, float *out_data, int *input_shape, int *output_shape,
                 TransposeParameter *transpose_param);
 void TransposeDim2(float *in_data, float *out_data, int *strides, int *out_strides, int *perm, int *output_shape);
 void TransposeDim3(float *in_data, float *out_data, int *strides, int *out_strides, int *perm, int *output_shape);
 void TransposeDim4(float *in_data, float *out_data, int *strides, int *out_strides, int *perm, int *output_shape);
 void TransposeDim5(float *in_data, float *out_data, int *strides, int *out_strides, int *perm, int *output_shape);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_TRANSPOSE_H_
-

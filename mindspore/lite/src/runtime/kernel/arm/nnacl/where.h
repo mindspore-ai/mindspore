@@ -27,7 +27,12 @@ typedef struct WhereParameter {
   int thread_num_;
 } WhereParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void Where(bool *input, float *input1, float *input2, float *output, WhereParameter *where_param_, int task_id);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_WHERE_H_
-

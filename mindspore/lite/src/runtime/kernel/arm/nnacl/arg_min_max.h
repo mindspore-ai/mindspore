@@ -18,5 +18,12 @@
 
 #include "nnacl/arg_min_max_parameter.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void ArgMinMax(const void *input, void *output, const int *in_shape, ArgMinMaxParameter *param);
+#ifdef __cplusplus
+}
+#endif
+
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ARG_MIN_MAX_H_

@@ -23,15 +23,13 @@
 #include "nnacl/op_base.h"
 #include "nnacl/matmul_parameter.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void MatMul(const float *a, const float *b, float *c, const float *bias, ActType act_type, int depth, int row, int col);
 void RowMajor2Row8Major(float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Col8Major(float *src_ptr, float *dst_ptr, size_t row, size_t col);
 void Row8x8Major2RowMajor(float *src_ptr, float *dst_ptr, size_t row, size_t col, size_t stride);
-void MatMul8x8(const float *a, const float *b, float *c, const float *bias, float maxf, float minf, int deep,
-               int row_8_, int col_8_);
-#ifdef __cplusplus
-extern "C" {
-#endif
 #ifdef __aarch64__
 void MatmulFloatNeon64(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                        int col);

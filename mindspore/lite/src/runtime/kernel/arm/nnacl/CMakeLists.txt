@@ -11,7 +11,7 @@ file(GLOB OPTIMIZED_ASSEMBLY
         )
 
 file(GLOB FP16_SRC
-        ${NNACL_DIR}/fp16/*.cc
+        ${NNACL_DIR}/fp16/*.c
         ${NNACL_DIR}/../fp16/*.cc
         )
 

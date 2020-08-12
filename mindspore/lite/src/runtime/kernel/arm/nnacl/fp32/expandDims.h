@@ -24,7 +24,12 @@ typedef struct ExpandDimsParameter {
   int dim_;
 } ExpandDimsParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int ExpandDims(float *input_ptr, float *output_ptr, size_t data_size);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_EXPANDDIMS_H_
-

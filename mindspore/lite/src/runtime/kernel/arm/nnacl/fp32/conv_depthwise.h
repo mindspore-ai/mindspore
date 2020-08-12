@@ -25,6 +25,10 @@ void DepthwiseCenter(float *dst, const float *src, const float *weight, const fl
                      int in_kh_step, int in_kw_step, bool is_relu, bool is_relu6);
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void InitSlidingParam(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block);
 
 void InitSlidingParamConv(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block);
@@ -48,5 +52,9 @@ void ConvDw3x3Fp32(float *output_data, const float *input_data, const float *wei
 
 void DeconvDwC4Fp32(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
                     const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_CONV_DEPTHWISE_H_

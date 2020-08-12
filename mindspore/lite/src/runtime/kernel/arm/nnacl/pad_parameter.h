@@ -25,7 +25,7 @@
 typedef struct PadParameter {
   OpParameter op_parameter_;
   PadQuantArg pad_quant_arg_;
-  int paddings_[MAX_PAD_SIZE] = {0};
+  int paddings_[MAX_PAD_SIZE];
   int pad_mode_;
   float constant_value_;
 } PadParameter;

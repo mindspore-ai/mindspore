@@ -24,26 +24,34 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/quantization/quantize.h"
 
-int ElementRound(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-int ElementFloor(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+int Int8ElementRound(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
 
-int ElementCeil(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+int Int8ElementFloor(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
 
-int ElementAbs(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+int Int8ElementCeil(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
 
-int ElementSin(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+int Int8ElementAbs(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
 
-int ElementCos(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+int Int8ElementSin(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
 
-int ElementLog(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+int Int8ElementCos(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
 
-int ElementSqrt(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+int Int8ElementLog(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
 
-int ElementRsqrt(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+int Int8ElementSqrt(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
 
-int ElementSquare(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+int Int8ElementRsqrt(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
 
-int ElementLogicalNot(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+int Int8ElementSquare(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+
+int Int8ElementLogicalNot(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_ARITHMETIC_SELF_INT8_H_

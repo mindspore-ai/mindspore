@@ -29,7 +29,12 @@ typedef struct TileParameter {
   int out_strides_[5];
 } TileParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void Tile(float *input_data, float *output_data, TileParameter *parameter);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_TILE_H_
-

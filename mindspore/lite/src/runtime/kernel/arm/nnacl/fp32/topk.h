@@ -33,7 +33,12 @@ typedef struct TopkParameter {
   void *topk_node_list_;
 } TopkParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void Topk(float *input_data, float *output_data, int32_t *output_index, TopkParameter *parameter);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_TOPK_H_
-

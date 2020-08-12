@@ -66,8 +66,8 @@ int ResizeCPUKernel::RunImpl(int task_id) {
   int ret = 0;
   switch (method_) {
     case static_cast<int>(schema::ResizeMethod_BILINEAR): {
-      ret = ResizeBilinear(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
-                             align_corners_, task_id, context_->thread_num_);
+      ret = ResizeBilinear(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(), align_corners_,
+                           task_id, context_->thread_num_);
       break;
     }
     case static_cast<int>(schema::ResizeMethod_NEAREST_NEIGHBOR): {
@@ -76,7 +76,7 @@ int ResizeCPUKernel::RunImpl(int task_id) {
         return RET_ERROR;
       }
       ret = ResizeNearestNeighbor(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(), task_id,
-                                    context_->thread_num_);
+                                  context_->thread_num_);
       break;
     }
     case schema::ResizeMethod_UNKNOW:

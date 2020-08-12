@@ -25,9 +25,16 @@ typedef struct ScaleParameter {
   int axis_size_;
   int inner_size_;
   int axis_;
-  bool const_scale_ = false;
-  bool has_offset_ = false;
+  bool const_scale_;
+  bool has_offset_;
 } ScaleParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int DoScale(float *in_data, float *out_data, float *scale, float *offset, int task_id, ScaleParameter *scale_param);
+#ifdef __cplusplus
+}
+#endif
+
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_SCALE_H_

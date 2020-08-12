@@ -79,17 +79,17 @@ int CastCPUKernel::DoCast(int thread_id) {
     }
   } else {
     switch (input_data_type) {
-    case kNumberTypeUInt8:
-      Uint8ToFloat32(reinterpret_cast<uint8_t *>(input->Data()) + offset,
-                     reinterpret_cast<float *>(output_data) + offset, data_num);
-      break;
-    case kNumberTypeInt32:
-      Int32ToFloat32(reinterpret_cast<int32_t *>(input->Data()) + offset,
-                     reinterpret_cast<float *>(output_data) + offset, data_num);
-      break;
-    default:
-      MS_LOG(ERROR) << "Unsupport input data type " << input_data_type;
-      return RET_ERROR;
+      case kNumberTypeUInt8:
+        Uint8ToFloat32(reinterpret_cast<uint8_t *>(input->Data()) + offset,
+                       reinterpret_cast<float *>(output_data) + offset, data_num);
+        break;
+      case kNumberTypeInt32:
+        Int32ToFloat32(reinterpret_cast<int32_t *>(input->Data()) + offset,
+                       reinterpret_cast<float *>(output_data) + offset, data_num);
+        break;
+      default:
+        MS_LOG(ERROR) << "Unsupport input data type " << input_data_type;
+        return RET_ERROR;
     }
   }
   return RET_OK;

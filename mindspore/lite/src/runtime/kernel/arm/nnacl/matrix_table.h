@@ -17,6 +17,9 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_MATRIX_TABLE_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_MATRIX_TABLE_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 inline void MatrixG4x2(float *matrix_data) {
   matrix_data[0] = 1.0f;
   matrix_data[1] = 0.0f;
@@ -507,6 +510,8 @@ inline void MatrixGT7x8(float *matrix_data) {
   matrix_data[54] = 11.390625f;
   matrix_data[55] = 1.0f;
 }
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_MATRIX_TABLE_H_
-

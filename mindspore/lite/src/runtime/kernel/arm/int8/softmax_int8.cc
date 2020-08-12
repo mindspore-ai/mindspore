@@ -100,7 +100,7 @@ int SoftmaxInt8CPUKernel::DoSoftmax(int task_id) {
   output_ptr += stride * task_id * inner_size;
   exp_data_ += stride * task_id * inner_size;
 
-  auto error_code = Softmax(input_ptr, output_ptr, count, exp_data_, sum_data_, quant_params_, softmax_param_);
+  auto error_code = Int8Softmax(input_ptr, output_ptr, count, exp_data_, sum_data_, quant_params_, softmax_param_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "DoSoftmax error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;

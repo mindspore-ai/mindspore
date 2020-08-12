@@ -62,22 +62,22 @@ int ArgMinMaxInt8CPUKernel::Run() {
   auto in_shape = input->shape().data();
   auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
   if (param->topk_ == 1) {
-    ArgMinMaxQuant(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
+    Int8ArgMinMaxQuant(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
     return RET_OK;
   }
 
   switch (param->axis_) {
     case 0:
-      ArgMinMaxDim0(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
+      Int8ArgMinMaxDim0(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
       break;
     case 1:
-      ArgMinMaxDim1(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
+      Int8ArgMinMaxDim1(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
       break;
     case 2:
-      ArgMinMaxDim2(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
+      Int8ArgMinMaxDim2(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
       break;
     case 3:
-      ArgMinMaxDim3(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
+      Int8ArgMinMaxDim3(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
       break;
   }
   FreeTmpMemory();

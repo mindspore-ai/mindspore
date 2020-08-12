@@ -21,7 +21,13 @@
 #include "nnacl/op_base.h"
 #include "nnacl/pad_parameter.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void PadConstant4D(const int8_t *in_data, int8_t *out_data, const int32_t *in_dims, const int32_t *out_dims,
                    const int32_t *paddings);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_PAD_INT8_H_

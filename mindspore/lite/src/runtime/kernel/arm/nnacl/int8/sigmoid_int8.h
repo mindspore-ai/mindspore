@@ -32,6 +32,12 @@ typedef struct SigmoidQuantArg {
   int32_t output_multiplier_exponent;
 } SigmoidQuantArg;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int SigmoidInt8(const int8_t *src, int length, int8_t *dst, SigmoidQuantArg *arg);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_Sigmoid_INT8_H_

@@ -31,6 +31,9 @@ typedef void (*GEMM_FUNC)(int8_t *dst, const int8_t *src, const int8_t *weight, 
                           size_t act_max, size_t out_zp, size_t out_multiplier, size_t shift_before,
                           size_t shift_after);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void IndirectGemmInt8(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const int8_t *weight, const int32_t *bias,
                       int ic4, size_t kernel_plane, size_t output_channel, const int32_t *input_sum,
                       ConvParameter *conv_param);
@@ -53,5 +56,8 @@ void Conv3x3Int8(int16_t *input_data, int16_t *transed_weight, const int32_t *bi
                  int16_t *tile_buffer, int16_t *block_unit_buffer, int32_t *tmp_dst_buffer, int8_t *tmp_out,
                  int task_id, ConvParameter *conv_param);
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_CONV_INT8_H_
+#ifdef __cplusplus
+}
+#endif
 
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_CONV_INT8_H_

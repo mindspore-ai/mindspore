@@ -19,7 +19,12 @@
 
 #include "nnacl/op_base.h"
 #include "nnacl/softmax_parameter.h"
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 void Softmax(const float *input_ptr, float *output_ptr, float *sum_data, SoftmaxParameter *parameter);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_SOFTMAX_H_

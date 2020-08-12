@@ -40,9 +40,7 @@ void ArithmeticCPUKernel::FreeTileData() {
   }
 }
 
-ArithmeticCPUKernel::~ArithmeticCPUKernel() {
-  FreeTileData();
-}
+ArithmeticCPUKernel::~ArithmeticCPUKernel() { FreeTileData(); }
 
 int ArithmeticCPUKernel::Init() {
   if (!InferShapeDone()) {

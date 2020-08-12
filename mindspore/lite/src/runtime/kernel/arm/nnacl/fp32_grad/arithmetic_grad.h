@@ -16,7 +16,13 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_GRAD_ARITHMETIC_GRAD_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_GRAD_ARITHMETIC_GRAD_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void ElementDivNegSquare(const float *nom, const float *denom, float *output, int element_size);
 void ElementMulAndDivNegSquare(const float *a, const float *b, const float *denom, float *output, int element_size);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_ARITHMETIC_GRAD_H_

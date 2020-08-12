@@ -20,6 +20,12 @@
 #include "nnacl/op_base.h"
 #include "nnacl/mul_parameter.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void Mul(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int64_t real_dst_count, MulQuantArg para);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_MUL_INT8_H_

@@ -28,6 +28,9 @@
 
 #define OUPUT_UNIT 2
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 // for fp32 winograd input/output transform
 void WinogradInputTransform(const float *input_data, float *trans_input, float *tmp_data, int cal_num,
                             int out_tile_index, int out_w_block_num, ConvParameter *conv_param,
@@ -66,5 +69,8 @@ void Conv3x3Uint8OutputUnit(const int32_t *gemm_out, const int32_t *bias_data, i
 
 void Conv3x3Uint8OutputTransform(const int32_t *gemm_out, int8_t *out_data, const int32_t *bias_data, int start_index,
                                  int real_cal_num, int out_w_block, ConvParameter *conv_param);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_WINOGRAD_TRANSFORM_H_
