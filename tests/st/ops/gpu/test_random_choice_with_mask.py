@@ -49,38 +49,37 @@ class RCWM_3D(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_RCWM_3D():
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     input_tensor = Tensor(np.ones([3, 4, 5]).astype(np.bool))
-    expect1 = [[0, 1, 1], [0, 2, 1], [0, 2, 2], [1, 0, 1], [0, 1, 3], [0, 3, 0], [1, 3, 2], \
-    [0, 0, 0], [1, 1, 2], [1, 3, 4]]
-    expect2 = [True, True, True, True, True, True, True, True, True, True]
+    expect1 = (10, 3)
+    expect2 = (10,)
     rcwm = RCWM_3D()
     output1, output2 = rcwm(input_tensor)
-    assert np.all(output1.asnumpy() == np.array(expect1)), "output: {}, expect: {}".format(output1, expect1)
-    assert np.all(output2.asnumpy() == np.array(expect2)), "output: {}, expect: {}".format(output2, expect2)
+    assert output1.shape == expect1
+    assert output2.shape == expect2
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_RCWM_count_out():
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     input_tensor = Tensor(np.array([[1, 0, 1, 0], [0, 0, 0, 1], [1, 1, 1, 1], [0, 0, 0, 1]]).astype(np.bool))
-    expect1 = [[0, 2], [2, 2], [2, 1], [2, 0], [0, 0], [3, 3], [2, 3], [1, 3], [0, 0], [0, 0]]
-    expect2 = [True, True, True, True, True, True, True, True, False, False]
+    expect1 = (10, 2)
+    expect2 = (10,)
     rcwm = RCWM_count_out()
     output1, output2 = rcwm(input_tensor)
-    assert np.all(output1.asnumpy() == np.array(expect1)), "output: {}, expect: {}".format(output1, expect1)
-    assert np.all(output2.asnumpy() == np.array(expect2)), "output: {}, expect: {}".format(output2, expect2)
+    assert output1.shape == expect1
+    assert output2.shape == expect2
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_RCWM_count_in():
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     input_tensor = Tensor(np.array([[1, 0, 1, 0], [0, 0, 0, 1], [1, 1, 1, 1], [0, 0, 0, 1]]).astype(np.bool))
-    expect1 = [[0, 2], [2, 2], [2, 1], [2, 0]]
-    expect2 = [True, True, True, True]
+    expect1 = (4, 2)
+    expect2 = (4,)
     rcwm = RCWM_count_in()
     output1, output2 = rcwm(input_tensor)
-    assert np.all(output1.asnumpy() == np.array(expect1)), "output: {}, expect: {}".format(output1, expect1)
-    assert np.all(output2.asnumpy() == np.array(expect2)), "output: {}, expect: {}".format(output2, expect2)
+    assert output1.shape == expect1
+    assert output2.shape == expect2
