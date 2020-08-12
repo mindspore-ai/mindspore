@@ -15,6 +15,7 @@
 """Exponential Distribution"""
 import numpy as np
 from mindspore.ops import operations as P
+from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import cast_to_tensor, check_greater_zero, check_type
@@ -107,7 +108,8 @@ class Exponential(Distribution):
 
         self.minval = np.finfo(np.float).tiny
 
-    # ops needed for the class
+        # ops needed for the class
+        self.cast = P.Cast()
         self.const = P.ScalarToArray()
         self.dtypeop = P.DType()
         self.exp = P.Exp()
@@ -118,7 +120,7 @@ class Exponential(Distribution):
         self.shape = P.Shape()
         self.sqrt = P.Sqrt()
         self.sq = P.Square()
-        self.uniform = P.UniformReal(seed=seed)
+        self.uniform = C.uniform
 
     def extend_repr(self):
         if self.is_scalar_batch:
@@ -251,5 +253,6 @@ class Exponential(Distribution):
         rate = self.rate if rate is None else rate
         minval = self.const(self.minval)
         maxval = self.const(1.0)
-        sample = self.uniform(shape + self.shape(rate), minval, maxval)
-        return -self.log(sample) / rate
+        sample_uniform = self.uniform(shape + self.shape(rate), minval, maxval, self.seed)
+        sample = -self.log(sample_uniform) / rate
+        return self.cast(sample, self.dtype)

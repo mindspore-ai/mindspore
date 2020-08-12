@@ -15,6 +15,7 @@
 """Bernoulli Distribution"""
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
+from mindspore.ops import composite as C
 from .distribution import Distribution
 from ._utils.utils import cast_to_tensor, check_prob, check_type
 
@@ -116,7 +117,7 @@ class Bernoulli(Distribution):
         self.select = P.Select()
         self.sq = P.Square()
         self.sqrt = P.Sqrt()
-        self.uniform = P.UniformReal(seed=seed)
+        self.uniform = C.uniform
 
     def extend_repr(self):
         if self.is_scalar_batch:
@@ -256,7 +257,6 @@ class Bernoulli(Distribution):
         probs1 = self.probs if probs is None else probs
         l_zero = self.const(0.0)
         h_one = self.const(1.0)
-        sample_uniform = self.uniform(shape + self.shape(probs1), l_zero, h_one)
+        sample_uniform = self.uniform(shape + self.shape(probs1), l_zero, h_one, self.seed)
         sample = self.less(sample_uniform, probs1)
-        sample = self.cast(sample, self.dtype)
-        return sample
+        return self.cast(sample, self.dtype)

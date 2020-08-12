@@ -14,6 +14,7 @@
 # ============================================================================
 """Uniform Distribution"""
 from mindspore.ops import operations as P
+from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import convert_to_batch, check_greater, check_type
@@ -108,7 +109,8 @@ class Uniform(Distribution):
             self._low = low
             self._high = high
 
-    # ops needed for the class
+        # ops needed for the class
+        self.cast = P.Cast()
         self.const = P.ScalarToArray()
         self.dtypeop = P.DType()
         self.exp = P.Exp()
@@ -121,8 +123,8 @@ class Uniform(Distribution):
         self.shape = P.Shape()
         self.sq = P.Square()
         self.sqrt = P.Sqrt()
-        self.uniform = P.UniformReal(seed=seed)
         self.zeroslike = P.ZerosLike()
+        self.uniform = C.uniform
 
     def extend_repr(self):
         if self.is_scalar_batch:
@@ -284,6 +286,6 @@ class Uniform(Distribution):
         broadcast_shape = self.shape(low + high)
         l_zero = self.const(0.0)
         h_one = self.const(1.0)
-        sample_uniform = self.uniform(shape + broadcast_shape, l_zero, h_one)
+        sample_uniform = self.uniform(shape + broadcast_shape, l_zero, h_one, self.seed)
         sample = (high - low) * sample_uniform + low
-        return sample
+        return self.cast(sample, self.dtype)

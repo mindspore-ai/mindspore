@@ -15,6 +15,7 @@
 """Geometric Distribution"""
 import numpy as np
 from mindspore.ops import operations as P
+from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import cast_to_tensor, check_prob, check_type
@@ -109,6 +110,7 @@ class Geometric(Distribution):
         self.minval = np.finfo(np.float).tiny
 
         # ops needed for the class
+        self.cast = P.Cast()
         self.const = P.ScalarToArray()
         self.dtypeop = P.DType()
         self.fill = P.Fill()
@@ -121,7 +123,7 @@ class Geometric(Distribution):
         self.shape = P.Shape()
         self.sq = P.Square()
         self.sqrt = P.Sqrt()
-        self.uniform = P.UniformReal(seed=seed)
+        self.uniform = C.uniform
 
     def extend_repr(self):
         if self.is_scalar_batch:
@@ -269,5 +271,6 @@ class Geometric(Distribution):
         probs = self.probs if probs is None else probs
         minval = self.const(self.minval)
         maxval = self.const(1.0)
-        sample_uniform = self.uniform(shape + self.shape(probs), minval, maxval)
-        return self.floor(self.log(sample_uniform) / self.log(1.0 - probs))
+        sample_uniform = self.uniform(shape + self.shape(probs), minval, maxval, self.seed)
+        sample = self.floor(self.log(sample_uniform) / self.log(1.0 - probs))
+        return self.cast(sample, self.dtype)
