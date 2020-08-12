@@ -13,31 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_POOLING_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_POOLING_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CAST_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CAST_FP16_H_
 
 #include <vector>
-#include "src/runtime/kernel/arm/base/pooling_base.h"
 #include "src/lite_kernel.h"
-#include "ir/anf.h"
 
 namespace mindspore::kernel {
-class PoolingCPUKernel : public PoolingBaseCPUKernel {
+class CastFp16CPUKernel : public LiteKernel {
  public:
-  PoolingCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                   const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
-                   const lite::Primitive *primitive)
-      : PoolingBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~PoolingCPUKernel() override = default;
+  CastFp16CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                    const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                    const lite::Primitive *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+
+  ~CastFp16CPUKernel() = default;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int RunImpl(int task_id);
+  int DoCast(int thread_id);
 
  private:
+  uint32_t stride_;
+  uint32_t data_num_;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_POOLING_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CAST_FP16_H_

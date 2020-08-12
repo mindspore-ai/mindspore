@@ -33,9 +33,5 @@ void Uint8ToInt8(const uint8_t *input, int8_t *output, int number);
 void Int8ToUint8(const int8_t *input, uint8_t *output, int number);
 void Int32ToFloat32(const int32_t *input, float *output, int number);
 void Float32ToInt32(const float *input, int32_t *output, int number);
-#ifdef ENABLE_FP16
-void Float32ToFloat16(const float *input, float16_t *output, int number);
-void Float16ToFloat32(const float16_t *input, float *output, int number);
-#endif
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CAST_H_
 

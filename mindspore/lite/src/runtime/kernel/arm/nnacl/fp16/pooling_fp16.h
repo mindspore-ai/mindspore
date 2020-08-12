@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_POOLING_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_POOLING_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP16_POOLING_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP16_POOLING_FP16_H_
 
-#ifdef ENABLE_NEON
 #include <arm_neon.h>
-#endif
-#include "nnacl/op_base.h"
 #include "nnacl/pooling_parameter.h"
-#include "nnacl/quantization/quantize.h"
 
-void AvgPooling(const float *input_ptr, float *output_ptr, PoolingParameter *pooling_param, int task_id);
+void AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingParameter *pooling_param, int task_id);
 
-void MaxPooling(const float *input_ptr, float *output_ptr, PoolingParameter *pooling_param, int task_id);
+void MaxPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingParameter *pooling_param, int task_id);
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_POOLING_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP16_POOLING_FP16_H_
