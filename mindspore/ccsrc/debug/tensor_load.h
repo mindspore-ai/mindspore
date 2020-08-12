@@ -46,7 +46,7 @@ class TensorLoader {
       }
     }
     tensor_list.push_back(tensor);
-    tensor_list_map.insert({tensor->GetName(), tensor});
+    tensor_list_map[tensor->GetName()] = tensor;  // use [] instead of insert to ensure latest value
     auto node_name = tensor->GetName();
     node_name = node_name.substr(0, node_name.find_first_of(":"));
     node_tensor_map.insert({node_name, tensor});
