@@ -106,7 +106,7 @@ if (BUILD_CONVERTER)
     include_directories(${TOP_DIR}/third_party/protobuf/build/include)
     link_directories(${TOP_DIR}/third_party/protobuf/build/lib)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/converter)
-    add_subdirectory(src/common/anf_exporter)
+    add_subdirectory(src/common/anf_importer)
 endif()
 
 if (BUILD_DEVICE)

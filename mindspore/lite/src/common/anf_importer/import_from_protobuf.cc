@@ -28,6 +28,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "schema/inner/model_generated.h"
 #include "frontend/operator/ops.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "include/errorcode.h"
@@ -38,6 +39,7 @@
 #include "tools/converter/parser/onnx/onnx.pb.h"
 #include "utils/log_adapter.h"
 #include "securec/include/securec.h"
+#include "src/common/anf_importer/anf_populater/anf_node_populater_registry.h"
 
 using string = std::string;
 using int32 = int32_t;
@@ -997,10 +999,8 @@ CNodePtr AnfImporterFromProtobuf::BuildCNodeForFuncGraph(const FuncGraphPtr &out
       return nullptr;
     }
   }
-
   std::vector<AnfNodePtr> inputs;
   inputs.clear();
-  inputs.push_back(NewValueNode(prim));
   for (int i = 0; i < node_proto.input_size(); ++i) {
     const std::string &input_name = node_proto.input(i);
     if (anfnode_build_map_.find(input_name) == anfnode_build_map_.end()) {
@@ -1009,6 +1009,18 @@ CNodePtr AnfImporterFromProtobuf::BuildCNodeForFuncGraph(const FuncGraphPtr &out
     }
     inputs.push_back(anfnode_build_map_[input_name]);
   }
+  std::string opType = prim->name();
+  auto node_parser = AnfNodePopulaterRegistry::GetInstance()->GetNodePopulater(opType);
+  if (node_parser == nullptr) {
+    MS_LOG(ERROR) << "Find op parser failed, opType: " << opType;
+    return nullptr;
+  }
+  auto primitiveT = std::make_unique<schema::PrimitiveT>();
+  // auto * primitiveTValue = new PrimitiveTValue(primitiveT.release());
+  std::shared_ptr<PrimitiveTValue> primitiveTValuePtr = std::make_shared<PrimitiveTValue>(primitiveT.release());
+  node_parser->Populate(prim, primitiveTValuePtr.get(), inputs);
+  MS_ASSERT(primitiveTValuePtr != nullptr);
+  inputs.insert(inputs.begin(), NewValueNode(primitiveTValuePtr));
   CNodePtr cnode_ptr = outputFuncGraph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cnode_ptr);
   if (node_type == "LayerNorm") {

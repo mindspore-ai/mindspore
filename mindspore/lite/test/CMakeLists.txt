@@ -215,9 +215,9 @@ if(BUILD_CONVERTER)
             ${TEST_CASE_TFLITE_PARSERS_SRC}
             ${TOP_DIR}/mindspore/core/utils/flags.cc
             ${LITE_DIR}/tools/converter/optimizer.cc
-            ${LITE_DIR}/src/common/anf_importer/anf_importer.cc
-            ${LITE_DIR}/src/common/anf_importer/import_from_meta_graphT.cc
-            ${LITE_DIR}/src/common/anf_importer/import_from_protobuf.cc
+            # ${LITE_DIR}/src/common/anf_importer/import_from_protobuf.cc
+            # ${LITE_DIR}/src/common/anf_importer/import_from_meta_graphT.cc
+            # ${LITE_DIR}/src/common/anf_importer/import_from_protobuf.cc
             ${LITE_DIR}/tools/converter/anf_transform.cc
             ${LITE_DIR}/tools/converter/graphdef_transform.cc
             ${LITE_DIR}/tools/converter/converter_flags.cc
@@ -345,7 +345,7 @@ if (BUILD_MINDDATA)
 endif()
 if (BUILD_CONVERTER)
     target_link_libraries(lite-test
-            anf_exporter_mid
+            anf_importer_mid
             tflite_parser_mid
             caffe_parser_mid
             node_mid
