@@ -863,7 +863,7 @@ bool TensorNeedSync(const AnfNodePtr &parameter, const tensor::TensorPtr &tensor
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_address = AnfAlgo::GetMutableOutputAddr(parameter, 0);
-  if (ms_context->execution_mode() == kPynativeMode) {
+  if (ms_context->enable_pynative_infer()) {
     return tensor->device_address().get() == nullptr || tensor->device_address() != device_address;
   }
   if (tensor->is_dirty()) {
