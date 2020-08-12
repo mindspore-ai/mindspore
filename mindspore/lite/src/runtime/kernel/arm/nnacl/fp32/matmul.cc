@@ -151,9 +151,9 @@ void Row8x8Major2RowMajor(float *src_ptr, float *dst_ptr, size_t row, size_t col
       "mov x10, %[src_c] \n"
       "mov x11, %[dst_c] \n"
 
-      "Loop8x8: \n"
+      "1: \n"
       "cmp x0, x1 \n"
-      "beq End \n"
+      "beq 2f \n"
 
       "ld1 {v0.4s}, [x10], #16\n"
       "ld1 {v1.4s}, [x10], #16\n"
@@ -190,9 +190,9 @@ void Row8x8Major2RowMajor(float *src_ptr, float *dst_ptr, size_t row, size_t col
       "st1 {v13.4s}, [x11], %[offset]\n"
       "st1 {v14.4s}, [x11], #16\n"
       "st1 {v15.4s}, [x11], %[offset]\n"
-      "b Loop8x8\n"
+      "b 1b\n"
 
-      "End:\n"
+      "2:\n"
 
       :
       : [ dst_c ] "r"(dst_c), [ src_c ] "r"(src_c), [ offset ] "r"(offset), [ row_8div ] "r"(row_8div)
