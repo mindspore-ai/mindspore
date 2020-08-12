@@ -159,22 +159,72 @@ ConvDwInt8Center:
             sqrdmulh v13.4s, v13.4s, v27.4s
             sqrdmulh v14.4s, v14.4s, v27.4s
             sqrdmulh v15.4s, v15.4s, v27.4s
-            sqrshl v0.4s, v0.4s, v28.4s
-            sqrshl v1.4s, v1.4s, v28.4s
-            sqrshl v2.4s, v2.4s, v28.4s
-            sqrshl v3.4s, v3.4s, v28.4s
-            sqrshl v4.4s, v4.4s, v28.4s
-            sqrshl v5.4s, v5.4s, v28.4s
-            sqrshl v6.4s, v6.4s, v28.4s
-            sqrshl v7.4s, v7.4s, v28.4s
-            sqrshl v8.4s, v8.4s, v28.4s
-            sqrshl v9.4s, v9.4s, v28.4s
-            sqrshl v10.4s, v10.4s, v28.4s
-            sqrshl v11.4s, v11.4s, v28.4s
-            sqrshl v12.4s, v12.4s, v28.4s
-            sqrshl v13.4s, v13.4s, v28.4s
-            sqrshl v14.4s, v14.4s, v28.4s
-            sqrshl v15.4s, v15.4s, v28.4s
+
+            and v16.16b, v28.16b, v0.16b
+            sshr v16.4s, v16.4s, #31
+            sqadd v0.4s, v0.4s, v16.4s
+            srshl v0.4s, v0.4s, v28.4s
+            and v17.16b, v28.16b, v1.16b
+            sshr v17.4s, v17.4s, #31
+            sqadd v1.4s, v1.4s, v17.4s
+            srshl v1.4s, v1.4s, v28.4s
+            and v18.16b, v28.16b, v2.16b
+            sshr v18.4s, v18.4s, #31
+            sqadd v2.4s, v2.4s, v18.4s
+            srshl v2.4s, v2.4s, v28.4s
+            and v19.16b, v28.16b, v3.16b
+            sshr v19.4s, v19.4s, #31
+            sqadd v3.4s, v3.4s, v19.4s
+            srshl v3.4s, v3.4s, v28.4s
+            and v20.16b, v28.16b, v4.16b
+            sshr v20.4s, v20.4s, #31
+            sqadd v4.4s, v4.4s, v20.4s
+            srshl v4.4s, v4.4s, v28.4s
+            and v21.16b, v28.16b, v5.16b
+            sshr v21.4s, v21.4s, #31
+            sqadd v5.4s, v5.4s, v21.4s
+            srshl v5.4s, v5.4s, v28.4s
+            and v22.16b, v28.16b, v6.16b
+            sshr v22.4s, v22.4s, #31
+            sqadd v6.4s, v6.4s, v22.4s
+            srshl v6.4s, v6.4s, v28.4s
+            and v23.16b, v28.16b, v7.16b
+            sshr v23.4s, v23.4s, #31
+            sqadd v7.4s, v7.4s, v23.4s
+            srshl v7.4s, v7.4s, v28.4s
+            and v16.16b, v28.16b, v8.16b
+            sshr v16.4s, v16.4s, #31
+            sqadd v8.4s, v8.4s, v16.4s
+            srshl v8.4s, v8.4s, v28.4s
+            and v17.16b, v28.16b, v9.16b
+            sshr v17.4s, v17.4s, #31
+            sqadd v9.4s, v9.4s, v17.4s
+            srshl v9.4s, v9.4s, v28.4s
+            and v18.16b, v28.16b, v10.16b
+            sshr v18.4s, v18.4s, #31
+            sqadd v10.4s, v10.4s, v18.4s
+            srshl v10.4s, v10.4s, v28.4s
+            and v19.16b, v28.16b, v11.16b
+            sshr v19.4s, v19.4s, #31
+            sqadd v11.4s, v11.4s, v19.4s
+            srshl v11.4s, v11.4s, v28.4s
+            and v20.16b, v28.16b, v12.16b
+            sshr v20.4s, v20.4s, #31
+            sqadd v12.4s, v12.4s, v20.4s
+            srshl v12.4s, v12.4s, v28.4s
+            and v21.16b, v28.16b, v13.16b
+            sshr v21.4s, v21.4s, #31
+            sqadd v13.4s, v13.4s, v21.4s
+            srshl v13.4s, v13.4s, v28.4s
+            and v22.16b, v28.16b, v14.16b
+            sshr v22.4s, v22.4s, #31
+            sqadd v14.4s, v14.4s, v22.4s
+            srshl v14.4s, v14.4s, v28.4s
+            and v23.16b, v28.16b, v15.16b
+            sshr v23.4s, v23.4s, #31
+            sqadd v15.4s, v15.4s, v23.4s
+            srshl v15.4s, v15.4s, v28.4s
+
             add v0.4s, v0.4s, v29.4s
             add v1.4s, v1.4s, v29.4s
             add v2.4s, v2.4s, v29.4s
@@ -407,14 +457,40 @@ ConvDwInt8Center:
             sqrdmulh v5.4s, v5.4s, v27.4s
             sqrdmulh v6.4s, v6.4s, v27.4s
             sqrdmulh v7.4s, v7.4s, v27.4s
-            sqrshl v0.4s, v0.4s, v28.4s
-            sqrshl v1.4s, v1.4s, v28.4s
-            sqrshl v2.4s, v2.4s, v28.4s
-            sqrshl v3.4s, v3.4s, v28.4s
-            sqrshl v4.4s, v4.4s, v28.4s
-            sqrshl v5.4s, v5.4s, v28.4s
-            sqrshl v6.4s, v6.4s, v28.4s
-            sqrshl v7.4s, v7.4s, v28.4s
+
+            and v16.16b, v28.16b, v0.16b
+            sshr v16.4s, v16.4s, #31
+            sqadd v0.4s, v0.4s, v16.4s
+            srshl v0.4s, v0.4s, v28.4s
+            and v17.16b, v28.16b, v1.16b
+            sshr v17.4s, v17.4s, #31
+            sqadd v1.4s, v1.4s, v17.4s
+            srshl v1.4s, v1.4s, v28.4s
+            and v18.16b, v28.16b, v2.16b
+            sshr v18.4s, v18.4s, #31
+            sqadd v2.4s, v2.4s, v18.4s
+            srshl v2.4s, v2.4s, v28.4s
+            and v19.16b, v28.16b, v3.16b
+            sshr v19.4s, v19.4s, #31
+            sqadd v3.4s, v3.4s, v19.4s
+            srshl v3.4s, v3.4s, v28.4s
+            and v20.16b, v28.16b, v4.16b
+            sshr v20.4s, v20.4s, #31
+            sqadd v4.4s, v4.4s, v20.4s
+            srshl v4.4s, v4.4s, v28.4s
+            and v21.16b, v28.16b, v5.16b
+            sshr v21.4s, v21.4s, #31
+            sqadd v5.4s, v5.4s, v21.4s
+            srshl v5.4s, v5.4s, v28.4s
+            and v22.16b, v28.16b, v6.16b
+            sshr v22.4s, v22.4s, #31
+            sqadd v6.4s, v6.4s, v22.4s
+            srshl v6.4s, v6.4s, v28.4s
+            and v23.16b, v28.16b, v7.16b
+            sshr v23.4s, v23.4s, #31
+            sqadd v7.4s, v7.4s, v23.4s
+            srshl v7.4s, v7.4s, v28.4s
+
             add v0.4s, v0.4s, v29.4s
             add v1.4s, v1.4s, v29.4s
             add v2.4s, v2.4s, v29.4s
@@ -526,7 +602,12 @@ ConvDwInt8Center:
 
             sqshl v0.4s, v0.4s, v26.4s
             sqrdmulh v0.4s, v0.4s, v27.4s
-            sqrshl v0.4s, v0.4s, v28.4s
+
+            and v16.16b, v28.16b, v0.16b
+            sshr v16.4s, v16.4s, #31
+            sqadd v0.4s, v0.4s, v16.4s
+            srshl v0.4s, v0.4s, v28.4s
+
             add v0.4s, v0.4s, v29.4s
             smax v0.4s, v0.4s, v30.4s
             smin v0.4s, v0.4s, v31.4s

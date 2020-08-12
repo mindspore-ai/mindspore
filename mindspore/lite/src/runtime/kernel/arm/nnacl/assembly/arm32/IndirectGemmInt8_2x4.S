@@ -166,7 +166,13 @@ IndirectGemmInt8_2x4:
 
                 ldr r10, [sp, #40]
                 vdup.32 q5, r10
+                vand q3, q5, q8
+                vshr.s32 q3, q3, #31
+                vqadd.s32 q8, q8, q3
                 vrshl.s32 q8, q8, q5
+                vand q4, q5, q12
+                vshr.s32 q4, q4, #31
+                vqadd.s32 q12, q12, q4
                 vrshl.s32 q12, q12, q5
                 
                 ldr r10, [sp, #28]
