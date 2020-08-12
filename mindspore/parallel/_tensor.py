@@ -229,10 +229,13 @@ def _load_tensor_by_layout(tensor, layout):
     """
     if not isinstance(layout, list):
         raise TypeError("The layout should be list! layout is {}".format(layout))
-    if len(layout) < 3:
-        raise ValueError("The length of layout must be larger than 3! layout is {}".format(layout))
+    if len(layout) < 5:
+        raise ValueError("The length of layout must be larger than 5! layout is {}".format(layout))
     dev_mat = layout[0]
     tensor_map = layout[1]
+    uniform_split = layout[4]
+    if uniform_split[0] == 0:
+        raise RuntimeError("The load tensor only support uniform split now")
     if tensor.size() == 1:
         return tensor
     return _load_tensor(tensor, dev_mat, tensor_map)

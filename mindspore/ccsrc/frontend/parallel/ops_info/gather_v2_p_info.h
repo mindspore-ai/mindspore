@@ -59,7 +59,9 @@ class GatherV2PInfo : public OperatorInfo {
   Status GetAttrs() override;
 
   Status ComputeReplaceGraph(const CNodePtr &cnode);
-  Status CheckManualSplit();
+  Status CheckManualSplit(const Strategys &strategy);
+  Status GetManualSplitAttr();
+  Status GetManualSplitWithoutOffsetAttr();
   Status ComputeReplaceOp();
   Status InferBias();
   Status InferOffset();
