@@ -151,7 +151,7 @@ class Conv2dBnAct(Cell):
         self.has_act = activation is not None
         self.after_fake = after_fake
         if has_bn:
-            self.batchnorm = BatchNorm2d(out_channelsi, eps, momentum)
+            self.batchnorm = BatchNorm2d(out_channels, eps, momentum)
         if activation == "leakyrelu":
             self.activation = LeakyReLU(alpha)
         else:
