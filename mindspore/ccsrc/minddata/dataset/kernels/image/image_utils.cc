@@ -856,6 +856,44 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
     RETURN_STATUS_UNEXPECTED("Unexpected error in pad");
   }
 }
+
+Status RgbaToRgb(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+  try {
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
+    int num_channels = input_cv->shape()[2];
+    if (input_cv->shape().Size() != 3 || num_channels != 4) {
+      std::string err_msg = "Number of channels does not equal 4, got : " + std::to_string(num_channels);
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+    TensorShape out_shape = TensorShape({input_cv->shape()[0], input_cv->shape()[1], 3});
+    std::shared_ptr<CVTensor> output_cv;
+    RETURN_IF_NOT_OK(CVTensor::CreateEmpty(out_shape, input_cv->type(), &output_cv));
+    cv::cvtColor(input_cv->mat(), output_cv->mat(), static_cast<int>(cv::COLOR_RGBA2RGB));
+    *output = std::static_pointer_cast<Tensor>(output_cv);
+    return Status::OK();
+  } catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("Unexpected error in RgbaToRgb.");
+  }
+}
+
+Status RgbaToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+  try {
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
+    int num_channels = input_cv->shape()[2];
+    if (input_cv->shape().Size() != 3 || num_channels != 4) {
+      std::string err_msg = "Number of channels does not equal 4, got : " + std::to_string(num_channels);
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+    TensorShape out_shape = TensorShape({input_cv->shape()[0], input_cv->shape()[1], 3});
+    std::shared_ptr<CVTensor> output_cv;
+    RETURN_IF_NOT_OK(CVTensor::CreateEmpty(out_shape, input_cv->type(), &output_cv));
+    cv::cvtColor(input_cv->mat(), output_cv->mat(), static_cast<int>(cv::COLOR_RGBA2BGR));
+    *output = std::static_pointer_cast<Tensor>(output_cv);
+    return Status::OK();
+  } catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("Unexpected error in RgbaToBgr.");
+  }
+}
 // -------- BBOX OPERATIONS -------- //
 Status UpdateBBoxesForCrop(std::shared_ptr<Tensor> *bboxList, size_t *bboxCount, int CB_Xmin, int CB_Ymin, int CB_Xmax,
                            int CB_Ymax) {

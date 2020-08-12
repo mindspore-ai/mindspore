@@ -65,14 +65,16 @@ class RandomSharpnessOperation;
 class RandomSolarizeOperation;
 class RandomVerticalFlipOperation;
 class ResizeOperation;
+class RgbaToBgrOperation;
+class RgbaToRgbOperation;
 class SwapRedBlueOperation;
 class UniformAugOperation;
 
 /// \brief Function to create a CenterCrop TensorOperation.
 /// \notes Crops the input image at the center to the given size.
 /// \param[in] size - a vector representing the output size of the cropped image.
-///               If size is a single value, a square crop of size (size, size) is returned.
-///               If size has 2 values, it should be (height, width).
+///      If size is a single value, a square crop of size (size, size) is returned.
+///      If size has 2 values, it should be (height, width).
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<CenterCropOperation> CenterCrop(std::vector<int32_t> size);
 
@@ -103,15 +105,15 @@ std::shared_ptr<HwcToChwOperation> HWC2CHW();
 
 /// \brief Function to create a MixUpBatch TensorOperation.
 /// \notes Apply MixUp transformation on an input batch of images and labels. The labels must be in one-hot format and
-///    Batch must be called before calling this function.
+///     Batch must be called before calling this function.
 /// \param[in] alpha hyperparameter of beta distribution (default = 1.0)
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<MixUpBatchOperation> MixUpBatch(float alpha = 1);
 
 /// \brief Function to create a Normalize TensorOperation.
 /// \notes Normalize the input image with respect to mean and standard deviation.
-/// \param[in] mean - a vector of mean values for each channel, w.r.t channel order.
-/// \param[in] std - a vector of standard deviations for each channel, w.r.t. channel order.
+/// \param[in] mean A vector of mean values for each channel, w.r.t channel order.
+/// \param[in] std A vector of standard deviations for each channel, w.r.t. channel order.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<NormalizeOperation> Normalize(std::vector<float> mean, std::vector<float> std);
 
@@ -230,8 +232,18 @@ std::shared_ptr<RandomSolarizeOperation> RandomSolarize(uint8_t threshold_min = 
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<RandomVerticalFlipOperation> RandomVerticalFlip(float prob = 0.5);
 
+/// \brief Function to create a RgbaToBgr TensorOperation.
+/// \notes Changes the input 4 channel RGBA tensor to 3 channel BGR.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<RgbaToBgrOperation> RGBA2BGR();
+
+/// \brief Function to create a RgbaToRgb TensorOperation.
+/// \notes Changes the input 4 channel RGBA tensor to 3 channel RGB.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<RgbaToRgbOperation> RGBA2RGB();
+
 /// \brief Function to create a Resize TensorOperation.
-/// \notes Resize the input image to the given size..
+/// \notes Resize the input image to the given size.
 /// \param[in] size - a vector representing the output size of the resized image.
 ///               If size is a single value, the image will be resized to this value with
 ///               the same image aspect ratio. If size has 2 values, it should be (height, width).
@@ -518,6 +530,28 @@ class ResizeOperation : public TensorOperation {
  private:
   std::vector<int32_t> size_;
   InterpolationMode interpolation_;
+};
+
+class RgbaToBgrOperation : public TensorOperation {
+ public:
+  RgbaToBgrOperation();
+
+  ~RgbaToBgrOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
+};
+
+class RgbaToRgbOperation : public TensorOperation {
+ public:
+  RgbaToRgbOperation();
+
+  ~RgbaToRgbOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
 };
 
 class UniformAugOperation : public TensorOperation {

@@ -35,6 +35,8 @@
 #include "minddata/dataset/kernels/image/random_solarize_op.h"
 #include "minddata/dataset/kernels/image/random_vertical_flip_op.h"
 #include "minddata/dataset/kernels/image/resize_op.h"
+#include "minddata/dataset/kernels/image/rgba_to_bgr_op.h"
+#include "minddata/dataset/kernels/image/rgba_to_rgb_op.h"
 #include "minddata/dataset/kernels/image/swap_red_blue_op.h"
 #include "minddata/dataset/kernels/image/uniform_aug_op.h"
 
@@ -233,6 +235,26 @@ std::shared_ptr<RandomVerticalFlipOperation> RandomVerticalFlip(float prob) {
 // Function to create ResizeOperation.
 std::shared_ptr<ResizeOperation> Resize(std::vector<int32_t> size, InterpolationMode interpolation) {
   auto op = std::make_shared<ResizeOperation>(size, interpolation);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
+// Function to create RgbaToBgrOperation.
+std::shared_ptr<RgbaToBgrOperation> RGBA2BGR() {
+  auto op = std::make_shared<RgbaToBgrOperation>();
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
+// Function to create RgbaToRgbOperation.
+std::shared_ptr<RgbaToRgbOperation> RGBA2RGB() {
+  auto op = std::make_shared<RgbaToRgbOperation>();
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -741,6 +763,26 @@ std::shared_ptr<TensorOp> ResizeOperation::Build() {
   }
 
   return std::make_shared<ResizeOp>(height, width, interpolation_);
+}
+
+// RgbaToBgrOperation.
+RgbaToBgrOperation::RgbaToBgrOperation() {}
+
+bool RgbaToBgrOperation::ValidateParams() { return true; }
+
+std::shared_ptr<TensorOp> RgbaToBgrOperation::Build() {
+  std::shared_ptr<RgbaToBgrOp> tensor_op = std::make_shared<RgbaToBgrOp>();
+  return tensor_op;
+}
+
+// RgbaToRgbOperation.
+RgbaToRgbOperation::RgbaToRgbOperation() {}
+
+bool RgbaToRgbOperation::ValidateParams() { return true; }
+
+std::shared_ptr<TensorOp> RgbaToRgbOperation::Build() {
+  std::shared_ptr<RgbaToRgbOp> tensor_op = std::make_shared<RgbaToRgbOp>();
+  return tensor_op;
 }
 
 // SwapRedBlueOperation.

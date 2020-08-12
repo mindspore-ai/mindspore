@@ -36,6 +36,8 @@ add_library(kernels-image OBJECT
     rescale_op.cc
     resize_bilinear_op.cc
     resize_op.cc
+    rgba_to_bgr_op.cc
+    rgba_to_rgb_op.cc
     sharpness_op.cc
     solarize_op.cc
     swap_red_blue_op.cc
