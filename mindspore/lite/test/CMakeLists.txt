@@ -145,6 +145,7 @@ if (SUPPORT_GPU)
             # ${LITE_DIR}/src/runtime/kernel/opencl/kernel/leaky_relu.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/conv2d_transpose.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/transpose.cc
+            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/reshape.cc
             )
 endif()
 ### minddata lite
