@@ -23,8 +23,11 @@ int ArgCompareAscFp32(const void *a, const void *b) {
 }
 
 int ArgCompareDescFp32(const void *a, const void *b) {
-  return reinterpret_cast<const ArgElement *>(b)->data_.f_data_
-    - reinterpret_cast<const ArgElement *>(a)->data_.f_data_;
+  // cmp funtion of qsort must return int type
+  auto b_value = reinterpret_cast<const ArgElement *>(b)->data_.f_data_;
+  auto a_value = reinterpret_cast<const ArgElement *>(a)->data_.f_data_;
+  int res = b_value > a_value ? 1 : -1;
+  return res;
 }
 
 void ArgMaxDim0OutValue(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
