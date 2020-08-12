@@ -213,6 +213,7 @@ const char kNameRange[] = "Range";
 const char kNameSquareSumAll[] = "SquareSumAll";
 const char kNameAscendQuant[] = "Quant";
 const char kNameAscendDequant[] = "Dequant";
+const char kNameReverseSequence[] = "ReverseSequence";
 const char kNameCase[] = "Case";
 
 // -----------------OpAdapter initialization--------------
@@ -429,6 +430,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameSquareSumAll), ADPT_DESC(SquareSumAll)},
     {string(kNameAscendQuant), ADPT_DESC(AscendQuant)},
     {string(kNameAscendDequant), ADPT_DESC(AscendDequant)},
+    {string(kNameReverseSequence), ADPT_DESC(ReverseSequence)},
     {string(kNameCase), ADPT_DESC(Case)}};
 #ifdef ENABLE_GE
   adpt_map[string(kNamePrint)] = ADPT_DESC(Print);

@@ -1412,6 +1412,7 @@ class BiasAdd(PrimitiveWithInfer):
     Inputs:
         - **input_x** (Tensor) - Input value. The input shape can be 2-4 dimensions.
         - **bias** (Tensor) - Bias value, with shape :math:`(C)`.
+          The shape of `bias` must be the same as `input_x` in second dimension.
 
     Outputs:
         Tensor, with the same shape and type as `input_x`.
@@ -2341,7 +2342,7 @@ class OneHot(PrimitiveWithInfer):
 
     Inputs:
         - **indices** (Tensor) - A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
-        Data type must be int32.
+          Data type must be int32.
         - **depth** (int) - A scalar defining the depth of the one hot dimension.
         - **on_value** (Tensor) - A value to fill in output when `indices[j] = i`. With data type of float16 or float32.
         - **off_value** (Tensor) - A value to fill in output when `indices[j] != i`.

@@ -1132,7 +1132,7 @@ class SquaredDifference(_MathBinaryOp):
 
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar only could be a constant.
 
@@ -1833,7 +1833,7 @@ class TruncateDiv(_MathBinaryOp):
 
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar only could be a constant.
 
@@ -1862,7 +1862,7 @@ class TruncateMod(_MathBinaryOp):
 
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar only could be a constant.
 
@@ -2014,7 +2014,7 @@ class Xdivy(_MathBinaryOp):
 
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar only could be a constant.
 
@@ -2047,7 +2047,7 @@ class Xlogy(_MathBinaryOp):
 
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar only could be a constant.
 
@@ -3234,7 +3234,7 @@ class BitwiseAnd(_BitwiseBinaryOp):
     Returns bitwise `and` of two tensors element-wise.
 
     Inputs:
-        - **input_x1** (Tensor) - The input tensor with int16 or uint16 data type.
+        - **input_x1** (Tensor) - The input tensor with int16, int32 or uint16 data type.
         - **input_x2** (Tensor) - The input tensor with same type as the `input_x1`.
 
     Outputs:
@@ -3254,7 +3254,7 @@ class BitwiseOr(_BitwiseBinaryOp):
     Returns bitwise `or` of two tensors element-wise.
 
     Inputs:
-        - **input_x1** (Tensor) - The input tensor with int16 or uint16 data type.
+        - **input_x1** (Tensor) - The input tensor with int16, int32 or uint16 data type.
         - **input_x2** (Tensor) - The input tensor with same type as the `input_x1`.
 
     Outputs:
@@ -3274,7 +3274,7 @@ class BitwiseXor(_BitwiseBinaryOp):
     Returns bitwise `xor` of two tensors element-wise.
 
     Inputs:
-        - **input_x1** (Tensor) - The input tensor with int16 or uint16 data type.
+        - **input_x1** (Tensor) - The input tensor with int16, int32 or uint16 data type.
         - **input_x2** (Tensor) - The input tensor with same type as the `input_x1`.
 
     Outputs:
@@ -3297,7 +3297,7 @@ class BesselI0e(PrimitiveWithInfer):
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Outputs:
-        Tensor, has the same shape as `input_x`.
+        Tensor, has the same shape as `input_x`. Data type should be float16 or float32.
 
     Examples:
         >>> bessel_i0e = P.BesselI0e()
@@ -3326,7 +3326,7 @@ class BesselI1e(PrimitiveWithInfer):
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Outputs:
-        Tensor, has the same shape as `input_x`.
+        Tensor, has the same shape as `input_x`. Data type should be float16 or float32.
 
     Examples:
         >>> bessel_i1e = P.BesselI1e()

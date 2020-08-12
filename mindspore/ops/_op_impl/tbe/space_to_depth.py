@@ -26,17 +26,18 @@ space_to_depth_op_info = TBERegOp("SpaceToDepth") \
     .attr("block_size", "required", "int", "all") \
     .attr("data_format", "optional", "str", "all") \
     .input(0, "x", False, "required", "all") \
+    .input(1, "filter", False, "optional", "all") \
     .output(0, "y", False, "required", "all") \
-    .dtype_format(DataType.F16_NHWC, DataType.F16_NHWC) \
-    .dtype_format(DataType.F32_NHWC, DataType.F32_NHWC) \
-    .dtype_format(DataType.I8_NHWC, DataType.I8_NHWC) \
-    .dtype_format(DataType.I16_NHWC, DataType.I16_NHWC) \
-    .dtype_format(DataType.I32_NHWC, DataType.I32_NHWC) \
-    .dtype_format(DataType.I64_NHWC, DataType.I64_NHWC) \
-    .dtype_format(DataType.U8_NHWC, DataType.U8_NHWC) \
-    .dtype_format(DataType.U16_NHWC, DataType.U16_NHWC) \
-    .dtype_format(DataType.U32_NHWC, DataType.U32_NHWC) \
-    .dtype_format(DataType.U64_NHWC, DataType.U64_NHWC) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_FracZ, DataType.F16_5HD) \
+    .dtype_format(DataType.F32_NHWC, DataType.F16_FracZ, DataType.F32_NHWC) \
+    .dtype_format(DataType.I8_NHWC, DataType.F16_FracZ, DataType.I8_NHWC) \
+    .dtype_format(DataType.I16_NHWC, DataType.F16_FracZ, DataType.I16_NHWC) \
+    .dtype_format(DataType.I32_NHWC, DataType.F16_FracZ, DataType.I32_NHWC) \
+    .dtype_format(DataType.I64_NHWC, DataType.F16_FracZ, DataType.I64_NHWC) \
+    .dtype_format(DataType.U8_NHWC, DataType.F16_FracZ, DataType.U8_NHWC) \
+    .dtype_format(DataType.U16_NHWC, DataType.F16_FracZ, DataType.U16_NHWC) \
+    .dtype_format(DataType.U32_NHWC, DataType.F16_FracZ, DataType.U32_NHWC) \
+    .dtype_format(DataType.U64_NHWC, DataType.F16_FracZ, DataType.U64_NHWC) \
     .get_op_info()
 
 

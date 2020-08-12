@@ -1340,6 +1340,12 @@ ATTR_MAP(CTCLoss) = {
   {"ignore_longer_outputs_than_inputs", ATTR_DESC(ignore_longer_outputs_than_inputs, AnyTraits<bool>())}};
 OUTPUT_MAP(CTCLoss) = {{0, OUTPUT_DESC(loss)}, {1, OUTPUT_DESC(gradient)}};
 
+// ReverseSequence
+INPUT_MAP(ReverseSequence) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(seq_lengths)}};
+ATTR_MAP(ReverseSequence) = {{"seq_dim", ATTR_DESC(seq_dim, AnyTraits<int>())},
+                             {"batch_dim", ATTR_DESC(batch_dim, AnyTraits<int>())}};
+OUTPUT_MAP(ReverseSequence) = {{0, OUTPUT_DESC(y)}};
+
 // AscendQuant
 INPUT_MAP(AscendQuant) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(AscendQuant) = {{"scale", ATTR_DESC(scale, AnyTraits<float>())},
