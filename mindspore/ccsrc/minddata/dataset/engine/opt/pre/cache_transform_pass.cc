@@ -79,8 +79,8 @@ Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CacheOp> node, b
       MS_LOG(INFO) << "Cache transform pass: Set up cache sampler from non-mappable leaf.";
     } else {
       // We're a cache op but no sampler was saved from leaf, so create a default sampler
-      int64_t num_samples = 0;
-      int64_t start_index = 0;
+      const int64_t num_samples = 0;
+      const int64_t start_index = 0;
       sampler_ = std::make_shared<SequentialSampler>(num_samples, start_index);
       node->SetSampler(std::move(sampler_));
       MS_LOG(INFO) << "Cache transform pass: Creating default sequential sampler for cache op.";

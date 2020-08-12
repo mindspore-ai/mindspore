@@ -34,6 +34,9 @@ class SoftDvppDecodeRandomCropResizeJpegOp : public RandomCropAndResizeOp {
                                        float scale_ub = kDefScaleUb, float aspect_lb = kDefAspectLb,
                                        float aspect_ub = kDefAspectUb, int32_t max_iter = kDefMaxIter);
 
+  /// \brief Destructor
+  ~SoftDvppDecodeRandomCropResizeJpegOp() = default;
+
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
   std::string Name() const override { return kSoftDvppDecodeRandomCropResizeJpegOp; }

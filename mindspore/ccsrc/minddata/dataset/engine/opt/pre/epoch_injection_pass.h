@@ -78,6 +78,9 @@ class EpochInjectionPass : public TreePass {
   /// \brief Constructor
   EpochInjectionPass();
 
+  /// \brief Destructor
+  ~EpochInjectionPass() = default;
+
   /// \brief Runs an injection pass to inject in operators needed at the pre pass stage
   /// \param[inout] tree The tree to operate on.
   /// \param[inout] Indicate of the tree was modified.

@@ -755,6 +755,7 @@ int32_t SoftVpc::Process(VpcInfo input, const SoftDpCropInfo crop, const VpcInfo
   int32_t ret = CheckParamter();
   if (ret != dpSucc) {
     delete[] input.addr;
+    input.addr = nullptr;
     return ret;
   }
 
