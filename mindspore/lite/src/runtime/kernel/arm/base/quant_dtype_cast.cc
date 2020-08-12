@@ -118,7 +118,7 @@ int QuantDTypeCastCPUKernel::Run() {
     int8_ptr_ = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
   }
 
-  int ret = LiteBackendParallelLaunch(QuantDTypeCastRun, this, thread_n_num_);
+  auto ret = LiteBackendParallelLaunch(QuantDTypeCastRun, this, thread_n_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;

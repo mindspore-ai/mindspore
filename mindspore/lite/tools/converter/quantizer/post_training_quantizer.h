@@ -46,10 +46,14 @@ enum ImageFormat {
   BGR = 2,
 };
 
+const char kMethodMaxMin[] = "MAX_MIN";
+const char kMethodKL[] = "KL";
+
 struct ConfigParam {
   // ImageFormat imageFormat;
   std::string image_path;
-  uint32_t batch_count;
+  uint32_t batch_count{100};
+  std::string method_x{kMethodKL};
   uint32_t thread_num;
 };
 
@@ -114,6 +118,8 @@ class Calibrator {
   size_t GetBatchNum() const { return images_.size(); }
 
   uint32_t GetThreadNum() const { return config_param_.thread_num; }
+
+  std::string GetMethodX() const { return config_param_.method_x; }
 
   STATUS AddQuantizedOp(CNodePtr node);
 

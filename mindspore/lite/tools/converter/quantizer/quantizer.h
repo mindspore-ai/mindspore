@@ -24,6 +24,7 @@
 #include "include/model.h"
 #include "base/base.h"
 #include "src/param_value_lite.h"
+#include "tools/converter/converter_flags.h"
 
 namespace mindspore {
 namespace lite {
@@ -52,6 +53,7 @@ class Quantizer {
 
     virtual STATUS DoQuantize(FuncGraphPtr funcGraph) = 0;
 
+    mindspore::lite::converter::Flags flags;
  protected:
     FuncGraphPtr funcGraph = nullptr;
 };

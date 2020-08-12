@@ -31,7 +31,7 @@
 #include "src/common/anf_importer/import_from_protobuf.h"
 #include "tools/converter/parser/onnx/onnx.pb.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
-#include "tools/converter/quantizer/post_training.h"
+#include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
 
 namespace mindspore {
@@ -94,6 +94,7 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
 
   CreateQuantizer(graph, flag);
   if (mQuantizer != nullptr) {
+    mQuantizer->flags = *flag;
     auto status = mQuantizer->DoQuantize(graph);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Quant failed " << status;
