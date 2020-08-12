@@ -65,6 +65,10 @@ int SoftmaxCPUKernel::ReSize() {
     free(sum_data_);
   }
   sum_data_ = reinterpret_cast<float *>(malloc(out_plane_size * in_plane_size * sizeof(float)));
+  if (sum_data_ == nullptr) {
+    MS_LOG(ERROR) << "malloc data for softmax fail!";
+    return RET_ERROR;
+  }
   memset(sum_data_, 0, out_plane_size * in_plane_size * sizeof(float));
   return RET_OK;
 }

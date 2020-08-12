@@ -37,7 +37,7 @@ constexpr uint32_t kNHWC_w_index = 2;
 constexpr uint32_t kNHWC_c_index = 3;
 constexpr uint32_t kDimension_4d = 4;
 
-const std::set<int> kSupportDataType = {kNumberTypeUInt8, kNumberTypeInt32};
+const std::set<int> kSupportDataType = {kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeFloat32};
 
 class Primitive {
  public:
