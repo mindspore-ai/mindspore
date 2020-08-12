@@ -33,6 +33,27 @@ mul1 = (2, 2, 2)
 input_x2 = np.arange(1).reshape((1, 1, 1)).astype(np.float32)
 mul2 = (1, 1, 1)
 
+input_32_x0 = np.arange(2).reshape((2, 1, 1)).astype(np.int32)
+mul_32_0 = (8, 1, 1)
+input_32_x1 = np.arange(32).reshape((2, 4, 4)).astype(np.int32)
+mul_32_1 = (2, 2, 2)
+input_32_x2 = np.arange(1).reshape((1, 1, 1)).astype(np.int32)
+mul_32_2 = (1, 1, 1)
+
+input_16_x0 = np.arange(2).reshape((2, 1, 1)).astype(np.int16)
+mul_16_0 = (8, 1, 1)
+input_16_x1 = np.arange(32).reshape((2, 4, 4)).astype(np.int16)
+mul_16_1 = (2, 2, 2)
+input_16_x2 = np.arange(1).reshape((1, 1, 1)).astype(np.int16)
+mul_16_2 = (1, 1, 1)
+
+input_8_x0 = np.arange(2).reshape((2, 1, 1)).astype(np.uint8)
+mul_8_0 = (8, 1, 1)
+input_8_x1 = np.arange(32).reshape((2, 4, 4)).astype(np.int8)
+mul_8_1 = (2, 2, 2)
+input_8_x2 = np.arange(1).reshape((1, 1, 1)).astype(np.uint8)
+mul_8_2 = (1, 1, 1)
+
 
 class Net(Cell):
     def __init__(self):
@@ -51,6 +72,46 @@ class Net(Cell):
         output = (self.Tile(self.input_x0, self.mul0),
                   self.Tile(self.input_x1, self.mul1),
                   self.Tile(self.input_x2, self.mul2))
+        return output
+
+
+class Net32(Cell):
+    def __init__(self):
+        super(Net32, self).__init__()
+        self.Tile = Tile()
+
+        self.input_32_x0 = Parameter(initializer(Tensor(input_32_x0), input_32_x0.shape), name='x0')
+        self.mul_32_0 = mul_32_0
+        self.input_32_x1 = Parameter(initializer(Tensor(input_32_x1), input_32_x1.shape), name='x1')
+        self.mul_32_1 = mul_32_1
+        self.input_32_x2 = Parameter(initializer(Tensor(input_32_x2), input_32_x2.shape), name='x2')
+        self.mul_32_2 = mul_32_2
+
+    @ms_function
+    def construct(self):
+        output = (self.Tile(self.input_32_x0, self.mul_32_0),
+                  self.Tile(self.input_32_x1, self.mul_32_1),
+                  self.Tile(self.input_32_x2, self.mul_32_2))
+        return output
+
+
+class Net16(Cell):
+    def __init__(self):
+        super(Net16, self).__init__()
+        self.Tile = Tile()
+
+        self.input_16_x0 = Parameter(initializer(Tensor(input_16_x0), input_16_x0.shape), name='x0')
+        self.mul_16_0 = mul_16_0
+        self.input_16_x1 = Parameter(initializer(Tensor(input_16_x1), input_16_x1.shape), name='x1')
+        self.mul_16_1 = mul_16_1
+        self.input_16_x2 = Parameter(initializer(Tensor(input_16_x2), input_16_x2.shape), name='x2')
+        self.mul_16_2 = mul_16_2
+
+    @ms_function
+    def construct(self):
+        output = (self.Tile(self.input_16_x0, self.mul_16_0),
+                  self.Tile(self.input_16_x1, self.mul_16_1),
+                  self.Tile(self.input_16_x2, self.mul_16_2))
         return output
 
 
@@ -74,6 +135,58 @@ def test_tile():
     assert output[1].shape == expect1.shape
 
     expect2 = np.tile(input_x2, mul2)
+    diff2 = output[2].asnumpy() - expect2
+    error2 = np.ones(shape=expect2.shape) * 1.0e-5
+    assert np.all(diff2 < error2)
+    assert output[2].shape == expect2.shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_tile_32():
+    net = Net32()
+    output = net()
+
+    expect0 = np.tile(input_32_x0, mul_32_0)
+    diff0 = output[0].asnumpy() - expect0
+    error0 = np.ones(shape=expect0.shape) * 1.0e-5
+    assert np.all(diff0 < error0)
+    assert output[0].shape == expect0.shape
+
+    expect1 = np.tile(input_32_x1, mul_32_1)
+    diff1 = output[1].asnumpy() - expect1
+    error1 = np.ones(shape=expect1.shape) * 1.0e-5
+    assert np.all(diff1 < error1)
+    assert output[1].shape == expect1.shape
+
+    expect2 = np.tile(input_32_x2, mul_32_2)
+    diff2 = output[2].asnumpy() - expect2
+    error2 = np.ones(shape=expect2.shape) * 1.0e-5
+    assert np.all(diff2 < error2)
+    assert output[2].shape == expect2.shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_tile_16():
+    net = Net16()
+    output = net()
+
+    expect0 = np.tile(input_16_x0, mul_16_0)
+    diff0 = output[0].asnumpy() - expect0
+    error0 = np.ones(shape=expect0.shape) * 1.0e-5
+    assert np.all(diff0 < error0)
+    assert output[0].shape == expect0.shape
+
+    expect1 = np.tile(input_16_x1, mul_16_1)
+    diff1 = output[1].asnumpy() - expect1
+    error1 = np.ones(shape=expect1.shape) * 1.0e-5
+    assert np.all(diff1 < error1)
+    assert output[1].shape == expect1.shape
+
+    expect2 = np.tile(input_16_x2, mul_16_2)
     diff2 = output[2].asnumpy() - expect2
     error2 = np.ones(shape=expect2.shape) * 1.0e-5
     assert np.all(diff2 < error2)

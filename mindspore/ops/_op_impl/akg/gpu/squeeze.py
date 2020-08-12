@@ -22,6 +22,10 @@ squeeze_op_info = AkgGpuRegOp("Squeeze") \
     .attr("axis", "optional", "listInt") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I16_Default, DataType.I16_Default) \
+    .dtype_format(DataType.U8_Default, DataType.U8_Default) \
+    .dtype_format(DataType.BOOL_Default, DataType.BOOL_Default) \
     .get_op_info()
 
 

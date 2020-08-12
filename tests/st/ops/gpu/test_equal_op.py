@@ -65,6 +65,21 @@ def test_equal():
     y2_np = np.array([0, 1, -3]).astype(np.int32)
     y2 = Tensor(y2_np)
     expect2 = np.equal(x2_np, y2_np)
+    x3_np = np.array([0, 1, 3]).astype(np.int16)
+    x3 = Tensor(x3_np)
+    y3_np = np.array([0, 1, -3]).astype(np.int16)
+    y3 = Tensor(y3_np)
+    expect3 = np.equal(x3_np, y3_np)
+    x4_np = np.array([0, 1, 4]).astype(np.uint8)
+    x4 = Tensor(x4_np)
+    y4_np = np.array([0, 1, 3]).astype(np.uint8)
+    y4 = Tensor(y4_np)
+    expect4 = np.equal(x4_np, y4_np)
+    x5_np = np.array([True, False, True]).astype(bool)
+    x5 = Tensor(x5_np)
+    y5_np = np.array([True, False, False]).astype(bool)
+    y5 = Tensor(y5_np)
+    expect5 = np.equal(x5_np, y5_np)
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     equal = NetEqual()
@@ -77,6 +92,17 @@ def test_equal():
     output2 = equal(x2, y2)
     assert np.all(output2.asnumpy() == expect2)
     assert output2.shape == expect2.shape
+    output3 = equal(x3, y3)
+    assert np.all(output3.asnumpy() == expect3)
+    assert output3.shape == expect3.shape
+    output4 = equal(x4, y4)
+    assert np.all(output4.asnumpy() == expect4)
+    assert output4.shape == expect4.shape
+    output5 = equal(x5, y5)
+    assert np.all(output5.asnumpy() == expect5)
+    assert output5.shape == expect5.shape
+
+
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     equal = NetEqual()
@@ -89,6 +115,15 @@ def test_equal():
     output2 = equal(x2, y2)
     assert np.all(output2.asnumpy() == expect2)
     assert output2.shape == expect2.shape
+    output3 = equal(x3, y3)
+    assert np.all(output3.asnumpy() == expect3)
+    assert output3.shape == expect3.shape
+    output4 = equal(x4, y4)
+    assert np.all(output4.asnumpy() == expect4)
+    assert output4.shape == expect4.shape
+    output5 = equal(x5, y5)
+    assert np.all(output5.asnumpy() == expect5)
+    assert output5.shape == expect5.shape
 
 
 @pytest.mark.level0
@@ -98,18 +133,45 @@ def test_notequal():
     x0 = Tensor(np.array([[1.2, 1], [1, 0]]).astype(np.float32))
     y0 = Tensor(np.array([[1, 2]]).astype(np.float32))
     expect0 = np.array([[True, True], [False, True]])
+    x1 = Tensor(np.array([[2, 1], [1, 1]]).astype(np.int16))
+    y1 = Tensor(np.array([[1, 2]]).astype(np.int16))
+    expect1 = np.array([[True, True], [False, True]])
+    x2 = Tensor(np.array([[2, 1], [1, 2]]).astype(np.uint8))
+    y2 = Tensor(np.array([[1, 2]]).astype(np.uint8))
+    expect2 = np.array([[True, True], [False, False]])
+    x3 = Tensor(np.array([[False, True], [True, False]]).astype(bool))
+    y3 = Tensor(np.array([[True, False]]).astype(bool))
+    expect3 = np.array([[True, True], [False, False]])
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     notequal = NetNotEqual()
     output0 = notequal(x0, y0)
     assert np.all(output0.asnumpy() == expect0)
     assert output0.shape == expect0.shape
+    output1 = notequal(x1, y1)
+    assert np.all(output1.asnumpy() == expect1)
+    assert output1.shape == expect1.shape
+    output2 = notequal(x2, y2)
+    assert np.all(output2.asnumpy() == expect2)
+    assert output2.shape == expect2.shape
+    output3 = notequal(x3, y3)
+    assert np.all(output3.asnumpy() == expect3)
+    assert output3.shape == expect3.shape
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     notequal = NetNotEqual()
     output0 = notequal(x0, y0)
     assert np.all(output0.asnumpy() == expect0)
     assert output0.shape == expect0.shape
+    output1 = notequal(x1, y1)
+    assert np.all(output1.asnumpy() == expect1)
+    assert output1.shape == expect1.shape
+    output2 = notequal(x2, y2)
+    assert np.all(output2.asnumpy() == expect2)
+    assert output2.shape == expect2.shape
+    output3 = notequal(x3, y3)
+    assert np.all(output3.asnumpy() == expect3)
+    assert output3.shape == expect3.shape
 
 
 @pytest.mark.level0
@@ -119,15 +181,33 @@ def test_greaterqual():
     x0 = Tensor(np.array([[1.2, 1], [1, 0]]).astype(np.float32))
     y0 = Tensor(np.array([[1, 2]]).astype(np.float32))
     expect0 = np.array([[True, False], [True, False]])
+    x1 = Tensor(np.array([[2, 1], [1, 1]]).astype(np.int16))
+    y1 = Tensor(np.array([[1, 2]]).astype(np.int16))
+    expect1 = np.array([[True, False], [True, False]])
+    x2 = Tensor(np.array([[2, 1], [1, 2]]).astype(np.uint8))
+    y2 = Tensor(np.array([[1, 2]]).astype(np.uint8))
+    expect2 = np.array([[True, False], [True, True]])
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     gequal = NetGreaterEqual()
     output0 = gequal(x0, y0)
     assert np.all(output0.asnumpy() == expect0)
     assert output0.shape == expect0.shape
+    output1 = gequal(x1, y1)
+    assert np.all(output1.asnumpy() == expect1)
+    assert output1.shape == expect1.shape
+    output2 = gequal(x2, y2)
+    assert np.all(output2.asnumpy() == expect2)
+    assert output2.shape == expect2.shape
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     gequal = NetGreaterEqual()
     output0 = gequal(x0, y0)
     assert np.all(output0.asnumpy() == expect0)
     assert output0.shape == expect0.shape
+    output1 = gequal(x1, y1)
+    assert np.all(output1.asnumpy() == expect1)
+    assert output1.shape == expect1.shape
+    output2 = gequal(x2, y2)
+    assert np.all(output2.asnumpy() == expect2)
+    assert output2.shape == expect2.shape
