@@ -197,6 +197,16 @@ typedef struct ArithmeticQuantArg {
   QuantArg in1_args_;
   QuantArg out_args_;
 } ArithmeticQuantArg;
+
+typedef struct DivQuantArg {
+  QuantArg in0_args_;
+  QuantArg in1_args_;
+  QuantArg out_args_;
+  int output_activation_min_;
+  int output_activation_max_;
+  int output_multiplier_;
+  int output_shift_;
+} DivQuantArg;
 #ifdef __cplusplus
 extern "C" {
 #endif
