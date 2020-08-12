@@ -27,6 +27,7 @@
 #include "tools/common/storage.h"
 #include "parser/caffe/caffe_converter.h"
 #include "parser/tflite/tflite_converter.h"
+#include "parser/onnx/onnx_converter.h"
 #include "src/common/anf_exporter/anf_exporter.h"
 #include "src/common/anf_importer/import_from_protobuf.h"
 #include "tools/converter/parser/onnx/onnx.pb.h"
@@ -184,6 +185,10 @@ int RunConverter(int argc, const char **argv) {
     case FmkType::FmkType_TFLITE: {
       TfliteConverter tfLiteConverter;
       fb_graph = tfLiteConverter.Convert(flags);
+    } break;
+    case FmkType::FmkType_ONNX: {
+      OnnxConverter onnxConverter;
+      fb_graph = onnxConverter.Convert(flags);
     } break;
     default: {
       MS_LOG(ERROR) << "Unsupported fmkType: " << flags->fmk;

@@ -15,14 +15,15 @@
  */
 
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_unsample_parser.h"
+#include "tools/converter/parser/onnx/onnx_unsample_parser.h"
 
 namespace mindspore {
 namespace lite {
 STATUS OnnxUpsampleParser::Parse(const onnx::GraphProto &onnx_graph,
                                  const onnx::NodeProto &onnx_node,
                                  schema::CNodeT *op) {
-  unique_ptr<schema::UpsampleT> attr(new schema::UpsampleT());
+  MS_LOG(DEBUG) << "onnx UpsampleParser";
+  std::unique_ptr<schema::UpsampleT> attr(new schema::UpsampleT());
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "mode") {

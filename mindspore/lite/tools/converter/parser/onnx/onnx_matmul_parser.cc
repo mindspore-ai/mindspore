@@ -15,14 +15,14 @@
  */
 
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_matmul_parser.h"
+#include "tools/converter/parser/onnx/onnx_matmul_parser.h"
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxMatmulParser::Parse(const onnx::GraphProto &onnx_graph,
-                               const onnx::NodeProto &onnx_node,
+STATUS OnnxMatmulParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                schema::CNodeT *op) {
-  unique_ptr<schema::MatMulT> attr(new schema::MatMulT());
+  MS_LOG(DEBUG) << "onnx MatMulParser";
+  std::unique_ptr<schema::MatMulT> attr(new schema::MatMulT());
   float alpha = 1.0f;
   float beta = 1.0f;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
@@ -38,7 +38,7 @@ STATUS OnnxMatmulParser::Parse(const onnx::GraphProto &onnx_graph,
     }
   }
   if (alpha != 1 || beta != 1) {
-    // MS_LOGE("not support alpha * A * B + beta * C");
+    MS_LOG(ERROR) << "not support alpha * A * B + beta * C";
     return RET_PARAM_INVALID;
   }
 
@@ -53,4 +53,3 @@ STATUS OnnxMatmulParser::Parse(const onnx::GraphProto &onnx_graph,
 OnnxNodeRegistrar g_onnxMatmulParser("MatMul", new OnnxMatmulParser());
 }  // namespace lite
 }  // namespace mindspore
-

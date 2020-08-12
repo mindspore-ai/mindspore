@@ -15,14 +15,15 @@
  */
 
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_unsqueeze_parser.h"
+#include "tools/converter/parser/onnx/onnx_unsqueeze_parser.h"
 
 namespace mindspore {
 namespace lite {
 STATUS OnnxUnSqueezeParser::Parse(const onnx::GraphProto &onnx_graph,
                                   const onnx::NodeProto &onnx_node,
                                   schema::CNodeT *op) {
-  unique_ptr<schema::UnsqueezeT> attr(new schema::UnsqueezeT());
+  MS_LOG(DEBUG) << "onnx UnSqueezeParser";
+  std::unique_ptr<schema::UnsqueezeT> attr(new schema::UnsqueezeT());
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "axes") {

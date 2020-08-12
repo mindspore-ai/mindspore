@@ -27,9 +27,10 @@
 #include <memory>
 #include <set>
 #include "securec/include/securec.h"
-#include "mindspore/lite/tools/converter/model_parser.h"
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_node_parser_registry.h"
+#include "tools/converter/model_parser.h"
+#include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
 #include "tools/common/tensor_util.h"
+#include "tools/converter/parser/onnx/onnx.pb.h"
 
 namespace mindspore {
 namespace lite {
@@ -41,30 +42,24 @@ class OnnxModelParser : public ModelParser {
                     const QuantType &quantType = QuantType_QUANT_NONE) override;
 
  private:
-  TypeId GetDateTypeFromOnnx(onnx::TensorProto_DataType onnx_type);
+  TypeId GetDataTypeFromOnnx(onnx::TensorProto_DataType onnx_type);
   std::vector<int32_t> GetDimsFromOnnxValue(const onnx::ValueInfoProto &onnx_value);
   STATUS ReadOnnxModelFromBinary(const std::string &modelFile, google::protobuf::Message *model_proto);
   STATUS SetGraphConstTensor(const onnx::GraphProto &onnx_graph, TensorCache *tensor_cache);
   STATUS SetGraphInputTensor(const onnx::GraphProto &onnx_graph, schema::MetaGraphT *graph, TensorCache *tensor_cache);
   STATUS SetGraphOutputTensor(const onnx::GraphProto &onnx_graph, schema::MetaGraphT *graph, TensorCache *tensor_cache);
   STATUS AddTensorCache(const onnx::ValueInfoProto &proto, schema::TensorT *tensor);
-  STATUS ParseOnnxNodeToDstOp(const onnx::GraphProto &onnx_graph,
-                              const onnx::NodeProto &onnx_node,
-                              schema::CNodeT *dst_op,
-                              schema::TensorT *dst_tensor, TensorCache *tensor_cache);
-  void ParseOnnxGemmNode(const onnx::GraphProto &onnx_graph,
-                         const onnx::NodeProto &onnx_node,
-                         schema::MetaGraphT *graph,
-                         TensorCache *tensor_cache);
+  STATUS ParseOnnxNodeToDstOp(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
+                              schema::CNodeT *dst_op, schema::TensorT *dst_tensor, TensorCache *tensor_cache);
+  void ParseOnnxGemmNode(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
+                         schema::MetaGraphT *graph, TensorCache *tensor_cache);
   STATUS ParseOnnxGivenFillNode(const onnx::NodeProto &onnx_node, TensorCache *tensor_cache);
   STATUS ParseOnnxNodeAttr(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                            const string &onnx_op_type, schema::CNodeT *dst_op);
   void SetOpQuantParams(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *dst_op,
                         schema::TensorT *dst_tensor, TensorCache *tensor_cache);
-  STATUS SetOpInputIndex(const std::vector<string> &node_inputs,
-                         schema::CNodeT *dst_op,
-                         const onnx::NodeProto &onnx_node,
-                         TensorCache *tensor_cache);
+  STATUS SetOpInputIndex(const std::vector<string> &node_inputs, schema::CNodeT *dst_op,
+                         const onnx::NodeProto &onnx_node, TensorCache *tensor_cache);
   STATUS SetOpOutputIndex(const std::vector<string> &node_outputs, schema::CNodeT *dst_op, TensorCache *tensor_cache);
   STATUS CopyOnnxTensorData(const onnx::TensorProto &onnx_init_value, schema::TensorT *tensor);
   STATUS SetAllTensors(const TensorCache &tensor_cache, schema::MetaGraphT *graphDef);
@@ -78,4 +73,3 @@ class OnnxModelParser : public ModelParser {
 }  // namespace mindspore
 
 #endif  // MS_ONNX_MODEL_PARSER_H
-

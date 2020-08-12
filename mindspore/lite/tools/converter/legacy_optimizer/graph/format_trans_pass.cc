@@ -138,6 +138,12 @@ STATUS FormatTransPass::DoNodeInoutFormatTrans(schema::MetaGraphT *graph) {
       }
       beforeNodeType = kNCHW2NHWC;
       afterNodeType = kNHWC2NCHW;
+    } else if (fmkType == converter::FmkType_ONNX) {
+      if (!IsContain(GetNhwcOpList(), GetCNodeTType(**iter))) {
+        continue;
+      }
+      beforeNodeType = kNCHW2NHWC;
+      afterNodeType = kNHWC2NCHW;
     } else {
       MS_LOG(ERROR) << "Unsupported fmk: " << fmkType;
       return RET_ERROR;
@@ -197,4 +203,3 @@ void FormatTransPass::SetFmk(converter::FmkType fmkType) { this->fmkType = fmkTy
 
 }  // namespace lite
 }  // namespace mindspore
-

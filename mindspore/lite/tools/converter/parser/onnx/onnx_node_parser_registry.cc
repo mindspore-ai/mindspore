@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_node_parser_registry.h"
+#include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
 #include <string>
 
 namespace mindspore {
@@ -33,13 +33,14 @@ OnnxNodeParser *OnnxNodeParserRegistry::GetNodeParser(const std::string &name) {
   if (it != parsers.end()) {
     return it->second;
   }
+  /* should not support vague name, otherwise may get wrong parser. ex. PRelu and Relu
   for (auto const &i : parsers) {
     if (name.find(i.first) != std::string::npos) {
       return i.second;
     }
   }
+   */
   return nullptr;
 }
 }  // namespace lite
 }  // namespace mindspore
-

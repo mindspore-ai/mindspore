@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_batchnorm_parser.h"
+#include "tools/converter/parser/onnx/onnx_batchnorm_parser.h"
 #include <memory>
 
 namespace mindspore {
 namespace lite {
 STATUS OnnxBatchNormParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                   schema::CNodeT *op) {
-  unique_ptr<schema::FusedBatchNormT> attr(new schema::FusedBatchNormT());
+  MS_LOG(DEBUG) << "onnx BatchNormParser";
+  std::unique_ptr<schema::FusedBatchNormT> attr(new schema::FusedBatchNormT());
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "epsilon") {
       attr->epsilon = onnx_node_attr.f();

@@ -15,17 +15,19 @@
  */
 
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_shape_parser.h"
+#include "tools/converter/parser/onnx/onnx_shape_parser.h"
 
 namespace mindspore {
 namespace lite {
 STATUS OnnxShapeParser::Parse(const onnx::GraphProto &onnx_graph,
                               const onnx::NodeProto &onnx_node,
                               schema::CNodeT *op) {
+  MS_LOG(DEBUG) << "onnx ShapeParser";
   if (op != nullptr) {
+    std::unique_ptr<schema::ShapeT> attr(new schema::ShapeT());
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Shape;
-    op->primitive->value.value = nullptr;
+    op->primitive->value.value = attr.release();
   }
   return RET_OK;
 }

@@ -15,15 +15,17 @@
  */
 
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_tile_parser.h"
+#include "tools/converter/parser/onnx/onnx_tile_parser.h"
 
 namespace mindspore {
 namespace lite {
 STATUS OnnxTileParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+  MS_LOG(DEBUG) << "onnx TileParser";
   if (op != nullptr) {
+    std::unique_ptr<schema::TileT> attr(new schema::TileT());
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Tile;
-    op->primitive->value.value = nullptr;
+    op->primitive->value.value = attr.release();
   }
   return RET_OK;
 }
@@ -31,4 +33,3 @@ STATUS OnnxTileParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
 OnnxNodeRegistrar g_onnxTileParser("Tile", new OnnxTileParser());
 }  // namespace lite
 }  // namespace mindspore
-

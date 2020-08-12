@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_node_parser.h"
+#include "tools/converter/parser/onnx/onnx_node_parser.h"
 
 namespace mindspore {
 namespace lite {

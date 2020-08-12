@@ -15,14 +15,15 @@
  */
 
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_slice_parser.h"
+#include "tools/converter/parser/onnx/onnx_slice_parser.h"
 
 namespace mindspore {
 namespace lite {
 STATUS OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph,
                               const onnx::NodeProto &onnx_node,
                               schema::CNodeT *op) {
-  unique_ptr<schema::SliceT> attr(new schema::SliceT());
+  MS_LOG(DEBUG) << "onnx SliceParser";
+  std::unique_ptr<schema::SliceT> attr(new schema::SliceT());
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto& attribute_name = onnx_node_attr.name();
     if (attribute_name == "starts") {

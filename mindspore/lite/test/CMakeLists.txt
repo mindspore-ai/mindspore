@@ -223,7 +223,6 @@ if(BUILD_CONVERTER)
             ${LITE_DIR}/tools/converter/graphdef_transform.cc
             ${LITE_DIR}/tools/converter/converter_flags.cc
             ${LITE_DIR}/tools/converter/converter.cc
-            ${LITE_DIR}/tools/converter/parser/onnx/onnx.pb.cc
             ${LITE_DIR}/test/st/converter_test.cc
             ${LITE_DIR}/test/ut/tools/optimizer/fusion/conv_activation_fusion_test.cc
             ${LITE_DIR}/test/ut/tools/optimizer/fusion/conv_biasadd_fusion_test.cc
@@ -351,6 +350,7 @@ if (BUILD_CONVERTER)
             anf_importer_mid
             tflite_parser_mid
             caffe_parser_mid
+            onnx_parser_mid
             node_mid
             graph_pass_mid
             fusion_mid

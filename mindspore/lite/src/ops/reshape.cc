@@ -102,6 +102,10 @@ int Reshape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
         auto data = reinterpret_cast<int32_t *>(shape_tensor->Data());
         CalShape<int32_t>(data, inputs_, &out_shape, shape_size);
       } break;
+      case kNumberTypeInt64: {
+        auto data = reinterpret_cast<int64_t *>(shape_tensor->Data());
+        CalShape<int64_t>(data, inputs_, &out_shape, shape_size);
+      } break;
       case kNumberTypeFloat: {
         auto data = reinterpret_cast<float *>(shape_tensor->Data());
         CalShape<float>(data, inputs_, &out_shape, shape_size);

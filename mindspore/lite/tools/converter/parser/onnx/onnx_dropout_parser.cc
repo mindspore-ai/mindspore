@@ -15,14 +15,15 @@
  */
 
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_dropout_parser.h"
+#include "tools/converter/parser/onnx/onnx_dropout_parser.h"
 
 namespace mindspore {
 namespace lite {
 STATUS OnnxDropoutParser::Parse(const onnx::GraphProto &onnx_graph,
                                 const onnx::NodeProto &onnx_node,
                                 schema::CNodeT *op) {
-  unique_ptr<schema::DropoutT> attr(new schema::DropoutT());
+  MS_LOG(DEBUG) << "onnx DropoutParser";
+  std::unique_ptr<schema::DropoutT> attr(new schema::DropoutT());
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "ratio") {

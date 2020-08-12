@@ -15,7 +15,7 @@
  */
 
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_biasadd_parser.h"
+#include "tools/converter/parser/onnx/onnx_biasadd_parser.h"
 
 // using namespace mindspore::predict;
 // using namespace onnx;
@@ -25,7 +25,8 @@ namespace lite {
 STATUS OnnxBiasAddParser::Parse(const onnx::GraphProto &onnx_graph,
                                 const onnx::NodeProto &onnx_node,
                                 schema::CNodeT *op) {
-  unique_ptr<schema::BiasAddT> attr(new schema::BiasAddT());
+  MS_LOG(DEBUG) << "onnx BiasAddParser";
+  std::unique_ptr<schema::BiasAddT> attr(new schema::BiasAddT());
   // use channel dim as axis
   attr->axis = {1};
   if (op != nullptr) {

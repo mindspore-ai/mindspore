@@ -18,9 +18,8 @@
 #define MS_ONNX_CONVERTER_H
 #include <string>
 #include <memory>
-#include "mindspore/lite/tools/converter/converter.h"
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_model_parser.h"
-#include "mindspore/lite/tools/converter/graphdef_transform.h"
+#include "tools/converter/converter.h"
+#include "tools/converter/graphdef_transform.h"
 
 namespace mindspore {
 namespace lite {

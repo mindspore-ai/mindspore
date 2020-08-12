@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-
 #include "tools/converter/converter_flags.h"
 #include <regex>
 #include <string>
 #include "ir/dtype/type_id.h"
-
 
 namespace mindspore {
 namespace lite {
@@ -89,8 +87,10 @@ int Flags::Init(int argc, const char **argv) {
     this->fmk = FmkType_MS;
   } else if (this->fmkIn == "TFLITE") {
     this->fmk = FmkType_TFLITE;
+  } else if (this->fmkIn == "ONNX") {
+    this->fmk = FmkType_ONNX;
   } else {
-    std::cerr << "INPUT ILLEGAL: fmk must be TFLITE|CAFFE|MS";
+    std::cerr << "INPUT ILLEGAL: fmk must be TFLITE|CAFFE|MS|ONNX";
     return 1;
   }
 

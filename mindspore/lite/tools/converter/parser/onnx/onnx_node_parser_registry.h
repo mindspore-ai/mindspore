@@ -19,8 +19,7 @@
 
 #include <string>
 #include <unordered_map>
-#include "mindspore/lite/tools/converter/proto/onnx.pb.h"
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_node_parser.h"
+#include "tools/converter/parser/onnx/onnx_node_parser.h"
 
 namespace mindspore {
 namespace lite {
