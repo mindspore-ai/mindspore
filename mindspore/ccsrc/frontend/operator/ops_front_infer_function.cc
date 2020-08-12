@@ -206,7 +206,7 @@ bool CompareShape(const std::vector<ValuePtr> &x_shape, const std::vector<ValueP
 }
 
 AbstractBasePtr DoInferReduceShape(const AbstractTuplePtr &x_shape, const ValuePtr &x_shp_value,
-                                   const ValueTuplePtr &axis_value_ptr, const PrimitivePtr &primitive) {
+                                   const ValueSequeuePtr &axis_value_ptr, const PrimitivePtr &primitive) {
   size_t x_rank = x_shape->size();
   std::set<int> axis_set;
   auto axis_data = axis_value_ptr->value();
@@ -348,17 +348,17 @@ AbstractBasePtr InferImplReduceShape(const AnalysisEnginePtr &, const PrimitiveP
                       << " evaluator shape's data field can't be anything: " << args_spec_list[1]->ToString();
   }
 
-  // Axis can be scalar, tuple or None
-  AbstractTuplePtr axis = nullptr;
+  // Axis can be scalar, tuple or list
+  AbstractSequeuePtr axis = nullptr;
   if (args_spec_list[1]->isa<AbstractScalar>()) {
     MS_LOG(DEBUG) << op_name << " evaluator second parameter is scalar";
     AbstractBasePtrList axis_list = {dyn_cast<AbstractScalar>(args_spec_list[1])};
     axis = std::make_shared<AbstractTuple>(axis_list);
-  } else if (args_spec_list[1]->isa<AbstractTuple>()) {
-    MS_LOG(DEBUG) << op_name << " evaluator second parameter is tuple";
-    axis = args_spec_list[1]->cast<AbstractTuplePtr>();
+  } else if (args_spec_list[1]->isa<AbstractSequeue>()) {
+    MS_LOG(DEBUG) << op_name << " evaluator second parameter is sequeue";
+    axis = args_spec_list[1]->cast<AbstractSequeuePtr>();
   } else {
-    MS_LOG(EXCEPTION) << op_name << " evaluator second parameter should be a scalar or tuple, but got "
+    MS_LOG(EXCEPTION) << op_name << " evaluator second parameter should be a scalar or tuple or list, but got "
                       << args_spec_list[1]->ToString();
   }
 
@@ -367,7 +367,7 @@ AbstractBasePtr InferImplReduceShape(const AnalysisEnginePtr &, const PrimitiveP
     MS_LOG(EXCEPTION) << op_name
                       << " evaluator shape's data field can't be anything: " << args_spec_list[1]->ToString();
   }
-  auto axis_value_ptr = axis_value->cast<ValueTuplePtr>();
+  auto axis_value_ptr = axis_value->cast<ValueSequeuePtr>();
   MS_EXCEPTION_IF_NULL(axis_value_ptr);
 
   return DoInferReduceShape(shape_x, x_shp_value, axis_value_ptr, primitive);

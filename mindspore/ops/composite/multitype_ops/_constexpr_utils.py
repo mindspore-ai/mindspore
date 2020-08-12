@@ -762,3 +762,10 @@ def get_stride_info_from_tuple(data_shape, index_tuple):
         end_strides.append(data_shape[item])
         step_strides.append(1)
     return tuple(begin_strides), tuple(end_strides), tuple(step_strides), shrink_axis
+
+
+@constexpr
+def mstype_eq(x, y):
+    if x == y:
+        return True
+    return False

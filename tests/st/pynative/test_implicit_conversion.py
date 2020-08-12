@@ -49,6 +49,7 @@ def test_bool_and_int_tensor_add():
     ret_expect = Tensor(np.array([[2, 3, 4], [5, 6, 7]], dtype=np.int32))
     assert (ret_actual.asnumpy() == ret_expect.asnumpy()).all()
 
+
 def test_float_tensor_and_int_tensor_add():
     x = Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))
     y = Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32))

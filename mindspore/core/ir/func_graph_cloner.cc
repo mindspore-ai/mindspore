@@ -206,8 +206,8 @@ void Cloner::InlineCloneParameters(const FuncGraphPtr &func_graph, const AnfNode
   MS_EXCEPTION_IF_NULL(func_graph);
   auto &old_params = func_graph->parameters();
   if (old_params.size() != params.size()) {
-    MS_LOG(EXCEPTION) << "Origin params size[" << old_params.size() << "], inline params size[" << params.size() << "]";
-    return;
+    MS_EXCEPTION(TypeError) << "Origin params size[" << old_params.size() << "], inline params size[" << params.size()
+                            << "]";
   }
   for (size_t i = 0; i < old_params.size(); ++i) {
     repl_node_[old_params[i]] = params[i];

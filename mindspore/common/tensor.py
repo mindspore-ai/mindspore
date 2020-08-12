@@ -239,7 +239,8 @@ class Tensor(Tensor_):
         Check all array elements along a given axis evaluate to True.
 
         Args:
-            axis (Union[None, int, tuple(int)): Dimensions of reduction.
+            axis (Union[None, int, tuple(int)): Dimensions of reduction,
+                when axis is None or empty tuple, reduce all dimensions.
                 Default: (), reduce all dimensions.
             keep_dims (bool): Whether to keep the reduced dimensions.
                 Default : False, don't keep these reduced dimensions.
@@ -257,7 +258,8 @@ class Tensor(Tensor_):
         Check any array element along a given axis evaluate to True.
 
         Args:
-            axis (Union[None, int, tuple(int)): Dimensions of reduction.
+            axis (Union[None, int, tuple(int)): Dimensions of reduction,
+                when axis is None or empty tuple, reduce all dimensions.
                 Default: (), reduce all dimensions.
             keep_dims (bool): Whether to keep the reduced dimensions.
                 Default : False, don't keep these reduced dimensions.

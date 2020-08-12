@@ -14,7 +14,7 @@
 # ============================================================================
 
 """equal_impl"""
-
+from . import _constexpr_utils as const_utils
 from ...composite import base
 from ... import functional as F
 
@@ -32,13 +32,28 @@ def _equal_scalar(x, y):
     Determine if two numbers are equal.
 
     Args:
-       x (Number): x
-       y (NUmber): y
+       x (Number): first input number.
+       y (NUmber): second input number.
 
     Returns:
        bool, if x == y return true, x != y return false.
    """
     return F.scalar_eq(x, y)
+
+
+@equal.register("mstype", "mstype")
+def _equal_mstype(x, y):
+    """
+    Determine if two mindspore types are equal.
+
+    Args:
+       x (mstype): first input mindspore type.
+       y (mstype): second input mindspore type.
+
+    Returns:
+       bool, if x == y return true, x != y return false.
+   """
+    return const_utils.mstype_eq(x, y)
 
 
 @equal.register("String", "String")
@@ -47,8 +62,8 @@ def _equal_string(x, y):
     Determine if two strings are equal.
 
     Args:
-       x: str
-       y: str
+       x (str): first input string.
+       y (str): second input string.
 
     Returns:
        bool, if x == y return true, x != y return false.
@@ -62,8 +77,8 @@ def _string_equal_none(x, y):
     Determine if string equals none.
 
     Args:
-       x: str.
-       y: None.
+       x (str): first input string.
+       y (None) second input None.
 
     Returns:
        bool, return false.
@@ -77,8 +92,8 @@ def _none_equal_string(x, y):
     Determine if string equals none.
 
     Args:
-       x: None.
-       y: str.
+       x (None): first input None.
+       y (str): second input string.
 
     Returns:
        bool, return false.
@@ -92,8 +107,8 @@ def _none_equal_none(x, y):
     Determine if none equals none.
 
     Args:
-       x: None.
-       y: None.
+       x (None): first input None.
+       y (None): second input None.
 
     Returns:
        bool, return true.
@@ -107,8 +122,8 @@ def _scalar_equal_none(x, y):
     Determine if number equals none.
 
     Args:
-       x: Number.
-       y: None.
+       x (Number): first input number.
+       y (None): second input None.
 
     Returns:
        bool, return false.
@@ -122,8 +137,8 @@ def _none_equal_scalar(x, y):
     Determine if number equals none.
 
     Args:
-       x: None.
-       y: NUmber.
+       x (None): first input None.
+       y (Number): second input Number.
 
     Returns:
        bool, return false.
@@ -137,8 +152,8 @@ def _euqal_tuple(x, y):
     Determine if two tuples are equal by element.
 
     Args:
-       x (tuple): x
-       y (tuple): y
+       x (tuple): first input tuple.
+       y (tuple): second input tuple.
 
     Returns:
        bool, if x and y are equal by element return true, else return false.
@@ -152,8 +167,8 @@ def _euqal_list(x, y):
     Determine if two lists are equal by element.
 
     Args:
-       x (list): x
-       y (list): y
+       x (list): first input list.
+       y (list): second input list.
 
     Returns:
        bool, if x and y are equal by element return true, else return false.
@@ -167,8 +182,8 @@ def _tuple_euqal_none(x, y):
     Determine if tuple element equals none element.
 
     Args:
-       x: Tuple.
-       y: None.
+       x(tuple): first input tuple.
+       y (None): second input None.
 
     Returns:
        bool, return false.
@@ -182,8 +197,8 @@ def _none_equal_tuple(x, y):
     Determine if tuple element equals none element.
 
     Args:
-       x: None.
-       y: Tuple.
+       x (None): first input None.
+       y (tuple): second input tuple.
 
     Returns:
        bool, return false.
@@ -199,8 +214,8 @@ def _tensor_equal_tensor(x, y):
     Determine if two tensors are equal.
 
     Args:
-       x : Tensor.
-       y : Tensor.
+       x (Tensor): first input tensor.
+       y (Tensor): second input tensor.
 
     Returns:
        bool, if x == y return true, x != y return false.
@@ -214,8 +229,8 @@ def _tensor_equal_none(x, y):
     Determine if tensor equal none.
 
     Args:
-       x : Tensor.
-       y : None.
+       x (Tensor): first input tensor.
+       y (None): second input None.
 
     Returns:
        bool, return false.
@@ -229,8 +244,8 @@ def _none_equal_tensor(x, y):
     Determine if tensor equal none.
 
     Args:
-       x : None.
-       y : Tensor.
+       x (None): first input None.
+       y (Tensor): second input tensor.
 
     Returns:
        bool, return false.
@@ -245,7 +260,7 @@ def _list_equal_none(x, y):
 
     Args:
        x (list): The first input which is a list.
-       y (none): The second input which is none.
+       y (None): The second input which is none.
 
     Returns:
        bool, return false.
@@ -259,7 +274,7 @@ def _none_equal_list(x, y):
     Determine if none equal list.
 
     Args:
-       x (none): The first input which is none.
+       x (None): The first input which is none.
        y (list): The second input which is a list.
 
     Returns:
