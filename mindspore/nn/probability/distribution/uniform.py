@@ -216,8 +216,8 @@ class Uniform(Distribution):
         """
         low = self.low if low is None else low
         high = self.high if high is None else high
-        ones = self.fill(self.dtype, self.shape(value), 1.0)
-        prob = ones / (high - low)
+        neg_ones = self.fill(self.dtype, self.shape(value), -1.0)
+        prob = self.exp(neg_ones * self.log(high - low))
         broadcast_shape = self.shape(prob)
         zeros = self.fill(self.dtypeop(prob), broadcast_shape, 0.0)
         comp_lo = self.less(value, low)

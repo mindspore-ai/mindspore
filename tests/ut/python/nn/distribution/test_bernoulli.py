@@ -28,7 +28,7 @@ def test_arguments():
     """
     b = msd.Bernoulli()
     assert isinstance(b, msd.Distribution)
-    b = msd.Bernoulli([0.0, 0.3, 0.5, 1.0], dtype=dtype.int32)
+    b = msd.Bernoulli([0.1, 0.3, 0.5, 0.9], dtype=dtype.int32)
     assert isinstance(b, msd.Distribution)
 
 def test_type():
@@ -51,6 +51,10 @@ def test_prob():
         msd.Bernoulli([-0.1], dtype=dtype.int32)
     with pytest.raises(ValueError):
         msd.Bernoulli([1.1], dtype=dtype.int32)
+    with pytest.raises(ValueError):
+        msd.Bernoulli([0.0], dtype=dtype.int32)
+    with pytest.raises(ValueError):
+        msd.Bernoulli([1.0], dtype=dtype.int32)
 
 class BernoulliProb(nn.Cell):
     """
