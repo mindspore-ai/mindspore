@@ -51,12 +51,12 @@ int CaffePReluCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto input = inputs_.at(0);
-  auto input1 = inputs_.at(1);
+  auto input = in_tensors_[0];
+  auto input1 = in_tensors_[1];
 
   prelu_param_->input_num_ = input->ElementsNum();
   input_data = reinterpret_cast<float *>(input->Data());
-  output_data = reinterpret_cast<float *>(outputs_.at(0)->Data());
+  output_data = reinterpret_cast<float *>(out_tensors_[0]->Data());
   auto channels = input->shape();
   prelu_param_->negtive_slope_ = reinterpret_cast<float *>(input1->Data());
   prelu_param_->channel_num_ = channels.at(channels.size() - 1);

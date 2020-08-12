@@ -32,7 +32,7 @@ class CaffePReluCPUKernel : public LiteKernel {
                       const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                       const lite::Primitive *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
-    prelu_param_ = (reinterpret_cast<CaffePReluParameter *>(opParameter));
+    prelu_param_ = reinterpret_cast<CaffePReluParameter *>(op_parameter_);
     primitive_ = primitive;
   }
   ~CaffePReluCPUKernel() = default;
