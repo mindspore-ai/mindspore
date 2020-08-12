@@ -48,6 +48,8 @@ void AddInt8(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int6
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 int16x8_t LoadAndAddOffset(int8_t *data, int index, int offset);
+int32x4_t ClacScaledInput(int32x4_t input, int32x4_t left_shift_result_vec, int32x4_t input_multiplier_vec,
+                          int32x4_t right_shift_vec);
 #endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ADD_INT8_H_
