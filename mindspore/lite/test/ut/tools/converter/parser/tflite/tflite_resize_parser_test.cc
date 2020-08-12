@@ -18,6 +18,7 @@
 #include "common/common_test.h"
 
 namespace mindspore {
+
 class TestTfliteParserResizeNN : public TestTfliteParser {
  public:
   TestTfliteParserResizeNN() = default;
@@ -35,10 +36,39 @@ TEST_F(TestTfliteParserResizeNN, AttrValue) {
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
 
   auto val = meta_graph->nodes.front()->primitive->value.AsResize();
-
+  ASSERT_NE(val, nullptr);
   ASSERT_EQ(val->alignCorners, false);
   ASSERT_EQ(val->newHeight, 3);
   ASSERT_EQ(val->newWidth, 100);
+  ASSERT_EQ(val->format, schema::Format_NHWC);
+  ASSERT_EQ(val->preserveAspectRatio, false);
+  ASSERT_EQ(val->method, schema::ResizeMethod_NEAREST_NEIGHBOR);
+}
+
+class TestTfliteParserResizeBilinear : public TestTfliteParser {
+ public:
+  TestTfliteParserResizeBilinear() = default;
+  void SetUp() override { meta_graph = LoadAndConvert("./resize_bilinear.tflite", ""); }
+};
+
+TEST_F(TestTfliteParserResizeBilinear, OpType) {
+  ASSERT_GT(meta_graph->nodes.size(), 0);
+  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Resize) << "wrong Op Type";
+}
+
+TEST_F(TestTfliteParserResizeBilinear, AttrValue) {
+  ASSERT_GT(meta_graph->nodes.size(), 0);
+  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
+
+  auto val = meta_graph->nodes.front()->primitive->value.AsResize();
+  ASSERT_NE(val, nullptr);
+  ASSERT_EQ(val->alignCorners, false);
+  ASSERT_EQ(val->newHeight, 75);
+  ASSERT_EQ(val->newWidth, 4);
+  ASSERT_EQ(val->format, schema::Format_NHWC);
+  ASSERT_EQ(val->preserveAspectRatio, false);
+  ASSERT_EQ(val->method, schema::ResizeMethod_BILINEAR);
 }
 
 }  // namespace mindspore

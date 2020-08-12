@@ -63,9 +63,39 @@ STATUS TflitePoolingParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
   attr->strideH = tflite_attr->stride_h;
   attr->padMode = GetPadMode(tflite_attr->padding);
   attr->format = schema::Format_NHWC;
-  // attr->global
+
+  // by default
+  attr->global = false;
+  attr->roundMode = schema::RoundMode_FLOOR;
 
   // calculate pad params
+  if (attr->padMode == schema::PadMode_VALID || attr->padMode == schema::PadMode_NOTSET) {
+    attr->padUp = 0;
+    attr->padDown = 0;
+    attr->padLeft = 0;
+    attr->padRight = 0;
+  } else if (attr->padMode == schema::PadMode_SAME) {
+    auto data_index = tflite_op->inputs[0];
+    const auto &data_tensor = tfliteTensors[data_index];
+    if (data_tensor == nullptr) {
+      MS_LOG(ERROR) << "the first input is null";
+      return RET_NULL_PTR;
+    }
+
+    auto shape = data_tensor->shape;
+    int H_input = shape.at(1);
+    int W_input = shape.at(2);
+
+    int H_output = ceil(H_input / attr->strideH);
+    int pad_needed_H = (H_output - 1) * attr->strideH + attr->windowH - H_input;
+    attr->padUp = floor(pad_needed_H / 2.0);
+    attr->padDown = pad_needed_H - attr->padUp;
+
+    int W_output = ceil(W_input / attr->strideW);
+    int pad_needed_W = (W_output - 1) * attr->strideW + attr->windowW - W_input;
+    attr->padLeft = floor(pad_needed_W / 2.0);
+    attr->padRight = pad_needed_W - attr->padLeft;
+  }
 
   op->primitive->value.type = schema::PrimitiveType_Pooling;
   op->primitive->value.value = attr.release();

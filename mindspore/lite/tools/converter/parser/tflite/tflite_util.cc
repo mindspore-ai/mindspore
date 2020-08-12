@@ -145,6 +145,7 @@ std::map<int, TypeId> type_map = {
   {tflite::TensorType_UINT8, TypeId::kNumberTypeUInt8},
   {tflite::TensorType_INT16, TypeId::kNumberTypeInt16},
   {tflite::TensorType_INT8, TypeId::kNumberTypeInt8},
+  {tflite::TensorType_INT64, TypeId::kNumberTypeInt64},
 };
 
 TypeId GetTfliteDataType(const tflite::TensorType &tflite_data_type) {
@@ -179,7 +180,10 @@ size_t GetDataTypeSize(const TypeId &data_type) {
       return sizeof(uint8_t);
     case TypeId::kNumberTypeUInt32:
       return sizeof(uint32_t);
+    case TypeId::kNumberTypeInt64:
+      return sizeof(int64_t);
     default:
+      MS_LOG(ERROR) << data_type;
       MS_LOG(ERROR) << "unsupport datatype";
       return RET_ERROR;
   }

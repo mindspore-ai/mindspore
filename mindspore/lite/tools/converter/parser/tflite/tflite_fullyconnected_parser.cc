@@ -65,6 +65,7 @@ STATUS TfliteFullyConnectedParser::Parse(const std::unique_ptr<tflite::OperatorT
     }
   }
   attr->axis = 1;
+  attr->useAxis = false;
 
   op->primitive->value.type = schema::PrimitiveType_FullConnection;
   op->primitive->value.value = attr.release();
