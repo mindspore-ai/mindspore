@@ -17,6 +17,8 @@
 #include "nnacl/fp32/arithmetic.h"
 #include <math.h>
 
+#define ACCURACY_DATA 0.00000001
+
 int ElementMul(float *input0, float *input1, float *output, int element_size) {
   int block_mod = element_size % C4NUM;
   int block_c4 = element_size - block_mod;
@@ -549,6 +551,14 @@ int BroadcastMinimum(float *input0, float *input1, float *tile_input0, float *ti
   return ElementMinimum(tile_input0, tile_input1, output, element_size);
 }
 
+float FloatNotEqualCheck(float in0, float in1) {
+  float minus = in0 - in1;
+  if (minus <= ACCURACY_DATA && minus >= -ACCURACY_DATA) {
+    return (float)false;
+  }
+  return (float)true;
+}
+
 int ElementNotEqual(float *input0, float *input1, float *output, int element_size) {
   int block_mod = element_size % C4NUM;
   int block_c4 = element_size - block_mod;
@@ -563,10 +573,10 @@ int ElementNotEqual(float *input0, float *input1, float *output, int element_siz
     float32x4_t vout = vbslq_f32(vceqq_f32(vin0, vin1), vfalse, vtrue);
     vst1q_f32(output, vout);
 #else
-    output[0] = (float)(input0[0] != input1[0]);
-    output[1] = (float)(input0[1] != input1[1]);
-    output[2] = (float)(input0[2] != input1[2]);
-    output[3] = (float)(input0[3] != input1[3]);
+    output[0] = FloatNotEqualCheck(input0[0], input1[0]);
+    output[1] = FloatNotEqualCheck(input0[1], input1[1]);
+    output[2] = FloatNotEqualCheck(input0[2], input1[2]);
+    output[3] = FloatNotEqualCheck(input0[3], input1[3]);
 #endif
     input0 += C4NUM;
     input1 += C4NUM;
@@ -584,6 +594,14 @@ int BroadcastNotEqual(float *input0, float *input1, float *tile_input0, float *t
   return ElementNotEqual(tile_input0, tile_input1, output, element_size);
 }
 
+float FloatEqualCheck(float in0, float in1) {
+  float minus = in0 - in1;
+  if (minus <= ACCURACY_DATA && minus >= -ACCURACY_DATA) {
+    return (float)true;
+  }
+  return (float)false;
+}
+
 int ElementEqual(float *input0, float *input1, float *output, int element_size) {
   int block_mod = element_size % C4NUM;
   int block_c4 = element_size - block_mod;
@@ -598,10 +616,10 @@ int ElementEqual(float *input0, float *input1, float *output, int element_size) 
     float32x4_t vout = vbslq_f32(vceqq_f32(vin0, vin1), vtrue, vfalse);
     vst1q_f32(output, vout);
 #else
-    output[0] = (float)(input0[0] == input1[0]);
-    output[1] = (float)(input0[1] == input1[1]);
-    output[2] = (float)(input0[2] == input1[2]);
-    output[3] = (float)(input0[3] == input1[3]);
+    output[0] = FloatEqualCheck(input0[0], input1[0]);
+    output[1] = FloatEqualCheck(input0[1], input1[1]);
+    output[2] = FloatEqualCheck(input0[2], input1[2]);
+    output[3] = FloatEqualCheck(input0[3], input1[3]);
 #endif
     input0 += C4NUM;
     input1 += C4NUM;
@@ -758,3 +776,5 @@ int BroadcastGreaterEqual(float *input0, float *input1, float *tile_input0, floa
   TileDimensions(input0, input1, tile_input0, tile_input1, param);
   return ElementGreaterEqual(tile_input0, tile_input1, output, element_size);
 }
+
+#undef ACCURACY_DATA

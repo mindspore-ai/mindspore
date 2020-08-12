@@ -20,10 +20,12 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "schema/model_generated.h"
+#include "src/runtime/kernel/arm/nnacl/int8/arithmetic_int8.h"
 
 namespace mindspore::kernel {
 class ArithmeticInt8CPUKernel : public LiteKernel {
-  typedef int (*ArithmeticRunInt8)(int8_t *input0, int8_t *input1, int8_t *output, int element_size);
+  typedef int (*ArithmeticRunInt8)(int8_t *input0, int8_t *input1, int8_t *output, int element_size,
+                                   ArithmeticQuantArg *quant_arg);
 
  public:
   ArithmeticInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
@@ -39,10 +41,10 @@ class ArithmeticInt8CPUKernel : public LiteKernel {
 
  private:
   void FreeTileData();
-  int thread_count_;
   int8_t *tile_data0_;
   int8_t *tile_data1_;
   ArithmeticRunInt8 arithmetic_run_;
+  ArithmeticQuantArg quant_args_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_ARITHMETIC_INT8_H_

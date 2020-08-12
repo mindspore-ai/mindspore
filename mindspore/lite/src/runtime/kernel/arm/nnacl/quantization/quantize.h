@@ -193,6 +193,12 @@ typedef struct SubQuantArg {
   int right_shift_out_;
 } SubQuantArg;
 
+typedef struct ArithmeticQuantArg {
+  QuantArg in0_args_;
+  QuantArg in1_args_;
+  QuantArg out_args_;
+} ArithmeticQuantArg;
+
 void QuantizeMultiplier(double double_multiplier, int32_t *quantized_multiplier, int *shift);
 
 inline void QuantizeMultiplierSmallerThanOne(double double_multiplier, int32_t *quantized_multiplier,
