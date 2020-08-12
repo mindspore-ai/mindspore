@@ -46,21 +46,23 @@ int ConcatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) 
   img_size->clear();
   std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
   *img_size = vec;
-  return 1;
+  return RET_OK;
 }
 int ConcatOpenCLKernel::Init() {
   if (in_tensors_[0]->shape().size() != 4) {
     MS_LOG(ERROR) << "only support dim=4";
+    return RET_ERROR;
   }
 
   auto param = reinterpret_cast<ConcatParameter *>(this->op_parameter_);
-  MS_LOG(INFO) << "concat at axis=:  " << param->axis_;
+  MS_LOG(DEBUG) << "concat at axis=:  " << param->axis_;
   if (param->axis_ != 0 && param->axis_ != 3) {
     MS_LOG(ERROR) << "only support axis=0 or axis=3";
+    return RET_ERROR;
   }
 
   if (param->axis_ == 0) {
-    return 0;
+    return RET_OK;
   }
   if (in_tensors_.size() == 2) {
     std::set<std::string> build_options;
@@ -82,10 +84,10 @@ int ConcatOpenCLKernel::Init() {
     ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
   }
 
-  return 0;
+  return RET_OK;
 }
 
-int ConcatOpenCLKernel::ReSize() { return 0; }
+int ConcatOpenCLKernel::ReSize() { return RET_OK; }
 
 int ConcatOpenCLKernel::Run_axis0() {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
@@ -111,11 +113,7 @@ int ConcatOpenCLKernel::Run_axis0() {
       ocl_runtime->UnmapBuffer(*buffer, tensor->Data());
     }
   }
-  return 0;
-}
-int DivideRoundUp(int n, int div) {
-  int q = n / div;
-  return n % div == 0 ? q : q + 1;
+  return RET_OK;
 }
 
 int GetBiggestDividerWithPriority(int number, int max_divider) {
@@ -128,19 +126,22 @@ int GetBiggestDividerWithPriority(int number, int max_divider) {
   if (number % 2 == 0 && 2 <= max_divider) {
     return number / 2;
   }
+
   for (int i = max_divider; i != 0; i--) {
     if (number % i == 0) {
       return i;
     }
   }
-  return 1;
+  return RET_OK;
 }
 
 void ConcatGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *local, int max_size) {
-  int x = std::min(GetBiggestDividerWithPriority(global[0], 8), 4);
+  const int max_divider = 8;
+  const int max_x = 4, max_y = 8;
+  int x = std::min(GetBiggestDividerWithPriority(global[0], max_divider), max_x);
   int yz = max_size / x;
-  int y = std::min(std::min(GetBiggestDividerWithPriority(global[1], 8), yz), 8);
-  int z = std::min(yz / y, DivideRoundUp(global[2], 2));
+  int y = std::min(std::min(GetBiggestDividerWithPriority(global[1], max_divider), yz), max_y);
+  int z = std::min(yz / y, static_cast<int>(UP_DIV(global[2], 2)));
 
   local->clear();
   local->push_back(x);
@@ -159,44 +160,53 @@ int ConcatOpenCLKernel::Run() {
   auto input1_shape = in_tensors_[1]->shape();
   auto output_shape = out_tensors_[0]->shape();
 
-  cl_int2 input0_shape2_ = {DivideRoundUp(input0_shape[3], 4), DivideRoundUp(input1_shape[3], 4)};  // change
-  cl_int4 output_shape_ = {output_shape[0], output_shape[1], output_shape[2], DivideRoundUp(output_shape[3], 4)};
+  cl_int2 input0_shape2_ = {UP_DIV(input0_shape[3], C4NUM), UP_DIV(input1_shape[3], C4NUM)};  // change
+  cl_int4 output_shape_ = {output_shape[0], output_shape[1], output_shape[2], UP_DIV(output_shape[3], C4NUM)};
 
-  uint32_t OH = output_shape[0] * output_shape[1];  // N*H
+  uint32_t OH = output_shape[1];  // N*H
   uint32_t OW = output_shape[2];
+  uint32_t OC = UP_DIV(output_shape[3], C4NUM);
 
-  std::vector<size_t> local = {1, 1};
-  std::vector<size_t> global = {OH, OW};
-  //    ConcatGetWorkGroup(global, &local, 512);
+  const std::vector<size_t> &max_global = ocl_runtime->GetWorkItemSize();
+  std::vector<size_t> local = {1, 1, 1};  // init local
+  std::vector<size_t> global = {OH, OW, OC};
+  ConcatGetWorkGroup(global, &local, max_global[0]);
 
   int arg_cn = 0;
   if (in_tensors_.size() == 2) {
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->Data());
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->Data());
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->Data());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->Data());
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, input0_shape2_);
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, output_shape_);
   } else if (in_tensors_.size() == 3) {
     auto input2_shape = in_tensors_[2]->shape();
-    cl_int3 input0_shape3_ = {DivideRoundUp(input0_shape[3], 4), DivideRoundUp(input1_shape[3], 4),
-                              DivideRoundUp(input2_shape[3], 4)};
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->Data());
+    cl_int3 input0_shape3_ = {UP_DIV(input0_shape[3], C4NUM), UP_DIV(input1_shape[3], C4NUM),
+                              UP_DIV(input2_shape[3], C4NUM)};
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->Data());
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->Data());
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[2]->Data());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->Data());
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, input0_shape3_);
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, output_shape_);
+  } else {
+    MS_LOG(ERROR) << "only support inputs<=3";
+    return RET_ERROR;
   }
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
 
-  return 0;
+  return RET_OK;
 }  // namespace mindspore::kernel
 
 kernel::LiteKernel *OpenCLConcatKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                               const std::vector<lite::tensor::Tensor *> &outputs,
                                               OpParameter *opParameter, const lite::Context *ctx,
                                               const kernel::KernelKey &desc, const lite::Primitive *primitive) {
-  auto *kernel = new ConcatOpenCLKernel(opParameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) ConcatOpenCLKernel(opParameter, inputs, outputs);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new ConcatOpenCLKernel failed";
+    return nullptr;
+  }
   auto ret = kernel->Init();
   if (0 != ret) {
     MS_LOG(ERROR) << "Init kernel failed, name: Convolution";

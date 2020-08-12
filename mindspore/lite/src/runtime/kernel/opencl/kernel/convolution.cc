@@ -255,6 +255,14 @@ int ConvolutionOpenCLKernel::GetGlobalLocal(std::vector<size_t> *global, std::ve
     local_h = global_h / 2;
   }
 
+  auto output_tensor = out_tensors_[0];
+  const size_t CO = output_tensor->Channel();
+  const size_t CO_SLICES = UP_DIV(CO, C4NUM);
+  const size_t OW = output_tensor->Width();
+  if (OW * CO_SLICES > 65536) {
+    local_w = 4;
+  }
+
   global->clear();
   global->push_back(UP_DIV(param->output_h_, local_h) * local_h);
   global->push_back(UP_DIV(param->output_w_, local_w) * local_w);
