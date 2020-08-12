@@ -25,7 +25,7 @@
 #include "abstract/abstract_value.h"
 #include "base/core_ops.h"
 #include "mindspore/core/ir/primitive.h"
-#include "src/common/anf_exporter/anf_populater/anf_node_populater_registry.h"
+// #include "src/common/anf_exporter/anf_populater/anf_node_populater_registry.h"
 #include "src/ir/primitive_t_value.h"
 #include "src/ir/tensor.h"
 #include "src/param_value_lite.h"
@@ -148,27 +148,27 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &funcGraph) {
     node->name = cnode->fullname_with_scope();
     node->nodeType = schema::NodeType_CNode;
     // populate primitive
-    if (primitive != nullptr) {
-      primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-      MS_ASSERT(primitive != nullptr);
-      std::string opType = primitive->name();
-      auto nodeParser = AnfNodePopulaterRegistry::GetInstance()->GetNodePopulater(opType);
-      if (nodeParser == nullptr) {
-        MS_LOG(ERROR) << "Find op parser failed, opType: " << opType;
-        return nullptr;
-      }
-      std::vector<schema::TensorT *> outputs;
-      if (utils::isa<abstract::AbstractSequeue>(cnode->abstract())) {
-        auto abstract_cnode = utils::cast<abstract::AbstractSequeuePtr>(cnode->abstract());
-        outputs.resize(abstract_cnode->size());
-      }
-
-      nodeParser->Parse(cnode, node.get(), &outputs);
-      SetOpInputNode(cnode, metaGraphT.get(), node.get());
-      SetOpOutputNode(cnode, outputs, metaGraphT.get(), node.get());
-      metaGraphT->nodes.emplace_back(std::move(node));
-      continue;
-    }
+    // if (primitive != nullptr) {
+    //   primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+    //   MS_ASSERT(primitive != nullptr);
+    //   std::string opType = primitive->name();
+    //   auto nodeParser = AnfNodePopulaterRegistry::GetInstance()->GetNodePopulater(opType);
+    //   if (nodeParser == nullptr) {
+    //     MS_LOG(ERROR) << "Find op parser failed, opType: " << opType;
+    //     return nullptr;
+    //   }
+    //   std::vector<schema::TensorT *> outputs;
+    //   if (utils::isa<abstract::AbstractSequeue>(cnode->abstract())) {
+    //     auto abstract_cnode = utils::cast<abstract::AbstractSequeuePtr>(cnode->abstract());
+    //     outputs.resize(abstract_cnode->size());
+    //   }
+    //
+    //   nodeParser->Parse(cnode, node.get(), &outputs);
+    //   SetOpInputNode(cnode, metaGraphT.get(), node.get());
+    //   SetOpOutputNode(cnode, outputs, metaGraphT.get(), node.get());
+    //   metaGraphT->nodes.emplace_back(std::move(node));
+    //   continue;
+    // }
     auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveTValue>>(cnode->input(0));
     if (primitiveT_value == nullptr) {
       MS_LOG(ERROR) << "PrimitiveT_value is nullptr";

@@ -70,9 +70,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/tensor_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/flag_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/storage.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/anf_importer/anf_importer.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/anf_importer/import_from_meta_graphT.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/anf_importer/import_from_protobuf.cc
+        # ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/anf_exporter/anf_exporter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/onnx/onnx.pb.cc
 
         ../optimizer/common/node_pass_extends.cc
@@ -99,7 +97,7 @@ add_executable(converter_lite
 target_link_libraries(converter_lite PRIVATE
         tflite_parser_mid
         caffe_parser_mid
-        anf_exporter_mid
+        anf_importer_mid
         node_mid
         graph_pass_mid
         fusion_mid
