@@ -17,16 +17,21 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_ARITHMETIC_INT8_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/quantization/quantize.h"
 
-int ElementNotEqual(int8_t *input0, int8_t *input1, int8_t *output, int element_size);
+int ElementNotEqualInt8(int8_t *input0, int8_t *input1, int8_t *output, int element_size,
+                        ArithmeticQuantArg *quant_arg);
 
-int ElementEqual(int8_t *input0, int8_t *input1, int8_t *output, int element_size);
+int ElementEqualInt8(int8_t *input0, int8_t *input1, int8_t *output, int element_size, ArithmeticQuantArg *quant_arg);
 
-int ElementLess(int8_t *input0, int8_t *input1, int8_t *output, int element_size);
+int ElementLessInt8(int8_t *input0, int8_t *input1, int8_t *output, int element_size, ArithmeticQuantArg *quant_arg);
 
-int ElementLessEqual(int8_t *input0, int8_t *input1, int8_t *output, int element_size);
+int ElementLessEqualInt8(int8_t *input0, int8_t *input1, int8_t *output, int element_size,
+                         ArithmeticQuantArg *quant_arg);
 
-int ElementGreater(int8_t *input0, int8_t *input1, int8_t *output, int element_size);
+int ElementGreaterInt8(int8_t *input0, int8_t *input1, int8_t *output, int element_size,
+                       ArithmeticQuantArg *quant_arg);
 
-int ElementGreaterEqual(int8_t *input0, int8_t *input1, int8_t *output, int element_size);
+int ElementGreaterEqualInt8(int8_t *input0, int8_t *input1, int8_t *output, int element_size,
+                            ArithmeticQuantArg *quant_arg);
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_ARITHMETIC_INT8_H_

@@ -15,7 +15,6 @@
  */
 
 #include "src/runtime/kernel/arm/int8/arithmetic_int8.h"
-#include "src/runtime/kernel/arm/nnacl/int8/arithmetic_int8.h"
 #include "src/runtime/kernel/arm/nnacl/arithmetic_common.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -42,7 +41,7 @@ int ArithmeticsInt8Launch(int thread_id, LiteParallelGroupEnv *penv, void *cdata
   auto error_code = arithmetic_kernel->DoArithmetic(thread_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticsRun error thread_id[" << thread_id << "] error_code[" << error_code << "]";
-    return RET_ERROR;
+    return error_code;
   }
   return RET_OK;
 }
@@ -79,28 +78,43 @@ ArithmeticInt8CPUKernel::~ArithmeticInt8CPUKernel() {
 int ArithmeticInt8CPUKernel::Init() {
   switch (op_parameter_->type_) {
     case PrimitiveType_Equal:
-      arithmetic_run_ = ElementEqual;
+      arithmetic_run_ = ElementEqualInt8;
       break;
     case PrimitiveType_NotEqual:
-      arithmetic_run_ = ElementNotEqual;
+      arithmetic_run_ = ElementNotEqualInt8;
       break;
     case PrimitiveType_Less:
-      arithmetic_run_ = ElementLess;
+      arithmetic_run_ = ElementLessInt8;
       break;
     case PrimitiveType_LessEqual:
-      arithmetic_run_ = ElementLessEqual;
+      arithmetic_run_ = ElementLessEqualInt8;
       break;
     case PrimitiveType_Greater:
-      arithmetic_run_ = ElementGreater;
+      arithmetic_run_ = ElementGreaterInt8;
       break;
     case PrimitiveType_GreaterEqual:
-      arithmetic_run_ = ElementGreaterEqual;
+      arithmetic_run_ = ElementGreaterEqualInt8;
       break;
     default:
       MS_LOG(ERROR) << "Error Operator type " << op_parameter_->type_;
       arithmetic_run_ = nullptr;
       return RET_PARAM_INVALID;
   }
+
+  auto *input0_tensor = in_tensors_.at(0);
+  auto in0_quant_args = input0_tensor->GetQuantParams();
+  quant_args_.in0_args_.scale_ = in0_quant_args.front().scale;
+  quant_args_.in0_args_.zp_ = in0_quant_args.front().zeroPoint;
+
+  auto *input1_tensor = in_tensors_.at(1);
+  auto in1_quant_args = input1_tensor->GetQuantParams();
+  quant_args_.in1_args_.scale_ = in1_quant_args.front().scale;
+  quant_args_.in1_args_.zp_ = in1_quant_args.front().zeroPoint;
+
+  auto *out_tensor = out_tensors_.at(kOutputIndex);
+  auto out_quant_args = out_tensor->GetQuantParams();
+  quant_args_.out_args_.scale_ = out_quant_args.front().scale;
+  quant_args_.out_args_.zp_ = out_quant_args.front().zeroPoint;
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -142,16 +156,16 @@ int ArithmeticInt8CPUKernel::DoArithmetic(int thread_id) {
     }
 
     int error_code = arithmetic_run_(tile_data0_ + stride * thread_id, tile_data1_ + stride * thread_id,
-                                     output_data + stride * thread_id, count);
+                                     output_data + stride * thread_id, count, &quant_args_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "Arithmetic run fail! ret: " << error_code;
-      return RET_ERROR;
+      return error_code;
     }
   } else if (arithmetic_run_ != nullptr) {
-    int error_code = arithmetic_run_(input0_data, input1_data1, output_data, element_num);
+    int error_code = arithmetic_run_(input0_data, input1_data1, output_data, element_num, &quant_args_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "Arithmetic run fail!ret: " << error_code;
-      return RET_ERROR;
+      return error_code;
     }
   } else {
     MS_LOG(ERROR) << "arithmetic_run function is nullptr!";
