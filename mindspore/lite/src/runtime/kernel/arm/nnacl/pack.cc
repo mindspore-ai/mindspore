@@ -74,7 +74,9 @@ void PackWeightInt8(int8_t *weight_data, ConvParameter *conv_param, int8_t *pack
 
   for (int m = 0; m < kernel_plane; m++) {
     int kernel_plane_stride = m * in_channel;
-    int packed_kernel_plane_stride = m * C4NUM;
+    int plane_block = m / C4NUM;
+    int plane_res = m % C4NUM;
+    int packed_kernel_plane_stride = plane_block * C4NUM * C4NUM * ic4 * C4NUM + plane_res * C4NUM;
     for (int i = 0; i < ic4; i++) {
       int channel_block_stride = kernel_plane_stride + i * C4NUM;
       int packed_channel_block_size = packed_kernel_plane_stride + i * C4NUM * C4NUM * C4NUM;
