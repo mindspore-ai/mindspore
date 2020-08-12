@@ -32,13 +32,9 @@ TEST_F(TestTfliteParserReduceMax, OpType) {
 }
 
 TEST_F(TestTfliteParserReduceMax, AttrValue) {
-  ASSERT_NE(meta_graph, nullptr);
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsReduce(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsReduce();
-  ASSERT_NE(val, nullptr);
-  ASSERT_EQ(val->mode, schema::ReduceMode_ReduceMax) << "wrong reduce mode";
+  ASSERT_EQ(val->mode, schema::ReduceMode_ReduceMax);
   ASSERT_EQ(val->keepDims, false);
   std::vector<int32_t> axes = {2};
   ASSERT_EQ(val->axes, axes);
@@ -58,13 +54,9 @@ TEST_F(TestTfliteParserReduceMin, OpType) {
 }
 
 TEST_F(TestTfliteParserReduceMin, AttrValue) {
-  ASSERT_NE(meta_graph, nullptr);
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsReduce(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsReduce();
-  ASSERT_NE(val, nullptr);
-  ASSERT_EQ(val->mode, schema::ReduceMode_ReduceMin) << "wrong reduce mode";
+  ASSERT_EQ(val->mode, schema::ReduceMode_ReduceMin);
   ASSERT_EQ(val->keepDims, false);
   std::vector<int32_t> axes = {2};
   ASSERT_EQ(val->axes, axes);
@@ -84,13 +76,9 @@ TEST_F(TestTfliteParserReduceProd, OpType) {
 }
 
 TEST_F(TestTfliteParserReduceProd, AttrValue) {
-  ASSERT_NE(meta_graph, nullptr);
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsReduce(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsReduce();
-  ASSERT_NE(val, nullptr);
-  ASSERT_EQ(val->mode, schema::ReduceMode_ReduceProd) << "wrong reduce mode";
+  ASSERT_EQ(val->mode, schema::ReduceMode_ReduceProd);
   ASSERT_EQ(val->keepDims, false);
   std::vector<int32_t> axes = {2};
   ASSERT_EQ(val->axes, axes);
@@ -111,13 +99,9 @@ TEST_F(TestTfliteParserSum, OpType) {
 }
 
 TEST_F(TestTfliteParserSum, AttrValue) {
-  ASSERT_NE(meta_graph, nullptr);
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsReduce(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsReduce();
-  ASSERT_NE(val, nullptr);
-  ASSERT_EQ(val->mode, schema::ReduceMode_ReduceSum) << "wrong reduce mode";
+  ASSERT_EQ(val->mode, schema::ReduceMode_ReduceSum);
   ASSERT_EQ(val->keepDims, false);
   std::vector<int32_t> axes = {2};
   ASSERT_EQ(val->axes, axes);
@@ -138,13 +122,9 @@ TEST_F(TestTfliteParserMean, OpType) {
 }
 
 TEST_F(TestTfliteParserMean, AttrValue) {
-  ASSERT_NE(meta_graph, nullptr);
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsReduce(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsReduce();
-  ASSERT_NE(val, nullptr);
-  ASSERT_EQ(val->mode, schema::ReduceMode_ReduceMean) << "wrong reduce mode";
+  ASSERT_EQ(val->mode, schema::ReduceMode_ReduceMean);
   ASSERT_EQ(val->keepDims, true);
   std::vector<int32_t> axes = {2, 3};
   ASSERT_EQ(val->axes, axes);

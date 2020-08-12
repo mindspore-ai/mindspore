@@ -21,54 +21,84 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <utility>
 #include "utils/log_adapter.h"
 #include "schema/inner/model_generated.h"
-#include "tools/converter/parser/tflite/tflite_util.h"
 #include "tools/converter/parser/tflite/schema_generated.h"
 #include "tools/common/tensor_util.h"
 #include "ir/dtype/type_id.h"
 #include "include/errorcode.h"
+#include "tools/converter/parser/tflite/tflite_util.h"
 
 namespace mindspore {
 namespace lite {
 class TfliteNodeParser {
  public:
-  explicit TfliteNodeParser(const std::string &nodeName) : name(nodeName) {}
+  explicit TfliteNodeParser(const std::string &node_name) : name(node_name) {}
 
   virtual ~TfliteNodeParser() = default;
 
-  virtual STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-                       const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-                       const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                       const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
+  virtual STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                       const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+                       const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
                        schema::CNodeT *op,
-                       TensorCache *tensor_cache,
-                       bool quantizedModel) = 0;
+                       std::vector<int32_t> *tensors_id,
+                       std::vector<schema::Format> *tensors_format,
+                       std::map<int, int>  *tensors_id_map) = 0;
 
-  STATUS ParseTensor(const std::vector<tflite::TensorT *> &ts,
-                     const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                     mindspore::lite::TensorCache *tensor_cache,
-                     int node_type,
-                     bool isWeight);
+  void AddOpInput(schema::CNodeT *op,
+                  std::vector<int32_t> *tensors_id,
+                  std::vector<schema::Format> *tensors_format,
+                  std::map<int, int> *tensors_id_map,
+                  int idx, int new_idx, int total,  schema::Format format) {
+    auto iter = tensors_id_map->find(idx);
+    if (iter != tensors_id_map->end()) {
+      op->inputIndex.emplace_back(iter->second);
+    } else {
+      if (idx < 0) {
+        idx += total;
+      }
+      tensors_id->emplace_back(idx);
+      tensors_format->emplace_back(format);
+      tensors_id_map->insert(std::make_pair(idx, new_idx));
+      op->inputIndex.emplace_back(new_idx);
+    }
+  }
 
-  STATUS CopyTfliteTensorData(const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                              const tflite::TensorT *tflite_tensor,
-                              schema::TensorT *tensor);
+  void AddOpOutput(schema::CNodeT *op,
+                  std::vector<int32_t> *tensors_id,
+                  std::vector<schema::Format> *tensors_format,
+                  std::map<int, int> *tensors_id_map,
+                  int idx, int new_idx, int total, schema::Format format) {
+    auto iter = tensors_id_map->find(idx);
+    if (iter != tensors_id_map->end()) {
+      op->outputIndex.emplace_back(iter->second);
+    } else {
+      if (idx < 0) {
+        idx += total;
+      }
+      tensors_id->emplace_back(idx);
+      tensors_format->emplace_back(format);
+      tensors_id_map->insert(std::make_pair(idx, new_idx));
+      op->outputIndex.emplace_back(new_idx);
+    }
+  }
 
   template <typename T>
-  STATUS GetTfliteData(const int32_t tensor_index, const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-                       const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
+  STATUS GetTfliteData(const int32_t tensor_index,
+                       const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+                       const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
                        std::vector<T> &attr_data) {
     int32_t count = 1;
-    std::for_each(tfliteTensors[tensor_index]->shape.begin(), tfliteTensors[tensor_index]->shape.end(),
+    std::for_each(tflite_tensors[tensor_index]->shape.begin(), tflite_tensors[tensor_index]->shape.end(),
                   [&](int32_t sha) { count *= sha; });
-    auto &buf_data = tfliteModelBuffer[tfliteTensors[tensor_index]->buffer];
+    auto &buf_data = tflite_model_buffer[tflite_tensors[tensor_index]->buffer];
     if (buf_data == nullptr) {
       MS_LOG(ERROR) << "buf_data is null";
       return RET_NULL_PTR;
     }
     auto data_ptr = buf_data->data.data();
-    switch (tfliteTensors[tensor_index]->type) {
+    switch (tflite_tensors[tensor_index]->type) {
       case tflite::TensorType_UINT8: {
         for (int i = 0; i < count; i++) {
           uint8_t data = *(static_cast<uint8_t *>(static_cast<void *>(data_ptr)));

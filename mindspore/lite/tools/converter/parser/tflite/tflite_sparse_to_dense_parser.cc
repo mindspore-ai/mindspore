@@ -15,18 +15,22 @@
 * limitations under the License.
 */
 
+#include "tools/converter/parser/tflite/tflite_sparse_to_dense_parser.h"
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_sparse_to_dense_parser.h"
+#include <map>
 
 namespace mindspore {
 namespace lite {
 STATUS TfliteSparseToDenseParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                         const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
                                         const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                        const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_opset,
                                         schema::CNodeT *op,
-                                        TensorCache *tensor_cache, bool quantized_model) {
+                                        std::vector<int32_t> *tensors_id,
+                                        std::vector<schema::Format> *tensors_format,
+                                        std::map<int, int>  *tensors_id_map) {
+  MS_LOG(DEBUG) << "parse TfliteSparseToDenseParser";
+
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -37,7 +41,6 @@ STATUS TfliteSparseToDenseParser::Parse(const std::unique_ptr<tflite::OperatorT>
     return RET_NULL_PTR;
   }
 
-  MS_LOG(DEBUG) << "parse TfliteSparseToDenseParser";
   std::unique_ptr<schema::SparseToDenseT> attr(new schema::SparseToDenseT());
 
   attr->validateIndices = false;
@@ -57,6 +60,11 @@ STATUS TfliteSparseToDenseParser::Parse(const std::unique_ptr<tflite::OperatorT>
 
   op->primitive->value.type = schema::PrimitiveType_SparseToDense;
   op->primitive->value.value = attr.release();
+
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
+             tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
+              tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   return RET_OK;
 }
 

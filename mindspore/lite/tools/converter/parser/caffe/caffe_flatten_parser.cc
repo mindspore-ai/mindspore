@@ -21,11 +21,16 @@ namespace lite {
 STATUS CaffeFlattenParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
                                        schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   if (op == nullptr) {
-    // MS_LOGE("null pointer dereferencing.");
+    // MS_LOG(ERROR) << "null pointer dereferencing.";
     return RET_NULL_PTR;
   }
-  std::unique_ptr<schema::ReshapeT> attr(new schema::ReshapeT());
-  attr->format = schema::Format_NCHW;
+  std::unique_ptr<schema::FullConnectionT> attr(new schema::FullConnectionT());
+  const caffe::FlattenParameter flattenParam = proto.flatten_param();
+
+  attr->axis = (int32_t)flattenParam.axis();
+  attr->useAxis = true;
+  attr->hasBias = false;
+  attr->activationType = schema::ActivationType_NO_ACTIVATION;
 
   op->primitive = std::make_unique<schema::PrimitiveT>();
   op->primitive->value.type = schema::PrimitiveType_Flatten;

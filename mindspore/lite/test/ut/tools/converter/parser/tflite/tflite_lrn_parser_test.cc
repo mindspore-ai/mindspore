@@ -25,6 +25,7 @@ class TestTfliteParserLRN : public TestTfliteParser {
 };
 
 TEST_F(TestTfliteParserLRN, OpType) {
+  ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type,
@@ -32,9 +33,7 @@ TEST_F(TestTfliteParserLRN, OpType) {
 }
 
 TEST_F(TestTfliteParserLRN, AttrValue) {
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsLocalResponseNormalization(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsLocalResponseNormalization();
   ASSERT_EQ(val->alpha, 1);
   ASSERT_EQ(val->beta, 0.5);

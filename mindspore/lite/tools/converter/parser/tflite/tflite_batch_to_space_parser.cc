@@ -19,14 +19,17 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <map>
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteBatchToSpaceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-                                       const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-                                       const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                                       const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                                       schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+STATUS TfliteBatchToSpaceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                       const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+                                       const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
+                                       schema::CNodeT *op,
+                                       std::vector<int32_t> *tensors_id,
+                                       std::vector<schema::Format> *tensors_format,
+                                       std::map<int, int>  *tensors_id_map) {
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -38,30 +41,32 @@ STATUS TfliteBatchToSpaceParser::Parse(const std::unique_ptr<tflite::OperatorT> 
   }
 
   std::vector<std::string> node_name_str;
-  Split(op->name.data(), &node_name_str, "-");
+  Split(op->name, &node_name_str, "-");
   const char *node_name = node_name_str.data()->c_str();
   if (std::strcmp(node_name, "BatchToSpace") == 0) {
     MS_LOG(DEBUG) << "parse TfliteBatchToSpaceParser";
   } else if (std::strcmp(node_name, "BatchToSpaceND") == 0) {
     MS_LOG(DEBUG) << "parse TfliteBatchToSpaceNDParser";
-    // in tflite
-    // blockShape should be a 1D tensor with dimension [spatial_dims_num]
-    // crops should be a 2D tensor with dimension [spatial_dims_num, 2]
   }
 
   std::unique_ptr<schema::BatchToSpaceT> attr(new schema::BatchToSpaceT());
 
-  if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->blockShape)) {
+  if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->blockShape)) {
     MS_LOG(ERROR) << "get batchToSpace -> blockShape failed";
     return RET_ERROR;
   }
-  if (GetTfliteData(tfliteOp->inputs[2], tfliteTensors, tfliteModelBuffer, attr->crops)) {
+  if (GetTfliteData(tflite_op->inputs[2], tflite_tensors, tflite_model_buffer, attr->crops)) {
     MS_LOG(ERROR) << "get batchToSpace -> crops failed";
     return RET_ERROR;
   }
 
   op->primitive->value.type = schema::PrimitiveType_BatchToSpace;
   op->primitive->value.value = attr.release();
+
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
+             tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
+              tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   return RET_OK;
 }
 

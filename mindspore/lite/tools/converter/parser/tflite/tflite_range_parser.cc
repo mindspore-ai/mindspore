@@ -17,16 +17,19 @@
 #include "tools/converter/parser/tflite/tflite_range_parser.h"
 #include <vector>
 #include <memory>
+#include <map>
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteRangeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-                              const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-                              const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                              const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                              schema::CNodeT *op,
-                              TensorCache *tensor_cache,
-                              bool quantizedModel) {
+STATUS TfliteRangeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+                                const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
+                                schema::CNodeT *op,
+                                std::vector<int32_t> *tensors_id,
+                                std::vector<schema::Format> *tensors_format,
+                                std::map<int, int>  *tensors_id_map) {
+  MS_LOG(DEBUG) << "parse TfliteRangeParser";
+
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -37,13 +40,20 @@ STATUS TfliteRangeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
     return RET_NULL_PTR;
   }
 
-  MS_LOG(DEBUG) << "parse TfliteRangeParser";
   std::unique_ptr<schema::RangeT> attr(new schema::RangeT());
 
   attr->dType = 0;
+//  attr->start
+//  attr->limit
+//  attr->delta
 
   op->primitive->value.type = schema::PrimitiveType_Range;
   op->primitive->value.value = attr.release();
+
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
+             tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
+              tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   return RET_OK;
 }
 

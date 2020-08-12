@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
+#include "tools/converter/parser/tflite/tflite_strided_slice_parser.h"
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_strided_slice_parser.h"
+#include <map>
 
 namespace mindspore {
 namespace lite {
 STATUS TfliteStridedSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                        const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
                                        const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                       const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_opset,
                                        schema::CNodeT *op,
-                                       TensorCache *tensor_cache, bool quantized_model) {
+                                       std::vector<int32_t> *tensors_id,
+                                       std::vector<schema::Format> *tensors_format,
+                                       std::map<int, int>  *tensors_id_map) {
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -43,7 +45,6 @@ STATUS TfliteStridedSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> 
     MS_LOG(ERROR) << "get op: %s attr failed", op->name.c_str();
     return RET_NULL_PTR;
   }
-
   attr->beginMask = tflite_attr->begin_mask;
   attr->endMask = tflite_attr->end_mask;
   attr->ellipsisMask = tflite_attr->ellipsis_mask;
@@ -67,6 +68,11 @@ STATUS TfliteStridedSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> 
 
   op->primitive->value.type = schema::PrimitiveType_StridedSlice;
   op->primitive->value.value = attr.release();
+
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
+             tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
+              tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   return RET_OK;
 }
 

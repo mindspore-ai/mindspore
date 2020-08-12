@@ -26,17 +26,15 @@ class TestTfliteParserResizeNN : public TestTfliteParser {
 };
 
 TEST_F(TestTfliteParserResizeNN, OpType) {
+  ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Resize) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserResizeNN, AttrValue) {
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsResize(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsResize();
-  ASSERT_NE(val, nullptr);
   ASSERT_EQ(val->alignCorners, false);
   ASSERT_EQ(val->newHeight, 3);
   ASSERT_EQ(val->newWidth, 100);
@@ -52,17 +50,15 @@ class TestTfliteParserResizeBilinear : public TestTfliteParser {
 };
 
 TEST_F(TestTfliteParserResizeBilinear, OpType) {
+  ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Resize) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserResizeBilinear, AttrValue) {
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsResize(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsResize();
-  ASSERT_NE(val, nullptr);
   ASSERT_EQ(val->alignCorners, false);
   ASSERT_EQ(val->newHeight, 75);
   ASSERT_EQ(val->newWidth, 4);

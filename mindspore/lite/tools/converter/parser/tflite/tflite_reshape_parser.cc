@@ -14,17 +14,22 @@
  * limitations under the License.
  */
 
+#include "tools/converter/parser/tflite/tflite_reshape_parser.h"
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_reshape_parser.h"
+#include <map>
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-                                  const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-                                  const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                                  const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                                  schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+STATUS TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                  const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+                                  const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
+                                  schema::CNodeT *op,
+                                  std::vector<int32_t> *tensors_id,
+                                  std::vector<schema::Format> *tensors_format,
+                                  std::map<int, int>  *tensors_id_map) {
+  MS_LOG(DEBUG) << "parse TfliteReshapeParser";
+
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -35,23 +40,22 @@ STATUS TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
     return RET_NULL_PTR;
   }
 
-  MS_LOG(DEBUG) << "parse TfliteReshapeParser";
   std::unique_ptr<schema::ReshapeT> attr(new schema::ReshapeT());
 
-  const auto &tfliteAttr = tfliteOp->builtin_options.AsReshapeOptions();
+  const auto &tfliteAttr = tflite_op->builtin_options.AsReshapeOptions();
   if (tfliteAttr == nullptr) {
-    if (tfliteOp->inputs.size() < 2) {
-      MS_LOG(ERROR) << "expected two input tensors, but got: " << tfliteOp->inputs.size();
+    if (tflite_op->inputs.size() < 2) {
+      MS_LOG(ERROR) << "expected two input tensors, but got: " << tflite_op->inputs.size();
       return RET_ERROR;
     }
-    auto shape_tensor_index = tfliteOp->inputs[1];
-    const auto & shape_tensor = tfliteTensors[shape_tensor_index];
+    auto shape_tensor_index = tflite_op->inputs[1];
+    const auto & shape_tensor = tflite_tensors[shape_tensor_index];
     if (shape_tensor == nullptr) {
       MS_LOG(ERROR) << "shape_tensor is null";
       return RET_NULL_PTR;
     }
-    if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->shape)) {
-      MS_LOG(ERROR) << "get reshape->shape error";
+    if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->shape)) {
+      MS_LOG(ERROR) << "get reshape -> shape failed";
       return RET_ERROR;
     }
   } else {
@@ -64,6 +68,13 @@ STATUS TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
 
   op->primitive->value.type = schema::PrimitiveType_Reshape;
   op->primitive->value.value = attr.release();
+
+  for (int i = 0; i < tflite_op->inputs.size(); i++) {
+    AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
+               tflite_op->inputs[i], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  }
+  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
+              tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   return RET_OK;
 }
 

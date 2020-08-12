@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef PREDICT_TFLITE_ARGMIN_PARSER_H
-#define PREDICT_TFLITE_ARGMIN_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_ARGMIN_PARSER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_ARGMIN_PARSER_H
 
 #include <vector>
 #include <memory>
+#include <map>
 #include "tools/converter/parser/tflite/tflite_node_parser.h"
 #include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
 
@@ -28,14 +29,15 @@ class TfliteArgminParser : public TfliteNodeParser {
  public:
   TfliteArgminParser() : TfliteNodeParser("Argmin") {}
 
-  STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-               const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-               const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-               const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet, schema::CNodeT *op,
-               TensorCache *tensor_cache,
-               bool quantizedModel) override;
+  STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+               const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+               const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
+               schema::CNodeT *op,
+               std::vector<int32_t> *tensors_id,
+               std::vector<schema::Format> *tensors_format,
+               std::map<int, int>  *tensors_id_map) override;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // PREDICT_TFLITE_ARGMIN_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_ARGMIN_PARSER_H

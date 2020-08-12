@@ -35,12 +35,9 @@ TEST_F(TestTfliteParserCast, OpType) {
 }
 
 TEST_F(TestTfliteParserCast, AttrValue) {
-  // float32 --> int32
-  ASSERT_NE(meta_graph, nullptr);
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsCast(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsCast()->srcT, 43);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsCast()->dstT, 34);
+  auto val = meta_graph->nodes.front()->primitive->value.AsCast();
+  ASSERT_EQ(val->srcT, 43);
+  ASSERT_EQ(val->dstT, 34);
 }
 }  // namespace mindspore

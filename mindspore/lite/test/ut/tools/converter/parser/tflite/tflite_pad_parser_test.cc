@@ -25,17 +25,15 @@ class TestTfliteParserPad : public TestTfliteParser {
 };
 
 TEST_F(TestTfliteParserPad, OpType) {
+  ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Pad) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserPad, AttrValue) {
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsPad(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsPad();
-
   std::vector<int32_t> paddings = {1, 1, 2, 2, 3, 3, 4, 4};
   ASSERT_EQ(val->paddings, paddings);
 }

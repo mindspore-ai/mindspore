@@ -14,17 +14,22 @@
  * limitations under the License.
  */
 
+#include "tools/converter/parser/tflite/tflite_softmax_parser.h"
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_softmax_parser.h"
+#include <map>
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteSoftmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-                                  const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-                                  const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                                  const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                                  schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+STATUS TfliteSoftmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                  const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+                                  const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
+                                  schema::CNodeT *op,
+                                  std::vector<int32_t> *tensors_id,
+                                  std::vector<schema::Format> *tensors_format,
+                                  std::map<int, int>  *tensors_id_map) {
+  MS_LOG(DEBUG) << "parse TfliteSoftmaxParser";
+
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -35,19 +40,17 @@ STATUS TfliteSoftmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
     return RET_NULL_PTR;
   }
 
-  MS_LOG(DEBUG) << "parse TfliteSoftmaxParser";
   std::unique_ptr<schema::SoftMaxT> attr(new schema::SoftMaxT());
-
-  const auto &tflite_attr = tfliteOp->builtin_options.AsSoftmaxOptions();
-  if (tflite_attr == nullptr) {
-    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
-    return RET_NULL_PTR;
-  }
 
   attr->axis = -1;
 
   op->primitive->value.type = schema::PrimitiveType_SoftMax;
   op->primitive->value.value = attr.release();
+
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
+             tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
+              tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   return RET_OK;
 }
 

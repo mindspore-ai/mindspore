@@ -32,14 +32,12 @@ TEST_F(TestTfliteParserBatchToSpaceNd, OpType) {
 }
 
 TEST_F(TestTfliteParserBatchToSpaceNd, AttrValue) {
-  const std::vector<int> blockShape{2, 2};
-  const std::vector<int> crops{0, 0, 2, 0};
-  ASSERT_NE(meta_graph, nullptr);
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsBatchToSpace(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsBatchToSpace()->blockShape, blockShape);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsBatchToSpace()->crops, crops);
+  auto val = meta_graph->nodes.front()->primitive->value.AsBatchToSpace();
+  const std::vector<int> blockShape = {2, 2};
+  ASSERT_EQ(val->blockShape, blockShape);
+  const std::vector<int> crops = {0, 0, 2, 0};
+  ASSERT_EQ(val->crops, crops);
 }
 
 }  // namespace mindspore

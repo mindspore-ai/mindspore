@@ -26,6 +26,7 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <unordered_map>
 #include "securec/include/securec.h"
 #include "tools/converter/model_parser.h"
 #include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
@@ -38,44 +39,41 @@ class TfliteModelParser : public ModelParser {
  public:
   TfliteModelParser();
 
-  virtual ~TfliteModelParser();
+  ~TfliteModelParser() override;
 
-  MetaGraphT *Parse(const std::string &modelFile, const std::string &weightFile,
+  MetaGraphT *Parse(const std::string &model_file,
+                    const std::string &weight_file,
                     const QuantType &quantType = QuantType_QUANT_NONE) override;
 
  private:
-  std::unique_ptr<tflite::ModelT> ReadTfliteModelFromFlat(const char *buf);
+  std::unique_ptr<tflite::ModelT> ReadTfliteModel(const char *model_path);
 
-  void SetMsTensorFromTflite(const std::unique_ptr<tflite::TensorT> &tflite_tensor, schema::TensorT *tensor);
+  STATUS CopyConstTensorData(const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
+                              const tflite::TensorT *tflite_tensor,
+                              schema::TensorT *tensor);
 
-  void SetInputTensor(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, TensorCache *tensor_cache);
+  void SetTensorQuantParam(const std::unique_ptr<tflite::TensorT> &tflite_tensor,
+                           schema::TensorT *tensor);
 
-  void SetGraphTensorIndex(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                           const std::unique_ptr<tflite::ModelT> &tflite_model,
-                           const mindspore::lite::TensorCache &tensorCache,
-                           schema::MetaGraphT *subGraphDef);
+  STATUS ConvertOp(const std::unique_ptr<tflite::ModelT> &tflite_model,
+                   const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                   const QuantType &quant_type,
+                   schema::MetaGraphT* sub_graph);
 
-  STATUS ParseOp(const std::unique_ptr<tflite::ModelT> &tflite_model,
-                 const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::MetaGraphT *sub_graph,
-                 TensorCache *tensor_cache, const QuantType &quantType);
+  STATUS ConvertTensor(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                       const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
+                       schema::MetaGraphT* sub_graph);
 
-  STATUS ParseTfliteQuantParams(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                const std::unique_ptr<tflite::OperatorT> &tflite_op, schema::CNodeT *op,
-                                TensorCache *tensor_cache);
+  STATUS GetGraphInfo(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      schema::MetaGraphT* sub_graph);
 
-  std::string GetTfliteNodeType(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                const std::unique_ptr<tflite::ModelT> &tflite_model);
+  STATUS UpdateOp(schema::MetaGraphT* sub_graph);
 
-  STATUS SetAllTensors(const TensorCache &tensor_cache, schema::MetaGraphT *sub_graph);
-
-  STATUS SetOpOutputIdx(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                        const std::unique_ptr<tflite::OperatorT> &tflite_op, schema::CNodeT *op,
-                        TensorCache *tensorCache);
-
-  STATUS SetOpInputIdx(const std::unique_ptr<tflite::ModelT> &tflite_model,
-                       const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                       const std::unique_ptr<tflite::OperatorT> &tflite_op, schema::CNodeT *op,
-                       TensorCache *tensor_cache);
+ private:
+  std::vector<int32_t> tensorsId;
+  std::vector<schema::Format> tensorsFormat;
+  std::map<int, int>  tensorsIdMap;
+  std::vector<schema::TensorT *> tensors;
 
   std::map<std::string, schema::CNodeT *> opMap;
   std::map<const tflite::OperatorT *, schema::CNodeT *> tfliteOpMap;

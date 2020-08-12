@@ -35,13 +35,11 @@ TEST_F(TestTfliteParserReverseSequence, OpType) {
 }
 
 TEST_F(TestTfliteParserReverseSequence, AttrValue) {
-  std::vector<int> seq_length{7, 2, 3, 5};
-  ASSERT_NE(meta_graph, nullptr);
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsReverseSequence(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsReverseSequence()->seqAxis, 1);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsReverseSequence()->seqAxis, 1);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsReverseSequence()->seqLengths, seq_length);
+  auto val = meta_graph->nodes.front()->primitive->value.AsReverseSequence();
+  ASSERT_EQ(val->seqAxis, 1);
+  ASSERT_EQ(val->seqAxis, 1);
+  std::vector<int> seq_length = {7, 2, 3, 5};
+  ASSERT_EQ(val->seqLengths, seq_length);
 }
 }  // namespace mindspore

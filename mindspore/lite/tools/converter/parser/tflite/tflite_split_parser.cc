@@ -14,19 +14,23 @@
  * limitations under the License.
  */
 
+#include "tools/converter/parser/tflite/tflite_split_parser.h"
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_split_parser.h"
+#include <map>
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteSplitParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-                                const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-                                const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                                const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
+STATUS TfliteSplitParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+                                const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
                                 schema::CNodeT *op,
-                                TensorCache *tensor_cache,
-                                bool quantizedModel) {
+                                std::vector<int32_t> *tensors_id,
+                                std::vector<schema::Format> *tensors_format,
+                                std::map<int, int>  *tensors_id_map) {
+  MS_LOG(DEBUG) << "parse TfliteSplitParser";
+
+  // set attr
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -37,33 +41,32 @@ STATUS TfliteSplitParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
     return RET_NULL_PTR;
   }
 
-  MS_LOG(INFO) << "parse TfliteSplitParser";
   std::unique_ptr<schema::SplitT> attr(new schema::SplitT());
 
-  const auto &tflite_attr = tfliteOp->builtin_options.AsSplitOptions();
+  const auto &tflite_attr = tflite_op->builtin_options.AsSplitOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name << " attr failed";
     return RET_NULL_PTR;
   }
   auto num_splits = tflite_attr->num_splits;
 
-  const auto &shape_tensor = tfliteTensors[tfliteOp->inputs[1]];
+  const auto &shape_tensor = tflite_tensors[tflite_op->inputs[1]];
   if (shape_tensor == nullptr) {
     MS_LOG(ERROR) << "shape_tensor is null";
     return RET_NULL_PTR;
   }
   const auto tensor_shape = shape_tensor->shape;
-  const auto &axis_tensor = tfliteTensors[tfliteOp->inputs[0]];
+  const auto &axis_tensor = tflite_tensors[tflite_op->inputs[0]];
   if (axis_tensor == nullptr) {
     MS_LOG(ERROR) << "axis_tensor is null";
     return RET_NULL_PTR;
   }
-  auto axis = *(reinterpret_cast<int32_t *>(tfliteModelBuffer[axis_tensor->buffer]->data.data()));
+  auto axis = *(reinterpret_cast<int32_t *>(tflite_model_buffer[axis_tensor->buffer]->data.data()));
   if (axis < 0) {
     axis += tensor_shape.size();
   }
   if (axis >= tensor_shape.size()) {
-    MS_LOG(ERROR) << "axis value too large";
+    MS_LOG(ERROR) << "axis value is too large";
     return RET_ERROR;
   }
   attr->splitDim = axis;
@@ -79,6 +82,13 @@ STATUS TfliteSplitParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
 
   op->primitive->value.type = schema::PrimitiveType_Split;
   op->primitive->value.value = attr.release();
+
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
+             tflite_op->inputs[1], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  for (int i = 0; i < tflite_op->outputs.size(); i++) {
+    AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
+                tflite_op->outputs[i], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  }
   return RET_OK;
 }
 

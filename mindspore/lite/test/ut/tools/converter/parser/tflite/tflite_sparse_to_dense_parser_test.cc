@@ -35,16 +35,14 @@ TEST_F(TestTfliteParserSparseToDense, OpType) {
 }
 
 TEST_F(TestTfliteParserSparseToDense, AttrValue) {
-  std::vector<int> outputShape{5, 5};
-  std::vector<int> sparseValue{1};
-  std::vector<int> defaultValue{0};
-  ASSERT_NE(meta_graph, nullptr);
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsSparseToDense(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsSparseToDense()->outputShape, outputShape);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsSparseToDense()->sparseValue, sparseValue);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsSparseToDense()->defaultValue, defaultValue);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsSparseToDense()->validateIndices, false);
+  auto val = meta_graph->nodes.front()->primitive->value.AsSparseToDense();
+  std::vector<int> outputShape = {5, 5};
+  ASSERT_EQ(val->outputShape, outputShape);
+  std::vector<int> sparseValue = {1};
+  ASSERT_EQ(val->sparseValue, sparseValue);
+  std::vector<int> defaultValue = {0};
+  ASSERT_EQ(val->defaultValue, defaultValue);
+  ASSERT_EQ(val->validateIndices, false);
 }
 }  // namespace mindspore

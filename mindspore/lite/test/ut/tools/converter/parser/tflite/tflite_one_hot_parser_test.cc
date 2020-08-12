@@ -32,12 +32,9 @@ TEST_F(TestTfliteParserOneHot, OpType) {
 }
 
 TEST_F(TestTfliteParserOneHot, AttrValue) {
-  ASSERT_NE(meta_graph, nullptr);
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsOneHot(), nullptr);
-  // in OneHot parser axis = axis > 0 ? axis : axis + tensor_shape.size()
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsOneHot()->axis, 2);
+  auto val = meta_graph->nodes.front()->primitive->value.AsOneHot();
+  ASSERT_EQ(val->axis, 2);
 }
 
 }  // namespace mindspore

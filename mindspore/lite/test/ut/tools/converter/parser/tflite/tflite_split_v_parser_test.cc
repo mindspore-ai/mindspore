@@ -33,14 +33,12 @@ TEST_F(TestTfliteParserSplitV, OpType) {
 }
 
 TEST_F(TestTfliteParserSplitV, AttrValue) {
-  ASSERT_NE(meta_graph, nullptr);
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsSplit(), nullptr);
-  const std::vector<int> sizeSplits{1, 3};
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsSplit()->splitDim, 0);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsSplit()->numberSplit, 2);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsSplit()->sizeSplits, sizeSplits);
+  auto val = meta_graph->nodes.front()->primitive->value.AsSplit();
+  ASSERT_EQ(val->splitDim, 0);
+  ASSERT_EQ(val->numberSplit, 2);
+  const std::vector<int> sizeSplits = {1, 3};
+  ASSERT_EQ(val->sizeSplits, sizeSplits);
 }
 
 }  // namespace mindspore

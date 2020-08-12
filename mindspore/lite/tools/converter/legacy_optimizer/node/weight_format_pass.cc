@@ -353,7 +353,7 @@ int WeightFormatPass::NonQuantDataFormatTrans(GraphNode *graphNode) {
       status = TransFilterFormat<float>(weightTensor.get(), kCKHW2KHWC);
     } else if (weightTensor->format == schema::Format_KCHW) {
       status = TransFilterFormat<float>(weightTensor.get(), kKCHW2KHWC);
-    } else if (weightTensor->format == schema::Format_CHWK) {
+    } else if (weightTensor->format == schema::Format_CHWK) {   // from tflite
       status = TransFilterFormat<float>(weightTensor.get(), kCHWK2KHWC);
     } else {
       MS_LOG(ERROR) << "Unsupported weightTensor format: " << weightTensor->format;
@@ -369,7 +369,7 @@ int WeightFormatPass::NonQuantDataFormatTrans(GraphNode *graphNode) {
   } else if (opType == schema::PrimitiveType_DeConv2D) {  // weight should be KHWC
     if (weightTensor->format == schema::Format_KCHW) {    // from caffe or onnx or ms
       status = TransFilterFormat<float>(weightTensor.get(), kKCHW2KHWC);
-    } else if (weightTensor->format == schema::Format_CHWK) {  // from tf
+    } else if (weightTensor->format == schema::Format_CHWK) {   // from tflite
       status = TransFilterFormat<float>(weightTensor.get(), kCHWK2KHWC);
     } else {
       MS_LOG(ERROR) << "Unsupported weightTensor format: " << weightTensor->format;

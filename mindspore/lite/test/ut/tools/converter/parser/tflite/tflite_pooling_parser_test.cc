@@ -35,12 +35,8 @@ TEST_F(TestTfliteParserMaxPooling, OpType) {
 }
 
 TEST_F(TestTfliteParserMaxPooling, AttrValue) {
-  ASSERT_NE(meta_graph, nullptr);
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsPooling(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsPooling();
-  ASSERT_NE(val, nullptr);
   ASSERT_EQ(val->format, schema::Format_NHWC);
   ASSERT_EQ(val->poolingMode, schema::PoolMode_MAX_POOLING);
   ASSERT_EQ(val->global, false);
@@ -72,12 +68,8 @@ TEST_F(TestTfliteParserAvgPooling, OpType) {
 }
 
 TEST_F(TestTfliteParserAvgPooling, AttrValue) {
-  ASSERT_NE(meta_graph, nullptr);
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsPooling(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsPooling();
-  ASSERT_NE(val, nullptr);
   ASSERT_EQ(val->format, schema::Format_NHWC);
   ASSERT_EQ(val->poolingMode, schema::PoolMode_MEAN_POOLING);
   ASSERT_EQ(val->global, false);

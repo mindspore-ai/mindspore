@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
+#include "tools/converter/parser/tflite/tflite_pooling_parser.h"
 #include <vector>
 #include <memory>
 #include <string>
-#include "tools/converter/parser/tflite/tflite_pooling_parser.h"
+#include <map>
 
 namespace mindspore {
 namespace lite {
 STATUS TflitePoolingParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                  const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-                                  const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                                  const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                                  schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+                                  const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+                                  const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
+                                  schema::CNodeT *op,
+                                  std::vector<int32_t> *tensors_id,
+                                  std::vector<schema::Format> *tensors_format,
+                                  std::map<int, int>  *tensors_id_map) {
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -39,7 +42,7 @@ STATUS TflitePoolingParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
   std::unique_ptr<schema::PoolingT> attr(new schema::PoolingT());
 
   std::vector<std::string> node_name_str;
-  Split(op->name.data(), &node_name_str, "-");
+  Split(op->name, &node_name_str, "-");
   const char *node_name = node_name_str.data()->c_str();
   if (std::strcmp(node_name, "MeanPooling") == 0) {
     MS_LOG(DEBUG) << "parser TfliteMeanPoolingParser";
@@ -47,9 +50,6 @@ STATUS TflitePoolingParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
   } else if (std::strcmp(node_name, "MaxPooling") == 0) {
     MS_LOG(DEBUG) << "parse TfliteMaxPoolingParser";
     attr->poolingMode = schema::PoolMode_MAX_POOLING;
-  } else {
-    MS_LOG(ERROR) << "wrong pooling type";
-    return RET_ERROR;
   }
 
   const auto &tflite_attr = tflite_op->builtin_options.AsPool2DOptions();
@@ -64,41 +64,31 @@ STATUS TflitePoolingParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
   attr->padMode = GetPadMode(tflite_attr->padding);
   attr->format = schema::Format_NHWC;
 
-  // by default
   attr->global = false;
   attr->roundMode = schema::RoundMode_FLOOR;
 
   // calculate pad params
-  if (attr->padMode == schema::PadMode_VALID || attr->padMode == schema::PadMode_NOTSET) {
-    attr->padUp = 0;
-    attr->padDown = 0;
-    attr->padLeft = 0;
-    attr->padRight = 0;
-  } else if (attr->padMode == schema::PadMode_SAME) {
-    auto data_index = tflite_op->inputs[0];
-    const auto &data_tensor = tfliteTensors[data_index];
-    if (data_tensor == nullptr) {
-      MS_LOG(ERROR) << "the first input is null";
-      return RET_NULL_PTR;
-    }
-
-    auto shape = data_tensor->shape;
-    int H_input = shape.at(1);
-    int W_input = shape.at(2);
-
-    int H_output = ceil(H_input / attr->strideH);
-    int pad_needed_H = (H_output - 1) * attr->strideH + attr->windowH - H_input;
-    attr->padUp = floor(pad_needed_H / 2.0);
-    attr->padDown = pad_needed_H - attr->padUp;
-
-    int W_output = ceil(W_input / attr->strideW);
-    int pad_needed_W = (W_output - 1) * attr->strideW + attr->windowW - W_input;
-    attr->padLeft = floor(pad_needed_W / 2.0);
-    attr->padRight = pad_needed_W - attr->padLeft;
+  auto data_index = tflite_op->inputs[0];
+  const auto &data_tensor = tflite_tensors[data_index];
+  std::vector<int> params;
+  if (getPaddingParam(data_tensor, attr->padMode, attr->strideH,
+                      attr->strideW, attr->windowH, attr->windowW, &params) != RET_OK) {
+    MS_LOG(ERROR) << "get padding params failed";
+    return RET_ERROR;
+  } else {
+    attr->padUp = params.at(0);
+    attr->padDown = params.at(1);
+    attr->padLeft = params.at(2);
+    attr->padRight = params.at(3);
   }
 
   op->primitive->value.type = schema::PrimitiveType_Pooling;
   op->primitive->value.value = attr.release();
+
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
+             tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
+              tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   return RET_OK;
 }
 

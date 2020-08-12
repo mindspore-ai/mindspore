@@ -17,15 +17,20 @@
 #include "tools/converter/parser/tflite/tflite_slice_parser.h"
 #include <vector>
 #include <memory>
+#include <map>
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-                                  const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-                                  const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                                  const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                                  schema::CNodeT *op,
-                                  TensorCache *tensor_cache, bool quantizedModel) {
+STATUS TfliteSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+                                const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
+                                schema::CNodeT *op,
+                                std::vector<int32_t> *tensors_id,
+                                std::vector<schema::Format> *tensors_format,
+                                std::map<int, int>  *tensors_id_map) {
+  MS_LOG(DEBUG) << "parse TfliteSliceParser";
+
+  // set attr
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -36,20 +41,26 @@ STATUS TfliteSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
     return RET_NULL_PTR;
   }
 
-  MS_LOG(DEBUG) << "parse TfliteSliceParser";
   std::unique_ptr<schema::SliceT> attr(new schema::SliceT());
 
-  if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->begin)) {
+  attr->format = schema::Format_NHWC;
+
+  if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->begin)) {
     MS_LOG(ERROR) << "get slice -> begin failed";
     return RET_ERROR;
   }
-  if (GetTfliteData(tfliteOp->inputs[2], tfliteTensors, tfliteModelBuffer, attr->size)) {
+  if (GetTfliteData(tflite_op->inputs[2], tflite_tensors, tflite_model_buffer, attr->size)) {
     MS_LOG(ERROR) << "get slice -> size failed";
     return RET_ERROR;
   }
 
   op->primitive->value.type = schema::PrimitiveType_Slice;
   op->primitive->value.value = attr.release();
+
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
+             tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
+              tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   return RET_OK;
 }
 

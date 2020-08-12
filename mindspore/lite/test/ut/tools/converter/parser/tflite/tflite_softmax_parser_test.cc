@@ -35,11 +35,9 @@ TEST_F(TestTfliteParserSoftmax, OpType) {
 }
 
 TEST_F(TestTfliteParserSoftmax, AttrValue) {
-ASSERT_NE(meta_graph, nullptr);
-ASSERT_GT(meta_graph->nodes.size(), 0);
-ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsSoftMax(), nullptr);
-ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsSoftMax()->axis, -1);
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsSoftMax(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsSoftMax();
+  ASSERT_EQ(val->axis, -1);
 }
 
 }  // namespace mindspore
