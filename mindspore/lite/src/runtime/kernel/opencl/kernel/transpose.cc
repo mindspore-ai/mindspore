@@ -110,6 +110,10 @@ kernel::LiteKernel *OpenCLTransposeKernelCreator(const std::vector<lite::tensor:
                                                  OpParameter *opParameter, const lite::Context *ctx,
                                                  const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   auto *kernel = new TransposeOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "kernel " << opParameter->name_ << "is nullptr.";
+    return nullptr;
+  }
   auto ret = kernel->Init();
   if (0 != ret) {
     delete kernel;
