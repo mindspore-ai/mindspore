@@ -31,8 +31,7 @@ class PreluBaseCPUKernel : public LiteKernel {
                      const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                      const lite::Primitive *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx) {
-    opParameter->thread_num_ = ctx->thread_num_;
-    prelu_param_ = reinterpret_cast<PreluParameter *>(opParameter);
+    prelu_param_ = reinterpret_cast<PreluParameter *>(op_parameter_);
   }
 
   ~PreluBaseCPUKernel() = default;
