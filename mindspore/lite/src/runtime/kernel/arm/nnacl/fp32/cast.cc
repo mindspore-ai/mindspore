@@ -40,6 +40,12 @@ void Int32ToFloat32(const int32_t *input, float *output, int number) {
   }
 }
 
+void Float32ToInt32(const float *input, int32_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (int32_t)input[i];
+  }
+}
+
 #ifdef ENABLE_FP16
 void Float32ToFloat16(const float *input, float16_t *output, int number) {
   for (int i = 0; i < number; ++i) {

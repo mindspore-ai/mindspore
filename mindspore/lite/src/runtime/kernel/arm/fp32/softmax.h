@@ -27,7 +27,7 @@ class SoftmaxCPUKernel : public SoftmaxBaseCPUKernel {
   SoftmaxCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                    const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                    const lite::Primitive *primitive)
-      : SoftmaxBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : SoftmaxBaseCPUKernel(parameter, inputs, outputs, ctx, primitive), sum_data_(nullptr) {}
   ~SoftmaxCPUKernel() override {
     if (sum_data_ != nullptr) {
       free(sum_data_);
