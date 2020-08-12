@@ -85,7 +85,9 @@ class Tensor(Tensor_):
             return False
         #  bool type is not supported for `Equal` operator in backend.
         if self.dtype == mstype.bool_ or (isinstance(other, Tensor) and other.dtype == mstype.bool_):
-            return Tensor(np.array(self.asnumpy() == other.asnumpy()))
+            if isinstance(other, Tensor):
+                return Tensor(np.array(self.asnumpy() == other.asnumpy()))
+            return Tensor(np.array(self.asnumpy() == other))
         return tensor_operator_registry.get('__eq__')(self, other)
 
     def __ne__(self, other):
