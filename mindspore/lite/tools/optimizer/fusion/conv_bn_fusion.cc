@@ -32,7 +32,6 @@ constexpr size_t kTFBNBiasIndex = 3;
 constexpr size_t kTFBNMeanIndex = 4;
 constexpr size_t kTFBNVarIndex = 5;
 constexpr const float EPS = 1e-8;
-constexpr const float EPS_DEFAULT_FLOAT = 1e-5;
 constexpr const float POW_NUM = 0.5;
 bool IsBatchNode(const BaseRef &n) {
   if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
@@ -133,7 +132,7 @@ const void ConvBatchNormFusion::InitTransParam(const CNodePtr &bn_node, int kern
   CheckIfNodeIsParam(bn_mean_node);
   CheckIfNodeIsParam(bn_variance_node);
   if (eps < EPS) {
-    eps = EPS_DEFAULT_FLOAT;
+    eps = EPS;
   }
 
   CalTransale(bn_scale_node, bn_variance_node, trans_scale, eps, kernel_num);

@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
+#include <cmath>
 #include <memory>
 #include "mindspore/lite/tools/converter/parser/caffe/caffe_eltwise_parser.h"
+#include "utils/log_adapter.h"
 
 const int ELTWISE_MIN_INPUT_SIZE = 2;
+const float ELTWISE_SUM_COEFF_EPSILON = 1e-5;
 
 namespace mindspore {
 namespace lite {
@@ -25,21 +28,27 @@ STATUS CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto, const caffe
                                  schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   std::unique_ptr<schema::EltwiseT> attr(new schema::EltwiseT());
   if (proto.bottom_size() < ELTWISE_MIN_INPUT_SIZE) {
-    // MS_LOGE("Eltwise Op '%s' need at least 2 inputs,but input size is %d",  proto.name().c_str(),
-    // proto.bottom_size());
+    MS_LOG(ERROR) << "Eltwise Op " << proto.name() << " need at least 2 inputs,but input size is "
+                  << proto.bottom_size();
     return RET_ERROR;
   }
 
   const caffe::EltwiseParameter eltwiseParam = proto.eltwise_param();
 
   if (eltwiseParam.coeff_size() != 0 && eltwiseParam.coeff_size() != proto.bottom_size()) {
-    // MS_LOGE("Coeff size(%d) check fail, Eltwise Layer takes one coefficient per bottom blob.",
-    //        eltwiseParam.coeff_size());
+    MS_LOG(ERROR) << "Coeff size(" << eltwiseParam.coeff_size()
+                  << ") check fail, Eltwise Layer takes one coefficient per bottom blob.";
     return RET_PARAM_INVALID;
   }
 
   if (eltwiseParam.operation() == caffe::EltwiseParameter::PROD && eltwiseParam.coeff_size() != 0) {
-    // MS_LOGE("Eltwise layer only takes coefficients for summation.");
+    MS_LOG(ERROR) << "Eltwise layer only takes coefficients for summation.";
+    return RET_ERROR;
+  }
+
+  if (eltwiseParam.coeff_size() != 0 && (fabs(eltwiseParam.coeff(0) - 1) > ELTWISE_SUM_COEFF_EPSILON ||
+                                         fabs(eltwiseParam.coeff(1) - 1) > ELTWISE_SUM_COEFF_EPSILON)) {
+    MS_LOG(ERROR) << "Eltwise only support coefficient 1 for summation now.";
     return RET_ERROR;
   }
 
@@ -55,7 +64,7 @@ STATUS CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto, const caffe
         attr->mode = schema::EltwiseMode_MAXIMUM;
         break;
       default:
-        // MS_LOGE("Eltwise parse params fail, unsupported opration %d.", eltwiseParam.operation());
+        MS_LOG(ERROR) << "Eltwise parse params fail, unsupported opration: " << eltwiseParam.operation();
         return RET_PARAM_INVALID;
     }
   } else {
