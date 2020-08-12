@@ -13,42 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <fstream>
-#include <iostream>
-#include <memory>
-#include <vector>
-#include <string>
-
-#include "utils/log_adapter.h"
-#include "utils/ms_utils.h"
 #include "common/common.h"
-#include "gtest/gtest.h"
-#include "securec.h"
 #include "minddata/dataset/include/datasets.h"
-#include "minddata/dataset/include/status.h"
-#include "minddata/dataset/include/transforms.h"
-#include "minddata/dataset/include/iterator.h"
-#include "minddata/dataset/core/constants.h"
-#include "minddata/dataset/core/tensor_shape.h"
-#include "minddata/dataset/core/tensor.h"
-#include "minddata/dataset/include/samplers.h"
 
 using namespace mindspore::dataset::api;
-using mindspore::MsLogLevel::ERROR;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::LogStream;
 using mindspore::dataset::Tensor;
 using mindspore::dataset::TensorShape;
-using mindspore::dataset::TensorImpl;
-using mindspore::dataset::DataType;
-using mindspore::dataset::Status;
-using mindspore::dataset::BorderType;
-using mindspore::dataset::dsize_t;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+TEST_F(MindDataTestPipeline, TestIteratorEmptyColumn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorEmptyColumn.";
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, RandomSampler(false, 5));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Rename operation on ds
+  ds = ds->Rename({"image", "label"}, {"col1", "col2"});
+  EXPECT_NE(ds, nullptr);
+
+  // No columns are specified, use all columns
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::vector<std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+  TensorShape expect0({32, 32, 3});
+  TensorShape expect1({});
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    MS_LOG(INFO) << "row[0]:" << row[0]->shape() << ", row[1]:" << row[1]->shape();
+    EXPECT_EQ(expect0, row[0]->shape());
+    EXPECT_EQ(expect1, row[1]->shape());
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 5);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
 
 TEST_F(MindDataTestPipeline, TestIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorOneColumn.";
@@ -79,6 +89,46 @@ TEST_F(MindDataTestPipeline, TestIteratorOneColumn) {
       MS_LOG(INFO) << "image shape:" << v->shape();
       EXPECT_EQ(expect, v->shape());
     }
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 2);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestIteratorReOrder) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorReOrder.";
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, SequentialSampler(false, 4));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Take operation on ds
+  ds = ds->Take(2);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // Reorder "image" and "label" column
+  std::vector<std::string> columns = {"label", "image"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::vector<std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+  TensorShape expect0({32, 32, 3});
+  TensorShape expect1({});
+
+  // Check if we will catch "label" before "image" in row
+  std::vector<std::string> expect = {"label", "image"};
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    MS_LOG(INFO) << "row[0]:" << row[0]->shape() << ", row[1]:" << row[1]->shape();
+    EXPECT_EQ(expect1, row[0]->shape());
+    EXPECT_EQ(expect0, row[1]->shape());
     iter->GetNextRow(&row);
     i++;
   }
@@ -128,82 +178,6 @@ TEST_F(MindDataTestPipeline, TestIteratorTwoColumns) {
   }
 
   EXPECT_EQ(i, 8);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-}
-
-TEST_F(MindDataTestPipeline, TestIteratorEmptyColumn) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorEmptyColumn.";
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, RandomSampler(false, 5));
-  EXPECT_NE(ds, nullptr);
-
-  // Create a Rename operation on ds
-  ds = ds->Rename({"image", "label"}, {"col1", "col2"});
-  EXPECT_NE(ds, nullptr);
-
-  // No columns are specified, use all columns
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::vector<std::shared_ptr<Tensor>> row;
-  iter->GetNextRow(&row);
-  TensorShape expect0({32, 32, 3});
-  TensorShape expect1({});
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    MS_LOG(INFO) << "row[0]:" << row[0]->shape() << ", row[1]:" << row[1]->shape();
-    EXPECT_EQ(expect0, row[0]->shape());
-    EXPECT_EQ(expect1, row[1]->shape());
-    iter->GetNextRow(&row);
-    i++;
-  }
-
-  EXPECT_EQ(i, 5);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-}
-
-TEST_F(MindDataTestPipeline, TestIteratorReOrder) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorReOrder.";
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, SequentialSampler(false, 4));
-  EXPECT_NE(ds, nullptr);
-
-  // Create a Take operation on ds
-  ds = ds->Take(2);
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // Reorder "image" and "label" column
-  std::vector<std::string> columns = {"label", "image"};
-  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::vector<std::shared_ptr<Tensor>> row;
-  iter->GetNextRow(&row);
-  TensorShape expect0({32, 32, 3});
-  TensorShape expect1({});
-
-  // Check if we will catch "label" before "image" in row
-  std::vector<std::string> expect = {"label", "image"};
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    MS_LOG(INFO) << "row[0]:" << row[0]->shape() << ", row[1]:" << row[1]->shape();
-    EXPECT_EQ(expect1, row[0]->shape());
-    EXPECT_EQ(expect0, row[1]->shape());
-    iter->GetNextRow(&row);
-    i++;
-  }
-
-  EXPECT_EQ(i, 2);
 
   // Manually terminate the pipeline
   iter->Stop();

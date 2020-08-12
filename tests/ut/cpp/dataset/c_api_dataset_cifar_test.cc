@@ -13,37 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <fstream>
-#include <iostream>
-#include <memory>
-#include <vector>
-#include <string>
-
-#include "utils/log_adapter.h"
-#include "utils/ms_utils.h"
 #include "common/common.h"
-#include "gtest/gtest.h"
-#include "securec.h"
 #include "minddata/dataset/include/datasets.h"
-#include "minddata/dataset/include/status.h"
-#include "minddata/dataset/include/transforms.h"
-#include "minddata/dataset/include/iterator.h"
-#include "minddata/dataset/core/constants.h"
-#include "minddata/dataset/core/tensor_shape.h"
-#include "minddata/dataset/core/tensor.h"
-#include "minddata/dataset/include/samplers.h"
 
 using namespace mindspore::dataset::api;
-using mindspore::MsLogLevel::ERROR;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::LogStream;
 using mindspore::dataset::Tensor;
-using mindspore::dataset::TensorShape;
-using mindspore::dataset::TensorImpl;
-using mindspore::dataset::DataType;
-using mindspore::dataset::Status;
-using mindspore::dataset::BorderType;
-using mindspore::dataset::dsize_t;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
@@ -81,14 +55,6 @@ TEST_F(MindDataTestPipeline, TestCifar10Dataset) {
 
   // Manually terminate the pipeline
   iter->Stop();
-}
-
-TEST_F(MindDataTestPipeline, TestCifar10DatasetFail1) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10DatasetFail1.";
-
-  // Create a Cifar10 Dataset
-  std::shared_ptr<Dataset> ds = Cifar10("", RandomSampler(false, 10));
-  EXPECT_EQ(ds, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestCifar100Dataset) {
@@ -131,5 +97,13 @@ TEST_F(MindDataTestPipeline, TestCifar100DatasetFail1) {
 
   // Create a Cifar100 Dataset
   std::shared_ptr<Dataset> ds = Cifar100("", RandomSampler(false, 10));
+  EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestCifar10DatasetFail1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10DatasetFail1.";
+
+  // Create a Cifar10 Dataset
+  std::shared_ptr<Dataset> ds = Cifar10("", RandomSampler(false, 10));
   EXPECT_EQ(ds, nullptr);
 }

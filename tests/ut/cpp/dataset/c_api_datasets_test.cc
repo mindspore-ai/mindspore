@@ -13,57 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <fstream>
-#include <iostream>
-#include <memory>
-#include <vector>
-#include <string>
-
-#include "utils/log_adapter.h"
-#include "utils/ms_utils.h"
 #include "common/common.h"
-#include "gtest/gtest.h"
-#include "securec.h"
 #include "minddata/dataset/include/datasets.h"
-#include "minddata/dataset/include/status.h"
-#include "minddata/dataset/include/transforms.h"
-#include "minddata/dataset/include/iterator.h"
-#include "minddata/dataset/core/constants.h"
-#include "minddata/dataset/core/tensor_shape.h"
-#include "minddata/dataset/core/tensor.h"
-#include "minddata/dataset/include/samplers.h"
 
 using namespace mindspore::dataset::api;
-using mindspore::MsLogLevel::ERROR;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::LogStream;
 using mindspore::dataset::Tensor;
 using mindspore::dataset::TensorShape;
-using mindspore::dataset::TensorImpl;
-using mindspore::dataset::DataType;
-using mindspore::dataset::Status;
-using mindspore::dataset::BorderType;
-using mindspore::dataset::dsize_t;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
-
-TEST_F(MindDataTestPipeline, TestMnistFail1) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMnistFail1.";
-
-  // Create a Mnist Dataset
-  std::shared_ptr<Dataset> ds = Mnist("", RandomSampler(false, 10));
-  EXPECT_EQ(ds, nullptr);
-}
-
-TEST_F(MindDataTestPipeline, TestImageFolderFail1) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderFail1.";
-
-  // Create an ImageFolder Dataset
-  std::shared_ptr<Dataset> ds = ImageFolder("", true, nullptr);
-  EXPECT_EQ(ds, nullptr);
-}
 
 TEST_F(MindDataTestPipeline, TestCelebADataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCelebADataset.";
@@ -157,4 +116,20 @@ TEST_F(MindDataTestPipeline, TestCelebAException) {
   EXPECT_EQ(ds, nullptr);
   std::shared_ptr<Dataset> ds1 = CelebA(folder_path, invalid_dataset_type);
   EXPECT_EQ(ds1, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestImageFolderFail1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderFail1.";
+
+  // Create an ImageFolder Dataset
+  std::shared_ptr<Dataset> ds = ImageFolder("", true, nullptr);
+  EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestMnistFail1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMnistFail1.";
+
+  // Create a Mnist Dataset
+  std::shared_ptr<Dataset> ds = Mnist("", RandomSampler(false, 10));
+  EXPECT_EQ(ds, nullptr);
 }

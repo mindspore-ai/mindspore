@@ -13,33 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <fstream>
-#include <iostream>
-#include <memory>
-#include <vector>
-#include <string>
-
-#include "utils/log_adapter.h"
-#include "utils/ms_utils.h"
 #include "common/common.h"
-#include "gtest/gtest.h"
-#include "securec.h"
 #include "minddata/dataset/include/datasets.h"
-#include "minddata/dataset/include/status.h"
-#include "minddata/dataset/include/transforms.h"
-#include "minddata/dataset/include/iterator.h"
-#include "minddata/dataset/core/constants.h"
-#include "minddata/dataset/core/tensor_shape.h"
-#include "minddata/dataset/core/tensor.h"
-#include "minddata/dataset/include/samplers.h"
 
 using namespace mindspore::dataset::api;
-using mindspore::MsLogLevel::ERROR;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::LogStream;
 using mindspore::dataset::Tensor;
-using mindspore::dataset::Status;
-using mindspore::dataset::BorderType;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
