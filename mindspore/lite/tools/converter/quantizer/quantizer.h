@@ -73,7 +73,7 @@ class FbQuantizer {
   virtual STATUS DoQuantize() = 0;
 
  protected:
-  std::shared_ptr<schema::MetaGraphT> graph = nullptr;
+  schema::MetaGraphT *graph = nullptr;
 };
 }  // namespace mindspore::lite::quant
 
