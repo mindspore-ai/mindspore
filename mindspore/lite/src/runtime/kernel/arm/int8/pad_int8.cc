@@ -111,18 +111,35 @@ int PadInt8CPUKernel::Init() {
   return RET_OK;
 }
 
+int PadInt8CPUKernel::RunImpl(int task_id) {
+  return PadConstant4D(in_data_, out_data_, in_dims_, out_dims_, pad_param_->paddings_, task_id, context_->thread_num_);
+}
+
+int PadInt8Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+  auto resize = reinterpret_cast<PadInt8CPUKernel *>(cdata);
+  auto error_code = resize->RunImpl(task_id);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "Resize Run error task_id[" << task_id << "] error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 int PadInt8CPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  int8_t *in_data = reinterpret_cast<int8_t *>(in_tensors_[0]->Data());
-  int8_t *out_data = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
+  in_data_ = reinterpret_cast<int8_t *>(in_tensors_[0]->Data());
+  out_data_ = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
 
-  memset(out_data, pad_param_->pad_quant_arg_.constant_value_[0], out_tensors_[0]->ElementsNum() * sizeof(int8_t));
-  PadConstant4D(in_data, out_data, in_dims_, out_dims_, pad_param_->paddings_);
+  memset(out_data_, pad_param_->pad_quant_arg_.constant_value_[0], out_tensors_[0]->ElementsNum() * sizeof(int8_t));
+  int error_code = LiteBackendParallelLaunch(PadInt8Impl, this, context_->thread_num_);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "Resize run error, error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
-
 }  // namespace mindspore::kernel

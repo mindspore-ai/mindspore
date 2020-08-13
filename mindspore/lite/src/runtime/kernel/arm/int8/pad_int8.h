@@ -38,6 +38,7 @@ class PadInt8CPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int RunImpl(int task_id);
 
  private:
   int SetQuantParam();
@@ -46,6 +47,8 @@ class PadInt8CPUKernel : public LiteKernel {
 
  private:
   PadParameter *pad_param_;
+  int8_t *in_data_;
+  int8_t *out_data_;
   int in_dims_[DEFAULT_PAD_NDIMS];
   int out_dims_[DEFAULT_PAD_NDIMS];
 };
