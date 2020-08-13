@@ -15,6 +15,7 @@
  */
 
 #include "minddata/dataset/include/de_tensor.h"
+#include "minddata/dataset/include/type_id.h"
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/data_type.h"
 #include "mindspore/core/ir/dtype/type_id.h"
@@ -23,68 +24,6 @@
 
 namespace mindspore {
 namespace tensor {
-dataset::DataType MSTypeToDEType(TypeId data_type) {
-  switch (data_type) {
-    case kNumberTypeBool:
-      return dataset::DataType(dataset::DataType::DE_BOOL);
-    case kNumberTypeInt8:
-      return dataset::DataType(dataset::DataType::DE_INT8);
-    case kNumberTypeUInt8:
-      return dataset::DataType(dataset::DataType::DE_UINT8);
-    case kNumberTypeInt16:
-      return dataset::DataType(dataset::DataType::DE_INT16);
-    case kNumberTypeUInt16:
-      return dataset::DataType(dataset::DataType::DE_UINT16);
-    case kNumberTypeInt32:
-      return dataset::DataType(dataset::DataType::DE_INT32);
-    case kNumberTypeUInt32:
-      return dataset::DataType(dataset::DataType::DE_UINT32);
-    case kNumberTypeInt64:
-      return dataset::DataType(dataset::DataType::DE_INT64);
-    case kNumberTypeUInt64:
-      return dataset::DataType(dataset::DataType::DE_UINT64);
-    case kNumberTypeFloat16:
-      return dataset::DataType(dataset::DataType::DE_FLOAT16);
-    case kNumberTypeFloat32:
-      return dataset::DataType(dataset::DataType::DE_FLOAT32);
-    case kNumberTypeFloat64:
-      return dataset::DataType(dataset::DataType::DE_FLOAT64);
-    default:
-      return dataset::DataType(dataset::DataType::DE_UNKNOWN);
-  }
-}
-
-TypeId DETypeToMSType(dataset::DataType data_type) {
-  switch (data_type.value()) {
-    case dataset::DataType::DE_BOOL:
-      return mindspore::TypeId::kNumberTypeBool;
-    case dataset::DataType::DE_INT8:
-      return mindspore::TypeId::kNumberTypeInt8;
-    case dataset::DataType::DE_UINT8:
-      return mindspore::TypeId::kNumberTypeUInt8;
-    case dataset::DataType::DE_INT16:
-      return mindspore::TypeId::kNumberTypeInt16;
-    case dataset::DataType::DE_UINT16:
-      return mindspore::TypeId::kNumberTypeUInt16;
-    case dataset::DataType::DE_INT32:
-      return mindspore::TypeId::kNumberTypeInt32;
-    case dataset::DataType::DE_UINT32:
-      return mindspore::TypeId::kNumberTypeUInt32;
-    case dataset::DataType::DE_INT64:
-      return mindspore::TypeId::kNumberTypeInt64;
-    case dataset::DataType::DE_UINT64:
-      return mindspore::TypeId::kNumberTypeUInt64;
-    case dataset::DataType::DE_FLOAT16:
-      return mindspore::TypeId::kNumberTypeFloat16;
-    case dataset::DataType::DE_FLOAT32:
-      return mindspore::TypeId::kNumberTypeFloat32;
-    case dataset::DataType::DE_FLOAT64:
-      return mindspore::TypeId::kNumberTypeFloat64;
-    default:
-      return kTypeUnknown;
-  }
-}
-
 MSTensor *DETensor::CreateTensor(TypeId data_type, const std::vector<int> &shape) {
   return new DETensor(data_type, shape);
 }
@@ -100,7 +39,7 @@ DETensor::DETensor(TypeId data_type, const std::vector<int> &shape) {
   t_shape.reserve(shape.size());
   std::transform(shape.begin(), shape.end(), std::back_inserter(t_shape),
                  [](int s) -> dataset::dsize_t { return static_cast<dataset::dsize_t>(s); });
-  dataset::Tensor::CreateEmpty(dataset::TensorShape(t_shape), MSTypeToDEType(data_type), &this->tensor_impl_);
+  dataset::Tensor::CreateEmpty(dataset::TensorShape(t_shape), dataset::MSTypeToDEType(data_type), &this->tensor_impl_);
 }
 
 DETensor::DETensor(std::shared_ptr<dataset::Tensor> tensor_ptr) { this->tensor_impl_ = std::move(tensor_ptr); }
@@ -120,14 +59,14 @@ std::shared_ptr<dataset::Tensor> DETensor::tensor() const {
 
 TypeId DETensor::data_type() const {
   MS_ASSERT(this->tensor_impl_ != nullptr);
-  return DETypeToMSType(this->tensor_impl_->type());
+  return dataset::DETypeToMSType(this->tensor_impl_->type());
 }
 
 TypeId DETensor::set_data_type(TypeId data_type) {
   MS_ASSERT(this->tensor_impl_ != nullptr);
   if (data_type != this->data_type()) {
     std::shared_ptr<dataset::Tensor> temp;
-    dataset::Tensor::CreateFromMemory(this->tensor_impl_->shape(), MSTypeToDEType(data_type),
+    dataset::Tensor::CreateFromMemory(this->tensor_impl_->shape(), dataset::MSTypeToDEType(data_type),
                                       this->tensor_impl_->GetBuffer(), &temp);
     this->tensor_impl_ = temp;
   }

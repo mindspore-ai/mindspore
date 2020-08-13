@@ -213,9 +213,8 @@ class RandomDataOp : public ParallelOp {
 
   /**
    * Helper function to produce a default/random schema if one didn't exist
-   @return Status - The error code return
-  */
-  Status GenerateSchema();
+   */
+  void GenerateSchema();
 
   /**
    * Performs a synchronization between workers at the end of an epoch

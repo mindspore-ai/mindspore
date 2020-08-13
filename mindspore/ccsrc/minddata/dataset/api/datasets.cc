@@ -27,6 +27,7 @@
 #include "minddata/dataset/engine/datasetops/source/coco_op.h"
 #include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
 #include "minddata/dataset/engine/datasetops/source/mnist_op.h"
+#include "minddata/dataset/engine/datasetops/source/random_data_op.h"
 #include "minddata/dataset/engine/datasetops/source/text_file_op.h"
 #include "minddata/dataset/engine/datasetops/source/voc_op.h"
 // Dataset operator headers (in alphabetical order)
@@ -98,6 +99,15 @@ Dataset::Dataset() {
   rows_per_buffer_ = cfg->rows_per_buffer();
   connector_que_size_ = cfg->op_connector_size();
   worker_connector_size_ = cfg->worker_connector_size();
+}
+
+/// \brief Function to create a SchemaObj
+/// \param[in] schema_file Path of schema file
+/// \return Shared pointer to the current schema
+std::shared_ptr<SchemaObj> Schema(const std::string &schema_file) {
+  auto schema = std::make_shared<SchemaObj>(schema_file);
+
+  return schema->init() ? schema : nullptr;
 }
 
 // FUNCTIONS TO CREATE DATASETS FOR LEAF-NODE DATASETS
@@ -351,6 +361,163 @@ std::shared_ptr<ZipDataset> Dataset::Zip(const std::vector<std::shared_ptr<Datas
   ds->children.push_back(shared_from_this());
 
   return ds->ValidateParams() ? ds : nullptr;
+}
+
+SchemaObj::SchemaObj(const std::string &schema_file) : schema_file_(schema_file), num_rows_(0), dataset_type_("") {}
+
+// SchemaObj init function
+bool SchemaObj::init() {
+  if (schema_file_ != "") {
+    Path schema_file(schema_file_);
+    if (!schema_file.Exists()) {
+      MS_LOG(ERROR) << "The file " << schema_file << " does not exist or permission denied!";
+      return false;
+    }
+
+    nlohmann::json js;
+    try {
+      std::ifstream in(schema_file_);
+      in >> js;
+    } catch (const std::exception &err) {
+      MS_LOG(ERROR) << "Schema file failed to load";
+      return false;
+    }
+    return from_json(js);
+  }
+  return true;
+}
+
+// Function to add a column to schema with a mstype de_type
+bool SchemaObj::add_column(std::string name, TypeId de_type, std::vector<int32_t> shape) {
+  nlohmann::json new_column;
+  new_column["name"] = name;
+  // if de_type is mstype
+  DataType data_type = dataset::MSTypeToDEType(de_type);
+  new_column["type"] = data_type.ToString();
+  if (shape.size() > 0) {
+    new_column["shape"] = shape;
+    new_column["rank"] = shape.size();
+  } else {
+    new_column["rank"] = 1;
+  }
+  columns_.push_back(new_column);
+  return true;
+}
+
+// Function to add a column to schema with a string de_type
+bool SchemaObj::add_column(std::string name, std::string de_type, std::vector<int32_t> shape) {
+  nlohmann::json new_column;
+  new_column["name"] = name;
+  DataType data_type(de_type);
+  new_column["type"] = data_type.ToString();
+  if (shape.size() > 0) {
+    new_column["shape"] = shape;
+    new_column["rank"] = shape.size();
+  } else {
+    new_column["rank"] = 1;
+  }
+  columns_.push_back(new_column);
+  return true;
+}
+
+std::string SchemaObj::to_json() {
+  nlohmann::json json_file;
+  json_file["columns"] = columns_;
+  if (dataset_type_ != "") {
+    json_file["datasetType"] = dataset_type_;
+  }
+
+  if (num_rows_ > 0) {
+    json_file["numRows"] = num_rows_;
+  }
+
+  return json_file.dump(2);
+}
+
+bool SchemaObj::parse_column(nlohmann::json columns) {
+  std::string name, de_type;
+  std::vector<int32_t> shape;
+
+  columns_.clear();
+  if (columns.type() == nlohmann::json::value_t::array) {
+    // reference to python list
+    for (auto column : columns) {
+      auto key_name = column.find("name");
+      if (key_name == column.end()) {
+        MS_LOG(ERROR) << "Column's name is missing";
+        return false;
+      }
+      name = *key_name;
+
+      auto key_type = column.find("type");
+      if (key_type == column.end()) {
+        MS_LOG(ERROR) << "Column's type is missing";
+        return false;
+      }
+      de_type = *key_type;
+
+      shape.clear();
+      auto key_shape = column.find("shape");
+      if (key_shape != column.end()) {
+        shape.insert(shape.end(), (*key_shape).begin(), (*key_shape).end());
+      }
+      if (!add_column(name, de_type, shape)) {
+        return false;
+      }
+    }
+  } else if (columns.type() == nlohmann::json::value_t::object) {
+    for (const auto &it_child : columns.items()) {
+      name = it_child.key();
+      auto key_type = it_child.value().find("type");
+      if (key_type == it_child.value().end()) {
+        MS_LOG(ERROR) << "Column's type is missing";
+        return false;
+      }
+      de_type = *key_type;
+
+      shape.clear();
+      auto key_shape = it_child.value().find("shape");
+      if (key_shape != it_child.value().end()) {
+        shape.insert(shape.end(), (*key_shape).begin(), (*key_shape).end());
+      }
+
+      if (!add_column(name, de_type, shape)) {
+        return false;
+      }
+    }
+  } else {
+    MS_LOG(ERROR) << "columns must be dict or list, columns contain name, type, shape(optional).";
+    return false;
+  }
+  return true;
+}
+
+bool SchemaObj::from_json(nlohmann::json json_obj) {
+  for (const auto &it_child : json_obj.items()) {
+    if (it_child.key() == "datasetType") {
+      dataset_type_ = it_child.value();
+    } else if (it_child.key() == "numRows") {
+      num_rows_ = it_child.value();
+    } else if (it_child.key() == "columns") {
+      if (!parse_column(it_child.value())) {
+        MS_LOG(ERROR) << "parse columns failed";
+        return false;
+      }
+    } else {
+      MS_LOG(ERROR) << "Unknown field " << it_child.key();
+      return false;
+    }
+  }
+  if (columns_.empty()) {
+    MS_LOG(ERROR) << "Columns are missing.";
+    return false;
+  }
+  if (num_rows_ <= 0) {
+    MS_LOG(ERROR) << "numRows must be greater than 0";
+    return false;
+  }
+
+  return true;
 }
 
 // OTHER FUNCTIONS
@@ -861,6 +1028,67 @@ std::vector<std::shared_ptr<DatasetOp>> MnistDataset::Build() {
 
   node_ops.push_back(std::make_shared<MnistOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_,
                                                std::move(schema), std::move(sampler_->Build())));
+  return node_ops;
+}
+
+// ValideParams for RandomDataset
+bool RandomDataset::ValidateParams() {
+  if (total_rows_ < 0) {
+    MS_LOG(ERROR) << "RandomDataset: total_rows must be greater than 0, now get " << total_rows_;
+    return false;
+  }
+  return true;
+}
+
+int32_t RandomDataset::GenRandomInt(int32_t min, int32_t max) {
+  std::uniform_int_distribution<int32_t> uniDist(min, max);
+  return uniDist(rand_gen_);
+}
+
+// Build for RandomDataset
+std::vector<std::shared_ptr<DatasetOp>> RandomDataset::Build() {
+  // A vector containing shared pointer to the Dataset Ops that this object will create
+  std::vector<std::shared_ptr<DatasetOp>> node_ops;
+
+  rand_gen_.seed(GetSeed());  // seed the random generator
+  // If total rows was not given, then randomly pick a number
+  std::shared_ptr<SchemaObj> schema_obj;
+  if (!schema_path_.empty()) schema_obj = std::make_shared<SchemaObj>(schema_path_);
+
+  if (schema_obj != nullptr && total_rows_ == 0) {
+    total_rows_ = schema_obj->get_num_rows();
+  }
+
+  // If user does not specify Sampler, create a default sampler based on the shuffle variable.
+  if (sampler_ == nullptr) {
+    sampler_ = CreateDefaultSampler();
+  }
+
+  std::string schema_json_string, schema_file_path;
+  if (schema_ != nullptr) {
+    schema_->set_dataset_type("Random");
+    if (total_rows_ != 0) {
+      schema_->set_num_rows(total_rows_);
+    }
+    schema_json_string = schema_->to_json();
+  } else {
+    schema_file_path = schema_path_;
+  }
+
+  std::unique_ptr<DataSchema> data_schema;
+  std::vector<std::string> columns_to_load;
+  if (!schema_file_path.empty() || !schema_json_string.empty()) {
+    data_schema = std::make_unique<DataSchema>();
+    if (!schema_file_path.empty()) {
+      data_schema->LoadSchemaFile(schema_file_path, columns_to_load);
+    } else if (!schema_json_string.empty()) {
+      data_schema->LoadSchemaString(schema_json_string, columns_to_load);
+    }
+  }
+  std::shared_ptr<RandomDataOp> op;
+  op = std::make_shared<RandomDataOp>(num_workers_, connector_que_size_, rows_per_buffer_, total_rows_,
+                                      std::move(data_schema), std::move(sampler_->Build()));
+  node_ops.push_back(op);
   return node_ops;
 }
 

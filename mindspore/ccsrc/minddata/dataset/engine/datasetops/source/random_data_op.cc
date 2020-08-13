@@ -50,13 +50,6 @@ Status RandomDataOp::Builder::Build(std::shared_ptr<RandomDataOp> *out_op) {
     std::make_shared<RandomDataOp>(builder_num_workers_, builder_op_connector_size_, builder_rows_per_buffer_,
                                    builder_total_rows_, std::move(builder_data_schema_), std::move(builder_sampler_));
 
-  // If the user did not provide a schema, then we will ask the op to generate a pseudo-random
-  // schema.
-  // See details of generateSchema function to learn what type of schema it will create.
-  if ((*out_op)->data_schema_ == nullptr) {
-    RETURN_IF_NOT_OK((*out_op)->GenerateSchema());
-  }
-
   return Status::OK();
 }
 
@@ -85,6 +78,12 @@ RandomDataOp::RandomDataOp(int32_t num_workers, int32_t op_connector_size, int64
   if (total_rows_ == 0) {
     total_rows_ = GenRandomInt(1, kMaxTotalRows);
   }
+  // If the user did not provide a schema, then we will ask the op to generate a pseudo-random
+  // schema.
+  // See details of generateSchema function to learn what type of schema it will create.
+  if (data_schema_ == nullptr) {
+    GenerateSchema();
+  }
   // Everyone is already out from the sync area.
   all_out_.Set();
 }
@@ -106,11 +105,7 @@ void RandomDataOp::Print(std::ostream &out, bool show_all) const {
 }
 
 // Helper function to produce a default/random schema if one didn't exist
-Status RandomDataOp::GenerateSchema() {
-  if (data_schema_ != nullptr) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Generating a schema but one already exists!");
-  }
-
+void RandomDataOp::GenerateSchema() {
   // To randomly create a schema, we need to choose:
   // a) how many columns
   // b) the type of each column
@@ -144,8 +139,6 @@ Status RandomDataOp::GenerateSchema() {
 
     data_schema_->AddColumn(*newCol);
   }
-
-  return Status::OK();
 }
 
 // Class functor operator () override.
