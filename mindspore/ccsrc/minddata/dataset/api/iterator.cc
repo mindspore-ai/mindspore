@@ -25,7 +25,7 @@ namespace api {
 void Iterator::GetNextRow(TensorMap *row) {
   Status rc = iterator_->GetNextAsMap(row);
   if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetNextRow: Failed to get next row.";
+    MS_LOG(ERROR) << "GetNextRow: Failed to get next row. Error status: " << rc;
     row->clear();
   }
 }
@@ -35,7 +35,7 @@ void Iterator::GetNextRow(TensorVec *row) {
   TensorRow tensor_row;
   Status rc = iterator_->FetchNextTensorRow(&tensor_row);
   if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetNextRow: Failed to get next row.";
+    MS_LOG(ERROR) << "GetNextRow: Failed to get next row. Error status: " << rc;
     row->clear();
   }
   // Generate a vector as return

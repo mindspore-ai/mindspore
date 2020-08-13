@@ -437,22 +437,22 @@ TEST_F(MindDataTestPipeline, TestRepeatDefault) {
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   std::shared_ptr <Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
-  EXPECT_NE(ds,nullptr);
+  EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
   // Default value of repeat count is -1, expected to repeat infinitely
   ds = ds->Repeat();
-  EXPECT_NE(ds,nullptr);
+  EXPECT_NE(ds, nullptr);
 
   // Create a Batch operation on ds
   int32_t batch_size = 1;
   ds = ds->Batch(batch_size);
-  EXPECT_NE(ds,nullptr);
+  EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
   // This will trigger the creation of the Execution Tree and launch it.
   std::shared_ptr <Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter,nullptr);
+  EXPECT_NE(iter, nullptr);
 
   // Iterate the dataset and get each row
   std::unordered_map <std::string, std::shared_ptr<Tensor>> row;
@@ -460,14 +460,16 @@ TEST_F(MindDataTestPipeline, TestRepeatDefault) {
   uint64_t i = 0;
   while (row.size()!= 0) {
     // manually stop
-    if(i==100){break;}
+    if (i == 100) {
+      break;
+    }
     i++;
     auto image = row["image"];
     MS_LOG(INFO)<< "Tensor image shape: " << image->shape();
     iter->GetNextRow(&row);
   }
 
-  EXPECT_EQ(i,100);
+  EXPECT_EQ(i, 100);
   // Manually terminate the pipeline
   iter->Stop();
 }
@@ -478,22 +480,22 @@ TEST_F(MindDataTestPipeline, TestRepeatOne) {
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   std::shared_ptr <Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
-  EXPECT_NE(ds,nullptr);
+  EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
   int32_t repeat_num = 1;
   ds = ds->Repeat(repeat_num);
-  EXPECT_NE(ds,nullptr);
+  EXPECT_NE(ds, nullptr);
 
   // Create a Batch operation on ds
   int32_t batch_size = 1;
   ds = ds->Batch(batch_size);
-  EXPECT_NE(ds,nullptr);
+  EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
   // This will trigger the creation of the Execution Tree and launch it.
   std::shared_ptr <Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter,nullptr);
+  EXPECT_NE(iter, nullptr);
 
   // Iterate the dataset and get each row
   std::unordered_map <std::string, std::shared_ptr<Tensor>> row;
@@ -506,13 +508,27 @@ TEST_F(MindDataTestPipeline, TestRepeatOne) {
     iter->GetNextRow(&row);
   }
 
-  EXPECT_EQ(i,10);
+  EXPECT_EQ(i, 10);
   // Manually terminate the pipeline
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestRepeatFail) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRepeatFail.";
+TEST_F(MindDataTestPipeline, TestRepeatFail1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRepeatFail1.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 0;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestRepeatFail2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRepeatFail2.";
   // This case is expected to fail because the repeat count is invalid (<-1 && !=0).
 
   // Create an ImageFolder Dataset

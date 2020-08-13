@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASETS_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASETS_H_
 
+#include <unistd.h>
 #include <vector>
 #include <memory>
 #include <set>
