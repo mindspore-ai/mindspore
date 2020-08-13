@@ -322,6 +322,20 @@ def convert_to_ms_tensor(data):
     return MsTensor(data)
 
 
+def get_object_description(obj, fname, fline):
+    """return method or funcition description for error report, include location, class name, etc."""
+    if isinstance(obj, types.MethodType):
+        obj_cls = obj.__self__.__class__
+        class_name = f'{obj_cls.__module__}.{obj_cls.__qualname__}'
+        cls_fname = inspect.getfile(obj_cls)
+        _, cls_fline = inspect.getsourcelines(obj_cls)
+        class_loc = f'{cls_fname}:{cls_fline}'
+        return f"bound method '{obj.__name__}' at {fname}:{fline} of <{class_name} at {class_loc} object>"
+    if isinstance(obj, (types.FunctionType, ast.FunctionDef)):
+        return f"function '{obj.name}' at {fname}:{fline}"
+    return str(obj)
+
+
 class Parser:
     """
     Parser python code to ast tree.

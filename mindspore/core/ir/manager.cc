@@ -379,7 +379,11 @@ FuncGraphSetPtr FuncGraphManager::MaybeDropNodes(const std::vector<AnfNodePtr> &
   FuncGraphSetPtr func_graphs_to_check = std::make_shared<FuncGraphSet>();
   while (!nodes_ordered.empty()) {
     AnfNodePtr node = nodes_ordered.pop();
-    MS_EXCEPTION_IF_NULL(node);
+    if (node == nullptr) {
+      // Here can not call 'MS_EXCEPTION_IF_NULL' to throw exception, this method may be triggered by desctuctor
+      MS_LOG(WARNING) << "Node to be dropped is nullptr";
+      continue;
+    }
     if (!all_nodes_.contains(node)) {
       continue;
     }
