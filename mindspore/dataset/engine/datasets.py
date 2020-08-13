@@ -3541,7 +3541,7 @@ class TFRecordDataset(SourceDataset):
             If the schema is not provided, the meta data from the TFData file is considered the schema.
         columns_list (list[str], optional): List of columns to be read (default=None, read all columns)
         num_samples (int, optional): number of samples(rows) to read (default=None).
-            If num_samples is None and numRows(parsed from schema) is not exist, read the full dataset;
+            If num_samples is None and numRows(parsed from schema) does not exist, read the full dataset;
             If num_samples is None and numRows(parsed from schema) is greater than 0, read numRows rows;
             If both num_samples and numRows(parsed from schema) are greater than 0, read num_samples rows.
         num_parallel_workers (int, optional): number of workers to read the data
@@ -3560,8 +3560,8 @@ class TFRecordDataset(SourceDataset):
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument should be specified only when num_shards is also specified.
-        shard_equal_rows (bool): Get equal rows for all shards(default=False). If shard_equal_rows is false, number
-            of rows of each shard may be not equal.
+        shard_equal_rows (bool, optional): Get equal rows for all shards(default=False). If shard_equal_rows
+            is false, number of rows of each shard may be not equal.
         cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
             The cache feature is under development and is not recommended.
     Examples:
