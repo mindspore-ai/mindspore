@@ -30,7 +30,6 @@ namespace mindspore::kernel {
 
 int ConvolutionOpenCLKernel::Init() {
   static int count = 0;
-  std::cout << "ConvolutionOpenCLKernel::Init()\n";
   std::set<std::string> build_options;
   std::string source = CodeGen();
   std::string program_name = "convolution" + std::to_string(count);
@@ -41,6 +40,8 @@ int ConvolutionOpenCLKernel::Init() {
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
   this->InitBuffer();
+  out_tensors_[0]->SetFormat(schema::Format_NHWC4);
+  MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
 
