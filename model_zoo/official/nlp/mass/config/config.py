@@ -93,6 +93,7 @@ class TransformerConfig:
             encoder/decoder cell. Default: 4096.
         hidden_act (str): Activation function used in the Transformer encoder/decoder
             cell. Default: "relu".
+        loss_scale_mode (str): Loss scale mode. Default: "dynamic".
         init_loss_scale (int): Initialized loss scale.
         loss_scale_factor (int): Loss scale factor.
         scale_window (int): Window size of loss scale.
@@ -141,6 +142,7 @@ class TransformerConfig:
                  attention_dropout_prob=0.1,
                  max_position_embeddings=64,
                  initializer_range=0.02,
+                 loss_scale_mode="dynamic",
                  init_loss_scale=2 ** 10,
                  loss_scale_factor=2, scale_window=2000,
                  beam_width=5,
@@ -192,6 +194,7 @@ class TransformerConfig:
         self.compute_type = mstype.float16
         self.dtype = dtype
 
+        self.loss_scale_mode = loss_scale_mode
         self.scale_window = scale_window
         self.loss_scale_factor = loss_scale_factor
         self.init_loss_scale = init_loss_scale
