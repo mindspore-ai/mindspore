@@ -29,6 +29,7 @@ bitwise_or_op_info = TBERegOp("BitwiseOr") \
     .op_pattern("broadcast") \
     .dtype_format(DataType.I16_None, DataType.I16_None, DataType.I16_None) \
     .dtype_format(DataType.U16_None, DataType.U16_None, DataType.U16_None) \
+    .dtype_format(DataType.I32_None, DataType.I32_None, DataType.I32_None) \
     .get_op_info()
 
 

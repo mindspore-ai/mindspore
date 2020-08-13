@@ -28,9 +28,7 @@ bias_add_grad_op_info = TBERegOp("BiasAdd") \
     .input(1, "bias", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .op_pattern("dynamicFormat") \
-    .dtype_format(DataType.I32_None, DataType.I32_None, DataType.I32_None) \
-    .dtype_format(DataType.F16_None, DataType.F16_None, DataType.F16_None) \
-    .dtype_format(DataType.F32_None, DataType.F32_None, DataType.F32_None) \
+    .dtype_format(DataType.None_None, DataType.None_None, DataType.None_None) \
     .get_op_info()
 
 
