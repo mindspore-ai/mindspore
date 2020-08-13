@@ -46,7 +46,8 @@ import mindspore._c_dataengine as cde
 from .utils import Inter, Border
 from .validators import check_prob, check_crop, check_resize_interpolation, check_random_resize_crop, \
     check_mix_up_batch_c, check_normalize_c, check_random_crop, check_random_color_adjust, check_random_rotation, \
-    check_range, check_resize, check_rescale, check_pad, check_cutout, check_uniform_augment_cpp, \
+    check_range, check_resize, check_rescale, check_pad, check_cutout, \
+    check_uniform_augment_cpp, \
     check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_auto_contrast, check_random_affine, \
     check_random_solarize, check_soft_dvpp_decode_random_crop_resize_jpeg, check_positive_degrees, FLOAT_MAX_INTEGER
 
@@ -627,6 +628,21 @@ class CenterCrop(cde.CenterCropOp):
         self.size = size
         super().__init__(*size)
 
+
+class RandomColor(cde.RandomColorOp):
+    """
+    Adjust the color of the input image by a fixed or random degree.
+
+    Args:
+         degrees (sequence): Range of random color adjustment degrees.
+            It should be in (min, max) format. If min=max, then it is a
+            single fixed magnitude operation (default=(0.1,1.9)).
+            Works with 3-channel color images.
+    """
+
+    @check_positive_degrees
+    def __init__(self, degrees=(0.1, 1.9)):
+        super().__init__(*degrees)
 
 class RandomColorAdjust(cde.RandomColorAdjustOp):
     """

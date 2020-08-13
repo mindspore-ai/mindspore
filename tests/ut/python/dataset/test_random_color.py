@@ -16,9 +16,11 @@
 Testing RandomColor op in DE
 """
 import numpy as np
+import pytest
 
 import mindspore.dataset as ds
 import mindspore.dataset.engine as de
+import mindspore.dataset.transforms.vision.c_transforms as vision
 import mindspore.dataset.transforms.vision.py_transforms as F
 from mindspore import log as logger
 from util import visualize_list, diff_mse, save_and_check_md5, \
@@ -26,11 +28,17 @@ from util import visualize_list, diff_mse, save_and_check_md5, \
 
 DATA_DIR = "../data/dataset/testImageNetData/train/"
 
+C_DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
+C_SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
+
+MNIST_DATA_DIR = "../data/dataset/testMnistData"
+
 GENERATE_GOLDEN = False
 
-def test_random_color(degrees=(0.1, 1.9), plot=False):
+
+def test_random_color_py(degrees=(0.1, 1.9), plot=False):
     """
-    Test RandomColor
+    Test Python RandomColor
     """
     logger.info("Test RandomColor")
 
@@ -85,9 +93,53 @@ def test_random_color(degrees=(0.1, 1.9), plot=False):
         visualize_list(images_original, images_random_color)
 
 
-def test_random_color_md5():
+def test_random_color_c(degrees=(0.1, 1.9), plot=False, run_golden=True):
     """
-    Test RandomColor with md5 check
+    Test Cpp RandomColor
+    """
+    logger.info("test_random_color_op")
+
+    original_seed = config_get_set_seed(10)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
+
+    # Decode with rgb format set to True
+    data1 = ds.TFRecordDataset(C_DATA_DIR, C_SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data2 = ds.TFRecordDataset(C_DATA_DIR, C_SCHEMA_DIR, columns_list=["image"], shuffle=False)
+
+    # Serialize and Load dataset requires using vision.Decode instead of vision.Decode().
+    if degrees is None:
+        c_op = vision.RandomColor()
+    else:
+        c_op = vision.RandomColor(degrees)
+
+    data1 = data1.map(input_columns=["image"], operations=[vision.Decode()])
+    data2 = data2.map(input_columns=["image"], operations=[vision.Decode(), c_op])
+
+    image_random_color_op = []
+    image = []
+
+    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+        actual = item1["image"]
+        expected = item2["image"]
+        image.append(actual)
+        image_random_color_op.append(expected)
+
+    if run_golden:
+        # Compare with expected md5 from images
+        filename = "random_color_op_02_result.npz"
+        save_and_check_md5(data2, filename, generate_golden=GENERATE_GOLDEN)
+
+    if plot:
+        visualize_list(image, image_random_color_op)
+
+    # Restore configuration
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers((original_num_parallel_workers))
+
+
+def test_random_color_py_md5():
+    """
+    Test Python RandomColor with md5 check
     """
     logger.info("Test RandomColor with md5 check")
     original_seed = config_get_set_seed(10)
@@ -110,8 +162,94 @@ def test_random_color_md5():
     ds.config.set_num_parallel_workers((original_num_parallel_workers))
 
 
+def test_compare_random_color_op(degrees=None, plot=False):
+    """
+    Compare Random Color op in Python and Cpp
+    """
+
+    logger.info("test_random_color_op")
+
+    original_seed = config_get_set_seed(5)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
+
+    # Decode with rgb format set to True
+    data1 = ds.TFRecordDataset(C_DATA_DIR, C_SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data2 = ds.TFRecordDataset(C_DATA_DIR, C_SCHEMA_DIR, columns_list=["image"], shuffle=False)
+
+    if degrees is None:
+        c_op = vision.RandomColor()
+        p_op = F.RandomColor()
+    else:
+        c_op = vision.RandomColor(degrees)
+        p_op = F.RandomColor(degrees)
+
+    transforms_random_color_py = F.ComposeOp([lambda img: img.astype(np.uint8), F.ToPIL(),
+                                              p_op, np.array])
+
+    data1 = data1.map(input_columns=["image"], operations=[vision.Decode(), c_op])
+    data2 = data2.map(input_columns=["image"], operations=[vision.Decode()])
+    data2 = data2.map(input_columns=["image"], operations=transforms_random_color_py())
+
+    image_random_color_op = []
+    image = []
+
+    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+        actual = item1["image"]
+        expected = item2["image"]
+        image_random_color_op.append(actual)
+        image.append(expected)
+        assert actual.shape == expected.shape
+        mse = diff_mse(actual, expected)
+        logger.info("MSE= {}".format(str(np.mean(mse))))
+
+    # Restore configuration
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
+    if plot:
+        visualize_list(image, image_random_color_op)
+
+
+def test_random_color_c_errors():
+    """
+    Test that Cpp RandomColor errors with bad input
+    """
+    with pytest.raises(TypeError) as error_info:
+        vision.RandomColor((12))
+    assert "degrees must be either a tuple or a list." in str(error_info.value)
+
+    with pytest.raises(TypeError) as error_info:
+        vision.RandomColor(("col", 3))
+    assert "Argument degrees[0] with value col is not of type (<class 'int'>, <class 'float'>)." in str(
+        error_info.value)
+
+    with pytest.raises(ValueError) as error_info:
+        vision.RandomColor((0.9, 0.1))
+    assert "degrees should be in (min,max) format. Got (max,min)." in str(error_info.value)
+
+    with pytest.raises(ValueError) as error_info:
+        vision.RandomColor((0.9,))
+    assert "degrees must be a sequence with length 2." in str(error_info.value)
+
+    # RandomColor Cpp Op will fail with one channel input
+    mnist_ds = de.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
+    mnist_ds = mnist_ds.map(input_columns="image", operations=vision.RandomColor())
+
+    with pytest.raises(RuntimeError) as error_info:
+        for _ in enumerate(mnist_ds):
+            pass
+    assert "Invalid number of channels in input image" in str(error_info.value)
+
+
 if __name__ == "__main__":
-    test_random_color()
-    test_random_color(plot=True)
-    test_random_color(degrees=(0.5, 1.5), plot=True)
-    test_random_color_md5()
+    test_random_color_py()
+    test_random_color_py(plot=True)
+    test_random_color_py(degrees=(0.5, 1.5), plot=True)
+    test_random_color_py_md5()
+
+    test_random_color_c()
+    test_random_color_c(plot=True)
+    test_random_color_c(degrees=(0.5, 1.5), plot=True, run_golden=False)
+    test_random_color_c(degrees=(0.1, 0.1), plot=True, run_golden=False)
+    test_compare_random_color_op(plot=True)
+    test_random_color_c_errors()

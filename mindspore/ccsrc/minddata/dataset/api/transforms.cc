@@ -27,6 +27,7 @@
 #include "minddata/dataset/kernels/data/one_hot_op.h"
 #include "minddata/dataset/kernels/image/pad_op.h"
 #include "minddata/dataset/kernels/image/random_affine_op.h"
+#include "minddata/dataset/kernels/image/random_color_op.h"
 #include "minddata/dataset/kernels/image/random_color_adjust_op.h"
 #include "minddata/dataset/kernels/image/random_crop_op.h"
 #include "minddata/dataset/kernels/image/random_horizontal_flip_op.h"
@@ -138,6 +139,21 @@ std::shared_ptr<PadOperation> Pad(std::vector<int32_t> padding, std::vector<uint
     return nullptr;
   }
   return op;
+}
+
+// Function to create RandomColorOperation.
+std::shared_ptr<RandomColorOperation> RandomColor(float t_lb, float t_ub) {
+  auto op = std::make_shared<RandomColorOperation>(t_lb, t_ub);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
+std::shared_ptr<TensorOp> RandomColorOperation::Build() {
+  std::shared_ptr<RandomColorOp> tensor_op = std::make_shared<RandomColorOp>(t_lb_, t_ub_);
+  return tensor_op;
 }
 
 // Function to create RandomColorAdjustOperation.
@@ -473,6 +489,18 @@ std::shared_ptr<TensorOp> PadOperation::Build() {
   std::shared_ptr<PadOp> tensor_op =
     std::make_shared<PadOp>(pad_top, pad_bottom, pad_left, pad_right, padding_mode_, fill_r, fill_g, fill_b);
   return tensor_op;
+}
+
+// RandomColorOperation.
+RandomColorOperation::RandomColorOperation(float t_lb, float t_ub) : t_lb_(t_lb), t_ub_(t_ub) {}
+
+bool RandomColorOperation::ValidateParams() {
+  // Do some input validation.
+  if (t_lb_ > t_ub_) {
+    MS_LOG(ERROR) << "RandomColor: lower bound must be less or equal to upper bound";
+    return false;
+  }
+  return true;
 }
 
 // RandomColorAdjustOperation.

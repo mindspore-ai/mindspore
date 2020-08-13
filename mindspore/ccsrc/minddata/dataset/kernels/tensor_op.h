@@ -129,6 +129,7 @@ constexpr char kSwapRedBlueOp[] = "SwapRedBlueOp";
 constexpr char kUniformAugOp[] = "UniformAugOp";
 constexpr char kSoftDvppDecodeRandomCropResizeJpegOp[] = "SoftDvppDecodeRandomCropResizeJpegOp";
 constexpr char kSoftDvppDecodeReiszeJpegOp[] = "SoftDvppDecodeReiszeJpegOp";
+constexpr char kRandomColorOp[] = "RandomColorOp";
 
 // text
 constexpr char kBasicTokenizerOp[] = "BasicTokenizerOp";

@@ -70,7 +70,7 @@ class CVTensor : public Tensor {
 
   /// Get a reference to the CV::Mat
   /// \return a reference to the internal CV::Mat
-  cv::Mat mat() const { return mat_; }
+  cv::Mat &mat() { return mat_; }
 
   /// Get a copy of the CV::Mat
   /// \return a copy of internal CV::Mat

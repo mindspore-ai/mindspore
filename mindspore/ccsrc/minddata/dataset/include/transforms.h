@@ -57,6 +57,7 @@ class NormalizeOperation;
 class OneHotOperation;
 class PadOperation;
 class RandomAffineOperation;
+class RandomColorOperation;
 class RandomColorAdjustOperation;
 class RandomCropOperation;
 class RandomHorizontalFlipOperation;
@@ -161,6 +162,14 @@ std::shared_ptr<RandomAffineOperation> RandomAffine(
   const std::vector<float_t> &scale_range = {1.0, 1.0}, const std::vector<float_t> &shear_ranges = {0.0, 0.0, 0.0, 0.0},
   InterpolationMode interpolation = InterpolationMode::kNearestNeighbour,
   const std::vector<uint8_t> &fill_value = {0, 0, 0});
+
+/// \brief Blends an image with its grayscale version with random weights
+///        t and 1 - t generated from a given range. If the range is trivial
+///        then the weights are determinate and t equals the bound of the interval
+/// \param[in] t_lb lower bound on the range of random weights
+/// \param[in] t_lb upper bound on the range of random weights
+/// \return Shared pointer to the current TensorOp
+std::shared_ptr<RandomColorOperation> RandomColor(float t_lb, float t_ub);
 
 /// \brief Randomly adjust the brightness, contrast, saturation, and hue of the input image
 /// \param[in] brightness Brightness adjustment factor. Must be a vector of one or two values
@@ -415,6 +424,21 @@ class RandomAffineOperation : public TensorOperation {
   std::vector<float_t> shear_ranges_;     // min_x_shear, max_x_shear, min_y_shear, max_y_shear
   InterpolationMode interpolation_;
   std::vector<uint8_t> fill_value_;
+};
+
+class RandomColorOperation : public TensorOperation {
+ public:
+  RandomColorOperation(float t_lb, float t_ub);
+
+  ~RandomColorOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
+
+ private:
+  float t_lb_;
+  float t_ub_;
 };
 
 class RandomColorAdjustOperation : public TensorOperation {
