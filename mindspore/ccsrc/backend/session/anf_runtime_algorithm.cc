@@ -1031,31 +1031,29 @@ FuncGraphPtr AnfRuntimeAlgorithm::GetValueNodeFuncGraph(const AnfNodePtr &node) 
   return func_graph;
 }
 
-std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallNodeKernelGraph(const CNodePtr &call_node) {
-  MS_EXCEPTION_IF_NULL(call_node);
-  if (!AnfAlgo::CheckPrimitiveType(call_node, std::make_shared<Primitive>("call"))) {
-    MS_LOG(EXCEPTION) << "Anf node: " << call_node->DebugString() << "is not a call node.";
+std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallSwitchKernelGraph(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (!(AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimCall) || AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitch))) {
+    MS_LOG(EXCEPTION) << "Node: " << cnode->DebugString() << "is not a call or switch node.";
   }
-  auto input1 = call_node->input(1);
-  MS_EXCEPTION_IF_NULL(input1);
-  if (input1->isa<ValueNode>()) {
+  if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimCall)) {
+    auto input1 = cnode->input(kCallKernelGraphIndex);
+    MS_EXCEPTION_IF_NULL(input1);
     auto value_node = input1->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
     auto kernel_graph = value_node->value();
     MS_EXCEPTION_IF_NULL(kernel_graph);
     return {kernel_graph->cast<KernelGraphPtr>()};
-  } else if (input1->isa<CNode>() && AnfAlgo::CheckPrimitiveType(input1, prim::kPrimSwitch)) {
-    auto switch_node = input1->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(switch_node);
-    auto get_switch_kernel_graph = [switch_node](size_t input_index) -> KernelGraphPtr {
-      auto partial = switch_node->input(input_index);
+  } else if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitch)) {
+    auto get_switch_kernel_graph = [cnode](size_t input_index) -> KernelGraphPtr {
+      auto partial = cnode->input(input_index);
       MS_EXCEPTION_IF_NULL(partial);
       if (IsValueNode<KernelGraph>(partial)) {
         return GetValueNode<KernelGraphPtr>(partial);
       }
       auto partial_cnode = partial->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(partial_cnode);
-      auto graph_node = partial_cnode->input(1);
+      auto graph_node = partial_cnode->input(kCallKernelGraphIndex);
       MS_EXCEPTION_IF_NULL(graph_node);
       auto graph_value_node = graph_node->cast<ValueNodePtr>();
       MS_EXCEPTION_IF_NULL(graph_value_node);
@@ -1064,7 +1062,8 @@ std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallNodeKernelGraph(const CN
       auto child_graph = graph_value->cast<KernelGraphPtr>();
       return child_graph;
     };
-    return {get_switch_kernel_graph(2), get_switch_kernel_graph(3)};
+    return {get_switch_kernel_graph(kSwitchTrueKernelGraphIndex),
+            get_switch_kernel_graph(kSwitchFalseKernelGraphIndex)};
   }
   return {};
 }

@@ -885,7 +885,7 @@ void AscendSession::CreateMultiBranchOutput(NotNull<KernelGraphPtr> graph, NotNu
   std::map<AnfNodePtr, AnfNodePtr> need_replace_list;
   auto node_list = GetCNodes(TopoSort(graph->get_return()));
   for (auto &node : node_list) {
-    if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimCall)) {
+    if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimCall) || AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitch)) {
       // create a parameter to store the output of multiple branch and set the parameter as the condition graph's output
       auto output_param = graph->TransTupleToMakeTuple(graph->NewParameter(node->abstract()));
       MS_EXCEPTION_IF_NULL(graph->MutableInputs());
@@ -898,7 +898,7 @@ void AscendSession::CreateMultiBranchOutput(NotNull<KernelGraphPtr> graph, NotNu
       MS_LOG(INFO) << "Create parameter " << output_param->DebugString() << " for call node " << node->DebugString()
                    << ", depend node is " << depend->DebugString();
       // insert assign in order to transfer child graph output to parameter
-      auto child_graphs = AnfAlgo::GetCallNodeKernelGraph(node);
+      auto child_graphs = AnfAlgo::GetCallSwitchKernelGraph(node);
       for (auto &child_graph : child_graphs) {
         MS_EXCEPTION_IF_NULL(child_graph);
         // If graph has no output, the graph is the true graph of while and will call condition graph, no need insert

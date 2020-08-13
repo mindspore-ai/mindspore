@@ -67,7 +67,7 @@ std::vector<AnfNodePtr> GetCallRealOutputs(const AnfNodePtr &call_node) {
     return {node};
   }
   std::vector<AnfNodePtr> real_inputs;
-  auto child_graphs = AnfAlgo::GetCallNodeKernelGraph(node->cast<CNodePtr>());
+  auto child_graphs = AnfAlgo::GetCallSwitchKernelGraph(node->cast<CNodePtr>());
   for (const auto &child_graph : child_graphs) {
     if (child_graph->get_output_null()) {
       continue;
@@ -931,6 +931,18 @@ std::vector<CNodePtr> KernelGraph::FindNodeByPrimitive(const PrimitivePtr &primi
   return result;
 }
 
+std::vector<CNodePtr> KernelGraph::FindNodeByPrimitive(const std::vector<PrimitivePtr> &primitive_list) const {
+  std::vector<CNodePtr> result;
+  for (const auto &anf : execution_order_) {
+    for (const auto &primitive : primitive_list) {
+      if (AnfAlgo::CheckPrimitiveType(anf, primitive) && AnfAlgo::GetGraphId(anf.get()) == graph_id_) {
+        result.push_back(anf->cast<CNodePtr>());
+      }
+    }
+  }
+  return result;
+}
+
 void KernelGraph::PrintGraphExecuteOrder() const {
   MS_LOG(INFO) << "Graph:" << graph_id_ << "execution order";
   for (size_t i = 0; i < execution_order_.size(); i++) {
@@ -1078,11 +1090,12 @@ bool KernelGraph::IsUniqueTargetInternalOutput(const AnfNodePtr &node, int outpu
 void KernelGraph::UpdateChildGraphOrder() {
   MS_LOG(INFO) << "Update " << ToString() << " child graph order.";
   SetExecOrderByDefault();
-  auto call_nodes = FindNodeByPrimitive(std::make_shared<Primitive>(prim::kPrimCall->name()));
+  auto call_nodes = FindNodeByPrimitive(
+    {std::make_shared<Primitive>(prim::kPrimCall->name()), std::make_shared<Primitive>(prim::kPrimSwitch->name())});
   std::vector<KernelGraphPtr> child_graph_order;
   for (auto &call_node : call_nodes) {
     MS_EXCEPTION_IF_NULL(call_node);
-    auto call_child_graphs = AnfAlgo::GetCallNodeKernelGraph(call_node->cast<CNodePtr>());
+    auto call_child_graphs = AnfAlgo::GetCallSwitchKernelGraph(call_node->cast<CNodePtr>());
     for (const auto &child_graph : call_child_graphs) {
       MS_EXCEPTION_IF_NULL(child_graph);
       if (child_graph != parent_graph_) {
