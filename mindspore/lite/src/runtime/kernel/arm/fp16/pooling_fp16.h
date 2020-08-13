@@ -13,31 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_POOLING_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_POOLING_FP16_H_
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_POOLING_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_POOLING_H_
-
+#include <arm_neon.h>
 #include <vector>
-#include "src/runtime/kernel/arm/base/pooling_base.h"
 #include "src/lite_kernel.h"
-#include "ir/anf.h"
+#include "src/runtime/kernel/arm/base/pooling_base.h"
 
 namespace mindspore::kernel {
-class PoolingCPUKernel : public PoolingBaseCPUKernel {
+class PoolingFp16CPUKernel : public PoolingBaseCPUKernel {
  public:
-  PoolingCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                   const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
-                   const lite::Primitive *primitive)
+  PoolingFp16CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                       const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                       const lite::Primitive *primitive)
       : PoolingBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~PoolingCPUKernel() override = default;
+  ~PoolingFp16CPUKernel() override {
+    if (fp16_input_ != nullptr) {
+      free(fp16_input_);
+    }
+    if (fp16_output_ != nullptr) {
+      free(fp16_output_);
+    }
+  };
 
   int Init() override;
+  int InitBuffer();
   int ReSize() override;
   int Run() override;
   int RunImpl(int task_id);
 
  private:
+  float16_t *fp16_input_ = nullptr;
+  float16_t *fp16_output_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_POOLING_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_POOLING_FP16_H_
