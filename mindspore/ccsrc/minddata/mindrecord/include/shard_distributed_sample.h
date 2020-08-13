@@ -30,9 +30,10 @@ namespace mindrecord {
 class ShardDistributedSample : public ShardSample {
  public:
   ShardDistributedSample(int num_shards, int shard_id, int no_of_padded_samples, bool shuffle, uint32_t seed,
-                         int no_of_samples = 0);
+                         int no_of_samples = 0, int offset = -1);
 
-  ShardDistributedSample(int num_shards, int shard_id, bool shuffle, uint32_t seed, int no_of_samples = 0);
+  ShardDistributedSample(int num_shards, int shard_id, bool shuffle, uint32_t seed, int no_of_samples = 0,
+                         int offset = -1);
 
   void SetNumPaddedSamples(int no_of_padded_samples) { no_of_padded_samples_ = no_of_padded_samples; }
 

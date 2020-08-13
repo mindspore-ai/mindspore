@@ -294,8 +294,9 @@ Status DeviceQueueOp::SendDataToCPU() {
     RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&curr_row));
 
     if (!curr_row.empty()) {
-      MS_LOG(DEBUG) << "Feature size is " << curr_row[0]->SizeInBytes() << ".";
-      MS_LOG(DEBUG) << "Label size is " << curr_row[1]->SizeInBytes() << ".";
+      for (auto &tensor : curr_row) {
+        MS_LOG(DEBUG) << "Feature size is " << tensor->SizeInBytes() << ".";
+      }
       total_batch++;
       if (stop_send_) break;
     }

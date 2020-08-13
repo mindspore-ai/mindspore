@@ -223,7 +223,7 @@ class DistributedSampler(BuiltinSampler):
         shard_id (int): Shard ID of the current shard within num_shards.
         shuffle (bool, optional): If true, the indices are shuffled (default=True).
         num_samples (int, optional): The number of samples to draw (default=None, all elements).
-
+        offset(int, optional): Offset from shard when the element of dataset is allocated
     Examples:
         >>> import mindspore.dataset as ds
         >>>
@@ -239,7 +239,7 @@ class DistributedSampler(BuiltinSampler):
         ValueError: If shuffle is not a boolean value.
     """
 
-    def __init__(self, num_shards, shard_id, shuffle=True, num_samples=None):
+    def __init__(self, num_shards, shard_id, shuffle=True, num_samples=None, offset=-1):
         if num_shards <= 0:
             raise ValueError("num_shards should be a positive integer value, but got num_shards={}".format(num_shards))
 
@@ -258,13 +258,15 @@ class DistributedSampler(BuiltinSampler):
         self.shard_id = shard_id
         self.shuffle = shuffle
         self.seed = 0
+        self.offset = offset
         super().__init__(num_samples)
 
     def create(self):
         num_samples = self.num_samples if self.num_samples is not None else 0
         # each time user calls create_dict_iterator() (to do repeat) sampler would get a different seed to shuffle
         self.seed += 1
-        c_sampler = cde.DistributedSampler(num_samples, self.num_shards, self.shard_id, self.shuffle, self.seed)
+        c_sampler = cde.DistributedSampler(num_samples, self.num_shards, self.shard_id,
+                                           self.shuffle, self.seed, self.offset)
         c_child_sampler = self.create_child()
         c_sampler.add_child(c_child_sampler)
         return c_sampler
@@ -272,7 +274,7 @@ class DistributedSampler(BuiltinSampler):
     def create_for_minddataset(self):
         num_samples = self.num_samples if self.num_samples is not None else 0
         c_sampler = cde.MindrecordDistributedSampler(self.num_shards, self.shard_id, self.shuffle,
-                                                     self.seed, num_samples)
+                                                     self.seed, num_samples, self.offset)
         c_child_sampler = self.create_child_for_minddataset()
         c_sampler.add_child(c_child_sampler)
         return c_sampler
@@ -288,6 +290,10 @@ class DistributedSampler(BuiltinSampler):
             return self.num_shards > 1
 
         return self.child_sampler.is_sharded()
+
+    def set_offset(self, offset):
+        self.offset = offset
+        return self
 
 
 class PKSampler(BuiltinSampler):

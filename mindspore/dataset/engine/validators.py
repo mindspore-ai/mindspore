@@ -1156,3 +1156,20 @@ def check_numpyslicesdataset(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def check_paddeddataset(method):
+    """A wrapper that wraps a parameter checker to the original Dataset(PaddedDataset)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        _, param_dict = parse_user_args(method, *args, **kwargs)
+
+        paddedSamples = param_dict.get("padded_samples")
+        if not paddedSamples:
+            raise ValueError("Argument padded_samples cannot be empty")
+        type_check(paddedSamples, (list,), "padded_samples")
+        type_check(paddedSamples[0], (dict,), "padded_element")
+        return method(self, *args, **kwargs)
+
+    return new_method

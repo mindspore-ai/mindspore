@@ -48,7 +48,7 @@ PYBIND_REGISTER(Sampler, 0, ([](const py::module *m) {
 PYBIND_REGISTER(DistributedSampler, 1, ([](const py::module *m) {
                   (void)py::class_<DistributedSampler, Sampler, std::shared_ptr<DistributedSampler>>(
                     *m, "DistributedSampler")
-                    .def(py::init<int64_t, int64_t, int64_t, bool, uint32_t>());
+                    .def(py::init<int64_t, int64_t, int64_t, bool, uint32_t, int64_t>());
                 }));
 
 PYBIND_REGISTER(PKSampler, 1, ([](const py::module *m) {

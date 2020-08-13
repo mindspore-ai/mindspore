@@ -29,15 +29,29 @@ namespace dataset {
 ConcatOp::Builder::Builder() {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   builder_op_connector_size_ = cfg->op_connector_size();
+  builder_sampler_ = nullptr;
 }
 
 // The builder "build" method creates the final object.
 Status ConcatOp::Builder::Build(std::shared_ptr<ConcatOp> *ptr) {
-  *ptr = std::make_shared<ConcatOp>(builder_op_connector_size_);
+  if (builder_sampler_ == nullptr) {
+    builder_sampler_ = std::make_shared<DistributedSampler>(0, 1, 0, false);
+  }
+  *ptr = std::make_shared<ConcatOp>(builder_op_connector_size_, builder_sampler_, children_flag_and_nums_,
+                                    children_start_end_index_);
   return Status::OK();
 }
 
 // Constructor of the ConcatOp.
+ConcatOp::ConcatOp(int32_t op_connector_size, std::shared_ptr<Sampler> sampler,
+                   std::vector<std::pair<int, int>> children_flag_and_nums,
+                   std::vector<std::pair<int, int>> children_start_end_index)
+    : PipelineOp(op_connector_size),
+      children_num_(0),
+      sampler_(sampler),
+      children_flag_and_nums_(children_flag_and_nums),
+      children_start_end_index_(children_start_end_index) {}
+
 ConcatOp::ConcatOp(int32_t op_connector_size) : PipelineOp(op_connector_size), children_num_(0) {}
 
 // A function that prints info about the Operator
@@ -57,11 +71,20 @@ void ConcatOp::Print(std::ostream &out, bool show_all) const {
 
 // Main entry point for Concat
 Status ConcatOp::operator()() {
-  // The children_num_ parameter needs to be put here
   children_num_ = static_cast<int32_t>(child_.size());
   TaskManager::FindMe()->Post();
   std::unique_ptr<DataBuffer> buf;
   int eof_count = 0;
+  int sample_number = 0;
+  bool is_not_mappable = true;
+  int num_shard = 1;
+  int shard_index = 0;
+  std::shared_ptr<DistributedSampler> distribute_sampler = std::dynamic_pointer_cast<DistributedSampler>(sampler_);
+  if (distribute_sampler != nullptr) {
+    num_shard = distribute_sampler->GetDeviceNum();
+    shard_index = distribute_sampler->GetDeviceID();
+  }
+
   while (eof_count == 0) {
     for (int i = 0; i < children_num_; i++) {
       // 1. Read the first buffer
@@ -75,11 +98,39 @@ Status ConcatOp::operator()() {
         RETURN_IF_NOT_OK(Verify(i, buf));
       }
       // 3. Put the data into output_connector
+      if (!children_flag_and_nums_.empty()) is_not_mappable = children_flag_and_nums_[i].first;
       while (!buf->eoe() && !buf->eof()) {
-        RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(buf)));
+        // if dataset is no mappable or generator dataset which source is yeild（cannot get the number of samples in
+        // python layer), we use filtering to get data
+        if (sample_number % num_shard == shard_index && (is_not_mappable || !children_flag_and_nums_[i].second)) {
+          RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(buf)));
+        } else if (!is_not_mappable && children_flag_and_nums_[i].second) {  // if dataset is mappable or generator
+                                                                             // dataset which source is not yield
+          // get the start and end subscripts of valid values
+          int fv = children_start_end_index_[i].first, sv = children_start_end_index_[i].second;
+
+          // determine whether the data allocated to the current shard id is false data
+          if ((fv == -1 && sv == -1) || (fv < sv && shard_index >= fv && shard_index < sv) ||
+              (fv > sv && (shard_index >= fv || shard_index < sv))) {
+            RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(buf)));
+          }
+        }
+
+        // if dataSet is no mappable or generator dataset` which source is yeild, sample_number+=1
+        if (is_not_mappable || !children_flag_and_nums_[i].second) {
+          sample_number++;
+        }
+
         RETURN_IF_NOT_OK(child_[i]->GetNextBuffer(&buf));
       }
+
+      // if dataset is mappable,We do't use filtering to pick data.
+      // so sample_number plus the length of the entire dataset
+      if (!is_not_mappable && children_flag_and_nums_[i].second) {
+        sample_number += children_flag_and_nums_[i].second;
+      }
     }
+
     // 4. Add eoe buffer after get buffer from all child
     if (eof_count == 0) {
       auto eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);

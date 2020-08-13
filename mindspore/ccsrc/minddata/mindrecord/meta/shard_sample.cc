@@ -28,7 +28,8 @@ ShardSample::ShardSample(int n)
       partition_id_(0),
       no_of_samples_(n),
       indices_({}),
-      sampler_type_(kCustomTopNSampler) {}
+      sampler_type_(kCustomTopNSampler),
+      offset_(-1) {}
 
 ShardSample::ShardSample(int num, int den)
     : numerator_(num),
@@ -36,15 +37,17 @@ ShardSample::ShardSample(int num, int den)
       partition_id_(0),
       no_of_samples_(0),
       indices_({}),
-      sampler_type_(kCustomTopPercentSampler) {}
+      sampler_type_(kCustomTopPercentSampler),
+      offset_(-1) {}
 
-ShardSample::ShardSample(int num, int den, int par, int no_of_samples)
+ShardSample::ShardSample(int num, int den, int par, int no_of_samples, int offset)
     : numerator_(num),
       denominator_(den),
       partition_id_(par),
       no_of_samples_(no_of_samples),
       indices_({}),
-      sampler_type_(kCustomTopPercentSampler) {}
+      sampler_type_(kCustomTopPercentSampler),
+      offset_(offset) {}
 
 ShardSample::ShardSample(const std::vector<int64_t> &indices, uint32_t seed)
     : numerator_(0),
@@ -75,6 +78,19 @@ int64_t ShardSample::GetNumSamples(int64_t dataset_size, int64_t num_classes) {
 }
 
 MSRStatus ShardSample::Execute(ShardTask &tasks) {
+  if (offset_ != -1) {
+    int64_t old_v = 0;
+    int num_rows_ = static_cast<int>(tasks.Size());
+    for (int x = 0; x < denominator_; x++) {
+      int samples_per_buffer_ = (num_rows_ + offset_) / denominator_;
+      int remainder = (num_rows_ + offset_) % denominator_;
+      if (x < remainder) samples_per_buffer_++;
+      if (x < offset_) samples_per_buffer_--;
+      old_v += samples_per_buffer_;
+      // nums_per_shard_ is used to save the current shard's ending index
+      nums_per_shard_.push_back(old_v);
+    }
+  }
   int no_of_categories = static_cast<int>(tasks.categories);
   int total_no = static_cast<int>(tasks.Size());  // make sure task_size
 
@@ -100,7 +116,6 @@ MSRStatus ShardSample::Execute(ShardTask &tasks) {
       return FAILED;
     }
   }
-
   if (tasks.permutation_.empty()) {
     ShardTask new_tasks;
     total_no = static_cast<int>(tasks.Size());
@@ -111,10 +126,20 @@ MSRStatus ShardSample::Execute(ShardTask &tasks) {
       }
     } else {
       int count = 0;
-      for (int i = partition_id_ * taking; i < (partition_id_ + 1) * taking; i++) {
-        if (no_of_samples_ != 0 && count == no_of_samples_) break;
-        new_tasks.InsertTask(tasks.GetTaskByID(i % total_no));  // rounding up. if overflow, go back to start
-        count++;
+      if (nums_per_shard_.empty()) {
+        for (size_t i = partition_id_ * taking; i < (partition_id_ + 1) * taking; i++) {
+          if (no_of_samples_ != 0 && count == no_of_samples_) break;
+          new_tasks.InsertTask(tasks.GetTaskByID(i % total_no));  // rounding up. if overflow, go back to start
+          count++;
+        }
+      } else {
+        // Get samples within a specific range
+        size_t i = partition_id_ - 1 >= 0 ? nums_per_shard_[partition_id_ - 1] : 0;
+        for (; i < nums_per_shard_[partition_id_]; i++) {
+          if (no_of_samples_ != 0 && count == no_of_samples_) break;
+          new_tasks.InsertTask(tasks.GetTaskByID(i % total_no));
+          count++;
+        }
       }
     }
     std::swap(tasks, new_tasks);

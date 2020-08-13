@@ -32,7 +32,7 @@ class ShardSample : public ShardOperator {
 
   ShardSample(int num, int den);
 
-  ShardSample(int num, int den, int par, int no_of_samples = 0);
+  ShardSample(int num, int den, int par, int no_of_samples = 0, int offset = -1);
 
   ShardSample(const std::vector<int64_t> &indices, uint32_t seed);
 
@@ -50,10 +50,12 @@ class ShardSample : public ShardOperator {
   int partition_id_;
   int no_of_samples_;
   std::shared_ptr<ShardShuffle> shuffle_op_;
+  std::vector<int64_t> nums_per_shard_;
 
  private:
   std::vector<int64_t> indices_;
   SamplerType sampler_type_;
+  int offset_;
 };
 }  // namespace mindrecord
 }  // namespace mindspore
