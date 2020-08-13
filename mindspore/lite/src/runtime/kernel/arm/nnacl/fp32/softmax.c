@@ -16,6 +16,7 @@
 
 #include "nnacl/fp32/softmax.h"
 #include <math.h>
+#include <float.h>
 
 // output = exp(input) / reduce_sum(exp(input), axis)
 void Softmax(const float *input_ptr, float *output_ptr, float *sum_data, SoftmaxParameter *parameter) {
@@ -24,8 +25,13 @@ void Softmax(const float *input_ptr, float *output_ptr, float *sum_data, Softmax
   int ele_size = parameter->element_size_;
   int *input_shape = parameter->input_shape_;
 
+  float max_data = -FLT_MAX;
   for (int i = 0; i < ele_size; i++) {
-    output_ptr[i] = exp(input_ptr[i]);
+    max_data = max_data > input_ptr[i] ? max_data : input_ptr[i];
+  }
+
+  for (int i = 0; i < ele_size; i++) {
+    output_ptr[i] = exp(input_ptr[i] - max_data);
   }
   int inner_size = 1, outter_size = 1;
   for (int i = 0; i < axis; i++) {
