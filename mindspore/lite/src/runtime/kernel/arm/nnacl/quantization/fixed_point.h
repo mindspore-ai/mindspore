@@ -64,6 +64,114 @@ inline int MultiplyByQuantizedMultiplier(int32_t value, int32_t multiplier, int3
   return RoundingDivideByPOT(SaturatingRoundingDoublingHighMul(value * (1 << left_shift), multiplier), -right_shift);
 }
 
+inline int FractionsBits(int kIntegerBits) {
+  int totalBits = 8 * sizeof(int32_t) - 1;
+  return totalBits - kIntegerBits;
+}
+
+inline int FixedPoint_One(int kIntegerBits, int kFractionsBits) {
+  return (kIntegerBits == 0 ? INT32_MAX : ((1) << (uint32_t)(kIntegerBits == 0 ? 0 : kFractionsBits)));
+}
+
+inline int RoundingHalfSum(int a, int b) {
+  int64_t a64 = a;
+  int64_t b64 = b;
+  int64_t sum = a64 + b64;
+  int64_t sign = sum > 0 ? 1 : -1;
+  return (int32_t)((sum + sign) / 2);
+}
+
+inline int32_t BitAnd(int32_t a, int32_t b) { return (uint32_t)a & (uint32_t)b; }
+
+inline int32_t BitOr(int32_t a, int32_t b) { return (uint32_t)a | (uint32_t)b; }
+
+inline int32_t BitXor(int32_t a, int32_t b) { return (uint32_t)a ^ (uint32_t)b; }
+
+inline int32_t BitNot(int32_t a) { return ~(uint32_t)a; }
+
+inline int SelectUsingMask(int mask, int bound, int val) {
+  return BitXor(BitAnd(mask, bound), BitAnd(BitNot(mask), val));
+}
+
+inline int32_t MaskNonZero(int32_t a) {
+  int32_t zreo = 0;
+  return a ? BitNot(zreo) : zreo;
+}
+
+inline int SaturatingRoundingMultiplyByPOT(int32_t x, int Exponent) {
+  int ExponentSign = (Exponent > 0 ? 1 : Exponent < 0 ? -1 : 0);
+  if (ExponentSign == 0) {
+    return x;
+  } else if (ExponentSign == 1) {
+    const int min = INT32_MIN;
+    const int max = INT32_MAX;
+    const int thresold = ((1 << (uint32_t)(31 - Exponent)) - 1);
+    const int postive_mask = MaskNonZero(x > thresold);
+    const int negative_mask = MaskNonZero(x < -thresold);
+    int result = x << Exponent;
+    result = SelectUsingMask(postive_mask, max, result);
+    result = SelectUsingMask(negative_mask, min, result);
+    return result;
+  } else if (ExponentSign == -1) {
+    return RoundingDivideByPOT(x, -Exponent);
+  } else {
+    return 0;
+  }
+}
+
+inline int32_t Rescale(int x, int kIntegerBitsSrc, int kIntegerBitsDst) {
+  int kExponent = kIntegerBitsSrc - kIntegerBitsDst;
+  int result = SaturatingRoundingMultiplyByPOT(x, kExponent);
+  return result;
+}
+
+static inline int32_t one_over_one_plus_x_for_x_in_0_1(int32_t a) {
+  int one = FixedPoint_One(0, FractionsBits(0));
+  int half_denominator = RoundingHalfSum(a, one);
+  const int constant_48_over_17 = 1515870810;
+  const int constant_neg_32_over_17 = -1010580540;
+  int x = constant_48_over_17 + SaturatingRoundingDoublingHighMul(half_denominator, constant_neg_32_over_17);
+  for (int i = 0; i < 3; i++) {
+    int half_denominator_times_x = SaturatingRoundingDoublingHighMul(half_denominator, x);
+    int one_minus_half_denominator_times_x = FixedPoint_One(2, FractionsBits(2)) - half_denominator_times_x;
+    x = x + Rescale(SaturatingRoundingDoublingHighMul(x, one_minus_half_denominator_times_x), 2 + 2, 2);
+  }
+  return Rescale(x, 2 - 1, 0);
+}
+
+inline int CountLeadingZeroBits(uint32_t x) {
+#if defined(__GUNC__)
+  return x ? __builtin_clz(x) : 8 * sizeof(uint32_t);
+#else
+  if (x == 0) {
+    return 8 * sizeof(uint32_t);
+  }
+  const int32_t leading_positive = (int32_t)(1) << (8 * sizeof(uint32_t) - 1);
+  int leading_zeros = 0;
+  while (x < leading_positive) {
+    x <<= 1;
+    leading_zeros++;
+  }
+  return leading_zeros;
+#endif
+}
+
+inline int CountLeadingSignBits(int32_t x) {
+#if defined(__GUNC__) && !defined(__clang__)
+  return x ? __builtin_clrsb(x) : 8 * sizeof(int32_t);
+#else
+  return x >= 0 ? CountLeadingZeroBits((uint32_t)x) - 1 : x != INT32_MIN ? CountLeadingZeroBits(2 * (uint32_t)(-x)) : 0;
+#endif
+}
+
+static inline int32_t ComputerReciproal(int32_t x, int x_digits, int *recip_shift) {
+  int leading_zreos_plus_one = CountLeadingZeroBits((uint32_t)x);
+  *recip_shift = x_digits - leading_zreos_plus_one;
+  const int32_t shifted_minus_one = (int32_t)(((uint32_t)x << leading_zreos_plus_one) - ((uint32_t)(1) << 31));
+  const int32_t shifted_scaled = one_over_one_plus_x_for_x_in_0_1(shifted_minus_one);
+  return shifted_scaled;
+}
+
 #ifdef __cplusplus
 }
 #endif
