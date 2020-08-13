@@ -386,6 +386,5 @@ static inline uint64_t GetCurrentUSec() {
   do {                                                                                                      \
     MS_LOG(INFO) << #stage << " called " << count_##stage << " times, costs " << total_##stage << " usec."; \
   } while (0)
-
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_UTILS_UTILS_H_

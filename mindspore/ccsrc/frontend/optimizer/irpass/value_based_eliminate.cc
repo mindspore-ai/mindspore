@@ -122,7 +122,6 @@ AnfNodePtr ValueBasedEliminate::operator()(const OptimizerPtr &, const AnfNodePt
 
   return nullptr;
 }
-
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

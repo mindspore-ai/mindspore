@@ -23,10 +23,8 @@
 #include "base/base.h"
 
 namespace mindspore {
-
 struct TypeIdManager *TypeIdManager::Get() {
   static TypeIdManager manager;
   return &manager;
 }
-
 }  // namespace mindspore

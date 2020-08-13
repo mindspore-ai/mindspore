@@ -29,7 +29,6 @@
 #include "abstract/abstract_value.h"
 
 namespace mindspore {
-
 class SymbolicKeyInstance : public Value {
  public:
   SymbolicKeyInstance(const AnfNodePtr &node, const abstract::AbstractBasePtr &abstract)
@@ -168,7 +167,6 @@ class EnvInstance : public Value {
 using EnvInstancePtr = std::shared_ptr<EnvInstance>;
 
 extern std::shared_ptr<EnvInstance> newenv;
-
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_UTILS_SYMBOLIC_H_

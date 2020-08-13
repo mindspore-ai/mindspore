@@ -141,7 +141,6 @@ class ConvertSwitchReplacement : public OptimizerCaller {
     return nullptr;
   }
 };
-
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

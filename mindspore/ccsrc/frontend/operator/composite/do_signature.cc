@@ -162,9 +162,9 @@ TypeId GetMaxTypeId(const abstract::AbstractBasePtrList &args_spec_list, std::ve
 }
 
 // Get the largest type of index in the same SignatureEnumDType of arguments.
-std::map<SignatureEnumDType, TypeId> GetMaxDtype(const std::vector<SignatureEnumDType> &dtypes,
-                                                 const abstract::AbstractBasePtrList &args_spec_list,
-                                                 const std::set<size_t> &write_indices) {
+using MaxTypeMap = std::map<SignatureEnumDType, TypeId>;
+MaxTypeMap GetMaxDtype(const std::vector<SignatureEnumDType> &dtypes,
+                       const abstract::AbstractBasePtrList &args_spec_list, const std::set<size_t> &write_indices) {
   // record index for signature.dtypes of the same type
   // eg. [T, T1, T, T2, T, T1, T3] -> {{T:(0,2,4)}, {T1:(1,5)}, {T2:(3)}, {T3:(6)}}
   std::map<SignatureEnumDType, std::vector<size_t>> type_indices;

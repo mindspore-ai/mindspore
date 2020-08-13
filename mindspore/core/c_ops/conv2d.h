@@ -30,6 +30,7 @@ namespace mindspore {
 class Conv2d : public PrimitiveC {
  public:
   Conv2d();
+  ~Conv2d() = default;
   void Init(int out_channel, const std::vector<int> &kernel_size, int mode = 1, const std::string &pad_mode = "valid",
             const std::vector<int> &pad = {0, 0, 0, 0}, const std::vector<int> &stride = {1, 1, 1, 1},
             const std::vector<int> &dilation = {1, 1, 1, 1}, int group = 1);

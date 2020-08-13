@@ -395,7 +395,6 @@ class LogConfigParser {
     bool flag_error = false;
     std::string text;
     auto tok = lexer.GetNext(&text);
-
     // empty string
     if (tok == LogConfigToken::EOS) {
       return log_levels;

@@ -20,7 +20,6 @@
 #include "utils/ordered_map.h"
 
 namespace mindspore {
-
 template <typename T, class Hash = std::hash<T>, class Equal = std::equal_to<T>>
 class Counter {
   using counter_type = Counter<T, Hash, Equal>;

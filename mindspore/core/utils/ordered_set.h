@@ -30,7 +30,6 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-
 // Implementation of OrderedSet that keeps insertion order
 // using map as set, and use list as a sequential container to record elements to keep insertion order
 template <class T, class Hash = std::hash<T>, class KeyEqual = std::equal_to<T>>
@@ -277,7 +276,6 @@ class OrderedSet {
   map_type mapped_data_;
   sequential_type ordered_data_;
 };
-
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_UTILS_ORDERED_SET_H_

@@ -146,6 +146,7 @@ void MsBackend::Link(GraphId graph_id) {
 Backend::Backend(const std::string &name) : name_(name) {
   MS_LOG(DEBUG) << "select backend:" << name;
   convert_fn_ = backends[name_];
+  is_multi_graph_sink_ = false;
 }
 
 MsBackend::MsBackend(const std::string &name, const std::string &target, uint32_t device_id) : Backend(name) {

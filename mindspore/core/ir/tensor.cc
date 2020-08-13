@@ -81,7 +81,7 @@ std::unique_ptr<T[]> NewData(Scalar scalar) {
 }
 
 template <typename T>
-std::unique_ptr<T[]> CopyData(const std::vector<int> &shape, void *data, TypeId data_type) {
+std::unique_ptr<T[]> CopyData(const std::vector<int> &shape, void *const data, TypeId data_type) {
   const size_t size = SizeOf(shape);
   switch (data_type) {
     case kNumberTypeBool:
@@ -136,7 +136,7 @@ std::unique_ptr<T[]> CopyData(const std::vector<int> &shape, void *data, TypeId 
 }
 
 template <typename T>
-std::unique_ptr<T[]> CopyData(const std::vector<int> &shape, void *data, size_t data_len) {
+std::unique_ptr<T[]> CopyData(const std::vector<int> &shape, void *const data, size_t data_len) {
   size_t size = SizeOf(shape);
   if (size * sizeof(T) != data_len) {
     MS_LOG(EXCEPTION) << "Incorrect tensor input data length  " << data_len << ", expect " << size * sizeof(T)

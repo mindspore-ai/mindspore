@@ -24,12 +24,10 @@
 namespace mindspore {
 /* namespace to support opt */
 namespace opt {
-
 bool GraphKernelReuse::CompareNode(const AnfNodePtr a, const AnfNodePtr b) {
   if (a->abstract() && b->abstract()) {
     auto a_type = a->abstract()->GetTypeTrack();
     auto b_type = b->abstract()->GetTypeTrack();
-
     if (a_type != b_type) {
       return false;
     }
@@ -132,7 +130,6 @@ bool GraphKernelReuse::DoReplace(const FuncGraphManagerPtr manager) {
             manager->Replace(iter.first->first, new_cnode);
             changed = true;
           }
-
         } else {
           // Add current fg to map
           graph_kernel_ops[key].push_back(fg);
@@ -152,6 +149,5 @@ bool GraphKernelReuse::ReuseGraphKernel(const FuncGraphPtr root, const FuncGraph
 
   return DoReplace(manager);
 }
-
 }  // namespace opt
 }  // namespace mindspore
