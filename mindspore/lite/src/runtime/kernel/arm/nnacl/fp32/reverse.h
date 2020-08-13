@@ -30,7 +30,12 @@ typedef struct ReverseParameter {
   int num_axis_;
 } ReverseParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int Reverse(const float *input, float *output, size_t elem_size, int *index);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_REVERSE_H_
-

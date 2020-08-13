@@ -20,5 +20,12 @@
 #include "nnacl/op_base.h"
 #include "nnacl/unsqueeze_parameter.h"
 
-int Unsqueeze(int8_t *input_ptr, int8_t *output_ptr, UnSqueezeParameter *para_, size_t data_size, int task_id);
+#ifdef __cplusplus
+extern "C" {
+#endif
+int Int8Unsqueeze(int8_t *input_ptr, int8_t *output_ptr, UnSqueezeParameter *para_, size_t data_size, int task_id);
+#ifdef __cplusplus
+}
+#endif
+
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_UNSQUEEZE_INT8_H_

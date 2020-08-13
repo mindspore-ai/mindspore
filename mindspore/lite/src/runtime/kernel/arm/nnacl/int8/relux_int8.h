@@ -32,6 +32,9 @@ typedef struct ReluXQuantArg {
   int quantized_output_max;
 } ReluXQuantArg;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 inline void ReluXInt8(const int8_t *src, int length, int8_t *dst, ReluXQuantArg *arg) {
   for (int i = 0; i < length; ++i) {
     if (src[i] <= arg->input_arg.zp_) {
@@ -45,4 +48,8 @@ inline void ReluXInt8(const int8_t *src, int length, int8_t *dst, ReluXQuantArg 
     dst[i] = (int8_t)MSMIN(output, arg->quantized_output_max);
   }
 }
+#ifdef __cplusplus
+}
+#endif
+
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_RELU_INT8_H_

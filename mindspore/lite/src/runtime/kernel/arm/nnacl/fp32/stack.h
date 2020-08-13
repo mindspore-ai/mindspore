@@ -19,10 +19,16 @@
 #include "nnacl/op_base.h"
 
 typedef struct StackParameter {
-    OpParameter op_parameter_;
-    int32_t axis_;
+  OpParameter op_parameter_;
+  int32_t axis_;
 } StackParameter;
 
-void DoStack(const float * const *inputs, size_t input_num, int *in_shape, size_t shape_size, int axis, float *output);
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_STACK_H_
+#ifdef __cplusplus
+extern "C" {
+#endif
+void DoStack(const float *const *inputs, size_t input_num, int *in_shape, size_t shape_size, int axis, float *output);
+#ifdef __cplusplus
+}
+#endif
 
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_STACK_H_

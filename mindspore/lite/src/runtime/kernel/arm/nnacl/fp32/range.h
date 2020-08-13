@@ -27,7 +27,12 @@ typedef struct RangeParameter {
   int delta_;
 } RangeParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void Range(float *output_ptr, int start, int limit, int delta);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_RANGE_H_
-

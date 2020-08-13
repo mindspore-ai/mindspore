@@ -19,6 +19,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define C4NUM 4
 #define C8NUM 8

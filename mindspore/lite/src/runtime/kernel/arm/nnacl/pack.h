@@ -23,6 +23,9 @@
 #include "nnacl/conv_parameter.h"
 #include "nnacl/op_base.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void Im2ColPackUnitFp32(const float *input_data, ConvParameter *conv_param, float *packed_input, int real_cal_num,
                         int block_index);
 
@@ -92,5 +95,8 @@ void PackNCHWToNHWCInt8(const void *src, void *dst, int batch, int plane, int ch
 void PackDepthwiseInt8Input(const int8_t *src, int16_t *dst, const ConvParameter *conv_param);
 
 void PackDepthwiseInt8Weight(const int8_t *src, int16_t *dst, const ConvParameter *conv_param);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PACK_H_

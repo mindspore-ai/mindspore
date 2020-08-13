@@ -28,7 +28,12 @@ typedef struct UnstackParameter {
   int after_dims_;
 } UnstackParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void Unistack(float *input, float **output, UnstackParameter *para);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_UNSTACK_H_
-

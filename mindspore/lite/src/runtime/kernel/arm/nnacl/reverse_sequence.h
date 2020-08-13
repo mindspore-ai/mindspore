@@ -36,7 +36,12 @@ typedef struct ReverseSequenceParameter {
   int total_data_size_;
 } ReverseSequenceParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void ReverseSequence(float *input0, int *input1, float *output, ReverseSequenceParameter *para);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_REVERSE_SEQUENCE_H_
-

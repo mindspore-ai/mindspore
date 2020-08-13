@@ -25,7 +25,12 @@ typedef struct PReluParameter {
   int thread_num_;
 } PReluParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void PRelu(float *input, float *output, PReluParameter *prelu_param_, int task_id);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PRELU_H_
-

@@ -18,7 +18,12 @@
 
 #include "nnacl/op_base.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void ApproximateZerosLike(float *input, float *output, int number);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ZEROSLIKE_H_
-

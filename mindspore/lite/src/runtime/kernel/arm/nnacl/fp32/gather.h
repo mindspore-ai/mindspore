@@ -25,8 +25,13 @@ typedef struct GatherParameter {
   int batchDims_;
 } GatherParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int Gather(float *input, int outer_size, int inner_size, int limit, int *indices, int indices_element_size,
            float *output);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_GATHER_H_
-

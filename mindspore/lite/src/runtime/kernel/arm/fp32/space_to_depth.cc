@@ -45,7 +45,7 @@ int SpaceToDepthCPUKernel::Init() {
 }
 
 int SpaceToDepthCPUKernel::ReSize() {
-if (in_tensors_[0]->GetFormat() != schema::Format_NHWC) {
+  if (in_tensors_[0]->GetFormat() != schema::Format_NHWC) {
     MS_LOG(ERROR) << "space_to_depth only support NHWC now!";
     return RET_FORMAT_ERR;
   }

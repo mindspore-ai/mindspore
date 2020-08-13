@@ -21,6 +21,9 @@
 #include "nnacl/conv_parameter.h"
 #include "nnacl/fp32/strassen_matmul.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void PackDeConvWeightFp32(const float *weight, float *dst, int input_channel, int output_channel, int plane);
 
 int DeConvFp32(const float *input, const float *weight, float *output, float *tmp_buffer,
@@ -30,5 +33,8 @@ int DeConvPostFp32C4(const float *src, float *tmp_c4, float *dst, const float *b
                      int input_plane, int kernel_plane, int output_plane, ConvParameter *conv_param);
 int DeConvPostFp32C8x8(const float *src, float *tmp_out, const float *bias, float *dst, int output_channel,
                        ConvParameter *conv_param);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_DECONV_H_

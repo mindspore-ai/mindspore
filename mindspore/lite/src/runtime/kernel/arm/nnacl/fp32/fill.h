@@ -30,7 +30,12 @@ typedef struct FillParameter {
   int num_dims_;
 } FillParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int Fill(float *output, int size, float data);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FILL_H_
-

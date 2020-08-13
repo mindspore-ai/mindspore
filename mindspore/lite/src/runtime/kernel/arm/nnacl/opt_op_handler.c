@@ -16,11 +16,18 @@
 
 #include <stdlib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern void IndirectGemmInt8_24x4_dp(int8_t *dst, const int8_t *src, const int8_t *weight, const int32_t *bias,
                                      size_t ksize, size_t ic4, size_t output_channel, size_t offset,
                                      const int32_t *input_sum, size_t act_min, size_t act_max, size_t out_zp,
                                      size_t out_multiplier, size_t shift_before, size_t shift_after);
+#ifdef __cplusplus
+}
+#endif
 
+#ifdef ENABLE_ARM64
 void IndirectGemmInt8_optimize_handler(int8_t *dst, const int8_t *src, const int8_t *weight, const int32_t *bias,
                                        size_t ksize, size_t ic4, size_t output_channel, size_t offset,
                                        const int32_t *input_sum, size_t act_min, size_t act_max, size_t out_zp,
@@ -28,3 +35,4 @@ void IndirectGemmInt8_optimize_handler(int8_t *dst, const int8_t *src, const int
   return IndirectGemmInt8_24x4_dp(dst, src, weight, bias, ksize, ic4, output_channel, offset, input_sum, act_min,
                                   act_max, out_zp, out_multiplier, shift_before, shift_after);
 }
+#endif

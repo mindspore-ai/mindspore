@@ -23,6 +23,9 @@
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int ElementAbs(float *input, float *output, int element_size);
 
 int ElementCos(float *input, float *output, int element_size);
@@ -46,6 +49,8 @@ int ElementRound(float *input, float *output, int element_size);
 int ElementFloor(float *input, float *output, int element_size);
 
 int ElementCeil(float *input, float *output, int number);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ARITHMETIC_SELF_H_
-

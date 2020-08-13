@@ -23,6 +23,9 @@
 #include "nnacl/arithmetic_common.h"
 #include "nnacl/errorcode.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int ElementMul(float *input0, float *input1, float *output, int element_size);
 int ElementMulRelu(float *input0, float *input1, float *output, int element_size);
 int ElementMulRelu6(float *input0, float *input1, float *output, int element_size);
@@ -102,5 +105,8 @@ int BroadcastGreater(float *input0, float *input1, float *tile_input0, float *ti
 int ElementGreaterEqual(float *input0, float *input1, float *output, int element_size);
 int BroadcastGreaterEqual(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
                           int element_size, ArithmeticParameter *param);
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ARITHMETIC_H_
+#ifdef __cplusplus
+}
+#endif
 
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ARITHMETIC_H_

@@ -18,6 +18,9 @@
 
 #include "nnacl/arg_min_max_parameter.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void ArgMax(const float *input, float *output, ArgMinMaxParameter *param, int pre_axis_count, int axis_count,
             int after_axis_count);
 void ArgMin(const float *input, float *output, ArgMinMaxParameter *param, int pre_axis_count, int axis_count,
@@ -30,4 +33,8 @@ void ArgMaxDim2(const float *input, float *output, const int *in_shape, ArgMinMa
 void ArgMinDim2(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param);
 void ArgMaxDim3(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param);
 void ArgMinDim3(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param);
+#ifdef __cplusplus
+}
+#endif
+
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_ARG_MIN_MAX_H_

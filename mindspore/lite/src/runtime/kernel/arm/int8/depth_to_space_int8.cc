@@ -65,7 +65,7 @@ int DepthToSpaceInt8CPUKernel::Run() {
   if (in_quant_arg_.scale_ == out_quant_arg_.scale_ && in_quant_arg_.zp_ == out_quant_arg_.zp_) {
     DepthToSpaceForNHWC(input_data, output_data, in_shape.data(), param);
   } else {
-    DepthToSpaceForNHWC(input_data, output_data, in_shape.data(), param, &in_quant_arg_, &out_quant_arg_);
+    DepthToSpaceForNHWCInt8(input_data, output_data, in_shape.data(), param, &in_quant_arg_, &out_quant_arg_);
   }
   return RET_OK;
 }

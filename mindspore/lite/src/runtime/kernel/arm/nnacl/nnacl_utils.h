@@ -18,10 +18,13 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_NNACL_UTILS_H_
 
 #include <stdint.h>
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 #if defined(__arm__) || defined(__aarch64__)
 uint32_t getHwCap(int hwcap_type);
 #endif
-
+#ifdef __cplusplus
+}
+#endif
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_NNACL_UTILS_H_
-

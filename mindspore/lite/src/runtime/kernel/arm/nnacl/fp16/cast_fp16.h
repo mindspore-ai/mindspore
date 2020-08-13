@@ -16,11 +16,17 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CAST_FP16_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CAST_FP16_H_
 
+#ifdef ENABLE_NEON
 #include <arm_neon.h>
+#endif
 #include "nnacl/op_base.h"
 #include "nnacl/fp32/cast.h"
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 void Float32ToFloat16(const float *input, float16_t *output, int number);
 void Float16ToFloat32(const float16_t *input, float *output, int number);
-
+#ifdef __cplusplus
+}
+#endif
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CAST_FP16_H_

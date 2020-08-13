@@ -23,7 +23,12 @@ typedef struct UniqueParameter {
   OpParameter op_parameter_;
 } UniqueParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void Unique(float *input, int input_len, float *output0, int *output0_len, int *output1);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_UNIQUE_H
-

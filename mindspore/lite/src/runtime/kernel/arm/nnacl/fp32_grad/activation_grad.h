@@ -27,6 +27,10 @@ typedef struct ActivationGradParameter {
   float alpha_{0.01};
 } ActivationGradParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 inline int ReluGrad(float *src0, float *src1, int length, float *dst) {
   for (int i = 0; i < length; ++i) {
     dst[i] = src1[i] > 0 ? 1.0f : 0.0f;
@@ -84,5 +88,9 @@ inline int HSigmoidGrad(float *src0, float *src1, int length, float *dst) {
   }
   return OPCLIB_OK;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_GRAD_ACTIVATION_GRAD_H_

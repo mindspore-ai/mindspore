@@ -24,6 +24,9 @@
 #include "nnacl/quantization/quantize.h"
 #include "nnacl/resize_parameter.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int ResizeBilinearInt8(const int8_t *input_data, int8_t *output_data, const int *input_shape, const int *output_shape,
                        const bool align_corners, QuantArg *quant_in, QuantArg *quant_out, const QuantMulArg *mul_arg,
                        int tid, int thread_num);
@@ -42,4 +45,8 @@ void ComputeInterpolationArgs(const int32_t pos, const int32_t scale, const int3
 
 void ComputeNearestNeighborInt(const int32_t pos, const int in_size, const int32_t new_size, const bool align_corners,
                                int32_t *nearest);
+#ifdef __cplusplus
+}
+#endif
+
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_RESIZE_H_

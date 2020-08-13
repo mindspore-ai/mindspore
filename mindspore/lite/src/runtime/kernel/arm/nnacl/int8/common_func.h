@@ -59,4 +59,3 @@ void ConvDwInt8Center(int8_t *dst, const int16_t *src, const int16_t *weight, co
 #endif
 
 #endif /* MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_COMMON_FUNC_H_ */
-

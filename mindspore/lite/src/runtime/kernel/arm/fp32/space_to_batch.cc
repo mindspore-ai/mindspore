@@ -23,9 +23,9 @@
 #include "include/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_FORMAT_ERR;
 using mindspore::lite::RET_OK;
-using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OP_EXECUTE_FAILURE;
 using mindspore::schema::PrimitiveType_SpaceToBatch;
 
@@ -73,8 +73,8 @@ int SpaceToBatchCPUKernel::Run() {
   float *tmp_space[3] = {nullptr, nullptr, nullptr};
   if (param->need_paddings_) {
     for (int i = 0; i < 3; ++i) {
-      tmp_space[i]
-        = reinterpret_cast<float *>(context_->allocator->Malloc(param->num_elements_padded_ * sizeof(float)));
+      tmp_space[i] =
+        reinterpret_cast<float *>(context_->allocator->Malloc(param->num_elements_padded_ * sizeof(float)));
       (void)memset(tmp_space[i], 0, param->num_elements_padded_ * sizeof(float));
       if (tmp_space[i] == nullptr) {
         MS_LOG(ERROR) << "malloc tmp buffer fail!";

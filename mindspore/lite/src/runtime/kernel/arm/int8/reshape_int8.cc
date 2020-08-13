@@ -78,7 +78,7 @@ int ReshapeInt8CPUKernel::DoExecute(int task_id) {
   int8_t *cur_input0_data = input_data_ + task_id * count_unit_;
   int8_t *cur_output_data = output_data_ + task_id * count_unit_;
 
-  Reshape(cur_input0_data, cur_output_data, real_dst_count, reshape_param_->quant_para_);
+  Int8Reshape(cur_input0_data, cur_output_data, real_dst_count, reshape_param_->quant_para_);
   return lite::RET_OK;
 }
 }  // namespace mindspore::kernel

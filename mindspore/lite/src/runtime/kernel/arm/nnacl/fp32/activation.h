@@ -24,7 +24,7 @@
 typedef struct ActivationParameter {
   OpParameter op_parameter_;
   int type_;
-  float alpha_{0.2};
+  float alpha_;
 } ActivationParameter;
 
 inline int Relu(const float *src, int length, float *dst) {

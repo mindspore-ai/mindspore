@@ -23,6 +23,9 @@
 #include "nnacl/conv_parameter.h"
 #include "nnacl/op_base.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void Im2ColPackUnitFp16(float16_t *input_data, ConvParameter *conv_param, float16_t *packed_input, int real_cal_num,
                         int block_index);
 
@@ -53,5 +56,8 @@ void PackNCHWFp32ToNC8HW8Fp16(float *src, float16_t *dst, int batch, int plane, 
 void PackNHWCFp32ToNHWC8Fp16(float *src, float16_t *dst, int batch, int plane, int channel);
 
 void PackNHWC8Fp16ToNHWCFp32(float16_t *src, float *dst, int batch, int plane, int channel);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP16_PACK_FP16_H_

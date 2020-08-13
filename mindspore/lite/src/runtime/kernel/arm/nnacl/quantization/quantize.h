@@ -21,7 +21,6 @@
 #include <math.h>
 #include <stdlib.h>
 #include <limits.h>
-#include <limits>
 #include "nnacl/op_base.h"
 
 typedef struct QuantArg {
@@ -116,9 +115,9 @@ typedef struct MatmulQuantArg {
 } MatmulQuantArg;
 
 typedef struct PadQuantArg {
-  QuantArg *in_quant_args_ = nullptr;
-  QuantArg *out_quanr_args_ = nullptr;
-  int8_t *constant_value_ = nullptr;
+  QuantArg *in_quant_args_;
+  QuantArg *out_quanr_args_;
+  int8_t *constant_value_;
 } PadQuantArg;
 
 typedef struct MulQuantArg {
@@ -198,12 +197,15 @@ typedef struct ArithmeticQuantArg {
   QuantArg in1_args_;
   QuantArg out_args_;
 } ArithmeticQuantArg;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void QuantizeMultiplier(double double_multiplier, int32_t *quantized_multiplier, int *shift);
 
 inline void QuantizeMultiplierSmallerThanOne(double double_multiplier, int32_t *quantized_multiplier,
                                              int *right_shift) {
-  if (quantized_multiplier == nullptr || right_shift == nullptr) {
+  if (quantized_multiplier == NULL || right_shift == NULL) {
     return;
   }
   int shift;
@@ -263,5 +265,9 @@ inline void Dequantize(int8_t *input_data, int length, float scale, int zero_poi
     output_data[i] = scale * (input_data[i] - zero_point);
   }
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_QUANTIZATION_QUANTIZE_H_

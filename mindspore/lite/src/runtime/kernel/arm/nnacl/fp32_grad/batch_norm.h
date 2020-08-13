@@ -23,6 +23,10 @@ typedef struct bnParameter {
   int spatial;
   float eps;
 } bnParameter;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 void scaleBias(const float *scales, int batch, int n, int size, float *output);
 void normalize(const float *x, const float *mean, const float *variance, float eps, int batch, int filters, int spatial,
                float *out);
@@ -35,6 +39,8 @@ void meanAdd(const float *x, const float *mean, const float *variance_delta, int
              float *mean_add, float *mean_delta);
 void NormalizeDelta(const float *x, const float *mean, const float *variance, const float *mean_delta,
                     const float *variance_delta, int batch, int filters, int spatial, float eps, float *delta);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_BATCH_NORM_H_
-

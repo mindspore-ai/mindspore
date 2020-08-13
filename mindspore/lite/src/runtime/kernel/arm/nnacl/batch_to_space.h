@@ -26,8 +26,15 @@ typedef struct BatchToSpaceParameter {
   int32_t crops_[BATCH_TO_SPACE_CROPS_SIZE];
 } BatchToSpaceParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void BatchToSpaceNoCropForNHWC(const void *input, void *output, const int *in_shape, int out_n, const int *block,
                                int data_size);
 void BatchToSpaceForNHWC(const void *input, void *output, const int *in_shape, int out_n, const int *block,
                          const int *crops, int data_size);
+#ifdef __cplusplus
+}
+#endif
+
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_BATCH_TO_SPACE_H_

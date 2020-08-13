@@ -18,9 +18,12 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_QUANTIZATION_FIXED_POINT_H_
 
 #include <limits.h>
-#include "include/infer_log.h"
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 // returns the high-32 bits of a * b with rounding
@@ -51,8 +54,6 @@ inline int16_t SaturatingRoundingDoublingHighMulInt16(int16_t a, int16_t b) {
 // division by a 2^exponent with rounding
 // or arithmetic right shift with rouding
 inline int RoundingDivideByPOT(int x, int exponent) {
-  MS_ASSERT(exponent >= 0);
-  MS_ASSERT(exponent <= 31);
   const int mask = (1ll << exponent) - 1;
   const int remainder = x & mask;
   const int threshold = (mask >> 1) + (x < 0 ? 1 : 0);
@@ -62,6 +63,10 @@ inline int RoundingDivideByPOT(int x, int exponent) {
 inline int MultiplyByQuantizedMultiplier(int32_t value, int32_t multiplier, int32_t left_shift, int32_t right_shift) {
   return RoundingDivideByPOT(SaturatingRoundingDoublingHighMul(value * (1 << left_shift), multiplier), -right_shift);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef ENABLE_NEON
 inline int32x4_t RoundingDivideByPOTInt32x4(int32x4_t x, int exponent) {

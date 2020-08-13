@@ -32,6 +32,13 @@ typedef struct OneHotParameter {
   int inner_size_;
 } OneHotParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int OneHot(const int *indices, float *output, const OneHotParameter *one_hot_param, const int tid,
            const int thread_num);
+#ifdef __cplusplus
+}
+#endif
+
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_ONE_HOT_H_

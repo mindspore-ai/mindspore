@@ -20,17 +20,23 @@
 #define SLICE_SHAPE_MAX_SIZE 4
 
 typedef struct SliceParameter {
-    OpParameter op_parameter_;
-    int32_t begin_[SLICE_SHAPE_MAX_SIZE];
-    int32_t end_[SLICE_SHAPE_MAX_SIZE];
-    int32_t size_[SLICE_SHAPE_MAX_SIZE];
-    int32_t shape_[SLICE_SHAPE_MAX_SIZE];
-    int32_t param_length_;
-    int32_t thread_id_;
+  OpParameter op_parameter_;
+  int32_t begin_[SLICE_SHAPE_MAX_SIZE];
+  int32_t end_[SLICE_SHAPE_MAX_SIZE];
+  int32_t size_[SLICE_SHAPE_MAX_SIZE];
+  int32_t shape_[SLICE_SHAPE_MAX_SIZE];
+  int32_t param_length_;
+  int32_t thread_id_;
 } SliceParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void PadSliceParameterTo4D(SliceParameter *param);
 void DoSlice(const float *input, float *output, SliceParameter *param);
 void DoSliceNoParallel(const float *input, float *output, SliceParameter *param);
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_SLICE_H_
+#ifdef __cplusplus
+}
+#endif
 
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_SLICE_H_

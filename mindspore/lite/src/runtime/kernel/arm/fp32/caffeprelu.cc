@@ -31,7 +31,7 @@ namespace mindspore::kernel {
 int CaffePReluCPUKernel::Init() { return RET_OK; }
 
 int CaffePReluCPUKernel::DoExcute(int task_id) {
-  PRelu(input_data, output_data, prelu_param_, task_id);
+  CaffePRelu(input_data, output_data, prelu_param_, task_id);
   return RET_OK;
 }
 

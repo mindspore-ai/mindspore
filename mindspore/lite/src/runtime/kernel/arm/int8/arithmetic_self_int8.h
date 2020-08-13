@@ -48,37 +48,37 @@ class ArithmeticSelfInt8CPUKernel : public LiteKernel {
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
     switch (parameter->type_) {
       case PrimitiveType_Round:
-        arithmeticSelf_run_ = ElementRound;
+        arithmeticSelf_run_ = Int8ElementRound;
         break;
       case PrimitiveType_Floor:
-        arithmeticSelf_run_ = ElementFloor;
+        arithmeticSelf_run_ = Int8ElementFloor;
         break;
       case PrimitiveType_Ceil:
-        arithmeticSelf_run_ = ElementCeil;
+        arithmeticSelf_run_ = Int8ElementCeil;
         break;
       case PrimitiveType_Abs:
-        arithmeticSelf_run_ = ElementAbs;
+        arithmeticSelf_run_ = Int8ElementAbs;
         break;
       case PrimitiveType_Sin:
-        arithmeticSelf_run_ = ElementSin;
+        arithmeticSelf_run_ = Int8ElementSin;
         break;
       case PrimitiveType_Cos:
-        arithmeticSelf_run_ = ElementCos;
+        arithmeticSelf_run_ = Int8ElementCos;
         break;
       case PrimitiveType_Log:
-        arithmeticSelf_run_ = ElementLog;
+        arithmeticSelf_run_ = Int8ElementLog;
         break;
       case PrimitiveType_Sqrt:
-        arithmeticSelf_run_ = ElementSqrt;
+        arithmeticSelf_run_ = Int8ElementSqrt;
         break;
       case PrimitiveType_Rsqrt:
-        arithmeticSelf_run_ = ElementRsqrt;
+        arithmeticSelf_run_ = Int8ElementRsqrt;
         break;
       case PrimitiveType_Square:
-        arithmeticSelf_run_ = ElementSquare;
+        arithmeticSelf_run_ = Int8ElementSquare;
         break;
       case PrimitiveType_LogicalNot:
-        arithmeticSelf_run_ = ElementLogicalNot;
+        arithmeticSelf_run_ = Int8ElementLogicalNot;
         break;
       default:
         break;

@@ -17,11 +17,17 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP16_POOLING_FP16_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP16_POOLING_FP16_H_
 
+#ifdef ENABLE_NEON
 #include <arm_neon.h>
+#endif
 #include "nnacl/pooling_parameter.h"
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 void AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingParameter *pooling_param, int task_id);
 
 void MaxPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingParameter *pooling_param, int task_id);
-
+#ifdef __cplusplus
+}
+#endif
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP16_POOLING_FP16_H_

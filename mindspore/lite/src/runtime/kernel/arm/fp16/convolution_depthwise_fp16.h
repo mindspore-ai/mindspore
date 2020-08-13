@@ -22,6 +22,17 @@
 #include "src/runtime/kernel/arm/base/convolution_base.h"
 #include "src/runtime/kernel/arm/nnacl/fp16/conv_depthwise_fp16.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+void ConvDwC8Fp16(float16_t *output_data, const float16_t *input_data, const float16_t *weight_data,
+                  const float16_t *bias_data, const ConvParameter *conv_param, const SlidingWindowParam *sliding,
+                  int task_id);
+#ifdef __cplusplus
+}
+#endif
+
+
 namespace mindspore::kernel {
 class ConvolutionDepthwiseFp16CPUKernel : public ConvolutionBaseCPUKernel {
  public:

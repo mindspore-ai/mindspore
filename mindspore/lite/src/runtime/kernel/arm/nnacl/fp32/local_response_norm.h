@@ -27,7 +27,13 @@ typedef struct LocalResponseNormParameter {
   float beta_;
 } LocalResponseNormParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int LocalResponseNorm(float *input_ptr, int out_size, int channel, float *output_ptr,
                       LocalResponseNormParameter *param);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_LOCAL_RESPONSE_NORM_H_

@@ -24,10 +24,13 @@
 #include "nnacl/conv_parameter.h"
 #include "nnacl/op_base.h"
 
-using InputTransformUnitFunc = void (*)(const float *src_data, float *dst_data, int src_step, int dst_step);
-using OutputTransformUnitFunc = void (*)(const float *src_data, float *dst_data, const float *bias_data, int src_step,
-                                         int dst_step);
+typedef void (*InputTransformUnitFunc)(const float *src_data, float *dst_data, int src_step, int dst_step);
+typedef void (*OutputTransformUnitFunc)(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                        int dst_step);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void InputTransform4x4Unit(const float *src_data, float *dst_data, int src_step, int dst_step);
 
 void InputTransform8x8Unit(const float *src_data, float *dst_data, int src_step, int dst_step);
@@ -56,5 +59,8 @@ OutputTransformUnitFunc GetOutputTransFunc(int input_unit, int output_unit);
 
 void CheckIfUseWinograd(bool *use_winograd, int *output_unit, ConvParameter *conv_param,
                         InputTransformUnitFunc input_trans_func, OutputTransformUnitFunc output_trans_func);
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_WINOGRAD_UTILS_H_
+#ifdef __cplusplus
+}
+#endif
 
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_WINOGRAD_UTILS_H_

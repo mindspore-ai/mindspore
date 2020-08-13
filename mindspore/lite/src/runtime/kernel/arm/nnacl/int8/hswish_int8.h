@@ -32,6 +32,12 @@ typedef struct HswishQuantArg {
   int32_t output_multiplier_exponent;
 } HswishQuantArg;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int HSwishInt8(const int8_t *src, int length, int8_t *dst, HswishQuantArg *arg);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_HSWISH_INT8_H_

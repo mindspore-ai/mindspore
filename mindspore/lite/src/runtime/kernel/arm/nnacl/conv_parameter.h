@@ -55,7 +55,6 @@ typedef struct ConvParameter {
   bool is_relu6_;
 } ConvParameter;
 
-
 typedef struct SlidingWindowParam {
   int left_;
   int right_;

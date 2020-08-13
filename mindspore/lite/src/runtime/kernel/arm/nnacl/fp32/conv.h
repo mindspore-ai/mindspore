@@ -28,11 +28,14 @@
 #include "nnacl/winograd_utils.h"
 #include "nnacl/fp32/conv_depthwise.h"
 
-using TmpBufferAddress = float *;
+typedef float *TmpBufferAddress;
 typedef void (*GEMM_FUNC_FP32)(float *output, const float *input, const float *weight, const float *bias, size_t step,
                                size_t ic4, size_t output_channel, size_t offset, size_t mode, size_t writeC4,
                                size_t relu, size_t relu6);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void SWBorder(float *dst, const float *src, const float *weight, const float *bias, int top, int bottom, int left,
               int right, const ConvParameter *conv_param, const SlidingWindowParam *sliding);
 
@@ -64,5 +67,8 @@ void UnPackWinogradOutput(const float *src, float *dst, int batch, int height, i
 // fp32 conv3x3
 void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_data, float *output_data,
                  TmpBufferAddress *buffer_list, int task_id, ConvParameter *conv_param, GEMM_FUNC_FP32 gemm_func);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_CONV_H_

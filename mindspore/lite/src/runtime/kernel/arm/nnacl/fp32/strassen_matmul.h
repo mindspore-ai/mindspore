@@ -28,6 +28,9 @@
 #define FP32_STRASSEN_WEIGHT_UINT (C4NUM * C4NUM)
 #define FP32_STRASSEN_MAX_RECURSION 5
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int RecursionMatmul(const float *a_ptr, const float *b_ptr, float *c_ptr, StrassenMatMulParameter *matmul_param,
                     int max_recursion, int, float *tmp_a_ptr);
 int CommonMatMul(const float *a_ptr, const float *b_ptr, float *c_ptr, StrassenMatMulParameter *Matmul_param,
@@ -35,6 +38,8 @@ int CommonMatMul(const float *a_ptr, const float *b_ptr, float *c_ptr, StrassenM
 
 int StrassenMatmul(const float *a_ptr, const float *b_ptr, float *c_ptr, StrassenMatMulParameter *matmul_param,
                    int max_recursion, int cur_recursion, float *tmp_a_ptr);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_STRASSEN_MATMUL_H_
-

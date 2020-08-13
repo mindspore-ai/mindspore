@@ -21,13 +21,17 @@
 #endif
 #include <memory.h>
 #include "nnacl/op_base.h"
-#include "schema/ops_generated.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int ResizeBilinear(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
                    bool align_corners, int tid, int thread_num);
 
 int ResizeNearestNeighbor(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
                           int tid, int thread_num);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_RESIZE_H_
-

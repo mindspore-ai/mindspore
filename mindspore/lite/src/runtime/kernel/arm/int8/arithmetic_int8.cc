@@ -71,9 +71,7 @@ void ArithmeticInt8CPUKernel::FreeTileData() {
   tile_data1_ = nullptr;
 }
 
-ArithmeticInt8CPUKernel::~ArithmeticInt8CPUKernel() {
-  FreeTileData();
-}
+ArithmeticInt8CPUKernel::~ArithmeticInt8CPUKernel() { FreeTileData(); }
 
 int ArithmeticInt8CPUKernel::Init() {
   switch (op_parameter_->type_) {

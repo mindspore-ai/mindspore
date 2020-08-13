@@ -25,6 +25,13 @@ typedef struct ROIPoolingParameter {
   float scale_;
 } ROIPoolingParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int ROIPooling(float *in_ptr, float *out_ptr, float *roi, const int *in_shape, const int *out_shape, int dim, int tid,
-                ROIPoolingParameter *param);
+               ROIPoolingParameter *param);
+#ifdef __cplusplus
+}
+#endif
+
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_ROI_POOLING_H_

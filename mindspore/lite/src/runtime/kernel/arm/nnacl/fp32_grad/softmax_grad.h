@@ -20,10 +20,10 @@
 #include "nnacl/op_base.h"
 
 typedef struct SoftmaxCrossEntropyParameter {
-    OpParameter op_parameter;
-    int32_t batch_size_;
-    unsigned int number_of_classes_;
-    int n_dim_;
-    int input_shape_[5];
+  OpParameter op_parameter;
+  int32_t batch_size_;
+  unsigned int number_of_classes_;
+  int n_dim_;
+  int input_shape_[5];
 } SoftmaxCrossEntropyParameter;
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_SOFTMAX_GRAD_H_

@@ -24,4 +24,3 @@ typedef struct ShapeParameter {
 } ShapeParameter;
 
 #endif  // MINDSPORE_CCSRC_KERNEL_CPU_ARM_NNACL_SHAPE_H_
-

@@ -25,6 +25,12 @@ typedef struct TopkNodeInt8 {
   int32_t index;
 } TopkNodeInt8;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void TopkInt8(int8_t *input_data, int8_t *output_data, int32_t *output_index, TopkParameter *parameter);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_TOPK_INT8_H_

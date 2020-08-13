@@ -18,7 +18,12 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_RESHAHPE_H_
 #include "nnacl/op_base.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void Reshape(void *input_ptr, void *output_ptr, size_t data_size);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_RESHAHPE_H_
-

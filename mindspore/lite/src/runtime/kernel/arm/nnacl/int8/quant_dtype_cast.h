@@ -25,7 +25,13 @@ typedef struct QuantDTypeCastParameter {
   int32_t dstT;
 } QuantDTypeCastParameter;
 
-int DequantizeInt8(int8_t *quant_values, float *real_values, float scale, int32_t zp, int size);
-int QuantizeToInt8(float *real_values, int8_t *quant_values, float scale, int32_t zp, int size);
+#ifdef __cplusplus
+extern "C" {
+#endif
+int DoDequantizeInt8(int8_t *quant_values, float *real_values, float scale, int32_t zp, int size);
+int DoQuantizeToInt8(float *real_values, int8_t *quant_values, float scale, int32_t zp, int size);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_QUANTDTYPECAST_H_

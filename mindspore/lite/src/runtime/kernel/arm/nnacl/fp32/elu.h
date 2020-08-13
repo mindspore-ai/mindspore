@@ -26,6 +26,12 @@ typedef struct EluParameter {
   int in_size_;
 } EluParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int Elu(float *input_data, float *output_data, EluParameter *parameter, int task_id);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_ELU_H_

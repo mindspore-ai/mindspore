@@ -24,7 +24,12 @@ typedef struct SqueezeParameter {
   int axes_[8];
 } SqueezeParameter;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int DoSqueeze(float *input_ptr, float *output_ptr, size_t data_size);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_SQUEEZE_H_
-
