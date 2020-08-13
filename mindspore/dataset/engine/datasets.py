@@ -727,7 +727,7 @@ class Dataset:
             sizes (Union[list[int], list[float]]): If a list of integers [s1, s2, …, sn] is
                 provided, the dataset will be split into n datasets of size s1, size s2, …, size sn
                 respectively. If the sum of all sizes does not equal the original dataset size, an
-                an error will occur.
+                error will occur.
                 If a list of floats [f1, f2, …, fn] is provided, all floats must be between 0 and 1
                 and must sum to 1, otherwise an error will occur. The dataset will be split into n
                 Datasets of size round(f1*K), round(f2*K), …, round(fn*K) where K is the size of the
