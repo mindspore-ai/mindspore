@@ -352,6 +352,7 @@ table FullConnection {
     hasBias: bool;
     axis: int;
     useAxis: bool;
+    activationType: ActivationType = 0;
 }
 
 // Mean(input_tensor, axis, keep_dims)

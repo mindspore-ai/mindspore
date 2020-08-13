@@ -38,6 +38,13 @@ STATUS TfliteFullyConnectedParser::Parse(const std::unique_ptr<tflite::OperatorT
   MS_LOG(DEBUG) << "parse TfliteFullyConnectedParser";
   std::unique_ptr<schema::FullConnectionT> attr(new schema::FullConnectionT());
 
+  const auto &tflite_attr = tfliteOp->builtin_options.AsFullyConnectedOptions();
+  if (tflite_attr == nullptr) {
+    MS_LOG(ERROR) << "get op: " << op->name << " attr failed";
+    return  RET_NULL_PTR;
+  }
+  attr->activationType = GetActivationFunctionType(tflite_attr->fused_activation_function);
+
   auto weight_index = tfliteOp->inputs[1];
   const auto &weight_tensor = tfliteTensors[weight_index];
   if (weight_tensor == nullptr) {

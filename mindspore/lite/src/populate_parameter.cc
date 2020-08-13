@@ -226,7 +226,14 @@ OpParameter *PopulateFullconnectionParameter(const lite::Primitive *primitive) {
   matmul_param->b_transpose_ = true;
   matmul_param->a_transpose_ = false;
   matmul_param->has_bias_ = param->hasBias();
-  matmul_param->act_type_ = ActType_No;
+  if (param->activationType() == schema::ActivationType_RELU) {
+    matmul_param->act_type_ = ActType_Relu;
+  } else if (param->activationType() == schema::ActivationType_RELU6) {
+    matmul_param->act_type_ = ActType_Relu6;
+  } else {
+    matmul_param->act_type_ = ActType_No;
+  }
+
   return reinterpret_cast<OpParameter *>(matmul_param);
 }
 

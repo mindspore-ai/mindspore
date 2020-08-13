@@ -48,6 +48,22 @@ int PowerTestInit(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lite
   return out_t->ElementsNum();
 }
 
+int PowerTestInit2(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lite::tensor::Tensor *> *outputs_,
+                   float *a_ptr, std::vector<int> a_shape, std::vector<int> c_shape) {
+  auto in_t =
+    new lite::tensor::Tensor(kNumberTypeFloat, a_shape, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  in_t->MallocData();
+  memcpy(in_t->Data(), a_ptr, sizeof(float) * in_t->ElementsNum());
+  inputs_->push_back(in_t);
+
+  auto out_t =
+    new lite::tensor::Tensor(kNumberTypeFloat, c_shape, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  out_t->MallocData();
+  outputs_->push_back(out_t);
+
+  return out_t->ElementsNum();
+}
+
 TEST_F(TestPowerFp32, Simple) {
   std::vector<lite::tensor::Tensor *> inputs_;
   std::vector<lite::tensor::Tensor *> outputs_;
@@ -62,13 +78,12 @@ TEST_F(TestPowerFp32, Simple) {
   int total_size = PowerTestInit(&inputs_, &outputs_, a, b, a_shape, b_shape, c_shape);
   auto ctx = new lite::Context;
   ctx->thread_num_ = 1;
-  kernel::PowerCPUKernel *op = new kernel::PowerCPUKernel(reinterpret_cast<OpParameter *>(param), inputs_, outputs_,
-                                                          ctx, nullptr);
+  kernel::PowerCPUKernel *op =
+    new kernel::PowerCPUKernel(reinterpret_cast<OpParameter *>(param), inputs_, outputs_, ctx, nullptr);
   op->Init();
   op->Run();
   float correct[] = {1, 64, 2187, 65536};
   float *output = reinterpret_cast<float *>(outputs_[0]->Data());
-  for (int i = 0; i < 4; ++i) printf("%f ", output[i]);
   CompareOutputData(reinterpret_cast<float *>(outputs_[0]->Data()), correct, total_size, 0.0001);
   delete op;
   for (auto t : inputs_) delete t;
@@ -79,18 +94,17 @@ TEST_F(TestPowerFp32, Broadcast) {
   std::vector<lite::tensor::Tensor *> inputs_;
   std::vector<lite::tensor::Tensor *> outputs_;
   auto param = new PowerParameter();
+  param->power_ = 2;
   param->scale_ = 1;
   param->shift_ = 0;
   float a[] = {1, 2, 3, 4};
-  float b[] = {2};
   std::vector<int> a_shape = {2, 2};
-  std::vector<int> b_shape = {1};
   std::vector<int> c_shape = {2, 2};
-  int total_size = PowerTestInit(&inputs_, &outputs_, a, b, a_shape, b_shape, c_shape);
+  int total_size = PowerTestInit2(&inputs_, &outputs_, a, a_shape, c_shape);
   auto ctx = new lite::Context;
   ctx->thread_num_ = 2;
-  kernel::PowerCPUKernel *op = new kernel::PowerCPUKernel(reinterpret_cast<OpParameter *>(param), inputs_, outputs_,
-                                                          ctx, nullptr);
+  kernel::PowerCPUKernel *op =
+    new kernel::PowerCPUKernel(reinterpret_cast<OpParameter *>(param), inputs_, outputs_, ctx, nullptr);
   op->Init();
   op->Run();
   float correct[] = {1, 4, 9, 16};
