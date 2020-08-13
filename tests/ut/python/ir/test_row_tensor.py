@@ -421,17 +421,16 @@ def test_row_tensor_with_control_flow_if():
 
 
 class EmbeddingLookUpBnNet(nn.Cell):
-    def __init__(self, param_np, target='CPU'):
+    def __init__(self, vocab_size, embedding_size, target='CPU'):
         super().__init__()
-        self.param = Parameter(Tensor(param_np), name="w1")
-        self.embedding_lookup = nn.EmbeddingLookup(target=target)
+        self.embedding_lookup = nn.EmbeddingLookup(vocab_size, embedding_size, param_init='ones', target=target)
         self.bn = nn.BatchNorm2d(num_features=3)
         self.mul = P.Mul()
         self.reshape = P.Reshape()
         self.relu = nn.PReLU()
 
     def construct(self, indices):
-        x = self.embedding_lookup(self.param, indices)
+        x = self.embedding_lookup(indices)
         x = self.reshape(x, (2, 3, 2, 2))
         x = self.relu(x)
         x = self.bn(x)
@@ -439,10 +438,9 @@ class EmbeddingLookUpBnNet(nn.Cell):
 
 
 def test_embedding_lookup_with_mix_precision():
-    param_np = np.ones([8, 8]).astype(np.float32)
     data = Tensor(np.array([0, 1, 2]).astype(np.int32))
     label = Tensor(np.random.randn(*(2, 3, 2, 2)).astype(np.float32))
-    net = EmbeddingLookUpBnNet(param_np, target='CPU')
+    net = EmbeddingLookUpBnNet(8, 8, target='CPU')
 
     criterion = nn.SoftmaxCrossEntropyWithLogits(reduction='mean')
     optimizer = nn.Adam(params=net.trainable_params(), learning_rate=0.1)
