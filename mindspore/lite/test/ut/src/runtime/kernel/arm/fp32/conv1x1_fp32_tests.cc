@@ -370,26 +370,35 @@ TEST_F(TestConv1x1Fp32, Conv1x1Test2) {
   conv1x1->Run();
   CompareOutputData(reinterpret_cast<float *>(outputs_[0]->Data()), correct, total_size, 0.0001);
 
-  /* running warm up */
-  for (int i = 0; i < 0; i++) {
-    conv1x1->Run();
+  auto ptr = reinterpret_cast<float *>(outputs_[0]->Data());
+  bool first = true;
+  for (int i = 0; i < total_size; i++) {
+    if (fabs(ptr[i] - correct[i]) > 0.001 && first) {
+      printf("%d %f %f\n", i, ptr[i], correct[i]);
+      first = false;
+    }
   }
 
-  /* running time cost */
-  int loop_count = 1;
-  auto time_start = mindspore::lite::GetTimeUs();
-  for (int i = 0; i < loop_count; i++) {
-    conv1x1->Run();
-  }
-  auto time_end = mindspore::lite::GetTimeUs();
-  auto cost = time_end - time_start;
-  uint64_t time_avg = cost / loop_count;
-  printf("1x1 average time : %f ms\n", time_avg / 1000.0f);
-
-  delete conv_param;
-  delete conv1x1;
-  for (auto t : inputs_) delete t;
-  for (auto t : outputs_) delete t;
-  free(correct);
+  //  /* running warm up */
+  //  for (int i = 0; i < 0; i++) {
+  //    conv1x1->Run();
+  //  }
+  //
+  //  /* running time cost */
+  //  int loop_count = 1;
+  //  auto time_start = mindspore::lite::GetTimeUs();
+  //  for (int i = 0; i < loop_count; i++) {
+  //    conv1x1->Run();
+  //  }
+  //  auto time_end = mindspore::lite::GetTimeUs();
+  //  auto cost = time_end - time_start;
+  //  uint64_t time_avg = cost / loop_count;
+  //  printf("1x1 average time : %f ms\n", time_avg / 1000.0f);
+  //
+  //  delete conv_param;
+  //  delete conv1x1;
+  //  for (auto t : inputs_) delete t;
+  //  for (auto t : outputs_) delete t;
+  //  free(correct);
 }
 }  // namespace mindspore

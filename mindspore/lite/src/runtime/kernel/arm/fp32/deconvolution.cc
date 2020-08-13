@@ -152,7 +152,7 @@ int DeConvolutionCPUKernel::DoDeconv(int task_id) {
 
   MatMul(pack_input_, weight_ptr_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_,
          tmp_buffer_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->row_8_, nullptr, ActType_No,
-         matmul_param_->deep_, matmul_param_->row_8_, oc * C8NUM * kernel_plane_);
+         matmul_param_->deep_, matmul_param_->row_8_, oc * C8NUM * kernel_plane_, matmul_param_->col_, false);
 
   return RET_OK;
 }

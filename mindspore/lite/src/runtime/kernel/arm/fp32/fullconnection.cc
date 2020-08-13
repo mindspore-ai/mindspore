@@ -104,7 +104,7 @@ int FullconnectionCPUKernel::DoMatmul(int task_id) {
   MatMul(a_c8_ptr_, b_r8_ptr_ + task_id * thread_stride_ * C8NUM * fc_param_->deep_,
          c_r8x8_ptr_ + task_id * thread_stride_ * C8NUM * fc_param_->row_8_,
          bias_ptr_ + task_id * thread_stride_ * C8NUM, fc_param_->act_type_, fc_param_->deep_, fc_param_->row_8_,
-         cur_oc * 8);
+         cur_oc * 8, 0, false);
   return RET_OK;
 }
 

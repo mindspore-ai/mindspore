@@ -46,7 +46,6 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
 
  public:
   int DoConv1x1(int task_id);
-  int DoConv1x1Post(int task_id);
 
  private:
   int InitConv1x1Param();
@@ -61,7 +60,6 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
   int thread_stride_ = 0;
   float *weight_ptr_ = nullptr;
   float *pack_input_ = nullptr;
-  float *pack_output_ = nullptr;
   float *input_ptr_ = nullptr;
   float *output_ptr_ = nullptr;
 };
