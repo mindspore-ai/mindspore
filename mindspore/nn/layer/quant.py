@@ -205,7 +205,8 @@ class DenseBnAct(Cell):
                  bias_init='zeros',
                  has_bias=True,
                  has_bn=False,
-                 activation=None):
+                 activation=None,
+                 after_fake=True):
         super(DenseBnAct, self).__init__()
         self.dense = basic.Dense(
             in_channels,
@@ -215,6 +216,7 @@ class DenseBnAct(Cell):
             has_bias)
         self.has_bn = validator.check_bool("has_bn", has_bn)
         self.has_act = activation is not None
+        self.after_fake = after_fake
         if has_bn:
             self.batchnorm = BatchNorm1d(out_channels)
         self.activation = get_activation(activation)
