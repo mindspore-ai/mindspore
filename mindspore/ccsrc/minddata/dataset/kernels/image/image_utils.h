@@ -44,50 +44,50 @@ struct JpegErrorManagerCustom {
   jmp_buf setjmp_buffer;
 };
 
-// Returns the interpolation mode in openCV format
-// @param mode: interpolation mode in DE format
+/// \brief Returns the interpolation mode in openCV format
+/// \param[in] mode Interpolation mode in DE format
 int GetCVInterpolationMode(InterpolationMode mode);
 
-// Returns the openCV equivalent of the border type used for padding.
-// @param type
-// @return
+/// \brief Returns the openCV equivalent of the border type used for padding.
+/// \param type
+/// \return Status code
 int GetCVBorderType(BorderType type);
 
-// Returns flipped image
-// @param input/output: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
-// @param flip_code: 1 for Horizontal (around y-axis), 0 for Vertical (around x-axis), -1 for both
-// The flipping happens in place.
+/// \brief Returns flipped image
+/// \param[in] input/output: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
+/// \param flip_code: 1 for Horizontal (around y-axis), 0 for Vertical (around x-axis), -1 for both
+///     The flipping happens in place.
 Status Flip(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, int flip_code);
 
-// Returns Horizontally flipped image
-// @param input/output: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
-// The flipping happens in place.
+/// \brief Returns Horizontally flipped image
+/// \param input/output: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
+/// The flipping happens in place.
 Status HorizontalFlip(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output);
 
-// Returns Vertically flipped image
-// @param input/output: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
-// The flipping happens in place.
+/// \brief Returns Vertically flipped image
+/// \param input/output: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
+/// \note The flipping happens in place.
 Status VerticalFlip(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output);
 
-// Returns Resized image.
-// @param input/output: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
-// @param output_height: height of output
-// @param output_width: width of output
-// @param fx: horizontal scale
-// @param fy: vertical scale
-// @param InterpolationMode: the interpolation mode
-// @param output: Resized image of shape <outputHeight,outputWidth,C> or <outputHeight,outputWidth>
-//                and same type as input
+/// \brief  Returns Resized image.
+/// \param input/output: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
+/// \param output_height: height of output
+/// \param output_width: width of output
+/// \param fx: horizontal scale
+/// \param fy: vertical scale
+/// \param InterpolationMode: the interpolation mode
+/// \param output: Resized image of shape <outputHeight,outputWidth,C> or <outputHeight,outputWidth>
+///                and same type as input
 Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t output_height,
               int32_t output_width, double fx = 0.0, double fy = 0.0,
               InterpolationMode mode = InterpolationMode::kLinear);
 
-// Returns Decoded image
-// Supported images:
-//  BMP JPEG JPG PNG TIFF
-// supported by opencv, if user need more image analysis capabilities, please compile opencv particularlly.
-// @param input: CVTensor containing the not decoded image 1D bytes
-// @param output: Decoded image Tensor of shape <H,W,C> and type DE_UINT8. Pixel order is RGB
+/// \brief Returns Decoded image
+/// Supported images:
+///  BMP JPEG JPG PNG TIFF
+/// supported by opencv, if user need more image analysis capabilities, please compile opencv particularlly.
+/// \param input: CVTensor containing the not decoded image 1D bytes
+/// \param output: Decoded image Tensor of shape <H,W,C> and type DE_UINT8. Pixel order is RGB
 Status Decode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
 
 Status DecodeCv(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
@@ -98,106 +98,107 @@ void JpegSetSource(j_decompress_ptr c_info, const void *data, int64_t data_size)
 
 Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int x = 0, int y = 0,
                          int w = 0, int h = 0);
-// Returns Rescaled image
-// @param input: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
-// @param rescale: rescale parameter
-// @param shift: shift parameter
-// @param output: Rescaled image Tensor of same input shape and type DE_FLOAT32
+
+/// \brief Returns Rescaled image
+/// \param input: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
+/// \param rescale: rescale parameter
+/// \param shift: shift parameter
+/// \param output: Rescaled image Tensor of same input shape and type DE_FLOAT32
 Status Rescale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float rescale, float shift);
 
-// Returns cropped ROI of an image
-// @param input: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
-// @param x: starting horizontal position of ROI
-// @param y: starting vertical position of ROI
-// @param w: width of the ROI
-// @param h: height of the ROI
-// @param output: Cropped image Tensor of shape <h,w,C> or <h,w> and same input type.
+/// \brief Returns cropped ROI of an image
+/// \param input: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
+/// \param x: starting horizontal position of ROI
+/// \param y: starting vertical position of ROI
+/// \param w: width of the ROI
+/// \param h: height of the ROI
+/// \param output: Cropped image Tensor of shape <h,w,C> or <h,w> and same input type.
 Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int x, int y, int w, int h);
 
-// Swaps the channels in the image, i.e. converts HWC to CHW
-// @param input: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
-// @param output: Tensor of shape <C,H,W> or <H,W> and same input type.
+/// \brief Swaps the channels in the image, i.e. converts HWC to CHW
+/// \param input: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
+/// \param output: Tensor of shape <C,H,W> or <H,W> and same input type.
 Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output);
 
-// Swap the red and blue pixels (RGB <-> BGR)
-// @param input: Tensor of shape <H,W,3> and any OpenCv compatible type, see CVTensor.
-// @param output: Swapped image of same shape and type
+/// \brief Swap the red and blue pixels (RGB <-> BGR)
+/// \param input: Tensor of shape <H,W,3> and any OpenCv compatible type, see CVTensor.
+/// \param output: Swapped image of same shape and type
 Status SwapRedAndBlue(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output);
 
-// Crops and resizes the image
-// @param input: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
-// @param x: horizontal start point
-// @param y: vertical start point
-// @param crop_height: height of the cropped ROI
-// @param crop_width: width of the cropped ROI
-// @param target_width: width of the final resized image
-// @param target_height: height of the final resized image
-// @param InterpolationMode: the interpolation used in resize operation
-// @param output: Tensor of shape <targetHeight,targetWidth,C> or <targetHeight,targetWidth>
-//                and same type as input
+/// \brief Crops and resizes the image
+/// \param input: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
+/// \param x: horizontal start point
+/// \param y: vertical start point
+/// \param crop_height: height of the cropped ROI
+/// \param crop_width: width of the cropped ROI
+/// \param target_width: width of the final resized image
+/// \param target_height: height of the final resized image
+/// \param InterpolationMode: the interpolation used in resize operation
+/// \param output: Tensor of shape <targetHeight,targetWidth,C> or <targetHeight,targetWidth>
+///     and same type as input
 Status CropAndResize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int x, int y,
                      int crop_height, int crop_width, int target_height, int target_width, InterpolationMode mode);
 
-// Returns rotated image
-// @param input: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
-// @param fx: rotation center x coordinate
-// @param fy: rotation center y coordinate
-// @param degree: degree to rotate
-// @param expand: if reshape is necessary
-// @param output: rotated image of same input type.
+/// \brief Returns rotated image
+/// \param input: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
+/// \param fx: rotation center x coordinate
+/// \param fy: rotation center y coordinate
+/// \param degree: degree to rotate
+/// \param expand: if reshape is necessary
+/// \param output: rotated image of same input type.
 Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float fx, float fy, float degree,
               InterpolationMode interpolation = InterpolationMode::kNearestNeighbour, bool expand = false,
               uint8_t fill_r = 0, uint8_t fill_g = 0, uint8_t fill_b = 0);
 
-// Returns Normalized image
-// @param input: Tensor of shape <H,W,C> in RGB order and any OpenCv compatible type, see CVTensor.
-// @param mean: Tensor of shape <3> and type DE_FLOAT32 which are mean of each channel in RGB order
-// @param std:  Tensor of shape <3> and type DE_FLOAT32 which are std of each channel in RGB order
-// @param output: Normalized image Tensor of same input shape and type DE_FLOAT32
+/// \brief Returns Normalized image
+/// \param input: Tensor of shape <H,W,C> in RGB order and any OpenCv compatible type, see CVTensor.
+/// \param mean: Tensor of shape <3> and type DE_FLOAT32 which are mean of each channel in RGB order
+/// \param std:  Tensor of shape <3> and type DE_FLOAT32 which are std of each channel in RGB order
+/// \param output: Normalized image Tensor of same input shape and type DE_FLOAT32
 Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
                  const std::shared_ptr<Tensor> &mean, const std::shared_ptr<Tensor> &std);
 
-// Returns image with adjusted brightness.
-// @param input: Tensor of shape <H,W,3> in RGB order and any OpenCv compatible type, see CVTensor.
-// @param alpha: Alpha value to adjust brightness by. Should be a positive number.
-//               If user input one value in python, the range is [1 - value, 1 + value].
-//               This will output original image multiplied by alpha. 0 gives a black image, 1 gives the
-//               original image while 2 increases the brightness by a factor of 2.
-// @param output: Adjusted image of same shape and type.
+/// \brief Returns image with adjusted brightness.
+/// \param input: Tensor of shape <H,W,3> in RGB order and any OpenCv compatible type, see CVTensor.
+/// \param alpha: Alpha value to adjust brightness by. Should be a positive number.
+///               If user input one value in python, the range is [1 - value, 1 + value].
+///               This will output original image multiplied by alpha. 0 gives a black image, 1 gives the
+///               original image while 2 increases the brightness by a factor of 2.
+/// \param output: Adjusted image of same shape and type.
 Status AdjustBrightness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &alpha);
 
-// Returns image with adjusted contrast.
-// @param input: Tensor of shape <H,W,3> in RGB order and any OpenCv compatible type, see CVTensor.
-// @param alpha: Alpha value to adjust contrast by. Should be a positive number.
-//               If user input one value in python, the range is [1 - value, 1 + value].
-//               0 gives a solid gray image, 1 gives the original image while 2 increases
-//               the contrast by a factor of 2.
-// @param output: Adjusted image of same shape and type.
+/// \brief Returns image with adjusted contrast.
+/// \param input: Tensor of shape <H,W,3> in RGB order and any OpenCv compatible type, see CVTensor.
+/// \param alpha: Alpha value to adjust contrast by. Should be a positive number.
+///               If user input one value in python, the range is [1 - value, 1 + value].
+///               0 gives a solid gray image, 1 gives the original image while 2 increases
+///               the contrast by a factor of 2.
+/// \param output: Adjusted image of same shape and type.
 Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &alpha);
 
-// Returns image with contrast maximized.
-// @param input: Tensor of shape <H,W,3>/<H,W,1>/<H,W> in RGB/Grayscale and any OpenCv compatible type, see CVTensor.
-// @param cutoff: Cutoff percentage of how many pixels are to be removed (high pixels change to 255 and low change to 0)
-//                from the high and low ends of the histogram.
-// @param ignore: Pixel values to be ignored in the algorithm.
+/// \brief Returns image with contrast maximized.
+/// \param input: Tensor of shape <H,W,3>/<H,W,1>/<H,W> in RGB/Grayscale and any OpenCv compatible type, see CVTensor.
+/// \param cutoff: Cutoff percentage of how many pixels are to be removed (high pixels change to 255 and low change
+///     to 0) from the high and low ends of the histogram.
+/// \param ignore: Pixel values to be ignored in the algorithm.
 Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &cutoff,
                     const std::vector<uint32_t> &ignore);
 
-// Returns image with adjusted saturation.
-// @param input: Tensor of shape <H,W,3> in RGB order and any OpenCv compatible type, see CVTensor.
-// @param alpha: Alpha value to adjust saturation by. Should be a positive number.
-//               If user input one value in python, the range is [1 - value, 1 + value].
-//               0 will give a black and white image, 1 will give the original image while
-//               2 will enhance the saturation by a factor of 2.
-// @param output: Adjusted image of same shape and type.
+/// \brief Returns image with adjusted saturation.
+/// \param input: Tensor of shape <H,W,3> in RGB order and any OpenCv compatible type, see CVTensor.
+/// \param alpha: Alpha value to adjust saturation by. Should be a positive number.
+///               If user input one value in python, the range is [1 - value, 1 + value].
+///               0 will give a black and white image, 1 will give the original image while
+///               2 will enhance the saturation by a factor of 2.
+/// \param output: Adjusted image of same shape and type.
 Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &alpha);
 
-// Returns image with adjusted hue.
-// @param input: Tensor of shape <H,W,3> in RGB order and any OpenCv compatible type, see CVTensor.
-// @param hue: Hue value to adjust by, should be within range [-0.5, 0.5]. 0.5 and - 0.5 will reverse the hue channel
-//             completely.
-//             If user input one value in python, the range is [-value, value].
-// @param output: Adjusted image of same shape and type.
+/// \brief Returns image with adjusted hue.
+/// \param input: Tensor of shape <H,W,3> in RGB order and any OpenCv compatible type, see CVTensor.
+/// \param hue: Hue value to adjust by, should be within range [-0.5, 0.5]. 0.5 and - 0.5 will reverse the hue channel
+///             completely.
+///             If user input one value in python, the range is [-value, value].
+/// \param output: Adjusted image of same shape and type.
 Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &hue);
 
 /// \brief Returns image with equalized histogram.
@@ -206,72 +207,84 @@ Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
 /// \param[out] output: Equalized image of same shape and type.
 Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
 
-// Masks out a random section from the image with set dimension
-// @param input: input Tensor
-// @param output: cutOut Tensor
-// @param box_height: height of the cropped box
-// @param box_width: width of the cropped box
-// @param num_patches: number of boxes to cut out from the image
-// @param bounded: boolean flag to toggle between random erasing and cutout
-// @param random_color: whether or not random fill value should be used
-// @param fill_r: red fill value for erase
-// @param fill_g: green fill value for erase
-// @param fill_b: blue fill value for erase.
+/// \brief Masks out a random section from the image with set dimension
+/// \param input: input Tensor
+/// \param output: cutOut Tensor
+/// \param box_height: height of the cropped box
+/// \param box_width: width of the cropped box
+/// \param num_patches: number of boxes to cut out from the image
+/// \param bounded: boolean flag to toggle between random erasing and cutout
+/// \param random_color: whether or not random fill value should be used
+/// \param fill_r: red fill value for erase
+/// \param fill_g: green fill value for erase
+/// \param fill_b: blue fill value for erase.
 Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t box_height,
              int32_t box_width, int32_t num_patches, bool bounded, bool random_color, std::mt19937 *rnd,
              uint8_t fill_r = 0, uint8_t fill_g = 0, uint8_t fill_b = 0);
 
-// Pads the input image and puts the padded image in the output
-// @param input: input Tensor
-// @param output: padded Tensor
-// @param pad_top: amount of padding done in top
-// @param pad_bottom: amount of padding done in bottom
-// @param pad_left: amount of padding done in left
-// @param pad_right: amount of padding done in right
-// @param border_types: the interpolation to be done in the border
-// @param fill_r: red fill value for pad
-// @param fill_g: green fill value for pad
-// @param fill_b: blue fill value for pad.
+/// \brief Pads the input image and puts the padded image in the output
+/// \param input: input Tensor
+/// \param output: padded Tensor
+/// \param pad_top: amount of padding done in top
+/// \param pad_bottom: amount of padding done in bottom
+/// \param pad_left: amount of padding done in left
+/// \param pad_right: amount of padding done in right
+/// \param border_types: the interpolation to be done in the border
+/// \param fill_r: red fill value for pad
+/// \param fill_g: green fill value for pad
+/// \param fill_b: blue fill value for pad.
 Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const int32_t &pad_top,
            const int32_t &pad_bottom, const int32_t &pad_left, const int32_t &pad_right, const BorderType &border_types,
            uint8_t fill_r = 0, uint8_t fill_g = 0, uint8_t fill_b = 0);
 
-// -------- BBOX OPERATIONS -------- //
-// Updates and checks bounding boxes for new cropped region of image
-// @param bboxList: A tensor contaning bounding box tensors
-// @param bboxCount: total Number of bounding boxes - required within caller function to run update loop
-// @param CB_Xmin: Image's CropBox Xmin coordinate
-// @param CB_Xmin: Image's CropBox Ymin coordinate
-// @param CB_Xmax: Image's CropBox Xmax coordinate - (Xmin + width)
-// @param CB_Xmax: Image's CropBox Ymax coordinate - (Ymin + height)
+/// \brief Take in a 4 channel image in RBGA to RGB
+/// \param[in] input The input image
+/// \param[out] output The output image
+/// \return Status code
+Status RgbaToRgb(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
+
+/// \brief Take in a 4 channel image in RBGA to BGR
+/// \param[in] input The input image
+/// \param[out] output The output image
+/// \return Status code
+Status RgbaToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
+
+/// -------- BBOX OPERATIONS -------- ///
+/// \brief Updates and checks bounding boxes for new cropped region of image
+/// \param bboxList: A tensor contaning bounding box tensors
+/// \param bboxCount: total Number of bounding boxes - required within caller function to run update loop
+/// \param CB_Xmin: Image's CropBox Xmin coordinate
+/// \param CB_Xmin: Image's CropBox Ymin coordinate
+/// \param CB_Xmax: Image's CropBox Xmax coordinate - (Xmin + width)
+/// \param CB_Xmax: Image's CropBox Ymax coordinate - (Ymin + height)
 Status UpdateBBoxesForCrop(std::shared_ptr<Tensor> *bboxList, size_t *bboxCount, int CB_Xmin, int CB_Ymin, int CB_Xmax,
                            int CB_Ymax);
 
-// Updates bounding boxes with required Top and Left padding
-// Top and Left padding amounts required to adjust bboxs min X,Y values according to padding 'push'
-// Top/Left since images 0,0 coordinate is taken from top left
-// @param bboxList: A tensor contaning bounding box tensors
-// @param bboxCount: total Number of bounding boxes - required within caller function to run update loop
-// @param pad_top: Total amount of padding applied to image top
-// @param pad_left: Total amount of padding applied to image left side
+/// \brief Updates bounding boxes with required Top and Left padding
+/// \note Top and Left padding amounts required to adjust bboxs min X,Y values according to padding 'push'
+///     Top/Left since images 0,0 coordinate is taken from top left
+/// \param bboxList: A tensor contaning bounding box tensors
+/// \param bboxCount: total Number of bounding boxes - required within caller function to run update loop
+/// \param pad_top: Total amount of padding applied to image top
+/// \param pad_left: Total amount of padding applied to image left side
 Status PadBBoxes(const std::shared_ptr<Tensor> *bboxList, const size_t &bboxCount, int32_t pad_top, int32_t pad_left);
 
-// Updates bounding boxes for an Image Resize Operation - Takes in set of valid BBoxes
-// For e.g those that remain after a crop
-// @param bboxList: A tensor contaning bounding box tensors
-// @param bboxCount: total Number of bounding boxes - required within caller function to run update loop
-// @param bboxList: A tensor contaning bounding box tensors
-// @param target_width_: required width of image post resize
-// @param target_width_: required height of image post resize
-// @param orig_width: current width of image pre resize
-// @param orig_height: current height of image pre resize
+/// \brief Updates bounding boxes for an Image Resize Operation - Takes in set of valid BBoxes
+/// For e.g those that remain after a crop
+/// \param bboxList: A tensor contaning bounding box tensors
+/// \param bboxCount: total Number of bounding boxes - required within caller function to run update loop
+/// \param bboxList: A tensor contaning bounding box tensors
+/// \param target_width_: required width of image post resize
+/// \param target_width_: required height of image post resize
+/// \param orig_width: current width of image pre resize
+/// \param orig_height: current height of image pre resize
 Status UpdateBBoxesForResize(const std::shared_ptr<Tensor> &bboxList, const size_t &bboxCount, int32_t target_width_,
                              int32_t target_height_, int orig_width, int orig_height);
 
-// Get jpeg image width and height
-// @param input: CVTensor containing the not decoded image 1D bytes
-// @param img_width: the jpeg image width
-// @param img_height: the jpeg image height
+/// \brief Get jpeg image width and height
+/// \param input: CVTensor containing the not decoded image 1D bytes
+/// \param img_width: the jpeg image width
+/// \param img_height: the jpeg image height
 Status GetJpegImageInfo(const std::shared_ptr<Tensor> &input, int *img_width, int *img_height);
 
 }  // namespace dataset

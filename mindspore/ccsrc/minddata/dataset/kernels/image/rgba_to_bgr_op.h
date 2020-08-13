@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_SWAP_RED_BLUE_OP_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_SWAP_RED_BLUE_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_RGBA_TO_BGR_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_RGBA_TO_BGR_OP_H_
 
 #include <memory>
 #include <vector>
@@ -27,24 +27,17 @@
 
 namespace mindspore {
 namespace dataset {
-class SwapRedBlueOp : public TensorOp {
+class RgbaToBgrOp : public TensorOp {
  public:
-  /// \brief Constructor
-  SwapRedBlueOp() {}
+  RgbaToBgrOp() {}
 
-  SwapRedBlueOp(const SwapRedBlueOp &rhs) = default;
-
-  SwapRedBlueOp(SwapRedBlueOp &&rhs) = default;
-
-  ~SwapRedBlueOp() override = default;
-
-  void Print(std::ostream &out) const override { out << "SwapRedBlueOp"; }
+  ~RgbaToBgrOp() override = default;
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
-  std::string Name() const override { return kSwapRedBlueOp; }
+  std::string Name() const override { return kRgbaToBgrOp; }
 };
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_SWAP_RED_BLUE_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_RGBA_TO_BGR_OP_H_
