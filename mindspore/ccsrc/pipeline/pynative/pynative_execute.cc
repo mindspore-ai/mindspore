@@ -329,6 +329,12 @@ std::string GetSingleOpGraphInfo(const OpExecInfoPtr &op_exec_info,
     (void)std::for_each(tensor_shape.begin(), tensor_shape.end(),
                         [&](const auto &dim) { (void)graph_info.append(std::to_string(dim) + "_"); });
     (void)graph_info.append(std::to_string(tensor->data_type()) + "_");
+    if (tensor->device_address() != nullptr) {
+      (void)graph_info.append(
+        std::to_string(std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address())->type_id()) + "_");
+      (void)graph_info.append(std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address())->format() +
+                              "_");
+    }
   }
   // get prim and abstract info
   (void)graph_info.append(op_exec_info->prim_id + "_");
