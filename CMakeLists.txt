@@ -51,8 +51,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/flatbuffers/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/flatbuffers/include/flatbuffers)
 
-if (NOT ENABLE_ACL)
-
 include(${CMAKE_SOURCE_DIR}/cmake/dependency_utils.cmake)
 find_package(Python3 3.7 COMPONENTS Interpreter Development)
 if(Python3_FOUND)
@@ -103,13 +101,9 @@ if (ENABLE_TESTCASES)
     add_subdirectory(tests)
 endif()
 
-endif() # NOT ENABLE_ACL
-
 if (ENABLE_SERVING)
     add_subdirectory(serving)
     add_subdirectory(serving/example/cpp_client)
 endif()
 
-if (NOT ENABLE_ACL)
 include(cmake/package.cmake)
-endif() # NOT ENABLE_ACL

@@ -270,6 +270,8 @@ checkopts()
         echo "enable serving"
         ;;
       w)
+        ENABLE_SERVING="on"
+        echo "enable serving"
         ENABLE_ACL="on"
         echo "enable acl"
         ;;
