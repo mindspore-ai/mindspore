@@ -174,10 +174,6 @@ class DistributedGradReducerThor(Cell):
         datatypes = self.hyper_map(F.partial(_get_datatype), grads)
         grads = self.hyper_map(F.partial(_cast_datatype, mstype.float32), grads)
 
-        if self.mean:
-            new_grad = self.hyper_map(F.partial(reduce_opt, self.mul, self.degree), grads)
-        else:
-            new_grad = self.hyper_map(F.partial(reduce_opt), self.allreduce_filter, grads)
-
+        new_grad = self.hyper_map(F.partial(reduce_opt, self.mul, self.degree), grads)
         new_grad = self.hyper_map(F.partial(_cast_datatype), datatypes, new_grad)
         return new_grad

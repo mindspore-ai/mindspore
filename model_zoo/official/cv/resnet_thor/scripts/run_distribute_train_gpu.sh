@@ -16,10 +16,9 @@
 
 if [ $# != 2 ]
 then 
-    echo "Usage: sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]"
+	echo "Usage: sh run_distribute_train_gpu.sh [DATASET_PATH] [DEVICE_NUM]"
 exit 1
 fi
-
 
 get_real_path(){
   if [ "${1:0:1}" == "/" ]; then
@@ -30,37 +29,18 @@ get_real_path(){
 }
 
 PATH1=$(get_real_path $1)
-PATH2=$(get_real_path $2)
-
-
-if [ ! -d $PATH1 ]
-then 
-    echo "error: DATASET_PATH=$PATH1 is not a directory"
-exit 1
-fi 
-
-if [ ! -f $PATH2 ]
-then 
-    echo "error: CHECKPOINT_PATH=$PATH2 is not a file"
-exit 1
-fi 
 
 ulimit -u unlimited
-export DEVICE_NUM=1
-export DEVICE_ID=0
-export RANK_SIZE=$DEVICE_NUM
-export RANK_ID=0
+export DEVICE_NUM=$2
+export RANK_SIZE=$2
 
-if [ -d "eval" ];
-then
-    rm -rf ./eval
-fi
-mkdir ./eval
-cp ../*.py ./eval
-cp *.sh ./eval
-cp -r ../src ./eval
-cd ./eval || exit
-env > env.log
-echo "start evaluation for device $DEVICE_ID"
-python eval.py --dataset_path=$PATH1 --checkpoint_path=$PATH2 &> log &
-cd ..
+rm -rf ./train_parallel
+mkdir ./train_parallel
+cp ../*.py ./train_parallel
+cp *.sh ./train_parallel
+cp -r ../src ./train_parallel
+cd ./train_parallel || exit
+
+mpirun -n $RANK_SIZE \
+python train.py --run_distribute=True \
+--device_num=$DEVICE_NUM --device_target="GPU" --dataset_path=$PATH1 &> log &

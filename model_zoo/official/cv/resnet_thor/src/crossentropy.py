@@ -28,13 +28,10 @@ class CrossEntropy(_Loss):
         self.onehot = P.OneHot()
         self.on_value = Tensor(1.0 - smooth_factor, mstype.float32)
         self.off_value = Tensor(1.0 * smooth_factor / (num_classes - 1), mstype.float32)
-        # self.cast = P.Cast()
         self.ce = nn.SoftmaxCrossEntropyWithLogits()
         self.mean = P.ReduceMean(False)
 
     def construct(self, logit, label):
-        # one_hot_label = self.onehot(self.cast(label, mstype.int32),
-        #                F.shape(logit)[1], self.on_value, self.off_value)、
         one_hot_label = self.onehot(label, F.shape(logit)[1], self.on_value, self.off_value)
         loss = self.ce(logit, one_hot_label)
         loss = self.mean(loss, 0)

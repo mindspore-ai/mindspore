@@ -16,30 +16,36 @@
 create train or eval dataset.
 """
 import os
-
 import mindspore.common.dtype as mstype
 import mindspore.dataset.engine as de
+import mindspore.dataset.transforms.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
-import mindspore.dataset.transforms.vision.c_transforms as V_C
+from mindspore.communication.management import init, get_rank, get_group_size
 
 
-def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
+def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend"):
     """
-    create a train or eval dataset
+    create a train or eval imagenet2012 dataset for resnet50
+
     Args:
         dataset_path(string): the path of dataset.
         do_train(bool): whether dataset is used for train or eval.
         repeat_num(int): the repeat times of dataset. Default: 1
         batch_size(int): the batch size of dataset. Default: 32
+        target(str): the device target. Default: Ascend
     Returns:
         dataset
     """
 
-    device_num = int(os.getenv("RANK_SIZE"))
-    rank_id = int(os.getenv("RANK_ID"))
+    if target == "Ascend":
+        device_num, rank_id = _get_rank_info()
+    else:
+        init("nccl")
+        rank_id = get_rank()
+        device_num = get_group_size()
 
     if device_num == 1:
-        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=False)
+        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True)
     else:
         ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True,
                                      num_shards=device_num, shard_id=rank_id)
@@ -47,29 +53,28 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
     image_size = 224
     mean = [0.485 * 255, 0.456 * 255, 0.406 * 255]
     std = [0.229 * 255, 0.224 * 255, 0.225 * 255]
+
+    # define map operations
     if do_train:
-        transform_img = [
-            V_C.RandomCropDecodeResize(image_size, scale=(0.08, 1.0), ratio=(0.75, 1.333)),
-            V_C.RandomHorizontalFlip(prob=0.5),
-            V_C.Normalize(mean=mean, std=std),
-            V_C.HWC2CHW()
+        trans = [
+            C.RandomCropDecodeResize(image_size, scale=(0.08, 1.0), ratio=(0.75, 1.333)),
+            C.RandomHorizontalFlip(prob=0.5),
+            C.Normalize(mean=mean, std=std),
+            C.HWC2CHW()
         ]
     else:
-        transform_img = [
-            V_C.Decode(),
-            V_C.Resize((256, 256)),
-            V_C.CenterCrop(image_size),
-            V_C.Normalize(mean=mean, std=std),
-            V_C.HWC2CHW()
+        trans = [
+            C.Decode(),
+            C.Resize(256),
+            C.CenterCrop(image_size),
+            C.Normalize(mean=mean, std=std),
+            C.HWC2CHW()
         ]
-    # type_cast_op = C2.TypeCast(mstype.float16)
+
     type_cast_op = C2.TypeCast(mstype.int32)
 
-    ds = ds.map(input_columns="image", operations=transform_img, num_parallel_workers=8)
-    ds = ds.map(input_columns="label", operations=type_cast_op, num_parallel_workers=8)
-
-    # apply shuffle operations
-    # ds = ds.shuffle(buffer_size=config.buffer_size)
+    ds = ds.map(input_columns="image", num_parallel_workers=8, operations=trans)
+    ds = ds.map(input_columns="label", num_parallel_workers=8, operations=type_cast_op)
 
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)
@@ -78,3 +83,18 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
     ds = ds.repeat(repeat_num)
 
     return ds
+
+def _get_rank_info():
+    """
+    get rank size and rank id
+    """
+    rank_size = int(os.environ.get("RANK_SIZE", 1))
+
+    if rank_size > 1:
+        rank_size = get_group_size()
+        rank_id = get_rank()
+    else:
+        rank_size = 1
+        rank_id = 0
+
+    return rank_size, rank_id
