@@ -54,7 +54,6 @@ int ArgMinMaxCPUKernel::Run() {
     return ret;
   }
   ret = ArgMinMaxBaseCPUKernel::Run();
-  ArgMinMaxBaseCPUKernel::FreeTmpMemory();
   return ret;
 }
 }  // namespace mindspore::kernel

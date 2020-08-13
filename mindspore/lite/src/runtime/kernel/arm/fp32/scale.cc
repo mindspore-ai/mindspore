@@ -173,7 +173,6 @@ int ScaleCPUKernel::Run() {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;
   }
-  FreeTmpBuffer();
   return RET_OK;
 }
 
