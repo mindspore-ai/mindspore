@@ -140,10 +140,10 @@ void SWCenter(float *dst, const float *src, const float *weight, const float *bi
 void ConvSWFp32(const float *input_data, const float *packed_weight, const float *bias_data, float *tmp_out_block,
                 float *output_data, int task_id, ConvParameter *conv_param, SlidingWindowParam *slidingWindow_param) {
   int ic4 = slidingWindow_param->ic4_channel_ / C4NUM;
-  int ic4_res = conv_param->input_channel_ % C4NUM;
+  int oc4_res = conv_param->output_channel_ % C4NUM;
   const float *src = input_data;
   float *dst;
-  if (ic4_res == 0) {
+  if (oc4_res == 0) {
     dst = output_data;
   } else {
     dst = tmp_out_block;
@@ -183,7 +183,7 @@ void ConvSWFp32(const float *input_data, const float *packed_weight, const float
     dst += slidingWindow_param->out_step_;
   }  // batch loop
   // output nhwc4
-  if (ic4_res != 0) {
+  if (oc4_res != 0) {
     PackNHWC4ToNHWCFp32(tmp_out_block, output_data, conv_param->output_batch_,
                         conv_param->output_h_ * conv_param->output_w_, conv_param->output_channel_);
   }
