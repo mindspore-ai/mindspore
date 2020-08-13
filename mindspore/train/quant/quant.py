@@ -274,7 +274,7 @@ class ConvertToQuantNetwork:
         subcell.dense = dense_inner
         if subcell.has_act and subcell.activation is not None:
             subcell.activation = self._convert_activation(subcell.activation)
-        elif subcell.after_fake:
+        else:
             subcell.has_act = True
             subcell.activation = _AddFakeQuantAfterSubCell(F.identity,
                                                            num_bits=self.act_bits,
