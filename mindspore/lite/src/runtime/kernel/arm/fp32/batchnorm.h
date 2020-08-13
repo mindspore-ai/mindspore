@@ -42,10 +42,10 @@ class BatchnormCPUKernel : public LiteKernel {
   int DoExecute(int tid);
 
  private:
-  float *in_addr_;
-  float *mean_addr_;
-  float *var_addr_;
-  float *out_addr_;
+  float *in_addr_ = nullptr;
+  float *mean_addr_ = nullptr;
+  float *var_addr_ = nullptr;
+  float *out_addr_ = nullptr;
   BatchNormParameter *batchnorm_param_;
 };
 }  // namespace mindspore::kernel

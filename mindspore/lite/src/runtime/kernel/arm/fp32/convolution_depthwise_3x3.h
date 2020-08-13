@@ -49,11 +49,11 @@ class ConvolutionDepthwise3x3CPUKernel : public ConvolutionBaseCPUKernel {
   int Execute(int task_id);
 
  private:
-  float *packed_weight_;
-  float *packed_input_;
-  float *packed_output_;
-  float *block_buffer_;
-  float *trans_buffer_;
+  float *packed_weight_ = nullptr;
+  float *packed_input_ = nullptr;
+  float *packed_output_ = nullptr;
+  float *block_buffer_ = nullptr;
+  float *trans_buffer_ = nullptr;
   int trans_size_;
   bool need_align_ = false;
 };
