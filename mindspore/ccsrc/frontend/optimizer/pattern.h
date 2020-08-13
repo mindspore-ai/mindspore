@@ -23,8 +23,8 @@
 #include "base/base.h"
 #include "ir/anf.h"
 #include "ir/tensor.h"
-#include "utils/primitive_py.h"
-#include "utils/tensor_py.h"
+#include "pybind_api/ir/primitive_py.h"
+#include "pybind_api/ir/tensor_py.h"
 
 namespace mindspore {
 namespace opt {

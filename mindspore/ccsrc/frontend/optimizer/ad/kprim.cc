@@ -20,7 +20,7 @@
 #include <string>
 #include <utility>
 #include "ir/anf.h"
-#include "utils/primitive_py.h"
+#include "pybind_api/ir/primitive_py.h"
 #include "ir/meta_func_graph.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/manager.h"

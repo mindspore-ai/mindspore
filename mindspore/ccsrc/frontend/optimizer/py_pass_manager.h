@@ -23,7 +23,7 @@
 
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "utils/primitive_py.h"
+#include "pybind_api/ir/primitive_py.h"
 #include "ir/graph_utils.h"
 #include "utils/ms_utils.h"
 

@@ -19,7 +19,7 @@
 
 #include "common/common_test.h"
 #include "ir/value.h"
-#include "utils/primitive_py.h"
+#include "pybind_api/ir/primitive_py.h"
 #include "frontend/operator/ops.h"
 #include "./common.h"
 

@@ -329,7 +329,7 @@ bool FinalizeGe(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) {
     if (ge::GEFinalize() != ge::GRAPH_SUCCESS) {
       MS_LOG(WARNING) << "Finalize GE failed!";
     }
-    ms_context_ptr->set_pynative_ge_init(fasle);
+    ms_context_ptr->set_pynative_ge_init(false);
   } else {
     MS_LOG(INFO) << "Ge is used, no need to finalize, tsd reference = " << ms_context_ptr->ge_ref() << ".";
   }

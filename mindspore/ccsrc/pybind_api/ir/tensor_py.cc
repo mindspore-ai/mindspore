@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "utils/tensor_py.h"
+#include "pybind_api/ir/tensor_py.h"
 
 #include <functional>
 #include <numeric>

@@ -27,7 +27,7 @@
 
 #include "pybind11/pybind11.h"
 #include "ir/anf.h"
-#include "utils/primitive_py.h"
+#include "pybind_api/ir/primitive_py.h"
 #include "abstract/abstract_value.h"
 
 namespace mindspore {
