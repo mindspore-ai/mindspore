@@ -48,6 +48,10 @@ class TensorLayout {
 
   void set_field_size(int32_t field_size) { field_size_ = field_size; }
 
+  bool uniform_split() const { return uniform_split_; }
+
+  void set_uniform_split(bool flag) { uniform_split_ = flag; }
+
   Arrangement device_arrangement() const { return device_arrangement_; }
 
   Map tensor_map() const { return tensor_map_; }
@@ -104,6 +108,7 @@ class TensorLayout {
   Arrangement tensor_shape_;
   bool skip_redistribution_ = false;
   int32_t field_size_ = 0;
+  bool uniform_split_ = true;
 };
 }  // namespace parallel
 }  // namespace mindspore

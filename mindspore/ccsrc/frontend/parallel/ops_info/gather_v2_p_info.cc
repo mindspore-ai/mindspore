@@ -27,6 +27,92 @@
 
 namespace mindspore {
 namespace parallel {
+Status GatherV2PInfo::GetManualSplitWithoutOffsetAttr() {
+  auto manual_split_without_offset_iter = attrs_.find("manual_split");
+  if (manual_split_without_offset_iter != attrs_.end()) {
+    manual_split_ = true;
+    MS_EXCEPTION_IF_NULL(manual_split_without_offset_iter->second);
+    if (manual_split_without_offset_iter->second->cast<ValueTuplePtr>() == nullptr) {
+      MS_LOG(ERROR) << name_ << ": Manual split without offset strategy's format is wrong! Need ValueSequeue";
+      return FAILED;
+    }
+    std::vector<ValuePtr> value_vector = manual_split_without_offset_iter->second->cast<ValueTuplePtr>()->value();
+    MS_LOG(INFO) << name_ << ": manual split with offset is " << manual_split_without_offset_iter->second->ToString();
+
+    int64_t offset = 0;
+    for (auto &ele : value_vector) {
+      index_offsets_.push_back(offset);
+      if (!ele->isa<Int32Imm>()) {
+        MS_LOG(ERROR) << name_ << ": The element of manual split must be int";
+        return FAILED;
+      }
+      int64_t param_split_shape = static_cast<int64_t>(GetValue<int>(ele));
+      if (param_split_shape <= 0) {
+        MS_LOG(ERROR) << name_ << ": The value of manual split must be positive, but got " << param_split_shape;
+        return FAILED;
+      }
+      param_split_shapes_.push_back(param_split_shape);
+      offset += param_split_shape;
+    }
+    if (param_split_shapes_.empty()) {
+      MS_LOG(ERROR) << name_ << ": Failed to extract param split's split info";
+      return FAILED;
+    }
+  }
+
+  return SUCCESS;
+}
+
+Status GatherV2PInfo::GetManualSplitAttr() {
+  auto manual_split_with_offset_iter = attrs_.find("manual_split_with_offset");
+  if (manual_split_with_offset_iter != attrs_.end()) {
+    manual_split_ = true;
+    auto var = manual_split_with_offset_iter->second->cast<ValueTuplePtr>();
+    if (var == nullptr) {
+      MS_LOG(ERROR) << name_ << ": Manual split with offset strategy's format is wrong! Need ValueSequeue";
+      return FAILED;
+    }
+
+    MS_LOG(INFO) << name_ << ": manual split with offset strategy " << var->ToString();
+    for (auto &ele : var->value()) {
+      if (!ele->isa<ValueSequeue>()) {
+        MS_LOG(ERROR) << name_ << ": Manual split with offset strategy's format is wrong! Need ValueSequeue";
+        return FAILED;
+      }
+      std::vector<ValuePtr> value_vector = ele->cast<ValueTuplePtr>()->value();
+      if (value_vector.size() != 2) {
+        MS_LOG(ERROR) << name_ << ": Size of manual split with offset's element must be 2";
+        return FAILED;
+      }
+      int64_t param_split_row = static_cast<int64_t>(GetValue<int>(value_vector[0]));
+      int64_t offset = static_cast<int64_t>(GetValue<int>(value_vector[1]));
+      if ((param_split_row <= 0) || (offset < 0)) {
+        MS_LOG(ERROR) << name_
+                      << ": The value of param split shape must be positive, and the offset must larger or equal to 0";
+        return FAILED;
+      }
+      param_split_shapes_.push_back(param_split_row);
+      index_offsets_.push_back(offset);
+    }
+
+    if (param_split_shapes_.empty()) {
+      MS_LOG(ERROR) << name_ << ": Failed to extract param split with offset's split info";
+      return FAILED;
+    }
+    if (std::any_of(index_offsets_.begin(), index_offsets_.end(), [](const int64_t &offset) { return offset < 0; })) {
+      MS_LOG(ERROR) << name_ << ": Index offset must not less than 0";
+      return FAILED;
+    }
+    return SUCCESS;
+  }
+
+  if (GetManualSplitWithoutOffsetAttr() != SUCCESS) {
+    return FAILED;
+  }
+
+  return SUCCESS;
+}
+
 Status GatherV2PInfo::GetAttrs() {
   // get axis, the third input is the axis, is a ValueNode, embeddinglookup doesn't have axis.
   if (target_ != CPU) {
@@ -53,58 +139,76 @@ Status GatherV2PInfo::GetAttrs() {
     if (target_iter->second->isa<StringImm>()) {
       target_ = target_iter->second->cast<StringImmPtr>()->value();
     } else {
-      MS_LOG(ERROR) << name_ << " : The value of target is not a string.";
-    }
-  }
-  auto manual_split_iter = attrs_.find("manual_split");
-  if (manual_split_iter != attrs_.end()) {
-    param_split_shapes_.clear();
-    manual_split_ = true;
-    auto var = manual_split_iter->second->cast<ValueTuplePtr>();
-    MS_LOG(DEBUG) << "Extract manual split strategy " << manual_split_iter->second->ToString();
-
-    if (var->size() > 0) {
-      std::vector<ValuePtr> elements = var->value();
-      for (auto &ele : elements) {
-        if (ele->isa<ValueSequeue>()) {
-          auto value_tuple = ele->cast<ValueTuplePtr>();
-          std::vector<ValuePtr> value_vector = value_tuple->value();
-          if (value_vector.size() != 2) {
-            MS_LOG(ERROR) << "Failure: Size of manual_split element must be 2.";
-            return FAILED;
-          }
-          param_split_shapes_.push_back(static_cast<int64_t>(GetValue<int>(value_vector[0])));
-          index_offsets_.push_back(static_cast<int64_t>(GetValue<int>(value_vector[1])));
-        } else {
-          MS_LOG(ERROR) << "Failure: Manual split strategy's format is wrong! Need ValueSequeue";
-          return FAILED;
-        }
-      }
-
-      if (param_split_shapes_.empty()) {
-        MS_LOG(ERROR) << "Failed to extract param split strategy.";
-        return FAILED;
-      }
+      MS_LOG(ERROR) << name_ << ": The value of target is not a string.";
     }
   }
 
+  if (GetManualSplitAttr() != SUCCESS) {
+    return FAILED;
+  }
+
+  if (manual_split_ && (axis_ != 0)) {
+    MS_LOG(ERROR) << name_ << ": The axis or offset must be 0 if manual split, bug got " << axis_;
+    return FAILED;
+  }
   return SUCCESS;
 }
 
-Status GatherV2PInfo::CheckManualSplit() {
-  auto param_shape = inputs_shape_.at(0);
+Status GatherV2PInfo::CheckManualSplit(const Strategys &strategy) {
+  if (strategy.size() != 2) {
+    MS_LOG(ERROR) << name_ << ": The size of strategy must be 2, but got " << strategy.size();
+    return FAILED;
+  }
+  Dimensions param_strategy = strategy[0];
+  Dimensions indices_strategy = strategy[1];
+  if (param_strategy.size() != 2 || indices_strategy.size() != 2) {
+    MS_LOG(ERROR) << name_ << ": The size of param strategy or indices strategy must be 2";
+    return FAILED;
+  }
+
+  if (indices_strategy[0] != 1) {
+    MS_LOG(ERROR) << name_ << ": The indices_strategy[0] must be 1, bug got " << indices_strategy[0];
+    return FAILED;
+  }
+
+  if (param_strategy[0] != indices_strategy[1]) {
+    MS_LOG(ERROR) << name_ << ": The param_strategy[0] must be equal to indices_strategy[1]";
+    return FAILED;
+  }
+
+  if (indices_strategy[1] != SizeToInt(param_split_shapes_.size())) {
+    MS_LOG(ERROR) << name_ << ": The indices_strategy[1] must be equal to manual split size";
+    return FAILED;
+  }
+
+  int64_t min_param_slice_row = inputs_shape_[1][1] / indices_strategy[1];
+  bool invalid = std::any_of(param_split_shapes_.begin(), param_split_shapes_.end(),
+                             [&min_param_slice_row](int64_t v) { return v < min_param_slice_row; });
+  if (invalid) {
+    MS_LOG(ERROR) << name_ << ": The split value must be larger than or equal to indices slice's column num";
+    return FAILED;
+  }
+
+  if (inputs_shape_[0][0] < inputs_shape_[1][1]) {
+    MS_LOG(ERROR) << name_ << ": The param's row smaller than indices' column";
+    return FAILED;
+  }
+
+  // Don't support repeated calc
+  CheckGlobalDeviceManager();
+  size_t dev_num = g_device_manager->GetDeviceListByStageId(0).size();
+  auto product_p = std::accumulate(param_strategy.begin(), param_strategy.end(), 1, std::multiplies<int>());
+  if (IntToSize(product_p) < dev_num) {
+    MS_LOG(ERROR) << name_ << ": Manual split doesn't support repeated calc";
+    return FAILED;
+  }
+
   int64_t split_shape_sum = std::accumulate(param_split_shapes_.begin(), param_split_shapes_.end(), 0,
                                             [](int64_t s, int64_t shape) { return s + shape; });
-  if (split_shape_sum < param_shape.at(0)) {
-    MS_LOG(ERROR) << "Failure: Sum of splited shapes should not be smaller than param_shape.";
+  if (split_shape_sum != inputs_shape_[0][0]) {
+    MS_LOG(ERROR) << name_ << ": Sum of splited shapes must be equal to param_shape[0]";
     return FAILED;
   }
-
-  if (std::any_of(index_offsets_.begin(), index_offsets_.end(), [](const int64_t &offset) { return offset < 0; })) {
-    MS_LOG(ERROR) << "Failure: Index offset must not less than 0.";
-    return FAILED;
-  }
-
   return SUCCESS;
 }
 
@@ -147,7 +251,7 @@ Status GatherV2PInfo::CheckStrategy(const StrategyPtr &strategy) {
   }
 
   if (manual_split_) {
-    if (CheckManualSplit() != SUCCESS) {
+    if (CheckManualSplit(strategy->GetInputDim()) != SUCCESS) {
       return FAILED;
     }
     // when using manual_split, no need to check belowings.
@@ -343,13 +447,14 @@ Status GatherV2PInfo::InferTensorInfo() {
        SUCCESS)) {
     return FAILED;
   }
+
+  if (manual_split_) {
+    input_tensor_layout.set_uniform_split(false);
+  }
   // infer tensor info
   TensorInfo input_tensor_info(input_tensor_layout);
   TensorInfo input_index_info(input_index_layout);
   TensorInfo output_tensor_info(output_tensor_layout);
-
-  Shape slice_shape = input_tensor_info.slice_shape();
-  MS_LOG(DEBUG) << "The fake slice shape is: " << ShapeToString(slice_shape);
 
   inputs_tensor_info_.push_back(input_tensor_info);
   inputs_tensor_info_.push_back(input_index_info);
@@ -392,9 +497,17 @@ Status GatherV2PInfo::InferBias() {
 Status GatherV2PInfo::InferOffset() {
   CheckGlobalDeviceManager();
   size_t rank = g_device_manager->global_rank();
-  if (rank < index_offsets_.size()) {
-    index_offset_ = index_offsets_.at(rank);
-    MS_LOG(DEBUG) << name_ << ": Device rank " << rank << ", Index Offset: " << index_offset_;
+
+  MS_EXCEPTION_IF_NULL(strategy_);
+  auto param_strategy = strategy_->GetInputDim()[0];
+  if (param_strategy.size() != 2) {
+    MS_LOG(ERROR) << "The size of param strategy must be 2";
+    return FAILED;
+  }
+  size_t index = rank / param_strategy[1];
+  if (index < index_offsets_.size()) {
+    index_offset_ = index_offsets_[index];
+    MS_LOG(INFO) << name_ << ": Device rank " << rank << ", Index Offset: " << index_offset_;
     return SUCCESS;
   }
 
@@ -524,8 +637,7 @@ Status GatherV2PInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
 ReplaceGraphPtr GatherV2PInfo::replace_graph(const CNodePtr &cnode) {
   if (manual_split_ && target_ != CPU) {
     if (ComputeReplaceGraph(cnode) != SUCCESS) {
-      MS_LOG(ERROR) << name_ << ": ComputeReplaceGraph failed.";
-      return nullptr;
+      MS_LOG(EXCEPTION) << name_ << ": ComputeReplaceGraph failed.";
     }
     return replace_graph_;
   }
@@ -536,8 +648,7 @@ ReplaceGraphPtr GatherV2PInfo::replace_graph(const CNodePtr &cnode) {
     return nullptr;
   }
   if (param_strategy.at(IntToSize(axis_)) != 1 && ComputeReplaceGraph(cnode) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": ComputeReplaceGraph failed.";
-    return nullptr;
+    MS_LOG(EXCEPTION) << name_ << ": ComputeReplaceGraph failed.";
   }
   return replace_graph_;
 }
@@ -614,6 +725,13 @@ Status GatherV2PInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
 }
 
 Status GatherV2PInfo::GenerateStrategies(int32_t stage_id) {
+  if (GetAttrs() != SUCCESS) {
+    return FAILED;
+  }
+  if (manual_split_) {
+    MS_LOG(ERROR) << name_ << ": Manual split does not support to search strategy";
+    return FAILED;
+  }
   is_auto_parallel_ = true;
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shape input1_split(inputs_shape_[1].size(), 1);
@@ -621,14 +739,14 @@ Status GatherV2PInfo::GenerateStrategies(int32_t stage_id) {
 
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Generate strategies for independent inputs() failed.";
+    MS_LOG(ERROR) << name_ << ": Generate strategies for independent inputs() failed.";
     return FAILED;
   }
   size_t success = 0;
   for (auto &sp : sp_vector) {
     if (SetCostUnderStrategy(sp) == SUCCESS) {
       success++;
-      MS_LOG(INFO) << name_ << " : Successfully generated " << success << " strategy";
+      MS_LOG(INFO) << name_ << ": Successfully generated " << success << " strategy";
       PrintStrategy(sp);
     }
   }
@@ -636,6 +754,12 @@ Status GatherV2PInfo::GenerateStrategies(int32_t stage_id) {
 }
 
 std::shared_ptr<Strategys> GatherV2PInfo::GenerateBatchStrategies() {
+  if (GetAttrs() != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << ": Get attr failed";
+  }
+  if (manual_split_) {
+    MS_LOG(EXCEPTION) << name_ << ": Manual split does not support to generate batch strategy";
+  }
   CheckGlobalDeviceManager();
   size_t dev_num = g_device_manager->GetDeviceListByStageId(0).size();
   Dimensions param_strategy(inputs_shape_[0].size(), 1);
