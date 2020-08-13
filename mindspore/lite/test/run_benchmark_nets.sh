@@ -5,6 +5,9 @@ function Run_x86() {
     # Run tflite converted models:
     while read line; do
         model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
         echo ${model_name}
         echo 'cd  '${convertor_path}'/MSLite-*-linux_x86_64'
         cd ${convertor_path}/MSLite-*-linux_x86_64 || return 1
@@ -23,6 +26,9 @@ function Run_x86() {
     # Run caffe converted models:
     while read line; do
         model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
         echo ${model_name}
         echo 'cd  '${convertor_path}'/MSLite-*-linux_x86_64'
         cd ${convertor_path}/MSLite-*-linux_x86_64 || return 1
@@ -44,6 +50,9 @@ function Run_arm64() {
     # Run tflite converted models:
     while read line; do
         model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
         echo ${model_name}
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1'
@@ -63,6 +72,9 @@ function Run_arm64() {
     # Run caffe converted models:
     while read line; do
         model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
         echo ${model_name}
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1'
@@ -148,6 +160,9 @@ ms_models_path=${basepath}/ms_models
 # Convert tflite models:
 while read line; do
     model_name=${line}
+    if [[ $model_name == \#* ]]; then
+      continue
+    fi
     echo ${model_name}
     echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}''
     ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}
@@ -156,6 +171,9 @@ done < ${models_tflite_config}
 # Convert caffe models:
 while read line; do
     model_name=${line}
+    if [[ $model_name == \#* ]]; then
+      continue
+    fi
     echo ${model_name}
     pwd
     echo './converter_lite  --fmk=CAFFE --modelFile='${models_path}'/'${model_name}'.prototxt --weightFile='${models_path}'/'${model_name}'.caffemodel --outputFile='${ms_models_path}'/'${model_name}''
