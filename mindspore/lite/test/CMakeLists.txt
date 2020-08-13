@@ -100,8 +100,6 @@ endif()
 if (PLATFORM_ARM64)
     # assembly
     file(GLOB TEST_ASSEMBLY_SRC ${LITE_DIR}/src/runtime/kernel/arm/nnacl/assembly/arm64/*.s
-            ${LITE_DIR}/src/runtime/kernel/arm/nnacl/assembly/opt/*.s
-            ${LITE_DIR}/src/runtime/kernel/arm/nnacl/assembly/opt/*.S
             ${LITE_DIR}/src/runtime/kernel/arm/nnacl/assembly/arm64/*.S)
 
     set_property(SOURCE ${TEST_ASSEMBLY_SRC} PROPERTY LANGUAGE C)
@@ -113,8 +111,6 @@ endif()
 if (PLATFORM_ARM32)
     # assembly
     file(GLOB TEST_ASSEMBLY_SRC
-            ${LITE_DIR}/src/runtime/kernel/arm/nnacl/assembly/opt/*.s
-            ${LITE_DIR}/src/runtime/kernel/arm/nnacl/assembly/opt/*.S
             ${LITE_DIR}/src/runtime/kernel/arm/nnacl/assembly/arm32/*.S
             ${LITE_DIR}/src/runtime/kernel/arm/nnacl/assembly/arm32/*.s)
     set_property(SOURCE ${TEST_ASSEMBLY_SRC} PROPERTY LANGUAGE C)

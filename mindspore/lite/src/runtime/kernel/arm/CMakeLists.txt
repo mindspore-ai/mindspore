@@ -9,6 +9,7 @@ file(GLOB KERNEL_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/fp32/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/int8/*.cc
         )
+list(REMOVE_ITEM KERNEL_SRC  ${CMAKE_CURRENT_SOURCE_DIR}/nnacl/opt_op_handler.c)
 
 if (SUPPORT_TRAIN)
 file (GLOB TRAIN_KERNEL_SRC
@@ -20,8 +21,6 @@ endif()
 if (PLATFORM_ARM64)
     # assembly
     file(GLOB ASSEMBLY_SRC nnacl/assembly/arm64/*.s
-            nnacl/assembly/opt/*.s
-            nnacl/assembly/opt/*.S
             nnacl/assembly/arm64/*.S)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
     set(KERNEL_SRC ${KERNEL_SRC} ${ASSEMBLY_SRC})
@@ -31,8 +30,6 @@ if (PLATFORM_ARM32)
     # assembly
     file(GLOB ASSEMBLY_SRC nnacl/assembly/arm32/*.s
             nnacl/assembly/arm32/*.S
-            nnacl/assembly/opt/*.s
-            nnacl/assembly/opt/*.S
             )
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
     set(KERNEL_SRC ${KERNEL_SRC} ${ASSEMBLY_SRC})
