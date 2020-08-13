@@ -23,6 +23,7 @@ from mindspore import log as logger
 
 from . import dtype as mstype
 from .tensor import Tensor
+from .._c_expression import random_normal
 
 _INITIALIZER_ALIAS = dict()
 
@@ -386,9 +387,12 @@ class Normal(Initializer):
         self.sigma = sigma
 
     def _initialize(self, arr):
-        tmp = np.random.normal(0, self.sigma, arr.shape)
-        _assignment(arr, tmp)
-
+        seed = np.random.get_state()[1][0]
+        output_tensor = Tensor(np.zeros(arr.shape, dtype=np.float32))
+        random_normal(0, self.sigma, arr.shape, seed, output_tensor)
+        output_data = output_tensor.asnumpy()
+        output_data *= self.sigma
+        _assignment(arr, output_data)
 
 @_register()
 class TruncatedNormal(Initializer):
@@ -434,6 +438,8 @@ def initializer(init, shape=None, dtype=mstype.float32):
 
     Examples:
         >>> tensor = initializer('ones', [1, 2, 3], mindspore.float32)
+        >>> tensor = initializer(One(), [1, 2, 3], mindspore.float32)
+        >>> tensor = initializer(0, [1, 2, 3], mindspore.float32)
     """
     if not isinstance(init, (Tensor, numbers.Number, str, Initializer)):
         raise TypeError("Unsupported init type '{}'.".format(type(init)))

@@ -42,6 +42,7 @@
 #include "pipeline/pynative/pynative_execute.h"
 #include "frontend/optimizer/py_pass_manager.h"
 #include "pybind_api/pybind_patch.h"
+#include "backend/kernel_compiler/cpu/random_op_cpu_kernel.h"
 
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "frontend/parallel/ps/common.h"
@@ -900,6 +901,50 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
     (void)(*fn)(args);
   }
   MS_LOG(DEBUG) << "InitDataSetVm End.";
+  return true;
+}
+
+bool InitRandomNormal(float mean, float stddev, std::vector<int64_t> out_shape, int64_t seed,
+                      const py::object &output_tensor) {
+  if (out_shape.size() == 0) {
+    std::cout << "output data shape is error" << std::endl;
+  }
+  int64_t total_count = 1;
+  for (uint32_t i = 0; i < out_shape.size(); i++) {
+    total_count *= out_shape[i];
+  }
+  uint32_t thread_num = 16;
+  if (total_count <= thread_num) {
+    thread_num = 1;
+  }
+  auto temp = py::cast<std::shared_ptr<Tensor>>(output_tensor);
+  float *start_ptr = reinterpret_cast<float *>(temp->data_c());
+  if (start_ptr == nullptr) {
+    std::cout << "start_ptr is nullptr" << std::endl;
+    return false;
+  }
+  int64_t batchSize = total_count / thread_num;
+  std::vector<std::thread> threads(thread_num);
+  mindspore::kernel::PhiloxGenerator generator = mindspore::kernel::PhiloxGenerator(seed);
+  if (thread_num != 1) {
+    for (uint32_t i = 0; i < thread_num - 1; i++) {
+      float *offset_ptr = start_ptr + batchSize * i;
+      threads[i] = std::thread(mindspore::kernel::FillRandoms<
+                                 mindspore::kernel::NormalDistribution<mindspore::kernel::PhiloxGenerator, float>>,
+                               generator, offset_ptr, batchSize, i);
+    }
+    float *offset_ptr = start_ptr + batchSize * (thread_num - 1);
+    threads[thread_num - 1] = std::thread(
+      mindspore::kernel::FillRandoms<mindspore::kernel::NormalDistribution<mindspore::kernel::PhiloxGenerator, float>>,
+      generator, offset_ptr, total_count - (thread_num - 1) * batchSize, thread_num - 1);
+  } else {
+    threads[0] = std::thread(
+      mindspore::kernel::FillRandoms<mindspore::kernel::NormalDistribution<mindspore::kernel::PhiloxGenerator, float>>,
+      generator, start_ptr, total_count, 0);
+  }
+  for (uint32_t i = 0; i < thread_num; i++) {
+    threads[i].join();
+  }
   return true;
 }
 
