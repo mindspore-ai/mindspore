@@ -2,14 +2,13 @@
 
 # Run on x86 platform:
 function Run_x86() {
-    Run_x86_caselist_count=0
     # Run tflite converted models:
     while read line; do
         model_name=${line}
         echo ${model_name}
         echo 'cd  '${convertor_path}'/MSLite-*-linux_x86_64'
         cd ${convertor_path}/MSLite-*-linux_x86_64
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1'
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' || return 1
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1
         if [ $? = 0 ]; then
 	    run_result='Run_x86: '${model_name}' pass'
@@ -17,7 +16,7 @@ function Run_x86() {
 	else
 	    run_result='Run_x86: '${model_name}' fail'
 	    echo ${run_result} >> ${run_benchmark_result_file}
-	    return -1
+	    return 1
         fi
     done < ${models_tflite_config}
 
@@ -27,7 +26,7 @@ function Run_x86() {
         echo ${model_name}
         echo 'cd  '${convertor_path}'/MSLite-*-linux_x86_64'
         cd ${convertor_path}/MSLite-*-linux_x86_64
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1'
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' || return 1
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1
         if [ $? = 0 ]; then
             run_result='Run_x86: '${model_name}' pass'
@@ -35,7 +34,7 @@ function Run_x86() {
         else
             run_result='Run_x86: '${model_name}' fail'
             echo ${run_result} >> ${run_benchmark_result_file}
-            return -1
+            return 1
         fi
     done < ${models_caffe_config}
 }
@@ -56,7 +55,7 @@ function Run_arm64() {
         else
             run_result='Run_arm64:'${model_name}' fail'
             echo ${run_result} >> ${run_benchmark_result_file}
-            return -1
+            return 1
         fi
 	#sleep 1
     done < ${models_tflite_config}
@@ -75,7 +74,7 @@ function Run_arm64() {
         else
             run_result='Run_arm64:'${model_name}' fail'
             echo ${run_result} >> ${run_benchmark_result_file}
-            return -1
+            return 1
         fi
 	#sleep 1
     done < ${models_caffe_config}
@@ -126,13 +125,13 @@ done
 
 # Unzip arm 
 cd ${arm_path}
-tar -zxf MSLite-*-linux_arm64.tar.gz
+tar -zxf MSLite-*-linux_arm64.tar.gz || exit 1
 
 # Unzip convertor 
 cd ${convertor_path}
-tar -zxf MSLite-*-linux_x86_64.tar.gz
+tar -zxf MSLite-*-linux_x86_64.tar.gz || exit 1
 cd ${convertor_path}/MSLite-*-linux_x86_64
-cp converter/converter_lite ./
+cp converter/converter_lite ./ || exit 1
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./lib/:./third_party/protobuf/lib
 
 # Convert the models
@@ -169,11 +168,11 @@ rm -rf ${basepath}/benchmark_test
 mkdir -p ${basepath}/benchmark_test
 benchmark_test_path=${basepath}/benchmark_test
 cd ${benchmark_test_path}
-cp -a ${arm_path}/MSLite-*-linux_arm64/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so
-cp -a ${arm_path}/MSLite-*-linux_arm64/benchmark/benchmark ${benchmark_test_path}/benchmark
+cp -a ${arm_path}/MSLite-*-linux_arm64/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
+cp -a ${arm_path}/MSLite-*-linux_arm64/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
 
 # Copy the MindSpore models:
-cp -a ${ms_models_path}/*.ms ${benchmark_test_path}
+cp -a ${ms_models_path}/*.ms ${benchmark_test_path} || exit 1
 
 # Second:adb push all needed files to the phone
 adb -s ${device_id} push ${benchmark_test_path} /data/local/tmp/
