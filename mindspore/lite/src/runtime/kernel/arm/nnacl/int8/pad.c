@@ -16,12 +16,13 @@
 
 #include "nnacl/int8/pad.h"
 #include "nnacl/common_func.h"
+#include "nnacl/errorcode.h"
 
-void PadConstant4D(const int8_t *in_data, int8_t *out_data, const int32_t *in_dims, const int32_t *out_dims,
-                   const int32_t *paddings) {
+int PadConstant4D(const int8_t *in_data, int8_t *out_data, const int32_t *in_dims, const int32_t *out_dims,
+                   const int32_t *paddings, const int tid, const int thread_num) {
   int32_t copy_size = in_dims[3];
   for (int n = 0; n < in_dims[0]; n++) {
-    for (int h = 0; h < in_dims[1]; h++) {
+    for (int h = tid; h < in_dims[1]; h += thread_num) {
       for (int w = 0; w < in_dims[2]; w++) {
         const int8_t *in = in_data + offset(in_dims, n, h, w, 0);
         int8_t *out = out_data + offset(out_dims, n + paddings[0], h + paddings[2], w + paddings[4], paddings[6]);
@@ -29,5 +30,5 @@ void PadConstant4D(const int8_t *in_data, int8_t *out_data, const int32_t *in_di
       }
     }
   }
-  return;
+  return NNACL_OK;
 }

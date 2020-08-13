@@ -183,6 +183,7 @@ TEST_F(TestPadInt8, PadInt8TestInit4) {
   std::vector<lite::tensor::Tensor *> outputs_;
   auto pad_param = new PadParameter();
   lite::Context *ctx = new lite::Context;
+  ctx->thread_num_ = 2;
   int8_t *correct;
   int total_size = PadInt8TestInit2(&inputs_, &outputs_, pad_param, &correct);
   kernel::PadInt8CPUKernel *pad =
