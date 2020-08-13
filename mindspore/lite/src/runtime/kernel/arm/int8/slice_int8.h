@@ -13,27 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SLICE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SLICE_H_
+
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_SLICE_INT8_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_SLICE_INT8_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/base/slice_base.h"
+#include "src/runtime/kernel/arm/nnacl/quantization/quantize.h"
 
 namespace mindspore::kernel {
-class SliceCPUKernel : public SliceBaseCPUKernel {
+class SliceInt8CPUKernel : public SliceBaseCPUKernel {
  public:
-  SliceCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                 const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                 const lite::Primitive *primitive)
+  SliceInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                       const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                       const lite::Primitive *primitive)
       : SliceBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~SliceCPUKernel() = default;
+  ~SliceInt8CPUKernel() {
+  }
 
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int SliceParallelRun(int thread_id);
+  int DoSlice(int task_id);
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SLICE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_SLICE_INT8_H_

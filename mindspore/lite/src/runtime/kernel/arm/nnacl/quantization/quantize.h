@@ -239,6 +239,13 @@ typedef struct ReduceQuantArg {
   int sum_square_right_shift_;
 } ReduceQuantArg;
 
+typedef struct SliceQuantArg {
+  QuantArg in_args_;
+  QuantArg out_args_;
+  int output_activation_min_;
+  int output_activation_max_;
+} SliceQuantArg;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

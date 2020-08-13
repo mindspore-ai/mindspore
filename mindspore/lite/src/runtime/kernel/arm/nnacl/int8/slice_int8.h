@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_SLICE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_SLICE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_SLICE_INT8_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_SLICE_INT8_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/slice_parameter.h"
@@ -22,11 +22,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void PadSliceParameterTo4D(SliceParameter *param);
-void DoSlice(const float *input, float *output, SliceParameter *param);
-void DoSliceNoParallel(const float *input, float *output, SliceParameter *param);
+int SliceInt8NoParallel(const int8_t*input, int8_t *output, SliceParameter *param);
+int SliceInt8(const int8_t*input, int8_t *output, SliceParameter *param);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_SLICE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_SLICE_INT8_H_
+
