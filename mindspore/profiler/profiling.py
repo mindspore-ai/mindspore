@@ -56,6 +56,8 @@ class Profiler:
             will deal with all op if null; Different op types should be seperated by comma.
         optypes_not_deal (str): Op type names, the data of which optype will not be collected and analysed;
             Different op types should be seperated by comma.
+        job_id (str): The directory where the parsed profiling files are located;
+            This parameter is used to support offline parsing.
 
     Examples:
         >>> from mindspore.profiler import Profiler
