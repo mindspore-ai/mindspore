@@ -18,13 +18,19 @@ set -e
 
 CURRPATH=$(cd $(dirname $0); pwd)
 
-if [ $# -gt 0 -a $1 == "-h" ]; then
-    echo "Usage: $0 [testcase_name]"
-    exit 0
+if [ $# -gt 0 ]; then
+    if [ $1 == "python" ]; then
+        echo "run python ut"
+        bash ${CURRPATH}/ut/python/runtest.sh $2
+    elif [ $1 == "cpp" ]; then
+        echo "run cpp ut"
+        bash ${CURRPATH}/ut/cpp/runtest.sh
+    fi
+else
+    echo "run all ut"
+    # 1.run python testcases
+    bash ${CURRPATH}/ut/python/runtest.sh $2
+
+    # 2.run c++ ut testcases
+    bash ${CURRPATH}/ut/cpp/runtest.sh
 fi
-
-# 1.run python testcases
-bash ${CURRPATH}/ut/python/runtest.sh $1
-
-# 2.run c++ ut testcases
-bash ${CURRPATH}/ut/cpp/runtest.sh

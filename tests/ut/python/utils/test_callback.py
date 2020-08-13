@@ -370,7 +370,6 @@ def test_step_end_save_graph():
     ckpoint_cb = ModelCheckpoint(prefix="test", directory='./test_files', config=train_config)
     run_context = RunContext(cb_params)
     ckpoint_cb.begin(run_context)
-    # import pdb;pdb.set_trace()
     ckpoint_cb.step_end(run_context)
     assert os.path.exists('./test_files/test-graph.meta')
     if os.path.exists('./test_files/test-graph.meta'):

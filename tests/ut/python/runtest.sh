@@ -15,8 +15,9 @@
 # ============================================================================
 
 CURRPATH=$(cd $(dirname $0); pwd)
-cd ${CURRPATH}
-PROJECT_PATH=${CURRPATH}/../../..
+IGNORE_EXEC="--ignore=$CURRPATH/exec"
+PROJECT_PATH=$(cd ${CURRPATH}/../../..; pwd)
+
 if [ $BUILD_PATH ];then
 	echo "BUILD_PATH = $BUILD_PATH"
 else
@@ -28,50 +29,47 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${BUILD_PATH}/third_party/gtest/lib
 export PYTHONPATH=$PYTHONPATH:${PROJECT_PATH}:${PROJECT_PATH}/tests/ut/cpp/python_input:${PROJECT_PATH}/tests/ut/python
 echo "export PYTHONPATH=$PYTHONPATH"
 
-IGNORE_EXEC=""
-if [ "x${ENABLE_GE}" == "xON" -o "x${ENABLE_GE}" == "xOn" -o "x${ENABLE_GE}" == "xon" -o \
-     "x${ENABLE_GE}" == "xTrue" -o "x${ENABLE_GE}" == "xtrue" ]; then
-    if [ $# -gt 0 ]; then
-        IGNORE_EXEC="--ignore=$1/exec"
-    else
-        IGNORE_EXEC="--ignore=$CURRPATH/exec"
+if [ $# -eq 1 ]  &&  ([ "$1" == "stage1" ] || [ "$1" == "stage2" ] || [ "$1" == "stage3" ]); then
+    if [ $1 == "stage1" ]; then
+        echo "run python dataset ut"
+        pytest $CURRPATH/dataset
+
+    elif [ $1 == "stage2" ]; then
+        echo "run python parallel\train\ops ut"
+        pytest -n 4 --dist=loadfile -v $CURRPATH/parallel $CURRPATH/train $CURRPATH/ops
+
+    elif [ $1 == "stage3" ]; then
+        echo "run other ut"
+        pytest --ignore=$CURRPATH/dataset --ignore=$CURRPATH/parallel --ignore=$CURRPATH/train  --ignore=$CURRPATH/ops --ignore=$CURRPATH/pynative_mode $IGNORE_EXEC $CURRPATH
+
+        RET=$?
+        if [ ${RET} -ne 0 ]; then
+            exit ${RET}
+        fi
+        pytest $CURRPATH/pynative_mode
     fi
-fi
-
-if [ $# -gt 0 ]; then
-    pytest -s --ignore=$1/pynative_mode --ignore=$1/parallel  --ignore=$1/train  $IGNORE_EXEC $1
 else
-    pytest --ignore=$CURRPATH/pynative_mode --ignore=$CURRPATH/parallel --ignore=$CURRPATH/train $IGNORE_EXEC $CURRPATH
-fi
+    echo "run all python ut"
+    pytest $CURRPATH/dataset
 
-RET=$?
-if [ "x${IGNORE_EXEC}" != "x" ]; then
-    exit ${RET}
-fi
+    RET=$?
+    if [ ${RET} -ne 0 ]; then
+        exit ${RET}
+    fi
+    pytest -n 4 --dist=loadfile -v $CURRPATH/parallel $CURRPATH/train $CURRPATH/ops
 
-if [ ${RET} -ne 0 ]; then
-    exit ${RET}
-fi
+    RET=$?
+    if [ ${RET} -ne 0 ]; then
+        exit ${RET}
+    fi
 
-if [ $# -gt 0 ]; then
-    pytest -n 4 --dist=loadfile -v $1/parallel $1/train
-else
-    pytest -n 4 --dist=loadfile -v $CURRPATH/parallel $CURRPATH/train
-fi
-
-RET=$?
-
-if [ ${RET} -ne 0 ]; then
-    exit ${RET}
-fi
-
-if [ $# -gt 0 ]; then
-    pytest -s $1/pynative_mode
-else
+    pytest --ignore=$CURRPATH/dataset --ignore=$CURRPATH/parallel --ignore=$CURRPATH/train  --ignore=$CURRPATH/ops $IGNORE_EXEC --ignore=$CURRPATH/pynative_mode $CURRPATH
+    RET=$?
+    if [ ${RET} -ne 0 ]; then
+        exit ${RET}
+    fi
     pytest $CURRPATH/pynative_mode
 fi
 
 RET=$?
-if [ ${RET} -ne 0 ]; then
-    exit ${RET}
-fi
+exit ${RET}
