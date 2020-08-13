@@ -80,7 +80,6 @@ int ArgMinMaxInt8CPUKernel::Run() {
       Int8ArgMinMaxDim3(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
       break;
   }
-  FreeTmpMemory();
   return RET_OK;
 }
 }  // namespace mindspore::kernel
