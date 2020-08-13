@@ -860,7 +860,7 @@ void AscendSession::CreateMultiBranchOutput(NotNull<KernelGraphPtr> graph, NotNu
   memo->insert(graph.get());
   graph->UpdateChildGraphOrder();
   for (auto &child_graph : graph->child_graph_order()) {
-    CreateMultiBranchOutput(NOT_NULL(child_graph), memo);
+    CreateMultiBranchOutput(NOT_NULL(child_graph.lock()), memo);
   }
   std::map<AnfNodePtr, AnfNodePtr> need_replace_list;
   auto node_list = GetCNodes(TopoSort(graph->get_return()));
@@ -932,7 +932,7 @@ void AscendSession::IrFusionPass(const NotNull<KernelGraphPtr> graph, NotNull<st
   }
 
   for (auto &child_graph : graph->child_graph_order()) {
-    IrFusionPass(NOT_NULL(child_graph), memo);
+    IrFusionPass(NOT_NULL(child_graph.lock()), memo);
   }
 }
 
@@ -1016,7 +1016,7 @@ void AscendSession::HardwareOptimize(NotNull<KernelGraphPtr> graph,
 
   HardwareOptimize(graph.get());
   for (auto &child_graph : graph->child_graph_order()) {
-    HardwareOptimize(NOT_NULL(child_graph), memo);
+    HardwareOptimize(NOT_NULL(child_graph.lock()), memo);
   }
   MS_LOG(INFO) << "Finish doing HardwareOptimize in graph: " << graph->graph_id();
 }
@@ -1035,7 +1035,7 @@ void AscendSession::AssignStaticMemory(NotNull<KernelGraphPtr> graph,
   runtime_instance->AssignStaticMemoryInput(graph.get().get());
   runtime_instance->AssignStaticMemoryValueNode(graph.get().get());
   for (auto &child_graph : graph->child_graph_order()) {
-    AssignStaticMemory(NOT_NULL(child_graph), memo);
+    AssignStaticMemory(NOT_NULL(child_graph.lock()), memo);
   }
   MS_LOG(INFO) << "Finish assigning static memory for parameter in graph: " << graph->graph_id();
 }
@@ -1048,9 +1048,11 @@ void AscendSession::UpdateRefOutputMap(NotNull<KernelGraphPtr> graph,
   memo->insert(graph.get());
 
   for (auto &child_graph : graph->child_graph_order()) {
-    UpdateRefOutputMap(NOT_NULL(child_graph), memo);
+    std::shared_ptr<KernelGraph> child_graph_ptr = child_graph.lock();
+    MS_EXCEPTION_IF_NULL(child_graph_ptr);
+    UpdateRefOutputMap(NOT_NULL(child_graph_ptr), memo);
     // copy ref map to final graph
-    auto child_ref_map = child_graph->GetRefMap();
+    auto child_ref_map = child_graph_ptr->GetRefMap();
     for (auto &item : child_ref_map) {
       if (graph->IsInRefOutputMap(item.first)) {
         MS_LOG(WARNING) << "The ref pair <" << item.first.first->DebugString() << ", " << item.first.second

@@ -922,8 +922,9 @@ std::vector<std::shared_ptr<KernelGraph>> KernelGraph::GetLeafGraphOrder() {
     leaf_graph_order.push_back(shared_from_this()->cast<KernelGraphPtr>());
   } else {
     for (const auto &child_graph : child_graph_order_) {
-      MS_EXCEPTION_IF_NULL(child_graph);
-      auto child_leaf_graph_order = child_graph->GetLeafGraphOrder();
+      std::shared_ptr<KernelGraph> child_graph_ptr = child_graph.lock();
+      MS_EXCEPTION_IF_NULL(child_graph_ptr);
+      auto child_leaf_graph_order = child_graph_ptr->GetLeafGraphOrder();
       std::copy(child_leaf_graph_order.begin(), child_leaf_graph_order.end(), std::back_inserter(leaf_graph_order));
     }
   }
@@ -1103,13 +1104,13 @@ void KernelGraph::UpdateChildGraphOrder() {
   SetExecOrderByDefault();
   auto call_nodes = FindNodeByPrimitive(
     {std::make_shared<Primitive>(prim::kPrimCall->name()), std::make_shared<Primitive>(prim::kPrimSwitch->name())});
-  std::vector<KernelGraphPtr> child_graph_order;
+  std::vector<std::weak_ptr<KernelGraph>> child_graph_order;
   for (auto &call_node : call_nodes) {
     MS_EXCEPTION_IF_NULL(call_node);
     auto call_child_graphs = AnfAlgo::GetCallSwitchKernelGraph(call_node->cast<CNodePtr>());
     for (const auto &child_graph : call_child_graphs) {
       MS_EXCEPTION_IF_NULL(child_graph);
-      if (child_graph != parent_graph_) {
+      if (child_graph != parent_graph_.lock()) {
         auto shared_this = std::dynamic_pointer_cast<KernelGraph>(shared_from_this());
         MS_EXCEPTION_IF_NULL(shared_this);
         child_graph->set_parent_graph(shared_this);
@@ -1118,7 +1119,9 @@ void KernelGraph::UpdateChildGraphOrder() {
     }
   }
   for (size_t i = 0; i < child_graph_order.size(); ++i) {
-    MS_LOG(INFO) << "Child graph[" << i << "][id:" << child_graph_order[i]->graph_id() << "]";
+    std::shared_ptr<KernelGraph> child_graph = child_graph_order[i].lock();
+    MS_EXCEPTION_IF_NULL(child_graph);
+    MS_LOG(INFO) << "Child graph[" << i << "][id:" << child_graph->graph_id() << "]";
   }
   child_graph_order_ = child_graph_order;
 }

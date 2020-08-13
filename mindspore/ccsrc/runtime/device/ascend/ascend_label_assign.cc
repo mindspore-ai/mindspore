@@ -89,7 +89,7 @@ static void AssignLabelForLabelSet(NotNull<std::shared_ptr<session::KernelGraph>
   }
 
   for (auto &cg : graph->child_graph_order()) {
-    AssignLabelForLabelSet(NOT_NULL(cg), label_id, memo);
+    AssignLabelForLabelSet(NOT_NULL(cg.lock()), label_id, memo);
   }
 }
 
@@ -120,7 +120,7 @@ static void AssignLabelForGotoSwitch(NotNull<std::shared_ptr<session::KernelGrap
     }
   }
   for (auto &cg : graph->child_graph_order()) {
-    AssignLabelForGotoSwitch(NOT_NULL(cg), memo);
+    AssignLabelForGotoSwitch(NOT_NULL(cg.lock()), memo);
   }
 }
 

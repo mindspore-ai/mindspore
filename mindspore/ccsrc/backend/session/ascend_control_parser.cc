@@ -63,7 +63,7 @@ static void RecursiveReplaceNode(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr>
   }
 
   for (auto &child : kg->child_graph_order()) {
-    RecursiveReplaceNode(NOT_NULL(child), main_parameter, parameter_reuse_set, memo);
+    RecursiveReplaceNode(NOT_NULL(child.lock()), main_parameter, parameter_reuse_set, memo);
   }
 }
 
@@ -177,13 +177,14 @@ void AscendControlParser::AttachChildGraphToReturnNode(NotNull<KernelGraphPtr> g
     return;
   }
   memo->insert(graph.get());
-  const std::vector<std::shared_ptr<KernelGraph>> &child_graph_order = graph->child_graph_order();
+  const std::vector<std::weak_ptr<KernelGraph>> &child_graph_order = graph->child_graph_order();
   if (child_graph_order.empty()) {
     return;
   }
 
   std::vector<AnfNodePtr> depend_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimPartial->name()))};
-  for (auto &cg : child_graph_order) {
+  for (auto &kg : child_graph_order) {
+    std::shared_ptr<KernelGraph> cg = kg.lock();
     MS_EXCEPTION_IF_NULL(cg);
     auto fg = cg->cast<FuncGraphPtr>();
     MS_EXCEPTION_IF_NULL(fg);
@@ -207,7 +208,7 @@ void AscendControlParser::LinkGraph(NotNull<KernelGraphPtr> kg) {
   memo.clear();
   // assign label resource
   device::ascend::AscendLabelAssign::GetInstance().AssignLabel(kg);
-  AttachChildGraphToReturnNode(kg, NOT_NULL(&memo));
+  // AttachChildGraphToReturnNode(kg, NOT_NULL(&memo));
 }
 
 void AscendControlParser::EraseParameter(NotNull<KernelGraphPtr> root_graph,
@@ -428,7 +429,7 @@ void AscendControlParser::ChildGraphDataAssign(
   }
   kg->SetExecOrderByDefault();
   for (auto &child_graph : kg->child_graph_order()) {
-    ChildGraphDataAssign(NOT_NULL(child_graph), link_list, memo);
+    ChildGraphDataAssign(NOT_NULL(child_graph.lock()), link_list, memo);
   }
 }
 
@@ -772,7 +773,7 @@ std::vector<CNodePtr> AscendControlParser::RecurseGraph(NotNull<KernelGraphPtr> 
       MS_LOG(EXCEPTION) << "Index out of range:" << graph->child_graph_order().size();
     }
     auto child_graph = graph->child_graph_order()[child_order_index++];
-    auto child_execution_order = RecurseGraph(NOT_NULL(child_graph), memo);
+    auto child_execution_order = RecurseGraph(NOT_NULL(child_graph.lock()), memo);
     execution_order.insert(execution_order.end(), child_execution_order.begin(), child_execution_order.end());
   };
 
@@ -790,6 +791,10 @@ std::vector<CNodePtr> AscendControlParser::RecurseGraph(NotNull<KernelGraphPtr> 
     } else if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimLabelGoto)) {
       uint32_t label_index = AnfAlgo::GetNodeAttr<uint32_t>(node, kAttrLabelIndex);
       recurse_child_graph(child_graph_index, label_index, node);
+    }
+    // erase kAttrChildGraph after finish using
+    if (AnfAlgo::HasNodeAttr(kAttrChildGraph, node)) {
+      AnfAlgo::EraseNodeAttr(kAttrChildGraph, node);
     }
   }
   graph->set_execution_order(execution_order);
