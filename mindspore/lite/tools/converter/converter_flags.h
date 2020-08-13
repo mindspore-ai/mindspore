@@ -27,7 +27,7 @@ namespace lite {
 using mindspore::schema::QuantType;
 using mindspore::schema::QuantType_PostTraining;
 using mindspore::schema::QuantType_QUANT_NONE;
-using mindspore::schema::QuantType_AwareTrainning;
+using mindspore::schema::QuantType_AwareTraining;
 using mindspore::schema::QuantType_WeightQuant;
 using mindspore::schema::QuantType_PostTraining;
 using mindspore::schema::QuantType_PostTraining;

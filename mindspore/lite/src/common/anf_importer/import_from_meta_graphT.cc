@@ -89,13 +89,15 @@ int AnfImporterFromMetaGraphT::ConverterCNode() {
     }
     auto primTValue = std::make_shared<PrimitiveTValue>(cNode->primitive.release());
     // add quant parameter
-    if (cNode->quantType == schema::QuantType_AwareTrainning) {
+    if (cNode->quantType == schema::QuantType_AwareTraining) {
       primTValue->SetQuantType(cNode->quantType);
       for (int index : cNode->inputIndex) {
-        primTValue->AddInputQuantParam(*(meta_graph_->allTensors[index]->quantParams[0]));
+        std::vector<schema::QuantParamT> quant_params = {*(meta_graph_->allTensors[index]->quantParams[0])};
+        primTValue->AddInputQuantParam(quant_params);
       }
       for (int index : cNode->outputIndex) {
-        primTValue->AddOutputQuantParam(*(meta_graph_->allTensors[index]->quantParams[0]));
+        std::vector<schema::QuantParamT> quant_params = {*(meta_graph_->allTensors[index]->quantParams[0])};
+        primTValue->AddOutputQuantParam(quant_params);
       }
     }
     cNode->primitive = nullptr;

@@ -130,7 +130,7 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
 void Converter::CreateQuantizer(FuncGraphPtr funcGraph, const converter::Flags *flags) {
   auto type = flags->quantType;
   switch (type) {
-    case mindspore::schema::QuantType_AwareTrainning: {
+    case mindspore::schema::QuantType_AwareTraining: {
       // mQuantizer.reset(new AwareQuantizer(graphDefT, flags->inputInferenceTypeIn, flags->stdDev, flags->mean));
       break;
     }

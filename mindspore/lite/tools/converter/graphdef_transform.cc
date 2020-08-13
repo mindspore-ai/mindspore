@@ -68,8 +68,8 @@ void GraphDefTransform::SetGraphDef(schema::MetaGraphT *_dstDef) { graphDefT = _
 void GraphDefTransform::CreateQuantizer(const converter::Flags *flags) {
   auto type = flags->quantType;
   switch (type) {
-    case QuantType::QuantType_AwareTrainning: {
-      MS_LOG(INFO) << "create AwareTrainningQuantizer!";
+    case QuantType::QuantType_AwareTraining: {
+      MS_LOG(INFO) << "create AwareTrainingQuantizer!";
       fbQuantizer =
         std::make_unique<quant::AwareQuantizer>(graphDefT, flags->inputInferenceTypeIn, flags->stdDev, flags->mean);
       break;
@@ -146,7 +146,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
         return status;
       }
       if (!(this->graphDefT->fmkType == converter::FmkType_TF &&
-        this->graphDefT->nodes.front()->quantType == QuantType::QuantType_AwareTrainning)) {
+        this->graphDefT->nodes.front()->quantType == QuantType::QuantType_AwareTraining)) {
         status = mQuantizer->GenerateQuantParam();
         if (status != RET_OK) {
           MS_LOG(ERROR) << "GenerateQuantParam failed";
@@ -173,7 +173,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     formatTransOptimizer.AddPass(formatTransPass);
     formatTransOptimizer.AddPass(new (std::nothrow) FormatTransFusionPass());
     formatTransOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
-    //    if (ctx.quantType == QuantType_AwareTrainning) {
+    //    if (ctx.quantType == QuantType_AwareTraining) {
     //      formatTransOptimizer.AddPass(new (std::nothrow) FormatTransNodeQuantParamFillPass());
     //    }
     status = formatTransOptimizer.Run(graphDefT);
@@ -193,7 +193,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
   }
 
   // insert quantNode and deQuantNode
-  if (ctx.quantType == QuantType_AwareTrainning) {
+  if (ctx.quantType == QuantType_AwareTraining) {
     Optimizer quantNodeOptimizer;
     auto dTypeTransPass = new (std::nothrow) DTypeTransPass();
     if (dTypeTransPass == nullptr) {

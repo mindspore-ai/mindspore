@@ -197,7 +197,7 @@ union PrimitiveType {
 
 enum QuantType: int {
     QUANT_NONE,
-    AwareTrainning,
+    AwareTraining,
     WeightQuant,
     PostTraining
 }

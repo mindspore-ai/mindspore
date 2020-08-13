@@ -225,7 +225,7 @@ int AnfConvPopulater::Populate(const PrimitivePtr &prim,
     PopulaterConv2DSingleGroup(prim, primitive, group);
   }
   primitiveTValuePtr->SetPrimitiveT(primitive.release());
-  if (primitiveTValuePtr->GetQuantType() == schema::QuantType_AwareTrainning) {
+  if (primitiveTValuePtr->GetQuantType() == schema::QuantType_AwareTraining) {
     std::vector<std::vector<schema::QuantParamT>> vecQuantParam;
     PopulaterQuantParam(prim, &vecQuantParam);
     primitiveTValuePtr->SetInputQuantParam(vecQuantParam);
