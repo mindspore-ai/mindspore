@@ -18,10 +18,11 @@
 #include <memory>
 #include <string>
 #include "utils/log_adapter.h"
-#include "mindspore/lite/tools/optimizer/fusion/conv_biasadd_fusion.h"
-#include "mindspore/lite/tools/optimizer/fusion/conv_activation_fusion.h"
-#include "mindspore/lite/tools/optimizer/fusion/conv_scale_fusion.h"
-#include "mindspore/lite/tools/optimizer/fusion/conv_bn_fusion.h"
+#include "tools/optimizer/fusion/conv_biasadd_fusion.h"
+#include "tools/optimizer/fusion/conv_activation_fusion.h"
+#include "tools/optimizer/fusion/conv_scale_fusion.h"
+#include "tools/optimizer/fusion/conv_bn_fusion.h"
+#include "tools/optimizer/fusion/constant_folding_fusion.h"
 
 using std::string;
 namespace mindspore {
@@ -43,6 +44,7 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph) {
                                                          schema::ActivationType_RELU));
   pm->AddPass(std::make_shared<opt::ConvActivationFusion>(true, "conv_relu6", schema::PrimitiveType_Activation,
                                                          schema::ActivationType_RELU6));
+  pm->AddPass(std::make_shared<opt::ConstFoldPass>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(old_graph);
   return new_graph;

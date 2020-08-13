@@ -17,6 +17,7 @@
 #include <vector>
 #include "src/ir/primitive_t_value.h"
 #include "frontend/operator/ops.h"
+#include "backend/optimizer/common/helper.h"
 
 namespace mindspore {
 namespace opt {
@@ -314,6 +315,11 @@ schema::PrimitiveType GetCNodeType(const BaseRef &n) {
     auto primitive = value->cast<PrimitiveTValuePtr>();
     MS_ASSERT(primitive != nullptr);
     return primitive->GetPrimitiveT()->value.type;
+  } else if (utils::isa<Primitive>(value)) {
+    auto primitive = value->cast<PrimitivePtr>();
+    MS_ASSERT(primitive != nullptr);
+    MS_LOG(INFO) << "anf primitive node type:" << primitive->name();
+    return schema::PrimitiveType_NONE;
   }
   return schema::PrimitiveType_NONE;
 }
@@ -328,6 +334,38 @@ bool IsConvNode(const BaseRef &n) {
     return type == schema::PrimitiveType_Conv2D || type == schema::PrimitiveType_DepthwiseConv2D;
   }
   return false;
+}
+
+bool CheckIsAllInputsParam(const AnfNodePtr &node) {
+  if (utils::isa<CNode>(node)) {
+    auto cnode = node->cast<CNodePtr>();
+    for (auto i = 1; i < cnode->inputs().size(); i++) {
+      if (!utils::isa<Parameter>(cnode->input(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
+size_t GetOutputTensorNum(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto type = node->Type();
+  if (type == nullptr) {
+    return 1;
+  }
+  if (type->isa<Tuple>()) {
+    auto tuple_type = type->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_type);
+    return tuple_type->size();
+  } else if (type->isa<TensorType>() || type->isa<Number>()) {
+    return 1;
+  } else if (type->isa<TypeNone>()) {
+    return 0;
+  } else {
+    return 1;
+  }
 }
 }  // namespace opt
 }  // namespace mindspore

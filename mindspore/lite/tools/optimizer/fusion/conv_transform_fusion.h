@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_PASS_FUSION_CONV_TRANSFORM_FUSION_H_
 
 #include <string>
-#include "tools/optimizer/common/optimizer.h"
+#include "backend/optimizer/common/optimizer.h"
 
 namespace mindspore::opt {
 class ConvTransformFusion : public PatternProcessPass {

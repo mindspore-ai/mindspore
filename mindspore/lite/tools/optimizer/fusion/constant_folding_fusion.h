@@ -13,29 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_PASS_COMMON_PASS_H_
-#define MINDSPORE_LITE_SRC_PASS_COMMON_PASS_H_
-#include <memory>
-#include <string>
 
-#include "ir/anf.h"
-#include "frontend/operator/ops.h"
+#ifndef MINDSPORE_LITE_SRC_PASS_FUSION_CONSTANT_FOLDING_FUSION_H_
+#define MINDSPORE_LITE_SRC_PASS_FUSION_CONSTANT_FOLDING_FUSION_H_
+
+#include "backend/optimizer/common/optimizer.h"
 
 namespace mindspore {
 namespace opt {
-// @brief ANF Graph level optimization base pass
-class Pass {
+class ConstFoldPass : public PatternProcessPass {
  public:
-  explicit Pass(const std::string &name = "pass") : name_(name) {}
-  virtual ~Pass() = default;
-  virtual bool Run(const FuncGraphPtr &func_graph) = 0;
-  virtual std::string name() const { return name_; }
-
- private:
-  const std::string name_;
+  explicit ConstFoldPass(bool multigraph = true) : PatternProcessPass("constfold_pass", multigraph) {}
+  ~ConstFoldPass() override = default;
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };
-using PassPtr = std::shared_ptr<Pass>;
 }  // namespace opt
 }  // namespace mindspore
+#endif  // MINDSPORE_LITE_SRC_PASS_FUSION_CONSTANT_FOLDING_FUSION_H_
 
-#endif  // MINDSPORE_LITE_SRC_PASS_COMMON_PASS_H_

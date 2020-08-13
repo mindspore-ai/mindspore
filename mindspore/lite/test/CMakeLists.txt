@@ -228,6 +228,7 @@ if(BUILD_CONVERTER)
             ${LITE_DIR}/test/ut/tools/optimizer/fusion/conv_biasadd_fusion_test.cc
             ${LITE_DIR}/test/ut/tools/optimizer/fusion/conv_bn_fusion_test.cc
             ${LITE_DIR}/test/ut/tools/optimizer/fusion/conv_scale_fusion_test.cc
+            ${LITE_DIR}/test/ut/tools/optimizer/fusion/constant_folding_fusion_test.cc
             ${LITE_DIR}/tools/optimizer/common/node_pass_extends.cc
             ${LITE_DIR}/tools/optimizer/common/pass_manager_extends.cc
             ${LITE_DIR}/tools/optimizer/common/gllo_utils.cc
@@ -236,6 +237,7 @@ if(BUILD_CONVERTER)
             ${LITE_DIR}/tools/optimizer/fusion/conv_transform_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_scale_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_bn_fusion.cc
+            ${LITE_DIR}/tools/optimizer/fusion/constant_folding_fusion.cc
             )
 endif()
 ### train
