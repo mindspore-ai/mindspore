@@ -14,24 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_LEAKYRELU_H
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_LEAKYRELU_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_ACTIVATION_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_ACTIVATION_H_
 
 #include <vector>
-#include <string>
-#include "src/ir/tensor.h"
-#include "src/runtime/kernel/opencl/opencl_kernel.h"
-#include "schema/model_generated.h"
+
 #include "src/runtime/opencl/opencl_runtime.h"
+#include "src/runtime/kernel/opencl/opencl_kernel.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/activation.h"
 
 namespace mindspore::kernel {
 
-class LeakyReluOpenCLKernel : public OpenCLKernel {
+class ActivationOpenClKernel : public OpenCLKernel {
  public:
-  explicit LeakyReluOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                 const std::vector<lite::tensor::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs) {}
-  ~LeakyReluOpenCLKernel() override{};
+  explicit ActivationOpenClKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                                  const std::vector<lite::tensor::Tensor *> &outputs)
+      : OpenCLKernel(parameter, inputs, outputs) {
+    type_ = (reinterpret_cast<ActivationParameter *>(parameter))->type_;
+    alpha_ = (reinterpret_cast<ActivationParameter *>(parameter))->alpha_;
+  }
+  ~ActivationOpenClKernel() override{};
 
   int Init() override;
   int Run() override;
@@ -39,8 +41,9 @@ class LeakyReluOpenCLKernel : public OpenCLKernel {
 
  private:
   cl::Kernel kernel_;
+  int type_;
+  float alpha_;
 };
 
 }  // namespace mindspore::kernel
-
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_LEAKYRELU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_ACTIVATION_H_

@@ -160,7 +160,8 @@ kernel::LiteKernel *OpenCLMatMulKernelCreator(const std::vector<lite::tensor::Te
   if (opParameter->type_ == PrimitiveType_FullConnection) {
     hasBias = (reinterpret_cast<MatMulParameter *>(opParameter))->has_bias_;
   }
-  auto *kernel = new MatMulOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs, hasBias);
+  auto *kernel =
+    new (std::nothrow) MatMulOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs, hasBias);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel " << opParameter->name_ << "is nullptr.";
     return nullptr;
