@@ -221,6 +221,8 @@ class Tensor : public MetaTensor {
 
   DeviceSyncPtr device_address() const { return device_sync_; }
   void set_device_address(const DeviceSyncPtr &device_sync) { device_sync_ = device_sync; }
+  void set_padding_type(std::vector<Axis> padding_type) { padding_type_ = padding_type; }
+  std::vector<Axis> padding_type() const { return padding_type_; }
 
   std::string id() const { return id_; }
 
@@ -230,6 +232,7 @@ class Tensor : public MetaTensor {
   bool dirty_{true};
   std::string id_{""};
   DeviceSyncPtr device_sync_{nullptr};
+  std::vector<Axis> padding_type_;
 };
 using TensorPtr = std::shared_ptr<Tensor>;
 using TensorPtrList = std::vector<std::shared_ptr<Tensor>>;

@@ -55,7 +55,7 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
   CNodePtr trans_data = nullptr;
   std::string input_format = is_insert_input ? kOpFormat_DEFAULT : AnfAlgo::GetOutputFormat(node, 0);
   std::string dst_format = is_insert_input ? AnfAlgo::GetInputFormat(node, 0) : kOpFormat_DEFAULT;
-  std::vector<kernel::Axis> padding_axis;
+  std::vector<Axis> padding_axis;
   MS_EXCEPTION_IF_NULL(node);
   // if insert transdata for input we need to change the input
   if (is_insert_input) {
@@ -170,7 +170,7 @@ AnfNodePtr InsertTransOpForMultipleOutput(const FuncGraphPtr &func_graph, const 
 }
 }  // namespace
 void RefreshKernelBuildInfo(const std::string &input_format, const std::string &output_format,
-                            const AnfNodePtr &trans_data, const std::vector<kernel::Axis> &reshape_type,
+                            const AnfNodePtr &trans_data, const std::vector<Axis> &reshape_type,
                             const TypeId &type_id) {
   MS_EXCEPTION_IF_NULL(trans_data);
   auto ori_build_info = AnfAlgo::GetSelectKernelBuildInfo(trans_data);

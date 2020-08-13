@@ -399,7 +399,7 @@ std::vector<int> GetRuntimePaddingShape(const AnfNodePtr &node, size_t index) {
   return shape;
 }
 
-std::vector<size_t> PaddingShapeTo4d(const std::vector<size_t> &shape, const std::vector<kernel::Axis> &padding_axis) {
+std::vector<size_t> PaddingShapeTo4d(const std::vector<size_t> &shape, const std::vector<Axis> &padding_axis) {
   if (padding_axis.empty() || shape.size() != padding_axis.size()) {
     return PaddingShapeTo4dByDefault(shape);
   }

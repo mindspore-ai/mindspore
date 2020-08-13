@@ -30,14 +30,6 @@ namespace mindspore {
 enum KernelType : int { UNKNOWN_KERNEL_TYPE = 0, AKG_KERNEL, AICPU_KERNEL, RT_KERNEL, HCCL_KERNEL, TBE_KERNEL };
 
 namespace kernel {
-
-enum Axis : int {
-  N = 0,
-  C,
-  H,
-  W,
-};
-
 // Supported fusion type
 enum FusionType {
   CONVLUTION = 0,

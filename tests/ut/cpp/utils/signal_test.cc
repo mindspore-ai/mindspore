@@ -54,10 +54,10 @@ class A {
   std::shared_ptr<int> i;
 };
 
-class C : public A {
+class Ca : public A {
  public:
-  C() {}
-  explicit C(signals *sigs) : A(sigs) { printf("conn C:%p\n", this); }
+  Ca() {}
+  explicit Ca(signals *sigs) : A(sigs) { printf("conn C:%p\n", this); }
   void FuncA(int v1, float v2, std::string str) { printf("C: --%d--%f--%s--\n", v1, v2, str.c_str()); }
 };
 
@@ -71,13 +71,13 @@ class B : public A {
 TEST_F(TestSignal, test_common) {
   A objA;
   B objB;
-  C objC;
+  Ca objC;
 
   Signal<void(int, float, std::string)> signal;
 
   signal.connect(&objA, &A::FuncA);
   signal.connect(&objB, &B::FuncA);
-  signal.connect(&objC, &C::FuncA);
+  signal.connect(&objC, &Ca::FuncA);
   signal(20, 20, "Signal-Slot test");
 }
 
@@ -85,11 +85,11 @@ TEST_F(TestSignal, test_sigs) {
   signals sigs;
   A objA(&sigs);
   B objB(&sigs);
-  C objC(&sigs);
+  Ca objC(&sigs);
 
   sigs.signal.connect(&objA, &A::FuncA);
   sigs.signal.connect(&objB, &B::FuncA);
-  sigs.signal.connect(&objC, &C::FuncA);
+  sigs.signal.connect(&objC, &Ca::FuncA);
   sigs.signal(20, 20, "sigs Signal-Slot test");
 }
 
@@ -97,7 +97,7 @@ TEST_F(TestSignal, test_sigs_Named) {
   signals sigs;
   A objA(&sigs);
   B objB(&sigs);
-  C objC(&sigs);
+  Ca objC(&sigs);
 
   sigs.signal(10, 20, "Signal-Slot test");
   std::shared_ptr<Named> a;

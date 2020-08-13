@@ -406,16 +406,16 @@ void TbeKernelSelect::StringToAxisVector(const std::string &reshape_type_str, st
   for (const auto &c : reshape_type_str) {
     switch (c) {
       case 'N':
-        reshape_type_vec->push_back(kernel::N);
+        reshape_type_vec->push_back(N);
         break;
       case 'C':
-        reshape_type_vec->push_back(kernel::C);
+        reshape_type_vec->push_back(C);
         break;
       case 'H':
-        reshape_type_vec->push_back(kernel::H);
+        reshape_type_vec->push_back(H);
         break;
       case 'W':
-        reshape_type_vec->push_back(kernel::W);
+        reshape_type_vec->push_back(W);
         break;
       default:
         MS_LOG(EXCEPTION) << "Unknown axis " << c << "in reshape type.";

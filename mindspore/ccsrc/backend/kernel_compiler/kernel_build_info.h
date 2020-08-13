@@ -22,6 +22,7 @@
 #include <string>
 #include <utility>
 #include "ir/dtype.h"
+#include "ir/kernel_info_dev.h"
 #include "backend/kernel_compiler/kernel.h"
 
 namespace mindspore {

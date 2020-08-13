@@ -66,12 +66,13 @@ tensor::TensorPtr CreateOutputTensor(const AnfNodePtr &node, size_t output_index
   if (type_id == kTypeUnknown) {
     type_id = AnfAlgo::GetOutputInferDataType(node, output_index);
   }
-  tensor::TensorPtr tensor;
+  tensor::TensorPtr tensor = nullptr;
   std::vector<int> temp_shape;
   if (graph->IsUniqueTargetInternalOutput(node, output_index)) {
     temp_shape.emplace_back(1);
     tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
     tensor->set_device_address(address);
+    tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(node, output_index));
     tensor->set_dirty(false);
     return tensor;
   }
@@ -86,6 +87,7 @@ tensor::TensorPtr CreateOutputTensor(const AnfNodePtr &node, size_t output_index
       graph->AddInternalOutputTensor(node, output_index, tensor);
     }
   }
+  tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(node, output_index));
   // if in paynative mode,data only copyed to host when user want to print data
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -240,6 +242,7 @@ ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, 
   } else {
     kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{device_address->format()});
     kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>{device_address->type_id()});
+    kernel_build_info_builder->SetOutputsReshapeType({input_tensor->padding_type()});
   }
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), param.get());
   // construct abstract of parameter
