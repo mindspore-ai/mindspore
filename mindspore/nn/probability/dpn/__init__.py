@@ -13,12 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """
-Probability.
+Deep Probability Network(dpn).
 
-The high-level components used to construct the probabilistic network.
+Deep probability network such as BNN and VAE network.
 """
 
-from . import bijector
-from . import distribution
-from . import infer
-from . import dpn
+from .vae import *
+
+__all__ = []
+__all__.extend(vae.__all__)
