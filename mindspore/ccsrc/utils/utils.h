@@ -182,6 +182,7 @@ constexpr auto kPushOpName = "Push";
 constexpr auto kPullOpName = "Pull";
 constexpr auto kEmbeddingLookupOpName = "EmbeddingLookup";
 constexpr auto kEmbeddingLookupProxyOpName = "EmbeddingLookupProxy";
+constexpr auto kPaddingOpName = "Padding";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
@@ -253,6 +254,10 @@ constexpr auto kAttrInputNums = "inputNums";
 constexpr auto kAttrT = "T";
 constexpr auto kAttrNum = "num";
 constexpr auto kAttrRankSize = "rank_size";
+constexpr auto kAttrPadDimSize = "pad_dim_size";
+constexpr auto kAttrNumSegments = "num_segments";
+constexpr auto kAttrBegin = "begin";
+constexpr auto kAttrSize = "size";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
