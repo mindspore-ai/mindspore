@@ -47,7 +47,7 @@ class RegisterStandardPrimitiveEvalHelper {
 };
 
 #define REGISTER_PRIMITIVE_EVAL_IMPL(name, primitive, impl) \
-  static auto helper_##name = RegisterStandardPrimitiveEvalHelper(primitive, impl)
+  static auto helper_##name = abstract::RegisterStandardPrimitiveEvalHelper(primitive, impl)
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_ABSTRACT_PRIMITIVE_INFER_MAP_H_

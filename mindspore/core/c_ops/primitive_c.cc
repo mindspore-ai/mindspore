@@ -15,22 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_CORE_C_OPS_PRIMITIVE_C_H_
-#define MINDSPORE_CORE_C_OPS_PRIMITIVE_C_H_
+#include "c_ops/primitive_c.h"
+#include <memory>
 #include <string>
-#include <vector>
-#include "ir/primitive.h"
-#include "abstract/primitive_infer_map.h"
-#include "ir/value.h"
 namespace mindspore {
-class PrimitiveC : public Primitive {
- public:
-  explicit PrimitiveC(const std::string &name) : Primitive(name) {}
-  AbstractBasePtr Infer(const AbstractBasePtrList &abstract_list);
+void PrimitiveC::InitIOName(const std::vector<std::string> &inputs_name, const std::vector<std::string> &outputs_name) {
+  this->AddAttr("input_names", MakeValue(inputs_name));
+  this->AddAttr("output_names", MakeValue(outputs_name));
+}
 
- protected:
-  void InitIOName(const std::vector<std::string> &inputs_name, const std::vector<std::string> &outputs_name);
-};
+AbstractBasePtr PrimitiveC::Infer(const AbstractBasePtrList &abstract_list) {
+  auto infer_map = abstract::GetPrimitiveToEvalImplMap();
+  auto iter = infer_map.find(std::make_shared<Primitive>(this->name()));
+  if (iter == infer_map.end()) {
+    MS_EXCEPTION(NotExistsError) << "Cannot find the " << this->name() << "infer function in the infer map!";
+  }
+  auto infer_function = iter->second.impl_;
+  return infer_function(nullptr, shared_from_base<Primitive>(), abstract_list);
+}
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_PRIMITIVE_C_H_

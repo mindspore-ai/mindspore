@@ -55,5 +55,4 @@ AbstractBasePtr Conv2dInfer(const abstract::AnalysisEnginePtr &, const Primitive
                             const std::vector<AbstractBasePtr> &input_args);
 using PrimConv2dPtr = std::shared_ptr<Conv2d>;
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CORE_C_OPS_CONV2D_H_
