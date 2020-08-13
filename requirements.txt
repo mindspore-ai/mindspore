@@ -14,3 +14,4 @@ opencv-python >= 4.1.2.30   # for ut test
 sklearn >= 0.0              # for st test
 pandas >= 1.0.2             # for ut test
 bs4
+astunparse
