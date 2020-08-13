@@ -27,7 +27,7 @@
 #include "abstract/abstract_value.h"
 #include "src/ir/primitive_value.h"
 #include "include/errorcode.h"
-
+#include "schema/inner/model_generated.h"
 namespace mindspore {
 namespace lite {
 #if 0
@@ -159,7 +159,7 @@ void MinnieBuildGraph::FbTest(const GraphDef *graph_def) {
 }
 #endif
 
-int AnfImporter::Import() {
+int AnfImporter::Import(const schema::QuantType &quantType) {
   ConverterConstTensor();
   auto ret = ConverterCNode();
   if (RET_OK != ret) {

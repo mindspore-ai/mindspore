@@ -73,6 +73,9 @@ class Tensor : public mindspore::tensor::MetaTensor {
   size_t Size() const {
     size_t size = 0;
     switch (this->data_type_) {
+      case kNumberTypeFloat64:
+        size = sizeof(double);
+        break;
       case kNumberTypeFloat:
       case kNumberTypeFloat32:
         size = sizeof(float);
