@@ -3359,7 +3359,7 @@ class InplaceUpdate(PrimitiveWithInfer):
         indices (Union[int, tuple]): Indices into the left-most dimension of `x`.
 
     Inputs:
-        - **x** (Tensor) - A tensor which to be inplace updated. It can be of the following data types:
+        - **x** (Tensor) - A tensor which to be inplace updated. It can be one of the following data types:
           float32, float16, int32.
         - **v** (Tensor) - A tensor of the same type as `x`. Same dimension size as `x` except
           the first dimension, which must be the same as the size of `indices`.
@@ -3474,7 +3474,7 @@ class TransShape(PrimitiveWithInfer):
         - **out_shape** (tuple[int]) - The shape of output data.
 
     Outputs:
-        Tensor, a tensor whose data type is same as 'input_x', and the shape is same as the `out_shape`.
+        Tensor, a tensor whose data type is same as 'input_x', and the shape is the same as the `out_shape`.
     """
     @prim_attr_register
     def __init__(self):

@@ -58,12 +58,12 @@ class LARS(Optimizer):
         epsilon (float): Term added to the denominator to improve numerical stability. Default: 1e-05.
         coefficient (float): Trust coefficient for calculating the local learning rate. Default: 0.001.
         use_clip (bool): Whether to use clip operation for calculating the local learning rate. Default: False.
-        lars_filter (Function): A function to determine whether apply lars algorithm. Default:
+        lars_filter (Function): A function to determine whether apply the LARS algorithm. Default:
                                 lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name.
 
     Inputs:
-        - **gradients** (tuple[Tensor]) - The gradients of `params` in optimizer, the shape is
-          as same as the `params` in optimizer.
+        - **gradients** (tuple[Tensor]) - The gradients of `params` in the optimizer, the shape is the
+          as same as the `params` in the optimizer.
 
     Outputs:
         Union[Tensor[bool], tuple[Parameter]], it depends on the output of `optimizer`.

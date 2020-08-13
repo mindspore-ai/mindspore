@@ -158,18 +158,18 @@ class ExtractImagePatches(PrimitiveWithInfer):
     The input tensor must be a 4-D tensor and the data format is NHWC.
 
     Args:
-        ksizes (Union[tuple[int], list[int]]): The size of sliding window, should be a tuple or list of int,
+        ksizes (Union[tuple[int], list[int]]): The size of sliding window, should be a tuple or a list of integers,
             and the format is [1, ksize_row, ksize_col, 1].
         strides (Union[tuple[int], list[int]]): Distance between the centers of the two consecutive patches,
             should be a tuple or list of int, and the format is [1, stride_row, stride_col, 1].
-        rates (Union[tuple[int], list[int]]): In each extracted patch, the gap between the corresponding dim
-            pixel positions, should be a tuple or list of int, and the format is [1, rate_row, rate_col, 1].
+        rates (Union[tuple[int], list[int]]): In each extracted patch, the gap between the corresponding dimension
+            pixel positions, should be a tuple or a list of integers, and the format is [1, rate_row, rate_col, 1].
         padding (str): The type of padding algorithm, is a string whose value is "same" or "valid",
             not case sensitive. Default: "valid".
 
             - same: Means that the patch can take the part beyond the original image, and this part is filled with 0.
 
-            - valid: Means that the patch area taken must be completely contained in the original image.
+            - valid: Means that the taken patch area must be completely covered in the original image.
 
     Inputs:
         - **input_x** (Tensor) - A 4-D tensor whose shape is [in_batch, in_row, in_col, in_depth] and
@@ -177,7 +177,7 @@ class ExtractImagePatches(PrimitiveWithInfer):
 
     Outputs:
         Tensor, a 4-D tensor whose data type is same as 'input_x',
-        and the shape is [out_batch, out_row, out_col, out_depth], the out_batch is same as the in_batch.
+        and the shape is [out_batch, out_row, out_col, out_depth], the out_batch is the same as the in_batch.
     """
 
     @prim_attr_register
@@ -436,8 +436,8 @@ class MatrixDiag(PrimitiveWithInfer):
     Returns a batched diagonal tensor with a given batched diagonal values.
 
     Inputs:
-        - **x** (Tensor) - A tensor which to be element-wise multi by `assist`. It can be of the following data types:
-          float32, float16, int32, int8, uint8.
+        - **x** (Tensor) - A tensor which to be element-wise multi by `assist`. It can be one of the following data
+          types: float32, float16, int32, int8, and uint8.
         - **assist** (Tensor) - A eye tensor of the same type as `x`. It's rank must greater than or equal to 2 and
           it's last dimension must equal to the second to last dimension.
 
@@ -490,7 +490,7 @@ class MatrixDiagPart(PrimitiveWithInfer):
     Returns the batched diagonal part of a batched tensor.
 
     Inputs:
-        - **x** (Tensor) - The batched tensor. It can be of the following data types:
+        - **x** (Tensor) - The batched tensor. It can be one of the following data types:
           float32, float16, int32, int8, uint8.
         - **assist** (Tensor) - A eye tensor of the same type as `x`. With shape same as `x`.
 
@@ -531,7 +531,7 @@ class MatrixSetDiag(PrimitiveWithInfer):
     Modify the batched diagonal part of a batched tensor.
 
     Inputs:
-        - **x** (Tensor) - The batched tensor. It can be of the following data types:
+        - **x** (Tensor) - The batched tensor. It can be one of the following data types:
           float32, float16, int32, int8, uint8.
         - **assist** (Tensor) - A eye tensor of the same type as `x`. With shape same as `x`.
         - **diagonal** (Tensor) - The diagonal values.

@@ -31,7 +31,7 @@ class ScalarCast(PrimitiveWithInfer):
         - **input_y** (mindspore.dtype) - The type should cast to be. Only constant value is allowed.
 
     Outputs:
-        Scalar. The type is same as the python type corresponding to `input_y`.
+        Scalar. The type is the same as the python type corresponding to `input_y`.
 
     Examples:
         >>> scalar_cast = P.ScalarCast()

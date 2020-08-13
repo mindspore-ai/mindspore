@@ -39,8 +39,8 @@ def _update_run_op(beta1, beta2, eps, global_step, lr, weight_decay, param, m, v
     Update parameters.
 
     Args:
-        beta1 (Tensor): The exponential decay rate for the 1st moment estimates. Should be in range (0.0, 1.0).
-        beta2 (Tensor): The exponential decay rate for the 2nd moment estimates. Should be in range (0.0, 1.0).
+        beta1 (Tensor): The exponential decay rate for the 1st moment estimations. Should be in range (0.0, 1.0).
+        beta2 (Tensor): The exponential decay rate for the 2nd moment estimations. Should be in range (0.0, 1.0).
         eps (Tensor): Term added to the denominator to improve numerical stability. Should be greater than 0.
         lr (Tensor): Learning rate.
         weight_decay (Number): Weight decay. Should be equal to or greater than 0.
@@ -122,8 +122,8 @@ def _update_run_op_graph_kernel(beta1, beta2, eps, global_step, lr, weight_decay
     Update parameters.
 
     Args:
-        beta1 (Tensor): The exponential decay rate for the 1st moment estimates. Should be in range (0.0, 1.0).
-        beta2 (Tensor): The exponential decay rate for the 2nd moment estimates. Should be in range (0.0, 1.0).
+        beta1 (Tensor): The exponential decay rate for the 1st moment estimations. Should be in range (0.0, 1.0).
+        beta2 (Tensor): The exponential decay rate for the 2nd moment estimations. Should be in range (0.0, 1.0).
         eps (Tensor): Term added to the denominator to improve numerical stability. Should be greater than 0.
         lr (Tensor): Learning rate.
         weight_decay (Number): Weight decay. Should be equal to or greater than 0.
@@ -184,7 +184,7 @@ def _check_param_value(beta1, beta2, eps, prim_name):
 
 class Lamb(Optimizer):
     """
-    Lamb Dynamic LR.
+    Lamb Dynamic Learning Rate.
 
     LAMB is an optimization algorithm employing a layerwise adaptive large batch
     optimization technique. Refer to the paper `LARGE BATCH OPTIMIZATION FOR DEEP LEARNING: TRAINING BERT IN 76
@@ -214,16 +214,16 @@ class Lamb(Optimizer):
               the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
               in the value of 'order_params' should be in one of group parameters.
 
-        learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or graph for the learning rate.
-            When the learning_rate is a Iterable or a Tensor with dimension of 1, use dynamic learning rate, then
+        learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or a graph for the learning rate.
+            When the learning_rate is an Iterable or a Tensor in a 1D dimension, use dynamic learning rate, then
             the i-th step will take the i-th value as the learning rate. When the learning_rate is LearningRateSchedule,
             use dynamic learning rate, the i-th learning rate will be calculated during the process of training
-            according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor with
-            dimension of 0, use fixed learning rate. Other cases are not supported. The float learning rate should be
+            according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor in a zero
+            dimension, use fixed learning rate. Other cases are not supported. The float learning rate should be
             equal to or greater than 0. If the type of `learning_rate` is int, it will be converted to float.
-        beta1 (float): The exponential decay rate for the 1st moment estimates. Default: 0.9.
+        beta1 (float): The exponential decay rate for the 1st moment estimations. Default: 0.9.
             Should be in range (0.0, 1.0).
-        beta2 (float): The exponential decay rate for the 2nd moment estimates. Default: 0.999.
+        beta2 (float): The exponential decay rate for the 2nd moment estimations. Default: 0.999.
             Should be in range (0.0, 1.0).
         eps (float): Term added to the denominator to improve numerical stability. Default: 1e-6.
             Should be greater than 0.

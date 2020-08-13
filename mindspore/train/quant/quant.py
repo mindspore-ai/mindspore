@@ -496,12 +496,11 @@ def convert_quant_network(network,
         per_channel (bool, list or tuple):  Quantization granularity based on layer or on channel. If `True`
             then base on per channel otherwise base on per layer. The first element represent weights
             and second element represent data flow. Default: (False, False)
-        symmetric (bool, list or tuple): Quantization algorithm use symmetric or not. If `True` then base on
+        symmetric (bool, list or tuple): Whether the quantization algorithm is symmetric or not. If `True` then base on
             symmetric otherwise base on asymmetric. The first element represent weights and second
             element represent data flow. Default: (False, False)
-        narrow_range (bool, list or tuple): Quantization algorithm use narrow range or not. If `True` then base
-            on narrow range otherwise base on off narrow range. The first element represent weights and
-            second element represent data flow. Default: (False, False)
+        narrow_range (bool, list or tuple): Whether the quantization algorithm uses narrow range or not.
+            The first element represents weights and the second element represents data flow. Default: (False, False)
 
     Returns:
         Cell, Network which has change to quantization aware training network cell.

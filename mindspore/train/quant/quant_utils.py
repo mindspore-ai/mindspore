@@ -31,8 +31,8 @@ def cal_quantization_params(input_min,
         input_max (numpy.ndarray): The dimension of channel or 1.
         data_type (numpy type) : Can ben numpy int8, numpy uint8.
         num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
-        symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
-        narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
+        symmetric (bool): Whether the quantization algorithm is symmetric or not. Default: False.
+        narrow_range (bool): Whether the quantization algorithm uses narrow range or not. Default: False.
 
     Returns:
         scale (numpy.ndarray): quantization param.

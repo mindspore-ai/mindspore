@@ -1,7 +1,9 @@
 ![MindSpore Logo](docs/MindSpore-logo.png "MindSpore logo")
 ============================================================
 
-- [What Is MindSpore?](#what-is-mindspore)
+[查看中文](./README_CN.md)
+
+- [What Is MindSpore](#what-is-mindspore)
     - [Automatic Differentiation](#automatic-differentiation)
     - [Automatic Parallel](#automatic-parallel)
 - [Installation](#installation)

@@ -127,26 +127,26 @@ class LazyAdam(Optimizer):
               the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
               in the value of 'order_params' should be in one of group parameters.
 
-        learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or graph for the learning rate.
-            When the learning_rate is a Iterable or a Tensor with dimension of 1, use dynamic learning rate, then
+        learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or a graph for the learning rate.
+            When the learning_rate is an Iterable or a Tensor in a 1D dimension, use dynamic learning rate, then
             the i-th step will take the i-th value as the learning rate. When the learning_rate is LearningRateSchedule,
             use dynamic learning rate, the i-th learning rate will be calculated during the process of training
-            according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor with
-            dimension of 0, use fixed learning rate. Other cases are not supported. The float learning rate should be
+            according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor in a zero
+            dimension, use fixed learning rate. Other cases are not supported. The float learning rate should be
             equal to or greater than 0. If the type of `learning_rate` is int, it will be converted to float.
             Default: 1e-3.
-        beta1 (float): The exponential decay rate for the 1st moment estimates. Should be in range (0.0, 1.0). Default:
-                       0.9.
-        beta2 (float): The exponential decay rate for the 2nd moment estimates. Should be in range (0.0, 1.0). Default:
-                       0.999.
+        beta1 (float): The exponential decay rate for the 1st moment estimations. Should be in range (0.0, 1.0).
+                       Default: 0.9.
+        beta2 (float): The exponential decay rate for the 2nd moment estimations. Should be in range (0.0, 1.0).
+                       Default: 0.999.
         eps (float): Term added to the denominator to improve numerical stability. Should be greater than 0. Default:
                      1e-8.
         use_locking (bool): Whether to enable a lock to protect updating variable tensors.
-            If True, updating of the var, m, and v tensors will be protected by a lock.
-            If False, the result is unpredictable. Default: False.
+            If true, updates of the var, m, and v tensors will be protected by a lock.
+            If false, the result is unpredictable. Default: False.
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
-            If True, updates the gradients using NAG.
-            If False, updates the gradients without using NAG. Default: False.
+            If true, update the gradients using NAG.
+            If true, update the gradients without using NAG. Default: False.
         weight_decay (float): Weight decay (L2 penalty). Default: 0.0.
         loss_scale (float): A floating point value for the loss scale. Should be equal to or greater than 1. Default:
                             1.0.

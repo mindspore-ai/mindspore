@@ -61,7 +61,7 @@ class Conv2dBnAct(Cell):
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
         out_channels (int): The number of output channel :math:`C_{out}`.
-        kernel_size (Union[int, tuple]): The data type is int or tuple with 2 integers. Specifies the height
+        kernel_size (Union[int, tuple]): The data type is int or a tuple of 2 integers. Specifies the height
             and width of the 2D convolution window. Single int means the value is for both height and width of
             the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
             width of the kernel.
@@ -292,19 +292,19 @@ class BatchNormFoldCell(Cell):
 
 class FakeQuantWithMinMax(Cell):
     r"""
-    Quantization aware op. This OP provide Fake quantization observer function on data with min and max.
+    Quantization aware op. This OP provides the fake quantization observer function on data with min and max.
 
     Args:
         min_init (int, float): The dimension of channel or 1(layer). Default: -6.
         max_init (int, float): The dimension of channel or 1(layer). Default: 6.
-        ema (bool): Exponential Moving Average algorithm update min and max. Default: False.
+        ema (bool): The exponential Moving Average algorithm updates min and max. Default: False.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
         per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
         channel_axis (int): Quantization by channel axis. Default: 1.
         num_channels (int): declarate the min and max channel size, Default: 1.
-        num_bits (int): The quantization number bit, support 4 and 8bit. Default: 8.
-        symmetric (bool): The quantization algorithm is symmetric or not. Default: False.
-        narrow_range (bool): The quantization algorithm uses narrow range or not. Default: False.
+        num_bits (int): The bit number of quantization, supporting 4 and 8bits. Default: 8.
+        symmetric (bool): Whether the quantization algorithm is symmetric or not. Default: False.
+        narrow_range (bool): Whether the quantization algorithm uses narrow range or not. Default: False.
         quant_delay (int): Quantization delay parameters according to the global step. Default: 0.
 
     Inputs:
@@ -431,7 +431,7 @@ class Conv2dBnFoldQuant(Cell):
             variance vector. Default: 'ones'.
         fake (bool): Whether Conv2dBnFoldQuant Cell adds FakeQuantWithMinMax op. Default: True.
         per_channel (bool): FakeQuantWithMinMax Parameters. Default: False.
-        num_bits (int): The quantization number bit, support 4 and 8bit. Default: 8.
+        num_bits (int): The bit number of quantization, supporting 4 and 8bits. Default: 8.
         symmetric (bool): The quantization algorithm is symmetric or not. Default: False.
         narrow_range (bool): The quantization algorithm uses narrow range or not. Default: False.
         quant_delay (int): The Quantization delay parameters according to the global step. Default: 0.
@@ -614,7 +614,7 @@ class Conv2dBnWithoutFoldQuant(Cell):
             Default: 'normal'.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the bias vector. Default: 'zeros'.
         per_channel (bool): FakeQuantWithMinMax Parameters. Default: False.
-        num_bits (int): The quantization number bit, support 4 and 8bit. Default: 8.
+        num_bits (int): The bit number of quantization, supporting 4 and 8bits. Default: 8.
         symmetric (bool): The quantization algorithm is symmetric or not. Default: False.
         narrow_range (bool): The quantization algorithm uses narrow range or not. Default: False.
         quant_delay (int): Quantization delay parameters according to the global step. Default: 0.
@@ -736,7 +736,7 @@ class Conv2dQuant(Cell):
             Default: 'normal'.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the bias vector. Default: 'zeros'.
         per_channel (bool): FakeQuantWithMinMax Parameters. Default: False.
-        num_bits (int): The quantization number bit, support 4 and 8bit. Default: 8.
+        num_bits (int): The bit number of quantization, supporting 4 and 8bits. Default: 8.
         symmetric (bool): The quantization algorithm is symmetric or not. Default: False.
         narrow_range (bool): The quantization algorithm uses narrow range or not. Default: False.
         quant_delay (int): Quantization delay parameters according to the global step. Default: 0.
@@ -845,7 +845,7 @@ class DenseQuant(Cell):
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
         activation (str): The regularization function applied to the output of the layer, eg. 'relu'. Default: None.
         per_channel (bool): FakeQuantWithMinMax Parameters. Default: False.
-        num_bits (int): The quantization number bit, support 4 and 8bit. Default: 8.
+        num_bits (int): The bit number of quantization, supporting 4 and 8bits. Default: 8.
         symmetric (bool): The quantization algorithm is symmetric or not. Default: False.
         narrow_range (bool): The quantization algorithm uses narrow range or not. Default: False.
         quant_delay (int): Quantization delay parameters according to the global step. Default: 0.
@@ -947,15 +947,14 @@ class ActQuant(_QuantActivation):
     r"""
     Quantization aware training activation function.
 
-    Add Fake Quant OP after activation. Not Recommand to used these cell for Fake Quant Op
-    Will climp the max range of the activation and the relu6 do the same operation.
-    This part is a more detailed overview of ReLU6 op.
+    Add the fake quant op to the end of activation op, by which the output of activation op will be truncated.
+    Please check `FakeQuantWithMinMax` for more details.
 
     Args:
         activation (Cell): Activation cell class.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
         per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
-        num_bits (int): The quantization number bit, support 4 and 8bit. Default: 8.
+        num_bits (int): The bit number of quantization, supporting 4 and 8bits. Default: 8.
         symmetric (bool): The quantization algorithm is symmetric or not. Default: False.
         narrow_range (bool): The quantization algorithm uses narrow range or not. Default: False.
         quant_delay (int): Quantization delay parameters according to the global steps. Default: 0.
@@ -1010,7 +1009,7 @@ class LeakyReLUQuant(_QuantActivation):
         activation (Cell): Activation cell class.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
         per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
-        num_bits (int): The quantization number bit, support 4 and 8bit. Default: 8.
+        num_bits (int): The bit number of quantization, supporting 4 and 8bits. Default: 8.
         symmetric (bool): The quantization algorithm is symmetric or not. Default: False.
         narrow_range (bool): The quantization algorithm uses narrow range or not. Default: False.
         quant_delay (int): Quantization delay parameters according to the global step. Default: 0.
@@ -1080,9 +1079,9 @@ class HSwishQuant(_QuantActivation):
         activation (Cell): Activation cell class.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
         per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
-        num_bits (int): The quantization number bit, support 4 and 8bit. Default: 8.
-        symmetric (bool): The quantization algorithm is symmetric or not. Default: False.
-        narrow_range (bool): The quantization algorithm uses narrow range or not. Default: False.
+        num_bits (int): The bit number of quantization, supporting 4 and 8bits. Default: 8.
+        symmetric (bool): Whether the quantization algorithm is symmetric or not. Default: False.
+        narrow_range (bool): Whether the quantization algorithm uses narrow range or not. Default: False.
         quant_delay (int): Quantization delay parameters according to the global step. Default: 0.
 
     Inputs:
@@ -1149,9 +1148,9 @@ class HSigmoidQuant(_QuantActivation):
         activation (Cell): Activation cell class.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
         per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
-        num_bits (int): The quantization number bit, support 4 and 8bit. Default: 8.
-        symmetric (bool): The quantization algorithm is symmetric or not. Default: False.
-        narrow_range (bool): The quantization algorithm uses narrow range or not. Default: False.
+        num_bits (int): The bit number of quantization, supporting 4 and 8bits. Default: 8.
+        symmetric (bool): Whether the quantization algorithm is symmetric or not. Default: False.
+        narrow_range (bool): Whether the quantization algorithm uses narrow range or not. Default: False.
         quant_delay (int): Quantization delay parameters according to the global step. Default: 0.
 
     Inputs:
@@ -1217,7 +1216,7 @@ class TensorAddQuant(Cell):
     Args:
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
         per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
-        num_bits (int): The quantization number bit, support 4 and 8bit. Default: 8.
+        num_bits (int): The bit number of quantization, supporting 4 and 8bits. Default: 8.
         symmetric (bool): The quantization algorithm is symmetric or not. Default: False.
         narrow_range (bool): The quantization algorithm uses narrow range or not. Default: False.
         quant_delay (int): Quantization delay parameters according to the global step. Default: 0.
@@ -1269,7 +1268,7 @@ class MulQuant(Cell):
     Args:
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
         per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
-        num_bits (int): The quantization number bit, support 4 and 8bit. Default: 8.
+        num_bits (int): The bit number of quantization, supporting 4 and 8bits. Default: 8.
         symmetric (bool): The quantization algorithm is symmetric or not. Default: False.
         narrow_range (bool): The quantization algorithm uses narrow range or not. Default: False.
         quant_delay (int): Quantization delay parameters according to the global step. Default: 0.

@@ -54,8 +54,8 @@ class DynamicLossScaleUpdateCell(Cell):
     Dynamic Loss scale update cell.
 
     For loss scaling training, the initial loss scaling value will be set to be `loss_scale_value`.
-    In every training step, the loss scaling value  will be updated by loss scaling value/`scale_factor`
-    when there is overflow. And it will be increased by loss scaling value * `scale_factor` if there is no
+    In each training step, the loss scaling value  will be updated by loss scaling value/`scale_factor`
+    when there is an overflow. And it will be increased by loss scaling value * `scale_factor` if there is no
     overflow for a continuous `scale_window` steps. This cell is used for Graph mode training in which all
     logic will be executed on device side(Another training mode is normal(non-sink) mode in which some logic will be
     executed on host).
@@ -133,7 +133,7 @@ class FixedLossScaleUpdateCell(Cell):
     """
     Static scale update cell, the loss scaling value will not be updated.
 
-    For usage please refer to `DynamicLossScaleUpdateCell`.
+    For usage, refer to `DynamicLossScaleUpdateCell`.
 
     Args:
         loss_scale_value (float): Init loss scale.

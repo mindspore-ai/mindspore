@@ -72,7 +72,7 @@ class SequentialCell(Cell):
         args (list, OrderedDict): List of subclass of Cell.
 
     Raises:
-        TypeError: If arg is not of type list or OrderedDict.
+        TypeError: If the type of the argument is not list or OrderedDict.
 
     Inputs:
         - **input** (Tensor) - Tensor with shape according to the first Cell in the sequence.

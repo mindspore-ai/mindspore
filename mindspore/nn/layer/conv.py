@@ -131,7 +131,7 @@ class Conv2d(_Conv):
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
         out_channels (int): The number of output channel :math:`C_{out}`.
-        kernel_size (Union[int, tuple[int]]): The data type is int or tuple with 2 integers. Specifies the height
+        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 2 integers. Specifies the height
             and width of the 2D convolution window. Single int means the value is for both the height and the width of
             the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
             width of the kernel.
@@ -147,7 +147,7 @@ class Conv2d(_Conv):
               last extra padding will be done from the bottom and the right side. If this mode is set, `padding`
               must be 0.
 
-            - valid: Adopts the way of discarding. The possibly largest height and width of output will be returned
+            - valid: Adopts the way of discarding. The possible largest height and width of output will be returned
               without padding. Extra pixels will be discarded. If this mode is set, `padding`
               must be 0.
 
@@ -158,7 +158,7 @@ class Conv2d(_Conv):
                     the padding of top, bottom, left and right is the same, equal to padding. If `padding` is a tuple
                     with four integers, the padding of top, bottom, left and right will be equal to padding[0],
                     padding[1], padding[2], and padding[3] accordingly. Default: 0.
-        dilation (Union[int, tuple[int]]): The data type is int or tuple with 2 integers. Specifies the dilation rate
+        dilation (Union[int, tuple[int]]): The data type is int or a tuple of 2 integers. Specifies the dilation rate
                                       to use for dilated convolution. If set to be :math:`k > 1`, there will
                                       be :math:`k - 1` pixels skipped for each sampling location. Its value should
                                       be greater or equal to 1 and bounded by the height and width of the
@@ -451,7 +451,7 @@ class Conv2dTranspose(_Conv):
     Args:
         in_channels (int): The number of channels in the input space.
         out_channels (int): The number of channels in the output space.
-        kernel_size (Union[int, tuple]): int or tuple with 2 integers, which specifies the  height
+        kernel_size (Union[int, tuple]): int or a tuple of 2 integers, which specifies the  height
             and width of the 2D convolution window. Single int means the value is for both the height and the width of
             the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
             width of the kernel.
@@ -825,7 +825,7 @@ class DepthwiseConv2d(Cell):
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
         out_channels (int): The number of output channel :math:`C_{out}`.
-        kernel_size (Union[int, tuple[int]]): The data type is int or tuple with 2 integers. Specifies the height
+        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 2 integers. Specifies the height
             and width of the 2D convolution window. Single int means the value is for both the height and the width of
             the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
             width of the kernel.
@@ -841,7 +841,7 @@ class DepthwiseConv2d(Cell):
               last extra padding will be done from the bottom and the right side. If this mode is set, `padding`
               must be 0.
 
-            - valid: Adopts the way of discarding. The possibly largest height and width of output will be returned
+            - valid: Adopts the way of discarding. The possible largest height and width of output will be returned
               without padding. Extra pixels will be discarded. If this mode is set, `padding`
               must be 0.
 
@@ -849,16 +849,16 @@ class DepthwiseConv2d(Cell):
               Tensor borders. `padding` should be greater than or equal to 0.
 
         padding (int): Implicit paddings on both sides of the input. Default: 0.
-        dilation (Union[int, tuple[int]]): The data type is int or tuple with 2 integers. Specifies the dilation rate
+        dilation (Union[int, tuple[int]]): The data type is int or a tuple of 2 integers. Specifies the dilation rate
                                       to use for dilated convolution. If set to be :math:`k > 1`, there will
                                       be :math:`k - 1` pixels skipped for each sampling location. Its value should
-                                      be greater or equal to 1 and bounded by the height and width of the
+                                      be greater than or equal to 1 and bounded by the height and width of the
                                       input. Default: 1.
         group (int): Split filter into groups, `in_ channels` and `out_channels` should be
             divisible by the number of groups. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the convolution kernel.
-            It can be a Tensor, a string, an Initializer or a numbers.Number. When a string is specified,
+            It can be a Tensor, a string, an Initializer or a number. When a string is specified,
             values from 'TruncatedNormal', 'Normal', 'Uniform', 'HeUniform' and 'XavierUniform' distributions as well
             as constant 'One' and 'Zero' distributions are possible. Alias 'xavier_uniform', 'he_uniform', 'ones'
             and 'zeros' are acceptable. Uppercase and lowercase are both acceptable. Refer to the values of

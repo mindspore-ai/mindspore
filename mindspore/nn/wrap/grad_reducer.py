@@ -329,7 +329,7 @@ class DistributedGradReducer(Cell):
 
     def construct(self, grads):
         """
-        In some circumstances, the data precision of grads could be mixed with float16 and float32. Thus, the
+        Under certain circumstances, the data precision of grads could be mixed with float16 and float32. Thus, the
         result of AllReduce is unreliable. To solve the problem, grads should be cast to float32 before AllReduce,
         and cast back after the operation.
 

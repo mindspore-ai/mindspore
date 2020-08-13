@@ -32,7 +32,7 @@ def _list_setitem_with_string(data, number_index, value):
         number_index (Number): Index of data.
 
     Outputs:
-        list, type is same as the element type of data.
+        list, type is the same as the element type of data.
     """
     return F.list_setitem(data, number_index, value)
 
@@ -48,7 +48,7 @@ def _list_setitem_with_number(data, number_index, value):
         value (Number): Value given.
 
     Outputs:
-        list, type is same as the element type of data.
+        list, type is the same as the element type of data.
     """
     return F.list_setitem(data, number_index, value)
 
@@ -64,7 +64,7 @@ def _list_setitem_with_Tensor(data, number_index, value):
         value (Tensor): Value given.
 
     Outputs:
-        list, type is same as the element type of data.
+        list, type is the same as the element type of data.
     """
     return F.list_setitem(data, number_index, value)
 
@@ -80,7 +80,7 @@ def _list_setitem_with_List(data, number_index, value):
         value (list): Value given.
 
     Outputs:
-        list, type is same as the element type of data.
+        list, type is the same as the element type of data.
     """
     return F.list_setitem(data, number_index, value)
 
@@ -96,7 +96,7 @@ def _list_setitem_with_Tuple(data, number_index, value):
         value (list): Value given.
 
     Outputs:
-        list, type is same as the element type of data.
+        list, type is the same as the element type of data.
     """
     return F.list_setitem(data, number_index, value)
 

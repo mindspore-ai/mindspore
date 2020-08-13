@@ -82,7 +82,7 @@ class Metric(metaclass=ABCMeta):
     @abstractmethod
     def clear(self):
         """
-        A interface describes the behavior of clearing the internal evaluation result.
+        An interface describes the behavior of clearing the internal evaluation result.
 
         Note:
             All subclasses should override this interface.
@@ -92,7 +92,7 @@ class Metric(metaclass=ABCMeta):
     @abstractmethod
     def eval(self):
         """
-        A interface describes the behavior of computing the evaluation result.
+        An interface describes the behavior of computing the evaluation result.
 
         Note:
             All subclasses should override this interface.
@@ -102,7 +102,7 @@ class Metric(metaclass=ABCMeta):
     @abstractmethod
     def update(self, *inputs):
         """
-        A interface describes the behavior of updating the internal evaluation result.
+        An interface describes the behavior of updating the internal evaluation result.
 
         Note:
             All subclasses should override this interface.

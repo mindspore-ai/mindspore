@@ -57,7 +57,7 @@ class _TupleGetItemTensor(base.TupleGetItemTensor_):
         data (tuple): A tuple of items.
         index (Tensor): The index in tensor.
     Outputs:
-        Type, is same as the element type of data.
+        Type, is the same as the element type of data.
     """
 
     def __init__(self, name):
@@ -81,7 +81,7 @@ def _tuple_getitem_by_number(data, number_index):
         number_index (Number): Index in scalar.
 
     Outputs:
-        Type, is same as the element type of data.
+        Type, is the same as the element type of data.
     """
     return F.tuple_getitem(data, number_index)
 
@@ -96,7 +96,7 @@ def _tuple_getitem_by_slice(data, slice_index):
         slice_index (Slice): Index in slice.
 
     Outputs:
-        Tuple, element type is same as the element type of data.
+        Tuple, element type is the same as the element type of data.
     """
     return _tuple_slice(data, slice_index)
 
@@ -111,7 +111,7 @@ def _tuple_getitem_by_tensor(data, tensor_index):
         tensor_index (Tensor): Index to select item.
 
     Outputs:
-        Type, is same as the element type of data.
+        Type, is the same as the element type of data.
     """
     return _tuple_get_item_tensor(data, tensor_index)
 
@@ -126,7 +126,7 @@ def _list_getitem_by_number(data, number_index):
         number_index (Number): Index in scalar.
 
     Outputs:
-        Type is same as the element type of data.
+        Type is the same as the element type of data.
     """
     return F.list_getitem(data, number_index)
 
@@ -186,7 +186,7 @@ def _tensor_getitem_by_slice(data, slice_index):
         slice_index (Slice): Index in slice.
 
     Outputs:
-        Tensor, element type is same as the element type of data.
+        Tensor, element type is the same as the element type of data.
     """
     return compile_utils.tensor_index_by_slice(data, slice_index)
 
@@ -201,7 +201,7 @@ def _tensor_getitem_by_tensor(data, tensor_index):
         tensor_index (Tensor): An index expressed by tensor.
 
     Outputs:
-        Tensor, element type is same as the element type of data.
+        Tensor, element type is the same as the element type of data.
     """
     return compile_utils.tensor_index_by_tensor(data, tensor_index)
 
@@ -216,7 +216,7 @@ def _tensor_getitem_by_tuple(data, tuple_index):
         tuple_index (tuple): Index in tuple.
 
     Outputs:
-        Tensor, element type is same as the element type of data.
+        Tensor, element type is the same as the element type of data.
     """
     return compile_utils.tensor_index_by_tuple(data, tuple_index)
 

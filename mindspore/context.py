@@ -546,9 +546,11 @@ def set_context(**kwargs):
 
     Note:
         Attribute name is required for setting attributes.
+        The mode is not recommended to be changed after net was initilized because the implementations of some
+        operations are different in graph mode and pynative mode. Default: PYNATIVE_MODE.
 
     Args:
-        mode (int): Running in GRAPH_MODE(0) or PYNATIVE_MODE(1). Default: PYNATIVE_MODE.
+        mode (int): Running in GRAPH_MODE(0) or PYNATIVE_MODE(1).
         device_target (str): The target device to run, support "Ascend", "GPU", "CPU". Default: "Ascend".
         device_id (int): Id of target device, the value must be in [0, device_num_per_host-1],
                     while device_num_per_host should no more than 4096. Default: 0.

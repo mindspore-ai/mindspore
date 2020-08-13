@@ -243,6 +243,10 @@ class BatchNorm1d(_BatchNorm):
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
 
+    Note:
+        The implementation of BatchNorm is different in graph mode and pynative mode, therefore the mode is not
+        recommended to be changed after net was initilized.
+
     Args:
         num_features (int): `C` from an expected input of size (N, C).
         eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
@@ -319,6 +323,10 @@ class BatchNorm2d(_BatchNorm):
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
 
+    Note:
+        The implementation of BatchNorm is different in graph mode and pynative mode, therefore that mode can not be
+        changed after net was initilized.
+
     Args:
         num_features (int): `C` from an expected input of size (N, C, H, W).
         eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
@@ -384,8 +392,8 @@ class GlobalBatchNorm(_BatchNorm):
     r"""
     Global normalization layer over a N-dimension input.
 
-    Global Normalization is cross device synchronized batch normalization. Batch Normalization implementation
-    only normalize the data within each device. Global normalization will normalize the input within the group.
+    Global Normalization is cross device synchronized batch normalization. The implementation of Batch Normalization
+    only normalizes the data within each device. Global normalization will normalize the input within the group.
     It has been described in the paper `Batch Normalization: Accelerating Deep Network Training by
     Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_. It rescales and recenters the
     feature using a mini-batch of data and the learned parameters which can be described in the following formula.
@@ -467,10 +475,10 @@ class LayerNorm(Cell):
     Applies Layer Normalization over a mini-batch of inputs.
 
     Layer normalization is widely used in recurrent neural networks. It applies
-    normalization over a mini-batch of inputs for each single training case as described
+    normalization on a mini-batch of inputs for each single training case as described
     in the paper `Layer Normalization <https://arxiv.org/pdf/1607.06450.pdf>`_. Unlike batch
     normalization, layer normalization performs exactly the same computation at training and
-    testing times. It can be described using the following formula. It is applied across all channels
+    testing time. It can be described using the following formula. It is applied across all channels
     and pixel but only one batch size.
 
     .. math::
@@ -545,7 +553,7 @@ class GroupNorm(Cell):
     Group Normalization over a mini-batch of inputs.
 
     Group normalization is widely used in recurrent neural networks. It applies
-    normalization over a mini-batch of inputs for each single training case as described
+    normalization on a mini-batch of inputs for each single training case as described
     in the paper `Group Normalization <https://arxiv.org/pdf/1803.08494.pdf>`_. Group normalization
     divides the channels into groups and computes within each group the mean and variance for normalization,
     and it performs very stable over a wide range of batch size. It can be described using the following formula.
@@ -557,7 +565,7 @@ class GroupNorm(Cell):
         num_groups (int): The number of groups to be divided along the channel dimension.
         num_channels (int): The number of channels per group.
         eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
-        affine (bool): A bool value, this layer will has learnable affine parameters when set to true. Default: True.
+        affine (bool): A bool value, this layer will have learnable affine parameters when set to true. Default: True.
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
             The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
             'he_uniform', etc. Default: 'ones'.

@@ -100,7 +100,7 @@ class Softmax(PrimitiveWithInfer):
     Softmax operation.
 
     Applies the Softmax operation to the input tensor on the specified axis.
-    Suppose a slice along the given aixs :math:`x` then for each element :math:`x_i`
+    Suppose a slice in the given aixs :math:`x` then for each element :math:`x_i`
     the Softmax function is shown as follows:
 
     .. math::
@@ -151,7 +151,7 @@ class LogSoftmax(PrimitiveWithInfer):
     Log Softmax activation function.
 
     Applies the Log Softmax function to the input tensor on the specified axis.
-    Suppose a slice along the given aixs :math:`x` then for each element :math:`x_i`
+    Suppose a slice in the given aixs :math:`x` then for each element :math:`x_i`
     the Log Softmax function is shown as follows:
 
     .. math::
@@ -429,7 +429,7 @@ class HSwish(PrimitiveWithInfer):
     .. math::
         \text{hswish}(x_{i}) = x_{i} * \frac{ReLU6(x_{i} + 3)}{6},
 
-    where :math:`x_{i}` is the :math:`i`-th slice along the given dim of the input Tensor.
+    where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
 
     Inputs:
         - **input_data** (Tensor) - The input of HSwish, data type should be float16 or float32.
@@ -502,7 +502,7 @@ class HSigmoid(PrimitiveWithInfer):
     .. math::
         \text{hsigmoid}(x_{i}) = max(0, min(1, \frac{x_{i} + 3}{6})),
 
-    where :math:`x_{i}` is the :math:`i`-th slice along the given dim of the input Tensor.
+    where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
 
     Inputs:
         - **input_data** (Tensor) - The input of HSigmoid, data type should be float16 or float32.
@@ -2234,7 +2234,7 @@ class DropoutDoMask(PrimitiveWithInfer):
           shape of `input_x` must be same as the value of `DropoutGenMask`'s input `shape`. If input wrong `mask`,
           the output of `DropoutDoMask` are unpredictable.
         - **keep_prob** (Tensor) - The keep rate, between 0 and 1, e.g. keep_prob = 0.9,
-          means dropping out 10% of input units. The value of `keep_prob` is same as the input `keep_prob` of
+          means dropping out 10% of input units. The value of `keep_prob` is the same as the input `keep_prob` of
           `DropoutGenMask`.
 
     Outputs:
@@ -2674,9 +2674,9 @@ class Pad(PrimitiveWithInfer):
 
     Args:
         paddings (tuple): The shape of parameter `paddings` is (N, 2). N is the rank of input data. All elements of
-            paddings are int type. For `D` th dimension of input, paddings[D, 0] indicates how many sizes to be
-            extended ahead of the `D` th dimension of the input tensor, and paddings[D, 1] indicates how many sizes to
-            be extended behind of the `D` th dimension of the input tensor.
+            paddings are int type. For the input in `D` th dimension, paddings[D, 0] indicates how many sizes to be
+            extended ahead of the input tensor in the `D` th dimension, and paddings[D, 1] indicates how many sizes to
+            be extended behind of the input tensor in the `D` th dimension.
 
     Inputs:
         - **input_x** (Tensor) - The input tensor.
@@ -2733,9 +2733,9 @@ class MirrorPad(PrimitiveWithInfer):
         - **input_x** (Tensor) - The input tensor.
         - **paddings** (Tensor) - The paddings tensor. The value of `paddings` is a matrix(list),
           and its shape is (N, 2). N is the rank of input data. All elements of paddings
-          are int type. For `D` th dimension of input, paddings[D, 0] indicates how many sizes to be
-          extended ahead of the `D` th dimension of the input tensor, and paddings[D, 1] indicates
-          how many sizes to be extended behind of the `D` th dimension of the input tensor.
+          are int type. For the input in `D` th dimension, paddings[D, 0] indicates how many sizes to be
+          extended ahead of the input tensor in the `D` th dimension, and paddings[D, 1] indicates how many sizes to
+          be extended behind of the input tensor in the `D` th dimension.
 
     Outputs:
         Tensor, the tensor after padding.
@@ -2880,11 +2880,11 @@ class Adam(PrimitiveWithInfer):
 
     Args:
         use_locking (bool): Whether to enable a lock to protect updating variable tensors.
-            If True, updating of the var, m, and v tensors will be protected by a lock.
-            If False, the result is unpredictable. Default: False.
+            If true, updates of the var, m, and v tensors will be protected by a lock.
+            If false, the result is unpredictable. Default: False.
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
-            If True, updates the gradients using NAG.
-            If False, updates the gradients without using NAG. Default: False.
+            If true, update the gradients using NAG.
+            If true, update the gradients without using NAG. Default: False.
 
     Inputs:
         - **var** (Tensor) - Weights to be updated.
@@ -2894,8 +2894,8 @@ class Adam(PrimitiveWithInfer):
         - **beta1_power** (float) - :math:`beta_1^t` in the updating formula.
         - **beta2_power** (float) - :math:`beta_2^t` in the updating formula.
         - **lr** (float) - :math:`l` in the updating formula.
-        - **beta1** (float) - The exponential decay rate for the 1st moment estimates.
-        - **beta2** (float) - The exponential decay rate for the 2nd moment estimates.
+        - **beta1** (float) - The exponential decay rate for the 1st moment estimations.
+        - **beta2** (float) - The exponential decay rate for the 2nd moment estimations.
         - **epsilon** (float) - Term added to the denominator to improve numerical stability.
         - **gradient** (Tensor) - Gradients. Has the same type as `var`.
 
@@ -2974,11 +2974,11 @@ class FusedSparseAdam(PrimitiveWithInfer):
 
     Args:
         use_locking (bool): Whether to enable a lock to protect updating variable tensors.
-            If True, updating of the var, m, and v tensors will be protected by a lock.
-            If False, the result is unpredictable. Default: False.
+            If true, updates of the var, m, and v tensors will be protected by a lock.
+            If false, the result is unpredictable. Default: False.
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
-            If True, updates the gradients using NAG.
-            If False, updates the gradients without using NAG. Default: False.
+            If true, update the gradients using NAG.
+            If true, update the gradients without using NAG. Default: False.
 
     Inputs:
         - **var** (Parameter) - Parameters to be updated. With float32 data type.
@@ -2989,8 +2989,8 @@ class FusedSparseAdam(PrimitiveWithInfer):
         - **beta1_power** (Tensor) - :math:`beta_1^t` in the updating formula. With float32 data type.
         - **beta2_power** (Tensor) - :math:`beta_2^t` in the updating formula. With float32 data type.
         - **lr** (Tensor) - :math:`l` in the updating formula. With float32 data type.
-        - **beta1** (Tensor) - The exponential decay rate for the 1st moment estimates. With float32 data type.
-        - **beta2** (Tensor) - The exponential decay rate for the 2nd moment estimates. With float32 data type.
+        - **beta1** (Tensor) - The exponential decay rate for the 1st moment estimations. With float32 data type.
+        - **beta2** (Tensor) - The exponential decay rate for the 2nd moment estimations. With float32 data type.
         - **epsilon** (Tensor) - Term added to the denominator to improve numerical stability. With float32 data type.
         - **gradient** (Tensor) - Gradient value. With float32 data type.
         - **indices** (Tensor) - Gradient indices. With int32 data type.
@@ -3108,11 +3108,11 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
 
     Args:
         use_locking (bool): Whether to enable a lock to protect updating variable tensors.
-            If True, updating of the var, m, and v tensors will be protected by a lock.
-            If False, the result is unpredictable. Default: False.
+            If true, updates of the var, m, and v tensors will be protected by a lock.
+            If false, the result is unpredictable. Default: False.
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
-            If True, updates the gradients using NAG.
-            If False, updates the gradients without using NAG. Default: False.
+            If true, update the gradients using NAG.
+            If true, update the gradients without using NAG. Default: False.
 
     Inputs:
         - **var** (Parameter) - Parameters to be updated. With float32 data type.
@@ -3123,8 +3123,8 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
         - **beta1_power** (Tensor) - :math:`beta_1^t` in the updating formula. With float32 data type.
         - **beta2_power** (Tensor) - :math:`beta_2^t` in the updating formula. With float32 data type.
         - **lr** (Tensor) - :math:`l` in the updating formula. With float32 data type.
-        - **beta1** (Tensor) - The exponential decay rate for the 1st moment estimates. With float32 data type.
-        - **beta2** (Tensor) - The exponential decay rate for the 2nd moment estimates. With float32 data type.
+        - **beta1** (Tensor) - The exponential decay rate for the 1st moment estimations. With float32 data type.
+        - **beta2** (Tensor) - The exponential decay rate for the 2nd moment estimations. With float32 data type.
         - **epsilon** (Tensor) - Term added to the denominator to improve numerical stability. With float32 data type.
         - **gradient** (Tensor) - Gradient value. With float32 data type.
         - **indices** (Tensor) - Gradient indices. With int32 data type.
@@ -3227,7 +3227,7 @@ class FusedSparseFtrl(PrimitiveWithInfer):
         l2 (float): l2 regularization strength, must be greater than or equal to zero.
         lr_power (float): Learning rate power controls how the learning rate decreases during training,
             must be less than or equal to zero. Use fixed learning rate if `lr_power` is zero.
-        use_locking (bool): Use locks for update operation if True . Default: False.
+        use_locking (bool): Use locks for updating operation if True . Default: False.
 
     Inputs:
         - **var** (Parameter) - The variable to be updated. The data type must be float32.
@@ -3320,7 +3320,7 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
             var = \frac{sign(\text{prox_v})}{1 + lr * l2} * \max(\left| \text{prox_v} \right| - lr * l1, 0)
 
     Args:
-        use_locking (bool): If True, updating of the var and accum tensors will be protected. Default: False.
+        use_locking (bool): If true, updates of the var and accum tensors will be protected. Default: False.
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. The data type must be float32.
@@ -3415,7 +3415,7 @@ class KLDivLoss(PrimitiveWithInfer):
             \end{cases}
 
     Args:
-        reduction (str): Specifies the reduction to apply to the output.
+        reduction (str): Specifies the reduction to be applied to the output.
             Its value should be one of 'none', 'mean', 'sum'. Default: 'mean'.
 
     Inputs:
@@ -3487,7 +3487,7 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
             \end{cases}
 
     Args:
-        reduction (str): Specifies the reduction to apply to the output.
+        reduction (str): Specifies the reduction to be applied to the output.
             Its value should be one of 'none', 'mean', 'sum'. Default: 'mean'.
 
     Inputs:
@@ -3575,9 +3575,9 @@ class ApplyAdaMax(PrimitiveWithInfer):
           With float32 or float16 data type.
         - **lr** (Union[Number, Tensor]) - Learning rate, :math:`l` in the updating formula, should be scalar.
           With float32 or float16 data type.
-        - **beta1** (Union[Number, Tensor]) - The exponential decay rate for the 1st moment estimates,
+        - **beta1** (Union[Number, Tensor]) - The exponential decay rate for the 1st moment estimations,
           should be scalar. With float32 or float16 data type.
-        - **beta2** (Union[Number, Tensor]) - The exponential decay rate for the 2nd moment estimates,
+        - **beta2** (Union[Number, Tensor]) - The exponential decay rate for the 2nd moment estimations,
           should be scalar. With float32 or float16 data type.
         - **epsilon** (Union[Number, Tensor]) - A small value added for numerical stability, should be scalar.
           With float32 or float16 data type.
@@ -3939,7 +3939,7 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
     Args:
         lr (float): Learning rate.
         update_slots (bool): If `True`, `accum` will be updated. Default: True.
-        use_locking (bool): If True, updating of the var and accum tensors will be protected. Default: False.
+        use_locking (bool): If true, updates of the var and accum tensors will be protected. Default: False.
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
@@ -4099,7 +4099,7 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
             var = \frac{sign(\text{prox_v})}{1 + lr * l2} * \max(\left| \text{prox_v} \right| - lr * l1, 0)
 
     Args:
-        use_locking (bool): If True, updating of the var and accum tensors will be protected. Default: False.
+        use_locking (bool): If true, updates of the var and accum tensors will be protected. Default: False.
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. The data type should be float16 or float32.
@@ -4195,7 +4195,7 @@ class SparseApplyProximalAdagrad(PrimitiveWithInfer):
             var = \frac{sign(\text{prox_v})}{1 + lr * l2} * \max(\left| \text{prox_v} \right| - lr * l1, 0)
 
     Args:
-        use_locking (bool): If True, updating of the var and accum tensors will be protected. Default: False.
+        use_locking (bool): If true, updates of the var and accum tensors will be protected. Default: False.
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. The data type must be float16 or float32.
@@ -4697,7 +4697,7 @@ class ApplyFtrl(PrimitiveWithInfer):
     Update relevant entries according to the FTRL scheme.
 
     Args:
-        use_locking (bool): Use locks for update operation if True . Default: False.
+        use_locking (bool): Use locks for updating operation if True . Default: False.
 
     Inputs:
         - **var** (Parameter) - The variable to be updated. The data type should be float16 or float32.
@@ -4788,7 +4788,7 @@ class SparseApplyFtrl(PrimitiveWithInfer):
         l2 (float): l2 regularization strength, must be greater than or equal to zero.
         lr_power (float): Learning rate power controls how the learning rate decreases during training,
             must be less than or equal to zero. Use fixed learning rate if `lr_power` is zero.
-        use_locking (bool): Use locks for update operation if True . Default: False.
+        use_locking (bool): Use locks for updating operation if True . Default: False.
 
     Inputs:
         - **var** (Parameter) - The variable to be updated. The data type must be float16 or float32.
@@ -4967,8 +4967,8 @@ class ConfusionMulGrad(PrimitiveWithInfer):
         axis (Union[int, tuple[int], list[int]]): The dimensions to reduce.
             Default:(), reduce all dimensions. Only constant value is allowed.
         keep_dims (bool):
-            - If True, keep these reduced dimensions and the length is 1.
-            - If False, don't keep these dimensions. Default:False.
+            - If true, keep these reduced dimensions and the length is 1.
+            - If false, don't keep these dimensions. Default:False.
 
     Inputs:
         - **input_0** (Tensor) - The input Tensor.
@@ -5094,9 +5094,9 @@ class CTCLoss(PrimitiveWithInfer):
     Calculates the CTC(Connectionist Temporal Classification) loss. Also calculates the gradient.
 
     Args:
-        preprocess_collapse_repeated (bool): If True, repeated labels are collapsed prior to the CTC calculation.
+        preprocess_collapse_repeated (bool): If true, repeated labels are collapsed prior to the CTC calculation.
                                              Default: False.
-        ctc_merge_repeated (bool): If False, during CTC calculation, repeated non-blank labels will not be merged
+        ctc_merge_repeated (bool): If false, during CTC calculation, repeated non-blank labels will not be merged
                                    and are interpreted as individual labels. This is a simplfied version of CTC.
                                    Default: True.
         ignore_longer_outputs_than_inputs (bool): If True, sequences with longer outputs than inputs will be ignored.
@@ -5192,7 +5192,7 @@ class BasicLSTMCell(PrimitiveWithInfer):
         keep_prob (float): If not 1.0, append `Dropout` layer on the outputs of each
             LSTM layer except the last layer. Default 1.0. The range of dropout is [0.0, 1.0].
         forget_bias (float): Add forget bias to forget gate biases in order to decrease former scale. Default to 1.0.
-        state_is_tuple (bool): If True, state is tensor tuple, containing h and c; If False, one tensor,
+        state_is_tuple (bool): If true, state is tensor tuple, containing h and c; If false, one tensor,
           need split first. Default to True.
         activation (str): Activation. Default to "tanh".
 

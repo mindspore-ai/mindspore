@@ -178,8 +178,8 @@ class FakeQuantPerLayer(PrimitiveWithInfer):
         quant_delay (int): Quantilization delay parameter. Before delay step in training time not update
             simulate quantization aware funcion. After delay step in training time begin simulate the aware
             quantize funcion. Default: 0.
-        symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
-        narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
+        symmetric (bool): Whether the quantization algorithm is symmetric or not. Default: False.
+        narrow_range (bool): Whether the quantization algorithm uses narrow range or not. Default: False.
         training (bool): Training the network or not. Default: True.
 
     Inputs:
@@ -318,8 +318,8 @@ class FakeQuantPerChannel(PrimitiveWithInfer):
         quant_delay (int): Quantilization delay  parameter. Before delay step in training time not
             update the weight data to simulate quantize operation. After delay step in training time
             begin simulate the quantize operation. Default: 0.
-        symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
-        narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
+        symmetric (bool): Whether the quantization algorithm is symmetric or not. Default: False.
+        narrow_range (bool): Whether the quantization algorithm uses narrow range or not. Default: False.
         training (bool): Training the network or not. Default: True.
         channel_axis (int): Quantization by channel axis. Ascend backend only supports 0 or 1. Default: 1.
 
