@@ -47,9 +47,9 @@ int ActivationCPUKernel::DoActivation(int task_id) {
   auto error_code = RET_OK;
 
   if (type_ == schema::ActivationType_RELU) {
-    error_code = Relu(input_addr + stride * task_id, count, output_addr + stride * task_id);
+    error_code = Fp32Relu(input_addr + stride * task_id, count, output_addr + stride * task_id);
   } else if (type_ == schema::ActivationType_RELU6) {
-    error_code = Relu6(input_addr + stride * task_id, count, output_addr + stride * task_id);
+    error_code = Fp32Relu6(input_addr + stride * task_id, count, output_addr + stride * task_id);
   } else if (type_ == schema::ActivationType_LEAKY_RELU) {
     error_code = LRelu(input_addr + stride * task_id, count, output_addr + stride * task_id, alpha_);
   } else if (type_ == schema::ActivationType_SIGMOID) {

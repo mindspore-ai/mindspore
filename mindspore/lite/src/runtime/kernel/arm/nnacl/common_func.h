@@ -45,16 +45,9 @@ void IndirectGemmFp32_Comm(float *output, const float *input, const float *weigh
                            size_t offset);
 void IndirectGemmFp32(float *output, const float *input, const float *weight, const float *bias, size_t step, int ic4,
                       int output_channel, size_t offset, size_t relu, size_t relu6);
-
-inline int offset(const int *shape, const int dim0, const int dim1, const int dim2, const int dim3) {
-  return ((dim0 * shape[1] + dim1) * shape[2] + dim2) * shape[3] + dim3;
-}
-
-inline int offsetComm(const int *shape, const int dim0, const int dim1, const int dim2) {
-  return ((dim0 * shape[1] + dim1) * shape[2] + dim2) * shape[3];
-}
-
-inline int offset4d(const int *shape, const int *dims) { return offset(shape, dims[0], dims[1], dims[2], dims[3]); }
+int offset(const int *shape, const int dim0, const int dim1, const int dim2, const int dim3);
+int offsetComm(const int *shape, const int dim0, const int dim1, const int dim2);
+int offset4d(const int *shape, const int *dims);
 
 #ifdef ENABLE_ARM64
 void BiasAdd(const float *bias, float *data, size_t oc4, size_t plan_size);

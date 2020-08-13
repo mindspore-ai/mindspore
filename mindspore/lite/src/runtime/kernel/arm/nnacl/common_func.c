@@ -17,6 +17,16 @@
 #include "nnacl/common_func.h"
 #include "nnacl/quantization/fixed_point.h"
 
+int offset(const int *shape, const int dim0, const int dim1, const int dim2, const int dim3) {
+  return ((dim0 * shape[1] + dim1) * shape[2] + dim2) * shape[3] + dim3;
+}
+
+int offsetComm(const int *shape, const int dim0, const int dim1, const int dim2) {
+  return ((dim0 * shape[1] + dim1) * shape[2] + dim2) * shape[3];
+}
+
+int offset4d(const int *shape, const int *dims) { return offset(shape, dims[0], dims[1], dims[2], dims[3]); }
+
 #ifndef ENABLE_ARM64
 void IndirectGemmFp32(float *output, const float *input, const float *weight, const float *bias, size_t step, int ic4,
                       int output_channel, size_t offset, size_t relu, size_t relu6) {

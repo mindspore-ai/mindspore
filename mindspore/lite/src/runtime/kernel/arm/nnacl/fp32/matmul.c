@@ -119,7 +119,7 @@ void RowMajor2Col8Major(float *src_ptr, float *dst_ptr, size_t row, size_t col) 
   return;
 }
 
-inline void MatrixUnPackUnit(const void *src, void *dst, size_t row, size_t col, size_t src_stride, size_t dst_stride,
+void MatrixUnPackUnit(const void *src, void *dst, size_t row, size_t col, size_t src_stride, size_t dst_stride,
                              size_t data_lenth) {
   size_t copy_size = col * data_lenth;
   size_t src_size = src_stride * data_lenth;

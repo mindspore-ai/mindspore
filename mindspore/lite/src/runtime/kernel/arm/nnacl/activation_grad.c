@@ -13,33 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_GRAD_ACTIVATION_GRAD_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_GRAD_ACTIVATION_GRAD_H_
+#include "nnacl/activation_grad.h"
 
-#include <math.h>
-#include "nnacl/op_base.h"
-#include "nnacl/fp32/arithmetic.h"
-#include "nnacl/errorcode.h"
-
-typedef struct ActivationGradParameter {
-  OpParameter op_parameter{};
-  int type_;
-  float alpha_{0.01};
-} ActivationGradParameter;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-inline int ReluGrad(float *src0, float *src1, int length, float *dst) {
+int ReluGrad(float *src0, float *src1, int length, float *dst) {
   for (int i = 0; i < length; ++i) {
     dst[i] = src1[i] > 0 ? 1.0f : 0.0f;
   }
   ElementMul(src0, dst, dst, length);
-  return OPCLIB_OK;
+  return NNACL_OK;
 }
 
-inline int Relu6Grad(float *src0, float *src1, int length, float *dst) {
+int Relu6Grad(float *src0, float *src1, int length, float *dst) {
   for (int i = 0; i < length; ++i) {
     if (src1[i] < 0) {
       dst[i] = 0;
@@ -48,49 +32,43 @@ inline int Relu6Grad(float *src0, float *src1, int length, float *dst) {
     }
   }
   ElementMul(src0, dst, dst, length);
-  return OPCLIB_OK;
+  return NNACL_OK;
 }
 
-inline int LReluGrad(float *src0, float *src1, int length, float *dst, float alpha) {
+int LReluGrad(float *src0, float *src1, int length, float *dst, float alpha) {
   for (int i = 0; i < length; ++i) {
     dst[i] = src1[i] > 0.0f ? 1.0f : alpha;
   }
   ElementMul(src0, dst, dst, length);
-  return OPCLIB_OK;
+  return NNACL_OK;
 }
 
-inline int SigmoidGrad(float *src0, float *src1, int length, float *dst) {
+int SigmoidGrad(float *src0, float *src1, int length, float *dst) {
   for (int i = 0; i < length; ++i) {
     dst[i] = src0[i] * (src1[i] * (1.0f - src1[i]));
   }
-  return OPCLIB_OK;
+  return NNACL_OK;
 }
 
-inline int TanhGrad(float *src0, float *src1, int length, float *dst) {
+int TanhGrad(float *src0, float *src1, int length, float *dst) {
   for (int i = 0; i < length; ++i) {
     dst[i] = (1.0f - (src1[i] * src1[i])) * src0[i];
   }
-  return OPCLIB_OK;
+  return NNACL_OK;
 }
 
-inline int HSwishGrad(float *src0, float *src1, int length, float *dst) {
+int HSwishGrad(float *src0, float *src1, int length, float *dst) {
   for (int i = 0; i < length; ++i) {
     float tmp = (src1[i] > 3.0f ? 1.0f : (src1[i] < -3.0f ? 0.0f : (2.0f * src1[i] + 3.0f) / 6.0f));
     dst[i] = tmp * src0[i];
   }
-  return OPCLIB_OK;
+  return NNACL_OK;
 }
 
-inline int HSigmoidGrad(float *src0, float *src1, int length, float *dst) {
+int HSigmoidGrad(float *src0, float *src1, int length, float *dst) {
   for (int i = 0; i < length; ++i) {
     float tmp = (src1[i] > 3.0f ? 1.0f : (src1[i] < -3.0f ? 0.0f : 1.0f / 6.0f));
     dst[i] = tmp * src0[i];
   }
-  return OPCLIB_OK;
+  return NNACL_OK;
 }
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_GRAD_ACTIVATION_GRAD_H_

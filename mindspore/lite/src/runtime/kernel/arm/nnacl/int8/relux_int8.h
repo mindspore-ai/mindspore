@@ -35,19 +35,7 @@ typedef struct ReluXQuantArg {
 #ifdef __cplusplus
 extern "C" {
 #endif
-inline void ReluXInt8(const int8_t *src, int length, int8_t *dst, ReluXQuantArg *arg) {
-  for (int i = 0; i < length; ++i) {
-    if (src[i] <= arg->input_arg.zp_) {
-      dst[i] = arg->output_arg.zp_;
-      continue;
-    }
-    const int32_t input_val = src[i] - arg->input_arg.zp_;
-    const int32_t scaled_input = SaturatingRoundingDoublingHighMul(input_val, arg->input_multiplier_);
-    const int32_t shifted_input = RoundingDivideByPOT(scaled_input * (1 << arg->left_shift_), -arg->right_shift_);
-    const int32_t output = shifted_input + arg->output_arg.zp_;
-    dst[i] = (int8_t)MSMIN(output, arg->quantized_output_max);
-  }
-}
+void ReluXInt8(const int8_t *src, int length, int8_t *dst, ReluXQuantArg *arg);
 #ifdef __cplusplus
 }
 #endif
