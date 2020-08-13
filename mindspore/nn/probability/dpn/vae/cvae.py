@@ -16,7 +16,6 @@
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore._checkparam import check_int_positive
-from ...distribution.normal import Normal
 from ....cell import Cell
 from ....layer.basic import Dense, OneHot
 
@@ -46,7 +45,7 @@ class ConditionalVAE(Cell):
         - **input_y** (Tensor) - the tensor of the target data, the shape is math:`(N, 1)`.
 
     Outputs:
-        - **output** (tuple) - (recon_x(Tensor), x(Tensor), mu(Tensor), std(Tensor), z(Tensor), prior(Cell)).
+        - **output** (tuple) - (recon_x(Tensor), x(Tensor), mu(Tensor), std(Tensor)).
     """
 
     def __init__(self, encoder, decoder, hidden_size, latent_size, num_classes):
@@ -59,11 +58,10 @@ class ConditionalVAE(Cell):
         self.normal = C.normal
         self.exp = P.Exp()
         self.reshape = P.Reshape()
+        self.shape = P.Shape()
         self.concat = P.Concat(axis=1)
         self.to_tensor = P.ScalarToArray()
-        self.normal_dis = Normal()
         self.one_hot = OneHot(depth=num_classes)
-        self.standard_normal_dis = Normal([0] * self.latent_size, [1] * self.latent_size)
         self.dense1 = Dense(self.hidden_size, self.latent_size)
         self.dense2 = Dense(self.hidden_size, self.latent_size)
         self.dense3 = Dense(self.latent_size + self.num_classes, self.hidden_size)
@@ -82,11 +80,11 @@ class ConditionalVAE(Cell):
     def construct(self, x, y):
         mu, log_var = self._encode(x, y)
         std = self.exp(0.5 * log_var)
-        z = self.normal_dis('sample', mean=mu, sd=std)
+        z = self.normal(self.shape(mu), mu, std, seed=0)
         y = self.one_hot(y)
         z_c = self.concat((z, y))
         recon_x = self._decode(z_c)
-        return recon_x, x, mu, std, z, self.standard_normal_dis
+        return recon_x, x, mu, std
 
     def generate_sample(self, sample_y, generate_nums=None, shape=None):
         """

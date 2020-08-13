@@ -36,7 +36,7 @@ class ELBO(Cell):
             - Normal: If the distribution of output data is Normal, the reconstruct loss is MSELoss.
 
     Inputs:
-        - **input_data** (Tuple) - (recon_x(Tensor), x(Tensor), mu(Tensor), std(Tensor), z(Tensor), prior(Cell)).
+        - **input_data** (Tuple) - (recon_x(Tensor), x(Tensor), mu(Tensor), std(Tensor)).
         - **target_data** (Tensor) - the target tensor.
 
     Outputs:
@@ -46,6 +46,7 @@ class ELBO(Cell):
     def __init__(self, latent_prior='Normal', output_prior='Normal'):
         super(ELBO, self).__init__()
         self.sum = P.ReduceSum()
+        self.zeros = P.ZerosLike()
         if latent_prior == 'Normal':
             self.posterior = Normal()
         else:
@@ -56,9 +57,8 @@ class ELBO(Cell):
             raise ValueError('The values of output_dis now only support Normal')
 
     def construct(self, data, label):
-        recon_x, x, mu, std, z, prior = data
+        recon_x, x, mu, std = data
         reconstruct_loss = self.recon_loss(x, recon_x)
-        kl_loss = -(prior('log_prob', z) - self.posterior('log_prob', z, mu, std)) \
-                  * self.posterior('prob', z, mu, std)
+        kl_loss = self.posterior('kl_loss', 'Normal', self.zeros(mu), self.zeros(mu)+1, mu, std)
         elbo = reconstruct_loss + self.sum(kl_loss)
         return elbo

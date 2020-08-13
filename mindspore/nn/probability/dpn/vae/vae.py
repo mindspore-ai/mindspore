@@ -16,7 +16,6 @@
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore._checkparam import check_int_positive
-from ...distribution.normal import Normal
 from ....cell import Cell
 from ....layer.basic import Dense
 
@@ -43,7 +42,7 @@ class VAE(Cell):
         - **input** (Tensor) - the same shape as the input of encoder.
 
     Outputs:
-        - **output** (Tuple) - (recon_x(Tensor), x(Tensor), mu(Tensor), std(Tensor), z(Tensor), prior(Cell)).
+        - **output** (Tuple) - (recon_x(Tensor), x(Tensor), mu(Tensor), std(Tensor)).
     """
 
     def __init__(self, encoder, decoder, hidden_size, latent_size):
@@ -55,9 +54,8 @@ class VAE(Cell):
         self.normal = C.normal
         self.exp = P.Exp()
         self.reshape = P.Reshape()
+        self.shape = P.Shape()
         self.to_tensor = P.ScalarToArray()
-        self.normal_dis = Normal()
-        self.standard_normal_dis = Normal([0]*self.latent_size, [1]*self.latent_size)
         self.dense1 = Dense(self.hidden_size, self.latent_size)
         self.dense2 = Dense(self.hidden_size, self.latent_size)
         self.dense3 = Dense(self.latent_size, self.hidden_size)
@@ -76,9 +74,9 @@ class VAE(Cell):
     def construct(self, x):
         mu, log_var = self._encode(x)
         std = self.exp(0.5 * log_var)
-        z = self.normal_dis('sample', mean=mu, sd=std)
+        z = self.normal(self.shape(mu), mu, std, seed=0)
         recon_x = self._decode(z)
-        return recon_x, x, mu, std, z, self.standard_normal_dis
+        return recon_x, x, mu, std
 
     def generate_sample(self, generate_nums, shape):
         """
