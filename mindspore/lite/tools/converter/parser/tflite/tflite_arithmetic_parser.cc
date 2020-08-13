@@ -57,7 +57,7 @@ STATUS TfliteDoubleInputOpParser::Parse(const std::unique_ptr<tflite::OperatorT>
     }
     if (!x_data->data.empty()) {
       std::vector<tflite::TensorT *> x_tensors{x_tensor.get()};
-      if (RET_OK != ParseTensor(x_tensors, tfliteModelBuffer, tensor_cache, TF_CONST)) {
+      if (RET_OK != ParseTensor(x_tensors, tfliteModelBuffer, tensor_cache, TF_CONST, false)) {
         MS_LOG(ERROR) << "parse the first tensor failed";
         return RET_ERROR;
       }
@@ -76,7 +76,7 @@ STATUS TfliteDoubleInputOpParser::Parse(const std::unique_ptr<tflite::OperatorT>
     }
     if (!y_data->data.empty()) {
       std::vector<tflite::TensorT *> y_tensors{y_tensor.get()};
-      if (RET_OK != ParseTensor(y_tensors, tfliteModelBuffer, tensor_cache, TF_CONST)) {
+      if (RET_OK != ParseTensor(y_tensors, tfliteModelBuffer, tensor_cache, TF_CONST, false)) {
         MS_LOG(ERROR) << "parse the second tensor failed";
         return RET_ERROR;
       }

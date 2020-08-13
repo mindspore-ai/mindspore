@@ -45,13 +45,20 @@ STATUS TfliteNodeParser::CopyTfliteTensorData(const std::vector<std::unique_ptr<
 STATUS TfliteNodeParser::ParseTensor(const std::vector<tflite::TensorT *> &ts,
                                      const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                                      mindspore::lite::TensorCache *tensor_cache,
-                                     int node_type) {
+                                     int node_type,
+                                     bool isWeight) {
   for (const auto &t : ts) {
     auto idx = tensor_cache->FindTensor(t->name);
     if (idx < 0) {
       std::unique_ptr<schema::TensorT> tensor(new schema::TensorT);
       tensor->dataType = GetTfliteDataType(t->type);
       tensor->dims = t->shape;
+
+      if (isWeight) {
+        tensor->format = schema::Format_KHWC;
+      } else {
+        tensor->format = schema::Format_NHWC;
+      }
 
       if (t->buffer > 0) {
         CopyTfliteTensorData(tfliteModelBuffer, t, tensor.get());

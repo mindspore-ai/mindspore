@@ -59,7 +59,7 @@ STATUS TfliteDeConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     return RET_NULL_PTR;
   }
   std::vector<tflite::TensorT *> weight_tensors{weight_tensor.get()};
-  if (RET_OK != ParseTensor(weight_tensors, tfliteModelBuffer, tensor_cache, TF_CONST)) {
+  if (RET_OK != ParseTensor(weight_tensors, tfliteModelBuffer, tensor_cache, TF_CONST, true)) {
     return RET_ERROR;
   }
   auto weight_shape = weight_tensor->shape;

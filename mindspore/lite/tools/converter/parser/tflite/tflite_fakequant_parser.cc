@@ -44,7 +44,7 @@ STATUS TfliteFakeQuantParser::Parse(const std::unique_ptr<tflite::OperatorT> &tf
     return RET_NULL_PTR;
   }
   std::vector<tflite::TensorT *> weight_tensors{weight_tensor.get()};
-  if (RET_OK != ParseTensor(weight_tensors, tfliteModelBuffer, tensor_cache, TF_CONST)) {
+  if (RET_OK != ParseTensor(weight_tensors, tfliteModelBuffer, tensor_cache, TF_CONST, true)) {
     MS_LOG(ERROR) << "parse weight failed";
     return RET_ERROR;
   }
@@ -58,7 +58,7 @@ STATUS TfliteFakeQuantParser::Parse(const std::unique_ptr<tflite::OperatorT> &tf
       return RET_NULL_PTR;
     }
     std::vector<tflite::TensorT *> bias_tensors{bias_tensor.get()};
-    if (RET_OK != ParseTensor(bias_tensors, tfliteModelBuffer, tensor_cache, TF_CONST)) {
+    if (RET_OK != ParseTensor(bias_tensors, tfliteModelBuffer, tensor_cache, TF_CONST, false)) {
       MS_LOG(ERROR) << "parse bias failed";
       return RET_ERROR;
     }
