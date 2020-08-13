@@ -14,7 +14,7 @@ function Run_x86() {
 	    run_result='Run_x86: '${model_name}' pass'
 	    echo ${run_result} >> ${run_benchmark_result_file}
 	else
-	    run_result='Run_x86: '${model_name}' fail'
+	    run_result='Run_x86: '${model_name}' fail <<===========================this is the failed case'
 	    echo ${run_result} >> ${run_benchmark_result_file}
 	    return 1
         fi
@@ -32,7 +32,7 @@ function Run_x86() {
             run_result='Run_x86: '${model_name}' pass'
             echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='Run_x86: '${model_name}' fail'
+            run_result='Run_x86: '${model_name}' fail <<===========================this is the failed case'
             echo ${run_result} >> ${run_benchmark_result_file}
             return 1
         fi
@@ -53,7 +53,7 @@ function Run_arm64() {
             run_result='Run_arm64: '${model_name}' pass'
             echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='Run_arm64:'${model_name}' fail'
+            run_result='Run_arm64:'${model_name}' fail <<===========================this is the failed case'
             echo ${run_result} >> ${run_benchmark_result_file}
             return 1
         fi
@@ -72,7 +72,7 @@ function Run_arm64() {
             run_result='Run_arm64:'${model_name}' pass'
             echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='Run_arm64:'${model_name}' fail'
+            run_result='Run_arm64:'${model_name}' fail <<===========================this is the failed case'
             echo ${run_result} >> ${run_benchmark_result_file}
             return 1
         fi
@@ -183,9 +183,6 @@ echo 'cp  /data/local/tmp/libc++_shared.so ./' >> adb_cmd.txt
 echo 'chmod 777 benchmark' >> adb_cmd.txt
 
 adb -s ${device_id} shell < adb_cmd.txt
-
-run_x86_result=0 || exit 1
-run_arm64_result=0 || exit 1
 
 # Write resulte to temp file 
 run_benchmark_result_file=${basepath}/run_benchmark_result.txt
