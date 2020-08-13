@@ -77,7 +77,7 @@ class CsvOp : public ParallelOp {
           total_rows_(0),
           start_offset_(0),
           end_offset_(std::numeric_limits<int64_t>::max()),
-          err_message_("unkonw") {
+          err_message_("unknown") {
       cur_buffer_ = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
       initCsvParser();
     }
@@ -101,8 +101,9 @@ class CsvOp : public ParallelOp {
       if (it == sd.end()) {
         return -1;
       }
+      int ret = it->second.second(*this, static_cast<char>(c));
       cur_state_ = it->second.first;
-      return it->second.second(*this, c);
+      return ret;
     }
 
     int countRows(int c);
@@ -169,7 +170,13 @@ class CsvOp : public ParallelOp {
     }
 
     int catch_exception(char c) {
-      MS_LOG(ERROR) << "Invalid syntax!";
+      if (getMessage(c) == Message::MS_QUOTE && cur_state_ == State::UNQUOTE) {
+        err_message_ = "Invalid quote in unquote field.";
+      } else if (getMessage(c) == Message::MS_END_OF_FILE && cur_state_ == State::QUOTE) {
+        err_message_ = "Reach the end of file in quote field.";
+      } else if (getMessage(c) == Message::MS_NORMAL && cur_state_ == State::SECOND_QUOTE) {
+        err_message_ = "Receive unquote char in quote field.";
+      }
       return -1;
     }
 
@@ -425,6 +432,8 @@ class CsvOp : public ParallelOp {
   Status ComputeColMap() override;
 
   // Split string based on a character delimiter
+  // @param str - the input string
+  // @param str - the delimiter
   // @return - the a string vector
   std::vector<std::string> split(const std::string &s, char delim);
 
