@@ -58,7 +58,7 @@ int Reduce::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   for (size_t i = 0; i < in_shape.size(); i++) {
     bool reduce_axis = false;
     for (int idx = 0; idx < num_axes; ++idx) {
-      if (static_cast<size_t>((*axes)[idx]) == i) {
+      if (static_cast<size_t>((*axes)[idx]) == i || static_cast<size_t>((*axes)[idx] + in_shape.size()) == i) {
         reduce_axis = true;
         break;
       }
