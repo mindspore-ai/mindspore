@@ -39,126 +39,127 @@ QuantStrategy::QuantStrategy(size_t weightSize, size_t convWeightQuantChannelThr
     : mWeightSize(weightSize), mConvWeightQuantChannelThreshold(convWeightQuantChannelThreshold) {}
 
 bool QuantStrategy::CanConvOpQuantized(const CNodePtr &node) const {
-    size_t i = 0;
-    for (i = 0; i < mConvTypes.size(); i++) {
-        if (node->fullname_with_scope().find(mConvTypes[i]) == 0) {
-            break;
-        }
+  size_t i = 0;
+  for (i = 0; i < mConvTypes.size(); i++) {
+    if (node->fullname_with_scope().find(mConvTypes[i]) == 0) {
+      break;
     }
+  }
 
-    if ((i == mConvTypes.size()) || (node->size() < 3)) {
-        return false;
-    }
+  if ((i == mConvTypes.size()) || (node->size() < 3)) {
+    return false;
+  }
 
-    auto inputNode = node->input(2);
-    if (!inputNode->isa<Parameter>()) {
-        return false;
-    }
-    auto paramNode = inputNode->cast<ParameterPtr>();
-    auto abstract_base = paramNode->abstract();
-    if (abstract_base == nullptr) {
-        return false;
-    }
+  auto inputNode = node->input(2);
+  if (!inputNode->isa<Parameter>()) {
+    return false;
+  }
+  auto paramNode = inputNode->cast<ParameterPtr>();
+  auto abstract_base = paramNode->abstract();
+  if (abstract_base == nullptr) {
+    return false;
+  }
 
-    if (!utils::isa<abstract::ShapePtr>(abstract_base->GetShapeTrack())) {
-        MS_LOG(INFO) << "Shape of Abstract of parameter should be ShapePtr " << paramNode->name();
-        return false;
-    }
-    auto weight_shape = utils::cast<abstract::ShapePtr>(abstract_base->GetShapeTrack())->shape();
-    size_t shapeSize = 1;
-    for (auto dim : weight_shape) {
-        shapeSize = shapeSize * dim;
-    }
-    if (shapeSize < mWeightSize) {
-        MS_LOG(INFO) << "shapeSize Invalid!" << shapeSize;
-        return false;
-    }
-    if (weight_shape[0] <= mConvWeightQuantChannelThreshold) {
-        MS_LOG(INFO) << "channel less mConvWeightQuantChannelThreshold!" << weight_shape[0];
-        return false;
-    }
+  if (!utils::isa<abstract::ShapePtr>(abstract_base->GetShapeTrack())) {
+    MS_LOG(INFO) << "Shape of Abstract of parameter should be ShapePtr " << paramNode->name();
+    return false;
+  }
+  auto weight_shape = utils::cast<abstract::ShapePtr>(abstract_base->GetShapeTrack())->shape();
+  size_t shapeSize = 1;
+  for (auto dim : weight_shape) {
+    shapeSize = shapeSize * dim;
+  }
+  if (shapeSize < mWeightSize) {
+    MS_LOG(INFO) << "shapeSize Invalid!" << shapeSize;
+    return false;
+  }
+  if (weight_shape[0] <= mConvWeightQuantChannelThreshold) {
+    MS_LOG(INFO) << "channel less mConvWeightQuantChannelThreshold!" << weight_shape[0];
+    return false;
+  }
 
-    return true;
+  return true;
 }
 
 bool QuantStrategy::CanOpPostQuantized(AnfNodePtr &node) const {
-    if (!node->isa<CNode>()) {
-        return false;
-    }
-    auto cnode = std::dynamic_pointer_cast<CNode>(node);
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  auto cnode = std::dynamic_pointer_cast<CNode>(node);
 
-    auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveTValue>>(cnode->input(0));
-    if (primitiveT_value == nullptr) {
-        MS_LOG(WARNING) << "PrimitiveT_value is nullptr: " << cnode->fullname_with_scope();
-        return false;
-    }
+  auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveTValue>>(cnode->input(0));
+  if (primitiveT_value == nullptr) {
+    MS_LOG(WARNING) << "PrimitiveT_value is nullptr: " << cnode->fullname_with_scope();
+    return false;
+  }
 
-    auto type = primitiveT_value->GetPrimitiveT()->value.type;
-    MS_LOG(INFO) << "Primitive type: " << type;
-    static const std::vector<schema::PrimitiveType> uint8OpList = {
-        schema::PrimitiveType_Nchw2Nhwc,       schema::PrimitiveType_Nhwc2Nchw, schema::PrimitiveType_Conv2D,
-        schema::PrimitiveType_DepthwiseConv2D, schema::PrimitiveType_Add,       schema::PrimitiveType_Pooling,
-        schema::PrimitiveType_Concat,          /*schema::PrimitiveType_SoftMax,*/   schema::PrimitiveType_Reshape,
-        schema::PrimitiveType_Activation};
-    return IsContain(uint8OpList, type);
+  auto type = primitiveT_value->GetPrimitiveT()->value.type;
+  MS_LOG(INFO) << "Primitive type: " << type;
+  static const std::vector<schema::PrimitiveType> uint8OpList = {
+    schema::PrimitiveType_Nchw2Nhwc, schema::PrimitiveType_Nhwc2Nchw,
+    schema::PrimitiveType_Conv2D,    schema::PrimitiveType_DepthwiseConv2D,
+    schema::PrimitiveType_Add,       schema::PrimitiveType_Pooling,
+    schema::PrimitiveType_Concat,    /*schema::PrimitiveType_SoftMax,*/ schema::PrimitiveType_Reshape,
+    schema::PrimitiveType_Activation};
+  return IsContain(uint8OpList, type);
 }
 
 bool QuantStrategy::CanMulOpQuantized(const CNodePtr &node) const {
-    size_t i = 0;
-    for (i = 0; i < mMulTypes.size(); i++) {
-        if (node->fullname_with_scope().find(mMulTypes[i]) == 0) {
-            break;
-        }
+  size_t i = 0;
+  for (i = 0; i < mMulTypes.size(); i++) {
+    if (node->fullname_with_scope().find(mMulTypes[i]) == 0) {
+      break;
     }
-    if (i == mMulTypes.size()) {
-        return false;
-    }
+  }
+  if (i == mMulTypes.size()) {
+    return false;
+  }
 
-    if (node->size() < 3) {
-        MS_LOG(INFO) << "input size less!";
-        return false;
-    }
+  if (node->size() < 3) {
+    MS_LOG(INFO) << "input size less!";
+    return false;
+  }
 
-    auto inputNode1 = node->input(1);
-    auto inputNode2 = node->input(2);
-    if (inputNode1 == nullptr || inputNode2 == nullptr) {
-        MS_LOG(INFO) << "mul input is nullptr!";
-        return false;
-    }
+  auto inputNode1 = node->input(1);
+  auto inputNode2 = node->input(2);
+  if (inputNode1 == nullptr || inputNode2 == nullptr) {
+    MS_LOG(INFO) << "mul input is nullptr!";
+    return false;
+  }
 
-    ParameterPtr paramNode = nullptr;
-    if (inputNode1->isa<Parameter>()) {
-        paramNode = inputNode1->cast<ParameterPtr>();
-    } else if (inputNode2->isa<Parameter>()) {
-        paramNode = inputNode2->cast<ParameterPtr>();
-    }
+  ParameterPtr paramNode = nullptr;
+  if (inputNode1->isa<Parameter>()) {
+    paramNode = inputNode1->cast<ParameterPtr>();
+  } else if (inputNode2->isa<Parameter>()) {
+    paramNode = inputNode2->cast<ParameterPtr>();
+  }
 
-    if (paramNode == nullptr) {
-        MS_LOG(INFO) << "invalid paramNode!";
-        return false;
-    }
+  if (paramNode == nullptr) {
+    MS_LOG(INFO) << "invalid paramNode!";
+    return false;
+  }
 
-    auto abstract_base = paramNode->abstract();
-    if (abstract_base == nullptr) {
-        MS_LOG(INFO) << "abstract is nullptr";
-        return false;
-    }
+  auto abstract_base = paramNode->abstract();
+  if (abstract_base == nullptr) {
+    MS_LOG(INFO) << "abstract is nullptr";
+    return false;
+  }
 
-    if (!utils::isa<abstract::ShapePtr>(abstract_base->GetShapeTrack())) {
-        MS_LOG(INFO) << "Shape of Abstract of parameter should be ShapePtr " << paramNode->name();
-        return false;
-    }
-    auto weight_shape = utils::cast<abstract::ShapePtr>(abstract_base->GetShapeTrack())->shape();
-    size_t shapeSize = 1;
-    for (auto dim : weight_shape) {
-        shapeSize = shapeSize * dim;
-    }
-    if (shapeSize < mWeightSize) {
-        MS_LOG(INFO) << "shapeSize Invalid!" << shapeSize;
-        return false;
-    }
+  if (!utils::isa<abstract::ShapePtr>(abstract_base->GetShapeTrack())) {
+    MS_LOG(INFO) << "Shape of Abstract of parameter should be ShapePtr " << paramNode->name();
+    return false;
+  }
+  auto weight_shape = utils::cast<abstract::ShapePtr>(abstract_base->GetShapeTrack())->shape();
+  size_t shapeSize = 1;
+  for (auto dim : weight_shape) {
+    shapeSize = shapeSize * dim;
+  }
+  if (shapeSize < mWeightSize) {
+    MS_LOG(INFO) << "shapeSize Invalid!" << shapeSize;
+    return false;
+  }
 
-    return true;
+  return true;
 }
 
 void CalFakeNode(const AnfNodePtr &inTensor) {
@@ -190,56 +191,119 @@ void CalFakeNode(const AnfNodePtr &inTensor) {
   // }
 }
 
-STATUS CalQuantizationParams(std::unique_ptr<AnfQuantParam> &quantParam, double mMin,
-                                double mMax, bool narrowRange, int quant_max, int quant_min, int num_bits) {
-    MS_ASSERT(quantParam != nullptr);
-    if (mMin > 0.0f) {
-        MS_LOG(ERROR) << "min " << mMin << " is bigger then 0, set to 0, this may course low precision";
-        mMin = 0.0f;
+STATUS CalQuantizationParams(std::unique_ptr<AnfQuantParam> &quantParam, double mMin, double mMax, bool narrowRange,
+                             int quant_max, int quant_min, int num_bits) {
+  MS_ASSERT(quantParam != nullptr);
+  if (mMin > 0.0f) {
+    MS_LOG(ERROR) << "min " << mMin << " is bigger then 0, set to 0, this may course low precision";
+    mMin = 0.0f;
+  }
+  if (mMax < 0.0f) {
+    MS_LOG(ERROR) << "mMax " << mMax << " is smaller than 0, set to 0, this may course low precision";
+    mMax = 0.0f;
+  }
+  if (mMin > mMax) {
+    MS_LOG(ERROR) << "cal error while min" << mMin << ">" << mMax;
+    return RET_PARAM_INVALID;
+  }
+  if (mMin == mMax) {
+    if (mMin != 0.0f) {
+      MS_LOG(ERROR) << "min and max should both be zero if they are equal to each other";
+      return RET_ERROR;
     }
-    if (mMax < 0.0f) {
-        MS_LOG(ERROR) << "mMax " << mMax << " is smaller than 0, set to 0, this may course low precision";
-        mMax = 0.0f;
-    }
-    if (mMin > mMax) {
-        MS_LOG(ERROR) << "cal error while min" << mMin << ">" << mMax;
-        return RET_PARAM_INVALID;
-    }
-    if (mMin == mMax) {
-        if (mMin != 0.0f) {
-            MS_LOG(ERROR) << "min and max should both be zero if they are equal to each other";
-            return RET_ERROR;
-        }
-        quantParam->inited = true;
-        quantParam->min = mMin;
-        quantParam->max = mMax;
-        quantParam->scale = 0.0f;
-        quantParam->zeroPoint = 0;
-        quantParam->narrowRange = narrowRange;
-        quantParam->numBits = num_bits;
-        return RET_OK;
-    }
-
-    auto quantMinFloat = static_cast<double>(quant_min);
-    auto quantMaxFloat = static_cast<double>(quant_max);
-    double scale = (mMax - mMin) / (quantMaxFloat - quantMinFloat);
-    const double zeroPointFromMin = quantMinFloat - mMin / scale;
-    // const double zeroPointFromMax = quantMaxFloat - mMax / scale;
-    int zeroPoint = static_cast<int32_t>(std::round(zeroPointFromMin));
-
-    // The zero point should always be in the range of quantized value,
-    // [qmin, qmax].
-    MS_ASSERT(zeroPoint >= quantMin);
-    MS_ASSERT(zeroPoint <= quantMax);
     quantParam->inited = true;
     quantParam->min = mMin;
     quantParam->max = mMax;
-    quantParam->scale = scale;
-    quantParam->zeroPoint = zeroPoint;
+    quantParam->scale = 0.0f;
+    quantParam->zeroPoint = 0;
     quantParam->narrowRange = narrowRange;
     quantParam->numBits = num_bits;
-
     return RET_OK;
+  }
+
+  auto quantMinFloat = static_cast<double>(quant_min);
+  auto quantMaxFloat = static_cast<double>(quant_max);
+  double scale = (mMax - mMin) / (quantMaxFloat - quantMinFloat);
+  const double zeroPointFromMin = quantMinFloat - mMin / scale;
+  // const double zeroPointFromMax = quantMaxFloat - mMax / scale;
+  int zeroPoint = static_cast<int32_t>(std::round(zeroPointFromMin));
+
+  // The zero point should always be in the range of quantized value,
+  // [qmin, qmax].
+  MS_ASSERT(zeroPoint >= quantMin);
+  MS_ASSERT(zeroPoint <= quantMax);
+  quantParam->inited = true;
+  quantParam->min = mMin;
+  quantParam->max = mMax;
+  quantParam->scale = scale;
+  quantParam->zeroPoint = zeroPoint;
+  quantParam->narrowRange = narrowRange;
+  quantParam->numBits = num_bits;
+
+  return RET_OK;
+}
+
+STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax,
+                             bool narrowRange, int numBits) {
+  MS_ASSERT(quantParam != nullptr);
+  if (mMin > 0.0f) {
+    MS_LOG(ERROR) << "min " << mMin << " is bigger then 0, set to 0, this may course low precision";
+    mMin = 0.0f;
+  }
+  if (mMax < 0.0f) {
+    MS_LOG(ERROR) << "mMax " << mMax << " is smaller than 0, set to 0, this may course low precision";
+    mMax = 0.0f;
+  }
+  if (mMin > mMax) {
+    MS_LOG(ERROR) << "cal error while min" << mMin << ">" << mMax;
+    return RET_PARAM_INVALID;
+  }
+  if (mMin == mMax) {
+    if (mMin != 0.0f) {
+      MS_LOG(ERROR) << "min and max should both be zero if they are equal to each other";
+      return RET_ERROR;
+    }
+    quantParam->inited = true;
+    quantParam->min = mMin;
+    quantParam->max = mMax;
+    quantParam->scale = 0.0f;
+    quantParam->zeroPoint = 0;
+    quantParam->narrowRange = narrowRange;
+    quantParam->numBits = numBits;
+    return RET_OK;
+  }
+
+  int quantMin = narrowRange ? 1 : 0;
+  int quantMax = (1 << (unsigned int)numBits) - 1;
+  auto quantMinFloat = static_cast<double>(quantMin);
+  auto quantMaxFloat = static_cast<double>(quantMax);
+  double scale = (mMax - mMin) / (quantMaxFloat - quantMinFloat);
+  const double zeroPointFromMin = quantMinFloat - mMin / scale;
+  const double zeroPointFromMax = quantMaxFloat - mMax / scale;
+  const double zpFromMinError = std::abs(quantMinFloat) + std::abs(mMin / scale);
+  const double zpFromMaxError = std::abs(quantMaxFloat) + std::abs(mMax / scale);
+  const double zpDouble = zpFromMinError < zpFromMaxError ? zeroPointFromMin : zeroPointFromMax;
+  int zeroPoint;
+  if (zpDouble < quantMinFloat) {
+    zeroPoint = quantMin;
+  } else if (zpDouble > quantMaxFloat) {
+    zeroPoint = quantMax;
+  } else {
+    zeroPoint = static_cast<int32_t>(std::round(zpDouble));
+  }
+  // The zero point should always be in the range of quantized value,
+  // [qmin, qmax].
+  MS_ASSERT(zeroPoint >= quantMin);
+  MS_ASSERT(zeroPoint <= quantMax);
+  quantParam->inited = true;
+  quantParam->min = mMin;
+  quantParam->max = mMax;
+  quantParam->scale = scale;
+  quantParam->zeroPoint = zeroPoint;
+  quantParam->narrowRange = narrowRange;
+  quantParam->numBits = numBits;
+
+  return RET_OK;
 }
 
 STATUS QuantFilter(ParamValueLitePtr &weightPtr, QuantType quantType, int quant_max, int quant_min, size_t bitNum,
@@ -292,14 +356,14 @@ STATUS QuantFilter(ParamValueLitePtr &weightPtr, QuantType quantType, int quant_
 
       weightPtr->set_quant_param(quantParam);
     }
-    auto ret = memcpy_s(const_cast<float*>(rawDatas), weightPtr->tensor_size(),
-                        qDatas.data(), shapeSize * sizeof(int8_t));
+    auto ret =
+      memcpy_s(const_cast<float *>(rawDatas), weightPtr->tensor_size(), qDatas.data(), shapeSize * sizeof(int8_t));
     if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy error: " << ret;
       return RET_ERROR;
     }
     if (quantType == QuantType_WeightQuant) {
-      PostBitPack(const_cast<float*>(rawDatas), shapeSize, bitNum);
+      PostBitPack(const_cast<float *>(rawDatas), shapeSize, bitNum);
     }
 
     weightPtr->set_tensor_type(kNumberTypeInt8);
@@ -338,14 +402,13 @@ STATUS QuantFilter(ParamValueLitePtr &weightPtr, QuantType quantType, int quant_
         qDatas[i] = quant_max;
       } else if (quant_data < quant_min) {
         qDatas[i] = quant_min;
-      }  else {
+      } else {
         qDatas[i] = static_cast<int8_t>(quant_data);
       }
     }
 
     weightPtr->set_quant_param(quantParam);
-    auto ret = memcpy_s(rawDatas, weightPtr->tensor_size(),
-                        qDatas.data(), shapeSize * sizeof(int8_t));
+    auto ret = memcpy_s(rawDatas, weightPtr->tensor_size(), qDatas.data(), shapeSize * sizeof(int8_t));
     if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy error: " << ret;
       return RET_ERROR;
@@ -358,34 +421,32 @@ STATUS QuantFilter(ParamValueLitePtr &weightPtr, QuantType quantType, int quant_
     weightPtr->set_tensor_size(shapeSize * sizeof(int8_t));
   }
 
-
-    return RET_OK;
+  return RET_OK;
 }
 
 STATUS PostBitPack(float *weight, size_t shapeSize, size_t bitNum) {
-    auto *rawDatas = reinterpret_cast<uint8_t *>(weight);
-    vector<uint8_t> qDatas(rawDatas, rawDatas + shapeSize);
-    vector<uint8_t> qDatas_packed;
-    if (bitNum < 8 && bitNum > 1) {
-        BitPack weight_bitpack(bitNum);
-        weight_bitpack.BitPacking(qDatas, qDatas_packed);
-        if (EOK != memcpy_s(rawDatas, shapeSize, &qDatas_packed[0], shapeSize)) {
-          MS_LOG(ERROR) << "PostBitPack memcpy_s qDatas_packed failed";
-          return RET_ERROR;
-        }
-    } else if (bitNum == 8) {
-        if (EOK != memcpy_s(rawDatas, shapeSize, &qDatas[0], shapeSize)) {
-          MS_LOG(ERROR) << "PostBitPack memcpy_s qDatas failed";
-          return RET_ERROR;
-        }
-    } else {
-        MS_LOG(ERROR) << "bitNum must be between 0 and 8 : " << bitNum;
-        return RET_ERROR;
+  auto *rawDatas = reinterpret_cast<uint8_t *>(weight);
+  vector<uint8_t> qDatas(rawDatas, rawDatas + shapeSize);
+  vector<uint8_t> qDatas_packed;
+  if (bitNum < 8 && bitNum > 1) {
+    BitPack weight_bitpack(bitNum);
+    weight_bitpack.BitPacking(qDatas, qDatas_packed);
+    if (EOK != memcpy_s(rawDatas, shapeSize, &qDatas_packed[0], shapeSize)) {
+      MS_LOG(ERROR) << "PostBitPack memcpy_s qDatas_packed failed";
+      return RET_ERROR;
     }
+  } else if (bitNum == 8) {
+    if (EOK != memcpy_s(rawDatas, shapeSize, &qDatas[0], shapeSize)) {
+      MS_LOG(ERROR) << "PostBitPack memcpy_s qDatas failed";
+      return RET_ERROR;
+    }
+  } else {
+    MS_LOG(ERROR) << "bitNum must be between 0 and 8 : " << bitNum;
+    return RET_ERROR;
+  }
 
-    return RET_OK;
+  return RET_OK;
 }
 }  // namespace quant
 }  // namespace lite
 }  // namespace mindspore
-

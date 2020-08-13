@@ -18,48 +18,63 @@
 #define MS_QUANTIZER_H
 
 #include <unordered_map>
+#include <utility>
+#include <memory>
 #include "include/errorcode.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"
-#include "include/model.h"
 #include "base/base.h"
 #include "src/param_value_lite.h"
+#include "schema/inner/model_generated.h"
 #include "tools/converter/converter_flags.h"
 
-namespace mindspore {
-namespace lite {
-namespace quant {
+namespace mindspore::lite::quant {
 using STATUS = int;
 enum QuantType {
-    QuantType_QUANT_NONE    = 0,
-    QuantType_AwareTraining = 1,
-    QuantType_WeightQuant   = 2,
-    QuantType_PostTraining  = 3,
-    QuantType_MIN = QuantType_QUANT_NONE,
-    QuantType_MAX = QuantType_PostTraining
+  QuantType_QUANT_NONE = 0,
+  QuantType_AwareTraining = 1,
+  QuantType_WeightQuant = 2,
+  QuantType_PostTraining = 3,
+  QuantType_MIN = QuantType_QUANT_NONE,
+  QuantType_MAX = QuantType_PostTraining
 };
 
 class Quantizer {
  public:
-    explicit Quantizer(FuncGraphPtr graph);
+  explicit Quantizer(FuncGraphPtr graph) : funcGraph(std::move(graph)) {}
 
-    ~Quantizer() = default;
+  ~Quantizer() = default;
 
-    virtual STATUS RemoveFakeQuant();
+  virtual STATUS RemoveFakeQuant();
 
-    virtual STATUS GenerateQuantParam();
+  virtual STATUS GenerateQuantParam();
 
-    virtual STATUS DetermineNodeQuantType();
+  virtual STATUS DetermineNodeQuantType();
 
-    virtual STATUS DoQuantize(FuncGraphPtr funcGraph) = 0;
+  virtual STATUS DoQuantize(FuncGraphPtr funcGraph) = 0;
 
     mindspore::lite::converter::Flags flags;
  protected:
-    FuncGraphPtr funcGraph = nullptr;
+  FuncGraphPtr funcGraph = nullptr;
 };
-}  // namespace quant
-}  // namespace lite
-}  // namespace mindspore
+
+class FbQuantizer {
+ public:
+  explicit FbQuantizer(schema::MetaGraphT *graph) : graph(graph) {}
+
+  ~FbQuantizer() = default;
+
+  virtual STATUS RemoveFakeQuant();
+
+  virtual STATUS GenerateQuantParam();
+
+  virtual STATUS DetermineNodeQuantType();
+
+  virtual STATUS DoQuantize() = 0;
+
+ protected:
+  std::shared_ptr<schema::MetaGraphT> graph = nullptr;
+};
+}  // namespace mindspore::lite::quant
 
 #endif
-

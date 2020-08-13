@@ -19,6 +19,7 @@
 
 #include <string>
 #include "tools/common/flag_parser.h"
+#include "ir/dtype/type_id.h"
 #include "schema/inner/model_generated.h"
 
 namespace mindspore {
@@ -66,7 +67,7 @@ class Flags : public virtual mindspore::lite::FlagParser {
   // used for parse aware trainning
   std::string inputInferenceTypeIn;
   //  mindspore::predict::DataType inputInferenceType = DataType_DT_FLOAT;
-  int inputInferenceType = 0;
+  TypeId inputInferenceType = TypeId::kNumberTypeFloat;
   std::string stdDev;
   std::string mean;
   // used for post-trainning-weight

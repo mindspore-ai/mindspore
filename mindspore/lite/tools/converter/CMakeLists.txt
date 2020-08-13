@@ -101,6 +101,7 @@ target_link_libraries(converter_lite PRIVATE
         node_mid
         graph_pass_mid
         fusion_mid
+        quantizer_mid
         protobuf
         quantizer_mid
         pthread

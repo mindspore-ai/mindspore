@@ -53,7 +53,7 @@ class MatMulBiasAddFusionPass : public FusionPass {
   bool transB = false;
   size_t id = 0;
 
-  OpDefCopyer TransposeOpCopyer = [](const std::unique_ptr<CNodeT> &inOpDef) -> std::unique_ptr<CNodeT> {
+  OpDefCopyer TransposeOpCopyer = [](CNodeT *inOpDef) -> std::unique_ptr<CNodeT>  {
     std::unique_ptr<CNodeT> newOpDef(new (std::nothrow) CNodeT);
     if (newOpDef == nullptr) {
       MS_LOG(ERROR) << "new OpDefT failed";

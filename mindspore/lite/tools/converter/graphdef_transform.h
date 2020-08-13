@@ -17,8 +17,9 @@
 #ifndef MS_GRAPHDEF_TRANSFORM_H
 #define MS_GRAPHDEF_TRANSFORM_H
 
+#include <memory>
 #include "tools/converter/optimizer.h"
-// #include "quantizer/quantizer.h"
+#include "tools/converter/quantizer/quantizer.h"
 #include "schema/inner/model_generated.h"
 #include "tools/common/storage.h"
 #include "tools/converter/converter_flags.h"
@@ -42,7 +43,8 @@ class GraphDefTransform {
   schema::MetaGraphT *graphDefT = nullptr;
   Optimizer *optimizer = nullptr;
 
-  //  std::unique_ptr<Quantizer> mQuantizer;
+  std::unique_ptr<quant::Quantizer> mQuantizer;
+  std::unique_ptr<quant::FbQuantizer> fbQuantizer;
 };
 }  // namespace lite
 }  // namespace mindspore

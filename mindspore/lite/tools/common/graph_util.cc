@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace lite {
 OpDefCopyer GetSimpleOpCopyer() {
-  return [](std::unique_ptr<CNodeT> &inCNode) -> std::unique_ptr<CNodeT> {
+  return [](CNodeT *inCNode) -> std::unique_ptr<CNodeT> {
     std::unique_ptr<CNodeT> newCNode(new CNodeT);
 
     newCNode->name = inCNode->name;
@@ -421,9 +421,13 @@ NodeIter InsertNodeBefore(schema::MetaGraphT *graphT, NodeIter existNodeIter, si
     }
     preTensor->refCount = 0;
     preTensor->data.clear();
+    if (toAddNodeIn->primitive->value.type == schema::PrimitiveType_QuantDTypeCast) {
+      preTensor->dataType = toAddNodeIn->primitive->value.AsQuantDTypeCast()->dstT;
+      toAddTensor->dataType = toAddNodeIn->primitive->value.AsQuantDTypeCast()->srcT;
+    }
     graphT->allTensors.emplace_back(std::move(toAddTensor));
     size_t toAddTensorIdx = graphT->allTensors.size() - 1;
-    auto toAddNode = opDefCopyer(toAddNodeIn);
+    auto toAddNode = opDefCopyer(toAddNodeIn.get());
     if (toAddNode == nullptr) {
       MS_LOG(ERROR) << "copy toAddNodeIn failed";
       *errorCode = RET_NULL_PTR;
@@ -456,9 +460,13 @@ NodeIter InsertNodeBefore(schema::MetaGraphT *graphT, NodeIter existNodeIter, si
         // MS_LOG(ERROR)("Copy TensorT failed");
         return graphT->nodes.end();
       }
+      if (toAddNodeIn->primitive->value.type == schema::PrimitiveType_QuantDTypeCast) {
+        preTensor->dataType = toAddNodeIn->primitive->value.AsQuantDTypeCast()->srcT;
+        toAddTensor->dataType = toAddNodeIn->primitive->value.AsQuantDTypeCast()->dstT;
+      }
       graphT->allTensors.emplace_back(std::move(toAddTensor));
       size_t toAddTensorIdx = graphT->allTensors.size() - 1;
-      auto toAddNode = opDefCopyer(toAddNodeIn);
+      auto toAddNode = opDefCopyer(toAddNodeIn.get());
       if (toAddNode == nullptr) {
         // MS_LOG(ERROR)("copy toAddNodeIn failed");
         *errorCode = RET_NULL_PTR;
@@ -505,9 +513,13 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
       *errorCode = RET_NULL_PTR;
       return graphT->nodes.end();
     }
+    if (toAddNodeIn->primitive->value.type == schema::PrimitiveType_QuantDTypeCast) {
+      postTensor->dataType = toAddNodeIn->primitive->value.AsQuantDTypeCast()->srcT;
+      toAddTensor->dataType = toAddNodeIn->primitive->value.AsQuantDTypeCast()->dstT;
+    }
     graphT->allTensors.emplace_back(std::move(toAddTensor));
     size_t toAddTensorIdx = graphT->allTensors.size() - 1;
-    auto toAddNode = opDefCopyer(toAddNodeIn);
+    auto toAddNode = opDefCopyer(toAddNodeIn.get());
     if (toAddNode == nullptr) {
       // MS_LOG(ERROR)("copy toAddNodeIn failed");
       *errorCode = RET_NULL_PTR;
@@ -540,9 +552,13 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
         *errorCode = RET_NULL_PTR;
         return graphT->nodes.end();
       }
+      if (toAddNodeIn->primitive->value.type == schema::PrimitiveType_QuantDTypeCast) {
+        postTensor->dataType = toAddNodeIn->primitive->value.AsQuantDTypeCast()->srcT;
+        toAddTensor->dataType = toAddNodeIn->primitive->value.AsQuantDTypeCast()->dstT;
+      }
       graphT->allTensors.emplace_back(std::move(toAddTensor));
       size_t toAddTensorIdx = graphT->allTensors.size() - 1;
-      auto toAddNode = opDefCopyer(toAddNodeIn);
+      auto toAddNode = opDefCopyer(toAddNodeIn.get());
       if (toAddNode == nullptr) {
         // MS_LOG(ERROR)("copy toAddNodeIn failed");
         *errorCode = RET_NULL_PTR;

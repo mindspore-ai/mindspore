@@ -209,6 +209,9 @@ int WeightFormatPass::ShapeFormatTrans(GraphNode *graphNode) {
   return 0;
 }
 
+// inference needed filterFormat:
+//           conv     deconv     depth     dedepth
+// uint8     KHWC     KHWC       KHWC      KHWC
 int WeightFormatPass::QuantDataFormatTrans(GraphNode *graphNode) {
   MS_ASSERT(graphNode != nullptr);
   auto &subGraph = graphNode->subGraph;
@@ -227,7 +230,7 @@ int WeightFormatPass::QuantDataFormatTrans(GraphNode *graphNode) {
   auto &weightTensor = subGraph->allTensors[weightIndex];
   MS_ASSERT(weightTensor->dataType == kNumberTypeInt8);  // DataType_DT_FLOAT
   STATUS status = RET_OK;
-  if (opType == schema::PrimitiveType_Conv2D) {         // weight should be HWCK
+  if (opType == schema::PrimitiveType_Conv2D) {         // weight should be KHWC
     if (weightTensor->format == schema::Format_KCHW) {  // from caffe
       if (weightTensor->dataType == kNumberTypeInt8) {  // DataType_DT_UINT8) {
         MS_LOG(DEBUG) << "**weight tensor index: %d, format: %d, datatype: " << weightIndex << weightTensor->format
@@ -236,58 +239,51 @@ int WeightFormatPass::QuantDataFormatTrans(GraphNode *graphNode) {
       } else {
         MS_LOG(DEBUG) << "--weight tensor index: %d, format: %d, datatype: " << weightIndex << weightTensor->format
                       << weightTensor->dataType;
-        status = TransFilterFormat<float>(weightTensor.get(), kKCHW2HWCK);
+        status = TransFilterFormat<float>(weightTensor.get(), kKCHW2KHWC);
       }
-    } else if (weightTensor->format == schema::Format_KHWC) {  // from onnx
-      return RET_OK;
-      //      if (weightTensor->dataType == kNumberTypeInt8) {                     // DataType_DT_UINT8) {
-      //        status = TransFilterFormat<int8_t>(weightTensor.get(), kKHWC2HWCK);
-      //      } else {
-      //        status = TransFilterFormat<float>(weightTensor.get(), kKHWC2HWCK);
-      //      }
-    } else if (weightTensor->format == schema::Format_HWCK) {  // from tf
-      return 0;
-    } else {
+    } else if (weightTensor->format != schema::Format_KHWC) {
       MS_LOG(ERROR) << "Unsupported weightTensor format: " << weightTensor->format;
       return -1;
     }
     if (status == 0) {
       node->primitive->value.AsConv2D()->format = schema::Format_NHWC;
-      weightTensor->format = schema::Format_HWCK;
+      weightTensor->format = schema::Format_KHWC;
     } else {
-      MS_LOG(WARNING) << "TransFilter %sToHWCK failed, node : "
-                      << (weightTensor->format == schema::Format_KCHW ? "KCHW" : "KHWC"),
-        node->name.c_str();
+      MS_LOG(WARNING) << "TransFilter %sToKHWC failed, node : "
+                      << (weightTensor->format == schema::Format_KHWC ? "KHWC" : "KCHW") << node->name.c_str();
       // todo(00445839): consider varible weight condition
     }
-  } else if (opType == schema::PrimitiveType_DepthwiseConv2D) {  // weight should be HWCK
+  } else if (opType == schema::PrimitiveType_DepthwiseConv2D) {  // weight should be KHWC
     if (weightTensor->format == schema::Format_CKHW) {           // from caffe
       if (weightTensor->dataType == kNumberTypeInt8) {           // DataType_DT_UINT8) {
-        MS_LOG(DEBUG) << "**weight tensor index: %d, format: %d, datatype: " << weightIndex, weightTensor->format,
-          weightTensor->dataType;
-        status = TransFilterFormat<uint8_t>(weightTensor.get(), kCKHW2HWCK);
+        MS_LOG(DEBUG) << "**weight tensor index: " << weightIndex << "format: " << weightTensor->format
+                      << "datatype: " << weightTensor->dataType;
+        status = TransFilterFormat<int8_t>(weightTensor.get(), kCKHW2KHWC);
+      } else if (weightTensor->dataType == kNumberTypeUInt8) {
+        MS_LOG(DEBUG) << "**weight tensor index: " << weightIndex << "format: " << weightTensor->format
+                      << "datatype: " << weightTensor->dataType;
+        status = TransFilterFormat<uint8_t>(weightTensor.get(), kCKHW2KHWC);
       } else {
-        MS_LOG(DEBUG) << "--weight tensor index: %d, format: %d, datatype: " << weightIndex, weightTensor->format,
-          weightTensor->dataType;
-        status = TransFilterFormat<float>(weightTensor.get(), kCKHW2HWCK);
+        MS_LOG(DEBUG) << "**weight tensor index: " << weightIndex << "format: " << weightTensor->format
+                      << "datatype: " << weightTensor->dataType;
+        status = TransFilterFormat<float>(weightTensor.get(), kCKHW2KHWC);
       }
 
-    } else if (weightTensor->format == schema::Format_HWCK) {  // from tf
-      return 0;
     } else if (weightTensor->format == schema::Format_CHWK) {  // from onnx
-      if (weightTensor->dataType == kNumberTypeInt8) {         // DataType_DT_UINT8) {
+      if (weightTensor->dataType == kNumberTypeInt8) {
+        MS_LOG(DEBUG) << "**weight tensor index: " << weightIndex << "format: " << weightTensor->format
+                      << "datatype: " << weightTensor->dataType;
         status = TransFilterFormat<int8_t>(weightTensor.get(), kCHWK2KHWC);
-        MS_LOG(DEBUG) << node->name << " weight trans format: CHWK->KHWC";
+      } else if (weightTensor->dataType == kNumberTypeUInt8) {
+        MS_LOG(DEBUG) << "**weight tensor index: " << weightIndex << "format: " << weightTensor->format
+                      << "datatype: " << weightTensor->dataType;
+        status = TransFilterFormat<uint8_t>(weightTensor.get(), kCHWK2KHWC);
       } else {
+        MS_LOG(DEBUG) << "**weight tensor index: " << weightIndex << "format: " << weightTensor->format
+                      << "datatype: " << weightTensor->dataType;
         status = TransFilterFormat<float>(weightTensor.get(), kCHWK2KHWC);
       }
-    } else if (weightTensor->format == schema::Format_KCHW) {
-      if (weightTensor->dataType == kNumberTypeInt8) {  // DataType_DT_UINT8) {
-        status = TransFilterFormat<uint8_t>(weightTensor.get(), kKCHW2HWCK);
-      } else {
-        status = TransFilterFormat<float>(weightTensor.get(), kKCHW2HWCK);
-      }
-    } else {
+    } else if (weightTensor->format != schema::Format_KHWC) {
       MS_LOG(ERROR) << "Unsupported weightTensor format: " << weightTensor->format;
       return -1;
     }
@@ -295,14 +291,13 @@ int WeightFormatPass::QuantDataFormatTrans(GraphNode *graphNode) {
       node->primitive->value.AsDepthwiseConv2D()->format = schema::Format_NHWC;
       weightTensor->format = schema::Format_KHWC;
     } else {
-      MS_LOG(WARNING) << "TransFilter %ToHWCK failed, node : "
-                      << (weightTensor->format == schema::Format_CHWK ? "CHWK" : "CKHW"),
-        node->name.c_str();
+      MS_LOG(WARNING) << "TransFilter" << (weightTensor->format == schema::Format_KHWC ? "KHWC" : "CKHW")
+                      << "To KHWC failed, node : " << node->name.c_str();
       // todo(00445839): consider varible weight condition
     }
-  } else if (opType == schema::PrimitiveType_DeConv2D) {  // weight should be HWCK
-    node->primitive->value.AsDeConv2D()->format = schema::Format_NCHW;
-    weightTensor->format = schema::Format_CKHW;
+  } else {  // weight should be HWCK
+    node->primitive->value.AsDeConv2D()->format = schema::Format_NHWC;
+    weightTensor->format = schema::Format_KHWC;
   }
   return 0;
 }
@@ -354,7 +349,7 @@ int WeightFormatPass::NonQuantDataFormatTrans(GraphNode *graphNode) {
     if (graphNode->subGraph->fmkType == converter::FmkType_MS) {
       weightTensor->format = schema::Format_CKHW;
     }
-    if (weightTensor->format == schema::Format_CKHW) {           // from caffe or onnx or ms
+    if (weightTensor->format == schema::Format_CKHW) {  // from caffe or onnx or ms
       status = TransFilterFormat<float>(weightTensor.get(), kCKHW2KHWC);
     } else if (weightTensor->format == schema::Format_KCHW) {
       status = TransFilterFormat<float>(weightTensor.get(), kKCHW2KHWC);
@@ -374,8 +369,8 @@ int WeightFormatPass::NonQuantDataFormatTrans(GraphNode *graphNode) {
   } else if (opType == schema::PrimitiveType_DeConv2D) {  // weight should be KHWC
     if (weightTensor->format == schema::Format_KCHW) {    // from caffe or onnx or ms
       status = TransFilterFormat<float>(weightTensor.get(), kKCHW2KHWC);
-    } else if (weightTensor->format == schema::Format_CHWK) {  // from tf
-      status = TransFilterFormat<float>(weightTensor.get(), kCHWK2KHWC);
+    } else if (weightTensor->format == schema::Format_KHWC) {  // from tf
+      status = RET_OK;
     } else {
       MS_LOG(ERROR) << "Unsupported weightTensor format: " << weightTensor->format;
       return -1;

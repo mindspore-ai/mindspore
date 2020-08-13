@@ -38,6 +38,9 @@ using schema::FusedBatchNormT;
 using schema::Format_NCHW;
 using schema::Format_NHWC;
 using STATUS = int;
+
+std::unique_ptr<QuantParamT> GetTensorQuantParam(const std::unique_ptr<TensorT> &tensor);
+
 size_t GetElementSize(const TensorT &tensor);
 
 size_t GetElementSize(const TypeId &dataType);
@@ -49,6 +52,8 @@ size_t GetShapeSize(const std::vector<int32_t> &shape);
 std::unique_ptr<TensorT> CopyTensorDefT(const std::unique_ptr<TensorT> &);
 
 size_t GetRefCount(schema::MetaGraphT *graphT, uint32_t tensorIdx);
+
+std::unique_ptr<schema::QuantParamT> CopyQuantParamT(const std::unique_ptr<schema::QuantParamT> &srcQuantParam);
 
 std::unique_ptr<schema::QuantParamT> \
     CopyQuantParamArrayT(const std::unique_ptr<schema::QuantParamT> &srcQuantParamArray);

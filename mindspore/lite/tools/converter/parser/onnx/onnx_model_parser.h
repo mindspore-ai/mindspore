@@ -37,7 +37,8 @@ class OnnxModelParser : public ModelParser {
  public:
   OnnxModelParser();
   virtual ~OnnxModelParser();
-  MetaGraphT *Parse(const std::string &modelFile, const std::string &weightFile) override;
+  MetaGraphT *Parse(const std::string &modelFile, const std::string &weightFile,
+                    const QuantType &quantType = QuantType_QUANT_NONE) override;
 
  private:
   TypeId GetDateTypeFromOnnx(onnx::TensorProto_DataType onnx_type);

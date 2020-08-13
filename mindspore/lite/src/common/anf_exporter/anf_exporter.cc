@@ -188,7 +188,7 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &funcGraph) {
 
     // add quant param
     node->quantType = primitiveT_value->GetQuantType();
-    if (node->quantType == schema::QuantType_PostTraining) {
+    if (node->quantType == schema::QuantType_PostTraining || node->quantType == schema::QuantType_AwareTrainning) {
       MS_LOG(INFO) << "node: " << node->name << " add QuantParam";
       // activation
       auto input_quant_params = primitiveT_value->GetInputQuantParams();

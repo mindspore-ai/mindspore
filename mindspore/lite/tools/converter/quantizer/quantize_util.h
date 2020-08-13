@@ -62,6 +62,41 @@ class QuantStrategy {
 STATUS CalQuantizationParams(std::unique_ptr<AnfQuantParam> &quantParam, double mMin, double mMax,
                              bool narrowRange, int quant_max, int quant_min, int num_bits);
 
+STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax,
+                             bool narrowRange = false, int numBits = UINT8_QUANTIZATION);
+
+template <typename T>
+T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {
+  MS_ASSERT(quantParam != nullptr);
+  MS_ASSERT(quantParam->inited);
+  const auto scale = quantParam->scale;
+  const auto zeroPoint = quantParam->zeroPoint;
+  const auto numBit = quantParam->numBits;
+  const auto narrowRange = quantParam->narrowRange;
+  const double maxLimit = static_cast<float>((1 << (unsigned int)numBit) - 1 - zeroPoint) * scale;
+  double minLimit;
+  if (narrowRange) {
+    minLimit = static_cast<float>(1 - zeroPoint) * scale;
+  } else {
+    minLimit = static_cast<float>(0 - zeroPoint) * scale;
+  }
+  return [maxLimit, minLimit, zeroPoint, scale, narrowRange, originData] {
+    double tmp = 0.0f;
+    if (originData > maxLimit) {
+      tmp = maxLimit;
+    } else if (originData < minLimit) {
+      tmp = minLimit;
+    } else {
+      tmp = originData;
+    }
+    auto quantData = static_cast<T>(std::round(tmp / scale + zeroPoint));
+    if (quantData == 0 && narrowRange) {
+      quantData++;
+    }
+    return quantData;
+  }();
+}
+
 template <typename T>
 T QuantizeData(float originData, const AnfQuantParam *quantParam, int quant_max, int quant_min) {
   MS_ASSERT(quantParam != nullptr);

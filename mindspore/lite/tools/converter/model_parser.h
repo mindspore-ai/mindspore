@@ -40,7 +40,8 @@ class ModelParser {
     }
     return Fb2Anf(Parse(modelFile, weightFile));
   }
-  virtual schema::MetaGraphT *Parse(const std::string &modelFile, const std::string &weightFile) = 0;
+  virtual schema::MetaGraphT *Parse(const std::string &modelFile, const std::string &weightFile,
+                                    const QuantType &quantType = QuantType_QUANT_NONE) = 0;
 
  public:
   static FuncGraphPtr Fb2Anf(schema::MetaGraphT *meta_graph) {

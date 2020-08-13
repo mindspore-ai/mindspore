@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-#include <string>
+
 #include "tools/converter/converter_flags.h"
+#include <regex>
+#include <string>
+#include "ir/dtype/type_id.h"
+
 
 namespace mindspore {
 namespace lite {
@@ -70,9 +74,11 @@ int Flags::Init(int argc, const char **argv) {
     return 1;
   }
   if (this->inputInferenceTypeIn == "FLOAT") {
-    this->inputInferenceType = 0;
+    this->inputInferenceType = TypeId::kNumberTypeFloat;
   } else if (this->inputInferenceTypeIn == "UINT8") {
-    this->inputInferenceType = 1;
+    this->inputInferenceType = TypeId::kNumberTypeUInt8;
+  } else if (this->inputInferenceTypeIn == "INT8") {
+    this->inputInferenceType = TypeId::kNumberTypeInt8;
   } else {
     std::cerr << "INPUT INVALID: inputInferenceType is invalid: %s", this->inputInferenceTypeIn.c_str();
     return 1;
