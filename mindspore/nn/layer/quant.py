@@ -29,7 +29,7 @@ from mindspore._checkparam import Rel
 import mindspore.context as context
 
 from .normalization import BatchNorm2d, BatchNorm1d
-from .activation import get_activation, ReLU
+from .activation import get_activation, ReLU, LeakyReLU
 from ..cell import Cell
 from . import conv, basic
 from ..._checkparam import ParamValidator as validator
@@ -115,7 +115,11 @@ class Conv2dBnAct(Cell):
                  weight_init='normal',
                  bias_init='zeros',
                  has_bn=False,
-                 activation=None):
+                 momentum=0.9,
+                 eps=1e-5,
+                 activation=None,
+                 alpha=0.2,
+                 after_fake=True):
         super(Conv2dBnAct, self).__init__()
 
         if context.get_context('device_target') == "Ascend" and group > 1:
@@ -145,9 +149,13 @@ class Conv2dBnAct(Cell):
 
         self.has_bn = validator.check_bool("has_bn", has_bn)
         self.has_act = activation is not None
+        self.after_fake = after_fake
         if has_bn:
-            self.batchnorm = BatchNorm2d(out_channels)
-        self.activation = get_activation(activation)
+            self.batchnorm = BatchNorm2d(out_channels, eps, momentum)
+        if activation == "leakyrelu":
+            self.activation = LeakyReLU(alpha)
+        else:
+            self.activation = get_activation(activation)
 
     def construct(self, x):
         x = self.conv(x)
