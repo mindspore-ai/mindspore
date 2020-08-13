@@ -25,8 +25,8 @@ int AnfReshapePopulater::Populate(const PrimitivePtr &prim, PrimitiveTValue *pri
                                   const std::vector<AnfNodePtr> &inputs) {
   auto primitive = std::make_unique<schema::PrimitiveT>();
   auto attr = std::make_unique<schema::ReshapeT>();
-  MS_ASSERT(inputs.size() == kAnfPopulaterThree);
-  auto inputNode = inputs[kAnfPopulaterTwo];
+  MS_ASSERT(inputs.size() == kAnfPopulaterThree - 1);
+  auto inputNode = inputs[kAnfPopulaterTwo - 1];
   if (inputNode->isa<ValueNode>()) {
     auto valueNode = inputNode->cast<ValueNodePtr>();
     MS_ASSERT(valueNode != nullptr);

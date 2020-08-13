@@ -35,4 +35,5 @@ int AnfMatmulPopulater::Populate(const PrimitivePtr &prim, PrimitiveTValue *prim
   return 0;
 }
 AnfNodePopulaterRegistrar anfMatmulPopulater("Matmul", new AnfMatmulPopulater());
+AnfNodePopulaterRegistrar anfMatMulPopulater("MatMul", new AnfMatmulPopulater());
 }  // namespace mindspore::lite
