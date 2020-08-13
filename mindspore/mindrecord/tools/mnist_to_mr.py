@@ -37,7 +37,7 @@ class MnistToMR:
     Class is for transformation from Mnist to MindRecord.
 
     Args:
-        source (str): directory which contain t10k-images-idx3-ubyte.gz,
+        source (str): directory which contains t10k-images-idx3-ubyte.gz,
                       train-images-idx3-ubyte.gz, t10k-labels-idx1-ubyte.gz,
                       train-labels-idx1-ubyte.gz.
         destination (str): the MindRecord file directory to transform into.

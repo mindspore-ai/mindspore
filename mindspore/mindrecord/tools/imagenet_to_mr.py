@@ -25,12 +25,13 @@ from ..shardutils import check_filename
 
 __all__ = ['ImageNetToMR']
 
+
 class ImageNetToMR:
     """
     Class is for transformation from imagenet to MindRecord.
 
     Args:
-        map_file (str): the map file which indicate label.
+        map_file (str): the map file which indicates label.
                   the map file content should like this:
 
                   .. code-block::

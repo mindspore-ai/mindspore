@@ -275,7 +275,7 @@ class FileWriter:
 
     def commit(self):
         """
-        Flush data to disk and generate the correspond db files.
+        Flush data to disk and generate the corresponding db files.
 
         Returns:
             MSRStatus, SUCCESS or FAILED.
