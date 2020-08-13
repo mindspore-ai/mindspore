@@ -132,6 +132,9 @@ class Invert(cde.InvertOp):
 class Decode(cde.DecodeOp):
     """
     Decode the input image in RGB mode.
+
+    Args:
+        rgb (bool, optional): Mode of decoding input image (default=True).
     """
 
     def __init__(self, rgb=True):

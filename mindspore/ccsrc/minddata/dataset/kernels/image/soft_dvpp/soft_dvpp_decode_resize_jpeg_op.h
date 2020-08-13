@@ -30,6 +30,9 @@ class SoftDvppDecodeResizeJpegOp : public TensorOp {
   SoftDvppDecodeResizeJpegOp(int32_t target_height, int32_t target_width)
       : target_height_(target_height), target_width_(target_width) {}
 
+  /// \brief Destructor
+  ~SoftDvppDecodeResizeJpegOp() = default;
+
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
   std::string Name() const override { return kSoftDvppDecodeReiszeJpegOp; }
