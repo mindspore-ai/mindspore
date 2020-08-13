@@ -1165,7 +1165,7 @@ std::vector<std::shared_ptr<DatasetOp>> RenameDataset::Build() {
   return node_ops;
 }
 
-RepeatDataset::RepeatDataset(uint32_t count) : repeat_count_(count) {}
+RepeatDataset::RepeatDataset(int32_t count) : repeat_count_(count) {}
 
 std::vector<std::shared_ptr<DatasetOp>> RepeatDataset::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
@@ -1176,8 +1176,8 @@ std::vector<std::shared_ptr<DatasetOp>> RepeatDataset::Build() {
 }
 
 bool RepeatDataset::ValidateParams() {
-  if (repeat_count_ <= 0) {
-    MS_LOG(ERROR) << "Repeat: Repeat count cannot be negative";
+  if (repeat_count_ != -1 && repeat_count_ <= 0) {
+    MS_LOG(ERROR) << "Repeat: Repeat count cannot be" << repeat_count_;
     return false;
   }
 

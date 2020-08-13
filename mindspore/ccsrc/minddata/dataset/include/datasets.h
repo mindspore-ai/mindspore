@@ -692,7 +692,7 @@ class RenameDataset : public Dataset {
 class RepeatDataset : public Dataset {
  public:
   /// \brief Constructor
-  explicit RepeatDataset(uint32_t count);
+  explicit RepeatDataset(int32_t count);
 
   /// \brief Destructor
   ~RepeatDataset() = default;
@@ -706,7 +706,7 @@ class RepeatDataset : public Dataset {
   bool ValidateParams() override;
 
  private:
-  uint32_t repeat_count_;
+  int32_t repeat_count_;
 };
 
 class ShuffleDataset : public Dataset {

@@ -16,7 +16,7 @@
 Test Repeat Op
 """
 import numpy as np
-
+import pytest
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore import log as logger
@@ -295,6 +295,26 @@ def test_repeat_count2():
     assert data1_size == 3
     assert dataset_size == num1_iter == 8
 
+def test_repeat_count0():
+    """
+    Test Repeat with invalid count 0.
+    """
+    logger.info("Test Repeat with invalid count 0")
+    with pytest.raises(ValueError) as info:
+        data1 = ds.TFRecordDataset(DATA_DIR_TF2, SCHEMA_DIR_TF2, shuffle=False)
+        data1.repeat(0)
+    assert "count" in str(info)
+
+def test_repeat_countneg2():
+    """
+    Test Repeat with invalid count -2.
+    """
+    logger.info("Test Repeat with invalid count -2")
+    with pytest.raises(ValueError) as info:
+        data1 = ds.TFRecordDataset(DATA_DIR_TF2, SCHEMA_DIR_TF2, shuffle=False)
+        data1.repeat(-2)
+    assert "count" in str(info)
+
 if __name__ == "__main__":
     test_tf_repeat_01()
     test_tf_repeat_02()
@@ -313,3 +333,5 @@ if __name__ == "__main__":
     test_nested_repeat11()
     test_repeat_count1()
     test_repeat_count2()
+    test_repeat_count0()
+    test_repeat_countneg2()
