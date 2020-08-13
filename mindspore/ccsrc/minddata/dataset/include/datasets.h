@@ -305,7 +305,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \notes Randomly shuffles the rows of this dataset
   /// \param[in] buffer_size The size of the buffer (must be larger than 1) for shuffling
   /// \return Shared pointer to the current ShuffleDataset
-  std::shared_ptr<ShuffleDataset> Shuffle(int32_t shuffle_size);
+  std::shared_ptr<ShuffleDataset> Shuffle(int32_t buffer_size);
 
   /// \brief Function to create a SkipDataset
   /// \notes Skips count elements in this dataset.
