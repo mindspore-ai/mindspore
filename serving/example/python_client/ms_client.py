@@ -48,7 +48,6 @@ def run():
 
     try:
         result = stub.Predict(request)
-        print(result)
         result_np = np.frombuffer(result.result[0].data, dtype=np.float32).reshape(result.result[0].tensor_shape.dims)
         print("ms client received: ")
         print(result_np)
