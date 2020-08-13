@@ -50,7 +50,10 @@ class TfliteModelParser : public ModelParser {
 
   void SetInputTensor(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, TensorCache *tensor_cache);
 
-  void SetGraphTensorIndex(const mindspore::lite::TensorCache &tensorCache, schema::MetaGraphT *subGraphDef);
+  void SetGraphTensorIndex(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                           const std::unique_ptr<tflite::ModelT> &tflite_model,
+                           const mindspore::lite::TensorCache &tensorCache,
+                           schema::MetaGraphT *subGraphDef);
 
   STATUS ParseOp(const std::unique_ptr<tflite::ModelT> &tflite_model,
                  const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::MetaGraphT *sub_graph,
