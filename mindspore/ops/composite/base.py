@@ -116,7 +116,7 @@ class GradOperation(GradOperation_):
         self.fn = None
         self.need_forward = False
 
-    def _pynative_forward_run(self, args, fn):
+    def _pynative_forward_run(self, args, kwargs, fn):
         """ Pynative forward run to build grad graph. """
         if self.sens_param:
             args = args[:-1]
@@ -125,9 +125,9 @@ class GradOperation(GradOperation_):
                 raise TypeError("grad inputs should be tensor in pynative mode")
         if isinstance(fn, FunctionType):
             _pynative_exec.set_grad_flag(True)
-            _pynative_exec.new_graph(fn, *args)
-            output = fn(*args)
-            _pynative_exec.end_graph(fn, output, *args)
+            _pynative_exec.new_graph(fn, *args, **kwargs)
+            output = fn(*args, **kwargs)
+            _pynative_exec.end_graph(fn, output, *args, **kwargs)
         else:
             if fn.already_run and not fn.requires_grad:
                 raise ValueError("obj must set_grad.")
@@ -135,7 +135,7 @@ class GradOperation(GradOperation_):
                 self.need_forward = True
             if self.need_forward:
                 fn.set_grad()
-                fn(*args)
+                fn(*args, **kwargs)
                 fn.already_run = False
 
     def __call__(self, fn, weights=None):
@@ -152,10 +152,10 @@ class GradOperation(GradOperation_):
                         return grad_(fn)(*args)
             else:
                 @_wrap_func
-                def after_grad(*args):
-                    self._pynative_forward_run(args, fn)
-                    _pynative_exec.grad(grad_, fn, weights, *args)
-                    out = _pynative_exec(*args)
+                def after_grad(*args, **kwargs):
+                    self._pynative_forward_run(args, kwargs, fn)
+                    _pynative_exec.grad(grad_, fn, weights, *args, **kwargs)
+                    out = _pynative_exec(*args, **kwargs)
                     _pynative_exec.clear()
                     return out
             self.grad_fn = after_grad

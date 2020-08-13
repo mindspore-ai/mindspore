@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """cell"""
+import inspect
 import time
 import gc
 from collections import OrderedDict
@@ -222,19 +223,27 @@ class Cell:
         else:
             object.__delattr__(self, name)
 
-    def __call__(self, *inputs):
+    def __call__(self, *inputs, **kwargs):
         if context.get_context("mode") == context.GRAPH_MODE:
+            if kwargs:
+                raise ValueError("For 'graph' mode, the outermost network does not support passing "
+                                 "key-value pair parameters and variable key-value pair parameters.")
             out = self.compile_and_run(*inputs)
             return out
+
+        if kwargs:
+            bound_args = inspect.signature(self.construct).bind(*inputs, **kwargs)
+            inputs = bound_args.args
+            kwargs = bound_args.kwargs
         for item in inputs:
             if isinstance(item, numpy.ndarray):
                 raise TypeError("cell inputs should not be numpy array.")
-        orign_grad = []
+        origin_grad = []
         if self.requires_grad is True:
             _pynative_exec.set_grad_flag(True)
-            _pynative_exec.new_graph(self, *inputs)
+            _pynative_exec.new_graph(self, *inputs, **kwargs)
             for cell in self.cells():
-                orign_grad.append(cell.requires_grad)
+                origin_grad.append(cell.requires_grad)
                 cell.set_grad(True)
         else:
             _pynative_exec.set_grad_flag(False)
@@ -251,15 +260,15 @@ class Cell:
         else:
             cast_inputs = inputs
         if self.enable_hook:
-            output = self._hook_construct(*cast_inputs)
+            output = self._hook_construct(*cast_inputs, **kwargs)
         else:
-            output = self.construct(*cast_inputs)
+            output = self.construct(*cast_inputs, **kwargs)
         if isinstance(output, Parameter):
             output = output.data
         if self.requires_grad is True:
-            _pynative_exec.end_graph(self, output, *inputs)
+            _pynative_exec.end_graph(self, output, *inputs, **kwargs)
             for i, cell in enumerate(self.cells()):
-                cell.set_grad(orign_grad[i])
+                cell.set_grad(origin_grad[i])
         self._already_run = True
         return output
 
@@ -400,7 +409,6 @@ class Cell:
 
     def _get_construct_inputs_number_and_name(self):
         """Compute self._construct_inputs_names and self._construct_inputs_num"""
-        import inspect
         from mindspore._extends.parse.parser import get_parse_method_of_class
 
         fn = get_parse_method_of_class(self)
@@ -517,7 +525,7 @@ class Cell:
             raise TypeError("Child cell type is incorrect.")
         self._cells[child_name] = child
 
-    def construct(self, *inputs):
+    def construct(self, *inputs, **kwargs):
         """
         Defines the computation to be performed.
 
@@ -878,7 +886,7 @@ class Cell:
         self.add_flags(auto_parallel=True)
         self._get_construct_inputs_number_and_name()
 
-    def _hook_construct(self, *inputs):
+    def _hook_construct(self, *inputs, **kwargs):
         """Hook construct method to replace original construct method when hook function enabled."""
         inputs = self._backward_hook(*inputs)
         inputs = self.construct(inputs)
