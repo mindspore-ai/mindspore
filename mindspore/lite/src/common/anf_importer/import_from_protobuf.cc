@@ -1168,6 +1168,7 @@ int AnfImporterFromProtobuf::Import() {
   const onnx::GraphProto &graphBuild = onnx_model_->graph();
   if (!BuildFuncGraph(dstGraph, graphBuild)) {
     MS_LOG(ERROR) << "Build funcgraph failed!";
+    func_graph_ = nullptr;
     return RET_ERROR;
   }
   func_graph_ = dstGraph;

@@ -346,7 +346,7 @@ int WeightFormatPass::NonQuantDataFormatTrans(GraphNode *graphNode) {
       // todo(00445839): consider varible weight condition
     }
   } else if (opType == schema::PrimitiveType_DepthwiseConv2D) {  // weight should be CKHW
-    if (graphNode->subGraph->fmkType == converter::FmkType_MS) {
+    if (fmkType == converter::FmkType_MS) {
       weightTensor->format = schema::Format_CKHW;
     }
     if (weightTensor->format == schema::Format_CKHW) {  // from caffe or onnx or ms
