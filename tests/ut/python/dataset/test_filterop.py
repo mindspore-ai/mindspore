@@ -484,6 +484,16 @@ def test_filter_by_generator_with_map_all_sort():
     assert ret_data[0]["col1"] == 0
     assert ret_data[9]["col6"] == 509
 
+def test_filter_by_generator_get_dataset_size():
+    dataset = ds.GeneratorDataset(generator_1d, ["data"])
+    dataset = dataset.filter(predicate=filter_func_shuffle_after, num_parallel_workers=4)
+    data_sie = dataset.get_dataset_size()
+
+    num_iter = 0
+    for _ in dataset.create_dict_iterator():
+        num_iter += 1
+    assert data_sie == num_iter
+
 
 if __name__ == '__main__':
     test_diff_predicate_func()
@@ -506,3 +516,4 @@ if __name__ == '__main__':
     test_filter_by_generator_with_zip()
     test_filter_by_generator_with_zip_after()
     test_filter_by_generator_Partial()
+    test_filter_by_generator_get_dataset_size()

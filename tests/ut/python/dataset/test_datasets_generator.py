@@ -25,6 +25,16 @@ def generator_1d():
     for i in range(64):
         yield (np.array([i]),)
 
+class DatasetGenerator:
+    def __init__(self):
+        pass
+
+    def __getitem__(self, item):
+        return (np.array([item]),)
+
+    def __len__(self):
+        return 10
+
 
 def test_generator_0():
     """
@@ -615,6 +625,103 @@ def test_generator_schema():
         type_tester_with_type_check_2c_schema(np_types[i], [de_types[i], de_types[i]])
 
 
+def test_generator_dataset_size_0():
+    """
+    Test GeneratorDataset get_dataset_size by iterator method.
+    """
+    logger.info("Test 1D Generator : 0 - 63 get_dataset_size")
+
+    data1 = ds.GeneratorDataset(generator_1d, ["data"])
+    data_size = data1.get_dataset_size()
+
+    num_rows = 0
+    for _ in data1.create_dict_iterator():  # each data is a dictionary
+        num_rows = num_rows + 1
+    assert data_size == num_rows
+
+
+def test_generator_dataset_size_1():
+    """
+    Test GeneratorDataset get_dataset_size by __len__ method.
+    """
+    logger.info("Test DatasetGenerator get_dataset_size")
+
+    dataset_generator = DatasetGenerator()
+    data1 = ds.GeneratorDataset(dataset_generator, ["data"])
+
+    data_size = data1.get_dataset_size()
+
+    num_rows = 0
+    for _ in data1.create_dict_iterator():
+        num_rows = num_rows + 1
+    assert data_size == num_rows
+
+
+def test_generator_dataset_size_2():
+    """
+    Test GeneratorDataset + repeat get_dataset_size
+    """
+    logger.info("Test 1D Generator + repeat get_dataset_size")
+
+    data1 = ds.GeneratorDataset(generator_1d, ["data"])
+    data1 = data1.repeat(2)
+
+    data_size = data1.get_dataset_size()
+
+    num_rows = 0
+    for _ in data1.create_dict_iterator():
+        num_rows = num_rows + 1
+    assert data_size == num_rows
+
+
+def test_generator_dataset_size_3():
+    """
+    Test GeneratorDataset + batch get_dataset_size
+    """
+    logger.info("Test 1D Generator + batch get_dataset_size")
+
+    data1 = ds.GeneratorDataset(generator_1d, ["data"])
+    data1 = data1.batch(4)
+
+    data_size = data1.get_dataset_size()
+
+    num_rows = 0
+    for _ in data1.create_dict_iterator():
+        num_rows += 1
+    assert data_size == num_rows
+
+
+def test_generator_dataset_size_4():
+    """
+    Test GeneratorDataset + num_shards
+    """
+    logger.info("Test 1D Generator : 0 - 63 + num_shards get_dataset_size")
+
+    dataset_generator = DatasetGenerator()
+    data1 = ds.GeneratorDataset(dataset_generator, ["data"], num_shards=3, shard_id=0)
+    data_size = data1.get_dataset_size()
+
+    num_rows = 0
+    for _ in data1.create_dict_iterator():  # each data is a dictionary
+        num_rows = num_rows + 1
+    assert data_size == num_rows
+
+def test_generator_dataset_size_5():
+    """
+    Test get_dataset_size after create_dict_iterator
+    """
+    logger.info("Test get_dataset_size after create_dict_iterator")
+
+    dataset_generator = DatasetGenerator()
+    data1 = ds.GeneratorDataset(dataset_generator, ["data"], num_shards=3, shard_id=0)
+
+    num_rows = 0
+    for _ in data1.create_dict_iterator():  # each data is a dictionary
+        num_rows = num_rows + 1
+    data_size = data1.get_dataset_size()
+    assert data_size == num_rows
+
+
 def manual_test_generator_keyboard_interrupt():
     """
     Test keyboard_interrupt
@@ -663,3 +770,9 @@ if __name__ == "__main__":
     test_generator_num_samples()
     test_generator_num_samples_underflow()
     test_generator_schema()
+    test_generator_dataset_size_0()
+    test_generator_dataset_size_1()
+    test_generator_dataset_size_2()
+    test_generator_dataset_size_3()
+    test_generator_dataset_size_4()
+    test_generator_dataset_size_5()

@@ -72,6 +72,7 @@ class Iterator:
         ITERATORS_LIST.append(weakref.ref(self))
         # create a copy of tree and work on it.
         self.dataset = copy.deepcopy(dataset)
+        self.ori_dataset = dataset
         self.parent_subtree = []
 
         # The dataset passed into the iterator is not the root of the tree.
@@ -247,6 +248,8 @@ class Iterator:
         if not data:
             if self._index == 0:
                 logger.warning("No records available.")
+            if self.ori_dataset.dataset_size is None:
+                self.ori_dataset.dataset_size = self._index
             raise StopIteration
         self._index += 1
         return data
