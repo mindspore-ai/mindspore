@@ -21,12 +21,14 @@
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/leaky_relu.h"
+#include "mindspore/lite/src/runtime/kernel/arm/nnacl/leaky_relu_parameter.h"
+
+using mindspore::kernel::LeakyReluOpenCLKernel;
+using mindspore::kernel::LiteKernel;
+using mindspore::kernel::SubGraphOpenCLKernel;
 
 namespace mindspore {
-class TestLeakyReluOpenCL : public mindspore::Common {
- public:
-  TestLeakyReluOpenCL() {}
-};
+class TestLeakyReluOpenCL : public mindspore::CommonTest {};
 
 void LoadDataLeakyRelu(void *dst, size_t dst_size, const std::string &file_path) {
   if (file_path.empty()) {
@@ -99,7 +101,6 @@ TEST_F(TestLeakyReluOpenCL, LeakyReluFp32_dim4) {
   LoadDataLeakyRelu(input_tensor->Data(), input_tensor->Size(), in_file);
   MS_LOG(INFO) << "==================input data================";
   printf_tensor(inputs[0]);
-
   sub_graph->Run();
 
   MS_LOG(INFO) << "==================output data================";

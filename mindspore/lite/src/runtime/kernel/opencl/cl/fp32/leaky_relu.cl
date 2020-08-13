@@ -16,7 +16,6 @@ __kernel void LeakyRelu(__read_only image2d_t input, __write_only image2d_t outp
 
   int Y = get_global_id(0);  // height id
   int X = get_global_id(1);  // weight id
-
   for (int num = 0; num < UP_DIV(C, SLICES); ++num) {
     FLT4 in_c4 = READ_FLT4(input, smp_zero, (int2)(X * UP_DIV(C, SLICES) + num, Y));  // NHWC4: H WC
     FLT4 tmp;

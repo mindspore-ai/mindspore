@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_BACKEND_OPENCL_LEAKYRELU_H_
-#define MINDSPORE_LITE_SRC_BACKEND_OPENCL_LEAKYRELU_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_LEAKYRELU_H
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_LEAKYRELU_H_
 
 #include <vector>
-
-#include "src/runtime/opencl/opencl_runtime.h"
+#include <string>
+#include "src/ir/tensor.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
-
-struct LeakyReluParameter {
-  OpParameter op_parameter_;
-  cl_float alpha;
-};
+#include "schema/model_generated.h"
+#include "src/runtime/opencl/opencl_runtime.h"
 
 namespace mindspore::kernel {
 
@@ -46,4 +43,4 @@ class LeakyReluOpenCLKernel : public OpenCLKernel {
 
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_BACKEND_OPENCL_LEAKYRELU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_LEAKYRELU_H_

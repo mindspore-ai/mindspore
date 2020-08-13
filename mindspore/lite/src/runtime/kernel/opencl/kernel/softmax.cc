@@ -87,6 +87,10 @@ kernel::LiteKernel *OpenCLSoftMaxKernelCreator(const std::vector<lite::tensor::T
                                                OpParameter *opParameter, const lite::Context *ctx,
                                                const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   auto *kernel = new SoftmaxOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "kernel " << opParameter->name_ << "is nullptr.";
+    return nullptr;
+  }
   if (inputs[0]->shape()[0] > 1) {
     MS_LOG(ERROR) << "Init `Softmax` kernel failed: Unsupported multi-batch.";
   }

@@ -175,6 +175,10 @@ kernel::LiteKernel *OpenCLConv2dTransposeKernelCreator(const std::vector<lite::t
                                                        const kernel::KernelKey &desc,
                                                        const lite::Primitive *primitive) {
   auto *kernel = new Conv2dTransposeOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "kernel " << opParameter->name_ << "is nullptr.";
+    return nullptr;
+  }
   auto ret = kernel->Init();
   if (0 != ret) {
     // MS_LOG(ERROR) << "Init kernel failed, name: " << opDef.name()->str()
