@@ -654,7 +654,7 @@ class Padding(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The rank of x should be at least 2.
-        The last dimension of x should be 1.
+          The last dimension of x should be 1.
 
     Outputs:
         Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
