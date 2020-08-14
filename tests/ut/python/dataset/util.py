@@ -16,6 +16,7 @@
 import hashlib
 import json
 import os
+import itertools
 from enum import Enum
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -397,3 +398,40 @@ def check_bad_bbox(data, test_op, invalid_bbox_type, expected_error):
     except RuntimeError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
         assert expected_error in str(error)
+
+#return true if datasets are equal
+def dataset_equal(data1, data2, mse_threshold):
+    if data1.get_dataset_size() != data2.get_dataset_size():
+        return False
+    equal = True
+    for item1, item2 in itertools.zip_longest(data1, data2):
+        for column1, column2 in itertools.zip_longest(item1, item2):
+            mse = diff_mse(column1, column2)
+            if mse > mse_threshold:
+                equal = False
+                break
+        if not equal:
+            break
+    return equal
+
+# return true if datasets are equal after modification to target
+# params: data_unchanged - dataset kept unchanged
+#         data_target    - dataset to be modified by foo
+#         mse_threshold  - maximum allowable value of mse
+#         foo            - function applied to data_target columns BEFORE compare
+#         foo_args       - arguments passed into foo
+def dataset_equal_with_function(data_unchanged, data_target, mse_threshold, foo, *foo_args):
+    if data_unchanged.get_dataset_size() != data_target.get_dataset_size():
+        return False
+    equal = True
+    for item1, item2 in itertools.zip_longest(data_unchanged, data_target):
+        for column1, column2 in itertools.zip_longest(item1, item2):
+            # note the function is to be applied to the second dataset
+            column2 = foo(column2, *foo_args)
+            mse = diff_mse(column1, column2)
+            if mse > mse_threshold:
+                equal = False
+                break
+        if not equal:
+            break
+    return equal

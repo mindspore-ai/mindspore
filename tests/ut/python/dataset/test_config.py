@@ -24,6 +24,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as c_vision
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
+from util import dataset_equal
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
@@ -139,8 +140,7 @@ def test_deterministic_run_fail():
     data2 = data2.map(input_columns=["image"], operations=random_crop_op)
 
     try:
-        for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
-            np.testing.assert_equal(item1["image"], item2["image"])
+        dataset_equal(data1, data2, 0)
 
     except Exception as e:
         # two datasets split the number out of the sequence a
@@ -181,8 +181,7 @@ def test_seed_undeterministic():
     random_crop_op2 = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
     data2 = data2.map(input_columns=["image"], operations=random_crop_op2)
     try:
-        for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
-            np.testing.assert_equal(item1["image"], item2["image"])
+        dataset_equal(data1, data2, 0)
     except Exception as e:
         # two datasets both use numbers from the generated sequence "a"
         logger.info("Got an exception in DE: {}".format(str(e)))
@@ -221,8 +220,7 @@ def test_seed_deterministic():
     random_crop_op2 = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
     data2 = data2.map(input_columns=["image"], operations=random_crop_op2)
 
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
-        np.testing.assert_equal(item1["image"], item2["image"])
+    dataset_equal(data1, data2, 0)
 
     # Restore original configuration values
     ds.config.set_num_parallel_workers(num_parallel_workers_original)
@@ -257,8 +255,7 @@ def test_deterministic_run_distribution():
     random_horizontal_flip_op2 = c_vision.RandomHorizontalFlip(0.1)
     data2 = data2.map(input_columns=["image"], operations=random_horizontal_flip_op2)
 
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
-        np.testing.assert_equal(item1["image"], item2["image"])
+    dataset_equal(data1, data2, 0)
 
     # Restore original configuration values
     ds.config.set_num_parallel_workers(num_parallel_workers_original)
