@@ -28,16 +28,17 @@
 
 namespace mindspore {
 namespace kernel {
-enum RandomOptype { RANDOM_OP_NORMAL = 0, RANDOM_OP_UNIFORM_REAL, RANDOM_OP_INVALID_TYPE = 255 };
+enum RandomOptype { RANDOM_OP_NORMAL = 0, RANDOM_OP_UNIFORM_INT, RANDOM_OP_UNIFORM_REAL, RANDOM_OP_INVALID_TYPE = 255 };
 
-const std::map<std::string, RandomOptype> kRandomOpTypeMap = {{"StandardNormal", RANDOM_OP_NORMAL},
-                                                              {"UniformReal", RANDOM_OP_UNIFORM_REAL}};
+const std::map<std::string, RandomOptype> kRandomOpTypeMap = {
+  {"StandardNormal", RANDOM_OP_NORMAL}, {"UniformInt", RANDOM_OP_UNIFORM_INT}, {"UniformReal", RANDOM_OP_UNIFORM_REAL}};
+
 template <typename T>
 class RandomOpGpuKernel : public GpuKernel {
  public:
   RandomOpGpuKernel()
       : random_op_type_(RANDOM_OP_INVALID_TYPE),
-        input_size_0_(sizeof(int)),
+        input_size_0_(sizeof(0)),
         input_size_1_(sizeof(T)),
         input_size_2_(sizeof(T)),
         output_size_(sizeof(T)),
@@ -62,11 +63,16 @@ class RandomOpGpuKernel : public GpuKernel {
                        reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
       }
-      case RANDOM_OP_UNIFORM_REAL: {
+      case RANDOM_OP_UNIFORM_INT: {
         T *input_addr_1 = GetDeviceAddress<T>(inputs, 1);
         T *input_addr_2 = GetDeviceAddress<T>(inputs, 2);
-        UniformReal(seed_, devStates, input_addr_1, inputs[1]->size / sizeof(T), input_addr_2,
-                    inputs[2]->size / sizeof(T), output_addr, outputs[0]->size / sizeof(T),
+        UniformInt(seed_, seed2_, devStates, input_addr_1, inputs[1]->size / sizeof(T), input_addr_2,
+                   inputs[2]->size / sizeof(T), output_addr, outputs[0]->size / sizeof(T),
+                   reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case RANDOM_OP_UNIFORM_REAL: {
+        UniformReal(seed_, seed2_, devStates, output_addr, outputs[0]->size / sizeof(T),
                     reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
       }
@@ -86,11 +92,11 @@ class RandomOpGpuKernel : public GpuKernel {
       random_op_type_ = iter->second;
     }
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-    if (random_op_type_ == RANDOM_OP_NORMAL && input_num != 1) {
+    if ((random_op_type_ == RANDOM_OP_NORMAL || random_op_type_ == RANDOM_OP_UNIFORM_REAL) && input_num != 1) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but random op needs 1 input.";
       return false;
     }
-    if (random_op_type_ == RANDOM_OP_UNIFORM_REAL && input_num != 3) {
+    if (random_op_type_ == RANDOM_OP_UNIFORM_INT && input_num != 3) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but random op needs 3 inputs.";
       return false;
     }
@@ -104,15 +110,9 @@ class RandomOpGpuKernel : public GpuKernel {
       input_size_0_ += input_shape_0[i];
     }
     input_size_0_ *= sizeof(int);
-    if (random_op_type_ == RANDOM_OP_UNIFORM_REAL) {
-      auto input_shape_1 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-      for (size_t i = 0; i < input_shape_1.size(); i++) {
-        input_size_1_ *= input_shape_1[i];
-      }
-      auto input_shape_2 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-      for (size_t i = 0; i < input_shape_2.size(); i++) {
-        input_size_2_ *= input_shape_2[i];
-      }
+    if (random_op_type_ == RANDOM_OP_UNIFORM_INT) {
+      input_size_1_ *= 1;
+      input_size_2_ *= 1;
     }
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     for (size_t i = 0; i < output_shape.size(); i++) {
@@ -120,9 +120,7 @@ class RandomOpGpuKernel : public GpuKernel {
       workspace_size_ *= output_shape[i];
     }
     seed_ = GetValue<int>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed"));
-    if (random_op_type_ == RANDOM_OP_NORMAL) {
-      seed2_ = GetValue<int>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed2"));
-    }
+    seed2_ = GetValue<int>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed2"));
     InitSizeLists();
     return true;
   }
@@ -130,7 +128,7 @@ class RandomOpGpuKernel : public GpuKernel {
  protected:
   void InitSizeLists() override {
     input_size_list_.push_back(input_size_0_);
-    if (random_op_type_ == RANDOM_OP_UNIFORM_REAL) {
+    if (random_op_type_ == RANDOM_OP_UNIFORM_INT) {
       input_size_list_.push_back(input_size_1_);
       input_size_list_.push_back(input_size_2_);
     }
