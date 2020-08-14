@@ -28,25 +28,25 @@ context.set_context(device_target='GPU')
 
 
 class Transpose(nn.Cell):
-    def __init__(self):
+    def __init__(self, nptype):
         super(Transpose, self).__init__()
         self.transpose = P.Transpose()
 
-        self.x_2D = Parameter(initializer(Tensor(np.arange(5 * 6).reshape(5, 6).astype(np.float32)), [5, 6]),
+        self.x_2D = Parameter(initializer(Tensor(np.arange(5 * 6).reshape(5, 6).astype(nptype)), [5, 6]),
                               name='x_2D')
         self.perm_2D = (1, 0)
 
-        self.x_3D = Parameter(initializer(Tensor(np.arange(2 * 2 * 4).reshape(2, 2, 4).astype(np.float32)), [2, 2, 4]),
+        self.x_3D = Parameter(initializer(Tensor(np.arange(2 * 2 * 4).reshape(2, 2, 4).astype(nptype)), [2, 2, 4]),
                               name='x_3D')
         self.perm_3D = (1, 0, 2)
 
         self.x_4D = Parameter(
-            initializer(Tensor(np.arange(2 * 3 * 4 * 5).reshape(2, 3, 4, 5).astype(np.float32)), [2, 3, 4, 5]),
+            initializer(Tensor(np.arange(2 * 3 * 4 * 5).reshape(2, 3, 4, 5).astype(nptype)), [2, 3, 4, 5]),
             name='x_4D')
         self.perm_4D = (0, 1, 2, 3)
 
         self.x_5D = Parameter(
-            initializer(Tensor(np.arange(1 * 2 * 3 * 4 * 5).reshape(1, 2, 3, 4, 5).astype(np.float32)),
+            initializer(Tensor(np.arange(1 * 2 * 3 * 4 * 5).reshape(1, 2, 3, 4, 5).astype(nptype)),
                         [1, 2, 3, 4, 5]), name='x_5D')
         self.perm_5D = (1, 0, 3, 4, 2)
 
@@ -56,11 +56,8 @@ class Transpose(nn.Cell):
                 self.transpose(self.x_4D, self.perm_4D), self.transpose(self.x_5D, self.perm_5D))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_transpose():
-    transpose = Transpose()
+def transpose1(nptype):
+    transpose = Transpose(nptype)
     output = transpose()
 
     expect0 = np.array([[[0, 6, 12, 18, 24],
@@ -68,11 +65,11 @@ def test_transpose():
                          [2, 8, 14, 20, 26],
                          [3, 9, 15, 21, 27],
                          [4, 10, 16, 22, 28],
-                         [5, 11, 17, 23, 29]]]).astype(np.float32)
+                         [5, 11, 17, 23, 29]]]).astype(nptype)
     expect1 = np.array([[[[0, 1, 2, 3],
                           [8, 9, 10, 11]],
                          [[4, 5, 6, 7],
-                          [12, 13, 14, 15]]]]).astype(np.float32)
+                          [12, 13, 14, 15]]]]).astype(nptype)
     expect2 = np.array([[[[[0, 1, 2, 3, 4],
                            [5, 6, 7, 8, 9],
                            [10, 11, 12, 13, 14],
@@ -97,7 +94,7 @@ def test_transpose():
                           [[100, 101, 102, 103, 104],
                            [105, 106, 107, 108, 109],
                            [110, 111, 112, 113, 114],
-                           [115, 116, 117, 118, 119]]]]]).astype(np.float32)
+                           [115, 116, 117, 118, 119]]]]]).astype(nptype)
     expect3 = np.array([[[[[[0, 20, 40],
                             [1, 21, 41],
                             [2, 22, 42],
@@ -138,8 +135,26 @@ def test_transpose():
                             [76, 96, 116],
                             [77, 97, 117],
                             [78, 98, 118],
-                            [79, 99, 119]]]]]]).astype(np.float32)
+                            [79, 99, 119]]]]]]).astype(nptype)
     assert (output[0].asnumpy() == expect0).all()
     assert (output[1].asnumpy() == expect1).all()
     assert (output[2].asnumpy() == expect2).all()
     assert (output[3].asnumpy() == expect3).all()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_transpose_float32():
+    transpose1(np.float32)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_transpose_float16():
+    transpose1(np.float16)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_transpose_int32():
+    transpose1(np.int32)

@@ -21,5 +21,7 @@ MS_REG_GPU_KERNEL_ONE(Transpose, KernelAttr().AddInputAttr(kNumberTypeFloat32).A
                       TransposeGpuFwdKernel, float)
 MS_REG_GPU_KERNEL_ONE(Transpose, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
                       TransposeGpuFwdKernel, half)
+MS_REG_GPU_KERNEL_ONE(Transpose, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+                      TransposeGpuFwdKernel, int)
 }  // namespace kernel
 }  // namespace mindspore
