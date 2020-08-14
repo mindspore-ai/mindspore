@@ -167,7 +167,8 @@ std::string ProfilingUtils::GetGraphLastTbeKernelName(const std::vector<CNodePtr
   std::string last_tbe_kernel_name;
   // find last tbe_kernel
   for (auto iter = cnode_exec_order.rbegin(); iter != cnode_exec_order.rend(); ++iter) {
-    if (AnfAlgo::GetKernelType(*iter) == TBE_KERNEL || AnfAlgo::GetKernelType(*iter) == AKG_KERNEL) {
+    if (AnfAlgo::GetKernelType(*iter) == TBE_KERNEL || AnfAlgo::GetKernelType(*iter) == AKG_KERNEL ||
+        AnfAlgo::IsCommunicationOp(*iter)) {
       last_tbe_kernel_name = (*iter)->fullname_with_scope();
       break;
     }
