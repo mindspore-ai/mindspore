@@ -23,10 +23,6 @@ Matrix *TransformMatrixGenerator(int m, int k) {
   auto aa = malloc(m * k * sizeof(float));
   matrix->SetData(aa);
   matrix->SetNum(m, k);
-  //  matrix->data_ = malloc(m * k * sizeof(float));
-  //  matrix->m_ = m;
-  //  matrix->k_ = k;
-  //  matrix->row_major_ = true;
   return matrix;
 }
 

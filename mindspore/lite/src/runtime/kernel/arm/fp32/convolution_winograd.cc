@@ -189,8 +189,8 @@ int ConvolutionWinogradCPUKernel::InitTmpBuffer() {
   /*=============================tmp_out_data_============================*/
   int out_w_block = UP_DIV(output_w, output_unit_);
   int out_h_block = UP_DIV(output_h, output_unit_);
-  tmp_out_data_ = reinterpret_cast<float *>(
-    malloc(out_w_block * out_h_block * output_unit_ * output_unit_ * oc4 * C4NUM * sizeof(float)));
+  tmp_out_data_ = reinterpret_cast<float *>(malloc(conv_param_->output_batch_ * out_w_block * out_h_block *
+                                                   output_unit_ * output_unit_ * oc4 * C4NUM * sizeof(float)));
   if (tmp_out_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_out_data_ failed.";
     return RET_ERROR;
@@ -365,6 +365,22 @@ int ConvolutionWinogradCPUKernel::Run() {
     MS_LOG(ERROR) << "conv winograd error error_code[" << error_code << "]";
     return RET_ERROR;
   }
+
+  // get real output
+  auto out_tensor = out_tensors_.front();
+  auto out_data = reinterpret_cast<float *>(out_tensor->Data());
+  UnPackWinogradOutput(tmp_out_data_, out_data, conv_param_->output_batch_, conv_param_->output_h_,
+                       conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
+  int output_num =
+    conv_param_->output_channel_ * conv_param_->output_h_ * conv_param_->output_w_ * conv_param_->output_batch_;
+  if (conv_param_->is_relu_) {
+    ReluFp32(out_data, out_data, output_num);
+  } else if (conv_param_->is_relu6_) {
+    Relu6Fp32(out_data, out_data, output_num);
+  } else {
+    // do nothing
+  }
+
   return RET_OK;
 }
 }  // namespace mindspore::kernel

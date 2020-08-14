@@ -65,26 +65,6 @@ class Matrix {
   int n_dim_;
   bool row_major_;
 };
-// struct Matrix {
-//  void *data_;
-//  int *shape_;
-//  int *stride_;
-//  int m_;
-//  int k_;
-//  int n_dim_;
-//  bool row_major_;
-//  ~Matrix() {
-//    if (data_ != nullptr) {
-//      free(data_);
-//    }
-//    if (shape_ != nullptr) {
-//      free(shape_);
-//    }
-//    if (shape_ != nullptr) {
-//      free(stride_);
-//    }
-//  }
-//};
 
 Matrix *TransformMatrixGenerator(int m, int k);
 
