@@ -246,7 +246,7 @@ TEST_F(InferTest, TestAddNode) {
 TEST_F(InferTest, TestModel) {
   auto buf = new char *[1];
   size_t model_size;
-  std::string model_path = "./model.ms";
+  std::string model_path = "./models/model_hebing_3branch.ms";
   ReadFile(model_path.c_str(), &model_size, buf);
   ASSERT_NE(nullptr, buf[0]);
 

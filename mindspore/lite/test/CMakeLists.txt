@@ -170,6 +170,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/runtime/thread_pool.cc
         ${LITE_DIR}/src/runtime/workspace_pool.cc
         ${LITE_DIR}/src/ir/tensor.cc
+        ${LITE_DIR}/src/ir/primitive_t_value.cc
         ${LITE_DIR}/src/context.cc
         ${LITE_DIR}/src/executor.cc
         ${LITE_DIR}/src/kernel_factory.cc
@@ -218,9 +219,6 @@ if(BUILD_CONVERTER)
             ${TEST_CASE_TFLITE_PARSERS_SRC}
             ${TOP_DIR}/mindspore/core/utils/flags.cc
             ${LITE_DIR}/tools/converter/optimizer.cc
-            # ${LITE_DIR}/src/common/anf_importer/import_from_protobuf.cc
-            # ${LITE_DIR}/src/common/anf_importer/import_from_meta_graphT.cc
-            # ${LITE_DIR}/src/common/anf_importer/import_from_protobuf.cc
             ${LITE_DIR}/tools/converter/anf_transform.cc
             ${LITE_DIR}/tools/converter/graphdef_transform.cc
             ${LITE_DIR}/tools/converter/converter_flags.cc
@@ -300,7 +298,6 @@ if (SUPPORT_TRAIN)
     set(TEST_SRC
             ${TEST_SRC}
             ${TEST_CASE_KERNEL_TRAIN_SRC}
-  #         ${TEST_DIR}/ut/src/train_test.cc
             ${TEST_DIR}/ut/src/infer_test.cc  # temporary
             )
 else()
@@ -350,6 +347,7 @@ endif()
 if (BUILD_CONVERTER)
     target_link_libraries(lite-test
             anf_importer_mid
+            anf_exporter_mid
             tflite_parser_mid
             caffe_parser_mid
             onnx_parser_mid

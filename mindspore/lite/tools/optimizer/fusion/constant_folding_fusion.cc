@@ -21,7 +21,7 @@
 #include "schema/inner/model_generated.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/kernel_factory.h"
-#include "src/common/anf_exporter/anf_exporter.h"
+#include "tools/anf_exporter/anf_exporter.h"
 #include "src/scheduler.h"
 #include "include/context.h"
 #include "src/lite_session.h"
@@ -38,7 +38,7 @@ const std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &CNode) {
   auto tmp_meta_graph = std::make_unique<schema::MetaGraphT>();
   auto tmp_fb_node = std::make_unique<schema::CNodeT>();
   lite::AnfExporter anfExporter;
-  anfExporter.SetOpInputNode(CNode, tmp_meta_graph.get(), tmp_fb_node.get());
+  anfExporter.SetOpInputNode(CNode, tmp_meta_graph, tmp_fb_node.get());
   std::vector<Tensor *> input_tensors;
   for (auto input_index : tmp_fb_node->inputIndex) {
     auto tensorT = tmp_meta_graph->allTensors.at(input_index).get();

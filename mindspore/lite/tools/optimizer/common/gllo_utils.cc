@@ -283,7 +283,7 @@ void CheckLeastInputSize(const CNodePtr &node, const int size) {
   }
 }
 
-AnfNodePtr AddNewBiasNode(float *bias_data, const FuncGraphPtr &func_graph, int kernel_num,
+ParameterPtr AddNewBiasNode(float *bias_data, const FuncGraphPtr &func_graph, int kernel_num,
                           const ParamValueLitePtr &weight_tensor) {
   auto bias_parameter = func_graph->add_parameter();
   MS_ASSERT(bias_parameter != nullptr);

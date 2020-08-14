@@ -47,7 +47,7 @@ void CheckIfNodeIsParam(const AnfNodePtr &node);
 
 void CheckLeastInputSize(const CNodePtr &node, int size);
 
-AnfNodePtr AddNewBiasNode(float *bias_data, const FuncGraphPtr &func_graph, int kernel_num,
+ParameterPtr AddNewBiasNode(float *bias_data, const FuncGraphPtr &func_graph, int kernel_num,
                           const ParamValueLitePtr &weight_tensor);
 
 schema::PrimitiveType GetCNodeType(const BaseRef &node);

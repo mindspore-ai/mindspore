@@ -17,6 +17,7 @@ fi
 cd ${TOP_PATH}/output/
 rm -rf MSLite-0.6.0-linux_arm64
 tar -zxvf MSLite-0.6.0-linux_arm64.tar.gz
+mkdir -p ${BASE_PATH}/lib/
 cp ${TOP_PATH}/output/MSLite-0.6.0-linux_arm64/lib/libmindspore-lite.so ${BASE_PATH}/lib/
 cp ${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so ${BASE_PATH}/lib/
 
@@ -35,6 +36,7 @@ cp ${BASE_PATH}/native/build/libmindspore-lite-jni.so ${BASE_PATH}/lib/
 ## check sdk gradle
 cd ${BASE_PATH}/java
 rm -rf .gradle build gradle gradlew gradlew.bat build app/build
+mkdir -p ${BASE_PATH}/java/app/libs/arm64-v8a/
 rm -rf ${BASE_PATH}/java/app/libs/arm64-v8a/*
 cp ${BASE_PATH}/lib/*.so ${BASE_PATH}/java/app/libs/arm64-v8a/
 gradle init

@@ -12,7 +12,6 @@ add_library(quantizer_mid OBJECT
     ${CMAKE_CURRENT_SOURCE_DIR}/general_bitpacking.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/post_training_quantizer.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/quant_cast.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/common/anf_exporter/anf_exporter.cc
     )
 
 if(ENABLE_ASAN)

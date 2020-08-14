@@ -33,8 +33,8 @@ constexpr size_t kConvWithBiasLen = 4;
 bool IsConvExtendNode(const BaseRef &n) {
   if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
     auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_Conv2D || type == schema::PrimitiveType_DepthwiseConv2D
-        || type == schema::PrimitiveType_DeConv2D;
+    return type == schema::PrimitiveType_Conv2D || type == schema::PrimitiveType_DepthwiseConv2D ||
+           type == schema::PrimitiveType_DeConv2D;
   }
   return false;
 }
@@ -59,8 +59,8 @@ int Get_Kenrnel_nums(const CNodePtr &conv_node) {
   if (type == schema::PrimitiveType_Conv2D) {
     return primitive->GetPrimitiveT()->value.AsConv2D()->channelOut;
   } else if (type == schema::PrimitiveType_DepthwiseConv2D) {
-    return primitive->GetPrimitiveT()->value.AsDepthwiseConv2D()->channelMultiplier
-        * primitive->GetPrimitiveT()->value.AsDepthwiseConv2D()->channelIn;
+    return primitive->GetPrimitiveT()->value.AsDepthwiseConv2D()->channelMultiplier *
+           primitive->GetPrimitiveT()->value.AsDepthwiseConv2D()->channelIn;
   } else if (type == schema::PrimitiveType_DeConv2D) {
     return primitive->GetPrimitiveT()->value.AsDeConv2D()->channelOut;
   } else {
@@ -83,16 +83,16 @@ void GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, c
   if (kernel_nums <= 0) {
     MS_LOG(EXCEPTION) << "kernel num less than 0";
   }
-  auto add_bias_data = new(std::nothrow) float[kernel_nums];
+  auto add_bias_data = new (std::nothrow) float[kernel_nums];
   auto bias_add_weight = bias_node->input(kAddWEIGHTINDEX);
   CheckIfNodeIsParam(bias_add_weight);
   auto add_weight_param = bias_add_weight->cast<ParameterPtr>()->default_param();
   auto add_weight_tensor = std::dynamic_pointer_cast<ParamValueLite>(add_weight_param);
   auto add_weight_data = reinterpret_cast<float *>(add_weight_tensor->tensor_addr());
   auto add_weight_shape = add_weight_tensor->tensor_shape();
-  if (add_weight_shape.empty() || (add_weight_shape.size() == 1 && add_weight_shape[0] ==1)) {
-      for (size_t i = 0; i < kernel_nums; i++) {
-        add_bias_data[i] = *add_weight_data;
+  if (add_weight_shape.empty() || (add_weight_shape.size() == 1 && add_weight_shape[0] == 1)) {
+    for (size_t i = 0; i < kernel_nums; i++) {
+      add_bias_data[i] = *add_weight_data;
     }
   } else {
     if (EOK != memcpy_s(add_bias_data, kernel_nums * sizeof(float), add_weight_data, kernel_nums * sizeof(float))) {
@@ -115,6 +115,7 @@ void GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, c
     auto conv_weight_param = conv_weight_node->cast<ParameterPtr>()->default_param();
     auto conv_weight_tensor = std::dynamic_pointer_cast<ParamValueLite>(conv_weight_param);
     auto conv_new_bias = AddNewBiasNode(add_bias_data, func_graph, kernel_nums, conv_weight_tensor);
+    conv_new_bias->set_name(conv_node->fullname_with_scope() + "_bias");
     conv_node->add_input(conv_new_bias);
   }
 }
@@ -159,4 +160,3 @@ const AnfNodePtr ConvBiasaddFusion::Process(const FuncGraphPtr &func_graph, cons
   return conv_node;
 }
 }  // namespace mindspore::opt
-

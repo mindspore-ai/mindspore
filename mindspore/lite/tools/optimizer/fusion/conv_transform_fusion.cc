@@ -44,8 +44,8 @@ int Get_Kenrnel_nums(const CNodePtr &conv_node) {
   if (type == schema::PrimitiveType_Conv2D) {
     return primitive->GetPrimitiveT()->value.AsConv2D()->channelOut;
   } else if (type == schema::PrimitiveType_DepthwiseConv2D) {
-    return primitive->GetPrimitiveT()->value.AsDepthwiseConv2D()->channelMultiplier
-        * primitive->GetPrimitiveT()->value.AsDepthwiseConv2D()->channelIn;
+    return primitive->GetPrimitiveT()->value.AsDepthwiseConv2D()->channelMultiplier *
+           primitive->GetPrimitiveT()->value.AsDepthwiseConv2D()->channelIn;
   } else {
     MS_LOG(ERROR) << "Unsupported opType, " << type;
     return 0;
@@ -74,8 +74,8 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
     MS_LOG(ERROR) << "Unsupported conv node, " << conv_node->DebugString();
     return node;
   }
-  auto trans_scale = new(std::nothrow) float[kernel_nums];
-  auto trans_bias = new(std::nothrow) float[kernel_nums];
+  auto trans_scale = new (std::nothrow) float[kernel_nums];
+  auto trans_bias = new (std::nothrow) float[kernel_nums];
   GenTransParam(transform_node, kernel_nums, trans_scale, trans_bias);
   GenNewConvTensor(func_graph, conv_node, kernel_nums, trans_scale, trans_bias);
   delete[] trans_bias;
@@ -93,8 +93,8 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
   return pre_node;
 }
 
-const void ConvTransformFusion::GenTransParam(const CNodePtr &transform_node, int kernel_nums,
-                                              float *trans_scale, float *trans_bias) const {
+const void ConvTransformFusion::GenTransParam(const CNodePtr &transform_node, int kernel_nums, float *trans_scale,
+                                              float *trans_bias) const {
   if (trans_scale == nullptr) {
     MS_LOG(EXCEPTION) << "new transScale failed";
   }
@@ -112,8 +112,8 @@ const void ConvTransformFusion::GenTransParam(const CNodePtr &transform_node, in
 }
 
 const void ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph, const CNodePtr &conv_node,
-                                                 int kernel_num, const float *trans_scale, const float *trans_bias)
-const {
+                                                 int kernel_num, const float *trans_scale,
+                                                 const float *trans_bias) const {
   MS_ASSERT(conv_node != nullptr);
   AnfNodePtr conv_weight_node = nullptr;
   AnfNodePtr conv_bias_node = nullptr;
@@ -152,18 +152,19 @@ const {
     bias_data = reinterpret_cast<float *>(bias_tensor->tensor_addr());
     bias_flag = true;
   } else {
-    bias_data = new(std::nothrow) float[kernel_num];
+    bias_data = new (std::nothrow) float[kernel_num];
   }
   CalNewBiasTensor(bias_data, kernel_num, bias_flag, trans_scale, trans_bias);
   if (!bias_flag) {
     auto bias_node = AddNewBiasNode(bias_data, func_graph, kernel_num, weight_tensor);
+    bias_node->set_name(conv_node->fullname_with_scope() + "_bias");
     conv_node->add_input(bias_node);
   }
 }
 const void ConvTransformFusion::CalNewWeightTensor(float *weight_data, int kernel_num, int kernel_size,
                                                    const float *trans_scale) const {
   MS_ASSERT(weight_data != nullptr);
-  auto tmp_weight_data = new(std::nothrow) float[kernel_num * kernel_size];
+  auto tmp_weight_data = new (std::nothrow) float[kernel_num * kernel_size];
   MS_ASSERT(new_weight_data != nullptr);
   auto data_size = kernel_num * kernel_size * sizeof(float);
   if (0 != memset_s(tmp_weight_data, data_size, 0, data_size)) {
@@ -189,7 +190,7 @@ const void ConvTransformFusion::CalNewBiasTensor(float *bias_data, int kernel_nu
                                                  const float *trans_scale, const float *trans_bias) const {
   MS_ASSERT(bias_data != nullptr);
   if (bias_flag) {
-    auto tmp_bias_data = new(std::nothrow) float[kernel_num];
+    auto tmp_bias_data = new (std::nothrow) float[kernel_num];
     if (EOK != memset_s(tmp_bias_data, kernel_num * sizeof(float), 0, kernel_num * sizeof(float))) {
       MS_LOG(EXCEPTION) << "memset bias data failed";
     }

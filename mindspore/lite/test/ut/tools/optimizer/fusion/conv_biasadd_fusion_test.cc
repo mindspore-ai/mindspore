@@ -24,7 +24,7 @@
 #include "utils/log_adapter.h"
 #include "tools/converter/model_parser.h"
 #include "tools/converter/anf_transform.h"
-#include "src/common/anf_exporter/anf_exporter.h"
+#include "tools/anf_exporter/anf_exporter.h"
 
 namespace mindspore {
 class ConvBiasAddFusionTest : public mindspore::CommonTest {

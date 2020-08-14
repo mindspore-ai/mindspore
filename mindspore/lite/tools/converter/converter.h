@@ -22,7 +22,7 @@
 #include "schema/inner/model_generated.h"
 #include "tools/converter/graphdef_transform.h"
 #include "tools/converter/model_parser.h"
-#include "src/common/anf_importer/anf_importer.h"
+#include "tools/anf_importer/anf_importer.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/converter/anf_transform.h"
 #include "tools/converter/quantizer/quantizer.h"
