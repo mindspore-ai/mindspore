@@ -135,6 +135,40 @@ def test_check_str_by_regular():
     with pytest.raises(ValueError):
         _check_str_by_regular(str6)
 
+def test_parameter_compute():
+    para_1 = Parameter(initializer('ones', [1, 2, 3], mstype.int32), 'test1')
+    para_2 = Parameter(initializer('ones', [1, 2, 3], mstype.int32), 'test2')
+
+    t3 = Tensor(np.ones((1, 2, 3)))
+
+    out = para_1 + para_2
+    assert np.array_equal(out.asnumpy(), np.ones((1, 2, 3)) * 2)
+
+    out = para_1 * para_2
+    assert np.array_equal(out.asnumpy(), np.ones((1, 2, 3)))
+
+    out = para_1 + t3
+    assert np.array_equal(out.asnumpy(), np.ones((1, 2, 3)) * 2)
+
+    out = para_1 * t3
+    assert np.array_equal(out.asnumpy(), np.ones((1, 2, 3)))
+
+    assert isinstance(para_1, Tensor)
+
+
+def test_scalar_parameter_update():
+    fp = Parameter(0.5, 'fp')
+    fp.default_input = 0.8
+    assert np.array_equal(fp.default_input.asnumpy(), np.array(0.8, np.float32))
+    fp.default_input = 1
+    assert np.array_equal(fp.default_input.asnumpy(), np.array(1.0, np.float32))
+    int_ = Parameter(1, 'fp')
+    int_.default_input = 2
+    assert np.array_equal(int_.default_input.asnumpy(), np.array(2, np.int32))
+    with pytest.raises(TypeError):
+        int_.default_input = 1.2
+
+
 def test_parameter_lazy_init():
     # support lazy init in SEMI_AUTO_PARALLEL mode
     context.reset_auto_parallel_context()
@@ -155,7 +189,7 @@ def test_parameter_lazy_init():
     # init then assign
     para = para.init_data()
     # check the type
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         para.default_input = Tensor(np.zeros((1, 2, 3)))
     # check the shape
     with pytest.raises(ValueError):
@@ -170,4 +204,8 @@ def test_parameter_lazy_init():
     # expect no effect.
     para.init_data()
     assert np.array_equal(para.default_input.asnumpy(), np.ones((1, 2, 3)))
+    para.set_parameter_data(Tensor(np.zeros((1, 2)).astype(np.float32)), slice_shape=True)
+    assert np.array_equal(para.default_input.asnumpy(), np.zeros((1, 2)))
+    para.set_parameter_data(initializer('ones', [1, 2], mstype.float32), slice_shape=True)
+    assert np.array_equal(para.default_input.asnumpy(), np.ones((1, 2)))
     context.reset_auto_parallel_context()
