@@ -22,32 +22,28 @@
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/nnacl/conv_parameter.h"
 #include "src/runtime/opencl/opencl_runtime.h"
-
-#ifdef ENABLE_FP16
-using FLOAT_T = float16_t;
-#else
-using FLOAT_T = float;
-#endif
+#include "src/runtime/kernel/opencl/opencl_kernel.h"
 
 namespace mindspore::kernel {
 
-class Conv2dTransposeOpenCLKernel : public LiteKernel {
+class Conv2dTransposeOpenCLKernel : public OpenCLKernel {
  public:
   explicit Conv2dTransposeOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                                        const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs, nullptr, nullptr) {}
+      : OpenCLKernel(parameter, inputs, outputs) {}
   ~Conv2dTransposeOpenCLKernel() override{};
 
   int Init() override;
   int ReSize() override;
   int Run() override;
   void PadWeight();
+  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
 
  private:
   ConvParameter *parameter_;
   cl::Kernel kernel_;
-  FLOAT_T *padWeight_;
-  FLOAT_T *bias_;
+  FLOAT_t *padWeight_;
+  FLOAT_t *bias_;
 };
 }  // namespace mindspore::kernel
 
