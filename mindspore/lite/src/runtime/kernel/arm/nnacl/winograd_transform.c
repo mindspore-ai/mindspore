@@ -854,7 +854,7 @@ void Conv3x3Uint8InputTransform(const int16_t *input_data, int16_t *trans_input,
   int pad_w = conv_param->pad_w_;
   int pad_h = conv_param->pad_h_;
   ConvQuantArg quant_arg = conv_param->conv_quant_arg_;
-  int input_zp = quant_arg.quant_args_[0][0].zp_;
+  int input_zp = quant_arg.input_quant_args_[0].zp_;
   int ic8 = UP_DIV(input_channel, C8NUM);
   int input_unit = 4;
 
@@ -1155,11 +1155,11 @@ void Conv3x3Int8FilterTransform(const int16_t *weight_data, int16_t *trans_weigh
 }
 
 void Conv3x3Uint8OutputUnit(const int32_t *gemm_out, const int32_t *bias_data, int8_t *output_data, bool h_not_bound,
-                            bool w_not_bound, int output_w, int real_num, ConvParameter *conv_param) {
-  int left_shift = conv_param->conv_quant_arg_.left_shift_[0];
-  int right_shift = conv_param->conv_quant_arg_.right_shift_[0];
-  int quant_multiplier = conv_param->conv_quant_arg_.quant_multiplier_[0];
-  int output_zp = conv_param->conv_quant_arg_.quant_args_[2][0].zp_;
+                            bool w_not_bound, int output_w, int real_num, int oc_start, ConvParameter *conv_param) {
+  int32_t *left_shift = conv_param->conv_quant_arg_.left_shift_;
+  int32_t *right_shift = conv_param->conv_quant_arg_.right_shift_;
+  int32_t *quant_multiplier = conv_param->conv_quant_arg_.quant_multiplier_;
+  int output_zp = conv_param->conv_quant_arg_.output_quant_args_[0].zp_;
   int out_min = conv_param->conv_quant_arg_.out_act_min_[0];
   int out_max = conv_param->conv_quant_arg_.out_act_max_[0];
 
@@ -1202,12 +1202,21 @@ void Conv3x3Uint8OutputUnit(const int32_t *gemm_out, const int32_t *bias_data, i
   int32x4_t d10 = vaddq_s32(vshrq_n_s32(vaddq_s32(vaddq_s32(t10, t11), t12), 1), bias_ptr);
   int32x4_t d11 = vaddq_s32(vshrq_n_s32(vsubq_s32(vsubq_s32(t11, t12), t13), 1), bias_ptr);
 
-  int32x4_t out_multiplier = vdupq_n_s32(quant_multiplier);
+  int32x4_t out_multiplier;
+  int32x4_t ls;
+  int32x4_t rs;
+  if ((conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
+    out_multiplier = vld1q_s32(quant_multiplier);
+    ls = vld1q_s32(left_shift);
+    rs = vld1q_s32(right_shift);
+  } else {
+    out_multiplier = vdupq_n_s32(quant_multiplier);
+    ls = vdupq_n_s32(left_shift);
+    rs = vdupq_n_s32(right_shift);
+  }
   int32x4_t out_zp = vdupq_n_s32(output_zp);
   int32x4_t output_min = vdupq_n_s32(out_min);
   int32x4_t output_max = vdupq_n_s32(out_max);
-  int32x4_t ls = vdupq_n_s32(left_shift);
-  int32x4_t rs = vdupq_n_s32(right_shift);
 
   d00 = vqshlq_s32(d00, ls);
   d00 = vqrdmulhq_s32(d00, out_multiplier);
@@ -1261,78 +1270,166 @@ void Conv3x3Uint8OutputUnit(const int32_t *gemm_out, const int32_t *bias_data, i
     }
   }
 #else
-  for (int i = 0; i < C4NUM; i++) {
-    const int32_t *local_ptr = gemm_out + i;
-    const int32_t *bias_ptr = bias_data + i;
+  if ((conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
+    for (int i = 0; i < C4NUM; i++) {
+      const int32_t *local_ptr = gemm_out + i;
+      const int32_t *bias_ptr = bias_data + i;
 
-    int32_t s00 = local_ptr[0];
-    int32_t s01 = (local_ptr + 4)[0];
-    int32_t s02 = (local_ptr + 8)[0];
-    int32_t s03 = (local_ptr + 12)[0];
+      int32_t s00 = local_ptr[0];
+      int32_t s01 = (local_ptr + 4)[0];
+      int32_t s02 = (local_ptr + 8)[0];
+      int32_t s03 = (local_ptr + 12)[0];
 
-    int32_t s10 = (local_ptr + 16)[0];
-    int32_t s11 = (local_ptr + 20)[0];
-    int32_t s12 = (local_ptr + 24)[0];
-    int32_t s13 = (local_ptr + 28)[0];
+      int32_t s10 = (local_ptr + 16)[0];
+      int32_t s11 = (local_ptr + 20)[0];
+      int32_t s12 = (local_ptr + 24)[0];
+      int32_t s13 = (local_ptr + 28)[0];
 
-    int32_t s20 = (local_ptr + 32)[0];
-    int32_t s21 = (local_ptr + 36)[0];
-    int32_t s22 = (local_ptr + 40)[0];
-    int32_t s23 = (local_ptr + 44)[0];
+      int32_t s20 = (local_ptr + 32)[0];
+      int32_t s21 = (local_ptr + 36)[0];
+      int32_t s22 = (local_ptr + 40)[0];
+      int32_t s23 = (local_ptr + 44)[0];
 
-    int32_t s30 = (local_ptr + 48)[0];
-    int32_t s31 = (local_ptr + 52)[0];
-    int32_t s32 = (local_ptr + 56)[0];
-    int32_t s33 = (local_ptr + 60)[0];
+      int32_t s30 = (local_ptr + 48)[0];
+      int32_t s31 = (local_ptr + 52)[0];
+      int32_t s32 = (local_ptr + 56)[0];
+      int32_t s33 = (local_ptr + 60)[0];
 
-    int32_t t00 = (s00 + s10 + s20) / 2;
-    int32_t t01 = (s01 + s11 + s21) / 2;
-    int32_t t02 = (s02 + s12 + s22) / 2;
-    int32_t t03 = (s03 + s13 + s23) / 2;
+      int32_t t00 = (s00 + s10 + s20) / 2;
+      int32_t t01 = (s01 + s11 + s21) / 2;
+      int32_t t02 = (s02 + s12 + s22) / 2;
+      int32_t t03 = (s03 + s13 + s23) / 2;
 
-    int32_t t10 = (s10 - s20 - s30) / 2;
-    int32_t t11 = (s11 - s21 - s31) / 2;
-    int32_t t12 = (s12 - s22 - s32) / 2;
-    int32_t t13 = (s13 - s23 - s33) / 2;
+      int32_t t10 = (s10 - s20 - s30) / 2;
+      int32_t t11 = (s11 - s21 - s31) / 2;
+      int32_t t12 = (s12 - s22 - s32) / 2;
+      int32_t t13 = (s13 - s23 - s33) / 2;
 
-    int32_t d00 = (t00 + t01 + t02) / 2 + bias_ptr[0];
-    int32_t d01 = (t01 - t02 - t03) / 2 + bias_ptr[0];
+      int32_t d00 = (t00 + t01 + t02) / 2 + bias_ptr[0];
+      int32_t d01 = (t01 - t02 - t03) / 2 + bias_ptr[0];
 
-    int32_t d10 = (t10 + t11 + t12) / 2 + bias_ptr[0];
-    int32_t d11 = (t11 - t12 - t13) / 2 + bias_ptr[0];
+      int32_t d10 = (t10 + t11 + t12) / 2 + bias_ptr[0];
+      int32_t d11 = (t11 - t12 - t13) / 2 + bias_ptr[0];
 
-    d00 = RoundingDivideByPOT(
-      SaturatingRoundingDoublingHighMul(d00 * (1 << (unsigned int)left_shift), quant_multiplier), -right_shift);
-    d00 += output_zp;
-    d00 = d00 > out_min ? d00 : out_min;
-    d00 = d00 < out_max ? d00 : out_max;
+      int oc_index = oc_start + i;
+      d00 = RoundingDivideByPOT(
+        SaturatingRoundingDoublingHighMul(d00 * (1 << (unsigned int)left_shift[oc_index]), quant_multiplier[oc_index]),
+        -right_shift[oc_index]);
+      d00 += output_zp;
+      d00 = d00 > out_min ? d00 : out_min;
+      d00 = d00 < out_max ? d00 : out_max;
 
-    d01 = RoundingDivideByPOT(
-      SaturatingRoundingDoublingHighMul(d01 * (1 << (unsigned int)left_shift), quant_multiplier), -right_shift);
-    d01 += output_zp;
-    d01 = d01 > out_min ? d01 : out_min;
-    d01 = d01 < out_max ? d01 : out_max;
+      d01 = RoundingDivideByPOT(
+        SaturatingRoundingDoublingHighMul(d01 * (1 << (unsigned int)left_shift[oc_index]), quant_multiplier[oc_index]),
+        -right_shift[oc_index]);
+      d01 += output_zp;
+      d01 = d01 > out_min ? d01 : out_min;
+      d01 = d01 < out_max ? d01 : out_max;
 
-    d10 = RoundingDivideByPOT(
-      SaturatingRoundingDoublingHighMul(d10 * (1 << (unsigned int)left_shift), quant_multiplier), -right_shift);
-    d10 += output_zp;
-    d10 = d10 > out_min ? d10 : out_min;
-    d10 = d10 < out_max ? d10 : out_max;
+      d10 = RoundingDivideByPOT(
+        SaturatingRoundingDoublingHighMul(d10 * (1 << (unsigned int)left_shift[oc_index]), quant_multiplier[oc_index]),
+        -right_shift[oc_index]);
+      d10 += output_zp;
+      d10 = d10 > out_min ? d10 : out_min;
+      d10 = d10 < out_max ? d10 : out_max;
 
-    d11 = RoundingDivideByPOT(
-      SaturatingRoundingDoublingHighMul(d11 * (1 << (unsigned int)left_shift), quant_multiplier), -right_shift);
-    d11 += output_zp;
-    d11 = d11 > out_min ? d11 : out_min;
-    d11 = d11 < out_max ? d11 : out_max;
+      d11 = RoundingDivideByPOT(
+        SaturatingRoundingDoublingHighMul(d11 * (1 << (unsigned int)left_shift[oc_index]), quant_multiplier[oc_index]),
+        -right_shift[oc_index]);
+      d11 += output_zp;
+      d11 = d11 > out_min ? d11 : out_min;
+      d11 = d11 < out_max ? d11 : out_max;
 
-    (output_data + i)[0] = (int8_t)d00;
-    if (w_not_bound) {
-      (output_data + i + C4NUM)[0] = (int8_t)d01;
-    }
-    if (h_not_bound) {
-      (output_data + i + output_w * C4NUM)[0] = (int8_t)d10;
+      (output_data + i)[0] = (int8_t)d00;
       if (w_not_bound) {
-        (output_data + i + output_w * C4NUM + C4NUM)[0] = (int8_t)d11;
+        (output_data + i + C4NUM)[0] = (int8_t)d01;
+      }
+      if (h_not_bound) {
+        (output_data + i + output_w * C4NUM)[0] = (int8_t)d10;
+        if (w_not_bound) {
+          (output_data + i + output_w * C4NUM + C4NUM)[0] = (int8_t)d11;
+        }
+      }
+    }
+
+  } else {
+    for (int i = 0; i < C4NUM; i++) {
+      const int32_t *local_ptr = gemm_out + i;
+      const int32_t *bias_ptr = bias_data + i;
+
+      int32_t s00 = local_ptr[0];
+      int32_t s01 = (local_ptr + 4)[0];
+      int32_t s02 = (local_ptr + 8)[0];
+      int32_t s03 = (local_ptr + 12)[0];
+
+      int32_t s10 = (local_ptr + 16)[0];
+      int32_t s11 = (local_ptr + 20)[0];
+      int32_t s12 = (local_ptr + 24)[0];
+      int32_t s13 = (local_ptr + 28)[0];
+
+      int32_t s20 = (local_ptr + 32)[0];
+      int32_t s21 = (local_ptr + 36)[0];
+      int32_t s22 = (local_ptr + 40)[0];
+      int32_t s23 = (local_ptr + 44)[0];
+
+      int32_t s30 = (local_ptr + 48)[0];
+      int32_t s31 = (local_ptr + 52)[0];
+      int32_t s32 = (local_ptr + 56)[0];
+      int32_t s33 = (local_ptr + 60)[0];
+
+      int32_t t00 = (s00 + s10 + s20) / 2;
+      int32_t t01 = (s01 + s11 + s21) / 2;
+      int32_t t02 = (s02 + s12 + s22) / 2;
+      int32_t t03 = (s03 + s13 + s23) / 2;
+
+      int32_t t10 = (s10 - s20 - s30) / 2;
+      int32_t t11 = (s11 - s21 - s31) / 2;
+      int32_t t12 = (s12 - s22 - s32) / 2;
+      int32_t t13 = (s13 - s23 - s33) / 2;
+
+      int32_t d00 = (t00 + t01 + t02) / 2 + bias_ptr[0];
+      int32_t d01 = (t01 - t02 - t03) / 2 + bias_ptr[0];
+
+      int32_t d10 = (t10 + t11 + t12) / 2 + bias_ptr[0];
+      int32_t d11 = (t11 - t12 - t13) / 2 + bias_ptr[0];
+
+      d00 = RoundingDivideByPOT(
+        SaturatingRoundingDoublingHighMul(d00 * (1 << (unsigned int)left_shift[0]), quant_multiplier[0]),
+        -right_shift[0]);
+      d00 += output_zp;
+      d00 = d00 > out_min ? d00 : out_min;
+      d00 = d00 < out_max ? d00 : out_max;
+
+      d01 = RoundingDivideByPOT(
+        SaturatingRoundingDoublingHighMul(d01 * (1 << (unsigned int)left_shift[0]), quant_multiplier[0]),
+        -right_shift[0]);
+      d01 += output_zp;
+      d01 = d01 > out_min ? d01 : out_min;
+      d01 = d01 < out_max ? d01 : out_max;
+
+      d10 = RoundingDivideByPOT(
+        SaturatingRoundingDoublingHighMul(d10 * (1 << (unsigned int)left_shift[0]), quant_multiplier[0]),
+        -right_shift[0]);
+      d10 += output_zp;
+      d10 = d10 > out_min ? d10 : out_min;
+      d10 = d10 < out_max ? d10 : out_max;
+
+      d11 = RoundingDivideByPOT(
+        SaturatingRoundingDoublingHighMul(d11 * (1 << (unsigned int)left_shift[0]), quant_multiplier[0]),
+        -right_shift[0]);
+      d11 += output_zp;
+      d11 = d11 > out_min ? d11 : out_min;
+      d11 = d11 < out_max ? d11 : out_max;
+
+      (output_data + i)[0] = (int8_t)d00;
+      if (w_not_bound) {
+        (output_data + i + C4NUM)[0] = (int8_t)d01;
+      }
+      if (h_not_bound) {
+        (output_data + i + output_w * C4NUM)[0] = (int8_t)d10;
+        if (w_not_bound) {
+          (output_data + i + output_w * C4NUM + C4NUM)[0] = (int8_t)d11;
+        }
       }
     }
   }
@@ -1364,7 +1461,8 @@ void Conv3x3Uint8OutputTransform(const int32_t *gemm_out, int8_t *out_data, cons
       int real_num = (output_channel - j * C4NUM) < C4NUM ? (output_channel - j * C4NUM) : C4NUM;
       bool w_not_bound = out_w_index * OUPUT_UNIT + 1 < output_w;
       bool h_not_bound = out_h_index * OUPUT_UNIT + 1 < output_h;
-      Conv3x3Uint8OutputUnit(src_ptr, bias_ptr, dst_ptr, h_not_bound, w_not_bound, output_w, real_num, conv_param);
+      Conv3x3Uint8OutputUnit(src_ptr, bias_ptr, dst_ptr, h_not_bound, w_not_bound, output_w, real_num, j * C4NUM,
+                             conv_param);
     }
   }
 }

@@ -32,6 +32,7 @@
 using mindspore::lite::Context;
 using mindspore::schema::PadMode;
 using mindspore::schema::QuantType;
+static constexpr int kPerTensor = 1;
 
 namespace mindspore::kernel {
 class ConvolutionBaseCPUKernel : public LiteKernel {
@@ -49,7 +50,14 @@ class ConvolutionBaseCPUKernel : public LiteKernel {
   int ReSize() override { return 0; }
   int Run() override { return 0; }
   virtual int CheckLayout(lite::tensor::Tensor *input_tensor);
+  int SetIfAsymmetric();
+  int SetIfPerChannel();
+  int MallocQuantParam();
   int SetQuantParam();
+  int SetInputTensorQuantParam();
+  int SetFilterTensorQuantParam();
+  int SetOutputTensorQuantParam();
+  int SetQuantMultiplier();
   void FreeQuantParam();
 
  protected:
@@ -59,9 +67,9 @@ class ConvolutionBaseCPUKernel : public LiteKernel {
   void *nhwc4_input_ = nullptr;
   const Context *ctx_;
   ConvParameter *conv_param_;
+  ConvQuantArg *conv_quant_arg_;
   LayoutConvertor convert_func_;
 };
-bool CheckSupportFP16();
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CONVOLUTION_BASE_H_

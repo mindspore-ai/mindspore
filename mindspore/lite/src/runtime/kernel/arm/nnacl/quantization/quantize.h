@@ -17,11 +17,16 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_QUANTIZATION_QUANTIZE_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_QUANTIZATION_QUANTIZE_H_
 
-#include <stdint.h>
 #include <math.h>
-#include <stdlib.h>
 #include <limits.h>
 #include "nnacl/op_base.h"
+
+#define INPUT_ASYMMETRIC 0b001
+#define FILTER_ASYMMETRIC 0b010
+#define OUTPUT_ASYMMETRIC 0b100
+#define INPUT_PER_CHANNEL 0b001
+#define FILTER_PER_CHANNEL 0b010
+#define OUTPUT_PER_CHANNEL 0b100
 
 typedef struct QuantArg {
   double scale_;
@@ -29,13 +34,20 @@ typedef struct QuantArg {
 } QuantArg;
 
 typedef struct ConvQuantArg {
-  QuantArg **quant_args_;
+  QuantArg *input_quant_args_;
+  QuantArg *filter_quant_args_;
+  QuantArg *output_quant_args_;
   double *real_multiplier_;
   int32_t *left_shift_;
   int32_t *right_shift_;
   int32_t *quant_multiplier_;
   int32_t *out_act_min_;
   int32_t *out_act_max_;
+  size_t input_arg_num_;
+  size_t filter_arg_num_;
+  size_t output_arg_num_;
+  uint8_t asymmetric_;
+  uint8_t per_channel_;
 } ConvQuantArg;
 
 typedef struct ConcatQuantArg {
