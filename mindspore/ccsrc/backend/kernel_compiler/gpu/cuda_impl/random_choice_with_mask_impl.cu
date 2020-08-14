@@ -134,7 +134,7 @@ template <typename T>
 __global__ void Sort(const int ceil_power2, T *rank_buff) {
   for (size_t i = 2; i <= ceil_power2; i <<= 1) {
     for (size_t j = (i >> 1); j > 0; j >>= 1) {
-      for (size_t tid = blockIdx.x * blockDim.x + threadIdx.x; tid < ceil_power2; tid += blockDim.x * gridDim.x) {
+      for (size_t tid = threadIdx.x; tid < ceil_power2; tid += blockDim.x) {
         size_t tid_comp = tid ^ j;
         if (tid_comp > tid) {
           if ((tid & i) == 0) {
@@ -165,7 +165,7 @@ __global__ void Shuffle(const int ceil_power2, curandState *globalState, T *rank
   int value;
   for (size_t i = 2; i <= ceil_power2; i <<= 1) {
     for (size_t j = (i >> 1); j > 0; j >>= 1) {
-      for (size_t tid = blockIdx.x * blockDim.x + threadIdx.x; tid < ceil_power2; tid += blockDim.x * gridDim.x) {
+      for (size_t tid = threadIdx.x; tid < ceil_power2; tid += blockDim.x) {
         size_t tid_comp = tid ^ j;
         if (tid_comp > tid) {
           value = static_cast<int>(curand(&globalState[tid]));
@@ -249,10 +249,10 @@ void CalRandomChoiceWithMask(const int &input_size, const int &input_shape_size,
   Reshape2Index<<<GET_BLOCKS(input_size), GET_THREADS, 0, stream>>>(input_size, input_shape_size, d1, d2, d3, d4, d5,
                                                                     input, index_buff);
 
-  Sort<<<GET_BLOCKS(ceil_power2), GET_THREADS, 0, stream>>>(ceil_power2, rank_buff);
+  Sort<<<1, GET_THREADS, 0, stream>>>(ceil_power2, rank_buff);
 
   SrandInit<<<GET_BLOCKS(ceil_power2), GET_THREADS, 0, stream>>>(ceil_power2, globalState, seedc);
-  Shuffle<<<GET_BLOCKS(ceil_power2), GET_THREADS, 0, stream>>>(ceil_power2, globalState, rank_buff);
+  Shuffle<<<1, GET_THREADS, 0, stream>>>(ceil_power2, globalState, rank_buff);
 
   MoveToOutput<<<GET_BLOCKS(count), GET_THREADS, 0, stream>>>(input_shape_size, count, input, output_index, output_mask,
                                                               index_buff, rank_buff, Tnum_buff);
