@@ -39,6 +39,7 @@ SET(DE_UT_SRCS
         project_op_test.cc
         queue_test.cc
         random_affine_op_test.cc
+        random_color_op_test.cc
         random_crop_op_test.cc
         random_crop_with_bbox_op_test.cc
         random_crop_decode_resize_op_test.cc

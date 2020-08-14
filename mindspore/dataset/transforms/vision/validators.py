@@ -609,21 +609,23 @@ def check_uniform_augment_py(method):
 
 
 def check_positive_degrees(method):
-    """A wrapper method to check degrees parameter in RandSharpness and RandColor"""
+    """A wrapper method to check degrees parameter in RandomSharpness and RandomColor ops (python and cpp)"""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [degrees], _ = parse_user_args(method, *args, **kwargs)
-        if isinstance(degrees, (list, tuple)):
+
+        if degrees is not None:
+            if not isinstance(degrees, (list, tuple)):
+                raise TypeError("degrees must be either a tuple or a list.")
+            type_check_list(degrees, (int, float), "degrees")
             if len(degrees) != 2:
-                raise ValueError("Degrees must be a sequence with length 2.")
-            for value in degrees:
-                check_value(value, (0., FLOAT_MAX_INTEGER))
-            check_positive(degrees[0], "degrees[0]")
+                raise ValueError("degrees must be a sequence with length 2.")
+            for degree in degrees:
+                check_value(degree, (0, FLOAT_MAX_INTEGER))
             if degrees[0] > degrees[1]:
-                raise ValueError("Degrees should be in (min,max) format. Got (max,min).")
-        else:
-            raise TypeError("Degrees should be a tuple or list.")
+                raise ValueError("degrees should be in (min,max) format. Got (max,min).")
+
         return method(self, *args, **kwargs)
 
     return new_method
@@ -698,4 +700,5 @@ def check_random_solarize(method):
             raise ValueError("threshold must be in min max format numbers")
 
         return method(self, *args, **kwargs)
+
     return new_method

@@ -44,5 +44,6 @@ add_library(kernels-image OBJECT
     uniform_aug_op.cc
     resize_with_bbox_op.cc
     random_resize_with_bbox_op.cc
+    random_color_op.cc
     )
 add_dependencies(kernels-image kernels-soft-dvpp-image)

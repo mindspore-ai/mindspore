@@ -32,6 +32,7 @@
 #include "minddata/dataset/kernels/image/normalize_op.h"
 #include "minddata/dataset/kernels/image/pad_op.h"
 #include "minddata/dataset/kernels/image/random_affine_op.h"
+#include "minddata/dataset/kernels/image/random_color_op.h"
 #include "minddata/dataset/kernels/image/random_color_adjust_op.h"
 #include "minddata/dataset/kernels/image/random_crop_and_resize_op.h"
 #include "minddata/dataset/kernels/image/random_crop_and_resize_with_bbox_op.h"
@@ -272,6 +273,14 @@ PYBIND_REGISTER(
       .def(py::init<int32_t, int32_t>(), py::arg("targetHeight"),
            py::arg("targetWidth") = RandomResizeOp::kDefTargetWidth);
   }));
+
+PYBIND_REGISTER(RandomColorOp, 1, ([](const py::module *m) {
+                  (void)py::class_<RandomColorOp, TensorOp, std::shared_ptr<RandomColorOp>>(
+                    *m, "RandomColorOp",
+                    "Tensor operation to blend an image with its grayscale version with random weights"
+                    "Takes min and max for the range of random weights")
+                    .def(py::init<float, float>(), py::arg("min"), py::arg("max"));
+                }));
 
 PYBIND_REGISTER(RandomColorAdjustOp, 1, ([](const py::module *m) {
                   (void)py::class_<RandomColorAdjustOp, TensorOp, std::shared_ptr<RandomColorAdjustOp>>(
