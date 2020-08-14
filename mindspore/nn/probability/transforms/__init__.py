@@ -15,7 +15,7 @@
 """
 Transforms.
 
-The high-level components used to transform model between DNN and DNN.
+The high-level components used to transform model between DNN and BNN.
 """
 from . import transform_bnn
 from .transform_bnn import TransformToBNN

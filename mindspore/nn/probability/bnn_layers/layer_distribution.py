@@ -75,7 +75,18 @@ class NormalPosterior(Cell):
                  untransformed_scale_std=0.1):
         super(NormalPosterior, self).__init__()
         if not isinstance(name, str):
-            raise ValueError('The type of `name` should be `str`')
+            raise TypeError('The type of `name` should be `str`')
+
+        if not isinstance(shape, (tuple, list)):
+            raise TypeError('The type of `shape` should be `tuple` or `list`')
+
+        if not (np.array(shape) > 0).all():
+            raise ValueError('Negative dimensions are not allowed')
+
+        if not (np.array(loc_std) >= 0).all():
+            raise ValueError('The value of `loc_std` < 0')
+        if not (np.array(untransformed_scale_std) >= 0).all():
+            raise ValueError('The value of `untransformed_scale_std` < 0')
 
         self.mean = Parameter(
             Tensor(np.random.normal(loc_mean, loc_std, shape), dtype=dtype), name=name + '_mean')

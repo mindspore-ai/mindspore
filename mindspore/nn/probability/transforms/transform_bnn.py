@@ -61,6 +61,11 @@ class TransformToBNN:
     """
 
     def __init__(self, trainable_dnn, dnn_factor=1, bnn_factor=1):
+        if not isinstance(dnn_factor, (int, float)):
+            raise TypeError('The type of `dnn_factor` should be `int` or `float`')
+        if not isinstance(bnn_factor, (int, float)):
+            raise TypeError('The type of `bnn_factor` should be `int` or `float`')
+
         net_with_loss = trainable_dnn.network
         self.optimizer = trainable_dnn.optimizer
         self.backbone = net_with_loss.backbone_network
@@ -88,8 +93,10 @@ class TransformToBNN:
             get_conv_args (function): The arguments gotten from the DNN convolutional layer. Default: lambda dp:
                 {"in_channels": dp.in_channels, "out_channels": dp.out_channels, "pad_mode": dp.pad_mode,
                 "kernel_size": dp.kernel_size, "stride": dp.stride, "has_bias": dp.has_bias}.
-            add_dense_args (dict): The new arguments added to BNN full connection layer. Default: {}.
-            add_conv_args (dict): The new arguments added to BNN convolutional layer. Default: {}.
+            add_dense_args (dict): The new arguments added to BNN full connection layer. Note that the arguments in
+                `add_dense_args` should not duplicate arguments in `get_dense_args`. Default: {}.
+            add_conv_args (dict): The new arguments added to BNN convolutional layer. Note that the arguments in
+                `add_conv_args` should not duplicate arguments in `get_conv_args`. Default: {}.
 
         Returns:
             Cell, a trainable BNN model wrapped by TrainOneStepCell.
@@ -131,7 +138,8 @@ class TransformToBNN:
             bnn_layer_type (Cell): The type of BNN layer to be transformed to. The optional values are
                 DenseReparameterization, ConvReparameterization.
             get_args (dict): The arguments gotten from the DNN layer. Default: None.
-            add_args (dict): The new arguments added to BNN layer. Default: None.
+            add_args (dict): The new arguments added to BNN layer. Note that the arguments in `add_args` should not
+                duplicate arguments in `get_args`. Default: None.
 
         Returns:
             Cell, a trainable model wrapped by TrainOneStepCell, whose sprcific type of layer is transformed to the

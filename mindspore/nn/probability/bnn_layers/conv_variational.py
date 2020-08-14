@@ -79,20 +79,40 @@ class _ConvVariational(_Conv):
         self.weight.requires_grad = False
 
         if isinstance(weight_prior_fn, Cell):
+            if weight_prior_fn.__class__.__name__ != 'NormalPrior':
+                raise TypeError('The type of `weight_prior_fn` should be `NormalPrior`')
             self.weight_prior = weight_prior_fn
         else:
+            if weight_prior_fn.__name__ != 'NormalPrior':
+                raise TypeError('The type of `weight_prior_fn` should be `NormalPrior`')
             self.weight_prior = weight_prior_fn()
 
+        if isinstance(weight_posterior_fn, Cell):
+            if weight_posterior_fn.__class__.__name__ != 'NormalPosterior':
+                raise TypeError('The type of `weight_posterior_fn` should be `NormalPosterior`')
+        else:
+            if weight_posterior_fn.__name__ != 'NormalPosterior':
+                raise TypeError('The type of `weight_posterior_fn` should be `NormalPosterior`')
         self.weight_posterior = weight_posterior_fn(shape=self.shape, name='bnn_weight')
 
         if self.has_bias:
             self.bias.requires_grad = False
 
             if isinstance(bias_prior_fn, Cell):
+                if bias_prior_fn.__class__.__name__ != 'NormalPrior':
+                    raise TypeError('The type of `bias_prior_fn` should be `NormalPrior`')
                 self.bias_prior = bias_prior_fn
             else:
+                if bias_prior_fn.__name__ != 'NormalPrior':
+                    raise TypeError('The type of `bias_prior_fn` should be `NormalPrior`')
                 self.bias_prior = bias_prior_fn()
 
+            if isinstance(bias_posterior_fn, Cell):
+                if bias_posterior_fn.__class__.__name__ != 'NormalPosterior':
+                    raise TypeError('The type of `bias_posterior_fn` should be `NormalPosterior`')
+            else:
+                if bias_posterior_fn.__name__ != 'NormalPosterior':
+                    raise TypeError('The type of `bias_posterior_fn` should be `NormalPosterior`')
             self.bias_posterior = bias_posterior_fn(shape=[self.out_channels], name='bnn_bias')
 
         # mindspore operations
