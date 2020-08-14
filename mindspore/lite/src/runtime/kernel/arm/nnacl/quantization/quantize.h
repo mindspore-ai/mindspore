@@ -213,68 +213,20 @@ extern "C" {
 
 void QuantizeMultiplier(double double_multiplier, int32_t *quantized_multiplier, int *shift);
 
-inline void QuantizeMultiplierSmallerThanOne(double double_multiplier, int32_t *quantized_multiplier,
-                                             int *right_shift) {
-  if (quantized_multiplier == NULL || right_shift == NULL) {
-    return;
-  }
-  int shift;
-  QuantizeMultiplier(double_multiplier, quantized_multiplier, &shift);
-  *right_shift = -shift;
-}
+void QuantizeMultiplierSmallerThanOne(double double_multiplier, int32_t *quantized_multiplier, int *right_shift);
 
-inline void QuantizeRoundParameter(double double_multiplier, int32_t *quantized_multiplier, int *left_shift,
-                                   int *right_shift) {
-  int shift;
-  QuantizeMultiplierSmallerThanOne(double_multiplier, quantized_multiplier, &shift);
-  shift = -shift;
-  if (shift < 0) {
-    *left_shift = 0;
-    *right_shift = shift;
-  } else {
-    *left_shift = shift;
-    *right_shift = 0;
-  }
-}
+void QuantizeRoundParameter(double double_multiplier, int32_t *quantized_multiplier, int *left_shift, int *right_shift);
 
-inline uint8_t QuantizeToUint8(float real_value, float scale, int32_t zp) { return round(real_value / scale + zp); }
+uint8_t QuantizeToUint8(float real_value, float scale, int32_t zp);
 
-inline int32_t QuantizeToInt8(float real_value, float scale, int32_t zp) { return round(real_value / scale + zp); }
+int32_t QuantizeToInt8(float real_value, float scale, int32_t zp);
 
-inline void CalculateActivationRangeQuantized(bool is_relu, bool is_relu6, int32_t zp, float scale, int *mini,
-                                              int *maxi) {
-  int32_t min = CHAR_MIN;
-  int32_t max = CHAR_MAX;
-  int32_t quantized_zero = QuantizeToInt8(0, scale, zp);
-  int32_t quantized_six = QuantizeToInt8(6, scale, zp);
-  if (is_relu) {
-    min = min > quantized_zero ? min : quantized_zero;
-  } else if (is_relu6) {
-    min = min > quantized_zero ? min : quantized_zero;
-    max = max < quantized_six ? max : quantized_six;
-  } else {
-    // do nothing
-  }
-  *mini = min;
-  *maxi = max;
-}
-
+void CalculateActivationRangeQuantized(bool is_relu, bool is_relu6, int32_t zp, float scale, int *mini, int *maxi);
 // quantize from float to int8
-inline void Quantize(float *input_data, int length, float scale, int zero_point, int8_t *output_data) {
-  for (int i = 0; i < length; ++i) {
-    int q = (int)round(input_data[i] / scale + zero_point);
-    q = q > CHAR_MAX ? CHAR_MAX : q;
-    q = q < CHAR_MIN ? CHAR_MIN : q;
-    output_data[i] = (int8_t)q;
-  }
-}
+void Quantize(float *input_data, int length, float scale, int zero_point, int8_t *output_data);
 
 // dequantize from int8 to float
-inline void Dequantize(int8_t *input_data, int length, float scale, int zero_point, float *output_data) {
-  for (int i = 0; i < length; ++i) {
-    output_data[i] = scale * (input_data[i] - zero_point);
-  }
-}
+void Dequantize(int8_t *input_data, int length, float scale, int zero_point, float *output_data);
 
 #ifdef __cplusplus
 }

@@ -18,7 +18,6 @@
 
 #include <math.h>
 #include "nnacl/op_base.h"
-#include "nnacl/errorcode.h"
 #include "nnacl/quantization/fixed_point.h"
 
 typedef struct ActivationParameter {
@@ -27,52 +26,16 @@ typedef struct ActivationParameter {
   float alpha_;
 } ActivationParameter;
 
-inline int Relu(const float *src, int length, float *dst) {
-  for (int i = 0; i < length; ++i) {
-    dst[i] = src[i] > 0 ? src[i] : 0;
-  }
-  return NNACL_OK;
+#ifdef __cplusplus
+extern "C" {
+#endif
+int Fp32Relu(const float *src, int length, float *dst);
+int Fp32Relu6(const float *src, int length, float *dst);
+int LRelu(const float *src, int length, float *dst, float alpha);
+int Sigmoid(const float *src, int length, float *dst);
+int Tanh(const float *src, int length, float *dst);
+int HSwish(const float *src, int length, float *dst);
+#ifdef __cplusplus
 }
-
-inline int Relu6(const float *src, int length, float *dst) {
-  for (int i = 0; i < length; ++i) {
-    if (src[i] < 0) {
-      dst[i] = 0;
-    } else {
-      dst[i] = src[i] > 6.0f ? 6.0f : src[i];
-    }
-  }
-  return NNACL_OK;
-}
-
-inline int LRelu(const float *src, int length, float *dst, float alpha) {
-  for (int i = 0; i < length; ++i) {
-    dst[i] = src[i] > 0 ? src[i] : (src[i] * alpha);
-  }
-  return NNACL_OK;
-}
-
-inline int Sigmoid(const float *src, int length, float *dst) {
-  for (int i = 0; i < length; ++i) {
-    dst[i] = 1.0f / (1.0f + exp(-src[i]));
-  }
-  return NNACL_OK;
-}
-
-inline int Tanh(const float *src, int length, float *dst) {
-  for (int i = 0; i < length; ++i) {
-    dst[i] = 1.0f - 2.0f / (exp(2 * src[i]) + 1);
-  }
-  return NNACL_OK;
-}
-
-inline int HSwish(const float *src, int length, float *dst) {
-  for (int i = 0; i < length; ++i) {
-    float in = src[i];
-    float relu6 = MSMIN(MSMAX(in + 3, 0), 6);
-    dst[i] = in * relu6 / 6;
-  }
-  return NNACL_OK;
-}
-
+#endif
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_ACTIVATION_H_

@@ -30,7 +30,7 @@ class TestActivationFp32 : public mindspore::CommonTest {
 TEST_F(TestActivationFp32, ReluFp32) {
   float input[8] = {-3, -2, -1, 0, 1, 5, 6, 7};
   float output[8] = {0};
-  Relu(input, 8, output);
+  Fp32Relu(input, 8, output);
   float expect[8] = {0, 0, 0, 0, 1, 5, 6, 7};
   for (int i = 0; i < 8; ++i) {
     ASSERT_EQ(output[i], expect[i]);
@@ -40,7 +40,7 @@ TEST_F(TestActivationFp32, ReluFp32) {
 TEST_F(TestActivationFp32, Relu6Fp32) {
   float input[8] = {-3, -2, -1, 0, 1, 5, 6, 7};
   float output[8] = {0};
-  Relu6(input, 8, output);
+  Fp32Relu6(input, 8, output);
   float expect[8] = {0, 0, 0, 0, 1, 5, 6, 6};
   for (int i = 0; i < 8; ++i) {
     ASSERT_EQ(output[i], expect[i]);

@@ -22,7 +22,7 @@
 #include "nnacl/errorcode.h"
 
 typedef struct ActivationGradParameter {
-  OpParameter op_parameter{};
+  OpParameter op_parameter;
   int type_;
   float alpha_;
 } ActivationGradParameter;
@@ -30,63 +30,14 @@ typedef struct ActivationGradParameter {
 extern "C" {
 #endif
 
-inline int ReluGrad(float *src0, float *src1, int length, float *dst) {
-  for (int i = 0; i < length; ++i) {
-    dst[i] = src1[i] > 0 ? 1.0f : 0.0f;
-  }
-  ElementMul(src0, dst, dst, length);
-  return NNACL_OK;
-}
+int ReluGrad(float *src0, float *src1, int length, float *dst);
+int Relu6Grad(float *src0, float *src1, int length, float *dst);
+int LReluGrad(float *src0, float *src1, int length, float *dst, float alpha);
+int SigmoidGrad(float *src0, float *src1, int length, float *dst);
+int TanhGrad(float *src0, float *src1, int length, float *dst);
+int HSwishGrad(float *src0, float *src1, int length, float *dst);
+int HSigmoidGrad(float *src0, float *src1, int length, float *dst);
 
-inline int Relu6Grad(float *src0, float *src1, int length, float *dst) {
-  for (int i = 0; i < length; ++i) {
-    if (src1[i] < 0) {
-      dst[i] = 0;
-    } else {
-      dst[i] = src1[i] > 6.0f ? 0.0f : 1.0f;
-    }
-  }
-  ElementMul(src0, dst, dst, length);
-  return NNACL_OK;
-}
-
-inline int LReluGrad(float *src0, float *src1, int length, float *dst, float alpha) {
-  for (int i = 0; i < length; ++i) {
-    dst[i] = src1[i] > 0.0f ? 1.0f : alpha;
-  }
-  ElementMul(src0, dst, dst, length);
-  return NNACL_OK;
-}
-
-inline int SigmoidGrad(float *src0, float *src1, int length, float *dst) {
-  for (int i = 0; i < length; ++i) {
-    dst[i] = src0[i] * (src1[i] * (1.0f - src1[i]));
-  }
-  return NNACL_OK;
-}
-
-inline int TanhGrad(float *src0, float *src1, int length, float *dst) {
-  for (int i = 0; i < length; ++i) {
-    dst[i] = (1.0f - (src1[i] * src1[i])) * src0[i];
-  }
-  return NNACL_OK;
-}
-
-inline int HSwishGrad(float *src0, float *src1, int length, float *dst) {
-  for (int i = 0; i < length; ++i) {
-    float tmp = (src1[i] > 3.0f ? 1.0f : (src1[i] < -3.0f ? 0.0f : (2.0f * src1[i] + 3.0f) / 6.0f));
-    dst[i] = tmp * src0[i];
-  }
-  return NNACL_OK;
-}
-
-inline int HSigmoidGrad(float *src0, float *src1, int length, float *dst) {
-  for (int i = 0; i < length; ++i) {
-    float tmp = (src1[i] > 3.0f ? 1.0f : (src1[i] < -3.0f ? 0.0f : 1.0f / 6.0f));
-    dst[i] = tmp * src0[i];
-  }
-  return NNACL_OK;
-}
 #ifdef __cplusplus
 }
 #endif
