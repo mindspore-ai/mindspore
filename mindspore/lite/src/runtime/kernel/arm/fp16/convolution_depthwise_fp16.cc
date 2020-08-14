@@ -139,7 +139,7 @@ int ConvolutionDepthwiseFp16CPUKernel::ReSize() {
   }
 
   ConvolutionBaseCPUKernel::Init();
-  InitSlidingParam(sliding_, conv_param_, C8NUM);
+  InitSlidingParamConvDw(sliding_, conv_param_, C8NUM);
 
   auto ret = InitBuffer();
   if (ret != 0) {
