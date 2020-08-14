@@ -47,7 +47,8 @@ class TfliteNodeParser {
   STATUS ParseTensor(const std::vector<tflite::TensorT *> &ts,
                      const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                      mindspore::lite::TensorCache *tensor_cache,
-                     int node_type);
+                     int node_type,
+                     bool isWeight);
 
   STATUS CopyTfliteTensorData(const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
                               const tflite::TensorT *tflite_tensor,
