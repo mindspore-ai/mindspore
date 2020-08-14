@@ -95,7 +95,7 @@ if __name__ == "__main__":
     # define the vae model
     vae = VAE(encoder, decoder, hidden_size=400, latent_size=20)
     # define the loss function
-    net_loss = ELBO(latent_prior='Normal', output_dis='Normal')
+    net_loss = ELBO(latent_prior='Normal', output_prior='Normal')
     # define the optimizer
     optimizer = nn.Adam(params=vae.trainable_params(), learning_rate=0.001)
     # define the training dataset

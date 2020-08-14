@@ -125,9 +125,11 @@ if __name__ == '__main__':
                                        train_dataset=ds_train,
                                        task_type='classification',
                                        num_classes=10,
-                                       epochs=5,
-                                       uncertainty_model_path=None)
+                                       epochs=1,
+                                       epi_uncer_model_path=None,
+                                       ale_uncer_model_path=None,
+                                       save_model=False)
     for eval_data in ds_eval.create_dict_iterator():
         eval_data = Tensor(eval_data['image'], mstype.float32)
-        epistemic_uncertainty = evaluation.eval_epistemic(eval_data)
-        aleatoric_uncertainty = evaluation.eval_aleatoric(eval_data)
+        epistemic_uncertainty = evaluation.eval_epistemic_uncertainty(eval_data)
+        aleatoric_uncertainty = evaluation.eval_aleatoric_uncertainty(eval_data)

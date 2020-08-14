@@ -107,7 +107,7 @@ if __name__ == "__main__":
     # define the cvae model
     cvae = ConditionalVAE(encoder, decoder, hidden_size=400, latent_size=20, num_classes=10)
     # define the loss function
-    net_loss = ELBO(latent_prior='Normal', output_dis='Normal')
+    net_loss = ELBO(latent_prior='Normal', output_prior='Normal')
     # define the optimizer
     optimizer = nn.Adam(params=cvae.trainable_params(), learning_rate=0.001)
     # define the training dataset
