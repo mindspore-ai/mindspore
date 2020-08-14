@@ -30,7 +30,7 @@ int ROIPooling(float *in_ptr, float *out_ptr, float *roi, const int *in_shape, c
   int pooled_width = param->pooledW_;
   int in_stride[DIMENSION_4D];
   int out_stride[DIMENSION_4D];
-  int roi_stride = 5;
+  const int roi_stride = 5;
   in_stride[DIMENSION_4D - 1] = 1;
   out_stride[DIMENSION_4D - 1] = 1;
   for (int i = dim - 2; i >= 0; --i) {

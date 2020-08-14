@@ -135,10 +135,10 @@ void InputTransform4x4Unit(const float *src_data, float *dst_data, int src_step,
     float t12 = src_data_12 + 2 * src_data_22;
     float t13 = src_data_13 + 2 * src_data_23;
 
-    float t20 = 2 * src_data_20 - src_data_10;
-    float t21 = 2 * src_data_21 - src_data_11;
-    float t22 = 2 * src_data_22 - src_data_12;
-    float t23 = 2 * src_data_23 - src_data_13;
+    const float t20 = 2 * src_data_20 - src_data_10;
+    const float t21 = 2 * src_data_21 - src_data_11;
+    const float t22 = 2 * src_data_22 - src_data_12;
+    const float t23 = 2 * src_data_23 - src_data_13;
 
     float t30 = src_data_30 - 0.25f * src_data_10;
     float t31 = src_data_31 - 0.25f * src_data_11;
@@ -147,17 +147,17 @@ void InputTransform4x4Unit(const float *src_data, float *dst_data, int src_step,
 
     float m00 = t00 - 4 * t02;
     float m01 = t01 + 2 * t02;
-    float m02 = 2 * t02 - t01;
+    const float m02 = 2 * t02 - t01;
     float m03 = t03 - 0.25f * t01;
 
     float m10 = t10 - 4 * t12;
     float m11 = t11 + 2 * t12;
-    float m12 = 2 * t12 - t11;
+    const float m12 = 2 * t12 - t11;
     float m13 = t13 - 0.25f * t11;
 
     float m20 = t20 - 4 * t22;
     float m21 = t21 + 2 * t22;
-    float m22 = 2 * t22 - t21;
+    const float m22 = 2 * t22 - t21;
     float m23 = t23 - 0.25f * t21;
 
     float m30 = t30 - 4 * t32;
@@ -987,236 +987,239 @@ void InputTransform8x8Unit(const float *src_data, float *dst_data, int src_step,
     float t07 = src_data_07 - 5.444444444444444445125f * src_data_27 + 6.222222222222222222223f * src_data_47 -
                 1.77777777777777778f * src_data_67;
 
-    float t10 = 1.5f * src_data_10 + 3.0f * src_data_20 - 2.1666666666666667f * src_data_30 -
+    const float t10 = 1.5f * src_data_10 + 3.0f * src_data_20 - 2.1666666666666667f * src_data_30 -
                 4.333333333333333333f * src_data_40 + 0.66666666666666667f * src_data_50 +
                 1.333333333333333f * src_data_60;
-    float t11 = 1.5f * src_data_11 + 3.0f * src_data_21 - 2.1666666666666667f * src_data_31 -
+    const float t11 = 1.5f * src_data_11 + 3.0f * src_data_21 - 2.1666666666666667f * src_data_31 -
                 4.333333333333333333f * src_data_41 + 0.66666666666666667f * src_data_51 +
                 1.333333333333333f * src_data_61;
-    float t12 = 1.5f * src_data_12 + 3.0f * src_data_22 - 2.1666666666666667f * src_data_32 -
+    const float t12 = 1.5f * src_data_12 + 3.0f * src_data_22 - 2.1666666666666667f * src_data_32 -
                 4.333333333333333333f * src_data_42 + 0.66666666666666667f * src_data_52 +
                 1.333333333333333f * src_data_62;
-    float t13 = 1.5f * src_data_13 + 3.0f * src_data_23 - 2.1666666666666667f * src_data_33 -
+    const float t13 = 1.5f * src_data_13 + 3.0f * src_data_23 - 2.1666666666666667f * src_data_33 -
                 4.333333333333333333f * src_data_43 + 0.66666666666666667f * src_data_53 +
                 1.333333333333333f * src_data_63;
-    float t14 = 1.5f * src_data_14 + 3.0f * src_data_24 - 2.1666666666666667f * src_data_34 -
+    const float t14 = 1.5f * src_data_14 + 3.0f * src_data_24 - 2.1666666666666667f * src_data_34 -
                 4.333333333333333333f * src_data_44 + 0.66666666666666667f * src_data_54 +
                 1.333333333333333f * src_data_64;
-    float t15 = 1.5f * src_data_15 + 3.0f * src_data_25 - 2.1666666666666667f * src_data_35 -
+    const float t15 = 1.5f * src_data_15 + 3.0f * src_data_25 - 2.1666666666666667f * src_data_35 -
                 4.333333333333333333f * src_data_45 + 0.66666666666666667f * src_data_55 +
                 1.333333333333333f * src_data_65;
-    float t16 = 1.5f * src_data_16 + 3.0f * src_data_26 - 2.1666666666666667f * src_data_36 -
+    const float t16 = 1.5f * src_data_16 + 3.0f * src_data_26 - 2.1666666666666667f * src_data_36 -
                 4.333333333333333333f * src_data_46 + 0.66666666666666667f * src_data_56 +
                 1.333333333333333f * src_data_66;
-    float t17 = 1.5f * src_data_17 + 3.0f * src_data_27 - 2.1666666666666667f * src_data_37 -
+    const float t17 = 1.5f * src_data_17 + 3.0f * src_data_27 - 2.1666666666666667f * src_data_37 -
                 4.333333333333333333f * src_data_47 + 0.66666666666666667f * src_data_57 +
                 1.333333333333333f * src_data_67;
 
-    float t20 = -1.5f * src_data_10 + 3.0f * src_data_20 + 2.1666666666666667f * src_data_30 -
+    const float t20 = -1.5f * src_data_10 + 3.0f * src_data_20 + 2.1666666666666667f * src_data_30 -
                 4.333333333333333333f * src_data_40 - 0.66666666666666667f * src_data_50 +
                 1.333333333333333f * src_data_60;
-    float t21 = -1.5f * src_data_11 + 3.0f * src_data_21 + 2.1666666666666667f * src_data_31 -
+    const float t21 = -1.5f * src_data_11 + 3.0f * src_data_21 + 2.1666666666666667f * src_data_31 -
                 4.333333333333333333f * src_data_41 - 0.66666666666666667f * src_data_51 +
                 1.333333333333333f * src_data_61;
-    float t22 = -1.5f * src_data_12 + 3.0f * src_data_22 + 2.1666666666666667f * src_data_32 -
+    const float t22 = -1.5f * src_data_12 + 3.0f * src_data_22 + 2.1666666666666667f * src_data_32 -
                 4.333333333333333333f * src_data_42 - 0.66666666666666667f * src_data_52 +
                 1.333333333333333f * src_data_62;
-    float t23 = -1.5f * src_data_13 + 3.0f * src_data_23 + 2.1666666666666667f * src_data_33 -
+    const float t23 = -1.5f * src_data_13 + 3.0f * src_data_23 + 2.1666666666666667f * src_data_33 -
                 4.333333333333333333f * src_data_43 - 0.66666666666666667f * src_data_53 +
                 1.333333333333333f * src_data_63;
-    float t24 = -1.5f * src_data_14 + 3.0f * src_data_24 + 2.1666666666666667f * src_data_34 -
+    const float t24 = -1.5f * src_data_14 + 3.0f * src_data_24 + 2.1666666666666667f * src_data_34 -
                 4.333333333333333333f * src_data_44 - 0.66666666666666667f * src_data_54 +
                 1.333333333333333f * src_data_64;
-    float t25 = -1.5f * src_data_15 + 3.0f * src_data_25 + 2.1666666666666667f * src_data_35 -
+    const float t25 = -1.5f * src_data_15 + 3.0f * src_data_25 + 2.1666666666666667f * src_data_35 -
                 4.333333333333333333f * src_data_45 - 0.66666666666666667f * src_data_55 +
                 1.333333333333333f * src_data_65;
-    float t26 = -1.5f * src_data_16 + 3.0f * src_data_26 + 2.1666666666666667f * src_data_36 -
+    const float t26 = -1.5f * src_data_16 + 3.0f * src_data_26 + 2.1666666666666667f * src_data_36 -
                 4.333333333333333333f * src_data_46 - 0.66666666666666667f * src_data_56 +
                 1.333333333333333f * src_data_66;
-    float t27 = -1.5f * src_data_17 + 3.0f * src_data_27 + 2.1666666666666667f * src_data_37 -
+    const float t27 = -1.5f * src_data_17 + 3.0f * src_data_27 + 2.1666666666666667f * src_data_37 -
                 4.333333333333333333f * src_data_47 - 0.66666666666666667f * src_data_57 +
                 1.333333333333333f * src_data_67;
 
-    float t30 = -0.3f * (src_data_10 + src_data_20) + 1.33333333333333f * (src_data_30 + src_data_40) -
+    const float t30 = -0.3f * (src_data_10 + src_data_20) + 1.33333333333333f * (src_data_30 + src_data_40) -
                 0.53333333333f * (src_data_50 + src_data_60);
-    float t31 = -0.3f * (src_data_11 + src_data_21) + 1.33333333333333f * (src_data_31 + src_data_41) -
+    const float t31 = -0.3f * (src_data_11 + src_data_21) + 1.33333333333333f * (src_data_31 + src_data_41) -
                 0.53333333333f * (src_data_51 + src_data_61);
-    float t32 = -0.3f * (src_data_12 + src_data_22) + 1.33333333333333f * (src_data_32 + src_data_42) -
+    const float t32 = -0.3f * (src_data_12 + src_data_22) + 1.33333333333333f * (src_data_32 + src_data_42) -
                 0.53333333333f * (src_data_52 + src_data_62);
-    float t33 = -0.3f * (src_data_13 + src_data_23) + 1.33333333333333f * (src_data_33 + src_data_43) -
+    const float t33 = -0.3f * (src_data_13 + src_data_23) + 1.33333333333333f * (src_data_33 + src_data_43) -
                 0.53333333333f * (src_data_53 + src_data_63);
-    float t34 = -0.3f * (src_data_14 + src_data_24) + 1.33333333333333f * (src_data_34 + src_data_44) -
+    const float t34 = -0.3f * (src_data_14 + src_data_24) + 1.33333333333333f * (src_data_34 + src_data_44) -
                 0.53333333333f * (src_data_54 + src_data_64);
-    float t35 = -0.3f * (src_data_15 + src_data_25) + 1.33333333333333f * (src_data_35 + src_data_45) -
+    const float t35 = -0.3f * (src_data_15 + src_data_25) + 1.33333333333333f * (src_data_35 + src_data_45) -
                 0.53333333333f * (src_data_55 + src_data_65);
-    float t36 = -0.3f * (src_data_16 + src_data_26) + 1.33333333333333f * (src_data_36 + src_data_46) -
+    const const float t36 = -0.3f * (src_data_16 + src_data_26) + 1.33333333333333f * (src_data_36 + src_data_46) -
                 0.53333333333f * (src_data_56 + src_data_66);
-    float t37 = -0.3f * (src_data_17 + src_data_27) + 1.33333333333333f * (src_data_37 + src_data_47) -
+    const const float t37 = -0.3f * (src_data_17 + src_data_27) + 1.33333333333333f * (src_data_37 + src_data_47) -
                 0.53333333333f * (src_data_57 + src_data_67);
 
-    float t40 = 0.3f * (src_data_10 - src_data_20) + 1.33333333333333f * (src_data_40 - src_data_30) +
+    const float t40 = 0.3f * (src_data_10 - src_data_20) + 1.33333333333333f * (src_data_40 - src_data_30) +
                 0.53333333333f * (src_data_50 - src_data_60);
-    float t41 = 0.3f * (src_data_11 - src_data_21) + 1.33333333333333f * (src_data_41 - src_data_31) +
+    const float t41 = 0.3f * (src_data_11 - src_data_21) + 1.33333333333333f * (src_data_41 - src_data_31) +
                 0.53333333333f * (src_data_51 - src_data_61);
-    float t42 = 0.3f * (src_data_12 - src_data_22) + 1.33333333333333f * (src_data_42 - src_data_32) +
+    const float t42 = 0.3f * (src_data_12 - src_data_22) + 1.33333333333333f * (src_data_42 - src_data_32) +
                 0.53333333333f * (src_data_52 - src_data_62);
-    float t43 = 0.3f * (src_data_13 - src_data_23) + 1.33333333333333f * (src_data_43 - src_data_33) +
+    const float t43 = 0.3f * (src_data_13 - src_data_23) + 1.33333333333333f * (src_data_43 - src_data_33) +
                 0.53333333333f * (src_data_53 - src_data_63);
-    float t44 = 0.3f * (src_data_14 - src_data_24) + 1.33333333333333f * (src_data_44 - src_data_34) +
+    const float t44 = 0.3f * (src_data_14 - src_data_24) + 1.33333333333333f * (src_data_44 - src_data_34) +
                 0.53333333333f * (src_data_54 - src_data_64);
-    float t45 = 0.3f * (src_data_15 - src_data_25) + 1.33333333333333f * (src_data_45 - src_data_35) +
+    const float t45 = 0.3f * (src_data_15 - src_data_25) + 1.33333333333333f * (src_data_45 - src_data_35) +
                 0.53333333333f * (src_data_55 - src_data_65);
-    float t46 = 0.3f * (src_data_16 - src_data_26) + 1.33333333333333f * (src_data_46 - src_data_36) +
+    const float t46 = 0.3f * (src_data_16 - src_data_26) + 1.33333333333333f * (src_data_46 - src_data_36) +
                 0.53333333333f * (src_data_56 - src_data_66);
-    float t47 = 0.3f * (src_data_17 - src_data_27) + 1.33333333333333f * (src_data_47 - src_data_37) +
+    const float t47 = 0.3f * (src_data_17 - src_data_27) + 1.33333333333333f * (src_data_47 - src_data_37) +
                 0.53333333333f * (src_data_57 - src_data_67);
 
-    float t50 = 0.0333333333f * src_data_10 + 0.02222222f * src_data_20 - 0.1666666666f * src_data_30 -
+    const float t50 = 0.0333333333f * src_data_10 + 0.02222222f * src_data_20 - 0.1666666666f * src_data_30 -
                 0.1111111111f * src_data_40 + 0.1333333f * src_data_50 + 0.0888888f * src_data_60;
-    float t51 = 0.0333333333f * src_data_11 + 0.02222222f * src_data_21 - 0.1666666666f * src_data_31 -
+    const float t51 = 0.0333333333f * src_data_11 + 0.02222222f * src_data_21 - 0.1666666666f * src_data_31 -
                 0.1111111111f * src_data_41 + 0.1333333f * src_data_51 + 0.0888888f * src_data_61;
-    float t52 = 0.0333333333f * src_data_12 + 0.02222222f * src_data_22 - 0.1666666666f * src_data_32 -
+    const float t52 = 0.0333333333f * src_data_12 + 0.02222222f * src_data_22 - 0.1666666666f * src_data_32 -
                 0.1111111111f * src_data_42 + 0.1333333f * src_data_52 + 0.0888888f * src_data_62;
-    float t53 = 0.0333333333f * src_data_13 + 0.02222222f * src_data_23 - 0.1666666666f * src_data_33 -
+    const float t53 = 0.0333333333f * src_data_13 + 0.02222222f * src_data_23 - 0.1666666666f * src_data_33 -
                 0.1111111111f * src_data_43 + 0.1333333f * src_data_53 + 0.0888888f * src_data_63;
-    float t54 = 0.0333333333f * src_data_14 + 0.02222222f * src_data_24 - 0.1666666666f * src_data_34 -
+    const float t54 = 0.0333333333f * src_data_14 + 0.02222222f * src_data_24 - 0.1666666666f * src_data_34 -
                 0.1111111111f * src_data_44 + 0.1333333f * src_data_54 + 0.0888888f * src_data_64;
-    float t55 = 0.0333333333f * src_data_15 + 0.02222222f * src_data_25 - 0.1666666666f * src_data_35 -
+    const float t55 = 0.0333333333f * src_data_15 + 0.02222222f * src_data_25 - 0.1666666666f * src_data_35 -
                 0.1111111111f * src_data_45 + 0.1333333f * src_data_55 + 0.0888888f * src_data_65;
-    float t56 = 0.0333333333f * src_data_16 + 0.02222222f * src_data_26 - 0.1666666666f * src_data_36 -
+    const float t56 = 0.0333333333f * src_data_16 + 0.02222222f * src_data_26 - 0.1666666666f * src_data_36 -
                 0.1111111111f * src_data_46 + 0.1333333f * src_data_56 + 0.0888888f * src_data_66;
-    float t57 = 0.0333333333f * src_data_17 + 0.02222222f * src_data_27 - 0.1666666666f * src_data_37 -
+    const float t57 = 0.0333333333f * src_data_17 + 0.02222222f * src_data_27 - 0.1666666666f * src_data_37 -
                 0.1111111111f * src_data_47 + 0.1333333f * src_data_57 + 0.0888888f * src_data_67;
 
-    float t60 = -0.0333333333f * src_data_10 + 0.02222222f * src_data_20 + 0.1666666666f * src_data_30 -
+    const float t60 = -0.0333333333f * src_data_10 + 0.02222222f * src_data_20 + 0.1666666666f * src_data_30 -
                 0.1111111111f * src_data_40 - 0.1333333f * src_data_50 + 0.0888888f * src_data_60;
-    float t61 = -0.0333333333f * src_data_11 + 0.02222222f * src_data_21 + 0.1666666666f * src_data_31 -
+    const float t61 = -0.0333333333f * src_data_11 + 0.02222222f * src_data_21 + 0.1666666666f * src_data_31 -
                 0.1111111111f * src_data_41 - 0.1333333f * src_data_51 + 0.0888888f * src_data_61;
-    float t62 = -0.0333333333f * src_data_12 + 0.02222222f * src_data_22 + 0.1666666666f * src_data_32 -
+    const float t62 = -0.0333333333f * src_data_12 + 0.02222222f * src_data_22 + 0.1666666666f * src_data_32 -
                 0.1111111111f * src_data_42 - 0.1333333f * src_data_52 + 0.0888888f * src_data_62;
-    float t63 = -0.0333333333f * src_data_13 + 0.02222222f * src_data_23 + 0.1666666666f * src_data_33 -
+    const float t63 = -0.0333333333f * src_data_13 + 0.02222222f * src_data_23 + 0.1666666666f * src_data_33 -
                 0.1111111111f * src_data_43 - 0.1333333f * src_data_53 + 0.0888888f * src_data_63;
-    float t64 = -0.0333333333f * src_data_14 + 0.02222222f * src_data_24 + 0.1666666666f * src_data_34 -
+    const float t64 = -0.0333333333f * src_data_14 + 0.02222222f * src_data_24 + 0.1666666666f * src_data_34 -
                 0.1111111111f * src_data_44 - 0.1333333f * src_data_54 + 0.0888888f * src_data_64;
-    float t65 = -0.0333333333f * src_data_15 + 0.02222222f * src_data_25 + 0.1666666666f * src_data_35 -
+    const float t65 = -0.0333333333f * src_data_15 + 0.02222222f * src_data_25 + 0.1666666666f * src_data_35 -
                 0.1111111111f * src_data_45 - 0.1333333f * src_data_55 + 0.0888888f * src_data_65;
-    float t66 = -0.0333333333f * src_data_16 + 0.02222222f * src_data_26 + 0.1666666666f * src_data_36 -
+    const float t66 = -0.0333333333f * src_data_16 + 0.02222222f * src_data_26 + 0.1666666666f * src_data_36 -
                 0.1111111111f * src_data_46 - 0.1333333f * src_data_56 + 0.0888888f * src_data_66;
-    float t67 = -0.0333333333f * src_data_17 + 0.02222222f * src_data_27 + 0.1666666666f * src_data_37 -
+    const float t67 = -0.0333333333f * src_data_17 + 0.02222222f * src_data_27 + 0.1666666666f * src_data_37 -
                 0.1111111111f * src_data_47 - 0.1333333f * src_data_57 + 0.0888888f * src_data_67;
 
-    float t70 = -0.5625f * src_data_10 + 3.0625f * src_data_30 - 3.5f * src_data_50 + src_data_70;
-    float t71 = -0.5625f * src_data_11 + 3.0625f * src_data_31 - 3.5f * src_data_51 + src_data_71;
-    float t72 = -0.5625f * src_data_12 + 3.0625f * src_data_32 - 3.5f * src_data_52 + src_data_72;
-    float t73 = -0.5625f * src_data_13 + 3.0625f * src_data_33 - 3.5f * src_data_53 + src_data_73;
-    float t74 = -0.5625f * src_data_14 + 3.0625f * src_data_34 - 3.5f * src_data_54 + src_data_74;
-    float t75 = -0.5625f * src_data_15 + 3.0625f * src_data_35 - 3.5f * src_data_55 + src_data_75;
-    float t76 = -0.5625f * src_data_16 + 3.0625f * src_data_36 - 3.5f * src_data_56 + src_data_76;
-    float t77 = -0.5625f * src_data_17 + 3.0625f * src_data_37 - 3.5f * src_data_57 + src_data_77;
+    const float t70 = -0.5625f * src_data_10 + 3.0625f * src_data_30 - 3.5f * src_data_50 + src_data_70;
+    const float t71 = -0.5625f * src_data_11 + 3.0625f * src_data_31 - 3.5f * src_data_51 + src_data_71;
+    const float t72 = -0.5625f * src_data_12 + 3.0625f * src_data_32 - 3.5f * src_data_52 + src_data_72;
+    const float t73 = -0.5625f * src_data_13 + 3.0625f * src_data_33 - 3.5f * src_data_53 + src_data_73;
+    const float t74 = -0.5625f * src_data_14 + 3.0625f * src_data_34 - 3.5f * src_data_54 + src_data_74;
+    const float t75 = -0.5625f * src_data_15 + 3.0625f * src_data_35 - 3.5f * src_data_55 + src_data_75;
+    const float t76 = -0.5625f * src_data_16 + 3.0625f * src_data_36 - 3.5f * src_data_56 + src_data_76;
+    const float t77 = -0.5625f * src_data_17 + 3.0625f * src_data_37 - 3.5f * src_data_57 + src_data_77;
 
-    float m00 = t00 - 5.444444444444444445125f * t02 + 6.222222222222222222223f * t04 - 1.77777777777777778f * t06;
-    float m01 = 1.5f * t01 + 3.0f * t02 - 2.1666666666666667f * t03 - 4.333333333333333333f * t04 +
+    const float m00 = t00 - 5.444444444444444445125f * t02 + 6.222222222222222222223f * t04 -
+                      1.77777777777777778f * t06;
+    const float m01 = 1.5f * t01 + 3.0f * t02 - 2.1666666666666667f * t03 - 4.333333333333333333f * t04 +
                 0.66666666666666667f * t05 + 1.333333333333333f * t06;
-    float m02 = -1.5f * t01 + 3.0f * t02 + 2.1666666666666667f * t03 - 4.333333333333333333f * t04 -
+    const float m02 = -1.5f * t01 + 3.0f * t02 + 2.1666666666666667f * t03 - 4.333333333333333333f * t04 -
                 0.66666666666666667f * t05 + 1.333333333333333f * t06;
-    float m03 = -0.3f * (t01 + t02) + 1.33333333333333f * (t03 + t04) - 0.53333333333f * (t05 + t06);
-    float m04 = 0.3f * (t01 - t02) + 1.33333333333333f * (t04 - t03) + 0.53333333333f * (t05 - t06);
-    float m05 = 0.0333333333f * t01 + 0.02222222f * t02 - 0.1666666666f * t03 - 0.1111111111f * t04 + 0.1333333f * t05 +
-                0.0888888f * t06;
-    float m06 = -0.0333333333f * t01 + 0.02222222f * t02 + 0.1666666666f * t03 - 0.1111111111f * t04 -
+    const float m03 = -0.3f * (t01 + t02) + 1.33333333333333f * (t03 + t04) - 0.53333333333f * (t05 + t06);
+    const float m04 = 0.3f * (t01 - t02) + 1.33333333333333f * (t04 - t03) + 0.53333333333f * (t05 - t06);
+    const float m05 = 0.0333333333f * t01 + 0.02222222f * t02 - 0.1666666666f * t03 - 0.1111111111f * t04 +
+                      0.1333333f * t05 + 0.0888888f * t06;
+    const float m06 = -0.0333333333f * t01 + 0.02222222f * t02 + 0.1666666666f * t03 - 0.1111111111f * t04 -
                 0.1333333f * t05 + 0.0888888f * t06;
-    float m07 = -0.5625f * t01 + 3.0625f * t03 - 3.5f * t05 + t07;
+    const float m07 = -0.5625f * t01 + 3.0625f * t03 - 3.5f * t05 + t07;
 
     float m10 = t10 - 5.444444444444444445125f * t12 + 6.222222222222222222223f * t14 - 1.77777777777777778f * t16;
-    float m11 = 1.5f * t11 + 3.0f * t12 - 2.1666666666666667f * t13 - 4.333333333333333333f * t14 +
+    const float m11 = 1.5f * t11 + 3.0f * t12 - 2.1666666666666667f * t13 - 4.333333333333333333f * t14 +
                 0.66666666666666667f * t15 + 1.333333333333333f * t16;
-    float m12 = -1.5f * t11 + 3.0f * t12 + 2.1666666666666667f * t13 - 4.333333333333333333f * t14 -
+    const float m12 = -1.5f * t11 + 3.0f * t12 + 2.1666666666666667f * t13 - 4.333333333333333333f * t14 -
                 0.66666666666666667f * t15 + 1.333333333333333f * t16;
-    float m13 = -0.3f * (t11 + t12) + 1.33333333333333f * (t13 + t14) - 0.53333333333f * (t15 + t16);
-    float m14 = 0.3f * (t11 - t12) + 1.33333333333333f * (t14 - t13) + 0.53333333333f * (t15 - t16);
-    float m15 = 0.0333333333f * t11 + 0.02222222f * t12 - 0.1666666666f * t13 - 0.1111111111f * t14 + 0.1333333f * t15 +
-                0.0888888f * t16;
-    float m16 = -0.0333333333f * t11 + 0.02222222f * t12 + 0.1666666666f * t13 - 0.1111111111f * t14 -
+    const float m13 = -0.3f * (t11 + t12) + 1.33333333333333f * (t13 + t14) - 0.53333333333f * (t15 + t16);
+    const float m14 = 0.3f * (t11 - t12) + 1.33333333333333f * (t14 - t13) + 0.53333333333f * (t15 - t16);
+    const float m15 = 0.0333333333f * t11 + 0.02222222f * t12 - 0.1666666666f * t13 - 0.1111111111f * t14 +
+                      0.1333333f * t15 + 0.0888888f * t16;
+    const float m16 = -0.0333333333f * t11 + 0.02222222f * t12 + 0.1666666666f * t13 - 0.1111111111f * t14 -
                 0.1333333f * t15 + 0.0888888f * t16;
-    float m17 = -0.5625f * t11 + 3.0625f * t13 - 3.5f * t15 + t17;
+    const float m17 = -0.5625f * t11 + 3.0625f * t13 - 3.5f * t15 + t17;
 
-    float m20 = t20 - 5.444444444444444445125f * t22 + 6.222222222222222222223f * t24 - 1.77777777777777778f * t26;
-    float m21 = 1.5f * t21 + 3.0f * t22 - 2.1666666666666667f * t23 - 4.333333333333333333f * t24 +
+    const float m20 = t20 - 5.444444444444444445125f * t22 + 6.222222222222222222223f * t24 -
+                      1.77777777777777778f * t26;
+    const float m21 = 1.5f * t21 + 3.0f * t22 - 2.1666666666666667f * t23 - 4.333333333333333333f * t24 +
                 0.66666666666666667f * t25 + 1.333333333333333f * t26;
-    float m22 = -1.5f * t21 + 3.0f * t22 + 2.1666666666666667f * t23 - 4.333333333333333333f * t24 -
+    const float m22 = -1.5f * t21 + 3.0f * t22 + 2.1666666666666667f * t23 - 4.333333333333333333f * t24 -
                 0.66666666666666667f * t25 + 1.333333333333333f * t26;
-    float m23 = -0.3f * (t21 + t22) + 1.33333333333333f * (t23 + t24) - 0.53333333333f * (t25 + t26);
-    float m24 = 0.3f * (t21 - t22) + 1.33333333333333f * (t24 - t23) + 0.53333333333f * (t25 - t26);
-    float m25 = 0.0333333333f * t21 + 0.02222222f * t22 - 0.1666666666f * t23 - 0.1111111111f * t24 + 0.1333333f * t25 +
-                0.0888888f * t26;
-    float m26 = -0.0333333333f * t21 + 0.02222222f * t22 + 0.1666666666f * t23 - 0.1111111111f * t24 -
+    const float m23 = -0.3f * (t21 + t22) + 1.33333333333333f * (t23 + t24) - 0.53333333333f * (t25 + t26);
+    const float m24 = 0.3f * (t21 - t22) + 1.33333333333333f * (t24 - t23) + 0.53333333333f * (t25 - t26);
+    const float m25 = 0.0333333333f * t21 + 0.02222222f * t22 - 0.1666666666f * t23 - 0.1111111111f * t24 +
+                      0.1333333f * t25 + 0.0888888f * t26;
+    const float m26 = -0.0333333333f * t21 + 0.02222222f * t22 + 0.1666666666f * t23 - 0.1111111111f * t24 -
                 0.1333333f * t25 + 0.0888888f * t26;
-    float m27 = -0.5625f * t21 + 3.0625f * t23 - 3.5f * t25 + t27;
+    const float m27 = -0.5625f * t21 + 3.0625f * t23 - 3.5f * t25 + t27;
 
     float m30 = t30 - 5.444444444444444445125f * t32 + 6.222222222222222222223f * t34 - 1.77777777777777778f * t36;
-    float m31 = 1.5f * t31 + 3.0f * t32 - 2.1666666666666667f * t33 - 4.333333333333333333f * t34 +
+    const float m31 = 1.5f * t31 + 3.0f * t32 - 2.1666666666666667f * t33 - 4.333333333333333333f * t34 +
                 0.66666666666666667f * t35 + 1.333333333333333f * t36;
-    float m32 = -1.5f * t31 + 3.0f * t32 + 2.1666666666666667f * t33 - 4.333333333333333333f * t34 -
+    const float m32 = -1.5f * t31 + 3.0f * t32 + 2.1666666666666667f * t33 - 4.333333333333333333f * t34 -
                 0.66666666666666667f * t35 + 1.333333333333333f * t36;
-    float m33 = -0.3f * (t31 + t32) + 1.33333333333333f * (t33 + t34) - 0.53333333333f * (t35 + t36);
-    float m34 = 0.3f * (t31 - t32) + 1.33333333333333f * (t34 - t33) + 0.53333333333f * (t35 - t36);
-    float m35 = 0.0333333333f * t31 + 0.02222222f * t32 - 0.1666666666f * t33 - 0.1111111111f * t34 + 0.1333333f * t35 +
-                0.0888888f * t36;
-    float m36 = -0.0333333333f * t31 + 0.02222222f * t32 + 0.1666666666f * t33 - 0.1111111111f * t34 -
+    const float m33 = -0.3f * (t31 + t32) + 1.33333333333333f * (t33 + t34) - 0.53333333333f * (t35 + t36);
+    const float m34 = 0.3f * (t31 - t32) + 1.33333333333333f * (t34 - t33) + 0.53333333333f * (t35 - t36);
+    const float m35 = 0.0333333333f * t31 + 0.02222222f * t32 - 0.1666666666f * t33 - 0.1111111111f * t34 +
+                      0.1333333f * t35 + 0.0888888f * t36;
+    const float m36 = -0.0333333333f * t31 + 0.02222222f * t32 + 0.1666666666f * t33 - 0.1111111111f * t34 -
                 0.1333333f * t35 + 0.0888888f * t36;
-    float m37 = -0.5625f * t31 + 3.0625f * t33 - 3.5f * t35 + t37;
+    const float m37 = -0.5625f * t31 + 3.0625f * t33 - 3.5f * t35 + t37;
 
-    float m40 = t40 - 5.444444444444444445125f * t42 + 6.222222222222222222223f * t44 - 1.77777777777777778f * t46;
-    float m41 = 1.5f * t41 + 3.0f * t42 - 2.1666666666666667f * t43 - 4.333333333333333333f * t44 +
+    const float m40 = t40 - 5.444444444444444445125f * t42 + 6.222222222222222222223f * t44 -
+                      1.77777777777777778f * t46;
+    const float m41 = 1.5f * t41 + 3.0f * t42 - 2.1666666666666667f * t43 - 4.333333333333333333f * t44 +
                 0.66666666666666667f * t45 + 1.333333333333333f * t46;
-    float m42 = -1.5f * t41 + 3.0f * t42 + 2.1666666666666667f * t43 - 4.333333333333333333f * t44 -
+    const float m42 = -1.5f * t41 + 3.0f * t42 + 2.1666666666666667f * t43 - 4.333333333333333333f * t44 -
                 0.66666666666666667f * t45 + 1.333333333333333f * t46;
-    float m43 = -0.3f * (t41 + t42) + 1.33333333333333f * (t43 + t44) - 0.53333333333f * (t45 + t46);
-    float m44 = 0.3f * (t41 - t42) + 1.33333333333333f * (t44 - t43) + 0.53333333333f * (t45 - t46);
-    float m45 = 0.0333333333f * t41 + 0.02222222f * t42 - 0.1666666666f * t43 - 0.1111111111f * t44 + 0.1333333f * t45 +
-                0.0888888f * t46;
-    float m46 = -0.0333333333f * t41 + 0.02222222f * t42 + 0.1666666666f * t43 - 0.1111111111f * t44 -
+    const float m43 = -0.3f * (t41 + t42) + 1.33333333333333f * (t43 + t44) - 0.53333333333f * (t45 + t46);
+    const float m44 = 0.3f * (t41 - t42) + 1.33333333333333f * (t44 - t43) + 0.53333333333f * (t45 - t46);
+    const float m45 = 0.0333333333f * t41 + 0.02222222f * t42 - 0.1666666666f * t43 - 0.1111111111f * t44 +
+                      0.1333333f * t45 + 0.0888888f * t46;
+    const float m46 = -0.0333333333f * t41 + 0.02222222f * t42 + 0.1666666666f * t43 - 0.1111111111f * t44 -
                 0.1333333f * t45 + 0.0888888f * t46;
-    float m47 = -0.5625f * t41 + 3.0625f * t43 - 3.5f * t45 + t47;
+    const float m47 = -0.5625f * t41 + 3.0625f * t43 - 3.5f * t45 + t47;
 
     float m50 = t50 - 5.444444444444444445125f * t52 + 6.222222222222222222223f * t54 - 1.77777777777777778f * t56;
-    float m51 = 1.5f * t51 + 3.0f * t52 - 2.1666666666666667f * t53 - 4.333333333333333333f * t54 +
+    const float m51 = 1.5f * t51 + 3.0f * t52 - 2.1666666666666667f * t53 - 4.333333333333333333f * t54 +
                 0.66666666666666667f * t55 + 1.333333333333333f * t56;
-    float m52 = -1.5f * t51 + 3.0f * t52 + 2.1666666666666667f * t53 - 4.333333333333333333f * t54 -
+    const float m52 = -1.5f * t51 + 3.0f * t52 + 2.1666666666666667f * t53 - 4.333333333333333333f * t54 -
                 0.66666666666666667f * t55 + 1.333333333333333f * t56;
-    float m53 = -0.3f * (t51 + t52) + 1.33333333333333f * (t53 + t54) - 0.53333333333f * (t55 + t56);
-    float m54 = 0.3f * (t51 - t52) + 1.33333333333333f * (t54 - t53) + 0.53333333333f * (t55 - t56);
-    float m55 = 0.0333333333f * t51 + 0.02222222f * t52 - 0.1666666666f * t53 - 0.1111111111f * t54 + 0.1333333f * t55 +
-                0.0888888f * t56;
-    float m56 = -0.0333333333f * t51 + 0.02222222f * t52 + 0.1666666666f * t53 - 0.1111111111f * t54 -
+    const float m53 = -0.3f * (t51 + t52) + 1.33333333333333f * (t53 + t54) - 0.53333333333f * (t55 + t56);
+    const float m54 = 0.3f * (t51 - t52) + 1.33333333333333f * (t54 - t53) + 0.53333333333f * (t55 - t56);
+    const float m55 = 0.0333333333f * t51 + 0.02222222f * t52 - 0.1666666666f * t53 - 0.1111111111f * t54 +
+                      0.1333333f * t55 + 0.0888888f * t56;
+    const float m56 = -0.0333333333f * t51 + 0.02222222f * t52 + 0.1666666666f * t53 - 0.1111111111f * t54 -
                 0.1333333f * t55 + 0.0888888f * t56;
-    float m57 = -0.5625f * t51 + 3.0625f * t53 - 3.5f * t55 + t57;
+    const float m57 = -0.5625f * t51 + 3.0625f * t53 - 3.5f * t55 + t57;
 
     float m60 = t60 - 5.444444444444444445125f * t62 + 6.222222222222222222223f * t64 - 1.77777777777777778f * t66;
-    float m61 = 1.5f * t61 + 3.0f * t62 - 2.1666666666666667f * t63 - 4.333333333333333333f * t64 +
+    const float m61 = 1.5f * t61 + 3.0f * t62 - 2.1666666666666667f * t63 - 4.333333333333333333f * t64 +
                 0.66666666666666667f * t65 + 1.333333333333333f * t66;
-    float m62 = -1.5f * t61 + 3.0f * t62 + 2.1666666666666667f * t63 - 4.333333333333333333f * t64 -
+    const float m62 = -1.5f * t61 + 3.0f * t62 + 2.1666666666666667f * t63 - 4.333333333333333333f * t64 -
                 0.66666666666666667f * t65 + 1.333333333333333f * t66;
-    float m63 = -0.3f * (t61 + t62) + 1.33333333333333f * (t63 + t64) - 0.53333333333f * (t65 + t66);
-    float m64 = 0.3f * (t61 - t62) + 1.33333333333333f * (t64 - t63) + 0.53333333333f * (t65 - t66);
-    float m65 = 0.0333333333f * t61 + 0.02222222f * t62 - 0.1666666666f * t63 - 0.1111111111f * t64 + 0.1333333f * t65 +
-                0.0888888f * t66;
-    float m66 = -0.0333333333f * t61 + 0.02222222f * t62 + 0.1666666666f * t63 - 0.1111111111f * t64 -
+    const float m63 = -0.3f * (t61 + t62) + 1.33333333333333f * (t63 + t64) - 0.53333333333f * (t65 + t66);
+    const float m64 = 0.3f * (t61 - t62) + 1.33333333333333f * (t64 - t63) + 0.53333333333f * (t65 - t66);
+    const float m65 = 0.0333333333f * t61 + 0.02222222f * t62 - 0.1666666666f * t63 - 0.1111111111f * t64 +
+                      0.1333333f * t65 + 0.0888888f * t66;
+    const float m66 = -0.0333333333f * t61 + 0.02222222f * t62 + 0.1666666666f * t63 - 0.1111111111f * t64 -
                 0.1333333f * t65 + 0.0888888f * t66;
-    float m67 = -0.5625f * t61 + 3.0625f * t63 - 3.5f * t65 + t67;
+    const float m67 = -0.5625f * t61 + 3.0625f * t63 - 3.5f * t65 + t67;
 
     float m70 = t70 - 5.444444444444444445125f * t72 + 6.222222222222222222223f * t74 - 1.77777777777777778f * t76;
-    float m71 = 1.5f * t71 + 3.0f * t72 - 2.1666666666666667f * t73 - 4.333333333333333333f * t74 +
+    const float m71 = 1.5f * t71 + 3.0f * t72 - 2.1666666666666667f * t73 - 4.333333333333333333f * t74 +
                 0.66666666666666667f * t75 + 1.333333333333333f * t76;
-    float m72 = -1.5f * t71 + 3.0f * t72 + 2.1666666666666667f * t73 - 4.333333333333333333f * t74 -
+    const float m72 = -1.5f * t71 + 3.0f * t72 + 2.1666666666666667f * t73 - 4.333333333333333333f * t74 -
                 0.66666666666666667f * t75 + 1.333333333333333f * t76;
-    float m73 = -0.3f * (t71 + t72) + 1.33333333333333f * (t73 + t74) - 0.53333333333f * (t75 + t76);
-    float m74 = 0.3f * (t71 - t72) + 1.33333333333333f * (t74 - t73) + 0.53333333333f * (t75 - t76);
-    float m75 = 0.0333333333f * t71 + 0.02222222f * t72 - 0.1666666666f * t73 - 0.1111111111f * t74 + 0.1333333f * t75 +
-                0.0888888f * t76;
-    float m76 = -0.0333333333f * t71 + 0.02222222f * t72 + 0.1666666666f * t73 - 0.1111111111f * t74 -
+    const float m73 = -0.3f * (t71 + t72) + 1.33333333333333f * (t73 + t74) - 0.53333333333f * (t75 + t76);
+    const float m74 = 0.3f * (t71 - t72) + 1.33333333333333f * (t74 - t73) + 0.53333333333f * (t75 - t76);
+    const float m75 = 0.0333333333f * t71 + 0.02222222f * t72 - 0.1666666666f * t73 - 0.1111111111f * t74 +
+                      0.1333333f * t75 + 0.0888888f * t76;
+    const float m76 = -0.0333333333f * t71 + 0.02222222f * t72 + 0.1666666666f * t73 - 0.1111111111f * t74 -
                 0.1333333f * t75 + 0.0888888f * t76;
-    float m77 = -0.5625f * t71 + 3.0625f * t73 - 3.5f * t75 + t77;
+    const float m77 = -0.5625f * t71 + 3.0625f * t73 - 3.5f * t75 + t77;
 
     (dst_data + i)[0] = m00;
     (dst_data + i + dst_step)[0] = m01;
@@ -1357,15 +1360,15 @@ void OutputTransform4x2Unit(const float *src_data, float *dst_data, const float 
     float t02 = src_data_02 + src_data_12 + src_data_22;
     float t03 = src_data_03 + src_data_13 + src_data_23;
 
-    float t10 = 0.5f * (src_data_10 - src_data_20) + src_data_30;
-    float t11 = 0.5f * (src_data_11 - src_data_21) + src_data_31;
-    float t12 = 0.5f * (src_data_12 - src_data_22) + src_data_32;
-    float t13 = 0.5f * (src_data_13 - src_data_23) + src_data_33;
+    const float t10 = 0.5f * (src_data_10 - src_data_20) + src_data_30;
+    const float t11 = 0.5f * (src_data_11 - src_data_21) + src_data_31;
+    const float t12 = 0.5f * (src_data_12 - src_data_22) + src_data_32;
+    const float t13 = 0.5f * (src_data_13 - src_data_23) + src_data_33;
 
     float m00 = t00 + t01 + t02 + bias_data[i];
-    float m01 = 0.5f * (t01 - t02) + t03 + bias_data[i];
+    const float m01 = 0.5f * (t01 - t02) + t03 + bias_data[i];
     float m10 = t10 + t11 + t12 + bias_data[i];
-    float m11 = 0.5f * (t11 - t12) + t13 + bias_data[i];
+    const float m11 = 0.5f * (t11 - t12) + t13 + bias_data[i];
 
     (dst_data + i)[0] = m00;
     (dst_data + i + C4NUM)[0] = m01;
@@ -1454,27 +1457,27 @@ void OutputTransform4x3Unit(const float *src_data, float *dst_data, const float 
     float t02 = src_data_02 + src_data_12 + src_data_22;
     float t03 = src_data_03 + src_data_13 + src_data_23;
 
-    float t10 = 0.5f * (src_data_10 - src_data_20);
-    float t11 = 0.5f * (src_data_11 - src_data_21);
-    float t12 = 0.5f * (src_data_12 - src_data_22);
-    float t13 = 0.5f * (src_data_13 - src_data_23);
+    const float t10 = 0.5f * (src_data_10 - src_data_20);
+    const float t11 = 0.5f * (src_data_11 - src_data_21);
+    const float t12 = 0.5f * (src_data_12 - src_data_22);
+    const const float t13 = 0.5f * (src_data_13 - src_data_23);
 
-    float t20 = 0.25f * (src_data_10 + src_data_20) + src_data_30;
-    float t21 = 0.25f * (src_data_11 + src_data_21) + src_data_31;
-    float t22 = 0.25f * (src_data_12 + src_data_22) + src_data_32;
-    float t23 = 0.25f * (src_data_13 + src_data_23) + src_data_33;
+    const float t20 = 0.25f * (src_data_10 + src_data_20) + src_data_30;
+    const float t21 = 0.25f * (src_data_11 + src_data_21) + src_data_31;
+    const float t22 = 0.25f * (src_data_12 + src_data_22) + src_data_32;
+    const float t23 = 0.25f * (src_data_13 + src_data_23) + src_data_33;
 
     float m00 = t00 + t01 + t02 + bias_data[i];
-    float m01 = 0.5f * (t01 - t02) + bias_data[i];
-    float m02 = 0.25f * (t01 + t02) + t03 + bias_data[i];
+    const float m01 = 0.5f * (t01 - t02) + bias_data[i];
+    const float m02 = 0.25f * (t01 + t02) + t03 + bias_data[i];
 
     float m10 = t10 + t11 + t12 + bias_data[i];
-    float m11 = 0.5f * (t11 - t12) + bias_data[i];
-    float m12 = 0.25f * (t11 + t12) + t13 + bias_data[i];
+    const float m11 = 0.5f * (t11 - t12) + bias_data[i];
+    const float m12 = 0.25f * (t11 + t12) + t13 + bias_data[i];
 
     float m20 = t20 + t21 + t22 + bias_data[i];
-    float m21 = 0.5f * (t21 - t22) + bias_data[i];
-    float m22 = 0.25f * (t21 + t22) + t23 + bias_data[i];
+    const float m21 = 0.5f * (t21 - t22) + bias_data[i];
+    const float m22 = 0.25f * (t21 + t22) + t23 + bias_data[i];
 
     (dst_data + i)[0] = m00;
     (dst_data + i + C4NUM)[0] = m01;
@@ -1760,14 +1763,14 @@ void OutputTransform8x2Unit(const float *src_data, float *dst_data, const float 
     float t06 = src_data_06 + src_data_16 + src_data_26 + src_data_36 + src_data_46 + src_data_56 + src_data_66;
     float t07 = src_data_07 + src_data_17 + src_data_27 + src_data_37 + src_data_47 + src_data_57 + src_data_67;
 
-    float t10 = 0.5f * d01 + d11 + 1.5f * d21 + src_data_70;
-    float t11 = 0.5f * d02 + d12 + 1.5f * d22 + src_data_71;
-    float t12 = 0.5f * d03 + d13 + 1.5f * d23 + src_data_72;
-    float t13 = 0.5f * d04 + d14 + 1.5f * d24 + src_data_73;
-    float t14 = 0.5f * d05 + d15 + 1.5f * d25 + src_data_74;
-    float t15 = 0.5f * d06 + d16 + 1.5f * d26 + src_data_75;
-    float t16 = 0.5f * d07 + d17 + 1.5f * d27 + src_data_76;
-    float t17 = 0.5f * d08 + d18 + 1.5f * d28 + src_data_77;
+    const float t10 = 0.5f * d01 + d11 + 1.5f * d21 + src_data_70;
+    const float t11 = 0.5f * d02 + d12 + 1.5f * d22 + src_data_71;
+    const float t12 = 0.5f * d03 + d13 + 1.5f * d23 + src_data_72;
+    const float t13 = 0.5f * d04 + d14 + 1.5f * d24 + src_data_73;
+    const float t14 = 0.5f * d05 + d15 + 1.5f * d25 + src_data_74;
+    const float t15 = 0.5f * d06 + d16 + 1.5f * d26 + src_data_75;
+    const float t16 = 0.5f * d07 + d17 + 1.5f * d27 + src_data_76;
+    const float t17 = 0.5f * d08 + d18 + 1.5f * d28 + src_data_77;
 
     float s11 = t01 - t02;
     float s12 = t11 - t12;
@@ -1777,9 +1780,9 @@ void OutputTransform8x2Unit(const float *src_data, float *dst_data, const float 
     float s32 = t15 - t16;
 
     float m00 = t00 + t01 + t02 + t03 + t04 + t05 + t06;
-    float m01 = 0.5f * s11 + s21 + 1.5f * s31 + t07;
+    const float m01 = 0.5f * s11 + s21 + 1.5f * s31 + t07;
     float m10 = t10 + t11 + t12 + t13 + t14 + t15 + t16;
-    float m11 = 0.5f * s12 + s22 + 1.5f * s32 + t17;
+    const float m11 = 0.5f * s12 + s22 + 1.5f * s32 + t17;
 
     (dst_data + i)[0] = m00 + bias_data[i];
     (dst_data + i + C4NUM)[0] = m01 + bias_data[i];
@@ -2148,23 +2151,23 @@ void OutputTransform8x3Unit(const float *src_data, float *dst_data, const float 
     float t06 = src_data_06 + src_data_16 + src_data_26 + src_data_36 + src_data_46 + src_data_56 + src_data_66;
     float t07 = src_data_07 + src_data_17 + src_data_27 + src_data_37 + src_data_47 + src_data_57 + src_data_67;
 
-    float t10 = 0.5f * d01 + d11 + 1.5f * d21;
-    float t11 = 0.5f * d02 + d12 + 1.5f * d22;
-    float t12 = 0.5f * d03 + d13 + 1.5f * d23;
-    float t13 = 0.5f * d04 + d14 + 1.5f * d24;
-    float t14 = 0.5f * d05 + d15 + 1.5f * d25;
-    float t15 = 0.5f * d06 + d16 + 1.5f * d26;
-    float t16 = 0.5f * d07 + d17 + 1.5f * d27;
-    float t17 = 0.5f * d08 + d18 + 1.5f * d28;
+    const float t10 = 0.5f * d01 + d11 + 1.5f * d21;
+    const float t11 = 0.5f * d02 + d12 + 1.5f * d22;
+    const float t12 = 0.5f * d03 + d13 + 1.5f * d23;
+    const float t13 = 0.5f * d04 + d14 + 1.5f * d24;
+    const float t14 = 0.5f * d05 + d15 + 1.5f * d25;
+    const float t15 = 0.5f * d06 + d16 + 1.5f * d26;
+    const float t16 = 0.5f * d07 + d17 + 1.5f * d27;
+    const float t17 = 0.5f * d08 + d18 + 1.5f * d28;
 
-    float t20 = 0.25f * d31 + d41 + 2.25f * d51 + src_data_70;
-    float t21 = 0.25f * d32 + d42 + 2.25f * d52 + src_data_71;
-    float t22 = 0.25f * d33 + d43 + 2.25f * d53 + src_data_72;
-    float t23 = 0.25f * d34 + d44 + 2.25f * d54 + src_data_73;
-    float t24 = 0.25f * d35 + d45 + 2.25f * d55 + src_data_74;
-    float t25 = 0.25f * d36 + d46 + 2.25f * d56 + src_data_75;
-    float t26 = 0.25f * d37 + d47 + 2.25f * d57 + src_data_76;
-    float t27 = 0.25f * d38 + d48 + 2.25f * d58 + src_data_77;
+    const float t20 = 0.25f * d31 + d41 + 2.25f * d51 + src_data_70;
+    const float t21 = 0.25f * d32 + d42 + 2.25f * d52 + src_data_71;
+    const float t22 = 0.25f * d33 + d43 + 2.25f * d53 + src_data_72;
+    const float t23 = 0.25f * d34 + d44 + 2.25f * d54 + src_data_73;
+    const float t24 = 0.25f * d35 + d45 + 2.25f * d55 + src_data_74;
+    const float t25 = 0.25f * d36 + d46 + 2.25f * d56 + src_data_75;
+    const float t26 = 0.25f * d37 + d47 + 2.25f * d57 + src_data_76;
+    const float t27 = 0.25f * d38 + d48 + 2.25f * d58 + src_data_77;
 
     float s11 = t01 - t02;
     float s12 = t11 - t12;
@@ -2191,16 +2194,16 @@ void OutputTransform8x3Unit(const float *src_data, float *dst_data, const float 
     float s63 = t25 + t26;
 
     float m00 = t00 + t01 + t02 + t03 + t04 + t05 + t06;
-    float m01 = 0.5f * s11 + s21 + 1.5f * s31;
-    float m02 = 0.25f * s41 + s51 + 2.25f * s61 + t07;
+    const float m01 = 0.5f * s11 + s21 + 1.5f * s31;
+    const float m02 = 0.25f * s41 + s51 + 2.25f * s61 + t07;
 
     float m10 = t10 + t11 + t12 + t13 + t14 + t15 + t16;
-    float m11 = 0.5f * s12 + s22 + 1.5f * s32;
-    float m12 = 0.25f * s42 + s52 + 2.25f * s62 + t17;
+    const float m11 = 0.5f * s12 + s22 + 1.5f * s32;
+    const float m12 = 0.25f * s42 + s52 + 2.25f * s62 + t17;
 
     float m20 = t20 + t21 + t22 + t23 + t24 + t25 + t26;
-    float m21 = 0.5f * s13 + s23 + 1.5f * s33;
-    float m22 = 0.25f * s43 + s53 + 2.25f * s63 + t27;
+    const float m21 = 0.5f * s13 + s23 + 1.5f * s33;
+    const float m22 = 0.25f * s43 + s53 + 2.25f * s63 + t27;
 
     (dst_data + i)[0] = m00 + bias_data[i];
     (dst_data + i + C4NUM)[0] = m01 + bias_data[i];
@@ -2607,32 +2610,32 @@ void OutputTransform8x4Unit(const float *src_data, float *dst_data, const float 
     float t06 = src_data_06 + src_data_16 + src_data_26 + src_data_36 + src_data_46 + src_data_56 + src_data_66;
     float t07 = src_data_07 + src_data_17 + src_data_27 + src_data_37 + src_data_47 + src_data_57 + src_data_67;
 
-    float t10 = 0.5f * d01 + d11 + 1.5f * d21;
-    float t11 = 0.5f * d02 + d12 + 1.5f * d22;
-    float t12 = 0.5f * d03 + d13 + 1.5f * d23;
-    float t13 = 0.5f * d04 + d14 + 1.5f * d24;
-    float t14 = 0.5f * d05 + d15 + 1.5f * d25;
-    float t15 = 0.5f * d06 + d16 + 1.5f * d26;
-    float t16 = 0.5f * d07 + d17 + 1.5f * d27;
-    float t17 = 0.5f * d08 + d18 + 1.5f * d28;
+    const float t10 = 0.5f * d01 + d11 + 1.5f * d21;
+    const float t11 = 0.5f * d02 + d12 + 1.5f * d22;
+    const float t12 = 0.5f * d03 + d13 + 1.5f * d23;
+    const float t13 = 0.5f * d04 + d14 + 1.5f * d24;
+    const float t14 = 0.5f * d05 + d15 + 1.5f * d25;
+    const float t15 = 0.5f * d06 + d16 + 1.5f * d26;
+    const float t16 = 0.5f * d07 + d17 + 1.5f * d27;
+    const float t17 = 0.5f * d08 + d18 + 1.5f * d28;
 
-    float t20 = 0.25f * d31 + d41 + 2.25f * d51;
-    float t21 = 0.25f * d32 + d42 + 2.25f * d52;
-    float t22 = 0.25f * d33 + d43 + 2.25f * d53;
-    float t23 = 0.25f * d34 + d44 + 2.25f * d54;
-    float t24 = 0.25f * d35 + d45 + 2.25f * d55;
-    float t25 = 0.25f * d36 + d46 + 2.25f * d56;
-    float t26 = 0.25f * d37 + d47 + 2.25f * d57;
-    float t27 = 0.25f * d38 + d48 + 2.25f * d58;
+    const float t20 = 0.25f * d31 + d41 + 2.25f * d51;
+    const float t21 = 0.25f * d32 + d42 + 2.25f * d52;
+    const float t22 = 0.25f * d33 + d43 + 2.25f * d53;
+    const float t23 = 0.25f * d34 + d44 + 2.25f * d54;
+    const float t24 = 0.25f * d35 + d45 + 2.25f * d55;
+    const float t25 = 0.25f * d36 + d46 + 2.25f * d56;
+    const float t26 = 0.25f * d37 + d47 + 2.25f * d57;
+    const const float t27 = 0.25f * d38 + d48 + 2.25f * d58;
 
-    float t30 = 0.125f * d01 + d11 + 3.375f * d21 + src_data_70;
-    float t31 = 0.125f * d02 + d12 + 3.375f * d22 + src_data_71;
-    float t32 = 0.125f * d03 + d13 + 3.375f * d23 + src_data_72;
-    float t33 = 0.125f * d04 + d14 + 3.375f * d24 + src_data_73;
-    float t34 = 0.125f * d05 + d15 + 3.375f * d25 + src_data_74;
-    float t35 = 0.125f * d06 + d16 + 3.375f * d26 + src_data_75;
-    float t36 = 0.125f * d07 + d17 + 3.375f * d27 + src_data_76;
-    float t37 = 0.125f * d08 + d18 + 3.375f * d28 + src_data_77;
+    const float t30 = 0.125f * d01 + d11 + 3.375f * d21 + src_data_70;
+    const float t31 = 0.125f * d02 + d12 + 3.375f * d22 + src_data_71;
+    const float t32 = 0.125f * d03 + d13 + 3.375f * d23 + src_data_72;
+    const float t33 = 0.125f * d04 + d14 + 3.375f * d24 + src_data_73;
+    const float t34 = 0.125f * d05 + d15 + 3.375f * d25 + src_data_74;
+    const float t35 = 0.125f * d06 + d16 + 3.375f * d26 + src_data_75;
+    const float t36 = 0.125f * d07 + d17 + 3.375f * d27 + src_data_76;
+    const float t37 = 0.125f * d08 + d18 + 3.375f * d28 + src_data_77;
 
     float s11 = t01 - t02;
     float s12 = t11 - t12;
@@ -2665,24 +2668,24 @@ void OutputTransform8x4Unit(const float *src_data, float *dst_data, const float 
     float s64 = t35 + t36;
 
     float m00 = t00 + t01 + t02 + t03 + t04 + t05 + t06;
-    float m01 = 0.5f * s11 + s21 + 1.5f * s31;
-    float m02 = 0.25f * s41 + s51 + 2.25f * s61;
-    float m03 = 0.125f * s11 + s21 + 3.375f * s31 + t07;
+    const float m01 = 0.5f * s11 + s21 + 1.5f * s31;
+    const float m02 = 0.25f * s41 + s51 + 2.25f * s61;
+    const float m03 = 0.125f * s11 + s21 + 3.375f * s31 + t07;
 
     float m10 = t10 + t11 + t12 + t13 + t14 + t15 + t16;
-    float m11 = 0.5f * s12 + s22 + 1.5f * s32;
-    float m12 = 0.25f * s42 + s52 + 2.25f * s62;
-    float m13 = 0.125f * s12 + s22 + 3.375f * s32 + t17;
+    const float m11 = 0.5f * s12 + s22 + 1.5f * s32;
+    const float m12 = 0.25f * s42 + s52 + 2.25f * s62;
+    const float m13 = 0.125f * s12 + s22 + 3.375f * s32 + t17;
 
     float m20 = t20 + t21 + t22 + t23 + t24 + t25 + t26;
-    float m21 = 0.5f * s13 + s23 + 1.5f * s33;
-    float m22 = 0.25f * s43 + s53 + 2.25f * s63;
-    float m23 = 0.125f * s13 + s23 + 3.375f * s33 + t27;
+    const float m21 = 0.5f * s13 + s23 + 1.5f * s33;
+    const float m22 = 0.25f * s43 + s53 + 2.25f * s63;
+    const float m23 = 0.125f * s13 + s23 + 3.375f * s33 + t27;
 
     float m30 = t30 + t31 + t32 + t33 + t34 + t35 + t36;
-    float m31 = 0.5f * s14 + s24 + 1.5f * s34;
-    float m32 = 0.25f * s44 + s54 + 2.25f * s64;
-    float m33 = 0.125f * s14 + s24 + 3.375f * s34 + t37;
+    const float m31 = 0.5f * s14 + s24 + 1.5f * s34;
+    const float m32 = 0.25f * s44 + s54 + 2.25f * s64;
+    const float m33 = 0.125f * s14 + s24 + 3.375f * s34 + t37;
 
     (dst_data + i)[0] = m00 + bias_data[i];
     (dst_data + i + C4NUM)[0] = m01 + bias_data[i];
@@ -3140,41 +3143,41 @@ void OutputTransform8x5Unit(const float *src_data, float *dst_data, const float 
     float t06 = src_data_06 + src_data_16 + src_data_26 + src_data_36 + src_data_46 + src_data_56 + src_data_66;
     float t07 = src_data_07 + src_data_17 + src_data_27 + src_data_37 + src_data_47 + src_data_57 + src_data_67;
 
-    float t10 = 0.5f * d01 + d11 + 1.5f * d21;
-    float t11 = 0.5f * d02 + d12 + 1.5f * d22;
-    float t12 = 0.5f * d03 + d13 + 1.5f * d23;
-    float t13 = 0.5f * d04 + d14 + 1.5f * d24;
-    float t14 = 0.5f * d05 + d15 + 1.5f * d25;
-    float t15 = 0.5f * d06 + d16 + 1.5f * d26;
-    float t16 = 0.5f * d07 + d17 + 1.5f * d27;
-    float t17 = 0.5f * d08 + d18 + 1.5f * d28;
+    const float t10 = 0.5f * d01 + d11 + 1.5f * d21;
+    const float t11 = 0.5f * d02 + d12 + 1.5f * d22;
+    const float t12 = 0.5f * d03 + d13 + 1.5f * d23;
+    const float t13 = 0.5f * d04 + d14 + 1.5f * d24;
+    const float t14 = 0.5f * d05 + d15 + 1.5f * d25;
+    const float t15 = 0.5f * d06 + d16 + 1.5f * d26;
+    const float t16 = 0.5f * d07 + d17 + 1.5f * d27;
+    const float t17 = 0.5f * d08 + d18 + 1.5f * d28;
 
-    float t20 = 0.25f * d31 + d41 + 2.25f * d51;
-    float t21 = 0.25f * d32 + d42 + 2.25f * d52;
-    float t22 = 0.25f * d33 + d43 + 2.25f * d53;
-    float t23 = 0.25f * d34 + d44 + 2.25f * d54;
-    float t24 = 0.25f * d35 + d45 + 2.25f * d55;
-    float t25 = 0.25f * d36 + d46 + 2.25f * d56;
-    float t26 = 0.25f * d37 + d47 + 2.25f * d57;
-    float t27 = 0.25f * d38 + d48 + 2.25f * d58;
+    const float t20 = 0.25f * d31 + d41 + 2.25f * d51;
+    const float t21 = 0.25f * d32 + d42 + 2.25f * d52;
+    const float t22 = 0.25f * d33 + d43 + 2.25f * d53;
+    const float t23 = 0.25f * d34 + d44 + 2.25f * d54;
+    const float t24 = 0.25f * d35 + d45 + 2.25f * d55;
+    const float t25 = 0.25f * d36 + d46 + 2.25f * d56;
+    const float t26 = 0.25f * d37 + d47 + 2.25f * d57;
+    const float t27 = 0.25f * d38 + d48 + 2.25f * d58;
 
-    float t30 = 0.125f * d01 + d11 + 3.375f * d21;
-    float t31 = 0.125f * d02 + d12 + 3.375f * d22;
-    float t32 = 0.125f * d03 + d13 + 3.375f * d23;
-    float t33 = 0.125f * d04 + d14 + 3.375f * d24;
-    float t34 = 0.125f * d05 + d15 + 3.375f * d25;
-    float t35 = 0.125f * d06 + d16 + 3.375f * d26;
-    float t36 = 0.125f * d07 + d17 + 3.375f * d27;
-    float t37 = 0.125f * d08 + d18 + 3.375f * d28;
+    const float t30 = 0.125f * d01 + d11 + 3.375f * d21;
+    const float t31 = 0.125f * d02 + d12 + 3.375f * d22;
+    const float t32 = 0.125f * d03 + d13 + 3.375f * d23;
+    const float t33 = 0.125f * d04 + d14 + 3.375f * d24;
+    const float t34 = 0.125f * d05 + d15 + 3.375f * d25;
+    const float t35 = 0.125f * d06 + d16 + 3.375f * d26;
+    const float t36 = 0.125f * d07 + d17 + 3.375f * d27;
+    const float t37 = 0.125f * d08 + d18 + 3.375f * d28;
 
-    float t40 = 0.0625f * d31 + d41 + 5.0625f * d51 + src_data_70;
-    float t41 = 0.0625f * d32 + d42 + 5.0625f * d52 + src_data_71;
-    float t42 = 0.0625f * d33 + d43 + 5.0625f * d53 + src_data_72;
-    float t43 = 0.0625f * d34 + d44 + 5.0625f * d54 + src_data_73;
-    float t44 = 0.0625f * d35 + d45 + 5.0625f * d55 + src_data_74;
-    float t45 = 0.0625f * d36 + d46 + 5.0625f * d56 + src_data_75;
-    float t46 = 0.0625f * d37 + d47 + 5.0625f * d57 + src_data_76;
-    float t47 = 0.0625f * d38 + d48 + 5.0625f * d58 + src_data_77;
+    const float t40 = 0.0625f * d31 + d41 + 5.0625f * d51 + src_data_70;
+    const float t41 = 0.0625f * d32 + d42 + 5.0625f * d52 + src_data_71;
+    const float t42 = 0.0625f * d33 + d43 + 5.0625f * d53 + src_data_72;
+    const float t43 = 0.0625f * d34 + d44 + 5.0625f * d54 + src_data_73;
+    const float t44 = 0.0625f * d35 + d45 + 5.0625f * d55 + src_data_74;
+    const float t45 = 0.0625f * d36 + d46 + 5.0625f * d56 + src_data_75;
+    const float t46 = 0.0625f * d37 + d47 + 5.0625f * d57 + src_data_76;
+    const float t47 = 0.0625f * d38 + d48 + 5.0625f * d58 + src_data_77;
 
     float s11 = t01 - t02;
     float s12 = t11 - t12;
@@ -3213,34 +3216,34 @@ void OutputTransform8x5Unit(const float *src_data, float *dst_data, const float 
     float s65 = t45 + t46;
 
     float m00 = t00 + t01 + t02 + t03 + t04 + t05 + t06;
-    float m01 = 0.5f * s11 + s21 + 1.5f * s31;
-    float m02 = 0.25f * s41 + s51 + 2.25f * s61;
-    float m03 = 0.125f * s11 + s21 + 3.375f * s31;
-    float m04 = 0.0625f * s41 + s51 + 5.0625f * s61 + t07;
+    const float m01 = 0.5f * s11 + s21 + 1.5f * s31;
+    const float m02 = 0.25f * s41 + s51 + 2.25f * s61;
+    const float m03 = 0.125f * s11 + s21 + 3.375f * s31;
+    const float m04 = 0.0625f * s41 + s51 + 5.0625f * s61 + t07;
 
     float m10 = t10 + t11 + t12 + t13 + t14 + t15 + t16;
-    float m11 = 0.5f * s12 + s22 + 1.5f * s32;
-    float m12 = 0.25f * s42 + s52 + 2.25f * s62;
-    float m13 = 0.125f * s12 + s22 + 3.375f * s32;
-    float m14 = 0.0625f * s42 + s52 + 5.0625f * s62 + t17;
+    const float m11 = 0.5f * s12 + s22 + 1.5f * s32;
+    const float m12 = 0.25f * s42 + s52 + 2.25f * s62;
+    const float m13 = 0.125f * s12 + s22 + 3.375f * s32;
+    const float m14 = 0.0625f * s42 + s52 + 5.0625f * s62 + t17;
 
     float m20 = t20 + t21 + t22 + t23 + t24 + t25 + t26;
-    float m21 = 0.5f * s13 + s23 + 1.5f * s33;
-    float m22 = 0.25f * s43 + s53 + 2.25f * s63;
-    float m23 = 0.125f * s13 + s23 + 3.375f * s33;
-    float m24 = 0.0625f * s43 + s53 + 5.0625f * s63 + t27;
+    const float m21 = 0.5f * s13 + s23 + 1.5f * s33;
+    const float m22 = 0.25f * s43 + s53 + 2.25f * s63;
+    const float m23 = 0.125f * s13 + s23 + 3.375f * s33;
+    const float m24 = 0.0625f * s43 + s53 + 5.0625f * s63 + t27;
 
     float m30 = t30 + t31 + t32 + t33 + t34 + t35 + t36;
-    float m31 = 0.5f * s14 + s24 + 1.5f * s34;
-    float m32 = 0.25f * s44 + s54 + 2.25f * s64;
-    float m33 = 0.125f * s14 + s24 + 3.375f * s34;
-    float m34 = 0.0625f * s44 + s54 + 5.0625f * s64 + t37;
+    const float m31 = 0.5f * s14 + s24 + 1.5f * s34;
+    const float m32 = 0.25f * s44 + s54 + 2.25f * s64;
+    const float m33 = 0.125f * s14 + s24 + 3.375f * s34;
+    const float m34 = 0.0625f * s44 + s54 + 5.0625f * s64 + t37;
 
     float m40 = t40 + t41 + t42 + t43 + t44 + t45 + t46;
-    float m41 = 0.5f * s15 + s25 + 1.5f * s35;
-    float m42 = 0.25f * s45 + s55 + 2.25f * s65;
-    float m43 = 0.125f * s15 + s25 + 3.375f * s35;
-    float m44 = 0.0625f * s45 + s55 + 5.0625f * s65 + t47;
+    const float m41 = 0.5f * s15 + s25 + 1.5f * s35;
+    const float m42 = 0.25f * s45 + s55 + 2.25f * s65;
+    const float m43 = 0.125f * s15 + s25 + 3.375f * s35;
+    const float m44 = 0.0625f * s45 + s55 + 5.0625f * s65 + t47;
 
     (dst_data + i)[0] = m00 + bias_data[i];
     (dst_data + i + C4NUM)[0] = m01 + bias_data[i];
@@ -3742,50 +3745,50 @@ void OutputTransform8x6Unit(const float *src_data, float *dst_data, const float 
     float t06 = src_data_06 + src_data_16 + src_data_26 + src_data_36 + src_data_46 + src_data_56 + src_data_66;
     float t07 = src_data_07 + src_data_17 + src_data_27 + src_data_37 + src_data_47 + src_data_57 + src_data_67;
 
-    float t10 = 0.5f * d01 + d11 + 1.5f * d21;
-    float t11 = 0.5f * d02 + d12 + 1.5f * d22;
-    float t12 = 0.5f * d03 + d13 + 1.5f * d23;
-    float t13 = 0.5f * d04 + d14 + 1.5f * d24;
-    float t14 = 0.5f * d05 + d15 + 1.5f * d25;
-    float t15 = 0.5f * d06 + d16 + 1.5f * d26;
-    float t16 = 0.5f * d07 + d17 + 1.5f * d27;
-    float t17 = 0.5f * d08 + d18 + 1.5f * d28;
+    const float t10 = 0.5f * d01 + d11 + 1.5f * d21;
+    const float t11 = 0.5f * d02 + d12 + 1.5f * d22;
+    const float t12 = 0.5f * d03 + d13 + 1.5f * d23;
+    const float t13 = 0.5f * d04 + d14 + 1.5f * d24;
+    const float t14 = 0.5f * d05 + d15 + 1.5f * d25;
+    const float t15 = 0.5f * d06 + d16 + 1.5f * d26;
+    const float t16 = 0.5f * d07 + d17 + 1.5f * d27;
+    const float t17 = 0.5f * d08 + d18 + 1.5f * d28;
 
-    float t20 = 0.25f * d31 + d41 + 2.25f * d51;
-    float t21 = 0.25f * d32 + d42 + 2.25f * d52;
-    float t22 = 0.25f * d33 + d43 + 2.25f * d53;
-    float t23 = 0.25f * d34 + d44 + 2.25f * d54;
-    float t24 = 0.25f * d35 + d45 + 2.25f * d55;
-    float t25 = 0.25f * d36 + d46 + 2.25f * d56;
-    float t26 = 0.25f * d37 + d47 + 2.25f * d57;
-    float t27 = 0.25f * d38 + d48 + 2.25f * d58;
+    const float t20 = 0.25f * d31 + d41 + 2.25f * d51;
+    const float t21 = 0.25f * d32 + d42 + 2.25f * d52;
+    const float t22 = 0.25f * d33 + d43 + 2.25f * d53;
+    const float t23 = 0.25f * d34 + d44 + 2.25f * d54;
+    const float t24 = 0.25f * d35 + d45 + 2.25f * d55;
+    const float t25 = 0.25f * d36 + d46 + 2.25f * d56;
+    const float t26 = 0.25f * d37 + d47 + 2.25f * d57;
+    const float t27 = 0.25f * d38 + d48 + 2.25f * d58;
 
-    float t30 = 0.125f * d01 + d11 + 3.375f * d21;
-    float t31 = 0.125f * d02 + d12 + 3.375f * d22;
-    float t32 = 0.125f * d03 + d13 + 3.375f * d23;
-    float t33 = 0.125f * d04 + d14 + 3.375f * d24;
-    float t34 = 0.125f * d05 + d15 + 3.375f * d25;
-    float t35 = 0.125f * d06 + d16 + 3.375f * d26;
-    float t36 = 0.125f * d07 + d17 + 3.375f * d27;
-    float t37 = 0.125f * d08 + d18 + 3.375f * d28;
+    const float t30 = 0.125f * d01 + d11 + 3.375f * d21;
+    const float t31 = 0.125f * d02 + d12 + 3.375f * d22;
+    const float t32 = 0.125f * d03 + d13 + 3.375f * d23;
+    const float t33 = 0.125f * d04 + d14 + 3.375f * d24;
+    const float t34 = 0.125f * d05 + d15 + 3.375f * d25;
+    const float t35 = 0.125f * d06 + d16 + 3.375f * d26;
+    const float t36 = 0.125f * d07 + d17 + 3.375f * d27;
+    const float t37 = 0.125f * d08 + d18 + 3.375f * d28;
 
-    float t40 = 0.0625f * d31 + d41 + 5.0625f * d51;
-    float t41 = 0.0625f * d32 + d42 + 5.0625f * d52;
-    float t42 = 0.0625f * d33 + d43 + 5.0625f * d53;
-    float t43 = 0.0625f * d34 + d44 + 5.0625f * d54;
-    float t44 = 0.0625f * d35 + d45 + 5.0625f * d55;
-    float t45 = 0.0625f * d36 + d46 + 5.0625f * d56;
-    float t46 = 0.0625f * d37 + d47 + 5.0625f * d57;
-    float t47 = 0.0625f * d38 + d48 + 5.0625f * d58;
+    const float t40 = 0.0625f * d31 + d41 + 5.0625f * d51;
+    const float t41 = 0.0625f * d32 + d42 + 5.0625f * d52;
+    const float t42 = 0.0625f * d33 + d43 + 5.0625f * d53;
+    const float t43 = 0.0625f * d34 + d44 + 5.0625f * d54;
+    const float t44 = 0.0625f * d35 + d45 + 5.0625f * d55;
+    const float t45 = 0.0625f * d36 + d46 + 5.0625f * d56;
+    const float t46 = 0.0625f * d37 + d47 + 5.0625f * d57;
+    const float t47 = 0.0625f * d38 + d48 + 5.0625f * d58;
 
-    float t50 = 0.03125f * d01 + d11 + 7.59375f * d21 + src_data_70;
-    float t51 = 0.03125f * d02 + d12 + 7.59375f * d22 + src_data_71;
-    float t52 = 0.03125f * d03 + d13 + 7.59375f * d23 + src_data_72;
-    float t53 = 0.03125f * d04 + d14 + 7.59375f * d24 + src_data_73;
-    float t54 = 0.03125f * d05 + d15 + 7.59375f * d25 + src_data_74;
-    float t55 = 0.03125f * d06 + d16 + 7.59375f * d26 + src_data_75;
-    float t56 = 0.03125f * d07 + d17 + 7.59375f * d27 + src_data_76;
-    float t57 = 0.03125f * d08 + d18 + 7.59375f * d28 + src_data_77;
+    const float t50 = 0.03125f * d01 + d11 + 7.59375f * d21 + src_data_70;
+    const float t51 = 0.03125f * d02 + d12 + 7.59375f * d22 + src_data_71;
+    const float t52 = 0.03125f * d03 + d13 + 7.59375f * d23 + src_data_72;
+    const float t53 = 0.03125f * d04 + d14 + 7.59375f * d24 + src_data_73;
+    const float t54 = 0.03125f * d05 + d15 + 7.59375f * d25 + src_data_74;
+    const const float t55 = 0.03125f * d06 + d16 + 7.59375f * d26 + src_data_75;
+    const float t56 = 0.03125f * d07 + d17 + 7.59375f * d27 + src_data_76;
+    const float t57 = 0.03125f * d08 + d18 + 7.59375f * d28 + src_data_77;
 
     float s11 = t01 - t02;
     float s12 = t11 - t12;
@@ -3830,46 +3833,46 @@ void OutputTransform8x6Unit(const float *src_data, float *dst_data, const float 
     float s66 = t55 + t56;
 
     float m00 = t00 + t01 + t02 + t03 + t04 + t05 + t06;
-    float m01 = 0.5f * s11 + s21 + 1.5f * s31;
-    float m02 = 0.25f * s41 + s51 + 2.25f * s61;
-    float m03 = 0.125f * s11 + s21 + 3.375f * s31;
-    float m04 = 0.0625f * s41 + s51 + 5.0625f * s61;
-    float m05 = 0.03125f * s11 + s21 + 7.59375f * s31 + t07;
+    const float m01 = 0.5f * s11 + s21 + 1.5f * s31;
+    const float m02 = 0.25f * s41 + s51 + 2.25f * s61;
+    const float m03 = 0.125f * s11 + s21 + 3.375f * s31;
+    const float m04 = 0.0625f * s41 + s51 + 5.0625f * s61;
+    const float m05 = 0.03125f * s11 + s21 + 7.59375f * s31 + t07;
 
     float m10 = t10 + t11 + t12 + t13 + t14 + t15 + t16;
-    float m11 = 0.5f * s12 + s22 + 1.5f * s32;
-    float m12 = 0.25f * s42 + s52 + 2.25f * s62;
-    float m13 = 0.125f * s12 + s22 + 3.375f * s32;
-    float m14 = 0.0625f * s42 + s52 + 5.0625f * s62;
-    float m15 = 0.03125f * s12 + s22 + 7.59375f * s32 + t17;
+    const float m11 = 0.5f * s12 + s22 + 1.5f * s32;
+    const float m12 = 0.25f * s42 + s52 + 2.25f * s62;
+    const float m13 = 0.125f * s12 + s22 + 3.375f * s32;
+    const float m14 = 0.0625f * s42 + s52 + 5.0625f * s62;
+    const float m15 = 0.03125f * s12 + s22 + 7.59375f * s32 + t17;
 
     float m20 = t20 + t21 + t22 + t23 + t24 + t25 + t26;
-    float m21 = 0.5f * s13 + s23 + 1.5f * s33;
-    float m22 = 0.25f * s43 + s53 + 2.25f * s63;
-    float m23 = 0.125f * s13 + s23 + 3.375f * s33;
-    float m24 = 0.0625f * s43 + s53 + 5.0625f * s63;
-    float m25 = 0.03125f * s13 + s23 + 7.59375f * s33 + t27;
+    const float m21 = 0.5f * s13 + s23 + 1.5f * s33;
+    const float m22 = 0.25f * s43 + s53 + 2.25f * s63;
+    const float m23 = 0.125f * s13 + s23 + 3.375f * s33;
+    const float m24 = 0.0625f * s43 + s53 + 5.0625f * s63;
+    const float m25 = 0.03125f * s13 + s23 + 7.59375f * s33 + t27;
 
     float m30 = t30 + t31 + t32 + t33 + t34 + t35 + t36;
-    float m31 = 0.5f * s14 + s24 + 1.5f * s34;
-    float m32 = 0.25f * s44 + s54 + 2.25f * s64;
-    float m33 = 0.125f * s14 + s24 + 3.375f * s34;
-    float m34 = 0.0625f * s44 + s54 + 5.0625f * s64;
-    float m35 = 0.03125f * s14 + s24 + 7.59375f * s34 + t37;
+    const float m31 = 0.5f * s14 + s24 + 1.5f * s34;
+    const float m32 = 0.25f * s44 + s54 + 2.25f * s64;
+    const float m33 = 0.125f * s14 + s24 + 3.375f * s34;
+    const float m34 = 0.0625f * s44 + s54 + 5.0625f * s64;
+    const float m35 = 0.03125f * s14 + s24 + 7.59375f * s34 + t37;
 
     float m40 = t40 + t41 + t42 + t43 + t44 + t45 + t46;
-    float m41 = 0.5f * s15 + s25 + 1.5f * s35;
-    float m42 = 0.25f * s45 + s55 + 2.25f * s65;
-    float m43 = 0.125f * s15 + s25 + 3.375f * s35;
-    float m44 = 0.0625f * s45 + s55 + 5.0625f * s65;
-    float m45 = 0.03125f * s15 + s25 + 7.59375f * s35 + t47;
+    const float m41 = 0.5f * s15 + s25 + 1.5f * s35;
+    const float m42 = 0.25f * s45 + s55 + 2.25f * s65;
+    const float m43 = 0.125f * s15 + s25 + 3.375f * s35;
+    const float m44 = 0.0625f * s45 + s55 + 5.0625f * s65;
+    const float m45 = 0.03125f * s15 + s25 + 7.59375f * s35 + t47;
 
     float m50 = t50 + t51 + t52 + t53 + t54 + t55 + t56;
-    float m51 = 0.5f * s16 + s26 + 1.5f * s36;
-    float m52 = 0.25f * s46 + s56 + 2.25f * s66;
-    float m53 = 0.125f * s16 + s26 + 3.375f * s36;
-    float m54 = 0.0625f * s46 + s56 + 5.0625f * s66;
-    float m55 = 0.03125f * s16 + s26 + 7.59375f * s36 + t57;
+    const float m51 = 0.5f * s16 + s26 + 1.5f * s36;
+    const float m52 = 0.25f * s46 + s56 + 2.25f * s66;
+    const float m53 = 0.125f * s16 + s26 + 3.375f * s36;
+    const float m54 = 0.0625f * s46 + s56 + 5.0625f * s66;
+    const float m55 = 0.03125f * s16 + s26 + 7.59375f * s36 + t57;
 
     (dst_data + i)[0] = m00 + bias_data[i];
     (dst_data + i + C4NUM)[0] = m01 + bias_data[i];
@@ -4425,59 +4428,59 @@ void OutputTransform8x7Unit(const float *src_data, float *dst_data, const float 
     float t06 = src_data_06 + src_data_16 + src_data_26 + src_data_36 + src_data_46 + src_data_56 + src_data_66;
     float t07 = src_data_07 + src_data_17 + src_data_27 + src_data_37 + src_data_47 + src_data_57 + src_data_67;
 
-    float t10 = 0.5f * d01 + d11 + 1.5f * d21;
-    float t11 = 0.5f * d02 + d12 + 1.5f * d22;
-    float t12 = 0.5f * d03 + d13 + 1.5f * d23;
-    float t13 = 0.5f * d04 + d14 + 1.5f * d24;
-    float t14 = 0.5f * d05 + d15 + 1.5f * d25;
-    float t15 = 0.5f * d06 + d16 + 1.5f * d26;
-    float t16 = 0.5f * d07 + d17 + 1.5f * d27;
-    float t17 = 0.5f * d08 + d18 + 1.5f * d28;
+    const float t10 = 0.5f * d01 + d11 + 1.5f * d21;
+    const float t11 = 0.5f * d02 + d12 + 1.5f * d22;
+    const float t12 = 0.5f * d03 + d13 + 1.5f * d23;
+    const float t13 = 0.5f * d04 + d14 + 1.5f * d24;
+    const float t14 = 0.5f * d05 + d15 + 1.5f * d25;
+    const float t15 = 0.5f * d06 + d16 + 1.5f * d26;
+    const float t16 = 0.5f * d07 + d17 + 1.5f * d27;
+    const float t17 = 0.5f * d08 + d18 + 1.5f * d28;
 
-    float t20 = 0.25f * d31 + d41 + 2.25f * d51;
-    float t21 = 0.25f * d32 + d42 + 2.25f * d52;
-    float t22 = 0.25f * d33 + d43 + 2.25f * d53;
-    float t23 = 0.25f * d34 + d44 + 2.25f * d54;
-    float t24 = 0.25f * d35 + d45 + 2.25f * d55;
-    float t25 = 0.25f * d36 + d46 + 2.25f * d56;
-    float t26 = 0.25f * d37 + d47 + 2.25f * d57;
-    float t27 = 0.25f * d38 + d48 + 2.25f * d58;
+    const float t20 = 0.25f * d31 + d41 + 2.25f * d51;
+    const float t21 = 0.25f * d32 + d42 + 2.25f * d52;
+    const float t22 = 0.25f * d33 + d43 + 2.25f * d53;
+    const float t23 = 0.25f * d34 + d44 + 2.25f * d54;
+    const float t24 = 0.25f * d35 + d45 + 2.25f * d55;
+    const float t25 = 0.25f * d36 + d46 + 2.25f * d56;
+    const float t26 = 0.25f * d37 + d47 + 2.25f * d57;
+    const float t27 = 0.25f * d38 + d48 + 2.25f * d58;
 
-    float t30 = 0.125f * d01 + d11 + 3.375f * d21;
-    float t31 = 0.125f * d02 + d12 + 3.375f * d22;
-    float t32 = 0.125f * d03 + d13 + 3.375f * d23;
-    float t33 = 0.125f * d04 + d14 + 3.375f * d24;
-    float t34 = 0.125f * d05 + d15 + 3.375f * d25;
-    float t35 = 0.125f * d06 + d16 + 3.375f * d26;
-    float t36 = 0.125f * d07 + d17 + 3.375f * d27;
-    float t37 = 0.125f * d08 + d18 + 3.375f * d28;
+    const float t30 = 0.125f * d01 + d11 + 3.375f * d21;
+    const float t31 = 0.125f * d02 + d12 + 3.375f * d22;
+    const float t32 = 0.125f * d03 + d13 + 3.375f * d23;
+    const float t33 = 0.125f * d04 + d14 + 3.375f * d24;
+    const float t34 = 0.125f * d05 + d15 + 3.375f * d25;
+    const float t35 = 0.125f * d06 + d16 + 3.375f * d26;
+    const float t36 = 0.125f * d07 + d17 + 3.375f * d27;
+    const float t37 = 0.125f * d08 + d18 + 3.375f * d28;
 
-    float t40 = 0.0625f * d31 + d41 + 5.0625f * d51;
-    float t41 = 0.0625f * d32 + d42 + 5.0625f * d52;
-    float t42 = 0.0625f * d33 + d43 + 5.0625f * d53;
-    float t43 = 0.0625f * d34 + d44 + 5.0625f * d54;
-    float t44 = 0.0625f * d35 + d45 + 5.0625f * d55;
-    float t45 = 0.0625f * d36 + d46 + 5.0625f * d56;
-    float t46 = 0.0625f * d37 + d47 + 5.0625f * d57;
-    float t47 = 0.0625f * d38 + d48 + 5.0625f * d58;
+    const float t40 = 0.0625f * d31 + d41 + 5.0625f * d51;
+    const float t41 = 0.0625f * d32 + d42 + 5.0625f * d52;
+    const float t42 = 0.0625f * d33 + d43 + 5.0625f * d53;
+    const float t43 = 0.0625f * d34 + d44 + 5.0625f * d54;
+    const float t44 = 0.0625f * d35 + d45 + 5.0625f * d55;
+    const float t45 = 0.0625f * d36 + d46 + 5.0625f * d56;
+    const float t46 = 0.0625f * d37 + d47 + 5.0625f * d57;
+    const float t47 = 0.0625f * d38 + d48 + 5.0625f * d58;
 
-    float t50 = 0.03125f * d01 + d11 + 7.59375f * d21;
-    float t51 = 0.03125f * d02 + d12 + 7.59375f * d22;
-    float t52 = 0.03125f * d03 + d13 + 7.59375f * d23;
-    float t53 = 0.03125f * d04 + d14 + 7.59375f * d24;
-    float t54 = 0.03125f * d05 + d15 + 7.59375f * d25;
-    float t55 = 0.03125f * d06 + d16 + 7.59375f * d26;
-    float t56 = 0.03125f * d07 + d17 + 7.59375f * d27;
-    float t57 = 0.03125f * d08 + d18 + 7.59375f * d28;
+    const float t50 = 0.03125f * d01 + d11 + 7.59375f * d21;
+    const float t51 = 0.03125f * d02 + d12 + 7.59375f * d22;
+    const float t52 = 0.03125f * d03 + d13 + 7.59375f * d23;
+    const float t53 = 0.03125f * d04 + d14 + 7.59375f * d24;
+    const float t54 = 0.03125f * d05 + d15 + 7.59375f * d25;
+    const float t55 = 0.03125f * d06 + d16 + 7.59375f * d26;
+    const float t56 = 0.03125f * d07 + d17 + 7.59375f * d27;
+    const float t57 = 0.03125f * d08 + d18 + 7.59375f * d28;
 
-    float t60 = 0.015625f * d31 + d41 + 11.390625f * d51 + src_data_70;
-    float t61 = 0.015625f * d32 + d42 + 11.390625f * d52 + src_data_71;
-    float t62 = 0.015625f * d33 + d43 + 11.390625f * d53 + src_data_72;
-    float t63 = 0.015625f * d34 + d44 + 11.390625f * d54 + src_data_73;
-    float t64 = 0.015625f * d35 + d45 + 11.390625f * d55 + src_data_74;
-    float t65 = 0.015625f * d36 + d46 + 11.390625f * d56 + src_data_75;
-    float t66 = 0.015625f * d37 + d47 + 11.390625f * d57 + src_data_76;
-    float t67 = 0.015625f * d38 + d48 + 11.390625f * d58 + src_data_77;
+    const float t60 = 0.015625f * d31 + d41 + 11.390625f * d51 + src_data_70;
+    const float t61 = 0.015625f * d32 + d42 + 11.390625f * d52 + src_data_71;
+    const float t62 = 0.015625f * d33 + d43 + 11.390625f * d53 + src_data_72;
+    const float t63 = 0.015625f * d34 + d44 + 11.390625f * d54 + src_data_73;
+    const float t64 = 0.015625f * d35 + d45 + 11.390625f * d55 + src_data_74;
+    const float t65 = 0.015625f * d36 + d46 + 11.390625f * d56 + src_data_75;
+    const float t66 = 0.015625f * d37 + d47 + 11.390625f * d57 + src_data_76;
+    const float t67 = 0.015625f * d38 + d48 + 11.390625f * d58 + src_data_77;
 
     float s11 = t01 - t02;
     float s12 = t11 - t12;
@@ -4528,60 +4531,60 @@ void OutputTransform8x7Unit(const float *src_data, float *dst_data, const float 
     float s67 = t65 + t66;
 
     float m00 = t00 + t01 + t02 + t03 + t04 + t05 + t06;
-    float m01 = 0.5f * s11 + s21 + 1.5f * s31;
-    float m02 = 0.25f * s41 + s51 + 2.25f * s61;
-    float m03 = 0.125f * s11 + s21 + 3.375f * s31;
-    float m04 = 0.0625f * s41 + s51 + 5.0625f * s61;
-    float m05 = 0.03125f * s11 + s21 + 7.59375f * s31;
-    float m06 = 0.015625f * s41 + s51 + 11.390625f * s61 + t07;
+    const float m01 = 0.5f * s11 + s21 + 1.5f * s31;
+    const float m02 = 0.25f * s41 + s51 + 2.25f * s61;
+    const float m03 = 0.125f * s11 + s21 + 3.375f * s31;
+    const float m04 = 0.0625f * s41 + s51 + 5.0625f * s61;
+    const float m05 = 0.03125f * s11 + s21 + 7.59375f * s31;
+    const float m06 = 0.015625f * s41 + s51 + 11.390625f * s61 + t07;
 
     float m10 = t10 + t11 + t12 + t13 + t14 + t15 + t16;
-    float m11 = 0.5f * s12 + s22 + 1.5f * s32;
-    float m12 = 0.25f * s42 + s52 + 2.25f * s62;
-    float m13 = 0.125f * s12 + s22 + 3.375f * s32;
-    float m14 = 0.0625f * s42 + s52 + 5.0625f * s62;
-    float m15 = 0.03125f * s12 + s22 + 7.59375f * s32;
-    float m16 = 0.015625f * s42 + s52 + 11.390625f * s62 + t17;
+    const float m11 = 0.5f * s12 + s22 + 1.5f * s32;
+    const float m12 = 0.25f * s42 + s52 + 2.25f * s62;
+    const float m13 = 0.125f * s12 + s22 + 3.375f * s32;
+    const float m14 = 0.0625f * s42 + s52 + 5.0625f * s62;
+    const float m15 = 0.03125f * s12 + s22 + 7.59375f * s32;
+    const float m16 = 0.015625f * s42 + s52 + 11.390625f * s62 + t17;
 
     float m20 = t20 + t21 + t22 + t23 + t24 + t25 + t26;
-    float m21 = 0.5f * s13 + s23 + 1.5f * s33;
-    float m22 = 0.25f * s43 + s53 + 2.25f * s63;
-    float m23 = 0.125f * s13 + s23 + 3.375f * s33;
-    float m24 = 0.0625f * s43 + s53 + 5.0625f * s63;
-    float m25 = 0.03125f * s13 + s23 + 7.59375f * s33;
-    float m26 = 0.015625f * s43 + s53 + 11.390625f * s63 + t27;
+    const float m21 = 0.5f * s13 + s23 + 1.5f * s33;
+    const float m22 = 0.25f * s43 + s53 + 2.25f * s63;
+    const float m23 = 0.125f * s13 + s23 + 3.375f * s33;
+    const float m24 = 0.0625f * s43 + s53 + 5.0625f * s63;
+    const float m25 = 0.03125f * s13 + s23 + 7.59375f * s33;
+    const float m26 = 0.015625f * s43 + s53 + 11.390625f * s63 + t27;
 
     float m30 = t30 + t31 + t32 + t33 + t34 + t35 + t36;
-    float m31 = 0.5f * s14 + s24 + 1.5f * s34;
-    float m32 = 0.25f * s44 + s54 + 2.25f * s64;
-    float m33 = 0.125f * s14 + s24 + 3.375f * s34;
-    float m34 = 0.0625f * s44 + s54 + 5.0625f * s64;
-    float m35 = 0.03125f * s14 + s24 + 7.59375f * s34;
-    float m36 = 0.015625f * s44 + s54 + 11.390625f * s64 + t37;
+    const float m31 = 0.5f * s14 + s24 + 1.5f * s34;
+    const float m32 = 0.25f * s44 + s54 + 2.25f * s64;
+    const float m33 = 0.125f * s14 + s24 + 3.375f * s34;
+    const float m34 = 0.0625f * s44 + s54 + 5.0625f * s64;
+    const float m35 = 0.03125f * s14 + s24 + 7.59375f * s34;
+    const float m36 = 0.015625f * s44 + s54 + 11.390625f * s64 + t37;
 
     float m40 = t40 + t41 + t42 + t43 + t44 + t45 + t46;
-    float m41 = 0.5f * s15 + s25 + 1.5f * s35;
-    float m42 = 0.25f * s45 + s55 + 2.25f * s65;
-    float m43 = 0.125f * s15 + s25 + 3.375f * s35;
-    float m44 = 0.0625f * s45 + s55 + 5.0625f * s65;
-    float m45 = 0.03125f * s15 + s25 + 7.59375f * s35;
-    float m46 = 0.015625f * s45 + s55 + 11.390625f * s65 + t47;
+    const float m41 = 0.5f * s15 + s25 + 1.5f * s35;
+    const float m42 = 0.25f * s45 + s55 + 2.25f * s65;
+    const float m43 = 0.125f * s15 + s25 + 3.375f * s35;
+    const float m44 = 0.0625f * s45 + s55 + 5.0625f * s65;
+    const float m45 = 0.03125f * s15 + s25 + 7.59375f * s35;
+    const float m46 = 0.015625f * s45 + s55 + 11.390625f * s65 + t47;
 
     float m50 = t50 + t51 + t52 + t53 + t54 + t55 + t56;
-    float m51 = 0.5f * s16 + s26 + 1.5f * s36;
-    float m52 = 0.25f * s46 + s56 + 2.25f * s66;
-    float m53 = 0.125f * s16 + s26 + 3.375f * s36;
-    float m54 = 0.0625f * s46 + s56 + 5.0625f * s66;
-    float m55 = 0.03125f * s16 + s26 + 7.59375f * s36;
-    float m56 = 0.015625f * s46 + s56 + 11.390625f * s66 + t57;
+    const float m51 = 0.5f * s16 + s26 + 1.5f * s36;
+    const float m52 = 0.25f * s46 + s56 + 2.25f * s66;
+    const float m53 = 0.125f * s16 + s26 + 3.375f * s36;
+    const float m54 = 0.0625f * s46 + s56 + 5.0625f * s66;
+    const float m55 = 0.03125f * s16 + s26 + 7.59375f * s36;
+    const float m56 = 0.015625f * s46 + s56 + 11.390625f * s66 + t57;
 
     float m60 = t60 + t61 + t62 + t63 + t64 + t65 + t66;
-    float m61 = 0.5f * s17 + s27 + 1.5f * s37;
-    float m62 = 0.25f * s47 + s57 + 2.25f * s67;
-    float m63 = 0.125f * s17 + s27 + 3.375f * s37;
-    float m64 = 0.0625f * s47 + s57 + 5.0625f * s67;
-    float m65 = 0.03125f * s17 + s27 + 7.59375f * s37;
-    float m66 = 0.015625f * s47 + s57 + 11.390625f * s67 + t67;
+    const float m61 = 0.5f * s17 + s27 + 1.5f * s37;
+    const float m62 = 0.25f * s47 + s57 + 2.25f * s67;
+    const float m63 = 0.125f * s17 + s27 + 3.375f * s37;
+    const float m64 = 0.0625f * s47 + s57 + 5.0625f * s67;
+    const float m65 = 0.03125f * s17 + s27 + 7.59375f * s37;
+    const float m66 = 0.015625f * s47 + s57 + 11.390625f * s67 + t67;
 
     (dst_data + i)[0] = m00 + bias_data[i];
     (dst_data + i + C4NUM)[0] = m01 + bias_data[i];
@@ -4669,7 +4672,7 @@ int SelectOutputUnit(ConvParameter *conv_param) {
       continue;
     }
     // don't count filter transform cost, because it can be processed once offline.
-    float input_trans_unit_cost = 2 * input_unit * input_unit * input_unit * in_channel;
+    const float input_trans_unit_cost = 2 * input_unit * input_unit * input_unit * in_channel;
     float gemm_unit_cost = input_unit * input_unit * in_channel * out_channel;
     float output_trans_unit_cost = input_unit * u * (u + input_unit) * out_channel;
     // equation (23) in papar

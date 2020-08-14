@@ -84,7 +84,7 @@ int LstmCPUKernel::InitWeightBias() {
   }
 
   auto bias_data = reinterpret_cast<float *>(in_tensors_.at(3)->Data());
-  int state_bias_offset = 4 * lstm_parm_->hidden_size_;
+  const int state_bias_offset = 4 * lstm_parm_->hidden_size_;
   for (int i = 0; i < state_bias_offset; i++) {
     bias_ptr_[i] = bias_data[i] + bias_data[i + state_bias_offset];
   }

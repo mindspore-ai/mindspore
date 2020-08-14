@@ -36,8 +36,8 @@ void AvgPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParamete
   float output_scale = pooling_param->quant_args_[1][0].scale_;
   int output_zp = pooling_param->quant_args_[1][0].zp_;
   double real_multiplier = input_scale / output_scale;
-  int8_t out_min = INT8_MIN;
-  int8_t out_max = INT8_MAX;
+  const int8_t out_min = INT8_MIN;
+  const int8_t out_max = INT8_MAX;
 
   for (int batch = 0; batch < output_batch; batch++) {
     int in_batch_offset = batch * in_h * in_w * channel;
@@ -91,8 +91,8 @@ void AvgPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParam
   int out_tile_count = UP_DIV(out_plane, TILE_NUM);
   int thread_num = pooling_param->thread_num_;
   int c8 = UP_DIV(channel, C8NUM);
-  int8_t out_min = INT8_MIN;
-  int8_t out_max = INT8_MAX;
+  const int8_t out_min = INT8_MIN;
+  const int8_t out_max = INT8_MAX;
 
   for (int batch = 0; batch < output_batch; batch++) {
     int in_batch_offset = batch * in_h * in_w * channel;

@@ -249,6 +249,10 @@ int ConvolutionOpenCLKernel::GetGlobalLocal(std::vector<size_t> *global, std::ve
   size_t global_c = UP_DIV(UP_DIV(param->output_channel_, C4NUM), work_group_size[2]) * work_group_size[2];
 
   size_t local_c = GetBiggestDivider(global_c, max_z_size);
+  if (local_c == 0) {
+    MS_LOG(ERROR) << "Divide by zero";
+    return RET_ERROR;
+  }
   size_t local_hw_size = std::min<size_t>(256, max_work_group_size) / local_c;
   size_t local_w = std::min(global_w, local_hw_size);
   size_t local_h = std::min(local_hw_size / local_w, global_h);

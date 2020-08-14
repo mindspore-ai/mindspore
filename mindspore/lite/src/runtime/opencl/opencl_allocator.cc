@@ -130,6 +130,7 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t>& img_size) 
   if (ret != CL_SUCCESS) {
     MS_LOG(ERROR) << "Create OpenCL Image2D failed! (ERROR CODE: " << ret << ")";
     UnLock();
+    delete buffer;
     return nullptr;
   }
   device_ptr = static_cast<void *>(buffer);
@@ -138,6 +139,7 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t>& img_size) 
   if (host_ptr == nullptr) {
     MS_LOG(ERROR) << "Map buffer failed, can not found buffer :" << device_ptr << ", host_ptr=" << host_ptr;
     UnLock();
+
     return nullptr;
   }
   cl::Memory *mem = buffer;
@@ -187,6 +189,7 @@ void *OpenCLAllocator::CreateImageFromHost(void *data, size_t size, const std::v
   if (ret != CL_SUCCESS) {
     MS_LOG(ERROR) << "Create OpenCL Image2D failed! (ERROR CODE: " << ret << ")";
     UnLock();
+    delete buffer;
     return nullptr;
   }
   device_ptr = static_cast<void *>(buffer);

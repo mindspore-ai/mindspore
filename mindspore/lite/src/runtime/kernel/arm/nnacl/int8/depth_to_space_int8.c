@@ -22,7 +22,7 @@ void DepthToSpaceForNHWCInt8(const int8_t *input, int8_t *output, int *in_shape,
   int32_t in_shape_dim2 = in_shape[2];
   int32_t in_shape_dim1 = in_shape[1];
   size_t copy_size = block_size * param->out_stride_dim2_;
-  float output_inverse_scale = 1.f / out_quant_arg->scale_;
+  const float output_inverse_scale = 1.f / out_quant_arg->scale_;
   float scale = in_quant_arg->scale_ * output_inverse_scale;
   float bias = -in_quant_arg->zp_ * scale;
   int32_t output_zp = out_quant_arg->zp_;

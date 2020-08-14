@@ -166,6 +166,7 @@ const void ConvTransformFusion::CalNewWeightTensor(float *weight_data, int kerne
   auto data_size = kernel_num * kernel_size * sizeof(float);
   if (0 != memset_s(tmp_weight_data, data_size, 0, data_size)) {
     MS_LOG(EXCEPTION) << "memset newWeightData failed";
+    delete[] tmp_weight_data;
     return;
   }
 

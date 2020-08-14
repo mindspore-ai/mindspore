@@ -61,7 +61,7 @@ int Convolution3x3CPUKernel::InitWeightBias() {
   oc_block = C8NUM;
   oc_block_num = UP_DIV(output_channel, C8NUM);
 #endif
-  int k_plane = 16;
+  const int k_plane = 16;
   // init weight
   size_t transformed_size = iC4 * C4NUM * oc_block_num * oc_block * k_plane * sizeof(float);
   transformed_filter_addr_ = reinterpret_cast<float *>(malloc(transformed_size));
@@ -93,7 +93,7 @@ int Convolution3x3CPUKernel::InitWeightBias() {
 int Convolution3x3CPUKernel::InitTmpBuffer() {
   int iC4 = UP_DIV(conv_param_->input_channel_, C4NUM);
   int oC4 = UP_DIV(conv_param_->output_channel_, C4NUM);
-  int k_plane = 16;
+  const int k_plane = 16;
 
   /*=============================tile_buffer_============================*/
   size_t tile_buffer_size = thread_count_ * TILE_NUM * k_plane * iC4 * C4NUM * sizeof(float);

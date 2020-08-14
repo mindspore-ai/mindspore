@@ -35,7 +35,7 @@ void IndirectGemmFp16_16x8(float16_t *output, float16_t *input, float16_t *weigh
 void IndirectGemmFp16_16x8(float16_t *output, float16_t *input, float16_t *weight, float16_t *bias, size_t step,
                            size_t ic4, size_t out_channel, size_t offset, size_t mode, size_t writeC4, size_t relu,
                            size_t relu6) {
-  int tile_n = 16;
+  const int tile_n = 16;
   for (int i = 0; i < out_channel; i++) {
     int oc8_block = i / 8;
     int oc8_res = i % 8;
@@ -76,7 +76,7 @@ void IndirectGemmFp16_16x8(float16_t *output, float16_t *input, float16_t *weigh
 void IndirectGemmFp16_16x8_tmp(float16_t *output, float16_t *input, float16_t *weight, const float16_t *bias,
                                size_t step, size_t ic4, size_t output_channel, size_t offset, size_t mode,
                                size_t writeC4, size_t relu, size_t relu6) {
-  int tile_num = 16;
+  const int tile_num = 16;
   if (mode) {
     for (int i = 0; i < tile_num; i++) {
       int input_tile_offset = i * C4NUM;
@@ -175,8 +175,8 @@ void Conv3x3Fp16(float16_t *input_data, float16_t *transed_weight, const float16
   // todo
   int thread_count = conv_param->thread_num_;
   int tile_num = 16;
-  int output_unit = 4;
-  int k_plane = 36;
+  const int output_unit = 4;
+  const int k_plane = 36;
   int ic4 = UP_DIV(conv_param->input_channel_, C4NUM);
   int oc8 = UP_DIV(conv_param->output_channel_, C8NUM);
 

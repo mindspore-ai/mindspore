@@ -49,6 +49,9 @@ __kernel void ElementDiv(__read_only image2d_t input_a, __read_only image2d_t in
 
   float4 a = read_imagef(input_a, smp_none, (int2)(X, Y));
   float4 b = read_imagef(input_b, smp_none, (int2)(X, Y));
+  if (b == 0) {
+    return;
+  }
   write_imagef(output, (int2)(X, Y), a / b);
 }
 

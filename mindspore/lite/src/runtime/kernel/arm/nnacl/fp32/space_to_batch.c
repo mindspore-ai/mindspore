@@ -138,7 +138,7 @@ void DoPadding(const float *input, float *padded_input, SpaceToBatchParameter pa
 }
 
 int SpaceToBatch(const float *input, float *output, SpaceToBatchParameter param, float *tmp_space[3]) {
-  float *padded_input;
+  float *padded_input = NULL;
   int ret;
   if (param.need_paddings_) {
     if (tmp_space[0] == NULL || tmp_space[1] == NULL || tmp_space[2] == NULL) {

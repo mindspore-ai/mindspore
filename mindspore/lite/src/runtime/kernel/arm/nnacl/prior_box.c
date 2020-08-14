@@ -19,6 +19,9 @@
 #include "nnacl/prior_box.h"
 
 int PriorBox(const float *input_data, float *output_data, const size_t size, const int tid, const int thread_num) {
+  if (thread_num == 0) {
+    return NNACL_ERR;
+  }
   size_t unit_size = size / thread_num;
   if (tid == thread_num - 1) {
     size_t tail_size = size - unit_size * tid;

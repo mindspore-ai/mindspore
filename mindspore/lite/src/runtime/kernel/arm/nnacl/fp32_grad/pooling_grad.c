@@ -30,7 +30,7 @@ void AvgPoolingGrad(const float *input_ptr, float *output_ptr, PoolingParameter 
   int output_h = pooling_param->output_h_;
   int output_batch = pooling_param->output_batch_;
 
-  const float *inPtr;
+  const float *inPtr = NULL;
   for (int i = 0; i < output_h * output_w * channel * output_batch; i++) output_ptr[i] = 0.0;
 
   // int pad_top = padding[2];
@@ -119,7 +119,7 @@ void MaxPoolingGrad(const float *dy, const int *indices, float *output_ptr, Pool
 
   const float *yt = (const float *)(dy);
   const int *pos = (const int *)(indices);
-  float *out;
+  float *out = NULL;
 
   if (1) {  // grads->layout() == Tensor::nhwc)
     for (int ib = 0; ib < output_batch; ib++) {

@@ -20,11 +20,11 @@
 void Squeeze(int8_t **inputs, int8_t *output_ptr, int task_id, SqueezeQuantArg *quant_Squeeze_parm,
              SqueezeParameter *para_, size_t osize) {
   float output_scale = quant_Squeeze_parm->out_quant_args_.scale_;
-  float output_inverse_scale = 1.f / output_scale;
+  const float output_inverse_scale = 1.f / output_scale;
   QuantArg *input_quant = quant_Squeeze_parm->in_quant_args_;
   int output_zp = quant_Squeeze_parm->out_quant_args_.zp_;
 
-  int i = 0;
+  const int i = 0;
   int8_t *input_ptr = inputs[0];
   for (int j = task_id; j < osize; j += para_->op_parameter_.thread_num_) {
     float scale = input_quant[i].scale_ * output_inverse_scale;

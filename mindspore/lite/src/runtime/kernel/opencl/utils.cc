@@ -32,6 +32,10 @@ std::vector<size_t> GetCommonGlobalSize(const std::vector<size_t> &local, const 
 
 std::vector<size_t> GetCommonLocalSize(const std::vector<size_t> &global, int max_size) {
   size_t wg_z = GetBiggestDividerWithPriority(global[2], 8);
+  if (wg_z == 0) {
+    MS_LOG(ERROR) << "Divide by zero";
+    return {};
+  }
   size_t wg_xy_size = max_size / wg_z;
   size_t wg_x = std::min(DivideRoundUp(global[0], 2), wg_xy_size);
   size_t wg_y = std::min(wg_xy_size / wg_x, global[1]);

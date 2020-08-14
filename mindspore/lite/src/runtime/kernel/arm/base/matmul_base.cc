@@ -48,7 +48,7 @@ kernel::LiteKernel *CpuMatmulKernelCreator(const std::vector<lite::tensor::Tenso
 
     case kNumberTypeFloat32: {
       kernel = new (std::nothrow) MatmulCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-      if (!kernel) {
+      if (kernel == nullptr) {
         MS_LOG(ERROR) << "kernel is nullptr.";
         return nullptr;
       }

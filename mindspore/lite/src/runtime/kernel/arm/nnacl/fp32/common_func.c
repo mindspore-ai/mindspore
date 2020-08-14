@@ -65,6 +65,9 @@ void MatrixMultiAdd(float *c11, float *c12, float *c21, float *c22, float *x_ptr
 
 void PostConvFuncComm(const float *src_ptr_, float *out_ptr, const float *bias_ptr, size_t output_channel,
                       size_t plane_size, size_t stride, bool is_relu, bool is_relu6, int size) {
+  if (size == 0) {
+    return;
+  }
   for (int oc = 0; oc < output_channel; oc++) {
     int oc_div = oc / size, oc_mod = oc % size;
     for (int hw = 0; hw < plane_size; hw++) {

@@ -28,7 +28,7 @@ void BatchToSpaceNoCropForNHWCInt8(const int8_t *input, int8_t *output, const in
   size_t output_offset = 0;
   size_t in_stride_h = in_w * in_c;
   size_t in_stride_n = in_stride_h * in_h;
-  float output_inverse_scale = 1.f / out_quant_arg->scale_;
+  const float output_inverse_scale = 1.f / out_quant_arg->scale_;
   float scale = in_quant_arg->scale_ * output_inverse_scale;
   float bias = -in_quant_arg->zp_ * scale;
   int32_t output_zp = out_quant_arg->zp_;
@@ -76,7 +76,7 @@ void BatchToSpaceForNHWCInt8(const int8_t *input, int8_t *output, const int *in_
   size_t in_stride_h = in_w * in_c;
   size_t in_stride_n = in_stride_h * in_h;
 
-  float output_inverse_scale = 1.f / out_quant_arg->scale_;
+  const float output_inverse_scale = 1.f / out_quant_arg->scale_;
   float scale = in_quant_arg->scale_ * output_inverse_scale;
   float bias = -in_quant_arg->zp_ * scale;
   int32_t output_zp = out_quant_arg->zp_;

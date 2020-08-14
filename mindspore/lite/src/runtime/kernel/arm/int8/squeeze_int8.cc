@@ -161,7 +161,7 @@ int SqueezeInt8CPUKernel::Run() {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "RunSqueezeParam failed. errorcode: ";
   }
-  return RET_OK;
+  return ret;
 }
 
 int SqueezeInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {

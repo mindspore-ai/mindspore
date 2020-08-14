@@ -66,7 +66,7 @@ int PowerCPUKernel::RunImpl(int task_id) {
     exp_addr = reinterpret_cast<float *>(in_tensors_[1]->Data());
     broadcast = false;
   }
-  float *cur_exp;
+  float *cur_exp = nullptr;
   if (broadcast) {
     cur_exp = &power_;
   } else {

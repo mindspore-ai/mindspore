@@ -261,7 +261,7 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Ten
   conv_param->input_w_ = inputs.front()->Width();
   conv_param->output_h_ = outputs.front()->Height();
   conv_param->output_w_ = outputs.front()->Width();
-  bool use_winograd;
+  bool use_winograd = false;
   int out_unit;
   InputTransformUnitFunc input_trans_func = nullptr;
   OutputTransformUnitFunc output_trans_func = nullptr;

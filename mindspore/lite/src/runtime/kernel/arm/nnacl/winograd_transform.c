@@ -28,7 +28,9 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
   int pad_w = conv_param->pad_w_;
   int input_h = conv_param->input_h_;
   int input_w = conv_param->input_w_;
-
+  if (out_w_block_num == 0) {
+    return;
+  }
   for (int c = 0; c < cal_num; c++) {  // actual tiled number
     int src_x_s = (out_tile_index % out_w_block_num) * output_unit - pad_w;
     int src_y_s = (out_tile_index / out_w_block_num) * output_unit - pad_h;
@@ -83,7 +85,9 @@ void WinogradOutputTransform(const float *gemm_out, float *tmp_out_data, const f
   int output_channel = conv_param->output_channel_;
   int oc4 = UP_DIV(output_channel, C4NUM);
   int input_unit = conv_param->input_unit_;
-
+  if (output_unit_num == 0) {
+    return;
+  }
   for (int i = 0; i < cal_num; i++) {
     int dst_x_s = out_tile_index % output_unit_num;
     int dst_y_s = out_tile_index / output_unit_num;
@@ -281,7 +285,9 @@ void Conv3x3Fp32InputTransform(const float *input_data, float *trans_input, floa
   int pad_h = conv_param->pad_h_;
   int ic4 = UP_DIV(input_channel, C4NUM);
   int input_unit = 4;
-
+  if (out_w_block == 0) {
+    return;
+  }
   for (int cal_id = 0; cal_id < real_cal_num; cal_id++) {
     int x_id = start_index + cal_id;
     int origin_x = (x_id % out_w_block) * OUPUT_UNIT - pad_w;
@@ -328,8 +334,11 @@ void Conv3x3Fp32InputTransform(const float *input_data, float *trans_input, floa
 
 void Conv3x3Fp32FilterTransform(float *weight_data, float *trans_weight, int iC4, int output_channel, int kernel_plane,
                                 int oc_block) {
-  int input_unit = 4;
+  const int input_unit = 4;
   int dst_step = iC4 * C4NUM * oc_block;
+  if (oc_block == 0) {
+    return;
+  }
   for (int o = 0; o < output_channel; o++) {
     int oc_block_num = o / oc_block;
     int oc_block_rem = o % oc_block;
@@ -485,36 +494,36 @@ void Conv3x3Fp32FilterTransform(float *weight_data, float *trans_weight, int iC4
         float dst01 = (local_ptr + 4)[0];
         float dst02 = (local_ptr + 8)[0];
 
-        float dst10 = 0.5f * local_ptr[0] + 0.5f * (local_ptr + 12)[0] + 0.5f * (local_ptr + 24)[0];
-        float dst11 = 0.5f * (local_ptr + 4)[0] + 0.5f * (local_ptr + 16)[0] + 0.5f * (local_ptr + 28)[0];
-        float dst12 = 0.5f * (local_ptr + 8)[0] + 0.5f * (local_ptr + 20)[0] + 0.5f * (local_ptr + 32)[0];
+        const float dst10 = 0.5f * local_ptr[0] + 0.5f * (local_ptr + 12)[0] + 0.5f * (local_ptr + 24)[0];
+        const float dst11 = 0.5f * (local_ptr + 4)[0] + 0.5f * (local_ptr + 16)[0] + 0.5f * (local_ptr + 28)[0];
+        const float dst12 = 0.5f * (local_ptr + 8)[0] + 0.5f * (local_ptr + 20)[0] + 0.5f * (local_ptr + 32)[0];
 
-        float dst20 = 0.5f * local_ptr[0] - 0.5f * (local_ptr + 12)[0] + 0.5f * (local_ptr + 24)[0];
-        float dst21 = 0.5f * (local_ptr + 4)[0] - 0.5f * (local_ptr + 16)[0] + 0.5f * (local_ptr + 28)[0];
-        float dst22 = 0.5f * (local_ptr + 8)[0] - 0.5f * (local_ptr + 20)[0] + 0.5f * (local_ptr + 32)[0];
+        const float dst20 = 0.5f * local_ptr[0] - 0.5f * (local_ptr + 12)[0] + 0.5f * (local_ptr + 24)[0];
+        const float dst21 = 0.5f * (local_ptr + 4)[0] - 0.5f * (local_ptr + 16)[0] + 0.5f * (local_ptr + 28)[0];
+        const float dst22 = 0.5f * (local_ptr + 8)[0] - 0.5f * (local_ptr + 20)[0] + 0.5f * (local_ptr + 32)[0];
 
         float dst30 = (local_ptr + 24)[0];
         float dst31 = (local_ptr + 28)[0];
         float dst32 = (local_ptr + 32)[0];
 
         float m00 = dst00;
-        float m01 = 0.5f * dst00 + 0.5f * dst01 + 0.5f * dst02;
-        float m02 = 0.5f * dst00 - 0.5f * dst01 + 0.5f * dst02;
+        const float m01 = 0.5f * dst00 + 0.5f * dst01 + 0.5f * dst02;
+        const float m02 = 0.5f * dst00 - 0.5f * dst01 + 0.5f * dst02;
         float m03 = dst02;
 
         float m10 = dst10;
-        float m11 = 0.5f * dst10 + 0.5f * dst11 + 0.5f * dst12;
-        float m12 = 0.5f * dst10 - 0.5f * dst11 + 0.5f * dst12;
+        const float m11 = 0.5f * dst10 + 0.5f * dst11 + 0.5f * dst12;
+        const float m12 = 0.5f * dst10 - 0.5f * dst11 + 0.5f * dst12;
         float m13 = dst12;
 
         float m20 = dst20;
-        float m21 = 0.5f * dst20 + 0.5f * dst21 + 0.5f * dst22;
-        float m22 = 0.5f * dst20 - 0.5f * dst21 + 0.5f * dst22;
+        const float m21 = 0.5f * dst20 + 0.5f * dst21 + 0.5f * dst22;
+        const float m22 = 0.5f * dst20 - 0.5f * dst21 + 0.5f * dst22;
         float m23 = dst22;
 
         float m30 = dst30;
-        float m31 = 0.5f * dst30 + 0.5f * dst31 + 0.5f * dst32;
-        float m32 = 0.5f * dst30 - 0.5f * dst31 + 0.5f * dst32;
+        const float m31 = 0.5f * dst30 + 0.5f * dst31 + 0.5f * dst32;
+        const float m32 = 0.5f * dst30 - 0.5f * dst31 + 0.5f * dst32;
         float m33 = dst32;
 
         *(dst_ic4_ptr + j * 8) = m00;
@@ -652,8 +661,10 @@ void Conv3x3Fp32OutputTransform(const float *gemm_out, float *out_data, const fl
   int output_w = conv_param->output_w_;
   int output_h = conv_param->output_h_;
   int oc4 = UP_DIV(output_channel, C4NUM);
-  int input_unit = 4;
-
+  const int input_unit = 4;
+  if (out_w_block == 0) {
+    return;
+  }
   for (int i = 0; i < real_cal_num; i++) {
     int out_w_index = (start_index + i) % out_w_block;
     int out_h_index = (start_index + i) / out_w_block;
@@ -855,9 +866,11 @@ void Conv3x3Uint8InputTransform(const int16_t *input_data, int16_t *trans_input,
   int pad_h = conv_param->pad_h_;
   ConvQuantArg quant_arg = conv_param->conv_quant_arg_;
   int input_zp = quant_arg.input_quant_args_[0].zp_;
-  int ic8 = UP_DIV(input_channel, C8NUM);
-  int input_unit = 4;
-
+  const int ic8 = UP_DIV(input_channel, C8NUM);
+  const int input_unit = 4;
+  if (out_w_block == 0) {
+    return;
+  }
   for (int cal_id = 0; cal_id < real_cal_num; cal_id++) {
     int x_id = start_index + cal_id;
     int origin_x = (x_id % out_w_block) * OUPUT_UNIT - pad_w;
@@ -890,7 +903,7 @@ void Conv3x3Uint8InputTransform(const int16_t *input_data, int16_t *trans_input,
 
 void Conv3x3Int8FilterTransform(const int16_t *weight_data, int16_t *trans_weight, int iC8, int output_channel,
                                 int kernel_plane) {
-  int input_unit = 4;
+  const int input_unit = 4;
   int dst_step = iC8 * C8NUM * C4NUM;
   for (int o = 0; o < output_channel; o++) {
     int oc4_block_num = o / C4NUM;
@@ -1441,9 +1454,11 @@ void Conv3x3Uint8OutputTransform(const int32_t *gemm_out, int8_t *out_data, cons
   int output_channel = conv_param->output_channel_;
   int output_w = conv_param->output_w_;
   int output_h = conv_param->output_h_;
-  int oc4 = UP_DIV(output_channel, C4NUM);
-  int input_unit = 4;
-
+  const int oc4 = UP_DIV(output_channel, C4NUM);
+  const int input_unit = 4;
+  if (out_w_block == 0) {
+    return;
+  }
   for (int i = 0; i < real_cal_num; i++) {
     int out_w_index = (start_index + i) % out_w_block;
     int out_h_index = (start_index + i) / out_w_block;

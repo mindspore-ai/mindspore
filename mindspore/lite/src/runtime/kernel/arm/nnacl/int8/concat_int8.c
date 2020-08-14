@@ -20,7 +20,7 @@
 
 void Int8Concat(int8_t **inputs, int8_t *output, ConcatParameter *para, int axis, int64_t real_dst_count, int task_id) {
   float output_scale = para->quant_arg_.out_args_.scale_;
-  float output_inverse_scale = 1.f / output_scale;
+  const float output_inverse_scale = 1.f / output_scale;
   int input_num = para->input_num_;
   int count_unit_ = para->count_unit_;
   int after_axis_size = para->after_axis_size;
