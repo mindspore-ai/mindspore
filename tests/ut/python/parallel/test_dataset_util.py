@@ -16,7 +16,7 @@ import numpy as np
 
 import mindspore as ms
 from mindspore import Tensor
-from mindspore.train._utils import _to_full_shapes, _to_full_tensor
+from mindspore.parallel._utils import _to_full_shapes, _to_full_tensor
 
 
 def test_to_full_shapes():

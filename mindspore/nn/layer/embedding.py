@@ -121,9 +121,8 @@ class EmbeddingLookup(Cell):
         When 'target' is set to 'DEVICE', this module will use P.GatherV2() which
         specified 'axis = 0' to lookup table.
         In field slice mode, the manual_shapes should be given. It is a tuple ,where
-        the element is (vocab[i], offset[i]), vocab[i] is the row numbers for i-th
-        part and offset[i] is the feature id offset for i-th part. The feature id in
-        i-th part will be subtracted by offset[i] to ensure the id start from 0.
+        the element is vocab[i], vocab[i] is the row numbers for i-th
+        part.
 
     Args:
         vocab_size (int): Size of the dictionary of embeddings.

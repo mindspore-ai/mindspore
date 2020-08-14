@@ -31,7 +31,6 @@ from ..ops.functional import cast
 from ..parallel._tensor import _load_tensor_by_layout
 from ..common.tensor import Tensor
 
-
 class Cell:
     """
     Base class for all neural networks.
@@ -87,6 +86,7 @@ class Cell:
         self._bprop_debug = False
         self._already_run = False
         self.cell_type = None
+        self._auto_parallel_compile_and_run = False
 
     @property
     def already_run(self):
@@ -445,6 +445,7 @@ class Cell:
         Returns:
             Object, the result of executing.
         """
+        self._auto_parallel_compile_and_run = True
         _executor.compile(self, *inputs, phase=self.phase, auto_parallel_mode=self._auto_parallel_mode)
 
         if self._auto_parallel_mode:
@@ -452,11 +453,12 @@ class Cell:
                 # get parallel inputs in sink mode, parallel inputs set in _executor.compile
                 parallel_inputs_run = self._parallel_inputs_run
             else:
-                # set parallel inputs in normal mode
-                self._parallel_inputs_run = self._load_inputs(*inputs)
-                parallel_inputs_run = self._parallel_inputs_run
+                parallel_inputs_run = inputs
             return _executor(self, *parallel_inputs_run, phase=self.phase)
         return _executor(self, *inputs, phase=self.phase)
+
+    def auto_parallel_compile_and_run(self):
+        return self._auto_parallel_compile_and_run
 
     def exec_checkpoint_graph(self):
         """Executes saving checkpoint graph operation."""

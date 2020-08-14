@@ -23,7 +23,7 @@ from mindspore import log as logger
 from .._c_expression import generate_key, Executor_, Tensor, MetaTensor, PynativeExecutor_
 from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_backend
 from .tensor import Tensor as MsTensor
-
+from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _to_full_tensor
 # store ms_function class compiled pipeline cache
 ms_compile_cache = {}
 
@@ -402,6 +402,11 @@ class _Executor:
             logger.debug("%r graph has existed.", phase)
             return phase, False
 
+        is_sink_mode = args and isinstance(args[0], Tensor) and args[0].virtual_flag
+        if auto_parallel_mode and _need_to_full() and not is_sink_mode and obj.auto_parallel_compile_and_run():
+            args_full = _to_full_tensor(args, _get_device_num(), _get_global_rank())
+            _, args_list = _generate_pip_args(obj, *args_full)
+
         result = self._executor.compile(obj, args_list, phase, use_vm)
         self.compile_cache[phase] = phase
         if not result:
@@ -423,7 +428,7 @@ class _Executor:
         self._updata_param_node_default_input(phase, replace)
 
         # set parallel inputs in sink mode
-        if auto_parallel_mode and (args and isinstance(args[0], Tensor) and args[0].virtual_flag):
+        if auto_parallel_mode and is_sink_mode:
             obj.set_parallel_input_with_inputs(*args)
 
         # the following GE init process is not needed when use vm or ms backend

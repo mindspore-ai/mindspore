@@ -19,9 +19,9 @@ import os
 from mindspore._checkparam import check_bool, check_int
 from .. import context
 from ._utils import _exec_datagraph, _get_types_and_shapes, _to_tensor, \
-    _construct_tensor_list, _to_full_shapes, _to_full_tensor
+    _construct_tensor_list
 from ..nn.wrap import GetNextSingleOp
-from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full
+from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _to_full_shapes
 
 
 def _send_data(dataset, epoch_num):
@@ -236,6 +236,4 @@ class _DatasetIterNormal:
 
     def __next__(self):
         data = self.iter.__next__()
-        if _need_to_full():
-            return _to_full_tensor(data, self.device_num, self.global_rank)
         return _to_tensor(data)

@@ -34,7 +34,7 @@ from mindspore.parallel._utils import _get_parallel_mode, _get_device_num, _get_
     _get_parameter_broadcast, _device_number_check, _parameter_broadcast_check
 from mindspore.parallel._utils import _need_to_full
 from mindspore.train import amp
-from mindspore.train._utils import _to_full_tensor
+from mindspore.parallel._utils import _to_full_tensor
 from mindspore.train.callback import _InternalCallbackParam, RunContext, _CallbackManager
 from mindspore.train.parallel_utils import ParallelMode
 from .dataset_helper import DatasetHelper
