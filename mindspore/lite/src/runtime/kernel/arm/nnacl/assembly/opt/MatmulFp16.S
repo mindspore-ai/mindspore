@@ -24,10 +24,10 @@ MatmulFp16Neon64:
   st1 {v8.8h, v9.8h, v10.8h, v11.8h}, [sp], #64
   st1 {v12.8h, v13.8h, v14.8h, v15.8h}, [sp], #64
 
-  mov w18, #32 // sizeof(float) * 8
+  mov w18, #16 // sizeof(float) * 8
   mul w15, w5, w18 // block stride of lhs/rhs: sizeof(float) * 8 * depth
   mov x11, x3 // bias flag
-  mov x18, #4
+  mov x18, #2
   ldr x17, [sp]
   mul x17, x17, x18
 
