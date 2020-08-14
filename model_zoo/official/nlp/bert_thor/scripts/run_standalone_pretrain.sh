@@ -20,27 +20,39 @@ echo "bash run_standalone_pretrain.sh DEVICE_ID EPOCH_SIZE DATA_DIR SCHEMA_DIR"
 echo "for example: bash run_standalone_pretrain.sh 0 40 /path/zh-wiki/ /path/Schema.json"
 echo "=============================================================================================================="
 
-DEVICE_ID=$1
 EPOCH_SIZE=$2
 DATA_DIR=$3
 SCHEMA_DIR=$4
 
-mkdir -p ms_log 
-PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
-CUR_DIR=`pwd`
-export GLOG_log_dir=${CUR_DIR}/ms_log
-export GLOG_logtostderr=0
-python ${PROJECT_DIR}/../run_pretrain.py  \
-    --distribute="false" \
-    --epoch_size=$EPOCH_SIZE \
-    --device_id=$DEVICE_ID \
-    --enable_save_ckpt="true" \
-    --enable_lossscale="true" \
-    --do_shuffle="true" \
-    --enable_data_sink="true" \
-    --data_sink_steps=1 \
-    --load_checkpoint_path="" \
-    --save_checkpoint_steps=10000 \
-    --save_checkpoint_num=1 \
-    --data_dir=$DATA_DIR \
-    --schema_dir=$SCHEMA_DIR > log.txt 2>&1 &
+ulimit -u unlimited
+export DEVICE_ID=$1
+export RANK_SIZE=1
+
+if [ -d "LOG" ];
+then
+    rm -rf ./LOG
+fi
+mkdir ./LOG
+cp  ../*.py ./LOG
+cp -r ../src ./LOG
+cd ./LOG || exit
+echo "start training for device $DEVICE_ID"
+env > env.log
+python run_pretrain.py  \
+--distribute="false" \
+--epoch_size=$EPOCH_SIZE \
+--device_id=$DEVICE_ID \
+--device_num=$RANK_SIZE \
+--enable_save_ckpt="true" \
+--enable_lossscale="false" \
+--do_shuffle="false" \
+--enable_data_sink="true" \
+--data_sink_steps=1000 \
+--load_checkpoint_path="" \
+--save_checkpoint_path='./' \
+--save_checkpoint_steps=5000 \
+--save_checkpoint_num=20 \
+--data_dir=$DATA_DIR \
+--schema_dir=$SCHEMA_DIR > log.txt 2>&1 &
+cd ../
+

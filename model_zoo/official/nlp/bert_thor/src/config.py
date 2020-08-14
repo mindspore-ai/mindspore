@@ -19,9 +19,6 @@ from easydict import EasyDict as edict
 
 cfg = edict({
     'bert_network': 'large',
-    'loss_scale_value': 65536,
-    'scale_factor': 2,
-    'scale_window': 1000,
     'optimizer': 'Thor',
     'AdamWeightDecay': edict({
         'learning_rate': 3e-5,
@@ -49,7 +46,7 @@ cfg = edict({
         'momentum': 0.9,
         'weight_decay': 5e-4,
         'loss_scale': 1,
-        'frequency': 10,
-        'batch_size': 8,
+        'frequency': 100,
+        'batch_size': 12,
     }),
 })

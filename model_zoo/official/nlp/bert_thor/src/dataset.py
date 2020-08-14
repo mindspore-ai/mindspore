@@ -16,7 +16,6 @@
 Data operations, will be used in run_pretrain.py
 """
 import os
-
 import mindspore.common.dtype as mstype
 import mindspore.dataset.engine.datasets as de
 import mindspore.dataset.transforms.c_transforms as C
@@ -37,7 +36,7 @@ def create_bert_dataset(device_num=1, rank=0, do_shuffle="true", data_dir=None, 
                             columns_list=["input_ids", "input_mask", "segment_ids", "next_sentence_labels",
                                           "masked_lm_positions", "masked_lm_ids", "masked_lm_weights"],
                             shuffle=de.Shuffle.FILES if do_shuffle == "true" else False,
-                            num_shards=device_num, shard_id=rank, shard_equal_rows=True)
+                            num_shards=device_num, shard_id=rank, shard_equal_rows=False)
     ori_dataset_size = ds.get_dataset_size()
     print('origin dataset size: ', ori_dataset_size)
     type_cast_op = C.TypeCast(mstype.int32)
