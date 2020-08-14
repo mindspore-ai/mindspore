@@ -42,6 +42,7 @@ class ROIAlignGradGpuFwdKernel : public GpuKernel {
 
     ROIAlignGrad(dy, rois, roi_rows_, roi_cols_, dx, spatial_scale_, sample_num_, roi_end_mode_, channels_, height_,
                  width_, pooled_height_, pooled_width_, reinterpret_cast<cudaStream_t>(stream_ptr));
+
     return true;
   }
 

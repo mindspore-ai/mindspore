@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_UTIL_H_
+#define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_UTIL_H_
+
 #include <cuda_fp16.h>
 
 inline __device__ float ms_atomic_add(float *address, float val) { return atomicAdd(address, val); }
@@ -25,12 +28,12 @@ inline __device__ half ms_atomic_add(half *address, half val) {
     reinterpret_cast<unsigned int *>(reinterpret_cast<size_t>(address) - (reinterpret_cast<size_t>(address) & 2));
   unsigned int old = *aligned;
   unsigned int assumed;
-  unsigned short old_as_us;  //NOLINT
+  unsigned short old_as_us;  // NOLINT
   do {
     assumed = old;
-    old_as_us = static_cast<unsigned short>(reinterpret_cast<size_t>(address) & 2 ? old >> 16 : old & 0xffff); //NOLINT
+    old_as_us = static_cast<unsigned short>(reinterpret_cast<size_t>(address) & 2 ? old >> 16 : old & 0xffff);  // NOLINT
     half sum = __float2half_rn(__half2float(__ushort_as_half(old_as_us)) + static_cast<float>(val));
-    unsigned short sum_as_us = __half_as_ushort(sum); //NOLINT
+    unsigned short sum_as_us = __half_as_ushort(sum);  // NOLINT
     unsigned int sum_as_ui =
       reinterpret_cast<size_t>(address) & 2 ? (sum_as_us << 16) | (old & 0xffff) : (old & 0xffff0000) | sum_as_us;
     old = atomicCAS(aligned, assumed, sum_as_ui);
@@ -38,3 +41,5 @@ inline __device__ half ms_atomic_add(half *address, half val) {
   __half_raw raw = {old_as_us};
   return half(raw);
 }
+
+#endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_UTIL_H_
