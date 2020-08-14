@@ -30,6 +30,7 @@
 #include "minddata/dataset/include/iterator.h"
 #include "minddata/dataset/include/samplers.h"
 #include "minddata/dataset/include/type_id.h"
+#include "minddata/dataset/text/vocab.h"
 
 namespace mindspore {
 namespace dataset {
@@ -39,6 +40,7 @@ class DatasetOp;
 class DataSchema;
 class Tensor;
 class TensorShape;
+class Vocab;
 
 namespace api {
 
@@ -61,6 +63,7 @@ class TextFileDataset;
 class VOCDataset;
 // Dataset Op classes (in alphabetical order)
 class BatchDataset;
+class BuildVocabDataset;
 class ConcatDataset;
 class MapDataset;
 class ProjectDataset;
@@ -324,6 +327,24 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   ///    be dropped and not propagated to the next node
   /// \return Shared pointer to the current BatchDataset
   std::shared_ptr<BatchDataset> Batch(int32_t batch_size, bool drop_remainder = false);
+
+  /// \brief Function to create a Vocab from source dataset
+  /// \notes Build a vocab from a dataset. This would collect all the unique words in a dataset and return a vocab
+  ///    which contains top_k most frequent words (if top_k is specified)
+  /// \param[in] columns Column names to get words from. It can be a vector of column names
+  /// \param[in] freq_range A tuple of integers (min_frequency, max_frequency). Words within the frequency
+  ///    range would be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
+  ///    can be set to default, which corresponds to 0/total_words separately
+  /// \param[in] top_k Number of words to be built into vocab. top_k most frequent words are
+  //     taken. The top_k is taken after freq_range. If not enough top_k, all words will be taken
+  /// \param[in] special_tokens A list of strings, each one is a special token
+  /// \param[in] special_first Whether special_tokens will be prepended/appended to vocab, If special_tokens
+  ///    is specified and special_first is set to default, special_tokens will be prepended
+  /// \return Shared pointer to the current Vocab
+  std::shared_ptr<Vocab> BuildVocab(const std::vector<std::string> &columns = {},
+                                    const std::pair<int64_t, int64_t> &freq_range = {0, kDeMaxFreq},
+                                    int64_t top_k = kDeMaxTopk, const std::vector<std::string> &special_tokens = {},
+                                    bool special_first = true);
 
   /// \brief Function to create a ConcatDataset
   /// \notes Concat the datasets in the input
@@ -857,6 +878,33 @@ class BatchDataset : public Dataset {
   bool pad_;
   std::vector<std::string> cols_to_map_;
   std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map_;
+};
+
+class BuildVocabDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  BuildVocabDataset(std::shared_ptr<Vocab> vocab, const std::vector<std::string> &columns,
+                    const std::pair<int64_t, int64_t> &freq_range, int64_t top_k,
+                    const std::vector<std::string> &special_tokens, bool special_first);
+
+  /// \brief Destructor
+  ~BuildVocabDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::shared_ptr<Vocab> vocab_;
+  std::vector<std::string> columns_;
+  std::pair<int64_t, int64_t> freq_range_;
+  int64_t top_k_;
+  std::vector<std::string> special_tokens_;
+  bool special_first_;
 };
 
 class ConcatDataset : public Dataset {

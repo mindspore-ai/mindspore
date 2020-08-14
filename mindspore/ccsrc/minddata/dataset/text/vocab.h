@@ -57,6 +57,34 @@ class Vocab {
   static Status BuildFromFile(const std::string &path, const std::string &delimiter, int32_t vocab_size,
                               const py::list &special_tokens, bool prepend_special, std::shared_ptr<Vocab> *vocab);
 
+  /// \brief Build a vocab from a c++ map. id needs to start from 2, no duplicate and continuous
+  /// \param[in] words An unordered_map containing word, word id pair.
+  /// \param[out] vocab A vocab object
+  /// \return Error code
+  static Status BuildFromUnorderedMap(const std::unordered_map<WordType, WordIdType> &words,
+                                      std::shared_ptr<Vocab> *vocab);
+
+  /// \brief Build a vocab from a c++ vector. id needs to start from 2, no duplicate and continuous
+  /// \param[in] words A vector of string, used to build vocab, id starts from 2
+  /// \param[in] special_tokens A vector of string contain special tokens
+  /// \param[in] prepend_special Whether special_tokens will be prepended/appended to vocab
+  /// \param[out] vocab A vocab object
+  /// \return Error code
+  static Status BuildFromVector(const std::vector<WordType> &words, const std::vector<WordType> &special_tokens,
+                                bool prepend_special, std::shared_ptr<Vocab> *vocab);
+
+  /// \brief Build a vocab from reading a vocab file, id are automatically assigned, start from 2
+  /// \param[in] path Path to vocab file , each line is assumed to contain 1 word
+  /// \param[in] delimiter Delimiter to break each line with
+  /// \param[in] vocab_size Number of words to read from file
+  /// \param[in] special_tokens A vector of string contain special tokens
+  /// \param[in] prepend_special Whether special_tokens will be prepended/appended to vocab
+  /// \param[out] vocab A vocab object
+  /// \return Error code
+  static Status BuildFromFileCpp(const std::string &path, const std::string &delimiter, int32_t vocab_size,
+                                 const std::vector<WordType> &special_tokens, bool prepend_special,
+                                 std::shared_ptr<Vocab> *vocab);
+
   // Lookup the id of a word, if word doesn't exist in vocab, return default_id
   // @param const WordType word - word to look up
   // @param WordIdType default_id - word id to return to user when its not in the vocab

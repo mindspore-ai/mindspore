@@ -26,4 +26,5 @@ add_library(cpp-API OBJECT
         iterator.cc
         transforms.cc
         samplers.cc
+        text.cc
         )

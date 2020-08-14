@@ -97,6 +97,7 @@ SET(DE_UT_SRCS
         concatenate_op_test.cc
         cyclic_array_test.cc
         perf_data_test.cc
+        build_vocab_test.cc
         c_api_samplers_test.cc
         c_api_transforms_test.cc
         c_api_dataset_ops_test.cc
@@ -104,12 +105,13 @@ SET(DE_UT_SRCS
         c_api_dataset_clue_test.cc
         c_api_dataset_coco_test.cc
         c_api_dataset_csv_test.cc
-        c_api_dataset_filetext_test.cc
+        c_api_dataset_textfile_test.cc
         c_api_dataset_manifest_test.cc
         c_api_dataset_randomdata_test.cc
         c_api_dataset_voc_test.cc
         c_api_datasets_test.cc
         c_api_dataset_iterator_test.cc
+        c_api_dataset_vocab.cc
         tensor_op_fusion_pass_test.cc
         sliding_window_op_test.cc
         epoch_ctrl_op_test.cc
