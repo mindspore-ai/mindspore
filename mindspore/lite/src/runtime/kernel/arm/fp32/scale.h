@@ -41,11 +41,10 @@ class ScaleCPUKernel : public LiteKernel {
   int Scale(int task_id);
 
  private:
-  void FreeTmpBuffer();
-  float *input_ptr_;
-  float *scale_;
-  float *offset_;
-  float *output_ptr_;
+  float *input_ptr_ = nullptr;
+  float *scale_ = nullptr;
+  float *offset_ = nullptr;
+  float *output_ptr_ = nullptr;
   ScaleParameter *scale_param_;
 };
 }  // namespace mindspore::kernel

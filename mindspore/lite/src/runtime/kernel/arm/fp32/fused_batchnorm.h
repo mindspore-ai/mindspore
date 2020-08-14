@@ -40,12 +40,12 @@ class FusedBatchnormCPUKernel : public LiteKernel {
   int Execute(int task_id);
 
  private:
-  float *in_addr_;
-  float *mean_addr_;
-  float *var_addr_;
-  float *scale_addr_;
-  float *offset_addr_;
-  float *out_addr_;
+  float *in_addr_ = nullptr;
+  float *mean_addr_ = nullptr;
+  float *var_addr_ = nullptr;
+  float *scale_addr_ = nullptr;
+  float *offset_addr_ = nullptr;
+  float *out_addr_ = nullptr;
 
   BatchNormParameter *batchnorm_param_;
 };

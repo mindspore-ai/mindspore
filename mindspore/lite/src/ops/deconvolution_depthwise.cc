@@ -48,8 +48,8 @@ int DeconvDepthwiseConv2D::InferShape(std::vector<tensor::Tensor *> inputs_, std
   pad_u_ = conv_prim->padUp();
   pad_d_ = conv_prim->padDown();
   pad_r_ = conv_prim->padRight();
-  output_h = conv_prim->strideH() * (input_h - 1) * conv_prim->kernelH() - pad_u_ - pad_d_;
-  output_w = conv_prim->strideW() * (input_w - 1) * conv_prim->kernelW() - pad_l_ - pad_r_;
+  output_h = conv_prim->strideH() * (input_h - 1) + conv_prim->kernelH() - pad_u_ - pad_d_;
+  output_w = conv_prim->strideW() * (input_w - 1) + conv_prim->kernelW() - pad_l_ - pad_r_;
   if ((output_h + conv_prim->padUp() + conv_prim->padDown() - conv_prim->kernelH()) % conv_prim->strideH() != 0) {
     output_h += (output_h + conv_prim->padLeft() + conv_prim->padRight() - conv_prim->kernelH()) % conv_prim->strideH();
   }

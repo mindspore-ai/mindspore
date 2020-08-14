@@ -28,9 +28,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Scale;
 
 namespace mindspore::kernel {
-ScaleCPUKernel::~ScaleCPUKernel() { FreeTmpBuffer(); }
-
-void ScaleCPUKernel::FreeTmpBuffer() {
+ScaleCPUKernel::~ScaleCPUKernel() {
   if (scale_param_->const_scale_) {
     if (scale_ != nullptr) {
       free(scale_);
@@ -46,7 +44,6 @@ void ScaleCPUKernel::FreeTmpBuffer() {
 }
 
 int ScaleCPUKernel::InitScaleOffset() {
-  FreeTmpBuffer();
   auto scale_tensor = in_tensors_.at(1);
   float *scale_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->Data());
   if (scale_ptr != nullptr) {
@@ -116,10 +113,7 @@ int ScaleCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
   }
-  return ReSize();
-}
 
-int ScaleCPUKernel::ReSize() {
   auto ret = InitParameter();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale fp32 InitParameter failed.";
@@ -129,6 +123,15 @@ int ScaleCPUKernel::ReSize() {
   ret = InitScaleOffset();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale fp32 InitScaleOffset failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int ScaleCPUKernel::ReSize() {
+  auto ret = InitParameter();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Scale fp32 InitParameter failed.";
     return RET_ERROR;
   }
   return RET_OK;
