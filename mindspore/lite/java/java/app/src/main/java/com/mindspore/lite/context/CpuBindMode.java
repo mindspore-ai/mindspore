@@ -1,4 +1,4 @@
-package cn.huawei.mindspore.context;
+package com.mindspore.lite.context;
 
 public class CpuBindMode {
     public static final int MID_CPU = -1;

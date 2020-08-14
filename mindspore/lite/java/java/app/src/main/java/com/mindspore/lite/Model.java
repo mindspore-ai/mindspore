@@ -1,10 +1,9 @@
-package cn.huawei.mindspore;
+package com.mindspore.lite;
 
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.util.Log;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.MappedByteBuffer;

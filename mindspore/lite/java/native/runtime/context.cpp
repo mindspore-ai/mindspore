@@ -20,7 +20,7 @@
 #include "common/ms_log.h"
 #include "include/context.h"
 
-extern "C" JNIEXPORT jlong JNICALL Java_cn_huawei_mindspore_context_Context_createContext(JNIEnv *env, jobject thiz,
+extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_context_Context_createContext(JNIEnv *env, jobject thiz,
                                                                                           jint device_type,
                                                                                           jint thread_num,
                                                                                           jint cpu_bind_mode) {
@@ -57,7 +57,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_cn_huawei_mindspore_context_Context_crea
   return (jlong)context;
 }
 
-extern "C" JNIEXPORT void JNICALL Java_cn_huawei_mindspore_context_Context_free(JNIEnv *env, jobject thiz,
+extern "C" JNIEXPORT void JNICALL Java_com_mindspore_lite_context_Context_free(JNIEnv *env, jobject thiz,
                                                                                 jlong context_ptr) {
   auto *pointer = reinterpret_cast<void *>(context_ptr);
   if (pointer == nullptr) {

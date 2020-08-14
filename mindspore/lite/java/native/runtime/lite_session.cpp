@@ -22,7 +22,7 @@
 #include "include/lite_session.h"
 #include "include/errorcode.h"
 
-extern "C" JNIEXPORT jlong JNICALL Java_cn_huawei_mindspore_LiteSession_createSession(JNIEnv *env, jobject thiz,
+extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_LiteSession_createSession(JNIEnv *env, jobject thiz,
                                                                                       jlong context_ptr) {
   auto *pointer = reinterpret_cast<void *>(context_ptr);
   if (pointer == nullptr) {
@@ -38,7 +38,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_cn_huawei_mindspore_LiteSession_createSe
   return jlong(session);
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_cn_huawei_mindspore_LiteSession_compileGraph(JNIEnv *env, jobject thiz,
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_LiteSession_compileGraph(JNIEnv *env, jobject thiz,
                                                                                         jlong session_ptr,
                                                                                         jlong model_ptr) {
   auto *session_pointer = reinterpret_cast<void *>(session_ptr);
@@ -58,7 +58,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_cn_huawei_mindspore_LiteSession_compi
   return (jboolean)(ret == mindspore::lite::RET_OK);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_cn_huawei_mindspore_LiteSession_bindThread(JNIEnv *env, jobject thiz,
+extern "C" JNIEXPORT void JNICALL Java_com_mindspore_lite_LiteSession_bindThread(JNIEnv *env, jobject thiz,
                                                                                   jlong session_ptr, jboolean if_bind) {
   auto *pointer = reinterpret_cast<void *>(session_ptr);
   if (pointer == nullptr) {
@@ -69,7 +69,7 @@ extern "C" JNIEXPORT void JNICALL Java_cn_huawei_mindspore_LiteSession_bindThrea
   lite_session_ptr->BindThread(if_bind);
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_cn_huawei_mindspore_LiteSession_runGraph(JNIEnv *env, jobject thiz,
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_LiteSession_runGraph(JNIEnv *env, jobject thiz,
                                                                                     jlong session_ptr) {
   auto *pointer = reinterpret_cast<void *>(session_ptr);
   if (pointer == nullptr) {
@@ -81,7 +81,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_cn_huawei_mindspore_LiteSession_runGr
   return (jboolean)(ret == mindspore::lite::RET_OK);
 }
 
-extern "C" JNIEXPORT jobject JNICALL Java_cn_huawei_mindspore_LiteSession_getInputs(JNIEnv *env, jobject thiz,
+extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_lite_LiteSession_getInputs(JNIEnv *env, jobject thiz,
                                                                                     jlong session_ptr) {
   jclass array_list = env->FindClass("java/util/ArrayList");
   jmethodID array_list_construct = env->GetMethodID(array_list, "<init>", "()V");
@@ -104,7 +104,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_cn_huawei_mindspore_LiteSession_getInp
   return ret;
 }
 
-extern "C" JNIEXPORT jobject JNICALL Java_cn_huawei_mindspore_LiteSession_getInputsByName(JNIEnv *env, jobject thiz,
+extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_lite_LiteSession_getInputsByName(JNIEnv *env, jobject thiz,
                                                                                           jlong session_ptr,
                                                                                           jstring node_name) {
   jclass array_list = env->FindClass("java/util/ArrayList");
@@ -128,7 +128,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_cn_huawei_mindspore_LiteSession_getInp
   return ret;
 }
 
-extern "C" JNIEXPORT jobject JNICALL Java_cn_huawei_mindspore_LiteSession_getOutputs(JNIEnv *env, jobject thiz,
+extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_lite_LiteSession_getOutputs(JNIEnv *env, jobject thiz,
                                                                                      jlong session_ptr) {
   jclass hash_map_clazz = env->FindClass("java/util/HashMap");
   jmethodID hash_map_construct = env->GetMethodID(hash_map_clazz, "<init>", "()V");
@@ -160,7 +160,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_cn_huawei_mindspore_LiteSession_getOut
   return hash_map;
 }
 
-extern "C" JNIEXPORT jobject JNICALL Java_cn_huawei_mindspore_LiteSession_getOutputsByName(JNIEnv *env, jobject thiz,
+extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_lite_LiteSession_getOutputsByName(JNIEnv *env, jobject thiz,
                                                                                            jlong session_ptr,
                                                                                            jstring node_name) {
   jclass array_list = env->FindClass("java/util/ArrayList");
@@ -184,7 +184,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_cn_huawei_mindspore_LiteSession_getOut
   return ret;
 }
 
-extern "C" JNIEXPORT void JNICALL Java_cn_huawei_mindspore_LiteSession_free(JNIEnv *env, jobject thiz,
+extern "C" JNIEXPORT void JNICALL Java_com_mindspore_lite_LiteSession_free(JNIEnv *env, jobject thiz,
                                                                             jlong session_ptr) {
   auto *pointer = reinterpret_cast<void *>(session_ptr);
   if (pointer == nullptr) {

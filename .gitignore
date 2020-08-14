@@ -4,6 +4,15 @@ mindspore/lib
 output
 *.ir
 
+# mindspore lite java
+mindspore/lite/java/java/.gradle
+mindspore/lite/java/java/build
+mindspore/lite/java/java/gradle
+mindspore/lite/java/java/gradlew
+mindspore/lite/java/java/gradlew.bat
+mindspore/lite/java/java/app/build
+mindspore/lite/java/java/app/libs
+
 # flatbuffer
 mindspore/lite/tools/converter/parser/tflite/schema_generated.h
 mindspore/lite/tools/converter/parser/caffe/caffe.pb.cc
