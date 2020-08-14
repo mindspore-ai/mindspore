@@ -16,7 +16,6 @@
 import numpy as np
 import pytest
 
-import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -31,24 +30,57 @@ class NetCheckValid(nn.Cell):
     def construct(self, anchor, image_metas):
         return self.valid(anchor, image_metas)
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_boundingbox_decode():
-    anchor = np.array([[50, 0, 100, 700], [-2, 2, 8, 100], [10, 20, 300, 2000]], np.float32)
-    image_metas = np.array([768, 1280, 1], np.float32)
-    anchor_box = Tensor(anchor, mindspore.float32)
-    image_metas_box = Tensor(image_metas, mindspore.float32)
-    expect = np.array([True, False, False], np.bool_)
+def check_valid(nptype):
+    anchor = np.array([[50, 0, 100, 700], [-2, 2, 8, 100], [10, 20, 300, 2000]], nptype)
+    image_metas = np.array([768, 1280, 1], nptype)
+    anchor_box = Tensor(anchor)
+    image_metas_box = Tensor(image_metas)
+    expect = np.array([True, False, False], np.bool)
 
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     boundingbox_decode = NetCheckValid()
     output = boundingbox_decode(anchor_box, image_metas_box)
-    diff = (output.asnumpy() == expect)
-    assert (diff == 1).all()
+    assert np.array_equal(output.asnumpy(), expect)
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     boundingbox_decode = NetCheckValid()
     output = boundingbox_decode(anchor_box, image_metas_box)
-    diff = (output.asnumpy() == expect)
-    assert (diff == 1).all()
+    assert np.array_equal(output.asnumpy(), expect)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_check_valid_float32():
+    check_valid(np.float32)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_check_valid_float16():
+    check_valid(np.float16)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_check_valid_int16():
+    check_valid(np.int16)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_check_valid_uint8():
+    anchor = np.array([[5, 0, 10, 70], [2, 2, 8, 10], [1, 2, 30, 200]], np.uint8)
+    image_metas = np.array([76, 128, 1], np.uint8)
+    anchor_box = Tensor(anchor)
+    image_metas_box = Tensor(image_metas)
+    expect = np.array([True, True, False], np.bool)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    boundingbox_decode = NetCheckValid()
+    output = boundingbox_decode(anchor_box, image_metas_box)
+    assert np.array_equal(output.asnumpy(), expect)
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
+    boundingbox_decode = NetCheckValid()
+    output = boundingbox_decode(anchor_box, image_metas_box)
+    assert np.array_equal(output.asnumpy(), expect)

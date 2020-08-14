@@ -879,7 +879,7 @@ class Fill(PrimitiveWithInfer):
         validator.check_value_type("value", x['value'], [numbers.Number, bool], self.name)
         for idx, item in enumerate(dims['value']):
             validator.check_integer("dims[%d]" % idx, item, 0, Rel.GT, self.name)
-        valid_types = [mstype.bool_, mstype.int8, mstype.int32, mstype.int64,
+        valid_types = [mstype.bool_, mstype.int8, mstype.int16, mstype.int32, mstype.int64,
                        mstype.uint8, mstype.uint32, mstype.uint64,
                        mstype.float16, mstype.float32, mstype.float64]
         validator.check_type_same({"value": dtype['value']}, valid_types, self.name)

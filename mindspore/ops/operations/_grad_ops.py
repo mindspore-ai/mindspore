@@ -1304,7 +1304,7 @@ class StridedSliceGrad(PrimitiveWithInfer):
 
     def __infer__(self, dy, shapex, begin, end, strides):
         args = {"dy": dy['dtype']}
-        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        validator.check_tensor_type_same(args, mstype.number_type + (mstype.bool_,), self.name)
 
         for idx, item in enumerate(shapex['value']):
             validator.check_value_type("shapex[%d]" % idx, item, [int], self.name)
