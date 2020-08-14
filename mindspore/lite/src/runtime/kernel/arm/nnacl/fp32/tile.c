@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "nnacl/tile.h"
+#include "nnacl/fp32/tile.h"
 #include <string.h>
 
 void DoCopyData(float *input_data, float *output_data, size_t size, size_t multiple) {
@@ -35,7 +35,7 @@ int DoTileOneDimension(float *input_data, float *output_data, size_t dim, TilePa
     for (size_t j = 0; j < parameter->multiples_[dim]; ++j) {
       size_t in_pos = parameter->in_strides_[dim] * i;
       size_t out_pos = parameter->out_strides_[dim] * (i + j * src_dim_size);
-      TileOneDimension(input_data + in_pos, output_data + out_pos, dim + 1, parameter);
+      DoTileOneDimension(input_data + in_pos, output_data + out_pos, dim + 1, parameter);
     }
   }
   return 0;
