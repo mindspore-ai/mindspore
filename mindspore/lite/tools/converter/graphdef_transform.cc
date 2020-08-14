@@ -95,55 +95,6 @@ void GraphDefTransform::CreateQuantizer(const converter::Flags *flags) {
 
 int GraphDefTransform::Transform(const converter::Flags &ctx) {
   STATUS status;
-  //  // constant folding
-  //  {
-  //    Optimizer topologicalSortOptimizer;
-  //    topologicalSortOptimizer.AddPass(new (std::nothrow) TopologicalSortPass());
-  //    status = topologicalSortOptimizer.Run(graphDefT);
-  //    if (status != RET_OK) {
-  //      MS_LOG(ERROR)<<"Run topologicalSortOptimizer graphPasses Failed";
-  //      return status;
-  //    }
-  //    Optimizer constFoldOptimizer;
-  //    constFoldOptimizer.AddPass(new (std::nothrow) AddConstFoldPass());
-  //    constFoldOptimizer.AddPass(new (std::nothrow) CastConstFoldPass());
-  //    constFoldOptimizer.AddPass(new (std::nothrow) ConcatV2ConstFoldPass());
-  //    constFoldOptimizer.AddPass(new (std::nothrow) ExpandDimsConstFoldPass());
-  //    constFoldOptimizer.AddPass(new (std::nothrow) MulConstFoldPass());
-  //    constFoldOptimizer.AddPass(new (std::nothrow) RangeConstFoldPass());
-  //    constFoldOptimizer.AddPass(new (std::nothrow) ReshapeConstFoldPass());
-  //    constFoldOptimizer.AddPass(new (std::nothrow) RsqrtConstFoldPass());
-  //    constFoldOptimizer.AddPass(new (std::nothrow) ShapeConstFoldPass());
-  //    constFoldOptimizer.AddPass(new (std::nothrow) SliceConstFoldPass());
-  //    constFoldOptimizer.AddPass(new (std::nothrow) StackConstFoldPass());
-  //    constFoldOptimizer.AddPass(new (std::nothrow) StridedSliceConstFoldPass());
-  //    constFoldOptimizer.AddPass(new (std::nothrow) SubConstFoldPass());
-  //    constFoldOptimizer.AddPass(new (std::nothrow) TileConstFoldPass());
-  //    constFoldOptimizer.AddPass(new (std::nothrow) TransposeConstFoldPass());
-  //    constFoldOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
-  //    status = constFoldOptimizer.Run(graphDefT);
-  //    if (status != RET_OK && status != RET_NO_CHANGE) {
-  //      MS_LOG(ERROR) << "Run constFoldOptimizer graphPasses Failed";
-  //      return status;
-  //    }
-  //  }
-
-  // fusion
-  // {
-  //   Optimizer fusionOptimizer;
-  //   fusionOptimizer.AddPass(new (std::nothrow) ConvBiasAddFusionPass());
-  //   fusionOptimizer.AddPass(new (std::nothrow) ConvBNFusionPass());
-  //   fusionOptimizer.AddPass(new (std::nothrow) ConvScaleFusionPass());
-  //   fusionOptimizer.AddPass(new (std::nothrow) ConvReluFusionPass());
-  //   fusionOptimizer.AddPass(new (std::nothrow) ConvRelu6FusionPass());
-  //   fusionOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
-  //   status = fusionOptimizer.Run(graphDefT);
-  //   if (status != RET_OK && status != RET_NO_CHANGE) {
-  //     MS_LOG(ERROR) << "Run fusionOptimizer graphPasses Failed";
-  //     return status;
-  //   }
-  // }
-
   // weight format trans
   if (ctx.formatTrans) {
     Optimizer weightFormatOptimizer;

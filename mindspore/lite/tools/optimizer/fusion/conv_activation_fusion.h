@@ -18,7 +18,8 @@
 #define MINDSPORE_LITE_SRC_PASS_FUSION_CONV_ACTIVATION_FUSION_H_
 
 #include <string>
-#include "tools/optimizer/common/optimizer.h"
+#include "backend/optimizer/common/optimizer.h"
+#include "schema/inner/model_generated.h"
 
 namespace mindspore {
 namespace opt {

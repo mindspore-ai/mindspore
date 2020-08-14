@@ -29,13 +29,6 @@
 using PrimitiveTValuePtr = std::shared_ptr<mindspore::lite::PrimitiveTValue>;
 namespace mindspore {
 namespace opt {
-bool AnfEqual(const BaseRef &a, const BaseRef &b);
-
-bool CNodeTypeEqual(const BaseRef &a, const BaseRef &b);
-
-AnfNodePtr SexpToNode(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap *primitive_vars,
-                      bool multigraph = false);
-
 bool IsRealCNodeKernel(const AnfNodePtr &node);
 
 bool IsGraphKernel(const AnfNodePtr &node);
@@ -62,6 +55,10 @@ schema::PrimitiveType GetCNodeType(const BaseRef &node);
 bool IsParamNode(const BaseRef &n);
 
 bool IsConvNode(const BaseRef &n);
+
+bool CheckIsAllInputsParam(const AnfNodePtr &node);
+
+size_t GetOutputTensorNum(const AnfNodePtr &node);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_PASS_COMMON_GLLO_UTILS_H_
