@@ -81,7 +81,7 @@ int SplitCPUKernel::Run() {
   auto in_tensor = in_tensors_.front();
   input_ptr_ = reinterpret_cast<float *>(in_tensor->Data());
   for (int i = 0; i < param->num_split_; i++) {
-    output_ptr_.push_back(reinterpret_cast<float *>(out_tensors_.at(i)->Data()));
+    output_ptr_[i] = reinterpret_cast<float *>(out_tensors_.at(i)->Data());
   }
   ret = LiteBackendParallelLaunch(SplitRun, this, thread_n_num_);
   if (ret != RET_OK) {
