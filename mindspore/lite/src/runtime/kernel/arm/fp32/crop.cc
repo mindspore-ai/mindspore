@@ -48,8 +48,7 @@ int CropCPUKernel::CropParallelRun(int thread_id) {
   float *input_data = reinterpret_cast<float *>(input->Data());
   float *output_data = reinterpret_cast<float *>(output->Data());
   auto param = reinterpret_cast<CropParameter *>(op_parameter_);
-  param->thread_id_ = thread_id;
-  Crop4D(input_data, output_data, input->shape().data(), output->shape().data(), param);
+  Crop4D(input_data, output_data, input->shape().data(), output->shape().data(), param, thread_id);
   return RET_OK;
 }
 
