@@ -43,7 +43,6 @@ class AkgKernelBuild {
   KernelPackPtr BuildByJson(const AnfNodePtr &anf_node, std::vector<size_t> *const input_size,
                             std::vector<size_t> *const output_size);
   static std::string GetProcessor(const AnfNodePtr &anf_node);
-  static std::string PyObjectToStr(PyObject *const PyObj);
 
  protected:
   bool CreateInputDescJson(const AnfNodePtr &anf_node, nlohmann::json *const inputs_json);
