@@ -95,6 +95,34 @@ __global__ void RsqrtKernel(half *input, half *output, size_t count) {
   return;
 }
 template <typename T>
+__global__ void SinKernel(T *input, T *output, size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = sin(input[i]);
+  }
+  return;
+}
+template <>
+__global__ void SinKernel(half *input, half *output, size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = hsin(input[i]);
+  }
+  return;
+}
+template <typename T>
+__global__ void CosKernel(T *input, T *output, size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = cos(input[i]);
+  }
+  return;
+}
+template <>
+__global__ void CosKernel(half *input, half *output, size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = hcos(input[i]);
+  }
+  return;
+}
+template <typename T>
 __global__ void ZeroslikeKernel(T *output, size_t count) {
   T zero = 0.0;
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
@@ -167,6 +195,16 @@ void Sqrt(T *input, T *output, size_t count, cudaStream_t cuda_stream) {
   return;
 }
 template <typename T>
+void Sin(T *input, T *output, size_t count, cudaStream_t cuda_stream) {
+  SinKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
+void Cos(T *input, T *output, size_t count, cudaStream_t cuda_stream) {
+  CosKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
 void Rsqrt(T *input, T *output, size_t count, cudaStream_t cuda_stream) {
   RsqrtKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
@@ -193,6 +231,8 @@ template void Negative<float>(float *input, float *output, size_t count, cudaStr
 template void Reciprocal<float>(float *input, float *output, size_t count, cudaStream_t cuda_stream);
 template void Square<float>(float *input, float *output, size_t count, cudaStream_t cuda_stream);
 template void Sqrt<float>(float *input, float *output, size_t count, cudaStream_t cuda_stream);
+template void Sin<float>(float *input, float *output, size_t count, cudaStream_t cuda_stream);
+template void Cos<float>(float *input, float *output, size_t count, cudaStream_t cuda_stream);
 template void Rsqrt<float>(float *input, float *output, size_t count, cudaStream_t cuda_stream);
 template void Zeroslike<float>(float *output, size_t count, cudaStream_t cuda_stream);
 template void Abs<float>(float *input, float *output, size_t count, cudaStream_t cuda_stream);
@@ -203,6 +243,8 @@ template void Negative<half>(half *input, half *output, size_t count, cudaStream
 template void Reciprocal<half>(half *input, half *output, size_t count, cudaStream_t cuda_stream);
 template void Square<half>(half *input, half *output, size_t count, cudaStream_t cuda_stream);
 template void Sqrt<half>(half *input, half *output, size_t count, cudaStream_t cuda_stream);
+template void Sin<half>(half *input, half *output, size_t count, cudaStream_t cuda_stream);
+template void Cos<half>(half *input, half *output, size_t count, cudaStream_t cuda_stream);
 template void Rsqrt<half>(half *input, half *output, size_t count, cudaStream_t cuda_stream);
 template void Zeroslike<half>(half *output, size_t count, cudaStream_t cuda_stream);
 template void Abs<half>(half *input, half *output, size_t count, cudaStream_t cuda_stream);
