@@ -263,6 +263,13 @@ int ConvolutionSWFP16CPUKernel::Run() {
   auto out_tensor = out_tensors_.at(kOutputIndex);
   auto out_ele_num = out_tensor->ElementsNum();
   auto output_addr = reinterpret_cast<float *>(out_tensor->Data());
+  // output nhwc4
+  int oc4_res = conv_param_->output_channel_ % C4NUM;
+  if (oc4_res != 0) {
+    PackNHWC4ToNHWCFp16(reinterpret_cast<const void *>(tmp_output_block_), reinterpret_cast<void *>(fp16_out_),
+                        conv_param_->output_batch_, conv_param_->output_h_ * conv_param_->output_w_,
+                        conv_param_->output_channel_);
+  }
   Float16ToFloat32(fp16_out_, output_addr, out_ele_num);
   return RET_OK;
 }

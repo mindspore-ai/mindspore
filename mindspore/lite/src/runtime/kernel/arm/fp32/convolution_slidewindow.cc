@@ -206,6 +206,14 @@ int ConvolutionSWCPUKernel::Run() {
     MS_LOG(ERROR) << "conv error error_code[" << error_code << "]";
     return RET_ERROR;
   }
+  // output nhwc4
+  auto out_tensor = out_tensors_.front();
+  auto out_data = reinterpret_cast<float *>(out_tensor->Data());
+  int oc4_res = conv_param_->output_channel_ % C4NUM;
+  if (oc4_res != 0) {
+    PackNHWC4ToNHWCFp32(tmp_output_block_, out_data, conv_param_->output_batch_,
+                        conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
+  }
   return RET_OK;
 }
 }  // namespace mindspore::kernel

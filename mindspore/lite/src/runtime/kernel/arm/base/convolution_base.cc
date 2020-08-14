@@ -141,23 +141,23 @@ int ConvolutionBaseCPUKernel::SetIfAsymmetric() {
   uint8_t asymmetric = 0b0;
   auto filter_tensor = in_tensors_.at(kWeightIndex);
   auto filter_ele_num = filter_tensor->ElementsNum();
-  auto filter_data = reinterpret_cast<float *>(filter_tensor->Data());
-  float min_value = FLT_MAX;
-  float max_value = -FLT_MAX;
+  auto filter_data = reinterpret_cast<int8_t *>(filter_tensor->Data());
+  int min_value = INT8_MAX;
+  int max_value = INT8_MIN;
   for (int i = 0; i < filter_ele_num; ++i) {
     min_value = min_value < filter_data[i] ? min_value : filter_data[i];
     max_value = max_value > filter_data[i] ? max_value : filter_data[i];
   }
   if (conv_quant_arg_->filter_arg_num_ == kPerTensor) {
     auto filter_zp = conv_quant_arg_->filter_quant_args_[0].zp_;
-    if (filter_zp == 0 && min_value >= -127 && max_value <= 127) {
-      asymmetric = asymmetric & FILTER_ASYMMETRIC;
+    if (filter_zp != 0 && min_value >= -128 && max_value <= 127) {
+      asymmetric = asymmetric | FILTER_ASYMMETRIC;
     }
   } else {
     auto filter_arg = conv_quant_arg_->filter_quant_args_;
     for (int i = 0; i < conv_param_->output_channel_; ++i) {
-      if (filter_arg[i].zp_ == 0 && min_value >= -127 && max_value <= 127) {
-        asymmetric = asymmetric & FILTER_ASYMMETRIC;
+      if (filter_arg[i].zp_ != 0 && min_value >= -128 && max_value <= 127) {
+        asymmetric = asymmetric | FILTER_ASYMMETRIC;
       }
     }
   }

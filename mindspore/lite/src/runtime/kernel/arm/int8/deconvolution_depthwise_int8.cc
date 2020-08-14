@@ -148,10 +148,14 @@ int DeconvolutionDepthwiseInt8CPUKernel::Init() {
   ConvolutionBaseCPUKernel::Init();
 
   // init quant param
-  ConvolutionBaseCPUKernel::SetQuantParam();
+  auto ret = ConvolutionBaseCPUKernel::SetQuantParam();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Set quant param failed.";
+    return ret;
+  }
 
   // init weight and bias
-  auto ret = InitWeightBias();
+  ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Deconv Depthwise int8 InitWeightBias error!";
     return ret;

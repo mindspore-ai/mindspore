@@ -282,6 +282,39 @@ int Convolution3x3FP16CPUKernel::Run() {
     return RET_ERROR;
   }
 
+  // get real output
+  // todo
+  int out_w_block = UP_DIV(conv_param_->output_w_, C4NUM);
+  int out_h_block = UP_DIV(conv_param_->output_h_, C4NUM);
+  int oc8 = UP_DIV(conv_param_->output_channel_, C8NUM);
+  bool relu = conv_param_->is_relu_;
+  bool relu6 = conv_param_->is_relu6_;
+  for (int batch = 0; batch < conv_param_->output_batch_; batch++) {
+    int tmp_out_batch_offset =
+      batch * oc8 * C8NUM * out_w_block * out_h_block * conv_param_->output_unit_ * conv_param_->output_unit_;
+    int ro_batch_size = batch * conv_param_->output_channel_ * conv_param_->output_h_ * conv_param_->output_w_;
+    const float16_t *batch_tmp_out = tmp_out_ + tmp_out_batch_offset;
+    float16_t *batch_out = fp16_out_ + ro_batch_size;
+    for (int h = 0; h < conv_param_->output_h_; h++) {
+      for (int w = 0; w < conv_param_->output_w_; w++) {
+        for (int c = 0; c < conv_param_->output_channel_; c++) {
+          int oc8_block = c / C8NUM;
+          int oc8_res = c % C8NUM;
+          int src_offset = oc8_block * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM +
+                           C8NUM * (h * out_w_block * conv_param_->output_unit_ + w) + oc8_res;
+          int dst_offset = (h * conv_param_->output_w_ + w) * conv_param_->output_channel_ + c;
+          (batch_out + dst_offset)[0] = (batch_tmp_out + src_offset)[0];
+          if (relu) {
+            (batch_out + dst_offset)[0] = (batch_out + dst_offset)[0] < 0 ? 0 : (batch_out + dst_offset)[0];
+          } else if (relu6) {
+            (batch_out + dst_offset)[0] = (batch_out + dst_offset)[0] < 0 ? 0 : (batch_out + dst_offset)[0];
+            (batch_out + dst_offset)[0] = (batch_out + dst_offset)[0] > 6 ? 6 : (batch_out + dst_offset)[0];
+          }
+        }
+      }
+    }
+  }
+
   // cast fp16 out to fp32 data
   auto out_tensor = out_tensors_.at(kOutputIndex);
   auto out_ele_num = out_tensor->ElementsNum();

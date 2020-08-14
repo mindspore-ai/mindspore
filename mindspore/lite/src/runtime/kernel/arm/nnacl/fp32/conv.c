@@ -182,11 +182,6 @@ void ConvSWFp32(const float *input_data, const float *packed_weight, const float
     src += slidingWindow_param->in_step_;
     dst += slidingWindow_param->out_step_;
   }  // batch loop
-  // output nhwc4
-  if (oc4_res != 0) {
-    PackNHWC4ToNHWCFp32(tmp_out_block, output_data, conv_param->output_batch_,
-                        conv_param->output_h_ * conv_param->output_w_, conv_param->output_channel_);
-  }
 }
 
 // fp32 conv common

@@ -305,7 +305,11 @@ int ConvolutionInt8CPUKernel::Init() {
   // config input output
   ConfigInputOutput();
   CheckSupportOptimize();
-  SetQuantParam();
+  ret = SetQuantParam();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Set quant param failed.";
+    return ret;
+  }
   // init for opt
   if (support_optimize_) {
     ret = InitOpt();

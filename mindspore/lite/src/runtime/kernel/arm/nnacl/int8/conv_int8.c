@@ -264,7 +264,7 @@ void ConvInt8(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight, c
   int packed_input_size = output_tile_count * tile_n * unit_size;
 
   for (int b = 0; b < in_batch; b++) {
-    int in_batch_offset = b * in_channel * in_h * in_w;
+    int in_batch_offset = b * ic4 * C4NUM * in_h * in_w;
     int out_batch_offset = b * out_channel * out_h * out_w;
     int gemm_in_batch_offset = b * packed_input_size;
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
@@ -319,7 +319,7 @@ void ConvInt8Opt(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight
   int packed_input_size = output_tile_count * tile_n * unit_size;
 
   for (int b = 0; b < in_batch; b++) {
-    int in_batch_offset = b * in_channel * in_h * in_w;
+    int in_batch_offset = b * ic4 * C4NUM * in_h * in_w;
     int out_batch_offset = b * out_channel * out_h * out_w;
     int gemm_in_batch_offset = b * packed_input_size;
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
@@ -358,10 +358,7 @@ void Conv3x3Int8(int16_t *input_data, int16_t *transed_weight, const int32_t *bi
                  int task_id, ConvParameter *conv_param) {
   int thread_count = conv_param->thread_num_;
   int ic8 = UP_DIV(conv_param->input_channel_, C8NUM);
-  int output_batch = conv_param->output_batch_;
   int output_channel = conv_param->output_channel_;
-  int output_w = conv_param->output_w_;
-  int output_h = conv_param->output_h_;
   int out_w_block = UP_DIV(conv_param->output_w_, OUPUT_UNIT);
   int out_h_block = UP_DIV(conv_param->output_h_, OUPUT_UNIT);
   int output_count = out_w_block * out_h_block;
@@ -373,22 +370,21 @@ void Conv3x3Int8(int16_t *input_data, int16_t *transed_weight, const int32_t *bi
 
   int input_batch = conv_param->input_batch_;
   for (int batch = 0; batch < input_batch; batch++) {
+    int in_batch_offset = batch * ic8 * C8NUM * conv_param->input_h_ * conv_param->input_w_;
+    int tmp_out_batch_offset = batch * oc4 * C4NUM * conv_param->output_w_ * conv_param->output_h_;
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
       int start_index = thread_id * TILE_NUM;
       int real_cal_num = (output_count - start_index) < TILE_NUM ? (output_count - start_index) : TILE_NUM;
 
-      Conv3x3Uint8InputTransform(input_data, tile_buffer + task_id * tile_buffer_offset,
+      Conv3x3Uint8InputTransform(input_data + in_batch_offset, tile_buffer + task_id * tile_buffer_offset,
                                  block_unit_buffer + task_id * block_unit_buffer_offset, start_index, real_cal_num,
                                  out_w_block, conv_param);
 
       Conv3x3Uint8Gemm(tmp_dst_buffer + task_id * tmp_dst_buffer_offset, tile_buffer + task_id * tile_buffer_offset,
                        transed_weight, output_channel, ic8, real_cal_num);
 
-      Conv3x3Uint8OutputTransform(tmp_dst_buffer + task_id * tmp_dst_buffer_offset, tmp_out, bias_data, start_index,
-                                  real_cal_num, out_w_block, conv_param);
+      Conv3x3Uint8OutputTransform(tmp_dst_buffer + task_id * tmp_dst_buffer_offset, tmp_out + tmp_out_batch_offset,
+                                  bias_data, start_index, real_cal_num, out_w_block, conv_param);
     }
   }
-
-  // get real output
-  PackNC4HW4ToNHWCInt8(tmp_out, output_data, output_batch, output_h * output_w, output_channel);
 }

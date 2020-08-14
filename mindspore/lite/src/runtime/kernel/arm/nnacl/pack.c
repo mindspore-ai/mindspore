@@ -417,6 +417,12 @@ void PackWeightToC8Int8(const int8_t *origin_weight_data, int16_t *packed_weight
     int src_kernel_offset = k * input_channel;
     int dst_kernel_offset = k * C8NUM;
     for (int o = 0; o < output_channel; o++) {
+      int32_t zp;
+      if (conv_param->conv_quant_arg_.filter_arg_num_ == 1) {
+        zp = filter_zp[0].zp_;
+      } else {
+        zp = filter_zp[o].zp_;
+      }
       int src_oc_offset = src_kernel_offset + o * kernel_plane * input_channel;
       int dst_oc_offset = dst_kernel_offset + o * ic8 * kernel_plane * C8NUM;
       for (int i = 0; i < input_channel; i++) {
@@ -424,7 +430,7 @@ void PackWeightToC8Int8(const int8_t *origin_weight_data, int16_t *packed_weight
         int c8_block_rem = i % C8NUM;
         int src_ic_offset = src_oc_offset + i;
         int dst_ic_offset = dst_oc_offset + c8_block_num * kernel_plane * C8NUM + c8_block_rem;
-        (packed_weight_data + dst_ic_offset)[0] = (int16_t)((origin_weight_data + src_ic_offset)[0] - filter_zp[o].zp_);
+        (packed_weight_data + dst_ic_offset)[0] = (int16_t)((origin_weight_data + src_ic_offset)[0] - zp);
       }
     }
   }
