@@ -25,7 +25,8 @@ from mindspore.train.quant import quant
 
 from src.mobilenetV2 import mobilenetV2
 from src.dataset import create_dataset
-from src.config import config_ascend
+from src.config import config_ascend_quant
+from src.config import config_gpu_quant
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
@@ -36,12 +37,15 @@ args_opt = parser.parse_args()
 
 if __name__ == '__main__':
     config_device_target = None
+    device_id = int(os.getenv('DEVICE_ID'))
     if args_opt.device_target == "Ascend":
-        config_device_target = config_ascend
-        device_id = int(os.getenv('DEVICE_ID'))
+        config_device_target = config_ascend_quant
         context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
                             device_id=device_id, save_graphs=False)
-
+    elif args_opt.device_target == "GPU":
+        config_device_target = config_gpu_quant
+        context.set_context(mode=context.GRAPH_MODE, device_target="GPU",
+                            device_id=device_id, save_graphs=False)
     else:
         raise ValueError("Unsupported device target: {}.".format(args_opt.device_target))
 
