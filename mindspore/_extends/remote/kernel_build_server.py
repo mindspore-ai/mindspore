@@ -47,7 +47,7 @@ class Messager:
                 res = res[0:len(res)-1]
             self.message = res
             logger.debug('[IN]', self.message)
-        except EOFError:
+        except (EOFError, KeyboardInterrupt):
             self.exit()
         finally:
             pass
