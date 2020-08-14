@@ -178,20 +178,32 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   if (inputs_params == nullptr) {
     return 0;
   }
-  if (inputs_params->size() < 2) {
+  if (inputs_params->size() < 3) {
     MS_LOG(EXCEPTION) << "Illegal inputs_params size";
   }
-  auto tensor = (*inputs_params)[0];
-  MS_EXCEPTION_IF_NULL(tensor);
-  auto *val = static_cast<int32_t *>(tensor->data_c());
-  MS_EXCEPTION_IF_NULL(val);
-  *val = 0;
-  tensor->set_dirty(true);
+  // update current loop tensor to 0 per iterator
+  auto cur_loop_tensor = (*inputs_params)[0];
+  MS_EXCEPTION_IF_NULL(cur_loop_tensor);
+  auto *cur_val = static_cast<int32_t *>(cur_loop_tensor->data_c());
+  MS_EXCEPTION_IF_NULL(cur_val);
+  *cur_val = 0;
+  cur_loop_tensor->set_dirty(true);
   // set loop_count to zero
   MS_EXCEPTION_IF_NULL(inputs);
-  inputs->push_back(tensor);
+  inputs->push_back(cur_loop_tensor);
 
-  auto epoch_tensor = (*inputs_params)[1];
+  // update next loop tensor to 0 per iterator
+  auto next_loop_tensor = (*inputs_params)[1];
+  MS_EXCEPTION_IF_NULL(next_loop_tensor);
+  auto *next_val = static_cast<int32_t *>(next_loop_tensor->data_c());
+  MS_EXCEPTION_IF_NULL(next_val);
+  *next_val = 0;
+  next_loop_tensor->set_dirty(true);
+  // set loop_count to zero
+  MS_EXCEPTION_IF_NULL(inputs);
+  inputs->push_back(next_loop_tensor);
+
+  auto epoch_tensor = (*inputs_params)[2];
   MS_EXCEPTION_IF_NULL(epoch_tensor);
   auto *epoch_val = static_cast<int32_t *>(epoch_tensor->data_c());
   MS_EXCEPTION_IF_NULL(epoch_val);
@@ -908,7 +920,7 @@ bool TensorNeedSync(const AnfNodePtr &parameter, const tensor::TensorPtr &tensor
 void SessionBasic::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                                  const std::vector<tensor::TensorPtr> &inputs_const) const {
   std::vector<tensor::TensorPtr> inputs(inputs_const);
-  size_t input_ctrl_size = 2;
+  size_t input_ctrl_size = 3;
   MS_EXCEPTION_IF_NULL(kernel_graph);
   if (kernel_graph->input_ctrl_tensors()) {
     input_ctrl_size = LoadCtrlInputTensor(kernel_graph, &inputs);
@@ -918,7 +930,7 @@ void SessionBasic::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_grap
     auto params = AnfAlgo::GetAllOutput(input_node);
     std::copy(params.begin(), params.end(), std::back_inserter(input_nodes));
   }
-  if ((inputs.size() + input_ctrl_size) - 2 != input_nodes.size()) {
+  if ((inputs.size() + input_ctrl_size) - 3 != input_nodes.size()) {
     MS_LOG(EXCEPTION) << "Tensor input:" << inputs.size() << " is not equal graph inputs:" << input_nodes.size()
                       << ", input_ctrl_size:" << input_ctrl_size;
   }
