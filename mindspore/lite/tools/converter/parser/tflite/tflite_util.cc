@@ -184,7 +184,7 @@ size_t GetDataTypeSize(const TypeId &data_type) {
       return sizeof(int64_t);
     default:
       MS_LOG(ERROR) << data_type;
-      MS_LOG(ERROR) << "unsupport datatype";
+      MS_LOG(ERROR) << "Unsupported datatype";
       return RET_ERROR;
   }
 }

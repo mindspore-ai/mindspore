@@ -19,6 +19,7 @@
 #include "utils/log_adapter.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "include/errorcode.h"
+#include "src/runtime/kernel/opencl/utils.h"
 
 namespace mindspore::lite::opencl {
 
@@ -128,7 +129,7 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t>& img_size) 
   cl::Image2D *buffer = new cl::Image2D(*ocl_runtime->Context(), CL_MEM_READ_WRITE, image_format,
           img_size[0], img_size[1], 0, nullptr, &ret);
   if (ret != CL_SUCCESS) {
-    MS_LOG(ERROR) << "Create OpenCL Image2D failed! (ERROR CODE: " << ret << ")";
+    MS_LOG(ERROR) << "Create OpenCL Image2D failed!" << kernel::CLErrorCode(ret);
     UnLock();
     delete buffer;
     return nullptr;
@@ -187,7 +188,7 @@ void *OpenCLAllocator::CreateImageFromHost(void *data, size_t size, const std::v
   cl::Image2D *buffer = new cl::Image2D(*ocl_runtime->Context(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
           image_format, img_size[0], img_size[1], 0, data, &ret);
   if (ret != CL_SUCCESS) {
-    MS_LOG(ERROR) << "Create OpenCL Image2D failed! (ERROR CODE: " << ret << ")";
+    MS_LOG(ERROR) << "Create OpenCL Image2D failed - " << kernel::CLErrorCode(ret);
     UnLock();
     delete buffer;
     return nullptr;

@@ -52,6 +52,7 @@ int OpenCLExecutor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tenso
         std::vector<size_t> img_size;
         op_kernel->GetImageSize(i, &img_size);
         auto data_ptr = op_allocator->Malloc(output->Size(), img_size);
+
         output->SetData(data_ptr);
       } else {
         output->MallocData(allocator);
@@ -109,7 +110,7 @@ int OpenCLExecutor::TransformTensorLayout(tensor::Tensor *tensor, schema::Format
     case kNumberTypeFloat32:
       return TransformTensorLayoutFp32(tensor, src_format, dst_format, trans_dir);
     default:
-      MS_LOG(ERROR) << "Unsupport layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
+      MS_LOG(ERROR) << "Unsupported layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
                     << schema::EnumNameFormat(dst_format);
       return RET_ERROR;
   }
@@ -160,7 +161,7 @@ int OpenCLExecutor::TransformTensorLayoutToBuffer(tensor::Tensor *tensor, schema
     // TODO(wandongdong): add support !!
     return RET_OK;
   } else {
-    MS_LOG(ERROR) << "Unsupport layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
+    MS_LOG(ERROR) << "Unsupported layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
                   << schema::EnumNameFormat(dst_format) << " in float32";
     return RET_ERROR;
   }
@@ -194,7 +195,7 @@ int OpenCLExecutor::TransformTensorLayoutToImage(tensor::Tensor *tensor, schema:
     allocator_->Free(src_data);
     return RET_OK;
   } else {
-    MS_LOG(ERROR) << "Unsupport layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
+    MS_LOG(ERROR) << "Unsupported layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
                   << schema::EnumNameFormat(dst_format) << " in float32";
     return RET_ERROR;
   }
@@ -216,7 +217,7 @@ int OpenCLExecutor::TransformTensorLayoutFromImage(tensor::Tensor *tensor, schem
     allocator_->Free(src_data);
     return RET_OK;
   } else {
-    MS_LOG(ERROR) << "Unsupport layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
+    MS_LOG(ERROR) << "Unsupported layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
                   << schema::EnumNameFormat(dst_format) << " in float32";
     return RET_ERROR;
   }
@@ -228,7 +229,7 @@ int OpenCLExecutor::TransformTensorLayoutUint8(tensor::Tensor *tensor, schema::F
   MS_ASSERT(4 == tensor->shape().size());
   //  auto src_format = tensor->GetFormat();
   // todo
-  MS_LOG(ERROR) << "Unsupport layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
+  MS_LOG(ERROR) << "Unsupported layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
                 << schema::EnumNameFormat(dst_format) << " in uint8";
   return RET_ERROR;
 }

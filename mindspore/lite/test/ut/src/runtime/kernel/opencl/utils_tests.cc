@@ -40,13 +40,13 @@ void CompareOutput(lite::tensor::Tensor *output_tensor, const std::string &file_
   size_t output_size = output_tensor->Size();
   float *expect_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &output_size));
 
-  printf("output[0:10]:");
-  for (int i = 0; i < 10; i++) {
+  printf("output[0:12]:");
+  for (int i = 0; i < 12; i++) {
     printf("[%d]:%.3f ", i, output_data[i]);
   }
   printf("\n");
-  printf("expect[0:10]:");
-  for (int i = 0; i < 10; i++) {
+  printf("expect[0:12]:");
+  for (int i = 0; i < 12; i++) {
     printf("[%d]:%.3f ", i, expect_data[i]);
   }
   printf("\n");

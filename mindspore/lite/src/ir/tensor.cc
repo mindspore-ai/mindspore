@@ -104,8 +104,8 @@ bool Tensor::operator==(const Value &other) const {
 }
 
 int32_t Tensor::Batch() const {
-  if (this->shape_.size() != 4) {
-    MS_LOG(ERROR) << "tensor should have 4 dim";
+  if (this->shape_.size() != 4 && this->shape_.size() != 2) {
+    MS_LOG(ERROR) << "Unsupported tensor shape: " << this->shape().size();
     return -1;
   }
   switch (this->format_) {
@@ -115,6 +115,8 @@ int32_t Tensor::Batch() const {
     case schema::Format_NC4HW4:
     case schema::Format_KCHW:
     case schema::Format_KHWC:
+    case schema::Format_NC:
+    case schema::Format_NC4:
       return this->shape_[0];
     case schema::Format_HWCK:
     case schema::Format_CHWK:
@@ -124,19 +126,21 @@ int32_t Tensor::Batch() const {
     case schema::Format_CKHW:
       return this->shape_[1];
     default:
-      MS_LOG(ERROR) << "Unsupport format: " << schema::EnumNameFormat(this->format_);
+      MS_LOG(ERROR) << "Unsupported format: " << schema::EnumNameFormat(this->format_);
       return -1;
   }
 }
 
 int32_t Tensor::Channel() const {
-  if (this->shape_.size() != 4) {
-    MS_LOG(ERROR) << "tensor should have 4 dim";
+  if (this->shape_.size() != 4 && this->shape_.size() != 2) {
+    MS_LOG(ERROR) << "Unsupported tensor shape: " << this->shape().size();
     return -1;
   }
   switch (this->format_) {
     case schema::Format_NCHW:
     case schema::Format_KCHW:
+    case schema::Format_NC:
+    case schema::Format_NC4:
       return this->shape_[1];
     case schema::Format_HWCK:
       return this->shape_[2];
@@ -155,8 +159,8 @@ int32_t Tensor::Channel() const {
 }
 
 int32_t Tensor::Height() const {
-  if (this->shape_.size() != 4) {
-    MS_LOG(ERROR) << "tensor should have 4 dim";
+  if (this->shape_.size() != 4 && this->shape_.size() != 2) {
+    MS_LOG(ERROR) << "Unsupported tensor shape: " << this->shape().size();
     return -1;
   }
   switch (this->format_) {
@@ -172,16 +176,18 @@ int32_t Tensor::Height() const {
       return this->shape_[1];
     case schema::Format_HWCK:
     case schema::Format_HWKC:
+    case schema::Format_HW:
+    case schema::Format_HW4:
       return this->shape_[0];
     default:
-      MS_LOG(ERROR) << "Unsupport format: " << schema::EnumNameFormat(this->format_);
+      MS_LOG(ERROR) << "Unsupported format: " << schema::EnumNameFormat(this->format_);
       return -1;
   }
 }
 
 int32_t Tensor::Width() const {
-  if (this->shape_.size() != 4) {
-    MS_LOG(ERROR) << "tensor should have 4 dim";
+  if (this->shape_.size() != 4 && this->shape_.size() != 2) {
+    MS_LOG(ERROR) << "Unsupported tensor shape: " << this->shape().size();
     return -1;
   }
   switch (this->format_) {
@@ -197,10 +203,22 @@ int32_t Tensor::Width() const {
       return this->shape_[2];
     case schema::Format_HWCK:
     case schema::Format_HWKC:
+    case schema::Format_HW:
+    case schema::Format_HW4:
       return this->shape_[1];
     default:
       return -1;
   }
+}
+
+int32_t Tensor::ElementsC4Num() const {
+  int32_t result = 0;
+  if (this->shape_.size() == 4) {
+    result = Batch() * Height() * Width() * ((Channel() + 3) / 4 * 4);
+  } else if (this->shape_.size() == 2) {
+    result = this->shape_[0] * ((this->shape_[1] + 3) / 4 * 4);
+  }
+  return result;
 }
 
 std::string Tensor::ToString() const {
@@ -235,7 +253,7 @@ std::string Tensor::ToString() const {
       }
     } break;
     default:
-      oss << "Unsupport data type to print";
+      oss << "Unsupported data type to print";
       break;
   }
   return oss.str();

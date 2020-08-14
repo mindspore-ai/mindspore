@@ -175,4 +175,3 @@ std::string CLErrorCode(cl_int error_code) {
 }
 }  // namespace kernel
 }  // namespace mindspore
-

@@ -66,7 +66,7 @@ class Tensor : public mindspore::tensor::MetaTensor {
 
   int32_t Width() const;
 
-  int32_t ElementsC4Num() const { return Batch() * Height() * Width() * ((Channel() + 3) / 4 * 4); }
+  int32_t ElementsC4Num() const;
 
   int DataSize() const { return this->ElementsNum(); }
 

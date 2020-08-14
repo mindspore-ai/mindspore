@@ -23,29 +23,37 @@
 #include "src/runtime/kernel/arm/nnacl/fp32/softmax.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 
-namespace mindspore {
-namespace kernel {
-class SoftmaxOpenCLKernel : public LiteKernel {
+namespace mindspore::kernel {
+
+class SoftmaxOpenCLKernel : public OpenCLKernel {
  public:
-  explicit SoftmaxOpenCLKernel(OpParameter *parameter,
-                               const std::vector<lite::tensor::Tensor *> &inputs,
+  explicit SoftmaxOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                                const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs, nullptr, nullptr) {
+      : OpenCLKernel(parameter, inputs, outputs) {
     parameter_ = reinterpret_cast<SoftmaxParameter *>(parameter);
   }
-  ~SoftmaxOpenCLKernel() override{};
 
+  ~SoftmaxOpenCLKernel() override{};
   int Init() override;
-  int ReSize() override;
   int Run() override;
-  int InitBuffer();
+  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
+
+  int InitGlobalSize();
+  int SetWorkGroupSize1x1();
+  int SetWorkGroupSize();
+    std::vector<float> GetMaskForLastChannel(int channels);
 
  private:
-  SoftmaxParameter *parameter_;
   cl::Kernel kernel_;
+  SoftmaxParameter *parameter_;
+  lite::opencl::OpenCLRuntime *runtime_;
+  enum class MEM_TYPE { BUF, IMG } mem_type_{MEM_TYPE::IMG};
+
+  bool onexone_flag_{false};
+  std::vector<size_t> local_size_;
+  std::vector<size_t> global_size_;
 };
-}  // namespace kernel
-}  // namespace mindspore
+
+}  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_BACKEND_OPENCL_SOFTMAX_H_
-
