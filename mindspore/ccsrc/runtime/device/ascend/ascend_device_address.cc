@@ -26,11 +26,9 @@
 #include "runtime/device/convert_tensor_utils.h"
 #include "ir/dtype/type.h"
 #include "ir/tensor.h"
-#include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_build.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_parallel_build.h"
 #include "utils/utils.h"
-#include "utils/ms_utils.h"
 #include "common/trans.h"
 #ifdef ENABLE_DUMP_E2E
 #include "debug/e2e_dump.h"

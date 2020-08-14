@@ -16,17 +16,12 @@
 
 #include "backend/kernel_compiler/akg/ascend/akg_ascend_kernel_mod.h"
 #include <algorithm>
-#include <fstream>
-#include <map>
 #include <memory>
-#include <mutex>
 #include <unordered_map>
 #include <vector>
-#include "nlohmann/json.hpp"
 #include "runtime/rt.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils.h"
-#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {

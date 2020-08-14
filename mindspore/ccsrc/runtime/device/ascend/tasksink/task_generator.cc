@@ -18,7 +18,6 @@
 
 #include <runtime/rt.h>
 #include "backend/kernel_compiler/task_stream.h"
-#include "utils/ms_context.h"
 #include "utils/ms_utils.h"
 #include "runtime/device/ascend/profiling/profiling_utils.h"
 #include "runtime/device/ascend/profiling/profiling_manager.h"

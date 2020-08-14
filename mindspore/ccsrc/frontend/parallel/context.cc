@@ -20,11 +20,9 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <numeric>
 #include <utility>
 #include <map>
 
-#include "utils/ms_utils.h"
 #include "frontend/parallel/device_manager.h"
 
 namespace mindspore {

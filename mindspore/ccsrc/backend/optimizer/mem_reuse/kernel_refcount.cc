@@ -15,7 +15,7 @@
  */
 #include "backend/optimizer/mem_reuse/kernel_refcount.h"
 #include <algorithm>
-#include "utils/log_adapter.h"
+
 namespace mindspore {
 namespace memreuse {
 /**

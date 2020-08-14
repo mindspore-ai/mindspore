@@ -19,8 +19,6 @@
 #include <map>
 #include <algorithm>
 #include <string>
-#include <unordered_set>
-#include <unordered_map>
 #include <vector>
 
 #include "backend/session/anf_runtime_algorithm.h"
@@ -31,7 +29,6 @@
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "utils/utils.h"
 #include "runtime/device/ascend/profiling/profiling_manager.h"
-#include "runtime/device/ascend/kernel_select_ascend.h"
 #include "runtime/base.h"
 #include "runtime/device/ascend/ascend_stream_assign.h"
 

@@ -21,10 +21,7 @@
 #include <exception>
 #include <iostream>
 #include <functional>
-#include <iterator>
-
 #include "frontend/optimizer/opt.h"
-
 #include "ir/anf.h"
 #include "utils/convert_utils_base.h"
 #include "utils/overload.h"

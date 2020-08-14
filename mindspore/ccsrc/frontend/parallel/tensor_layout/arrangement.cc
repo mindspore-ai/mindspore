@@ -16,7 +16,6 @@
 
 #include "frontend/parallel/tensor_layout/arrangement.h"
 #include <algorithm>
-#include <iostream>
 #include <utility>
 #include "utils/ms_utils.h"
 #include "frontend/parallel/status.h"

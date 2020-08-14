@@ -42,7 +42,6 @@
 #include "external/ge/ge_api.h"
 #endif
 #include "graph/tensor.h"
-#include "transform/graph_ir/all_ops.h"
 
 namespace ge {
 class CustomOperator : public Operator {

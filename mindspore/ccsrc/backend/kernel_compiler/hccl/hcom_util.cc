@@ -15,9 +15,7 @@
  */
 
 #include "backend/kernel_compiler/hccl/hcom_util.h"
-
 #include <memory>
-
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/utils.h"

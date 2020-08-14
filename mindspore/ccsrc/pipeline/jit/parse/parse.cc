@@ -21,7 +21,6 @@
 #include <utility>
 #include <string>
 #include <memory>
-#include <sstream>
 #include <unordered_map>
 #include <algorithm>
 #include "pipeline/jit/parse/resolve.h"

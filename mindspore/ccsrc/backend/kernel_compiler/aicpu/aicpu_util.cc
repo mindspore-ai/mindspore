@@ -14,13 +14,9 @@
  * limitations under the License.
  */
 #include "backend/kernel_compiler/aicpu/aicpu_util.h"
-#include <vector>
-#include <string>
 #include "proto/types.pb.h"
 #include "runtime/mem.h"
-#include "runtime/rt.h"
 #include "utils/convert_utils.h"
-#include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace kernel {

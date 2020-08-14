@@ -29,16 +29,15 @@
 #include "utils/convert_utils.h"
 #include "./common.h"
 #include "utils/ms_context.h"
+#include "transform/graph_ir/op_adapter_map.h"
+#include "ops/state_ops.h"
+#include "ops/array_ops.h"
+#include "ops/elewise_calculation_ops.h"
+#include "ops/math_ops.h"
 
 namespace mindspore {
 namespace transform {
 using std::endl;
-
-#define ADPT_DESC_ONE(T) std::make_shared<OpAdapterDesc>(std::make_shared<OpAdapter<T>>())
-#define ADPT_DESC_TWO(T, I) \
-  std::make_shared<OpAdapterDesc>(std::make_shared<OpAdapter<T>>(), std::make_shared<OpAdapter<I>>())
-#define GET_MACRO(_1, _2, DESC, ...) DESC
-#define ADPT_DESC(...) GET_MACRO(__VA_ARGS__, ADPT_DESC_TWO, ADPT_DESC_ONE, ...)(__VA_ARGS__)
 
 using ge::Operator;
 using mindspore::kAnyValue;
@@ -46,398 +45,10 @@ using std::make_shared;
 using std::shared_ptr;
 using std::string;
 using std::vector;
-
-const char kNameCustomOp[] = "CustomOp";
-const char kNameConst[] = "Const";
-const char kNameParam[] = "parameter";
-const char kNameRandomUniform[] = "RandomUniform";
-const char kNameSimpleMean[] = "SimpleMean";
-const char kNameSimpleMeanGrad[] = "SimpleMeanGrad";
-const char kNameAllReduce[] = "AllReduce";
-const char kNameBroadcast[] = "Broadcast";
-const char kNameAllgather[] = "AllGather";
-const char kNameReduceScatter[] = "ReduceScatter";
-const char kNameReduceSum[] = "ReduceSum";
-const char kNameIsFinite[] = "isFinite";
-const char kNameReciprocal[] = "Reciprocal";
-const char kNameRsqrt[] = "Rsqrt";
-const char kNameSqrt[] = "Sqrt";
-const char kNameSquare[] = "Square";
-const char kNameSquaredDifference[] = "SquaredDifference";
-const char kNamePow[] = "Pow";
-const char kNameBatchMatMul[] = "BatchMatMul";
-const char kNameStridedSlice[] = "StridedSlice";
-const char kNameStridedSliceGrad[] = "StridedSliceGrad";
-const char kNameExpandDims[] = "ExpandDims";
-const char kNameLog[] = "Log";
-const char kNameLogicalAnd[] = "LogicalAnd";
-const char kNameLogicalNot[] = "LogicalNot";
-const char kNameLogicalOr[] = "LogicalOr";
-const char kNameExp[] = "Exp";
-const char kNameLessEqual[] = "LessEqual";
-const char kNameGreaterEqual[] = "GreaterEqual";
-const char kNameEqual[] = "Equal";
-const char kNameNotEqual[] = "NotEqual";
-const char kNameFlattenGrad[] = "FlattenGrad";
-const char kNameConvolution[] = "Convolution";
-const char kNameBiasAdd[] = "BiasAdd";
-const char kNameMaxPoolGrad[] = "MaxPoolGrad";
-const char kNameRsqrtGrad[] = "RsqrtGrad";
-const char kNameSqrtGrad[] = "SqrtGrad";
-const char kNameReciprocalGrad[] = "ReciprocalGrad";
-const char kNameAvgPoolGrad[] = "AvgPoolGrad";
-const char kNameMaxPoolGradWithArgmax[] = "MaxPoolGradWithArgmax";
-const char kNameApplyMomentum[] = "ApplyMomentum";
-const char kNameDropoutDoMask[] = "DropoutDoMask";
-const char kNameResizeBilinear[] = "ResizeBilinear";
-const char kNameResizeBilinearGrad[] = "ResizeBilinearGrad";
-const char kNameZerosLike[] = "ZerosLike";
-const char kNameOnesLike[] = "OnesLike";
-const char kNameTruncatedNormal[] = "TruncatedNormal";
-const char kNameSpaceToBatchNd[] = "SpaceToBatchNd";
-const char kNameConfusionMatrix[] = "ConfusionMatrix";
-const char kNameResizeNearestNeighborD[] = "ResizeNearestNeighbor";
-const char kNameResizeNearestNeighborGrad[] = "ResizeNearestNeighborGrad";
-const char kNameApplyAdam[] = "Adam";
-const char kNameExtractImagePatches[] = "ExtractImagePatches";
-const char kNameReLU6[] = "ReLU6";
-const char kNameReLU6Grad[] = "ReLU6Grad";
-const char kNameElu[] = "Elu";
-const char kNameEluGrad[] = "EluGrad";
-const char kNameTensorScatterUpdate[] = "TensorScatterUpdate";
-const char kNameScatterUpdate[] = "ScatterUpdate";
-const char kNameScatterNdUpdate[] = "ScatterNdUpdate";
-const char kNameScatterMax[] = "ScatterMax";
-const char kNameNMSWithMask[] = "NMSWithMask";
-const char kNameCheckValid[] = "CheckValid";
-const char kNameSmoothL1Loss[] = "SmoothL1Loss";
-const char kNameSmoothL1LossGrad[] = "SmoothL1LossGrad";
-const char kNameSGD[] = "SGD";
-const char kNameSigmoidCrossEntropyWithLogits[] = "SigmoidCrossEntropyWithLogits";
-const char kNameSigmoidCrossEntropyWithLogitsGrad[] = "SigmoidCrossEntropyWithLogitsGrad";
-const char kNameScatterNdD[] = "ScatterNd";
-const char kNamePadD[] = "Pad";
-const char kNameMirrorPad[] = "MirrorPad";
-const char kNameMirrorPadGrad[] = "MirrorPadGrad";
-const char kNameGatherNd[] = "GatherNd";
-const char kNameArgmax[] = "Argmax";
-const char kNameArgmin[] = "Argmin";
-const char kNameArgMaxWithValue[] = "ArgMaxWithValue";
-const char kNameArgMinWithValue[] = "ArgMinWithValue";
-const char kNameReduceProd[] = "ReduceProd";
-const char kNameCumProd[] = "CumProd";
-const char kNameDiagpart[] = "Diagpart";
-const char kNameSplitD[] = "Split";
-const char kNameBatchToSpaceNd[] = "BatchToSpaceNd";
-const char kNameFloor[] = "Floor";
-const char kNameNPUGetFloatStatus[] = "NPUGetFloatStatus";
-const char kNameAssign[] = "Assign";
-const char kNameAssignAdd[] = "AssignAdd";
-const char kNameAssignSub[] = "AssignSub";
-const char kNameNPUAllocFloatStatus[] = "NPUAllocFloatStatus";
-const char kNameNPUClearFloatStatus[] = "NPUClearFloatStatus";
-const char kNameReshape[] = "Reshape";
-const char kNameTransShape[] = "TransShape";
-const char kNameRealDiv[] = "RealDiv";
-const char kNameTile[] = "Tile";
-const char kNameCos[] = "Cos";
-const char kNameACos[] = "ACos";
-const char kNameACosGrad[] = "ACosGrad";
-const char kNameFloorDiv[] = "FloorDiv";
-const char kNameSin[] = "Sin";
-const char kNamePrelu[] = "PReLU";
-const char kNamePreluGrad[] = "PReLUGrad";
-const char kNameSigmoid[] = "Sigmoid";
-const char kNameSigmoidGrad[] = "SigmoidGrad";
-const char kNameL2Normalize[] = "L2Normalize";
-const char kNameL2NormalizeGrad[] = "L2NormalizeGrad";
-const char kNameSoftmax[] = "Softmax";
-const char kNameIOU[] = "IOU";
-const char kNameBoundingBoxDecode[] = "BoundingBoxDecode";
-const char kNameBoundingBoxEncode[] = "BoundingBoxEncode";
-const char kNameSlice[] = "Slice";
-const char kNameAddN[] = "AddN";
-const char kNameLess[] = "Less";
-const char kNameGreater[] = "Greater";
-const char kNamePack[] = "Pack";
-const char kNameUnpack[] = "Unpack";
-const char kNameMerge[] = "Merge";
-const char kNameGeSwitch[] = "GeSwitch";
-
-const char kNameHuberLoss[] = "HuberLoss";
-const char kNameCumSum[] = "CumSum";
-const char kNameHuberLossGrad[] = "HuberLossGrad";
-const char kNameSparseSoftmaxCrossEntropy[] = "SparseSoftmaxCrossEntropy";
-const char kNameSparseSoftmaxCrossEntropyGrad[] = "SparseSoftmaxCrossEntropyGrad";
-const char kNameTopK[] = "TopK";
-const char kNameSoftmaxGrad[] = "SoftmaxGrad";
-const char kNameMaxPool[] = "MaxPool";
-const char kNameAvgPool[] = "AvgPool";
-const char kNameMaxPoolWithArgmax[] = "MaxPoolWithArgmax";
-const char kNameBatchNorm[] = "BatchNorm";
-const char kNameBatchNormGrad[] = "BatchNormGrad";
-const char kNameROIAlign[] = "ROIAlign";
-const char kNameROIAlignGrad[] = "ROIAlignGrad";
-const char kNameRandomChoiceWithMask[] = "RandomChoiceWithMask";
-const char kNameAbs[] = "Abs";
-const char kNameAbsGrad[] = "AbsGrad";
-const char kNameBinaryCrossEntropy[] = "BinaryCrossEntropy";
-const char kNameBinaryCrossEntropyGrad[] = "BinaryCrossEntropyGrad";
-const char kNameSparseApplyAdagrad[] = "SparseApplyAdagrad";
-const char kNameSparseApplyFtrlD[] = "SparseApplyFtrlD";
-const char kNameApplyProximalAdagrad[] = "ApplyProximalAdagrad";
-const char kNameAcosh[] = "Acosh";
-const char kNameAcoshGrad[] = "AcoshGrad";
-const char kNameFloorMod[] = "FloorMod";
-const char kNameSpaceToDepth[] = "SpaceToDepth";
-const char kNameDepthToSpace[] = "DepthToSpace";
-const char kNameSign[] = "Sign";
-const char kNameLARSUpdate[] = "LARSUpdate";
-const char kNameRound[] = "Round";
-const char kNamePrint[] = "Print";
-const char kNameApplyFtrl[] = "ApplyFtrl";
-const char kNameDiag[] = "Diag";
-const char kNameDiagPart[] = "DiagPart";
-const char kNameSpaceToBatch[] = "SpaceToBatch";
-const char kNameBatchToSpace[] = "BatchToSpace";
-const char kNameAtan2[] = "Atan2";
-const char kNameApplyRMSProp[] = "ApplyRMSProp";
-const char kNameApplyCenteredRMSProp[] = "ApplyCenteredRMSProp";
-const char kNameBasicLSTMCell[] = "BasicLSTMCell";
-const char kNameBasicLSTMCellInputGrad[] = "BasicLSTMCellInputGrad";
-const char kNameBasicLSTMCellWeightGrad[] = "BasicLSTMCellWeightGrad";
-const char kNameBasicLSTMCellCStateGrad[] = "BasicLSTMCellCStateGrad";
-const char kNameL2Loss[] = "L2Loss";
-const char kNameCTCLoss[] = "CTCLoss";
-const char kNameRange[] = "Range";
-const char kNameSquareSumAll[] = "SquareSumAll";
-const char kNameAscendQuant[] = "Quant";
-const char kNameAscendDequant[] = "Dequant";
-const char kNameReverseSequence[] = "ReverseSequence";
-const char kNameCase[] = "Case";
-
-// -----------------OpAdapter initialization--------------
-std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_map() {
-  static std::unordered_map<std::string, OpAdapterDescPtr> adpt_map = {
-    {string(kNameCustomOp), ADPT_DESC(Operator)},
-    {string(kNameIOU), ADPT_DESC(Iou)},
-    {string(kNameGreaterEqual), ADPT_DESC(GreaterEqual)},
-    {string(kNameSlice), ADPT_DESC(SliceD)},
-    {string(kNameApplyMomentum), ADPT_DESC(ApplyMomentum)},
-    {string(kNameMaxPool), ADPT_DESC(MaxPool)},
-    {string(kNameAvgPool), ADPT_DESC(AvgPool)},
-    {string(kNameMaxPoolWithArgmax), ADPT_DESC(MaxPoolWithArgmax)},
-    {string(kNameTopK), ADPT_DESC(TopK)},
-    {string(kNamePack), ADPT_DESC(Pack)},
-    {string(kNameUnpack), ADPT_DESC(Unpack)},
-    {string(kNameSplitD), ADPT_DESC(SplitD)},
-    {string(kNameAllReduce), ADPT_DESC(HcomAllReduce)},
-    {string(kNameBroadcast), ADPT_DESC(HcomBroadcast)},
-    {string(kNameAllgather), ADPT_DESC(HcomAllGather)},
-    {string(kNameReduceScatter), ADPT_DESC(HcomReduceScatter)},
-    {string(kNameMaxPoolGrad), ADPT_DESC(MaxPoolGrad)},
-    {string(kNameSqrtGrad), ADPT_DESC(SqrtGrad)},
-    {string(kNameReciprocalGrad), ADPT_DESC(ReciprocalGrad)},
-    {string(kNameRsqrtGrad), ADPT_DESC(RsqrtGrad)},
-    {string(kNameAvgPoolGrad), ADPT_DESC(AvgPoolGrad)},
-    {string(kNameMaxPoolGradWithArgmax), ADPT_DESC(MaxPoolGradWithArgmax)},
-    {string(kNameExtractImagePatches), ADPT_DESC(ExtractImagePatches)},
-    {prim::kPrimAssign->name(), ADPT_DESC(Assign)},
-    {prim::kPrimStateSetItem->name(), ADPT_DESC(Assign)},
-    {prim::kPrimReluGrad->name(), ADPT_DESC(ReluGrad)},
-    {prim::kPrimBiasAddGrad->name(), ADPT_DESC(BiasAddGrad)},
-    {prim::kPrimConv2D->name(), ADPT_DESC(Conv2D)},
-    {prim::kPrimConv2DBackpropInput->name(), ADPT_DESC(Conv2DBackpropInputD)},
-    {prim::kPrimConv2DBackpropFilter->name(), ADPT_DESC(Conv2DBackpropFilterD)},
-    {prim::kPrimDepthwiseConv2dNative->name(), ADPT_DESC(DepthwiseConv2D)},
-    {prim::kPrimDepthwiseConv2dNativeBackpropFilter->name(), ADPT_DESC(DepthwiseConv2DBackpropFilterD)},
-    {prim::kPrimDepthwiseConv2dNativeBackpropInput->name(), ADPT_DESC(DepthwiseConv2DBackpropInputD)},
-    {string(kNameBatchNorm), ADPT_DESC(BatchNorm)},
-    {string(kNameBatchNormGrad), ADPT_DESC(BatchNormGrad)},
-    {string(kNameReshape), ADPT_DESC(Reshape)},
-    {string(kNameTransShape), ADPT_DESC(TransShape)},
-    {string(kNameFlattenGrad), ADPT_DESC(Reshape)},
-    {prim::kPrimFlatten->name(), ADPT_DESC(Flatten)},
-    {string(kNameAddN), ADPT_DESC(AddN)},
-    {string(kNameLess), ADPT_DESC(Less)},
-    {string(kNameSqrt), ADPT_DESC(Sqrt)},
-    {string(kNameRsqrt), ADPT_DESC(Rsqrt)},
-    {string(kNameSquare), ADPT_DESC(Square)},
-    {prim::kPrimTanh->name(), ADPT_DESC(Tanh)},
-    {prim::kPrimTanhGrad->name(), ADPT_DESC(TanhGrad)},
-    {string(kNameResizeNearestNeighborD), ADPT_DESC(ResizeNearestNeighborV2D)},
-    {string(kNameResizeNearestNeighborGrad), ADPT_DESC(ResizeNearestNeighborV2Grad)},
-    {string(kNameApplyAdam), ADPT_DESC(ApplyAdam)},
-    {string(kNameReLU6), ADPT_DESC(Relu6)},
-    {string(kNameReLU6Grad), ADPT_DESC(Relu6Grad)},
-    {string(kNameElu), ADPT_DESC(Elu)},
-    {string(kNameEluGrad), ADPT_DESC(EluGrad)},
-    {string(kNameResizeBilinearGrad), ADPT_DESC(ResizeBilinearV2Grad)},
-    {string(kNameResizeBilinear), ADPT_DESC(ResizeBilinearV2D)},
-    {string(kNameZerosLike), ADPT_DESC(ZerosLike)},
-    {string(kNameOnesLike), ADPT_DESC(OnesLike)},
-    {string(kNameTensorScatterUpdate), ADPT_DESC(TensorScatterUpdate)},
-    {string(kNameScatterUpdate), ADPT_DESC(ScatterUpdate)},
-    {string(kNameScatterNdUpdate), ADPT_DESC(ScatterNdUpdate)},
-    {string(kNameScatterMax), ADPT_DESC(ScatterMax)},
-    {string(kNameNMSWithMask), ADPT_DESC(NMSWithMask)},
-    {string(kNameCheckValid), ADPT_DESC(CheckValid)},
-    {string(kNameSmoothL1Loss), ADPT_DESC(SmoothL1Loss)},
-    {string(kNameSmoothL1LossGrad), ADPT_DESC(SmoothL1LossGrad)},
-    {string(kNameSigmoidCrossEntropyWithLogits), ADPT_DESC(SigmoidCrossEntropyWithLogits)},
-    {string(kNameSigmoidCrossEntropyWithLogitsGrad), ADPT_DESC(SigmoidCrossEntropyWithLogitsGrad)},
-    {string(kNameScatterNdD), ADPT_DESC(ScatterNdD)},
-    {string(kNamePadD), ADPT_DESC(PadD)},
-    {string(kNameMirrorPad), ADPT_DESC(MirrorPad)},
-    {string(kNameMirrorPadGrad), ADPT_DESC(MirrorPadGrad)},
-    {string(kNameGatherNd), ADPT_DESC(GatherNd)},
-    {string(kNameArgmax), ADPT_DESC(ArgMaxD)},
-    {string(kNameArgmin), ADPT_DESC(ArgMinD)},
-    {string(kNameArgMaxWithValue), ADPT_DESC(ArgMaxWithValue)},
-    {string(kNameArgMinWithValue), ADPT_DESC(ArgMinWithValue)},
-    {prim::kPrimReduceSum->name(), ADPT_DESC(ReduceSumD)},
-    {prim::kPrimReduceMean->name(), ADPT_DESC(ReduceMeanD)},
-    {prim::kPrimReduceAll->name(), ADPT_DESC(ReduceAllD)},
-    {prim::kPrimReduceMin->name(), ADPT_DESC(ReduceMinD)},
-    {prim::kPrimReduceMax->name(), ADPT_DESC(ReduceMaxD)},
-    {string(kNameLARSUpdate), ADPT_DESC(LarsV2Update)},
-    {string(kNameReduceProd), ADPT_DESC(ReduceProdD)},
-    {string(kNameCumProd), ADPT_DESC(CumprodD)},
-    {string(kNameMerge), ADPT_DESC(Merge)},
-    {string(kNameGeSwitch), ADPT_DESC(Switch)},
-    {string(kNameCumSum), ADPT_DESC(CumsumD)},
-
-    {prim::kPrimMul->name(), ADPT_DESC(Mul)},
-    {string(kNameTile), ADPT_DESC(TileD)},
-    {prim::kPrimOneHot->name(), ADPT_DESC(OneHot)},
-
-    {prim::kPrimGatherV2->name(), ADPT_DESC(GatherV2D)},
-    {string(kNameCos), ADPT_DESC(Cos)},
-    {string(kNameACos), ADPT_DESC(Acos)},
-    {string(kNameACosGrad), ADPT_DESC(AcosGrad)},
-    {string(kNameFloor), ADPT_DESC(Floor)},
-    {string(kNameFloorDiv), ADPT_DESC(FloorDiv)},
-    {string(kNameSin), ADPT_DESC(Sin)},
-    {string(kNameExp), ADPT_DESC(Exp)},
-    {string(kNameBoundingBoxEncode), ADPT_DESC(BoundingBoxEncode)},
-    {string(kNameBoundingBoxDecode), ADPT_DESC(BoundingBoxDecode)},
-
-    {prim::kPrimCast->name(), ADPT_DESC(Cast)},
-    {string(kNameRealDiv), ADPT_DESC(RealDiv)},
-    {prim::kPrimNeg->name(), ADPT_DESC(Neg)},
-    {prim::kPrimTranspose->name(), ADPT_DESC(TransposeD)},
-    {prim::kPrimSub->name(), ADPT_DESC(Sub)},
-    {string(kNameReciprocal), ADPT_DESC(Reciprocal)},
-    {prim::kPrimDropoutGenMask->name(), ADPT_DESC(DropOutGenMask)},
-    {string(kNameAssignAdd), ADPT_DESC(AssignAdd)},
-    {string(kNameAssignSub), ADPT_DESC(AssignSub)},
-    {prim::kPrimConcat->name(), ADPT_DESC(ConcatD)},
-    {string(kNamePow), ADPT_DESC(Pow)},
-    {string(kNameExp), ADPT_DESC(Exp)},
-    {string(kNameEqual), ADPT_DESC(Equal)},
-    {string(kNameNotEqual), ADPT_DESC(NotEqual)},
-    {string(kNameLog), ADPT_DESC(Log)},
-    {string(kNameLogicalAnd), ADPT_DESC(LogicalAnd)},
-    {string(kNameLogicalNot), ADPT_DESC(LogicalNot)},
-    {string(kNameLogicalOr), ADPT_DESC(LogicalOr)},
-    {string(kNameGreater), ADPT_DESC(Greater)},
-    {prim::kPrimMaximum->name(), ADPT_DESC(Maximum)},
-    {prim::kPrimRelu->name(), ADPT_DESC(Relu)},
-    {string(kNamePrelu), ADPT_DESC(PRelu)},
-    {string(kNamePreluGrad), ADPT_DESC(PReluGrad)},
-    {string(kNameSigmoid), ADPT_DESC(Sigmoid)},
-    {string(kNameSigmoidGrad), ADPT_DESC(SigmoidGrad)},
-    {string(kNameSGD), ADPT_DESC(SGD)},
-    {prim::kPrimLogSoftmaxGrad->name(), ADPT_DESC(LogSoftmaxGrad)},
-    {prim::kPrimMaximumGrad->name(), ADPT_DESC(MaximumGrad)},
-    {prim::kPrimMinimumGrad->name(), ADPT_DESC(MinimumGrad)},
-    {string(kNameL2Normalize), ADPT_DESC(L2Normalize)},
-    {string(kNameL2NormalizeGrad), ADPT_DESC(L2NormalizeGrad)},
-
-    {prim::kPrimMinimum->name(), ADPT_DESC(Minimum)},
-    {prim::kPrimSelect->name(), ADPT_DESC(Select)},
-    {string(kNameLessEqual), ADPT_DESC(LessEqual)},
-    {prim::kPrimLogSoftmax->name(), ADPT_DESC(LogSoftmaxV2)},
-    {string(kNameTruncatedNormal), ADPT_DESC(TruncatedNormal)},
-    {string(kNameStridedSliceGrad), ADPT_DESC(StridedSliceGrad)},
-    {prim::kPrimGelu->name(), ADPT_DESC(Gelu)},
-    {prim::kPrimGeluGrad->name(), ADPT_DESC(GeluGrad)},
-    {string(kNameStridedSlice), ADPT_DESC(StridedSlice)},
-    {prim::kPrimUnsortedSegmentMin->name(), ADPT_DESC(UnsortedSegmentMin)},
-    {prim::kPrimUnsortedSegmentSum->name(), ADPT_DESC(UnsortedSegmentSumD)},
-    {string(kNameExpandDims), ADPT_DESC(ExpandDims)},
-    {prim::kPrimSqueeze->name(), ADPT_DESC(Squeeze)},
-    {prim::kPrimLayerNorm->name(), ADPT_DESC(LayerNorm)},
-    {prim::kPrimLayerNormGrad->name(), ADPT_DESC(LayerNormGrad)},
-    {string(kNameBatchMatMul), ADPT_DESC(BatchMatMul)},
-    {string(kNameDropoutDoMask), ADPT_DESC(DropOutDoMask)},
-
-    {string(kNameNPUGetFloatStatus), ADPT_DESC(NPUGetFloatStatus)},
-    {string(kNameNPUAllocFloatStatus), ADPT_DESC(NPUAllocFloatStatus)},
-    {string(kNameNPUClearFloatStatus), ADPT_DESC(NPUClearFloatStatus)},
-
-    {string(kNameRandomChoiceWithMask), ADPT_DESC(RandomChoiceWithMask)},
-    {prim::kPrimSoftmaxCrossEntropyWithLogits->name(), ADPT_DESC(SoftmaxCrossEntropyWithLogits)},
-
-    {prim::kPrimScalarSummary->name(), ADPT_DESC(Summary)},
-    {prim::kPrimImageSummary->name(), ADPT_DESC(Summary)},
-    {prim::kPrimTensorSummary->name(), ADPT_DESC(Summary)},
-    {prim::kPrimHistogramSummary->name(), ADPT_DESC(Summary)},
-    {prim::kPrimDebug->name(), ADPT_DESC(Summary)},
-    {prim::kPrimTensorAdd->name(),
-     std::make_shared<OpAdapterDesc>(std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(1)}})),
-                                     std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(1)}})))},
-    {string(kNameBiasAdd), ADPT_DESC(BiasAdd)},
-    {prim::kPrimRelu->name(), ADPT_DESC(Relu)},
-
-    {prim::kPrimMatMul->name(), ADPT_DESC(MatMulV2)},
-
-    {string(kNameConst), ADPT_DESC(Constant, Const)},
-    {string(kNameSoftmax), ADPT_DESC(SoftmaxV2)},
-    {string(kNameSoftmaxGrad), ADPT_DESC(SoftmaxGrad)},
-    {string(kNameParam), ADPT_DESC(Data)},
-    {string(kNameROIAlign), ADPT_DESC(ROIAlign)},
-    {string(kNameROIAlignGrad), ADPT_DESC(ROIAlignGrad)},
-    {string(kNameAbs), ADPT_DESC(Abs)},
-    {string(kNameAbsGrad), ADPT_DESC(AbsGrad)},
-    {string(kNameBinaryCrossEntropy), ADPT_DESC(BinaryCrossEntropy)},
-    {string(kNameBinaryCrossEntropyGrad), ADPT_DESC(BinaryCrossEntropyGrad)},
-    {string(kNameSparseApplyAdagrad), ADPT_DESC(SparseApplyAdagradD)},
-    {string(kNameSparseApplyFtrlD), ADPT_DESC(SparseApplyFtrlD)},
-    {string(kNameApplyProximalAdagrad), ADPT_DESC(ApplyProximalAdagradD)},
-    {string(kNameAcosh), ADPT_DESC(Acosh)},
-    {string(kNameAcoshGrad), ADPT_DESC(AcoshGrad)},
-    {string(kNameFloorMod), ADPT_DESC(FloorMod)},
-    {string(kNameSpaceToDepth), ADPT_DESC(SpaceToDepth)},
-    {string(kNameDepthToSpace), ADPT_DESC(DepthToSpace)},
-    {string(kNameSign), ADPT_DESC(Sign)},
-    {string(kNameRound), ADPT_DESC(Round)},
-    {string(kNameApplyFtrl), ADPT_DESC(ApplyFtrlD)},
-    {string(kNameDiag), ADPT_DESC(Diag)},
-    {string(kNameDiagPart), ADPT_DESC(DiagPart)},
-    {string(kNameSpaceToBatch), ADPT_DESC(SpaceToBatchD)},
-    {string(kNameBatchToSpace), ADPT_DESC(BatchToSpaceD)},
-    {string(kNameAtan2), ADPT_DESC(Atan2)},
-    {string(kNameApplyRMSProp), ADPT_DESC(ApplyRMSPropD)},
-    {string(kNameApplyCenteredRMSProp), ADPT_DESC(ApplyCenteredRMSPropD)},
-    {string(kNameBasicLSTMCell), ADPT_DESC(BasicLSTMCell)},
-    {string(kNameBasicLSTMCellInputGrad), ADPT_DESC(BasicLSTMCellInputGrad)},
-    {string(kNameBasicLSTMCellWeightGrad), ADPT_DESC(BasicLSTMCellWeightGrad)},
-    {string(kNameBasicLSTMCellCStateGrad), ADPT_DESC(BasicLSTMCellCStateGrad)},
-    {string(kNameL2Loss), ADPT_DESC(L2Loss)},
-    {string(kNameCTCLoss), ADPT_DESC(CTCLoss)},
-    {string(kNameRange), ADPT_DESC(RangeD)},
-    {string(kNameSquareSumAll), ADPT_DESC(SquareSumAll)},
-    {string(kNameAscendQuant), ADPT_DESC(AscendQuant)},
-    {string(kNameAscendDequant), ADPT_DESC(AscendDequant)},
-    {string(kNameReverseSequence), ADPT_DESC(ReverseSequence)},
-    {string(kNameCase), ADPT_DESC(Case)}};
-#ifdef ENABLE_GE
-  adpt_map[string(kNamePrint)] = ADPT_DESC(Print);
-  adpt_map[string(kNameApplyAdam)] = ADPT_DESC(ApplyAdamD);
-#endif
-  return adpt_map;
-}
+using Variable = ge::op::Variable;
+using Constant = ge::op::Constant;
+using Assign = ge::op::Assign;
+using Data = ge::op::Data;
 
 // ---------------implement of DfGraphConvertor-------------
 PrimType GetCNodeFuncType(const CNodePtr cnode) {
@@ -481,18 +92,18 @@ OpAdapterPtr DfGraphConvertor::FindAdapter(const AnfNodePtr node, bool train) {
       name = GetCNodeTargetFuncName(cnode);
     }
 
-    auto it_adpt = get_adpt_map().find(name);
-    if (it_adpt != get_adpt_map().end()) {
+    auto it_adpt = OpAdapterMap::get().find(name);
+    if (it_adpt != OpAdapterMap::get().end()) {
       return it_adpt->second->Get(train);
     }
     MS_LOG(EXCEPTION) << "Can't find OpAdapter for " << name;
   }
 
   if (node->isa<ValueNode>()) {
-    return get_adpt_map()[kNameConst]->Get(train);
+    return OpAdapterMap::get()[kNameConst]->Get(train);
   }
   if (node->isa<Parameter>()) {
-    return get_adpt_map()[kNameParam]->Get(train);
+    return OpAdapterMap::get()[kNameParam]->Get(train);
   }
   return OpAdapterPtr(nullptr);
 }
@@ -571,8 +182,8 @@ void DfGraphConvertor::InitLoopVar(std::vector<ge::Operator> *init_input) {
 }
 
 OpAdapterPtr DfGraphConvertor::FindAdapter(const std::string &name, bool train) {
-  auto it = get_adpt_map().find(name);
-  if (it != get_adpt_map().end()) {
+  auto it = OpAdapterMap::get().find(name);
+  if (it != OpAdapterMap::get().end()) {
     return it->second->Get(train);
   }
   MS_LOG(EXCEPTION) << "Can't find OpAdapter for " << name;
@@ -2086,5 +1697,12 @@ void DfGraphConvertor::DrawCNode(const CNodePtr node, const OpAdapterPtr adpt) {
 
   compute_sout_ << "</table>> shape=plaintext]" << endl;
 }
+void DfGraphConvertor::RegisterAdapter(const std::string &name, OpAdapterPtr adpt) {
+  OpAdapterMap::get()[name] = std::make_shared<OpAdapterDesc>(adpt);
+}
+void DfGraphConvertor::RegisterAdapter(const std::string &name, OpAdapterPtr train_adpt, OpAdapterPtr infer_adpt) {
+  OpAdapterMap::get()[name] = std::make_shared<OpAdapterDesc>(train_adpt, infer_adpt);
+}
+
 }  // namespace transform
 }  // namespace mindspore

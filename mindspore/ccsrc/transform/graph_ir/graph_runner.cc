@@ -21,7 +21,6 @@
 #include "utils/log_adapter.h"
 #include "utils/config_manager.h"
 #include "sys/time.h"
-#include "utils/callbacks.h"
 #include "utils/utils.h"
 #include "./common.h"
 #ifdef ENABLE_GE

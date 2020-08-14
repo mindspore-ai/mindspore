@@ -20,7 +20,6 @@
 #include <vector>
 #include <set>
 #include <unordered_map>
-#include "./common.h"
 
 namespace mindspore {
 /* namespace to support opt */

@@ -16,15 +16,9 @@
 
 #include "utils/trace_base.h"
 
-#include <iostream>
-#include <fstream>
-#include <map>
-#include <unordered_map>
 #include <vector>
 #include <string>
-#include <sstream>
 #include <utility>
-#include <stack>
 #include <algorithm>
 
 #include "ir/graph_utils.h"

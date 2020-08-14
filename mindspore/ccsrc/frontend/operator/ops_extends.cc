@@ -15,10 +15,8 @@
  */
 
 #include "frontend/operator/ops.h"
-#include <memory>
 #include <string>
 #include "pipeline/jit/parse/python_adapter.h"
-#include "pipeline/jit/parse/data_converter.h"
 
 namespace mindspore {
 // namespace to support primitive operators

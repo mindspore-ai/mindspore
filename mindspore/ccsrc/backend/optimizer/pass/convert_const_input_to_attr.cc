@@ -17,7 +17,6 @@
 
 #include <vector>
 #include <string>
-#include <unordered_map>
 #include <memory>
 
 #include "backend/optimizer/pass/const_input_to_attr_registry.h"

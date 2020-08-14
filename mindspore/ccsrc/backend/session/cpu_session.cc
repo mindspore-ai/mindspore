@@ -17,9 +17,7 @@
 #include "backend/session/cpu_session.h"
 #include <algorithm>
 #include <sstream>
-#include "ir/tensor.h"
 #include "ir/anf.h"
-#include "backend/kernel_compiler/kernel.h"
 #include "utils/ms_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_runtime.h"

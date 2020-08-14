@@ -15,8 +15,6 @@
  */
 
 #include "utils/trace_info.h"
-#include <utility>
-#include <fstream>
 #include <sstream>
 #include "ir/anf.h"
 

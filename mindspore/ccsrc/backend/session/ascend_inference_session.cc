@@ -16,7 +16,6 @@
 
 #include <algorithm>
 #include "backend/session/ascend_inference_session.h"
-#include "frontend/operator/ops.h"
 #include "ir/tensor.h"
 #include "ir/anf.h"
 #include "ir/param_info.h"

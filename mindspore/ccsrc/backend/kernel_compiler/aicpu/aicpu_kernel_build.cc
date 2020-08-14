@@ -15,13 +15,11 @@
  */
 #include "backend/kernel_compiler/aicpu/aicpu_kernel_build.h"
 #include <google/protobuf/text_format.h>
-#include <fstream>
 #include <utility>
 #include <string>
 #include <vector>
 #include <memory>
 #include <algorithm>
-#include <map>
 #include "runtime/device/kernel_runtime.h"
 #include "backend/kernel_compiler/aicpu/aicpu_kernel_mod.h"
 #include "backend/kernel_compiler/akg/akg_kernel_build.h"
@@ -30,7 +28,6 @@
 #include "proto/attr.pb.h"
 #include "proto/node_def.pb.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "utils/ms_utils.h"
 #include "backend/kernel_compiler/aicpu/aicpu_util.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/kernel_compiler/common_utils.h"

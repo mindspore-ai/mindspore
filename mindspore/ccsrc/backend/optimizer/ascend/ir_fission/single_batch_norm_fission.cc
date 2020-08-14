@@ -16,7 +16,6 @@
 #include "backend/optimizer/ascend/ir_fission/single_batch_norm_fission.h"
 #include <vector>
 #include <memory>
-#include <algorithm>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/helper.h"
 

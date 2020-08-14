@@ -43,7 +43,6 @@
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 #include "utils/comm_manager.h"
 #include "utils/symbolic.h"
-#include "pipeline/jit/static_analysis/prim.h"
 
 using mindspore::tensor::Tensor;
 

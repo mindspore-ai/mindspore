@@ -16,12 +16,10 @@
 #include "backend/optimizer/ascend/ir_fission/bn_grad_split.h"
 
 #include <vector>
-#include <string>
 #include <memory>
 
 #include "utils/utils.h"
 #include "utils/ms_context.h"
-#include "utils/ms_utils.h"
 #include "backend/optimizer/common/helper.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/session/anf_runtime_algorithm.h"

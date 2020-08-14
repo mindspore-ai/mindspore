@@ -17,11 +17,8 @@
 #include "backend/optimizer/ascend/ir_fusion/refresh_parameter_format.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/utils.h"
-#include "frontend/operator/ops.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/optimizer/common/helper.h"
-#include "backend/optimizer/common/optimizer.h"
-#include "backend/optimizer/ascend/ascend_helper.h"
 
 namespace mindspore {
 namespace opt {

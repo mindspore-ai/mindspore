@@ -26,7 +26,6 @@
 #include "frontend/parallel/auto_parallel/costmodel.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/strategy.h"
-#include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 
 namespace mindspore {
 namespace parallel {

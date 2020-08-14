@@ -15,11 +15,7 @@
  */
 
 #include "backend/kernel_compiler/hccl/hcom_all_reduce.h"
-
-#include <algorithm>
 #include <memory>
-#include <string>
-
 #include "utils/ms_context.h"
 
 namespace mindspore {

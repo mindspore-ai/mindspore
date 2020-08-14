@@ -16,14 +16,10 @@
 
 #include "backend/optimizer/ascend/enhancer/insert_pad_for_nms_with_mask.h"
 #include <vector>
-#include <string>
 #include <memory>
-#include "backend/optimizer/ascend/ascend_helper.h"
 #include "backend/optimizer/common/helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/utils.h"
-#include "runtime/device/kernel_info.h"
-#include "backend/kernel_compiler//oplib/oplib.h"
 #include "frontend/operator/ops.h"
 
 namespace mindspore {

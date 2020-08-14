@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-#include "backend/kernel_compiler/cpu/ps/pserver_kernel.h"
-#include "frontend/parallel/ps/util.h"
-
 namespace mindspore {
 namespace kernel {
 namespace ps {}  // namespace ps

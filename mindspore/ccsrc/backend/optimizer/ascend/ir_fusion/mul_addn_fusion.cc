@@ -16,8 +16,6 @@
 #include "backend/optimizer/ascend/ir_fusion/mul_addn_fusion.h"
 #include <vector>
 #include <memory>
-#include <string>
-#include <tuple>
 #include <utility>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "frontend/optimizer/opt.h"

@@ -44,8 +44,6 @@
 #include "frontend/parallel/graph_util/node_info.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
-#include "pipeline/jit/parse/python_adapter.h"
-#include "pipeline/jit/pipeline.h"
 
 namespace mindspore {
 namespace parallel {

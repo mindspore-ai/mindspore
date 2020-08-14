@@ -29,6 +29,7 @@
 #include "pipeline/jit/static_analysis/prim.h"
 #include "backend/session/session_factory.h"
 #include "pybind_api/ir/tensor_py.h"
+#include "transform/graph_ir/op_declare/array_ops_declare.h"
 
 const char SINGLE_OP_GRAPH[] = "single_op_graph";
 

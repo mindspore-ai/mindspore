@@ -18,7 +18,6 @@
 #include "ir/func_graph.h"
 
 #include "pybind_api/api_register.h"
-#include "pybind_api/export_flags.h"
 
 namespace mindspore {
 REGISTER_PYBIND_DEFINE(FuncGraph, ([](const pybind11::module *m) {

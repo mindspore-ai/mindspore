@@ -15,7 +15,6 @@
  */
 #include "frontend/optimizer/pattern.h"
 #include "pybind_api/api_register.h"
-#include "pybind_api/export_flags.h"
 
 namespace mindspore {
 namespace opt {

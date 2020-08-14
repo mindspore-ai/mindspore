@@ -17,7 +17,6 @@
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
 #include <memory>
-#include <iostream>
 #include <string>
 
 #include "runtime/device/kernel_info.h"

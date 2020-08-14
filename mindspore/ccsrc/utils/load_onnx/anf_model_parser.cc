@@ -20,7 +20,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "ir/tensor.h"
 #include "ir/param_info.h"
 #include "frontend/operator/ops.h"

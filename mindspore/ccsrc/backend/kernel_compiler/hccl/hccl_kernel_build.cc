@@ -18,8 +18,6 @@
 
 #include <string>
 #include <memory>
-#include <algorithm>
-
 #include "backend/kernel_compiler/hccl/hccl_kernel.h"
 #include "backend/session/anf_runtime_algorithm.h"
 

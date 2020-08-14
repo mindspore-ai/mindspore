@@ -21,7 +21,6 @@
 #include "utils/system/env.h"
 #include "utils/system/file_system.h"
 #include "utils/log_adapter.h"
-#include "utils/ms_context.h"
 
 namespace mindspore {
 std::optional<std::string> Common::GetRealPath(const std::string &input_path) {

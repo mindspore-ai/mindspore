@@ -15,12 +15,9 @@
  */
 
 #include "backend/kernel_compiler/rts/memcpy_async.h"
-
 #include <memory>
 #include <string>
-
 #include "runtime/mem.h"
-#include "utils/ms_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "common/trans.h"
 #include "utils/ms_context.h"

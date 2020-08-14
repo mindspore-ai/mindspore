@@ -18,7 +18,6 @@
 #include <vector>
 #include <algorithm>
 #include <string>
-#include "./common.h"
 #include "ir/graph_utils.h"
 
 namespace mindspore {

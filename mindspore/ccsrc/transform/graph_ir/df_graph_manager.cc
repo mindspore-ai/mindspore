@@ -16,15 +16,10 @@
 
 #include "transform/graph_ir/df_graph_manager.h"
 
-#include <dirent.h>
-#include <dlfcn.h>
-#include <limits.h>
 #include <sstream>
 
-#include "securec/include/securec.h"
 #include "pipeline/jit/parse/python_adapter.h"
 #include "pipeline/jit/pipeline.h"
-#include "utils/config_manager.h"
 #ifndef NO_DLIB
 #include "tdt/tsd_client.h"
 #endif

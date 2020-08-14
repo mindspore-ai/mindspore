@@ -22,7 +22,6 @@
 #include "ir/dtype.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "frontend/operator/ops.h"
-#include "ir/graph_utils.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 
 namespace mindspore {

@@ -16,14 +16,11 @@
 #include "frontend/optimizer/py_pass.h"
 #include <unordered_set>
 #include <deque>
-#include <algorithm>
-#include <utility>
 #include <vector>
 
 #include "ir/func_graph.h"
 #include "ir/manager.h"
 #include "pybind_api/ir/primitive_py.h"
-#include "pipeline/jit/parse/parse_base.h"
 #include "pipeline/jit/resource.h"
 
 namespace mindspore {

@@ -27,7 +27,6 @@
 #include "utils/ms_utils.h"
 #include "ir/manager.h"
 #include "ir/meta_tensor.h"
-#include "ir/func_graph.h"
 #include "frontend/operator/ops.h"
 #include "ir/graph_utils.h"
 

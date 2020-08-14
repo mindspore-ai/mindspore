@@ -15,7 +15,6 @@
  */
 
 #include "frontend/parallel/ps/scheduler.h"
-#include <unistd.h>
 #include "ps/ps.h"
 
 namespace mindspore {

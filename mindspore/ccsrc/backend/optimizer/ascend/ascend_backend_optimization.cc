@@ -81,7 +81,6 @@
 #include "backend/optimizer/ascend/buffer_fusion/conv_single_in_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/conv_double_in_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/matmul_eltwise_fusion_pass.h"
-#include "backend/optimizer/ascend/buffer_fusion/matmul_confusiontranspose_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/depthwiseconv_eltwise_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/bnupdate_eltwise_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/bnupdate_eltwise_eltwise_fusion_pass.h"
