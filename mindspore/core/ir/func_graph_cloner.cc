@@ -228,6 +228,7 @@ void Cloner::SetFuncGraphInfo(const FuncGraphPtr &func_graph, FuncGraphPtr *cons
   (*target_func_graph)->set_hyper_param_count(func_graph->hyper_param_count());
   (*target_func_graph)->set_is_generate(func_graph->is_generated());
   (*target_func_graph)->set_stub(func_graph->stub());
+  (*target_func_graph)->set_switch_layer_input(func_graph->switch_layer_input());
   TraceManager::EndTrace();
 }
 
@@ -645,6 +646,7 @@ FuncGraphPtr TransformableClone(const FuncGraphPtr &func_graph, const TraceInfoP
   new_func_graph->set_hyper_param_count(func_graph->hyper_param_count());
   new_func_graph->set_is_generate(func_graph->is_generated());
   new_func_graph->set_stub(func_graph->stub());
+  new_func_graph->set_switch_layer_input(func_graph->switch_layer_input());
   for (auto &item : func_graph->parameter_default_value()) {
     new_func_graph->set_param_default_value(item.first, cloner[item.second]);
   }
