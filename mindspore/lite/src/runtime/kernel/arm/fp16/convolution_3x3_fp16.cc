@@ -16,6 +16,7 @@
 
 #include "src/runtime/kernel/arm/fp16/convolution_3x3_fp16.h"
 #include "src/runtime/kernel/arm/nnacl/fp16/conv_fp16.h"
+#include "src/runtime/kernel/arm/nnacl/fp16/cast_fp16.h"
 #include "src/runtime/kernel/arm/nnacl/fp16/winograd_transform_fp16.h"
 #include "src/runtime/kernel/arm/nnacl/fp16/pack_fp16.h"
 #include "src/runtime/kernel/arm/fp16/layout_transform_fp16.h"
@@ -265,11 +266,9 @@ int Convolution3x3FP16CPUKernel::Run() {
     return RET_ERROR;
   }
   auto input_tensor = in_tensors_.at(kInputIndex);
+  auto input_ele_num = input_tensor->ElementsNum();
   auto ori_input_data = reinterpret_cast<float *>(input_tensor->Data());
-  auto input_element_num = input_tensor->ElementsNum();
-  for (int i = 0; i < input_element_num; ++i) {
-    fp16_input_[i] = (float16_t)ori_input_data[i];
-  }
+  Float32ToFloat16(ori_input_data, fp16_input_, input_ele_num);
 
   int in_batch = conv_param_->input_batch_;
   int in_h = conv_param_->input_h_;
@@ -285,12 +284,9 @@ int Convolution3x3FP16CPUKernel::Run() {
 
   // cast fp16 out to fp32 data
   auto out_tensor = out_tensors_.at(kOutputIndex);
+  auto out_ele_num = out_tensor->ElementsNum();
   auto output_addr = reinterpret_cast<float *>(out_tensor->Data());
-  auto output_element_num = out_tensor->ElementsNum();
-
-  for (int j = 0; j < output_element_num; ++j) {
-    output_addr[j] = static_cast<float>(fp16_out_[j]);
-  }
+  Float16ToFloat32(fp16_out_, output_addr, out_ele_num);
   return RET_OK;
 }
 }  // namespace mindspore::kernel

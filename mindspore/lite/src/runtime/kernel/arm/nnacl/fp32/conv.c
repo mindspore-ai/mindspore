@@ -217,7 +217,7 @@ void ConvFp32(float *input_data, float *packed_input, float *packed_weight, cons
   size_t output_offset = out_channel * sizeof(float);
 
   for (int b = 0; b < in_batch; b++) {
-    int in_batch_offset = b * in_channel * in_h * in_w;
+    int in_batch_offset = b * ic4 * C4NUM * in_h * in_w;
     int out_batch_offset = b * out_channel * out_h * out_w;
     int gemm_in_batch_offset = b * packed_input_size;
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
@@ -263,12 +263,9 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
   int output_count = out_w_block * out_h_block;
   int output_tile_count = UP_DIV(output_count, TILE_NUM);
   int out_channel = conv_param->output_channel_;
-  int out_batch = conv_param->output_batch_;
   int oc4 = UP_DIV(out_channel, C4NUM);
   int input_unit_square = input_unit * input_unit;
   size_t output_offset = oc4 * C4NUM * input_unit_square * sizeof(float);
-  bool is_relu = conv_param->is_relu_;
-  bool is_relu6 = conv_param->is_relu6_;
 
   float *trans_input = buffer_list[0];
   float *gemm_out = buffer_list[1];
@@ -280,11 +277,13 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
   // step 1 : filter transform (pre-processed offline)
   // step 2 : input transform (online)
   for (int b = 0; b < in_batch; b++) {
+    int in_batch_offset = b * ic4 * C4NUM * conv_param->input_h_ * conv_param->input_w_;
+    int tmp_out_batch_offset = b * out_w_block * out_h_block * out_unit * out_unit * oc4 * C4NUM;
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_num) {
       int out_tile_index = thread_id * TILE_NUM;
       int cal_num = output_count - thread_id * TILE_NUM;
       cal_num = cal_num > TILE_NUM ? TILE_NUM : cal_num;
-      WinogradInputTransform(input_data, trans_input + task_id * trans_input_offset,
+      WinogradInputTransform(input_data + in_batch_offset, trans_input + task_id * trans_input_offset,
                              tmp_data + task_id * tmp_data_offset, cal_num, out_tile_index, out_w_block, conv_param,
                              input_trans_func);
       // step 3 : gemm
@@ -292,20 +291,9 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
                 input_unit_square, ic4, oc4 * C4NUM, output_offset, 1, 1, 0, 0);
 
       // step 4 : output transform
-      WinogradOutputTransform(gemm_out + task_id * gemm_out_offset, tmp_out_data, bias_data, cal_num, out_tile_index,
-                              out_w_block, conv_param, output_trans_func);
+      WinogradOutputTransform(gemm_out + task_id * gemm_out_offset, tmp_out_data + tmp_out_batch_offset, bias_data,
+                              cal_num, out_tile_index, out_w_block, conv_param, output_trans_func);
     }
-  }
-  // get real output
-  UnPackWinogradOutput(tmp_out_data, output_data, out_batch, conv_param->output_h_, conv_param->output_w_, out_channel,
-                       out_unit);
-  int output_num = out_channel * conv_param->output_h_ * conv_param->output_w_ * conv_param->output_batch_;
-  if (is_relu) {
-    ReluFp32(output_data, output_data, output_num);
-  } else if (is_relu6) {
-    Relu6Fp32(output_data, output_data, output_num);
-  } else {
-    // do nothing
   }
 }
 
@@ -360,8 +348,6 @@ void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_dat
   int output_count = out_w_block * out_h_block;
   int output_tile_count = UP_DIV(output_count, TILE_NUM);
   int input_unit_square = 4 * 4;
-  bool is_relu = conv_param->is_relu_;
-  bool is_relu6 = conv_param->is_relu6_;
   float *tile_buffer = buffer_list[0];
   float *block_unit_buffer = buffer_list[1];
   float *tmp_dst_buffer = buffer_list[2];
@@ -372,10 +358,13 @@ void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_dat
 
   int input_batch = conv_param->input_batch_;
   for (int batch = 0; batch < input_batch; batch++) {
+    int in_batch_offset = batch * ic4 * C4NUM * conv_param->input_h_ * conv_param->input_w_;
+    int nc4hw4_buffer_offset = batch * oc4 * C4NUM * conv_param->output_h_ * conv_param->output_w_;
+
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
       int start_index = thread_id * TILE_NUM;
       int real_cal_num = (output_count - start_index) < TILE_NUM ? (output_count - start_index) : TILE_NUM;
-      Conv3x3Fp32InputTransform(input_data, tile_buffer + task_id * tile_buffer_offset,
+      Conv3x3Fp32InputTransform(input_data + in_batch_offset, tile_buffer + task_id * tile_buffer_offset,
                                 block_unit_buffer + task_id * block_unit_buffer_offset, start_index, real_cal_num,
                                 out_w_block, conv_param);
 
@@ -383,17 +372,8 @@ void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_dat
                 transed_weight, NULL, input_unit_square, ic4, oc4 * C4NUM,
                 oc4 * C4NUM * input_unit_square * sizeof(float), 1, 1, 0, 0);
 
-      Conv3x3Fp32OutputTransform(tmp_dst_buffer + task_id * tmp_dst_buffer_offset, nc4hw4_out, bias_data, start_index,
-                                 real_cal_num, out_w_block, conv_param);
+      Conv3x3Fp32OutputTransform(tmp_dst_buffer + task_id * tmp_dst_buffer_offset, nc4hw4_out + nc4hw4_buffer_offset,
+                                 bias_data, start_index, real_cal_num, out_w_block, conv_param);
     }
-    PackNC4HW4ToNHWCFp32(nc4hw4_out, output_data, 1, conv_param->output_h_ * conv_param->output_w_, output_channel);
-  }
-  int output_num = output_channel * conv_param->output_h_ * conv_param->output_w_ * conv_param->output_batch_;
-  if (is_relu) {
-    ReluFp32(output_data, output_data, output_num);
-  } else if (is_relu6) {
-    Relu6Fp32(output_data, output_data, output_num);
-  } else {
-    // do nothing
   }
 }
