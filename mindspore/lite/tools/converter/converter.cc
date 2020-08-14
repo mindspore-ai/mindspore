@@ -141,11 +141,11 @@ void Converter::CreateQuantizer(FuncGraphPtr funcGraph, const converter::Flags *
       //        flags->bitNum));
       //      break;
       //    }
-      //    case mindspore::schema::QuantType_PostTraining: {
-      //      MS_LOG(INFO) << "create PostTrainningQuantizer!";
-      //      mQuantizer.reset(new quant::PostTrainingQuantizer(funcGraph, flags->configFile, 8));
-      //      break;
-      //    }
+    case mindspore::schema::QuantType_PostTraining: {
+      MS_LOG(INFO) << "create PostTrainningQuantizer!";
+      mQuantizer.reset(new quant::PostTrainingQuantizer(funcGraph, flags->configFile, 8));
+      break;
+    }
     case mindspore::schema::QuantType_QUANT_NONE:
       MS_LOG(INFO) << "Not do quantization for model!";
       break;
