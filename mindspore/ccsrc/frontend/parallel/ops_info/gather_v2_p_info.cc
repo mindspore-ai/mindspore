@@ -550,6 +550,10 @@ RankList GetRankFromGroup(const Group &group) {
 }
 
 Status GatherV2PInfo::InferForwardCommunication() {
+  if (manual_split_) {
+    return SUCCESS;
+  }
+
   forward_op_.clear();
   auto param_strategy = strategy_->GetInputDim().at(0);
   // don't split axis or target is not CPU, no need forward communication
