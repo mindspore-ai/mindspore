@@ -24,7 +24,7 @@ int FullConnection::InferShape(std::vector<tensor::Tensor *> inputs_, std::vecto
   MS_ASSERT(this->primitive != nullptr);
   auto input0 = inputs_.front();
   MS_ASSERT(input0 != nullptr);
-  auto input1 = inputs_.at(1);
+  auto input1 = inputs_[1];
   MS_ASSERT(input1 != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
@@ -33,27 +33,45 @@ int FullConnection::InferShape(std::vector<tensor::Tensor *> inputs_, std::vecto
     MS_LOG(ERROR) << "Input tensors num error";
     return RET_INPUT_TENSOR_ERROR;
   }
-  if (fc_prim->axis() < 1 || fc_prim->axis() > input0->shape().size()) {
+  auto axis = fc_prim->axis();
+  auto use_axis = fc_prim->useAxis();
+  if (use_axis && (axis < 1 || axis >= input0->shape().size())) {
     MS_LOG(ERROR) << "FullConnection axis invalid";
     return RET_INPUT_TENSOR_ERROR;
   }
   int new_k = 1;
-  for (size_t i = fc_prim->axis(); i < input0->shape().size(); ++i) {
-    new_k *= input0->shape().at(i);
+  if (use_axis) {
+    for (int i = axis; i < input0->shape().size(); ++i) {
+      new_k *= input0->shape()[i];
+    }
+    if (new_k != input1->shape()[1]) {
+      MS_LOG(ERROR) << "Input1 size invalid";
+      return RET_PARAM_INVALID;
+    }
+  } else {
+    new_k = input1->shape()[1];
   }
-  if (new_k != input1->shape().at(1)) {
-    MS_LOG(ERROR) << "Input1 size invalid";
-    return RET_PARAM_INVALID;
-  }
+
   if (fc_prim->hasBias()) {
-    if (inputs_.at(2)->shape()[0] != input1->shape()[0]) {
+    if (inputs_[2]->shape()[0] != input1->shape()[0]) {
       MS_LOG(ERROR) << "bias size invalid";
       return RET_PARAM_INVALID;
     }
   }
   std::vector<int> out_shape{inputs_[0]->shape()};
-  out_shape.resize(fc_prim->axis() + 1);
-  out_shape[fc_prim->axis()] = input1->shape()[0];
+  if (use_axis) {
+    out_shape.resize(fc_prim->axis() + 1);
+    out_shape[fc_prim->axis()] = input1->shape()[0];
+  } else {
+    int total = 1;
+    for (int i = 0; i < input0->shape().size(); ++i) {
+      total *= input0->shape()[i];
+    }
+    out_shape.resize(2);
+    auto batch_size = total / new_k;
+    out_shape[0] = batch_size;
+    out_shape[1] = input1->shape()[0];
+  }
   output->set_shape(out_shape);
   output->set_data_type(input0->data_type());
   output->SetFormat(input0->GetFormat());
