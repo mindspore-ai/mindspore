@@ -50,7 +50,7 @@ from .validators import check_prob, check_crop, check_resize_interpolation, chec
     check_uniform_augment_cpp, \
     check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_auto_contrast, check_random_affine, \
     check_random_solarize, check_soft_dvpp_decode_random_crop_resize_jpeg, check_positive_degrees, FLOAT_MAX_INTEGER, \
-    check_cut_mix_batch_c
+    check_cut_mix_batch_c, check_posterize
 
 DE_C_INTER_MODE = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBOUR,
                    Inter.LINEAR: cde.InterpolationMode.DE_INTER_LINEAR,
@@ -459,6 +459,26 @@ class RandomHorizontalFlipWithBBox(cde.RandomHorizontalFlipWithBBoxOp):
         super().__init__(prob)
 
 
+class RandomPosterize(cde.RandomPosterizeOp):
+    """
+    Reduce the number of bits for each color channel.
+
+    Args:
+        bits (sequence or int): Range of random posterize to compress image.
+            bits values should always be in range of [1,8], and include at
+            least one integer values in the given range. It should be in
+            (min, max) or integer format. If min=max, then it is a single fixed
+            magnitude operation (default=8).
+    """
+
+    @check_posterize
+    def __init__(self, bits=(8, 8)):
+        self.bits = bits
+        if isinstance(bits, int):
+            bits = (bits, bits)
+        super().__init__(bits[0], bits[1])
+
+
 class RandomVerticalFlip(cde.RandomVerticalFlipOp):
     """
     Flip the input image vertically, randomly with a given probability.
@@ -675,6 +695,7 @@ class RandomColor(cde.RandomColorOp):
     @check_positive_degrees
     def __init__(self, degrees=(0.1, 1.9)):
         super().__init__(*degrees)
+
 
 class RandomColorAdjust(cde.RandomColorAdjustOp):
     """

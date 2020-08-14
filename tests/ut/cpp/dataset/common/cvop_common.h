@@ -42,6 +42,7 @@ class CVOpCommon : public Common {
     kRandomSharpness,
     kInvert,
     kRandomAffine,
+    kRandomPosterize,
     kAutoContrast,
     kEqualize
   };
