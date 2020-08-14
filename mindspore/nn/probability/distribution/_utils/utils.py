@@ -184,7 +184,7 @@ def check_greater(a, b, name_a, name_b):
 
 def check_prob(p):
     """
-    Check if p is a proper probability, i.e. 0 <= p <=1.
+    Check if p is a proper probability, i.e. 0 < p <1.
 
     Args:
         p (Tensor, Parameter): value to be checked.
@@ -196,12 +196,12 @@ def check_prob(p):
         if not isinstance(p.default_input, Tensor):
             return
         p = p.default_input
-    comp = np.less(p.asnumpy(), np.zeros(p.shape))
-    if comp.any():
-        raise ValueError('Probabilities should be greater than or equal to zero')
-    comp = np.greater(p.asnumpy(), np.ones(p.shape))
-    if comp.any():
-        raise ValueError('Probabilities should be less than or equal to one')
+    comp = np.less(np.zeros(p.shape), p.asnumpy())
+    if not comp.all():
+        raise ValueError('Probabilities should be greater than zero')
+    comp = np.greater(np.ones(p.shape), p.asnumpy())
+    if not comp.all():
+        raise ValueError('Probabilities should be less than one')
 
 
 def logits_to_probs(logits, is_binary=False):

@@ -110,6 +110,7 @@ class Bernoulli(Distribution):
         self.const = P.ScalarToArray()
         self.dtypeop = P.DType()
         self.erf = P.Erf()
+        self.exp = P.Exp()
         self.fill = P.Fill()
         self.log = P.Log()
         self.less = P.Less()
@@ -159,7 +160,7 @@ class Bernoulli(Distribution):
         """
         probs1 = self.probs if probs1 is None else probs1
         probs0 = 1.0 - probs1
-        return probs0 * probs1
+        return self.exp(self.log(probs0) + self.log(probs1))
 
     def _entropy(self, probs=None):
         r"""
@@ -183,7 +184,7 @@ class Bernoulli(Distribution):
             return self._entropy(probs=probs1_a) + self._kl_loss(dist, probs1_b, probs1_a)
         return None
 
-    def _prob(self, value, probs=None):
+    def _log_prob(self, value, probs=None):
         r"""
         pmf of Bernoulli distribution.
 
@@ -197,7 +198,7 @@ class Bernoulli(Distribution):
         """
         probs1 = self.probs if probs is None else probs
         probs0 = 1.0 - probs1
-        return (probs1 * value) + (probs0 * (1.0 - value))
+        return self.log(probs1) * value + self.log(probs0) * (1.0 - value)
 
     def _cdf(self, value, probs=None):
         r"""

@@ -26,7 +26,7 @@ class Bijector(Cell):
         is_constant_jacobian (bool): if the bijector has constant derivative. Default: False.
         is_injective (bool): if the bijector is an one-to-one mapping. Default: True.
         name (str): name of the bijector. Default: None.
-        dtype (mstype): type of the distribution the bijector can operate on. Default: None.
+        dtype (mindspore.dtype): type of the distribution the bijector can operate on. Default: None.
         param (dict): parameters used to initialize the bijector. Default: None.
     """
     def __init__(self,
@@ -110,7 +110,7 @@ class Bijector(Cell):
             *args: args[0] shall be either a distribution or the name of a bijector function.
         """
         if isinstance(args[0], Distribution):
-            return TransformedDistribution(self, args[0])
+            return TransformedDistribution(self, args[0], self.distribution.dtype)
         return super(Bijector, self).__call__(*args, **kwargs)
 
     def construct(self, name, *args, **kwargs):

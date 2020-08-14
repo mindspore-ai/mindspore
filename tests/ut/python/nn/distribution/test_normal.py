@@ -42,6 +42,12 @@ def test_seed():
     with pytest.raises(TypeError):
         msd.Normal(0., 1., seed='seed')
 
+def test_sd():
+    with pytest.raises(ValueError):
+        msd.Normal(0., 0.)
+    with pytest.raises(ValueError):
+        msd.Normal(0., -1.)
+
 def test_arguments():
     """
     args passing during initialization.

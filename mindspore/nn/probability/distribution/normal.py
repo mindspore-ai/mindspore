@@ -18,7 +18,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
-from ._utils.utils import convert_to_batch, check_greater_equal_zero, check_type
+from ._utils.utils import convert_to_batch, check_greater_zero, check_type
 
 
 class Normal(Distribution):
@@ -106,7 +106,7 @@ class Normal(Distribution):
         if  mean is not None and sd is not None:
             self._mean_value = convert_to_batch(mean, self.broadcast_shape, dtype)
             self._sd_value = convert_to_batch(sd, self.broadcast_shape, dtype)
-            check_greater_equal_zero(self._sd_value, "Standard deviation")
+            check_greater_zero(self._sd_value, "Standard deviation")
         else:
             self._mean_value = mean
             self._sd_value = sd
@@ -166,7 +166,7 @@ class Normal(Distribution):
             H(X) = \log(\sqrt(numpy.e * 2. * numpy.pi * \sq(\sigma)))
         """
         sd = self._sd_value if sd is None else sd
-        return self.log(self.sqrt(np.e * 2. * np.pi * self.sq(sd)))
+        return self.log(self.sqrt(self.const(np.e * 2. * np.pi))) + self.log(sd)
 
     def _cross_entropy(self, dist, mean_b, sd_b, mean_a=None, sd_a=None):
         r"""
@@ -198,7 +198,7 @@ class Normal(Distribution):
         mean = self._mean_value if mean is None else mean
         sd = self._sd_value if sd is None else sd
         unnormalized_log_prob = -1. * (self.sq(value - mean)) / (2. * self.sq(sd))
-        neg_normalization = -1. * self.log(self.sqrt(2. * np.pi * self.sq(sd)))
+        neg_normalization = -1. * self.log(self.sqrt(self.const(2. * np.pi))) - self.log(sd)
         return unnormalized_log_prob + neg_normalization
 
     def _cdf(self, value, mean=None, sd=None):

@@ -199,7 +199,7 @@ class Exponential(Distribution):
             pdf(x) = rate * \exp(-1 * \lambda * x) if x >= 0 else 0
         """
         rate = self.rate if rate is None else rate
-        prob = rate * self.exp(-1. * rate * value)
+        prob = self.exp(self.log(rate) - rate * value)
         zeros = self.fill(self.dtypeop(prob), self.shape(prob), 0.0)
         comp = self.less(value, zeros)
         return self.select(comp, zeros, prob)

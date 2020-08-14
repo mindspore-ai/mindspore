@@ -29,7 +29,7 @@ def test_arguments():
     """
     g = msd.Geometric()
     assert isinstance(g, msd.Distribution)
-    g = msd.Geometric([0.0, 0.3, 0.5, 1.0], dtype=dtype.int32)
+    g = msd.Geometric([0.1, 0.3, 0.5, 0.9], dtype=dtype.int32)
     assert isinstance(g, msd.Distribution)
 
 def test_type():
@@ -52,6 +52,10 @@ def test_prob():
         msd.Geometric([-0.1], dtype=dtype.int32)
     with pytest.raises(ValueError):
         msd.Geometric([1.1], dtype=dtype.int32)
+    with pytest.raises(ValueError):
+        msd.Geometric([0.0], dtype=dtype.int32)
+    with pytest.raises(ValueError):
+        msd.Geometric([1.0], dtype=dtype.int32)
 
 class GeometricProb(nn.Cell):
     """

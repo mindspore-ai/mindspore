@@ -113,6 +113,7 @@ class Geometric(Distribution):
         self.cast = P.Cast()
         self.const = P.ScalarToArray()
         self.dtypeop = P.DType()
+        self.exp = P.Exp()
         self.fill = P.Fill()
         self.floor = P.Floor()
         self.issubclass = P.IsSubClass()
@@ -205,7 +206,7 @@ class Geometric(Distribution):
             value = self.floor(value)
         else:
             return None
-        pmf = self.pow((1.0 - probs1), value) * probs1
+        pmf = self.exp(self.log(1.0 - probs1) * value + self.log(probs1))
         zeros = self.fill(self.dtypeop(probs1), self.shape(pmf), 0.0)
         comp = self.less(value, zeros)
         return self.select(comp, zeros, pmf)
