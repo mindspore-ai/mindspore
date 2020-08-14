@@ -114,7 +114,7 @@ uint8_t *AscendMemoryManager::MallocDynamicMem(size_t size, bool communication_m
 
   auto device_mem_pool_offset = AscendMemoryPool::GetInstance().device_mem_pool_offset();
   MS_LOG(INFO) << "Malloc Memory: Dynamic, total[" << device_mem_size_ << "] (dynamic[" << total_dynamic_size_
-               << "] memory pool[" << device_mem_pool_offset << "])"
+               << "] memory pool[" << device_mem_size_ - device_mem_pool_offset << "])"
                << " malloc [" << align_size << "] communication_mem: " << communication_mem;
   auto offset = dynamic_mem_offset_;
   auto new_offset = dynamic_mem_offset_ + align_size;
