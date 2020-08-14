@@ -21,6 +21,7 @@
 #include "ir/func_graph.h"
 #include "ir/anf.h"
 #include "base/base.h"
+#include "schema/inner/model_generated.h"
 
 namespace mindspore::lite {
 class AnfImporter {
@@ -29,7 +30,7 @@ class AnfImporter {
 
   virtual ~AnfImporter() = default;
 
-  virtual int Import();
+  virtual int Import(const schema::QuantType &quantType = schema::QuantType_QUANT_NONE);
 
   virtual FuncGraphPtr GetResult() = 0;
 

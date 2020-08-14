@@ -15,8 +15,9 @@
  */
 #ifndef MINDSPORE_ANF_DEPTHWISECONV2D_PARSER_H
 #define MINDSPORE_ANF_DEPTHWISECONV2D_PARSER_H
-#include "src/common/anf_importer/anf_populater/anf_node_populater.h"
 #include <vector>
+
+#include "src/common/anf_importer/anf_populater/anf_node_populater.h"
 namespace mindspore::lite {
 class AnfDepwiseconv2DPopulater : public AnfNodePopulater {
  public:
@@ -24,6 +25,11 @@ class AnfDepwiseconv2DPopulater : public AnfNodePopulater {
   ~AnfDepwiseconv2DPopulater() override = default;
   int Populate(const PrimitivePtr &prim, PrimitiveTValue *primitiveTValuePtr,
                const std::vector<AnfNodePtr> &inputs) override;
+ private:
+  void PopulaterQuantParam(const PrimitivePtr &prim,
+                           std::vector<std::vector<schema::QuantParamT>> *vecQuantParam);
+  void CalQuantParam(const double &mean, const double &stdDev, float *mMin,
+                     float *mMax);
 };
 }  // namespace mindspore::lite
 

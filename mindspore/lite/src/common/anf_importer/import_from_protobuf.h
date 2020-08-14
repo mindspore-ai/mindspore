@@ -17,20 +17,21 @@
 #ifndef MINDSPORE_LITE_SRC_ANF_IMPORTER_IMPORTER_FROM_PROTOBUF_H_
 #define MINDSPORE_LITE_SRC_ANF_IMPORTER_IMPORTER_FROM_PROTOBUF_H_
 
-#include <string>
 #include <map>
+#include <string>
 #include <unordered_map>
 #include <utility>
 
-#include "tools/converter/parser/onnx/onnx.pb.h"
-#include "src/common/anf_importer/anf_importer.h"
 #include "abstract/abstract_value.h"
+#include "src/common/anf_importer/anf_importer.h"
+#include "tools/converter/parser/onnx/onnx.pb.h"
 
 namespace mindspore::lite {
 class AnfImporterFromProtobuf : public AnfImporter {
  public:
-  explicit AnfImporterFromProtobuf(onnx::ModelProto *onnx_model, FuncGraphPtr func_graph)
-  : onnx_model_(onnx_model), func_graph_(std::move(func_graph)) {}
+  explicit AnfImporterFromProtobuf(onnx::ModelProto *onnx_model,
+                                   FuncGraphPtr func_graph)
+      : onnx_model_(onnx_model), func_graph_(std::move(func_graph)) {}
 
   ~AnfImporterFromProtobuf() override = default;
 
@@ -38,15 +39,17 @@ class AnfImporterFromProtobuf : public AnfImporter {
 
   FuncGraphPtr GetResult() override;
 
-  int Import() override;
+  int Import(const schema::QuantType &quantType =
+                 schema::QuantType_QUANT_NONE) override;
 
  private:
-  void ConverterConstTensor() override {};
-  int ConverterCNode() override {};
-  void AddReturnCNode() override {};
+  void ConverterConstTensor() override{};
+  int ConverterCNode() override{};
+  void AddReturnCNode() override{};
   bool ParseModelConfigureInfo(const onnx::ModelProto &model_proto);
   bool BuildFuncGraph(const FuncGraphPtr &outputFuncGraph,
-                      const onnx::GraphProto &importProto);
+                      const onnx::GraphProto &importProto,
+                      const schema::QuantType &quantType);
 #if 0
   bool ImportParametersForGraph(const FuncGraphPtr &outputFuncGraph,
                                 const onnx::GraphProto &importProto);
@@ -78,30 +81,45 @@ class AnfImporterFromProtobuf : public AnfImporter {
   std::unordered_map<std::string, abstract::AbstractTensorPtr>
           GetAbstractForCNode(const onnx::AttributeProto &attr_proto);
 #else
-  bool ImportParametersForGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto);
-  bool ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto);
-  bool BuildParameterForFuncGraph(const ParameterPtr &node, const onnx::ValueInfoProto &value_proto);
-  CNodePtr BuildCNodeForFuncGraph(const FuncGraphPtr &outputFuncGraph, const onnx::NodeProto &node_proto);
-  bool BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto,
+  bool ImportParametersForGraph(const FuncGraphPtr &outputFuncGraph,
+                                const onnx::GraphProto &importProto);
+  bool ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph,
+                           const onnx::GraphProto &importProto,
+                           const schema::QuantType &quantType);
+  bool BuildParameterForFuncGraph(const ParameterPtr &node,
+                                  const onnx::ValueInfoProto &value_proto);
+  CNodePtr BuildCNodeForFuncGraph(const FuncGraphPtr &outputFuncGraph,
+                                  const onnx::NodeProto &node_proto,
+                                  const schema::QuantType &quantType);
+  bool BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGraph,
+                               const onnx::GraphProto &importProto,
                                const CNodePtr &cnode_ptr);
-  bool GetAttrValueForCNode(const PrimitivePtr &prim, const onnx::AttributeProto &attr_proto);
-  bool ObtainCNodeAttrInTypeForm(const PrimitivePtr &prim, const std::string &attr_name,
+  bool GetAttrValueForCNode(const PrimitivePtr &prim,
+                            const onnx::AttributeProto &attr_proto);
+  bool ObtainCNodeAttrInTypeForm(const PrimitivePtr &prim,
+                                 const std::string &attr_name,
                                  const onnx::TensorProto &attr_tensor);
-  bool ObtainCNodeAttrInScalarForm(const PrimitivePtr &prim, const std::string &attr_name,
+  bool ObtainCNodeAttrInScalarForm(const PrimitivePtr &prim,
+                                   const std::string &attr_name,
                                    const onnx::TensorProto &attr_tensor);
-  bool ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim, const std::string &attr_name,
+  bool ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim,
+                                   const std::string &attr_name,
                                    const onnx::TensorProto &attr_tensor);
   bool BuildValueNodeForFuncGraph(const onnx::NodeProto &node_proto);
-  bool ObtainValueNodeInTensorForm(const string &value_node_name, const onnx::TensorProto &attr_tensor);
+  bool ObtainValueNodeInTensorForm(const string &value_node_name,
+                                   const onnx::TensorProto &attr_tensor);
 
-  bool ObtainValueNodeInScalarForm(const string &value_node_name, const onnx::TensorProto &attr_tensor);
-  bool GetAttrValueForValueNode(const string &ref_attr_name, const std::string &value_node_name,
+  bool ObtainValueNodeInScalarForm(const string &value_node_name,
+                                   const onnx::TensorProto &attr_tensor);
+  bool GetAttrValueForValueNode(const string &ref_attr_name,
+                                const std::string &value_node_name,
                                 const onnx::TensorProto &attr_tensor);
-  bool ObtainValueNodeInTypeForm(const string &value_node_name, const onnx::TensorProto &attr_tensor);
-  abstract::AbstractTensorPtr GetAbstractForCNode(const onnx::AttributeProto &attr_proto);
+  bool ObtainValueNodeInTypeForm(const string &value_node_name,
+                                 const onnx::TensorProto &attr_tensor);
+  abstract::AbstractTensorPtr GetAbstractForCNode(
+      const onnx::AttributeProto &attr_proto);
 
 #endif
-
 
  private:
   std::string producer_name_;
@@ -115,4 +133,3 @@ class AnfImporterFromProtobuf : public AnfImporter {
 }  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_SRC_ANF_IMPORTER_IMPORTER_FROM_PROTOBUF_H_
-
