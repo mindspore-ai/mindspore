@@ -31,6 +31,7 @@
 #include "runtime/device/gpu/gpu_memory_copy_manager.h"
 #include "common/trans.h"
 #include "ir/dtype.h"
+#include "profiler/device/gpu/gpu_profiling.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debug_services.h"
 #endif
@@ -670,6 +671,11 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, De
   auto &kernels = graph->execution_order();
   int exec_order = 1;
 
+  auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
+  if (profiler_inst == nullptr) {
+    MS_LOG(ERROR) << "gpu profiler instance is nullptr";
+  }
+
   for (const auto &kernel : kernels) {
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
@@ -688,8 +694,17 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, De
     }
     if (!mock) {
       if (!profiling) {
+        if (profiler_inst->GetEnableFlag()) {
+          profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), stream_);
+        }
         CHECK_OP_RET_WITH_EXCEPT(kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_),
                                  "Launch kernel failed.");
+        if (profiler_inst->GetEnableFlag()) {
+          profiler_inst->OpDataProducerEnd();
+          if (profiler_inst->GetSyncEnableFlag()) {
+            CHECK_OP_RET_WITH_ERROR(SyncStream(), "Profiler SyncStream failed.");
+          }
+        }
       } else {
         LaunchKernelWithTimeProfiling(kernel, kernel_inputs, kernel_workspaces, kernel_outputs);
       }
