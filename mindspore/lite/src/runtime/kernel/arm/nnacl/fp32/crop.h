@@ -23,7 +23,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Crop4D(const float *input, float *output, const int *in_shape, const int *out_shape, CropParameter *crop_param);
+void Crop4D(const float *input, float *output, const int *in_shape, const int *out_shape, CropParameter *crop_param,
+            int thread_id);
 void Crop4DNoParallel(const float *input, float *output, const int *in_shape, const int *out_shape,
                       CropParameter *crop_param);
 #ifdef __cplusplus

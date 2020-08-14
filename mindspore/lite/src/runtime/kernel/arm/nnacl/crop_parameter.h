@@ -26,7 +26,6 @@ typedef struct CropParameter {
   OpParameter op_parameter_;
   CropQuantArg quant_arg;
   int thread_count_;
-  int thread_id_;
   int offset_size_;
   int64_t offset_[CROP_OFFSET_MAX_SIZE];
   int64_t in_offset_[CROP_OFFSET_MAX_SIZE];
