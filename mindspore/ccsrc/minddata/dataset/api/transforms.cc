@@ -241,8 +241,8 @@ std::shared_ptr<RandomRotationOperation> RandomRotation(std::vector<float> degre
 }
 
 // Function to create RandomSolarizeOperation.
-std::shared_ptr<RandomSolarizeOperation> RandomSolarize(uint8_t threshold_min, uint8_t threshold_max) {
-  auto op = std::make_shared<RandomSolarizeOperation>(threshold_min, threshold_max);
+std::shared_ptr<RandomSolarizeOperation> RandomSolarize(std::vector<uint8_t> threshold) {
+  auto op = std::make_shared<RandomSolarizeOperation>(threshold);
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -811,19 +811,22 @@ std::shared_ptr<TensorOp> RandomSharpnessOperation::Build() {
 }
 
 // RandomSolarizeOperation.
-RandomSolarizeOperation::RandomSolarizeOperation(uint8_t threshold_min, uint8_t threshold_max)
-    : threshold_min_(threshold_min), threshold_max_(threshold_max) {}
+RandomSolarizeOperation::RandomSolarizeOperation(std::vector<uint8_t> threshold) : threshold_(threshold) {}
 
 bool RandomSolarizeOperation::ValidateParams() {
-  if (threshold_max_ < threshold_min_) {
-    MS_LOG(ERROR) << "RandomSolarize: threshold_max must be greater or equal to threshold_min";
+  if (threshold_.size() != 2) {
+    MS_LOG(ERROR) << "RandomSolarize: threshold vector has incorrect size: " << threshold_.size();
+    return false;
+  }
+  if (threshold_.at(0) > threshold_.at(1)) {
+    MS_LOG(ERROR) << "RandomSolarize: threshold must be passed in a min, max format";
     return false;
   }
   return true;
 }
 
 std::shared_ptr<TensorOp> RandomSolarizeOperation::Build() {
-  std::shared_ptr<RandomSolarizeOp> tensor_op = std::make_shared<RandomSolarizeOp>(threshold_min_, threshold_max_);
+  std::shared_ptr<RandomSolarizeOp> tensor_op = std::make_shared<RandomSolarizeOp>(threshold_);
   return tensor_op;
 }
 

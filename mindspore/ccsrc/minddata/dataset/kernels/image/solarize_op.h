@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
@@ -28,8 +29,7 @@ namespace mindspore {
 namespace dataset {
 class SolarizeOp : public TensorOp {
  public:
-  explicit SolarizeOp(uint8_t threshold_min = 0, uint8_t threshold_max = 255)
-      : threshold_min_(threshold_min), threshold_max_(threshold_max) {}
+  explicit SolarizeOp(std::vector<uint8_t> threshold = {0, 255}) : threshold_(threshold) {}
 
   ~SolarizeOp() = default;
 
@@ -38,8 +38,7 @@ class SolarizeOp : public TensorOp {
   std::string Name() const override { return kSolarizeOp; }
 
  private:
-  uint8_t threshold_min_;
-  uint8_t threshold_max_;
+  std::vector<uint8_t> threshold_;
 };
 }  // namespace dataset
 }  // namespace mindspore

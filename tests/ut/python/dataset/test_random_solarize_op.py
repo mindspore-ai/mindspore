@@ -17,66 +17,87 @@ Testing RandomSolarizeOp op in DE
 """
 import pytest
 import mindspore.dataset as ds
+import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore import log as logger
-from util import visualize_list, save_and_check_md5, config_get_set_seed, config_get_set_num_parallel_workers
+from util import visualize_list, save_and_check_md5, config_get_set_seed, config_get_set_num_parallel_workers, \
+    visualize_one_channel_dataset
 
 GENERATE_GOLDEN = False
 
+MNIST_DATA_DIR = "../data/dataset/testMnistData"
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 
-def test_random_solarize_op(threshold=None, plot=False):
+def test_random_solarize_op(threshold=(10, 150), plot=False, run_golden=True):
     """
     Test RandomSolarize
     """
     logger.info("Test RandomSolarize")
 
     # First dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"])
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = vision.Decode()
+
+    original_seed = config_get_set_seed(0)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     if threshold is None:
         solarize_op = vision.RandomSolarize()
     else:
         solarize_op = vision.RandomSolarize(threshold)
+
     data1 = data1.map(input_columns=["image"], operations=decode_op)
     data1 = data1.map(input_columns=["image"], operations=solarize_op)
 
     # Second dataset
-    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"])
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data2 = data2.map(input_columns=["image"], operations=decode_op)
+
+    if run_golden:
+        filename = "random_solarize_01_result.npz"
+        save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
 
     image_solarized = []
     image = []
+
     for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
         image_solarized.append(item1["image"].copy())
         image.append(item2["image"].copy())
     if plot:
         visualize_list(image, image_solarized)
 
-
-def test_random_solarize_md5():
-    """
-    Test RandomSolarize
-    """
-    logger.info("Test RandomSolarize")
-    original_seed = config_get_set_seed(0)
-    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
-
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = vision.Decode()
-    random_solarize_op = vision.RandomSolarize((10, 150))
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=random_solarize_op)
-    # Compare with expected md5 from images
-    filename = "random_solarize_01_result.npz"
-    save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
-
-    # Restore config setting
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
+
+def test_random_solarize_mnist(plot=False, run_golden=True):
+    """
+    Test RandomSolarize op with MNIST dataset (Grayscale images)
+    """
+
+    mnist_1 = de.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
+    mnist_2 = de.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
+    mnist_2 = mnist_2.map(input_columns="image", operations=vision.RandomSolarize((0, 255)))
+
+    images = []
+    images_trans = []
+    labels = []
+
+    for _, (data_orig, data_trans) in enumerate(zip(mnist_1, mnist_2)):
+        image_orig, label_orig = data_orig
+        image_trans, _ = data_trans
+        images.append(image_orig)
+        labels.append(label_orig)
+        images_trans.append(image_trans)
+
+    if plot:
+        visualize_one_channel_dataset(images, images_trans, labels)
+
+    if run_golden:
+        filename = "random_solarize_02_result.npz"
+        save_and_check_md5(mnist_2, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_random_solarize_errors():
@@ -105,8 +126,8 @@ def test_random_solarize_errors():
 
 
 if __name__ == "__main__":
-    test_random_solarize_op((100, 100), plot=True)
-    test_random_solarize_op((12, 120), plot=True)
-    test_random_solarize_op(plot=True)
+    test_random_solarize_op((10, 150), plot=True, run_golden=True)
+    test_random_solarize_op((12, 120), plot=True, run_golden=False)
+    test_random_solarize_op(plot=True, run_golden=False)
+    test_random_solarize_mnist(plot=True, run_golden=True)
     test_random_solarize_errors()
-    test_random_solarize_md5()

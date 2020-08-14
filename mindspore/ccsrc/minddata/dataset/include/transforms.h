@@ -249,10 +249,9 @@ std::shared_ptr<RandomSharpnessOperation> RandomSharpness(std::vector<float> deg
 
 /// \brief Function to create a RandomSolarize TensorOperation.
 /// \notes Invert pixels within specified range. If min=max, then it inverts all pixel above that threshold
-/// \param[in] threshold_min - lower limit
-/// \param[in] threshold_max - upper limit
+/// \param[in] threshold - a vector with two elements specifying the pixel range to invert.
 /// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<RandomSolarizeOperation> RandomSolarize(uint8_t threshold_min = 0, uint8_t threshold_max = 255);
+std::shared_ptr<RandomSolarizeOperation> RandomSolarize(std::vector<uint8_t> threshold = {0, 255});
 
 /// \brief Function to create a RandomVerticalFlip TensorOperation.
 /// \notes Tensor operation to perform random vertical flip.
@@ -657,7 +656,7 @@ class SwapRedBlueOperation : public TensorOperation {
 
 class RandomSolarizeOperation : public TensorOperation {
  public:
-  explicit RandomSolarizeOperation(uint8_t threshold_min, uint8_t threshold_max);
+  explicit RandomSolarizeOperation(std::vector<uint8_t> threshold);
 
   ~RandomSolarizeOperation() = default;
 
@@ -666,8 +665,7 @@ class RandomSolarizeOperation : public TensorOperation {
   bool ValidateParams() override;
 
  private:
-  uint8_t threshold_min_;
-  uint8_t threshold_max_;
+  std::vector<uint8_t> threshold_;
 };
 }  // namespace vision
 }  // namespace api

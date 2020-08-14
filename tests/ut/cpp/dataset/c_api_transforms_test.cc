@@ -1109,29 +1109,21 @@ TEST_F(MindDataTestPipeline, TestUniformAugWithOps) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestRandomSolarize) {
+TEST_F(MindDataTestPipeline, TestRandomSolarizeSucess1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomSolarize.";
+
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
   EXPECT_NE(ds, nullptr);
 
-  // Create a Repeat operation on ds
-  int32_t repeat_num = 2;
-  ds = ds->Repeat(repeat_num);
-  EXPECT_NE(ds, nullptr);
-
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> random_solarize =
-    mindspore::dataset::api::vision::RandomSolarize(23, 23);  // vision::RandomSolarize();
+  std::vector<uint8_t> threshold = {10, 100};
+  std::shared_ptr<TensorOperation> random_solarize = mindspore::dataset::api::vision::RandomSolarize(threshold);
   EXPECT_NE(random_solarize, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({random_solarize});
-  EXPECT_NE(ds, nullptr);
-
-  // Create a Batch operation on ds
-  int32_t batch_size = 1;
-  ds = ds->Batch(batch_size);
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -1151,8 +1143,61 @@ TEST_F(MindDataTestPipeline, TestRandomSolarize) {
     iter->GetNextRow(&row);
   }
 
-  EXPECT_EQ(i, 20);
+  EXPECT_EQ(i, 10);
 
   // Manually terminate the pipeline
   iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRandomSolarizeSucess2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomSolarize with default params.";
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_solarize = mindspore::dataset::api::vision::RandomSolarize();
+  EXPECT_NE(random_solarize, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({random_solarize});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 10);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRandomSolarizeFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomSolarize with invalid params.";
+  std::vector<uint8_t> threshold = {13, 1};
+  std::shared_ptr<TensorOperation> random_solarize = mindspore::dataset::api::vision::RandomSolarize(threshold);
+  EXPECT_EQ(random_solarize, nullptr);
+
+  threshold = {1, 2, 3};
+  random_solarize = mindspore::dataset::api::vision::RandomSolarize(threshold);
+  EXPECT_EQ(random_solarize, nullptr);
+
+  threshold = {1};
+  random_solarize = mindspore::dataset::api::vision::RandomSolarize(threshold);
+  EXPECT_EQ(random_solarize, nullptr);
 }
