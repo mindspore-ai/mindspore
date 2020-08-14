@@ -33,6 +33,7 @@ TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp32) {
   // setbuf(stdout, NULL);
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
+  auto allocator = ocl_runtime->GetAllocator();
   int pad = 0;
   int n = 1;
   int h = 240;
@@ -57,7 +58,6 @@ TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp32) {
   auto bias_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(bias_path.c_str(), &bias_size));
 
   lite::tensor::Tensor *tensor_x = new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), {1, h, w, ci});
-  tensor_x->SetData(input_data);
 
   lite::tensor::Tensor *tensor_w = new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), {co, kh, kw, ci});
   tensor_w->SetData(weight_data);
@@ -81,9 +81,11 @@ TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp32) {
     new kernel::Conv2dTransposeOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   arith_kernel->Init();
 
+  inputs[0]->MallocData(allocator);
   std::vector<kernel::LiteKernel *> kernels{arith_kernel};
   auto *pGraph = new kernel::SubGraphOpenCLKernel({tensor_x}, outputs, kernels, kernels, kernels);
   pGraph->Init();
+  memcpy(inputs[0]->Data(), input_data, input_size);
   pGraph->Run();
 
   printf("==================output data=================\n");

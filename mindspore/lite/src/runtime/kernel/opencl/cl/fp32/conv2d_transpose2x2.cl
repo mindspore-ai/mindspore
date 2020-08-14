@@ -21,7 +21,7 @@ __kernel void conv2d_transpose2x2(__read_only image2d_t src_data, __global FLT16
   FLT4 r1 = (FLT4)(0.f);
   FLT4 r2 = (FLT4)(0.f);
   FLT4 r3 = (FLT4)(0.f);
-  int base_w = (co * 4 + kh + kw * 2) * src_size.z;
+  int base_w = (co * 4 + kh * 2 + kw) * src_size.z;
   for (int ci = 0; ci < src_size.z; ++ci) {
     FLT4 x0 = READ_IMAGE(src_data, smp_zero, (int2)(src_w * src_size.z + ci, src_h));
     FLT4 x1 = READ_IMAGE(src_data, smp_zero, (int2)(src_w * src_size.z + ci, src_h + 1));
