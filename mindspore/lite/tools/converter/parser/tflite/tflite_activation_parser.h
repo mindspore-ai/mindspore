@@ -56,6 +56,11 @@ class TfliteLogisticParser : public TfliteActivationParser {
   TfliteLogisticParser() : TfliteActivationParser() {}
 };
 
+class TfliteLeakyReluParser : public TfliteActivationParser {
+ public:
+  TfliteLeakyReluParser() : TfliteActivationParser() {}
+};
+
 class TflitePreluParser : public TfliteNodeParser {
  public:
   TflitePreluParser() : TfliteNodeParser("Prelu") {}
@@ -65,17 +70,6 @@ class TflitePreluParser : public TfliteNodeParser {
                const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
                const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_opset, schema::CNodeT *op,
                TensorCache *tensor_cache, bool quantized_model) override;
-};
-
-class TfliteLeakyReluParser : public TfliteNodeParser {
- public:
-  TfliteLeakyReluParser() : TfliteNodeParser("LeakyRelu") {}
-
-  STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-               const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-               const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-               const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet, schema::CNodeT *op,
-               TensorCache *tensor_cache, bool quantizedModel) override;
 };
 
 }  // namespace lite
