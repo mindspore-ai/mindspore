@@ -72,6 +72,7 @@ class Lookup(cde.LookupOp):
     def __init__(self, vocab, unknown_token=None):
         super().__init__(vocab, unknown_token)
 
+
 class SlidingWindow(cde.SlidingWindowOp):
     """
     TensorOp to construct a tensor from data (only 1-D for now), where each element in the dimension axis
@@ -100,6 +101,7 @@ class SlidingWindow(cde.SlidingWindowOp):
     @check_slidingwindow
     def __init__(self, width, axis=0):
         super().__init__(width=width, axis=axis)
+
 
 class Ngram(cde.NgramOp):
     """
@@ -511,8 +513,8 @@ if platform.system().lower() != 'windows':
                 on input text to make the text to lower case and strip accents characters; If False, only apply
                 NormalizeUTF8('normalization_form' mode) operation on input text(default=False).
             keep_whitespace(bool, optional): If True, the whitespace will be kept in out tokens(default=False).
-            normalization_form(NormalizeForm, optional): Used to specify a specific normlaize mode,
-                only effective when 'lower_case' is False. See NormalizeUTF8 for details(default='NONE').
+            normalization_form(NormalizeForm, optional): Used to specify a specific normalize mode,
+                only effective when 'lower_case' is False. See NormalizeUTF8 for details(default=NormalizeForm.NONE).
             preserve_unused_token(bool, optional): If True, do not split special tokens like
                 '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'(default=True).
             with_offsets (bool, optional): If or not output offsets of tokens (default=False).

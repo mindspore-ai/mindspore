@@ -204,7 +204,7 @@ class Concatenate(cde.ConcatenateOp):
     Tensor operation that concatenates all columns into a single tensor.
 
     Args:
-        axis (int, optional): axis to concatenate the tensors along (Default=0).
+        axis (int, optional): concatenate the tensors along given axis (Default=0).
         prepend (numpy.array, optional): numpy array to be prepended to the already concatenated tensors (Default=None).
         append (numpy.array, optional): numpy array to be appended to the already concatenated tensors (Default=None).
     """

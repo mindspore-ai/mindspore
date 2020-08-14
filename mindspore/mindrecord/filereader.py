@@ -23,6 +23,7 @@ from .common.exceptions import ParamValueError, ParamTypeError
 
 __all__ = ['FileReader']
 
+
 class FileReader:
     """
     Class to read MindRecord File series.
@@ -31,7 +32,7 @@ class FileReader:
        file_name (str, list[str]): One of MindRecord File or file list.
        num_consumer(int, optional): Number of consumer threads which load data to memory (default=4).
            It should not be smaller than 1 or larger than the number of CPU.
-       columns (list[str], optional): List of fields which correspond data would be read (default=None).
+       columns (list[str], optional): List of fields which corresponding data would be read (default=None).
        operator(int, optional): Reserved parameter for operators (default=None).
 
     Raises:

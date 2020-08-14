@@ -132,11 +132,12 @@ class Vocab(cde.Vocab):
         Build a vocab object from a dict.
 
         Args:
-            word_dict (dict): dict contains word, id pairs where word should be str and id int. id is recommended to
-                start from 0 and be continuous. ValueError will be raised if id is negative.
+            word_dict (dict): dict contains word and id pairs, where word should be str and id be int. id is recommended
+                to start from 0 and be continuous. ValueError will be raised if id is negative.
         """
 
         return super().from_dict(word_dict)
+
 
 class SentencePieceVocab(cde.SentencePieceVocab):
     """
@@ -151,9 +152,9 @@ class SentencePieceVocab(cde.SentencePieceVocab):
         Args:
             dataset(Dataset): Dataset to build sentencepiece.
             col_names(list): The list of the col name.
-            vocab_size(int): Vocabulary size, the type of uint32_t.
+            vocab_size(int): Vocabulary size.
             character_coverage(float): Amount of characters covered by the model, good defaults are: 0.9995 for
-                languages. with rich character set like Japanse or Chinese and 1.0 for other languages with small
+                languages. with rich character set like Japanese or Chinese and 1.0 for other languages with small
                 character set.
             model_type(SentencePieceModel): Choose from unigram (default), bpe, char, or word. The input sentence
                 must be pretokenized when using word type.
@@ -261,6 +262,7 @@ class NormalizeForm(IntEnum):
     NFD = 3
     NFKD = 4
 
+
 class SentencePieceModel(IntEnum):
     """An enumeration for SentencePieceModel, effective enumeration types are UNIGRAM, BPE, CHAR, WORD."""
     UNIGRAM = 0
@@ -275,10 +277,12 @@ DE_C_INTER_SENTENCEPIECE_MODE = {
     SentencePieceModel.WORD: cde.SentencePieceModel.DE_SENTENCE_PIECE_WORD
 }
 
+
 class SPieceTokenizerOutType(IntEnum):
     """An enumeration for SPieceTokenizerOutType, effective enumeration types are STRING, INT."""
     STRING = 0
     INT = 1
+
 
 class SPieceTokenizerLoadType(IntEnum):
     """An enumeration for SPieceTokenizerLoadType, effective enumeration types are FILE, MODEL."""

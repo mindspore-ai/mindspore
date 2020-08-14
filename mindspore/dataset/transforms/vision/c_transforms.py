@@ -188,8 +188,8 @@ class Normalize(cde.NormalizeOp):
     Normalize the input image with respect to mean and standard deviation.
 
     Args:
-        mean (sequence): List or tuple of mean values for each channel, w.r.t channel order.
-        std (sequence): List or tuple of standard deviations for each channel, w.r.t. channel order.
+        mean (sequence): List or tuple of mean values for each channel, with respect to channel order.
+        std (sequence): List or tuple of standard deviations for each channel, with respect to channel order.
     """
 
     @check_normalize_c

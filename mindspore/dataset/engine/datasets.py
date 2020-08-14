@@ -267,9 +267,9 @@ class Dataset:
                 be dropped and not propagated to the child node.
             num_parallel_workers (int, optional): Number of workers to process the Dataset in parallel (default=None).
             per_batch_map (callable, optional): Per batch map callable. A callable which takes
-                (list[Tensor], list[Tensor], ..., BatchInfo) as input parameters. Each list[Tensor] represent a batch of
-                Tensors on a given column. The number of lists should match with number of entries in input_columns. The
-                last parameter of the callable should always be a BatchInfo object.
+                (list[Tensor], list[Tensor], ..., BatchInfo) as input parameters. Each list[Tensor] represents a batch
+                of Tensors on a given column. The number of lists should match with number of entries in input_columns.
+                The last parameter of the callable should always be a BatchInfo object.
             input_columns (list[str], optional): List of names of the input columns. The size of the list should
                 match with signature of per_batch_map callable.
             pad_info (dict, optional): Whether to perform padding on selected columns. pad_info={"col1":([224,224],0)}
@@ -2821,7 +2821,7 @@ class MnistDataset(MappableDataset):
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, all images).
         num_parallel_workers (int, optional): Number of workers to read the data
-            (default=value, set in the config).
+            (default=None, set in the config).
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset
             (default=None, expected order behavior shown in the table).
         sampler (Sampler, optional): Object used to choose samples from the
@@ -2898,7 +2898,7 @@ class MnistDataset(MappableDataset):
 
 class MindDataset(MappableDataset):
     """
-    A source dataset that reads from shard files and database.
+    A source dataset that reads MindRecord files.
 
     Args:
         dataset_file (Union[str, list[str]]): One of file names or file list in dataset.
@@ -3225,7 +3225,7 @@ class _GeneratorWorker(multiprocessing.Process):
 
 class GeneratorDataset(MappableDataset):
     """
-    A source dataset that generate data from python by invoking python data source each epoch.
+    A source dataset that generates data from python by invoking python data source each epoch.
 
     This dataset can take in a sampler. sampler and shuffle are mutually exclusive. Table
     below shows what input args are allowed and their expected behavior.
@@ -3437,7 +3437,7 @@ class TFRecordDataset(SourceDataset):
 
     Args:
         dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for a
-        pattern of files. The list will be sorted in a lexicographical order.
+            pattern of files. The list will be sorted in a lexicographical order.
         schema (Union[str, Schema], optional): Path to the json schema file or schema object (default=None).
             If the schema is not provided, the meta data from the TFData file is considered the schema.
         columns_list (list[str], optional): List of columns to be read (default=None, read all columns)
@@ -3620,7 +3620,7 @@ class ManifestDataset(MappableDataset):
 
     Args:
         dataset_file (str): File to be read.
-        usage (str, optional): Need train, eval or inference data (default="train").
+        usage (str, optional): acceptable usages include train, eval and inference (default="train").
         num_samples (int, optional): The number of images to be included in the dataset.
             (default=None, all images).
         num_parallel_workers (int, optional): Number of workers to read the data
