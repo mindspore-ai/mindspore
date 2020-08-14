@@ -180,8 +180,7 @@ template void CalSliceGrad<int>(const size_t input_size, const int *dy, const st
                                 const std::vector<int> begin, const std::vector<int> size, int *output,
                                 cudaStream_t cuda_stream);
 
-// NOLINTNEXTLINE
-template void FillDeviceArray<short>(const size_t input_size, short *addr, const float value, cudaStream_t cuda_stream);
+template void FillDeviceArray<short>(const size_t input_size, short *addr, const float value, cudaStream_t cuda_stream);  // NOLINT
 template void Slice4DKernel(const int s1, const int s2, const int s3, const int s4, const int l1, const int l2,
                             const int l3, const int l4, const int d1, const int d2, const int d3, const int d4,
                             const short *input, short *output, cudaStream_t stream);  // NOLINT
@@ -189,13 +188,14 @@ template void CalSliceGrad<short>(const size_t input_size, const short *dy, cons
                                 const std::vector<int> begin, const std::vector<int> size, short *output,  // NOLINT
                                 cudaStream_t cuda_stream);
 
-template void FillDeviceArray<char>(const size_t input_size, char *addr, const float value, cudaStream_t cuda_stream);
+template void FillDeviceArray<unsigned char>(const size_t input_size, unsigned char *addr, const float value,
+                                             cudaStream_t cuda_stream);
 template void Slice4DKernel(const int s1, const int s2, const int s3, const int s4, const int l1, const int l2,
                             const int l3, const int l4, const int d1, const int d2, const int d3, const int d4,
-                            const char *input, char *output, cudaStream_t stream);
-template void CalSliceGrad<char>(const size_t input_size, const char *dy, const std::vector<int> in_shape,
-                                const std::vector<int> begin, const std::vector<int> size, char *output,
-                                cudaStream_t cuda_stream);
+                            const unsigned char *input, unsigned char *output, cudaStream_t stream);
+template void CalSliceGrad<unsigned char>(const size_t input_size, const unsigned char *dy,
+                                          const std::vector<int> in_shape, const std::vector<int> begin,
+                                          const std::vector<int> size, unsigned char *output, cudaStream_t cuda_stream);
 
 template void FillDeviceArray<bool>(const size_t input_size, bool *addr, const float value, cudaStream_t cuda_stream);
 template void Slice4DKernel(const int s1, const int s2, const int s3, const int s4, const int l1, const int l2,
@@ -215,12 +215,11 @@ template void StridedSlice(const std::vector<size_t> &input_shape, const std::ve
                            const std::vector<int> &strides, const std::vector<int> &output_shape, const int *input,
                            int *output, cudaStream_t cuda_stream);
 template void StridedSlice(const std::vector<size_t> &input_shape, const std::vector<int> &begin,
-                           // NOLINTNEXTLINE
-                           const std::vector<int> &strides, const std::vector<int> &output_shape, const short *input,
-                           short *output, cudaStream_t cuda_stream);  // NOLINT
+                           const std::vector<int> &strides, const std::vector<int> &output_shape,
+                           const short *input, short *output, cudaStream_t cuda_stream);  // NOLINT
 template void StridedSlice(const std::vector<size_t> &input_shape, const std::vector<int> &begin,
-                           const std::vector<int> &strides, const std::vector<int> &output_shape, const char *input,
-                           char *output, cudaStream_t cuda_stream);
+                           const std::vector<int> &strides, const std::vector<int> &output_shape,
+                           const unsigned char *input, unsigned char *output, cudaStream_t cuda_stream);
 template void StridedSlice(const std::vector<size_t> &input_shape, const std::vector<int> &begin,
                            const std::vector<int> &strides, const std::vector<int> &output_shape, const bool *input,
                            bool *output, cudaStream_t cuda_stream);
@@ -235,12 +234,11 @@ template void StridedSliceGrad(const std::vector<int> &dy_shape, const std::vect
                                const std::vector<int> &strides, const std::vector<int> &dx_shape, const int *dy,
                                int *dx, cudaStream_t cuda_stream);
 template void StridedSliceGrad(const std::vector<int> &dy_shape, const std::vector<int> &begin,
-                               // NOLINTNEXTLINE
-                               const std::vector<int> &strides, const std::vector<int> &dx_shape, const short *dy,
+                               const std::vector<int> &strides, const std::vector<int> &dx_shape, const short *dy,  // NOLINT
                                short *dx, cudaStream_t cuda_stream);  // NOLINT
 template void StridedSliceGrad(const std::vector<int> &dy_shape, const std::vector<int> &begin,
-                               const std::vector<int> &strides, const std::vector<int> &dx_shape, const char *dy,
-                               char *dx, cudaStream_t cuda_stream);
+                               const std::vector<int> &strides, const std::vector<int> &dx_shape,
+                               const unsigned char *dy, unsigned char *dx, cudaStream_t cuda_stream);
 template void StridedSliceGrad(const std::vector<int> &dy_shape, const std::vector<int> &begin,
                                const std::vector<int> &strides, const std::vector<int> &dx_shape, const bool *dy,
                                bool *dx, cudaStream_t cuda_stream);

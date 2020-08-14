@@ -32,7 +32,7 @@ MS_REG_GPU_KERNEL_ONE(Concat,
                       ConcatV2GpuFwdKernel, short)  // NOLINT
 MS_REG_GPU_KERNEL_ONE(Concat,
                       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                      ConcatV2GpuFwdKernel, char)
+                      ConcatV2GpuFwdKernel, uchar)
 MS_REG_GPU_KERNEL_ONE(Concat,
                       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
                       ConcatV2GpuFwdKernel, bool)
