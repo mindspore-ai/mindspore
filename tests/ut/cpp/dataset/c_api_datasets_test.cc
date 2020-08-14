@@ -133,3 +133,25 @@ TEST_F(MindDataTestPipeline, TestMnistFail1) {
   std::shared_ptr<Dataset> ds = Mnist("", RandomSampler(false, 10));
   EXPECT_EQ(ds, nullptr);
 }
+
+TEST_F(MindDataTestPipeline, TestImageFolderFail2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderFail2.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 2), {".JGP"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+  EXPECT_EQ(row.size(), 0);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}

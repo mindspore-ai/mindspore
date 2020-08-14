@@ -408,6 +408,10 @@ bool ValidateCommonDatasetParams(std::string dataset_dir) {
     MS_LOG(ERROR) << "No dataset path is specified";
     return false;
   }
+  if (access(dataset_dir.c_str(), R_OK) == -1) {
+    MS_LOG(ERROR) << "No access to specified dataset path: " << dataset_dir;
+    return false;
+  }
   return true;
 }
 
@@ -1185,8 +1189,8 @@ std::vector<std::shared_ptr<DatasetOp>> RepeatDataset::Build() {
 }
 
 bool RepeatDataset::ValidateParams() {
-  if (repeat_count_ != -1 && repeat_count_ <= 0) {
-    MS_LOG(ERROR) << "Repeat: Repeat count cannot be" << repeat_count_;
+  if (repeat_count_ <= 0 && repeat_count_ != -1) {
+    MS_LOG(ERROR) << "Repeat: repeat_count should be either -1 or positive integer, repeat_count_: " << repeat_count_;
     return false;
   }
 
@@ -1232,7 +1236,7 @@ std::vector<std::shared_ptr<DatasetOp>> SkipDataset::Build() {
 // Function to validate the parameters for SkipDataset
 bool SkipDataset::ValidateParams() {
   if (skip_count_ <= -1) {
-    MS_LOG(ERROR) << "Skip: Invalid input, skip_count: " << skip_count_;
+    MS_LOG(ERROR) << "Skip: skip_count should not be negative, skip_count: " << skip_count_;
     return false;
   }
 
@@ -1253,8 +1257,8 @@ std::vector<std::shared_ptr<DatasetOp>> TakeDataset::Build() {
 
 // Function to validate the parameters for TakeDataset
 bool TakeDataset::ValidateParams() {
-  if (take_count_ < -1) {
-    MS_LOG(ERROR) << "Take: Invalid input, take_count: " << take_count_;
+  if (take_count_ < 0 && take_count_ != -1) {
+    MS_LOG(ERROR) << "Take: take_count should be either -1 or positive integer, take_count: " << take_count_;
     return false;
   }
 
