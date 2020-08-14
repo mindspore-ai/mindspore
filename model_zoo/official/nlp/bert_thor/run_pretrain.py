@@ -19,7 +19,6 @@ python run_pretrain.py
 
 import argparse
 import os
-
 import numpy
 from src import BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell
 from src.bert_net_config import bert_net_cfg
@@ -27,10 +26,8 @@ from src.config import cfg
 from src.dataset import create_bert_dataset
 from src.lr_generator import get_bert_lr, get_bert_damping
 from src.model_thor import Model
-# from src.thor_for_bert import THOR
 from src.thor_for_bert_arg import THOR
 from src.utils import LossCallBack, BertLearningRate
-
 import mindspore.common.dtype as mstype
 import mindspore.communication.management as D
 from mindspore import context
@@ -69,8 +66,8 @@ def run_pretrain():
     parser.add_argument("--schema_dir", type=str, default="", help="Schema path, it is better to use absolute path")
 
     args_opt = parser.parse_args()
-    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=args_opt.device_id,
-                        save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target,
+                        device_id=args_opt.device_id, save_graphs=False)
     context.set_context(reserve_class_name_in_scope=False)
     context.set_context(variable_memory_max_size="30GB")
     ckpt_save_dir = args_opt.save_checkpoint_path
@@ -165,15 +162,13 @@ def run_pretrain():
         optimizer = THOR(filter(lambda x: x.requires_grad, net_with_loss.get_parameters()), lr, cfg.Thor.momentum,
                          filter(lambda x: 'matrix_A' in x.name, net_with_loss.get_parameters()),
                          filter(lambda x: 'matrix_G' in x.name, net_with_loss.get_parameters()),
-                         filter(lambda x: 'A_inv_max' in x.name, net_with_loss.get_parameters()),
-                         filter(lambda x: 'G_inv_max' in x.name, net_with_loss.get_parameters()),
                          cfg.Thor.weight_decay, cfg.Thor.loss_scale, bert_net_cfg.num_hidden_layers,
                          bert_net_cfg.batch_size, damping)
     else:
-        raise ValueError("Don't support optimizer {}, only support [Lamb, Momentum, AdamWeightDecay]".
+        raise ValueError("Don't support optimizer {}, only support [Lamb, Momentum, AdamWeightDecay, Thor]".
                          format(cfg.optimizer))
     callback = [TimeMonitor(args_opt.data_sink_steps), LossCallBack()]
-    if args_opt.enable_save_ckpt == "true":
+    if args_opt.enable_save_ckpt == "true" and rank == 0:
         config_ck = CheckpointConfig(save_checkpoint_steps=args_opt.save_checkpoint_steps,
                                      keep_checkpoint_max=args_opt.save_checkpoint_num)
         ckpoint_cb = ModelCheckpoint(prefix='checkpoint_bert', directory=ckpt_save_dir, config=config_ck)

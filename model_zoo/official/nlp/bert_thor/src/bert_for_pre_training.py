@@ -35,6 +35,8 @@ from .thor_layer import Dense_Thor
 
 damping = get_bert_damping()
 loss_scale = cfg.Thor.loss_scale
+frequency = cfg.Thor.frequency
+batch_size = cfg.Thor.batch_size
 GRADIENT_CLIP_TYPE = 1
 GRADIENT_CLIP_VALUE = 1.0
 
@@ -91,9 +93,9 @@ class GetMaskedLMOutput(nn.Cell):
                                 bias_init='zeros',
                                 damping=damping,
                                 loss_scale=loss_scale,
-                                frequency=1,
+                                frequency=frequency,
                                 activation=config.hidden_act,
-                                batch_size=config.batch_size).to_float(config.compute_type)
+                                batch_size=batch_size).to_float(config.compute_type)
         self.layernorm = nn.LayerNorm((config.hidden_size,)).to_float(config.compute_type)
         self.output_bias = Parameter(
             initializer(

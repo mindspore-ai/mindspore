@@ -34,6 +34,7 @@ from .thor_layer import Dense_Thor, Embedding_Thor
 
 damping = get_bert_damping()
 loss_scale = cfg.Thor.loss_scale
+frequency = cfg.Thor.frequency
 batch_size = cfg.Thor.batch_size
 
 
@@ -200,11 +201,10 @@ class EmbeddingPostprocessor(nn.Cell):
             use_one_hot_embeddings=use_one_hot_embeddings,
             initializer_range=initializer_range,
             name='embedding_table',
-            is_expand=False,
             batch_size=batch_size,
             damping=damping,
             loss_scale=loss_scale,
-            frequency=1)
+            frequency=frequency)
         self.shape_flat = (-1,)
         self.one_hot = P.OneHot()
         self.on_value = Tensor(1.0, mstype.float32)
@@ -225,11 +225,10 @@ class EmbeddingPostprocessor(nn.Cell):
             use_one_hot_embeddings=use_one_hot_embeddings,
             initializer_range=initializer_range,
             name='full_position_embeddings',
-            is_expand=False,
             batch_size=batch_size,
             damping=damping,
             loss_scale=loss_scale,
-            frequency=1)
+            frequency=frequency)
         self.position_ids = Tensor(np.arange(seq).reshape(-1, seq).astype(np.int32))
         self.layernorm = nn.LayerNorm((embedding_size,))
 
@@ -274,7 +273,7 @@ class BertOutput(nn.Cell):
                                 bias_init='zeros',
                                 damping=damping,
                                 loss_scale=loss_scale,
-                                frequency=1,
+                                frequency=frequency,
                                 activation=None,
                                 batch_size=batch_size).to_float(compute_type)
         self.dropout = nn.Dropout(1 - dropout_prob)
@@ -488,7 +487,7 @@ class BertAttention(nn.Cell):
                                       bias_init='zeros',
                                       damping=damping,
                                       loss_scale=loss_scale,
-                                      frequency=1,
+                                      frequency=frequency,
                                       activation=query_act,
                                       batch_size=batch_size).to_float(compute_type)
         self.key_layer = Dense_Thor(in_channels=to_tensor_width,
@@ -498,7 +497,7 @@ class BertAttention(nn.Cell):
                                     bias_init='zeros',
                                     damping=damping,
                                     loss_scale=loss_scale,
-                                    frequency=1,
+                                    frequency=frequency,
                                     activation=key_act,
                                     batch_size=batch_size).to_float(compute_type)
         self.value_layer = Dense_Thor(in_channels=to_tensor_width,
@@ -508,7 +507,7 @@ class BertAttention(nn.Cell):
                                       bias_init='zeros',
                                       damping=damping,
                                       loss_scale=loss_scale,
-                                      frequency=1,
+                                      frequency=frequency,
                                       activation=value_act,
                                       batch_size=batch_size).to_float(compute_type)
         self.shape_from = (batch_size, from_seq_length, num_attention_heads, size_per_head)
@@ -764,7 +763,7 @@ class BertEncoderCell(nn.Cell):
                                        bias_init='zeros',
                                        damping=damping,
                                        loss_scale=loss_scale,
-                                       frequency=1,
+                                       frequency=frequency,
                                        activation=hidden_act,
                                        batch_size=batch_size).to_float(compute_type)
         self.output = BertOutput(in_channels=intermediate_size,
@@ -945,11 +944,10 @@ class BertModel(nn.Cell):
             use_one_hot_embeddings=use_one_hot_embeddings,
             initializer_range=config.initializer_range,
             name='embedding_table',
-            is_expand=True,
             batch_size=batch_size,
             damping=damping,
             loss_scale=loss_scale,
-            frequency=1)
+            frequency=frequency)
         self.bert_embedding_postprocessor = EmbeddingPostprocessor(
             embedding_size=self.embedding_size,
             embedding_shape=output_embedding_shape,
@@ -991,7 +989,7 @@ class BertModel(nn.Cell):
                                 bias_init='zeros',
                                 damping=damping,
                                 loss_scale=loss_scale,
-                                frequency=1,
+                                frequency=frequency,
                                 activation="tanh",
                                 batch_size=batch_size).to_float(config.compute_type)
         self._create_attention_mask_from_input_mask = CreateAttentionMaskFromInputMask(config)

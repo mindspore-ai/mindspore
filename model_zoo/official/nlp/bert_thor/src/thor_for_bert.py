@@ -46,9 +46,8 @@ def _tensor_apply_decay(weight_decay, if_apply, weight, gradient):
 
 class THOR(Optimizer):
     """THOR"""
-
-    def __init__(self, params, learning_rate, momentum, matrix_A, matrix_G, A_inv_max, G_inv_max, weight_decay=0.0,
-                 loss_scale=1.0, num_hidden_layers=24, batch_size=12, damping=0.03, frequency=10,
+    def __init__(self, params, learning_rate, momentum, matrix_A, matrix_G, weight_decay=0.0,
+                 loss_scale=1.0, num_hidden_layers=24, batch_size=12, damping=0.03,
                  decay_filter=lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower()):
         super(THOR, self).__init__(learning_rate, params, weight_decay, loss_scale)
         if isinstance(momentum, float) and momentum < 0.0:
@@ -60,8 +59,6 @@ class THOR(Optimizer):
         self.opt = P.ApplyMomentum()
         self.matrix_A = ParameterTuple(matrix_A)
         self.matrix_G = ParameterTuple(matrix_G)
-        self.A_inv_max = ParameterTuple(A_inv_max)
-        self.G_inv_max = ParameterTuple(G_inv_max)
         self.matmul = P.MatMul()
         self.transpose = P.Transpose()
         self.shape = P.Shape()
@@ -70,16 +67,8 @@ class THOR(Optimizer):
         self.gather = P.GatherV2()
         self.matrix_A_inv = ()
         self.matrix_G_inv = ()
-        self.matrix_max_inv = ()
         self.num_hidden_layers = num_hidden_layers
-        fc_layer_num = num_hidden_layers * 6 + 5
-        for i in range(fc_layer_num):
-            self.matrix_max_inv = self.matrix_max_inv + (
-                Parameter(initializer(1, [1], mstype.float32), name="matrix_max" + str(i), requires_grad=False),)
-        self.log = P.Log()
-        self.exp = P.Exp()
         self.sqrt = P.Sqrt()
-        self.matrix_max_inv = ParameterTuple(self.matrix_max_inv)
         self.assign = P.Assign()
         self.cast = P.Cast()
         self.thor = True
@@ -90,7 +79,6 @@ class THOR(Optimizer):
         self.inv = P.Inv()
         self.batch_size = batch_size
         self.damping = damping
-        self.freq = Tensor(frequency, mstype.int32)
         self.one = Tensor(1, mstype.int32)
         self.cov_step = Parameter(initializer(0, [1], mstype.int32), name="cov_step", requires_grad=False)
 
@@ -106,26 +94,20 @@ class THOR(Optimizer):
                 g = gradients[em_idx]
                 matrix_idx = em_idx
                 temp_a_ori = self.matrix_A[matrix_idx]
-                temp_a = self.expand(temp_a_ori, 1)
                 temp_g = self.matrix_G[matrix_idx]
-                G_max = self.G_inv_max[matrix_idx]
-                temp_g = self.cast(temp_g, mstype.float32)
-                matrix_G_inv_max = self.log(G_max)
-                matrix_G_inv_max = self.mul(matrix_G_inv_max, -1)
-                matrix_G_inv_max = self.exp(matrix_G_inv_max)
-                temp_g = self.mul(temp_g, matrix_G_inv_max)
-                g = self.mul(temp_a, g)
-                g = self.cast(g, mstype.float16)
+                temp_a_ori = F.depend(temp_a_ori, g)
+                temp_g = F.depend(temp_g, g)
+                temp_a = self.expand(temp_a_ori, 1)
+                temp_a = self.cast(temp_a, mstype.float16)
                 temp_g = self.cast(temp_g, mstype.float16)
+                g = self.cast(g, mstype.float16)
+                g = self.mul(temp_a, g)
                 g = self.matmul(g, temp_g)
                 g = self.cast(g, mstype.float32)
-                g = self.mul(g, G_max)
                 fake_A = self.assign(self.matrix_A[matrix_idx], temp_a_ori)
                 fake_G = self.assign(self.matrix_G[matrix_idx], temp_g)
-                fake_max = self.assign(self.matrix_max_inv[matrix_idx], G_max)
                 g = F.depend(g, fake_A)
                 g = F.depend(g, fake_G)
-                g = F.depend(g, fake_max)
                 new_grads = new_grads + (g,)
             # process bert_embedding_postprocessor.layernorm
             grad_idx = 3
@@ -180,32 +162,18 @@ class THOR(Optimizer):
                         matrix_idx = 6 * i + offset_idx + 3
                         temp_a = self.matrix_A[matrix_idx]
                         temp_g = self.matrix_G[matrix_idx]
-                        temp_a = self.cast(temp_a, mstype.float32)
-                        temp_g = self.cast(temp_g, mstype.float32)
-                        matrix_A_inv_max = self.log(self.A_inv_max[matrix_idx])
-                        matrix_A_inv_max = self.mul(matrix_A_inv_max, -1)
-                        matrix_A_inv_max = self.exp(matrix_A_inv_max)
-                        temp_a = self.mul(temp_a, matrix_A_inv_max)
-                        matrix_G_inv_max = self.log(self.G_inv_max[matrix_idx])
-                        matrix_G_inv_max = self.mul(matrix_G_inv_max, -1)
-                        matrix_G_inv_max = self.exp(matrix_G_inv_max)
-                        temp_g = self.mul(temp_g, matrix_G_inv_max)
-                        temp_max = self.mul(self.A_inv_max[matrix_idx], self.G_inv_max[matrix_idx])
+                        temp_a = F.depend(temp_a, g)
+                        temp_g = F.depend(temp_g, g)
                         temp_a = self.cast(temp_a, mstype.float16)
                         temp_g = self.cast(temp_g, mstype.float16)
                         g = self.cast(g, mstype.float16)
-
                         g = self.matmul(temp_g, g)
                         g = self.matmul(g, temp_a)
                         g = self.cast(g, mstype.float32)
-                        g = self.mul(g, temp_max)
-
                         fake_A = self.assign(self.matrix_A[matrix_idx], temp_a)
                         fake_G = self.assign(self.matrix_G[matrix_idx], temp_g)
-                        fake_max = self.assign(self.matrix_max_inv[matrix_idx], temp_max)
                         g = F.depend(g, fake_A)
                         g = F.depend(g, fake_G)
-                        g = F.depend(g, fake_max)
                         new_grads = new_grads + (g,)
                         new_grads = new_grads + (gradients[grad_idx + 1],)
 
@@ -216,32 +184,18 @@ class THOR(Optimizer):
             pooler_bias = gradients[pooler_layer_idx + 1]
             temp_a = self.matrix_A[matrix_idx]
             temp_g = self.matrix_G[matrix_idx]
-            temp_a = self.cast(temp_a, mstype.float32)
-            temp_g = self.cast(temp_g, mstype.float32)
-            matrix_A_inv_max = self.log(self.A_inv_max[matrix_idx])
-            matrix_A_inv_max = self.mul(matrix_A_inv_max, -1)
-            matrix_A_inv_max = self.exp(matrix_A_inv_max)
-            temp_a = self.mul(temp_a, matrix_A_inv_max)
-            matrix_G_inv_max = self.log(self.G_inv_max[matrix_idx])
-            matrix_G_inv_max = self.mul(matrix_G_inv_max, -1)
-            matrix_G_inv_max = self.exp(matrix_G_inv_max)
-            temp_g = self.mul(temp_g, matrix_G_inv_max)
-            temp_max = self.mul(self.A_inv_max[matrix_idx], self.G_inv_max[matrix_idx])
+            temp_a = F.depend(temp_a, g)
+            temp_g = F.depend(temp_g, g)
             temp_a = self.cast(temp_a, mstype.float16)
             temp_g = self.cast(temp_g, mstype.float16)
             g = self.cast(g, mstype.float16)
-
             g = self.matmul(temp_g, g)
             g = self.matmul(g, temp_a)
             g = self.cast(g, mstype.float32)
-            g = self.mul(g, temp_max)
-
             fake_A = self.assign(self.matrix_A[matrix_idx], temp_a)
             fake_G = self.assign(self.matrix_G[matrix_idx], temp_g)
-            fake_max = self.assign(self.matrix_max_inv[matrix_idx], temp_max)
             g = F.depend(g, fake_A)
             g = F.depend(g, fake_G)
-            g = F.depend(g, fake_max)
             new_grads = new_grads + (g, pooler_bias)
 
             # for cls1 fc layer: mlm
@@ -251,38 +205,26 @@ class THOR(Optimizer):
             mlm_bias = gradients[mlm_fc_idx + 1]
             temp_a = self.matrix_A[matrix_idx]
             temp_g = self.matrix_G[matrix_idx]
-            temp_a = self.cast(temp_a, mstype.float32)
-            temp_g = self.cast(temp_g, mstype.float32)
-            matrix_A_inv_max = self.log(self.A_inv_max[matrix_idx])
-            matrix_A_inv_max = self.mul(matrix_A_inv_max, -1)
-            matrix_A_inv_max = self.exp(matrix_A_inv_max)
-            temp_a = self.mul(temp_a, matrix_A_inv_max)
-            matrix_G_inv_max = self.log(self.G_inv_max[matrix_idx])
-            matrix_G_inv_max = self.mul(matrix_G_inv_max, -1)
-            matrix_G_inv_max = self.exp(matrix_G_inv_max)
-            temp_g = self.mul(temp_g, matrix_G_inv_max)
-            temp_max = self.mul(self.A_inv_max[matrix_idx], self.G_inv_max[matrix_idx])
+            temp_a = F.depend(temp_a, g)
+            temp_g = F.depend(temp_g, g)
             temp_a = self.cast(temp_a, mstype.float16)
             temp_g = self.cast(temp_g, mstype.float16)
             g = self.cast(g, mstype.float16)
-
             g = self.matmul(temp_g, g)
             g = self.matmul(g, temp_a)
             g = self.cast(g, mstype.float32)
-            g = self.mul(g, temp_max)
-
+            # add bert.cls1.output_bias grad
             fake_A = self.assign(self.matrix_A[matrix_idx], temp_a)
             fake_G = self.assign(self.matrix_G[matrix_idx], temp_g)
-            fake_max = self.assign(self.matrix_max_inv[matrix_idx], temp_max)
             g = F.depend(g, fake_A)
             g = F.depend(g, fake_G)
-            g = F.depend(g, fake_max)
             new_grads = new_grads + (gradients[mlm_fc_idx - 1],)
             new_grads = new_grads + (g, mlm_bias)
             # add bert.cls1.layernorm grad
             begin_idx = mlm_fc_idx + 2
             end_idx = mlm_fc_idx + 4
             new_grads = new_grads + gradients[begin_idx: end_idx]
+
             lenth = len(gradients)
             new_grads = new_grads + gradients[lenth - 2: lenth]
             gradients = new_grads
@@ -293,15 +235,16 @@ class THOR(Optimizer):
                 g = gradients[em_idx]
                 matrix_idx = em_idx
                 temp_a = self.matrix_A[matrix_idx]
-                temp_a = self.expand(temp_a, 1)
                 temp_g = self.matrix_G[matrix_idx]
-                matrix_max = self.matrix_max_inv[matrix_idx]
-                g = self.mul(temp_a, g)
+                temp_a = F.depend(temp_a, g)
+                temp_g = F.depend(temp_g, g)
+                temp_a = self.expand(temp_a, 1)
+                temp_a = self.cast(temp_a, mstype.float16)
                 temp_g = self.cast(temp_g, mstype.float16)
                 g = self.cast(g, mstype.float16)
+                g = self.mul(temp_a, g)
                 g = self.matmul(g, temp_g)
                 g = self.cast(g, mstype.float32)
-                g = self.mul(g, matrix_max)
                 new_grads = new_grads + (g,)
             # process bert_embedding_postprocessor.layernorm
             grad_idx = 3
@@ -356,15 +299,14 @@ class THOR(Optimizer):
                         matrix_idx = 6 * i + offset_idx + 3
                         temp_a = self.matrix_A[matrix_idx]
                         temp_g = self.matrix_G[matrix_idx]
-                        matrix_max = self.matrix_max_inv[matrix_idx]
+                        temp_a = F.depend(temp_a, g)
+                        temp_g = F.depend(temp_g, g)
                         temp_a = self.cast(temp_a, mstype.float16)
                         temp_g = self.cast(temp_g, mstype.float16)
                         g = self.cast(g, mstype.float16)
-
                         g = self.matmul(temp_g, g)
                         g = self.matmul(g, temp_a)
                         g = self.cast(g, mstype.float32)
-                        g = self.mul(g, matrix_max)
                         new_grads = new_grads + (g,)
                         new_grads = new_grads + (gradients[grad_idx + 1],)
 
@@ -375,15 +317,14 @@ class THOR(Optimizer):
             pooler_bias = gradients[pooler_layer_idx + 1]
             temp_a = self.matrix_A[matrix_idx]
             temp_g = self.matrix_G[matrix_idx]
-            matrix_max = self.matrix_max_inv[matrix_idx]
+            temp_a = F.depend(temp_a, g)
+            temp_g = F.depend(temp_g, g)
             temp_a = self.cast(temp_a, mstype.float16)
             temp_g = self.cast(temp_g, mstype.float16)
             g = self.cast(g, mstype.float16)
-
             g = self.matmul(temp_g, g)
             g = self.matmul(g, temp_a)
             g = self.cast(g, mstype.float32)
-            g = self.mul(g, matrix_max)
             new_grads = new_grads + (g, pooler_bias)
 
             # for cls1 fc layer: mlm
@@ -393,15 +334,14 @@ class THOR(Optimizer):
             mlm_bias = gradients[mlm_fc_idx + 1]
             temp_a = self.matrix_A[matrix_idx]
             temp_g = self.matrix_G[matrix_idx]
-            matrix_max = self.matrix_max_inv[matrix_idx]
+            temp_a = F.depend(temp_a, g)
+            temp_g = F.depend(temp_g, g)
             temp_a = self.cast(temp_a, mstype.float16)
             temp_g = self.cast(temp_g, mstype.float16)
             g = self.cast(g, mstype.float16)
-
             g = self.matmul(temp_g, g)
             g = self.matmul(g, temp_a)
             g = self.cast(g, mstype.float32)
-            g = self.mul(g, matrix_max)
             # add bert.cls1.output_bias grad
             new_grads = new_grads + (gradients[mlm_fc_idx - 1],)
             new_grads = new_grads + (g, mlm_bias)
@@ -409,6 +349,7 @@ class THOR(Optimizer):
             begin_idx = mlm_fc_idx + 2
             end_idx = mlm_fc_idx + 4
             new_grads = new_grads + gradients[begin_idx: end_idx]
+
             lenth = len(gradients)
             new_grads = new_grads + gradients[lenth - 2: lenth]
             gradients = new_grads

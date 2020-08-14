@@ -14,7 +14,6 @@
 # ============================================================================
 """thor_layer"""
 import numpy as np
-
 import mindspore.common.dtype as mstype
 from mindspore._checkparam import check_bool, check_int_positive
 from mindspore.common.initializer import TruncatedNormal, initializer
@@ -23,7 +22,6 @@ from mindspore.common.tensor import Tensor
 from mindspore.nn.cell import Cell
 from mindspore.nn.layer.activation import get_activation
 from mindspore.ops import operations as P
-
 
 class Embedding_Thor(Cell):
     """
@@ -37,7 +35,6 @@ class Embedding_Thor(Cell):
         use_one_hot_embeddings (bool): Specifies whether to use one hot encoding form. Default: False.
         initializer_range (float): Initialization value of TruncatedNormal. Default: 0.02.
     """
-
     def __init__(self,
                  vocab_size,
                  embedding_size,
@@ -45,11 +42,10 @@ class Embedding_Thor(Cell):
                  use_one_hot_embeddings=False,
                  initializer_range=0.02,
                  name='embedding_table',
-                 is_expand=False,
                  batch_size=12,
                  damping=0.03,
                  loss_scale=1,
-                 frequency=10,
+                 frequency=100,
                  ):
         super(Embedding_Thor, self).__init__()
         self.vocab_size = vocab_size
@@ -59,7 +55,6 @@ class Embedding_Thor(Cell):
                                           [vocab_size, embedding_size]),
                                          name=name)
         self.thor = True
-        self.is_expand = is_expand
         self.expand = P.ExpandDims()
         self.shape_flat = (-1,)
         self.gather = P.GatherV2()
@@ -71,13 +66,11 @@ class Embedding_Thor(Cell):
         self.em_shape = tuple(embedding_shape)
         self.shape = P.Shape()
         self.loss_scale = Tensor(1 / loss_scale, mstype.float16)
-        self.matrix_A_inv = Parameter(Tensor(np.zeros([vocab_size]).astype(np.float32)), name='matrix_A_inv',
-                                      requires_grad=False)
+
+        self.matrix_A_inv = Parameter(Tensor(np.zeros([vocab_size]).astype(np.float16)),
+                                      name='matrix_A_inv', requires_grad=False)
         self.matrix_G_inv = Parameter(Tensor(np.zeros([embedding_size, embedding_size]).astype(np.float16)),
                                       name="matrix_G_inv", requires_grad=False)
-        self.A_inv_max = Parameter(initializer(0, [1], mstype.float32), name="A_inv_max", requires_grad=False)
-        self.G_inv_max = Parameter(initializer(0, [1], mstype.float32), name="G_inv_max", requires_grad=False)
-        self.fused_abs_max = P.CusFusedAbsMax1()
         self.fake_G = Tensor(np.zeros([embedding_size, embedding_size]).astype(np.float16))
         self.dampingA = Tensor(np.ones([vocab_size]).astype(np.float32))
         self.dampingG = Tensor(np.identity(embedding_size), mstype.float32)
@@ -117,9 +110,6 @@ class Embedding_Thor(Cell):
         matrix_G = matrix_G + damping * dampingG
         matrix_G_inv = self.cholesky(matrix_G)
         matrix_G_inv = self.vector_matmul(matrix_G_inv, matrix_G_inv)
-        matrix_G_inv_max = self.fused_abs_max(matrix_G_inv)
-        matrix_G_inv_max = self.fused_abs_max(matrix_G_inv_max)
-        self.G_inv_max = matrix_G_inv_max
         matrix_G_inv = self.matrix_combine(matrix_G_inv)
         matrix_G_inv = self.cast(matrix_G_inv, mstype.float16)
         self.matrix_G_inv = matrix_G_inv
@@ -127,8 +117,6 @@ class Embedding_Thor(Cell):
 
     def construct(self, input_ids):
         """construct of Embedding_Thor"""
-        if self.is_expand:
-            input_ids = self.expand(input_ids, -1)
         flat_ids = self.reshape(input_ids, self.shape_flat)
         if self.use_one_hot_embeddings:
             one_hot_ids = self.one_hot(flat_ids, self.vocab_size, self.on_value, self.off_value)
@@ -146,6 +134,7 @@ class Embedding_Thor(Cell):
                 dampingA = self.cast(self.dampingA, mstype.float32)
                 matrix_A = matrix_A + damping * dampingA
                 matrix_A_inv = self.inv(matrix_A)
+                matrix_A_inv = self.cast(matrix_A_inv, mstype.float16)
                 self.matrix_A_inv = matrix_A_inv
                 self.matrix_G_inv = self.fake_G
                 output_for_reshape = self.gather(self.embedding_table, flat_ids, 0)
@@ -156,11 +145,9 @@ class Embedding_Thor(Cell):
         output = self.reshape(output_for_reshape, self.em_shape)
         return output, self.embedding_table
 
-
 class Dense_Thor(Cell):
     """Dense_Thor"""
 
-    # @cell_attr_register(attrs=['has_bias', 'activation', 'in_channels', 'out_channels'])
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -168,7 +155,7 @@ class Dense_Thor(Cell):
                  bias_init='zeros',
                  damping=0.03,
                  loss_scale=1,
-                 frequency=10,
+                 frequency=100,
                  has_bias=False,
                  activation=None,
                  batch_size=12):
@@ -200,9 +187,6 @@ class Dense_Thor(Cell):
                                       name='matrix_A_inv', requires_grad=False)
         self.matrix_G_inv = Parameter(Tensor(np.zeros([out_channels, out_channels]).astype(np.float16)),
                                       name="matrix_G_inv", requires_grad=False)
-        self.A_inv_max = Parameter(initializer(0, [1], mstype.float32), name="A_inv_max", requires_grad=False)
-        self.G_inv_max = Parameter(initializer(0, [1], mstype.float32), name="G_inv_max", requires_grad=False)
-        self.fused_abs_max = P.CusFusedAbsMax1()
         self.fake_G = Tensor(np.zeros([out_channels, out_channels]).astype(np.float16))
 
         self.matmul = P.MatMul(transpose_b=True)
@@ -250,9 +234,6 @@ class Dense_Thor(Cell):
         matrix_G = matrix_G + damping * dampingG
         matrix_G_inv = self.cholesky(matrix_G)
         matrix_G_inv = self.vector_matmul(matrix_G_inv, matrix_G_inv)
-        matrix_G_inv_max = self.fused_abs_max(matrix_G_inv)
-        matrix_G_inv_max = self.fused_abs_max(matrix_G_inv_max)
-        self.G_inv_max = matrix_G_inv_max
         matrix_G_inv = self.matrix_combine(matrix_G_inv)
         matrix_G_inv = self.cast(matrix_G_inv, mstype.float16)
         self.matrix_G_inv = matrix_G_inv
@@ -265,7 +246,6 @@ class Dense_Thor(Cell):
             shape = self.shape(x)
             normalizer = self.cast(shape[0], mstype.float32)
             matrix_A = self.mul(inputs, 1.0 / normalizer)
-
             damping_step = self.gather(self.damping, self.cov_step, self.axis)
             damping_step = self.cast(damping_step, mstype.float32)
             damping = self.sqrt(damping_step)
@@ -273,9 +253,6 @@ class Dense_Thor(Cell):
             matrix_A = matrix_A + damping * dampingA
             matrix_A_inv = self.cholesky(matrix_A)
             matrix_A_inv = self.vector_matmul(matrix_A_inv, matrix_A_inv)
-            matrix_A_inv_max = self.fused_abs_max(matrix_A_inv)
-            matrix_A_inv_max = self.fused_abs_max(matrix_A_inv_max)
-            self.A_inv_max = matrix_A_inv_max
             matrix_A_inv = self.matrix_combine(matrix_A_inv)
             matrix_A_inv = self.cast(matrix_A_inv, mstype.float16)
             self.matrix_A_inv = matrix_A_inv

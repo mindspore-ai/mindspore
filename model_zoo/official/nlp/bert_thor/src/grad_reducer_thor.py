@@ -80,7 +80,7 @@ def _tensors_cast_datatype(datatype, grad):
     return F.cast(grad, datatype)
 
 
-class DistributedGradReducerThor1(Cell):
+class DistributedGradReducerThor(Cell):
     """
     A distributed optimizer.
 
@@ -154,7 +154,7 @@ class DistributedGradReducerThor1(Cell):
     """
 
     def __init__(self, parameters, group, mean=True, degree=None):
-        super(DistributedGradReducerThor1, self).__init__(auto_prefix=False)
+        super(DistributedGradReducerThor, self).__init__(auto_prefix=False)
         self.hyper_map = C.HyperMap()
         self.mul = P.Mul()
         if degree is None:
@@ -168,7 +168,7 @@ class DistributedGradReducerThor1(Cell):
         _init_optimizer_allreduce(group)
 
     def construct(self, grads):
-        """construct of DistributedGradReducerThor1"""
+        """construct of DistributedGradReducerThor"""
         # In some circumstances, the data precision of grads could be mixed with float16 and float32. Thus, the
         # result of AllReduce is unreliable. To solve the problem, grads should be cast to float32 before AllReduce,
         # and cast back after the operation.
