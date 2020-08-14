@@ -92,6 +92,16 @@ void LiteSession::InitGraphInputTensors(const lite::Model *model) {
   }
 }
 
+void LiteSession::InitGraphInputMSTensors(const lite::Model *model) {
+  auto meta_graph = model->GetMetaGraph();
+  MS_ASSERT(this->input_vec_.empty());
+  MS_ASSERT(meta_graph != nullptr);
+  for (auto &input_tensor : this->inputs_) {
+    MS_ASSERT(input_tensor != nullptr);
+    this->input_vec_.emplace_back(new lite::tensor::LiteTensor(input_tensor));
+  }
+}
+
 void LiteSession::InitGraphOutputTensors(const lite::Model *model) {
   auto meta_graph = model->GetMetaGraph();
   MS_ASSERT(this->outputs_.empty());
@@ -169,6 +179,7 @@ void LiteSession::InitGraphOutputMap(const lite::Model *model) {
 
 void LiteSession::InitGraphInOutTensors(const lite::Model *model) {
   InitGraphInputTensors(model);
+  InitGraphInputMSTensors(model);
   InitGraphOutputTensors(model);
   InitGraphInputMap(model);
   InitGraphOutputMap(model);
@@ -201,16 +212,7 @@ int LiteSession::CompileGraph(Model *model) {
 }
 
 std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputs() const {
-  std::vector<mindspore::tensor::MSTensor *> ret;
-  for (auto &iter : this->input_map_) {
-    auto &node_input_tensors = iter.second;
-    for (auto tensor : node_input_tensors) {
-      if (!IsContain(ret, tensor)) {
-        ret.emplace_back(tensor);
-      }
-    }
-  }
-  return ret;
+  return this->input_vec_;
 }
 
 int LiteSession::RunGraph(const session::KernelCallBack &before, const session::KernelCallBack &after) {

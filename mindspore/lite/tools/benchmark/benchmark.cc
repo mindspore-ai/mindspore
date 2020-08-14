@@ -49,7 +49,8 @@ int Benchmark::GenerateInputData() {
     auto tensorByteSize = tensor->Size();
     auto status = GenerateRandomData(tensorByteSize, inputData);
     if (status != 0) {
-      MS_LOG(ERROR) << "GenerateRandomData for inTensor failed %d" << status;
+      std::cerr << "GenerateRandomData for inTensor failed: " << status << std::endl;
+      MS_LOG(ERROR) << "GenerateRandomData for inTensor failed:" << status;
       return status;
     }
   }
@@ -60,12 +61,14 @@ int Benchmark::LoadInput() {
   if (_flags->inDataPath.empty()) {
     auto status = GenerateInputData();
     if (status != 0) {
+      std::cerr << "Generate input data error " << status << std::endl;
       MS_LOG(ERROR) << "Generate input data error " << status;
       return status;
     }
   } else {
     auto status = ReadInputFile();
     if (status != 0) {
+      std::cerr << "ReadInputFile error, " << status << std::endl;
       MS_LOG(ERROR) << "ReadInputFile error, " << status;
       return status;
     }
@@ -97,6 +100,7 @@ int Benchmark::ReadInputFile() {
       char *binBuf = ReadFile(_flags->input_data_list[i].c_str(), &size);
       auto tensorDataSize = cur_tensor->Size();
       if (size != tensorDataSize) {
+        std::cerr << "Input binary file size error, required: %zu, in fact: %zu" << tensorDataSize << size << std::endl;
         MS_LOG(ERROR) << "Input binary file size error, required: %zu, in fact: %zu" << tensorDataSize << size;
         return RET_ERROR;
       }
@@ -113,11 +117,13 @@ int Benchmark::ReadCalibData() {
   // read calib data
   std::ifstream inFile(calibDataPath);
   if (!inFile.good()) {
+    std::cerr << "file: " << calibDataPath << " is not exist" << std::endl;
     MS_LOG(ERROR) << "file: " << calibDataPath << " is not exist";
     return RET_ERROR;
   }
 
   if (!inFile.is_open()) {
+    std::cerr << "file: " << calibDataPath << " open failed" << std::endl;
     MS_LOG(ERROR) << "file: " << calibDataPath << " open failed";
     inFile.close();
     return RET_ERROR;
@@ -181,6 +187,7 @@ float Benchmark::CompareData(const std::string &nodeName, std::vector<int> msSha
         oss << dim << ",";
       }
       oss << ") are different";
+      std::cerr << oss.str() << std::endl;
       MS_LOG(ERROR) << "%s", oss.str().c_str();
       return RET_ERROR;
     }
@@ -193,6 +200,7 @@ float Benchmark::CompareData(const std::string &nodeName, std::vector<int> msSha
       }
 
       if (std::isnan(msTensorData[j]) || std::isinf(msTensorData[j])) {
+        std::cerr << "Output tensor has nan or inf data, compare fail" << std::endl;
         MS_LOG(ERROR) << "Output tensor has nan or inf data, compare fail";
         return RET_ERROR;
       }
@@ -522,6 +530,13 @@ int Benchmark::Init() {
   }
 
   return RET_OK;
+}
+
+Benchmark::~Benchmark() {
+  for (auto iter : this->calibData) {
+    delete (iter.second);
+  }
+  this->calibData.clear();
 }
 
 int RunBenchmark(int argc, const char **argv) {
