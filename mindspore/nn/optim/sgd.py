@@ -32,7 +32,7 @@ def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, accum, s
 
 
 class SGD(Optimizer):
-    """
+    r"""
     Implements stochastic gradient descent (optionally with momentum).
 
     Introduction to SGD can be found at https://en.wikipedia.org/wiki/Stochastic_gradient_descent.
@@ -47,15 +47,15 @@ class SGD(Optimizer):
         To improve parameter groups performance, the customized order of parameters can be supported.
 
     .. math::
-        v_{t+1} = u \ast v_{t} + gradient \ast (1-dampening)
+            v_{t+1} = u \ast v_{t} + gradient \ast (1-dampening)
 
-    If nesterov is True:
-        .. math::
-            p_{t+1} = p_{t} - lr \ast (gradient + u \ast v_{t+1})
+        If nesterov is True:
+            .. math::
+                p_{t+1} = p_{t} - lr \ast (gradient + u \ast v_{t+1})
 
-    If nesterov is Flase:
-        .. math::
-            p_{t+1} = p_{t} - lr \ast v_{t+1}
+        If nesterov is Flase:
+            .. math::
+                p_{t+1} = p_{t} - lr \ast v_{t+1}
 
     To be noticed, for the first step, v_{t+1} = gradient
 

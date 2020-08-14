@@ -383,9 +383,13 @@ class Cell:
             inputs (Function or Cell): inputs of construct method.
         """
         parallel_inputs_run = []
-        if len(inputs) > self._construct_inputs_num:
-            raise ValueError('Len of inputs: {} is bigger than self._construct_inputs_num: {}.'.
-                             format(len(inputs), self._construct_inputs_num))
+        # judge if *args exists in input
+        if self.argspec[1] is not None:
+            prefix = self.argspec[1]
+            for i in range(len(inputs)):
+                key = prefix + str(i)
+                self._construct_inputs_names = self._construct_inputs_names + (key,)
+                self._construct_inputs_num = self._construct_inputs_num + 1
         for i, tensor in enumerate(inputs):
             key = self._construct_inputs_names[i]
             # if input is not used, self.parameter_layout_dict may not contain the key
@@ -412,7 +416,7 @@ class Cell:
         from mindspore._extends.parse.parser import get_parse_method_of_class
 
         fn = get_parse_method_of_class(self)
-        inspect.getfullargspec(fn)
+        self.argspec = inspect.getfullargspec(fn)
         self._construct_inputs_num = fn.__code__.co_argcount
         self._construct_inputs_names = fn.__code__.co_varnames
 
