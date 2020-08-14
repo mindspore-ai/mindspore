@@ -462,7 +462,7 @@ void BenchmarkFlags::InitInputDataList() {
   char *cur_input;
   const char *split_c = ",";
   cur_input = strtok(input_list, split_c);
-  while (cur_input) {
+  while (cur_input != nullptr) {
     input_data_list.emplace_back(cur_input);
     cur_input = strtok(nullptr, split_c);
   }

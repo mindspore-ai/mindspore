@@ -22,7 +22,7 @@ void Int8Reshape(int8_t *input_ptr, int8_t *output_ptr, int64_t real_dst_count, 
   if (para.in_args_.scale_ == para.out_args_.scale_ && para.in_args_.zp_ == para.out_args_.zp_) {
     memcpy(output_ptr, input_ptr, real_dst_count);
   } else {
-    float output_inverse_scale = 1.f / para.out_args_.scale_;
+    const float output_inverse_scale = 1.f / para.out_args_.scale_;
     float scale = para.in_args_.scale_ * output_inverse_scale;
     float bias = -para.in_args_.zp_ * scale;
     int32_t output_zp = para.out_args_.zp_;

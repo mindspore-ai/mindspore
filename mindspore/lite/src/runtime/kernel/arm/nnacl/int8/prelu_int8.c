@@ -20,7 +20,7 @@
 void prelu(int8_t *inputs, int8_t *output_ptr, PreluParameter *quant_prelu_parm, int task_id) {
   float output_scale = quant_prelu_parm->quant_arg.out_args_.scale_;
   int output_zp = quant_prelu_parm->quant_arg.out_args_.zp_;
-  float output_inverse_scale = 1.f / output_scale;
+  const float output_inverse_scale = 1.f / output_scale;
   int output_dim = quant_prelu_parm->input_dim_;
 
   QuantArg *input_quant = NULL;

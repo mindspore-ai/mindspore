@@ -195,7 +195,7 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<tensor::Tensor *> 
   }
 
   desc.arch = kernel::KERNEL_ARCH::kCPU;
-  kernel::LiteKernel *kernel;
+  kernel::LiteKernel *kernel = nullptr;
   if (data_type == kNumberTypeFloat32) {
     // check if support fp16
     kernel::KernelKey key{desc.arch, kNumberTypeFloat16, desc.type};

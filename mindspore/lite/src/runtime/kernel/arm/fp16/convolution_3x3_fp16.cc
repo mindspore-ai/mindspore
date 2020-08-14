@@ -97,8 +97,8 @@ int Convolution3x3FP16CPUKernel::InitWeightBias() {
 }
 
 int Convolution3x3FP16CPUKernel::InitTmpBuffer() {
-  int tile_num = 16;
-  int k_plane = 36;
+  const int tile_num = 16;
+  const int k_plane = 36;
   int iC4 = UP_DIV(conv_param_->input_channel_, C4NUM);
   int oC8 = UP_DIV(conv_param_->output_channel_, C8NUM);
 

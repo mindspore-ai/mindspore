@@ -25,6 +25,10 @@ std::shared_ptr<ModelImpl> Import(const char *model_buf, size_t size) {
     return nullptr;
   }
   // todo hangangqiang remove when copy primitive done
+  if (size <= 0) {
+    MS_LOG(ERROR) << "size is zero";
+    return nullptr;
+  }
   auto *inner_buf = new char[size];
   memcpy(inner_buf, model_buf, size);
   auto meta_graph = schema::GetMetaGraph(inner_buf);

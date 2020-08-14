@@ -190,14 +190,16 @@ void Conv3x3Fp16InputUnit(float16_t *tmp_data, float16_t *trans_input_data, size
 void Conv3x3Fp16InputTransform(const float16_t *input_data, float16_t *trans_input, float16_t *tmp_data,
                                int start_index, int real_cal_num, int out_w_block, ConvParameter *conv_param) {
   // input data format : nhwc
-  int output_unit = 4;
+  const int output_unit = 4;
   int input_channel = conv_param->input_channel_;
   int input_width = conv_param->input_w_;
   int input_height = conv_param->input_h_;
   int pad_w = conv_param->pad_w_;
   int pad_h = conv_param->pad_h_;
   int ic4 = UP_DIV(input_channel, C4NUM);
-
+  if (out_w_block == 0) {
+    return;
+  }
   for (int cal_id = 0; cal_id < real_cal_num; cal_id++) {
     int x_id = start_index + cal_id;
     int origin_x = (x_id % out_w_block) * output_unit - pad_w;
@@ -511,7 +513,9 @@ void Conv3x3Fp16OutputTransform(const float16_t *gemm_out, float16_t *out_data, 
   int output_h = conv_param->output_h_;
   int out_h_block = UP_DIV(output_h, C4NUM);
   int oc8 = UP_DIV(output_channel, C8NUM);
-
+  if (out_w_block == 0) {
+    return;
+  }
   for (int i = 0; i < real_cal_num; i++) {
     int out_w_index = (start_index + i) % out_w_block;
     int out_h_index = (start_index + i) / out_w_block;

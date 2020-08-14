@@ -142,7 +142,7 @@ void ConvSWFp32(const float *input_data, const float *packed_weight, const float
   int ic4 = slidingWindow_param->ic4_channel_ / C4NUM;
   int oc4_res = conv_param->output_channel_ % C4NUM;
   const float *src = input_data;
-  float *dst;
+  float *dst = NULL;
   if (oc4_res == 0) {
     dst = output_data;
   } else {

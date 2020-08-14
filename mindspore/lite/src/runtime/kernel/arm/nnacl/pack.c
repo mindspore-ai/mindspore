@@ -21,6 +21,9 @@
 void PackWeightFp32(float *weight_data, ConvParameter *conv_param, float *packed_weight, int oc_block,
                     int oc_block_num) {
   // original weight format : ohwi
+  if (oc_block_num == 0) {
+    return;
+  }
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
   int in_channel = conv_param->input_channel_;
@@ -30,7 +33,7 @@ void PackWeightFp32(float *weight_data, ConvParameter *conv_param, float *packed
   int pack_weight_size = oc_block * oc_block_num * ic4 * C4NUM * kernel_plane;
 
   int unit_size = oc_block * C4NUM;
-  int block_size = pack_weight_size / oc_block_num;
+  const int block_size = pack_weight_size / oc_block_num;
 
   for (int m = 0; m < kernel_plane; m++) {
     int kernel_plane_stride = m * in_channel;

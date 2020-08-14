@@ -47,13 +47,13 @@ int ResizeBilinear(const float *input_data, float *output_data, const int *input
       int y_bottom = (int)(floor(actual_y));
       int y_top = y_bottom + 1 < in_h ? (y_bottom + 1) : (in_h - 1);
       float y_top_weight = actual_y - (float)(y_bottom);
-      float y_bottom_weight = 1.0f - y_top_weight;
+      const float y_bottom_weight = 1.0f - y_top_weight;
       for (w = 0; w < new_width; w++) {
         float actual_x = (float)(w)*width_scale;
         int x_left = (int)(floor(actual_x));
         int x_right = x_left + 1 < in_w ? (x_left + 1) : (in_w - 1);
         float x_right_weight = actual_x - (float)(x_left);
-        float x_left_weight = 1.0f - x_right_weight;
+        const float x_left_weight = 1.0f - x_right_weight;
         c = 0;
 #ifdef ENABLE_NEON
         for (; c <= in_c - 4; c += 4) {

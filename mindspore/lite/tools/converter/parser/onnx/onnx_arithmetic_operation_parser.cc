@@ -117,9 +117,9 @@ STATUS OnnxEltwiseParser::Parse(const onnx::GraphProto &onnx_graph,
   std::unique_ptr<schema::EltwiseT> attr(new schema::EltwiseT());
   if (onnx_node.op_type() == "Prod") {
     attr->mode = schema::EltwiseMode_PROD;
-  } else if (onnx_node.op_type() == "Prod") {
-    attr->mode = schema::EltwiseMode_SUM;
   } else if (onnx_node.op_type() == "Sum") {
+    attr->mode = schema::EltwiseMode_SUM;
+  } else if (onnx_node.op_type() == "Maximum") {
     attr->mode = schema::EltwiseMode_MAXIMUM;
   }
 

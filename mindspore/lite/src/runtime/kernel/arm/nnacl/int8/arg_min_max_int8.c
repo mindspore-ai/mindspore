@@ -34,7 +34,7 @@ void CalcParameter(const int *shape, int dims_number, int axis, int *pre_axis_co
 void DoArgMinMaxQuant(const int8_t *input, int8_t *output, ArgMinMaxParameter *param, int pre_axis_count,
                       int axis_count, int after_axis_count, QuantArg *in_quant_arg, QuantArg *out_quant_arg) {
   bool out_value = param->out_value_;
-  float output_inverse_scale = 1.f / out_quant_arg->scale_;
+  const float output_inverse_scale = 1.f / out_quant_arg->scale_;
   float bias = -in_quant_arg->zp_ * in_quant_arg->scale_;
   int32_t output_zp = out_quant_arg->zp_;
   for (int i = 0; i < pre_axis_count; ++i) {

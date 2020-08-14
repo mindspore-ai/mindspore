@@ -115,6 +115,9 @@ int ResizeNearestNeighborInt8Simple(const int8_t *input_data, int8_t *output_dat
 }
 
 void ComputeScale(const int32_t in_value, const int32_t out_value, const bool align_corners, int32_t *scale) {
+  if (out_value == 0) {
+    return;
+  }
   *scale = (in_value * (1 << 10) + out_value / 2) / out_value;
   if (align_corners && out_value > 1) {
     *scale = ((in_value - 1) * (1 << 10) + (out_value - 1) / 2) / (out_value - 1);
@@ -133,6 +136,9 @@ void ComputeInterpolationArgs(const int32_t pos, const int32_t scale, const int3
 
 void ComputeNearestNeighborInt(const int32_t pos, const int in_size, const int32_t new_size, const bool align_corners,
                                int32_t *nearest) {
+  if (new_size == 0) {
+    return;
+  }
   *nearest = (in_size * pos) / new_size;
   if (align_corners) {
     *nearest = ((in_size - 1) * pos + (new_size - 1) / 2) / (new_size - 1);
