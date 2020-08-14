@@ -43,6 +43,8 @@ using mindspore::schema::PrimitiveType_Sub;
 namespace mindspore::kernel {
 class ArithmeticCPUKernel : public LiteKernel {
   typedef int (*ArithmeticRun)(float *input0, float *input1, float *output, int element_size);
+  typedef int (*ArithmeticOptRun)(float *input0, float *input1, float *output, int element_size,
+                                  ArithmeticParameter *param);
   typedef int (*ArithmeticBroadcastRun)(float *input0, float *input1, float *tile_input0, float *tile_input1,
                                         float *output, int element_size, ArithmeticParameter *param);
 
@@ -177,8 +179,9 @@ class ArithmeticCPUKernel : public LiteKernel {
   float *tile_data0_ = nullptr;
   float *tile_data1_ = nullptr;
   ArithmeticParameter *arithmeticParameter_;
-  ArithmeticRun arithmetic_run_;
-  ArithmeticBroadcastRun arithmetic_broadcast_run_;
+  ArithmeticRun arithmetic_run_ = nullptr;
+  ArithmeticBroadcastRun arithmetic_broadcast_run_ = nullptr;
+  ArithmeticOptRun arithmetic_opt_run_ = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARITHMETIC_H_

@@ -26,6 +26,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+int ElementOptAdd(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
+int ElementOptSub(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
+int ElementOptMul(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
 int ElementMul(float *input0, float *input1, float *output, int element_size);
 int ElementMulRelu(float *input0, float *input1, float *output, int element_size);
 int ElementMulRelu6(float *input0, float *input1, float *output, int element_size);

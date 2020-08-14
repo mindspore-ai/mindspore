@@ -231,7 +231,8 @@ int ConvolutionFP16CPUKernel::Run() {
   }
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto ori_input_data = reinterpret_cast<float *>(input_tensor->Data());
-  for (int i = 0; i < input_tensor->ElementsNum(); ++i) {
+  auto input_element_num = input_tensor->ElementsNum();
+  for (int i = 0; i < input_element_num; ++i) {
     fp16_input_[i] = (float16_t)ori_input_data[i];
   }
 
@@ -250,7 +251,8 @@ int ConvolutionFP16CPUKernel::Run() {
   // cast fp16 out to fp32 data
   auto out_tensor = out_tensors_.at(kOutputIndex);
   auto output_addr = reinterpret_cast<float *>(out_tensor->Data());
-  for (int j = 0; j < out_tensor->ElementsNum(); ++j) {
+  auto output_element_num = out_tensor->ElementsNum();
+  for (int j = 0; j < output_element_num; ++j) {
     output_addr[j] = static_cast<float>(fp16_out_[j]);
   }
   return RET_OK;

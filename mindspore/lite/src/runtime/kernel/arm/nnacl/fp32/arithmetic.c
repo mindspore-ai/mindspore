@@ -19,6 +19,57 @@
 
 #define ACCURACY_DATA 0.00000001
 
+int ElementOptMul(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param) {
+  if (param->in_elements_num0_ == 1) {
+    for (int i = 0; i < element_size; ++i) {
+      output[i] = input0[0] * input1[i];
+    }
+  } else if (param->in_elements_num1_ == 1) {
+    for (int i = 0; i < element_size; ++i) {
+      output[i] = input0[i] * input1[0];
+    }
+  } else {
+    for (int i = 0; i < element_size; ++i) {
+      output[i] = input0[i] * input1[i];
+    }
+  }
+  return NNACL_OK;
+}
+
+int ElementOptSub(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param) {
+  if (param->in_elements_num0_ == 1) {
+    for (int i = 0; i < element_size; ++i) {
+      output[i] = input0[0] - input1[i];
+    }
+  } else if (param->in_elements_num1_ == 1) {
+    for (int i = 0; i < element_size; ++i) {
+      output[i] = input0[i] - input1[0];
+    }
+  } else {
+    for (int i = 0; i < element_size; ++i) {
+      output[i] = input0[i] - input1[i];
+    }
+  }
+  return NNACL_OK;
+}
+
+int ElementOptAdd(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param) {
+  if (param->in_elements_num0_ == 1) {
+    for (int i = 0; i < element_size; ++i) {
+      output[i] = input0[0] + input1[i];
+    }
+  } else if (param->in_elements_num1_ == 1) {
+    for (int i = 0; i < element_size; ++i) {
+      output[i] = input0[i] + input1[0];
+    }
+  } else {
+    for (int i = 0; i < element_size; ++i) {
+      output[i] = input0[i] + input1[i];
+    }
+  }
+  return NNACL_OK;
+}
+
 int ElementMul(float *input0, float *input1, float *output, int element_size) {
   int block_mod = element_size % C4NUM;
   int block_c4 = element_size - block_mod;

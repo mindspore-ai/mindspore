@@ -706,6 +706,7 @@ build_lite()
             mkdir -p ${OUTPUT_DIR}/include/schema/
             cp ${BASEPATH}/mindspore/lite/schema/*.h ${OUTPUT_DIR}/include/schema/
             cp ${BASEPATH}/mindspore/lite/build/src/libmindspore-lite.so ${OUTPUT_DIR}/lib/
+            cp ${BASEPATH}/mindspore/lite/build/src/runtime/kernel/arm/nnacl/liboptimize.so ${OUTPUT_DIR}/lib/
             mkdir -p ${OUTPUT_DIR}/third_party/flatbuffers
             cp -r ${BASEPATH}/third_party/flatbuffers/include/ ${OUTPUT_DIR}/third_party/flatbuffers/
             cd ..
