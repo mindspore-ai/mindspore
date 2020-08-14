@@ -162,6 +162,7 @@ tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(session::KernelGraph *k
       tensor->set_device_address(address);
       need_sync_outputs->emplace_back(tensor);
     } else {
+      tensor->set_device_address(nullptr);
       address->ptr_ = tensor->data_c();
     }
     address->ref_count_ = INIT_NODE_REF;
