@@ -85,8 +85,6 @@ endif ()
 
 if (ENABLE_DUMP_PROTO)
     include_directories(${CMAKE_BINARY_DIR})
-    file(GLOB_RECURSE PROTO_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "utils/node_strategy.proto")
-    ms_protobuf_generate(PROTO_SRCS PROTO_HDRS ${PROTO_LIST})
 
     file(GLOB_RECURSE PROTO_PY RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "utils/anf_ir.proto"
@@ -94,6 +92,7 @@ if (ENABLE_DUMP_PROTO)
         "utils/lineage.proto"
         "utils/checkpoint.proto"
         "utils/print.proto"
+	"utils/node_strategy.proto"
     )
     ms_protobuf_generate_py(PY_SRCS PY_HDRS PY_PYS ${PROTO_PY})
 
