@@ -257,6 +257,7 @@ class ShardWriter {
 
   std::mutex check_mutex_;  // mutex for data check
   std::atomic<bool> flag_{false};
+  std::atomic<int64_t> compression_size_;
 };
 }  // namespace mindrecord
 }  // namespace mindspore

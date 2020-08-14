@@ -209,6 +209,9 @@ class ShardReader {
   /// \brief get all classes
   MSRStatus GetAllClasses(const std::string &category_field, std::set<std::string> &categories);
 
+  /// \brief get the size of blob data
+  MSRStatus GetTotalBlobSize(int64_t *total_blob_size);
+
  protected:
   /// \brief sqlite call back function
   static int SelectCallback(void *p_data, int num_fields, char **p_fields, char **p_col_names);
@@ -323,6 +326,7 @@ class ShardReader {
   const std::string kThreadName = "THRD_ITER_";  // prefix of thread name
   std::vector<std::thread> thread_set_;          // thread list
   int num_rows_;                                 // number of rows
+  int64_t total_blob_size_;                      // total size of blob data
   std::mutex mtx_delivery_;                      // locker for delivery
   std::condition_variable cv_delivery_;          // conditional variable for delivery
   std::condition_variable cv_iterator_;          // conditional variable for iterator

@@ -22,6 +22,7 @@
 #include "gtest/gtest.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/engine/gnn/node.h"
+#include "minddata/dataset/engine/gnn/graph_data_impl.h"
 #include "minddata/dataset/engine/gnn/graph_loader.h"
 
 using namespace mindspore::dataset;
@@ -39,30 +40,9 @@ class MindDataTestGNNGraph : public UT::Common {
   MindDataTestGNNGraph() = default;
 };
 
-TEST_F(MindDataTestGNNGraph, TestGraphLoader) {
-  std::string path = "data/mindrecord/testGraphData/testdata";
-  GraphLoader gl(path, 4);
-  EXPECT_TRUE(gl.InitAndLoad().IsOk());
-  NodeIdMap n_id_map;
-  EdgeIdMap e_id_map;
-  NodeTypeMap n_type_map;
-  EdgeTypeMap e_type_map;
-  NodeFeatureMap n_feature_map;
-  EdgeFeatureMap e_feature_map;
-  DefaultNodeFeatureMap default_node_feature_map;
-  DefaultEdgeFeatureMap default_edge_feature_map;
-  EXPECT_TRUE(gl.GetNodesAndEdges(&n_id_map, &e_id_map, &n_type_map, &e_type_map, &n_feature_map, &e_feature_map,
-                                  &default_node_feature_map, &default_edge_feature_map)
-                .IsOk());
-  EXPECT_EQ(n_id_map.size(), 20);
-  EXPECT_EQ(e_id_map.size(), 40);
-  EXPECT_EQ(n_type_map[2].size(), 10);
-  EXPECT_EQ(n_type_map[1].size(), 10);
-}
-
 TEST_F(MindDataTestGNNGraph, TestGetAllNeighbors) {
   std::string path = "data/mindrecord/testGraphData/testdata";
-  Graph graph(path, 1);
+  GraphDataImpl graph(path, 1);
   Status s = graph.Init();
   EXPECT_TRUE(s.IsOk());
 
@@ -103,7 +83,7 @@ TEST_F(MindDataTestGNNGraph, TestGetAllNeighbors) {
 
 TEST_F(MindDataTestGNNGraph, TestGetSampledNeighbors) {
   std::string path = "data/mindrecord/testGraphData/testdata";
-  Graph graph(path, 1);
+  GraphDataImpl graph(path, 1);
   Status s = graph.Init();
   EXPECT_TRUE(s.IsOk());
 
@@ -194,7 +174,7 @@ TEST_F(MindDataTestGNNGraph, TestGetSampledNeighbors) {
 
 TEST_F(MindDataTestGNNGraph, TestGetNegSampledNeighbors) {
   std::string path = "data/mindrecord/testGraphData/testdata";
-  Graph graph(path, 1);
+  GraphDataImpl graph(path, 1);
   Status s = graph.Init();
   EXPECT_TRUE(s.IsOk());
 
@@ -237,7 +217,7 @@ TEST_F(MindDataTestGNNGraph, TestGetNegSampledNeighbors) {
 
 TEST_F(MindDataTestGNNGraph, TestRandomWalk) {
   std::string path = "data/mindrecord/testGraphData/sns";
-  Graph graph(path, 1);
+  GraphDataImpl graph(path, 1);
   Status s = graph.Init();
   EXPECT_TRUE(s.IsOk());
 
@@ -263,7 +243,7 @@ TEST_F(MindDataTestGNNGraph, TestRandomWalk) {
 
 TEST_F(MindDataTestGNNGraph, TestRandomWalkDefaults) {
   std::string path = "data/mindrecord/testGraphData/sns";
-  Graph graph(path, 1);
+  GraphDataImpl graph(path, 1);
   Status s = graph.Init();
   EXPECT_TRUE(s.IsOk());
 

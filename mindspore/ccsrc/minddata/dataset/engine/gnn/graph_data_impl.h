@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_GNN_GRAPH_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_GNN_GRAPH_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_GNN_GRAPH_DATA_IMPL_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_GNN_GRAPH_DATA_IMPL_H_
 
 #include <algorithm>
 #include <memory>
@@ -25,13 +25,11 @@
 #include <vector>
 #include <utility>
 
-#include "minddata/dataset/core/tensor.h"
-#include "minddata/dataset/core/tensor_row.h"
-#include "minddata/dataset/engine/gnn/graph_loader.h"
-#include "minddata/dataset/engine/gnn/feature.h"
-#include "minddata/dataset/engine/gnn/node.h"
-#include "minddata/dataset/engine/gnn/edge.h"
-#include "minddata/dataset/util/status.h"
+#include "minddata/dataset/engine/gnn/graph_data.h"
+#if !defined(_WIN32) && !defined(_WIN64)
+#include "minddata/dataset/engine/gnn/graph_shared_memory.h"
+#endif
+#include "minddata/mindrecord/include/common/shard_utils.h"
 
 namespace mindspore {
 namespace dataset {
@@ -41,41 +39,32 @@ const float kGnnEpsilon = 0.0001;
 const uint32_t kMaxNumWalks = 80;
 using StochasticIndex = std::pair<std::vector<int32_t>, std::vector<float>>;
 
-struct MetaInfo {
-  std::vector<NodeType> node_type;
-  std::vector<EdgeType> edge_type;
-  std::map<NodeType, NodeIdType> node_num;
-  std::map<EdgeType, EdgeIdType> edge_num;
-  std::vector<FeatureType> node_feature_type;
-  std::vector<FeatureType> edge_feature_type;
-};
-
-class Graph {
+class GraphDataImpl : public GraphData {
  public:
   // Constructor
   // @param std::string dataset_file -
   // @param int32_t num_workers - number of parallel threads
-  Graph(std::string dataset_file, int32_t num_workers);
+  GraphDataImpl(std::string dataset_file, int32_t num_workers, bool server_mode = false);
 
-  ~Graph() = default;
+  ~GraphDataImpl();
 
   // Get all nodes from the graph.
   // @param NodeType node_type - type of node
   // @param std::shared_ptr<Tensor> *out - Returned nodes id
   // @return Status - The error code return
-  Status GetAllNodes(NodeType node_type, std::shared_ptr<Tensor> *out);
+  Status GetAllNodes(NodeType node_type, std::shared_ptr<Tensor> *out) override;
 
   // Get all edges from the graph.
   // @param NodeType edge_type - type of edge
   // @param std::shared_ptr<Tensor> *out - Returned edge ids
   // @return Status - The error code return
-  Status GetAllEdges(EdgeType edge_type, std::shared_ptr<Tensor> *out);
+  Status GetAllEdges(EdgeType edge_type, std::shared_ptr<Tensor> *out) override;
 
   // Get the node id from the edge.
   // @param std::vector<EdgeIdType> edge_list - List of edges
   // @param std::shared_ptr<Tensor> *out - Returned node ids
   // @return Status - The error code return
-  Status GetNodesFromEdges(const std::vector<EdgeIdType> &edge_list, std::shared_ptr<Tensor> *out);
+  Status GetNodesFromEdges(const std::vector<EdgeIdType> &edge_list, std::shared_ptr<Tensor> *out) override;
 
   // All neighbors of the acquisition node.
   // @param std::vector<NodeType> node_list - List of nodes
@@ -85,7 +74,7 @@ class Graph {
   // is not enough, fill in tensor as -1.
   // @return Status - The error code return
   Status GetAllNeighbors(const std::vector<NodeIdType> &node_list, NodeType neighbor_type,
-                         std::shared_ptr<Tensor> *out);
+                         std::shared_ptr<Tensor> *out) override;
 
   // Get sampled neighbors.
   // @param std::vector<NodeType> node_list - List of nodes
@@ -94,7 +83,7 @@ class Graph {
   // @param std::shared_ptr<Tensor> *out - Returned neighbor's id.
   // @return Status - The error code return
   Status GetSampledNeighbors(const std::vector<NodeIdType> &node_list, const std::vector<NodeIdType> &neighbor_nums,
-                             const std::vector<NodeType> &neighbor_types, std::shared_ptr<Tensor> *out);
+                             const std::vector<NodeType> &neighbor_types, std::shared_ptr<Tensor> *out) override;
 
   // Get negative sampled neighbors.
   // @param std::vector<NodeType> node_list - List of nodes
@@ -103,7 +92,7 @@ class Graph {
   // @param std::shared_ptr<Tensor> *out - Returned negative neighbor's id.
   // @return Status - The error code return
   Status GetNegSampledNeighbors(const std::vector<NodeIdType> &node_list, NodeIdType samples_num,
-                                NodeType neg_neighbor_type, std::shared_ptr<Tensor> *out);
+                                NodeType neg_neighbor_type, std::shared_ptr<Tensor> *out) override;
 
   // Node2vec random walk.
   // @param std::vector<NodeIdType> node_list - List of nodes
@@ -115,7 +104,7 @@ class Graph {
   // @return Status - The error code return
   Status RandomWalk(const std::vector<NodeIdType> &node_list, const std::vector<NodeType> &meta_path,
                     float step_home_param, float step_away_param, NodeIdType default_node,
-                    std::shared_ptr<Tensor> *out);
+                    std::shared_ptr<Tensor> *out) override;
 
   // Get the feature of a node
   // @param std::shared_ptr<Tensor> nodes - List of nodes
@@ -124,16 +113,22 @@ class Graph {
   // @param TensorRow *out - Returned features
   // @return Status - The error code return
   Status GetNodeFeature(const std::shared_ptr<Tensor> &nodes, const std::vector<FeatureType> &feature_types,
-                        TensorRow *out);
+                        TensorRow *out) override;
+
+  Status GetNodeFeatureSharedMemory(const std::shared_ptr<Tensor> &nodes, FeatureType type,
+                                    std::shared_ptr<Tensor> *out);
 
   // Get the feature of a edge
-  // @param std::shared_ptr<Tensor> edget - List of edges
+  // @param std::shared_ptr<Tensor> edges - List of edges
   // @param std::vector<FeatureType> feature_types - Types of features, An error will be reported if the feature type
   // does not exist.
   // @param Tensor *out - Returned features
   // @return Status - The error code return
-  Status GetEdgeFeature(const std::shared_ptr<Tensor> &edget, const std::vector<FeatureType> &feature_types,
-                        TensorRow *out);
+  Status GetEdgeFeature(const std::shared_ptr<Tensor> &edges, const std::vector<FeatureType> &feature_types,
+                        TensorRow *out) override;
+
+  Status GetEdgeFeatureSharedMemory(const std::shared_ptr<Tensor> &edges, FeatureType type,
+                                    std::shared_ptr<Tensor> *out);
 
   // Get meta information of graph
   // @param MetaInfo *meta_info - Returned meta information
@@ -142,15 +137,34 @@ class Graph {
 
 #ifdef ENABLE_PYTHON
   // Return meta information to python layer
-  Status GraphInfo(py::dict *out);
+  Status GraphInfo(py::dict *out) override;
 #endif
 
-  Status Init();
+  const std::unordered_map<FeatureType, std::shared_ptr<Feature>> *GetAllDefaultNodeFeatures() {
+    return &default_node_feature_map_;
+  }
+
+  const std::unordered_map<FeatureType, std::shared_ptr<Feature>> *GetAllDefaultEdgeFeatures() {
+    return &default_edge_feature_map_;
+  }
+
+  Status Init() override;
+
+  Status Stop() override { return Status::OK(); }
+
+  std::string GetDataSchema() { return data_schema_.dump(); }
+
+#if !defined(_WIN32) && !defined(_WIN64)
+  key_t GetSharedMemoryKey() { return graph_shared_memory_->memory_key(); }
+
+  int64_t GetSharedMemorySize() { return graph_shared_memory_->memory_size(); }
+#endif
 
  private:
+  friend class GraphLoader;
   class RandomWalkBase {
    public:
-    explicit RandomWalkBase(Graph *graph);
+    explicit RandomWalkBase(GraphDataImpl *graph);
 
     Status Build(const std::vector<NodeIdType> &node_list, const std::vector<NodeType> &meta_path,
                  float step_home_param = 1.0, float step_away_param = 1.0, NodeIdType default_node = -1,
@@ -176,7 +190,7 @@ class Graph {
     template <typename T>
     std::vector<float> Normalize(const std::vector<T> &non_normalized_probability);
 
-    Graph *graph_;
+    GraphDataImpl *graph_;
     std::vector<NodeIdType> node_list_;
     std::vector<NodeType> meta_path_;
     float step_home_param_;  // Return hyper parameter. Default is 1.0
@@ -248,7 +262,11 @@ class Graph {
   int32_t num_workers_;  // The number of worker threads
   std::mt19937 rnd_;
   RandomWalkBase random_walk_;
-
+  mindrecord::json data_schema_;
+  bool server_mode_;
+#if !defined(_WIN32) && !defined(_WIN64)
+  std::unique_ptr<GraphSharedMemory> graph_shared_memory_;
+#endif
   std::unordered_map<NodeType, std::vector<NodeIdType>> node_type_map_;
   std::unordered_map<NodeIdType, std::shared_ptr<Node>> node_id_map_;
 
@@ -264,4 +282,4 @@ class Graph {
 }  // namespace gnn
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_GNN_GRAPH_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_GNN_GRAPH_DATA_IMPL_H_

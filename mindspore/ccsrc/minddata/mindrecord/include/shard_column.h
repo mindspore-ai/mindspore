@@ -61,6 +61,7 @@ const std::unordered_map<std::string, ColumnDataType> ColumnDataTypeMap = {
 class ShardColumn {
  public:
   explicit ShardColumn(const std::shared_ptr<ShardHeader> &shard_header, bool compress_integer = true);
+  explicit ShardColumn(const json &schema_json, bool compress_integer = true);
 
   ~ShardColumn() = default;
 
@@ -72,23 +73,29 @@ class ShardColumn {
                                  std::vector<int64_t> *column_shape);
 
   /// \brief compress blob
-  std::vector<uint8_t> CompressBlob(const std::vector<uint8_t> &blob);
+  std::vector<uint8_t> CompressBlob(const std::vector<uint8_t> &blob, int64_t *compression_size);
 
   /// \brief check if blob compressed
   bool CheckCompressBlob() const { return has_compress_blob_; }
 
+  /// \brief getter
   uint64_t GetNumBlobColumn() const { return num_blob_column_; }
 
+  /// \brief getter
   std::vector<std::string> GetColumnName() { return column_name_; }
 
+  /// \brief getter
   std::vector<ColumnDataType> GeColumnDataType() { return column_data_type_; }
 
+  /// \brief getter
   std::vector<std::vector<int64_t>> GetColumnShape() { return column_shape_; }
 
   /// \brief get column value from blob
   MSRStatus GetColumnFromBlob(const std::string &column_name, const std::vector<uint8_t> &columns_blob,
                               const unsigned char **data, std::unique_ptr<unsigned char[]> *data_ptr,
                               uint64_t *const n_bytes);
+
+  /// \brief get column type
   std::pair<MSRStatus, ColumnCategory> GetColumnTypeByName(const std::string &column_name,
                                                            ColumnDataType *column_data_type,
                                                            uint64_t *column_data_type_size,
@@ -99,6 +106,9 @@ class ShardColumn {
                               std::unique_ptr<unsigned char[]> *data_ptr, uint64_t *n_bytes);
 
  private:
+  /// \brief intialization
+  void Init(const json &schema_json, bool compress_integer = true);
+
   /// \brief get float value from json
   template <typename T>
   MSRStatus GetFloat(std::unique_ptr<unsigned char[]> *data_ptr, const json &json_column_value, bool use_double);

@@ -44,6 +44,7 @@ Status LocalEdge::UpdateFeature(const std::shared_ptr<Feature> &feature) {
     return Status::OK();
   }
 }
+
 }  // namespace gnn
 }  // namespace dataset
 }  // namespace mindspore

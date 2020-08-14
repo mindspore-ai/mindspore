@@ -26,10 +26,13 @@
 
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/tensor.h"
-#include "minddata/dataset/engine/gnn/feature.h"
-#include "minddata/dataset/engine/gnn/graph.h"
-#include "minddata/dataset/engine/gnn/node.h"
 #include "minddata/dataset/engine/gnn/edge.h"
+#include "minddata/dataset/engine/gnn/feature.h"
+#include "minddata/dataset/engine/gnn/graph_feature_parser.h"
+#if !defined(_WIN32) && !defined(_WIN64)
+#include "minddata/dataset/engine/gnn/graph_shared_memory.h"
+#endif
+#include "minddata/dataset/engine/gnn/node.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/mindrecord/include/shard_reader.h"
 namespace mindspore {
@@ -46,13 +49,15 @@ using EdgeFeatureMap = std::unordered_map<EdgeType, std::unordered_set<FeatureTy
 using DefaultNodeFeatureMap = std::unordered_map<FeatureType, std::shared_ptr<Feature>>;
 using DefaultEdgeFeatureMap = std::unordered_map<FeatureType, std::shared_ptr<Feature>>;
 
+class GraphDataImpl;
+
 // this class interfaces with the underlying storage format (mindrecord)
 // it returns raw nodes and edges via GetNodesAndEdges
 // it is then the responsibility of graph to construct itself based on the nodes and edges
 // if needed, this class could become a base where each derived class handles a specific storage format
 class GraphLoader {
  public:
-  explicit GraphLoader(std::string mr_filepath, int32_t num_workers = 4);
+  GraphLoader(GraphDataImpl *graph_impl, std::string mr_filepath, int32_t num_workers = 4, bool server_mode = false);
 
   ~GraphLoader() = default;
   // Init mindrecord and load everything into memory multi-threaded
@@ -63,8 +68,7 @@ class GraphLoader {
   // nodes and edges are added to map without any connection. That's because there nodes and edges are read in
   // random order. src_node and dst_node in Edge are node_id only with -1 as type.
   // features attached to each node and edge are expected to be filled correctly
-  Status GetNodesAndEdges(NodeIdMap *, EdgeIdMap *, NodeTypeMap *, EdgeTypeMap *, NodeFeatureMap *, EdgeFeatureMap *,
-                          DefaultNodeFeatureMap *, DefaultEdgeFeatureMap *);
+  Status GetNodesAndEdges();
 
  private:
   //
@@ -92,29 +96,15 @@ class GraphLoader {
   Status LoadEdge(const std::vector<uint8_t> &blob, const mindrecord::json &jsn, std::shared_ptr<Edge> *edge,
                   EdgeFeatureMap *feature_map, DefaultEdgeFeatureMap *default_feature);
 
-  // @param std::string key - column name
-  // @param std::vector<uint8_t> &blob - contains data in blob field in mindrecord
-  // @param mindrecord::json &jsn - contains raw data
-  // @param std::vector<int32_t> *ind - return value, list of feature index in int32_t
-  // @return Status - the status code
-  Status LoadFeatureIndex(const std::string &key, const std::vector<uint8_t> &blob, const mindrecord::json &jsn,
-                          std::vector<int32_t> *ind);
-
-  // @param std::string &key - column name
-  // @param std::vector<uint8_t> &blob - contains data in blob field in mindrecord
-  // @param mindrecord::json &jsn - contains raw data
-  // @param std::shared_ptr<Tensor> *tensor - return value feature tensor
-  // @return Status - the status code
-  Status LoadFeatureTensor(const std::string &key, const std::vector<uint8_t> &blob, const mindrecord::json &jsn,
-                           std::shared_ptr<Tensor> *tensor);
-
   // merge NodeFeatureMap and EdgeFeatureMap of each worker into 1
-  void MergeFeatureMaps(NodeFeatureMap *, EdgeFeatureMap *, DefaultNodeFeatureMap *, DefaultEdgeFeatureMap *);
+  void MergeFeatureMaps();
 
+  GraphDataImpl *graph_impl_;
+  std::string mr_path_;
   const int32_t num_workers_;
   std::atomic_int row_id_;
-  std::string mr_path_;
   std::unique_ptr<ShardReader> shard_reader_;
+  std::unique_ptr<GraphFeatureParser> graph_feature_parser_;
   std::vector<std::deque<std::shared_ptr<Node>>> n_deques_;
   std::vector<std::deque<std::shared_ptr<Edge>>> e_deques_;
   std::vector<NodeFeatureMap> n_feature_maps_;

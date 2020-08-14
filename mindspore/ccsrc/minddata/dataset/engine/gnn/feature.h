@@ -31,7 +31,7 @@ class Feature {
   // Constructor
   // @param FeatureType type_name - feature type
   // @param std::shared_ptr<Tensor> value - feature value
-  Feature(FeatureType type_name, std::shared_ptr<Tensor> value);
+  Feature(FeatureType type_name, std::shared_ptr<Tensor> value, bool is_shared_memory = false);
 
   ~Feature() = default;
 
@@ -45,6 +45,7 @@ class Feature {
  private:
   FeatureType type_name_;
   std::shared_ptr<Tensor> value_;
+  bool is_shared_memory_;
 };
 }  // namespace gnn
 }  // namespace dataset

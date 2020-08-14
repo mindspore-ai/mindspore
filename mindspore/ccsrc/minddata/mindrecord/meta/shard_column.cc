@@ -24,7 +24,15 @@ namespace mindspore {
 namespace mindrecord {
 ShardColumn::ShardColumn(const std::shared_ptr<ShardHeader> &shard_header, bool compress_integer) {
   auto first_schema = shard_header->GetSchemas()[0];
-  auto schema = first_schema->GetSchema()["schema"];
+  json schema_json = first_schema->GetSchema();
+  Init(schema_json, compress_integer);
+}
+
+ShardColumn::ShardColumn(const json &schema_json, bool compress_integer) { Init(schema_json, compress_integer); }
+
+void ShardColumn::Init(const json &schema_json, bool compress_integer) {
+  auto schema = schema_json["schema"];
+  auto blob_fields = schema_json["blob_fields"];
 
   bool has_integer_array = false;
   for (json::iterator it = schema.begin(); it != schema.end(); ++it) {
@@ -51,8 +59,6 @@ ShardColumn::ShardColumn(const std::shared_ptr<ShardHeader> &shard_header, bool 
   for (uint64_t i = 0; i < column_name_.size(); i++) {
     column_name_id_[column_name_[i]] = i;
   }
-
-  auto blob_fields = first_schema->GetBlobFields();
 
   for (const auto &field : blob_fields) {
     blob_column_.push_back(field);
@@ -282,8 +288,9 @@ ColumnCategory ShardColumn::CheckColumnName(const std::string &column_name) {
   return it_blob == blob_column_id_.end() ? ColumnInRaw : ColumnInBlob;
 }
 
-std::vector<uint8_t> ShardColumn::CompressBlob(const std::vector<uint8_t> &blob) {
+std::vector<uint8_t> ShardColumn::CompressBlob(const std::vector<uint8_t> &blob, int64_t *compression_size) {
   // Skip if no compress columns
+  *compression_size = 0;
   if (!CheckCompressBlob()) return blob;
 
   std::vector<uint8_t> dst_blob;
@@ -295,7 +302,9 @@ std::vector<uint8_t> ShardColumn::CompressBlob(const std::vector<uint8_t> &blob)
 
     // Compress and return is blob has 1 column only
     if (num_blob_column_ == 1) {
-      return CompressInt(blob, int_type);
+      dst_blob = CompressInt(blob, int_type);
+      *compression_size = static_cast<int64_t>(blob.size()) - static_cast<int64_t>(dst_blob.size());
+      return dst_blob;
     }
 
     // Just copy and continue if column dat type is not int32/int64
@@ -319,6 +328,7 @@ std::vector<uint8_t> ShardColumn::CompressBlob(const std::vector<uint8_t> &blob)
     i_src += kInt64Len + num_bytes;
   }
   MS_LOG(DEBUG) << "Compress all blob from " << blob.size() << " to " << dst_blob.size() << ".";
+  *compression_size = static_cast<int64_t>(blob.size()) - static_cast<int64_t>(dst_blob.size());
   return dst_blob;
 }
 
