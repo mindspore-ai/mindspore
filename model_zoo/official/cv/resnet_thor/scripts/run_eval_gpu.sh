@@ -16,10 +16,9 @@
 
 if [ $# != 2 ]
 then 
-    echo "Usage: sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]"
+    echo "Usage: sh run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]"
 exit 1
 fi
-
 
 get_real_path(){
   if [ "${1:0:1}" == "/" ]; then
@@ -62,5 +61,5 @@ cp -r ../src ./eval
 cd ./eval || exit
 env > env.log
 echo "start evaluation for device $DEVICE_ID"
-python eval.py --dataset_path=$PATH1 --checkpoint_path=$PATH2 &> log &
+python eval.py --dataset_path=$PATH1 --checkpoint_path=$PATH2 --device_target="GPU" &> log &
 cd ..
