@@ -92,7 +92,8 @@ required_package = [
     'easydict >= 1.9',
     'sympy >= 1.4',
     'cffi >= 1.13.2',
-    'decorator >= 4.4.0'
+    'decorator >= 4.4.0',
+    'astunparse >= 1.6.3'
 ]
 
 package_data = {

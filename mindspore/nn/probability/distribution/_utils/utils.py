@@ -21,6 +21,7 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 import mindspore.nn as nn
+import mindspore.nn.probability as msp
 
 def cast_to_tensor(t, hint_dtype=mstype.float32):
     """
@@ -84,7 +85,7 @@ def check_scalar_from_param(params):
     Notes: String parameters are excluded.
     """
     for value in params.values():
-        if isinstance(value, (nn.probability.bijector.Bijector, nn.probability.distribution.Distribution)):
+        if isinstance(value, (msp.bijector.Bijector, msp.distribution.Distribution)):
             return params['distribution'].is_scalar_batch
         if isinstance(value, Parameter):
             return False
@@ -109,7 +110,7 @@ def calc_broadcast_shape_from_param(params):
     """
     broadcast_shape = []
     for value in params.values():
-        if isinstance(value, (nn.probability.bijector.Bijector, nn.probability.distribution.Distribution)):
+        if isinstance(value, (msp.bijector.Bijector, msp.distribution.Distribution)):
             return params['distribution'].broadcast_shape
         if isinstance(value, (str, type(params['dtype']))):
             continue

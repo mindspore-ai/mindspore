@@ -36,7 +36,7 @@ class _CodeTransformer(ast.NodeTransformer):
     def visit_FunctionDef(self, node):
         """visit function and add kl_loss computation."""
         self.generic_visit(node)
-        if node.name == 'compute_kl_loss':
+        if node.name == 'cal_kl_loss':
             for i in range(self.layer_count):
                 func = ast.Assign(targets=[ast.Name(id='loss', ctx=ast.Store())],
                                   value=ast.BinOp(left=ast.Name(id='loss', ctx=ast.Load()), op=ast.Add(),
@@ -71,7 +71,7 @@ def gain_bnn_with_loss(layer_count, backbone, loss_fn, dnn_factor, bnn_factor):
         layer_count (int): The number of kl loss to be generated, namely the number of Bayesian layers.
         backbone (Cell): The target network to wrap.
         loss_fn (Cell): The loss function used to compute loss.
-        dnn_factor ((int, float): The coefficient of backbone's loss, which is computed by loss function.
+        dnn_factor (int, float): The coefficient of backbone's loss, which is computed by loss function.
         bnn_factor (int, float): The coefficient of kl loss, which is kl divergence of Bayesian layer.
     """
     bnn_loss_func = _generate_kl_loss_func(layer_count)
