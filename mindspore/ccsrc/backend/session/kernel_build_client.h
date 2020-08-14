@@ -90,11 +90,18 @@ class KernelBuildClient {
     std::string res;
     *dp_ >> res;
     // Filter out the interference
+    if (res.empty()) {
+      MS_LOG(EXCEPTION) << "Response is empty";
+    }
     auto start = res.find(kTag);
     if (start == std::string::npos) {
       MS_LOG(EXCEPTION) << "Response seems incorrect, res: " << res;
     }
-    res = res.substr(start + std::strlen(kTag), res.size() - start);
+    auto pos = start + std::strlen(kTag);
+    if (pos > res.size()) {  // Safe check for codedex
+      MS_LOG(EXCEPTION) << "Response seems incorrect, res(" << res.size() << "): {" << res << "}, start: " << start;
+    }
+    res = res.substr(pos);
     // Revert the line feed and space
     if (res != kSuccess && res != kAck && res != kErr && res != kTrue) {
       ReplaceStr(&res, kLF, '\n');
@@ -113,25 +120,30 @@ class KernelBuildClient {
   std::shared_ptr<DuplexPipe> dp_;
 };
 
-static inline std::string GetScriptFilePath(const std::string cmd_env, const std::string &cmd_script) {
+static std::string GetScriptFilePath(const std::string cmd_env, const std::string &cmd_script) {
   std::string cmd = cmd_env;
   (void)cmd.append(1, ' ').append(cmd_script);
   FILE *fpipe = popen(cmd.c_str(), "r");
   if (fpipe == nullptr) {
-    MS_LOG(EXCEPTION) << "popen failed, " << strerror(errno) << "(" << errno << ")";
+    MS_LOG(EXCEPTION) << "popen failed, errno: " << errno;
   }
   bool start = false;
   std::string result;
   char buf[kBufferSize];
   while (std::fgets(buf, sizeof(buf), fpipe) != nullptr) {
+    auto len = std::strlen(buf);
+    if (len == 0 || len >= kBufferSize) {
+      // Safe check for codedex
+      // Should never reach here
+      MS_LOG(EXCEPTION) << "fgets() failed, len: " << len << ", errno: " << errno;
+    }
     if (std::strncmp(buf, kTag, std::strlen(kTag)) == 0) {
       start = true;
     }
     // Filter with 'kTAG' and '\n'
     if (start) {
-      auto size = std::strlen(buf);
-      bool line_end = buf[size - 1] == '\n';
-      result.append(buf, line_end ? size - 1 : size);
+      bool line_end = buf[len - 1] == '\n';
+      result.append(buf, line_end ? len - 1 : len);
       if (line_end) {
         break;
       }
@@ -141,6 +153,9 @@ static inline std::string GetScriptFilePath(const std::string cmd_env, const std
   const std::string py_suffix = ".py";
   if (result.empty() || result.rfind(py_suffix) != (result.length() - py_suffix.length())) {
     MS_LOG(EXCEPTION) << "py file seems incorrect, result: {" << result << "}";
+  }
+  if (strlen(kTag) > result.size()) {  // Safe check for codedex
+    MS_LOG(EXCEPTION) << "result size seems incorrect, result(" << result.size() << "): {" << result << "}";
   }
   result = result.substr(strlen(kTag));
   MS_LOG(DEBUG) << "result: " << result;

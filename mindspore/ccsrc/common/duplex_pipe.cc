@@ -24,12 +24,12 @@
 namespace mindspore {
 int DuplexPipe::Open(std::initializer_list<std::string> arg_list, bool append_fds) {
   if (pipe(fd1_) == -1) {
-    DP_EXCEPTION << "pipe 1 failed, " << strerror(errno) << "(" << errno << ")";
+    DP_EXCEPTION << "pipe 1 failed, errno: " << errno;
   }
   if (pipe(fd2_) == -1) {
     close(fd1_[0]);
     close(fd1_[1]);
-    DP_EXCEPTION << "pipe 2 failed, " << strerror(errno) << "(" << errno << ")";
+    DP_EXCEPTION << "pipe 2 failed, errno: " << errno;
   }
 
   pid_ = fork();
@@ -38,7 +38,7 @@ int DuplexPipe::Open(std::initializer_list<std::string> arg_list, bool append_fd
     close(fd1_[1]);
     close(fd2_[0]);
     close(fd2_[1]);
-    DP_EXCEPTION << "fork failed, " << strerror(errno) << "(" << errno << ")";
+    DP_EXCEPTION << "fork failed, errno: " << errno;
   } else if (pid_ == 0) {  // Remote process
     DP_INFO << "Remote process, pid: " << getpid() << ", " << fd1_[0] << "/" << fd2_[1];
     remote_stdout_ = dup(STDOUT_FILENO);
@@ -61,7 +61,7 @@ int DuplexPipe::Open(std::initializer_list<std::string> arg_list, bool append_fd
     }
     args.emplace_back(nullptr);
     if (execvp(args[0], const_cast<char *const *>(&args[0])) == -1) {
-      DP_EXCEPTION << "execute " << args[0] << " failed, " << strerror(errno) << "(" << errno << ")";
+      DP_EXCEPTION << "execute " << args[0] << " failed, errno: " << errno;
     }
   } else {  // Local process
     DP_INFO << "Local process, id: " << getpid() << ", " << fd2_[0] << "/" << fd1_[1];
@@ -77,13 +77,13 @@ int DuplexPipe::Open(std::initializer_list<std::string> arg_list, bool append_fd
 void DuplexPipe::Write(const std::string &buf, bool flush) {
   // Write the string into pipe
   if (write(fd1_[1], buf.data(), buf.size()) == -1) {
-    DP_ERROR << "write failed, error: " << strerror(errno) << "(" << errno << ")";
+    DP_ERROR << "write failed, errno: " << errno;
     return;
   }
   if (flush) {
     // Flush into the pipe
     if (write(fd1_[1], "\n", 1) == -1) {
-      DP_ERROR << "write failed, error: " << strerror(errno) << "(" << errno << ")";
+      DP_ERROR << "write failed, errno: " << errno;
       return;
     }
   }
