@@ -27,6 +27,7 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Cast;
+using mindspore::schema::PrimitiveType_Fp16Cast;
 
 namespace mindspore::kernel {
 namespace {
@@ -87,6 +88,10 @@ int CastCPUKernel::DoCast(int thread_id) {
         Int32ToFloat32(reinterpret_cast<int32_t *>(input->Data()) + offset,
                        reinterpret_cast<float *>(output_data) + offset, data_num);
         break;
+      case kNumberTypeFloat16:
+        Fp16ToFloat32(reinterpret_cast<int16_t *>(input->Data()) + offset,
+                       reinterpret_cast<float *>(output_data) + offset, data_num);
+        break;
       default:
         MS_LOG(ERROR) << "Unsupport input data type " << input_data_type;
         return RET_ERROR;
@@ -139,4 +144,5 @@ kernel::LiteKernel *CpuCastFp32KernelCreator(const std::vector<lite::tensor::Ten
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Cast, CpuCastFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Fp16Cast, CpuCastFp32KernelCreator)
 }  // namespace mindspore::kernel

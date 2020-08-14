@@ -265,3 +265,4 @@ void SimplePostFuncInt8(const int *in, int8_t *out, int oc, int plane, int plane
     }
   }
 }
+

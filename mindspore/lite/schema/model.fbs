@@ -90,6 +90,7 @@ union PrimitiveType {
     Rsqrt,
     ExpandDims,
     Tile,
+    Fp16Cast,
     Cast,
     Shape,
     Nchw2Nhwc,
