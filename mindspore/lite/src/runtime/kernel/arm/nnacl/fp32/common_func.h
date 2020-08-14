@@ -58,6 +58,9 @@ void C4BiasAddRelu(float *dst, const float *input, const float *bias, size_t oc,
 void C4BiasAddRelu6(float *dst, const float *input, const float *bias, size_t oc, size_t plane_size, size_t stride);
 void C4Relu(float *dst, const float *input, size_t oc, size_t plane_size, size_t stride);
 void C4Relu6(float *dst, const float *input, size_t oc, size_t plane_size, size_t stride);
+
+void ConvDwFp32Border(float *dst, const float *src, const float *weight, const float *bias, size_t height, size_t width,
+                      size_t in_kh_step, size_t in_kw_step, size_t kernel_w, size_t relu, size_t relu6);
 #endif
 
 #ifdef __cplusplus

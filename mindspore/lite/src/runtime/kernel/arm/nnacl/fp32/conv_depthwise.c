@@ -86,8 +86,9 @@ void AppendSlidingParamConvDw(SlidingWindowParam *sliding, const ConvParameter *
 }
 
 /*conv depthwise fp32 begin*/
+#ifndef ENABLE_ARM64
 void DepthwiseBorderPixel(float *dst, const float *src, const float *weight, const float *bias, int height, int width,
-                          int in_kh_step, int in_kw_step, int kernel_w, bool is_relu, bool is_relu6) {
+                          int in_kh_step, int in_kw_step, int kernel_w_step, bool is_relu, bool is_relu6) {
   const float *src_kh = src;
   const float *weight_kh = weight;
   for (int c = 0; c < C4NUM; c++) {
@@ -97,22 +98,14 @@ void DepthwiseBorderPixel(float *dst, const float *src, const float *weight, con
     const float *src_kw = src_kh;
     const float *weight_kw = weight_kh;
     for (int kw = 0; kw < width; kw++) {
-#ifdef ENABLE_ARM64
-      float32x4_t src_4 = vld1q_f32(src_kw);
-      float32x4_t weight_4 = vld1q_f32(weight_kw);
-      float32x4_t dst_4 = vld1q_f32(dst);
-      dst_4 = vfmaq_f32(dst_4, src_4, weight_4);
-      vst1q_f32(dst, dst_4);
-#else
       for (int c = 0; c < C4NUM; c++) {
         dst[c] += src_kw[c] * weight_kw[c];
       }
-#endif
       src_kw += in_kw_step;
       weight_kw += C4NUM;
     }  // kernel_w loop
     src_kh += in_kh_step;
-    weight_kh += kernel_w * C4NUM;
+    weight_kh += kernel_w_step;
   }  // kernel_h loop
   for (int c = 0; c < C4NUM; c++) {
     dst[c] += bias[c];
@@ -120,6 +113,7 @@ void DepthwiseBorderPixel(float *dst, const float *src, const float *weight, con
     dst[c] = (is_relu6) ? (MSMIN(6, MSMAX(0, dst[c]))) : (dst[c]);
   }
 }
+#endif
 
 void DepthwiseBorder(float *dst, const float *src, const float *weight, const float *bias, int top, int bottom,
                      int left, int right, const ConvParameter *conv_param, const SlidingWindowParam *sliding) {
@@ -140,10 +134,15 @@ void DepthwiseBorder(float *dst, const float *src, const float *weight, const fl
       const float *src_kernel = src_w + start_kh * sliding->in_kh_step_ + start_kw * sliding->in_kw_step_;
       const float *weight_kernel = weight + (start_kh * conv_param->kernel_w_ + start_kw) * C4NUM;
 
+#ifdef ENABLE_ARM64
+      ConvDwFp32Border(dst_kernel, src_kernel, weight_kernel, bias, end_kh - start_kh, end_kw - start_kw,
+                       sliding->in_kh_step_ * sizeof(float), sliding->in_kw_step_ * sizeof(float),
+                       conv_param->kernel_w_ * C4NUM * sizeof(float), conv_param->is_relu_, conv_param->is_relu6_);
+#else
       DepthwiseBorderPixel(dst_kernel, src_kernel, weight_kernel, bias, end_kh - start_kh, end_kw - start_kw,
-                           sliding->in_kh_step_, sliding->in_kw_step_, conv_param->kernel_w_, conv_param->is_relu_,
-                           conv_param->is_relu6_);
-
+                           sliding->in_kh_step_, sliding->in_kw_step_, conv_param->kernel_w_ * C4NUM,
+                           conv_param->is_relu_, conv_param->is_relu6_);
+#endif
       dst_kernel += sliding->block_channel_;
     }  // width loop
     dst_h += sliding->out_h_step_;

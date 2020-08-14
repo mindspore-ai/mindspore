@@ -55,7 +55,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::InitSlideParam() {
   conv_param_->output_channel_ = in_tensors_.front()->shape().at(kNHWC_C);
 
   // init sliding_ window param
-  InitSlidingParam(sliding_, conv_param_, C8NUM);
+  InitSlidingParamConvDw(sliding_, conv_param_, C8NUM);
   return RET_OK;
 }
 
