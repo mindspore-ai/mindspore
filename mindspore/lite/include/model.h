@@ -101,7 +101,7 @@ class MS_API ModelBuilder {
   /// \param[in] op Define the primitive to be added.
   /// \param[in] inputs Define input edge of primitive to be added.
   ///
-  /// \return ID of the primitive added.
+  /// \return ID of the added primitive.
   virtual std::string AddOp(const lite::Primitive &op, const std::vector<OutEdge> &inputs) = 0;
 
   /// \brief Finish constructing the model.
