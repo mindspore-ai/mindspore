@@ -22,10 +22,10 @@
 void IndirectGemmInt8(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const int8_t *weight, const int32_t *bias,
                       int ic4, size_t kernel_plane, size_t output_channel, const int32_t *input_sum,
                       ConvParameter *conv_param) {
-  int32_t shift_before = conv_param->conv_quant_arg_.left_shift_[0];
-  int32_t shift_after = conv_param->conv_quant_arg_.right_shift_[0];
-  int32_t out_multiplier = conv_param->conv_quant_arg_.quant_multiplier_[0];
-  int32_t out_zp = conv_param->conv_quant_arg_.quant_args_[2][0].zp_;
+  int32_t *shift_before = conv_param->conv_quant_arg_.left_shift_;
+  int32_t *shift_after = conv_param->conv_quant_arg_.right_shift_;
+  int32_t *out_multiplier = conv_param->conv_quant_arg_.quant_multiplier_;
+  int32_t out_zp = conv_param->conv_quant_arg_.output_quant_args_[0].zp_;
   int32_t act_min = conv_param->conv_quant_arg_.out_act_min_[0];
   int32_t act_max = conv_param->conv_quant_arg_.out_act_max_[0];
 #ifdef __aarch64__
@@ -63,14 +63,49 @@ void IndirectGemmInt8(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const in
           }  // in c4num loop
         }    // ic4 loop
       }      // kernel_plane loop
-      tmp_dst[dst_tile_offset] -= input_sum[n];
-      int result = tmp_dst[dst_tile_offset] + bias[oc];
-      result = RoundingDivideByPOT(
-        SaturatingRoundingDoublingHighMul(result * (1 << (unsigned int)shift_before), out_multiplier), -shift_after);
-      result += out_zp;
-      result = result > act_min ? result : act_min;
-      result = result < act_max ? result : act_max;
-      dst[dst_tile_offset] = (int8_t)result;
+      if (!(conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
+          (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
+        int result = tmp_dst[dst_tile_offset] + bias[oc];
+        result = RoundingDivideByPOT(
+          SaturatingRoundingDoublingHighMul(result * (1 << (unsigned int)shift_before[oc]), out_multiplier[oc]),
+          -shift_after[oc]);
+        result += out_zp;
+        result = result > act_min ? result : act_min;
+        result = result < act_max ? result : act_max;
+        dst[dst_tile_offset] = (int8_t)result;
+      } else if (!(conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
+                 !(conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
+        int result = tmp_dst[dst_tile_offset] + bias[oc];
+        result = RoundingDivideByPOT(
+          SaturatingRoundingDoublingHighMul(result * (1 << (unsigned int)shift_before[0]), out_multiplier[0]),
+          -shift_after[0]);
+        result += out_zp;
+        result = result > act_min ? result : act_min;
+        result = result < act_max ? result : act_max;
+        dst[dst_tile_offset] = (int8_t)result;
+      } else if ((conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
+                 !(conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
+        tmp_dst[dst_tile_offset] -= input_sum[n];
+        int result = tmp_dst[dst_tile_offset] + bias[oc];
+        result = RoundingDivideByPOT(
+          SaturatingRoundingDoublingHighMul(result * (1 << (unsigned int)shift_before[0]), out_multiplier[0]),
+          -shift_after[0]);
+        result += out_zp;
+        result = result > act_min ? result : act_min;
+        result = result < act_max ? result : act_max;
+        dst[dst_tile_offset] = (int8_t)result;
+      } else if ((conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
+                 (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
+        tmp_dst[dst_tile_offset] -= input_sum[n * output_channel + oc];
+        int result = tmp_dst[dst_tile_offset] + bias[oc];
+        result = RoundingDivideByPOT(
+          SaturatingRoundingDoublingHighMul(result * (1 << (unsigned int)shift_before[oc]), out_multiplier[oc]),
+          -shift_after[oc]);
+        result += out_zp;
+        result = result > act_min ? result : act_min;
+        result = result < act_max ? result : act_max;
+        dst[dst_tile_offset] = (int8_t)result;
+      }
     }  // tile_num loop
   }    // output_channel loop
 #endif
@@ -79,10 +114,10 @@ void IndirectGemmInt8(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const in
 void IndirectGemmInt8Opt(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const int8_t *weight, const int32_t *bias,
                          int ic4, size_t kernel_plane, size_t output_channel, const int32_t *input_sum,
                          ConvParameter *conv_param, GEMM_FUNC gemm_func) {
-  int32_t shift_before = conv_param->conv_quant_arg_.left_shift_[0];
-  int32_t shift_after = conv_param->conv_quant_arg_.right_shift_[0];
-  int32_t out_multiplier = conv_param->conv_quant_arg_.quant_multiplier_[0];
-  int32_t out_zp = conv_param->conv_quant_arg_.quant_args_[2][0].zp_;
+  int32_t *shift_before = conv_param->conv_quant_arg_.left_shift_;
+  int32_t *shift_after = conv_param->conv_quant_arg_.right_shift_;
+  int32_t *out_multiplier = conv_param->conv_quant_arg_.quant_multiplier_;
+  int32_t out_zp = conv_param->conv_quant_arg_.output_quant_args_[0].zp_;
   int32_t act_min = conv_param->conv_quant_arg_.out_act_min_[0];
   int32_t act_max = conv_param->conv_quant_arg_.out_act_max_[0];
   if (gemm_func != NULL) {
@@ -113,14 +148,49 @@ void IndirectGemmInt8Opt(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const
             }  // in c4num loop
           }    // ic4 loop
         }      // kernel_plane loop
-        tmp_dst[dst_tile_offset] -= input_sum[n];
-        int result = tmp_dst[dst_tile_offset] + bias[oc];
-        result = RoundingDivideByPOT(
-          SaturatingRoundingDoublingHighMul(result * (1 << (unsigned int)shift_before), out_multiplier), -shift_after);
-        result += out_zp;
-        result = result > act_min ? result : act_min;
-        result = result < act_max ? result : act_max;
-        dst[dst_tile_offset] = (int8_t)result;
+        if (!(conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
+            (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
+          int result = tmp_dst[dst_tile_offset] + bias[oc];
+          result = RoundingDivideByPOT(
+            SaturatingRoundingDoublingHighMul(result * (1 << (unsigned int)shift_before[oc]), out_multiplier[oc]),
+            -shift_after[oc]);
+          result += out_zp;
+          result = result > act_min ? result : act_min;
+          result = result < act_max ? result : act_max;
+          dst[dst_tile_offset] = (int8_t)result;
+        } else if (!(conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
+                   !(conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
+          int result = tmp_dst[dst_tile_offset] + bias[oc];
+          result = RoundingDivideByPOT(
+            SaturatingRoundingDoublingHighMul(result * (1 << (unsigned int)shift_before[0]), out_multiplier[0]),
+            -shift_after[0]);
+          result += out_zp;
+          result = result > act_min ? result : act_min;
+          result = result < act_max ? result : act_max;
+          dst[dst_tile_offset] = (int8_t)result;
+        } else if ((conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
+                   !(conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
+          tmp_dst[dst_tile_offset] -= input_sum[n];
+          int result = tmp_dst[dst_tile_offset] + bias[oc];
+          result = RoundingDivideByPOT(
+            SaturatingRoundingDoublingHighMul(result * (1 << (unsigned int)shift_before[0]), out_multiplier[0]),
+            -shift_after[0]);
+          result += out_zp;
+          result = result > act_min ? result : act_min;
+          result = result < act_max ? result : act_max;
+          dst[dst_tile_offset] = (int8_t)result;
+        } else if ((conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
+                   (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
+          tmp_dst[dst_tile_offset] -= input_sum[n * output_channel + oc];
+          int result = tmp_dst[dst_tile_offset] + bias[oc];
+          result = RoundingDivideByPOT(
+            SaturatingRoundingDoublingHighMul(result * (1 << (unsigned int)shift_before[oc]), out_multiplier[oc]),
+            -shift_after[oc]);
+          result += out_zp;
+          result = result > act_min ? result : act_min;
+          result = result < act_max ? result : act_max;
+          dst[dst_tile_offset] = (int8_t)result;
+        }
       }  // tile_num loop
     }    // output_channel loop
   }
@@ -182,7 +252,7 @@ void ConvInt8(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight, c
   int out_h = conv_param->output_h_;
   int out_w = conv_param->output_w_;
   int out_channel = conv_param->output_channel_;
-  int32_t input_zp = conv_param->conv_quant_arg_.quant_args_[0][0].zp_;
+  int32_t input_zp = conv_param->conv_quant_arg_.input_quant_args_[0].zp_;
 
   int tile_n = conv_param->tile_num_;
   int thread_count = conv_param->thread_num_;
@@ -238,7 +308,7 @@ void ConvInt8Opt(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight
   int out_h = conv_param->output_h_;
   int out_w = conv_param->output_w_;
   int out_channel = conv_param->output_channel_;
-  int32_t input_zp = conv_param->conv_quant_arg_.quant_args_[0][0].zp_;
+  int32_t input_zp = conv_param->conv_quant_arg_.input_quant_args_[0].zp_;
   int tile_n = conv_param->tile_num_;
   int thread_count = conv_param->thread_num_;
   int output_count = out_h * out_w;

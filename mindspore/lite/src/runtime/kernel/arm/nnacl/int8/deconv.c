@@ -19,8 +19,8 @@
 
 int DeConvInt8(const int8_t *input, const int8_t *weight, int32_t *output, size_t row8, size_t col8, size_t deep,
                ConvParameter *conv_param) {
-  MatMulInt8(input, weight, output, row8, col8, deep, conv_param->conv_quant_arg_.quant_args_[0][0].zp_,
-             conv_param->conv_quant_arg_.quant_args_[1][0].zp_);
+  MatMulInt8(input, weight, output, row8, col8, deep, conv_param->conv_quant_arg_.input_quant_args_[0].zp_,
+             conv_param->conv_quant_arg_.filter_quant_args_[0].zp_);
   return NNACL_OK;
 }
 
@@ -65,7 +65,7 @@ int DeConvPostInt8(const int32_t *src, const int32_t *bias, int32_t *tmp, int8_t
 
   PostFuncInt8(tmp, bias, out, output_channel, output_plane, UP_ROUND(output_plane, 8),
                conv_param->conv_quant_arg_.quant_multiplier_[0], conv_param->conv_quant_arg_.left_shift_[0],
-               conv_param->conv_quant_arg_.right_shift_[0], conv_param->conv_quant_arg_.quant_args_[2][0].zp_,
+               conv_param->conv_quant_arg_.right_shift_[0], conv_param->conv_quant_arg_.output_quant_args_[0].zp_,
                conv_param->conv_quant_arg_.out_act_min_[0], conv_param->conv_quant_arg_.out_act_max_[0]);
   return NNACL_OK;
 }
