@@ -16,6 +16,7 @@
 
 #include "src/runtime/kernel/arm/fp16/convolution_depthwise_fp16.h"
 #include "src/runtime/kernel/arm/nnacl/fp16/pack_fp16.h"
+#include "src/runtime/kernel/arm/nnacl/fp16/cast_fp16.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -177,10 +178,22 @@ int ConvolutionDepthwiseFp16CPUKernel::Run() {
   }
 
   auto input_tensor = in_tensors_.at(kInputIndex);
-  auto input_addr = reinterpret_cast<float *>(input_tensor->Data());
+  float16_t *input_addr;
+  if (input_tensor->data_type() == kNumberTypeFloat32) {
+    input_addr =
+      reinterpret_cast<float16_t *>(context_->allocator->Malloc(input_tensor->ElementsNum() * sizeof(float16_t)));
+    if (input_addr == nullptr) {
+      MS_LOG(ERROR) << "Malloc buffer failed.";
+      return RET_ERROR;
+    }
+    Float32ToFloat16(reinterpret_cast<float *>(input_tensor->Data()), input_addr, input_tensor->ElementsNum());
+  } else {
+    input_addr = reinterpret_cast<float16_t *>(input_tensor->Data());
+  }
+
   // pack input: to nhwc8
-  PackNHWCFp32ToNHWC8Fp16(input_addr, packed_input_, conv_param_->input_batch_,
-                          conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
+  PackNHWCToNHWC8Fp16(input_addr, packed_input_, conv_param_->input_batch_,
+                      conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
 
   ret = LiteBackendParallelLaunch(ConvDwFp16Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
@@ -188,10 +201,13 @@ int ConvolutionDepthwiseFp16CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
-  PackNHWC8Fp16ToNHWCFp32(packed_output_, output_addr, conv_param_->output_batch_,
-                          conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
+  auto output_addr = reinterpret_cast<float16_t *>(out_tensors_.at(kOutputIndex)->Data());
+  PackNHWC8ToNHWCFp16(packed_output_, output_addr, conv_param_->output_batch_,
+                      conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
 
+  if (input_tensor->data_type() == kNumberTypeFloat32) {
+    context_->allocator->Free(input_addr);
+  }
   return RET_OK;
 }
 
