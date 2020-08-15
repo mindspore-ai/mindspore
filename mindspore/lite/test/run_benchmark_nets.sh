@@ -152,6 +152,7 @@ cd ${convertor_path}/MSLite-*-linux_x86_64 || exit 1
 # Set models config filepath
 models_tflite_config=${basepath}/models_tflite.cfg
 models_caffe_config=${basepath}/models_caffe.cfg
+models_tflite_posttraining_config=${basepath}/models_tflite_posttraining.cfg
 
 rm -rf ${basepath}/ms_models
 mkdir -p ${basepath}/ms_models
@@ -179,6 +180,17 @@ while read line; do
     echo './converter_lite  --fmk=CAFFE --modelFile='${models_path}'/'${model_name}'.prototxt --weightFile='${models_path}'/'${model_name}'.caffemodel --outputFile='${ms_models_path}'/'${model_name}''
     ./converter_lite  --fmk=CAFFE --modelFile=${models_path}/${model_name}.prototxt --weightFile=${models_path}/${model_name}.caffemodel --outputFile=${ms_models_path}/${model_name}
 done < ${models_caffe_config}
+
+# Convert PostTraining models:
+while read line; do
+    model_name=${line}
+    if [[ $model_name == \#* ]]; then
+      continue
+    fi
+    echo ${model_name}
+    echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}_posttraining' --quantType=PostTraining --config_file='${models_path}'/'${model_name}'_posttraining.config'
+    ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_posttraining --quantType=PostTraining --config_file=${models_path}/${model_name}_posttraining.config
+done < ${models_tflite_posttraining_config}
 
 # Push to the arm and run benchmark:
 # First:copy benchmark exe and so files to the server which connected to the phone
