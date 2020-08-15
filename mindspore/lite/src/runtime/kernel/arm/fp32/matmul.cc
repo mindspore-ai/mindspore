@@ -20,6 +20,7 @@
 #include "include/errorcode.h"
 
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_INPUT_TENSOR_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
 
@@ -28,6 +29,7 @@ MatmulCPUKernel::~MatmulCPUKernel() {
   ctx_->allocator->Free(a_c8_ptr_);
   ctx_->allocator->Free(b_r8_ptr_);
   ctx_->allocator->Free(c_r8x8_ptr_);
+  ctx_->allocator->Free(bias_ptr_);
 }
 
 int MatmulCPUKernel::ReSize() { return RET_OK; }
@@ -40,6 +42,14 @@ int MatmulCPUKernel::Init() {
   int batch = 1;
   auto a_shape = in_tensors_[0]->shape();
   auto c_shape = out_tensors_[0]->shape();
+  if (in_tensors_.size() == 3) {
+    auto bias_shape = in_tensors_[2]->shape();
+    if (bias_shape[bias_shape.size() - 1] != c_shape[c_shape.size() - 1]) {
+      MS_LOG(ERROR) << "The bias' dimension is not equal with column";
+      return RET_INPUT_TENSOR_ERROR;
+    }
+  }
+
   for (int i = 0; i < a_shape.size() - 2; ++i) {
     batch *= a_shape[i];
   }
@@ -67,6 +77,15 @@ int MatmulCPUKernel::Init() {
     return RET_MEMORY_FAILED;
   }
   memset(c_r8x8_ptr_, 0, params_->row_8_ * params_->col_8_ * sizeof(float));
+
+  if (in_tensors_.size() == 3) {
+    bias_ptr_ = reinterpret_cast<float *>(malloc(params_->col_8_ * sizeof(float)));
+    memset(bias_ptr_, 0, params_->col_8_ * sizeof(float));
+    memcpy(bias_ptr_, in_tensors_[2]->Data(), params_->col_ * sizeof(float));
+  } else {
+    bias_ptr_ = nullptr;
+  }
+
   return RET_OK;
 }
 
@@ -77,7 +96,12 @@ int MatmulCPUKernel::RunImpl(int task_id) {
   }
   auto cur_b = b_r8_ptr_ + task_id * thread_stride_ * C8NUM * params_->deep_;
   auto cur_c = c_r8x8_ptr_ + task_id * thread_stride_ * C8NUM * params_->row_8_;
-  MatMul(a_c8_ptr_, cur_b, cur_c, NULL, ActType_No, params_->deep_, params_->row_8_, cur_oc * 8, 0, false);
+  if (bias_ptr_) {
+    auto cur_bias = bias_ptr_ + task_id * thread_stride_ * C8NUM;
+    MatMul(a_c8_ptr_, cur_b, cur_c, cur_bias, ActType_No, params_->deep_, params_->row_8_, cur_oc * 8, 0, false);
+  } else {
+    MatMul(a_c8_ptr_, cur_b, cur_c, NULL, ActType_No, params_->deep_, params_->row_8_, cur_oc * 8, 0, false);
+  }
   return RET_OK;
 }
 

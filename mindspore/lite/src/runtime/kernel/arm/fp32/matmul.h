@@ -39,6 +39,7 @@ class MatmulCPUKernel : public MatmulBaseCPUKernel {
   float *a_c8_ptr_;
   float *b_r8_ptr_;
   float *c_r8x8_ptr_;
+  float *bias_ptr_;
 };
 }  // namespace mindspore::kernel
 
