@@ -2898,7 +2898,7 @@ class SpaceToDepth(PrimitiveWithInfer):
         - **x** (Tensor) - The target tensor.
 
     Outputs:
-        Tensor, the same type as `x`.
+        Tensor, the same type as `x`. It must be a 4-D tensor.
 
     Examples:
         >>> x = Tensor(np.random.rand(1,3,2,2), mindspore.float32)
@@ -2952,7 +2952,7 @@ class DepthToSpace(PrimitiveWithInfer):
         block_size (int): The block size used to divide depth data. It must be >= 2.
 
     Inputs:
-        - **x** (Tensor) - The target tensor.
+        - **x** (Tensor) - The target tensor. It must be a 4-D tensor.
 
     Outputs:
         Tensor, the same type as `x`.
@@ -3007,7 +3007,7 @@ class SpaceToBatch(PrimitiveWithInfer):
             by block_size.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor.
+        - **input_x** (Tensor) - The input tensor. It must be a 4-D tensor.
 
     Outputs:
         Tensor, the output tensor with the same type as input. Assume input shape is :math:`(n, c, h, w)` with
@@ -3070,12 +3070,14 @@ class BatchToSpace(PrimitiveWithInfer):
 
     Args:
         block_size (int): The block size of dividing block with value >= 2.
-        crops (list): The crop value for H and W dimension, containing 2 sub list, each containing 2 int value.
+        crops (Union[list(int), tuple(int)]): The crop value for H and W dimension, containing 2 sub list,
+            each containing 2 int value.
             All values must be >= 0. crops[i] specifies the crop values for spatial dimension i, which corresponds to
             input dimension i+2. It is required that input_shape[i+2]*block_size >= crops[i][0]+crops[i][1].
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor.
+        - **input_x** (Tensor) - The input tensor. It must be a 4-D tensor, dimension 0 should be divisible by
+          product of `block_shape`.
 
     Outputs:
         Tensor, the output tensor with the same type as input. Assume input shape is (n, c, h, w) with block_size
@@ -3105,6 +3107,7 @@ class BatchToSpace(PrimitiveWithInfer):
         validator.check_value_type('block_size', block_size, [int], self.name)
         validator.check('block_size', block_size, '', 2, Rel.GE, self.name)
         self.block_size = block_size
+        validator.check_value_type('crops type', crops, [list, tuple], self.name)
         validator.check('crops shape', np.array(crops).shape, '', (2, 2))
         for elem in itertools.chain(*crops):
             validator.check_integer('crops element', elem, 0, Rel.GE, self.name)
@@ -3149,8 +3152,7 @@ class SpaceToBatchND(PrimitiveWithInfer):
             by block_shape[i].
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor.
-
+        - **input_x** (Tensor) - The input tensor. It must be a 4-D tensor.
     Outputs:
         Tensor, the output tensor with the same type as input. Assume input shape is :math:`(n, c, h, w)` with
         :math:`block\_shape` and :math:`padddings`. The output tensor shape will be :math:`(n', c', h', w')`, where
@@ -3228,12 +3230,14 @@ class BatchToSpaceND(PrimitiveWithInfer):
     Args:
         block_shape (Union[list(int), tuple(int)]): The block shape of dividing block with all value >= 1.
             The length of block_shape is M correspoding to the number of spatial dimensions.
-        crops (list): The crop value for H and W dimension, containing 2 sub list, each containing 2 int value.
+        crops (Union[list(int), tuple(int)]): The crop value for H and W dimension, containing 2 sub list,
+            each containing 2 int value.
             All values must be >= 0. crops[i] specifies the crop values for spatial dimension i, which corresponds to
             input dimension i+2. It is required that input_shape[i+2]*block_shape[i] > crops[i][0]+crops[i][1].
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor.
+        - **input_x** (Tensor) - The input tensor. It must be a 4-D tensor, dimension 0 should be divisible by
+          product of `block_shape`.
 
     Outputs:
         Tensor, the output tensor with the same type as input. Assume input shape is (n, c, h, w) with block_shape
@@ -3270,6 +3274,7 @@ class BatchToSpaceND(PrimitiveWithInfer):
 
         self.block_shape = block_shape
 
+        validator.check_value_type('crops type', crops, [list, tuple], self.name)
         validator.check('crops shape', np.array(crops).shape, '', (block_rank, 2), Rel.EQ, self.name)
         for elem in itertools.chain(*crops):
             validator.check_integer('crops element', elem, 0, Rel.GE, self.name)

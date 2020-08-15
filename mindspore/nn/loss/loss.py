@@ -22,7 +22,6 @@ from mindspore.ops import _selected_ops
 from mindspore.nn.cell import Cell
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
-from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from ... import context
 
 
@@ -386,11 +385,9 @@ class CosineEmbeddingLoss(_Loss):
         _check_reduced_shape_valid(F.shape(x1), F.shape(y), (1,), self.cls_name)
         # if target > 0, 1-cosine(x1, x2)
         # else, max(0, cosine(x1, x2)-margin)
-        np_eps = const_utils.get_np_eps(F.dtype(x1))
-        eps = F.cast(np_eps, F.dtype(x1))
         prod_sum = self.reduce_sum(x1 * x2, (1,))
-        square1 = self.reduce_sum(F.square(x1), (1,)) + eps
-        square2 = self.reduce_sum(F.square(x2), (1,)) + eps
+        square1 = self.reduce_sum(F.square(x1), (1,))
+        square2 = self.reduce_sum(F.square(x2), (1,))
         denom = F.sqrt(square1 * square2)
         cosine = prod_sum / denom
 
