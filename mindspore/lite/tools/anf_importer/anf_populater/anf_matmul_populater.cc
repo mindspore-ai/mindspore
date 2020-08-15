@@ -30,8 +30,10 @@ void AnfMatmulPopulater::CalQuantParam(const double &mean, const double &stdDev,
   *mMax = static_cast<float>((qmax - mean) / stdDev);
 }
 
-void AnfMatmulPopulater::PopulaterQuantParam(const PrimitivePtr &prim,
-                                             std::vector<std::vector<schema::QuantParamT>> *vecQuantParam) {
+void AnfMatmulPopulater::PopulaterQuantParam(
+        const PrimitivePtr &prim,
+        std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,
+        std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam) {
   auto narrow_range = prim->GetAttr("narrow_range");
   bool narrowRangeQuantParam = GetValue<bool>(narrow_range);
   auto num_bits = prim->GetAttr("num_bits");
@@ -62,7 +64,7 @@ void AnfMatmulPopulater::PopulaterQuantParam(const PrimitivePtr &prim,
   quant::CalQuantizationParams(&quantParam, quantParam.min, quantParam.max, narrowRangeQuantParam,
                                numbitsRangeQuantParam);
   quants.emplace_back(quantParam);
-  vecQuantParam->emplace_back(quants);
+  vecInputQuantParam->emplace_back(quants);
 
   quants.clear();
   auto filterMin = prim->GetAttr("filter_minq");
@@ -79,7 +81,7 @@ void AnfMatmulPopulater::PopulaterQuantParam(const PrimitivePtr &prim,
                                    numbitsRangeQuantParam);
       quants.emplace_back(quantParam);
     }
-    vecQuantParam->emplace_back(quants);
+    vecInputQuantParam->emplace_back(quants);
   }
 
   quants.clear();
@@ -95,7 +97,7 @@ void AnfMatmulPopulater::PopulaterQuantParam(const PrimitivePtr &prim,
     quant::CalQuantizationParams(&quantParam, quantParam.min, quantParam.max, narrowRangeQuantParam,
                                  numbitsRangeQuantParam);
     quants.emplace_back(quantParam);
-    vecQuantParam->emplace_back(quants);
+    vecOutputQuantParam->emplace_back(quants);
   }
 }
 
@@ -110,12 +112,13 @@ int AnfMatmulPopulater::Populate(const PrimitivePtr &prim, PrimitiveTValue *prim
   primitive->value.value = attr.release();
   MS_ASSERT(primitiveTValuePtr != nullptr);
   primitiveTValuePtr->SetPrimitiveT(primitive.release());
-  if (primitiveTValuePtr->GetQuantType()) {
-    std::vector<std::vector<schema::QuantParamT>> vecQuantParam;
-    PopulaterQuantParam(prim, &vecQuantParam);
-    primitiveTValuePtr->SetInputQuantParam(vecQuantParam);
+  if (primitiveTValuePtr->GetQuantType() == schema::QuantType_AwareTraining) {
+    std::vector<std::vector<schema::QuantParamT>> vecInputQuantParam;
+    std::vector<std::vector<schema::QuantParamT>> vecOutputQuantParam;
+    PopulaterQuantParam(prim, &vecInputQuantParam, &vecOutputQuantParam);
+    primitiveTValuePtr->SetInputQuantParam(vecInputQuantParam);
+    primitiveTValuePtr->SetOutputQuantParam(vecOutputQuantParam);
   }
-
   return 0;
 }
 AnfNodePopulaterRegistrar anfMatmulPopulater("Matmul", new AnfMatmulPopulater());

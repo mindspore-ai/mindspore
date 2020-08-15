@@ -47,7 +47,15 @@ class PrimitiveTValue : public Value {
     }
   }
 
-  void SetInputQuantParam(std::vector<std::vector<schema::QuantParamT>> vec_quant_param) {}
+
+  void SetInputQuantParam(const std::vector<std::vector<schema::QuantParamT>> &input_quant_param) {
+    this->input_quant_param_ = input_quant_param;
+  }
+
+  void SetOutputQuantParam(const std::vector<std::vector<schema::QuantParamT>> &output_quant_param) {
+    this->output_quant_param_ = output_quant_param;
+  }
+
 
   void AddInputQuantParam(std::vector<schema::QuantParamT> quant_param) {
     this->input_quant_param_.emplace_back(quant_param);
