@@ -17,11 +17,12 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_deconv_parser.h"
+#include "tools/converter/parser/onnx/onnx_deconv_parser.h"
 
 namespace mindspore {
 namespace lite {
 bool OnnxDeConvParser::ParseGroupDeConvolution(schema::CNodeT *op, schema::DeConv2DT *attr) {
+  MS_LOG(DEBUG) << "onnx DeConvParser";
   if (attr == nullptr || attr->group != attr->channelOut) {
     return false;
   }

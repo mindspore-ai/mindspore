@@ -15,14 +15,15 @@
  */
 
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_gather_parser.h"
+#include "tools/converter/parser/onnx/onnx_gather_parser.h"
 
 namespace mindspore {
 namespace lite {
 STATUS OnnxGatherParser::Parse(const onnx::GraphProto &onnx_graph,
                                const onnx::NodeProto &onnx_node,
                                schema::CNodeT *op) {
-  unique_ptr<schema::GatherT> attr(new schema::GatherT());
+  MS_LOG(DEBUG) << "onnx GatherParser";
+  std::unique_ptr<schema::GatherT> attr(new schema::GatherT());
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto& attribute_name = onnx_node_attr.name();
     if (attribute_name == "axis") {

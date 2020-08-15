@@ -15,24 +15,32 @@
  */
 
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_clip_parser.h"
+#include "tools/converter/parser/onnx/onnx_clip_parser.h"
 
 namespace mindspore {
 namespace lite {
 STATUS OnnxClipParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
-  unique_ptr<schema::ClipT> attr(new schema::ClipT());
+  MS_LOG(DEBUG) << "onnx ClipParser";
+  float min = -1, max = -1;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "max") {
-      attr->max = onnx_node_attr.f();
+      max = onnx_node_attr.f();
     } else if (attribute_name == "min") {
-      attr->min = onnx_node_attr.f();
+      min = onnx_node_attr.f();
     }
   }
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Clip;
-    op->primitive->value.value = attr.release();
+  if (min == 0 && max == 6) {
+    std::unique_ptr<schema::ActivationT> attr(new schema::ActivationT());
+    attr->type = schema::ActivationType_RELU6;
+    if (op != nullptr) {
+      op->primitive = std::make_unique<schema::PrimitiveT>();
+      op->primitive->value.type = schema::PrimitiveType_Activation;
+      op->primitive->value.value = attr.release();
+    }
+  } else {
+    MS_LOG(ERROR) << "only support convert clip(0,6) to relu6, other value is not supported";
+    return RET_PARAM_INVALID;
   }
   return RET_OK;
 }
@@ -40,4 +48,3 @@ STATUS OnnxClipParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
 OnnxNodeRegistrar g_onnxClipParser("Clip", new OnnxClipParser());
 }  // namespace lite
 }  // namespace mindspore
-

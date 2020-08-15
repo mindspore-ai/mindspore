@@ -16,17 +16,17 @@
 
 #include <vector>
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_reshape_parser.h"
+#include "tools/converter/parser/onnx/onnx_reshape_parser.h"
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph,
-                                const onnx::NodeProto &onnx_node,
+STATUS OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                 schema::CNodeT *op) {
-  unique_ptr<schema::ReshapeT> attr(new schema::ReshapeT());
-  attr->format = schema::Format_NHWC;
-
+  MS_LOG(DEBUG) << "onnx ReshapeParser";
+  std::unique_ptr<schema::ReshapeT> attr(new schema::ReshapeT());
+  attr->format = schema::Format_NCHW;
   std::vector<onnx::TensorProto> params;
+  // TODO(wangzhe) shape may also come from other op, there need refactor to introduce tensor_cache
   for (int i = 0; i < onnx_node.input_size(); ++i) {
     const auto &input_name = onnx_node.input(i);
     for (const auto &it : onnx_graph.initializer()) {
@@ -37,16 +37,16 @@ STATUS OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph,
     }
   }
   if (params.empty()) {
-    return RET_OK;
-  }
-  if (params.size() != 1) {
-    // MS_LOGE("input num is ,not equal 1", params.size())
-    return RET_PARAM_INVALID;
-  }
+    MS_LOG(DEBUG) << "shape from another op other than const initializer";
+  } else {
+    if (params.size() != 1) {
+      MS_LOG(ERROR) << "shape param num is " << params.size() << ", not equal to 1";
+      return RET_PARAM_INVALID;
+    }
 
-  auto pre_shape = params[0];
-  for (int i = 0; i < pre_shape.dims_size(); ++i) {
-    attr->shape.emplace_back(params[0].dims(i));
+    for (int i = 0; i < params[0].int64_data_size(); ++i) {
+      attr->shape.emplace_back(params[0].int64_data(i));
+    }
   }
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
@@ -59,4 +59,3 @@ STATUS OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph,
 OnnxNodeRegistrar g_onnxReshapeParser("Reshape", new OnnxReshapeParser());
 }  // namespace lite
 }  // namespace mindspore
-

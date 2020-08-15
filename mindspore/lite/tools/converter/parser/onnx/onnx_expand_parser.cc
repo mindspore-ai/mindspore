@@ -15,17 +15,18 @@
  */
 
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_expand_parser.h"
+#include "tools/converter/parser/onnx/onnx_expand_parser.h"
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxExpandParser::Parse(const onnx::GraphProto &onnx_graph,
-                               const onnx::NodeProto &onnx_node,
+STATUS OnnxExpandParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                schema::CNodeT *op) {
+  MS_LOG(DEBUG) << "onnx ExpandParser";
   if (op != nullptr) {
+    std::unique_ptr<schema::BroadcastT> attr(new schema::BroadcastT());
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Broadcast;
-    op->primitive->value.value = nullptr;
+    op->primitive->value.value = attr.release();
   }
   return RET_OK;
 }
@@ -33,4 +34,3 @@ STATUS OnnxExpandParser::Parse(const onnx::GraphProto &onnx_graph,
 OnnxNodeRegistrar g_onnxExpandSpaceParser("Expand", new OnnxExpandParser());
 }  // namespace lite
 }  // namespace mindspore
-

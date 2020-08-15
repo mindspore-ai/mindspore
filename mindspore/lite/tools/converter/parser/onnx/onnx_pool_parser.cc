@@ -15,12 +15,13 @@
  */
 
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_pool_parser.h"
+#include "tools/converter/parser/onnx/onnx_pool_parser.h"
 
 namespace mindspore {
 namespace lite {
 STATUS OnnxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
-  unique_ptr<schema::PoolingT> attr(new schema::PoolingT());
+  MS_LOG(DEBUG) << "onnx PoolParser";
+  std::unique_ptr<schema::PoolingT> attr(new schema::PoolingT());
 
   const auto &pool_type = onnx_node.op_type();
   if (pool_type == "MaxPool") {
@@ -41,6 +42,8 @@ STATUS OnnxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
   }
 
   attr->roundMode = schema::RoundMode_FLOOR;
+  attr->strideW = 1;
+  attr->strideH = 1;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "kernel_shape") {

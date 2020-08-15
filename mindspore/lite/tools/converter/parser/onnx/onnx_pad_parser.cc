@@ -15,12 +15,13 @@
  */
 
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_pad_parser.h"
+#include "tools/converter/parser/onnx/onnx_pad_parser.h"
 
 namespace mindspore {
 namespace lite {
 STATUS OnnxPadParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
-  unique_ptr<schema::PadT> attr(new schema::PadT());
+  MS_LOG(DEBUG) << "onnx PadParser";
+  std::unique_ptr<schema::PadT> attr(new schema::PadT());
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "pads") {
@@ -33,11 +34,11 @@ STATUS OnnxPadParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
     } else if (attribute_name == "mode") {
       const auto &mode =  onnx_node_attr.s();
       if  (mode == "constant") {
-        attr->paddingmode = schema::PaddingMode_CONSTANT;
+        attr->paddingMode = schema::PaddingMode_CONSTANT;
       } else if (mode == "reflect") {
-        attr->paddingmode = schema::PaddingMode_REFLECT;
+        attr->paddingMode = schema::PaddingMode_REFLECT;
       } else if (mode == "edge") {
-        attr->paddingmode = schema::PaddingMode_SYMMETRIC;
+        attr->paddingMode = schema::PaddingMode_SYMMETRIC;
       }
     }
   }

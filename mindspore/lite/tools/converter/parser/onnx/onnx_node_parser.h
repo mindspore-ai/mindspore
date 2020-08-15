@@ -19,9 +19,9 @@
 
 #include <string>
 #include "google/protobuf/message.h"
-#include "mindspore/lite/tools/converter/proto/onnx.pb.h"
+#include "tools/converter/parser/onnx/onnx.pb.h"
 #include "tools/common/node_util.h"
-#include "mindspore/lite/schema/inner/model_generated.h"
+#include "schema/inner/model_generated.h"
 
 // using namespace std;
 

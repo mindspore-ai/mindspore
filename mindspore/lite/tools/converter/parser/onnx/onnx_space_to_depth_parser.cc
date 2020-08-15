@@ -15,14 +15,14 @@
  */
 
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_space_to_depth_parser.h"
+#include "tools/converter/parser/onnx/onnx_space_to_depth_parser.h"
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxSPaceToDepthParser::Parse(const onnx::GraphProto &onnx_graph,
-                                     const onnx::NodeProto &onnx_node,
+STATUS OnnxSpaceToDepthParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                      schema::CNodeT *op) {
-  unique_ptr<schema::SpaceToDepthT> attr(new schema::SpaceToDepthT());
+  MS_LOG(DEBUG) << "onnx SpaceToDepthParser";
+  std::unique_ptr<schema::SpaceToDepthT> attr(new schema::SpaceToDepthT());
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "blocksize") {
@@ -37,7 +37,6 @@ STATUS OnnxSPaceToDepthParser::Parse(const onnx::GraphProto &onnx_graph,
   return RET_OK;
 }
 
-OnnxNodeRegistrar g_onnxSpaceToDepthParser("SpaceToDepth", new OnnxSPaceToDepthParser());
+OnnxNodeRegistrar g_onnxSpaceToDepthParser("SpaceToDepth", new OnnxSpaceToDepthParser());
 }  // namespace lite
 }  // namespace mindspore
-

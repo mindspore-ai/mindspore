@@ -15,14 +15,15 @@
  */
 
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_flatten_parser.h"
+#include "tools/converter/parser/onnx/onnx_flatten_parser.h"
 
 namespace mindspore {
 namespace lite {
 STATUS OnnxFlattenParser::Parse(const onnx::GraphProto &onnx_graph,
                                 const onnx::NodeProto &onnx_node,
                                 schema::CNodeT *op) {
-  unique_ptr<schema::ReshapeT> attr(new schema::ReshapeT());
+  MS_LOG(DEBUG) << "onnx FlattenParser";
+  std::unique_ptr<schema::ReshapeT> attr(new schema::ReshapeT());
   int axis = 1;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();

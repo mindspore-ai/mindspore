@@ -15,12 +15,13 @@
  */
 
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_lrn_parser.h"
+#include "tools/converter/parser/onnx/onnx_lrn_parser.h"
 
 namespace mindspore {
 namespace lite {
 STATUS OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
-  unique_ptr<schema::LrnT> attr(new schema::LrnT());
+  MS_LOG(DEBUG) << "onnx LrnParser";
+  std::unique_ptr<schema::LrnT> attr(new schema::LrnT());
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto& attribute_name = onnx_node_attr.name();
     if (attribute_name == "size") {

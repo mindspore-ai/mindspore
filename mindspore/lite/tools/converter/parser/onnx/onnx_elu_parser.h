@@ -17,8 +17,8 @@
 #ifndef MS_ONNX_ELU_PARSER_H
 #define MS_ONNX_ELU_PARSER_H
 
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_node_parser.h"
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_node_parser_registry.h"
+#include "tools/converter/parser/onnx/onnx_node_parser.h"
+#include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
 
 namespace mindspore {
 namespace lite {

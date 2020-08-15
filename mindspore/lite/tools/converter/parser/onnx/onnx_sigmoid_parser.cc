@@ -15,14 +15,15 @@
  */
 
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_sigmoid_parser.h"
+#include "tools/converter/parser/onnx/onnx_sigmoid_parser.h"
 
 namespace mindspore {
 namespace lite {
 STATUS OnnxSigmoidParser::Parse(const onnx::GraphProto &onnx_graph,
                                 const onnx::NodeProto &onnx_node,
                                 schema::CNodeT *op) {
-  unique_ptr<schema::ActivationT> attr(new schema::ActivationT());
+  MS_LOG(DEBUG) << "onnx SigmoidParser";
+  std::unique_ptr<schema::ActivationT> attr(new schema::ActivationT());
   attr->type = schema::ActivationType_SIGMOID;
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();

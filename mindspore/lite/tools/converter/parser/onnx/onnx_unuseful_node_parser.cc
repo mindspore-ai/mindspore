@@ -15,13 +15,14 @@
  */
 
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_unuseful_node_parser.h"
+#include "tools/converter/parser/onnx/onnx_unuseful_node_parser.h"
 
 namespace mindspore {
 namespace lite {
 STATUS OnnxUnusefulNodeParser::Parse(const onnx::GraphProto &onnx_graph,
                                      const onnx::NodeProto &onnx_node,
                                      schema::CNodeT *op) {
+  MS_LOG(DEBUG) << "onnx UnusefulNodeParser";
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
     if (onnx_node.op_type() == "Int8Quantize") {

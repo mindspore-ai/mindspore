@@ -17,14 +17,14 @@
 #ifndef MS_ONNX_SPACE_TO_DEPTH_PARSER_H
 #define MS_ONNX_SPACE_TO_DEPTH_PARSER_H
 
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_node_parser.h"
-#include "mindspore/lite/tools/converter/parser/onnx/onnx_node_parser_registry.h"
+#include "tools/converter/parser/onnx/onnx_node_parser.h"
+#include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
 
 namespace mindspore {
 namespace lite {
-class OnnxSPaceToDepthParser : public OnnxNodeParser {
+class OnnxSpaceToDepthParser : public OnnxNodeParser {
  public:
-  OnnxSPaceToDepthParser() : OnnxNodeParser("SpaceToDepth") {}
+  OnnxSpaceToDepthParser() : OnnxNodeParser("SpaceToDepth") {}
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };
 }  // namespace lite

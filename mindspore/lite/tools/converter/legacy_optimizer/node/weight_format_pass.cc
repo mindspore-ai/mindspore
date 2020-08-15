@@ -189,7 +189,7 @@ int WeightFormatPass::ShapeFormatTrans(GraphNode *graphNode) {
         if (opType == schema::PrimitiveType_Conv2D) {
           weightTensor->format = schema::Format_KCHW;
         } else if (opType == schema::PrimitiveType_DepthwiseConv2D) {
-          weightTensor->format = schema::Format_CKHW;
+          weightTensor->format = schema::Format_KCHW;
         } else if (opType == schema::PrimitiveType_DeConv2D) {
           weightTensor->format = schema::Format_CKHW;
         } else {
