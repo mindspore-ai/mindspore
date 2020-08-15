@@ -36,13 +36,11 @@ const AnfNodePtr ReplaceAddNFusion::Process(const FuncGraphPtr &graph, const Anf
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(equiv);
-
   auto A = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
   auto B = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 1);
   MS_EXCEPTION_IF_NULL(A);
   MS_EXCEPTION_IF_NULL(B);
   int num_input = AnfAlgo::GetNodeAttr<int>(node, "n");
-
   if (num_input == 2) {
     auto prim = std::make_shared<Primitive>(prim::kPrimTensorAdd->name());
     MS_EXCEPTION_IF_NULL(prim);
