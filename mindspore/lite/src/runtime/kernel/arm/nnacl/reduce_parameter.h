@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_RESIZE_PARAMETER_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_RESIZE_PARAMETER_H_
 
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_REDUCE_PARAMETER_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_REDUCE_PARAMETER_H_
 #include "nnacl/op_base.h"
-typedef struct ResizeParameter {
+#define REDUCE_MAX_AXES_NUM 8
+
+struct ReduceParameter {
   OpParameter op_parameter_;
-  int method_;
-  int64_t new_height_;
-  int64_t new_width_;
-  bool align_corners_;
-  bool preserve_aspect_ratio_;
-} ResizeParameter;
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_RESIZE_PARAMETER_H_
+  bool keep_dims_;
+  int axes_[REDUCE_MAX_AXES_NUM];
+  int num_axes_;
+  int mode_;
+};
+
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_REDUCE_PARAMETER_H_

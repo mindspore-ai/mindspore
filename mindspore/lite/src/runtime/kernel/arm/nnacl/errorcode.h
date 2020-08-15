@@ -49,6 +49,8 @@ typedef enum ErrorCodeUint8OpEnum {
 
 typedef enum ErrorCodeInt8OpEnum {
   NNACL_ERRCODE_OP_INT8_START = 40000,
+  NNACL_ERRCODE_ADD_OVERFLOW,
+  NNACL_ERRCODE_MUL_OVERFLOW,
   NNACL_ERRCODE_OP_INT8_END = 49999
 } ErrorCodeInt8OpEnums;
 

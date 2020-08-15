@@ -38,7 +38,7 @@
 #include "src/runtime/kernel/arm/nnacl/softmax_parameter.h"
 #include "src/runtime/kernel/arm/nnacl/tile.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/topk.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/reduce.h"
+#include "src/runtime/kernel/arm/nnacl/reduce_parameter.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/activation.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/arithmetic.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/batchnorm.h"

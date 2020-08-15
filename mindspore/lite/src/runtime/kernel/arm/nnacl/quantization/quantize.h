@@ -219,6 +219,26 @@ typedef struct DivQuantArg {
   int output_multiplier_;
   int output_shift_;
 } DivQuantArg;
+
+typedef struct ReduceQuantArg {
+  double in_scale_;
+  int32_t in_zp_;
+  double out_scale_;
+  int32_t out_zp_;
+  int32_t in_out_multiplier_;
+  int in_out_left_shift_;
+  int in_out_right_shift_;
+  int32_t mean_multiplier_;
+  int mean_left_shift_;
+  int mean_right_shift_;
+  int32_t prod_multiplier_;
+  int prod_left_shift_;
+  int prod_right_shift_;
+  int32_t sum_square_multiplier_;
+  int sum_square_left_shift_;
+  int sum_square_right_shift_;
+} ReduceQuantArg;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

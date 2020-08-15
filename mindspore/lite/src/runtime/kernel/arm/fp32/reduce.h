@@ -21,25 +21,20 @@
 #include "src/lite_kernel.h"
 
 #include "src/runtime/kernel/arm/nnacl/fp32/reduce.h"
+#include "src/runtime/kernel/arm/base/reduce_base.h"
 #include "ir/anf.h"
 using mindspore::schema::ReduceMode;
 
 namespace mindspore::kernel {
-class ReduceCPUKernel : public LiteKernel {
+class ReduceCPUKernel : public ReduceBaseCPUKernel {
   typedef int (*Reducer)(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
                          const int *src_shape, float *dst_data, const int tid, const int thread_num);
 
  public:
-  ReduceCPUKernel(ReduceParameter *param, const std::vector<lite::tensor::Tensor *> &inputs,
+  ReduceCPUKernel(OpParameter *param, const std::vector<lite::tensor::Tensor *> &inputs,
                   const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                   const lite::Primitive *primitive)
-      : LiteKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs, ctx, primitive),
-        context_(ctx),
-        keep_dims_(param->keep_dims_),
-        num_axes_(param->num_axes_),
-        mode_(param->mode_) {
-    memcpy(axes_, param->axes_, sizeof(param->axes_));
-  }
+      : ReduceBaseCPUKernel(param, inputs, outputs, ctx, primitive) {}
   ~ReduceCPUKernel() {
     for (auto i = 0; i < data_buffers_.size(); i++) {
       float *buffer = data_buffers_[i];
@@ -58,26 +53,13 @@ class ReduceCPUKernel : public LiteKernel {
   int CallReduceUnit(int task_id);
 
  private:
-  int CheckInputsOutputs();
-  int CheckParameters();
-  int MallocTmpBuffer();
-
- private:
-  const lite::Context *context_ = nullptr;
-  bool keep_dims_;
-  int axes_[REDUCE_MAX_AXES_NUM];
-  int num_axes_;
-  int mode_;
-
- private:
+  Reducer reducer_;
   std::vector<float *> data_buffers_;
-  int outer_size_;
-  int inner_size_;
-  int axis_size_;
-  std::vector<int> tmp_shape_;
   const float *src_data_;
   float *dst_data_;
-  Reducer reducer_;
+
+ private:
+  int MallocTmpBuffer();
 };
 }  // namespace mindspore::kernel
 
