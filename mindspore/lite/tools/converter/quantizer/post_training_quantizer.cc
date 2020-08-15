@@ -62,7 +62,7 @@ struct DivergInfo {
     this->bin_num = bins;
     this->bit_num = bits;
     histogram.resize(bin_num);
-    max = FLT_MIN;
+    max = -FLT_MAX;
     min = FLT_MAX;
     this->quant_max = quant_max;
     this->quant_min = quant_min;

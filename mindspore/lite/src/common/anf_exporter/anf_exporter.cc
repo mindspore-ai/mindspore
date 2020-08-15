@@ -201,14 +201,16 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &funcGraph) {
         }
         auto activate_index = node->inputIndex[i];
         auto tensor_input = metaGraphT->allTensors[activate_index].get();
-        std::unique_ptr<schema::QuantParamT> input_quant_param =
-          std::make_unique<schema::QuantParamT>(input_quant_params[i]);
-        MS_LOG(DEBUG) << "[input]node: " << node->name << " scale: " << input_quant_param->scale
-                      << " zp: " << input_quant_param->zeroPoint;
-        tensor_input->quantParams.emplace_back(std::move(input_quant_param));
-        if (!(node_type == schema::PrimitiveType_QuantDTypeCast &&
-              primitiveT_value->GetPrimitiveT()->value.AsQuantDTypeCast()->srcT == kNumberTypeFloat32)) {
-          tensor_input->dataType = kNumberTypeInt8;
+        if (tensor_input->quantParams.empty()) {
+          std::unique_ptr<schema::QuantParamT> input_quant_param =
+            std::make_unique<schema::QuantParamT>(input_quant_params[i]);
+          MS_LOG(DEBUG) << "[input]node: " << node->name << " scale: " << input_quant_param->scale
+                        << " zp: " << input_quant_param->zeroPoint;
+          tensor_input->quantParams.emplace_back(std::move(input_quant_param));
+          if (!(node_type == schema::PrimitiveType_QuantDTypeCast &&
+                primitiveT_value->GetPrimitiveT()->value.AsQuantDTypeCast()->srcT == kNumberTypeFloat32)) {
+            tensor_input->dataType = kNumberTypeInt8;
+          }
         }
       }
 
@@ -219,11 +221,13 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &funcGraph) {
       if (output_quant_params.empty()) {
         MS_LOG(WARNING) << "node: " << node->name << " output quant params is empty";
       } else {
-        std::unique_ptr<schema::QuantParamT> output_quant_param =
-          std::make_unique<schema::QuantParamT>(output_quant_params[0]);
-        MS_LOG(DEBUG) << "[output]node: " << node->name << " scale: " << output_quant_param->scale
-                      << " zp: " << output_quant_param->zeroPoint;
-        tensor_output->quantParams.emplace_back(std::move(output_quant_param));
+        if (tensor_output->quantParams.empty()) {
+          std::unique_ptr<schema::QuantParamT> output_quant_param =
+            std::make_unique<schema::QuantParamT>(output_quant_params[0]);
+          MS_LOG(DEBUG) << "[output]node: " << node->name << " scale: " << output_quant_param->scale
+                        << " zp: " << output_quant_param->zeroPoint;
+          tensor_output->quantParams.emplace_back(std::move(output_quant_param));
+        }
       }
       if (!(node_type == schema::PrimitiveType_QuantDTypeCast &&
             primitiveT_value->GetPrimitiveT()->value.AsQuantDTypeCast()->dstT == kNumberTypeFloat32)) {
