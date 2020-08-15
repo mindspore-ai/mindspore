@@ -307,11 +307,6 @@ void ConvSWFp16(const float16_t *input_data, const float16_t *packed_weight, con
     src += slidingWindow_param->in_step_;
     dst += slidingWindow_param->out_step_;
   }  // batch loop
-  // output nhwc4
-  if (oc4_res != 0) {
-    PackNHWC4ToNHWCFp16((const void *)tmp_out_block, (void *)output_data, conv_param->output_batch_,
-                        conv_param->output_h_ * conv_param->output_w_, conv_param->output_channel_);
-  }
 }
 
 // fp16 convolution common (im2col+gemm)
@@ -381,11 +376,6 @@ void Conv3x3Fp16(float16_t *input_data, float16_t *transed_weight, const float16
   int ic4 = UP_DIV(conv_param->input_channel_, C4NUM);
   int oc8 = UP_DIV(conv_param->output_channel_, C8NUM);
 
-  int output_batch = conv_param->output_batch_;
-  int output_channel = conv_param->output_channel_;
-  int output_w = conv_param->output_w_;
-  int output_h = conv_param->output_h_;
-
   int out_w_block = UP_DIV(conv_param->output_w_, C4NUM);
   int out_h_block = UP_DIV(conv_param->output_h_, C4NUM);
   int output_count = out_w_block * out_h_block;
@@ -412,35 +402,6 @@ void Conv3x3Fp16(float16_t *input_data, float16_t *transed_weight, const float16
 
       Conv3x3Fp16OutputTransform(tmp_dst_buffer + task_id * tmp_dst_buffer_offset, tmp_out + tmp_out_batch_offset,
                                  bias_data, start_index, real_cal_num, out_w_block, conv_param);
-    }
-  }
-
-  // get real output
-  // todo
-  bool relu = conv_param->is_relu_;
-  bool relu6 = conv_param->is_relu6_;
-  for (int batch = 0; batch < output_batch; batch++) {
-    int tmp_out_batch_offset = batch * oc8 * C8NUM * out_w_block * out_h_block * output_unit * output_unit;
-    int ro_batch_size = batch * output_channel * output_h * output_w;
-    const float16_t *batch_tmp_out = tmp_out + tmp_out_batch_offset;
-    float16_t *batch_out = output_data + ro_batch_size;
-    for (int h = 0; h < output_h; h++) {
-      for (int w = 0; w < output_w; w++) {
-        for (int c = 0; c < output_channel; c++) {
-          int oc8_block = c / C8NUM;
-          int oc8_res = c % C8NUM;
-          int src_offset = oc8_block * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM +
-                           C8NUM * (h * out_w_block * output_unit + w) + oc8_res;
-          int dst_offset = (h * output_w + w) * output_channel + c;
-          (batch_out + dst_offset)[0] = (batch_tmp_out + src_offset)[0];
-          if (relu) {
-            (batch_out + dst_offset)[0] = (batch_out + dst_offset)[0] < 0 ? 0 : (batch_out + dst_offset)[0];
-          } else if (relu6) {
-            (batch_out + dst_offset)[0] = (batch_out + dst_offset)[0] < 0 ? 0 : (batch_out + dst_offset)[0];
-            (batch_out + dst_offset)[0] = (batch_out + dst_offset)[0] > 6 ? 6 : (batch_out + dst_offset)[0];
-          }
-        }
-      }
     }
   }
 }

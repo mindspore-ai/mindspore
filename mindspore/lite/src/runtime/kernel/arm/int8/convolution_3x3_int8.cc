@@ -170,7 +170,11 @@ int Convolution3x3Int8CPUKernel::Init() {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
     return RET_ERROR;
   }
-  SetQuantParam();
+  ret = SetQuantParam();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Set quant param failed.";
+    return ret;
+  }
   ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
@@ -249,6 +253,11 @@ int Convolution3x3Int8CPUKernel::Run() {
     MS_LOG(ERROR) << "conv3x3 int8 error error_code[" << error_code << "]";
     return RET_ERROR;
   }
+  // get real output
+  auto out_tensor = out_tensors_.front();
+  auto out_data = reinterpret_cast<int8_t *>(out_tensor->Data());
+  PackNC4HW4ToNHWCInt8(tmp_out_, out_data, conv_param_->output_batch_, conv_param_->output_h_ * conv_param_->output_w_,
+                       conv_param_->output_channel_);
   return RET_OK;
 }
 }  // namespace mindspore::kernel
