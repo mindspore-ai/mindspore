@@ -29,14 +29,23 @@ class TransposeCPUKernel : public LiteKernel {
   explicit TransposeCPUKernel(OpParameter *param, const std::vector<lite::tensor::Tensor *> &inputs,
                               const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                               const lite::Primitive *primitive)
-      : LiteKernel(param, inputs, outputs, ctx, primitive) {}
+      : LiteKernel(param, inputs, outputs, ctx, primitive), thread_num_(ctx->thread_num_) {}
   ~TransposeCPUKernel() override = default;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int TransposeParallel(int task_id);
 
  private:
+  int thread_num_;
+  int thread_h_stride_;
+  int thread_h_num_;
+  int num_unit_;
+  float *in_data_;
+  float *out_data_;
+  int *in_shape_;
+  int *out_shape_;
 };
 }  // namespace mindspore::kernel
 

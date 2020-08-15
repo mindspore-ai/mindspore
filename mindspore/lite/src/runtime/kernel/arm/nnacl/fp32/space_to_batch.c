@@ -28,7 +28,7 @@ int EnumElement(int *shape, int n_dims) {
 }
 
 void TransposeForNHWC(const float *in_data, float *out_data, int *strides, int *out_strides, int *perm,
-                      int *output_shape) {
+                      int *output_shape, int h_start, int h_end) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -40,7 +40,6 @@ void TransposeForNHWC(const float *in_data, float *out_data, int *strides, int *
   const int out_stride3 = out_strides[3];
   const int out_stride4 = out_strides[4];
   const int output0 = output_shape[0];
-  const int output1 = output_shape[1];
   const int output2 = output_shape[2];
   const int output3 = output_shape[3];
   const int output4 = output_shape[4];
@@ -48,7 +47,7 @@ void TransposeForNHWC(const float *in_data, float *out_data, int *strides, int *
   for (int i = 0; i < output0; ++i) {
     int out_stride0_i = i * out_stride0;
     int stride0_i = i * stride0;
-    for (int j = 0; j < output1; ++j) {
+    for (int j = h_start; j < h_end; ++j) {
       int out_stride1_j = j * out_stride1;
       int stride1_j = j * stride1;
       for (int k = 0; k < output2; ++k) {
@@ -69,7 +68,8 @@ void TransposeForNHWC(const float *in_data, float *out_data, int *strides, int *
   }
 }
 
-int SpaceToBatchForNHWC(const float *input, float *output, int *in_shape, int shape_size, int *block_sizes) {
+int SpaceToBatchForNHWC(const float *input, float *output, int *in_shape, int shape_size, int *block_sizes, int h_start,
+                        int h_end) {
   int trans_in_shape[6] = {in_shape[0],    in_shape[1] / block_sizes[0],
                            block_sizes[0], in_shape[2] / block_sizes[1],
                            block_sizes[1], in_shape[3]};
@@ -82,7 +82,7 @@ int SpaceToBatchForNHWC(const float *input, float *output, int *in_shape, int sh
   ComputeStrides(trans_out_shape, out_strides, shape_size + 2);
 
   int perm[6] = {0, 2, 4, 1, 3, 5};
-  TransposeForNHWC(input, output, in_strides, out_strides, perm, trans_out_shape);
+  TransposeForNHWC(input, output, in_strides, out_strides, perm, trans_out_shape, h_start, h_end);
   return NNACL_OK;
 }
 
@@ -137,21 +137,11 @@ void DoPadding(const float *input, float *padded_input, SpaceToBatchParameter pa
   }
 }
 
-int SpaceToBatch(const float *input, float *output, SpaceToBatchParameter param, float *tmp_space[3]) {
-  float *padded_input = NULL;
-  int ret;
-  if (param.need_paddings_) {
-    if (tmp_space[0] == NULL || tmp_space[1] == NULL || tmp_space[2] == NULL) {
-      return NNACL_NULL_PTR;
-    }
-    padded_input = tmp_space[0];
-    DoPadding(input, padded_input, param, tmp_space + 1);
+int SpaceToBatch(const float *input, float *output, SpaceToBatchParameter param, int h_start, int h_end) {
+  if (input == NULL || output == NULL) {
+    return NNACL_NULL_PTR;
   }
-
-  if (param.need_paddings_) {
-    ret = SpaceToBatchForNHWC(padded_input, output, param.padded_in_shape_, param.n_dims_, param.block_sizes_);
-  } else {
-    ret = SpaceToBatchForNHWC(input, output, param.padded_in_shape_, param.n_dims_, param.block_sizes_);
-  }
+  auto ret =
+    SpaceToBatchForNHWC(input, output, param.padded_in_shape_, param.n_dims_, param.block_sizes_, h_start, h_end);
   return ret;
 }

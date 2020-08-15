@@ -85,7 +85,7 @@ TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest1) {
   int in_shape[4] = {1, 4, 4, 1};
   int out_shape[4] = {4, 2, 2, 1};
   int block_sizes[2] = {2, 2};
-  SpaceToBatchForNHWC((const float *)input, output, in_shape, 4, block_sizes);
+  SpaceToBatchForNHWC((const float *)input, output, in_shape, 4, block_sizes, 0, 4 / 2);
   for (int i = 0; i < out_size; ++i) {
     std::cout << output[i] << " ";
   }
@@ -107,7 +107,10 @@ TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest2) {
 
   float padded_input[48]{}, tmp[48]{}, tmp_zero[48]{};
   float *tmp_space[3] = {padded_input, tmp, tmp_zero};
-  auto ret = SpaceToBatch((const float *)input, output, param, tmp_space);
+  // DoPadding
+  DoPadding(input, padded_input, param, tmp_space + 1);
+
+  auto ret = SpaceToBatch((const float *)padded_input, output, param, 0, 4 / 2);
   std::cout << "return " << ret << std::endl;
   for (int i = 0; i < out_size; ++i) {
     std::cout << output[i] << " ";
@@ -145,6 +148,7 @@ TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest3) {
   outputs_tensor.emplace_back(&output_tensor);
 
   lite::Context ctx;
+  ctx.thread_num_ = 2;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_SpaceToBatch};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
