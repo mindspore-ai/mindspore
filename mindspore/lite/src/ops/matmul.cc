@@ -22,10 +22,6 @@
 namespace mindspore::lite {
 int MatMul::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
-  if (inputs_.size() != kDoubleNum) {
-    MS_LOG(ERROR) << "OpMatMul inputs size: " << inputs_.size();
-    return RET_INPUT_TENSOR_ERROR;
-  }
   auto input0 = inputs_.front();
   MS_ASSERT(input0 != nullptr);
   auto input1 = inputs_.at(1);

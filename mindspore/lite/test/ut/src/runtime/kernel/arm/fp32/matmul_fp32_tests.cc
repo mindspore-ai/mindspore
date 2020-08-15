@@ -202,6 +202,35 @@ int MMTestInit(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lite::t
   return out_t->ElementsNum();
 }
 
+int MMTestInit2(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lite::tensor::Tensor *> *outputs_,
+                float *a_ptr, float *b_ptr, float *bias_ptr, std::vector<int> a_shape, std::vector<int> b_shape,
+                std::vector<int> bias_shape, std::vector<int> c_shape) {
+  auto in_t =
+    new lite::tensor::Tensor(kNumberTypeFloat, a_shape, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  in_t->MallocData();
+  memcpy(in_t->Data(), a_ptr, sizeof(float) * in_t->ElementsNum());
+  inputs_->push_back(in_t);
+
+  auto weight_t =
+    new lite::tensor::Tensor(kNumberTypeFloat, b_shape, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  weight_t->MallocData();
+  memcpy(weight_t->Data(), b_ptr, sizeof(float) * weight_t->ElementsNum());
+  inputs_->push_back(weight_t);
+
+  auto bias_t =
+    new lite::tensor::Tensor(kNumberTypeFloat, bias_shape, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  bias_t->MallocData();
+  memcpy(bias_t->Data(), bias_ptr, sizeof(float) * bias_t->ElementsNum());
+  inputs_->push_back(bias_t);
+
+  auto out_t =
+    new lite::tensor::Tensor(kNumberTypeFloat, c_shape, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  out_t->MallocData();
+  outputs_->push_back(out_t);
+
+  return out_t->ElementsNum();
+}
+
 TEST_F(TestMatMulFp32, simple) {
   std::vector<lite::tensor::Tensor *> inputs_;
   std::vector<lite::tensor::Tensor *> outputs_;
@@ -226,6 +255,38 @@ TEST_F(TestMatMulFp32, simple) {
   mm->Run();
   float correct[] = {-0.1256939023733139, -0.07744802534580231,  0.07410638779401779,
                      -0.3049793541431427, -0.027687929570674896, -0.18109679222106934};
+  CompareOutputData(reinterpret_cast<float *>(outputs_[0]->Data()), correct, total_size, 0.0001);
+  delete mm;
+  for (auto t : inputs_) delete t;
+  for (auto t : outputs_) delete t;
+}
+
+TEST_F(TestMatMulFp32, simple_bias) {
+  std::vector<lite::tensor::Tensor *> inputs_;
+  std::vector<lite::tensor::Tensor *> outputs_;
+  auto matmul_param = new MatMulParameter();
+  matmul_param->a_transpose_ = false;
+  matmul_param->b_transpose_ = false;
+  matmul_param->has_bias_ = false;
+  float a[] = {-3.2366564, -4.7733846, -7.8329225, 16.146885, 5.060793,  -6.1471,  -1.7680453, -6.5721383,
+               17.87506,   -5.1192183, 10.742863,  1.4536934, 19.693445, 19.45783, 5.063163,   0.5234792};
+  float b[] = {-0.0024438887, 0.0006738146, -0.008169129, 0.0021510671,  -0.012470592,   -0.0053063435,
+               0.006050155,   0.008656233,  0.012911413,  -0.0028635843, -0.00034080597, -0.0010622552,
+               -0.012254699,  -0.01312836,  0.0025241964, -0.004706142,  0.002451482,    -0.009558459,
+               0.004481974,   0.0033251503, -0.011705584, -0.001720293,  -0.0039410214,  -0.0073637343};
+  float bias[] = {1, 2, 3};
+  std::vector<int> a_shape = {2, 8};
+  std::vector<int> b_shape = {8, 3};
+  std::vector<int> bias_shape = {1, 3};
+  std::vector<int> c_shape = {2, 3};
+  int total_size = MMTestInit2(&inputs_, &outputs_, a, b, bias, a_shape, b_shape, bias_shape, c_shape);
+  auto ctx = new lite::Context;
+  ctx->thread_num_ = 1;
+  auto mm = new kernel::MatmulCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, nullptr);
+  mm->Init();
+  mm->Run();
+  float correct[] = {-0.1256939023733139 + 1, -0.07744802534580231 + 2,  0.07410638779401779 + 3,
+                     -0.3049793541431427 + 1, -0.027687929570674896 + 2, -0.18109679222106934 + 3};
   CompareOutputData(reinterpret_cast<float *>(outputs_[0]->Data()), correct, total_size, 0.0001);
   delete mm;
   for (auto t : inputs_) delete t;
