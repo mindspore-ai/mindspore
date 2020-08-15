@@ -18,7 +18,7 @@
 #include "nnacl/mul_parameter.h"
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
-#include "nnacl/add_int8.h"
+#include "nnacl/int8/add_int8.h"
 #endif
 #include "nnacl/quantization/fixed_point.h"
 

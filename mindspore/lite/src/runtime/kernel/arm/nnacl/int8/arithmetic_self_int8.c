@@ -18,7 +18,7 @@
 #include "nnacl/int8/arithmetic_self_int8.h"
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
-#include "nnacl/add_int8.h"
+#include "nnacl/int8/add_int8.h"
 #endif
 #include "nnacl/quantization/fixed_point.h"
 

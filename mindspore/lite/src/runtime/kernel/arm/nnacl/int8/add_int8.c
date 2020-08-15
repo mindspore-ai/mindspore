@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "nnacl/add_int8.h"
+#include "nnacl/int8/add_int8.h"
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "nnacl/unique.h"
+#include "nnacl/fp32/unique.h"
 
 int Find(float *array, int len, float target) {
   for (int i = 0; i < len; ++i) {
