@@ -63,7 +63,7 @@ __kernel void to_format_NHWC4_to_NHWC4_IMG(__global FLT4 *src_data, __write_only
   if (X >= size.x || Y >= size.y || Z >= size.z) {
     return;
   }
-  //  WRITE_IMAGE(dst_data, (int2)(Y * size.z + Z, X), READ_IMAGE(src_data, smp_zero, (int2)(Y * size.z + Z, X)));
+  WRITE_IMAGE(dst_data, (int2)(Y * size.z + Z, X), src_data[(X * size.y + Y) * size.z + Z]);
 }
 __kernel void to_format_NC4HW4_to_NHWC4_IMG(__global FLT4 *src_data, __write_only image2d_t dst_data, int4 size,
                                             int4 shape) {
@@ -231,5 +231,5 @@ __kernel void to_format_NHWC4_to_NHWC4_BUF(__read_only image2d_t src_data, __glo
   if (X >= size.x || Y >= size.y || Z >= size.z) {
     return;
   }
-  dst_data[(Y * size.z + Z) * size.x + X] = READ_IMAGE(src_data, smp_zero, (int2)(Y * size.z + Z, X));
+  dst_data[(X * size.y + Y) * size.z + Z] = READ_IMAGE(src_data, smp_zero, (int2)(Y * size.z + Z, X));
 }

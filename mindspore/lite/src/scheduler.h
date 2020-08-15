@@ -38,6 +38,7 @@ class Scheduler {
  private:
   int InitOp2Kernel(const lite::Model *model, std::vector<tensor::Tensor *> *tensors,
                     std::vector<kernel::LiteKernel *> *kernels);
+  int InferShape(const lite::Model *model, std::vector<tensor::Tensor *> *tensors);
 
   // construct SubGraphKernel for each kernel-group in markedKernelGroup
   void ConstructSubgraphs(std::vector<kernel::LiteKernel *> *kernels);
