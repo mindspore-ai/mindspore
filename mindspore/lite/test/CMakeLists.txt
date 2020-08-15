@@ -142,7 +142,7 @@ if (SUPPORT_GPU)
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/matmul.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/softmax.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/concat.cc
-            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/leaky_relu.cc
+            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/activation.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/conv2d_transpose.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/transpose.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/reshape.cc
@@ -323,14 +323,14 @@ if (SUPPORT_GPU)
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/conv2d_transpose_tests.cc
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/transpose_tests.cc
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/convolution_tests.cc
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/leakyrelu_tests.cc
+            ${TEST_DIR}/ut/src/runtime/kernel/opencl/activation_tests.cc
             )
 endif()
 
 if (ENABLE_FP16)
     set(TEST_SRC
             ${TEST_SRC}
-            ${TEST_DIR}/ut/src/runtime/kernel/arm/fp16/convolution_fp16_tests.cc)
+)
 endif ()
 
 

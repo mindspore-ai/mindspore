@@ -161,7 +161,8 @@ kernel::LiteKernel *OpenCLArithmeticKernelCreator(const std::vector<lite::tensor
                                                   const std::vector<lite::tensor::Tensor *> &outputs,
                                                   OpParameter *opParameter, const lite::Context *ctx,
                                                   const kernel::KernelKey &desc, const lite::Primitive *primitive) {
-  auto *kernel = new ArithmeticOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs, ctx);
+  auto *kernel =
+    new (std::nothrow) ArithmeticOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create OpenCL Arithmetic kernel failed!";
     return nullptr;
