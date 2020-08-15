@@ -20,16 +20,16 @@
 #include <arm_neon.h>
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/base/convolution_base.h"
+#include "src/runtime/kernel/arm/fp16/convolution_base_fp16.h"
 #include "src/runtime/kernel/arm/nnacl/optimized_kernel.h"
 
 namespace mindspore::kernel {
-class Convolution3x3FP16CPUKernel : public ConvolutionBaseCPUKernel {
+class Convolution3x3FP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
  public:
   Convolution3x3FP16CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                               const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                               const lite::Primitive *primitive)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~Convolution3x3FP16CPUKernel() override {
     if (fp16_input_ != nullptr) {
       free(fp16_input_);
@@ -66,9 +66,6 @@ class Convolution3x3FP16CPUKernel : public ConvolutionBaseCPUKernel {
   void ConfigInputOutput();
 
  private:
-  float16_t *fp16_input_;
-  float16_t *fp16_weight_;
-  float16_t *fp16_out_;
   float16_t *transformed_filter_addr_;
   float16_t *tile_buffer_;
   float16_t *block_unit_buffer_;

@@ -115,10 +115,6 @@ int DeconvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
 }
 
 int DeconvolutionDepthwiseFp16CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
-    return RET_OK;
-  }
   sliding_ = new SlidingWindowParam;
   InitSlideParam();
   // conv base init

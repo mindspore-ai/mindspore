@@ -52,8 +52,6 @@ void ProcessFilterFp16(float16_t *origin_weight, float16_t *dst_weight, ConvPara
 int Convolution3x3FP16CPUKernel::InitWeightBias() {
   auto input_channel = conv_param_->input_channel_;
   int output_channel = conv_param_->output_channel_;
-  int kernel_h = conv_param_->kernel_h_;
-  int kernel_w = conv_param_->kernel_w_;
   int iC4 = UP_DIV(input_channel, C4NUM);
   int oC8 = UP_DIV(output_channel, C8NUM);
   // init weight
@@ -64,18 +62,8 @@ int Convolution3x3FP16CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(transformed_filter_addr_, 0, transformed_size);
-  float *origin_weight = reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->Data());
-  size_t fp16_weight_size = input_channel * output_channel * kernel_h * kernel_w * sizeof(float16_t);
-  fp16_weight_ = reinterpret_cast<float16_t *>(malloc(fp16_weight_size));
-  if (fp16_weight_ == nullptr) {
-    MS_LOG(ERROR) << "malloc fp16_weight_ failed.";
-    return RET_ERROR;
-  }
-  memset(fp16_weight_, 0, fp16_weight_size);
-  for (int i = 0; i < fp16_weight_size / sizeof(float16_t); ++i) {
-    fp16_weight_[i] = (float16_t)origin_weight[i];
-  }
-  ProcessFilterFp16(fp16_weight_, transformed_filter_addr_, conv_param_);
+  ConvolutionBaseFP16CPUKernel::GetExecuteFilter();
+  ProcessFilterFp16(execute_weight_, transformed_filter_addr_, conv_param_);
 
   // init bias
   size_t new_bias_size = oC8 * C8NUM * sizeof(float16_t);
@@ -183,10 +171,6 @@ void Convolution3x3FP16CPUKernel::ConfigInputOutput() {
 }
 
 int Convolution3x3FP16CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
-    return RET_OK;
-  }
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
@@ -244,8 +228,8 @@ int Convolution3x3FP16CPUKernel::ReSize() {
 
 int Convolution3x3FP16CPUKernel::RunImpl(int task_id) {
   Conv3x3Fp16(reinterpret_cast<float16_t *>(nhwc4_input_), transformed_filter_addr_,
-              reinterpret_cast<float16_t *>(bias_data_), fp16_out_, tile_buffer_, block_unit_buffer_, tmp_dst_buffer_,
-              tmp_out_, task_id, conv_param_);
+              reinterpret_cast<float16_t *>(bias_data_), execute_output_, tile_buffer_, block_unit_buffer_,
+              tmp_dst_buffer_, tmp_out_, task_id, conv_param_);
   return RET_OK;
 }
 
@@ -265,16 +249,13 @@ int Convolution3x3FP16CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  auto input_tensor = in_tensors_.at(kInputIndex);
-  auto input_ele_num = input_tensor->ElementsNum();
-  auto ori_input_data = reinterpret_cast<float *>(input_tensor->Data());
-  Float32ToFloat16(ori_input_data, fp16_input_, input_ele_num);
+  ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
 
   int in_batch = conv_param_->input_batch_;
   int in_h = conv_param_->input_h_;
   int in_w = conv_param_->input_w_;
   int in_channel = conv_param_->input_channel_;
-  convert_func_(reinterpret_cast<void *>(fp16_input_), nhwc4_input_, in_batch, in_h * in_w, in_channel);
+  convert_func_(reinterpret_cast<void *>(execute_input_), nhwc4_input_, in_batch, in_h * in_w, in_channel);
 
   int error_code = LiteBackendParallelLaunch(Convolution3x3Fp16Impl, this, thread_count_);
   if (error_code != RET_OK) {
@@ -294,7 +275,7 @@ int Convolution3x3FP16CPUKernel::Run() {
       batch * oc8 * C8NUM * out_w_block * out_h_block * conv_param_->output_unit_ * conv_param_->output_unit_;
     int ro_batch_size = batch * conv_param_->output_channel_ * conv_param_->output_h_ * conv_param_->output_w_;
     const float16_t *batch_tmp_out = tmp_out_ + tmp_out_batch_offset;
-    float16_t *batch_out = fp16_out_ + ro_batch_size;
+    float16_t *batch_out = execute_output_ + ro_batch_size;
     for (int h = 0; h < conv_param_->output_h_; h++) {
       for (int w = 0; w < conv_param_->output_w_; w++) {
         for (int c = 0; c < conv_param_->output_channel_; c++) {
@@ -315,11 +296,7 @@ int Convolution3x3FP16CPUKernel::Run() {
     }
   }
 
-  // cast fp16 out to fp32 data
-  auto out_tensor = out_tensors_.at(kOutputIndex);
-  auto out_ele_num = out_tensor->ElementsNum();
-  auto output_addr = reinterpret_cast<float *>(out_tensor->Data());
-  Float16ToFloat32(fp16_out_, output_addr, out_ele_num);
+  ConvolutionBaseFP16CPUKernel::IfCastOutput();
   return RET_OK;
 }
 }  // namespace mindspore::kernel

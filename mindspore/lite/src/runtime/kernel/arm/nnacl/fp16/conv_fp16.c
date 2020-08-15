@@ -32,12 +32,21 @@ void IndirectGemmFp16_16x8(float16_t *output, float16_t *input, float16_t *weigh
 #endif
 #ifndef ENABLE_NEON
 void IndirectGemmFp16_16x8(float16_t *output, float16_t *input, float16_t *weight, float16_t *bias, size_t step,
-                           size_t ic4, size_t out_channel, size_t offset, size_t mode, size_t writeC4, size_t relu,
+                           size_t ic4, size_t out_channel, size_t offset, size_t mode, size_t writeC8, size_t relu,
                            size_t relu6) {
+  if (!(mode && writeC8)) {
+    IndirectGemmFp16_16x8_common(output, input, weight, bias, step, ic4, output, offset, relu, relu6);
+  } else {
+    IndirectGemmFp16_16x8_c8(output, input, weight, bias, step, ic4, output, offset, mode, writeC8, relu, relu6);
+  }
+}
+
+void IndirectGemmFp16_16x8_common(float16_t *output, float16_t *input, float16_t *weight, float16_t *bias, size_t step,
+                                  size_t ic4, size_t oc8, size_t offset, size_t relu, size_t relu6) {
   const int tile_n = 16;
   for (int i = 0; i < out_channel; i++) {
-    int oc8_block = i / 8;
-    int oc8_res = i % 8;
+    int oc8_block = i / C8NUM;
+    int oc8_res = i % C8NUM;
     int weight_oc_offset = oc8_block * step * ic4 * C4NUM * C8NUM + oc8_res;
     for (int k = 0; k < tile_n; k++) {
       int input_tile_offset = k * C4NUM;
@@ -72,32 +81,32 @@ void IndirectGemmFp16_16x8(float16_t *output, float16_t *input, float16_t *weigh
   }
 }
 
-void IndirectGemmFp16_16x8_tmp(float16_t *output, float16_t *input, float16_t *weight, const float16_t *bias,
-                               size_t step, size_t ic4, size_t output_channel, size_t offset, size_t mode,
-                               size_t writeC4, size_t relu, size_t relu6) {
+void IndirectGemmFp16_16x8_c8(float16_t *output, float16_t *input, float16_t *weight, float16_t *bias, size_t step,
+                              size_t ic4, size_t output_channel, size_t offset, size_t mode, size_t writeC8,
+                              size_t relu, size_t relu6) {
   const int tile_num = 16;
-  if (mode) {
+  if (mode && writeC8) {
     for (int i = 0; i < tile_num; i++) {
       int input_tile_offset = i * C4NUM;
-      int output_tile_offset = i * output_channel * 36;
+      int output_tile_offset = i * output_channel * step;
       for (int j = 0; j < output_channel; j++) {
-        int oc8_block = j / 8;
-        int oc8_res = j % 8;
-        int weight_oc_offset = oc8_block * 36 * ic4 * C4NUM * 8 + oc8_res;
-        int out_oc_offset = output_tile_offset + oc8_block * 36 * C8NUM + oc8_res;
+        int oc8_block = j / C8NUM;
+        int oc8_res = j % C8NUM;
+        int weight_oc_offset = oc8_block * step * ic4 * C4NUM * C8NUM + oc8_res;
+        int out_oc_offset = output_tile_offset + oc8_block * step * C8NUM + oc8_res;
 
         for (int n = 0; n < step; n++) {
           int input_kw_offset = input_tile_offset + n * ic4 * C4NUM * tile_num;
-          int weight_kw_offset = weight_oc_offset + n * ic4 * C4NUM * 8;
+          int weight_kw_offset = weight_oc_offset + n * ic4 * C4NUM * C8NUM;
           int output_kw_offset = out_oc_offset + n * C8NUM;
           float16_t acc = 0;
 
           for (int k = 0; k < ic4; k++) {
             int input_ic4_offset = input_kw_offset + k * tile_num * C4NUM;
-            int weight_ic4_offset = weight_kw_offset + k * C4NUM * 8;
-            for (int m = 0; m < 4; m++) {
+            int weight_ic4_offset = weight_kw_offset + k * C4NUM * C8NUM;
+            for (int m = 0; m < C4NUM; m++) {
               int input_ic_offset = input_ic4_offset + m;
-              int weight_ic_offset = weight_ic4_offset + m * 8;
+              int weight_ic_offset = weight_ic4_offset + m * C8NUM;
               acc += (weight + weight_ic_offset)[0] * (input + input_ic_offset)[0];
             }
           }
@@ -402,6 +411,94 @@ void Conv3x3Fp16(float16_t *input_data, float16_t *transed_weight, const float16
 
       Conv3x3Fp16OutputTransform(tmp_dst_buffer + task_id * tmp_dst_buffer_offset, tmp_out + tmp_out_batch_offset,
                                  bias_data, start_index, real_cal_num, out_w_block, conv_param);
+    }
+  }
+}
+
+// fp16 convolution winograd
+void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const float16_t *bias_data,
+                      TmpBufferAddressFp16 *buffer_list, int task_id, ConvParameter *conv_param,
+                      InputTransformUnitFp16Func input_trans_func, OutputTransformUnitFp16Func output_trans_func) {
+  int thread_num = conv_param->thread_num_;
+  int input_unit = conv_param->input_unit_;
+  int in_batch = conv_param->input_batch_;
+  int in_channel = conv_param->input_channel_;
+  int ic4 = UP_DIV(in_channel, C4NUM);
+  int out_unit = conv_param->output_unit_;
+  int out_w_block = UP_DIV(conv_param->output_w_, out_unit);
+  int out_h_block = UP_DIV(conv_param->output_h_, out_unit);
+  int tile_num = 16;
+  int output_count = out_w_block * out_h_block;
+  int output_tile_count = UP_DIV(output_count, tile_num);
+  int out_channel = conv_param->output_channel_;
+  int oc8 = UP_DIV(out_channel, C8NUM);
+  int input_unit_square = input_unit * input_unit;
+  size_t output_offset = oc8 * C8NUM * input_unit_square * sizeof(float16_t);
+
+  float16_t *trans_input = buffer_list[0];
+  float16_t *gemm_out = buffer_list[1];
+  float16_t *tmp_out_data = buffer_list[2];
+  float16_t *tmp_data = buffer_list[3];
+  int trans_input_offset = tile_num * input_unit_square * ic4 * C4NUM;
+  int gemm_out_offset = tile_num * input_unit_square * oc8 * C8NUM;
+  int tmp_data_offset = input_unit_square * C4NUM;
+  // step 1 : filter transform (pre-processed offline)
+  // step 2 : input transform (online)
+  for (int b = 0; b < in_batch; b++) {
+    int in_batch_offset = b * ic4 * C4NUM * conv_param->input_h_ * conv_param->input_w_;
+    int tmp_out_batch_offset = b * out_w_block * out_h_block * out_unit * out_unit * oc8 * C8NUM;
+    for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_num) {
+      int out_tile_index = thread_id * TILE_NUM;
+      int cal_num = output_count - thread_id * tile_num;
+      cal_num = cal_num > tile_num ? tile_num : cal_num;
+      WinogradInputTransformFp16(input_data + in_batch_offset, trans_input + task_id * trans_input_offset,
+                                 tmp_data + task_id * tmp_data_offset, cal_num, out_tile_index, out_w_block, conv_param,
+                                 input_trans_func);
+      // step 3 : gemm
+      IndirectGemmFp16_16x8(gemm_out + task_id * gemm_out_offset, trans_input + task_id * trans_input_offset,
+                            trans_weight, NULL, input_unit_square, ic4, oc8 * C8NUM, output_offset, 1, 1, 0, 0);
+
+      // step 4 : output transform
+      WinogradOutputTransformFp16(gemm_out + task_id * gemm_out_offset, tmp_out_data + tmp_out_batch_offset, bias_data,
+                                  cal_num, out_tile_index, out_w_block, conv_param, output_trans_func);
+    }
+  }
+}
+
+void UnPackWinogradOutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel,
+                              int output_unit) {
+  int out_h_block_num = UP_DIV(height, output_unit);
+  int out_w_block_num = UP_DIV(width, output_unit);
+  int c8 = UP_DIV(channel, C8NUM);
+  for (int b = 0; b < batch; b++) {
+    int src_batch_offset = b * c8 * C8NUM * out_h_block_num * output_unit * out_w_block_num * output_unit;
+    int dst_batch_offset = b * height * width * channel;
+    for (int h = 0; h < height; h++) {
+      int src_h_offset = src_batch_offset + C8NUM * (h * out_w_block_num * output_unit);
+      int dst_h_offset = dst_batch_offset + h * width * channel;
+      for (int w = 0; w < width; w++) {
+        int src_w_offset = src_h_offset + w * C8NUM;
+        int dst_w_offset = dst_h_offset + w * channel;
+        for (int c = 0; c < c8 - 1; c++) {
+          int src_c8_offset = src_w_offset + c * C8NUM * out_w_block_num * out_h_block_num * output_unit * output_unit;
+          int dst_c8_offset = dst_w_offset + c * C8NUM;
+#ifdef ENABLE_NEON
+          vst1q_f16(dst + dst_c8_offset, vld1q_f16(src + src_c8_offset));
+#else
+          for (int i = 0; i < C8NUM; ++i) {
+            dst[dst_c8_offset + i] = src[src_c8_offset + i];
+          }
+#endif
+        }
+        int c_res = channel - (c8 - 1) * C8NUM;
+        int src_c_res_offset = (c8 - 1) * C8NUM * out_w_block_num * out_h_block_num * output_unit * output_unit;
+        int dst_c_res_offset = (c8 - 1) * C8NUM;
+        for (int c = 0; c < c_res; c++) {
+          int src_c8_res_offset = src_w_offset + src_c_res_offset + c;
+          int dst_c8_res_offset = dst_w_offset + dst_c_res_offset + c;
+          dst[dst_c8_res_offset] = src[src_c8_res_offset];
+        }
+      }
     }
   }
 }

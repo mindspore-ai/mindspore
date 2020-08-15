@@ -19,15 +19,15 @@
 #include <arm_neon.h>
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/base/convolution_base.h"
+#include "src/runtime/kernel/arm/fp16/convolution_base_fp16.h"
 
 namespace mindspore::kernel {
-class ConvolutionSWFP16CPUKernel : public ConvolutionBaseCPUKernel {
+class ConvolutionSWFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
  public:
   ConvolutionSWFP16CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                              const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                              const lite::Primitive *primitive)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ConvolutionSWFP16CPUKernel() override {
     if (fp16_input_ != nullptr) {
       free(fp16_input_);
@@ -57,9 +57,6 @@ class ConvolutionSWFP16CPUKernel : public ConvolutionBaseCPUKernel {
   int ProcessFilter();
 
  private:
-  float16_t *fp16_input_;
-  float16_t *fp16_weight_;
-  float16_t *fp16_out_;
   float16_t *packed_weight_;
   float16_t *tmp_output_block_;
   SlidingWindowParam *slidingWindow_param_;

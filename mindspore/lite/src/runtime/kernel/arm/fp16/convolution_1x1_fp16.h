@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_FP16_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_FP16_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_1x1_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_1x1_FP16_H_
 
 #include <arm_neon.h>
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/fp16/convolution_base_fp16.h"
+#include "src/runtime/kernel/arm/nnacl/optimized_kernel.h"
 
 namespace mindspore::kernel {
-class ConvolutionFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
+class Convolution1x1FP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
  public:
-  ConvolutionFP16CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                           const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
-                           const lite::Primitive *primitive)
+  Convolution1x1FP16CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                              const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                              const lite::Primitive *primitive)
       : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~ConvolutionFP16CPUKernel() override {
+  ~Convolution1x1FP16CPUKernel() override {
     if (fp16_input_ != nullptr) {
       free(fp16_input_);
     }
@@ -39,30 +40,15 @@ class ConvolutionFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
     if (fp16_out_ != nullptr) {
       free(fp16_out_);
     }
-    if (packed_input_ != nullptr) {
-      free(packed_input_);
-    }
-    if (packed_weight_ != nullptr) {
-      free(packed_weight_);
-    }
-    if (tmp_output_block_ != nullptr) {
-      free(tmp_output_block_);
-    }
   }
 
   int Init() override;
   int ReSize() override;
   int Run() override;
   int RunImpl(int task_id);
-  int InitWeightBias();
-  int InitTmpBuffer();
-  void ConfigInputOutput();
 
  private:
-  float16_t *packed_input_;
-  float16_t *packed_weight_;
-  float16_t *tmp_output_block_;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_FP16_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_1x1_FP16_H_

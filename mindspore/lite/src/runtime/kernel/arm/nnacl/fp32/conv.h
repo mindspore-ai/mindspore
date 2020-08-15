@@ -57,10 +57,9 @@ int Conv1x1Fp32(const float *input_data, const float *weight_data, float *output
                 StrassenMatMulParameter matmul_param);
 
 // fp32 convolution winograd
-void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_data, float *output_data,
-                      TmpBufferAddress *buffer_list, int task_id, ConvParameter *conv_param,
-                      InputTransformUnitFunc input_trans_func, OutputTransformUnitFunc output_trans_func,
-                      GEMM_FUNC_FP32 gemm_func);
+void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_data, TmpBufferAddress *buffer_list,
+                      int task_id, ConvParameter *conv_param, InputTransformUnitFunc input_trans_func,
+                      OutputTransformUnitFunc output_trans_func, GEMM_FUNC_FP32 gemm_func);
 
 void UnPackWinogradOutput(const float *src, float *dst, int batch, int height, int width, int channel, int output_unit);
 

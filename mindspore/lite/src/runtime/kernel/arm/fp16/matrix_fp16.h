@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CAST_FP16_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CAST_FP16_H_
 
-#include <arm_neon.h>
-#include "nnacl/op_base.h"
-#include "nnacl/fp32/cast.h"
-#ifdef __cplusplus
-extern "C" {
-#endif
-void Float32ToFloat16(const float *input, float16_t *output, int number);
-void Float16ToFloat32(const float16_t *input, float *output, int number);
-#ifdef __cplusplus
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_MATRIX_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_MATRIX_FP16_H_
+
+#include "src/runtime/kernel/arm/base/matrix.h"
+
+namespace mindspore::kernel {
+void MatrixMultiplyFp16(const float16_t *matrix_a, const float16_t *matrix_b, float16_t *matrix_c, int m, int k, int n,
+                        bool row);
 }
-#endif
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CAST_FP16_H_
+
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_MATRIX_FP16_H_
