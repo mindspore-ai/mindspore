@@ -53,10 +53,6 @@ int PoolingFp16CPUKernel::InitBuffer() {
 }
 
 int PoolingFp16CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
-    return RET_OK;
-  }
   auto ret = PoolingBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PoolingBase Init failed.";

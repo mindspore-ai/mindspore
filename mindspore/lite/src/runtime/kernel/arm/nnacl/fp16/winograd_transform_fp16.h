@@ -21,6 +21,7 @@
 #include <string.h>
 #include "nnacl/fp16/pack_fp16.h"
 #include "nnacl/fp16/conv_fp16.h"
+#include "nnacl/fp16/winograd_utils_fp16.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,6 +40,15 @@ void Conv3x3Fp16OutputUnit(const float16_t *gemm_out, const float16_t *bias_data
 
 void Conv3x3Fp16OutputTransform(const float16_t *gemm_out, float16_t *out_data, const float16_t *bias_data,
                                 int start_index, int real_cal_num, int out_w_block, ConvParameter *conv_param);
+
+// fp16 common winograd
+void WinogradInputTransformFp16(const float16_t *input_data, float16_t *trans_input, float16_t *tmp_data, int cal_num,
+                                int out_tile_index, int out_w_block_num, ConvParameter *conv_param,
+                                InputTransformUnitFp16Func input_trans_func);
+
+void WinogradOutputTransformFp16(const float16_t *gemm_out, float16_t *tmp_out_data, const float16_t *bias_data,
+                                 int cal_num, int out_tile_index, int output_unit_num, ConvParameter *conv_param,
+                                 OutputTransformUnitFp16Func output_trans_func);
 #ifdef __cplusplus
 }
 #endif

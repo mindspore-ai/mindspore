@@ -39,6 +39,8 @@ void DeconvDwFp16Center(float16_t *dst, const float16_t *src, const float16_t *w
                         size_t kernel_h, size_t kernel_w, size_t out_h_step, size_t block_channel, size_t in_sh_step,
                         size_t in_sw_step, size_t in_kh_step, size_t in_kw_step);
 #endif
+void ReluFp16(float16_t *data, float16_t *dst, int ele_num);
+void Relu6Fp16(float16_t *data, float16_t *dst, int ele_num);
 
 #ifdef __cplusplus
 }

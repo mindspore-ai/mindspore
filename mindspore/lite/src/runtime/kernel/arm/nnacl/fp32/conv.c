@@ -243,10 +243,9 @@ int Conv1x1Fp32(const float *input_data, const float *weight_data, float *output
 }
 
 // fp32 conv winograd
-void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_data, float *output_data,
-                      TmpBufferAddress *buffer_list, int task_id, ConvParameter *conv_param,
-                      InputTransformUnitFunc input_trans_func, OutputTransformUnitFunc output_trans_func,
-                      GEMM_FUNC_FP32 gemm_func) {
+void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_data, TmpBufferAddress *buffer_list,
+                      int task_id, ConvParameter *conv_param, InputTransformUnitFunc input_trans_func,
+                      OutputTransformUnitFunc output_trans_func, GEMM_FUNC_FP32 gemm_func) {
   int thread_num = conv_param->thread_num_;
   int input_unit = conv_param->input_unit_;
   int in_batch = conv_param->input_batch_;

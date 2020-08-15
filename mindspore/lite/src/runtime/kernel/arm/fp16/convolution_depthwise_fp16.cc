@@ -102,10 +102,6 @@ int ConvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
 }
 
 int ConvolutionDepthwiseFp16CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
-    return RET_OK;
-  }
   // conv base init
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
