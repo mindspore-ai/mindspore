@@ -38,6 +38,10 @@ int ReverseCPUKernel::Stride(int index) {
 }
 
 int ReverseCPUKernel::ReSize() {
+  data_size_ = in_tensors_.at(0)->ElementsNum();
+  thread_sz_count_ = MSMIN(thread_count_, data_size_);
+  thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
+
   auto *param = reinterpret_cast<ReverseParameter *>(op_parameter_);
   auto input_shape = in_tensors_[0]->shape();
   if (param->num_axis_ > input_shape.size()) {
@@ -89,13 +93,9 @@ int ReverseCPUKernel::ReSize() {
 }
 
 int ReverseCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
-  data_size_ = in_tensors_.at(0)->ElementsNum();
-  thread_sz_count_ = MSMIN(thread_count_, data_size_);
-  thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
   int ret = ReSize();
   return ret;
 }

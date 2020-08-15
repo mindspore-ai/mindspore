@@ -29,12 +29,10 @@ using mindspore::schema::PrimitiveType_ExpandDims;
 
 namespace mindspore::kernel {
 int ExpandDimsCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
-  int ret = ReSize();
-  return ret;
+  return ReSize();
 }
 
 int ExpandDimsCPUKernel::ReSize() {

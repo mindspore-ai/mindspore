@@ -48,15 +48,15 @@ class ReduceCPUKernel : public ReduceBaseCPUKernel {
   }
 
   int Init() override;
-  int ReSize() override { return 0; };
+  int ReSize() override;
   int Run() override;
   int CallReduceUnit(int task_id);
 
  private:
-  Reducer reducer_;
+  Reducer reducer_ = nullptr;
   std::vector<float *> data_buffers_;
-  const float *src_data_;
-  float *dst_data_;
+  const float *src_data_ = nullptr;
+  float *dst_data_ = nullptr;
 
  private:
   int MallocTmpBuffer();

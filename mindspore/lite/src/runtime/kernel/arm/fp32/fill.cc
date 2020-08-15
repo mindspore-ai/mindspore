@@ -35,17 +35,18 @@ constexpr int kOutputNum = 1;
 }  // namespace
 
 int FillCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
+  return ReSize();
+}
+
+int FillCPUKernel::ReSize() {
   data_size_ = out_tensors_.front()->ElementsNum();
   thread_sz_count_ = MSMIN(thread_count_, data_size_);
   thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
   return RET_OK;
 }
-
-int FillCPUKernel::ReSize() { return RET_OK; }
 
 int FillCPUKernel::DoFill(int task_id) {
   int size = MSMIN(thread_sz_stride_, data_size_ - task_id * thread_sz_stride_);

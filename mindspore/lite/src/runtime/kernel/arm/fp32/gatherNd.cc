@@ -38,9 +38,16 @@ GatherNdCPUKernel::~GatherNdCPUKernel() {
 }
 
 int GatherNdCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
+  }
+  return ReSize();
+}
+
+int GatherNdCPUKernel::ReSize() {
+  if (in_offset_ != nullptr) {
+    free(in_offset_);
+    in_offset_ = nullptr;
   }
   auto indices_tensor = in_tensors_.at(1);
   auto indices_shape = indices_tensor->shape();
@@ -59,16 +66,9 @@ int GatherNdCPUKernel::Init() {
 
   thread_sz_count_ = MSMIN(thread_count_, count_);
   thread_sz_stride_ = UP_DIV(count_, thread_sz_count_);
-  int ret = ReSize();
-  return ret;
-}
 
-int GatherNdCPUKernel::ReSize() {
   auto in_shape = in_tensors_.front()->shape();
   int in_rank = in_shape.size();
-  auto indices_tensor = in_tensors_.at(1);
-  auto indices_shape = indices_tensor->shape();
-  int indices_rank = indices_shape.size();
   int idx_lastshape = indices_shape[indices_rank - 1];
   auto indices_ptr = reinterpret_cast<int *>(indices_tensor->Data());
   area_ = 1;

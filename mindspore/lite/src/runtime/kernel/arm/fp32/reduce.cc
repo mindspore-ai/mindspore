@@ -44,10 +44,7 @@ int ReduceCPUKernel::Init() {
   if (ret != RET_OK) {
     return ret;
   }
-  ret = MallocTmpBuffer();
-  if (ret != RET_OK) {
-    return ret;
-  }
+
   switch (mode_) {
     case static_cast<int>(ReduceMode_ReduceSum): {
       reducer_ = ReduceSum;
@@ -77,11 +74,14 @@ int ReduceCPUKernel::Init() {
       MS_LOG(ERROR) << "Reduce unsupported reduce mode: " << mode_;
       return RET_ERROR;
   }
+
   if (!InferShapeDone()) {
     return RET_OK;
   }
   return ReSize();
 }
+
+int ReduceCPUKernel::ReSize() { return MallocTmpBuffer(); }
 
 int ReduceCPUKernel::CallReduceUnit(int task_id) {
   auto ret = reducer_(outer_size_, inner_size_, axis_size_, src_data_, tmp_shape_.data(), dst_data_, task_id,
@@ -149,6 +149,14 @@ int ReduceCPUKernel::Run() {
 }
 
 int ReduceCPUKernel::MallocTmpBuffer() {
+  for (auto buffer : data_buffers_) {
+    if (buffer != nullptr) {
+      free(buffer);
+      buffer = nullptr;
+    }
+  }
+  data_buffers_.clear();
+
   auto input_shape = in_tensors_.at(0)->shape();
   for (auto i = 0; i < num_axes_ - 1; i++) {
     int axis = axes_[i];
