@@ -26,9 +26,6 @@ extern "C" {
 #endif
 void PackDeConvWeightFp32(const float *weight, float *dst, int input_channel, int output_channel, int plane);
 
-int DeConvFp32(const float *input, const float *weight, float *output, float *tmp_buffer,
-               StrassenMatMulParameter matmul_param);
-
 int DeConvPostFp32C4(const float *src, float *tmp_c4, float *dst, const float *bias, int output_channel,
                      int input_plane, int kernel_plane, int output_plane, ConvParameter *conv_param);
 int DeConvPostFp32C8x8(const float *src, float *tmp_out, const float *bias, float *dst, int output_channel,
