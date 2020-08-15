@@ -28,6 +28,9 @@ extern "C" {
 #endif
 
 #ifdef ENABLE_ARM64
+void ConvDwFp16Border(float16_t *dst, const float16_t *src, const float16_t *weight, const float16_t *bias,
+                      size_t height, size_t width, size_t in_kh_step, size_t in_kw_step, size_t kernel_w, size_t relu,
+                      size_t relu6);
 void ConvDwFp16Center(float16_t *dst, const float16_t *src, const float16_t *weight, const float16_t *bias,
                       size_t height, size_t width, size_t kernel_h, size_t kernel_w, size_t out_h_step,
                       size_t block_channel, size_t in_sh_step, size_t in_sw_step, size_t in_kh_step, size_t in_kw_step,

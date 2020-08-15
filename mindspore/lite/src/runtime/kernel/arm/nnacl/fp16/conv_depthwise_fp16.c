@@ -20,7 +20,7 @@
 
 /*conv depthwise fp16 begin*/
 void DepthwiseBorderPixelFp16(float16_t *dst, const float16_t *src, const float16_t *weight, const float16_t *bias,
-                              int height, int width, int in_kh_step, int in_kw_step, int kernel_w, bool is_relu,
+                              int height, int width, int in_kh_step, int in_kw_step, int kernel_w_step, bool is_relu,
                               bool is_relu6) {
   for (int c = 0; c < C8NUM; c++) {
     dst[c] = 0;
@@ -41,7 +41,7 @@ void DepthwiseBorderPixelFp16(float16_t *dst, const float16_t *src, const float1
       weight_kw += C8NUM;
     }  // kernel_w loop
     src_kh += in_kh_step;
-    weight_kh += kernel_w * C8NUM;
+    weight_kh += kernel_w_step;
   }  // kernel_h loop
   for (int c = 0; c < C8NUM; c++) {
     dst[c] += bias[c];
@@ -69,11 +69,15 @@ void DepthwiseBorderFp16(float16_t *dst, const float16_t *src, const float16_t *
 
       const float16_t *src_kernel = src_w + start_kh * sliding->in_kh_step_ + start_kw * sliding->in_kw_step_;
       const float16_t *weight_kernel = weight + (start_kh * conv_param->kernel_w_ + start_kw) * C8NUM;
-
+#ifdef ENABLE_ARM64
+      ConvDwFp16Border(dst_kernel, src_kernel, weight_kernel, bias, end_kh - start_kh, end_kw - start_kw,
+                       sliding->in_kh_step_ * sizeof(float16_t), sliding->in_kw_step_ * sizeof(float16_t),
+                       conv_param->kernel_w_ * C8NUM * sizeof(float16_t), conv_param->is_relu_, conv_param->is_relu6_);
+#else
       DepthwiseBorderPixelFp16(dst_kernel, src_kernel, weight_kernel, bias, end_kh - start_kh, end_kw - start_kw,
-                               sliding->in_kh_step_, sliding->in_kw_step_, conv_param->kernel_w_, conv_param->is_relu_,
-                               conv_param->is_relu6_);
-
+                               sliding->in_kh_step_, sliding->in_kw_step_, conv_param->kernel_w_ * C8NUM,
+                               conv_param->is_relu_, conv_param->is_relu6_);
+#endif
       dst_kernel += sliding->block_channel_;
     }  // width loop
     dst_h += sliding->out_h_step_;
