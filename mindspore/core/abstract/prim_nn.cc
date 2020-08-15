@@ -220,6 +220,24 @@ AbstractBasePtr InferImplFusedBatchNormGrad(const AnalysisEnginePtr &, const Pri
   return std::make_shared<AbstractTuple>(rets);
 }
 
+AbstractBasePtr InferImplBatchNormGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const AbstractBasePtrList &args_spec_list) {
+  // Inputs: five tensors(y_backprop, x, scale, save_mean, save_inv_variance).
+  MS_EXCEPTION_IF_NULL(args_spec_list[1]);
+  MS_EXCEPTION_IF_NULL(args_spec_list[2]);
+  MS_EXCEPTION_IF_NULL(args_spec_list[3]);
+
+  CheckArgsSize(primitive->name(), args_spec_list, 5);
+  auto dx = args_spec_list[1]->Broaden();
+  auto dscale = args_spec_list[2]->Broaden();
+  auto dbias = args_spec_list[3]->Broaden();
+  auto reserve_1 = args_spec_list[4]->Broaden();
+  auto reserve_2 = args_spec_list[5]->Broaden();
+
+  AbstractBasePtrList rets = {dx, dscale, dbias, reserve_1, reserve_2};
+  return std::make_shared<AbstractTuple>(rets);
+}
+
 AbstractBasePtr InferImplReluGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const AbstractBasePtrList &args_spec_list) {
   // Inputs: two tensors(y_backprop, x).
