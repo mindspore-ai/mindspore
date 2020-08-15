@@ -1,15 +1,72 @@
-# Transformer Example
-## Description
-This example implements training and evaluation of Transformer Model, which is introduced in the following paper:
-- Ashish Vaswani, Noam Shazeer, Niki Parmar, JakobUszkoreit, Llion Jones, Aidan N Gomez, Ł ukaszKaiser, and Illia Polosukhin. 2017. Attention is all you need. In NIPS 2017, pages 5998–6008.
+# Contents
 
-## Requirements
-- Install [MindSpore](https://www.mindspore.cn/install/en).
-- Download and preprocess the WMT English-German dataset for training and evaluation.
+- [Transfomer Description](#transformer-description)
+- [Model Architecture](#model-architecture)
+- [Dataset](#dataset)
+- [Environment Requirements](#environment-requirements)
+- [Quick Start](#quick-start)
+- [Script Description](#script-description)
+    - [Script and Sample Code](#script-and-sample-code)
+    - [Script Parameters](#script-parameters)
+    - [Dataset Preparation](#dataset-preparation)
+    - [Training Process](#training-process)
+    - [Evaluation Process](#evaluation-process)
+- [Model Description](#model-description)
+    - [Performance](#performance)
+        - [Training Performance](#training-performance)
+        - [Evaluation Performance](#evaluation-performance)
+- [Description of Random Situation](#description-of-random-situation)
+- [ModelZoo Homepage](#modelzoo-homepage)
 
->  Notes:If you are running an evaluation task, prepare the corresponding checkpoint file.
 
-## Example structure
+# [Transfomer Description](#contents)
+
+Transformer was proposed in 2017 and designed to process sequential data. It is adopted mainly in the field of natural language processing(NLP), for tasks like machine translation or text summarization. Unlike traditional recurrent neural network(RNN) which processes data in order, Transformer adopts attention mechanism and improve the parallelism, therefore reduced training times and made training on larger datasets possible. Since Transformer model was introduced, it has used to tackle many problems in NLP and derives many network models, such as BERT(Bidirectional Encoder Representations from Transformers) and GPT(Generative Pre-trained Transformer).
+
+[Paper](https://arxiv.org/abs/1706.03762):  Ashish Vaswani, Noam Shazeer, Niki Parmar, JakobUszkoreit, Llion Jones, Aidan N Gomez, Ł ukaszKaiser, and Illia Polosukhin. 2017. Attention is all you need. In NIPS 2017, pages 5998–6008.
+
+
+# [Model Architecture](#contents)
+
+Specifically, Transformer contains six encoder modules and six decoder modules. Each encoder module consists of a self-attention layer and a feed forward layer, each decoder module consists of a self-attention layer, a encoder-decoder-attention layer and a feed forward layer.
+
+
+# [Dataset](#contents)
+
+- *WMT Englis-German* for training.
+- *WMT newstest2014* for evaluation. 
+
+
+# [Environment Requirements](#contents)
+
+- Hardware（Ascend）
+  - Prepare hardware environment with Ascend processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. 
+- Framework
+  - [MindSpore](https://gitee.com/mindspore/mindspore)
+- For more information, please check the resources below：
+  - [MindSpore tutorials](https://www.mindspore.cn/tutorial/en/master/index.html) 
+  - [MindSpore API](https://www.mindspore.cn/api/en/master/index.html)
+
+
+# [Quick Start](#contents)
+
+After dataset preparation, you can start training and evaluation as follows: 
+
+```bash
+# run training example
+sh scripts/run_standalone_train_ascend.sh 0 52 /path/ende-l128-mindrecord00
+
+# run distributed training example
+sh scripts/run_distribute_train_ascend.sh 8 52 /path/newstest2014-l128-mindrecord rank_table.json
+
+# run evaluation example
+python eval.py > eval.log 2>&1 &
+```
+
+
+# [Script Description](#contents)
+
+## [Script and Sample Code](#contents)
 
 ```shell
 .
@@ -18,8 +75,8 @@ This example implements training and evaluation of Transformer Model, which is i
   ├─scripts
     ├─process_output.sh
     ├─replace-quote.perl
-    ├─run_distribute_train.sh
-    └─run_standalone_train.sh
+    ├─run_distribute_train_ascend.sh
+    └─run_standalone_train_ascend.sh
   ├─src
     ├─__init__.py
     ├─beam_search.py
@@ -37,73 +94,9 @@ This example implements training and evaluation of Transformer Model, which is i
   └─train.py
 ```
 
----
+## [Script Parameters](#contents)
 
-## Prepare the dataset
-- You may use this [shell script](https://github.com/tensorflow/nmt/blob/master/nmt/scripts/wmt16_en_de.sh) to download and preprocess WMT English-German dataset. Assuming you get the following files:
-  - train.tok.clean.bpe.32000.en
-  - train.tok.clean.bpe.32000.de
-  - vocab.bpe.32000
-  - newstest2014.tok.bpe.32000.en
-  - newstest2014.tok.bpe.32000.de
-  - newstest2014.tok.de
-
-- Convert the original data to mindrecord for training:
-
-    ``` bash
-    paste train.tok.clean.bpe.32000.en train.tok.clean.bpe.32000.de > train.all
-    python create_data.py --input_file train.all --vocab_file vocab.bpe.32000 --output_file /path/ende-l128-mindrecord --max_seq_length 128
-    ```
-- Convert the original data to mindrecord for evaluation:
-
-    ``` bash
-    paste newstest2014.tok.bpe.32000.en newstest2014.tok.bpe.32000.de > test.all
-    python create_data.py --input_file test.all --vocab_file vocab.bpe.32000 --output_file /path/newstest2014-l128-mindrecord --num_splits 1 --max_seq_length 128 --clip_to_max_len True
-    ```
-
-## Running the example
-
-### Training
-- Set options in `config.py`, including loss_scale, learning rate and network hyperparameters. Click [here](https://www.mindspore.cn/tutorial/zh-CN/master/use/data_preparation/loading_the_datasets.html#mindspore) for more information about dataset.
-
-- Run `run_standalone_train.sh` for non-distributed training of Transformer model.
-
-    ``` bash
-    sh scripts/run_standalone_train.sh DEVICE_ID EPOCH_SIZE DATA_PATH
-    ```
-- Run `run_distribute_train.sh` for distributed training of Transformer model.
-
-    ``` bash
-    sh scripts/run_distribute_train.sh DEVICE_NUM EPOCH_SIZE DATA_PATH RANK_TABLE_FILE
-    ```
-
-### Evaluation
-- Set options in `eval_config.py`. Make sure the 'data_file', 'model_file' and 'output_file' are set to your own path.
-
-- Run `eval.py` for evaluation of Transformer model.
-
-    ```bash
-    python eval.py
-    ```
-
-- Run `process_output.sh` to process the output token ids to get the real translation results.
-
-    ```bash
-    sh scripts/process_output.sh REF_DATA EVAL_OUTPUT VOCAB_FILE
-    ```
-    You will get two files, REF_DATA.forbleu and EVAL_OUTPUT.forbleu, for BLEU score calculation.
-
-- Calculate BLEU score, you may use this [perl script](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/generic/multi-bleu.perl) and run following command to get the BLEU score.
-
-    ```bash
-    perl multi-bleu.perl REF_DATA.forbleu < EVAL_OUTPUT.forbleu
-    ```
-
----
-
-## Usage
-
-### Training
+### Training Script Parameters
 ```
 usage: train.py  [--distribute DISTRIBUTE] [--epoch_size N] [----device_num N] [--device_id N]
                  [--enable_save_ckpt ENABLE_SAVE_CKPT]
@@ -128,9 +121,7 @@ options:
     --data_path                path to dataset file: PATH, default is ""
 ```
 
-## Options and Parameters
-It contains of parameters of Transformer model and options for training and evaluation, which is set in file `config.py` and `evaluation_config.py` respectively.
-### Options:
+### Running Options
 ```
 config.py:
     transformer_network             version of Transformer model: base | large, default is large
@@ -146,7 +137,7 @@ eval_config.py:
     output_file                     output file of evaluation: PATH
 ```
 
-### Parameters:
+### Network Parameters
 ```
 Parameters for dataset and network (Training/Evaluation):
     batch_size                      batch size of input dataset: N, default is 96
@@ -174,3 +165,114 @@ Parameters for learning rate:
     start_decay_step                step of the learning rate to decay: N
     min_lr                          minimal learning rate: Q
 ```
+
+## [Dataset Preparation](#contents)
+- You may use this [shell script](https://github.com/tensorflow/nmt/blob/master/nmt/scripts/wmt16_en_de.sh) to download and preprocess WMT English-German dataset. Assuming you get the following files:
+  - train.tok.clean.bpe.32000.en
+  - train.tok.clean.bpe.32000.de
+  - vocab.bpe.32000
+  - newstest2014.tok.bpe.32000.en
+  - newstest2014.tok.bpe.32000.de
+  - newstest2014.tok.de
+
+- Convert the original data to mindrecord for training:
+
+    ``` bash
+    paste train.tok.clean.bpe.32000.en train.tok.clean.bpe.32000.de > train.all
+    python create_data.py --input_file train.all --vocab_file vocab.bpe.32000 --output_file /path/ende-l128-mindrecord --max_seq_length 128
+    ```
+- Convert the original data to mindrecord for evaluation:
+
+    ``` bash
+    paste newstest2014.tok.bpe.32000.en newstest2014.tok.bpe.32000.de > test.all
+    python create_data.py --input_file test.all --vocab_file vocab.bpe.32000 --output_file /path/newstest2014-l128-mindrecord --num_splits 1 --max_seq_length 128 --clip_to_max_len True
+    ```
+
+
+## [Training Process](#contents)
+
+- Set options in `config.py`, including loss_scale, learning rate and network hyperparameters. Click [here](https://www.mindspore.cn/tutorial/zh-CN/master/use/data_preparation/loading_the_datasets.html#mindspore) for more information about dataset.
+
+- Run `run_standalone_train_ascend.sh` for non-distributed training of Transformer model.
+
+    ``` bash
+    sh scripts/run_standalone_train_ascend.sh DEVICE_ID EPOCH_SIZE DATA_PATH
+    ```
+- Run `run_distribute_train_ascend.sh` for distributed training of Transformer model.
+
+    ``` bash
+    sh scripts/run_distribute_train_ascend.sh DEVICE_NUM EPOCH_SIZE DATA_PATH RANK_TABLE_FILE
+    ```
+
+
+## [Evaluation Process](#contents)
+
+- Set options in `eval_config.py`. Make sure the 'data_file', 'model_file' and 'output_file' are set to your own path.
+
+- Run `eval.py` for evaluation of Transformer model.
+
+    ```bash
+    python eval.py
+    ```
+
+- Run `process_output.sh` to process the output token ids to get the real translation results.
+
+    ```bash
+    sh scripts/process_output.sh REF_DATA EVAL_OUTPUT VOCAB_FILE
+    ```
+    You will get two files, REF_DATA.forbleu and EVAL_OUTPUT.forbleu, for BLEU score calculation.
+
+- Calculate BLEU score, you may use this [perl script](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/generic/multi-bleu.perl) and run following command to get the BLEU score.
+
+    ```bash
+    perl multi-bleu.perl REF_DATA.forbleu < EVAL_OUTPUT.forbleu
+    ```
+
+# [Model Description](#contents)
+## [Performance](#contents)
+
+### Training Performance 
+
+| Parameters                 | Transformer                                                    |
+| -------------------------- | -------------------------------------------------------------- |
+| Resource                   | Ascend 910                                                     |
+| uploaded Date              | 06/09/2020 (month/day/year)                                    |
+| MindSpore Version          | 0.5.0-beta                                                     |
+| Dataset                    | WMT Englis-German                                              |
+| Training Parameters        | epoch=52, batch_size=96                                        |
+| Optimizer                  | Adam                                                           |
+| Loss Function              | Softmax Cross Entropy                                          |
+| BLEU Score                 | 28.7                                                           |
+| Speed                      | 400ms/step (8pcs)                                              |
+| Loss                       | 2.8                                                            |
+| Params (M)                 | 213.7                                                          |
+| Checkpoint for inference   | 2.4G (.ckpt file)                                              |
+| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/transformer |
+
+
+### Evaluation Performance
+
+| Parameters          | GoogleNet                   |
+| ------------------- | --------------------------- |
+| Resource            | Ascend 910                  |
+| Uploaded Date       | 06/09/2020 (month/day/year) |
+| MindSpore Version   | 0.5.0-beta                  |
+| Dataset             | WMT newstest2014            |
+| batch_size          | 1                           |
+| outputs             | BLEU score                  |
+| Accuracy            | BLEU=28.7                   |
+
+
+# [Description of Random Situation](#contents)
+
+There are three random situations:
+- Shuffle of the dataset.
+- Initialization of some model weights.
+- Dropout operations.
+
+Some seeds have already been set in train.py to avoid the randomness of dataset shuffle and weight initialization. If you want to disable dropout, please set the corresponding dropout_prob parameter to 0 in src/config.py.
+
+
+# [ModelZoo Homepage](#contents)
+
+Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
