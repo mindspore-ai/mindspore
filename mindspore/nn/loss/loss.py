@@ -80,7 +80,7 @@ class L1Loss(_Loss):
     When argument reduction is 'sum', the sum of :math:`L(x, y)` will be returned. :math:`N` is the batch size.
 
     Args:
-        reduction (str): Type of reduction to apply to loss. The optional values are "mean", "sum", "none".
+        reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
             Default: "mean".
 
     Inputs:
@@ -107,7 +107,7 @@ class L1Loss(_Loss):
 
 class MSELoss(_Loss):
     r"""
-    MSELoss create a criterion to measures the mean squared error (squared L2-norm) between :math:`x` and :math:`y`
+    MSELoss creates a criterion to measure the mean squared error (squared L2-norm) between :math:`x` and :math:`y`
     by element, where :math:`x` is the input and :math:`y` is the target.
 
     For simplicity, let :math:`x` and :math:`y` be 1-dimensional Tensor with length :math:`N`,
@@ -120,7 +120,7 @@ class MSELoss(_Loss):
     When argument reduction is 'sum', the sum of :math:`L(x, y)` will be returned. :math:`N` is the batch size.
 
     Args:
-        reduction (str): Type of reduction to apply to loss. The optional values are "mean", "sum", "none".
+        reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
             Default: "mean".
 
     Inputs:
@@ -210,14 +210,14 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
 
     Note:
         While the target classes are mutually exclusive, i.e., only one class is positive in the target, the predicted
-        probabilities need not be exclusive. All that is required is that the predicted probability distribution
+        probabilities need not to be exclusive. It is only required that the predicted probability distribution
         of entry is a valid one.
 
     Args:
         is_grad (bool): Specifies whether calculate grad only. Default: True.
         sparse (bool): Specifies whether labels use sparse format or not. Default: False.
-        reduction (Union[str, None]): Type of reduction to apply to loss. Support 'sum' or 'mean' If None,
-            do not reduction. Default: None.
+        reduction (Union[str, None]): Type of reduction to be applied to loss. Support 'sum' and 'mean'. If None,
+            do not perform reduction. Default: None.
         smooth_factor (float): Label smoothing factor. It is a optional input which should be in range [0, 1].
             Default: 0.
         num_classes (int): The number of classes in the task. It is a optional input Default: 2.
@@ -225,7 +225,7 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
     Inputs:
         - **logits** (Tensor) - Tensor of shape (N, C).
         - **labels** (Tensor) - Tensor of shape (N, ). If `sparse` is True, The type of
-          `labels` is mindspore.int32. If `sparse` is False, the type of `labels` is same as the type of `logits`.
+          `labels` is mindspore.int32. If `sparse` is False, the type of `labels` is the same as the type of `logits`.
 
     Outputs:
         Tensor, a tensor of the same shape as logits with the component-wise
@@ -282,8 +282,8 @@ class SoftmaxCrossEntropyExpand(Cell):
     where :math:`x_i` is a 1D score Tensor, :math:`t_i` is the target class.
 
     Note:
-        When argument sparse is set to True, the format of label is the index
-        range from :math:`0` to :math:`C - 1` instead of one-hot vectors.
+        When argument sparse is set to True, the format of the label is the index
+        ranging from :math:`0` to :math:`C - 1` instead of one-hot vectors.
 
     Args:
         sparse(bool): Specifies whether labels use sparse format or not. Default: False.

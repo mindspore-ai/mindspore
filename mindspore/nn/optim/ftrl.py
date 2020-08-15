@@ -114,12 +114,12 @@ class FTRL(Optimizer):
             than or equal to zero. Use fixed learning rate if lr_power is zero. Default: -0.5.
         l1 (float): l1 regularization strength, must be greater than or equal to zero. Default: 0.0.
         l2 (float): l2 regularization strength, must be greater than or equal to zero. Default: 0.0.
-        use_locking (bool): If True use locks for update operation. Default: False.
+        use_locking (bool): If True, use locks for updating operation. Default: False.
         loss_scale (float): Value for the loss scale. It should be equal to or greater than 1.0. Default: 1.0.
         weight_decay (float): Weight decay value to multiply weight, must be zero or positive value. Default: 0.0.
 
     Inputs:
-        - **grads** (tuple[Tensor]) - The gradients of `params` in optimizer, the shape is as same as the `params`
+        - **grads** (tuple[Tensor]) - The gradients of `params` in the optimizer, the shape is the same as the `params`
           in optimizer.
 
     Outputs:

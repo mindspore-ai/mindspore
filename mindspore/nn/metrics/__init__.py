@@ -69,7 +69,7 @@ def names():
 
 def get_metric_fn(name, *args, **kwargs):
     """
-    Gets the metric method base on the input name.
+    Gets the metric method based on the input name.
 
     Args:
         name (str): The name of metric method. Refer to the '__factory__'

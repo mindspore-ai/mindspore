@@ -34,7 +34,7 @@ pkg_dir = os.path.join(pwd, 'build/package')
 
 
 def _read_file(filename):
-    with open(os.path.join(pwd, filename)) as f:
+    with open(os.path.join(pwd, filename), encoding='UTF-8') as f:
         return f.read()
 
 

@@ -36,7 +36,7 @@ class Embedding(Cell):
     the corresponding word embeddings.
 
     Note:
-        When 'use_one_hot' is set to True, the input should be of type mindspore.int32.
+        When 'use_one_hot' is set to True, the type of the input should be mindspore.int32.
 
     Args:
         vocab_size (int): Size of the dictionary of embeddings.
@@ -48,9 +48,9 @@ class Embedding(Cell):
         dtype (:class:`mindspore.dtype`): Data type of input. Default: mindspore.float32.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(\text{batch_size}, \text{input_length})`. The element of
-          the Tensor should be integer and not larger than vocab_size. else the corresponding embedding vector is zero
-          if larger than vocab_size.
+        - **input** (Tensor) - Tensor of shape :math:`(\text{batch_size}, \text{input_length})`. The elements of
+          the Tensor should be integer and not larger than vocab_size. Otherwise the corresponding embedding vector will
+          be zero.
 
     Outputs:
         Tensor of shape :math:`(\text{batch_size}, \text{input_length}, \text{embedding_size})`.

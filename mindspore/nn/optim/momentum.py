@@ -83,12 +83,12 @@ class Momentum(Optimizer):
               the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
               in the value of 'order_params' should be in one of group parameters.
 
-        learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or graph for the learning rate.
-            When the learning_rate is a Iterable or a Tensor with dimension of 1, use dynamic learning rate, then
+        learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or a graph for the learning rate.
+            When the learning_rate is an Iterable or a Tensor in a 1D dimension, use dynamic learning rate, then
             the i-th step will take the i-th value as the learning rate. When the learning_rate is LearningRateSchedule,
             use dynamic learning rate, the i-th learning rate will be calculated during the process of training
-            according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor with
-            dimension of 0, use fixed learning rate. Other cases are not supported. The float learning rate should be
+            according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor in a zero
+            dimension, use fixed learning rate. Other cases are not supported. The float learning rate should be
             equal to or greater than 0. If the type of `learning_rate` is int, it will be converted to float.
         momentum (float): Hyperparameter of type float, means momentum for the moving average.
             It should be at least 0.0.

@@ -87,22 +87,22 @@ class ProximalAdagrad(Optimizer):
               in the value of 'order_params' should be in one of group parameters.
 
         accum (float): The starting value for accumulators, must be zero or positive values. Default: 0.1.
-        learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or graph for the learning rate.
-            When the learning_rate is a Iterable or a Tensor with dimension of 1, use dynamic learning rate, then
+        learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or a graph for the learning rate.
+            When the learning_rate is an Iterable or a Tensor in a 1D dimension, use dynamic learning rate, then
             the i-th step will take the i-th value as the learning rate. When the learning_rate is LearningRateSchedule,
             use dynamic learning rate, the i-th learning rate will be calculated during the process of training
-            according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor with
-            dimension of 0, use fixed learning rate. Other cases are not supported. The float learning rate should be
+            according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor in a zero
+            dimension, use fixed learning rate. Other cases are not supported. The float learning rate should be
             equal to or greater than 0. If the type of `learning_rate` is int, it will be converted to float.
             Default: 0.001.
         l1 (float): l1 regularization strength, must be greater than or equal to zero. Default: 0.0.
         l2 (float): l2 regularization strength, must be greater than or equal to zero. Default: 0.0.
-        use_locking (bool): If True use locks for update operation. Default: False.
+        use_locking (bool): If True, use locks for updating operation. Default: False.
         loss_scale (float): Value for the loss scale. It should be greater than 0.0. Default: 1.0.
         weight_decay (float): Weight decay value to multiply weight, must be zero or positive value. Default: 0.0.
 
     Inputs:
-        - **grads** (tuple[Tensor]) - The gradients of `params` in optimizer, the shape is as same as the `params`
+        - **grads** (tuple[Tensor]) - The gradients of `params` in the optimizer, the shape is the same as the `params`
           in optimizer.
 
     Outputs:

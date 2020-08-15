@@ -661,7 +661,7 @@ class LogSoftmax(GraphKernel):
     Log Softmax activation function.
 
     Applies the Log Softmax function to the input tensor on the specified axis.
-    Suppose a slice along the given aixs :math:`x` then for each element :math:`x_i`
+    Suppose a slice in the given aixs :math:`x` then for each element :math:`x_i`
     the Log Softmax function is shown as follows:
 
     .. math::
@@ -987,10 +987,10 @@ class LayerNorm(Cell):
     Applies Layer Normalization over a mini-batch of inputs.
 
     Layer normalization is widely used in recurrent neural networks. It applies
-    normalization over a mini-batch of inputs for each single training case as described
+    normalization on a mini-batch of inputs for each single training case as described
     in the paper `Layer Normalization <https://arxiv.org/pdf/1607.06450.pdf>`_. Unlike batch
     normalization, layer normalization performs exactly the same computation at training and
-    testing times. It can be described using the following formula. It is applied across all channels
+    testing time. It can be described using the following formula. It is applied across all channels
     and pixel but only one batch size.
 
     .. math::
@@ -1139,9 +1139,9 @@ class LambNextMV(GraphKernel):
     Outputs:
         Tuple of 2 Tensor.
 
-        - **add3** (Tensor) - The shape is same as the shape after broadcasting, and the data type is
+        - **add3** (Tensor) - The shape is the same as the shape after broadcasting, and the data type is
                               the one with high precision or high digits among the inputs.
-        - **realdiv4** (Tensor) - The shape is same as the shape after broadcasting, and the data type is
+        - **realdiv4** (Tensor) - The shape is the same as the shape after broadcasting, and the data type is
                                   the one with high precision or high digits among the inputs.
 
     Examples:

@@ -65,7 +65,7 @@ class Dropout(Cell):
         dtype (:class:`mindspore.dtype`): Data type of input. Default: mindspore.float32.
 
     Raises:
-        ValueError: If keep_prob is not in range (0, 1).
+        ValueError: If `keep_prob` is not in range (0, 1).
 
     Inputs:
         - **input** (Tensor) - An N-D Tensor.
@@ -373,8 +373,8 @@ class OneHot(Cell):
         axis is created at dimension `axis`.
 
     Args:
-        axis (int): Features x depth if axis == -1, depth x features
-                    if axis == 0. Default: -1.
+        axis (int): Features x depth if axis is -1, depth x features
+                    if axis is 0. Default: -1.
         depth (int): A scalar defining the depth of the one hot dimension. Default: 1.
         on_value (float): A scalar defining the value to fill in output[i][j]
                           when indices[j] = i. Default: 1.0.
@@ -492,18 +492,18 @@ class Unfold(Cell):
     The input tensor must be a 4-D tensor and the data format is NCHW.
 
     Args:
-        ksizes (Union[tuple[int], list[int]]): The size of sliding window, should be a tuple or list of int,
+        ksizes (Union[tuple[int], list[int]]): The size of sliding window, should be a tuple or a list of integers,
             and the format is [1, ksize_row, ksize_col, 1].
         strides (Union[tuple[int], list[int]]): Distance between the centers of the two consecutive patches,
             should be a tuple or list of int, and the format is [1, stride_row, stride_col, 1].
-        rates (Union[tuple[int], list[int]]): In each extracted patch, the gap between the corresponding dim
-            pixel positions, should be a tuple or list of int, and the format is [1, rate_row, rate_col, 1].
+        rates (Union[tuple[int], list[int]]): In each extracted patch, the gap between the corresponding dimension
+            pixel positions, should be a tuple or a list of integers, and the format is [1, rate_row, rate_col, 1].
         padding (str): The type of padding algorithm, is a string whose value is "same" or "valid",
             not case sensitive. Default: "valid".
 
             - same: Means that the patch can take the part beyond the original image, and this part is filled with 0.
 
-            - valid: Means that the patch area taken must be completely contained in the original image.
+            - valid: Means that the taken patch area must be completely covered in the original image.
 
     Inputs:
         - **input_x** (Tensor) - A 4-D tensor whose shape is [in_batch, in_depth, in_row, in_col] and
@@ -511,7 +511,7 @@ class Unfold(Cell):
 
     Outputs:
         Tensor, a 4-D tensor whose data type is same as 'input_x',
-        and the shape is [out_batch, out_depth, out_row, out_col], the out_batch is same as the in_batch.
+        and the shape is [out_batch, out_depth, out_row, out_col], the out_batch is the same as the in_batch.
 
     Examples:
         >>> net = Unfold(ksizes=[1, 2, 2, 1], strides=[1, 1, 1, 1], rates=[1, 1, 1, 1])
@@ -556,11 +556,11 @@ class MatrixDiag(Cell):
     Returns a batched diagonal tensor with a given batched diagonal values.
 
     Inputs:
-        - **x** (Tensor) - The diagonal values. It can be of the following data types:
-          float32, float16, int32, int8, uint8.
+        - **x** (Tensor) - The diagonal values. It can be one of the following data types:
+          float32, float16, int32, int8, and uint8.
 
     Outputs:
-        Tensor, same type as input `x`. The shape should be x.shape + (x.shape[-1], ).
+        Tensor, has the same type as input `x`. The shape should be x.shape + (x.shape[-1], ).
 
     Examples:
         >>> x = Tensor(np.array([1, -1]), mstype.float32)
@@ -587,11 +587,11 @@ class MatrixDiagPart(Cell):
     Returns the batched diagonal part of a batched tensor.
 
     Inputs:
-        - **x** (Tensor) - The batched tensor. It can be of the following data types:
-          float32, float16, int32, int8, uint8.
+        - **x** (Tensor) - The batched tensor. It can be one of the following data types:
+          float32, float16, int32, int8, and uint8.
 
     Outputs:
-        Tensor, same type as input `x`. The shape should be x.shape[:-2] + [min(x.shape[-2:])].
+        Tensor, has the same type as input `x`. The shape should be x.shape[:-2] + [min(x.shape[-2:])].
 
     Examples:
         >>> x = Tensor([[[-1, 0], [0, 1]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
@@ -617,12 +617,12 @@ class MatrixSetDiag(Cell):
     Modify the batched diagonal part of a batched tensor.
 
     Inputs:
-        - **x** (Tensor) - The batched tensor. It can be of the following data types:
-          float32, float16, int32, int8, uint8.
+        - **x** (Tensor) - The batched tensor. It can be one of the following data types:
+          float32, float16, int32, int8, and uint8.
         - **diagonal** (Tensor) - The diagonal values.
 
     Outputs:
-        Tensor, same type as input `x`. The shape same as `x`.
+        Tensor, has the same type and shape as input `x`.
 
     Examples:
         >>> x = Tensor([[[-1, 0], [0, 1]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)

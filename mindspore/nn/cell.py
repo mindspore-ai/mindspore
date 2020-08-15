@@ -148,7 +148,7 @@ class Cell:
 
     def update_cell_type(self, cell_type):
         """
-        Update the current cell type mainly identify if quantization aware training network.
+        The current cell type is updated when a quantization aware training network is encountered.
 
         After being invoked, it can set the cell type to 'cell_type'.
         """
@@ -936,7 +936,7 @@ class GraphKernel(Cell):
     Base class for GraphKernel.
 
     A `GraphKernel` a composite of basic primitives and can be compiled into a fused kernel automatically when
-    context.set_context(enable_graph_kernel=True).
+    enable_graph_kernel in context is set to True.
 
     Examples:
         >>> class Relu(GraphKernel):

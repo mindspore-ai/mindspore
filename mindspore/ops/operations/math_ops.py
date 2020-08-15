@@ -132,7 +132,7 @@ class TensorAdd(_MathBinaryOp):
           a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,
+        Tensor, the shape is the same as the shape after broadcasting,
         and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
@@ -1067,7 +1067,7 @@ class Sub(_MathBinaryOp):
           a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,
+        Tensor, the shape is the same as the shape after broadcasting,
         and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
@@ -1105,7 +1105,7 @@ class Mul(_MathBinaryOp):
           a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,
+        Tensor, the shape is the same as the shape after broadcasting,
         and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
@@ -1144,7 +1144,7 @@ class SquaredDifference(_MathBinaryOp):
           float16, float32, int32 or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,
+        Tensor, the shape is the same as the shape after broadcasting,
         and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
@@ -1333,7 +1333,7 @@ class Pow(_MathBinaryOp):
           a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,
+        Tensor, the shape is the same as the shape after broadcasting,
         and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
@@ -1618,7 +1618,7 @@ class Minimum(_MathBinaryOp):
           a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,
+        Tensor, the shape is the same as the shape after broadcasting,
         and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
@@ -1656,7 +1656,7 @@ class Maximum(_MathBinaryOp):
           a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,
+        Tensor, the shape is the same as the shape after broadcasting,
         and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
@@ -1694,7 +1694,7 @@ class RealDiv(_MathBinaryOp):
           a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,
+        Tensor, the shape is the same as the shape after broadcasting,
         and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
@@ -1733,7 +1733,7 @@ class Div(_MathBinaryOp):
           is a number or a bool, the second input should be a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,
+        Tensor, the shape is the same as the shape after broadcasting,
         and the data type is the one with high precision or high digits among the two inputs.
 
     Raises:
@@ -1772,7 +1772,7 @@ class DivNoNan(_MathBinaryOp):
           a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,
+        Tensor, the shape is the same as the shape after broadcasting,
         and the data type is the one with high precision or high digits among the two inputs.
 
     Raises:
@@ -1814,7 +1814,7 @@ class FloorDiv(_MathBinaryOp):
           a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,
+        Tensor, the shape is the same as the shape after broadcasting,
         and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
@@ -1844,7 +1844,7 @@ class TruncateDiv(_MathBinaryOp):
           a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,
+        Tensor, the shape is the same as the shape after broadcasting,
         and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
@@ -1873,7 +1873,7 @@ class TruncateMod(_MathBinaryOp):
           a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,
+        Tensor, the shape is the same as the shape after broadcasting,
         and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
@@ -1900,7 +1900,7 @@ class Mod(_MathBinaryOp):
           the second input should be a tensor whose data type is number.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,
+        Tensor, the shape is the same as the shape after broadcasting,
         and the data type is the one with high precision or high digits among the two inputs.
 
     Raises:
@@ -1967,7 +1967,7 @@ class FloorMod(_MathBinaryOp):
           a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,
+        Tensor, the shape is the same as the shape after broadcasting,
         and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
@@ -2025,7 +2025,7 @@ class Xdivy(_MathBinaryOp):
           a bool when the first input is a tensor or a tensor whose data type is float16, float32 or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,
+        Tensor, the shape is the same as the shape after broadcasting,
         and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
@@ -2059,7 +2059,7 @@ class Xlogy(_MathBinaryOp):
           The value must be positive.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,
+        Tensor, the shape is the same as the shape after broadcasting,
         and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
@@ -2219,7 +2219,7 @@ class Equal(_LogicBinaryOp):
           a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,and the data type is bool.
+        Tensor, the shape is the same as the shape after broadcasting,and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -2250,7 +2250,7 @@ class ApproximateEqual(_LogicBinaryOp):
         - **x2** (Tensor) - A tensor of the same type and shape as 'x1'.
 
     Outputs:
-        Tensor, the shape is same as the shape of 'x1', and the data type is bool.
+        Tensor, the shape is the same as the shape of 'x1', and the data type is bool.
 
     Examples:
         >>> x1 = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -2328,7 +2328,7 @@ class NotEqual(_LogicBinaryOp):
           a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,and the data type is bool.
+        Tensor, the shape is the same as the shape after broadcasting,and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -2364,7 +2364,7 @@ class Greater(_LogicBinaryOp):
           a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,and the data type is bool.
+        Tensor, the shape is the same as the shape after broadcasting,and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -2399,7 +2399,7 @@ class GreaterEqual(_LogicBinaryOp):
           a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,and the data type is bool.
+        Tensor, the shape is the same as the shape after broadcasting,and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -2434,7 +2434,7 @@ class Less(_LogicBinaryOp):
           a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,and the data type is bool.
+        Tensor, the shape is the same as the shape after broadcasting,and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -2469,7 +2469,7 @@ class LessEqual(_LogicBinaryOp):
           a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,and the data type is bool.
+        Tensor, the shape is the same as the shape after broadcasting,and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -2495,7 +2495,7 @@ class LogicalNot(PrimitiveWithInfer):
         - **input_x** (Tensor) - The input tensor whose dtype is bool.
 
     Outputs:
-        Tensor, the shape is same as the `input_x`, and the dtype is bool.
+        Tensor, the shape is the same as the `input_x`, and the dtype is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([True, False, True]), mindspore.bool_)
@@ -2533,7 +2533,7 @@ class LogicalAnd(_LogicBinaryOp):
           a tensor whose data type is bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is bool.
+        Tensor, the shape is the same as the shape after broadcasting, and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([True, False, True]), mindspore.bool_)
@@ -2563,7 +2563,7 @@ class LogicalOr(_LogicBinaryOp):
           a tensor whose data type is bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,and the data type is bool.
+        Tensor, the shape is the same as the shape after broadcasting,and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([True, False, True]), mindspore.bool_)
@@ -3182,7 +3182,7 @@ class Atan2(_MathBinaryOp):
         - **input_y** (Tensor) - The input tensor.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting,and the data type is same as `input_x`.
+        Tensor, the shape is the same as the shape after broadcasting,and the data type is same as `input_x`.
 
     Examples:
          >>> input_x = Tensor(np.array([[0, 1]]), mindspore.float32)

@@ -35,7 +35,7 @@ class LSTM(Cell):
     Applies a LSTM to the input.
 
     There are two pipelines connecting two consecutive cells in a LSTM model; one is cell state pipeline
-    and another is hidden state pipeline. Denote two consecutive time nodes as :math:`t-1` and :math:`t`.
+    and the other is hidden state pipeline. Denote two consecutive time nodes as :math:`t-1` and :math:`t`.
     Given an input :math:`x_t` at time :math:`t`, an hidden state :math:`h_{t-1}` and an cell
     state :math:`c_{t-1}` of the layer at time :math:`{t-1}`, the cell state and hidden state at
     time :math:`t` is computed using an gating mechanism. Input gate :math:`i_t` is designed to protect the cell
@@ -68,18 +68,17 @@ class LSTM(Cell):
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
         num_layers (int): Number of layers of stacked LSTM . Default: 1.
-        has_bias (bool): Specifies whether has bias `b_ih` and `b_hh`. Default: True.
+        has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: True.
         batch_first (bool): Specifies whether the first dimension of input is batch_size. Default: False.
         dropout (float, int): If not 0, append `Dropout` layer on the outputs of each
             LSTM layer except the last layer. Default 0. The range of dropout is [0.0, 1.0].
-        bidirectional (bool): Specifies whether this is a bidirectional LSTM. If set True,
-            number of directions will be 2 otherwise number of directions is 1. Default: False.
+        bidirectional (bool): Specifies whether it is a bidirectional LSTM. Default: False.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape (seq_len, batch_size, `input_size`).
         - **hx** (tuple) - A tuple of two Tensors (h_0, c_0) both of data type mindspore.float32 or
           mindspore.float16 and shape (num_directions * `num_layers`, batch_size, `hidden_size`).
-          Data type of `hx` should be the same of `input`.
+          Data type of `hx` should be the same as `input`.
 
     Outputs:
         Tuple, a tuple constains (`output`, (`h_n`, `c_n`)).
@@ -205,7 +204,7 @@ class LSTMCell(Cell):
     Applies a LSTM layer to the input.
 
     There are two pipelines connecting two consecutive cells in a LSTM model; one is cell state pipeline
-    and another is hidden state pipeline. Denote two consecutive time nodes as :math:`t-1` and :math:`t`.
+    and the other is hidden state pipeline. Denote two consecutive time nodes as :math:`t-1` and :math:`t`.
     Given an input :math:`x_t` at time :math:`t`, an hidden state :math:`h_{t-1}` and an cell
     state :math:`c_{t-1}` of the layer at time :math:`{t-1}`, the cell state and hidden state at
     time :math:`t` is computed using an gating mechanism. Input gate :math:`i_t` is designed to protect the cell
@@ -238,7 +237,7 @@ class LSTMCell(Cell):
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
         layer_index (int): index of current layer of stacked LSTM . Default: 0.
-        has_bias (bool): Specifies whether has bias `b_ih` and `b_hh`. Default: True.
+        has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: True.
         batch_first (bool): Specifies whether the first dimension of input is batch_size. Default: False.
         dropout (float, int): If not 0, append `Dropout` layer on the outputs of each
             LSTM layer except the last layer. Default 0. The range of dropout is [0.0, 1.0].

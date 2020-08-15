@@ -55,7 +55,7 @@ class Softmax(Cell):
     .. math::
         \text{softmax}(x_{i}) =  \frac{\exp(x_i)}{\sum_{j=0}^{n-1}\exp(x_j)},
 
-    where :math:`x_{i}` is the :math:`i`-th slice along the given dim of the input Tensor.
+    where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
 
     Args:
         axis (Union[int, tuple[int]]): The axis to apply Softmax operation, -1 means the last dimension. Default: -1.
@@ -87,11 +87,11 @@ class LogSoftmax(Cell):
 
     Applies the LogSoftmax function to n-dimensional input tensor.
 
-    The input is transformed with Softmax function and then with log function to lie in range[-inf,0).
+    The input is transformed by the Softmax function and then by the log function to lie in range[-inf,0).
 
     Logsoftmax is defined as:
     :math:`\text{logsoftmax}(x_i) = \log \left(\frac{\exp(x_i)}{\sum_{j=0}^{n-1} \exp(x_j)}\right)`,
-    where :math:`x_{i}` is the :math:`i`-th slice along the given dim of the input Tensor.
+    where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
 
     Args:
         axis (int): The axis to apply LogSoftmax operation, -1 means the last dimension. Default: -1.
@@ -123,7 +123,7 @@ class ELU(Cell):
     Exponential Linear Uint activation function.
 
     Applies the exponential linear unit function element-wise.
-    The activation function defined as:
+    The activation function is defined as:
 
     .. math::
         E_{i} =
@@ -162,7 +162,7 @@ class ReLU(Cell):
 
     Applies the rectified linear unit function element-wise. It returns
     element-wise :math:`\max(0, x)`, specially, the neurons with the negative output
-    will suppressed and the active neurons will stay the same.
+    will be suppressed and the active neurons will stay the same.
 
     Inputs:
         - **input_data** (Tensor) - The input of ReLU.
@@ -197,7 +197,7 @@ class ReLU6(Cell):
         - **input_data** (Tensor) - The input of ReLU6.
 
     Outputs:
-        Tensor, which has the same type with `input_data`.
+        Tensor, which has the same type as `input_data`.
 
     Examples:
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
@@ -234,7 +234,7 @@ class LeakyReLU(Cell):
         - **input_x** (Tensor) - The input of LeakyReLU.
 
     Outputs:
-        Tensor, has the same type and shape with the `input_x`.
+        Tensor, has the same type and shape as the `input_x`.
 
     Examples:
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
@@ -365,7 +365,7 @@ class PReLU(Cell):
     PReLU is defined as: :math:`prelu(x_i)= \max(0, x_i) + w * \min(0, x_i)`, where :math:`x_i`
     is an element of an channel of the input.
 
-    Here :math:`w` is an learnable parameter with default initial value 0.25.
+    Here :math:`w` is a learnable parameter with a default initial value 0.25.
     Parameter :math:`w` has dimensionality of the argument channel. If called without argument
     channel, a single parameter :math:`w` will be shared across all channels.
 
@@ -413,7 +413,7 @@ class PReLU(Cell):
 
 class HSwish(Cell):
     r"""
-    rHard swish activation function.
+    Hard swish activation function.
 
     Applies hswish-type activation element-wise. The input is a Tensor with any valid shape.
 
@@ -422,7 +422,7 @@ class HSwish(Cell):
     .. math::
         \text{hswish}(x_{i}) = x_{i} * \frac{ReLU6(x_{i} + 3)}{6},
 
-    where :math:`x_{i}` is the :math:`i`-th slice along the given dim of the input Tensor.
+    where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
 
     Inputs:
         - **input_data** (Tensor) - The input of HSwish.
@@ -456,7 +456,7 @@ class HSigmoid(Cell):
     .. math::
         \text{hsigmoid}(x_{i}) = max(0, min(1, \frac{x_{i} + 3}{6})),
 
-    where :math:`x_{i}` is the :math:`i`-th slice along the given dim of the input Tensor.
+    where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
 
     Inputs:
         - **input_data** (Tensor) - The input of HSigmoid.

@@ -138,9 +138,9 @@ class TrainOneStepCell(Cell):
     r"""
     Network training package class.
 
-    Wraps the network with an optimizer. The resulting Cell be trained with input *inputs.
-    Backward graph will be created in the construct function to do parameter updating. Different
-    parallel modes are available to run the training.
+    Wraps the network with an optimizer. The resulting Cell is trained with input *inputs.
+    The backward graph will be created in the construct function to update the parameter. Different
+    parallel modes are available for training.
 
     Args:
         network (Cell): The training network.
@@ -231,14 +231,14 @@ class DataWrapper(Cell):
 
 class GetNextSingleOp(Cell):
     """
-    Cell to run get next operation.
+    Cell to run for getting the next operation.
 
     Args:
         dataset_types (list[:class:`mindspore.dtype`]): The types of dataset.
         dataset_shapes (list[tuple[int]]): The shapes of dataset.
         queue_name (str): Queue name to fetch the data.
 
-    Detailed information, please refer to `ops.operations.GetNext`.
+    For detailed information, refer to `ops.operations.GetNext`.
     """
 
     def __init__(self, dataset_types, dataset_shapes, queue_name):
@@ -360,7 +360,7 @@ class ParameterUpdate(Cell):
         param (Parameter): The parameter to be updated manually.
 
     Raises:
-        KeyError: If parameter with the specified name do not exist.
+        KeyError: If parameter with the specified name does not exist.
 
     Examples:
         >>> network = Net()

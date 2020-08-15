@@ -40,8 +40,6 @@ class Optimizer(Cell):
     """
     Base class for all optimizers.
 
-    This class defines the API to add Ops to train a model.
-
     Note:
         This class defines the API to add Ops to train a model. Never use
         this class directly, but instead instantiate one of its subclasses.
@@ -55,12 +53,12 @@ class Optimizer(Cell):
         To improve parameter groups performance, the customized order of parameters can be supported.
 
     Args:
-        learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or graph for the learning
-            rate. When the learning_rate is a Iterable or a Tensor with dimension of 1, use dynamic learning rate, then
+        learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or a graph for the learning
+            rate. When the learning_rate is an Iterable or a Tensor in a 1D dimension, use dynamic learning rate, then
             the i-th step will take the i-th value as the learning rate. When the learning_rate is LearningRateSchedule,
             use dynamic learning rate, the i-th learning rate will be calculated during the process of training
-            according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor with
-            dimension of 0, use fixed learning rate. Other cases are not supported. The float learning rate should be
+            according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor in a zero
+            dimension, use fixed learning rate. Other cases are not supported. The float learning rate should be
             equal to or greater than 0. If the type of `learning_rate` is int, it will be converted to float.
         parameters (Union[list[Parameter], list[dict]]): When the `parameters` is a list of `Parameter` which will be
             updated, the element in `parameters` should be class `Parameter`. When the `parameters` is a list of `dict`,
@@ -84,8 +82,8 @@ class Optimizer(Cell):
             type of `loss_scale` input is int, it will be converted to float. Default: 1.0.
 
     Raises:
-        ValueError: If the learning_rate is a Tensor, but the dims of tensor is greater than 1.
-        TypeError: If the learning_rate is not any of the three types: float, Tensor, Iterable.
+        ValueError: If the learning_rate is a Tensor, but the dimension of tensor is greater than 1.
+        TypeError: If the learning_rate is not any of the three types: float, Tensor, nor Iterable.
     """
 
     def __init__(self, learning_rate, parameters, weight_decay=0.0, loss_scale=1.0):
@@ -179,7 +177,7 @@ class Optimizer(Cell):
         An approach to reduce the overfitting of a deep learning neural network model.
 
         Args:
-            gradients (tuple[Tensor]): The gradients of `self.parameters`, and have the same shape with
+            gradients (tuple[Tensor]): The gradients of `self.parameters`, and have the same shape as
                 `self.parameters`.
 
         Returns:
@@ -204,7 +202,7 @@ class Optimizer(Cell):
         network.
 
         Args:
-            gradients (tuple[Tensor]): The gradients of `self.parameters`, and have the same shape with
+            gradients (tuple[Tensor]): The gradients of `self.parameters`, and have the same shape as
                 `self.parameters`.
 
         Returns:

@@ -150,7 +150,7 @@ TensorPtr TensorPy::MakeTensor(const py::array &input, const TypePtr &type_ptr) 
   // Get tensor shape.
   std::vector<int> shape(buf.shape.begin(), buf.shape.end());
   if (data_type == buf_type) {
-    // Use memory copy if input data type is same as the required type.
+    // Use memory copy if input data type is the same as the required type.
     return std::make_shared<Tensor>(data_type, shape, buf.ptr, buf.size * buf.itemsize);
   }
   // Create tensor with data type converted.
