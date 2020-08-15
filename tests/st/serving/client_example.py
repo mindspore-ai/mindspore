@@ -89,7 +89,7 @@ def test_bert():
     net = BertModel(bert_net_cfg, False)
     bert_out = net(Tensor(input_ids), Tensor(segment_ids), Tensor(input_mask))
     print("bert out: ")
-    print(bert_out)
+    print(bert_out[0])
     bert_out_size = len(bert_out)
     for i in range(bert_out_size):
         result_np = np.frombuffer(result.result[i].data, dtype=np.float32).reshape(result.result[i].tensor_shape.dims)

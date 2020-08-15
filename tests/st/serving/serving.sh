@@ -16,7 +16,7 @@ echo "ENV_DEVICE_ID:" ${ENV_DEVICE_ID}
 
 MODEL_PATH=${CURRPATH}/model
 export LD_LIBRARY_PATH=${MINDSPORE_INSTALL_PATH}/lib:/usr/local/python/python375/lib/:${LD_LIBRARY_PATH}
-export PYTHONPATH=${MINDSPORE_INSTALL_PATH}/../:${PYTHONPATH}
+export PYTHONPATH=${MINDSPORE_INSTALL_PATH}/:${PYTHONPATH}
 
 echo "LD_LIBRARY_PATH: " ${LD_LIBRARY_PATH}
 echo "PYTHONPATH: " ${PYTHONPATH}
@@ -40,7 +40,7 @@ prepare_model()
   echo "### begin to generate mode for serving test ###"
   python3 generate_model.py &> generate_model_serving.log
   echo "### end to generate mode for serving test ###"
-  result=`ls -l | grep -E '*pb' | grep -v ".log" | wc -l`
+  result=`ls -l | grep -E '*mindir' | grep -v ".log" | wc -l`
   if [ ${result} -ne 2 ]
   then
     cat generate_model_serving.log
@@ -49,7 +49,7 @@ prepare_model()
   fi
   rm -rf model
   mkdir model
-  mv *.pb ${CURRPATH}/model
+  mv *.mindir ${CURRPATH}/model
   cp ${MINDSPORE_INSTALL_PATH}/ms_serving ./
 }
 
@@ -91,27 +91,27 @@ pytest_serving()
   then
     clean_pid
     cat ${test_client_name}_client.log
-    echo "client $1 faile to start."
+    echo "client $1 faile to start." && exit 1
   fi
   echo "### $1 client end ###"
 }
 
 test_add_model()
 {
-  start_service 5500 add.pb ${ENV_DEVICE_ID}
+  start_service 5500 add.mindir ${ENV_DEVICE_ID}
   pytest_serving test_add
   clean_pid
 }
 
 test_bert_model()
 {
-  start_service 5500 bert.pb ${ENV_DEVICE_ID}
+  start_service 5500 bert.mindir ${ENV_DEVICE_ID}
   pytest_serving test_bert
   clean_pid
 }
 
 echo "-----serving start-----"
-rm -rf ms_serving *.log *.pb *.dat ${CURRPATH}/model ${CURRPATH}/kernel_meta
+rm -rf ms_serving *.log *.mindir *.dat ${CURRPATH}/model ${CURRPATH}/kernel_meta
 prepare_model
 test_add_model
 test_bert_model
