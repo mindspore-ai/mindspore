@@ -128,7 +128,7 @@ int RunSubGraphOpenCLKernel(const std::vector<lite::tensor::Tensor *> &inputs,
   return RET_OK;
 }
 
-TEST_F(TestActivationOpenCL, LeakyReluFp32_dim4) {
+TEST_F(TestActivationOpenCL, ActivationFp32_dim4) {
   MS_LOG(INFO) << "Begin test:";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
