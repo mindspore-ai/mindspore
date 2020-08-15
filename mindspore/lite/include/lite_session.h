@@ -50,14 +50,14 @@ class MS_API LiteSession {
   /// \brief Destructor of MindSpore Lite LiteSession.
   virtual ~LiteSession() = default;
 
-  /// \brief Try to bind or unbind threads in the thread pool to the specified cpu core.
+  /// \brief Attempt to bind or unbind threads in the thread pool to or from the specified cpu core.
   ///
   /// \param[in] if_bind Define whether to bind or unbind threads.
   virtual void BindThread(bool if_bind) = 0;
 
   /// \brief Compile MindSpore Lite model.
   ///
-  /// \note CompileGraph should called before RunGraph.
+  /// \note CompileGraph should be called before RunGraph.
   ///
   /// \param[in] model Define the model to be compiled.
   ///
@@ -78,10 +78,10 @@ class MS_API LiteSession {
 
   /// \brief Run session with callback.
   ///
-  /// \param[in] before Define a call_back_function called before running each node.
+  /// \param[in] before Define a call_back_function to be called before running each node.
   /// \param[in] after Define a call_back_function called after running each node.
   ///
-  /// \note RunGraph should called after CompileGraph.
+  /// \note RunGraph should be called after CompileGraph.
   ///
   /// \return STATUS as an error code of running graph, STATUS is defined in errorcode.h.
   virtual int RunGraph(const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) = 0;

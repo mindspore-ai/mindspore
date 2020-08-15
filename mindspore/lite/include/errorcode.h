@@ -19,7 +19,7 @@
 
 namespace mindspore {
 namespace lite {
-/// \brief STATUS defined error code in MindSpore Lite.
+/// \brief STATUS defined for holding error code in MindSpore Lite.
 using STATUS = int;
 
 /* Success */
@@ -31,7 +31,7 @@ constexpr int RET_NULL_PTR = -2;      /**< NULL pointer returned.*/
 constexpr int RET_PARAM_INVALID = -3; /**< Invalid parameter.*/
 constexpr int RET_NO_CHANGE = -4;     /**< No change. */
 constexpr int RET_SUCCESS_EXIT = -5;  /**< No error but exit. */
-constexpr int RET_MEMORY_FAILED = -6; /**< Create memory failed. */
+constexpr int RET_MEMORY_FAILED = -6; /**< Fail to create memory. */
 
 /* Executor error code, range: [-101,-200] */
 constexpr int RET_OUT_OF_TENSOR_RANGE = -101; /**< Failed to check range. */
@@ -52,7 +52,7 @@ constexpr int RET_FORMAT_ERR = -401; /**< Failed to checking tensor format. */
 
 /* InferShape error code, range: [-501,-600] */
 constexpr int RET_INFER_ERR = -501; /**< Failed to infer shape. */
-constexpr int RET_INFER_INVALID = -502; /**< Invalid to infer shape before runtime. */
+constexpr int RET_INFER_INVALID = -502; /**< Invalid infer shape before runtime. */
 }  // namespace lite
 }  // namespace mindspore
 

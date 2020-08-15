@@ -38,7 +38,7 @@ class MS_API MSTensor {
   /// \param[in] data_type Define data type of tensor to be created.
   /// \param[in] shape Define Shape of tensor to be created.
   ///
-  /// \note TypeId is defined in mindspore/mindspore/core/ir/dtype/type_id.h. Only number types in TypeId enum is
+  /// \note TypeId is defined in mindspore/mindspore/core/ir/dtype/type_id.h. Only number types in TypeId enum are
   /// suitable for MSTensor.
   ///
   /// \return the pointer of MSTensor.
@@ -49,7 +49,7 @@ class MS_API MSTensor {
 
   /// \brief Get data type of the MindSpore Lite MSTensor.
   ///
-  /// \note TypeId is defined in mindspore/mindspore/core/ir/dtype/type_id.h. Only number types in TypeId enum is
+  /// \note TypeId is defined in mindspore/mindspore/core/ir/dtype/type_id.h. Only number types in TypeId enum are
   /// suitable for MSTensor.
   ///
   /// \return MindSpore Lite TypeId of the MindSpore Lite MSTensor.
@@ -57,7 +57,7 @@ class MS_API MSTensor {
 
   /// \brief Set data type for the MindSpore Lite MSTensor.
   ///
-  /// \param[in] data_type Define MindSpore Lite TypeId to be set into the MindSpore Lite MSTensor.
+  /// \param[in] data_type Define MindSpore Lite TypeId to be set in the MindSpore Lite MSTensor.
   ///
   /// \return MindSpore Lite TypeId of the MindSpore Lite MSTensor after set.
   virtual TypeId set_data_type(TypeId data_type) = 0;
@@ -98,7 +98,7 @@ class MS_API MSTensor {
 
   /// \brief Get the pointer of data in MSTensor.
   ///
-  /// \note The data pointer can be used to both write or read data in MSTensor.
+  /// \note The data pointer can be used to both write and read data in MSTensor.
   ///
   /// \return the pointer points to data in MSTensor.
   virtual void *MutableData() const = 0;
