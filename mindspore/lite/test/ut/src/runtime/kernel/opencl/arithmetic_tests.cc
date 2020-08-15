@@ -68,18 +68,37 @@ void TestCase(const std::vector<int> &shape_a, const std::vector<int> &shape_b) 
   auto tensorType = schema::NodeType_ValueNode;
 
   lite::tensor::Tensor *tensor_a =
-    new lite::tensor::Tensor(kNumberTypeFloat32, shape_a, schema::Format_NHWC4, tensorType);
+    new (std::nothrow) lite::tensor::Tensor(kNumberTypeFloat32, shape_a, schema::Format_NHWC4, tensorType);
   lite::tensor::Tensor *tensor_b =
-    new lite::tensor::Tensor(kNumberTypeFloat32, shape_b, schema::Format_NHWC4, tensorType);
+    new (std::nothrow) lite::tensor::Tensor(kNumberTypeFloat32, shape_b, schema::Format_NHWC4, tensorType);
   lite::tensor::Tensor *tensor_c =
-    new lite::tensor::Tensor(kNumberTypeFloat32, shape_a, schema::Format_NHWC4, tensorType);
+    new (std::nothrow) lite::tensor::Tensor(kNumberTypeFloat32, shape_a, schema::Format_NHWC4, tensorType);
+  if (tensor_a == nullptr || tensor_b == nullptr || tensor_c == nullptr) {
+    MS_LOG(ERROR) << "Create tensor failed!";
+    delete tensor_a;
+    delete tensor_b;
+    delete tensor_c;
+    return;
+  }
+
   int64_t element_num = tensor_a->ElementsC4Num();
   int64_t element_num_b = is_bias_add ? 1 : tensor_b->ElementsC4Num();
 
-  float *data_a = new float[element_num];
-  float *data_b = new float[element_num_b];
-  float *data_c_cpu = new float[element_num];
-  float *data_c_ocl = new float[element_num];
+  float *data_a = new (std::nothrow) float[element_num];
+  float *data_b = new (std::nothrow) float[element_num_b];
+  float *data_c_cpu = new (std::nothrow) float[element_num];
+  float *data_c_ocl = new (std::nothrow) float[element_num];
+  if (data_a == nullptr || data_b == nullptr || data_c_cpu == nullptr || data_c_ocl == nullptr) {
+    MS_LOG(ERROR) << "Create buffer failed!";
+    delete tensor_a;
+    delete tensor_b;
+    delete tensor_c;
+    delete[] data_a;
+    delete[] data_b;
+    delete[] data_c_cpu;
+    delete[] data_c_ocl;
+    return;
+  }
 
   InitData(data_a, element_num);
   InitData(data_b, element_num_b);
@@ -100,7 +119,18 @@ void TestCase(const std::vector<int> &shape_a, const std::vector<int> &shape_b) 
   }
   std::vector<lite::tensor::Tensor *> outputs = {tensor_c};
 
-  ArithmeticParameter *param = new ArithmeticParameter();
+  ArithmeticParameter *param = new (std::nothrow) ArithmeticParameter();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "Create parameter failed!";
+    delete tensor_a;
+    delete tensor_b;
+    delete tensor_c;
+    delete[] data_a;
+    delete[] data_b;
+    delete[] data_c_cpu;
+    delete[] data_c_ocl;
+    return;
+  }
   param->ndim_ = 4;
   param->op_parameter_.type_ = PrimitiveType_Add;
 
@@ -108,12 +138,36 @@ void TestCase(const std::vector<int> &shape_a, const std::vector<int> &shape_b) 
   lite::Context ctx;
   auto *arith_kernel =
     new kernel::ArithmeticOpenCLKernel(reinterpret_cast<OpParameter *>(param), arithmetic_inputs, outputs, &ctx);
+  if (arith_kernel == nullptr) {
+    MS_LOG(ERROR) << "Create ArithmeticOpenCLKernel failed!";
+    delete tensor_a;
+    delete tensor_b;
+    delete tensor_c;
+    delete[] data_a;
+    delete[] data_b;
+    delete[] data_c_cpu;
+    delete[] data_c_ocl;
+    delete param;
+    return;
+  }
   arith_kernel->Init();
 
   tensor_a->MallocData(allocator);
   tensor_b->MallocData(allocator);
   std::vector<kernel::LiteKernel *> kernels{arith_kernel};
-  auto *kernel = new kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  auto *kernel = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  if (arith_kernel == nullptr) {
+    MS_LOG(ERROR) << "Create SubGraphOpenCLKernel failed!";
+    delete tensor_a;
+    delete tensor_b;
+    delete tensor_c;
+    delete[] data_a;
+    delete[] data_b;
+    delete[] data_c_cpu;
+    delete[] data_c_ocl;
+    delete arith_kernel;
+    return;
+  }
   kernel->Init();
 
   memcpy(inputs[0]->Data(), data_a, sizeof(float) * element_num);
