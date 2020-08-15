@@ -147,7 +147,6 @@ void AdjustAllReduceMulAdd::ProcessDependEdge(const FuncGraphPtr &fg, const AnfN
     }
   }
 }
-
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

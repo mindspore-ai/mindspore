@@ -507,6 +507,5 @@ struct TraceProviderRegister {
   }
   ~TraceProviderRegister() = default;
 } trace_provider_regsiter;
-
 }  // namespace trace
 }  // namespace mindspore

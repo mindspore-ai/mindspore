@@ -361,5 +361,4 @@ void MsProfile::Print() {
   (void)printf("\nTime group info:\n%s", text.c_str());
   (void)fflush(stdout);
 }
-
 }  // namespace mindspore

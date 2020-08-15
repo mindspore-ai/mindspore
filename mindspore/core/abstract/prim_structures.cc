@@ -215,7 +215,6 @@ AbstractBasePtr InferImplDictGetItem(const AnalysisEnginePtr &, const PrimitiveP
   std::vector<AbstractAttribute> dict_elems = dict->elements();
   auto it = std::find_if(dict_elems.begin(), dict_elems.end(),
                          [key_str](const AbstractAttribute &item) { return item.first == key_str; });
-
   if (it == dict_elems.end()) {
     MS_LOG(EXCEPTION) << "The key " << key_str << " does not exist in the dict:" << args_spec_list[0]->ToString();
   }

@@ -23,7 +23,6 @@
 
 // namespace to support intermediate representation definition
 namespace mindspore {
-
 abstract::AbstractBasePtr MetaFuncGraph::ToAbstract() {
   return std::make_shared<abstract::MetaFuncGraphAbstractClosure>(shared_from_base<MetaFuncGraph>());
 }

@@ -579,7 +579,6 @@ class PConstant : public PBase<PConstant<T> > {
     if (!node->isa<ValueNode>()) {
       return nullptr;
     }
-
     auto value = node->cast<ValueNodePtr>()->value();
 
     if (!value->isa<tensor::Tensor>()) {
@@ -622,7 +621,6 @@ class PConstant : public PBase<PConstant<T> > {
       }
       auto x_abstract = x->abstract()->cast<abstract::AbstractTensorPtr>();
       std::vector<int> x_shape = x_abstract->shape()->shape();
-
       if (x_shape != tensor_shape) {
         return nullptr;
       }
@@ -638,7 +636,6 @@ class PConstant : public PBase<PConstant<T> > {
     }
 
     auto x_tensor_ptr = dyn_cast<tensor::Tensor>(x_value);
-
     if ((x_tensor_ptr->DataSize() > 1) && (x_tensor_ptr->DataSize() != new_tensor_ptr->DataSize())) {
       return nullptr;
     }
@@ -729,7 +726,6 @@ class PConstant : public PBase<PConstant<T> > {
 
     auto value_1 = GetValueNode(vnode_1);
     auto value_2 = GetValueNode(vnode_2);
-
     if (!value_1->isa<tensor::Tensor>() || !value_2->isa<tensor::Tensor>()) {
       return nullptr;
     }
@@ -744,14 +740,12 @@ class PConstant : public PBase<PConstant<T> > {
     TypePtr tensor_1_type_ptr = tensor_1_abstract->element()->BuildType();
     TypePtr tensor_2_type_ptr = tensor_2_abstract->element()->BuildType();
     TypePtr tensor_3_type_ptr = tensor_3_abstract->element()->BuildType();
-
     if ((tensor_1_type_ptr->type_id() != tensor_3_type_ptr->type_id()) ||
         (tensor_2_type_ptr->type_id() != tensor_3_type_ptr->type_id())) {
       return nullptr;
     }
 
     std::vector<int> tensor_out_shape = tensor_3_abstract->shape()->shape();
-
     int data_out_size = std::accumulate(tensor_out_shape.begin(), tensor_out_shape.end(), 1, std::multiplies<int>());
 
     if ((tensor_ptr_1->DataSize() > 1) && (tensor_ptr_1->DataSize() != data_out_size)) {
@@ -872,7 +866,6 @@ BIN_OPERATION_PATTERN(operator*, prim::kPrimMul, true);
       return rep;                                                         \
     }                                                                     \
   }
-
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_PATTERN_MATCHER_H_

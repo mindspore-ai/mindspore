@@ -20,7 +20,6 @@
 #include "abstract/abstract_function.h"
 
 namespace mindspore {
-
 static std::string MakeId() {
   // Use atomic to make id generator thread safe.
   static std::atomic<uint64_t> last_id{1};
@@ -44,6 +43,7 @@ Primitive::Primitive(const Primitive &prim)
       has_signature_(prim.has_signature_),
       prim_type_(prim.prim_type_),
       record_evaluate_add_attr_(false),
+      is_const_value_(false),
       id_(prim.id_) {}
 
 abstract::AbstractBasePtr Primitive::ToAbstract() {

@@ -30,7 +30,6 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-
 // {prim::kPrimSelect, {prim::kPrimGreater, X, 0}, Y, Z}} -> Y when X is always greater than 0
 // {prim::kPrimMaximum, X, Y} -> X when Y is smaller than LOWER_FLT_LIMIT
 // {prim::kPrimMinimum, X, Y} -> X when Y is greater than UPPER_FLT_LIMIT

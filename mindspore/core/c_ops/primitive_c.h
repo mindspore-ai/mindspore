@@ -27,6 +27,7 @@ namespace mindspore {
 class PrimitiveC : public Primitive {
  public:
   explicit PrimitiveC(const std::string &name) : Primitive(name) {}
+  ~PrimitiveC() = default;
   AbstractBasePtr Infer(const AbstractBasePtrList &abstract_list);
 
  protected:

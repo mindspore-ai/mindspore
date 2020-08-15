@@ -19,7 +19,6 @@
 #include <memory>
 
 namespace mindspore {
-
 // only support (int, float, bool) as Literal
 bool AnyIsLiteral(const Any &any) {
   static const std::type_index typeid_int = std::type_index(typeid(int));
@@ -53,5 +52,4 @@ Any &Any::operator=(Any &&other) {
   }
   return *this;
 }
-
 }  // namespace mindspore

@@ -21,7 +21,6 @@
 #include <memory>
 
 namespace mindspore {
-
 std::ostream &operator<<(std::ostream &out, const std::shared_ptr<EnvInstance> &objPtr) {
   out << "(";
   MS_EXCEPTION_IF_NULL(objPtr);
@@ -50,5 +49,4 @@ bool EnvInstance::operator==(const Value &other) const {
   return false;
 }
 std::shared_ptr<EnvInstance> newenv = std::make_shared<EnvInstance>();
-
 }  // namespace mindspore

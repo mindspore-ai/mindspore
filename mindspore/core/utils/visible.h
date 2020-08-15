@@ -38,7 +38,6 @@ namespace mindspore {
 #define MS_EXPORT __attribute__((visibility("default")))
 #define MS_LOCAL __attribute__((visibility("hidden")))
 #endif
-
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_UTILS_VISIBLE_H_

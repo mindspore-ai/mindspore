@@ -63,7 +63,6 @@ bool PassGroup::Run(const FuncGraphPtr &func_graph) const {
   }
   return changed;
 }
-
 }  // namespace python_pass
 }  // namespace opt
 }  // namespace mindspore

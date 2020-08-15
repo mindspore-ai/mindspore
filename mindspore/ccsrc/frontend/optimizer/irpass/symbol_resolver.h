@@ -33,7 +33,6 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-
 const char PARSE_SUPER_NAME[] = "namespace";
 
 // {prim::kPrimResolve, Ns, Sym}
@@ -108,7 +107,6 @@ class ResolveAttr : public OptimizerCaller {
 
       auto ns_ = GetValueNode<parse::NameSpacePtr>(ns_node.GetNode(node));
       auto sym_ = GetValueNode<parse::SymbolPtr>(sym_node.GetNode(node));
-
       if (ns_->module() == parse::RESOLVE_NAMESPACE_NAME_CLASS_MEMBER && sym_->symbol() != PARSE_SUPER_NAME) {
         // deal with the case of getting attr from a class member
         // and avoid the case of getting attr from self (the result of ParseSuper)

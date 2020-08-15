@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace opt {
-
 // Common subexpression elimination.
 class GraphKernelReuse {
  public:
@@ -46,7 +45,6 @@ class GraphKernelReuse {
   std::unordered_map<std::string, std::vector<FuncGraphPtr>> graph_kernel_ops;
   int count;
 };
-
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_GRAPH_KERNEL_OP_REUSE_H

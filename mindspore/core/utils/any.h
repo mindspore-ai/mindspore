@@ -208,7 +208,6 @@ struct AnyLess {
 };
 
 bool AnyIsLiteral(const Any &any);
-
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_UTILS_ANY_H_

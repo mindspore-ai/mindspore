@@ -35,7 +35,6 @@
 #include "utils/label.h"
 
 namespace mindspore {
-
 enum IncludeType { FOLLOW, NOFOLLOW, EXCLUDE };
 
 using IncludeFunc = std::function<IncludeType(const AnfNodePtr &)>;

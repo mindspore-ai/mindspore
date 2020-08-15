@@ -32,7 +32,6 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-
 static int count = 0;
 
 std::string GetFusionNumber() {
@@ -79,7 +78,6 @@ class MarkInterfaceFusion : public AnfVisitor {
  private:
   AnfNodePtr y_{nullptr};
 };
-
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

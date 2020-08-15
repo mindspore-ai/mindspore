@@ -221,7 +221,6 @@ class MsProfile {
   std::map<std::string, TimeStat> time_stat_;  // record time and count info from some activity
   ProfileBase *profile_ = nullptr;             // record hierarchical profile info
 };
-
 }  // namespace mindspore
 
 #ifdef ENABLE_PROFILE

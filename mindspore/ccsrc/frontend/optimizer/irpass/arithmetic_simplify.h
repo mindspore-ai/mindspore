@@ -62,7 +62,6 @@ class ArithmeticSimplify2 : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override;
 };
-
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
