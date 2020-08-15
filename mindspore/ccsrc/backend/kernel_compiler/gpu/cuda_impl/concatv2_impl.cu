@@ -73,7 +73,7 @@ template void ConcatKernel(const size_t size, const int input_num,
                            cudaStream_t cuda_stream);
 template void ConcatKernel(const size_t size, const int input_num,
                            const int all_size_before_axis, const int all_size_axis,
-                           int* len_axis, char** inputs, char* output,
+                           int* len_axis, unsigned char** inputs, unsigned char* output,
                            cudaStream_t cuda_stream);
 template void ConcatKernel(const size_t size, const int input_num,
                            const int all_size_before_axis, const int all_size_axis,

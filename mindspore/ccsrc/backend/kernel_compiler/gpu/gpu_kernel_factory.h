@@ -64,6 +64,14 @@ class GpuKernelRegister {
   }
 };
 
+// This is necessary for gpu kernels to support uint8 data type. In cuda, an unsigned,
+// 8 bit integral type is represented by an unsigned char, but the MS_REG_GPU_KERNEL
+// macros defined below will create compilation errors when datatype T contains a space,
+// because the variable created by the macro will also contain a space. So, we solve this
+// problem by writing uchar when calling these macros, and expanding uchar after the
+// variable has been created.
+#define uchar unsigned char
+
 #define MS_REG_GPU_KERNEL(OPNAME, OPCLASS)                                                 \
   static_assert(std::is_base_of<GpuKernel, OPCLASS>::value, " must be base of GpuKernel"); \
   static const GpuKernelRegister g_##OPNAME##_gpu_kernel_reg(#OPNAME, KernelAttr(), []() { return new OPCLASS(); });
@@ -88,7 +96,6 @@ class GpuKernelRegister {
   static_assert(std::is_base_of<GpuKernel, OPCLASS<T, S>>::value, " must be base of GpuKernel"); \
   static const GpuKernelRegister g_##OPNAME##_##T##_##S##_gpu_kernel_reg(#OPNAME, ATTR,          \
                                                                          []() { return new OPCLASS<T, S>(); });
-
 // register of mixed accuracy kernels which use template and maintain three typename
 #define MS_REG_GPU_KERNEL_THREE(OPNAME, ATTR, OPCLASS, T, S, G)                                     \
   static_assert(std::is_base_of<GpuKernel, OPCLASS<T, S, G>>::value, " must be base of GpuKernel"); \

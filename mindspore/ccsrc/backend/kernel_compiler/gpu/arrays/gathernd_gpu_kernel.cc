@@ -34,7 +34,7 @@ MS_REG_GPU_KERNEL_TWO(
   GatherNdGpuFwdKernel, short, int)  // NOLINT
 MS_REG_GPU_KERNEL_TWO(
   GatherNd, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
-  GatherNdGpuFwdKernel, char, int)
+  GatherNdGpuFwdKernel, uchar, int)
 MS_REG_GPU_KERNEL_TWO(
   GatherNd, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
   GatherNdGpuFwdKernel, bool, int)

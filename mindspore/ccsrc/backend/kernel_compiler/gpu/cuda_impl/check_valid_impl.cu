@@ -37,7 +37,8 @@ __global__ void CheckValidKernel(const size_t size, const T *box, const T *img_m
 }
 
 template <typename S>
-__global__ void CheckValidKernel(const size_t size, const char *box, const char *img_metas, S *valid) {
+__global__ void CheckValidKernel(const size_t size, const unsigned char *box,
+                                 const unsigned char *img_metas, S *valid) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     const size_t left_x = i * 4;
     const size_t left_y = i * 4 + 1;
@@ -45,10 +46,8 @@ __global__ void CheckValidKernel(const size_t size, const char *box, const char 
     const size_t right_y = i * 4 + 3;
 
     S valid_flag = false;
-    valid_flag |= !((unsigned int)box[left_x] >= 0);
-    valid_flag |= !((unsigned int)box[left_y] >= 0);
-    valid_flag |= !((unsigned int)img_metas[0] * (unsigned int)img_metas[2] - 1 >= (unsigned int)box[right_x]);
-    valid_flag |= !((unsigned int)img_metas[1] * (unsigned int)img_metas[2] - 1 >= (unsigned int)box[right_y]);
+    valid_flag |= !(img_metas[0] * img_metas[2] >= box[right_x] + 1);
+    valid_flag |= !(img_metas[1] * img_metas[2] >= box[right_y] + 1);
 
     valid[i] = !valid_flag;
   }
@@ -67,5 +66,5 @@ template void CheckValid(const size_t &size, const half *box, const half *img_me
                          cudaStream_t cuda_stream);
 template void CheckValid(const size_t &size, const short *box, const short *img_metas, bool *valid,  // NOLINT
                          cudaStream_t cuda_stream);
-template void CheckValid(const size_t &size, const char *box, const char *img_metas, bool *valid,
+template void CheckValid(const size_t &size, const unsigned char *box, const unsigned char *img_metas, bool *valid,
                          cudaStream_t cuda_stream);
