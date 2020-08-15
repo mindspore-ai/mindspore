@@ -20,6 +20,7 @@
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/reduce.h"
+#include "src/runtime/kernel/arm/base/reduce_base.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -37,69 +38,9 @@ using mindspore::schema::ReduceMode_ReduceSum;
 using mindspore::schema::ReduceMode_ReduceSumSquare;
 
 namespace mindspore::kernel {
-namespace {
-constexpr size_t kInputNum = 1;
-constexpr size_t kOutputNum = 1;
-}  // namespace
-
-int ReduceCPUKernel::CheckInputsOutputs() {
-  if (in_tensors_.size() != kInputNum) {
-    MS_LOG(ERROR) << "Reduce inputs size should be " << kInputNum << " but got " << in_tensors_.size();
-    return RET_ERROR;
-  }
-  if (out_tensors_.size() != kOutputNum) {
-    MS_LOG(ERROR) << "Reduce outputs size should be " << kOutputNum << " but got " << out_tensors_.size();
-    return RET_ERROR;
-  }
-  auto input = in_tensors_.at(0);
-  if (input == nullptr) {
-    MS_LOG(ERROR) << "Reduce input is nullptr";
-    return RET_NULL_PTR;
-  }
-  auto output = out_tensors_.at(0);
-  if (output == nullptr) {
-    MS_LOG(ERROR) << "Reduce output is nullptr";
-    return RET_NULL_PTR;
-  }
-  return RET_OK;
-}
-
-int ReduceCPUKernel::CheckParameters() {
-  size_t input_rank = in_tensors_.at(0)->shape().size();
-  if (static_cast<size_t>(num_axes_) > input_rank) {
-    MS_LOG(ERROR) << "Reduce num of reduce axes " << num_axes_ << " larger than input rank " << input_rank;
-    return RET_ERROR;
-  }
-  for (auto i = 0; i < num_axes_; i++) {
-    if (axes_[i] < -static_cast<int>(input_rank) || axes_[i] >= static_cast<int>(input_rank)) {
-      MS_LOG(ERROR) << "Reduce got invalid axis " << axes_[i] << ", axis should be in ["
-                    << -static_cast<int>(input_rank) << ", " << input_rank - 1 << "].";
-      return RET_ERROR;
-    }
-    if (axes_[i] < 0) {
-      axes_[i] += static_cast<int>(input_rank);
-    }
-  }
-
-  if (num_axes_ == 0) {
-    for (int i = 0; i < input_rank; i++) {
-      axes_[i] = i;
-    }
-  }
-
-  return RET_OK;
-}
 
 int ReduceCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
-    return RET_OK;
-  }
-  auto ret = CheckInputsOutputs();
-  if (ret != RET_OK) {
-    return ret;
-  }
-  ret = CheckParameters();
+  auto ret = ReduceBaseCPUKernel::Init();
   if (ret != RET_OK) {
     return ret;
   }
@@ -107,7 +48,6 @@ int ReduceCPUKernel::Init() {
   if (ret != RET_OK) {
     return ret;
   }
-
   switch (mode_) {
     case static_cast<int>(ReduceMode_ReduceSum): {
       reducer_ = ReduceSum;
@@ -137,7 +77,10 @@ int ReduceCPUKernel::Init() {
       MS_LOG(ERROR) << "Reduce unsupported reduce mode: " << mode_;
       return RET_ERROR;
   }
-  return RET_OK;
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
 }
 
 int ReduceCPUKernel::CallReduceUnit(int task_id) {
@@ -225,67 +168,4 @@ int ReduceCPUKernel::MallocTmpBuffer() {
   }
   return RET_OK;
 }
-
-kernel::LiteKernel *CpuReduceFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc, const lite::Primitive *primitive) {
-  MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_Reduce);
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Reduce opParameter nullptr";
-    return nullptr;
-  }
-  if (desc.type != schema::PrimitiveType_Reduce) {
-    MS_LOG(ERROR) << "Reduce op desc.type should be PrimitiveType_Reduce, got " << desc.type;
-    return nullptr;
-  }
-  auto *kernel = new (std::nothrow)
-    ReduceCPUKernel(reinterpret_cast<ReduceParameter *>(opParameter), inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "Reduce new ReduceCPUKernel failed.";
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-kernel::LiteKernel *CpuMeanFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs,
-                                             OpParameter *opParameter, const lite::Context *ctx,
-                                             const kernel::KernelKey &desc, const lite::Primitive *primitive) {
-  MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_Mean);
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Reduce opParameter nullptr";
-    return nullptr;
-  }
-  if (desc.type != schema::PrimitiveType_Mean) {
-    MS_LOG(ERROR) << "Reduce op desc.type should be PrimitiveType_Mean, got " << desc.type;
-    return nullptr;
-  }
-  auto *kernel = new (std::nothrow)
-    ReduceCPUKernel(reinterpret_cast<ReduceParameter *>(opParameter), inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "Reduce new ReduceCPUKernel failed.";
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Reduce, CpuReduceFp32KernelCreator)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Mean, CpuMeanFp32KernelCreator)
 }  // namespace mindspore::kernel
