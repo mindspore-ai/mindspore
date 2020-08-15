@@ -582,22 +582,10 @@ Write7:
   st1 {v31.s}[2], [x16], x17
   b WriteEnd
 WriteC8:
-  st1 {v16.4s}, [x2], #16
-  st1 {v17.4s}, [x2], #16
-  st1 {v18.4s}, [x2], #16
-  st1 {v19.4s}, [x2], #16
-  st1 {v20.4s}, [x2], #16
-  st1 {v21.4s}, [x2], #16
-  st1 {v22.4s}, [x2], #16
-  st1 {v23.4s}, [x2], #16
-  st1 {v24.4s}, [x2], #16
-  st1 {v25.4s}, [x2], #16
-  st1 {v26.4s}, [x2], #16
-  st1 {v27.4s}, [x2], #16
-  st1 {v28.4s}, [x2], #16
-  st1 {v29.4s}, [x2], #16
-  st1 {v30.4s}, [x2], #16
-  st1 {v31.4s}, [x2], #16
+  st1 {v16.8h, v17.8h, v18.8h, v19.8h}, [x2], #64
+  st1 {v20.8h, v21.8h, v22.8h, v23.8h}, [x2], #64
+  st1 {v24.8h, v25.8h, v26.8h, v27.8h}, [x2], #64
+  st1 {v28.8h, v29.8h, v30.8h, v31.8h}, [x2], #64
   b WriteEnd
 Write8:
   st1 {v16.4s, v17.4s}, [x18], x17
@@ -634,7 +622,7 @@ End2:
   ldrb w13, [sp, #8]
   cbz w13, NoDstStep
   add x2, x2, #32 // dst ptr + stride
-  NoDstStep:
+NoDstStep:
   bgt L1
 
 End1:
