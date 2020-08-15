@@ -227,6 +227,12 @@ lite::Primitive *ModelImpl::CopyPrimitive(const schema::Primitive *src_prim) {
       return new lite::Tile(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Resize:
       return new lite::Resize(const_cast<schema::Primitive *>(src_prim));
+    case schema::PrimitiveType_Unstack:
+      return new lite::Unstack(const_cast<schema::Primitive *>(src_prim));
+    case schema::PrimitiveType_Unique:
+      return new lite::Unique(const_cast<schema::Primitive *>(src_prim));
+    case schema::PrimitiveType_TopK:
+      return new lite::TopK(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_MatMul:
       return new lite::MatMul(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_QuantDTypeCast:
