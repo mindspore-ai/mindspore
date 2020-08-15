@@ -285,13 +285,10 @@ if __name__ == '__main__':
 
     enable_loss_scale = True
     if args_opt.device_target == "GPU":
-        if td_teacher_net_cfg.compute_type != mstype.float32:
-            logger.warning('GPU only support fp32 temporarily, run with fp32.')
-            td_teacher_net_cfg.compute_type = mstype.float32
         if td_student_net_cfg.compute_type != mstype.float32:
-            logger.warning('GPU only support fp32 temporarily, run with fp32.')
+            logger.warning('Compute about the student only support float32 temporarily, run with float32.')
             td_student_net_cfg.compute_type = mstype.float32
-        # Both the forward and backward of the network are calculated using fp32,
+        # Backward of the network are calculated using fp32,
         # and the loss scale is not necessary
         enable_loss_scale = False
 
