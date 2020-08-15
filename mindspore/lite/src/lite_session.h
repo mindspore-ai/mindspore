@@ -57,13 +57,15 @@ class LiteSession : public session::LiteSession {
   int ConvertTensors(const lite::Model *model);
 
   void InitGraphInOutTensors(const lite::Model *model);
-
+  // init this->inputs_
   void InitGraphInputTensors(const lite::Model *model);
-
+  // init this->input_vec_
+  void InitGraphInputMSTensors(const lite::Model *model);
+  // init this->outputs_
   void InitGraphOutputTensors(const lite::Model *model);
-
+  // init this->input_map_
   void InitGraphInputMap(const lite::Model *model);
-
+  // init this->output_map_
   void InitGraphOutputMap(const lite::Model *model);
 
  protected:
@@ -74,6 +76,8 @@ class LiteSession : public session::LiteSession {
   std::vector<tensor::Tensor *> inputs_;
   // graph output tensors
   std::vector<tensor::Tensor *> outputs_;
+  // graph input MSTensors
+  std::vector<mindspore::tensor::MSTensor *> input_vec_;
   // graph input node name -- input tensors
   std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> input_map_;
   // graph output node name -- output tensors

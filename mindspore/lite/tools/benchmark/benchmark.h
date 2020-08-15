@@ -104,7 +104,7 @@ class MS_API Benchmark {
  public:
   explicit Benchmark(BenchmarkFlags *flags) : _flags(flags) {}
 
-  virtual ~Benchmark() = default;
+  virtual ~Benchmark();
 
   int Init();
   int RunBenchmark(const std::string &deviceType = "NPU");
