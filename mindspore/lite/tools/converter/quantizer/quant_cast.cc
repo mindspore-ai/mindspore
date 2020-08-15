@@ -31,7 +31,8 @@ ValueNodePtr NewQuantCastValueNode(int src_type, int dst_type, const std::vector
   auto primTValue = std::make_shared<PrimitiveTValue>(primitive.release());
   primTValue->SetQuantType(schema::QuantType_PostTraining);
   for (auto &quant_param : quant_params) {
-    primTValue->AddInputQuantParam(quant_param);
+    std::vector<schema::QuantParamT> quant_params_in = {quant_param};
+    primTValue->AddInputQuantParam(quant_params_in);
   }
   return NewValueNode(primTValue);
 }
@@ -53,7 +54,7 @@ STATUS QuantCast::Run(FuncGraphPtr graph) {
     if (first) {
       if (curnode_quant_type == schema::QuantType_PostTraining && inputDataDType == kNumberTypeFloat32) {
         auto value_node =
-          NewQuantCastValueNode(kNumberTypeFloat32, kNumberTypeInt8, primitiveT_value->GetInputQuantParams());
+          NewQuantCastValueNode(kNumberTypeFloat32, kNumberTypeInt8, primitiveT_value->GetInputQuantParams().front());
         std::vector<AnfNodePtr> op_inputs = {value_node, cnode->input(1)};
         auto quant_cast_cnode = graph->NewCNode(op_inputs);
         quant_cast_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "_quant_cast");
@@ -84,11 +85,11 @@ STATUS QuantCast::Run(FuncGraphPtr graph) {
         if (curnode_quant_type == schema::QuantType_PostTraining &&
             input_cnode_quant_type == schema::QuantType_QUANT_NONE) {
           value_node = NewQuantCastValueNode(kNumberTypeFloat32, kNumberTypeInt8,
-                                             primitiveT_value->GetInputQuantParams());
+                                             primitiveT_value->GetInputQuantParams().front());
         } else if (curnode_quant_type == schema::QuantType_QUANT_NONE &&
                    input_cnode_quant_type == schema::QuantType_PostTraining) {
           value_node = NewQuantCastValueNode(kNumberTypeInt8, kNumberTypeFloat32,
-                                             input_cnode_primitiveT_value->GetInputQuantParams());
+                                             input_cnode_primitiveT_value->GetInputQuantParams().front());
         }
         if (value_node == nullptr) {
           MS_LOG(WARNING) << "value_node is null! "

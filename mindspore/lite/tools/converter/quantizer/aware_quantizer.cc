@@ -324,7 +324,7 @@ STATUS AwareQuantizer::GenerateQuantParam() {
         MS_LOG(ERROR) << "quantParamCalcer failed: " << status << " node: " << node->name.c_str();
         node->quantType = schema::QuantType_QUANT_NONE;
       } else {
-        node->quantType = schema::QuantType_AwareTrainning;
+        node->quantType = schema::QuantType_AwareTraining;
       }
     }
   }
@@ -337,7 +337,7 @@ STATUS AwareQuantizer::DoQuantize() {
     if (!IsContain(GetUint8OpList(), GetCNodeTType(*node))) {
       continue;
     }
-    if (node->quantType != schema::QuantType_AwareTrainning) {
+    if (node->quantType != schema::QuantType_AwareTraining) {
       continue;
     }
     STATUS status;
@@ -584,7 +584,7 @@ STATUS AwareQuantizer::DetermineNodeQuantType() {
       }
     }
     if (canQuant && IsContain(GetUint8OpList(), GetCNodeTType(*node))) {
-      node->quantType = schema::QuantType_AwareTrainning;
+      node->quantType = schema::QuantType_AwareTraining;
     } else {
       node->quantType = schema::QuantType_QUANT_NONE;
     }

@@ -31,7 +31,7 @@ Flags::Flags() {
           "Input model weight file path. Needed when fmk is CAFFE. CAFFE: *.caffemodel", "");
   AddFlag(&Flags::inferenceType, "inferenceType",
           "Real data type saved in output file, reserved param, NOT used for now. FLOAT | FP16 | UINT8", "FLOAT");
-  AddFlag(&Flags::quantTypeIn, "quantType", "Quantization Type. AwareTrainning | WeightQuant | PostTraining", "");
+  AddFlag(&Flags::quantTypeIn, "quantType", "Quantization Type. AwareTraining | WeightQuant | PostTraining", "");
   AddFlag(&Flags::inputInferenceTypeIn, "inputInferenceType", "Input inference data type. FLOAT | UINT8", "FLOAT");
   AddFlag(&Flags::stdDev, "stdDev", "Standard deviation value for aware-quantization", "128");
   AddFlag(&Flags::mean, "mean", "Mean value for aware-quantization", "127");
@@ -98,8 +98,8 @@ int Flags::Init(int argc, const char **argv) {
     std::cerr << "INPUT ILLEGAL: weightFile is not a valid flag";
     return 1;
   }
-  if (this->quantTypeIn == "AwareTrainning") {
-    this->quantType = QuantType_AwareTrainning;
+  if (this->quantTypeIn == "AwareTraining") {
+    this->quantType = QuantType_AwareTraining;
   } else if (this->quantTypeIn == "WeightQuant") {
     this->quantType = QuantType_WeightQuant;
   } else if (this->quantTypeIn == "PostTraining") {
@@ -107,7 +107,7 @@ int Flags::Init(int argc, const char **argv) {
   } else if (this->quantTypeIn.empty()) {
     this->quantType = QuantType_QUANT_NONE;
   } else {
-    std::cerr << "INPUT ILLEGAL: quantType must be AwareTrainning|WeightQuant|PostTraining";
+    std::cerr << "INPUT ILLEGAL: quantType must be AwareTraining|WeightQuant|PostTraining";
     return 1;
   }
 

@@ -509,7 +509,8 @@ STATUS PostTrainingQuantizer::DoQuantInput(double scale, int zeropoint, struct M
   quant_param.min = max_min->min;
   quant_param.numBits = bit_num;
   quant_param.narrowRange = false;
-  lite_primitive->AddInputQuantParam(quant_param);
+  std::vector<schema::QuantParamT> quant_params = {quant_param};
+  lite_primitive->AddInputQuantParam(quant_params);
   // p->AddAttr("quant_input_dataType", MakeValue((int)DataType_DT_FLOAT));
   return RET_OK;
 }
@@ -526,7 +527,8 @@ STATUS PostTrainingQuantizer::DoQuantOutput(double scale, int zeropoint, struct 
   quant_param.min = max_min->min;
   quant_param.numBits = bit_num;
   quant_param.narrowRange = false;
-  lite_primitive->AddOutputQuantParam(quant_param);
+  std::vector<schema::QuantParamT> quant_params = {quant_param};
+  lite_primitive->AddOutputQuantParam(quant_params);
   // p->AddAttr("quant_output_dataType", MakeValue((int)DataType_DT_FLOAT));
   return RET_OK;
 }
@@ -569,7 +571,7 @@ STATUS PostTrainingQuantizer::DoBiasQuant(std::shared_ptr<PrimitiveTValue> input
   auto quant_params = input->GetInputQuantParams();
   size_t sizeX = quant_params.size();
   for (size_t i = 0; i < sizeX; i++) {
-    input_scales.emplace_back(quant_params[i].scale);
+    input_scales.emplace_back(quant_params[i].front().scale);
   }
   size_t sizeY = weight_param->quant_param().size();
   if (sizeX != sizeY) {

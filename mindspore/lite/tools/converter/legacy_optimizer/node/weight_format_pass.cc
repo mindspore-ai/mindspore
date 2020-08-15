@@ -27,7 +27,7 @@ int WeightFormatPass::Run(GraphNode *graphNode) {
     MS_LOG(ERROR) << "ShapeFormatTrans failed: " << status;
     return status;
   }
-  if (this->quantType == QuantType_AwareTrainning || this->quantType == QuantType_PostTraining) {
+  if (this->quantType == QuantType_AwareTraining || this->quantType == QuantType_PostTraining) {
     status = QuantDataFormatTrans(graphNode);
     if (status != 0) {
       MS_LOG(ERROR) << "QuantDataFormatTrans failed: " << status;
@@ -96,7 +96,7 @@ int WeightFormatPass::ShapeFormatTrans(GraphNode *graphNode) {
     return 0;
   } else if (fmkType == converter::FmkType_MS) {
     switch (node->quantType) {
-      case QuantType_AwareTrainning: {
+      case QuantType_AwareTraining: {
         if (opType == schema::PrimitiveType_Conv2D || opType == schema::PrimitiveType_DepthwiseConv2D) {
           weightTensor->format = schema::Format_HWCK;
         } else {
@@ -123,7 +123,7 @@ int WeightFormatPass::ShapeFormatTrans(GraphNode *graphNode) {
     return 0;
   } else if (fmkType == converter::FmkType_TF) {
     switch (node->quantType) {
-      case QuantType_AwareTrainning: {
+      case QuantType_AwareTraining: {
         if (opType == schema::PrimitiveType_Conv2D || opType == schema::PrimitiveType_DepthwiseConv2D) {
           weightTensor->format = schema::Format_HWCK;
         } else {
@@ -148,7 +148,7 @@ int WeightFormatPass::ShapeFormatTrans(GraphNode *graphNode) {
   } else if (fmkType == converter::FmkType_TFLITE) {
     switch (node->quantType) {
       case QuantType_QUANT_NONE:
-      case QuantType_AwareTrainning:
+      case QuantType_AwareTraining:
       case QuantType_PostTraining: {
         if (opType == schema::PrimitiveType_Conv2D) {
           weightTensor->format = schema::Format_KHWC;
@@ -170,7 +170,7 @@ int WeightFormatPass::ShapeFormatTrans(GraphNode *graphNode) {
     return 0;
   } else if (fmkType == converter::FmkType_ONNX) {
     switch (node->quantType) {
-      case QuantType_AwareTrainning: {
+      case QuantType_AwareTraining: {
         // sum up from current onnx quant models
         if (opType == schema::PrimitiveType_Conv2D) {
           weightTensor->format = schema::Format_KHWC;

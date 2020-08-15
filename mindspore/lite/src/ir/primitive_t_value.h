@@ -49,17 +49,17 @@ class PrimitiveTValue : public Value {
   void SetInputQuantParam(std::vector<std::vector<schema::QuantParamT>> vec_quant_param) {
   }
 
-  void AddInputQuantParam(schema::QuantParamT quant_param) {
+  void AddInputQuantParam(std::vector<schema::QuantParamT> quant_param) {
     this->input_quant_param_.emplace_back(quant_param);
   }
-  std::vector<schema::QuantParamT> GetInputQuantParams() const {
+  std::vector<std::vector<schema::QuantParamT>> GetInputQuantParams() const {
     return input_quant_param_;
   }
 
-  void AddOutputQuantParam(schema::QuantParamT quant_param) {
+  void AddOutputQuantParam(std::vector<schema::QuantParamT> quant_param) {
     this->output_quant_param_.emplace_back(quant_param);
   }
-  std::vector<schema::QuantParamT> GetOutputQuantParams() const {
+  std::vector<std::vector<schema::QuantParamT>> GetOutputQuantParams() const {
     return output_quant_param_;
   }
 
@@ -69,8 +69,8 @@ class PrimitiveTValue : public Value {
 
  protected:
   schema::PrimitiveT *primitive = nullptr;
-  std::vector<schema::QuantParamT> input_quant_param_;
-  std::vector<schema::QuantParamT> output_quant_param_;
+  std::vector<std::vector<schema::QuantParamT>> input_quant_param_;
+  std::vector<std::vector<schema::QuantParamT>> output_quant_param_;
   schema::QuantType quant_type_{schema::QuantType_QUANT_NONE};
 };
 }  // namespace mindspore::lite

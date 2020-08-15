@@ -314,7 +314,7 @@ void OnnxModelParser::SetOpQuantParams(const onnx::GraphProto &onnx_graph, const
     }
   }
   if (findQuantParams == needQuantParams) {
-    dst_op->quantType = schema::QuantType_AwareTrainning;
+    dst_op->quantType = schema::QuantType_AwareTraining;
   } else {
     dst_op->quantType = schema::QuantType_QUANT_NONE;
   }

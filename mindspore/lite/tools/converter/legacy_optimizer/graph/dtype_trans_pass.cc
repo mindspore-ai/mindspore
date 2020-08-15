@@ -136,7 +136,7 @@ STATUS DTypeTransPass::DoNodeInoutDTypeTrans(schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
   // insert transNode before and after existNode
   for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
-    if (IsContain(GetUint8OpList(), GetCNodeTType(**iter)) && (*iter)->quantType == QuantType_AwareTrainning) {
+    if (IsContain(GetUint8OpList(), GetCNodeTType(**iter)) && (*iter)->quantType == QuantType_AwareTraining) {
       continue;
     }
     auto &node = *iter;
@@ -208,7 +208,7 @@ NodeIter DTypeTransPass::InsertDTypeTransNode(schema::MetaGraphT *graph, NodeIte
   transNode->primitive = std::make_unique<schema::PrimitiveT>();
   transNode->primitive->value.value = quantDTypeCastParam;
   transNode->primitive->value.type = PrimitiveType_QuantDTypeCast;
-  transNode->quantType = QuantType_AwareTrainning;
+  transNode->quantType = QuantType_AwareTraining;
   if (nodeType == kInt8ToFP32) {
     quantDTypeCastParam->srcT = TypeId::kNumberTypeInt8;
     quantDTypeCastParam->dstT = TypeId::kNumberTypeFloat32;
