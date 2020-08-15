@@ -54,7 +54,7 @@ int LiteBackendFreeWorkspace(int deviceType, int deviceId, void *ptr) {
 }
 
 void SetMaxWokerNum(int num) {
-  auto p = mindspore::predict::ThreadPool::GetInstance();
+  auto p = mindspore::predict::GlobalThreadPool();
   if (p == nullptr) {
     MS_LOG(ERROR) << "Get thread pool instance failed";
     return;
@@ -67,7 +67,7 @@ void SetMaxWokerNum(int num) {
 }
 
 void ConfigThreadPool(int mode, int nthreads) {
-  auto p = mindspore::predict::ThreadPool::GetInstance();
+  auto p = mindspore::predict::GlobalThreadPool();
   if (p == nullptr) {
     MS_LOG(ERROR) << "Get thread pool instance failed";
     return;
@@ -76,7 +76,7 @@ void ConfigThreadPool(int mode, int nthreads) {
 }
 
 int LiteBackendParallelLaunch(FTVMParallelLambda flambda, void *cdata, int num_task) {
-  auto p = mindspore::predict::ThreadPool::GetInstance();
+  auto p = mindspore::predict::GlobalThreadPool();
   if (p == nullptr) {
     MS_LOG(ERROR) << "Get thread pool instance failed";
     return -1;
@@ -89,7 +89,7 @@ int LiteBackendParallelLaunch(FTVMParallelLambda flambda, void *cdata, int num_t
 }
 
 void DoAllThreadBind(bool ifBind, int mode) {
-  auto p = mindspore::predict::ThreadPool::GetInstance();
+  auto p = mindspore::predict::GlobalThreadPool();
   if (p == nullptr) {
     MS_LOG(ERROR) << "Get thread pool instance failed";
     return;

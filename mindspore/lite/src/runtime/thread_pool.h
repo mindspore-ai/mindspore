@@ -87,7 +87,6 @@ class ThreadPool {
  public:
   ThreadPool() = default;
   ~ThreadPool();
-  static ThreadPool *GetInstance();
   bool LaunchWork(WorkFun worker, void *cdata, int numTask);
   void ConfigThreadPool(int mode, int numThreads);
   void ConfigMaxThreadNum(unsigned int num);
@@ -119,6 +118,8 @@ class ThreadPool {
   std::unique_ptr<LiteThreadBind> threadBind{nullptr};
   std::vector<std::pair<int, std::pair<bool, int>>> errorInfo{};
 };
+
+ThreadPool* GlobalThreadPool();
 }  // namespace predict
 }  // namespace mindspore
 

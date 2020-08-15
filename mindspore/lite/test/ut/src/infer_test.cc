@@ -23,6 +23,8 @@
 #include "include/context.h"
 #include "include/errorcode.h"
 #include "mindspore/core/utils/log_adapter.h"
+#include "src/lite_session.h"
+#include "src/runtime/parallel_executor.h"
 
 namespace mindspore {
 class InferTest : public mindspore::CommonTest {
@@ -147,10 +149,11 @@ TEST_F(InferTest, TestConvNode) {
   //===================================================
   ASSERT_EQ(output_size, outTensor->Size());
   for (size_t i = 0; i < outTensor->ElementsNum(); i++) {
-    ASSERT_LE((output_data[i]- outData[i]), 0.001);
+    ASSERT_LE((output_data[i] - outData[i]), 0.001);
   }
   MS_LOG(INFO) << "Passed";
 }
+
 TEST_F(InferTest, TestAddNode) {
   auto meta_graph = std::make_shared<schema::MetaGraphT>();
   meta_graph->name = "graph";
@@ -203,7 +206,7 @@ TEST_F(InferTest, TestAddNode) {
   content = nullptr;
   auto context = new lite::Context;
   context->cpu_bind_mode_ = lite::NO_BIND;
-  context->device_ctx_.type = lite::DT_GPU;
+  context->device_ctx_.type = lite::DT_CPU;
   context->thread_num_ = 4;
   auto session = session::LiteSession::CreateSession(context);
   ASSERT_NE(nullptr, session);
@@ -240,6 +243,97 @@ TEST_F(InferTest, TestAddNode) {
   // for (size_t i = 0; i < outTensor->ElementsNum(); i++) {
   //   ASSERT_EQ(output_data[i], outData[i]);
   // }
+  MS_LOG(INFO) << "Passed";
+}
+
+class SessionWithParallelExecutor : public lite::LiteSession {
+ public:
+  int Init(lite::Context *context) {
+    lite::LiteSession::Init(context);
+    delete this->executor;
+    this->executor = new mindspore::lite::ParallelExecutor();
+    return 0;
+  }
+};
+
+TEST_F(InferTest, TestParallelExecutor) {
+  auto meta_graph = std::make_shared<schema::MetaGraphT>();
+  meta_graph->name = "graph";
+
+  auto node = std::make_unique<schema::CNodeT>();
+  node->inputIndex = {0, 1};
+  node->outputIndex = {2};
+  node->primitive = std::make_unique<schema::PrimitiveT>();
+  node->primitive->value.type = schema::PrimitiveType_Add;
+  auto primitive = new schema::AddT;
+  node->primitive->value.value = primitive;
+  node->name = "Add";
+  meta_graph->nodes.emplace_back(std::move(node));
+  meta_graph->inputIndex = {0, 1};
+  meta_graph->outputIndex = {2};
+
+  auto input0 = std::make_unique<schema::TensorT>();
+  input0->nodeType = schema::NodeType::NodeType_ValueNode;
+  input0->format = schema::Format_NHWC;
+  input0->dataType = TypeId::kNumberTypeFloat32;
+  input0->dims = {1, 28, 28, 3};
+  input0->offset = -1;
+  meta_graph->allTensors.emplace_back(std::move(input0));
+
+  auto weight = std::make_unique<schema::TensorT>();
+  weight->nodeType = schema::NodeType::NodeType_ValueNode;
+  weight->format = schema::Format_NHWC;
+  weight->dataType = TypeId::kNumberTypeFloat32;
+  weight->dims = {1, 28, 28, 3};
+
+  weight->offset = -1;
+  meta_graph->allTensors.emplace_back(std::move(weight));
+
+  auto output = std::make_unique<schema::TensorT>();
+  output->nodeType = schema::NodeType::NodeType_Parameter;
+  output->format = schema::Format_NHWC;
+  output->dataType = TypeId::kNumberTypeFloat32;
+  output->offset = -1;
+  meta_graph->allTensors.emplace_back(std::move(output));
+
+  flatbuffers::FlatBufferBuilder builder(1024);
+  auto offset = schema::MetaGraph::Pack(builder, meta_graph.get());
+  builder.Finish(offset);
+  size_t size = builder.GetSize();
+  const char *content = reinterpret_cast<char *>(builder.GetBufferPointer());
+
+  auto model = lite::Model::Import(content, size);
+  ASSERT_NE(nullptr, model);
+  meta_graph.reset();
+  content = nullptr;
+  auto context = new lite::Context;
+  context->cpu_bind_mode_ = lite::NO_BIND;
+  context->device_ctx_.type = lite::DT_CPU;
+  context->thread_num_ = 4;
+  auto session = new SessionWithParallelExecutor();
+  session->Init(context);
+  ASSERT_NE(nullptr, session);
+  auto ret = session->CompileGraph(model);
+  ASSERT_EQ(lite::RET_OK, ret);
+  auto inputs = session->GetInputs();
+  ASSERT_EQ(inputs.size(), 2);
+  auto inTensor = inputs.front();
+  ASSERT_NE(nullptr, inTensor);
+  (void)inTensor->MutableData();
+  auto inTensor1 = inputs.back();
+  ASSERT_NE(nullptr, inTensor1);
+  (void)inTensor1->MutableData();
+  ret = session->RunGraph();
+  ASSERT_EQ(lite::RET_OK, ret);
+  auto outputs = session->GetOutputs();
+  ASSERT_EQ(outputs.size(), 1);
+  ASSERT_EQ(outputs.begin()->second.size(), 1);
+  auto outTensor = outputs.begin()->second.front();
+  ASSERT_NE(nullptr, outTensor);
+  ASSERT_EQ(28 * 28 * 3, outTensor->ElementsNum());
+  ASSERT_EQ(TypeId::kNumberTypeFloat32, outTensor->data_type());
+  auto *outData = reinterpret_cast<float *>(outTensor->MutableData());
+  ASSERT_NE(nullptr, outData);
   MS_LOG(INFO) << "Passed";
 }
 

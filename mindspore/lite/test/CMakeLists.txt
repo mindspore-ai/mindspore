@@ -167,6 +167,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/runtime/runtime_api.cc
         ${LITE_DIR}/src/runtime/thread_pool.cc
         ${LITE_DIR}/src/runtime/workspace_pool.cc
+        ${LITE_DIR}/src/runtime/parallel_executor.cc
         ${LITE_DIR}/src/ir/tensor.cc
         ${LITE_DIR}/src/context.cc
         ${LITE_DIR}/src/executor.cc

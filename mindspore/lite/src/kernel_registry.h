@@ -42,6 +42,7 @@ class KernelRegistry {
 
  protected:
   kernel::KernelCreator *creator_arrays_ = nullptr;
+  size_t array_size_;
   int device_type_length_;
   int data_type_length_;
   int op_type_length_;

@@ -208,6 +208,7 @@ int LiteSession::CompileGraph(Model *model) {
     return ret;
   }
 
+  executor->Prepare(this->kernels_);
   return RET_OK;
 }
 
@@ -219,11 +220,10 @@ int LiteSession::RunGraph(const session::KernelCallBack &before, const session::
   MS_EXCEPTION_IF_NULL(this->context_);
   SetMaxWokerNum(context_->thread_num_);
   context_->running_ = true;
-  Executor executor;
   if (before == nullptr && after == nullptr) {
-    return executor.Run(this->inputs_, this->outputs_, this->kernels_, this->context_->allocator.get());
+    return executor->Run(this->inputs_, this->outputs_, this->kernels_, this->context_->allocator.get());
   } else {
-    return executor.Run(this->inputs_, this->outputs_, this->kernels_, this->context_->allocator.get(), before, after);
+    return executor->Run(this->inputs_, this->outputs_, this->kernels_, this->context_->allocator.get(), before, after);
   }
 }
 
@@ -251,6 +251,8 @@ int LiteSession::Init(Context *context) {
     opencl_runtime->Init();
   }
 #endif
+  executor = new Executor();
+  MS_EXCEPTION_IF_NULL(executor);
   return RET_OK;
 }
 
@@ -289,6 +291,8 @@ LiteSession::~LiteSession() {
     delete kernel;
   }
   delete this->context_;
+  delete this->executor;
+  this->executor = nullptr;
 }
 
 std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputsByName(const std::string &name) const {
