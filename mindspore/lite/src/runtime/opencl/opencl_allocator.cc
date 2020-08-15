@@ -16,10 +16,10 @@
 
 #include "src/runtime/opencl/opencl_allocator.h"
 #include <utility>
-#include "utils/log_adapter.h"
 #include "src/runtime/opencl/opencl_runtime.h"
-#include "include/errorcode.h"
 #include "src/runtime/kernel/opencl/utils.h"
+#include "utils/log_adapter.h"
+#include "include/errorcode.h"
 
 namespace mindspore::lite::opencl {
 
@@ -61,7 +61,7 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size) 
   }
   Lock();
   auto iter = free_list_.lower_bound(size);
-  if (iter != free_list_.end() && (iter->second->size_ >= size) && (iter->second->size_ < (size << shift_factor_))) {
+  while (iter != free_list_.end() && (iter->second->size_ >= size) && (iter->second->size_ < (size << shift_factor_))) {
     auto mem_buf = iter->second;
     bool is_match{mem_buf->img_size.size() == img_size.size()};
     for (int i = 0; i < img_size.size() && is_match; ++i) {
@@ -75,6 +75,7 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size) 
                     << ", host addr: " << mem_buf->host_ptr_ << ", device addr: " << mem_buf->device_ptr_;
       return mem_buf->host_ptr_;
     }
+    ++iter;
   }
   void *host_ptr = nullptr;
   void *device_ptr = nullptr;
@@ -136,7 +137,7 @@ void *OpenCLAllocator::CreateImageFromHost(void *data, size_t size, const std::v
   auto ocl_runtime = opencl::OpenCLRuntime::GetInstance();
   Lock();
   auto iter = free_list_.lower_bound(size);
-  if (iter != free_list_.end() && (iter->second->size_ >= size) && (iter->second->size_ < (size << shift_factor_))) {
+  while (iter != free_list_.end() && (iter->second->size_ >= size) && (iter->second->size_ < (size << shift_factor_))) {
     auto mem_buf = iter->second;
     bool is_match{mem_buf->img_size.size() == img_size.size()};
     for (int i = 0; i < img_size.size() && is_match; ++i) {
@@ -150,6 +151,7 @@ void *OpenCLAllocator::CreateImageFromHost(void *data, size_t size, const std::v
                     << ", host addr: " << mem_buf->host_ptr_ << ", device addr: " << mem_buf->device_ptr_;
       return mem_buf->host_ptr_;
     }
+    ++iter;
   }
   void *host_ptr = nullptr;
   void *device_ptr = nullptr;
@@ -198,10 +200,13 @@ void OpenCLAllocator::Free(void *buf) {
     allocated_list_.erase(iter);
     free_list_.insert(std::make_pair(mem_buf->size_, mem_buf));
     UnLock();
+    MS_LOG(DEBUG) << "Free a new Image2D. size: " << mem_buf->size_ << ", host addr: " << mem_buf->host_ptr_
+                  << ", device addr: " << mem_buf->device_ptr_ << ", image addr: " << mem_buf->image_ptr_;
     return;
   }
   UnLock();
   free(buf);
+  MS_LOG(DEBUG) << "Free host ptr: " << buf;
 }
 
 size_t OpenCLAllocator::GetTotalSize() {

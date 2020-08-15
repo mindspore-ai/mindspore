@@ -22,6 +22,13 @@
 #include "CL/cl2.hpp"
 #include "utils/log_adapter.h"
 #include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "src/lite_kernel.h"
+
+namespace mindspore::lite {
+kernel::LiteKernel *GetOpenCLKernel(const std::vector<tensor::Tensor *> &in_tensors,
+                                    const std::vector<tensor::Tensor *> &out_tensors, OpParameter *parameter,
+                                    const Context *ctx, const kernel::KernelKey &key);
+}
 
 namespace mindspore::kernel {
 

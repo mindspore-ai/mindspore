@@ -131,6 +131,10 @@ class LiteKernel {
 
   void AddOutKernel(LiteKernel *kernel) { this->out_kernels_.emplace_back(kernel); }
 
+  void SetInKernel(const std::vector<LiteKernel *> &kernel) { this->in_kernels_ = kernel; }
+
+  void SetOutKernel(const std::vector<LiteKernel *> &kernel) { this->out_kernels_ = kernel; }
+
   std::vector<LiteKernel *> &in_kernels() { return this->in_kernels_; }
 
   std::vector<LiteKernel *> &out_kernels() { return this->out_kernels_; }
@@ -167,16 +171,14 @@ class SubGraphKernel : public LiteKernel {
  public:
   explicit SubGraphKernel(const std::vector<lite::tensor::Tensor *> &inputs,
                           const std::vector<lite::tensor::Tensor *> &outputs,
-                          const std::vector<kernel::LiteKernel *> &inKernels,
-                          const std::vector<kernel::LiteKernel *> &outKernels,
+                          const std::vector<kernel::LiteKernel *> &in_kernels,
+                          const std::vector<kernel::LiteKernel *> &out_kernels,
                           const std::vector<kernel::LiteKernel *> &nodes, const lite::Context *ctx,
                           const lite::Primitive *primitive)
-      : LiteKernel(nullptr, inputs, outputs, ctx, primitive),
-        inputs_(inputs),
-        outputs_(outputs),
-        inkernels_(inKernels),
-        outkernels_(outKernels),
-        nodes_(nodes) {}
+      : LiteKernel(nullptr, inputs, outputs, ctx, primitive), nodes_(nodes) {
+    in_kernels_ = in_kernels;
+    out_kernels_ = out_kernels;
+  }
 
   virtual int Init() { return -1; }
   virtual int InferShape() { return -1; }
@@ -184,10 +186,6 @@ class SubGraphKernel : public LiteKernel {
   virtual int Run() { return -1; }
 
  protected:
-  std::vector<lite::tensor::Tensor *> inputs_;
-  std::vector<lite::tensor::Tensor *> outputs_;
-  std::vector<LiteKernel *> inkernels_;
-  std::vector<LiteKernel *> outkernels_;
   std::vector<LiteKernel *> nodes_;
 };
 

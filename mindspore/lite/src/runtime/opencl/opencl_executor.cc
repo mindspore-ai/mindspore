@@ -24,41 +24,9 @@ namespace mindspore::lite::opencl {
 int OpenCLExecutor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tensor::Tensor *> &outputs,
                         std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator,
                         const session::KernelCallBack &before, const session::KernelCallBack &after) {
-  MS_ASSERT(nullptr != allocator);
-  for (auto &inTensor : inputs) {
-    if (inTensor == nullptr) {
-      MS_LOG(ERROR) << "Graph input tensor is nullptr";
-      return RET_ERROR;
-    }
-    if (inTensor->GetFormat() != schema::Format_NHWC4 && inTensor->GetFormat() != schema::Format_NC4HW4 &&
-      inTensor->GetFormat() != schema::Format_NHWC) {
-      MS_LOG(ERROR) << "input should be NHWC/NHWC4/NC4HW4, actual is " << schema::EnumNameFormat(inTensor->GetFormat());
-      return RET_ERROR;
-    } else {
-      TransformTensorLayout(inTensor, inTensor->GetFormat(), schema::Format_NHWC4, true);
-      // TransformTensorLayout(inTensor, inTensor->GetFormat(), schema::Format_NC4HW4, true);
-    }
-  }
   kernel::LiteKernelUtil::InitTensorRefCount(kernels);
-  OpenCLAllocator* op_allocator = reinterpret_cast<OpenCLAllocator*>(allocator);
   for (auto *kernel : kernels) {
     MS_ASSERT(nullptr != kernel);
-    kernel::OpenCLKernel *op_kernel = reinterpret_cast<kernel::OpenCLKernel*>(kernel);
-    auto &outputs = kernel->out_tensors();
-    for (auto i = 0; i < outputs.size(); ++i) {
-      auto *output = outputs.at(i);
-      MS_ASSERT(nullptr != output);
-      if (is_image2d_out_) {
-        std::vector<size_t> img_size;
-        op_kernel->GetImageSize(i, &img_size);
-        auto data_ptr = op_allocator->Malloc(output->Size(), img_size);
-
-        output->SetData(data_ptr);
-      } else {
-        output->MallocData(allocator);
-      }
-      output->set_allocator(allocator);
-    }
     session::CallBackParam callbackParam;
     callbackParam.name_callback_param = kernel->name();
 
@@ -67,6 +35,21 @@ int OpenCLExecutor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tenso
         MS_LOG(ERROR) << "run kernel before_callback failed, name: " << kernel->name();
       }
     }
+    kernel::OpenCLKernel *op_kernel = reinterpret_cast<kernel::OpenCLKernel *>(kernel);
+    auto &cur_outputs = kernel->out_tensors();
+    for (auto i = 0; i < cur_outputs.size(); ++i) {
+      auto *output = cur_outputs.at(i);
+      MS_ASSERT(nullptr != output);
+      if (op_kernel->GetMemType() == kernel::OpenCLMemType::IMG) {
+        std::vector<size_t> img_size;
+        op_kernel->GetImageSize(i, &img_size);
+        auto data_ptr = allocator_->Malloc(output->Size(), img_size);
+        output->SetData(data_ptr);
+      } else {
+        output->MallocData(allocator_);
+      }
+    }
+
     auto ret = kernel->Run();
     if (0 != ret) {
       MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
@@ -86,21 +69,11 @@ int OpenCLExecutor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tenso
       }
     }
   }
-  // output format transform
-  for (auto &outTensor : outputs) {
-    if (outTensor == nullptr) {
-      MS_LOG(ERROR) << "Graph output tensor is nullptr";
-      return RET_ERROR;
-    }
-    if (outTensor->GetFormat() != schema::Format_NHWC) {
-      TransformTensorLayout(outTensor, outTensor->GetFormat(), schema::Format_NHWC, false);
-    }
-  }
   return RET_OK;
 }
 
-int OpenCLExecutor::TransformTensorLayout(tensor::Tensor *tensor, schema::Format src_format,
-    schema::Format dst_format, bool trans_dir) {
+int OpenCLExecutor::TransformTensorLayout(tensor::Tensor *tensor, schema::Format src_format, schema::Format dst_format,
+                                          bool trans_dir) {
   MS_ASSERT(nullptr != tensor);
   MS_ASSERT(4 == tensor->shape().size());
   auto data_type = tensor->data_type();
@@ -114,11 +87,10 @@ int OpenCLExecutor::TransformTensorLayout(tensor::Tensor *tensor, schema::Format
                     << schema::EnumNameFormat(dst_format);
       return RET_ERROR;
   }
-  return RET_OK;
 }
 
 int OpenCLExecutor::TransformTensorLayoutFp32(tensor::Tensor *tensor, schema::Format src_format,
-    schema::Format dst_format, bool trans_dir) {
+                                              schema::Format dst_format, bool trans_dir) {
   MS_ASSERT(nullptr != tensor);
   MS_ASSERT(nullptr != allocator_);
   MS_ASSERT(4 == tensor->shape().size());
@@ -138,11 +110,11 @@ int OpenCLExecutor::TransformTensorLayoutFp32(tensor::Tensor *tensor, schema::Fo
 }
 
 int OpenCLExecutor::TransformTensorLayoutToBuffer(tensor::Tensor *tensor, schema::Format src_format,
-    schema::Format dst_format) {
+                                                  schema::Format dst_format) {
   if (dst_format == schema::Format_NHWC4) {
     auto *src_data = tensor->Data();
     size_t C4 = UP_DIV(tensor->Channel(), C4NUM);
-    std::vector <size_t> img_size{tensor->Width() * C4, (size_t) tensor->Height(), CL_FLOAT};
+    std::vector<size_t> img_size{tensor->Width() * C4, (size_t)tensor->Height(), CL_FLOAT};
     if (src_format == schema::Format_NHWC) {
       auto *dst_data = allocator_->Malloc(tensor->Size(), img_size);
       if (dst_data == nullptr) {
@@ -168,7 +140,7 @@ int OpenCLExecutor::TransformTensorLayoutToBuffer(tensor::Tensor *tensor, schema
 }
 
 int OpenCLExecutor::TransformTensorLayoutToImage(tensor::Tensor *tensor, schema::Format src_format,
-    schema::Format dst_format) {
+                                                 schema::Format dst_format) {
   if (dst_format == schema::Format_NHWC4) {
     tensor->SetFormat(schema::Format_NHWC4);
     // convert to nhwc4
@@ -202,15 +174,15 @@ int OpenCLExecutor::TransformTensorLayoutToImage(tensor::Tensor *tensor, schema:
 }
 
 int OpenCLExecutor::TransformTensorLayoutFromImage(tensor::Tensor *tensor, schema::Format src_format,
-    schema::Format dst_format) {
+                                                   schema::Format dst_format) {
   if (dst_format == schema::Format_NHWC) {
     auto src_data = tensor->Data();
     auto dst_data = allocator_->Malloc(tensor->Size());
     cl::Image2D *out_mem = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
     std::vector<size_t> img_size;
     allocator_->GetImageSize(src_data, &img_size);
-    auto origin = cl::array < cl::size_type, 3U > {0, 0, 0};
-    auto region = cl::array < cl::size_type, 3U > {img_size[0], img_size[1], 1};
+    auto origin = cl::array<cl::size_type, 3U>{0, 0, 0};
+    auto region = cl::array<cl::size_type, 3U>{img_size[0], img_size[1], 1};
     auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
     ocl_runtime->GetDefaultCommandQueue()->enqueueReadImage(*out_mem, CL_TRUE, origin, region, 0, 0, dst_data);
     tensor->SetData(dst_data);
@@ -224,7 +196,7 @@ int OpenCLExecutor::TransformTensorLayoutFromImage(tensor::Tensor *tensor, schem
 }
 
 int OpenCLExecutor::TransformTensorLayoutUint8(tensor::Tensor *tensor, schema::Format src_format,
-    schema::Format dst_format, bool is_image) {
+                                               schema::Format dst_format, bool is_image) {
   MS_ASSERT(nullptr != tensor);
   MS_ASSERT(4 == tensor->shape().size());
   //  auto src_format = tensor->GetFormat();
@@ -234,4 +206,3 @@ int OpenCLExecutor::TransformTensorLayoutUint8(tensor::Tensor *tensor, schema::F
   return RET_ERROR;
 }
 }  // namespace mindspore::lite::opencl
-

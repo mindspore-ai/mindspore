@@ -21,21 +21,37 @@
 #include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
+
+enum class OpenCLMemType { BUF, IMG };
+
+struct OpenCLToFormatParameter {
+  OpParameter op_parameter;
+  schema::Format src_format{schema::Format_NHWC};
+  schema::Format dst_format{schema::Format_NHWC4};
+  OpenCLMemType out_mem_type{OpenCLMemType::IMG};
+};
+
 class OpenCLKernel : public LiteKernel {
  public:
   explicit OpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                         const std::vector<lite::tensor::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs, nullptr, nullptr) {}
+    : LiteKernel(parameter, inputs, outputs, nullptr, nullptr) {}
 
   virtual int Init() { return -1; }
   virtual int Prepare() { return -1; }
   virtual int InferShape() { return -1; }
   virtual int ReSize() { return -1; }
   virtual int Run() { return -1; }
-  virtual int GetImageSize(size_t idx, std::vector<size_t>* img_size) { return -1; }
-  virtual int GetGlobalSize(size_t idx, std::vector<size_t>* global_size) { return -1; }
-  virtual int GetLocalSize(size_t idx, const std::vector<size_t>& global_size,
-                           std::vector<size_t>* local_size) { return -1; }
+  virtual int GetImageSize(size_t idx, std::vector<size_t> *img_size) { return -1; }
+  virtual int GetGlobalSize(size_t idx, std::vector<size_t> *global_size) { return -1; }
+  virtual int GetLocalSize(size_t idx, const std::vector<size_t> &global_size, std::vector<size_t> *local_size) {
+    return -1;
+  }
+  OpenCLMemType GetMemType() { return out_mem_type_; }
+  void SetMemType(OpenCLMemType mem_type) { out_mem_type_ = mem_type; }
+
+ protected:
+  OpenCLMemType out_mem_type_{OpenCLMemType::IMG};
 };
 }  // namespace mindspore::kernel
 

@@ -881,5 +881,10 @@ table TopKV2 {
 table MakeTuple {
 }
 
+table ToFormat {
+    srcT: int;
+    dstT: int;
+}
+
 table Return {
 }
