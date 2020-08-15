@@ -77,7 +77,7 @@ int MatmulCPUKernel::RunImpl(int task_id) {
   }
   auto cur_b = b_r8_ptr_ + task_id * thread_stride_ * C8NUM * params_->deep_;
   auto cur_c = c_r8x8_ptr_ + task_id * thread_stride_ * C8NUM * params_->row_8_;
-  MatMul(a_c8_ptr_, cur_b, cur_c, NULL, ActType_No, params_->deep_, params_->row_8_, cur_oc * 8);
+  MatMul(a_c8_ptr_, cur_b, cur_c, NULL, ActType_No, params_->deep_, params_->row_8_, cur_oc * 8, 0, false);
   return RET_OK;
 }
 

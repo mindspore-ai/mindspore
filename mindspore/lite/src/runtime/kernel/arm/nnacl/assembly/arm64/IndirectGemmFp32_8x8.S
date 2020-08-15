@@ -640,7 +640,7 @@ IndirectGemmStart:
                 add x15, x15, x7
                 str s30, [x15]
                 add x0, x0, #4
-                b WriteEnd
+                b WriteEndHalf
             Write2:
                 dup s17, v16.s[1]
                 stp s16, s17, [x15]
@@ -666,7 +666,7 @@ IndirectGemmStart:
                 dup s31, v30.s[1]
                 stp s30, s31, [x15]
                 add x0, x0, #8
-                b WriteEnd
+                b WriteEndHalf
             Write3:
                 add x17, x15, #8
                 dup s17, v16.s[1]
