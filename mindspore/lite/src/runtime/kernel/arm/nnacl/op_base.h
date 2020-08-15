@@ -23,6 +23,7 @@
 
 #define C4NUM 4
 #define C8NUM 8
+#define C16NUM 16
 #define BLOCK 4
 #define TILE_NUM 8
 
