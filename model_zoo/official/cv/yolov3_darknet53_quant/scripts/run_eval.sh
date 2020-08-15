@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 2 ]
+if [ $# != 3 ]
 then
-    echo "Usage: sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]"
+    echo "Usage: sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [DEVICE_ID]"
 exit 1
 fi
 
@@ -45,19 +45,19 @@ exit 1
 fi
 
 export DEVICE_NUM=1
-export DEVICE_ID=0
+export DEVICE_ID=$3
 export RANK_SIZE=$DEVICE_NUM
 export RANK_ID=0
 
-if [ -d "eval" ];
+if [ -d "eval$3" ];
 then
-    rm -rf ./eval
+    rm -rf ./eval$3
 fi
 
-mkdir ./eval
-cp ../*.py ./eval
-cp -r ../src ./eval
-cd ./eval || exit
+mkdir ./eval$3
+cp ../*.py ./eval$3
+cp -r ../src ./eval$3
+cd ./eval$3 || exit
 env > env.log
 echo "start infering for device $DEVICE_ID"
 python eval.py \

@@ -40,7 +40,7 @@ def main():
     parser.add_argument("--lr", type=float, default=0.05, help="Learning rate, default is 0.05.")
     parser.add_argument("--mode", type=str, default="sink", help="Run sink mode or not, default is sink.")
     parser.add_argument("--dataset", type=str, default="coco", help="Dataset, defalut is coco.")
-    parser.add_argument("--epoch_size", type=int, default=250, help="Epoch size, default is 250.")
+    parser.add_argument("--epoch_size", type=int, default=500, help="Epoch size, default is 500.")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size, default is 32.")
     parser.add_argument("--pre_trained", type=str, default=None, help="Pretrained Checkpoint file path.")
     parser.add_argument("--pre_trained_epoch_size", type=int, default=0, help="Pretrained epoch size.")
