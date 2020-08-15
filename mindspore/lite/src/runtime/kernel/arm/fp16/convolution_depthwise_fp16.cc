@@ -112,7 +112,7 @@ int ConvolutionDepthwiseFp16CPUKernel::Init() {
   }
   // init sliding_ window param
   sliding_ = new SlidingWindowParam;
-  InitSlidingParam(sliding_, conv_param_, C8NUM);
+  InitSlidingParamConvDw(sliding_, conv_param_, C8NUM);
 
   ret = InitWeightBias();
   if (ret != 0) {
