@@ -35,7 +35,7 @@ class PadCPUKernel : public LiteKernel {
   ~PadCPUKernel() {}
 
   int Init() override;
-  int ReSize() override { return 0; };
+  int ReSize() override;
   int Run() override;
   int RunImpl(int task_id);
 

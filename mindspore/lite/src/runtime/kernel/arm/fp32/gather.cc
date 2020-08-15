@@ -32,7 +32,10 @@ namespace mindspore::kernel {
 int GatherCPUKernel::Init() {
   axis_ = (reinterpret_cast<GatherParameter *>(op_parameter_))->axis_;
   batchDims_ = (reinterpret_cast<GatherParameter *>(op_parameter_))->batchDims_;
-  return RET_OK;
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
 }
 
 int GatherCPUKernel::ReSize() { return RET_OK; }

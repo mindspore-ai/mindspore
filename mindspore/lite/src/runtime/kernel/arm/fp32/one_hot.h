@@ -26,12 +26,12 @@ class OneHotCPUKernel : public LiteKernel {
   OneHotCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                   const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                   const lite::Primitive *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), context_(ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
 
   ~OneHotCPUKernel() override = default;
 
   int Init() override;
-  int ReSize() override { return 0; };
+  int ReSize() override;
   int Run() override;
   int OneHotImpl(int task_id);
 
@@ -39,7 +39,6 @@ class OneHotCPUKernel : public LiteKernel {
   int GetParams();
 
  private:
-  const lite::Context *context_;
   int thread_num_;
   int axis_;
   int outer_size_;

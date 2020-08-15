@@ -36,16 +36,19 @@ constexpr int kOutputNum = 1;
 }  // namespace
 
 int PadCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
-    return RET_OK;
-  }
   if (in_tensors_.size() != kInputNum || out_tensors_.size() != kOutputNum) {
     MS_LOG(ERROR) << "Pad input size should be " << kInputNum << ", got " << in_tensors_.size()
                   << ", output size should be" << kOutputNum << ", got " << out_tensors_.size();
     return RET_ERROR;
   }
 
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
+
+int PadCPUKernel::ReSize() {
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
   if (input == nullptr || output == nullptr) {
