@@ -13,10 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """Evaluation api."""
+import os
 import argparse
 import pickle
 
 from mindspore.common import dtype as mstype
+from mindspore import context
 
 from config import TransformerConfig
 from src.transformer import infer, infer_ppl
@@ -32,6 +34,8 @@ parser.add_argument("--output", type=str, required=True,
                     help="Result file path.")
 parser.add_argument("--metric", type=str, default='rouge',
                     help='Set eval method.')
+parser.add_argument("--platform", type=str, required=True,
+                    help="model working platform.")
 
 
 def get_config(config):
@@ -45,6 +49,16 @@ if __name__ == '__main__':
     args, _ = parser.parse_known_args()
     vocab = Dictionary.load_from_persisted_dict(args.vocab)
     _config = get_config(args.config)
+
+    device_id = os.getenv('DEVICE_ID', None)
+    if device_id is None:
+        device_id = 0
+    device_id = int(device_id)
+    context.set_context(
+        mode=context.GRAPH_MODE,
+        device_target=args.platform,
+        reserve_class_name_in_scope=False,
+        device_id=device_id)
 
     if args.metric == 'rouge':
         result = infer(_config)
