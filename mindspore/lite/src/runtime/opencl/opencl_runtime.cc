@@ -124,17 +124,12 @@ int OpenCLRuntime::Init() {
   const std::string device_name = device_->getInfo<CL_DEVICE_NAME>();
   const std::string device_version = device_->getInfo<CL_DEVICE_VERSION>();
   const std::string opencl_version = device_->getInfo<CL_DEVICE_OPENCL_C_VERSION>();
-  cl_uint align;
-  size_t ret;
-  clGetDeviceInfo((*device_)(), CL_DEVICE_IMAGE_PITCH_ALIGNMENT, sizeof(cl_uint), &align, &ret);
+  clGetDeviceInfo((*device_)(), CL_DEVICE_IMAGE_PITCH_ALIGNMENT, sizeof(cl_uint), &image_pitch_align_, nullptr);
   MS_LOG(INFO) << "Device name:\t" << device_name;
   MS_LOG(INFO) << "Opencl version:\t" << device_version;
-  MS_LOG(INFO) << "Image alignment:\t" << align;
-  MS_LOG(INFO) << "Image ret:\t" << ret;
+  MS_LOG(INFO) << "Image pitch alignment:\t" << image_pitch_align_;
   MS_LOG(INFO) << "Highest OpenCL c version:\t" << opencl_version;
-  MS_LOG(INFO) << "Max work item size:\t"
-               << max_work_item_sizes_[0] << " : "
-               << max_work_item_sizes_[1] << " : "
+  MS_LOG(INFO) << "Max work item size:\t" << max_work_item_sizes_[0] << " : " << max_work_item_sizes_[1] << " : "
                << max_work_item_sizes_[2];
 
   gpu_info_ = ParseGpuInfo(device_name, device_version);
@@ -540,8 +535,8 @@ int OpenCLRuntime::MapBuffer(void *host_ptr, int flags, size_t size, cl::Command
   return command_queue->enqueueMapSVM(host_ptr, sync, flags, size);
 }
 
-void *OpenCLRuntime::MapBuffer(const cl::Image2D buffer, bool sync, int flags,
-                               const std::vector<size_t>& region, cl::CommandQueue *command_queue) const {
+void *OpenCLRuntime::MapBuffer(const cl::Image2D buffer, bool sync, int flags, const std::vector<size_t> &region,
+                               cl::CommandQueue *command_queue) const {
   if (command_queue == nullptr) {
     command_queue = default_command_queue_.get();
   }
@@ -623,4 +618,3 @@ bool OpenCLRuntime::CreateProgramFromIL(const std::vector<u_char> program_binary
 }
 
 }  // namespace mindspore::lite::opencl
-

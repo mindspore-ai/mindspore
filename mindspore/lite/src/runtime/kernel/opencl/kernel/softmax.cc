@@ -124,9 +124,7 @@ int SoftmaxOpenCLKernel::Init() {
 
 int SoftmaxOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-  std::cout << "run" << std::endl;
 
-  // attribute
   int arg_idx = 0;
   if (onexone_flag_) {
     int channel_size = in_tensors_[0]->shape()[1];

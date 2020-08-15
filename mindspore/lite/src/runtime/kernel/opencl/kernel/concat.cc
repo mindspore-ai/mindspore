@@ -95,11 +95,11 @@ int ConcatOpenCLKernel::Run_axis0() {
   cl::CommandQueue *command_queue = ocl_runtime->GetDefaultCommandQueue();
 
   for (auto &tensor : in_tensors_) {
-    auto buffer = static_cast<cl::Buffer *>(allocator_->GetDeviceBuffer(tensor->Data()));
+    auto buffer = static_cast<cl::Buffer *>(allocator_->GetBuffer(tensor->Data()));
     ocl_runtime->MapBuffer(*buffer, CL_MAP_READ, tensor->Size(), command_queue, true);
   }
   for (auto &tensor : out_tensors_) {
-    auto buffer = static_cast<cl::Buffer *>(allocator_->GetDeviceBuffer(tensor->Data()));
+    auto buffer = static_cast<cl::Buffer *>(allocator_->GetBuffer(tensor->Data()));
     ocl_runtime->MapBuffer(*buffer, CL_MAP_WRITE, tensor->Size(), command_queue, true);
   }
 
@@ -109,7 +109,7 @@ int ConcatOpenCLKernel::Run_axis0() {
 
   for (auto tensors : {&in_tensors_, &out_tensors_}) {
     for (auto &tensor : *tensors) {
-      auto buffer = static_cast<cl::Buffer *>(allocator_->GetDeviceBuffer(tensor->Data()));
+      auto buffer = static_cast<cl::Buffer *>(allocator_->GetBuffer(tensor->Data()));
       ocl_runtime->UnmapBuffer(*buffer, tensor->Data());
     }
   }

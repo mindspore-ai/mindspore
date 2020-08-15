@@ -118,12 +118,12 @@ int ArithmeticOpenCLKernel::Init() {
 
 int ArithmeticOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-  auto runtime_ = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
 
-  int arg_idx = 0;
   uint32_t element_num = out_tensors_[0]->ElementsC4Num();
+  int arg_idx = 0;
 
-  runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
   if (element_flag_) {
     runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[1]->Data());
   } else {
@@ -145,15 +145,15 @@ int ArithmeticOpenCLKernel::Run() {
         MS_LOG(ERROR) << "Error Operator type " << op_parameter_->type_;
         break;
     }
-    runtime_->SetKernelArg(kernel_, arg_idx++, weight_);
-    runtime_->SetKernelArg(kernel_, arg_idx++, bias_);
+    ocl_runtime->SetKernelArg(kernel_, arg_idx++, weight_);
+    ocl_runtime->SetKernelArg(kernel_, arg_idx++, bias_);
   }
-  runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
   int H = out_tensors_[0]->Batch() * out_tensors_[0]->Height();
   int W = out_tensors_[0]->Width() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   cl_int2 output_shape{W, H};
-  runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
-  runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, output_shape);
+  ocl_runtime->RunKernel(kernel_, global_size_, local_size_, nullptr);
   return 0;
 }
 
