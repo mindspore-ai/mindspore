@@ -111,7 +111,8 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetFail3) {
 
   // Attempt to create a TextFile Dataset
   // with non-existent dataset_files input
-  std::shared_ptr<Dataset> ds = TextFile({"notexist.txt"}, 0, ShuffleMode::kFalse);
+  std::string tf_file1 = datasets_root_path_ + "/testTextFileDataset/1.txt";
+  std::shared_ptr<Dataset> ds = TextFile({tf_file1, "notexist.txt"}, 0, ShuffleMode::kFalse);
 
   // Expect failure: specified dataset_files does not exist
   EXPECT_EQ(ds, nullptr);
