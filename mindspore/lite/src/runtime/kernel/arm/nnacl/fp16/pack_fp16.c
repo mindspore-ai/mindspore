@@ -369,6 +369,21 @@ void PackNHWCFp32ToNHWC8Fp16(float *src, float16_t *dst, int batch, int plane, i
   }
 }
 
+void PackNHWCFp32ToC8HWN8Fp16(float *src, float16_t *dst, int batch, int plane, int channel) {
+  for (int n = 0; n < batch; n++) {
+    for (int hw = 0; hw < plane; hw++) {
+      for (int c = 0; c < channel; c++) {
+        int c8div = c / C8NUM;
+        int c8mod = c % C8NUM;
+        int src_index = n * plane * channel + hw * channel + c;
+        int dst_index = c8div * batch * plane * C8NUM + hw * batch * C8NUM + n * C8NUM + c8mod;
+        dst[dst_index] = (float16_t)(src[src_index]);
+      }
+    }
+  }
+  return;
+}
+
 void PackNHWC8Fp16ToNHWCFp32(float16_t *src, float *dst, int batch, int plane, int channel) {
   int c8_channel = UP_DIV(channel, C8NUM) * C8NUM;
   for (int b = 0; b < batch; b++) {
