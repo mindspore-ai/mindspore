@@ -38,12 +38,12 @@ KernelRegistry::KernelRegistry() {
   data_type_length_ = kNumberTypeEnd - kNumberTypeBegin + 1;
   op_type_length_ = PrimitiveType_MAX - PrimitiveType_MIN + 1;
   // malloc an array contain creator functions of kernel
-  auto total_len = device_type_length_ * data_type_length_ * op_type_length_;
-  creator_arrays_ = (kernel::KernelCreator *)malloc(total_len * sizeof(kernel::KernelCreator));
+  array_size_ = device_type_length_ * data_type_length_ * op_type_length_;
+  creator_arrays_ = (kernel::KernelCreator *)malloc(array_size_ * sizeof(kernel::KernelCreator));
   if (creator_arrays_ == nullptr) {
     MS_LOG(ERROR) << "malloc creator_arrays_ failed.";
   } else {
-    for (int i = 0; i < total_len; ++i) {
+    for (int i = 0; i < array_size_; ++i) {
       creator_arrays_[i] = nullptr;
     }
   }

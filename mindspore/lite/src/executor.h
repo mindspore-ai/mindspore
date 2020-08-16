@@ -26,10 +26,11 @@ namespace mindspore::lite {
 class Executor {
  public:
   Executor() = default;
+  virtual ~Executor() = default;
 
-  int Prepare(std::vector<kernel::LiteKernel *> &kernels) { return 0; }
+  virtual int Prepare(std::vector<kernel::LiteKernel *> &kernels) { return 0; }
 
-  int Run(std::vector<tensor::Tensor *> &in_tensors, std::vector<tensor::Tensor *> &out_tensors,
+  virtual int Run(std::vector<tensor::Tensor *> &in_tensors, std::vector<tensor::Tensor *> &out_tensors,
           std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator = nullptr,
           const session::KernelCallBack &before = nullptr, const session::KernelCallBack &after = nullptr);
 

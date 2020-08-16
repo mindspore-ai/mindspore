@@ -32,6 +32,9 @@ constexpr int kBigMidCpuNum = 4;
 constexpr int kDefaultThreadNum = 1;
 static unsigned int kDefaultMaxThreadNums = 8;
 static unsigned int localMaxThreadNums = 1;
+static ThreadPool globalThreadPool;
+
+ThreadPool *GlobalThreadPool() { return &globalThreadPool; }
 
 bool LiteQueue::Enqueue(ThreadPoolTask *task) {
   const int tailIndex = tail.load(std::memory_order_relaxed);
@@ -425,11 +428,6 @@ void ThreadPool::ConfigThreadPool(int mode, int numThreads) {
 
 void ThreadPool::ConfigMaxThreadNum(unsigned int num) { localMaxThreadNums = num; }
 
-ThreadPool *ThreadPool::GetInstance() {
-  static ThreadPool instance;
-  return &instance;
-}
-
 ThreadPool::~ThreadPool() {
   curThreadRunNums = static_cast<int>(threadList.size() + 1);
   exitRun = true;
@@ -446,4 +444,3 @@ ThreadPool::~ThreadPool() {
 }
 }  // namespace predict
 }  // namespace mindspore
-

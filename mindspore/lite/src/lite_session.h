@@ -27,6 +27,7 @@
 #include "include/context.h"
 #include "src/lite_kernel.h"
 #include "schema/model_generated.h"
+#include "src/executor.h"
 
 namespace mindspore {
 namespace lite {
@@ -36,7 +37,7 @@ class LiteSession : public session::LiteSession {
 
   ~LiteSession() override;
 
-  int Init(Context *context);
+  virtual int Init(Context *context);
 
   void BindThread(bool if_bind) override;
 
@@ -82,6 +83,7 @@ class LiteSession : public session::LiteSession {
   std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> input_map_;
   // graph output node name -- output tensors
   std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> output_map_;
+  Executor *executor = nullptr;
 };
 }  // namespace lite
 }  // namespace mindspore
