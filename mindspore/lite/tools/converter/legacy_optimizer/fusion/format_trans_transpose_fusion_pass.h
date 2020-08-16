@@ -26,8 +26,8 @@ namespace mindspore {
 namespace lite {
 constexpr const char *kFormatTransformOp = "FormatTransOp";
 constexpr const char *kPermuteOp = "PermuteOp";
-constexpr const char *kFormatTrans2PermuteFusionPattern = "Nc2NhAndNh2NcFusionPattern";
-constexpr const char *kPermute2FormatTransFusionPattern = "Nc2NhAndNh2NcPassFusionPattern";
+constexpr const char *kFormatTrans2TransposeFusionPattern = "Nc2NhAndNh2NcFusionPattern";
+constexpr const char *kTranspose2FormatTransFusionPattern = "Nc2NhAndNh2NcPassFusionPattern";
 
 class FormatTransPermuteFusionPass : public FusionPass {
  public:
@@ -46,4 +46,3 @@ class FormatTransPermuteFusionPass : public FusionPass {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_PREDICT_FORMAT_TRANS_PERMUTE_FUSION_PASS_H
-

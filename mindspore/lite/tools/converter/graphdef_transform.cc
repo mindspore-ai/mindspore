@@ -30,7 +30,7 @@
 #include "tools/converter/legacy_optimizer/fusion/conv_biasadd_fusion_pass.h"
 // #include "tools/converter/legacy_optimizer/fusion/matmul_biasadd_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/format_trans_fusion_pass.h"
-#include "tools/converter/legacy_optimizer/fusion/format_trans_permute_fusion_pass.h"
+#include "tools/converter/legacy_optimizer/fusion/format_trans_transpose_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/quant_cast_fusion_pass.h"
 // #include "tools/converter/legacy_optimizer/fusion/batchnorm_fold_fusion_pass.h"
 //
