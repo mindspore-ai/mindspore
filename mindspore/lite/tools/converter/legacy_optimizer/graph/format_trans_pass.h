@@ -37,16 +37,19 @@ class FormatTransPass : public GraphPass {
 
   void SetFmk(converter::FmkType fmkType);
 
+ protected:
+  NodeIter InsertFormatTransNode(schema::MetaGraphT *graph, NodeIter existNodeIter, InsertPlace place, size_t inoutIdx,
+                                 FormatTransNodeType nodeType, STATUS *errorCode);
+
  private:
   STATUS DoModelInputFormatTrans(schema::MetaGraphT *graph);
 
   STATUS DoNodeInoutFormatTrans(schema::MetaGraphT *graph);
 
-  NodeIter InsertFormatTransNode(schema::MetaGraphT *graph, NodeIter existNodeIter, InsertPlace place, size_t inoutIdx,
-                                 FormatTransNodeType nodeType, STATUS *errorCode);
+ protected:
+  size_t id = 0;
 
  private:
-  size_t id;
   QuantType quantType = QuantType_QUANT_NONE;
   converter::FmkType fmkType = converter::FmkType_TF;
 };
@@ -54,4 +57,3 @@ class FormatTransPass : public GraphPass {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_PREDICT_FORMAT_TRANS_PASS_H
-

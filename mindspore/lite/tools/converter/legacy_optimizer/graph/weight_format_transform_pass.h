@@ -14,45 +14,40 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_PREDICT_WEIGHT_FORMAT_PASS_H
-#define MINDSPORE_PREDICT_WEIGHT_FORMAT_PASS_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_LEGACY_OPTIMIZER_WEIGHT_FORMAT_TRANSFORM_PASS_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_LEGACY_OPTIMIZER_WEIGHT_FORMAT_TRANSFORM_PASS_H
 
 #include "tools/converter/optimizer.h"
+#include "tools/common/graph_util.h"
 #include "tools/converter/converter_flags.h"
-#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace lite {
-class WeightFormatPass : public NodePass {
+class WeightFormatTransformPass : public GraphPass {
  public:
-  WeightFormatPass() = default;
+  WeightFormatTransformPass() = default;
 
-  ~WeightFormatPass() override = default;
+  ~WeightFormatTransformPass() override = default;
 
   void SetQuantType(QuantType quantType);
 
   void SetFmkType(converter::FmkType fmkType);
 
-  int Run(GraphNode *graphNode) override;
+  void SetDstFormat(Format format);
+
+  STATUS Run(MetaGraphT *graph) override;
 
  private:
-  // correct weightTensor->Format
-  int ShapeFormatTrans(GraphNode *graphNode);
+  STATUS QuantDataFormatTrans(MetaGraphT *graph);
 
-  // transform weightTensor data and format
-  // if quant : conv transform dataFormat to NHWC, weight format to HWCK
-  // if quant : depth transform dataFormat to NCHW, weight format to CKHW
-  int QuantDataFormatTrans(GraphNode *graphNode);
-
-  // if no quant : transform dataFormat to NCHW, weight format to KCHW/CKHW
-  int NonQuantDataFormatTrans(GraphNode *graphNode);
+  STATUS NonQuantDataFormatTrans(MetaGraphT *graph);
 
  private:
   QuantType quantType = QuantType_QUANT_NONE;
   converter::FmkType fmkType = converter::FmkType_TF;
+  Format dstFormat = Format_NUM_OF_FORMAT;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_PREDICT_WEIGHT_FORMAT_PASS_H
-
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_LEGACY_OPTIMIZER_WEIGHT_FORMAT_TRANSFORM_PASS_H

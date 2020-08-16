@@ -23,34 +23,12 @@
 #include "src/common/op_utils.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/converter/legacy_optimizer/graph/dtype_trans_pass.h"
-#include "tools/converter/legacy_optimizer/fusion/conv_bn_fusion_pass.h"
-#include "tools/converter/legacy_optimizer/fusion/conv_scale_fusion_pass.h"
-#include "tools/converter/legacy_optimizer/fusion/conv_relu_fusion_pass.h"
-#include "tools/converter/legacy_optimizer/fusion/conv_relu6_fusion_pass.h"
-#include "tools/converter/legacy_optimizer/fusion/conv_biasadd_fusion_pass.h"
 // #include "tools/converter/legacy_optimizer/fusion/matmul_biasadd_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/format_trans_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/format_trans_transpose_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/quant_cast_fusion_pass.h"
-// #include "tools/converter/legacy_optimizer/fusion/batchnorm_fold_fusion_pass.h"
-//
-// #include "tools/converter/legacy_optimizer/const_fold/add_const_fold_pass.h"
-// #include "tools/converter/legacy_optimizer/const_fold/cast_const_fold_pass.h"
-// #include "tools/converter/legacy_optimizer/const_fold/concat_v2_const_fold_pass.h"
-// #include "tools/converter/legacy_optimizer/const_fold/expand_dims_const_fold_pass.h"
-// #include "tools/converter/legacy_optimizer/const_fold/mul_const_fold_pass.h"
-// #include "tools/converter/legacy_optimizer/const_fold/range_const_fold_pass.h"
-// #include "tools/converter/legacy_optimizer/const_fold/reshape_const_fold_pass.h"
-// #include "tools/converter/legacy_optimizer/const_fold/rsqrt_const_fold_pass.h"
-// #include "tools/converter/legacy_optimizer/const_fold/shape_const_fold_pass.h"
-// #include "tools/converter/legacy_optimizer/const_fold/slice_const_fold_pass.h"
-// #include "tools/converter/legacy_optimizer/const_fold/stack_const_fold_pass.h"
-// #include "tools/converter/legacy_optimizer/const_fold/strided_slice_const_fold_pass.h"
-// #include "tools/converter/legacy_optimizer/const_fold/sub_const_fold_pass.h"
-// #include "tools/converter/legacy_optimizer/const_fold/tile_const_fold_pass.h"
-// #include "tools/converter/legacy_optimizer/const_fold/transpose_const_fold_pass.h"
-//
-#include "tools/converter/legacy_optimizer/node/weight_format_pass.h"
+#include "tools/converter/legacy_optimizer/graph/weight_format_hardcode_pass.h"
+#include "tools/converter/legacy_optimizer/graph/weight_format_transform_pass.h"
 #include "tools/converter/legacy_optimizer/graph/format_trans_pass.h"
 #include "tools/converter/legacy_optimizer/graph/eltwise_format_trans_pass.h"
 #include "tools/converter/legacy_optimizer/graph/isolated_node_remove_pass.h"
@@ -76,19 +54,6 @@ void GraphDefTransform::CreateQuantizer(const converter::Flags *flags) {
         std::make_unique<quant::AwareQuantizer>(graphDefT, flags->inputInferenceTypeIn, flags->stdDev, flags->mean);
       break;
     }
-      //    case QuantType::QuantType_WeightQuant: {
-      //      MS_LOGI("create WeightQuantizer!");
-      //      mQuantizer.reset(new WeightQuantizer(graphDefT, flags->quantSize));
-      //      break;
-      //    }
-      //    case QuantType_PostTraining: {
-      //      MS_LOGI("create PostTrainningQuantizer!");
-      //      mQuantizer.reset(new PostTrainingQuantizer(graphDefT, flags->configFile));
-      //      break;
-      //    }
-      //    case QuantType::QuantType_QUANT_NONE:
-      //      MS_LOGD("Not do quantization for model!");
-      //      break;
     default:
       //      MS_LOGI("will support quantizer type %s in the future!", flags->quantTypeIn.c_str());
       break;
@@ -97,16 +62,16 @@ void GraphDefTransform::CreateQuantizer(const converter::Flags *flags) {
 
 int GraphDefTransform::Transform(const converter::Flags &ctx) {
   STATUS status;
-  // weight format trans
-  if (ctx.formatTrans) {
+  {
     Optimizer weightFormatOptimizer;
-    auto weightFormatPass = new (std::nothrow) WeightFormatPass();
-    if (weightFormatPass == nullptr) {
-      MS_LOG(ERROR) << "new weightFormatPass failed";
-      return RET_ERROR;
-    }
+    auto weightHardCodePass = new WeightFormatHardCodePass();
+    auto weightFormatPass = new WeightFormatTransformPass();
+    weightHardCodePass->SetQuantType(ctx.quantType);
+    weightHardCodePass->SetFmkType(ctx.fmk);
     weightFormatPass->SetQuantType(ctx.quantType);
     weightFormatPass->SetFmkType(ctx.fmk);
+//    weightFormatPass->SetDstFormat(Format_KHWC);
+    weightFormatOptimizer.AddPass(weightHardCodePass);
     weightFormatOptimizer.AddPass(weightFormatPass);
     status = weightFormatOptimizer.Run(graphDefT);
     if (status != RET_OK && status != RET_NO_CHANGE) {

@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_PREDICT_ELTWISE_FORMAT_TRANS_PASS_H
 #define MINDSPORE_PREDICT_ELTWISE_FORMAT_TRANS_PASS_H
 
-#include "tools/converter/optimizer.h"
+#include <memory>
 #include "tools/common/graph_util.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/converter/legacy_optimizer/graph/format_trans_pass.h"
@@ -25,26 +25,24 @@
 namespace mindspore {
 namespace lite {
 
-class EltwiseFormatTransPass : public GraphPass {
+class EltwiseFormatTransPass : public FormatTransPass {
  public:
-  EltwiseFormatTransPass() : id(0) {}
+  EltwiseFormatTransPass() : FormatTransPass() {}
 
   ~EltwiseFormatTransPass() override = default;
 
   STATUS Run(schema::MetaGraphT *graph) override;
 
-  void SetQuantType(QuantType quantType);
+ private:
+  bool CanFusion(schema::MetaGraphT *graph, const std::unique_ptr<CNodeT> &node);
 
-  void SetFmk(converter::FmkType fmkType);
+  STATUS FindOutTransType();
 
  private:
-  NodeIter InsertFormatTransNode(schema::MetaGraphT *graph, NodeIter existNodeIter, InsertPlace place, size_t inoutIdx,
-                                 FormatTransNodeType nodeType, STATUS *errorCode);
-
- private:
-  size_t id;
-  QuantType quantType = QuantType_QUANT_NONE;
-  converter::FmkType fmkType = converter::FmkType_TF;
+  FormatTransNodeType pre_insert_trans_type_ = kNHWC2NCHW;
+  FormatTransNodeType post_insert_trans_type_ = kNHWC2NCHW;
+  schema::PrimitiveType pre_type_ = schema::PrimitiveType_NONE;
+  schema::PrimitiveType post_type_ = schema::PrimitiveType_NONE;
 };
 }  // namespace lite
 }  // namespace mindspore

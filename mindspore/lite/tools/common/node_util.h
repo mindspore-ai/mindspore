@@ -53,7 +53,7 @@ class NodeUtils {
 
 // todo check this
 enum kTransFilterType {
-  kKCHW2HWCK,
+  kKCHW2HWCK,  // 0
   kKCHW2KHWC,
   kCKHW2KHWC,
   kCKHW2HWCK,
@@ -63,19 +63,23 @@ enum kTransFilterType {
   kHWCK2CKHW,
   kHWKC2KCHW,
   kHWKC2CKHW,
-  kNHWC2KCHW,
+  kNHWC2KCHW,  // 10
   kNHWC2CKHW,
   kNHWC2HWCK,
   kKHWC2HWCK,
   kCHWK2HWCK,
   kKHWC2CHWK,
-  kCHWK2KHWC
+  kCHWK2KHWC,
+  kKHWC2KCHW,
+  kCKHW2KCHW,
+  kCHWK2KCHW,
+  kKCHW2CKHW  // 20
 };
 
 static STATUS GetFilterDim(std::vector<int32_t> &oriDims, kTransFilterType type, int32_t &filterK, int32_t &filterC,
                            int32_t &filterH, int32_t &filterW) {
   MS_ASSERT(oriDims.size() == 4);
-  if (type == kKCHW2HWCK || type == kKCHW2HWKC || type == kKCHW2KHWC) {
+  if (type == kKCHW2HWCK || type == kKCHW2HWKC || type == kKCHW2KHWC || type == kKCHW2CKHW) {
     filterK = oriDims.at(KCHW_K);
     filterC = oriDims.at(KCHW_C);
     filterH = oriDims.at(KCHW_H);
@@ -126,7 +130,7 @@ static STATUS SetFilterDim(schema::TensorT *tensor, kTransFilterType type, int32
     tensor->dims = {filterH, filterW, filterK, filterC};
   } else if (type == kHWCK2KCHW || type == kHWKC2KCHW || type == kNHWC2KCHW) {
     tensor->dims = {filterK, filterC, filterH, filterW};
-  } else if (type == kHWCK2CKHW || type == kHWKC2CKHW || type == kNHWC2CKHW) {
+  } else if (type == kHWCK2CKHW || type == kHWKC2CKHW || type == kNHWC2CKHW || type == kKCHW2CKHW) {
     tensor->dims = {filterC, filterK, filterH, filterW};
   } else if (type == kKHWC2CHWK) {
     tensor->dims = {filterC, filterH, filterW, filterK};
@@ -198,6 +202,7 @@ static STATUS TransFilterData(schema::TensorT *tensor, kTransFilterType type, in
       }
     } break;
     case kKCHW2HWCK:
+    case kKCHW2CKHW:
     case kKCHW2KHWC:
     case kKCHW2HWKC: {
       for (int k = 0; k < filterK; ++k) {
@@ -211,6 +216,9 @@ static STATUS TransFilterData(schema::TensorT *tensor, kTransFilterType type, in
               } else if (type == kKCHW2KHWC) {
                 p2Buff =
                   buf.get() + ((k * filterH * filterW * filterC) + (h * filterW * filterC) + (w * filterC) + (c));
+              } else if (type == kKCHW2CKHW) {
+                p2Buff =
+                  buf.get() + ((c * filterK * filterH * filterW) + (k * filterH * filterW) + (h * filterW) + (w));
               } else {
                 p2Buff =
                   buf.get() + ((h * filterW * filterK * filterC) + (w * filterK * filterC) + (k * filterC) + (c));
@@ -367,7 +375,8 @@ static STATUS TransFilterFormat(schema::TensorT *tensor, kTransFilterType type) 
 
   return RET_OK;
 }
+
+STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat);
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_PREDICT_NODE_UTIL_H
-

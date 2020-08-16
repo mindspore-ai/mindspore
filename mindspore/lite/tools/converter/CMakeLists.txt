@@ -103,7 +103,6 @@ target_link_libraries(converter_lite PRIVATE
         onnx_parser_mid
         anf_importer_mid
         anf_exporter_mid
-        node_mid
         graph_pass_mid
         fusion_mid
         quantizer_mid
