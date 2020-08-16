@@ -184,7 +184,7 @@ void ConvDwC8Fp16(float16_t *output_data, const float16_t *input_data, const flo
 
 /*deconv depthwise fp16 begin*/
 void DeconvDepthwiseBorderPixelFp16(float16_t *dst, const float16_t *src, const float16_t *weight, int height,
-                                    int width, int in_kh_step, int in_kw_step, int kernel_w) {
+                                    int width, int in_kh_step, int in_kw_step, int kernel_w_step) {
   float16_t *dst_kh = dst;
   const float16_t *weight_kh = weight;
   for (int kh = 0; kh < height; kh++) {
@@ -201,7 +201,7 @@ void DeconvDepthwiseBorderPixelFp16(float16_t *dst, const float16_t *src, const 
       weight_kw += C8NUM;
     }  // kernel_w loop
     dst_kh += in_kh_step;
-    weight_kh += kernel_w * C8NUM;
+    weight_kh += kernel_w_step;
   }  // kernel_h loop
 }
 
@@ -224,9 +224,14 @@ void DeconvDepthwiseBorderFp16(float16_t *dst, const float16_t *src, const float
 
       const float16_t *weight_kernel = weight + (start_kh * conv_param->kernel_w_ + start_kw) * C8NUM;
       float16_t *dst_kernel = dst_w + start_kh * sliding->in_kh_step_ + start_kw * sliding->in_kw_step_;
-
+#ifdef ENABLE_ARM64
+      DeconvDwFp16Border(dst_kernel, src_kernel, weight_kernel, end_kh - start_kh, end_kw - start_kw,
+                         sliding->in_kh_step_ * sizeof(float16_t), sliding->in_kw_step_ * sizeof(float16_t),
+                         conv_param->kernel_w_ * C8NUM * sizeof(float16_t));
+#else
       DeconvDepthwiseBorderPixelFp16(dst_kernel, src_kernel, weight_kernel, end_kh - start_kh, end_kw - start_kw,
-                                     sliding->in_kh_step_, sliding->in_kw_step_, conv_param->kernel_w_);
+                                     sliding->in_kh_step_, sliding->in_kw_step_, conv_param->kernel_w_ * C8NUM);
+#endif
       src_kernel += sliding->block_channel_;
     }  // width loop
     src_h += sliding->out_h_step_;
