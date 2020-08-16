@@ -100,17 +100,17 @@ int ElementOptAddFp16(float16_t *input0, float16_t *input1, float16_t *output, i
 }
 
 int ElementMulFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
-  int block_mod = element_size % C4NUM;
-  int block_c4 = element_size - block_mod;
+  int block_mod = element_size % C8NUM;
+  int block_c8 = element_size - block_mod;
 
-  for (int index = 0; index < block_c4; index += C4NUM) {
+  for (int index = 0; index < block_c8; index += C8NUM) {
     output[0] = input0[0] * input1[0];
     output[1] = input0[1] * input1[1];
     output[2] = input0[2] * input1[2];
     output[3] = input0[3] * input1[3];
-    input0 += C4NUM;
-    input1 += C4NUM;
-    output += C4NUM;
+    input0 += C8NUM;
+    input1 += C8NUM;
+    output += C8NUM;
   }
   for (int index = 0; index < block_mod; ++index) {
     output[index] = input0[index] * input1[index];
@@ -120,10 +120,10 @@ int ElementMulFp16(float16_t *input0, float16_t *input1, float16_t *output, int 
 }
 
 int ElementMulReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
-  int block_mod = element_size % C4NUM;
-  int block_c4 = element_size - block_mod;
+  int block_mod = element_size % C8NUM;
+  int block_c8 = element_size - block_mod;
 
-  for (int index = 0; index < block_c4; index += C4NUM) {
+  for (int index = 0; index < block_c8; index += C8NUM) {
     float16_t res = input0[0] * input1[0];
     output[0] = res > 0 ? res : 0;
     res = input0[1] * input1[1];
@@ -132,9 +132,9 @@ int ElementMulReluFp16(float16_t *input0, float16_t *input1, float16_t *output, 
     output[2] = res > 0 ? res : 0;
     res = input0[3] * input1[3];
     output[3] = res > 0 ? res : 0;
-    input0 += C4NUM;
-    input1 += C4NUM;
-    output += C4NUM;
+    input0 += C8NUM;
+    input1 += C8NUM;
+    output += C8NUM;
   }
   for (int index = 0; index < block_mod; ++index) {
     float16_t res = input0[index] * input1[index];
@@ -145,17 +145,17 @@ int ElementMulReluFp16(float16_t *input0, float16_t *input1, float16_t *output, 
 }
 
 int ElementMulRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
-  int block_mod = element_size % C4NUM;
-  int block_c4 = element_size - block_mod;
+  int block_mod = element_size % C8NUM;
+  int block_c8 = element_size - block_mod;
 
-  for (int index = 0; index < block_c4; index += C4NUM) {
+  for (int index = 0; index < block_c8; index += C8NUM) {
     output[0] = MSMIN(MSMAX(input0[0] * input1[0], 0), 6);
     output[1] = MSMIN(MSMAX(input0[1] * input1[1], 0), 6);
     output[2] = MSMIN(MSMAX(input0[2] * input1[2], 0), 6);
     output[3] = MSMIN(MSMAX(input0[3] * input1[3], 0), 6);
-    input0 += C4NUM;
-    input1 += C4NUM;
-    output += C4NUM;
+    input0 += C8NUM;
+    input1 += C8NUM;
+    output += C8NUM;
   }
   for (int index = 0; index < block_mod; ++index) {
     output[index] = MSMIN(MSMAX(input0[index] * input1[index], 0), 6);
@@ -165,17 +165,17 @@ int ElementMulRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output,
 }
 
 int ElementAddFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
-  int block_mod = element_size % C4NUM;
-  int block_c4 = element_size - block_mod;
+  int block_mod = element_size % C8NUM;
+  int block_c8 = element_size - block_mod;
 
-  for (int index = 0; index < block_c4; index += C4NUM) {
+  for (int index = 0; index < block_c8; index += C8NUM) {
     output[0] = input0[0] + input1[0];
     output[1] = input0[1] + input1[1];
     output[2] = input0[2] + input1[2];
     output[3] = input0[3] + input1[3];
-    input0 += C4NUM;
-    input1 += C4NUM;
-    output += C4NUM;
+    input0 += C8NUM;
+    input1 += C8NUM;
+    output += C8NUM;
   }
   for (int index = 0; index < block_mod; ++index) {
     output[index] = input0[index] + input1[index];
@@ -184,10 +184,10 @@ int ElementAddFp16(float16_t *input0, float16_t *input1, float16_t *output, int 
 }
 
 int ElementAddReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
-  int block_mod = element_size % C4NUM;
-  int block_c4 = element_size - block_mod;
+  int block_mod = element_size % C8NUM;
+  int block_c8 = element_size - block_mod;
 
-  for (int index = 0; index < block_c4; index += C4NUM) {
+  for (int index = 0; index < block_c8; index += C8NUM) {
     float16_t res = input0[0] + input1[0];
     output[0] = res > 0 ? res : 0;
     res = input0[1] + input1[1];
@@ -196,9 +196,9 @@ int ElementAddReluFp16(float16_t *input0, float16_t *input1, float16_t *output, 
     output[2] = res > 0 ? res : 0;
     res = input0[3] + input1[3];
     output[3] = res > 0 ? res : 0;
-    input0 += C4NUM;
-    input1 += C4NUM;
-    output += C4NUM;
+    input0 += C8NUM;
+    input1 += C8NUM;
+    output += C8NUM;
   }
   for (int index = 0; index < block_mod; ++index) {
     float16_t res = input0[index] + input1[index];
@@ -208,17 +208,17 @@ int ElementAddReluFp16(float16_t *input0, float16_t *input1, float16_t *output, 
 }
 
 int ElementAddRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
-  int block_mod = element_size % C4NUM;
-  int block_c4 = element_size - block_mod;
+  int block_mod = element_size % C8NUM;
+  int block_c8 = element_size - block_mod;
 
-  for (int index = 0; index < block_c4; index += C4NUM) {
+  for (int index = 0; index < block_c8; index += C8NUM) {
     output[0] = MSMIN(MSMAX(input0[0] + input1[0], 0), 6);
     output[1] = MSMIN(MSMAX(input0[1] + input1[1], 0), 6);
     output[2] = MSMIN(MSMAX(input0[2] + input1[2], 0), 6);
     output[3] = MSMIN(MSMAX(input0[3] + input1[3], 0), 6);
-    input0 += C4NUM;
-    input1 += C4NUM;
-    output += C4NUM;
+    input0 += C8NUM;
+    input1 += C8NUM;
+    output += C8NUM;
   }
   for (int index = 0; index < block_mod; ++index) {
     output[index] = MSMIN(MSMAX(input0[index] + input1[index], 0), 6);
@@ -228,17 +228,17 @@ int ElementAddRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output,
 }
 
 int ElementSubFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
-  int block_mod = element_size % C4NUM;
-  int block_c4 = element_size - block_mod;
+  int block_mod = element_size % C8NUM;
+  int block_c8 = element_size - block_mod;
 
-  for (int index = 0; index < block_c4; index += C4NUM) {
+  for (int index = 0; index < block_c8; index += C8NUM) {
     output[0] = input0[0] - input1[0];
     output[1] = input0[1] - input1[1];
     output[2] = input0[2] - input1[2];
     output[3] = input0[3] - input1[3];
-    input0 += C4NUM;
-    input1 += C4NUM;
-    output += C4NUM;
+    input0 += C8NUM;
+    input1 += C8NUM;
+    output += C8NUM;
   }
   for (int index = 0; index < block_mod; ++index) {
     output[index] = input0[index] - input1[index];
@@ -247,10 +247,10 @@ int ElementSubFp16(float16_t *input0, float16_t *input1, float16_t *output, int 
 }
 
 int ElementSubReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
-  int block_mod = element_size % C4NUM;
-  int block_c4 = element_size - block_mod;
+  int block_mod = element_size % C8NUM;
+  int block_c8 = element_size - block_mod;
 
-  for (int index = 0; index < block_c4; index += C4NUM) {
+  for (int index = 0; index < block_c8; index += C8NUM) {
     float16_t res = input0[0] - input1[0];
     output[0] = res > 0 ? res : 0;
     res = input0[1] - input1[1];
@@ -259,9 +259,9 @@ int ElementSubReluFp16(float16_t *input0, float16_t *input1, float16_t *output, 
     output[2] = res > 0 ? res : 0;
     res = input0[3] - input1[3];
     output[3] = res > 0 ? res : 0;
-    input0 += C4NUM;
-    input1 += C4NUM;
-    output += C4NUM;
+    input0 += C8NUM;
+    input1 += C8NUM;
+    output += C8NUM;
   }
   for (int index = 0; index < block_mod; ++index) {
     float16_t res = input0[index] - input1[index];
@@ -271,17 +271,17 @@ int ElementSubReluFp16(float16_t *input0, float16_t *input1, float16_t *output, 
 }
 
 int ElementSubRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
-  int block_mod = element_size % C4NUM;
-  int block_c4 = element_size - block_mod;
+  int block_mod = element_size % C8NUM;
+  int block_c8 = element_size - block_mod;
 
-  for (int index = 0; index < block_c4; index += C4NUM) {
+  for (int index = 0; index < block_c8; index += C8NUM) {
     output[0] = MSMIN(MSMAX(input0[0] - input1[0], 0), 6);
     output[1] = MSMIN(MSMAX(input0[1] - input1[1], 0), 6);
     output[2] = MSMIN(MSMAX(input0[2] - input1[2], 0), 6);
     output[3] = MSMIN(MSMAX(input0[3] - input1[3], 0), 6);
-    input0 += C4NUM;
-    input1 += C4NUM;
-    output += C4NUM;
+    input0 += C8NUM;
+    input1 += C8NUM;
+    output += C8NUM;
   }
   for (int index = 0; index < block_mod; ++index) {
     output[index] = MSMIN(MSMAX(input0[index] - input1[index], 0), 6);

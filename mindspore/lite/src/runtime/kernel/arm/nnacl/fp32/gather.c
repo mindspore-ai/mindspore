@@ -16,6 +16,7 @@
 
 #include "nnacl/fp32/gather.h"
 #include <string.h>
+#include "nnacl/errorcode.h"
 
 inline int Stride(int *shape, int rank, int index) {
   int i, stride = 1;
@@ -33,10 +34,26 @@ int Gather(float *input, int outer_size, int inner_size, int limit, int *indices
     float *outputm = output + inner_size * m * indices_element_size;
     for (i = 0; i < indices_element_size; ++i) {
       if (indices[i] < 0 || indices[i] > limit) {
-        return -1;
+        return NNACL_ERR;
       }
       memcpy(outputm + i * inner_size, inputm + indices[i] * inner_size, sizeof(float) * inner_size);
     }
   }
-  return 0;
+  return NNACL_OK;
+}
+
+int GatherInt32(const int32_t *input, int outer_size, int inner_size, int limit, int *indices,
+                int indices_element_size, int32_t *output) {
+  int i, m;
+  for (m = 0; m < outer_size; ++m) {
+    const int32_t *inputm = input + inner_size * m * limit;
+    int32_t *outputm = output + inner_size * m * indices_element_size;
+    for (i = 0; i < indices_element_size; ++i) {
+      if (indices[i] < 0 || indices[i] > limit) {
+        return NNACL_ERR;
+      }
+      memcpy(outputm + i * inner_size, inputm + indices[i] * inner_size, sizeof(int32_t) * inner_size);
+    }
+  }
+  return NNACL_OK;
 }
