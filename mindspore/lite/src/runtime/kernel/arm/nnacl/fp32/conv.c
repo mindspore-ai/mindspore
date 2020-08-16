@@ -296,8 +296,9 @@ void UnPackWinogradOutput(const float *src, float *dst, int batch, int height, i
   int out_h_block_num = UP_DIV(height, output_unit);
   int out_w_block_num = UP_DIV(width, output_unit);
   int c4 = UP_DIV(channel, C4NUM);
+  int c4_block = C4NUM * out_h_block_num * output_unit * out_w_block_num * output_unit;
   for (int b = 0; b < batch; b++) {
-    int src_batch_offset = b * c4 * C4NUM * out_h_block_num * output_unit * out_w_block_num * output_unit;
+    int src_batch_offset = b * c4 * c4_block;
     int dst_batch_offset = b * height * width * channel;
     for (int h = 0; h < height; h++) {
       int src_h_offset = src_batch_offset + C4NUM * (h * out_w_block_num * output_unit);
@@ -306,24 +307,119 @@ void UnPackWinogradOutput(const float *src, float *dst, int batch, int height, i
         int src_w_offset = src_h_offset + w * C4NUM;
         int dst_w_offset = dst_h_offset + w * channel;
         for (int c = 0; c < c4 - 1; c++) {
-          int src_c4_offset = src_w_offset + c * C4NUM * out_w_block_num * out_h_block_num * output_unit * output_unit;
+          int src_c4_offset = src_w_offset + c * c4_block;
           int dst_c4_offset = dst_w_offset + c * C4NUM;
 #ifdef ENABLE_NEON
           vst1q_f32(dst + dst_c4_offset, vld1q_f32(src + src_c4_offset));
 #else
-          dst[dst_c4_offset] = src[src_c4_offset];
-          dst[dst_c4_offset + 1] = src[src_c4_offset + 1];
-          dst[dst_c4_offset + 2] = src[src_c4_offset + 2];
-          dst[dst_c4_offset + 3] = src[src_c4_offset + 3];
+          for (int i = 0; i < C4NUM; ++i) {
+            dst[dst_c4_offset + i] = src[src_c4_offset + i];
+          }
 #endif
         }
         int c_res = channel - (c4 - 1) * C4NUM;
-        int src_c_res_offset = (c4 - 1) * C4NUM * out_w_block_num * out_h_block_num * output_unit * output_unit;
+        int src_c_res_offset = (c4 - 1) * c4_block;
         int dst_c_res_offset = (c4 - 1) * C4NUM;
         for (int c = 0; c < c_res; c++) {
           int src_c4_res_offset = src_w_offset + src_c_res_offset + c;
           int dst_c4_res_offset = dst_w_offset + dst_c_res_offset + c;
           dst[dst_c4_res_offset] = src[src_c4_res_offset];
+        }
+      }
+    }
+  }
+}
+
+void UnPackWinogradReluOutput(const float *src, float *dst, int batch, int height, int width, int channel,
+                              int output_unit) {
+  int out_h_block_num = UP_DIV(height, output_unit);
+  int out_w_block_num = UP_DIV(width, output_unit);
+  int c4 = UP_DIV(channel, C4NUM);
+  int c4_block = C4NUM * out_h_block_num * output_unit * out_w_block_num * output_unit;
+  for (int b = 0; b < batch; b++) {
+    int src_batch_offset = b * c4 * c4_block;
+    int dst_batch_offset = b * height * width * channel;
+    for (int h = 0; h < height; h++) {
+      int src_h_offset = src_batch_offset + C4NUM * (h * out_w_block_num * output_unit);
+      int dst_h_offset = dst_batch_offset + h * width * channel;
+      for (int w = 0; w < width; w++) {
+        int src_w_offset = src_h_offset + w * C4NUM;
+        int dst_w_offset = dst_h_offset + w * channel;
+        for (int c = 0; c < c4 - 1; c++) {
+          int src_c4_offset = src_w_offset + c * c4_block;
+          int dst_c4_offset = dst_w_offset + c * C4NUM;
+#ifdef ENABLE_NEON
+          float32x4_t input_ptr = vld1q_f32(src + src_c4_offset);
+          float32x4_t zero = vdupq_n_f32(0);
+          input_ptr = vmaxq_f32(zero, input_ptr);
+          vst1q_f32(dst + dst_c4_offset, input_ptr);
+#else
+          for (int i = 0; i < C4NUM; ++i) {
+            float input_data = src[src_c4_offset + i];
+            input_data = input_data < 0 ? 0 : input_data;
+            dst[dst_c4_offset + i] = input_data;
+          }
+#endif
+        }
+        int c_res = channel - (c4 - 1) * C4NUM;
+        int src_c_res_offset = (c4 - 1) * c4_block;
+        int dst_c_res_offset = (c4 - 1) * C4NUM;
+        for (int c = 0; c < c_res; c++) {
+          int src_c4_res_offset = src_w_offset + src_c_res_offset + c;
+          int dst_c4_res_offset = dst_w_offset + dst_c_res_offset + c;
+          float input_data = src[src_c4_res_offset];
+          input_data = input_data < 0 ? 0 : input_data;
+          dst[dst_c4_res_offset] = input_data;
+        }
+      }
+    }
+  }
+}
+
+void UnPackWinogradRelu6Output(const float *src, float *dst, int batch, int height, int width, int channel,
+                               int output_unit) {
+  int out_h_block_num = UP_DIV(height, output_unit);
+  int out_w_block_num = UP_DIV(width, output_unit);
+  int c4 = UP_DIV(channel, C4NUM);
+  int c4_block = C4NUM * out_h_block_num * output_unit * out_w_block_num * output_unit;
+  for (int b = 0; b < batch; b++) {
+    int src_batch_offset = b * c4 * c4_block;
+    int dst_batch_offset = b * height * width * channel;
+    for (int h = 0; h < height; h++) {
+      int src_h_offset = src_batch_offset + C4NUM * (h * out_w_block_num * output_unit);
+      int dst_h_offset = dst_batch_offset + h * width * channel;
+      for (int w = 0; w < width; w++) {
+        int src_w_offset = src_h_offset + w * C4NUM;
+        int dst_w_offset = dst_h_offset + w * channel;
+        for (int c = 0; c < c4 - 1; c++) {
+          int src_c4_offset = src_w_offset + c * c4_block;
+          int dst_c4_offset = dst_w_offset + c * C4NUM;
+#ifdef ENABLE_NEON
+          float32x4_t input_ptr = vld1q_f32(src + src_c4_offset);
+          float32x4_t zero = vdupq_n_f32(0);
+          float32x4_t six = vdupq_n_f32(6);
+          input_ptr = vmaxq_f32(zero, input_ptr);
+          input_ptr = vminq_f32(six, input_ptr);
+          vst1q_f32(dst + dst_c4_offset, input_ptr);
+#else
+          for (int i = 0; i < C4NUM; ++i) {
+            float input_data = src[src_c4_offset + i];
+            input_data = input_data < 0 ? 0 : input_data;
+            input_data = input_data > 6 ? 6 : input_data;
+            dst[dst_c4_offset + i] = input_data;
+          }
+#endif
+        }
+        int c_res = channel - (c4 - 1) * C4NUM;
+        int src_c_res_offset = (c4 - 1) * c4_block;
+        int dst_c_res_offset = (c4 - 1) * C4NUM;
+        for (int c = 0; c < c_res; c++) {
+          int src_c4_res_offset = src_w_offset + src_c_res_offset + c;
+          int dst_c4_res_offset = dst_w_offset + dst_c_res_offset + c;
+          float input_data = src[src_c4_res_offset];
+          input_data = input_data < 0 ? 0 : input_data;
+          input_data = input_data > 6 ? 6 : input_data;
+          dst[dst_c4_res_offset] = input_data;
         }
       }
     }

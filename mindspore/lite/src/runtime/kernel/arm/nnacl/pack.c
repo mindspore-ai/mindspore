@@ -582,6 +582,84 @@ void PackNC4HW4ToNHWCFp32(const void *src, void *dst, int batch, int plane, int 
   }
 }
 
+void PackNC4HW4ToNHWCReluFp32(const void *src, void *dst, int batch, int plane, int channel) {
+  int c4 = UP_DIV(channel, C4NUM);
+  for (int b = 0; b < batch; b++) {
+    int src_offset = b * plane * c4 * C4NUM;
+    int dst_offset = b * plane * channel;
+    for (int k = 0; k < plane; k++) {
+      int src_kernel_offset = src_offset + k * C4NUM;
+      int dst_kernel_offset = dst_offset + k * channel;
+      for (int c = 0; c < c4 - 1; c++) {
+        int src_c_offset = src_kernel_offset + c * plane * C4NUM;
+        int dst_c_offset = dst_kernel_offset + c * C4NUM;
+#ifdef ENABLE_NEON
+        float32x4_t input_ptr = vld1q_f32((float *)src + src_c_offset);
+        float32x4_t zero = vdupq_n_f32(0);
+        input_ptr = vmaxq_f32(zero, input_ptr);
+        vst1q_f32((float *)dst + dst_c_offset, input_ptr);
+#else
+        for (int i = 0; i < C4NUM; ++i) {
+          float input_data = ((float *)src + src_c_offset)[i];
+          input_data = input_data < 0 ? 0 : input_data;
+          ((float *)dst + dst_c_offset)[i] = input_data;
+        }
+#endif
+      }
+      // res part
+      int res_c = channel - (c4 - 1) * C4NUM;
+      for (int i = 0; i < res_c; i++) {
+        int src_res_c_offset = src_kernel_offset + (c4 - 1) * C4NUM * plane + i;
+        int dst_res_c_offset = dst_kernel_offset + (c4 - 1) * C4NUM + i;
+        float input_data = ((float *)src + src_res_c_offset)[0];
+        input_data = input_data < 0 ? 0 : input_data;
+        ((float *)dst + dst_res_c_offset)[0] = input_data;
+      }
+    }
+  }
+}
+
+void PackNC4HW4ToNHWCRelu6Fp32(const void *src, void *dst, int batch, int plane, int channel) {
+  int c4 = UP_DIV(channel, C4NUM);
+  for (int b = 0; b < batch; b++) {
+    int src_offset = b * plane * c4 * C4NUM;
+    int dst_offset = b * plane * channel;
+    for (int k = 0; k < plane; k++) {
+      int src_kernel_offset = src_offset + k * C4NUM;
+      int dst_kernel_offset = dst_offset + k * channel;
+      for (int c = 0; c < c4 - 1; c++) {
+        int src_c_offset = src_kernel_offset + c * plane * C4NUM;
+        int dst_c_offset = dst_kernel_offset + c * C4NUM;
+#ifdef ENABLE_NEON
+        float32x4_t input_ptr = vld1q_f32((float *)src + src_c_offset);
+        float32x4_t zero = vdupq_n_f32(0);
+        float32x4_t six = vdupq_n_f32(6);
+        input_ptr = vmaxq_f32(zero, input_ptr);
+        input_ptr = vminq_f32(six, input_ptr);
+        vst1q_f32((float *)dst + dst_c_offset, input_ptr);
+#else
+        for (int i = 0; i < C4NUM; ++i) {
+          float input_data = ((float *)src + src_c_offset)[i];
+          input_data = input_data < 0 ? 0 : input_data;
+          input_data = input_data > 6 ? 6 : input_data;
+          ((float *)dst + dst_c_offset)[i] = input_data;
+        }
+#endif
+      }
+      // res part
+      int res_c = channel - (c4 - 1) * C4NUM;
+      for (int i = 0; i < res_c; i++) {
+        int src_res_c_offset = src_kernel_offset + (c4 - 1) * C4NUM * plane + i;
+        int dst_res_c_offset = dst_kernel_offset + (c4 - 1) * C4NUM + i;
+        float input_data = ((float *)src + src_res_c_offset)[0];
+        input_data = input_data < 0 ? 0 : input_data;
+        input_data = input_data > 6 ? 6 : input_data;
+        ((float *)dst + dst_res_c_offset)[0] = input_data;
+      }
+    }
+  }
+}
+
 void PackNC4HW4ToNCHWFp32(const void *src, void *dst, int batch, int plane, int channel) {
   int c4 = UP_DIV(channel, C4NUM);
   for (int b = 0; b < batch; b++) {

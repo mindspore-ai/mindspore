@@ -263,16 +263,15 @@ int Convolution3x3CPUKernel::Run() {
   auto is_relu = conv_param_->is_relu_;
   auto is_relu6 = conv_param_->is_relu6_;
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
-  PackNC4HW4ToNHWCFp32(nc4hw4_out_, output_addr, conv_param_->output_batch_,
-                       conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
-  int output_num =
-    conv_param_->output_channel_ * conv_param_->output_h_ * conv_param_->output_w_ * conv_param_->output_batch_;
   if (is_relu) {
-    ReluFp32(output_addr, output_addr, output_num);
+    PackNC4HW4ToNHWCReluFp32(nc4hw4_out_, output_addr, conv_param_->output_batch_,
+                             conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
   } else if (is_relu6) {
-    Relu6Fp32(output_addr, output_addr, output_num);
+    PackNC4HW4ToNHWCRelu6Fp32(nc4hw4_out_, output_addr, conv_param_->output_batch_,
+                              conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
   } else {
-    // do nothing
+    PackNC4HW4ToNHWCFp32(nc4hw4_out_, output_addr, conv_param_->output_batch_,
+                         conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
   }
   return RET_OK;
 }

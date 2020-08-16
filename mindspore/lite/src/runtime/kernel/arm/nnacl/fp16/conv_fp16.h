@@ -67,6 +67,12 @@ void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const floa
 
 void UnPackWinogradOutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel,
                               int output_unit);
+
+void UnPackWinogradReluOutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel,
+                                  int output_unit);
+
+void UnPackWinogradRelu6OutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel,
+                                   int output_unit);
 #ifdef __cplusplus
 }
 #endif
