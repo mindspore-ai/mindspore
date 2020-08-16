@@ -63,6 +63,12 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
 
 void UnPackWinogradOutput(const float *src, float *dst, int batch, int height, int width, int channel, int output_unit);
 
+void UnPackWinogradReluOutput(const float *src, float *dst, int batch, int height, int width, int channel,
+                              int output_unit);
+
+void UnPackWinogradRelu6Output(const float *src, float *dst, int batch, int height, int width, int channel,
+                               int output_unit);
+
 // fp32 conv3x3
 void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_data, float *output_data,
                  TmpBufferAddress *buffer_list, int task_id, ConvParameter *conv_param, GEMM_FUNC_FP32 gemm_func);

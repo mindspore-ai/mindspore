@@ -470,8 +470,9 @@ void UnPackWinogradOutputFp16(const float16_t *src, float16_t *dst, int batch, i
   int out_h_block_num = UP_DIV(height, output_unit);
   int out_w_block_num = UP_DIV(width, output_unit);
   int c8 = UP_DIV(channel, C8NUM);
+  int c8_block = C8NUM * out_h_block_num * output_unit * out_w_block_num * output_unit;
   for (int b = 0; b < batch; b++) {
-    int src_batch_offset = b * c8 * C8NUM * out_h_block_num * output_unit * out_w_block_num * output_unit;
+    int src_batch_offset = b * c8 * c8_block;
     int dst_batch_offset = b * height * width * channel;
     for (int h = 0; h < height; h++) {
       int src_h_offset = src_batch_offset + C8NUM * (h * out_w_block_num * output_unit);
@@ -480,7 +481,7 @@ void UnPackWinogradOutputFp16(const float16_t *src, float16_t *dst, int batch, i
         int src_w_offset = src_h_offset + w * C8NUM;
         int dst_w_offset = dst_h_offset + w * channel;
         for (int c = 0; c < c8 - 1; c++) {
-          int src_c8_offset = src_w_offset + c * C8NUM * out_w_block_num * out_h_block_num * output_unit * output_unit;
+          int src_c8_offset = src_w_offset + c * c8_block;
           int dst_c8_offset = dst_w_offset + c * C8NUM;
 #ifdef ENABLE_NEON
           vst1q_f16(dst + dst_c8_offset, vld1q_f16(src + src_c8_offset));
@@ -491,12 +492,108 @@ void UnPackWinogradOutputFp16(const float16_t *src, float16_t *dst, int batch, i
 #endif
         }
         int c_res = channel - (c8 - 1) * C8NUM;
-        int src_c_res_offset = (c8 - 1) * C8NUM * out_w_block_num * out_h_block_num * output_unit * output_unit;
+        int src_c_res_offset = (c8 - 1) * c8_block;
         int dst_c_res_offset = (c8 - 1) * C8NUM;
         for (int c = 0; c < c_res; c++) {
           int src_c8_res_offset = src_w_offset + src_c_res_offset + c;
           int dst_c8_res_offset = dst_w_offset + dst_c_res_offset + c;
           dst[dst_c8_res_offset] = src[src_c8_res_offset];
+        }
+      }
+    }
+  }
+}
+
+void UnPackWinogradReluOutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel,
+                                  int output_unit) {
+  int out_h_block_num = UP_DIV(height, output_unit);
+  int out_w_block_num = UP_DIV(width, output_unit);
+  int c8 = UP_DIV(channel, C8NUM);
+  int c8_block = C8NUM * out_h_block_num * output_unit * out_w_block_num * output_unit;
+  for (int b = 0; b < batch; b++) {
+    int src_batch_offset = b * c8 * c8_block;
+    int dst_batch_offset = b * height * width * channel;
+    for (int h = 0; h < height; h++) {
+      int src_h_offset = src_batch_offset + C8NUM * (h * out_w_block_num * output_unit);
+      int dst_h_offset = dst_batch_offset + h * width * channel;
+      for (int w = 0; w < width; w++) {
+        int src_w_offset = src_h_offset + w * C8NUM;
+        int dst_w_offset = dst_h_offset + w * channel;
+        for (int c = 0; c < c8 - 1; c++) {
+          int src_c8_offset = src_w_offset + c * c8_block;
+          int dst_c8_offset = dst_w_offset + c * C8NUM;
+#ifdef ENABLE_NEON
+          float16x8_t input_ptr = vld1q_f16(src + src_c8_offset);
+          float16x8_t zero = vdupq_n_f16(0);
+          input_ptr = vmaxq_f16(zero, input_ptr);
+          vst1q_f16(dst + dst_c8_offset, input_ptr);
+#else
+          for (int i = 0; i < C8NUM; ++i) {
+            float16_t input_data = src[src_c8_offset + i];
+            input_data = input_data < 0 ? 0 : input_data;
+            dst[dst_c8_offset + i] = input_data;
+          }
+#endif
+        }
+        int c_res = channel - (c8 - 1) * C8NUM;
+        int src_c_res_offset = (c8 - 1) * c8_block;
+        int dst_c_res_offset = (c8 - 1) * C8NUM;
+        for (int c = 0; c < c_res; c++) {
+          int src_c8_res_offset = src_w_offset + src_c_res_offset + c;
+          int dst_c8_res_offset = dst_w_offset + dst_c_res_offset + c;
+          float16_t input_data = src[src_c8_res_offset];
+          input_data = input_data < 0 ? 0 : input_data;
+          dst[dst_c8_res_offset] = input_data;
+        }
+      }
+    }
+  }
+}
+
+void UnPackWinogradRelu6OutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel,
+                                   int output_unit) {
+  int out_h_block_num = UP_DIV(height, output_unit);
+  int out_w_block_num = UP_DIV(width, output_unit);
+  int c8 = UP_DIV(channel, C8NUM);
+  int c8_block = C8NUM * out_h_block_num * output_unit * out_w_block_num * output_unit;
+  for (int b = 0; b < batch; b++) {
+    int src_batch_offset = b * c8 * c8_block;
+    int dst_batch_offset = b * height * width * channel;
+    for (int h = 0; h < height; h++) {
+      int src_h_offset = src_batch_offset + C8NUM * (h * out_w_block_num * output_unit);
+      int dst_h_offset = dst_batch_offset + h * width * channel;
+      for (int w = 0; w < width; w++) {
+        int src_w_offset = src_h_offset + w * C8NUM;
+        int dst_w_offset = dst_h_offset + w * channel;
+        for (int c = 0; c < c8 - 1; c++) {
+          int src_c8_offset = src_w_offset + c * c8_block;
+          int dst_c8_offset = dst_w_offset + c * C8NUM;
+#ifdef ENABLE_NEON
+          float16x8_t input_ptr = vld1q_f16(src + src_c8_offset);
+          float16x8_t zero = vdupq_n_f16(0);
+          float16x8_t six = vdupq_n_f16(6);
+          input_ptr = vmaxq_f16(zero, input_ptr);
+          input_ptr = vminq_f16(six, input_ptr);
+          vst1q_f16(dst + dst_c8_offset, input_ptr);
+#else
+          for (int i = 0; i < C8NUM; ++i) {
+            float16_t input_data = src[src_c8_offset + i];
+            input_data = input_data < 0 ? 0 : input_data;
+            input_data = input_data > 6 ? 6 : input_data;
+            dst[dst_c8_offset + i] = input_data;
+          }
+#endif
+        }
+        int c_res = channel - (c8 - 1) * C8NUM;
+        int src_c_res_offset = (c8 - 1) * c8_block;
+        int dst_c_res_offset = (c8 - 1) * C8NUM;
+        for (int c = 0; c < c_res; c++) {
+          int src_c8_res_offset = src_w_offset + src_c_res_offset + c;
+          int dst_c8_res_offset = dst_w_offset + dst_c_res_offset + c;
+          float16_t input_data = src[src_c8_res_offset];
+          input_data = input_data < 0 ? 0 : input_data;
+          input_data = input_data > 6 ? 6 : input_data;
+          dst[dst_c8_res_offset] = input_data;
         }
       }
     }

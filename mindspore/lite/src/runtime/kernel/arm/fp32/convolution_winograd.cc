@@ -368,18 +368,16 @@ int ConvolutionWinogradCPUKernel::Run() {
   // get real output
   auto out_tensor = out_tensors_.front();
   auto out_data = reinterpret_cast<float *>(out_tensor->Data());
-  UnPackWinogradOutput(tmp_out_data_, out_data, conv_param_->output_batch_, conv_param_->output_h_,
-                       conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
-  int output_num =
-    conv_param_->output_channel_ * conv_param_->output_h_ * conv_param_->output_w_ * conv_param_->output_batch_;
   if (conv_param_->is_relu_) {
-    ReluFp32(out_data, out_data, output_num);
+    UnPackWinogradReluOutput(tmp_out_data_, out_data, conv_param_->output_batch_, conv_param_->output_h_,
+                             conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
   } else if (conv_param_->is_relu6_) {
-    Relu6Fp32(out_data, out_data, output_num);
+    UnPackWinogradRelu6Output(tmp_out_data_, out_data, conv_param_->output_batch_, conv_param_->output_h_,
+                              conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
   } else {
-    // do nothing
+    UnPackWinogradOutput(tmp_out_data_, out_data, conv_param_->output_batch_, conv_param_->output_h_,
+                         conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
   }
-
   return RET_OK;
 }
 }  // namespace mindspore::kernel

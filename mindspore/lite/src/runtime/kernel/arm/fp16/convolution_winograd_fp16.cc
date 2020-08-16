@@ -400,16 +400,15 @@ int ConvolutionWinogradFP16CPUKernel::Run() {
   }
 
   // get real output
-  UnPackWinogradOutputFp16(tmp_out_data_, execute_output_, conv_param_->output_batch_, conv_param_->output_h_,
-                           conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
-  int output_num =
-    conv_param_->output_channel_ * conv_param_->output_h_ * conv_param_->output_w_ * conv_param_->output_batch_;
   if (conv_param_->is_relu_) {
-    ReluFp16(execute_output_, execute_output_, output_num);
+    UnPackWinogradReluOutputFp16(tmp_out_data_, execute_output_, conv_param_->output_batch_, conv_param_->output_h_,
+                                 conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
   } else if (conv_param_->is_relu6_) {
-    Relu6Fp16(execute_output_, execute_output_, output_num);
+    UnPackWinogradRelu6OutputFp16(tmp_out_data_, execute_output_, conv_param_->output_batch_, conv_param_->output_h_,
+                                  conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
   } else {
-    // do nothing
+    UnPackWinogradOutputFp16(tmp_out_data_, execute_output_, conv_param_->output_batch_, conv_param_->output_h_,
+                             conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
   }
   ConvolutionBaseFP16CPUKernel::IfCastOutput();
   return RET_OK;
