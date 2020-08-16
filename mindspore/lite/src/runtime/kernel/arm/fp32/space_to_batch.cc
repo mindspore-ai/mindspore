@@ -21,6 +21,7 @@
 #include "src/runtime/kernel/arm/nnacl/fp32/space_to_batch.h"
 #include "src/runtime/kernel/arm/nnacl/errorcode.h"
 #include "include/errorcode.h"
+#include "src/runtime/runtime_api.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -47,6 +48,31 @@ int SpaceToBatchCPUKernel::Init() {
   return ReSize();
 }
 
+int SpaceToBatchCPUKernel::SpaceToBatchParallel(int task_id) {
+  int num_unit_thread = MSMIN(thread_h_stride_, num_unit_ - task_id * thread_h_stride_);
+  if (num_unit_thread <= 0) {
+    return RET_OK;
+  }
+  int thread_offset = task_id * thread_h_stride_;
+  SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->op_parameter_);
+  auto ret = SpaceToBatch(input_ptr_, output_ptr_, *param, thread_offset, thread_offset + num_unit_thread);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SpaceToDepth error task_id[" << task_id << "] error_code[" << ret << "]";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int SpaceToBatchRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+  auto g_kernel = reinterpret_cast<SpaceToBatchCPUKernel *>(cdata);
+  auto ret = g_kernel->SpaceToBatchParallel(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SpaceToBatchRun error task_id[" << task_id << "] error_code[" << ret << "]";
+    return RET_OP_EXECUTE_FAILURE;
+  }
+  return RET_OK;
+}
+
 int SpaceToBatchCPUKernel::ReSize() {
   if (in_tensors_[0]->GetFormat() != schema::Format_NHWC) {
     MS_LOG(ERROR) << "space_to_batch only support NHWC now!";
@@ -55,6 +81,10 @@ int SpaceToBatchCPUKernel::ReSize() {
   SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->op_parameter_);
   param->num_elements_ = EnumElement(param->in_shape_, param->n_dims_);
   param->num_elements_padded_ = EnumElement(param->padded_in_shape_, param->n_dims_);
+  num_unit_ = static_cast<int>(in_tensors_[kInputIndex]->shape().at(kNHWC_H));
+  num_unit_ /= param->block_sizes_[0];
+  thread_h_num_ = MSMIN(thread_num_, num_unit_);
+  thread_h_stride_ = UP_DIV(num_unit_, thread_h_num_);
   return RET_OK;
 }
 
@@ -81,20 +111,28 @@ int SpaceToBatchCPUKernel::Run() {
         return RET_ERROR;
       }
     }
-    ret = SpaceToBatch(input_ptr_, output_ptr_, *param, tmp_space);
-    for (int i = 0; i < 3; ++i) {
-      context_->allocator->Free(tmp_space);
-    }
-  } else {
-    ret = SpaceToBatch(input_ptr_, output_ptr_, *param, tmp_space);
-  }
-  if (ret != NNACL_OK) {
-    MS_LOG(ERROR) << "Do space to batch fails!";
-    return RET_OP_EXECUTE_FAILURE;
+    auto padded_input = tmp_space[0];
+    DoPadding(input_ptr_, padded_input, *param, tmp_space + 1);
+    input_ptr_ = padded_input;
   }
 
-  return RET_OK;
-}
+  if (input->GetFormat() == schema::Format_NHWC) {
+    ret = LiteBackendParallelLaunch(SpaceToBatchRun, this, thread_h_num_);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "SpaceToBatch error error_code[" << ret << "]";
+    }
+  } else {
+    MS_LOG(ERROR) << "Only support NHWC now!";
+    ret = RET_FORMAT_ERR;
+  }
+  if (param->need_paddings_) {
+    for (int i = 0; i < 3; ++i) {
+      context_->allocator->Free(tmp_space[i]);
+    }
+  }
+
+  return ret;
+}  // namespace mindspore::kernel
 
 kernel::LiteKernel *CpuSpaceToBatchFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                      const std::vector<lite::tensor::Tensor *> &outputs,

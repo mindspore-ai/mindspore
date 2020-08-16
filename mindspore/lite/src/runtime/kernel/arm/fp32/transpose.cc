@@ -20,10 +20,12 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
+#include "src/runtime/runtime_api.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::RET_OP_EXECUTE_FAILURE;
 using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
@@ -32,6 +34,10 @@ constexpr int kTransposeInputNum = 1;
 constexpr int kTransposeOutputNum = 1;
 }  // namespace
 int TransposeCPUKernel::Init() {
+  TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
+  num_unit_ = static_cast<int>(in_tensors_[kInputIndex]->shape().at(param->perm_[kNHWC_H]));
+  thread_h_num_ = MSMIN(thread_num_, num_unit_);
+  thread_h_stride_ = UP_DIV(num_unit_, thread_h_num_);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -54,6 +60,32 @@ int TransposeCPUKernel::ReSize() {
   return RET_OK;
 }
 
+int TransposeCPUKernel::TransposeParallel(int task_id) {
+  int num_unit_thread = MSMIN(thread_h_stride_, num_unit_ - task_id * thread_h_stride_);
+  if (num_unit_thread <= 0) {
+    return RET_OK;
+  }
+  int thread_offset = task_id * thread_h_stride_;
+  TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
+  auto ret =
+    DoTranspose(in_data_, out_data_, in_shape_, out_shape_, param, thread_offset, thread_offset + num_unit_thread);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Transpose error task_id[" << task_id << "] error_code[" << ret << "]";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int TransposeRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+  auto g_kernel = reinterpret_cast<TransposeCPUKernel *>(cdata);
+  auto ret = g_kernel->TransposeParallel(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "TransposeRun error task_id[" << task_id << "] error_code[" << ret << "]";
+    return RET_OP_EXECUTE_FAILURE;
+  }
+  return RET_OK;
+}
+
 int TransposeCPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
@@ -62,23 +94,24 @@ int TransposeCPUKernel::Run() {
   }
   MS_ASSERT(in_tensors_.size() == TransposeInputNum);
   MS_ASSERT(out_tensors_.size() == TransposeOutputNum);
-  auto &inTensor = in_tensors_.front();
-  auto &outTensor = out_tensors_.front();
-  if (inTensor == nullptr || outTensor == nullptr) {
+  auto &in_tensor = in_tensors_.front();
+  auto &out_tensor = out_tensors_.front();
+  if (in_tensor == nullptr || out_tensor == nullptr) {
     MS_LOG(ERROR) << "null pointer dreferencing.";
     return RET_ERROR;
   }
-  auto *in_data = static_cast<float *>(inTensor->Data());
-  auto *out_data = static_cast<float *>(outTensor->Data());
-  auto in_shape = inTensor->shape();
-  auto out_shape = outTensor->shape();
-  auto *input_shape = &in_shape.front();
-  auto *output_shape = &out_shape.front();
+  in_data_ = reinterpret_cast<float *>(in_tensor->Data());
+  out_data_ = reinterpret_cast<float *>(out_tensor->Data());
+  in_shape_ = const_cast<int *>(in_tensor->shape().data());
+  out_shape_ = const_cast<int *>(out_tensor->shape().data());
 
-  ret =
-    DoTranspose(in_data, out_data, input_shape, output_shape, reinterpret_cast<TransposeParameter *>(op_parameter_));
+  ret = LiteBackendParallelLaunch(TransposeRun, this, thread_h_num_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Tranpose error error_code[" << ret << "]";
+    return ret;
+  }
   return ret;
-}
+}  // namespace mindspore::kernel
 
 kernel::LiteKernel *CpuTransposeFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                   const std::vector<lite::tensor::Tensor *> &outputs,

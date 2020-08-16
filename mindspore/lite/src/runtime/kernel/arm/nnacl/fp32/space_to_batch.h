@@ -35,10 +35,12 @@ typedef struct SpaceToBatchParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-int SpaceToBatch(const float *input, float *output, SpaceToBatchParameter param, float *tmp_space[3]);
-int SpaceToBatchForNHWC(const float *input, float *output, int *in_shape, int shape_size, int *block_size);
+int SpaceToBatch(const float *input, float *output, SpaceToBatchParameter param, int h_start, int h_end);
+int SpaceToBatchForNHWC(const float *input, float *output, int *in_shape, int shape_size, int *block_size, int h_start,
+                        int h_end);
 void TransposeForNHWC(const float *in_data, float *out_data, int *strides, int *out_strides, int *perm,
-                      int *output_shape);
+                      int *output_shape, int h_start, int h_end);
+void DoPadding(const float *input, float *padded_input, SpaceToBatchParameter param, float *tmp_space[]);
 int EnumElement(int *shape, int n_dims);
 #ifdef __cplusplus
 }
