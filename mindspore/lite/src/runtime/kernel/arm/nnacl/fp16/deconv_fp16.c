@@ -37,16 +37,12 @@ void PostConvFuncCommFp16(float16_t *out_ptr, const float16_t *src_ptr_, const f
 
 void PostConvFuncFp16C8(const float16_t *c8_out_ptr, float16_t *out_ptr, const float16_t *bias_ptr,
                         size_t output_channel, size_t plane_size, size_t stride, bool is_relu, bool is_relu6) {
-#ifdef DEBUG_CODE
-  PostConvFuncCommFp16(out_ptr, c8_out_ptr, bias_ptr, output_channel, plane_size, stride, is_relu, is_relu6, C8NUM);
-#else
   size_t oc8mod = output_channel % C8NUM;
   size_t oc8div = output_channel - oc8mod;
   size_t stride_size = stride * sizeof(float16_t);
   size_t relu_type = is_relu ? 1 : 0;
   relu_type = is_relu6 ? 2 : relu_type;
   PostFuncBiasReluC8Fp16(out_ptr, c8_out_ptr, bias_ptr, oc8div, oc8mod, plane_size, stride_size, relu_type);
-#endif
   return;
 }
 

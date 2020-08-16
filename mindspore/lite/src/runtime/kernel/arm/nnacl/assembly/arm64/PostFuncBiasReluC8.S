@@ -204,6 +204,9 @@ Loop_C1:
   beq End
   mov w13, w5
   ld1 {v16.4s, v17.4s}, [x2], #32
+  mov x25,  #4
+  mul x24, x10, x25
+  add x0, x0, x24
 
   cmp x4, #1
   beq Loop_C1_1

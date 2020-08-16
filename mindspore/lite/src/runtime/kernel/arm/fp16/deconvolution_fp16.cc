@@ -124,7 +124,7 @@ int DeConvFp16Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int DeConvolutionFp16CPUKernel::DoDeconv(int task_id) {
-  int oc = MSMIN(thread_stride_ * C8NUM, conv_param_->output_channel_ - task_id * thread_stride_ * C8NUM);
+  int oc = MSMIN(thread_stride_, UP_DIV(conv_param_->output_channel_, C8NUM) - task_id * thread_stride_);
   int oc_res = MSMIN(thread_stride_ * C8NUM, conv_param_->output_channel_ - task_id * thread_stride_ * C8NUM);
   if (oc <= 0) {
     return RET_OK;
