@@ -112,7 +112,7 @@ void IndirectGemmFp32_8x8(float *output, const float *input, const float *weight
   }
 }
 #endif
-#ifndef ENABLE_ARM32
+// #ifndef ENABLE_ARM32
 void IndirectGemmFp32_8x4(float *output, const float *input, const float *weight, const float *bias, size_t step,
                           size_t ic4, size_t output_channel, size_t offset, size_t mode, size_t writeC4, size_t relu,
                           size_t relu6) {
@@ -155,7 +155,7 @@ void IndirectGemmFp32_8x4(float *output, const float *input, const float *weight
     }
   }
 }
-#endif
+// #endif
 
 int8_t MinInt8(int8_t a, int8_t b) { return b ^ ((a ^ b) & -(a < b)); }
 

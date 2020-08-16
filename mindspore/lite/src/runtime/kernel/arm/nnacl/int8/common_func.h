@@ -36,11 +36,12 @@ void IndirectGemmInt8_4x4(int8_t *output, const int8_t *input, const int8_t *wei
                           size_t ic4, size_t oc, size_t offset, const int32_t *input_sum, size_t act_min,
                           size_t act_max, size_t out_zp, size_t out_multiplier, size_t shift_before,
                           size_t shift_after);
-#elif defined(ENABLE_ARM32)
-void IndirectGemmInt8_2x4(int8_t *output, const int8_t *input, const int8_t *weight, const int32_t *bias, size_t ksize,
-                          size_t ic4, size_t oc, size_t offset, const int32_t *input_sum, size_t act_min,
-                          size_t act_max, size_t out_zp, size_t out_multiplier, size_t shift_before,
-                          size_t shift_after);
+// #elif defined(ENABLE_ARM32)
+// void IndirectGemmInt8_2x4(int8_t *output, const int8_t *input, const int8_t *weight, const int32_t *bias,
+//                           size_t ksize,
+//                           size_t ic4, size_t oc, size_t offset, const int32_t *input_sum, size_t act_min,
+//                           size_t act_max, size_t out_zp, size_t out_multiplier, size_t shift_before,
+//                           size_t shift_after);
 #endif
 #endif
 

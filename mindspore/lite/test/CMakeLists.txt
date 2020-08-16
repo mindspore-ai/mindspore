@@ -108,6 +108,7 @@ if (PLATFORM_ARM64)
             ${TEST_ASSEMBLY_SRC}
             )
 endif()
+#[[
 if (PLATFORM_ARM32)
     # assembly
     file(GLOB TEST_ASSEMBLY_SRC
@@ -119,6 +120,7 @@ if (PLATFORM_ARM32)
             ${TEST_ASSEMBLY_SRC}
             )
 endif()
+]]
 if (ENABLE_FP16)
     file(GLOB KERNEL_OP_FP16_SRC
             ${LITE_DIR}/src/runtime/kernel/arm/fp16/*.cc

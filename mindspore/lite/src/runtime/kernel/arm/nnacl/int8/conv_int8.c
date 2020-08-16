@@ -32,10 +32,10 @@ void IndirectGemmInt8(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const in
   IndirectGemmInt8_4x4(dst, src, weight, bias, UP_DIV(kernel_plane, C4NUM), ic4, output_channel,
                        output_channel * sizeof(int8_t), input_sum, act_min, act_max, out_zp, out_multiplier,
                        shift_before, shift_after);
-#elif defined(ENABLE_ARM32)
-  IndirectGemmInt8_2x4(dst, src, weight, bias, UP_DIV(kernel_plane, C4NUM), ic4, output_channel,
-                       output_channel * sizeof(int8_t), input_sum, act_min, act_max, out_zp, out_multiplier,
-                       shift_before, shift_after);
+// #elif defined(ENABLE_ARM32)
+//   IndirectGemmInt8_2x4(dst, src, weight, bias, UP_DIV(kernel_plane, C4NUM), ic4, output_channel,
+//                        output_channel * sizeof(int8_t), input_sum, act_min, act_max, out_zp, out_multiplier,
+//                        shift_before, shift_after);
 #else
   int tile_num = conv_param->tile_num_;
   int plane_c4 = UP_DIV(kernel_plane, C4NUM);
@@ -198,7 +198,7 @@ void IndirectGemmInt8Opt(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const
 
 void Conv3x3Uint8Gemm(int32_t *dst, const int16_t *src, const int16_t *weight, int oc, int ic8, size_t real_cal_num) {
   int oc4 = UP_DIV(oc, C4NUM);
-#ifdef ENABLE_ARM
+#ifdef ENABLE_ARM64
   IndirectGemmInt16to32_8x4(dst, src, weight, 16, ic8, oc4, oc4 * 4 * 16 * sizeof(int32_t));
 #else
   const int input_unit_square = 16;
