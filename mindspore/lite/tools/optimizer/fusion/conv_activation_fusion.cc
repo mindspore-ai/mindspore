@@ -51,6 +51,9 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
   AnfNodePtr pre_node = act_node->input(1);
   CheckIfAnfNodeIsNull(pre_node);
   if (pre_node != nullptr && pre_node->isa<CNode>()) {
+    if (IsMultiOutputTensors(func_graph, pre_node)) {
+      return node;
+    }
     auto conv_node = pre_node->cast<CNodePtr>();
     auto node_type = GetCNodeType(conv_node);
     auto primitiveT_value = GetValueNode<std::shared_ptr<lite::PrimitiveTValue>>(conv_node->input(0));

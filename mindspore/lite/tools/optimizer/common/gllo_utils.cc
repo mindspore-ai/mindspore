@@ -15,6 +15,8 @@
  */
 #include "tools/optimizer/common/gllo_utils.h"
 #include <vector>
+#include <algorithm>
+#include <utility>
 #include "src/ir/primitive_t_value.h"
 #include "frontend/operator/ops.h"
 #include "backend/optimizer/common/helper.h"
@@ -366,6 +368,30 @@ size_t GetOutputTensorNum(const AnfNodePtr &node) {
   } else {
     return 1;
   }
+}
+
+bool IsMultiOutputTensors(const FuncGraphPtr &graph, const AnfNodePtr &node) {
+  auto output_node_list = GetRealNodeUsedList(graph, node);
+  if (output_node_list->size() != 1) {
+      MS_LOG(DEBUG) << "fusion node has multi output nodes";
+      return true;
+  }
+  return false;
+}
+
+std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(const FuncGraphPtr &graph,
+                                                                             const AnfNodePtr &node) {
+  auto output_node_list = std::make_shared<std::vector<std::pair<AnfNodePtr, int>>>();
+  MS_EXCEPTION_IF_NULL(graph);
+  auto manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto iter = manager->node_users().find(node);
+  if (iter == manager->node_users().end()) {
+    MS_LOG(EXCEPTION) << "node has no output in manager";
+  }
+  auto output_info_list = iter->second;
+  std::copy(output_info_list.begin(), output_info_list.end(), std::back_inserter(*output_node_list));
+  return output_node_list;
 }
 }  // namespace opt
 }  // namespace mindspore

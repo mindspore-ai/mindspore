@@ -138,6 +138,9 @@ const AnfNodePtr ConvBiasaddFusion::Process(const FuncGraphPtr &func_graph, cons
 
   AnfNodePtr conv_node_anf = add_node->input(1);
   CheckIfAnfNodeIsNull(conv_node_anf);
+  if (IsMultiOutputTensors(func_graph, conv_node_anf)) {
+    return add_node;
+  }
   auto conv_node = conv_node_anf->cast<CNodePtr>();
   CheckIfCNodeIsNull(conv_node);
   GenConvNewBias(func_graph, conv_node, add_node);
