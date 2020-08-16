@@ -26,6 +26,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+void Conv1x1InputPackFp16(const float16_t *src, float16_t *dst, ConvParameter *conv_param);
+
 void Im2ColPackUnitFp16(float16_t *input_data, ConvParameter *conv_param, float16_t *packed_input, int real_cal_num,
                         int block_index);
 

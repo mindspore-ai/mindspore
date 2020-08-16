@@ -39,7 +39,11 @@ int ConvolutionSWFP16CPUKernel::ProcessFilter() {
   int out_channel = conv_param_->output_channel_;
   int ic4 = UP_DIV(in_channel, C4NUM);
 
-  ConvolutionBaseFP16CPUKernel::GetExecuteFilter();
+  auto ret = ConvolutionBaseFP16CPUKernel::GetExecuteFilter();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Get Execute filter failed.";
+    return ret;
+  }
 
   for (int oc = 0; oc < out_channel; ++oc) {
     int src_oc_offset = oc * kernel_h * kernel_w * in_channel;
@@ -228,7 +232,11 @@ int ConvolutionSWFP16CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
+  ret = ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Get Execute tensor failed.";
+    return ret;
+  }
 
   int in_batch = conv_param_->input_batch_;
   int in_h = conv_param_->input_h_;

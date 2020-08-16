@@ -76,6 +76,10 @@ int PoolingBaseCPUKernel::Init() {
   pooling_param_->output_channel_ = out_tensor->Channel();
   pooling_param_->output_h_ = out_tensor->Height();
   pooling_param_->output_w_ = out_tensor->Width();
+  if (pooling_param_->global_) {
+      pooling_param_->window_h_ = pooling_param_->input_h_;
+      pooling_param_->window_w_ = pooling_param_->input_w_;
+  }
   return RET_OK;
 }
 

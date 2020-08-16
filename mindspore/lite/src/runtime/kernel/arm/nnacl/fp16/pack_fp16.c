@@ -18,6 +18,27 @@
 #include <string.h>
 #include <stdlib.h>
 
+void Conv1x1InputPackFp16(const float16_t *src, float16_t *dst, ConvParameter *conv_param) {
+  /* support nhwc */
+  for (int dst_h = 0; dst_h < conv_param->output_h_; dst_h++) {
+    int src_h = dst_h * conv_param->stride_h_ - conv_param->pad_h_;
+    if (src_h < 0 || src_h >= conv_param->input_h_) {
+      continue;
+    }
+    const float16_t *src_h_ptr = src + src_h * conv_param->input_w_ * conv_param->input_channel_;
+    float16_t *dst_h_ptr = dst + dst_h * conv_param->output_w_ * conv_param->input_channel_;
+    for (int dst_w = 0; dst_w < conv_param->output_w_; dst_w++) {
+      int src_w = dst_w * conv_param->stride_w_ - conv_param->pad_w_;
+      if (src_w < 0 || src_w >= conv_param->input_w_) {
+        continue;
+      }
+      memcpy(dst_h_ptr + dst_w * conv_param->input_channel_, src_h_ptr + src_w * conv_param->input_channel_,
+             conv_param->input_channel_ * sizeof(float16_t));
+    }
+  }
+  return;
+}
+
 void Im2ColPackUnitFp16(float16_t *input_data, ConvParameter *conv_param, float16_t *packed_input, int real_cal_num,
                         int block_index) {
   // input format : nhwc
