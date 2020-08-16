@@ -255,7 +255,7 @@ int Convolution3x3FP16CPUKernel::Run() {
   bool relu6 = conv_param_->is_relu6_;
   for (int batch = 0; batch < conv_param_->output_batch_; batch++) {
     int tmp_out_batch_offset =
-      batch * oc8 * C8NUM * out_w_block * out_h_block * conv_param_->output_unit_ * conv_param_->output_unit_;
+      batch * oc8 * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM;
     int ro_batch_size = batch * conv_param_->output_channel_ * conv_param_->output_h_ * conv_param_->output_w_;
     const float16_t *batch_tmp_out = tmp_out_ + tmp_out_batch_offset;
     float16_t *batch_out = execute_output_ + ro_batch_size;
@@ -265,7 +265,7 @@ int Convolution3x3FP16CPUKernel::Run() {
           int oc8_block = c / C8NUM;
           int oc8_res = c % C8NUM;
           int src_offset = oc8_block * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM +
-                           C8NUM * (h * out_w_block * conv_param_->output_unit_ + w) + oc8_res;
+                           C8NUM * (h * out_w_block * C4NUM + w) + oc8_res;
           int dst_offset = (h * conv_param_->output_w_ + w) * conv_param_->output_channel_ + c;
           (batch_out + dst_offset)[0] = (batch_tmp_out + src_offset)[0];
           if (relu) {

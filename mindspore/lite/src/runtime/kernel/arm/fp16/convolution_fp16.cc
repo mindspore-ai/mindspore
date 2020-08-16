@@ -219,8 +219,8 @@ int ConvolutionFP16CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
   ConvolutionBaseFP16CPUKernel::IfCastOutput();
+  ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
   return RET_OK;
 }
 

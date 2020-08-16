@@ -92,9 +92,8 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(weight_ptr_, 0, matmul_param_->deep_ * matmul_param_->col_8_ * sizeof(float16_t));
-  RowMajor2Col8MajorFp16(reinterpret_cast<float16_t *>(execute_weight_), weight_ptr_, matmul_param_->col_,
-                         matmul_param_->deep_);
-
+  ColMajor2Row8MajorFp16(reinterpret_cast<float16_t *>(execute_weight_), weight_ptr_, matmul_param_->deep_,
+                         matmul_param_->col_);
   return RET_OK;
 }
 
@@ -159,7 +158,7 @@ void Convolution1x1FP16CPUKernel::Pre1x1Trans(float16_t *src_input, float16_t *s
     input_ptr_ = src_input;
   }
 
-  RowMajor2Col8MajorFp16(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
+  RowMajor2Col16MajorFp16(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
   return;
 }
 

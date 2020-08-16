@@ -47,7 +47,7 @@ int ConvolutionBaseFP16CPUKernel::GetExecuteFilter() {
   if (weight_data_type == kNumberTypeFloat32) {
     float *origin_weight = reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->Data());
     size_t fp16_weight_size = conv_param_->input_channel_ * conv_param_->output_channel_ * conv_param_->kernel_h_ *
-                              conv_param_->input_w_ * sizeof(float16_t);
+                              conv_param_->kernel_w_ * sizeof(float16_t);
     fp16_weight_ = reinterpret_cast<float16_t *>(malloc(fp16_weight_size));
     if (fp16_weight_ == nullptr) {
       MS_LOG(ERROR) << "malloc fp16_weight_ failed.";
