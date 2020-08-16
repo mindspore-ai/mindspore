@@ -26,6 +26,7 @@ if (PLATFORM_ARM64)
     set(KERNEL_SRC ${KERNEL_SRC} ${ASSEMBLY_SRC})
 endif()
 
+#[[
 if (PLATFORM_ARM32)
     # assembly
     file(GLOB ASSEMBLY_SRC nnacl/assembly/arm32/*.s
@@ -34,6 +35,7 @@ if (PLATFORM_ARM32)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
     set(KERNEL_SRC ${KERNEL_SRC} ${ASSEMBLY_SRC})
 endif()
+]]
 
 add_library(cpu_kernel_mid_ OBJECT ${KERNEL_SRC} ${TRAIN_KERNEL_SRC})
 add_subdirectory(nnacl)
