@@ -32,10 +32,10 @@ using mindspore::schema::PrimitiveType_Conv2D;
 namespace mindspore::kernel {
 void ConvolutionInt8CPUKernel::CheckSupportOptimize() {
   tile_num_ = 24;
-#ifdef ENABLE_ARM32
-  tile_num_ = 2;
-  support_optimize_ = false;
-#endif
+// #ifdef ENABLE_ARM32
+//   tile_num_ = 2;
+//   support_optimize_ = false;
+// #endif
 
 #ifdef ENABLE_ARM64
   void *optimize_op_handler = OptimizeModule::GetInstance()->optimized_op_handler_;
