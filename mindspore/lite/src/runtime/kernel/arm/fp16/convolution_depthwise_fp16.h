@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/base/convolution_base.h"
+#include "src/runtime/kernel/arm/fp16/convolution_base_fp16.h"
 #include "src/runtime/kernel/arm/nnacl/fp16/conv_depthwise_fp16.h"
 
 #ifdef __cplusplus
@@ -34,12 +34,12 @@ void ConvDwC8Fp16(float16_t *output_data, const float16_t *input_data, const flo
 
 
 namespace mindspore::kernel {
-class ConvolutionDepthwiseFp16CPUKernel : public ConvolutionBaseCPUKernel {
+class ConvolutionDepthwiseFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
  public:
   ConvolutionDepthwiseFp16CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                                     const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                                     const lite::Primitive *primitive)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ConvolutionDepthwiseFp16CPUKernel() override;
 
   int Init() override;

@@ -187,15 +187,6 @@ int ConvolutionWinogradFP16CPUKernel::InitTmpBuffer() {
   int ic4 = UP_DIV(channel_in, C4NUM);
   int oc8 = UP_DIV(channel_out, C8NUM);
 
-  /*=============================fp16_input_============================*/
-  size_t fp16_input_size = conv_param_->input_channel_ * conv_param_->input_batch_ * conv_param_->input_h_ *
-                           conv_param_->input_w_ * sizeof(float16_t);
-  fp16_input_ = reinterpret_cast<float16_t *>(malloc(fp16_input_size));
-  if (fp16_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc fp16_input_ failed.";
-    return RET_ERROR;
-  }
-
   /*=============================trans_input_============================*/
   size_t tile_buffer_size = thread_count_ * cal_num * input_unit_ * input_unit_ * ic4 * C4NUM * sizeof(float16_t);
   trans_input_ = reinterpret_cast<float16_t *>(malloc(tile_buffer_size));
@@ -220,14 +211,6 @@ int ConvolutionWinogradFP16CPUKernel::InitTmpBuffer() {
                                                        output_unit_ * output_unit_ * oc8 * C8NUM * sizeof(float16_t)));
   if (tmp_out_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_out_data_ failed.";
-    return RET_ERROR;
-  }
-  /*=============================fp16_out_============================*/
-  size_t fp16_output_size = conv_param_->output_channel_ * conv_param_->output_batch_ * conv_param_->output_h_ *
-                            conv_param_->output_w_ * sizeof(float16_t);
-  fp16_out_ = reinterpret_cast<float16_t *>(malloc(fp16_output_size));
-  if (fp16_out_ == nullptr) {
-    MS_LOG(ERROR) << "malloc fp16_out_ failed.";
     return RET_ERROR;
   }
 
@@ -327,12 +310,6 @@ int ConvolutionWinogradFP16CPUKernel::ReSize() {
   if (nhwc4_input_ != nullptr) {
     free(nhwc4_input_);
   }
-  if (fp16_input_ != nullptr) {
-    free(fp16_input_);
-  }
-  if (fp16_out_ != nullptr) {
-    free(fp16_out_);
-  }
 
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
@@ -411,6 +388,7 @@ int ConvolutionWinogradFP16CPUKernel::Run() {
                              conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
   }
   ConvolutionBaseFP16CPUKernel::IfCastOutput();
+  ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
   return RET_OK;
 }
 }  // namespace mindspore::kernel

@@ -98,28 +98,6 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
   return RET_OK;
 }
 
-int Convolution1x1FP16CPUKernel::InitBuffer() {
-  /*=============================fp16_input_============================*/
-  size_t fp16_input_size = conv_param_->input_channel_ * conv_param_->input_batch_ * conv_param_->input_h_ *
-                           conv_param_->input_w_ * sizeof(float16_t);
-  fp16_input_ = reinterpret_cast<float16_t *>(malloc(fp16_input_size));
-  if (fp16_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc fp16_input_ failed.";
-    return RET_ERROR;
-  }
-  memset(fp16_input_, 0, fp16_input_size);
-
-  /*=============================fp16_out_============================*/
-  size_t fp16_output_size = conv_param_->output_channel_ * conv_param_->output_batch_ * conv_param_->output_h_ *
-                            conv_param_->output_w_ * sizeof(float16_t);
-  fp16_out_ = reinterpret_cast<float16_t *>(malloc(fp16_output_size));
-  if (fp16_out_ == nullptr) {
-    MS_LOG(ERROR) << "malloc fp16_out_ failed.";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
 int Convolution1x1FP16CPUKernel::Init() {
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
@@ -136,11 +114,6 @@ int Convolution1x1FP16CPUKernel::Init() {
     MS_LOG(ERROR) << "Init conv1x1 param failed.";
     return ret;
   }
-  ret = InitBuffer();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init buffer failed.";
-    return ret;
-  }
   ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
@@ -150,12 +123,6 @@ int Convolution1x1FP16CPUKernel::Init() {
 }
 
 int Convolution1x1FP16CPUKernel::ReSize() {
-  if (fp16_out_ != nullptr) {
-    free(fp16_out_);
-  }
-  if (fp16_input_ != nullptr) {
-    free(fp16_input_);
-  }
   if (fp16_weight_ != nullptr) {
     free(fp16_weight_);
   }
@@ -181,12 +148,6 @@ int Convolution1x1FP16CPUKernel::ReSize() {
     MS_LOG(ERROR) << "Init conv1x1 param failed.";
     return ret;
   }
-  ret = InitBuffer();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init buffer failed.";
-    return ret;
-  }
-
   return RET_OK;
 }
 
@@ -253,6 +214,7 @@ int Convolution1x1FP16CPUKernel::Run() {
   }
 
   ConvolutionBaseFP16CPUKernel::IfCastOutput();
+  ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
   return RET_OK;
 }
 }  // namespace mindspore::kernel

@@ -39,14 +39,14 @@ class ConvolutionBaseFP16CPUKernel : public ConvolutionBaseCPUKernel {
   virtual int GetExecuteTensor();
   virtual int GetExecuteFilter();
   virtual void IfCastOutput();
+  void FreeTmpBuffer();
 
  protected:
-  float16_t *fp16_input_ = nullptr;
   float16_t *fp16_weight_ = nullptr;
-  float16_t *fp16_out_ = nullptr;
-  float16_t *execute_input_;
+  float16_t *execute_input_;  // ctx allocator malloc and free
   float16_t *execute_weight_;
-  float16_t *execute_output_;
+  float16_t *execute_output_;  // ctx allocator malloc and free
+  TypeId in_data_type_;
   TypeId out_data_type_;
 };
 }  // namespace mindspore::kernel

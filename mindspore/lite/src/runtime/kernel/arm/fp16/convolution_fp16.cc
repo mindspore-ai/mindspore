@@ -103,15 +103,6 @@ int ConvolutionFP16CPUKernel::InitTmpBuffer() {
   }
   memset(packed_input_, 0, in_batch * packed_input_size * sizeof(float16_t));
 
-  /*=============================fp16_input_============================*/
-  size_t fp16_input_size =
-    in_channel * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float16_t);
-  fp16_input_ = reinterpret_cast<float16_t *>(malloc(fp16_input_size));
-  if (fp16_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc fp16_input_ failed.";
-    return RET_ERROR;
-  }
-
   /*=============================nhwc4_input_============================*/
   size_t nhwc4_input_size = channel_block * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ *
                             conv_param_->input_w_ * sizeof(float16_t);
@@ -129,14 +120,6 @@ int ConvolutionFP16CPUKernel::InitTmpBuffer() {
     return RET_ERROR;
   }
 
-  /*=============================fp16_out_============================*/
-  size_t fp16_output_size =
-    out_channel * conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * sizeof(float16_t);
-  fp16_out_ = reinterpret_cast<float16_t *>(malloc(fp16_output_size));
-  if (fp16_out_ == nullptr) {
-    MS_LOG(ERROR) << "malloc fp16_out_ failed.";
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 
@@ -180,12 +163,6 @@ int ConvolutionFP16CPUKernel::ReSize() {
   }
   if (nhwc4_input_ != nullptr) {
     free(nhwc4_input_);
-  }
-  if (fp16_input_ != nullptr) {
-    free(fp16_input_);
-  }
-  if (fp16_out_ != nullptr) {
-    free(fp16_out_);
   }
 
   auto ret = ConvolutionBaseCPUKernel::Init();
@@ -242,6 +219,7 @@ int ConvolutionFP16CPUKernel::Run() {
     return RET_ERROR;
   }
 
+  ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
   ConvolutionBaseFP16CPUKernel::IfCastOutput();
   return RET_OK;
 }

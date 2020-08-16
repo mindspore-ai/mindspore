@@ -30,14 +30,8 @@ class ConvolutionFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
                            const lite::Primitive *primitive)
       : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ConvolutionFP16CPUKernel() override {
-    if (fp16_input_ != nullptr) {
-      free(fp16_input_);
-    }
     if (fp16_weight_ != nullptr) {
       free(fp16_weight_);
-    }
-    if (fp16_out_ != nullptr) {
-      free(fp16_out_);
     }
     if (packed_input_ != nullptr) {
       free(packed_input_);

@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/base/convolution_base.h"
+#include "src/runtime/kernel/arm/fp16/convolution_base_fp16.h"
 #include "src/runtime/kernel/arm/nnacl/fp16/conv_depthwise_fp16.h"
 
 #ifdef __cplusplus
@@ -34,12 +34,12 @@ void ComputeStrides(int *shape, int *strides, int ndim);
 #endif
 
 namespace mindspore::kernel {
-class DeconvolutionDepthwiseFp16CPUKernel : public ConvolutionBaseCPUKernel {
+class DeconvolutionDepthwiseFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
  public:
   DeconvolutionDepthwiseFp16CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                                       const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                                       const lite::Primitive *primitive)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~DeconvolutionDepthwiseFp16CPUKernel() override;
 
   int Init() override;
