@@ -19,6 +19,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <memory>
 #include "utils/log_adapter.h"
 #include "schema/inner/model_generated.h"
@@ -126,6 +127,17 @@ class TfliteNodeParser {
 
  protected:
   const std::string &name;
+  std::map<int, TypeId> dtype_map = {
+    {tflite::TensorType_FLOAT64, TypeId::kNumberTypeFloat64},
+    {tflite::TensorType_FLOAT32, TypeId::kNumberTypeFloat32},
+    {tflite::TensorType_FLOAT16, TypeId::kNumberTypeFloat16},
+    {tflite::TensorType_INT64, TypeId::kNumberTypeInt64},
+    {tflite::TensorType_INT32, TypeId::kNumberTypeInt32},
+    {tflite::TensorType_INT16, TypeId::kNumberTypeInt16},
+    {tflite::TensorType_INT8, TypeId::kNumberTypeInt8},
+    {tflite::TensorType_UINT8, TypeId::kNumberTypeUInt8},
+    {tflite::TensorType_BOOL, TypeId::kNumberTypeBool},
+  };
 };
 }  // namespace lite
 }  // namespace mindspore

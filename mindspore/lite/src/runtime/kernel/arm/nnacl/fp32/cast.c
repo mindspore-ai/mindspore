@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/fp32/cast.h"
+#include "nnacl/fp32/common_func.h"
 
 void Uint8ToFloat32(const uint8_t *input, float *output, int number) {
   for (int i = 0; i < number; ++i) {
@@ -37,6 +38,12 @@ void Int8ToUint8(const int8_t *input, uint8_t *output, int number) {
 void Int32ToFloat32(const int32_t *input, float *output, int number) {
   for (int i = 0; i < number; ++i) {
     output[i] = (float)input[i];
+  }
+}
+
+void Fp16ToFloat32(const int16_t *input, float *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = ShortToFloat32(input[i]);
   }
 }
 

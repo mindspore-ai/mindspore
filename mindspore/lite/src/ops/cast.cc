@@ -46,7 +46,7 @@ int Cast::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
   }
   output->SetFormat(input->GetFormat());
   output->set_shape(input->shape());
-  output->set_data_type(input->data_type());
+  output->set_data_type(TypeId::kNumberTypeFloat32);
   return RET_OK;
 }
 }  // namespace mindspore::lite

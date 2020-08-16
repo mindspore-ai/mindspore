@@ -208,10 +208,12 @@ STATUS TfliteModelParser::ParseOp(const std::unique_ptr<tflite::ModelT> &tflite_
       return RET_ERROR;
     }
 
-    status = ParseTfliteQuantParams(tflite_subgraph, tflite_op, op.get(), tensorCache);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "parse op " << opType.c_str() << " quant parameters failed";
-      return RET_ERROR;
+    if (quantType != schema::QuantType_QUANT_NONE) {
+      status = ParseTfliteQuantParams(tflite_subgraph, tflite_op, op.get(), tensorCache);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "parse op " << opType.c_str() << " quant parameters failed";
+        return RET_ERROR;
+      }
     }
 
     subGraph->nodes.emplace_back(std::move(op));
