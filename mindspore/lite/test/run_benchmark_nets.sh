@@ -43,6 +43,28 @@ function Run_x86() {
             return 1
         fi
     done < ${models_caffe_config}
+
+    # Run onnx converted models:
+    while read line; do
+        model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name}
+        echo 'cd  '${convertor_path}'/MSLite-*-linux_x86_64'
+        cd ${convertor_path}/MSLite-*-linux_x86_64 || return 1
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' || return 1
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1
+        if [ $? = 0 ]; then
+            run_result='Run_x86: '${model_name}' pass'
+            echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='Run_x86: '${model_name}' fail <<===========================this is the failed case'
+            echo ${run_result} >> ${run_benchmark_result_file}
+            return 1
+        fi
+    done < ${models_onnx_config}
+
 }
 
 # Run on arm64 platform:
@@ -152,6 +174,8 @@ cd ${convertor_path}/MSLite-*-linux_x86_64 || exit 1
 # Set models config filepath
 models_tflite_config=${basepath}/models_tflite.cfg
 models_caffe_config=${basepath}/models_caffe.cfg
+models_tflite_posttraining_config=${basepath}/models_tflite_posttraining.cfg
+models_onnx_config=${basepath}/models_onnx.cfg
 
 rm -rf ${basepath}/ms_models
 mkdir -p ${basepath}/ms_models
@@ -165,7 +189,7 @@ while read line; do
     fi
     echo ${model_name}
     echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}''
-    ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}
+    ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name} || exit 1
 done < ${models_tflite_config}
 
 # Convert caffe models:
@@ -177,8 +201,33 @@ while read line; do
     echo ${model_name}
     pwd
     echo './converter_lite  --fmk=CAFFE --modelFile='${models_path}'/'${model_name}'.prototxt --weightFile='${models_path}'/'${model_name}'.caffemodel --outputFile='${ms_models_path}'/'${model_name}''
-    ./converter_lite  --fmk=CAFFE --modelFile=${models_path}/${model_name}.prototxt --weightFile=${models_path}/${model_name}.caffemodel --outputFile=${ms_models_path}/${model_name}
+    ./converter_lite  --fmk=CAFFE --modelFile=${models_path}/${model_name}.prototxt --weightFile=${models_path}/${model_name}.caffemodel --outputFile=${ms_models_path}/${model_name} || exit 1
 done < ${models_caffe_config}
+
+# Convert onnx models:
+while read line; do
+    model_name=${line}
+    if [[ $model_name == \#* ]]; then
+      continue
+    fi
+    echo ${model_name}
+    pwd
+    echo './converter_lite  --fmk=ONNX --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}''
+    ./converter_lite  --fmk=ONNX --modelFile=${models_path}/${model_name} --outputFile=${ms_models_path}/${model_name} || exit 1
+done < ${models_onnx_config}
+
+
+# Convert TFLite PostTraining models:
+while read line; do
+    model_name=${line}
+    if [[ $model_name == \#* ]]; then
+      continue
+    fi
+    echo ${model_name}
+    echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}_posttraining' --quantType=PostTraining --config_file='${models_path}'/'${model_name}'_posttraining.config'
+    ###core dump 0815,after bugfix ,then add this convert:
+    ###./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_posttraining --quantType=PostTraining --config_file=${models_path}/${model_name}_posttraining.config || exit 1
+done < ${models_tflite_posttraining_config}
 
 # Push to the arm and run benchmark:
 # First:copy benchmark exe and so files to the server which connected to the phone
