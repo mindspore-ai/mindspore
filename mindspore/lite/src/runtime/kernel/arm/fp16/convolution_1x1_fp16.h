@@ -35,14 +35,11 @@ class Convolution1x1FP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
     matmul_param_ = new MatMulParameter();
   }
   ~Convolution1x1FP16CPUKernel() override {
-    if (fp16_weight_ != nullptr) {
-      free(fp16_weight_);
-    }
-    if (input_ptr_ != nullptr) {
-      free(input_ptr_);
-    }
     if (weight_ptr_ != nullptr) {
       free(weight_ptr_);
+    }
+    if (pack_input_ != nullptr) {
+      free(pack_input_);
     }
     delete matmul_param_;
   }

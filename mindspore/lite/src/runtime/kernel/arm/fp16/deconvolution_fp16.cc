@@ -170,7 +170,7 @@ int DeConvolutionFp16CPUKernel::Run() {
   ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
 
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
-    RowMajor2Col8MajorFp16(execute_input_, pack_input_, input_plane_, conv_param_->input_channel_);
+    RowMajor2Col16MajorFp16(execute_input_, pack_input_, input_plane_, conv_param_->input_channel_);
 
     int error_code = LiteBackendParallelLaunch(DeConvFp16Run, this, thread_count_);
     if (error_code != RET_OK) {
