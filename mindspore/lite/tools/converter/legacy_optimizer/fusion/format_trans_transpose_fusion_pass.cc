@@ -58,7 +58,7 @@ STATUS FormatTransPermuteFusionPass::DefinePattern() {
     formatTransOp->types = {PrimitiveType_Nchw2Nhwc, PrimitiveType_Nhwc2Nchw};
     auto transposeOp = std::make_shared<PatternOp>();
     transposeOp->id = kPermuteOp;
-    transposeOp->types = {PrimitiveType_Permute};
+    transposeOp->types = {PrimitiveType_Transpose};
 
     formatTransOp->left = transposeOp;
     std::unique_ptr<FusionPattern> transposeFormatTransFusionPattern(
