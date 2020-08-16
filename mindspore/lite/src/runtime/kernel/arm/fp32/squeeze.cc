@@ -42,12 +42,20 @@ int SqueezeCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  auto input_ptr = reinterpret_cast<float *>(in_tensors_.front()->Data());
-  auto output_ptr = reinterpret_cast<float *>(out_tensors_.front()->Data());
+
   size_t data_size = in_tensors_.front()->Size();
-  ret = DoSqueeze(input_ptr, output_ptr, data_size);
+  if (in_tensors_.front()->data_type() == kNumberTypeInt32) {
+    auto input_ptr = reinterpret_cast<int32_t *>(in_tensors_.front()->Data());
+    auto output_ptr = reinterpret_cast<int32_t *>(out_tensors_.front()->Data());
+    ret = DoSqueezeInt32(input_ptr, output_ptr, data_size);
+  } else {
+    auto input_ptr = reinterpret_cast<float *>(in_tensors_.front()->Data());
+    auto output_ptr = reinterpret_cast<float *>(out_tensors_.front()->Data());
+    ret = DoSqueeze(input_ptr, output_ptr, data_size);
+  }
+
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Do squeeze failed.";
+    MS_LOG(ERROR) << "Do squeeze fail!ret: " << ret;
     return RET_ERROR;
   }
   return RET_OK;
@@ -55,14 +63,14 @@ int SqueezeCPUKernel::Run() {
 
 kernel::LiteKernel *CpuSqueezeFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                 const std::vector<lite::tensor::Tensor *> &outputs,
-                                                OpParameter *opParameter, const lite::Context *ctx,
+                                                OpParameter *parameter, const lite::Context *ctx,
                                                 const kernel::KernelKey &desc, const lite::Primitive *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_Squeeze);
-  if (opParameter == nullptr) {
+  if (parameter == nullptr) {
     MS_LOG(ERROR) << "desc type is not Squeeze";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) SqueezeCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  auto *kernel = new (std::nothrow) SqueezeCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "New kernel fails.";
     return nullptr;
@@ -70,8 +78,8 @@ kernel::LiteKernel *CpuSqueezeFp32KernelCreator(const std::vector<lite::tensor::
 
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
     delete kernel;
     return nullptr;
   }
@@ -80,4 +88,5 @@ kernel::LiteKernel *CpuSqueezeFp32KernelCreator(const std::vector<lite::tensor::
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Squeeze, CpuSqueezeFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Squeeze, CpuSqueezeFp32KernelCreator)
 }  // namespace mindspore::kernel

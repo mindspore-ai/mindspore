@@ -43,9 +43,12 @@ class ArithmeticFP16CPUKernel : public LiteKernel {
   int DoArithmetic(int task_id);
 
  private:
-  void FreeTileData();
+  void FreeTmpBuffer();
   float16_t *tile_data0_ = nullptr;
   float16_t *tile_data1_ = nullptr;
+  float16_t *input0_fp16_ = nullptr;
+  float16_t *input1_fp16_ = nullptr;
+  float16_t *output_fp16_ = nullptr;
   ArithmeticParameter *arithmeticParameter_ = nullptr;
   ArithmeticRun arithmetic_run_ = nullptr;
   ArithmeticOptRun arithmetic_opt_run_ = nullptr;

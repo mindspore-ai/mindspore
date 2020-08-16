@@ -49,6 +49,9 @@ int GatherCPUKernel::DoGather(int task_id) {
   auto indices_ptr = reinterpret_cast<int *>(indices_tensor->Data());
   auto output_ptr = reinterpret_cast<float *>(out_tensor->Data());
 
+  auto input_int32 = reinterpret_cast<int32_t *>(input_tensor->Data());
+  auto output_int32 = reinterpret_cast<int32_t *>(out_tensor->Data());
+
   auto in_shape = input_tensor->shape();
   int in_rank = in_shape.size();
   int indices_element_size = indices_tensor->ElementsNum();
@@ -73,11 +76,19 @@ int GatherCPUKernel::DoGather(int task_id) {
 
   int stride = UP_DIV(outer_size, thread_count_);
   int count = MSMIN(stride, outer_size - stride * task_id);
+  auto thread_stride = stride * task_id;
 
-  input_ptr += stride * task_id * limit;
-  output_ptr += stride * task_id * indices_element_size;
+  int error_code;
+  if (input_tensor->data_type() == kNumberTypeInt32) {
+    input_int32 += thread_stride * limit;
+    output_int32 += thread_stride * indices_element_size;
+    error_code = GatherInt32(input_int32, count, inner_size, limit, indices_ptr, indices_element_size, output_int32);
+  } else {
+    input_ptr += thread_stride * limit;
+    output_ptr += thread_stride * indices_element_size;
+    error_code = Gather(input_ptr, count, inner_size, limit, indices_ptr, indices_element_size, output_ptr);
+  }
 
-  auto error_code = Gather(input_ptr, count, inner_size, limit, indices_ptr, indices_element_size, output_ptr);
   if (error_code != RET_OK) {
     return RET_ERROR;
   }
@@ -110,19 +121,21 @@ int GatherCPUKernel::Run() {
 
 kernel::LiteKernel *CpuGatherFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *opParameter, const lite::Context *ctx,
+                                               OpParameter *parameter, const lite::Context *ctx,
                                                const kernel::KernelKey &desc, const lite::Primitive *primitive) {
-  MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Gather);
-
-  auto *kernel = new (std::nothrow) GatherCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << "input parameter is nullptr!";
+    return nullptr;
+  }
+  auto *kernel = new (std::nothrow) GatherCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     return nullptr;
   }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
     delete kernel;
     return nullptr;
   }
@@ -130,4 +143,5 @@ kernel::LiteKernel *CpuGatherFp32KernelCreator(const std::vector<lite::tensor::T
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Gather, CpuGatherFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Gather, CpuGatherFp32KernelCreator)
 }  // namespace mindspore::kernel

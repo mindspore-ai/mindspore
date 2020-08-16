@@ -28,6 +28,7 @@ typedef struct SqueezeParameter {
 extern "C" {
 #endif
 int DoSqueeze(float *input_ptr, float *output_ptr, size_t data_size);
+int DoSqueezeInt32(int32_t *in_data, int32_t *out_data, size_t data_size);
 #ifdef __cplusplus
 }
 #endif

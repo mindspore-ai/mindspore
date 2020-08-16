@@ -16,6 +16,7 @@
 
 #include "src/runtime/kernel/arm/fp16/arithmetic_fp16.h"
 #include "src/runtime/kernel/arm/nnacl/fp16/arithmetic_fp16.h"
+#include "src/runtime/kernel/arm/nnacl/fp16/cast_fp16.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
@@ -31,7 +32,7 @@ using mindspore::schema::PrimitiveType_Mul;
 using mindspore::schema::PrimitiveType_Sub;
 
 namespace mindspore::kernel {
-void ArithmeticFP16CPUKernel::FreeTileData() {
+void ArithmeticFP16CPUKernel::FreeTmpBuffer() {
   if (tile_data0_ != nullptr) {
     free(tile_data0_);
     tile_data0_ = nullptr;
@@ -40,9 +41,21 @@ void ArithmeticFP16CPUKernel::FreeTileData() {
     free(tile_data1_);
     tile_data1_ = nullptr;
   }
+  if (input0_fp16_ != nullptr) {
+    context_->allocator->Free(input0_fp16_);
+    input0_fp16_ = nullptr;
+  }
+  if (input1_fp16_ != nullptr) {
+    context_->allocator->Free(input1_fp16_);
+    input1_fp16_ = nullptr;
+  }
+  if (output_fp16_ != nullptr) {
+    context_->allocator->Free(output_fp16_);
+    output_fp16_ = nullptr;
+  }
 }
 
-ArithmeticFP16CPUKernel::~ArithmeticFP16CPUKernel() { FreeTileData(); }
+ArithmeticFP16CPUKernel::~ArithmeticFP16CPUKernel() { FreeTmpBuffer(); }
 
 int ArithmeticFP16CPUKernel::Init() {
   switch (op_parameter_->type_) {
@@ -97,10 +110,38 @@ int ArithmeticFP16CPUKernel::Init() {
 }
 
 int ArithmeticFP16CPUKernel::ReSize() {
-  FreeTileData();
+  FreeTmpBuffer();
   arithmeticParameter_->in_elements_num0_ = in_tensors_[0]->ElementsNum();
   arithmeticParameter_->in_elements_num1_ = in_tensors_[1]->ElementsNum();
   arithmeticParameter_->out_elements_num_ = out_tensors_[0]->ElementsNum();
+  if (in_tensors_[0]->data_type() == kNumberTypeFloat32 || in_tensors_[0]->data_type() == kNumberTypeFloat) {
+    input0_fp16_ = reinterpret_cast<float16_t *>(context_->allocator->Malloc(
+        arithmeticParameter_->in_elements_num0_ * sizeof(float16_t)));
+    if (input0_fp16_ == nullptr) {
+      MS_LOG(ERROR) << "malloc data fail!";
+      return RET_ERROR;
+    }
+    Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[0]->Data()), input0_fp16_,
+                     arithmeticParameter_->in_elements_num0_);
+  }
+  if (in_tensors_[1]->data_type() == kNumberTypeFloat32 || in_tensors_[1]->data_type() == kNumberTypeFloat) {
+    input1_fp16_ = reinterpret_cast<float16_t *>(context_->allocator->Malloc(
+        arithmeticParameter_->in_elements_num1_ * sizeof(float16_t)));
+    if (input0_fp16_ == nullptr) {
+      MS_LOG(ERROR) << "malloc data fail!";
+      return RET_ERROR;
+    }
+    Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[1]->Data()), input1_fp16_,
+                     arithmeticParameter_->in_elements_num1_);
+  }
+  if (out_tensors_[0]->data_type() == kNumberTypeFloat32 || out_tensors_[0]->data_type() == kNumberTypeFloat) {
+    output_fp16_ = reinterpret_cast<float16_t *>(context_->allocator->Malloc(
+        arithmeticParameter_->out_elements_num_ * sizeof(float16_t)));
+    if (output_fp16_ == nullptr) {
+      MS_LOG(ERROR) << "malloc data fail!";
+      return RET_ERROR;
+    }
+  }
 
   if (arithmeticParameter_->in_elements_num0_ == 1 || arithmeticParameter_->in_elements_num1_ == 1) {
     if (arithmeticParameter_->activation_type_ == schema::ActivationType_NO_ACTIVATION) {
@@ -137,13 +178,17 @@ int ArithmeticFP16CPUKernel::ReSize() {
 }
 
 int ArithmeticFP16CPUKernel::DoArithmetic(int task_id) {
-  auto input0_data = reinterpret_cast<float16_t *>(in_tensors_[0]->Data());
-  auto input1_data1 = reinterpret_cast<float16_t *>(in_tensors_[1]->Data());
-  auto output_data = reinterpret_cast<float16_t *>(out_tensors_[0]->Data());
+  auto input0 = reinterpret_cast<float16_t *>(in_tensors_[0]->Data());
+  auto input1 = reinterpret_cast<float16_t *>(in_tensors_[1]->Data());
+  auto output = reinterpret_cast<float16_t *>(out_tensors_[0]->Data());
   auto element_num = out_tensors_[0]->ElementsNum();
 
+  float16_t *input0_data = input0_fp16_ == nullptr ? input0 : input0_fp16_;
+  float16_t *input1_data1 = input1_fp16_ == nullptr ? input1 : input1_fp16_;
+  auto output_data = output_fp16_ == nullptr ? output : output_fp16_;
   int stride = UP_DIV(element_num, context_->thread_num_);
   int count = MSMIN(stride, element_num - stride * task_id);
+  auto thread_stride = stride * task_id;
 
   if (arithmetic_run_ == nullptr) {
     MS_LOG(ERROR) << "arithmetic_run function is nullptr!";
@@ -152,25 +197,29 @@ int ArithmeticFP16CPUKernel::DoArithmetic(int task_id) {
 
   int error_code = RET_OK;
   if (arithmeticParameter_->broadcasting_) {
-    error_code = arithmetic_run_(tile_data0_ + stride * task_id, tile_data1_ + stride * task_id,
-                                 output_data + stride * task_id, count);
+    error_code = arithmetic_run_(tile_data0_ + thread_stride, tile_data1_ + thread_stride,
+                                 output_data + thread_stride, count);
   } else if (arithmetic_opt_run_ != nullptr) {
     if (arithmeticParameter_->in_elements_num0_ == 1) {
-      error_code = arithmetic_opt_run_(input0_data, input1_data1 + stride * task_id, output_data + stride * task_id,
+      error_code = arithmetic_opt_run_(input0_data, input1_data1 + thread_stride, output_data + thread_stride,
                                        count, arithmeticParameter_);
     } else if (arithmeticParameter_->in_elements_num1_ == 1) {
-      error_code = arithmetic_opt_run_(input0_data + stride * task_id, input1_data1, output_data + stride * task_id,
+      error_code = arithmetic_opt_run_(input0_data + thread_stride, input1_data1, output_data + thread_stride,
                                        count, arithmeticParameter_);
     } else {
-      error_code = arithmetic_opt_run_(input0_data + stride * task_id, input1_data1 + stride * task_id,
-                                       output_data + stride * task_id, count, arithmeticParameter_);
+      error_code = arithmetic_opt_run_(input0_data + thread_stride, input1_data1 + thread_stride,
+                                       output_data + thread_stride, count, arithmeticParameter_);
     }
   } else {
-    error_code = arithmetic_run_(input0_data + stride * task_id, input1_data1 + stride * task_id,
-                                 output_data + stride * task_id, count);
+    error_code = arithmetic_run_(input0_data + thread_stride, input1_data1 + thread_stride,
+                                 output_data + thread_stride, count);
   }
   if (error_code != RET_OK) {
     return RET_ERROR;
+  }
+  if (output_fp16_ != nullptr) {
+    auto output_fp32 = reinterpret_cast<float *>(out_tensors_[0]->Data());
+    Float16ToFloat32(output_data + thread_stride, output_fp32 + thread_stride, count);
   }
   return RET_OK;
 }
@@ -195,7 +244,9 @@ int ArithmeticFP16CPUKernel::Run() {
   if (arithmeticParameter_->broadcasting_) {
     auto input_data0 = reinterpret_cast<float16_t *>(in_tensors_[0]->Data());
     auto input_data1 = reinterpret_cast<float16_t *>(in_tensors_[1]->Data());
-    TileDimensionsFp16(input_data0, input_data1, tile_data0_, tile_data1_, arithmeticParameter_);
+    float16_t *input0 = input0_fp16_ == nullptr ? input_data0 : input0_fp16_;
+    float16_t *input1 = input1_fp16_ == nullptr ? input_data1 : input1_fp16_;
+    TileDimensionsFp16(input0, input1, tile_data0_, tile_data1_, arithmeticParameter_);
   }
   ret = LiteBackendParallelLaunch(ArithmeticsRun, this, context_->thread_num_);
   if (ret != RET_OK) {
