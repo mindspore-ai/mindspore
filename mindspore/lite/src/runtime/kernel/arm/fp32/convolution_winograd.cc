@@ -93,13 +93,13 @@ int ConvolutionWinogradCPUKernel::InitWeightBias() {
   int output_channel = conv_param_->output_channel_;
   int oc4 = UP_DIV(output_channel, C4NUM);
   int oc_block, oc_block_num;
-#ifdef ENABLE_ARM32
-  oc_block = C4NUM;
-  oc_block_num = UP_DIV(output_channel, C4NUM);
-#else
+// #ifdef ENABLE_ARM32
+//   oc_block = C4NUM;
+//   oc_block_num = UP_DIV(output_channel, C4NUM);
+// #else
   oc_block = C8NUM;
   oc_block_num = UP_DIV(output_channel, C8NUM);
-#endif
+// #endif
 
   // init weight
   auto ret = MallocFilterMatrix(oc_block, oc_block_num);
@@ -242,11 +242,11 @@ int ConvolutionWinogradCPUKernel::ConfigInputOutput() {
     MS_LOG(ERROR) << "Get output_trans_func_ failed.";
     return RET_ERROR;
   }
-#ifdef ENABLE_ARM32
-  gemm_func_ = IndirectGemmFp32_8x4;
-#else
+// #ifdef ENABLE_ARM32
+//   gemm_func_ = IndirectGemmFp32_8x4;
+// #else
   gemm_func_ = IndirectGemmFp32_8x8;
-#endif
+// #endif
   return RET_OK;
 }
 

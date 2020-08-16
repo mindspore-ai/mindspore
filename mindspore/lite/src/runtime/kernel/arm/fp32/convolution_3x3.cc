@@ -54,13 +54,13 @@ int Convolution3x3CPUKernel::InitWeightBias() {
   int iC4 = UP_DIV(input_channel, C4NUM);
   int oC4 = UP_DIV(output_channel, C4NUM);
   int oc_block, oc_block_num;
-#ifdef ENABLE_ARM32
-  oc_block = C4NUM;
-  oc_block_num = UP_DIV(output_channel, C4NUM);
-#else
+// #ifdef ENABLE_ARM32
+//   oc_block = C4NUM;
+//   oc_block_num = UP_DIV(output_channel, C4NUM);
+// #else
   oc_block = C8NUM;
   oc_block_num = UP_DIV(output_channel, C8NUM);
-#endif
+// #endif
   const int k_plane = 16;
   // init weight
   size_t transformed_size = iC4 * C4NUM * oc_block_num * oc_block * k_plane * sizeof(float);
@@ -158,11 +158,11 @@ void Convolution3x3CPUKernel::ConfigInputOutput() {
     MS_LOG(ERROR) << "Check layout failed.";
     return;
   }
-#ifdef ENABLE_ARM32
-  gemm_func_ = IndirectGemmFp32_8x4;
-#else
+// #ifdef ENABLE_ARM32
+//   gemm_func_ = IndirectGemmFp32_8x4;
+// #else
   gemm_func_ = IndirectGemmFp32_8x8;
-#endif
+// #endif
 }
 
 int Convolution3x3CPUKernel::Init() {

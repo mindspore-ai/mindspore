@@ -42,13 +42,13 @@ int ConvolutionCPUKernel::InitWeightBias() {
   int ic4 = UP_DIV(in_channel, C4NUM);
   int kernel_plane = kernel_h * kernel_w;
   int oc_block, oc_block_num;
-#ifdef ENABLE_ARM32
-  oc_block = C4NUM;
-  oc_block_num = UP_DIV(out_channel, C4NUM);
-#else
+// #ifdef ENABLE_ARM32
+//   oc_block = C4NUM;
+//   oc_block_num = UP_DIV(out_channel, C4NUM);
+// #else
   oc_block = C8NUM;
   oc_block_num = UP_DIV(out_channel, C8NUM);
-#endif
+// #endif
   int pack_weight_size = oc_block_num * oc_block * ic4 * C4NUM * kernel_plane;
 
   // init weight
@@ -130,11 +130,11 @@ void ConvolutionCPUKernel::ConfigInputOutput() {
     MS_LOG(ERROR) << "Check layout failed.";
     return;
   }
-#ifdef ENABLE_ARM32
-  gemm_func_ = IndirectGemmFp32_8x4;
-#else
+// #ifdef ENABLE_ARM32
+//   gemm_func_ = IndirectGemmFp32_8x4;
+// #else
   gemm_func_ = IndirectGemmFp32_8x8;
-#endif
+// #endif
 }
 
 int ConvolutionCPUKernel::Init() {
