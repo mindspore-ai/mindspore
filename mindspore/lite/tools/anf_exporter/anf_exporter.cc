@@ -285,6 +285,7 @@ int AnfExporter::ConvertInputParameter(const std::shared_ptr<AnfNode> input_anod
   auto typePtr = abstractTensor->element()->GetTypeTrack();
   MS_ASSERT(typePtr != nullptr);
   paramTensor->dataType = typePtr->type_id();
+  paramTensor->format = schema::Format(abstractTensor->format());
   if (!utils::isa<abstract::ShapePtr>(abstractTensor->BuildShape())) {
     MS_LOG(ERROR) << "Shape of Abstract of parameter should be ShapePtr, " << paramNode->name();
     return RET_ERROR;

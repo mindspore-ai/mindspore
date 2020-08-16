@@ -20,10 +20,10 @@
 #include "tools/converter/optimizer.h"
 #include "tools/common/graph_util.h"
 #include "tools/converter/converter_flags.h"
+#include "tools/converter/legacy_optimizer/graph/format_trans_pass.h"
 
 namespace mindspore {
 namespace lite {
-enum FormatTransNodeType { kNCHW2NHWC, kNHWC2NCHW };
 
 class EltwiseFormatTransPass : public GraphPass {
  public:
@@ -38,10 +38,6 @@ class EltwiseFormatTransPass : public GraphPass {
   void SetFmk(converter::FmkType fmkType);
 
  private:
-  STATUS DoModelInputFormatTrans(schema::MetaGraphT *graph);
-
-  STATUS DoNodeInoutFormatTrans(schema::MetaGraphT *graph);
-
   NodeIter InsertFormatTransNode(schema::MetaGraphT *graph, NodeIter existNodeIter, InsertPlace place, size_t inoutIdx,
                                  FormatTransNodeType nodeType, STATUS *errorCode);
 

@@ -51,6 +51,7 @@
 //
 #include "tools/converter/legacy_optimizer/node/weight_format_pass.h"
 #include "tools/converter/legacy_optimizer/graph/format_trans_pass.h"
+#include "tools/converter/legacy_optimizer/graph/eltwise_format_trans_pass.h"
 #include "tools/converter/legacy_optimizer/graph/isolated_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/unused_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/topological_sort_pass.h"
@@ -113,7 +114,6 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     }
   }
 
-
   {
     Optimizer unusedOpRemoveOptimizer;
     unusedOpRemoveOptimizer.AddPass(new UnusedNodeRemovePass());
@@ -146,7 +146,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
         return status;
       }
       if (!(this->graphDefT->fmkType == converter::FmkType_TF &&
-        this->graphDefT->nodes.front()->quantType == QuantType::QuantType_AwareTraining)) {
+            this->graphDefT->nodes.front()->quantType == QuantType::QuantType_AwareTraining)) {
         status = mQuantizer->GenerateQuantParam();
         if (status != RET_OK) {
           MS_LOG(ERROR) << "GenerateQuantParam failed";
@@ -171,6 +171,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     formatTransPass->SetQuantType(ctx.quantType);
     formatTransPass->SetFmk(ctx.fmk);
     formatTransOptimizer.AddPass(formatTransPass);
+    formatTransOptimizer.AddPass(new EltwiseFormatTransPass());
     formatTransOptimizer.AddPass(new (std::nothrow) FormatTransFusionPass());
     formatTransOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
     //    if (ctx.quantType == QuantType_AwareTraining) {
