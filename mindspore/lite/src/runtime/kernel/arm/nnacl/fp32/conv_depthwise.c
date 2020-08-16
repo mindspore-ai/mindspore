@@ -634,7 +634,7 @@ void ConvDw3x3Fp32(float *output_data, const float *input_data, const float *wei
 
 /*deconv depthwise fp32 begin*/
 void DeconvDepthwiseBorderPixel(float *dst, const float *src, const float *weight, int height, int width,
-                                int in_kh_step, int in_kw_step, int kernel_w) {
+                                int in_kh_step, int in_kw_step, int kernel_w_step) {
   float *dst_kh = dst;
   const float *weight_kh = weight;
   for (int kh = 0; kh < height; kh++) {
@@ -656,7 +656,7 @@ void DeconvDepthwiseBorderPixel(float *dst, const float *src, const float *weigh
       weight_kw += C4NUM;
     }  // kernel_w loop
     dst_kh += in_kh_step;
-    weight_kh += kernel_w * C4NUM;
+    weight_kh += kernel_w_step;
   }  // kernel_h loop
 }
 
@@ -678,9 +678,14 @@ void DeconvDepthwiseBorder(float *dst, const float *src, const float *weight, in
 
       const float *weight_kernel = weight + (start_kh * conv_param->kernel_w_ + start_kw) * C4NUM;
       float *dst_kernel = dst_w + start_kh * sliding->in_kh_step_ + start_kw * sliding->in_kw_step_;
-
+#ifdef ENABLE_ARM64
+      DeconvDwFp32Border(dst_kernel, src_kernel, weight_kernel, end_kh - start_kh, end_kw - start_kw,
+                         sliding->in_kh_step_ * sizeof(float), sliding->in_kw_step_ * sizeof(float),
+                         conv_param->kernel_w_ * C4NUM * sizeof(float));
+#else
       DeconvDepthwiseBorderPixel(dst_kernel, src_kernel, weight_kernel, end_kh - start_kh, end_kw - start_kw,
-                                 sliding->in_kh_step_, sliding->in_kw_step_, conv_param->kernel_w_);
+                                 sliding->in_kh_step_, sliding->in_kw_step_, conv_param->kernel_w_ * C4NUM);
+#endif
       src_kernel += sliding->block_channel_;
     }  // width loop
     src_h += sliding->out_h_step_;
