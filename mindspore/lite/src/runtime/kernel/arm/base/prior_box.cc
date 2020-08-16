@@ -18,7 +18,7 @@
 #include <cmath>
 #include "src/runtime/kernel/arm/base/prior_box.h"
 #include "schema/model_generated.h"
-#include "src/kernel_factory.h"
+#include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "include/context.h"
 #include "src/runtime/runtime_api.h"

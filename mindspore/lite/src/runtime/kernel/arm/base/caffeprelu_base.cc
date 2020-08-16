@@ -16,7 +16,7 @@
 #include "src/runtime/kernel/arm/base/caffeprelu_base.h"
 #include <vector>
 #include "schema/model_generated.h"
-#include "src/kernel_factory.h"
+#include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "include/context.h"
 

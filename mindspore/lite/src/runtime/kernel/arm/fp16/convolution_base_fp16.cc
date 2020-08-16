@@ -18,7 +18,7 @@
 #include "src/runtime/kernel/arm/nnacl/fp16/cast_fp16.h"
 #include "src/runtime/kernel/arm/fp16/common_fp16.h"
 #include "schema/model_generated.h"
-#include "src/kernel_factory.h"
+#include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
 

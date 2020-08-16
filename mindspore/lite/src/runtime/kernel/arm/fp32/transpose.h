@@ -20,7 +20,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 
-#include "src/kernel_factory.h"
+#include "src/kernel_registry.h"
 
 namespace mindspore::kernel {
 

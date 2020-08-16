@@ -175,12 +175,10 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/ir/primitive_t_value.cc
         ${LITE_DIR}/src/context.cc
         ${LITE_DIR}/src/executor.cc
-        ${LITE_DIR}/src/kernel_factory.cc
         ${LITE_DIR}/src/kernel_registry.cc
         ${LITE_DIR}/src/lite_kernel.cc
         ${LITE_DIR}/src/lite_session.cc
         ${LITE_DIR}/src/model.cc
-        ${LITE_DIR}/src/model_impl.cc
         ${LITE_DIR}/src/populate_parameter.cc
         ${LITE_DIR}/src/scheduler.cc
         ${LITE_DIR}/src/common/graph_util.cc
@@ -265,7 +263,7 @@ if (SUPPORT_TRAIN)
     #       ${LITE_DIR}/src/ir/primitive_value.cc
     #       ${LITE_DIR}/src/train/lite_kernel_runtime.cc
     #       ${LITE_DIR}/src/train/train_session.cc
-    #       ${LITE_DIR}/src/train/model_impl.cc
+    #       ${LITE_DIR}/src/train/model.cc
             ${LITE_DIR}/src/lite_session.cc  # temporary
             )
 else()

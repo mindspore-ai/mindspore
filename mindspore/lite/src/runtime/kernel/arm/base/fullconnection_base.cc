@@ -17,7 +17,7 @@
 #include "src/runtime/kernel/arm/int8/fullconnection_int8.h"
 #include "src/runtime/kernel/arm/fp32/fullconnection.h"
 #include "schema/model_generated.h"
-#include "src/kernel_factory.h"
+#include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "include/context.h"
 
