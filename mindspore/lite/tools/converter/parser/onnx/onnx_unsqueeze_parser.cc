@@ -19,8 +19,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxUnSqueezeParser::Parse(const onnx::GraphProto &onnx_graph,
-                                  const onnx::NodeProto &onnx_node,
+STATUS OnnxUnSqueezeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                   schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx UnSqueezeParser";
   std::unique_ptr<schema::UnsqueezeT> attr(new schema::UnsqueezeT());
@@ -43,4 +42,3 @@ STATUS OnnxUnSqueezeParser::Parse(const onnx::GraphProto &onnx_graph,
 OnnxNodeRegistrar g_onnxUnsqueezeParser("Unsqueeze", new OnnxUnSqueezeParser());
 }  // namespace lite
 }  // namespace mindspore
-
