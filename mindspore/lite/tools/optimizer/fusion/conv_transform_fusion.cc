@@ -66,7 +66,9 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
 
   auto pre_node = transform_node->input(1);
   auto conv_node = pre_node->cast<CNodePtr>();
-
+  if (IsMultiOutputTensors(func_graph, conv_node)) {
+    return transform_node;
+  }
   int kernel_nums = Get_Kenrnel_nums(conv_node);
   if (kernel_nums <= 0) {
     MS_LOG(ERROR) << "Unsupported conv node, " << conv_node->DebugString();
