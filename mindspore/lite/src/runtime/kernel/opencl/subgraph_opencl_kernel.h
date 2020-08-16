@@ -36,7 +36,7 @@ class SubGraphOpenCLKernel : public SubGraphKernel {
                                 const std::vector<kernel::LiteKernel *> inKernels,
                                 const std::vector<kernel::LiteKernel *> outKernels,
                                 const std::vector<kernel::LiteKernel *> nodes)
-      : SubGraphKernel(inputs, outputs, inKernels, outKernels, nodes, nullptr, nullptr) {}
+    : SubGraphKernel(inputs, outputs, inKernels, outKernels, nodes, nullptr, nullptr) {}
   ~SubGraphOpenCLKernel() override;
 
   int Init() override;
@@ -45,11 +45,24 @@ class SubGraphOpenCLKernel : public SubGraphKernel {
   int Run() override;
   int UnInit();
 
+ protected:
+  int MallocTensorWithReuse();
+  int GenToFormatOp(const std::vector<lite::tensor::Tensor *> &in_tensors,
+                    const std::vector<kernel::LiteKernel *> in_kernels,
+                    std::vector<lite::tensor::Tensor *> *out_tensors,
+                    std::vector<OpenCLToFormatParameter *> *out_parameters, std::vector<LiteKernel *> *out_convert_ops,
+                    OpenCLMemType mem_type);
+
  private:
   SubGraphOpenCLParameter *subgraph_ocl_parameter_;
   lite::opencl::OpenCLAllocator *allocator_;
+  std::vector<lite::tensor::Tensor *> in_convert_tensors_;
+  std::vector<lite::tensor::Tensor *> out_convert_tensors_;
+  std::vector<OpenCLToFormatParameter *> in_parameters_;
+  std::vector<OpenCLToFormatParameter *> out_parameters_;
+  std::vector<LiteKernel *> in_convert_ops_;
+  std::vector<LiteKernel *> out_convert_ops_;
 };
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_BACKEND_OPENCL_SUBGRAPH_OPENCL_KERNEL_H_
-

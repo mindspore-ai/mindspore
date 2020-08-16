@@ -192,7 +192,8 @@ union PrimitiveType {
     SpaceToBatchND,
     TopKV2,
     Return,
-    MakeTuple
+    MakeTuple,
+    ToFormat,
 }
 
 enum QuantType: int {

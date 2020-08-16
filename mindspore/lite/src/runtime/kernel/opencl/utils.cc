@@ -18,6 +18,22 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include "src/kernel_registry.h"
+
+using mindspore::lite::KernelRegistrar;
+
+namespace mindspore::lite {
+kernel::LiteKernel *GetOpenCLKernel(const std::vector<tensor::Tensor *> &in_tensors,
+                                    const std::vector<tensor::Tensor *> &out_tensors, OpParameter *parameter,
+                                    const Context *ctx, const kernel::KernelKey &key) {
+  auto creator = KernelRegistry::GetInstance()->GetCreator(key);
+  if (creator != nullptr) {
+    auto kernel = creator(in_tensors, out_tensors, parameter, nullptr, key, nullptr);
+    return kernel;
+  }
+  return nullptr;
+}
+}  // namespace mindspore::lite
 
 namespace mindspore {
 namespace kernel {

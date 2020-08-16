@@ -148,6 +148,7 @@ if (SUPPORT_GPU)
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/conv2d_transpose.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/transpose.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/reshape.cc
+            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/to_format.cc
             )
 endif()
 ### minddata lite
@@ -323,6 +324,8 @@ if (SUPPORT_GPU)
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/transpose_tests.cc
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/convolution_tests.cc
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/activation_tests.cc
+            #${TEST_DIR}/ut/src/runtime/kernel/opencl/leakyrelu_tests.cc
+            ${TEST_DIR}/ut/src/runtime/kernel/opencl/to_format_tests.cc
             )
 endif()
 
