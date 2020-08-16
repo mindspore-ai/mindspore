@@ -97,17 +97,6 @@ void GraphDefTransform::CreateQuantizer(const converter::Flags *flags) {
 
 int GraphDefTransform::Transform(const converter::Flags &ctx) {
   STATUS status;
-  {
-    Optimizer fusionOptimizer;
-    fusionOptimizer.AddPass(new (std::nothrow) FormatTransPermuteFusionPass());
-    fusionOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
-    status = fusionOptimizer.Run(graphDefT);
-    if (status != RET_OK && status != RET_NO_CHANGE) {
-      MS_LOG(ERROR) << "Run fusionOptimizer graphPasses Failed";
-      return status;
-    }
-  }
-
   // weight format trans
   if (ctx.formatTrans) {
     Optimizer weightFormatOptimizer;
@@ -192,6 +181,16 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     status = formatTransOptimizer.Run(graphDefT);
     if (status != RET_OK && status != RET_NO_CHANGE) {
       MS_LOG(ERROR) << "Run formatTransOptimizer graphPasses Failed";
+      return status;
+    }
+  }
+  {
+    Optimizer fusionOptimizer;
+    fusionOptimizer.AddPass(new (std::nothrow) FormatTransPermuteFusionPass());
+    fusionOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
+    status = fusionOptimizer.Run(graphDefT);
+    if (status != RET_OK && status != RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "Run fusionOptimizer graphPasses Failed";
       return status;
     }
   }
