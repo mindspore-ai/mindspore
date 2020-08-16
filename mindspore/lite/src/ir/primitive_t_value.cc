@@ -15,3 +15,26 @@
  */
 
 #include "src/ir/primitive_t_value.h"
+
+namespace mindspore::lite {
+std::shared_ptr<PrimitiveTValue> GetReturnPrim() {
+  auto return_primitiveT = new schema::PrimitiveT;
+  return_primitiveT->value.type = schema::PrimitiveType_Return;
+  return_primitiveT->value.value = new schema::ReturnT;
+  return std::make_shared<PrimitiveTValue>(return_primitiveT);
+}
+
+std::shared_ptr<PrimitiveTValue> GetMakeTuplePrim() {
+  auto make_tuple_primitiveT = new schema::PrimitiveT;
+  make_tuple_primitiveT->value.type = schema::PrimitiveType_MakeTuple;
+  make_tuple_primitiveT->value.value = new schema::MakeTupleT;
+  return std::make_shared<PrimitiveTValue>(make_tuple_primitiveT);
+}
+
+std::shared_ptr<PrimitiveTValue> GetTupleGetItemPrim() {
+  auto tuple_get_item_primitiveT = new schema::PrimitiveT();
+  tuple_get_item_primitiveT->value.type = schema::PrimitiveType_TupleGetItem;
+  tuple_get_item_primitiveT->value.value = new schema::TupleGetItemT;
+  return std::make_shared<PrimitiveTValue>(tuple_get_item_primitiveT);
+}
+}  // namespace mindspore::lite

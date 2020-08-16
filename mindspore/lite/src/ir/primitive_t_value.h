@@ -18,8 +18,9 @@
 #define MINDSPORE_LITE_SRC_ANF_IMPORTER_PRIMITIVET_H_
 
 #include <vector>
+#include <memory>
+#include "schema/inner/model_generated.h"
 #include "ir/value.h"
-#include "mindspore/lite/schema/inner/model_generated.h"
 
 namespace mindspore::lite {
 
@@ -46,22 +47,17 @@ class PrimitiveTValue : public Value {
     }
   }
 
-  void SetInputQuantParam(std::vector<std::vector<schema::QuantParamT>> vec_quant_param) {
-  }
+  void SetInputQuantParam(std::vector<std::vector<schema::QuantParamT>> vec_quant_param) {}
 
   void AddInputQuantParam(std::vector<schema::QuantParamT> quant_param) {
     this->input_quant_param_.emplace_back(quant_param);
   }
-  std::vector<std::vector<schema::QuantParamT>> GetInputQuantParams() const {
-    return input_quant_param_;
-  }
+  std::vector<std::vector<schema::QuantParamT>> GetInputQuantParams() const { return input_quant_param_; }
 
   void AddOutputQuantParam(std::vector<schema::QuantParamT> quant_param) {
     this->output_quant_param_.emplace_back(quant_param);
   }
-  std::vector<std::vector<schema::QuantParamT>> GetOutputQuantParams() const {
-    return output_quant_param_;
-  }
+  std::vector<std::vector<schema::QuantParamT>> GetOutputQuantParams() const { return output_quant_param_; }
 
   void SetQuantType(schema::QuantType quant_type) { this->quant_type_ = quant_type; }
 
@@ -73,7 +69,12 @@ class PrimitiveTValue : public Value {
   std::vector<std::vector<schema::QuantParamT>> output_quant_param_;
   schema::QuantType quant_type_{schema::QuantType_QUANT_NONE};
 };
+
+std::shared_ptr<PrimitiveTValue> GetReturnPrim();
+
+std::shared_ptr<PrimitiveTValue> GetMakeTuplePrim();
+
+std::shared_ptr<PrimitiveTValue> GetTupleGetItemPrim();
 }  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_SRC_ANF_IMPORTER_PRIMITIVET_H_
-

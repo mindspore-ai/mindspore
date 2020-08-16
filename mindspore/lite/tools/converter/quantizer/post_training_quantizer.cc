@@ -27,7 +27,7 @@
 #include <fstream>
 #include "schema/inner/model_generated.h"
 #include "src/ir/tensor.h"
-#include "src/common/anf_exporter/anf_exporter.h"
+#include "tools/anf_exporter/anf_exporter.h"
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "src/common/common.h"

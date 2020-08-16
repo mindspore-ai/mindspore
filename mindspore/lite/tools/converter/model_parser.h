@@ -20,7 +20,7 @@
 #include <string>
 #include <memory>
 #include "schema/inner/model_generated.h"
-#include "src/common/anf_importer/import_from_meta_graphT.h"
+#include "tools/anf_importer/import_from_meta_graphT.h"
 #include "ir/anf.h"
 #include "include/errorcode.h"
 

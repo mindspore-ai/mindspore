@@ -25,7 +25,7 @@
 #include "tools/converter/model_parser.h"
 #include "tools/converter/anf_transform.h"
 #include "tools/optimizer/fusion/constant_folding_fusion.h"
-#include "src/common/anf_exporter/anf_exporter.h"
+#include "tools/anf_exporter/anf_exporter.h"
 
 namespace mindspore {
 class ConstantFoldingFusionTest : public mindspore::CommonTest {
