@@ -173,22 +173,13 @@ int ConvolutionDepthwiseFp16CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  auto input_tensor = in_tensors_.at(kInputIndex);
-  float16_t *input_addr;
-  if (input_tensor->data_type() == kNumberTypeFloat32) {
-    input_addr =
-      reinterpret_cast<float16_t *>(context_->allocator->Malloc(input_tensor->ElementsNum() * sizeof(float16_t)));
-    if (input_addr == nullptr) {
-      MS_LOG(ERROR) << "Malloc buffer failed.";
-      return RET_ERROR;
-    }
-    Float32ToFloat16(reinterpret_cast<float *>(input_tensor->Data()), input_addr, input_tensor->ElementsNum());
-  } else {
-    input_addr = reinterpret_cast<float16_t *>(input_tensor->Data());
+  ret = ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Get Execute tensor failed.";
+    return ret;
   }
-
   // pack input: to nhwc8
-  PackNHWCToNHWC8Fp16(input_addr, packed_input_, conv_param_->input_batch_,
+  PackNHWCToNHWC8Fp16(execute_input_, packed_input_, conv_param_->input_batch_,
                       conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
 
   ret = LiteBackendParallelLaunch(ConvDwFp16Run, this, conv_param_->thread_num_);
@@ -197,13 +188,11 @@ int ConvolutionDepthwiseFp16CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  auto output_addr = reinterpret_cast<float16_t *>(out_tensors_.at(kOutputIndex)->Data());
-  PackNHWC8ToNHWCFp16(packed_output_, output_addr, conv_param_->output_batch_,
+  PackNHWC8ToNHWCFp16(packed_output_, execute_output_, conv_param_->output_batch_,
                       conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
 
-  if (input_tensor->data_type() == kNumberTypeFloat32) {
-    context_->allocator->Free(input_addr);
-  }
+  ConvolutionBaseFP16CPUKernel::IfCastOutput();
+  ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
   return RET_OK;
 }
 

@@ -35,14 +35,8 @@ class Convolution1x1FP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
     matmul_param_ = new MatMulParameter();
   }
   ~Convolution1x1FP16CPUKernel() override {
-    if (fp16_input_ != nullptr) {
-      free(fp16_input_);
-    }
     if (fp16_weight_ != nullptr) {
       free(fp16_weight_);
-    }
-    if (fp16_out_ != nullptr) {
-      free(fp16_out_);
     }
     if (input_ptr_ != nullptr) {
       free(input_ptr_);
@@ -57,7 +51,6 @@ class Convolution1x1FP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   int ReSize() override;
   int Run() override;
   int RunImpl(int task_id);
-  int InitBuffer();
   int InitConv1x1Param();
   int InitMatmulParam();
   int InitWeightBias();

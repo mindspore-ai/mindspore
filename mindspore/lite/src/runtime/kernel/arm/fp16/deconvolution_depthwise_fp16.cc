@@ -185,11 +185,14 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  auto input_tensor = in_tensors_.at(kInputIndex);
-  auto input_addr = reinterpret_cast<float *>(input_tensor->Data());
+  ret = ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Get Execute tensor failed.";
+    return ret;
+  }
   // pack input: to nhwc8
-  PackNHWCFp32ToNHWC8Fp16(input_addr, packed_input_, conv_param_->input_batch_,
-                          conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
+  PackNHWCToNHWC8Fp16(execute_input_, packed_input_, conv_param_->input_batch_,
+                      conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
 
   ret = LiteBackendParallelLaunch(DeconvDwFp16Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
@@ -197,9 +200,10 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
-  PackNHWC8Fp16ToNHWCFp32(packed_output_, output_addr, conv_param_->output_batch_,
-                          conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
+  PackNHWC8ToNHWCFp16(packed_output_, execute_output_, conv_param_->output_batch_,
+                      conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
+  ConvolutionBaseFP16CPUKernel::IfCastOutput();
+  ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
   return RET_OK;
 }
 

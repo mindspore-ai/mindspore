@@ -16,6 +16,7 @@
 
 #include "src/runtime/kernel/arm/fp16/convolution_base_fp16.h"
 #include "src/runtime/kernel/arm/nnacl/fp16/cast_fp16.h"
+#include "src/runtime/kernel/arm/fp16/common_fp16.h"
 #include "schema/model_generated.h"
 #include "src/kernel_factory.h"
 #include "include/errorcode.h"
@@ -25,28 +26,17 @@ namespace mindspore::kernel {
 int ConvolutionBaseFP16CPUKernel::GetExecuteTensor() {
   // ===================input====================//
   auto input_tensor = in_tensors_.at(kInputIndex);
-  auto input_data_type = input_tensor->data_type();
-  MS_ASSERT(input_data_type == kNumberTypeFloat32 || input_data_type == kNumberTypeFloat16);
-  if (input_data_type == kNumberTypeFloat32) {
-    auto input_ele_num = input_tensor->ElementsNum();
-    auto ori_input_data = reinterpret_cast<float *>(input_tensor->Data());
-    Float32ToFloat16(ori_input_data, fp16_input_, input_ele_num);
-    execute_input_ = fp16_input_;
-  } else {
-    auto ori_input_data = reinterpret_cast<float16_t *>(input_tensor->Data());
-    execute_input_ = ori_input_data;
-  }
+  in_data_type_ = input_tensor->data_type();
+  MS_ASSERT(in_data_type_ == kNumberTypeFloat32 || in_data_type_ == kNumberTypeFloat16);
+
+  execute_input_ = ConvertInputFp32toFp16(input_tensor, context_);
+
   // ==================output====================//
   auto out_tensor = out_tensors_.at(kOutputIndex);
-  auto out_data_type = out_tensor->data_type();
-  MS_ASSERT(out_data_type == kNumberTypeFloat32 || out_data_type == kNumberTypeFloat16);
-  out_data_type_ = out_data_type;
-  if (out_data_type == kNumberTypeFloat32) {
-    execute_output_ = fp16_out_;
-  } else {
-    auto out_ptr = reinterpret_cast<float16_t *>(out_tensor->Data());
-    execute_output_ = out_ptr;
-  }
+  out_data_type_ = out_tensor->data_type();
+  MS_ASSERT(out_data_type_ == kNumberTypeFloat32 || out_data_type_ == kNumberTypeFloat16);
+
+  execute_output_ = MallocOutputFp16(out_tensor, context_);
   return RET_OK;
 }
 
@@ -79,7 +69,16 @@ void ConvolutionBaseFP16CPUKernel::IfCastOutput() {
     auto out_tensor = out_tensors_.at(kOutputIndex);
     auto out_ele_num = out_tensor->ElementsNum();
     auto output_addr = reinterpret_cast<float *>(out_tensor->Data());
-    Float16ToFloat32(fp16_out_, output_addr, out_ele_num);
+    Float16ToFloat32(execute_output_, output_addr, out_ele_num);
+  }
+}
+
+void ConvolutionBaseFP16CPUKernel::FreeTmpBuffer() {
+  if (in_data_type_ == kNumberTypeFloat32) {
+    context_->allocator->Free(execute_input_);
+  }
+  if (out_data_type_ == kNumberTypeFloat32) {
+    context_->allocator->Free(execute_output_);
   }
 }
 

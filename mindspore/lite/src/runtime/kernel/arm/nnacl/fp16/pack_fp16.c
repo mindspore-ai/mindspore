@@ -392,7 +392,7 @@ void PackNHWCToNHWC8Fp16(float16_t *src, float16_t *dst, int batch, int plane, i
     for (int i = 0; i < plane; i++) {
       float16_t *dst_plane = dst_batch + i * c8_channel;
       float16_t *src_plane = src_batch + i * channel;
-      memcpy(dst_plane, src_batch, channel * sizeof(float16_t));
+      memcpy(dst_plane, src_plane, channel * sizeof(float16_t));
     }
   }
 }
@@ -405,7 +405,7 @@ void PackNHWC8ToNHWCFp16(float16_t *src, float16_t *dst, int batch, int plane, i
     for (int i = 0; i < plane; i++) {
       float16_t *src_plane = src_batch + i * c8_channel;
       float16_t *dst_plane = dst_batch + i * channel;
-      memcpy(dst_plane, src_batch, channel * sizeof(float16_t));
+      memcpy(dst_plane, src_plane, channel * sizeof(float16_t));
     }
   }
 }
