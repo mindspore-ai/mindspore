@@ -30,6 +30,7 @@
 #include "tools/converter/legacy_optimizer/fusion/conv_biasadd_fusion_pass.h"
 // #include "tools/converter/legacy_optimizer/fusion/matmul_biasadd_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/format_trans_fusion_pass.h"
+#include "tools/converter/legacy_optimizer/fusion/format_trans_permute_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/quant_cast_fusion_pass.h"
 // #include "tools/converter/legacy_optimizer/fusion/batchnorm_fold_fusion_pass.h"
 //
@@ -96,6 +97,17 @@ void GraphDefTransform::CreateQuantizer(const converter::Flags *flags) {
 
 int GraphDefTransform::Transform(const converter::Flags &ctx) {
   STATUS status;
+  {
+    Optimizer fusionOptimizer;
+    fusionOptimizer.AddPass(new (std::nothrow) FormatTransPermuteFusionPass());
+    fusionOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
+    status = fusionOptimizer.Run(graphDefT);
+    if (status != RET_OK && status != RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "Run fusionOptimizer graphPasses Failed";
+      return status;
+    }
+  }
+
   // weight format trans
   if (ctx.formatTrans) {
     Optimizer weightFormatOptimizer;
