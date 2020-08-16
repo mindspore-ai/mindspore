@@ -238,6 +238,7 @@ int LiteSession::Init(Context *context) {
     MS_LOG(ERROR) << "new context failed";
     return RET_MEMORY_FAILED;
   }
+  this->context_->float16_priority = context->float16_priority;
   this->context_->cpu_bind_mode_ = context->cpu_bind_mode_;
   ConfigThreadPool(context->cpu_bind_mode_, context->thread_num_);
   auto ret = KernelRegistry::GetInstance()->Init();

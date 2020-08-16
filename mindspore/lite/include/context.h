@@ -64,11 +64,10 @@ class MS_API Context {
   /// \brief Destructor of MindSpore Lite Context.
   virtual ~Context();
 
-  void InferShapeInterrupt() {
-    infer_shape_interrupt_ = true;
-  }
+  void InferShapeInterrupt() { infer_shape_interrupt_ = true; }
 
  public:
+  bool float16_priority = true; /**< allow priority select float16 kernel */
   DeviceContext device_ctx_{DT_CPU};
   int thread_num_ = 2; /**< thread number config for thread pool */
   std::shared_ptr<Allocator> allocator = nullptr;
