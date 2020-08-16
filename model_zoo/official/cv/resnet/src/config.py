@@ -51,12 +51,12 @@ config2 = ed({
     "keep_checkpoint_max": 10,
     "save_checkpoint_path": "./",
     "warmup_epochs": 0,
-    "lr_decay_mode": "cosine",
+    "lr_decay_mode": "linear",
     "use_label_smooth": True,
     "label_smooth_factor": 0.1,
     "lr_init": 0,
-    "lr_max": 0.1
-
+    "lr_max": 0.1,
+    "lr_end": 0.0
 })
 
 # config for resent101, imagenet2012
@@ -77,4 +77,26 @@ config3 = ed({
     "use_label_smooth": True,
     "label_smooth_factor": 0.1,
     "lr": 0.1
+})
+
+# config for se-resnet50, imagenet2012
+config4 = ed({
+    "class_num": 1001,
+    "batch_size": 32,
+    "loss_scale": 1024,
+    "momentum": 0.9,
+    "weight_decay": 1e-4,
+    "epoch_size": 28,
+    "pretrain_epoch_size": 1,
+    "save_checkpoint": True,
+    "save_checkpoint_epochs": 4,
+    "keep_checkpoint_max": 10,
+    "save_checkpoint_path": "./",
+    "warmup_epochs": 3,
+    "lr_decay_mode": "cosine",
+    "use_label_smooth": True,
+    "label_smooth_factor": 0.1,
+    "lr_init": 0.0,
+    "lr_max": 0.3,
+    "lr_end": 0.0001
 })

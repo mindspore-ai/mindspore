@@ -38,17 +38,20 @@ de.config.set_seed(1)
 
 if args_opt.net == "resnet50":
     from src.resnet import resnet50 as resnet
-
     if args_opt.dataset == "cifar10":
         from src.config import config1 as config
         from src.dataset import create_dataset1 as create_dataset
     else:
         from src.config import config2 as config
         from src.dataset import create_dataset2 as create_dataset
-else:
+elif args_opt.net == "resnet101":
     from src.resnet import resnet101 as resnet
     from src.config import config3 as config
     from src.dataset import create_dataset3 as create_dataset
+else:
+    from src.resnet import se_resnet50 as resnet
+    from src.config import config4 as config
+    from src.dataset import create_dataset4 as create_dataset
 
 if __name__ == '__main__':
     target = args_opt.device_target

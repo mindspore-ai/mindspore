@@ -62,6 +62,18 @@ def get_lr(lr_init, lr_end, lr_max, warmup_epochs, total_epochs, steps_per_epoch
                 if lr < 0.0:
                     lr = 0.0
             lr_each_step.append(lr)
+    elif lr_decay_mode == 'cosine':
+        decay_steps = total_steps - warmup_steps
+        for i in range(total_steps):
+            if i < warmup_steps:
+                lr_inc = (float(lr_max) - float(lr_init)) / float(warmup_steps)
+                lr = float(lr_init) + lr_inc * (i + 1)
+            else:
+                linear_decay = (total_steps - i) / decay_steps
+                cosine_decay = 0.5 * (1 + math.cos(math.pi * 2 * 0.47 * i / decay_steps))
+                decayed = linear_decay * cosine_decay + 0.00001
+                lr = lr_max * decayed
+            lr_each_step.append(lr)
     else:
         for i in range(total_steps):
             if i < warmup_steps:
