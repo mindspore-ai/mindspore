@@ -115,7 +115,11 @@ int ConvolutionWinogradFP16CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
 
-  ConvolutionBaseFP16CPUKernel::GetExecuteFilter();
+  ret = ConvolutionBaseFP16CPUKernel::GetExecuteFilter();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Get Execute filter failed.";
+    return ret;
+  }
   WinogradFilterTransformFp16(execute_weight_, trans_weight_, kernel_unit_, input_unit_, conv_param_, oc_block);
 
   // init bias
@@ -377,7 +381,11 @@ int ConvolutionWinogradFP16CPUKernel::Run() {
     return prepare_ret;
   }
 
-  ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
+  auto ret = ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Get Execute tensor failed.";
+    return ret;
+  }
 
   int in_batch = conv_param_->input_batch_;
   int in_h = conv_param_->input_h_;

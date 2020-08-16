@@ -16,6 +16,11 @@
 
 #include "nnacl/fp16/matmul_fp16.h"
 
+void MatMulFp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, ActType act_type,
+                int depth, int row, int col, int stride, bool write_nhwc) {
+  MatmulFp16Neon64(a, b, c, bias, (int)act_type, depth, row, col, stride, write_nhwc);
+}
+
 void RowMajor2Col8MajorFp16(float16_t *src_ptr, float16_t *dst_ptr, size_t row, size_t col) {
   size_t row16 = row / C16NUM * C16NUM;
   size_t col8 = col / C8NUM * C8NUM;
@@ -134,7 +139,7 @@ void RowMajor2Col8MajorFp16(float16_t *src_ptr, float16_t *dst_ptr, size_t row, 
         :
         : [ dst_c ] "r"(dst_c), [ src_c ] "r"(src_c), [ stride ] "r"(stride)
         : "x10", "x11", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14",
-          "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", 
+          "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29",
           "v30", "v31");
 #else
       for (int tr = 0; tr < C16NUM; tr++) {

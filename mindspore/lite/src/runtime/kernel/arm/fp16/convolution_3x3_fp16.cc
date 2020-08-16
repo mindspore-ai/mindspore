@@ -62,7 +62,11 @@ int Convolution3x3FP16CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(transformed_filter_addr_, 0, transformed_size);
-  ConvolutionBaseFP16CPUKernel::GetExecuteFilter();
+  auto ret = ConvolutionBaseFP16CPUKernel::GetExecuteFilter();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Get Execute filter failed.";
+    return ret;
+  }
   ProcessFilterFp16(execute_weight_, transformed_filter_addr_, conv_param_);
 
   // init bias
@@ -249,8 +253,11 @@ int Convolution3x3FP16CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
-
+  ret = ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Get execute tensor failed.";
+    return ret;
+  }
   int in_batch = conv_param_->input_batch_;
   int in_h = conv_param_->input_h_;
   int in_w = conv_param_->input_w_;

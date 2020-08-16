@@ -171,7 +171,6 @@ OpParameter *PopulatePoolingParameter(const lite::Primitive *primitive) {
   pooling_param->global_ = pooling_primitive->global();
   pooling_param->window_w_ = pooling_primitive->windowW();
   pooling_param->window_h_ = pooling_primitive->windowH();
-  // todo format
   auto pooling_lite_primitive = (lite::Pooling *)primitive;
   MS_ASSERT(nullptr != pooling_lite_primitive);
   pooling_param->pad_u_ = pooling_lite_primitive->PadUp();
@@ -181,6 +180,8 @@ OpParameter *PopulatePoolingParameter(const lite::Primitive *primitive) {
   pooling_param->stride_w_ = pooling_primitive->strideW();
   pooling_param->stride_h_ = pooling_primitive->strideH();
 
+  auto is_global = pooling_primitive->global();
+  pooling_param->global_ = is_global;
   auto pool_mode = pooling_primitive->poolingMode();
   switch (pool_mode) {
     case schema::PoolMode_MAX_POOLING:

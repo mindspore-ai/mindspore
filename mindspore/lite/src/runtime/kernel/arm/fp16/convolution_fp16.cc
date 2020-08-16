@@ -18,6 +18,7 @@
 #include <vector>
 #include "src/runtime/kernel/arm/fp16/convolution_sw_fp16.h"
 #include "src/runtime/kernel/arm/fp16/convolution_3x3_fp16.h"
+#include "src/runtime/kernel/arm/fp16/convolution_1x1_fp16.h"
 #include "src/runtime/kernel/arm/nnacl/fp16/conv_fp16.h"
 #include "src/runtime/kernel/arm/nnacl/fp16/cast_fp16.h"
 #include "src/runtime/kernel/arm/nnacl/fp16/pack_fp16.h"
@@ -46,7 +47,11 @@ int ConvolutionFP16CPUKernel::InitWeightBias() {
   int pack_weight_size = oc8 * ic4 * C8NUM * C4NUM * kernel_plane;
 
   // init weight
-  ConvolutionBaseFP16CPUKernel::GetExecuteFilter();
+  auto ret = ConvolutionBaseFP16CPUKernel::GetExecuteFilter();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Get Execute filter failed.";
+    return ret;
+  }
   packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed_weight_ failed.";
@@ -218,7 +223,12 @@ int ConvolutionFP16CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
+
+  ret = ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Get Execute tensor failed.";
+    return ret;
+  }
 
   int in_batch = conv_param_->input_batch_;
   int in_h = conv_param_->input_h_;
@@ -256,6 +266,8 @@ kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::tensor::Ten
   kernel::LiteKernel *kernel = nullptr;
   if (kernel_h == 3 && kernel_w == 3 && stride_h == 1 && stride_w == 1 && dilation_h == 1 && dilation_w == 1) {
     kernel = new (std::nothrow) kernel::Convolution3x3FP16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  } else if (kernel_h == 1 && kernel_w == 1) {
+    kernel = new (std::nothrow) kernel::Convolution1x1FP16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   } else {
     bool use_winograd = false;
     int out_unit;
