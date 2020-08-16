@@ -84,7 +84,38 @@ def test_soft_dvpp_decode_random_crop_resize_jpeg(plot=False):
             visualize_image(image1, image2, mse)
         num_iter += 1
 
+def test_soft_dvpp_decode_resize_jpeg_supplement(plot=False):
+    """
+    Test SoftDvppDecodeResizeJpeg op
+    """
+    logger.info("test_random_decode_resize_op")
+
+    # First dataset
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    decode_op = vision.Decode()
+    resize_op = vision.Resize(256)
+    data1 = data1.map(input_columns=["image"], operations=[decode_op, resize_op])
+
+    # Second dataset
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    soft_dvpp_decode_resize_op = vision.SoftDvppDecodeResizeJpeg(256)
+    data2 = data2.map(input_columns=["image"], operations=soft_dvpp_decode_resize_op)
+
+    num_iter = 0
+    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+        if num_iter > 0:
+            break
+        image1 = item1["image"]
+        image2 = item2["image"]
+        mse = diff_mse(image1, image2)
+        assert mse <= 0.02
+        logger.info("random_crop_decode_resize_op_{}, mse: {}".format(num_iter + 1, mse))
+        if plot:
+            visualize_image(image1, image2, mse)
+        num_iter += 1
 
 if __name__ == "__main__":
     test_soft_dvpp_decode_resize_jpeg(plot=True)
     test_soft_dvpp_decode_random_crop_resize_jpeg(plot=True)
+    test_soft_dvpp_decode_resize_jpeg_supplement(plot=True)
+    

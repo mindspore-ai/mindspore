@@ -43,8 +43,8 @@ Status SoftDvppDecodeRandomCropResizeJpegOp::GetCropInfo(const std::shared_ptr<T
   RETURN_IF_NOT_OK(GetCropBox(img_height, img_width, &x, &y, &crop_heigh, &crop_widht));
   crop_info->left = x;
   crop_info->up = y;
-  crop_info->right = crop_info->left + crop_widht;
-  crop_info->down = crop_info->up + crop_heigh;
+  crop_info->right = crop_info->left + crop_widht - 1;
+  crop_info->down = crop_info->up + crop_heigh - 1;
   return Status::OK();
 }
 
