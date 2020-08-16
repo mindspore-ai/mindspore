@@ -41,6 +41,7 @@ class Scheduler {
   void ConstructSubgraphs(std::vector<kernel::LiteKernel *> *kernels);
 
   kernel::LiteKernel *CreateSubKernel(const std::vector<kernel::LiteKernel *> &kernels, kernel::KERNEL_ARCH arch);
+  void SetKernelTensorDataType(kernel::LiteKernel *kernel);
 
  protected:
   Context *context_ = nullptr;
