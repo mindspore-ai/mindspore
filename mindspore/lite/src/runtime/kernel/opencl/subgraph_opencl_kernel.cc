@@ -34,6 +34,15 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::tensor::Tensor *
   out_parameters->clear();
   out_convert_ops->clear();
   for (size_t i = 0; i < in_tensors.size(); ++i) {
+    OpenCLKernel* cur_opencl_op = reinterpret_cast<OpenCLKernel*>(in_kernels[i]);
+    schema::Format ori_format = cur_opencl_op->GetOriFormat();
+    if (mem_type == cur_opencl_op->GetMemType() && in_tensors[i]->GetFormat() == ori_format) {
+      continue;
+    }
+    auto dst_format =
+      (mem_type == OpenCLMemType::IMG) ? in_kernels[i]->out_tensors()[0]->GetFormat() : ori_format;
+    auto src_format =
+      (mem_type == OpenCLMemType::IMG) ? in_tensors[i]->GetFormat() : in_kernels[i]->out_tensors()[0]->GetFormat();
     lite::tensor::Tensor *new_tensor = new (std::nothrow) lite::tensor::Tensor();
     MS_ASSERT(new_tensor);
     if (new_tensor == nullptr) {
@@ -41,10 +50,6 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::tensor::Tensor *
       return RET_ERROR;
     }
     new_tensor->CopyTensor(*in_tensors[i]);
-    auto dst_format =
-      (mem_type == OpenCLMemType::IMG) ? in_kernels.back()->out_tensors()[0]->GetFormat() : in_tensors[i]->GetFormat();
-    auto src_format =
-      (mem_type == OpenCLMemType::IMG) ? in_tensors[i]->GetFormat() : in_kernels.front()->out_tensors()[0]->GetFormat();
     if ((dst_format == schema::Format_NCHW || dst_format == schema::Format_NC4HW4) &&
         (src_format == schema::Format_NHWC || src_format == schema::Format_NHWC4)) {
       auto &shape = new_tensor->shape();

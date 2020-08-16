@@ -68,6 +68,7 @@ int MatMulOpenCLKernel::Init() {
   PadWeight();
   allocator->UnmapBuffer(padWeight_);
   allocator->UnmapBuffer(bias_);
+  ori_format_ = out_tensors_[0]->GetFormat();
   out_tensors_[0]->SetFormat(schema::Format_NHWC4);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return 0;
