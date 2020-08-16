@@ -26,8 +26,8 @@ int AnfTransposePopulater::Populate(const PrimitivePtr &prim, PrimitiveTValue *p
                                     const std::vector<AnfNodePtr> &inputs) {
   auto primitive = std::make_unique<schema::PrimitiveT>();
   auto attr = std::make_unique<schema::TransposeT>();
-  MS_ASSERT(inputs.size() == kAnfPopulaterThree);
-  auto inputNode = inputs[kAnfPopulaterTwo];
+  MS_ASSERT(inputs.size() == kAnfPopulaterTwo);
+  auto inputNode = inputs[kAnfPopulaterOne];
   if (inputNode->isa<ValueNode>()) {
     auto valNode = inputNode->cast<ValueNodePtr>();
     MS_ASSERT(valNode != nullptr);

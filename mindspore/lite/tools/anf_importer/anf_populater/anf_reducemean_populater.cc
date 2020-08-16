@@ -21,10 +21,6 @@
 #include "ir/primitive.h"
 
 namespace mindspore::lite {
-namespace {
-constexpr int kReduceInputNum = 3;
-constexpr int kReduceInputIndex = 2;
-}  // namespace
 int AnfReduceMeanPopulater::Populate(const PrimitivePtr &prim, PrimitiveTValue *primitiveTValuePtr,
                                      const std::vector<AnfNodePtr> &inputs) {
   auto primitive = std::make_unique<schema::PrimitiveT>();
@@ -32,8 +28,8 @@ int AnfReduceMeanPopulater::Populate(const PrimitivePtr &prim, PrimitiveTValue *
   attr->mode = schema::ReduceMode_ReduceMean;
 
   attr->keepDims = GetValue<bool>(prim->GetAttr("keep_dims"));
-  if (inputs.size() == kReduceInputNum) {
-    auto inputNode = inputs[kReduceInputIndex];
+  if (inputs.size() == kAnfPopulaterTwo) {
+    auto inputNode = inputs[kAnfPopulaterOne];
     MS_ASSERT(inputNode != nullptr);
     if (inputNode->isa<ValueNode>()) {
       auto valueNode = inputNode->cast<ValueNodePtr>();

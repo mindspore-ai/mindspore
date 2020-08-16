@@ -718,6 +718,8 @@ bool AnfImporterFromProtobuf::BuildParameterForFuncGraph(const ParameterPtr &nod
     MS_EXCEPTION_IF_NULL(param_value);
     param_value->set_tensor_addr(tensor_data_buf);
     param_value->set_tensor_size(tensor_info->Size());
+    param_value->set_tensor_type(tensor_info->data_type());
+    param_value->set_tensor_shape(tensor_info->shape());
     node->set_default_param(param_value);
   }
   anfnode_build_map_[value_proto.name()] = node;
@@ -1088,7 +1090,12 @@ bool AnfImporterFromProtobuf::BuildReturnForFuncGraph(const FuncGraphPtr &output
   std::vector<AnfNodePtr> inputs;
   if (importProto.output_size() > 1) {
     inputs.clear();
-    inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
+    auto primitiveT = std::make_unique<schema::PrimitiveT>();
+    MS_ASSERT(primitiveT != nullptr);
+    primitiveT->value.type = schema::PrimitiveType_MakeTuple;
+    std::shared_ptr<PrimitiveTValue> primitiveTValuePtr = std::make_shared<PrimitiveTValue>(primitiveT.release());
+    MS_ASSERT(primitiveTValuePtr != nullptr);
+    inputs.push_back(NewValueNode(primitiveTValuePtr));
     AbstractBasePtrList elem;
     for (int out_size = 0; out_size < importProto.output_size(); ++out_size) {
       const onnx::ValueInfoProto &output_node = importProto.output(out_size);
@@ -1099,7 +1106,12 @@ bool AnfImporterFromProtobuf::BuildReturnForFuncGraph(const FuncGraphPtr &output
     auto maketuple_ptr = outputFuncGraph->NewCNode(inputs);
     maketuple_ptr->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
     inputs.clear();
-    inputs.push_back(NewValueNode(prim::kPrimReturn));
+    auto primReturn = std::make_unique<schema::PrimitiveT>();
+    MS_ASSERT(primReturn != nullptr);
+    primReturn->value.type = schema::PrimitiveType_Return;
+    std::shared_ptr<PrimitiveTValue> primitiveTReturnValuePtr = std::make_shared<PrimitiveTValue>(primReturn.release());
+    MS_ASSERT(primitiveTReturnValuePtr != nullptr);
+    inputs.push_back(NewValueNode(primitiveTReturnValuePtr));
     inputs.push_back(maketuple_ptr);
     auto return_node = outputFuncGraph->NewCNode(inputs);
     MS_EXCEPTION_IF_NULL(return_node);
