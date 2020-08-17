@@ -8,7 +8,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../../third_party/flatbuff
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/../lib)
 
 add_library(mindspore-lite-jni SHARED
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/ms_log.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/common/jni_utils.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/model.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/context.cpp
