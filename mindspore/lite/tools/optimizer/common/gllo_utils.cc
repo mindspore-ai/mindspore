@@ -327,7 +327,15 @@ schema::PrimitiveType GetCNodeType(const BaseRef &n) {
 }
 
 bool IsParamNode(const BaseRef &n) {
-  return utils::isa<ParameterPtr>(n);
+  if (!utils::isa<ParameterPtr>(n)) {
+    return false;
+  }
+  auto param = utils::cast<ParameterPtr>(n)->default_param();
+  auto tensor = std::dynamic_pointer_cast<ParamValueLite>(param);
+  if (tensor == nullptr) {
+    return false;
+  }
+  return tensor->tensor_addr() != nullptr;
 }
 
 bool IsConvNode(const BaseRef &n) {

@@ -45,12 +45,20 @@ const std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &CNode) {
     auto tensor_shape = tensorT->dims;
     auto lite_tensor =
         new(std::nothrow)Tensor(TypeId(tensorT->dataType), tensor_shape, tensorT->format, tensorT->nodeType);
+    if (lite_tensor == nullptr) {
+      MS_LOG(ERROR) << "lite tensor is nullptr";
+      return input_tensors;
+    }
     auto lite_tensor_size = tensorT->data.size() * sizeof(uint8_t);
     // when tensorT as graph input
     if (lite_tensor_size == 0) {
         return input_tensors;
     }
     auto tensor_data = new(std::nothrow)char[lite_tensor_size / sizeof(char)];
+    if (tensor_data == nullptr) {
+      MS_LOG(ERROR) << "tensor_data is nullptr";
+      return input_tensors;
+    }
     auto ret = memcpy_s(tensor_data, lite_tensor_size, tensorT->data.data(), lite_tensor_size);
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "memcpy error: " << ret;
@@ -97,6 +105,10 @@ const ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *ten
   if (tensor->Data() != nullptr) {
     auto size = tensor->ElementsNum();
     auto tensor_data = new (std::nothrow) float[size];
+    if (tensor_data == nullptr) {
+      MS_LOG(ERROR) << "tensor_data is nullptr";
+      return nullptr;
+    }
     auto ret = memcpy_s(tensor_data, size * sizeof(float), tensor->Data(), size * sizeof(float));
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "memcpy error: " << ret;
@@ -150,11 +162,15 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
       std::vector<Tensor *> output_tensors{output_nums, new Tensor()};
       auto scheam_primitive = PackPrimitiveT(input_cnode);
       auto lite_primitive = lite::Primitive::CreatePrimitive(scheam_primitive);
+      if (lite_primitive == nullptr) {
+        MS_LOG(DEBUG) << "constant_folding schedule node lite primitive nullptr";
+        return nullptr;
+      }
       lite_primitive->InferShape(input_tensors, output_tensors);
       auto lite_kernel = GetLiteKernel(input_tensors, output_tensors, lite_primitive);
       if (lite_kernel == nullptr) {
-        MS_LOG(ERROR) << "constant_folding schedule node lite kernel nullptr";
-        return any_node;
+        MS_LOG(DEBUG) << "constant_folding schedule node lite kernel nullptr";
+        return nullptr;
       }
       auto ret = lite_kernel->Run();
       if (0 != ret) {

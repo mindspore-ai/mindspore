@@ -36,7 +36,7 @@ void AnfTransform::SetGraphDef(schema::MetaGraphT *_dstDef) { graphDefT = _dstDe
 FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph) {
   // return old_graph;
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
-  auto pm = std::make_shared<opt::PassManager>();
+  auto pm = std::make_shared<opt::PassManager>("anf fusion pass manager", false);
   pm->AddPass(std::make_shared<opt::ConvBiasaddFusion>());
   pm->AddPass(std::make_shared<opt::ConvBatchNormFusion>());
   pm->AddPass(std::make_shared<opt::ConvScaleFusion>());
