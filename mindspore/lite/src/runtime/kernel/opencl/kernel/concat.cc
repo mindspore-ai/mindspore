@@ -83,6 +83,8 @@ int ConcatOpenCLKernel::Init() {
     ocl_runtime->LoadSource(program_name, source);
     ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
   }
+  ori_format_ = out_tensors_[0]->GetFormat();
+  out_tensors_[0]->SetFormat(schema::Format_NHWC4);
 
   return RET_OK;
 }
@@ -116,8 +118,8 @@ int ConcatOpenCLKernel::Run_axis0() {
   return RET_OK;
 }
 
-int GetBiggestDividerWithPriority(int number, int max_divider) {
-  if (number % 8 == 0 && 8 <= max_divider) {
+int ConcatGetBiggestDividerWithPriority(int number, int max_divider) {
+  if (number % 8 == 0 && max_divider >= 8) {
     return number / 8;
   }
   if (number % 4 == 0 && 4 <= max_divider) {
@@ -138,9 +140,9 @@ int GetBiggestDividerWithPriority(int number, int max_divider) {
 void ConcatGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *local, int max_size) {
   const int max_divider = 8;
   const int max_x = 4, max_y = 8;
-  int x = std::min(GetBiggestDividerWithPriority(global[0], max_divider), max_x);
+  int x = std::min(ConcatGetBiggestDividerWithPriority(global[0], max_divider), max_x);
   int yz = max_size / x;
-  int y = std::min(std::min(GetBiggestDividerWithPriority(global[1], max_divider), yz), max_y);
+  int y = std::min(std::min(ConcatGetBiggestDividerWithPriority(global[1], max_divider), yz), max_y);
   int z = std::min(yz / y, static_cast<int>(UP_DIV(global[2], 2)));
 
   local->clear();

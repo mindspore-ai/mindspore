@@ -103,16 +103,16 @@ int ToFormatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size
   size_t im_dst_x, im_dst_y;
   std::vector<int> shapex = out_tensors_[0]->shape();
   if (out_tensors_[0]->GetFormat() == schema::Format_NC4HW4) {
+    int c = shapex[1];
+    int h = shapex[2];
+    int w = shapex[3];
+    im_dst_y = h * UP_DIV(c, C4NUM);
+    im_dst_x = w;
+  } else if (out_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
     int h = shapex[1];
     int w = shapex[2];
     int c = shapex[3];
-    im_dst_y = UP_DIV(h * c, C4NUM);
-    im_dst_x = w;
-  } else if (out_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
-    int h = shapex[2];
-    int w = shapex[3];
-    int c = shapex[1];
-    im_dst_x = UP_DIV(w * c, C4NUM);
+    im_dst_x = w * UP_DIV(c, C4NUM);
     im_dst_y = h;
   } else {
     MS_LOG(ERROR) << "Unsupported format. " << out_tensors_[0]->GetFormat();
@@ -127,9 +127,9 @@ int ToFormatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size
   *img_size = vec;
   return RET_OK;
 }
-
 int ToFormatOpenCLKernel::Run() {
-  MS_LOG(DEBUG) << "ToFormat" << " Running!";
+  MS_LOG(DEBUG) << "ToFormat"
+                << " Running!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   std::vector<size_t> local = {};
   std::vector<size_t> global;

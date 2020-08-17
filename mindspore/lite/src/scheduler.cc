@@ -31,7 +31,12 @@ int Scheduler::Schedule(const lite::Model *model, std::vector<tensor::Tensor *> 
   // 1. op ---> kernel
   // 2. sub graph
   // 3. kernels (kernels --> subGraph)
-  int ret = InitOp2Kernel(model, tensors, kernels);
+  int ret = InferShape(model, tensors);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "op infer shape failed.";
+    return RET_ERROR;
+  }
+  ret = InitOp2Kernel(model, tensors, kernels);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "init op to kernel failed.";
     return RET_ERROR;
@@ -72,15 +77,12 @@ int Scheduler::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels) {
   return RET_OK;
 }
 
-int Scheduler::InitOp2Kernel(const lite::Model *model, std::vector<tensor::Tensor *> *tensors,
-                             std::vector<kernel::LiteKernel *> *kernels) {
+int Scheduler::InferShape(const lite::Model *model, std::vector<tensor::Tensor *> *tensors) {
   MS_EXCEPTION_IF_NULL(model);
   MS_EXCEPTION_IF_NULL(tensors);
-  MS_EXCEPTION_IF_NULL(kernels);
   auto meta_graph = model->GetMetaGraph();
   MS_EXCEPTION_IF_NULL(meta_graph);
   uint32_t kernelCount = meta_graph->nodes()->size();
-  auto graph_output_node_indexes = GetGraphOutputNodes(meta_graph);
   for (uint32_t i = 0; i < kernelCount; i++) {
     auto cNode = meta_graph->nodes()->GetAs<schema::CNode>(i);
     std::vector<tensor::Tensor *> inputs;
@@ -115,7 +117,31 @@ int Scheduler::InitOp2Kernel(const lite::Model *model, std::vector<tensor::Tenso
     } else {
       primitive->SetInferFlag(false);
     }
+  }
+  return RET_OK;
+}
 
+int Scheduler::InitOp2Kernel(const lite::Model *model, std::vector<tensor::Tensor *> *tensors,
+                             std::vector<kernel::LiteKernel *> *kernels) {
+  MS_EXCEPTION_IF_NULL(model);
+  MS_EXCEPTION_IF_NULL(tensors);
+  auto meta_graph = model->GetMetaGraph();
+  MS_EXCEPTION_IF_NULL(meta_graph);
+  uint32_t kernelCount = meta_graph->nodes()->size();
+  auto graph_output_node_indexes = GetGraphOutputNodes(meta_graph);
+  for (uint32_t i = 0; i < kernelCount; i++) {
+    auto cNode = meta_graph->nodes()->GetAs<schema::CNode>(i);
+    std::vector<tensor::Tensor *> inputs;
+    std::vector<tensor::Tensor *> outputs;
+    auto inIndexes = cNode->inputIndex();
+    for (size_t j = 0; j < inIndexes->size(); j++) {
+      inputs.emplace_back(tensors->at(size_t(inIndexes->GetAs<uint32_t>(j))));
+    }
+    auto outIndexes = cNode->outputIndex();
+    for (size_t j = 0; j < outIndexes->size(); j++) {
+      outputs.emplace_back(tensors->at(size_t(outIndexes->GetAs<uint32_t>(j))));
+    }
+    auto *primitive = model->GetOp(cNode->name()->str());
     auto *kernel = this->ScheduleNode(inputs, outputs, primitive);
     if (nullptr == kernel) {
       MS_LOG(ERROR) << "ScheduleNode return nullptr, name: " << cNode->name()->str()
