@@ -717,6 +717,13 @@ class Shape : public Primitive {
   int InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) override;
 };
 
+class ConstantOfShape : public Primitive {
+ public:
+  explicit ConstantOfShape(schema::Primitive *primitive) : Primitive(primitive) {}
+  const schema::ConstantOfShape *GetAttribute() const { return this->primitive->value_as_ConstantOfShape(); }
+  int InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) override;
+};
+
 class ScatterND : public Primitive {
  public:
   explicit ScatterND(schema::Primitive *primitive) : Primitive(primitive) {}

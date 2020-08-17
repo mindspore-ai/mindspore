@@ -28,6 +28,7 @@
 #include "src/runtime/kernel/arm/nnacl/fp32/broadcast_to.h"
 #include "src/runtime/kernel/arm/nnacl/reshape_parameter.h"
 #include "src/runtime/kernel/arm/nnacl/shape.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/constant_of_shape.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/stack.h"
 #include "src/runtime/kernel/arm/nnacl/unstack.h"
 #include "src/runtime/kernel/arm/nnacl/depth_to_space.h"
@@ -937,6 +938,18 @@ OpParameter *PopulateShapeParameter(const lite::Primitive *primitive) {
   return reinterpret_cast<OpParameter *>(shape_param);
 }
 
+OpParameter *PopulateConstantOfShapeParameter(const lite::Primitive *primitive) {
+  auto attr = primitive->Value()->value_as_ConstantOfShape();
+  ConstantOfShapeParameter *param = new (std::nothrow) ConstantOfShapeParameter();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "new ConstantOfShapeParameter failed.";
+    return nullptr;
+  }
+  param->op_parameter_.type_ = primitive->Type();
+  param->value_ = attr->value();
+  return reinterpret_cast<OpParameter *>(param);
+}
+
 OpParameter *PopulateReverseParameter(const lite::Primitive *primitive) {
   auto reverse_attr = primitive->Value()->value_as_Reverse();
   ReverseParameter *reverse_param = new (std::nothrow) ReverseParameter();
@@ -1370,6 +1383,7 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_Cast] = PopulateCastParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Scale] = PopulateScaleParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Reshape] = PopulateReshapeParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_ConstantOfShape] = PopulateConstantOfShapeParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Shape] = PopulateShapeParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Concat] = PopulateConcatParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Tile] = PopulateTileParameter;
