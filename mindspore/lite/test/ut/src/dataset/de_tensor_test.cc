@@ -96,3 +96,13 @@ TEST_F(MindDataTestTensorDE, MSTensorHash) {
   auto ms_tensor = std::shared_ptr<MSTensor>(new DETensor(t));
   ASSERT_EQ(ms_tensor->hash() == 11093771382437, true);
 }
+
+TEST_F(MindDataTestTensorDE, MSTensorCreateFromMemory) {
+  std::vector<float> x = {2.5, 2.5, 2.5, 2.5};
+  auto mem_tensor = DETensor::CreateFromMemory(mindspore::TypeId::kNumberTypeFloat32, {2, 2}, &x[0]);
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateFromVector(x, TensorShape({2, 2}), &t);
+  auto ms_tensor = std::shared_ptr<MSTensor>(new DETensor(t));
+  ASSERT_EQ(ms_tensor->hash() == mem_tensor->hash(), true);
+}
+

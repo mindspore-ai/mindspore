@@ -37,6 +37,14 @@ class DETensor : public MSTensor {
   /// \return - MSTensor pointer.
   static MSTensor *CreateTensor(const std::string &path);
 
+  /// \brief Create a MSTensor pointer.
+  /// \note This function returns null_ptr if tensor creation fails.
+  /// \param[data_type] DataTypeId of tensor to be created.
+  /// \param[shape] Shape of tensor to be created.
+  /// \param[data] Data pointer.
+  /// \return - MSTensor pointer.
+  static MSTensor *CreateFromMemory(TypeId data_type, const std::vector<int> &shape, void *data);
+
   DETensor(TypeId data_type, const std::vector<int> &shape);
 
   explicit DETensor(std::shared_ptr<dataset::Tensor> tensor_ptr);
