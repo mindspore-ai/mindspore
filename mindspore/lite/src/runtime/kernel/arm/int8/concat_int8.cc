@@ -28,9 +28,15 @@ namespace mindspore::kernel {
 
 int ConcatInt8CPUKernel::Init() {
   ConcatBaseCPUKernel::Init();
+  concat_param_->input_shapes_ = nullptr;
   auto input_num = in_tensors_.size();
+  input_data_ = reinterpret_cast<int8_t **>(malloc(sizeof(int8_t *) * input_num));
+  if (input_data_ == nullptr) {
+    MS_LOG(ERROR) << "Null pointer reference: inputs_array.";
+    return RET_ERROR;
+  }
   concat_param_->quant_arg_.in_args_ =
-    reinterpret_cast<QuantArg *>(ctx_->allocator->Malloc(sizeof(QuantArg) * input_num));
+    reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg) * input_num));
   if (concat_param_->quant_arg_.in_args_ == nullptr) {
     MS_LOG(ERROR) << "Null pointer reference: quant_concat_parm_->in_quant_args_.";
     return RET_ERROR;
@@ -61,11 +67,11 @@ int ConcatInt8CPUKernel::ReSize() {
     return ret;
   }
   if (concat_param_->input_shapes_ != nullptr) {
-    ctx_->allocator->Free(concat_param_->input_shapes_);
+//    free(concat_param_->input_shapes_);
   }
   auto input_num = in_tensors_.size();
   concat_param_->input_num_ = input_num;
-  concat_param_->input_shapes_ = reinterpret_cast<const int **>(ctx_->allocator->Malloc(sizeof(int *) * input_num));
+  concat_param_->input_shapes_ = reinterpret_cast<const int **>(malloc(sizeof(int *) * input_num));
   for (size_t i = 0; i < input_num; i++) {
     concat_param_->input_shapes_[i] = reinterpret_cast<const int *>(in_tensors_.at(i)->shape().data());
   }
@@ -96,21 +102,13 @@ int ConcatInt8CPUKernel::Run() {
   auto input_num = concat_param_->input_num_;
   count_unit_ = thread_count_ > 1 ? UP_DIV(before_axis_size, thread_count_) : before_axis_size;
   concat_param_->count_unit_ = count_unit_;
-  input_data_ = reinterpret_cast<int8_t **>(ctx_->allocator->Malloc(sizeof(int8_t *) * input_num));
-  if (input_data_ == nullptr) {
-    MS_LOG(ERROR) << "Null pointer reference: inputs_array.";
-    return RET_ERROR;
-  }
+
   for (size_t i = 0; i < input_num; i++) {
     input_data_[i] = static_cast<int8_t *>(in_tensors_.at(i)->Data());
   }
   output_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->Data());
 
   ret = LiteBackendParallelLaunch(ConcatInt8Run, this, thread_count_);
-
-  ctx_->allocator->Free(input_data_);
-  ctx_->allocator->Free(concat_param_->input_shapes_);
-  ctx_->allocator->Free(concat_param_->quant_arg_.in_args_);
 
   return ret;
 }

@@ -53,8 +53,8 @@ typedef struct ConvQuantArg {
 typedef struct ConcatQuantArg {
   QuantArg *in_args_;
   QuantArg out_args_;
-  int output_activation_min_;
-  int output_activation_max_;
+  int8_t output_activation_min_;
+  int8_t output_activation_max_;
 } ConcatQuantArg;
 
 typedef struct SqueezeQuantArg {

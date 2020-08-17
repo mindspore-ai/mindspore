@@ -33,7 +33,7 @@ void Int8Reshape(int8_t *input_ptr, int8_t *output_ptr, int64_t real_dst_count, 
       } else if (output_tmp < para.output_activation_min_) {
         output_ptr[i] = para.output_activation_min_;
       } else {
-        output_ptr[i] = output_tmp;
+        output_ptr[i] = (int8_t)output_tmp;
       }
     }
   }
