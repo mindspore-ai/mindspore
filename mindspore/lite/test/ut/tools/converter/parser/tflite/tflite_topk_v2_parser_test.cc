@@ -31,14 +31,13 @@ TEST_F(TestTfliteParserTopKV2, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_TopKV2) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_TopK) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserTopKV2, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsTopKV2(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsTopKV2();
-  std::vector<int> k = {3};
-  ASSERT_EQ(val->k, k);
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsTopK(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsTopK();
+  ASSERT_EQ(val->k, 3);
   ASSERT_EQ(val->sorted, true);
 }
 }  // namespace mindspore

@@ -41,15 +41,17 @@ STATUS TfliteTopKV2Parser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::TopKV2T> attr(new schema::TopKV2T());
+  std::unique_ptr<schema::TopKT> attr(new schema::TopKT());
 
   attr->sorted = true;
-  if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->k)) {
+  std::vector<int32_t> k;
+  if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, k)) {
     MS_LOG(ERROR) << "get topKV2 -> k failed";
     return RET_ERROR;
   }
+  attr->k = k.front();
 
-  op->primitive->value.type = schema::PrimitiveType_TopKV2;
+  op->primitive->value.type = schema::PrimitiveType_TopK;
   op->primitive->value.value = attr.release();
 
   AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
