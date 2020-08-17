@@ -393,9 +393,8 @@ def _get_bbox(rank, shape, central_fraction):
     else:
         n, c, h, w = shape
 
-    central_fraction = central_fraction.asnumpy()[0]
-    bbox_h_start = int((float(h) - float(h) * central_fraction) / 2)
-    bbox_w_start = int((float(w) - float(w) * central_fraction) / 2)
+    bbox_h_start = int(np.round((float(h) - float(h) * central_fraction) / 2))
+    bbox_w_start = int(np.round((float(w) - float(w) * central_fraction) / 2))
     bbox_h_size = h - bbox_h_start * 2
     bbox_w_size = w - bbox_w_start * 2
 
@@ -432,7 +431,6 @@ class CentralCrop(Cell):
         validator.check_value_type("central_fraction", central_fraction, [float], self.cls_name)
         self.central_fraction = validator.check_number_range('central_fraction', central_fraction,
                                                              0.0, 1.0, Rel.INC_RIGHT, self.cls_name)
-        self.central_fraction_tensor = Tensor(np.array([central_fraction]).astype(np.float64))
         self.slice = P.Slice()
 
     def construct(self, image):
@@ -443,7 +441,7 @@ class CentralCrop(Cell):
         if self.central_fraction == 1.0:
             return image
 
-        bbox_begin, bbox_size = _get_bbox(rank, image_shape, self.central_fraction_tensor)
+        bbox_begin, bbox_size = _get_bbox(rank, image_shape, self.central_fraction)
         image = self.slice(image, bbox_begin, bbox_size)
 
         return image
