@@ -81,7 +81,8 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
       return RET_ERROR;
     }
     memset(bias_data_, 0, matmul_param_->col_8_ * sizeof(float16_t));
-    memcpy(bias_data_, in_tensors_[2]->Data(), conv_param_->output_channel_ * sizeof(float16_t));
+    Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[2]->Data()), reinterpret_cast<float16_t *>(bias_data_),
+                     conv_param_->output_channel_);
   } else {
     bias_data_ = nullptr;
   }
