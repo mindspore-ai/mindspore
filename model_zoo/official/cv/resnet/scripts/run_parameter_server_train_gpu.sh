@@ -99,27 +99,31 @@ then
 fi
 cd ..
 
+
 export MS_ROLE=MS_PSERVER
-rm -rf ./server
-mkdir ./server
-cp ../*.py ./server
-cp *.sh ./server
-cp -r ../src ./server
-cd ./server || exit
-if [ $# == 3 ]
-then	    
-        mpirun --allow-run-as-root -n 1 \
-	      python train.py --net=$1 --dataset=$2 --run_distribute=True \
-	      --device_num=$DEVICE_NUM --device_target="GPU" --dataset_path=$PATH1 --parameter_server=True &> server.log &
-fi
-    
-if [ $# == 4 ]
-then
-        mpirun --allow-run-as-root -n 1 \
+for((i=0;i<$MS_SERVER_NUM;i++));
+do
+  rm -rf ./server_$i
+  mkdir ./server_$i
+  cp ../*.py ./server_$i
+  cp *.sh ./server_$i
+  cp -r ../src ./server_$i
+  cd ./server_$i || exit
+  if [ $# == 3 ]
+  then	    
+          mpirun --allow-run-as-root -n 1 \
           python train.py --net=$1 --dataset=$2 --run_distribute=True \
-	  --device_num=$DEVICE_NUM --device_target="GPU" --dataset_path=$PATH1 --parameter_server=True --pre_trained=$PATH2 &> server.log &
-fi
-cd ..
+          --device_num=$DEVICE_NUM --device_target="GPU" --dataset_path=$PATH1 --parameter_server=True &> server_$i.log &
+  fi
+      
+  if [ $# == 4 ]
+  then
+          mpirun --allow-run-as-root -n 1 \
+            python train.py --net=$1 --dataset=$2 --run_distribute=True \
+      --device_num=$DEVICE_NUM --device_target="GPU" --dataset_path=$PATH1 --parameter_server=True --pre_trained=$PATH2 &> server_$i.log &
+  fi
+  cd ..
+done
 
 export MS_ROLE=MS_WORKER
 rm -rf ./worker

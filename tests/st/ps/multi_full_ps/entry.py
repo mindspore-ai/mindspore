@@ -14,19 +14,22 @@
 # ============================================================================
 import os
 
-# @pytest.mark.level0
-# @pytest.mark.platform_arm_ascend_training
-# @pytest.mark.platform_x86_ascend_training
-# @pytest.mark.env_single
-def test_multi_worker_full_ps_ascend_lenet():
-    return_code = os.system("bash shell_run_test.sh Ascend 8 1 127.0.0.1 8088")
+
+def test_ps_ascend_multi_worker_multi_server():
+    return_code = os.system("bash shell_run_test.sh Ascend 8 8 127.0.0.1 8088")
     assert return_code == 0
 
 
-# @pytest.mark.level0
-# @pytest.mark.platform_arm_ascend_training
-# @pytest.mark.platform_x86_ascend_training
-# @pytest.mark.env_onecard
-def test_full_ps_ascend_lenet():
+def test_ps_ascend():
     return_code = os.system("bash shell_run_test.sh Ascend 1 1 127.0.0.1 8088")
+    assert return_code == 0
+
+
+def test_ps_gpu_multi_worker_multi_server():
+    return_code = os.system("bash shell_run_test.sh GPU 8 8 127.0.0.1 8088")
+    assert return_code == 0
+
+
+def test_ps_gpu():
+    return_code = os.system("bash shell_run_test.sh GPU 1 1 127.0.0.1 8088")
     assert return_code == 0

@@ -30,9 +30,7 @@ do
   rm -rf ${execute_path}/sched_$i/
   mkdir ${execute_path}/sched_$i/
   cd ${execute_path}/sched_$i/ || exit
-  export RANK_ID=$i
-  export DEVICE_ID=$i
-  python ${self_path}/../test_multi_worker_full_ps_lenet.py --device_target=$DEVICE_TARGET &
+  python ${self_path}/../test_multi_full_ps.py --device_target=$DEVICE_TARGET &
 done
 
 export MS_ROLE=MS_PSERVER
@@ -43,10 +41,11 @@ do
   cd ${execute_path}/server_$i/ || exit
   export RANK_ID=$i
   export DEVICE_ID=$i
-  python ${self_path}/../test_multi_worker_full_ps_lenet.py --device_target=$DEVICE_TARGET &
+  python ${self_path}/../test_multi_full_ps.py --device_target=$DEVICE_TARGET &
 done
 
 export MS_ROLE=MS_WORKER
+if [ $DEVICE_TARGET == "Ascend" ];then
 for((i=0;i<$MS_WORKER_NUM;i++));
 do
   rm -rf ${execute_path}/worker_$i/
@@ -54,8 +53,15 @@ do
   cd ${execute_path}/worker_$i/ || exit
   export RANK_ID=$i
   export DEVICE_ID=$i
-  python ${self_path}/../test_multi_worker_full_ps_lenet.py --device_target=$DEVICE_TARGET &
+  python ${self_path}/../test_multi_full_ps.py --device_target=$DEVICE_TARGET &
 done
+fi
+if [ $DEVICE_TARGET == "GPU" ];then
+  rm -rf ${execute_path}/worker/
+  mkdir ${execute_path}/worker/
+  cd ${execute_path}/worker/ || exit
+  mpirun -n $MS_WORKER_NUM python ${self_path}/../test_multi_full_ps.py --device_target=$DEVICE_TARGET &
+fi
 
 wait $!
 exit $?
