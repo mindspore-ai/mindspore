@@ -38,27 +38,16 @@ const AnfNodePtr ReplaceBNCastFusion::Process(const FuncGraphPtr &graph, const A
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(equiv);
-
   auto fbn2 = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
   auto x_after = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(fbn2), 0);
   auto x_before = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(x_after), 0);
-  auto scale = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(fbn2), 1);
-  auto bias = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(fbn2), 2);
-  auto mean = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(fbn2), 3);
-  auto var = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(fbn2), 4);
-
   MS_EXCEPTION_IF_NULL(fbn2);
   MS_EXCEPTION_IF_NULL(x_after);
   MS_EXCEPTION_IF_NULL(x_before);
-  MS_EXCEPTION_IF_NULL(scale);
-  MS_EXCEPTION_IF_NULL(bias);
-  MS_EXCEPTION_IF_NULL(mean);
-  MS_EXCEPTION_IF_NULL(var);
   std::vector<TypeId> outputs_type;
   std::vector<std::vector<size_t>> outputs_shape;
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-
   auto outlist = GetRealNodeUsedList(graph, fbn2);
   for (size_t i = 0; i < outlist->size(); i++) {
     auto index_node = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(outlist->at(i).first), 1);
@@ -76,7 +65,6 @@ const AnfNodePtr ReplaceBNCastFusion::Process(const FuncGraphPtr &graph, const A
       AnfAlgo::SetOutputInferTypeAndShape(outputs_type, outputs_shape, outlist->at(i).first.get());
     }
   }
-
   manager->Replace(utils::cast<CNodePtr>(x_after), utils::cast<CNodePtr>(x_before));
   outputs_type.clear();
   outputs_shape.clear();
