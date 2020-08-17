@@ -161,6 +161,7 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
         MS_LOG(EXCEPTION) << "run kernel failed, name: " << lite_kernel->name();
       }
       auto new_parameter = CreateNewParamter(func_graph, output_tensors.front());
+      new_parameter->set_name(input_node->fullname_with_scope());
       any_node->set_input(i, new_parameter);
     }
   }

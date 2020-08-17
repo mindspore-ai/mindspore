@@ -41,9 +41,15 @@ void Int32ToFloat32(const int32_t *input, float *output, int number) {
   }
 }
 
-void Fp16ToFloat32(const int16_t *input, float *output, int number) {
+void Fp16ToFloat32(const uint16_t *input, float *output, int number) {
   for (int i = 0; i < number; ++i) {
     output[i] = ShortToFloat32(input[i]);
+  }
+}
+
+void Float32ToFp16(const float *input, uint16_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = Float32ToShort(input[i]);
   }
 }
 

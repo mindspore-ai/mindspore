@@ -58,7 +58,7 @@ STATUS TfliteDequantizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
     return RET_ERROR;
   }
 
-  op->primitive->value.type = schema::PrimitiveType_Fp16Cast;
+  op->primitive->value.type = schema::PrimitiveType_Cast;
   op->primitive->value.value = attr.release();
   return 0;
 }
