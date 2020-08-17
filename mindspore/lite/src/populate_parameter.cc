@@ -1038,7 +1038,7 @@ OpParameter *PopulateSpaceToDepthParameter(const lite::Primitive *primitive) {
     return nullptr;
   }
   space_depth_param->op_parameter_.type_ = primitive->Type();
-  auto param = primitive->Value()->value_as_DepthToSpace();
+  auto param = primitive->Value()->value_as_SpaceToDepth();
   space_depth_param->op_parameter_.type_ = primitive->Type();
   space_depth_param->block_size_ = param->blockSize();
   if (param->format() != schema::Format_NHWC) {
