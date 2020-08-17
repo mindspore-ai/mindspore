@@ -32,7 +32,17 @@ class ConcatInt8CPUKernel : public ConcatBaseCPUKernel {
                       const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                       const lite::Primitive *primitive)
       : ConcatBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~ConcatInt8CPUKernel() override {}
+  ~ConcatInt8CPUKernel() override {
+    if (input_data_ != nullptr) {
+      free(input_data_);
+    }
+    if (concat_param_->input_shapes_ != nullptr) {
+      free(concat_param_->input_shapes_);
+    }
+    if (concat_param_->quant_arg_.in_args_ != nullptr) {
+      free(concat_param_->quant_arg_.in_args_);
+    }
+  }
 
   int Init() override;
   int ReSize() override;

@@ -80,7 +80,7 @@ void Mul(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int64_t 
     } else if (mul_result < para.output_activation_min_) {
       output_data[index] = para.output_activation_min_;
     } else {
-      output_data[index] = (mul_result);
+      output_data[index] = (int8_t)mul_result;
     }
   }
   return;

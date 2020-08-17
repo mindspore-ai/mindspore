@@ -62,7 +62,7 @@ int Int8DoSplit(int8_t *in_data, int8_t **out_data, const int *input_shape, int 
         } else if (output_tmp < param->quant_arg_.output_activation_min_) {
           dst[j] = param->quant_arg_.output_activation_min_;
         } else {
-          dst[j] = output_tmp;
+          dst[j] = (int8_t)output_tmp;
         }
       }
     }

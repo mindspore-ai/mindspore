@@ -22,36 +22,36 @@ void Int8Concat(int8_t **inputs, int8_t *output, ConcatParameter *para, int axis
   float output_scale = para->quant_arg_.out_args_.scale_;
   const float output_inverse_scale = 1.f / output_scale;
   int input_num = para->input_num_;
-  int count_unit_ = para->count_unit_;
-  int after_axis_size = para->after_axis_size;
+  int64_t count_unit_ = para->count_unit_;
+  int64_t after_axis_size = para->after_axis_size;
   const int *output_shape = para->output_shapes_;
   int out_copy_size = output_shape[axis] * after_axis_size;
   QuantArg *input_quant = para->quant_arg_.in_args_;
   int output_zp = para->quant_arg_.out_args_.zp_;
-  int max_int8 = para->quant_arg_.output_activation_max_;
-  int min_int8 = para->quant_arg_.output_activation_min_;
+  int8_t max_int8 = para->quant_arg_.output_activation_max_;
+  int8_t min_int8 = para->quant_arg_.output_activation_min_;
   int64_t start = task_id * count_unit_;
   int64_t end = start + real_dst_count;
+  output += start * out_copy_size;
 
   for (int k = start; k < end; k++) {
     for (int i = 0; i < input_num; i++) {
       const int *input_shape = para->input_shapes_[i];
-      int in_copy_size = input_shape[axis] * after_axis_size;
+      int64_t in_copy_size = input_shape[axis] * after_axis_size;
       int8_t *input_ptr = inputs[i] + k * in_copy_size;
-      int8_t *output_ptr = output + k * out_copy_size;
       if (input_quant[i].scale_ == output_scale && input_quant[i].zp_ == output_zp) {
-        memcpy(output_ptr, input_ptr, in_copy_size);
+        memcpy(output, input_ptr, in_copy_size);
       } else {
         float scale = input_quant[i].scale_ * output_inverse_scale;
         float bias = -input_quant[i].zp_ * scale;
         for (int j = 0; j < in_copy_size; j++) {
           int32_t output_tmp = round(input_ptr[j] * scale + bias) + output_zp;
           if (output_tmp > max_int8) {
-            output_ptr[j] = max_int8;
+            output[j] = max_int8;
           } else if (output_tmp < min_int8) {
-            output_ptr[j] = min_int8;
+            output[j] = min_int8;
           } else {
-            output_ptr[j] = (output_tmp);
+            output[j] = (int8_t)output_tmp;
           }
         }
       }

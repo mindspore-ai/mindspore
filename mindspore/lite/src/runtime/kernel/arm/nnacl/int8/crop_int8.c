@@ -68,7 +68,7 @@ void Crop1D(const int8_t *input, int8_t *output, int task_id, CropParameter *par
       } else if (output_tmp < para->quant_arg.output_activation_min_) {
         out_ptr[i] = para->quant_arg.output_activation_min_;
       } else {
-        out_ptr[i] = output_tmp;
+        out_ptr[i] = (int8_t)output_tmp;
       }
     }
   }
@@ -110,7 +110,7 @@ void Crop2D(const int8_t *input, int8_t *output, int task_id, CropParameter *par
         } else if (output_tmp < para->quant_arg.output_activation_min_) {
           out_ptr[i] = para->quant_arg.output_activation_min_;
         } else {
-          out_ptr[i] = (output_tmp);
+          out_ptr[i] = (int8_t)output_tmp;
         }
       }
     }
@@ -164,7 +164,7 @@ void Crop3D(const int8_t *input, int8_t *output, int task_id, CropParameter *par
           } else if (output_tmp < para->quant_arg.output_activation_min_) {
             out_ptr[i] = para->quant_arg.output_activation_min_;
           } else {
-            out_ptr[i] = (output_tmp);
+            out_ptr[i] = (int8_t)output_tmp;
           }
         }
       }
@@ -225,7 +225,7 @@ void Int8Crop4D(const int8_t *input, int8_t *output, int task_id, CropParameter 
             } else if (output_tmp < para->quant_arg.output_activation_min_) {
               out_ptr[i] = para->quant_arg.output_activation_min_;
             } else {
-              out_ptr[i] = (output_tmp);
+              out_ptr[i] = (int8_t)output_tmp;
             }
           }
         }

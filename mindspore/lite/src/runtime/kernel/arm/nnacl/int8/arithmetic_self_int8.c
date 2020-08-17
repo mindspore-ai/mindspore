@@ -35,7 +35,7 @@ int Int8ElementFloor(int8_t *input, int8_t *output, int element_size, ArithSelfQ
     } else if (output_tmp < para.output_activation_min_) {
       output[i] = para.output_activation_min_;
     } else {
-      output[i] = (output_tmp);
+      output[i] = (int8_t)output_tmp;
     }
   }
   return NNACL_OK;
@@ -54,7 +54,7 @@ int Int8ElementRound(int8_t *input, int8_t *output, int element_size, ArithSelfQ
     } else if (output_tmp < para.output_activation_min_) {
       output[i] = para.output_activation_min_;
     } else {
-      output[i] = (output_tmp);
+      output[i] = (int8_t)output_tmp;
     }
   }
   return NNACL_OK;
@@ -73,7 +73,7 @@ int Int8ElementCeil(int8_t *input, int8_t *output, int element_size, ArithSelfQu
     } else if (output_tmp < para.output_activation_min_) {
       output[i] = para.output_activation_min_;
     } else {
-      output[i] = (output_tmp);
+      output[i] = (int8_t)output_tmp;
     }
   }
   return NNACL_OK;
@@ -92,7 +92,7 @@ int Int8ElementAbs(int8_t *input, int8_t *output, int element_size, ArithSelfQua
     } else if (output_tmp < para.output_activation_min_) {
       output[i] = para.output_activation_min_;
     } else {
-      output[i] = (output_tmp);
+      output[i] = (int8_t)output_tmp;
     }
   }
   return NNACL_OK;
@@ -111,7 +111,7 @@ int Int8ElementSin(int8_t *input, int8_t *output, int element_size, ArithSelfQua
     } else if (output_tmp < para.output_activation_min_) {
       output[i] = para.output_activation_min_;
     } else {
-      output[i] = (output_tmp);
+      output[i] = (int8_t)output_tmp;
     }
   }
   return NNACL_OK;
@@ -130,7 +130,7 @@ int Int8ElementCos(int8_t *input, int8_t *output, int element_size, ArithSelfQua
     } else if (output_tmp < para.output_activation_min_) {
       output[i] = para.output_activation_min_;
     } else {
-      output[i] = (output_tmp);
+      output[i] = (int8_t)output_tmp;
     }
   }
   return NNACL_OK;
@@ -149,7 +149,7 @@ int Int8ElementLog(int8_t *input, int8_t *output, int element_size, ArithSelfQua
     } else if (output_tmp < para.output_activation_min_) {
       output[i] = para.output_activation_min_;
     } else {
-      output[i] = (output_tmp);
+      output[i] = (int8_t)output_tmp;
     }
   }
   return NNACL_OK;
@@ -172,7 +172,7 @@ int Int8ElementSqrt(int8_t *input, int8_t *output, int element_size, ArithSelfQu
     } else if (output_tmp < para.output_activation_min_) {
       output[i] = para.output_activation_min_;
     } else {
-      output[i] = (output_tmp);
+      output[i] = (int8_t)output_tmp;
     }
   }
   return NNACL_OK;
@@ -195,7 +195,7 @@ int Int8ElementRsqrt(int8_t *input, int8_t *output, int element_size, ArithSelfQ
     } else if (output_tmp < para.output_activation_min_) {
       output[i] = para.output_activation_min_;
     } else {
-      output[i] = (output_tmp);
+      output[i] = (int8_t)output_tmp;
     }
   }
   return NNACL_OK;
@@ -230,6 +230,7 @@ void SquareInt8NEON(int8_t *input_data, int8_t *output_data, int64_t element_siz
     int16x8_t res_s16 = vcombine_s16(sum_low, sum_high);
     int8x8_t res_u8_n0 = vqmovn_s16(res_s16);
     vst1_s8(output_data, res_u8_n0);
+    output_data += 8;
   }
 }
 #endif
@@ -253,7 +254,7 @@ int Int8ElementSquare(int8_t *input, int8_t *output, int element_size, ArithSelf
     } else if (output_tmp < para.output_activation_min_) {
       output[index] = para.output_activation_min_;
     } else {
-      output[index] = (output_tmp);
+      output[index] = (int8_t)output_tmp;
     }
   }
   return NNACL_OK;
