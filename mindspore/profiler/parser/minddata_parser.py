@@ -43,17 +43,21 @@ class MinddataParser:
                         node_name, node_start, node_end, queue_size = "", 0, 0, 0
                         if node_info:
                             node_name = node_info[0].replace("Node:", "")
-                        if len(node_info) > 2:
-                            node_start = node_info[1].replace("Run start:", "")
-                            if node_start.isdigit():
-                                node_start = int(node_start)
-                            node_end = node_info[2].replace("Run end:", "")
-                            if node_end.isdigit():
-                                node_end = int(node_end)
-                        if len(node_info) > 3:
+
+                        if len(node_info) > 3 and "queue" in node_info[1]:
+                            queue_size = node_info[1].replace("queue size:", "")
+                            queue_size = int(queue_size) if queue_size.isdigit() else queue_size
+                            node_start = node_info[2].replace("Run start:", "")
+                            node_start = int(node_start) if node_start.isdigit() else node_start
+                            node_end = node_info[3].replace("Run end:", "")
+                            node_end = int(node_end) if node_end.isdigit() else node_end
+                        elif len(node_info) > 3 and "Run" in node_info[1]:
                             queue_size = node_info[3].replace("queue size:", "")
-                            if queue_size.isdigit():
-                                queue_size = int(queue_size)
+                            queue_size = int(queue_size) if queue_size.isdigit() else queue_size
+                            node_start = node_info[1].replace("Run start:", "")
+                            node_start = int(node_start) if node_start.isdigit() else node_start
+                            node_end = node_info[2].replace("Run end:", "")
+                            node_end = int(node_end) if node_end.isdigit() else node_end
 
                         one_step_list = [node_name, node_start, node_end, queue_size]
                         result.append(one_step_list)

@@ -126,7 +126,7 @@ CUptiResult CuptiGetStreamId(CUcontext context, CUstream stream, uint32_t *strea
 }
 
 CUptiResult CuptiGetDeviceId(CUcontext context, uint32_t *deviceId) {
-  static auto func_ptr = reinterpret_cast<CuptiGetDeviceIdFunc>(GetCUPTIFunc("cuptiSubscribe"));
+  static auto func_ptr = reinterpret_cast<CuptiGetDeviceIdFunc>(GetCUPTIFunc("cuptiGetDeviceId"));
   return func_ptr(context, deviceId);
 }
 }  // namespace gpu
