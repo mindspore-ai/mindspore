@@ -44,6 +44,8 @@ def all_(x, axis=(), keep_dims=False):
         Tensor, has the same data type as x.
     """
 
+    if axis is None:
+        axis = ()
     reduce_all = P.ReduceAll(keep_dims)
     return reduce_all(x, axis)
 
@@ -60,7 +62,8 @@ def any_(x, axis=(), keep_dims=False):
     Returns:
         Tensor, has the same data type as x.
     """
-
+    if axis is None:
+        axis = ()
     reduce_any = P.ReduceAny(keep_dims)
     return reduce_any(x, axis)
 
