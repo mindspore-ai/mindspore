@@ -27,8 +27,6 @@
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/kernels/data/data_utils.h"
 
-using float16 = Eigen::half;
-
 namespace mindspore {
 namespace dataset {
 BatchOp::Builder::Builder(int32_t batch_size) : builder_drop_(false), builder_pad_(false), builder_pad_map_({}) {

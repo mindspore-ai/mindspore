@@ -22,12 +22,10 @@
 #include <vector>
 #include <numeric>
 
-#include "Eigen/Core"
 #include "ir/device_sync.h"
 #include "ir/meta_tensor.h"
 #include "utils/log_adapter.h"
-
-using float16 = Eigen::half;
+#include "base/float16.h"
 
 // brief mindspore namespace.
 //

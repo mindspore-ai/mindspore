@@ -113,7 +113,7 @@ bool FloatToHalfAndSyncHostToDevice(void *dst, size_t dst_size, const void *src,
     MS_EXCEPTION(ArgumentError) << "FloatToHalf failed. size not match src_size[" << src_size << "], dst_size["
                                 << dst_size << "]";
   }
-  std::vector<Eigen::half> half_data(elem_num);
+  std::vector<float16> half_data(elem_num);
   FloatToHalf(half_data.data(), src, elem_num);
   SyncMemory(dst, half_data.data(), dst_size, RT_MEMCPY_HOST_TO_DEVICE);
   return true;
@@ -136,7 +136,7 @@ bool SyncDeviceToHostAndHalfToFloat(void *dst, size_t dst_size, const void *src,
     MS_EXCEPTION(ArgumentError) << "HalfToFloat failed. size not match src_size[" << src_size << "], dst_size["
                                 << dst_size << "]";
   }
-  std::vector<Eigen::half> half_data(elem_num);
+  std::vector<float16> half_data(elem_num);
   SyncMemory(half_data.data(), src, src_size, RT_MEMCPY_DEVICE_TO_HOST);
   HalfToFloat(dst, half_data.data(), elem_num);
   return true;

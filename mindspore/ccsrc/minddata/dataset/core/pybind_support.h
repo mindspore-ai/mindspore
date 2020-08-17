@@ -21,10 +21,9 @@
 
 #include "pybind11/numpy.h"
 #include "pybind11/pybind11.h"
-#include "Eigen/Core"
+#include "base/float16.h"
 
 namespace py = pybind11;
-using float16 = Eigen::half;
 
 namespace pybind11 {
 namespace detail {
