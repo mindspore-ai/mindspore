@@ -30,16 +30,7 @@ class TransposeFp16CPUKernel : public LiteKernel {
                                   const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                                   const lite::Primitive *primitive)
       : LiteKernel(param, inputs, outputs, ctx, primitive), thread_num_(ctx->thread_num_) {}
-  ~TransposeFp16CPUKernel() {
-    if (fp16_in_data_ != nullptr) {
-      free(fp16_in_data_);
-      fp16_in_data_ = nullptr;
-    }
-    if (fp16_out_data_ != nullptr) {
-      free(fp16_out_data_);
-      fp16_out_data_ = nullptr;
-    }
-  }
+  ~TransposeFp16CPUKernel() = default;
 
   int Init() override;
   int ReSize() override;
