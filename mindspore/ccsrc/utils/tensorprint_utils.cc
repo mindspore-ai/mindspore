@@ -105,10 +105,15 @@ template <typename T>
 void PrintScalarToString(const char *str_data_ptr, const string &tensor_type, std::ostringstream *const buf) {
   MS_EXCEPTION_IF_NULL(str_data_ptr);
   MS_EXCEPTION_IF_NULL(buf);
-  const T *data_ptr = reinterpret_cast<const T *>(str_data_ptr);
   *buf << "Tensor shape:[1] " << tensor_type;
   *buf << "\nval:";
-  *buf << *data_ptr << "\n";
+  const T *data_ptr = reinterpret_cast<const T *>(str_data_ptr);
+  if constexpr (std::is_same<T, int8_t>::value || std::is_same<T, uint8_t>::value) {
+    const int int_data = static_cast<int>(*data_ptr);
+    *buf << int_data << "\n";
+  } else {
+    *buf << *data_ptr << "\n";
+  }
 }
 
 void PrintScalarToBoolString(const char *str_data_ptr, const string &tensor_type, std::ostringstream *const buf) {
