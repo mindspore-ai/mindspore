@@ -39,7 +39,7 @@ STATUS TfliteStridedSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> 
   }
 
   MS_LOG(DEBUG) << "parse TfliteStridedSliceParser";
-  std::unique_ptr<schema::StridedSliceT> attr(new schema::StridedSliceT());
+  std::unique_ptr<schema::StridedSliceT> attr = std::make_unique<schema::StridedSliceT>();
   const auto &tflite_attr = tflite_op->builtin_options.AsStridedSliceOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: %s attr failed", op->name.c_str();

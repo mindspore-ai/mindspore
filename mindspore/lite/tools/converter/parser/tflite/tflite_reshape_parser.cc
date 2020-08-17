@@ -40,7 +40,7 @@ STATUS TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::ReshapeT> attr(new schema::ReshapeT());
+  std::unique_ptr<schema::ReshapeT> attr = std::make_unique<schema::ReshapeT>();
 
   const auto &tfliteAttr = tflite_op->builtin_options.AsReshapeOptions();
   if (tfliteAttr == nullptr) {

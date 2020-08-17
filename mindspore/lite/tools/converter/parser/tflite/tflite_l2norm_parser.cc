@@ -42,8 +42,16 @@ STATUS TfliteL2NormParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::L2NormT> attr(new schema::L2NormT());
+  std::unique_ptr<schema::L2NormT> attr = std::make_unique<schema::L2NormT>();
+  if (tflite_op->inputs.empty()) {
+    MS_LOG(ERROR) << "the input is null";
+    return RET_NULL_PTR;
+  }
   auto data_index = tflite_op->inputs[0];
+  if (tflite_op->inputs.size() <= data_index) {
+    MS_LOG(ERROR) << "the size of input should be greater than " << data_index;
+    return RET_ERROR;
+  }
   const auto &data_tensor = tflite_tensors[data_index];
   if (data_tensor == nullptr) {
     MS_LOG(ERROR) << "the input tensor is null";

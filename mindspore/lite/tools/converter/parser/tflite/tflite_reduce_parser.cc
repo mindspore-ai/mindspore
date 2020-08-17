@@ -40,7 +40,7 @@ STATUS TfliteReduceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::ReduceT> attr(new schema::ReduceT());
+  std::unique_ptr<schema::ReduceT> attr = std::make_unique<schema::ReduceT>();
   // auto tflite_tensors = tflite_subgraph->tensors;
 
   const auto &tflite_attr = tflite_op->builtin_options.AsReducerOptions();

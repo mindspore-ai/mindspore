@@ -40,7 +40,7 @@ STATUS TfliteSoftmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::SoftMaxT> attr(new schema::SoftMaxT());
+  std::unique_ptr<schema::SoftMaxT> attr = std::make_unique<schema::SoftMaxT>();
 
   attr->axis = -1;
 

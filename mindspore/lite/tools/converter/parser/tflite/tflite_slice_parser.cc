@@ -41,7 +41,7 @@ STATUS TfliteSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::SliceT> attr(new schema::SliceT());
+  std::unique_ptr<schema::SliceT> attr = std::make_unique<schema::SliceT>();
 
   attr->format = schema::Format_NHWC;
 

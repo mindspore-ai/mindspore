@@ -40,7 +40,7 @@ STATUS TfliteRangeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::RangeT> attr(new schema::RangeT());
+  std::unique_ptr<schema::RangeT> attr = std::make_unique<schema::RangeT>();
 
   attr->dType = 0;
 //  attr->start

@@ -40,7 +40,7 @@ STATUS TfliteDequantizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::CastT> attr(new schema::CastT);
+  std::unique_ptr<schema::CastT> attr = std::make_unique<schema::CastT>();
 
   // get the dequantize input tensor
   const auto &in_tensor = tflite_tensors[tflite_op->inputs[0]];

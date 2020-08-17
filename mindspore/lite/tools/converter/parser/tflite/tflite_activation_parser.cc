@@ -38,7 +38,7 @@ STATUS TfliteActivationParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
     MS_LOG(ERROR) << "op->primitive is null";
     return RET_NULL_PTR;
   }
-  std::unique_ptr<schema::ActivationT> attr(new schema::ActivationT());
+  std::unique_ptr<schema::ActivationT> attr = std::make_unique<schema::ActivationT>();
 
   std::vector<std::string> node_name_str;
   Split(op->name, &node_name_str, "-");
@@ -89,7 +89,7 @@ STATUS TflitePreluParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
     MS_LOG(ERROR) << "op->primitive is null";
     return RET_NULL_PTR;
   }
-  std::unique_ptr<schema::PreluT> attr(new schema::PreluT());
+  std::unique_ptr<schema::PreluT> attr = std::make_unique<schema::PreluT>();
 
   if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->slope)) {
     MS_LOG(ERROR) << "get pRelu -> slope failed";
@@ -124,7 +124,7 @@ STATUS TfliteLeakyReluParser::Parse(const std::unique_ptr<tflite::OperatorT> &tf
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::LeakyReLUT> attr(new schema::LeakyReLUT());
+  std::unique_ptr<schema::LeakyReLUT> attr = std::make_unique<schema::LeakyReLUT>();
 
   const auto &tflite_attr = tflite_op->builtin_options.AsLeakyReluOptions();
   if (tflite_attr == nullptr) {

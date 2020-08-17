@@ -41,7 +41,7 @@ STATUS TfliteSplitParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::SplitT> attr(new schema::SplitT());
+  std::unique_ptr<schema::SplitT> attr = std::make_unique<schema::SplitT>();
 
   const auto &tflite_attr = tflite_op->builtin_options.AsSplitOptions();
   if (tflite_attr == nullptr) {

@@ -39,7 +39,7 @@ STATUS TfliteResizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::ResizeT> attr(new schema::ResizeT());
+  std::unique_ptr<schema::ResizeT> attr = std::make_unique<schema::ResizeT>();
 
   std::vector<std::string> node_name_str;
   Split(op->name.data(), &node_name_str, "-");

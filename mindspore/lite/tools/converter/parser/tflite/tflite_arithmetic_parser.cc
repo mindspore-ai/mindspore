@@ -44,7 +44,7 @@ STATUS TfliteDoubleInputOpParser::Parse(const std::unique_ptr<tflite::OperatorT>
   const char *node_name = node_name_str.data()->c_str();
   if (std::strcmp(node_name, "Add") == 0) {
     MS_LOG(DEBUG) << "parse TfliteAddParser";
-    std::unique_ptr<schema::AddT> attr(new schema::AddT());
+    std::unique_ptr<schema::AddT> attr = std::make_unique<schema::AddT>();
     const auto &tfliteAttr = tflite_op->builtin_options.AsAddOptions();
     if (nullptr == tfliteAttr) {
       MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
@@ -55,7 +55,7 @@ STATUS TfliteDoubleInputOpParser::Parse(const std::unique_ptr<tflite::OperatorT>
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "Sub") == 0) {
     MS_LOG(DEBUG) << "parse TfliteSubParser";
-    std::unique_ptr<schema::SubT> attr(new schema::SubT());
+    std::unique_ptr<schema::SubT> attr = std::make_unique<schema::SubT>();
     const auto &tfliteAttr = tflite_op->builtin_options.AsSubOptions();
     if (nullptr == tfliteAttr) {
       MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
@@ -66,7 +66,7 @@ STATUS TfliteDoubleInputOpParser::Parse(const std::unique_ptr<tflite::OperatorT>
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "Mul") == 0) {
     MS_LOG(DEBUG) << "parse TfliteMulParser";
-    std::unique_ptr<schema::MulT> attr(new schema::MulT());
+    std::unique_ptr<schema::MulT> attr = std::make_unique<schema::MulT>();
     const auto &tfliteAttr = tflite_op->builtin_options.AsMulOptions();
     if (nullptr == tfliteAttr) {
       MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
@@ -77,7 +77,7 @@ STATUS TfliteDoubleInputOpParser::Parse(const std::unique_ptr<tflite::OperatorT>
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "Div") == 0) {
     MS_LOG(DEBUG) << "parse TfliteDivParser";
-    std::unique_ptr<schema::DivT> attr(new schema::DivT());
+    std::unique_ptr<schema::DivT> attr = std::make_unique<schema::DivT>();
     const auto &tfliteAttr = tflite_op->builtin_options.AsDivOptions();
     if (nullptr == tfliteAttr) {
       MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
@@ -88,27 +88,27 @@ STATUS TfliteDoubleInputOpParser::Parse(const std::unique_ptr<tflite::OperatorT>
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "FloorDiv") == 0) {
     MS_LOG(DEBUG) << "parse TfliteFloorDivParser";
-    std::unique_ptr<schema::FloorDivT> attr(new schema::FloorDivT());
+    std::unique_ptr<schema::FloorDivT> attr = std::make_unique<schema::FloorDivT>();
     op->primitive->value.type = schema::PrimitiveType_FloorDiv;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "FloorMod") == 0) {
     MS_LOG(DEBUG) << "parse TfliteFloorModParser";
-    std::unique_ptr<schema::FloorModT> attr(new schema::FloorModT());
+    std::unique_ptr<schema::FloorModT> attr = std::make_unique<schema::FloorModT>();
     op->primitive->value.type = schema::PrimitiveType_FloorMod;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "RealDiv") == 0) {
     MS_LOG(DEBUG) << "parse TfliteRealDivParser";
-    std::unique_ptr<schema::RealDivT> attr(new schema::RealDivT());
+    std::unique_ptr<schema::RealDivT> attr = std::make_unique<schema::RealDivT>();
     op->primitive->value.type = schema::PrimitiveType_Div;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "SquaredDifference") == 0) {
     MS_LOG(DEBUG) << "parse TfliteSquaredDifferenceParser";
-    std::unique_ptr<schema::SquaredDifferenceT> attr(new schema::SquaredDifferenceT());
+    std::unique_ptr<schema::SquaredDifferenceT> attr = std::make_unique<schema::SquaredDifferenceT>();
     op->primitive->value.type = schema::PrimitiveType_SquaredDifference;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "Pow") == 0) {
     MS_LOG(DEBUG) << "parse TflitePowParser";
-    std::unique_ptr<schema::PowerT> attr(new schema::PowerT());
+    std::unique_ptr<schema::PowerT> attr = std::make_unique<schema::PowerT>();
     attr->power = 0.0f;
     attr->scale = 1.0f;
     attr->shift = 0.0f;
@@ -116,12 +116,12 @@ STATUS TfliteDoubleInputOpParser::Parse(const std::unique_ptr<tflite::OperatorT>
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "Maximum") == 0) {
     MS_LOG(DEBUG) << "parse TfliteMaximumParser";
-    std::unique_ptr<schema::MaximumT> attr(new schema::MaximumT());
+    std::unique_ptr<schema::MaximumT> attr = std::make_unique<schema::MaximumT>();
     op->primitive->value.type = schema::PrimitiveType_Maximum;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "Minimum") == 0) {
     MS_LOG(DEBUG) << "parse TfliteMinimumParser";
-    std::unique_ptr<schema::MinimumT> attr(new schema::MinimumT());
+    std::unique_ptr<schema::MinimumT> attr = std::make_unique<schema::MinimumT>();
     op->primitive->value.type = schema::PrimitiveType_Minimum;
     op->primitive->value.value = attr.release();
   }
@@ -158,57 +158,57 @@ STATUS TfliteSingleInputOpParser::Parse(const std::unique_ptr<tflite::OperatorT>
   const char *node_name = node_name_str.data()->c_str();
   if (std::strcmp(node_name, "Abs") == 0) {
     MS_LOG(DEBUG) << "parse TfliteAbsParser";
-    std::unique_ptr<schema::AbsT> attr(new schema::AbsT());
+    std::unique_ptr<schema::AbsT> attr = std::make_unique<schema::AbsT>();
     op->primitive->value.type = schema::PrimitiveType_Abs;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "Exp") == 0) {
     MS_LOG(DEBUG) << "parse TfliteExpParser";
-    std::unique_ptr<schema::ExpT> attr(new schema::ExpT());
+    std::unique_ptr<schema::ExpT> attr = std::make_unique<schema::ExpT>();
     op->primitive->value.type = schema::PrimitiveType_Exp;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "Sqrt") == 0) {
     MS_LOG(DEBUG) << "parse TfliteSqrtParser";
-    std::unique_ptr<schema::SqrtT> attr(new schema::SqrtT());
+    std::unique_ptr<schema::SqrtT> attr = std::make_unique<schema::SqrtT>();
     op->primitive->value.type = schema::PrimitiveType_Sqrt;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "Rsqrt") == 0) {
     MS_LOG(DEBUG) << "parse TfliteRsqrtParser";
-    std::unique_ptr<schema::RsqrtT> attr(new schema::RsqrtT());
+    std::unique_ptr<schema::RsqrtT> attr = std::make_unique<schema::RsqrtT>();
     op->primitive->value.type = schema::PrimitiveType_Rsqrt;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "Square") == 0) {
     MS_LOG(DEBUG) << "parse TfliteSquareParser";
-    std::unique_ptr<schema::SquareT> attr(new schema::SquareT());
+    std::unique_ptr<schema::SquareT> attr = std::make_unique<schema::SquareT>();
     op->primitive->value.type = schema::PrimitiveType_Square;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "Sin") == 0) {
     MS_LOG(DEBUG) << "parse TfliteSinParser";
-    std::unique_ptr<schema::SinT> attr(new schema::SinT());
+    std::unique_ptr<schema::SinT> attr = std::make_unique<schema::SinT>();
     op->primitive->value.type = schema::PrimitiveType_Sin;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "Cos") == 0) {
     MS_LOG(DEBUG) << "parse TfliteCosParser";
-    std::unique_ptr<schema::CosT> attr(new schema::CosT());
+    std::unique_ptr<schema::CosT> attr = std::make_unique<schema::CosT>();
     op->primitive->value.type = schema::PrimitiveType_Cos;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "Log") == 0) {
     MS_LOG(DEBUG) << "parse TfliteLogParser";
-    std::unique_ptr<schema::LogT> attr(new schema::LogT());
+    std::unique_ptr<schema::LogT> attr = std::make_unique<schema::LogT>();
     op->primitive->value.type = schema::PrimitiveType_Log;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "Round") == 0) {
     MS_LOG(DEBUG) << "parse TfliteRoundParser";
-    std::unique_ptr<schema::RoundT> attr(new schema::RoundT());
+    std::unique_ptr<schema::RoundT> attr = std::make_unique<schema::RoundT>();
     op->primitive->value.type = schema::PrimitiveType_Round;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "Ceil") == 0) {
     MS_LOG(DEBUG) << "parse TfliteCeilParser";
-    std::unique_ptr<schema::CeilT> attr(new schema::CeilT());
+    std::unique_ptr<schema::CeilT> attr = std::make_unique<schema::CeilT>();
     op->primitive->value.type = schema::PrimitiveType_Ceil;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "flOOR") == 0) {
     MS_LOG(DEBUG) << "parse TfliteFloorParser";
-    std::unique_ptr<schema::FloorT> attr(new schema::FloorT());
+    std::unique_ptr<schema::FloorT> attr = std::make_unique<schema::FloorT>();
     op->primitive->value.type = schema::PrimitiveType_Floor;
     op->primitive->value.value = attr.release();
   }
@@ -242,32 +242,32 @@ STATUS TfliteCompareOpParser::Parse(const std::unique_ptr<tflite::OperatorT> &tf
   const char *node_name = node_name_str.data()->c_str();
   if (std::strcmp(node_name, "Equal") == 0) {
     MS_LOG(DEBUG) << "parse TfliteEqualParser";
-    std::unique_ptr<schema::EqualT> attr(new schema::EqualT());
+    std::unique_ptr<schema::EqualT> attr = std::make_unique<schema::EqualT>();
     op->primitive->value.type = schema::PrimitiveType_Equal;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "NotEqual") == 0) {
     MS_LOG(DEBUG) << "parse TfliteNotEqualParser";
-    std::unique_ptr<schema::NotEqualT> attr(new schema::NotEqualT());
+    std::unique_ptr<schema::NotEqualT> attr = std::make_unique<schema::NotEqualT>();
     op->primitive->value.type = schema::PrimitiveType_NotEqual;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "Greater") == 0) {
     MS_LOG(DEBUG) << "parse TfliteGreaterParser";
-    std::unique_ptr<schema::GreaterT> attr(new schema::GreaterT());
+    std::unique_ptr<schema::GreaterT> attr = std::make_unique<schema::GreaterT>();
     op->primitive->value.type = schema::PrimitiveType_Greater;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "GreaterEqual") == 0) {
     MS_LOG(DEBUG) << "parse TfliteGreaterEqualParser";
-    std::unique_ptr<schema::GreaterEqualT> attr(new schema::GreaterEqualT());
+    std::unique_ptr<schema::GreaterEqualT> attr = std::make_unique<schema::GreaterEqualT>();
     op->primitive->value.type = schema::PrimitiveType_GreaterEqual;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "Less") == 0) {
     MS_LOG(DEBUG) << "parse TfliteLessParser";
-    std::unique_ptr<schema::LessT> attr(new schema::LessT());
+    std::unique_ptr<schema::LessT> attr = std::make_unique<schema::LessT>();
     op->primitive->value.type = schema::PrimitiveType_Less;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "LessEqual") == 0) {
     MS_LOG(DEBUG) << "parse TfliteLessEqualParser";
-    std::unique_ptr<schema::LessEqualT> attr(new schema::LessEqualT());
+    std::unique_ptr<schema::LessEqualT> attr = std::make_unique<schema::LessEqualT>();
     op->primitive->value.type = schema::PrimitiveType_LessEqual;
     op->primitive->value.value = attr.release();
   }

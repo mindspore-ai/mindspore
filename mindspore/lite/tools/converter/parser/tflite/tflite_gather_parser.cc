@@ -41,7 +41,7 @@ STATUS TfliteGatherParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::GatherT> attr(new schema::GatherT());
+  std::unique_ptr<schema::GatherT> attr = std::make_unique<schema::GatherT>();
 
   const auto &tflite_attr = tflite_op->builtin_options.AsGatherOptions();
   if (tflite_attr == nullptr) {

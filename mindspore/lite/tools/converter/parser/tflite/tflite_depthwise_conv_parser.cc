@@ -41,7 +41,7 @@ STATUS TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite::Operator
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::DepthwiseConv2DT> attr(new schema::DepthwiseConv2DT());
+  std::unique_ptr<schema::DepthwiseConv2DT> attr = std::make_unique<schema::DepthwiseConv2DT>();
   const auto &tflite_attr = tflite_op->builtin_options.AsDepthwiseConv2DOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";

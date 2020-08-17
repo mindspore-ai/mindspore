@@ -40,7 +40,7 @@ STATUS TfliteSqueezeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::SqueezeT> attr(new schema::SqueezeT());
+  std::unique_ptr<schema::SqueezeT> attr = std::make_unique<schema::SqueezeT>();
 
   const auto &tflite_attr = tflite_op->builtin_options.AsSqueezeOptions();
   if (tflite_attr == nullptr) {

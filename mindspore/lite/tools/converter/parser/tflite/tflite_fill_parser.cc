@@ -40,7 +40,7 @@ STATUS TfliteFillParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::FillT> attr(new schema::FillT());
+  std::unique_ptr<schema::FillT> attr = std::make_unique<schema::FillT>();
 
   if (tflite_op->inputs.size() > 1) {
     if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->dims)) {

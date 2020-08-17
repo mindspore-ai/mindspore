@@ -40,7 +40,7 @@ STATUS TfliteDeConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::DeConv2DT> attr(new schema::DeConv2DT());
+  std::unique_ptr<schema::DeConv2DT> attr = std::make_unique<schema::DeConv2DT>();
   const auto &tflite_attr = tflite_op->builtin_options.AsTransposeConvOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";

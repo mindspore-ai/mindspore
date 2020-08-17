@@ -41,7 +41,7 @@ STATUS TfliteSpaceToBatchNDParser::Parse(const std::unique_ptr<tflite::OperatorT
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::SpaceToBatchNDT> attr(new schema::SpaceToBatchNDT());
+  std::unique_ptr<schema::SpaceToBatchNDT> attr = std::make_unique<schema::SpaceToBatchNDT>();
 
   if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->blockShape)) {
     MS_LOG(ERROR) << "get spaceToBatchND -> blockShape failed";

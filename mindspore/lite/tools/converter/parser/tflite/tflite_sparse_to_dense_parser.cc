@@ -41,7 +41,7 @@ STATUS TfliteSparseToDenseParser::Parse(const std::unique_ptr<tflite::OperatorT>
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::SparseToDenseT> attr(new schema::SparseToDenseT());
+  std::unique_ptr<schema::SparseToDenseT> attr = std::make_unique<schema::SparseToDenseT>();
 
   attr->validateIndices = false;
 
