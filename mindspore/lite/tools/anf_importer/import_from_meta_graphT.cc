@@ -61,17 +61,17 @@ int AnfImporterFromMetaGraphT::ConverterConstTensor() {
       param_value->set_tensor_addr(tensor_data);
       param_value->set_tensor_size(size);
     }
-    if (!tensor->quantParams.empty()) {
-      std::unique_ptr<AnfQuantParam> quantParam = std::make_unique<AnfQuantParam>();
-      quantParam->scale = tensor->quantParams[0]->scale;
-      quantParam->zeroPoint = tensor->quantParams[0]->zeroPoint;
-      quantParam->min = tensor->quantParams[0]->min;
-      quantParam->max = tensor->quantParams[0]->max;
-      quantParam->narrowRange = tensor->quantParams[0]->narrowRange;
-      quantParam->numBits = tensor->quantParams[0]->numBits;
-      quantParam->inited = tensor->quantParams[0]->inited;
-      param_value->set_quant_param(quantParam);
-    }
+//    if (!tensor->quantParams.empty()) {
+//      std::unique_ptr<AnfQuantParam> quantParam = std::make_unique<AnfQuantParam>();
+//      quantParam->scale = tensor->quantParams[0]->scale;
+//      quantParam->zeroPoint = tensor->quantParams[0]->zeroPoint;
+//      quantParam->min = tensor->quantParams[0]->min;
+//      quantParam->max = tensor->quantParams[0]->max;
+//      quantParam->narrowRange = tensor->quantParams[0]->narrowRange;
+//      quantParam->numBits = tensor->quantParams[0]->numBits;
+//      quantParam->inited = tensor->quantParams[0]->inited;
+//      param_value->set_quant_param(quantParam);
+//    }
     parameter->set_default_param(param_value);
     AddNode(i, parameter);
   }
