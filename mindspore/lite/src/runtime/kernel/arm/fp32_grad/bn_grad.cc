@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <vector>
 #include "schema/model_generated.h"
-#include "src/kernel_factory.h"
+#include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/fp32_grad/bn_grad.h"
 #include "src/runtime/kernel/arm/nnacl/fp32_grad/batch_norm.h"
 #include "include/errorcode.h"

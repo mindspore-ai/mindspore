@@ -8,10 +8,8 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/ir/tensor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/executor.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/kernel_factory.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel_registry.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_kernel.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/model.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/populate_parameter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/scheduler.cc
         )
@@ -21,44 +19,11 @@ if (SUPPORT_GPU)
   list(APPEND LITE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/runtime/kernel/opencl/utils.cc)
 endif()
 
-if (SUPPORT_TRAIN)
-    set(ANF_SRC
-             ${ANF_SRC}
-#            ${CCSRC_DIR}/common/trans.cc
-#            ${CCSRC_DIR}/utils/lite/base_ref_utils.cc
-#            ${CCSRC_DIR}/runtime/kernel/kernel_compiler/kernel_build_info.cc
-#            ${CCSRC_DIR}/session/lite/anf_runtime_algorithm_extends.cc
-#            ${CCSRC_DIR}/session/lite/session_basic_extends.cc
-#            ${CCSRC_DIR}/session/anf_runtime_algorithm.cc
-#            ${CCSRC_DIR}/session/session_basic.cc
-#            ${CCSRC_DIR}/session/kernel_graph.cc
-#            ${CCSRC_DIR}/session/session_factory.cc
-#            ${CCSRC_DIR}/device/kernel_info.cc
-#            ${CCSRC_DIR}/device/kernel_runtime.cc
-#            ${CCSRC_DIR}/device/lite/kernel_runtime_extends.cc
-            )
-    set(PASS_SRC)
-    set(LITE_SRC
-            ${LITE_SRC}
-            ${ANF_SRC}
-        #   ${PASS_SRC}
-        #   ${CMAKE_CURRENT_SOURCE_DIR}/common/anf_importer/anf_importer.cc
-        #   ${CMAKE_CURRENT_SOURCE_DIR}/common/anf_importer/import_from_meta_graph.cc
-        #   ${CMAKE_CURRENT_SOURCE_DIR}/ir/primitive_value.cc
-        #   ${CMAKE_CURRENT_SOURCE_DIR}/train/lite_kernel_runtime.cc
-        #   ${CMAKE_CURRENT_SOURCE_DIR}/train/train_session.cc
-        #   ${CMAKE_CURRENT_SOURCE_DIR}/train/model_impl.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc # temporary
-            ${CMAKE_CURRENT_SOURCE_DIR}/model_impl.cc   # temporary
-            )
-            
-else ()
-    set(LITE_SRC
-            ${LITE_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/model_impl.cc
-            )
-endif ()
+set(LITE_SRC
+        ${LITE_SRC}
+        ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/model.cc
+        )
 
 if (SUPPORT_GPU)
     set(LITE_SRC

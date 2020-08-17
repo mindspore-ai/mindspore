@@ -16,6 +16,7 @@
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "ir/dtype/type_id.h"
+#include "src/populate_parameter.h"
 #ifdef ENABLE_ARM64
 #include <asm/hwcap.h>
 #include "common/utils.h"
@@ -120,4 +121,23 @@ void KernelRegistry::RegKernel(const KERNEL_ARCH arch, const TypeId data_type, c
 bool KernelRegistry::Merge(const std::unordered_map<KernelKey, KernelCreator> &newCreators) { return false; }
 
 const kernel::KernelCreator *KernelRegistry::GetCreatorArrays() { return creator_arrays_; }
+
+kernel::LiteKernel *KernelRegistry::GetKernel(const std::vector<tensor::Tensor *> &in_tensors,
+                                      const std::vector<tensor::Tensor *> &out_tensors,
+                                      const lite::Primitive *primitive, const Context *ctx,
+                                      const kernel::KernelKey &key) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  MS_EXCEPTION_IF_NULL(ctx);
+  auto parameter = kernel::PopulateParameter(primitive);
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << schema::EnumNamePrimitiveType(primitive->Type());
+    return nullptr;
+  }
+  auto creator = GetCreator(key);
+  if (creator != nullptr) {
+    auto kernel = creator(in_tensors, out_tensors, parameter, ctx, key, primitive);
+    return kernel;
+  }
+  return nullptr;
+}
 }  // namespace mindspore::lite

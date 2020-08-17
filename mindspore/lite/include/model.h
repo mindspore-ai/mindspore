@@ -25,12 +25,12 @@
 namespace mindspore {
 #define MS_API __attribute__((visibility("default")))
 
+namespace lite {
 /// \brief ModelImpl defined the implement class of Model in MindSpore Lite.
 ///
 /// \note List public class and interface for reference.
 class ModelImpl;
 
-namespace lite {
 /// \brief Primitive defined as prototype of operator.
 ///
 /// \note List public class and interface for reference.
@@ -66,11 +66,6 @@ class MS_API Model {
   ///
   /// \return the pointer of graph defined in flatbuffers.
   const schema::MetaGraph *GetMetaGraph() const;
-
-  /// \brief Get MindSpore Lite ModelImpl.
-  ///
-  /// \return the pointer of MindSpore Lite ModelImpl.
-  ModelImpl *model_impl();
 
   /// \brief Free MetaGraph in MindSpore Lite Model.
   void FreeMetaGraph();

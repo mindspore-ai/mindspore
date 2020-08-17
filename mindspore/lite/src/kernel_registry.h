@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_LITE_SRC_KERNEL_REGISTRY_H_
 #define MINDSPORE_LITE_SRC_KERNEL_REGISTRY_H_
 
-#include <map>
 #include <string>
 #include <unordered_map>
+#include <vector>
 #include "src/lite_kernel.h"
 #include "schema/model_generated.h"
 
@@ -39,6 +39,9 @@ class KernelRegistry {
   void RegKernel(const kernel::KERNEL_ARCH arch, const TypeId data_type, const schema::PrimitiveType type,
                  kernel::KernelCreator creator);
   bool Merge(const std::unordered_map<kernel::KernelKey, kernel::KernelCreator> &newCreators);
+  kernel::LiteKernel *GetKernel(const std::vector<tensor::Tensor *> &in_tensors,
+                                const std::vector<tensor::Tensor *> &out_tensors, const lite::Primitive *primitive,
+                                const Context *ctx, const kernel::KernelKey &key);
 
  protected:
   kernel::KernelCreator *creator_arrays_ = nullptr;

@@ -20,15 +20,15 @@
 #include <algorithm>
 #include "schema/inner/model_generated.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "src/kernel_factory.h"
 #include "tools/anf_exporter/anf_exporter.h"
+#include "src/kernel_registry.h"
 #include "src/scheduler.h"
 #include "include/context.h"
 #include "src/lite_session.h"
 #include "src/ir/primitive_t_value.h"
 #include "src/populate_parameter.h"
 
-using mindspore::lite::KernelFactory;
+using mindspore::lite::KernelRegistry;
 using mindspore::lite::tensor::Tensor;
 using mindspore::lite::PrimitiveTValue;
 namespace mindspore::opt {

@@ -16,7 +16,7 @@
 #include "src/runtime/kernel/arm/base/matmul_base.h"
 #include "src/runtime/kernel/arm/fp32/matmul.h"
 #include "src/runtime/kernel/arm/int8/matmul_int8.h"
-#include "src/kernel_factory.h"
+#include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "include/context.h"
 

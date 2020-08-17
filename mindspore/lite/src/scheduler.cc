@@ -18,7 +18,7 @@
 #include <vector>
 #include <algorithm>
 #include "include/errorcode.h"
-#include "src/kernel_factory.h"
+#include "src/kernel_registry.h"
 #include "src/common/graph_util.h"
 #include "src/common/utils.h"
 #if SUPPORT_GPU
@@ -191,7 +191,7 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<tensor::Tensor *> 
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, primitive->Type()};
   if (context_->device_ctx_.type == DT_GPU) {
     desc.arch = kernel::KERNEL_ARCH::kGPU;
-    auto *kernel = KernelFactory::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, desc);
+    auto *kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, desc);
     if (nullptr != kernel) {
       kernel->set_desc(desc);
       return kernel;
@@ -203,7 +203,7 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<tensor::Tensor *> 
   if ((context_->float16_priority && data_type == kNumberTypeFloat32) || data_type == kNumberTypeFloat16) {
     // check if support fp16
     kernel::KernelKey key{desc.arch, kNumberTypeFloat16, desc.type};
-    kernel = KernelFactory::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, key);
+    kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, key);
     if (kernel != nullptr) {
       MS_LOG(DEBUG) << "Get fp16 op success.";
       desc.data_type = kNumberTypeFloat16;
@@ -215,7 +215,7 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<tensor::Tensor *> 
   if (data_type == kNumberTypeFloat16) {
     desc.data_type = kNumberTypeFloat32;
   }
-  kernel = KernelFactory::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, desc);
+  kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, desc);
   if (kernel != nullptr) {
     kernel->set_desc(desc);
     return kernel;

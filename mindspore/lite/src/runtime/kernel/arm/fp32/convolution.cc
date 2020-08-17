@@ -22,7 +22,7 @@
 #include "src/runtime/kernel/arm/nnacl/fp32/conv.h"
 #include "src/runtime/kernel/arm/nnacl/common_func.h"
 #include "schema/model_generated.h"
-#include "src/kernel_factory.h"
+#include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
 
