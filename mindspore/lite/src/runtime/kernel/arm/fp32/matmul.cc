@@ -78,6 +78,11 @@ int MatmulCPUKernel::Init() {
   }
   memset(c_r8x8_ptr_, 0, params_->row_8_ * params_->col_8_ * sizeof(float));
 
+  params_->a_const_ = false;
+  params_->b_const_ = false;
+  InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->Data()), a_c8_ptr_);
+  InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->Data()), b_r8_ptr_);
+
   if (in_tensors_.size() == 3) {
     bias_ptr_ = reinterpret_cast<float *>(malloc(params_->col_8_ * sizeof(float)));
     memset(bias_ptr_, 0, params_->col_8_ * sizeof(float));
@@ -87,6 +92,40 @@ int MatmulCPUKernel::Init() {
   }
 
   return RET_OK;
+}
+
+void MatmulCPUKernel::InitMatrixA(float *src_ptr, float *dst_ptr) {
+  if (params_->a_const_ == true) {
+    return;
+  }
+  if (src_ptr == nullptr) {
+    return;
+  }
+  params_->a_const_ = true;
+
+  if (params_->a_transpose_) {
+    RowMajor2Row8Major(src_ptr, dst_ptr, params_->deep_, params_->row_);
+  } else {
+    RowMajor2Col8Major(src_ptr, a_c8_ptr_, params_->row_, params_->deep_);
+  }
+  return;
+}
+
+void MatmulCPUKernel::InitMatrixB(float *src_ptr, float *dst_ptr) {
+  if (params_->b_const_ == true) {
+    return;
+  }
+  if (src_ptr == nullptr) {
+    return;
+  }
+  params_->b_const_ = true;
+
+  if (params_->b_transpose_) {
+    RowMajor2Col8Major(src_ptr, dst_ptr, params_->col_, params_->deep_);
+  } else {
+    RowMajor2Row8Major(src_ptr, dst_ptr, params_->deep_, params_->col_);
+  }
+  return;
 }
 
 int MatmulCPUKernel::RunImpl(int task_id) {
@@ -131,16 +170,10 @@ int MatmulCPUKernel::Run() {
     auto cur_a_ptr = a_ptr + i * a_stride;
     auto cur_b_ptr = b_ptr + i * b_stride;
     auto cur_c_ptr = c_ptr + i * c_stride;
-    if (params_->a_transpose_) {
-      RowMajor2Row8Major(cur_a_ptr, a_c8_ptr_, params_->deep_, params_->row_);
-    } else {
-      RowMajor2Col8Major(cur_a_ptr, a_c8_ptr_, params_->row_, params_->deep_);
-    }
-    if (params_->b_transpose_) {
-      RowMajor2Col8Major(cur_b_ptr, b_r8_ptr_, params_->col_, params_->deep_);
-    } else {
-      RowMajor2Row8Major(cur_b_ptr, b_r8_ptr_, params_->deep_, params_->col_);
-    }
+
+    InitMatrixA(cur_a_ptr, a_c8_ptr_);
+    InitMatrixB(cur_b_ptr, b_r8_ptr_);
+
     LiteBackendParallelLaunch(MatmulFloatRun, this, thread_count_);
     Row8x8Major2RowMajor(c_r8x8_ptr_, cur_c_ptr, params_->row_, params_->col_, params_->col_);
   }

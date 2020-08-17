@@ -36,6 +36,10 @@ class MatmulCPUKernel : public MatmulBaseCPUKernel {
   int RunImpl(int task_id);
 
  private:
+  void InitMatrixA(float *src_ptr, float *dst_ptr);
+  void InitMatrixB(float *src_ptr, float *dst_ptr);
+
+ private:
   float *a_c8_ptr_;
   float *b_r8_ptr_;
   float *c_r8x8_ptr_;

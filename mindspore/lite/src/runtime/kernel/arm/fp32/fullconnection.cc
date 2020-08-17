@@ -23,6 +23,11 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 FullconnectionCPUKernel::~FullconnectionCPUKernel() {
+  FreeBuf();
+  return;
+}
+
+void FullconnectionCPUKernel::FreeBuf() {
   if (a_c8_ptr_ != nullptr) {
     free(a_c8_ptr_);
     a_c8_ptr_ = nullptr;
@@ -41,7 +46,11 @@ FullconnectionCPUKernel::~FullconnectionCPUKernel() {
   }
 }
 
-int FullconnectionCPUKernel::ReSize() { return RET_OK; }
+int FullconnectionCPUKernel::ReSize() {
+  FreeBuf();
+  Init();
+  return RET_OK;
+}
 
 int FullconnectionCPUKernel::Init() {
   if (context_->infer_shape_interrupt_ && !context_->running_) {
@@ -75,14 +84,42 @@ int FullconnectionCPUKernel::Init() {
     return RET_MEMORY_FAILED;
   }
   memset(b_r8_ptr_, 0, fc_param_->col_8_ * fc_param_->deep_ * sizeof(float));
-  RowMajor2Col8Major(reinterpret_cast<float *>(in_tensors_[1]->Data()), b_r8_ptr_, fc_param_->col_, fc_param_->deep_);
 
   c_r8x8_ptr_ = reinterpret_cast<float *>(malloc(fc_param_->row_8_ * fc_param_->col_8_ * sizeof(float)));
   if (c_r8x8_ptr_ == nullptr) {
     return RET_MEMORY_FAILED;
   }
   memset(c_r8x8_ptr_, 0, fc_param_->row_8_ * fc_param_->col_8_ * sizeof(float));
+
+  fc_param_->a_const_ = false;
+  fc_param_->b_const_ = false;
+  InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->Data()), a_c8_ptr_);
+  InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->Data()), b_r8_ptr_);
   return RET_OK;
+}
+
+void FullconnectionCPUKernel::InitMatrixA(float *src_ptr, float *dst_ptr) {
+  if (fc_param_->a_const_ == true) {
+    return;
+  }
+  if (src_ptr == nullptr) {
+    return;
+  }
+  fc_param_->a_const_ = true;
+  RowMajor2Col8Major(src_ptr, a_c8_ptr_, fc_param_->row_, fc_param_->deep_);
+  return;
+}
+
+void FullconnectionCPUKernel::InitMatrixB(float *src_ptr, float *dst_ptr) {
+  if (fc_param_->b_const_ == true) {
+    return;
+  }
+  if (src_ptr == nullptr) {
+    return;
+  }
+  fc_param_->b_const_ = true;
+  RowMajor2Col8Major(src_ptr, dst_ptr, fc_param_->col_, fc_param_->deep_);
+  return;
 }
 
 int FcFp32MatmulRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
@@ -115,9 +152,11 @@ int FullconnectionCPUKernel::Run() {
     return prepare_ret;
   }
   auto a_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
+  auto b_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->Data());
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
 
-  RowMajor2Col8Major(a_ptr, a_c8_ptr_, fc_param_->row_, fc_param_->deep_);
+  InitMatrixA(a_ptr, a_c8_ptr_);
+  InitMatrixB(b_ptr, b_r8_ptr_);
 
   LiteBackendParallelLaunch(FcFp32MatmulRun, this, thread_count_);
 
