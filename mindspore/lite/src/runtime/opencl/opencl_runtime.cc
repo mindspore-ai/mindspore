@@ -71,6 +71,10 @@ void OpenCLRuntime::DeleteInstance() {
 
 OpenCLRuntime::OpenCLRuntime() { default_build_opts_ = " -cl-mad-enable -cl-fast-relaxed-math -Werror"; }
 
+void printf_callback(const char *buffer, size_t length, size_t final, void *user_data) {
+  fwrite(buffer, 1, length, stdout);
+}
+
 // Init will get platforms info, get devices info, create opencl context.
 int OpenCLRuntime::Init() {
   std::unique_lock<std::mutex> lck(g_init_mtx);
@@ -147,6 +151,9 @@ int OpenCLRuntime::Init() {
   }
 #else
   MS_LOG(INFO) << "Create common opencl context";
+  //  cl_context_properties context_prop[] = {CL_CONTEXT_PLATFORM, (cl_context_properties)platforms[0](),
+  //                                          CL_PRINTF_CALLBACK_ARM, (cl_context_properties)printf_callback, 0};
+  //  context_ = std::make_shared<cl::Context>(std::vector<cl::Device>{*device_}, context_prop, nullptr, nullptr, &err);
   context_ = std::make_shared<cl::Context>(std::vector<cl::Device>{*device_}, nullptr, nullptr, nullptr, &err);
 #endif
   if (err != CL_SUCCESS) {

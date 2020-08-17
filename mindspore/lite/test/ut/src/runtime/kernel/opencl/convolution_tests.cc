@@ -63,9 +63,26 @@ void MyCompareOutput(lite::tensor::Tensor *output_tensor, const std::string &fil
   printf("compare success!\n\n\n");
 }
 
-void TEST_MAIN(ConvParameter *param, schema::Format data_format, const std::string &input_file,
-               const std::string &weight_file, const std::string &bias_file, const std::string &expect_file) {
+void TEST_MAIN(schema::Format input_format, schema::Format output_format, const std::string &data_path,
+               std::string attr_str) {
   assert(data_format == schema::Format_NHWC || data_format == schema::Format_NHWC4);
+  auto param = new ConvParameter;
+  sscanf(attr_str.c_str(),
+         "inputNHWC_%dx%dx%dx%d_outputNHWC_%dx%dx%dx%d_kernelHW_%dx%d_strideHW_%dx%d_padTopBottomLeftRight_%dx%dx%dx%d_"
+         "dilationHW_%dx%d",
+         &param->input_batch_, &param->input_h_, &param->input_w_, &param->input_channel_, &param->output_batch_,
+         &param->output_h_, &param->output_w_, &param->output_channel_, &param->kernel_h_, &param->kernel_w_,
+         &param->stride_h_, &param->stride_w_, &param->pad_u_, &param->pad_d_, &param->pad_l_, &param->pad_r_,
+         &param->dilation_h_, &param->dilation_w_);
+  auto testcase_path = data_path + "/" + attr_str + "/";
+  auto input_file = testcase_path + (input_format == schema::Format_NHWC4 ? "input_NHWC4.bin" : "input_NHWC.bin");
+  auto weight_file = testcase_path + "weight_OHWI.bin";
+  auto bias_file = testcase_path + "bias_C4.bin";
+  auto expect_file = testcase_path + (output_format == schema::Format_NHWC4 ? "expect_NHWC4.bin" : "expect_NHWC.bin");
+  std::cout << input_file << std::endl;
+  std::cout << weight_file << std::endl;
+  std::cout << bias_file << std::endl;
+  std::cout << expect_file << std::endl;
 
   std::cout << "initialize OpenCLRuntime";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
@@ -79,10 +96,10 @@ void TEST_MAIN(ConvParameter *param, schema::Format data_format, const std::stri
   std::vector<int> output_shape = {param->output_batch_, param->output_h_, param->output_w_, param->output_channel_};
   auto data_type = kNumberTypeFloat32;
   auto tensorType = schema::NodeType_ValueNode;
-  auto input_tensor = new lite::tensor::Tensor(data_type, input_shape, data_format, tensorType);
+  auto input_tensor = new lite::tensor::Tensor(data_type, input_shape, input_format, tensorType);
   auto weight_tensor = new lite::tensor::Tensor(data_type, weight_shape, schema::Format_KHWC, tensorType);
   auto bias_tensor = new lite::tensor::Tensor(data_type, bias_shape, schema::Format_KHWC, tensorType);
-  auto output_tensor = new lite::tensor::Tensor(data_type, output_shape, data_format, tensorType);
+  auto output_tensor = new lite::tensor::Tensor(data_type, output_shape, output_format, tensorType);
   std::vector<lite::tensor::Tensor *> inputs{input_tensor, weight_tensor, bias_tensor};
   std::vector<lite::tensor::Tensor *> outputs{output_tensor};
 
@@ -114,7 +131,6 @@ void TEST_MAIN(ConvParameter *param, schema::Format data_format, const std::stri
 
   std::cout << "sub_graph->Run()";
   sub_graph->Run();
-  printf("output_tensor->Size() =%zu\n", output_tensor->Size());
 
   std::cout << "compare result";
   MyCompareOutput(output_tensor, expect_file);
@@ -131,57 +147,35 @@ void TEST_MAIN(ConvParameter *param, schema::Format data_format, const std::stri
   mindspore::lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
-std::array<std::string, 4> GenFilenames(ConvParameter *param, schema::Format data_format, const std::string &path) {
-  auto full_path = path + "inputNHWC_" + std::to_string(param->input_batch_) + "x" + std::to_string(param->input_h_) +
-                   "x" + std::to_string(param->input_w_) + "x" + std::to_string(param->input_channel_) +
-                   "_outputNHWC_" + std::to_string(param->output_batch_) + "x" + std::to_string(param->output_h_) +
-                   "x" + std::to_string(param->output_w_) + "x" + std::to_string(param->output_channel_) +
-                   "_kernelHW_" + std::to_string(param->kernel_h_) + "x" + std::to_string(param->kernel_w_) +
-                   "_strideHW_" + std::to_string(param->stride_h_) + "x" + std::to_string(param->stride_w_) +
-                   "_padTopBottomLeftRight_" + std::to_string(param->pad_u_) + "x" + std::to_string(param->pad_d_) +
-                   "x" + std::to_string(param->pad_l_) + "x" + std::to_string(param->pad_r_) + "_dilationHW_1x1/";
-
-  if (data_format == schema::Format_NHWC4) {
-    return std::array<std::string, 4>{full_path + "input_NHWC4.bin", full_path + "weight_OHWI.bin",
-                                      full_path + "bias_C4.bin", full_path + "expect_NHWC4.bin"};
-  } else {
-    return std::array<std::string, 4>{full_path + "input_NHWC.bin", full_path + "weight_OHWI.bin",
-                                      full_path + "bias_C.bin", full_path + "expect_NHWC.bin"};
-  }
-}
-
 TEST_F(TestConvolutionOpenCL, in1x224x224x3_out1x112x112x32_k33_s22_p0101) {
-  auto param = new ConvParameter;
-  param->input_batch_ = 1, param->input_h_ = 224, param->input_w_ = 224, param->input_channel_ = 3;
-  param->output_batch_ = 1, param->output_h_ = 112, param->output_w_ = 112, param->output_channel_ = 32;
-  param->kernel_h_ = 3, param->kernel_w_ = 3;
-  param->stride_h_ = 2, param->stride_w_ = 2;
-  param->pad_u_ = 0, param->pad_d_ = 1, param->pad_l_ = 0, param->pad_r_ = 1;
-
-  auto filenames = GenFilenames(param, schema::Format_NHWC4, "testcases/mobilenetv2_fp32/");
-  //  std::cout << filenames[0] << std::endl;
-  //  std::cout << filenames[1] << std::endl;
-  //  std::cout << filenames[2] << std::endl;
-  //  std::cout << filenames[3] << std::endl;
-  TEST_MAIN(param, schema::Format_NHWC4, filenames[0], filenames[1], filenames[2], filenames[3]);
-  lite::opencl::OpenCLRuntime::DeleteInstance();
+  TEST_MAIN(
+    schema::Format_NHWC, schema::Format_NHWC4, "testcases/mobilenetv2_fp32/",
+    "inputNHWC_1x224x224x3_outputNHWC_1x112x112x32_kernelHW_3x3_strideHW_2x2_padTopBottomLeftRight_0x1x0x1_dilationHW_"
+    "1x1");
 }
 
-TEST_F(TestConvolutionOpenCL, in1x1x64x512_out1x1x64x7358_k11_s11_p0000) {
-  auto param = new ConvParameter;
-  param->input_batch_ = 1, param->input_h_ = 1, param->input_w_ = 64, param->input_channel_ = 512;
-  param->output_batch_ = 1, param->output_h_ = 1, param->output_w_ = 64, param->output_channel_ = 7358;
-  param->kernel_h_ = 1, param->kernel_w_ = 1;
-  param->stride_h_ = 1, param->stride_w_ = 1;
-  param->pad_u_ = 0, param->pad_d_ = 0, param->pad_l_ = 0, param->pad_r_ = 0;
+// TEST_F(TestConvolutionOpenCL, in1x1x64x512_out1x1x64x7358_k11_s11_p0000) {
+//  TEST_MAIN(
+//    schema::Format_NHWC, schema::Format_NHWC4, "testcases/02_fp32/",
+//    "inputNHWC_1x1x64x512_outputNHWC_1x1x64x7358_kernelHW_1x1_strideHW_1x1_padTopBottomLeftRight_0x0x0x0_dilationHW_"
+//    "1x1");
+//}
 
-  auto filenames = GenFilenames(param, schema::Format_NHWC4, "testcases/02_fp32/");
-  //  std::cout << filenames[0] << std::endl;
-  //  std::cout << filenames[1] << std::endl;
-  //  std::cout << filenames[2] << std::endl;
-  //  std::cout << filenames[3] << std::endl;
-  TEST_MAIN(param, schema::Format_NHWC4, filenames[0], filenames[1], filenames[2], filenames[3]);
-  lite::opencl::OpenCLRuntime::DeleteInstance();
+TEST_F(TestConvolutionOpenCL, winograd_inputNHWC_1x16x256x96_outputNHWC_1x16x256x80) {
+  TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/test_fp32/",
+            "inputNHWC_1x16x256x96_outputNHWC_1x16x256x80_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_"
+            "dilationHW_1x1");
+}
+TEST_F(TestConvolutionOpenCL, winograd_inputNHWC_1x16x256x100_outputNHWC_1x16x256x96) {
+  TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/test_fp32/",
+            "inputNHWC_1x16x256x100_outputNHWC_1x16x256x96_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_"
+            "dilationHW_1x1");
+}
+
+TEST_F(TestConvolutionOpenCL, winograd_inputNHWC_1x480x480x128_outputNHWC_1x480x480x128) {
+  TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/test_fp32/",
+            "inputNHWC_1x480x480x128_outputNHWC_1x480x480x128_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_"
+            "1x1x1x1_dilationHW_1x1");
 }
 
 }  // namespace mindspore

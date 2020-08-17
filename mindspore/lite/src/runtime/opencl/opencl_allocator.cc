@@ -113,6 +113,7 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size) 
         UnLock();
         return nullptr;
       }
+      MS_LOG(DEBUG) << "Malloc a new Image2D, width=" << img_size[0] << ", height=" << img_size[1];
       image_ptr = static_cast<void *>(image);
     }
   }
