@@ -522,6 +522,8 @@ class Model:
             is not equal to the required amount of training .
             If dataset_sink_mode is True, data will be sent to device. If device is Ascend, features
             of data will be transferred one by one. The limitation of data transmission per time is 256M.
+            If sink_size > 0, each epoch the dataset can be traversed unlimited times until you get sink_size
+            elements of the dataset. Next epoch continues to traverse from the end position of the previous traversal.
 
         Args:
             epoch (int): Generally, total number of iterations on the data per epoch.
@@ -537,8 +539,8 @@ class Model:
                                       Configure pynative mode, the training process will be performed with
                                       dataset not sink.
             sink_size (int): Control the amount of data in each sink.
-                             If sink_size=-1, sink the complete dataset for each epoch.
-                             If sink_size>0, sink sink_size data for each epoch.
+                             If sink_size = -1, sink the complete dataset for each epoch.
+                             If sink_size > 0, sink sink_size data for each epoch.
                              If dataset_sink_mode is False, set sink_size as invalid. Default: -1.
 
         Examples:
