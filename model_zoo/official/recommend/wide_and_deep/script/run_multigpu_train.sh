@@ -25,5 +25,5 @@ mpirun --allow-run-as-root -n $RANK_SIZE                    \
     python -s ${self_path}/../train_and_eval_distribute.py  \
         --device_target="GPU"                               \
         --data_path=$DATASET                                \
-        --batch_size=8000                                   \
+        --batch_size=16000                                  \
         --epochs=$EPOCH_SIZE > log.txt 2>&1 &
