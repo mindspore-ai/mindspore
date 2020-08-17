@@ -44,6 +44,28 @@ int ElementSubFp16(float16_t *input0, float16_t *input1, float16_t *output, int 
 int ElementSubReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
 int ElementSubRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
 
+int ElementDivFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+int ElementDivReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+int ElementDivRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+
+int ElementFloorModFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+int ElementFloorDivFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+
+int ElementLogicalAndFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+int ElementLogicalOrFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+
+int ElementSquaredDifferenceFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+
+int ElementMaximumFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+int ElementMinimumFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+
+int ElementNotEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+int ElementEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+int ElementLessFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+int ElementLessEqual(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+int ElementGreaterFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+int ElementGreaterEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+
 void TileDimensionsFp16(float16_t *data0, float16_t *data1, float16_t *tile_data0, float16_t *tile_data1,
                         ArithmeticParameter *param);
 #ifdef __cplusplus

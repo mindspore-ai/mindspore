@@ -104,10 +104,16 @@ int ElementMulFp16(float16_t *input0, float16_t *input1, float16_t *output, int 
   int block_c8 = element_size - block_mod;
 
   for (int index = 0; index < block_c8; index += C8NUM) {
-    output[0] = input0[0] * input1[0];
-    output[1] = input0[1] * input1[1];
-    output[2] = input0[2] * input1[2];
-    output[3] = input0[3] * input1[3];
+#ifdef ENABLE_NEON
+    float16x8_t vin0 = vld1q_f16(input0);
+    float16x8_t vin1 = vld1q_f16(input1);
+    float16x8_t vout = vmulq_f16(vin0, vin1);
+    vst1q_f16(output, vout);
+#else
+    for (int i = 0; i < C8NUM; ++i) {
+      output[i] = input0[i] * input1[i];
+    }
+#endif
     input0 += C8NUM;
     input1 += C8NUM;
     output += C8NUM;
@@ -123,15 +129,24 @@ int ElementMulReluFp16(float16_t *input0, float16_t *input1, float16_t *output, 
   int block_mod = element_size % C8NUM;
   int block_c8 = element_size - block_mod;
 
+#ifdef ENABLE_NEON
+  float16x8_t zeros = {0, 0, 0, 0, 0, 0, 0, 0};
+#endif
+
   for (int index = 0; index < block_c8; index += C8NUM) {
-    float16_t res = input0[0] * input1[0];
-    output[0] = res > 0 ? res : 0;
-    res = input0[1] * input1[1];
-    output[1] = res > 0 ? res : 0;
-    res = input0[2] * input1[2];
-    output[2] = res > 0 ? res : 0;
-    res = input0[3] * input1[3];
-    output[3] = res > 0 ? res : 0;
+#ifdef ENABLE_NEON
+    float16x8_t vin0 = vld1q_f16(input0);
+    float16x8_t vin1 = vld1q_f16(input1);
+    float16x8_t vout = vmulq_f16(vin0, vin1);
+    vout = vmaxq_f16(vout, zeros);
+    vst1q_f16(output, vout);
+#else
+    float16_t res;
+    for (int i = 0; i < C8NUM; ++i) {
+      res = input[i] * input1[i];
+      output[i] = res > 0 ? res : 0;
+    }
+#endif
     input0 += C8NUM;
     input1 += C8NUM;
     output += C8NUM;
@@ -148,11 +163,23 @@ int ElementMulRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output,
   int block_mod = element_size % C8NUM;
   int block_c8 = element_size - block_mod;
 
+#ifdef ENABLE_NEON
+  float16x8_t zeros = {0, 0, 0, 0, 0, 0, 0, 0};
+  float16x8_t bounds = {6, 6, 6, 6, 6, 6, 6, 6};
+#endif
+
   for (int index = 0; index < block_c8; index += C8NUM) {
-    output[0] = MSMIN(MSMAX(input0[0] * input1[0], 0), 6);
-    output[1] = MSMIN(MSMAX(input0[1] * input1[1], 0), 6);
-    output[2] = MSMIN(MSMAX(input0[2] * input1[2], 0), 6);
-    output[3] = MSMIN(MSMAX(input0[3] * input1[3], 0), 6);
+#ifdef ENABLE_NEON
+    float16x8_t vin0 = vld1q_f16(input0);
+    float16x8_t vin1 = vld1q_f16(input1);
+    float16x8_t vout = vmulq_f16(vin0, vin1);
+    vout = vminq_f16(vmaxq_f16(vout, zeros), bounds);
+    vst1q_f16(output, vout);
+#else
+    for (int i = 0; i < C8NUM; ++i) {
+      output[i] = MSMIN(MSMAX(input0[i] * input1[i], 0), 6);
+    }
+#endif
     input0 += C8NUM;
     input1 += C8NUM;
     output += C8NUM;
@@ -169,10 +196,16 @@ int ElementAddFp16(float16_t *input0, float16_t *input1, float16_t *output, int 
   int block_c8 = element_size - block_mod;
 
   for (int index = 0; index < block_c8; index += C8NUM) {
-    output[0] = input0[0] + input1[0];
-    output[1] = input0[1] + input1[1];
-    output[2] = input0[2] + input1[2];
-    output[3] = input0[3] + input1[3];
+#ifdef ENABLE_NEON
+    float16x8_t vin0 = vld1q_f16(input0);
+    float16x8_t vin1 = vld1q_f16(input1);
+    float16x8_t vout = vaddq_f16(vin0, vin1);
+    vst1q_f16(output, vout);
+#else
+    for (int i = 0; i < C8NUM; ++i) {
+      output[i] = input0[i] + input1[i];
+    }
+#endif
     input0 += C8NUM;
     input1 += C8NUM;
     output += C8NUM;
@@ -187,15 +220,22 @@ int ElementAddReluFp16(float16_t *input0, float16_t *input1, float16_t *output, 
   int block_mod = element_size % C8NUM;
   int block_c8 = element_size - block_mod;
 
+#ifdef ENABLE_NEON
+  float16x8_t zeros = {0, 0, 0, 0, 0, 0, 0, 0};
+#endif
+
   for (int index = 0; index < block_c8; index += C8NUM) {
-    float16_t res = input0[0] + input1[0];
-    output[0] = res > 0 ? res : 0;
-    res = input0[1] + input1[1];
-    output[1] = res > 0 ? res : 0;
-    res = input0[2] + input1[2];
-    output[2] = res > 0 ? res : 0;
-    res = input0[3] + input1[3];
-    output[3] = res > 0 ? res : 0;
+#ifdef ENABLE_NEON
+    float16x8_t vin0 = vld1q_f16(input0);
+    float16x8_t vin1 = vld1q_f16(input1);
+    float16x8_t vout = vaddq_f16(vin0, vin1);
+    vout = vmaxq_f16(vout, zeros);
+    vst1q_f16(output, vout);
+#else
+    for (int i = 0; i < C8NUM; ++i) {
+      output[i] = MSMAX(input0[i] + input1[i], 0);
+    }
+#endif
     input0 += C8NUM;
     input1 += C8NUM;
     output += C8NUM;
@@ -211,11 +251,23 @@ int ElementAddRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output,
   int block_mod = element_size % C8NUM;
   int block_c8 = element_size - block_mod;
 
+#ifdef ENABLE_NEON
+  float16x8_t zeros = {0, 0, 0, 0, 0, 0, 0, 0};
+  float16x8_t bounds = {6, 6, 6, 6, 6, 6, 6, 6};
+#endif
+
   for (int index = 0; index < block_c8; index += C8NUM) {
-    output[0] = MSMIN(MSMAX(input0[0] + input1[0], 0), 6);
-    output[1] = MSMIN(MSMAX(input0[1] + input1[1], 0), 6);
-    output[2] = MSMIN(MSMAX(input0[2] + input1[2], 0), 6);
-    output[3] = MSMIN(MSMAX(input0[3] + input1[3], 0), 6);
+#ifdef ENABLE_NEON
+    float16x8_t vin0 = vld1q_f16(input0);
+    float16x8_t vin1 = vld1q_f16(input1);
+    float16x8_t vout = vaddq_f16(vin0, vin1);
+    vout = vminq_f16(vmaxq_f16(vout, zeros), bounds);
+    vst1q_f16(output, vout);
+#else
+    for (int i = 0; i < C8NUM; ++i) {
+      output[i] = MSMIN(MSMAX(input0[i] + input1[i], 0), 6);
+    }
+#endif
     input0 += C8NUM;
     input1 += C8NUM;
     output += C8NUM;
@@ -232,10 +284,16 @@ int ElementSubFp16(float16_t *input0, float16_t *input1, float16_t *output, int 
   int block_c8 = element_size - block_mod;
 
   for (int index = 0; index < block_c8; index += C8NUM) {
-    output[0] = input0[0] - input1[0];
-    output[1] = input0[1] - input1[1];
-    output[2] = input0[2] - input1[2];
-    output[3] = input0[3] - input1[3];
+#ifdef ENABLE_NEON
+    float16x8_t vin0 = vld1q_f16(input0);
+    float16x8_t vin1 = vld1q_f16(input1);
+    float16x8_t vout = vsubq_f16(vin0, vin1);
+    vst1q_f16(output, vout);
+#else
+    for (int i = 0; i < C8NUM; ++i) {
+      output[i] = input0[i] - input1[i];
+    }
+#endif
     input0 += C8NUM;
     input1 += C8NUM;
     output += C8NUM;
@@ -249,16 +307,21 @@ int ElementSubFp16(float16_t *input0, float16_t *input1, float16_t *output, int 
 int ElementSubReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
   int block_mod = element_size % C8NUM;
   int block_c8 = element_size - block_mod;
-
+#ifdef ENABLE_NEON
+  float16x8_t zeros = {0, 0, 0, 0, 0, 0, 0, 0};
+#endif
   for (int index = 0; index < block_c8; index += C8NUM) {
-    float16_t res = input0[0] - input1[0];
-    output[0] = res > 0 ? res : 0;
-    res = input0[1] - input1[1];
-    output[1] = res > 0 ? res : 0;
-    res = input0[2] - input1[2];
-    output[2] = res > 0 ? res : 0;
-    res = input0[3] - input1[3];
-    output[3] = res > 0 ? res : 0;
+#ifdef ENABLE_NEON
+    float16x8_t vin0 = vld1q_f16(input0);
+    float16x8_t vin1 = vld1q_f16(input1);
+    float16x8_t vout = vsubq_f16(vin0, vin1);
+    vout = vmaxq_f16(vout, zeros);
+    vst1q_f16(output, vout);
+#else
+    for (int i = 0; i < C8NUM; ++i) {
+      output[i] = MSMAX(input0[i] - input1[i], 0);
+    }
+#endif
     input0 += C8NUM;
     input1 += C8NUM;
     output += C8NUM;
@@ -273,12 +336,22 @@ int ElementSubReluFp16(float16_t *input0, float16_t *input1, float16_t *output, 
 int ElementSubRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
   int block_mod = element_size % C8NUM;
   int block_c8 = element_size - block_mod;
-
+#ifdef ENABLE_NEON
+  float16x8_t zeros = {0, 0, 0, 0, 0, 0, 0, 0};
+  float16x8_t bounds = {6, 6, 6, 6, 6, 6, 6, 6};
+#endif
   for (int index = 0; index < block_c8; index += C8NUM) {
-    output[0] = MSMIN(MSMAX(input0[0] - input1[0], 0), 6);
-    output[1] = MSMIN(MSMAX(input0[1] - input1[1], 0), 6);
-    output[2] = MSMIN(MSMAX(input0[2] - input1[2], 0), 6);
-    output[3] = MSMIN(MSMAX(input0[3] - input1[3], 0), 6);
+#ifdef ENABLE_NEON
+    float16x8_t vin0 = vld1q_f16(input0);
+    float16x8_t vin1 = vld1q_f16(input1);
+    float16x8_t vout = vsubq_f16(vin0, vin1);
+    vout = vminq_f16(vmaxq_f16(vout, zeros), bounds);
+    vst1q_f16(output, vout);
+#else
+    for (int i = 0; i < C8NUM; ++i) {
+      output[i] = MSMIN(MSMAX(input0[i] - input1[i], 0), 6);
+    }
+#endif
     input0 += C8NUM;
     input1 += C8NUM;
     output += C8NUM;
@@ -287,5 +360,415 @@ int ElementSubRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output,
     output[index] = MSMIN(MSMAX(input0[index] - input1[index], 0), 6);
   }
 
+  return NNACL_OK;
+}
+
+int ElementDivFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+  int block_mod = element_size % C8NUM;
+  int block_c8 = element_size - block_mod;
+
+  for (int index = 0; index < block_c8; index += C8NUM) {
+    for (int i = 0; i < C8NUM; ++i) {
+      if (input1[i] == 0) {
+        return NNACL_ERRCODE_DIVISOR_ZERO;
+      }
+    }
+#ifdef ENABLE_NEON
+    float16x8_t vin0 = vld1q_f16(input0);
+    float16x8_t vin1 = vld1q_f16(input1);
+    float16x8_t vout = vsubq_f16(vin0, vin1);
+    vst1q_f16(output, vout);
+#else
+    for (int i = 0; i < C8NUM; ++i) {
+      output[i] = input0[i] / input1[i];
+    }
+#endif
+    input0 += C8NUM;
+    input1 += C8NUM;
+    output += C8NUM;
+  }
+  for (int index = 0; index < block_mod; ++index) {
+    if (input1[index] == 0) {
+      return NNACL_ERRCODE_DIVISOR_ZERO;
+    }
+    output[index] = input0[index] / input1[index];
+  }
+  return NNACL_OK;
+}
+
+int ElementDivReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+  int block_mod = element_size % C8NUM;
+  int block_c8 = element_size - block_mod;
+#ifdef ENABLE_NEON
+  float16x8_t zeros = {0, 0, 0, 0, 0, 0, 0, 0};
+#endif
+  for (int index = 0; index < block_c8; index += C8NUM) {
+    for (int i = 0; i < C8NUM; ++i) {
+      if (input1[i] == 0) {
+        return NNACL_ERRCODE_DIVISOR_ZERO;
+      }
+    }
+#ifdef ENABLE_NEON
+    float16x8_t vin0 = vld1q_f16(input0);
+    float16x8_t vin1 = vld1q_f16(input1);
+    float16x8_t vout = vsubq_f16(vin0, vin1);
+    vout = vmaxq_f16(vout, zeros);
+    vst1q_f16(output, vout);
+#else
+    for (int i = 0; i < C8NUM; ++i) {
+      output[i] = MSMAX(input0[i] - input1[i], 0);
+    }
+#endif
+    input0 += C8NUM;
+    input1 += C8NUM;
+    output += C8NUM;
+  }
+  for (int index = 0; index < block_mod; ++index) {
+    if (input1[index] == 0) {
+      return NNACL_ERRCODE_DIVISOR_ZERO;
+    }
+    float16_t res = input0[index] - input1[index];
+    output[index] = res > 0 ? res : 0;
+  }
+  return NNACL_OK;
+}
+
+int ElementDivRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+  int block_mod = element_size % C8NUM;
+  int block_c8 = element_size - block_mod;
+#ifdef ENABLE_NEON
+  float16x8_t zeros = {0, 0, 0, 0, 0, 0, 0, 0};
+  float16x8_t bounds = {6, 6, 6, 6, 6, 6, 6, 6};
+#endif
+  for (int index = 0; index < block_c8; index += C8NUM) {
+    for (int i = 0; i < C8NUM; ++i) {
+      if (input1[i] == 0) {
+        return NNACL_ERRCODE_DIVISOR_ZERO;
+      }
+    }
+#ifdef ENABLE_NEON
+    float16x8_t vin0 = vld1q_f16(input0);
+    float16x8_t vin1 = vld1q_f16(input1);
+    float16x8_t vout = vsubq_f16(vin0, vin1);
+    vout = vminq_f16(vmaxq_f16(vout, zeros), bounds);
+    vst1q_f16(output, vout);
+#else
+    for (int i = 0; i < C8NUM; ++i) {
+      output[i] = MSMIN(MSMAX(input0[i] - input1[i], 0), 6);
+    }
+#endif
+    input0 += C8NUM;
+    input1 += C8NUM;
+    output += C8NUM;
+  }
+  for (int index = 0; index < block_mod; ++index) {
+    if (input1[index] == 0) {
+      return NNACL_ERRCODE_DIVISOR_ZERO;
+    }
+    output[index] = MSMIN(MSMAX(input0[index] - input1[index], 0), 6);
+  }
+  return NNACL_OK;
+}
+
+int ElementFloorModFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+  for (int i = 0; i < element_size; ++i) {
+    if (input1[i] == 0) {
+      return NNACL_ERRCODE_DIVISOR_ZERO;
+    }
+    output[i] = input0[i] - floorf(input0[i] / input1[i]) * input1[i];
+  }
+  return NNACL_OK;
+}
+
+int ElementFloorDivFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+  for (int i = 0; i < element_size; ++i) {
+    if (input1[i] == 0) {
+      return NNACL_ERRCODE_DIVISOR_ZERO;
+    }
+    output[i] = floorf(input0[i] / input1[i]);
+  }
+  return NNACL_OK;
+}
+
+int ElementLogicalAndFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+  int block_mod = element_size % C8NUM;
+  int block_c8 = element_size - block_mod;
+
+#ifdef ENABLE_NEON
+  float16x8_t vtrue = {1, 1, 1, 1, 1, 1, 1, 1};
+  float16x8_t vfalse = {0, 0, 0, 0, 0, 0, 0, 0};
+  uint16x8_t mask = vmovq_n_u16(((uint16_t)(1u << 15) - 1));
+  uint16x8_t zeros = {0, 0, 0, 0, 0, 0, 0, 0};
+#endif
+  for (int index = 0; index < block_c8; index += C8NUM) {
+#ifdef ENABLE_NEON
+    uint16x8_t vin0 = vandq_u16(vreinterpretq_s16_f16(vld1q_f16(input0)), mask);
+    uint16x8_t vin1 = vandq_u16(vreinterpretq_s16_f16(vld1q_f16(input1)), mask);
+    float16x8_t vout = vbslq_f16(vceqq_u16(vandq_u16(vin0, vin1), zeros), vfalse, vtrue);
+    vst1q_f16(output, vout);
+#else
+    for (int i = 0; i < C8NUM; ++i) {
+      output[i] = (float16_t)((bool)(input0[i]) & (bool)(input1[i]));
+    }
+#endif
+    input0 += C8NUM;
+    input1 += C8NUM;
+    output += C8NUM;
+  }
+  for (int index = 0; index < block_mod; ++index) {
+    output[index] = (float16_t)((bool)(input0[index]) & (bool)(input1[index]));
+  }
+  return NNACL_OK;
+}
+
+int ElementLogicalOrFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+  int block_mod = element_size % C8NUM;
+  int block_c8 = element_size - block_mod;
+
+#ifdef ENABLE_NEON
+  float16x8_t vtrue = {1, 1, 1, 1, 1, 1, 1, 1};
+  float16x8_t vfalse = {0, 0, 0, 0, 0, 0, 0, 0};
+  uint16x8_t mask = vmovq_n_u16(((uint16_t)(1u << 15) - 1));
+  uint16x8_t zeros = {0, 0, 0, 0, 0, 0, 0, 0};
+#endif
+  for (int index = 0; index < block_c8; index += C8NUM) {
+#ifdef ENABLE_NEON
+    uint16x8_t vin0 = vandq_u16(vreinterpretq_s16_f16(vld1q_f16(input0)), mask);
+    uint16x8_t vin1 = vandq_u16(vreinterpretq_s16_f16(vld1q_f16(input1)), mask);
+    float16x8_t vout = vbslq_f16(vceqq_u16(vorrq_u16(vin0, vin1), zeros), vfalse, vtrue);
+    vst1q_f16(output, vout);
+#else
+    for (int i = 0; i < C8NUM; ++i) {
+      output[i] = (float16_t)((bool)(input0[i]) | (bool)(input1[i]));
+    }
+#endif
+    input0 += C8NUM;
+    input1 += C8NUM;
+    output += C8NUM;
+  }
+  for (int index = 0; index < block_mod; ++index) {
+    output[index] = (float16_t)((bool)(input0[index]) | (bool)(input1[index]));
+  }
+  return NNACL_OK;
+}
+
+int ElementSquaredDifferenceFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+  ElementSubFp16(input0, input1, output, element_size);
+  return ElementMulFp16(output, output, output, element_size);
+}
+
+int ElementMaximumFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+  int block_mod = element_size % C8NUM;
+  int block_c8 = element_size - block_mod;
+  for (int index = 0; index < block_c8; index += C8NUM) {
+#ifdef ENABLE_NEON
+    float16x8_t vin0 = vld1q_f16(input0);
+    float16x8_t vin1 = vld1q_f16(input1);
+    float16x8_t vout = vmaxq_f16(vin0, vin1);
+    vst1q_f16(output, vout);
+#else
+    for (int i = 0; i < C8NUM; ++i) {
+      output[i] = MSMAX(input0[i], input1[i]);
+    }
+#endif
+    input0 += C8NUM;
+    input1 += C8NUM;
+    output += C8NUM;
+  }
+  for (int index = 0; index < block_mod; ++index) {
+    output[index] = MSMAX(input0[index], input1[index]);
+  }
+  return NNACL_OK;
+}
+
+int ElementMinimumFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+  int block_mod = element_size % C8NUM;
+  int block_c8 = element_size - block_mod;
+  for (int index = 0; index < block_c8; index += C8NUM) {
+#ifdef ENABLE_NEON
+    float16x8_t vin0 = vld1q_f16(input0);
+    float16x8_t vin1 = vld1q_f16(input1);
+    float16x8_t vout = vminq_f16(vin0, vin1);
+    vst1q_f16(output, vout);
+#else
+    for (int i = 0; i < C8NUM; ++i) {
+      output[i] = MSMIN(input0[i], input1[i]);
+    }
+#endif
+    input0 += C8NUM;
+    input1 += C8NUM;
+    output += C8NUM;
+  }
+  for (int index = 0; index < block_mod; ++index) {
+    output[index] = MSMIN(input0[index], input1[index]);
+  }
+  return NNACL_OK;
+}
+
+int ElementNotEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+  int block_mod = element_size % C8NUM;
+  int block_c8 = element_size - block_mod;
+#ifdef ENABLE_NEON
+  float16x8_t vtrue = {1, 1, 1, 1, 1, 1, 1, 1};
+  float16x8_t vfalse = {0, 0, 0, 0, 0, 0, 0, 0};
+#endif
+  for (int index = 0; index < block_c8; index += C8NUM) {
+#ifdef ENABLE_NEON
+    float16x8_t vin0 = vld1q_f16(input0);
+    float16x8_t vin1 = vld1q_f16(input1);
+    float16x8_t vout = vbslq_f16(vceqq_f16(vin0, vin1), vfalse, vtrue);
+    vst1q_f16(output, vout);
+#else
+    for (int i = 0; i < C8NUM; ++i) {
+      output[i] = (float16_t)(input0[i] != input1[i]);
+    }
+#endif
+    input0 += C8NUM;
+    input1 += C8NUM;
+    output += C8NUM;
+  }
+  for (int index = 0; index < block_mod; ++index) {
+    output[index] = (float16_t)(input0[index] != input1[index]);
+  }
+  return NNACL_OK;
+}
+
+int ElementEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+  int block_mod = element_size % C8NUM;
+  int block_c8 = element_size - block_mod;
+#ifdef ENABLE_NEON
+  float16x8_t vtrue = {1, 1, 1, 1, 1, 1, 1, 1};
+  float16x8_t vfalse = {0, 0, 0, 0, 0, 0, 0, 0};
+#endif
+  for (int index = 0; index < block_c8; index += C8NUM) {
+#ifdef ENABLE_NEON
+    float16x8_t vin0 = vld1q_f16(input0);
+    float16x8_t vin1 = vld1q_f16(input1);
+    float16x8_t vout = vbslq_f16(vceqq_f16(vin0, vin1), vtrue, vfalse);
+    vst1q_f16(output, vout);
+#else
+    for (int i = 0; i < C8NUM; ++i) {
+      output[i] = (float16_t)(input0[i] == input1[i]);
+    }
+#endif
+    input0 += C8NUM;
+    input1 += C8NUM;
+    output += C8NUM;
+  }
+  for (int index = 0; index < block_mod; ++index) {
+    output[index] = (float16_t)(input0[index] == input1[index]);
+  }
+  return NNACL_OK;
+}
+
+int ElementLessFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+  int block_mod = element_size % C8NUM;
+  int block_c8 = element_size - block_mod;
+#ifdef ENABLE_NEON
+  float16x8_t vtrue = {1, 1, 1, 1, 1, 1, 1, 1};
+  float16x8_t vfalse = {0, 0, 0, 0, 0, 0, 0, 0};
+#endif
+  for (int index = 0; index < block_c8; index += C8NUM) {
+#ifdef ENABLE_NEON
+    float16x8_t vin0 = vld1q_f16(input0);
+    float16x8_t vin1 = vld1q_f16(input1);
+    float16x8_t vout = vbslq_f16(vcltq_f16(vin0, vin1), vtrue, vfalse);
+    vst1q_f16(output, vout);
+#else
+    for (int i = 0; i < C8NUM; ++i) {
+      output[i] = (float16_t)(input0[i] < input1[i]);
+    }
+#endif
+    input0 += C8NUM;
+    input1 += C8NUM;
+    output += C8NUM;
+  }
+  for (int index = 0; index < block_mod; ++index) {
+    output[index] = (float16_t)(input0[index] < input1[index]);
+  }
+  return NNACL_OK;
+}
+
+int ElementLessEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+  int block_mod = element_size % C8NUM;
+  int block_c8 = element_size - block_mod;
+#ifdef ENABLE_NEON
+  float16x8_t vtrue = {1, 1, 1, 1, 1, 1, 1, 1};
+  float16x8_t vfalse = {0, 0, 0, 0, 0, 0, 0, 0};
+#endif
+  for (int index = 0; index < block_c8; index += C8NUM) {
+#ifdef ENABLE_NEON
+    float16x8_t vin0 = vld1q_f16(input0);
+    float16x8_t vin1 = vld1q_f16(input1);
+    float16x8_t vout = vbslq_f16(vcleq_f16(vin0, vin1), vtrue, vfalse);
+    vst1q_f16(output, vout);
+#else
+    for (int i = 0; i < C8NUM; ++i) {
+      output[i] = (float16_t)(input0[i] <= input1[i]);
+    }
+#endif
+    input0 += C8NUM;
+    input1 += C8NUM;
+    output += C8NUM;
+  }
+  for (int index = 0; index < block_mod; ++index) {
+    output[index] = (float16_t)(input0[index] <= input1[index]);
+  }
+  return NNACL_OK;
+}
+
+int ElementGreaterFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+  int block_mod = element_size % C8NUM;
+  int block_c8 = element_size - block_mod;
+#ifdef ENABLE_NEON
+  float16x8_t vtrue = {1, 1, 1, 1, 1, 1, 1, 1};
+  float16x8_t vfalse = {0, 0, 0, 0, 0, 0, 0, 0};
+#endif
+  for (int index = 0; index < block_c8; index += C8NUM) {
+#ifdef ENABLE_NEON
+    float16x8_t vin0 = vld1q_f16(input0);
+    float16x8_t vin1 = vld1q_f16(input1);
+    float16x8_t vout = vbslq_f16(vcgtq_f16(vin0, vin1), vtrue, vfalse);
+    vst1q_f16(output, vout);
+#else
+    for (int i = 0; i < C8NUM; ++i) {
+      output[i] = (float16_t)(input0[i] > input1[i]);
+    }
+#endif
+    input0 += C8NUM;
+    input1 += C8NUM;
+    output += C8NUM;
+  }
+  for (int index = 0; index < block_mod; ++index) {
+    output[index] = (float16_t)(input0[index] > input1[index]);
+  }
+  return NNACL_OK;
+}
+
+int ElementGreaterEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+  int block_mod = element_size % C8NUM;
+  int block_c8 = element_size - block_mod;
+#ifdef ENABLE_NEON
+  float16x8_t vtrue = {1, 1, 1, 1, 1, 1, 1, 1};
+  float16x8_t vfalse = {0, 0, 0, 0, 0, 0, 0, 0};
+#endif
+  for (int index = 0; index < block_c8; index += C8NUM) {
+#ifdef ENABLE_NEON
+    float16x8_t vin0 = vld1q_f16(input0);
+    float16x8_t vin1 = vld1q_f16(input1);
+    float16x8_t vout = vbslq_f16(vcgeq_f16(vin0, vin1), vtrue, vfalse);
+    vst1q_f16(output, vout);
+#else
+    for (int i = 0; i < C8NUM; ++i) {
+      output[i] = (float16_t)(input0[i] >= input1[i]);
+    }
+#endif
+    input0 += C8NUM;
+    input1 += C8NUM;
+    output += C8NUM;
+  }
+  for (int index = 0; index < block_mod; ++index) {
+    output[index] = (float16_t)(input0[index] >= input1[index]);
+  }
   return NNACL_OK;
 }
