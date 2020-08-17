@@ -219,7 +219,7 @@ void IndirectGemmFp32_Comm(float *output, const float *input, const float *weigh
         int d4mod = deep % 4;
         int d4div = deep / 4;
         int a_index = d4div * 4 * 8 + r * 4 + d4mod;
-        int b_index = 8 * deep + c;
+        const int b_index = 8 * deep + c;
         value += input[a_index] * weight[b_index];
       }
       output[r * offset + c] = value;

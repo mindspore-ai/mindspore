@@ -54,6 +54,11 @@ void WinogradFilterTransform(const float *weight_data, Matrix *trans_weight, int
   int kernel_plane_stride = channel_in;
   if (oc_block == 0) {
     MS_LOG(ERROR) << "Divide by zero";
+    free(tmp_weight_data);
+    free(tmp_data);
+    free(trans_out_data);
+    delete matrix_g;
+    delete matrix_gt;
     return;
   }
   for (int i = 0; i < channel_out; i++) {

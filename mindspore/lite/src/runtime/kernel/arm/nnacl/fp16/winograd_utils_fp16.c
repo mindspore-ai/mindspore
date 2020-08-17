@@ -160,7 +160,7 @@ void InputTransform4x4UnitFp16(const float16_t *src_data, float16_t *dst_data, i
     float16_t m23 = t23 - 0.25f * t21;
 
     float16_t m30 = t30 - 4 * t32;
-    float16_t m31 = t31 + 2 * t32;
+    const float16_t m31 = t31 + 2 * t32;
     float16_t m32 = 2 * t32 - t31;
     float16_t m33 = t33 - 0.25f * t31;
 

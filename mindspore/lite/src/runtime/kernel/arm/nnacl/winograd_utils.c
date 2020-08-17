@@ -162,7 +162,7 @@ void InputTransform4x4Unit(const float *src_data, float *dst_data, int src_step,
 
     float m30 = t30 - 4 * t32;
     float m31 = t31 + 2 * t32;
-    float m32 = 2 * t32 - t31;
+    const float m32 = 2 * t32 - t31;
     float m33 = t33 - 0.25f * t31;
 
     (dst_data + i)[0] = m00;

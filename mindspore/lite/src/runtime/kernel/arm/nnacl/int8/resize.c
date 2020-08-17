@@ -41,7 +41,7 @@ int ResizeBilinearInt8(const int8_t *input_data, int8_t *output_data, const int 
   for (n = 0; n < in_n; n++) {
     for (h = tid; h < new_height; h += thread_num) {
       //      float actual_y = (float)h * height_scale;
-      int base_offset = 20;
+      const int base_offset = 20;
       int scaled_actual_y;
       int bottom, top;
       int scaled_bottom_weight, scaled_top_weight;
@@ -149,7 +149,7 @@ void ComputeNearestNeighborInt(const int32_t pos, const int in_size, const int32
 int ResizeNearestNeighborInt8(const int8_t *input_data, int8_t *output_data, const int *input_shape,
                               const int *output_shape, const bool align_corners, const QuantMulArg *multiplier,
                               QuantArg *quant_in, QuantArg *quant_out, int tid, int thread_num) {
-  int base_offset = 20;
+  const int base_offset = 20;
   int32_t batch, y, x, c;
   int32_t in_h, in_w, new_height, new_width;
   in_h = input_shape[1];

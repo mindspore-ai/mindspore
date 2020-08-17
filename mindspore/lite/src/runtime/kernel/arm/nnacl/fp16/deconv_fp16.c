@@ -18,6 +18,9 @@
 void PostConvFuncCommFp16(float16_t *out_ptr, const float16_t *src_ptr_, const float16_t *bias_ptr,
                           size_t output_channel, size_t plane_size, size_t stride, bool is_relu, bool is_relu6,
                           int size) {
+  if (size == 0) {
+    return;
+  }
   for (int oc = 0; oc < output_channel; oc++) {
     int oc_div = oc / size, oc_mod = oc % size;
     for (int hw = 0; hw < plane_size; hw++) {

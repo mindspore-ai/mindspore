@@ -93,8 +93,8 @@ void Im2ColPackUnitFp16(float16_t *input_data, ConvParameter *conv_param, float1
 
 void PackWeightFp16(float16_t *weight_data, ConvParameter *conv_param, float16_t *packed_weight) {
   // original weight format : ohwi
-  int tile_num = 8;
-  int inchannel_block = 4;
+  const int tile_num = 8;
+  const int inchannel_block = 4;
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
   int in_channel = conv_param->input_channel_;

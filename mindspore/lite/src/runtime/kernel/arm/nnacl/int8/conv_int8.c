@@ -365,7 +365,7 @@ void Conv3x3Int8(int16_t *input_data, int16_t *transed_weight, const int32_t *bi
   int output_tile_count = UP_DIV(output_count, TILE_NUM);
   int oc4 = UP_DIV(output_channel, C4NUM);
   int tile_buffer_offset = TILE_NUM * 16 * ic8 * C8NUM;
-  int block_unit_buffer_offset = 16 * C8NUM;
+  const int block_unit_buffer_offset = 16 * C8NUM;
   int tmp_dst_buffer_offset = TILE_NUM * 16 * oc4 * C4NUM;
 
   int input_batch = conv_param->input_batch_;

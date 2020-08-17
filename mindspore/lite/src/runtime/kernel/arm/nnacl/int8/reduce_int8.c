@@ -253,7 +253,7 @@ int ReduceMinLastAxis(const int outer_size, const int inner_size, const int axis
     return NNACL_NULL_PTR;
   }
   int i, j, k;
-  int base_offset = 20;
+  const int base_offset = 20;
   for (j = tid; j < outer_size; j += thread_num) {
     const int32_t *outer_src = src_data + j * axis_size * inner_size;
     int8_t *outer_dst = dst_data + j * inner_size;

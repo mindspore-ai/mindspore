@@ -161,6 +161,7 @@ int SqueezeInt8CPUKernel::Run() {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "RunSqueezeParam failed. errorcode: ";
   }
+  free(inputs_array);
   return ret;
 }
 

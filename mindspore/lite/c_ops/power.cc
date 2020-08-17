@@ -47,7 +47,7 @@ int Power::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<li
   }
   auto output_tensor = outputs[0];
   MS_ASSERT(output_tensor != nullptr);
-  if (exp_tensor) {
+  if (exp_tensor != nullptr) {
     if (exp_tensor->shape() != x_tensor->shape() || exp_tensor->data_type() != x_tensor->data_type()) {
       MS_LOG(ERROR) << "Power inputs shape or type is not equal!";
       return 1;
