@@ -83,6 +83,8 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   reset_defer_inline_ =
     MakeSubstitution(std::make_shared<ResetDeferInline>(), "reset_defer_inline", IsValueNode<FuncGraph>);
   depend_value_elim_ = MakeSubstitution(std::make_shared<DependValueElim>(), "depend_value_elim", prim::kPrimDepend);
+  all_reduce_const_elim_ =
+    MakeSubstitution(std::make_shared<AllReduceConstElim>(), "reduce_all_const_elim", prim::kPrimAllReduce);
 
   // Env Item Eliminate
   env_get_item_eliminate_ =
