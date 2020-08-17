@@ -863,7 +863,10 @@ End2:
   subs w7, w7, #8 // rhs col - 8
   add x1, x1, x15 // rhs ptr + stride
   add x3, x3, #16 // bias ptr + stride
+  ldrb w13, [sp, #8]
+  cbz w13, NoDstStep
   add x2, x2, #16 // dst ptr + stride
+NoDstStep:
   bgt L1
 
 End1:

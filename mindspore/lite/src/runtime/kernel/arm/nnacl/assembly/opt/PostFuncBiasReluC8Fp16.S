@@ -16,21 +16,20 @@
 
 // v0 ~ v7 value
 // v16  bias data
-// x24  x25  weite loop tmp buf
+// x22 x23  x24  x25  write loop tmp buf
 // x26  relu6  #6;    x27 relu #0
 // w10  oc8 loop control
 // w13  hw  loop control
 
 PostFuncBiasReluC8Fp16:
-  movi v26.8h, #6
-  scvtf v26.8h, v26.8h
+  movi v26.8h, #0x46, lsl #8
   dup v27.8h, wzr
   mov w10, #0
 
 Loop_C8:
   cmp w10, w3
   beq Loop_C1
-  mov x25,  #4
+  mov x25, #2
   mul x24, x10, x25
   add x25, x0, x24
   add w10, w10, #8
@@ -118,6 +117,7 @@ Write_4x8:
   st1 {v1.8h}, [x25], x6
   st1 {v2.8h}, [x25], x6
   st1 {v3.8h}, [x25], x6
+  b Loop_4x8
 
 Loop_1x8:
   cmp w7, #2
@@ -159,6 +159,9 @@ Loop_C1:
   beq End
   mov w13, w5
   ld1 {v16.8h}, [x2], #16
+  mov x25,  #2
+  mul x24, x10, x25
+  add x22, x0, x24
 
   cmp x4, #1
   beq Loop_C1_1
@@ -189,7 +192,7 @@ Loop_C1_1_Relu6:
   fadd v0.8h, v0.8h, v16.8h
   fmin v0.8h, v0.8h, v26.8h
   fmax v0.8h, v0.8h, v27.8h
-  st1 {v1.h}[0], [x0], x6
+  st1 {v0.h}[0], [x22], x6
   b Loop_C1_1_Relu6
 Loop_C1_1_Relu:
   cmp w13, #0
@@ -198,7 +201,7 @@ Loop_C1_1_Relu:
   ld1 {v0.8h}, [x1], #16
   fadd v0.8h, v0.8h, v16.8h
   fmax v0.8h, v0.8h, v27.8h
-  st1 {v1.h}[0], [x0], x6
+  st1 {v0.h}[0], [x22], x6
   b Loop_C1_1_Relu
 Loop_C1_1_Write:
   cmp w13, #0
@@ -206,7 +209,7 @@ Loop_C1_1_Write:
   sub w13, w13, #1
   ld1 {v0.8h}, [x1], #16
   fadd v0.8h, v0.8h, v16.8h
-  st1 {v1.h}[0], [x0], x6
+  st1 {v0.h}[0], [x22], x6
   b Loop_C1_1_Write
 
 Loop_C1_2:
@@ -224,8 +227,8 @@ Loop_C1_2_Relu6:
   fadd v0.8h, v0.8h, v16.8h
   fmin v0.8h, v0.8h, v26.8h
   fmax v0.8h, v0.8h, v27.8h
-  st1 {v1.h}[0], [x0], x6
-  st1 {v1.h}[1], [x24], x6
+  st1 {v0.h}[0], [x22], x6
+  st1 {v0.h}[1], [x24], x6
   b Loop_C1_2_Relu6
 Loop_C1_2_Relu:
   cmp w13, #0
@@ -234,8 +237,8 @@ Loop_C1_2_Relu:
   ld1 {v0.8h}, [x1], #16
   fadd v0.8h, v0.8h, v16.8h
   fmax v0.8h, v0.8h, v27.8h
-  st1 {v1.h}[0], [x0], x6
-  st1 {v1.h}[1], [x24], x6
+  st1 {v0.h}[0], [x22], x6
+  st1 {v0.h}[1], [x24], x6
   b Loop_C1_2_Relu
 Loop_C1_2_Write:
   cmp w13, #0
@@ -243,14 +246,14 @@ Loop_C1_2_Write:
   sub w13, w13, #1
   ld1 {v0.8h}, [x1], #16
   fadd v0.8h, v0.8h, v16.8h
-  st1 {v1.h}[0], [x0], x6
-  st1 {v1.h}[1], [x24], x6
+  st1 {v0.h}[0], [x22], x6
+  st1 {v0.h}[1], [x24], x6
   b Loop_C1_2_Write
 
 
 Loop_C1_3:
-  add x24, x0, #2
-  add x25, x0, #4
+  add x24, x22, #2
+  add x25, x22, #4
   cmp w7, #2
   beq Loop_C1_3_Relu6
   cmp w7, #1
@@ -264,9 +267,9 @@ Loop_C1_3_Relu6:
   fadd v0.8h, v0.8h, v16.8h
   fmin v0.8h, v0.8h, v26.8h
   fmax v0.8h, v0.8h, v27.8h
-  st1 {v1.h}[0], [x0], x6
-  st1 {v1.h}[1], [x24], x6
-  st1 {v1.h}[2], [x25], x6
+  st1 {v0.h}[0], [x22], x6
+  st1 {v0.h}[1], [x24], x6
+  st1 {v0.h}[2], [x25], x6
   b Loop_C1_3_Relu6
 Loop_C1_3_Relu:
   cmp w13, #0
@@ -275,9 +278,9 @@ Loop_C1_3_Relu:
   ld1 {v0.8h}, [x1], #16
   fadd v0.8h, v0.8h, v16.8h
   fmax v0.8h, v0.8h, v27.8h
-  st1 {v1.h}[0], [x0], x6
-  st1 {v1.h}[1], [x24], x6
-  st1 {v1.h}[2], [x25], x6
+  st1 {v0.h}[0], [x22], x6
+  st1 {v0.h}[1], [x24], x6
+  st1 {v0.h}[2], [x25], x6
   b Loop_C1_3_Relu
 Loop_C1_3_Write:
   cmp w13, #0
@@ -285,9 +288,9 @@ Loop_C1_3_Write:
   sub w13, w13, #1
   ld1 {v0.8h}, [x1], #16
   fadd v0.8h, v0.8h, v16.8h
-  st1 {v1.h}[0], [x0], x6
-  st1 {v1.h}[1], [x24], x6
-  st1 {v1.h}[2], [x25], x6
+  st1 {v0.h}[0], [x22], x6
+  st1 {v0.h}[1], [x24], x6
+  st1 {v0.h}[2], [x25], x6
   b Loop_C1_3_Write
 
 Loop_C1_4:
@@ -304,7 +307,7 @@ Loop_C1_4_Relu6:
   fadd v0.8h, v0.8h, v16.8h
   fmin v0.8h, v0.8h, v26.8h
   fmax v0.8h, v0.8h, v27.8h
-  st1 {v0.4h}, [x0], x6
+  st1 {v0.4h}, [x22], x6
   b Loop_C1_4_Relu6
 Loop_C1_4_Relu:
   cmp w13, #0
@@ -313,7 +316,7 @@ Loop_C1_4_Relu:
   ld1 {v0.8h}, [x1], #16
   fadd v0.8h, v0.8h, v16.8h
   fmax v0.8h, v0.8h, v27.8h
-  st1 {v0.4h}, [x0], x6
+  st1 {v0.4h}, [x22], x6
   b Loop_C1_4_Relu6
 Loop_C1_4_Write:
   cmp w13, #0
@@ -321,11 +324,11 @@ Loop_C1_4_Write:
   sub w13, w13, #1
   ld1 {v0.8h}, [x1], #16
   fadd v0.8h, v0.8h, v16.8h
-  st1 {v0.4h}, [x0], x6
+  st1 {v0.4h}, [x22], x6
   b Loop_C1_4_Write
 
 Loop_C1_5:
-  add x25, x0, #16
+  add x25, x22, #8
   cmp w7, #2
   beq Loop_C1_5_Relu6
   cmp w7, #1
@@ -339,9 +342,8 @@ Loop_C1_5_Relu6:
   fadd v0.8h, v0.8h, v16.8h
   fmin v0.8h, v0.8h, v26.8h
   fmax v0.8h, v0.8h, v27.8h
-  st1 {v0.4h}, [x0], x6
-  str h1, [x25]
-  add x25, x25, x6
+  st1 {v0.4h}, [x22], x6
+  st1 {v0.h}[4], [x25], x6
   b Loop_C1_5_Relu6
 Loop_C1_5_Relu:
   cmp w13, #0
@@ -350,9 +352,8 @@ Loop_C1_5_Relu:
   ld1 {v0.8h}, [x1], #16
   fadd v0.8h, v0.8h, v16.8h
   fmax v0.8h, v0.8h, v27.8h
-  st1 {v0.4h}, [x0], x6
-  str h1, [x25]
-  add x25, x25, x6
+  st1 {v0.4h}, [x22], x6
+  st1 {v0.h}[4], [x25], x6
   b Loop_C1_5_Relu
 Loop_C1_5_Write:
   cmp w13, #0
@@ -360,14 +361,13 @@ Loop_C1_5_Write:
   sub w13, w13, #1
   ld1 {v0.8h}, [x1], #16
   fadd v0.8h, v0.8h, v16.8h
-  st1 {v0.4h}, [x0], x6
-  str h1, [x25]
-  add x25, x25, x6
+  st1 {v0.4h}, [x22], x6
+  st1 {v0.h}[4], [x25], x6
   b Loop_C1_5_Write
 
 Loop_C1_6:
-  add x23, x0, #8
-  add x24, x0, #10
+  add x23, x22, #8
+  add x24, x22, #10
   cmp w7, #2
   beq Loop_C1_6_Relu6
   cmp w7, #1
@@ -381,9 +381,9 @@ Loop_C1_6_Relu6:
   fadd v0.8h, v0.8h, v16.8h
   fmin v0.8h, v0.8h, v26.8h
   fmax v0.8h, v0.8h, v27.8h
-  st1 {v0.4h}, [x0], x6
-  st1 {v1.h}[4], [x23], x6
-  st1 {v1.h}[5], [x24], x6
+  st1 {v0.4h}, [x22], x6
+  st1 {v0.h}[4], [x23], x6
+  st1 {v0.h}[5], [x24], x6
   b Loop_C1_6_Relu6
 Loop_C1_6_Relu:
   cmp w13, #0
@@ -392,9 +392,9 @@ Loop_C1_6_Relu:
   ld1 {v0.8h}, [x1], #16
   fadd v0.8h, v0.8h, v16.8h
   fmax v0.8h, v0.8h, v27.8h
-  st1 {v0.4h}, [x0], x6
-  st1 {v1.h}[4], [x23], x6
-  st1 {v1.h}[5], [x24], x6
+  st1 {v0.4h}, [x22], x6
+  st1 {v0.h}[4], [x23], x6
+  st1 {v0.h}[5], [x24], x6
   b Loop_C1_6_Relu
 Loop_C1_6_Write:
   cmp w13, #0
@@ -402,15 +402,15 @@ Loop_C1_6_Write:
   sub w13, w13, #1
   ld1 {v0.8h}, [x1], #16
   fadd v0.8h, v0.8h, v16.8h
-  st1 {v0.4h}, [x0], x6
-  st1 {v1.h}[4], [x23], x6
-  st1 {v1.h}[5], [x24], x6
+  st1 {v0.4h}, [x22], x6
+  st1 {v0.h}[4], [x23], x6
+  st1 {v0.h}[5], [x24], x6
   b Loop_C1_6_Write
 
 Loop_C1_7:
-  add x23, x0, #8
-  add x24, x0, #10
-  add x25, x0, #12
+  add x23, x22, #8
+  add x24, x22, #10
+  add x25, x22, #12
   cmp w7, #2
   beq Loop_C1_7_Relu6
   cmp w7, #1
@@ -424,10 +424,10 @@ Loop_C1_7_Relu6:
   fadd v0.8h, v0.8h, v16.8h
   fmin v0.8h, v0.8h, v26.8h
   fmax v0.8h, v0.8h, v27.8h
-  st1 {v0.4h}, [x0], x6
-  st1 {v1.h}[4], [x23], x6
-  st1 {v1.h}[5], [x24], x6
-  st1 {v1.h}[6], [x25], x6
+  st1 {v0.4h}, [x22], x6
+  st1 {v0.h}[4], [x23], x6
+  st1 {v0.h}[5], [x24], x6
+  st1 {v0.h}[6], [x25], x6
   b Loop_C1_7_Relu6
 Loop_C1_7_Relu:
   cmp w13, #0
@@ -436,10 +436,10 @@ Loop_C1_7_Relu:
   ld1 {v0.8h}, [x1], #16
   fadd v0.8h, v0.8h, v16.8h
   fmax v0.8h, v0.8h, v27.8h
-  st1 {v0.4h}, [x0], x6
-  st1 {v1.h}[4], [x23], x6
-  st1 {v1.h}[5], [x24], x6
-  st1 {v1.h}[6], [x25], x6
+  st1 {v0.4h}, [x22], x6
+  st1 {v0.h}[4], [x23], x6
+  st1 {v0.h}[5], [x24], x6
+  st1 {v0.h}[6], [x25], x6
   b Loop_C1_7_Relu
 Loop_C1_7_Write:
   cmp w13, #0
@@ -447,11 +447,10 @@ Loop_C1_7_Write:
   sub w13, w13, #1
   ld1 {v0.8h}, [x1], #16
   fadd v0.8h, v0.8h, v16.8h
-  fmax v0.8h, v0.8h, v27.8h
-  st1 {v0.4h}, [x0], x6
-  st1 {v1.h}[4], [x23], x6
-  st1 {v1.h}[5], [x24], x6
-  st1 {v1.h}[6], [x25], x6
+  st1 {v0.4h}, [x22], x6
+  st1 {v0.h}[4], [x23], x6
+  st1 {v0.h}[5], [x24], x6
+  st1 {v0.h}[6], [x25], x6
   b Loop_C1_7_Write
 
 End:
