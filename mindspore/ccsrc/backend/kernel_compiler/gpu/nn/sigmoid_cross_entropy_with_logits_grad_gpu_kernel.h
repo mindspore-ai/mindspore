@@ -38,9 +38,10 @@ class SigmoidCrossEntropyWithLogitsGradGpuKernel : public GpuKernel {
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     T *logits_addr = GetDeviceAddress<T>(inputs, 0);
     S *labels_addr = GetDeviceAddress<S>(inputs, 1);
+    T *dout_addr = GetDeviceAddress<T>(inputs, 2);
     T *outputs_addr = GetDeviceAddress<T>(outputs, 0);
 
-    SigmoidCrossEntropyWithLogitsGrad(inputs[0]->size / sizeof(T), logits_addr, labels_addr, outputs_addr,
+    SigmoidCrossEntropyWithLogitsGrad(inputs[0]->size / sizeof(T), logits_addr, labels_addr, dout_addr, outputs_addr,
                                       reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -78,6 +79,7 @@ class SigmoidCrossEntropyWithLogitsGradGpuKernel : public GpuKernel {
   void InitSizeLists() override {
     input_size_list_.push_back(logits_size_);
     input_size_list_.push_back(labels_size_);
+    input_size_list_.push_back(logits_size_);
     output_size_list_.push_back(outputs_size_);
   }
 
