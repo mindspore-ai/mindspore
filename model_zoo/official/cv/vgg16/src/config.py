@@ -64,7 +64,7 @@ imagenet_cfg = edict({
     "image_size": '224,224',
     "pad_mode": 'pad',
     "padding": 1,
-    "has_bias": True,
+    "has_bias": False,
     "batch_norm": False,
     "keep_checkpoint_max": 10,
     "initialize_mode": "KaimingNormal",
