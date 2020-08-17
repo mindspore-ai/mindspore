@@ -24,74 +24,6 @@
 
 namespace mindspore {
 namespace lite {
-STATUS BroadCastQuantParam(schema::MetaGraphT *graphT, const std::unique_ptr<CNodeT> &node) {
-  MS_ASSERT(graphT != nullptr);
-  MS_ASSERT(node != nullptr);
-  // set quantParam to preNode
-  for (size_t i = 0; i < node->inputIndex.size(); i++) {
-    auto preNodeIdexes = GetInputNodeIdx(*graphT, *(node.get()), i);
-    for (auto preNodeIdx : preNodeIdexes) {
-      MS_ASSERT(graphT->nodes.size() > preNodeIdx);
-      auto &preNode = graphT->nodes.at(preNodeIdx);
-      MS_ASSERT(preNode != nullptr);
-      // if preNode is not init, it maybe not a quantNode, so skip
-      //      if (preNode->inputIndex.size() + preNode->outputIndex.size() != preNode->quantParam.size()) {
-      //        continue;
-      //      }
-      auto preNodeOutputIndexes = preNode->outputIndex;
-      int32_t currentNodeIndexInPre = -1;
-      for (auto index : preNodeOutputIndexes) {
-        currentNodeIndexInPre++;
-        if (index == node->inputIndex.at(i)) {
-          break;
-        }
-      }
-      MS_ASSERT(currentNodeIndexInPre != -1);
-      MS_ASSERT(node->quantParam.size() > i);
-      MS_ASSERT(node->quantParam.at(i) != nullptr);
-      //      auto quantParamArrayCopy = CopyQuantParamArrayT(node->quantParam.at(i));
-      //      if (quantParamArrayCopy == nullptr) {
-      //        //MS_LOG(ERROR)("CopyQuantParamArray return nullptr, node: %s", node->name.c_str());
-      //        return RET_ERROR;
-      //      }
-      //      preNode->quantParam.at(preNode->inputIndex.size() + currentNodeIndexInPre) =
-      //        std::move(CopyQuantParamArrayT(quantParamArrayCopy));
-    }
-  }
-
-  // set quantParam to postNode
-  for (size_t i = 0; i < node->outputIndex.size(); i++) {
-    auto postNodeIdexes = GetOutputNodeIdx(*graphT, *(node.get()), i);
-    for (auto postNodeIdx : postNodeIdexes) {
-      MS_ASSERT(graphT->nodes.size() > postNodeIdx);
-      auto &postNode = graphT->nodes.at(postNodeIdx);
-      MS_ASSERT(postNode != nullptr);
-      // if postNode is not init, it maybe not a quantNode, so skip
-      //      if (postNode->inputIndex.size() + postNode->outputIndex.size() != postNode->quantParam.size()) {
-      //        continue;
-      //      }
-      auto postNodeInputIndexes = postNode->inputIndex;
-      int32_t currentNodeIndexInPost = -1;
-      for (auto index : postNodeInputIndexes) {
-        currentNodeIndexInPost++;
-        if (index == node->outputIndex.at(i)) {
-          break;
-        }
-      }
-      MS_ASSERT(currentNodeIndexInPost != -1);
-      MS_ASSERT(node->quantParam.size() > node->inputIndex.size() + i);
-      MS_ASSERT(node->quantParam.at(node->inputIndex.size() + i) != nullptr);
-      //      auto quantParamArrayCopy = CopyQuantParamArrayT(node->quantParam.at(node->inputIndex.size() + i));
-      //      if (quantParamArrayCopy == nullptr) {
-      //        //MS_LOG(ERROR)("CopyQuantParamArray return nullptr, node: %s", node->name.c_str());
-      //        return RET_ERROR;
-      //      }
-      //      postNode->quantParam.at(currentNodeIndexInPost) = std::move(CopyQuantParamArrayT(quantParamArrayCopy));
-    }
-  }
-  return RET_OK;
-}
-
 static const std::vector<schema::PrimitiveType> nhwcOpList = {
   schema::PrimitiveType_Conv2D,          schema::PrimitiveType_DeConv2D,
   schema::PrimitiveType_DepthwiseConv2D, schema::PrimitiveType_DeDepthwiseConv2D,
@@ -121,8 +53,8 @@ std::vector<schema::PrimitiveType> GetUint8OpList() { return uint8OpList; }
 STATUS NodeUtils::ConvertDims(mindspore::lite::Format src_format, const std::vector<int32_t> &src_dims,
                               mindspore::lite::Format dst_format, std::vector<int32_t> *dst_dims) {
   if ((src_dims.size() != DIM_DEFAULT_SIZE && src_dims.size() != 3) || src_format == dst_format) {
-    // MS_LOG(ERROR)("Convert format , src size %lu <3 or src format is equal to dst format,not need convert",
-    // src_dims.size());
+    MS_LOG(ERROR) << "Convert format , src size " << src_dims.size()
+                  << " <3 or src format is equal to dst format,not need convert";
     *dst_dims = src_dims;
     return RET_PARAM_INVALID;
   }
@@ -145,12 +77,12 @@ STATUS NodeUtils::ConvertDims(mindspore::lite::Format src_format, const std::vec
       }
       break;
     default:
-      // MS_LOG(ERROR)("Not support src format: %d", src_format);
+      MS_LOG(ERROR) << "Not support src format: " << schema::EnumNameFormat(src_format);
       return RET_ERROR;
   }
 
   if (nchw_dim.size() == 0) {
-    // MS_LOG(ERROR)("Param nchw_dim is empty!");
+    MS_LOG(ERROR) << "Param nchw_dim is empty!";
     return RET_ERROR;
   }
 
@@ -172,7 +104,250 @@ STATUS NodeUtils::ConvertDims(mindspore::lite::Format src_format, const std::vec
   }
   return RET_OK;
 }
+
+STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
+  if (tensor == nullptr) {
+    return RET_NULL_PTR;
+  }
+  std::vector<int32_t> oriDims = tensor->dims;
+  if (oriDims.size() != (size_t)DIM_DEFAULT_SIZE) {
+    MS_LOG(ERROR) << "Filter dim-num is not supported, dim-num: " << oriDims.size();
+    return RET_ERROR;
+  }
+  auto srcFormat = tensor->format;
+  auto dataType = tensor->dataType;
+  STATUS status;
+  switch (dstFormat) {
+    case schema::Format_KHWC: {
+      switch (srcFormat) {
+        case schema::Format_KCHW:
+          if (dataType == kNumberTypeFloat32) {
+            status = TransFilterFormat<float>(tensor, kKCHW2KHWC);
+          } else if (dataType == kNumberTypeUInt8) {
+            status = TransFilterFormat<uint8_t>(tensor, kKCHW2KHWC);
+          } else if (dataType == kNumberTypeInt8) {
+            status = TransFilterFormat<int8_t>(tensor, kKCHW2KHWC);
+          } else {
+            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
+            return RET_ERROR;
+          }
+          break;
+        case schema::Format_CKHW:
+          if (dataType == kNumberTypeFloat32) {
+            status = TransFilterFormat<float>(tensor, kCKHW2KHWC);
+          } else if (dataType == kNumberTypeUInt8) {
+            status = TransFilterFormat<uint8_t>(tensor, kCKHW2KHWC);
+          } else if (dataType == kNumberTypeInt8) {
+            status = TransFilterFormat<int8_t>(tensor, kCKHW2KHWC);
+          } else {
+            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
+            return RET_ERROR;
+          }
+          break;
+        case schema::Format_CHWK:
+          if (dataType == kNumberTypeFloat32) {
+            status = TransFilterFormat<float>(tensor, kCHWK2KHWC);
+          } else if (dataType == kNumberTypeUInt8) {
+            status = TransFilterFormat<uint8_t>(tensor, kCHWK2KHWC);
+          } else if (dataType == kNumberTypeInt8) {
+            status = TransFilterFormat<int8_t>(tensor, kCHWK2KHWC);
+          } else {
+            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
+            return RET_ERROR;
+          }
+          break;
+        case schema::Format_KHWC:
+          return RET_OK;
+        default:
+          MS_LOG(ERROR) << "Unsupported transform from " << schema::EnumNameFormat(srcFormat) << " to "
+                        << schema::EnumNameFormat(dstFormat);
+          return RET_ERROR;
+      }
+    } break;
+    case schema::Format_HWCK: {
+      switch (srcFormat) {
+        case schema::Format_KCHW:
+          if (dataType == kNumberTypeFloat32) {
+            status = TransFilterFormat<float>(tensor, kKCHW2HWCK);
+          } else if (dataType == kNumberTypeUInt8) {
+            status = TransFilterFormat<uint8_t>(tensor, kKCHW2HWCK);
+          } else if (dataType == kNumberTypeInt8) {
+            status = TransFilterFormat<int8_t>(tensor, kKCHW2HWCK);
+          } else {
+            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
+            return RET_ERROR;
+          }
+          break;
+        case schema::Format_KHWC:
+          if (dataType == kNumberTypeFloat32) {
+            status = TransFilterFormat<float>(tensor, kKHWC2HWCK);
+          } else if (dataType == kNumberTypeUInt8) {
+            status = TransFilterFormat<uint8_t>(tensor, kKHWC2HWCK);
+          } else if (dataType == kNumberTypeInt8) {
+            status = TransFilterFormat<int8_t>(tensor, kKHWC2HWCK);
+          } else {
+            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
+            return RET_ERROR;
+          }
+          break;
+        case schema::Format_CKHW:
+          if (dataType == kNumberTypeFloat32) {
+            status = TransFilterFormat<float>(tensor, kCKHW2HWCK);
+          } else if (dataType == kNumberTypeUInt8) {
+            status = TransFilterFormat<uint8_t>(tensor, kCKHW2HWCK);
+          } else if (dataType == kNumberTypeInt8) {
+            status = TransFilterFormat<int8_t>(tensor, kCKHW2HWCK);
+          } else {
+            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
+            return RET_ERROR;
+          }
+          break;
+        case schema::Format_CHWK:
+          if (dataType == kNumberTypeFloat32) {
+            status = TransFilterFormat<float>(tensor, kCHWK2HWCK);
+          } else if (dataType == kNumberTypeUInt8) {
+            status = TransFilterFormat<uint8_t>(tensor, kCHWK2HWCK);
+          } else if (dataType == kNumberTypeInt8) {
+            status = TransFilterFormat<int8_t>(tensor, kCHWK2HWCK);
+          } else {
+            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
+            return RET_ERROR;
+          }
+          break;
+        case schema::Format_HWCK:
+          return RET_OK;
+        default:
+          MS_LOG(ERROR) << "Unsupported transform from " << schema::EnumNameFormat(srcFormat) << " to "
+                        << schema::EnumNameFormat(dstFormat);
+          return RET_ERROR;
+      }
+    } break;
+    case schema::Format_KCHW: {
+      switch (srcFormat) {
+        case schema::Format_KCHW:
+          return RET_OK;
+        case schema::Format_HWCK:
+          if (dataType == kNumberTypeFloat32) {
+            status = TransFilterFormat<float>(tensor, kHWCK2KCHW);
+          } else if (dataType == kNumberTypeUInt8) {
+            status = TransFilterFormat<uint8_t>(tensor, kHWCK2KCHW);
+          } else if (dataType == kNumberTypeInt8) {
+            status = TransFilterFormat<int8_t>(tensor, kHWCK2KCHW);
+          } else {
+            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
+            return RET_ERROR;
+          }
+          break;
+        case schema::Format_HWKC:
+          if (dataType == kNumberTypeFloat32) {
+            status = TransFilterFormat<float>(tensor, kHWKC2KCHW);
+          } else if (dataType == kNumberTypeUInt8) {
+            status = TransFilterFormat<uint8_t>(tensor, kHWKC2KCHW);
+          } else if (dataType == kNumberTypeInt8) {
+            status = TransFilterFormat<int8_t>(tensor, kHWKC2KCHW);
+          } else {
+            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
+            return RET_ERROR;
+          }
+          break;
+        case schema::Format_KHWC:
+          if (dataType == kNumberTypeFloat32) {
+            status = TransFilterFormat<float>(tensor, kKHWC2KCHW);
+          } else if (dataType == kNumberTypeUInt8) {
+            status = TransFilterFormat<uint8_t>(tensor, kKHWC2KCHW);
+          } else if (dataType == kNumberTypeInt8) {
+            status = TransFilterFormat<int8_t>(tensor, kKHWC2KCHW);
+          } else {
+            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
+            return RET_ERROR;
+          }
+          break;
+        case schema::Format_CKHW:
+          if (dataType == kNumberTypeFloat32) {
+            status = TransFilterFormat<float>(tensor, kCKHW2KCHW);
+          } else if (dataType == kNumberTypeUInt8) {
+            status = TransFilterFormat<uint8_t>(tensor, kCKHW2KCHW);
+          } else if (dataType == kNumberTypeInt8) {
+            status = TransFilterFormat<int8_t>(tensor, kCKHW2KCHW);
+          } else {
+            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
+            return RET_ERROR;
+          }
+          break;
+        case schema::Format_CHWK:
+          if (dataType == kNumberTypeFloat32) {
+            status = TransFilterFormat<float>(tensor, kCHWK2KCHW);
+          } else if (dataType == kNumberTypeUInt8) {
+            status = TransFilterFormat<uint8_t>(tensor, kCHWK2KCHW);
+          } else if (dataType == kNumberTypeInt8) {
+            status = TransFilterFormat<int8_t>(tensor, kCHWK2KCHW);
+          } else {
+            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
+            return RET_ERROR;
+          }
+          break;
+        default:
+          MS_LOG(ERROR) << "Unsupported transform from " << schema::EnumNameFormat(srcFormat) << " to "
+                        << schema::EnumNameFormat(dstFormat);
+          return RET_ERROR;
+      }
+    } break;
+    case schema::Format_CKHW: {
+      switch (srcFormat) {
+        case schema::Format_HWCK:
+          if (dataType == kNumberTypeFloat32) {
+            status = TransFilterFormat<float>(tensor, kHWCK2CKHW);
+          } else if (dataType == kNumberTypeUInt8) {
+            status = TransFilterFormat<uint8_t>(tensor, kHWCK2CKHW);
+          } else if (dataType == kNumberTypeInt8) {
+            status = TransFilterFormat<int8_t>(tensor, kHWCK2CKHW);
+          } else {
+            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
+            return RET_ERROR;
+          }
+          break;
+        case schema::Format_HWKC:
+          if (dataType == kNumberTypeFloat32) {
+            status = TransFilterFormat<float>(tensor, kHWKC2CKHW);
+          } else if (dataType == kNumberTypeUInt8) {
+            status = TransFilterFormat<uint8_t>(tensor, kHWKC2CKHW);
+          } else if (dataType == kNumberTypeInt8) {
+            status = TransFilterFormat<int8_t>(tensor, kHWKC2CKHW);
+          } else {
+            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
+            return RET_ERROR;
+          }
+          break;
+        case schema::Format_KCHW:
+          if (dataType == kNumberTypeFloat32) {
+            status = TransFilterFormat<float>(tensor, kKCHW2CKHW);
+          } else if (dataType == kNumberTypeUInt8) {
+            status = TransFilterFormat<uint8_t>(tensor, kKCHW2CKHW);
+          } else if (dataType == kNumberTypeInt8) {
+            status = TransFilterFormat<int8_t>(tensor, kKCHW2CKHW);
+          } else {
+            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
+            return RET_ERROR;
+          }
+          break;
+        case schema::Format_CKHW:
+          return RET_OK;
+        default:
+          MS_LOG(ERROR) << "Unsupported transform from " << schema::EnumNameFormat(srcFormat) << " to "
+                        << schema::EnumNameFormat(dstFormat);
+          return RET_ERROR;
+      }
+    } break;
+    default:
+      MS_LOG(ERROR) << "Unsupported transform from " << schema::EnumNameFormat(srcFormat) << " to "
+                    << schema::EnumNameFormat(dstFormat);
+      return RET_ERROR;
+  }
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "TransFilterData failed: " << status;
+    return status;
+  }
+  return RET_OK;
+}
 }  // namespace lite
 }  // namespace mindspore
-
-

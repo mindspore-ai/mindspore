@@ -353,7 +353,6 @@ if (BUILD_CONVERTER)
             tflite_parser_mid
             caffe_parser_mid
             onnx_parser_mid
-            node_mid
             graph_pass_mid
             fusion_mid
             quantizer_mid
