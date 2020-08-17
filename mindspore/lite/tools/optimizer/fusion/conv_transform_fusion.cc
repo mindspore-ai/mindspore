@@ -69,6 +69,8 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
   if (IsMultiOutputTensors(func_graph, conv_node)) {
     return transform_node;
   }
+
+  auto abstr = transform_node->abstract();
   int kernel_nums = Get_Kenrnel_nums(conv_node);
   if (kernel_nums <= 0) {
     MS_LOG(ERROR) << "Unsupported conv node, " << conv_node->DebugString();
@@ -90,6 +92,7 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
   } else {
     MS_LOG(EXCEPTION) << "Unsupported opType, " << type;
   }
+  pre_node->set_abstract(abstr);
   return pre_node;
 }
 

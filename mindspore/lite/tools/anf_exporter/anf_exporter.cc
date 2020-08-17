@@ -408,6 +408,10 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
         node_id_map_[name] = meta_graphT->allTensors.size();
       }
       meta_graphT->allTensors.emplace_back(msTensor);
+      if (IsPrimitiveCNode(cnode, schema::PrimitiveType_Conv2D)
+          || IsPrimitiveCNode(cnode, schema::PrimitiveType_DepthwiseConv2D)) {
+        break;
+      }
     }
   } else {
     auto ms_tensor = new schema::TensorT();

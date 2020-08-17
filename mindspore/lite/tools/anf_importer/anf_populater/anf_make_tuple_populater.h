@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_TUPLE_GETITEM_PARSER_H
-#define MINDSPORE_TUPLE_GETITEM_PARSER_H
+#ifndef MINDSPORE_ANF_MAKE_TUPLE_PARSER_H
+#define MINDSPORE_ANF_MAKE_TUPLE_PARSER_H
 #include "tools/anf_importer/anf_populater/anf_node_populater.h"
 #include <vector>
 namespace mindspore::lite {
-class AnfTupleGetItemPopulater : public AnfNodePopulater {
+class AnfMakeTuplePopulater : public AnfNodePopulater {
  public:
-  AnfTupleGetItemPopulater() = default;
-  ~AnfTupleGetItemPopulater() override = default;
+  AnfMakeTuplePopulater() = default;
+  ~AnfMakeTuplePopulater() override = default;
   int Populate(const PrimitivePtr &prim, PrimitiveTValue *primitiveTValuePtr,
                const std::vector<AnfNodePtr> &inputs) override;
 };
 }  // namespace mindspore::lite
-
-#endif  // MINDSPORE_ANF_BATCHNORM_PARSER_H
+#endif  // MINDSPORE_ANF_MAKE_TUPLE_PARSER_H

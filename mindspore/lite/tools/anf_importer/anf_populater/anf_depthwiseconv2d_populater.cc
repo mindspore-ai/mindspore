@@ -155,8 +155,8 @@ int AnfDepwiseconv2DPopulater::Populate(const PrimitivePtr &prim, PrimitiveTValu
   auto channel_multiplier = GetValue<int>(prim->GetAttr("channel_multiplier"));
   attr->channelMultiplier = channel_multiplier;
 
-  MS_ASSERT(inputs.size() == kAnfPopulaterThree);
-  auto inputNode = inputs[kAnfPopulaterTwo];
+  MS_ASSERT(inputs.size() == kAnfPopulaterTwo);
+  auto inputNode = inputs[kAnfPopulaterOne];
   MS_ASSERT(inputNode != nullptr);
   if (inputNode->isa<Parameter>()) {
     auto paramNode = inputNode->cast<ParameterPtr>();
