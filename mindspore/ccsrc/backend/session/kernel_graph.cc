@@ -563,7 +563,12 @@ void KernelGraph::FrontBackendlMapAdd(const AnfNodePtr &front_anf, const AnfNode
     MS_LOG(EXCEPTION) << "Anf " << front_anf->DebugString() << " has been exist in the front_backend_anf_map_";
   }
   if (backend_front_anf_map_.find(backend_anf) != backend_front_anf_map_.end()) {
-    MS_LOG(EXCEPTION) << "Kernel " << backend_anf->DebugString() << "has been exist in the backend_front_anf_map_";
+    auto front_node = front_anf->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(front_node);
+    auto attr_input = front_node->input(kAnfPrimitiveIndex);
+    if (!attr_input->isa<CNode>()) {
+      MS_LOG(EXCEPTION) << "Kernel " << backend_anf->DebugString() << "has been exist in the backend_front_anf_map_";
+    }
   }
   front_backend_anf_map_[front_anf] = backend_anf;
   backend_front_anf_map_[backend_anf] = front_anf;

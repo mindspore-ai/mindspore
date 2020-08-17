@@ -111,6 +111,8 @@ class SessionBasic {
  private:
   CNodePtr CreateSwitchInput(const AnfNodePtr &node_input, KernelGraph *graph);
   std::vector<AnfNodePtr> CreateSwitchOrPartialNode(const CNodePtr &cnode, KernelGraph *graph);
+  std::vector<AnfNodePtr> CreateValueNode(const CNodePtr &cnode, KernelGraph *graph);
+  void CreateCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, std::vector<AnfNodePtr> *cnode_inputs);
 
  protected:
   virtual void SetSummaryNodes(KernelGraph *graph);
