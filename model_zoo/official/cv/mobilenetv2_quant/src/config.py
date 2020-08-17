@@ -16,34 +16,12 @@
 network config setting, will be used in train.py and eval.py
 """
 from easydict import EasyDict as ed
-
-config_ascend = ed({
-    "num_classes": 1000,
-    "image_height": 224,
-    "image_width": 224,
-    "batch_size": 256,
-    "data_load_mode": "mindrecord",
-    "epoch_size": 200,
-    "start_epoch": 0,
-    "warmup_epochs": 4,
-    "lr": 0.4,
-    "momentum": 0.9,
-    "weight_decay": 4e-5,
-    "label_smooth": 0.1,
-    "loss_scale": 1024,
-    "save_checkpoint": True,
-    "save_checkpoint_epochs": 1,
-    "keep_checkpoint_max": 300,
-    "save_checkpoint_path": "./checkpoint",
-    "quantization_aware": False,
-})
-
 config_ascend_quant = ed({
     "num_classes": 1000,
     "image_height": 224,
     "image_width": 224,
     "batch_size": 192,
-    "data_load_mode": "mindrecord",
+    "data_load_mode": "mindata",
     "epoch_size": 60,
     "start_epoch": 200,
     "warmup_epochs": 1,
@@ -57,24 +35,6 @@ config_ascend_quant = ed({
     "keep_checkpoint_max": 300,
     "save_checkpoint_path": "./checkpoint",
     "quantization_aware": True,
-})
-
-config_gpu = ed({
-    "num_classes": 1000,
-    "image_height": 224,
-    "image_width": 224,
-    "batch_size": 150,
-    "epoch_size": 200,
-    "warmup_epochs": 4,
-    "lr": 0.8,
-    "momentum": 0.9,
-    "weight_decay": 4e-5,
-    "label_smooth": 0.1,
-    "loss_scale": 1024,
-    "save_checkpoint": True,
-    "save_checkpoint_epochs": 1,
-    "keep_checkpoint_max": 300,
-    "save_checkpoint_path": "./checkpoint",
 })
 
 config_gpu_quant = ed({

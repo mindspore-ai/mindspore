@@ -33,7 +33,7 @@ import mindspore.common.initializer as weight_init
 from models.resnet_quant import resnet50_quant
 from src.dataset import create_dataset
 from src.lr_generator import get_lr
-from src.config import quant_set, config_quant, config_noquant
+from src.config import config_quant
 from src.crossentropy import CrossEntropy
 from src.utils import _load_param_into_net
 
@@ -44,7 +44,7 @@ parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path
 parser.add_argument('--device_target', type=str, default='Ascend', help='Device target')
 parser.add_argument('--pre_trained', type=str, default=None, help='Pertained checkpoint path')
 args_opt = parser.parse_args()
-config = config_quant if quant_set.quantization_aware else config_noquant
+config = config_quant
 
 if args_opt.device_target == "Ascend":
     device_id = int(os.getenv('DEVICE_ID'))
@@ -110,9 +110,8 @@ if __name__ == '__main__':
                              target=args_opt.device_target)
     step_size = dataset.get_dataset_size()
 
-    if quant_set.quantization_aware:
-        # convert fusion network to quantization aware network
-        net = quant.convert_quant_network(net, bn_fold=True, per_channel=[True, False], symmetric=[True, False])
+    # convert fusion network to quantization aware network
+    net = quant.convert_quant_network(net, bn_fold=True, per_channel=[True, False], symmetric=[True, False])
 
     # get learning rate
     lr = get_lr(lr_init=config.lr_init,
@@ -131,11 +130,7 @@ if __name__ == '__main__':
                    config.weight_decay, config.loss_scale)
 
     # define model
-    if quant_set.quantization_aware:
-        model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'})
-    else:
-        model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'},
-                      amp_level="O2")
+    model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'})
 
     print("============== Starting Training ==============")
     time_callback = TimeMonitor(data_size=step_size)

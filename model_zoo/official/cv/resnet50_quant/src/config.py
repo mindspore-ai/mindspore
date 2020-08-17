@@ -16,33 +16,6 @@
 network config setting, will be used in train.py and eval.py
 """
 from easydict import EasyDict as ed
-
-quant_set = ed({
-    "quantization_aware": True,
-})
-config_noquant = ed({
-    "class_num": 1001,
-    "batch_size": 32,
-    "loss_scale": 1024,
-    "momentum": 0.9,
-    "weight_decay": 1e-4,
-    "epoch_size": 90,
-    "pretrained_epoch_size": 1,
-    "buffer_size": 1000,
-    "image_height": 224,
-    "image_width": 224,
-    "data_load_mode": "mindrecord",
-    "save_checkpoint": True,
-    "save_checkpoint_epochs": 1,
-    "keep_checkpoint_max": 50,
-    "save_checkpoint_path": "./",
-    "warmup_epochs": 0,
-    "lr_decay_mode": "cosine",
-    "use_label_smooth": True,
-    "label_smooth_factor": 0.1,
-    "lr_init": 0,
-    "lr_max": 0.1,
-})
 config_quant = ed({
     "class_num": 1001,
     "batch_size": 32,
@@ -54,7 +27,7 @@ config_quant = ed({
     "buffer_size": 1000,
     "image_height": 224,
     "image_width": 224,
-    "data_load_mode": "mindrecord",
+    "data_load_mode": "mindata",
     "save_checkpoint": True,
     "save_checkpoint_epochs": 1,
     "keep_checkpoint_max": 50,
