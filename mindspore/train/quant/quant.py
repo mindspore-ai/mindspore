@@ -474,8 +474,8 @@ def export(network, *inputs, file_name, mean=127.5, std_dev=127.5, file_format='
 
 
 def convert_quant_network(network,
-                          bn_fold=False,
-                          freeze_bn=10000,
+                          bn_fold=True,
+                          freeze_bn=10000000,
                           quant_delay=(0, 0),
                           num_bits=(8, 8),
                           per_channel=(False, False),
@@ -487,21 +487,20 @@ def convert_quant_network(network,
 
     Args:
         network (Cell): Obtain a pipeline through network for saving graph summary.
-        bn_fold (bool): Flag to used bn fold ops for simulation inference operation. Default: False.
-        freeze_bn (int): Number of steps after which BatchNorm OP parameters used total mean and variance. Default: 0.
+        bn_fold (bool): Flag to used bn fold ops for simulation inference operation. Default: True.
+        freeze_bn (int): Number of steps after which BatchNorm OP parameters used total mean and variance. Default: 1e7.
         quant_delay (int, list or tuple): Number of steps after which weights and activations are quantized during
             eval. The first element represent weights and second element represent data flow. Default: (0, 0)
-        num_bits (int, list or tuple): Number of bits to use for quantizing weights and activations. The first
+        num_bits (int, list or tuple): Number of bits to use for quantize weights and activations. The first
             element represent weights and second element represent data flow. Default: (8, 8)
         per_channel (bool, list or tuple):  Quantization granularity based on layer or on channel. If `True`
             then base on per channel otherwise base on per layer. The first element represent weights
             and second element represent data flow. Default: (False, False)
-        symmetric (bool, list or tuple): Quantization algorithm use symmetric or not. If `True` then base on
+        symmetric (bool, list or tuple): Whether the quantization algorithm is symmetric or not. If `True` then base on
             symmetric otherwise base on asymmetric. The first element represent weights and second
             element represent data flow. Default: (False, False)
-        narrow_range (bool, list or tuple): Quantization algorithm use narrow range or not. If `True` then base
-            on narrow range otherwise base on off narrow range. The first element represent weights and
-            second element represent data flow. Default: (False, False)
+        narrow_range (bool, list or tuple): Whether the quantization algorithm uses narrow range or not.
+            The first element represents weights and the second element represents data flow. Default: (False, False)
 
     Returns:
         Cell, Network which has change to quantization aware training network cell.

@@ -62,7 +62,7 @@ class SummaryCollector(Callback):
     SummaryCollector can help you to collect some common information.
 
     It can help you to collect loss, learning late, computational graph and so on.
-    SummaryCollector also persists data collected by the summary operator into a summary file.
+    SummaryCollector also enables the summary operator to collect data from a summary file.
 
     Note:
         1. Multiple SummaryCollector instances in callback list are not allowed.
@@ -74,51 +74,51 @@ class SummaryCollector(Callback):
             If the directory does not exist, it will be created automatically.
         collect_freq (int): Set the frequency of data collection, it should be greater then zero,
             and the unit is `step`. Default: 10. If a frequency is set, we will collect data
-            at (current steps % freq) == 0, and the first step will be collected at any time.
+            when (current steps % freq) equals to 0, and the first step will be collected at any time.
             It is important to note that if the data sink mode is used, the unit will become the `epoch`.
             It is not recommended to collect data too frequently, which can affect performance.
         collect_specified_data (Union[None, dict]): Perform custom operations on the collected data. Default: None.
             By default, if set to None, all data is collected as the default behavior.
-            If you want to customize the data collected, you can do so with a dictionary.
-            Examples,you can set {'collect_metric': False} to control not collecting metrics.
+            You can customize the collected data with a dictionary.
+            For example, you can set {'collect_metric': False} to control not collecting metrics.
             The data that supports control is shown below.
 
-            - collect_metric: Whether to collect training metrics, currently only loss is collected.
-              The first output will be treated as loss, and it will be averaged.
+            - collect_metric: Whether to collect training metrics, currently only the loss is collected.
+              The first output will be treated as the loss and it will be averaged.
               Optional: True/False. Default: True.
-            - collect_graph: Whether to collect computational graph, currently only
+            - collect_graph: Whether to collect the computational graph. Currently, only
               training computational graph is collected. Optional: True/False. Default: True.
             - collect_train_lineage: Whether to collect lineage data for the training phase,
               this field will be displayed on the lineage page of Mindinsight. Optional: True/False. Default: True.
-            - collect_eval_lineage: Whether to collect lineage data for the eval phase,
+            - collect_eval_lineage: Whether to collect lineage data for the evaluation phase,
               this field will be displayed on the lineage page of Mindinsight. Optional: True/False. Default: True.
             - collect_input_data: Whether to collect dataset for each training. Currently only image data is supported.
               Optional: True/False. Default: True.
             - collect_dataset_graph: Whether to collect dataset graph for the training phase.
               Optional: True/False. Default: True.
-            - histogram_regular: Collect weight and bias for parameter distribution page display in MindInsight.
+            - histogram_regular: Collect weight and bias for parameter distribution page and displayed in MindInsight.
               This field allows regular strings to control which parameters to collect.
               Default: None, it means only the first five parameters are collected.
               It is not recommended to collect too many parameters at once, as it can affect performance.
               Note that if you collect too many parameters and run out of memory, the training will fail.
         keep_default_action (bool): This field affects the collection behavior of the 'collect_specified_data' field.
             Optional: True/False, Default: True.
-            True: means that after specified data is set, non-specified data is collected as the default behavior.
-            False: means that after specified data is set, only the specified data is collected,
+            True: it means that after specified data is set, non-specified data is collected as the default behavior.
+            False: it means that after specified data is set, only the specified data is collected,
             and the others are not collected.
         custom_lineage_data (Union[dict, None]): Allows you to customize the data and present it on the MingInsight
-            lineage page. In the custom data, the key type support str, and the value type support str/int/float.
-            Default: None, it means there is no custom data.
-        collect_tensor_freq (Optional[int]): Same semantic as the `collect_freq`, but controls TensorSummary only.
-            Because TensorSummary data is too large compared to other summary data, this parameter is used to reduce
-            its collection. By default, TensorSummary data will be collected at most 20 steps, but not more than how
-            many steps other summary data will be collected.
+            lineage page. In the custom data, the type of the key supports str, and the type of value supports str, int
+            and float. Default: None, it means there is no custom data.
+        collect_tensor_freq (Optional[int]): The same semantics as the `collect_freq`, but controls TensorSummary only.
+            Because TensorSummary data is too large to be compared with other summary data, this parameter is used to
+            reduce its collection. By default, The maximum number of steps for collecting TensorSummary data is 21,
+            but it will not exceed the number of steps for collecting other summary data.
             Default: None, which means to follow the behavior as described above. For example, given `collect_freq=10`,
             when the total steps is 600, TensorSummary will be collected 20 steps, while other summary data 61 steps,
             but when the total steps is 20, both TensorSummary and other summary will be collected 3 steps.
             Also note that when in parallel mode, the total steps will be splitted evenly, which will
-            affect how many steps TensorSummary will be collected.
-        max_file_size (Optional[int]): The maximum size in bytes each file can be written to the disk.
+            affect the number of steps TensorSummary will be collected.
+        max_file_size (Optional[int]): The maximum size in bytes of each file that can be written to the disk.
             Default: None, which means no limit. For example, to write not larger than 4GB,
             specify `max_file_size=4 * 1024**3`.
 

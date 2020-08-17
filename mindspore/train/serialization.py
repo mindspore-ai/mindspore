@@ -144,10 +144,10 @@ def save_checkpoint(parameter_list, ckpt_file_name, async_save=False):
     Saves checkpoint info to a specified file.
 
     Args:
-        parameter_list (list): Parameters list, each element is a dict
+        parameter_list (list): Parameters list, each element is a dictionary
                                like {"name":xx, "type":xx, "shape":xx, "data":xx}.
         ckpt_file_name (str): Checkpoint file name.
-        async_save (bool): Whether asynchronous execute save checkpoint into file. Default: False
+        async_save (bool): Whether asynchronous execution saves the checkpoint to a file. Default: False
 
     Raises:
         RuntimeError: Failed to save the Checkpoint file.
@@ -270,10 +270,10 @@ def load_param_into_net(net, parameter_dict):
 
     Args:
         net (Cell): Cell network.
-        parameter_dict (dict): Parameter dict.
+        parameter_dict (dict): Parameter dictionary.
 
     Raises:
-        TypeError: Argument is not a Cell, or parameter_dict is not a Parameter dict.
+        TypeError: Argument is not a Cell, or parameter_dict is not a Parameter dictionary.
     """
     if not isinstance(net, nn.Cell):
         logger.error("Failed to combine the net and the parameters.")
@@ -447,12 +447,12 @@ def _fill_param_into_net(net, parameter_list):
 
 def export(net, *inputs, file_name, file_format='AIR'):
     """
-    Exports MindSpore predict model to file in specified format.
+    Export the MindSpore prediction model to a file in the specified format.
 
     Args:
         net (Cell): MindSpore network.
         inputs (Tensor): Inputs of the `net`.
-        file_name (str): File name of model to export.
+        file_name (str): File name of the model to be exported.
         file_format (str): MindSpore currently supports 'AIR', 'ONNX' and 'MINDIR' format for exported model.
 
             - AIR: Ascend Intermidiate Representation. An intermidiate representation format of Ascend model.
@@ -507,7 +507,7 @@ def parse_print(print_file_name):
     Loads Print data from a specified file.
 
     Args:
-        print_file_name (str): The file name of save print data.
+        print_file_name (str): The file name of saved print data.
 
     Returns:
         List, element of list is Tensor.

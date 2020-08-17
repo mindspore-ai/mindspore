@@ -41,7 +41,7 @@ class FixedLossScaleManager(LossScaleManager):
 
     Args:
         loss_scale (float): Loss scale. Default: 128.0.
-        drop_overflow_update (bool): whether to do optimizer if there is overflow. Default: True.
+        drop_overflow_update (bool): whether to execute optimizer if there is an overflow. Default: True.
 
     Examples:
         >>> loss_scale_manager = FixedLossScaleManager()
@@ -59,7 +59,7 @@ class FixedLossScaleManager(LossScaleManager):
         return self._loss_scale
 
     def get_drop_overflow_update(self):
-        """Get the flag whether to drop optimizer update when there is overflow happened"""
+        """Get the flag whether to drop optimizer update when there is an overflow."""
         return self._drop_overflow_update
 
     def update_loss_scale(self, overflow):
@@ -82,7 +82,7 @@ class DynamicLossScaleManager(LossScaleManager):
     Dynamic loss-scale manager.
 
     Args:
-        init_loss_scale (float): Init loss scale. Default: 2**24.
+        init_loss_scale (float): Initialize loss scale. Default: 2**24.
         scale_factor (int): Coefficient of increase and decrease. Default: 2.
         scale_window (int): Maximum continuous normal steps when there is no overflow. Default: 2000.
 
@@ -135,7 +135,7 @@ class DynamicLossScaleManager(LossScaleManager):
         self.cur_iter += 1
 
     def get_drop_overflow_update(self):
-        """Get the flag whether to drop optimizer update when there is overflow happened"""
+        """Get the flag whether to drop optimizer update when there is an overflow."""
         return True
 
     def get_update_cell(self):

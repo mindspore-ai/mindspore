@@ -64,29 +64,29 @@ class SummaryRecord:
     SummaryRecord is used to record the summary data and lineage data.
 
     The API will create a summary file and lineage files lazily in a given directory and writes data to them.
-    It writes the data to files by executing the 'record' method. In addition to record the data bubbled up from
+    It writes the data to files by executing the 'record' method. In addition to recording the data bubbled up from
     the network by defining the summary operators, SummaryRecord also supports to record extra data which
     can be added by calling add_value.
 
     Note:
-        1. Make sure to close the SummaryRecord at the end, or the process will not exit.
-           Please see the Example section below on how to properly close with two ways.
-        2. The SummaryRecord instance can only allow one at a time, otherwise it will cause problems with data writes.
+        1. Make sure to close the SummaryRecord at the end, otherwise the process will not exit.
+           Please see the Example section below to learn how to close properly in two ways.
+        2. Only one SummaryRecord instance is allowed at a time, otherwise it will cause data writing problems.
 
     Args:
         log_dir (str): The log_dir is a directory location to save the summary.
         queue_max_size (int): Deprecated. The capacity of event queue.(reserved). Default: 0.
-        flush_time (int): Deprecated. Frequency to flush the summaries to disk, the unit is second. Default: 120.
+        flush_time (int): Deprecated. Frequency of flush the summary file to disk. The unit is second. Default: 120.
         file_prefix (str): The prefix of file. Default: "events".
         file_suffix (str): The suffix of file. Default: "_MS".
         network (Cell): Obtain a pipeline through network for saving graph summary. Default: None.
-        max_file_size (Optional[int]): The maximum size in bytes each file can be written to the disk. \
+        max_file_size (Optional[int]): The maximum size of each file that can be written to disk (in bytes). \
             Unlimited by default. For example, to write not larger than 4GB, specify `max_file_size=4 * 1024**3`.
 
     Raises:
-        TypeError: If `max_file_size`, `queue_max_size` or `flush_time` is not int, \
-            or `file_prefix` and `file_suffix` is not str.
-        RuntimeError: If the log_dir can not be resolved to a canonicalized absolute pathname.
+        TypeError: If the data type of `max_file_size`, `queue_max_size` or `flush_time` is not int, \
+            or the data type of `file_prefix` and `file_suffix` is not str.
+        RuntimeError: If the log_dir is not a normalized absolute path name.
 
     Examples:
         >>> # use in with statement to auto close
@@ -171,10 +171,10 @@ class SummaryRecord:
 
     def set_mode(self, mode):
         """
-        Set the mode for the recorder to be aware. The mode is set 'train' by default.
+        Set the mode for the recorder to be aware. The mode is set to 'train' by default.
 
         Args:
-            mode (str): The mode to set, which should be 'train' or 'eval'.
+            mode (str): The mode to be set, which should be 'train' or 'eval'.
 
         Raises:
             ValueError: When the mode is not recognized.
@@ -190,29 +190,30 @@ class SummaryRecord:
 
     def add_value(self, plugin, name, value):
         """
-        Add value to be record later on.
+        Add value to be recorded later.
 
         When the plugin is 'tensor', 'scalar', 'image' or 'histogram',
         the name should be the tag name, and the value should be a Tensor.
 
-        When the plugin plugin is 'graph', the value should be a GraphProto.
+        When the plugin is 'graph', the value should be a GraphProto.
 
-        When the plugin 'dataset_graph', 'train_lineage', 'eval_lineage',
+        When the plugin is 'dataset_graph', 'train_lineage', 'eval_lineage',
         or 'custom_lineage_data', the value should be a proto message.
 
 
         Args:
-            plugin (str): The plugin for the value.
-            name (str): The name for the value.
+            plugin (str): The value of the plugin.
+            name (str): The value of the name.
             value (Union[Tensor, GraphProto, TrainLineage, EvaluationLineage, DatasetGraph, UserDefinedInfo]): \
                 The value to store.
 
-                - GraphProto: The 'value' should be a serialized string this type when the plugin is 'graph'.
-                - Tensor: The 'value' should be this type when the plugin is 'scalar', 'image', 'tensor' or 'histogram'.
-                - TrainLineage: The 'value' should be this type when the plugin is 'train_lineage'.
-                - EvaluationLineage: The 'value' should be this type when the plugin is 'eval_lineage'.
-                - DatasetGraph: The 'value' should be this type when the plugin is 'dataset_graph'.
-                - UserDefinedInfo: The 'value' should be this type when the plugin is 'custom_lineage_data'.
+                - The data type of value should be 'GraphProto' when the plugin is 'graph'.
+                - The data type of value should be 'Tensor' when the plugin is 'scalar', 'image', 'tensor'
+                  or 'histogram'.
+                - The data type of value should be 'TrainLineage' when the plugin is 'train_lineage'.
+                - The data type of value should be 'EvaluationLineage' when the plugin is 'eval_lineage'.
+                - The data type of value should be 'DatasetGraph' when the plugin is 'dataset_graph'.
+                - The data type of value should be  'UserDefinedInfo' when the plugin is 'custom_lineage_data'.
 
         Raises:
             ValueError: When the name is not valid.
@@ -248,9 +249,9 @@ class SummaryRecord:
 
         Args:
             step (int): Represents training step number.
-            train_network (Cell): The network that called the callback.
+            train_network (Cell): The network to call the callback.
             plugin_filter (Optional[Callable[[str], bool]]): The filter function, \
-                which is used to filter out plugins from being written by return False.
+                which is used to filter out plugins from being written by returning False.
 
         Returns:
             bool, whether the record process is successful or not.
@@ -342,7 +343,7 @@ class SummaryRecord:
 
     def close(self):
         """
-        Flush all events and close summary records. Please use with statement to autoclose.
+        Flush all events and close summary records. Please use the statement to autoclose.
 
         Examples:
             >>> try:

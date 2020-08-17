@@ -70,23 +70,24 @@ def _chg_ckpt_file_name_if_same_exist(directory, prefix):
 
 class CheckpointConfig:
     """
-    The config for model checkpoint.
+    The configuration of model checkpoint.
 
     Note:
         During the training process, if dataset is transmitted through the data channel,
-        suggest set save_checkpoint_steps be an integer multiple of loop_size.
-        Otherwise there may be deviation in the timing of saving checkpoint.
+        It is suggested to set 'save_checkpoint_steps' to an integer multiple of loop_size.
+        Otherwise, the time to save the checkpoint may be biased.
 
     Args:
         save_checkpoint_steps (int): Steps to save checkpoint. Default: 1.
         save_checkpoint_seconds (int): Seconds to save checkpoint. Default: 0.
             Can't be used with save_checkpoint_steps at the same time.
-        keep_checkpoint_max (int): Maximum step to save checkpoint. Default: 5.
+        keep_checkpoint_max (int): Maximum number of checkpoint files can be saved. Default: 5.
         keep_checkpoint_per_n_minutes (int): Keep one checkpoint every n minutes. Default: 0.
             Can't be used with keep_checkpoint_max at the same time.
-        integrated_save (bool): Whether to intergrated save in automatic model parallel scene. Default: True.
-            Integrated save function is only supported in automatic parallel scene, not supported in manual parallel.
-        async_save (bool): Whether asynchronous execute save checkpoint into file. Default: False
+        integrated_save (bool): Whether to perform integrated save function in automatic model parallel scene.
+            Default: True. Integrated save function is only supported in automatic parallel scene, not supported
+            in manual parallel.
+        async_save (bool): Whether asynchronous execution saves the checkpoint to a file. Default: False
 
     Raises:
         ValueError: If the input_param is None or 0.
@@ -180,9 +181,9 @@ class ModelCheckpoint(Callback):
     It is called to combine with train process and save the model and network parameters after traning.
 
     Args:
-        prefix (str): Checkpoint files names prefix. Default: "CKP".
-        directory (str): Folder path into which checkpoint files will be saved. Default: None.
-        config (CheckpointConfig): Checkpoint strategy config. Default: None.
+        prefix (str): The prefix name of checkpoint files. Default: "CKP".
+        directory (str): The path of the folder which will be saved in the checkpoint file. Default: None.
+        config (CheckpointConfig): Checkpoint strategy configuration. Default: None.
 
     Raises:
         ValueError: If the prefix is invalid.
