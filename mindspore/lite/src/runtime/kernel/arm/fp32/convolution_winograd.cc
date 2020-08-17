@@ -222,12 +222,6 @@ int ConvolutionWinogradCPUKernel::InitTmpBuffer() {
 }
 
 int ConvolutionWinogradCPUKernel::ConfigInputOutput() {
-  auto input_tensor = in_tensors_.at(kInputIndex);
-  auto ret = CheckLayout(input_tensor);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Check layout failed.";
-    return RET_ERROR;
-  }
   auto output_tensor = out_tensors_.at(kOutputIndex);
   output_tensor->SetFormat(schema::Format_NHWC);
 
@@ -357,7 +351,7 @@ int ConvolutionWinogradCPUKernel::Run() {
   int in_h = conv_param_->input_h_;
   int in_w = conv_param_->input_w_;
   int in_channel = conv_param_->input_channel_;
-  convert_func_(ori_input_data, nhwc4_input_, in_batch, in_h * in_w, in_channel);
+  PackNHWCToNHWC4Fp32(ori_input_data, nhwc4_input_, in_batch, in_h * in_w, in_channel);
 
   int error_code = LiteBackendParallelLaunch(ConvolutionWinogradImpl, this, thread_count_);
   if (error_code != RET_OK) {

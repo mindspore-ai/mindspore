@@ -35,14 +35,14 @@ void IndirectGemmFp16_16x8(float16_t *output, float16_t *input, float16_t *weigh
                            size_t ic4, size_t out_channel, size_t offset, size_t mode, size_t writeC8, size_t relu,
                            size_t relu6) {
   if (!(mode && writeC8)) {
-    IndirectGemmFp16_16x8_common(output, input, weight, bias, step, ic4, output, offset, relu, relu6);
+    IndirectGemmFp16_16x8_common(output, input, weight, bias, step, ic4, out_channel, offset, relu, relu6);
   } else {
-    IndirectGemmFp16_16x8_c8(output, input, weight, bias, step, ic4, output, offset, mode, writeC8, relu, relu6);
+    IndirectGemmFp16_16x8_c8(output, input, weight, bias, step, ic4, out_channel, offset, mode, writeC8, relu, relu6);
   }
 }
 
 void IndirectGemmFp16_16x8_common(float16_t *output, float16_t *input, float16_t *weight, float16_t *bias, size_t step,
-                                  size_t ic4, size_t oc8, size_t offset, size_t relu, size_t relu6) {
+                                  size_t ic4, size_t out_channel, size_t offset, size_t relu, size_t relu6) {
   const int tile_n = 16;
   for (int i = 0; i < out_channel; i++) {
     int oc8_block = i / C8NUM;
@@ -74,7 +74,7 @@ void IndirectGemmFp16_16x8_common(float16_t *output, float16_t *input, float16_t
       if (relu) {
         tmp[0] = tmp[0] < 0 ? 0 : tmp[0];
       } else if (relu6) {
-        mp[0] = tmp[0] < 0 ? 0 : tmp[0];
+        tmp[0] = tmp[0] < 0 ? 0 : tmp[0];
         tmp[0] = tmp[0] > 6 ? 6 : tmp[0];
       }
     }
@@ -411,6 +411,124 @@ void Conv3x3Fp16(float16_t *input_data, float16_t *transed_weight, const float16
 
       Conv3x3Fp16OutputTransform(tmp_dst_buffer + task_id * tmp_dst_buffer_offset, tmp_out + tmp_out_batch_offset,
                                  bias_data, start_index, real_cal_num, out_w_block, conv_param);
+    }
+  }
+}
+
+void UnPack3x3OutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel) {
+  int out_w_block = UP_DIV(width, C4NUM);
+  int out_h_block = UP_DIV(height, C4NUM);
+  int oc8 = UP_DIV(channel, C8NUM);
+
+  for (int b = 0; b < batch; b++) {
+    int tmp_out_batch_offset = b * oc8 * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM;
+    int ro_batch_size = b * channel * height * width;
+    const float16_t *batch_tmp_out = src + tmp_out_batch_offset;
+    float16_t *batch_out = dst + ro_batch_size;
+    for (int h = 0; h < height; h++) {
+      int src_h_offset = h * out_w_block * C4NUM * C8NUM;
+      int dst_h_offset = h * width * channel;
+      for (int w = 0; w < width; w++) {
+        int src_w_offset = src_h_offset + w * C8NUM;
+        int dst_w_offset = dst_h_offset + w * channel;
+        for (int c = 0; c < oc8 - 1; ++c) {
+          int src_offset = c * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM + src_w_offset;
+          int dst_offset = dst_w_offset + c * C8NUM;
+          vst1q_f16(batch_out + dst_offset, vld1q_f16(batch_tmp_out + src_offset));
+        }
+
+        int c_res = channel - (oc8 - 1) * C8NUM;
+        int src_c_res_offset = src_w_offset + (oc8 - 1) * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM;
+        int dst_c_res_offset = dst_w_offset + (oc8 - 1) * C8NUM;
+        for (int c = 0; c < c_res; c++) {
+          int src_offset = src_c_res_offset + c;
+          int dst_offset = dst_c_res_offset + c;
+          (batch_out + dst_offset)[0] = (batch_tmp_out + src_offset)[0];
+        }
+      }
+    }
+  }
+}
+
+void UnPack3x3ReluOutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel) {
+  int out_w_block = UP_DIV(width, C4NUM);
+  int out_h_block = UP_DIV(height, C4NUM);
+  int oc8 = UP_DIV(channel, C8NUM);
+
+  for (int b = 0; b < batch; b++) {
+    int tmp_out_batch_offset = b * oc8 * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM;
+    int ro_batch_size = b * channel * height * width;
+    const float16_t *batch_tmp_out = src + tmp_out_batch_offset;
+    float16_t *batch_out = dst + ro_batch_size;
+    for (int h = 0; h < height; h++) {
+      int src_h_offset = h * out_w_block * C4NUM * C8NUM;
+      int dst_h_offset = h * width * channel;
+      for (int w = 0; w < width; w++) {
+        int src_w_offset = src_h_offset + w * C8NUM;
+        int dst_w_offset = dst_h_offset + w * channel;
+        for (int c = 0; c < oc8 - 1; ++c) {
+          int src_offset = c * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM + src_w_offset;
+          int dst_offset = dst_w_offset + c * C8NUM;
+          float16x8_t input_ptr = vld1q_f16(batch_tmp_out + src_offset);
+          float16x8_t zero = vdupq_n_f16(0);
+          input_ptr = vmaxq_f16(zero, input_ptr);
+          vst1q_f16(batch_out + dst_offset, input_ptr);
+        }
+
+        int c_res = channel - (oc8 - 1) * C8NUM;
+        int src_c_res_offset = src_w_offset + (oc8 - 1) * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM;
+        int dst_c_res_offset = dst_w_offset + (oc8 - 1) * C8NUM;
+        for (int c = 0; c < c_res; c++) {
+          int src_offset = src_c_res_offset + c;
+          int dst_offset = dst_c_res_offset + c;
+          float16_t input_data = (batch_tmp_out + src_offset)[0];
+          input_data = input_data < 0 ? 0 : input_data;
+          (batch_out + dst_offset)[0] = input_data;
+        }
+      }
+    }
+  }
+}
+
+void UnPack3x3Relu6OutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel) {
+  int out_w_block = UP_DIV(width, C4NUM);
+  int out_h_block = UP_DIV(height, C4NUM);
+  int oc8 = UP_DIV(channel, C8NUM);
+
+  for (int b = 0; b < batch; b++) {
+    int tmp_out_batch_offset = b * oc8 * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM;
+    int ro_batch_size = b * channel * height * width;
+    const float16_t *batch_tmp_out = src + tmp_out_batch_offset;
+    float16_t *batch_out = dst + ro_batch_size;
+    for (int h = 0; h < height; h++) {
+      int src_h_offset = h * out_w_block * C4NUM * C8NUM;
+      int dst_h_offset = h * width * channel;
+      for (int w = 0; w < width; w++) {
+        int src_w_offset = src_h_offset + w * C8NUM;
+        int dst_w_offset = dst_h_offset + w * channel;
+        for (int c = 0; c < oc8 - 1; ++c) {
+          int src_offset = c * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM + src_w_offset;
+          int dst_offset = dst_w_offset + c * C8NUM;
+          float16x8_t input_ptr = vld1q_f16(batch_tmp_out + src_offset);
+          float16x8_t zero = vdupq_n_f16(0);
+          float16x8_t six = vdupq_n_f16(6);
+          input_ptr = vmaxq_f16(zero, input_ptr);
+          input_ptr = vminq_f16(six, input_ptr);
+          vst1q_f16(batch_out + dst_offset, input_ptr);
+        }
+
+        int c_res = channel - (oc8 - 1) * C8NUM;
+        int src_c_res_offset = src_w_offset + (oc8 - 1) * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM;
+        int dst_c_res_offset = dst_w_offset + (oc8 - 1) * C8NUM;
+        for (int c = 0; c < c_res; c++) {
+          int src_offset = src_c_res_offset + c;
+          int dst_offset = dst_c_res_offset + c;
+          float16_t input_data = (batch_tmp_out + src_offset)[0];
+          input_data = input_data < 0 ? 0 : input_data;
+          input_data = input_data > 6 ? 6 : input_data;
+          (batch_out + dst_offset)[0] = input_data;
+        }
+      }
     }
   }
 }
