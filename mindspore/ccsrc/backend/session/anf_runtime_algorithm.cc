@@ -1187,6 +1187,19 @@ TypeId AnfRuntimeAlgorithm::GetPrevNodeOutputPrecision(const AnfNodePtr &node, s
   return GetCNodeOutputPrecision(kernel_with_index.first);
 }
 
+bool AnfRuntimeAlgorithm::IsDynamicShape(const AnfNodePtr &node) {
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto has_attr = AnfAlgo::HasNodeAttr(kAttrIsDynamicShape, cnode);
+  if (!has_attr) {
+    return false;
+  }
+  return AnfAlgo::GetNodeAttr<bool>(node, kAttrIsDynamicShape);
+}
+
 bool AnfRuntimeAlgorithm::IsCondControlKernel(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (node->inputs().empty()) {

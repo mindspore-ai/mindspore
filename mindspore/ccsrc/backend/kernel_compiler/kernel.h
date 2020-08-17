@@ -37,7 +37,6 @@ enum FusionType {
   COMMREDUCE,
   SEGMENT,
   OPAQUE,
-  DYNAMIC,
   UNKNOWN_FUSION_TYPE = -1,
 };
 enum OpPattern {
@@ -80,8 +79,8 @@ class KernelPack {
   bool LoadKernelMeta(const std::string &json_f, const std::string &processor);
   bool ReadFromJsonFile(const std::string &json_f, const std::string &processor);
   const std::string Serialize() const;
-  const FlexArray *const GetJson() const { return json_; }
-  const FlexArray *const GetKernel() const { return kernel_; }
+  const FlexArray *GetJson() const { return json_; }
+  const FlexArray *GetKernel() const { return kernel_; }
   ~KernelPack() {
     if (json_) {
       delete[] json_;

@@ -26,7 +26,7 @@ message AttrValue {
     repeated int64 i = 3 [ packed = true ];       //"array(int)"
     repeated float f = 4 [ packed = true ];       //"array(float)"
     repeated bool b = 5 [ packed = true ];        //"array(bool)"
-    repeated DataType type = 6 [ packed = true ]; //"array(type)"
+    repeated int32 type = 6 [ packed = true ]; //"array(type)"
     repeated TensorShape shape = 7;               //"array(shape)"
     repeated Tensor tensor = 8;                   //"array(tensor)"
   }
