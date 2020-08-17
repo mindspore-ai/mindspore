@@ -568,7 +568,7 @@ void KernelAdjust::Profiling(NotNull<session::KernelGraph *> kernel_graph_ptr) {
   }
   ProfilingTraceInfo profiling_trace_info = ProfilingUtils::GetProfilingTraceFromEnv(kernel_graph_ptr);
   if (!profiling_trace_info.IsValid()) {
-    MS_LOG(WARNING) << "[profiling] no profiling node found!";
+    MS_LOG(INFO) << "[profiling] no profiling node found!";
     return;
   }
   InsertProfilingKernel(profiling_trace_info, kernel_graph_ptr);

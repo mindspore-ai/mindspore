@@ -137,16 +137,18 @@ bool DataDumpParser::NeedDump(const std::string &op_full_name) const {
   return iter != kernel_map_.end();
 }
 
-bool DataDumpParser::IsConfigExist(const nlohmann::json &dump_settings) const {
-  if (dump_settings.find(kConfigDumpMode) == dump_settings.end() ||
-      dump_settings.find(kConfigNetName) == dump_settings.end() ||
-      dump_settings.find(kConfigOpDebugMode) == dump_settings.end() ||
-      dump_settings.find(kConfigIteration) == dump_settings.end() ||
-      dump_settings.find(kConfigKernels) == dump_settings.end()) {
-    MS_LOG(ERROR) << "[DataDump] DumpSettings keys are not exist.";
+bool CheckConfigKey(const nlohmann::json &dump_settings, const std::string &key) {
+  if (dump_settings.find(key) == dump_settings.end()) {
+    MS_LOG(ERROR) << "[DataDump] DumpSettings key:" << key << " is not exist.";
     return false;
   }
   return true;
+}
+
+bool DataDumpParser::IsConfigExist(const nlohmann::json &dump_settings) const {
+  return CheckConfigKey(dump_settings, kConfigDumpMode) && CheckConfigKey(dump_settings, kConfigNetName) &&
+         CheckConfigKey(dump_settings, kConfigOpDebugMode) && CheckConfigKey(dump_settings, kConfigIteration) &&
+         CheckConfigKey(dump_settings, kConfigKernels);
 }
 
 bool DataDumpParser::ParseDumpSetting(const nlohmann::json &dump_settings) {

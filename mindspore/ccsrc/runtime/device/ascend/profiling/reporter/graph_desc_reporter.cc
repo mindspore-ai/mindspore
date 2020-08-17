@@ -25,6 +25,7 @@ namespace ascend {
 void GraphDescReporter::ReportData() {
   for (const auto &node : cnode_list_) {
     if (AnfAlgo::GetKernelType(node) != TBE_KERNEL && AnfAlgo::GetKernelType(node) != AKG_KERNEL) {
+      MS_LOG(INFO) << "Skip non tbe kernel:" << node->fullname_with_scope();
       continue;
     }
     std::vector<DataElement> input_data_list;
