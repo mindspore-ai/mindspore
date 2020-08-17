@@ -44,7 +44,6 @@ int ActivationOpenClKernel::Init() {
     MS_LOG(ERROR) << "Activate fun only support dim=4, but your dim=" << in_tensors_[0]->shape().size();
     return RET_ERROR;
   }
-  ori_format_ = out_tensors_[0]->GetFormat();
   std::string program_name = "";
   std::string kernel_name = "";
   std::string source = activation_source_fp32;
@@ -68,6 +67,8 @@ int ActivationOpenClKernel::Init() {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ori_format_ = out_tensors_[0]->GetFormat();
+  out_tensors_[0]->SetFormat(schema::Format_NHWC4);
   MS_LOG(DEBUG) << op_parameter_->name_ << " init Done!";
   return RET_OK;
 }

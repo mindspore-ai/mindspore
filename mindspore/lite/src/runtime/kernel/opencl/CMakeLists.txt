@@ -11,4 +11,6 @@ set(OPENCL_KERNEL_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel/conv2d_transpose.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel/transpose.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel/reshape.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel/activation.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel/caffe_prelu.cc
     )

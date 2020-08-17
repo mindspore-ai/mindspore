@@ -122,7 +122,8 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size) 
   mem_buf->host_ptr_ = host_ptr;
   mem_buf->image_ptr_ = image_ptr;
   mem_buf->img_size = img_size;
-  MS_LOG(DEBUG) << "Malloc a new buffer. size: " << mem_buf->size_ << ", host addr: " << mem_buf->host_ptr_
+  std::string type_name = img_size.empty() ? "buffer" : "Image2D";
+  MS_LOG(DEBUG) << "Malloc a new " << type_name << ". size: " << mem_buf->size_ << ", host addr: " << mem_buf->host_ptr_
                 << ", device addr: " << mem_buf->device_ptr_ << ", image_addr: " << image_ptr;
   allocated_list_[host_ptr] = mem_buf.release();
   UnLock();
