@@ -28,8 +28,8 @@ def test_all_and_any_of_tensor_in_graph():
         def construct(self, x):
             all_ = x.all()
             any_ = x.any()
-            all_0 = x.all(0, True)
-            any_0 = x.any(0, True)
+            all_0 = x.all(None, True)
+            any_0 = x.any(None, True)
             return all_, any_, all_0, any_0
 
     net = Net()
