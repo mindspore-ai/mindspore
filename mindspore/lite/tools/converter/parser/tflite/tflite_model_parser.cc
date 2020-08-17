@@ -96,6 +96,11 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
   for (const auto &tflite_op : tflite_subgraph->operators) {
     auto tflite_op_type = (tflite_model->operator_codes[tflite_op->opcode_index])->builtin_code;
     auto op_type = GetMSOpType(tflite_op_type);
+    if (op_type == "CUSTOM") {
+      auto custom_type = (tflite_model->operator_codes[tflite_op->opcode_index])->custom_code;
+      MS_LOG(ERROR) << "CUSTOM op is not supported, the type is " << custom_type;
+      return RET_ERROR;
+    }
 
     std::unique_ptr<schema::CNodeT> op(new schema::CNodeT);
     op->name = op_type + "-" + std::to_string(idx++);
@@ -216,7 +221,7 @@ STATUS TfliteModelParser::GetGraphInfo(const std::unique_ptr<tflite::SubGraphT> 
   return RET_OK;
 }
 
-STATUS TfliteModelParser::UpdateOp(schema::MetaGraphT *sub_graph) {
+STATUS TfliteModelParser::ConvertGroupDepthwiseOp(schema::MetaGraphT* sub_graph) {
   for (auto &op : sub_graph->nodes) {
     if (op->primitive->value.type == schema::PrimitiveType_DepthwiseConv2D) {
       auto attr = op->primitive->value.AsDepthwiseConv2D();
@@ -248,7 +253,6 @@ STATUS TfliteModelParser::UpdateOp(schema::MetaGraphT *sub_graph) {
         auto weight_id = op->inputIndex[1];
         auto &weight_tensor = sub_graph->allTensors.at(weight_id);
         if (weight_tensor->dataType == TypeId::kNumberTypeUInt8) {
-          // convert weight format KHWC -> CHWK
           auto status = TransFilterFormat<uint8_t>(weight_tensor.get(), kKHWC2CHWK);
           if (status != RET_OK) {
             MS_LOG(ERROR) << "Trans depthwiseConv Filter Format failed.";
@@ -256,13 +260,13 @@ STATUS TfliteModelParser::UpdateOp(schema::MetaGraphT *sub_graph) {
           }
         }
         if (weight_tensor->dataType == kNumberTypeFloat32 || weight_tensor->dataType == kNumberTypeFloat) {
-          // convert weight format KHWC -> CHWK
           auto status = TransFilterFormat<float>(weight_tensor.get(), kKHWC2CHWK);
           if (status != RET_OK) {
-            MS_LOG(ERROR) << "Trans depthwiseConv Filter Format failed.";
+            MS_LOG(ERROR) << "Trans filter format failed.";
             return RET_ERROR;
           }
         }
+        weight_tensor->format = schema::Format_CHWK;
       }
     }
   }
@@ -303,8 +307,8 @@ MetaGraphT *TfliteModelParser::Parse(const std::string &model_file, const std::s
   }
 
   // update for depthwiseConv
-  if (UpdateOp(sub_graph.get()) != RET_OK) {
-    MS_LOG(ERROR) << "update depthwise conv failed";
+  if (ConvertGroupDepthwiseOp(sub_graph.get()) != RET_OK) {
+    MS_LOG(ERROR) << "convert group depthwise conv failed";
     return nullptr;
   }
 
