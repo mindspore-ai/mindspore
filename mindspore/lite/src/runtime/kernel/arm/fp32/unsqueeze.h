@@ -29,7 +29,7 @@ class UnsqueezeCPUKernel : public LiteKernel {
   UnsqueezeCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                      const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                      const lite::Primitive *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~UnsqueezeCPUKernel() = default;
 
   int Init() override;
@@ -38,13 +38,11 @@ class UnsqueezeCPUKernel : public LiteKernel {
   int DoUnsqueeze(int task_id);
 
  private:
-  int thread_count_;
   int thread_sz_count_;
   int thread_sz_stride_;
   int data_size_;
-  float *in_ptr_;
-  float *out_ptr_;
-  const Context *ctx_;
+  int8_t *in_ptr_;
+  int8_t *out_ptr_;
 };
 }  // namespace mindspore::kernel
 

@@ -30,7 +30,7 @@ typedef struct UnsqueezeParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-int Unsqueeze(float *input_ptr, float *output_ptr, size_t data_size);
+int Unsqueeze(const int8_t *input_ptr, int8_t *output_ptr, size_t data_size);
 #ifdef __cplusplus
 }
 #endif

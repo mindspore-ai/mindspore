@@ -28,17 +28,15 @@ using mindspore::schema::PrimitiveType_Unsqueeze;
 
 namespace mindspore::kernel {
 int UnsqueezeCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
-  int ret = ReSize();
-  return ret;
+  return ReSize();
 }
 
 int UnsqueezeCPUKernel::ReSize() {
   data_size_ = in_tensors_.at(0)->ElementsNum();
-  thread_sz_count_ = MSMIN(thread_count_, data_size_);
+  thread_sz_count_ = MSMIN(context_->thread_num_, data_size_);
   thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
   return RET_OK;
 }
@@ -48,7 +46,7 @@ int UnsqueezeCPUKernel::DoUnsqueeze(int task_id) {
   if (size == 0) {
     return RET_OK;
   }
-  int offset = task_id * thread_sz_stride_;
+  size_t offset = task_id * thread_sz_stride_ * sizeof(float);
   int ret = Unsqueeze(in_ptr_ + offset, out_ptr_ + offset, size * sizeof(float));
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "UnsqueezeRun error task_id[" << task_id << "] error_code[" << ret << "]";
@@ -73,8 +71,8 @@ int UnsqueezeCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  in_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
-  out_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  in_ptr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->Data());
+  out_ptr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->Data());
   ret = LiteBackendParallelLaunch(UnsqueezeRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "UnsqueezeRun error error_code[" << ret << "]";
@@ -85,19 +83,19 @@ int UnsqueezeCPUKernel::Run() {
 
 kernel::LiteKernel *CpuUnsqueezeFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                   const std::vector<lite::tensor::Tensor *> &outputs,
-                                                  OpParameter *opParameter, const lite::Context *ctx,
+                                                  OpParameter *parameter, const lite::Context *ctx,
                                                   const kernel::KernelKey &desc, const lite::Primitive *primitive) {
-  MS_ASSERT(opParameter != nullptr);
+  MS_ASSERT(parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Unsqueeze);
-  auto *kernel = new (std::nothrow) UnsqueezeCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  auto *kernel = new (std::nothrow) UnsqueezeCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new UnsqueezeCPUKernel fail!";
     return nullptr;
   }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
     delete kernel;
     return nullptr;
   }
@@ -105,4 +103,5 @@ kernel::LiteKernel *CpuUnsqueezeFp32KernelCreator(const std::vector<lite::tensor
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Unsqueeze, CpuUnsqueezeFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Unsqueeze, CpuUnsqueezeFp32KernelCreator)
 }  // namespace mindspore::kernel
