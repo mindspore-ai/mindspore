@@ -246,6 +246,10 @@ void KernelGraph::SetExecOrderByDefault() {
   }
   CheckLoop();
   // resort start label / end goto
+  execution_order_ = SortStartLabelAndEndGoto();
+}
+
+std::vector<CNodePtr> KernelGraph::SortStartLabelAndEndGoto() {
   std::vector<CNodePtr> re_order;
   if (start_label_ != nullptr) {
     re_order.push_back(start_label_);
@@ -272,7 +276,7 @@ void KernelGraph::SetExecOrderByDefault() {
   if (end_goto_ != nullptr) {
     re_order.push_back(end_goto_);
   }
-  execution_order_ = re_order;
+  return re_order;
 }
 
 void KernelGraph::CheckLoop() {
@@ -736,27 +740,29 @@ void KernelGraph::UpdateControlDependRelations(const std::vector<AnfNodePtr> &de
     for (const auto &tmp : prior_nodes) {
       GetAllFatherRealNode(tmp, &real_prior_nodes, &prior_visited);
     }
-
     std::vector<AnfNodePtr> real_depend_nodes;
     std::set<AnfNodePtr> depend_visited;
     for (const auto &tmp : depend_nodes) {
       GetAllFatherRealNode(tmp, &real_depend_nodes, &depend_visited);
     }
+    UpdateNodeInputOutputEdges(real_prior_nodes, real_depend_nodes);
+  }
+}
 
-    for (auto &first_node : real_prior_nodes) {
-      if (AnfAlgo::CheckPrimitiveType(first_node, prim::kPrimControlDepend)) {
+void KernelGraph::UpdateNodeInputOutputEdges(const std::vector<AnfNodePtr> &real_prior_nodes,
+                                             const std::vector<AnfNodePtr> &real_depend_nodes) {
+  for (auto &first_node : real_prior_nodes) {
+    if (AnfAlgo::CheckPrimitiveType(first_node, prim::kPrimControlDepend)) {
+      continue;
+    }
+    for (auto &second_node : real_depend_nodes) {
+      if (AnfAlgo::CheckPrimitiveType(second_node, prim::kPrimControlDepend)) {
         continue;
       }
-      for (auto &second_node : real_depend_nodes) {
-        if (AnfAlgo::CheckPrimitiveType(second_node, prim::kPrimControlDepend)) {
-          continue;
-        }
-        MS_EXCEPTION_IF_NULL(first_node);
-        MS_EXCEPTION_IF_NULL(second_node);
-        MS_LOG(DEBUG) << "Add first node:" << first_node->DebugString()
-                      << ",second node:" << second_node->DebugString();
-        AddDependEdge(second_node, first_node, 1);
-      }
+      MS_EXCEPTION_IF_NULL(first_node);
+      MS_EXCEPTION_IF_NULL(second_node);
+      MS_LOG(DEBUG) << "Add first node:" << first_node->DebugString() << ",second node:" << second_node->DebugString();
+      AddDependEdge(second_node, first_node, 1);
     }
   }
 }

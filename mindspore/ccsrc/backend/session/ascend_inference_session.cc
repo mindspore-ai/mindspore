@@ -236,6 +236,5 @@ void AscendInferenceSession::GetModelInputsInfo(uint32_t graph_id, std::vector<t
     }
   }
 }
-
 }  // namespace session
 }  // namespace mindspore

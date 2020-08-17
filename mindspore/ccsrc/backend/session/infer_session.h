@@ -49,7 +49,7 @@ class MSInferSession : public InferSession {
   std::shared_ptr<session::SessionBasic> session_impl_ = nullptr;
   std::vector<uint32_t> graph_id_;
   std::string device_type_;
-  int32_t device_id_;
+  int32_t device_id_ = 0;
 #ifdef ENABLE_D
   rtContext_t context_ = nullptr;
 #endif
