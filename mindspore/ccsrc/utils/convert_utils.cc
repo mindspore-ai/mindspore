@@ -481,8 +481,10 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
 }
 
 // Isomorphism
-static bool SameNodeShallow(const AnfNodePtr &node1, const AnfNodePtr &node2, FuncGraphPairMapEquiv *equiv_func_graph,
-                            NodeMapEquiv *const equiv_node) {
+static bool SameNode(const AnfNodePtr &node1, const AnfNodePtr &node2, FuncGraphPairMapEquiv *equiv_func_graph,
+                     NodeMapEquiv *const equiv_node);
+bool SameNodeShallow(const AnfNodePtr &node1, const AnfNodePtr &node2, FuncGraphPairMapEquiv *equiv_func_graph,
+                     NodeMapEquiv *const equiv_node) {
   if (equiv_node == nullptr) {
     MS_LOG(ERROR) << "Invalid equiv_node";
     return false;
@@ -513,6 +515,9 @@ static bool SameNodeShallow(const AnfNodePtr &node1, const AnfNodePtr &node2, Fu
     }
     MS_LOG(DEBUG) << "two parameters are not equal.";
     return false;
+  }
+  if (node1->isa<CNode>() && node2->isa<CNode>()) {
+    return SameNode(node1, node2, equiv_func_graph, equiv_node);
   }
   MS_LOG(ERROR) << "type error";
   return false;

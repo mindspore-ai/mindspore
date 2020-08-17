@@ -188,6 +188,7 @@ EvalResultPtr AnalysisEngine::Eval(const AnfNodeConfigPtr &conf) {
     trace::TraceEvalCNodeLeave();
   } else {
     MS_LOG(EXCEPTION) << "Illegal AnfNode for evaluating, " << node->DebugString()
+                      << (node->func_graph() != nullptr ? node->func_graph()->ToString() : "nullgraph")
                       << ". NodeInfo: " << trace::GetDebugInfo(node->debug_info());
   }
 
@@ -301,6 +302,8 @@ void AnalysisEngine::Clear() {
   anfnode_config_map_.clear();
   eval_trace_.clear();
   constructors_.clear();
+  constructors_app_.clear();
+  continued_evals_.clear();
 }
 
 namespace {
@@ -426,8 +429,14 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<PartialAbstr
   MS_EXCEPTION_IF_NULL(func);
   AbstractFunctionPtr func_orig = func->fn();
   EvaluatorPtr evaluator_orig = GetEvaluatorFor(func_orig);
+  auto part_pair = std::make_pair(func_orig, func->args());
+  auto itr = constructors_app_.find(part_pair);
+  if (itr != constructors_app_.end()) {
+    return itr->second;
+  }
   std::shared_ptr<PartialAppEvaluator> partial_evaluator =
     std::make_shared<PartialAppEvaluator>(evaluator_orig, func->args());
+  constructors_app_[part_pair] = partial_evaluator;
   return partial_evaluator;
 }
 
@@ -504,9 +513,10 @@ void AnalysisEngine::SetUndeterminedFlag(const EvaluatorPtr &evaluator) {
   if (fg_eval == nullptr) {
     return;
   }
+
   auto fg = fg_eval->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
-  auto undetermined_fgs = fg->recursive_graphs();
+  auto undetermined_fgs = fg->recursive();
   if (undetermined_fgs) {
     auto fg_parent = fg->parent();
     MS_EXCEPTION_IF_NULL(fg_parent);
@@ -546,15 +556,19 @@ EvaluatorPtr AnalysisEngine::HandleNestedRecursion(const std::vector<EvaluatorPt
   MS_LOG(DEBUG) << "undetermined_evals size(): " << undetermined_evals.size();
 
   for (auto u_eval : undetermined_evals) {
-    MS_LOG(DEBUG) << u_eval.first->ToString() << " check undetermined.";
-    if (!undetermined_evals.count(std::make_pair(multi_poss_[u_eval.first], args_spec_list))) {
-      MS_LOG(DEBUG) << u_eval.first->ToString() << " has undetermined.";
+    MS_LOG(DEBUG) << u_eval.first->ToString() << "check undetermined.";
+    auto &alternate_evaluator = multi_poss_[u_eval.first];
+    auto &eval_cache = alternate_evaluator->cache();
+    if ((!undetermined_evals.count(std::make_pair(alternate_evaluator, args_spec_list))) &&
+        (((!continued_evals_.count(u_eval)) && (eval_cache->find(args_spec_list) != eval_cache->end())) ||
+         (eval_cache->find(args_spec_list) == eval_cache->end()))) {
+      MS_LOG(DEBUG) << u_eval.first->ToString() << "has undetermined.";
       has_undetermined = true;
       break;
     }
   }
   if (has_undetermined == false) {
-    MS_LOG(DEBUG) << eval->ToString() << " has no undetermined.";
+    MS_LOG(DEBUG) << eval->ToString() << "has no undetermined.";
     *continue_flag = true;
     return latest_entry;
   }
@@ -597,34 +611,33 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
 
     auto current_inf = std::make_pair(eval, args_spec_list);
     MS_LOG(DEBUG) << "Check Evaluator " << eval->ToString();
-
     // If current evaluator is under tracing, then skip current evaluator to avoid recursively evaluating.
     auto it = std::find(eval_trace_.rbegin(), eval_trace_.rend(), current_inf);
     if (it == eval_trace_.rend()) {
       eval_trace_.push_back(current_inf);
-      MS_LOG(DEBUG) << "Trace Evaluator " << eval->ToString() << " ptr: " << eval.get();
       MS_EXCEPTION_IF_NULL(eval);
       auto eval_result = eval->Run(shared_from_this(), args_conf_list, out_conf);
       MS_EXCEPTION_IF_NULL(eval_result->abstract());
-      MS_LOG(DEBUG) << "Evaluator " << eval->ToString() << " return out_spec: " << eval_result->abstract()->ToString();
       out_specs.push_back(eval_result->abstract());
       eval_trace_.pop_back();
       if (eval_trace_.empty()) {
         multi_poss_.clear();
       }
-    } else if (it != eval_trace_.rbegin()) {
+    } else {
       bool continue_flag = false;
       auto latest_entry = HandleNestedRecursion(evaluators, eval, args_spec_list, it, &continue_flag);
       if (continue_flag) {
+        MS_LOG(DEBUG) << "continued_evals_ add " << current_inf.first.get() << current_inf.first->ToString();
+        continued_evals_.insert(current_inf);
         continue;
       }
 
       // Try to travel the latest undetermined.
       if (latest_entry != eval_trace_.rbegin()->first) {
-        MS_LOG(DEBUG) << "Direct Run Evaluator " << eval->ToString();
+        MS_LOG(DEBUG) << "Direct Run Evaluator " << eval.get() << "----" << eval->ToString();
         auto eval_result = latest_entry->Run(shared_from_this(), args_conf_list, out_conf);
         MS_EXCEPTION_IF_NULL(eval_result->abstract());
-        MS_LOG(DEBUG) << "Evaluator " << latest_entry->ToString()
+        MS_LOG(DEBUG) << "end Direct Evaluator " << latest_entry->ToString()
                       << " return out_spec: " << eval_result->abstract()->ToString();
         return eval_result;
       }

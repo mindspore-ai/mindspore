@@ -30,6 +30,7 @@
 #include "base/base.h"
 #include "ir/dtype.h"
 #include "ir/dtype/number.h"
+#include "utils/hashing.h"
 
 using std::fabs;
 
@@ -51,7 +52,7 @@ using ScalarPtr = std::shared_ptr<Scalar>;
 
 class BoolImm : public Scalar {
  public:
-  explicit BoolImm(bool b) : Scalar(kBool), v_(b) { hash_ = std::hash<bool>{}(v_); }
+  explicit BoolImm(bool b) : Scalar(kBool), v_(b) { hash_ = hash_combine({tid(), std::hash<bool>{}(v_)}); }
   ~BoolImm() override = default;
   MS_DECLARE_PARENT(BoolImm, Scalar)
   std::size_t hash() const override { return hash_; }
@@ -91,7 +92,7 @@ class IntergerImm : public Scalar {
 class Int8Imm : public IntergerImm {
  public:
   Int8Imm() : IntergerImm(kInt8), v_(0) {}
-  explicit Int8Imm(int8_t v) : IntergerImm(kInt8), v_(v) { hash_ = std::hash<int>{}(v_); }
+  explicit Int8Imm(int8_t v) : IntergerImm(kInt8), v_(v) { hash_ = hash_combine({tid(), std::hash<int>{}(v_)}); }
   ~Int8Imm() override = default;
   MS_DECLARE_PARENT(Int8Imm, IntergerImm)
   std::size_t hash() const override { return hash_; }
@@ -117,7 +118,7 @@ IMM_TRAITS(Int8ImmPtr, int8_t)
 class Int16Imm : public IntergerImm {
  public:
   Int16Imm() : IntergerImm(kInt16), v_(0) {}
-  explicit Int16Imm(int16_t v) : IntergerImm(kInt16), v_(v) { hash_ = std::hash<int>{}(v_); }
+  explicit Int16Imm(int16_t v) : IntergerImm(kInt16), v_(v) { hash_ = hash_combine({tid(), std::hash<int>{}(v_)}); }
   ~Int16Imm() override = default;
   MS_DECLARE_PARENT(Int16Imm, IntergerImm)
   std::size_t hash() const override { return hash_; }
@@ -143,7 +144,7 @@ IMM_TRAITS(Int16ImmPtr, int16_t)
 class Int32Imm : public IntergerImm {
  public:
   Int32Imm() : IntergerImm(kInt32), v_(0) {}
-  explicit Int32Imm(int v) : IntergerImm(kInt32), v_(v) { hash_ = std::hash<int>{}(v_); }
+  explicit Int32Imm(int v) : IntergerImm(kInt32), v_(v) { hash_ = hash_combine({tid(), std::hash<int>{}(v_)}); }
   ~Int32Imm() override = default;
   MS_DECLARE_PARENT(Int32Imm, IntergerImm)
   std::size_t hash() const override { return hash_; }
@@ -169,7 +170,7 @@ IMM_TRAITS(Int32ImmPtr, int32_t)
 class Int64Imm : public IntergerImm {
  public:
   Int64Imm() : IntergerImm(kInt64), v_(0) {}
-  explicit Int64Imm(int64_t v) : IntergerImm(kInt64), v_(v) { hash_ = std::hash<int64_t>{}(v_); }
+  explicit Int64Imm(int64_t v) : IntergerImm(kInt64), v_(v) { hash_ = hash_combine({tid(), std::hash<int64_t>{}(v_)}); }
   ~Int64Imm() override = default;
   MS_DECLARE_PARENT(Int64Imm, IntergerImm)
   std::size_t hash() const override { return hash_; }
@@ -195,7 +196,9 @@ IMM_TRAITS(Int64ImmPtr, int64_t)
 class UInt8Imm : public IntergerImm {
  public:
   UInt8Imm() : IntergerImm(kUInt8), v_(0) {}
-  explicit UInt8Imm(uint8_t v) : IntergerImm(kUInt8), v_(v) { hash_ = std::hash<unsigned int>{}(v_); }
+  explicit UInt8Imm(uint8_t v) : IntergerImm(kUInt8), v_(v) {
+    hash_ = hash_combine({tid(), std::hash<unsigned int>{}(v_)});
+  }
   ~UInt8Imm() override = default;
   MS_DECLARE_PARENT(UInt8Imm, IntergerImm)
   std::size_t hash() const override { return hash_; }
@@ -221,7 +224,9 @@ IMM_TRAITS(UInt8ImmPtr, uint8_t);
 class UInt16Imm : public IntergerImm {
  public:
   UInt16Imm() : IntergerImm(kUInt16), v_(0) {}
-  explicit UInt16Imm(uint16_t v) : IntergerImm(kUInt16), v_(v) { hash_ = std::hash<unsigned int>{}(v_); }
+  explicit UInt16Imm(uint16_t v) : IntergerImm(kUInt16), v_(v) {
+    hash_ = hash_combine({tid(), std::hash<unsigned int>{}(v_)});
+  }
   ~UInt16Imm() override = default;
   MS_DECLARE_PARENT(UInt16Imm, IntergerImm)
   std::size_t hash() const override { return hash_; }
@@ -247,7 +252,9 @@ IMM_TRAITS(UInt16ImmPtr, uint16_t);
 class UInt32Imm : public IntergerImm {
  public:
   UInt32Imm() : IntergerImm(kUInt32), v_(0) {}
-  explicit UInt32Imm(uint32_t v) : IntergerImm(kUInt32), v_(v) { hash_ = std::hash<unsigned int>{}(v_); }
+  explicit UInt32Imm(uint32_t v) : IntergerImm(kUInt32), v_(v) {
+    hash_ = hash_combine({tid(), std::hash<unsigned int>{}(v_)});
+  }
   ~UInt32Imm() override = default;
   MS_DECLARE_PARENT(UInt32Imm, IntergerImm)
   std::size_t hash() const override { return hash_; }
@@ -273,7 +280,9 @@ IMM_TRAITS(UInt32ImmPtr, uint32_t);
 class UInt64Imm : public IntergerImm {
  public:
   UInt64Imm() : IntergerImm(kUInt64), v_(0) {}
-  explicit UInt64Imm(uint64_t v) : IntergerImm(kUInt64), v_(v) { hash_ = std::hash<uint64_t>{}(v); }
+  explicit UInt64Imm(uint64_t v) : IntergerImm(kUInt64), v_(v) {
+    hash_ = hash_combine({tid(), std::hash<uint64_t>{}(v)});
+  }
   ~UInt64Imm() override = default;
   MS_DECLARE_PARENT(UInt64Imm, IntergerImm)
   std::size_t hash() const override { return hash_; }
@@ -308,7 +317,7 @@ using FloatImmPtr = std::shared_ptr<FloatImm>;
 class FP32Imm : public FloatImm {
  public:
   FP32Imm() : FloatImm(kFloat32), v_(0.0) {}
-  explicit FP32Imm(float v) : FloatImm(kFloat32), v_(v) { hash_ = std::hash<float>{}(v_); }
+  explicit FP32Imm(float v) : FloatImm(kFloat32), v_(v) { hash_ = hash_combine({tid(), std::hash<float>{}(v_)}); }
   ~FP32Imm() override = default;
   MS_DECLARE_PARENT(FP32Imm, FloatImm)
   std::size_t hash() const override { return hash_; }
@@ -334,7 +343,7 @@ IMM_TRAITS(FP32ImmPtr, float)
 class FP64Imm : public FloatImm {
  public:
   FP64Imm() : FloatImm(kFloat64), v_(0.0) {}
-  explicit FP64Imm(double v) : FloatImm(kFloat64), v_(v) { hash_ = std::hash<double>{}(v_); }
+  explicit FP64Imm(double v) : FloatImm(kFloat64), v_(v) { hash_ = hash_combine({tid(), std::hash<double>{}(v_)}); }
   ~FP64Imm() override = default;
   MS_DECLARE_PARENT(FP64Imm, FloatImm)
   std::size_t hash() const override { return hash_; }

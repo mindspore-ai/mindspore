@@ -330,7 +330,8 @@ std::string AnfExporter::GetSymbolicKeyInstanceText(const FuncGraphPtr &func_gra
     }
     oss << "SymInst(%para" << idx << ")";
   } else {
-    MS_LOG(EXCEPTION) << "SymbolicKeyInstance does not embed a parameter: " << sym_node->ToString();
+    MS_LOG(WARNING) << "SymbolicKeyInstance does not embed a parameter: " << sym_node->ToString();
+    oss << "SymInst(cnode_" << sym_node->ToString() << ")";
   }
 
   return oss.str();

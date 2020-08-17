@@ -14,14 +14,12 @@
 # ============================================================================
 """Generate vm_impl function for array ops"""
 import numpy as np
-
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.vm_impl_registry import vm_impl_registry as vm_impl_getters
 from .vm_interface import vm
-
 
 # pylint: disable=unused-argument
 
@@ -181,8 +179,7 @@ def vm_impl_tile(self):
 
     def vm_impl(x, multiples):
         x = x.asnumpy()
-        multiples = multiples.asnumpy()
-        out = vm.Tile(x, multiples)
+        out = np.tile(x, multiples)
         return Tensor(out)
 
     return vm_impl
@@ -255,7 +252,10 @@ def vm_impl_sum(self):
 
     def vm_impl(x, axis):
         x = x.asnumpy()
-        out = vm.sum(x, axis)
+        if axis == ():
+            out = np.sum(x)
+        else:
+            out = np.sum(x, axis=axis)
         return Tensor(np.array(out))
 
     return vm_impl
@@ -291,11 +291,13 @@ def vm_impl_square(self):
 
     return vm_impl
 
+
 @vm_impl_getters.register(P.ZerosLike)
 def vm_impl_zeros_like(self):
     """Generate vm_impl function for ZerosLike"""
     def vm_impl(x):
         return Tensor(np.zeros_like(x.asnumpy()))
+
 
 @vm_impl_getters.register(P.Partial)
 def vm_impl_partial(self):
@@ -306,6 +308,7 @@ def vm_impl_partial(self):
         return partial_func
 
     return vm_impl
+
 
 @vm_impl_getters.register(P.Depend)
 def vm_impl_depend(self):

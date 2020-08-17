@@ -113,17 +113,18 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   }
   const AnfNodePtr &func_node = fg->get_return();
 
-  MS_LOG(DEBUG) << "Analysis FuncGraph begin, func graph: " << fg->ToString()
+  MS_LOG(DEBUG) << "Analysis FuncGraph begin, func graph: " << fg.get() << fg->ToString()
                 << ", context: " << graph_context_->ToString() << ", return node: " << func_node->DebugString();
   AbstractBasePtr ret_base = nullptr;
   std::vector<AnfNodePtr> nodes = FastShadowSort(func_node);
   for (auto it = nodes.crbegin(); it != nodes.crend(); it++) {
     const auto &node = *it;
     AnfNodeConfigPtr node_conf = engine->MakeConfig(node, graph_context_);
-    MS_LOG(DEBUG) << "Analysis node begin, func graph: " << fg->ToString() << ", node_conf: " << node_conf->ToString();
+    MS_LOG(DEBUG) << "Analysis node begin, func graph: " << fg.get() << fg->ToString()
+                  << ", node_conf: " << node_conf->ToString();
     ret_base = engine->GetEvaluatedValue(node_conf)->abstract();
-    MS_LOG(DEBUG) << "Analysis node end, func graph: " << fg->ToString() << ", node_conf: " << node_conf->ToString()
-                  << ", abstract: " << ret_base->ToString();
+    MS_LOG(DEBUG) << "Analysis node end, func graph: " << fg.get() << fg->ToString()
+                  << ", node_conf: " << node_conf->ToString() << ", abstract: " << ret_base->ToString();
   }
 
   MS_EXCEPTION_IF_NULL(ret_base);
@@ -142,16 +143,17 @@ AbstractBasePtrList FuncGraphEvaluator::NormalizeArgs(const AbstractBasePtrList 
     (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(broaded_list),
                          [](const AbstractBasePtr &arg) -> AbstractBasePtr {
                            MS_EXCEPTION_IF_NULL(arg);
-                           return arg->Broaden();
+                           if (arg->GetValueTrack() != kAnyValue) {
+                             return arg->Broaden();
+                           }
+                           return arg;
                          });
-    if (func_graph_->joined_shapes_.size() != broaded_list.size()) {
-      MS_EXCEPTION(ValueError) << "Number of input arguments " << broaded_list.size()
-                               << " does not equal to number of original buffer arguments "
-                               << func_graph_->joined_shapes_.size();
+    if (func_graph_->joined_shapes_.size() == broaded_list.size()) {
+      for (size_t i = 0; i < broaded_list.size(); ++i) {
+        broaded_list[i]->set_shape(func_graph_->joined_shapes_[i]);
+      }
     }
-    for (size_t i = 0; i < broaded_list.size(); ++i) {
-      broaded_list[i]->set_shape(func_graph_->joined_shapes_[i]);
-    }
+
     MS_LOG(DEBUG) << func_graph_->ToString() << " original: " << mindspore::ToString(args_spec_list)
                   << ", broaded: " << mindspore::ToString(broaded_list);
     return broaded_list;
@@ -181,8 +183,13 @@ AbstractBasePtrList FuncGraphEvaluator::BroadenUndeterminedArgs(const AbstractBa
           func_graph_->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES, true);
           func_graph_->joined_shapes_.clear();
           std::transform(joined_args_spec_list.begin(), joined_args_spec_list.end(),
-                         std::back_inserter(func_graph_->joined_shapes_),
-                         [](const AbstractBasePtr &arg_spec) { return arg_spec->GetShapeTrack(); });
+                         std::back_inserter(func_graph_->joined_shapes_), [](const AbstractBasePtr &arg_spec) {
+                           if (arg_spec->isa<AbstractRef>()) {
+                             return arg_spec->cast<AbstractRefPtr>()->ref()->GetShapeTrack();
+                           }
+                           return arg_spec->GetShapeTrack();
+                         });
+          joined_args_spec_list = NormalizeArgs(joined_args_spec_list);
           MS_LOG(DEBUG) << "Set " << func_graph_->ToString() << " with IGNORE_VALUES flag.";
         }
         return joined_args_spec_list;
@@ -199,8 +206,13 @@ AbstractBasePtrList FuncGraphEvaluator::BroadenUndeterminedArgs(const AbstractBa
         func_graph_->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES, true);
         func_graph_->joined_shapes_.clear();
         std::transform(joined_args_spec_list.begin(), joined_args_spec_list.end(),
-                       std::back_inserter(func_graph_->joined_shapes_),
-                       [](const AbstractBasePtr &arg_spec) { return arg_spec->GetShapeTrack(); });
+                       std::back_inserter(func_graph_->joined_shapes_), [](const AbstractBasePtr &arg_spec) {
+                         if (arg_spec->isa<AbstractRef>()) {
+                           return arg_spec->cast<AbstractRefPtr>()->ref()->GetShapeTrack();
+                         }
+                         return arg_spec->GetShapeTrack();
+                       });
+        joined_args_spec_list = NormalizeArgs(joined_args_spec_list);
         MS_LOG(DEBUG) << "Set " << func_graph_->ToString() << " with IGNORE_VALUES flag.";
       }
       MS_LOG(DEBUG) << "Joined eval args: " << ::mindspore::ToString(joined_args_spec_list);

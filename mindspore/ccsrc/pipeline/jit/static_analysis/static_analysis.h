@@ -26,6 +26,7 @@
 #include <vector>
 #include <utility>
 #include <map>
+#include <set>
 
 #ifdef DEBUG
 #include <stack>
@@ -113,7 +114,8 @@ class AnfNodeConfig : public Config {
 
   std::string ToString() const override {
     std::ostringstream buffer;
-    buffer << "Node: " << node_->DebugString() << ", Context: " << context_->ToString();
+    buffer << "Node: " << node_->DebugString() << "-uid(" << node_->UniqueId()
+           << "), Context: " << context_->ToString();
     return buffer.str();
   }
 
@@ -173,7 +175,13 @@ struct AnalysisResult {
 };
 
 using EvalTraceRevIter = std::list<std::pair<EvaluatorPtr, AbstractBasePtrList>>::reverse_iterator;
-
+struct PartialAppHasher {
+  std::size_t operator()(const std::pair<AbstractFunctionPtr, AbstractBasePtrList> &p) const {
+    auto h1 = std::hash<AbstractFunctionPtr>{}(p.first);
+    auto h2 = AbstractBasePtrListHash(p.second);
+    return h1 ^ h2;
+  }
+};
 class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
  public:
   AnalysisEngine(const PrimEvaluatorMap &prim_evaluator_map, const FuncGraphManagerPtr &func_graph_manager)
@@ -233,10 +241,13 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   const PrimEvaluatorMap &prim_constructors_;
   FuncGraphManagerPtr func_graph_manager_;
   std::unordered_map<AbstractFunctionPtr, EvaluatorPtr, AbstractFunctionHasher, AbstractFunctionEqual> constructors_;
+  std::unordered_map<std::pair<AbstractFunctionPtr, AbstractBasePtrList>, EvaluatorPtr, PartialAppHasher>
+    constructors_app_;
   AnfNodeConfigMap anfnode_config_map_;
   // Use a list to trace multiple evaluators.
   std::list<std::pair<EvaluatorPtr, AbstractBasePtrList>> eval_trace_;
   std::map<EvaluatorPtr, EvaluatorPtr> multi_poss_;
+  std::set<std::pair<EvaluatorPtr, AbstractBasePtrList>> continued_evals_;
 
   AnalysisContextPtr Run(const FuncGraphPtr &func_graph, const AnalysisContextPtr &context,
                          const ConfigPtrList &args_conf_list);

@@ -30,6 +30,7 @@
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/validator.h"
+#include "pipeline/jit/remove_value_node_dup.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/cse.h"
 #include "frontend/optimizer/graph_kernel_reuse.h"
@@ -128,10 +129,13 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.incorporate_getitem_set_,
     irpass.incorporate_call_,
     irpass.incorporate_call_switch_,
-    irpass.incorporate_env_getitem_,
+    irpass.incorporate_env_getitem_bypass_recursive_,
     irpass.incorporate_env_getitem_switch_,
     irpass.new_env_get_item_,
     irpass.depend_value_elim_,
+  });
+  opt::OptPassConfig a_after_grad = opt::OptPassConfig({
+    irpass.inline_without_move_,
   });
   opt::OptPassConfig a_3 = opt::OptPassConfig({
     irpass.arithmetic_simplify2_,
@@ -155,6 +159,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"virtual_dataset", virtual_dataset},
                          {"grad", grad},
                          {"resolve", resolve_pass},
+                         {"a_after_grad", a_after_grad},
                          {"renormalize", opt::OptPassConfig::Renormalize()},
                          {"cse", opt::OptPassConfig(opt::CSE(false))},
                          {"a_3", a_3}});
@@ -162,11 +167,24 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   return map_a;
 }
 
+OptPassGroupMap GetOptPassesAfterCconv(const opt::irpass::OptimizeIRPassLib &irpass) {
+  opt::OptPassConfig c_1 = opt::OptPassConfig({
+    // Safe inlining
+    irpass.inline_,
+    irpass.partial_eliminate_,
+  });
+
+  OptPassGroupMap map_a({{"c_1", c_1}, {"renormalize", opt::OptPassConfig::Renormalize()}});
+
+  return map_a;
+}
+
 OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
-  opt::OptPassConfig b_1 =
-    opt::OptPassConfig({irpass.zero_like_fill_zero_, irpass.item_tuple_eliminate_, irpass.float_tuple_getitem_switch_,
-                        irpass.reset_defer_inline_, irpass.inline_, irpass.special_op_eliminate_,
-                        irpass.get_make_ref_eliminate_, irpass.value_based_eliminate_});
+  opt::OptPassConfig b_1 = opt::OptPassConfig(
+    {irpass.zero_like_fill_zero_, irpass.item_tuple_eliminate_, irpass.float_tuple_getitem_switch_,
+     irpass.reset_defer_inline_, irpass.inline_, irpass.special_op_eliminate_, irpass.get_make_ref_eliminate_,
+     irpass.incorporate_env_getitem_, irpass.incorporate_env_getitem_switch_, irpass.env_get_item_eliminate_,
+     irpass.value_based_eliminate_});
   opt::OptPassConfig b_2 = opt::OptPassConfig({
     irpass.replace_refkey_by_param_,
     irpass.make_ref_eliminate_,
@@ -245,6 +263,8 @@ void InitOpt(const ResourcePtr &res) {
     opt::irpass::OptimizeIRPassLib irpass;
     g_pass_opts["opt_a"] = Optimizer::MakeOptimizer("opt_a", res, GetOptPassesA(irpass));
     g_pass_opts["opt_b"] = Optimizer::MakeOptimizer("opt_b", res, GetOptPassesB(irpass), false, true);
+    g_pass_opts["opt_after_cconv"] =
+      Optimizer::MakeOptimizer("opt_after_cconv", res, GetOptPassesAfterCconv(irpass), false, true);
     g_pass_opts["opt_graph_kernel_a"] =
       Optimizer::MakeOptimizer("opt_graph_kernel_a", res, GetOptPassesGraphKernelA(irpass), true);
     g_pass_opts["opt_graph_kernel_b"] =
@@ -289,6 +309,7 @@ bool OptPassGroup(const ResourcePtr &res, const std::string &name) {
 
 bool OptPassAGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_a"); }
 bool OptPassBGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_b"); }
+bool OptPassAfterCconvGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_after_cconv"); }
 bool OptPassGraphKernelGroupA(const ResourcePtr &res) { return OptPassGroup(res, "opt_graph_kernel_a"); }
 bool OptPassGraphKernelGroupB(const ResourcePtr &res) { return OptPassGroup(res, "opt_graph_kernel_b"); }
 bool ControlGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_control"); }
@@ -307,6 +328,33 @@ bool AddControlDependPass(const ResourcePtr &res) {
     MS_EXCEPTION_IF_NULL(fg);
     if (fg->has_flag(GRAPH_FLAG_EFFECT_PATIAL_ORDER)) {
       opt::AddControlDepend(fg);
+    }
+  }
+  return true;
+}
+
+bool MergeDupGraphPass(const ResourcePtr &res) {
+  FuncGraphPtr func_graph = res->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(res->manager());
+  if (res->manager()->func_graphs().size() <= 1) {
+    return true;
+  }
+  return MergeDuplicateGraphs(res->manager());
+}
+
+bool RemoveValueNodeDuplicationsPass(const ResourcePtr &res) {
+  if (res->func_graph() == nullptr) {
+    MS_LOG(EXCEPTION) << "Remove value node duplications error.";
+  }
+  auto manager = res->manager();
+  HashCache hash_cache;
+  HashValue hashes;
+  // Remove duplicated value nodes across all graphs in manager
+  for (auto &fg : manager->func_graphs()) {
+    auto value_nodes = fg->value_nodes();
+    for (const auto &value_pair : value_nodes) {
+      TryToDoReplace(manager.get(), value_pair.first, &hash_cache, &hashes);
     }
   }
   return true;
@@ -341,6 +389,8 @@ std::vector<PassItem> kVmPasses = {{"simplify_data_structures", SimplifyDataStru
                                    {"clean_after_opta", CleanAfterOptAPass},
                                    {"opt_b", OptPassBGroup},
                                    {"cconv", CconvPass},
+                                   {"opt_after_cconv", OptPassAfterCconvGroup},
+                                   {"remove_dup_value", RemoveValueNodeDuplicationsPass},
                                    {"opt_graph_kernel_a", OptPassGraphKernelGroupA},
                                    {"opt_graph_kernel_b", OptPassGraphKernelGroupB},
                                    {"add_control_depend", AddControlDependPass}};

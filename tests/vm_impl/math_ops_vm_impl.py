@@ -196,6 +196,18 @@ def vm_impl_reduce_mean(self):
 
     return vm_impl
 
+@vm_impl_getters.register(P.ReduceMax)
+def vm_impl_reduce_max(self):
+    """Generate vm_impl function for ReduceMean."""
+
+    def vm_impl(x, axis):
+        x = x.asnumpy()
+        if axis == ():
+            axis = None
+        out = np.amax(x, axis)
+        return Tensor(out)
+
+    return vm_impl
 
 @vm_impl_getters.register(P.Equal)
 def vm_impl_equal(self):
