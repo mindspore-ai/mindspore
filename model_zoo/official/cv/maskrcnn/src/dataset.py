@@ -467,7 +467,7 @@ def data_to_mindrecord_byte_image(dataset="coco", is_training=True, prefix="mask
     if dataset == "coco":
         image_files, image_anno_dict, masks, masks_shape = create_coco_label(is_training)
     else:
-        print("Error unsupport other dataset")
+        print("Error unsupported other dataset")
         return
 
     maskrcnn_json = {

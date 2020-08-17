@@ -169,7 +169,7 @@ class Model:
     def _check_kwargs(self, kwargs):
         for arg in kwargs:
             if arg not in ['loss_scale_manager', 'keep_batchnorm_fp32']:
-                raise ValueError(f"Unsupport arg '{arg}'")
+                raise ValueError(f"Unsupported arg '{arg}'")
 
     def _build_train_network(self):
         """Build train network"""

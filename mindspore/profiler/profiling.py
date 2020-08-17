@@ -427,7 +427,7 @@ class Profiler:
             logger.error("Fail to get DEVICE_ID, use 0 instead.")
 
         if device_target and device_target not in ["Davinci", "Ascend", "GPU"]:
-            msg = "Profiling: unsupport backend: %s" % device_target
+            msg = "Profiling: unsupported backend: %s" % device_target
             raise RuntimeError(msg)
 
         self._dev_id = dev_id

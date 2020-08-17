@@ -59,7 +59,7 @@ MPI_Op GetMpiOp(const std::string &op_type) {
     return MPI_PROD;
   }
 
-  RAISE_EXCEPTION_WITH_PARAM("unsupport op_type: ", op_type);
+  RAISE_EXCEPTION_WITH_PARAM("Unsupported op_type: ", op_type);
   return MPI_SUM;
 }
 
