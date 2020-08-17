@@ -108,6 +108,7 @@ kernel::LiteKernel *CpuConcatFp32KernelCreator(const std::vector<lite::tensor::T
   return kernel;
 }
 
+
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Concat, CpuConcatInt8KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Concat, CpuConcatInt32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Concat, CpuConcatFp32KernelCreator)
