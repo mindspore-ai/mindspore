@@ -7,7 +7,7 @@ The number of D chips can be automatically allocated based on the device_num set
 ## how to use
 For example, if we want to run the distributed training of Bert model on D chip, we can in `/bert/` dir:
 ```
-python model_zoo/utils/ascend_distributed_launcher/run_distribute_pretrain.py --run_script_dir ./run_pretrain.py --hyper_parameter_config_dir model_zoo/utils/ascend_distributed_launcher/hyper_parameter_config.ini --data_dir /path/dataset/ --hccl_config_dir model_zoo/utils/hccl_tools/hccl_2p_56_x.x.x.x.json
+python model_zoo/utils/ascend_distributed_launcher/run_distributed.py --run_script_dir ./run_pretrain.py --hyper_parameter_config_dir model_zoo/utils/ascend_distributed_launcher/hyper_parameter_config.ini --data_dir /path/dataset/ --hccl_config_dir model_zoo/utils/hccl_tools/hccl_2p_56_x.x.x.x.json
 ```
 
 output:

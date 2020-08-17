@@ -14,16 +14,29 @@ This example implements pre-training, fine-tuning and evaluation of [BERT-base](
 ### Pre-Training
 - Set options in `config.py`, including lossscale, optimizer and network. Click [here](https://www.mindspore.cn/tutorial/zh-CN/master/use/data_preparation/loading_the_datasets.html#tfrecord) for more information about dataset and the json schema file.
 
-- Run `run_standalone_pretrain.sh` for non-distributed pre-training of BERT-base and BERT-NEZHA model.
+- Run `run_standalone_pretrain.sh` for non-distributed pre-training of BERT-base and BERT-NEZHA model on `Ascend`.
 
     ``` bash   
-    sh scripts/run_standalone_pretrain.sh DEVICE_ID EPOCH_SIZE DATA_DIR SCHEMA_DIR
+    bash scripts/run_standalone_pretrain.sh DEVICE_ID EPOCH_SIZE DATA_DIR SCHEMA_DIR
     ```
-- Run `run_distribute_pretrain.sh` for distributed pre-training of BERT-base and BERT-NEZHA model.
+
+- Run `run_standalone_pretrain_for_gpu.sh` for non-distributed pre-training of BERT-base and BERT-NEZHA model on `GPU`.
 
     ``` bash   
-    sh scripts/run_distribute_pretrain.sh DATA_DIR RANK_TABLE_FILE
+    bash scripts/run_standalone_pretrain_for_gpu.sh DEVICE_ID EPOCH_SIZE DATA_DIR SCHEMA_DIR
+    ```
+
+- Run `run_distribute_pretrain.sh` for distributed pre-training of BERT-base and BERT-NEZHA model on `Ascend`.
+
+    ``` bash   
+    bash scripts/run_distribute_pretrain.sh DATA_DIR RANK_TABLE_FILE
     ```  
+
+- Run `run_distribute_pretrain_for_gpu.sh` for distributed pre-training of BERT-base and BERT-NEZHA model on `GPU`.
+
+    ```bash
+    bash scripts/run_distribute_pretrain_for_gpu.sh RANK_SIZE EPOCH_SIZE DATA_DIR SCHEMA_DIR
+    ```
 
 ### Fine-Tuning and Evaluation
 - Including three kinds of task: Classification, NER(Named Entity Recognition) and SQuAD(Stanford Question Answering Dataset)

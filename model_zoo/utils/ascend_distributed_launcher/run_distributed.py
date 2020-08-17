@@ -124,7 +124,7 @@ def distribute_pretrain():
         print("data_dir:", data_dir)
         print("log_file_dir: ./LOG" + str(device_id) + "/log.txt")
 
-        cmd = 'taskset -c ' + cmdopt + ' python ' + run_script + " "
+        cmd = 'taskset -c ' + cmdopt + ' nohup python ' + run_script + " "
         opt = " ".join(["--" + key + "=" + str(cfg[key]) for key in cfg.keys()])
         if ('device_id' in opt) or ('device_num' in opt) or ('data_dir' in opt):
             raise ValueError("hyper_parameter_config.ini can not setting 'device_id',"
