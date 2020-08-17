@@ -19,9 +19,8 @@ from mindspore.train.callback import RunContext
 from mindspore import context
 from mindspore import nn
 from mindspore.train.parallel_utils import ParallelMode
-from mindspore.train._utils import _to_full_tensor
 from mindspore.train.model import Model
-from mindspore.parallel._utils import _need_to_full
+from mindspore.parallel._utils import _need_to_full, _to_full_tensor
 from mindspore.common.dtype import pytype_to_dtype
 from mindspore._c_expression import init_exec_dataset
 
