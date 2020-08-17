@@ -13,20 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_SLICE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_SLICE_H_
+
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_SLICE_PARAMETER_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_SLICE_PARAMETER_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/slice_parameter.h"
+#include "nnacl/quantization/quantize.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-void PadSliceParameterTo4D(SliceParameter *param);
-void DoSlice(const float *input, float *output, SliceParameter *param);
-void DoSliceNoParallel(const float *input, float *output, SliceParameter *param);
-#ifdef __cplusplus
-}
-#endif
+#define SLICE_SHAPE_MAX_SIZE 4
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_SLICE_H_
+typedef struct SliceParameter {
+  OpParameter op_parameter_;
+  SliceQuantArg quant_arg_;
+  int32_t begin_[SLICE_SHAPE_MAX_SIZE];
+  int32_t end_[SLICE_SHAPE_MAX_SIZE];
+  int32_t size_[SLICE_SHAPE_MAX_SIZE];
+  int32_t shape_[SLICE_SHAPE_MAX_SIZE];
+  int32_t param_length_;
+  int32_t thread_id_;
+} SliceParameter;
+
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_SLICE_PARAMETER_H_
