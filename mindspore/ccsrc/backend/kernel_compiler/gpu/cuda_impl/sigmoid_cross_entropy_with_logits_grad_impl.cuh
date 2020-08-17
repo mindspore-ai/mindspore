@@ -19,7 +19,7 @@
 
 #include "runtime/device/gpu/cuda_common.h"
 template <typename T, typename S>
-void SigmoidCrossEntropyWithLogitsGrad(const size_t size, const T *logits, const S *labels, T *outputs,
-                                       cudaStream_t cuda_stream);
+void SigmoidCrossEntropyWithLogitsGrad(const size_t size, const T *logits, const S *labels, const T *dout_addr,
+                                       T *outputs, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_SIGMOID_CROSS_ENTROPY_WITH_LOGITS_GRAD_IMPL_H_
