@@ -581,11 +581,6 @@ table Cast {
     dstT: int;
 }
 
-table Fp16Cast {
-    srcT: int;
-    dstT: int;
-}
-
 table QuantDTypeCast {
     srcT: int;
     dstT: int;

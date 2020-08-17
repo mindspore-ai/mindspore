@@ -37,9 +37,10 @@ void MatrixSub(const float *a_ptr, const float *b_ptr, float *dst, size_t a_stri
                size_t row, size_t col);
 void MatrixMultiAdd(float *c11, float *c12, float *c21, float *c22, float *x_ptr, size_t row, size_t col,
                     size_t c_stride, size_t x_stride);
-int16_t Float32ToShort(float srcValue);
+float ShortToFloat32(uint16_t srcValue);
 
-float ShortToFloat32(int16_t srcValue);
+uint16_t Float32ToShort(float srcValue);
+
 
 #ifdef ENABLE_ARM
 void ConvDwFp32Center(float *dst, const float *src, const float *weight, const float *bias, size_t height, size_t width,

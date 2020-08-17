@@ -35,7 +35,8 @@ void Uint8ToFloat32(const uint8_t *input, float *output, int number);
 void Uint8ToInt8(const uint8_t *input, int8_t *output, int number);
 void Int8ToUint8(const int8_t *input, uint8_t *output, int number);
 void Int32ToFloat32(const int32_t *input, float *output, int number);
-void Fp16ToFloat32(const int16_t *input, float *output, int number);
+void Fp16ToFloat32(const uint16_t *input, float *output, int number);
+void Float32ToFp16(const float *input, uint16_t *output, int number);
 void Float32ToInt32(const float *input, int32_t *output, int number);
 #ifdef __cplusplus
 }
