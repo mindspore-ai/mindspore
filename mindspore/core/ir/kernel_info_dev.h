@@ -20,6 +20,12 @@
 #include <memory>
 
 namespace mindspore {
+enum Axis : int {
+  N = 0,
+  C,
+  H,
+  W,
+};
 // Interface for device kernel program information.
 class KernelInfoDevice {
  public:

@@ -384,7 +384,8 @@ Tensor::Tensor(const Tensor &tensor)
       data_(tensor.data_),
       dirty_(tensor.dirty_),
       id_(tensor.id_),
-      device_sync_(tensor.device_sync_) {}
+      device_sync_(tensor.device_sync_),
+      padding_type_(tensor.padding_type()) {}
 
 Tensor::Tensor(const Tensor &tensor, TypeId data_type)
     : MetaTensor(data_type, tensor.shape_),
@@ -392,7 +393,8 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       data_(MakeTensorData(data_type, tensor.shape_, tensor.data_->data(), tensor.data_type_)),
       dirty_(tensor.dirty_),
       id_(tensor.id_),
-      device_sync_(tensor.device_sync_) {}
+      device_sync_(tensor.device_sync_),
+      padding_type_(tensor.padding_type()) {}
 
 Tensor::Tensor(TypeId data_type, const std::vector<int> &shape, TensorDataPtr data)
     : MetaTensor(data_type, shape), data_(std::move(data)), id_(MakeId()) {}
@@ -441,6 +443,7 @@ Tensor &Tensor::AssignValue(const Tensor &tensor) {
     device_sync_ = tensor.device_sync_;
     data_ = tensor.data_;
     id_ = tensor.id_;
+    padding_type_ = tensor.padding_type_;
   }
   return *this;
 }
