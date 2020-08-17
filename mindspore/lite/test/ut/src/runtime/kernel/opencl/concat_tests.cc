@@ -175,6 +175,14 @@ TEST_F(TestConcatOpenCL, ConcatFp32_2input_dim4_axis3) {
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->Data());
   CompareOutputData1(output_data_gpu, output_data_cpu.data(), output_tensor->ElementsNum(), 0.00001);
+  for (auto tensor : inputs) {
+    delete tensor;
+  }
+  for (auto tensor : outputs) {
+    delete tensor;
+  }
+  delete concat_kernel;
+  delete sub_graph;
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

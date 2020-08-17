@@ -75,12 +75,15 @@ TEST_F(TestMatMulOpenCL, MatMulFp32) {
   // compare
   CompareOutputData(output_data, correct_data, co, 0.00001);
 
-  delete input_data;
-  delete weight_data;
-  delete tensor_x;
-  delete tensor_w;
-  delete tensor_out;
-  delete correct_data;
   MS_LOG(INFO) << "TestMatMulFp32 passed";
+  for (auto tensor : inputs) {
+    delete tensor;
+  }
+  for (auto tensor : outputs) {
+    delete tensor;
+  }
+  delete arith_kernel;
+  delete pGraph;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

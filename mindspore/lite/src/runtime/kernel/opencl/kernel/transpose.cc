@@ -36,7 +36,11 @@ namespace mindspore::kernel {
 int TransposeOpenCLKernel::Init() {
   std::string kernel_name = "transpose";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-
+  if (!is_image_out_) {
+    kernel_name += "_BUF";
+  } else {
+    kernel_name += "_IMG";
+  }
 #ifdef PROGRAM_WITH_IL
   ocl_runtime->CreateKernelFromIL(kernel_(), kernel_name);
 #else
@@ -60,8 +64,12 @@ int TransposeOpenCLKernel::Init() {
     MS_LOG(ERROR) << "input H * W % 4 != 0 not support!";
     return RET_ERROR;
   }
-  ori_format_ = out_tensors_[0]->GetFormat();
+  // Transpose::InferShape just set output->SetFormat(input->GetFormat()); -^-!
+  ori_format_ = schema::Format_NCHW;
   out_tensors_[0]->SetFormat(schema::Format_NCHW);
+  if (!is_image_out_) {
+    out_mem_type_ = OpenCLMemType::BUF;
+  }
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }

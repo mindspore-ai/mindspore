@@ -125,6 +125,7 @@ int RunSubGraphOpenCLKernel(const std::vector<lite::tensor::Tensor *> &inputs,
     MS_LOG(ERROR) << "Run SubGraphOpenCLKernel error.";
     return RET_ERROR;
   }
+  delete sub_graph;
   return RET_OK;
 }
 
@@ -180,6 +181,7 @@ TEST_F(TestActivationOpenCL, ActivationFp32_dim4) {
 
   delete input_tensor;
   delete output_tensor;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
   return;
 }
 }  // namespace mindspore

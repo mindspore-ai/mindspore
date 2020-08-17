@@ -77,6 +77,15 @@ void RunTestCase(std::vector<int> input_shape, std::vector<int> output_shape, st
   MS_LOG(INFO) << "compare result";
   std::cout << "compare result" << std::endl;
   CompareOutput(output_tensor, expect_file);
+  for (auto tensor : inputs) {
+    delete tensor;
+  }
+  for (auto tensor : outputs) {
+    delete tensor;
+  }
+  delete kernel;
+  delete pGraph;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestSoftmaxOpenCL, Softmax_1) {
