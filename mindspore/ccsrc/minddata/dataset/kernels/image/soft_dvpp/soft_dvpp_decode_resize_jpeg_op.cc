@@ -15,6 +15,7 @@
  */
 #include "minddata/dataset/kernels/image/soft_dvpp/soft_dvpp_decode_resize_jpeg_op.h"
 #include <string>
+#include <vector>
 
 #include "./utils/external_soft_dp.h"
 #include "opencv2/opencv.hpp"
@@ -35,14 +36,32 @@ Status SoftDvppDecodeResizeJpegOp::Compute(const std::shared_ptr<Tensor> &input,
     SoftDpProcsessInfo info;
     info.input_buffer = static_cast<uint8_t *>(buffer);
     info.input_buffer_size = input->SizeInBytes();
-    info.output_width = target_width_;
-    info.output_height = target_height_;
+
+    int input_w = 0;
+    int input_h = 0;
+    RETURN_IF_NOT_OK(GetJpegImageInfo(input, &input_w, &input_h));
 
     SoftDpCropInfo crop_info{0, 0, 0, 0};
 
-    cv::Mat out_rgb_img(target_height_, target_width_, CV_8UC3);
+    if (target_width_ == 0) {
+      if (input_h < input_w) {
+        CHECK_FAIL_RETURN_UNEXPECTED(input_h != 0, "The input height is 0");
+        info.output_height = target_height_;
+        info.output_width = static_cast<int>(std::lround(static_cast<float>(input_w) / input_h * info.output_height));
+      } else {
+        CHECK_FAIL_RETURN_UNEXPECTED(input_w != 0, "The input width is 0");
+        info.output_width = target_height_;
+        info.output_height = static_cast<int>(std::lround(static_cast<float>(input_h) / input_w * info.output_width));
+      }
+    } else {
+      info.output_height = target_height_;
+      info.output_width = target_width_;
+    }
+
+    cv::Mat out_rgb_img(info.output_height, info.output_width, CV_8UC3);
     info.output_buffer = out_rgb_img.data;
-    info.output_buffer_size = target_width_ * target_height_ * 3;
+    info.output_buffer_size = info.output_height * info.output_width * 3;
+
     info.is_v_before_u = true;
     int ret = DecodeAndResizeJpeg(&info);
     std::string error_info("Soft dvpp DecodeAndResizeJpeg failed with return code: ");
@@ -56,5 +75,16 @@ Status SoftDvppDecodeResizeJpegOp::Compute(const std::shared_ptr<Tensor> &input,
   }
   return Status::OK();
 }
+
+Status SoftDvppDecodeResizeJpegOp::OutputShape(const std::vector<TensorShape> &inputs,
+                                               std::vector<TensorShape> &outputs) {
+  RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
+  outputs.clear();
+  TensorShape out({-1, -1, 3});  // we don't know what is output image size, but we know it should be 3 channels
+  if (inputs[0].Rank() == 1) outputs.emplace_back(out);
+  if (!outputs.empty()) return Status::OK();
+  return Status(StatusCode::kUnexpectedError, "Input has a wrong shape");
+}
+
 }  // namespace dataset
 }  // namespace mindspore

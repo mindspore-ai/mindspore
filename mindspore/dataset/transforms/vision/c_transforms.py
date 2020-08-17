@@ -943,7 +943,7 @@ class SoftDvppDecodeResizeJpeg(cde.SoftDvppDecodeResizeJpegOp):
     @check_resize
     def __init__(self, size):
         if isinstance(size, int):
-            size = (size, size)
+            size = (size, 0)
         self.size = size
         super().__init__(*size)
 
