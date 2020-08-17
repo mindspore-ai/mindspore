@@ -18,14 +18,19 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_MATMUL_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/matmul_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 void MatMulInt8(const int8_t *a, const int8_t *b, int32_t *c, const int row8, const int col8, const int deep,
                 const int32_t a_zp, const int32_t b_zp);
+void MatMulOptR4Int8(int32_t *dst, const int8_t *a, const int8_t *b, const int32_t *bias, const int32_t *input_sum,
+                     size_t row_4, size_t col_4, size_t deep_16);
+
 void RowMajor2Row8MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col);
 void RowMajor2Col8MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col);
+void RowMajor2Row16x4MajorInt8(void *src_ptr, void *dst_ptr, int row, int col);
 #ifdef __cplusplus
 }
 #endif

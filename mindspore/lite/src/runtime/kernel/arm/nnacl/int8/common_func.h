@@ -27,6 +27,11 @@
 extern "C" {
 #endif
 
+void PostFuncInt8C8(const int *in, const int *bias, int8_t *out, int oc, int plane, int32_t multiplier,
+                    int32_t left_shift, int32_t right_shift, int32_t zp, int8_t mini, int8_t maxi);
+void PostFuncInt8C4(const int *in, const int *bias, int8_t *out, int oc, int plane, int stride, int32_t multiplier,
+                    int32_t left_shift, int32_t right_shift, int32_t zp, int8_t mini, int8_t maxi);
+
 #ifdef ENABLE_ARM
 void IndirectGemmInt16to32_8x4(int32_t *dst, const int16_t *src, const int16_t *weight, size_t ksize, size_t ic8,
                                size_t oc4, size_t offset);

@@ -23,6 +23,7 @@
 #include "include/errorcode.h"
 #include "src/runtime/kernel/arm/nnacl/matmul_parameter.h"
 #include "src/runtime/kernel/arm/nnacl/int8/deconv.h"
+#include "src/runtime/kernel/arm/nnacl/int8/common_func.h"
 #include "src/runtime/kernel/arm/nnacl/int8/matmul_int8.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
@@ -43,23 +44,28 @@ class DeConvInt8CPUKernel : public ConvolutionBaseCPUKernel {
 
  public:
   int DoDeconv(int task_id);
-  int DoPostFunc(int task_id);
-
- private:
-  int InitData();
-  int InitParam();
-  int InitBiasWeight();
 
  private:
   void FreeTmpBuffer();
-  MatMulParameter *fc_param_ = nullptr;
-  int8_t *weight_ptr_ = nullptr;
-  int8_t *input_ptr_ = nullptr;   /* record c8 input*/
+  int InitData();
+  int InitParam();
+  int InitBiasWeight();
+  void CheckSupportOptimize();
+
+ private:
   int32_t *tmp_buffer_ = nullptr; /* record matmul result */
   int32_t *tmp_output_ = nullptr; /* record post c8 result */
+  int32_t *input_sum_ = nullptr;  /* record in * w_zp  */
+  int32_t *weight_sum_ = nullptr; /* record w_v * in_zp - in_zp * w_zp */
+  int8_t *input_ptr_ = nullptr;   /* packed input */
+  int8_t *weight_ptr_ = nullptr;  /* packed weight */
   int8_t *output_ptr_ = nullptr;
-  size_t thread_count_;
-  size_t thread_stride_;
+  size_t thread_count_ = 1;
+  size_t thread_stride_ = 0;
+  MATMUL_OPT_R4_FUNC matmul_func_;
+  MAT_TRANS_FUNC input_trans_func_;
+  MatMulParameter *matmul_param_ = nullptr;
+  bool support_optimize_ = true;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_DECONVOLUTION_INT8_H_

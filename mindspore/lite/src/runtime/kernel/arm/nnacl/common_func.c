@@ -228,27 +228,6 @@ void IndirectGemmFp32_Comm(float *output, const float *input, const float *weigh
   return;
 }
 
-void PostFuncInt8(const int *in, const int *bias, int8_t *out, int oc, int plane, int plane8, int32_t multiplier,
-                  int32_t left_shift, int32_t right_shift, int32_t zp, int8_t mini, int8_t maxi) {
-  /*  (int32_t)row8x8-major * multiplier + bias  =>  (int8)relu  =>  (int8_t)row-major  */
-  for (int r = 0; r < plane; r++) {
-    for (int c = 0; c < oc; c++) {
-      int c8div = c / 8, c8mod = c % 8;
-      int src_index = c8div * plane8 * 8 + r * 8 + c8mod;
-      int dst_index = r * oc + c;
-      int32_t value = in[src_index];
-      if (bias != NULL) {
-        value = in[src_index] + bias[c];
-      }
-      value = MultiplyByQuantizedMultiplier(value, multiplier, left_shift, right_shift) + zp;
-      value = MSMIN(maxi, value);
-      value = MSMAX(mini, value);
-      out[dst_index] = (int8_t)value;
-    }
-  }
-  return;
-}
-
 void SimplePostFuncInt8(const int *in, int8_t *out, int oc, int plane, int plane8, int32_t multiplier,
                         int32_t left_shift, int32_t right_shift, int32_t zp) {
   /*  (int32_t)row8x8-major * multiplier => (int8_t)row-major  */
@@ -265,4 +244,3 @@ void SimplePostFuncInt8(const int *in, int8_t *out, int oc, int plane, int plane
     }
   }
 }
-

@@ -129,8 +129,8 @@ int FullconnectionInt8CPUKernel::Run() {
   auto &p = quant_params_;
   RowMajor2Col8MajorInt8(a_ptr, a_c8_ptr_, fc_param_->row_, fc_param_->deep_);
   LiteBackendParallelLaunch(FcInt8Run, this, thread_count_);
-  PostFuncInt8(c_r8x8_ptr_, bias_ptr_, output_ptr, fc_param_->col_, fc_param_->row_, fc_param_->row_8_,
-               p.quant_multiplier, p.left_shift, p.right_shift, p.output.zp_, p.out_act_min, p.out_act_max);
+  PostFuncInt8C8(c_r8x8_ptr_, bias_ptr_, output_ptr, fc_param_->col_, fc_param_->row_, p.quant_multiplier, p.left_shift,
+                 p.right_shift, p.output.zp_, p.out_act_min, p.out_act_max);
   return RET_OK;
 }
 
