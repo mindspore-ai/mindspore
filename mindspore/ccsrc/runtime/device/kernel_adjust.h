@@ -33,19 +33,13 @@
 using mindspore::device::ascend::ProfilingTraceInfo;
 using mindspore::device::ascend::ProfilingUtils;
 namespace mindspore {
-constexpr auto kCurLoopCountParamName = "cur_loop_count";
-constexpr auto kNextLoopCountParamName = "next_loop_count";
+constexpr auto kLoopCountParamName = "loop_count";
 constexpr auto kIterLoopParamName = "iter_loop";
+constexpr auto kZeroParamName = "zero";
 constexpr auto kOneParamName = "one";
 constexpr auto kEpochParamName = "loop_epoch";
 constexpr auto kStreamNeedActivedFirst = "stream_need_active_first";
 constexpr uint32_t kSecondStreamSwitchLabel = 2;
-enum StreamSwitchKind {
-  kFpBpStreamSwitch = 0,
-  kGetNextStreamSwitch = 1,
-  kEosStreamSwitch = 2,
-  kIndependentStreamSwitch = 3
-};
 
 namespace device {
 class KernelAdjust {
@@ -71,22 +65,18 @@ class KernelAdjust {
   void CreateSwitchOpParameters(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                 std::map<std::string, mindspore::ParameterPtr> *switch_loop_input);
   CNodePtr CreateStreamSwitchOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
-                                StreamSwitchKind kind);
-
+                                const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input);
   CNodePtr CreatTupleGetItemNode(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, const CNodePtr &node,
                                  size_t output_idx);
   CNodePtr CreateEndOfSequenceOP(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                  const CNodePtr &getnext_cnode);
   CNodePtr CreateStreamAssignAddnOP(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                    const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
-                                    bool cur_loop);
+                                    const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input);
   kernel::KernelBuildInfo::KernelBuildInfoBuilder CreateMngKernelBuilder(const std::vector<std::string> &formats,
                                                                          const std::vector<TypeId> &type_ids);
   void LoadSwitchInputs(std::vector<tensor::TensorPtr> *inputs);
   void InsertProfilingKernel(const ProfilingTraceInfo &profiling_trace_info,
                              NotNull<session::KernelGraph *> kernel_graph_ptr);
-  bool ExitIndependent(const std::shared_ptr<session::KernelGraph> &graph_ptr);
 };
 }  // namespace device
 }  // namespace mindspore
