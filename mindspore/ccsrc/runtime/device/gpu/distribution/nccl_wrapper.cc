@@ -66,6 +66,14 @@ ncclResult_t NCCLWrapper::ReduceScatter(const void *input_addr, void *output_add
   return ncclReduceScatter(input_addr, output_addr, count, data_type, reduce_type, group_comm, stream);
 }
 
+ncclResult_t NCCLWrapper::Broadcast(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
+                                    int root, cudaStream_t stream, const std::string &group_name) {
+  CHECK_RET(group_info_.count(group_name), 1,
+            "Failed to find NCCL communicator for Broadcast by the group name " + group_name);
+  ncclComm_t group_comm = group_info_[group_name].comm;
+  return ncclBroadcast(input_addr, output_addr, count, data_type, root, group_comm, stream);
+}
+
 void NCCLWrapper::AddGroupInfo(const std::string &group_name, NcclGroupInfo *group) {
   if (comm_init_done_) {
     CHECK_RET(ncclCommInitRank(&(group->comm), group->size, group->unique_id, group->rank), ncclSuccess,

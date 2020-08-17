@@ -40,6 +40,8 @@ class NCCLWrapper {
                          cudaStream_t stream, const std::string &group_name = NCCL_WORLD_GROUP);
   ncclResult_t ReduceScatter(const void *input_addr, void *output_addr, size_t count, ncclDataType_t datatype,
                              ncclRedOp_t op, cudaStream_t stream, const std::string &group_name = NCCL_WORLD_GROUP);
+  ncclResult_t Broadcast(const void *input_addr, void *output_addr, size_t count, ncclDataType_t datatype, int root,
+                         cudaStream_t stream, const std::string &group_name = NCCL_WORLD_GROUP);
   void AddGroupInfo(const std::string &group_name, NcclGroupInfo *group);
   void DestroyGroup(const std::string &group_name);
 

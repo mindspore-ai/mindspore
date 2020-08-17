@@ -223,6 +223,7 @@ constexpr auto kAttrLabelForInsertStreamActive = "label_for_insert_stream_active
 constexpr auto kAttrFusion = "fusion";
 constexpr auto kAttrGroup = "group";
 constexpr auto kAttrOp = "op";
+constexpr auto kAttrRootRank = "root_rank";
 constexpr auto kAttrIsTraining = "is_training";
 constexpr auto kAttrFusionId = "fusion_id";
 constexpr auto kAttrLabelIndex = "label_index";

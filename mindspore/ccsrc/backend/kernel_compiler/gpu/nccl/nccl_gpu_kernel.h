@@ -30,11 +30,18 @@
 
 namespace mindspore {
 namespace kernel {
-enum NcclKernelType { NCCL_ALL_REDUCE = 0, NCCL_ALL_GATHER, NCCL_REDUCE_SCATTER, NCCL_INVALID_TYPE = 255 };
+enum NcclKernelType {
+  NCCL_ALL_REDUCE = 0,
+  NCCL_ALL_GATHER,
+  NCCL_REDUCE_SCATTER,
+  NCCL_BROADCAST,
+  NCCL_INVALID_TYPE = 255
+};
 const std::map<std::string, NcclKernelType> kNcclTypeMap = {
   {"AllReduce", NCCL_ALL_REDUCE},
   {"AllGather", NCCL_ALL_GATHER},
   {"ReduceScatter", NCCL_REDUCE_SCATTER},
+  {"Broadcast", NCCL_BROADCAST},
 };
 
 static std::map<std::string, ncclDataType_t> kNcclDtypeMap = {
@@ -45,6 +52,7 @@ typedef ncclResult_t (*AllReduce)(const void *, void *, size_t, ncclDataType_t, 
 typedef ncclResult_t (*AllGather)(const void *, void *, size_t, ncclDataType_t, cudaStream_t, const std::string &);
 typedef ncclResult_t (*ReduceScatter)(const void *, void *, size_t, ncclDataType_t, ncclRedOp_t, cudaStream_t,
                                       const std::string &);
+typedef ncclResult_t (*Broadcast)(const void *, void *, size_t, ncclDataType_t, int, cudaStream_t, const std::string &);
 
 template <typename T>
 class NcclGpuKernel : public GpuKernel {
@@ -55,6 +63,7 @@ class NcclGpuKernel : public GpuKernel {
         group_name_(""),
         input_size_(0),
         output_size_(0),
+        root_(0),
         collective_handle_(nullptr),
         comm_stream_(nullptr) {}
   ~NcclGpuKernel() override = default;
@@ -94,6 +103,15 @@ class NcclGpuKernel : public GpuKernel {
         CHECK_NCCL_RET_WITH_EXCEPT((*reduce_scatter_funcptr)(input_addr, output_addr, output_size_ / sizeof(T),
                                                              nccl_data_type_, nccl_reduce_type_, stream, group_name_),
                                    "ncclReduceScatter failed");
+        break;
+      }
+      case NCCL_BROADCAST: {
+        auto broadcast_funcptr =
+          reinterpret_cast<Broadcast>(dlsym(const_cast<void *>(collective_handle_), "Broadcast"));
+        MS_EXCEPTION_IF_NULL(broadcast_funcptr);
+        CHECK_NCCL_RET_WITH_EXCEPT((*broadcast_funcptr)(input_addr, output_addr, output_size_ / sizeof(T),
+                                                        nccl_data_type_, root_, stream, group_name_),
+                                   "ncclBroadcast failed");
         break;
       }
       default: {
@@ -167,6 +185,11 @@ class NcclGpuKernel : public GpuKernel {
         MS_LOG(EXCEPTION) << "Nccl reduce type " << type << " is not supported.";
       }
     }
+
+    auto root_rank = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr(kAttrRootRank);
+    if (root_rank) {
+      root_ = GetValue<int>(root_rank);
+    }
     return;
   }
 
@@ -176,6 +199,7 @@ class NcclGpuKernel : public GpuKernel {
   std::string group_name_;
   size_t input_size_;
   size_t output_size_;
+  int root_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
