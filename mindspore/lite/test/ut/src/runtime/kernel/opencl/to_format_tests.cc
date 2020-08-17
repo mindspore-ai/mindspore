@@ -75,5 +75,14 @@ TEST_F(TestToFormatOpenCL, TransposeFp32) {
   // compare
   CompareOutputData(output_data, correct_data, h * w * c, 0.00001);
   MS_LOG(INFO) << "TestMatMulFp32 passed";
+  for (auto tensor : inputs) {
+    delete tensor;
+  }
+  for (auto tensor : outputs) {
+    delete tensor;
+  }
+  delete arith_kernel;
+  delete pGraph;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

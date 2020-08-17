@@ -108,5 +108,14 @@ TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp32) {
   CompareOutputData(output_data, correct_data, oh * ow * co, 0.00001);
 
   MS_LOG(INFO) << "Test Conv2dTransposeFp32 passed";
+  for (auto tensor : inputs) {
+    delete tensor;
+  }
+  for (auto tensor : outputs) {
+    delete tensor;
+  }
+  delete arith_kernel;
+  delete pGraph;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

@@ -92,6 +92,15 @@ TEST_F(TestMaxPoolingOpenCL, MaxPool_1_32_512_96) {
   MS_LOG(INFO) << "compare result";
   std::cout << "compare result" << std::endl;
   CompareOutput(output_tensor, expect_file);
+  for (auto tensor : inputs) {
+    delete tensor;
+  }
+  for (auto tensor : outputs) {
+    delete tensor;
+  }
+  delete pooling_kernel;
+  delete pGraph;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 }  // namespace mindspore

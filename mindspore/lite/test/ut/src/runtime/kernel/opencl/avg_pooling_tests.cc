@@ -119,6 +119,11 @@ TEST_F(TestAvgPoolingOpenCL, AvgPoolFp32) {
     }
   printf("test all close OK!\n");
   lite::CompareOutputData(output_data, expect, 4);
+  delete tensor_in;
+  delete tensor_out;
+  delete pooling_kernel;
+  delete pGraph;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 }  // namespace mindspore

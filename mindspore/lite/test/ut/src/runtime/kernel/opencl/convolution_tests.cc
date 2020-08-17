@@ -120,6 +120,14 @@ void TEST_MAIN(ConvParameter *param, schema::Format data_format, const std::stri
   MyCompareOutput(output_tensor, expect_file);
   //  lite::CompareOutput(reinterpret_cast<float *>(output_tensor->Data()), expect_file);
 
+  for (auto tensor : inputs) {
+    delete tensor;
+  }
+  for (auto tensor : outputs) {
+    delete tensor;
+  }
+  delete conv_kernel;
+  delete sub_graph;
   mindspore::lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
