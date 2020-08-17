@@ -872,12 +872,6 @@ table SpaceToBatchND {
     paddings : [int];
 }
 
-table TopKV2 {
-    k : [int];
-    sorted : bool = true;
-}
-
-
 table MakeTuple {
 }
 

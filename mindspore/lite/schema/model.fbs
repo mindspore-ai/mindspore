@@ -190,7 +190,6 @@ union PrimitiveType {
     ActivationGrad,
     PriorBox,
     SpaceToBatchND,
-    TopKV2,
     Return,
     MakeTuple,
     ToFormat,
