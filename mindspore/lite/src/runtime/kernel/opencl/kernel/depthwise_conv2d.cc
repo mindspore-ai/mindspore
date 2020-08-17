@@ -43,6 +43,7 @@ int DepthwiseConv2dOpenCLKernel::Init() {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   std::string kernel_name = "DepthwiseConv2d";
   auto in_format = in_tensors_[0]->GetFormat();
+  ori_format_ = out_tensors_[0]->GetFormat();
   out_tensors_[0]->SetFormat(in_format);
   if (in_format != schema::Format_NHWC4 && in_format != schema::Format_NC4HW4) {
     MS_LOG(ERROR) << "input format(" << in_format << ") "

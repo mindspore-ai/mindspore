@@ -19,7 +19,6 @@
 
 #include <vector>
 
-
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "src/runtime/kernel/arm/nnacl/conv_parameter.h"
 #include "src/runtime/opencl/opencl_runtime.h"
@@ -32,11 +31,11 @@ using FLOAT_T = float;
 
 namespace mindspore::kernel {
 
-class MatMulOpenCLKernel : public LiteKernel {
+class MatMulOpenCLKernel : public OpenCLKernel {
  public:
   explicit MatMulOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                               const std::vector<lite::tensor::Tensor *> &outputs, bool hasBias)
-      : LiteKernel(parameter, inputs, outputs, nullptr, nullptr) {
+      : OpenCLKernel(parameter, inputs, outputs) {
     hasBias_ = hasBias;
   }
   ~MatMulOpenCLKernel() override{};
@@ -57,4 +56,3 @@ class MatMulOpenCLKernel : public LiteKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_BACKEND_OPENCL_MATMUL_H_
-

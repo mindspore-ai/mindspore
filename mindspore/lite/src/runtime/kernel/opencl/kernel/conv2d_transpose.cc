@@ -56,6 +56,7 @@ int Conv2dTransposeOpenCLKernel::Init() {
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
   PadWeight();
+  ori_format_ = out_tensors_[0]->GetFormat();
   out_tensors_[0]->SetFormat(schema::Format_NHWC4);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;

@@ -44,6 +44,7 @@ int ActivationOpenClKernel::Init() {
     MS_LOG(ERROR) << "Activate fun only support dim=4, but your dim=" << in_tensors_[0]->shape().size();
     return RET_ERROR;
   }
+  ori_format_ = out_tensors_[0]->GetFormat();
   std::string program_name = "";
   std::string kernel_name = "";
   std::string source = activation_source_fp32;

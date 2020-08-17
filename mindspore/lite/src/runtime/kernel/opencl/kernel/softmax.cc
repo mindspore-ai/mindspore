@@ -115,9 +115,10 @@ int SoftmaxOpenCLKernel::Init() {
   }
   std::set<std::string> build_options;
   runtime_->LoadSource(program_name, source);
-  out_tensors_[0]->SetFormat(schema::Format_NHWC4);
   runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
+  ori_format_ = out_tensors_[0]->GetFormat();
+  out_tensors_[0]->SetFormat(schema::Format_NHWC4);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return lite::RET_OK;
 }

@@ -60,6 +60,7 @@ int TransposeOpenCLKernel::Init() {
     MS_LOG(ERROR) << "input H * W % 4 != 0 not support!";
     return RET_ERROR;
   }
+  ori_format_ = out_tensors_[0]->GetFormat();
   out_tensors_[0]->SetFormat(schema::Format_NCHW);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;

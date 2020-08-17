@@ -49,6 +49,13 @@ const char *argv[] = {"./benchmark", "--modelPath=./hiai/model_02.ms",
 auto status = RunBenchmark(5, argv);
 ASSERT_EQ(status, RET_OK);
 }
+TEST_F(BenchmarkTest, TestOCR_02_GPU_PERF) {
+const char *argv[] = {"./benchmark", "--modelPath=./hiai/model_02.ms",
+                                     "--inDataPath=./hiai/model_02_in.bin",
+                                     "--device=GPU"};
+auto status = RunBenchmark(4, argv);
+ASSERT_EQ(status, RET_OK);
+}
 
 TEST_F(BenchmarkTest, Test_MV2_GPU) {
 const char *argv[] = {"./benchmark", "--modelPath=./hiai/mobilenet_v2.ms",
@@ -57,6 +64,14 @@ const char *argv[] = {"./benchmark", "--modelPath=./hiai/mobilenet_v2.ms",
                                      "--device=GPU"};
 auto status = RunBenchmark(5, argv);
 ASSERT_EQ(status, RET_OK);
+}
+
+TEST_F(BenchmarkTest, Test_MV2_GPU_PERF) {
+  const char *argv[] = {"./benchmark", "--modelPath=./hiai/mobilenet_v2.ms",
+                        "--inDataPath=./hiai/mobilenet_v2_in.bin",
+                        "--device=GPU"};
+  auto status = RunBenchmark(4, argv);
+  ASSERT_EQ(status, RET_OK);
 }
 
 TEST_F(BenchmarkTest, TestHebing) {

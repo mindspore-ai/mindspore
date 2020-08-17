@@ -111,6 +111,7 @@ int ArithmeticOpenCLKernel::Init() {
   runtime_->LoadSource(program_name, source);
   runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
+  ori_format_ = out_tensors_[0]->GetFormat();
   out_tensors_[0]->SetFormat(schema::Format_NHWC4);
   Image2dGetWorkGroupSize();
   return 0;
