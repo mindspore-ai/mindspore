@@ -57,22 +57,27 @@ struct KernelKey {
 class LiteKernel {
  public:
   LiteKernel() = default;
-  explicit LiteKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &in_tensors,
-                      const std::vector<lite::tensor::Tensor *> &out_tensors, const lite::Context *ctx,
-                      const lite::Primitive *primitive)
+  LiteKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &in_tensors,
+             const std::vector<lite::tensor::Tensor *> &out_tensors, const lite::Context *ctx,
+             const lite::Primitive *primitive)
       : op_parameter_(parameter),
         in_tensors_(in_tensors),
         out_tensors_(out_tensors),
         primitive_(primitive),
         context_(ctx) {
-    if (op_parameter_ && ctx) {
+    if (op_parameter_ != nullptr && ctx != nullptr) {
       op_parameter_->thread_num_ = ctx->thread_num_;
     }
     this->in_kernels_.clear();
     this->out_kernels_.clear();
   }
 
-  virtual ~LiteKernel() { delete op_parameter_; }
+  virtual ~LiteKernel() {
+    if (op_parameter_ != nullptr) {
+      delete op_parameter_;
+      op_parameter_ = nullptr;
+    }
+  }
 
   virtual int Prepare() {
     if (!InferShapeDone()) {
@@ -148,6 +153,8 @@ class LiteKernel {
   void set_desc(const KernelKey kernel_key) { desc_ = kernel_key; }
 
   void set_need_reinit() { need_reinit_ = true; }
+
+  const lite::Primitive *GetPrimitive() const { return primitive_; }
 
  protected:
   bool InferShapeDone() { return !(primitive_ != nullptr && !primitive_->GetInferFlag()) && true; }

@@ -29,23 +29,22 @@ using mindspore::schema::PrimitiveType_Pooling;
 
 namespace mindspore::kernel {
 int PoolingCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
-    return RET_OK;
-  }
   auto ret = PoolingBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PoolingBase Init failed.";
     return RET_ERROR;
   }
-  return RET_OK;
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
 }
 
 int PoolingCPUKernel::ReSize() {
-  auto ret = Init();
+  auto ret = PoolingBaseCPUKernel::ReSize();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Pooling resize init failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "PoolingBase ReSize fai1!ret: " << ret;
+    return ret;
   }
   return RET_OK;
 }

@@ -29,6 +29,8 @@ class Scheduler {
   int Schedule(const lite::Model *model, std::vector<tensor::Tensor *> *tensors,
                std::vector<kernel::LiteKernel *> *kernels);
 
+  int ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels);
+
  protected:
   kernel::LiteKernel *ScheduleNode(const std::vector<tensor::Tensor *> &in_tensors,
                                    const std::vector<tensor::Tensor *> &out_tensors, const lite::Primitive *primitive);

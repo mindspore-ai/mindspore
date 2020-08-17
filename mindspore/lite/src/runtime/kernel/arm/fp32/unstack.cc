@@ -24,10 +24,13 @@ using mindspore::schema::PrimitiveType_Unstack;
 
 namespace mindspore::kernel {
 int UnstackCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
+  return ReSize();
+}
+
+int UnstackCPUKernel::ReSize() {
   auto input = in_tensors_.at(0);
   MS_ASSERT(input != nullptr);
   size_t shape_size = input->shape().size();
@@ -48,7 +51,10 @@ int UnstackCPUKernel::Init() {
       para->axis_dim_ = input->DimensionSize(i);
     }
   }
-
+  if (output_addr_array_ != nullptr) {
+    free(output_addr_array_);
+    output_addr_array_ = nullptr;
+  }
   output_addr_array_ = reinterpret_cast<float **>(malloc(sizeof(float *) * out_tensors_.size()));
   if (output_addr_array_ == nullptr) {
     MS_LOG(ERROR) << "Failed to malloc memory";
@@ -56,8 +62,6 @@ int UnstackCPUKernel::Init() {
   }
   return RET_OK;
 }
-
-int UnstackCPUKernel::ReSize() { return RET_OK; }
 
 int UnstackCPUKernel::Run() {
   auto ret = Prepare();

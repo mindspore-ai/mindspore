@@ -98,6 +98,23 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
 }
 
 int Convolution1x1FP16CPUKernel::Init() {
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
+
+int Convolution1x1FP16CPUKernel::ReSize() {
+  FreeTmpBuffer();
+  if (fp16_weight_ != nullptr) {
+    free(fp16_weight_);
+    fp16_weight_ = nullptr;
+  }
+  if (input_ptr_ != nullptr) {
+    free(input_ptr_);
+    input_ptr_ = nullptr;
+  }
+
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
@@ -116,35 +133,6 @@ int Convolution1x1FP16CPUKernel::Init() {
   ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
-    return ret;
-  }
-  return RET_OK;
-}
-
-int Convolution1x1FP16CPUKernel::ReSize() {
-  if (fp16_weight_ != nullptr) {
-    free(fp16_weight_);
-  }
-  if (input_ptr_ != nullptr) {
-    free(input_ptr_);
-  }
-  if (weight_ptr_ != nullptr) {
-    free(weight_ptr_);
-  }
-
-  auto ret = ConvolutionBaseCPUKernel::Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConvolutionBase init failed.";
-    return ret;
-  }
-  ret = InitMatmulParam();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init matmul param failed.";
-    return ret;
-  }
-  ret = InitConv1x1Param();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init conv1x1 param failed.";
     return ret;
   }
   return RET_OK;

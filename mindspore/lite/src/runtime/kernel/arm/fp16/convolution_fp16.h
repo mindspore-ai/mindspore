@@ -29,20 +29,7 @@ class ConvolutionFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
                            const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                            const lite::Primitive *primitive)
       : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~ConvolutionFP16CPUKernel() override {
-    if (fp16_weight_ != nullptr) {
-      free(fp16_weight_);
-    }
-    if (packed_input_ != nullptr) {
-      free(packed_input_);
-    }
-    if (packed_weight_ != nullptr) {
-      free(packed_weight_);
-    }
-    if (tmp_output_block_ != nullptr) {
-      free(tmp_output_block_);
-    }
-  }
+  ~ConvolutionFP16CPUKernel() override { FreeTmpBuffer(); }
 
   int Init() override;
   int ReSize() override;
@@ -53,9 +40,28 @@ class ConvolutionFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   void ConfigInputOutput();
 
  private:
-  float16_t *packed_input_;
-  float16_t *packed_weight_;
-  float16_t *tmp_output_block_;
+  void FreeTmpBuffer() {
+    if (fp16_weight_ != nullptr) {
+      free(fp16_weight_);
+      fp16_weight_ = nullptr;
+    }
+
+    if (packed_input_ != nullptr) {
+      free(packed_input_);
+      packed_input_ = nullptr;
+    }
+    if (packed_weight_ != nullptr) {
+      free(packed_weight_);
+      packed_weight_ = nullptr;
+    }
+    if (tmp_output_block_ != nullptr) {
+      free(tmp_output_block_);
+      tmp_output_block_ = nullptr;
+    }
+  }
+  float16_t *packed_input_ = nullptr;
+  float16_t *packed_weight_ = nullptr;
+  float16_t *tmp_output_block_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

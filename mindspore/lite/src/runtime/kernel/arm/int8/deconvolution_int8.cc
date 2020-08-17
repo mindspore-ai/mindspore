@@ -27,7 +27,9 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DeConv2D;
 
 namespace mindspore::kernel {
-DeConvInt8CPUKernel::~DeConvInt8CPUKernel() {
+DeConvInt8CPUKernel::~DeConvInt8CPUKernel() { FreeTmpBuffer(); }
+
+void DeConvInt8CPUKernel::FreeTmpBuffer() {
   if (weight_ptr_ != nullptr) {
     free(weight_ptr_);
     weight_ptr_ = nullptr;
@@ -47,7 +49,35 @@ DeConvInt8CPUKernel::~DeConvInt8CPUKernel() {
   ConvolutionBaseCPUKernel::FreeQuantParam();
 }
 
-int DeConvInt8CPUKernel::ReSize() { return RET_OK; }
+int DeConvInt8CPUKernel::ReSize() {
+  FreeTmpBuffer();
+
+  ConvolutionBaseCPUKernel::Init();
+  int error_code = ConvolutionBaseCPUKernel::SetQuantParam();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "deconv int8 SetQuantParam error!";
+    return error_code;
+  }
+
+  error_code = InitParam();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "deconv int8 InitParam error!";
+    return error_code;
+  }
+
+  error_code = InitBiasWeight();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "deconv int8 InitBiasWeight error!";
+    return error_code;
+  }
+
+  error_code = InitData();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "deconv int8 InitData error!";
+    return error_code;
+  }
+  return RET_OK;
+}
 
 int DeConvInt8CPUKernel::InitParam() {
   fc_param_ = new MatMulParameter();
@@ -115,35 +145,10 @@ int DeConvInt8CPUKernel::InitData() {
 }
 
 int DeConvInt8CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
-  ConvolutionBaseCPUKernel::Init();
-  int error_code = ConvolutionBaseCPUKernel::SetQuantParam();
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "deconv int8 SetQuantParam error!";
-    return error_code;
-  }
-
-  error_code = InitParam();
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "deconv int8 InitParam error!";
-    return error_code;
-  }
-
-  error_code = InitBiasWeight();
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "deconv int8 InitBiasWeight error!";
-    return error_code;
-  }
-
-  error_code = InitData();
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "deconv int8 InitData error!";
-    return error_code;
-  }
-  return RET_OK;
+  return ReSize();
 }
 
 int DeConvInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {

@@ -52,6 +52,7 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
   int InitConv1x1BiasWeight();
   void InitConv1x1MatmulParam();
   void Pre1x1Trans(float *src_input, float *src_output);
+  void FreeTmpBuffer();
 
  private:
   MatMulParameter *matmul_param_ = nullptr;

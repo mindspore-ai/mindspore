@@ -51,10 +51,11 @@ class ConvolutionDepthwiseFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   int Execute(int task_id);
 
  private:
-  SlidingWindowParam *sliding_;
-  float16_t *packed_weight_;
-  float16_t *packed_input_;
-  float16_t *packed_output_;
+  void FreeTmpBuffer();
+  SlidingWindowParam *sliding_ = nullptr;
+  float16_t *packed_weight_ = nullptr;
+  float16_t *packed_input_ = nullptr;
+  float16_t *packed_output_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

@@ -37,7 +37,7 @@ class PoolingBaseCPUKernel : public LiteKernel {
   ~PoolingBaseCPUKernel() = default;
 
   int Init() override;
-  int ReSize() override { return RET_OK; }
+  int ReSize() override;
   int Run() override { return RET_OK; }
   int SetQuantParam();
   void FreeQuantParam();

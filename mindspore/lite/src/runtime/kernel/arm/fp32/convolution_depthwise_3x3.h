@@ -31,13 +31,11 @@ class ConvolutionDepthwise3x3CPUKernel : public ConvolutionBaseCPUKernel {
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 
   ~ConvolutionDepthwise3x3CPUKernel() override {
-    free(packed_weight_);
-    if (need_align_) {
-      free(packed_input_);
-      free(packed_output_);
+    FreeTmpBufer();
+    if (block_buffer_ != nullptr) {
+      free(block_buffer_);
+      block_buffer_ = nullptr;
     }
-    free(block_buffer_);
-    free(trans_buffer_);
   };
 
   int Init() override;
@@ -49,6 +47,7 @@ class ConvolutionDepthwise3x3CPUKernel : public ConvolutionBaseCPUKernel {
   int Execute(int task_id);
 
  private:
+  void FreeTmpBufer();
   float *packed_weight_ = nullptr;
   float *packed_input_ = nullptr;
   float *packed_output_ = nullptr;

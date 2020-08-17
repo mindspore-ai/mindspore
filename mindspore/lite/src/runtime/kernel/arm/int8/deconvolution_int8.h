@@ -51,12 +51,13 @@ class DeConvInt8CPUKernel : public ConvolutionBaseCPUKernel {
   int InitBiasWeight();
 
  private:
-  MatMulParameter *fc_param_;
-  int8_t *weight_ptr_;
-  int8_t *input_ptr_;   /* record c8 input*/
-  int32_t *tmp_buffer_; /* record matmul result */
-  int32_t *tmp_output_; /* record post c8 result */
-  int8_t *output_ptr_;
+  void FreeTmpBuffer();
+  MatMulParameter *fc_param_ = nullptr;
+  int8_t *weight_ptr_ = nullptr;
+  int8_t *input_ptr_ = nullptr;   /* record c8 input*/
+  int32_t *tmp_buffer_ = nullptr; /* record matmul result */
+  int32_t *tmp_output_ = nullptr; /* record post c8 result */
+  int8_t *output_ptr_ = nullptr;
   size_t thread_count_;
   size_t thread_stride_;
 };

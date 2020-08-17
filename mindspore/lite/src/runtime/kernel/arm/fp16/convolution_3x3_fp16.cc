@@ -157,6 +157,23 @@ void Convolution3x3FP16CPUKernel::ConfigInputOutput() {
 }
 
 int Convolution3x3FP16CPUKernel::Init() {
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
+
+int Convolution3x3FP16CPUKernel::ReSize() {
+  FreeTmpBuffer();
+
+  if (tile_buffer_ != nullptr) {
+    free(tile_buffer_);
+    tile_buffer_ = nullptr;
+  }
+  if (nhwc4_input_ != nullptr) {
+    free(nhwc4_input_);
+    nhwc4_input_ = nullptr;
+  }
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
@@ -173,36 +190,6 @@ int Convolution3x3FP16CPUKernel::Init() {
     return RET_ERROR;
   }
   ConfigInputOutput();
-  return RET_OK;
-}
-
-int Convolution3x3FP16CPUKernel::ReSize() {
-  if (tile_buffer_ != nullptr) {
-    free(tile_buffer_);
-  }
-  if (block_unit_buffer_ != nullptr) {
-    free(block_unit_buffer_);
-  }
-  if (tmp_dst_buffer_ != nullptr) {
-    free(tmp_dst_buffer_);
-  }
-  if (tmp_out_ != nullptr) {
-    free(tmp_out_);
-  }
-  if (nhwc4_input_ != nullptr) {
-    free(nhwc4_input_);
-  }
-
-  auto ret = ConvolutionBaseCPUKernel::Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConvolutionBase init failed.";
-    return ret;
-  }
-  ret = InitTmpBuffer();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init tmp buffer failed.";
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 

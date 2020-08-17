@@ -40,21 +40,24 @@ int PoolingInt8CPUKernel::Init() {
     MS_LOG(ERROR) << "Set pooling quant param failed.";
     return RET_ERROR;
   }
-  return RET_OK;
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
 }
 
 int PoolingInt8CPUKernel::ReSize() {
   FreeQuantParam();
-  auto ret = PoolingBaseCPUKernel::Init();
+  auto ret = PoolingBaseCPUKernel::ReSize();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PoolingBase Init failed.";
-    return RET_ERROR;
+    return ret;
   }
   SetQuantParam();
   ret = SetQuantParam();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Set pooling quant param failed.";
-    return RET_ERROR;
+    return ret;
   }
   return RET_OK;
 }

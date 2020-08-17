@@ -99,10 +99,14 @@ int LstmCPUKernel::InitWeightBias() {
 }
 
 int LstmCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
+  return ReSize();
+}
+
+int LstmCPUKernel::ReSize() {
+  FreeTmpBuffer();
   auto ret = InitParam();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "LstmCPUKernel InitParam error.";
@@ -112,23 +116,6 @@ int LstmCPUKernel::Init() {
   ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "LstmCPUKernel InitWeightBias error.";
-    return RET_ERROR;
-  }
-
-  ret = InitBuffer();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "LstmCPUKernel InitBuffer error.";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-int LstmCPUKernel::ReSize() {
-  free(gate_buffer_);
-
-  auto ret = InitParam();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "LstmCPUKernel InitParam error.";
     return RET_ERROR;
   }
 
@@ -170,13 +157,16 @@ int LstmCPUKernel::Run() {
 }
 
 kernel::LiteKernel *CpuLstmKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                         const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *opParameter,
+                                         const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
                                          const lite::Context *ctx, const kernel::KernelKey &desc,
                                          const lite::Primitive *primitive) {
-  MS_ASSERT(opParameter != nullptr);
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << "Input parameter is nullptr!";
+    return nullptr;
+  }
   MS_ASSERT(desc.type == schema::PrimitiveType_Lstm);
 
-  auto *kernel = new (std::nothrow) LstmCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  auto *kernel = new (std::nothrow) LstmCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
     return nullptr;
@@ -184,8 +174,8 @@ kernel::LiteKernel *CpuLstmKernelCreator(const std::vector<lite::tensor::Tensor 
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
     return nullptr;
   }
   return kernel;

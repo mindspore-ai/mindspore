@@ -30,21 +30,10 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   ConvolutionWinogradCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                                const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                                const lite::Primitive *primitive, int output_unit)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive), output_unit_(output_unit) {}
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive), output_unit_(output_unit),
+        trans_weight_(nullptr) {}
   ~ConvolutionWinogradCPUKernel() override {
-    if (tmp_data_ != nullptr) {
-      free(tmp_data_);
-    }
-    if (trans_input_ != nullptr) {
-      free(trans_input_);
-    }
-    if (gemm_out_ != nullptr) {
-      free(gemm_out_);
-    }
-    if (tmp_out_data_ != nullptr) {
-      free(tmp_out_data_);
-    }
-    delete trans_weight_;
+    FreeTmpBuffer();
   };
   int Init() override;
   int ReSize() override;
@@ -56,14 +45,36 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   int ConfigInputOutput();
 
  private:
+  void FreeTmpBuffer() {
+    if (tmp_data_ != nullptr) {
+      free(tmp_data_);
+      tmp_data_ = nullptr;
+    }
+    if (trans_input_ != nullptr) {
+      free(trans_input_);
+      trans_input_ = nullptr;
+    }
+    if (gemm_out_ != nullptr) {
+      free(gemm_out_);
+      gemm_out_ = nullptr;
+    }
+    if (tmp_out_data_ != nullptr) {
+      free(tmp_out_data_);
+      tmp_out_data_ = nullptr;
+    }
+    if (trans_weight_ != nullptr) {
+      delete trans_weight_;
+      trans_weight_ = nullptr;
+    }
+  }
   int kernel_unit_;
   int input_unit_;
   int output_unit_;
-  float *tmp_data_;
-  float *trans_input_;
-  float *gemm_out_;
-  float *tmp_out_data_;
-  Matrix *trans_weight_;
+  float *tmp_data_ = nullptr;
+  float *trans_input_ = nullptr;
+  float *gemm_out_ = nullptr;
+  float *tmp_out_data_ = nullptr;
+  Matrix *trans_weight_ = nullptr;
   InputTransformUnitFunc input_trans_func_;
   OutputTransformUnitFunc output_trans_func_;
   TmpBufferAddress tmp_buffer_address_list_[5];

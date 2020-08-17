@@ -100,50 +100,56 @@ int ConvolutionDepthwise3x3CPUKernel::InitBuffer() {
 }
 
 int ConvolutionDepthwise3x3CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
-    return RET_OK;
-  }
-  // conv base init
-  ConvolutionBaseCPUKernel::Init();
-
-  auto ret = InitWeightBias();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Depthwise3x3 fp32 initWeightBias error!";
-    return ret;
-  }
-
-  // init threadNum;
-  conv_param_->thread_num_ = MSMIN(thread_count_, UP_DIV(conv_param_->output_channel_, C4NUM));
-
-  ret = InitBuffer();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Depthwise3x3 fp32 initBuffer error!";
-    return ret;
-  }
-
   // malloc one block buffer
   block_buffer_ = reinterpret_cast<float *>(malloc(thread_count_ * 16 * C4NUM * sizeof(float)));
   if (block_buffer_ == nullptr) {
     MS_LOG(ERROR) << "malloc block buffer failed.";
     return RET_ERROR;
   }
-  return RET_OK;
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
+
+void ConvolutionDepthwise3x3CPUKernel::FreeTmpBufer() {
+  if (need_align_) {
+    if (packed_input_ != nullptr) {
+      free(packed_input_);
+      packed_input_ = nullptr;
+    }
+    if (packed_output_ != nullptr) {
+      free(packed_output_);
+      packed_output_ = nullptr;
+    }
+  }
+  if (trans_buffer_ != nullptr) {
+    free(trans_buffer_);
+    trans_buffer_ = nullptr;
+  }
+  if (packed_weight_ != nullptr) {
+    free(packed_weight_);
+    packed_weight_ = nullptr;
+  }
 }
 
 int ConvolutionDepthwise3x3CPUKernel::ReSize() {
-  if (need_align_) {
-    free(packed_input_);
-    free(packed_output_);
-  }
-  free(trans_buffer_);
+  FreeTmpBufer();
 
   // conv base init
   ConvolutionBaseCPUKernel::Init();
 
-  auto ret = InitBuffer();
+  auto ret = InitWeightBias();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Depthwise3x3 fp32 initBuffer error!";
+    MS_LOG(ERROR) << "Depthwise3x3 fp32 initWeightBias error!ret: " << ret;
+    return ret;
+  }
+    // init threadNum;
+  conv_param_->thread_num_ = MSMIN(thread_count_, UP_DIV(conv_param_->output_channel_, C4NUM));
+
+  ret = InitBuffer();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Depthwise3x3 fp32 initBuffer error!ret: " << ret;
     return ret;
   }
   return RET_OK;

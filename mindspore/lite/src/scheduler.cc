@@ -45,6 +45,33 @@ int Scheduler::Schedule(const lite::Model *model, std::vector<tensor::Tensor *> 
   return RET_OK;
 }
 
+int Scheduler::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels) {
+  for (size_t i = 0; i < kernels.size(); ++i) {
+    if (kernels[i] == nullptr) {
+      MS_LOG(ERROR) << "input kernel is nullptr!";
+      return RET_ERROR;
+    }
+    auto primitive = const_cast<lite::Primitive *>(kernels[i]->GetPrimitive());
+    if (primitive == nullptr) {
+      MS_LOG(ERROR) << "kernel(" << kernels[i]->name() << ")'s primitive is nullptr!";
+      return RET_ERROR;
+    }
+    std::vector<tensor::Tensor *> &inputs = kernels[i]->in_tensors();
+    std::vector<tensor::Tensor *> &outputs = kernels[i]->out_tensors();
+    auto ret = primitive->InferShape(inputs, outputs);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "InferShape failed, name: " << kernels[i]->name() << ", ret = " << ret;
+      return ret;
+    }
+    ret = kernels[i]->ReSize();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "kernel " << kernels[i]->name() << " resize fail!ret = " << ret;
+      return ret;
+    }
+  }
+  return RET_OK;
+}
+
 int Scheduler::InitOp2Kernel(const lite::Model *model, std::vector<tensor::Tensor *> *tensors,
                              std::vector<kernel::LiteKernel *> *kernels) {
   MS_EXCEPTION_IF_NULL(model);

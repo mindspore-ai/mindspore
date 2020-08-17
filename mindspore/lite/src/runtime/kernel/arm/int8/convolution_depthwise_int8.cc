@@ -28,8 +28,12 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
 namespace mindspore::kernel {
-ConvolutionDepthwiseInt8CPUKernel::~ConvolutionDepthwiseInt8CPUKernel() {
-  delete sliding;
+void ConvolutionDepthwiseInt8CPUKernel::FreeTmpBuffer() {
+  if (sliding != nullptr) {
+    delete sliding;
+    sliding = nullptr;
+  }
+
   if (packed_weight_ != nullptr) {
     delete packed_weight_;
     packed_weight_ = nullptr;
@@ -45,6 +49,8 @@ ConvolutionDepthwiseInt8CPUKernel::~ConvolutionDepthwiseInt8CPUKernel() {
     }
   }
 }
+
+ConvolutionDepthwiseInt8CPUKernel::~ConvolutionDepthwiseInt8CPUKernel() { FreeTmpBuffer(); }
 
 int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   // init weight, int8 -> int16
@@ -99,10 +105,15 @@ int ConvolutionDepthwiseInt8CPUKernel::InitBuffer() {
 }
 
 int ConvolutionDepthwiseInt8CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+if (!InferShapeDone()) {
     return RET_OK;
   }
+  return ReSize();
+}
+
+int ConvolutionDepthwiseInt8CPUKernel::ReSize() {
+  FreeTmpBuffer();
+
   // conv base init
   ConvolutionBaseCPUKernel::Init();
 
@@ -125,35 +136,6 @@ int ConvolutionDepthwiseInt8CPUKernel::Init() {
   }
 
   ret = InitBuffer();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Depthwise int8 ReSize error!";
-    return ret;
-  }
-  return RET_OK;
-}
-
-int ConvolutionDepthwiseInt8CPUKernel::ReSize() {
-  if (packed_input_ != nullptr) {
-    delete packed_input_;
-    packed_input_ = nullptr;
-  }
-  if (need_align_) {
-    if (packed_output_ != nullptr) {
-      delete packed_output_;
-      packed_output_ = nullptr;
-    }
-  }
-
-  // conv base init
-  ConvolutionBaseCPUKernel::Init();
-
-  // init sliding window param
-  InitSlidingParamConvDw(sliding, conv_param_, C4NUM);
-
-  // init quant param
-  ConvolutionBaseCPUKernel::SetQuantParam();
-
-  auto ret = InitBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Depthwise int8 ReSize error!";
     return ret;

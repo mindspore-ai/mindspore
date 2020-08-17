@@ -28,13 +28,10 @@ using mindspore::schema::PrimitiveType_Flatten;
 
 namespace mindspore::kernel {
 int FlattenCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
-
-  ReSize();
-  return RET_OK;
+  return ReSize();
 }
 
 int FlattenCPUKernel::ReSize() {

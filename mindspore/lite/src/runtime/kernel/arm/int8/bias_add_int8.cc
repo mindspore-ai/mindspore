@@ -26,10 +26,13 @@ using mindspore::schema::PrimitiveType_BiasAdd;
 
 namespace mindspore::kernel {
 int BiasAddInt8CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
+  return ReSize();
+}
+
+int BiasAddInt8CPUKernel::ReSize() {
   auto bias_param = reinterpret_cast<ArithmeticParameter *>(op_parameter_);
   auto dims = in_tensors_[0]->shape();
   bias_param->ndim_ = dims.size();
@@ -39,10 +42,8 @@ int BiasAddInt8CPUKernel::Init() {
     bias_param->out_shape_[i] = dims[i];
   }
   bias_param->in_shape1_[3] = dims[3];
-  return NNACL_OK;
+  return RET_OK;
 }
-
-int BiasAddInt8CPUKernel::ReSize() { return NNACL_OK; }
 
 int BiasAddInt8CPUKernel::Run() {
   auto ret = Prepare();

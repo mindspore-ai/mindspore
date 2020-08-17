@@ -131,10 +131,19 @@ void ConvolutionCPUKernel::ConfigInputOutput() {
 }
 
 int ConvolutionCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
+  return ReSize();
+}
+
+int ConvolutionCPUKernel::ReSize() {
+  FreeTmpBuffer();
+  if (nhwc4_input_ != nullptr) {
+    free(nhwc4_input_);
+    nhwc4_input_ = nullptr;
+  }
+
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
@@ -153,31 +162,6 @@ int ConvolutionCPUKernel::Init() {
   }
   // config input output
   ConfigInputOutput();
-  return RET_OK;
-}
-
-int ConvolutionCPUKernel::ReSize() {
-  if (packed_input_ != nullptr) {
-    free(packed_input_);
-  }
-  if (tmp_output_block_ != nullptr) {
-    free(tmp_output_block_);
-  }
-  if (nhwc4_input_ != nullptr) {
-    free(nhwc4_input_);
-  }
-
-  auto ret = ConvolutionBaseCPUKernel::Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConvolutionBase init failed.";
-    return RET_ERROR;
-  }
-  // init tmp input, output
-  ret = InitTmpBuffer();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init tmp buffer failed.";
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 

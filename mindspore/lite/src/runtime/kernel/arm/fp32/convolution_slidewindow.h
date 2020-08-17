@@ -32,15 +32,7 @@ class ConvolutionSWCPUKernel : public ConvolutionBaseCPUKernel {
                          const lite::Primitive *primitive)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 
-  ~ConvolutionSWCPUKernel() override {
-    if (packed_weight_ != nullptr) {
-      free(packed_weight_);
-    }
-    if (tmp_output_block_ != nullptr) {
-      free(tmp_output_block_);
-    }
-    delete slidingWindow_param_;
-  };
+  ~ConvolutionSWCPUKernel() override { FreeTmpBuffer(); }
 
   int Init() override;
   int ReSize() override;
@@ -51,9 +43,23 @@ class ConvolutionSWCPUKernel : public ConvolutionBaseCPUKernel {
   void ConfigInputOutput();
 
  private:
-  float *packed_weight_;
-  float *tmp_output_block_;
-  SlidingWindowParam *slidingWindow_param_;
+  void FreeTmpBuffer() {
+    if (packed_weight_ != nullptr) {
+      free(packed_weight_);
+      packed_weight_ = nullptr;
+    }
+    if (tmp_output_block_ != nullptr) {
+      free(tmp_output_block_);
+      tmp_output_block_ = nullptr;
+    }
+    if (slidingWindow_param_ != nullptr) {
+      delete slidingWindow_param_;
+      slidingWindow_param_ = nullptr;
+    }
+  }
+  float *packed_weight_ = nullptr;
+  float *tmp_output_block_ = nullptr;
+  SlidingWindowParam *slidingWindow_param_ = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_SLIDEWINDOW_H_

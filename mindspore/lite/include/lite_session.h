@@ -97,6 +97,13 @@ class MS_API LiteSession {
   ///
   /// \return The vector of MindSpore Lite MSTensor.
   virtual std::vector<tensor::MSTensor *> GetOutputsByName(const std::string &node_name) const = 0;
+
+  /// \brief Resize inputs shape.
+  ///
+  /// \param[in] inputs Define the new inputs shape.
+  ///
+  /// \return STATUS as an error code of resize inputs, STATUS is defined in errorcode.h.
+  virtual int Resize(const std::vector<tensor::MSTensor *> &inputs) = 0;
 };
 }  // namespace session
 }  // namespace mindspore

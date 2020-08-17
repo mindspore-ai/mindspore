@@ -24,17 +24,17 @@ using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-MatmulInt8CPUKernel::~MatmulInt8CPUKernel() {
-  ctx_->allocator->Free(a_c8_ptr_);
-  ctx_->allocator->Free(b_r8_ptr_);
-  ctx_->allocator->Free(c_r8x8_ptr_);
-}
+MatmulInt8CPUKernel::~MatmulInt8CPUKernel() { FreeTmpBuffer(); }
 
 int MatmulInt8CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
+  return ReSize();
+}
+
+int MatmulInt8CPUKernel::ReSize() {
+  FreeTmpBuffer();
   int batch = 1;
   auto x_shape = in_tensors_[0]->shape();
   auto o_shape = out_tensors_[0]->shape();
@@ -87,8 +87,6 @@ int MatmulInt8CPUKernel::Init() {
                          &quant_params_.right_shift);
   return RET_OK;
 }
-
-int MatmulInt8CPUKernel::ReSize() { return RET_OK; }
 
 int MatmulInt8CPUKernel::RunImpl(int task_id) {
   int cur_oc = MSMIN(thread_stride_, UP_DIV(params_->col_8_, 8) - task_id * thread_stride_);

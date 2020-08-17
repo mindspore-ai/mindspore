@@ -28,18 +28,7 @@ class ConvolutionSWFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
                              const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                              const lite::Primitive *primitive)
       : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~ConvolutionSWFP16CPUKernel() override {
-    if (fp16_weight_ != nullptr) {
-      free(fp16_weight_);
-    }
-    if (packed_weight_ != nullptr) {
-      free(packed_weight_);
-    }
-    if (tmp_output_block_ != nullptr) {
-      free(tmp_output_block_);
-    }
-    delete slidingWindow_param_;
-  }
+  ~ConvolutionSWFP16CPUKernel() override { FreeTmpBuffer(); }
 
   int Init() override;
   int ReSize() override;
@@ -51,9 +40,27 @@ class ConvolutionSWFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   int ProcessFilter();
 
  private:
-  float16_t *packed_weight_;
-  float16_t *tmp_output_block_;
-  SlidingWindowParam *slidingWindow_param_;
+  void FreeTmpBuffer() {
+    if (fp16_weight_ != nullptr) {
+      free(fp16_weight_);
+      fp16_weight_ = nullptr;
+    }
+    if (packed_weight_ != nullptr) {
+      free(packed_weight_);
+      packed_weight_ = nullptr;
+    }
+    if (tmp_output_block_ != nullptr) {
+      free(tmp_output_block_);
+      tmp_output_block_ = nullptr;
+    }
+    if (slidingWindow_param_ != nullptr) {
+      delete slidingWindow_param_;
+      slidingWindow_param_ = nullptr;
+    }
+  }
+  float16_t *packed_weight_ = nullptr;
+  float16_t *tmp_output_block_ = nullptr;
+  SlidingWindowParam *slidingWindow_param_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
