@@ -38,7 +38,6 @@ bool ReshapeCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   auto ret = memcpy_s(outputs[0]->addr, mem_bits, inputs[0]->addr, mem_bits);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
-    return false;
   }
   return true;
 }
