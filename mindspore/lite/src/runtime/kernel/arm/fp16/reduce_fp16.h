@@ -34,21 +34,7 @@ class ReduceFp16CPUKernel : public ReduceBaseCPUKernel {
                       const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                       const lite::Primitive *primitive)
       : ReduceBaseCPUKernel(param, inputs, outputs, ctx, primitive) {}
-  ~ReduceFp16CPUKernel() {
-    for (auto i = 0; i < data_buffers_.size(); i++) {
-      float16_t *buffer = data_buffers_[i];
-      if (buffer != nullptr) {
-        free(buffer);
-        buffer = nullptr;
-      }
-    }
-    if (fp16_input_ != nullptr) {
-      free(fp16_input_);
-      fp16_input_ = nullptr;
-    }
-    src_data_ = nullptr;
-    dst_data_ = nullptr;
-  }
+  ~ReduceFp16CPUKernel() = default;
 
   int Init() override;
   int ReSize() override;
@@ -66,6 +52,7 @@ class ReduceFp16CPUKernel : public ReduceBaseCPUKernel {
 
  private:
   int MallocTmpBuffer();
+  int FreeTmpBuffer();
 };
 }  // namespace mindspore::kernel
 

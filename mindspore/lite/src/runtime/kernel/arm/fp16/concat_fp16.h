@@ -32,19 +32,16 @@ class ConcatFp16CPUKernel : public ConcatBaseCPUKernel {
                       const lite::Primitive *primitive)
       : ConcatBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 
-  ~ConcatFp16CPUKernel() {
-    for (auto ptr : fp16_inputs_) {
-      if (ptr != nullptr) {
-        free(ptr);
-      }
-    }
-  }
+  ~ConcatFp16CPUKernel() = default;
 
   int Init() override;
 
   int ReSize() override;
 
   int Run() override;
+
+ private:
+  void FreeTmpBuffer();
 
  private:
   std::vector<float16_t *> fp16_inputs_;

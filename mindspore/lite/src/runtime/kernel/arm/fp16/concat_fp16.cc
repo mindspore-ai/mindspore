@@ -42,33 +42,45 @@ int ConcatFp16CPUKernel::Init() {
 }
 
 int ConcatFp16CPUKernel::ReSize() {
-  for (auto ptr : fp16_inputs_) {
-    if (ptr != nullptr) {
-      free(ptr);
-      ptr = nullptr;
-    }
-  }
-  fp16_inputs_.clear();
-  for (size_t i = 0; i < in_tensors_.size(); ++i) {
+  FreeTmpBuffer();
+
+  for (const auto &in_tensor : in_tensors_) {
     float16_t *ptr = nullptr;
-    ptr = reinterpret_cast<float16_t *>(malloc(sizeof(float16_t) * in_tensors_[i]->ElementsNum()));
-    if (ptr == nullptr) {
-      MS_LOG(ERROR) << "malloc failed";
-      return RET_ERROR;
+    if (in_tensor->data_type() == kNumberTypeFloat32 || in_tensor->data_type() == kNumberTypeFloat) {
+      ptr = reinterpret_cast<float16_t *>(context_->allocator->Malloc(sizeof(float16_t) * in_tensor->ElementsNum()));
+      if (ptr == nullptr) {
+        MS_LOG(ERROR) << "malloc failed";
+        return RET_ERROR;
+      }
     }
     fp16_inputs_.push_back(ptr);
   }
 
-  if (fp16_output_ != nullptr) {
-    free(fp16_output_);
-    fp16_output_ = nullptr;
+  auto &out_tensor = out_tensors_.at(0);
+  if (out_tensor->data_type() == kNumberTypeFloat32 || out_tensor->data_type() == kNumberTypeFloat) {
+    if (fp16_output_ != nullptr) {
+      context_->allocator->Free(fp16_output_);
+      fp16_output_ = nullptr;
+    }
+    fp16_output_ =
+      reinterpret_cast<float16_t *>(context_->allocator->Malloc(sizeof(float16_t) * out_tensors_[0]->ElementsNum()));
+    if (fp16_output_ == nullptr) {
+      MS_LOG(ERROR) << "malloc failed";
+      return RET_ERROR;
+    }
   }
-  fp16_output_ = reinterpret_cast<float16_t *>(malloc(sizeof(float16_t) * out_tensors_[0]->ElementsNum()));
-  if (fp16_output_ == nullptr) {
-    MS_LOG(ERROR) << "malloc failed";
-    return RET_ERROR;
-  }
+
   return ConcatBaseCPUKernel::ReSize();
+}
+
+void ConcatFp16CPUKernel::FreeTmpBuffer() {
+  for (auto ptr : fp16_inputs_) {
+    if (ptr != nullptr) {
+      context_->allocator->Free(ptr);
+      ptr = nullptr;
+    }
+  }
+  fp16_inputs_.clear();
 }
 
 int ConcatFp16CPUKernel::Run() {
@@ -78,28 +90,53 @@ int ConcatFp16CPUKernel::Run() {
     return prepare_ret;
   }
   auto input_num = in_tensors_.size();
-  std::vector<float *> inputs_addr(input_num, nullptr);
   std::vector<int *> inputs_output_shape(input_num + 1, nullptr);
 
   std::vector<std::vector<int>> shapes;
   for (size_t i = 0; i < input_num; ++i) {
-    inputs_addr[i] = reinterpret_cast<float *>(in_tensors_[i]->Data());
-    if (inputs_addr[i] == nullptr) {
-      MS_LOG(ERROR) << "got nullptr when cast in_tensor to float ptr";
-      return RET_ERROR;
+    const auto in_tensor = in_tensors_[i];
+    if (in_tensor->data_type() == kNumberTypeFloat || in_tensor->data_type() == kNumberTypeFloat32) {
+      auto in_tensor_data = reinterpret_cast<float *>(in_tensor->Data());
+      if (in_tensor_data == nullptr) {
+        MS_LOG(ERROR) << "got nullptr when cast in_tensor to float ptr";
+        return RET_ERROR;
+      }
+      Float32ToFloat16(in_tensor_data, fp16_inputs_[i], in_tensor->ElementsNum());
+    } else {
+      fp16_inputs_[i] = reinterpret_cast<float16_t *>(in_tensor->Data());
     }
 
-    Float32ToFloat16(inputs_addr[i], fp16_inputs_[i], in_tensors_[i]->ElementsNum());
     shapes.push_back(in_tensors_[i]->shape());
     inputs_output_shape[i] = shapes[i].data();
   }
   auto output_shape = out_tensors_.at(0)->shape();
   inputs_output_shape[input_num] = output_shape.data();
   auto output_addr = out_tensors_.at(0)->Data();
+  if (out_tensors_.at(0)->data_type() == kNumberTypeFloat16) {
+    fp16_output_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->Data());
+  }
 
   ConcatFp16(reinterpret_cast<void **>(fp16_inputs_.data()), input_num, axis_, inputs_output_shape.data(),
              output_shape.size(), reinterpret_cast<void *>(fp16_output_));
-  Float16ToFloat32(fp16_output_, reinterpret_cast<float *>(output_addr), out_tensors_.at(0)->ElementsNum());
+
+  // free fp16 in out buffer
+  if (out_tensors_.at(0)->data_type() == kNumberTypeFloat32 || out_tensors_.at(0)->data_type() == kNumberTypeFloat) {
+    Float16ToFloat32(fp16_output_, reinterpret_cast<float *>(output_addr), out_tensors_.at(0)->ElementsNum());
+    context_->allocator->Free(fp16_output_);
+    fp16_output_ = nullptr;
+  }
+  for (auto i = 0; i < fp16_inputs_.size(); i++) {
+    const auto in_tensor = in_tensors_[i];
+    if (in_tensor->data_type() == kNumberTypeFloat || in_tensor->data_type() == kNumberTypeFloat32) {
+      auto ptr = fp16_inputs_[i];
+      if (ptr != nullptr) {
+        context_->allocator->Free(ptr);
+        ptr = nullptr;
+      }
+    }
+  }
+  fp16_inputs_.clear();
+
   return RET_OK;
 }
 
