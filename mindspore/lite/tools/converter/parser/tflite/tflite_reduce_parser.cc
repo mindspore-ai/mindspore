@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
+#include "tools/converter/parser/tflite/tflite_reduce_parser.h"
 #include <vector>
 #include <memory>
 #include <string>
-#include "tools/converter/parser/tflite/tflite_reduce_parser.h"
+#include <map>
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteReduceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-                                 const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-                                 const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                                 const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                                 schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+STATUS TfliteReduceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                 const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+                                 const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
+                                 schema::CNodeT *op,
+                                 std::vector<int32_t> *tensors_id,
+                                 std::vector<schema::Format> *tensors_format,
+                                 std::map<int, int>  *tensors_id_map) {
+  // set attr
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -37,8 +41,9 @@ STATUS TfliteReduceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   }
 
   std::unique_ptr<schema::ReduceT> attr(new schema::ReduceT());
+  // auto tflite_tensors = tflite_subgraph->tensors;
 
-  const auto &tflite_attr = tfliteOp->builtin_options.AsReducerOptions();
+  const auto &tflite_attr = tflite_op->builtin_options.AsReducerOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name << " attr failed";
     return RET_NULL_PTR;
@@ -46,8 +51,9 @@ STATUS TfliteReduceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   attr->keepDims = tflite_attr->keep_dims;
 
   std::vector<std::string> node_name_str;
-  Split(op->name.data(), &node_name_str, "-");
+  Split(op->name, &node_name_str, "-");
   const char *node_name = node_name_str.data()->c_str();
+
   if (std::strcmp(node_name, "ReduceMax") == 0) {
     MS_LOG(DEBUG) << "parse TfliteReduceMaxParser";
     attr->mode = schema::ReduceMode_ReduceMax;
@@ -67,18 +73,20 @@ STATUS TfliteReduceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     // attr->mode;
     MS_LOG(ERROR) << "ms-lite haven't supported REDUCE_ANY now";
     return RET_NOT_FIND_OP;
-  } else {
-    MS_LOG(ERROR) << "wrong reduce type";
-    return RET_ERROR;
   }
 
-  if (GetTfliteData(tfliteOp->inputs[1], tfliteTensors, tfliteModelBuffer, attr->axes)) {
-    MS_LOG(ERROR) << "get reduce_prod -> axes failed";
+  if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->axes)) {
+    MS_LOG(ERROR) << "get reduce -> axes failed";
     return RET_ERROR;
   }
 
   op->primitive->value.type = schema::PrimitiveType_Reduce;
   op->primitive->value.value = attr.release();
+
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
+             tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
+              tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   return RET_OK;
 }
 

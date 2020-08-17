@@ -15,17 +15,23 @@
 * limitations under the License.
 */
 
+#include "tools/converter/parser/tflite/tflite_unstack_parser.h"
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/tflite/tflite_unstack_parser.h"
+#include <map>
 
 namespace mindspore {
 namespace lite {
 STATUS TfliteUnstackParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                   const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
                                   const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                  const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_opset,
-                                  schema::CNodeT *op, TensorCache *tensor_cache, bool quantized_model) {
+                                  schema::CNodeT *op,
+                                  std::vector<int32_t> *tensors_id,
+                                  std::vector<schema::Format> *tensors_format,
+                                  std::map<int, int>  *tensors_id_map) {
+  MS_LOG(DEBUG) << "paser TfliteUnstackParser";
+
+  // set attr
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -36,7 +42,6 @@ STATUS TfliteUnstackParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
     return RET_NULL_PTR;
   }
 
-  MS_LOG(DEBUG) << "paser TfliteUnstackParser";
   std::unique_ptr<schema::UnstackT> attr(new schema::UnstackT());
 
   const auto &tflite_attr = tflite_op->builtin_options.AsUnpackOptions();
@@ -49,6 +54,13 @@ STATUS TfliteUnstackParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
 
   op->primitive->value.type = schema::PrimitiveType_Unstack;
   op->primitive->value.value = attr.release();
+
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
+             tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  for (int i = 0; i < tflite_op->outputs.size(); i++) {
+    AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
+                tflite_op->outputs[i], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  }
   return RET_OK;
 }
 

@@ -31,6 +31,12 @@ TEST_F(TestTfliteParserRelu, OpType) {
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Activation) << "wrong Op Type";
 }
 
+TEST_F(TestTfliteParserRelu, AttrValue) {
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsActivation(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsActivation();
+  ASSERT_EQ(val->type, schema::ActivationType_RELU);
+}
+
 class TestTfliteParserRelu6 : public TestTfliteParser {
  public:
   TestTfliteParserRelu6() = default;
@@ -41,6 +47,12 @@ TEST_F(TestTfliteParserRelu6, OpType) {
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Activation) << "wrong Op Type";
+}
+
+TEST_F(TestTfliteParserRelu6, AttrValue) {
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsActivation(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsActivation();
+  ASSERT_EQ(val->type, schema::ActivationType_RELU6);
 }
 
 class TestTfliteParserTanh : public TestTfliteParser {
@@ -55,7 +67,45 @@ TEST_F(TestTfliteParserTanh, OpType) {
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Activation) << "wrong Op Type";
 }
 
-// logistic
+TEST_F(TestTfliteParserTanh, AttrValue) {
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsActivation(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsActivation();
+  ASSERT_EQ(val->type, schema::ActivationType_TANH);
+}
+
+class TestTfliteParserLogistic : public TestTfliteParser {
+ public:
+  TestTfliteParserLogistic() = default;
+  void SetUp() override { meta_graph = LoadAndConvert("./logistic.tflite", ""); }
+};
+
+TEST_F(TestTfliteParserLogistic, OpType) {
+  ASSERT_GT(meta_graph->nodes.size(), 0);
+  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Activation) << "wrong Op Type";
+}
+TEST_F(TestTfliteParserLogistic, AttrValue) {
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsActivation(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsActivation();
+  ASSERT_EQ(val->type, schema::ActivationType_SIGMOID);
+}
+
+class TestTfliteParserHardSwish : public TestTfliteParser {
+ public:
+  TestTfliteParserHardSwish() = default;
+  void SetUp() override { meta_graph = LoadAndConvert("./hardswish.tflite", ""); }
+};
+
+TEST_F(TestTfliteParserHardSwish, OpType) {
+  ASSERT_GT(meta_graph->nodes.size(), 0);
+  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Activation) << "wrong Op Type";
+}
+TEST_F(TestTfliteParserHardSwish, AttrValue) {
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsActivation(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsActivation();
+  ASSERT_EQ(val->type, schema::ActivationType_SIGMOID);
+}
 
 class TestTfliteParserPrelu : public TestTfliteParser {
  public:
@@ -73,12 +123,11 @@ TEST_F(TestTfliteParserPrelu, OpType) {
 }
 
 TEST_F(TestTfliteParserPrelu, AttrValue) {
-  std::vector<float> slope(20, 0);
-  ASSERT_NE(meta_graph, nullptr);
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsPrelu(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsPrelu()->slope, slope);
+  auto val = meta_graph->nodes.front()->primitive->value;
+  std::vector<float> slope(20, 0);
+  ASSERT_EQ(val.AsPrelu()->slope, slope);
+  ASSERT_EQ(val.type, schema::PrimitiveType_Prelu);
 }
 
 class TestTfliteParserLeakyRelu : public TestTfliteParser {
@@ -94,12 +143,10 @@ TEST_F(TestTfliteParserLeakyRelu, OpType) {
 }
 
 TEST_F(TestTfliteParserLeakyRelu, AttrValue) {
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-
-  auto val = meta_graph->nodes.front()->primitive->value.AsLeakyReLU();
-  ASSERT_NE(val, nullptr);
-  ASSERT_EQ(val->negativeSlope, 0.20000000298023224);
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsLeakyReLU(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value;
+  ASSERT_EQ(val.AsLeakyReLU()->negativeSlope, 0.20000000298023224);
+  ASSERT_EQ(val.type, schema::PrimitiveType_LeakyReLU);
 }
 
 }  // namespace mindspore

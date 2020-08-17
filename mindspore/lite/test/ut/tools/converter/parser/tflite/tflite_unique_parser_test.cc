@@ -35,10 +35,9 @@ TEST_F(TestTfliteParserUnique, OpType) {
 }
 
 TEST_F(TestTfliteParserUnique, AttrValue) {
-  ASSERT_NE(meta_graph, nullptr);
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsUnique(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsUnique()->outType, 34);  // int32
+  auto val = meta_graph->nodes.front()->primitive->value.AsUnique();
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsUnique(), nullptr);
+  ASSERT_EQ(val->outType, 34);
 }
 }  // namespace mindspore

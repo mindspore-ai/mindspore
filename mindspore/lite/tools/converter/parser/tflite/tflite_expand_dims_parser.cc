@@ -17,16 +17,17 @@
 #include "tools/converter/parser/tflite/tflite_expand_dims_parser.h"
 #include <vector>
 #include <memory>
+#include <map>
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteExpandDimsParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-                              const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-                              const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                              const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                              schema::CNodeT *op,
-                              TensorCache *tensor_cache,
-                              bool quantizedModel) {
+STATUS TfliteExpandDimsParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                     const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+                                     const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
+                                     schema::CNodeT *op,
+                                     std::vector<int32_t> *tensors_id,
+                                     std::vector<schema::Format> *tensors_format,
+                                     std::map<int, int>  *tensors_id_map) {
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -40,7 +41,7 @@ STATUS TfliteExpandDimsParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
   MS_LOG(DEBUG) << "parse TfliteExpandDimsParser";
   std::unique_ptr<schema::ExpandDimsT> attr(new schema::ExpandDimsT());
 
-  const auto &tflite_attr = tfliteOp->builtin_options.AsExpandDimsOptions();
+  const auto &tflite_attr = tflite_op->builtin_options.AsExpandDimsOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
     return RET_NULL_PTR;

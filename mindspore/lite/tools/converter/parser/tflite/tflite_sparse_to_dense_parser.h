@@ -14,11 +14,12 @@
 * limitations under the License.
 */
 
-#ifndef LITE_TFLITE_SPARSE_TO_DENSE_PARSER_H
-#define LITE_TFLITE_SPARSE_TO_DENSE_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_SPARSE_TO_DENSE_PARSER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_SPARSE_TO_DENSE_PARSER_H
 
 #include <memory>
 #include <vector>
+#include <map>
 #include "tools/converter/parser/tflite/tflite_node_parser.h"
 #include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
 
@@ -31,11 +32,12 @@ class TfliteSparseToDenseParser : public TfliteNodeParser {
   STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
                const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-               const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_opset, schema::CNodeT *op,
-               TensorCache *tensor_cache,
-               bool quantized_model) override;
+               schema::CNodeT *op,
+               std::vector<int32_t> *tensors_id,
+               std::vector<schema::Format> *tensors_format,
+               std::map<int, int>  *tensors_id_map) override;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_TFLITE_SPARSE_TO_DENSE_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_SPARSE_TO_DENSE_PARSER_H

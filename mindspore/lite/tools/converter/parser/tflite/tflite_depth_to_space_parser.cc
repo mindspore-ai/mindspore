@@ -18,14 +18,19 @@
 #include "tools/converter/parser/tflite/tflite_depth_to_space_parser.h"
 #include <vector>
 #include <memory>
+#include <map>
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteDepthToSpaceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-                                       const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-                                       const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                                       const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                                       schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+STATUS TfliteDepthToSpaceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                       const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+                                       const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
+                                       schema::CNodeT *op,
+                                       std::vector<int32_t> *tensors_id,
+                                       std::vector<schema::Format> *tensors_format,
+                                       std::map<int, int>  *tensors_id_map) {
+  MS_LOG(DEBUG) << "parse TfliteDepthToSpaceParser";
+
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -36,20 +41,23 @@ STATUS TfliteDepthToSpaceParser::Parse(const std::unique_ptr<tflite::OperatorT> 
     return RET_NULL_PTR;
   }
 
-  MS_LOG(DEBUG) << "parse TfliteDepthToSpaceParser";
   std::unique_ptr<schema::DepthToSpaceT> attr(new schema::DepthToSpaceT());
 
-  const auto &tflite_attr = tfliteOp->builtin_options.AsDepthToSpaceOptions();
+  const auto &tflite_attr = tflite_op->builtin_options.AsDepthToSpaceOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: %s attr failed", op->name.c_str();
     return RET_NULL_PTR;
   }
   attr->blockSize = tflite_attr->block_size;
-
   attr->format = schema::Format_NHWC;
 
   op->primitive->value.type = schema::PrimitiveType_DepthToSpace;
   op->primitive->value.value = attr.release();
+
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
+             tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
+              tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   return RET_OK;
 }
 

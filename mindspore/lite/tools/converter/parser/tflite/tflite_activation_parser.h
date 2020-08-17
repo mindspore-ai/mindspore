@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef PREDICT_TFLITE_RELU_PARSER_H
-#define PREDICT_TFLITE_RELU_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_ACTIVATION_PARSER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_ACTIVATION_PARSER_H
 
-#include "tools/converter/parser/tflite/tflite_node_parser.h"
-#include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
 #include <vector>
 #include <memory>
+#include <map>
+#include "tools/converter/parser/tflite/tflite_node_parser.h"
+#include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
 
 namespace mindspore {
 namespace lite {
@@ -29,11 +30,13 @@ class TfliteActivationParser : public TfliteNodeParser {
  public:
   TfliteActivationParser() : TfliteNodeParser("node_name") {}
 
-  STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-               const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-               const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-               const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet, schema::CNodeT *op,
-               TensorCache *tensor_cache, bool quantizedModel) override;
+  STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+               const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+               const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
+               schema::CNodeT *op,
+               std::vector<int32_t> *tensors_id,
+               std::vector<schema::Format> *tensors_format,
+               std::map<int, int>  *tensors_id_map) override;
 };
 
 class TfliteReluParser : public TfliteActivationParser {
@@ -56,9 +59,9 @@ class TfliteLogisticParser : public TfliteActivationParser {
   TfliteLogisticParser() : TfliteActivationParser() {}
 };
 
-class TfliteLeakyReluParser : public TfliteActivationParser {
+class TfliteHardSwishParser : public TfliteActivationParser {
  public:
-  TfliteLeakyReluParser() : TfliteActivationParser() {}
+  TfliteHardSwishParser() : TfliteActivationParser() {}
 };
 
 class TflitePreluParser : public TfliteNodeParser {
@@ -68,12 +71,27 @@ class TflitePreluParser : public TfliteNodeParser {
   STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
                const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-               const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_opset, schema::CNodeT *op,
-               TensorCache *tensor_cache, bool quantized_model) override;
+               schema::CNodeT *op,
+               std::vector<int32_t> *tensors_id,
+               std::vector<schema::Format> *tensors_format,
+               std::map<int, int>  *tensors_id_map) override;
+};
+
+class TfliteLeakyReluParser : public TfliteNodeParser {
+ public:
+  TfliteLeakyReluParser() : TfliteNodeParser("LeakyRelu") {}
+
+  STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+               const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+               const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
+               schema::CNodeT *op,
+               std::vector<int32_t> *tensors_id,
+               std::vector<schema::Format> *tensors_format,
+               std::map<int, int>  *tensors_id_map) override;
 };
 
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // PREDICT_TFLITE_RELU_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_ACTIVATION_PARSER_H
 

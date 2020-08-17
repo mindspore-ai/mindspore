@@ -35,10 +35,8 @@ TEST_F(TestTfliteParserAddN, OpType) {
 }
 
 TEST_F(TestTfliteParserAddN, AttrValue) {
-  ASSERT_NE(meta_graph, nullptr);
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsAddN(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsAddN()->N, 4);
+  auto val = meta_graph->nodes.front()->primitive->value.AsAddN();
+  ASSERT_EQ(val->N, 4);
 }
 }  // namespace mindspore

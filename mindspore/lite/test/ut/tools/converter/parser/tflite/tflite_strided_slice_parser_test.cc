@@ -35,21 +35,19 @@ TEST_F(TestTfliteParserStridedSlice, OpType) {
 }
 
 TEST_F(TestTfliteParserStridedSlice, AttrValue) {
-  std::vector<int> begin{1, -1, 0};
-  std::vector<int> end{2, -3, 3};
-  std::vector<int> stride{1, -1, 1};
-  std::vector<int> isscale{3, 2, 3};
-  ASSERT_NE(meta_graph, nullptr);
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsStridedSlice(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsStridedSlice()->beginMask, 0);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsStridedSlice()->endMask, 0);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsStridedSlice()->beginMask, 0);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsStridedSlice()->beginMask, 0);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsStridedSlice()->begin, begin);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsStridedSlice()->end, end);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsStridedSlice()->stride, stride);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsStridedSlice()->isScale, isscale);
+  auto val = meta_graph->nodes.front()->primitive->value.AsStridedSlice();
+  ASSERT_EQ(val->beginMask, 0);
+  ASSERT_EQ(val->endMask, 0);
+  ASSERT_EQ(val->beginMask, 0);
+  ASSERT_EQ(val->beginMask, 0);
+  std::vector<int> begin = {1, -1, 0};
+  ASSERT_EQ(val->begin, begin);
+  std::vector<int> end = {2, -3, 3};
+  ASSERT_EQ(val->end, end);
+  std::vector<int> stride = {1, -1, 1};
+  ASSERT_EQ(val->stride, stride);
+  std::vector<int> isscale = {3, 2, 3};
+  ASSERT_EQ(val->isScale, isscale);
 }
 }  // namespace mindspore

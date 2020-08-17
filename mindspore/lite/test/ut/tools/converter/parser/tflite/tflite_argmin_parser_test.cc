@@ -25,15 +25,14 @@ class TestTfliteParserArgmin : public TestTfliteParser {
 };
 
 TEST_F(TestTfliteParserArgmin, OpType) {
+  ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_ArgMin) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserArgmin, AttrValue) {
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsArgMin(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsArgMin();
   ASSERT_EQ(val->axis, 1);
   ASSERT_EQ(val->topK, 1);

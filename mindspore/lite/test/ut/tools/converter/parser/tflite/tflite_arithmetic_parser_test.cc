@@ -19,234 +19,57 @@
 
 namespace mindspore {
 // doubleInputOp
-class TestTfliteParserAdd1 : public TestTfliteParser {
+class TestTfliteParserAdd : public TestTfliteParser {
  public:
-  TestTfliteParserAdd1() = default;
-  void SetUp() override { meta_graph = LoadAndConvert("./add1.tflite", ""); }
+  TestTfliteParserAdd() = default;
+  void SetUp() override { meta_graph = LoadAndConvert("./add.tflite", ""); }
 };
 
-TEST_F(TestTfliteParserAdd1, OpType) {
+TEST_F(TestTfliteParserAdd, OpType) {
+  ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Add) << "wrong Op Type";
 }
 
-TEST_F(TestTfliteParserAdd1, Tensor) {
-  ASSERT_GT(meta_graph->allTensors.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(0)->data.size(), 0);
-  ASSERT_GT(meta_graph->allTensors.at(1)->data.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(2)->data.size(), 0);
-}
-
-class TestTfliteParserAdd2 : public TestTfliteParser {
+class TestTfliteParserSub : public TestTfliteParser {
  public:
-  TestTfliteParserAdd2() = default;
-  void SetUp() override { meta_graph = LoadAndConvert("./add2.tflite", ""); }
+  TestTfliteParserSub() = default;
+  void SetUp() override { meta_graph = LoadAndConvert("./sub.tflite", ""); }
 };
 
-TEST_F(TestTfliteParserAdd2, OpType) {
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Add) << "wrong Op Type";
-}
-
-TEST_F(TestTfliteParserAdd2, Tensor) {
-  ASSERT_GT(meta_graph->allTensors.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(0)->data.size(), 0);
-  ASSERT_GT(meta_graph->allTensors.at(1)->data.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(2)->data.size(), 0);
-}
-
-class TestTfliteParserAdd3 : public TestTfliteParser {
- public:
-  TestTfliteParserAdd3() = default;
-  void SetUp() override { meta_graph = LoadAndConvert("./add3.tflite", ""); }
-};
-
-TEST_F(TestTfliteParserAdd3, OpType) {
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Add) << "wrong Op Type";
-}
-
-TEST_F(TestTfliteParserAdd3, Tensor) {
-  ASSERT_GT(meta_graph->allTensors.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(0)->data.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(1)->data.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(2)->data.size(), 0);
-}
-
-class TestTfliteParserSub1 : public TestTfliteParser {
- public:
-  TestTfliteParserSub1() = default;
-  void SetUp() override { meta_graph = LoadAndConvert("./sub1.tflite", ""); }
-};
-
-TEST_F(TestTfliteParserSub1, OpType) {
+TEST_F(TestTfliteParserSub, OpType) {
+  ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Sub) << "wrong Op Type";
 }
 
-TEST_F(TestTfliteParserSub1, Tensor) {
-  ASSERT_GT(meta_graph->allTensors.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(0)->data.size(), 0);
-  ASSERT_GT(meta_graph->allTensors.at(1)->data.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(2)->data.size(), 0);
-}
-
-class TestTfliteParserSub2 : public TestTfliteParser {
+class TestTfliteParserMul : public TestTfliteParser {
  public:
-  TestTfliteParserSub2() = default;
-  void SetUp() override { meta_graph = LoadAndConvert("./sub2.tflite", ""); }
+  TestTfliteParserMul() = default;
+  void SetUp() override { meta_graph = LoadAndConvert("./mul.tflite", ""); }
 };
 
-TEST_F(TestTfliteParserSub2, OpType) {
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Sub) << "wrong Op Type";
-}
-
-TEST_F(TestTfliteParserSub2, Tensor) {
-  ASSERT_GT(meta_graph->allTensors.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(0)->data.size(), 0);
-  ASSERT_GT(meta_graph->allTensors.at(1)->data.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(2)->data.size(), 0);
-}
-
-class TestTfliteParserSub3 : public TestTfliteParser {
- public:
-  TestTfliteParserSub3() = default;
-  void SetUp() override { meta_graph = LoadAndConvert("./sub3.tflite", ""); }
-};
-
-TEST_F(TestTfliteParserSub3, OpType) {
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Sub) << "wrong Op Type";
-}
-
-TEST_F(TestTfliteParserSub3, Tensor) {
-  ASSERT_GT(meta_graph->allTensors.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(0)->data.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(1)->data.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(2)->data.size(), 0);
-}
-
-class TestTfliteParserMul1 : public TestTfliteParser {
- public:
-  TestTfliteParserMul1() = default;
-  void SetUp() override { meta_graph = LoadAndConvert("./mul1.tflite", ""); }
-};
-
-TEST_F(TestTfliteParserMul1, OpType) {
+TEST_F(TestTfliteParserMul, OpType) {
+  ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Mul) << "wrong Op Type";
 }
 
-TEST_F(TestTfliteParserMul1, Tensor) {
-  ASSERT_GT(meta_graph->allTensors.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(0)->data.size(), 0);
-  ASSERT_GT(meta_graph->allTensors.at(1)->data.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(2)->data.size(), 0);
-}
-
-class TestTfliteParserMul2 : public TestTfliteParser {
+class TestTfliteParserDiv : public TestTfliteParser {
  public:
-  TestTfliteParserMul2() = default;
-  void SetUp() override { meta_graph = LoadAndConvert("./mul2.tflite", ""); }
+  TestTfliteParserDiv() = default;
+  void SetUp() override { meta_graph = LoadAndConvert("./div.tflite", ""); }
 };
 
-TEST_F(TestTfliteParserMul2, OpType) {
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Mul) << "wrong Op Type";
-}
-
-TEST_F(TestTfliteParserMul2, Tensor) {
-  ASSERT_GT(meta_graph->allTensors.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(0)->data.size(), 0);
-  ASSERT_GT(meta_graph->allTensors.at(1)->data.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(2)->data.size(), 0);
-}
-
-class TestTfliteParserMul3 : public TestTfliteParser {
- public:
-  TestTfliteParserMul3() = default;
-  void SetUp() override { meta_graph = LoadAndConvert("./mul3.tflite", ""); }
-};
-
-TEST_F(TestTfliteParserMul3, OpType) {
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Mul) << "wrong Op Type";
-}
-
-TEST_F(TestTfliteParserMul3, Tensor) {
-  ASSERT_GT(meta_graph->allTensors.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(0)->data.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(1)->data.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(2)->data.size(), 0);
-}
-
-class TestTfliteParserDiv1 : public TestTfliteParser {
- public:
-  TestTfliteParserDiv1() = default;
-  void SetUp() override { meta_graph = LoadAndConvert("./div1.tflite", ""); }
-};
-
-TEST_F(TestTfliteParserDiv1, OpType) {
+TEST_F(TestTfliteParserDiv, OpType) {
+  ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Div) << "wrong Op Type";
 }
-
-TEST_F(TestTfliteParserDiv1, Tensor) {
-  ASSERT_GT(meta_graph->allTensors.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(0)->data.size(), 0);
-  ASSERT_GT(meta_graph->allTensors.at(1)->data.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(2)->data.size(), 0);
-}
-
-class TestTfliteParserDiv2 : public TestTfliteParser {
- public:
-  TestTfliteParserDiv2() = default;
-  void SetUp() override { meta_graph = LoadAndConvert("./div2.tflite", ""); }
-};
-
-TEST_F(TestTfliteParserDiv2, OpType) {
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Div) << "wrong Op Type";
-}
-
-TEST_F(TestTfliteParserDiv2, Tensor) {
-  ASSERT_GT(meta_graph->allTensors.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(0)->data.size(), 0);
-  ASSERT_GT(meta_graph->allTensors.at(1)->data.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(2)->data.size(), 0);
-}
-
-class TestTfliteParserDiv3 : public TestTfliteParser {
- public:
-  TestTfliteParserDiv3() = default;
-  void SetUp() override { meta_graph = LoadAndConvert("./div3.tflite", ""); }
-};
-
-TEST_F(TestTfliteParserDiv3, OpType) {
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Div) << "wrong Op Type";
-}
-
-TEST_F(TestTfliteParserDiv3, Tensor) {
-  ASSERT_GT(meta_graph->allTensors.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(0)->data.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(1)->data.size(), 0);
-  ASSERT_EQ(meta_graph->allTensors.at(2)->data.size(), 0);
-}
-
 class TestTfliteParserFloorDiv : public TestTfliteParser {
  public:
   TestTfliteParserFloorDiv() = default;
@@ -254,6 +77,7 @@ class TestTfliteParserFloorDiv : public TestTfliteParser {
 };
 
 TEST_F(TestTfliteParserFloorDiv, OpType) {
+  ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_FloorDiv) << "wrong Op Type";
@@ -266,12 +90,26 @@ class TestTfliteParserFloorMod : public TestTfliteParser {
 };
 
 TEST_F(TestTfliteParserFloorMod, OpType) {
+  ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_FloorMod) << "wrong Op Type";
 }
 
-// realDiv
+class TestTfliteParserRealDiv : public TestTfliteParser {
+ public:
+  TestTfliteParserRealDiv() = default;
+  void SetUp() override {
+    meta_graph = LoadAndConvert("./realdiv.tflite");
+  }
+};
+
+TEST_F(TestTfliteParserRealDiv, OpType) {
+  ASSERT_NE(meta_graph, nullptr);
+  ASSERT_GT(meta_graph->nodes.size(), 0);
+  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Div) << "wrong Op Type";
+}
 
 class TestTfliteParserSquaredDifference : public TestTfliteParser {
  public:
@@ -296,17 +134,15 @@ class TestTfliteParserPow : public TestTfliteParser {
 };
 
 TEST_F(TestTfliteParserPow, OpType) {
+  ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Power) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserPow, AttrValue) {
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsPower(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsPower();
-
   ASSERT_EQ(val->scale, 1.0);
   ASSERT_EQ(val->shift, 0.0);
   ASSERT_EQ(val->power, 0.0);
@@ -477,6 +313,7 @@ class TestTfliteParserFloor : public TestTfliteParser {
 };
 
 TEST_F(TestTfliteParserFloor, OpType) {
+  ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Floor) << "wrong Op Type";

@@ -17,16 +17,19 @@
 #include "tools/converter/parser/tflite/tflite_argmax_parser.h"
 #include <memory>
 #include <vector>
+#include <map>
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteArgmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-                                 const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-                                 const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                                 const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
+STATUS TfliteArgmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                 const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+                                 const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
                                  schema::CNodeT *op,
-                                 TensorCache *tensor_cache,
-                                 bool quantizedModel) {
+                                 std::vector<int32_t> *tensors_id,
+                                 std::vector<schema::Format> *tensors_format,
+                                 std::map<int, int>  *tensors_id_map)  {
+  MS_LOG(DEBUG) << "parse TfliteArgmaxParser";
+
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -37,7 +40,6 @@ STATUS TfliteArgmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     return RET_NULL_PTR;
   }
 
-  MS_LOG(DEBUG) << "parse TfliteArgmaxParser";
   std::unique_ptr<schema::ArgMaxT> attr(new schema::ArgMaxT());
 
   attr->outMaxValue = false;
@@ -45,9 +47,10 @@ STATUS TfliteArgmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   attr->keepDims = false;
   attr->axisType = 1;
 
-  auto axis_idx = tfliteOp->inputs[1];
-  std::for_each(tfliteTensors[axis_idx]->shape.begin(), tfliteTensors[axis_idx]->shape.end(), [&](int32_t sha){});
-  auto &buf_data = tfliteModelBuffer[tfliteTensors[axis_idx]->buffer];
+  // get axis attr
+  auto axis_idx = tflite_op->inputs[1];
+  std::for_each(tflite_tensors[axis_idx]->shape.begin(), tflite_tensors[axis_idx]->shape.end(), [&](int32_t sha){});
+  auto &buf_data = tflite_model_buffer[tflite_tensors[axis_idx]->buffer];
   if (buf_data == nullptr) {
     MS_LOG(ERROR) << "the buf data is null";
     return RET_NULL_PTR;
@@ -61,6 +64,11 @@ STATUS TfliteArgmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
 
   op->primitive->value.type = schema::PrimitiveType_ArgMax;
   op->primitive->value.value = attr.release();
+
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
+             tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
+              tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   return RET_OK;
 }
 

@@ -35,11 +35,9 @@ TEST_F(TestTfliteParserUnstack, OpType) {
 }
 
 TEST_F(TestTfliteParserUnstack, AttrValue) {
-  ASSERT_NE(meta_graph, nullptr);
-  ASSERT_GT(meta_graph->nodes.size(), 0);
-  ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsUnstack(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsUnstack()->num, 5);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.AsUnstack()->axis, 1);
+  auto val = meta_graph->nodes.front()->primitive->value.AsUnstack();
+  ASSERT_EQ(val->num, 5);
+  ASSERT_EQ(val->axis, 1);
 }
 }  // namespace mindspore

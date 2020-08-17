@@ -15,25 +15,15 @@
  */
 
 #include "tools/converter/parser/tflite/tflite_util.h"
-#include <map>
 #include <string>
 #include <vector>
+#include <cmath>
+#include <memory>
 #include "utils/log_adapter.h"
 #include "include/errorcode.h"
 
 namespace mindspore {
 namespace lite {
-std::map<tflite::ActivationFunctionType, schema::ActivationType> tfMsActivationFunctionMap{
-  {tflite::ActivationFunctionType_NONE, schema::ActivationType_NO_ACTIVATION},
-  {tflite::ActivationFunctionType_RELU, schema::ActivationType_RELU},
-  {tflite::ActivationFunctionType_RELU6, schema::ActivationType_RELU6},
-  {tflite::ActivationFunctionType_TANH, schema::ActivationType_TANH},
-};
-
-schema::ActivationType GetActivationFunctionType(tflite::ActivationFunctionType tfliteAFType) {
-  return tfMsActivationFunctionMap.at(tfliteAFType);
-}
-
 std::map<tflite::BuiltinOperator, std::string> tfMsOpTypeMap{
   {tflite::BuiltinOperator_CONV_2D, "Conv2D"},
   {tflite::BuiltinOperator_DEPTHWISE_CONV_2D, "DepthwiseConv2D"},
@@ -129,6 +119,29 @@ std::map<tflite::BuiltinOperator, std::string> tfMsOpTypeMap{
   {tflite::BuiltinOperator_UNPACK, "Unstack"},
 };
 
+std::map<tflite::ActivationFunctionType, schema::ActivationType> tfMsActivationFunctionMap{
+  {tflite::ActivationFunctionType_NONE, schema::ActivationType_NO_ACTIVATION},
+  {tflite::ActivationFunctionType_RELU, schema::ActivationType_RELU},
+  {tflite::ActivationFunctionType_RELU6, schema::ActivationType_RELU6},
+  {tflite::ActivationFunctionType_TANH, schema::ActivationType_TANH},
+};
+
+std::map<int, TypeId> type_map = {
+  {tflite::TensorType_FLOAT64, TypeId::kNumberTypeFloat64},
+  {tflite::TensorType_FLOAT32, TypeId::kNumberTypeFloat32},
+  {tflite::TensorType_FLOAT16, TypeId::kNumberTypeFloat16},
+  {tflite::TensorType_INT32, TypeId::kNumberTypeInt32},
+  {tflite::TensorType_INT16, TypeId::kNumberTypeInt16},
+  {tflite::TensorType_INT8, TypeId::kNumberTypeInt8},
+  {tflite::TensorType_INT64, TypeId::kNumberTypeInt64},
+  {tflite::TensorType_UINT8, TypeId::kNumberTypeUInt8},
+  {tflite::TensorType_BOOL, TypeId::kNumberTypeBool},
+};
+
+schema::ActivationType GetActivationFunctionType(tflite::ActivationFunctionType tfliteAFType) {
+  return tfMsActivationFunctionMap.at(tfliteAFType);
+}
+
 std::string GetMSOpType(tflite::BuiltinOperator tfliteOpType) {
   auto iter = tfMsOpTypeMap.find(tfliteOpType);
   if (iter == tfMsOpTypeMap.end()) {
@@ -137,16 +150,6 @@ std::string GetMSOpType(tflite::BuiltinOperator tfliteOpType) {
   }
   return iter->second;
 }
-
-std::map<int, TypeId> type_map = {
-  {tflite::TensorType_FLOAT32, TypeId::kNumberTypeFloat32},
-  {tflite::TensorType_FLOAT16, TypeId::kNumberTypeFloat16},
-  {tflite::TensorType_INT32, TypeId::kNumberTypeInt32},
-  {tflite::TensorType_UINT8, TypeId::kNumberTypeUInt8},
-  {tflite::TensorType_INT16, TypeId::kNumberTypeInt16},
-  {tflite::TensorType_INT8, TypeId::kNumberTypeInt8},
-  {tflite::TensorType_INT64, TypeId::kNumberTypeInt64},
-};
 
 TypeId GetTfliteDataType(const tflite::TensorType &tflite_data_type) {
   auto iter = type_map.find(tflite_data_type);
@@ -183,10 +186,46 @@ size_t GetDataTypeSize(const TypeId &data_type) {
     case TypeId::kNumberTypeInt64:
       return sizeof(int64_t);
     default:
-      MS_LOG(ERROR) << data_type;
-      MS_LOG(ERROR) << "Unsupported datatype";
+      MS_LOG(ERROR) << data_type << " is Unsupported datatype";
       return RET_ERROR;
   }
+}
+
+STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor,
+                                 schema::PadMode pad_mode,
+                                 int strideH, int strideW,
+                                 int windowH, int windowW,
+                                 std::vector<int> *params) {
+  if (tensor == nullptr) {
+    MS_LOG(ERROR) << "the input tensor is null";
+    return RET_ERROR;
+  }
+
+  int padUp = 0;
+  int padDown = 0;
+  int padLeft = 0;
+  int padRight = 0;
+  if (pad_mode == schema::PadMode_SAME) {
+    auto shape = tensor->shape;
+    int H_input = shape.at(1);
+    int W_input = shape.at(2);
+
+    int H_output = ceil(H_input * 1.0 / strideH);
+    int pad_needed_H = (H_output - 1) * strideH + windowH - H_input;
+    padUp = floor(pad_needed_H / 2.0);
+    padDown = pad_needed_H - padUp;
+
+    int W_output = ceil(W_input * 1.0 / strideW);
+    int pad_needed_W = (W_output - 1) * strideW + windowW - W_input;
+    padLeft = floor(pad_needed_W / 2.0);
+    padRight = pad_needed_W - padLeft;
+  }
+
+  params->emplace_back(padUp);
+  params->emplace_back(padDown);
+  params->emplace_back(padLeft);
+  params->emplace_back(padRight);
+  return RET_OK;
 }
 
 void Split(const std::string &src_str, std::vector<std::string> *dst_str, const std::string &chr) {

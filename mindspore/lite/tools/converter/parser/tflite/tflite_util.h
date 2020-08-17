@@ -19,11 +19,14 @@
 
 #include <string>
 #include <vector>
+#include <map>
+#include <memory>
 #include "utils/log_adapter.h"
 #include "schema/inner/model_generated.h"
 #include "tools/converter/parser/tflite/schema_generated.h"
 #include "schema/inner/ops_generated.h"
 #include "ir/dtype/type_id.h"
+#include "include/errorcode.h"
 
 namespace mindspore {
 namespace lite {
@@ -37,7 +40,15 @@ std::string GetMSOpType(tflite::BuiltinOperator tfliteOpType);
 
 TypeId GetTfliteDataType(const tflite::TensorType &tflite_data_type);
 
-void Split(const std::string &src_str, std::vector<std::string> *dst_str, const std::string &chr);
+STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor,
+                       schema::PadMode pad_mode,
+                       int strideH, int strideW,
+                       int windowH, int windowW,
+                       std::vector<int> *params);
+
+void Split(const std::string &src_str,
+           std::vector<std::string> *dst_str,
+           const std::string &chr);
 }  // namespace lite
 }  // namespace mindspore
 

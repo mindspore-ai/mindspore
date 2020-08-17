@@ -19,6 +19,7 @@
 
 #include <string>
 #include <memory>
+#include <map>
 #include "tools/converter/converter.h"
 #include "tools/converter/parser/tflite/tflite_model_parser.h"
 #include "tools/converter/graphdef_transform.h"

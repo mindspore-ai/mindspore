@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
+#include "tools/converter/parser/tflite/tflite_resize_parser.h"
 #include <vector>
 #include <memory>
 #include <string>
-#include "tools/converter/parser/tflite/tflite_resize_parser.h"
+#include <map>
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteResizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-                                 const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-                                 const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                                 const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                                 schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+STATUS TfliteResizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                 const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+                                 const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
+                                 schema::CNodeT *op,
+                                 std::vector<int32_t> *tensors_id,
+                                 std::vector<schema::Format> *tensors_format,
+                                 std::map<int, int>  *tensors_id_map) {
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -41,10 +44,9 @@ STATUS TfliteResizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   std::vector<std::string> node_name_str;
   Split(op->name.data(), &node_name_str, "-");
   const char *node_name = node_name_str.data()->c_str();
-
   if (std::strcmp(node_name, "ResizeBilinear") == 0) {
     MS_LOG(DEBUG) << "parse TfliteResizeBilinearParser";
-    const auto &tfliteAttr = tfliteOp->builtin_options.AsResizeBilinearOptions();
+    const auto &tfliteAttr = tflite_op->builtin_options.AsResizeBilinearOptions();
     if (tfliteAttr == nullptr) {
       MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
       return RET_NULL_PTR;
@@ -53,7 +55,7 @@ STATUS TfliteResizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     attr->method = schema::ResizeMethod_BILINEAR;
   }  else if (std::strcmp(node_name, "NearestNeighbor") == 0) {
     MS_LOG(DEBUG) << "parse TfliteResizeNearestNeighborParser";
-    const auto &tfliteAttr = tfliteOp->builtin_options.AsResizeNearestNeighborOptions();
+    const auto &tfliteAttr = tflite_op->builtin_options.AsResizeNearestNeighborOptions();
     if (tfliteAttr == nullptr) {
       MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
       return RET_NULL_PTR;
@@ -68,14 +70,14 @@ STATUS TfliteResizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   attr->format = schema::Format_NHWC;
   attr->preserveAspectRatio = false;
 
-  auto tfliteResizeTensorIndex = tfliteOp->inputs[1];
-  const auto & shape_tensor = tfliteTensors[tfliteResizeTensorIndex];
+  auto tfliteResizeTensorIndex = tflite_op->inputs[1];
+  const auto & shape_tensor = tflite_tensors[tfliteResizeTensorIndex];
   if (shape_tensor == nullptr) {
     MS_LOG(ERROR) << "shape_tensor is null";
     return RET_NULL_PTR;
   }
   auto resizeTensorBufferIndex = shape_tensor->buffer;
-  const auto & buff = tfliteModelBuffer.at(resizeTensorBufferIndex);
+  const auto & buff = tflite_model_buffer.at(resizeTensorBufferIndex);
   if (buff == nullptr) {
     MS_LOG(ERROR) << "buff_data is null";
     return RET_NULL_PTR;
@@ -88,6 +90,11 @@ STATUS TfliteResizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
 
   op->primitive->value.type = schema::PrimitiveType_Resize;
   op->primitive->value.value = attr.release();
+
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
+               tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
+              tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   return RET_OK;
 }
 

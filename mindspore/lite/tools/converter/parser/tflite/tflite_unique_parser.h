@@ -14,8 +14,8 @@
 * limitations under the License.
 */
 
-#ifndef LITE_TFLITE_UNIQUE_PARSER_H
-#define LITE_TFLITE_UNIQUE_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_UNIQUE_PARSER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_UNIQUE_PARSER_H
 
 #include <memory>
 #include <vector>
@@ -32,24 +32,12 @@ class TfliteUniqueParser : public TfliteNodeParser {
   STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
                const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-               const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tflite_opset, schema::CNodeT *op,
-               TensorCache *tensor_cache,
-               bool quantized_model) override;
-
- private:
-  std::map<int, TypeId> dtype_map = {
-           {tflite::TensorType_FLOAT64, TypeId::kNumberTypeFloat64},
-           {tflite::TensorType_FLOAT32, TypeId::kNumberTypeFloat32},
-           {tflite::TensorType_FLOAT16, TypeId::kNumberTypeFloat16},
-           {tflite::TensorType_INT64, TypeId::kNumberTypeInt64},
-           {tflite::TensorType_INT32, TypeId::kNumberTypeInt32},
-           {tflite::TensorType_INT16, TypeId::kNumberTypeInt16},
-           {tflite::TensorType_INT8, TypeId::kNumberTypeInt8},
-           {tflite::TensorType_UINT8, TypeId::kNumberTypeUInt8},
-           {tflite::TensorType_BOOL, TypeId::kNumberTypeBool},
-  };
+               schema::CNodeT *op,
+               std::vector<int32_t> *tensors_id,
+               std::vector<schema::Format> *tensors_format,
+               std::map<int, int>  *tensors_id_map) override;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_TFLITE_UNIQUE_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_UNIQUE_PARSER_H

@@ -17,14 +17,19 @@
 #include "tools/converter/parser/tflite/tflite_conv_parser.h"
 #include <vector>
 #include <memory>
+#include <map>
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-                               const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-                               const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                               const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                               schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+STATUS TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                               const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+                               const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
+                               schema::CNodeT *op,
+                               std::vector<int32_t> *tensors_id,
+                               std::vector<schema::Format> *tensors_format,
+                               std::map<int, int>  *tensors_id_map) {
+  MS_LOG(DEBUG) << "parse TfliteConvParser";
+
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -35,60 +40,61 @@ STATUS TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteO
     return RET_NULL_PTR;
   }
 
-  MS_LOG(DEBUG) << "parse TfliteConvParser";
   std::unique_ptr<schema::Conv2DT> attr(new schema::Conv2DT());
-  const auto &tfliteAttr = tfliteOp->builtin_options.AsConv2DOptions();
-  if (tfliteAttr == nullptr) {
+  const auto &tflite_attr = tflite_op->builtin_options.AsConv2DOptions();
+  if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
     return RET_NULL_PTR;
   }
   attr->group = 1;
-  attr->strideW = tfliteAttr->stride_w;
-  attr->strideH = tfliteAttr->stride_h;
-  attr->dilateH = tfliteAttr->dilation_h_factor;
-  attr->dilateW = tfliteAttr->dilation_w_factor;
-  attr->padMode = GetPadMode(tfliteAttr->padding);
+  attr->strideW = tflite_attr->stride_w;
+  attr->strideH = tflite_attr->stride_h;
+  attr->dilateH = tflite_attr->dilation_h_factor;
+  attr->dilateW = tflite_attr->dilation_w_factor;
+  attr->padMode = GetPadMode(tflite_attr->padding);
   attr->format = schema::Format_NHWC;
-  attr->activationType = GetActivationFunctionType(tfliteAttr->fused_activation_function);
+  attr->activationType = GetActivationFunctionType(tflite_attr->fused_activation_function);
+  attr->hasBias = true;
 
   // get the conv op weight tensor
-  auto weight_index = tfliteOp->inputs[1];
-  const auto &weight_tensor = tfliteTensors[weight_index];
+  auto weight_index = tflite_op->inputs[1];
+  const auto &weight_tensor = tflite_tensors[weight_index];
   if (weight_tensor == nullptr) {
-    MS_LOG(ERROR) << "weight_tensor is null";
+    MS_LOG(ERROR) << "the weight tensor is null";
     return RET_NULL_PTR;
   }
-  std::vector<tflite::TensorT *> weight_tensors{weight_tensor.get()};
-  if (RET_OK != ParseTensor(weight_tensors, tfliteModelBuffer, tensor_cache, TF_CONST, true)) {
-    MS_LOG(ERROR) << "parse weight failed";
-    return RET_ERROR;
-  }
   auto weight_shape = weight_tensor->shape;
-  attr->channelIn = weight_shape[KHWC_C];
-  attr->channelOut = weight_shape[KHWC_K];
-  attr->kernelW = weight_shape[KHWC_W];
-  attr->kernelH = weight_shape[KHWC_H];
-
-  // get the conv op bias tensor
-  if (tfliteOp->inputs.size() == 3) {
-    attr->hasBias = true;
-    auto bias_index = tfliteOp->inputs[2];
-    const auto &bias_tensor = tfliteTensors[bias_index];
-    if (bias_tensor == nullptr) {
-      MS_LOG(ERROR) << "bias_tensor is null";
-      return RET_NULL_PTR;
-    }
-    std::vector<tflite::TensorT *> bias_tensors{bias_tensor.get()};
-    if (RET_OK != ParseTensor(bias_tensors, tfliteModelBuffer, tensor_cache, TF_CONST, false)) {
-      MS_LOG(ERROR) << "parse bias failed";
-      return RET_ERROR;
-    }
-  }
+  attr->channelIn = weight_shape[3];
+  attr->channelOut = weight_shape[0];
+  attr->kernelH = weight_shape[1];
+  attr->kernelW = weight_shape[2];
 
   // calculate pad params
+  auto data_index = tflite_op->inputs[0];
+  const auto &data_tensor = tflite_tensors[data_index];
+  std::vector<int> params;
+  if (getPaddingParam(data_tensor, attr->padMode, attr->strideH,
+                      attr->strideW, attr->kernelH, attr->kernelW, &params) != RET_OK) {
+    MS_LOG(ERROR) << "get padding params failed";
+    return RET_ERROR;
+  } else {
+    attr->padUp = params.at(0);
+    attr->padDown = params.at(1);
+    attr->padLeft = params.at(2);
+    attr->padRight = params.at(3);
+  }
 
   op->primitive->value.type = schema::PrimitiveType_Conv2D;
   op->primitive->value.value = attr.release();
+
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
+             tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
+             tflite_op->inputs[1], tensors_id->size(), tflite_tensors.size(), schema::Format_KHWC);
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
+             tflite_op->inputs[2], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
+              tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   return RET_OK;
 }
 

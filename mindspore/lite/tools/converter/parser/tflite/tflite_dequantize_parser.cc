@@ -16,15 +16,20 @@
 #include "tools/converter/parser/tflite/tflite_dequantize_parser.h"
 #include <vector>
 #include <memory>
+#include <map>
 #include "tools/common/node_util.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteDequantizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
-                                     const std::vector<std::unique_ptr<tflite::TensorT>> &tfliteTensors,
-                                     const std::vector<std::unique_ptr<tflite::BufferT>> &tfliteModelBuffer,
-                                     const std::vector<std::unique_ptr<tflite::OperatorCodeT>> &tfliteOpSet,
-                                     schema::CNodeT *op, TensorCache *tensor_cache, bool quantizedModel) {
+STATUS TfliteDequantizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                     const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+                                     const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
+                                     schema::CNodeT *op,
+                                     std::vector<int32_t> *tensors_id,
+                                     std::vector<schema::Format> *tensors_format,
+                                     std::map<int, int>  *tensors_id_map) {
+  MS_LOG(DEBUG) << "parse TfliteDequantizeNParser";
+
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -35,32 +40,30 @@ STATUS TfliteDequantizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
     return RET_NULL_PTR;
   }
 
-  MS_LOG(DEBUG) << "parse TfliteDequantizeNParser";
   std::unique_ptr<schema::CastT> attr(new schema::CastT);
 
   // get the dequantize input tensor
-  const auto &in_tensor = tfliteTensors[tfliteOp->inputs[0]];
+  const auto &in_tensor = tflite_tensors[tflite_op->inputs[0]];
   if (in_tensor == nullptr) {
-    MS_LOG(ERROR) << "weight_tensor is null";
+    MS_LOG(ERROR) << "input tensor is null";
     return RET_NULL_PTR;
   }
-  attr->srcT = dtype_map[in_tensor->type];
-
-  const auto &out_tensor = tfliteTensors[tfliteOp->outputs[0]];
+  attr->srcT = GetTfliteDataType(in_tensor->type);
+  const auto &out_tensor = tflite_tensors[tflite_op->outputs[0]];
   if (out_tensor == nullptr) {
-    MS_LOG(ERROR) << "tensor is null";
+    MS_LOG(ERROR) << "output tensor is null";
     return RET_NULL_PTR;
   }
-  attr->dstT = dtype_map[out_tensor->type];
-  std::vector<tflite::TensorT *> weight_tensors{in_tensor.get()};
-  if (RET_OK != ParseTensor(weight_tensors, tfliteModelBuffer, tensor_cache, TF_CONST, true)) {
-    MS_LOG(ERROR) << "parse weight failed";
-    return RET_ERROR;
-  }
+  attr->dstT = GetTfliteDataType(out_tensor->type);
 
   op->primitive->value.type = schema::PrimitiveType_Cast;
   op->primitive->value.value = attr.release();
-  return 0;
+
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
+             tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
+              tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  return RET_OK;
 }
 
 TfliteNodeRegister g_tfliteDequantizeParser("DEQUANTIZE", new TfliteDequantizeParser());
