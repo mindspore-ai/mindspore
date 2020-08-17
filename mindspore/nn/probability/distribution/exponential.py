@@ -18,7 +18,8 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
-from ._utils.utils import cast_to_tensor, check_greater_zero, check_type
+from ._utils.utils import cast_to_tensor, check_greater_zero, check_type, check_distribution_name,\
+                          raise_none_error
 
 class Exponential(Distribution):
     """
@@ -100,8 +101,9 @@ class Exponential(Distribution):
         valid_dtype = mstype.float_type
         check_type(dtype, valid_dtype, "Exponential")
         super(Exponential, self).__init__(seed, dtype, name, param)
+        self.parameter_type = dtype
         if rate is not None:
-            self._rate = cast_to_tensor(rate, dtype)
+            self._rate = cast_to_tensor(rate, self.parameter_type)
             check_greater_zero(self._rate, "rate")
         else:
             self._rate = rate
@@ -141,16 +143,19 @@ class Exponential(Distribution):
         .. math::
             MEAN(EXP) = \frac{1.0}{\lambda}.
         """
-        rate = self.rate if rate is None else rate
+        rate = self.cast(rate, self.parameter_type) if rate is not None else self.rate
+        if rate is None:
+            raise_none_error("rate")
         return 1.0 / rate
-
 
     def _mode(self, rate=None):
         r"""
         .. math::
             MODE(EXP) = 0.
         """
-        rate = self.rate if rate is None else rate
+        rate = self.cast(rate, self.parameter_type) if rate is not None else self.rate
+        if rate is None:
+            raise_none_error("rate")
         return self.fill(self.dtype, self.shape(rate), 0.)
 
     def _sd(self, rate=None):
@@ -158,7 +163,9 @@ class Exponential(Distribution):
         .. math::
             sd(EXP) = \frac{1.0}{\lambda}.
         """
-        rate = self.rate if rate is None else rate
+        rate = self.cast(rate, self.parameter_type) if rate is not None else self.rate
+        if rate is None:
+            raise_none_error("rate")
         return 1.0 / rate
 
     def _entropy(self, rate=None):
@@ -166,7 +173,9 @@ class Exponential(Distribution):
         .. math::
             H(Exp) = 1 - \log(\lambda).
         """
-        rate = self.rate if rate is None else rate
+        rate = self.cast(rate, self.parameter_type) if rate is not None else self.rate
+        if rate is None:
+            raise_none_error("rate")
         return 1.0 - self.log(rate)
 
 
@@ -179,9 +188,9 @@ class Exponential(Distribution):
             rate_b (Tensor): rate of distribution b.
             rate_a (Tensor): rate of distribution a. Default: self.rate.
         """
-        if dist == 'Exponential':
-            return self._entropy(rate=rate_a) + self._kl_loss(dist, rate_b, rate_a)
-        return None
+        check_distribution_name(dist, 'Exponential')
+        return self._entropy(rate=rate_a) + self._kl_loss(dist, rate_b, rate_a)
+
 
     def _prob(self, value, rate=None):
         r"""
@@ -198,7 +207,12 @@ class Exponential(Distribution):
         .. math::
             pdf(x) = rate * \exp(-1 * \lambda * x) if x >= 0 else 0
         """
-        rate = self.rate if rate is None else rate
+        if value is None:
+            raise_none_error("value")
+        value = self.cast(value, self.dtype)
+        rate = self.cast(rate, self.parameter_type) if rate is not None else self.rate
+        if rate is None:
+            raise_none_error("rate")
         prob = self.exp(self.log(rate) - rate * value)
         zeros = self.fill(self.dtypeop(prob), self.shape(prob), 0.0)
         comp = self.less(value, zeros)
@@ -218,7 +232,12 @@ class Exponential(Distribution):
         .. math::
             cdf(x) = 1.0 - \exp(-1 * \lambda * x) if x >= 0 else 0
         """
-        rate = self.rate if rate is None else rate
+        if value is None:
+            raise_none_error("value")
+        value = self.cast(value, self.dtype)
+        rate = self.cast(rate, self.parameter_type) if rate is not None else self.rate
+        if rate is None:
+            raise_none_error("rate")
         cdf = 1.0 - self.exp(-1. * rate * value)
         zeros = self.fill(self.dtypeop(cdf), self.shape(cdf), 0.0)
         comp = self.less(value, zeros)
@@ -234,10 +253,14 @@ class Exponential(Distribution):
             rate_b (Tensor): rate of distribution b.
             rate_a (Tensor): rate of distribution a. Default: self.rate.
         """
-        if dist == 'Exponential':
-            rate_a = self.rate if rate_a is None else rate_a
-            return self.log(rate_a) - self.log(rate_b) + rate_b / rate_a - 1.0
-        return None
+        check_distribution_name(dist, 'Exponential')
+        if rate_b is None:
+            raise_none_error("rate_b")
+        rate_b = self.cast(rate_b, self.parameter_type)
+        rate_a = self.cast(rate_a, self.parameter_type) if rate_a is not None else self.rate
+        if rate_a is None:
+            raise_none_error("rate_a")
+        return self.log(rate_a) - self.log(rate_b) + rate_b / rate_a - 1.0
 
     def _sample(self, shape=(), rate=None):
         """
@@ -250,7 +273,9 @@ class Exponential(Distribution):
         Returns:
             Tensor, shape is shape + batch_shape.
         """
-        rate = self.rate if rate is None else rate
+        rate = self.cast(rate, self.parameter_type) if rate is not None else self.rate
+        if rate is None:
+            raise_none_error("rate")
         minval = self.const(self.minval)
         maxval = self.const(1.0)
         sample_uniform = self.uniform(shape + self.shape(rate), minval, maxval, self.seed)

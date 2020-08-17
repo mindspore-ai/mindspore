@@ -15,6 +15,7 @@
 """Utitly functions to help distribution class."""
 import numpy as np
 from mindspore.ops import _utils as utils
+from mindspore.ops.primitive import constexpr
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.common import dtype as mstype
@@ -23,7 +24,7 @@ from mindspore.ops import composite as C
 import mindspore.nn as nn
 import mindspore.nn.probability as msp
 
-def cast_to_tensor(t, hint_dtype=mstype.float32):
+def cast_to_tensor(t, hint_type=mstype.float32):
     """
     Cast an user input value into a Tensor of dtype.
     If the input t is of type Parameter, t is directly returned as a Parameter.
@@ -38,24 +39,27 @@ def cast_to_tensor(t, hint_dtype=mstype.float32):
     Returns:
         Tensor.
     """
+    if t is None:
+        raise ValueError(f'Input cannot be None in cast_to_tensor')
     if isinstance(t, Parameter):
         return t
+    t_type = hint_type
     if isinstance(t, Tensor):
-        if t.dtype != hint_dtype:
-            raise TypeError(f"Input tensor should be type {hint_dtype}.")
         #check if the Tensor in shape of Tensor(4)
         if t.dim() == 0:
             value = t.asnumpy()
-            return Tensor([value], dtype=hint_dtype)
+            return Tensor([value], dtype=t_type)
         #convert the type of tensor to dtype
-        return t
+        return Tensor(t.asnumpy(), dtype=t_type)
     if isinstance(t, (list, np.ndarray)):
-        return Tensor(t, dtype=hint_dtype)
-    if np.isscalar(t):
-        return Tensor([t], dtype=hint_dtype)
-    raise RuntimeError("Input type is not supported.")
+        return Tensor(t, dtype=t_type)
+    if isinstance(t, bool):
+        raise TypeError(f'Input cannot be Type Bool')
+    if isinstance(t, (int, float)):
+        return Tensor([t], dtype=t_type)
+    raise TypeError("Input type is not supported.")
 
-def convert_to_batch(t, batch_shape, hint_dtype):
+def convert_to_batch(t, batch_shape, required_type):
     """
     Convert a Tensor to a given batch shape.
 
@@ -72,8 +76,8 @@ def convert_to_batch(t, batch_shape, hint_dtype):
     """
     if isinstance(t, Parameter):
         return t
-    t = cast_to_tensor(t, hint_dtype)
-    return Tensor(np.broadcast_to(t.asnumpy(), batch_shape), dtype=hint_dtype)
+    t = cast_to_tensor(t, required_type)
+    return Tensor(np.broadcast_to(t.asnumpy(), batch_shape), dtype=required_type)
 
 def check_scalar_from_param(params):
     """
@@ -91,7 +95,7 @@ def check_scalar_from_param(params):
             return False
         if isinstance(value, (str, type(params['dtype']))):
             continue
-        elif np.isscalar(value):
+        elif isinstance(value, (int, float)):
             continue
         else:
             return False
@@ -119,9 +123,10 @@ def calc_broadcast_shape_from_param(params):
         if isinstance(value, Parameter):
             value_t = value.default_input
         else:
-            value_t = cast_to_tensor(value, params['dtype'])
+            value_t = cast_to_tensor(value, mstype.float32)
         broadcast_shape = utils.get_broadcast_shape(broadcast_shape, list(value_t.shape), params['name'])
     return tuple(broadcast_shape)
+
 
 def check_greater_equal_zero(value, name):
     """
@@ -155,13 +160,16 @@ def check_greater_zero(value, name):
         ValueError: if the input value is less than or equal to zero.
 
     """
+    if value is None:
+        raise ValueError(f'input value cannot be None in check_greater_zero')
     if isinstance(value, Parameter):
-        if isinstance(value.default_input, MetaTensor):
+        if not isinstance(value.default_input, Tensor):
             return
         value = value.default_input
     comp = np.less(np.zeros(value.shape), value.asnumpy())
     if not comp.all():
         raise ValueError(f'{name} should be greater than zero.')
+
 
 def check_greater(a, b, name_a, name_b):
     """
@@ -176,6 +184,8 @@ def check_greater(a, b, name_a, name_b):
     Raises:
         ValueError: if b is less than or equal to a
     """
+    if a is None or b is None:
+        raise ValueError(f'input value cannot be None in check_greater')
     if isinstance(a, Parameter) or isinstance(b, Parameter):
         return
     comp = np.less(a.asnumpy(), b.asnumpy())
@@ -193,6 +203,8 @@ def check_prob(p):
     Raises:
         ValueError: if p is not a proper probability.
     """
+    if p is None:
+        raise ValueError(f'input value cannot be None in check_greater_zero')
     if isinstance(p, Parameter):
         if not isinstance(p.default_input, Tensor):
             return
@@ -259,3 +271,12 @@ def check_tensor_type(name, inputs, valid_type):
 def check_type(data_type, value_type, name):
     if not data_type in value_type:
         raise TypeError(f"For {name}, valid type include {value_type}, {data_type} is invalid")
+
+@constexpr
+def raise_none_error(name):
+    raise ValueError(f"{name} should be specified. Value cannot be None")
+
+@constexpr
+def check_distribution_name(name, expected_name):
+    if name != expected_name:
+        raise ValueError(f"Distribution should be {expected_name}.")
