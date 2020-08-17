@@ -52,8 +52,12 @@ class ConditionalVAE(Cell):
         super(ConditionalVAE, self).__init__()
         self.encoder = encoder
         self.decoder = decoder
+        if (not isinstance(encoder, Cell)) or (not isinstance(decoder, Cell)):
+            raise TypeError('The encoder and decoder should be Cell type.')
         self.hidden_size = check_int_positive(hidden_size)
         self.latent_size = check_int_positive(latent_size)
+        if hidden_size < latent_size:
+            raise ValueError('The latent_size should be less than or equal to the hidden_size.')
         self.num_classes = check_int_positive(num_classes)
         self.normal = C.normal
         self.exp = P.Exp()
@@ -78,6 +82,9 @@ class ConditionalVAE(Cell):
         return recon_x
 
     def construct(self, x, y):
+        """
+        The input are x and y, so the WithLossCell method needs to be rewritten when using cvae interface.
+        """
         mu, log_var = self._encode(x, y)
         std = self.exp(0.5 * log_var)
         z = self.normal(self.shape(mu), mu, std, seed=0)

@@ -88,7 +88,7 @@ def create_dataset(data_path, batch_size=32, repeat_size=1,
     return mnist_ds
 
 
-if __name__ == "__main__":
+def test_svi_vae():
     # define the encoder and decoder
     encoder = Encoder()
     decoder = Decoder()
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     # define the variational inference
     vi = SVI(net_with_loss=net_with_loss, optimizer=optimizer)
     # run the vi to return the trained network.
-    vae = vi.run(train_dataset=ds_train, epochs=10)
+    vae = vi.run(train_dataset=ds_train, epochs=5)
     # get the trained loss
     trained_loss = vi.get_train_loss()
     # test function: generate_sample
@@ -113,3 +113,6 @@ if __name__ == "__main__":
     for sample in ds_train.create_dict_iterator():
         sample_x = Tensor(sample['image'], dtype=mstype.float32)
         reconstructed_sample = vae.reconstruct_sample(sample_x)
+    print('The loss of the trained network is ', trained_loss)
+    print('The hape of the generated sample is ', generated_sample.shape)
+    print('The shape of the reconstructed sample is ', reconstructed_sample.shape)
