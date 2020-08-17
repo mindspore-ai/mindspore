@@ -53,6 +53,7 @@ message ParallelLayouts {
     repeated TensorMap tensor_map = 2;
     repeated ParamSplitShape param_split_shape = 3;
     repeated IndicesOffset indices_offset = 4;
+    required int32 field = 5;
 }
 
 message ParallelLayoutItem {

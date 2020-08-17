@@ -129,6 +129,7 @@ Status StrategyCheckpoint::Save(const StrategyMap &strategy_map, const TensorInf
       param_split_shape->add_dim(dim_pair.first);
       indices_offset->add_dim(dim_pair.second);
     }
+    parallel_layouts->set_field(tensor_layout.get_field_size());
   }
 
   std::fstream output(save_file_, std::ios::out | std::ios::trunc | std::ios::binary);
