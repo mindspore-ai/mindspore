@@ -249,6 +249,10 @@ table PoolingGrad {
 table Shape {
 }
 
+table ConstantOfShape{
+    value: float = 0;
+}
+
 table Nchw2Nhwc {
 
 }

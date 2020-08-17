@@ -155,6 +155,7 @@ union PrimitiveType {
     Select,
     Scatter,
     ScatterND,
+    ConstantOfShape,
     Unique,
     Unstack,
     LogicalAnd,
