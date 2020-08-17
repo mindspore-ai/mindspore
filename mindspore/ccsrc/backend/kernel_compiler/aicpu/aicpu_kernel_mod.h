@@ -36,6 +36,7 @@ class AicpuOpKernelMod : public AscendKernelMod {
   void SetOutputList(const std::vector<int64_t> &outputList);
   void SetAnfNode(const AnfNodePtr &anf_node);
   void SetNodeDef(const std::string &nodeDef);
+  void SetExtInfo(const std::string &ext_info);
   void SetNodeName(const std::string &node_name);
 
   /**
@@ -58,6 +59,7 @@ class AicpuOpKernelMod : public AscendKernelMod {
   std::string node_def_str_;
   std::string node_name_;
   std::string node_so_;
+  std::string ext_info_;
   std::vector<int64_t> inputList_;
   std::vector<int64_t> outputList_;
   AnfNodePtr anf_node_;

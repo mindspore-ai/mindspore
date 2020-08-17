@@ -91,6 +91,7 @@ from ._thor_ops import (CusBatchMatMul, CusCholeskyTrsm, CusFusedAbsMax1, CusImg
 from .sparse_ops import SparseToDense
 
 __all__ = [
+    'Unique',
     'ReverseSequence',
     'EditDistance',
     'CropAndResize',
