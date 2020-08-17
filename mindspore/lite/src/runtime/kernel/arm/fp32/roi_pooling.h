@@ -40,11 +40,7 @@ class ROIPoolingCPUKernel : public LiteKernel {
   float *in_ptr_;
   float *out_ptr_;
   float *roi_ptr_;
-  const int *in_shape_;
-  const int *out_shape_;
   ROIPoolingParameter *param_;
-  int dim_;
-  int thread_count_;
 };
 }  // namespace mindspore::kernel
 
