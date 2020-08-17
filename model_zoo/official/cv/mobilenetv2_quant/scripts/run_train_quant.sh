@@ -43,7 +43,6 @@ run_ascend()
             --training_script=${BASEPATH}/../train.py \
             --dataset_path=$5 \
             --pre_trained=$6 \
-            --quantization_aware=True \
             --device_target=$1 &> train.log &  # dataset train folder
 }
 
@@ -75,8 +74,7 @@ run_gpu()
     python ${BASEPATH}/../train.py \
         --dataset_path=$4 \
         --device_target=$1 \
-        --pre_trained=$5 \
-        --quantization_aware=True &> ../train.log &  # dataset train folder
+        --pre_trained=$5  &> ../train.log &  # dataset train folder
 }
 
 if [ $# -gt 6 ] || [ $# -lt 5 ]
