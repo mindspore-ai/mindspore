@@ -42,13 +42,13 @@ int ConvolutionCPUKernel::InitWeightBias() {
   int ic4 = UP_DIV(in_channel, C4NUM);
   int kernel_plane = kernel_h * kernel_w;
   int oc_block, oc_block_num;
-// #ifdef ENABLE_ARM32
-//   oc_block = C4NUM;
-//   oc_block_num = UP_DIV(out_channel, C4NUM);
-// #else
+  // #ifdef ENABLE_ARM32
+  //   oc_block = C4NUM;
+  //   oc_block_num = UP_DIV(out_channel, C4NUM);
+  // #else
   oc_block = C8NUM;
   oc_block_num = UP_DIV(out_channel, C8NUM);
-// #endif
+  // #endif
   int pack_weight_size = oc_block_num * oc_block * ic4 * C4NUM * kernel_plane;
 
   // init weight
@@ -123,18 +123,11 @@ void ConvolutionCPUKernel::ConfigInputOutput() {
   auto output_tensor = out_tensors_.at(kOutputIndex);
   output_tensor->SetFormat(schema::Format_NHWC);
 
-  // select trans func for input
-  auto input_tensor = in_tensors_.at(kInputIndex);
-  auto ret = CheckLayout(input_tensor);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Check layout failed.";
-    return;
-  }
-// #ifdef ENABLE_ARM32
-//   gemm_func_ = IndirectGemmFp32_8x4;
-// #else
+  // #ifdef ENABLE_ARM32
+  //   gemm_func_ = IndirectGemmFp32_8x4;
+  // #else
   gemm_func_ = IndirectGemmFp32_8x8;
-// #endif
+  // #endif
 }
 
 int ConvolutionCPUKernel::Init() {
@@ -221,7 +214,7 @@ int ConvolutionCPUKernel::Run() {
   int in_h = conv_param_->input_h_;
   int in_w = conv_param_->input_w_;
   int in_channel = conv_param_->input_channel_;
-  convert_func_(ori_input_data, nhwc4_input_, in_batch, in_h * in_w, in_channel);
+  PackNHWCToNHWC4Fp32(ori_input_data, nhwc4_input_, in_batch, in_h * in_w, in_channel);
 
   int error_code = LiteBackendParallelLaunch(ConvolutionImpl, this, thread_count_);
   if (error_code != RET_OK) {

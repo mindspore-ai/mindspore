@@ -60,6 +60,12 @@ void Conv3x3Fp16(float16_t *input_data, float16_t *transed_weight, const float16
                  float16_t *tile_buffer, float16_t *block_unit_buffer, float16_t *tmp_dst_buffer, float16_t *tmp_out,
                  int task_id, ConvParameter *conv_param);
 
+void UnPack3x3OutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel);
+
+void UnPack3x3ReluOutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel);
+
+void UnPack3x3Relu6OutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel);
+
 // fp16 convolution winograd
 void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const float16_t *bias_data,
                       TmpBufferAddressFp16 *buffer_list, int task_id, ConvParameter *conv_param,
