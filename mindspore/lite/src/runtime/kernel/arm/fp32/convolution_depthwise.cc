@@ -29,8 +29,14 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
 namespace mindspore::kernel {
-ConvolutionDepthwiseCPUKernel::~ConvolutionDepthwiseCPUKernel() {
-  delete sliding_;
+ConvolutionDepthwiseCPUKernel::~ConvolutionDepthwiseCPUKernel() { FreeTmpBuffer(); }
+
+void ConvolutionDepthwiseCPUKernel::FreeTmpBuffer() {
+  if (sliding_ != nullptr) {
+    delete sliding_;
+    sliding_ = nullptr;
+  }
+
   if (packed_weight_ != nullptr) {
     delete packed_weight_;
     packed_weight_ = nullptr;
@@ -105,10 +111,14 @@ int ConvolutionDepthwiseCPUKernel::InitBuffer() {
 }
 
 int ConvolutionDepthwiseCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
+  return ReSize();
+}
+
+int ConvolutionDepthwiseCPUKernel::ReSize() {
+  FreeTmpBuffer();
   // conv base init
   ConvolutionBaseCPUKernel::Init();
 
@@ -123,33 +133,6 @@ int ConvolutionDepthwiseCPUKernel::Init() {
   }
 
   ret = InitBuffer();
-  if (ret != 0) {
-    MS_LOG(ERROR) << "Convolution depthwise fp32 InitBuffer failed.";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-int ConvolutionDepthwiseCPUKernel::ReSize() {
-  if (need_align_) {
-    if (packed_input_ != nullptr) {
-      delete packed_input_;
-      packed_input_ = nullptr;
-    }
-    if (packed_output_ != nullptr) {
-      delete packed_output_;
-      packed_output_ = nullptr;
-    }
-  }
-
-  // conv base init
-  ConvolutionBaseCPUKernel::Init();
-
-  // init sliding window param
-  sliding_ = new SlidingWindowParam;
-  InitSlidingParamConvDw(sliding_, conv_param_, C4NUM);
-
-  auto ret = InitBuffer();
   if (ret != 0) {
     MS_LOG(ERROR) << "Convolution depthwise fp32 InitBuffer failed.";
     return RET_ERROR;

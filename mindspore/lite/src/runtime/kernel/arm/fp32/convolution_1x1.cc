@@ -23,6 +23,13 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 Convolution1x1CPUKernel::~Convolution1x1CPUKernel() {
+  FreeTmpBuffer();
+  if (matmul_param_ != nullptr) {
+    delete matmul_param_;
+  }
+}
+
+void Convolution1x1CPUKernel::FreeTmpBuffer() {
   if (weight_ptr_ != nullptr) {
     free(weight_ptr_);
     weight_ptr_ = nullptr;
@@ -35,20 +42,23 @@ Convolution1x1CPUKernel::~Convolution1x1CPUKernel() {
     free(input_ptr_);
     input_ptr_ = nullptr;
   }
-  delete matmul_param_;
 }
 
 int Convolution1x1CPUKernel::ReSize() {
-  if (pack_input_ != nullptr) {
-    free(pack_input_);
-    pack_input_ = nullptr;
-  }
-  if (pre_trans_input_ && input_ptr_ != nullptr) {
-    free(input_ptr_);
-    input_ptr_ = nullptr;
-  }
+  FreeTmpBuffer();
+  ConvolutionBaseCPUKernel::Init();
   InitConv1x1MatmulParam();
-  InitConv1x1Param();
+
+  int error_code = InitConv1x1BiasWeight();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "Convolution base init failed.";
+    return error_code;
+  }
+  error_code = InitConv1x1Param();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "Convolution base init failed.";
+    return error_code;
+  }
   return RET_OK;
 }
 
@@ -125,24 +135,10 @@ void Convolution1x1CPUKernel::Pre1x1Trans(float *src_input, float *src_output) {
 }
 
 int Convolution1x1CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
-  ConvolutionBaseCPUKernel::Init();
-  InitConv1x1MatmulParam();
-
-  int error_code = InitConv1x1BiasWeight();
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "Convolution base init failed.";
-    return error_code;
-  }
-  error_code = InitConv1x1Param();
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "Convolution base init failed.";
-    return error_code;
-  }
-  return RET_OK;
+  return ReSize();
 }
 
 int Convolution1x1CPUKernel::DoConv1x1(int task_id) {

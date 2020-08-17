@@ -41,10 +41,11 @@ class DeconvolutionDepthwiseCPUKernel : public ConvolutionBaseCPUKernel {
   int Execute(int task_id);
 
  private:
-  SlidingWindowParam *sliding_;
-  float *packed_weight_;
-  float *packed_input_;
-  float *packed_output_;
+  void FreeTmpBuffer();
+  SlidingWindowParam *sliding_ = nullptr;
+  float *packed_weight_ = nullptr;
+  float *packed_input_ = nullptr;
+  float *packed_output_ = nullptr;
   bool need_align_ = false;
 };
 }  // namespace mindspore::kernel

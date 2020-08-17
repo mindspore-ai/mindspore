@@ -41,12 +41,13 @@ class Convolution3x3Int8CPUKernel : public ConvolutionBaseCPUKernel {
   void ConfigInputOutput();
 
  private:
-  int16_t *transformed_filter_addr_;
-  int16_t *input_data_;
-  int16_t *tile_buffer_;
-  int16_t *block_unit_buffer_;
-  int32_t *tmp_dst_buffer_;
-  int8_t *tmp_out_;
+  void FreeTmpBuffer();
+  int16_t *transformed_filter_addr_ = nullptr;
+  int16_t *input_data_ = nullptr;
+  int16_t *tile_buffer_ = nullptr;
+  int16_t *block_unit_buffer_ = nullptr;
+  int32_t *tmp_dst_buffer_ = nullptr;
+  int8_t *tmp_out_ = nullptr;
 };
 void ProcessFilterUint8(int8_t *origin_weight, int16_t *dst_weight, ConvParameter *conv_param);
 }  // namespace mindspore::kernel

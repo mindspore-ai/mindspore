@@ -30,24 +30,7 @@ class ConvolutionInt8CPUKernel : public ConvolutionBaseCPUKernel {
                            const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                            const lite::Primitive *primitive)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~ConvolutionInt8CPUKernel() override {
-    if (packed_weight_ != nullptr) {
-      free(packed_weight_);
-    }
-    if (packed_input_ != nullptr) {
-      free(packed_input_);
-    }
-    if (input_sum_ != nullptr) {
-      free(input_sum_);
-    }
-    if (tmp_dst_ != nullptr) {
-      free(tmp_dst_);
-    }
-    if (tmp_out_ != nullptr) {
-      free(tmp_out_);
-    }
-    FreeQuantParam();
-  };
+  ~ConvolutionInt8CPUKernel() override { FreeTmpBuffer(); }
 
   int Init() override;
   int ReSize() override;
@@ -62,6 +45,29 @@ class ConvolutionInt8CPUKernel : public ConvolutionBaseCPUKernel {
   void ConfigInputOutput();
 
  private:
+  void FreeTmpBuffer() {
+    if (packed_weight_ != nullptr) {
+      free(packed_weight_);
+      packed_weight_ = nullptr;
+    }
+    if (packed_input_ != nullptr) {
+      free(packed_input_);
+      packed_input_ = nullptr;
+    }
+    if (input_sum_ != nullptr) {
+      free(input_sum_);
+      input_sum_ = nullptr;
+    }
+    if (tmp_dst_ != nullptr) {
+      free(tmp_dst_);
+      tmp_dst_ = nullptr;
+    }
+    if (tmp_out_ != nullptr) {
+      free(tmp_out_);
+      tmp_out_ = nullptr;
+    }
+    FreeQuantParam();
+  }
   bool support_optimize_ = true;
   int8_t *packed_weight_ = nullptr;
   int8_t *packed_input_ = nullptr;

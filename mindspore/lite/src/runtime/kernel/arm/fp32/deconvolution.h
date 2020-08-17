@@ -47,20 +47,21 @@ class DeConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
  private:
   int InitParam();
   int InitWeightBias();
+  void FreeTmpBuffer();
 
  private:
-  MatMulParameter *matmul_param_;
+  MatMulParameter *matmul_param_ = nullptr;
   int input_plane_;
   int kernel_plane_;
   int output_plane_;
   int thread_count_;
   int thread_stride_;
-  float *weight_ptr_;
-  float *pack_input_;
-  float *pack_output_;
-  float *tmp_buffer_;
-  float *input_ptr_;
-  float *output_ptr_;
+  float *weight_ptr_ = nullptr;
+  float *pack_input_ = nullptr;
+  float *pack_output_ = nullptr;
+  float *tmp_buffer_ = nullptr;
+  float *input_ptr_ = nullptr;
+  float *output_ptr_ = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_DECONVOLUTION_H_

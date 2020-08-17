@@ -54,6 +54,8 @@ class LiteSession : public session::LiteSession {
 
   std::vector<mindspore::tensor::MSTensor *> GetOutputsByName(const std::string &name) const override;
 
+  int Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs) override;
+
  protected:
   int ConvertTensors(const lite::Model *model);
 
@@ -68,6 +70,8 @@ class LiteSession : public session::LiteSession {
   void InitGraphInputMap(const lite::Model *model);
   // init this->output_map_
   void InitGraphOutputMap(const lite::Model *model);
+  // resize inputs
+  int ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &inputs);
 
  protected:
   Context *context_ = nullptr;
@@ -75,6 +79,7 @@ class LiteSession : public session::LiteSession {
   std::vector<tensor::Tensor *> tensors_;
   // graph input tensors
   std::vector<tensor::Tensor *> inputs_;
+  std::vector<tensor::Tensor *> inputs_old_;
   // graph output tensors
   std::vector<tensor::Tensor *> outputs_;
   // graph input MSTensors

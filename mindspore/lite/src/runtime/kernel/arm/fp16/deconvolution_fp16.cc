@@ -32,7 +32,19 @@ DeConvolutionFp16CPUKernel::~DeConvolutionFp16CPUKernel() {
 
 int DeConvolutionFp16CPUKernel::ReSize() {
   FreeParam();
-  InitParam();
+  ConvolutionBaseCPUKernel::Init();
+
+  int error_code = InitParam();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "deconv InitParam error!";
+    return error_code;
+  }
+
+  error_code = InitWeightBias();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "deconv InitWeightBias error!";
+    return error_code;
+  }
   return RET_OK;
 }
 
@@ -141,24 +153,10 @@ int DeConvolutionFp16CPUKernel::DoDeconv(int task_id) {
 }
 
 int DeConvolutionFp16CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
-  ConvolutionBaseCPUKernel::Init();
-
-  int error_code = InitParam();
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "deconv InitParam error!";
-    return error_code;
-  }
-
-  error_code = InitWeightBias();
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "deconv InitWeightBias error!";
-    return error_code;
-  }
-  return RET_OK;
+  return ReSize();
 }
 
 int DeConvolutionFp16CPUKernel::Run() {

@@ -293,10 +293,30 @@ void ConvolutionInt8CPUKernel::ConfigInputOutput() {
 }
 
 int ConvolutionInt8CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
+  return ReSize();
+}
+
+int ConvolutionInt8CPUKernel::InitOpt() {
+  auto ret = InitWeightBiasOpt();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init weight bias failed.";
+    return RET_ERROR;
+  }
+  // init tmp input, output
+  ret = InitTmpBufferOpt();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init tmp buffer failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int ConvolutionInt8CPUKernel::ReSize() {
+  FreeTmpBuffer();
+
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
@@ -325,57 +345,6 @@ int ConvolutionInt8CPUKernel::Init() {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return RET_ERROR;
-  }
-  // init tmp input, output
-  ret = InitTmpBuffer();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init tmp buffer failed.";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-int ConvolutionInt8CPUKernel::InitOpt() {
-  auto ret = InitWeightBiasOpt();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init weight bias failed.";
-    return RET_ERROR;
-  }
-  // init tmp input, output
-  ret = InitTmpBufferOpt();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init tmp buffer failed.";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-int ConvolutionInt8CPUKernel::ReSize() {
-  if (packed_input_ != nullptr) {
-    free(packed_input_);
-  }
-  if (input_sum_ != nullptr) {
-    free(input_sum_);
-  }
-  if (tmp_dst_ != nullptr) {
-    free(tmp_dst_);
-  }
-  if (tmp_out_ != nullptr) {
-    free(tmp_out_);
-  }
-
-  auto ret = ConvolutionBaseCPUKernel::Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConvolutionBase init failed.";
-    return RET_ERROR;
-  }
-  if (support_optimize_) {
-    ret = InitTmpBufferOpt();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Init tmp buffer for opt failed.";
-      return RET_ERROR;
-    }
-    return RET_OK;
   }
   // init tmp input, output
   ret = InitTmpBuffer();

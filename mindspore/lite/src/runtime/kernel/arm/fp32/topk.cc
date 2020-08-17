@@ -25,10 +25,15 @@ using mindspore::schema::PrimitiveType_TopK;
 
 namespace mindspore::kernel {
 int TopKCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
+  parameter->topk_node_list_ = nullptr;
+  if (!InferShapeDone()) {
     return RET_OK;
   }
+  return ReSize();
+}
+
+int TopKCPUKernel::ReSize() {
   TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
   lite::tensor::Tensor *input = in_tensors_.at(0);
   parameter->last_dim_size_ = input->shape()[input->shape().size() - 1];
@@ -37,6 +42,10 @@ int TopKCPUKernel::Init() {
     parameter->loop_num_ *= input->shape()[i];
   }
 
+  if (parameter->topk_node_list_ != nullptr) {
+    free(parameter->topk_node_list_);
+    parameter->topk_node_list_ = nullptr;
+  }
   parameter->topk_node_list_ = malloc(sizeof(TopkNode) * parameter->last_dim_size_);
   if (parameter->topk_node_list_ == nullptr) {
     MS_LOG(ERROR) << "malloc fail.";
@@ -44,8 +53,6 @@ int TopKCPUKernel::Init() {
   }
   return RET_OK;
 }
-
-int TopKCPUKernel::ReSize() { return RET_OK; }
 
 int TopKCPUKernel::Run() {
   auto ret = Prepare();
@@ -65,7 +72,10 @@ kernel::LiteKernel *CpuTopKFp32KernelCreator(const std::vector<lite::tensor::Ten
                                              const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
                                              const lite::Context *ctx, const KernelKey &desc,
                                              const lite::Primitive *primitive) {
-  MS_ASSERT(parameter != nullptr);
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << "input parameter is nullptr!";
+    return nullptr;
+  }
   MS_ASSERT(desc.type == PrimitiveType_Tile);
   auto *kernel = new (std::nothrow) TopKCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {

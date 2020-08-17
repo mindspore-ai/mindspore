@@ -34,7 +34,7 @@ class UnstackCPUKernel : public LiteKernel {
   int Run() override;
 
  private:
-  float **output_addr_array_;
+  float **output_addr_array_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

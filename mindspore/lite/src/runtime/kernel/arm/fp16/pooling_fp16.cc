@@ -59,19 +59,23 @@ int PoolingFp16CPUKernel::Init() {
     return ret;
   }
 
-  ret = InitBuffer();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init Buffer failed.";
-    return ret;
+  if (!InferShapeDone()) {
+    return RET_OK;
   }
-  return RET_OK;
+  return ReSize();
 }
 
 int PoolingFp16CPUKernel::ReSize() {
-  auto ret = Init();
+  auto ret = PoolingBaseCPUKernel::ReSize();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Pooling resize init failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "PoolingBase ReSize fai1!ret: " << ret;
+    return ret;
+  }
+
+  ret = InitBuffer();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init Buffer fail!ret: " << ret;
+    return ret;
   }
   return RET_OK;
 }

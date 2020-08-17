@@ -30,26 +30,7 @@ class Convolution3x3FP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
                               const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                               const lite::Primitive *primitive)
       : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~Convolution3x3FP16CPUKernel() override {
-    if (fp16_weight_ != nullptr) {
-      free(fp16_weight_);
-    }
-    if (transformed_filter_addr_ != nullptr) {
-      free(transformed_filter_addr_);
-    }
-    if (tile_buffer_ != nullptr) {
-      free(tile_buffer_);
-    }
-    if (block_unit_buffer_ != nullptr) {
-      free(block_unit_buffer_);
-    }
-    if (tmp_dst_buffer_ != nullptr) {
-      free(tmp_dst_buffer_);
-    }
-    if (tmp_out_ != nullptr) {
-      free(tmp_out_);
-    }
-  }
+  ~Convolution3x3FP16CPUKernel() override { FreeTmpBuffer(); }
 
   int Init() override;
   int ReSize() override;
@@ -60,11 +41,38 @@ class Convolution3x3FP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   void ConfigInputOutput();
 
  private:
-  float16_t *transformed_filter_addr_;
-  float16_t *tile_buffer_;
-  float16_t *block_unit_buffer_;
-  float16_t *tmp_dst_buffer_;
-  float16_t *tmp_out_;
+  void FreeTmpBuffer() {
+    if (fp16_weight_ != nullptr) {
+      free(fp16_weight_);
+      fp16_weight_ = nullptr;
+    }
+
+    if (transformed_filter_addr_ != nullptr) {
+      free(transformed_filter_addr_);
+      transformed_filter_addr_ = nullptr;
+    }
+    if (tile_buffer_ != nullptr) {
+      free(tile_buffer_);
+      tile_buffer_ = nullptr;
+    }
+    if (block_unit_buffer_ != nullptr) {
+      free(block_unit_buffer_);
+      block_unit_buffer_ = nullptr;
+    }
+    if (tmp_dst_buffer_ != nullptr) {
+      free(tmp_dst_buffer_);
+      tmp_dst_buffer_ = nullptr;
+    }
+    if (tmp_out_ != nullptr) {
+      free(tmp_out_);
+      tmp_out_ = nullptr;
+    }
+  }
+  float16_t *transformed_filter_addr_ = nullptr;
+  float16_t *tile_buffer_ = nullptr;
+  float16_t *block_unit_buffer_ = nullptr;
+  float16_t *tmp_dst_buffer_ = nullptr;
+  float16_t *tmp_out_ = nullptr;
 };
 void ProcessFilterFp16(float16_t *origin_weight, float16_t *dst_weight, ConvParameter *conv_param);
 }  // namespace mindspore::kernel

@@ -33,24 +33,7 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
                                    const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                                    const lite::Primitive *primitive, int out_unit)
       : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive), output_unit_(out_unit) {}
-  ~ConvolutionWinogradFP16CPUKernel() override {
-    if (fp16_weight_ != nullptr) {
-      free(fp16_weight_);
-    }
-    if (tmp_data_ != nullptr) {
-      free(tmp_data_);
-    }
-    if (trans_input_ != nullptr) {
-      free(trans_input_);
-    }
-    if (gemm_out_ != nullptr) {
-      free(gemm_out_);
-    }
-    if (tmp_out_data_ != nullptr) {
-      free(tmp_out_data_);
-    }
-    delete trans_weight_;
-  }
+  ~ConvolutionWinogradFP16CPUKernel() override { FreeTmpBuffer(); }
 
   int Init() override;
   int ReSize() override;
@@ -62,14 +45,40 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   int ConfigInputOutput();
 
  private:
+  void FreeTmpBuffer() {
+    if (fp16_weight_ != nullptr) {
+      free(fp16_weight_);
+      fp16_weight_ = nullptr;
+    }
+    if (tmp_data_ != nullptr) {
+      free(tmp_data_);
+      tmp_data_ = nullptr;
+    }
+    if (trans_input_ != nullptr) {
+      free(trans_input_);
+      trans_input_ = nullptr;
+    }
+    if (gemm_out_ != nullptr) {
+      free(gemm_out_);
+      gemm_out_ = nullptr;
+    }
+    if (tmp_out_data_ != nullptr) {
+      free(tmp_out_data_);
+      tmp_out_data_ = nullptr;
+    }
+    if (trans_weight_ != nullptr) {
+      delete trans_weight_;
+      trans_weight_ = nullptr;
+    }
+  }
   int kernel_unit_;
   int input_unit_;
   int output_unit_;
-  float16_t *tmp_data_;
-  float16_t *trans_input_;
-  float16_t *gemm_out_;
-  float16_t *tmp_out_data_;
-  Matrix *trans_weight_;
+  float16_t *tmp_data_ = nullptr;
+  float16_t *trans_input_ = nullptr;
+  float16_t *gemm_out_ = nullptr;
+  float16_t *tmp_out_data_ = nullptr;
+  Matrix *trans_weight_ = nullptr;
   InputTransformUnitFp16Func input_trans_func_;
   OutputTransformUnitFp16Func output_trans_func_;
   TmpBufferAddressFp16 tmp_buffer_address_list_[4];

@@ -28,11 +28,6 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 int ArithmeticSelfInt8CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
-    return RET_OK;
-  }
-  int ret = ReSize();
   auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->GetQuantParams();
   para_->quant_arg_.in_args_.scale_ = in_quant_args.front().scale;
@@ -57,7 +52,10 @@ int ArithmeticSelfInt8CPUKernel::Init() {
     para_->quant_arg_.shift_right_ = right_shift > 0 ? right_shift : 0;
   }
 
-  return ret;
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
 }
 
 int ArithmeticSelfInt8CPUKernel::ReSize() {

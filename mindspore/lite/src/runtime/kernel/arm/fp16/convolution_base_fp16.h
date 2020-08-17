@@ -43,9 +43,9 @@ class ConvolutionBaseFP16CPUKernel : public ConvolutionBaseCPUKernel {
 
  protected:
   float16_t *fp16_weight_ = nullptr;
-  float16_t *execute_input_;  // ctx allocator malloc and free
-  float16_t *execute_weight_;
-  float16_t *execute_output_;  // ctx allocator malloc and free
+  float16_t *execute_input_ = nullptr;
+  float16_t *execute_weight_ = nullptr;
+  float16_t *execute_output_ = nullptr;
   TypeId in_data_type_;
   TypeId out_data_type_;
 };

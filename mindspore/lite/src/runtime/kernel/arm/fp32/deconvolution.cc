@@ -25,7 +25,9 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DeConv2D;
 
 namespace mindspore::kernel {
-DeConvolutionCPUKernel::~DeConvolutionCPUKernel() {
+DeConvolutionCPUKernel::~DeConvolutionCPUKernel() { FreeTmpBuffer(); }
+
+void DeConvolutionCPUKernel::FreeTmpBuffer() {
   if (weight_ptr_ != nullptr) {
     free(weight_ptr_);
     weight_ptr_ = nullptr;
@@ -42,24 +44,23 @@ DeConvolutionCPUKernel::~DeConvolutionCPUKernel() {
     free(pack_output_);
     pack_output_ = nullptr;
   }
-  return;
 }
 
 int DeConvolutionCPUKernel::ReSize() {
-  if (tmp_buffer_ != nullptr) {
-    free(tmp_buffer_);
-    tmp_buffer_ = nullptr;
-  }
-  if (pack_input_ != nullptr) {
-    free(pack_input_);
-    pack_input_ = nullptr;
-  }
-  if (pack_output_ != nullptr) {
-    free(pack_output_);
-    pack_output_ = nullptr;
-  }
-  InitParam();
+  FreeTmpBuffer();
+  ConvolutionBaseCPUKernel::Init();
 
+  int error_code = InitParam();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "deconv InitParam error!ret: " << error_code;
+    return error_code;
+  }
+
+  error_code = InitWeightBias();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "deconv InitWeightBias error!ret: " << error_code;
+    return error_code;
+  }
   return RET_OK;
 }
 
@@ -151,24 +152,10 @@ int DeConvolutionCPUKernel::DoDeconv(int task_id) {
 }
 
 int DeConvolutionCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
-  ConvolutionBaseCPUKernel::Init();
-
-  int error_code = InitParam();
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "deconv InitParam error!";
-    return error_code;
-  }
-
-  error_code = InitWeightBias();
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "deconv InitWeightBias error!";
-    return error_code;
-  }
-  return RET_OK;
+  return ReSize();
 }
 
 int DeConvolutionCPUKernel::Run() {

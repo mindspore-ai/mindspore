@@ -41,11 +41,12 @@ class DeconvolutionDepthwiseInt8CPUKernel : public ConvolutionBaseCPUKernel {
   int Execute(int task_id);
 
  private:
-  SlidingWindowParam *sliding;
-  int16_t *packed_weight_;
-  int16_t *packed_input_;
-  int8_t *packed_output_;
-  int32_t *output_buffer_;
+  void FreeTmpBuffer();
+  SlidingWindowParam *sliding = nullptr;
+  int16_t *packed_weight_ = nullptr;
+  int16_t *packed_input_ = nullptr;
+  int8_t *packed_output_ = nullptr;
+  int32_t *output_buffer_ = nullptr;
   bool need_align_ = false;
 };
 }  // namespace mindspore::kernel

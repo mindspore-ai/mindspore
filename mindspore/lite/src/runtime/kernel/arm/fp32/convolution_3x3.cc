@@ -159,56 +159,31 @@ void Convolution3x3CPUKernel::ConfigInputOutput() {
 }
 
 int Convolution3x3CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+    if (!InferShapeDone()) {
     return RET_OK;
   }
+  return ReSize();
+}
+
+int Convolution3x3CPUKernel::ReSize() {
+  FreeTmpBuffer();
+
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConvolutionBase init failed.";
+    MS_LOG(ERROR) << "ConvolutionBase init failed.ret: " << ret;
     return RET_ERROR;
   }
   ret = InitWeightBias();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init weight bias failed.";
+    MS_LOG(ERROR) << "Init weight bias failed.ret: " << ret;
     return RET_ERROR;
   }
   ret = InitTmpBuffer();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init tmp buffer failed.";
+    MS_LOG(ERROR) << "Init tmp buffer failed.ret: " << ret;
     return RET_ERROR;
   }
   ConfigInputOutput();
-  return RET_OK;
-}
-
-int Convolution3x3CPUKernel::ReSize() {
-  if (tile_buffer_ != nullptr) {
-    free(tile_buffer_);
-  }
-  if (block_unit_buffer_ != nullptr) {
-    free(block_unit_buffer_);
-  }
-  if (tmp_dst_buffer_ != nullptr) {
-    free(tmp_dst_buffer_);
-  }
-  if (nhwc4_input_ != nullptr) {
-    free(nhwc4_input_);
-  }
-  if (nc4hw4_out_ != nullptr) {
-    free(nc4hw4_out_);
-  }
-
-  auto ret = ConvolutionBaseCPUKernel::Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConvolutionBase init failed.";
-    return RET_ERROR;
-  }
-  ret = InitTmpBuffer();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init tmp buffer failed.";
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 

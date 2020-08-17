@@ -29,23 +29,7 @@ class Convolution3x3CPUKernel : public ConvolutionBaseCPUKernel {
                           const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                           const lite::Primitive *primitive)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~Convolution3x3CPUKernel() override {
-    if (transformed_filter_addr_ != nullptr) {
-      free(transformed_filter_addr_);
-    }
-    if (tile_buffer_ != nullptr) {
-      free(tile_buffer_);
-    }
-    if (block_unit_buffer_ != nullptr) {
-      free(block_unit_buffer_);
-    }
-    if (tmp_dst_buffer_ != nullptr) {
-      free(tmp_dst_buffer_);
-    }
-    if (nc4hw4_out_ != nullptr) {
-      free(nc4hw4_out_);
-    }
-  };
+  ~Convolution3x3CPUKernel() override { FreeTmpBuffer(); }
 
   int Init() override;
   int ReSize() override;
@@ -56,11 +40,34 @@ class Convolution3x3CPUKernel : public ConvolutionBaseCPUKernel {
   void ConfigInputOutput();
 
  private:
-  float *transformed_filter_addr_;
-  float *tile_buffer_;
-  float *block_unit_buffer_;
-  float *tmp_dst_buffer_;
-  float *nc4hw4_out_;
+  void FreeTmpBuffer() {
+    if (tile_buffer_ != nullptr) {
+      free(tile_buffer_);
+      tile_buffer_ = nullptr;
+    }
+    if (block_unit_buffer_ != nullptr) {
+      free(block_unit_buffer_);
+      block_unit_buffer_ = nullptr;
+    }
+    if (tmp_dst_buffer_ != nullptr) {
+      free(tmp_dst_buffer_);
+      tmp_dst_buffer_ = nullptr;
+    }
+    if (nhwc4_input_ != nullptr) {
+      free(nhwc4_input_);
+      nhwc4_input_ = nullptr;
+    }
+    if (nc4hw4_out_ != nullptr) {
+      free(nc4hw4_out_);
+      nc4hw4_out_ = nullptr;
+    }
+  }
+
+  float *transformed_filter_addr_ = nullptr;
+  float *tile_buffer_ = nullptr;
+  float *block_unit_buffer_ = nullptr;
+  float *tmp_dst_buffer_ = nullptr;
+  float *nc4hw4_out_ = nullptr;
   TmpBufferAddress tmp_buffer_address_list_[4];
   GEMM_FUNC_FP32 gemm_func_ = nullptr;
 };

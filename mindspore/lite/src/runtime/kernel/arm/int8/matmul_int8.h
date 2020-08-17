@@ -38,10 +38,24 @@ class MatmulInt8CPUKernel : public MatmulBaseCPUKernel {
   int RunImpl(int task_id);
 
  private:
+  void FreeTmpBuffer() {
+    if (a_c8_ptr_ != nullptr) {
+      ctx_->allocator->Free(a_c8_ptr_);
+      a_c8_ptr_ = nullptr;
+    }
+    if (b_r8_ptr_ != nullptr) {
+      ctx_->allocator->Free(b_r8_ptr_);
+      b_r8_ptr_ = nullptr;
+    }
+    if (c_r8x8_ptr_ != nullptr) {
+      ctx_->allocator->Free(c_r8x8_ptr_);
+      c_r8x8_ptr_ = nullptr;
+    }
+  }
   MatmulQuantArg quant_params_;
-  int8_t *a_c8_ptr_;
-  int8_t *b_r8_ptr_;
-  int *c_r8x8_ptr_;
+  int8_t *a_c8_ptr_ = nullptr;
+  int8_t *b_r8_ptr_ = nullptr;
+  int *c_r8x8_ptr_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

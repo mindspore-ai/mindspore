@@ -107,10 +107,20 @@ void ConvolutionSWCPUKernel::ConfigInputOutput() {
 }
 
 int ConvolutionSWCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
+  return ReSize();
+}
+
+int ConvolutionSWCPUKernel::ReSize() {
+  FreeTmpBuffer();
+
+  if (nhwc4_input_ != nullptr) {
+    free(nhwc4_input_);
+    nhwc4_input_ = nullptr;
+  }
+
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
@@ -133,32 +143,6 @@ int ConvolutionSWCPUKernel::Init() {
 
   // config input output
   ConfigInputOutput();
-  return RET_OK;
-}
-
-int ConvolutionSWCPUKernel::ReSize() {
-  if (tmp_output_block_ != nullptr) {
-    free(tmp_output_block_);
-  }
-  if (nhwc4_input_ != nullptr) {
-    free(nhwc4_input_);
-  }
-  delete slidingWindow_param_;
-
-  auto ret = ConvolutionBaseCPUKernel::Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConvolutionBase init failed.";
-    return RET_ERROR;
-  }
-  // init tmp input, output
-  ret = InitTmpBuffer();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init tmp buffer failed.";
-    return RET_ERROR;
-  }
-  // init sliding window param
-  slidingWindow_param_ = new SlidingWindowParam;
-  InitSlidingParamConv(slidingWindow_param_, conv_param_, C4NUM);
   return RET_OK;
 }
 

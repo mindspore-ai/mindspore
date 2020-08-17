@@ -25,10 +25,14 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 int FullconnectionInt8CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
+  return ReSize();
+}
+
+int FullconnectionInt8CPUKernel::ReSize() {
+  FreeTmpBuffer();
   fc_param_->row_ = (in_tensors_[0]->shape())[0];
   fc_param_->col_ = (in_tensors_[1]->shape())[0];
   fc_param_->deep_ = (in_tensors_[1]->shape())[1];
@@ -91,8 +95,6 @@ int FullconnectionInt8CPUKernel::Init() {
                                     &quant_params_.out_act_min);
   return RET_OK;
 }
-
-int FullconnectionInt8CPUKernel::ReSize() { return RET_OK; }
 
 int FullconnectionInt8CPUKernel::RunImpl(int task_id) {
   int cur_oc = MSMIN(thread_stride_, UP_DIV(fc_param_->col_8_, 8) - task_id * thread_stride_);

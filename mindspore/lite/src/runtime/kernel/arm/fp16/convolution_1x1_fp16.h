@@ -34,26 +34,32 @@ class Convolution1x1FP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
       : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {
     matmul_param_ = new MatMulParameter();
   }
-  ~Convolution1x1FP16CPUKernel() override {
-    if (weight_ptr_ != nullptr) {
-      free(weight_ptr_);
-    }
-    if (pack_input_ != nullptr) {
-      free(pack_input_);
-    }
-    delete matmul_param_;
-  }
+  ~Convolution1x1FP16CPUKernel() override { FreeTmpBuffer(); }
 
   int Init() override;
   int ReSize() override;
   int Run() override;
   int RunImpl(int task_id);
+  int InitBuffer();
   int InitConv1x1Param();
   int InitMatmulParam();
   int InitWeightBias();
   void Pre1x1Trans(float16_t *src_input, float16_t *src_output);
 
  private:
+  void FreeTmpBuffer() {
+    if (weight_ptr_ != nullptr) {
+      free(weight_ptr_);
+      weight_ptr_ = nullptr;
+    }
+    if (matmul_param_ != nullptr) {
+      delete matmul_param_;
+      matmul_param_ = nullptr;
+    }
+    if (pack_input_ != nullptr) {
+      free(pack_input_);
+    }
+  }
   bool pre_trans_input_ = false;
   int thread_count_ = 0;
   int thread_stride_ = 0;

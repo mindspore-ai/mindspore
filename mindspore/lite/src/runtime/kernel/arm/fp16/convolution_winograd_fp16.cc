@@ -265,6 +265,19 @@ int ConvolutionWinogradFP16CPUKernel::ConfigInputOutput() {
 }
 
 int ConvolutionWinogradFP16CPUKernel::Init() {
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
+
+int ConvolutionWinogradFP16CPUKernel::ReSize() {
+  FreeTmpBuffer();
+  if (nhwc4_input_ != nullptr) {
+    free(nhwc4_input_);
+    nhwc4_input_ = nullptr;
+  }
+
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
@@ -281,46 +294,6 @@ int ConvolutionWinogradFP16CPUKernel::Init() {
     return RET_ERROR;
   }
   // malloc tmp buffer
-  ret = InitTmpBuffer();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init tmp buffer failed.";
-    return RET_ERROR;
-  }
-  ret = ConfigInputOutput();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConfigInputOutput failed.";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-int ConvolutionWinogradFP16CPUKernel::ReSize() {
-  if (tmp_data_ != nullptr) {
-    free(tmp_data_);
-  }
-  if (trans_input_ != nullptr) {
-    free(trans_input_);
-  }
-  if (gemm_out_ != nullptr) {
-    free(gemm_out_);
-  }
-  if (tmp_out_data_ != nullptr) {
-    free(tmp_out_data_);
-  }
-  if (nhwc4_input_ != nullptr) {
-    free(nhwc4_input_);
-  }
-
-  auto ret = ConvolutionBaseCPUKernel::Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConvolutionBase init failed.";
-    return RET_ERROR;
-  }
-  kernel_unit_ = conv_param_->kernel_h_;
-  input_unit_ = output_unit_ + kernel_unit_ - 1;
-  conv_param_->input_unit_ = input_unit_;
-  conv_param_->output_unit_ = output_unit_;
-
   ret = InitTmpBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init tmp buffer failed.";

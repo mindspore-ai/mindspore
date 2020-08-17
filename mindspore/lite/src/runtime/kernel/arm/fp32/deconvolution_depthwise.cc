@@ -27,8 +27,14 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DeDepthwiseConv2D;
 
 namespace mindspore::kernel {
-DeconvolutionDepthwiseCPUKernel::~DeconvolutionDepthwiseCPUKernel() {
-  delete sliding_;
+DeconvolutionDepthwiseCPUKernel::~DeconvolutionDepthwiseCPUKernel() { FreeTmpBuffer(); }
+
+void DeconvolutionDepthwiseCPUKernel::FreeTmpBuffer() {
+  if (sliding_ != nullptr) {
+    delete sliding_;
+    sliding_ = nullptr;
+  }
+
   if (packed_weight_ != nullptr) {
     delete packed_weight_;
     packed_weight_ = nullptr;
@@ -120,48 +126,28 @@ int DeconvolutionDepthwiseCPUKernel::InitBuffer() {
 }
 
 int DeconvolutionDepthwiseCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
+  return ReSize();
+}
+
+int DeconvolutionDepthwiseCPUKernel::ReSize() {
+  FreeTmpBuffer();
   InitSlideParam();
   // conv base init
   ConvolutionBaseCPUKernel::Init();
 
   auto ret = InitWeightBias();
   if (ret != 0) {
-    MS_LOG(ERROR) << "Deconvolution depthwise fp32 InitWeightBias failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "Deconvolution depthwise fp32 InitWeightBias failed.ret: " << ret;
+    return ret;
   }
 
   ret = InitBuffer();
   if (ret != 0) {
-    MS_LOG(ERROR) << "Deconvolution depthwise fp32 InitBuffer failed.";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-int DeconvolutionDepthwiseCPUKernel::ReSize() {
-  if (need_align_) {
-    if (packed_input_ != nullptr) {
-      delete packed_input_;
-      packed_input_ = nullptr;
-    }
-    if (packed_output_ != nullptr) {
-      delete packed_output_;
-      packed_output_ = nullptr;
-    }
-  }
-  InitSlideParam();
-
-  // conv base init
-  ConvolutionBaseCPUKernel::Init();
-
-  auto ret = InitBuffer();
-  if (ret != 0) {
-    MS_LOG(ERROR) << "Deconvolution depthwise fp32 InitBuffer failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "Deconvolution depthwise fp32 InitBuffer failed.ret: " << ret;
+    return ret;
   }
   return RET_OK;
 }

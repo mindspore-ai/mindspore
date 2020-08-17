@@ -56,14 +56,14 @@ void PoolingBaseCPUKernel::FreeQuantParam() {
 }
 
 int PoolingBaseCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
-    return RET_OK;
-  }
   MS_ASSERT(in_tensors_.size() == 1);
   MS_ASSERT(out_tensors_.size() == 1);
   pooling_param_->thread_num_ = thread_count_;
   MS_ASSERT(this->op_parameter_ != nullptr);
+  return RET_OK;
+}
+
+int PoolingBaseCPUKernel::ReSize() {
   auto in_tensor = this->in_tensors_.front();
   auto out_tensor = this->out_tensors_.front();
   MS_ASSERT(in_tensor != nullptr);

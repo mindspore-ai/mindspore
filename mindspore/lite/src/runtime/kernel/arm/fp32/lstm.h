@@ -31,12 +31,7 @@ class LstmCPUKernel : public LiteKernel {
     lstm_parm_ = reinterpret_cast<LstmParameter *>(op_parameter_);
   }
 
-  ~LstmCPUKernel() override {
-    free(gate_buffer_);
-    free(weight_i_ptr_);
-    free(weight_h_ptr_);
-    free(bias_ptr_);
-  }
+  ~LstmCPUKernel() override { FreeTmpBuffer(); }
 
   int Init() override;
   int ReSize() override;
@@ -47,11 +42,29 @@ class LstmCPUKernel : public LiteKernel {
   int InitWeightBias();
 
  private:
-  float *gate_buffer_;
-  float *weight_i_ptr_;
-  float *weight_h_ptr_;
-  float *bias_ptr_;
-  LstmParameter *lstm_parm_;
+  void FreeTmpBuffer() {
+    if (gate_buffer_ != nullptr) {
+      free(gate_buffer_);
+      gate_buffer_ = nullptr;
+    }
+    if (weight_i_ptr_ != nullptr) {
+      free(weight_i_ptr_);
+      weight_i_ptr_ = nullptr;
+    }
+    if (weight_h_ptr_ != nullptr) {
+      free(weight_h_ptr_);
+      weight_h_ptr_ = nullptr;
+    }
+    if (bias_ptr_ != nullptr) {
+      free(bias_ptr_);
+      bias_ptr_ = nullptr;
+    }
+  }
+  float *gate_buffer_ = nullptr;
+  float *weight_i_ptr_ = nullptr;
+  float *weight_h_ptr_ = nullptr;
+  float *bias_ptr_ = nullptr;
+  LstmParameter *lstm_parm_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

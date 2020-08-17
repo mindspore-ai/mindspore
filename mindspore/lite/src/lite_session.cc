@@ -315,6 +315,41 @@ std::vector<mindspore::tensor::MSTensor *> LiteSession::GetOutputsByName(const s
   }
   return ret->second;
 }
+
+int LiteSession::ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &inputs) {
+  if (inputs.size() != inputs_.size()) {
+    MS_LOG(ERROR) << "Inputs size " << inputs.size() << " is not equal to " << inputs_.size();
+    return RET_PARAM_INVALID;
+  }
+
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    if (inputs[i] == nullptr) {
+      MS_LOG(ERROR) << "Input tensor is nullptr!";
+      return RET_PARAM_INVALID;
+    }
+    inputs_[i]->set_shape(inputs[i]->shape());
+  }
+  return RET_OK;
+}
+
+int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs) {
+  inputs_old_.clear();
+  inputs_old_ = inputs_;
+  auto ret = ResizeInputs(inputs);
+  if (ret != RET_OK) {
+    inputs_ = inputs_old_;
+    return ret;
+  }
+
+  Scheduler scheduler(context_);
+  ret = scheduler.ReSizeKernels(kernels_);
+  if (ret != RET_OK) {
+    inputs_ = inputs_old_;
+    scheduler.ReSizeKernels(kernels_);
+    return ret;
+  }
+  return RET_OK;
+}
 }  // namespace lite
 
 session::LiteSession *session::LiteSession::CreateSession(lite::Context *context) {
@@ -327,4 +362,5 @@ session::LiteSession *session::LiteSession::CreateSession(lite::Context *context
   }
   return session;
 }
+
 }  // namespace mindspore

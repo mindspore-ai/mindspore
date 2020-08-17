@@ -30,17 +30,7 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
                        const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                        const lite::Primitive *primitive)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~ConvolutionCPUKernel() override {
-    if (packed_input_ != nullptr) {
-      free(packed_input_);
-    }
-    if (packed_weight_ != nullptr) {
-      free(packed_weight_);
-    }
-    if (tmp_output_block_ != nullptr) {
-      free(tmp_output_block_);
-    }
-  };
+  ~ConvolutionCPUKernel() override { FreeTmpBuffer(); }
 
   int Init() override;
   int ReSize() override;
@@ -51,9 +41,23 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
   void ConfigInputOutput();
 
  private:
-  float *packed_input_;
-  float *packed_weight_;
-  float *tmp_output_block_;
+  void FreeTmpBuffer() {
+    if (packed_input_ != nullptr) {
+      free(packed_input_);
+      packed_input_ = nullptr;
+    }
+    if (tmp_output_block_ != nullptr) {
+      free(tmp_output_block_);
+      tmp_output_block_ = nullptr;
+    }
+    if (packed_weight_ != nullptr) {
+      free(packed_weight_);
+      packed_weight_ = nullptr;
+    }
+  }
+  float *packed_input_ = nullptr;
+  float *packed_weight_ = nullptr;
+  float *tmp_output_block_ = nullptr;
   GEMM_FUNC_FP32 gemm_func_ = nullptr;
 };
 }  // namespace mindspore::kernel
