@@ -41,6 +41,12 @@ enum class ShuffleMode { kFalse = 0, kFiles = 1, kGlobal = 2 };
 // Possible values for Border types
 enum class BorderType { kConstant = 0, kEdge = 1, kReflect = 2, kSymmetric = 3 };
 
+// Possible values for Image format types in a batch
+enum class ImageBatchFormat { kNHWC = 0, kNCHW = 1 };
+
+// Possible values for Image format types
+enum class ImageFormat { HWC = 0, CHW = 1, HW = 2 };
+
 // Possible interpolation modes
 enum class InterpolationMode { kLinear = 0, kNearestNeighbour = 1, kCubic = 2, kArea = 3 };
 

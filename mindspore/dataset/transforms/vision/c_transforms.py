@@ -43,13 +43,14 @@ Examples:
 import numbers
 import mindspore._c_dataengine as cde
 
-from .utils import Inter, Border
+from .utils import Inter, Border, ImageBatchFormat
 from .validators import check_prob, check_crop, check_resize_interpolation, check_random_resize_crop, \
     check_mix_up_batch_c, check_normalize_c, check_random_crop, check_random_color_adjust, check_random_rotation, \
     check_range, check_resize, check_rescale, check_pad, check_cutout, \
     check_uniform_augment_cpp, \
     check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_auto_contrast, check_random_affine, \
-    check_random_solarize, check_soft_dvpp_decode_random_crop_resize_jpeg, check_positive_degrees, FLOAT_MAX_INTEGER
+    check_random_solarize, check_soft_dvpp_decode_random_crop_resize_jpeg, check_positive_degrees, FLOAT_MAX_INTEGER, \
+    check_cut_mix_batch_c
 
 DE_C_INTER_MODE = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBOUR,
                    Inter.LINEAR: cde.InterpolationMode.DE_INTER_LINEAR,
@@ -60,6 +61,8 @@ DE_C_BORDER_TYPE = {Border.CONSTANT: cde.BorderType.DE_BORDER_CONSTANT,
                     Border.REFLECT: cde.BorderType.DE_BORDER_REFLECT,
                     Border.SYMMETRIC: cde.BorderType.DE_BORDER_SYMMETRIC}
 
+DE_C_IMAGE_BATCH_FORMAT = {ImageBatchFormat.NHWC: cde.ImageBatchFormat.DE_IMAGE_BATCH_FORMAT_NHWC,
+                           ImageBatchFormat.NCHW: cde.ImageBatchFormat.DE_IMAGE_BATCH_FORMAT_NCHW}
 
 def parse_padding(padding):
     if isinstance(padding, numbers.Number):
@@ -141,6 +144,33 @@ class Decode(cde.DecodeOp):
     def __init__(self, rgb=True):
         self.rgb = rgb
         super().__init__(self.rgb)
+
+
+class CutMixBatch(cde.CutMixBatchOp):
+    """
+    Apply CutMix transformation on input batch of images and labels.
+    Note that you need to make labels into one-hot format and batch before calling this function.
+
+    Args:
+        image_batch_format (Image Batch Format): The method of padding. Can be any of
+            [ImageBatchFormat.NHWC, ImageBatchFormat.NCHW]
+        alpha (float): hyperparameter of beta distribution (default = 1.0).
+        prob (float): The probability by which CutMix is applied to each image (default = 1.0).
+
+    Examples:
+        >>> one_hot_op = data.OneHot(num_classes=10)
+        >>> data = data.map(input_columns=["label"], operations=one_hot_op)
+        >>> cutmix_batch_op = vision.CutMixBatch(ImageBatchFormat.NHWC, 1.0, 0.5)
+        >>> data = data.batch(5)
+        >>> data = data.map(input_columns=["image", "label"], operations=cutmix_batch_op)
+    """
+
+    @check_cut_mix_batch_c
+    def __init__(self, image_batch_format, alpha=1.0, prob=1.0):
+        self.image_batch_format = image_batch_format.value
+        self.alpha = alpha
+        self.prob = prob
+        super().__init__(DE_C_IMAGE_BATCH_FORMAT[image_batch_format], alpha, prob)
 
 
 class CutOut(cde.CutOutOp):

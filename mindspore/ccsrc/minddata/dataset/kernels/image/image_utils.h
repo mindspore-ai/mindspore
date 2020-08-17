@@ -120,6 +120,19 @@ Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
 /// \param output: Tensor of shape <C,H,W> or <H,W> and same input type.
 Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output);
 
+/// \brief Masks the given part of the input image with a another image (sub_mat)
+/// \param[in] sub_mat The image we want to mask with
+/// \param[in] input The pointer to the image we want to mask
+/// \param[in] x The horizontal coordinate of left side of crop box
+/// \param[in] y The vertical coordinate of the top side of crop box
+/// \param[in] width The width of the mask box
+/// \param[in] height The height of the mask box
+/// \param[in] image_format The format of the image (CHW or HWC)
+/// \param[out] input Masks the input image in-place and returns it
+/// @return Status ok/error
+Status MaskWithTensor(const std::shared_ptr<Tensor> &sub_mat, std::shared_ptr<Tensor> *input, int x, int y, int width,
+                      int height, ImageFormat image_format);
+
 /// \brief Swap the red and blue pixels (RGB <-> BGR)
 /// \param input: Tensor of shape <H,W,3> and any OpenCv compatible type, see CVTensor.
 /// \param output: Swapped image of same shape and type

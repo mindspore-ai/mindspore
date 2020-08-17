@@ -37,10 +37,12 @@ Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   std::vector<int64_t> label_shape = input.at(1)->shape().AsVector();
 
   // Check inputs
-  if (label_shape.size() != 2 || image_shape.size() != 4 || image_shape[0] != label_shape[0]) {
+  if (image_shape.size() != 4 || image_shape[0] != label_shape[0]) {
     RETURN_STATUS_UNEXPECTED("You must batch before calling MixUpBatch");
   }
-
+  if (label_shape.size() != 2) {
+    RETURN_STATUS_UNEXPECTED("MixUpBatch: Label's must be in one-hot format and in a batch");
+  }
   if ((image_shape[1] != 1 && image_shape[1] != 3) && (image_shape[3] != 1 && image_shape[3] != 3)) {
     RETURN_STATUS_UNEXPECTED("MixUpBatch: Images must be in the shape of HWC or CHW");
   }

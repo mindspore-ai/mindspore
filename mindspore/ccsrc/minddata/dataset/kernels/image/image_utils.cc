@@ -402,6 +402,62 @@ Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) 
   }
 }
 
+Status MaskWithTensor(const std::shared_ptr<Tensor> &sub_mat, std::shared_ptr<Tensor> *input, int x, int y,
+                      int crop_width, int crop_height, ImageFormat image_format) {
+  if (image_format == ImageFormat::HWC) {
+    if ((*input)->Rank() != 3 || ((*input)->shape()[2] != 1 && (*input)->shape()[2] != 3)) {
+      RETURN_STATUS_UNEXPECTED("MaskWithTensor: Image shape doesn't match the given image_format.");
+    }
+    if (sub_mat->Rank() != 3 || (sub_mat->shape()[2] != 1 && sub_mat->shape()[2] != 3)) {
+      RETURN_STATUS_UNEXPECTED("MaskWithTensor: sub_mat shape doesn't match the given image_format.");
+    }
+    int number_of_channels = (*input)->shape()[2];
+    for (int i = 0; i < crop_width; i++) {
+      for (int j = 0; j < crop_height; j++) {
+        for (int c = 0; c < number_of_channels; c++) {
+          uint8_t pixel_value;
+          RETURN_IF_NOT_OK(sub_mat->GetItemAt(&pixel_value, {j, i, c}));
+          RETURN_IF_NOT_OK((*input)->SetItemAt({y + j, x + i, c}, pixel_value));
+        }
+      }
+    }
+  } else if (image_format == ImageFormat::CHW) {
+    if ((*input)->Rank() != 3 || ((*input)->shape()[0] != 1 && (*input)->shape()[0] != 3)) {
+      RETURN_STATUS_UNEXPECTED("MaskWithTensor: Image shape doesn't match the given image_format.");
+    }
+    if (sub_mat->Rank() != 3 || (sub_mat->shape()[0] != 1 && sub_mat->shape()[0] != 3)) {
+      RETURN_STATUS_UNEXPECTED("MaskWithTensor: sub_mat shape doesn't match the given image_format.");
+    }
+    int number_of_channels = (*input)->shape()[0];
+    for (int i = 0; i < crop_width; i++) {
+      for (int j = 0; j < crop_height; j++) {
+        for (int c = 0; c < number_of_channels; c++) {
+          uint8_t pixel_value;
+          RETURN_IF_NOT_OK(sub_mat->GetItemAt(&pixel_value, {c, j, i}));
+          RETURN_IF_NOT_OK((*input)->SetItemAt({c, y + j, x + i}, pixel_value));
+        }
+      }
+    }
+  } else if (image_format == ImageFormat::HW) {
+    if ((*input)->Rank() != 2) {
+      RETURN_STATUS_UNEXPECTED("MaskWithTensor: Image shape doesn't match the given image_format.");
+    }
+    if (sub_mat->Rank() != 2) {
+      RETURN_STATUS_UNEXPECTED("MaskWithTensor: sub_mat shape doesn't match the given image_format.");
+    }
+    for (int i = 0; i < crop_width; i++) {
+      for (int j = 0; j < crop_height; j++) {
+        uint8_t pixel_value;
+        RETURN_IF_NOT_OK(sub_mat->GetItemAt(&pixel_value, {j, i}));
+        RETURN_IF_NOT_OK((*input)->SetItemAt({y + j, x + i}, pixel_value));
+      }
+    }
+  } else {
+    RETURN_STATUS_UNEXPECTED("MaskWithTensor: Image format must be CHW, HWC, or HW.");
+  }
+  return Status::OK();
+}
+
 Status SwapRedAndBlue(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
