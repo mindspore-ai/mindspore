@@ -69,8 +69,8 @@ bool EmbeddingLookUpCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
   auto input_addr = reinterpret_cast<float *>(inputs[0]->addr);
   auto indices_addr = reinterpret_cast<int *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
-  const size_t thread_num = 8;
-  std::thread threads[8];
+  const size_t thread_num = 16;
+  std::thread threads[16];
   size_t task_proc_lens = (indices_lens_ + thread_num - 1) / thread_num;
   size_t i;
   size_t task_offset = 0;

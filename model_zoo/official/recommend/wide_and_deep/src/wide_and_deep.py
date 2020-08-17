@@ -164,9 +164,6 @@ class WideDeepModel(nn.Cell):
         init_acts = [('Wide_b', [1], self.emb_init)]
         var_map = init_var_dict(self.init_args, init_acts)
         self.wide_b = var_map["Wide_b"]
-        if parameter_server:
-            self.wide_w.set_param_ps()
-            self.embedding_table.set_param_ps()
         self.dense_layer_1 = DenseLayer(self.all_dim_list[0],
                                         self.all_dim_list[1],
                                         self.weight_bias_init,
@@ -217,6 +214,8 @@ class WideDeepModel(nn.Cell):
             self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim)
             self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1)
             self.embedding_table = self.deep_embeddinglookup.embedding_table
+            self.wide_w.set_param_ps()
+            self.embedding_table.set_param_ps()
         else:
             self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim, target='DEVICE')
             self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1, target='DEVICE')
