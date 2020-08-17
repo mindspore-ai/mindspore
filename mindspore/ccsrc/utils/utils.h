@@ -210,7 +210,6 @@ constexpr auto kAttrDataType = "data_type";
 constexpr auto kAttrActiveTarget = "active_target";
 constexpr auto kAttrActiveStreamList = "active_stream_list";
 constexpr auto kAttrTrueBranchStream = "true_branch_stream";
-constexpr auto kAttrStreamSwitchKind = "stream_switch_kind";
 constexpr auto kAttrEventId = "event_id";
 constexpr auto kAttrDynInput = "dynamic";
 constexpr auto kAttrDynInputSizes = "dyn_input_sizes";
