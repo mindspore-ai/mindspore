@@ -169,7 +169,7 @@ def train_on_gpu():
     network = quant.convert_quant_network(network,
                                           bn_fold=True,
                                           per_channel=[True, False],
-                                          symmetric=[True, True],
+                                          symmetric=[True, False],
                                           freeze_bn=1000000,
                                           quant_delay=step_size * 2)
 

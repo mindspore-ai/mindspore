@@ -43,9 +43,7 @@ Dataset use: ImageNet
 ```python
 ├── mobilenetv2_quant        
   ├── Readme.md                      
-  ├── scripts 
-  │   ├──run_train.sh                  
-  │   ├──run_infer.sh
+  ├── scripts
   │   ├──run_train_quant.sh                  
   │   ├──run_infer_quant.sh
   ├── src                              
@@ -56,49 +54,7 @@ Dataset use: ImageNet
   │   ├──mobilenetV2.py
   ├── train.py
   ├── eval.py
-```
 
-## Training process
-
-### Train MobileNetV2 model
-
-Train a MindSpore fusion MobileNetV2 model for ImageNet, like:
-
-- Ascend: sh run_train.sh Ascend [DEVICE_NUM] [SERVER_IP(x.x.x.x)] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH]
-- GPU: sh run_trian.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]
-
-You can just run this command instead.
-
-``` bash
->>> Ascend: sh run_train.sh Ascend 4 192.168.0.1 0,1,2,3 ~/imagenet/train/ ~/mobilenet.ckpt
->>> GPU: sh run_train.sh GPU 8 0,1,2,3,4,5,6,7 ~/imagenet/train/
-```
-
-Training result will be stored in the example path. Checkpoints will be stored at `. /checkpoint` by default, and training log  will be redirected to `./train/train.log` like followings. 
-
-``` 
->>> epoch: [  0/200], step:[  624/  625], loss:[5.258/5.258], time:[140412.236], lr:[0.100]
->>> epoch time: 140522.500, per step time: 224.836, avg loss: 5.258
->>> epoch: [  1/200], step:[  624/  625], loss:[3.917/3.917], time:[138221.250], lr:[0.200]
->>> epoch time: 138331.250, per step time: 221.330, avg loss: 3.917
-```
-
-### Evaluate MobileNetV2 model
-
-Evaluate a MindSpore fusion MobileNetV2 model for ImageNet, like:
-
-- sh run_infer.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH]
-
-You can just run this command instead.
-
-``` bash
->>> sh run_infer.sh Ascend ~/imagenet/val/ ~/train/mobilenet-200_625.ckpt
-```
-
-Inference result will be stored in the example path, you can find result like the followings in `val.log`. 
-
-``` 
->>> result: {'acc': 0.71976314102564111} ckpt=/path/to/checkpoint/mobilenet-200_625.ckpt
 ```
 
 ### Fine-tune for quantization aware training
