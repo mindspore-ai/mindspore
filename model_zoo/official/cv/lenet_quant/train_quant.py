@@ -57,7 +57,7 @@ if __name__ == "__main__":
     load_param_into_net(network, param_dict)
 
     # convert fusion network to quantization aware network
-    network = quant.convert_quant_network(network, quant_delay=0, bn_fold=False, freeze_bn=10000)
+    network = quant.convert_quant_network(network, quant_delay=900, per_channel=[True, False], symmetric=[False, False])
 
     # define network loss
     net_loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
