@@ -19,6 +19,8 @@
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
+#include "src/runtime/kernel/arm/nnacl/batchnorm_parameter.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/batchnorm.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_BATCHNORM_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_BATCHNORM_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_BATCHNORM_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_BATCHNORM_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/batchnorm_parameter.h"
@@ -24,14 +24,11 @@
 extern "C" {
 #endif
 
-void BatchNorm(float *output_ptr, const float *input_ptr, const float *mean_ptr, const float *variance_ptr, int task_id,
-               BatchNormParameter *param);
-
-void FusedBatchNorm(float *output_ptr, const float *input_ptr, const float *scale_ptr, const float *offest_ptr,
-                    const float *mean_ptr, const float *variance_ptr, int task_id, BatchNormParameter *param);
+void BatchNormInt8(int8_t *output_ptr, const int8_t *input_ptr, const float *alpha_ptr, const float *beta_ptr,
+                   int task_id, BatchNormParameter *param);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FUSED_BATCHNORM_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_BATCHNORM_H_
