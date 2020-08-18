@@ -163,5 +163,5 @@ kernel::LiteKernel *CpuConcatFp16KernelCreator(const std::vector<lite::tensor::T
   }
   return kernel;
 }
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Concat, CpuConcatFp16KernelCreator)
+// REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Concat, CpuConcatFp16KernelCreator)
 }  // namespace mindspore::kernel
