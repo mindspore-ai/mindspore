@@ -30,20 +30,25 @@ class ArithmeticFP16CPUKernel : public LiteKernel {
 
  public:
   ArithmeticFP16CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                      const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                      const mindspore::lite::PrimitiveC *primitive)
+                          const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                          const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
-        arithmeticParameter_ = reinterpret_cast<ArithmeticParameter *>(parameter);
-      }
+    arithmeticParameter_ = reinterpret_cast<ArithmeticParameter *>(parameter);
+  }
   ~ArithmeticFP16CPUKernel() override;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
   int DoArithmetic(int task_id);
+  int broadcast_run_(float16_t *input0, float16_t *input1, float16_t *output, int dim);
 
  private:
   void FreeTmpBuffer();
+  int break_pos_;
+  int outside_;
+  int out_thread_stride_;
+  int out_count_;
   float16_t *tile_data0_ = nullptr;
   float16_t *tile_data1_ = nullptr;
   float16_t *input0_fp16_ = nullptr;
