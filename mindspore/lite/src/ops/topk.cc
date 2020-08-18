@@ -53,10 +53,9 @@ int TopK::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
   if (!GetInferFlag()) {
     return RET_OK;
   }
-  auto topk_prim = this->primitive->value_as_TopK();
   MS_ASSERT(topk_prim != nullptr);
   auto out_shape = input->shape();
-  out_shape[out_shape.size() - 1] = topk_prim->k();
+  out_shape[out_shape.size() - 1] = GetK();
   output0->set_shape(out_shape);
   output1->set_shape(out_shape);
   return RET_OK;

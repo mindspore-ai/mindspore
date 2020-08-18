@@ -174,10 +174,6 @@ int StridedSlice::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::ve
   std::vector<int> output_shape;
   ndim_ = static_cast<int>(GetBegin().size());
 
-  MS_ASSERT(ndim_ == static_cast<int>(strided_slice_prim->end()->size()));
-  MS_ASSERT(ndim_ == static_cast<int>(strided_slice_prim->stride()->size()));
-  MS_ASSERT(ndim_ == static_cast<int>(input_shape.size()));
-
   for (int i = 0; i < ndim_; i++) {
     in_shape_.emplace_back(input_shape.at(i));
     begins_.emplace_back((GetBegin())[i]);

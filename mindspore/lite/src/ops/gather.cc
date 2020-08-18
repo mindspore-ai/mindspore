@@ -58,10 +58,10 @@ int Gather::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   if (!GetInferFlag()) {
     return RET_OK;
   }
-  auto gather_prim = this->primitive->value_as_Gather();
+
   MS_ASSERT(gather_prim != nullptr);
-  int axis = gather_prim->axis();
-  int batch_dims = gather_prim->batchDims();
+  int axis = GetAxis();
+  int batch_dims = GetBatchDims();
   if (axis < 0) {
     axis += input->shape().size();
   }

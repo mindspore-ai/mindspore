@@ -37,11 +37,8 @@ int OneHot::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor:
   if (this->primitive == nullptr) {
     return RET_NULL_PTR;
   }
-  auto one_hot_prim = this->primitive->value_as_OneHot();
-  if (one_hot_prim == nullptr) {
-    return RET_NULL_PTR;
-  }
-  int axis = one_hot_prim->axis();
+
+  int axis = GetAxis();
   // indices, depth, on_value, off_value
   if (inputs.size() != kOneHotInputNum) {
     MS_LOG(ERROR) << "OneHot got inputs num " << inputs.size() << ", should be " << kOneHotInputNum;

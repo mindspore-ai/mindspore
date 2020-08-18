@@ -62,12 +62,12 @@ int Reduce::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   if (this->primitive == nullptr) {
     return RET_NULL_PTR;
   }
-  auto reduce_prim = this->primitive->value_as_Reduce();
-  bool keep_dims = static_cast<bool>(reduce_prim->keepDims());
+
+  bool keep_dims = static_cast<bool>(GetKeepDims());
   std::vector<int> in_shape = input->shape();
   std::vector<int> out_shape;
-  const auto &axes = reduce_prim->axes();
-  auto num_axes = axes->size();
+  const auto &axes = GetAxes();
+  auto num_axes = axes.size();
   // reduce on all axes
   if (num_axes == 0) {
     if (keep_dims) {
@@ -83,7 +83,7 @@ int Reduce::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   for (size_t i = 0; i < in_shape.size(); i++) {
     bool reduce_axis = false;
     for (int idx = 0; idx < num_axes; ++idx) {
-      if (static_cast<size_t>((*axes)[idx]) == i || static_cast<size_t>((*axes)[idx] + in_shape.size()) == i) {
+      if (static_cast<size_t>(axes[idx]) == i || static_cast<size_t>(axes[idx] + in_shape.size()) == i) {
         reduce_axis = true;
         break;
       }

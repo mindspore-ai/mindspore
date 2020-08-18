@@ -38,10 +38,10 @@ int Unstack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor
   auto input = inputs.at(0);
   MS_ASSERT(input != nullptr);
   auto input_shape = input->shape();
-  auto prim = this->primitive->value_as_Unstack();
-  int axis = prim->axis() < 0 ? prim->axis() + input_shape.size() : prim->axis();
+
+  int axis = GetAxis() < 0 ? GetAxis() + input_shape.size() : GetAxis();
   if (axis < 0 || axis >= input_shape.size()) {
-    MS_LOG(ERROR) << "Invalid axis " << prim->axis();
+    MS_LOG(ERROR) << "Invalid axis " << GetAxis();
     return RET_PARAM_INVALID;
   }
   for (auto &out : outputs) {

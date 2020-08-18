@@ -61,9 +61,9 @@ int ROIPooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<te
   if (!GetInferFlag()) {
     return RET_OK;
   }
-  auto ROIPooling = this->primitive->value_as_ROIPooling();
-  auto new_h = ROIPooling->pooledH();
-  auto new_w = ROIPooling->pooledW();
+
+  auto new_h = GetPooledH();
+  auto new_w = GetPooledW();
   auto shape_data = roi->shape();
   std::vector<int> output_shape;
   output_shape.push_back(shape_data[0]);

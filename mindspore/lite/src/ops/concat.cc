@@ -55,10 +55,10 @@ int Concat::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   if (!GetInferFlag()) {
     return RET_OK;
   }
-  auto concat_prim = this->primitive->value_as_Concat();
+
   MS_ASSERT(concat_prim != nullptr);
   auto input0_shape = inputs_.at(0)->shape();
-  int axis = concat_prim->axis() < 0 ? concat_prim->axis() + input0_shape.size() : concat_prim->axis();
+  int axis = GetAxis() < 0 ? GetAxis() + input0_shape.size() : GetAxis();
   if (axis < 0 || axis >= input0_shape.size()) {
     MS_LOG(ERROR) << "Invalid axis: " << axis;
     return RET_PARAM_INVALID;

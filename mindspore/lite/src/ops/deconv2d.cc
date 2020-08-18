@@ -139,7 +139,6 @@ int DeConv2D::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vecto
   } else {
     MS_LOG(ERROR) << "unsupported pad mode for deconv";
   }
-
   std::vector<int> out_shape = {output_n, output_h, output_w, output_c};
   output->set_shape(out_shape);
   return 0;

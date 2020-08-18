@@ -61,18 +61,17 @@ int ArgMax::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   if (!GetInferFlag()) {
     return RET_OK;
   }
-  auto argmax_prim = this->primitive->value_as_ArgMax();
   std::vector<int> output_shape(input->shape());
   auto input_shape_size = input->shape().size();
-  int axis = argmax_prim->axis() < 0 ? argmax_prim->axis() + input_shape_size : argmax_prim->axis();
+  int axis = GetAxis() < 0 ? GetAxis() + input_shape_size : GetAxis();
   if (axis >= input_shape_size || axis < 0) {
-    MS_LOG(ERROR) << "Invalid axis " << argmax_prim->axis() << ", input shape size: " << input_shape_size;
+    MS_LOG(ERROR) << "Invalid axis " << GetAxis() << ", input shape size: " << input_shape_size;
     return RET_PARAM_INVALID;
   }
-  if (argmax_prim->topK() == 1 && !argmax_prim->keepDims()) {
+  if (GetTopK() == 1 && !GetKeepDims()) {
     output_shape.erase(output_shape.begin() + axis);
   } else {
-    output_shape[axis] = argmax_prim->topK();
+    output_shape[axis] = GetTopK();
   }
 
   output->set_shape(output_shape);

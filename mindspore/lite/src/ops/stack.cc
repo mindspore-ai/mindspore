@@ -62,11 +62,11 @@ int Stack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::
     return RET_OK;
   }
   auto input_shape = input->shape();
-  auto stack_prim = this->primitive->value_as_Stack();
+
   std::vector<int32_t> output_shape = input_shape;
-  int axis = stack_prim->axis() < 0 ? stack_prim->axis() + input_shape.size() : stack_prim->axis();
+  int axis = GetAxis() < 0 ? GetAxis() + input_shape.size() : GetAxis();
   if (axis < 0 || axis > input_shape.size()) {
-    MS_LOG(ERROR) << "Invalid axis " << stack_prim->axis();
+    MS_LOG(ERROR) << "Invalid axis " << GetAxis();
     return RET_PARAM_INVALID;
   }
   schema::Format input0_format = input->GetFormat();

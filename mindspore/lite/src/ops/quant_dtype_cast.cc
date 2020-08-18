@@ -40,9 +40,8 @@ int QuantDTypeCast::InferShape(std::vector<tensor::Tensor *> inputs_, std::vecto
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
-  auto param = primitive->value_as_QuantDTypeCast();
   MS_ASSERT(input->data_type() == param->srcT);
-  output->set_data_type(static_cast<TypeId>(param->dstT()));
+  output->set_data_type(static_cast<TypeId>(GetDstT()));
   output->SetFormat(input->GetFormat());
   if (!GetInferFlag()) {
     return RET_OK;

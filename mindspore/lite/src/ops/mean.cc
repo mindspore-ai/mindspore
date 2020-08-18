@@ -58,12 +58,12 @@ int Mean::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
   if (this->primitive == nullptr) {
     return RET_NULL_PTR;
   }
-  auto mean_prim = this->primitive->value_as_Mean();
-  bool keep_dims = static_cast<bool>(mean_prim->keepDims());
+
+  bool keep_dims = static_cast<bool>(GetKeepDims());
   std::vector<int> in_shape = input->shape();
   std::vector<int> out_shape;
-  const auto &axes = mean_prim->axis();
-  auto num_axes = axes->size();
+  const auto &axes = GetAxis();
+  auto num_axes = axes.size();
   // reduce on all axes
   if (num_axes == 0) {
     if (keep_dims) {
@@ -79,7 +79,7 @@ int Mean::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
   for (size_t i = 0; i < in_shape.size(); i++) {
     bool reduce_axis = false;
     for (int idx = 0; idx < num_axes; ++idx) {
-      if (static_cast<size_t>((*axes)[idx]) == i) {
+      if (static_cast<size_t>(axes[idx]) == i) {
         reduce_axis = true;
         break;
       }

@@ -42,13 +42,13 @@ int DepthToSpace::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::ve
   MS_ASSERT(this->primitive != nullptr);
   if (outputs.size() != kDepthToSpaceOutputNum || inputs.size() != kDepthToSpaceInputNum) {
     MS_LOG(ERROR) << "Invalid output/input size! output size: " << outputs.size() << ",input size: " << inputs.size();
-    return 1;
+    return RET_PARAM_INVALID;
   }
 
   auto input = inputs.at(0);
   if (input->GetFormat() != schema::Format_NHWC) {
     MS_LOG(ERROR) << "depth_to_space only support NHWC now!";
-    return 1;
+    return RET_FORMAT_ERR;
   }
   outputs[0]->set_data_type(input->data_type());
   outputs[0]->SetFormat(input->GetFormat());
@@ -58,14 +58,14 @@ int DepthToSpace::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::ve
   auto input_shape = input->shape();
   if (input_shape.size() != kDimension_4d) {
     MS_LOG(ERROR) << "input shape dimension size should == " << kDimension_4d;
-    return 1;
+    return RET_PARAM_INVALID;
   }
 
   int32_t block_size = GetBlockSize();
   if (input_shape[NHWC_C] % (block_size * block_size) != 0 || input_shape[NHWC_C] == 0) {
     MS_LOG(ERROR) << "input dimension c size " << input_shape[NHWC_C] << " should be mulitple of block_size("
                   << block_size << ") * block_size)!";
-    return 1;
+    return RET_PARAM_INVALID;
   }
   std::vector<int32_t> output_shape(input_shape.size());
   output_shape[NHWC_N] = input_shape[NHWC_N];

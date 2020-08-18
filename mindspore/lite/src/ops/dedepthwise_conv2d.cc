@@ -154,7 +154,7 @@ int DeDepthwiseConv2D::InferShape(std::vector<lite::tensor::Tensor *> inputs_,
   out_shape.at(2) = output_w;
   if (GetChannelMultiplier() * input_channel != weight->shape()[0]) {
     MS_LOG(ERROR) << "Conv depthwise only support group equals output channel.";
-    return 1;
+    return RET_ERROR;
   }
   out_shape.at(3) = weight->shape()[0] * weight->shape()[3];  // in_channel * out_channel
 
