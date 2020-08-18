@@ -36,7 +36,7 @@ class SubGraphOpenCLKernel : public SubGraphKernel {
                                 const std::vector<kernel::LiteKernel *> inKernels,
                                 const std::vector<kernel::LiteKernel *> outKernels,
                                 const std::vector<kernel::LiteKernel *> nodes)
-    : SubGraphKernel(inputs, outputs, inKernels, outKernels, nodes, nullptr, nullptr) {}
+      : SubGraphKernel(inputs, outputs, inKernels, outKernels, nodes, nullptr, nullptr) {}
   ~SubGraphOpenCLKernel() override;
 
   int Init() override;
@@ -48,10 +48,13 @@ class SubGraphOpenCLKernel : public SubGraphKernel {
  protected:
   int MallocTensorWithReuse();
   int GenToFormatOp(const std::vector<lite::tensor::Tensor *> &in_tensors,
-                    const std::vector<kernel::LiteKernel *> in_kernels,
+                    const std::vector<std::vector<kernel::LiteKernel *>> in_kernels,
                     std::vector<lite::tensor::Tensor *> *out_tensors,
                     std::vector<OpenCLToFormatParameter *> *out_parameters, std::vector<LiteKernel *> *out_convert_ops,
                     OpenCLMemType mem_type);
+  int GetKernelFromToTensor(const std::vector<lite::tensor::Tensor *> &in_tensors,
+                            const std::vector<kernel::LiteKernel *> &in_kernels,
+                            std::vector<std::vector<kernel::LiteKernel *>> *out_kernels, bool is_from);
 
  private:
   SubGraphOpenCLParameter *subgraph_ocl_parameter_;

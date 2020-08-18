@@ -345,7 +345,7 @@ int OpenCLRuntime::RunKernel(const cl_kernel &kernel, const std::vector<size_t> 
     internal_global_ws[i] = ROUND_UP(global[i], local[i]);
   }
 
-  MS_LOG(INFO) << "global size: " << global.size() << ", local size: " << local.size();
+  MS_LOG(DEBUG) << "global size: " << global.size() << ", local size: " << local.size();
   for (size_t i = 0; i < global.size(); i++) {
     MS_LOG(DEBUG) << "global[" << i << "] = " << global[i];
   }
@@ -367,7 +367,7 @@ int OpenCLRuntime::RunKernel(const cl_kernel &kernel, const std::vector<size_t> 
     MS_LOG(ERROR) << "Kernel execute failed:" << CLErrorCode(error);
     return 1;
   }
-  MS_LOG(INFO) << "RunKernel success!";
+  MS_LOG(DEBUG) << "RunKernel success!";
   return 0;
 }
 
@@ -383,7 +383,7 @@ int OpenCLRuntime::RunKernel(const cl::Kernel &kernel, const std::vector<size_t>
     internal_global_ws[i] = ROUND_UP(global[i], local[i]);
   }
 
-  MS_LOG(INFO) << "global size: " << global.size() << ", local size: " << local.size();
+  MS_LOG(DEBUG) << "global size: " << global.size() << ", local size: " << local.size();
   for (size_t i = 0; i < global.size(); i++) {
     MS_LOG(DEBUG) << "global[" << i << "] = " << global[i];
   }
@@ -412,7 +412,7 @@ int OpenCLRuntime::RunKernel(const cl::Kernel &kernel, const std::vector<size_t>
       local_range = cl::NDRange(local[0], local[1], local[2]);
     }
   } else {
-    MS_LOG(INFO) << "Not supported NDRange!";
+    MS_LOG(ERROR) << "Not supported NDRange!";
     return 1;
   }
 
@@ -422,7 +422,7 @@ int OpenCLRuntime::RunKernel(const cl::Kernel &kernel, const std::vector<size_t>
     MS_LOG(ERROR) << "Kernel execute failed:" << CLErrorCode(err);
     return 1;
   }
-  MS_LOG(INFO) << "RunKernel success!";
+  MS_LOG(DEBUG) << "RunKernel success!";
 #if MS_OPENCL_PROFILE
   event.wait();
   cl_ulong time_start;
