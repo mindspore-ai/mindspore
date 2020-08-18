@@ -23,11 +23,16 @@
 #include "src/lite_kernel.h"
 #include "schema/model_generated.h"
 
+using mindspore::kernel::kKernelArch_MAX;
+using mindspore::kernel::kKernelArch_MIN;
+using mindspore::schema::PrimitiveType_MAX;
+using mindspore::schema::PrimitiveType_MIN;
+
 namespace mindspore::lite {
 class KernelRegistry {
  public:
-  KernelRegistry();
-  virtual ~KernelRegistry();
+  KernelRegistry() = default;
+  virtual ~KernelRegistry() = default;
 
   static KernelRegistry *GetInstance();
   int Init();
@@ -44,11 +49,11 @@ class KernelRegistry {
                                 const Context *ctx, const kernel::KernelKey &key);
 
  protected:
-  kernel::KernelCreator *creator_arrays_ = nullptr;
-  size_t array_size_;
-  int device_type_length_;
-  int data_type_length_;
-  int op_type_length_;
+  static const int device_type_length_{kKernelArch_MAX - kKernelArch_MIN + 1};
+  static const int data_type_length_{kNumberTypeEnd - kNumberTypeBegin + 1};
+  static const int op_type_length_{PrimitiveType_MAX - PrimitiveType_MIN + 1};
+  static const int array_size_{device_type_length_ * data_type_length_ * op_type_length_};
+  kernel::KernelCreator creator_arrays_[array_size_] = {0};
 };
 
 class KernelRegistrar {
