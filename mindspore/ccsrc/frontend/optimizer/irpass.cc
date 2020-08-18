@@ -95,6 +95,10 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   incorporate_env_getitem_ =
     MakeSubstitution(std::make_shared<IncorporateEnvGetitem>(), "incorporate_env_get_item", prim::kPrimEnvGetItem);
 
+  incorporate_env_getitem_switch_layer_ =
+    MakeSubstitution(std::make_shared<IncorporateEnvGetitemSwitchLayer>(), "incorporate_env_getitem_switch_layer",
+                     prim::kPrimEnvGetItem);
+
   // Ref eliminate
   make_ref_eliminate_ =
     MakeSubstitution(std::make_shared<MakeRefEliminater>(), "make_ref_eliminate", prim::kPrimMakeRef);
