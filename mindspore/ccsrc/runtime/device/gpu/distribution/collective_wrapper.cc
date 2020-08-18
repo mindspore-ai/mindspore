@@ -48,3 +48,8 @@ ncclResult_t ReduceScatter(const void *input_addr, void *output_addr, size_t cou
                            ncclRedOp_t reduce_type, cudaStream_t stream, const std::string &group) {
   return NCCLWrapper::instance().ReduceScatter(input_addr, output_addr, count, data_type, reduce_type, stream, group);
 }
+
+ncclResult_t Broadcast(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type, int root,
+                       cudaStream_t stream, const std::string &group) {
+  return NCCLWrapper::instance().Broadcast(input_addr, output_addr, count, data_type, root, stream, group);
+}

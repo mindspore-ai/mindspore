@@ -45,3 +45,6 @@ extern "C" EXPORT_WRAPPER ncclResult_t AllGather(const void *input_addr, void *o
 extern "C" EXPORT_WRAPPER ncclResult_t ReduceScatter(const void *input_addr, void *output_addr, size_t count,
                                                      ncclDataType_t data_type, ncclRedOp_t reduce_type,
                                                      cudaStream_t stream, const std::string &group);
+extern "C" EXPORT_WRAPPER ncclResult_t Broadcast(const void *input_addr, void *output_addr, size_t count,
+                                                 ncclDataType_t data_type, int root, cudaStream_t stream,
+                                                 const std::string &group);
