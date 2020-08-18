@@ -509,6 +509,8 @@ def check_random_affine(method):
             if len(scale) == 2:
                 for i, s in enumerate(scale):
                     check_positive(s, "scale[{}]".format(i))
+                if scale[0] > scale[1]:
+                    raise ValueError("Input scale[1] must be equal to or greater than scale[0].")
             else:
                 raise TypeError("scale should be a list or tuple of length 2.")
 
@@ -519,6 +521,11 @@ def check_random_affine(method):
             else:
                 if len(shear) not in (2, 4):
                     raise TypeError("shear must be of length 2 or 4.")
+                if len(shear) == 2 and shear[0] > shear[1]:
+                    raise ValueError("Input shear[1] must be equal to or greater than shear[0]")
+                if len(shear) == 4 and (shear[0] > shear[1] or shear[2] > shear[3]):
+                    raise ValueError("Input shear[1] must be equal to or greater than shear[0] and "
+                                     "shear[3] must be equal to or greater than shear[2].")
 
         type_check(resample, (Inter,), "resample")
 
