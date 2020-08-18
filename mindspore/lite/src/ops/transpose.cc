@@ -26,7 +26,11 @@ int Transpose::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<ten
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
-
+  output->set_data_type(input->data_type());
+  output->SetFormat(input->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   MS_ASSERT(inputs_.size() == kSingleNum);
   MS_ASSERT(outputs_.size() == kSingleNum);
   auto transpore_prim = this->primitive->value_as_Transpose();
@@ -46,8 +50,6 @@ int Transpose::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<ten
   }
 
   output->set_shape(out_shape);
-  output->set_data_type(input->data_type());
-  output->SetFormat(input->GetFormat());
 
   return RET_OK;
 }

@@ -32,6 +32,11 @@ int Slice::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::
     return RET_PARAM_INVALID;
   }
   auto input = inputs.at(0);
+  outputs[0]->set_data_type(input->data_type());
+  outputs[0]->SetFormat(input->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   auto input_shape = input->shape();
   auto slice_prim = this->primitive->value_as_Slice();
   std::vector<int32_t> slice_begin(slice_prim->begin()->begin(), slice_prim->begin()->end());
@@ -61,9 +66,6 @@ int Slice::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::
   }
 
   outputs[0]->set_shape(output_shape);
-  outputs[0]->set_data_type(input->data_type());
-  outputs[0]->SetFormat(input->GetFormat());
-
   return RET_OK;
 }
 }  // namespace mindspore::lite

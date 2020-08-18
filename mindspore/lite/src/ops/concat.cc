@@ -34,6 +34,11 @@ int Concat::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
     MS_LOG(ERROR) << "output size is error";
     return RET_PARAM_INVALID;
   }
+  output->set_data_type(input0->data_type());
+  output->SetFormat(input0->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   auto concat_prim = this->primitive->value_as_Concat();
   MS_ASSERT(concat_prim != nullptr);
   auto input0_shape = inputs_.at(0)->shape();
@@ -74,9 +79,6 @@ int Concat::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   auto output_shape = input0_shape;
   output_shape[axis] = output_axis_dim;
   outputs_[0]->set_shape(output_shape);
-  output->set_data_type(input0->data_type());
-  output->SetFormat(input0->GetFormat());
-
   return RET_OK;
 }
 }  // namespace mindspore::lite

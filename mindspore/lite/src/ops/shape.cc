@@ -37,6 +37,15 @@ int Shape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor:
 
   auto in_tensor = inputs_.front();
   auto out_tensor = outputs_.front();
+  auto ret_dtype = out_tensor->set_data_type(kNumberTypeInt32);
+  if (ret_dtype != in_tensor->data_type()) {
+    MS_LOG(ERROR) << "Set datatype fails.";
+    return RET_ERROR;
+  }
+
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   std::vector<int> out_shape;
   out_shape.push_back(static_cast<int>(in_tensor->shape().size()));
 
@@ -45,18 +54,6 @@ int Shape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor:
     MS_LOG(ERROR) << "Set shape fails.";
     return RET_ERROR;
   }
-  auto ret_dtype = out_tensor->set_data_type(in_tensor->data_type());
-  if (ret_dtype != in_tensor->data_type()) {
-    MS_LOG(ERROR) << "Set datatype fails.";
-    return RET_ERROR;
-  }
-
-  // todo
-  // auto ret_data = out_tensor->MallocData();
-  // if (ret_data != 0) {
-  //   MS_LOG(ERROR) << "Allocate memory fails.";
-  //   return RET_ERROR;
-  // }
 
   return RET_OK;
 }

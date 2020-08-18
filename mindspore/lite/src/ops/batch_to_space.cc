@@ -39,6 +39,11 @@ int BatchToSpace::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<t
     MS_LOG(ERROR) << "batch_to_space only support NHWC now!";
     return RET_FORMAT_ERR;
   }
+  outputs[0]->SetFormat(input->GetFormat());
+  outputs[0]->set_data_type(input->data_type());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   auto input_shape = input->shape();
   if (input_shape.size() != kDimension_4d) {
     MS_LOG(ERROR) << "input shape dimension size should == " << kDimension_4d;
@@ -86,9 +91,7 @@ int BatchToSpace::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<t
   output_shape[kNHWC_w_index] = input_shape[kNHWC_w_index] * block_shape->Get(1) - crops->Get(2) - crops->Get(3);
   output_shape[kNHWC_c_index] = input_shape[kNHWC_c_index];
 
-  outputs[0]->SetFormat(input->GetFormat());
   outputs[0]->set_shape(output_shape);
-  outputs[0]->set_data_type(input->data_type());
   return RET_OK;
 }
 }  // namespace mindspore::lite

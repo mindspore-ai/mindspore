@@ -32,6 +32,11 @@ int Unsqueeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<ten
   if (outputs_.size() != kSingleNum) {
     MS_LOG(ERROR) << "output size is invalid";
   }
+  output->set_data_type(input->data_type());
+  output->SetFormat(input->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   auto unsqueeze_prim = this->primitive->value_as_Unsqueeze();
   auto dims = unsqueeze_prim->axis()->data();
   auto in_shape = input->shape();
@@ -65,9 +70,7 @@ int Unsqueeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<ten
     }
   }
 
-  output->SetFormat(input->GetFormat());
   output->set_shape(out_shape);
-  output->set_data_type(input->data_type());
   return RET_OK;
 }
 }  // namespace mindspore::lite

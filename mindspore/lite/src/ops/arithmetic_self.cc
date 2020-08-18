@@ -26,10 +26,12 @@ int ArithmeticSelf::InferShape(std::vector<tensor::Tensor *> inputs_, std::vecto
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
-
   output->SetFormat(input->GetFormat());
-  output->set_shape(input->shape());
   output->set_data_type(input->data_type());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
+  output->set_shape(input->shape());
 
   return RET_OK;
 }
