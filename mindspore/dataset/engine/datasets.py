@@ -2343,8 +2343,10 @@ class ConcatDataset(DatasetOp):
             Number, number of batches.
         """
         if self.dataset_size is None:
-            children_sizes = [c.get_dataset_size() for c in self.children]
-            self.dataset_size = sum(children_sizes)
+            num_rows = 0
+            for _ in self.create_dict_iterator():
+                num_rows += 1
+            self.dataset_size = num_rows
         return self.dataset_size
 
     def use_sampler(self, sampler):
