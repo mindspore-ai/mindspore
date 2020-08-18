@@ -154,13 +154,13 @@ uint32_t SoftJpegd::ConfigVpcInputData(struct VpcInfo *vpc_input_info, int32_t *
   if ((vpc_input_info->format == INPUT_YUV420_PLANNER || vpc_input_info->format == INPUT_YUV422_PLANNER) &&
       (*width % num2 == 1)) {
     *width = reinterpret_cast<int32_t>(AlignUp(*width, num2));
-    JPEGD_LOGW("vpc width needs align up %d, height is %d.", width, height);
+    JPEGD_LOGW("vpc width needs align up %d, height is %d.", *width, *height);
   }
 
   if ((vpc_input_info->format == INPUT_YUV420_PLANNER || vpc_input_info->format == INPUT_YUV422_PLANNER) &&
       (*height % num2 == 1)) {
     *height = reinterpret_cast<int32_t>(AlignUp(*height, num2));
-    JPEGD_LOGW("vpc height needs align up %d, height is %d.", width, height);
+    JPEGD_LOGW("vpc height needs align up %d, height is %d.", *width, *height);
   }
 
   vpc_input_info->addr = soft_decode_out_buf_;
