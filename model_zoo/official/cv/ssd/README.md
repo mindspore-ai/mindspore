@@ -66,7 +66,7 @@ To train the model, run `train.py`. If the `mindrecord_dir` is empty, it will ge
     sh run_distribute_train.sh 8 500 0.2 coco /data/hccl.json
     ```
 
-    The input parameters are device numbers, epoch size, learning rate, dataset mode and [hccl json configuration file](https://www.mindspore.cn/tutorial/en/master/advanced_use/distributed_training.html). **It is better to use absolute path.** 
+    The input parameters are device numbers, epoch size, learning rate, dataset mode and [hccl json configuration file](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools). **It is better to use absolute path.** 
 
 You will get the loss value of each step as following:
 
