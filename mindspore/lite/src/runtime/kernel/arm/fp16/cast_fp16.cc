@@ -76,7 +76,7 @@ int CastFp16CPUKernel::DoCast(int thread_id) {
                        reinterpret_cast<float *>(output_data) + offset, data_num);
       break;
     default:
-      MS_LOG(ERROR) << "Unsupport input data type " << input->data_type();
+      MS_LOG(ERROR) << "Unsupported input data type " << input->data_type();
       return RET_ERROR;
   }
   return RET_OK;

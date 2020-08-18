@@ -61,7 +61,7 @@ def create_dataset(dataset_path, do_train, config, device_target, repeat_num=1, 
         else:
             ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True)
     else:
-        raise ValueError("Unsupport device_target.")
+        raise ValueError("Unsupported device_target.")
 
     resize_height = config.image_height
 

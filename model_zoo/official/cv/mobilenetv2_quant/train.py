@@ -206,3 +206,5 @@ if __name__ == '__main__':
         train_on_ascend()
     elif args_opt.device_target == "GPU":
         train_on_gpu()
+    else:
+        raise ValueError("Unsupported device target.")

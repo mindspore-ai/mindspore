@@ -139,7 +139,7 @@ def _shape_check(shape_a, shape_b, shape_bias, src_dtype, trans_a, trans_b):
             if [i for i in shape_bias[-2:]] != [m_shape, n_shape]:
                 raise RuntimeError("non broadcast bias shape must be same as output shape")
         else:
-            raise RuntimeError("unsupport input shape now for batch bias case")
+            raise RuntimeError("Unsupported input shape now for batch bias case")
 
 
 def _get_bias(shape_bias):

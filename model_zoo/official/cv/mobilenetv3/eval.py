@@ -30,29 +30,29 @@ from src.mobilenetV3 import mobilenet_v3_large
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
-parser.add_argument('--platform', type=str, default=None, help='run platform')
+parser.add_argument('--device_target', type=str, default=None, help='run device_target')
 args_opt = parser.parse_args()
 
 
 if __name__ == '__main__':
-    config_platform = None
-    if args_opt.platform == "Ascend":
-        config_platform = config_ascend
+    config = None
+    if args_opt.device_target == "Ascend":
+        config = config_ascend
         device_id = int(os.getenv('DEVICE_ID'))
         context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
                             device_id=device_id, save_graphs=False)
-    elif args_opt.platform == "GPU":
-        config_platform = config_gpu
+    elif args_opt.device_target == "GPU":
+        config = config_gpu
         context.set_context(mode=context.GRAPH_MODE,
                             device_target="GPU", save_graphs=False)
     else:
-        raise ValueError("Unsupport platform.")
+        raise ValueError("Unsupported device_target.")
 
     loss = nn.SoftmaxCrossEntropyWithLogits(
         is_grad=False, sparse=True, reduction='mean')
-    net = mobilenet_v3_large(num_classes=config_platform.num_classes)
+    net = mobilenet_v3_large(num_classes=config.num_classes)
 
-    if args_opt.platform == "Ascend":
+    if args_opt.device_target == "Ascend":
         net.to_float(mstype.float16)
         for _, cell in net.cells_and_names():
             if isinstance(cell, nn.Dense):
@@ -60,9 +60,9 @@ if __name__ == '__main__':
 
     dataset = create_dataset(dataset_path=args_opt.dataset_path,
                              do_train=False,
-                             config=config_platform,
-                             platform=args_opt.platform,
-                             batch_size=config_platform.batch_size)
+                             config=config,
+                             device_target=args_opt.device_target,
+                             batch_size=config.batch_size)
     step_size = dataset.get_dataset_size()
 
     if args_opt.checkpoint_path:

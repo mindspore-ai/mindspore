@@ -43,7 +43,7 @@ run_ascend()
             --training_script=${BASEPATH}/../train.py \
             --dataset_path=$5 \
             --pre_trained=$6 \
-            --platform=$1 &> ../train.log &  # dataset train folder
+            --device_target=$1 &> ../train.log &  # dataset train folder
 }
 
 run_gpu()
@@ -73,7 +73,7 @@ run_gpu()
     mpirun -n $2 --allow-run-as-root \
     python ${BASEPATH}/../train.py \
         --dataset_path=$4 \
-        --platform=$1 \
+        --device_target=$1 \
         &> ../train.log &  # dataset train folder
 }
 
@@ -91,6 +91,6 @@ if [ $1 = "Ascend" ] ; then
 elif [ $1 = "GPU" ] ; then
     run_gpu "$@"
 else
-    echo "Unsupported platform."
+    echo "Unsupported device_target."
 fi;
 

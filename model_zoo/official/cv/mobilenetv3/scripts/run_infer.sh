@@ -15,8 +15,7 @@
 # ============================================================================
 if [ $# != 3 ]
 then
-    echo "Ascend: sh run_infer.sh [PLATFORM] [DATASET_PATH] [CHECKPOINT_PATH] \
-          GPU: sh run_infer.sh [PLATFORM] [DATASET_PATH] [CHECKPOINT_PATH]"
+    echo "GPU: sh run_infer.sh [DEVICE_TARGET] [DATASET_PATH] [CHECKPOINT_PATH]"
 exit 1
 fi
 
@@ -49,7 +48,7 @@ cd ../eval || exit
 
 # luanch
 python ${BASEPATH}/../eval.py \
-        --platform=$1 \
+        --device_target=$1 \
         --dataset_path=$2 \
         --checkpoint_path=$3 \
         &> ../infer.log &  # dataset val folder path

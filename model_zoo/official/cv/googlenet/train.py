@@ -88,7 +88,7 @@ if __name__ == '__main__':
             context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                               mirror_mean=True)
     else:
-        raise ValueError("Unsupport platform.")
+        raise ValueError("Unsupported platform.")
 
     dataset = create_dataset(cfg.data_path, 1)
     batch_num = dataset.get_dataset_size()

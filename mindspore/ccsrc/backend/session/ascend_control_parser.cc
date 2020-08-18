@@ -384,7 +384,7 @@ std::vector<std::pair<KernelGraphPtr, std::vector<AnfNodePtr>>> AscendControlPar
       ret.emplace_back(target_graph, args);
     }
   } else {
-    MS_LOG(EXCEPTION) << "Unsupport call node: " << cnode->DebugString(5);
+    MS_LOG(EXCEPTION) << "Unsupported call node: " << cnode->DebugString(5);
   }
   return ret;
 }

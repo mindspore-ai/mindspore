@@ -159,7 +159,7 @@ void convertDataItem2Scalar(const char *str_data_ptr, const string &tensor_type,
   } else if (type_id == TypeId::kNumberTypeFloat64) {
     PrintScalarToString<double>(str_data_ptr, tensor_type, buf);
   } else {
-    MS_LOG(EXCEPTION) << "Cannot print scalar because of unsupport data type: " << tensor_type << ".";
+    MS_LOG(EXCEPTION) << "Cannot print scalar because of unsupported data type: " << tensor_type << ".";
   }
 }
 

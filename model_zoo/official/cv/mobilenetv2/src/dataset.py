@@ -21,7 +21,7 @@ import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
 
-def create_dataset(dataset_path, do_train, config, platform, repeat_num=1, batch_size=32):
+def create_dataset(dataset_path, do_train, config, device_target, repeat_num=1, batch_size=32):
     """
     create a train or eval dataset
 
@@ -34,7 +34,7 @@ def create_dataset(dataset_path, do_train, config, platform, repeat_num=1, batch
     Returns:
         dataset
     """
-    if platform == "Ascend":
+    if device_target == "Ascend":
         rank_size = int(os.getenv("RANK_SIZE"))
         rank_id = int(os.getenv("RANK_ID"))
         if rank_size == 1:
@@ -42,7 +42,7 @@ def create_dataset(dataset_path, do_train, config, platform, repeat_num=1, batch
         else:
             ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True,
                                          num_shards=rank_size, shard_id=rank_id)
-    elif platform == "GPU":
+    elif device_target == "GPU":
         if do_train:
             from mindspore.communication.management import get_rank, get_group_size
             ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True,
@@ -50,7 +50,7 @@ def create_dataset(dataset_path, do_train, config, platform, repeat_num=1, batch
         else:
             ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True)
     else:
-        raise ValueError("Unsupport platform.")
+        raise ValueError("Unsupported device_target.")
 
     resize_height = config.image_height
     resize_width = config.image_width

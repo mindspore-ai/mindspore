@@ -22,7 +22,6 @@ import numpy as np
 from mindspore import context
 from mindspore import Tensor
 from mindspore import nn
-from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.loss.loss import _Loss
@@ -38,7 +37,7 @@ from mindspore.communication.management import init, get_group_size, get_rank
 
 from src.dataset import create_dataset
 from src.lr_generator import get_lr
-from src.config import config_gpu, config_ascend
+from src.config import config_gpu
 from src.mobilenetV3 import mobilenet_v3_large
 
 random.seed(1)
@@ -48,10 +47,10 @@ de.config.set_seed(1)
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
 parser.add_argument('--pre_trained', type=str, default=None, help='Pretrained checkpoint path')
-parser.add_argument('--platform', type=str, default=None, help='run platform')
+parser.add_argument('--device_target', type=str, default=None, help='run device_target')
 args_opt = parser.parse_args()
 
-if args_opt.platform == "Ascend":
+if args_opt.device_target == "Ascend":
     device_id = int(os.getenv('DEVICE_ID'))
     rank_id = int(os.getenv('RANK_ID'))
     rank_size = int(os.getenv('RANK_SIZE'))
@@ -61,7 +60,7 @@ if args_opt.platform == "Ascend":
                         device_target="Ascend",
                         device_id=device_id,
                         save_graphs=False)
-elif args_opt.platform == "GPU":
+elif args_opt.device_target == "GPU":
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="GPU",
                         save_graphs=False)
@@ -70,7 +69,7 @@ elif args_opt.platform == "GPU":
                                       parallel_mode=ParallelMode.DATA_PARALLEL,
                                       mirror_mean=True)
 else:
-    raise ValueError("Unsupport platform.")
+    raise ValueError("Unsupported device_target.")
 
 
 class CrossEntropyWithLabelSmooth(_Loss):
@@ -161,7 +160,7 @@ class Monitor(Callback):
 
 
 if __name__ == '__main__':
-    if args_opt.platform == "GPU":
+    if args_opt.device_target == "GPU":
         # train on gpu
         print("train args: ", args_opt)
         print("cfg: ", config_gpu)
@@ -180,7 +179,7 @@ if __name__ == '__main__':
         dataset = create_dataset(dataset_path=args_opt.dataset_path,
                                  do_train=True,
                                  config=config_gpu,
-                                 platform=args_opt.platform,
+                                 device_target=args_opt.device_target,
                                  repeat_num=1,
                                  batch_size=config_gpu.batch_size)
         step_size = dataset.get_dataset_size()
@@ -213,64 +212,3 @@ if __name__ == '__main__':
             cb += [ckpt_cb]
         # begine train
         model.train(epoch_size, dataset, callbacks=cb)
-    elif args_opt.platform == "Ascend":
-        # train on ascend
-        print("train args: ", args_opt, "\ncfg: ", config_ascend,
-              "\nparallel args: rank_id {}, device_id {}, rank_size {}".format(rank_id, device_id, rank_size))
-
-        if run_distribute:
-            context.set_auto_parallel_context(device_num=rank_size, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              parameter_broadcast=True, mirror_mean=True)
-            auto_parallel_context().set_all_reduce_fusion_split_indices([140])
-            init()
-
-        epoch_size = config_ascend.epoch_size
-        net = mobilenet_v3_large(num_classes=config_ascend.num_classes)
-        net.to_float(mstype.float16)
-        for _, cell in net.cells_and_names():
-            if isinstance(cell, nn.Dense):
-                cell.to_float(mstype.float32)
-        if config_ascend.label_smooth > 0:
-            loss = CrossEntropyWithLabelSmooth(
-                smooth_factor=config_ascend.label_smooth, num_classes=config.num_classes)
-        else:
-            loss = SoftmaxCrossEntropyWithLogits(
-                is_grad=False, sparse=True, reduction='mean')
-        dataset = create_dataset(dataset_path=args_opt.dataset_path,
-                                 do_train=True,
-                                 config=config_ascend,
-                                 platform=args_opt.platform,
-                                 repeat_num=1,
-                                 batch_size=config_ascend.batch_size)
-        step_size = dataset.get_dataset_size()
-        if args_opt.pre_trained:
-            param_dict = load_checkpoint(args_opt.pre_trained)
-            load_param_into_net(net, param_dict)
-
-        loss_scale = FixedLossScaleManager(
-            config_ascend.loss_scale, drop_overflow_update=False)
-        lr = Tensor(get_lr(global_step=0,
-                           lr_init=0,
-                           lr_end=0,
-                           lr_max=config_ascend.lr,
-                           warmup_epochs=config_ascend.warmup_epochs,
-                           total_epochs=epoch_size,
-                           steps_per_epoch=step_size))
-        opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config_ascend.momentum,
-                       config_ascend.weight_decay, config_ascend.loss_scale)
-
-        model = Model(net, loss_fn=loss, optimizer=opt,
-                      loss_scale_manager=loss_scale)
-
-        cb = None
-        if rank_id == 0:
-            cb = [Monitor(lr_init=lr.asnumpy())]
-            if config_ascend.save_checkpoint:
-                config_ck = CheckpointConfig(save_checkpoint_steps=config_ascend.save_checkpoint_epochs * step_size,
-                                             keep_checkpoint_max=config_ascend.keep_checkpoint_max)
-                ckpt_cb = ModelCheckpoint(
-                    prefix="mobilenetV3", directory=config_ascend.save_checkpoint_path, config=config_ck)
-                cb += [ckpt_cb]
-        model.train(epoch_size, dataset, callbacks=cb)
-    else:
-        raise Exception

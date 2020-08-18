@@ -1085,7 +1085,7 @@ Status DvppJsonConfigParser::InitWithJsonConfigImp(const std::string &json_confi
       return FAILED;
     }
   } else {
-    MSI_LOG_ERROR << "Unsupport op name " << op_name << ", expect resize, crop or crop_and_paste";
+    MSI_LOG_ERROR << "Unsupported op name " << op_name << ", expect resize, crop or crop_and_paste";
     return FAILED;
   }
   return SUCCESS;

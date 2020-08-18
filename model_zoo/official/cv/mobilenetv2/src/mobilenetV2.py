@@ -119,15 +119,15 @@ class ConvBNReLU(nn.Cell):
         >>> ConvBNReLU(16, 256, kernel_size=1, stride=1, groups=1)
     """
 
-    def __init__(self, platform, in_planes, out_planes, kernel_size=3, stride=1, groups=1):
+    def __init__(self, device_target, in_planes, out_planes, kernel_size=3, stride=1, groups=1):
         super(ConvBNReLU, self).__init__()
         padding = (kernel_size - 1) // 2
         if groups == 1:
             conv = nn.Conv2d(in_planes, out_planes, kernel_size, stride, pad_mode='pad', padding=padding)
         else:
-            if platform == "Ascend":
+            if device_target == "Ascend":
                 conv = DepthwiseConv(in_planes, kernel_size, stride, pad_mode='pad', pad=padding)
-            elif platform == "GPU":
+            elif device_target == "GPU":
                 conv = nn.Conv2d(in_planes, out_planes, kernel_size, stride,
                                  group=in_planes, pad_mode='pad', padding=padding)
 
@@ -156,7 +156,7 @@ class InvertedResidual(nn.Cell):
         >>> ResidualBlock(3, 256, 1, 1)
     """
 
-    def __init__(self, platform, inp, oup, stride, expand_ratio):
+    def __init__(self, device_target, inp, oup, stride, expand_ratio):
         super(InvertedResidual, self).__init__()
         assert stride in [1, 2]
 
@@ -165,10 +165,10 @@ class InvertedResidual(nn.Cell):
 
         layers = []
         if expand_ratio != 1:
-            layers.append(ConvBNReLU(platform, inp, hidden_dim, kernel_size=1))
+            layers.append(ConvBNReLU(device_target, inp, hidden_dim, kernel_size=1))
         layers.extend([
             # dw
-            ConvBNReLU(platform, hidden_dim, hidden_dim,
+            ConvBNReLU(device_target, hidden_dim, hidden_dim,
                        stride=stride, groups=hidden_dim),
             # pw-linear
             nn.Conv2d(hidden_dim, oup, kernel_size=1,
@@ -204,7 +204,7 @@ class MobileNetV2(nn.Cell):
         >>> MobileNetV2(num_classes=1000)
     """
 
-    def __init__(self, platform, num_classes=1000, width_mult=1.,
+    def __init__(self, device_target, num_classes=1000, width_mult=1.,
                  has_dropout=False, inverted_residual_setting=None, round_nearest=8):
         super(MobileNetV2, self).__init__()
         block = InvertedResidual
@@ -227,16 +227,16 @@ class MobileNetV2(nn.Cell):
         # building first layer
         input_channel = _make_divisible(input_channel * width_mult, round_nearest)
         self.out_channels = _make_divisible(last_channel * max(1.0, width_mult), round_nearest)
-        features = [ConvBNReLU(platform, 3, input_channel, stride=2)]
+        features = [ConvBNReLU(device_target, 3, input_channel, stride=2)]
         # building inverted residual blocks
         for t, c, n, s in self.cfgs:
             output_channel = _make_divisible(c * width_mult, round_nearest)
             for i in range(n):
                 stride = s if i == 0 else 1
-                features.append(block(platform, input_channel, output_channel, stride, expand_ratio=t))
+                features.append(block(device_target, input_channel, output_channel, stride, expand_ratio=t))
                 input_channel = output_channel
         # building last several layers
-        features.append(ConvBNReLU(platform, input_channel, self.out_channels, kernel_size=1))
+        features.append(ConvBNReLU(device_target, input_channel, self.out_channels, kernel_size=1))
         # make it nn.CellList
         self.features = nn.SequentialCell(features)
         # mobilenet head

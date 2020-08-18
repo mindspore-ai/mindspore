@@ -49,7 +49,7 @@ int Cast::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<li
     return 1;
   }
   if (kSupportDataType.find(input->data_type()) == kSupportDataType.end()) {
-    MS_LOG(ERROR) << "Unsupport input data type " << input->data_type();
+    MS_LOG(ERROR) << "Unsupported input data type " << input->data_type();
     return 1;
   }
   if (GetDstT() != kNumberTypeFloat && GetDstT() != kNumberTypeFloat32) {
