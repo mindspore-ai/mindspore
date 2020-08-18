@@ -25,7 +25,7 @@ class Softplus(Bijector):
     This Bijector performs the operation, where k is the sharpness factor.
 
     .. math::
-    Y = \frac{\log(1 + e ^ {kX})}{k}
+        Y = \frac{\log(1 + e ^ {kX})}{k}
 
     Args:
         sharpness (float): scale factor. Default: 1.0.
