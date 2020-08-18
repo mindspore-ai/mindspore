@@ -152,6 +152,9 @@ STATUS TfliteModelParser::ConvertTensor(const std::unique_ptr<tflite::SubGraphT>
     auto isConst = (!tensor_buffer->data.empty());
     if (isConst) {
       CopyConstTensorData(tflite_model_buffer, tflite_tensor.get(), tensor.get());
+    } else if (tensor->dataType ==TypeId::kNumberTypeUInt8) {
+      // set in/out tensor to int8 to fit ms-lite op
+      tensor->dataType = TypeId::kNumberTypeInt8;
     }
 
     // set tensor attr

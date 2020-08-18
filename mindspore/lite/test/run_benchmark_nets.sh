@@ -86,6 +86,27 @@ function Run_x86() {
         fi
     done < ${models_tflite_posttraining_config}
 
+    # Run tflite aware training quantization converted models:
+    while read line; do
+        model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name}
+        echo 'cd  '${convertor_path}'/MSLite-*-linux_x86_64'
+        cd ${convertor_path}/MSLite-*-linux_x86_64 || return 1
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1 --numThreads=1' || return 1
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1 --numThreads=1
+        if [ $? = 0 ]; then
+            run_result='Run_x86: '${model_name}'_awaretraining pass'
+            echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='Run_x86: '${model_name}'_awaretraining fail <<===========================this is the failed case'
+            echo ${run_result} >> ${run_benchmark_result_file}
+            return 1
+        fi
+    done < ${models_tflite_awaretraining_config}
+
     # Run mindspore converted models:
     while read line; do
         model_name=${line}
@@ -237,6 +258,7 @@ cd ${convertor_path}/MSLite-*-linux_x86_64 || exit 1
 # Set models config filepath
 models_tflite_config=${basepath}/models_tflite.cfg
 models_caffe_config=${basepath}/models_caffe.cfg
+models_tflite_awaretraining_config=${basepath}/models_tflite_awaretraining.cfg
 models_tflite_posttraining_config=${basepath}/models_tflite_posttraining.cfg
 models_onnx_config=${basepath}/models_onnx.cfg
 models_mindspore_config=${basepath}/models_mindspore.cfg
@@ -302,6 +324,17 @@ while read line; do
     echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}_posttraining' --quantType=PostTraining --config_file='${models_path}'/'${model_name}'_posttraining.config'
     ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_posttraining --quantType=PostTraining --config_file=${models_path}/${model_name}_posttraining.config || exit 1
 done < ${models_tflite_posttraining_config}
+
+# Convert TFLite AwareTraining models:
+while read line; do
+    model_name=${line}
+    if [[ $model_name == \#* ]]; then
+      continue
+    fi
+    echo ${model_name}
+    echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}' --quantType=AwareTraining'
+    ./converter_lite  --fmk=TFLITE --modelFile=${models_path}/${model_name} --outputFile=${ms_models_path}/${model_name} --quantType=AwareTraining || exit 1
+done < ${models_tflite_awaretraining_config}
 
 # Push to the arm and run benchmark:
 # First:copy benchmark exe and so files to the server which connected to the phone
