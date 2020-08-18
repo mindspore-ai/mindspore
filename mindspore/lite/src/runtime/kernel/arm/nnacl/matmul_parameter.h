@@ -33,6 +33,8 @@ typedef struct MatMulParameter {
   int batch;
   bool a_transpose_; /* false :  row-major  */
   bool b_transpose_; /* true  :  col-major  */
+  bool a_const_;
+  bool b_const_;
   ActType act_type_;
 } MatMulParameter;
 

@@ -40,6 +40,11 @@ class FullconnectionCPUKernel : public FullconnectionBaseCPUKernel {
 
  public:
   int DoMatmul(int task_id);
+  void FreeBuf();
+
+ private:
+  void InitMatrixA(float *src_ptr, float *dst_ptr);
+  void InitMatrixB(float *src_ptr, float *dst_ptr);
 
  private:
   float *a_c8_ptr_;
