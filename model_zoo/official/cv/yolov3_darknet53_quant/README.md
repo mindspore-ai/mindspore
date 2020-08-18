@@ -71,7 +71,7 @@ sh run_distribute_train.sh dataset/coco2014 yolov3_darknet_noquant_ckpt/0-320_10
 sh run_standalone_train.sh dataset/coco2014 yolov3_darknet_noquant_ckpt/0-320_102400.ckpt
 ```
 
-> About rank_table.json, you can refer to the [distributed training tutorial](https://www.mindspore.cn/tutorial/en/master/advanced_use/distributed_training.html).
+> About rank_table.json, You can generate it by using the [hccl json configuration file](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
 
 #### Result
 
@@ -108,14 +108,14 @@ epoch[134], iter[86500], loss:34.303755, 145.18 imgs/sec, lr:1.6245529650404933e
 
 ```
 # infer
-sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
+sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [DEVICE_ID]
 ```
 
 #### Launch
 
 ```bash
 # infer with checkpoint
-sh run_eval.sh dataset/coco2014/ checkpoint/0-135.ckpt
+sh run_eval.sh dataset/coco2014/ checkpoint/0-131.ckpt 0
 
 ```
 
