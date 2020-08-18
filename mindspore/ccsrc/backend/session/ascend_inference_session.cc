@@ -212,5 +212,31 @@ std::string AscendInferenceSession::InputsInfo(const std::vector<ParameterPtr> &
   return graph + "   " + actual;
 }
 
+void AscendInferenceSession::GetModelInputsInfo(uint32_t graph_id, std::vector<tensor::TensorPtr> *inputs) const {
+  MS_LOG(INFO) << "Start get model inputs, graph id : " << graph_id;
+  auto kernel_graph = GetGraph(graph_id);
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto kernel_graph_inputs = kernel_graph->inputs();
+  vector<ParameterPtr> paras;
+  // find parameters of graph inputs
+  for (size_t i = 0; i < kernel_graph_inputs.size(); ++i) {
+    if (!kernel_graph_inputs[i]->isa<Parameter>()) {
+      MS_LOG(ERROR) << "Kernel graph inputs have anfnode which is not Parameter.";
+      continue;
+    }
+    auto parameter = kernel_graph_inputs[i]->cast<ParameterPtr>();
+    if (!AnfAlgo::IsParameterWeight(parameter)) {
+      vector<int> input_shape;
+      auto parameter_shape = AnfAlgo::GetOutputDeviceShape(parameter, 0);
+      (void)std::transform(parameter_shape.begin(), parameter_shape.end(), std::back_inserter(input_shape),
+                           [](const size_t dim) { return static_cast<int>(dim); });
+      auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(parameter);
+      auto data_type = kernel_build_info->GetOutputDeviceType(0);
+      auto ms_tensor = std::make_shared<tensor::Tensor>(data_type, input_shape);
+      inputs->push_back(ms_tensor);
+    }
+  }
+}
+
 }  // namespace session
 }  // namespace mindspore

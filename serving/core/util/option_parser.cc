@@ -160,6 +160,8 @@ void Options::CreateOptions() {
   std::vector<Option> options = {
     Option("port", &args_->grpc_port,
            "[Optional] Port to listen on for gRPC API, default is 5500, range from 1 to 65535"),
+    Option("rest_api_port", &args_->rest_api_port,
+           "[Optional] Port to listen on for RESTful API, default is 5501, range from 1 to 65535"),
     Option("model_name", &args_->model_name, "[Required] model name "),
     Option("model_path", &args_->model_path, "[Required] the path of the model files"),
     Option("device_id", &args_->device_id, "[Optional] the device id, default is 0, range from 0 to 7"),
@@ -182,6 +184,14 @@ bool Options::CheckOptions() {
   }
   if (args_->grpc_port < 1 || args_->grpc_port > 65535) {
     std::cout << "the port should be in [1~65535]" << std::endl;
+    return false;
+  }
+  if (args_->rest_api_port < 1 || args_->rest_api_port > 65535) {
+    std::cout << "the rest_api_port should be in [1~65535]" << std::endl;
+    return false;
+  }
+  if (args_->rest_api_port == args_->grpc_port) {
+    std::cout << "the rest_api_port and grpc port should not be same" << std::endl;
     return false;
   }
   return true;

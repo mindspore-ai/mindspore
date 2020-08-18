@@ -43,6 +43,7 @@ class MSInferSession : public InferSession {
   Status LoadModelFromFile(const std::string &file_name, uint32_t &model_id) override;
   Status UnloadModel(uint32_t model_id) override;
   Status ExecuteModel(uint32_t model_id, const RequestBase &inputs, ReplyBase &outputs) override;
+  Status GetModelInputsInfo(uint32_t graph_id, std::vector<inference::InferTensor> *tensor_list) const override;
 
  private:
   std::shared_ptr<session::SessionBasic> session_impl_ = nullptr;

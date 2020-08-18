@@ -23,6 +23,7 @@
 #include <sstream>
 #include <memory>
 #include <iostream>
+#include <chrono>
 
 #ifndef ENABLE_ACL
 #include "mindspore/core/utils/log_adapter.h"
@@ -101,7 +102,18 @@ class LogWriter {
 
 #endif  // ENABLE_ACL
 
+#define MSI_TIME_STAMP_START(name) auto time_start_##name = std::chrono::steady_clock::now();
+#define MSI_TIME_STAMP_END(name)                                                                             \
+  {                                                                                                          \
+    auto time_end_##name = std::chrono::steady_clock::now();                                                 \
+    auto time_cost = std::chrono::duration<double, std::milli>(time_end_##name - time_start_##name).count(); \
+    MSI_LOG_INFO << #name " Time Cost # " << time_cost << " ms ---------------------";                       \
+  }
+
 #define INFER_STATUS(code) inference::Status(code) < inference::LogStream()
+#define ERROR_INFER_STATUS(status, type, msg) \
+  MSI_LOG_ERROR << msg;                       \
+  status = inference::Status(type, msg)
 
 }  // namespace mindspore::inference
 

@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_SERVER_H
-#define MINDSPORE_SERVER_H
+#ifndef MINDSPORE_SERVING_HTTP_PROCESS_H
+#define MINDSPORE_SERVING_HTTP_PROCESS_H
 
-#include "util/status.h"
+#include <evhttp.h>
+#include <event.h>
+#include <event2/http.h>
+#include <event2/http_struct.h>
+
 namespace mindspore {
 namespace serving {
-
-class Server {
- public:
-  Server() = default;
-  ~Server() = default;
-  Status BuildAndStart();
-};
+void http_handler_msg(struct evhttp_request *req, void *arg);
 }  // namespace serving
 }  // namespace mindspore
 #endif  // MINDSPORE_SERVER_H

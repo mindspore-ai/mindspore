@@ -97,6 +97,7 @@ class SessionBasic {
                                 std::string *error_msg) const {
     return true;
   }
+  virtual void GetModelInputsInfo(uint32_t graph_id, std::vector<tensor::TensorPtr> *inputs) const {}
 
 #ifdef ENABLE_DEBUGGER
   // set debugger

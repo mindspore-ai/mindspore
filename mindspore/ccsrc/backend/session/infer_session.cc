@@ -220,7 +220,7 @@ Status MSInferSession::ExecuteModel(uint32_t model_id, const RequestBase &reques
   for (const auto &tensor : outputs) {
     auto out_tensor = reply.add();
     if (out_tensor == nullptr) {
-      MS_LOG(ERROR) << "Execute Model " << model_id << " Failed， add output tensor failed";
+      MS_LOG(ERROR) << "Execute Model " << model_id << " Failed add output tensor failed";
       return FAILED;
     }
     MSTensor2ServingTensor(tensor, *out_tensor);
@@ -374,4 +374,18 @@ Status MSInferSession::CheckModelInputs(uint32_t graph_id, const std::vector<ten
   return SUCCESS;
 }
 
+Status MSInferSession::GetModelInputsInfo(uint32_t model_id, std::vector<inference::InferTensor> *tensor_list) const {
+  vector<tensor::TensorPtr> inputs;
+  session_impl_->GetModelInputsInfo(model_id, &inputs);
+  if (inputs.size() == 0) {
+    MS_LOG(ERROR) << "The model inputs is NULL";
+    return FAILED;
+  }
+  for (const auto &tensor : inputs) {
+    InferTensor infer_tensor = InferTensor();
+    MSTensor2ServingTensor(tensor, infer_tensor);
+    tensor_list->push_back(infer_tensor);
+  }
+  return SUCCESS;
+}
 }  // namespace mindspore::inference
