@@ -24,13 +24,7 @@ STATUS CaffeFlattenParser::Parse(const caffe::LayerParameter &proto, const caffe
     // MS_LOG(ERROR) << "null pointer dereferencing.";
     return RET_NULL_PTR;
   }
-  std::unique_ptr<schema::FullConnectionT> attr(new schema::FullConnectionT());
-  const caffe::FlattenParameter flattenParam = proto.flatten_param();
-
-  attr->axis = (int32_t)flattenParam.axis();
-  attr->useAxis = true;
-  attr->hasBias = false;
-  attr->activationType = schema::ActivationType_NO_ACTIVATION;
+  std::unique_ptr<schema::FlattenT> attr = std::make_unique<schema::FlattenT>();
 
   op->primitive = std::make_unique<schema::PrimitiveT>();
   op->primitive->value.type = schema::PrimitiveType_Flatten;
