@@ -103,7 +103,9 @@ SET(DE_UT_SRCS
         c_api_dataset_cifar_test.cc
         c_api_dataset_clue_test.cc
         c_api_dataset_coco_test.cc
+        c_api_dataset_csv_test.cc
         c_api_dataset_filetext_test.cc
+        c_api_dataset_manifest_test.cc
         c_api_dataset_randomdata_test.cc
         c_api_dataset_voc_test.cc
         c_api_datasets_test.cc

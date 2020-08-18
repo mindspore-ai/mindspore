@@ -51,6 +51,8 @@ class Cifar10Dataset;
 class Cifar100Dataset;
 class CLUEDataset;
 class CocoDataset;
+class CSVDataset;
+class CsvBase;
 class ImageFolderDataset;
 class ManifestDataset;
 class MnistDataset;
@@ -114,13 +116,13 @@ std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir,
 /// \param[in] usage Be used to "train", "test" or "eval" data (default="train").
 /// \param[in] num_samples The number of samples to be included in the dataset.
 ///    (Default = 0 means all samples.)
-/// \param[in] shuffle The mode for shuffling data every epoch. (Default=ShuffleMode.kGlobal)
+/// \param[in] shuffle The mode for shuffling data every epoch. (Default=ShuffleMode::kGlobal)
 ///    Can be any of:
-///    ShuffleMode.kFalse - No shuffling is performed.
-///    ShuffleMode.kFiles - Shuffle files only.
-///    ShuffleMode.kGlobal - Shuffle both the files and samples.
+///    ShuffleMode::kFalse - No shuffling is performed.
+///    ShuffleMode::kFiles - Shuffle files only.
+///    ShuffleMode::kGlobal - Shuffle both the files and samples.
 /// \param[in] num_shards Number of shards that the dataset should be divided into. (Default = 1)
-/// \param[in] shard_id  The shard ID within num_shards. This argument should be
+/// \param[in] shard_id The shard ID within num_shards. This argument should be
 ///    specified only when num_shards is also specified. (Default = 0)
 /// \return Shared pointer to the current CLUEDataset
 std::shared_ptr<CLUEDataset> CLUE(const std::vector<std::string> &dataset_files, const std::string &task = "AFQMC",
@@ -147,6 +149,32 @@ std::shared_ptr<CLUEDataset> CLUE(const std::vector<std::string> &dataset_files,
 std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::string &annotation_file,
                                   const std::string &task = "Detection", const bool &decode = false,
                                   const std::shared_ptr<SamplerObj> &sampler = nullptr);
+
+/// \brief Function to create a CSVDataset
+/// \notes The generated dataset has a variable number of columns
+/// \param[in] dataset_files List of files to be read to search for a pattern of files. The list
+///    will be sorted in a lexicographical order.
+/// \param[in] field_delim A char that indicates the delimiter to separate fields (default=',').
+/// \param[in] column_defaults List of default values for the CSV field (default={}). Each item in the list is
+///    either a valid type (float, int, or string). If this is not provided, treats all columns as string type.
+/// \param[in] column_names List of column names of the dataset (default={}). If this is not provided, infers the
+///    column_names from the first row of CSV file.
+/// \param[in] num_samples The number of samples to be included in the dataset.
+///    (Default = -1 means all samples.)
+/// \param[in] shuffle The mode for shuffling data every epoch. (Default=ShuffleMode::kGlobal)
+///    Can be any of:
+///    ShuffleMode::kFalse - No shuffling is performed.
+///    ShuffleMode::kFiles - Shuffle files only.
+///    ShuffleMode::kGlobal - Shuffle both the files and samples.
+/// \param[in] num_shards Number of shards that the dataset should be divided into. (Default = 1)
+/// \param[in] shard_id The shard ID within num_shards. This argument should be
+///    specified only when num_shards is also specified. (Default = 0)
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<CSVDataset> CSV(const std::vector<std::string> &dataset_files, char field_delim = ',',
+                                const std::vector<std::shared_ptr<CsvBase>> &column_defaults = {},
+                                const std::vector<std::string> &column_names = {}, int64_t num_samples = -1,
+                                ShuffleMode shuffle = ShuffleMode::kGlobal, int32_t num_shards = 1,
+                                int32_t shard_id = 0);
 
 /// \brief Function to create an ImageFolderDataset
 /// \notes A source dataset that reads images from a tree of directories
@@ -217,13 +245,13 @@ std::shared_ptr<RandomDataset> RandomData(const int32_t &total_rows = 0, T schem
 ///    will be sorted in a lexicographical order.
 /// \param[in] num_samples The number of samples to be included in the dataset.
 ///    (Default = 0 means all samples.)
-/// \param[in] shuffle The mode for shuffling data every epoch. (Default=ShuffleMode.kGlobal)
+/// \param[in] shuffle The mode for shuffling data every epoch. (Default=ShuffleMode::kGlobal)
 ///    Can be any of:
-///    ShuffleMode.kFalse - No shuffling is performed.
-///    ShuffleMode.kFiles - Shuffle files only.
-///    ShuffleMode.kGlobal - Shuffle both the files and samples.
+///    ShuffleMode::kFalse - No shuffling is performed.
+///    ShuffleMode::kFiles - Shuffle files only.
+///    ShuffleMode::kGlobal - Shuffle both the files and samples.
 /// \param[in] num_shards Number of shards that the dataset should be divided into. (Default = 1)
-/// \param[in] shard_id  The shard ID within num_shards. This argument should be
+/// \param[in] shard_id The shard ID within num_shards. This argument should be
 ///    specified only when num_shards is also specified. (Default = 0)
 /// \return Shared pointer to the current TextFileDataset
 std::shared_ptr<TextFileDataset> TextFile(const std::vector<std::string> &dataset_files, int32_t num_samples = 0,
@@ -570,6 +598,57 @@ class CocoDataset : public Dataset {
   std::string task_;
   bool decode_;
   std::shared_ptr<SamplerObj> sampler_;
+};
+
+/// \brief Record type for CSV
+enum CsvType : uint8_t { INT = 0, FLOAT, STRING };
+
+/// \brief Base class of CSV Record
+struct CsvBase {
+ public:
+  CsvBase() = default;
+  explicit CsvBase(CsvType t) : type(t) {}
+  virtual ~CsvBase() {}
+  CsvType type;
+};
+
+/// \brief CSV Record that can represent integer, float and string.
+template <typename T>
+class CsvRecord : public CsvBase {
+ public:
+  CsvRecord() = default;
+  CsvRecord(CsvType t, T v) : CsvBase(t), value(v) {}
+  ~CsvRecord() {}
+  T value;
+};
+
+class CSVDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  CSVDataset(const std::vector<std::string> &dataset_files, char field_delim,
+             const std::vector<std::shared_ptr<CsvBase>> &column_defaults, const std::vector<std::string> &column_names,
+             int64_t num_samples, ShuffleMode shuffle, int32_t num_shards, int32_t shard_id);
+
+  /// \brief Destructor
+  ~CSVDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return shared pointer to the list of newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::vector<std::string> dataset_files_;
+  char field_delim_;
+  std::vector<std::shared_ptr<CsvBase>> column_defaults_;
+  std::vector<std::string> column_names_;
+  int64_t num_samples_;
+  ShuffleMode shuffle_;
+  int32_t num_shards_;
+  int32_t shard_id_;
 };
 
 /// \class ImageFolderDataset
