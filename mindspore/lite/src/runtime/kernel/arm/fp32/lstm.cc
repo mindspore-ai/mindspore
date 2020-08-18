@@ -159,7 +159,7 @@ int LstmCPUKernel::Run() {
 kernel::LiteKernel *CpuLstmKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                          const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
                                          const lite::Context *ctx, const kernel::KernelKey &desc,
-                                         const lite::Primitive *primitive) {
+                                         const mindspore::lite::PrimitiveC *primitive) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "Input parameter is nullptr!";
     return nullptr;
@@ -174,8 +174,8 @@ kernel::LiteKernel *CpuLstmKernelCreator(const std::vector<lite::tensor::Tensor 
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
+    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_
+                  << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
     return nullptr;
   }
   return kernel;

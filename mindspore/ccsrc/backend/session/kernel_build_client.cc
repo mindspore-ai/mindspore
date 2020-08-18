@@ -15,8 +15,6 @@
  */
 
 #include "backend/session/kernel_build_client.h"
-
-#include <iostream>
 #include <memory>
 
 namespace mindspore {

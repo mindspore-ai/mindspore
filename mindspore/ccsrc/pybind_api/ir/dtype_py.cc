@@ -15,13 +15,9 @@
  */
 
 #include "ir/dtype.h"
-#include <string>
-#include <cstdlib>
-#include <algorithm>
 #include "utils/log_adapter.h"
 #include "abstract/abstract_value.h"
 #include "pybind_api/api_register.h"
-#include "pybind_api/export_flags.h"
 
 namespace mindspore {
 // Define python wrapper to handle data types.

@@ -18,20 +18,13 @@
  */
 
 #include "frontend/operator/composite/multitype_funcgraph.h"
-#include <algorithm>
 #include <utility>
 #include <sstream>
 
-#include "ir/anf.h"
-#include "ir/func_graph.h"
-#include "abstract/abstract_value.h"
 #include "abstract/abstract_function.h"
 #include "abstract/dshape.h"
-#include "abstract/param_validator.h"
-#include "frontend/operator/cc_implementations.h"
 #include "frontend/optimizer/opt.h"
 #include "utils/ms_context.h"
-#include "utils/symbolic.h"
 #include "pybind_api/api_register.h"
 #include "./common.h"
 #include "ir/signature.h"

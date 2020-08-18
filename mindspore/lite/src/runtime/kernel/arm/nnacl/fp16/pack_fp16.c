@@ -161,7 +161,8 @@ void PackWeightToC8Fp16(const float16_t *origin_weight_data, float16_t *packed_w
 void PackWeightToC4Fp16(const float16_t *origin_weight_data, float16_t *packed_weight_data, ConvParameter *conv_param) {
   // origin weight format : ohwi
   int input_channel = conv_param->input_channel_;
-  int ic4 = UP_DIV(input_channel, C4NUM);
+  int ic8 = UP_DIV(input_channel, C8NUM);
+  int ic4 = ic8 * 2;
   int output_channel = conv_param->output_channel_;
   int kernel_plane = conv_param->kernel_h_ * conv_param->kernel_w_;
 
@@ -233,6 +234,26 @@ void PackNHWCToNHWC4Fp16(const void *src, void *dst, int batch, int plane, int c
                channel * sizeof(float16_t));
       }
       nhwc4_batch_offset += nhwc4_batch_unit_offset;
+    }
+  } else {
+    size_t ori_input_size = batch * plane * channel * sizeof(float16_t);
+    memcpy(dst, src, ori_input_size);
+  }
+}
+
+void PackNHWCToNHWC8Fp16(const void *src, void *dst, int batch, int plane, int channel) {
+  int ic8 = UP_DIV(channel, C8NUM);
+  int nhwc8_batch_unit_offset = ic8 * C8NUM * plane;
+  int ic_remainder_ = channel % C8NUM;
+  if (ic_remainder_ != 0) {
+    int nhwc8_batch_offset = 0;
+    for (int b = 0; b < batch; b++) {
+      int batch_offset = b * channel * plane;
+      for (int i = 0; i < plane; i++) {
+        memcpy((float16_t *)dst + nhwc8_batch_offset + i * ic8 * C8NUM, (float16_t *)src + batch_offset + i * channel,
+               channel * sizeof(float16_t));
+      }
+      nhwc8_batch_offset += nhwc8_batch_unit_offset;
     }
   } else {
     size_t ori_input_size = batch * plane * channel * sizeof(float16_t);
@@ -395,19 +416,6 @@ void PackNHWC8Fp16ToNHWCFp32(float16_t *src, float *dst, int batch, int plane, i
       for (int c = 0; c < channel; c++) {
         dst_plane[c] = (float16_t)(src_plane[c]);
       }
-    }
-  }
-}
-
-void PackNHWCToNHWC8Fp16(float16_t *src, float16_t *dst, int batch, int plane, int channel) {
-  int c8_channel = UP_DIV(channel, C8NUM) * C8NUM;
-  for (int b = 0; b < batch; b++) {
-    float16_t *dst_batch = dst + b * plane * c8_channel;
-    float16_t *src_batch = src + b * plane * channel;
-    for (int i = 0; i < plane; i++) {
-      float16_t *dst_plane = dst_batch + i * c8_channel;
-      float16_t *src_plane = src_batch + i * channel;
-      memcpy(dst_plane, src_plane, channel * sizeof(float16_t));
     }
   }
 }

@@ -14,12 +14,38 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/argmin.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+int ArgMin::GetAxis() const { return this->primitive->value.AsArgMin()->axis; }
+bool ArgMin::GetOutMaxValue() const { return this->primitive->value.AsArgMin()->outMaxValue; }
+int ArgMin::GetTopK() const { return this->primitive->value.AsArgMin()->topK; }
+bool ArgMin::GetKeepDims() const { return this->primitive->value.AsArgMin()->keepDims; }
+int ArgMin::GetAxisType() const { return this->primitive->value.AsArgMin()->axisType; }
+
+void ArgMin::SetAxis(int axis) { this->primitive->value.AsArgMin()->axis = axis; }
+void ArgMin::SetOutMaxValue(bool out_max_value) { this->primitive->value.AsArgMin()->outMaxValue = out_max_value; }
+void ArgMin::SetTopK(int top_k) { this->primitive->value.AsArgMin()->topK = top_k; }
+void ArgMin::SetKeepDims(bool keep_dims) { this->primitive->value.AsArgMin()->keepDims = keep_dims; }
+void ArgMin::SetAxisType(int axis_type) { this->primitive->value.AsArgMin()->axisType = axis_type; }
+
+#else
+
+int ArgMin::GetAxis() const { return this->primitive->value_as_ArgMin()->axis(); }
+bool ArgMin::GetOutMaxValue() const { return this->primitive->value_as_ArgMin()->outMaxValue(); }
+int ArgMin::GetTopK() const { return this->primitive->value_as_ArgMin()->topK(); }
+bool ArgMin::GetKeepDims() const { return this->primitive->value_as_ArgMin()->keepDims(); }
+int ArgMin::GetAxisType() const { return this->primitive->value_as_ArgMin()->axisType(); }
+
+void ArgMin::SetAxis(int axis) {}
+void ArgMin::SetOutMaxValue(bool out_max_value) {}
+void ArgMin::SetTopK(int top_k) {}
+void ArgMin::SetKeepDims(bool keep_dims) {}
+void ArgMin::SetAxisType(int axis_type) {}
+#endif
+
 int ArgMin::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   auto input = inputs_.front();
@@ -42,10 +68,10 @@ int ArgMin::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   } else {
     output_shape[axis] = argmin_prim->topK();
   }
-
   output->SetFormat(input->GetFormat());
   output->set_shape(output_shape);
   output->set_data_type(input->data_type());
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

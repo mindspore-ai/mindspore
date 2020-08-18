@@ -25,7 +25,7 @@ class ArgMinMaxInt8CPUKernel : public ArgMinMaxBaseCPUKernel {
  public:
   ArgMinMaxInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                          const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                         const lite::Primitive *primitive)
+                         const mindspore::lite::PrimitiveC *primitive)
       : ArgMinMaxBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 
   ~ArgMinMaxInt8CPUKernel() = default;

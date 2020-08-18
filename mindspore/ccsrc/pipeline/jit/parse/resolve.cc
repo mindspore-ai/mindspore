@@ -19,7 +19,6 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include <algorithm>
 
 #include "ir/param_info.h"
 #include "pipeline/jit/parse/data_converter.h"
@@ -29,7 +28,6 @@
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/irpass.h"
-#include "./common.h"
 
 namespace mindspore {
 namespace parse {

@@ -15,12 +15,10 @@
  */
 
 #include <pybind11/operators.h>
-#include <pybind11/stl.h>
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "backend/kernel_compiler/oplib/oploader.h"
 #include "pipeline/jit/pipeline.h"
 #include "frontend/operator/composite/composite.h"
-#include "ir/signature.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "utils/symbolic.h"
 #include "pybind_api/api_register.h"
@@ -29,7 +27,6 @@
 #include "utils/config_manager.h"
 #include "utils/mpi/mpi_config.h"
 #include "frontend/parallel/context.h"
-#include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/costmodel_context.h"
 #ifdef ENABLE_GPU_COLLECTIVE
 #include "runtime/device/gpu/distribution/collective_init.h"

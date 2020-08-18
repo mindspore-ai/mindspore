@@ -18,10 +18,8 @@
 
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
-#include "utils/ms_utils.h"
 #include "ir/func_graph.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/graph_util/graph_info.h"

@@ -32,10 +32,10 @@ using mindspore::schema::PrimitiveType_Conv2D;
 namespace mindspore::kernel {
 void ConvolutionInt8CPUKernel::CheckSupportOptimize() {
   tile_num_ = 24;
-// #ifdef ENABLE_ARM32
-//   tile_num_ = 2;
-//   support_optimize_ = false;
-// #endif
+  // #ifdef ENABLE_ARM32
+  //   tile_num_ = 2;
+  //   support_optimize_ = false;
+  // #endif
 
 #ifdef ENABLE_ARM64
   void *optimize_op_handler = OptimizeModule::GetInstance()->optimized_op_handler_;
@@ -404,7 +404,8 @@ int ConvolutionInt8CPUKernel::Run() {
 kernel::LiteKernel *CpuConvInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs,
                                              OpParameter *opParameter, const Context *ctx,
-                                             const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                             const kernel::KernelKey &desc,
+                                             const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D);
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);

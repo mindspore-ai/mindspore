@@ -65,7 +65,7 @@ class ParamValueLite : public Value {
   }
 
   bool operator==(const Value &other) const override {
-    this == &other;
+    return this == &other;
   }
 
  private:

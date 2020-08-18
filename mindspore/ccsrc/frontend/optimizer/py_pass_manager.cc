@@ -16,9 +16,7 @@
 #include "frontend/optimizer/py_pass_manager.h"
 
 #include <functional>
-#include <algorithm>
 #include <utility>
-#include <initializer_list>
 
 #include "ir/manager.h"
 #include "frontend/optimizer/pass_group.h"

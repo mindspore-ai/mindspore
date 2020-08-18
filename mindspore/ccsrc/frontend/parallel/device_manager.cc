@@ -17,8 +17,6 @@
 #include "frontend/parallel/device_manager.h"
 
 #include <algorithm>
-#include <functional>
-#include <limits>
 #include <string>
 #include <unordered_set>
 #include <vector>

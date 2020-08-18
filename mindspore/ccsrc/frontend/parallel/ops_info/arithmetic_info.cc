@@ -17,7 +17,6 @@
 #include "frontend/parallel/ops_info/arithmetic_info.h"
 
 #include <algorithm>
-#include <memory>
 #include <utility>
 #include <vector>
 

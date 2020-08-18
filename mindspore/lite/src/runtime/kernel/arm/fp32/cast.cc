@@ -75,7 +75,7 @@ int CastCPUKernel::DoCast(int thread_id) {
                      reinterpret_cast<int32_t *>(output_data) + offset, data_num);
     } else if (input_data_type == kNumberTypeFloat32 && output_data_type == kNumberTypeFloat16) {
       Float32ToFp16(reinterpret_cast<float *>(input->Data()) + offset,
-                     reinterpret_cast<uint16_t *>(output_data) + offset, data_num);
+                    reinterpret_cast<uint16_t *>(output_data) + offset, data_num);
     } else {
       MS_LOG(ERROR) << "Unsupported datatype from " << input_data_type << " to " << output_data_type;
       return RET_ERROR;
@@ -117,7 +117,8 @@ int CastCPUKernel::Run() {
 kernel::LiteKernel *CpuCastFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs,
                                              OpParameter *opParameter, const lite::Context *ctx,
-                                             const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                             const kernel::KernelKey &desc,
+                                             const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
@@ -146,6 +147,7 @@ kernel::LiteKernel *CpuCastFp32KernelCreator(const std::vector<lite::tensor::Ten
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Cast, CpuCastFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeUInt8, PrimitiveType_Cast, CpuCastFp32KernelCreator)
 #ifndef ENABLE_ARM64
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Cast, CpuCastFp32KernelCreator)
 #endif

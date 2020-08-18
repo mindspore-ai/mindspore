@@ -30,7 +30,7 @@ class ReshapeCPUKernel : public ReshapeBaseCPUKernel {
  public:
   ReshapeCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                    const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
-                   const lite::Primitive *primitive)
+                   const mindspore::lite::PrimitiveC *primitive)
       : ReshapeBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ReshapeCPUKernel() = default;
 

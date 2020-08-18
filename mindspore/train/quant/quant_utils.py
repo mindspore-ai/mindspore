@@ -211,3 +211,42 @@ def fold_batchnorm(weight, cell_quant):
     weight = weight * _gamma / _sigma
     bias = beta - gamma * mean / sigma
     return weight, bias
+
+
+def without_fold_batchnorm(weight, cell_quant):
+    r"""
+    Fold the batchnorm in `Conv2dBnWithoutFoldQuant` to weight.
+
+    Calculate from `FakeQuantWithMinMax`'s Parameter or Fake quant primitive.
+
+    Args:
+        weight (numpy.ndarray): Weight of `cell_quant`.
+        cell_quant (Cell): Object of `mindspore.nn.layer.Conv2dBnWithoutFoldQuant`.
+
+    Returns:
+        weight (numpy.ndarray): whihout folded weight.
+        bias (numpy.ndarray): without folded bias.
+    """
+    variance = cell_quant.batchnorm.moving_variance.data.asnumpy()
+    mean = cell_quant.batchnorm.moving_mean.data.asnumpy()
+    gamma = cell_quant.batchnorm.gamma.data.asnumpy()
+    beta = cell_quant.batchnorm.beta.data.asnumpy()
+    epsilon = cell_quant.batchnorm.eps
+    sigma = np.sqrt(variance + epsilon)
+
+    if gamma.shape[0] == weight.shape[0]:
+        # `Conv2d` or `Dense` op weight
+        shape_list = [-1] + [1] * len(weight.shape[1:])
+        _gamma = gamma.reshape(shape_list)
+        _sigma = sigma.reshape(shape_list)
+    elif gamma.shape[0] == weight.shape[1]:
+        # `DepthwiseConv2d` op weight
+        shape_list = [1, -1] + [1] * len(weight.shape[2:])
+        _gamma = gamma.reshape(shape_list)
+        _sigma = sigma.reshape(shape_list)
+    else:
+        raise ValueError("Unsupported weight shape({})".format(weight.shape))
+
+    weight = weight * _gamma / _sigma
+    bias = beta - gamma * mean / sigma
+    return weight, bias

@@ -18,15 +18,12 @@
 #include <memory>
 #include "runtime/stream.h"
 #include "utils/ms_context.h"
-#include "runtime/device/ascend/ascend_stream_assign.h"
 #include "framework/ge_runtime/task_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {
 using ge::model_runner::EventWaitTaskInfo;
-using mindspore::device::ascend::AscendStreamAssign;
 using EventWaitTaskInfoPtr = std::shared_ptr<EventWaitTaskInfo>;
 
 RecvKernel::RecvKernel() { event_id_ = 0; }

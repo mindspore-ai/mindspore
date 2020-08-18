@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,26 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/unstack.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+int Unstack::GetNum() const { return this->primitive->value.AsUnstack()->num; }
+int Unstack::GetAxis() const { return this->primitive->value.AsUnstack()->axis; }
+
+void Unstack::SetNum(int num) { this->primitive->value.AsUnstack()->num = num; }
+void Unstack::SetAxis(int axis) { this->primitive->value.AsUnstack()->axis = axis; }
+
+#else
+
+int Unstack::GetNum() const { return this->primitive->value_as_Unstack()->num(); }
+int Unstack::GetAxis() const { return this->primitive->value_as_Unstack()->axis(); }
+
+void Unstack::SetNum(int num) {}
+void Unstack::SetAxis(int axis) {}
+#endif
+
 int Unstack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
   auto input = inputs.at(0);
   MS_ASSERT(input != nullptr);
@@ -30,7 +44,6 @@ int Unstack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor
     MS_LOG(ERROR) << "Invalid axis " << prim->axis();
     return RET_PARAM_INVALID;
   }
-
   std::vector<int> output_shape;
   for (size_t i = 0; i < input_shape.size(); ++i) {
     if (i != axis) {
@@ -45,4 +58,5 @@ int Unstack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor
   }
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

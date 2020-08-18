@@ -16,8 +16,6 @@
 
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
 
-#include <utility>
-
 namespace mindspore {
 namespace opt {
 namespace irpass {

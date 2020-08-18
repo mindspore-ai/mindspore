@@ -30,7 +30,7 @@ class PReluCPUKernel : public LiteKernel {
  public:
   PReluCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                  const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                 const lite::Primitive *primitive)
+                 const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
     prelu_param_ = (reinterpret_cast<PReluParameter *>(op_parameter_));
     primitive_ = primitive;

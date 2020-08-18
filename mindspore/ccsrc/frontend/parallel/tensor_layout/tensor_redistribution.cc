@@ -15,7 +15,6 @@
  */
 
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
-#include <cfloat>
 #include <functional>
 #include <numeric>
 #include "utils/ms_utils.h"

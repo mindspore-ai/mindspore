@@ -26,7 +26,7 @@ class BroadcastToCPUKernel : public LiteKernel {
  public:
   BroadcastToCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                        const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                       const lite::Primitive *primitive)
+                       const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~BroadcastToCPUKernel() = default;
 

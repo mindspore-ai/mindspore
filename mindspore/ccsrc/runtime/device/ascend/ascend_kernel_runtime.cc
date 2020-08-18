@@ -32,15 +32,16 @@
 #include "runtime/context.h"
 #include "runtime/device/ascend/ascend_label_assign.h"
 #include "runtime/device/ascend/ascend_stream_assign.h"
-#include "runtime/device/ascend/ascend_memory_pool.h"
 #include "framework/ge_runtime/model_runner.h"
 #include "runtime/device/ascend/tasksink/task_generator.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/ascend/profiling/profiling_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
-#include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
 #include "runtime/device/ascend/ascend_memory_manager.h"
 #include "debug/tensor_load.h"
+#ifdef MEM_REUSE_DEBUG
+#include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
+#endif
 
 using ge::model_runner::ModelRunner;
 using mindspore::device::ascend::ProfilingManager;

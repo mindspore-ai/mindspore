@@ -23,7 +23,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
-#include "src/ops/ops.h"
+
 #include "src/runtime/kernel/opencl/cl/fp32/activation.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -121,7 +121,8 @@ int ActivationOpenClKernel::GetImageSize(size_t idx, std::vector<size_t> *img_si
 kernel::LiteKernel *OpenClActivationFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                       const std::vector<lite::tensor::Tensor *> &outputs,
                                                       OpParameter *opParameter, const lite::Context *ctx,
-                                                      const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                                      const kernel::KernelKey &desc,
+                                                      const mindspore::lite::PrimitiveC *primitive) {
   if (inputs.size() == 0) {
     MS_LOG(ERROR) << "Input data size must be greater than 0, but your size is " << inputs.size();
     return nullptr;

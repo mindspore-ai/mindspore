@@ -53,7 +53,8 @@ int Nhwc2NchwCPUKernel::Run() {
 kernel::LiteKernel *CpuNhwc2NchwFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                   const std::vector<lite::tensor::Tensor *> &outputs,
                                                   OpParameter *opParameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                                  const kernel::KernelKey &desc,
+                                                  const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Nhwc2Nchw);
   auto *kernel = new (std::nothrow) Nhwc2NchwCPUKernel(opParameter, inputs, outputs, ctx, primitive);

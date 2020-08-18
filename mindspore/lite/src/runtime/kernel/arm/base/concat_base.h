@@ -29,7 +29,7 @@ class ConcatBaseCPUKernel : public LiteKernel {
  public:
   ConcatBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                       const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
-                      const lite::Primitive *primitive)
+                      const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
     concat_param_ = reinterpret_cast<ConcatParameter *>(op_parameter_);
   }

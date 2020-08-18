@@ -15,7 +15,6 @@
  */
 #include "utils/tensorprint_utils.h"
 #include <atomic>
-#include <thread>
 #include <fstream>
 #include <memory>
 #include <string>
@@ -23,8 +22,6 @@
 #include "ir/tensor.h"
 #include "pybind11/pybind11.h"
 #include "utils/ms_utils.h"
-#include "runtime/device/convert_tensor_utils.h"
-#include "./securec.h"
 #ifndef NO_DLIB
 #include "tdt/tsd_client.h"
 #include "tdt/tdt_host_interface.h"

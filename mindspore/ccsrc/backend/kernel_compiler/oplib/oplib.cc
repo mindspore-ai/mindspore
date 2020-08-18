@@ -16,7 +16,6 @@
 
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include <pybind11/pybind11.h>
-#include <unordered_map>
 #include <memory>
 #include <map>
 #include <fstream>

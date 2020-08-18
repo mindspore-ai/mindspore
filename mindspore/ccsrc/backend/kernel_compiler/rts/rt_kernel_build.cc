@@ -15,12 +15,9 @@
  */
 
 #include "backend/kernel_compiler/rts/rt_kernel_build.h"
-
 #include <string>
 #include <memory>
-#include <utility>
 #include <algorithm>
-
 #include "backend/kernel_compiler/rts/rt_kernel.h"
 #include "backend/session/anf_runtime_algorithm.h"
 

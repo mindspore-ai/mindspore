@@ -21,19 +21,14 @@
 #include <utility>
 
 #include "ir/anf.h"
-#include "ir/meta_func_graph.h"
 #include "utils/info.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/manager.h"
 #include "pipeline/jit/resource.h"
-#include "pipeline/jit/parse/parse.h"
 #include "frontend/optimizer/ad/adjoint.h"
-#include "frontend/optimizer/opt.h"
 #include "frontend/operator/ops.h"
-#include "frontend/operator/composite/composite.h"
 #include "utils/symbolic.h"
 #include "utils/ms_context.h"
-#include "./common.h"
 
 namespace mindspore {
 namespace ad {

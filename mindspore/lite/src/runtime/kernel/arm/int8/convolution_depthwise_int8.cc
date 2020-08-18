@@ -105,7 +105,7 @@ int ConvolutionDepthwiseInt8CPUKernel::InitBuffer() {
 }
 
 int ConvolutionDepthwiseInt8CPUKernel::Init() {
-if (!InferShapeDone()) {
+  if (!InferShapeDone()) {
     return RET_OK;
   }
   return ReSize();
@@ -196,7 +196,8 @@ int ConvolutionDepthwiseInt8CPUKernel::Run() {
 kernel::LiteKernel *CpuConvDwInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                const std::vector<lite::tensor::Tensor *> &outputs,
                                                OpParameter *opParameter, const Context *ctx,
-                                               const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                               const kernel::KernelKey &desc,
+                                               const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DepthwiseConv2D);
   auto kernel =

@@ -20,7 +20,6 @@
 #include <memory>
 #include <thread>
 #include <atomic>
-#include <fstream>
 
 namespace mindspore {
 namespace context {

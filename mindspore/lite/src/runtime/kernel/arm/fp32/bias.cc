@@ -70,7 +70,7 @@ int BiasCPUKernel::Init() {
 kernel::LiteKernel *CpuBiasFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
                                              const lite::Context *ctx, const kernel::KernelKey &desc,
-                                             const lite::Primitive *primitive) {
+                                             const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_BiasAdd);
   auto kernel = new (std::nothrow) BiasCPUKernel(parameter, inputs, outputs, ctx, primitive);

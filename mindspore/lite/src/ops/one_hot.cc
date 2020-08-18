@@ -14,12 +14,22 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/one_hot.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+int OneHot::GetAxis() const { return this->primitive->value.AsOneHot()->axis; }
+
+void OneHot::SetAxis(int axis) { this->primitive->value.AsOneHot()->axis = axis; }
+
+#else
+
+int OneHot::GetAxis() const { return this->primitive->value_as_OneHot()->axis(); }
+
+void OneHot::SetAxis(int axis) {}
+#endif
+
 namespace {
 constexpr size_t kOneHotInputNum = 4;
 }
@@ -32,7 +42,6 @@ int OneHot::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor:
     return RET_NULL_PTR;
   }
   int axis = one_hot_prim->axis();
-
   // indices, depth, on_value, off_value
   if (inputs.size() != kOneHotInputNum) {
     MS_LOG(ERROR) << "OneHot got inputs num " << inputs.size() << ", should be " << kOneHotInputNum;
@@ -43,7 +52,6 @@ int OneHot::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor:
     return RET_NULL_PTR;
   }
   const int *depth = static_cast<int *>(depth_tensor->Data());
-
   auto input = inputs.front();
   if (input == nullptr) {
     return RET_NULL_PTR;
@@ -55,20 +63,18 @@ int OneHot::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor:
   }
   std::vector<int> output_shape(input_shape);
   output_shape.insert(output_shape.cbegin() + axis, *depth);
-
   auto output = outputs.front();
   if (output == nullptr) {
     return RET_NULL_PTR;
   }
   output->set_shape(output_shape);
-
   auto on_value = inputs.at(2);
   if (on_value == nullptr) {
     return RET_NULL_PTR;
   }
   output->set_data_type(on_value->data_type());
   output->SetFormat(on_value->GetFormat());
-
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

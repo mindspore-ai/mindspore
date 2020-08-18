@@ -17,7 +17,6 @@
 #include <vector>
 #include <unordered_set>
 #include <memory>
-#include <string>
 #include "backend/kernel_compiler/kernel_fusion.h"
 #include "debug/anf_ir_dump.h"
 #include "backend/session/anf_runtime_algorithm.h"

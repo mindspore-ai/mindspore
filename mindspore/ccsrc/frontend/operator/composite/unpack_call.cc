@@ -21,11 +21,9 @@
 #include "./common.h"
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
-#include "abstract/param_validator.h"
 #include "frontend/operator/cc_implementations.h"
 #include "ir/anf.h"
 #include "frontend/optimizer/opt.h"
-#include "utils/symbolic.h"
 #include "pybind_api/api_register.h"
 
 namespace mindspore {

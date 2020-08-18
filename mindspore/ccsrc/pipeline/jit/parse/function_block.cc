@@ -19,7 +19,6 @@
 #include "pipeline/jit/parse/function_block.h"
 #include <string>
 #include <memory>
-#include <fstream>
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/parse/parse.h"
 #include "frontend/operator/ops.h"

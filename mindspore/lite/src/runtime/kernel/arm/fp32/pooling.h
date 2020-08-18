@@ -27,7 +27,7 @@ class PoolingCPUKernel : public PoolingBaseCPUKernel {
  public:
   PoolingCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                    const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
-                   const lite::Primitive *primitive)
+                   const mindspore::lite::PrimitiveC *primitive)
       : PoolingBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~PoolingCPUKernel() override = default;
 

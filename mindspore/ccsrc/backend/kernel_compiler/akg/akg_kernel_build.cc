@@ -15,22 +15,16 @@
  */
 
 #include "backend/kernel_compiler/akg/akg_kernel_build.h"
-#include <sys/types.h>
-#include <signal.h>
 #include <unistd.h>
 #include <dirent.h>
-#include <cctype>
-#include <cstdint>
 #include <memory>
 #include <map>
 #include <utility>
 #include <algorithm>
 #include <functional>
-#include <sstream>
 #include <iterator>
 #include <numeric>
 #include <unordered_set>
-#include "utils/ms_utils.h"
 #include "utils/convert_utils.h"
 #include "utils/any.h"
 #include "utils/utils.h"

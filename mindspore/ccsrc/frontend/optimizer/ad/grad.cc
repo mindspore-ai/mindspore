@@ -19,7 +19,6 @@
 #include "ir/func_graph_cloner.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
-#include "ir/graph_utils.h"
 
 namespace mindspore {
 namespace ad {

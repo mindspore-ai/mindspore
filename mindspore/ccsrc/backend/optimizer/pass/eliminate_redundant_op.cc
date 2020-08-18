@@ -18,7 +18,6 @@
 #include <memory>
 #include <utility>
 #include <unordered_map>
-#include <unordered_set>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/utils.h"
 #include "backend/optimizer/common/helper.h"

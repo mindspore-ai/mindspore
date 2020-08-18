@@ -21,8 +21,6 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
-#include <utility>
-
 #include "backend/optimizer/common/pattern_engine.h"
 #include "utils/any.h"
 #include "ir/anf.h"

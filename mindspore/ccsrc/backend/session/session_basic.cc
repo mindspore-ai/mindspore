@@ -17,7 +17,6 @@
 #include <utility>
 #include <algorithm>
 #include <unordered_map>
-#include <unordered_set>
 #include "pipeline/jit/parse/data_converter.h"
 #include "ir/manager.h"
 #include "ir/param_info.h"
@@ -26,9 +25,7 @@
 #include "common/trans.h"
 #include "utils/config_manager.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "backend/kernel_compiler/oplib/oplib.h"
 #include "backend/optimizer/common/common_backend_optimization.h"
-#include "backend/optimizer/pass/const_input_to_attr_registry.h"
 #include "backend/optimizer/common/helper.h"
 #include "utils/ms_utils.h"
 #include "ir/dtype.h"

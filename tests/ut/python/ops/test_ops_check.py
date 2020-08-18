@@ -16,6 +16,7 @@
 import functools
 import logging
 import numpy as np
+import pytest
 
 import mindspore.context as context
 from mindspore import Tensor
@@ -62,13 +63,9 @@ def test_net_without_construct():
     """ test_net_without_construct """
     net = NetMissConstruct()
     inp = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
-    try:
+    with pytest.raises(RuntimeError) as err:
         _executor.compile(net, inp)
-    except RuntimeError as err:
-        if str(err).find("Unsupported syntax 'Raise' at ") >= 0:
-            print(str(err))
-        else:
-            raise err
+    assert "Unsupported syntax 'Raise' at " in str(err.value)
 
 
 class NetWithRaise(nn.Cell):
@@ -87,13 +84,9 @@ def test_net_with_raise():
     """ test_net_with_raise """
     net = NetWithRaise()
     inp = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
-    try:
+    with pytest.raises(RuntimeError) as err:
         _executor.compile(net, inp)
-    except RuntimeError as err:
-        if str(err).find("Unsupported syntax 'Raise' at ") >= 0:
-            print(str(err))
-        else:
-            raise err
+    assert "Unsupported syntax 'Raise' at " in str(err.value)
 
 
 class NetAddN(nn.Cell):

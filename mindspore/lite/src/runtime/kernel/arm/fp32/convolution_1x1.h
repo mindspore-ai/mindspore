@@ -35,7 +35,7 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   Convolution1x1CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                           const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                          const lite::Primitive *primitive)
+                          const mindspore::lite::PrimitiveC *primitive)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {
     matmul_param_ = new MatMulParameter();
   }

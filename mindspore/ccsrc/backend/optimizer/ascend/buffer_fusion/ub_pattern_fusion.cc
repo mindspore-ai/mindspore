@@ -15,9 +15,7 @@
  */
 #include "backend/optimizer/ascend/buffer_fusion/ub_pattern_fusion.h"
 #include <vector>
-#include <tuple>
 #include <utility>
-#include <unordered_set>
 #include <unordered_map>
 #include <deque>
 #include <memory>

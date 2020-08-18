@@ -27,7 +27,6 @@
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/parse/parse.h"
 #include "frontend/optimizer/ad/dfunctor.h"
-#include "frontend/optimizer/opt.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/composite.h"
 #include "utils/symbolic.h"
@@ -35,8 +34,6 @@
 #include "utils/ms_context.h"
 #include "utils/info.h"
 #include "debug/trace.h"
-
-#include "./common.h"
 
 namespace mindspore {
 namespace ad {

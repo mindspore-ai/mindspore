@@ -382,7 +382,8 @@ void Conv3x3Fp16(float16_t *input_data, float16_t *transed_weight, const float16
   const int tile_num = 16;
   const int output_unit = 4;
   const int k_plane = 36;
-  int ic4 = UP_DIV(conv_param->input_channel_, C4NUM);
+  int ic8 = UP_DIV(conv_param->input_channel_, C8NUM);
+  int ic4 = ic8 * 2;
   int oc8 = UP_DIV(conv_param->output_channel_, C8NUM);
 
   int out_w_block = UP_DIV(conv_param->output_w_, C4NUM);
@@ -390,7 +391,7 @@ void Conv3x3Fp16(float16_t *input_data, float16_t *transed_weight, const float16
   int output_count = out_w_block * out_h_block;
   int output_tile_count = UP_DIV(output_count, tile_num);
   int tile_buffer_offset = tile_num * k_plane * ic4 * C4NUM;
-  int block_unit_buffer_offset = k_plane * C4NUM;
+  int block_unit_buffer_offset = k_plane * C8NUM;
   int tmp_dst_buffer_offset = tile_num * k_plane * oc8 * C8NUM;
 
   int input_batch = conv_param->input_batch_;
@@ -541,7 +542,7 @@ void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const floa
   int input_unit = conv_param->input_unit_;
   int in_batch = conv_param->input_batch_;
   int in_channel = conv_param->input_channel_;
-  int ic4 = UP_DIV(in_channel, C4NUM);
+  int ic8 = UP_DIV(in_channel, C8NUM);
   int out_unit = conv_param->output_unit_;
   int out_w_block = UP_DIV(conv_param->output_w_, out_unit);
   int out_h_block = UP_DIV(conv_param->output_h_, out_unit);
@@ -557,16 +558,16 @@ void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const floa
   float16_t *gemm_out = buffer_list[1];
   float16_t *tmp_out_data = buffer_list[2];
   float16_t *tmp_data = buffer_list[3];
-  int trans_input_offset = tile_num * input_unit_square * ic4 * C4NUM;
+  int trans_input_offset = tile_num * input_unit_square * ic8 * C8NUM;
   int gemm_out_offset = tile_num * input_unit_square * oc8 * C8NUM;
-  int tmp_data_offset = input_unit_square * C4NUM;
+  int tmp_data_offset = input_unit_square * C8NUM;
   // step 1 : filter transform (pre-processed offline)
   // step 2 : input transform (online)
   for (int b = 0; b < in_batch; b++) {
-    int in_batch_offset = b * ic4 * C4NUM * conv_param->input_h_ * conv_param->input_w_;
+    int in_batch_offset = b * ic8 * C8NUM * conv_param->input_h_ * conv_param->input_w_;
     int tmp_out_batch_offset = b * out_w_block * out_h_block * out_unit * out_unit * oc8 * C8NUM;
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_num) {
-      int out_tile_index = thread_id * TILE_NUM;
+      int out_tile_index = thread_id * tile_num;
       int cal_num = output_count - thread_id * tile_num;
       cal_num = cal_num > tile_num ? tile_num : cal_num;
       WinogradInputTransformFp16(input_data + in_batch_offset, trans_input + task_id * trans_input_offset,
@@ -574,7 +575,7 @@ void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const floa
                                  input_trans_func);
       // step 3 : gemm
       IndirectGemmFp16_16x8(gemm_out + task_id * gemm_out_offset, trans_input + task_id * trans_input_offset,
-                            trans_weight, NULL, input_unit_square, ic4, oc8 * C8NUM, output_offset, 1, 1, 0, 0);
+                            trans_weight, NULL, input_unit_square, ic8 * 2, oc8 * C8NUM, output_offset, 1, 1, 0, 0);
 
       // step 4 : output transform
       WinogradOutputTransformFp16(gemm_out + task_id * gemm_out_offset, tmp_out_data + tmp_out_batch_offset, bias_data,

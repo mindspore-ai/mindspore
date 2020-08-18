@@ -18,17 +18,13 @@
 #include <vector>
 #include <utility>
 #include <numeric>
-#include <functional>
 #include "utils/ms_utils.h"
 #include "common/trans.h"
 #include "utils/utils.h"
 #include "utils/ms_context.h"
 #include "frontend/operator/ops.h"
-#include "pipeline/jit/parse/python_adapter.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "backend/kernel_compiler/common_utils.h"
-#include "backend/kernel_compiler/oplib/oplib.h"
 #include "backend/optimizer/common/helper.h"
 #include "ir/value.h"
 using mindspore::kernel::Address;

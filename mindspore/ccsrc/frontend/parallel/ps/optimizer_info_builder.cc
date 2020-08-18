@@ -15,7 +15,6 @@
  */
 
 #include "frontend/parallel/ps/optimizer_info_builder.h"
-#include <functional>
 #include <vector>
 #include <memory>
 

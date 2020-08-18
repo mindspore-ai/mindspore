@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
+#include "src/ops/arithmetic.h"
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
 #include "src/ir/tensor.h"
 
-namespace mindspore::lite {
-int Arithmetic::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+namespace mindspore {
+namespace lite {
+int Arithmetic::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   if (inputs_.size() != kDoubleNum) {
     MS_LOG(ERROR) << "The number of input must be " << kDoubleNum;
@@ -103,5 +104,5 @@ int Arithmetic::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<te
   output->set_shape(output_shape);
   return RET_OK;
 }
-}  // namespace mindspore::lite
-
+}  // namespace lite
+}  // namespace mindspore

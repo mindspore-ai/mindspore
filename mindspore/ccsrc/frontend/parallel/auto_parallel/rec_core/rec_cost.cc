@@ -17,9 +17,7 @@
 #include "frontend/parallel/auto_parallel/rec_core/rec_cost.h"
 
 #include <algorithm>
-#include <iostream>
 #include <limits>
-#include <memory>
 #include <string>
 #include <utility>
 #include <vector>

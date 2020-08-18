@@ -29,7 +29,7 @@ class ConvolutionSWCPUKernel : public ConvolutionBaseCPUKernel {
  public:
   ConvolutionSWCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                          const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                         const lite::Primitive *primitive)
+                         const mindspore::lite::PrimitiveC *primitive)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 
   ~ConvolutionSWCPUKernel() override { FreeTmpBuffer(); }

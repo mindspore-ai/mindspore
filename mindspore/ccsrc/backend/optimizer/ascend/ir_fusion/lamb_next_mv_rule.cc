@@ -17,10 +17,7 @@
 #include "backend/optimizer/ascend/ir_fusion/lamb_next_mv_rule.h"
 #include <memory>
 #include <utility>
-#include <tuple>
 #include <algorithm>
-#include <unordered_map>
-#include "backend/session/anf_runtime_algorithm.h"
 #include "utils/utils.h"
 #include "backend/optimizer/common/helper.h"
 #include "frontend/operator/ops.h"

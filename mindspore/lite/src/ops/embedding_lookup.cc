@@ -14,39 +14,44 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "src/ir/tensor.h"
-#include "utils/log_adapter.h"
+#include "src/ops/embedding_lookup.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+float EmbeddingLookup::GetMaxNorm() const { return this->primitive->value.AsEmbeddingLookup()->maxNorm; }
+
+void EmbeddingLookup::SetMaxNorm(float max_norm) { this->primitive->value.AsEmbeddingLookup()->maxNorm = max_norm; }
+
+#else
+
+float EmbeddingLookup::GetMaxNorm() const { return this->primitive->value_as_EmbeddingLookup()->maxNorm(); }
+
+void EmbeddingLookup::SetMaxNorm(float max_norm) {}
+#endif
+
 int EmbeddingLookup::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   if (inputs_.size() < kDoubleNum) {
     MS_LOG(ERROR) << "Embedding Lookup should have at least two inputs";
     return RET_INPUT_TENSOR_ERROR;
   }
-
   if (outputs_.size() != kSingleNum) {
     MS_LOG(ERROR) << "Embedding Lookup should have one outputs";
     return RET_INPUT_TENSOR_ERROR;
   }
-
   auto params_ = inputs_.front();
   MS_ASSERT(params_ != nullptr);
   auto ids = inputs_.back();
   MS_ASSERT(ids != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
-
   auto embedding_shape = params_->shape();
   embedding_shape.erase(embedding_shape.begin());
-
   std::vector<int> output_shape(ids->shape());
   for (size_t i = 0; i < embedding_shape.size(); ++i) {
     output_shape.push_back(embedding_shape.at(i));
   }
-
   for (int i = 1; i < inputs_.size() - 1; ++i) {
     auto embedding_shape_t = inputs_.at(i)->shape();
     embedding_shape_t.erase(embedding_shape_t.begin());
@@ -55,9 +60,9 @@ int EmbeddingLookup::InferShape(std::vector<tensor::Tensor *> inputs_, std::vect
       return RET_INPUT_TENSOR_ERROR;
     }
   }
-
   output->set_shape(output_shape);
   output->set_data_type(params_->data_type());
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

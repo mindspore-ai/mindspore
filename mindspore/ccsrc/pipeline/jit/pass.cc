@@ -17,17 +17,13 @@
 #include "pipeline/jit/pass.h"
 
 #include <memory>
-#include <utility>
 #include <vector>
 #include <string>
 #include <unordered_map>
 #include <algorithm>
-#include <functional>
 
 #include "ir/func_graph_cloner.h"
-#include "debug/anf_ir_utils.h"
 #include "pipeline/jit/parse/parse_base.h"
-#include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/validator.h"
 #include "pipeline/jit/remove_value_node_dup.h"
@@ -40,7 +36,6 @@
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_auto_parallel.h"
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
-#include "utils/any.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

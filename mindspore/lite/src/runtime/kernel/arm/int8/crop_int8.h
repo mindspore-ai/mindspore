@@ -30,7 +30,7 @@ class CropInt8CPUKernel : public CropBaseCPUKernel {
  public:
   CropInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                     const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
-                    const lite::Primitive *primitive)
+                    const mindspore::lite::PrimitiveC *primitive)
       : CropBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {
     crop_para_ = reinterpret_cast<CropParameter *>(op_parameter_);
     crop_para_->thread_count_ = op_parameter_->thread_num_;

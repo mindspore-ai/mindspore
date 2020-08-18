@@ -14,12 +14,33 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/reduce.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+std::vector<int> Reduce::GetAxes() const { return this->primitive->value.AsReduce()->axes; }
+int Reduce::GetKeepDims() const { return this->primitive->value.AsReduce()->keepDims; }
+int Reduce::GetMode() const { return this->primitive->value.AsReduce()->mode; }
+
+void Reduce::SetAxes(const std::vector<int> &axes) { this->primitive->value.AsReduce()->axes = axes; }
+void Reduce::SetKeepDims(int keep_dims) { this->primitive->value.AsReduce()->keepDims = keep_dims; }
+void Reduce::SetMode(int mode) { this->primitive->value.AsReduce()->mode = (schema::ReduceMode)mode; }
+
+#else
+
+std::vector<int> Reduce::GetAxes() const {
+  auto fb_vector = this->primitive->value_as_Reduce()->axes();
+  return std::vector<int>(fb_vector->begin(), fb_vector->end());
+}
+int Reduce::GetKeepDims() const { return this->primitive->value_as_Reduce()->keepDims(); }
+int Reduce::GetMode() const { return this->primitive->value_as_Reduce()->mode(); }
+
+void Reduce::SetAxes(const std::vector<int> &axes) {}
+void Reduce::SetKeepDims(int keep_dims) {}
+void Reduce::SetMode(int mode) {}
+#endif
+
 namespace {
 constexpr size_t kInputSize = 1;
 constexpr size_t kOutputSize = 1;
@@ -58,7 +79,6 @@ int Reduce::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
     output->set_data_type(input->data_type());
     return RET_OK;
   }
-
   // reduce on selected axes
   for (size_t i = 0; i < in_shape.size(); i++) {
     bool reduce_axis = false;
@@ -77,7 +97,7 @@ int Reduce::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
     }
   }
   output->set_shape(out_shape);
-
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

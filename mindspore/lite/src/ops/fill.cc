@@ -14,12 +14,25 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/fill.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+std::vector<int> Fill::GetDims() const { return this->primitive->value.AsFill()->dims; }
+
+void Fill::SetDims(const std::vector<int> &dims) { this->primitive->value.AsFill()->dims = dims; }
+
+#else
+
+std::vector<int> Fill::GetDims() const {
+  auto fb_vector = this->primitive->value_as_Fill()->dims();
+  return std::vector<int>(fb_vector->begin(), fb_vector->end());
+}
+
+void Fill::SetDims(const std::vector<int> &dims) {}
+#endif
+
 int Fill::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   auto input = inputs_.front();
@@ -28,7 +41,6 @@ int Fill::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
     MS_LOG(ERROR) << "Fill input or output is null!";
     return RET_ERROR;
   }
-
   if (inputs_.size() != kSingleNum || outputs_.size() != kSingleNum) {
     MS_LOG(ERROR) << "input size: " << inputs_.size() << ", output size: " << outputs_.size();
     return RET_INPUT_TENSOR_ERROR;
@@ -43,7 +55,7 @@ int Fill::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
   output->set_shape(output_shape);
   output->set_data_type(input->data_type());
   output->SetFormat(input->GetFormat());
-
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

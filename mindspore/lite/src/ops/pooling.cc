@@ -14,12 +14,81 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/pooling.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+
+#ifdef PRIMITIVE_WRITEABLE
+int Pooling::GetFormat() const { return this->primitive->value.AsPooling()->format; }
+int Pooling::GetPoolingMode() const { return this->primitive->value.AsPooling()->poolingMode; }
+bool Pooling::GetGlobal() const { return this->primitive->value.AsPooling()->global; }
+int Pooling::GetWindowW() const { return this->primitive->value.AsPooling()->windowW; }
+int Pooling::GetWindowH() const { return this->primitive->value.AsPooling()->windowH; }
+int Pooling::GetStrideW() const { return this->primitive->value.AsPooling()->strideW; }
+int Pooling::GetStrideH() const { return this->primitive->value.AsPooling()->strideH; }
+int Pooling::GetPadMode() const { return this->primitive->value.AsPooling()->padMode; }
+int Pooling::GetPadUp() const { return this->primitive->value.AsPooling()->padUp; }
+int Pooling::GetPadDown() const { return this->primitive->value.AsPooling()->padDown; }
+int Pooling::GetPadLeft() const { return this->primitive->value.AsPooling()->padLeft; }
+int Pooling::GetPadRight() const { return this->primitive->value.AsPooling()->padRight; }
+int Pooling::GetRoundMode() const { return this->primitive->value.AsPooling()->roundMode; }
+
+void Pooling::SetFormat(int format) { this->primitive->value.AsPooling()->format = (schema::Format)format; }
+void Pooling::SetPoolingMode(int pooling_mode) {
+  this->primitive->value.AsPooling()->poolingMode = (schema::PoolMode)pooling_mode;
+}
+void Pooling::SetGlobal(bool global) { this->primitive->value.AsPooling()->global = global; }
+void Pooling::SetWindowW(int window_w) { this->primitive->value.AsPooling()->windowW = window_w; }
+void Pooling::SetWindowH(int window_h) { this->primitive->value.AsPooling()->windowH = window_h; }
+void Pooling::SetStrideW(int stride_w) { this->primitive->value.AsPooling()->strideW = stride_w; }
+void Pooling::SetStrideH(int stride_h) { this->primitive->value.AsPooling()->strideH = stride_h; }
+void Pooling::SetPadMode(int pad_mode) { this->primitive->value.AsPooling()->padMode = (schema::PadMode)pad_mode; }
+void Pooling::SetPadUp(int pad_up) { this->primitive->value.AsPooling()->padUp = pad_up; }
+void Pooling::SetPadDown(int pad_down) { this->primitive->value.AsPooling()->padDown = pad_down; }
+void Pooling::SetPadLeft(int pad_left) { this->primitive->value.AsPooling()->padLeft = pad_left; }
+void Pooling::SetPadRight(int pad_right) { this->primitive->value.AsPooling()->padRight = pad_right; }
+void Pooling::SetRoundMode(int round_mode) {
+  this->primitive->value.AsPooling()->roundMode = (schema::RoundMode)round_mode;
+}
+
+#else
+
+int Pooling::GetFormat() const { return this->primitive->value_as_Pooling()->format(); }
+int Pooling::GetPoolingMode() const { return this->primitive->value_as_Pooling()->poolingMode(); }
+bool Pooling::GetGlobal() const { return this->primitive->value_as_Pooling()->global(); }
+int Pooling::GetWindowW() const { return this->primitive->value_as_Pooling()->windowW(); }
+int Pooling::GetWindowH() const { return this->primitive->value_as_Pooling()->windowH(); }
+int Pooling::GetStrideW() const { return this->primitive->value_as_Pooling()->strideW(); }
+int Pooling::GetStrideH() const { return this->primitive->value_as_Pooling()->strideH(); }
+int Pooling::GetPadMode() const { return this->primitive->value_as_Pooling()->padMode(); }
+int Pooling::GetPadUp() const { return this->primitive->value_as_Pooling()->padUp(); }
+int Pooling::GetPadDown() const { return this->primitive->value_as_Pooling()->padDown(); }
+int Pooling::GetPadLeft() const { return this->primitive->value_as_Pooling()->padLeft(); }
+int Pooling::GetPadRight() const { return this->primitive->value_as_Pooling()->padRight(); }
+int Pooling::GetRoundMode() const { return this->primitive->value_as_Pooling()->roundMode(); }
+
+void Pooling::SetFormat(int format) {}
+void Pooling::SetPoolingMode(int pooling_mode) {}
+void Pooling::SetGlobal(bool global) {}
+void Pooling::SetWindowW(int window_w) {}
+void Pooling::SetWindowH(int window_h) {}
+void Pooling::SetStrideW(int stride_w) {}
+void Pooling::SetStrideH(int stride_h) {}
+void Pooling::SetPadMode(int pad_mode) {}
+void Pooling::SetPadUp(int pad_up) {}
+void Pooling::SetPadDown(int pad_down) {}
+void Pooling::SetPadLeft(int pad_left) {}
+void Pooling::SetPadRight(int pad_right) {}
+void Pooling::SetRoundMode(int round_mode) {}
+
+int Pooling::PadUp() const { return this->pad_u_; }
+int Pooling::PadDown() const { return this->pad_d_; }
+int Pooling::PadLeft() const { return this->pad_l_; }
+int Pooling::PadRight() const { return this->pad_r_; }
+
+#endif
+
 int Pooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   auto input = inputs_.front();
@@ -28,7 +97,6 @@ int Pooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
   MS_ASSERT(output != nullptr);
   int input_h = input->shape().at(1);
   int input_w = input->shape().at(2);
-
   auto pooling_prim = this->primitive->value_as_Pooling();
   MS_ASSERT(pooling_prim != nullptr);
   auto window_h = pooling_prim->windowH();
@@ -37,7 +105,6 @@ int Pooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
     window_h = input_h;
     window_w = input_w;
   }
-
   int output_h = 0;
   int output_w = 0;
   pad_l_ = pooling_prim->padLeft();
@@ -65,16 +132,15 @@ int Pooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
       MS_LOG(ERROR) << "unsupported round mode.";
     }
   }
-
   // todo: fmk type
   auto input_shape = input->shape();
   input_shape.at(1) = output_h;
   input_shape.at(2) = output_w;
   output->set_shape(input_shape);
   output->set_data_type(input->data_type());
-
   // todo: temp fix
   output->SetFormat(schema::Format_NHWC);
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

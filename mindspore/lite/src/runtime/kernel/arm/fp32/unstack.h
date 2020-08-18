@@ -25,7 +25,7 @@ class UnstackCPUKernel : public LiteKernel {
  public:
   UnstackCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                    const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                   const lite::Primitive *primitive)
+                   const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~UnstackCPUKernel() { free(output_addr_array_); }
 

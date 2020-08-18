@@ -15,13 +15,11 @@
  */
 
 #include "backend/kernel_compiler/rts/label_switch.h"
-#include <asm-generic/param.h>
 #include <memory>
 #include <string>
 #include "runtime/stream.h"
 #include "framework/ge_runtime/task_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "utils/ms_utils.h"
 
 using ge::model_runner::LabelSwitchTaskInfo;
 using LabelSwitchTaskInfoPtr = std::shared_ptr<LabelSwitchTaskInfo>;

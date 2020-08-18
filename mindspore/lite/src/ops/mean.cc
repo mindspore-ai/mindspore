@@ -14,12 +14,29 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/mean.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+std::vector<int> Mean::GetAxis() const { return this->primitive->value.AsMean()->axis; }
+bool Mean::GetKeepDims() const { return this->primitive->value.AsMean()->keepDims; }
+
+void Mean::SetAxis(const std::vector<int> &axis) { this->primitive->value.AsMean()->axis = axis; }
+void Mean::SetKeepDims(bool keep_dims) { this->primitive->value.AsMean()->keepDims = keep_dims; }
+
+#else
+
+std::vector<int> Mean::GetAxis() const {
+  auto fb_vector = this->primitive->value_as_Mean()->axis();
+  return std::vector<int>(fb_vector->begin(), fb_vector->end());
+}
+bool Mean::GetKeepDims() const { return this->primitive->value_as_Mean()->keepDims(); }
+
+void Mean::SetAxis(const std::vector<int> &axis) {}
+void Mean::SetKeepDims(bool keep_dims) {}
+#endif
+
 namespace {
 constexpr size_t kInputSize = 1;
 constexpr size_t kOutputSize = 1;
@@ -53,7 +70,6 @@ int Mean::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
     output->set_data_type(input->data_type());
     return RET_OK;
   }
-
   // reduce on selected axes
   for (size_t i = 0; i < in_shape.size(); i++) {
     bool reduce_axis = false;
@@ -76,4 +92,5 @@ int Mean::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
   output->SetFormat(input->GetFormat());
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

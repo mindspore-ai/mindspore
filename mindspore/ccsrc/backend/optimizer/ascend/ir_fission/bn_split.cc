@@ -16,7 +16,6 @@
 #include "backend/optimizer/ascend/ir_fission/bn_split.h"
 
 #include <vector>
-#include <string>
 #include <memory>
 
 #include "utils/utils.h"

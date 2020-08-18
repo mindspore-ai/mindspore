@@ -13,13 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <numeric>
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
 
-namespace mindspore::lite {
+#include "src/ops/power.h"
+
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+float Power::GetPower() const { return this->primitive->value.AsPower()->power; }
+float Power::GetScale() const { return this->primitive->value.AsPower()->scale; }
+float Power::GetShift() const { return this->primitive->value.AsPower()->shift; }
+
+void Power::SetPower(float power) { this->primitive->value.AsPower()->power = power; }
+void Power::SetScale(float scale) { this->primitive->value.AsPower()->scale = scale; }
+void Power::SetShift(float shift) { this->primitive->value.AsPower()->shift = shift; }
+
+#else
+
+float Power::GetPower() const { return this->primitive->value_as_Power()->power(); }
+float Power::GetScale() const { return this->primitive->value_as_Power()->scale(); }
+float Power::GetShift() const { return this->primitive->value_as_Power()->shift(); }
+
+void Power::SetPower(float power) {}
+void Power::SetScale(float scale) {}
+void Power::SetShift(float shift) {}
+#endif
+
 int Power::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
   MS_ASSERT(this->primitive != nullptr);
   auto x_tensor = inputs[0];
@@ -37,10 +55,10 @@ int Power::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::
       return RET_INPUT_TENSOR_ERROR;
     }
   }
-
   output_tensor->SetFormat(x_tensor->GetFormat());
   output_tensor->set_shape(x_tensor->shape());
   output_tensor->set_data_type(x_tensor->data_type());
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

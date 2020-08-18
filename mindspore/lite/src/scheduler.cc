@@ -56,7 +56,7 @@ int Scheduler::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels) {
       MS_LOG(ERROR) << "input kernel is nullptr!";
       return RET_ERROR;
     }
-    auto primitive = const_cast<lite::Primitive *>(kernels[i]->GetPrimitive());
+    auto primitive = const_cast<mindspore::lite::PrimitiveC *>(kernels[i]->GetPrimitive());
     if (primitive == nullptr) {
       MS_LOG(ERROR) << "kernel(" << kernels[i]->name() << ")'s primitive is nullptr!";
       return RET_ERROR;
@@ -243,11 +243,11 @@ kernel::LiteKernel *Scheduler::CreateSubKernel(const std::vector<kernel::LiteKer
 
 kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<tensor::Tensor *> &in_tensors,
                                             const std::vector<tensor::Tensor *> &out_tensors,
-                                            const lite::Primitive *primitive) {
+                                            const mindspore::lite::PrimitiveC *primitive) {
   // todo: support NPU, APU
   MS_ASSERT(nullptr != primitive);
   auto data_type = in_tensors.front()->data_type();
-  kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, primitive->Type()};
+  kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, static_cast<schema::PrimitiveType>(primitive->Type())};
   if (context_->device_ctx_.type == DT_GPU) {
     desc.arch = kernel::KERNEL_ARCH::kGPU;
     auto *kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, desc);

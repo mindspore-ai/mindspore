@@ -22,7 +22,7 @@
 #include "import_from_meta_graphT.h"
 #include "utils/log_adapter.h"
 #include "include/errorcode.h"
-#include "src/ops/ops.h"
+
 
 namespace mindspore::lite {
 int AnfImporterFromMetaGraphT::ConverterConstTensor() {

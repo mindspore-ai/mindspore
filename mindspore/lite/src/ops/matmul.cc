@@ -14,12 +14,27 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/matmul.h"
+#include <utility>
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+bool MatMul::GetTransposeA() const { return this->primitive->value.AsMatMul()->transposeA; }
+bool MatMul::GetTransposeB() const { return this->primitive->value.AsMatMul()->transposeB; }
+
+void MatMul::SetTransposeA(bool transpose_a) { this->primitive->value.AsMatMul()->transposeA = transpose_a; }
+void MatMul::SetTransposeB(bool transpose_b) { this->primitive->value.AsMatMul()->transposeB = transpose_b; }
+
+#else
+
+bool MatMul::GetTransposeA() const { return this->primitive->value_as_MatMul()->transposeA(); }
+bool MatMul::GetTransposeB() const { return this->primitive->value_as_MatMul()->transposeB(); }
+
+void MatMul::SetTransposeA(bool transpose_a) {}
+void MatMul::SetTransposeB(bool transpose_b) {}
+#endif
+
 int MatMul::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   auto input0 = inputs_.front();
@@ -28,21 +43,18 @@ int MatMul::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   MS_ASSERT(input1 != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
-
   std::vector<int> a_shape = input0->shape();
   std::vector<int> b_shape = input1->shape();
   if (a_shape.size() < 2 || b_shape.size() < 2) {
     MS_LOG(ERROR) << "inputs shape is invalid";
     return RET_INPUT_TENSOR_ERROR;
   }
-
   for (int i = 0; i < a_shape.size() - 2; ++i) {
     if (a_shape[i] != b_shape[i]) {
       MS_LOG(ERROR) << "Op MatMul's dimensions must be equal";
       return RET_INPUT_TENSOR_ERROR;
     }
   }
-
   auto matmul_prim = this->primitive->value_as_MatMul();
   if (matmul_prim->transposeA()) {
     std::swap(a_shape[a_shape.size() - 1], a_shape[a_shape.size() - 2]);
@@ -55,7 +67,7 @@ int MatMul::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   output->set_shape(c_shape);
   output->set_data_type(input0->data_type());
   output->SetFormat(input0->GetFormat());
-
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

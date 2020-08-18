@@ -19,12 +19,9 @@
 #include <string>
 #include <vector>
 #include <utility>
-
-#include "runtime/device/kernel_info.h"
 #include "backend/optimizer/ascend/ascend_helper.h"
 #include "backend/optimizer/common/helper.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
-#include "backend/kernel_compiler/oplib/oplib.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_graph.h"
 #include "utils/utils.h"

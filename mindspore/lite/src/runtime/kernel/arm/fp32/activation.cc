@@ -19,7 +19,6 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
-#include "src/ops/ops.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -95,7 +94,8 @@ int ActivationCPUKernel::Run() {
 kernel::LiteKernel *CpuActivationFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                    const std::vector<lite::tensor::Tensor *> &outputs,
                                                    OpParameter *opParameter, const lite::Context *ctx,
-                                                   const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                                   const kernel::KernelKey &desc,
+                                                   const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Activation);
   auto *kernel = new (std::nothrow) ActivationCPUKernel(opParameter, inputs, outputs, ctx, primitive);

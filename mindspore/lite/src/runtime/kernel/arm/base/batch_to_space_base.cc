@@ -50,7 +50,8 @@ int BatchToSpaceBaseCPUKernel::ReSize() {
 kernel::LiteKernel *CpuBatchToSpaceInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                      const std::vector<lite::tensor::Tensor *> &outputs,
                                                      OpParameter *op_parameter, const lite::Context *ctx,
-                                                     const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                                     const kernel::KernelKey &desc,
+                                                     const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_BatchToSpace);
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Input op_parameter is nullptr!";
@@ -75,7 +76,8 @@ kernel::LiteKernel *CpuBatchToSpaceInt8KernelCreator(const std::vector<lite::ten
 kernel::LiteKernel *CpuBatchToSpaceFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                      const std::vector<lite::tensor::Tensor *> &outputs,
                                                      OpParameter *op_parameter, const lite::Context *ctx,
-                                                     const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                                     const kernel::KernelKey &desc,
+                                                     const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_BatchToSpace);
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Input op_parameter is nullptr!";

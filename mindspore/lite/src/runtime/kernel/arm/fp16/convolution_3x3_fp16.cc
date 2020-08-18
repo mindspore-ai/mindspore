@@ -36,15 +36,15 @@ void ProcessFilterFp16(float16_t *origin_weight, float16_t *dst_weight, ConvPara
   auto input_channel = conv_param->input_channel_;
   auto output_channel = conv_param->output_channel_;
   auto kernel_plane = conv_param->kernel_w_ * conv_param->kernel_h_;
-  int iC4 = UP_DIV(input_channel, C4NUM);
+  int iC8 = UP_DIV(input_channel, C8NUM);
   int oC8 = UP_DIV(output_channel, C8NUM);
 
-  size_t tmp_size = oC8 * C8NUM * iC4 * C4NUM * kernel_plane * sizeof(float16_t);
+  size_t tmp_size = oC8 * C8NUM * iC8 * C8NUM * kernel_plane * sizeof(float16_t);
   auto tmp_addr = reinterpret_cast<float16_t *>(malloc(tmp_size));
   memset(tmp_addr, 0, tmp_size);
 
   PackWeightToC4Fp16(origin_weight, tmp_addr, conv_param);
-  Conv3x3Fp16FilterTransform(tmp_addr, dst_weight, iC4, output_channel, kernel_plane);
+  Conv3x3Fp16FilterTransform(tmp_addr, dst_weight, iC8 * 2, output_channel, kernel_plane);
 
   free(tmp_addr);
 }
@@ -52,10 +52,10 @@ void ProcessFilterFp16(float16_t *origin_weight, float16_t *dst_weight, ConvPara
 int Convolution3x3FP16CPUKernel::InitWeightBias() {
   auto input_channel = conv_param_->input_channel_;
   int output_channel = conv_param_->output_channel_;
-  int iC4 = UP_DIV(input_channel, C4NUM);
+  int iC8 = UP_DIV(input_channel, C8NUM);
   int oC8 = UP_DIV(output_channel, C8NUM);
   // init weight
-  size_t transformed_size = iC4 * C4NUM * oC8 * C8NUM * 36 * sizeof(float16_t);
+  size_t transformed_size = iC8 * C8NUM * oC8 * C8NUM * 36 * sizeof(float16_t);
   transformed_filter_addr_ = reinterpret_cast<float16_t *>(malloc(transformed_size));
   if (transformed_filter_addr_ == nullptr) {
     MS_LOG(ERROR) << "malloc transformed_filter_addr_ failed.";
@@ -92,11 +92,11 @@ int Convolution3x3FP16CPUKernel::InitWeightBias() {
 int Convolution3x3FP16CPUKernel::InitTmpBuffer() {
   const int tile_num = 16;
   const int k_plane = 36;
-  int iC4 = UP_DIV(conv_param_->input_channel_, C4NUM);
+  int iC8 = UP_DIV(conv_param_->input_channel_, C8NUM);
   int oC8 = UP_DIV(conv_param_->output_channel_, C8NUM);
 
   /*=============================tile_buffer_============================*/
-  size_t tile_buffer_size = thread_count_ * tile_num * k_plane * iC4 * C4NUM * sizeof(float16_t);
+  size_t tile_buffer_size = thread_count_ * tile_num * k_plane * iC8 * C8NUM * sizeof(float16_t);
   tile_buffer_ = reinterpret_cast<float16_t *>(malloc(tile_buffer_size));
   if (tile_buffer_ == nullptr) {
     MS_LOG(ERROR) << "malloc tile_buffer_ failed.";
@@ -105,7 +105,7 @@ int Convolution3x3FP16CPUKernel::InitTmpBuffer() {
   memset(tile_buffer_, 0, tile_buffer_size);
 
   /*=============================block_unit_buffer_============================*/
-  size_t block_unit_buffer_size = thread_count_ * k_plane * C4NUM * sizeof(float16_t);
+  size_t block_unit_buffer_size = thread_count_ * k_plane * C8NUM * sizeof(float16_t);
   block_unit_buffer_ = reinterpret_cast<float16_t *>(malloc(block_unit_buffer_size));
   if (block_unit_buffer_ == nullptr) {
     MS_LOG(ERROR) << "malloc block_unit_buffer_ failed.";
@@ -133,14 +133,14 @@ int Convolution3x3FP16CPUKernel::InitTmpBuffer() {
   memset(tmp_out_, 0, tmp_out_size);
 
   /*=============================nhwc4_input_============================*/
-  size_t nhwc4_input_size =
-    iC4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float16_t);
-  nhwc4_input_ = malloc(nhwc4_input_size);
+  size_t nhwc8_input_size =
+    iC8 * C8NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float16_t);
+  nhwc4_input_ = malloc(nhwc8_input_size);
   if (nhwc4_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc nhwc4_input_ failed.";
     return RET_ERROR;
   }
-  memset(nhwc4_input_, 0, nhwc4_input_size);
+  memset(nhwc4_input_, 0, nhwc8_input_size);
 
   return RET_OK;
 }
@@ -189,7 +189,6 @@ int Convolution3x3FP16CPUKernel::ReSize() {
     MS_LOG(ERROR) << "Init tmp buffer failed.";
     return RET_ERROR;
   }
-  ConfigInputOutput();
   return RET_OK;
 }
 
@@ -225,7 +224,7 @@ int Convolution3x3FP16CPUKernel::Run() {
   int in_h = conv_param_->input_h_;
   int in_w = conv_param_->input_w_;
   int in_channel = conv_param_->input_channel_;
-  convert_func_(reinterpret_cast<void *>(execute_input_), nhwc4_input_, in_batch, in_h * in_w, in_channel);
+  PackNHWCToNHWC8Fp16(reinterpret_cast<void *>(execute_input_), nhwc4_input_, in_batch, in_h * in_w, in_channel);
 
   int error_code = LiteBackendParallelLaunch(Convolution3x3Fp16Impl, this, thread_count_);
   if (error_code != RET_OK) {

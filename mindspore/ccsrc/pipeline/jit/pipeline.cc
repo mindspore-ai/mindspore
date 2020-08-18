@@ -33,7 +33,6 @@
 #include "utils/config_manager.h"
 #include "utils/convert_utils.h"
 #include "utils/context/context_extends.h"
-#include "utils/utils.h"
 #include "vm/segment_runner.h"
 #include "frontend/parallel/context.h"
 #include "frontend/parallel/graph_util/get_parallel_info.h"

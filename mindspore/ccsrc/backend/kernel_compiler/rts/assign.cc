@@ -15,11 +15,8 @@
  */
 
 #include "backend/kernel_compiler/rts/assign.h"
-
 #include <memory>
-
 #include "runtime/mem.h"
-#include "utils/ms_utils.h"
 
 using ge::model_runner::MemcpyAsyncTaskInfo;
 using MemcpyAsyncTaskInfoPtr = std::shared_ptr<MemcpyAsyncTaskInfo>;

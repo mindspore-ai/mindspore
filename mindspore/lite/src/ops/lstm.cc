@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,22 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/lstm.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+bool Lstm::GetBidirection() const { return this->primitive->value.AsLstm()->bidirection; }
+
+void Lstm::SetBidirection(bool bidirection) { this->primitive->value.AsLstm()->bidirection = bidirection; }
+
+#else
+
+bool Lstm::GetBidirection() const { return this->primitive->value_as_Lstm()->bidirection(); }
+
+void Lstm::SetBidirection(bool bidirection) {}
+#endif
+
 const int kLstmInputNum = 6;
 const int kLstmOutputNum = 3;
 int Lstm::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
@@ -34,17 +44,14 @@ int Lstm::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
   MS_ASSERT(input0 != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
-
   std::vector<int> in_shape = input->shape();
   std::vector<int> w_shape = weight_i->shape();  // layer, hidden_size * 4, input_size
   if (in_shape.size() != 3 || w_shape.size() != 3) {
     MS_LOG(ERROR) << "OpLstm input dims should be 3.";
     return RET_ERROR;
   }
-
   auto lstm_prim = this->primitive->value_as_Lstm();
   int hidden_size = w_shape[1] / 4;
-
   // set output
   std::vector<int> out_shape(in_shape);
   out_shape[2] = hidden_size;
@@ -52,18 +59,17 @@ int Lstm::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
     out_shape.insert(out_shape.begin() + 1, 2);
   }
   output->set_shape(out_shape);
-
   // set hidden state, cell state
   std::vector<int> state_shape(in_shape);
   state_shape[0] = lstm_prim->bidirection() ? 2 : 1;
   state_shape[2] = hidden_size;
   outputs_[1]->set_shape(state_shape);
   outputs_[2]->set_shape(state_shape);
-
   for (int i = 0; i < kLstmOutputNum; i++) {
     outputs_[i]->set_data_type(input->data_type());
     outputs_[i]->SetFormat(input->GetFormat());
   }
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

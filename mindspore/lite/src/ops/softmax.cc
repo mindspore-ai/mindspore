@@ -14,12 +14,22 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/softmax.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+int SoftMax::GetAxis() const { return this->primitive->value.AsSoftMax()->axis; }
+
+void SoftMax::SetAxis(int axis) { this->primitive->value.AsSoftMax()->axis = axis; }
+
+#else
+
+int SoftMax::GetAxis() const { return this->primitive->value_as_SoftMax()->axis(); }
+
+void SoftMax::SetAxis(int axis) {}
+#endif
+
 int SoftMax::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   auto input = inputs_.front();
@@ -32,7 +42,7 @@ int SoftMax::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
     return RET_OK;
   }
   output->set_shape(input->shape());
-
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

@@ -17,7 +17,6 @@
 #include "frontend/parallel/ops_info/operator_info.h"
 
 #include <algorithm>
-#include <cmath>
 #include <functional>
 #include <memory>
 #include <string>
@@ -30,7 +29,6 @@
 #include "frontend/parallel/auto_parallel/edge_costmodel.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "frontend/parallel/context.h"
-#include "utils/ms_context.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

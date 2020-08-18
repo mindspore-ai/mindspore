@@ -16,15 +16,11 @@
 #include "backend/optimizer/common/pass_manager.h"
 
 #include <sys/time.h>
-#include <unordered_set>
 #include <deque>
 #include <string>
-#include <algorithm>
-
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "ir/manager.h"
-#include "utils/utils.h"
 #include "utils/ms_context.h"
 #include "debug/anf_ir_dump.h"
 

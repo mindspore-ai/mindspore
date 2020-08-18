@@ -22,16 +22,10 @@
 #include <utility>
 #include <algorithm>
 #include <map>
-#include <unordered_map>
-#include <unordered_set>
-#include "utils/ms_utils.h"
 #include "debug/anf_ir_dump.h"
 #include "frontend/operator/ops.h"
-#include "ir/func_graph.h"
 #include "utils/ms_context.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "runtime/device/kernel_info.h"
-#include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/kernel_query.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "backend/kernel_compiler/kernel_build_info.h"

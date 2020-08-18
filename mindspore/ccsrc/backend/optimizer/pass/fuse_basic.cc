@@ -25,12 +25,10 @@
 #include <string>
 
 #include "frontend/operator/ops.h"
-#include "utils/utils.h"
 #include "ir/graph_utils.h"
 #include "backend/optimizer/common/helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "vm/segment_runner.h"
-#include "debug/draw.h"
 #include "debug/anf_ir_dump.h"
 #include "ir/func_graph_cloner.h"
 

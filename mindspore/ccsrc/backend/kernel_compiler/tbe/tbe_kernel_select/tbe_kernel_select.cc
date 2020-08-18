@@ -23,7 +23,6 @@
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_build.h"
 #include "nlohmann/json.hpp"
-#include "utils/ms_context.h"
 #include "backend/optimizer/common/helper.h"
 #include "backend/kernel_compiler/tbe/tbe_convert_utils.h"
 #include "frontend/parallel/ops_info/ops_utils.h"

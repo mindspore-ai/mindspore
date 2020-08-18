@@ -18,9 +18,7 @@
 #include <map>
 #include <string>
 #include <memory>
-#include <vector>
 #include "pybind11/pybind11.h"
-#include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/parse/python_adapter.h"
 #include "utils/visible.h"
 

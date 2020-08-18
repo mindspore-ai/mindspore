@@ -92,7 +92,7 @@ kernel::LiteKernel *CpuArithmeticSelfFp32KernelCreator(const std::vector<lite::t
                                                        const std::vector<lite::tensor::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::Context *ctx,
                                                        const kernel::KernelKey &desc,
-                                                       const lite::Primitive *primitive) {
+                                                       const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Creator failed, opParameter is nullptr!";

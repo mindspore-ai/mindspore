@@ -14,12 +14,29 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
+#include "src/ops/gather.h"
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
 #include "src/ir/tensor.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+int Gather::GetAxis() const { return this->primitive->value.AsGather()->axis; }
+int Gather::GetBatchDims() const { return this->primitive->value.AsGather()->batchDims; }
+
+void Gather::SetAxis(int axis) { this->primitive->value.AsGather()->axis = axis; }
+void Gather::SetBatchDims(int batch_dims) { this->primitive->value.AsGather()->batchDims = batch_dims; }
+
+#else
+
+int Gather::GetAxis() const { return this->primitive->value_as_Gather()->axis(); }
+int Gather::GetBatchDims() const { return this->primitive->value_as_Gather()->batchDims(); }
+
+void Gather::SetAxis(int axis) {}
+void Gather::SetBatchDims(int batch_dims) {}
+#endif
+
 int Gather::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   if (inputs_.size() != kDoubleNum) {
@@ -30,7 +47,6 @@ int Gather::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
     MS_LOG(ERROR) << "Gather should have one outputs";
     return RET_INPUT_TENSOR_ERROR;
   }
-
   auto input = inputs_.at(0);
   MS_ASSERT(input != nullptr);
   auto indices = inputs_.at(1);
@@ -44,7 +60,6 @@ int Gather::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   }
   auto gather_prim = this->primitive->value_as_Gather();
   MS_ASSERT(gather_prim != nullptr);
-
   int axis = gather_prim->axis();
   int batch_dims = gather_prim->batchDims();
   if (axis < 0) {
@@ -66,15 +81,13 @@ int Gather::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
     MS_LOG(ERROR) << "input[0]'s rank is less than axis + 1";
     return RET_ERROR;
   }
-
   std::vector<int> out_shape{in_shape};
   out_shape.erase(out_shape.begin() + axis);
   for (size_t i = 0; i < indices_rank; i++) {
     out_shape.insert(out_shape.begin() + axis, indices_shape[i]);
   }
-
   output->set_shape(out_shape);
-
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

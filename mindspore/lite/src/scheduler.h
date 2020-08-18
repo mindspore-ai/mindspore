@@ -21,6 +21,7 @@
 #include "src/lite_kernel.h"
 #include "include/context.h"
 #include "include/model.h"
+#include "src/ops/primitive_c.h"
 
 namespace mindspore::lite {
 class Scheduler {
@@ -33,7 +34,8 @@ class Scheduler {
 
  protected:
   kernel::LiteKernel *ScheduleNode(const std::vector<tensor::Tensor *> &in_tensors,
-                                   const std::vector<tensor::Tensor *> &out_tensors, const lite::Primitive *primitive);
+                                   const std::vector<tensor::Tensor *> &out_tensors,
+                                   const mindspore::lite::PrimitiveC *primitive);
 
  private:
   int InitOp2Kernel(const lite::Model *model, std::vector<tensor::Tensor *> *tensors,
