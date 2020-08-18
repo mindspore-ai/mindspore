@@ -37,8 +37,8 @@ class SoftmaxInt8CPUKernel : public SoftmaxBaseCPUKernel {
 
  private:
   void FreeTmpBuffer();
-  float *sum_data_;
-  float *exp_data_;
+  float *sum_data_ = nullptr;
+  float *exp_data_ = nullptr;
   SoftmaxQuantArg quant_params_;
 };
 }  // namespace mindspore::kernel

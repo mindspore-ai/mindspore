@@ -17,7 +17,7 @@
 #include "nnacl/int8/softmax_int8.h"
 #include <math.h>
 
-int Int8Softmax(const int8_t *input_ptr, int8_t *output_ptr, int count, float *exp_data, float *sum_data,
+int SoftmaxInt8(const int8_t *input_ptr, int8_t *output_ptr, int count, float *exp_data, float *sum_data,
                 SoftmaxQuantArg quant_param, SoftmaxParameter *parameter) {
   int32_t axis = parameter->axis_;
   int n_dim = parameter->n_dim_;
@@ -48,7 +48,8 @@ int Int8Softmax(const int8_t *input_ptr, int8_t *output_ptr, int count, float *e
         int inner_offset = axis_offset + i;
         float real_output = exp_data[inner_offset] / sum_data[i];
         int32_t output_scaled = round(real_output / output_scale) + output_zp;
-        output_ptr[inner_offset] = MSMAX(CHAR_MIN, MSMIN(CHAR_MAX, output_scaled));
+        output_ptr[inner_offset] =
+          MSMAX(quant_param.output_activation_min_, MSMIN(quant_param.output_activation_max_, output_scaled));
       }
     }
   }

@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/int8/softmax_int8.h"
+#include <limits>
 #include "src/runtime/kernel/arm/nnacl/int8/softmax_int8.h"
 #include "schema/model_generated.h"
 #include "src/runtime/runtime_api.h"
@@ -44,6 +45,8 @@ int SoftmaxInt8CPUKernel::Init() {
   auto out_quant_args = out_tensor->GetQuantParams();
   quant_params_.out_quant_arg_.scale_ = out_quant_args.front().scale;
   quant_params_.out_quant_arg_.zp_ = out_quant_args.front().zeroPoint;
+  quant_params_.output_activation_min_ = std::numeric_limits<int8_t>::min();
+  quant_params_.output_activation_max_ = std::numeric_limits<int8_t>::max();
 
   if (!InferShapeDone()) {
     return RET_OK;
@@ -95,12 +98,10 @@ int SoftmaxInt8CPUKernel::DoSoftmax(int task_id) {
 
   int stride = UP_DIV(outter_size, thread_count_);
   int count = MSMIN(stride, outter_size - stride * task_id);
+  int stride_size = stride * task_id * inner_size;
 
-  input_ptr += stride * task_id * inner_size;
-  output_ptr += stride * task_id * inner_size;
-  exp_data_ += stride * task_id * inner_size;
-
-  auto error_code = Int8Softmax(input_ptr, output_ptr, count, exp_data_, sum_data_, quant_params_, softmax_param_);
+  auto error_code = SoftmaxInt8(input_ptr + stride_size, output_ptr + stride_size, count, exp_data_ + stride_size,
+                                sum_data_, quant_params_, softmax_param_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "DoSoftmax error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;

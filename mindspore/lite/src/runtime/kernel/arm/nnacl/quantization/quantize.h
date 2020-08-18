@@ -169,6 +169,11 @@ typedef struct SplitQuantArg {
 typedef struct SoftmaxQuantArg {
   QuantArg in_quant_args_;
   QuantArg out_quant_arg_;
+  int output_activation_min_;
+  int output_activation_max_;
+  int output_multiplier_;
+  int shift_left_;
+  int shift_right_;
 } SoftmaxQuantArg;
 
 typedef struct ReshapeQuantArg {
