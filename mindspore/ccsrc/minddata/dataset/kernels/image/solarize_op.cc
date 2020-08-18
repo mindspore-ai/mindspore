@@ -27,6 +27,8 @@ const uint8_t kPixelValue = 255;
 Status SolarizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
 
+  uint8_t threshold_min_ = threshold_[0], threshold_max_ = threshold_[1];
+
   CHECK_FAIL_RETURN_UNEXPECTED(threshold_min_ <= threshold_max_,
                                "threshold_min must be smaller or equal to threshold_max.");
 

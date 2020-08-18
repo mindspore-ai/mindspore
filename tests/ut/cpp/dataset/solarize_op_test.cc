@@ -74,7 +74,8 @@ TEST_F(MindDataTestSolarizeOp, TestOp3) {
   MS_LOG(INFO) << "Doing testSolarizeOp3 - Pass in only threshold_min parameter";
 
   //  unsigned int threshold = 128;
-  std::unique_ptr<SolarizeOp> op(new SolarizeOp(1));
+  std::vector<uint8_t> threshold ={1, 255};
+  std::unique_ptr<SolarizeOp> op(new SolarizeOp(threshold));
 
   std::vector<uint8_t> test_vector = {3, 4, 59, 210, 255};
   std::vector<uint8_t> expected_output_vector = {252, 251, 196, 45, 0};
@@ -98,8 +99,8 @@ TEST_F(MindDataTestSolarizeOp, TestOp3) {
 TEST_F(MindDataTestSolarizeOp, TestOp4) {
   MS_LOG(INFO) << "Doing testSolarizeOp4 - Pass in both threshold parameters.";
 
-  //  unsigned int threshold = 128;
-  std::unique_ptr<SolarizeOp> op(new SolarizeOp(1, 230));
+  std::vector<uint8_t> threshold ={1, 230};
+  std::unique_ptr<SolarizeOp> op(new SolarizeOp(threshold));
 
   std::vector<uint8_t> test_vector = {3, 4, 59, 210, 255};
   std::vector<uint8_t> expected_output_vector = {252, 251, 196, 45, 255};
@@ -123,8 +124,8 @@ TEST_F(MindDataTestSolarizeOp, TestOp4) {
 TEST_F(MindDataTestSolarizeOp, TestOp5) {
   MS_LOG(INFO) << "Doing testSolarizeOp5 - Rank 2 input tensor.";
 
-  //  unsigned int threshold = 128;
-  std::unique_ptr<SolarizeOp> op(new SolarizeOp(1, 230));
+  std::vector<uint8_t> threshold ={1, 230};
+  std::unique_ptr<SolarizeOp> op(new SolarizeOp(threshold));
 
   std::vector<uint8_t> test_vector = {3, 4, 59, 210, 255};
   std::vector<uint8_t> expected_output_vector = {252, 251, 196, 45, 255};
@@ -149,7 +150,8 @@ TEST_F(MindDataTestSolarizeOp, TestOp5) {
 TEST_F(MindDataTestSolarizeOp, TestOp6) {
   MS_LOG(INFO) << "Doing testSolarizeOp6 - Bad Input.";
 
-  std::unique_ptr<SolarizeOp> op(new SolarizeOp(10, 1));
+  std::vector<uint8_t> threshold ={10, 1};
+  std::unique_ptr<SolarizeOp> op(new SolarizeOp(threshold));
 
   std::vector<uint8_t> test_vector = {3, 4, 59, 210, 255};
   std::shared_ptr<Tensor> test_input_tensor;

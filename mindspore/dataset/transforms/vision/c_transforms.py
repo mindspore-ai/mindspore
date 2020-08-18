@@ -1045,4 +1045,4 @@ class RandomSolarize(cde.RandomSolarizeOp):
 
     @check_random_solarize
     def __init__(self, threshold=(0, 255)):
-        super().__init__(*threshold)
+        super().__init__(threshold)

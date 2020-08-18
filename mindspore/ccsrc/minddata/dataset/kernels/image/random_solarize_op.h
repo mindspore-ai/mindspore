@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
@@ -31,10 +32,7 @@ namespace dataset {
 class RandomSolarizeOp : public SolarizeOp {
  public:
   // Pick a random threshold value to solarize the image with
-  explicit RandomSolarizeOp(uint8_t threshold_min = 0, uint8_t threshold_max = 255)
-      : threshold_min_(threshold_min), threshold_max_(threshold_max) {
-    rnd_.seed(GetSeed());
-  }
+  explicit RandomSolarizeOp(std::vector<uint8_t> threshold = {0, 255}) : threshold_(threshold) { rnd_.seed(GetSeed()); }
 
   ~RandomSolarizeOp() = default;
 
@@ -43,8 +41,7 @@ class RandomSolarizeOp : public SolarizeOp {
   std::string Name() const override { return kRandomSolarizeOp; }
 
  private:
-  uint8_t threshold_min_;
-  uint8_t threshold_max_;
+  std::vector<uint8_t> threshold_;
   std::mt19937 rnd_;
 };
 }  // namespace dataset

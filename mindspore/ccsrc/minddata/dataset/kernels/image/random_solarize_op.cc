@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <vector>
+
 #include "minddata/dataset/kernels/image/random_solarize_op.h"
 #include "minddata/dataset/kernels/image/solarize_op.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
@@ -24,6 +26,9 @@ namespace dataset {
 
 Status RandomSolarizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
+
+  uint8_t threshold_min_ = threshold_[0], threshold_max_ = threshold_[1];
+
   CHECK_FAIL_RETURN_UNEXPECTED(threshold_min_ <= threshold_max_,
                                "threshold_min must be smaller or equal to threshold_max.");
 
@@ -35,7 +40,8 @@ Status RandomSolarizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shar
     threshold_min = threshold_max;
     threshold_max = temp;
   }
-  std::unique_ptr<SolarizeOp> op(new SolarizeOp(threshold_min, threshold_max));
+  std::vector<uint8_t> inputs = {threshold_min, threshold_max};
+  std::unique_ptr<SolarizeOp> op(new SolarizeOp(inputs));
   return op->Compute(input, output);
 }
 }  // namespace dataset

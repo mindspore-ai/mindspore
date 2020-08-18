@@ -38,7 +38,9 @@ TEST_F(MindDataTestRandomSolarizeOp, TestOp1) {
   uint32_t curr_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(0);
 
-  std::unique_ptr<RandomSolarizeOp> op(new RandomSolarizeOp(100, 100));
+  std::vector<uint8_t> threshold = {100, 100};
+  std::unique_ptr<RandomSolarizeOp> op(new RandomSolarizeOp(threshold));
+
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor_);
 
