@@ -116,6 +116,12 @@ int Scheduler::InferShape(const lite::Model *model, std::vector<tensor::Tensor *
       }
     } else {
       primitive->SetInferFlag(false);
+      auto ret = primitive->InferShape(inputs, outputs);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "InferShape fail! name: " << cNode->name()->str()
+                      << ", type: " << schema::EnumNamePrimitiveType(cNode->primitive()->value_type());
+        return RET_INFER_ERR;
+      }
     }
   }
   return RET_OK;

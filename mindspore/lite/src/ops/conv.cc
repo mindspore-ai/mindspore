@@ -66,6 +66,11 @@ int Conv2D::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   MS_ASSERT(input_tensor != nullptr);
   MS_ASSERT(out_tensor != nullptr);
 
+  out_tensor->SetFormat(input_tensor->GetFormat());
+  out_tensor->set_data_type(input_tensor->data_type());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   auto in_shape = input_tensor->shape();
   int input_h = in_shape.at(1);
   int input_w = in_shape.at(2);
@@ -78,8 +83,7 @@ int Conv2D::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   out_shape.at(2) = output_w;
   out_shape.at(3) = weight_tensor->shape()[0];
   out_tensor->set_shape(out_shape);
-  out_tensor->SetFormat(input_tensor->GetFormat());
-  out_tensor->set_data_type(input_tensor->data_type());
+
   return RET_OK;
 }
 }  // namespace mindspore::lite

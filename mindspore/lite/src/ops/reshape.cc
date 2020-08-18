@@ -82,6 +82,11 @@ int Reshape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
+  output->set_data_type(input->data_type());
+  output->SetFormat(input->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   auto reshape_prim = this->primitive->value_as_Reshape();
   MS_ASSERT(reshape_prim != nullptr);
 
@@ -133,9 +138,6 @@ int Reshape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
   }
 
   output->set_shape(out_shape);
-  output->set_data_type(input->data_type());
-  output->SetFormat(input->GetFormat());
-
   return RET_OK;
 }
 }  // namespace mindspore::lite

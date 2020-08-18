@@ -223,11 +223,11 @@ bool CheckIfUseSlideWindow(ConvParameter *conv_param) {
 
 kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs,
-                                             OpParameter *opParameter, const Context *ctx,
+                                             OpParameter *op_parameter, const Context *ctx,
                                              const kernel::KernelKey &desc, const lite::Primitive *primitive) {
-  MS_ASSERT(opParameter != nullptr);
+  MS_ASSERT(op_parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D);
-  auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
+  auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
   int stride_h = conv_param->stride_h_;
@@ -239,25 +239,28 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Ten
   conv_param->output_h_ = outputs.front()->Height();
   conv_param->output_w_ = outputs.front()->Width();
   bool use_winograd = false;
+  bool use_sw = false;
   int out_unit;
   InputTransformUnitFunc input_trans_func = nullptr;
   OutputTransformUnitFunc output_trans_func = nullptr;
-  CheckIfUseWinograd(&use_winograd, &out_unit, conv_param, input_trans_func, output_trans_func);
-  bool use_sw = CheckIfUseSlideWindow(conv_param);
+  if (primitive != nullptr && primitive->GetInferFlag()) {
+    CheckIfUseWinograd(&use_winograd, &out_unit, conv_param, input_trans_func, output_trans_func);
+    use_sw = CheckIfUseSlideWindow(conv_param);
+  }
 
   kernel::LiteKernel *kernel;
   if (kernel_h == 1 && kernel_w == 1) {
-    kernel = new (std::nothrow) kernel::Convolution1x1CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+    kernel = new (std::nothrow) kernel::Convolution1x1CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   } else if (kernel_h == 3 && kernel_w == 3 && stride_h == 1 && stride_w == 1 && dilation_h == 1 && dilation_w == 1) {
-    kernel = new (std::nothrow) kernel::Convolution3x3CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+    kernel = new (std::nothrow) kernel::Convolution3x3CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   } else if (use_winograd) {
     kernel =
-      new (std::nothrow) kernel::ConvolutionWinogradCPUKernel(opParameter, inputs, outputs, ctx, primitive, out_unit);
+      new (std::nothrow) kernel::ConvolutionWinogradCPUKernel(op_parameter, inputs, outputs, ctx, primitive, out_unit);
   } else if (use_sw) {
-    // kernel = new (std::nothrow) kernel::ConvolutionSWCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-    kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+    // kernel = new (std::nothrow) kernel::ConvolutionSWCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
+    kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   } else {
-    kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+    kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   }
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
@@ -266,8 +269,8 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Ten
   auto ret = kernel->Init();
   if (ret != RET_OK && ret != RET_INFER_INVALID) {
     delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    MS_LOG(ERROR) << "Init kernel failed, name: " << op_parameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
     return nullptr;
   }
   return kernel;

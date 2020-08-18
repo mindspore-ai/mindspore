@@ -40,6 +40,11 @@ int Arithmetic::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<te
   auto input_shape0 = input0->shape();
   auto input_shape1 = input1->shape();
   auto format = input0->GetFormat();
+  output->SetFormat(format);
+  output->set_data_type(input0->data_type());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   in_shape0_.resize(5);
   in_shape1_.resize(5);
   out_shape_.resize(5);
@@ -94,9 +99,8 @@ int Arithmetic::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<te
     }
     output_shape.push_back(out_shape_[i]);
   }
-  output->SetFormat(format);
+
   output->set_shape(output_shape);
-  output->set_data_type(input0->data_type());
   return RET_OK;
 }
 }  // namespace mindspore::lite

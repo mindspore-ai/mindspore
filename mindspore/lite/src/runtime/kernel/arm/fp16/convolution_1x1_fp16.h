@@ -58,6 +58,7 @@ class Convolution1x1FP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
     }
     if (pack_input_ != nullptr) {
       free(pack_input_);
+      pack_input_ = nullptr;
     }
   }
   bool pre_trans_input_ = false;
