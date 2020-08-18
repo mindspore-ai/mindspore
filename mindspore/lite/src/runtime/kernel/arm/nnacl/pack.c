@@ -295,12 +295,12 @@ void Im2ColPackUnitInt8(const int8_t *input_data, int8_t *packed_input, int real
       }    // kernel_w loop
     }      // kernel_h loop
     if (!(conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC)) {
-      return;
+      continue;
     } else if ((conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
                (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
       int cal_num_offset = i * conv_param->output_channel_;
       for (int l = 0; l < conv_param->output_channel_; ++l) {
-        input_sum[cal_num_offset + l] = input_accumulator * filter_arg[i].zp_;
+        input_sum[cal_num_offset + l] = input_accumulator * filter_arg[l].zp_;
       }
     } else if ((conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
                !(conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
@@ -367,12 +367,12 @@ void Im2ColPackUnitInt8Opt(const int8_t *input_data, int8_t *packed_input, int r
       }
     }
     if (!(conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC)) {
-      return;
+      continue;
     } else if ((conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
                (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
       int cal_num_offset = i * conv_param->output_channel_;
       for (int l = 0; l < conv_param->output_channel_; ++l) {
-        input_sum[cal_num_offset + l] = input_accumulator * filter_arg[i].zp_;
+        input_sum[cal_num_offset + l] = input_accumulator * filter_arg[l].zp_;
       }
     } else if ((conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
                !(conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
@@ -870,8 +870,8 @@ void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int 
   int c8 = channel / C8NUM * C8NUM;
   int batch = plane * channel;
   for (int n = 0; n < batches; n++) {
-    const float *src_batch = (const float*) src + n * batch;
-    float *dst_batch = (float*) dst + n * batch;
+    const float *src_batch = (const float *)src + n * batch;
+    float *dst_batch = (float *)dst + n * batch;
     int hw = 0;
     for (; hw < hw8; hw += C8NUM) {
       int c = 0;
@@ -947,9 +947,10 @@ void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int 
           "st1 {v30.4s, v31.4s}, [x11], %[dstStride]\n"
 
           :
-          : [ dst_ptr ] "r"(dst_ptr), [ src_ptr ] "r"(src_ptr), [ srcStride ] "r"(srcStride), [ dstStride ] "r"(dstStride)
+          :
+          [ dst_ptr ] "r"(dst_ptr), [ src_ptr ] "r"(src_ptr), [ srcStride ] "r"(srcStride), [ dstStride ] "r"(dstStride)
           : "x10", "x11", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14",
-            "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", 
+            "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29",
             "v30", "v31");
 #else
         for (int tr = 0; tr < C8NUM; tr++) {

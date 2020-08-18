@@ -296,16 +296,6 @@ int ConvolutionBaseCPUKernel::SetQuantParam() {
     MS_LOG(ERROR) << "Set Output Tensor Quant Param Failed.";
     return ret;
   }
-  ret = SetQuantMultiplier();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Set Quant Multiplier Failed.";
-    return ret;
-  }
-  // now only consider per tensor for output
-  CalculateActivationRangeQuantized(
-    conv_param_->is_relu_, conv_param_->is_relu6_, conv_param_->conv_quant_arg_.output_quant_args_[0].zp_,
-    conv_param_->conv_quant_arg_.output_quant_args_[0].scale_, &conv_param_->conv_quant_arg_.out_act_min_[0],
-    &conv_param_->conv_quant_arg_.out_act_max_[0]);
 
   ret = SetIfPerChannel();
   if (ret != RET_OK) {
@@ -317,6 +307,18 @@ int ConvolutionBaseCPUKernel::SetQuantParam() {
     MS_LOG(ERROR) << "Set if per asymmetric failed.";
     return ret;
   }
+
+  ret = SetQuantMultiplier();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Set Quant Multiplier Failed.";
+    return ret;
+  }
+  // now only consider per tensor for output
+  CalculateActivationRangeQuantized(
+    conv_param_->is_relu_, conv_param_->is_relu6_, conv_param_->conv_quant_arg_.output_quant_args_[0].zp_,
+    conv_param_->conv_quant_arg_.output_quant_args_[0].scale_, &conv_param_->conv_quant_arg_.out_act_min_[0],
+    &conv_param_->conv_quant_arg_.out_act_max_[0]);
+
   return RET_OK;
 }
 }  // namespace mindspore::kernel
