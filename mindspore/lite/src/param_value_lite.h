@@ -22,7 +22,6 @@
 #include <vector>
 #include <utility>
 
-#include "ir/param_value.h"
 #include "ir/dtype/type_id.h"
 
 namespace mindspore {

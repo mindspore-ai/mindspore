@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_IR_PARAM_VALUE_H_
-#define MINDSPORE_CORE_IR_PARAM_VALUE_H_
+#ifndef MINDSPORE_CORE_IR_PARAM_INFO_H_
+#define MINDSPORE_CORE_IR_PARAM_INFO_H_
 
 #include <atomic>
 #include <memory>
@@ -25,13 +25,13 @@
 #include "ir/tensor.h"
 
 namespace mindspore {
-class ParamValue {
+class ParamInfo {
  public:
-  ParamValue() {}
+  ParamInfo() {}
 
-  ParamValue(const ParamValue &other) = default;
+  ParamInfo(const ParamInfo &other) = default;
 
-  virtual ~ParamValue() = default;
+  virtual ~ParamInfo() = default;
 
   const std::string &name() const { return name_; }
   void set_name(const std::string &name) { name_ = name; }
@@ -58,7 +58,7 @@ class ParamValue {
   ParamValuePtr Clone() {
     static std::atomic<int32_t> parameter_cloned_index{1};
     int32_t index = parameter_cloned_index.fetch_add(1, std::memory_order_relaxed);
-    auto clone = std::make_shared<ParamValue>(*this);
+    auto clone = std::make_shared<ParamInfo>(*this);
     clone->be_cloned_ = false;
     clone->cloned_ = true;
     clone->be_cloned_index_ = {};
@@ -78,4 +78,4 @@ class ParamValue {
   int32_t cloned_index_{0};
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_IR_PARAM_VALUE_H_
+#endif  // MINDSPORE_CORE_IR_PARAM_INFO_H_

@@ -28,7 +28,7 @@
 #include <utility>
 
 #include "ir/tensor.h"
-#include "ir/param_value.h"
+#include "ir/param_info.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"

@@ -19,7 +19,7 @@
 #include <unordered_set>
 #include <set>
 #include "frontend/operator/ops.h"
-#include "ir/param_value.h"
+#include "ir/param_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/kernel_compiler/kernel_build_info.h"

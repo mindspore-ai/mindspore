@@ -74,8 +74,8 @@ using VarPtr = std::shared_ptr<Var>;
 
 class AnfIrVisitor;
 
-class ParamValue;
-using ParamValuePtr = std::shared_ptr<ParamValue>;
+class ParamInfo;
+using ParamValuePtr = std::shared_ptr<ParamInfo>;
 
 // AnfNode is the basic class of the IR definition derived from Base.
 // Only two types of nodes are derived: CNode and ANode.

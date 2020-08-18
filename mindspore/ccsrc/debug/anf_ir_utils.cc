@@ -26,7 +26,7 @@
 #include "ir/graph_utils.h"
 #include "utils/symbolic.h"
 #include "ir/meta_func_graph.h"
-#include "ir/param_value.h"
+#include "ir/param_info.h"
 #include "pybind_api/ir/tensor_py.h"
 #include "pipeline/jit/parse/python_adapter.h"
 #include "pipeline/jit/parse/resolve.h"

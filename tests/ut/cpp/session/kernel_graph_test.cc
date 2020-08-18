@@ -15,7 +15,7 @@
  */
 
 #include "common/common_test.h"
-#include "ir/param_value.h"
+#include "ir/param_info.h"
 #include "frontend/operator/ops.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/session/anf_runtime_algorithm.h"

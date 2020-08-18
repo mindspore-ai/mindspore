@@ -24,7 +24,7 @@
 #include <cstdlib>
 #include <algorithm>
 
-#include "ir/param_value.h"
+#include "ir/param_info.h"
 #include "pipeline/jit/pass.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "frontend/optimizer/ad/dfunctor.h"

@@ -24,7 +24,7 @@
 #include <functional>
 
 #include "ir/tensor.h"
-#include "ir/param_value.h"
+#include "ir/param_info.h"
 #include "debug/anf_ir_utils.h"
 #include "frontend/operator/ops.h"
 #include "proto/onnx.pb.h"

@@ -19,7 +19,7 @@
 #include "frontend/operator/ops.h"
 #include "ir/tensor.h"
 #include "ir/anf.h"
-#include "ir/param_value.h"
+#include "ir/param_info.h"
 #include "runtime/device/kernel_runtime.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/ms_utils.h"

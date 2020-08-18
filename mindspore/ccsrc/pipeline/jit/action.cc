@@ -24,7 +24,7 @@
 #include <functional>
 
 #include "ir/func_graph_cloner.h"
-#include "ir/param_value.h"
+#include "ir/param_info.h"
 #include "frontend/parallel/costmodel_context.h"
 #include "frontend/parallel/context.h"
 #include "pipeline/jit/pass.h"
