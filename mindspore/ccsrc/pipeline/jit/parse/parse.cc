@@ -154,6 +154,23 @@ FuncGraphPtr Parser::ParseFuncGraph() {
   RemoveUnnecessaryPhis();
 
   MS_EXCEPTION_IF_NULL(pFnBlock);
+
+  // check whether the functions refered by this function and itself are missing 'return' statement
+  auto mng = Manage(pFnBlock->func_graph(), false);
+  for (auto func_graph : mng->func_graphs()) {
+    if (func_graph->get_return() != nullptr) {
+      continue;
+    }
+    py::list ret = ast_->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, node);
+    py::str desc =
+      python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast_->function(), ret[0], ret[1]);
+    MS_EXCEPTION(TypeError) << "Missing return statement in " << desc.cast<std::string>() << ".";
+  }
+  // clear manager info after checking missing return
+  for (auto fg : mng->func_graphs()) {
+    fg->ClearAllManagerInfo();
+  }
+
   return pFnBlock->func_graph();
 }
 
@@ -271,9 +288,9 @@ FunctionBlockPtr Parser::ParseFunction(const py::object &node, const FunctionBlo
   (void)ParseStatements(pFunBlock, funcObj);
 
   if (current_fg->get_return() == nullptr) {
-    MS_LOG(ERROR) << "Graph return node is null, loc:" << GetLocation(node)->ToString();
-    errcode_ = PARSE_NO_RETURN;
-    return pFunBlock;
+    py::list ret = ast_->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, node);
+    py::str desc = python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, node, ret[0], ret[1]);
+    MS_EXCEPTION(TypeError) << "Missing return statement in " << desc.cast<std::string>() << ".";
   }
   GenerateArgsDefaultValueForFunction(pFunBlock, node);
   return pFunBlock;
@@ -323,7 +340,11 @@ FunctionBlockPtr Parser::ParseStatement(const FunctionBlockPtr &block, const py:
     }
     auto filename = location[0].cast<std::string>();
     auto line_no = location[1].cast<int>();
-    MS_LOG(EXCEPTION) << "Unsupported syntax '" << node_name << "' at " << filename << ":" << line_no;
+    auto fn_loc = block->func_graph()->debug_info()->location();
+    py::str desc = python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast_->function(),
+                                               fn_loc->file_name(), fn_loc->line());
+    MS_LOG(EXCEPTION) << "Unsupported syntax '" << node_name << "' at " << filename << ":" << line_no << " in "
+                      << desc.cast<std::string>() << ".";
   }
 }
 
@@ -350,7 +371,11 @@ AnfNodePtr Parser::ParseExprNode(const FunctionBlockPtr &block, const py::object
     py::list ret = ast_->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, node);
     auto filename = ret[0].cast<std::string>();
     auto line_no = ret[1].cast<int>();
-    MS_LOG(EXCEPTION) << "Unsupported syntax '" << node_name << "' at " << filename << ":" << line_no;
+    auto fn_loc = block->func_graph()->debug_info()->location();
+    py::str desc = python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast_->function(),
+                                               fn_loc->file_name(), fn_loc->line());
+    MS_LOG(EXCEPTION) << "Unsupported syntax '" << node_name << "' at " << filename << ":" << line_no << " in "
+                      << desc.cast<std::string>() << ".";
   }
 }
 

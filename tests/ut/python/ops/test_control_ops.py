@@ -689,3 +689,26 @@ def test_while_concat():
     x = Tensor(np.arange(10 * 2 * 3).reshape(10, 2, 3).astype(np.float32))
     net = Net(x)
     net(x)
+
+
+def test_tensor_all_construct_lack_branch():
+    class NetConditionLackBranch(nn.Cell):
+        def __init__(self):
+            super(NetConditionLackBranch, self).__init__()
+            self.logicaland = P.LogicalAnd()
+            self.logicalor = P.LogicalOr()
+
+        def construct(self, input1, input2):
+            if input1.all():
+                return self.logicaland(input1, input2)
+            while input1.any():
+                return  self.logicalor(input1, input2)
+            # NOTICE: here missing return statement, default return None
+
+    input_np_1 = np.random.choice([True], size=(2, 3, 4, 5))
+    input_tensor_1 = Tensor(input_np_1)
+    input_np_2 = np.random.choice([True, False], size=(2, 3, 4, 5))
+    input_tensor_2 = Tensor(input_np_2)
+    net = NetConditionLackBranch()
+    with pytest.raises(Exception):
+        net(input_tensor_1, input_tensor_2)

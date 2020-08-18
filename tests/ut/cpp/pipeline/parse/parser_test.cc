@@ -96,21 +96,6 @@ TEST_F(TestParser, TestParseGraphSuccess) {
   ASSERT_TRUE(nullptr != func_graph);
 }
 
-TEST_F(TestParser, TestParseGraphFailure) {
-  GetPythonFunction("get_no_return_fn");
-
-  // create parser
-  std::shared_ptr<ParseAst> ast = std::make_shared<ParseAst>(fn);
-  bool succ = ast->InitParseAstInfo();
-  ASSERT_TRUE(succ = true);
-  std::shared_ptr<Parser> parser = std::make_shared<Parser>(ast);
-
-  // parse ast to graph
-  FuncGraphPtr func_graph = parser->ParseFuncGraph();
-  ASSERT_EQ(PARSE_NO_RETURN, parser->errcode());
-  ASSERT_TRUE(nullptr == func_graph);
-}
-
 TEST_F(TestParser, TestParseGraphIf) {
   GetPythonFunction("test_if");
 
