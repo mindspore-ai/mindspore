@@ -45,7 +45,9 @@ def _logical_not_tensor(x):
     Returns:
        Tensor, Return logical not operation result of x.
    """
-    return F.logical_not(x)
+    if F.isconstant(x):
+        return F.bool_not(x.__bool__())
+    return F.logical_not(x.__bool__())
 
 
 @logical_not.register("Tuple")

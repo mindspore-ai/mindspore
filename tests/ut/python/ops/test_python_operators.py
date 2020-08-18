@@ -103,15 +103,15 @@ class LogicalTensorOpsNet(nn.Cell):
         self.const_true = Tensor(True, dtype=mstype.bool_)
 
     def construct(self, x, y):
-        ret = x and y and (y or self.const_true) and (not self.const_true)
+        ret = x and y and (y or self.const_true) and (not y)
         return ret
 
 
 test_case_ops = [
     ('CompareOpsNet', {
         'block': ComparisonOpsNet(),
-        'desc_inputs': [Tensor(np.ones([6, 9, 10]), dtype=mstype.float32),
-                        Tensor(np.zeros([6, 9, 10]), dtype=mstype.float32)]}),
+        'desc_inputs': [Tensor(1.0, dtype=mstype.float32),
+                        Tensor(1.0, dtype=mstype.float32)]}),
     ('MathOpsNet', {
         'block': MathOpsNet(),
         'desc_inputs': [Tensor(np.ones([6, 9, 10]), dtype=mstype.float32),
@@ -126,8 +126,8 @@ test_case_ops = [
                         Tensor(np.zeros([6, 9, 10]), dtype=mstype.float32)]}),
     ('LogicalTensorOps', {
         'block': LogicalTensorOpsNet(),
-        'desc_inputs': [Tensor(np.ones([6, 9, 10]).astype(np.bool_), dtype=mstype.bool_),
-                        Tensor(np.zeros([6, 9, 10]).astype(np.bool_), dtype=mstype.bool_)]}),
+        'desc_inputs': [Tensor(True, dtype=mstype.bool_),
+                        Tensor(False, dtype=mstype.bool_)]}),
 ]
 
 test_case_lists = [test_case_ops]

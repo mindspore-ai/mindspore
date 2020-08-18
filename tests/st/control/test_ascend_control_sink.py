@@ -61,8 +61,7 @@ class ControlSimpleIfWithAssign(nn.Cell):
 
 
 class ControlIfinIf(nn.Cell):
-    def __init__(self):
-        super().__init__()
+    """pass"""
 
     def construct(self, x, y):
         if x > y:
@@ -149,6 +148,40 @@ class ControlMixedWhileIf(nn.Cell):
             out = out + y
         out = out + x
         return out
+
+
+class AndOperation(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.reduce_sum = op.ReduceSum()
+
+    def construct(self, x, y):
+        x_sum = self.reduce_sum(x)
+        y_sum = self.reduce_sum(y)
+        out = x_sum and y_sum
+        return out
+
+
+class OrOperation(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.reduce_sum = op.ReduceSum()
+
+    def construct(self, x, y):
+        x_sum = self.reduce_sum(x)
+        y_sum = self.reduce_sum(y)
+        out = x_sum or y_sum
+        return out
+
+
+class NotOperation(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.reduce_sum = op.ReduceSum()
+
+    def construct(self, x):
+        x_sum = self.reduce_sum(x)
+        return not x_sum
 
 
 @pytest.mark.level0
@@ -247,4 +280,28 @@ def test_mixed_while_if():
     net = ControlMixedWhileIf()
     output = net(Tensor(x), Tensor(y), Tensor(z), c2, c4)
     expect = np.array(3318).astype(np.int32)
+    assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_and_or_operation():
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    x = np.array([0, 1]).astype(np.float32)
+    y = np.array([0, 0]).astype(np.float32)
+    net = AndOperation()
+    output = net(Tensor(x), Tensor(y))
+    expect = np.sum(x) and np.sum(y)
+    assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)
+
+    net = OrOperation()
+    output = net(Tensor(x), Tensor(y))
+    expect = np.sum(x) or np.sum(y)
+    assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)
+
+    net = NotOperation()
+    output = net(Tensor(x))
+    expect = not np.sum(x)
     assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)

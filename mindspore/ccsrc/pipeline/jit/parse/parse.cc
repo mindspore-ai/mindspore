@@ -737,8 +737,7 @@ AnfNodePtr Parser::ParseCompare(const FunctionBlockPtr &block, const py::object 
   return block->func_graph()->NewCNode({op_node, left_node, right_node});
 }
 
-AnfNodePtr Parser::ProcessBoolOpValueList(const FunctionBlockPtr &block, const py::list &value_list,
-                                          const py::object &op) {
+AnfNodePtr Parser::ProcessBoolOpValueList(const FunctionBlockPtr &block, const py::list &value_list, AstSubType mode) {
   // if there is only one bool op now
   if (value_list.size() == 1) {
     AnfNodePtr first_node = ParseExprNode(block, value_list[0]);
@@ -749,11 +748,41 @@ AnfNodePtr Parser::ProcessBoolOpValueList(const FunctionBlockPtr &block, const p
     for (size_t i = 1; i < value_list.size(); i++) {
       rest.append(value_list[i]);
     }
+    MS_EXCEPTION_IF_NULL(block);
+    TraceManager::DebugTrace(std::make_shared<TraceIfExpTrueBranch>(block->func_graph()->debug_info()));
+    FunctionBlockPtr true_block = MakeFunctionBlock(*this);
+    TraceManager::EndTrace();
+    TraceManager::DebugTrace(std::make_shared<TraceIfExpFalseBranch>(block->func_graph()->debug_info()));
+    FunctionBlockPtr false_block = MakeFunctionBlock(*this);
+    TraceManager::EndTrace();
+    MakeConditionBlocks(block, true_block, false_block);
+    FunctionBlockPtr b1, b2;
 
-    AnfNodePtr first_node = ParseExprNode(block, first);
-    AnfNodePtr rest_node = ProcessBoolOpValueList(block, rest, op);
-    auto op_node = block->MakeResolveAstOp(op);
-    return block->func_graph()->NewCNode({op_node, first_node, rest_node});
+    // if it is and, we need to process the rest nodes;
+    // if it is or, we continue to next
+    if (mode == AST_SUB_TYPE_AND) {
+      b1 = true_block;
+      b2 = false_block;
+    } else if (mode == AST_SUB_TYPE_OR) {
+      b2 = true_block;
+      b1 = false_block;
+    } else {
+      MS_LOG(ERROR) << "Not supported mode: " << mode;
+      return nullptr;
+    }
+    AnfNodePtr test_node = ParseExprNode(block, first);
+    AnfNodePtr rest_node = ProcessBoolOpValueList(b1, rest, mode);
+    b1->func_graph()->set_output(rest_node);
+    b2->func_graph()->set_output(test_node);
+
+    auto cond_node = block->ForceToBoolNode(test_node);
+    auto switch_app =
+      block->func_graph()->NewCNode({NewValueNode(prim::kPrimSwitch), cond_node, NewValueNode(true_block->func_graph()),
+                                     NewValueNode(false_block->func_graph())});
+
+    std::vector<AnfNodePtr> call_graph_nodes{switch_app};
+    auto switch_app_call = block->func_graph()->NewCNode(call_graph_nodes);
+    return switch_app_call;
   }
 }
 
@@ -761,8 +790,13 @@ AnfNodePtr Parser::ProcessBoolOpValueList(const FunctionBlockPtr &block, const p
 AnfNodePtr Parser::ParseBoolOp(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast BoolOp";
   py::object op_node = python_adapter::GetPyObjAttr(node, "op");
+  AstSubType op_type = ast_->GetOpType(op_node);
+  if (op_type == AST_SUB_TYPE_UNKNOWN) {
+    MS_LOG(WARNING) << "ProcessBoolOp, got unkown op type";
+    return nullptr;
+  }
   py::list op_values = python_adapter::GetPyObjAttr(node, "values");
-  return ProcessBoolOpValueList(block, op_values, op_node);
+  return ProcessBoolOpValueList(block, op_values, op_type);
 }
 
 // Process a function def

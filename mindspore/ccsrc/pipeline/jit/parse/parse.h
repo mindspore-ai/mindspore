@@ -206,7 +206,7 @@ class Parser {
   void HandleAssignSubscript(const FunctionBlockPtr &block, const py::object &targ, const AnfNodePtr &assigned_node);
 
   // process a bool operation value list
-  AnfNodePtr ProcessBoolOpValueList(const FunctionBlockPtr &block, const py::list &value_list, const py::object &op);
+  AnfNodePtr ProcessBoolOpValueList(const FunctionBlockPtr &block, const py::list &value_list, AstSubType mode);
 
   CNodePtr GenerateIteratorInFor(const FunctionBlockPtr &block, const pybind11::object &node,
                                  const AnfNodePtr &op_iter);
