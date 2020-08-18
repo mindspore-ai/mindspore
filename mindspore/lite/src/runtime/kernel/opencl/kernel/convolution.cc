@@ -671,7 +671,8 @@ int ConvolutionOpenCLKernel::SetGlobalLocalConv(std::vector<size_t> *global, std
 kernel::LiteKernel *OpenCLConvolutionKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                    const std::vector<lite::tensor::Tensor *> &outputs,
                                                    OpParameter *opParameter, const lite::Context *ctx,
-                                                   const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                                   const kernel::KernelKey &desc,
+                                                   const mindspore::lite::PrimitiveC *primitive) {
   auto *kernel =
     new (std::nothrow) ConvolutionOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   if (kernel == nullptr) {

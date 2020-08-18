@@ -14,12 +14,30 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/roi_pooling.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+int ROIPooling::GetPooledH() const { return this->primitive->value.AsROIPooling()->pooledH; }
+int ROIPooling::GetPooledW() const { return this->primitive->value.AsROIPooling()->pooledW; }
+float ROIPooling::GetScale() const { return this->primitive->value.AsROIPooling()->scale; }
+
+void ROIPooling::SetPooledH(int pooled_h) { this->primitive->value.AsROIPooling()->pooledH = pooled_h; }
+void ROIPooling::SetPooledW(int pooled_w) { this->primitive->value.AsROIPooling()->pooledW = pooled_w; }
+void ROIPooling::SetScale(float scale) { this->primitive->value.AsROIPooling()->scale = scale; }
+
+#else
+
+int ROIPooling::GetPooledH() const { return this->primitive->value_as_ROIPooling()->pooledH(); }
+int ROIPooling::GetPooledW() const { return this->primitive->value_as_ROIPooling()->pooledW(); }
+float ROIPooling::GetScale() const { return this->primitive->value_as_ROIPooling()->scale(); }
+
+void ROIPooling::SetPooledH(int pooled_h) {}
+void ROIPooling::SetPooledW(int pooled_w) {}
+void ROIPooling::SetScale(float scale) {}
+#endif
+
 int ROIPooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   if (inputs_.size() != kDoubleNum) {
@@ -38,12 +56,10 @@ int ROIPooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<te
   if (output == nullptr) {
     return RET_NULL_PTR;
   }
-  auto ROIPooling = GetAttribute();
+  auto ROIPooling = this->primitive->value_as_ROIPooling();
   auto new_h = ROIPooling->pooledH();
   auto new_w = ROIPooling->pooledW();
-
   auto shape_data = roi->shape();
-
   std::vector<int> output_shape;
   output_shape.push_back(shape_data[0]);
   output_shape.push_back(new_h);
@@ -52,7 +68,7 @@ int ROIPooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<te
   output->set_shape(output_shape);
   output->set_data_type(input->data_type());
   output->SetFormat(input->GetFormat());
-
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

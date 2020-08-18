@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
+#include "src/ops/shape.h"
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
 #include "src/ir/tensor.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+
 namespace {
 constexpr int kShapeInputNum = 1;
 constexpr int kShapeOutputNum = 1;
-
 }  // namespace
 int Shape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   if (inputs_.size() != kShapeInputNum) {
@@ -34,7 +35,6 @@ int Shape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor:
     MS_LOG(ERROR) << "outputs to Shape operator should be 1, but " << outputs_.size() << " is given.";
     return RET_ERROR;
   }
-
   auto in_tensor = inputs_.front();
   auto out_tensor = outputs_.front();
   auto ret_dtype = out_tensor->set_data_type(kNumberTypeInt32);
@@ -42,20 +42,17 @@ int Shape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor:
     MS_LOG(ERROR) << "Set datatype fails.";
     return RET_ERROR;
   }
-
   if (!GetInferFlag()) {
     return RET_OK;
   }
   std::vector<int> out_shape;
   out_shape.push_back(static_cast<int>(in_tensor->shape().size()));
-
   auto ret_shape = out_tensor->set_shape(out_shape);
   if (ret_shape != 1 || size_t(out_tensor->shape()[0]) != in_tensor->shape().size()) {
     MS_LOG(ERROR) << "Set shape fails.";
     return RET_ERROR;
   }
-
   return RET_OK;
 }
-}  // namespace mindspore::lite
-
+}  // namespace lite
+}  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
+#include "src/ops/arithmetic_self.h"
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+
 int ArithmeticSelf::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   auto input = inputs_.front();
@@ -32,7 +33,7 @@ int ArithmeticSelf::InferShape(std::vector<tensor::Tensor *> inputs_, std::vecto
     return RET_OK;
   }
   output->set_shape(input->shape());
-
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

@@ -14,18 +14,38 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
+#include "src/ops/reshape.h"
+#include <algorithm>
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
 #include "src/ir/tensor.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+int Reshape::GetFormat() const { return this->primitive->value.AsReshape()->format; }
+std::vector<long> Reshape::GetShape() const { return this->primitive->value.AsReshape()->shape; }
+
+void Reshape::SetFormat(int format) { this->primitive->value.AsReshape()->format = format; }
+void Reshape::SetShape(const std::vector<long> &shape) { this->primitive->value.AsReshape()->shape = shape; }
+
+#else
+
+int Reshape::GetFormat() const { return this->primitive->value_as_Reshape()->format(); }
+std::vector<long> Reshape::GetShape() const {
+  auto fb_vector = this->primitive->value_as_Reshape()->shape();
+  return std::vector<long>(fb_vector->begin(), fb_vector->end());
+}
+
+void Reshape::SetFormat(int format) {}
+void Reshape::SetShape(const std::vector<long> &shape) {}
+#endif
+
 int Reshape::CalNewShape(const tensor::Tensor *in_tensor, std::vector<int> *out_shape) const {
   size_t in_shape_size = 1;
   for (size_t i = 0; i < in_tensor->shape().size(); i++) {
     in_shape_size *= in_tensor->shape()[i];
   }
-
   int64_t inferIndex = -1;
   size_t out_shapeSize = 1;
   for (size_t i = 0; i < out_shape->size(); i++) {
@@ -46,7 +66,6 @@ int Reshape::CalNewShape(const tensor::Tensor *in_tensor, std::vector<int> *out_
       out_shapeSize *= out_shape->at(i);
     }
   }
-
   if (inferIndex == -1 && out_shapeSize != in_shape_size) {
     MS_LOG(ERROR) << "output shapeSize: " << out_shapeSize << " should be equal to input shapeSize: " << in_shape_size;
     return RET_INFER_ERR;
@@ -56,11 +75,9 @@ int Reshape::CalNewShape(const tensor::Tensor *in_tensor, std::vector<int> *out_
   }
   return RET_OK;
 }
-
 template <typename T>
 void CalShape(const T *data, const std::vector<tensor::Tensor *> &inputs, std::vector<int> *out_shape, int shape_size) {
   int input_count = inputs[0]->ElementsNum();
-
   int index = 0;
   int size = 1;
   for (size_t i = 0; i < shape_size; i++) {
@@ -75,7 +92,6 @@ void CalShape(const T *data, const std::vector<tensor::Tensor *> &inputs, std::v
     (*out_shape)[index] = input_count / size;
   }
 }
-
 int Reshape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   auto input = inputs_.front();
@@ -89,7 +105,6 @@ int Reshape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
   }
   auto reshape_prim = this->primitive->value_as_Reshape();
   MS_ASSERT(reshape_prim != nullptr);
-
   std::vector<int> out_shape;
   if (inputs_.size() == kDoubleNum) {
     auto shape_tensor = inputs_.at(1);
@@ -130,14 +145,13 @@ int Reshape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
     MS_LOG(ERROR) << "inputs tensor size invalid.";
     return RET_INFER_ERR;
   }
-
   auto ret = CalNewShape(inputs_.front(), &out_shape);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "CalNewShape error";
     return ret;
   }
-
   output->set_shape(out_shape);
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

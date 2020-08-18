@@ -14,13 +14,36 @@
  * limitations under the License.
  */
 
-#include <vector>
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/space_to_batch.h"
+#include "src/common/common.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+std::vector<int> SpaceToBatch::GetBlockShape() const { return this->primitive->value.AsSpaceToBatch()->blockShape; }
+std::vector<int> SpaceToBatch::GetPaddings() const { return this->primitive->value.AsSpaceToBatch()->paddings; }
+
+void SpaceToBatch::SetBlockShape(const std::vector<int> &block_shape) {
+  this->primitive->value.AsSpaceToBatch()->blockShape = block_shape;
+}
+void SpaceToBatch::SetPaddings(const std::vector<int> &paddings) {
+  this->primitive->value.AsSpaceToBatch()->paddings = paddings;
+}
+
+#else
+
+std::vector<int> SpaceToBatch::GetBlockShape() const {
+  auto fb_vector = this->primitive->value_as_SpaceToBatch()->blockShape();
+  return std::vector<int>(fb_vector->begin(), fb_vector->end());
+}
+std::vector<int> SpaceToBatch::GetPaddings() const {
+  auto fb_vector = this->primitive->value_as_SpaceToBatch()->paddings();
+  return std::vector<int>(fb_vector->begin(), fb_vector->end());
+}
+
+void SpaceToBatch::SetBlockShape(const std::vector<int> &block_shape) {}
+void SpaceToBatch::SetPaddings(const std::vector<int> &paddings) {}
+#endif
 namespace {
 constexpr int kSpaceToBatchNDOutputNum = 1;
 constexpr int kSpaceToBatchNDInputNum = 1;
@@ -32,39 +55,38 @@ int SpaceToBatch::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::ve
   MS_ASSERT(this->primitive != nullptr);
   if (outputs.size() != kSpaceToBatchNDOutputNum || inputs.size() != kSpaceToBatchNDInputNum) {
     MS_LOG(ERROR) << "Invalid output/input size! output size: " << outputs.size() << ",input size: " << inputs.size();
-    return RET_PARAM_INVALID;
+    return 1;
   }
 
   auto input = inputs.at(0);
   if (input->GetFormat() != schema::Format_NHWC) {
     MS_LOG(ERROR) << "space_to_batch only support NHWC now!";
-    return RET_FORMAT_ERR;
+    return 1;
   }
   auto input_shape = input->shape();
   if (input_shape.size() != kDimension_4d) {
     MS_LOG(ERROR) << "input shape dimension size should == " << kDimension_4d;
-    return RET_PARAM_INVALID;
+    return 1;
   }
 
-  auto prim = this->primitive->value_as_SpaceToBatch();
-  if (prim->blockShape()->size() != kBlockSizesSize) {
+  if (GetBlockShape().size() != kBlockSizesSize) {
     MS_LOG(ERROR) << "Block shape size should be " << kBlockSizesSize;
-    return RET_PARAM_INVALID;
+    return 1;
   }
-  if (prim->paddings()->size() != kPaddingsSize) {
+  if (GetPaddings().size() != kPaddingsSize) {
     MS_LOG(ERROR) << "Crops size should be " << kPaddingsSize;
-    return RET_PARAM_INVALID;
+    return 1;
   }
 
-  for (auto iter = prim->blockShape()->begin(); iter != prim->blockShape()->end(); ++iter) {
-    block_sizes_.emplace_back(*iter);
+  for (int &iter : GetBlockShape()) {
+    block_sizes_.emplace_back(iter);
   }
 
   in_shape_.clear();
   padded_in_shape_.clear();
   paddings_.clear();
-  in_shape_.emplace_back(input_shape.at(kNHWC_n_index));
-  padded_in_shape_.emplace_back(input_shape.at(kNHWC_n_index));
+  in_shape_.emplace_back(input_shape.at(NHWC_N));
+  padded_in_shape_.emplace_back(input_shape.at(NHWC_N));
   for (int i = 0; i < kBlockSizesSize; i++) {
     in_shape_.emplace_back(input_shape.at(i + 1));
     padded_in_shape_.emplace_back(input_shape.at(i + 1) + (paddings_.at(2 * i) + paddings_.at(2 * i + 1)));
@@ -72,20 +94,20 @@ int SpaceToBatch::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::ve
     paddings_.emplace_back(paddings_.at(2 * i + 1));
     if (paddings_.back() % block_sizes_.at(i)) {
       MS_LOG(ERROR) << "Padded shape does not divide block size " << block_sizes_.at(i);
-      return RET_PARAM_INVALID;
+      return 1;
     }
   }
-  in_shape_.emplace_back(input_shape.at(kNHWC_c_index));
-  padded_in_shape_.emplace_back(input_shape.at(kNHWC_c_index));
+  in_shape_.emplace_back(input_shape.at(NHWC_C));
+  padded_in_shape_.emplace_back(input_shape.at(NHWC_C));
 
   std::vector<int32_t> output_shape(input_shape.size());
-  output_shape[kNHWC_n_index] =
-    input_shape[kNHWC_n_index] * (block_sizes_[kNHWC_n_index] * block_sizes_[kNHWC_h_index]);
-  output_shape[kNHWC_h_index] = input_shape[kNHWC_h_index] / block_sizes_[kNHWC_n_index];
-  output_shape[kNHWC_w_index] = input_shape[kNHWC_w_index] / block_sizes_[kNHWC_h_index];
-  output_shape[kNHWC_c_index] = input_shape[kNHWC_c_index];
+  output_shape[NHWC_N] = input_shape[NHWC_N] * (block_sizes_[NHWC_N] * block_sizes_[NHWC_H]);
+  output_shape[NHWC_H] = input_shape[NHWC_H] / block_sizes_[NHWC_N];
+  output_shape[NHWC_W] = input_shape[NHWC_W] / block_sizes_[NHWC_H];
+  output_shape[NHWC_C] = input_shape[NHWC_C];
   outputs[0]->set_shape(output_shape);
   outputs[0]->set_data_type(input->data_type());
-  return RET_OK;
+  return 0;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

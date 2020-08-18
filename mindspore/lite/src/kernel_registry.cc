@@ -124,13 +124,13 @@ const kernel::KernelCreator *KernelRegistry::GetCreatorArrays() { return creator
 
 kernel::LiteKernel *KernelRegistry::GetKernel(const std::vector<tensor::Tensor *> &in_tensors,
                                       const std::vector<tensor::Tensor *> &out_tensors,
-                                      const lite::Primitive *primitive, const Context *ctx,
+                                      const PrimitiveC *primitive, const Context *ctx,
                                       const kernel::KernelKey &key) {
   MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(ctx);
   auto parameter = kernel::PopulateParameter(primitive);
   if (parameter == nullptr) {
-    MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << schema::EnumNamePrimitiveType(primitive->Type());
+    MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << primitive->Type();
     return nullptr;
   }
   auto creator = GetCreator(key);

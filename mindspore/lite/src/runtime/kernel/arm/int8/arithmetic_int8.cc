@@ -195,7 +195,8 @@ int ArithmeticInt8CPUKernel::Run() {
 kernel::LiteKernel *CpuArithmeticInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                    const std::vector<lite::tensor::Tensor *> &outputs,
                                                    OpParameter *parameter, const lite::Context *ctx,
-                                                   const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                                   const kernel::KernelKey &desc,
+                                                   const mindspore::lite::PrimitiveC *primitive) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "Input parameter is null!";
     return nullptr;

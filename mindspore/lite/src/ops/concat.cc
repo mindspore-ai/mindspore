@@ -14,12 +14,28 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
+#include "src/ops/concat.h"
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
 #include "src/ir/tensor.h"
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+int Concat::GetAxis() const { return this->primitive->value.AsConcat()->axis; }
+int Concat::GetN() const { return this->primitive->value.AsConcat()->n; }
 
-namespace mindspore::lite {
+void Concat::SetAxis(int axis) { this->primitive->value.AsConcat()->axis = axis; }
+void Concat::SetN(int n) { this->primitive->value.AsConcat()->n = n; }
+
+#else
+
+int Concat::GetAxis() const { return this->primitive->value_as_Concat()->axis(); }
+int Concat::GetN() const { return this->primitive->value_as_Concat()->n(); }
+
+void Concat::SetAxis(int axis) {}
+void Concat::SetN(int n) {}
+#endif
+
 namespace {
 constexpr int kConcatOutputNum = 1;
 }
@@ -47,7 +63,6 @@ int Concat::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
     MS_LOG(ERROR) << "Invalid axis: " << axis;
     return RET_PARAM_INVALID;
   }
-
   auto input0_shape_without_axis = input0_shape;
   input0_shape_without_axis.erase(input0_shape_without_axis.begin() + axis);
   auto input0_data_type = inputs_.at(0)->data_type();
@@ -58,7 +73,6 @@ int Concat::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
       MS_LOG(ERROR) << "All inputs should have the same data type!";
       return RET_PARAM_INVALID;
     }
-
     if (inputs_.at(i)->GetFormat() != input0_format) {
       MS_LOG(ERROR) << "All input format should be the same!";
       return RET_PARAM_INVALID;
@@ -81,4 +95,5 @@ int Concat::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   outputs_[0]->set_shape(output_shape);
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

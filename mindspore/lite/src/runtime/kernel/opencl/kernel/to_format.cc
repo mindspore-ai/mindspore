@@ -149,7 +149,8 @@ int ToFormatOpenCLKernel::Run() {
 kernel::LiteKernel *OpenCLToFormatKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                 const std::vector<lite::tensor::Tensor *> &outputs,
                                                 OpParameter *opParameter, const lite::Context *ctx,
-                                                const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                                const kernel::KernelKey &desc,
+                                                const mindspore::lite::PrimitiveC *primitive) {
   auto *kernel = new (std::nothrow) ToFormatOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel " << opParameter->name_ << " create failed.";

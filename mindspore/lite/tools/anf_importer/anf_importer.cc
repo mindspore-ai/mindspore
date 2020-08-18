@@ -15,17 +15,9 @@
  */
 
 #include <utility>
-#include <vector>
-#include <string>
-#include <memory>
 #include "tools/anf_importer/anf_importer.h"
 #include "schema/model_generated.h"
 #include "ir/dtype.h"
-#include "ir/primitive.h"
-#include "src/param_value_lite.h"
-#include "frontend/operator/ops.h"
-#include "abstract/abstract_value.h"
-#include "src/ir/primitive_value.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
 namespace mindspore {

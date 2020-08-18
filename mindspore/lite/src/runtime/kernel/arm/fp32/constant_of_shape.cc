@@ -80,7 +80,7 @@ kernel::LiteKernel *CpuConstantOfShapeFp32KernelCreator(const std::vector<lite::
                                                         const std::vector<lite::tensor::Tensor *> &outputs,
                                                         OpParameter *opParameter, const lite::Context *ctx,
                                                         const kernel::KernelKey &desc,
-                                                        const lite::Primitive *primitive) {
+                                                        const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Create kernel failed, opParameter is nullptr, type: PrimitiveType_ConstantOfShape. ";

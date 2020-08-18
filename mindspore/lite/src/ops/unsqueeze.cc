@@ -14,12 +14,28 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
+#include "src/ops/unsqueeze.h"
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
 #include "src/ir/tensor.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+std::vector<int> Unsqueeze::GetAxis() const { return this->primitive->value.AsUnsqueeze()->axis; }
+
+void Unsqueeze::SetAxis(const std::vector<int> &axis) { this->primitive->value.AsUnsqueeze()->axis = axis; }
+
+#else
+bool predicate(int n) { return n != 1; }
+std::vector<int> Unsqueeze::GetAxis() const {
+  auto fb_vector = this->primitive->value_as_Unsqueeze()->axis();
+  return std::vector<int>(fb_vector->begin(), fb_vector->end());
+}
+
+void Unsqueeze::SetAxis(const std::vector<int> &axis) {}
+#endif
+
 int Unsqueeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   auto input = inputs_.front();
@@ -43,7 +59,6 @@ int Unsqueeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<ten
   auto in_rank = in_shape.size();
   auto dim_rank = unsqueeze_prim->axis()->size();
   std::vector<int> out_shape;
-
   if (dim_rank == 0) {
     for (auto d : in_shape) {
       if (d != 1) {
@@ -69,8 +84,8 @@ int Unsqueeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<ten
       }
     }
   }
-
   output->set_shape(out_shape);
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

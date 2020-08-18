@@ -35,8 +35,7 @@ int ConcatInt8CPUKernel::Init() {
     MS_LOG(ERROR) << "Null pointer reference: inputs_array.";
     return RET_ERROR;
   }
-  concat_param_->quant_arg_.in_args_ =
-    reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg) * input_num));
+  concat_param_->quant_arg_.in_args_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg) * input_num));
   if (concat_param_->quant_arg_.in_args_ == nullptr) {
     MS_LOG(ERROR) << "Null pointer reference: quant_concat_parm_->in_quant_args_.";
     return RET_ERROR;
@@ -67,7 +66,7 @@ int ConcatInt8CPUKernel::ReSize() {
     return ret;
   }
   if (concat_param_->input_shapes_ != nullptr) {
-//    free(concat_param_->input_shapes_);
+    //    free(concat_param_->input_shapes_);
   }
   auto input_num = in_tensors_.size();
   concat_param_->input_num_ = input_num;

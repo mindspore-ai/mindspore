@@ -14,12 +14,22 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/expand_dims.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+int ExpandDims::GetDim() const { return this->primitive->value.AsExpandDims()->dim; }
+
+void ExpandDims::SetDim(int dim) { this->primitive->value.AsExpandDims()->dim = dim; }
+
+#else
+
+int ExpandDims::GetDim() const { return this->primitive->value_as_ExpandDims()->dim(); }
+
+void ExpandDims::SetDim(int dim) {}
+#endif
+
 int ExpandDims::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   auto input = inputs_.front();
@@ -46,7 +56,7 @@ int ExpandDims::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<te
   output->set_shape(out_shape);
   output->set_data_type(input->data_type());
   output->SetFormat(input->GetFormat());
-
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

@@ -178,7 +178,8 @@ int ReduceFp16CPUKernel::MallocTmpBuffer() {
 kernel::LiteKernel *CpuReduceFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                const std::vector<lite::tensor::Tensor *> &outputs,
                                                OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                               const kernel::KernelKey &desc,
+                                               const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Reduce);
   if (opParameter == nullptr) {
@@ -207,7 +208,8 @@ kernel::LiteKernel *CpuReduceFp16KernelCreator(const std::vector<lite::tensor::T
 kernel::LiteKernel *CpuMeanFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs,
                                              OpParameter *opParameter, const lite::Context *ctx,
-                                             const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                             const kernel::KernelKey &desc,
+                                             const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Mean);
   if (opParameter == nullptr) {

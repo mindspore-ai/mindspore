@@ -26,7 +26,7 @@ class ActivationCPUKernel : public LiteKernel {
  public:
   ActivationCPUKernel(OpParameter *param, const std::vector<lite::tensor::Tensor *> &inputs,
                       const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                      const lite::Primitive *primitive)
+                      const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(param, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {
     type_ = (reinterpret_cast<ActivationParameter *>(param))->type_;
     alpha_ = (reinterpret_cast<ActivationParameter *>(param))->alpha_;

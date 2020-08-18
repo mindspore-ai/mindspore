@@ -28,7 +28,7 @@ class ReshapeBaseCPUKernel : public LiteKernel {
  public:
   ReshapeBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                        const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
-                       const lite::Primitive *primitive)
+                       const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx) {
     reshape_param_ = reinterpret_cast<ReshapeParameter *>(op_parameter_);
   }

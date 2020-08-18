@@ -118,7 +118,7 @@ int MulInt8CPUKernel::DoExecute(int task_id) {
 kernel::LiteKernel *CpuMulInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                             const std::vector<lite::tensor::Tensor *> &outputs,
                                             OpParameter *opParameter, const lite::Context *ctx, const KernelKey &desc,
-                                            const lite::Primitive *primitive) {
+                                            const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Mul);
   auto *kernel = new (std::nothrow) MulInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);

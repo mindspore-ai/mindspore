@@ -109,7 +109,8 @@ int SpaceToDepthCPUKernel::Run() {
 kernel::LiteKernel *CpuSpaceToDepthFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                      const std::vector<lite::tensor::Tensor *> &outputs,
                                                      OpParameter *opParameter, const lite::Context *ctx,
-                                                     const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                                     const kernel::KernelKey &desc,
+                                                     const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;

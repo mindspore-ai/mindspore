@@ -14,12 +14,25 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/squeeze.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+std::vector<int> Squeeze::GetAxis() const { return this->primitive->value.AsSqueeze()->axis; }
+
+void Squeeze::SetAxis(const std::vector<int> &axis) { this->primitive->value.AsSqueeze()->axis = axis; }
+
+#else
+
+std::vector<int> Squeeze::GetAxis() const {
+  auto fb_vector = this->primitive->value_as_Squeeze()->axis();
+  return std::vector<int>(fb_vector->begin(), fb_vector->end());
+}
+
+void Squeeze::SetAxis(const std::vector<int> &axis) {}
+#endif
+
 namespace {
 constexpr int kSqueezeInputNum = 1;
 constexpr int kSqueezeOutputNum = 1;
@@ -37,7 +50,6 @@ int Squeeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
   auto *in_tensor = inputs_.front();
   auto in_shape = in_tensor->shape();
   std::vector<int> out_shape;
-
   // todo: getAxis
   auto squeeze_prim = this->primitive->value_as_Squeeze();
   MS_EXCEPTION_IF_NULL(squeeze_prim);
@@ -46,7 +58,6 @@ int Squeeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
   for (auto iter = axis->begin(); iter != axis->end(); iter++) {
     axes_.push_back(*iter);
   }
-
   if (axes_.size() == 0) {
     for (int i = 0; i < in_shape.size(); i++) {
       if (in_shape[i] != 1) {
@@ -65,11 +76,10 @@ int Squeeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
       }
     }
   }
-
   outputs_.front()->set_shape(out_shape);
   outputs_.front()->set_data_type(in_tensor->data_type());
   outputs_.front()->SetFormat(in_tensor->GetFormat());
-
   return 0;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

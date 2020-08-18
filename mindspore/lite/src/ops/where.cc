@@ -14,12 +14,27 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/where.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+std::vector<bool> Where::GetCondition() const { return this->primitive->value.AsWhere()->condition; }
+
+void Where::SetCondition(const std::vector<bool> &condition) {
+  this->primitive->value.AsWhere()->condition = condition;
+}
+
+#else
+
+std::vector<bool> Where::GetCondition() const {
+  auto fb_vector = this->primitive->value_as_Where()->condition();
+  return std::vector<bool>(fb_vector->begin(), fb_vector->end());
+}
+
+void Where::SetCondition(const std::vector<bool> &condition) {}
+#endif
+
 int Where::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   auto input = inputs_.front();
@@ -42,7 +57,6 @@ int Where::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor:
   int num1 = input1->ElementsNum();
   int num2 = input2->ElementsNum();
   int nummax = num > num1 ? num : (num1 > num2 ? num1 : num2);
-
   auto shape_tmp = inputs_.at(0)->shape();
   auto shape_tmp1 = inputs_.at(1)->shape();
   auto shape_tmp2 = inputs_.at(2)->shape();
@@ -68,13 +82,12 @@ int Where::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor:
       return RET_OK;
     }
   }
-
   auto output_shape = shape_tmp;
   output_shape[axisout] = nummax;
   outputs_[0]->set_shape(output_shape);
   output->set_data_type(input->data_type());
   output->SetFormat(input->GetFormat());
-
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

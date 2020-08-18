@@ -193,7 +193,7 @@ kernel::LiteKernel *OpenCLDepthwiseConv2dKernelCreator(const std::vector<lite::t
                                                        const std::vector<lite::tensor::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::Context *ctx,
                                                        const kernel::KernelKey &desc,
-                                                       const lite::Primitive *primitive) {
+                                                       const mindspore::lite::PrimitiveC *primitive) {
   auto *kernel =
     new (std::nothrow) DepthwiseConv2dOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   if (kernel == nullptr) {

@@ -159,7 +159,7 @@ void Convolution3x3CPUKernel::ConfigInputOutput() {
 }
 
 int Convolution3x3CPUKernel::Init() {
-    if (!InferShapeDone()) {
+  if (!InferShapeDone()) {
     return RET_OK;
   }
   return ReSize();

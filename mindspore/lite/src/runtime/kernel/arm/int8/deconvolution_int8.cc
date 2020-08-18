@@ -236,7 +236,8 @@ int DeConvInt8CPUKernel::Run() {
 kernel::LiteKernel *CpuDeConvInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                const std::vector<lite::tensor::Tensor *> &outputs,
                                                OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                               const kernel::KernelKey &desc,
+                                               const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DeConv2D);
   auto kernel = new (std::nothrow) kernel::DeConvInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);

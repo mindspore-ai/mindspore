@@ -25,7 +25,7 @@ class TopKCPUKernel : public LiteKernel {
  public:
   explicit TopKCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                          const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                         const lite::Primitive *primitive)
+                         const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~TopKCPUKernel() override {
     TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);

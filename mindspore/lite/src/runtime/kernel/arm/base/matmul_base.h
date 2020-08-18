@@ -29,7 +29,7 @@ class MatmulBaseCPUKernel : public LiteKernel {
  public:
   MatmulBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                       const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
-                      const lite::Primitive *primitive)
+                      const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
     params_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
   }

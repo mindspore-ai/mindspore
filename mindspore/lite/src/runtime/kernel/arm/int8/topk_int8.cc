@@ -64,7 +64,7 @@ int TopKInt8CPUKernel::Run() {
 kernel::LiteKernel *CpuTopKInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
                                              const lite::Context *ctx, const KernelKey &desc,
-                                             const lite::Primitive *primitive) {
+                                             const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(parameter != nullptr);
   TopKInt8CPUKernel *kernel = new (std::nothrow) TopKInt8CPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {

@@ -38,7 +38,7 @@ class ConvolutionDepthwiseFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
  public:
   ConvolutionDepthwiseFp16CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                                     const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
-                                    const lite::Primitive *primitive)
+                                    const mindspore::lite::PrimitiveC *primitive)
       : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ConvolutionDepthwiseFp16CPUKernel() override;
 

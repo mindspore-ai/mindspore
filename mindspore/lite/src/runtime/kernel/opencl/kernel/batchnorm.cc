@@ -129,7 +129,8 @@ int BatchNormOpenCLKernel::Run() {
 kernel::LiteKernel *OpenCLBatchnormKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                  const std::vector<lite::tensor::Tensor *> &outputs,
                                                  OpParameter *opParameter, const lite::Context *ctx,
-                                                 const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                                 const kernel::KernelKey &desc,
+                                                 const mindspore::lite::PrimitiveC *primitive) {
   auto *kernel = new (std::nothrow) BatchNormOpenCLKernel(opParameter, inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new BatchnormOpenCLKernel failed";

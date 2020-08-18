@@ -27,7 +27,7 @@ class ConvolutionDepthwise3x3CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   ConvolutionDepthwise3x3CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                                    const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
-                                   const lite::Primitive *primitive)
+                                   const mindspore::lite::PrimitiveC *primitive)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 
   ~ConvolutionDepthwise3x3CPUKernel() override {

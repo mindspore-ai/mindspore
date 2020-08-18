@@ -14,49 +14,63 @@
  * limitations under the License.
  */
 
-#include <vector>
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/space_to_depth.h"
+#include "src/common/common.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+int SpaceToDepth::GetBlockSize() const { return this->primitive->value.AsSpaceToDepth()->blockSize; }
+int SpaceToDepth::GetFormat() const { return this->primitive->value.AsSpaceToDepth()->format; }
+
+void SpaceToDepth::SetBlockSize(int block_size) { this->primitive->value.AsSpaceToDepth()->blockSize = block_size; }
+void SpaceToDepth::SetFormat(int format) { this->primitive->value.AsSpaceToDepth()->format = format; }
+
+#else
+
+int SpaceToDepth::GetBlockSize() const { return this->primitive->value_as_SpaceToDepth()->blockSize(); }
+int SpaceToDepth::GetFormat() const { return this->primitive->value_as_SpaceToDepth()->format(); }
+
+void SpaceToDepth::SetBlockSize(int block_size) {}
+void SpaceToDepth::SetFormat(int format) {}
+#endif
 namespace {
 constexpr int kSpaceToDepthOutputNum = 1;
 constexpr int kSpaceToDepthInputNum = 1;
-}
+}  // namespace
 
 int SpaceToDepth::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs) {
   MS_ASSERT(this->primitive != nullptr);
   if (outputs.size() != kSpaceToDepthOutputNum || inputs.size() != kSpaceToDepthInputNum) {
     MS_LOG(ERROR) << "Invalid output/input size! output size: " << outputs.size() << ",input size: " << inputs.size();
-    return RET_PARAM_INVALID;
+    return 1;
   }
 
   auto input = inputs.at(0);
   if (input->GetFormat() != schema::Format_NHWC) {
     MS_LOG(ERROR) << "space_to_depth only support NHWC now!";
-    return RET_FORMAT_ERR;
+    return 1;
   }
   auto input_shape = input->shape();
   if (input_shape.size() != kDimension_4d) {
     MS_LOG(ERROR) << "input shape dimension size should == " << kDimension_4d;
-    return RET_PARAM_INVALID;
+    return 1;
   }
-  auto prim = this->primitive->value_as_SpaceToDepth();
-  int32_t block_size = prim->blockSize();
-  if (input_shape[kNHWC_c_index] % (block_size * block_size) != 0 || input_shape[kNHWC_c_index] == 0) {
-    MS_LOG(ERROR) << "input dimension c size " << input_shape[kNHWC_c_index] << " should be mulitple of block_size("
+
+  int32_t block_size = GetBlockSize();
+  if (input_shape[NHWC_C] % (block_size * block_size) != 0 || input_shape[NHWC_C] == 0) {
+    MS_LOG(ERROR) << "input dimension c size " << input_shape[NHWC_C] << " should be mulitple of block_size("
                   << block_size << ") * block_size)!";
-    return RET_PARAM_INVALID;
+    return 1;
   }
   std::vector<int32_t> output_shape(input_shape.size());
-  output_shape[kNHWC_n_index] = input_shape[kNHWC_n_index];
-  output_shape[kNHWC_h_index] = input_shape[kNHWC_h_index] / block_size;
-  output_shape[kNHWC_w_index] = input_shape[kNHWC_w_index] / block_size;
-  output_shape[kNHWC_c_index] = input_shape[kNHWC_c_index] * (block_size * block_size);
+  output_shape[NHWC_N] = input_shape[NHWC_N];
+  output_shape[NHWC_H] = input_shape[NHWC_H] / block_size;
+  output_shape[NHWC_W] = input_shape[NHWC_W] / block_size;
+  output_shape[NHWC_C] = input_shape[NHWC_C] * (block_size * block_size);
   outputs[0]->set_shape(output_shape);
   outputs[0]->set_data_type(input->data_type());
-  return RET_OK;
+  return 0;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

@@ -310,7 +310,8 @@ int ArithmeticFP16CPUKernel::Run() {
 kernel::LiteKernel *CpuArithmeticFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                    const std::vector<lite::tensor::Tensor *> &outputs,
                                                    OpParameter *parameter, const lite::Context *ctx,
-                                                   const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                                   const kernel::KernelKey &desc,
+                                                   const mindspore::lite::PrimitiveC *primitive) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "input parameter is null!";
     return nullptr;

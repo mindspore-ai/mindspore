@@ -14,17 +14,37 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/stack.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+int Stack::GetAxis() const { return this->primitive->value.AsStack()->axis; }
+int Stack::GetN() const { return this->primitive->value.AsStack()->n; }
+std::vector<int> Stack::GetIsScale() const { return this->primitive->value.AsStack()->isScale; }
+
+void Stack::SetAxis(int axis) { this->primitive->value.AsStack()->axis = axis; }
+void Stack::SetN(int n) { this->primitive->value.AsStack()->n = n; }
+void Stack::SetIsScale(const std::vector<int> &is_scale) { this->primitive->value.AsStack()->isScale = is_scale; }
+
+#else
+
+int Stack::GetAxis() const { return this->primitive->value_as_Stack()->axis(); }
+int Stack::GetN() const { return this->primitive->value_as_Stack()->n(); }
+std::vector<int> Stack::GetIsScale() const {
+  auto fb_vector = this->primitive->value_as_Stack()->isScale();
+  return std::vector<int>(fb_vector->begin(), fb_vector->end());
+}
+
+void Stack::SetAxis(int axis) {}
+void Stack::SetN(int n) {}
+void Stack::SetIsScale(const std::vector<int> &is_scale) {}
+#endif
+
 namespace {
 constexpr int kStackOutputNum = 1;
 constexpr int kStackMinInputNum = 2;
 }  // namespace
-
 int Stack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
   MS_ASSERT(this->primitive != nullptr);
   if (outputs.size() != kStackOutputNum) {
@@ -50,7 +70,6 @@ int Stack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::
       MS_LOG(ERROR) << "All inputs should have the same format!";
       return RET_PARAM_INVALID;
     }
-
     auto input_shape_tmp = inputs[i]->shape();
     if (input_shape_tmp.size() != input_shape.size()) {
       MS_LOG(ERROR) << "All input shape size should be the same!";
@@ -63,12 +82,11 @@ int Stack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::
       }
     }
   }
-
   output_shape.insert(output_shape.begin() + axis, inputs.size());
   outputs[0]->set_shape(output_shape);
   outputs[0]->set_data_type(input->data_type());
   outputs[0]->SetFormat(input->GetFormat());
-
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

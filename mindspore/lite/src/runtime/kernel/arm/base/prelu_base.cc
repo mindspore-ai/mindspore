@@ -32,7 +32,8 @@ int PreluBaseCPUKernel::Init() { return RET_OK; }
 kernel::LiteKernel *CpuPreluInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                               const std::vector<lite::tensor::Tensor *> &outputs,
                                               OpParameter *opParameter, const Context *ctx,
-                                              const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                              const kernel::KernelKey &desc,
+                                              const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;

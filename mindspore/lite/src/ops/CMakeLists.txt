@@ -1,3 +1,3 @@
-file(GLOB_RECURSE OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*.cc)
+file(GLOB_RECURSE C_OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*.cc)
 
-add_library(ops_mid_ OBJECT ${OPS_SRC})
+add_library(c_ops_mid OBJECT ${C_OPS_SRC})

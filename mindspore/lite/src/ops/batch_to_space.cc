@@ -14,12 +14,37 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
+#include "src/ops/batch_to_space.h"
+#include "src/common/common.h"
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
 #include "src/ir/tensor.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+std::vector<int> BatchToSpace::GetBlockShape() const { return this->primitive->value.AsBatchToSpace()->blockShape; }
+std::vector<int> BatchToSpace::GetCrops() const { return this->primitive->value.AsBatchToSpace()->crops; }
+
+void BatchToSpace::SetBlockShape(const std::vector<int> &block_shape) {
+  this->primitive->value.AsBatchToSpace()->blockShape = block_shape;
+}
+void BatchToSpace::SetCrops(const std::vector<int> &crops) { this->primitive->value.AsBatchToSpace()->crops = crops; }
+
+#else
+
+std::vector<int> BatchToSpace::GetBlockShape() const {
+  auto fb_vector = this->primitive->value_as_BatchToSpace()->blockShape();
+  return std::vector<int>(fb_vector->begin(), fb_vector->end());
+}
+std::vector<int> BatchToSpace::GetCrops() const {
+  auto fb_vector = this->primitive->value_as_BatchToSpace()->crops();
+  return std::vector<int>(fb_vector->begin(), fb_vector->end());
+}
+
+void BatchToSpace::SetBlockShape(const std::vector<int> &block_shape) {}
+void BatchToSpace::SetCrops(const std::vector<int> &crops) {}
+#endif
 namespace {
 constexpr int kBatchToSpaceOutputNum = 1;
 constexpr int kBatchToSpaceInputNum = 1;
@@ -27,7 +52,7 @@ constexpr int kBlockShapeSize = 2;
 constexpr int kCropsSize = 4;
 }  // namespace
 
-int BatchToSpace::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
+int BatchToSpace::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs) {
   MS_ASSERT(this->primitive != nullptr);
   if (outputs.size() != kBatchToSpaceOutputNum || inputs.size() != kBatchToSpaceInputNum) {
     MS_LOG(ERROR) << "Invalid output/input size! output size: " << outputs.size() << ",input size: " << inputs.size();
@@ -49,49 +74,50 @@ int BatchToSpace::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<t
     MS_LOG(ERROR) << "input shape dimension size should == " << kDimension_4d;
     return RET_PARAM_INVALID;
   }
-  auto prim = this->primitive->value_as_BatchToSpace();
-  auto block_shape = prim->blockShape();
-  if (block_shape->size() != kBlockShapeSize) {
+
+  auto block_shape = GetBlockShape();
+  if (block_shape.size() != kBlockShapeSize) {
     MS_LOG(ERROR) << "Block shape size should be " << kBlockShapeSize;
     return RET_PARAM_INVALID;
   }
-  auto crops = prim->crops();
-  if (crops->size() != kCropsSize) {
+  auto crops = GetCrops();
+  if (crops.size() != kCropsSize) {
     MS_LOG(ERROR) << "Crops size should be " << kCropsSize;
     return RET_PARAM_INVALID;
   }
   size_t mul_block_shape = 1;
 
   for (size_t i = 0; i < kBlockShapeSize; ++i) {
-    if (block_shape->Get(i) <= 0) {
+    if (block_shape[i] <= 0) {
       MS_LOG(ERROR) << "Input block_shape should > 0!";
       return RET_PARAM_INVALID;
     }
-    if (input_shape[kNHWC_n_index] % block_shape->Get(i)) {
-      MS_LOG(ERROR) << "Dimension n " << input_shape[kNHWC_n_index] << " can not divide block_shape[" << i << "] "
-                    << block_shape->Get(i);
-      return RET_PARAM_INVALID;
+    if (input_shape[NHWC_N] % block_shape[i]) {
+      MS_LOG(ERROR) << "Dimension n " << input_shape[NHWC_N] << " can not divide block_shape[" << i << "] "
+                    << block_shape[i];
+      return 1;
     }
-    mul_block_shape *= block_shape->Get(i);
+    mul_block_shape *= block_shape[i];
   }
 
-  if (input_shape[kNHWC_n_index] < mul_block_shape) {
-    MS_LOG(ERROR) << "Dimension n " << input_shape[kNHWC_n_index] << " < product of block shape!";
+  if (input_shape[NHWC_N] < mul_block_shape) {
+    MS_LOG(ERROR) << "Dimension n " << input_shape[NHWC_N] << " < product of block shape!";
     return RET_PARAM_INVALID;
   }
   for (size_t i = 0; i < kCropsSize; ++i) {
-    if (crops->Get(i) < 0) {
+    if (crops[i] < 0) {
       MS_LOG(ERROR) << "Input crops should >= 0";
       return RET_PARAM_INVALID;
     }
   }
   std::vector<int32_t> output_shape(input_shape.size());
-  output_shape[kNHWC_n_index] = input_shape[kNHWC_n_index] / mul_block_shape;
-  output_shape[kNHWC_h_index] = input_shape[kNHWC_h_index] * block_shape->Get(0) - crops->Get(0) - crops->Get(1);
-  output_shape[kNHWC_w_index] = input_shape[kNHWC_w_index] * block_shape->Get(1) - crops->Get(2) - crops->Get(3);
-  output_shape[kNHWC_c_index] = input_shape[kNHWC_c_index];
+  output_shape[NHWC_N] = input_shape[NHWC_N] / mul_block_shape;
+  output_shape[NHWC_H] = input_shape[NHWC_H] * block_shape[0] - crops[0] - crops[1];
+  output_shape[NHWC_W] = input_shape[NHWC_W] * block_shape[1] - crops[2] - crops[3];
+  output_shape[NHWC_C] = input_shape[NHWC_C];
 
   outputs[0]->set_shape(output_shape);
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

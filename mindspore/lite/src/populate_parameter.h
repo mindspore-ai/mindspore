@@ -18,11 +18,12 @@
 #define MINDSPORE_LITE_SRC_POPULATE_PARAMETER_H_
 
 #include "schema/model_generated.h"
-#include "src/ops/ops.h"
+
 #include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "src/ops/primitive_c.h"
 
 namespace mindspore::kernel {
-typedef OpParameter *(*PopulateParameterFunc)(const lite::Primitive *);
+typedef OpParameter *(*PopulateParameterFunc)(const mindspore::lite::PrimitiveC *);
 
 class PopulateParameterRegistry {
  public:
@@ -30,12 +31,12 @@ class PopulateParameterRegistry {
   ~PopulateParameterRegistry() = default;
 
   static PopulateParameterRegistry *GetInstance();
-  PopulateParameterFunc GetParameterFunc(const schema::PrimitiveType &type);
+  PopulateParameterFunc GetParameterFunc(int type);
 
  protected:
   PopulateParameterFunc populate_parameter_funcs_[schema::PrimitiveType_MAX + 1];
 };
 
-OpParameter *PopulateParameter(const lite::Primitive *primitive);
+OpParameter *PopulateParameter(const mindspore::lite::PrimitiveC *primitive);
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_POPULATE_PARAMETER_H_

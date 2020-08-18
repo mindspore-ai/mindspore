@@ -30,7 +30,7 @@ class PoolingInt8CPUKernel : public PoolingBaseCPUKernel {
  public:
   PoolingInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                        const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
-                       const lite::Primitive *primitive)
+                       const mindspore::lite::PrimitiveC *primitive)
       : PoolingBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~PoolingInt8CPUKernel() { FreeQuantParam(); }
 
