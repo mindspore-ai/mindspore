@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/fp32/roi_pooling.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/roi_pooling.h"
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -35,10 +36,35 @@ int ROIPoolingCPUKernel::Init() {
   return ReSize();
 }
 
-int ROIPoolingCPUKernel::ReSize() { return RET_OK; }
+int ROIPoolingCPUKernel::ReSize() {
+  auto in_shape = in_tensors_.front()->shape();
+  auto out_shape = out_tensors_.front()->shape();
+  int ndims = in_shape.size();
+  if (ndims > 4) {
+    MS_LOG(ERROR) << "ROIPooling ReSzie error ,shape dim greater than 4!";
+    return RET_ERROR;
+  }
+  param_->ndim_ = ndims;
+  param_->input_n_ = in_shape[0];
+  param_->input_h_ = in_shape[1];
+  param_->input_w_ = in_shape[2];
+  param_->input_c_ = in_shape[3];
+  param_->output_n_ = out_shape[0];
+  param_->output_h_ = out_shape[1];
+  param_->output_w_ = out_shape[2];
+  param_->output_c_ = out_shape[3];
+  param_->in_strides_[ndims - 1] = 1;
+  param_->out_strides_[ndims - 1] = 1;
+  for (int i = ndims - 2; i >= 0; --i) {
+    param_->in_strides_[i] = in_shape[i + 1] * param_->in_strides_[i + 1];
+    param_->out_strides_[i] = out_shape[i + 1] * param_->out_strides_[i + 1];
+  }
+  param_->thread_num_ = MSMIN(param_->op_parameter_.thread_num_, out_shape[0]);
+  return RET_OK;
+}
 
 int ROIPoolingCPUKernel::DoExecute(int task_id) {
-  auto ret = ROIPooling(in_ptr_, out_ptr_, roi_ptr_, in_shape_, out_shape_, dim_, task_id, param_);
+  auto ret = ROIPooling(in_ptr_, out_ptr_, roi_ptr_, task_id, param_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ROIPooling Execute error task_id[" << task_id << "] error_code[" << ret << "]";
     return ret;
@@ -65,11 +91,7 @@ int ROIPoolingCPUKernel::Run() {
   in_ptr_ = reinterpret_cast<float *>(in_tensors_.front()->Data());
   out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->Data());
   roi_ptr_ = reinterpret_cast<float *>(in_tensors_.at(1)->Data());
-  in_shape_ = reinterpret_cast<const int *>(in_tensors_.front()->shape().data());
-  out_shape_ = reinterpret_cast<const int *>(out_tensors_.front()->shape().data());
-  dim_ = in_tensors_.front()->shape().size();
-  thread_count_ = 1;
-  ret = LiteBackendParallelLaunch(ROIPoolingRun, this, thread_count_);
+  ret = LiteBackendParallelLaunch(ROIPoolingRun, this, param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ROIPooling error: error_code[" << ret << "]";
     return ret;

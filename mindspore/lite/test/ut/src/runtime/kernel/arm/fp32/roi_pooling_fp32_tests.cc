@@ -57,10 +57,10 @@ TEST_F(TestROIPoolingFp32, Simple) {
   param->pooledH_ = 2;
   float a[] = {1, 2, 3, 4, 5, 11, 12, 13, 14, 15, 21, 22, 23, 24, 25, 31, 32, 33, 34, 35,
                1, 2, 3, 4, 5, 11, 12, 13, 14, 15, 21, 22, 23, 24, 25, 31, 32, 33, 34, 35};
-  float b[] = {0, 1, 1, 3, 4, 1, 1, 1, 3, 4};
-  std::vector<int> a_shape = {2, 4, 5, 1};
+  float b[] = {0, 1, 1, 3, 4};
+  std::vector<int> a_shape = {1, 4, 5, 2};
   std::vector<int> b_shape = {2, 5};
-  std::vector<int> c_shape = {2, 2, 2, 1};
+  std::vector<int> c_shape = {1, 2, 2, 2};
   int total_size = ROIPoolingTestInit(&inputs_, &outputs_, a, b, a_shape, b_shape, c_shape);
   auto ctx = new lite::Context;
   ctx->thread_num_ = 3;
@@ -68,7 +68,7 @@ TEST_F(TestROIPoolingFp32, Simple) {
     new kernel::ROIPoolingCPUKernel(reinterpret_cast<OpParameter *>(param), inputs_, outputs_, ctx, nullptr);
   op->Init();
   op->Run();
-  float correct[] = {23, 25, 33, 35, 23, 25, 33, 35};
+  float correct[] = {25, 31, 34, 35, 25, 31, 34, 35};
   float *output = reinterpret_cast<float *>(outputs_[0]->Data());
   for (int i = 0; i < 8; ++i) printf("%f ", output[i]);
   printf("\n");

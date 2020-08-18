@@ -20,16 +20,27 @@
 
 typedef struct ROIPoolingParameter {
   OpParameter op_parameter_;
+  int in_strides_[DIMENSION_4D];
+  int out_strides_[DIMENSION_4D];
+  float scale_;
+  int ndim_;
+  int input_w_;
+  int input_h_;
+  int input_n_;
+  int input_c_;
+  int output_w_;
+  int output_h_;
+  int output_n_;
+  int output_c_;
+  int thread_num_;
   int pooledW_;
   int pooledH_;
-  float scale_;
 } ROIPoolingParameter;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-int ROIPooling(float *in_ptr, float *out_ptr, float *roi, const int *in_shape, const int *out_shape, int dim, int tid,
-               ROIPoolingParameter *param);
+int ROIPooling(float *in_ptr, float *out_ptr, float *roi, int tid, ROIPoolingParameter *param);
 #ifdef __cplusplus
 }
 #endif

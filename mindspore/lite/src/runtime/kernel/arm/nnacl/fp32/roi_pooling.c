@@ -16,29 +16,31 @@
 
 #include "nnacl/fp32/roi_pooling.h"
 #include <math.h>
+#include <string.h>
 #include "nnacl/errorcode.h"
+#include "nnacl/op_base.h"
 
-int ROIPooling(float *in_ptr, float *out_ptr, float *roi, const int *in_shape, const int *out_shape, int dim, int tid,
-               ROIPoolingParameter *param) {
-  int num_rois = out_shape[kNHWC_N];
-  int batch_size = in_shape[kNHWC_N];
-  int height_ = in_shape[kNHWC_H];
-  int width_ = in_shape[kNHWC_W];
-  int channels_ = in_shape[kNHWC_C];
+int ROIPooling(float *in_ptr, float *out_ptr, float *roi, int tid, ROIPoolingParameter *param) {
+  int num_rois = param->output_n_;
+  int units = UP_DIV(num_rois, param->thread_num_);
+  int roi_st = tid * units;
+  int roi_end = MSMIN(num_rois, roi_st + units);
+  if (roi_st >= num_rois) {
+    return NNACL_OK;
+  }
+  int batch_size = param->input_n_;
+  int height_ = param->input_h_;
+  int width_ = param->input_w_;
+  int channels_ = param->input_c_;
   int scale = param->scale_;
   int pooled_height = param->pooledH_;
   int pooled_width = param->pooledW_;
-  int in_stride[DIMENSION_4D];
-  int out_stride[DIMENSION_4D];
-  const int roi_stride = 5;
-  in_stride[DIMENSION_4D - 1] = 1;
-  out_stride[DIMENSION_4D - 1] = 1;
-  for (int i = dim - 2; i >= 0; --i) {
-    in_stride[i] = in_stride[i + 1] * in_shape[i + 1];
-    out_stride[i] = out_stride[i + 1] * out_shape[i + 1];
-  }
-  int roi_ind_st = 0;
-  for (int i = 0; i < num_rois; ++i) {
+  int *in_strides = &(param->in_strides_);
+  int *out_strides = &(param->out_strides_);
+  int roi_stride = 5;
+  int roi_ind_st = roi_st * roi_stride;
+  float *max_c = malloc(channels_ * sizeof(float));
+  for (int i = roi_st; i < roi_end; ++i) {
     int roi_batch_ind = (int)roi[roi_ind_st];  // batch_index
     if (roi_batch_ind >= batch_size) {
       return NNACL_ERRCODE_INDEX_OUT_OF_RANGE;
@@ -53,44 +55,46 @@ int ROIPooling(float *in_ptr, float *out_ptr, float *roi, const int *in_shape, c
 
     float bin_size_h = (float)roi_height / (float)pooled_height;
     float bin_size_w = (float)roi_width / (float)pooled_width;
-    float *batch_data = in_ptr + in_stride[kNHWC_N] * roi_batch_ind;
+    float *batch_data = in_ptr + in_strides[kNHWC_N] * roi_batch_ind;
 
-    int out_ind = i * out_stride[0];
-    for (int c = kNHWC_N; c < channels_; ++c) {
-      float max_v = -__FLT_MAX__;
-      for (int ph = 0; ph < pooled_height; ++ph) {
-        for (int pw = 0; pw < pooled_width; ++pw) {
-          int pooled_index =
-            i * out_stride[kNHWC_N] + ph * out_stride[kNHWC_H] + pw * out_stride[kNHWC_W] + c * out_stride[kNHWC_C];
-          int hstart = (int)floorf(ph * bin_size_h);     // block xi_1
-          int wstart = (int)floorf(pw * bin_size_w);     // block yi_1
-          int hend = (int)ceilf((ph + 1) * bin_size_h);  // block xi_2
-          int wend = (int)ceilf((pw + 1) * bin_size_w);  // block yi_2
+    int out_ind = i * out_strides[0];
+    for (int ph = 0; ph < pooled_height; ++ph) {
+      for (int pw = 0; pw < pooled_width; ++pw) {
+        int hstart = (int)floorf(ph * bin_size_h);     // block xi_1
+        int wstart = (int)floorf(pw * bin_size_w);     // block yi_1
+        int hend = (int)ceilf((ph + 1) * bin_size_h);  // block xi_2
+        int wend = (int)ceilf((pw + 1) * bin_size_w);  // block yi_2
 
-          hstart = MSMIN(MSMAX(hstart + roi_start_h, 0), height_);
-          hend = MSMIN(MSMAX(hend + roi_start_h, 0), height_);
-          wstart = MSMIN(MSMAX(wstart + roi_start_w, 0), width_);
-          wend = MSMIN(MSMAX(wend + roi_start_w, 0), width_);
-
+        hstart = MSMIN(MSMAX(hstart + roi_start_h, 0), height_);
+        hend = MSMIN(MSMAX(hend + roi_start_h, 0), height_);
+        wstart = MSMIN(MSMAX(wstart + roi_start_w, 0), width_);
+        wend = MSMIN(MSMAX(wend + roi_start_w, 0), width_);
+        for (int j = 0; j < channels_; ++j) {
+          max_c[j] = -__FLT_MAX__;
           bool is_empty = (hend <= hstart) || (wend <= wstart);
           if (is_empty) {
-            max_v = 0;
+            max_c[j] = 0;
           }
-          int bd_index = c * in_stride[kNHWC_C] + hstart * in_stride[kNHWC_H];
-          for (int h = hstart; h < hend; ++h) {
-            int wi = bd_index + wstart * in_stride[kNHWC_W];
-            for (int w = wstart; w < wend; ++w) {
-              max_v = MSMAX(batch_data[wi], max_v);
-              // printf("bd:index: %d, data: %f, max_v: %f\n",wi,batch_data[wi],max_v);
-              wi += in_stride[kNHWC_W];
+        }
+        int pooled_index = i * out_strides[0] + ph * out_strides[1] + pw * out_strides[2];
+        int bd_index = hstart * in_strides[1];
+        for (int h = hstart; h < hend; ++h) {
+          int wi = bd_index + wstart * in_strides[2];
+          for (int w = wstart; w < wend; ++w) {
+            for (int c = 0; c < channels_; ++c) {
+              max_c[c] = MSMAX(batch_data[wi + c], max_c[c]);
             }
-            bd_index += in_stride[kNHWC_H];
-          }
-          out_ptr[pooled_index] = max_v;
+            wi += in_strides[2];
+          }  // in_w end;
+          bd_index += in_strides[1];
+        }  // in_h end
+        for (int j = 0; j < channels_; ++j) {
+          out_ptr[pooled_index + j] = max_c[j];
         }
       }
     }
     roi_ind_st += roi_stride;
   }
+  free(max_c);
   return NNACL_OK;
 }
