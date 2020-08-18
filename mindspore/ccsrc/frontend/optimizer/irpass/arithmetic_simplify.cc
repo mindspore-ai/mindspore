@@ -53,7 +53,9 @@ AnfNodePtr ArithmeticSimplify::operator()(const OptimizerPtr &, const AnfNodePtr
       auto ttmul = NewCNode({mul_node, const_.GetNode(node), const_2.GetNode(node)}, node->func_graph());
       return NewCNode({mul_node, x.GetNode(node), ttmul}, node->func_graph());
     }
-    return NewCNode({mul_node, x.GetNode(node), new_mul_tensor}, node->func_graph());
+    auto new_cnode = NewCNode({mul_node, x.GetNode(node), new_mul_tensor}, node->func_graph());
+    new_cnode->set_abstract(node->abstract());
+    return new_cnode;
   };
   MATCH_REPLACE_LAMBDA(node, const_ * (const_2 * x), const_dup_lambda);
 
