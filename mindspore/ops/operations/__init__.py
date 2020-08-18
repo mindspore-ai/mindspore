@@ -89,6 +89,7 @@ from ._thor_ops import (CusBatchMatMul, CusCholeskyTrsm, CusFusedAbsMax1, CusImg
                         CusMatMulCubeDenseRight,
                         CusMatMulCubeFraczLeftCast, Im2Col, UpdateThorGradient, Cholesky)
 from .sparse_ops import SparseToDense
+from ._cache_ops import CacheSwapHashmap, SearchCacheIdx, CacheSwapTable, UpdateCache, MapCacheIdx
 
 __all__ = [
     'Unique',
