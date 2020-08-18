@@ -37,4 +37,5 @@ mpirun --allow-run-as-root -n $RANK_SIZE \
 	--save_ckpt_path="" \
 	--data_dir=$DATA_DIR \
 	--schema_dir=$SCHEMA_DIR \
+	--enable_data_sink=False \
 	--load_teacher_ckpt_path=$TEACHER_CKPT_PATH > log.txt 2>&1 &

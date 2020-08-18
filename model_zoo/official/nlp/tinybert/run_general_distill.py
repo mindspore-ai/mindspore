@@ -87,13 +87,10 @@ def run_general_distill():
 
     enable_loss_scale = True
     if args_opt.device_target == "GPU":
-        if bert_teacher_net_cfg.compute_type != mstype.float32:
-            logger.warning('GPU only support fp32 temporarily, run with fp32.')
-            bert_teacher_net_cfg.compute_type = mstype.float32
         if bert_student_net_cfg.compute_type != mstype.float32:
-            logger.warning('GPU only support fp32 temporarily, run with fp32.')
+            logger.warning('Compute about the student only support float32 temporarily, run with float32.')
             bert_student_net_cfg.compute_type = mstype.float32
-        # Both the forward and backward of the network are calculated using fp32,
+        # Backward of the network are calculated using fp32,
         # and the loss scale is not necessary
         enable_loss_scale = False
 
