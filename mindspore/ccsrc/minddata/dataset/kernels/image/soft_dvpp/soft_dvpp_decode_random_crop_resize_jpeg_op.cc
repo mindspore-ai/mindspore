@@ -76,7 +76,8 @@ Status SoftDvppDecodeRandomCropResizeJpegOp::Compute(const std::shared_ptr<Tenso
     RETURN_IF_NOT_OK(CVTensor::CreateFromMat(out_rgb_img, &cv_tensor));
     *output = std::static_pointer_cast<Tensor>(cv_tensor);
   } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Error in soft dvpp image decode and resize.");
+    std::string error = "Error in SoftDvppDecodeRandomCropResizeJpegOp:" + std::string(e.what());
+    RETURN_STATUS_UNEXPECTED(error);
   }
   return Status::OK();
 }

@@ -571,9 +571,9 @@ class RandomResizedCropWithBBox(cde.RandomCropAndResizeWithBBoxOp):
         size (Union[int, sequence]): The size of the output image.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
-        scale (tuple, optional): Range (min, max) of respective size of the original
+        scale (tuple, optional): Range [min, max) of respective size of the original
             size to be cropped (default=(0.08, 1.0)).
-        ratio (tuple, optional): Range (min, max) of aspect ratio to be cropped
+        ratio (tuple, optional): Range [min, max) of aspect ratio to be cropped
             (default=(3. / 4., 4. / 3.)).
         interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BILINEAR).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
@@ -610,9 +610,9 @@ class RandomResizedCrop(cde.RandomCropAndResizeOp):
         size (Union[int, sequence]): The size of the output image.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
-        scale (tuple, optional): Range (min, max) of respective size of the original
+        scale (tuple, optional): Range [min, max) of respective size of the original
             size to be cropped (default=(0.08, 1.0)).
-        ratio (tuple, optional): Range (min, max) of aspect ratio to be cropped
+        ratio (tuple, optional): Range [min, max) of aspect ratio to be cropped
             (default=(3. / 4., 4. / 3.)).
         interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BILINEAR).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
@@ -831,12 +831,12 @@ class RandomCropDecodeResize(cde.RandomCropDecodeResizeOp):
     Equivalent to RandomResizedCrop, but crops before decodes.
 
     Args:
-        size (Union[int, sequence], optional): The size of the output image.
+        size (Union[int, sequence]): The size of the output image.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
-        scale (tuple, optional): Range (min, max) of respective size of the
+        scale (tuple, optional): Range [min, max) of respective size of the
             original size to be cropped (default=(0.08, 1.0)).
-        ratio (tuple, optional): Range (min, max) of aspect ratio to be
+        ratio (tuple, optional): Range [min, max) of aspect ratio to be
             cropped (default=(3. / 4., 4. / 3.)).
         interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BILINEAR).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
@@ -986,12 +986,12 @@ class SoftDvppDecodeRandomCropResizeJpeg(cde.SoftDvppDecodeRandomCropResizeJpegO
     The usage scenario is consistent with SoftDvppDecodeReiszeJpeg.
 
     Args:
-        size (Union[int, sequence], optional): The size of the output image.
+        size (Union[int, sequence]): The size of the output image.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
-        scale (tuple, optional): Range (min, max) of respective size of the
+        scale (tuple, optional): Range [min, max) of respective size of the
             original size to be cropped (default=(0.08, 1.0)).
-        ratio (tuple, optional): Range (min, max) of aspect ratio to be
+        ratio (tuple, optional): Range [min, max) of aspect ratio to be
             cropped (default=(3. / 4., 4. / 3.)).
         max_attempts (int, optional): The maximum number of attempts to propose a valid crop_area (default=10).
             If exceeded, fall back to use center_crop instead.

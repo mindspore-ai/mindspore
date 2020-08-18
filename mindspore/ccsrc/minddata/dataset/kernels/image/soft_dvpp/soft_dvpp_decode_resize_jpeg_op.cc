@@ -41,8 +41,6 @@ Status SoftDvppDecodeResizeJpegOp::Compute(const std::shared_ptr<Tensor> &input,
     int input_h = 0;
     RETURN_IF_NOT_OK(GetJpegImageInfo(input, &input_w, &input_h));
 
-    SoftDpCropInfo crop_info{0, 0, 0, 0};
-
     if (target_width_ == 0) {
       if (input_h < input_w) {
         CHECK_FAIL_RETURN_UNEXPECTED(input_h != 0, "The input height is 0");
@@ -71,7 +69,8 @@ Status SoftDvppDecodeResizeJpegOp::Compute(const std::shared_ptr<Tensor> &input,
     RETURN_IF_NOT_OK(CVTensor::CreateFromMat(out_rgb_img, &cv_tensor));
     *output = std::static_pointer_cast<Tensor>(cv_tensor);
   } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Error in soft dvpp image decode and resize.");
+    std::string error = "Error in SoftDvppDecodeResizeJpegOp:" + std::string(e.what());
+    RETURN_STATUS_UNEXPECTED(error);
   }
   return Status::OK();
 }
