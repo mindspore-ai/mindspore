@@ -23,9 +23,9 @@ struct MinimumGradFunc {
   __device__ __forceinline__ void operator()(const T &x1, const T &x2, const bool &grad_x1, const bool &grad_x2,
                                              const T &dy, T *dx1, T *dx2) {
     if (grad_x1 && x1 < x2) {
-      ms_atomic_add(dx1, dy);
+      MsAtomicAdd(dx1, dy);
     } else if (grad_x2 && x1 >= x2) {
-      ms_atomic_add(dx2, dy);
+      MsAtomicAdd(dx2, dy);
     }
   }
 };
@@ -35,9 +35,9 @@ struct MaximumGradFunc {
   __device__ __forceinline__ void operator()(const T &x1, const T &x2, const bool &grad_x1, const bool &grad_x2,
                                              const T &dy, T *dx1, T *dx2) {
     if (grad_x1 && x1 > x2) {
-      ms_atomic_add(dx1, dy);
+      MsAtomicAdd(dx1, dy);
     } else if (grad_x2 && x1 <= x2) {
-      ms_atomic_add(dx2, dy);
+      MsAtomicAdd(dx2, dy);
     }
   }
 };
