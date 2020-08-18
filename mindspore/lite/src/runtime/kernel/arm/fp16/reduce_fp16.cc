@@ -235,6 +235,6 @@ kernel::LiteKernel *CpuMeanFp16KernelCreator(const std::vector<lite::tensor::Ten
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Reduce, CpuReduceFp16KernelCreator)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Mean, CpuMeanFp16KernelCreator)
+// REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Reduce, CpuReduceFp16KernelCreator)
+// REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Mean, CpuMeanFp16KernelCreator)
 }  // namespace mindspore::kernel
