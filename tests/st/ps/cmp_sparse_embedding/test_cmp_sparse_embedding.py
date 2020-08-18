@@ -14,6 +14,7 @@
 # ============================================================================
 
 import os
+import sys
 import argparse
 import numpy as np
 
@@ -82,8 +83,12 @@ def do_sparse_embedding(ps=False):
     for _ in range(epoch):
         data = Tensor(np.random.randint(0, 15, (32, 3), np.int32))
         label = Tensor(np.random.randint(0, 9, (32), np.int32))
-        loss = train_network(data, label).asnumpy()
-        losses.append(loss)
+        if envs.get("MS_ROLE") == "MS_PSERVER":
+            train_network(data, label)
+            sys.exit()
+        else:
+            loss = train_network(data, label).asnumpy()
+            losses.append(loss)
     print(losses)
     return losses
 
