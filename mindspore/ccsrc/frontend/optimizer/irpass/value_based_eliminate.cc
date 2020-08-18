@@ -98,10 +98,10 @@ AnfNodePtr ValueBasedEliminate::operator()(const OptimizerPtr &, const AnfNodePt
   PConstant zero_scalar_(node, false, 0, true);
 
   // {prim::kPrimSelect, {prim::kPrimGreater, X, 0}, Y, Z}} -> Y when X is always greater than 0
-  MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimSelect, PPrimitive(prim::kPrimGreater, x, zero_), y, z), y,
+  MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimSelect, PPrimitive(prim::kPrimGreaterEqual, x, zero_), y, z), y,
                    IsCNodePositive(x.GetNode(node)));
 
-  MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimSelect, PPrimitive(prim::kPrimGreater, x, zero_scalar_), y, z), y,
+  MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimSelect, PPrimitive(prim::kPrimGreaterEqual, x, zero_scalar_), y, z), y,
                    IsCNodePositive(x.GetNode(node)));
 
   // {prim::kPrimMaximum, X, LOWER_FLT_LIMIT}} -> X
