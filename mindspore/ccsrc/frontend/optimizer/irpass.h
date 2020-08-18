@@ -58,6 +58,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr incorporate_env_getitem_;
   SubstitutionPtr incorporate_env_getitem_bypass_recursive_;
   SubstitutionPtr incorporate_env_getitem_switch_;
+  SubstitutionPtr incorporate_env_getitem_switch_layer_;
 
   // Ref eliminate
   SubstitutionPtr make_ref_eliminate_;

@@ -464,6 +464,36 @@ def test_switch_layer_with_single_prim():
     C.grad_all(net)(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
 
 
+def test_switch_layer_env_eliminate():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.conv = nn.Conv2d(1, 1, 3, pad_mode='same')
+            self.conv2 = nn.Conv2d(1, 1, 5, pad_mode='same')
+            self.funs = (self.conv, self.conv2)
+
+        def construct(self, x, index):
+            x = self.funs[index](x)
+            return x
+
+    class NetGrad(nn.Cell):
+        def __init__(self, net):
+            super(NetGrad, self).__init__()
+            self.grad_op = C.GradOperation('grad', get_by_list=True, sens_param=False)
+            self.net = net
+            self.weights = ParameterTuple(self.net.trainable_params())
+
+        def construct(self, x, index):
+            weights = self.weights
+            grad = self.grad_op(self.net, weights)(x, index)
+            return grad
+    net = Net()
+    net2 = NetGrad(net)
+    x = Tensor(np.ones((3, 1, 12, 12)), ms.float32)
+    i = Tensor(1, ms.int32)
+    net2(x, i)
+
+
 def test_control_depend_check():
     with pytest.raises(TypeError) as e:
         P.ControlDepend(0.0)
