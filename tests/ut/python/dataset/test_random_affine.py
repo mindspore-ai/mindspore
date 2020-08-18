@@ -190,6 +190,12 @@ def test_random_affine_exception_scale_value():
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "Input scale[0] must be greater than 0."
 
+    try:
+        _ = py_vision.RandomAffine(degrees=15, scale=(2.0, 1.1))
+    except ValueError as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+        assert str(e) == "Input scale[1] must be equal to or greater than scale[0]."
+
 
 def test_random_affine_exception_shear_value():
     """
@@ -201,6 +207,26 @@ def test_random_affine_exception_shear_value():
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "Input shear must be greater than 0."
+
+    try:
+        _ = py_vision.RandomAffine(degrees=15, shear=(5, 1))
+    except ValueError as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+        assert str(e) == "Input shear[1] must be equal to or greater than shear[0]"
+
+    try:
+        _ = py_vision.RandomAffine(degrees=15, shear=(5, 1, 2, 8))
+    except ValueError as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+        assert str(e) == "Input shear[1] must be equal to or greater than shear[0] and " \
+                         "shear[3] must be equal to or greater than shear[2]."
+
+    try:
+        _ = py_vision.RandomAffine(degrees=15, shear=(5, 9, 2, 1))
+    except ValueError as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+        assert str(e) == "Input shear[1] must be equal to or greater than shear[0] and " \
+                         "shear[3] must be equal to or greater than shear[2]."
 
 
 def test_random_affine_exception_degrees_size():
