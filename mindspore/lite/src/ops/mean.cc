@@ -50,6 +50,11 @@ int Mean::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
   if (input == nullptr || output == nullptr) {
     return RET_NULL_PTR;
   }
+  output->set_data_type(input->data_type());
+  output->SetFormat(input->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   if (this->primitive == nullptr) {
     return RET_NULL_PTR;
   }
@@ -88,8 +93,6 @@ int Mean::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
     }
   }
   output->set_shape(out_shape);
-  output->set_data_type(input->data_type());
-  output->SetFormat(input->GetFormat());
   return RET_OK;
 }
 }  // namespace lite

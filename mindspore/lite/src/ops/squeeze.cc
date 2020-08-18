@@ -48,6 +48,11 @@ int Squeeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
     return -1;
   }
   auto *in_tensor = inputs_.front();
+  outputs_.front()->set_data_type(in_tensor->data_type());
+  outputs_.front()->SetFormat(in_tensor->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   auto in_shape = in_tensor->shape();
   std::vector<int> out_shape;
   // todo: getAxis
@@ -77,8 +82,6 @@ int Squeeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
     }
   }
   outputs_.front()->set_shape(out_shape);
-  outputs_.front()->set_data_type(in_tensor->data_type());
-  outputs_.front()->SetFormat(in_tensor->GetFormat());
   return 0;
 }
 }  // namespace lite

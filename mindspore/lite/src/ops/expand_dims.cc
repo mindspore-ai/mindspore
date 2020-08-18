@@ -42,6 +42,11 @@ int ExpandDims::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<te
   if (outputs_.size() != kSingleNum) {
     MS_LOG(ERROR) << "output size is invalid";
   }
+  output->set_data_type(input->data_type());
+  output->SetFormat(input->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   auto expand_dims_prim = this->primitive->value_as_ExpandDims();
   int dim = expand_dims_prim->dim();
   if (dim < 0) {
@@ -54,8 +59,6 @@ int ExpandDims::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<te
   auto out_shape = input->shape();
   out_shape.insert(out_shape.begin() + dim, 1, 1);
   output->set_shape(out_shape);
-  output->set_data_type(input->data_type());
-  output->SetFormat(input->GetFormat());
   return RET_OK;
 }
 }  // namespace lite

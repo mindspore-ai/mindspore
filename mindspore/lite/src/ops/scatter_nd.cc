@@ -51,11 +51,14 @@ int ScatterND::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<ten
     return RET_ERROR;
   }
   auto output = outputs_.front();
+  output->set_data_type(update->data_type());
+  output->SetFormat(update->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   auto shape_data = reinterpret_cast<int *>(shape->Data());
   std::vector<int> out_shape(shape_data, shape_data + shape->DataSize());
   output->set_shape(out_shape);
-  output->set_data_type(update->data_type());
-  output->SetFormat(update->GetFormat());
   return RET_OK;
 }
 }  // namespace lite

@@ -66,6 +66,13 @@ int Split::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor:
     MS_LOG(ERROR) << "outputs number is not equal to " << number_split;
     return RET_ERROR;
   }
+  for (int i = 0; i < number_split; ++i) {
+    outputs_[i]->set_data_type(input->data_type());
+    outputs_[i]->SetFormat(input->GetFormat());
+  }
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   int split_dim = spilt_prim->splitDim();
   std::vector<int> input_shape = input->shape();
   std::vector<int> size_split;

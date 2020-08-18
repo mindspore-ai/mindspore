@@ -50,16 +50,19 @@ int ConstantOfShape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vect
     return RET_ERROR;
   }
   auto in_tensor = inputs_.front();
-  auto in_data = reinterpret_cast<int *>(in_tensor->Data());
   auto out_tensor = outputs_.front();
+  out_tensor->set_data_type(kNumberTypeFloat32);
+  out_tensor->SetFormat(in_tensor->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
+  auto in_data = reinterpret_cast<int *>(in_tensor->Data());
   int size = in_tensor->ElementsNum();
   std::vector<int> out_shape(size);
   for (int i = 0; i < size; ++i) {
     out_shape[i] = in_data[i];
   }
   out_tensor->set_shape(out_shape);
-  out_tensor->set_data_type(kNumberTypeFloat32);
-  out_tensor->SetFormat(in_tensor->GetFormat());
 
   return RET_OK;
 }

@@ -99,6 +99,15 @@ constexpr int kPriorBoxC = 2;
 int PriorBox::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   auto param = this->primitive->value_as_PriorBox();
   MS_ASSERT(param != nullptr);
+  auto input = inputs_.at(0);
+  MS_ASSERT(input != nullptr);
+  auto output = outputs_.at(0);
+  MS_ASSERT(output != nullptr);
+  output->set_data_type(kNumberTypeFloat32);
+  output->SetFormat(input->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   std::vector<float> different_aspect_ratios{1.0f};
   auto aspect_ratios = param->aspect_ratios();
   MS_ASSERT(aspect_ratios != nullptr);
@@ -114,15 +123,9 @@ int PriorBox::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tens
     }
   }
   int32_t num_priors_box = param->min_sizes()->size() * different_aspect_ratios.size() + param->max_sizes()->size();
-  auto input = inputs_.at(0);
-  MS_ASSERT(input != nullptr);
   int32_t h = input->Height() * input->Width() * num_priors_box * kPriorBoxPoints;
   std::vector<int> output_shape{kPriorBoxN, h, kPriorBoxW, kPriorBoxC};
-  auto output = outputs_.at(0);
-  MS_ASSERT(output != nullptr);
   output->set_shape(output_shape);
-  output->set_data_type(kNumberTypeFloat32);
-  output->SetFormat(input->GetFormat());
   return RET_OK;
 }
 }  // namespace lite

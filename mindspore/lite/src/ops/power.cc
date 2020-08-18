@@ -49,15 +49,19 @@ int Power::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::
   }
   auto output_tensor = outputs[0];
   MS_ASSERT(output_tensor != nullptr);
+  output_tensor->set_data_type(x_tensor->data_type());
+  output_tensor->SetFormat(x_tensor->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   if (exp_tensor != nullptr) {
     if (exp_tensor->shape() != x_tensor->shape() || exp_tensor->data_type() != x_tensor->data_type()) {
       MS_LOG(ERROR) << "Power inputs shape or type is not equal!";
       return RET_INPUT_TENSOR_ERROR;
     }
   }
-  output_tensor->SetFormat(x_tensor->GetFormat());
+
   output_tensor->set_shape(x_tensor->shape());
-  output_tensor->set_data_type(x_tensor->data_type());
   return RET_OK;
 }
 }  // namespace lite

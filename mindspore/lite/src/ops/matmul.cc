@@ -43,6 +43,13 @@ int MatMul::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   MS_ASSERT(input1 != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
+
+  output->set_data_type(input0->data_type());
+  output->SetFormat(input0->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
+
   std::vector<int> a_shape = input0->shape();
   std::vector<int> b_shape = input1->shape();
   if (a_shape.size() < 2 || b_shape.size() < 2) {
@@ -65,8 +72,6 @@ int MatMul::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   std::vector<int> c_shape(a_shape);
   c_shape[c_shape.size() - 1] = b_shape[b_shape.size() - 1];
   output->set_shape(c_shape);
-  output->set_data_type(input0->data_type());
-  output->SetFormat(input0->GetFormat());
   return RET_OK;
 }
 }  // namespace lite

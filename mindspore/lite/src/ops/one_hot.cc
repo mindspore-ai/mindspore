@@ -56,6 +56,19 @@ int OneHot::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor:
   if (input == nullptr) {
     return RET_NULL_PTR;
   }
+  auto on_value = inputs.at(2);
+  if (on_value == nullptr) {
+    return RET_NULL_PTR;
+  }
+  auto output = outputs.front();
+  if (output == nullptr) {
+    return RET_NULL_PTR;
+  }
+  output->set_data_type(on_value->data_type());
+  output->SetFormat(on_value->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   const auto input_shape = input->shape();
   int input_rank = static_cast<int>(input_shape.size());
   if (axis < 0) {
@@ -63,17 +76,7 @@ int OneHot::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor:
   }
   std::vector<int> output_shape(input_shape);
   output_shape.insert(output_shape.cbegin() + axis, *depth);
-  auto output = outputs.front();
-  if (output == nullptr) {
-    return RET_NULL_PTR;
-  }
   output->set_shape(output_shape);
-  auto on_value = inputs.at(2);
-  if (on_value == nullptr) {
-    return RET_NULL_PTR;
-  }
-  output->set_data_type(on_value->data_type());
-  output->SetFormat(on_value->GetFormat());
   return RET_OK;
 }
 }  // namespace lite

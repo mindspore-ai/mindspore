@@ -164,6 +164,11 @@ int StridedSlice::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::ve
     return RET_PARAM_INVALID;
   }
   auto input = inputs.at(0);
+  outputs.front()->set_data_type(input->data_type());
+  outputs[0]->SetFormat(input->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   MS_ASSERT(input != nullptr);
   auto input_shape = input->shape();
   std::vector<int> output_shape;
@@ -214,8 +219,6 @@ int StridedSlice::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::ve
   output_shape = ApplyShrinkMask(output_shape);
 
   outputs.front()->set_shape(output_shape);
-  outputs.front()->set_data_type(input->data_type());
-  outputs[0]->SetFormat(input->GetFormat());
 
   return RET_OK;
 }

@@ -56,6 +56,11 @@ int ROIPooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<te
   if (output == nullptr) {
     return RET_NULL_PTR;
   }
+  output->set_data_type(input->data_type());
+  output->SetFormat(input->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   auto ROIPooling = this->primitive->value_as_ROIPooling();
   auto new_h = ROIPooling->pooledH();
   auto new_w = ROIPooling->pooledW();
@@ -66,8 +71,6 @@ int ROIPooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<te
   output_shape.push_back(new_w);
   output_shape.push_back(input->Channel());
   output->set_shape(output_shape);
-  output->set_data_type(input->data_type());
-  output->SetFormat(input->GetFormat());
   return RET_OK;
 }
 }  // namespace lite

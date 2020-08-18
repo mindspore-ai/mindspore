@@ -31,6 +31,13 @@ int Flatten::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
     MS_LOG(ERROR) << "input size: " << inputs_.size() << ", output size: " << outputs_.size();
     return RET_INPUT_TENSOR_ERROR;
   }
+
+  output->set_data_type(input->data_type());
+  output->SetFormat(input->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
+
   auto input_shape = input->shape();
   std::vector<int> output_shape(2);
   output_shape[0] = input_shape[0];
@@ -39,8 +46,6 @@ int Flatten::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
     output_shape[1] *= input_shape[i];
   }
   output->set_shape(output_shape);
-  output->set_data_type(input->data_type());
-  output->SetFormat(input->GetFormat());
   return RET_OK;
 }
 }  // namespace lite

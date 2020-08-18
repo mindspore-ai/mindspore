@@ -61,6 +61,15 @@ int Pad::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Te
   if (input == nullptr) {
     return RET_NULL_PTR;
   }
+  auto output = outputs.front();
+  if (output == nullptr) {
+    return RET_NULL_PTR;
+  }
+  output->SetFormat(input->GetFormat());
+  output->set_data_type(input->data_type());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   auto input_shape = input->shape();
   std::vector<int> output_shape;
   MS_ASSERT(input->shape().size() <= kInputRank);
@@ -69,13 +78,8 @@ int Pad::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Te
     auto shape = input_shape[i] + (*paddings)[2 * paddings_index] + (*paddings)[2 * paddings_index + 1];
     output_shape.push_back(shape);
   }
-  auto output = outputs.front();
-  if (output == nullptr) {
-    return RET_NULL_PTR;
-  }
-  output->SetFormat(input->GetFormat());
+
   output->set_shape(output_shape);
-  output->set_data_type(input->data_type());
   return RET_OK;
 }
 }  // namespace lite

@@ -103,7 +103,11 @@ int DeConv2D::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vecto
   MS_ASSERT(weight != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
-
+  output->SetFormat(input->GetFormat());
+  output->set_data_type(input->data_type());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   int32_t input_h = input->Height();
   int32_t input_w = input->Width();
 
@@ -138,8 +142,6 @@ int DeConv2D::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vecto
 
   std::vector<int> out_shape = {output_n, output_h, output_w, output_c};
   output->set_shape(out_shape);
-  output->SetFormat(input->GetFormat());
-  output->set_data_type(input->data_type());
   return 0;
 }
 }  // namespace lite
