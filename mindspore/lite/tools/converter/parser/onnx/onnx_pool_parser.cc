@@ -23,6 +23,7 @@ STATUS OnnxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
   MS_LOG(DEBUG) << "onnx PoolParser";
   std::unique_ptr<schema::PoolingT> attr(new schema::PoolingT());
 
+  attr->format = schema::Format_NCHW;
   const auto &pool_type = onnx_node.op_type();
   if (pool_type == "MaxPool") {
     attr->poolingMode = schema::PoolMode_MAX_POOLING;
@@ -37,7 +38,7 @@ STATUS OnnxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
     attr->poolingMode = schema::PoolMode_MEAN_POOLING;
     attr->global = true;
   } else {
-    // MS_LOGE("Pooling param`s PoolingMode is not MAX either AVE. MindSpore support MAX and AVE only.");
+    MS_LOG(ERROR) << "Pooling param`s PoolingMode is not MAX either AVE. MindSpore support MAX and AVE only.";
     return RET_ERROR;
   }
 
@@ -92,4 +93,3 @@ OnnxNodeRegistrar g_onnxGlobalAveragePoolParser("GlobalAveragePool", new OnnxPoo
 OnnxNodeRegistrar g_onnxGlobalMaxPoolParser("GlobalMaxPool", new OnnxPoolParser());
 }  // namespace lite
 }  // namespace mindspore
-

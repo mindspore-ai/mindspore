@@ -48,7 +48,10 @@ class OnnxModelParser : public ModelParser {
   STATUS SetGraphConstTensor(const onnx::GraphProto &onnx_graph, TensorCache *tensor_cache);
   STATUS SetGraphInputTensor(const onnx::GraphProto &onnx_graph, schema::MetaGraphT *graph, TensorCache *tensor_cache);
   STATUS SetGraphOutputTensor(const onnx::GraphProto &onnx_graph, schema::MetaGraphT *graph, TensorCache *tensor_cache);
-  STATUS AddTensorCache(const onnx::ValueInfoProto &proto, schema::TensorT *tensor);
+  STATUS AddValueInfo(const onnx::ValueInfoProto &proto, const std::string &name, const TensorType &type,
+                      TensorCache *tensor_cache, int *index);
+  STATUS AddTensorProto(const onnx::TensorProto &proto, const std::string &name, const TensorType &type,
+                        TensorCache *tensor_cache, int *index);
   STATUS ParseOnnxNodeToDstOp(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                               schema::CNodeT *dst_op, schema::TensorT *dst_tensor, TensorCache *tensor_cache);
   void ParseOnnxGemmNode(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,

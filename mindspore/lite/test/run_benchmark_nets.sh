@@ -153,6 +153,28 @@ function Run_arm64() {
         fi
 	#sleep 1
     done < ${models_caffe_config}
+
+  # Run caffe converted models:
+    while read line; do
+        model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name}
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1'
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt
+        if [ $? = 0 ]; then
+            run_result='Run_arm64:'${model_name}' pass'
+            echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='Run_arm64:'${model_name}' fail <<===========================this is the failed case'
+            echo ${run_result} >> ${run_benchmark_result_file}
+            return 1
+        fi
+	#sleep 1
+    done < ${models_onnx_config}
 }
 
 # Print start msg before run testcase
