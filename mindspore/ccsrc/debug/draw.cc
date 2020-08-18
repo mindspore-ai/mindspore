@@ -15,14 +15,10 @@
  */
 
 #include "debug/draw.h"
-
-#include <algorithm>
 #include <iostream>
 #include <iterator>
-#include <map>
 #include <vector>
 #include <string>
-
 #include "ir/meta_func_graph.h"
 #include "ir/param_info.h"
 #include "ir/primitive.h"

@@ -16,26 +16,19 @@
 
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
 
-#include <sys/types.h>
 #include <dirent.h>
-#include <vector>
 #include <string>
-#include <utility>
 #include <map>
 #include <functional>
 #include <iostream>
 #include <fstream>
 
 #include "runtime/kernel.h"
-#include "backend/kernel_compiler/oplib/oplib.h"
 #include "utils/utils.h"
-#include "backend/session/anf_runtime_algorithm.h"
 #include "utils/ms_utils.h"
-#include "runtime/device/kernel_info.h"
 #include "ir/dtype/type.h"
 #include "backend/kernel_compiler/tbe/tbe_convert_utils.h"
 #include "securec/include/securec.h"
-#include "frontend/operator/ops.h"
 
 namespace mindspore {
 namespace kernel {

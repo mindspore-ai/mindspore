@@ -17,11 +17,9 @@
  */
 
 #include "frontend/optimizer/clean.h"
-#include <map>
 #include <string>
 #include <vector>
 #include <algorithm>
-#include <utility>
 #include "./common.h"
 #include "debug/trace.h"
 #include "frontend/operator/composite/composite.h"

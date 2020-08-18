@@ -15,7 +15,6 @@
  */
 
 #include "frontend/parallel/tensor_layout/shape_util.h"
-#include <utility>
 #include "frontend/parallel/status.h"
 #include "utils/log_adapter.h"
 

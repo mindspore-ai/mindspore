@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "backend/kernel_compiler/cpu/mkldnn/matmul_cpu_kernel.h"
-#include <algorithm>
 #include <utility>
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "utils/ms_utils.h"

@@ -23,7 +23,6 @@
 
 #include "runtime/mem.h"
 #include "runtime/rt.h"
-#include "backend/kernel_compiler/aicpu/aicpu_kernel_build.h"
 #include "utils/convert_utils.h"
 #include "backend/kernel_compiler/aicpu/aicpu_util.h"
 #include "utils/ms_context.h"

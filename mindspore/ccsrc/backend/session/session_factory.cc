@@ -15,8 +15,8 @@
  */
 #include "backend/session/session_factory.h"
 #include <memory>
-#include <iostream>
 #include <string>
+
 namespace mindspore {
 namespace session {
 SessionFactory &SessionFactory::Get() {

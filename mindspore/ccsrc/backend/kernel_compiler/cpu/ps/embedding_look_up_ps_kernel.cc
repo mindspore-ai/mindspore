@@ -15,7 +15,6 @@
  */
 
 #include "backend/kernel_compiler/cpu/ps/embedding_look_up_ps_kernel.h"
-#include <functional>
 #include <vector>
 #include <memory>
 #include "backend/kernel_compiler/common_utils.h"

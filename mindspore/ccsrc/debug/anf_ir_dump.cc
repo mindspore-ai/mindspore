@@ -20,8 +20,6 @@
 #include <fstream>
 #include <map>
 #include <memory>
-#include <unordered_map>
-
 #include "ir/primitive.h"
 #include "ir/func_graph.h"
 #include "runtime/device/kernel_info.h"

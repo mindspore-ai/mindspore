@@ -16,17 +16,14 @@
 
 #include "frontend/optimizer/opt.h"
 
-#include <algorithm>
 #include <deque>
 #include <memory>
-#include <unordered_set>
 #include <unordered_map>
 
 #include "ir/anf.h"
 #include "ir/manager.h"
 #include "frontend/optimizer/optimizer.h"
 #include "utils/log_adapter.h"
-#include "utils/ordered_set.h"
 
 namespace mindspore {
 /* namespace to support opt */

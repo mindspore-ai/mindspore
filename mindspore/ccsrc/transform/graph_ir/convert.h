@@ -35,7 +35,7 @@
 #include "ir/tensor.h"
 #include "transform/graph_ir/df_graph_manager.h"
 #include "utils/config_manager.h"
-#include "transform/graph_ir/op_declare.h"
+#include "transform/graph_ir/op_adapter.h"
 #include "graph/operator_reg.h"
 #ifdef OPEN_SOURCE
 #include "ge/client/ge_api.h"
@@ -43,60 +43,12 @@
 #include "external/ge/ge_api.h"
 #endif
 #include "graph/tensor.h"
-#include "ops/all_ops.h"
+#include "ops/hcom_ops.h"
 
 namespace mindspore {
 namespace transform {
-class OpAdapterDesc {
- public:
-  OpAdapterDesc() : train_(nullptr), infer_(nullptr) {}
-
-  OpAdapterDesc(const OpAdapterPtr &train, const OpAdapterPtr &infer) : train_(train), infer_(infer) {}
-
-  explicit OpAdapterDesc(const OpAdapterPtr &common) : train_(common), infer_(common) {}
-
-  OpAdapterDesc(const OpAdapterDesc &desc) {
-    this->train_ = desc.train_;
-    this->infer_ = desc.infer_;
-  }
-
-  OpAdapterDesc(OpAdapterDesc &&desc) {
-    this->train_ = desc.train_;
-    this->infer_ = desc.infer_;
-    desc.train_ = nullptr;
-    desc.infer_ = nullptr;
-  }
-
-  ~OpAdapterDesc() = default;
-
-  OpAdapterPtr Get(bool train) const { return train ? train_ : infer_; }
-
-  OpAdapterDesc &operator=(const OpAdapterDesc &desc) {
-    if (this != &desc) {
-      this->train_ = desc.train_;
-      this->infer_ = desc.infer_;
-    }
-    return *this;
-  }
-
-  OpAdapterDesc &operator=(OpAdapterDesc &&desc) {
-    if (this != &desc) {
-      this->train_ = desc.train_;
-      this->infer_ = desc.infer_;
-      desc.train_ = nullptr;
-      desc.infer_ = nullptr;
-    }
-    return *this;
-  }
-
- private:
-  OpAdapterPtr train_;
-  OpAdapterPtr infer_;
-};
-
-using OpAdapterDescPtr = std::shared_ptr<OpAdapterDesc>;
 using TensorOrderMap = std::map<std::string, std::shared_ptr<tensor::Tensor>>;
-
+using HcomBroadcast = ge::op::HcomBroadcast;
 class DfGraphConvertor {
  public:
   explicit DfGraphConvertor(const AnfGraphPtr &anf_graph)
@@ -118,12 +70,8 @@ class DfGraphConvertor {
 
   ~DfGraphConvertor() {}
 
-  static void RegisterAdapter(const std::string &name, OpAdapterPtr adpt) {
-    get_adpt_map()[name] = std::make_shared<OpAdapterDesc>(adpt);
-  }
-  static void RegisterAdapter(const std::string &name, OpAdapterPtr train_adpt, OpAdapterPtr infer_adpt) {
-    get_adpt_map()[name] = std::make_shared<OpAdapterDesc>(train_adpt, infer_adpt);
-  }
+  static void RegisterAdapter(const std::string &name, OpAdapterPtr adpt);
+  static void RegisterAdapter(const std::string &name, OpAdapterPtr train_adpt, OpAdapterPtr infer_adpt);
 
   void DrawComputeGraph(const std::string &name) {
     std::ofstream fout(name);
@@ -174,7 +122,6 @@ class DfGraphConvertor {
   static OpAdapterPtr FindAdapter(AnfNodePtr node, bool train = false);
   int ErrCode() const { return static_cast<int>(error_); }
 
-  static std::unordered_map<std::string, OpAdapterDescPtr> &get_adpt_map();
   bool is_training() const { return training_; }
   void set_training(bool is_training) { training_ = is_training; }
 

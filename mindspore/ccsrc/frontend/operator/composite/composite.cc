@@ -32,7 +32,6 @@
 #include "frontend/optimizer/opt.h"
 #include "utils/symbolic.h"
 #include "pybind_api/api_register.h"
-#include "./common.h"
 #include "ir/signature.h"
 #include "debug/trace.h"
 

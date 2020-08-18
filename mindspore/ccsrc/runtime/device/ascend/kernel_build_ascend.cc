@@ -19,12 +19,10 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <functional>
 
 #include "runtime/device/ascend/kernel_select_ascend.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/kernel_compiler/kernel.h"
-#include "backend/kernel_compiler/tbe/tbe_kernel_build.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_parallel_build.h"
 #include "backend/kernel_compiler/akg/ascend/akg_ascend_kernel_build.h"
 #include "backend/kernel_compiler/aicpu/aicpu_kernel_build.h"

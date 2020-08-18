@@ -15,8 +15,6 @@
  */
 #include "backend/kernel_compiler/cpu/mkldnn/lstm_grad_cpu_kernel.h"
 #include <cstring>
-#include <cmath>
-#include <numeric>
 #include <string>
 #include "utils/ms_utils.h"
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"

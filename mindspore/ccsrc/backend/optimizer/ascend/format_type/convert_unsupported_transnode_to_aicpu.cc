@@ -18,7 +18,7 @@
 #include <memory>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
-#include "backend/kernel_compiler/kernel_query.h"
+
 namespace mindspore {
 namespace opt {
 const BaseRef ConvertUnSupportNodeToAICPU::DefinePattern() const {

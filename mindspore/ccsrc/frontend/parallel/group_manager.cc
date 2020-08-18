@@ -20,7 +20,6 @@
 #include <vector>
 
 #include "frontend/parallel/device_manager.h"
-#include "frontend/parallel/ops_info/ops_utils.h"
 #include "utils/comm_manager.h"
 
 namespace mindspore {

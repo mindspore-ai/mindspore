@@ -17,7 +17,6 @@
 #include "transform/graph_ir/util.h"
 
 #include <utility>
-#include <sstream>
 #include <map>
 
 #include "securec/include/securec.h"

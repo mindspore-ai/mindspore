@@ -17,7 +17,6 @@
 #include "utils/summary/event_writer.h"
 #include <string>
 #include <memory>
-#include <vector>
 #include "utils/log_adapter.h"
 #include "utils/convert_utils.h"
 

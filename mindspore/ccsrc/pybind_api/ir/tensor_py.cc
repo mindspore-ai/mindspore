@@ -16,14 +16,11 @@
 
 #include "pybind_api/ir/tensor_py.h"
 
-#include <functional>
-#include <numeric>
 #include <vector>
 #include <sstream>
 #include <string>
 
 #include "pybind_api/api_register.h"
-#include "pybind_api/export_flags.h"
 #include "abstract/abstract_value.h"
 
 namespace mindspore {

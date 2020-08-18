@@ -15,7 +15,6 @@
  */
 #include "backend/optimizer/ascend/ir_fusion/add_input_to_output.h"
 #include <vector>
-#include <algorithm>
 #include "backend/optimizer/ascend/ir_fusion/input_to_output_registry.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/oplib/oplib.h"

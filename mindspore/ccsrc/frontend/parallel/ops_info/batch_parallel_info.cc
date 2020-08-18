@@ -18,7 +18,6 @@
 
 #include <memory>
 #include <utility>
-#include <vector>
 
 #include "ir/value.h"
 #include "frontend/parallel/device_manager.h"

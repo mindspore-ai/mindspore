@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "pybind_api/export_flags.h"
+
 namespace mindspore {
 const char PYTHON_PRIMITIVE_FLAG[] = "__primitive_flag__";
 const char PYTHON_CELL_AS_LIST[] = "__cell_as_list__";

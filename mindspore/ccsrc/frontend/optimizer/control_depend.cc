@@ -20,7 +20,6 @@
 #include <list>
 #include <utility>
 #include <memory>
-#include <algorithm>
 
 #include "frontend/optimizer/optimizer.h"
 

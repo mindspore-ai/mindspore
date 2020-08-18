@@ -28,7 +28,6 @@
 #include "pybind_api/api_register.h"
 #include "debug/trace.h"
 #include "frontend/operator/ops.h"
-#include "./common.h"
 
 namespace mindspore {
 // namespace to support composite operators definition

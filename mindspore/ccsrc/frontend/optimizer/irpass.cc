@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <string>
-
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/irpass/arithmetic_simplify.h"
 #include "frontend/optimizer/irpass/branch_culling.h"

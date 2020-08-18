@@ -17,7 +17,6 @@
 #include "backend/optimizer/ascend/ir_fusion/lamb_update_with_lr_v2.h"
 #include <memory>
 #include <algorithm>
-#include <unordered_map>
 #include "utils/utils.h"
 #include "frontend/operator/ops.h"
 

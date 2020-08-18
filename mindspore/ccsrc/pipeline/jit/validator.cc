@@ -23,7 +23,6 @@
 
 #include "ir/manager.h"
 #include "ir/dtype.h"
-#include "./common.h"
 #include "pipeline/jit/static_analysis/prim.h"
 
 namespace mindspore {

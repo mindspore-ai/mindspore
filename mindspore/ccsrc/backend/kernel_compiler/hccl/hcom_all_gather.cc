@@ -15,11 +15,7 @@
  */
 
 #include "backend/kernel_compiler/hccl/hcom_all_gather.h"
-
-#include <algorithm>
-#include <string>
 #include <memory>
-
 #include "utils/ms_context.h"
 
 namespace mindspore {

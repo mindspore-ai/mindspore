@@ -19,8 +19,6 @@
 #include "utils/utils.h"
 #include "backend/optimizer/ascend/ascend_helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "runtime/device/kernel_info.h"
-#include "backend/kernel_compiler/oplib/oplib.h"
 
 namespace mindspore {
 namespace opt {

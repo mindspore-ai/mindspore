@@ -17,7 +17,6 @@
 #include "backend/kernel_compiler/tbe/tbe_kernel_parallel_build.h"
 
 #include <memory>
-#include <map>
 #include <set>
 #include <algorithm>
 #include <vector>

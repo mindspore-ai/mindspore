@@ -15,8 +15,6 @@
  */
 #include "backend/optimizer/ascend/enhancer/insert_memcpy_async_for_cascade.h"
 #include <vector>
-#include <set>
-#include <string>
 #include "utils/utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "frontend/optimizer/opt.h"

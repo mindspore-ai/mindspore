@@ -15,12 +15,10 @@
  */
 
 #include "frontend/operator/cc_implementations.h"
-#include <cassert>
 #include <limits>
 #include <algorithm>
 #include <cmath>
 #include <cfloat>
-#include "utils/misc.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils.h"
 #include "utils/ms_utils.h"

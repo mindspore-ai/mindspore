@@ -15,7 +15,6 @@
  */
 
 #include "pipeline/jit/parse/python_adapter.h"
-#include <map>
 #include <memory>
 #include <string>
 

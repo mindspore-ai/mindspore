@@ -16,8 +16,6 @@
 
 #include "pybind_api/api_register.h"
 
-#include <mutex>
-
 namespace mindspore {
 
 PybindDefineRegister &PybindDefineRegister::GetSingleton() {

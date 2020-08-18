@@ -20,9 +20,7 @@
 #include <map>
 #include <memory>
 #include <unordered_map>
-#include <unordered_set>
 #include <algorithm>
-
 #include "ir/graph_utils.h"
 #include "utils/symbolic.h"
 #include "ir/meta_func_graph.h"

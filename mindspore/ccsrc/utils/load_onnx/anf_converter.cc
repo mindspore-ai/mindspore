@@ -15,12 +15,9 @@
  */
 
 #include <fcntl.h>
-#include <cstdio>
-#include <cstdlib>
 #include <fstream>
 #include <memory>
 #include <vector>
-#include <limits>
 #include <string>
 #include "utils/base_ref_extends.h"
 #include "utils/load_onnx/anf_model_parser.h"

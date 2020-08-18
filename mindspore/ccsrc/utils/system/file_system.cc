@@ -17,8 +17,6 @@
 #include "utils/system/file_system.h"
 #include <sys/stat.h>
 #include <unistd.h>
-#include <algorithm>
-#include <deque>
 
 namespace mindspore {
 namespace system {

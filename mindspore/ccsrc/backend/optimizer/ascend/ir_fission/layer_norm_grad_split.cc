@@ -17,12 +17,10 @@
 
 #include <memory>
 #include <vector>
-#include <string>
 
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_info.h"
 #include "ir/primitive.h"
-#include "utils/ms_utils.h"
 #include "utils/utils.h"
 
 namespace mindspore {

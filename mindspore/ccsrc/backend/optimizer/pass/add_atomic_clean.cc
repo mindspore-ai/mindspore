@@ -17,10 +17,8 @@
 #include "backend/optimizer/pass/add_atomic_clean.h"
 #include <memory>
 #include <vector>
-#include <functional>
 #include "frontend/operator/ops.h"
 #include "utils/utils.h"
-#include "ir/graph_utils.h"
 #include "utils/log_adapter.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_graph.h"

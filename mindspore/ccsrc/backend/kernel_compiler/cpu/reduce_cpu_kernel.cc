@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <map>
+
 #include <string>
 #include <vector>
 #include "backend/kernel_compiler/cpu/reduce_cpu_kernel.h"

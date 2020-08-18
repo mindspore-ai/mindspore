@@ -21,8 +21,6 @@
 #include "frontend/operator/ops.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/optimizer/common/helper.h"
-#include "backend/optimizer/common/optimizer.h"
-#include "backend/optimizer/ascend/ascend_helper.h"
 
 namespace mindspore {
 namespace opt {

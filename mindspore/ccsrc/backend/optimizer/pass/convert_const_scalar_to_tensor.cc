@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 #include "backend/optimizer/pass/convert_const_scalar_to_tensor.h"
-
-#include <vector>
 #include <memory>
 #include <utility>
-
-#include "ir/graph_utils.h"
 #include "utils/convert_utils.h"
 #include "backend/optimizer/common/helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_graph.h"
-#include "backend/kernel_compiler/common_utils.h"
-#include "runtime/device/kernel_info.h"
 
 namespace mindspore {
 namespace opt {
