@@ -440,16 +440,10 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
   // inputs (a.k.a args in current function) size less than parameters'.
   if (output->isa<Parameter>()) {
     MS_LOG(INFO) << "Graph's output is a parameter. If all params are inputs, no need to execute.";
-    if (args.empty()) {
-      MS_LOG(EXCEPTION) << "Inputs size is 0, let graph to be executed.";
-    }
     // Find the right parameter as ret_val.
     auto func_graph = output->func_graph();
     MS_EXCEPTION_IF_NULL(func_graph);
     auto params = func_graph->parameters();
-    if (params.empty()) {
-      MS_EXCEPTION(UnknownError) << "Graph's parameters size is 0";
-    }
     if ((args.size() + func_graph->hyper_param_count()) != params.size()) {
       MS_LOG(EXCEPTION) << "Input size " << args.size() << " add Parameter count " << func_graph->hyper_param_count()
                         << " not equal to graph input size " << params.size() << ", let graph to be executed.";

@@ -39,6 +39,9 @@ class PyExceptionInitializer {
     if (exception_type == TypeError) {
       throw py::type_error(str);
     }
+    if (exception_type == KeyError) {
+      throw py::key_error(str);
+    }
     if (exception_type == AttributeError) {
       throw py::attribute_error(str);
     }

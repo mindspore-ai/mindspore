@@ -24,6 +24,7 @@
 #include "utils/convert_utils_base.h"
 #include "utils/primitive_utils.h"
 #include "utils/base_ref_extends.h"
+#include "utils/ms_context.h"
 #include "pybind_api/api_register.h"
 #include "pybind_api/export_flags.h"
 #include "pybind_api/ir/base_ref_py.h"
@@ -77,9 +78,47 @@ py::function PrimitivePy::GetBpropFunction() {
   }
 }
 
+py::tuple check_bprop_out(const py::object &grads_obj, const py::tuple &py_args) {
+  py::tuple grads;
+  if (!py::isinstance<py::tuple>(grads_obj)) {
+    grads = py::make_tuple(grads_obj);
+  } else {
+    grads = py::cast<py::tuple>(grads_obj);
+  }
+  if (grads.size() != py_args.size() - 2) {
+    MS_EXCEPTION(ValueError) << "For user define net bprop, the gradients number: " << grads.size()
+                             << " is not equal to the args number: " << py_args.size() - 2 << ".";
+  }
+  if (MsContext::GetInstance()->check_bprop_flag()) {
+    for (size_t i = 0; i < grads.size(); i++) {
+      if (py::isinstance<tensor::Tensor>(py_args[i])) {
+        if (!py::isinstance<tensor::Tensor>(grads[i])) {
+          MS_EXCEPTION(ValueError) << "For user define net bprop, the gradient of the " << i
+                                   << "th arg should be Tensor, but got "
+                                   << py::cast<std::string>(grads[i].attr("__class__").attr("__name__"))
+                                   << ", and the value is " << py::cast<py::str>(grads[i]) << ".";
+        }
+
+        py::tuple grad_shape = grads[i].attr("shape");
+        py::object grad_dtype = grads[i].attr("dtype");
+        py::tuple arg_shape = py_args[i].attr("shape");
+        py::object arg_dtype = py_args[i].attr("dtype");
+        if (!grad_shape.equal(arg_shape) || grad_dtype != arg_dtype) {
+          MS_EXCEPTION(ValueError) << "For user define net bprop, the gradient of the " << i
+                                   << "th arg should have the same shape and dtype as the " << i << "th arg, but the "
+                                   << i << "th arg shape: " << py::cast<py::str>(arg_shape)
+                                   << " and dtype: " << py::cast<py::str>(arg_dtype)
+                                   << ", the gradient shape: " << py::cast<py::str>(grad_shape)
+                                   << " and dtype: " << py::cast<py::str>(grad_dtype) << ".";
+        }
+      }
+    }
+  }
+  return grads;
+}
+
 BaseRef PrimitivePy::RunHookFunction(const VectorRef &args) const {
   py::tuple py_args = ConvertDatatoPyTuple(args);
-  py::object obj;
   bool is_bprop = this->HasAttr(kBpropAttrName);
   if (is_bprop) {
     SyncData(py_args);
@@ -90,11 +129,13 @@ BaseRef PrimitivePy::RunHookFunction(const VectorRef &args) const {
                                                             parse::PYTHON_MOD_CONVERT_TO_MS_TENSOR, py_args[i])
                           : py_args[i];
     }
-    obj = hook_(*convert_args);
-    return std::make_shared<PyObjectRef>(obj);
+    py::object grads_obj = hook_(*convert_args);
+    py::tuple grads = check_bprop_out(grads_obj, py_args);
+    return std::make_shared<PyObjectRef>(grads);
   }
   SyncData(py_args[2]);
   bool is_cell = this->HasAttr(kCellHookAttrName);
+  py::object obj;
   if (is_cell) {
     auto cell_id = GetValue<std::string>(this->GetAttr(kCellIDAttrName));
     auto iter = hook_grad_.find(cell_id);

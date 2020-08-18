@@ -175,6 +175,7 @@ std::map<SignatureEnumDType, TypeId> GetDstType(const py::tuple &py_args,
     TypeId max_type = TypeId::kTypeUnknown;
     bool has_float = false;
     bool has_int = false;
+    bool has_int8 = false;
     for (size_t index : indexes) {
       if (!has_float && py::isinstance<py::float_>(py_args[index])) {
         has_float = true;
@@ -191,6 +192,9 @@ std::map<SignatureEnumDType, TypeId> GetDstType(const py::tuple &py_args,
         if (type_priority == prim::type_map.end()) {
           continue;
         }
+        if (arg_type_id == kNumberTypeInt8) {
+          has_int8 = true;
+        }
         if (type_priority->second > priority) {
           max_type = type_priority->first;
           priority = type_priority->second;
@@ -204,6 +208,9 @@ std::map<SignatureEnumDType, TypeId> GetDstType(const py::tuple &py_args,
       if (has_float) {
         max_type = TypeId::kNumberTypeFloat32;
       }
+    }
+    if (max_type == TypeId::kNumberTypeUInt8 && has_int8) {
+      max_type = TypeId::kNumberTypeInt16;
     }
     (void)dst_type.insert(std::make_pair(type, max_type));
   }
