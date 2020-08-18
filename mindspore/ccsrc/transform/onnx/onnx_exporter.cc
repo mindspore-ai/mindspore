@@ -27,7 +27,7 @@
 #include "proto/onnx.pb.h"
 #include "frontend/operator/ops.h"
 #include "ir/tensor.h"
-#include "ir/param_value.h"
+#include "ir/param_info.h"
 
 namespace mindspore {
 enum OpMergeMode {

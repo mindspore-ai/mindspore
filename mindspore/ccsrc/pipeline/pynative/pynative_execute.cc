@@ -24,7 +24,7 @@
 
 #include "debug/trace.h"
 #include "pybind_api/ir/tensor_py.h"
-#include "ir/param_value.h"
+#include "ir/param_info.h"
 #include "utils/any.h"
 #include "utils/utils.h"
 #include "utils/ms_context.h"

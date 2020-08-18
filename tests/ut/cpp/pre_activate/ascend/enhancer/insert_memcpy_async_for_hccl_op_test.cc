@@ -22,7 +22,7 @@
 #include "utils/utils.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "backend/optimizer/common/optimizer.h"
-#include "ir/param_value.h"
+#include "ir/param_info.h"
 #define private public
 #define protected public
 #include "backend/optimizer/ascend/enhancer/insert_memcpy_async_for_hccl_op.h"

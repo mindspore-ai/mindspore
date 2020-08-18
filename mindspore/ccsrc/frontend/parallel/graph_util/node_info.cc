@@ -19,7 +19,7 @@
 #include <string>
 
 #include "ir/anf.h"
-#include "ir/param_value.h"
+#include "ir/param_info.h"
 #include "pipeline/jit/parse/python_adapter.h"
 
 namespace mindspore {

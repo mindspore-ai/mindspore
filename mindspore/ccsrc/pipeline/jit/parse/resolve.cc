@@ -21,7 +21,7 @@
 #include <vector>
 #include <algorithm>
 
-#include "ir/param_value.h"
+#include "ir/param_info.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/parse/parse.h"
 #include "pipeline/jit/parse/python_adapter.h"

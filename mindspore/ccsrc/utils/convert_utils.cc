@@ -30,7 +30,7 @@
 #include "pipeline/jit/parse/parse_base.h"
 #include "ir/value.h"
 #include "ir/tensor.h"
-#include "ir/param_value.h"
+#include "ir/param_info.h"
 #include "utils/base_ref_extends.h"
 #include "utils/ms_context.h"
 
@@ -483,8 +483,8 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
 // Isomorphism
 static bool SameNode(const AnfNodePtr &node1, const AnfNodePtr &node2, FuncGraphPairMapEquiv *equiv_func_graph,
                      NodeMapEquiv *const equiv_node);
-bool SameNodeShallow(const AnfNodePtr &node1, const AnfNodePtr &node2, FuncGraphPairMapEquiv *equiv_func_graph,
-                     NodeMapEquiv *const equiv_node) {
+static bool SameNodeShallow(const AnfNodePtr &node1, const AnfNodePtr &node2, FuncGraphPairMapEquiv *equiv_func_graph,
+                            NodeMapEquiv *const equiv_node) {
   if (equiv_node == nullptr) {
     MS_LOG(ERROR) << "Invalid equiv_node";
     return false;
@@ -523,8 +523,8 @@ bool SameNodeShallow(const AnfNodePtr &node1, const AnfNodePtr &node2, FuncGraph
   return false;
 }
 
-static bool SameNode(const AnfNodePtr &node1, const AnfNodePtr &node2, FuncGraphPairMapEquiv *equiv_func_graph,
-                     NodeMapEquiv *const equiv_node) {
+bool SameNode(const AnfNodePtr &node1, const AnfNodePtr &node2, FuncGraphPairMapEquiv *equiv_func_graph,
+              NodeMapEquiv *const equiv_node) {
   MS_EXCEPTION_IF_NULL(node1);
   MS_EXCEPTION_IF_NULL(node2);
   if (node1->isa<CNode>() && node2->isa<CNode>()) {

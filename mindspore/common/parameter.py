@@ -15,7 +15,7 @@
 
 """Parameter for cell."""
 from copy import copy
-from .._c_expression import ParamValue
+from .._c_expression import ParamInfo
 from . import dtype as mstype
 from .initializer import initializer, Initializer
 from .tensor import Tensor, MetaTensor
@@ -79,7 +79,7 @@ class Parameter(MetaTensor):
             Parameter, (data, self.name, self.requires_grad, self.layerwise_parallel))
 
     def __init__(self, default_input, name, requires_grad=True, layerwise_parallel=False):
-        self._value = ParamValue()
+        self._value = ParamInfo()
         self.name = name
         self.requires_grad = requires_grad
         self.layerwise_parallel = layerwise_parallel

@@ -19,7 +19,7 @@
 #include <algorithm>
 
 #include "ir/manager.h"
-#include "ir/param_value.h"
+#include "ir/param_info.h"
 #include "base/core_ops.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"

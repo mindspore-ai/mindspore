@@ -20,7 +20,7 @@
 #include <unordered_set>
 #include "pipeline/jit/parse/data_converter.h"
 #include "ir/manager.h"
-#include "ir/param_value.h"
+#include "ir/param_info.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "frontend/operator/ops.h"
 #include "common/trans.h"

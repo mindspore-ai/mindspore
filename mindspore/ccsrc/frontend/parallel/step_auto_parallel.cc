@@ -28,7 +28,7 @@
 #include <vector>
 
 #include "ir/anf.h"
-#include "ir/param_value.h"
+#include "ir/param_info.h"
 #include "ir/tensor.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/optimizer.h"

@@ -24,7 +24,7 @@
 #include <string>
 
 #include "ir/meta_func_graph.h"
-#include "ir/param_value.h"
+#include "ir/param_info.h"
 #include "ir/primitive.h"
 #include "ir/graph_utils.h"
 #include "utils/utils.h"

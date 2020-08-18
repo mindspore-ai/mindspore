@@ -16,7 +16,7 @@
 
 #include "utils/callbacks_ge.h"
 #include "pybind11/pybind11.h"
-#include "ir/param_value.h"
+#include "ir/param_info.h"
 #include "transform/graph_ir/df_graph_manager.h"
 #include "transform/graph_ir/util.h"
 #include "pipeline/jit/parse/data_converter.h"
