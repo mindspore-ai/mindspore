@@ -21,7 +21,6 @@
 #include <vector>
 #include <memory>
 #include "schema/model_generated.h"
-#include "src/ops/primitive_c.h"
 
 namespace mindspore {
 #define MS_API __attribute__((visibility("default")))
