@@ -162,6 +162,28 @@ def check_crop(method):
     return new_method
 
 
+def check_posterize(method):
+    """"A wrapper that wraps a parameter checker to the original function(posterize operation)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [bits], _ = parse_user_args(method, *args, **kwargs)
+        if bits is not None:
+            type_check(bits, (list, tuple, int), "bits")
+        if isinstance(bits, int):
+            check_value(bits, [1, 8])
+        if isinstance(bits, (list, tuple)):
+            if len(bits) != 2:
+                raise TypeError("Size of bits should be a single integer or a list/tuple (min, max) of length 2.")
+            for item in bits:
+                check_uint8(item, "bits")
+            # also checks if min <= max
+            check_range(bits, [1, 8])
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_resize_interpolation(method):
     """A wrapper that wraps a parameter checker to the original function(resize interpolation operation)."""
 

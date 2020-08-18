@@ -32,6 +32,7 @@
 #include "minddata/dataset/kernels/image/random_color_adjust_op.h"
 #include "minddata/dataset/kernels/image/random_crop_op.h"
 #include "minddata/dataset/kernels/image/random_horizontal_flip_op.h"
+#include "minddata/dataset/kernels/image/random_posterize_op.h"
 #include "minddata/dataset/kernels/image/random_rotation_op.h"
 #include "minddata/dataset/kernels/image/random_sharpness_op.h"
 #include "minddata/dataset/kernels/image/random_solarize_op.h"
@@ -210,6 +211,16 @@ std::shared_ptr<RandomCropOperation> RandomCrop(std::vector<int32_t> size, std::
 // Function to create RandomHorizontalFlipOperation.
 std::shared_ptr<RandomHorizontalFlipOperation> RandomHorizontalFlip(float prob) {
   auto op = std::make_shared<RandomHorizontalFlipOperation>(prob);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
+// Function to create RandomPosterizeOperation.
+std::shared_ptr<RandomPosterizeOperation> RandomPosterize(uint8_t min_bit, uint8_t max_bit) {
+  auto op = std::make_shared<RandomPosterizeOperation>(min_bit, max_bit);
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -722,6 +733,31 @@ bool RandomHorizontalFlipOperation::ValidateParams() { return true; }
 
 std::shared_ptr<TensorOp> RandomHorizontalFlipOperation::Build() {
   std::shared_ptr<RandomHorizontalFlipOp> tensor_op = std::make_shared<RandomHorizontalFlipOp>(probability_);
+  return tensor_op;
+}
+
+// RandomPosterizeOperation
+RandomPosterizeOperation::RandomPosterizeOperation(uint8_t min_bit, uint8_t max_bit)
+    : min_bit_(min_bit), max_bit_(max_bit) {}
+
+bool RandomPosterizeOperation::ValidateParams() {
+  if (min_bit_ < 1 || min_bit_ > 8) {
+    MS_LOG(ERROR) << "RandomPosterize: min_bit value is out of range [1-8]: " << min_bit_;
+    return false;
+  }
+  if (max_bit_ < 1 || max_bit_ > 8) {
+    MS_LOG(ERROR) << "RandomPosterize: max_bit value is out of range [1-8]: " << max_bit_;
+    return false;
+  }
+  if (max_bit_ < min_bit_) {
+    MS_LOG(ERROR) << "RandomPosterize: max_bit value is less than min_bit: max =" << max_bit_ << ", min = " << min_bit_;
+    return false;
+  }
+  return true;
+}
+
+std::shared_ptr<TensorOp> RandomPosterizeOperation::Build() {
+  std::shared_ptr<RandomPosterizeOp> tensor_op = std::make_shared<RandomPosterizeOp>(min_bit_, max_bit_);
   return tensor_op;
 }
 

@@ -62,6 +62,7 @@ class RandomColorOperation;
 class RandomColorAdjustOperation;
 class RandomCropOperation;
 class RandomHorizontalFlipOperation;
+class RandomPosterizeOperation;
 class RandomRotationOperation;
 class RandomSharpnessOperation;
 class RandomSolarizeOperation;
@@ -219,6 +220,13 @@ std::shared_ptr<RandomCropOperation> RandomCrop(std::vector<int32_t> size, std::
 /// \param[in] prob - float representing the probability of flip.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<RandomHorizontalFlipOperation> RandomHorizontalFlip(float prob = 0.5);
+
+/// \brief Function to create a RandomPosterize TensorOperation.
+/// \notes Tensor operation to perform random posterize.
+/// \param[in] min_bit - uint8_t representing the minimum bit in range. (Default=8)
+/// \param[in] max_bit - uint8_t representing the maximum bit in range. (Default=8)
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<RandomPosterizeOperation> RandomPosterize(uint8_t min_bit = 8, uint8_t max_bit = 8);
 
 /// \brief Function to create a RandomRotation TensorOp
 /// \notes Rotates the image according to parameters
@@ -519,6 +527,21 @@ class RandomHorizontalFlipOperation : public TensorOperation {
 
  private:
   float probability_;
+};
+
+class RandomPosterizeOperation : public TensorOperation {
+ public:
+  explicit RandomPosterizeOperation(uint8_t min_bit = 8, uint8_t max_bit = 8);
+
+  ~RandomPosterizeOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
+
+ private:
+  uint8_t min_bit_;
+  uint8_t max_bit_;
 };
 
 class RandomRotationOperation : public TensorOperation {

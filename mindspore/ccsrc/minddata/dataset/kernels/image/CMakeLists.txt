@@ -17,6 +17,7 @@ add_library(kernels-image OBJECT
     mixup_batch_op.cc
     normalize_op.cc
     pad_op.cc
+    posterize_op.cc
     random_affine_op.cc
     random_color_adjust_op.cc
     random_crop_decode_resize_op.cc
@@ -27,6 +28,7 @@ add_library(kernels-image OBJECT
     random_horizontal_flip_op.cc
     random_horizontal_flip_with_bbox_op.cc
     bounding_box_augment_op.cc
+    random_posterize_op.cc
     random_resize_op.cc
     random_rotation_op.cc
     random_select_subpolicy_op.cc

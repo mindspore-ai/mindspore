@@ -42,6 +42,7 @@
 #include "minddata/dataset/kernels/image/random_crop_with_bbox_op.h"
 #include "minddata/dataset/kernels/image/random_horizontal_flip_op.h"
 #include "minddata/dataset/kernels/image/random_horizontal_flip_with_bbox_op.h"
+#include "minddata/dataset/kernels/image/random_posterize_op.h"
 #include "minddata/dataset/kernels/image/random_resize_op.h"
 #include "minddata/dataset/kernels/image/random_resize_with_bbox_op.h"
 #include "minddata/dataset/kernels/image/random_rotation_op.h"
@@ -140,6 +141,13 @@ PYBIND_REGISTER(RandomAffineOp, 1, ([](const py::module *m) {
                          py::arg("shear_ranges") = RandomAffineOp::kShearRanges,
                          py::arg("interpolation") = RandomAffineOp::kDefInterpolation,
                          py::arg("fill_value") = RandomAffineOp::kFillValue);
+                }));
+
+PYBIND_REGISTER(RandomPosterizeOp, 1, ([](const py::module *m) {
+                  (void)py::class_<RandomPosterizeOp, TensorOp, std::shared_ptr<RandomPosterizeOp>>(
+                    *m, "RandomPosterizeOp", "Tensor operation to apply random posterize operation on an image.")
+                    .def(py::init<uint8_t, uint8_t>(), py::arg("min_bit") = RandomPosterizeOp::kMinBit,
+                         py::arg("max_bit") = RandomPosterizeOp::kMaxBit);
                 }));
 
 PYBIND_REGISTER(
