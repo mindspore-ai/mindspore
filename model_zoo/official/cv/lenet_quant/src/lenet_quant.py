@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""LeNet."""
+"""Manual construct network for LeNet"""
+
 import mindspore.nn as nn
 
 
@@ -34,25 +35,21 @@ class LeNet5(nn.Cell):
         super(LeNet5, self).__init__()
         self.num_class = num_class
 
-        self.conv1 = nn.Conv2d(channel, 6, 5, pad_mode='valid')
-        self.bn1 = nn.BatchNorm2d(6)
-        self.conv2 = nn.Conv2d(6, 16, 5, pad_mode='valid')
-        self.bn2 = nn.BatchNorm2d(16)
-        self.fc1 = nn.Dense(16 * 5 * 5, 120)
-        self.fc2 = nn.Dense(120, 84)
-        self.fc3 = nn.Dense(84, self.num_class)
+        self.conv1 = nn.Conv2dBnFoldQuant(channel, 6, 5, pad_mode='valid', per_channel=True, quant_delay=900)
+        self.conv2 = nn.Conv2dBnFoldQuant(6, 16, 5, pad_mode='valid', per_channel=True, quant_delay=900)
+        self.fc1 = nn.DenseQuant(16 * 5 * 5, 120, per_channel=True, quant_delay=900)
+        self.fc2 = nn.DenseQuant(120, 84, per_channel=True, quant_delay=900)
+        self.fc3 = nn.DenseQuant(84, self.num_class, per_channel=True, quant_delay=900)
 
-        self.relu = nn.ReLU()
+        self.relu = nn.ActQuant(nn.ReLU(), per_channel=False, quant_delay=900)
         self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
         self.flatten = nn.Flatten()
 
     def construct(self, x):
         x = self.conv1(x)
-        x = self.bn1(x)
         x = self.relu(x)
         x = self.max_pool2d(x)
         x = self.conv2(x)
-        x = self.bn2(x)
         x = self.relu(x)
         x = self.max_pool2d(x)
         x = self.flatten(x)
