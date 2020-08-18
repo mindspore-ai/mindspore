@@ -20,7 +20,6 @@ namespace mindspore {
 namespace {
 constexpr int kShapeInputNum = 1;
 constexpr int kShapeOutputNum = 1;
-
 }  // namespace
 int Shape::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) {
   if (inputs_.size() != kShapeInputNum) {

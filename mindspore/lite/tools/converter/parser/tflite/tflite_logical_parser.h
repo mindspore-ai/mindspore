@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace lite {
-
 class TfliteLogicalParser : public TfliteNodeParser {
  public:
   TfliteLogicalParser() : TfliteNodeParser("node_name") {}

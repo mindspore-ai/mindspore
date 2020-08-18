@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace lite {
-
 class TfliteDoubleInputOpParser : public TfliteNodeParser {
  public:
   TfliteDoubleInputOpParser() : TfliteNodeParser("node_name") {}
@@ -206,7 +205,6 @@ class TfliteLessEqualParser : public TfliteCompareOpParser {
  public:
   TfliteLessEqualParser() : TfliteCompareOpParser() {}
 };
-
 }  // namespace lite
 }  // namespace mindspore
 

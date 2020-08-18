@@ -28,7 +28,6 @@ STATUS CaffeConcatParser::Parse(const caffe::LayerParameter &proto,
   op->name = proto.name();
   std::unique_ptr<schema::ConcatT> attr(new schema::ConcatT());
   const caffe::ConcatParameter concatParam = proto.concat_param();
-
   if (concatParam.has_axis() && concatParam.has_concat_dim()) {
     // MS_LOGE("Concat param in caffe have concat_dim and axis simultaneously,return fail");
     return RET_ERROR;
@@ -37,7 +36,6 @@ STATUS CaffeConcatParser::Parse(const caffe::LayerParameter &proto,
   if (concatParam.has_concat_dim()) {
     // MS_LOGD("Concat dim , set axis:%d", concatParam.concat_dim());
     int32_t concat_dim_value = (int32_t)concatParam.concat_dim();
-
     if (concat_dim_value < 0) {
       // MS_LOGE("concat_dim value in model is smaller than 0:%d", concat_dim_value);
       return RET_ERROR;

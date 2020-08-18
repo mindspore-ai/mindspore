@@ -28,7 +28,7 @@ const int iMantissaBits = 31;
 
 
 void QuantizeMultiplierSmallerThanOne(double double_multiplier, int32_t *quantized_multiplier,
-                                             int *right_shift) {
+                                      int *right_shift) {
   if (quantized_multiplier == NULL || right_shift == NULL) {
     return;
   }
@@ -38,7 +38,7 @@ void QuantizeMultiplierSmallerThanOne(double double_multiplier, int32_t *quantiz
 }
 
 void QuantizeRoundParameter(double double_multiplier, int32_t *quantized_multiplier, int *left_shift,
-                                   int *right_shift) {
+                            int *right_shift) {
   int shift;
   QuantizeMultiplierSmallerThanOne(double_multiplier, quantized_multiplier, &shift);
   shift = -shift;
@@ -56,7 +56,7 @@ uint8_t QuantizeToUint8(float real_value, float scale, int32_t zp) { return roun
 int32_t QuantizeToInt8(float real_value, float scale, int32_t zp) { return round(real_value / scale + zp); }
 
 void CalculateActivationRangeQuantized(bool is_relu, bool is_relu6, int32_t zp, float scale, int *mini,
-                                              int *maxi) {
+                                       int *maxi) {
   int32_t min = CHAR_MIN;
   int32_t max = CHAR_MAX;
   int32_t quantized_zero = QuantizeToInt8(0, scale, zp);

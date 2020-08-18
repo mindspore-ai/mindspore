@@ -146,6 +146,5 @@ std::vector<AnfNodePtr> DeepUsedGraphSearch(const AnfNodePtr &root, const Includ
 std::vector<AnfNodePtr> DeepLinkedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include) {
   return DeepLinkedGraphSearcher(include).Search(root);
 }
-
 }  // namespace mindspore
 

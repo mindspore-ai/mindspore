@@ -24,7 +24,6 @@
 
 namespace mindspore {
 namespace lite {
-
 class EltwiseFormatTransPass : public FormatTransPass {
  public:
   EltwiseFormatTransPass() : FormatTransPass() {}

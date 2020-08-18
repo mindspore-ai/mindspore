@@ -34,7 +34,6 @@ STATUS CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto, const caffe
   }
 
   const caffe::EltwiseParameter eltwiseParam = proto.eltwise_param();
-
   if (eltwiseParam.coeff_size() != 0 && eltwiseParam.coeff_size() != proto.bottom_size()) {
     MS_LOG(ERROR) << "Coeff size(" << eltwiseParam.coeff_size()
                   << ") check fail, Eltwise Layer takes one coefficient per bottom blob.";

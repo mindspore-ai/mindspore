@@ -32,7 +32,6 @@ STATUS CaffeCropParser::Parse(const caffe::LayerParameter &proto,
     attr->offsets = offsets;
   } else {
     const caffe::CropParameter cropParam = proto.crop_param();
-
     if (cropParam.has_axis()) {
       if (cropParam.axis() == -1) {
         // MS_LOGW("axis with -1 may lead to calculation errors when input less than 4 dims.");

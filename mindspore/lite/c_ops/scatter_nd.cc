@@ -58,5 +58,4 @@ int ScatterND::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vect
 
   return 0;
 }
-
 }  // namespace mindspore

@@ -187,5 +187,3 @@ STATUS FormatTransFusionPass::DoFusion(schema::MetaGraphT *graph, const std::str
 }
 }  // namespace lite
 }  // namespace mindspore
-
-

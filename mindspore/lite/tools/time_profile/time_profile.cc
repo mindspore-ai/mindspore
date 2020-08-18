@@ -394,6 +394,5 @@ int RunTimeProfile(int argc, const char **argv) {
 
   return RET_OK;
 }
-
 }  // namespace lite
 }  // namespace mindspore

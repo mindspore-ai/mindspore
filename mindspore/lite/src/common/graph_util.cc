@@ -75,7 +75,6 @@ std::vector<size_t> GetGraphOutputNodes(const schema::MetaGraph *meta_graph) {
 // std::unordered_set<NODE_ID> OpNode::GetAllInEdges() { return inEdges; }
 //
 // std::unordered_set<NODE_ID> OpNode::GetAllOutEdges() { return outEdges; }
-
 }  // namespace lite
 }  // namespace mindspore
 

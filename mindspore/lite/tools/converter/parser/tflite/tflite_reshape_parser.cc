@@ -49,7 +49,7 @@ STATUS TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
       return RET_ERROR;
     }
     auto shape_tensor_index = tflite_op->inputs[1];
-    const auto & shape_tensor = tflite_tensors[shape_tensor_index];
+    const auto &shape_tensor = tflite_tensors[shape_tensor_index];
     if (shape_tensor == nullptr) {
       MS_LOG(ERROR) << "shape_tensor is null";
       return RET_NULL_PTR;

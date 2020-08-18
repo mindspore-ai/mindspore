@@ -42,7 +42,6 @@ class TfliteBatchToSpaceNDParser : public TfliteBatchToSpaceParser {
  public:
   TfliteBatchToSpaceNDParser() : TfliteBatchToSpaceParser() {}
 };
-
 }  // namespace lite
 }  // namespace mindspore
 

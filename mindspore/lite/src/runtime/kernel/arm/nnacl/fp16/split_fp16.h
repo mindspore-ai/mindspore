@@ -25,7 +25,7 @@
 extern "C" {
 #endif
 int DoSplitFp16(float16_t *in_data, float16_t **out_data, const int *input_shape, int offset, int num_unit,
-            SplitParameter *split_param);
+                SplitParameter *split_param);
 #ifdef __cplusplus
 }
 #endif

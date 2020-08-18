@@ -150,6 +150,5 @@ TfliteNodeRegister g_TfliteHardSwishParser("HardSwish", new TfliteHardSwishParse
 TfliteNodeRegister g_tfliteLogisticParser("Logistic", new TfliteLogisticParser());
 TfliteNodeRegister g_tflitePreluParser("Prelu", new TflitePreluParser());
 TfliteNodeRegister g_TfliteLeakyReluParser("LeakyRelu", new TfliteLeakyReluParser());
-
 }  // namespace lite
 }  // namespace mindspore

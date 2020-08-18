@@ -99,9 +99,9 @@ int SliceInt8(const int8_t *input, int8_t *output, SliceParameter *param) {
     multiplier = input_scale / output_scale;
   }
 
-  for (n = 0; n< param->size_[0]; ++n) {
+  for (n = 0; n < param->size_[0]; ++n) {
     size_t out_offset0 = n * out_stride0;
-    size_t in_offset0 = (n+ param->begin_[0]) * in_stride0 + param->begin_[3];
+    size_t in_offset0 = (n + param->begin_[0]) * in_stride0 + param->begin_[3];
     for (h = 0; h < count_per_thread; ++h) {
       size_t k = h + thread_stride;
       if (k >= out_dim1) {

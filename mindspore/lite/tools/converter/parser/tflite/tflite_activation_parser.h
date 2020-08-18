@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace lite {
-
 class TfliteActivationParser : public TfliteNodeParser {
  public:
   TfliteActivationParser() : TfliteNodeParser("node_name") {}
@@ -89,7 +88,6 @@ class TfliteLeakyReluParser : public TfliteNodeParser {
                std::vector<schema::Format> *tensors_format,
                std::map<int, int>  *tensors_id_map) override;
 };
-
 }  // namespace lite
 }  // namespace mindspore
 

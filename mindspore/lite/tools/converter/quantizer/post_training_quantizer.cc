@@ -42,7 +42,6 @@ using std::vector;
 namespace mindspore {
 namespace lite {
 namespace quant {
-
 struct DivergInfo {
   std::vector<float> histogram;
   CNodePtr cnode;

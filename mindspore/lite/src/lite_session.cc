@@ -362,5 +362,4 @@ session::LiteSession *session::LiteSession::CreateSession(lite::Context *context
   }
   return session;
 }
-
 }  // namespace mindspore

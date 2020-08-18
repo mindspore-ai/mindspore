@@ -55,8 +55,8 @@ size_t GetRefCount(schema::MetaGraphT *graphT, uint32_t tensorIdx);
 
 std::unique_ptr<schema::QuantParamT> CopyQuantParamT(const std::unique_ptr<schema::QuantParamT> &srcQuantParam);
 
-std::unique_ptr<schema::QuantParamT> \
-    CopyQuantParamArrayT(const std::unique_ptr<schema::QuantParamT> &srcQuantParamArray);
+std::unique_ptr<schema::QuantParamT> CopyQuantParamArrayT(
+        const std::unique_ptr<schema::QuantParamT> &srcQuantParamArray);
 
 std::unique_ptr<schema::QuantParamT> GetInTensorQuantParamArray(const schema::MetaGraphT &graphT, size_t tensorIdx);
 

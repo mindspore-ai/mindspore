@@ -122,7 +122,6 @@ int DeConv2D::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vecto
   pad_d_ = GetPadDown();
   pad_r_ = GetPadRight();
   auto pad_mode = (schema::PadMode)GetPadMode();
-
   if (pad_mode == schema::PadMode_CAFFE) {
     output_h = (input_h - 1) * stride_h + ((kernel_h - 1) * dilate_h + 1) - pad_u_ - pad_d_;
     output_w = (input_w - 1) * stride_w + ((kernel_w - 1) * dilate_w + 1) - pad_l_ - pad_r_;

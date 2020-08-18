@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace lite {
-
 STATUS AddConstFoldPass::Run(GraphNode *graphNode) { return ConstFoldPass::Run(graphNode); }
 
 STATUS AddConstFoldPass::CreateOp(SubGraphDefT *subGraph, OpDefT *node) {
