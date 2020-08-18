@@ -576,39 +576,6 @@ build_minddata_lite_deps()
   build_jpeg_turbo
 }
 
-prepare_md_lite() {
-    if [ "${COMPILE_MINDDATA_LITE}" == "on" ]; then
-    echo "packaging minddata"
-        cp ${BASEPATH}/mindspore/ccsrc/minddata/dataset/include/*h ${OUTPUT_DIR}/include/
-	cp ${BASEPATH}/mindspore/lite/build/minddata/libminddata-lite.so ${OUTPUT_DIR}/lib/
-        if [[ "$LITE_PLATFORM" == "x86_64" ]]; then
-	    mkdir -p ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib
-            cp -r ${BASEPATH}/third_party/libjpeg-turbo/lib/libjpeg.so ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib/
-            cp -r ${BASEPATH}/third_party/libjpeg-turbo/lib/libturbojpeg.so ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib/
-	    mkdir -p ${OUTPUT_DIR}/third_party/opencv/lib/
-	    cp -r ${BASEPATH}/third_party/opencv/build/lib/libopencv_core.so ${OUTPUT_DIR}/third_party/opencv/lib/
-            cp -r ${BASEPATH}/third_party/opencv/build/lib/libopencv_imgcodecs.so ${OUTPUT_DIR}/third_party/opencv/lib/
-            cp -r ${BASEPATH}/third_party/opencv/build/lib/libopencv_imgproc.so ${OUTPUT_DIR}/third_party/opencv/lib/
-        elif [[ "$LITE_PLATFORM" == "arm64" ]]; then
-            mkdir -p ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib
-            cp -r ${BASEPATH}/third_party/libjpeg-turbo/lib/libjpeg.so ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib/
-            cp -r ${BASEPATH}/third_party/libjpeg-turbo/lib/libturbojpeg.so ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib/
-            mkdir -p ${OUTPUT_DIR}/third_party/opencv/lib/arm64-v8a/
-            cp -r ${BASEPATH}/third_party/opencv/build/lib/arm64-v8a/libopencv_core.so ${OUTPUT_DIR}/third_party/opencv/lib/arm64-v8a/
-            cp -r ${BASEPATH}/third_party/opencv/build/lib/arm64-v8a/libopencv_imgcodecs.so ${OUTPUT_DIR}/third_party/opencv/lib/arm64-v8a/
-            cp -r ${BASEPATH}/third_party/opencv/build/lib/arm64-v8a/libopencv_imgproc.so ${OUTPUT_DIR}/third_party/opencv/lib/arm64-v8a/
-        elif [[ "$LITE_PLATFORM" == "arm32" ]]; then
-            mkdir -p ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib
-            cp -r ${BASEPATH}/third_party/libjpeg-turbo/lib/libjpeg.so ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib/
-            cp -r ${BASEPATH}/third_party/libjpeg-turbo/lib/libturbojpeg.so ${OUTPUT_DIR}/third_party/libjpeg-turbo/lib/
-            mkdir -p ${OUTPUT_DIR}/third_party/opencv/lib/armeabi-v7a/
-            cp -r ${BASEPATH}/third_party/opencv/build/lib/armeabi-v7a/libopencv_core.so ${OUTPUT_DIR}/third_party/opencv/lib/armeabi-v7a/
-            cp -r ${BASEPATH}/third_party/opencv/build/lib/armeabi-v7a/libopencv_imgcodecs.so ${OUTPUT_DIR}/third_party/opencv/lib/armeabi-v7a/
-            cp -r ${BASEPATH}/third_party/opencv/build/lib/armeabi-v7a/libopencv_imgproc.so ${OUTPUT_DIR}/third_party/opencv/lib/armeabi-v7a/
-        fi
-    fi
-}
-
 build_lite()
 {
     echo "start build mindspore lite project"
@@ -645,7 +612,7 @@ build_lite()
               -DANDROID_STL="c++_shared" -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_TRAIN=${SUPPORT_TRAIN}                     \
               -DBUILD_DEVICE=on -DPLATFORM_ARM64=on -DBUILD_CONVERTER=off -DENABLE_NEON=on -DENABLE_FP16="off"      \
               -DSUPPORT_GPU=${ENABLE_GPU} -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
-              "${BASEPATH}/mindspore/lite"
+              -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp "${BASEPATH}/mindspore/lite"
     elif [[ "${LITE_PLATFORM}" == "arm32" ]]; then
         checkndk
         cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
@@ -653,88 +620,20 @@ build_lite()
               -DANDROID_STL="c++_shared" -DCMAKE_BUILD_TYPE=${BUILD_TYPE}                                                      \
               -DBUILD_DEVICE=on -DPLATFORM_ARM32=on -DENABLE_NEON=on -DSUPPORT_TRAIN=${SUPPORT_TRAIN} -DBUILD_CONVERTER=off    \
               -DSUPPORT_GPU=${ENABLE_GPU} -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
-               "${BASEPATH}/mindspore/lite"
+               -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp "${BASEPATH}/mindspore/lite"
     else
         cmake -DBUILD_DEVICE=on -DPLATFORM_ARM64=off -DBUILD_CONVERTER=${ENABLE_CONVERTER} -DSUPPORT_TRAIN=${SUPPORT_TRAIN}   \
         -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_GPU=${ENABLE_GPU} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
-        -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} "${BASEPATH}/mindspore/lite"
+        -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp "${BASEPATH}/mindspore/lite"
     fi
-    VERBOSE=2 make -j$THREAD_NUM
+    VERBOSE=2 make -j$THREAD_NUM && make install && make package
     COMPILE_RET=$?
 
     if [[ "${COMPILE_RET}" -ne 0 ]]; then
         echo "---------------- mindspore lite: build failed ----------------"
     else
-        mkdir -pv ${BASEPATH}/mindspore/lite/output/
-        if [[ "$LITE_PLATFORM" == "x86_64" ]]; then
-            OUTPUT_DIR=${BASEPATH}/output/MSLite-0.6.0-linux_x86_64
-            rm -rf ${OUTPUT_DIR} && mkdir -p ${OUTPUT_DIR} && cd ${OUTPUT_DIR}
-            mkdir -p ${OUTPUT_DIR}/converter && mkdir -p ${OUTPUT_DIR}/time_profile
-            mkdir -p ${OUTPUT_DIR}/benchmark && mkdir -p ${OUTPUT_DIR}/include && mkdir -p ${OUTPUT_DIR}/lib
-            mkdir -p ${OUTPUT_DIR}/third_party
-	    prepare_md_lite
-            cp ${BASEPATH}/mindspore/lite/build/tools/converter/converter_lite ${OUTPUT_DIR}/converter/
-            cp ${BASEPATH}/mindspore/lite/build/tools/benchmark/benchmark ${OUTPUT_DIR}/benchmark/
-            cp ${BASEPATH}/mindspore/lite/build/tools/time_profile/timeprofile ${OUTPUT_DIR}/time_profile/
-            cp ${BASEPATH}/mindspore/lite/include/*.h ${OUTPUT_DIR}/include/
-            mkdir -p ${OUTPUT_DIR}/include/ir/dtype/
-            cp ${BASEPATH}/mindspore/core/ir/dtype/type_id.h ${OUTPUT_DIR}/include/ir/dtype/
-            mkdir -p ${OUTPUT_DIR}/include/schema/
-            cp ${BASEPATH}/mindspore/lite/schema/*.h ${OUTPUT_DIR}/include/schema/
-            cp ${BASEPATH}/mindspore/lite/build/src/libmindspore-lite.so ${OUTPUT_DIR}/lib/
-            mkdir -p ${OUTPUT_DIR}/third_party/protobuf/lib
-            cp -r ${BASEPATH}/third_party/protobuf/build/include/ ${OUTPUT_DIR}/third_party/protobuf/
-            cp -r ${BASEPATH}/third_party/protobuf/build/lib/libprotobuf.so.19.0.0 ${OUTPUT_DIR}/third_party/protobuf/lib/libprotobuf.so.19
-            mkdir -p ${OUTPUT_DIR}/third_party/flatbuffers
-            cp -r ${BASEPATH}/third_party/flatbuffers/include/ ${OUTPUT_DIR}/third_party/flatbuffers/
-            cd ..
-            tar -czf MSLite-0.6.0-linux_x86_64.tar.gz MSLite-0.6.0-linux_x86_64/ --warning=no-file-changed
-            sha256sum MSLite-0.6.0-linux_x86_64.tar.gz > MSLite-0.6.0-linux_x86_64.tar.gz.sha256
-            rm -rf MSLite-0.6.0-linux_x86_64/
-        elif [[ "$LITE_PLATFORM" == "arm64" ]]; then
-            OUTPUT_DIR=${BASEPATH}/output/MSLite-0.6.0-linux_arm64
-            rm -rf ${OUTPUT_DIR} && mkdir -p ${OUTPUT_DIR} && cd ${OUTPUT_DIR}
-            mkdir -p ${OUTPUT_DIR}/time_profile && mkdir -p ${OUTPUT_DIR}/benchmark
-            mkdir -p ${OUTPUT_DIR}/include && mkdir -p ${OUTPUT_DIR}/lib
-            mkdir -p ${OUTPUT_DIR}/third_party
-	    prepare_md_lite
-            cp ${BASEPATH}/mindspore/lite/build/tools/benchmark/benchmark ${OUTPUT_DIR}/benchmark/
-            cp ${BASEPATH}/mindspore/lite/build/tools/time_profile/timeprofile ${OUTPUT_DIR}/time_profile/
-            cp ${BASEPATH}/mindspore/lite/include/*.h ${OUTPUT_DIR}/include/
-            mkdir -p ${OUTPUT_DIR}/include/ir/dtype/
-            cp ${BASEPATH}/mindspore/core/ir/dtype/type_id.h ${OUTPUT_DIR}/include/ir/dtype/
-            mkdir -p ${OUTPUT_DIR}/include/schema/
-            cp ${BASEPATH}/mindspore/lite/schema/*.h ${OUTPUT_DIR}/include/schema/
-            cp ${BASEPATH}/mindspore/lite/build/src/libmindspore-lite.so ${OUTPUT_DIR}/lib/
-            cp ${BASEPATH}/mindspore/lite/build/src/runtime/kernel/arm/nnacl/liboptimize.so ${OUTPUT_DIR}/lib/
-            mkdir -p ${OUTPUT_DIR}/third_party/flatbuffers
-            cp -r ${BASEPATH}/third_party/flatbuffers/include/ ${OUTPUT_DIR}/third_party/flatbuffers/
-            cd ..
-            tar -czf MSLite-0.6.0-linux_arm64.tar.gz MSLite-0.6.0-linux_arm64/ --warning=no-file-changed
-            sha256sum MSLite-0.6.0-linux_arm64.tar.gz > MSLite-0.6.0-linux_arm64.tar.gz.sha256
-            rm -rf MSLite-0.6.0-linux_arm64/
-        elif [[ "$LITE_PLATFORM" == "arm32" ]]; then
-            OUTPUT_DIR=${BASEPATH}/output/MSLite-0.6.0-linux_arm32
-            rm -rf ${OUTPUT_DIR} && mkdir -p ${OUTPUT_DIR} && cd ${OUTPUT_DIR}
-            mkdir -p ${OUTPUT_DIR}/time_profile && mkdir -p ${OUTPUT_DIR}/benchmark
-            mkdir -p ${OUTPUT_DIR}/include && mkdir -p ${OUTPUT_DIR}/lib
-            mkdir -p ${OUTPUT_DIR}/third_party
-	    prepare_md_lite
-            cp ${BASEPATH}/mindspore/lite/build/tools/benchmark/benchmark ${OUTPUT_DIR}/benchmark/
-            cp ${BASEPATH}/mindspore/lite/build/tools/time_profile/timeprofile ${OUTPUT_DIR}/time_profile/
-            cp ${BASEPATH}/mindspore/lite/include/*.h ${OUTPUT_DIR}/include/
-            mkdir -p ${OUTPUT_DIR}/include/ir/dtype/
-            cp ${BASEPATH}/mindspore/core/ir/dtype/type_id.h ${OUTPUT_DIR}/include/ir/dtype/
-            mkdir -p ${OUTPUT_DIR}/include/schema/
-            cp ${BASEPATH}/mindspore/lite/schema/*.h ${OUTPUT_DIR}/include/schema/
-            cp ${BASEPATH}/mindspore/lite/build/src/libmindspore-lite.so ${OUTPUT_DIR}/lib/
-            mkdir -p ${OUTPUT_DIR}/third_party/flatbuffers
-            cp -r ${BASEPATH}/third_party/flatbuffers/include/ ${OUTPUT_DIR}/third_party/flatbuffers/
-            cd ..
-            tar -czf MSLite-0.6.0-linux_arm32.tar.gz MSLite-0.6.0-linux_arm32/ --warning=no-file-changed
-            sha256sum MSLite-0.6.0-linux_arm32.tar.gz > MSLite-0.6.0-linux_arm32.tar.gz.sha256
-            rm -rf MSLite-0.6.0-linux_arm32/
-        fi
+        mv ${BASEPATH}/output/tmp/*.tar.gz* ${BASEPATH}/output/
+        rm -rf ${BASEPATH}/output/tmp/
         echo "---------------- mindspore lite: build success ----------------"
     fi
 }

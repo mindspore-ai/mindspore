@@ -16,3 +16,6 @@ if (PLATFORM_ARM32 OR PLATFORM_ARM64)
 else()
     target_link_libraries(timeprofile mindspore-lite pthread)
 endif()
+
+install(TARGETS timeprofile
+        RUNTIME DESTINATION ${MAIN_DIR}/time_profile COMPONENT ${COMPONENT_NAME})

@@ -5,6 +5,28 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_
     message(FATAL_ERROR "GCC vesion ${CMAKE_CXX_COMPILER_VERSION} must not be less than 7.3.0")
 endif ()
 
+set(MS_VERSION_MAJOY 0)
+set(MS_VERSION_MINOR 6)
+set(MS_VERSION_REVISION 0)
+
+set(DIR_PREFIX mindspore-lite)
+set(MS_VERSION ${MS_VERSION_MAJOY}.${MS_VERSION_MINOR}.${MS_VERSION_REVISION})
+set(MAIN_DIR ${DIR_PREFIX}-${MS_VERSION})
+
+if (SUPPORT_GPU)
+    set(PROCESS_UNIT gpu)
+else ()
+    set(PROCESS_UNIT cpu)
+endif ()
+
+if (PLATFORM_ARM64)
+    set(COMPONENT_NAME runtime-arm64-${PROCESS_UNIT})
+elseif (PLATFORM_ARM32)
+    set(COMPONENT_NAME runtime-arm32-${PROCESS_UNIT})
+else ()
+    set(COMPONENT_NAME convert-ubuntu)
+endif()
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 set(TOP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 set(CORE_DIR ${TOP_DIR}/mindspore/core)
@@ -157,3 +179,5 @@ if (BUILD_DEVICE)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/time_profile)
 endif()
+
+include(${TOP_DIR}/cmake/package_lite.cmake)
