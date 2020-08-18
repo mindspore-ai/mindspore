@@ -54,7 +54,7 @@ STATUS TfliteScatterNdParser::Parse(const std::unique_ptr<tflite::OperatorT> &tf
   // in tflite, kIndices = 0, kUpdates = 1, kShape = 2
   // in mslite, kScatterShapeIndex = 0, kScatterIndicesIndex = 1, kScatterUpdateIndex = 2;
   AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
-               tflite_op->inputs[2], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+             tflite_op->inputs[2], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
              tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   AddOpInput(op, tensors_id, tensors_format, tensors_id_map,

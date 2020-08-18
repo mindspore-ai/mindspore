@@ -33,7 +33,4 @@ void MatrixMultiplyFp16(const float16_t *matrix_a, const float16_t *matrix_b, fl
     }
   }
 }
-
-
-
 }  // namespace mindspore::kernel

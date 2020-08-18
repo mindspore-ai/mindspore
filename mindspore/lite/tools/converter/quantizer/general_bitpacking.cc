@@ -73,14 +73,13 @@ void BitPack::BitPacking(const std::vector<uint8_t>& originDataVec, std::vector<
     }
 
     size_t remainBitData = bitDataVec.size();
-    if ( 8 > remainBitData && remainBitData > 0 ) {
-        for ( int i = 0; i < 8 - remainBitData; i++ ) {
+    if (8 > remainBitData && remainBitData > 0) {
+        for (int i = 0; i < 8 - remainBitData; i++) {
             bitDataVec.push(0);
         }
         PackFromOriginToUint8(bitDataVec, packedDataVec);
     }
 }
-
 }  // namespace lite
 }  // namespace mindspore
 

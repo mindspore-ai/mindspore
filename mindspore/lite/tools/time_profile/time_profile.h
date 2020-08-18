@@ -34,7 +34,6 @@
 
 namespace mindspore {
 namespace lite {
-
 class MS_API TimeProfileFlags : public virtual FlagParser {
  public:
   TimeProfileFlags() {

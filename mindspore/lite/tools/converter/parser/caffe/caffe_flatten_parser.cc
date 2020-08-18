@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace lite {
 STATUS CaffeFlattenParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
-                                       schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
+                                 schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   if (op == nullptr) {
     // MS_LOG(ERROR) << "null pointer dereferencing.";
     return RET_NULL_PTR;

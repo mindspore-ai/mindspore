@@ -311,7 +311,6 @@ TfliteNodeRegister g_tfliteGreaterEParser("Greater", new TfliteGreaterParser());
 TfliteNodeRegister g_tfliteGreaterEqualParser("GreaterEqual", new TfliteGreaterEqualParser());
 TfliteNodeRegister g_tfliteLessParser("Less", new TfliteLessParser());
 TfliteNodeRegister g_tfliteLessEqualParser("LessEqual", new TfliteLessEqualParser());
-
 }  // namespace lite
 }  // namespace mindspore
 

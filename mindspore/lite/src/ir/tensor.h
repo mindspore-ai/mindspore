@@ -29,7 +29,6 @@
 namespace mindspore {
 namespace lite {
 namespace tensor {
-
 struct QuantArg {
   double scale;
   int32_t zeroPoint;

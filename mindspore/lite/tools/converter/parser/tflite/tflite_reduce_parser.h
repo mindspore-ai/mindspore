@@ -67,7 +67,6 @@ class TfliteReduceAnyParser : public TfliteReduceParser {
  public:
   TfliteReduceAnyParser() : TfliteReduceParser() {}
 };
-
 }  // namespace lite
 }  // namespace mindspore
 

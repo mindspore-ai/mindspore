@@ -27,7 +27,6 @@ STATUS CaffeReshapeParser::Parse(const caffe::LayerParameter &proto,
   attr->format = schema::Format_NCHW;
 
   const caffe::ReshapeParameter reshapeParam = proto.reshape_param();
-
   if (!reshapeParam.has_shape()) {
     // MS_LOGE("Reshape has no shape info, ret fail");
     return RET_ERROR;

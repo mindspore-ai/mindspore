@@ -36,7 +36,7 @@ int32x4_t ClacScaledInput(int32x4_t input, int32x4_t left_shift_result_vec, int3
 }
 
 int16x4_t AddClacSumHalfWord(int32x4_t scaled_input0, int32x4_t scaled_input1, int32x4_t left_shift_out_vec,
-                          int32x4_t output_multiplier_vec, AddQuantParameter *para) {
+                             int32x4_t output_multiplier_vec, AddQuantParameter *para) {
   int32x4_t raw_sum = vaddq_s32(scaled_input0, scaled_input1);
 
   raw_sum = RoundingDivideByPOTInt32x4(vqrdmulhq_s32(vmulq_s32(raw_sum, left_shift_out_vec), output_multiplier_vec),

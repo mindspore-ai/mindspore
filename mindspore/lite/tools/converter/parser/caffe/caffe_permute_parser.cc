@@ -20,9 +20,9 @@
 namespace mindspore {
 namespace lite {
 STATUS CaffePermuteParser::Parse(const caffe::LayerParameter &proto,
-                                const caffe::LayerParameter &weight,
-                                schema::CNodeT *op,
-                                std::vector<schema::TensorT *> *weightVec) {
+                                 const caffe::LayerParameter &weight,
+                                 schema::CNodeT *op,
+                                 std::vector<schema::TensorT *> *weightVec) {
   op->name = proto.name();
   std::unique_ptr<schema::TransposeT> attr(new schema::TransposeT());
   const caffe::PermuteParameter permuteParam = proto.permute_param();

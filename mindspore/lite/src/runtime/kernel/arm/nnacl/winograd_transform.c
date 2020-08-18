@@ -1364,7 +1364,6 @@ void Conv3x3Uint8OutputUnit(const int32_t *gemm_out, const int32_t *bias_data, i
         }
       }
     }
-
   } else {
     for (int i = 0; i < C4NUM; i++) {
       const int32_t *local_ptr = gemm_out + i;

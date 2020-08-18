@@ -37,7 +37,6 @@ kernel::LiteKernel *GetOpenCLKernel(const std::vector<tensor::Tensor *> &in_tens
 
 namespace mindspore {
 namespace kernel {
-
 std::vector<size_t> GetCommonGlobalSize(const std::vector<size_t> &local, const std::vector<size_t> &global) {
   std::vector<size_t> result(3, 1);
   for (int i = 0; i < 3; ++i) {

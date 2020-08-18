@@ -200,6 +200,5 @@ NodeIter FormatTransPass::InsertFormatTransNode(schema::MetaGraphT *graph, NodeI
 void FormatTransPass::SetQuantType(QuantType quantType) { this->quantType = quantType; }
 
 void FormatTransPass::SetFmk(converter::FmkType fmkType) { this->fmkType = fmkType; }
-
 }  // namespace lite
 }  // namespace mindspore

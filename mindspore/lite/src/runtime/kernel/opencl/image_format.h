@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 /**
  * MindSpore to OpenCL channel order.
  * @param num_channels

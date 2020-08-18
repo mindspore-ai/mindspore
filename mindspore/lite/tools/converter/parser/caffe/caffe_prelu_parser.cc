@@ -25,7 +25,6 @@ STATUS CaffePReluParser::Parse(const caffe::LayerParameter &proto,
                                std::vector<schema::TensorT *> *weightVec) {
   std::unique_ptr<schema::CaffePReLUT> attr(new schema::CaffePReLUT());
   const caffe::PReLUParameter pReluParam = proto.prelu_param();
-
   if (pReluParam.has_channel_shared()) {
     attr->channelShared = pReluParam.channel_shared();
   } else {

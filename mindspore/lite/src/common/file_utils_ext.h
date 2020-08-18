@@ -22,7 +22,6 @@
 namespace mindspore {
 namespace lite {
 int CompareRelativeOutput(float *output_data, std::string file_path);
-
 }
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_COMMON_FILE_UTILS_EXT_H_

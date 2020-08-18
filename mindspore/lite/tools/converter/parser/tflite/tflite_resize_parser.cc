@@ -71,13 +71,13 @@ STATUS TfliteResizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   attr->preserveAspectRatio = false;
 
   auto tfliteResizeTensorIndex = tflite_op->inputs[1];
-  const auto & shape_tensor = tflite_tensors[tfliteResizeTensorIndex];
+  const auto &shape_tensor = tflite_tensors[tfliteResizeTensorIndex];
   if (shape_tensor == nullptr) {
     MS_LOG(ERROR) << "shape_tensor is null";
     return RET_NULL_PTR;
   }
   auto resizeTensorBufferIndex = shape_tensor->buffer;
-  const auto & buff = tflite_model_buffer.at(resizeTensorBufferIndex);
+  const auto &buff = tflite_model_buffer.at(resizeTensorBufferIndex);
   if (buff == nullptr) {
     MS_LOG(ERROR) << "buff_data is null";
     return RET_NULL_PTR;
@@ -92,7 +92,7 @@ STATUS TfliteResizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   op->primitive->value.value = attr.release();
 
   AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
-               tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+             tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
               tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   return RET_OK;

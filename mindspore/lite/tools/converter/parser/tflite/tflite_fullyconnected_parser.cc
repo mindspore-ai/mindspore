@@ -68,7 +68,7 @@ STATUS TfliteFullyConnectedParser::Parse(const std::unique_ptr<tflite::OperatorT
   AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
              tflite_op->inputs[1], tensors_id->size(), tflite_tensors.size(), schema::Format_KHWC);
   AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
-               tflite_op->inputs[2], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+             tflite_op->inputs[2], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
               tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   return RET_OK;

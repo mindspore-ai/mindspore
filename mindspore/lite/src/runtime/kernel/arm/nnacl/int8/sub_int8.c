@@ -24,7 +24,7 @@
 #ifdef ENABLE_NEON
 
 int16x4_t DoClacSumHalfWord(int32x4_t scaled_input0, int32x4_t scaled_input1, int32x4_t left_shift_out_vec,
-                          int32x4_t output_multiplier_vec, SubQuantArg *para) {
+                            int32x4_t output_multiplier_vec, SubQuantArg *para) {
   int32x4_t raw_data = vsubq_s32(scaled_input0, scaled_input1);
 
   raw_data = RoundingDivideByPOTInt32x4(vqrdmulhq_s32(vmulq_s32(raw_data, left_shift_out_vec), output_multiplier_vec),

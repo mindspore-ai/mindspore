@@ -31,6 +31,5 @@ AnfNodePopulater *AnfNodePopulaterRegistry::GetNodePopulater(const std::string &
 void AnfNodePopulaterRegistry::SetNodePopulater(const std::string &name, AnfNodePopulater *populater) {
   populaters[name] = populater;
 }
-
 }  // namespace lite
 }  // namespace mindspore

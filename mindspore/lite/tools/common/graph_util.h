@@ -99,7 +99,6 @@ class OpGraphT : public OpGraph<OpNode> {
   int AddEdge(NODE_ID srcId, NODE_ID dstId);
   int AddEdge(const schema::CNodeT *srcNodeDef, const std::vector<std::unique_ptr<schema::CNodeT>> *nodeDefs);
 };
-
 }  // namespace lite
 }  // namespace mindspore
 

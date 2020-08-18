@@ -33,7 +33,6 @@
 namespace mindspore {
 namespace lite {
 namespace quant {
-
 static constexpr size_t UINT8_QUANTIZATION = 8;
 
 /**
@@ -124,7 +123,6 @@ STATUS QuantFilter(ParamValueLitePtr &weightPtr, QuantType quantType, int quant_
                    size_t bitNum = UINT8_QUANTIZATION, bool per_channel = false);
 
 STATUS PostBitPack(float *weights, size_t shapeSize, size_t bitNum = UINT8_QUANTIZATION);
-
 }  // namespace quant
 }  // namespace lite
 }  // namespace mindspore

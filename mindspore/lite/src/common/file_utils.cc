@@ -161,6 +161,5 @@ void CompareOutput(float *output_data, std::string file_path) {
 //  }
 //  return "/data/data/" + packageName + '/';
 //}
-
 }  // namespace lite
 }  // namespace mindspore

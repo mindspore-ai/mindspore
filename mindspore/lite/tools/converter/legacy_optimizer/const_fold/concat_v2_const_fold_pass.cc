@@ -19,7 +19,6 @@
 
 namespace mindspore {
 namespace lite {
-
 STATUS ConcatV2ConstFoldPass::Run(GraphNode *graphNode) { return ConstFoldPass::Run(graphNode); }
 
 STATUS ConcatV2ConstFoldPass::CreateOp(SubGraphDefT *subGraph, OpDefT *node) {

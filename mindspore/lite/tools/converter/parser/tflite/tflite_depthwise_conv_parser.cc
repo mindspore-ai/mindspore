@@ -22,8 +22,6 @@
 
 namespace mindspore {
 namespace lite {
-
-
 STATUS TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                           const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
                                           const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,

@@ -96,6 +96,5 @@ TfliteNodeRegister g_TfliteReduceMaxParser("ReduceMax", new TfliteReduceMaxParse
 TfliteNodeRegister g_TfliteReduceMinParser("ReduceMin", new TfliteReduceMinParser());
 TfliteNodeRegister g_TfliteReduceProdParser("ReduceProd", new TfliteReduceProdParser());
 TfliteNodeRegister g_TfliteReduceAnyParser("ReduceAny", new TfliteReduceAnyParser());
-
 }  // namespace lite
 }  // namespace mindspore

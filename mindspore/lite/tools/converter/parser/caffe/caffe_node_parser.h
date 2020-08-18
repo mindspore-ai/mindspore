@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace lite {
-
 class CaffeNodeParser {
  public:
   explicit CaffeNodeParser(const std::string &nodeName) : name(nodeName) {}

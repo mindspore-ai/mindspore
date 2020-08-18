@@ -25,7 +25,7 @@
 #ifdef ENABLE_NEON
 
 int16x4_t ClacSumHalfWordMul(int32x4_t scaled_input0, int32x4_t scaled_input1, int32x4_t left_shift_out_vec,
-                          int32x4_t output_multiplier_vec, MulQuantArg para) {
+                             int32x4_t output_multiplier_vec, MulQuantArg para) {
   int32x4_t input_scale = vmulq_s32(scaled_input0, scaled_input1);
   int32x4_t raw_sum = RoundingDivideByPOTInt32x4(
     SaturatingRoundingDoublingHighMulInt32x4(vmulq_s32(input_scale, left_shift_out_vec), output_multiplier_vec),

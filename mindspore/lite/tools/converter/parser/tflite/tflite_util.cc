@@ -192,10 +192,10 @@ size_t GetDataTypeSize(const TypeId &data_type) {
 }
 
 STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor,
-                                 schema::PadMode pad_mode,
-                                 int strideH, int strideW,
-                                 int windowH, int windowW,
-                                 std::vector<int> *params) {
+                       schema::PadMode pad_mode,
+                       int strideH, int strideW,
+                       int windowH, int windowW,
+                       std::vector<int> *params) {
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "the input tensor is null";
     return RET_ERROR;
@@ -239,6 +239,5 @@ void Split(const std::string &src_str, std::vector<std::string> *dst_str, const 
     dst_str->push_back(src_str.substr(p1));
   }
 }
-
 }  // namespace lite
 }  // namespace mindspore

@@ -71,6 +71,5 @@ STATUS TfliteLogicalParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
 TfliteNodeRegister g_TfliteLogicalAndParser("LogicalAnd", new TfliteLogicalAndParser());
 TfliteNodeRegister g_TfliteLogicalNotParser("LogicalNot", new TfliteLogicalNotParser());
 TfliteNodeRegister g_TfliteLogicalOrParser("LogicalOr", new TfliteLogicalOrParser());
-
 }  // namespace lite
 }  // namespace mindspore

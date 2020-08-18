@@ -19,7 +19,7 @@
 #include "nnacl/errorcode.h"
 
 int PadConstant4D(const int8_t *in_data, int8_t *out_data, const int32_t *in_dims, const int32_t *out_dims,
-                   const int32_t *paddings, const int tid, const int thread_num) {
+                  const int32_t *paddings, const int tid, const int thread_num) {
   int32_t copy_size = in_dims[3];
   for (int n = 0; n < in_dims[0]; n++) {
     for (int h = tid; h < in_dims[1]; h += thread_num) {

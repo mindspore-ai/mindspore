@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace lite {
-
 STATUS RsqrtConstFoldPass::Run(GraphNode *graphNode) { return ConstFoldPass::Run(graphNode); }
 
 STATUS RsqrtConstFoldPass::CreateOp(SubGraphDefT *subGraph, OpDefT *node) {

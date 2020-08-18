@@ -82,7 +82,6 @@ int OpGraph<NODE_T>::Build(const schema::MetaGraph *subGraphDef) {
     return RET_ERROR;
   }
 
-
   auto opDefs = subGraphDef->nodes();
 
   uint32_t opCount = opDefs->size();
@@ -104,7 +103,7 @@ int OpGraph<NODE_T>::Build(const schema::MetaGraph *subGraphDef) {
 }
 template <typename NODE_T>
 int OpGraph<NODE_T>::AddEdge(const schema::CNode *srcNodeDef,
-        const flatbuffers::Vector<flatbuffers::Offset<schema::CNode>> *nodeDefs) {
+                             const flatbuffers::Vector<flatbuffers::Offset<schema::CNode>> *nodeDefs) {
   MS_ASSERT(srcNodeDef != nullptr);
   MS_ASSERT(nodeDefs != nullptr);
   NODE_ID srcId = std::string(srcNodeDef->name()->c_str());
@@ -242,7 +241,6 @@ OpGraph<NODE_T>::~OpGraph() {
   }
   nodes.clear();
 }
-
 }  // namespace lite
 }  // namespace mindspore
 

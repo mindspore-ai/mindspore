@@ -47,7 +47,6 @@ class TfliteResizeNearestNeighborParser : public TfliteResizeParser {
  public:
   TfliteResizeNearestNeighborParser() : TfliteResizeParser() {}
 };
-
 }  // namespace lite
 }  // namespace mindspore
 
