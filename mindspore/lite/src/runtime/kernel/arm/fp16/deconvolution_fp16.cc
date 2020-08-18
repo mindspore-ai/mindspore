@@ -27,6 +27,10 @@ using mindspore::schema::PrimitiveType_DeConv2D;
 namespace mindspore::kernel {
 DeConvolutionFp16CPUKernel::~DeConvolutionFp16CPUKernel() {
   FreeParam();
+  if (matmul_param_ != nullptr) {
+    delete matmul_param_;
+    matmul_param_ = nullptr;
+  }
   return;
 }
 

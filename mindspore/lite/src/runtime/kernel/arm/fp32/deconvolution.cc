@@ -25,7 +25,13 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DeConv2D;
 
 namespace mindspore::kernel {
-DeConvolutionCPUKernel::~DeConvolutionCPUKernel() { FreeTmpBuffer(); }
+DeConvolutionCPUKernel::~DeConvolutionCPUKernel() {
+  FreeTmpBuffer();
+  if (matmul_param_ != nullptr) {
+    delete matmul_param_;
+    matmul_param_ = nullptr;
+  }
+}
 
 void DeConvolutionCPUKernel::FreeTmpBuffer() {
   if (weight_ptr_ != nullptr) {
@@ -44,6 +50,7 @@ void DeConvolutionCPUKernel::FreeTmpBuffer() {
     free(pack_output_);
     pack_output_ = nullptr;
   }
+  return;
 }
 
 int DeConvolutionCPUKernel::ReSize() {
