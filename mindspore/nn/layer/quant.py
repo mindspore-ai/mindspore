@@ -607,7 +607,6 @@ class Conv2dBnWithoutFoldQuant(Cell):
         group (int): Split filter into groups, `in_ channels` and `out_channels` should be
             divisible by the number of groups. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
-        has_bn (bool): Specifies to used batchnorm or not. Default: False.
         eps (float): Parameters for BatchNormal. Default: 1e-5.
         momentum (float): Parameters for BatchNormal op. Default: 0.997.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the convolution kernel.
@@ -641,7 +640,6 @@ class Conv2dBnWithoutFoldQuant(Cell):
                  dilation=1,
                  group=1,
                  has_bias=False,
-                 has_bn=True,
                  eps=1e-5,
                  momentum=0.997,
                  weight_init='normal',
@@ -693,17 +691,14 @@ class Conv2dBnWithoutFoldQuant(Cell):
                                                      symmetric=symmetric,
                                                      narrow_range=narrow_range,
                                                      quant_delay=quant_delay)
-        self.has_bn = validator.check_bool("has_bn", has_bn)
-        if has_bn:
-            self.batchnorm = BatchNorm2d(out_channels, eps=eps, momentum=momentum)
+        self.batchnorm = BatchNorm2d(out_channels, eps=eps, momentum=momentum)
 
     def construct(self, x):
         weight = self.fake_quant_weight(self.weight)
         out = self.conv(x, weight)
         if self.has_bias:
             out = self.bias_add(out, self.bias)
-        if self.has_bn:
-            out = self.batchnorm(out)
+        out = self.batchnorm(out)
         return out
 
     def extend_repr(self):

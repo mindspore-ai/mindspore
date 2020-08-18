@@ -208,7 +208,6 @@ class ConvertToQuantNetwork:
                                                             group=conv_inner.group,
                                                             eps=bn_inner.eps,
                                                             momentum=bn_inner.momentum,
-                                                            has_bn=True,
                                                             quant_delay=self.weight_qdelay,
                                                             per_channel=self.weight_channel,
                                                             num_bits=self.weight_bits,
@@ -378,8 +377,10 @@ class ExportToQuantInferNetwork:
         if isinstance(cell_core, (quant.DenseQuant, quant.Conv2dQuant)):
             if cell_core.has_bias:
                 bias = cell_core.bias.data.asnumpy()
-        elif isinstance(cell_core, (quant.Conv2dBnFoldQuant, quant.Conv2dBnWithoutFoldQuant)):
+        elif isinstance(cell_core, quant.Conv2dBnFoldQuant):
             weight, bias = quant_utils.fold_batchnorm(weight, cell_core)
+        elif isinstance(cell_core, quant.Conv2dBnWithoutFoldQuant):
+            weight, bias = quant_utils.without_fold_batchnorm(weight, cell_core)
 
         # apply the quant
         weight = quant_utils.weight2int(weight, scale_w, zp_w)
