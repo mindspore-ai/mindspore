@@ -325,7 +325,6 @@ void ConvInt8Opt(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
       int start_index = thread_id * tile_n;
       int real_cal_num = (output_count - start_index) < tile_n ? (output_count - start_index) : tile_n;
-      // todo
       int32_t *tmp_input_sum = input_sum + task_id * tile_n;
       int8_t *gemm_input = packed_input + thread_id * unit_size * tile_n + gemm_in_batch_offset;
       // clear tmp buffer before compute

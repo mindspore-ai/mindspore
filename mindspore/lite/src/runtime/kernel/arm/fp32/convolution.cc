@@ -51,7 +51,7 @@ int ConvolutionCPUKernel::InitWeightBias() {
   // #endif
   int pack_weight_size = oc_block_num * oc_block * ic4 * C4NUM * kernel_plane;
 
-  // init weight
+  // =====================init weight==========================//
   auto origin_weight = reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->Data());
   packed_weight_ = reinterpret_cast<float *>(malloc(pack_weight_size * sizeof(float)));
   if (packed_weight_ == nullptr) {
@@ -61,7 +61,7 @@ int ConvolutionCPUKernel::InitWeightBias() {
   memset(packed_weight_, 0, pack_weight_size * sizeof(float));
   PackWeightFp32(origin_weight, conv_param_, packed_weight_, oc_block, oc_block_num);
 
-  // init bias
+  // =======================init bias==========================//
   bias_data_ = reinterpret_cast<float *>(malloc(oc_block_num * oc_block * sizeof(float)));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc bias failed.";

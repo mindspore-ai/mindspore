@@ -17,6 +17,7 @@
 #include "src/runtime/kernel/arm/fp16/convolution_fp16.h"
 #include <vector>
 #include "src/runtime/kernel/arm/fp16/convolution_sw_fp16.h"
+#include "src/runtime/kernel/arm/fp16/convolution_winograd_fp16.h"
 #include "src/runtime/kernel/arm/fp16/convolution_3x3_fp16.h"
 #include "src/runtime/kernel/arm/fp16/convolution_1x1_fp16.h"
 #include "src/runtime/kernel/arm/nnacl/fp16/conv_fp16.h"
@@ -243,6 +244,10 @@ kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::tensor::Ten
     InputTransformUnitFunc input_trans_func = nullptr;
     OutputTransformUnitFunc output_trans_func = nullptr;
     CheckIfUseWinograd(&use_winograd, &out_unit, conv_param, input_trans_func, output_trans_func);
+    if (use_winograd) {
+      kernel = new (std::nothrow)
+        kernel::ConvolutionWinogradFP16CPUKernel(opParameter, inputs, outputs, ctx, primitive, out_unit);
+    }
     if (kernel_h != 1 && kernel_w != 1 && !use_winograd) {
       kernel = new (std::nothrow) kernel::ConvolutionFP16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
     }

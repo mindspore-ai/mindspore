@@ -81,7 +81,9 @@ void WinogradOutputTransform(const float *gemm_out, float *tmp_out_data, const f
                              OutputTransformUnitFunc output_trans_func) {
   int output_unit = conv_param->output_unit_;
   int output_w = conv_param->output_w_;
-  int output_unit_block = UP_DIV(output_w, output_unit);
+  int output_h = conv_param->output_h_;
+  int output_w_unit_block = UP_DIV(output_w, output_unit);
+  int output_h_unit_block = UP_DIV(output_h, output_unit);
   int output_channel = conv_param->output_channel_;
   int oc4 = UP_DIV(output_channel, C4NUM);
   int input_unit = conv_param->input_unit_;
@@ -92,16 +94,16 @@ void WinogradOutputTransform(const float *gemm_out, float *tmp_out_data, const f
     int dst_x_s = out_tile_index % output_unit_num;
     int dst_y_s = out_tile_index / output_unit_num;
     int src_tile_offset = i * oc4 * C4NUM * input_unit * input_unit;
-    int dst_tile_offset = C4NUM * output_unit * (dst_x_s + dst_y_s * output_unit_block * output_unit);
+    int dst_tile_offset = C4NUM * output_unit * (dst_x_s + dst_y_s * output_w_unit_block * output_unit);
 
     for (int j = 0; j < oc4; j++) {
       int src_oc4_offset = src_tile_offset + j * input_unit * input_unit * C4NUM;
       int dst_oc4_offset =
-        dst_tile_offset + j * C4NUM * output_unit_block * output_unit_block * output_unit * output_unit;
+        dst_tile_offset + j * C4NUM * output_h_unit_block * output_w_unit_block * output_unit * output_unit;
       const float *src_ptr = gemm_out + src_oc4_offset;
       const float *bias_ptr = bias_data + j * C4NUM;
       float *dst_ptr = tmp_out_data + dst_oc4_offset;
-      output_trans_func(src_ptr, dst_ptr, bias_ptr, C4NUM, output_unit_block * output_unit);
+      output_trans_func(src_ptr, dst_ptr, bias_ptr, C4NUM, output_w_unit_block * output_unit);
     }
     out_tile_index++;
   }

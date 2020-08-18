@@ -1066,7 +1066,7 @@ void OutputTransform4x3UnitFp16(const float16_t *src_data, float16_t *dst_data, 
     const float16_t t10 = 0.5f * (src_data_10 - src_data_20);
     const float16_t t11 = 0.5f * (src_data_11 - src_data_21);
     const float16_t t12 = 0.5f * (src_data_12 - src_data_22);
-    const const float16_t t13 = 0.5f * (src_data_13 - src_data_23);
+    const float16_t t13 = 0.5f * (src_data_13 - src_data_23);
 
     const float16_t t20 = 0.25f * (src_data_10 + src_data_20) + src_data_30;
     const float16_t t21 = 0.25f * (src_data_11 + src_data_21) + src_data_31;
@@ -2232,7 +2232,7 @@ void OutputTransform8x4UnitFp16(const float16_t *src_data, float16_t *dst_data, 
     const float16_t t24 = 0.25f * d35 + d45 + 2.25f * d55;
     const float16_t t25 = 0.25f * d36 + d46 + 2.25f * d56;
     const float16_t t26 = 0.25f * d37 + d47 + 2.25f * d57;
-    const const float16_t t27 = 0.25f * d38 + d48 + 2.25f * d58;
+    const float16_t t27 = 0.25f * d38 + d48 + 2.25f * d58;
 
     const float16_t t30 = 0.125f * d01 + d11 + 3.375f * d21 + src_data_70;
     const float16_t t31 = 0.125f * d02 + d12 + 3.375f * d22 + src_data_71;
@@ -3392,7 +3392,7 @@ void OutputTransform8x6UnitFp16(const float16_t *src_data, float16_t *dst_data, 
     const float16_t t52 = 0.03125f * d03 + d13 + 7.59375f * d23 + src_data_72;
     const float16_t t53 = 0.03125f * d04 + d14 + 7.59375f * d24 + src_data_73;
     const float16_t t54 = 0.03125f * d05 + d15 + 7.59375f * d25 + src_data_74;
-    const const float16_t t55 = 0.03125f * d06 + d16 + 7.59375f * d26 + src_data_75;
+    const float16_t t55 = 0.03125f * d06 + d16 + 7.59375f * d26 + src_data_75;
     const float16_t t56 = 0.03125f * d07 + d17 + 7.59375f * d27 + src_data_76;
     const float16_t t57 = 0.03125f * d08 + d18 + 7.59375f * d28 + src_data_77;
 
