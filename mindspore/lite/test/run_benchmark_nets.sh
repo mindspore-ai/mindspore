@@ -209,7 +209,7 @@ while getopts "a:c:m:d:" opt; do
         m)
 	    models_path=${OPTARG}
             echo "models_path is ${OPTARG}"
-            ;;		
+            ;;
         d)
 	    device_id=${OPTARG}
             echo "device_id is ${OPTARG}"
@@ -220,11 +220,11 @@ while getopts "a:c:m:d:" opt; do
     esac
 done
 
-# Unzip arm 
+# Unzip arm
 cd ${arm_path} || exit 1
 tar -zxf MSLite-*-linux_arm64.tar.gz || exit 1
 
-# Unzip convertor 
+# Unzip convertor
 cd ${convertor_path} || exit 1
 tar -zxf MSLite-*-linux_x86_64.tar.gz || exit 1
 cd ${convertor_path}/MSLite-*-linux_x86_64 || exit 1
@@ -325,7 +325,7 @@ echo 'chmod 777 benchmark' >> adb_cmd.txt
 
 adb -s ${device_id} shell < adb_cmd.txt
 
-# Write resulte to temp file 
+# Write resulte to temp file
 run_benchmark_result_file=${basepath}/run_benchmark_result.txt
 echo 'cases :' > ${run_benchmark_result_file}
 
@@ -335,7 +335,7 @@ Run_x86_PID=$!
 sleep 1
 
 # Run on arm64
-Run_arm64 & 
+Run_arm64 &
 Run_arm64_PID=$!
 
 wait ${Run_x86_PID}
