@@ -36,12 +36,12 @@ def parse_args():
     parser = ArgumentParser(description="mindspore distributed training launch "
                                         "helper utilty that will generate hccl"
                                         " config file")
-    parser.add_argument("--device_num", type=str, default="[0,8]",
+    parser.add_argument("--device_num", type=str, default="[0,8)",
                         help="The number of the D chip used. please note that the D chips"
-                             "used must be continuous, such [0,4] means to use four chips "
-                             "0，1，2，3; [0,1] means to use chip 0; The first four chips are"
+                             "used must be continuous, such [0,4) means to use four chips "
+                             "0，1，2，3; [0,1) means to use chip 0; The first four chips are"
                              "a group, and the last four chips are a group. In addition to"
-                             "the [0,8] chips are allowed, other cross-group such as [3,6]"
+                             "the [0,8) chips are allowed, other cross-group such as [3,6)"
                              "are prohibited.")
     parser.add_argument("--visible_devices", type=str, default="0,1,2,3,4,5,6,7",
                         help="will use the visible devices sequentially")
