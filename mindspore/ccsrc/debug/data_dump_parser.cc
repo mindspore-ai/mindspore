@@ -209,4 +209,24 @@ void DataDumpParser::CheckOpDebugMode(uint32_t op_debug_mode) const {
     MS_LOG(EXCEPTION) << "[DataDump] op_debug_mode in config json file should be [0-3]";
   }
 }
+
+std::string DataDumpParser::GetOpOverflowBinPath(uint32_t graph_id, uint32_t device_id) const {
+  std::string bin_path = "/var/log/npu/ide_daemon/dump";
+
+  const char *dump_data_path = std::getenv("DATA_DUMP_PATH");
+  bin_path.append(dump_data_path);
+  bin_path.append("_");
+  bin_path.append(std::to_string(device_id));
+  bin_path.append("/");
+  bin_path.append(net_name_);
+  bin_path.append("_");
+  bin_path.append(std::to_string(graph_id));
+  bin_path.append("/");
+  bin_path.append(std::to_string(dump_mode_));
+  bin_path.append("/");
+  bin_path.append(std::to_string(dump_step_));
+  bin_path.append("/");
+
+  return bin_path;
+}
 }  // namespace mindspore

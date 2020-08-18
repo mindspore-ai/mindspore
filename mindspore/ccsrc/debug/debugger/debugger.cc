@@ -14,11 +14,18 @@
  * limitations under the License.
  */
 
+#include <dirent.h>
+#include <stdio.h>
 #include <fstream>
 #include <tuple>
 #include <vector>
 #include <algorithm>
+#include <iostream>
+#include <cstring>
+#include <utility>
+#include <map>
 #include "debug/debugger/debugger.h"
+#include "debug/data_dump_parser.h"
 #include "pipeline/jit/pipeline.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_runtime_manager.h"
@@ -49,7 +56,9 @@ Debugger::Debugger()
       node_name_(""),
       cur_name_(""),
       is_dataset_graph_(false),
-      partial_memory_(false) {}
+      partial_memory_(false),
+      last_overflow_bin_(0),
+      overflow_bin_path_("") {}
 
 void Debugger::Init(const uint32_t device_id, const std::string device_target) {
   // access lock for public method
@@ -133,6 +142,35 @@ void Debugger::EnableDebugger() {
                        "usage for large models.";
   }
 
+  if (device_target_ == kAscendDevice) {
+    // set operation overflow info
+    overflow_bin_path_ = DataDumpParser::GetInstance().GetOpOverflowBinPath(graph_ptr_->graph_id(), device_id_);
+    // new overflow dump files will have a timestamp greater than last_overflow_bin_
+    last_overflow_bin_ = 0;
+    DIR *d;
+    d = opendir(overflow_bin_path_.c_str());
+    if (d) {
+      struct dirent *dir;
+      while ((dir = readdir(d)) != NULL) {
+        if (dir->d_type == DT_REG) {
+          std::string file_path = overflow_bin_path_;
+          file_path.append(dir->d_name);
+          std::size_t found = file_path.find_last_of(".");
+          if (found == std::string::npos) {
+            continue;
+          }
+          std::string overflow_time = file_path.substr(found + 1);
+          if (stod(overflow_time) <= last_overflow_bin_) {
+            MS_LOG(INFO) << "Old op overflow bin folder" << file_path;
+            continue;
+          }
+          last_overflow_bin_ = stod(overflow_time);
+        }
+      }
+      MS_LOG(INFO) << "last op overflow bin folder" << last_overflow_bin_;
+    }
+  }
+
   // initialize grpc client
   if (debugger_enabled_) {
     grpc_client_ = std::make_unique<GrpcClient>(host, port);
@@ -154,6 +192,9 @@ void Debugger::Reset() {
   graph_ptr_ = nullptr;
   grpc_client_ = nullptr;
   debug_services_ = nullptr;
+  last_overflow_bin_ = 0;
+  overflow_bin_path_ = "";
+  stream_task_to_opname_.clear();
 }
 
 void Debugger::PreExecute(const KernelGraphPtr &graph_ptr) {
@@ -200,6 +241,7 @@ void Debugger::PostExecuteNode() {
   if (debugger_enabled_ && !is_dataset_graph_) {
     auto watchpoint_table = debug_services_->GetWatchpointTable();
     auto is_watchpoint = debug_services_->IsWatchPoint(cur_name_, watchpoint_table);
+
     // if kernel is watchpoint,and get hit. suspend.
     if (is_watchpoint) {
       auto hits = CheckSingleWatchpoint(cur_name_);
@@ -223,6 +265,10 @@ void Debugger::PostDebugOp() {
     MS_LOG(INFO) << "Debugger suspend at debug_op";
     CommandLoop();
   }
+}
+
+std::map<std::pair<uint32_t, uint32_t>, std::string> &Debugger::GetStreamTaskToOpnameMap() {
+  return stream_task_to_opname_;
 }
 
 void Debugger::CheckGraphPtr(const KernelGraphPtr &graph_ptr) {
@@ -476,15 +522,15 @@ void Debugger::Exit() {
   std::exit(EXIT_FAILURE);
 }
 
-std::list<WatchpointHit> Debugger::CheckWatchpoints() const {
+std::list<WatchpointHit> Debugger::CheckWatchpoints() {
   std::vector<std::string> name;
   std::vector<std::string> slot;
-  std::vector<char *> data_ptr;
-  std::vector<unsigned int> data_size;
   std::vector<int> condition;
   std::vector<unsigned int> watchpoint_id;
+  std::vector<std::string> overflow_ops;
 
-  debug_services_->CheckWatchpoints(&name, &slot, &data_ptr, &data_size, &condition, &watchpoint_id);
+  overflow_ops = CheckOpOverflow();
+  debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, overflow_ops);
   std::list<WatchpointHit> hits;
   for (unsigned int i = 0; i < name.size(); i++) {
     WatchpointHit hit;
@@ -657,5 +703,71 @@ void Debugger::SetStepNum(int32_t cur_num_step) {
 }
 
 int32_t Debugger::step_num() const { return num_step_; }
+
+uint64_t BytestoInt64(const std::vector<char> &buffer) {
+  uint64_t ret;
+
+  ret = ((uint64_t)buffer[7] << 56) | ((uint64_t)buffer[6] << 48) | ((uint64_t)buffer[5] << 40) |
+        ((uint64_t)buffer[4] << 32) | (buffer[3] << 24) | (buffer[2] << 16) | (buffer[1] << 8) | buffer[0];
+
+  return ret;
+}
+
+#define BUF_SIZ 256
+std::vector<std::string> Debugger::CheckOpOverflow() {
+  std::vector<double> bin_list;
+  std::vector<std::string> op_names;
+  DIR *d;
+  struct dirent *dir;
+  d = opendir(overflow_bin_path_.c_str());
+  if (d) {
+    while ((dir = readdir(d)) != NULL) {
+      if (dir->d_type == DT_REG) {
+        std::string file_path = overflow_bin_path_;
+        file_path.append(dir->d_name);
+        std::string file_name = dir->d_name;
+        std::size_t found = file_name.find_last_of(".");
+        if (found == std::string::npos) {
+          continue;
+        }
+        std::string overflow_time = file_name.substr(found + 1);
+        if (stod(overflow_time) <= last_overflow_bin_) {
+          MS_LOG(INFO) << "File already processed " << file_name;
+          continue;
+        }
+        bin_list.push_back(stod(overflow_time));
+        std::fstream infile;
+        infile.open(file_path.c_str(), std::ios::binary | std::ios::in);
+        infile.seekg(313, std::ios::beg);
+        std::vector<char> buffer;
+        buffer.resize(BUF_SIZ);
+        infile.read(buffer.data(), BUF_SIZ);
+        uint64_t stream_id = BytestoInt64(std::vector<char>(buffer.begin() + 8, buffer.end()));
+        uint64_t task_id = BytestoInt64(std::vector<char>(buffer.begin() + 16, buffer.end()));
+        MS_LOG(INFO) << "Overflow stream_id " << stream_id << ", task_id " << task_id << ".";
+        auto op = debugger_->stream_task_to_opname_.find(std::make_pair(stream_id, task_id));
+        if (op != debugger_->stream_task_to_opname_.end()) {
+          MS_LOG(ERROR) << "Overflow detected on node " << op->second << std::endl;
+          op_names.push_back(op->second);
+        } else {
+          MS_LOG(INFO) << "No overflow is detected " << std::endl;
+        }
+        infile.close();
+      }
+    }
+  } else {
+    MS_LOG(INFO) << "OverFlow bin directory does not exist!";
+  }
+  closedir(d);
+  MS_LOG(ERROR) << "These operation overflows are detected " << op_names;
+
+  for (auto &i : bin_list) {
+    if (i > last_overflow_bin_) {
+      last_overflow_bin_ = i;
+    }
+  }
+
+  return op_names;
+}
 
 }  // namespace mindspore

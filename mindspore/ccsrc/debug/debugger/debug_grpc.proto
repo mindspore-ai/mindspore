@@ -79,8 +79,16 @@ message WatchCondition {
   enum Condition {
     nan = 0;
     inf = 1;
+    overflow = 2;
+    ge = 3;  // greater than and equal to
+    gt = 4;  // greater than
+    le = 5;  // less than and equal to
+    lt = 6;  // less than
+    between = 7;  // between
   }
   Condition condition = 1;
+  repeated float value = 2;  // for between condition, there will be two values
+  repeated bool include = 3;  // for between condition, define the value is included or not
 }
 
 message WatchNode {

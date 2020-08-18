@@ -19,6 +19,9 @@
 #include <list>
 #include <memory>
 #include <string>
+#include <utility>
+#include <vector>
+#include <map>
 #include "backend/session/kernel_graph.h"
 #include "debug/debugger/grpc_client.h"
 #include "debug/debug_services.h"
@@ -90,6 +93,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   int32_t step_num() const;
 
+  std::map<std::pair<uint32_t, uint32_t>, std::string> &GetStreamTaskToOpnameMap();
+
  private:
   // private constructor for singleton
   Debugger();
@@ -130,11 +135,14 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   // analyze tensors and check watchpoint conditions
   // return names of tensors and what condition they hit
-  std::list<WatchpointHit> CheckWatchpoints() const;
+  std::list<WatchpointHit> CheckWatchpoints();
   std::list<WatchpointHit> CheckSingleWatchpoint(std::string watchnode) const;
 
   // send watchpoints that hit and enter command wait loop
   void SendWatchpointsAndSuspend(const std::list<WatchpointHit> &points);
+
+  // Find if any operation overflow happened and return their names
+  std::vector<std::string> CheckOpOverflow();
 
   // class members
   std::unique_ptr<GrpcClient> grpc_client_;
@@ -150,7 +158,9 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   bool is_dataset_graph_;
   bool partial_memory_;
   std::mutex access_lock_;
-
+  std::map<std::pair<uint32_t, uint32_t>, std::string> stream_task_to_opname_;
+  double last_overflow_bin_;
+  std::string overflow_bin_path_;
   // singleton
   static std::mutex instance_lock_;
   static std::shared_ptr<Debugger> debugger_;
@@ -180,5 +190,6 @@ ProtoVector<TensorProto> GetTensors(const EventReply &reply);
 // get the full name of a tensor, which is the name used in TensorLoader
 std::string GetTensorFullName(const TensorProto &tensor);
 
+uint64_t BytestoInt64(const std::vector<char> &buffer);
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_DEBUGGER_DEBUGGER_H_

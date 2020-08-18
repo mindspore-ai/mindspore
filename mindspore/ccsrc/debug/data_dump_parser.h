@@ -42,6 +42,7 @@ class DataDumpParser {
   uint32_t dump_step() const { return dump_step_; }
   void MatchKernel(const std::string &kernel_name);
   void PrintUnusedKernel();
+  std::string GetOpOverflowBinPath(uint32_t graph_id, uint32_t device_id) const;
 
  private:
   DataDumpParser() = default;
