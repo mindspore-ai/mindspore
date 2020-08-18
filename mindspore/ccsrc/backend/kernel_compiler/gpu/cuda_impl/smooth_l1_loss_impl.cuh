@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SMOOTH_L1_LOSS_H_
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SMOOTH_L1_LOSS_H_
 template <typename T>
-void SmoothL1Loss(const int &input_size, const float &sigma, const T *prediction, const T *target, T *loss,
+void SmoothL1Loss(const int &input_size, const float &beta, const T *prediction, const T *target, T *loss,
                   cudaStream_t stream);
 template <typename T>
-void SmoothL1LossGrad(const int &input_size, const float &sigma, const T *prediction, const T *target, const T *dloss,
+void SmoothL1LossGrad(const int &input_size, const float &beta, const T *prediction, const T *target, const T *dloss,
                       T *dx, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SMOOTH_L1_LOSS_H_

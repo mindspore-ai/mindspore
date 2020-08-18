@@ -26,7 +26,7 @@ namespace kernel {
 template <typename T>
 class SmoothL1LossGradGpuKernel : public GpuKernel {
  public:
-  SmoothL1LossGradGpuKernel() : input_size_(1), sigma_(1.0) {}
+  SmoothL1LossGradGpuKernel() : input_size_(1), beta_(1.0) {}
   ~SmoothL1LossGradGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -40,7 +40,7 @@ class SmoothL1LossGradGpuKernel : public GpuKernel {
     T *dloss = GetDeviceAddress<T>(inputs, 2);
     T *dx = GetDeviceAddress<T>(outputs, 0);
 
-    SmoothL1LossGrad(input_size_, sigma_, prediction, target, dloss, dx, reinterpret_cast<cudaStream_t>(stream_ptr));
+    SmoothL1LossGrad(input_size_, beta_, prediction, target, dloss, dx, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
@@ -50,7 +50,7 @@ class SmoothL1LossGradGpuKernel : public GpuKernel {
       input_size_ *= input_shape[i];
     }
 
-    sigma_ = GetAttr<float>(kernel_node, "sigma");
+    beta_ = GetAttr<float>(kernel_node, "beta");
     InitSizeLists();
     return true;
   }
@@ -64,7 +64,7 @@ class SmoothL1LossGradGpuKernel : public GpuKernel {
 
  private:
   size_t input_size_;
-  float sigma_;
+  float beta_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

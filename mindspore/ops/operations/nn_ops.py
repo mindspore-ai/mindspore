@@ -1658,11 +1658,11 @@ class SmoothL1Loss(PrimitiveWithInfer):
         Sets input prediction as `X`, input target as `Y`, output as `loss`. Then,
 
         .. math::
-            \text{SmoothL1Loss} = \begin{cases}0.5x^{2}, &if \left |x \right |\leq \text{sigma} \cr
-            \left |x \right|-0.5, &\text{otherwise}\end{cases}
+            \text{SmoothL1Loss} = \begin{cases} \frac{0.5 x^{2}}{\text{beta}, &if \left |x \right | < \text{beta} \cr
+            \left |x \right|-0.5 \text{beta}, &\text{otherwise}\end{cases}
 
     Args:
-        sigma (float): A parameter used to control the point where the function will change from
+        beta (float): A parameter used to control the point where the function will change from
             quadratic to linear. Default: 1.0.
 
     Inputs:
@@ -1681,9 +1681,9 @@ class SmoothL1Loss(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, sigma=1.0):
-        validator.check_value_type('sigma', sigma, [float], self.name)
-        validator.check('sigma', sigma, '', 0, Rel.GT, self.name)
+    def __init__(self, beta=1.0):
+        validator.check_value_type('beta', beta, [float], self.name)
+        validator.check('beta', beta, '', 0, Rel.GT, self.name)
         self.init_prim_io_names(inputs=['prediction', 'target'], outputs=['output'])
 
     def infer_shape(self, prediction, target):
